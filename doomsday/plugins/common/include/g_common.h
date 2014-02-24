@@ -52,6 +52,8 @@ void G_ChangeGameState(gamestate_t state);
 gameaction_t G_GameAction(void);
 void G_SetGameAction(gameaction_t action);
 
+AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
+
 char const *P_GetGameModeName(void);
 
 uint G_GenerateSessionId(void);
@@ -135,7 +137,7 @@ uint G_LogicalMapNumber(uint episode, uint map);
 /// @return  Logical map number.
 uint G_CurrentLogicalMapNumber(void);
 
-AutoStr *G_GenerateSaveGameName(void);
+AutoStr *G_GenerateUserSaveDescription(void);
 
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );

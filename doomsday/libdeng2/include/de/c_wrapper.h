@@ -1,7 +1,7 @@
-/*
- * The Doomsday Engine Project -- libdeng2
+/** @file c_wrapper.h  C wrapper for various libdeng2 classes.
+ * @ingroup core
  *
- * Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

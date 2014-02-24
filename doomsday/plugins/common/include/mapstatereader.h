@@ -22,7 +22,7 @@
 #define LIBCOMMON_MAPSTATEREADER_H
 
 #include "common.h"
-#include "dmu_archiveindex.h"
+#include "thingarchive.h"
 #include <de/Error>
 
 /**
@@ -41,7 +41,7 @@ public:
     /**
      * @param saveVersion  Logical saved state version number.
      */
-    MapStateReader(int saveVersion);
+    MapStateReader(int saveVersion, int thingArchiveSize = 0);
 
     /**
      * Deserialize the saved map state using the specified @a reader.
@@ -59,7 +59,12 @@ public:
     Reader *reader();
 
     /**
-     * Finds and returns a material with the identifier @a serialId.
+     * Lookup a pointer to a Mobj with the given @a serialId.
+     */
+    struct mobj_s *mobj(ThingArchive::SerialId serialId, void *address) const;
+
+    /**
+     * Lookup a pointer to a Material with the given @a serialId.
      *
      * @param serialId  Unique identifier for the material in the material archive.
      * @param group     Used with previous versions of the material archive, which
@@ -67,12 +72,20 @@ public:
      *
      * @return  Pointer to the associated material; otherwise @c 0 (not archived).
      */
-    Material *material(materialarchive_serialid_t serialId, int group);
+    Material *material(materialarchive_serialid_t serialId, int group) const;
 
     /**
-     * Provides access to the side archive to use when deserializing the map state.
+     * Lookup a pointer to a Side with the given @a sideIndex.
      */
-    dmu_lib::SideArchive &sideArchive();
+    Side *side(int sideIndex) const;
+
+    /**
+     * Lookup a pointer to a player with the given @a serialId.
+     */
+    struct player_s *player(int serialId) const;
+
+public: /// @todo refactor away:
+    void addMobjToThingArchive(struct mobj_s *mobj, ThingArchive::SerialId);
 
 private:
     DENG2_PRIVATE(d)

@@ -1794,7 +1794,7 @@ void C_DECL A_BrainDie(mobj_t* mo)
 
 void C_DECL A_BrainSpit(mobj_t* mo)
 {
-    mobj_t *targ = BossBrain_NextTarget(bossBrain);
+    mobj_t *targ = BossBrain_NextTarget(theBossBrain);
     mobj_t *newmobj;
 
     if(!targ) return;

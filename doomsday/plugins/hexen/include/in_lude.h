@@ -32,8 +32,14 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-extern dd_bool  intermission;
-extern int interState;
+#include "h2def.h"
+
+DENG_EXTERN_C dd_bool intermission;
+DENG_EXTERN_C int interState;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// To be called to register the console commands and variables of this module.
 void WI_Register(void);
@@ -43,5 +49,9 @@ void            IN_Stop(void);
 void            IN_Ticker(void);
 void            IN_Drawer(void);
 void            IN_SkipToNext(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -190,6 +190,8 @@ GuiWidget &PanelWidget::content() const
 GuiWidget *PanelWidget::takeContent()
 {
     GuiWidget *w = d->content;
+    if(!w) return 0;
+
     d->content = 0;
 
     w->rule().clearInput(Rule::Left);
@@ -223,6 +225,11 @@ ui::Direction PanelWidget::openingDirection() const
 bool PanelWidget::isOpen() const
 {
     return d->opened;
+}
+
+bool PanelWidget::isOpeningOrClosing() const
+{
+    return !d->openingRule->animation().done();
 }
 
 void PanelWidget::close(TimeDelta delayBeforeClosing)

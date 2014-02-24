@@ -3,7 +3,8 @@
 import os
 import string
 
-DOOMSDAY_DIR = os.path.join(os.getcwd(), '..', 'doomsday')
+DOOMSDAY_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'doomsday')
+    
 DOOMSDAY_VERSION_FULL = "0.0.0-Name"
 DOOMSDAY_VERSION_FULL_PLAIN = "0.0.0"
 DOOMSDAY_VERSION_MAJOR = 0

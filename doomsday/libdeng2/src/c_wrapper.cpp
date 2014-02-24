@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -79,14 +79,15 @@ void App_Log(unsigned int metadata, char const *format, ...)
     DENG2_ASSERT(nc < sizeof(buffer) - 2);
     if(!nc) return;
 
+    LOG().enter(metadata, buffer);
+
     // Make sure there's a newline in the end.
-    if(buffer[nc - 1] != '\n')
+    /*if(buffer[nc - 1] != '\n')
     {
         buffer[nc++] = '\n';
         buffer[nc] = 0;
     }
-
-    logFragmentPrinter(metadata, buffer);
+    logFragmentPrinter(metadata, buffer);*/
 }
 
 void App_Timer(unsigned int milliseconds, void (*callback)(void))

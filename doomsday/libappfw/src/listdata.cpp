@@ -83,7 +83,7 @@ Data &ListData::insert(Pos pos, Item *item)
     // Notify.
     DENG2_FOR_AUDIENCE(Addition, i)
     {
-        i->contextItemAdded(pos, *item);
+        i->dataItemAdded(pos, *item);
     }
 
     return *this;
@@ -103,7 +103,7 @@ Item *ListData::take(Data::Pos pos)
     // Notify.
     DENG2_FOR_AUDIENCE(Removal, i)
     {
-        i->contextItemRemoved(pos, *taken);
+        i->dataItemRemoved(pos, *taken);
     }
 
     return taken;
@@ -125,7 +125,7 @@ void ListData::sort(LessThanFunc lessThan)
     // Notify.
     DENG2_FOR_AUDIENCE(OrderChange, i)
     {
-        i->contextItemOrderChanged();
+        i->dataItemOrderChanged();
     }
 }
 
@@ -136,7 +136,7 @@ void ListData::stableSort(LessThanFunc lessThan)
     // Notify.
     DENG2_FOR_AUDIENCE(OrderChange, i)
     {
-        i->contextItemOrderChanged();
+        i->dataItemOrderChanged();
     }
 }
 

@@ -196,19 +196,19 @@ DENG2_PIMPL(MenuWidget)
         organizer.setContext(*items); // recreates widgets
     }
 
-    void contextItemAdded(Data::Pos, Item const &)
+    void dataItemAdded(Data::Pos, Item const &)
     {
         // Make sure we determine the layout for the new item.
         needLayout = true;
     }
 
-    void contextItemRemoved(Data::Pos, Item &)
+    void dataItemRemoved(Data::Pos, Item &)
     {
         // Make sure we determine the layout after this item is gone.
         needLayout = true;
     }
 
-    void contextItemOrderChanged()
+    void dataItemOrderChanged()
     {
         // Make sure we determine the layout for the new order.
         needLayout = true;

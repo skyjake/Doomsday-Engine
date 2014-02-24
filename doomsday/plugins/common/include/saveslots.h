@@ -20,12 +20,13 @@
 
 #ifndef LIBCOMMON_SAVESLOTS_H
 #define LIBCOMMON_SAVESLOTS_H
+#ifdef __cplusplus
 
 #include "common.h"
-#include "saveinfo.h"
-
-#ifdef __cplusplus
 #include <de/Error>
+#include <de/Path>
+
+class SaveInfo;
 
 /**
  * Maps saved games into a finite set of "save slots".
@@ -42,41 +43,92 @@ public:
     /// An invalid slot was specified. @ingroup errors
     DENG2_ERROR(InvalidSlotError);
 
+    /**
+     * Logical save slot.
+     */
+    class Slot
+    {
+    public:
+        /// Required SaveInfo is missing. @ingroup errors
+        DENG2_ERROR(MissingInfoError);
+
+    public:
+        Slot(de::String const &fileName = "");
+
+        /**
+         * Returns the save game file name bound to the logical save slot.
+         */
+        de::String fileName() const;
+
+        /**
+         * Change the save game file name bound to the logical save slot.
+         *
+         * @param newName  New save game file name to be bound.
+         */
+        void bindFileName(de::String newName);
+
+        /**
+         * Returns @c true iff a saved game state exists for the logical save slot.
+         */
+        bool isUsed() const;
+
+        /**
+         * Returns @c true iff save info exists for the logical save slot.
+         */
+        bool hasSaveInfo() const;
+
+        /**
+         * Clear the save info for the logical save slot.
+         *
+         * @see hasSaveInfo()
+         */
+        void clearSaveInfo();
+
+        /**
+         * Returns the SaveInfo associated with the logical save slot.
+         *
+         * @see hasSaveInfo()
+         */
+        SaveInfo &saveInfo() const;
+
+        /**
+         * Replace the existing save info with @a newInfo.
+         *
+         * @param newInfo  New SaveInfo to replace with. Ownership is given.
+         */
+        void replaceSaveInfo(SaveInfo *newInfo);
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
 public:
     /**
      * @param numSlots  Number of logical slots.
      */
     SaveSlots(int numSlots);
 
-    void clearAllSaveInfo();
-
-    /**
-     * Force an update of the cached game-save info. To be called (sparingly) at strategic
-     * points when an update is necessary (e.g., the game-save paths have changed).
-     *
-     * @note It is not necessary to call this after a game-save is made, this module will do
-     * so automatically.
-     */
-    void updateAllSaveInfo();
-
     /**
      * Returns the total number of logical save slots.
      */
     int slotCount() const;
 
+    /// @see slotCount()
+    inline int size() const { return slotCount(); }
+
     /**
-     * Returns @c true iff @a slot is a valid logical slot number (in range).
+     * Returns @c true iff @a value is interpretable as logical slot number (in range).
      *
      * @see slotCount()
      */
-    bool isValidSlot(int slot) const;
+    bool isKnownSlot(int value) const;
 
     /**
-     * Composes the textual identifier/name for save @a slot.
+     * Composes the textual, symbolic identifier/name for save @a slotNumber.
      *
      * @see parseSlotIdentifier()
      */
-    AutoStr *composeSlotIdentifier(int slot) const;
+    de::String slotIdentifier(int slotNumber) const;
 
     /**
      * Parse @a str and determine whether it references a logical game-save slot.
@@ -93,9 +145,35 @@ public:
      *
      * @return  The parsed slot number if valid; otherwise @c -1
      *
-     * @see composeSlotIdentifier()
+     * @see slotIdentifier()
      */
-    int parseSlotIdentifier(char const *str) const;
+    int parseSlotIdentifier(de::String str) const;
+
+    /// @see slot()
+    inline Slot &operator [] (int slotNumber) {
+        return slot(slotNumber);
+    }
+
+    /**
+     * Returns the logical save slot associated with @a slotNumber.
+     *
+     * @see isKnownSlot()
+     */
+    Slot &slot(int slotNumber) const;
+
+    /**
+     * Clears save info for all logical save slots.
+     */
+    void clearAll();
+
+    /**
+     * Force an update of the cached game-save info. To be called (sparingly) at strategic
+     * points when an update is necessary (e.g., the game-save paths have changed).
+     *
+     * @note It is not necessary to call this after a game-save is made, this module will do
+     * so automatically.
+     */
+    void updateAll();
 
     /**
      * Lookup a save slot by searching for a match on game-save description. The search is in
@@ -105,57 +183,25 @@ public:
      *
      * @return  Logical slot number of the found game-save else @c -1
      */
-    int findSlotWithSaveDescription(char const *description) const;
+    int findSlotWithUserSaveDescription(de::String description) const;
 
     /**
-     * Returns @c true iff a saved game state exists for save @a slot.
+     * Returns @c true iff save @a slotNumber is user-writable (i.e., not a special slot, such
+     * as the @em auto and @em base slots).
      */
-    bool slotInUse(int slot) const;
+    bool slotIsUserWritable(int slotNumber) const;
 
     /**
-     * Returns @c true iff save @a slot is user-writable (i.e., not a special slot, such as
-     * the @em auto and @em base slots).
-     */
-    bool slotIsUserWritable(int slot) const;
-
-    /**
-     * Returns the SaveInfo associated with the logical save @a slot.
+     * Deletes all save game files associated with the specified save @a slotNumber.
      *
-     * @see isValidSlot()
+     * @see isKnownSlot()
      */
-    SaveInfo &saveInfo(int slot) const;
-
-    inline SaveInfo *saveInfoPtr(int slot) const {
-        return isValidSlot(slot)? &saveInfo(slot) : 0;
-    }
-
-    /**
-     * Deletes all save game files associated with the specified save @a slot.
-     *
-     * @see isValidSlot()
-     */
-    void clearSlot(int slot);
-
-    /**
-     * @param slot     Slot to replace the info of.
-     * @param newInfo  New SaveInfo to replace with. Ownership is given.
-     */
-    void replaceSaveInfo(int slot, SaveInfo *newInfo);
+    void clearSlot(int slotNumber);
 
     /**
      * Copies all the save game files from one slot to another.
      */
-    void copySlot(int sourceSlot, int destSlot);
-
-    /**
-     * Compose the (possibly relative) file path to the game state associated with save @a slot.
-     *
-     * @param slot  Slot to compose the identifier of.
-     * @param map   If @c >= 0 include this logical map index in the composed path.
-     *
-     * @return  The composed path if reachable (else a zero-length string).
-     */
-    AutoStr *composeSavePathForSlot(int slot, int map = -1) const;
+    void copySlot(int sourceSlotNumber, int destSlotNumber);
 
     /**
      * Register the console commands and variables of this module.
@@ -168,38 +214,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef SaveSlots::Slot SaveSlot;
+
 #endif // __cplusplus
-
-// C wrapper API ---------------------------------------------------------------
-
-#ifdef __cplusplus
-extern "C" {
-#else
-typedef void *SaveSlots;
-#endif
-
-SaveSlots *SaveSlots_New(int slotCount);
-void SaveSlots_Delete(SaveSlots *sslots);
-
-void SaveSlots_ClearAllSaveInfo(SaveSlots *sslots);
-void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots);
-int SaveSlots_SlotCount(SaveSlots const *sslots);
-dd_bool SaveSlots_IsValidSlot(SaveSlots const *sslots, int slot);
-AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots const *sslots, int slot);
-int SaveSlots_ParseSlotIdentifier(SaveSlots const *sslots, char const *str);
-int SaveSlots_FindSlotWithSaveDescription(SaveSlots const *sslots, char const *description);
-dd_bool SaveSlots_SlotInUse(SaveSlots const *sslots, int slot);
-dd_bool SaveSlots_SlotIsUserWritable(SaveSlots const *sslots, int slot);
-SaveInfo *SaveSlots_SaveInfo(SaveSlots *sslots, int slot);
-void SaveSlots_ReplaceSaveInfo(SaveSlots *sslots, int slot, SaveInfo *newInfo);
-void SaveSlots_ClearSlot(SaveSlots *sslots, int slot);
-void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot);
-AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots const *sslots, int slot, int map);
-
-void SaveSlots_ConsoleRegister();
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 #endif // LIBCOMMON_SAVESLOTS_H

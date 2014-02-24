@@ -1,4 +1,4 @@
-/** @file common/p_savedef.h Common game-save state management.
+/** @file p_savedef.h Common game-save state management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -66,18 +66,6 @@
 
 #  define BASE_SLOT             6
 #  define AUTO_SLOT             7
-
-typedef union saveptr_u {
-    byte *b;
-    short *w;
-    int *l;
-    float *f;
-} saveptr_t;
-
-typedef struct targetplraddress_s {
-    void **address;
-    struct targetplraddress_s *next;
-} targetplraddress_t;
 
 #endif
 

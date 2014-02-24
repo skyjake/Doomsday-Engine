@@ -73,9 +73,9 @@ typedef enum joyaxis_e {
 D_CMD(DefaultGameBinds);
 
 // Input devices; state controls.
-static int     povangle = -1;          // -1 means centered (really 0 - 7).
-static float   mousex;
-static float   mousey;
+//static int povangle = -1;  ///< @c -1= means centered (really 0 - 7).
+//static float mousex;
+//static float mousey;
 
 // Player control state.
 static pcontrolstate_t controlStates[MAXPLAYERS];

@@ -192,4 +192,17 @@ def version_cmp(a, b):
 def system_command(cmd):
     result = subprocess.call(cmd, shell=True)
     if result != 0:
-        raise Exception("Error from " + cmd)
+        raise Exception("System command \"%s\" returned error code %i" % (cmd, result))
+
+
+def python2_executable():
+    if sys.platform[:3] == 'win':
+        return 'python'
+    elif mac_os_version() == '10.5':
+        return '/usr/bin/env python2.5'  # required by Snowberry
+    else:
+        return '/usr/bin/env python2.7'
+
+
+def run_python2(script):
+    system_command(python2_executable() + " " + script)

@@ -26,7 +26,7 @@ namespace de {
 /**
  * Base class for events.
  *
- * @ingroup widgets
+ * @ingroup core
  */
 class DENG2_PUBLIC Event
 {

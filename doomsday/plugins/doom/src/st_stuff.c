@@ -3209,7 +3209,7 @@ void ST_ToggleAutomapMaxZoom(int player)
     if(!obj) return;
     if(UIAutomap_SetZoomMax(obj, !UIAutomap_ZoomMax(obj)))
     {
-        App_Log(0, "Maximum zoom %s in automap\n", UIAutomap_ZoomMax(obj)? "ON":"OFF");
+        App_Log(0, "Maximum zoom %s in automap", UIAutomap_ZoomMax(obj)? "ON":"OFF");
     }
 }
 
@@ -3368,7 +3368,7 @@ D_CMD(ChatSendMacro)
     {
         App_Log(DE2_SCR_NOTE, "Usage: %s (team) (macro number)", argv[0]);
         App_Log(DE2_SCR_MSG, "Send a chat macro to other player(s). "
-                "If (team) is omitted, the message will be sent to all players.");
+                             "If (team) is omitted, the message will be sent to all players.");
         return true;
     }
 

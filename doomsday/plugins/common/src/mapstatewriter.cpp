@@ -22,58 +22,71 @@
 #include "mapstatewriter.h"
 
 #include "dmu_lib.h"
-#include "p_saveg.h"
+#include "p_saveg.h"     // SV_WriteSector, SV_WriteLine
 #include "p_saveio.h"
 #include "polyobjs.h"
 #include "thinkerinfo.h"
+#include <de/String>
+
+namespace internal
+{
+    static bool useMaterialArchiveSegments() {
+#if __JHEXEN__
+        return true;
+#else
+        return false;
+#endif
+    }
+}
+
+using namespace internal;
 
 DENG2_PIMPL(MapStateWriter)
 {
-    bool excludePlayers;
-    Writer *writer;
+    ThingArchive *thingArchive; // Not owned.
     MaterialArchive *materialArchive;
+    Writer *writer; // Not owned.
 
     Instance(Public *i)
         : Base(i)
-        , excludePlayers(false)
-        , writer(0)
+        , thingArchive(0)
         , materialArchive(0)
+        , writer(0)
     {}
 
-    void beginSegment(int segmentId)
+    ~Instance()
     {
-        SV_BeginSegment(segmentId);
+        MaterialArchive_Delete(materialArchive);
+    }
+
+    void beginSegment(int segId)
+    {
+#if __JHEXEN__
+        Writer_WriteInt32(writer, segId);
+#else
+        DENG_UNUSED(segId);
+#endif
     }
 
     void endSegment()
     {
-        SV_EndSegment();
+        beginSegment(ASEG_END);
     }
 
-    void beginMapSegment()
+    void writeMapHeader()
     {
-        beginSegment(ASEG_MAP_HEADER2);
-
 #if __JHEXEN__
-        Writer_WriteByte(writer, MY_SAVE_VERSION); // Map version also.
+        // Maps have their own version number.
+        Writer_WriteByte(writer, MY_SAVE_VERSION);
 
         // Write the map timer
         Writer_WriteInt32(writer, mapTime);
 #endif
-
-        // Create and populate the MaterialArchive.
-#ifdef __JHEXEN__
-        materialArchive = MaterialArchive_New(true /* segment check */);
-#else
-        materialArchive = MaterialArchive_New(false);
-#endif
-        MaterialArchive_Write(materialArchive, writer);
     }
 
-    void endMapSegment()
+    void writeMaterialArchive()
     {
-        endSegment();
-        MaterialArchive_Delete(materialArchive); materialArchive = 0;
+        MaterialArchive_Write(materialArchive, writer);
     }
 
     void writeElements()
@@ -89,6 +102,8 @@ DENG2_PIMPL(MapStateWriter)
         {
             SV_WriteLine((Line *)P_ToPtr(DMU_LINE, i), thisPublic);
         }
+
+        // endSegment();
     }
 
     void writePolyobjs()
@@ -103,6 +118,8 @@ DENG2_PIMPL(MapStateWriter)
             DENG_ASSERT(po != 0);
             po->write(thisPublic);
         }
+
+        // endSegment();
 #endif
     }
 
@@ -127,12 +144,16 @@ DENG2_PIMPL(MapStateWriter)
         if(p.excludePlayers)
         {
             if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
-                return false; // Continue iteration.
+            {
+                return false;
+            }
         }
 
         // Only the server saves this class of thinker?
         if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
+        {
             return false;
+        }
 
         // Write the header block for this thinker.
         Writer_WriteByte(p.msw->writer(), thInfo->thinkclass); // Thinker type byte.
@@ -141,14 +162,14 @@ DENG2_PIMPL(MapStateWriter)
         // Write the thinker data.
         thInfo->writeFunc(th, p.msw);
 
-        return false; // Continue iteration.
+        return false;
     }
 
     /**
      * Serializes thinkers for both client and server.
      *
-     * @note Clients do not save data for all thinkers. In some cases the server
-     * will send it anyway (so saving it would just bloat client save states).
+     * @note Clients do not save data for all thinkers. In some cases the server will send it
+     * anyway (so saving it would just bloat client save states).
      *
      * @note Some thinker classes are NEVER saved by clients.
      */
@@ -157,16 +178,17 @@ DENG2_PIMPL(MapStateWriter)
         beginSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
-        Writer_WriteInt32(writer, thingArchiveSize); // number of mobjs.
+        Writer_WriteInt32(writer, thingArchive->size()); // number of mobjs.
 #endif
 
         // Serialize qualifying thinkers.
         writethinkerworker_params_t parm; de::zap(parm);
-        parm.msw = thisPublic;
-        parm.excludePlayers = excludePlayers;
+        parm.msw            = thisPublic;
+        parm.excludePlayers = thingArchive->excludePlayers();
         Thinker_Iterate(0/*all thinkers*/, writeThinkerWorker, &parm);
 
         // Mark the end of the thinkers.
+        // endSegment();
         Writer_WriteByte(writer, TC_END);
     }
 
@@ -175,6 +197,7 @@ DENG2_PIMPL(MapStateWriter)
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
         Game_ACScriptInterpreter().writeMapScriptData(thisPublic);
+        // endSegment();
 #endif
     }
 
@@ -183,22 +206,29 @@ DENG2_PIMPL(MapStateWriter)
 #if __JHEXEN__
         beginSegment(ASEG_SOUNDS);
         SN_WriteSequences(writer);
+        // endSegment();
 #endif
     }
 
-    void writeBrain()
+    void writeMisc()
     {
+#if __JHEXEN__
+        beginSegment(ASEG_MISC);
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            Writer_WriteInt32(writer, localQuakeHappening[i]);
+        }
+#endif
 #if __JDOOM__
-        DENG_ASSERT(bossBrain != 0);
-        bossBrain->write(thisPublic);
+        DENG_ASSERT(theBossBrain != 0);
+        theBossBrain->write(thisPublic);
 #endif
     }
 
     void writeSoundTargets()
     {
 #if !__JHEXEN__
-        // Not for us?
-        if(!IS_SERVER) return;
+        if(!IS_SERVER) return; // Not for us.
 
         // Write the total number.
         int count = 0;
@@ -210,39 +240,29 @@ DENG2_PIMPL(MapStateWriter)
                 count += 1;
             }
         }
+
+        // beginSegment();
         Writer_WriteInt32(writer, count);
 
         // Write the mobj references using the mobj archive.
         for(int i = 0; i < numsectors; ++i)
         {
             xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
-
             if(xsec->soundTarget)
             {
                 Writer_WriteInt32(writer, i);
-                Writer_WriteInt16(writer, SV_ThingArchiveId(xsec->soundTarget));
+                Writer_WriteInt16(writer, thingArchive->serialIdFor(xsec->soundTarget));
             }
         }
-#endif
-    }
-
-    void writeMisc()
-    {
-#if __JHEXEN__
-        beginSegment(ASEG_MISC);
-
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            Writer_WriteInt32(writer, localQuakeHappening[i]);
-        }
+        // endSegment();
 #endif
     }
 };
 
-MapStateWriter::MapStateWriter(bool excludePlayers)
+MapStateWriter::MapStateWriter(ThingArchive &thingArchive)
     : d(new Instance(this))
 {
-    d->excludePlayers = excludePlayers;
+    d->thingArchive = &thingArchive;
 }
 
 void MapStateWriter::write(Writer *writer)
@@ -250,28 +270,43 @@ void MapStateWriter::write(Writer *writer)
     DENG_ASSERT(writer != 0);
     d->writer = writer;
 
-    d->beginMapSegment();
+    // Prepare and populate the material archive.
+    d->materialArchive = MaterialArchive_New(useMaterialArchiveSegments());
+
+    // Serialize the map.
+    d->beginSegment(ASEG_MAP_HEADER2);
     {
+        d->writeMapHeader();
+        d->writeMaterialArchive();
+
         d->writeElements();
         d->writePolyobjs();
         d->writeThinkers();
         d->writeACScriptData();
         d->writeSoundSequences();
         d->writeMisc();
-        d->writeBrain();
         d->writeSoundTargets();
     }
-    d->endMapSegment();
+    d->endSegment();
+
+    // Cleanup.
+    MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
 }
 
-Writer *MapStateWriter::writer()
+ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)
 {
-    DENG_ASSERT(d->writer != 0);
-    return d->writer;
+    DENG_ASSERT(d->thingArchive != 0);
+    return d->thingArchive->serialIdFor(mobj);
 }
 
 materialarchive_serialid_t MapStateWriter::serialIdFor(Material *material)
 {
     DENG_ASSERT(d->materialArchive != 0);
     return MaterialArchive_FindUniqueSerialId(d->materialArchive, material);
+}
+
+Writer *MapStateWriter::writer()
+{
+    DENG_ASSERT(d->writer != 0);
+    return d->writer;
 }

@@ -300,8 +300,8 @@ int ceiling_s::read(MapStateReader *msr)
     {
         // Its in the old format which serialized ceiling_t
         // Padding at the start (an old thinker_t struct)
-        byte junk[16]; // sizeof thinker_t
-        Reader_Read(reader, junk, 16);
+        int32_t junk[4]; // sizeof thinker_t
+        Reader_Read(reader, (byte *)junk, 16);
 
         // Start of used data members.
 #if __JHEXEN__
@@ -329,8 +329,10 @@ int ceiling_s::read(MapStateReader *msr)
 
         thinker.function = T_MoveCeiling;
 #if !__JHEXEN__
-        if(!((thinker_t *)junk)->function)
+        if(junk[2] == 0) // thinker_t::function
+        {
             Thinker_SetStasis(&thinker, true);
+        }
 #endif
     }
 

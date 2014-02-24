@@ -46,6 +46,7 @@ HEADERS += \
     include/h_stat.h \
     include/h_think.h \
     include/h_type.h \
+    include/hereticv13gamestatereader.h \
     include/in_lude.h \
     include/info.h \
     include/jheretic.h \
@@ -57,7 +58,6 @@ HEADERS += \
     include/p_local.h \
     include/p_maputl.h \
     include/p_mobj.h \
-    include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
     include/p_spec.h \
@@ -74,8 +74,9 @@ SOURCES += \
     src/acfnlink.c \
     src/h_api.c \
     src/h_console.c \
-    src/h_main.c \
+    src/h_main.cpp \
     src/h_refresh.c \
+    src/hereticv13gamestatereader.cpp \
     src/in_lude.c \
     src/m_cheat.c \
     src/m_random.c \
@@ -84,7 +85,6 @@ SOURCES += \
     src/p_lights.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
-    src/p_oldsvg.cpp \
     src/p_pspr.c \
     src/p_setup.c \
     src/p_spec.c \

@@ -1,6 +1,6 @@
 /**
  * @file huffman.h
- * Huffman codes. @ingroup math
+ * Huffman codes. @ingroup data
  *
  * @see CLR 2nd Ed, p. 388
  *

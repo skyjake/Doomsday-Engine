@@ -402,15 +402,15 @@ int DS_Init(void)
             useEAX = false;
 
             App_Log(DE2_LOG_DEV | DE2_LOG_AUDIO | DE2_LOG_WARNING,
-                    "dsDirectSound::DS_Init: Failed retrieving property set.\n");
+                    "dsDirectSound::DS_Init: Failed retrieving property set.");
         }
     }
 
     // Announce capabilites:
-    App_Log(DE2_LOG_AUDIO, "DirectSound configuration:\n");
-    App_Log(DE2_LOG_AUDIO, "  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
+    App_Log(DE2_LOG_AUDIO, "DirectSound configuration:");
+    App_Log(DE2_LOG_AUDIO, "  Primary Buffer: %s (%s)", (primaryBuffer3D? "3D" : "2D"),
             (primaryBufferHW? "hardware" : "software"));
-    App_Log(DE2_LOG_AUDIO, "  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
+    App_Log(DE2_LOG_AUDIO, "  Hardware Buffers: %i", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
     LogBuffer_Printf(DE2_LOG_AUDIO, "  DSP: %s", eaxAvailable? "EAX 2.0" : "None");
     if(eaxAvailable)
         LogBuffer_Printf(DE2_LOG_AUDIO, " (%s)", useEAX? "enabled" : "disabled");
@@ -418,19 +418,19 @@ int DS_Init(void)
 
     if(eaxAvailable)
     {
-        App_Log(DE2_LOG_AUDIO, "  EAX Listner Environment:\n");
+        App_Log(DE2_LOG_AUDIO, "  EAX Listner Environment:");
         for(size_t i = 0; eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE; ++i)
         {
             const eaxproperty_t* p = &eaxProps[i];
 
             App_Log(DE2_LOG_AUDIO, "    %s: %s", p->name,
-                    queryEAXSupport(p->prop)? "Present\n" : "Not available\n");
+                    queryEAXSupport(p->prop)? "Present" : "Not available");
         }
     }
 
     // Success!
     App_Log(DE2_LOG_AUDIO | DE2_LOG_VERBOSE | DE2_LOG_DEV,
-                     "dsDirectSound::DS_Init: Initialization complete, OK.\n");
+                     "dsDirectSound::DS_Init: Initialization complete, OK.");
     return true;
 
 #undef NUMBUFFERS_HW_3D
@@ -1251,7 +1251,7 @@ void DS_SFX_Listenerv(int prop, float* values)
     case SFXLP_ORIENTATION:
         if(!dsListener)
             return;
-        listenerOrientation(values[VX] / 180 * PI, values[VY] / 180 * PI);
+        listenerOrientation(values[VX] / 180 * DD_PI, values[VY] / 180 * DD_PI);
         break;
 
     case SFXLP_REVERB:

@@ -1,5 +1,4 @@
 /** @file monospacelogsinkformatter.cpp  Fixed-width log entry formatter.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -106,7 +105,7 @@ struct TabFiller
                     }
                     else
                     {
-                        stop = ln.at(i).toAscii() - 'a';
+                        stop = ln.at(i).toLatin1() - 'a';
                     }
                     maxStop = max(stop, maxStop);
                 }
@@ -141,7 +140,7 @@ struct TabFiller
                             // continue to the tab-replacing phase.
                             goto replaceTabs;
                         }
-                        if(ln.at(i) == '+' || ln.at(i).toAscii() - 'a' == stop)
+                        if(ln.at(i) == '+' || ln.at(i).toLatin1() - 'a' == stop)
                         {
                             // This is it.
                             tabWidth = max(tabWidth, w);
@@ -174,7 +173,7 @@ replaceTabs:
                             resetAt = Vector2i(idx, i - 1);
                             goto nextStop;
                         }
-                        if(ln.at(i) == '+' || ln.at(i).toAscii() - 'a' == stop)
+                        if(ln.at(i) == '+' || ln.at(i).toLatin1() - 'a' == stop)
                         {
                             // Replace this stop with spaces.
                             ln.remove(--i, 2);

@@ -134,7 +134,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         return selected < items().size();
     }
 
-    void contextItemAdded(Data::Pos id, ui::Item const &)
+    void dataItemAdded(Data::Pos id, ui::Item const &)
     {
         updateMaximumWidth();
 
@@ -154,7 +154,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         }
     }
 
-    void contextItemRemoved(Data::Pos id, ui::Item &)
+    void dataItemRemoved(Data::Pos id, ui::Item &)
     {
         if(id <= selected && selected > 0)
         {
@@ -165,7 +165,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         updateMaximumWidth();
     }
 
-    void contextItemOrderChanged()
+    void dataItemOrderChanged()
     {
         updateButtonWithSelection();
     }

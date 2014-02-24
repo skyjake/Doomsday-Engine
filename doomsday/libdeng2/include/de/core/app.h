@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -133,7 +133,7 @@ public:
      *
      * @param flags  How to/which subsystems to initialize.
      */
-    void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+    virtual void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
     /**
      * Adds a system to the application. The order of systems is preserved; the

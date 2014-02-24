@@ -90,7 +90,7 @@ static dd_bool Writer_Check(Writer const *writer, size_t len)
                 return true;
         }
         App_Log(DE2_LOG_ERROR,
-            "Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",
+            "Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.",
                 (unsigned long) writer->pos,
                 (unsigned long) len,
                 (unsigned long) writer->size,
@@ -142,6 +142,7 @@ Writer *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
 
 void Writer_Delete(Writer *writer)
 {
+    if(!writer) return;
     if(writer->isDynamic)
     {
         // The buffer was allocated by us.
@@ -328,7 +329,7 @@ void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
     if(v & 0x8000)
     {
         App_Log(DE2_LOG_ERROR,
-            "Writer_WritePackedUInt16: Cannot write %i (%x).\n", v, v);
+            "Writer_WritePackedUInt16: Cannot write %i (%x).", v, v);
         return;
     }
 

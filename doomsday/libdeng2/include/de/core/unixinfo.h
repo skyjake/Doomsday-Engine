@@ -41,6 +41,8 @@ namespace de {
  * Mac OS X, ~/Library/Preferences/) but these are not directly used by
  * libdeng2. Instead of these, one should use Config (or QSettings) for
  * platform-independent persistent configuration.
+ *
+ * @ingroup core
  */
 class UnixInfo
 {

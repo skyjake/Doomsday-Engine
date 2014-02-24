@@ -204,6 +204,8 @@ DENG_GUI_PIMPL(LineEditWidget)
     void contentChanged()
     {
         composer.setText(self.text());
+
+        emit self.editorContentChanged();
     }
 
     void atlasContentRepositioned(Atlas &)

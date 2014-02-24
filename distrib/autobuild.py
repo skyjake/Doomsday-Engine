@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2.7
 # coding=utf-8
 #
 # Script for performing automated build events.
@@ -64,9 +64,12 @@ def todays_platform_release():
     os.chdir(builder.config.DISTRIB_DIR)
     oldFiles = DirState('releases', subdirs=False)
     
-    print 'platform_release.py...'
-    os.system("python platform_release.py > %s 2> %s" % \
-        ('buildlog.txt', 'builderrors.txt'))
+    try:
+        print 'platform_release.py...'
+        run_python2("platform_release.py > %s 2> %s" % \
+            ('buildlog.txt', 'builderrors.txt'))
+    except Exception, x:
+        print 'Error during platform_release:', x
             
     for n in DirState('releases', subdirs=False).list_new_files(oldFiles):
         # Copy any new files.

@@ -45,6 +45,7 @@ HEADERS += \
     include/doomdata.h \
     include/doomdef.h \
     include/doomtype.h \
+    include/doomv9gamestatereader.h \
     include/dstrings.h \
     include/g_game.h \
     include/info.h \
@@ -58,7 +59,6 @@ HEADERS += \
     include/p_local.h \
     include/p_maputl.h \
     include/p_mobj.h \
-    include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
     include/p_spec.h \
@@ -75,8 +75,9 @@ SOURCES += \
     src/d_api.c \
     src/d_console.c \
     src/d_items.c \
-    src/d_main.c \
+    src/d_main.cpp \
     src/d_refresh.c \
+    src/doomv9gamestatereader.cpp \
     src/m_cheat.c \
     src/m_random.c \
     src/p_enemy.c \
@@ -84,7 +85,6 @@ SOURCES += \
     src/p_lights.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
-    src/p_oldsvg.cpp \
     src/p_pspr.c \
     src/p_setup.c \
     src/p_spec.c \

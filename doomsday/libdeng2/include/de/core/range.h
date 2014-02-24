@@ -1,6 +1,6 @@
 /** @file range.h  Linear range.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -31,6 +31,8 @@ namespace de {
 /**
  * Linear value range. The start point is inclusive while the end point is
  * exclusive. The end point should be larger in value than the start point.
+ *
+ * @ingroup math
  */
 template <typename Type>
 struct Range

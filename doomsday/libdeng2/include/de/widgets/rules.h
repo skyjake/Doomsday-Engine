@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project
  *
- * Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

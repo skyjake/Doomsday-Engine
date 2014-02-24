@@ -1,6 +1,6 @@
 /** @file infobank.h  Abstract Bank read from Info definitions.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -35,6 +35,8 @@ class File;
  *
  * InfoBank handles the common plumbing of parsing an Info file and iterating
  * through it for creating bank sources.
+ *
+ * @ingroup data
  */
 class DENG2_PUBLIC InfoBank : public Bank
 {

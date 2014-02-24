@@ -68,7 +68,7 @@ DENG2_PUBLIC int Garbage_IsTrashed(void const *ptr);
  * @warning Do not call this if there is a chance that the pointer has already
  * been freed.
  *
- * @param ptr  Pointer to memory allocated from the @ref memzone.
+ * @param ptr  Pointer to memory previously put in the trash.
  */
 DENG2_PUBLIC void Garbage_Untrash(void *ptr);
 

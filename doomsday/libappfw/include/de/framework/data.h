@@ -50,16 +50,16 @@ public:
     /**
      * Notified when a new item is added to the data context.
      */
-    DENG2_DEFINE_AUDIENCE(Addition, void contextItemAdded(Pos id, Item const &item))
+    DENG2_DEFINE_AUDIENCE(Addition, void dataItemAdded(Pos id, Item const &item))
 
     /**
      * Notified when an item has been removed from the data context. When this
      * is called @a item is no longer in the context and can be modified at
      * will.
      */
-    DENG2_DEFINE_AUDIENCE(Removal, void contextItemRemoved(Pos oldId, Item &item))
+    DENG2_DEFINE_AUDIENCE(Removal, void dataItemRemoved(Pos oldId, Item &item))
 
-    DENG2_DEFINE_AUDIENCE(OrderChange, void contextItemOrderChanged())
+    DENG2_DEFINE_AUDIENCE(OrderChange, void dataItemOrderChanged())
 
 public:
     virtual ~Data() {}

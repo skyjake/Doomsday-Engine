@@ -2757,7 +2757,7 @@ void P_ApplyWind(mobj_t *mo, Sector *sec)
         return; // Wind does not affect cameras.
 
     info = &(P_ToXSector(sec)->xg->info);
-    ang = PI * info->windAngle / 180;
+    ang = DD_PI * info->windAngle / 180;
 
     if(IS_CLIENT)
     {
@@ -2925,7 +2925,7 @@ void XS_Thinker(xsthinker_t* xs)
     if(xg->info.materialMoveSpeed[0] != 0)
     {
         coord_t floorOffset[2];
-        double ang = PI * xg->info.materialMoveAngle[0] / 180;
+        double ang = DD_PI * xg->info.materialMoveAngle[0] / 180;
 
         P_GetDoublepv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
         floorOffset[VX] -= cos(ang) * xg->info.materialMoveSpeed[0];
@@ -2939,7 +2939,7 @@ void XS_Thinker(xsthinker_t* xs)
     if(xg->info.materialMoveSpeed[1] != 0)
     {
         coord_t ceilOffset[2];
-        double ang = PI * xg->info.materialMoveAngle[1] / 180;
+        double ang = DD_PI * xg->info.materialMoveAngle[1] / 180;
 
         P_GetDoublepv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
         ceilOffset[VX] -= cos(ang) * xg->info.materialMoveSpeed[1];
@@ -3046,17 +3046,17 @@ D_CMD(MovePlane)
 
     if(argc < 2)
     {
-        App_Log(DE2_SCR_NOTE, "Usage: %s (opts)\n", argv[0]);
-        App_Log(DE2_LOG_SCR, "Opts can be:\n");
-        App_Log(DE2_LOG_SCR, "  here [crush] [off] (z/units) [speed]\n");
-        App_Log(DE2_LOG_SCR, "  at (x) (y) [crush] [off] (z/units) [speed]\n");
-        App_Log(DE2_LOG_SCR, "  tag (sector-tag) [crush] [off] (z/units) [speed]\n");
+        App_Log(DE2_SCR_NOTE, "Usage: %s (opts)", argv[0]);
+        App_Log(DE2_LOG_SCR, "Opts can be:");
+        App_Log(DE2_LOG_SCR, "  here [crush] [off] (z/units) [speed]");
+        App_Log(DE2_LOG_SCR, "  at (x) (y) [crush] [off] (z/units) [speed]");
+        App_Log(DE2_LOG_SCR, "  tag (sector-tag) [crush] [off] (z/units) [speed]");
         return true;
     }
 
     if(IS_CLIENT)
     {
-        App_Log(DE2_SCR_ERROR, "Clients can't move planes\n");
+        App_Log(DE2_SCR_ERROR, "Clients can't move planes");
         return false;
     }
 
@@ -3098,7 +3098,7 @@ D_CMD(MovePlane)
     }
     else
     {   // Unknown mode.
-        App_Log(DE2_SCR_ERROR, "Unknown mode\n");
+        App_Log(DE2_SCR_ERROR, "Unknown mode");
         return false;
     }
 
@@ -3108,7 +3108,7 @@ D_CMD(MovePlane)
     // No more arguments?
     if(argc == p)
     {
-        App_Log(DE2_LOG_MAP, "Ceiling = %g\nFloor = %g\n", ceilingheight, floorheight);
+        App_Log(DE2_LOG_MAP, "Ceiling = %g, Floor = %g", ceilingheight, floorheight);
         return true;
     }
 
@@ -3133,7 +3133,7 @@ D_CMD(MovePlane)
     }
     else
     {
-        App_Log(DE2_SCR_ERROR, "You must specify Z-units\n");
+        App_Log(DE2_SCR_ERROR, "You must specify Z-units");
         return false; // Required parameter missing.
     }
 

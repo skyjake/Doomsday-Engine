@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -26,6 +26,8 @@ namespace de {
 
 /**
  * Template for primitive types that are automatically initialized to zero.
+ *
+ * @ingroup data
  */
 template <typename Type>
 class Zeroed

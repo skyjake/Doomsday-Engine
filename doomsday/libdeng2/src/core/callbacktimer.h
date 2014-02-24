@@ -2,7 +2,7 @@
  * @file callbacktimer.h
  * Internal helper class for making callbacks to C code.
  *
- * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

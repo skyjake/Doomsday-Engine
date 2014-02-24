@@ -23,8 +23,11 @@
 #ifndef LIBCOMMON_HUD_CROSSHAIR_H
 #define LIBCOMMON_HUD_CROSSHAIR_H
 
-
 #define NUM_XHAIRS                  (5)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void X_Drawer(int player);
 
@@ -32,5 +35,9 @@ void X_Drawer(int player);
  * Register CVARs and CCmds for the crosshair.
  */
 void X_Register(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_HUD_CROSSHAIR_H

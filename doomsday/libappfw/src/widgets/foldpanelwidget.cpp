@@ -27,7 +27,6 @@ using namespace ui;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {
-    /*
     struct FoldImage : public ProceduralImage
     {
         FoldPanelWidget &fold;
@@ -38,28 +37,28 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
 
         void update()
         {
-            setSize(fold.root().atlas().imageRect(fold.root().roundCorners()).size());
+            float h = fold.title().font().height().value();
+            setSize(Vector2f(h, h));
         }
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
         {
             GuiRootWidget &root = fold.root();
             Atlas &atlas = root.atlas();
+            ColorBank::Colorf const &textColor = fold.title().textColorf();
 
-            ColorBank::Colorf const &textColor   = fold.style().colors().colorf("text");
-            ColorBank::Colorf accentColor = fold.style().colors().colorf("accent")
-                    * Vector4f(1, 1, 1, fold.isOpen()? .5f : 1);
+            verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
+                                    atlas.imageRectf(root.roundCorners()));
 
-            verts.makeQuad(rect, accentColor,
-                           atlas.imageRectf(root.roundCorners()));
-
-            Vector2ui dotSize = atlas.imageRect(root.tinyDot()).size();
-            verts.makeQuad(Rectanglef::fromSize(rect.middle() - dotSize/2,
-                                                dotSize),
-                           fold.isOpen()? accentColor : textColor,
-                           atlas.imageRectf(root.tinyDot()));
+            Rectanglef uv = atlas.imageRectf(root.fold());
+            if(!fold.isOpen())
+            {
+                // Flip it.
+                uv = Rectanglef(uv.bottomLeft(), uv.topRight());
+            }
+            verts.makeQuad(rect, textColor * Vector4f(1, 1, 1, .5f), uv);
         }
-    };*/
+    };
 
     ButtonWidget *title; // not owned
     GuiWidget *container; ///< Held here while not part of the widget tree.
@@ -85,9 +84,10 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
     d->title->setOpacity(.8f);
 
-    // Icon is disabled for now, doesn't look quite right.
-    //d->title->setImage(new Instance::FoldImage(*this));
-    //d->title->setTextAlignment(ui::AlignRight); // Text is on the right from the image.
+    // Fold indicator.
+    d->title->setImage(new Instance::FoldImage(*this));
+    d->title->setTextAlignment(ui::AlignRight);
+    d->title->setTextGap("gap");
 
     return d->title;
 }

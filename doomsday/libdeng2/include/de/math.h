@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -33,7 +33,7 @@
 
 namespace de {
 
-#undef PI
+//#undef PI
 ddouble const PI = 3.1415926535897932384626433832795028841971693993751;
 ddouble const EPSILON = 1.0e-7;
 dfloat const FLOAT_EPSILON = 1.0e-5f;

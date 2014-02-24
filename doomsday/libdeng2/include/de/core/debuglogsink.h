@@ -26,6 +26,7 @@
 namespace de {
 
 /**
+ * Log sink that uses QDebug for output.
  * @ingroup core
  */
 class DebugLogSink : public LogSink

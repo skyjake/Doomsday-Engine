@@ -1,6 +1,6 @@
 /** @file asset.h  Information about the state of an asset (e.g., resource).
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -35,6 +35,8 @@ namespace de {
  * OpenGL shader may or may not be compiled and ready to be used, but a native
  * file in the FileSystem is always considered available (as it can be read via
  * the native file system at any time).
+ *
+ * @ingroup core
  */
 class DENG2_PUBLIC Asset
 {
@@ -80,6 +82,8 @@ private:
  *
  * AssetGroup is derived from Asset so it is possible to group assets
  * together and depend on the groups as a whole.
+ *
+ * @ingroup core
  *
  * @todo Any better name for this class?
  */

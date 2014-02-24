@@ -1,4 +1,4 @@
-/** @file p_oldsvg.h  Heretic ver 1.3 save game reader.
+/** @file hereticv13gamestatereader.h  Heretic ver 1.3 save game reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -26,33 +26,26 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "saveinfo.h"
+#include "gamestatereader.h"
 
 /**
  * Heretic ver 1.3 saved game state reader.
  *
  * @ingroup libheretic
  */
-class HereticV13GameStateReader
+class HereticV13GameStateReader : public IGameStateReader
 {
 public:
-    /// An error occurred attempting to open the input file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
+    HereticV13GameStateReader();
+    ~HereticV13GameStateReader();
 
-    /// Base class for read errors. @ingroup errors
-    DENG2_ERROR(ReadError);
+    static IGameStateReader *make();
+    static bool recognize(SaveInfo &info);
 
-public:
-    /**
-     * Determines whether the resource file on @a path is interpretable as a game state which can
-     * be loaded with a HereticV13GameStateReader.
-     *
-     * @param info  SaveInfo to attempt to read game session header into.
-     * @param path  Path to the resource file to be recognized.
-     */
-    static bool recognize(SaveInfo *info, Str const *path);
+    void read(SaveInfo &info);
 
-    void read(SaveInfo *info, Str const *path);
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBHERETIC_HERETICV13_GAMESTATEREADER

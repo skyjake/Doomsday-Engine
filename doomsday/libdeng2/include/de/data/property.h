@@ -1,6 +1,6 @@
 /** @file property.h  Utility for observable properties.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -28,6 +28,8 @@ namespace de {
  *
  * libdeng2 properties are a utility for conveniently defining observable objects that
  * automatically send out a notification when their value changes.
+ *
+ * @ingroup data
  */
 template <typename ValueType>
 class BaseProperty
@@ -54,6 +56,8 @@ protected:
  *
  * Unlike script variables, properties deal with native value types and cannot accept
  * more than one type of value.
+ *
+ * @ingroup data
  */
 #define DENG2_DEFINE_PROPERTY(PropName, ValueType) \
     class PropName : public de::BaseProperty<ValueType> { \

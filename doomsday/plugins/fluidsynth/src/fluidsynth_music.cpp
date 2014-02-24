@@ -364,11 +364,11 @@ void DMFluid_SetSoundFont(const char* fileName)
     sfontId = fluid_synth_sfload(DMFluid_Synth(), fileName, true);
     if(sfontId >= 0)
     {
-        App_Log(DE2_LOG_VERBOSE, "FluidSynth: Loaded SF2 soundfont \"%s\" with id:%i\n", fileName, sfontId);
+        App_Log(DE2_LOG_VERBOSE, "FluidSynth: Loaded SF2 soundfont \"%s\" with id:%i", fileName, sfontId);
     }
     else
     {
-        App_Log(DE2_LOG_VERBOSE, "FluidSynth: Failed to load soundfont \"%s\" (not SF2 or not found)\n", fileName);
+        App_Log(DE2_LOG_VERBOSE, "FluidSynth: Failed to load soundfont \"%s\" (not SF2 or not found)", fileName);
     }
 }
 

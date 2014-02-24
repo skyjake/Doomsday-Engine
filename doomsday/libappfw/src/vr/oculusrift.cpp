@@ -271,6 +271,8 @@ void OculusRift::setPredictionLatency(float latency)
     {
         d->oculusTracker->setLatency(latency);
     }
+#else
+    DENG2_UNUSED(latency);
 #endif
 }
 

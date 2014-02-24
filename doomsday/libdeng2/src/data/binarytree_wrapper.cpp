@@ -1,5 +1,4 @@
-/** @file binarytree_wrapper.cpp Binary tree (C wrapper).
- * @ingroup data
+/** @file binarytree_wrapper.cpp  Binary tree (C wrapper).
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>

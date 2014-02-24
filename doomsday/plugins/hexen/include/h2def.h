@@ -1,26 +1,22 @@
-/**\file h2def.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file h2def.h
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef __H2DEF_H__
@@ -391,36 +387,11 @@ DENG_EXTERN_C int localQuakeHappening[MAXPLAYERS];
 extern "C" {
 #endif
 
-void            H2_Main(void);
-
-byte            P_Random(void);
-void            M_ResetRandom(void);
-
-void            SC_Open(const char* name);
-void            SC_OpenLump(lumpnum_t lumpNum);
-void            SC_OpenFile(const char* name);
-void            SC_Close(void);
-dd_bool         SC_GetString(void);
-void            SC_MustGetString(void);
-void            SC_MustGetStringName(char* name);
-dd_bool         SC_GetNumber(void);
-void            SC_MustGetNumber(void);
-void            SC_UnGet(void);
-
-dd_bool         SC_Compare(char* text);
-int             SC_MatchString(char** strings);
-void            SC_ScriptError(char* message);
+byte P_Random(void);
+void M_ResetRandom(void);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-DENG_EXTERN_C char* sc_String;
-DENG_EXTERN_C int sc_Number;
-DENG_EXTERN_C int sc_Line;
-DENG_EXTERN_C dd_bool sc_End;
-DENG_EXTERN_C dd_bool sc_Crossed;
-DENG_EXTERN_C dd_bool sc_FileScripts;
-DENG_EXTERN_C const char* sc_ScriptsDir;
 
 #endif // __H2DEF_H__

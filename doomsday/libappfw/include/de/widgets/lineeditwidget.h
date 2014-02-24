@@ -75,6 +75,7 @@ public:
 
 signals:
     void enterPressed(QString text);
+    void editorContentChanged();
 
 protected:
     void glInit();

@@ -62,6 +62,7 @@ public:
     Id borderGlow() const;
     Id toggleOnOff() const;
     Id tinyDot() const;
+    Id fold() const;
 
     static GLShaderBank &shaders();
 

@@ -46,17 +46,12 @@ GamesDialog::GamesDialog(String const &name)
 {
     connect(d->gameSel, SIGNAL(gameSessionSelected()), this, SLOT(accept()));
 
-    //heading().setText(tr("Games"));
-
-    //LabelWidget *lab = LabelWidget::newWithText(tr("Games from Master Server and local network:"), &area());
-
-    //d->gameSel->rule().setInput(Rule::Height, d->gameSel->contentRule().height()/*style().rules().rule("gameselection.max.height")*/);
-
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(1, 0);
-    //layout.setColumnAlignment(0, ui::AlignRight);
 
-    layout << *d->gameSel;
+    d->gameSel->filter().rule().setInput(Rule::Width, d->gameSel->rule().width());
+
+    layout << d->gameSel->filter() << *d->gameSel;
 
     area().setContentSize(layout.width(), layout.height());
 

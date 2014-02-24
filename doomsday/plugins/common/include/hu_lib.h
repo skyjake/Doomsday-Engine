@@ -214,6 +214,10 @@ typedef struct mn_object_s {
     int timer;
 } mn_object_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
 
 struct mn_page_s* MNObject_Page(const mn_object_t* obj);
@@ -298,6 +302,10 @@ dd_bool MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
  */
 int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 typedef enum {
     MENU_COLOR1 = 0,
     MENU_COLOR2,
@@ -380,6 +388,10 @@ typedef struct mn_page_s {
     int timer;
 } mn_page_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void MNPage_Initialize(mn_page_t* page);
 
 /// Call the ticker routine for each object.
@@ -461,6 +473,10 @@ int MNPage_LineHeight(mn_page_t *page/*, lineOffset = 0*/);
 /// @return  Current time in tics since page activation.
 int MNPage_Timer(mn_page_t* page);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
  * Rect objects.
  */
@@ -471,6 +487,10 @@ typedef struct mndata_rect_s {
     /// Background patch.
     patchid_t patch;
 } mndata_rect_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 mn_object_t* MNRect_New(void);
 void MNRect_Delete(mn_object_t* ob);
@@ -488,6 +508,10 @@ void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
  */
 void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
  * @defgroup mnTextFlags  MNText Flags
  */
@@ -499,14 +523,18 @@ void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch);
  * Text objects.
  */
 typedef struct mndata_text_s {
-    const char* text;
+    char const *text;
 
     /// Patch to be used when drawing this instead of text if Patch Replacement is in use.
-    patchid_t* patch;
+    patchid_t *patch;
 
     /// @ref mnTextFlags
     int flags;
 } mndata_text_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 mn_object_t* MNText_New(void);
 void MNText_Delete(mn_object_t* ob);
@@ -516,6 +544,10 @@ void MNText_Drawer(mn_object_t* ob, const Point2Raw* origin);
 void MNText_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 int MNText_SetFlags(mn_object_t* ob, flagop_t op, int flags);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /**
  * @defgroup mnButtonFlags  MNButton Flags
@@ -530,19 +562,23 @@ int MNText_SetFlags(mn_object_t* ob, flagop_t op, int flags);
 typedef struct mndata_button_s {
     dd_bool staydownMode; /// @c true= this is operating in two-state "staydown" mode.
 
-    void* data;
+    void *data;
 
     /// Label text.
-    const char* text;
+    char const *text;
 
     /// Patch to be used when drawing this instead of text.
-    patchid_t* patch;
+    patchid_t *patch;
 
-    const char* yes, *no;
+    char const *yes, *no;
 
     /// @ref mnButtonFlags
     int flags;
 } mndata_button_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 mn_object_t* MNButton_New(void);
 void MNButton_Delete(mn_object_t* ob);
@@ -553,6 +589,10 @@ int MNButton_CommandResponder(mn_object_t* ob, menucommand_e command);
 void MNButton_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /**
  * Edit field.
@@ -587,6 +627,10 @@ typedef struct mndata_edit_s {
     int data2;
 } mndata_edit_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mn_object_t* MNEdit_New(void);
 void MNEdit_Delete(mn_object_t* ob);
 
@@ -617,6 +661,10 @@ const ddstring_t* MNEdit_Text(mn_object_t* ob);
  */
 void MNEdit_SetText(mn_object_t* ob, int flags, const char* string);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
  * List selection.
  */
@@ -632,14 +680,18 @@ typedef struct {
 
 /// @note Also used for MN_LISTINLINE!
 typedef struct mndata_list_s {
-    void* items;
+    void *items;
     int count; // Number of items.
-    void* data;
+    void *data;
     int mask;
     int selection; // Selected item (-1 if none).
     int first; // First visible item.
     int numvis;
 } mndata_list_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 mn_object_t* MNList_New(void);
 void MNList_Delete(mn_object_t* ob);
@@ -693,6 +745,10 @@ dd_bool MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
  */
 dd_bool MNList_SelectItemByValue(mn_object_t* ob, int flags, int itemIndex);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
  * Color preview box.
  */
@@ -705,11 +761,15 @@ typedef struct mndata_colorbox_s {
     int width, height;
     float r, g, b, a;
     dd_bool rgbaMode;
-    void* data1;
-    void* data2;
-    void* data3;
-    void* data4;
+    void *data1;
+    void *data2;
+    void *data3;
+    void *data4;
 } mndata_colorbox_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 mn_object_t* MNColorBox_New(void);
 void MNColorBox_Delete(mn_object_t* ob);
@@ -777,6 +837,10 @@ dd_bool MNColorBox_SetAlphaf(mn_object_t* ob, int flags, float alpha);
  */
 dd_bool MNColorBox_CopyColor(mn_object_t* ob, int flags, const mn_object_t* otherObj);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
  * Graphical slider.
  */
@@ -803,13 +867,17 @@ typedef struct mndata_slider_s {
     float value;
     float step; // Button step.
     dd_bool floatMode; // Otherwise only integers are allowed.
-    /// \todo Turn this into a property record or something.
-    void* data1;
-    void* data2;
-    void* data3;
-    void* data4;
-    void* data5;
+    /// @todo Turn this into a property record or something.
+    void *data1;
+    void *data2;
+    void *data3;
+    void *data4;
+    void *data5;
 } mndata_slider_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 mn_object_t* MNSlider_New(void);
 void MNSlider_Delete(mn_object_t* ob);
@@ -839,6 +907,10 @@ float MNSlider_Value(const mn_object_t* ob);
  */
 void MNSlider_SetValue(mn_object_t* ob, int flags, float value);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
  * Mobj preview visual.
  */
@@ -852,6 +924,10 @@ typedef struct mndata_mobjpreview_s {
     int plrClass; /// Player class identifier.
 } mndata_mobjpreview_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mn_object_t* MNMobjPreview_New(void);
 void MNMobjPreview_Delete(mn_object_t* ob);
 
@@ -864,6 +940,10 @@ void MNMobjPreview_SetTranslationMap(mn_object_t* ob, int tMap);
 void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* origin);
 void MNMobjPreview_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 // Menu render state:
 typedef struct mn_rendstate_s {
     float pageAlpha;
@@ -872,7 +952,8 @@ typedef struct mn_rendstate_s {
     float textColors[MENU_COLOR_COUNT][4];
     fontid_t textFonts[MENU_FONT_COUNT];
 } mn_rendstate_t;
-extern const mn_rendstate_t* mnRendState;
+
+DENG_EXTERN_C mn_rendstate_t const *mnRendState;
 
 /**
  * @defgroup menuEffectFlags  Menu Effect Flags
@@ -885,6 +966,10 @@ extern const mn_rendstate_t* mnRendState;
 #define MEF_EVERYTHING              (MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER)
 ///@}
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
@@ -895,6 +980,10 @@ void MN_DrawPage(mn_page_t* page, float alpha, dd_bool showFocusCursor);
  * Execute a menu navigation/action command.
  */
 void Hu_MenuCommand(menucommand_e cmd);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 typedef enum {
     GUI_NONE,
@@ -982,6 +1071,10 @@ typedef struct uiwidget_s {
     void* typedata;
 } uiwidget_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin);
 void GUI_DrawWidgetXY(uiwidget_t* obj, int x, int y);
 
@@ -1018,6 +1111,10 @@ void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2Raw* size);
 
 void UIWidget_SetMaximumWidth(uiwidget_t* obj, int width);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
  * @defgroup uiWidgetGroupFlags  UIWidget Group Flags
  */
@@ -1039,11 +1136,19 @@ typedef struct {
     uiwidgetid_t* widgetIds;
 } guidata_group_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other);
 int UIGroup_Flags(uiwidget_t* obj);
 void UIGroup_SetFlags(uiwidget_t* obj, int flags);
 
 void UIGroup_UpdateGeometry(uiwidget_t* obj);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 typedef struct {
     int value;
@@ -1206,6 +1311,10 @@ typedef struct {
 } guidata_flight_t;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void GUI_Register(void);
 
 void GUI_Init(void);
@@ -1225,9 +1334,14 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
 
 uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, order_t order, int padding);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 typedef struct ui_rendstate_s {
     float pageAlpha;
 } ui_rendstate_t;
-extern const ui_rendstate_t* uiRendState;
+
+DENG_EXTERN_C const ui_rendstate_t* uiRendState;
 
 #endif /* LIBCOMMON_UI_LIBRARY_H */

@@ -21,10 +21,10 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
-#include "saveinfo.h"
 #include "api_materialarchive.h"
-#include "lzss.h"
 #include "p_savedef.h"
+#include <de/Path>
+#include "lzss.h"
 
 typedef enum savestatesegment_e {
     ASEG_MAP_HEADER = 102,  // Hexen only
@@ -43,33 +43,58 @@ typedef enum savestatesegment_e {
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
-#ifdef __cplusplus
-extern "C" {
+#if __JHEXEN__
+typedef union saveptr_u {
+    byte *b;
+    short *w;
+    int *l;
+    float *f;
+} saveptr_t;
 #endif
 
-void SV_InitIO(void);
-void SV_ShutdownIO(void);
+void SV_InitIO();
+void SV_ShutdownIO();
 
-void SV_ConfigureSavePaths(void);
-char const *SV_SavePath(void);
+/**
+ * Create the saved game directories.
+ */
+void SV_SetupSaveDirectory(de::Path);
+
+de::Path SV_SavePath();
+
 #if !__JHEXEN__
-char const *SV_ClientSavePath(void);
+de::Path SV_ClientSavePath();
 #endif
 
 /*
  * File management
  */
-LZFILE *SV_OpenFile(Str const *filePath, char const *mode);
-void SV_CloseFile(void);
-LZFILE *SV_File(void);
-dd_bool SV_ExistingFile(Str const *filePath);
-int SV_RemoveFile(Str const *filePath);
-void SV_CopyFile(Str const *srcPath, Str const *destPath);
+LZFILE *SV_OpenFile(de::Path filePath, de::String mode);
+
+void SV_CloseFile();
+
+LZFILE *SV_File();
+
+bool SV_ExistingFile(de::Path filePath);
+
+int SV_RemoveFile(de::Path filePath);
+
+void SV_CopyFile(de::Path srcPath, de::Path destPath);
+
+bool SV_OpenGameSaveFile(de::Path fileName, bool write);
 
 #if __JHEXEN__
-saveptr_t *SV_HxSavePtr(void);
+bool SV_OpenMapSaveFile(de::Path path);
+#endif
+
+#if __JHEXEN__
+saveptr_t *SV_HxSavePtr();
+
 void SV_HxSetSaveEndPtr(void *endPtr);
-dd_bool SV_HxBytesLeft(void);
+
+size_t SV_HxBytesLeft();
+
+void SV_HxReleaseSaveBuffer();
 #endif // __JHEXEN__
 
 /**
@@ -81,21 +106,20 @@ dd_bool SV_HxBytesLeft(void);
 void SV_AssertSegment(int segmentId);
 
 void SV_BeginSegment(int segmentId);
+
 void SV_EndSegment();
 
-void SV_WriteConsistencyBytes(void);
-void SV_ReadConsistencyBytes(void);
+void SV_WriteConsistencyBytes();
+
+void SV_ReadConsistencyBytes();
 
 /**
  * Seek forward @a offset bytes in the save file.
  */
 void SV_Seek(uint offset);
 
-Writer *SV_NewWriter(void);
-Reader *SV_NewReader(void);
+Writer *SV_NewWriter();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+Reader *SV_NewReader();
 
 #endif // LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H

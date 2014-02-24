@@ -150,6 +150,8 @@ public:
     GuiWidget *itemWidget(ui::Item const &item) const;
     GuiWidget *itemWidget(de::String const &label) const;
 
+    ui::Item const *findItemForWidget(GuiWidget const &widget) const;
+
 private:
     DENG2_PRIVATE(d)
 };

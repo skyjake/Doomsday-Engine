@@ -1,5 +1,4 @@
-/** @file logsink.h  Sink where log entries are flushed from the LogBuffer.
- * @ingroup core
+/** @file logsink.cpp  Sink where log entries are flushed from the LogBuffer.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

@@ -1,5 +1,4 @@
 /** @file debuglogsink.cpp  Log sink that uses QDebug for output.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

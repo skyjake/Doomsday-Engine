@@ -336,7 +336,7 @@ int materialchanger_s::read(MapStateReader *msr)
     else
     {
         // Side index is actually a DMU_ARCHIVE_INDEX.
-        side = (Side *)msr->sideArchive().at(sideIndex);
+        side = msr->side(sideIndex);
     }
     DENG_ASSERT(side != 0);
 
