@@ -440,6 +440,8 @@ int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
         {
             ST_HUDUnHide(player, HUE_ON_PICKUP_INVITEM);
         }
+#else
+        DENG2_UNUSED(silent);
 #endif
 
         return 1;

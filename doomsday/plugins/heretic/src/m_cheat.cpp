@@ -77,8 +77,8 @@ void G_RegisterCheats(void)
 
 CHEAT_FUNC(InvItem)
 {
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, TXT_CHEATINVITEMS1);
     S_LocalSound(SFX_DORCLS, NULL);
@@ -88,7 +88,7 @@ CHEAT_FUNC(InvItem)
 
 CHEAT_FUNC(InvItem2)
 {
-    DENG2_UNUSED(args);
+    DENG2_UNUSED2(args, numArgs);
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, TXT_CHEATINVITEMS2);
@@ -99,6 +99,7 @@ CHEAT_FUNC(InvItem2)
 
 CHEAT_FUNC(InvItem3)
 {
+    DENG2_UNUSED(numArgs);
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     player_t *plr = &players[player];
@@ -136,10 +137,9 @@ CHEAT_FUNC(InvItem3)
 CHEAT_FUNC(IDKFA)
 {
     player_t *plr = &players[player];
-    int i;
 
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(G_Rules().skill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
@@ -147,7 +147,7 @@ CHEAT_FUNC(IDKFA)
     if(plr->morphTics) return false;
 
     plr->update |= PSF_OWNED_WEAPONS;
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         plr->weapons[i].owned = false;
     }
@@ -165,8 +165,8 @@ CHEAT_FUNC(IDDQD)
 {
     player_t *plr = &players[player];
 
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(G_Rules().skill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
@@ -184,8 +184,8 @@ CHEAT_FUNC(Reveal)
 {
     player_t *plr = &players[player];
 
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(IS_NETGAME && G_Rules().deathmatch) return false;
     // Dead players can't cheat.
@@ -203,9 +203,11 @@ CHEAT_FUNC(Reveal)
  */
 D_CMD(Cheat)
 {
+    DENG2_UNUSED2(src, argc);
+
     // Give each of the characters in argument two to the SB event handler.
-    int i, len = (int) strlen(argv[1]);
-    for(i = 0; i < len; ++i)
+    int const len = (int) strlen(argv[1]);
+    for(int i = 0; i < len; ++i)
     {
         event_t ev;
         ev.type  = EV_KEY;
@@ -219,6 +221,8 @@ D_CMD(Cheat)
 
 D_CMD(CheatGod)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -258,6 +262,8 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -295,7 +301,7 @@ D_CMD(CheatNoClip)
     return true;
 }
 
-static int suicideResponse(msgresponse_t response, int userValue, void *userPointer)
+static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -314,6 +320,8 @@ static int suicideResponse(msgresponse_t response, int userValue, void *userPoin
 
 D_CMD(CheatSuicide)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         player_t *plr;
@@ -353,6 +361,8 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
+    DENG2_UNUSED2(src, argc);
+
     int option, i;
 
     // Server operator can always reveal.
@@ -381,6 +391,8 @@ D_CMD(CheatReveal)
 
 D_CMD(CheatGive)
 {
+    DENG2_UNUSED(src);
+
     char buf[100];
     int player = CONSOLEPLAYER;
     player_t *plr;
@@ -641,6 +653,8 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -663,6 +677,8 @@ D_CMD(CheatMassacre)
 
 D_CMD(CheatWhere)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     player_t *plr = &players[CONSOLEPLAYER];
     char textBuffer[256];
     Sector *sector;
@@ -706,6 +722,8 @@ D_CMD(CheatWhere)
  */
 D_CMD(CheatLeaveMap)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     // Only the server operator can end the map this way.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
         return false;
@@ -723,6 +741,8 @@ D_CMD(CheatLeaveMap)
 
 D_CMD(CheatMorph)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)

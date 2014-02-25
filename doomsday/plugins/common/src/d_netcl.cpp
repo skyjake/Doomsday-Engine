@@ -1047,5 +1047,7 @@ void NetCl_UpdateTotalCounts(Reader *msg)
 
     App_Log(DE2_DEV_NET_MSG, "NetCl_UpdateTotalCounts: kills=%i, items=%i, secrets=%i",
             totalKills, totalItems, totalSecret);
+#else
+    DENG2_UNUSED(msg);
 #endif
 }
