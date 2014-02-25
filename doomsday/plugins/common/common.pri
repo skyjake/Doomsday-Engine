@@ -80,11 +80,11 @@ SOURCES += \
     $$common_src/am_map.c \
     $$common_src/animdefsparser.cpp \
     $$common_src/common.c \
-    $$common_src/d_net.c \
-    $$common_src/d_netcl.c \
-    $$common_src/d_netsv.c \
+    $$common_src/d_net.cpp \
+    $$common_src/d_netcl.cpp \
+    $$common_src/d_netsv.cpp \
     $$common_src/dmu_lib.cpp \
-    $$common_src/fi_lib.c \
+    $$common_src/fi_lib.cpp \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \
     $$common_src/g_eventsequence.cpp \
@@ -95,7 +95,7 @@ SOURCES += \
     $$common_src/gamestatewriter.cpp \
     $$common_src/gl_drawpatch.c \
     $$common_src/hexlex.cpp \
-    $$common_src/hu_automap.c \
+    $$common_src/hu_automap.cpp \
     $$common_src/hu_chat.c \
     $$common_src/hu_inventory.c \
     $$common_src/hu_lib.c \

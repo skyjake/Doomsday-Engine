@@ -1,6 +1,4 @@
-/**
- * @file d_netcl.c
- * Common code related to netgames (client-side). @ingroup client
+/** @file d_netcl.cpp  Common code related to netgames (client-side).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -20,14 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-
 #include "common.h"
+#include "d_netcl.h"
+
 #include "p_saveg.h"
-#include "d_net.h"
-#include "d_netsv.h"
 #include "player.h"
 #include "p_map.h"
 #include "p_start.h"
@@ -37,7 +31,10 @@
 #include "hu_inventory.h"
 #include "st_stuff.h"
 
-void NetCl_UpdateGameState(Reader* msg)
+#include <cstdio>
+#include <cstring>
+
+void NetCl_UpdateGameState(Reader *msg)
 {
     byte len;
     byte gsFlags = 0;
@@ -80,7 +77,7 @@ void NetCl_UpdateGameState(Reader* msg)
 #endif
     gsJumping = (configFlags & 0x10? true : false);
 
-    gsRules.skill = Reader_ReadByte(msg);
+    gsRules.skill = skillmode_t(Reader_ReadByte(msg));
     // Interpret skill modes outside the normal range as "spawn no things".
     if(gsRules.skill < SM_BABY || gsRules.skill >= NUM_SKILL_MODES)
     {
@@ -243,13 +240,9 @@ void NetCl_PlayerSpawnPosition(Reader* msg)
     mo->angle = angle;
 }
 
-void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
+void NetCl_UpdatePlayerState2(Reader *msg, int plrNum)
 {
     player_t *pl = &players[plrNum];
-    unsigned int flags;
-    //int     oldstate = pl->playerState;
-    byte    b;
-    int     i, k;
 
     if(!Get(DD_GAME_READY))
     {
@@ -262,22 +255,22 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
         // Player number included in the message.
         plrNum = Reader_ReadByte(msg);
     }
-    flags = Reader_ReadUInt32(msg);
+    uint flags = Reader_ReadUInt32(msg);
 
     if(flags & PSF2_OWNED_WEAPONS)
     {
-        dd_bool val;
-
-        k = Reader_ReadUInt16(msg);
-        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+        int k = Reader_ReadUInt16(msg);
+        for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
-            val = (k & (1 << i)) != 0;
+            bool owned = CPP_BOOL(k & (1 << i));
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weapons[i].owned == false)
+            if(owned && pl->weapons[i].owned == false)
+            {
                 ST_HUDUnHide(pl - players, HUE_ON_PICKUP_WEAPON);
+            }
 
-            pl->weapons[i].owned = val;
+            pl->weapons[i].owned = owned;
         }
     }
 
@@ -285,8 +278,8 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
     {
         int oldPlayerState = pl->playerState;
 
-        b = Reader_ReadByte(msg);
-        pl->playerState = b & 0xf;
+        byte b = Reader_ReadByte(msg);
+        pl->playerState = playerstate_t(b & 0xf);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
@@ -329,9 +322,8 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
 void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 {
     int i;
-    player_t* pl = 0;
     byte b;
-    int flags, s;
+    int s;
 
     if(!Get(DD_GAME_READY))
         return;
@@ -340,14 +332,14 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
     {
         plrNum = Reader_ReadByte(msg);
     }
-    pl = &players[plrNum];
+    player_t *pl = &players[plrNum];
 
-    flags = Reader_ReadUInt16(msg);
+    int flags = Reader_ReadUInt16(msg);
 
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
-        b = Reader_ReadByte(msg);
-        pl->playerState = b & 0xf;
+        byte b = Reader_ReadByte(msg);
+        pl->playerState = playerstate_t(b & 0xf);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
@@ -411,29 +403,29 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     if(flags & PSF_INVENTORY)
     {
-        uint i, count;
-
-        for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+        for(uint i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
         {
-            inventoryitemtype_t type = IIT_FIRST + i;
-            uint j, count = P_InventoryCount(plrNum, type);
+            inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
+            uint count = P_InventoryCount(plrNum, type);
 
-            for(j = 0; j < count; ++j)
+            for(uint j = 0; j < count; ++j)
+            {
                 P_InventoryTake(plrNum, type, true);
+            }
         }
 
-        count = Reader_ReadByte(msg);
-        for(i = 0; i < count; ++i)
+        uint count = Reader_ReadByte(msg);
+        for(uint i = 0; i < count; ++i)
         {
-            inventoryitemtype_t type;
-            uint j, num;
-
             s = Reader_ReadUInt16(msg);
-            type = s & 0xff;
-            num = s >> 8;
 
-            for(j = 0; j < num; ++j)
+            inventoryitemtype_t const type = inventoryitemtype_t(s & 0xff);
+            uint const num                 = s >> 8;
+
+            for(uint j = 0; j < num; ++j)
+            {
                 P_InventoryGive(plrNum, type, true);
+            }
         }
     }
 #endif
@@ -526,7 +518,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     if(flags & PSF_FRAGS)
     {
-        memset(pl->frags, 0, sizeof(pl->frags));
+        de::zap(pl->frags);
         // First comes the number of frag counts included.
         for(i = Reader_ReadByte(msg); i > 0; i--)
         {
@@ -537,18 +529,18 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     if(flags & PSF_OWNED_WEAPONS)
     {
-        dd_bool val;
-
         b = Reader_ReadByte(msg);
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
-            val = (b & (1 << i)) != 0;
+            bool owned = CPP_BOOL(b & (1 << i));
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weapons[i].owned == false)
+            if(owned && pl->weapons[i].owned == false)
+            {
                 ST_HUDUnHide(plrNum, HUE_ON_PICKUP_WEAPON);
+            }
 
-            pl->weapons[i].owned = val;
+            pl->weapons[i].owned = owned;
         }
     }
 
@@ -560,7 +552,9 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
             // Maybe unhide the HUD?
             if(val > pl->ammo[i].owned)
+            {
                 ST_HUDUnHide(plrNum, HUE_ON_PICKUP_AMMO);
+            }
 
             pl->ammo[i].owned = val;
         }
@@ -604,7 +598,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             }
             else
             {
-                pl->pendingWeapon = b & 0xf;
+                pl->pendingWeapon = weapontype_t(b & 0xf);
 
                 App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: pendingweapon=%i", pl->pendingWeapon);
             }
@@ -616,7 +610,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
         {
             if(wasUndefined)
             {
-                pl->readyWeapon = b >> 4;
+                pl->readyWeapon = weapontype_t(b >> 4);
                 App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: readyweapon=%i", pl->readyWeapon);
             }
             else
@@ -742,7 +736,7 @@ void NetCl_Intermission(Reader* msg)
     if(flags & IMF_STATE)
     {
 #if __JDOOM__ || __JDOOM64__
-        WI_SetState(Reader_ReadInt16(msg));
+        WI_SetState(interludestate_t(Reader_ReadInt16(msg)));
 #elif __JHERETIC__ || __JHEXEN__
         interState = Reader_ReadInt16(msg);
 #endif
@@ -804,18 +798,13 @@ void NetCl_Finale(int packetType, Reader* msg)
 }
 #endif
 
-/**
- * Clients have other players' info, but it's only "FYI"; they don't really need it.
- */
 void NetCl_UpdatePlayerInfo(Reader *msg)
 {
-    int num;
-
-    num = Reader_ReadByte(msg);
+    int num = Reader_ReadByte(msg);
     cfg.playerColor[num] = Reader_ReadByte(msg);
     players[num].colorMap = cfg.playerColor[num];
 #if __JHEXEN__ || __JHERETIC__
-    cfg.playerClass[num] = Reader_ReadByte(msg);
+    cfg.playerClass[num] = playerclass_t(Reader_ReadByte(msg));
     players[num].class_ = cfg.playerClass[num];
 #endif
 
@@ -1025,21 +1014,20 @@ void NetCl_LocalMobjState(Reader* msg)
 #if !defined(__JDOOM__) && !defined(__JDOOM64__)
     mo->special1 = special1;
 #endif
-    P_MobjChangeState(mo, newState);
+    P_MobjChangeState(mo, statenum_t(newState));
 }
 
-void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)
+void NetCl_DamageRequest(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage)
 {
-    Writer* msg;
-
-    if(!IS_CLIENT || !target) return;
-
-    msg = D_NetWrite();
+    if(!IS_CLIENT) return;
+    if(!target) return;
 
     App_Log(DE2_DEV_NET_MSG,
             "NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i",
             damage, target->thinker.id, inflictor? inflictor->thinker.id : 0,
             source? source->thinker.id : 0);
+
+    Writer *msg = D_NetWrite();
 
     // Amount of damage.
     Writer_WriteInt32(msg, damage);

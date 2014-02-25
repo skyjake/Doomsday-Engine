@@ -1,46 +1,28 @@
-/**\file hu_automap.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file hu_automap.cpp  UIAutomap widget.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
+#include "hu_automap.h"
 
 #include "am_map.h"
 #include "dmu_lib.h"
-#include "hu_automap.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "r_common.h"
@@ -50,18 +32,24 @@
 #include "g_common.h"
 #include "hu_stuff.h"
 
+#include <cmath>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
 #define LERP(start, end, pos)   (end * pos + start * (1 - pos))
 
 // Translate between frame and map distances:
 #define FTOM(map, x)            ((x) * (map)->scaleFTOM)
 #define MTOF(map, x)            ((x) * (map)->scaleMTOF)
 
-typedef struct {
-    player_t* plr;
+struct uiautomap_rendstate_t
+{
+    player_t *plr;
     // The type of object we want to draw. If @c -1, draw only line specials.
     int objType;
     dd_bool addToLists;
-} uiautomap_rendstate_t;
+};
 uiautomap_rendstate_t rs;
 
 dd_bool freezeMapRLs = false;
@@ -599,15 +587,17 @@ static void drawMapLine(Line *line, uiwidget_t *uiWidget)
         return;
 
     // We only want to draw twosided lines once.
-    frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    frontSector = (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector // $degenleaf
-       && frontSector != P_GetPtrp(line, DMU_FRONT_SECTOR))
+       && frontSector != (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR))
+    {
         return;
+    }
 
     info = 0;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
     {
-        Sector *backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
+        Sector *backSector = (Sector *)P_GetPtrp(line, DMU_BACK_SECTOR);
 
         // Perhaps this is a specially colored line?
         info = AM_GetInfoForSpecialLine(UIAutomap_Config(uiWidget), xLine->special, xLine->flags,
@@ -1099,13 +1089,13 @@ static void positionPointInView(uiwidget_t* ob, coord_t point[2],
  */
 static void drawMarkedPoints(uiwidget_t* obj, float scale)
 {
+    DENG2_ASSERT(obj->type == GUI_AUTOMAP);
+
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    const float alpha = uiRendState->pageAlpha;
+    float const alpha = uiRendState->pageAlpha;
     coord_t bottomLeft[2], topLeft[2], bottomRight[2], topRight[2], viewPoint[2];
-    float angle;
     uint i, pointCount = UIAutomap_PointCount(obj);
-    const Point2Raw origin = { 0, 0 };
-    assert(obj->type == GUI_AUTOMAP);
+    Point2Raw const origin;
 
     if(!pointCount) return;
 
@@ -1119,15 +1109,17 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
     UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
 
-    angle = UIAutomap_CameraAngle(obj);
+    float angle = UIAutomap_CameraAngle(obj);
 
     for(i = 0; i < pointCount; ++i)
     {
         coord_t point[2];
+        if(!UIAutomap_PointOrigin(obj, i, &point[0], &point[1], NULL))
+        {
+            continue;
+        }
+
         char label[10];
-
-        if(!UIAutomap_PointOrigin(obj, i, &point[0], &point[1], NULL)) continue;
-
         dd_snprintf(label, 10, "%i", i);
 
         positionPointInView(obj, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
@@ -1243,7 +1235,7 @@ static void setupGLStateForMap(uiwidget_t *obj)
     if(!cfg.hudShown[HUD_INVENTORY])
     {
         int i, num = 0;
-        player_t* plr = &players[player];
+        //player_t *plr = &players[player];
         inventoryitemtype_t items[3] = {
             IIT_DEMONKEY1,
             IIT_DEMONKEY2,

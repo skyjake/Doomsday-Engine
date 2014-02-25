@@ -1,4 +1,4 @@
-/** @file d_net.c Common code related to net games.
+/** @file d_net.cpp  Common code related to net games.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,21 +19,19 @@
  */
 
 #include "common.h"
-#include "g_common.h"
 #include "d_net.h"
+
+#include "g_common.h"
 #include "player.h"
 #include "hu_menu.h"
 #include "p_start.h"
 #include "fi_lib.h"
-#include "doomsday.h"
 
 D_CMD(SetColor);
 #if __JHEXEN__
 D_CMD(SetClass);
 #endif
 D_CMD(LocalMessage);
-
-extern int netSvAllowSendMsg;
 
 static void D_NetMessageEx(int player, char const *msg, dd_bool playSound);
 
@@ -42,7 +40,7 @@ float netJumpPower = 9;
 static Writer *netWriter;
 static Reader *netReader;
 
-static void notifyAllowCheatsChange(void)
+static void notifyAllowCheatsChange()
 {
     if(IS_NETGAME && IS_NETWORK_SERVER && G_GameState() != GS_STARTUP)
     {
@@ -52,7 +50,7 @@ static void notifyAllowCheatsChange(void)
     }
 }
 
-void D_NetConsoleRegistration(void)
+void D_NetConsoleRegistration()
 {
     C_VAR_CHARPTR("mapcycle",                       &mapCycle,          CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
     C_VAR_CHARPTR("server-game-mapcycle",           &mapCycle,          0, 0, 0);
@@ -68,7 +66,7 @@ void D_NetConsoleRegistration(void)
     C_CMD        ("message",    "s",    LocalMessage);
 }
 
-Writer *D_NetWrite(void)
+Writer *D_NetWrite()
 {
     if(netWriter)
     {
@@ -89,7 +87,7 @@ Reader *D_NetRead(byte const *buffer, size_t len)
     return netReader;
 }
 
-void D_NetClearBuffer(void)
+void D_NetClearBuffer()
 {
     if(netReader) Reader_Delete(netReader);
     if(netWriter) Writer_Delete(netWriter);
@@ -98,10 +96,9 @@ void D_NetClearBuffer(void)
     netWriter = 0;
 }
 
-void NetSv_ApplyGameRulesFromConfig(void)
+void NetSv_ApplyGameRulesFromConfig()
 {
-    if(IS_CLIENT)
-        return;
+    if(IS_CLIENT) return;
 
     gameRules.deathmatch = cfg.netDeathmatch;
     gameRules.noMonsters = cfg.netNoMonsters;
@@ -118,24 +115,15 @@ void NetSv_ApplyGameRulesFromConfig(void)
     NetSv_UpdateGameConfigDescription();
 }
 
-/**
- * Called when the network server starts.
- *
- * Duties include:
- * Updating global state variables and initializing all players' settings
- */
 int D_NetServerStarted(int before)
 {
-    Uri *netMapUri = 0;
-    GameRuleset netRules = gameRules; // Make a copy of the current rules.
-
     if(before) return true;
 
     // We're the server, so...
     cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
 
 #if __JHEXEN__
-    cfg.playerClass[0] = cfg.netClass;
+    cfg.playerClass[0] = playerclass_t(cfg.netClass);
 #elif __JHERETIC__
     cfg.playerClass[0] = PCLASS_PLAYER;
 #endif
@@ -144,22 +132,21 @@ int D_NetServerStarted(int before)
     // Set the game parameters.
     NetSv_ApplyGameRulesFromConfig();
 
-    {
 #if __JDOOM64__
-        uint netEpisode = 0;
+    uint netEpisode = 0;
 #else
-        uint netEpisode = cfg.netEpisode;
+    uint netEpisode = cfg.netEpisode;
 #endif
 #if __JHEXEN__ // Map numbers need to be translated.
-        uint netMap = P_TranslateMap(cfg.netMap);
+    uint netMap = P_TranslateMap(cfg.netMap);
 #else
-        uint netMap = cfg.netMap;
+    uint netMap = cfg.netMap;
 #endif
 
-        netMapUri = G_ComposeMapUri(netEpisode, netMap);
-    }
+    Uri *netMapUri = G_ComposeMapUri(netEpisode, netMap);
 
-    netRules.skill = cfg.netSkill;
+    GameRuleset netRules = gameRules; // Make a copy of the current rules.
+    netRules.skill = skillmode_t(cfg.netSkill);
 
     G_NewSession(netMapUri, 0/*default*/, &netRules);
 
@@ -171,12 +158,6 @@ int D_NetServerStarted(int before)
     return true;
 }
 
-/**
- * Called when a network server closes.
- *
- * Duties include:
- * Restoring global state variables
- */
 int D_NetServerClose(int before)
 {
     if(!before)
@@ -187,8 +168,8 @@ int D_NetServerClose(int before)
         /// @todo fixme: "normal" is defined by the game rules config which may
         /// be changed from the command line (e.g., -fast, -nomonsters).
         /// In order to "restore normal" this logic is insufficient.
-        gameRules.deathmatch = false;
-        gameRules.noMonsters = false;
+        gameRules.deathmatch    = false;
+        gameRules.noMonsters    = false;
 #if __JHEXEN__
         gameRules.randomClasses = false;
 #endif
@@ -218,12 +199,11 @@ int D_NetConnect(int before)
 
 int D_NetDisconnect(int before)
 {
-    if(before)
-        return true;
+    if(before) return true;
 
     // Restore normal game state.
-    gameRules.deathmatch = false;
-    gameRules.noMonsters = false;
+    gameRules.deathmatch    = false;
+    gameRules.noMonsters    = false;
 #if __JHEXEN__
     gameRules.randomClasses = false;
 #endif
@@ -234,21 +214,6 @@ int D_NetDisconnect(int before)
     G_StartTitle();
     return true;
 }
-
-/*
-void* D_NetWriteCommands(int numCommands, void* data)
-{
-    // It's time to send ticcmds to the server.
-    // 'plrNumber' contains the number of commands.
-    return NetCl_WriteCommands(data, numCommands);
-}
-void* D_NetReadCommands(size_t pktLength, void* data)
-{
-    // Read ticcmds sent by a client.
-    // 'plrNumber' is the length of the packet.
-    return NetSv_ReadCommands(data, pktLength);
-}
-*/
 
 long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 {
@@ -292,14 +257,16 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
         App_Log(DE2_LOG_NOTE, "Player %i has left the game", plrNumber);
 
-        players[plrNumber].playerState = PST_GONE;
+        players[plrNumber].playerState = playerstate_t(PST_GONE);
 
         // Print a notification.
         Str_Appendf(str, "%s left the game", Net_GetPlayerName(plrNumber));
         D_NetMessage(CONSOLEPLAYER, Str_Text(str));
 
         if(IS_SERVER)
+        {
             P_DealPlayerStarts(0);
+        }
     }
     // DDPE_CHAT_MESSAGE occurs when a PKT_CHAT is received.
     // Here we will only display the message.
@@ -327,17 +294,14 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     return true;
 }
 
-int D_NetWorldEvent(int type, int parm, void* data)
+int D_NetWorldEvent(int type, int parm, void *data)
 {
-    int i;
-
     switch(type)
     {
     //
     // Server events:
     //
-    case DDWE_HANDSHAKE:
-        {
+    case DDWE_HANDSHAKE: {
         dd_bool newPlayer = *((dd_bool*) data);
 
         // A new player is entering the game. We as a server should send him
@@ -354,15 +318,16 @@ int D_NetWorldEvent(int type, int parm, void* data)
         NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT | (newPlayer ? 0 : GSF_DEMO), parm);
 
         // Send info about all players to the new one.
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
             if(players[i].plr->inGame && i != parm)
                 NetSv_SendPlayerInfo(i, parm);
+        }
 
         // Send info about our jump power.
         NetSv_SendJumpPower(parm, cfg.jumpEnabled ? cfg.jumpPower : 0);
         NetSv_Paused(paused);
-        break;
-        }
+        break; }
 
     //
     // Client events:
@@ -400,12 +365,13 @@ int D_NetWorldEvent(int type, int parm, void* data)
     default:
         return false;
     }
+
     return true;
 }
 
 void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 {
-    Reader* reader = D_NetRead(data, length);
+    Reader *reader = D_NetRead((byte *)data, length);
 
     //
     // Server events.
@@ -472,12 +438,9 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
     case GPT_YELLOW_MESSAGE:
 #endif
     {
-        size_t len = 0;
-        char *msg = 0;
-        len = Reader_ReadUInt16(reader);
-        msg = Z_Malloc(len + 1, PU_GAMESTATIC, 0);
-        Reader_Read(reader, msg, len);
-        msg[len] = 0;
+        size_t len = Reader_ReadUInt16(reader);
+        char *msg = (char *)Z_Malloc(len + 1, PU_GAMESTATIC, 0);
+        Reader_Read(reader, msg, len); msg[len] = 0;
 
 #if __JHEXEN__
         if(type == GPT_YELLOW_MESSAGE)
@@ -490,17 +453,14 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
             P_SetMessage(&players[CONSOLEPLAYER], 0, msg);
         }
         Z_Free(msg);
-        break;
-    }
+        break; }
 
-    case GPT_MAYBE_CHANGE_WEAPON:
-    {
+    case GPT_MAYBE_CHANGE_WEAPON: {
         weapontype_t wt = (weapontype_t) Reader_ReadInt16(reader);
-        ammotype_t at = (ammotype_t) Reader_ReadInt16(reader);
-        dd_bool force = (Reader_ReadByte(reader) != 0);
+        ammotype_t at   = (ammotype_t) Reader_ReadInt16(reader);
+        dd_bool force   = (Reader_ReadByte(reader) != 0);
         P_MaybeChangeWeapon(&players[CONSOLEPLAYER], wt, at, force);
-        break;
-    }
+        break; }
 
     case GPT_CONSOLEPLAYER_STATE:
         NetCl_UpdatePlayerState(reader, CONSOLEPLAYER);
@@ -535,14 +495,16 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    case GPT_CLASS:
-    {
-        player_t* plr = &players[CONSOLEPLAYER];
-        int newClass = Reader_ReadByte(reader);
-        int oldClass = plr->class_;
+    case GPT_CLASS: {
+        player_t *plr = &players[CONSOLEPLAYER];
+        playerclass_t newClass = playerclass_t(Reader_ReadByte(reader));
+# if __JHERETIC__
+        playerclass_t oldClass = plr->class_;
+# endif
         plr->class_ = newClass;
         App_Log(DE2_DEV_MAP_MSG, "Player %i class changed to %i", CONSOLEPLAYER, plr->class_);
-#if __JHERETIC__
+
+# if __JHERETIC__
         if(oldClass != newClass)
         {
             if(newClass == PCLASS_CHICKEN)
@@ -559,9 +521,8 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
                 P_PostMorphWeapon(plr, plr->readyWeapon);
             }
         }
-#endif
-        break;
-    }
+# endif
+        break; }
 #endif
 
     case GPT_SAVE:
@@ -588,7 +549,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 /**
  * Plays a (local) chat sound.
  */
-void D_ChatSound(void)
+void D_ChatSound()
 {
 #if __JHEXEN__
     S_LocalSound(SFX_CHAT, NULL);
@@ -609,16 +570,13 @@ void D_ChatSound(void)
 /**
  * Show a message on screen, optionally accompanied by Chat sound effect.
  *
- * @param player        Player number to send the message to.
- * @param playSound     @c true = play the chat sound.
+ * @param player     Player number to send the message to.
+ * @param playSound  @c true = play the chat sound.
  */
-static void D_NetMessageEx(int player, const char* msg, dd_bool playSound)
+static void D_NetMessageEx(int player, char const *msg, dd_bool playSound)
 {
-    player_t *plr;
-
-    if(player < 0 || player > MAXPLAYERS)
-        return;
-    plr = &players[player];
+    if(player < 0 || player > MAXPLAYERS) return;
+    player_t *plr = &players[player];
 
     if(!plr->plr->inGame)
         return;
@@ -629,46 +587,30 @@ static void D_NetMessageEx(int player, const char* msg, dd_bool playSound)
     P_SetMessage(plr, 0, msg);
 
     if(playSound)
+    {
         D_ChatSound();
+    }
 
     netSvAllowSendMsg = true;
 }
 
-/**
- * Show message on screen and play chat sound.
- *
- * @param msg           Ptr to the message to print.
- */
-void D_NetMessage(int player, const char* msg)
+void D_NetMessage(int player, char const *msg)
 {
     D_NetMessageEx(player, msg, true);
 }
 
-/**
- * Show message on screen.
- *
- * @param msg
- */
-void D_NetMessageNoSound(int player, const char* msg)
+void D_NetMessageNoSound(int player, char const *msg)
 {
     D_NetMessageEx(player, msg, false);
 }
 
-/**
- * Issues a damage request when a client is trying to damage another player's
- * mobj.
- *
- * @return                  @c true = no further processing of the damage
- *                          should be done else, process the damage as
- *                          normally.
- */
-dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                        int damage)
+dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage)
 {
     int sourcePlrNum = -1;
-
     if(source && source->player)
+    {
         sourcePlrNum = source->player - players;
+    }
 
     if(source && !source->player)
     {
@@ -679,10 +621,9 @@ dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     if(IS_SERVER && sourcePlrNum > 0)
     {
         /*
-         * A client is trying to do damage. However, it is not guaranteed
-         * that the server is 100% accurately aware of the gameplay situation
-         * in which the damage is being inflicted (due to network latency),
-         * so instead of applying the damage now we will wait for the client
+         * A client is trying to do damage. However, it is not guaranteed that the server is 100%
+         * accurately aware of the gameplay situation in which the damage is being inflicted (due
+         * to network latency), so instead of applying the damage now we will wait for the client
          * to request it separately.
          */
         return false;
@@ -707,13 +648,14 @@ dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
  */
 D_CMD(SetColor)
 {
+    DENG2_UNUSED2(src, argc);
+
     cfg.netColor = atoi(argv[1]);
     if(IS_SERVER) // A local player?
     {
-        int                 player = CONSOLEPLAYER;
+        if(IS_DEDICATED) return false;
 
-        if(IS_DEDICATED)
-            return false;
+        int player = CONSOLEPLAYER;
 
         // Server players, must be treated as a special case because this is
         // a local mobj we're dealing with. We'll change the color translation
@@ -747,13 +689,19 @@ D_CMD(SetColor)
 #if __JHEXEN__
 D_CMD(SetClass)
 {
-    playerclass_t newClass = atoi(argv[1]);
+    DENG2_UNUSED2(src, argc);
+
+    playerclass_t newClass = playerclass_t(atoi(argv[1]));
 
     if(!(newClass < NUM_PLAYER_CLASSES))
+    {
         return false;
+    }
 
     if(!PCLASS_INFO(newClass)->userSelectable)
+    {
         return false;
+    }
 
     cfg.netClass = newClass; // Stored as a cvar.
 
@@ -765,7 +713,7 @@ D_CMD(SetClass)
     else
     {
         // On the server (or singleplayer) we can do an immediate change.
-        P_PlayerChangeClass(&players[CONSOLEPLAYER], cfg.netClass);
+        P_PlayerChangeClass(&players[CONSOLEPLAYER], playerclass_t(cfg.netClass));
     }
 
     return true;
@@ -777,6 +725,7 @@ D_CMD(SetClass)
  */
 D_CMD(LocalMessage)
 {
+    DENG2_UNUSED2(src, argc);
     D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
     return true;
 }

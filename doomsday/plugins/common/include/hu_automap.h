@@ -33,10 +33,7 @@
 
 #define MAX_MAP_POINTS          (10)
 
-/// To be called to register the console commands and variables of this module.
-void UIAutomap_Register(void);
-
-extern dd_bool freezeMapRLs;
+DENG_EXTERN_C dd_bool freezeMapRLs;
 
 /**
  * UIAutomap. UIWidget for displaying a simplified, dynamic interpretation
@@ -137,6 +134,9 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// To be called to register the console commands and variables of this module.
+void UIAutomap_Register(void);
 
 void UIAutomap_LoadResources(void);
 void UIAutomap_ReleaseResources(void);

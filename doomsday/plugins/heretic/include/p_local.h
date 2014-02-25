@@ -113,7 +113,6 @@ void            P_DropWeapon(player_t* player);
 void            P_ActivateMorphWeapon(player_t* player);
 void            P_PostMorphWeapon(player_t* player, weapontype_t weapon);
 void            P_UpdateBeak(player_t* player, pspdef_t* psp);
-void            P_FireWeapon(player_t* player);
 
 dd_bool         P_UndoPlayerMorph(player_t* player);
 
