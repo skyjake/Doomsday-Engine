@@ -77,7 +77,7 @@ DENG2_PIMPL(App)
     /// The archive is owned by the file system.
     Archive *persistentData;
 
-    UnixInfo unixInfo;
+    QScopedPointer<UnixInfo> unixInfo;
 
     /// The configuration.
     Config *config;
@@ -232,6 +232,8 @@ DENG2_PIMPL(App)
 App::App(NativePath const &appFilePath, QStringList args)
     : d(new Instance(this, args))
 {
+    d->unixInfo.reset(new UnixInfo);
+
     // Global time source for animations.
     Animation::setClock(&d->clock);
 
@@ -359,7 +361,7 @@ NativePath App::nativePluginBinaryPath()
     path = DENG_LIBRARY_DIR;
 # endif
     // Also check the system config files.
-    d->unixInfo.path("libdir", path);
+    d->unixInfo->path("libdir", path);
 #endif
     return (d->cachedPluginBinaryPath = path);
 }
@@ -426,7 +428,7 @@ NativePath App::nativeBasePath()
     path = DENG_BASE_DIR;
 # endif
     // Also check the system config files.
-    d->unixInfo.path("basedir", path);
+    d->unixInfo->path("basedir", path);
 #endif
     return (d->cachedBasePath = path);
 }
@@ -543,6 +545,7 @@ bool App::appExists()
 
 App &App::app()
 {
+    DENG2_ASSERT(appExists());
     return *singletonApp;
 }
 
@@ -596,7 +599,7 @@ Config &App::config()
 
 UnixInfo &App::unixInfo()
 {
-    return DENG2_APP->d->unixInfo;
+    return *DENG2_APP->d->unixInfo;
 }
 
 } // namespace de
