@@ -78,7 +78,7 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
         numRounds += numRounds / 1;
     }
 
-    // Given the new ammo the player may want to change weapon atomatically.
+    // Given the new ammo the player may want to change weapon automatically.
     P_MaybeChangeWeapon(plr, WT_NOCHANGE, ammoType, false /*don't force*/);
 
     // Restock the player.

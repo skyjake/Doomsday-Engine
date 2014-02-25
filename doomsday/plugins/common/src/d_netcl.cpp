@@ -652,7 +652,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 #endif
 }
 
-void NetCl_UpdatePSpriteState(Reader *msg)
+void NetCl_UpdatePSpriteState(Reader * /*msg*/)
 {
     // Not used.
     /*
@@ -664,16 +664,14 @@ void NetCl_UpdatePSpriteState(Reader *msg)
      */
 }
 
-void NetCl_Intermission(Reader* msg)
+void NetCl_Intermission(Reader *msg)
 {
     int flags = Reader_ReadByte(msg);
 
     if(flags & IMF_BEGIN)
     {
-        uint i;
-
         // Close any HUDs left open at the end of the previous map.
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(uint i = 0; i < MAXPLAYERS; ++i)
         {
             ST_AutomapOpen(i, false, true);
 #if __JHERETIC__ || __JHEXEN__
@@ -695,14 +693,14 @@ void NetCl_Intermission(Reader* msg)
         wmInfo.nextMap    = Reader_ReadByte(msg);
         wmInfo.currentMap = Reader_ReadByte(msg);
         wmInfo.didSecret  = Reader_ReadByte(msg);
-        wmInfo.episode = gameEpisode;
+        wmInfo.episode    = gameEpisode;
 
         G_PrepareWIData();
 #elif __JHERETIC__
-        wmInfo.episode = gameEpisode;
+        wmInfo.episode    = gameEpisode;
 #elif __JHEXEN__
-        nextMap         = Reader_ReadByte(msg);
-        nextMapEntrance = Reader_ReadByte(msg);
+        nextMap           = Reader_ReadByte(msg);
+        nextMapEntrance   = Reader_ReadByte(msg);
 #endif
 
 #if __JDOOM__ || __JDOOM64__

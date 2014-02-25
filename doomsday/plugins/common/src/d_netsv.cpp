@@ -76,7 +76,7 @@ void NetSv_MapCycleTicker(void);
 void NetSv_SendPlayerClass(int pnum, char cls);
 
 char cyclingMaps;
-char *mapCycle = "";
+char *mapCycle = (char *)"";
 char mapCycleNoExit = true;
 int netSvAllowSendMsg = true;
 int netSvAllowCheats;
@@ -388,7 +388,7 @@ void NetSv_TellCycleRulesToPlayerAfterTics(int destPlr, int tics)
     {
         cycleRulesCounter[destPlr] = tics;
     }
-    else if(destPlr == DDSP_ALL_PLAYERS)
+    else if((unsigned)destPlr == DDSP_ALL_PLAYERS)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -680,7 +680,7 @@ void NetSv_SendGameState(int flags, int to)
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->inGame) continue;
-        if(to != DDSP_ALL_PLAYERS && to != i) continue;
+        if((unsigned)to != DDSP_ALL_PLAYERS && to != i) continue;
 
         Writer *writer = D_NetWrite();
         Writer_WriteByte(writer, flags);
@@ -1139,9 +1139,9 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
     tmp[1] = 0;
 
     // Choose the right kill message template.
-    char *in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer ==
-                       fragged ? TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
-                       killer->readyWeapon);
+    char const *in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer ==
+                             fragged ? TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
+                             killer->readyWeapon);
 
     for(; *in; in++)
     {
@@ -1429,7 +1429,7 @@ void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)
 
     App_Log(DE2_DEV_NET_VERBOSE, "NetSv_SendMessageEx: '%s'", msg);
 
-    if(plrNum == DDSP_ALL_PLAYERS)
+    if((unsigned)plrNum == DDSP_ALL_PLAYERS)
     {
         // Also show locally. No sound is played!
         D_NetMessageNoSound(CONSOLEPLAYER, msg);

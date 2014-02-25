@@ -68,6 +68,7 @@ GameRuleset &GameRuleset::operator = (GameRuleset const &other)
 void GameRuleset::write(Writer *writer) const
 {
     DENG2_ASSERT(writer != 0);
+
     Writer_WriteByte(writer, skill);
     Writer_WriteByte(writer, deathmatch);
 #if !__JHEXEN__
@@ -105,7 +106,6 @@ void GameRuleset::read(Reader *reader)
 }
 
 // C wrapper API ---------------------------------------------------------------
-
 
 skillmode_t GameRuleset_Skill(GameRuleset const *rules)
 {
