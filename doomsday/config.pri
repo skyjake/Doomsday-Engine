@@ -106,9 +106,36 @@ else:macx: include(config_macx.pri)
 
 # Apply deng_* Configuration -------------------------------------------------
 
- !isEmpty(SDK_PREFIX): DENG_SDK_HEADER_DIR = $$SDK_PREFIX/include/doomsday/de
-else:!isEmpty(PREFIX): DENG_SDK_HEADER_DIR = $$PREFIX/include/doomsday/de
-                 else: DENG_SDK_HEADER_DIR = $$OUT_PWD/include/de
+deng_nofixedasm {
+    DEFINES += DENG_NO_FIXED_ASM
+}
+!deng_rangecheck {
+    DEFINES += DENG_NO_RANGECHECKING
+}
+deng_nosdlmixer|deng_nosdl {
+    DEFINES += DENG_DISABLE_SDLMIXER
+}
+deng_nosdl {
+    DEFINES += DENG_NO_SDL
+}
+
+deng_sdk {
+    # SDK install location.
+    !isEmpty(SDK_PREFIX) {
+        DENG_SDK_HEADER_DIR = $$SDK_PREFIX/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$SDK_PREFIX/lib
+    }
+    else:!isEmpty(PREFIX) {
+        DENG_SDK_HEADER_DIR = $$PREFIX/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$PREFIX/lib
+    }
+    else {
+        DENG_SDK_HEADER_DIR = $$OUT_PWD/../include/de
+        DENG_SDK_LIB_DIR    = $$OUT_PWD/../lib
+    }
+    echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
+    echo(SDK library directory: $$DENG_SDK_LIB_DIR)
+}
 
 unix:deng_ccache {
     # ccache can be used to speed up recompilation.
@@ -121,17 +148,4 @@ unix:deng_ccache {
         QMAKE_CC  = ccache $$QMAKE_CC
         QMAKE_CXX = ccache $$QMAKE_CXX
     }
-}
-
-deng_nofixedasm {
-    DEFINES += DENG_NO_FIXED_ASM
-}
-!deng_rangecheck {
-    DEFINES += DENG_NO_RANGECHECKING
-}
-deng_nosdlmixer|deng_nosdl {
-    DEFINES += DENG_DISABLE_SDLMIXER
-}
-deng_nosdl {
-    DEFINES += DENG_NO_SDL
 }

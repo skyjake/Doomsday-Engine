@@ -197,3 +197,8 @@ macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
+
+deng_sdk {
+    INSTALLS *= target
+    target.path = $$DENG_SDK_LIB_DIR
+}
