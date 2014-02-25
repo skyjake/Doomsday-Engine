@@ -1,4 +1,4 @@
-/** @file p_maputl.c Movement/collision map utility functions.
+/** @file p_maputl.c  Movement/collision map utility functions.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -21,6 +21,7 @@
 
 #include "jhexen.h"
 #include "dmu_lib.h"
+#include "g_common.h"
 #include "p_map.h"
 
 typedef struct mobjtargetableparams_s {

@@ -43,6 +43,7 @@
 #  include "jdoom64.h"
 #endif
 
+#include "g_common.h"
 #include "player.h"
 #include "d_net.h"
 #include "p_inventory.h"

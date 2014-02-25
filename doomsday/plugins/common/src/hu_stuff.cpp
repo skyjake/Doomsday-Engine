@@ -755,7 +755,7 @@ static void drawMapMetaData(float x, float y, float alpha)
     if(!title) title = "Unnamed";
 
     char buf[256];
-    dd_snprintf(buf, 256, "map: %s gamemode: %s", title, P_GetGameModeName());
+    dd_snprintf(buf, 256, "map: %s gamemode: %s", title, P_GameRulesetDescription());
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
     FR_DrawTextXY2(buf, x + BORDER, y - BORDER, ALIGN_BOTTOMLEFT);
@@ -1463,16 +1463,11 @@ dd_bool Hu_IsStatusBarVisible(int player)
 }
 
 #if __JDOOM__ || __JDOOM64__
-patchid_t Hu_MapTitlePatchId(void)
-{
-    return P_MapTitlePatch(gameEpisode, gameMap);
-}
-
-int Hu_MapTitleFirstLineHeight(void)
+int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
     patchinfo_t patchInfo;
-    if(R_GetPatchInfo(Hu_MapTitlePatchId(), &patchInfo))
+    if(R_GetPatchInfo(P_MapTitlePatch(0/*current map*/), &patchInfo))
     {
         y = patchInfo.geometry.size.height + 2;
     }
@@ -1514,7 +1509,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    patchid_t patchId = Hu_MapTitlePatchId();
+    patchid_t patchId = P_MapTitlePatch(0/*current map*/);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.

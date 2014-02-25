@@ -188,8 +188,11 @@ void SaveInfo::setFileName(String newName)
     d->fileName = newName;
 }
 
-String SaveInfo::fileNameForMap(uint map) const
+String SaveInfo::fileNameForMap(Uri const *mapUri) const
 {
+    if(!mapUri) mapUri = gameMapUri;
+
+    uint map = G_MapNumberFor(mapUri);
     return d->fileName + String("%1." SAVEGAMEEXTENSION)
                              .arg(int(map + 1), 2, 10, QChar('0'));
 }
@@ -317,11 +320,11 @@ bool SaveInfo::gameSessionIsLoadable() const
     return true; // It's good!
 }
 
-bool SaveInfo::haveMapSession(uint map) const
+bool SaveInfo::haveMapSession(Uri const *mapUri) const
 {
     if(usingSeparateMapSessionFiles())
     {
-        return SV_ExistingFile(SV_SavePath() / fileNameForMap(map));
+        return SV_ExistingFile(SV_SavePath() / fileNameForMap(mapUri));
     }
     return haveGameSession();
 }

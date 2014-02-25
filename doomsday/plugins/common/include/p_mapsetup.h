@@ -58,7 +58,11 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor);
  */
 char const *P_MapTitle(Uri const *mapUri);
 
-patchid_t P_MapTitlePatch(uint episode, uint map);
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+patchid_t P_MapTitlePatch(Uri const *mapUri);
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void);

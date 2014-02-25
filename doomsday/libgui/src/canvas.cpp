@@ -433,13 +433,13 @@ void Canvas::paintGL()
 {
     if(!d->parent || d->parent->isRecreationInProgress()) return;
 
-#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+/*#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
     if(d->resizeTimer.isActive())
     {
         d->resizeTimer.stop();
         updateSize();
     }
-#endif
+#endif*/
 
     LIBGUI_ASSERT_GL_OK();
 

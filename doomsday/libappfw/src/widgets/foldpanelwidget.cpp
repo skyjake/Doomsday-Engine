@@ -79,15 +79,14 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
     d->title->setTextColor("accent");
     d->title->setHoverTextColor("text", ButtonWidget::ReplaceColor);
     d->title->setFont("heading");
+    d->title->setAlignment(ui::AlignLeft);
     d->title->setTextLineAlignment(ui::AlignLeft);
     d->title->set(Background()); // no frame or background
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
     d->title->setOpacity(.8f);
 
     // Fold indicator.
-    d->title->setImage(new Instance::FoldImage(*this));
-    d->title->setTextAlignment(ui::AlignRight);
-    d->title->setTextGap("gap");
+    d->title->setOverlayImage(new Instance::FoldImage(*this), ui::AlignRight);
 
     return d->title;
 }

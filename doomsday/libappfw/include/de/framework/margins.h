@@ -39,20 +39,20 @@ public:
 public:
     Margins(String const &defaultMargin = "gap");
 
-    void setLeft  (DotPath const &leftMarginId);
-    void setRight (DotPath const &rightMarginId);
-    void setTop   (DotPath const &topMarginId);
-    void setBottom(DotPath const &bottomMarginId);
-    void set      (ui::Direction dir, DotPath const &marginId);
-    void set      (DotPath const &marginId);
+    Margins &setLeft  (DotPath const &leftMarginId);
+    Margins &setRight (DotPath const &rightMarginId);
+    Margins &setTop   (DotPath const &topMarginId);
+    Margins &setBottom(DotPath const &bottomMarginId);
+    Margins &set      (ui::Direction dir, DotPath const &marginId);
+    Margins &set      (DotPath const &marginId);
 
-    void setLeft  (Rule const &rule);
-    void setRight (Rule const &rule);
-    void setTop   (Rule const &rule);
-    void setBottom(Rule const &rule);
-    void set      (ui::Direction dir, Rule const &rule);
-    void set      (Rule const &rule);
-    void setAll   (Margins const &margins);
+    Margins &setLeft  (Rule const &rule);
+    Margins &setRight (Rule const &rule);
+    Margins &setTop   (Rule const &rule);
+    Margins &setBottom(Rule const &rule);
+    Margins &set      (ui::Direction dir, Rule const &rule);
+    Margins &set      (Rule const &rule);
+    Margins &setAll   (Margins const &margins);
 
     Rule const &left() const;
     Rule const &right() const;

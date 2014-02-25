@@ -21,6 +21,7 @@
 #include "common.h"
 #include "saveslots.h"
 
+#include "g_common.h"
 #include "p_saveio.h"
 #include "saveinfo.h"
 #include <de/NativePath>
@@ -219,7 +220,9 @@ void SaveSlots::clearSlot(String slotId)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_RemoveFile(SV_SavePath() / saveInfo.fileNameForMap(i));
+        Uri *mapUri = G_ComposeMapUri(gameEpisode, i);
+        SV_RemoveFile(SV_SavePath() / saveInfo.fileNameForMap(mapUri));
+        Uri_Delete(mapUri);
     }
 
     SV_RemoveFile(SV_SavePath() / saveInfo.fileName());
@@ -251,8 +254,10 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_CopyFile(SV_SavePath() / sourceSlot.saveInfo().fileNameForMap(i),
-                    SV_SavePath() / destSlot.saveInfo().fileNameForMap(i));
+        Uri *mapUri = G_ComposeMapUri(gameEpisode, i);
+        SV_CopyFile(SV_SavePath() / sourceSlot.saveInfo().fileNameForMap(mapUri),
+                    SV_SavePath() / destSlot.saveInfo().fileNameForMap(mapUri));
+        Uri_Delete(mapUri);
     }
 
     SV_CopyFile(SV_SavePath() / sourceSlot.saveInfo().fileName(),

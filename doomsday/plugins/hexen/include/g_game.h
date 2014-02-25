@@ -41,13 +41,6 @@ DENG_EXTERN_C int gaLoadGameSaveSlot;
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C dd_bool gameInProgress;
-DENG_EXTERN_C uint gameEpisode;
-DENG_EXTERN_C uint gameMap;
-DENG_EXTERN_C Uri *gameMapUri;
-DENG_EXTERN_C uint gameMapEntrance;
-DENG_EXTERN_C GameRuleset gameRules;
-
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
 DENG_EXTERN_C dd_bool customPal;

@@ -1127,20 +1127,27 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
     return author;
 }
 
-patchid_t P_MapTitlePatch(uint episode, uint map)
+patchid_t P_MapTitlePatch(Uri const *mapUri)
 {
+    if(!mapUri) mapUri = gameMapUri;
+
 #if __JDOOM__ || __JDOOM64__
+    uint map = G_MapNumberFor(mapUri);
 #  if __JDOOM__
     if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
+    {
+        uint episode = G_EpisodeNumberFor(mapUri);
         map = (episode * 9) + map;
+    }
 #  endif
-    DENG_UNUSED(episode);
     if(map < pMapNamesSize)
+    {
         return pMapNames[map];
+    }
 #else
-    DENG_UNUSED(episode);
-    DENG_UNUSED(map);
+    DENG2_UNUSED(mapUri);
 #endif
+
     return 0;
 }
 

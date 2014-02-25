@@ -88,8 +88,10 @@ public:
 
     /**
      * Determines whether a saved map session exists.
+     *
+     * @param mapUri   Unique map identifier. If @c 0 the Uri for the @em current map is used.
      */
-    bool haveMapSession(uint map) const;
+    bool haveMapSession(Uri const *mapUri) const;
 
     /**
      * Attempt to update the save info from the named saved game session file. If the save path
@@ -109,11 +111,11 @@ public:
     /**
      * Returns the name of the resource file (with extension) containing the map session state.
      *
-     * @param map   Logical map index.
+     * @param mapUri   Unique map identifier. If @c 0 the Uri for the @em current map is used.
      *
      * @see fileName()
      */
-    de::String fileNameForMap(uint map) const;
+    de::String fileNameForMap(Uri const *mapUri = 0) const;
 
     /**
      * Update the metadata associated with the save using values derived from the current game

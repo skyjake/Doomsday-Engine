@@ -520,7 +520,7 @@ void D_PostInit()
     AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
+        G_DeferredNewSession(startMapUri, 0/*default*/, &gameRules);
     }
     else
     {

@@ -199,8 +199,8 @@ void getAllOpenGLEntryPoints()
     // Extensions:
 
 #ifdef GL_ARB_debug_output
-    GET_PROC(glDebugMessageControlARB);
-    GET_PROC(glDebugMessageCallbackARB);
+    GET_PROC_EXT(glDebugMessageControlARB);
+    GET_PROC_EXT(glDebugMessageCallbackARB);
 #endif
 
     GET_PROC_EXT(glBlitFramebufferEXT);

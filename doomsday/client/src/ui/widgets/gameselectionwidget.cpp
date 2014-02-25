@@ -95,8 +95,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             title().setFont("title");
             title().setTextColor("inverted.text");
             title().setHoverTextColor("inverted.text", ButtonWidget::ReplaceColor);
-            title().setAlignment(ui::AlignLeft);
-            title().margins().setLeft("");
+            title().margins().setLeft("").setRight("");
 
             switch(type)
             {
@@ -126,8 +125,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
             // This will be shown if there are no games in the subset.
             noGames = LabelWidget::newWithText(_E(b) + tr("No games"), menu);
-            noGames->margins().setTop(style().rules().rule("gap") * 2);
-            noGames->margins().setBottom(noGames->margins().top());
+            noGames->margins()
+                    .setTop   (style().rules().rule("gap") * 2)
+                    .setBottom(noGames->margins().top());
             noGames->setFont("heading");
             noGames->setTextColor("inverted.text");
             noGames->setOpacity(.4f);

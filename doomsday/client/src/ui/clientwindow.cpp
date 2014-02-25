@@ -225,11 +225,11 @@ DENG2_PIMPL(ClientWindow)
         container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
+        AutoRef<Rule> availHeight = taskBar->rule().top() - gameSelMenu->filter().rule().height();
         gameSelMenu->rule()
-                .setInput(Rule::AnchorY, taskBar->rule().top() / 2)
-                .setInput(Rule::Height,  OperatorRule::minimum(
-                              taskBar->rule().top(),
-                              gameSelMenu->contentRule().height() + gameSelMenu->margins().height()));
+                .setInput(Rule::AnchorY, gameSelMenu->filter().rule().height() + availHeight / 2)
+                .setInput(Rule::Height,  OperatorRule::minimum(availHeight,
+                        gameSelMenu->contentRule().height() + gameSelMenu->margins().height()));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;

@@ -165,11 +165,12 @@ static void G_InitNewSession();
 game_config_t cfg; // The global cfg.
 
 dd_bool gameInProgress;
-uint gameEpisode;
-uint gameMap;
-uint gameMapEntrance; // Position indicator for reborn.
-Uri *gameMapUri;
 GameRuleset gameRules;
+uint gameEpisode;
+
+Uri *gameMapUri;
+uint gameMapEntrance; ///< Entry point, for reborn.
+uint gameMap;
 
 uint nextMap;
 #if __JHEXEN__
@@ -178,10 +179,6 @@ uint nextMapEntrance;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 dd_bool secretExit;
-#endif
-
-#if __JHEXEN__
-uint mapHub;
 #endif
 
 dd_bool monsterInfight;
@@ -217,6 +214,9 @@ static GameStateReaderFactory gameStateReaderFactory;
 // vars used with game status cvars
 int gsvEpisode;
 int gsvMap;
+#if __JHEXEN__
+int gsvHub;
+#endif
 char *gsvMapAuthor;// = "Unknown";
 int gsvMapMusic = -1;
 char *gsvMapTitle;// = "Unknown";
@@ -263,7 +263,7 @@ cvartemplate_t gamestatusCVars[] =
     {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0, 0},
     {"map-episode", READONLYCVAR, CVT_INT, &gsvEpisode, 0, 0, 0},
 #if __JHEXEN__
-    {"map-hub", READONLYCVAR, CVT_INT, &mapHub, 0, 0, 0},
+    {"map-hub", READONLYCVAR, CVT_INT, &gsvHub, 0, 0, 0},
 #endif
     {"map-id", READONLYCVAR, CVT_INT, &gsvMap, 0, 0, 0},
     {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0, 0},
@@ -1135,11 +1135,6 @@ int G_UIResponder(event_t *ev)
     return false;
 }
 
-/**
- * Change the game's state.
- *
- * @param state         The state to change to.
- */
 void G_ChangeGameState(gamestate_t state)
 {
     dd_bool gameUIActive = false;
@@ -1244,8 +1239,8 @@ void G_StartHelp()
 }
 
 /**
- * Prints a banner to the console containing information pertinent to the
- * current map (e.g., map title, author...).
+ * Prints a banner to the console containing information pertinent to the current map
+ * (e.g., map title, author...).
  */
 static void printMapBanner()
 {
@@ -1298,7 +1293,7 @@ void G_BeginMap()
     S_PauseMusic(false);
 }
 
-int G_EndGameResponse(msgresponse_t response, int /*userValue*/, void * /*context*/)
+static int endSessionConfirmed(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -1314,7 +1309,7 @@ int G_EndGameResponse(msgresponse_t response, int /*userValue*/, void * /*contex
     return true;
 }
 
-void G_EndGame()
+void G_EndSession()
 {
     if(G_QuitInProgress()) return;
 
@@ -1338,7 +1333,7 @@ void G_EndGame()
         return;
     }
 
-    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
+    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, endSessionConfirmed, 0, NULL);
 }
 
 /// @param mapInfo  Can be @c NULL.
@@ -1403,7 +1398,7 @@ int G_DoLoadMap(loadmap_params_t *p)
         try
         {
             SaveInfo &saveInfo  = G_SaveSlots()["base"].saveInfo();
-            de::Path const path = SV_SavePath() / saveInfo.fileNameForMap(gameMap);
+            de::Path const path = SV_SavePath() / saveInfo.fileNameForMap();
 
             if(!SV_OpenFile(path, false/*for read*/))
             {
@@ -1866,15 +1861,6 @@ void G_Ticker(timespan_t ticLength)
     oldGameState = gameState;
 }
 
-/**
- * Called when a player leaves a map.
- *
- * Jobs include; striping keys, inventory and powers from the player
- * and configuring other player-specific properties ready for the next
- * map.
- *
- * @param player        Id of the player to configure.
- */
 void G_PlayerLeaveMap(int player)
 {
     player_t *p = &players[player];
@@ -1983,8 +1969,10 @@ void G_PlayerLeaveMap(int player)
 /**
  * Safely clears the player data structures.
  */
-void ClearPlayer(player_t *p)
+static void clearPlayer(player_t *p)
 {
+    DENG2_ASSERT(p != 0);
+
     player_t playerCopy;
     ddplayer_t ddPlayerCopy;
 
@@ -2055,7 +2043,7 @@ void G_PlayerReborn(int player)
 #endif
 
     // Clears (almost) everything.
-    ClearPlayer(p);
+    clearPlayer(p);
 
 #if __JHERETIC__
     p->startSpot = spot;
@@ -2974,21 +2962,22 @@ void G_DoLeaveMap()
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    revisit = G_SaveSlots()["base"].saveInfo().haveMapSession(nextMap);
+    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+
+    revisit = G_SaveSlots()["base"].saveInfo().haveMapSession(nextMapUri);
     if(gameRules.deathmatch)
     {
         revisit = false;
     }
 
     // Same hub?
-    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
     if(P_MapInfo(0/*current map*/)->hub == P_MapInfo(nextMapUri)->hub)
     {
         if(!gameRules.deathmatch)
         {
             // Save current map.
             SaveInfo &saveInfo  = G_SaveSlots()["base"].saveInfo();
-            de::Path const path = SV_SavePath() / saveInfo.fileNameForMap(gameMap);
+            de::Path const path = SV_SavePath() / saveInfo.fileNameForMap();
 
             if(!SV_OpenFile(path, true/*for write*/))
             {
@@ -3356,7 +3345,7 @@ void G_DoSaveSession(de::String slotId, de::String userDescription)
     }
 }
 
-void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
+void G_DeferredNewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 {
     if(!dMapUri)
     {
@@ -3370,48 +3359,48 @@ void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *r
 }
 
 /// @todo Get this from MAPINFO
-static uint episodeNumberFor(Uri const *mapUri)
+uint G_EpisodeNumberFor(Uri const *mapUri)
 {
 #if __JDOOM__ || __JHERETIC__
-    AutoStr *path = Uri_Resolved(mapUri);
-    if(!Str_IsEmpty(path))
+    de::String path = Str_Text(Uri_Resolved(mapUri));
+    if(!path.isEmpty())
     {
 # if __JDOOM__
         if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if(Str_At(path, 0) == 'E' && Str_At(path, 2) == 'M')
+            if(path.at(0) == 'E' && path.at(2) == 'M')
             {
-                return atoi(Str_Text(path) + 1) - 1;
+                return path.substr(1).toInt() - 1;
             }
         }
     }
 #else
-    DENG_UNUSED(mapUri);
+    DENG2_UNUSED(mapUri);
 #endif
     return 0;
 }
 
 /// @todo Get this from MAPINFO
-static uint mapNumberFor(Uri const *mapUri)
+uint G_MapNumberFor(Uri const *mapUri)
 {
-    AutoStr *path = Uri_Resolved(mapUri);
-    if(!Str_IsEmpty(path))
+    de::String path = Str_Text(Uri_Resolved(mapUri));
+    if(!path.isEmpty())
     {
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__
         if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if(Str_At(path, 0) == 'E' && Str_At(path, 2) == 'M')
+            if(path.at(0) == 'E' && path.at(2) == 'M')
             {
-                return atoi(Str_Text(path) + 3) - 1;
+                return path.substr(3).toInt() - 1;
             }
         }
 #endif
-        if(Str_StartsWith(path, "MAP"))
+        if(path.beginsWith("MAP"))
         {
-            return atoi(Str_Text(path) + 3) - 1;
+            return path.substr(3).toInt() - 1;
         }
     }
     return 0;
@@ -3419,7 +3408,7 @@ static uint mapNumberFor(Uri const *mapUri)
 
 void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 {
-    DENG_ASSERT(mapUri != 0 && rules != 0);
+    DENG2_ASSERT(mapUri != 0 && rules != 0);
 
     G_StopDemo();
 
@@ -3461,8 +3450,8 @@ void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
-    gameEpisode     = episodeNumberFor(mapUri);
-    gameMap         = mapNumberFor(mapUri);
+    gameEpisode     = G_EpisodeNumberFor(mapUri);
+    gameMap         = G_MapNumberFor(mapUri);
     Uri_Copy(gameMapUri, mapUri);
     gameMapEntrance = mapEntrance;
     gameRules       = *rules;
@@ -3622,7 +3611,7 @@ AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
     return AutoStr_FromTextStd(identityKeys[gamemode]);
 }
 
-char const *P_GetGameModeName()
+char const *P_GameRulesetDescription()
 {
     static char const *dm   = "deathmatch";
     static char const *coop = "cooperative";
@@ -4477,7 +4466,7 @@ D_CMD(EndGame)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    G_EndGame();
+    G_EndSession();
     return true;
 }
 
@@ -4612,12 +4601,12 @@ D_CMD(WarpMap)
         nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
+        G_DeferredNewSession(newMapUri, 0/*default*/, &gameRules);
 #endif
     }
     else
     {
-        G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
+        G_DeferredNewSession(newMapUri, 0/*default*/, &gameRules);
     }
 
     // If the command source was "us" the game library then it was probably in
