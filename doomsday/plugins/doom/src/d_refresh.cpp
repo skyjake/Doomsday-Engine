@@ -1,31 +1,25 @@
-/**\file d_refresh.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_refresh.cpp  DOOM specific refresh functions/utilities.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <string.h>
-#include <assert.h>
-
 #include "jdoom.h"
+#include "d_refresh.h"
 
 #include "dmu_lib.h"
 #include "hu_menu.h"
@@ -41,33 +35,28 @@
 #include "p_tick.h"
 #include "hu_automap.h"
 
+#include <cstring>
+
 float quitDarkenOpacity = 0;
 
 static float appliedFilter[MAXPLAYERS];
 
 void G_InitSpecialFilter()
 {
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         appliedFilter[i] = -1;
     }
 }
 
-/**
- * Draws a special filter over the screen (e.g. the inversing filter used
- * when in god mode).
- */
 void G_UpdateSpecialFilter(int player)
 {
-    player_t* plr = players + player;
-    float max = 30, str; //, r, g, b;
-    int filter;
-
     // In HacX a simple blue shift is used instead.
     if(gameMode == doom2_hacx) return;
 
-    filter = plr->powers[PT_INVULNERABILITY];
+    player_t *plr = players + player;
+
+    int filter = plr->powers[PT_INVULNERABILITY];
     if(!filter)
     {
         // Clear the filter.
@@ -79,10 +68,11 @@ void G_UpdateSpecialFilter(int player)
         return;
     }
 
+    float str = 1; // Full inversion.
     if(filter < 4 * 32 && !(filter & 8))
+    {
         str = 0; //.7f;
-    else
-        str = 1; // Full inversion.
+    }
 
     // Activate the filter.
     if(appliedFilter[player] < 0)
@@ -97,21 +87,6 @@ void G_UpdateSpecialFilter(int player)
     }
 
     appliedFilter[player] = str;
-
-#if 0
-    // Draw an inversing filter.
-    DGL_BlendMode(BM_INVERSE);
-
-    r = MINMAX_OF(0.f, str * 2, 1.f);
-    g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
-    b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
-
-    DGL_DrawRectf2Color(region->origin.x, region->origin.y,
-        region->size.width, region->size.height, r, g, b, 1);
-
-    // Restore the normal rendering state.
-    DGL_BlendMode(BM_NORMAL);
-#endif
 }
 
 dd_bool R_ViewFilterColor(float rgba[4], int filter)
@@ -185,7 +160,7 @@ void R_UpdateViewFilter(int player)
 {
 #define RADIATIONPAL            (13) /// Radiation suit, green shift.
 
-    player_t* plr = players + player;
+    player_t *plr = players + player;
     int palette = 0;
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -197,8 +172,8 @@ void R_UpdateViewFilter(int player)
     if(gameMode == doom2_hacx && plr->powers[PT_INVULNERABILITY])
     {
         // A blue shift is used in HacX.
-        const int max = 10;
-        const int cnt = plr->powers[PT_INVULNERABILITY];
+        int const max = 10;
+        int const cnt = plr->powers[PT_INVULNERABILITY];
 
         if(cnt < max)
             palette = .5f + (NUMINVULPALS-1) * ((float)cnt / max);
@@ -272,7 +247,7 @@ void R_UpdateViewFilter(int player)
 
 void G_RendPlayerView(int player)
 {
-    player_t* plr = &players[player];
+    player_t *plr = &players[player];
     float pspriteOffsetY;
     int isFullBright = ((plr->powers[PT_INFRARED] > 4 * 32) ||
                         (plr->powers[PT_INFRARED] & 8) ||
@@ -302,7 +277,7 @@ void G_RendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-void D_DrawWindow(const Size2Raw* windowSize)
+void D_DrawWindow(Size2Raw const * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {
@@ -318,17 +293,16 @@ void D_DrawWindow(const Size2Raw* windowSize)
     }
 }
 
-void D_EndFrame(void)
+void D_EndFrame()
 {
-    int i;
-
     if(G_GameState() != GS_MAP) return;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
+        player_t *plr = players + i;
 
-        if(!plr->plr->inGame || !plr->plr->mo) continue;
+        if(!plr->plr->inGame) continue;
+        if(!plr->plr->mo) continue;
 
         // View angles are updated with fractional ticks, so we can just use the current values.
         R_SetViewAngle(i, Player_ViewYawAngle(i));
@@ -336,8 +310,10 @@ void D_EndFrame(void)
     }
 }
 
-void Mobj_UpdateColorMap(mobj_t* mo)
+void Mobj_UpdateColorMap(mobj_t *mo)
 {
+    DENG2_ASSERT(mo != 0);
+
     if(mo->flags & MF_TRANSLATION)
     {
         mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
@@ -354,6 +330,8 @@ void Mobj_UpdateColorMap(mobj_t* mo)
  */
 void P_SetDoomsdayFlags(mobj_t *mo)
 {
+    DENG2_ASSERT(mo != 0);
+
     // Client mobjs can't be set here.
     if(IS_CLIENT && (mo->ddFlags & DDMF_REMOTE))
     {
@@ -426,20 +404,14 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     Mobj_UpdateColorMap(mo);
 }
 
-void R_SetAllDoomsdayFlags(void)
+void R_SetAllDoomsdayFlags()
 {
-    mobj_t* iter;
-    int i;
-
-    if(G_GameState() != GS_MAP)
-        return;
+    if(G_GameState() != GS_MAP) return;
 
     // Only visible things are in the sector thinglists, so this is good.
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
+    for(mobj_t *iter = (mobj_t *)P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
-        {
-            P_SetDoomsdayFlags(iter);
-        }
+        P_SetDoomsdayFlags(iter);
     }
 }
