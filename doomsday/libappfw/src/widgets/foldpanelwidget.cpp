@@ -79,20 +79,14 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
     d->title->setTextColor("accent");
     d->title->setHoverTextColor("text", ButtonWidget::ReplaceColor);
     d->title->setFont("heading");
+    d->title->setAlignment(ui::AlignLeft);
     d->title->setTextLineAlignment(ui::AlignLeft);
     d->title->set(Background()); // no frame or background
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
     d->title->setOpacity(.8f);
 
     // Fold indicator.
-    d->title->setImage(new Instance::FoldImage(*this));
-    d->title->setAlignment(ui::AlignCenter, LabelWidget::AlignSeparately);
-    d->title->setTextAlignment(ui::AlignLeft);
-    d->title->setImageAlignment(ui::AlignRight);
-    d->title->setTextGap("gap");
-
-    // By default, make the button as wide as the fold panel.
-    d->title->rule().setInput(Rule::Width, rule().width());
+    d->title->setOverlayImage(new Instance::FoldImage(*this), ui::AlignRight);
 
     return d->title;
 }
