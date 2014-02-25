@@ -88,8 +88,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         LabelWidget *noGames;
         int numCols;
 
-        SubsetWidget(Type selType, String const &headingText, GameSelectionWidget::Instance *owner)
-            : titleText(headingText), type(selType), numCols(3)
+        SubsetWidget(String const &widgetName, Type selType,
+                     String const &headingText, GameSelectionWidget::Instance *owner)
+            : FoldPanelWidget(widgetName)
+            , titleText(headingText)
+            , type(selType)
+            , numCols(3)
         {           
             owner->self.add(makeTitle(headingText));
             title().setFont("title");
@@ -206,20 +210,27 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     SubsetWidget *available;
     SubsetWidget *incomplete;
     SubsetWidget *multi;
+    QList<SubsetWidget *> subsets; // not owned
 
     Instance(Public *i)
         : Base(i)
         , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
     {
         // Menu of available games.
-        self.add(available = new SubsetWidget(SubsetWidget::NormalGames,
-                App_GameLoaded()? tr("Switch Game") : tr("Available Games"), this));
+        self.add(available = new SubsetWidget("available", SubsetWidget::NormalGames,
+                                              App_GameLoaded()? tr("Switch Game") :
+                                                                tr("Available Games"), this));
 
         // Menu of incomplete games.
-        self.add(incomplete = new SubsetWidget(SubsetWidget::NormalGames, tr("Games with Missing Resources"), this));
+        self.add(incomplete = new SubsetWidget("incomplete", SubsetWidget::NormalGames,
+                                               tr("Games with Missing Resources"), this));
 
         // Menu of multiplayer games.
-        self.add(multi = new SubsetWidget(SubsetWidget::MultiplayerGames, tr("Multiplayer Games"), this));
+        self.add(multi = new SubsetWidget("multi", SubsetWidget::MultiplayerGames,
+                                          tr("Multiplayer Games"), this));
+
+        // Keep all sets in a handy list.
+        subsets << available << incomplete << multi;
 
         self.add(filter = new GameFilterWidget);
 
@@ -486,11 +497,11 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         // If the view is too small, we'll want to reduce the number of items in the menu.
         int const maxWidth = style().rules().rule("gameselection.max.width").valuei();
 
-        int suitable = clamp(1, 3 * width / maxWidth, 3);
-
-        available->setColumns(suitable);
-        incomplete->setColumns(suitable);
-        multi->setColumns(suitable);
+        int const suitable = clamp(1, 3 * width / maxWidth, 3);
+        foreach(SubsetWidget *s, subsets)
+        {
+            s->setColumns(suitable);
+        }
     }
 };
 
@@ -503,6 +514,7 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
             .setInput(Rule::Bottom, rule().top())
             .setInput(Rule::Left,   rule().left());
 
+    // Default open/closed folds.
     d->multi->open();
     if(!App_GameLoaded())
     {
@@ -526,16 +538,18 @@ void GameSelectionWidget::setTitleColor(DotPath const &colorId,
                                         DotPath const &hoverColorId,
                                         ButtonWidget::HoverColorMode mode)
 {
-    d->available ->setTitleColor(colorId, hoverColorId, mode);
-    d->multi     ->setTitleColor(colorId, hoverColorId, mode);
-    d->incomplete->setTitleColor(colorId, hoverColorId, mode);
+    foreach(Instance::SubsetWidget *s, d->subsets)
+    {
+        s->setTitleColor(colorId, hoverColorId, mode);
+    }
 }
 
 void GameSelectionWidget::setTitleFont(DotPath const &fontId)
 {
-    d->available ->title().setFont(fontId);
-    d->multi     ->title().setFont(fontId);
-    d->incomplete->title().setFont(fontId);
+    foreach(Instance::SubsetWidget *s, d->subsets)
+    {
+        s->title().setFont(fontId);
+    }
 }
 
 GameFilterWidget &GameSelectionWidget::filter()
@@ -554,6 +568,33 @@ void GameSelectionWidget::update()
     if(hasChangedPlace(rect))
     {
         d->updateLayoutForWidth(rect.width());
+    }
+}
+
+void GameSelectionWidget::operator >> (PersistentState &toState) const
+{
+    Record &st = toState.names();
+    foreach(Instance::SubsetWidget *s, d->subsets)
+    {
+        // Save the fold open/closed state.
+        st.set(name() + "." + s->name() + ".open", s->isOpen());
+    }
+}
+
+void GameSelectionWidget::operator << (PersistentState const &fromState)
+{
+    Record const &st = fromState.names();
+    foreach(Instance::SubsetWidget *s, d->subsets)
+    {
+        // Restore the fold open/closed state.
+        if(st[name() + "." + s->name() + ".open"].value().isTrue())
+        {
+            s->open();
+        }
+        else
+        {
+            s->close(0); // instantly
+        }
     }
 }
 
