@@ -1,4 +1,4 @@
-HEADERS += \
+publicHeaders(root, \
     include/de/AccessorValue \
     include/de/Archive \
     include/de/ArrayValue \
@@ -51,9 +51,10 @@ HEADERS += \
     include/de/WaitableFIFO \
     include/de/Writer \
     include/de/Zeroed \
-    include/de/ZipArchive
+    include/de/ZipArchive \
+)
 
-HEADERS += \
+publicHeaders(data, \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \
@@ -105,7 +106,8 @@ HEADERS += \
     include/de/data/waitablefifo.h \
     include/de/data/writer.h \
     include/de/data/zeroed.h \
-    include/de/data/ziparchive.h
+    include/de/data/ziparchive.h \
+)
 
 SOURCES += \
     src/data/accessorvalue.cpp \

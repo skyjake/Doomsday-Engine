@@ -20,12 +20,12 @@ include(../config.pri)
 QMAKE_STRIP = true
 
 # Update the PK3 files.
-!deng_nopackres {
+!deng_sdk:!deng_nopackres {
     runPython2InDir($$PWD/scripts/, packres.py --quiet \"$$OUT_PWD/..\")
 }
 
 # Install the launcher.
-deng_snowberry {
+!deng_sdk:deng_snowberry {
     SB_ROOT = ../../snowberry
     SB_DIR = $$DENG_BASE_DIR/snowberry
 

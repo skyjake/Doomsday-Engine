@@ -45,7 +45,7 @@ else:unix {
 }
 
 # Public headers.
-HEADERS += \
+publicHeaders(root, \
     include/de/Atlas \
     include/de/AtlasTexture \
     include/de/Canvas \
@@ -78,7 +78,9 @@ HEADERS += \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
     include/de/VertexBuilder \
-    \
+)
+
+publicHeaders(gui, \
     include/de/gui/atlas.h \
     include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
@@ -115,7 +117,8 @@ HEADERS += \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
     include/de/gui/rowatlasallocator.h \
-    include/de/gui/vertexbuilder.h
+    include/de/gui/vertexbuilder.h \
+)
 
 # Sources and private headers.
 SOURCES +=  \

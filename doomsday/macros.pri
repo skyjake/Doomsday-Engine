@@ -64,3 +64,20 @@ macx {
         doPostLink("install_name_tool -id @executable_path/../DengPlugins/$${1}.bundle/Versions/$$2/$$1 $${1}.bundle/Versions/$$2/$$1")
     }
 }
+
+defineTest(publicHeaders) {
+    # 1: id ("root" for the main include dir)
+    # 2: header files
+    deng_sdk {
+        dir = $$1
+        contains(1, root): dir = .
+        eval(sdk_headers_$${1}.files += $$2)
+        eval(sdk_headers_$${1}.path = $$DENG_SDK_HEADER_DIR/$$dir)
+        INSTALLS *= sdk_headers_$$1
+        export(INSTALLS)
+        export(sdk_headers_$${1}.files)
+        export(sdk_headers_$${1}.path)
+    }
+    HEADERS += $$2
+    export(HEADERS)
+}

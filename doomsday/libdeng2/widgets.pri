@@ -1,4 +1,4 @@
-HEADERS += \
+publicHeaders(root, \
     include/de/Action \
     include/de/Animation \
     include/de/AnimationVector \
@@ -9,9 +9,10 @@ HEADERS += \
     include/de/RuleRectangle \
     include/de/RootWidget \
     include/de/ScalarRule \
-    include/de/Widget
+    include/de/Widget \
+)
 
-HEADERS += \
+publicHeaders(widgets, \
     include/de/widgets/action.h \
     include/de/widgets/animation.h \
     include/de/widgets/animationvector.h \
@@ -24,7 +25,8 @@ HEADERS += \
     include/de/widgets/rulebank.h \
     include/de/widgets/rules.h \
     include/de/widgets/scalarrule.h \
-    include/de/widgets/widget.h
+    include/de/widgets/widget.h \
+)
 
 SOURCES += \
     src/widgets/action.cpp \

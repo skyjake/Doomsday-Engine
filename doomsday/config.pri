@@ -74,6 +74,12 @@ CONFIG(debug, debug|release) {
     DEFINES += NDEBUG
 }
 
+# SDK build.
+deng_sdk {
+    DEFINES += DENG_SDK_BUILD
+    echo("SDK build.")
+}
+
 # Debugging options.
 deng_fakememoryzone: DEFINES += LIBDENG_FAKE_MEMORY_ZONE
 
@@ -99,6 +105,10 @@ else:macx: include(config_macx.pri)
      else: include(config_unix.pri)
 
 # Apply deng_* Configuration -------------------------------------------------
+
+ !isEmpty(SDK_PREFIX): DENG_SDK_HEADER_DIR = $$SDK_PREFIX/include/doomsday/de
+else:!isEmpty(PREFIX): DENG_SDK_HEADER_DIR = $$PREFIX/include/doomsday/de
+                 else: DENG_SDK_HEADER_DIR = $$OUT_PWD/include/de
 
 unix:deng_ccache {
     # ccache can be used to speed up recompilation.
