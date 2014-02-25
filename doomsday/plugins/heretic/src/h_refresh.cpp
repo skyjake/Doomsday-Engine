@@ -1,30 +1,25 @@
-/**\file h_refresh.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file h_refresh.cpp  Heretic specific refresh functions/utilities.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <string.h>
-
 #include "jheretic.h"
+#include "h_refresh.h"
 
 #include "dmu_lib.h"
 #include "hu_stuff.h"
@@ -41,23 +36,13 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "hu_automap.h"
-
-/**
- * Updates the status flags for all visible things.
- */
-void R_SetAllDoomsdayFlags(void);
-
-extern const float defFontRGB[];
-extern const float defFontRGB2[];
+#include <cstring>
 
 float quitDarkenOpacity = 0;
 
-/**
- * Draws a special filter over the screen.
- */
-void G_RendSpecialFilter(int player, const RectRaw* region)
+void G_RendSpecialFilter(int player, RectRaw const *region)
 {
-    player_t* plr = players + player;
+    player_t *plr = players + player;
     const struct filter_s {
         float colorRGB[3];
         int blendArg1, blendArg2;
@@ -84,8 +69,7 @@ void G_RendSpecialFilter(int player, const RectRaw* region)
 
 dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
-    if(!rgba)
-        return false;
+    if(!rgba) return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
@@ -114,13 +98,9 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
     return false;
 }
 
-/**
- * Sets the new palette based upon current values of player->damageCount
- * and player->bonusCount
- */
 void R_UpdateViewFilter(int player)
 {
-    player_t* plr = players + player;
+    player_t *plr = players + player;
     int palette = 0;
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -162,7 +142,7 @@ void R_UpdateViewFilter(int player)
 
 void G_RendPlayerView(int player)
 {
-    player_t* plr = &players[player];
+    player_t *plr = &players[player];
     float pspriteOffsetY;
     dd_bool isFullBright = (plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
                             (plr->powers[PT_INVULNERABILITY] & 8);
@@ -191,56 +171,7 @@ void G_RendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-#if 0
-static void rendHUD(int player, const RectRaw* portGeometry)
-{
-    if(player < 0 || player >= MAXPLAYERS) return;
-    if(G_GameState() != GS_MAP) return;
-    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
-    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
-
-    ST_Drawer(player);
-    HU_DrawScoreBoard(player);
-    Hu_MapTitleDrawer(portGeometry);
-}
-
-void H_DrawViewPort(int port, const RectRaw* portGeometry,
-    const RectRaw* windowGeometry, int player, int layer)
-{
-    if(layer != 0)
-    {
-        rendHUD(player, portGeometry);
-        return;
-    }
-
-    switch(G_GameState())
-    {
-    case GS_MAP: {
-        player_t* plr = players + player;
-
-        if(!ST_AutomapObscures2(player, windowGeometry))
-        {
-            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
-
-            rendPlayerView(player);
-            rendSpecialFilter(player, windowGeometry);
-
-            // Crosshair.
-            if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
-                X_Drawer(player);
-        }
-        break;
-      }
-    case GS_STARTUP:
-        DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
-        break;
-
-    default: break;
-    }
-}
-#endif
-
-void H_DrawWindow(const Size2Raw* windowSize)
+void H_DrawWindow(Size2Raw const *windowSize)
 {
     if(G_GameState() == GS_INTERMISSION)
     {
@@ -256,17 +187,16 @@ void H_DrawWindow(const Size2Raw* windowSize)
     }
 }
 
-void H_EndFrame(void)
+void H_EndFrame()
 {
-    int i;
-
     if(G_GameState() != GS_MAP) return;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
+        player_t *plr = players + i;
 
-        if(!plr->plr->inGame || !plr->plr->mo) continue;
+        if(!plr->plr->inGame) continue;
+        if(!plr->plr->mo) continue;
 
         // View angles are updated with fractional ticks, so we can just use the current values.
         R_SetViewAngle(i, Player_ViewYawAngle(i));
@@ -274,20 +204,27 @@ void H_EndFrame(void)
     }
 }
 
-void Mobj_UpdateColorMap(mobj_t* mo)
+void Mobj_UpdateColorMap(mobj_t *mo)
 {
+    DENG2_ASSERT(mo != 0);
+
     if(mo->flags & MF_TRANSLATION)
+    {
         mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+    }
     else
+    {
         mo->tmap = 0;
+    }
 }
 
 /**
- * Updates the mobj flags used by Doomsday with the state of our local flags
- * for the given mobj.
+ * Updates the mobj flags used by Doomsday with the state of our local flags for the given mobj.
  */
-void R_SetDoomsdayFlags(mobj_t* mo)
+void R_SetDoomsdayFlags(mobj_t *mo)
 {
+    DENG2_ASSERT(mo != 0);
+
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
     {
@@ -348,20 +285,15 @@ void R_SetDoomsdayFlags(mobj_t* mo)
     Mobj_UpdateColorMap(mo);
 }
 
-void R_SetAllDoomsdayFlags(void)
+void R_SetAllDoomsdayFlags()
 {
-    mobj_t* iter;
-    int i;
-
     if(G_GameState() != GS_MAP)
         return;
 
     // Only visible things are in the sector thinglists, so this is good.
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
+    for(mobj_t *iter = (mobj_t *)P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
-        {
-            R_SetDoomsdayFlags(iter);
-        }
+        R_SetDoomsdayFlags(iter);
     }
 }

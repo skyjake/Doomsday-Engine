@@ -88,8 +88,8 @@ CHEAT_FUNC(InvItem)
 
 CHEAT_FUNC(InvItem2)
 {
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED(args);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, TXT_CHEATINVITEMS2);
     S_LocalSound(SFX_DORCLS, NULL);
@@ -99,28 +99,25 @@ CHEAT_FUNC(InvItem2)
 
 CHEAT_FUNC(InvItem3)
 {
-    player_t *plr = &players[player];
-    inventoryitemtype_t type;
-    int count;
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    player_t *plr = &players[player];
 
     if(gameRules.skill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    type  = args[0] - 'a' + 1;
-    count = args[1] - '0';
+    inventoryitemtype_t type  = inventoryitemtype_t(args[0] - 'a' + 1);
+    int count                 = args[1] - '0';
     if(type > IIT_NONE && type < NUM_INVENTORYITEM_TYPES && count > 0 && count < 10)
     {
-        int i;
         if(gameMode == heretic_shareware && (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
         {
             P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATITEMSFAIL);
             return false;
         }
 
-        for(i = 0; i < count; ++i)
+        for(int i = 0; i < count; ++i)
         {
             P_InventoryGive(player, type, false);
         }
@@ -476,10 +473,10 @@ D_CMD(CheatGive)
         case 'i': // Inventory items.
             if(i < stuffLen)
             {
-                char* end;
-                long idx;
+                char *end;
                 errno = 0;
-                idx = strtol(&buf[i+1], &end, 0);
+                long idx = strtol(&buf[i+1], &end, 0);
+
                 if(end != &buf[i+1] && errno != ERANGE)
                 {
                     i += end - &buf[i+1];
@@ -494,27 +491,27 @@ D_CMD(CheatGive)
                     if(!(gameMode == heretic_shareware &&
                          (idx == IIT_SUPERHEALTH || idx == IIT_TELEPORT)))
                     {
-                        int j;
-                        for(j = 0; j < MAXINVITEMCOUNT; ++j)
-                            P_InventoryGive(player, idx, false);
+                        for(int j = 0; j < MAXINVITEMCOUNT; ++j)
+                        {
+                            P_InventoryGive(player, inventoryitemtype_t(idx), false);
+                        }
                     }
                     break;
                 }
             }
 
             // Give all inventory items.
-            { inventoryitemtype_t type;
-            for(type = IIT_FIRST; type < NUM_INVENTORYITEM_TYPES; ++type)
+            for(int type = IIT_FIRST; type < NUM_INVENTORYITEM_TYPES; ++type)
             {
                 if(gameMode == heretic_shareware &&
                    (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
                     continue;
 
-                { int i;
-                for(i = 0; i < MAXINVITEMCOUNT; ++i)
-                    P_InventoryGive(player, type, false);
+                for(int i = 0; i < MAXINVITEMCOUNT; ++i)
+                {
+                    P_InventoryGive(player, inventoryitemtype_t(type), false);
                 }
-            }}
+            }
             break;
 
         case 'h':

@@ -75,10 +75,10 @@ SOURCES += \
     src/h_api.c \
     src/h_console.c \
     src/h_main.cpp \
-    src/h_refresh.c \
+    src/h_refresh.cpp \
     src/hereticv13gamestatereader.cpp \
-    src/in_lude.c \
-    src/m_cheat.c \
+    src/in_lude.cpp \
+    src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \

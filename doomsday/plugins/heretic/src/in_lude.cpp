@@ -1,4 +1,4 @@
-/** @file in_lude.c  Heretic intermission/stat screens.
+/** @file in_lude.cpp  Heretic intermission/stat screens.
  *
  * @todo optimize: Do not repeatedly compose map URIs.
  *
@@ -21,6 +21,7 @@
  */
 
 #include "jheretic.h"
+#include "in_lude.h"
 
 #include "hu_stuff.h"
 #include "d_net.h"
@@ -28,7 +29,7 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 
-#include <string.h>
+#include <cstring>
 
 typedef enum gametype_e {
     SINGLE,
@@ -36,23 +37,24 @@ typedef enum gametype_e {
     DEATHMATCH
 } gametype_t;
 
-typedef struct teaminfo_s {
-    int             members;
-    int             frags[NUMTEAMS];
-    int             totalFrags;
-} teaminfo_t;
+struct teaminfo_t
+{
+    int members;
+    int frags[NUMTEAMS];
+    int totalFrags;
+};
 
-void    IN_DrawOldLevel(void);
-void    IN_DrawYAH(void);
-void    IN_DrawStatBack(void);
-void    IN_DrawSingleStats(void);
-void    IN_DrawCoopStats(void);
-void    IN_DrawDMStats(void);
+void IN_DrawOldLevel();
+void IN_DrawYAH();
+void IN_DrawStatBack();
+void IN_DrawSingleStats();
+void IN_DrawCoopStats();
+void IN_DrawDMStats();
 
 dd_bool intermission;
 
-int     interState = 0;
-int     interTime = -1;
+int interState;
+int interTime = -1;
 
 // Used for timing of background animation.
 static int bcnt;
@@ -62,7 +64,7 @@ static wbstartstruct_t *wbs;
 
 static dd_bool skipIntermission;
 
-static int oldInterTime = 0;
+static int oldInterTime;
 static gametype_t gameType;
 
 static int cnt;
@@ -94,37 +96,37 @@ static char* killersText[] = { "K", "I", "L", "L", "E", "R", "S" };
 
 static Point2Raw YAHspot[3][9] = {
     {
-     {172, 78},
-     {86, 90},
-     {73, 66},
-     {159, 95},
-     {148, 126},
-     {132, 54},
-     {131, 74},
-     {208, 138},
-     {52, 101}
+     Point2Raw(172, 78),
+     Point2Raw(86, 90),
+     Point2Raw(73, 66),
+     Point2Raw(159, 95),
+     Point2Raw(148, 126),
+     Point2Raw(132, 54),
+     Point2Raw(131, 74),
+     Point2Raw(208, 138),
+     Point2Raw(52, 10)
      },
     {
-     {218, 57},
-     {137, 81},
-     {155, 124},
-     {171, 68},
-     {250, 86},
-     {136, 98},
-     {203, 90},
-     {220, 140},
-     {279, 106}
+     Point2Raw(218, 57),
+     Point2Raw(137, 81),
+     Point2Raw(155, 124),
+     Point2Raw(171, 68),
+     Point2Raw(250, 86),
+     Point2Raw(136, 98),
+     Point2Raw(203, 90),
+     Point2Raw(220, 140),
+     Point2Raw(279, 106)
      },
     {
-     {86, 99},
-     {124, 103},
-     {154, 79},
-     {202, 83},
-     {178, 59},
-     {142, 58},
-     {219, 66},
-     {247, 57},
-     {107, 80}
+     Point2Raw(86, 99),
+     Point2Raw(124, 103),
+     Point2Raw(154, 79),
+     Point2Raw(202, 83),
+     Point2Raw(178, 59),
+     Point2Raw(142, 58),
+     Point2Raw(219, 66),
+     Point2Raw(247, 57),
+     Point2Raw(107, 80)
      }
 };
 
@@ -566,7 +568,8 @@ void IN_Drawer(void)
     if(interState != -1)
         oldInterState = interState;
 
-    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.inludeScaleMode);
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT,
+                                   Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     switch(interState)
@@ -635,9 +638,9 @@ void IN_Drawer(void)
     GL_EndBorderedProjection(&bp);
 }
 
-void IN_DrawStatBack(void)
+void IN_DrawStatBack()
 {
-    DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Flats:FLOOR16")), DGL_REPEAT, DGL_REPEAT);
+    DGL_SetMaterialUI((Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Flats:FLOOR16")), DGL_REPEAT, DGL_REPEAT);
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, 1);
@@ -646,7 +649,7 @@ void IN_DrawStatBack(void)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void IN_DrawOldLevel(void)
+void IN_DrawOldLevel()
 {
     Uri *oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
 
