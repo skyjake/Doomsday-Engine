@@ -137,9 +137,30 @@ struct mobj_s dummyThing;
 /* ADD NEW XG CLASSES TO THE END - ORIGINAL INDICES MUST STAY THE SAME!!! */
 xgclass_t xgClasses[NUMXGCLASSES] =
 {
-    { NULL, NULL, TRAV_NONE, 0, 1, 0, "None" },
+    { NULL, NULL, TRAV_NONE, 0, 1, 0, "None",
       // Dummy class (has no functions but enables use of secondary actions) (no params)
-
+      {{XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+      }
+    },
     { de::function_cast<int (*)()>(XL_DoChainSequence), NULL, TRAV_NONE, 0, 1, 0, "Chain Sequence",
       // Excute a chain of other XG line types (a zero ends the list)
        {{XGPF_INT, "Chain Flags", "chsf_", 0},              // ip0: (chsf_) chain sequence flags
@@ -503,9 +524,30 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "", "", -1}
       }
     },
-    { de::function_cast<int (*)()>(XL_DoExplode), NULL, TRAV_NONE, 0, 1, 0, "Explode" },
+    { de::function_cast<int (*)()>(XL_DoExplode), NULL, TRAV_NONE, 0, 1, 0, "Explode",
       // Explodes the activator (no params).
-
+      {{XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+      }
+    },
     { de::function_cast<int (*)()>(XSTrav_PlaneMaterial), NULL, TRAV_PLANES, 0, 1, 0, "Plane Material",
       // Change the material and/or surface color of a plane.
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0 : (plane ref) plane(s) to change
@@ -555,9 +597,30 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "", "", -1}
       }
     },
-    { de::function_cast<int (*)()>(XL_DoCommand), NULL, TRAV_NONE, 0, 1, 0, "Command" },
+    { de::function_cast<int (*)()>(XL_DoCommand), NULL, TRAV_NONE, 0, 1, 0, "Command",
       // Executes a console command (CCmd)
-
+      {{XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+       {XGPF_INT, "", "", -1},
+      }
+    },
     { de::function_cast<int (*)()>(XSTrav_SectorSound), NULL, TRAV_SECTORS, 0, 1, 0, "Sector Sound",
       // Plays a sound in sector(s)
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to play the sound in
