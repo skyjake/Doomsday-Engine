@@ -1172,6 +1172,8 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
 
     // Send the message to everybody.
     NetSv_SendMessage(DDSP_ALL_PLAYERS, buf);
+#else
+    DENG2_UNUSED3(killer, fragged, stomping);
 #endif
 }
 

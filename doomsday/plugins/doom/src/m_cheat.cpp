@@ -115,11 +115,12 @@ void G_RegisterCheats(void)
 
 CHEAT_FUNC(Music)
 {
+    DENG2_UNUSED(numArgs);
+
     player_t *plr = &players[player];
     int musnum;
 
-    DENG_ASSERT(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(gameModeBits & GM_ANY_DOOM2)
         musnum = (args[0] - '0') * 10 + (args[1] - '0');
@@ -138,10 +139,11 @@ CHEAT_FUNC(Music)
 
 CHEAT_FUNC(Reveal)
 {
+    DENG2_UNUSED2(args, numArgs);
+
     player_t *plr = &players[player];
 
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(IS_NETGAME && G_Rules().deathmatch) return false;
 
@@ -157,8 +159,8 @@ CHEAT_FUNC(Reveal)
 
 CHEAT_FUNC(Powerup)
 {
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, STSTR_BEHOLD);
     return true;
@@ -166,6 +168,8 @@ CHEAT_FUNC(Powerup)
 
 CHEAT_FUNC(Powerup2)
 {
+    DENG2_UNUSED(numArgs);
+
     struct mnemonic_pair_s {
         char vanilla;
         char give;
@@ -179,11 +183,10 @@ CHEAT_FUNC(Powerup2)
         /*PT_INFRARED*/         { 'l', 'g' }
     };
     static const int numMnemonics = (int)(sizeof(mnemonics) / sizeof(mnemonics[0]));
-    int i;
 
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    for(i = 0; i < numMnemonics; ++i)
+    for(int i = 0; i < numMnemonics; ++i)
     {
         if(args[0] == mnemonics[i].vanilla)
         {
@@ -196,11 +199,12 @@ CHEAT_FUNC(Powerup2)
 
 CHEAT_FUNC(MyPos)
 {
+    DENG2_UNUSED2(args, numArgs);
+
     player_t *plr = &players[player];
     char buf[80];
 
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     sprintf(buf, "ang=0x%x;x,y,z=(%g,%g,%g)",
             players[CONSOLEPLAYER].plr->mo->angle,
@@ -217,6 +221,8 @@ CHEAT_FUNC(MyPos)
  */
 D_CMD(Cheat)
 {
+    DENG2_UNUSED2(src, argc);
+
     // Give each of the characters in argument two to the ST event handler.
     int i, len = (int)strlen(argv[1]);
     for(i = 0; i < len; ++i)
@@ -234,6 +240,8 @@ D_CMD(Cheat)
 
 D_CMD(CheatGod)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -280,6 +288,8 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -315,10 +325,8 @@ D_CMD(CheatNoClip)
     return true;
 }
 
-static int suicideResponse(msgresponse_t response, int userValue, void *userPointer)
+static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
-    DENG_UNUSED(userValue);
-    DENG_UNUSED(userPointer);
     if(response == MSG_YES)
     {
         if(IS_NETGAME && IS_CLIENT)
@@ -336,6 +344,8 @@ static int suicideResponse(msgresponse_t response, int userValue, void *userPoin
 
 D_CMD(CheatSuicide)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         player_t *plr;
@@ -371,6 +381,8 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
+    DENG2_UNUSED(argc);
+
     int option, i;
 
     // Server operator can always reveal.
@@ -412,6 +424,8 @@ static void togglePower(player_t *player, powertype_t powerType)
 
 D_CMD(CheatGive)
 {
+    DENG2_UNUSED(src);
+
     char buf[100];
     int player = CONSOLEPLAYER;
     player_t *plr;
@@ -645,6 +659,8 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -665,6 +681,8 @@ D_CMD(CheatMassacre)
 
 D_CMD(CheatWhere)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     player_t *plr = &players[CONSOLEPLAYER];
     char textBuffer[256];
     Sector *sector;
@@ -708,6 +726,8 @@ D_CMD(CheatWhere)
  */
 D_CMD(CheatLeaveMap)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     // Only the server operator can end the map this way.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
         return false;

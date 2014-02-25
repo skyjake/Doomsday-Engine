@@ -2582,6 +2582,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {
                         xgclassparm_t const& iParm = xgClassLinks[l->lineClass].iparm[i];
 
+                        if(!iParm.name || !iParm.name[0]) continue;
                         if(!ISLABEL(iParm.name)) continue;
 
                         if(iParm.flagPrefix && iParm.flagPrefix[0])

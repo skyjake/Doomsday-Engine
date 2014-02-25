@@ -161,8 +161,9 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Line Type 15", "", -1},                 // ip16: ""  ""  ""
         {XGPF_INT, "Line Type 16", "", -1},                 // ip17: ""  ""  ""
         {XGPF_INT, "Line Type 17", "", -1},                 // ip18: ""  ""  ""
-        {XGPF_INT, "Line Type 18", "", -1} }},              // ip19: ""  ""  ""
-
+        {XGPF_INT, "Line Type 18", "", -1}                  // ip19: ""  ""  ""
+       }
+    },
     { de::function_cast<int (*)()>(XSTrav_MovePlane), XS_InitMovePlane, TRAV_PLANES, 0, 1, 0, "Move Plane",
       // Move one or more planes. Optionaly change textures/types on start/end
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0: (plane ref) plane(s) to move.
@@ -179,8 +180,14 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Start Type Ref", "lpref_", 11},         // ip11: (plane ref) start sector type (spec: use i12 as type ID)
         {XGPF_INT, "Start Type Num", "", -1},               // ip12: data component or type ID
         {XGPF_INT, "End Type Ref", "lpref_", 13},           // ip13: (plane ref) end sector type (spec: use i14 as type ID)
-        {XGPF_INT, "End Type Num", "", -1} }},              // ip14: data component or type ID
-
+        {XGPF_INT, "End Type Num", "", -1},                 // ip14: data component or type ID
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XSTrav_BuildStairs), XS_InitStairBuilder, TRAV_PLANES, 0, 1, 0, "Build Stairs",
       // Moves one or more planes, incrementing their height with each move
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0: (plane ref) plane to start from
@@ -190,34 +197,117 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Start Sound", "", 4 | MAP_SND},         // ip4: start build sound (doesn't wait)
         {XGPF_INT, "Step Start Sound", "", 5 | MAP_SND},    // ip5: step start sound
         {XGPF_INT, "Step End Sound", "", 6 | MAP_SND},      // ip6: step end sound
-        {XGPF_INT, "Step Move Sound", "", 7 | MAP_SND} }},  // ip7: step move sound
-
+        {XGPF_INT, "Step Move Sound", "", 7 | MAP_SND},     // ip7: step move sound
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XL_DoDamage), NULL, TRAV_NONE, 0, 1, 0, "Damage",
       // Deals health damage to the activator
        {{XGPF_INT, "Min Delta", "", -1},                    // ip0: min damage delta
         {XGPF_INT, "Max Delta", "", -1},                    // ip1: max damage delta
         {XGPF_INT, "Min Limit", "", -1},                    // ip2: min limit (wont damage if health bellow)
-        {XGPF_INT, "Max Limit", "", -1} }},                 // ip3: max limit (wont damage if health above)
-
+        {XGPF_INT, "Max Limit", "", -1},                    // ip3: max limit (wont damage if health above)
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+      }
+    },
     { de::function_cast<int (*)()>(XL_DoPower), NULL, TRAV_NONE, 0, 1, 0, "Power",
       // Deals armor damage to the activator (must be a player)
        {{XGPF_INT, "Min Delta", "", -1},                    // ip0: min power delta
         {XGPF_INT, "Max Delta", "", -1},                    // ip1: max power delta
         {XGPF_INT, "Min Limit", "", -1},                    // ip2: min limit
-        {XGPF_INT, "Max Limit", "", -1} }},                 // ip3: max limit
-
+        {XGPF_INT, "Max Limit", "", -1},                    // ip3: max limit
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_ChangeLineType), NULL, TRAV_LINES, 0, 1, 0, "Line Type",
       // Changes a line's type (must be an XG type)
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
-        {XGPF_INT, "Line Type", "", -1} }},                 // ip2: new type (must be an XG line type)
-
+        {XGPF_INT, "Line Type", "", -1},                    // ip2: new type (must be an XG line type)
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XSTrav_SectorType), NULL, TRAV_SECTORS, 0, 1, 0, "Sector Type",
       // Changes a sector's type (must be an XG type)
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
-        {XGPF_INT, "Sector Type", "", -1} }},               // ip2: new type (zero or an XG sector type)
-
+        {XGPF_INT, "Sector Type", "", -1},                  // ip2: new type (zero or an XG sector type)
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XSTrav_SectorLight), NULL, TRAV_SECTORS, 0, 1, 0, "Sector Light",
       // Change the light level and/or color  of the target sector(s).
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
@@ -231,50 +321,188 @@ xgclass_t xgClasses[NUMXGCLASSES] =
                                                             //      lightref_none makes ip7-9 absolute values
         {XGPF_INT, "Red Delta", "", -1},                    // ip7: offset to red delta
         {XGPF_INT, "Green Delta", "", -1},                  // ip8: offset to green delta
-        {XGPF_INT, "Blue Delta", "", -1} }},                // ip9: offset to blue delta
-
+        {XGPF_INT, "Blue Delta", "", -1},                   // ip9: offset to blue delta
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_Activate), NULL, TRAV_LINES, 0, 1, 0, "Activate",
       // Sends a chain event to all the referenced lines
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to activate
-        {XGPF_INT, "Target Num", "", -1} }},                // ip1:
-
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XL_DoKey), NULL, TRAV_NONE, 0, 1, 0, "Key",
       // Gives/takes keys to/from the activator (must be a player)
       // Params are bitfields! Bit 1 (0x1) corresponds key 1, bit 2 (0x2) key 2, etc.
        {{XGPF_INT, "Give Keys", "", -1},                    // ip0: keys to give
-        {XGPF_INT, "Take Keys", "", -1} }},                 // ip1: keys to take away.
-
+        {XGPF_INT, "Take Keys", "", -1},                    // ip1: keys to take away.
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_Music), NULL, TRAV_LINES, 2, 3, 0, "Music",
       // Changes the music track being played
        {{XGPF_INT, "Song ID", "ldref_", 0 | MAP_MUS},       // ip0: song id/name or (line data ref from ip2)
         {XGPF_INT, "Play Looped", "", -1},                  // ip1: non-zero means play looped
         {XGPF_INT, "Data Ref", "lref_", 2},                 // ip2: (line ref) used with line data ref eg set music track to line-tag
-        {XGPF_INT, "Data Num", "", -1} }},                  // ip3:
-
+        {XGPF_INT, "Data Num", "", -1},                     // ip3:
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_LineCount), NULL, TRAV_LINES, 0, 1, 0, "Line Count",
       // Changes the XG line(s)' internal activation counter
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Set Absolute", "", -1},                 // ip2: non-zero makes ip3 absolute
-        {XGPF_INT, "Count Delta", "", -1} }},               // ip3: count delta or absolute
-
+        {XGPF_INT, "Count Delta", "", -1},                  // ip3: count delta or absolute
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_LeaveMap), NULL, TRAV_LINES, 1, 2, 0, "Leave Map",
       // Exits the current map
        {{XGPF_INT, "Secret Exit", "", -1},                  // ip0: non-zero goto secret map
         {XGPF_INT, "Data Ref", "lref_", 1},                 // ip1: (line ref) line to acquire (line data ref) from
         {XGPF_INT, "Data Num", "", -1},                     // ip2:
-        {XGPF_INT, "Goto Map", "ldref_", 3} }},             // ip3: map ID or (line data ref from ip1)
-
+        {XGPF_INT, "Goto Map", "ldref_", 3},                // ip3: map ID or (line data ref from ip1)
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_DisableLine), NULL, TRAV_LINES, 0, 1, 0, "Disable Line",
       // Disables the referenced line(s) if active
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to disable
-        {XGPF_INT, "Target Num", "", -1} }},                // ip1:
-
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_EnableLine), NULL, TRAV_LINES, 0, 1, 0, "Enable Line",
       // Enables the referenced line(s) if active.
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to enable
-        {XGPF_INT, "Target Num", "", -1} }},                // ip1:
-
+        {XGPF_INT, "Target Num", "", -1},                   // ip1:
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XL_DoExplode), NULL, TRAV_NONE, 0, 1, 0, "Explode" },
       // Explodes the activator (no params).
 
@@ -282,12 +510,26 @@ xgclass_t xgClasses[NUMXGCLASSES] =
       // Change the material and/or surface color of a plane.
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0 : (plane ref) plane(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1 : ref data
-        {XGPF_INT, "Material Ref", "spref_", 2},             // ip2 : Texture ref
-        {XGPF_INT, "Material Num", "", 3 | MAP_MATERIAL},    // ip3 : texture number (flat), used with SPREF_NONE
+        {XGPF_INT, "Material Ref", "spref_", 2},            // ip2 : Texture ref
+        {XGPF_INT, "Material Num", "", 3 | MAP_MATERIAL},   // ip3 : texture number (flat), used with SPREF_NONE
         {XGPF_INT, "Red Delta", "", -1},                    // ip4 : plane surface color (red)
         {XGPF_INT, "Green Delta", "", -1},                  // ip5 : "" (green)
-        {XGPF_INT, "Blue Delta", "", -1} }},                // ip6 : "" (blue)
-
+        {XGPF_INT, "Blue Delta", "", -1},                   // ip6 : "" (blue)
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_ChangeWallMaterial), NULL, TRAV_LINES, 0, 1, 0, "Wall Material",
       // Changes material(s) on the referenced line(s).
       // Changes surface colour(s), alpha, mid textue blendmode and side flags
@@ -309,8 +551,10 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Middle Alpha Delta", "", -1},           // ip15:
         {XGPF_INT, "Bottom Red Delta", "", -1},             // ip16:
         {XGPF_INT, "Bottom Green Delta", "", -1},           // ip17:
-        {XGPF_INT, "Bottom Blue Delta", "", -1} }},         // ip18:
-
+        {XGPF_INT, "Bottom Blue Delta", "", -1},            // ip18:
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XL_DoCommand), NULL, TRAV_NONE, 0, 1, 0, "Command" },
       // Executes a console command (CCmd)
 
@@ -319,23 +563,73 @@ xgclass_t xgClasses[NUMXGCLASSES] =
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to play the sound in
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Sound ID", "", 2 | MAP_SND},            // ip2: sound name/id to play
-        {XGPF_INT, "Origin", "", -1} }},                    // ip3: non-zero = play from a specific origin (1=floor, 2=ceiling) else 0=center
-
+        {XGPF_INT, "Origin", "", -1},                       // ip3: non-zero = play from a specific origin (1=floor, 2=ceiling) else 0=center
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XSTrav_MimicSector), NULL, TRAV_SECTORS, 0, 1, 0, "Mimic Sector",
       // Copies all properties from target sector to destination sector(s)
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Mimic Ref", "spref_", 2},               // ip2: (spref) sector to mimic
-        {XGPF_INT, "Mimic Num", "", -1} }},                 // ip3:
-
+        {XGPF_INT, "Mimic Num", "", -1},                    // ip3:
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XSTrav_Teleport), NULL, TRAV_SECTORS, 0, 1, 0, "Teleport",
       // Teleports the activator to the first teleport exit in the target sector
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to teleport to (first acceptable target is used)
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "No Flash", "", -1},                     // ip2: non-zero = no flash (or sound)
         {XGPF_INT, "No Sound", "", -1},                     // ip3: non-zero = no sound
-        {XGPF_INT, "Always Stomp", "", -1} }},              // ip4: non-zero = Always telefrag
-
+        {XGPF_INT, "Always Stomp", "", -1},                 // ip4: non-zero = Always telefrag
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    },
     { de::function_cast<int (*)()>(XLTrav_LineTeleport), NULL, TRAV_LINES, 0, 1, 1 | XLE_CROSS, "Line Teleport",
       // Teleports the activator to the referenced line
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) teleport destination
@@ -343,36 +637,32 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "No Flash", "", -1},                     // ip2: non-zero = spawn MT_TFOG
         {XGPF_INT, "Teleport Sound", "", 3 | MAP_SND},      // ip3: sound ID/name to play (or silent)
         {XGPF_INT, "Exit Side", "", -1},                    // ip4: non-zero = exit from the back of the target line
-        {XGPF_INT, "Always Stomp", "", -1} }}               // ip5: non-zero = Always telefrag
+        {XGPF_INT, "Always Stomp", "", -1},                 // ip5: non-zero = Always telefrag
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "", "", -1}
+      }
+    }
 };
 
-cvartemplate_t xgCVars[] =
+void XG_Register()
 {
-    {"xg-dev", CVF_NO_ARCHIVE, CVT_INT, &xgDev, 0, 1},
-    {NULL}
-};
+    C_VAR_INT("xg-dev", &xgDev, CVF_NO_ARCHIVE, 0, 1);
 
-ccmdtemplate_t xgCCmds[] =
-{
-    {"movefloor",  NULL, CCmdMovePlane},
-    {"moveceil",   NULL, CCmdMovePlane},
-    {"movesec",    NULL, CCmdMovePlane},
-    {NULL}
-};
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Register XG CCmds & CVars (called during pre init)
- */
-void XG_Register(void)
-{
-    int i;
-
-    for(i = 0; xgCVars[i].path; ++i)
-        Con_AddVariable(xgCVars + i);
-    for(i = 0; xgCCmds[i].name; ++i)
-        Con_AddCommand(xgCCmds + i);
+    C_CMD("movefloor",  0, MovePlane);
+    C_CMD("moveceil",   0, MovePlane);
+    C_CMD("movesec",    0, MovePlane);
 }
 
 /**
@@ -422,7 +712,7 @@ void XG_Update(void)
 /**
  * Adds the given binary format line type to the generated types array
  */
-int XL_AddAutoGenType(linetype_t* newtype)
+int XL_AddAutoGenType(linetype_t * /*newtype*/)
 {
     return true;
 }
@@ -430,7 +720,7 @@ int XL_AddAutoGenType(linetype_t* newtype)
 /**
  * Converts a line ID number to a line type (BOOM support).
  */
-int XL_AutoGenType(int id, linetype_t* outptr)
+int XL_AutoGenType(int /*id*/, linetype_t * /*outptr*/)
 {
     return false; // Cos we don't work yet.
 
@@ -537,26 +827,23 @@ linetype_t* XL_GetType(int id)
 
 int XG_RandomInt(int min, int max)
 {
-    float               x;
+    if(max == min) return max;
 
-    if(max == min)
-        return max;
-    x = M_Random() / 256.0f; // Never reaches 1.
+    float x = M_Random() / 256.0f; // Never reaches 1.
     return (int) (min + x * (max - min) + x);
 }
 
 float XG_RandomPercentFloat(float value, int percent)
 {
-    float               i = (2 * M_Random() / 255.0f - 1) * percent / 100.0f;
-
+    float i = (2 * M_Random() / 255.0f - 1) * percent / 100.0f;
     return value * (1 + i);
 }
 
-int findXLThinker(thinker_t* th, void* context)
+int findXLThinker(thinker_t *th, void *context)
 {
-    xlthinker_t*        xl = (xlthinker_t*) th;
+    xlthinker_t *xl = (xlthinker_t *) th;
 
-    if(xl->line == (Line*) context)
+    if(xl->line == (Line *) context)
         return true; // Stop iteration, we've found it.
 
     return false; // Continue iteration.
@@ -632,8 +919,6 @@ int XL_TraversePlanes(Line *line, int refType, int ref, void *data, void *contex
     int tag;
     mobj_t *mo;
     dd_bool ok, findSecTagged;
-    Sector *sec;
-    xsector_t *xsec;
 
     if(xgDev)
     {
@@ -714,9 +999,11 @@ int XL_TraversePlanes(Line *line, int refType, int ref, void *data, void *contex
             // Find the first sector with the tag.
             IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
             IterList_RewindIterator(list);
+
+            Sector *sec;
             while((sec = (Sector *)IterList_MoveIterator(list)) != NULL)
             {
-                xsec = P_ToXSector(sec);
+                //xsector_t *xsec = P_ToXSector(sec);
 
                 if(refType == LPREF_TAGGED_FLOORS || refType == LPREF_TAGGED_CEILINGS)
                 {
@@ -925,15 +1212,13 @@ int XL_TraverseLines(Line* line, int rtype, int ref, void* data,
 }
 
 /**
- * @return              Value as determined by the reference type from the
- *                      specified line, using data from either the line
-*                       itself or context (will always be linetype_t).
+ * @return  Value as determined by the reference type from the specified line, using data
+ *          from either the line itself or context (will always be linetype_t).
  */
-int XL_ValidateLineRef(Line* line, int reftype, void* context,
-                       char* parmname)
+int XL_ValidateLineRef(Line *line, int reftype, void * /*context*/, char const *parmname)
 {
-    int                 answer = 0;
-    Side*               side;
+    int answer = 0;
+    Side *side;
 
     switch(reftype)
     {
@@ -1090,10 +1375,9 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
 /**
  * Executes the lines' function as defined by its class.
  */
-void XL_DoFunction(linetype_t* info, Line* line, int sideNum,
-                   mobj_t* actThing, int evType)
+void XL_DoFunction(linetype_t *info, Line *line, int sideNum, mobj_t *actThing, int evType)
 {
-    xgclass_t*          xgClass = &xgClasses[info->lineClass];
+    xgclass_t *xgClass = &xgClasses[info->lineClass];
 
     XG_Dev("XL_DoFunction: Line %i, side %i, activator id %i, event %s",
             P_ToIndex(line), sideNum, actThing ? actThing->thinker.id : 0,
@@ -1139,17 +1423,16 @@ void XL_DoFunction(linetype_t* info, Line* line, int sideNum,
     }
 }
 
-int XLTrav_QuickActivate(Line* line, dd_bool dummy, void* context,
-                                void* context2, mobj_t* activator)
+int XLTrav_QuickActivate(Line *line, dd_bool /*ceiling*/, void *context, void * /*context2*/,
+    mobj_t * /*activator*/)
 {
     if(line)
     {
-        xline_t*            xline = P_ToXLine(line);
-
+        xline_t *xline = P_ToXLine(line);
         if(xline->xg)
         {
             xline->xg->active = (context? true : false);
-            xline->xg->timer = XLTIMER_STOPPED; // Stop timer.
+            xline->xg->timer  = XLTIMER_STOPPED; // Stop timer.
         }
     }
 
@@ -1548,7 +1831,7 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
     mobj_t *flash;
     Line *line = (Line *) context;
     linetype_t *info = (linetype_t *) context2;
-    Vertex *newV1, *newV2, *oldV1, *oldV2;
+    Vertex /* *newV1,*/ *newV2, *oldV1/*, *oldV2*/;
     Sector *newFrontSec, *newBackSec;
     coord_t newPos[3], pos, s, c;
     coord_t oldLineDelta[2], newLineDelta[2];
@@ -1573,10 +1856,10 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
 
     // Retrieve a few properties to make this look neater.
     oldV1 = (Vertex *)P_GetPtrp(line, DMU_VERTEX0);
-    oldV2 = (Vertex *)P_GetPtrp(line, DMU_VERTEX1);
+    //oldV2 = (Vertex *)P_GetPtrp(line, DMU_VERTEX1);
     P_GetDoublepv(line, DMU_DXY, oldLineDelta);
 
-    newV1 = (Vertex *)P_GetPtrp(newLine, DMU_VERTEX0);
+    //newV1 = (Vertex *)P_GetPtrp(newLine, DMU_VERTEX0);
     newV2 = (Vertex *)P_GetPtrp(newLine, DMU_VERTEX1);
     P_GetDoublepv(newLine, DMU_DXY, newLineDelta);
     newFrontSec = (Sector *)P_GetPtrp(newLine, DMU_FRONT_SECTOR);
@@ -1663,9 +1946,9 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
     while(Line_PointOnSide(newLine, newPos) < 0 != side && --fudge >= 0)
     {
         if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
-            newPos[VY] -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);
+            newPos[VY] -= FIX2FLT(((newLineDelta[0] < 0) != side)? -1 : 1);
         else
-            newPos[VX] += FIX2FLT((newLineDelta[1] < 0) != side ? -1 : 1);
+            newPos[VX] += FIX2FLT(((newLineDelta[1] < 0) != side)? -1 : 1);
     }
 
     // Do the Teleport
@@ -1736,7 +2019,7 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
 #undef FUDGEFACTOR
 }
 
-dd_bool XL_ValidateMap(uint* map, int type)
+dd_bool XL_ValidateMap(uint *map, int /*type*/)
 {
     dd_bool result;
     uint bMap = *map, episode;

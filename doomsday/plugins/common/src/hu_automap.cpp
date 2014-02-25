@@ -78,50 +78,46 @@ static int playerColorPaletteIndices[NUMPLAYERCOLORS] = {
 
 static DGLuint amMaskTexture = 0; // Used to mask the map primitives.
 
-void UIAutomap_Register(void)
+void UIAutomap_Register()
 {
-    cvartemplate_t cvars[] = {
-        { "map-opacity", 0, CVT_FLOAT, &cfg.automapOpacity, 0, 1 },
+    C_VAR_FLOAT("map-opacity",              &cfg.automapOpacity,        0, 0, 1);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        { "map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1 },
+    C_VAR_BYTE ("map-babykeys",             &cfg.automapBabyKeys,       0, 0, 1);
 #endif
-        { "map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1 },
-        { "map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1 },
-        { "map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1 },
-        { "map-customcolors", 0, CVT_INT, &cfg.automapCustomColors, 0, 1 },
-        { "map-line-opacity", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1 },
-        { "map-line-width", 0, CVT_FLOAT, &cfg.automapLineWidth, .1f, 2 },
-        { "map-mobj-r", 0, CVT_FLOAT, &cfg.automapMobj[0], 0, 1 },
-        { "map-mobj-g", 0, CVT_FLOAT, &cfg.automapMobj[1], 0, 1 },
-        { "map-mobj-b", 0, CVT_FLOAT, &cfg.automapMobj[2], 0, 1 },
-        { "map-wall-r", 0, CVT_FLOAT, &cfg.automapL1[0], 0, 1 },
-        { "map-wall-g", 0, CVT_FLOAT, &cfg.automapL1[1], 0, 1 },
-        { "map-wall-b", 0, CVT_FLOAT, &cfg.automapL1[2], 0, 1 },
-        { "map-wall-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1 },
-        { "map-wall-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1 },
-        { "map-wall-unseen-b", 0, CVT_FLOAT, &cfg.automapL0[2], 0, 1 },
-        { "map-wall-floorchange-r", 0, CVT_FLOAT, &cfg.automapL2[0], 0, 1 },
-        { "map-wall-floorchange-g", 0, CVT_FLOAT, &cfg.automapL2[1], 0, 1 },
-        { "map-wall-floorchange-b", 0, CVT_FLOAT, &cfg.automapL2[2], 0, 1 },
-        { "map-wall-ceilingchange-r", 0, CVT_FLOAT, &cfg.automapL3[0], 0, 1 },
-        { "map-wall-ceilingchange-g", 0, CVT_FLOAT, &cfg.automapL3[1], 0, 1 },
-        { "map-wall-ceilingchange-b", 0, CVT_FLOAT, &cfg.automapL3[2], 0, 1 },
-        { "map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1 },
-        { "map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200 },
-        { "map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2 },
-        { "map-pan-speed", 0, CVT_FLOAT, &cfg.automapPanSpeed, 0, 1 },
-        { "map-pan-resetonopen", 0, CVT_BYTE, &cfg.automapPanResetOnOpen, 0, 1 },
-        { "map-rotate", 0, CVT_BYTE, &cfg.automapRotate, 0, 1 },
-        { "map-zoom-speed", 0, CVT_FLOAT, &cfg.automapZoomSpeed, 0, 1 },
-        { "map-open-timer", CVF_NO_MAX, CVT_FLOAT, &cfg.automapOpenSeconds, 0, 0 },
-        { "map-title-position", 0, CVT_BYTE, &cfg.automapTitleAtBottom, 0, 1},
-        { "rend-dev-freeze-map", CVF_NO_ARCHIVE, CVT_BYTE, &freezeMapRLs, 0, 1 },
+    C_VAR_FLOAT("map-background-r",         &cfg.automapBack[0],        0, 0, 1);
+    C_VAR_FLOAT("map-background-g",         &cfg.automapBack[1],        0, 0, 1);
+    C_VAR_FLOAT("map-background-b",         &cfg.automapBack[2],        0, 0, 1);
+    C_VAR_INT  ("map-customcolors",         &cfg.automapCustomColors,   0, 0, 1);
+    C_VAR_FLOAT( "map-line-opacity",        &cfg.automapLineAlpha,      0, 0, 1);
+    C_VAR_FLOAT("map-line-width",           &cfg.automapLineWidth,      0, .1f, 2);
+    C_VAR_FLOAT("map-mobj-r",               &cfg.automapMobj[0],        0, 0, 1);
+    C_VAR_FLOAT("map-mobj-g",               &cfg.automapMobj[1],        0, 0, 1);
+    C_VAR_FLOAT("map-mobj-b",               &cfg.automapMobj[2],        0, 0, 1);
+    C_VAR_FLOAT("map-wall-r",               &cfg.automapL1[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-g",               &cfg.automapL1[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-b",               &cfg.automapL1[2],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-unseen-r",        &cfg.automapL0[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-unseen-g",        &cfg.automapL0[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-unseen-b",        &cfg.automapL0[2],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-floorchange-r",   &cfg.automapL2[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-floorchange-g",   &cfg.automapL2[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-floorchange-b",   &cfg.automapL2[2],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-ceilingchange-r", &cfg.automapL3[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-ceilingchange-g", &cfg.automapL3[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-ceilingchange-b", &cfg.automapL3[2],          0, 0, 1);
+    C_VAR_BYTE ("map-door-colors",          &cfg.automapShowDoors,      0, 0, 1);
+    C_VAR_FLOAT("map-door-glow",            &cfg.automapDoorGlow,       0, 0, 200);
+    C_VAR_INT  ("map-huddisplay",           &cfg.automapHudDisplay,     0, 0, 2);
+    C_VAR_FLOAT("map-pan-speed",            &cfg.automapPanSpeed,       0, 0, 1);
+    C_VAR_BYTE ("map-pan-resetonopen",      &cfg.automapPanResetOnOpen, 0, 0, 1);
+    C_VAR_BYTE ("map-rotate",               &cfg.automapRotate,         0, 0, 1);
+    C_VAR_FLOAT("map-zoom-speed",           &cfg.automapZoomSpeed,      0, 0, 1);
+    C_VAR_FLOAT("map-open-timer",           &cfg.automapOpenSeconds,    CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE ("map-title-position",       &cfg.automapTitleAtBottom,  0, 0, 1);
+    C_VAR_BYTE ("rend-dev-freeze-map",      &freezeMapRLs,              CVF_NO_ARCHIVE, 0, 1);
 
-        // Aliases for old names:
-        { "map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1 },
-        { NULL }
-    };
-    Con_AddVariableList(cvars);
+    // Aliases for old names:
+    C_VAR_FLOAT("map-alpha-lines",          &cfg.automapLineAlpha,      0, 0, 1);
 }
 
 static void rotate2D(coord_t* x, coord_t* y, float angle)
@@ -939,16 +935,16 @@ static void drawPlayerMarker(int consoleNum, automapcfg_t* config)
 /**
  * Draws all players on the map using a line character
  */
-static void rendPlayerMarkers(uiwidget_t* obj)
+static void rendPlayerMarkers(uiwidget_t *ob)
 {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    int i;
-    assert(obj->type == GUI_AUTOMAP);
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_AUTOMAP);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    guidata_automap_t *am = (guidata_automap_t *)ob->typedata;
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         // Do not show markers for other players in deathmatch.
-        if(G_Rules().deathmatch && i != UIWidget_Player(obj))
+        if(G_Rules().deathmatch && i != UIWidget_Player(ob))
         {
             continue;
         }
@@ -1072,7 +1068,7 @@ static dd_bool interceptEdge(coord_t point[2], coord_t const startA[2], coord_t 
     return false;
 }
 
-static void positionPointInView(uiwidget_t* ob, coord_t point[2],
+static void positionPointInView(uiwidget_t * /*ob*/, coord_t point[2],
     coord_t const topLeft[2], coord_t const topRight[2], coord_t const bottomRight[2],
     coord_t const bottomLeft[2], coord_t const viewPoint[2])
 {
