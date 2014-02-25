@@ -562,47 +562,6 @@ Matrix4f GL_GetProjectionMatrix()
     return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip);
 }
 
-#if 0
-    // We're assuming pixels are squares.
-    float aspect = viewpw / (float) viewph;
-
-    if (vrCfg().mode() == VRConfig::OculusRift)
-    {
-        aspect = vrCfg().oculusRift().aspect();
-        // A little trigonometry to apply aspect ratio to angles
-        float x = tan(0.5 * de::degreeToRadian(Rend_FieldOfView()));
-        yfov = de::radianToDegree(2.0 * atan2(x/aspect, 1.0f));
-    }
-    else
-    {
-        yfov = Rend_FieldOfView() / aspect;
-    }
-
-    float fH = tan(0.5 * de::degreeToRadian(yfov)) * glNearClip;
-    float fW = fH*aspect;
-    /*
-     * Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
-     * Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
-     *  - AFS preserves identical near and far clipping planes in both views
-     *  - AFS shows items at/near infinity better
-     *  - AFS conforms to what stereo 3D photographers call "ortho stereo"
-     * Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only
-     * applies the viewpoint shift.
-     */
-    float frustumShift = 0;
-    if (vrCfg().frustumShift())
-    {
-        frustumShift = vrCfg().eyeShift() * glNearClip / vrCfg().screenDistance();
-    }
-
-    return Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
-                             -fH, fH,
-                             glNearClip, glFarClip) *
-           Matrix4f::translate(Vector3f(-vrCfg().eyeShift(), 0, 0)) *
-           Matrix4f::scale(Vector3f(1, 1, -1));
-}
-#endif
-
 void GL_ProjectionMatrix()
 {
     DENG_ASSERT_IN_MAIN_THREAD();

@@ -512,103 +512,31 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 
     if(useAngles)
     {
-        //bool scheduledLate = false;
-
         float yaw   = vang;
         float pitch = vpitch;
         float roll  = 0;
 
-        /*
-        static float storedPitch, storedRoll, storedYaw;
-        */
+        /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player
+        /// model.
 
         /*
-        if(VR::viewPositionHeld())
+         * Pitch and yaw can be taken directly from the head tracker, as the game is aware of
+         * these values and is syncing with them independently (however, game has more
+         * latency).
+         */
+        if((vrCfg().mode() == VRConfig::OculusRift) && vrCfg().oculusRift().isReady())
         {
-            roll  = storedRoll;
-            pitch = storedPitch;
-            yaw   = storedYaw;
-        }
-        else*/
+            Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
-        {
-            /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player
-            /// model.
+            // Use angles directly from the Rift for best response.
+            roll  = -radianToDegree(pry[1]);
+            pitch =  radianToDegree(pry[0]);
 
-            /*
-             * Pitch and yaw can be taken directly from the head tracker, as the game is aware of
-             * these values and is syncing with them independently (however, game has more
-             * latency).
-             */
-            if((vrCfg().mode() == VRConfig::OculusRift) && vrCfg().oculusRift().isReady())
-            {
-                Vector3f const pry = vrCfg().oculusRift().headOrientation();
-
-                // Use angles directly from the Rift for best response.
-                roll  = -radianToDegree(pry[1]);
-                pitch =  radianToDegree(pry[0]);
-
-#if 0
-
-                static float previousRiftYaw = 0;
-                static float previousVang2 = 0;
-
-                // Desired view angle without interpolation?
-                float vang2 = viewData->latest.angle / (float) ANGLE_MAX *360 - 90;
-
-                // Late-scheduled update
-                scheduledLate = true;
-                roll = -radianToDegree(pry[1]);
-                pitch = radianToDegree(pry[0]);
-
-                // Yaw might have a contribution from mouse/keyboard.
-                // So only late schedule if it seems to be head tracking only.
-                yaw = vang2; // default no late schedule
-                float currentRiftYaw = radianToDegree(pry[2]);
-                float dRiftYaw = currentRiftYaw - previousRiftYaw;
-                while (dRiftYaw > 180) dRiftYaw -= 360;
-                while (dRiftYaw < -180) dRiftYaw += 360;
-                float dVang = vang2 - previousVang2;
-                while (dVang > 180) dVang -= 360;
-                while (dVang < -180) dVang += 360;
-                if (abs(dVang) < 2.0 * abs(dRiftYaw)) // Mostly head motion
-                {
-                    yaw = storedYaw + dRiftYaw;
-                    float dy = vang2 - yaw;
-                    while (dy > 180) dy -= 360;
-                    while (dy < -180) dy += 360;
-                    yaw += 0.05 * dy; // ease slowly toward target angle
-                }
-                else
-                {
-                    yaw = vang2; // No interpolation if not from head tracker
-                }
-
-                previousRiftYaw = currentRiftYaw;
-                previousVang2 = vang2;
-#endif
-            }
-
-            /*
-            if(!scheduledLate)
-            {
-                // Vanilla angle update
-                roll  = 0;
-                pitch = vpitch;
-                yaw   = vang;
-            }*/
         }
 
         modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
                     Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
-
-        /*
-        // Keep these for possible use in later frames.
-        storedRoll  = roll;
-        storedPitch = pitch;
-        storedYaw   = yaw;
-        */
     }
 
     return (modelView *
