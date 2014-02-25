@@ -23,6 +23,7 @@
 #include <de/GuiWidget>
 #include <de/ButtonWidget>
 #include <de/LogWidget>
+#include <de/IPersistent>
 
 #include "consolecommandwidget.h"
 
@@ -34,7 +35,7 @@
  *
  * @ingroup gui
  */
-class ConsoleWidget : public de::GuiWidget
+class ConsoleWidget : public de::GuiWidget, public de::IPersistent
 {
     Q_OBJECT
 
@@ -62,6 +63,10 @@ public:
     void viewResized();
     void update();
     bool handleEvent(de::Event const &event);
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 signals:
     void commandModeChanged();

@@ -3,18 +3,17 @@
  * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Canvas"
@@ -85,6 +84,11 @@ DENG2_PIMPL(Canvas)
         resizeTimer.setSingleShot(true);
         QObject::connect(&resizeTimer, SIGNAL(timeout()), thisPublic, SLOT(updateSize()));
 #endif
+    }
+
+    ~Instance()
+    {
+        glDeinit();
     }
 
     void grabMouse()
@@ -343,6 +347,7 @@ void Canvas::resizeGL(int w, int h)
     if(d->currentSize != d->pendingSize)
     {
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+        qDebug() << "Canvas" << this << "triggered size to" << w << h << "from" << d->currentSize.asText();
         d->resizeTimer.start(100);
 #else
         updateSize();
@@ -352,7 +357,19 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::updateSize()
 {
-    d->currentSize = d->pendingSize;
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+    /*
+    if(d->parent && d->parent->isRecreationInProgress())
+    {
+        d->resizeTimer.start(100);
+        return;
+    }
+    */
+    qDebug() << this << "resizing now";
+#endif
+
+    makeCurrent();
+    d->currentSize = d->pendingSize; 
     d->reconfigureFramebuffer();
 
     DENG2_FOR_AUDIENCE(GLResize, i) i->canvasGLResized(*this);
@@ -386,7 +403,7 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    d->framebuf.glInit();
+    d->glInit();
     d->reconfigureFramebuffer();
 
     // Print some information.
@@ -414,10 +431,24 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
+    if(!d->parent || d->parent->isRecreationInProgress()) return;
+
+/*#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+    if(d->resizeTimer.isActive())
+    {
+        d->resizeTimer.stop();
+        updateSize();
+    }
+#endif*/
+
+    LIBGUI_ASSERT_GL_OK();
+
     // Make sure any changes to the state stack become effective.
     GLState::current().apply();
 
     DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void Canvas::focusInEvent(QFocusEvent*)

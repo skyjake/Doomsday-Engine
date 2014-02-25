@@ -3,16 +3,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -39,20 +39,20 @@ public:
 public:
     Margins(String const &defaultMargin = "gap");
 
-    void setLeft  (DotPath const &leftMarginId);
-    void setRight (DotPath const &rightMarginId);
-    void setTop   (DotPath const &topMarginId);
-    void setBottom(DotPath const &bottomMarginId);
-    void set      (ui::Direction dir, DotPath const &marginId);
-    void set      (DotPath const &marginId);
+    Margins &setLeft  (DotPath const &leftMarginId);
+    Margins &setRight (DotPath const &rightMarginId);
+    Margins &setTop   (DotPath const &topMarginId);
+    Margins &setBottom(DotPath const &bottomMarginId);
+    Margins &set      (ui::Direction dir, DotPath const &marginId);
+    Margins &set      (DotPath const &marginId);
 
-    void setLeft  (Rule const &rule);
-    void setRight (Rule const &rule);
-    void setTop   (Rule const &rule);
-    void setBottom(Rule const &rule);
-    void set      (ui::Direction dir, Rule const &rule);
-    void set      (Rule const &rule);
-    void setAll   (Margins const &margins);
+    Margins &setLeft  (Rule const &rule);
+    Margins &setRight (Rule const &rule);
+    Margins &setTop   (Rule const &rule);
+    Margins &setBottom(Rule const &rule);
+    Margins &set      (ui::Direction dir, Rule const &rule);
+    Margins &set      (Rule const &rule);
+    Margins &setAll   (Margins const &margins);
 
     Rule const &left() const;
     Rule const &right() const;

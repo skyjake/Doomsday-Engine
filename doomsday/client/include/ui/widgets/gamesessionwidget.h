@@ -36,6 +36,9 @@ public:
     de::ButtonWidget &infoButton();
     de::DocumentWidget &document();
 
+    /**
+     * Called immediately before the Info button is pressed.
+     */
     virtual void updateInfoContent();
 
 private:

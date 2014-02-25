@@ -1,9 +1,9 @@
-# The Doomsday Engine Project: GUI application framework for libdeng2
+# The Doomsday Engine Project -- GUI application framework for libdeng2
 # Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
-# This program is distributed under the GNU General Public License
-# version 2 (or, at your option, any later version). Please visit
-# http://www.gnu.org/licenses/gpl.html for details.
+# This program is distributed under the GNU Lesser General Public License
+# version 3 (or, at your option, any later version). Please visit
+# http://www.gnu.org/licenses/lgpl.html for details.
 
 include(../config.pri)
 
@@ -17,6 +17,7 @@ include(../dep_deng2.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_opengl.pri)
+include(../dep_rift.pri)
 
 DEFINES += __LIBAPPFW__
 INCLUDEPATH += include
@@ -25,17 +26,12 @@ win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
-else:macx {
-    #useFramework(Cocoa)
-}
-else:unix {
-    #LIBS += -lX11
-}
 
 # Public headers.
 HEADERS += \
     include/de/AtlasProceduralImage \
     include/de/BaseGuiApp \
+    include/de/BaseWindow \
     include/de/BlurWidget \
     include/de/ButtonWidget \
     include/de/ChildWidgetOrganizer \
@@ -55,13 +51,16 @@ HEADERS += \
     include/de/GuiRootWidget \
     include/de/GuiWidget \
     include/de/InputDialog \
+    include/de/IPersistent \
     include/de/LabelWidget \
     include/de/LineEditWidget \
     include/de/LogWidget \
     include/de/MenuWidget \
     include/de/MessageDialog \
     include/de/NotificationWidget \
+    include/de/OculusRift \
     include/de/PanelWidget \
+    include/de/PersistentState \
     include/de/PopupMenuWidget \
     include/de/PopupWidget \
     include/de/ProceduralImage \
@@ -71,10 +70,15 @@ HEADERS += \
     include/de/SequentialLayout \
     include/de/SignalAction \
     include/de/SliderWidget \
+    include/de/TabWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
+    include/de/VRWindowTransform \
+    include/de/WindowSystem \
+    include/de/WindowTransform \
     include/de/ui/ActionItem \
     include/de/ui/Data \
+    include/de/ui/ImageItem \
     include/de/ui/Item \
     include/de/ui/ListData \
     include/de/ui/Margins \
@@ -84,12 +88,14 @@ HEADERS += \
     include/de/ui/VariableToggleItem \
     include/de/VariableChoiceWidget \
     include/de/VariableToggleWidget \
+    include/de/VRConfig \
     \
     include/de/dialogs/inputdialog.h \
     include/de/dialogs/messagedialog.h \
     include/de/framework/actionitem.h \
     include/de/framework/atlasproceduralimage.h \
     include/de/framework/baseguiapp.h \
+    include/de/framework/basewindow.h \
     include/de/framework/childwidgetorganizer.h \
     include/de/framework/data.h \
     include/de/framework/dialogcontentstylist.h \
@@ -99,10 +105,12 @@ HEADERS += \
     include/de/framework/guirootwidget.h \
     include/de/framework/guiwidget.h \
     include/de/framework/guiwidgetprivate.h \
+    include/de/framework/imageitem.h \
     include/de/framework/item.h \
-    include/de/framework/libappfw.h \
+    include/de/framework/ipersistent.h \
     include/de/framework/listdata.h \
     include/de/framework/margins.h \
+    include/de/framework/persistentstate.h \
     include/de/framework/proceduralimage.h \
     include/de/framework/sequentiallayout.h \
     include/de/framework/signalaction.h \
@@ -112,7 +120,13 @@ HEADERS += \
     include/de/framework/subwidgetitem.h \
     include/de/framework/textdrawable.h \
     include/de/framework/variabletoggleitem.h \
+    include/de/framework/vrwindowtransform.h \
+    include/de/framework/windowsystem.h \
+    include/de/framework/windowtransform.h \
+    include/de/libappfw.h \
     include/de/ui/defs.h \
+    include/de/vr/oculusrift.h \
+    include/de/vr/vrconfig.h \
     include/de/widgets/blurwidget.h \
     include/de/widgets/buttonwidget.h \
     include/de/widgets/choicewidget.h \
@@ -135,6 +149,7 @@ HEADERS += \
     include/de/widgets/scriptcommandwidget.h \
     include/de/widgets/scrollareawidget.h \
     include/de/widgets/sliderwidget.h \
+    include/de/widgets/tabwidget.h \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
     include/de/widgets/variabletogglewidget.h
@@ -142,6 +157,7 @@ HEADERS += \
 # Sources and private headers.
 SOURCES += \
     src/baseguiapp.cpp \
+    src/basewindow.cpp \
     src/childwidgetorganizer.cpp \
     src/data.cpp \
     src/dialogcontentstylist.cpp \
@@ -155,11 +171,15 @@ SOURCES += \
     src/item.cpp \
     src/listdata.cpp \
     src/margins.cpp \
+    src/persistentstate.cpp \
     src/proceduralimage.cpp \
     src/sequentiallayout.cpp \
     src/signalaction.cpp \
     src/style.cpp \
     src/textdrawable.cpp \
+    src/vrwindowtransform.cpp \
+    src/vr/oculusrift.cpp \
+    src/vr/vrconfig.cpp \
     src/widgets/blurwidget.cpp \
     src/widgets/buttonwidget.cpp \
     src/widgets/choicewidget.cpp \
@@ -182,9 +202,12 @@ SOURCES += \
     src/widgets/scriptcommandwidget.cpp \
     src/widgets/scrollareawidget.cpp \
     src/widgets/sliderwidget.cpp \
+    src/widgets/tabwidget.cpp \
     src/widgets/togglewidget.cpp \
     src/widgets/variablechoicewidget.cpp \
-    src/widgets/variabletogglewidget.cpp
+    src/widgets/variabletogglewidget.cpp \
+    src/windowsystem.cpp \
+    src/windowtransform.cpp
 
 # Installation ---------------------------------------------------------------
 

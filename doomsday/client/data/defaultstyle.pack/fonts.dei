@@ -97,6 +97,10 @@ font heading inherits title {
     size $: gui.scale(default.size, 1.2)
 }
 
+font small inherits default {
+    size $: gui.scale(__this__.size, 0.75)
+}
+
 group editor {
     font plaintext inherits default {}
     font hint inherits default {
@@ -109,8 +113,7 @@ group separator {
     font empty inherits default {
         size $: gui.scale(__this__.size, 0.5)
     }
-    font label inherits default {
-        size $: gui.scale(__this__.size, 0.75)
+    font label inherits small {
         weight: bold
     }
 }
@@ -121,10 +124,15 @@ group choice {
     }
 }
 
-group slider {
-    font label inherits default {
-        size $: gui.scale(__this__.size, 0.75)
+group tab {
+    font label inherits small {
+        weight: bold
     }
+    font selected inherits tab.label {}
+}
+
+group slider {
+    font label inherits small {}
     font value inherits slider.label {
         weight: bold
     }

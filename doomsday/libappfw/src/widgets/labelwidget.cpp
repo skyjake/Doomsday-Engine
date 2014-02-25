@@ -3,17 +3,17 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/LabelWidget"
@@ -40,6 +40,7 @@ public Font::RichFormat::IStyle
     Alignment textAlign;
     Alignment lineAlign;
     Alignment imageAlign;
+    Alignment overlayAlign;
     ContentFit imageFit;
     Vector2f overrideImageSize;
     float imageScale;
@@ -68,6 +69,7 @@ public Font::RichFormat::IStyle
     mutable Vector2ui latestTextSize;
 
     QScopedPointer<ProceduralImage> image;
+    QScopedPointer<ProceduralImage> overlayImage;
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
@@ -186,6 +188,11 @@ public Font::RichFormat::IStyle
         {
             image->glInit();
         }
+
+        if(!overlayImage.isNull())
+        {
+            overlayImage->glInit();
+        }
     }
 
     void glDeinit()
@@ -196,11 +203,15 @@ public Font::RichFormat::IStyle
         {
             image->glDeinit();
         }
+        if(!overlayImage.isNull())
+        {
+            overlayImage->glDeinit();
+        }
     }
 
     bool hasImage() const
     {
-        return !image.isNull();
+        return !image.isNull() && image->size() != ProceduralImage::Size(0, 0);
     }
 
     bool hasText() const
@@ -226,6 +237,11 @@ public Font::RichFormat::IStyle
         return latestTextSize;
     }
 
+    Rectanglei contentArea() const
+    {
+        return self.rule().recti().adjusted(margin.xy(), -margin.zw());
+    }
+
     /**
      * Determines where the label's image and text should be drawn.
      *
@@ -233,7 +249,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self.rule().recti().adjusted(margin.xy(), -margin.zw());
+        Rectanglei const contentRect = contentArea(); //self.rule().recti().adjusted(margin.xy(), -margin.zw());
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -463,6 +479,10 @@ public Font::RichFormat::IStyle
         {
             image->update();
         }
+        if(!overlayImage.isNull())
+        {
+            overlayImage->update();
+        }
 
         glText.setLineWrapWidth(availableTextWidth());
         if(glText.update())
@@ -523,6 +543,12 @@ void LabelWidget::setImage(Image const &image)
 void LabelWidget::setImage(ProceduralImage *procImage)
 {
     d->image.reset(procImage);
+}
+
+void LabelWidget::setOverlayImage(ProceduralImage *overlayProcImage, ui::Alignment const &alignment)
+{
+    d->overlayImage.reset(overlayProcImage);
+    d->overlayAlign = alignment;
 }
 
 String LabelWidget::text() const
@@ -658,6 +684,13 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
                               lineAlign, Vector4f(0, 0, 0, 1));*/
         d->glText.makeVertices(verts, layout.text, AlignCenter, d->lineAlign, d->textGLColor);
+    }
+
+    if(!d->overlayImage.isNull())
+    {
+        Rectanglef rect = Rectanglef::fromSize(d->overlayImage->size());
+        applyAlignment(d->overlayAlign, rect, d->contentArea());
+        d->overlayImage->glMakeGeometry(verts, rect);
     }
 }
 

@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Animation"
@@ -76,7 +76,7 @@ DENG2_PIMPL(App)
     /// The archive is owned by the file system.
     Archive *persistentData;
 
-    UnixInfo unixInfo;
+    QScopedPointer<UnixInfo> unixInfo;
 
     /// The configuration.
     Config *config;
@@ -226,6 +226,8 @@ DENG2_PIMPL(App)
 App::App(NativePath const &appFilePath, QStringList args)
     : d(new Instance(this, args))
 {
+    d->unixInfo.reset(new UnixInfo);
+
     // Global time source for animations.
     Animation::setClock(&d->clock);
 
@@ -312,6 +314,11 @@ void App::setGame(game::Game &game)
 
 bool App::inMainThread()
 {
+    if(!App::appExists())
+    {
+        // No app even created yet, must be main thread.
+        return true;
+    }
     return DENG2_APP->d->mainThread == QThread::currentThread();
 }
 
@@ -329,7 +336,7 @@ NativePath App::nativePluginBinaryPath()
     path = DENG_LIBRARY_DIR;
 # endif
     // Also check the system config files.
-    d->unixInfo.path("libdir", path);
+    d->unixInfo->path("libdir", path);
 #endif
     return (d->cachedPluginBinaryPath = path);
 }
@@ -396,7 +403,7 @@ NativePath App::nativeBasePath()
     path = DENG_BASE_DIR;
 # endif
     // Also check the system config files.
-    d->unixInfo.path("basedir", path);
+    d->unixInfo->path("basedir", path);
 #endif
     return (d->cachedBasePath = path);
 }
@@ -513,6 +520,7 @@ bool App::appExists()
 
 App &App::app()
 {
+    DENG2_ASSERT(appExists());
     return *singletonApp;
 }
 
@@ -566,7 +574,7 @@ Config &App::config()
 
 UnixInfo &App::unixInfo()
 {
-    return DENG2_APP->d->unixInfo;
+    return *DENG2_APP->d->unixInfo;
 }
 
 } // namespace de

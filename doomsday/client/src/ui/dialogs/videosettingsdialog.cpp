@@ -180,6 +180,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->depths->items()
             << new ChoiceItem(tr("32-bit"), 32)
+            << new ChoiceItem(tr("24-bit"), 24)
             << new ChoiceItem(tr("16-bit"), 16);
 #endif
 

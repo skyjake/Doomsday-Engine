@@ -22,6 +22,7 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
+#include <de/BaseWindow>
 #include <de/NotificationWidget>
 
 #include "ui/clientrootwidget.h"
@@ -53,7 +54,7 @@ class AlertDialog;
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
  */
-class ClientWindow : public de::PersistentCanvasWindow,
+class ClientWindow : public de::BaseWindow,
                      DENG2_OBSERVES(de::Canvas, GLInit),
                      DENG2_OBSERVES(de::Canvas, GLResize)
 {
@@ -123,11 +124,6 @@ public:
     static bool setDefaultGLFormat();
 
     /**
-     * Request drawing the contents of the window as soon as possible.
-     */
-    void draw();
-
-    /**
      * Determines whether the contents of a window should be drawn during the
      * execution of the main loop callback, or should we wait for an update event
      * from the windowing system.
@@ -161,10 +157,19 @@ public:
     void closeEvent(QCloseEvent *);
     void canvasGLReady(de::Canvas &);
     void canvasGLInit(de::Canvas &);
-    void canvasGLDraw(de::Canvas &);
     void canvasGLResized(de::Canvas &);
 
+    // Implements BaseWindow.
+    de::Vector2f windowContentSize();
+    void drawWindowContent();
+    void preDraw();
+    void postDraw();
+    bool handleFallbackEvent(de::Event const &event);
+
     static ClientWindow &main();
+
+protected:
+    bool prepareForDraw();
 
 public slots:
     void toggleFPSCounter();

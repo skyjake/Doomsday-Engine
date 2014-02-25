@@ -35,6 +35,7 @@
 #include <de/PopupMenuWidget>
 #include <de/ToggleWidget>
 #include <de/LogWidget>
+#include <de/PersistentState>
 #include <QCursor>
 
 using namespace de;
@@ -420,6 +421,22 @@ bool ConsoleWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+void ConsoleWidget::operator >> (PersistentState &toState) const
+{
+    toState.names().set("console.width", d->width->value());
+}
+
+void ConsoleWidget::operator << (PersistentState const &fromState)
+{
+    d->width->set(fromState.names()["console.width"]);
+
+    if(!d->opened)
+    {
+        // Make sure it stays out of the view.
+        d->horizShift->set(-rule().width().valuei() - 1);
+    }
 }
 
 void ConsoleWidget::openLog()

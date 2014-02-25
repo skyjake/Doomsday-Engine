@@ -35,6 +35,10 @@ desc = End the game.
 [helpscreen]
 desc = Show the Help screens.
 
+[inspectgamesave]
+desc = Print detailed information about a saved game session to the console.
+inf = Params: inspectgamesave (slotId)\nFor example, 'inspectgamesave 1'.
+
 [kill]
 desc = Kill all the monsters on the map.
 

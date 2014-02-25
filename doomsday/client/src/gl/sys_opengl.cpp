@@ -419,6 +419,12 @@ void Sys_GLPrintExtensions(void)
         printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
     }
 #endif
+
+#ifdef Q_WS_X11
+    // List GLX extensions.
+    LOG_GL_MSG("  Extensions (GLX):");
+    printExtensions(QString(getGLXExtensionsString()).split(" ", QString::SkipEmptyParts));
+#endif
 }
 
 dd_bool Sys_GLCheckError()

@@ -1,9 +1,9 @@
-# The Doomsday Engine Project: Server Shell -- Common Functionality
+# The Doomsday Engine Project -- Server Shell Common Functionality
 # Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
-# This program is distributed under the GNU General Public License
-# version 2 (or, at your option, any later version). Please visit
-# http://www.gnu.org/licenses/gpl.html for details.
+# This program is distributed under the GNU Lesser General Public License
+# version 3 (or, at your option, any later version). Please visit
+# http://www.gnu.org/licenses/lgpl.html for details.
 
 include(../config.pri)
 

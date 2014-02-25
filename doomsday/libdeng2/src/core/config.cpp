@@ -1,25 +1,26 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
  
 #include "de/Config"
 #include "de/App"
 #include "de/Archive"
+#include "de/Refuge"
 #include "de/Log"
 #include "de/Folder"
 #include "de/ArrayValue"
@@ -36,8 +37,8 @@ DENG2_PIMPL_NOREF(Config)
     /// Configuration file name.
     Path configPath;
 
-    /// Path where the configuration is written (inside persist.pack).
-    Path persistentPath;
+    /// Saved configuration data (inside persist.pack).
+    Refuge refuge;
 
     /// The configuration namespace.
     Process config;
@@ -46,8 +47,9 @@ DENG2_PIMPL_NOREF(Config)
     Version oldVersion;
 
     Instance(Path const &path)
-        : configPath(path),
-          persistentPath("modules/Config")
+        : configPath(path)
+        , refuge("modules/Config")
+        , config(&refuge.names())
     {}
 
     void setOldVersion(Value const &old)
@@ -68,19 +70,6 @@ DENG2_PIMPL_NOREF(Config)
 Config::Config(Path const &path) : d(new Instance(path))
 {}
 
-Config::~Config()
-{
-    LOG_AS("~Config");
-    try
-    {
-        write();
-    }
-    catch(Error const &err)
-    {
-        LOG_ERROR("") << err.asText();
-    }
-}
-
 void Config::read()
 {
     LOG_AS("Config::read");
@@ -99,8 +88,7 @@ void Config::read()
     try
     {
         // If we already have a saved copy of the config, read it.
-        Archive const &persist = App::persistentData();
-        Reader(persist.entryBlock(d->persistentPath)).withHeader() >> names();
+        d->refuge.read();
 
         LOG_DEBUG("Found serialized Config:\n") << names();
         
@@ -117,15 +105,15 @@ void Config::read()
         else
         {
             // Versions match.
-            LOG_MSG("") << d->persistentPath << " matches version " << version->asText();
+            LOG_MSG("") << d->refuge.path() << " matches version " << version->asText();
         }
 
         // Also check the timestamp of written config vs. the config script.
         // If script is newer, it should be rerun.
-        if(scriptFile.status().modifiedAt > persist.entryStatus(d->persistentPath).modifiedAt)
+        if(scriptFile.status().modifiedAt > d->refuge.lastWrittenAt())
         {
             LOG_MSG("%s is newer than %s, rerunning the script.")
-                    << d->configPath << d->persistentPath;
+                    << d->configPath << d->refuge.path();
             shouldRunScript = true;
         }
     }
@@ -157,7 +145,7 @@ void Config::read()
 
 void Config::write() const
 {
-    Writer(App::persistentData().entryBlock(d->persistentPath)).withHeader() << names();
+    d->refuge.write();
 }
 
 Record &Config::names()

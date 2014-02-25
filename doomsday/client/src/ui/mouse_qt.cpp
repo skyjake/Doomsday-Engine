@@ -24,7 +24,7 @@
 #include "de_base.h"
 #include "con_main.h"
 #include "ui/sys_input.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/mouse_qt.h"
 #include <string.h>
@@ -66,7 +66,7 @@ static void Mouse_Qt_Poll()
 {
     if(!mouseTrapped) return;
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return; // Hmm?
 
     QPoint curPos = win->mapFromGlobal(QCursor::pos());
@@ -118,7 +118,7 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_ShowCursor(bool yes)
 {
-    de::Canvas &canvas = WindowSystem::main().canvas();
+    de::Canvas &canvas = ClientWindowSystem::main().canvas();
 
     LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
@@ -139,7 +139,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
 
 static void Mouse_Qt_InitTrap()
 {
-    de::Canvas &canvas = WindowSystem::main().canvas();
+    de::Canvas &canvas = ClientWindowSystem::main().canvas();
 
     QCursor::setPos(canvas.mapToGlobal(canvas.rect().center()));
     canvas.grabMouse();
@@ -149,7 +149,7 @@ static void Mouse_Qt_InitTrap()
 
 static void Mouse_Qt_DeinitTrap()
 {
-    WindowSystem::main().canvas().releaseMouse();
+    ClientWindowSystem::main().canvas().releaseMouse();
 
     Mouse_Qt_ShowCursor(true);
 }

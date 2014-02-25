@@ -3,17 +3,17 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/ButtonWidget"
@@ -30,6 +30,7 @@ DENG2_OBSERVES(Action, Triggered)
     State state;
     DotPath hoverTextColor;
     DotPath originalTextColor;
+    DotPath bgColorId;
     HoverColorMode hoverColorMode;
     Action *action;
     Animation scale;
@@ -39,6 +40,7 @@ DENG2_OBSERVES(Action, Triggered)
     Instance(Public *i)
         : Base(i)
         , state(Up)
+        , bgColorId("background")
         , hoverColorMode(ReplaceColor)
         , action(0)
         , scale(1.f)
@@ -138,7 +140,7 @@ DENG2_OBSERVES(Action, Triggered)
 
     void setDefaultBackground()
     {
-        self.set(Background(style().colors().colorf("background"),
+        self.set(Background(style().colors().colorf(bgColorId),
                             Background::GradientFrame, Vector4f(1, 1, 1, frameOpacity), 6));
     }
 
@@ -147,7 +149,7 @@ DENG2_OBSERVES(Action, Triggered)
         Background bg = self.background();
         if(bg.type == Background::GradientFrame)
         {
-            bg.solidFill = style().colors().colorf("background");
+            bg.solidFill = style().colors().colorf(bgColorId);
             bg.color = Vector4f(1, 1, 1, frameOpacity);
             self.set(bg);
         }
@@ -182,6 +184,12 @@ void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode 
 {
     d->hoverTextColor = hoverTextId;
     d->hoverColorMode = mode;
+}
+
+void ButtonWidget::setBackgroundColor(DotPath const &bgColorId)
+{
+    d->bgColorId = bgColorId;
+    d->updateBackground();
 }
 
 void ButtonWidget::setAction(RefArg<Action> action)
