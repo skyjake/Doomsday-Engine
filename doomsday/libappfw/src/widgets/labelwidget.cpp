@@ -40,6 +40,7 @@ public Font::RichFormat::IStyle
     Alignment textAlign;
     Alignment lineAlign;
     Alignment imageAlign;
+    Alignment overlayAlign;
     ContentFit imageFit;
     Vector2f overrideImageSize;
     float imageScale;
@@ -68,6 +69,7 @@ public Font::RichFormat::IStyle
     mutable Vector2ui latestTextSize;
 
     QScopedPointer<ProceduralImage> image;
+    QScopedPointer<ProceduralImage> overlayImage;
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
@@ -186,6 +188,11 @@ public Font::RichFormat::IStyle
         {
             image->glInit();
         }
+
+        if(!overlayImage.isNull())
+        {
+            overlayImage->glInit();
+        }
     }
 
     void glDeinit()
@@ -196,11 +203,15 @@ public Font::RichFormat::IStyle
         {
             image->glDeinit();
         }
+        if(!overlayImage.isNull())
+        {
+            overlayImage->glDeinit();
+        }
     }
 
     bool hasImage() const
     {
-        return !image.isNull();
+        return !image.isNull() && image->size() != ProceduralImage::Size(0, 0);
     }
 
     bool hasText() const
@@ -226,6 +237,11 @@ public Font::RichFormat::IStyle
         return latestTextSize;
     }
 
+    Rectanglei contentArea() const
+    {
+        return self.rule().recti().adjusted(margin.xy(), -margin.zw());
+    }
+
     /**
      * Determines where the label's image and text should be drawn.
      *
@@ -233,7 +249,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self.rule().recti().adjusted(margin.xy(), -margin.zw());
+        Rectanglei const contentRect = contentArea(); //self.rule().recti().adjusted(margin.xy(), -margin.zw());
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -322,79 +338,63 @@ public Font::RichFormat::IStyle
         // By default the image and the text are centered over each other.
         layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
 
-        if(alignMode == AlignSeparately)
+        if(hasImage() && hasText())
         {
-            // When aligning separately, simply align both the image and the text
-            // within the main content rectangle as specified.
-            if(hasImage())
+            // Determine the position of the image in relation to the text
+            // (keeping the image at its current position).
+            if(textAlign & AlignLeft)
             {
-                applyAlignment(imageAlign, layout.image, contentRect);
+                layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
             }
-            if(hasText())
+            if(textAlign & AlignRight)
             {
-                applyAlignment(textAlign, layout.text, contentRect);
+                layout.text.moveLeft(layout.image.right() + gap);
+            }
+            if(textAlign & AlignTop)
+            {
+                layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
+            }
+            if(textAlign & AlignBottom)
+            {
+                layout.text.moveTop(layout.image.bottom() + gap);
+            }
+
+            // Align the image in relation to the text on the other axis.
+            if(textAlign & (AlignLeft | AlignRight))
+            {
+                if(imageAlign & AlignTop)
+                {
+                    layout.image.moveTop(layout.text.top());
+                }
+                if(imageAlign & AlignBottom)
+                {
+                    layout.image.moveTop(layout.text.bottom() - layout.image.height());
+                }
+            }
+            if(textAlign & (AlignTop | AlignBottom))
+            {
+                if(imageAlign & AlignLeft)
+                {
+                    layout.image.moveLeft(layout.text.left());
+                }
+                if(imageAlign & AlignRight)
+                {
+                    layout.image.moveLeft(layout.text.right() - layout.image.width());
+                }
             }
         }
-        else
-        {
-            if(hasImage() && hasText())
-            {
-                // Determine the position of the image in relation to the text
-                // (keeping the image at its current position).
-                if(textAlign & AlignLeft)
-                {
-                    layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
-                }
-                if(textAlign & AlignRight)
-                {
-                    layout.text.moveLeft(layout.image.right() + gap);
-                }
-                if(textAlign & AlignTop)
-                {
-                    layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
-                }
-                if(textAlign & AlignBottom)
-                {
-                    layout.text.moveTop(layout.image.bottom() + gap);
-                }
 
-                // Align the image in relation to the text on the other axis.
-                if(textAlign & (AlignLeft | AlignRight))
-                {
-                    if(imageAlign & AlignTop)
-                    {
-                        layout.image.moveTop(layout.text.top());
-                    }
-                    if(imageAlign & AlignBottom)
-                    {
-                        layout.image.moveTop(layout.text.bottom() - layout.image.height());
-                    }
-                }
-                if(textAlign & (AlignTop | AlignBottom))
-                {
-                    if(imageAlign & AlignLeft)
-                    {
-                        layout.image.moveLeft(layout.text.left());
-                    }
-                    if(imageAlign & AlignRight)
-                    {
-                        layout.image.moveLeft(layout.text.right() - layout.image.width());
-                    }
-                }
-            }
+        // Align the final combination within the content.
+        Rectanglef combined =
+                (alignMode == AlignByCombination? (layout.image | layout.text) :
+                 alignMode == AlignOnlyByImage?    layout.image :
+                                                   layout.text);
 
-            // Align the final combination within the content.
-            Rectanglef combined =
-                    (alignMode == AlignByCombination? (layout.image | layout.text) :
-                     alignMode == AlignOnlyByImage?    layout.image :
-                                                       layout.text);
+        Vector2f delta = applyAlignment(align, combined.size(), contentRect);
+        delta -= combined.topLeft;
 
-            Vector2f delta = applyAlignment(align, combined.size(), contentRect);
-            delta -= combined.topLeft;
-
-            layout.image.move(delta);
-            layout.text.move(delta.toVector2i());
-        }
+        layout.image.move(delta);
+        layout.text.move(delta.toVector2i());
     }
 
     /**
@@ -479,6 +479,10 @@ public Font::RichFormat::IStyle
         {
             image->update();
         }
+        if(!overlayImage.isNull())
+        {
+            overlayImage->update();
+        }
 
         glText.setLineWrapWidth(availableTextWidth());
         if(glText.update())
@@ -539,6 +543,12 @@ void LabelWidget::setImage(Image const &image)
 void LabelWidget::setImage(ProceduralImage *procImage)
 {
     d->image.reset(procImage);
+}
+
+void LabelWidget::setOverlayImage(ProceduralImage *overlayProcImage, ui::Alignment const &alignment)
+{
+    d->overlayImage.reset(overlayProcImage);
+    d->overlayAlign = alignment;
 }
 
 String LabelWidget::text() const
@@ -674,6 +684,13 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
                               lineAlign, Vector4f(0, 0, 0, 1));*/
         d->glText.makeVertices(verts, layout.text, AlignCenter, d->lineAlign, d->textGLColor);
+    }
+
+    if(!d->overlayImage.isNull())
+    {
+        Rectanglef rect = Rectanglef::fromSize(d->overlayImage->size());
+        applyAlignment(d->overlayAlign, rect, d->contentArea());
+        d->overlayImage->glMakeGeometry(verts, rect);
     }
 }
 

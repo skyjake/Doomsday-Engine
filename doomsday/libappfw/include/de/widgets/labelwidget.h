@@ -80,6 +80,15 @@ public:
      */
     void setImage(ProceduralImage *procImage);
 
+    /**
+     * Sets an overlay image that gets drawn over the label contents.
+     *
+     * @param overlayProcImage  Procedural image. LabelWidget takes ownership.
+     * @param alignment         Alignment for the overlaid image.
+     */
+    void setOverlayImage(ProceduralImage *overlayProcImage,
+                         ui::Alignment const &alignment = ui::AlignCenter);
+
     String text() const;
 
     /**
@@ -97,8 +106,7 @@ public:
     enum AlignmentMode {
         AlignByCombination,
         AlignOnlyByImage,
-        AlignOnlyByText,
-        AlignSeparately ///< Aligned separately within the entire content rectangle.
+        AlignOnlyByText
     };
 
     /**
