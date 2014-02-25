@@ -6331,7 +6331,7 @@ int Hu_MenuSelectQuitGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*p
 int Hu_MenuSelectEndGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
     if(MNA_ACTIVEOUT != action) return 1;
-    G_EndGame();
+    G_EndSession();
     return 0;
 }
 
@@ -6535,7 +6535,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     Uri *newMapUri = G_ComposeMapUri(mnEpisode, 0);
 #endif
 
-    G_DeferredNewGame(newMapUri, 0/*default*/, &newRules);
+    G_DeferredNewSession(newMapUri, 0/*default*/, &newRules);
     Uri_Delete(newMapUri);
 }
 

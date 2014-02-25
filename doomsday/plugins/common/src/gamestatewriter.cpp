@@ -89,7 +89,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(SV_SavePath() / saveInfo->fileNameForMap(gameMap), true/*for write*/);
+        SV_OpenFile(SV_SavePath() / saveInfo->fileNameForMap(), true/*for write*/);
 #endif
 
         MapStateWriter(*thingArchive).write(writer);

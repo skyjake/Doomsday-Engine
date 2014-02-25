@@ -1,44 +1,39 @@
-/**\file g_common.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file g_common.h  Top-level (common) game routines.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBCOMMON_GAME_H
 #define LIBCOMMON_GAME_H
 
 #include "dd_share.h"
-#include "g_controls.h"
 #include "mobj.h"
 #include "player.h"
 
-enum {
-    JOYAXIS_NONE,
-    JOYAXIS_MOVE,
-    JOYAXIS_TURN,
-    JOYAXIS_STRAFE,
-    JOYAXIS_LOOK
-};
-
 DENG_EXTERN_C dd_bool singledemo;
+
+DENG_EXTERN_C dd_bool gameInProgress;
+DENG_EXTERN_C GameRuleset gameRules;
+DENG_EXTERN_C uint gameEpisode;
+
+DENG_EXTERN_C Uri *gameMapUri;
+DENG_EXTERN_C uint gameMapEntrance;
+DENG_EXTERN_C uint gameMap; ///< @todo refactor away.
 
 #if __cplusplus
 extern "C" {
@@ -46,19 +41,27 @@ extern "C" {
 
 void G_Register(void);
 
+dd_bool G_QuitInProgress(void);
+
 /**
  * Returns the current logical game state.
  */
 gamestate_t G_GameState(void);
 
+/**
+ * Change the game's state.
+ *
+ * @param state  The state to change to.
+ */
 void G_ChangeGameState(gamestate_t state);
 
 gameaction_t G_GameAction(void);
+
 void G_SetGameAction(gameaction_t action);
 
 AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
 
-char const *P_GetGameModeName(void);
+char const *P_GameRulesetDescription(void);
 
 uint G_GenerateSessionId(void);
 
@@ -72,17 +75,16 @@ void G_StartTitle(void);
  */
 void G_StartHelp(void);
 
-void G_EndGame(void);
-
-dd_bool G_QuitInProgress(void);
-
 /**
  * @param mapUri       Map identifier.
  * @param mapEntrance  Logical map entry point number.
  * @param rules        Game rules to apply.
  */
 void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
-void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+
+void G_DeferredNewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+
+void G_EndSession(void);
 
 /**
  * Signal that play on the current map may now begin.
@@ -99,6 +101,30 @@ void G_BeginMap(void);
  * @param secretExit     @c true if the exit taken was marked as 'secret'.
  */
 void G_LeaveMap(uint newMap, uint mapEntryPoint, dd_bool secretExit);
+
+/**
+ * Called when a player leaves a map.
+ *
+ * Jobs include; striping keys, inventory and powers from the player and configuring other
+ * player-specific properties ready for the next map.
+ *
+ * @param player  Id of the player to configure.
+ */
+void G_PlayerLeaveMap(int player);
+
+/**
+ * Returns the logical episode number for the identified map.
+ *
+ * @param mapUri  Unique identifier of the map to lookup.
+ */
+uint G_EpisodeNumberFor(Uri const *mapUri);
+
+/**
+ * Returns the logical map number for the identified map.
+ *
+ * @param mapUri  Unique identifier of the map to lookup.
+ */
+uint G_MapNumberFor(Uri const *mapUri);
 
 /**
  * Compose a Uri for the identified @a episode and @a map combination.
