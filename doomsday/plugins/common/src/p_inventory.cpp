@@ -1,83 +1,49 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_inventory.cpp  Common code for player inventory.
  *
- *\author Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
-*/
-
-/**
- * p_inventory.c: Common code for the player's inventory.
- *
- * \note The visual representation of the inventory is handled separately,
- *       in the HUD code.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #if defined(__JHERETIC__) || defined(__JHEXEN__) || defined(__JDOOM64__)
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <assert.h>
-#include <string.h>
-
-#if __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#endif
+#include "common.h"
+#include "p_inventory.h"
 
 #include "g_common.h"
 #include "player.h"
 #include "d_net.h"
-#include "p_inventory.h"
 #include "hu_inventory.h"
+#include <de/memory.h>
+#include <cstring>
 
-// MACROS ------------------------------------------------------------------
+struct inventoryitem_t
+{
+    int useCount;
+    inventoryitem_t *next;
+};
 
-// TYPES -------------------------------------------------------------------
-
-typedef struct inventoryitem_s {
-    int             useCount;
-    struct inventoryitem_s* next;
-} inventoryitem_t;
-
-typedef struct {
-    inventoryitem_t* items[NUM_INVENTORYITEM_TYPES-1];
+struct playerinventory_t
+{
+    inventoryitem_t *items[NUM_INVENTORYITEM_TYPES-1];
     inventoryitemtype_t readyItem;
-} playerinventory_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+};
 
 int didUseItem = false;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static const def_invitem_t itemDefs[NUM_INVENTORYITEM_TYPES-1] = {
+static def_invitem_t const itemDefs[NUM_INVENTORYITEM_TYPES-1] = {
 #if __JHERETIC__
     {IIF_USE_PANIC, "TXT_ARTIINVULNERABILITY", "A_Invulnerability", "artiuse", "ARTIINVU", CTL_INVULNERABILITY},
     {IIF_USE_PANIC, "TXT_ARTIINVISIBILITY", "A_Invisibility", "artiuse", "ARTIINVS", CTL_INVISIBILITY},
@@ -133,77 +99,68 @@ static invitem_t invItems[NUM_INVENTORYITEM_TYPES - 1];
 
 static playerinventory_t inventories[MAXPLAYERS];
 
-// CODE --------------------------------------------------------------------
-
-static __inline const def_invitem_t* itemDefForType(inventoryitemtype_t type)
+static inline def_invitem_t const *itemDefForType(inventoryitemtype_t type)
 {
     return &itemDefs[type - 1];
 }
 
-static inventoryitem_t* allocItem(void)
+static inventoryitem_t *allocItem()
 {
-    return malloc(sizeof(inventoryitem_t));
+    inventoryitem_t *item = (inventoryitem_t *)M_Malloc(sizeof(*item));
+    return item;
 }
 
-static void freeItem(inventoryitem_t* item)
+static void freeItem(inventoryitem_t *item)
 {
-    free(item);
+    M_Free(item);
 }
 
-static __inline unsigned int countItems2(const playerinventory_t* inv,
-                                         inventoryitemtype_t type)
+static inline uint countItems2(playerinventory_t const *inv, inventoryitemtype_t type)
 {
-    unsigned int        count;
-    const inventoryitem_t* item;
-
-    count = 0;
-    for(item = inv->items[type-1]; item; item = item->next)
+    uint count = 0;
+    for(inventoryitem_t const *item = inv->items[type - 1]; item; item = item->next)
+    {
         count++;
-
+    }
     return count;
 }
 
-static unsigned int countItems(const playerinventory_t* inv,
-                               inventoryitemtype_t type)
+static uint countItems(playerinventory_t const *inv, inventoryitemtype_t type)
 {
     if(type == IIT_NONE)
     {
-        inventoryitemtype_t i;
-        unsigned int        count;
-
-        count = 0;
-        for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
-            count += countItems2(inv, i);
-
+        uint count = 0;
+        for(int i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
+        {
+            count += countItems2(inv, inventoryitemtype_t(i));
+        }
         return count;
     }
-
     return countItems2(inv, type);
 }
 
-static dd_bool useItem(playerinventory_t* inv, inventoryitemtype_t type,
-                       dd_bool panic)
+static dd_bool useItem(playerinventory_t *inv, inventoryitemtype_t type, dd_bool panic)
 {
-    int                 plrnum;
-    const invitem_t*    item;
-
     if(!countItems(inv, type))
         return false; // That was a non-starter.
 
-    plrnum = inv - inventories;
-    item = &invItems[type-1];
+    int plrnum = inv - inventories;
+    invitem_t const *item = &invItems[type-1];
 
     // Is this usable?
     if(!item->action)
+    {
         return false; // No.
+    }
 
     // How about when panicked?
     if(panic)
     {
-        const def_invitem_t* def = itemDefForType(type);
-
+        def_invitem_t const *def = itemDefForType(type);
         if(!(def->flags & IIF_USE_PANIC))
+        {
             return false;
+        }
     }
 
     /**
@@ -213,27 +170,30 @@ static dd_bool useItem(playerinventory_t* inv, inventoryitemtype_t type,
      * Ugly.
      */
     didUseItem = false;
-    item->action(players[plrnum].plr->mo);
+    de::function_cast<void (*)(mobj_t *)>(item->action)(players[plrnum].plr->mo);
 
     return didUseItem;
 }
 
 static dd_bool giveItem(playerinventory_t *inv, inventoryitemtype_t type)
 {
-    unsigned int count = countItems(inv, type);
-    inventoryitem_t *item;
+    uint count = countItems(inv, type);
 
 #if __JHEXEN__
     // Can't carry more than 1 puzzle item in coop netplay.
     if(count && type >= IIT_FIRSTPUZZITEM && IS_NETGAME && !gameRules.deathmatch)
+    {
         return false;
+    }
 #endif
 
     // Carrying the maximum allowed number of these items?
     if(count >= MAXINVITEMCOUNT)
+    {
         return false;
+    }
 
-    item = allocItem();
+    inventoryitem_t *item = allocItem();
     item->useCount = 0;
 
     item->next = inv->items[type-1];
@@ -242,31 +202,35 @@ static dd_bool giveItem(playerinventory_t *inv, inventoryitemtype_t type)
     return true;
 }
 
-static int takeItem(playerinventory_t* inv, inventoryitemtype_t type)
+static int takeItem(playerinventory_t *inv, inventoryitemtype_t type)
 {
-    inventoryitem_t*    next;
-
     if(!inv->items[type - 1])
+    {
         return false; // Don't have one to take.
+    }
 
-    next = inv->items[type - 1]->next;
+    inventoryitem_t *next = inv->items[type - 1]->next;
     freeItem(inv->items[type -1]);
     inv->items[type - 1] = next;
 
     if(!inv->items[type - 1])
-    {   // Took last item of this type.
+    {
+        // Took last item of this type.
         if(inv->readyItem == type)
+        {
             inv->readyItem = IIT_NONE;
+        }
     }
 
     return true;
 }
 
-static int tryTakeItem(playerinventory_t* inv, inventoryitemtype_t type)
+static int tryTakeItem(playerinventory_t *inv, inventoryitemtype_t type)
 {
     if(takeItem(inv, type))
-    {   // An item was taken.
-        int                 player = inv - inventories;
+    {
+        // An item was taken.
+        int player = inv - inventories;
 
         players[player].update |= PSF_INVENTORY;
 
@@ -276,7 +240,9 @@ static int tryTakeItem(playerinventory_t* inv, inventoryitemtype_t type)
 
         // Set position markers and set the next readyItem?
         if(inv->readyItem == IIT_NONE)
+        {
             Hu_InventoryMove(player, -1, false, true);
+        }
 #endif
 
         return true;
@@ -285,169 +251,132 @@ static int tryTakeItem(playerinventory_t* inv, inventoryitemtype_t type)
     return false;
 }
 
-static int tryUseItem(playerinventory_t* inv, inventoryitemtype_t type,
-                      int panic)
+static int tryUseItem(playerinventory_t *inv, inventoryitemtype_t type, int panic)
 {
     if(useItem(inv, type, panic))
-    {   // Item was used.
+    {
+        // Item was used.
         return tryTakeItem(inv, type);
     }
 
     return false;
 }
 
-const def_invitem_t* P_GetInvItemDef(inventoryitemtype_t type)
+def_invitem_t const *P_GetInvItemDef(inventoryitemtype_t type)
 {
-    assert(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES);
-
+    DENG2_ASSERT(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES);
     return itemDefForType(type);
 }
 
-static acfnptr_t getActionPtr(const char* name)
+static acfnptr_t getActionPtr(char const *name)
 {
-    actionlink_t*       link = actionlinks;
-
-    if(!name || !name[0])
-        return NULL;
-
-    for(; link->name; link++)
-        if(!strcmp(name, link->name))
-            return link->func;
-
-    return NULL;
+    if(name && name[0])
+    {
+        for(actionlink_t *link = actionlinks; link->name; link++)
+        {
+            if(!strcmp(name, link->name))
+                return link->func;
+        }
+    }
+    return 0;
 }
 
-/**
- * Called during (post-game) init and after updating game/engine state.
- */
-void P_InitInventory(void)
+void P_InitInventory()
 {
-    int i;
+    de::zap(invItems);
 
-    memset(invItems, 0, sizeof(invItems));
-    for(i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
     {
-        inventoryitemtype_t type = IIT_FIRST + i;
-        const def_invitem_t* def = P_GetInvItemDef(type);
-        invitem_t* data = &invItems[i];
+        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
+        def_invitem_t const *def = P_GetInvItemDef(type);
+        invitem_t *data          = &invItems[i];
 
-        data->type = type;
-        data->niceName = Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL);
-        data->action = getActionPtr(def->action);
-        data->useSnd = Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL);
-        data->patchId = R_DeclarePatch(def->patch);
+        data->type     = type;
+        data->niceName = textenum_t(Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL));
+        data->action   = getActionPtr(def->action);
+        data->useSnd   = sfxenum_t(Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL));
+        data->patchId  = R_DeclarePatch(def->patch);
     }
 
-    memset(inventories, 0, sizeof(inventories));
+    de::zap(inventories);
 }
 
-/**
- * Called once, during shutdown.
- */
-void P_ShutdownInventory(void)
+void P_ShutdownInventory()
 {
-    int                 i;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         P_InventoryEmpty(i);
     }
 }
 
-const invitem_t* P_GetInvItem(int id)
+invitem_t const *P_GetInvItem(int id)
 {
     if(id < 0 || id >= NUM_INVENTORYITEM_TYPES - 1)
-        return NULL;
+        return 0;
 
     return &invItems[id];
 }
 
-/**
- * Should be called only outside of normal play (e.g., when starting a new
- * game or similar).
- *
- * @param player        Player to empty the inventory of.
- */
 void P_InventoryEmpty(int player)
 {
-    inventoryitemtype_t i;
-    playerinventory_t*  inv;
-
     if(player < 0 || player >= MAXPLAYERS)
         return;
-    inv = &inventories[player];
 
-    for(i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
+    playerinventory_t *inv = &inventories[player];
+
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
     {
-        if(inv->items[i])
+        inventoryitem_t *item;
+        while((item = inv->items[i]))
         {
-            inventoryitem_t*    item, *n;
-
-            item = inv->items[i];
-            do
-            {
-                n = item->next;
-                freeItem(item);
-                item = n;
-            } while(item);
+            inventoryitem_t *next = item->next;
+            freeItem(item);
+            inv->items[i] = next;
         }
     }
-    memset(inv->items, 0, sizeof(inv->items[0]) * (NUM_INVENTORYITEM_TYPES-1));
+    de::zap(inv->items);
 
     inv->readyItem = IIT_NONE;
 }
 
-/**
- * Retrieve the number of items possessed by the player.
- *
- * @param player        Player to check the inventory of.
- * @param type          Type requirement, limits the count to the
- *                      specified type else @c IIT_NONE to count all.
- * @return              Result.
- */
-unsigned int P_InventoryCount(int player, inventoryitemtype_t type)
+uint P_InventoryCount(int player, inventoryitemtype_t type)
 {
     if(player < 0 || player >= MAXPLAYERS)
         return 0;
 
     if(!(type == IIT_NONE ||
         (type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES)))
+    {
         return 0;
+    }
 
     return countItems(&inventories[player], type);
 }
 
-/**
- * Attempt to ready an item (or unready a currently readied item).
- *
- * @param player        Player to change the ready item of.
- * @param type          Item type to be readied.
- *
- * @return              Non-zero iff successful.
- */
 int P_InventorySetReadyItem(int player, inventoryitemtype_t type)
 {
-    playerinventory_t*  inv;
-
     if(player < 0 || player >= MAXPLAYERS)
         return 0;
 
     if(type < IIT_NONE || type >= NUM_INVENTORYITEM_TYPES)
         return 0;
-    inv = &inventories[player];
+
+    playerinventory_t *inv = &inventories[player];
 
     if(type == IIT_NONE || countItems(inv, type))
-    {   // A valid ready request.
-        dd_bool             mustEquip = true;
+    {
+        // A valid ready request.
+        dd_bool mustEquip = true;
 
         if(type != IIT_NONE)
         {
-            const def_invitem_t* def = P_GetInvItemDef(type);
+            def_invitem_t const *def = P_GetInvItemDef(type);
             mustEquip = ((def->flags & IIF_READY_ALWAYS)? false : true);
         }
 
         if(mustEquip && inv->readyItem != type)
-        {   // Make it so.
+        {
+            // Make it so.
             inv->readyItem = type;
 
 #if __JHERETIC__ || __JHEXEN__
@@ -462,9 +391,6 @@ int P_InventorySetReadyItem(int player, inventoryitemtype_t type)
     return 0;
 }
 
-/**
- * @return              The currently readied item, else @c IIT_NONE.
- */
 inventoryitemtype_t P_InventoryReadyItem(int player)
 {
     if(player < 0 || player >= MAXPLAYERS)
@@ -473,32 +399,20 @@ inventoryitemtype_t P_InventoryReadyItem(int player)
     return inventories[player].readyItem;
 }
 
-/**
- * Give one item of the specified type to the player.
- *
- * @param player        Player to give the item to.
- * @param type          Type of item to give.
- * @param silent        Non-zero = don't alert the player.
- *
- * @return              Non-zero iff an item of the specified type was
- *                      successfully given to the player.
- */
 int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
 {
-    unsigned int        oldNumItems;
-    playerinventory_t*  inv;
-
     if(player < 0 || player >= MAXPLAYERS)
         return 0;
 
     if(!(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES))
         return 0;
-    inv = &inventories[player];
 
-    oldNumItems = countItems(inv, IIT_NONE);
+    playerinventory_t *inv = &inventories[player];
+    uint oldNumItems       = countItems(inv, IIT_NONE);
 
     if(giveItem(inv, type))
-    {   // Item was given.
+    {
+        // Item was given.
         players[player].update |= PSF_INVENTORY;
 
 #if __JHERETIC__ || __JHEXEN__
@@ -507,8 +421,9 @@ int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
 #endif
 
         if(oldNumItems == 0)
-        {   // This is the first item the player has been given; ready it.
-            const def_invitem_t* def = P_GetInvItemDef(type);
+        {
+            // This is the first item the player has been given; ready it.
+            def_invitem_t const *def = P_GetInvItemDef(type);
 
             if(!(def->flags & IIF_READY_ALWAYS))
             {
@@ -522,7 +437,9 @@ int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
         // Maybe unhide the HUD?
 #if __JHERETIC__ || __JHEXEN__
         if(!silent)
+        {
             ST_HUDUnHide(player, HUE_ON_PICKUP_INVITEM);
+        }
 #endif
 
         return 1;
@@ -531,54 +448,29 @@ int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
     return 0;
 }
 
-/**
- * Take one of the specified items from the player (if owned).
- *
- * @param player        Player to take the item from.
- * @param type          Type of item being taken.
- * @param silent        Non-zero = don't alert the player.
- *
- * @return              Non-zero iff an item of the specified type was
- *                      successfully taken from the player.
- */
-int P_InventoryTake(int player, inventoryitemtype_t type,
-                    int silent)
+int P_InventoryTake(int player, inventoryitemtype_t type, int /*silent*/)
 {
-    playerinventory_t*  inv;
-
     if(player < 0 || player >= MAXPLAYERS)
         return 0;
 
     if(!(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES))
         return 0;
-    inv = &inventories[player];
 
+    playerinventory_t *inv = &inventories[player];
     return tryTakeItem(inv, type);
 }
 
-/**
- * Attempt to use an item of the specified type.
- *
- * @param player        Player using the item.
- * @param type          The type of item being used ELSE
- *                      IIT_NONE = Ignored.
- *                      NUM_INVENTORYITEM_TYPES = Panic. Use one of everything!!
- * @param silent        Non-zero - don't alert the player.
- *
- * @return              Non-zero iff one (or more) item was successfully
- *                      used by the player.
- */
 int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
 {
     inventoryitemtype_t lastUsed = IIT_NONE;
-    playerinventory_t*  inv;
 
     if(player < 0 || player >= MAXPLAYERS)
         return false;
 
     if(!(type >= IIT_FIRST || type <= NUM_INVENTORYITEM_TYPES))
         return false;
-    inv = &inventories[player];
+
+    playerinventory_t *inv = &inventories[player];
 
     App_Log(DE2_DEV_MAP_VERBOSE, "P_InventoryUse: Player %i using item %i", player, type);
 
@@ -596,19 +488,25 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
         if(type != NUM_INVENTORYITEM_TYPES)
         {
             if(tryUseItem(inv, type, false))
+            {
                 lastUsed = type;
+            }
         }
         else
-        {   // Panic! Use one of each item that is usable when panicked.
-            inventoryitemtype_t i;
-
-            for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
-                if(tryUseItem(inv, i, true))
-                    lastUsed = i;
+        {
+            // Panic! Use one of each item that is usable when panicked.
+            for(int i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
+            {
+                if(tryUseItem(inv, inventoryitemtype_t(i), true))
+                {
+                    lastUsed = inventoryitemtype_t(i);
+                }
+            }
         }
 
         if(lastUsed == IIT_NONE)
-        {   // Failed to use an item.
+        {
+            // Failed to use an item.
             // Set current to the next available?
 #if __JHERETIC__ || __JHEXEN__
             if(type != NUM_INVENTORYITEM_TYPES && cfg.inventoryUseNext)
@@ -616,7 +514,9 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
 # if __JHEXEN__
                 if(lastUsed < IIT_FIRSTPUZZITEM)
 # endif
+                {
                     Hu_InventoryMove(player, -1, true /* allow wrap */, true);
+                }
             }
 #endif
             return false;
@@ -625,7 +525,7 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
 
     if(!silent && lastUsed != IIT_NONE)
     {
-        invitem_t* item = &invItems[lastUsed - 1];
+        invitem_t *item = &invItems[lastUsed - 1];
         S_ConsoleSound(item->useSnd, NULL, player);
 #if __JHERETIC__ || __JHEXEN__
         ST_FlashCurrentItem(player);

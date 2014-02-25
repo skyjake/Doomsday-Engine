@@ -113,7 +113,7 @@ SOURCES += \
     $$common_src/p_ceiling.cpp \
     $$common_src/p_door.cpp \
     $$common_src/p_floor.cpp \
-    $$common_src/p_inventory.c \
+    $$common_src/p_inventory.cpp \
     $$common_src/p_iterlist.c \
     $$common_src/p_map.cpp \
     $$common_src/p_mapsetup.cpp \
@@ -130,7 +130,7 @@ SOURCES += \
     $$common_src/p_user.c \
     $$common_src/p_view.c \
     $$common_src/p_xgfile.cpp \
-    $$common_src/p_xgline.c \
+    $$common_src/p_xgline.cpp \
     $$common_src/p_xgsave.cpp \
     $$common_src/p_xgsec.c \
     $$common_src/player.cpp \

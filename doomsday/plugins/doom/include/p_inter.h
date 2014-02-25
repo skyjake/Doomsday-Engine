@@ -29,6 +29,10 @@
 #include "doomdef.h"
 #include "player.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param player     Player to receive the power.
  * @param powerType  Power type to give.
@@ -110,5 +114,9 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped);
  * @return  @c true iff the armor was given.
  */
 dd_bool P_GiveArmor(player_t *player, int type, int points);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDOOM_P_INTER_H
