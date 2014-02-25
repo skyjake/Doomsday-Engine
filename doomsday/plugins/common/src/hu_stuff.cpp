@@ -418,7 +418,7 @@ int scoreInfoCompare(void const *a_, void const *b_)
     if(a->kills > b->kills) return -1;
     if(b->kills > a->kills) return 1;
 
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
         // In deathmatch, suicides affect your place on the scoreboard.
         if(a->suicides < b->suicides) return -1;
@@ -493,7 +493,7 @@ static int populateScoreInfo(scoreinfo_t* scoreBoard, int maxPlayers, int player
         }
 #endif
 
-        if(gameRules.deathmatch)
+        if(G_Rules().deathmatch)
         {
             for(int j = 0; j < maxPlayers; ++j)
             {

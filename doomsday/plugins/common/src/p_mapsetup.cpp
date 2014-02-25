@@ -208,19 +208,19 @@ static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
         return false;
 
     // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
-    if(gameRules.deathmatch && (spot->flags & MSF_NOTDM))
+    if(G_Rules().deathmatch && (spot->flags & MSF_NOTDM))
         return false;
 
     // Don't spawn things flagged for Not Coop if we're coop'in.
-    if(IS_NETGAME && !gameRules.deathmatch && (spot->flags & MSF_NOTCOOP))
+    if(IS_NETGAME && !G_Rules().deathmatch && (spot->flags & MSF_NOTCOOP))
         return false;
 
     // The special "spawn no things" skill mode means nothing is spawned.
-    if(gameRules.skill == SM_NOTHINGS)
+    if(G_Rules().skill == SM_NOTHINGS)
         return false;
 
     // Check for appropriate skill level.
-    if(!(spot->skillModes & (1 << gameRules.skill)))
+    if(!(spot->skillModes & (1 << G_Rules().skill)))
         return false;
 
 #if __JHEXEN__
@@ -234,7 +234,7 @@ static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
             return false;
         }
     }
-    else if(!gameRules.deathmatch)
+    else if(!G_Rules().deathmatch)
     {
         // Cooperative mode.
 
@@ -478,7 +478,7 @@ static void initMapSpots()
 
     P_DealPlayerStarts(0);
 
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
         uint numDMStarts = P_GetNumPlayerStarts(true);
         uint playerCount = 0;
@@ -622,7 +622,7 @@ static void spawnMapObjects()
     if(!IS_CLIENT && maceSpotCount)
     {
         // Sometimes the Firemace doesn't show up if not in deathmatch.
-        if(!(!gameRules.deathmatch && P_Random() < 64))
+        if(!(!G_Rules().deathmatch && P_Random() < 64))
         {
             if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
             {
@@ -997,7 +997,7 @@ static void P_ResetWorldState()
     }
 
     timerGame = 0;
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
         int parm = CommandLine_Check("-timer");
         if(parm && parm < CommandLine_Count() - 1)
@@ -1019,7 +1019,7 @@ static void P_ResetWorldState()
             plr->playerState = PST_REBORN;
 
 #if __JHEXEN__
-        if(!IS_NETGAME || (IS_NETGAME != 0 && gameRules.deathmatch != 0) || firstFragReset == 1)
+        if(!IS_NETGAME || (IS_NETGAME != 0 && G_Rules().deathmatch != 0) || firstFragReset == 1)
         {
             memset(plr->frags, 0, sizeof(plr->frags));
             firstFragReset = 0;

@@ -148,7 +148,7 @@ mobj_t *BossBrain::nextTarget()
         return 0;
 
     d->easy ^= 1;
-    if(gameRules.skill <= SM_EASY && (!d->easy))
+    if(G_Rules().skill <= SM_EASY && (!d->easy))
         return 0;
 
     mobj_t *targ = d->targets[d->targetOn++];

@@ -50,7 +50,7 @@ void NetCl_UpdateGameState(Reader *msg)
     byte gsJumping = 0;
     //byte gsSkill = 0;
     coord_t gsGravity = 0;
-    GameRuleset gsRules = gameRules; // Make a copy of the current rules.
+    GameRuleset gsRules = G_Rules(); // Make a copy of the current rules.
 
     BusyMode_FreezeGameForBusyMode();
 
@@ -147,7 +147,7 @@ void NetCl_UpdateGameState(Reader *msg)
         gameMap     = gsMap;
         Uri_Copy(gameMapUri, mapUri);
         //gameMapEntrance = gsMapEntrance; /// @todo Not communicated to clients??
-        gameRules   = gsRules;
+        G_Rules()   = gsRules;
     }
 
     // Set gravity.

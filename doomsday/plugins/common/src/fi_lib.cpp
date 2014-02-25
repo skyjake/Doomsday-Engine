@@ -505,7 +505,7 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
 
     if(!stricmp(p->token, "deathmatch"))
     {
-        p->returnVal = (gameRules.deathmatch != false);
+        p->returnVal = (G_Rules().deathmatch != false);
         return true;
     }
 

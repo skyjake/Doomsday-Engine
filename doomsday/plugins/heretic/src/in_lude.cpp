@@ -275,7 +275,7 @@ void IN_InitStats(void)
     {
         gameType = SINGLE;
     }
-    else if( /*IS_NETGAME && */ !gameRules.deathmatch)
+    else if( /*IS_NETGAME && */ !G_Rules().deathmatch)
     {
         gameType = COOPERATIVE;
         memset(killPercent, 0, sizeof(killPercent));

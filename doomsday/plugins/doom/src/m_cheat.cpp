@@ -143,7 +143,7 @@ CHEAT_FUNC(Reveal)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME && gameRules.deathmatch) return false;
+    if(IS_NETGAME && G_Rules().deathmatch) return false;
 
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
@@ -240,7 +240,7 @@ D_CMD(CheatGod)
         {
             NetCl_CheatRequest("god");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -286,7 +286,7 @@ D_CMD(CheatNoClip)
         {
             NetCl_CheatRequest("noclip");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -461,7 +461,7 @@ D_CMD(CheatGive)
         return true;
     }
 
-    if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
+    if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
         return false;
 
     plr = &players[player];
@@ -651,7 +651,7 @@ D_CMD(CheatMassacre)
         {
             NetCl_CheatRequest("kill");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
         {
             return false;
         }

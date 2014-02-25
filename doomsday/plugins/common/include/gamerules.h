@@ -23,13 +23,16 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+
 /**
  * @ingroup libcommon
  *
  * @todo Separate behaviors so that each rule is singular.
 */
-typedef struct gameruleset_s
+class GameRuleset
 {
+public:
     skillmode_t skill;
 #if !__JHEXEN__
     byte fast;
@@ -41,14 +44,38 @@ typedef struct gameruleset_s
 #else
     byte respawnMonsters;
 #endif
-} GameRuleset;
+
+public:
+    GameRuleset();
+    GameRuleset(GameRuleset const &other);
+
+    GameRuleset &operator = (GameRuleset const &other);
+
+    void write(Writer *writer) const;
+    void read(Reader *reader);
+};
+
+#endif // __cplusplus
+
+// C wrapper API ---------------------------------------------------------------
 
 #ifdef __cplusplus
 extern "C" {
+#else
+typedef void *GameRuleset;
 #endif
 
-void GameRuleset_Write(GameRuleset const *rules, Writer *writer);
-void GameRuleset_Read(GameRuleset *rules, Reader *reader);
+skillmode_t GameRuleset_Skill(GameRuleset const *rules);
+#if !__JHEXEN__
+byte GameRuleset_Fast(GameRuleset const *rules);
+#endif
+byte GameRuleset_Deathmatch(GameRuleset const *rules);
+byte GameRuleset_NoMonsters(GameRuleset const *rules);
+#if __JHEXEN__
+byte GameRuleset_RandomClasses(GameRuleset const *rules);
+#else
+byte GameRuleset_RespawnMonsters(GameRuleset const *rules);
+#endif
 
 #ifdef __cplusplus
 } // extern "C"

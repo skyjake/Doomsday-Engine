@@ -90,7 +90,7 @@ SOURCES += \
     $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.cpp \
     $$common_src/g_update.c \
-    $$common_src/gamerules.c \
+    $$common_src/gamerules.cpp \
     $$common_src/gamestatereader.cpp \
     $$common_src/gamestatewriter.cpp \
     $$common_src/gl_drawpatch.c \

@@ -411,7 +411,7 @@ void D_PostInit()
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    G_Rules().skill = /*startSkill =*/ SM_MEDIUM;
 
     if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
@@ -419,12 +419,12 @@ void D_PostInit()
         cfg.netDeathmatch = 1;
 
     // Apply these rules.
-    gameRules.noMonsters      = CommandLine_Check("-nomonsters")? true : false;
-    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
-    gameRules.fast            = CommandLine_Check("-fast")? true : false;
+    G_Rules().noMonsters      = CommandLine_Check("-nomonsters")? true : false;
+    G_Rules().respawnMonsters = CommandLine_Check("-respawn")? true : false;
+    G_Rules().fast            = CommandLine_Check("-fast")? true : false;
 
     int p = CommandLine_Check("-timer");
-    if(p && p < myargc - 1 && gameRules.deathmatch)
+    if(p && p < myargc - 1 && G_Rules().deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
         App_Log(DE2_LOG_NOTE, "Maps will end after %d %s", time, time == 1? "minute" : "minutes");
@@ -469,7 +469,7 @@ void D_PostInit()
     if(p && p < myargc - 1)
     {
         int skillNumber = atoi(CommandLine_At(p + 1));
-        gameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        G_Rules().skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
@@ -513,14 +513,14 @@ void D_PostInit()
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
                               F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
-                              gameRules.skill);
+                              G_Rules().skill);
     }
 
     // Validate episode and map.
     AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        G_DeferredNewSession(startMapUri, 0/*default*/, &gameRules);
+        G_DeferredNewSession(startMapUri, 0/*default*/, &G_Rules());
     }
     else
     {

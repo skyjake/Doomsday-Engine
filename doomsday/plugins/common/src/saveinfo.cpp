@@ -76,7 +76,6 @@ DENG2_PIMPL_NOREF(SaveInfo)
         , mapTime  (0)
 #endif
     {
-        de::zap(gameRules);
 #if !__JHEXEN__
         de::zap(players);
 #endif
@@ -91,11 +90,11 @@ DENG2_PIMPL_NOREF(SaveInfo)
         , version        (other.version)
         , gameIdentityKey(other.gameIdentityKey)
         , mapUri         (Uri_Dup(other.mapUri))
+        , gameRules      (other.gameRules)
 #if !__JHEXEN__
         , mapTime        (other.mapTime)
 #endif
     {
-        std::memcpy(&gameRules, &other.gameRules, sizeof(gameRules));
 #if !__JHEXEN__
         std::memcpy(&players, &other.players, sizeof(players));
 #endif
@@ -290,7 +289,7 @@ void SaveInfo::applyCurrentSessionMetadata()
 #if !__JHEXEN__
     d->mapTime         = ::mapTime;
 #endif
-    d->gameRules       = ::gameRules; // Make a copy.
+    d->gameRules       = G_Rules(); // Make a copy.
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; i++)
@@ -370,7 +369,7 @@ void SaveInfo::write(writer_s *writer) const
 #if !__JHEXEN__
     Writer_WriteInt32(writer, d->mapTime);
 #endif
-    GameRuleset_Write(&d->gameRules, writer);
+    d->gameRules.write(writer);
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -434,7 +433,7 @@ void SaveInfo::read(reader_s *reader)
         d->mapTime = Reader_ReadInt32(reader);
 #endif
 
-        GameRuleset_Read(&d->gameRules, reader);
+        d->gameRules.read(reader);
     }
     else
     {

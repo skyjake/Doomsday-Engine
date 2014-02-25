@@ -54,7 +54,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (gameRules.deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
+        rgba[CA] = (GameRuleset_Deathmatch(G_RulesPtr())? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
         return true;
     }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)

@@ -24,11 +24,11 @@
 #include "dd_share.h"
 #include "mobj.h"
 #include "player.h"
+#include "gamerules.h"
 
 DENG_EXTERN_C dd_bool singledemo;
 
 DENG_EXTERN_C dd_bool gameInProgress;
-DENG_EXTERN_C GameRuleset gameRules;
 DENG_EXTERN_C uint gameEpisode;
 
 DENG_EXTERN_C Uri *gameMapUri;
@@ -74,17 +74,6 @@ void G_StartTitle(void);
  * Begin the helpscreen animation sequence.
  */
 void G_StartHelp(void);
-
-/**
- * @param mapUri       Map identifier.
- * @param mapEntrance  Logical map entry point number.
- * @param rules        Game rules to apply.
- */
-void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
-
-void G_DeferredNewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
-
-void G_EndSession(void);
 
 /**
  * Signal that play on the current map may now begin.
@@ -186,25 +175,15 @@ class GameStateReaderFactory;
 class SaveSlots;
 
 /**
- * Returns the game's SaveSlots.
+ * @param mapUri       Map identifier.
+ * @param mapEntrance  Logical map entry point number.
+ * @param rules        Game rules to apply.
  */
-SaveSlots &G_SaveSlots();
+void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
 
-/**
- * Parse @a str and determine whether it references a logical game-save slot.
- *
- * @param str  String to be parsed. Parse is divided into three passes.
- *             Pass 1: Check for a known game-save description which matches this.
- *                 Search is in logical save slot creation order.
- *             Pass 2: Check for keyword identifiers.
- *                 <auto>  = The "auto save" slot.
- *                 <last>  = The last used slot.
- *                 <quick> = The currently nominated "quick save" slot.
- *             Pass 3: Check for a unique save slot identifier.
- *
- * @return  The parsed slot id if found; otherwise a zero-length string.
- */
-de::String G_SaveSlotIdFromUserInput(de::String str);
+void G_DeferredNewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+
+void G_EndSession(void);
 
 /**
  * Determines whether game session loading is presently possible.
@@ -242,6 +221,42 @@ bool G_LoadSession(de::String slotId);
  */
 GameStateReaderFactory &G_GameStateReaderFactory();
 
+/**
+ * Returns the game's SaveSlots.
+ */
+SaveSlots &G_SaveSlots();
+
+/**
+ * Parse @a str and determine whether it references a logical game-save slot.
+ *
+ * @param str  String to be parsed. Parse is divided into three passes.
+ *             Pass 1: Check for a known game-save description which matches this.
+ *                 Search is in logical save slot creation order.
+ *             Pass 2: Check for keyword identifiers.
+ *                 <auto>  = The "auto save" slot.
+ *                 <last>  = The last used slot.
+ *                 <quick> = The currently nominated "quick save" slot.
+ *             Pass 3: Check for a unique save slot identifier.
+ *
+ * @return  The parsed slot id if found; otherwise a zero-length string.
+ */
+de::String G_SaveSlotIdFromUserInput(de::String str);
+
+/**
+ * Returns the game's GameRuleset.
+ */
+GameRuleset &G_Rules();
+
 #endif // __cplusplus
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GameRuleset *G_RulesPtr();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_GAME_H

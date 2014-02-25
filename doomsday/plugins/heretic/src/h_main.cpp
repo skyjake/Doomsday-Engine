@@ -344,7 +344,7 @@ void H_PostInit()
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Defaults for skill, episode and map.
-    gameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    G_Rules().skill = /*startSkill =*/ SM_MEDIUM;
 
     // Game mode specific settings.
     /* None */
@@ -355,8 +355,8 @@ void H_PostInit()
     }
 
     // Apply these game rules.
-    gameRules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
-    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
+    G_Rules().noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
+    G_Rules().respawnMonsters = CommandLine_Check("-respawn")? true : false;
 
     // turbo option.
     int p = CommandLine_Check("-turbo");
@@ -397,7 +397,7 @@ void H_PostInit()
     if(p && p < myargc - 1)
     {
         int skillNumber = atoi(CommandLine_At(p + 1));
-        gameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        G_Rules().skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
@@ -431,14 +431,14 @@ void H_PostInit()
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
                               F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
-                              gameRules.skill);
+                              G_Rules().skill);
     }
 
     // Validate episode and map.
     AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        G_DeferredNewSession(startMapUri, 0/*default*/, &gameRules);
+        G_DeferredNewSession(startMapUri, 0/*default*/, &G_Rules());
     }
     else
     {

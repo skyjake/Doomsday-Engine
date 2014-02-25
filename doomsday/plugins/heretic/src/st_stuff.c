@@ -470,7 +470,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
-            if(gameRules.deathmatch)
+            if(GameRuleset_Deathmatch(G_RulesPtr()))
                 GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
             else
                 GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
@@ -518,7 +518,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
-            if(gameRules.deathmatch)
+            if(GameRuleset_Deathmatch(G_RulesPtr()))
                 GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
             else
                 GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
@@ -714,7 +714,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
 
-    if(!gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(!GameRuleset_Deathmatch(G_RulesPtr()) || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -755,7 +755,7 @@ void SBarFrags_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(!gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(!GameRuleset_Deathmatch(G_RulesPtr()) || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -795,7 +795,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
-    if(gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(GameRuleset_Deathmatch(G_RulesPtr()) || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(hlth->value == 1994) return;
@@ -836,7 +836,7 @@ void SBarHealth_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(GameRuleset_Deathmatch(G_RulesPtr()) || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(hlth->value == 1994) return;
@@ -1854,7 +1854,7 @@ void Frags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
-    if(!gameRules.deathmatch) return;
+    if(!GameRuleset_Deathmatch(G_RulesPtr())) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -1889,7 +1889,7 @@ void Frags_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(!gameRules.deathmatch) return;
+    if(!GameRuleset_Deathmatch(G_RulesPtr())) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -2608,7 +2608,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(gameRules.skill == SM_BABY && cfg.automapBabyKeys)
+    if(GameRuleset_Skill(G_RulesPtr()) == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);

@@ -1134,11 +1134,11 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     */
 
     // Not for deathmatch?
-    if(gameRules.deathmatch && (info->flags & MF_NOTDMATCH))
+    if(GameRuleset_Deathmatch(G_RulesPtr()) && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Don't spawn any monsters?
-    if(gameRules.noMonsters && (info->flags & MF_COUNTKILL))
+    if(GameRuleset_NoMonsters(G_RulesPtr()) && (info->flags & MF_COUNTKILL))
         return NULL;
 
     if(info->flags & MF_SOLID)
@@ -1160,7 +1160,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
-    if(gameRules.skill != SM_NIGHTMARE)
+    if(GameRuleset_Skill(G_RulesPtr()) != SM_NIGHTMARE)
     {
         mo->reactionTime = info->reactionTime;
     }

@@ -502,7 +502,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
 #if __JHEXEN__
         p->keys = 2047;
@@ -657,7 +657,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     }
 
     // Spawn at random spot if in death match.
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrNum);
         return;
@@ -892,7 +892,7 @@ void P_SpawnPlayers()
     }
 
     // If deathmatch, randomly spawn the active players.
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -991,7 +991,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     playerclass_t pClass;
 #if __JHEXEN__
-    if(gameRules.randomClasses)
+    if(G_Rules().randomClasses)
     {
         pClass = playerclass_t(P_Random() % 3);
         if(pClass == cfg.playerClass[playerNum]) // Not the same class, please.

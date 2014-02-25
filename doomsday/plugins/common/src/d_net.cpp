@@ -100,16 +100,16 @@ void NetSv_ApplyGameRulesFromConfig()
 {
     if(IS_CLIENT) return;
 
-    gameRules.deathmatch = cfg.netDeathmatch;
-    gameRules.noMonsters = cfg.netNoMonsters;
+    G_Rules().deathmatch = cfg.netDeathmatch;
+    G_Rules().noMonsters = cfg.netNoMonsters;
     cfg.jumpEnabled = cfg.netJumping;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    gameRules.respawnMonsters = cfg.netRespawn;
+    G_Rules().respawnMonsters = cfg.netRespawn;
 #endif
 
 #if __JHEXEN__
-    gameRules.randomClasses = cfg.netRandomClass;
+    G_Rules().randomClasses = cfg.netRandomClass;
 #endif
 
     NetSv_UpdateGameConfigDescription();
@@ -145,7 +145,7 @@ int D_NetServerStarted(int before)
 
     Uri *netMapUri = G_ComposeMapUri(netEpisode, netMap);
 
-    GameRuleset netRules = gameRules; // Make a copy of the current rules.
+    GameRuleset netRules = G_Rules(); // Make a copy of the current rules.
     netRules.skill = skillmode_t(cfg.netSkill);
 
     G_NewSession(netMapUri, 0/*default*/, &netRules);
@@ -168,10 +168,10 @@ int D_NetServerClose(int before)
         /// @todo fixme: "normal" is defined by the game rules config which may
         /// be changed from the command line (e.g., -fast, -nomonsters).
         /// In order to "restore normal" this logic is insufficient.
-        gameRules.deathmatch    = false;
-        gameRules.noMonsters    = false;
+        G_Rules().deathmatch    = false;
+        G_Rules().noMonsters    = false;
 #if __JHEXEN__
-        gameRules.randomClasses = false;
+        G_Rules().randomClasses = false;
 #endif
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
 
@@ -202,10 +202,10 @@ int D_NetDisconnect(int before)
     if(before) return true;
 
     // Restore normal game state.
-    gameRules.deathmatch    = false;
-    gameRules.noMonsters    = false;
+    G_Rules().deathmatch    = false;
+    G_Rules().noMonsters    = false;
 #if __JHEXEN__
-    gameRules.randomClasses = false;
+    G_Rules().randomClasses = false;
 #endif
 
     D_NetClearBuffer();
@@ -350,14 +350,14 @@ int D_NetWorldEvent(int type, int parm, void *data)
             G_DemoEnds();
 
         // Restore normal game state.
-        gameRules.deathmatch = false;
-        gameRules.noMonsters = false;
+        G_Rules().deathmatch = false;
+        G_Rules().noMonsters = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        gameRules.respawnMonsters = false;
+        G_Rules().respawnMonsters = false;
 #endif
 
 #if __JHEXEN__
-        gameRules.randomClasses = false;
+        G_Rules().randomClasses = false;
 #endif
         break;
 #endif

@@ -167,7 +167,7 @@ void WI_initVariables(void /* wbstartstruct_t* wbstartstruct */)
 
 void IN_Init(void)
 {
-    DENG_ASSERT(gameRules.deathmatch);
+    DENG_ASSERT(GameRuleset_Deathmatch(G_RulesPtr()));
 
     WI_initVariables();
     loadPics();
@@ -333,7 +333,7 @@ static void CheckForSkip(void)
         }
     }
 
-    if(gameRules.deathmatch && interTime < 140)
+    if(GameRuleset_Deathmatch(G_RulesPtr()) && interTime < 140)
     {
         // Wait for 4 seconds before allowing a skip.
         if(skipIntermission == 1)

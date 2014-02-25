@@ -293,7 +293,7 @@ void P_ShotAmmo(player_t *player)
 
     int fireMode = 0;
 #if __JHERETIC__
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
         fireMode = 0; // In deathmatch always use mode zero.
     else
         fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -365,7 +365,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
 
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
-                if(gameRules.deathmatch &&
+                if(G_Rules().deathmatch &&
                    player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
                 {
                     // Not enough ammo of this type. Candidate is NOT good.
@@ -512,7 +512,7 @@ dd_bool P_CheckAmmo(player_t *plr)
     int fireMode = 0;
 #if __JHERETIC__
     // If deathmatch always use firemode two ammo requirements.
-    if(plr->powers[PT_WEAPONLEVEL2] && !gameRules.deathmatch)
+    if(plr->powers[PT_WEAPONLEVEL2] && !G_Rules().deathmatch)
     {
         fireMode = 1;
     }

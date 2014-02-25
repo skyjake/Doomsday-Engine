@@ -1565,7 +1565,7 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
         pmo->target = mo->target;
         pmo->args[0] = 10; // Initial turn value.
         pmo->args[1] = 0; // Initial look angle.
-        if(gameRules.deathmatch)
+        if(GameRuleset_Deathmatch(G_RulesPtr()))
         {
             // Ghosts last slightly less longer in DeathMatch.
             pmo->health = 85;

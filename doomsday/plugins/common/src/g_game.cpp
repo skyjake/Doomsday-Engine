@@ -2387,6 +2387,16 @@ static void G_ApplyNewGameRules()
     }
 }
 
+GameRuleset &G_Rules()
+{
+    return gameRules;
+}
+
+GameRuleset *G_RulesPtr()
+{
+    return &gameRules;
+}
+
 void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 {
 #if __JHEXEN__

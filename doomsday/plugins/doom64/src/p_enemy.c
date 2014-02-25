@@ -1008,7 +1008,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(!gameRules.fast)
+        if(!GameRuleset_Fast(G_RulesPtr()))
         {
             newChaseDir(actor);
         }
@@ -1031,7 +1031,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(!gameRules.fast && actor->moveCount))
+        if(!(!GameRuleset_Fast(G_RulesPtr()) && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {

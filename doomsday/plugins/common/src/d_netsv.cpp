@@ -99,19 +99,19 @@ void NetSv_UpdateGameConfigDescription()
         return;
 
     de::zap(gameConfigString);
-    sprintf(gameConfigString, "skill%i", gameRules.skill + 1);
+    sprintf(gameConfigString, "skill%i", G_Rules().skill + 1);
 
-    if(gameRules.deathmatch > 1)
-        sprintf(gameConfigString, " dm%i", gameRules.deathmatch);
-    else if(gameRules.deathmatch)
+    if(G_Rules().deathmatch > 1)
+        sprintf(gameConfigString, " dm%i", G_Rules().deathmatch);
+    else if(G_Rules().deathmatch)
         strcat(gameConfigString, " dm");
     else
         strcat(gameConfigString, " coop");
 
-    if(gameRules.noMonsters)
+    if(G_Rules().noMonsters)
         strcat(gameConfigString, " nomonst");
 #if !__JHEXEN__
-    if(gameRules.respawnMonsters)
+    if(G_Rules().respawnMonsters)
         strcat(gameConfigString, " respawn");
 #endif
 
@@ -570,7 +570,7 @@ void NetSv_NewPlayerEnters(int plrNum)
     NetSv_ResetPlayerFrags(plrNum);
 
     // Spawn the player into the world.
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrNum);
     }
@@ -696,17 +696,17 @@ void NetSv_SendGameState(int flags, int to)
         Writer_WriteByte(writer, gameEpisode);
         Writer_WriteByte(writer, gameMap);
 
-        Writer_WriteByte(writer, (gameRules.deathmatch & 0x3)
-            | (!gameRules.noMonsters? 0x4 : 0)
+        Writer_WriteByte(writer, (G_Rules().deathmatch & 0x3)
+            | (!G_Rules().noMonsters? 0x4 : 0)
 #if !__JHEXEN__
-            | (gameRules.respawnMonsters? 0x8 : 0)
+            | (G_Rules().respawnMonsters? 0x8 : 0)
 #else
             | 0
 #endif
             | (cfg.jumpEnabled? 0x10 : 0));
 
         // Note that SM_NOTHINGS will result in a value of '7'.
-        Writer_WriteByte(writer, gameRules.skill & 0x7);
+        Writer_WriteByte(writer, G_Rules().skill & 0x7);
         Writer_WriteFloat(writer, (float)P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
@@ -1130,7 +1130,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
 {
 #if __JDOOM__ || __JDOOM64__
     if(!cfg.killMessages) return;
-    if(!gameRules.deathmatch) return;
+    if(!G_Rules().deathmatch) return;
 
     char buf[500];
     buf[0] = 0;

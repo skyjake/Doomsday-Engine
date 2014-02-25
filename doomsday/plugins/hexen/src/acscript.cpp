@@ -391,9 +391,7 @@ void ACScriptInterpreter::clearDeferredTasks()
 
 void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
 {
-    //DENG_ASSERT(mapUri != 0);
-
-    if(gameRules.deathmatch)
+    if(G_Rules().deathmatch)
     {
         /// @todo Do we really want to disallow deferred ACS tasks in deathmatch?
         /// What is the actual intention here? -ds
@@ -1422,7 +1420,7 @@ ACS_COMMAND(GameType)
     {
         gametype = 0; // singleplayer
     }
-    else if(gameRules.deathmatch)
+    else if(G_Rules().deathmatch)
     {
         gametype = 2; // deathmatch
     }
@@ -1437,7 +1435,7 @@ ACS_COMMAND(GameType)
 
 ACS_COMMAND(GameSkill)
 {
-    acs.locals.push((int)gameRules.skill);
+    acs.locals.push((int)G_Rules().skill);
     return Continue;
 }
 

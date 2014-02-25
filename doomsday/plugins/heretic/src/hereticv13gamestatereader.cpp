@@ -643,7 +643,7 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
     //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
     info->setVersion(atoi(&vcheck[8]));
 
-    GameRuleset rules; de::zap(rules);
+    GameRuleset rules;
     rules.skill = (skillmode_t) Reader_ReadByte(reader);
     // Interpret skill levels outside the normal range as "spawn no things".
     if(rules.skill < SM_BABY || rules.skill >= NUM_SKILL_MODES)
