@@ -381,7 +381,7 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
-    DENG2_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
 
     int option, i;
 

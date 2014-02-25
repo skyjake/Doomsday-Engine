@@ -171,7 +171,7 @@ void G_RendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-void H_DrawWindow(Size2Raw const *windowSize)
+void H_DrawWindow(Size2Raw const * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {

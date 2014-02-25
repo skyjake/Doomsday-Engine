@@ -69,7 +69,6 @@ static gametype_t gameType;
 
 static int cnt;
 
-static int time;
 static int hours;
 static int minutes;
 static int seconds;
@@ -92,7 +91,7 @@ static patchid_t dpFaceDead[NUMTEAMS];
 static fixed_t dSlideX[NUMTEAMS];
 static fixed_t dSlideY[NUMTEAMS];
 
-static char* killersText[] = { "K", "I", "L", "L", "E", "R", "S" };
+static char const *killersText = "KILLERS";
 
 static Point2Raw YAHspot[3][9] = {
     {
@@ -132,12 +131,8 @@ static Point2Raw YAHspot[3][9] = {
 
 void WI_Register(void)
 {
-    cvartemplate_t cvars[] = {
-        { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
-        { "inlude-patch-replacement", 0, CVT_INT, &cfg.inludePatchReplaceMode, PRM_FIRST, PRM_LAST },
-        { NULL }
-    };
-    Con_AddVariableList(cvars);
+    C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, PRM_FIRST, PRM_LAST);
 }
 
 void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a)
@@ -264,11 +259,9 @@ void IN_InitStats(void)
         }
     }
 
-    time = mapTime / 35;
-    hours = time / 3600;
-    time -= hours * 3600;
-    minutes = time / 60;
-    time -= minutes * 60;
+    int time = mapTime / 35;
+    hours   = time / 3600; time -= hours * 3600;
+    minutes = time / 60;   time -= minutes * 60;
     seconds = time;
 
     if(!IS_NETGAME)
@@ -979,7 +972,7 @@ void IN_DrawDMStats(void)
 
     for(i = 0; i < 7; ++i)
     {
-        FR_DrawTextXY3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+        FR_DrawCharXY3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);

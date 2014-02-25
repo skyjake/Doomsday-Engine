@@ -1943,7 +1943,7 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
         side = 1;
 
     // Make sure we are on correct side of exit line.
-    while(Line_PointOnSide(newLine, newPos) < 0 != side && --fudge >= 0)
+    while((Line_PointOnSide(newLine, newPos) < 0) != side && --fudge >= 0)
     {
         if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
             newPos[VY] -= FIX2FLT(((newLineDelta[0] < 0) != side)? -1 : 1);
