@@ -1,32 +1,22 @@
-/**\file wi_stuff.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file wi_stuff.h  DOOM specific intermission screens.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Intermission screens - DOOM specific.
- *
- * \note WI_Ticker is used to detect keys because of timing issues in netgames.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDOOM_WI_STUFF_H
@@ -81,6 +71,35 @@ typedef enum {
     ILS_SHOW_NEXTMAP
 } interludestate_t;
 
+//
+// INTERMISSION
+// Structure passed e.g. to WI_Init(wb)
+//
+typedef struct {
+    dd_bool         inGame; // Whether the player is in game.
+
+    // Player stats, kills, collected items etc.
+    int             kills;
+    int             items;
+    int             secret;
+    int             time;
+    int             frags[MAXPLAYERS];
+    int             score; // Current score on entry, modified on return.
+} wbplayerstruct_t;
+
+typedef struct {
+    uint            episode;
+    dd_bool         didSecret; // If true, splash the secret level.
+    uint            currentMap, nextMap; // This and next maps.
+    int             maxKills;
+    int             maxItems;
+    int             maxSecret;
+    int             maxFrags;
+    int             parTime;
+    int             pNum; // Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];
+} wbstartstruct_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -91,12 +110,14 @@ void WI_Register(void);
 /**
  * Perform setup for an intermission.
  */
-void WI_Init(wbstartstruct_t* wbstartstruct);
+void WI_Init(wbstartstruct_t *wbstartstruct);
 
 void WI_Shutdown(void);
 
 /**
  * Process game tic for the intermission.
+ *
+ * @note Handles user input due to timing issues in netgames.
  */
 void WI_Ticker(void);
 

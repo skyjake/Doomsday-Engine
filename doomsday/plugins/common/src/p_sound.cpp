@@ -48,18 +48,18 @@ void S_MapMusic(Uri const *mapUri)
 
     if(S_StartMusic("currentmap", true))
     {
-        // Set the game status cvar for the map music
-        gsvMapMusic = defIndex;
+        // Set the game status cvar for the map music.
+        Con_SetInteger2("map-music", defIndex, SVF_WRITE_OVERRIDE);
     }
 #else
     AutoStr *mapPath = Uri_Compose(mapUri);
-    ddmapinfo_t mapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &mapInfo))
+    ddmapinfo_t ddMapInfo;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &ddMapInfo))
     {
-        if(S_StartMusicNum(mapInfo.music, true))
+        if(S_StartMusicNum(ddMapInfo.music, true))
         {
             // Set the game status cvar for the map music.
-            gsvMapMusic = mapInfo.music;
+            Con_SetInteger2("map-music", ddMapInfo.music, SVF_WRITE_OVERRIDE);
         }
     }
 #endif

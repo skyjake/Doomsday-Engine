@@ -39,9 +39,6 @@
 #include "gamerules.h"
 #include "wi_stuff.h"
 
-DENG_EXTERN_C int gaSaveGameSaveSlot;
-DENG_EXTERN_C int gaLoadGameSaveSlot;
-
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
 DENG_EXTERN_C uint nextMap; // If non zero this will be the next map.
@@ -52,7 +49,6 @@ DENG_EXTERN_C int bodyQueueSlot;
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
 DENG_EXTERN_C dd_bool customPal;
-DENG_EXTERN_C int gsvMapMusic;
 DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus

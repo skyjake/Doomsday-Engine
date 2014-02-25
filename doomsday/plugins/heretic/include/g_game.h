@@ -38,22 +38,18 @@
 #include "gamerules.h"
 #include "h_event.h"
 #include "h_player.h"
-
-DENG_EXTERN_C int gaSaveGameSaveSlot;
-DENG_EXTERN_C int gaLoadGameSaveSlot;
+#include "in_lude.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
 DENG_EXTERN_C uint nextMap;
 DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
+DENG_EXTERN_C wbstartstruct_t wmInfo;
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
-DENG_EXTERN_C wbstartstruct_t wmInfo;
 DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
-
-DENG_EXTERN_C int gsvMapMusic;
 
 #ifdef __cplusplus
 extern "C" {
