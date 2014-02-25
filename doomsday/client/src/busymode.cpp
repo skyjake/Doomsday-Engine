@@ -37,7 +37,7 @@
 
 #ifdef __CLIENT__
 #include "clientapp.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/widgets/busywidget.h"
 
 static void BusyMode_Exit(void);
@@ -276,7 +276,7 @@ static void preBusySetup(int initialMode)
     ClientApp::app().loop().setRate(60);   
 
     // Switch the window to busy mode UI.
-    WindowSystem::main().setMode(ClientWindow::Busy);
+    ClientWindowSystem::main().setMode(ClientWindow::Busy);
 
 #else
     DENG_UNUSED(initialMode);
@@ -296,7 +296,7 @@ static void postBusyCleanup()
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
-    WindowSystem::main().setMode(ClientWindow::Normal);
+    ClientWindowSystem::main().setMode(ClientWindow::Normal);
 
     if(!Con_TransitionInProgress())
     {
@@ -473,7 +473,7 @@ void BusyMode_Loop(void)
 
     if(canUpload)
     {
-        WindowSystem::main().glActivate();
+        ClientWindowSystem::main().glActivate();
 
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
@@ -496,7 +496,7 @@ void BusyMode_Loop(void)
        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
-        WindowSystem::main().draw();
+        ClientWindowSystem::main().draw();
         return;
     }
 

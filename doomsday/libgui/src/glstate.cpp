@@ -7,16 +7,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -50,6 +50,28 @@ namespace internal
         ViewportHeight,
         MAX_PROPERTIES
     };
+
+    static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
+        { CullMode,       2  },
+        { DepthTest,      1  },
+        { DepthFunc,      3  },
+        { DepthWrite,     1  },
+        { Blend,          1  },
+        { BlendFuncSrc,   4  },
+        { BlendFuncDest,  4  },
+        { BlendOp,        2  },
+        { ColorMask,      4  },
+        { Scissor,        1  },
+        { ScissorX,       12 }, // 12 bits == 4096 max
+        { ScissorY,       12 },
+        { ScissorWidth,   12 },
+        { ScissorHeight,  12 },
+        { ViewportX,      12 },
+        { ViewportY,      12 },
+        { ViewportWidth,  12 },
+        { ViewportHeight, 12 }
+    };
+    static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
 
     /// The GL state stack.
     struct GLStateStack : public QList<GLState *> {
@@ -113,35 +135,16 @@ DENG2_PIMPL(GLState)
     BitField props;
     GLTarget *target;
 
-    Instance(Public *i) : Base(i), target(0)
-    {
-        static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
-            { CullMode,       2  },
-            { DepthTest,      1  },
-            { DepthFunc,      3  },
-            { DepthWrite,     1  },
-            { Blend,          1  },
-            { BlendFuncSrc,   4  },
-            { BlendFuncDest,  4  },
-            { BlendOp,        2  },
-            { ColorMask,      4  },
-            { Scissor,        1  },
-            { ScissorX,       12 }, // 12 bits == 4096 max
-            { ScissorY,       12 },
-            { ScissorWidth,   12 },
-            { ScissorHeight,  12 },
-            { ViewportX,      12 },
-            { ViewportY,      12 },
-            { ViewportWidth,  12 },
-            { ViewportHeight, 12 }
-        };
-        props.addElements(propSpecs, MAX_PROPERTIES);
-    }
+    Instance(Public *i)
+        : Base(i)
+        , props(glStateProperties)
+        , target(0)
+    {}
 
     Instance(Public *i, Instance const &other)
-        : Base(i),
-          props(other.props),
-          target(other.target)
+        : Base(i)
+        , props(other.props)
+        , target(other.target)
     {}
 
     static GLenum glComp(gl::Comparison comp)
@@ -303,6 +306,8 @@ DENG2_PIMPL(GLState)
         default:
             break;
         }
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void removeRedundancies(BitField::Ids &changed)
@@ -569,6 +574,8 @@ Rectangleui GLState::scissorRect() const
 
 void GLState::apply() const
 {
+    LIBGUI_ASSERT_GL_OK();
+
     bool forceViewportAndScissor = false;
 
     // Update the render target.
@@ -594,12 +601,14 @@ void GLState::apply() const
         }
     }
 
+    LIBGUI_ASSERT_GL_OK();
+
     // Determine which properties have changed.
     BitField::Ids changed;
-    if(!currentProps.size())
+    if(currentProps.isEmpty())
     {
         // Apply everything.
-        changed = d->props.elementIds();
+        changed = d->props.elements().ids();
     }
     else
     {

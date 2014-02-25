@@ -3,17 +3,17 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/FoldPanelWidget"
@@ -27,7 +27,6 @@ using namespace ui;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {
-    /*
     struct FoldImage : public ProceduralImage
     {
         FoldPanelWidget &fold;
@@ -38,28 +37,28 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
 
         void update()
         {
-            setSize(fold.root().atlas().imageRect(fold.root().roundCorners()).size());
+            float h = fold.title().font().height().value();
+            setSize(Vector2f(h, h));
         }
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
         {
             GuiRootWidget &root = fold.root();
             Atlas &atlas = root.atlas();
+            ColorBank::Colorf const &textColor = fold.title().textColorf();
 
-            ColorBank::Colorf const &textColor   = fold.style().colors().colorf("text");
-            ColorBank::Colorf accentColor = fold.style().colors().colorf("accent")
-                    * Vector4f(1, 1, 1, fold.isOpen()? .5f : 1);
+            verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
+                                    atlas.imageRectf(root.roundCorners()));
 
-            verts.makeQuad(rect, accentColor,
-                           atlas.imageRectf(root.roundCorners()));
-
-            Vector2ui dotSize = atlas.imageRect(root.tinyDot()).size();
-            verts.makeQuad(Rectanglef::fromSize(rect.middle() - dotSize/2,
-                                                dotSize),
-                           fold.isOpen()? accentColor : textColor,
-                           atlas.imageRectf(root.tinyDot()));
+            Rectanglef uv = atlas.imageRectf(root.fold());
+            if(!fold.isOpen())
+            {
+                // Flip it.
+                uv = Rectanglef(uv.bottomLeft(), uv.topRight());
+            }
+            verts.makeQuad(rect, textColor * Vector4f(1, 1, 1, .5f), uv);
         }
-    };*/
+    };
 
     ButtonWidget *title; // not owned
     GuiWidget *container; ///< Held here while not part of the widget tree.
@@ -80,13 +79,14 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
     d->title->setTextColor("accent");
     d->title->setHoverTextColor("text", ButtonWidget::ReplaceColor);
     d->title->setFont("heading");
+    d->title->setAlignment(ui::AlignLeft);
+    d->title->setTextLineAlignment(ui::AlignLeft);
     d->title->set(Background()); // no frame or background
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
     d->title->setOpacity(.8f);
 
-    // Icon is disabled for now, doesn't look quite right.
-    //d->title->setImage(new Instance::FoldImage(*this));
-    //d->title->setTextAlignment(ui::AlignRight); // Text is on the right from the image.
+    // Fold indicator.
+    d->title->setOverlayImage(new Instance::FoldImage(*this), ui::AlignRight);
 
     return d->title;
 }

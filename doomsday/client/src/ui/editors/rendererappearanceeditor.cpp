@@ -111,12 +111,10 @@ DENG2_OBSERVES(App, GameChange)
             _resetButton->setText(tr("Reset"));
             _resetButton->setAction(new ResetAction(this));
             _resetButton->rule()
-                    .setInput(Rule::Right, d->container->contentRule().right())
-                    .setInput(Rule::Top, title().rule().top());
+                    .setInput(Rule::Right,   d->container->contentRule().right())
+                    .setInput(Rule::AnchorY, title().rule().top() + title().rule().height() / 2)
+                    .setAnchorPoint(Vector2f(0, .5f));
             _resetButton->disable();
-
-            // Extend the title all the way to the button.
-            title().hitRule().setInput(Rule::Right, _resetButton->rule().left());
 
             d->container->add(&title());
             d->container->add(_resetButton);
@@ -191,6 +189,9 @@ DENG2_OBSERVES(App, GameChange)
         void commit()
         {
             _group->rule().setSize(_layout.width(), _layout.height());
+
+            // Extend the title all the way to the button.
+            title().rule().setInput(Rule::Right, _resetButton->rule().left());
 
             // Calculate the maximum rule for the first column items.
             for(int i = 0; i < _layout.gridSize().y; ++i)

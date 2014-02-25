@@ -42,6 +42,10 @@ group choice {
     color popup { rgb $= gui.colorAlpha(background.rgb, 1.0) }
 }
 
+group tab {
+    color selected { rgb $= accent.rgb }
+}
+
 group progress {
     group light {
         color wheel  { rgb <1.0, 1.0, 1.0, 0.25> }

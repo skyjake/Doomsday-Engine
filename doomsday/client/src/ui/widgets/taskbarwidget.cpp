@@ -25,6 +25,7 @@
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
+#include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
 #include "ui/dialogs/gamesdialog.h"
 #include "updater/updatersettingsdialog.h"
@@ -62,6 +63,8 @@ enum MenuItemPositions
     POS_GAMES             = 0,
     POS_UNLOAD            = 1,
     POS_GAMES_SEPARATOR   = 2,
+    POS_CONNECT           = 3,
+    POS_CONNECT_SEPARATOR = 4,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -259,9 +262,11 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         updateStatus();
 
-        itemWidget(mainMenu, POS_GAMES)          .show(!newGame.isNull());
-        itemWidget(mainMenu, POS_UNLOAD)         .show(!newGame.isNull());
-        itemWidget(mainMenu, POS_GAMES_SEPARATOR).show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAMES)            .show(!newGame.isNull());
+        itemWidget(mainMenu, POS_UNLOAD)           .show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!newGame.isNull());
+        itemWidget(mainMenu, POS_CONNECT)          .show(!newGame.isNull());
+        itemWidget(mainMenu, POS_CONNECT_SEPARATOR).show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!newGame.isNull());
@@ -410,6 +415,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Games..."), new SignalAction(this, SLOT(showGames())))
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
+            << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
@@ -418,6 +425,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->itemWidget(d->mainMenu, POS_GAMES).hide();
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
     d->itemWidget(d->mainMenu, POS_GAMES_SEPARATOR).hide();
+    d->itemWidget(d->mainMenu, POS_CONNECT).hide();
+    d->itemWidget(d->mainMenu, POS_CONNECT_SEPARATOR).hide();
 
     d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
@@ -705,6 +714,17 @@ void TaskBarWidget::showGames()
     GamesDialog *games = new GamesDialog;
     games->setDeleteAfterDismissed(true);
     games->exec(root());
+}
+
+void TaskBarWidget::connectToServerManually()
+{
+    ManualConnectionDialog *dlg = new ManualConnectionDialog;
+    dlg->setDeleteAfterDismissed(true);
+    if(dlg->exec(root()))
+    {
+        // Connect to the provided address.
+        Con_Executef(CMDS_DDAY, false, "connect %s", dlg->editor().text().toLatin1().constData());
+    }
 }
 
 void TaskBarWidget::updateCommandLineLayout()

@@ -1,6 +1,7 @@
-# The Doomsday Engine Project
-# Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
+# The Doomsday Engine Project -- Doomsday 2 Core Library
+# License: LGPL 3
+# Copyright (c) 2011-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
 TARGET = deng2

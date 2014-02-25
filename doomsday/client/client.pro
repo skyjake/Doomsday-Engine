@@ -37,7 +37,6 @@ include(../dep_deng1.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_appfw.pri)
-include(../dep_rift.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -369,6 +368,7 @@ DENG_HEADERS += \
     include/ui/busyvisual.h \
     include/ui/clientrootwidget.h \
     include/ui/clientwindow.h \
+    include/ui/clientwindowsystem.h \
     include/ui/commandaction.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
@@ -379,6 +379,7 @@ DENG_HEADERS += \
     include/ui/dialogs/gamesdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/logsettingsdialog.h \
+    include/ui/dialogs/manualconnectiondialog.h \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
@@ -392,6 +393,7 @@ DENG_HEADERS += \
     include/ui/widgets/cvarlineeditwidget.h \
     include/ui/widgets/cvarsliderwidget.h \
     include/ui/widgets/cvartogglewidget.h \
+    include/ui/widgets/gamefilterwidget.h \
     include/ui/widgets/gameselectionwidget.h \
     include/ui/widgets/gamesessionwidget.h \
     include/ui/widgets/gameuiwidget.h \
@@ -414,9 +416,6 @@ DENG_HEADERS += \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/vrwindowtransform.h \
-    include/ui/windowsystem.h \
-    include/ui/windowtransform.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/updater/downloaddialog.h \
@@ -697,6 +696,7 @@ SOURCES += \
     src/ui/busyvisual.cpp \
     src/ui/clientrootwidget.cpp \
     src/ui/clientwindow.cpp \
+    src/ui/clientwindowsystem.cpp \
     src/ui/commandaction.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
@@ -706,6 +706,7 @@ SOURCES += \
     src/ui/dialogs/gamesdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/logsettingsdialog.cpp \
+    src/ui/dialogs/manualconnectiondialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/dialogs/vrsettingsdialog.cpp \
@@ -722,7 +723,6 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
-    src/ui/vrwindowtransform.cpp \
     src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
@@ -731,6 +731,7 @@ SOURCES += \
     src/ui/widgets/cvarlineeditwidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
+    src/ui/widgets/gamefilterwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
     src/ui/widgets/gamesessionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
@@ -740,8 +741,6 @@ SOURCES += \
     src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
-    src/ui/windowsystem.cpp \
-    src/ui/windowtransform.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \

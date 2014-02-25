@@ -3,16 +3,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -20,6 +20,8 @@
 #include "de/GuiRootWidget"
 #include "de/BlurWidget"
 #include "de/Style"
+#include "de/BaseGuiApp"
+#include "de/IPersistent"
 
 #include <de/Garbage>
 #include <de/MouseEvent>
@@ -314,6 +316,39 @@ DENG2_PIMPL(GuiWidget)
             opacityWhenDisabled.finish();
         }
     }
+
+    void restoreState()
+    {
+        try
+        {
+            if(IPersistent *po = self.maybeAs<IPersistent>())
+            {
+                DENG2_BASE_GUI_APP->persistentUIState() >> *po;
+            }
+        }
+        catch(Error const &er)
+        {
+            // Benign: widget will use default state.
+            LOG_VERBOSE("Failed to restore state of widget '%s': %s")
+                    << self.path() << er.asText();
+        }
+    }
+
+    void saveState()
+    {
+        try
+        {
+            if(IPersistent *po = self.maybeAs<IPersistent>())
+            {
+                DENG2_BASE_GUI_APP->persistentUIState() << *po;
+            }
+        }
+        catch(Error const &er)
+        {
+            LOG_WARNING("Failed to save state of widget '%s': %s")
+                    << self.path() << er.asText();
+        }
+    }
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
@@ -508,10 +543,12 @@ void GuiWidget::initialize()
     {
         d->inited = true;
         glInit();
+
+        d->restoreState();
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Error when initializing widget '%s':\n")
+        LOG_WARNING("Error when initializing widget '%s': %s")
                 << name() << er.asText();
     }
 }
@@ -522,13 +559,15 @@ void GuiWidget::deinitialize()
 
     try
     {
+        d->saveState();
+
         d->inited = false;
         d->deinitBlur();
         glDeinit();
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Error when deinitializing widget '%s':\n")
+        LOG_WARNING("Error when deinitializing widget '%s': %s")
                 << name() << er.asText();
     }
 }

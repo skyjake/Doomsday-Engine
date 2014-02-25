@@ -170,9 +170,10 @@ DENG_GUI_PIMPL(AlertDialog)
         label.setOverrideImageSize(style().fonts().font("default").height().value());
         label.setImageAlignment(ui::AlignTop);
         label.setTextAlignment(ui::AlignRight);
-        label.margins().setLeft("");
-        label.margins().setRight("");
-        label.margins().setBottom("");
+        label.margins()
+                .setLeft("")
+                .setRight("")
+                .setBottom("");
 
         AlertItem const &alert = item.as<AlertItem>();
         switch(alert.level())
