@@ -3,7 +3,7 @@
 
 greaterThan(QT_MAJOR_VERSION, 4): cache()
 
-!deng_sdk: error(\"deng_sdk'" must be defined in CONFIG!)
+!deng_sdk: error(\"deng_sdk\" must be defined in CONFIG!)
 
 include(config.pri)
 
