@@ -32,6 +32,7 @@ publicHeaders(root, \
     include/de/LittleEndianByteOrder \
     include/de/NoneValue \
     include/de/NumberValue \
+    include/de/Observers \
     include/de/Path \
     include/de/PathTree \
     include/de/Property \
