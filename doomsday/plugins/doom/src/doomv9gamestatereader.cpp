@@ -608,6 +608,16 @@ typedef struct {
     return true; // Add this thinker.
 }
 
+static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
+{
+    rules.skill = (skillmode_t) Reader_ReadByte(reader);
+    // Interpret skill levels outside the normal range as "spawn no things".
+    if(rules.skill < SM_BABY || rules.skill >= NUM_SKILL_MODES)
+    {
+        rules.skill = SM_NOTHINGS;
+    }
+}
+
 static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
@@ -621,13 +631,12 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
     info->setVersion(atoi(&vcheck[8]));
 
-    GameRuleset rules;
-    rules.skill = (skillmode_t) Reader_ReadByte(reader);
-    // Interpret skill levels outside the normal range as "spawn no things".
-    if(rules.skill < SM_BABY || rules.skill >= NUM_SKILL_MODES)
-    {
-        rules.skill = SM_NOTHINGS;
-    }
+    // The DOOM v9 savegame format omitted the majority of the game rules...
+    // Therefore we must assume the user has correctly configured the session accordingly.
+    App_Log(DE2_RES_WARNING, "Using current game rules as basis for Doom v9 savegame."
+                             " (The original save format omits this information).");
+    GameRuleset rules(G_Rules());
+    readLegacyGameRules(rules, reader);
     info->setGameRules(rules);
 
     uint episode = Reader_ReadByte(reader) - 1;
