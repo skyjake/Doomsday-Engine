@@ -99,11 +99,6 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
-#ifdef GL_ARB_debug_output
-PFNGLDEBUGMESSAGECONTROLARBPROC   glDebugMessageControlARB;
-PFNGLDEBUGMESSAGECALLBACKARBPROC  glDebugMessageCallbackARB;
-#endif
-
 PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
 
@@ -197,11 +192,6 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glVertexAttribPointer);
 
     // Extensions:
-
-#ifdef GL_ARB_debug_output
-    GET_PROC_EXT(glDebugMessageControlARB);
-    GET_PROC_EXT(glDebugMessageCallbackARB);
-#endif
 
     GET_PROC_EXT(glBlitFramebufferEXT);
     GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
