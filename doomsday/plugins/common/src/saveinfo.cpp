@@ -525,13 +525,15 @@ String SaveInfo::description() const
                   _E(l) "Source file: " _E(.)_E(i) "%4\n" _E(.)
                   _E(l) "Version: "     _E(.)_E(i) "%5 "  _E(.)
                   _E(l) "Session id: "  _E(.)_E(i) "%6\n" _E(.)
-                  _E(D) "Status: " _E(.) "%7")
+                  _E(D) "Game rules:\n" _E(.) "  %7\n"
+                  _E(D) "Status: " _E(.) "%8")
              .arg(userDescription())
              .arg(gameIdentityKey())
              .arg(Str_Text(currentMapUriAsText))
              .arg(NativePath(SV_SavePath() / fileName()).pretty())
              .arg(version())
              .arg(sessionId())
+             .arg(gameRules().asText())
              .arg(statusAsText());
 }
 
