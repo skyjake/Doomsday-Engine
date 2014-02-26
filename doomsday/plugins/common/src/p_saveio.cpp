@@ -145,7 +145,7 @@ void SV_CopyFile(de::Path srcPath, de::Path destPath)
 
 bool SV_OpenFile(de::Path path, bool write)
 {
-    App_Log(DE2_DEV_RES_MSG, "SV_OpenFile: Opening \"%s\"",
+    App_Log(DE2_DEV_RES_XVERBOSE, "SV_OpenFile: Opening \"%s\"",
             de::NativePath(path).pretty().toLatin1().constData());
 
 #if __JHEXEN__

@@ -522,7 +522,7 @@ String SaveInfo::description() const
     return String(_E(b) "%1\n" _E(.)
                   _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
                   _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Source file: " _E(.)_E(i) "%4\n" _E(.)
+                  _E(l) "Source file: " _E(.)_E(i) "\"%4\"\n" _E(.)
                   _E(l) "Version: "     _E(.)_E(i) "%5 "  _E(.)
                   _E(l) "Session id: "  _E(.)_E(i) "%6\n" _E(.)
                   _E(D) "Game rules:\n" _E(.) "  %7\n"

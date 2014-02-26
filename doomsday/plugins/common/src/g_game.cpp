@@ -106,7 +106,7 @@ MonsterMissileInfo[] =
 #endif
 
 D_CMD(CycleTextureGamma);
-D_CMD(EndGame);
+D_CMD(EndSession);
 D_CMD(HelpScreen);
 
 D_CMD(ListMaps);
@@ -394,7 +394,7 @@ cvartemplate_t gamestatusCVars[] =
 ccmdtemplate_t gameCmds[] = {
     { "deletegamesave",  "ss",   CCmdDeleteSavedSession, 0 },
     { "deletegamesave",  "s",    CCmdDeleteSavedSession, 0 },
-    { "endgame",         "",     CCmdEndGame, 0 },
+    { "endgame",         "",     CCmdEndSession, 0 },
     { "helpscreen",      "",     CCmdHelpScreen, 0 },
     { "inspectgamesave", "s",    CCmdInspectSavedSession, 0 },
     { "listmaps",        "",     CCmdListMaps, 0 },
@@ -4455,7 +4455,7 @@ D_CMD(HelpScreen)
     return true;
 }
 
-D_CMD(EndGame)
+D_CMD(EndSession)
 {
     DENG2_UNUSED3(src, argc, argv);
 
@@ -4500,7 +4500,7 @@ D_CMD(ListMaps)
  */
 D_CMD(WarpMap)
 {
-    bool const forceNewGameSession = IS_NETGAME != 0;
+    bool const forceNewSession = IS_NETGAME != 0;
 
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
@@ -4560,7 +4560,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(!forceNewGameSession && gameInProgress &&
+    if(!forceNewSession && gameInProgress &&
        Uri_Equality(gameMapUri, newMapUri))
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
@@ -4587,7 +4587,7 @@ D_CMD(WarpMap)
     // So be it.
     briefDisabled = true;
 
-    if(!forceNewGameSession && gameInProgress)
+    if(!forceNewSession && gameInProgress)
     {
 #if __JHEXEN__
         nextMap         = map;
