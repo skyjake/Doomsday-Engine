@@ -122,16 +122,19 @@ deng_nosdl {
 deng_sdk {
     # SDK install location.
     !isEmpty(SDK_PREFIX) {
-        DENG_SDK_HEADER_DIR = $$SDK_PREFIX/include/doomsday/de
-        DENG_SDK_LIB_DIR    = $$SDK_PREFIX/lib
+        DENG_SDK_DIR        = $$SDK_PREFIX
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
     }
     else:!isEmpty(PREFIX) {
-        DENG_SDK_HEADER_DIR = $$PREFIX/include/doomsday/de
-        DENG_SDK_LIB_DIR    = $$PREFIX/lib
+        DENG_SDK_DIR        = $$PREFIX
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
     }
     else {
-        DENG_SDK_HEADER_DIR = $$OUT_PWD/../include/de
-        DENG_SDK_LIB_DIR    = $$OUT_PWD/../lib
+        DENG_SDK_DIR        = $$OUT_PWD/..
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
     }
     echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
     echo(SDK library directory: $$DENG_SDK_LIB_DIR)

@@ -171,10 +171,13 @@ SOURCES += \
     src/core/textstreamlogsink.cpp \
     src/core/unixinfo.cpp
 
-OTHER_FILES += \
+scripts.files = \
     modules/Config.de \
-    modules/gui.de \
+    modules/Log.de \
     modules/recutil.de
+
+OTHER_FILES += \
+    $$scripts.files
 
 # Installation ---------------------------------------------------------------
 
@@ -199,6 +202,7 @@ macx {
 }
 
 deng_sdk {
-    INSTALLS *= target
+    INSTALLS *= target scripts
     target.path = $$DENG_SDK_LIB_DIR
+    scripts.path = $$DENG_SDK_DIR/modules
 }

@@ -173,6 +173,12 @@ else {
 
 unix:!macx: SOURCES += src/imKStoUCS_x11.c
 
+scripts.files = \
+    modules/gui.de
+
+OTHER_FILES += \
+    $$scripts.files
+
 # Installation ---------------------------------------------------------------
 
 macx {
@@ -190,6 +196,7 @@ else {
 }
 
 deng_sdk {
-    INSTALLS *= target
+    INSTALLS *= target scripts
     target.path = $$DENG_SDK_LIB_DIR
+    scripts.path = $$DENG_SDK_DIR/modules
 }

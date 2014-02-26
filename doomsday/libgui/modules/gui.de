@@ -1,6 +1,6 @@
-# The Doomsday Engine Project -- libdeng2
+# The Doomsday Engine Project
 #
-# Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published by
@@ -17,6 +17,56 @@
 
 #----------------------------------------------------------------------------
 # Graphical user interface
+
+def setDefaults(d)
+    # Applies the default configuration settings.
+    # - d: Record where to set the values.
+    try
+        import DisplayMode
+
+        # The default audio and video subsystems.
+        d.video = 'opengl'
+        d.audio = 'fmod'
+           
+        # Window manager defaults.
+        record d.window
+        d.window.fsaa = True    # Remove this (should be window-specific).
+    
+        # Configure the main window.
+        record d.window.main
+        d.window.main.showFps = False
+        d.window.main.center  = True
+        d.window.main.fsaa    = True
+        d.window.main.vsync   = True
+
+        # The default window parameters depend on the original display mode.
+        mode = DisplayMode.originalMode()
+
+        # By default the fullscreen resolution is the desktop resolution.
+        d.window.main.fullSize = [mode['width'], mode['height']]
+    
+        # In windowed mode mode, leave some space on the sides so that
+        # the first switch to windowed mode does not place the window in an
+        # inconvenient location. The reduction is done proportionally.
+        offx = mode['width'] * 0.15
+        offy = mode['height'] * 0.15
+        d.window.main.rect = [offx, offy, 
+                              mode['width'] - 2*offx,
+                              mode['height'] - 2*offy]
+        d.window.main.colorDepth = mode['depth']
+
+        if Version.OS == 'windows' or Version.OS == 'macx'
+            d.window.main.fullscreen = True
+            d.window.main.maximize   = False
+        else
+            d.window.main.fullscreen = False
+            d.window.main.maximize   = True
+        end
+    
+    catch NotFoundError
+        # DisplayMode isn't available on the server.
+    end
+end
 
 def scale(value, factor)
     # Scales a value by 'factor'. If 'value' is a text string, the 
