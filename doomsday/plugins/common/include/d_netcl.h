@@ -40,6 +40,9 @@ void NetCl_UpdatePlayerState2(Reader *msg, int plrNum);
 
 void NetCl_UpdatePSpriteState(Reader *msg);
 
+/**
+ * Set the jump power used in client mode.
+ */
 void NetCl_UpdateJumpPower(Reader *msg);
 
 void NetCl_Intermission(Reader *msg);
@@ -65,6 +68,10 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
 
 void NetCl_DamageRequest(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage);
 
+/**
+ * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing netgame cheating,
+ * the cheat will be executed on the server.
+ */
 void NetCl_CheatRequest(char const *command);
 
 void NetCl_FloorHitRequest(player_t *player);

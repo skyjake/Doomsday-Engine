@@ -21,20 +21,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdlib>
-#include <cctype>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <map>
-
 #include "common.h"
+#include "hu_stuff.h"
 
 #include "hu_chat.h"
 #include "hu_log.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
-#include "hu_stuff.h"
 #include "hu_inventory.h"
 #include "g_common.h"
 #include "p_mapsetup.h"
@@ -42,6 +35,13 @@
 #include "am_map.h"
 #include "fi_lib.h"
 #include "r_common.h"
+
+#include <cstdlib>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <map>
 
 /**
  * @defgroup tableColumnFlags  Table Column flags
@@ -755,7 +755,7 @@ static void drawMapMetaData(float x, float y, float alpha)
     if(!title) title = "Unnamed";
 
     char buf[256];
-    dd_snprintf(buf, 256, "map: %s gamemode: %s", title, P_GameRulesetDescription());
+    dd_snprintf(buf, 256, "%s - %s", G_Rules().description().toLatin1().constData(), title);
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
     FR_DrawTextXY2(buf, x + BORDER, y - BORDER, ALIGN_BOTTOMLEFT);

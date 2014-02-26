@@ -65,6 +65,18 @@ GameRuleset &GameRuleset::operator = (GameRuleset const &other)
     return *this;
 }
 
+de::String GameRuleset::description() const
+{
+    /// @todo Separate co-op behavior to new rules, avoiding netgame test.
+    if(IS_NETGAME)
+    {
+        if(deathmatch == 2) return "Deathmatch2";
+        if(deathmatch)      return "Deathmatch";
+        return "Co-op";
+    }
+    return "Singleplayer";
+}
+
 void GameRuleset::write(Writer *writer) const
 {
     DENG2_ASSERT(writer != 0);
@@ -103,6 +115,23 @@ void GameRuleset::read(Reader *reader)
 #else
     respawnMonsters = Reader_ReadByte(reader);
 #endif
+}
+
+de::String GameRuleset::asText() const
+{
+    de::String str;
+    QTextStream os(&str);
+    os << "skillmode: " << int(skill);
+    os << " jumping: "  << (cfg.jumpEnabled ? "yes" : "no");
+#if __JHEXEN__
+    os << " random player classes: " << (randomClasses ? "yes" : "no");
+#endif
+    os << " monsters: " << (!noMonsters     ? "yes" : "no");
+#if !__JHEXEN__
+    os << " (fast: "    << (fast            ? "yes" : "no");
+    os << " respawn: "  << (respawnMonsters ? "yes" : "no") << ")";
+#endif
+    return str;
 }
 
 // C wrapper API ---------------------------------------------------------------

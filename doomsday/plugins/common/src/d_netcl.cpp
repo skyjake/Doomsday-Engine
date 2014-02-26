@@ -36,59 +36,44 @@
 
 void NetCl_UpdateGameState(Reader *msg)
 {
-    byte len;
-    byte gsFlags = 0;
-    char gsGameIdentity[256];
-    Uri *mapUri;
-    uint gsEpisode = 0;
-    uint gsMap = 0;
-    //uint gsMapEntrance = 0;
-    byte configFlags = 0;
-    //byte gsDeathmatch = 0;
-    //byte gsMonsters = 0;
-    //byte gsRespawn = 0;
-    byte gsJumping = 0;
-    //byte gsSkill = 0;
-    coord_t gsGravity = 0;
-    GameRuleset gsRules = G_Rules(); // Make a copy of the current rules.
-
     BusyMode_FreezeGameForBusyMode();
 
-    gsFlags = Reader_ReadByte(msg);
+    byte gsFlags = Reader_ReadByte(msg);
 
     // Game identity key.
-    len = Reader_ReadByte(msg);
-    Reader_Read(msg, gsGameIdentity, len);
-    gsGameIdentity[len] = 0;
+    byte len = Reader_ReadByte(msg);
+    char gsGameIdentity[256];
+    Reader_Read(msg, gsGameIdentity, len); gsGameIdentity[len] = 0;
 
     // Current map.
-    mapUri    = Uri_FromReader(msg);
-    gsEpisode = Reader_ReadByte(msg);
-    gsMap     = Reader_ReadByte(msg);
+    Uri *gsMapUri  = Uri_FromReader(msg);
+    /*uint gsEpisode =*/ Reader_ReadByte(msg);
+    /*uint gsMap     =*/ Reader_ReadByte(msg);
 
     /// @todo Not communicated to clients??
-    //gsMapEntrance = ??;
+    //uint gsMapEntrance = ??;
 
-    configFlags = Reader_ReadByte(msg);
-    gsRules.deathmatch = configFlags & 0x3;
-    gsRules.noMonsters = !(configFlags & 0x4? true : false);
+    byte configFlags = Reader_ReadByte(msg);
+
+    GameRuleset gsRules(G_Rules()); // Initialize with a copy of the current rules.
+    gsRules.deathmatch      = configFlags & 0x3;
+    gsRules.noMonsters      = !(configFlags & 0x4? true : false);
 #if !__JHEXEN__
     gsRules.respawnMonsters = (configFlags & 0x8? true : false);
 #endif
-    gsJumping = (configFlags & 0x10? true : false);
+    /// @todo Not applied??
+    /*byte gsJumping          =*/ (configFlags & 0x10? true : false);
 
-    gsRules.skill = skillmode_t(Reader_ReadByte(msg));
+    gsRules.skill           = skillmode_t(Reader_ReadByte(msg));
     // Interpret skill modes outside the normal range as "spawn no things".
     if(gsRules.skill < SM_BABY || gsRules.skill >= NUM_SKILL_MODES)
     {
-        gsRules.skill = SM_NOTHINGS;
+        gsRules.skill       = SM_NOTHINGS;
     }
 
-    gsGravity = Reader_ReadFloat(msg);
+    coord_t gsGravity = Reader_ReadFloat(msg);
 
-    App_Log(DE2_DEV_MAP_NOTE,
-            "NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"",
-            gsFlags, Str_Text(Uri_ToString(mapUri)));
+    App_Log(DE2_DEV_MAP_NOTE, "NetCl_UpdateGameState: Flags=%x", gsFlags);
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
@@ -98,56 +83,35 @@ void NetCl_UpdateGameState(Reader *msg)
     /// @todo  Automatically load the server's game if it is available.
     /// However, note that this can only occur if the server changes its game
     /// while a netgame is running (which currently will end the netgame).
+    GameInfo gameInfo;
+    DD_GameInfo(&gameInfo);
+    if(Str_Compare(gameInfo.identityKey, gsGameIdentity))
     {
-        GameInfo gameInfo;
-        DD_GameInfo(&gameInfo);
-        if(Str_Compare(gameInfo.identityKey, gsGameIdentity))
-        {
-            App_Log(DE2_NET_ERROR, "Game mismatch: server's game mode (%s) is different than yours (%s)",
-                    gsGameIdentity, Str_Text(gameInfo.identityKey));
-            DD_Execute(false, "net disconnect");
-            return;
-        }
+        App_Log(DE2_NET_ERROR, "Game mismatch: server's identity key (%s) is different to yours (%s)",
+                gsGameIdentity, Str_Text(gameInfo.identityKey));
+        DD_Execute(false, "net disconnect");
+        return;
     }
 
     // Some statistics.
-#if __JHEXEN__
-    App_Log(DE2_LOG_NOTE,
-            "Game state: Map=%u Skill=%i %s", gsMap+1, gsRules.skill,
-            gsRules.deathmatch == 1 ? "Deathmatch" :
-            gsRules.deathmatch == 2 ? "Deathmatch2" : "Co-op");
-#else
-    App_Log(DE2_LOG_NOTE,
-            "Game state: Map=%u Episode=%u Skill=%i %s", gsMap+1,
-            gsEpisode+1, gsRules.skill,
-            gsRules.deathmatch == 1 ? "Deathmatch" :
-            gsRules.deathmatch == 2 ? "Deathmatch2" : "Co-op");
-#endif
-#if !__JHEXEN__
-    App_Log(DE2_LOG_NOTE, "  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
-            gsRules.respawnMonsters ? "yes" : "no", !gsRules.noMonsters ? "yes" : "no",
-            gsJumping ? "yes" : "no", gsGravity);
-#else
-    App_Log(DE2_NET_NOTE, "  Monsters=%s Jumping=%s Gravity=%.1f",
-                !gsRules.noMonsters ? "yes" : "no",
-                gsJumping ? "yes" : "no", gsGravity);
-#endif
+    App_Log(DE2_LOG_NOTE, "%s - %s\n  %s",
+            gsRules.description().toLatin1().constData(),
+            Str_Text(Uri_ToString(gsMapUri)),
+            gsRules.asText().toLatin1().constData());
 
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewSession(mapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
-
-        /// @todo Necessary?
-        G_SetGameAction(GA_NONE);
+        G_NewSession(gsMapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
+        G_SetGameAction(GA_NONE); /// @todo Necessary?
     }
     else
     {
-        gameEpisode = gsEpisode;
-        gameMap     = gsMap;
-        Uri_Copy(gameMapUri, mapUri);
+        Uri_Copy(gameMapUri, gsMapUri);
+        gameEpisode     = G_EpisodeNumberFor(gsMapUri);
+        gameMap         = G_MapNumberFor(gsMapUri);
         //gameMapEntrance = gsMapEntrance; /// @todo Not communicated to clients??
-        G_Rules()   = gsRules;
+        G_Rules()       = gsRules;
     }
 
     // Set gravity.
@@ -158,32 +122,29 @@ void NetCl_UpdateGameState(Reader *msg)
     if(gsFlags & GSF_CAMERA_INIT)
     {
         player_t *pl = &players[CONSOLEPLAYER];
-        mobj_t *mo;
-
-        mo = pl->plr->mo;
-        if(mo)
+        if(mobj_t *mo = pl->plr->mo)
         {
             P_MobjUnlink(mo);
             mo->origin[VX] = Reader_ReadFloat(msg);
             mo->origin[VY] = Reader_ReadFloat(msg);
             mo->origin[VZ] = Reader_ReadFloat(msg);
             P_MobjLink(mo);
-            mo->angle = Reader_ReadUInt32(msg);
+            mo->angle      = Reader_ReadUInt32(msg);
             // Update floorz and ceilingz.
 #if __JDOOM__ || __JDOOM64__
             P_CheckPosition(mo, mo->origin);
 #else
             P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]);
 #endif
-            mo->floorZ = tmFloorZ;
-            mo->ceilingZ = tmCeilingZ;
+            mo->floorZ     = tmFloorZ;
+            mo->ceilingZ   = tmCeilingZ;
         }
-        else // mo == NULL
+        else
         {
-            float mx = Reader_ReadFloat(msg);
-            float my = Reader_ReadFloat(msg);
-            float mz = Reader_ReadFloat(msg);
-            angle_t angle = Reader_ReadUInt32(msg);
+            float mx       = Reader_ReadFloat(msg);
+            float my       = Reader_ReadFloat(msg);
+            float mz       = Reader_ReadFloat(msg);
+            angle_t angle  = Reader_ReadUInt32(msg);
 
             App_Log(DE2_DEV_NET_WARNING,
                     "NetCl_UpdateGameState: Got camera init, but player has no mobj; "
@@ -195,15 +156,14 @@ void NetCl_UpdateGameState(Reader *msg)
     Net_SendPacket(0, DDPT_OK, 0, 0);
 }
 
-void NetCl_MobjImpulse(Reader* msg)
+void NetCl_MobjImpulse(Reader *msg)
 {
-    mobj_t* mo = players[CONSOLEPLAYER].plr->mo;
-    mobj_t* clmo = ClPlayer_ClMobj(CONSOLEPLAYER);
-    thid_t id = 0;
+    mobj_t *mo   = players[CONSOLEPLAYER].plr->mo;
+    mobj_t *clmo = ClPlayer_ClMobj(CONSOLEPLAYER);
 
     if(!mo || !clmo) return;
 
-    id = Reader_ReadUInt16(msg);
+    thid_t id = Reader_ReadUInt16(msg);
     if(id != clmo->thinker.id)
     {
         // Not applicable; wrong mobj.
@@ -218,23 +178,20 @@ void NetCl_MobjImpulse(Reader* msg)
     mo->mom[MZ] += Reader_ReadFloat(msg);
 }
 
-void NetCl_PlayerSpawnPosition(Reader* msg)
+void NetCl_PlayerSpawnPosition(Reader *msg)
 {
-    player_t* p = &players[CONSOLEPLAYER];
-    coord_t x, y, z;
-    angle_t angle;
-    mobj_t* mo;
+    player_t *p = &players[CONSOLEPLAYER];
 
-    x = Reader_ReadFloat(msg);
-    y = Reader_ReadFloat(msg);
-    z = Reader_ReadFloat(msg);
-    angle = Reader_ReadUInt32(msg);
+    coord_t x     = Reader_ReadFloat(msg);
+    coord_t y     = Reader_ReadFloat(msg);
+    coord_t z     = Reader_ReadFloat(msg);
+    angle_t angle = Reader_ReadUInt32(msg);
 
     App_Log(DE2_DEV_MAP_NOTE, "Got player spawn position (%g, %g, %g) facing %x",
             x, y, z, angle);
 
-    mo = p->plr->mo;
-    DENG_ASSERT(mo != 0);
+    mobj_t *mo = p->plr->mo;
+    DENG2_ASSERT(mo != 0);
 
     P_TryMoveXYZ(mo, x, y, z);
     mo->angle = angle;
@@ -818,12 +775,9 @@ void NetCl_UpdatePlayerInfo(Reader *msg)
  */
 void NetCl_SendPlayerInfo()
 {
-    Writer* msg;
+    if(!IS_CLIENT) return;
 
-    if(!IS_CLIENT)
-        return;
-
-    msg = D_NetWrite();
+    Writer *msg = D_NetWrite();
 
     Writer_WriteByte(msg, cfg.netColor);
 #ifdef __JHEXEN__
@@ -838,7 +792,7 @@ void NetCl_SendPlayerInfo()
 void NetCl_SaveGame(Reader *msg)
 {
 #if __JHEXEN__
-    DENG_UNUSED(msg);
+    DENG2_UNUSED(msg);
 #endif
 
     if(Get(DD_PLAYBACK)) return;
@@ -854,7 +808,7 @@ void NetCl_SaveGame(Reader *msg)
 void NetCl_LoadGame(Reader *msg)
 {
 #if __JHEXEN__
-    DENG_UNUSED(msg);
+    DENG2_UNUSED(msg);
 #endif
 
     if(!IS_CLIENT || Get(DD_PLAYBACK)) return;
@@ -867,27 +821,24 @@ void NetCl_LoadGame(Reader *msg)
 #endif
 }
 
-/**
- * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing
- * netgame cheating, the cheat will be executed on the server.
- */
-void NetCl_CheatRequest(const char *command)
+void NetCl_CheatRequest(char const *command)
 {
-    Writer* msg = D_NetWrite();
+    Writer *msg = D_NetWrite();
 
     Writer_WriteUInt16(msg, strlen(command));
     Writer_Write(msg, command, strlen(command));
 
     if(IS_CLIENT)
+    {
         Net_SendPacket(0, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
+    }
     else
+    {
         NetSv_ExecuteCheat(CONSOLEPLAYER, command);
+    }
 }
 
-/**
- * Set the jump power used in client mode.
- */
-void NetCl_UpdateJumpPower(Reader* msg)
+void NetCl_UpdateJumpPower(Reader *msg)
 {
     netJumpPower = Reader_ReadFloat(msg);
 

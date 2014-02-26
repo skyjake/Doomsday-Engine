@@ -95,28 +95,39 @@ static int oldClasses[MAXPLAYERS];
 
 void NetSv_UpdateGameConfigDescription()
 {
-    if(IS_CLIENT)
-        return;
+    if(IS_CLIENT) return;
 
     de::zap(gameConfigString);
     sprintf(gameConfigString, "skill%i", G_Rules().skill + 1);
 
     if(G_Rules().deathmatch > 1)
+    {
         sprintf(gameConfigString, " dm%i", G_Rules().deathmatch);
+    }
     else if(G_Rules().deathmatch)
+    {
         strcat(gameConfigString, " dm");
+    }
     else
+    {
         strcat(gameConfigString, " coop");
+    }
 
     if(G_Rules().noMonsters)
+    {
         strcat(gameConfigString, " nomonst");
+    }
 #if !__JHEXEN__
     if(G_Rules().respawnMonsters)
+    {
         strcat(gameConfigString, " respawn");
+    }
 #endif
 
     if(cfg.jumpEnabled)
+    {
         strcat(gameConfigString, " jump");
+    }
 }
 
 void NetSv_Ticker()
@@ -182,7 +193,7 @@ void NetSv_Ticker()
             plr->update = 0;
         }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
         // Keep track of player class changes (fighter, cleric, mage, pig).
         // Notify clients accordingly. This is mostly just FYI (it'll update
         // pl->class_ on the clientside).

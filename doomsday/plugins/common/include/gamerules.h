@@ -24,6 +24,7 @@
 #include "common.h"
 
 #ifdef __cplusplus
+#include <de/String>
 
 /**
  * @ingroup libcommon
@@ -51,8 +52,12 @@ public:
 
     GameRuleset &operator = (GameRuleset const &other);
 
+    de::String description() const;
+
     void write(Writer *writer) const;
     void read(Reader *reader);
+
+    de::String asText() const;
 };
 
 #endif // __cplusplus

@@ -881,7 +881,6 @@ void SV_LoadGameClient(uint sessionId)
     }
     else
     {
-        /// @todo Necessary?
         G_Rules() = info->gameRules();
     }
     mapTime = info->mapTime();

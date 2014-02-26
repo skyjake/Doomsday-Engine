@@ -61,8 +61,6 @@ void G_SetGameAction(gameaction_t action);
 
 AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
 
-char const *P_GameRulesetDescription(void);
-
 uint G_GenerateSessionId(void);
 
 /**
@@ -253,7 +251,7 @@ GameRuleset &G_Rules();
 extern "C" {
 #endif
 
-GameRuleset *G_RulesPtr();
+GameRuleset *G_RulesPtr(void);
 
 #ifdef __cplusplus
 } // extern "C"

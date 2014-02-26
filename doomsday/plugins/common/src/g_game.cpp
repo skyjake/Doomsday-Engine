@@ -1220,8 +1220,6 @@ void G_StartTitle()
 
 void G_StartHelp()
 {
-    ddfinale_t fin;
-
     if(G_QuitInProgress()) return;
     if(IS_CLIENT)
     {
@@ -1229,6 +1227,7 @@ void G_StartHelp()
         return;
     }
 
+    ddfinale_t fin;
     if(Def_Get(DD_DEF_FINALE, "help", &fin))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
@@ -1246,7 +1245,7 @@ static void printMapBanner()
 {
     char const *title = P_MapTitle(0/*current map*/);
 
-    App_Log(DE2_LOG_MAP, DE2_ESC(R));
+    App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
     if(title)
     {
         char buf[64];
@@ -1257,18 +1256,15 @@ static void printMapBanner()
 #else
         dd_snprintf(buf, 64, "Map: %s - " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), title);
 #endif
-        App_Log(DE2_MAP_NOTE, "%s", buf);
+        App_Log(DE2_LOG_NOTE, "%s", buf);
     }
 
 #if !__JHEXEN__
-    {
     char const *author = P_MapAuthor(0/*current map*/, P_MapIsCustom(Str_Text(Uri_Compose(gameMapUri))));
     if(!author) author = "Unknown";
 
-    App_Log(DE2_MAP_VERBOSE, "Author: %s", author);
-    }
+    App_Log(DE2_LOG_NOTE, "Author: %s", author);
 #endif
-    App_Log(DE2_LOG_MAP, "");
 }
 
 void G_BeginMap()
@@ -3460,9 +3456,9 @@ void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
+    Uri_Copy(gameMapUri, mapUri);
     gameEpisode     = G_EpisodeNumberFor(mapUri);
     gameMap         = G_MapNumberFor(mapUri);
-    Uri_Copy(gameMapUri, mapUri);
     gameMapEntrance = mapEntrance;
     gameRules       = *rules;
 
@@ -3619,19 +3615,6 @@ AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
 
     DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(identityKeys) / sizeof(identityKeys[0]));
     return AutoStr_FromTextStd(identityKeys[gamemode]);
-}
-
-char const *P_GameRulesetDescription()
-{
-    static char const *dm   = "deathmatch";
-    static char const *coop = "cooperative";
-    static char const *sp   = "singleplayer";
-    if(IS_NETGAME)
-    {
-        if(gameRules.deathmatch) return dm;
-        return coop;
-    }
-    return sp;
 }
 
 uint G_GenerateSessionId()

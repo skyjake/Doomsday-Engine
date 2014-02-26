@@ -1803,7 +1803,11 @@ coord_t Map::gravity() const
 
 void Map::setGravity(coord_t newGravity)
 {
-    _effectiveGravity = newGravity;
+    if(!de::fequal(_effectiveGravity, newGravity))
+    {
+        _effectiveGravity = newGravity;
+        LOG_MAP_VERBOSE("Effective gravity for %s now %.1f") << d->uri.asText() << _effectiveGravity;
+    }
 }
 
 Thinkers &Map::thinkers() const
