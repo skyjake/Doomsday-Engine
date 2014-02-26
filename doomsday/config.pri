@@ -91,7 +91,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 # Check for a 64-bit compiler.
 contains(QMAKE_HOST.arch, x86_64) {
     echo(64-bit architecture detected.)
-    DEFINES += HOST_IS_64BIT
+    DEFINES += DENG_64BIT_HOST
     win32: CONFIG += win64
 }
 
