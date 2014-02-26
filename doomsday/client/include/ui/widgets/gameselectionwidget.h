@@ -21,13 +21,14 @@
 
 #include <de/ScrollAreaWidget>
 #include <de/ButtonWidget>
+#include <de/IPersistent>
 
 #include "gamefilterwidget.h"
 
 /**
  * Menu for selecting
  */
-class GameSelectionWidget : public de::ScrollAreaWidget
+class GameSelectionWidget : public de::ScrollAreaWidget, public de::IPersistent
 {
     Q_OBJECT
 
@@ -47,6 +48,10 @@ public:
 
     // Events.
     void update();
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 signals:    
     void gameSessionSelected();

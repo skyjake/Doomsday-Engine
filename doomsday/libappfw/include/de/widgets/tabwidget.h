@@ -32,7 +32,7 @@ namespace de {
  * The widget sets its own height based on the height of the tab buttons. Tab buttons
  * are centered in the width of the widget.
  */
-class TabWidget : public GuiWidget
+class LIBAPPFW_PUBLIC TabWidget : public GuiWidget
 {
     Q_OBJECT
 
