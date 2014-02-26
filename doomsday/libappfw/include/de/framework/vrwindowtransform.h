@@ -20,6 +20,7 @@
 #ifndef LIBAPPFW_VRWINDOWTRANSFORM_H
 #define LIBAPPFW_VRWINDOWTRANSFORM_H
 
+#include "../libappfw.h"
 #include "../WindowTransform"
 
 namespace de {
@@ -27,7 +28,7 @@ namespace de {
 /**
  * Window content transformation for virtual reality.
  */
-class VRWindowTransform : public WindowTransform
+class LIBAPPFW_PUBLIC VRWindowTransform : public WindowTransform
 {
 public:
     VRWindowTransform(BaseWindow &window);

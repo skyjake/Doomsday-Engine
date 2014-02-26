@@ -30,9 +30,15 @@ namespace de {
 
 static GLInfo info;
 
+#ifdef WIN32
+#  define GL_CALL APIENTRY
+#else
+#  define GL_CALL
+#endif
+
 #ifdef GL_ARB_debug_output
-static void glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity,
-                       GLsizei length, GLchar const *message, void const *userParam)
+static void GL_CALL glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity,
+                               GLsizei length, GLchar const *message, GLvoid *userParam)
 {
     DENG2_UNUSED(source);
     DENG2_UNUSED(type);

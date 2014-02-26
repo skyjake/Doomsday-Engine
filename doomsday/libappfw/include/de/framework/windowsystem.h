@@ -41,7 +41,7 @@ namespace de {
  *
  * @ingroup gui
  */
-class WindowSystem : public System
+class LIBAPPFW_PUBLIC WindowSystem : public System
 {
 public:
     /// Required/referenced Window instance is missing. @ingroup errors
