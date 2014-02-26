@@ -3168,12 +3168,14 @@ bool G_LoadSession(de::String slotId)
     // caller with instant feedback. Naturally this is no guarantee that the game-save will
     // be accessible come load time.
 
-    // First ensure we have up-to-date info.
-    G_SaveSlots().updateAll();
-
     try
     {
-        if(G_SaveSlots()[slotId].isUsed())
+        SaveSlot &sslot = G_SaveSlots()[slotId];
+
+        // First ensure we have up-to-date info.
+        sslot.saveInfo().updateFromFile();
+
+        if(sslot.isUsed())
         {
             // Everything appears to be in order - schedule the game-save load!
             gaLoadSessionSlot = slotId;
@@ -4130,6 +4132,14 @@ D_CMD(OpenSaveMenu)
     return true;
 }
 
+D_CMD(EndSession)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    G_EndSession();
+    return true;
+}
+
 static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
     de::String *slotId = static_cast<de::String *>(context);
@@ -4158,13 +4168,14 @@ D_CMD(LoadSession)
         return false;
     }
 
-    // Ensure we have up-to-date info.
-    G_SaveSlots().updateAll();
-
     de::String const slotId = G_SaveSlotIdFromUserInput(argv[1]);
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
+
+        // Ensure we have up-to-date info.
+        sslot.saveInfo().updateFromFile();
+
         if(sslot.isUsed())
         {
             // A known used slot identifier.
@@ -4267,13 +4278,14 @@ D_CMD(SaveSession)
         return true;
     }
 
-    // Ensure we have up-to-date info.
-    G_SaveSlots().updateAll();
-
     de::String const slotId = G_SaveSlotIdFromUserInput(argv[1]);
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
+
+        // Ensure we have up-to-date info.
+        sslot.saveInfo().updateFromFile();
+
         if(sslot.isUserWritable())
         {
             // A known slot identifier.
@@ -4384,13 +4396,14 @@ D_CMD(DeleteSavedSession)
 
     if(G_QuitInProgress()) return false;
 
-    // Ensure we have up-to-date info.
-    G_SaveSlots().updateAll();
-
     de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
+
+        // Ensure we have up-to-date info.
+        sslot.saveInfo().updateFromFile();
+
         if(sslot.isUserWritable() && sslot.isUsed())
         {
             // A known slot identifier.
@@ -4423,13 +4436,15 @@ D_CMD(InspectSavedSession)
 {
     DENG2_UNUSED2(src, argc);
 
-    // Ensure we have up-to-date info.
-    G_SaveSlots().updateAll();
-
     de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
+
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
+
+        // Ensure we have up-to-date info.
+        sslot.saveInfo().updateFromFile();
+
         if(sslot.isUsed())
         {
             App_Log(DE2_LOG_MESSAGE, "%s", sslot.saveInfo().description().toLatin1().constData());
@@ -4452,14 +4467,6 @@ D_CMD(HelpScreen)
     DENG2_UNUSED3(src, argc, argv);
 
     G_StartHelp();
-    return true;
-}
-
-D_CMD(EndSession)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    G_EndSession();
     return true;
 }
 
