@@ -37,7 +37,7 @@ class WindowTransform;
  * will override the built-in transformation. The built-in transformation specifies an
  * "identity" transformation that doesn't differ from the logical layout.
  */
-class BaseWindow : public PersistentCanvasWindow
+class LIBAPPFW_PUBLIC BaseWindow : public PersistentCanvasWindow
 {
 public:
     BaseWindow(String const &id);

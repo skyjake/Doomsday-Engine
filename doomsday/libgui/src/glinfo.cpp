@@ -30,19 +30,6 @@ namespace de {
 
 static GLInfo info;
 
-#ifdef GL_ARB_debug_output
-static void glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity,
-                       GLsizei length, GLchar const *message, void const *userParam)
-{
-    DENG2_UNUSED(source);
-    DENG2_UNUSED(type);
-    DENG2_UNUSED(id);
-    DENG2_UNUSED(severity);
-    DENG2_UNUSED(userParam);
-    qWarning() << "[GL]" << String(message, length);
-}
-#endif
-
 DENG2_PIMPL_NOREF(GLInfo)
 {
     bool inited;
@@ -121,7 +108,6 @@ DENG2_PIMPL_NOREF(GLInfo)
         if(inited) return;
 
         // Extensions.
-        ext.ARB_debug_output               = query("GL_ARB_debug_output");
         ext.ARB_framebuffer_object         = query("GL_ARB_framebuffer_object");
         ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
         ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
@@ -164,14 +150,6 @@ DENG2_PIMPL_NOREF(GLInfo)
                                  lim.maxTexSize);
 
             LOG_GL_NOTE("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
-        }
-
-        if(CommandLine_Exists("-gldebug"))
-        {
-#ifdef GL_ARB_debug_output
-            /// @todo The GL context is not created with the debug output bit. -jk
-            glDebugMessageCallbackARB(glDebugOut, NULL);
-#endif
         }
 
         inited = true;

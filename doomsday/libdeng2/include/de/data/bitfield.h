@@ -48,7 +48,7 @@ public:
     /**
      * Metadata about the elements of a bit field.
      */
-    class Elements
+    class DENG2_PUBLIC Elements
     {
     public:
         Elements();
