@@ -28,6 +28,7 @@
 #include "de/LogBuffer"
 #include "de/LogFilter"
 #include "de/Module"
+#include "de/NativeFile"
 #include "de/NumberValue"
 #include "de/PackageFolder"
 #include "de/Record"
@@ -70,6 +71,7 @@ DENG2_PIMPL(App)
     QList<System *> systems;
 
     FileSystem fs;
+    QScopedPointer<NativeFile> basePackFile;
     ScriptSystem scriptSys;
     Record appModule;
 
@@ -80,6 +82,7 @@ DENG2_PIMPL(App)
     QScopedPointer<UnixInfo> unixInfo;
 
     /// The configuration.
+    Path configPath;
     Config *config;
 
     game::Game *currentGame;
@@ -108,6 +111,7 @@ DENG2_PIMPL(App)
         , cmdLine(args)
         , unixHomeFolder(".doomsday")
         , persistentData(0)
+        , configPath("/modules/Config.de")
         , config(0)
         , currentGame(0)
         , terminateFunc(0)
@@ -135,12 +139,16 @@ DENG2_PIMPL(App)
     {
         clock.audienceForTimeChange -= self;
 
-        // Update the log filter in the persistent configuration.
-        Record *filter = new Record;
-        logFilter.write(*filter);
-        config->names().add("log.filter", filter);
+        if(config)
+        {
+            // Update the log filter in the persistent configuration.
+            Record *filter = new Record;
+            logFilter.write(*filter);
+            config->names().add("log.filter", filter);
 
-        delete config;
+            delete config;
+        }
+
         Clock::setAppClock(0);
     }
 
@@ -151,21 +159,34 @@ DENG2_PIMPL(App)
         // Initialize the built-in folders. This hooks up the default native
         // directories into the appropriate places in the file system.
         // All of these are in read-only mode.
+
+        if(ZipArchive::recognize(self.nativeBasePath()))
+        {
+            // As a special case, if the base path points to a resource pack,
+            // use the contents of the pack as the root of the file system.
+            // The pack itself does not appear in the file system.
+            basePackFile.reset(new NativeFile(self.nativeBasePath().fileName(), self.nativeBasePath()));
+            basePackFile->setStatus(DirectoryFeed::fileStatus(self.nativeBasePath()));
+            fs.root().attach(new ArchiveFeed(*basePackFile));
+        }
+        else
+        {
 #ifdef MACOSX
-        NativePath appDir = appPath.fileNamePath();
-        binFolder.attach(new DirectoryFeed(appDir));
-        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+            NativePath appDir = appPath.fileNamePath();
+            binFolder.attach(new DirectoryFeed(appDir));
+            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 
 #elif WIN32
-        NativePath appDir = appPath.fileNamePath();
-        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
+            NativePath appDir = appPath.fileNamePath();
+            fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
 
 #else // UNIX
-        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 #endif
+        }
 
         if(allowPlugins)
         {
@@ -173,8 +194,8 @@ DENG2_PIMPL(App)
         }
 
         // User's home folder.
-        fs.makeFolder("/home").attach(new DirectoryFeed(self.nativeHomePath(),
-            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+        fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
+                DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
         // Populate the file system.
         fs.refresh();
@@ -271,9 +292,17 @@ App::~App()
     singletonApp = 0;
 }
 
+void App::setConfigScript(Path const &path)
+{
+    d->configPath = path;
+}
+
 void App::setUnixHomeFolderName(String const &name)
 {
     d->unixHomeFolder = name;
+
+    // Reload Unix config files.
+    d->unixInfo.reset(new UnixInfo);
 }
 
 String App::unixHomeFolderName() const
@@ -452,7 +481,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
 
     // The configuration.
-    d->config = new Config("/modules/Config.de");
+    d->config = new Config(d->configPath);
     d->scriptSys.addNativeModule("Config", d->config->names());
 
     d->config->read();

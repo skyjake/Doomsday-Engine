@@ -21,6 +21,7 @@
 #define LIBDENG2_ZIPARCHIVE_H
 
 #include "../Archive"
+#include "../NativePath"
 
 namespace de {
 
@@ -80,14 +81,22 @@ public:
 
 public:
     /**
-     * Determines whether a File looks like it could be accessed using
-     * ZipArchive.
+     * Determines whether a File looks like it could be accessed using ZipArchive.
      *
      * @param file  File to check.
      *
      * @return @c true, if the file looks like an archive.
      */
     static bool recognize(File const &file);
+
+    /**
+     * Determines whether a native file looks like it could be in ZIP format.
+     *
+     * @param path  Native path of the file to check.
+     *
+     * @return @c true, if the file looks like an archive.
+     */
+    static bool recognize(NativePath const &path);
 
 protected:
     void readFromSource(Entry const &entry, Path const &path, IBlock &uncompressedData) const;

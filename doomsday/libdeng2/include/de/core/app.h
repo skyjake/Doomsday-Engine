@@ -107,6 +107,18 @@ public:
                              String const &appName, String const &appVersion) = 0;
 
     /**
+     * Sets the path of the configuration script that will be automatically run if needed
+     * during application launch. The script governs the contents of the special
+     * persistent Config module. @see Config
+     *
+     * This method must be called before initSubsystems().
+     *
+     * @param path  Location of the @em Config.de script file. The default path of the
+     *              script is "/modules/Config.de".
+     */
+    void setConfigScript(Path const &path);
+
+    /**
      * Sets the Unix-style home folder name. For instance, ".doomsday" could be used.
      *
      * @param name  Name of the (usually hidden) user-specific home data folder.
