@@ -26,3 +26,9 @@ SUBDIRS += \
 
 #SUBDIRS += postbuild
 
+OTHER_FILES += doomsday_sdk.pri
+
+# Install the main .pri file of the SDK.
+INSTALLS += sdk_pri
+sdk_pri.files = doomsday_sdk.pri
+sdk_pri.path = $$DENG_SDK_DIR
