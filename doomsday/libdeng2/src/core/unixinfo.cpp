@@ -110,7 +110,7 @@ bool UnixInfo::path(String const &key, NativePath &value) const
         String s;
         if(d->paths->find(key, s))
         {
-            value = s;
+            value = NativePath(s).expand();
             return true;
         }
     }

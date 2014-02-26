@@ -53,7 +53,8 @@ public:
     UnixInfo();
 
     /**
-     * Returns a path preference.
+     * Returns a path preference. Any symbols in the path (e.g., ~) are expanded
+     * before the value is returned.
      *
      * @param key    Path identifier.
      * @param value  The value is returned here.
