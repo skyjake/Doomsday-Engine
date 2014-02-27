@@ -24,6 +24,8 @@ LIBS += -L$$DENG_SDK_DIR/lib
 # The core library is always required.
 LIBS += -ldeng2
 
+contains(DENG_CONFIG, appfw): DENG_CONFIG *= gui shell
+
 # Supporting libraries are optional.
 contains(DENG_CONFIG, gui):   LIBS += -ldeng_gui
 contains(DENG_CONFIG, appfw): LIBS += -ldeng_appfw
@@ -69,41 +71,46 @@ defineReplace(dengFindLibDir) {
     return($$dir)
 }
 
+defineReplace(findSdkLib) {
+    # 1: name of library
+    win32:     fn = $$DENG_SDK_DIR/lib/$${1}.dll
+    else:macx: fn = $$DENG_SDK_DIR/lib/lib$${1}.dylib
+    else {
+        fn = $$DENG_SDK_DIR/lib/lib$${1}.so
+        # Apply the latest major version.
+        exists($${fn}.2):      fn = $${fn}.2
+        else:exists($${fn}.1): fn = $${fn}.1
+        else:exists($${fn}.0): fn = $${fn}.0
+    }
+    return($$fn)
+}
+
 defineTest(dengDeploy) {
     # 1: app name
     # 2: install prefix
     # 3: base pack file
     prefix = $$2
-    INSTALLS += target basepack
+    INSTALLS += target basepack denglibs
     basepack.files = $$3
-    contains(DENG_CONFIG, gui):   INSTALLS += libgui
-    contains(DENG_CONFIG, appfw): INSTALLS += libappfw
-    contains(DENG_CONFIG, shell): INSTALLS += libshell
+
+    denglibs.files = $$findSdkLib(deng2)
+    contains(DENG_CONFIG, gui):   denglibs.files += $$findSdkLib(deng_gui)
+    contains(DENG_CONFIG, appfw): denglibs.files += $$findSdkLib(deng_appfw)
+    contains(DENG_CONFIG, shell): denglibs.files += $$findSdkLib(deng_shell)
+
     win32 {
     }
     else:macx {
     }
     else {
-        target.path = $$prefix/bin
+        target.path   = $$prefix/bin
         basepack.path = $$prefix/share/$${1}
-
-        libgui.files   = $$DENG_SDK_DIR/lib/libdeng_gui.so
-        libappfw.files = $$DENG_SDK_DIR/lib/libdeng_appfw.so
-        libshell.files = $$DENG_SDK_DIR/lib/libdeng_shell.so
-
-        libDir = $$dengFindLibDir($$prefix)
-        libgui.path   = $$libDir
-        libappfw.path = $$libDir
-        libshell.path = $$libDir
+        denglibs.path = $$dengFindLibDir($$prefix)
     }
     export(INSTALLS)
     export(target.path)
     export(basepack.files)
     export(basepack.path)
-    export(libgui.files)
-    export(libgui.path)
-    export(libappfw.files)
-    export(libappfw.path)
-    export(libshell.files)
-    export(libshell.path)
+    export(denglibs.files)
+    export(denglibs.path)
 }
