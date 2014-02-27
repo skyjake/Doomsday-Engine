@@ -71,7 +71,7 @@ defineReplace(dengFindLibDir) {
     return($$dir)
 }
 
-defineReplace(findSdkLib) {
+defineReplace(dengSdkLib) {
     # 1: name of library
     win32:     fn = $$DENG_SDK_DIR/lib/$${1}.dll
     else:macx: fn = $$DENG_SDK_DIR/lib/lib$${1}.dylib
@@ -93,10 +93,10 @@ defineTest(dengDeploy) {
     INSTALLS += target basepack denglibs
     basepack.files = $$3
 
-    denglibs.files = $$findSdkLib(deng2)
-    contains(DENG_CONFIG, gui):   denglibs.files += $$findSdkLib(deng_gui)
-    contains(DENG_CONFIG, appfw): denglibs.files += $$findSdkLib(deng_appfw)
-    contains(DENG_CONFIG, shell): denglibs.files += $$findSdkLib(deng_shell)
+    denglibs.files = $$dengSdkLib(deng2)
+    contains(DENG_CONFIG, gui):   denglibs.files += $$dengSdkLib(deng_gui)
+    contains(DENG_CONFIG, appfw): denglibs.files += $$dengSdkLib(deng_appfw)
+    contains(DENG_CONFIG, shell): denglibs.files += $$dengSdkLib(deng_shell)
 
     win32 {
     }
