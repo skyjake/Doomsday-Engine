@@ -5,6 +5,7 @@ publicHeaders(root, \
     include/de/ConstantRule \
     include/de/IndirectRule \
     include/de/OperatorRule \
+    include/de/Rule \
     include/de/RuleBank \
     include/de/RuleRectangle \
     include/de/RootWidget \

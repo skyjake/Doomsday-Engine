@@ -70,6 +70,7 @@ publicHeaders(root, \
     include/de/SequentialLayout \
     include/de/SignalAction \
     include/de/SliderWidget \
+    include/de/Style \
     include/de/TabWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
