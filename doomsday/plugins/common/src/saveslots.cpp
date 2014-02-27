@@ -81,7 +81,8 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, "");
         }
 
-        if(Hu_MenuIsActive() && page == Hu_MenuActivePage())
+        if(Hu_MenuIsActive() &&
+           (Hu_MenuActivePage() == page || Hu_MenuActivePage() == Hu_MenuFindPageByName("SaveGame")))
         {
             // Re-open the active page to update focus if necessary.
             Hu_MenuSetActivePage2(page, true);
