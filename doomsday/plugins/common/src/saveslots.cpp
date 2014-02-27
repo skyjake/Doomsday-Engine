@@ -44,13 +44,13 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     String id;
     bool userWritable;
     String fileName;
-    SaveInfo *info;
     int gameMenuWidgetId;
+    SaveInfo *info;
 
     Instance()
         : userWritable    (true)
-        , info            (0)
         , gameMenuWidgetId(0 /*none*/)
+        , info            (0)
     {}
 
     ~Instance() { delete info; }
@@ -135,6 +135,7 @@ String const &SaveSlots::Slot::fileName() const
 
 void SaveSlots::Slot::bindFileName(String newName)
 {
+    DENG2_ASSERT(d->info != 0);
     d->info->setFileName(d->fileName = newName);
 }
 
@@ -147,6 +148,8 @@ bool SaveSlots::Slot::isUsed() const
 void SaveSlots::Slot::replaceSaveInfo(SaveInfo *newInfo)
 {
     DENG2_ASSERT(newInfo != 0);
+
+    if(newInfo == d->info) return;
 
     delete d->info;
     d->info = newInfo;

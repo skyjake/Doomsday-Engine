@@ -49,7 +49,7 @@ public:
     {
     public:
         Slot(de::String id, bool userWritable, de::String const &fileName = "",
-             int gameMenuWidgetId = -1);
+             int gameMenuWidgetId = 0);
 
         /**
          * Returns the unique identifier/name for the logical save slot.
