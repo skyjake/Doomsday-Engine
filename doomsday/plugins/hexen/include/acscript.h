@@ -264,7 +264,7 @@ extern "C" {
 /**
  * To be called when a new game session begins to initialize ACS scripting.
  */
-void Game_InitACScriptsForNewGame(void);
+void Game_InitACScriptsForNewSession(void);
 
 dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, Uri const *mapUri,
     byte const args[4], mobj_t *activator, Line *line, int side);

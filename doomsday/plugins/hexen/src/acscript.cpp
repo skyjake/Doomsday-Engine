@@ -1836,7 +1836,7 @@ ACScriptInterpreter &Game_ACScriptInterpreter()
     return interp;
 }
 
-void Game_InitACScriptsForNewGame()
+void Game_InitACScriptsForNewSession()
 {
     memset(interp.worldVars, 0, sizeof(interp.worldVars));
     interp.clearDeferredTasks();

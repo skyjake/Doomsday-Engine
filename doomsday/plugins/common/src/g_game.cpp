@@ -2271,7 +2271,7 @@ static void G_InitNewSession()
     G_SaveSlots().clearSlot("auto");
 
 #if __JHEXEN__
-    Game_InitACScriptsForNewGame();
+    Game_InitACScriptsForNewSession();
 #endif
 }
 
