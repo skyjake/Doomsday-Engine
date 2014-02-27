@@ -24,6 +24,21 @@ defineTest(echo) {
     }
 }
 
+defineReplace(findLibDir) {
+    # Determines the appropriate library directory given prefix $$1
+    prefix = $$1
+    dir = $$prefix/lib
+    contains(QMAKE_HOST.arch, x86_64) {
+        exists($$prefix/lib64) {
+            dir = $$prefix/lib64
+        }
+        exists($$prefix/lib/x86_64-linux-gnu) {
+            dir = $$prefix/lib/x86_64-linux-gnu
+        }
+    }
+    return($$dir)
+}
+
 defineTest(useLibDir) {
     btype = ""
     win32 {

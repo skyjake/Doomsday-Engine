@@ -100,25 +100,6 @@ isStableRelease(): DEFINES += DENG_STABLE
 # Options defined by the user (may not exist).
 exists(config_user.pri): include(config_user.pri)
 
-    win32: include(config_win32.pri)
-else:macx: include(config_macx.pri)
-     else: include(config_unix.pri)
-
-# Apply deng_* Configuration -------------------------------------------------
-
-deng_nofixedasm {
-    DEFINES += DENG_NO_FIXED_ASM
-}
-!deng_rangecheck {
-    DEFINES += DENG_NO_RANGECHECKING
-}
-deng_nosdlmixer|deng_nosdl {
-    DEFINES += DENG_DISABLE_SDLMIXER
-}
-deng_nosdl {
-    DEFINES += DENG_NO_SDL
-}
-
 deng_sdk {
     # SDK install location.
     !isEmpty(SDK_PREFIX) {
@@ -138,6 +119,25 @@ deng_sdk {
     }
     echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
     echo(SDK library directory: $$DENG_SDK_LIB_DIR)
+}
+
+    win32: include(config_win32.pri)
+else:macx: include(config_macx.pri)
+     else: include(config_unix.pri)
+
+# Apply deng_* Configuration -------------------------------------------------
+
+deng_nofixedasm {
+    DEFINES += DENG_NO_FIXED_ASM
+}
+!deng_rangecheck {
+    DEFINES += DENG_NO_RANGECHECKING
+}
+deng_nosdlmixer|deng_nosdl {
+    DEFINES += DENG_DISABLE_SDLMIXER
+}
+deng_nosdl {
+    DEFINES += DENG_NO_SDL
 }
 
 unix:deng_ccache {
