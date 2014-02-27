@@ -18,6 +18,8 @@
 #----------------------------------------------------------------------------
 # Graphical user interface
 
+import Version
+
 def setDefaults(d)
     # Applies the default configuration settings.
     # - d: Record where to set the values.
@@ -62,7 +64,7 @@ def setDefaults(d)
             d.window.main.fullscreen = False
             d.window.main.maximize   = True
         end
-    
+
     catch NotFoundError
         # DisplayMode isn't available on the server.
     end
