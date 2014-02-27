@@ -53,3 +53,57 @@ defineTest(dengPackModules) {
     # 1: path of a .pack file
     dengPack($$1, $$DENG_SDK_DIR, modules/*.de)
 }
+
+defineReplace(dengFindLibDir) {
+    # Determines the appropriate library directory given prefix $$1
+    prefix = $$1
+    dir = $$prefix/lib
+    contains(QMAKE_HOST.arch, x86_64) {
+        exists($$prefix/lib64) {
+            dir = $$prefix/lib64
+        }
+        exists($$prefix/lib/x86_64-linux-gnu) {
+            dir = $$prefix/lib/x86_64-linux-gnu
+        }
+    }
+    return($$dir)
+}
+
+defineTest(dengDeploy) {
+    # 1: app name
+    # 2: install prefix
+    # 3: base pack file
+    prefix = $$2
+    INSTALLS += target basepack
+    basepack.files = $$3
+    contains(DENG_CONFIG, gui):   INSTALLS += libgui
+    contains(DENG_CONFIG, appfw): INSTALLS += libappfw
+    contains(DENG_CONFIG, shell): INSTALLS += libshell
+    win32 {
+    }
+    else:macx {
+    }
+    else {
+        target.path = $$prefix/bin
+        basepack.path = $$prefix/share/$${1}
+
+        libgui.files   = $$DENG_SDK_DIR/lib/libdeng_gui.so
+        libappfw.files = $$DENG_SDK_DIR/lib/libdeng_appfw.so
+        libshell.files = $$DENG_SDK_DIR/lib/libdeng_shell.so
+
+        libDir = $$dengFindLibDir($$prefix)
+        libgui.path   = $$libDir
+        libappfw.path = $$libDir
+        libshell.path = $$libDir
+    }
+    export(INSTALLS)
+    export(target.path)
+    export(basepack.files)
+    export(basepack.path)
+    export(libgui.files)
+    export(libgui.path)
+    export(libappfw.files)
+    export(libappfw.path)
+    export(libshell.files)
+    export(libshell.path)
+}
