@@ -68,9 +68,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             LOG_DEBUG("Failed locating menu widget with id ") << gameMenuWidgetId;
             return;
         }
-
-        mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
-        DENG2_ASSERT(edit != 0);
+        DENG2_ASSERT(ob->_type == MN_EDIT);
 
         MNObject_SetFlags(ob, FO_SET, MNF_DISABLED);
         if(info->gameSessionIsLoadable())
