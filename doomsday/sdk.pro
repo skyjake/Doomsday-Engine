@@ -12,7 +12,6 @@ CONFIG += ordered
 SUBDIRS = \
     build \
     libdeng2 \
-    libdeng1 \
     libshell
 
 !deng_noclient|macx {
