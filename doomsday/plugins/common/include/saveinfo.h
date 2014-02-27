@@ -22,6 +22,7 @@
 #define LIBCOMMON_SAVEINFO
 
 #include "common.h"
+#include <de/Observers>
 #include <de/String>
 
 /**
@@ -32,6 +33,12 @@
 class SaveInfo
 {
 public:
+    /// Notified whenever the status of the saved game session changes.
+    DENG2_DEFINE_AUDIENCE(SessionStatusChange, void saveInfoSessionStatusChanged(SaveInfo &saveInfo))
+
+    /// Notified whenever the user description of saved game session changes.
+    DENG2_DEFINE_AUDIENCE(UserDescriptionChange, void saveInfoUserDescriptionChanged(SaveInfo &saveInfo))
+
     /// Logical game session status:
     enum SessionStatus {
         Loadable,
@@ -54,7 +61,8 @@ public:
     SaveInfo &operator = (SaveInfo const &other);
 
     /**
-     * Determines the logical status of the saved game session.
+     * Returns the logical status of the saved game session. The SessionStatusChange audience
+     * is notified whenever the status changes.
      *
      * @see statusAsText()
      */
@@ -84,7 +92,7 @@ public:
      * Determines whether a saved game session exists and is compatibile with the current game
      * session (and @em should therefore be loadable).
      */
-    bool gameSessionIsLoadable() const;
+    inline bool gameSessionIsLoadable() const { return status() == Loadable; }
 
     /**
      * Determines whether a saved map session exists.
@@ -136,7 +144,8 @@ public:
     void setVersion(int newVersion);
 
     /**
-     * Returns the textual description of the game session provided by the user.
+     * Returns the textual description of the saved game session provided by the user. The
+     * UserDescriptionChange audience is notified whenever the description changes.
      */
     de::String const &userDescription() const;
     void setUserDescription(de::String newUserDescription);

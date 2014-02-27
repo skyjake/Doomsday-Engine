@@ -25,6 +25,7 @@
 #include "gamestatereader.h"
 #include "p_saveio.h"
 #include "p_tick.h"          // mapTime
+#include <de/Log>
 #include <de/NativePath>
 #include <cstring>
 
@@ -50,9 +51,11 @@ namespace internal
 using namespace de;
 using namespace internal;
 
-DENG2_PIMPL_NOREF(SaveInfo)
+DENG2_PIMPL(SaveInfo)
 {
     String fileName; ///< Name of the game session file.
+    SessionStatus status;
+    bool needUpdateStatus;
 
     // Metadata (the session header):
     String userDescription;
@@ -67,13 +70,16 @@ DENG2_PIMPL_NOREF(SaveInfo)
     Players players;
 #endif
 
-    Instance()
-        : sessionId(0)
-        , magic    (0)
-        , version  (0)
-        , mapUri   (Uri_New())
+    Instance(Public *i)
+        : Base(i)
+        , status          (Unused)
+        , needUpdateStatus(true)
+        , sessionId       (0)
+        , magic           (0)
+        , version         (0)
+        , mapUri          (Uri_New())
 #if !__JHEXEN__
-        , mapTime  (0)
+        , mapTime         (0)
 #endif
     {
 #if !__JHEXEN__
@@ -81,18 +87,20 @@ DENG2_PIMPL_NOREF(SaveInfo)
 #endif
     }
 
-    Instance(Instance const &other)
-        : IPrivate()
-        , fileName       (other.fileName)
-        , userDescription(other.userDescription)
-        , sessionId      (other.sessionId)
-        , magic          (other.magic)
-        , version        (other.version)
-        , gameIdentityKey(other.gameIdentityKey)
-        , mapUri         (Uri_Dup(other.mapUri))
-        , gameRules      (other.gameRules)
+    Instance(Public *i, Instance const &other)
+        : Base(i)
+        , status          (other.status)
+        , needUpdateStatus(other.needUpdateStatus)
+        , fileName        (other.fileName)
+        , userDescription (other.userDescription)
+        , sessionId       (other.sessionId)
+        , magic           (other.magic)
+        , version         (other.version)
+        , gameIdentityKey (other.gameIdentityKey)
+        , mapUri          (Uri_Dup(other.mapUri))
+        , gameRules       (other.gameRules)
 #if !__JHEXEN__
-        , mapTime        (other.mapTime)
+        , mapTime         (other.mapTime)
 #endif
     {
 #if !__JHEXEN__
@@ -103,6 +111,36 @@ DENG2_PIMPL_NOREF(SaveInfo)
     ~Instance()
     {
         Uri_Delete(mapUri);
+    }
+
+    void updateStatusIfNeeded()
+    {
+        if(!needUpdateStatus) return;
+
+        needUpdateStatus = false;
+        LOGDEV_XVERBOSE("Updating SaveInfo %p status") << thisPublic;
+
+        SessionStatus const oldStatus = status;
+
+        status = Unused;
+        if(self.haveGameSession())
+        {
+            status = Incompatible;
+            // Game identity key missmatch?
+            if(!gameIdentityKey.compareWithoutCase(currentGameIdentityKey()))
+            {
+                /// @todo Validate loaded add-ons and checksum the definition database.
+                status = Loadable; // It's good!
+            }
+        }
+
+        if(status != oldStatus)
+        {
+            DENG2_FOR_PUBLIC_AUDIENCE(SessionStatusChange, i)
+            {
+                i->saveInfoSessionStatusChanged(self);
+            }
+        }
     }
 
 #if __JHEXEN__
@@ -146,17 +184,18 @@ DENG2_PIMPL_NOREF(SaveInfo)
 #endif
 };
 
-SaveInfo::SaveInfo(String const &fileName) : d(new Instance)
+SaveInfo::SaveInfo(String const &fileName) : d(new Instance(this))
 {
     d->fileName = fileName;
 }
 
-SaveInfo::SaveInfo(SaveInfo const &other) : d(new Instance(*other.d))
+SaveInfo::SaveInfo(SaveInfo const &other) : d(new Instance(this, *other.d))
 {}
 
 SaveInfo *SaveInfo::newWithCurrentSessionMetadata(String const &fileName,
     String const &userDescription) // static
 {
+    LOG_AS("SaveInfo");
     SaveInfo *info = new SaveInfo(fileName);
     info->setUserDescription(userDescription);
     info->applyCurrentSessionMetadata();
@@ -166,15 +205,14 @@ SaveInfo *SaveInfo::newWithCurrentSessionMetadata(String const &fileName,
 
 SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
-    d.reset(new Instance(*other.d));
+    d.reset(new Instance(this, *other.d));
     return *this;
 }
 
 SaveInfo::SessionStatus SaveInfo::status() const
 {
-    if(!haveGameSession())       return Unused;
-    if(!gameSessionIsLoadable()) return Incompatible;
-    return Loadable;
+    d->updateStatusIfNeeded();
+    return d->status;
 }
 
 String SaveInfo::fileName() const
@@ -184,7 +222,11 @@ String SaveInfo::fileName() const
 
 void SaveInfo::setFileName(String newName)
 {
-    d->fileName = newName;
+    if(d->fileName != newName)
+    {
+        d->fileName         = newName;
+        d->needUpdateStatus = true;
+    }
 }
 
 String SaveInfo::fileNameForMap(Uri const *mapUri) const
@@ -203,7 +245,11 @@ String const &SaveInfo::gameIdentityKey() const
 
 void SaveInfo::setGameIdentityKey(String newGameIdentityKey)
 {
-    d->gameIdentityKey = newGameIdentityKey;
+    if(d->gameIdentityKey != newGameIdentityKey)
+    {
+        d->gameIdentityKey  = newGameIdentityKey;
+        d->needUpdateStatus = true;
+    }
 }
 
 int SaveInfo::version() const
@@ -213,7 +259,11 @@ int SaveInfo::version() const
 
 void SaveInfo::setVersion(int newVersion)
 {
-    d->version = newVersion;
+    if(d->version != newVersion)
+    {
+        d->version          = newVersion;
+        d->needUpdateStatus = true;
+    }
 }
 
 String const &SaveInfo::userDescription() const
@@ -223,7 +273,14 @@ String const &SaveInfo::userDescription() const
 
 void SaveInfo::setUserDescription(String newUserDescription)
 {
-    d->userDescription = newUserDescription;
+    if(d->userDescription != newUserDescription)
+    {
+        d->userDescription = newUserDescription;
+        DENG2_FOR_AUDIENCE(UserDescriptionChange, i)
+        {
+            i->saveInfoUserDescriptionChanged(*this);
+        }
+    }
 }
 
 uint SaveInfo::sessionId() const
@@ -233,7 +290,11 @@ uint SaveInfo::sessionId() const
 
 void SaveInfo::setSessionId(uint newSessionId)
 {
-    d->sessionId = newSessionId;
+    if(d->sessionId != newSessionId)
+    {
+        d->sessionId        = newSessionId;
+        d->needUpdateStatus = true;
+    }
 }
 
 Uri const *SaveInfo::mapUri() const
@@ -277,50 +338,41 @@ GameRuleset const &SaveInfo::gameRules() const
 
 void SaveInfo::setGameRules(GameRuleset const &newRules)
 {
-    d->gameRules = newRules; // Make a copy
+    LOG_AS("SaveInfo");
+    d->gameRules        = newRules; // Make a copy
+    d->needUpdateStatus = true;
 }
 
 void SaveInfo::applyCurrentSessionMetadata()
 {
-    d->magic           = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    d->version         = MY_SAVE_VERSION;
-    d->gameIdentityKey = currentGameIdentityKey();
+    LOG_AS("SaveInfo");
+    d->magic            = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    d->version          = MY_SAVE_VERSION;
+    d->gameIdentityKey  = currentGameIdentityKey();
     Uri_Copy(d->mapUri, gameMapUri);
 #if !__JHEXEN__
-    d->mapTime         = ::mapTime;
+    d->mapTime          = ::mapTime;
 #endif
-    d->gameRules       = G_Rules(); // Make a copy.
+    d->gameRules        = G_Rules(); // Make a copy.
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; i++)
     {
-        d->players[i]  = (::players[i]).plr->inGame;
+        d->players[i]   = (::players[i]).plr->inGame;
     }
 #endif
+    d->needUpdateStatus = true;
 }
 
 bool SaveInfo::haveGameSession() const
 {
+    LOG_AS("SaveInfo");
     return SV_ExistingFile(SV_SavePath() / fileName());
-}
-
-bool SaveInfo::gameSessionIsLoadable() const
-{
-    if(!haveGameSession()) return false;
-
-    // Game identity key missmatch?
-    if(d->gameIdentityKey.compareWithoutCase(currentGameIdentityKey()))
-    {
-        return false;
-    }
-
-    /// @todo Validate loaded add-ons and checksum the definition database.
-
-    return true; // It's good!
 }
 
 bool SaveInfo::haveMapSession(Uri const *mapUri) const
 {
+    LOG_AS("SaveInfo");
     if(usingSeparateMapSessionFiles())
     {
         return SV_ExistingFile(SV_SavePath() / fileNameForMap(mapUri));
@@ -330,6 +382,11 @@ bool SaveInfo::haveMapSession(Uri const *mapUri) const
 
 void SaveInfo::updateFromFile()
 {
+    LOGDEV_VERBOSE("Updating SaveInfo %p from source file") << this;
+    LOG_AS("SaveInfo");
+
+    d->needUpdateStatus = true;
+
     if(SV_SavePath().isEmpty())
     {
         // The save path cannot be accessed for some reason. Perhaps its a network path?
@@ -356,6 +413,8 @@ void SaveInfo::updateFromFile()
 
 void SaveInfo::write(writer_s *writer) const
 {
+    LOG_AS("SaveInfo");
+
     Writer_WriteInt32(writer, d->magic);
     Writer_WriteInt32(writer, d->version);
 
@@ -383,6 +442,10 @@ void SaveInfo::write(writer_s *writer) const
 
 void SaveInfo::read(reader_s *reader)
 {
+    LOG_AS("SaveInfo");
+
+    d->needUpdateStatus = true;
+
 #if __JHEXEN__
     // Read the magic byte to determine the high-level format.
     int magic = Reader_ReadInt32(reader);
@@ -544,7 +607,11 @@ int SaveInfo::magic() const
 
 void SaveInfo::setMagic(int newMagic)
 {
-    d->magic = newMagic;
+    if(d->magic != newMagic)
+    {
+        d->magic            = newMagic;
+        d->needUpdateStatus = true;
+    }
 }
 
 SaveInfo *SaveInfo::fromReader(reader_s *reader) // static
