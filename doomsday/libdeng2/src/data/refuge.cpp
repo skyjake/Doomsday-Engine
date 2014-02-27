@@ -41,7 +41,7 @@ Refuge::Refuge(String const &persistentPath) : d(new Instance)
     catch(Error const &er)
     {
         LOG_AS("Refuge");
-        LOG_RES_VERBOSE("\"%s\" could not be read: %s") << persistentPath << er.asText();
+        LOGDEV_RES_MSG("\"%s\" could not be read: %s") << persistentPath << er.asText();
     }
 }
 
