@@ -364,7 +364,7 @@ void X_PostInit()
                 return;
             }
         }
-        catch(SaveSlots::InvalidSlotError const &)
+        catch(SaveSlots::MissingSlotError const &)
         {}
     }
 

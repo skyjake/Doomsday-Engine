@@ -998,8 +998,10 @@ SaveSlots &G_SaveSlots()
 de::String G_SaveSlotIdFromUserInput(de::String str)
 {
     // Perhaps user save game description?
-    de::String slotId = G_SaveSlots().findSlotWithUserSaveDescription(str);
-    if(!slotId.isEmpty()) return slotId;
+    if(SaveSlot *sslot = G_SaveSlots().slotByUserDescription(str))
+    {
+        return sslot->id();
+    }
 
     // Perhaps a mnemonic?
     if(!str.compareWithoutCase("last") || !str.compareWithoutCase("<last>"))
@@ -1023,7 +1025,7 @@ de::String G_SaveSlotIdFromUserInput(de::String str)
 #endif
 
     // Perhaps a unique slot identifier?
-    if(G_SaveSlots().isKnownSlot(str))
+    if(G_SaveSlots().hasSlot(str))
     {
         return str;
     }
@@ -2890,7 +2892,7 @@ static int saveGameStateWorker(void *context)
     de::String const logicalSlot = p.slotId;
 #endif
 
-    if(!G_SaveSlots().isKnownSlot(p.slotId))
+    if(!G_SaveSlots().hasSlot(p.slotId))
     {
         DENG2_ASSERT(!"Invalid slot specified");
 
@@ -3197,7 +3199,7 @@ bool G_LoadSession(de::String slotId)
         App_Log(DE2_RES_ERROR, "Cannot load from save slot '%s': not in use",
                 slotId.toLatin1().constData());
     }
-    catch(SaveSlots::InvalidSlotError const &)
+    catch(SaveSlots::MissingSlotError const &)
     {}
 
     return false;
@@ -3286,7 +3288,7 @@ bool G_SessionSavingPossible()
 bool G_SaveSession(de::String slotId, de::String *userDescription)
 {
     if(!G_SessionSavingPossible()) return false;
-    if(!G_SaveSlots().isKnownSlot(slotId)) return false;
+    if(!G_SaveSlots().hasSlot(slotId)) return false;
 
     gaSaveSessionSlot = slotId;
 
@@ -4181,15 +4183,14 @@ D_CMD(LoadSession)
                 return G_LoadSession(slotId);
             }
 
+            S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             // Compose the confirmation message.
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, sslot.saveInfo().userDescription().toUtf8().constData());
-
-            S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(slotId));
             return true;
         }
     }
-    catch(SaveSlots::InvalidSlotError const &)
+    catch(SaveSlots::MissingSlotError const &)
     {}
 
     if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
@@ -4199,7 +4200,7 @@ D_CMD(LoadSession)
         return true;
     }
 
-    if(!G_SaveSlots().isKnownSlot(slotId))
+    if(!G_SaveSlots().hasSlot(slotId))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
@@ -4314,7 +4315,7 @@ D_CMD(SaveSession)
         App_Log(DE2_LOG_ERROR, "Save slot '%s' is non-user-writable",
                 slotId.toLatin1().constData());
     }
-    catch(SaveSlots::InvalidSlotError const &)
+    catch(SaveSlots::MissingSlotError const &)
     {}
 
     if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
@@ -4326,7 +4327,7 @@ D_CMD(SaveSession)
         return true;
     }
 
-    if(!G_SaveSlots().isKnownSlot(slotId))
+    if(!G_SaveSlots().hasSlot(slotId))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
@@ -4352,7 +4353,7 @@ bool G_DeleteSavedSession(de::String slotId)
             return true;
         }
     }
-    catch(SaveSlots::InvalidSlotError const &)
+    catch(SaveSlots::MissingSlotError const &)
     {}
 
     return false;
@@ -4405,7 +4406,7 @@ D_CMD(DeleteSavedSession)
 
         App_Log(DE2_LOG_ERROR, "Save slot '%s' is non-user-writable", slotId.toLatin1().constData());
     }
-    catch(SaveSlots::InvalidSlotError const &)
+    catch(SaveSlots::MissingSlotError const &)
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from '%s'", argv[1]);
     }
@@ -4435,7 +4436,7 @@ D_CMD(InspectSavedSession)
 
         App_Log(DE2_LOG_ERROR, "Save slot '%s' is not in use", slotId.toLatin1().constData());
     }
-    catch(SaveSlots::InvalidSlotError const &)
+    catch(SaveSlots::MissingSlotError const &)
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }

@@ -39,8 +39,8 @@ class SaveInfo;
 class SaveSlots
 {
 public:
-    /// An invalid slot was specified. @ingroup errors
-    DENG2_ERROR(InvalidSlotError);
+    /// A missing/unknown slot was referenced. @ingroup errors
+    DENG2_ERROR(MissingSlotError);
 
     /**
      * Logical save slot.
@@ -52,14 +52,19 @@ public:
              int gameMenuWidgetId = 0);
 
         /**
-         * Returns the unique identifier/name for the logical save slot.
+         * Returns @c true iff a saved game session exists for the logical save slot.
          */
-        de::String const &id() const;
+        bool isUsed() const;
 
         /**
          * Returns @c true iff the logical save slot is user-writable.
          */
         bool isUserWritable() const;
+
+        /**
+         * Returns the unique identifier/name for the logical save slot.
+         */
+        de::String const &id() const;
 
         /**
          * Returns the session file name bound to the logical save slot.
@@ -72,11 +77,6 @@ public:
          * @param newName  New session file name to be bound.
          */
         void bindFileName(de::String newName);
-
-        /**
-         * Returns @c true iff a saved game session exists for the logical save slot.
-         */
-        bool isUsed() const;
 
         /**
          * Returns the SaveInfo associated with the logical save slot.
@@ -119,7 +119,7 @@ public:
     /**
      * Returns @c true iff @a value is interpretable as a logical slot identifier.
      */
-    bool isKnownSlot(de::String value) const;
+    bool hasSlot(de::String value) const;
 
     /// @see slot()
     inline Slot &operator [] (de::String slotId) {
@@ -129,9 +129,35 @@ public:
     /**
      * Returns the logical save slot associated with @a slotId.
      *
-     * @see isKnownSlot()
+     * @see hasSlot(), slotByUserDescription()
      */
     Slot &slot(de::String slotId) const;
+
+    /**
+     * Lookup a slot by searching for a saved game session with a matching user description.
+     * The search is in ascending slot identifier order.
+     *
+     * @param description  Description of the game-save to look for (not case sensitive).
+     *
+     * @return  Pointer to the found slot; otherwise @c 0.
+     *
+     * @see slot()
+     */
+    Slot *slotByUserDescription(de::String description) const;
+
+    /**
+     * Deletes all saved game session files associated with the specified save @a slotId.
+     *
+     * @see hasSlot()
+     */
+    void clearSlot(de::String slotId);
+
+    /**
+     * Copies all the saved game session files from one slot to another.
+     *
+     * @see hasSlot()
+     */
+    void copySlot(de::String sourceSlotId, de::String destSlotId);
 
     /**
      * Force an update of the cached game-save info. To be called (sparingly) at strategic
@@ -141,29 +167,6 @@ public:
      * so automatically.
      */
     void updateAll();
-
-    /**
-     * Deletes all saved game session files associated with the specified save @a slotId.
-     *
-     * @see isKnownSlot()
-     */
-    void clearSlot(de::String slotId);
-
-    /**
-     * Copies all the saved game session files from one slot to another.
-     */
-    void copySlot(de::String sourceSlotId, de::String destSlotId);
-
-    /**
-     * Lookup a slot by searching for a saved game session with a matching user description.
-     * The search is in ascending logical slot order 0...N (where N is the number of available
-     * save slots).
-     *
-     * @param description  Description of the game-save to look for (not case sensitive).
-     *
-     * @return  Unique identifier of the found slot; otherwise a zero-length string.
-     */
-    de::String findSlotWithUserSaveDescription(de::String description) const;
 
     /**
      * Register the console commands and variables of this module.

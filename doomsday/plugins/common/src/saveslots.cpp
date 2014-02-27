@@ -214,7 +214,7 @@ int SaveSlots::slotCount() const
     return int(d->sslots.size());
 }
 
-bool SaveSlots::isKnownSlot(String value) const
+bool SaveSlots::hasSlot(String value) const
 {
     return d->slotById(value) != 0;
 }
@@ -225,8 +225,8 @@ SaveSlots::Slot &SaveSlots::slot(String slotId) const
     {
         return *sslot;
     }
-    /// @throw InvalidSlotError An invalid slot was specified.
-    throw InvalidSlotError("SaveSlots::slot", "Invalid slot id '" + slotId + "'");
+    /// @throw MissingSlotError An invalid slot was specified.
+    throw MissingSlotError("SaveSlots::slot", "Invalid slot id '" + slotId + "'");
 }
 
 void SaveSlots::clearSlot(String slotId)
@@ -299,7 +299,7 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
     destSlot.saveInfo().setFileName(destSlot.fileName());
 }
 
-String SaveSlots::findSlotWithUserSaveDescription(String description) const
+SaveSlots::Slot *SaveSlots::slotByUserDescription(String description) const
 {
     if(!description.isEmpty())
     {
@@ -308,11 +308,11 @@ String SaveSlots::findSlotWithUserSaveDescription(String description) const
             SaveSlot &sslot = *i->second;
             if(!sslot.saveInfo().userDescription().compareWithoutCase(description))
             {
-                return sslot.id();
+                return &sslot;
             }
         }
     }
-    return ""; // Not found.
+    return 0; // Not found.
 }
 
 void SaveSlots::consoleRegister() // static
