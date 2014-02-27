@@ -196,8 +196,6 @@ void Hu_MenuSetActivePage(mn_page_t* page);
  */
 void Hu_MenuInitNewGame(dd_bool confirmed);
 
-void Hu_MenuUpdateGameSaveWidgets(void);
-
 int Hu_MenuDefaultFocusAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
 int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters);

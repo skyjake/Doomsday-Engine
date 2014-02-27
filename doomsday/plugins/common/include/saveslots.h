@@ -48,11 +48,8 @@ public:
     class Slot
     {
     public:
-        /// Required SaveInfo is missing. @ingroup errors
-        DENG2_ERROR(MissingInfoError);
-
-    public:
-        Slot(de::String id, bool userWritable, de::String const &fileName = "");
+        Slot(de::String id, bool userWritable, de::String const &fileName = "",
+             int gameMenuWidgetId = -1);
 
         /**
          * Returns the unique identifier/name for the logical save slot.
@@ -82,21 +79,7 @@ public:
         bool isUsed() const;
 
         /**
-         * Returns @c true iff save info exists for the logical save slot.
-         */
-        bool hasSaveInfo() const;
-
-        /**
-         * Clear the save info for the logical save slot.
-         *
-         * @see hasSaveInfo()
-         */
-        void clearSaveInfo();
-
-        /**
          * Returns the SaveInfo associated with the logical save slot.
-         *
-         * @see hasSaveInfo()
          */
         SaveInfo &saveInfo() const;
 
@@ -117,11 +100,13 @@ public:
     /**
      * Add a new logical save slot.
      *
-     * @param id            Unique identifier for this slot.
-     * @param userWritable  @c true= allow the user to write to this slot.
-     * @param fileName      File name to bind to this slot.
+     * @param id                Unique identifier for this slot.
+     * @param userWritable      @c true= allow the user to write to this slot.
+     * @param fileName          File name to bind to this slot.
+     * @param gameMenuWidgetId  Unique identifier of the game menu widget to associate this slot with;
+     *                          otherwise @c 0= none.
      */
-    void addSlot(de::String id, bool userWritable, de::String fileName);
+    void addSlot(de::String id, bool userWritable, de::String fileName, int gameMenuWidgetId = 0);
 
     /**
      * Returns the total number of logical save slots.
@@ -147,11 +132,6 @@ public:
      * @see isKnownSlot()
      */
     Slot &slot(de::String slotId) const;
-
-    /**
-     * Clears save info for all logical save slots.
-     */
-    void clearAll();
 
     /**
      * Force an update of the cached game-save info. To be called (sparingly) at strategic

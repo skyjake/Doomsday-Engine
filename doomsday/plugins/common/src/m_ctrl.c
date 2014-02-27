@@ -218,8 +218,8 @@ static mndata_bindings_t controlConfig[] =
     { "Help Screen", "shortcut", 0, "helpscreen" },
 #endif
     { "End Game", "shortcut", 0, "endgame" },
-    { "Save Game", "shortcut", 0, "savegame" },
-    { "Load Game", "shortcut", 0, "loadgame" },
+    { "Save Game", "shortcut", 0, "menu savegame" },
+    { "Load Game", "shortcut", 0, "menu loadgame" },
     { "Quick Save", "shortcut", 0, "quicksave" },
     { "Quick Load", "shortcut", 0, "quickload" },
     { "Sound Options", "shortcut", 0, "menu soundoptions" },

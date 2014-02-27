@@ -22,9 +22,11 @@
 #include "saveslots.h"
 
 #include "g_common.h"
+#include "hu_menu.h"
 #include "p_saveio.h"
 #include "saveinfo.h"
 #include <de/NativePath>
+#include <de/Observers>
 #include <de/String>
 #include <map>
 
@@ -36,22 +38,84 @@ static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 using namespace de;
 
 DENG2_PIMPL_NOREF(SaveSlots::Slot)
+, DENG2_OBSERVES(SaveInfo, SessionStatusChange)
+, DENG2_OBSERVES(SaveInfo, UserDescriptionChange)
 {
     String id;
     bool userWritable;
     String fileName;
     SaveInfo *info;
+    int gameMenuWidgetId;
 
-    Instance() : userWritable(true), info(0) {}
+    Instance()
+        : userWritable    (true)
+        , info            (0)
+        , gameMenuWidgetId(0 /*none*/)
+    {}
+
     ~Instance() { delete info; }
+
+    void updateGameMenuWidget()
+    {
+        if(!gameMenuWidgetId) return;
+
+        mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
+        if(!page) return; // Not initialized yet?
+
+        mn_object_t *ob = MNPage_FindObject(page, 0, gameMenuWidgetId);
+        if(!ob)
+        {
+            LOG_DEBUG("Failed locating menu widget with id ") << gameMenuWidgetId;
+            return;
+        }
+
+        mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
+        DENG2_ASSERT(edit != 0);
+
+        MNObject_SetFlags(ob, FO_SET, MNF_DISABLED);
+        if(info->gameSessionIsLoadable())
+        {
+            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, info->userDescription().toUtf8().constData());
+            MNObject_SetFlags(ob, FO_CLEAR, MNF_DISABLED);
+        }
+        else
+        {
+            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, "");
+        }
+
+        if(Hu_MenuIsActive() && page == Hu_MenuActivePage())
+        {
+            // Re-open the active page to update focus if necessary.
+            Hu_MenuSetActivePage2(page, true);
+        }
+    }
+
+    /// Observes SaveInfo SessionStatusChange
+    void saveInfoSessionStatusChanged(SaveInfo &saveInfo)
+    {
+        DENG2_ASSERT(&saveInfo == info);
+        DENG2_UNUSED(saveInfo);
+        updateGameMenuWidget();
+    }
+
+    /// Observes SaveInfo UserDescriptionChange
+    void saveInfoUserDescriptionChanged(SaveInfo &saveInfo)
+    {
+        DENG2_ASSERT(&saveInfo == info);
+        DENG2_UNUSED(saveInfo);
+        updateGameMenuWidget();
+    }
 };
 
-SaveSlots::Slot::Slot(String id, bool userWritable, String const &fileName)
+SaveSlots::Slot::Slot(String id, bool userWritable, String const &fileName, int gameMenuWidgetId)
     : d(new Instance)
 {
-    d->id           = id;
-    d->userWritable = userWritable;
-    d->fileName     = fileName;
+    d->id               = id;
+    d->userWritable     = userWritable;
+    d->fileName         = fileName;
+    d->gameMenuWidgetId = gameMenuWidgetId;
+
+    replaceSaveInfo(new SaveInfo(d->fileName));
 }
 
 String const &SaveSlots::Slot::id() const
@@ -71,44 +135,37 @@ String const &SaveSlots::Slot::fileName() const
 
 void SaveSlots::Slot::bindFileName(String newName)
 {
-    if(d->fileName.compareWithoutCase(newName))
-    {
-        clearSaveInfo();
-    }
-    d->fileName = newName;
+    d->info->setFileName(d->fileName = newName);
 }
 
 bool SaveSlots::Slot::isUsed() const
 {
-    if(SV_SavePath().isEmpty()) return false;
-    if(!hasSaveInfo()) return false;
-    return saveInfo().gameSessionIsLoadable();
-}
-
-bool SaveSlots::Slot::hasSaveInfo() const
-{
-    return d->info != 0;
-}
-
-void SaveSlots::Slot::clearSaveInfo()
-{
-    delete d->info; d->info = 0;
+    if(!d->info) return false;
+    return d->info->gameSessionIsLoadable();
 }
 
 void SaveSlots::Slot::replaceSaveInfo(SaveInfo *newInfo)
 {
-    clearSaveInfo();
+    DENG2_ASSERT(newInfo != 0);
+
+    delete d->info;
     d->info = newInfo;
+
+    // Update the menu widget right away.
+    d->updateGameMenuWidget();
+
+    if(d->gameMenuWidgetId)
+    {
+        // We want notification of subsequent changes so that we can update the menu widget.
+        d->info->audienceForSessionStatusChange   += d;
+        d->info->audienceForUserDescriptionChange += d;
+    }
 }
 
 SaveInfo &SaveSlots::Slot::saveInfo() const
 {
-    if(d->info)
-    {
-        return *d->info;
-    }
-    /// @throw MissingInfoError Attempted with no SaveInfo present.
-    throw MissingInfoError("SaveSlots::Slot::saveInfo", "No SaveInfo exists");
+    DENG2_ASSERT(d->info != 0);
+    return *d->info;
 }
 
 DENG2_PIMPL_NOREF(SaveSlots)
@@ -128,49 +185,26 @@ DENG2_PIMPL_NOREF(SaveSlots)
         }
         return 0; // Not found.
     }
-
-    /// Re-build save info by re-scanning the save paths and populating the list.
-    void buildInfosIfNeeded(bool update = false)
-    {
-        DENG2_FOR_EACH(Slots, i, sslots)
-        {
-            SaveSlot &sslot = *i->second;
-            if(!sslot.hasSaveInfo())
-            {
-                sslot.replaceSaveInfo(new SaveInfo(sslot.fileName()));
-            }
-            if(update) sslot.saveInfo().updateFromFile();
-        }
-    }
 };
 
 SaveSlots::SaveSlots() : d(new Instance)
 {}
 
-void SaveSlots::addSlot(String id, bool userWritable, String fileName)
+void SaveSlots::addSlot(String id, bool userWritable, String fileName, int gameMenuWidgetId)
 {
     // Ensure the slot identifier is unique.
     if(d->slotById(id)) return;
 
     // Insert a new save slot.
-    d->sslots.insert(std::pair<String, Slot *>(id, new Slot(id, userWritable, fileName)));
-}
-
-void SaveSlots::clearAll()
-{
-    DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
-    {
-        i->second->clearSaveInfo();
-    }
-
-    // Reset last-used and quick-save slot tracking.
-    Con_SetInteger2("game-save-last-slot", -1, SVF_WRITE_OVERRIDE);
-    Con_SetInteger("game-save-quick-slot", -1);
+    d->sslots.insert(std::pair<String, Slot *>(id, new Slot(id, userWritable, fileName, gameMenuWidgetId)));
 }
 
 void SaveSlots::updateAll()
 {
-    d->buildInfosIfNeeded(true/*update session headers from source files*/);
+    DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
+    {
+        i->second->saveInfo().updateFromFile();
+    }
 }
 
 int SaveSlots::slotCount() const
@@ -185,8 +219,6 @@ bool SaveSlots::isKnownSlot(String value) const
 
 SaveSlots::Slot &SaveSlots::slot(String slotId) const
 {
-    d->buildInfosIfNeeded();
-
     if(SaveSlot *sslot = d->slotById(slotId))
     {
         return *sslot;
@@ -202,12 +234,7 @@ void SaveSlots::clearSlot(String slotId)
         return;
     }
 
-    Slot &sslot = slot(slotId);
-    if(!sslot.hasSaveInfo())
-    {
-        sslot.replaceSaveInfo(new SaveInfo(sslot.fileName()));
-    }
-
+    Slot &sslot        = slot(slotId);
     SaveInfo &saveInfo = sslot.saveInfo();
 
     // Should we announce this?
@@ -227,8 +254,9 @@ void SaveSlots::clearSlot(String slotId)
 
     SV_RemoveFile(SV_SavePath() / saveInfo.fileName());
 
-    saveInfo.setUserDescription("");
-    saveInfo.setSessionId(0);
+    // Force a status update.
+    /// @todo move clear logic into SaveInfo.
+    saveInfo.updateFromFile();
 }
 
 void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
@@ -276,8 +304,6 @@ String SaveSlots::findSlotWithUserSaveDescription(String description) const
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
             SaveSlot &sslot = *i->second;
-            if(!sslot.hasSaveInfo()) continue;
-
             if(!sslot.saveInfo().userDescription().compareWithoutCase(description))
             {
                 return sslot.id();

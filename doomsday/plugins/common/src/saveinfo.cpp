@@ -53,9 +53,10 @@ using namespace internal;
 
 DENG2_PIMPL(SaveInfo)
 {
-    String fileName; ///< Name of the game session file.
     SessionStatus status;
     bool needUpdateStatus;
+
+    String fileName; ///< Name of the game session file.
 
     // Metadata (the session header):
     String userDescription;
@@ -385,30 +386,24 @@ void SaveInfo::updateFromFile()
     LOGDEV_VERBOSE("Updating SaveInfo %p from source file") << this;
     LOG_AS("SaveInfo");
 
-    d->needUpdateStatus = true;
-
-    if(SV_SavePath().isEmpty())
-    {
-        // The save path cannot be accessed for some reason. Perhaps its a network path?
-        setUserDescription("");
-        setSessionId(0);
-        return;
-    }
-
     // Is this a recognized game state?
-    if(!G_GameStateReaderFactory().recognize(*this))
+    if(G_GameStateReaderFactory().recognize(*this))
     {
+        // Ensure we have a valid description.
+        if(d->userDescription.isEmpty())
+        {
+            setUserDescription("UNNAMED");
+        }
+    }
+    else
+    {
+        // Unrecognized or the file could not be accessed (perhaps its a network path?).
         // Clear the info.
         setUserDescription("");
         setSessionId(0);
-        return;
     }
 
-    // Ensure we have a valid description.
-    if(d->userDescription.isEmpty())
-    {
-        setUserDescription("UNNAMED");
-    }
+    d->updateStatusIfNeeded();
 }
 
 void SaveInfo::write(writer_s *writer) const
@@ -444,8 +439,6 @@ void SaveInfo::read(reader_s *reader)
 {
     LOG_AS("SaveInfo");
 
-    d->needUpdateStatus = true;
-
 #if __JHEXEN__
     // Read the magic byte to determine the high-level format.
     int magic = Reader_ReadInt32(reader);
@@ -456,6 +449,8 @@ void SaveInfo::read(reader_s *reader)
     {
         // Perhaps the old v9 format?
         d->read_Hx_v9(reader);
+
+        d->needUpdateStatus = true;
         return;
     }
 #endif
@@ -566,6 +561,8 @@ void SaveInfo::read(reader_s *reader)
 #endif
 
     d->sessionId = Reader_ReadInt32(reader);
+
+    d->needUpdateStatus = true;
 }
 
 String SaveInfo::statusAsText() const

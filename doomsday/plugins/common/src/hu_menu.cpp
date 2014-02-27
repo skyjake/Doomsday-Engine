@@ -5740,43 +5740,6 @@ void Hu_MenuDrawSkillPage(mn_page_t * /*page*/, Point2Raw const *origin)
 #endif
 }
 
-void Hu_MenuUpdateGameSaveWidgets()
-{
-    int const saveSlotObjectIds[NUMSAVESLOTS] = {
-        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
-#if !__JHEXEN__
-        MNF_ID6, MNF_ID7
-#endif
-    };
-
-    if(!menuActive) return;
-
-    // Prompt a refresh of the game-save info. We don't yet actively monitor
-    // the contents of the game-save paths, so instead we settle for manual
-    // updates whenever the save/load menu is opened.
-    G_SaveSlots().updateAll();
-
-    // Update widgets.
-    mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
-    for(int i = 0; i < NUMSAVESLOTS; ++i)
-    {
-        mn_object_t *obj    = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
-        mndata_edit_t *edit = (mndata_edit_t *) obj->_typedata;
-
-        MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
-        SaveSlot &sslot = G_SaveSlots()[(char *)edit->data1];
-        if(sslot.isUsed())
-        {
-            MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, sslot.saveInfo().userDescription().toUtf8().constData());
-            MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
-        }
-        else
-        {
-            MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, "");
-        }
-    }
-}
-
 /**
  * Called after the save name has been modified and to action the game-save.
  */
@@ -6348,7 +6311,6 @@ int Hu_MenuSelectLoadGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*c
         }
     }
 
-    Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
     return 0;
 }
@@ -6383,7 +6345,6 @@ int Hu_MenuSelectSaveGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*c
     }
 
     Hu_MenuCommand(MCMD_OPEN);
-    Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
     return 0;
 }

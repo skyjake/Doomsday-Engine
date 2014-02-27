@@ -472,6 +472,53 @@ gameaction_t G_GameAction()
     return gameAction;
 }
 
+de::Path G_ChooseRootSaveDirectory()
+{
+    // Use a custom root save directory?
+    if(CommandLine_CheckWith("-savedir", 1))
+    {
+        return de::NativePath(CommandLine_NextAsPath()).withSeparators('/');
+    }
+
+    // Use the default.
+    GameInfo gameInfo;
+    if(DD_GameInfo(&gameInfo))
+    {
+        return de::Path(SAVEGAME_DEFAULT_DIR) / Str_Text(gameInfo.identityKey);
+    }
+
+    /// @throw Error GameInfo is unavailable.
+    throw de::Error("G_ChooseRootSaveDirectory", "Failed retrieving GameInfo");
+}
+
+static void initGameSaveSystem()
+{
+    // Declare the native game state reader.
+    gameStateReaderFactory.declareReader(&GameStateReader::recognize, &GameStateReader::make);
+
+    // Setup the logical save slot bindings.
+    int const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
+        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
+#if !__JHEXEN__
+        MNF_ID6, MNF_ID7
+#endif
+    };
+    for(int i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        sslots.addSlot(de::String::number(i), true, de::String(SAVEGAMENAME "%1").arg(i),
+                       gameMenuSaveSlotWidgetIds[i]);
+    }
+    sslots.addSlot("auto", false, de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT));
+#if __JHEXEN__
+    sslots.addSlot("base", false, de::String(SAVEGAMENAME "%1").arg(BASE_SLOT));
+#endif
+
+    SV_InitIO();
+
+    // Initialize the saved game paths, possibly creating them if they do not exist.
+    SV_SetupSaveDirectory(G_ChooseRootSaveDirectory());
+}
+
 /**
  * Common Pre Game Initialization routine.
  * Game-specfic pre init actions should be placed in eg D_PreInit() (for jDoom)
@@ -513,6 +560,9 @@ void G_CommonPreInit()
     R_LoadColorPalettes();
 
     P_InitPicAnims();
+
+    App_Log(DE2_LOG_VERBOSE, "Initializing game save system...");
+    initGameSaveSystem();
 
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();     // Main command list.
@@ -931,6 +981,11 @@ void R_InitHud()
     App_Log(DE2_LOG_VERBOSE, "Initializing menu...");
     Hu_MenuInit();
 
+    // Manually force an update of the save slots to ensure that saved session metadata is reflected
+    // in the relevant menu widgets.
+    /// @todo The menu widgets should do this and observe SaveInfo changes directly.
+    G_SaveSlots().updateAll();
+
     App_Log(DE2_LOG_VERBOSE, "Initializing status-message/question system...");
     Hu_MsgInit();
 }
@@ -982,54 +1037,11 @@ GameStateReaderFactory &G_GameStateReaderFactory()
     return gameStateReaderFactory;
 }
 
-de::Path G_ChooseRootSaveDirectory()
-{
-    // Use a custom root save directory?
-    if(CommandLine_CheckWith("-savedir", 1))
-    {
-        return de::NativePath(CommandLine_NextAsPath()).withSeparators('/');
-    }
-
-    // Use the default.
-    GameInfo gameInfo;
-    if(DD_GameInfo(&gameInfo))
-    {
-        return de::Path(SAVEGAME_DEFAULT_DIR) / Str_Text(gameInfo.identityKey);
-    }
-
-    /// @throw Error GameInfo is unavailable.
-    throw de::Error("G_ChooseRootSaveDirectory", "Failed retrieving GameInfo");
-}
-
-static void initGameSaveSystem()
-{
-    // Declare the native game state reader.
-    gameStateReaderFactory.declareReader(&GameStateReader::recognize, &GameStateReader::make);
-
-    // Setup the logical save slot bindings.
-    for(int i = 0; i < NUMSAVESLOTS; ++i)
-    {
-        sslots.addSlot(de::String::number(i), true, de::String(SAVEGAMENAME "%1").arg(i));
-    }
-    sslots.addSlot("auto", false, de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT));
-#if __JHEXEN__
-    sslots.addSlot("base", false, de::String(SAVEGAMENAME "%1").arg(BASE_SLOT));
-#endif
-
-    SV_InitIO();
-
-    // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
-    SV_SetupSaveDirectory(G_ChooseRootSaveDirectory());
-}
-
 void G_CommonPostInit()
 {
     R_InitRefresh();
     FI_StackInit();
     GUI_Init();
-
-    App_Log(DE2_LOG_VERBOSE, "Initializing game save system...");
-    initGameSaveSystem();
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
@@ -1066,7 +1078,6 @@ void G_CommonShutdown()
     D_NetClearBuffer();
 
     SV_ShutdownIO();
-    sslots.clearAll();
 
     P_Shutdown();
     G_ShutdownEventSequences();
@@ -4098,30 +4109,12 @@ void G_DoScreenShot()
             fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
 }
 
-static void openLoadMenu()
-{
-    Hu_MenuCommand(MCMD_OPEN);
-    /// @todo This should be called automatically when opening the page
-    /// thus making this function redundant.
-    Hu_MenuUpdateGameSaveWidgets();
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
-}
-
-static void openSaveMenu()
-{
-    Hu_MenuCommand(MCMD_OPEN);
-    /// @todo This should be called automatically when opening the page
-    /// thus making this function redundant.
-    Hu_MenuUpdateGameSaveWidgets();
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
-}
-
 D_CMD(OpenLoadMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
     if(!G_SessionLoadingPossible()) return false;
-    openLoadMenu();
+    DD_Execute(true, "menu loadgame");
     return true;
 }
 
@@ -4130,7 +4123,7 @@ D_CMD(OpenSaveMenu)
     DENG2_UNUSED3(src, argc, argv);
 
     if(!G_SessionSavingPossible()) return false;
-    openSaveMenu();
+    DD_Execute(true, "menu savegame");
     return true;
 }
 
@@ -4219,7 +4212,7 @@ D_CMD(LoadSession)
     if(src == CMDS_CONSOLE)
     {
         App_Log(DE2_SCR_MSG, "Opening Load Game menu...");
-        openLoadMenu();
+        DD_Execute(true, "menu loadgame");
         return true;
     }
 
@@ -4328,7 +4321,6 @@ D_CMD(SaveSession)
     {
         // No quick-save slot has been nominated - allow doing so now.
         Hu_MenuCommand(MCMD_OPEN);
-        Hu_MenuUpdateGameSaveWidgets();
         Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
         menuNominatingQuickSaveSlot = true;
         return true;
@@ -4357,18 +4349,6 @@ bool G_DeleteSavedSession(de::String slotId)
         if(sslot.isUserWritable() && sslot.isUsed())
         {
             G_SaveSlots().clearSlot(slotId);
-
-            if(Hu_MenuIsActive())
-            {
-                mn_page_t *activePage = Hu_MenuActivePage();
-                if(activePage == Hu_MenuFindPageByName("LoadGame") ||
-                   activePage == Hu_MenuFindPageByName("SaveGame"))
-                {
-                    // Re-open the current menu page.
-                    Hu_MenuUpdateGameSaveWidgets();
-                    Hu_MenuSetActivePage2(activePage, true);
-                }
-            }
             return true;
         }
     }
