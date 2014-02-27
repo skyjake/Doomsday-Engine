@@ -3379,7 +3379,7 @@ uint G_EpisodeNumberFor(Uri const *mapUri)
         {
             if(path.at(0) == 'E' && path.at(2) == 'M')
             {
-                return path.substr(1).toInt() - 1;
+                return path.substr(1, 1).toInt() - 1;
             }
         }
     }
@@ -3459,8 +3459,8 @@ void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
     DD_Executef(true, "texreset raw");
 
     Uri_Copy(gameMapUri, mapUri);
-    gameEpisode     = G_EpisodeNumberFor(mapUri);
-    gameMap         = G_MapNumberFor(mapUri);
+    gameEpisode     = G_EpisodeNumberFor(gameMapUri);
+    gameMap         = G_MapNumberFor(gameMapUri);
     gameMapEntrance = mapEntrance;
     gameRules       = *rules;
 
@@ -3469,6 +3469,8 @@ void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
     {
         Uri *validMapUri = G_ComposeMapUri(gameEpisode, gameMap);
         Uri_Copy(gameMapUri, validMapUri);
+        gameEpisode = G_EpisodeNumberFor(gameMapUri);
+        gameMap     = G_MapNumberFor(gameMapUri);
         Uri_Delete(validMapUri);
     }
 
