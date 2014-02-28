@@ -221,18 +221,20 @@ void UIAutomap_Reset(uiwidget_t* obj)
 /**
  * Draws the given line including any optional extras.
  */
-static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
-    const float color[4], glowtype_t glowType, float glowStrength, float glowSize,
+static void rendLine2(uiwidget_t *ob, float x1, float y1, float x2, float y2,
+    float const color[4], glowtype_t glowType, float glowStrength, float glowSize,
     dd_bool glowOnly, dd_bool scaleGlowWithView, dd_bool caps, blendmode_t blend,
     dd_bool drawNormal, dd_bool addToLists)
 {
+    DENG2_ASSERT(ob->type == GUI_AUTOMAP);
+    DENG2_UNUSED(ob);
+
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    const float alpha = uiRendState->pageAlpha;
+    float const alpha = uiRendState->pageAlpha;
     //automapcfg_t* mcfg = am->mcfg;
     float a[2], b[2];
     float length, dx, dy;
     float normal[2], unit[2];
-    assert(obj->type == GUI_AUTOMAP);
 
     // Scale into map, screen space units.
     a[VX] = x1;
@@ -1311,21 +1313,20 @@ static void setupGLStateForMap(uiwidget_t *obj)
 /**
  * Restores the previous GL draw state
  */
-static void restoreGLStateFromMap(uiwidget_t* obj)
+static void restoreGLStateFromMap(uiwidget_t * /*ob*/)
 {
-    DENG_UNUSED(obj);
-
     // Restore the previous GL state.
     DGL_PopState();
 }
 
-static void renderVertexes(uiwidget_t* obj)
+static void renderVertexes(uiwidget_t *ob)
 {
+    DENG2_ASSERT(ob->type == GUI_AUTOMAP);
+    DENG2_UNUSED(ob);
+
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    const float alpha = uiRendState->pageAlpha;
+    float const alpha = uiRendState->pageAlpha;
     float v[2], oldPointSize;
-    int i;
-    assert(obj->type == GUI_AUTOMAP);
 
     DGL_Color4f(.2f, .5f, 1, alpha);
 
@@ -1334,7 +1335,7 @@ static void renderVertexes(uiwidget_t* obj)
     DGL_SetFloat(DGL_POINT_SIZE, 4 * aspectScale);
 
     DGL_Begin(DGL_POINTS);
-    for(i = 0; i < numvertexes; ++i)
+    for(int i = 0; i < numvertexes; ++i)
     {
         P_GetFloatv(DMU_VERTEX, i, DMU_XY, v);
         DGL_TexCoord2f(0, v[VX], v[VY]);
