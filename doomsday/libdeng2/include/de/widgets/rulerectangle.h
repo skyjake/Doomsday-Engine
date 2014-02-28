@@ -54,6 +54,8 @@ public:
     Rule const &bottom() const;
     Rule const &width() const;
     Rule const &height() const;
+    Rule const &midX() const;
+    Rule const &midY() const;
 
     /**
      * Sets one of the input rules of the rectangle.
