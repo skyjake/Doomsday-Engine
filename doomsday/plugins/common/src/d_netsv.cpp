@@ -678,14 +678,13 @@ void NetSv_SendGameState(int flags, int to)
 {
     if(!IS_NETWORK_SERVER) return;
 
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
+    de::String const identityKey = G_IdentityKey();
 
     // Print a short message that describes the game state.
-    AutoStr *str = Uri_Resolved(gameMapUri);
-
     App_Log(DE2_NET_NOTE, "Sending game setup: %s %s %s",
-            Str_Text(gameInfo.identityKey), Str_Text(str), gameConfigString);
+            identityKey.toLatin1().constData(),
+            Str_Text(Uri_Resolved(gameMapUri)),
+            gameConfigString);
 
     // Send an update to all the players in the game.
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -697,8 +696,8 @@ void NetSv_SendGameState(int flags, int to)
         Writer_WriteByte(writer, flags);
 
         // Game identity key.
-        Writer_WriteByte(writer, Str_Length(gameInfo.identityKey));
-        Writer_Write(writer, Str_Text(gameInfo.identityKey), Str_Length(gameInfo.identityKey));
+        Writer_WriteByte(writer, identityKey.length());
+        Writer_Write(writer, identityKey.toLatin1().constData(), identityKey.length());
 
         // The current map.
         Uri_Write(gameMapUri, writer);

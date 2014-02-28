@@ -659,9 +659,7 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     info->setMagic(0); // Initialize with *something*.
 
     /// @note Kludge: Assume the current game mode.
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    info->setGameIdentityKey(Str_Text(gameInfo.identityKey));
+    info->setGameIdentityKey(G_IdentityKey());
     /// Kludge end.
 
     info->setSessionId(0); // None.

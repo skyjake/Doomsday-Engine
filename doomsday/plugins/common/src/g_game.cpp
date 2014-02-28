@@ -481,14 +481,7 @@ de::Path G_ChooseRootSaveDirectory()
     }
 
     // Use the default.
-    GameInfo gameInfo;
-    if(DD_GameInfo(&gameInfo))
-    {
-        return de::Path(SAVEGAME_DEFAULT_DIR) / Str_Text(gameInfo.identityKey);
-    }
-
-    /// @throw Error GameInfo is unavailable.
-    throw de::Error("G_ChooseRootSaveDirectory", "Failed retrieving GameInfo");
+    return de::Path(SAVEGAME_DEFAULT_DIR) / G_IdentityKey();
 }
 
 static void initGameSaveSystem()
@@ -3559,7 +3552,18 @@ void G_QuitGame()
     Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
-AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
+de::String G_IdentityKey()
+{
+    GameInfo gameInfo;
+    if(DD_GameInfo(&gameInfo))
+    {
+        return Str_Text(gameInfo.identityKey);
+    }
+    /// @throw Error GameInfo is unavailable.
+    throw de::Error("G_IdentityKey", "Failed retrieving GameInfo");
+}
+
+de::String G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
 {
     static char const *identityKeys[] = {
 #if __JDOOM__
@@ -3619,9 +3623,7 @@ AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
          */
         if(gamemode == doom2 && (gameModeBits & GM_ANY_DOOM2))
         {
-            GameInfo gameInfo;
-            DD_GameInfo(&gameInfo);
-            return gameInfo.identityKey;
+            return G_IdentityKey();
         }
         /// kludge end.
 # endif
@@ -3631,7 +3633,7 @@ AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
 #endif
 
     DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(identityKeys) / sizeof(identityKeys[0]));
-    return AutoStr_FromTextStd(identityKeys[gamemode]);
+    return identityKeys[gamemode];
 }
 
 uint G_GenerateSessionId()
@@ -4070,45 +4072,37 @@ void G_ScreenShot()
 }
 
 /**
- * Find an unused screenshot file name. Uses the game's identity key as the
- * file name base.
- * @return  Composed file name.
+ * Find an unused screenshot file name. Uses the game's identity key as the file name base.
  */
-static AutoStr *composeScreenshotFileName()
+static de::String composeScreenshotFileName()
 {
-    GameInfo gameInfo;
-    if(!DD_GameInfo(&gameInfo))
-    {
-        Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
-        return 0; // Unreachable.
-    }
-
-    AutoStr *name = Str_Appendf(AutoStr_NewStd(), "%s-", Str_Text(gameInfo.identityKey));
-    int numPos = Str_Length(name);
+    de::String name = G_IdentityKey() + "-";
+    int const numPos = name.length();
     for(int i = 0; i < 1e6; ++i) // Stop eventually...
     {
-        Str_Appendf(name, "%03i.png", i);
-        if(!F_FileExists(Str_Text(name))) break;
-        Str_Truncate(name, numPos);
+        name += de::String("%1.png").arg(i, 3, 10, QChar('0'));
+        if(!F_FileExists(name.toUtf8().constData())) break;
+        name.truncate(numPos);
     }
     return name;
 }
 
 void G_DoScreenShot()
 {
-    AutoStr *fileName = composeScreenshotFileName();
-    if(fileName && M_ScreenShot(Str_Text(fileName), 24))
+    de::String fileName = composeScreenshotFileName();
+    if(M_ScreenShot(fileName.toUtf8().constData(), 24))
     {
         /// @todo Do not use the console player's message log for this notification.
         ///       The engine should implement it's own notification UI system for
         ///       this sort of thing.
-        AutoStr* msg = Str_Appendf(AutoStr_NewStd(), "Saved screenshot: %s", F_PrettyPath(Str_Text(fileName)));
+        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), "Saved screenshot: %s",
+                                   de::NativePath(fileName).pretty().toLatin1().constData());
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return;
     }
 
     App_Log(DE2_RES_ERROR, "Failed to write screenshot \"%s\"",
-            fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
+            de::NativePath(fileName).pretty().toLatin1().constData());
 }
 
 D_CMD(OpenLoadMenu)

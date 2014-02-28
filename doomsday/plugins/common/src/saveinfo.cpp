@@ -39,13 +39,6 @@ namespace internal
         return false;
 #endif
     }
-
-    static de::String currentGameIdentityKey()
-    {
-        GameInfo gameInfo;
-        DD_GameInfo(&gameInfo);
-        return Str_Text(gameInfo.identityKey);
-    }
 }
 
 using namespace de;
@@ -128,7 +121,7 @@ DENG2_PIMPL(SaveInfo)
         {
             status = Incompatible;
             // Game identity key missmatch?
-            if(!gameIdentityKey.compareWithoutCase(currentGameIdentityKey()))
+            if(!gameIdentityKey.compareWithoutCase(G_IdentityKey()))
             {
                 /// @todo Validate loaded add-ons and checksum the definition database.
                 status = Loadable; // It's good!
@@ -161,7 +154,7 @@ DENG2_PIMPL(SaveInfo)
         version         = String(&verText[8]).toInt();
 
         /// @note Kludge: Assume the current game.
-        gameIdentityKey = currentGameIdentityKey();
+        gameIdentityKey = G_IdentityKey();
         /// Kludge end.
 
         /*Skip junk*/ SV_Seek(4);
@@ -349,7 +342,7 @@ void SaveInfo::applyCurrentSessionMetadata()
     LOG_AS("SaveInfo");
     d->magic            = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
     d->version          = MY_SAVE_VERSION;
-    d->gameIdentityKey  = currentGameIdentityKey();
+    d->gameIdentityKey  = G_IdentityKey();
     Uri_Copy(d->mapUri, gameMapUri);
 #if !__JHEXEN__
     d->mapTime          = ::mapTime;
@@ -467,7 +460,7 @@ void SaveInfo::read(reader_s *reader)
     {
         // Translate gamemode identifiers from older save versions.
         int oldGamemode = Reader_ReadInt32(reader);
-        d->gameIdentityKey = Str_Text(G_IdentityKeyForLegacyGamemode(oldGamemode, d->version));
+        d->gameIdentityKey = G_IdentityKeyForLegacyGamemode(oldGamemode, d->version);
     }
 
     if(d->version >= 10)

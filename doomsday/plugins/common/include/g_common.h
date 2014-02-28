@@ -59,8 +59,6 @@ gameaction_t G_GameAction(void);
 
 void G_SetGameAction(gameaction_t action);
 
-AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
-
 uint G_GenerateSessionId(void);
 
 /**
@@ -171,6 +169,16 @@ D_CMD( CCmdExitLevel );
 
 class GameStateReaderFactory;
 class SaveSlots;
+
+/**
+ * Returns the game identity key (from the engine).
+ */
+de::String G_IdentityKey();
+
+/**
+ * Translates a legacy game mode identifier to a game identity key.
+ */
+de::String G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
 
 /**
  * @param mapUri       Map identifier.
