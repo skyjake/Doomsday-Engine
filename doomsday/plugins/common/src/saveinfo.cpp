@@ -246,6 +246,31 @@ void SessionMetadata::read(Reader *reader)
     sessionId = Reader_ReadInt32(reader);
 }
 
+SessionMetadata *SessionMetadata::fromReader(reader_s *reader) // static
+{
+    SessionMetadata *meta = new SessionMetadata;
+    meta->read(reader);
+    return meta;
+}
+
+de::String SessionMetadata::asText() const
+{
+    AutoStr *currentMapUriAsText = Uri_ToString(mapUri);
+
+    return de::String(_E(b) "%1\n" _E(.)
+                      _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
+                      _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
+                      _E(l) "Version: "     _E(.)_E(i) "%4 "  _E(.)
+                      _E(l) "Session id: "  _E(.)_E(i) "%5\n" _E(.)
+                      _E(D) "Game rules:\n" _E(.) "  %6")
+                 .arg(userDescription)
+                 .arg(gameIdentityKey)
+                 .arg(Str_Text(currentMapUriAsText))
+                 .arg(version)
+                 .arg(sessionId)
+                 .arg(gameRules.asText());
+}
+
 namespace internal
 {
     static bool usingSeparateMapSessionFiles()
@@ -523,29 +548,9 @@ String SaveInfo::statusAsText() const
 
 String SaveInfo::description() const
 {
-    AutoStr *currentMapUriAsText = Uri_ToString(meta().mapUri);
-
-    return String(_E(b) "%1\n" _E(.)
-                  _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
-                  _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Source file: " _E(.)_E(i) "\"%4\"\n" _E(.)
-                  _E(l) "Version: "     _E(.)_E(i) "%5 "  _E(.)
-                  _E(l) "Session id: "  _E(.)_E(i) "%6\n" _E(.)
-                  _E(D) "Game rules:\n" _E(.) "  %7\n"
-                  _E(D) "Status: " _E(.) "%8")
-             .arg(meta().userDescription)
-             .arg(meta().gameIdentityKey)
-             .arg(Str_Text(currentMapUriAsText))
-             .arg(NativePath(SV_SavePath() / fileName()).pretty())
-             .arg(meta().version)
-             .arg(meta().sessionId)
-             .arg(meta().gameRules.asText())
-             .arg(statusAsText());
-}
-
-SaveInfo *SaveInfo::fromReader(reader_s *reader) // static
-{
-    SaveInfo *info = new SaveInfo;
-    info->readMeta(reader);
-    return info;
+    return meta().asText() + "\n" +
+           String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"\n" _E(.)
+                  _E(D) "Status: " _E(.) "%2")
+               .arg(NativePath(SV_SavePath() / fileName()).pretty())
+               .arg(statusAsText());
 }

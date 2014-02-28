@@ -52,8 +52,12 @@ struct SessionMetadata
     SessionMetadata(SessionMetadata const &other);
     ~SessionMetadata();
 
+    static SessionMetadata *fromReader(Reader *reader);
+
     void write(Writer *writer) const;
     void read(Reader *reader);
+
+    de::String asText() const;
 };
 
 /**
@@ -173,9 +177,6 @@ public:
     void setMapTime(int newMapTime);
     void setPlayers(SessionMetadata::Players const &newPlayers);
 #endif // !__JHEXEN__
-
-public: /// @todo refactor away:
-    static SaveInfo *fromReader(Reader *reader);
 
 private:
     DENG2_PRIVATE(d)

@@ -1399,8 +1399,8 @@ int G_DoLoadMap(loadmap_params_t *p)
 
         try
         {
-            SaveInfo &saveInfo  = G_SaveSlots()["base"].saveInfo();
-            de::Path const path = SV_SavePath() / saveInfo.fileNameForMap();
+            SaveSlot &sslot = G_SaveSlots()["base"];
+            de::Path const path = SV_SavePath() / sslot.saveInfo().fileNameForMap();
 
             if(!SV_OpenFile(path, false/*for read*/))
             {
@@ -1408,7 +1408,7 @@ int G_DoLoadMap(loadmap_params_t *p)
                 throw de::Error("G_DoLoadMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");
             }
 
-            MapStateReader(saveInfo.meta().version).read(reader);
+            MapStateReader(sslot.saveInfo().meta().version).read(reader);
 
             SV_HxReleaseSaveBuffer();
         }
@@ -2242,8 +2242,8 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                SaveInfo &saveInfo = G_SaveSlots()[chosenSlot].saveInfo();
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, saveInfo.meta().userDescription.toUtf8().constData());
+                SessionMetadata const &saveMeta = G_SaveSlots()[chosenSlot].saveInfo().meta();
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, saveMeta.userDescription.toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, 0, new de::String(chosenSlot));
             }
@@ -2905,11 +2905,11 @@ static int saveGameStateWorker(void *context)
     de::String userDescription = p.userDescription;
     if(userDescription.isEmpty())
     {
-        SaveInfo &saveInfo = G_SaveSlots()[p.slotId].saveInfo();
-        if(!saveInfo.meta().userDescription.isEmpty())
+        SessionMetadata const &saveMeta = G_SaveSlots()[p.slotId].saveInfo().meta();
+        if(!saveMeta.userDescription.isEmpty())
         {
             // Slot already in use; reuse the existing description.
-            userDescription = saveInfo.meta().userDescription;
+            userDescription = saveMeta.userDescription;
         }
         else if(gaSaveSessionGenerateDescription)
         {
@@ -2988,8 +2988,8 @@ void G_DoLeaveMap()
         if(!gameRules.deathmatch)
         {
             // Save current map.
-            SaveInfo &saveInfo  = G_SaveSlots()["base"].saveInfo();
-            de::Path const path = SV_SavePath() / saveInfo.fileNameForMap();
+            SaveSlot &sslot = G_SaveSlots()["base"];
+            de::Path const path = SV_SavePath() / sslot.saveInfo().fileNameForMap();
 
             if(!SV_OpenFile(path, true/*for write*/))
             {
@@ -3241,13 +3241,13 @@ void G_DoLoadSession(de::String slotId)
         }
 #endif
 
-        SaveInfo &saveInfo = G_SaveSlots()[logicalSlot].saveInfo();
+        SaveSlot &sslot = G_SaveSlots()[logicalSlot];
 
         // Attempt to recognize and load the saved game state.
         App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                de::NativePath(SV_SavePath() / saveInfo.fileName()).pretty().toLatin1().constData());
+                de::NativePath(SV_SavePath() / sslot.saveInfo().fileName()).pretty().toLatin1().constData());
 
-        gameStateReaderFor(saveInfo)->read(saveInfo);
+        gameStateReaderFor(sslot.saveInfo())->read(sslot.saveInfo());
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);

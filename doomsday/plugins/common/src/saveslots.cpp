@@ -236,8 +236,7 @@ void SaveSlots::clearSlot(String slotId)
         return;
     }
 
-    Slot &sslot        = slot(slotId);
-    SaveInfo &saveInfo = sslot.saveInfo();
+    Slot &sslot = slot(slotId);
 
     // Should we announce this?
 #if !defined DENG_DEBUG // Always
@@ -250,15 +249,15 @@ void SaveSlots::clearSlot(String slotId)
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
         Uri *mapUri = G_ComposeMapUri(gameEpisode, i);
-        SV_RemoveFile(SV_SavePath() / saveInfo.fileNameForMap(mapUri));
+        SV_RemoveFile(SV_SavePath() / sslot.saveInfo().fileNameForMap(mapUri));
         Uri_Delete(mapUri);
     }
 
-    SV_RemoveFile(SV_SavePath() / saveInfo.fileName());
+    SV_RemoveFile(SV_SavePath() / sslot.saveInfo().fileName());
 
     // Force a status update.
     /// @todo move clear logic into SaveInfo.
-    saveInfo.updateFromFile();
+    sslot.saveInfo().updateFromFile();
 }
 
 void SaveSlots::copySlot(String sourceSlotId, String destSlotId)

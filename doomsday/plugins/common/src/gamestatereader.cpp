@@ -57,9 +57,9 @@ DENG2_PIMPL(GameStateReader)
     /// Assumes the reader is currently positioned at the start of the stream.
     void seekToGameState()
     {
-        // Read the header again.
+        // Read the session metadata again.
         /// @todo seek straight to the game state.
-        delete SaveInfo::fromReader(reader);
+        delete SessionMetadata::fromReader(reader);
     }
 
     void beginSegment(int segId)

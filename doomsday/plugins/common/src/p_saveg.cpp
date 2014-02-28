@@ -850,9 +850,11 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    Reader *reader = SV_NewReader();
-    SaveInfo *info = SaveInfo::fromReader(reader);
+    SaveInfo *info = new SaveInfo;
     info->setFileName(saveNameForClientSessionId(sessionId));
+
+    Reader *reader = SV_NewReader();
+    info->readMeta(reader);
 
     de::Path path = SV_ClientSavePath() / info->fileName();
     if(!SV_OpenFile(path, false/*for read*/))
