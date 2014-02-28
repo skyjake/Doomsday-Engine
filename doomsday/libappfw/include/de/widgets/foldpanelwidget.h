@@ -27,15 +27,14 @@ namespace de {
 /**
  * Folding panel.
  *
- * You should first set the container of the folding panel with setContent().
- * This ensures that widgets added to the panel use the appropriate stylist.
+ * You should first set the container of the folding panel with setContent(). This
+ * ensures that widgets added to the panel use the appropriate stylist.
  *
- * When dismissed, the panel contents are GL-deinitialized and removed from
- * the widget tree entirely.
+ * When dismissed, the panel contents are GL-deinitialized and removed from the widget
+ * tree entirely.
  *
- * FoldPanelWidget creates a title button for toggling the panel open and
- * closed. It is the user's responsibility to lay out this button
- * appropriately.
+ * If needed, FoldPanelWidget can create a title button for toggling the panel open and
+ * closed. It is the user's responsibility to lay out this button appropriately.
  */
 class LIBAPPFW_PUBLIC FoldPanelWidget : public PanelWidget
 {
