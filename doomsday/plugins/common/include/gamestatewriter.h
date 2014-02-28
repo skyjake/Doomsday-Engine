@@ -22,7 +22,7 @@
 #define LIBCOMMON_GAMESTATEWRITER_H
 
 #include "common.h"
-#include "saveinfo.h"
+#include "savedsessionrepository.h"
 #include <de/Error>
 
 /**
@@ -40,7 +40,7 @@ public:
 public:
     GameStateWriter();
 
-    void write(SaveInfo &info);
+    void write(SessionRecord &record);
 
 private:
     DENG2_PRIVATE(d)

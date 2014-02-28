@@ -21,23 +21,26 @@
 #include "common.h"
 #include "gamestatewriter.h"
 
-#include "d_net.h"          // NetSv_SaveGame
+#include "d_net.h"                   // NetSv_SaveGame
 #include "mapstatewriter.h"
+#include "p_savedef.h"               // CONSISTENCY
 #include "p_saveio.h"
-#include "p_saveg.h"        /// playerheader_t @todo remove me
+#include "p_saveg.h"                 /// playerheader_t @todo remove me
+#include "savedsessionrepository.h"
 #include "thingarchive.h"
-#include "saveslots.h"
 #include <de/NativePath>
 
 DENG2_PIMPL(GameStateWriter)
 {
-    SaveInfo *saveInfo; ///< Info for the save state to be written. Not owned.
+    /// Saved game session record for the serialized game state to be written. Not owned.
+    SessionRecord *record;
+
     ThingArchive *thingArchive;
     Writer *writer;
 
     Instance(Public *i)
         : Base(i)
-        , saveInfo(0)
+        , record(0)
         , thingArchive(0)
         , writer(0)
     {}
@@ -71,7 +74,7 @@ DENG2_PIMPL(GameStateWriter)
 
     void writeSessionHeader()
     {
-        saveInfo->meta().write(writer);
+        record->meta().write(writer);
     }
 
     void writeWorldACScriptData()
@@ -89,7 +92,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(SV_SavePath() / saveInfo->fileNameForMap(), true/*for write*/);
+        SV_OpenFile(record->repository().savePath() / record->fileNameForMap(), true/*for write*/);
 #endif
 
         MapStateWriter(*thingArchive).write(writer);
@@ -130,15 +133,15 @@ DENG2_PIMPL(GameStateWriter)
 GameStateWriter::GameStateWriter() : d(new Instance(this))
 {}
 
-void GameStateWriter::write(SaveInfo &info)
+void GameStateWriter::write(SessionRecord &record)
 {
-    de::Path const path = SV_SavePath() / info.fileName();
+    de::Path const path = record.repository().savePath() / record.fileName();
 
-    d->saveInfo = &info;
+    d->record = &record;
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(d->saveInfo->meta().sessionId);
+    NetSv_SaveGame(d->record->meta().sessionId);
 #endif
 
     if(!SV_OpenFile(path, true/*for writing*/))

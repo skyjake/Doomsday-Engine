@@ -640,7 +640,7 @@ static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
     }
 }
 
-static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
+static void SaveInfo_Read_Hr_v13(SessionRecord *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
 
@@ -725,7 +725,7 @@ DENG2_PIMPL(HereticV13GameStateReader)
     {
         // Read the header again.
         /// @todo seek straight to the game state.
-        SaveInfo *tmp = new SaveInfo;
+        SessionRecord *tmp = new SessionRecord;
         SaveInfo_Read_Hr_v13(tmp, reader);
         delete tmp;
     }
@@ -949,9 +949,9 @@ HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
 HereticV13GameStateReader::~HereticV13GameStateReader()
 {}
 
-bool HereticV13GameStateReader::recognize(SaveInfo &info) // static
+bool HereticV13GameStateReader::recognize(SessionRecord &record) // static
 {
-    de::Path const path = SV_SavePath() / info.fileName();
+    de::Path const path = record.repository().savePath() / record.fileName();
 
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenFile_Hr_v13(path)) return false;
@@ -966,8 +966,8 @@ bool HereticV13GameStateReader::recognize(SaveInfo &info) // static
 
     if(strncmp(vcheck, "version ", 8))*/
     {
-        SaveInfo_Read_Hr_v13(&info, reader);
-        result = (info.meta().version == 130);
+        SaveInfo_Read_Hr_v13(&record, reader);
+        result = (record.meta().version == 130);
     }
 
     Reader_Delete(reader); reader = 0;
@@ -981,9 +981,9 @@ IGameStateReader *HereticV13GameStateReader::make()
     return new HereticV13GameStateReader;
 }
 
-void HereticV13GameStateReader::read(SaveInfo &info)
+void HereticV13GameStateReader::read(SessionRecord &record)
 {
-    de::Path const path = SV_SavePath() / info.fileName();
+    de::Path const path = record.repository().savePath() / record.fileName();
 
     if(!SV_OpenFile_Hr_v13(path))
     {
@@ -998,11 +998,11 @@ void HereticV13GameStateReader::read(SaveInfo &info)
     briefDisabled = true;
 
     // Load a base map.
-    G_NewSession(info.meta().mapUri, 0/*not saved??*/, &info.meta().gameRules);
+    G_NewSession(record.meta().mapUri, 0/*not saved??*/, &record.meta().gameRules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     // Recreate map state.
-    mapTime = info.meta().mapTime;
+    mapTime = record.meta().mapTime;
 
     d->readPlayers();
     d->readMap();

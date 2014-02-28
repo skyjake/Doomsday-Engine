@@ -22,7 +22,7 @@
 #define LIBCOMMON_GAMESTATEREADER_H
 
 #include "common.h"
-#include "saveinfo.h"
+#include "savedsessionrepository.h"
 #include <de/Error>
 #include <de/Path>
 
@@ -44,9 +44,9 @@ public:
     /**
      * Attempt to load (read/interpret) the saved game state.
      *
-     * @param info  SaveInfo for the saved game state to be read/interpreted.
+     * @param record  Session record for the serialized game session to be read/interpreted.
      */
-    virtual void read(SaveInfo &info) = 0;
+    virtual void read(SessionRecord &info) = 0;
 };
 
 /**
@@ -55,9 +55,9 @@ public:
  * The job of a recognizer function is to determine whether the game session associated
  * with the given save @a info is interpretable as a potentially loadable savegame state.
  *
- * @param info  SaveInfo to attempt to read game session header into.
+ * @param record  Session record to attempt to update the saved game metadata of.
  */
-typedef bool (*GameStateRecognizeFunc)(SaveInfo &info);
+typedef bool (*GameStateRecognizeFunc)(SessionRecord &record);
 
 /// Game state reader instantiator function ptr.
 typedef IGameStateReader *(*GameStateReaderMakeFunc)();
@@ -87,15 +87,15 @@ public:
      * Determines whether a IGameStateReader appropriate for the specified save game @a info
      * is available and if so, reads the game session header.
      *
-     * @param saveInfo  The game session header will be written here if recognized.
+     * @param record  The game session metadata will be written here if recognized.
      *
-     * @return  @c true= the game session header was read successfully.
+     * @return  @c true= the game session metadata was read successfully.
      *
      * @see recognizeAndMakeReader()
      */
-    bool recognize(SaveInfo &saveInfo) const
+    bool recognize(SessionRecord &record) const
     {
-        return readGameSessionHeader(saveInfo) != 0;
+        return readGameSessionMeta(record) != 0;
     }
 
     /**
@@ -103,15 +103,15 @@ public:
      * is available and if so, reads the game session header and returns a new reader instance
      * for deserializing the game state.
      *
-     * @param saveInfo  The game session header will be written here if recognized.
+     * @param record  The game session metadata will be written here if recognized.
      *
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
      *
      * @see recognize()
      */
-    IGameStateReader *recognizeAndMakeReader(SaveInfo &saveInfo) const
+    IGameStateReader *recognizeAndMakeReader(SessionRecord &record) const
     {
-        if(ReaderInfo const *rdrInfo = readGameSessionHeader(saveInfo))
+        if(ReaderInfo const *rdrInfo = readGameSessionMeta(record))
         {
             return rdrInfo->newReader();
         }
@@ -126,11 +126,11 @@ private:
     typedef std::list<ReaderInfo> ReaderInfos;
     ReaderInfos readers;
 
-    ReaderInfo const *readGameSessionHeader(SaveInfo &info) const
+    ReaderInfo const *readGameSessionMeta(SessionRecord &record) const
     {
         DENG2_FOR_EACH_CONST(ReaderInfos, i, readers)
         {
-            if(i->recognize(info))
+            if(i->recognize(record))
             {
                 return &*i;
             }
@@ -152,9 +152,9 @@ public:
     ~GameStateReader();
 
     static IGameStateReader *make();
-    static bool recognize(SaveInfo &info);
+    static bool recognize(SessionRecord &record);
 
-    void read(SaveInfo &info);
+    void read(SessionRecord &record);
 
 private:
     DENG2_PRIVATE(d)

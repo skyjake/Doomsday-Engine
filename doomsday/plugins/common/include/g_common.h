@@ -169,6 +169,8 @@ D_CMD( CCmdExitLevel );
 
 class GameStateReaderFactory;
 class SaveSlots;
+class SavedSessionRepository;
+struct SessionMetadata;
 
 /**
  * Returns the game identity key (from the engine).
@@ -221,6 +223,13 @@ bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
  * @return  @c true iff @a slotId is in use and loading is presently possible.
  */
 bool G_LoadSession(de::String slotId);
+
+void G_ApplyCurrentSessionMetadata(SessionMetadata &metadata);
+
+/**
+ * Returns the game's SavedSessionRepository.
+ */
+SavedSessionRepository &G_SavedSessionRepository();
 
 /**
  * Returns the game's GameStateReaderFactory.

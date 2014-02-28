@@ -40,9 +40,9 @@ public:
     ~DoomV9GameStateReader();
 
     static IGameStateReader *make();
-    static bool recognize(SaveInfo &info);
+    static bool recognize(SessionRecord &record);
 
-    void read(SaveInfo &info);
+    void read(SessionRecord &record);
 
 private:
     DENG2_PRIVATE(d)

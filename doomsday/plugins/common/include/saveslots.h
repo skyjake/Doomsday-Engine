@@ -22,17 +22,14 @@
 #define LIBCOMMON_SAVESLOTS_H
 
 #include "common.h"
+#include "savedsessionrepository.h"
 #include <de/Error>
 #include <de/String>
 
-class SaveInfo;
+struct SessionMetadata;
 
 /**
  * Maps save-game session file names into a finite set of "save slots".
- *
- * @todo At present the associated SaveInfos are actually owned by this class. In the future
- * these should be referenced from another container which has none of the restrictions of
- * the slot-based mechanism.
  *
  * @ingroup libcommon
  */
@@ -48,7 +45,7 @@ public:
     class Slot
     {
     public:
-        Slot(de::String id, bool userWritable, de::String const &fileName = "",
+        Slot(de::String id, bool userWritable, de::String const &fileName,
              int gameMenuWidgetId = 0);
 
         /**
@@ -79,16 +76,21 @@ public:
         void bindFileName(de::String newName);
 
         /**
-         * Returns the SaveInfo associated with the logical save slot.
+         * Convenient method of looking up the deserialized session metadata for the logical save slot.
          */
-        SaveInfo &saveInfo() const;
+        SessionMetadata const &saveMetadata() const;
 
         /**
-         * Replace the existing save info with @a newInfo.
-         *
-         * @param newInfo  New SaveInfo to replace with. Ownership is given.
+         * Returns the saved game session record associated with the logical save slot.
          */
-        void replaceSaveInfo(SaveInfo *newInfo);
+        SessionRecord &sessionRecord() const;
+
+        /**
+         * Replace the existing saved game session record with @a newRecord.
+         *
+         * @param newRecord  New SessionRecord to replace with. Ownership is given.
+         */
+        void replaceSessionRecord(SessionRecord *newRecord);
 
     private:
         DENG2_PRIVATE(d)

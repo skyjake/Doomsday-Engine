@@ -618,18 +618,18 @@ static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
     }
 }
 
-static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
+static void SaveInfo_Read_Dm_v19(SessionRecord *record, Reader *reader)
 {
-    DENG_ASSERT(info != 0);
+    DENG_ASSERT(record != 0);
 
     char descBuf[24];
     Reader_Read(reader, descBuf, 24);
-    info->setUserDescription(de::String(descBuf, 24));
+    record->setUserDescription(de::String(descBuf, 24));
 
     char vcheck[16 + 1];
     Reader_Read(reader, vcheck, 16); vcheck[16] = 0;
     //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
-    info->setVersion(atoi(&vcheck[8]));
+    record->setVersion(atoi(&vcheck[8]));
 
     // The DOOM v9 savegame format omitted the majority of the game rules...
     // Therefore we must assume the user has correctly configured the session accordingly.
@@ -637,32 +637,32 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
                              " (The original save format omits this information).");
     GameRuleset rules(G_Rules());
     readLegacyGameRules(rules, reader);
-    info->setGameRules(rules);
+    record->setGameRules(rules);
 
     uint episode = Reader_ReadByte(reader) - 1;
     uint map     = Reader_ReadByte(reader) - 1;
-    info->setMapUri(G_ComposeMapUri(episode, map));
+    record->setMapUri(G_ComposeMapUri(episode, map));
 
     SessionMetadata::Players players; de::zap(players);
     for(int i = 0; i < 4; ++i)
     {
         players[i] = Reader_ReadByte(reader);
     }
-    info->setPlayers(players);
+    record->setPlayers(players);
 
     // Get the map time.
     int a = Reader_ReadByte(reader);
     int b = Reader_ReadByte(reader);
     int c = Reader_ReadByte(reader);
-    info->setMapTime((a << 16) + (b << 8) + c);
+    record->setMapTime((a << 16) + (b << 8) + c);
 
-    info->setMagic(0); // Initialize with *something*.
+    record->setMagic(0); // Initialize with *something*.
 
     /// @note Kludge: Assume the current game mode.
-    info->setGameIdentityKey(G_IdentityKey());
+    record->setGameIdentityKey(G_IdentityKey());
     /// Kludge end.
 
-    info->setSessionId(0); // None.
+    record->setSessionId(0); // None.
 }
 
 static bool SV_OpenFile_Dm_v19(de::Path path)
@@ -703,7 +703,7 @@ DENG2_PIMPL(DoomV9GameStateReader)
     {
         // Read the header again.
         /// @todo seek straight to the game state.
-        SaveInfo *tmp = new SaveInfo;
+        SessionRecord *tmp = G_SavedSessionRepository().newRecord();
         SaveInfo_Read_Dm_v19(tmp, reader);
         delete tmp;
     }
@@ -935,9 +935,9 @@ DoomV9GameStateReader::DoomV9GameStateReader() : d(new Instance(this))
 DoomV9GameStateReader::~DoomV9GameStateReader()
 {}
 
-bool DoomV9GameStateReader::recognize(SaveInfo &info) // static
+bool DoomV9GameStateReader::recognize(SessionRecord &record) // static
 {
-    de::Path const path = SV_SavePath() / info.fileName();
+    de::Path const path = record.repository().savePath() / record.fileName();
 
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenFile_Dm_v19(path)) return false;
@@ -952,8 +952,8 @@ bool DoomV9GameStateReader::recognize(SaveInfo &info) // static
 
     if(strncmp(vcheck, "version ", 8))*/
     {
-        SaveInfo_Read_Dm_v19(&info, reader);
-        result = (info.meta().version <= 500);
+        SaveInfo_Read_Dm_v19(&record, reader);
+        result = (record.meta().version <= 500);
     }
 
     Reader_Delete(reader); reader = 0;
@@ -967,9 +967,9 @@ IGameStateReader *DoomV9GameStateReader::make()
     return new DoomV9GameStateReader;
 }
 
-void DoomV9GameStateReader::read(SaveInfo &info)
+void DoomV9GameStateReader::read(SessionRecord &record)
 {
-    de::Path const path = SV_SavePath() / info.fileName();
+    de::Path const path = record.repository().savePath() / record.fileName();
 
     if(!SV_OpenFile_Dm_v19(path))
     {
@@ -984,11 +984,11 @@ void DoomV9GameStateReader::read(SaveInfo &info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewSession(info.meta().mapUri, 0/*not saved??*/, &info.meta().gameRules);
+    G_NewSession(record.meta().mapUri, 0/*not saved??*/, &record.meta().gameRules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     // Recreate map state.
-    mapTime = info.meta().mapTime;
+    mapTime = record.meta().mapTime;
 
     d->readPlayers();
     d->readMap();

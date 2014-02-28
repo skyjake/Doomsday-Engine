@@ -21,9 +21,9 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
-#include "api_materialarchive.h"
-#include "p_savedef.h"
 #include <de/Path>
+#include <de/reader.h>
+#include <de/writer.h>
 #include "lzss.h"
 
 typedef enum savestatesegment_e {
@@ -50,20 +50,6 @@ typedef union saveptr_u {
     int *l;
     float *f;
 } saveptr_t;
-#endif
-
-void SV_InitIO();
-void SV_ShutdownIO();
-
-/**
- * Create the saved game directories.
- */
-void SV_SetupSaveDirectory(de::Path);
-
-de::Path SV_SavePath();
-
-#if !__JHEXEN__
-de::Path SV_ClientSavePath();
 #endif
 
 /*

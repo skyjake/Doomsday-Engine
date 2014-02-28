@@ -25,10 +25,11 @@
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_tick.h"          // mapTime
+#include "p_savedef.h"
 #include "p_saveio.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
-#include "saveinfo.h"
+#include "savedsessionrepository.h"
 #include "saveslots.h"
 #include <de/NativePath>
 #include <de/String>
@@ -769,7 +770,7 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 static de::String saveNameForClientSessionId(uint sessionId)
 {
     // Do we have a valid path?
-    if(!F_MakePath(de::NativePath(SV_ClientSavePath()).expand().toUtf8().constData()))
+    if(!F_MakePath(de::NativePath(G_SavedSessionRepository().clientSavePath()).expand().toUtf8().constData()))
     {
         return "";
     }
@@ -789,28 +790,31 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    if(SV_ClientSavePath().isEmpty())
+    SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+
+    if(saveRepo.clientSavePath().isEmpty())
     {
         return;
     }
 
-    // Prepare new save info.
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMeta(saveNameForClientSessionId(sessionId));
-    info->setSessionId(sessionId);
+    // Prepare new saved game session record.
+    SessionRecord *record = saveRepo.newRecord(saveNameForClientSessionId(sessionId));
+    record->applyCurrentSessionMetadata();
+    record->setSessionId(sessionId);
 
-    de::Path path = SV_ClientSavePath() / info->fileName();
+    de::Path path = saveRepo.clientSavePath() / record->fileName();
     if(!SV_OpenFile(path, true/*for write*/))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
                                  de::NativePath(path).pretty().toLatin1().constData());
 
-        // Discard the useless save info.
-        delete info;
+        // Discard the useless record.
+        delete record;
         return;
     }
 
     Writer *writer = SV_NewWriter();
-    info->meta().write(writer);
+    record->meta().write(writer);
 
     // Some important information.
     // Our position and look angles.
@@ -835,7 +839,7 @@ void SV_SaveGameClient(uint sessionId)
 
     SV_CloseFile();
     Writer_Delete(writer);
-    delete info;
+    delete record;
 #else
     DENG2_UNUSED(sessionId);
 #endif
@@ -850,42 +854,43 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    SaveInfo *info = new SaveInfo;
-    info->setFileName(saveNameForClientSessionId(sessionId));
+    SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+
+    SessionRecord *record = saveRepo.newRecord(saveNameForClientSessionId(sessionId));
 
     Reader *reader = SV_NewReader();
-    info->readMeta(reader);
+    record->readMeta(reader);
 
-    de::Path path = SV_ClientSavePath() / info->fileName();
+    de::Path path = saveRepo.clientSavePath() / record->fileName();
     if(!SV_OpenFile(path, false/*for read*/))
     {
         Reader_Delete(reader);
-        delete info;
+        delete record;
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",
                                  de::NativePath(path).pretty().toLatin1().constData());
         return;
     }
 
-    if(info->meta().magic != MY_CLIENT_SAVE_MAGIC)
+    if(record->meta().magic != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
         Reader_Delete(reader);
-        delete info;
+        delete record;
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
     }
 
     // Do we need to change the map?
-    if(!Uri_Equality(gameMapUri, info->meta().mapUri))
+    if(!Uri_Equality(gameMapUri, record->meta().mapUri))
     {
-        G_NewSession(info->meta().mapUri, 0/*default*/, &info->meta().gameRules);
+        G_NewSession(record->meta().mapUri, 0/*default*/, &record->meta().gameRules);
         G_SetGameAction(GA_NONE); /// @todo Necessary?
     }
     else
     {
-        G_Rules() = info->meta().gameRules;
+        G_Rules() = record->meta().gameRules;
     }
-    mapTime = info->meta().mapTime;
+    mapTime = record->meta().mapTime;
 
     P_MobjUnlink(mo);
     mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
@@ -899,23 +904,23 @@ void SV_LoadGameClient(uint sessionId)
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
 #if __JHEXEN__
-    if(info->meta().version >= 4)
+    if(record->meta().version >= 4)
 #else
-    if(info->meta().version >= 5)
+    if(record->meta().version >= 5)
 #endif
     {
         SV_AssertSegment(ASEG_PLAYER_HEADER);
     }
     playerheader_t plrHdr;
-    plrHdr.read(reader, info->meta().version);
+    plrHdr.read(reader, record->meta().version);
 
     cpl->read(reader, plrHdr);
 
-    MapStateReader(info->meta().version).read(reader);
+    MapStateReader(record->meta().version).read(reader);
 
     SV_CloseFile();
     Reader_Delete(reader);
-    delete info;
+    delete record;
 #else
     DENG2_UNUSED(sessionId);
 #endif

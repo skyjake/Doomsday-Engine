@@ -25,8 +25,9 @@
 #include "g_common.h"
 #include "mapstatereader.h"
 #include "p_mapsetup.h"     // P_SpawnAllMaterialOriginScrollers
+#include "p_savedef.h"
 #include "p_saveio.h"
-#include "p_saveg.h"        /// @todo remove me
+#include "p_saveg.h"        /// playerheader_t @todo remove me
 #include "p_tick.h"         // mapTime
 #include "r_common.h"       // R_UpdateConsoleView
 #include "saveslots.h"
@@ -35,14 +36,16 @@
 
 DENG2_PIMPL(GameStateReader)
 {
-    SaveInfo *saveInfo; ///< Info for the save state to be read. Not owned.
+    /// Saved game session record for the serialized game state to be read. Not owned.
+    SessionRecord *record;
+
     Reader *reader;
     dd_bool loaded[MAXPLAYERS];
     dd_bool infile[MAXPLAYERS];
 
     Instance(Public *i)
         : Base(i)
-        , saveInfo(0)
+        , record(0)
         , reader(0)
     {
         de::zap(loaded);
@@ -99,11 +102,11 @@ DENG2_PIMPL(GameStateReader)
     void readWorldACScriptData()
     {
 #if __JHEXEN__
-        if(saveInfo->meta().version >= 7)
+        if(record->meta().version >= 7)
         {
             beginSegment(ASEG_WORLDSCRIPTDATA);
         }
-        Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->meta().version);
+        Game_ACScriptInterpreter().readWorldScriptData(reader, record->meta().version);
 #endif
     }
 
@@ -114,14 +117,14 @@ DENG2_PIMPL(GameStateReader)
         SV_HxReleaseSaveBuffer();
 
         // Open the map state file.
-        de::Path path = SV_SavePath() / saveInfo->fileNameForMap();
+        de::Path path = record->repository().savePath() / record->fileNameForMap();
         if(!SV_OpenFile(path, false/*for read*/))
         {
             throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
         }
 #endif
 
-        MapStateReader(saveInfo->meta().version, thingArchiveSize).read(reader);
+        MapStateReader(record->meta().version, thingArchiveSize).read(reader);
 
         readConsistencyBytes();
 #if __JHEXEN__
@@ -141,15 +144,15 @@ DENG2_PIMPL(GameStateReader)
     void readPlayers()
     {
 #if __JHEXEN__
-        if(saveInfo->meta().version >= 4)
+        if(record->meta().version >= 4)
 #else
-        if(saveInfo->meta().version >= 5)
+        if(record->meta().version >= 5)
 #endif
         {
             beginSegment(ASEG_PLAYER_HEADER);
         }
         playerheader_t plrHdr;
-        plrHdr.read(reader, saveInfo->meta().version);
+        plrHdr.read(reader, record->meta().version);
 
         // Setup the dummy.
         ddplayer_t dummyDDPlayer;
@@ -160,7 +163,7 @@ DENG2_PIMPL(GameStateReader)
         {
             loaded[i] = 0;
 #if !__JHEXEN__
-            infile[i] = saveInfo->meta().players[i];
+            infile[i] = record->meta().players[i];
 #endif
         }
 
@@ -277,15 +280,15 @@ GameStateReader::GameStateReader() : d(new Instance(this))
 GameStateReader::~GameStateReader()
 {}
 
-bool GameStateReader::recognize(SaveInfo &info) // static
+bool GameStateReader::recognize(SessionRecord &record) // static
 {
-    de::Path const path = SV_SavePath() / info.fileName();
+    de::Path const path = record.repository().savePath() / record.fileName();
 
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenFile(path, false/*for reading*/)) return false;
 
     Reader *reader = SV_NewReader();
-    info.readMeta(reader);
+    record.readMeta(reader);
     Reader_Delete(reader);
 
 #if __JHEXEN__
@@ -295,7 +298,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
 #endif
 
     // Magic must match.
-    if(info.meta().magic != MY_SAVE_MAGIC && info.meta().magic != MY_CLIENT_SAVE_MAGIC)
+    if(record.meta().magic != MY_SAVE_MAGIC && record.meta().magic != MY_CLIENT_SAVE_MAGIC)
     {
         return false;
     }
@@ -303,7 +306,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
     /*
      * Check for unsupported versions.
      */
-    if(info.meta().version > MY_SAVE_VERSION) // Future version?
+    if(record.meta().version > MY_SAVE_VERSION) // Future version?
     {
         return false;
     }
@@ -311,7 +314,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sides (ver3 format's sides contain chunks of junk data).
-    if(info.meta().version == 3)
+    if(record.meta().version == 3)
     {
         return false;
     }
@@ -325,11 +328,11 @@ IGameStateReader *GameStateReader::make() // static
     return new GameStateReader;
 }
 
-void GameStateReader::read(SaveInfo &info)
+void GameStateReader::read(SessionRecord &record)
 {
-    de::Path const path = SV_SavePath() / info.fileName();
+    de::Path const path = record.repository().savePath() / record.fileName();
 
-    d->saveInfo = &info;
+    d->record = &record;
 
     if(!SV_OpenFile(path, false/*for reading*/))
     {
@@ -346,16 +349,16 @@ void GameStateReader::read(SaveInfo &info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewSession(d->saveInfo->meta().mapUri, 0/*not saved??*/, &d->saveInfo->meta().gameRules);
+    G_NewSession(d->record->meta().mapUri, 0/*not saved??*/, &d->record->meta().gameRules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
 #if !__JHEXEN__
-    mapTime = d->saveInfo->meta().mapTime;
+    mapTime = d->record->meta().mapTime;
 #endif
 
     int thingArchiveSize = 0;
 #if !__JHEXEN__
-    thingArchiveSize = (d->saveInfo->meta().version >= 5? Reader_ReadInt32(d->reader) : 1024);
+    thingArchiveSize = (d->record->meta().version >= 5? Reader_ReadInt32(d->reader) : 1024);
 #endif
 
     d->readPlayers();
@@ -366,13 +369,13 @@ void GameStateReader::read(SaveInfo &info)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(d->saveInfo->meta().sessionId);
+    NetSv_LoadGame(d->record->meta().sessionId);
 #endif
 
     Reader_Delete(d->reader); d->reader = 0;
 
     // Material scrollers must be spawned for older savegame versions.
-    if(d->saveInfo->meta().version <= 10)
+    if(d->record->meta().version <= 10)
     {
         P_SpawnAllMaterialOriginScrollers();
     }

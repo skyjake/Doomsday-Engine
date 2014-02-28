@@ -21,89 +21,15 @@
 #include "common.h"
 #include "p_saveio.h"
 
+#include "p_savedef.h"    // CONSISTENCY
 #include <de/NativePath>
 
-static bool inited;
 static LZFILE *savefile;
-static de::Path savePath; // e.g., "savegame"
-#if !__JHEXEN__
-static de::Path clientSavePath; // e.g., "savegame/client"
-#endif
 
 #if __JHEXEN__
 static byte *saveBuffer;
 static saveptr_t saveptr;
 static void *saveEndPtr;
-#endif
-
-void SV_InitIO()
-{
-    savePath.clear();
-#if !__JHEXEN__
-    clientSavePath.clear();
-#endif
-    inited = true;
-
-    DENG2_ASSERT(!savefile);
-    savefile = 0;
-}
-
-void SV_ShutdownIO()
-{
-    if(!inited) return;
-
-    DENG2_ASSERT(!savefile);
-    SV_CloseFile();
-
-    inited = false;
-}
-
-void SV_SetupSaveDirectory(de::Path newRootSaveDir)
-{
-    DENG2_ASSERT(inited);
-
-    if(!newRootSaveDir.isEmpty())
-    {
-        savePath       = newRootSaveDir;
-#if !__JHEXEN__
-        clientSavePath = newRootSaveDir / "client";
-#endif
-
-        // Ensure that these paths exist.
-        bool savePathExists = F_MakePath(de::NativePath(savePath).expand().toUtf8().constData());
-#if !__JHEXEN__
-        if(!F_MakePath(de::NativePath(clientSavePath).expand().toUtf8().constData()))
-        {
-            savePathExists = false;
-        }
-#endif
-
-        if(savePathExists)
-        {
-            return;
-        }
-    }
-
-    savePath.clear();
-#if !__JHEXEN__
-    clientSavePath.clear();
-#endif
-
-    App_Log(DE2_RES_ERROR, "SV_SetupSaveDirectory: \"%s\" could not be accessed. Perhaps it could "
-                           "not be created (insufficient permissions?). Saving will not be possible.",
-                           de::NativePath(savePath).pretty().toLatin1().constData());
-}
-
-de::Path SV_SavePath()
-{
-    return savePath;
-}
-
-#if !__JHEXEN__
-de::Path SV_ClientSavePath()
-{
-    return clientSavePath;
-}
 #endif
 
 bool SV_ExistingFile(de::Path filePath)
@@ -201,7 +127,6 @@ void SV_HxReleaseSaveBuffer()
 
 void SV_Seek(uint offset)
 {
-    DENG2_ASSERT(inited);
 #if __JHEXEN__
     saveptr.b += offset;
 #else
@@ -211,13 +136,11 @@ void SV_Seek(uint offset)
 
 void SV_Write(void const *data, int len)
 {
-    DENG2_ASSERT(inited);
     lzWrite((void *)data, len, savefile);
 }
 
 void SV_WriteByte(byte val)
 {
-    DENG2_ASSERT(inited);
     lzPutC(val, savefile);
 }
 
@@ -227,7 +150,6 @@ void SV_WriteShort(unsigned short val)
 void SV_WriteShort(short val)
 #endif
 {
-    DENG2_ASSERT(inited);
     lzPutW(val, savefile);
 }
 
@@ -237,14 +159,12 @@ void SV_WriteLong(unsigned int val)
 void SV_WriteLong(long val)
 #endif
 {
-    DENG2_ASSERT(inited);
     lzPutL(val, savefile);
 }
 
 void SV_WriteFloat(float val)
 {
     DENG2_ASSERT(sizeof(val) == 4);
-    DENG2_ASSERT(inited);
 
     int32_t temp = 0;
     std::memcpy(&temp, &val, 4);
@@ -253,7 +173,6 @@ void SV_WriteFloat(float val)
 
 void SV_Read(void *data, int len)
 {
-    DENG2_ASSERT(inited);
 #if __JHEXEN__
     std::memcpy(data, saveptr.b, len);
     saveptr.b += len;
@@ -264,7 +183,6 @@ void SV_Read(void *data, int len)
 
 byte SV_ReadByte()
 {
-    DENG2_ASSERT(inited);
 #if __JHEXEN__
     DENG2_ASSERT((saveptr.b + 1) <= (byte *) saveEndPtr);
     return (*saveptr.b++);
@@ -275,7 +193,6 @@ byte SV_ReadByte()
 
 short SV_ReadShort()
 {
-    DENG2_ASSERT(inited);
 #if __JHEXEN__
     DENG2_ASSERT((saveptr.w + 1) <= (short *) saveEndPtr);
     return (SHORT(*saveptr.w++));
@@ -286,7 +203,6 @@ short SV_ReadShort()
 
 long SV_ReadLong()
 {
-    DENG2_ASSERT(inited);
 #if __JHEXEN__
     DENG2_ASSERT((saveptr.l + 1) <= (int *) saveEndPtr);
     return (LONG(*saveptr.l++));
@@ -297,7 +213,6 @@ long SV_ReadLong()
 
 float SV_ReadFloat()
 {
-    DENG2_ASSERT(inited);
     DENG2_ASSERT(sizeof(float) == 4);
 #if __JHEXEN__
     return (FLOAT(*saveptr.f++));
@@ -311,7 +226,6 @@ float SV_ReadFloat()
 
 void SV_AssertSegment(int segmentId)
 {
-    DENG2_ASSERT(inited);
 #if __JHEXEN__
     if(segmentId == ASEG_END && SV_HxBytesLeft() < 4)
     {
@@ -329,7 +243,6 @@ void SV_AssertSegment(int segmentId)
 
 void SV_BeginSegment(int segType)
 {
-    DENG2_ASSERT(inited);
 #if __JHEXEN__
     SV_WriteLong(segType);
 #else
