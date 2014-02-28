@@ -62,7 +62,7 @@ void NetCl_UpdateGameState(Reader *msg)
     gsRules.respawnMonsters = (configFlags & 0x8? true : false);
 #endif
     /// @todo Not applied??
-    /*byte gsJumping          =*/ (configFlags & 0x10? true : false);
+    //byte gsJumping          = (configFlags & 0x10? true : false);
 
     gsRules.skill           = skillmode_t(Reader_ReadByte(msg));
     // Interpret skill modes outside the normal range as "spawn no things".
