@@ -71,7 +71,7 @@ DENG2_PIMPL(GameStateWriter)
 
     void writeSessionHeader()
     {
-        saveInfo->write(writer);
+        saveInfo->meta().write(writer);
     }
 
     void writeWorldACScriptData()
@@ -138,7 +138,7 @@ void GameStateWriter::write(SaveInfo &info)
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(d->saveInfo->sessionId());
+    NetSv_SaveGame(d->saveInfo->meta().sessionId);
 #endif
 
     if(!SV_OpenFile(path, true/*for writing*/))

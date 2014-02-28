@@ -643,7 +643,7 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     uint map     = Reader_ReadByte(reader) - 1;
     info->setMapUri(G_ComposeMapUri(episode, map));
 
-    SaveInfo::Players players; de::zap(players);
+    SessionMetadata::Players players; de::zap(players);
     for(int i = 0; i < 4; ++i)
     {
         players[i] = Reader_ReadByte(reader);
@@ -953,7 +953,7 @@ bool DoomV9GameStateReader::recognize(SaveInfo &info) // static
     if(strncmp(vcheck, "version ", 8))*/
     {
         SaveInfo_Read_Dm_v19(&info, reader);
-        result = (info.version() <= 500);
+        result = (info.meta().version <= 500);
     }
 
     Reader_Delete(reader); reader = 0;
@@ -984,11 +984,11 @@ void DoomV9GameStateReader::read(SaveInfo &info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewSession(info.mapUri(), 0/*not saved??*/, &info.gameRules());
+    G_NewSession(info.meta().mapUri, 0/*not saved??*/, &info.meta().gameRules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     // Recreate map state.
-    mapTime = info.mapTime();
+    mapTime = info.meta().mapTime;
 
     d->readPlayers();
     d->readMap();

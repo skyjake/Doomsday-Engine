@@ -26,6 +26,37 @@
 #include <de/String>
 
 /**
+ * Game session metadata (serialized to savegames).
+ * @ingroup libcommon
+ */
+struct SessionMetadata
+{
+#if !__JHEXEN__
+    // Info data about players present (or not) in the game session.
+    typedef byte Players[MAXPLAYERS];
+#endif
+
+    de::String userDescription;
+    uint sessionId;
+    int magic;
+    int version;
+    de::String gameIdentityKey;
+    Uri *mapUri;
+    GameRuleset gameRules;
+#if !__JHEXEN__
+    int mapTime;
+    Players players;
+#endif
+
+    SessionMetadata();
+    SessionMetadata(SessionMetadata const &other);
+    ~SessionMetadata();
+
+    void write(Writer *writer) const;
+    void read(Reader *reader);
+};
+
+/**
  * Represents a saved game session state.
  *
  * @ingroup libcommon
@@ -46,17 +77,12 @@ public:
         Unused
     };
 
-#if !__JHEXEN__
-    // Info data about players present (or not) in the game session.
-    typedef byte Players[MAXPLAYERS];
-#endif
-
 public:
     SaveInfo(de::String const &fileName = "");
     SaveInfo(SaveInfo const &other);
 
-    static SaveInfo *newWithCurrentSessionMetadata(de::String const &fileName = "",
-                                                   de::String const &userDescription = "");
+    static SaveInfo *newWithCurrentSessionMeta(de::String const &fileName = "",
+                                               de::String const &userDescription = "");
 
     SaveInfo &operator = (SaveInfo const &other);
 
@@ -129,73 +155,31 @@ public:
      * Update the metadata associated with the save using values derived from the current game
      * session. Note that this does @em not affect the copy of this save on disk.
      */
-    void applyCurrentSessionMetadata();
+    void applyCurrentSessionMeta();
 
     /**
-     * Returns the unique "identity key" of the game session.
+     * Provides read-only access to a copy of the deserialized game session metadata.
      */
-    de::String const &gameIdentityKey() const;
+    SessionMetadata const &meta() const;
+
+    /**
+     * Deserializes the game session metadata using @a reader.
+     */
+    void readMeta(Reader *reader);
+
+    // Metadata manipulation:
     void setGameIdentityKey(de::String newGameIdentityKey);
-
-    /**
-     * Returns the logical version of the serialized game session state.
-     */
-    int version() const;
     void setVersion(int newVersion);
-
-    /**
-     * Returns the textual description of the saved game session provided by the user. The
-     * UserDescriptionChange audience is notified whenever the description changes.
-     */
-    de::String const &userDescription() const;
     void setUserDescription(de::String newUserDescription);
-
-    /**
-     * @see G_GenerateSessionId()
-     */
-    uint sessionId() const;
     void setSessionId(uint newSessionId);
-
-    /**
-     * Returns the URI of the @em current map of the game session.
-     */
-    Uri const *mapUri() const;
     void setMapUri(Uri const *newMapUri);
-
 #if !__JHEXEN__
-
-    /**
-     * Returns the expired time in tics since the @em current map of the game session began.
-     */
-    int mapTime() const;
     void setMapTime(int newMapTime);
-
-    /**
-     * Returns the player info data for the game session.
-     */
-    Players const &players() const;
-    void setPlayers(Players const &newPlayers);
-
+    void setPlayers(SessionMetadata::Players const &newPlayers);
 #endif // !__JHEXEN__
-
-    /**
-     * Returns the game ruleset for the game session.
-     */
-    GameRuleset const &gameRules() const;
     void setGameRules(GameRuleset const &newRules);
 
-    /**
-     * Serializes the game session header using @a writer.
-     */
-    void write(Writer *writer) const;
-
-    /**
-     * Deserializes the game session header using @a reader.
-     */
-    void read(Reader *reader);
-
 public: /// @todo refactor away:
-    int magic() const;
     void setMagic(int newMagic);
     static SaveInfo *fromReader(Reader *reader);
 

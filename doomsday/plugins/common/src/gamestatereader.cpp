@@ -99,11 +99,11 @@ DENG2_PIMPL(GameStateReader)
     void readWorldACScriptData()
     {
 #if __JHEXEN__
-        if(saveInfo->version() >= 7)
+        if(saveInfo->meta().version >= 7)
         {
             beginSegment(ASEG_WORLDSCRIPTDATA);
         }
-        Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->version());
+        Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->meta().version);
 #endif
     }
 
@@ -121,7 +121,7 @@ DENG2_PIMPL(GameStateReader)
         }
 #endif
 
-        MapStateReader(saveInfo->version(), thingArchiveSize).read(reader);
+        MapStateReader(saveInfo->meta().version, thingArchiveSize).read(reader);
 
         readConsistencyBytes();
 #if __JHEXEN__
@@ -141,15 +141,15 @@ DENG2_PIMPL(GameStateReader)
     void readPlayers()
     {
 #if __JHEXEN__
-        if(saveInfo->version() >= 4)
+        if(saveInfo->meta().version >= 4)
 #else
-        if(saveInfo->version() >= 5)
+        if(saveInfo->meta().version >= 5)
 #endif
         {
             beginSegment(ASEG_PLAYER_HEADER);
         }
         playerheader_t plrHdr;
-        plrHdr.read(reader, saveInfo->version());
+        plrHdr.read(reader, saveInfo->meta().version);
 
         // Setup the dummy.
         ddplayer_t dummyDDPlayer;
@@ -160,7 +160,7 @@ DENG2_PIMPL(GameStateReader)
         {
             loaded[i] = 0;
 #if !__JHEXEN__
-            infile[i] = saveInfo->players()[i];
+            infile[i] = saveInfo->meta().players[i];
 #endif
         }
 
@@ -285,7 +285,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
     if(!SV_OpenFile(path, false/*for reading*/)) return false;
 
     Reader *reader = SV_NewReader();
-    info.read(reader);
+    info.readMeta(reader);
     Reader_Delete(reader);
 
 #if __JHEXEN__
@@ -295,7 +295,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
 #endif
 
     // Magic must match.
-    if(info.magic() != MY_SAVE_MAGIC && info.magic() != MY_CLIENT_SAVE_MAGIC)
+    if(info.meta().magic != MY_SAVE_MAGIC && info.meta().magic != MY_CLIENT_SAVE_MAGIC)
     {
         return false;
     }
@@ -303,7 +303,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
     /*
      * Check for unsupported versions.
      */
-    if(info.version() > MY_SAVE_VERSION) // Future version?
+    if(info.meta().version > MY_SAVE_VERSION) // Future version?
     {
         return false;
     }
@@ -311,7 +311,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sides (ver3 format's sides contain chunks of junk data).
-    if(info.version() == 3)
+    if(info.meta().version == 3)
     {
         return false;
     }
@@ -346,16 +346,16 @@ void GameStateReader::read(SaveInfo &info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewSession(d->saveInfo->mapUri(), 0/*not saved??*/, &d->saveInfo->gameRules());
+    G_NewSession(d->saveInfo->meta().mapUri, 0/*not saved??*/, &d->saveInfo->meta().gameRules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
 #if !__JHEXEN__
-    mapTime = d->saveInfo->mapTime();
+    mapTime = d->saveInfo->meta().mapTime;
 #endif
 
     int thingArchiveSize = 0;
 #if !__JHEXEN__
-    thingArchiveSize = (d->saveInfo->version() >= 5? Reader_ReadInt32(d->reader) : 1024);
+    thingArchiveSize = (d->saveInfo->meta().version >= 5? Reader_ReadInt32(d->reader) : 1024);
 #endif
 
     d->readPlayers();
@@ -366,13 +366,13 @@ void GameStateReader::read(SaveInfo &info)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(d->saveInfo->sessionId());
+    NetSv_LoadGame(d->saveInfo->meta().sessionId);
 #endif
 
     Reader_Delete(d->reader); d->reader = 0;
 
     // Material scrollers must be spawned for older savegame versions.
-    if(d->saveInfo->version() <= 10)
+    if(d->saveInfo->meta().version <= 10)
     {
         P_SpawnAllMaterialOriginScrollers();
     }

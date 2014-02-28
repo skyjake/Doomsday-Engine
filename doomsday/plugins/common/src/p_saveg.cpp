@@ -795,7 +795,7 @@ void SV_SaveGameClient(uint sessionId)
     }
 
     // Prepare new save info.
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(saveNameForClientSessionId(sessionId));
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMeta(saveNameForClientSessionId(sessionId));
     info->setSessionId(sessionId);
 
     de::Path path = SV_ClientSavePath() / info->fileName();
@@ -810,7 +810,7 @@ void SV_SaveGameClient(uint sessionId)
     }
 
     Writer *writer = SV_NewWriter();
-    info->write(writer);
+    info->meta().write(writer);
 
     // Some important information.
     // Our position and look angles.
@@ -864,7 +864,7 @@ void SV_LoadGameClient(uint sessionId)
         return;
     }
 
-    if(info->magic() != MY_CLIENT_SAVE_MAGIC)
+    if(info->meta().magic != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
         Reader_Delete(reader);
@@ -874,16 +874,16 @@ void SV_LoadGameClient(uint sessionId)
     }
 
     // Do we need to change the map?
-    if(!Uri_Equality(gameMapUri, info->mapUri()))
+    if(!Uri_Equality(gameMapUri, info->meta().mapUri))
     {
-        G_NewSession(info->mapUri(), 0/*default*/, &info->gameRules());
+        G_NewSession(info->meta().mapUri, 0/*default*/, &info->meta().gameRules);
         G_SetGameAction(GA_NONE); /// @todo Necessary?
     }
     else
     {
-        G_Rules() = info->gameRules();
+        G_Rules() = info->meta().gameRules;
     }
-    mapTime = info->mapTime();
+    mapTime = info->meta().mapTime;
 
     P_MobjUnlink(mo);
     mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
@@ -897,19 +897,19 @@ void SV_LoadGameClient(uint sessionId)
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
 #if __JHEXEN__
-    if(info->version() >= 4)
+    if(info->meta().version >= 4)
 #else
-    if(info->version() >= 5)
+    if(info->meta().version >= 5)
 #endif
     {
         SV_AssertSegment(ASEG_PLAYER_HEADER);
     }
     playerheader_t plrHdr;
-    plrHdr.read(reader, info->version());
+    plrHdr.read(reader, info->meta().version);
 
     cpl->read(reader, plrHdr);
 
-    MapStateReader(info->version()).read(reader);
+    MapStateReader(info->meta().version).read(reader);
 
     SV_CloseFile();
     Reader_Delete(reader);

@@ -73,7 +73,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         MNObject_SetFlags(ob, FO_SET, MNF_DISABLED);
         if(info->gameSessionIsLoadable())
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, info->userDescription().toUtf8().constData());
+            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, info->meta().userDescription.toUtf8().constData());
             MNObject_SetFlags(ob, FO_CLEAR, MNF_DISABLED);
         }
         else
@@ -306,7 +306,7 @@ SaveSlots::Slot *SaveSlots::slotByUserDescription(String description) const
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
             SaveSlot &sslot = *i->second;
-            if(!sslot.saveInfo().userDescription().compareWithoutCase(description))
+            if(!sslot.saveInfo().meta().userDescription.compareWithoutCase(description))
             {
                 return &sslot;
             }
