@@ -57,7 +57,7 @@ struct SessionMetadata
 };
 
 /**
- * Represents a saved game session state.
+ * Logical component representing a saved game session.
  *
  * @ingroup libcommon
  */
@@ -152,12 +152,6 @@ public:
     de::String fileNameForMap(Uri const *mapUri = 0) const;
 
     /**
-     * Update the metadata associated with the save using values derived from the current game
-     * session. Note that this does @em not affect the copy of this save on disk.
-     */
-    void applyCurrentSessionMeta();
-
-    /**
      * Provides read-only access to a copy of the deserialized game session metadata.
      */
     SessionMetadata const &meta() const;
@@ -168,19 +162,19 @@ public:
     void readMeta(Reader *reader);
 
     // Metadata manipulation:
-    void setGameIdentityKey(de::String newGameIdentityKey);
+    void setMagic(int newMagic);
     void setVersion(int newVersion);
-    void setUserDescription(de::String newUserDescription);
     void setSessionId(uint newSessionId);
+    void setGameIdentityKey(de::String newGameIdentityKey);
+    void setGameRules(GameRuleset const &newRules);
+    void setUserDescription(de::String newUserDescription);
     void setMapUri(Uri const *newMapUri);
 #if !__JHEXEN__
     void setMapTime(int newMapTime);
     void setPlayers(SessionMetadata::Players const &newPlayers);
 #endif // !__JHEXEN__
-    void setGameRules(GameRuleset const &newRules);
 
 public: /// @todo refactor away:
-    void setMagic(int newMagic);
     static SaveInfo *fromReader(Reader *reader);
 
 private:

@@ -263,11 +263,11 @@ using namespace internal;
 
 DENG2_PIMPL(SaveInfo)
 {
+    String fileName; ///< Name of the game session file.
+
+    SessionMetadata meta;
     SessionStatus status;
     bool needUpdateStatus;
-
-    String fileName; ///< Name of the game session file.
-    SessionMetadata meta;
 
     Instance(Public *i)
         : Base(i)
@@ -277,10 +277,10 @@ DENG2_PIMPL(SaveInfo)
 
     Instance(Public *i, Instance const &other)
         : Base(i)
-        , status          (other.status)
-        , needUpdateStatus(other.needUpdateStatus)
         , fileName        (other.fileName)
         , meta            (other.meta)
+        , status          (other.status)
+        , needUpdateStatus(other.needUpdateStatus)
     {}
 
     void updateStatusIfNeeded()
@@ -327,9 +327,26 @@ SaveInfo *SaveInfo::newWithCurrentSessionMeta(String const &fileName,
 {
     LOG_AS("SaveInfo");
     SaveInfo *info = new SaveInfo(fileName);
-    info->setUserDescription(userDescription);
-    info->applyCurrentSessionMeta();
-    info->setSessionId(G_GenerateSessionId());
+
+    info->d->meta.userDescription  = userDescription;
+    info->d->meta.magic            = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    info->d->meta.version          = MY_SAVE_VERSION;
+    info->d->meta.gameIdentityKey  = G_IdentityKey();
+    Uri_Copy(info->d->meta.mapUri, gameMapUri);
+#if !__JHEXEN__
+    info->d->meta.mapTime          = ::mapTime;
+#endif
+    info->d->meta.gameRules        = G_Rules(); // Make a copy.
+
+#if !__JHEXEN__
+    for(int i = 0; i < MAXPLAYERS; i++)
+    {
+        info->d->meta.players[i]   = (::players[i]).plr->inGame;
+    }
+#endif
+    info->d->meta.sessionId        = G_GenerateSessionId();
+
+    info->d->needUpdateStatus = true;
     return info;
 }
 
@@ -373,6 +390,15 @@ void SaveInfo::setGameIdentityKey(String newGameIdentityKey)
     if(d->meta.gameIdentityKey != newGameIdentityKey)
     {
         d->meta.gameIdentityKey  = newGameIdentityKey;
+        d->needUpdateStatus = true;
+    }
+}
+
+void SaveInfo::setMagic(int newMagic)
+{
+    if(d->meta.magic != newMagic)
+    {
+        d->meta.magic = newMagic;
         d->needUpdateStatus = true;
     }
 }
@@ -429,27 +455,6 @@ void SaveInfo::setGameRules(GameRuleset const &newRules)
 {
     LOG_AS("SaveInfo");
     d->meta.gameRules = newRules; // Make a copy
-    d->needUpdateStatus = true;
-}
-
-void SaveInfo::applyCurrentSessionMeta()
-{
-    LOG_AS("SaveInfo");
-    d->meta.magic            = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    d->meta.version          = MY_SAVE_VERSION;
-    d->meta.gameIdentityKey  = G_IdentityKey();
-    Uri_Copy(d->meta.mapUri, gameMapUri);
-#if !__JHEXEN__
-    d->meta.mapTime          = ::mapTime;
-#endif
-    d->meta.gameRules        = G_Rules(); // Make a copy.
-
-#if !__JHEXEN__
-    for(int i = 0; i < MAXPLAYERS; i++)
-    {
-        d->meta.players[i]   = (::players[i]).plr->inGame;
-    }
-#endif
     d->needUpdateStatus = true;
 }
 
@@ -536,15 +541,6 @@ String SaveInfo::description() const
              .arg(meta().sessionId)
              .arg(meta().gameRules.asText())
              .arg(statusAsText());
-}
-
-void SaveInfo::setMagic(int newMagic)
-{
-    if(d->meta.magic != newMagic)
-    {
-        d->meta.magic = newMagic;
-        d->needUpdateStatus = true;
-    }
 }
 
 SaveInfo *SaveInfo::fromReader(reader_s *reader) // static
