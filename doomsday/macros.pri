@@ -31,8 +31,10 @@ defineTest(useLibDir) {
               else: btype = "/Release"
     }
     exists($${1}$${btype}) {
-        LIBS += -L$${1}$${btype}
-        export(LIBS)
+        # Specify this library directory first to ensure it overrides the
+        # system library directory.
+        QMAKE_LFLAGS = -L$${1}$${btype} $$QMAKE_LFLAGS
+        export(QMAKE_LFLAGS)
         return(true)
     }
     return(false)
