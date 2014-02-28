@@ -119,6 +119,14 @@ public:
     void setConfigScript(Path const &path);
 
     /**
+     * Sets the name of the application. Derived classes should call this from their
+     * implementation of setMetadata().
+     *
+     * @param appName  Application name. Defaults to "Doomsday Engine".
+     */
+    void setName(String const &appName);
+
+    /**
      * Sets the Unix-style home folder name. For instance, ".doomsday" could be used.
      *
      * @param name  Name of the (usually hidden) user-specific home data folder.

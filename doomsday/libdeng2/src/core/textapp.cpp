@@ -45,6 +45,9 @@ TextApp::TextApp(int &argc, char **argv)
 void TextApp::setMetadata(String const &orgName, String const &orgDomain,
                           String const &appName, String const &appVersion)
 {
+    setName(appName);
+
+    // Qt metadata.
     setOrganizationName  (orgName);
     setOrganizationDomain(orgDomain);
     setApplicationName   (appName);

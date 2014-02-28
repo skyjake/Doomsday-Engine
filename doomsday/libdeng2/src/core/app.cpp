@@ -51,6 +51,9 @@ DENG2_PIMPL(App)
 {
     QThread *mainThread;
 
+    /// Name of the application (metadata for humans).
+    String appName;
+
     CommandLine cmdLine;
 
     LogFilter logFilter;
@@ -108,6 +111,7 @@ DENG2_PIMPL(App)
 
     Instance(Public *a, QStringList args)
         : Base(a)
+        , appName("Doomsday Engine")
         , cmdLine(args)
         , unixHomeFolder(".doomsday")
         , persistentData(0)
@@ -297,6 +301,11 @@ void App::setConfigScript(Path const &path)
     d->configPath = path;
 }
 
+void App::setName(String const &appName)
+{
+    d->appName = appName;
+}
+
 void App::setUnixHomeFolderName(String const &name)
 {
     d->unixHomeFolder = name;
@@ -408,7 +417,7 @@ NativePath App::nativeHomePath()
 
 #ifdef MACOSX
     NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
+    nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
 #elif WIN32
     NativePath nativeHome = appDataPath();
     nativeHome = nativeHome / "runtime";
@@ -472,7 +481,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         // Recreate the persistent state data package.
         ZipArchive arch;
-        arch.add("Info", String("# Package for Doomsday's persistent state.\n").toUtf8());
+        arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
         Writer(homeFolder().replaceFile("persist.pack")) << arch;
 
         homeFolder().populate(Folder::PopulateOnlyThisFolder);

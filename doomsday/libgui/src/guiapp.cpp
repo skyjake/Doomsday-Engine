@@ -47,6 +47,9 @@ GuiApp::GuiApp(int &argc, char **argv)
 void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
                          String const &appName, String const &appVersion)
 {
+    setName(appName);
+
+    // Qt metadata.
     setOrganizationName  (orgName);
     setOrganizationDomain(orgDomain);
     setApplicationName   (appName);
