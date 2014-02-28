@@ -12,6 +12,8 @@
 
 DENG_SDK_DIR = $$PWD
 
+isEmpty(PREFIX): PREFIX = $$OUT_PWD
+
 exists($$DENG_SDK_DIR/include/doomsday) {
     INCLUDEPATH += $$DENG_SDK_DIR/include/doomsday
 }
@@ -36,6 +38,14 @@ contains(DENG_CONFIG, shell): LIBS += -ldeng_shell
     QMAKE_LFLAGS += -Wl,-rpath,$$DENG_SDK_DIR/lib
 }
 
+macx {
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+}
+
+DENG_MODULES = $$DENG_SDK_DIR/modules/*.de
+
+# Macros ---------------------------------------------------------------------
+
 defineTest(dengClear) {
     # 1: file to remove
     win32: system(del /q \"$$1\")
@@ -48,8 +58,6 @@ defineTest(dengPack) {
     # 3: files to include, relative to the root
     system(cd \"$$2\" && zip -r \"$$1\" $$3)
 }
-
-DENG_MODULES = $$DENG_SDK_DIR/modules/*.de
 
 defineTest(dengPackModules) {
     # 1: path of a .pack file
@@ -73,8 +81,14 @@ defineReplace(dengFindLibDir) {
 
 defineReplace(dengSdkLib) {
     # 1: name of library
-    win32:     fn = $$DENG_SDK_DIR/lib/$${1}.dll
-    else:macx: fn = $$DENG_SDK_DIR/lib/lib$${1}.dylib
+    win32: fn = $$DENG_SDK_DIR/lib/$${1}.dll
+    else:macx {
+        versions = 2 1 0
+        for(vers, versions) {
+            fn = $$DENG_SDK_DIR/lib/lib$${1}.$${vers}.dylib
+            exists($$fn): return($$fn)
+        }
+    }
     else {
         fn = $$DENG_SDK_DIR/lib/lib$${1}.so
         # Apply the latest major version.
@@ -101,14 +115,20 @@ defineTest(dengDeploy) {
     win32 {
     }
     else:macx {
+        QMAKE_BUNDLE_DATA += basepack denglibs
+        basepack.path = Contents/Resources
+        denglibs.path = Contents/Frameworks
     }
     else {
         target.path   = $$prefix/bin
         basepack.path = $$prefix/share/$${1}
         denglibs.path = $$dengFindLibDir($$prefix)
     }
-    export(INSTALLS)
-    export(target.path)
+    macx: export(QMAKE_BUNDLE_DATA)
+    else {
+        export(INSTALLS)
+        export(target.path)
+    }
     export(basepack.files)
     export(basepack.path)
     export(denglibs.files)
