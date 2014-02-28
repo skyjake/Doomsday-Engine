@@ -265,8 +265,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_GAMES)            .show(!newGame.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!newGame.isNull());
         itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!newGame.isNull());
-        itemWidget(mainMenu, POS_CONNECT)          .show(!newGame.isNull());
-        itemWidget(mainMenu, POS_CONNECT_SEPARATOR).show(!newGame.isNull());
+        //itemWidget(mainMenu, POS_CONNECT)          .show(!newGame.isNull());
+        //itemWidget(mainMenu, POS_CONNECT_SEPARATOR).show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!newGame.isNull());
@@ -425,8 +425,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->itemWidget(d->mainMenu, POS_GAMES).hide();
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
     d->itemWidget(d->mainMenu, POS_GAMES_SEPARATOR).hide();
-    d->itemWidget(d->mainMenu, POS_CONNECT).hide();
-    d->itemWidget(d->mainMenu, POS_CONNECT_SEPARATOR).hide();
+    //d->itemWidget(d->mainMenu, POS_CONNECT).hide();
+    //d->itemWidget(d->mainMenu, POS_CONNECT_SEPARATOR).hide();
 
     d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
@@ -746,4 +746,7 @@ void TaskBarWidget::updateCommandLineLayout()
     cmdRule.setInput(Rule::Left,   d->console->button().rule().right())
            .setInput(Rule::Bottom, rule().bottom())
            .setInput(Rule::Right,  layout.widgets().last()->as<GuiWidget>().rule().left());
+
+    // Just use a plain background for this editor.
+    d->console->commandLine().set(Background(style().colors().colorf("background")));
 }
