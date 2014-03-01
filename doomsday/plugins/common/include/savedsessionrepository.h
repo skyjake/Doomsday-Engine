@@ -105,7 +105,7 @@ public:
         /**
          * Determines whether a saved map session exists.
          *
-         * @param mapUri   Unique map identifier. If @c 0 the Uri for the @em current map is used.
+         * @param mapUri   Unique map identifier.
          */
         bool haveMapSession(Uri const *mapUri) const;
 
@@ -127,11 +127,11 @@ public:
         /**
          * Returns the name of the resource file (with extension) containing the map session state.
          *
-         * @param mapUri   Unique map identifier. If @c 0 the Uri for the @em current map is used.
+         * @param mapUri   Unique map identifier.
          *
          * @see fileName()
          */
-        de::String fileNameForMap(Uri const *mapUri = 0) const;
+        de::String fileNameForMap(Uri const *mapUri) const;
 
         /**
          * Provides read-only access to a copy of the deserialized game session metadata.

@@ -22,6 +22,7 @@
 #include "gamestatewriter.h"
 
 #include "d_net.h"                   // NetSv_SaveGame
+#include "g_common.h"                // gameMapUri
 #include "mapstatewriter.h"
 #include "p_savedef.h"               // CONSISTENCY
 #include "p_saveio.h"
@@ -92,7 +93,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(record->repository().savePath() / record->fileNameForMap(), true/*for write*/);
+        SV_OpenFile(record->repository().savePath() / record->fileNameForMap(gameMapUri), true/*for write*/);
 #endif
 
         MapStateWriter(*thingArchive).write(writer);

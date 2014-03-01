@@ -117,7 +117,7 @@ DENG2_PIMPL(GameStateReader)
         SV_HxReleaseSaveBuffer();
 
         // Open the map state file.
-        de::Path path = record->repository().savePath() / record->fileNameForMap();
+        de::Path path = record->repository().savePath() / record->fileNameForMap(gameMapUri);
         if(!SV_OpenFile(path, false/*for read*/))
         {
             throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");

@@ -22,8 +22,8 @@
 
 #include "g_common.h"
 #include "gamestatereader.h"
-//#include "p_savedef.h"
 #include "p_saveio.h"
+#include "p_savedef.h"
 #include <de/Log>
 #include <de/NativePath>
 #include <cstring>
@@ -134,6 +134,25 @@ SessionRecord::SessionStatus SavedSessionRepository::SessionRecord::status() con
     return d->status;
 }
 
+String SavedSessionRepository::SessionRecord::statusAsText() const
+{
+    static String const statusTexts[] = {
+        "Loadable",
+        "Incompatible",
+        "Unused",
+    };
+    return statusTexts[int(status())];
+}
+
+String SavedSessionRepository::SessionRecord::description() const
+{
+    return meta().asText() + "\n" +
+           String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"\n" _E(.)
+                  _E(D) "Status: " _E(.) "%2")
+               .arg(NativePath(repository().savePath() / fileName()).pretty())
+               .arg(statusAsText());
+}
+
 String SavedSessionRepository::SessionRecord::fileName() const
 {
     return d->fileName + "." + repository().saveFileExtension();
@@ -150,11 +169,68 @@ void SavedSessionRepository::SessionRecord::setFileName(String newName)
 
 String SavedSessionRepository::SessionRecord::fileNameForMap(Uri const *mapUri) const
 {
-    if(!mapUri) mapUri = gameMapUri;
-
+    DENG2_ASSERT(mapUri != 0);
     uint map = G_MapNumberFor(mapUri);
     return d->fileName + String("%1.").arg(int(map + 1), 2, 10, QChar('0'))
                        + repository().saveFileExtension();
+}
+
+bool SavedSessionRepository::SessionRecord::haveGameSession() const
+{
+    return SV_ExistingFile(repository().savePath() / fileName());
+}
+
+bool SavedSessionRepository::SessionRecord::haveMapSession(Uri const *mapUri) const
+{
+    if(usingSeparateMapSessionFiles())
+    {
+        return SV_ExistingFile(repository().savePath() / fileNameForMap(mapUri));
+    }
+    return haveGameSession();
+}
+
+void SavedSessionRepository::SessionRecord::updateFromFile()
+{
+    LOGDEV_VERBOSE("Updating saved game SessionRecord %p from source file") << this;
+
+    // Is this a recognized game state?
+    if(G_GameStateReaderFactory().recognize(*this))
+    {
+        // Ensure we have a valid description.
+        if(d->meta.userDescription.isEmpty())
+        {
+            setUserDescription("UNNAMED");
+        }
+    }
+    else
+    {
+        // Unrecognized or the file could not be accessed (perhaps its a network path?).
+        // Clear the info.
+        setUserDescription("");
+        setSessionId(0);
+    }
+
+    d->updateStatusIfNeeded();
+}
+
+SessionMetadata const &SavedSessionRepository::SessionRecord::meta() const
+{
+    return d->meta;
+}
+
+void SavedSessionRepository::SessionRecord::readMeta(reader_s *reader)
+{
+    d->meta.read(reader);
+    d->needUpdateStatus = true;
+}
+
+void SavedSessionRepository::SessionRecord::applyCurrentSessionMetadata()
+{
+    d->meta.magic   = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    d->meta.version = MY_SAVE_VERSION;
+    G_ApplyCurrentSessionMetadata(d->meta);
+
+    d->needUpdateStatus = true;
 }
 
 void SavedSessionRepository::SessionRecord::setGameIdentityKey(String newGameIdentityKey)
@@ -164,6 +240,12 @@ void SavedSessionRepository::SessionRecord::setGameIdentityKey(String newGameIde
         d->meta.gameIdentityKey  = newGameIdentityKey;
         d->needUpdateStatus = true;
     }
+}
+
+void SavedSessionRepository::SessionRecord::setGameRules(GameRuleset const &newRules)
+{
+    d->meta.gameRules = newRules; // Make a copy
+    d->needUpdateStatus = true;
 }
 
 void SavedSessionRepository::SessionRecord::setMagic(int newMagic)
@@ -223,86 +305,6 @@ void SavedSessionRepository::SessionRecord::setPlayers(SessionMetadata::Players 
 }
 #endif // !__JHEXEN__
 
-void SavedSessionRepository::SessionRecord::setGameRules(GameRuleset const &newRules)
-{
-    d->meta.gameRules = newRules; // Make a copy
-    d->needUpdateStatus = true;
-}
-
-bool SavedSessionRepository::SessionRecord::haveGameSession() const
-{
-    return SV_ExistingFile(repository().savePath() / fileName());
-}
-
-bool SavedSessionRepository::SessionRecord::haveMapSession(Uri const *mapUri) const
-{
-    if(usingSeparateMapSessionFiles())
-    {
-        return SV_ExistingFile(repository().savePath() / fileNameForMap(mapUri));
-    }
-    return haveGameSession();
-}
-
-void SavedSessionRepository::SessionRecord::updateFromFile()
-{
-    LOGDEV_VERBOSE("Updating saved game SessionRecord %p from source file") << this;
-
-    // Is this a recognized game state?
-    if(G_GameStateReaderFactory().recognize(*this))
-    {
-        // Ensure we have a valid description.
-        if(d->meta.userDescription.isEmpty())
-        {
-            setUserDescription("UNNAMED");
-        }
-    }
-    else
-    {
-        // Unrecognized or the file could not be accessed (perhaps its a network path?).
-        // Clear the info.
-        setUserDescription("");
-        setSessionId(0);
-    }
-
-    d->updateStatusIfNeeded();
-}
-
-SessionMetadata const &SavedSessionRepository::SessionRecord::meta() const
-{
-    return d->meta;
-}
-
-void SavedSessionRepository::SessionRecord::readMeta(reader_s *reader)
-{
-    d->meta.read(reader);
-    d->needUpdateStatus = true;
-}
-
-void SavedSessionRepository::SessionRecord::applyCurrentSessionMetadata()
-{
-    G_ApplyCurrentSessionMetadata(d->meta);
-    d->needUpdateStatus = true;
-}
-
-String SavedSessionRepository::SessionRecord::statusAsText() const
-{
-    static String const statusTexts[] = {
-        "Loadable",
-        "Incompatible",
-        "Unused",
-    };
-    return statusTexts[int(status())];
-}
-
-String SavedSessionRepository::SessionRecord::description() const
-{
-    return meta().asText() + "\n" +
-           String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"\n" _E(.)
-                  _E(D) "Status: " _E(.) "%2")
-               .arg(NativePath(repository().savePath() / fileName()).pretty())
-               .arg(statusAsText());
-}
-
 DENG2_PIMPL_NOREF(SavedSessionRepository)
 {
     Path savePath;            ///< e.g., "savegame"
@@ -334,6 +336,8 @@ SavedSessionRepository::SavedSessionRepository() : d(new Instance)
 
 void SavedSessionRepository::setupSaveDirectory(Path newRootSaveDir, String saveFileExtension)
 {
+    LOG_AS("SavedSessionRepository");
+
     d->saveFileExtension = saveFileExtension;
 
     if(!newRootSaveDir.isEmpty())
@@ -360,10 +364,8 @@ void SavedSessionRepository::setupSaveDirectory(Path newRootSaveDir, String save
     d->savePath.clear();
     d->clientSavePath.clear();
 
-    App_Log(DE2_RES_ERROR, "SavedSessionRepository::setupSaveDirectory: \"%s\" could not be accessed."
-                           " Perhaps it could not be created (insufficient permissions?)."
-                           " Saving will not be possible.",
-                           NativePath(d->savePath).pretty().toLatin1().constData());
+    LOG_RES_ERROR("\"%s\" could not be accessed. Perhaps it could not be created (insufficient permissions?)."
+                  " Saving will not be possible.") << NativePath(d->savePath).pretty();
 }
 
 Path const &SavedSessionRepository::savePath() const

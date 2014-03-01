@@ -1404,7 +1404,7 @@ int G_DoLoadMap(loadmap_params_t *p)
         {
             SaveSlot &sslot = G_SaveSlots()["base"];
             SessionRecord &record = sslot.sessionRecord();
-            de::Path const path = record.repository().savePath() / record.fileNameForMap();
+            de::Path const path = record.repository().savePath() / record.fileNameForMap(gameMapUri);
 
             if(!SV_OpenFile(path, false/*for read*/))
             {
@@ -2995,7 +2995,7 @@ void G_DoLeaveMap()
             // Save current map.
             SaveSlot &sslot = G_SaveSlots()["base"];
             SessionRecord &record = sslot.sessionRecord();
-            de::Path const path = record.repository().savePath() / record.fileNameForMap();
+            de::Path const path = record.repository().savePath() / record.fileNameForMap(gameMapUri);
 
             if(!SV_OpenFile(path, true/*for write*/))
             {
@@ -3344,8 +3344,6 @@ AutoStr *G_GenerateUserSaveDescription()
 
 void G_ApplyCurrentSessionMetadata(SessionMetadata &meta)
 {
-    meta.magic            = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    meta.version          = MY_SAVE_VERSION;
     meta.gameIdentityKey  = G_IdentityKey();
     Uri_Copy(meta.mapUri, gameMapUri);
 #if !__JHEXEN__
