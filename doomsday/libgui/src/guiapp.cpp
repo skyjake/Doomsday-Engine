@@ -44,6 +44,18 @@ GuiApp::GuiApp(int &argc, char **argv)
       d(new Instance(this))
 {}
 
+void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
+                         String const &appName, String const &appVersion)
+{
+    setName(appName);
+
+    // Qt metadata.
+    setOrganizationName  (orgName);
+    setOrganizationDomain(orgDomain);
+    setApplicationName   (appName);
+    setApplicationVersion(appVersion);
+}
+
 bool GuiApp::notify(QObject *receiver, QEvent *event)
 {
     try

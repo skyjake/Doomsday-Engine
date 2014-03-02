@@ -23,6 +23,7 @@
 #
 # TODO: make sure the server doesn't run this
 
+import gui
 import Version
 import Updater
 import Log
@@ -30,6 +31,8 @@ import Log
 def setDefaults(d)
     # Applies the client's defaults.
     # - d: Record where to set the values.
+
+    gui.setDefaults(d)    
     
     # Additional Log defaults.
     d.log.filterBySubsystem = False        
@@ -47,52 +50,6 @@ def setDefaults(d)
     record d.input
     record d.input.mouse
     d.input.mouse.syncSensitivity = True
-    
-    try
-        import DisplayMode
-        
-        # The default audio and video subsystems.
-        d.video = 'opengl'
-        d.audio = 'fmod'
-    
-        # Window manager defaults.
-        record d.window
-        d.window.fsaa = True    # Remove this (should be window-specific).
-    
-        # Configure the main window.
-        record d.window.main
-        d.window.main.showFps = False
-        d.window.main.center  = True
-        d.window.main.fsaa    = True
-        d.window.main.vsync   = True
-
-        # The default window parameters depend on the original display mode.
-        mode = DisplayMode.originalMode()
-
-        # By default the fullscreen resolution is the desktop resolution.
-        d.window.main.fullSize = [mode['width'], mode['height']]
-    
-        # In windowed mode mode, leave some space on the sides so that
-        # the first switch to windowed mode does not place the window in an
-        # inconvenient location. The reduction is done proportionally.
-        offx = mode['width'] * 0.15
-        offy = mode['height'] * 0.15
-        d.window.main.rect = [offx, offy, 
-                              mode['width'] - 2*offx,
-                              mode['height'] - 2*offy]
-        d.window.main.colorDepth = mode['depth']
-
-        if Version.OS == 'windows' or Version.OS == 'macx'
-            d.window.main.fullscreen = True
-            d.window.main.maximize   = False
-        else
-            d.window.main.fullscreen = False
-            d.window.main.maximize   = True
-        end
-    
-    catch NotFoundError
-        # DisplayMode isn't available on the server.
-    end
 
     # Defaults for the automatic updater.
     record d.updater
@@ -114,5 +71,5 @@ def setDefaults(d)
     record d.console
     d.console.snap = True
     d.console.script = False
+end
 
-    

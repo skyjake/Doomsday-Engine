@@ -30,16 +30,8 @@ DENG_BIN_DIR = $$PREFIX/bin
 
 # Library location.
 isEmpty(DENG_LIB_DIR) {
-	DENG_LIB_DIR = $$PREFIX/lib
-
-	contains(QMAKE_HOST.arch, x86_64) {
-	    exists($$PREFIX/lib64) {
-	        DENG_LIB_DIR = $$PREFIX/lib64
-	    }
-	    exists($$PREFIX/lib/x86_64-linux-gnu) {
-	        DENG_LIB_DIR = $$PREFIX/lib/x86_64-linux-gnu
-	    }
-	}
+    deng_sdk: DENG_LIB_DIR = $$findLibDir($$DENG_SDK_DIR)
+        else: DENG_LIB_DIR = $$findLibDir($$PREFIX)
 }
 
 # Target location for plugin libraries.
@@ -47,9 +39,7 @@ DENG_PLUGIN_LIB_DIR = $$DENG_LIB_DIR/doomsday
 
 # When installing libraries to a non-standard location, instruct
 # the linker where to find them.
-!contains(DENG_LIB_DIR, ^/usr/.*) {
-    QMAKE_LFLAGS += -Wl,-rpath,$$DENG_LIB_DIR
-}
+!contains(DENG_LIB_DIR, ^/usr/.*): QMAKE_LFLAGS += -Wl,-rpath,$$DENG_LIB_DIR
 
 DENG_BASE_DIR = $$PREFIX/share/doomsday
 DENG_DATA_DIR = $$DENG_BASE_DIR/data

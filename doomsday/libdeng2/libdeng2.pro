@@ -68,8 +68,7 @@ include(network.pri)
 include(scriptsys.pri)
 include(widgets.pri)
 
-# Convenience headers.
-HEADERS += \
+publicHeaders(root, \
     include/de/App \
     include/de/Asset \
     include/de/Clock \
@@ -98,14 +97,16 @@ HEADERS += \
     include/de/TextStreamLogSink \
     include/de/UnixInfo \
     include/de/Vector \
-    include/de/Version
-
-HEADERS += \
+    include/de/Version \
+    \
     include/de/c_wrapper.h \
     include/de/charsymbols.h \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
+)
+
+publicHeaders(core, \
     include/de/core/app.h \
     include/de/core/asset.h \
     include/de/core/clock.h \
@@ -133,7 +134,8 @@ HEADERS += \
     include/de/core/textstreamlogsink.h \
     include/de/core/unixinfo.h \
     include/de/core/vector.h \
-    include/de/core/version.h
+    include/de/core/version.h \
+)
 
 # Private headers.
 HEADERS += \
@@ -169,10 +171,13 @@ SOURCES += \
     src/core/textstreamlogsink.cpp \
     src/core/unixinfo.cpp
 
-OTHER_FILES += \
+scripts.files = \
     modules/Config.de \
-    modules/gui.de \
+    modules/Log.de \
     modules/recutil.de
+
+OTHER_FILES += \
+    $$scripts.files
 
 # Installation ---------------------------------------------------------------
 
@@ -194,4 +199,10 @@ macx {
 !macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+
+deng_sdk {
+    INSTALLS *= target scripts
+    target.path = $$DENG_SDK_LIB_DIR
+    scripts.path = $$DENG_SDK_DIR/modules
 }

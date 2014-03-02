@@ -1,4 +1,4 @@
-HEADERS += \
+publicHeaders(root, \
     include/de/ArchiveFeed \
     include/de/ArchiveEntryFile \
     include/de/ByteArrayFile \
@@ -11,9 +11,10 @@ HEADERS += \
     include/de/LibraryFile \
     include/de/NativeFile \
     include/de/NativePath \
-    include/de/PackageFolder
+    include/de/PackageFolder \
+)
 
-HEADERS += \
+publicHeaders(filesys, \
     include/de/filesys/archivefeed.h \
     include/de/filesys/archiveentryfile.h \
     include/de/filesys/bytearrayfile.h \
@@ -25,7 +26,8 @@ HEADERS += \
     include/de/filesys/libraryfile.h \
     include/de/filesys/nativefile.h \
     include/de/filesys/nativepath.h \
-    include/de/filesys/packagefolder.h
+    include/de/filesys/packagefolder.h \
+)
 
 SOURCES += \
     src/filesys/archivefeed.cpp \

@@ -24,6 +24,21 @@ defineTest(echo) {
     }
 }
 
+defineReplace(findLibDir) {
+    # Determines the appropriate library directory given prefix $$1
+    prefix = $$1
+    dir = $$prefix/lib
+    contains(QMAKE_HOST.arch, x86_64) {
+        exists($$prefix/lib64) {
+            dir = $$prefix/lib64
+        }
+        exists($$prefix/lib/x86_64-linux-gnu) {
+            dir = $$prefix/lib/x86_64-linux-gnu
+        }
+    }
+    return($$dir)
+}
+
 defineTest(useLibDir) {
     btype = ""
     win32 {
@@ -71,4 +86,21 @@ macx {
         # 2: version
         doPostLink("install_name_tool -id @executable_path/../DengPlugins/$${1}.bundle/Versions/$$2/$$1 $${1}.bundle/Versions/$$2/$$1")
     }
+}
+
+defineTest(publicHeaders) {
+    # 1: id ("root" for the main include dir)
+    # 2: header files
+    deng_sdk {
+        dir = $$1
+        contains(1, root): dir = .
+        eval(sdk_headers_$${1}.files += $$2)
+        eval(sdk_headers_$${1}.path = $$DENG_SDK_HEADER_DIR/$$dir)
+        INSTALLS *= sdk_headers_$$1
+        export(INSTALLS)
+        export(sdk_headers_$${1}.files)
+        export(sdk_headers_$${1}.path)
+    }
+    HEADERS += $$2
+    export(HEADERS)
 }

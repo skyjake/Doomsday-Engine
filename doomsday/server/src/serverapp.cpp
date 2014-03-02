@@ -103,10 +103,8 @@ ServerApp::ServerApp(int &argc, char **argv)
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
-    setOrganizationDomain ("dengine.net");
-    setOrganizationName   ("Deng Team");
-    setApplicationName    ("Doomsday Server");
-    setApplicationVersion (DOOMSDAY_VERSION_BASE);
+    setMetadata("Deng Team", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);
+    setUnixHomeFolderName(".doomsday");
 
     setTerminateFunc(handleAppTerminate);
 

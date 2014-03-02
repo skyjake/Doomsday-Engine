@@ -45,7 +45,7 @@ else:unix {
 }
 
 # Public headers.
-HEADERS += \
+publicHeaders(root, \
     include/de/Atlas \
     include/de/AtlasTexture \
     include/de/Canvas \
@@ -78,7 +78,9 @@ HEADERS += \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
     include/de/VertexBuilder \
-    \
+)
+
+publicHeaders(gui, \
     include/de/gui/atlas.h \
     include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
@@ -115,7 +117,8 @@ HEADERS += \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
     include/de/gui/rowatlasallocator.h \
-    include/de/gui/vertexbuilder.h
+    include/de/gui/vertexbuilder.h \
+)
 
 # Sources and private headers.
 SOURCES +=  \
@@ -170,6 +173,12 @@ else {
 
 unix:!macx: SOURCES += src/imKStoUCS_x11.c
 
+scripts.files = \
+    modules/gui.de
+
+OTHER_FILES += \
+    $$scripts.files
+
 # Installation ---------------------------------------------------------------
 
 macx {
@@ -184,4 +193,10 @@ macx {
 else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+
+deng_sdk {
+    INSTALLS *= target scripts
+    target.path = $$DENG_SDK_LIB_DIR
+    scripts.path = $$DENG_SDK_DIR/modules
 }

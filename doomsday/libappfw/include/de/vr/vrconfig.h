@@ -21,6 +21,7 @@
 #define LIBAPPFW_VRCONFIG_H
 
 #include <de/OculusRift>
+#include <de/Matrix>
 
 namespace de {
 
@@ -171,6 +172,33 @@ public:
 
     /// Multisampling used in unwarped Rift framebuffer.
     int riftFramebufferSampleCount() const;
+
+    float viewAspect(Vector2f const &viewPortSize) const;
+
+    /**
+     * Calculates a vertical field of view angle based on a horizontal FOV angle,
+     * view port size, and the current VR configuration.
+     *
+     * @param horizFovDegrees  Field of view horizontally, in degrees.
+     * @param viewPortSize     Size of the viewport in pixels.
+     *
+     * @return  Vertical field of view, in degrees.
+     */
+    float verticalFieldOfView(float horizFovDegrees, Vector2f const &viewPortSize) const;
+
+    /**
+     * Produces a projection matrix suitable for the current VR configuration.
+     *
+     * @param fovDegrees    Horizontal field of view angle.
+     * @param viewPortSize  Size of the viewport in pixels.
+     * @param nearClip      Distance of the near clipping plane.
+     * @param farClip       Distance of the far clipping plane.
+     *
+     * @return Projection matrix.
+     */
+    Matrix4f projectionMatrix(float fovDegrees,
+                              Vector2f const &viewPortSize,
+                              float nearClip, float farClip) const;
 
     de::OculusRift &oculusRift();
     de::OculusRift const &oculusRift() const;
