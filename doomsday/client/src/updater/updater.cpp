@@ -120,7 +120,6 @@ public:
         useMiniStyle();
         setColor("text");
         setShadowColor(""); // no shadow, please
-        setRotationSpeed(0);
         setSizePolicy(ui::Expand, ui::Expand);
 
         // The notification has a hidden button that can be clicked.
