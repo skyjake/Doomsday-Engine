@@ -85,6 +85,7 @@ public ChildWidgetOrganizer::IFilter
     MenuWidget *extraButtons;
     ui::ListData buttonItems;
     QEventLoop subloop;
+    de::Action *acceptAction;
     Animation glow;
     bool needButtonUpdate;
     float normalGlow;
@@ -92,12 +93,13 @@ public ChildWidgetOrganizer::IFilter
     DialogContentStylist stylist;
 
     Instance(Public *i, Flags const &dialogFlags)
-        : Base(i),
-          modality(Modal),
-          flags(dialogFlags),
-          heading(0),
-          needButtonUpdate(false),
-          animatingGlow(false)
+        : Base(i)
+        , modality(Modal)
+        , flags(dialogFlags)
+        , heading(0)
+        , acceptAction(0)
+        , needButtonUpdate(false)
+        , animatingGlow(false)
     {
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
@@ -188,6 +190,11 @@ public ChildWidgetOrganizer::IFilter
         container->add(buttons);
         container->add(extraButtons);
         self.setContent(container);
+    }
+
+    ~Instance()
+    {
+        releaseRef(acceptAction);
     }
 
     void updateContentHeight()
@@ -464,6 +471,11 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
     return 0;
 }
 
+void DialogWidget::setAcceptanceAction(RefArg<de::Action> action)
+{
+    changeRef(d->acceptAction, action);
+}
+
 int DialogWidget::exec(GuiRootWidget &root)
 {
     d->modality = Modal;
@@ -620,10 +632,20 @@ void DialogWidget::preparePanelForOpening()
     d->updateBackground();
 }
 
-void DialogWidget::finish(int)
+void DialogWidget::finish(int result)
 {
     root().setFocus(0);
     close();
+
+    if(result > 0)
+    {
+        // Success!
+        if(d->acceptAction)
+        {
+            AutoRef<de::Action> held = *d->acceptAction;
+            held->trigger();
+        }
+    }
 }
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)

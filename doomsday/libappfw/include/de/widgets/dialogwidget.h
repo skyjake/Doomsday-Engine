@@ -160,6 +160,15 @@ public:
     ButtonWidget *buttonWidget(int roleId) const;
 
     /**
+     * Sets the action that will be triggered if the dialog is accepted. The action
+     * will be triggered after the dialog has started closing (called from
+     * DialogWidget::finish()).
+     *
+     * @param action  Action to trigger after the dialog has been accepted.
+     */
+    void setAcceptanceAction(RefArg<de::Action> action);
+
+    /**
      * Shows the dialog and blocks execution until the dialog is closed --
      * another event loop is started for event processing. Call either accept()
      * or reject() to dismiss the dialog.
