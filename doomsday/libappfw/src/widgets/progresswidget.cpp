@@ -32,6 +32,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     Animation pos;
     float angle;
     float rotationSpeed;
+    bool mini;
     Id gearTex;
     DotPath colorId;
     DotPath shadowColorId;
@@ -40,24 +41,32 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     int framesWhileAnimDone; ///< # of frames drawn while animation was already done.
 
     Instance(Public *i)
-        : Base(i),
-          mode(Indefinite),
-          visualRange(0, 1),
-          pos(0, Animation::Linear),
-          angle(0),
-          rotationSpeed(20),
-          colorId("progress.light.wheel"),
-          shadowColorId("progress.light.shadow"),
-          gearId("progress.gear"),
-          updateAt(Time::invalidTime()),
-          framesWhileAnimDone(0)
+        : Base(i)
+        , mode(Indefinite)
+        , visualRange(0, 1)
+        , pos(0, Animation::Linear)
+        , angle(0)
+        , rotationSpeed(20)
+        , mini(false)
+        , colorId("progress.light.wheel")
+        , shadowColorId("progress.light.shadow")
+        , gearId("progress.gear")
+        , updateAt(Time::invalidTime())
+        , framesWhileAnimDone(0)
     {
         updateStyle();
     }
 
     void updateStyle()
     {
-        self.setImageColor(style().colors().colorf(colorId) /* * Vector4f(1, 1, 1, .5f)*/);
+        if(mini)
+        {
+            self.setImageColor(Vector4f());
+        }
+        else
+        {
+            self.setImageColor(style().colors().colorf(colorId));
+        }
     }
 
     void glInit()
@@ -88,18 +97,19 @@ ProgressWidget::ProgressWidget(String const &name)
     setTextLineAlignment(ui::AlignLeft);
 }
 
-void ProgressWidget::useMiniStyle()
+void ProgressWidget::useMiniStyle(DotPath const &colorId)
 {
-    // Don't use the normal wheel.
-    setImage(de::Image());
-
+    d->mini = true;
+    d->colorId = colorId;
     d->gearId = "progress.mini";
-    d->colorId = "text";
+    setTextColor(colorId);
+    setRotationSpeed(40);
     setImageScale(1);
-    setAlignment(ui::AlignCenter, LabelWidget::AlignByCombination);
 
     // Resize to the height of the default font.
     setOverrideImageSize(style().fonts().font("default").height().value());
+
+    d->updateStyle();
 }
 
 void ProgressWidget::setRotationSpeed(float anglesPerSecond)
@@ -131,7 +141,7 @@ void ProgressWidget::setColor(DotPath const &styleId)
     d->updateStyle();
 }
 
-void ProgressWidget::setShadowColor(const DotPath &styleId)
+void ProgressWidget::setShadowColor(DotPath const &styleId)
 {
     d->shadowColorId = styleId;
     d->updateStyle();
@@ -206,7 +216,7 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     // There is a shadow behind the wheel.
     float gradientThick = layout.image.width() * 2.f;
-    float solidThick = layout.image.width() * .53f;
+    float solidThick    = layout.image.width() * .53f;
 
     Vector4f const shadowColor = style().colors().colorf(d->shadowColorId);
     verts.makeRing(layout.image.middle(),
@@ -256,7 +266,7 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     DefaultVertexBuf::Builder gear;
     DefaultVertexBuf::Type v;
-    v.rgba = style().colors().colorf(d->colorId) * Vector4f(1, 1, 1, 2);
+    v.rgba = style().colors().colorf(d->colorId) * Vector4f(1, 1, 1, d->mini? 1.f : 1.9f);
 
     for(int i = 0; i <= edgeCount; ++i)
     {

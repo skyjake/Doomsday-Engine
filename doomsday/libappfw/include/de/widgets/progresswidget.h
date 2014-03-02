@@ -48,7 +48,7 @@ public:
 public:
     ProgressWidget(String const &name = "");
 
-    void useMiniStyle();
+    void useMiniStyle(DotPath const &colorId = "text");
     void setRotationSpeed(float anglesPerSecond);
 
     Mode mode() const;

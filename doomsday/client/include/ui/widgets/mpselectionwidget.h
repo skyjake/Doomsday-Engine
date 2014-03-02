@@ -20,6 +20,7 @@
 #define DENG_CLIENT_MPSELECTIONWIDGET_H
 
 #include <de/MenuWidget>
+#include "network/net_main.h"
 
 /**
  * Menu that populates itself with available multiplayer games.
@@ -31,9 +32,42 @@ class MPSelectionWidget : public de::MenuWidget
     Q_OBJECT
 
 public:
-    MPSelectionWidget();
+    DENG2_DEFINE_AUDIENCE(Selection, void gameSelected(serverinfo_t const &info))
+
+    enum DiscoveryMode {
+        NoDiscovery,
+        DiscoverUsingMaster,
+        DirectDiscoveryOnly
+    };
+
+    /**
+     * Action for joining a game on a multiplayer server.
+     */
+    class JoinAction : public de::Action
+    {
+    public:
+        JoinAction(serverinfo_t const &sv);
+        void trigger();
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
+public:
+    MPSelectionWidget(DiscoveryMode discovery = NoDiscovery);
+
+    /**
+     * Enables or disables joining games by pressing the menu items in the widget.
+     * By default, this is enabled. If disabled, one will only get a notification
+     * about the selection.
+     *
+     * @param enableJoin  @c true to allow automatic joining, @c false to disallow.
+     */
+    void setJoinGameWhenSelected(bool enableJoin);
 
     void setColumns(int numberOfColumns);
+
+    serverinfo_t const &serverInfo(de::ui::DataPos pos) const;
 
 signals:
     void availabilityChanged();

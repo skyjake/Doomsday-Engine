@@ -141,7 +141,7 @@ public:
 
     ScrollAreaWidget &area();
 
-    //MenuWidget &buttons();
+    MenuWidget &buttonsMenu();
 
     /**
      * Additional buttons of the dialog, laid out opposite to the normal dialog
@@ -158,6 +158,15 @@ public:
     ButtonWidget &buttonWidget(String const &label) const;
 
     ButtonWidget *buttonWidget(int roleId) const;
+
+    /**
+     * Sets the action that will be triggered if the dialog is accepted. The action
+     * will be triggered after the dialog has started closing (called from
+     * DialogWidget::finish()).
+     *
+     * @param action  Action to trigger after the dialog has been accepted.
+     */
+    void setAcceptanceAction(RefArg<de::Action> action);
 
     /**
      * Shows the dialog and blocks execution until the dialog is closed --

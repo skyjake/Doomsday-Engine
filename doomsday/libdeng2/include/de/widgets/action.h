@@ -48,6 +48,8 @@ public:
      */
     virtual void trigger();
 
+    DENG2_AS_IS_METHODS()
+
 protected:
     virtual ~Action(); // ref counted, hence not publicly deletable
 };

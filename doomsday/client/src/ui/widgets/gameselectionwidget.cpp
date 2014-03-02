@@ -109,7 +109,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 break;
 
             case MultiplayerGames:
-                menu = new MPSelectionWidget;
+                menu = new MPSelectionWidget(MPSelectionWidget::DiscoverUsingMaster);
                 QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
                 QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
                 break;

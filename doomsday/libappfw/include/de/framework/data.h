@@ -127,6 +127,8 @@ public:
     virtual dsize size() const = 0;
 };
 
+typedef Data::Pos DataPos;
+
 } // namespace ui
 } // namespace de
 

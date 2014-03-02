@@ -244,6 +244,13 @@ Rule const &PopupWidget::anchorY() const
     return *d->anchorY;
 }
 
+void PopupWidget::detachAnchor()
+{
+    setAnchorX(Constf(anchorX().value()));
+    setAnchorY(Constf(anchorY().value()));
+    d->updateLayout();
+}
+
 void PopupWidget::setDeleteAfterDismissed(bool deleteAfterDismiss)
 {
     d->deleteAfterDismiss = deleteAfterDismiss;

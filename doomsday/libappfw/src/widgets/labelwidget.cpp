@@ -249,7 +249,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = contentArea(); //self.rule().recti().adjusted(margin.xy(), -margin.zw());
+        Rectanglei const contentRect = contentArea();
 
         Vector2f const imgSize = imageSize() * imageScale;
 
