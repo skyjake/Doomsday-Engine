@@ -76,6 +76,8 @@ DENG_GUI_PIMPL(LineEditWidget)
         updateStyle();
 
         uCursorColor = Vector4f(1, 1, 1, 1);
+
+        self.set(Background(Vector4f(1, 1, 1, 1), Background::GradientFrame));
     }
 
     ~Instance()
@@ -113,15 +115,29 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     void updateBackground()
     {
-        Background bg(style().colors().colorf("background"));
-        if(hovering > 0)
+        // If using a gradient frame, update parameters automatically.
+        if(self.background().type == Background::GradientFrame)
         {
-            bg.type = Background::GradientFrame;
-            bg.thickness = 6;
-            bg.color = Vector4f(1, 1, 1, .15f * hovering);
-            self.requestGeometry();
+            Background bg;
+            if(!self.hasFocus())
+            {
+                bg = Background(Background::GradientFrame, Vector4f(1, 1, 1, .15f + hovering * .2f), 6);
+                //style().colors().colorf("background"));
+            }
+            else
+            {
+                bg = Background(style().colors().colorf("background"), Background::GradientFrame,
+                                Vector4f(1, 1, 1, .25f + hovering * .3f), 6);
+                /*if(hovering > 0)
+                {
+                    bg.type = Background::GradientFrame;
+                    bg.thickness = 6;
+                    bg.color = Vector4f(1, 1, 1, .15f * hovering);
+                    self.requestGeometry();
+                }*/
+            }
+            self.set(bg);
         }
-        self.set(bg);
     }
 
     void glInit()
@@ -188,7 +204,7 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     void updateHover(Vector2i const &pos)
     {
-        if(!self.hasFocus() && self.hitTest(pos))
+        if(/*!self.hasFocus() && */ self.hitTest(pos))
         {
             if(hovering.target() < 1)
             {
