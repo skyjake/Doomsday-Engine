@@ -78,7 +78,7 @@ public:
      * changes are queued, the notification is made only after all the changes
      * have been applied.
      */
-    DENG2_DEFINE_AUDIENCE(AttributeChange, void windowAttributesChanged(PersistentCanvasWindow &))
+    DENG2_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentCanvasWindow &))
 
 public:    
     /**

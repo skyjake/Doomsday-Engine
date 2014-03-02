@@ -48,7 +48,7 @@ public:
     /**
      * Notified when a Canvas is recreated.
      */
-    DENG2_DEFINE_AUDIENCE(GLContextChange, void appGLContextChanged())
+    DENG2_DEFINE_AUDIENCE2(GLContextChange, void appGLContextChanged())
 
 public:
     GuiApp(int &argc, char **argv);

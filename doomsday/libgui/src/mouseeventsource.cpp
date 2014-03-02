@@ -1,6 +1,6 @@
-/** @file keyeventsource.h  Object that produces keyboard input events.
+/** @file mouseeventsource.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -13,35 +13,23 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_KEYEVENTSOURCE_H
-#define LIBGUI_KEYEVENTSOURCE_H
-
-#include "libgui.h"
-#include "keyevent.h"
-#include <de/Observers>
-#include <de/String>
+#include "de/MouseEventSource"
 
 namespace de {
 
-/**
- * Object that produces keyboard events.
- */
-class LIBGUI_PUBLIC KeyEventSource
+DENG2_PIMPL_NOREF(MouseEventSource)
 {
-public:
-    DENG2_DEFINE_AUDIENCE2(KeyEvent, void keyEvent(KeyEvent const &))
-
-public:
-    KeyEventSource();
-    virtual ~KeyEventSource() {}
-
-private:
-    DENG2_PRIVATE(d)
+    DENG2_PIMPL_AUDIENCE(MouseStateChange)
+    DENG2_PIMPL_AUDIENCE(MouseEvent)
 };
 
-} // namespace de
+DENG2_AUDIENCE_METHOD(MouseEventSource, MouseStateChange)
+DENG2_AUDIENCE_METHOD(MouseEventSource, MouseEvent)
 
-#endif // LIBGUI_KEYEVENTSOURCE_H
+MouseEventSource::MouseEventSource() : d(new Instance)
+{}
+
+} // namespace de

@@ -737,7 +737,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         }
 
         // The queue is now empty; all modifications to state have been applied.
-        DENG2_FOR_PUBLIC_AUDIENCE(AttributeChange, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
         {
             i->windowAttributesChanged(self);
         }
@@ -761,7 +761,11 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         return st;
     }
+
+    DENG2_PIMPL_AUDIENCE(AttributeChange)
 };
+
+DENG2_AUDIENCE_METHOD(PersistentCanvasWindow, AttributeChange)
 
 PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     : d(new Instance(this, id))
@@ -896,7 +900,7 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
             d->state.setFlag(Instance::State::Centered, false);
 
             // Notify.
-            DENG2_FOR_AUDIENCE(AttributeChange, i)
+            DENG2_FOR_AUDIENCE2(AttributeChange, i)
             {
                 i->windowAttributesChanged(*this);
             }

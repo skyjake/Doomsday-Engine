@@ -125,7 +125,7 @@ public Font::RichFormat::IStyle
 
     void glInit()
     {        
-        atlas().audienceForReposition += this;
+        atlas().audienceForReposition() += this;
 
         glText.init(atlas(), self.font(), this);
 
@@ -145,7 +145,7 @@ public Font::RichFormat::IStyle
 
     void glDeinit()
     {
-        atlas().audienceForReposition -= this;
+        atlas().audienceForReposition() -= this;
         glText.deinit();
         drawable.clear();
     }

@@ -150,7 +150,9 @@ SOURCES +=  \
     src/imagebank.cpp \
     src/kdtreeatlasallocator.cpp \
     src/keyevent.cpp \
+    src/keyeventsource.cpp \
     src/mouseevent.cpp \
+    src/mouseeventsource.cpp \
     src/nativefont.cpp \
     src/qtnativefont.h \
     src/persistentcanvaswindow.cpp \

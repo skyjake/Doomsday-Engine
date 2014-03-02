@@ -81,8 +81,8 @@ DENG2_OBSERVES(Bank, Load)
         // Use this as the main window.
         setMain(i);
 
-        self.canvas().audienceForGLInit += this;
-        self.canvas().audienceForGLResize += this;
+        self.canvas().audienceForGLInit() += this;
+        self.canvas().audienceForGLResize() += this;
         Clock::appClock().audienceForTimeChange() += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);

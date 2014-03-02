@@ -37,14 +37,14 @@ DENG2_PIMPL(BaseWindow)
         , xf(&defaultXf)
     {
         // Listen to input.
-        self.canvas().audienceForKeyEvent   += this;
-        self.canvas().audienceForMouseEvent += this;
+        self.canvas().audienceForKeyEvent()   += this;
+        self.canvas().audienceForMouseEvent() += this;
     }
 
     ~Instance()
     {
-        self.canvas().audienceForKeyEvent   -= this;
-        self.canvas().audienceForMouseEvent -= this;
+        self.canvas().audienceForKeyEvent()   -= this;
+        self.canvas().audienceForMouseEvent() -= this;
     }
 
     void keyEvent(KeyEvent const &ev)

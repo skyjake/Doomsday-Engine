@@ -36,7 +36,11 @@ DENG2_PIMPL(GuiApp)
     {
         loop.audienceForIteration() += self;
     }
+
+    DENG2_PIMPL_AUDIENCE(GLContextChange)
 };
+
+DENG2_AUDIENCE_METHOD(GuiApp, GLContextChange)
 
 GuiApp::GuiApp(int &argc, char **argv)
     : QApplication(argc, argv),
@@ -80,8 +84,8 @@ void GuiApp::notifyDisplayModeChanged()
 
 void GuiApp::notifyGLContextChanged()
 {
-    qDebug() << "notifying GL context change" << audienceForGLContextChange.size();
-    DENG2_FOR_AUDIENCE(GLContextChange, i) i->appGLContextChanged();
+    qDebug() << "notifying GL context change" << audienceForGLContextChange().size();
+    DENG2_FOR_AUDIENCE2(GLContextChange, i) i->appGLContextChanged();
 }
 
 int GuiApp::execLoop()

@@ -463,8 +463,8 @@ public Font::RichFormat::IStyle
                 Atlas::BackingStore | Atlas::AllowDefragment,
                 GLTexture::maximumSize().min(Atlas::Size(4096, 2048)));
 
-        entryAtlas->audienceForReposition += this;
-        entryAtlas->audienceForOutOfSpace += this;
+        entryAtlas->audienceForReposition() += this;
+        entryAtlas->audienceForOutOfSpace() += this;
 
         // Simple texture for the scroll indicator.
         Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
