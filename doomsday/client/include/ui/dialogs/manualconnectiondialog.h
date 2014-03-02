@@ -40,6 +40,8 @@ public:
     void operator << (de::PersistentState const &fromState);
 
 public slots:
+    void queryOrConnect();
+    void contentChanged();
     void validate();
 
 protected:

@@ -720,11 +720,7 @@ void TaskBarWidget::connectToServerManually()
 {
     ManualConnectionDialog *dlg = new ManualConnectionDialog;
     dlg->setDeleteAfterDismissed(true);
-    if(dlg->exec(root()))
-    {
-        // Connect to the provided address.
-        Con_Executef(CMDS_DDAY, false, "connect %s", dlg->editor().text().toLatin1().constData());
-    }
+    dlg->exec(root());
 }
 
 void TaskBarWidget::updateCommandLineLayout()
