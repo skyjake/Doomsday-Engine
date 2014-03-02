@@ -55,7 +55,7 @@ DENG2_OBSERVES(ui::Item, Change     )
     {
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            i.value()->audienceForDeletion -= this;
+            i.value()->audienceForDeletion() -= this;
         }
     }
 
@@ -122,7 +122,7 @@ DENG2_OBSERVES(ui::Item, Change     )
         }
 
         // Observe.
-        w->audienceForDeletion += this; // in case it's manually deleted
+        w->audienceForDeletion() += this; // in case it's manually deleted
         item.audienceForChange += this;
     }
 
@@ -139,7 +139,7 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void deleteWidget(GuiWidget *w)
     {
-        w->audienceForDeletion -= this;
+        w->audienceForDeletion() -= this;
         GuiWidget::destroy(w);
     }
 

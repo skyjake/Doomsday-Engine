@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(PopupWidget)
 
     ~Instance()
     {
-        if(realParent) realParent->audienceForDeletion -= this;
+        if(realParent) realParent->audienceForDeletion() -= this;
 
         releaseRef(anchorX);
         releaseRef(anchorY);
@@ -414,7 +414,7 @@ void PopupWidget::preparePanelForOpening()
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();
     DENG2_ASSERT(d->realParent != 0);
-    d->realParent->audienceForDeletion += d;
+    d->realParent->audienceForDeletion() += d;
     d->realParent->remove(*this);
     d->realParent->root().as<GuiRootWidget>().addOnTop(this);
 
@@ -428,7 +428,7 @@ void PopupWidget::panelDismissed()
     // Move back to the original parent widget.
     if(d->realParent)
     {
-        d->realParent->audienceForDeletion -= d;
+        d->realParent->audienceForDeletion() -= d;
     }
     else
     {

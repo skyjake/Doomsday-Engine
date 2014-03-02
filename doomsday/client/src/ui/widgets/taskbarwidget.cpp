@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
         vertShift = new ScalarRule(0);
 
-        App::app().audienceForGameChange += this;
+        App::app().audienceForGameChange() += this;
         ClientApp::serverLink().audienceForJoin += this;
         ClientApp::serverLink().audienceForLeave += this;
 
@@ -139,7 +139,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     ~Instance()
     {
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForGameChange() -= this;
         ClientApp::serverLink().audienceForJoin -= this;
         ClientApp::serverLink().audienceForLeave -= this;
 

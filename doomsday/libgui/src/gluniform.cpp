@@ -90,7 +90,7 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case Sampler2D:
-            if(value.tex) value.tex->audienceForDeletion -= this;
+            if(value.tex) value.tex->audienceForDeletion() -= this;
             break;
 
         default:
@@ -280,12 +280,12 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
     if(d->value.tex != texture)
     {
         // We will observe the texture this uniform refers to.
-        if(d->value.tex) d->value.tex->audienceForDeletion -= d;
+        if(d->value.tex) d->value.tex->audienceForDeletion() -= d;
 
         d->value.tex = texture;
         d->markAsChanged();
 
-        if(d->value.tex) d->value.tex->audienceForDeletion += d;
+        if(d->value.tex) d->value.tex->audienceForDeletion() += d;
     }
     return *this;
 }

@@ -126,8 +126,8 @@ DENG2_PIMPL(ClientWindow)
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
 
-        App::app().audienceForGameChange += this;
-        App::app().audienceForStartupComplete += this;
+        App::app().audienceForGameChange() += this;
+        App::app().audienceForStartupComplete() += this;
 
         // Listen to input.
         self.canvas().audienceForMouseStateChange += this;
@@ -135,8 +135,8 @@ DENG2_PIMPL(ClientWindow)
 
     ~Instance()
     {
-        App::app().audienceForGameChange -= this;
-        App::app().audienceForStartupComplete -= this;
+        App::app().audienceForGameChange() -= this;
+        App::app().audienceForStartupComplete() -= this;
 
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;

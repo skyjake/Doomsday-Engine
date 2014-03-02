@@ -52,7 +52,7 @@ DENG2_OBSERVES(Action, Triggered)
 
     ~Instance()
     {
-        if(action) action->audienceForTriggered -= this;
+        if(action) action->audienceForTriggered() -= this;
         releaseRef(action);
     }
 
@@ -196,14 +196,14 @@ void ButtonWidget::setAction(RefArg<Action> action)
 {
     if(d->action)
     {
-        d->action->audienceForTriggered -= d;
+        d->action->audienceForTriggered() -= d;
     }
 
     changeRef(d->action, action);
 
     if(action)
     {
-        action->audienceForTriggered += d;
+        action->audienceForTriggered() += d;
     }
 }
 

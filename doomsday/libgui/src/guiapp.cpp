@@ -34,7 +34,7 @@ DENG2_PIMPL(GuiApp)
 
     Instance(Public *i) : Base(i)
     {
-        loop.audienceForIteration += self;
+        loop.audienceForIteration() += self;
     }
 };
 

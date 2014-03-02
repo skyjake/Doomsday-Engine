@@ -37,20 +37,21 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
      */
     struct SelectAction : public de::Action
     {
-        Instance *d;
+        ChoiceWidget::Instance *wd;
         ui::Item const &selItem;
 
-        SelectAction(Instance *inst, ui::Item const &item) : d(inst), selItem(item) {}
+        SelectAction(ChoiceWidget::Instance *inst, ui::Item const &item)
+            : wd(inst), selItem(item) {}
 
         void trigger()
         {
             Action::trigger();
-            d->selected = d->items().find(selItem);
-            d->updateButtonWithSelection();
-            d->updateItemHighlight();
-            d->choices->dismiss();
+            wd->selected = wd->items().find(selItem);
+            wd->updateButtonWithSelection();
+            wd->updateItemHighlight();
+            wd->choices->dismiss();
 
-            emit d->self.selectionChangedByUser(d->selected);
+            emit wd->self.selectionChangedByUser(wd->selected);
         }
     };
 

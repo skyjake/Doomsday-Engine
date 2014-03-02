@@ -239,15 +239,15 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         updateSubsetLayout();
 
         App_Games().audienceForAddition += this;
-        App::app().audienceForStartupComplete += this;
-        App::app().audienceForGameChange += this;
+        App::app().audienceForStartupComplete() += this;
+        App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
         App_Games().audienceForAddition -= this;
-        App::app().audienceForStartupComplete -= this;
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForStartupComplete() -= this;
+        App::app().audienceForGameChange() -= this;
     }
 
     void updateSubsetVisibility()

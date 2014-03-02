@@ -99,16 +99,16 @@ DENG2_OBSERVES(App, GameChange)
 
     Instance(Public *i) : Base(i), current(CUSTOM_PROFILE)
     {
-        App::app().audienceForGameUnload += this;
-        App::app().audienceForGameChange += this;
+        App::app().audienceForGameUnload() += this;
+        App::app().audienceForGameChange() += this;
 
         addProfile(current);
     }
 
     ~Instance()
     {
-        App::app().audienceForGameUnload -= this;
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForGameUnload() -= this;
+        App::app().audienceForGameChange() -= this;
 
         clearProfiles();
     }

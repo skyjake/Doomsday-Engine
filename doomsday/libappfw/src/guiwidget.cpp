@@ -86,11 +86,11 @@ DENG2_PIMPL(GuiWidget)
         , uBlurStep     ("uBlurStep",  GLUniform::Vec2)
         , uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
-        self.audienceForChildAddition += this;
+        self.audienceForChildAddition() += this;
         margins.audienceForChange += this;
 
 #ifdef DENG2_DEBUG
-        self.audienceForParentChange += this;
+        self.audienceForParentChange() += this;
         rule.setDebugName(self.path());
 #endif
 

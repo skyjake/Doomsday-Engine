@@ -1333,7 +1333,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     // The current game will be gone very soon.
-    DENG2_FOR_EACH_OBSERVER(App::GameUnloadAudience, i, App::app().audienceForGameUnload)
+    DENG2_FOR_EACH_OBSERVER(App::GameUnloadAudience, i, App::app().audienceForGameUnload())
     {
         i->aboutToUnloadGame(App::game());
     }
@@ -1589,7 +1589,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #endif
 
     // Game change is complete.
-    DENG2_FOR_EACH_OBSERVER(App::GameChangeAudience, i, App::app().audienceForGameChange)
+    DENG2_FOR_EACH_OBSERVER(App::GameChangeAudience, i, App::app().audienceForGameChange())
     {
         i->currentGameChanged(App::game());
     }
@@ -1703,7 +1703,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
 
     /// @todo This notification should be done from the app.
-    DENG2_FOR_EACH_OBSERVER(App::StartupCompleteAudience, i, App::app().audienceForStartupComplete)
+    DENG2_FOR_EACH_OBSERVER(App::StartupCompleteAudience, i, App::app().audienceForStartupComplete())
     {
         i->appStartupCompleted();
     }
