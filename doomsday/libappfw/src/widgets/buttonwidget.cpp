@@ -212,6 +212,20 @@ Action const *ButtonWidget::action() const
     return d->action;
 }
 
+void ButtonWidget::trigger()
+{
+    // Hold an extra ref so the action isn't deleted by triggering.
+    AutoRef<Action> held = holdRef(d->action);
+
+    // Notify.
+    DENG2_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
+
+    if(held)
+    {
+        held->trigger();
+    }
+}
+
 ButtonWidget::State ButtonWidget::state() const
 {
     return d->state;
@@ -242,16 +256,7 @@ bool ButtonWidget::handleEvent(Event const &event)
                 d->updateHover(mouse.pos());
                 if(hitTest(mouse.pos()))
                 {
-                    // Hold an extra ref so the action isn't deleted by triggering.
-                    AutoRef<Action> held = holdRef(d->action);
-
-                    // Notify.
-                    DENG2_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
-
-                    if(held)
-                    {
-                        held->trigger();
-                    }
+                    trigger();
                 }
                 return true;
 
