@@ -136,12 +136,12 @@ DENG2_PIMPL(App)
         appModule.addArray("audienceForGameChange"); // game change observers
         scriptSys.addNativeModule("App", appModule);
 
-        self.audienceForGameChange += scriptAudienceForGameChange;
+        audienceForGameChange += scriptAudienceForGameChange;
     }
 
     ~Instance()
     {
-        clock.audienceForTimeChange -= self;
+        clock.audienceForTimeChange() -= self;
 
         if(config)
         {
@@ -252,7 +252,15 @@ DENG2_PIMPL(App)
             logFilter.setAllowDev(LogEntry::AllDomains, false);
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(StartupComplete)
+    DENG2_PIMPL_AUDIENCE(GameUnload)
+    DENG2_PIMPL_AUDIENCE(GameChange)
 };
+
+DENG2_AUDIENCE_METHOD(App, StartupComplete)
+DENG2_AUDIENCE_METHOD(App, GameUnload)
+DENG2_AUDIENCE_METHOD(App, GameChange)
 
 App::App(NativePath const &appFilePath, QStringList args)
     : d(new Instance(this, args))
@@ -560,7 +568,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->clock.setTime(Time::currentHighPerformanceTime());
 
     // Now we can start observing progress of time.
-    d->clock.audienceForTimeChange += this;
+    d->clock.audienceForTimeChange() += this;
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }

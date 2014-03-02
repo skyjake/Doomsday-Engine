@@ -69,17 +69,17 @@ public:
     /**
      * Notified when application startup has been fully completed.
      */
-    DENG2_DEFINE_AUDIENCE(StartupComplete, void appStartupCompleted())
+    DENG2_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
 
     /**
      * Notified before the current game is unloaded.
      */
-    DENG2_DEFINE_AUDIENCE(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
+    DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
 
     /**
      * Notified after the current game has been changed.
      */
-    DENG2_DEFINE_AUDIENCE(GameChange, void currentGameChanged(game::Game const &newGame))
+    DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(game::Game const &newGame))
 
 public:
     /**

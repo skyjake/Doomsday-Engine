@@ -20,9 +20,19 @@
 
 namespace de {
 
+DENG2_PIMPL_NOREF(Clock)
+{
+    Time startedAt;
+    Time time;
+
+    DENG2_PIMPL_AUDIENCE(TimeChange)
+};
+
+DENG2_AUDIENCE_METHOD(Clock, TimeChange)
+
 Clock *Clock::_appClock = 0;
 
-Clock::Clock()
+Clock::Clock() : d(new Instance)
 {}
 
 Clock::~Clock()
@@ -30,9 +40,9 @@ Clock::~Clock()
 
 void Clock::setTime(Time const &currentTime)
 {
-    bool changed = (_time != currentTime);
+    bool changed = (d->time != currentTime);
 
-    _time = currentTime;
+    d->time = currentTime;
 
     if(changed)
     {
@@ -40,23 +50,23 @@ void Clock::setTime(Time const &currentTime)
         {
             i->timeChanged(*this);
         }
-        DENG2_FOR_AUDIENCE(TimeChange, i) i->timeChanged(*this);
+        DENG2_FOR_AUDIENCE2(TimeChange, i) i->timeChanged(*this);
     }
 }
 
 void Clock::advanceTime(TimeDelta const &span)
 {
-    setTime(_time + span);
+    setTime(d->time + span);
 }
 
 TimeDelta Clock::elapsed() const
 {
-    return _time - _startedAt;
+    return d->time - d->startedAt;
 }
 
 Time const &Clock::time() const
 {
-    return _time;
+    return d->time;
 }
 
 void Clock::setAppClock(Clock *c)

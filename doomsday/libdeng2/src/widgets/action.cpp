@@ -20,12 +20,22 @@
 
 namespace de {
 
+DENG2_PIMPL_NOREF(Action)
+{
+    DENG2_PIMPL_AUDIENCE(Triggered)
+};
+
+DENG2_AUDIENCE_METHOD(Action, Triggered)
+
+Action::Action() : d(new Instance)
+{}
+
 Action::~Action()
 {}
 
 void Action::trigger()
 {
-    DENG2_FOR_AUDIENCE(Triggered, i)
+    DENG2_FOR_AUDIENCE2(Triggered, i)
     {
         i->actionTriggered(*this);
     }

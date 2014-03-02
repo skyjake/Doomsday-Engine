@@ -61,6 +61,24 @@
     typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
     extern Name##Audience audienceFor##Name;
 
+#define DENG2_DECLARE_AUDIENCE_METHOD(Name) \
+    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    Name##Audience &audienceFor##Name(); \
+    Name##Audience const &audienceFor##Name() const;
+
+#define DENG2_AUDIENCE_METHOD(ClassName, Name) \
+    ClassName::Name##Audience &ClassName::audienceFor##Name() { return d->audienceFor##Name; } \
+    ClassName::Name##Audience const &ClassName::audienceFor##Name() const { return d->audienceFor##Name; }
+
+#define DENG2_AUDIENCE_METHOD_INLINE(Name) \
+    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    Name##Audience _audienceFor##Name; \
+    Name##Audience &audienceFor##Name() { return _audienceFor##Name; } \
+    Name##Audience const &audienceFor##Name() const { return _audienceFor##Name; }
+
+#define DENG2_PIMPL_AUDIENCE(Name) \
+    Name##Audience audienceFor##Name;
+
 /**
  * Macro for defining an observer interface containing a single method.
  *
@@ -72,6 +90,14 @@
 #define DENG2_DEFINE_AUDIENCE(Name, Method) \
     DENG2_DECLARE_AUDIENCE(Name, Method) \
     DENG2_AUDIENCE(Name)
+
+#define DENG2_DEFINE_AUDIENCE2(Name, Method) \
+    DENG2_DECLARE_AUDIENCE(Name, Method) \
+    DENG2_DECLARE_AUDIENCE_METHOD(Name)
+
+#define DENG2_DEFINE_AUDIENCE_INLINE(Name, Method) \
+    DENG2_DECLARE_AUDIENCE(Name, Method) \
+    DENG2_AUDIENCE_METHOD_INLINE(Name)
 
 /**
  * Macro that can be used in class declarations to specify which audiences the class
@@ -101,6 +127,9 @@
 #define DENG2_FOR_AUDIENCE(Name, Var) \
     DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
 
+#define DENG2_FOR_AUDIENCE2(Name, Var) \
+    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name())
+
 /**
  * Macro for looping through the public audience members from inside a private
  * implementation.
@@ -111,11 +140,54 @@
 #define DENG2_FOR_PUBLIC_AUDIENCE(Name, Var) \
     DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self.audienceFor##Name)
 
+#define DENG2_FOR_PUBLIC_AUDIENCE2(Name, Var) \
+    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
+
 namespace de {
 
 /**
  * Template for observer sets. The template type should be an interface
  * implemented by all the observers. @ingroup data
+ *
+ * @par How to use the non-pimpl audience macros
+ *
+ * These examples explain how to create an audience called "Deletion". In general,
+ * audience names should be nouns like this so they can be used in the form
+ * "audience for (something)".
+ *
+ * In a class declaration, define the audience in the @c public section of the class:
+ * <pre>DENG2_DEFINE_AUDIENCE(Deletion, ...interface-function...)</pre>
+ *
+ * This will generate a public member variable called @c audienceForDeletion that
+ * can be directly manipulated by other objects.
+ *
+ * Note that because the audience is created as a public member variable, this can
+ * easily lead to ABI backwards compatibility issues down the road if there is
+ * need to make changes to the class.
+ *
+ * @par How to use the pimpl audience macros
+ *
+ * Another set of macros is provided for declaring and defining a pimpl-friendly
+ * audience. The caveat is that you'll need to separately declare accessor methods
+ * and define the audience inside the private implementation of the class.
+ *
+ * First, define the audience in the @c public section of the class:
+ * <pre>DENG2_DEFINE_AUDIENCE2(Deletion, ...interface-function...)</pre>
+ *
+ * This works like DENG2_DEFINE_AUDIENCE, but without a public member variable.
+ * Instead, accessor methods are declared for accessing the audience.
+ *
+ * Then, inside the private implementation (@c Instance struct), define the audience:
+ * <pre>DENG2_PIMPL_AUDIENCE(Deletion)</pre>
+ *
+ * Finally, define the accessor methods (for instance, just before the constructor
+ * of the class):
+ * <pre>DENG2_AUDIENCE_METHOD(ClassName, Deletion)</pre>
+ *
+ * It is recommended to keep the DENG2_PIMPL_AUDIENCE and DENG2_AUDIENCE_METHOD
+ * macros close together in the source file for easier maintenance. The former
+ * could be at the end of the @c Instance struct while the latter is immediately
+ * following the struct.
  *
  * @par Thread-safety
  *

@@ -111,6 +111,7 @@ private:
 
 } // namespace internal
 
+
 DENG2_PIMPL(Bank),
 DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via main Loop
 {
@@ -545,7 +546,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration -= this;
+        Loop::appLoop().audienceForIteration() -= this;
         destroySerialCache();
     }
 
@@ -669,13 +670,13 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         notifications.put(new Notification(notif));
         if(isThreaded())
         {
-            Loop::appLoop().audienceForIteration += this;
+            Loop::appLoop().audienceForIteration() += this;
         }
     }
 
     void loopIteration()
     {
-        Loop::appLoop().audienceForIteration -= this;
+        Loop::appLoop().audienceForIteration() -= this;
         performNotifications();
     }
 
@@ -695,14 +696,14 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         switch(nt.kind)
         {
         case Notification::Loaded:
-            DENG2_FOR_PUBLIC_AUDIENCE(Load, i)
+            DENG2_FOR_PUBLIC_AUDIENCE2(Load, i)
             {
                 i->bankLoaded(nt.path);
             }
             break;
 
         case Notification::CacheChanged:
-            DENG2_FOR_PUBLIC_AUDIENCE(CacheLevel, i)
+            DENG2_FOR_PUBLIC_AUDIENCE2(CacheLevel, i)
             {
                 DENG2_ASSERT(nt.cache != 0);
 
@@ -714,7 +715,13 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             break;
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Load)
+    DENG2_PIMPL_AUDIENCE(CacheLevel)
 };
+
+DENG2_AUDIENCE_METHOD(Bank, Load)
+DENG2_AUDIENCE_METHOD(Bank, CacheLevel)
 
 Bank::Bank(Flags const &flags, String const &hotStorageLocation)
     : d(new Instance(this, flags))

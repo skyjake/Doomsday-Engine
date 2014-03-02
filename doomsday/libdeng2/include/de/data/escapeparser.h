@@ -38,7 +38,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DENG2_DEFINE_AUDIENCE(PlainText, void handlePlainText(Rangei const &range))
+    DENG2_DEFINE_AUDIENCE2(PlainText, void handlePlainText(Rangei const &range))
 
     /**
      * Called during parsing when an escape sequence has been parsed.
@@ -46,7 +46,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DENG2_DEFINE_AUDIENCE(EscapeSequence, void handleEscapeSequence(Rangei const &range))
+    DENG2_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(Rangei const &range))
 
 public:
     EscapeParser();

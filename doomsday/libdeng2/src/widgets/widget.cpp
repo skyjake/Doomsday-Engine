@@ -60,7 +60,17 @@ DENG2_PIMPL(Widget)
         }
         index.clear();
     }
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(ParentChange)
+    DENG2_PIMPL_AUDIENCE(ChildAddition)
+    DENG2_PIMPL_AUDIENCE(ChildRemoval)
 };
+
+DENG2_AUDIENCE_METHOD(Widget, Deletion)
+DENG2_AUDIENCE_METHOD(Widget, ParentChange)
+DENG2_AUDIENCE_METHOD(Widget, ChildAddition)
+DENG2_AUDIENCE_METHOD(Widget, ChildRemoval)
 
 Widget::Widget(String const &name) : d(new Instance(this, name))
 {}
@@ -72,7 +82,7 @@ Widget::~Widget()
         root().setFocus(0);
     }
 
-    audienceForParentChange.clear();
+    audienceForParentChange().clear();
 
     // Remove from parent automatically.
     if(d->parent)
@@ -81,7 +91,7 @@ Widget::~Widget()
     }
 
     // Notify everyone else.
-    DENG2_FOR_AUDIENCE(Deletion, i) i->widgetBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->widgetBeingDeleted(*this);
 }
 
 Id Widget::id() const
@@ -272,11 +282,11 @@ Widget &Widget::add(Widget *child)
     }
 
     // Notify.
-    DENG2_FOR_AUDIENCE(ChildAddition, i)
+    DENG2_FOR_AUDIENCE2(ChildAddition, i)
     {
         i->widgetChildAdded(*child);
     }
-    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange)
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
     {
         i->widgetParentChanged(*child, 0, this);
     }
@@ -309,11 +319,11 @@ Widget *Widget::remove(Widget &child)
     }
 
     // Notify.
-    DENG2_FOR_AUDIENCE(ChildRemoval, i)
+    DENG2_FOR_AUDIENCE2(ChildRemoval, i)
     {
         i->widgetChildRemoved(child);
     }
-    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange)
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange())
     {
         i->widgetParentChanged(child, this, 0);
     }

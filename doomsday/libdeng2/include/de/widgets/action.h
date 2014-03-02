@@ -39,7 +39,9 @@ public:
     /**
      * Audience to be notified when the action is triggerd.
      */
-    DENG2_DEFINE_AUDIENCE(Triggered, void actionTriggered(Action &))
+    DENG2_DEFINE_AUDIENCE2(Triggered, void actionTriggered(Action &))
+
+    Action();
 
     /**
      * Perform the action this instance represents. Derived classes must call
@@ -52,6 +54,9 @@ public:
 
 protected:
     virtual ~Action(); // ref counted, hence not publicly deletable
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

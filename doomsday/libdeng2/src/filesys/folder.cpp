@@ -40,8 +40,8 @@ Folder::~Folder()
 {
     DENG2_GUARD(this);
 
-    DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
-    audienceForDeletion.clear();
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion().clear();
     
     deindex();
     

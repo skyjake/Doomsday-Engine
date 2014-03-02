@@ -36,7 +36,7 @@ public:
      * Notified whenever the time of the clock changes. The audience members
      * will be notified in unspecified order.
      */
-    DENG2_DEFINE_AUDIENCE(TimeChange, void timeChanged(Clock const &))
+    DENG2_DEFINE_AUDIENCE2(TimeChange, void timeChanged(Clock const &))
 
     /**
      * Notified whenever the time of the clock changes. The entire priority
@@ -73,8 +73,7 @@ public:
     static Time const &appTime();
 
 private:
-    Time _startedAt;
-    Time _time;
+    DENG2_PRIVATE(d)
 
     static Clock *_appClock;
 };

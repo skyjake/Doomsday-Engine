@@ -48,7 +48,7 @@ DENG2_PIMPL(ArchiveFeed)
 
     Instance(Public *feed, File &f) : Base(feed), file(&f), arch(0), parentFeed(0)
     {
-        file->audienceForDeletion += this;
+        file->audienceForDeletion() += this;
 
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
@@ -75,14 +75,14 @@ DENG2_PIMPL(ArchiveFeed)
     Instance(Public *feed, ArchiveFeed &parentFeed, String const &path)
         : Base(feed), file(parentFeed.d->file), arch(0), basePath(path), parentFeed(&parentFeed)
     {
-        file->audienceForDeletion += this;
+        file->audienceForDeletion() += this;
     }
 
     ~Instance()
     {
         if(file)
         {
-            file->audienceForDeletion -= this;
+            file->audienceForDeletion() -= this;
         }
 
         if(arch)

@@ -29,7 +29,7 @@ DENG2_PIMPL(TextApp)
 
     Instance(Public *i) : Base(i)
     {
-        loop.audienceForIteration += self;
+        loop.audienceForIteration() += self;
 
         // In text-based apps, we can limit the loop frequency.
         loop.setRate(35);

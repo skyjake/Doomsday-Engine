@@ -39,7 +39,7 @@ public:
     /**
      * Audience to be notified each time the loop iterates.
      */
-    DENG2_DEFINE_AUDIENCE(Iteration, void loopIteration())
+    DENG2_DEFINE_AUDIENCE2(Iteration, void loopIteration())
 
 public:
     /**

@@ -24,7 +24,13 @@ DENG2_PIMPL_NOREF(EscapeParser)
 {
     String original;
     String plain;
+
+    DENG2_PIMPL_AUDIENCE(PlainText)
+    DENG2_PIMPL_AUDIENCE(EscapeSequence)
 };
+
+DENG2_AUDIENCE_METHOD(EscapeParser, PlainText)
+DENG2_AUDIENCE_METHOD(EscapeParser, EscapeSequence)
 
 EscapeParser::EscapeParser() : d(new Instance)
 {}
@@ -44,7 +50,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             // Empty ranges are ignored.
             if(range.size() > 0)
             {
-                DENG2_FOR_AUDIENCE(PlainText, i)
+                DENG2_FOR_AUDIENCE2(PlainText, i)
                 {
                     i->handlePlainText(range);
                 }
@@ -75,7 +81,7 @@ void EscapeParser::parse(String const &textWithEscapes)
                 break;
             }
 
-            DENG2_FOR_AUDIENCE(EscapeSequence, i)
+            DENG2_FOR_AUDIENCE2(EscapeSequence, i)
             {
                 i->handleEscapeSequence(Rangei(range.end + 1, range.end + escLen));
             }
@@ -89,7 +95,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             range.end = d->original.size();
             if(range.size() > 0)
             {
-                DENG2_FOR_AUDIENCE(PlainText, i)
+                DENG2_FOR_AUDIENCE2(PlainText, i)
                 {
                     i->handlePlainText(range);
                 }
