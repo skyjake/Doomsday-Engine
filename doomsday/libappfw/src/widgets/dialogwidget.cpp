@@ -414,6 +414,11 @@ ScrollAreaWidget &DialogWidget::area()
     return *d->area;
 }
 
+MenuWidget &DialogWidget::buttonsMenu()
+{
+    return *d->buttons;
+}
+
 /*
 MenuWidget &DialogWidget::buttons()
 {

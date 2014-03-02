@@ -141,7 +141,7 @@ public:
 
     ScrollAreaWidget &area();
 
-    //MenuWidget &buttons();
+    MenuWidget &buttonsMenu();
 
     /**
      * Additional buttons of the dialog, laid out opposite to the normal dialog
