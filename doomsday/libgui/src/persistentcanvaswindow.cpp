@@ -50,15 +50,17 @@ static QRect desktopRect()
 
 static QRect centeredQRect(Vector2ui const &size)
 {
-    QSize screenSize = desktopRect().size();
+    Vector2ui const screenSize(desktopRect().size().width(),
+                               desktopRect().size().height());
+    Vector2ui const clamped = size.min(screenSize);
 
     LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i")
-            << screenSize.width() << screenSize.height();
+            << screenSize.x << screenSize.y;
 
     return QRect(desktopRect().topLeft() +
-                 QPoint((screenSize.width()  - size.x) / 2,
-                        (screenSize.height() - size.y) / 2),
-                 QSize(size.x, size.y));
+                 QPoint((screenSize.x - clamped.x) / 2,
+                        (screenSize.y - clamped.y) / 2),
+                 QSize(clamped.x, clamped.y));
 }
 
 static Rectanglei centeredRect(Vector2ui const &size)
