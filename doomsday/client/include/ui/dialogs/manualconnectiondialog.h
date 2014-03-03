@@ -43,6 +43,7 @@ public slots:
     void queryOrConnect();
     void contentChanged();
     void validate();
+    void disconnected();
 
 protected:
     void finish(int result);
