@@ -46,6 +46,15 @@ DENG_MODULES = $$DENG_SDK_DIR/modules/*.de
 
 # Macros ---------------------------------------------------------------------
 
+defineTest(dengPostLink) {
+    isEmpty(QMAKE_POST_LINK) {
+        QMAKE_POST_LINK = $$1
+    } else {
+        QMAKE_POST_LINK = $$QMAKE_POST_LINK && $$1
+    }
+    export(QMAKE_POST_LINK)
+}
+
 defineTest(dengClear) {
     # 1: file to remove
     win32: system(del /q \"$$1\")
@@ -115,7 +124,8 @@ defineTest(dengDeploy) {
     win32 {
     }
     else:macx {
-        QMAKE_BUNDLE_DATA += basepack denglibs
+        QMAKE_BUNDLE_DATA += $$INSTALLS
+        QMAKE_BUNDLE_DATA -= target
         basepack.path = Contents/Resources
         denglibs.path = Contents/Frameworks
     }
@@ -124,6 +134,22 @@ defineTest(dengDeploy) {
         basepack.path = $$prefix/share/$${1}
         denglibs.path = $$dengFindLibDir($$prefix)
     }
+
+    unix {
+        # Symlink the libraries rather than copy.
+        macx {
+            QMAKE_BUNDLE_DATA -= denglibs
+            fwDir = $${TARGET}.app/$$denglibs.path
+        }
+        else {
+            INSTALLS -= denglibs
+            fwDir = $$denglibs.path
+        }
+        for(fn, denglibs.files) {
+            dengPostLink(mkdir -p \"$$fwDir\" && ln -sf \"$$fn\" \"$$fwDir\")
+        }
+    }
+
     macx: export(QMAKE_BUNDLE_DATA)
     else {
         export(INSTALLS)
