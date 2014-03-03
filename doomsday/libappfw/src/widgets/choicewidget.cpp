@@ -66,11 +66,11 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         self.setFont("choice.selected");
 
         choices = new PopupMenuWidget;
-        choices->items().audienceForAddition += this;
-        choices->items().audienceForRemoval += this;
-        choices->items().audienceForOrderChange += this;
-        choices->menu().organizer().audienceForWidgetCreation += this;
-        choices->menu().organizer().audienceForWidgetUpdate += this;
+        choices->items().audienceForAddition() += this;
+        choices->items().audienceForRemoval() += this;
+        choices->items().audienceForOrderChange() += this;
+        choices->menu().organizer().audienceForWidgetCreation() += this;
+        choices->menu().organizer().audienceForWidgetUpdate() += this;
         self.add(choices);
 
         self.setAction(new SignalAction(thisPublic, SLOT(openPopup())));
@@ -81,7 +81,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     ~Instance()
     {
-        choices->items().audienceForRemoval -= this;
+        choices->items().audienceForRemoval() -= this;
         releaseRef(maxWidth);
     }
 

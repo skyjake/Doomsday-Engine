@@ -113,7 +113,7 @@ DENG2_OBSERVES(Action, Triggered)
             break;
         }
 
-        DENG2_FOR_PUBLIC_AUDIENCE(StateChange, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(StateChange, i)
         {
             i->buttonStateChanged(self, state);
         }
@@ -170,12 +170,20 @@ DENG2_OBSERVES(Action, Triggered)
 
     void actionTriggered(Action &)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Triggered, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(Triggered, i)
         {
             i->buttonActionTriggered(self);
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(StateChange)
+    DENG2_PIMPL_AUDIENCE(Press)
+    DENG2_PIMPL_AUDIENCE(Triggered)
 };
+
+DENG2_AUDIENCE_METHOD(ButtonWidget, StateChange)
+DENG2_AUDIENCE_METHOD(ButtonWidget, Press)
+DENG2_AUDIENCE_METHOD(ButtonWidget, Triggered)
 
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
@@ -218,7 +226,7 @@ void ButtonWidget::trigger()
     AutoRef<Action> held = holdRef(d->action);
 
     // Notify.
-    DENG2_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
+    DENG2_FOR_AUDIENCE2(Press, i) i->buttonPressed(*this);
 
     if(held)
     {

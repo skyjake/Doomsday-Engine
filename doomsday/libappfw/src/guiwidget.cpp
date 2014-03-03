@@ -87,7 +87,7 @@ DENG2_PIMPL(GuiWidget)
         , uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
         self.audienceForChildAddition() += this;
-        margins.audienceForChange += this;
+        margins.audienceForChange() += this;
 
 #ifdef DENG2_DEBUG
         self.audienceForParentChange() += this;

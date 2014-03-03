@@ -67,12 +67,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                 b->setOverrideImageSize(style().fonts().font("default").height().valuei());
             }
 
-            b->audienceForStateChange += this;
+            b->audienceForStateChange() += this;
 
             // Triggered actions close the menu.
             if(item.semantics().testFlag(ui::Item::ActivationClosesPopup))
             {
-                b->audienceForTriggered += this;
+                b->audienceForTriggered() += this;
             }
         }
     }
@@ -191,8 +191,8 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
 
     menu().setGridSize(1, ui::Expand, 0, ui::Expand);
 
-    menu().organizer().audienceForWidgetCreation += d;
-    menu().organizer().audienceForWidgetUpdate += d;
+    menu().organizer().audienceForWidgetCreation() += d;
+    menu().organizer().audienceForWidgetUpdate() += d;
 }
 
 MenuWidget &PopupMenuWidget::menu() const

@@ -39,7 +39,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     {
         updateFromVariable();
 
-        self.audienceForToggle += this;
+        self.audienceForToggle() += this;
         var->audienceForDeletion() += this;
         var->audienceForChange() += this;
     }
@@ -50,7 +50,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
         {
             var->audienceForDeletion() -= this;
             var->audienceForChange() -= this;
-            self.audienceForToggle -= this;
+            self.audienceForToggle() -= this;
         }
     }
 

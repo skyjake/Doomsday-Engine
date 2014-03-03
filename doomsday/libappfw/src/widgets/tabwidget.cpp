@@ -44,9 +44,9 @@ DENG2_PIMPL(TabWidget)
         buttons->margins().set("");
         buttons->setGridSize(0, ui::Expand, 1, ui::Expand, GridLayout::ColumnFirst);
 
-        buttons->organizer().audienceForWidgetCreation += this;
-        buttons->items().audienceForAddition += this;
-        buttons->items().audienceForOrderChange += this;
+        buttons->organizer().audienceForWidgetCreation() += this;
+        buttons->items().audienceForAddition() += this;
+        buttons->items().audienceForOrderChange() += this;
 
         // Center the buttons inside the widget.
         buttons->rule()
@@ -63,7 +63,7 @@ DENG2_PIMPL(TabWidget)
         btn.setFont("tab.label");
         btn.margins().set("dialog.gap");
 
-        btn.audienceForPress += this;
+        btn.audienceForPress() += this;
     }
 
     void buttonPressed(ButtonWidget &button)

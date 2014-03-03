@@ -181,18 +181,18 @@ DENG2_PIMPL(MenuWidget)
         if(items)
         {
             // Get rid of the old context.
-            items->audienceForAddition -= this;
-            items->audienceForRemoval -= this;
-            items->audienceForOrderChange -= this;
+            items->audienceForAddition() -= this;
+            items->audienceForRemoval() -= this;
+            items->audienceForOrderChange() -= this;
             organizer.unsetContext();
         }
 
         items = ctx;
 
         // Take new context into use.
-        items->audienceForAddition += this;
-        items->audienceForRemoval += this;
-        items->audienceForOrderChange += this;
+        items->audienceForAddition() += this;
+        items->audienceForRemoval() += this;
+        items->audienceForOrderChange() += this;
         organizer.setContext(*items); // recreates widgets
     }
 
@@ -324,7 +324,7 @@ DENG2_PIMPL(MenuWidget)
 
         openSubs.insert(w);
 
-        w->audienceForClose += this;
+        w->audienceForClose() += this;
         w->audienceForDeletion() += this;
     }
 

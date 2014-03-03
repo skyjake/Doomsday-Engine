@@ -81,7 +81,7 @@ DENG2_PIMPL(Margins)
         changeRef(inputs[side], rule);
         updateOutput(side);
 
-        DENG2_FOR_PUBLIC_AUDIENCE(Change, i)
+        DENG2_FOR_AUDIENCE(Change, i)
         {
             i->marginsChanged();
         }
@@ -120,7 +120,11 @@ DENG2_PIMPL(Margins)
         }
         return *outputs[side];
     }
+
+    DENG2_PIMPL_AUDIENCE(Change)
 };
+
+DENG2_AUDIENCE_METHOD(Margins, Change)
 
 Margins::Margins(String const &defaultMargin) : d(new Instance(this, defaultMargin))
 {}

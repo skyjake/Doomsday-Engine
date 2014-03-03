@@ -139,7 +139,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
         ServerWidget *w = new ServerWidget;
-        w->loadButton().audienceForPress += this;
+        w->loadButton().audienceForPress() += this;
         w->rule().setInput(Rule::Height, w->loadButton().rule().height());
 
         // Automatically close the info popup if the dialog is closed.

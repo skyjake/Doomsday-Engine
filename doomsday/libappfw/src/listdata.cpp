@@ -81,7 +81,7 @@ Data &ListData::insert(Pos pos, Item *item)
     item->setDataContext(*this);
 
     // Notify.
-    DENG2_FOR_AUDIENCE(Addition, i)
+    DENG2_FOR_AUDIENCE2(Addition, i)
     {
         i->dataItemAdded(pos, *item);
     }
@@ -101,7 +101,7 @@ Item *ListData::take(Data::Pos pos)
     Item *taken = _items.takeAt(pos);
 
     // Notify.
-    DENG2_FOR_AUDIENCE(Removal, i)
+    DENG2_FOR_AUDIENCE2(Removal, i)
     {
         i->dataItemRemoved(pos, *taken);
     }
@@ -123,7 +123,7 @@ void ListData::sort(LessThanFunc lessThan)
     qSort(_items.begin(), _items.end(), ListItemSorter(lessThan));
 
     // Notify.
-    DENG2_FOR_AUDIENCE(OrderChange, i)
+    DENG2_FOR_AUDIENCE2(OrderChange, i)
     {
         i->dataItemOrderChanged();
     }
@@ -134,7 +134,7 @@ void ListData::stableSort(LessThanFunc lessThan)
     qStableSort(_items.begin(), _items.end(), ListItemSorter(lessThan));
 
     // Notify.
-    DENG2_FOR_AUDIENCE(OrderChange, i)
+    DENG2_FOR_AUDIENCE2(OrderChange, i)
     {
         i->dataItemOrderChanged();
     }

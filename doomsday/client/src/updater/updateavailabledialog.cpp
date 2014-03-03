@@ -94,7 +94,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         self.area().add(autoCheck);
         autoCheck->setAlignment(ui::AlignLeft);
         autoCheck->setText(tr("Check for updates automatically"));
-        autoCheck->audienceForToggle += this;
+        autoCheck->audienceForToggle() += this;
 
         // Include the toggle in the layout.
         self.updateLayout();

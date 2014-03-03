@@ -115,7 +115,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 break;
             }
 
-            menu->items().audienceForAddition += this;
+            menu->items().audienceForAddition() += this;
 
             setContent(menu);
             menu->enableScrolling(false);

@@ -43,7 +43,7 @@ public:
     /**
      * Audience to be notified when the panel is closing.
      */
-    DENG2_DEFINE_AUDIENCE(Close, void panelBeingClosed(PanelWidget &))
+    DENG2_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
 
 public:
     PanelWidget(String const &name = "");
