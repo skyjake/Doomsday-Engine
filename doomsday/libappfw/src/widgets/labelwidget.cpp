@@ -513,6 +513,38 @@ public Font::RichFormat::IStyle
         self.updateModelViewProjection(uMvpMatrix);
         drawable.draw();
     }
+
+    Rule const *widthRule() const
+    {
+        switch(appearType)
+        {
+        case AppearInstantly:
+        case AppearGrowVertically:
+            if(horizPolicy == Expand) return width;
+            break;
+
+        case AppearGrowHorizontally:
+            if(horizPolicy == Expand) return appearSize;
+            break;
+        }
+        return 0;
+    }
+
+    Rule const *heightRule() const
+    {
+        switch(appearType)
+        {
+        case AppearInstantly:
+        case AppearGrowHorizontally:
+            if(vertPolicy == Expand) return height;
+            break;
+
+        case AppearGrowVertically:
+            if(vertPolicy == Expand) return appearSize;
+            break;
+        }
+        return 0;
+    }
 };
 
 LabelWidget::LabelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
@@ -715,7 +747,7 @@ void LabelWidget::setWidthPolicy(SizePolicy policy)
     d->horizPolicy = policy;
     if(policy == Expand)
     {
-        rule().setInput(Rule::Width, *d->width);
+        rule().setInput(Rule::Width, *d->widthRule());
     }
     else
     {
@@ -728,7 +760,7 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     d->vertPolicy = policy;
     if(policy == Expand)
     {
-        rule().setInput(Rule::Height, *d->height);
+        rule().setInput(Rule::Height, *d->heightRule());
     }
     else
     {
@@ -741,22 +773,13 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta c
     d->appearType = method;
     d->appearSpan = span;
 
-    switch(d->appearType)
+    if(Rule const *w = d->widthRule())
     {
-    case AppearInstantly:
-        if(d->horizPolicy == Expand) rule().setInput(Rule::Width,  *d->width);
-        if(d->vertPolicy  == Expand) rule().setInput(Rule::Height, *d->height);
-        break;
-
-    case AppearGrowHorizontally:
-        if(d->horizPolicy == Expand) rule().setInput(Rule::Width,  *d->appearSize);
-        if(d->vertPolicy  == Expand) rule().setInput(Rule::Height, *d->height);
-        break;
-
-    case AppearGrowVertically:
-        if(d->horizPolicy == Expand) rule().setInput(Rule::Width,  *d->width);
-        if(d->vertPolicy  == Expand) rule().setInput(Rule::Height, *d->appearSize);
-        break;
+        rule().setInput(Rule::Width, *w);
+    }
+    if(Rule const *h = d->heightRule())
+    {
+        rule().setInput(Rule::Height, *h);
     }
 }
 
