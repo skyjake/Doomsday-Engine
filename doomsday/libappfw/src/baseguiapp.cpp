@@ -29,7 +29,6 @@ namespace de {
 
 static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &args)
 {
-    LOG_AS("ClientApp");
     try
     {
         // Try to load the specific font.
