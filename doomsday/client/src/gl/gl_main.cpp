@@ -559,7 +559,8 @@ Matrix4f GL_GetProjectionMatrix()
     float const fov = Rend_FieldOfView();
     Vector2f const size(viewpw, viewph);
     yfov = vrCfg().verticalFieldOfView(fov, size);
-    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip);
+    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip) *
+           Matrix4f::scale(Vector3f(1, 1, -1));
 }
 
 void GL_ProjectionMatrix()

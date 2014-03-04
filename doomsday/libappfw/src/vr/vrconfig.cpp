@@ -228,8 +228,7 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
     return Matrix4f::frustum(-fW - shift, fW - shift,
                              -fH, fH,
                              nearClip, farClip) *
-           Matrix4f::translate(Vector3f(-eyeShift(), 0, 0)) *
-           Matrix4f::scale(Vector3f(1, 1, -1));
+           Matrix4f::translate(Vector3f(-eyeShift(), 0, 0));
 }
 
 OculusRift &VRConfig::oculusRift()
