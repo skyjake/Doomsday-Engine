@@ -70,12 +70,12 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 #ifdef USE_COLOR_DEPTH_CHOICE
         area.add(depths       = new ChoiceWidget);
 #endif
-        win.audienceForAttributeChange += this;
+        win.audienceForAttributeChange() += this;
     }
 
     ~Instance()
     {
-        win.audienceForAttributeChange -= this;
+        win.audienceForAttributeChange() -= this;
     }
 
     /**

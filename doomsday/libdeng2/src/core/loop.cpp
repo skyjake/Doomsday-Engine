@@ -50,7 +50,11 @@ DENG2_PIMPL(Loop)
     {
         loopSingleton = 0;
     }
+
+    DENG2_PIMPL_AUDIENCE(Iteration)
 };
+
+DENG2_AUDIENCE_METHOD(Loop, Iteration)
 
 Loop::Loop() : d(new Instance(this))
 {}
@@ -102,7 +106,7 @@ void Loop::nextLoopIteration()
     {
         if(d->running)
         {
-            DENG2_FOR_AUDIENCE(Iteration, i) i->loopIteration();
+            DENG2_FOR_AUDIENCE2(Iteration, i) i->loopIteration();
         }
     }
     catch(Error const &er)

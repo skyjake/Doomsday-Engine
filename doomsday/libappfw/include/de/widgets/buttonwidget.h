@@ -43,20 +43,20 @@ public:
     /**
      * Notified when the state of the button changes.
      */
-    DENG2_DEFINE_AUDIENCE(StateChange, void buttonStateChanged(ButtonWidget &button, State state))
+    DENG2_DEFINE_AUDIENCE2(StateChange, void buttonStateChanged(ButtonWidget &button, State state))
 
     /**
      * Notified immediately before the button's action is to be triggered. Will
      * occur regardless of whether an action has been set.
      */
-    DENG2_DEFINE_AUDIENCE(Press, void buttonPressed(ButtonWidget &button))
+    DENG2_DEFINE_AUDIENCE2(Press, void buttonPressed(ButtonWidget &button))
 
     /**
      * Notified when the button's action is triggered (could be before or after
      * the action). Will not occur if no action has been defined for the
      * button.
      */
-    DENG2_DEFINE_AUDIENCE(Triggered, void buttonActionTriggered(ButtonWidget &button))
+    DENG2_DEFINE_AUDIENCE2(Triggered, void buttonActionTriggered(ButtonWidget &button))
 
 public:
     ButtonWidget(String const &name = "");
@@ -86,11 +86,17 @@ public:
 
     Action const *action() const;
 
+    /**
+     * Triggers the action of the button.
+     */
+    void trigger();
+
     State state() const;
 
     // Events.
     void update();
     bool handleEvent(Event const &event);
+
 
 protected:
     void updateModelViewProjection(GLUniform &uMvp);

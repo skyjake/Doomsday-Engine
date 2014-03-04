@@ -100,7 +100,7 @@ DENG2_PIMPL(LogSettingsDialog)
             // This'll keep the dialog's size fixed even though the choices change size.
             columnWidth->setSource(domWidgets[0].level->maximumWidth());
 
-            separately->audienceForToggle += this;
+            separately->audienceForToggle() += this;
         }
         catch(Error const &er)
         {

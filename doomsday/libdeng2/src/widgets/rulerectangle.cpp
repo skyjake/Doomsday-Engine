@@ -47,6 +47,8 @@ DENG2_PIMPL(RuleRectangle)
 
     // The output rules.
     IndirectRule *outputRules[MAX_OUTPUT_RULES];
+    Rule *midX;
+    Rule *midY;
 
     Instance(Public *i) : Base(i)
     {
@@ -61,11 +63,16 @@ DENG2_PIMPL(RuleRectangle)
             outputRules[i] = new IndirectRule;
         }
 
+        midX = holdRef(*outputRules[OutLeft] + *outputRules[OutWidth]  / 2);
+        midY = holdRef(*outputRules[OutTop]  + *outputRules[OutHeight] / 2);
+
         debugName = QString("0x%1").arg(dintptr(thisPublic), 0, 16);
     }
 
     ~Instance()
     {
+        releaseRef(midX);
+        releaseRef(midY);
         releaseRef(normalizedAnchorX);
         releaseRef(normalizedAnchorY);
 
@@ -239,6 +246,16 @@ Rule const &RuleRectangle::width() const
 Rule const &RuleRectangle::height() const
 {
     return *d->outputRules[Instance::OutHeight];
+}
+
+Rule const &RuleRectangle::midX() const
+{
+    return *d->midX;
+}
+
+Rule const &RuleRectangle::midY() const
+{
+    return *d->midY;
 }
 
 RuleRectangle &RuleRectangle::setInput(Rule::Semantic inputRule, Rule const &rule)

@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
 
     ~Instance()
     {
-        if(menu) menu->audienceForClose -= this;
+        if(menu) menu->audienceForClose() -= this;
     }
 
     void updateStyle()
@@ -161,7 +161,7 @@ void ProfilePickerWidget::openMenu()
 
     d->menu->setDeleteAfterDismissed(true);
     d->menu->setAnchorAndOpeningDirection(d->button->rule(), ui::Down);
-    d->menu->audienceForClose += d;
+    d->menu->audienceForClose() += d;
     d->menu->open();
 }
 

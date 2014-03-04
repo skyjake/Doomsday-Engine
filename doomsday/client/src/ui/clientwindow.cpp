@@ -126,20 +126,20 @@ DENG2_PIMPL(ClientWindow)
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
 
-        App::app().audienceForGameChange += this;
-        App::app().audienceForStartupComplete += this;
+        App::app().audienceForGameChange() += this;
+        App::app().audienceForStartupComplete() += this;
 
         // Listen to input.
-        self.canvas().audienceForMouseStateChange += this;
+        self.canvas().audienceForMouseStateChange() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForGameChange -= this;
-        App::app().audienceForStartupComplete -= this;
+        App::app().audienceForGameChange() -= this;
+        App::app().audienceForStartupComplete() -= this;
 
-        self.canvas().audienceForFocusChange -= this;
-        self.canvas().audienceForMouseStateChange -= this;
+        self.canvas().audienceForFocusChange() -= this;
+        self.canvas().audienceForMouseStateChange() -= this;
 
         releaseRef(cursorX);
         releaseRef(cursorY);
@@ -341,7 +341,7 @@ DENG2_PIMPL(ClientWindow)
         }
         */
 
-        self.canvas().audienceForFocusChange += this;
+        self.canvas().audienceForFocusChange() += this;
 
 #ifdef WIN32
         if(self.isFullScreen())
@@ -651,8 +651,8 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Instance(this))
 {
-    canvas().audienceForGLResize += this;
-    canvas().audienceForGLInit += this;
+    canvas().audienceForGLResize() += this;
+    canvas().audienceForGLInit() += this;
 
 #ifdef WIN32
     // Set an icon for the window.

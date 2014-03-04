@@ -28,6 +28,7 @@
 #include "de/LogBuffer"
 #include "de/LogFilter"
 #include "de/Module"
+#include "de/NativeFile"
 #include "de/NumberValue"
 #include "de/PackageFolder"
 #include "de/Record"
@@ -50,6 +51,9 @@ DENG2_PIMPL(App)
 {
     QThread *mainThread;
 
+    /// Name of the application (metadata for humans).
+    String appName;
+
     CommandLine cmdLine;
 
     LogFilter logFilter;
@@ -57,6 +61,7 @@ DENG2_PIMPL(App)
 
     /// Path of the application executable.
     NativePath appPath;
+    String unixHomeFolder;
 
     NativePath cachedBasePath;
     NativePath cachedPluginBinaryPath;
@@ -69,6 +74,7 @@ DENG2_PIMPL(App)
     QList<System *> systems;
 
     FileSystem fs;
+    QScopedPointer<NativeFile> basePackFile;
     ScriptSystem scriptSys;
     Record appModule;
 
@@ -79,6 +85,7 @@ DENG2_PIMPL(App)
     QScopedPointer<UnixInfo> unixInfo;
 
     /// The configuration.
+    Path configPath;
     Config *config;
 
     game::Game *currentGame;
@@ -103,8 +110,15 @@ DENG2_PIMPL(App)
     GameChangeScriptAudience scriptAudienceForGameChange;
 
     Instance(Public *a, QStringList args)
-        : Base(a), cmdLine(args), persistentData(0), config(0),
-          currentGame(0), terminateFunc(0)
+        : Base(a)
+        , appName("Doomsday Engine")
+        , cmdLine(args)
+        , unixHomeFolder(".doomsday")
+        , persistentData(0)
+        , configPath("/modules/Config.de")
+        , config(0)
+        , currentGame(0)
+        , terminateFunc(0)
     {
         singletonApp = a;
         mainThread = QThread::currentThread();
@@ -122,19 +136,23 @@ DENG2_PIMPL(App)
         appModule.addArray("audienceForGameChange"); // game change observers
         scriptSys.addNativeModule("App", appModule);
 
-        self.audienceForGameChange += scriptAudienceForGameChange;
+        audienceForGameChange += scriptAudienceForGameChange;
     }
 
     ~Instance()
     {
-        clock.audienceForTimeChange -= self;
+        clock.audienceForTimeChange() -= self;
 
-        // Update the log filter in the persistent configuration.
-        Record *filter = new Record;
-        logFilter.write(*filter);
-        config->names().add("log.filter", filter);
+        if(config)
+        {
+            // Update the log filter in the persistent configuration.
+            Record *filter = new Record;
+            logFilter.write(*filter);
+            config->names().add("log.filter", filter);
 
-        delete config;
+            delete config;
+        }
+
         Clock::setAppClock(0);
     }
 
@@ -145,21 +163,34 @@ DENG2_PIMPL(App)
         // Initialize the built-in folders. This hooks up the default native
         // directories into the appropriate places in the file system.
         // All of these are in read-only mode.
+
+        if(ZipArchive::recognize(self.nativeBasePath()))
+        {
+            // As a special case, if the base path points to a resource pack,
+            // use the contents of the pack as the root of the file system.
+            // The pack itself does not appear in the file system.
+            basePackFile.reset(new NativeFile(self.nativeBasePath().fileName(), self.nativeBasePath()));
+            basePackFile->setStatus(DirectoryFeed::fileStatus(self.nativeBasePath()));
+            fs.root().attach(new ArchiveFeed(*basePackFile));
+        }
+        else
+        {
 #ifdef MACOSX
-        NativePath appDir = appPath.fileNamePath();
-        binFolder.attach(new DirectoryFeed(appDir));
-        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+            NativePath appDir = appPath.fileNamePath();
+            binFolder.attach(new DirectoryFeed(appDir));
+            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 
 #elif WIN32
-        NativePath appDir = appPath.fileNamePath();
-        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
+            NativePath appDir = appPath.fileNamePath();
+            fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
 
 #else // UNIX
-        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 #endif
+        }
 
         if(allowPlugins)
         {
@@ -167,8 +198,8 @@ DENG2_PIMPL(App)
         }
 
         // User's home folder.
-        fs.makeFolder("/home").attach(new DirectoryFeed(self.nativeHomePath(),
-            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+        fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
+                DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
         // Populate the file system.
         fs.refresh();
@@ -221,7 +252,15 @@ DENG2_PIMPL(App)
             logFilter.setAllowDev(LogEntry::AllDomains, false);
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(StartupComplete)
+    DENG2_PIMPL_AUDIENCE(GameUnload)
+    DENG2_PIMPL_AUDIENCE(GameChange)
 };
+
+DENG2_AUDIENCE_METHOD(App, StartupComplete)
+DENG2_AUDIENCE_METHOD(App, GameUnload)
+DENG2_AUDIENCE_METHOD(App, GameChange)
 
 App::App(NativePath const &appFilePath, QStringList args)
     : d(new Instance(this, args))
@@ -263,6 +302,38 @@ App::~App()
     d.reset();
 
     singletonApp = 0;
+}
+
+void App::setConfigScript(Path const &path)
+{
+    d->configPath = path;
+}
+
+void App::setName(String const &appName)
+{
+    d->appName = appName;
+}
+
+void App::setUnixHomeFolderName(String const &name)
+{
+    d->unixHomeFolder = name;
+
+    // Reload Unix config files.
+    d->unixInfo.reset(new UnixInfo);
+}
+
+String App::unixHomeFolderName() const
+{
+    return d->unixHomeFolder;
+}
+
+String App::unixEtcFolderName() const
+{
+    if(d->unixHomeFolder.startsWith("."))
+    {
+        return d->unixHomeFolder.mid(1);
+    }
+    return d->unixHomeFolder;
 }
 
 void App::setTerminateFunc(void (*func)(char const *))
@@ -354,13 +425,13 @@ NativePath App::nativeHomePath()
 
 #ifdef MACOSX
     NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
+    nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
 #elif WIN32
     NativePath nativeHome = appDataPath();
     nativeHome = nativeHome / "runtime";
 #else // UNIX
     NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / ".doomsday/runtime";
+    nativeHome = nativeHome / d->unixHomeFolder / "runtime";
 #endif
     return (d->cachedHomePath = nativeHome);
 }
@@ -418,7 +489,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         // Recreate the persistent state data package.
         ZipArchive arch;
-        arch.add("Info", String("# Package for Doomsday's persistent state.\n").toUtf8());
+        arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
         Writer(homeFolder().replaceFile("persist.pack")) << arch;
 
         homeFolder().populate(Folder::PopulateOnlyThisFolder);
@@ -427,7 +498,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
 
     // The configuration.
-    d->config = new Config("/modules/Config.de");
+    d->config = new Config(d->configPath);
     d->scriptSys.addNativeModule("Config", d->config->names());
 
     d->config->read();
@@ -497,7 +568,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->clock.setTime(Time::currentHighPerformanceTime());
 
     // Now we can start observing progress of time.
-    d->clock.audienceForTimeChange += this;
+    d->clock.audienceForTimeChange() += this;
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }

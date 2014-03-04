@@ -606,12 +606,21 @@ void ZipArchive::operator >> (Writer &to) const
     to.seek(writer.offset());
 }
 
+static bool recognizeZipExtension(String const &ext)
+{
+    return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
+            ext == ".box" || ext == ".pk3" || ext == ".zip");
+}
+
 bool ZipArchive::recognize(File const &file)
 {
     // For now, just check the name.
-    String ext = file.name().fileNameExtension().lower();
-    return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
-            ext == ".box" || ext == ".pk3" || ext == ".zip");
+    return recognizeZipExtension(file.name().fileNameExtension().lower());
+}
+
+bool ZipArchive::recognize(NativePath const &path)
+{
+    return recognizeZipExtension(path.toString().fileNameExtension().lower());
 }
 
 void ZipArchive::ZipEntry::update()

@@ -63,7 +63,7 @@ public:
     typedef std::pair<String, String> KeyValue;
     typedef QList<KeyValue> List;
 
-    DENG2_DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record &record))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
 
 public:
     Record();

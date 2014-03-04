@@ -20,21 +20,38 @@
 
 namespace de {
 
-Asset::Asset(State initialState) : _state(initialState)
+DENG2_PIMPL_NOREF(Asset)
+{
+    State state;
+
+    Instance(State s) : state(s) {}
+    Instance(Instance const &other) : state(other.state) {}
+
+    DENG2_PIMPL_AUDIENCE(StateChange)
+    DENG2_PIMPL_AUDIENCE(Deletion)
+};
+
+DENG2_AUDIENCE_METHOD(Asset, StateChange)
+DENG2_AUDIENCE_METHOD(Asset, Deletion)
+
+Asset::Asset(State initialState) : d(new Instance(initialState))
+{}
+
+Asset::Asset(Asset const &other) : d(new Instance(*other.d))
 {}
 
 Asset::~Asset()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->assetDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->assetDeleted(*this);
 }
 
 void Asset::setState(State s)
 {
-    State old = _state;
-    _state = s;
-    if(old != _state)
+    State old = d->state;
+    d->state = s;
+    if(old != d->state)
     {
-        DENG2_FOR_AUDIENCE(StateChange, i) i->assetStateChanged(*this);
+        DENG2_FOR_AUDIENCE2(StateChange, i) i->assetStateChanged(*this);
     }
 }
 
@@ -45,12 +62,12 @@ void Asset::setState(bool assetReady)
 
 Asset::State Asset::state() const
 {
-    return _state;
+    return d->state;
 }
 
 bool Asset::isReady() const
 {
-    return _state == Ready;
+    return d->state == Ready;
 }
 
 //----------------------------------------------------------------------------
@@ -95,7 +112,7 @@ AssetGroup::AssetGroup() : d(new Instance)
 AssetGroup::~AssetGroup()
 {
     // We are about to be deleted.
-    audienceForStateChange.clear();
+    audienceForStateChange().clear();
 
     clear();
 }
@@ -109,8 +126,8 @@ void AssetGroup::clear()
 {
     DENG2_FOR_EACH(Members, i, d->deps)
     {
-        i->first->audienceForDeletion -= this;
-        i->first->audienceForStateChange -= this;
+        i->first->audienceForDeletion() -= this;
+        i->first->audienceForStateChange() -= this;
     }
 
     d->deps.clear();
@@ -120,15 +137,15 @@ void AssetGroup::clear()
 void AssetGroup::insert(Asset const &asset, Policy policy)
 {
     d->deps[&asset] = policy;
-    asset.audienceForDeletion += this;
-    asset.audienceForStateChange += this;
+    asset.audienceForDeletion() += this;
+    asset.audienceForStateChange() += this;
     d->update(*this);
 }
 
 void AssetGroup::remove(Asset const &asset)
 {
-    asset.audienceForDeletion -= this;
-    asset.audienceForStateChange -= this;
+    asset.audienceForDeletion() -= this;
+    asset.audienceForStateChange() -= this;
     d->deps.erase(&asset);
     d->update(*this);
 }

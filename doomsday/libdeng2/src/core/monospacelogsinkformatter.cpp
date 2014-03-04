@@ -40,8 +40,8 @@ struct TabFiller
 
     TabFiller(String const &text) : hasTabs(false)
     {
-        esc.audienceForPlainText += this;
-        esc.audienceForEscapeSequence += this;
+        esc.audienceForPlainText() += this;
+        esc.audienceForEscapeSequence() += this;
 
         // Break the entire message into lines, excluding all escape codes
         // except for tabs.

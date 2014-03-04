@@ -23,7 +23,7 @@ DEFINES += __LIBSHELL__
 INCLUDEPATH += include
 
 # Public headers.
-HEADERS += \
+publicHeaders(shell, \
     include/de/shell/AbstractLineEditor \
     include/de/shell/AbstractLink \
     include/de/shell/Action \
@@ -73,7 +73,8 @@ HEADERS += \
     include/de/shell/serverfinder.h \
     include/de/shell/textcanvas.h \
     include/de/shell/textrootwidget.h \
-    include/de/shell/textwidget.h
+    include/de/shell/textwidget.h \
+)
 
 # Sources and private headers.
 SOURCES += \
@@ -115,4 +116,9 @@ macx {
 else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+
+deng_sdk {
+    INSTALLS *= target
+    target.path = $$DENG_SDK_LIB_DIR
 }

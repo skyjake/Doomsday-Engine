@@ -146,7 +146,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
         self.panelClosing();
 
-        DENG2_FOR_PUBLIC_AUDIENCE(Close, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(Close, i)
         {
             i->panelBeingClosed(self);
         }
@@ -156,7 +156,11 @@ DENG_GUI_PIMPL(PanelWidget)
         dismissTimer.start();
         dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());
     }
+
+    DENG2_PIMPL_AUDIENCE(Close)
 };
+
+DENG2_AUDIENCE_METHOD(PanelWidget, Close)
 
 PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {

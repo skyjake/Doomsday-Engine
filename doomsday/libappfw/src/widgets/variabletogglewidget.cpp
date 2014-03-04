@@ -39,18 +39,18 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     {
         updateFromVariable();
 
-        self.audienceForToggle += this;
-        var->audienceForDeletion += this;
-        var->audienceForChange += this;
+        self.audienceForToggle() += this;
+        var->audienceForDeletion() += this;
+        var->audienceForChange() += this;
     }
 
     ~Instance()
     {
         if(var)
         {
-            var->audienceForDeletion -= this;
-            var->audienceForChange -= this;
-            self.audienceForToggle -= this;
+            var->audienceForDeletion() -= this;
+            var->audienceForChange() -= this;
+            self.audienceForToggle() -= this;
         }
     }
 
@@ -66,9 +66,9 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     {
         if(!var) return;
 
-        var->audienceForChange -= this;
+        var->audienceForChange() -= this;
         var->set(self.isActive()? activeValue : inactiveValue);
-        var->audienceForChange += this;
+        var->audienceForChange() += this;
     }
 
     void toggleStateChanged(ToggleWidget &)

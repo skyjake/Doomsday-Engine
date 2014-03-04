@@ -31,8 +31,8 @@ NativeFile::~NativeFile()
 {
     DENG2_GUARD(this);
 
-    DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
-    audienceForDeletion.clear();
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion().clear();
     
     close();
     deindex();
@@ -98,7 +98,8 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
     {
         /// @throw IByteArray::OffsetError  The region specified for reading extends
         /// beyond the bounds of the file.
-        throw OffsetError("NativeFile::get", "Cannot read past end of file");
+        throw OffsetError("NativeFile::get", description() + ": cannot read past end of file " +
+                          String("(%1[+%2] > %3)").arg(at).arg(count).arg(size()));
     }
     in.seek(at);
     in.read(reinterpret_cast<char *>(values), count);

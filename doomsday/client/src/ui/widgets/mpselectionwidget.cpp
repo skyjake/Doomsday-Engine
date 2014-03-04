@@ -75,33 +75,6 @@ DENG_GUI_PIMPL(MPSelectionWidget)
      */
     struct ServerWidget : public GameSessionWidget
     {
-        struct JoinAction : public Action
-        {
-        public:
-            JoinAction(serverinfo_t const &sv, ButtonWidget &owner)
-                : _owner(&owner)
-            {
-                _gameId = sv.gameIdentityKey;
-                _cmd = String("connect %1 %2").arg(sv.address).arg(sv.port);
-            }
-
-            void trigger()
-            {
-                Action::trigger();
-
-                BusyMode_FreezeGameForBusyMode();
-                ClientWindow::main().taskBar().close();
-
-                App_ChangeGame(App_Games().byIdentityKey(_gameId), false /*no reload*/);
-                Con_Execute(CMDS_DDAY, _cmd.toLatin1(), false, false);
-            }
-
-        private:
-            ButtonWidget *_owner;
-            String _gameId;
-            String _cmd;
-        };
-
         ServerWidget()
         {
             loadButton().disable();
@@ -124,10 +97,10 @@ DENG_GUI_PIMPL(MPSelectionWidget)
                 loadButton().enable(sv.canJoin);
                 if(sv.canJoin)
                 {
-                    loadButton().setAction(new JoinAction(sv, loadButton()));
+                    loadButton().setAction(new JoinAction(sv));
                 }
 
-                loadButton().setText(String(_E(1) "%1 " _E(.)_E(2) "(%5/%6)" _E(.) "\n%2"
+                loadButton().setText(String(_E(1) "%1 " _E(.)_E(2) "(%5/%6)" _E(.) " "DENG2_CHAR_MDASH" %2"
                                             _E(D)_E(l) "\n%7 %4")
                                .arg(sv.name)
                                .arg(svGame.title())
@@ -146,7 +119,13 @@ DENG_GUI_PIMPL(MPSelectionWidget)
         }
     };
 
-    Instance(Public *i) : Base(i)
+    ServerLink::FoundMask mask;
+    bool joinWhenSelected;
+
+    Instance(Public *i)
+        : Base(i)
+        , mask(ServerLink::Any)
+        , joinWhenSelected(true)
     {
         self.organizer().setWidgetFactory(*this);
         link().audienceForDiscoveryUpdate += this;
@@ -160,7 +139,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
         ServerWidget *w = new ServerWidget;
-        w->loadButton().audienceForPress += this;
+        w->loadButton().audienceForPress() += this;
         w->rule().setInput(Rule::Height, w->loadButton().rule().height());
 
         // Automatically close the info popup if the dialog is closed.
@@ -171,11 +150,27 @@ DENG_GUI_PIMPL(MPSelectionWidget)
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &item)
     {
-        widget.as<ServerWidget>().updateFromItem(item.as<ServerListItem>());
+        ServerWidget &sv = widget.as<ServerWidget>();
+        sv.updateFromItem(item.as<ServerListItem>());
+
+        if(!joinWhenSelected)
+        {
+            // Only send notification.
+            sv.loadButton().setAction(0);
+        }
     }
 
-    void buttonPressed(ButtonWidget &)
+    void buttonPressed(ButtonWidget &loadButton)
     {
+        if(ServerListItem const *it = self.organizer().findItemForWidget(
+                    loadButton.parentWidget()->as<GuiWidget>())->maybeAs<ServerListItem>())
+        {
+            DENG2_FOR_PUBLIC_AUDIENCE(Selection, i)
+            {
+                i->gameSelected(it->info());
+            }
+        }
+
         // A load button has been pressed.
         emit self.gameSelected();
     }
@@ -188,7 +183,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
         for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
             String const id = self.items().at(idx).data().toString();
-            if(!link.isFound(Address::parse(id)))
+            if(!link.isFound(Address::parse(id), mask))
             {
                 self.items().remove(idx--);
                 changed = true;
@@ -196,10 +191,10 @@ DENG_GUI_PIMPL(MPSelectionWidget)
         }
 
         // Add new entries and update existing ones.
-        foreach(de::Address const &host, link.foundServers())
+        foreach(de::Address const &host, link.foundServers(mask))
         {
             serverinfo_t info;
-            if(!link.foundServerInfo(host, &info)) continue;
+            if(!link.foundServerInfo(host, &info, mask)) continue;
 
             ui::Data::Pos found = self.items().findData(hostId(info));
             if(found == ui::Data::InvalidPos)
@@ -224,12 +219,30 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     }
 };
 
-MPSelectionWidget::MPSelectionWidget()
+MPSelectionWidget::MPSelectionWidget(DiscoveryMode discovery)
     : MenuWidget("mp-selection"), d(new Instance(this))
 {
     setGridSize(3, ui::Filled, 0, ui::Expand);
 
-    d->link().discoverUsingMaster();
+    switch(discovery)
+    {
+    case DiscoverUsingMaster:
+        d->link().discoverUsingMaster();
+        break;
+
+    case DirectDiscoveryOnly:
+        // Only show servers found via direct connection.
+        d->mask = ServerLink::Direct;
+        break;
+
+    default:
+        break;
+    }
+}
+
+void MPSelectionWidget::setJoinGameWhenSelected(bool enableJoin)
+{
+    d->joinWhenSelected = enableJoin;
 }
 
 void MPSelectionWidget::setColumns(int numberOfColumns)
@@ -239,15 +252,33 @@ void MPSelectionWidget::setColumns(int numberOfColumns)
         setGridSize(numberOfColumns, ui::Filled, 0, ui::Expand);
     }
 }
-/*
-void MPSelectionWidget::update()
-{
-    MenuWidget::update();
 
-    Rectanglei rect;
-    if(hasChangedPlace(rect))
-    {
-        d->updateLayoutForWidth(rect.width());
-    }
+serverinfo_t const &MPSelectionWidget::serverInfo(ui::DataPos pos) const
+{
+    DENG2_ASSERT(pos < items().size());
+    return items().at(pos).as<Instance::ServerListItem>().info();
 }
-*/
+
+DENG2_PIMPL_NOREF(MPSelectionWidget::JoinAction)
+{
+    String gameId;
+    String cmd;
+};
+
+MPSelectionWidget::JoinAction::JoinAction(serverinfo_t const &sv)
+    : d(new Instance)
+{
+    d->gameId = sv.gameIdentityKey;
+    d->cmd = String("connect %1 %2").arg(sv.address).arg(sv.port);
+}
+
+void MPSelectionWidget::JoinAction::trigger()
+{
+    Action::trigger();
+
+    BusyMode_FreezeGameForBusyMode();
+    ClientWindow::main().taskBar().close();
+
+    App_ChangeGame(App_Games().byIdentityKey(d->gameId), false /*no reload*/);
+    Con_Execute(CMDS_DDAY, d->cmd.toLatin1(), false, false);
+}

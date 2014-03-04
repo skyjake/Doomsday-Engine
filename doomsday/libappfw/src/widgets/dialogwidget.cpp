@@ -85,6 +85,7 @@ public ChildWidgetOrganizer::IFilter
     MenuWidget *extraButtons;
     ui::ListData buttonItems;
     QEventLoop subloop;
+    de::Action *acceptAction;
     Animation glow;
     bool needButtonUpdate;
     float normalGlow;
@@ -92,12 +93,13 @@ public ChildWidgetOrganizer::IFilter
     DialogContentStylist stylist;
 
     Instance(Public *i, Flags const &dialogFlags)
-        : Base(i),
-          modality(Modal),
-          flags(dialogFlags),
-          heading(0),
-          needButtonUpdate(false),
-          animatingGlow(false)
+        : Base(i)
+        , modality(Modal)
+        , flags(dialogFlags)
+        , heading(0)
+        , acceptAction(0)
+        , needButtonUpdate(false)
+        , animatingGlow(false)
     {
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
@@ -112,19 +114,19 @@ public ChildWidgetOrganizer::IFilter
         buttons = new MenuWidget("buttons");
         buttons->margins().setTop("");
         buttons->setItems(buttonItems);
-        buttons->items().audienceForAddition += this;
-        buttons->items().audienceForRemoval += this;
-        buttons->organizer().audienceForWidgetCreation += this;
-        buttons->organizer().audienceForWidgetUpdate += this;
+        buttons->items().audienceForAddition() += this;
+        buttons->items().audienceForRemoval() += this;
+        buttons->organizer().audienceForWidgetCreation() += this;
+        buttons->organizer().audienceForWidgetUpdate() += this;
         buttons->organizer().setFilter(*this);
 
         extraButtons = new MenuWidget("extra");
         extraButtons->margins().setTop("");
         extraButtons->setItems(buttonItems);
-        extraButtons->items().audienceForAddition += this;
-        extraButtons->items().audienceForRemoval += this;
-        extraButtons->organizer().audienceForWidgetCreation += this;
-        extraButtons->organizer().audienceForWidgetUpdate += this;
+        extraButtons->items().audienceForAddition() += this;
+        extraButtons->items().audienceForRemoval() += this;
+        extraButtons->organizer().audienceForWidgetCreation() += this;
+        extraButtons->organizer().audienceForWidgetUpdate() += this;
         extraButtons->organizer().setFilter(*this);
 
         // The menu maintains its own width and height based on children.
@@ -188,6 +190,11 @@ public ChildWidgetOrganizer::IFilter
         container->add(buttons);
         container->add(extraButtons);
         self.setContent(container);
+    }
+
+    ~Instance()
+    {
+        releaseRef(acceptAction);
     }
 
     void updateContentHeight()
@@ -414,6 +421,11 @@ ScrollAreaWidget &DialogWidget::area()
     return *d->area;
 }
 
+MenuWidget &DialogWidget::buttonsMenu()
+{
+    return *d->buttons;
+}
+
 /*
 MenuWidget &DialogWidget::buttons()
 {
@@ -457,6 +469,11 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
         }
     }
     return 0;
+}
+
+void DialogWidget::setAcceptanceAction(RefArg<de::Action> action)
+{
+    changeRef(d->acceptAction, action);
 }
 
 int DialogWidget::exec(GuiRootWidget &root)
@@ -615,10 +632,20 @@ void DialogWidget::preparePanelForOpening()
     d->updateBackground();
 }
 
-void DialogWidget::finish(int)
+void DialogWidget::finish(int result)
 {
     root().setFocus(0);
     close();
+
+    if(result > 0)
+    {
+        // Success!
+        if(d->acceptAction)
+        {
+            AutoRef<de::Action> held = *d->acceptAction;
+            held->trigger();
+        }
+    }
 }
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)

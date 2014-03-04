@@ -109,13 +109,13 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 break;
 
             case MultiplayerGames:
-                menu = new MPSelectionWidget;
+                menu = new MPSelectionWidget(MPSelectionWidget::DiscoverUsingMaster);
                 QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
                 QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
                 break;
             }
 
-            menu->items().audienceForAddition += this;
+            menu->items().audienceForAddition() += this;
 
             setContent(menu);
             menu->enableScrolling(false);
@@ -239,15 +239,15 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         updateSubsetLayout();
 
         App_Games().audienceForAddition += this;
-        App::app().audienceForStartupComplete += this;
-        App::app().audienceForGameChange += this;
+        App::app().audienceForStartupComplete() += this;
+        App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
         App_Games().audienceForAddition -= this;
-        App::app().audienceForStartupComplete -= this;
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForStartupComplete() -= this;
+        App::app().audienceForGameChange() -= this;
     }
 
     void updateSubsetVisibility()

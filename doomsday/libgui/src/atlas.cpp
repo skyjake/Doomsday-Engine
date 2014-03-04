@@ -139,12 +139,18 @@ DENG2_PIMPL(Atlas)
         markFullyChanged();
         mayDefrag = false;
 
-        DENG2_FOR_PUBLIC_AUDIENCE(Reposition, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(Reposition, i)
         {
             i->atlasContentRepositioned(self);
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Reposition)
+    DENG2_PIMPL_AUDIENCE(OutOfSpace)
 };
+
+DENG2_AUDIENCE_METHOD(Atlas, Reposition)
+DENG2_AUDIENCE_METHOD(Atlas, OutOfSpace)
 
 Atlas::Atlas(Flags const &flags, Size const &totalSize)
     : d(new Instance(this, flags, totalSize))
@@ -252,7 +258,7 @@ Id Atlas::alloc(Image const &image)
     {
         LOG_GL_XVERBOSE("Atlas is full with %.1f%% usage") << d->usedPercentage()*100;
 
-        DENG2_FOR_AUDIENCE(OutOfSpace, i)
+        DENG2_FOR_AUDIENCE2(OutOfSpace, i)
         {
             i->atlasOutOfSpace(*this);
         }

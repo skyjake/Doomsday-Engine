@@ -74,6 +74,12 @@ CONFIG(debug, debug|release) {
     DEFINES += NDEBUG
 }
 
+# SDK build.
+deng_sdk {
+    DEFINES += DENG_SDK_BUILD
+    echo("SDK build.")
+}
+
 # Debugging options.
 deng_fakememoryzone: DEFINES += LIBDENG_FAKE_MEMORY_ZONE
 
@@ -94,24 +100,32 @@ isStableRelease(): DEFINES += DENG_STABLE
 # Options defined by the user (may not exist).
 exists(config_user.pri): include(config_user.pri)
 
+deng_sdk {
+    # SDK install location.
+    !isEmpty(SDK_PREFIX) {
+        DENG_SDK_DIR        = $$SDK_PREFIX
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
+    }
+    else:!isEmpty(PREFIX) {
+        DENG_SDK_DIR        = $$PREFIX
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
+    }
+    else {
+        DENG_SDK_DIR        = $$OUT_PWD/..
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
+    }
+    echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
+    echo(SDK library directory: $$DENG_SDK_LIB_DIR)
+}
+
     win32: include(config_win32.pri)
 else:macx: include(config_macx.pri)
      else: include(config_unix.pri)
 
 # Apply deng_* Configuration -------------------------------------------------
-
-unix:deng_ccache {
-    # ccache can be used to speed up recompilation.
-    *-clang* {
-        QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
-        QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
-        QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
-    }
-    *-gcc*|*-g++* {
-        QMAKE_CC  = ccache $$QMAKE_CC
-        QMAKE_CXX = ccache $$QMAKE_CXX
-    }
-}
 
 deng_nofixedasm {
     DEFINES += DENG_NO_FIXED_ASM
@@ -124,4 +138,17 @@ deng_nosdlmixer|deng_nosdl {
 }
 deng_nosdl {
     DEFINES += DENG_NO_SDL
+}
+
+unix:deng_ccache {
+    # ccache can be used to speed up recompilation.
+    *-clang* {
+        QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
+        QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
+        QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
+    }
+    *-gcc*|*-g++* {
+        QMAKE_CC  = ccache $$QMAKE_CC
+        QMAKE_CXX = ccache $$QMAKE_CXX
+    }
 }

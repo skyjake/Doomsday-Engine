@@ -55,7 +55,7 @@ DENG2_PIMPL(GuiRootWidget)
         , uTexAtlas("uTex", GLUniform::Sampler2D)
         , noFramesDrawnYet(true)
     {
-        self.audienceForChildAddition += this;
+        self.audienceForChildAddition() += this;
     }
 
     ~Instance()

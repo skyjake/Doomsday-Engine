@@ -55,7 +55,7 @@ DENG2_OBSERVES(ui::Item, Change     )
     {
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            i.value()->audienceForDeletion -= this;
+            i.value()->audienceForDeletion() -= this;
         }
     }
 
@@ -63,9 +63,9 @@ DENG2_OBSERVES(ui::Item, Change     )
     {
         if(context)
         {
-            context->audienceForAddition -= this;
-            context->audienceForRemoval -= this;
-            context->audienceForOrderChange -= this;
+            context->audienceForAddition() -= this;
+            context->audienceForRemoval() -= this;
+            context->audienceForOrderChange() -= this;
 
             clearWidgets();
             context = 0;
@@ -77,9 +77,9 @@ DENG2_OBSERVES(ui::Item, Change     )
         {
             makeWidgets();
 
-            context->audienceForAddition += this;
-            context->audienceForRemoval += this;
-            context->audienceForOrderChange += this;
+            context->audienceForAddition() += this;
+            context->audienceForRemoval() += this;
+            context->audienceForOrderChange() += this;
         }
     }
 
@@ -116,14 +116,14 @@ DENG2_OBSERVES(ui::Item, Change     )
         }
 
         // Others may alter the widget in some way.
-        DENG2_FOR_PUBLIC_AUDIENCE(WidgetCreation, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(WidgetCreation, i)
         {
             i->widgetCreatedForItem(*w, item);
         }
 
         // Observe.
-        w->audienceForDeletion += this; // in case it's manually deleted
-        item.audienceForChange += this;
+        w->audienceForDeletion() += this; // in case it's manually deleted
+        item.audienceForChange() += this;
     }
 
     void makeWidgets()
@@ -139,7 +139,7 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void deleteWidget(GuiWidget *w)
     {
-        w->audienceForDeletion -= this;
+        w->audienceForDeletion() -= this;
         GuiWidget::destroy(w);
     }
 
@@ -147,7 +147,7 @@ DENG2_OBSERVES(ui::Item, Change     )
     {
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            i.key()->audienceForChange -= this;
+            i.key()->audienceForChange() -= this;
 
             deleteWidget(i.value());
         }
@@ -182,7 +182,7 @@ DENG2_OBSERVES(ui::Item, Change     )
         Mapping::const_iterator found = mapping.constFind(&item);
         if(found != mapping.constEnd())
         {
-            found.key()->audienceForChange -= this;
+            found.key()->audienceForChange() -= this;
             deleteWidget(found.value());
             mapping.remove(found.key());
         }
@@ -216,7 +216,7 @@ DENG2_OBSERVES(ui::Item, Change     )
         factory->updateItemWidget(w, item);
 
         // Notify.
-        DENG2_FOR_PUBLIC_AUDIENCE(WidgetUpdate, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(WidgetUpdate, i)
         {
             i->widgetUpdatedForItem(w, item);
         }
@@ -252,7 +252,13 @@ DENG2_OBSERVES(ui::Item, Change     )
         }
         return 0;
     }
+
+    DENG2_PIMPL_AUDIENCE(WidgetCreation)
+    DENG2_PIMPL_AUDIENCE(WidgetUpdate)
 };
+
+DENG2_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetCreation)
+DENG2_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetUpdate)
 
 ChildWidgetOrganizer::ChildWidgetOrganizer(GuiWidget &container)
     : d(new Instance(this, &container))

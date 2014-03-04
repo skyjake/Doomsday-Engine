@@ -32,14 +32,14 @@ DENG2_OBSERVES(App, GameChange)
 {
     Instance(Public *i) : Base(i)
     {
-        App::app().audienceForStartupComplete += this;
-        App::app().audienceForGameChange += this;
+        App::app().audienceForStartupComplete() += this;
+        App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForStartupComplete -= this;
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForStartupComplete() -= this;
+        App::app().audienceForGameChange() -= this;
     }
 
     void appStartupCompleted()

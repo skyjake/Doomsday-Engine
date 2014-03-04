@@ -67,7 +67,7 @@ void AlertMask::init()
 {
     foreach(Variable const *var, App::config().names().subrecord("alert").members())
     {
-        var->audienceForChange += d;
+        var->audienceForChange() += d;
     }
     d->updateMask();
 }

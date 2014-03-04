@@ -37,20 +37,21 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
      */
     struct SelectAction : public de::Action
     {
-        Instance *d;
+        ChoiceWidget::Instance *wd;
         ui::Item const &selItem;
 
-        SelectAction(Instance *inst, ui::Item const &item) : d(inst), selItem(item) {}
+        SelectAction(ChoiceWidget::Instance *inst, ui::Item const &item)
+            : wd(inst), selItem(item) {}
 
         void trigger()
         {
             Action::trigger();
-            d->selected = d->items().find(selItem);
-            d->updateButtonWithSelection();
-            d->updateItemHighlight();
-            d->choices->dismiss();
+            wd->selected = wd->items().find(selItem);
+            wd->updateButtonWithSelection();
+            wd->updateItemHighlight();
+            wd->choices->dismiss();
 
-            emit d->self.selectionChangedByUser(d->selected);
+            emit wd->self.selectionChangedByUser(wd->selected);
         }
     };
 
@@ -65,11 +66,11 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         self.setFont("choice.selected");
 
         choices = new PopupMenuWidget;
-        choices->items().audienceForAddition += this;
-        choices->items().audienceForRemoval += this;
-        choices->items().audienceForOrderChange += this;
-        choices->menu().organizer().audienceForWidgetCreation += this;
-        choices->menu().organizer().audienceForWidgetUpdate += this;
+        choices->items().audienceForAddition() += this;
+        choices->items().audienceForRemoval() += this;
+        choices->items().audienceForOrderChange() += this;
+        choices->menu().organizer().audienceForWidgetCreation() += this;
+        choices->menu().organizer().audienceForWidgetUpdate() += this;
         self.add(choices);
 
         self.setAction(new SignalAction(thisPublic, SLOT(openPopup())));
@@ -80,7 +81,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     ~Instance()
     {
-        choices->items().audienceForRemoval -= this;
+        choices->items().audienceForRemoval() -= this;
         releaseRef(maxWidth);
     }
 

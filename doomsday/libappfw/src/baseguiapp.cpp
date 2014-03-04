@@ -19,10 +19,71 @@
 #include "de/BaseGuiApp"
 #include "de/VRConfig"
 
+#include <de/Function>
+#include <de/ArrayValue>
+#include <de/DictionaryValue>
+#include <de/NativeFont>
+#include <QFontDatabase>
+
 namespace de {
+
+static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &args)
+{
+    try
+    {
+        // Try to load the specific font.
+        Block data(App::fileSystem().root().locate<File const>(args.at(0)->asText()));
+        int id;
+        id = QFontDatabase::addApplicationFontFromData(data);
+        if(id < 0)
+        {
+            LOG_RES_WARNING("Failed to load font:");
+        }
+        else
+        {
+            LOG_RES_VERBOSE("Loaded font: %s") << args.at(0)->asText();
+            //qDebug() << args.at(0)->asText();
+            //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
+        }
+    }
+    catch(Error const &er)
+    {
+        LOG_RES_WARNING("Failed to load font:\n") << er.asText();
+    }
+    return 0;
+}
+
+static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues const &args)
+{
+    // arg 0: family name
+    // arg 1: dictionary with [Text style, Number weight] => Text fontname
+
+    // styles: regular, italic
+    // weight: 0-99 (25=light, 50=normal, 75=bold)
+
+    NativeFont::StyleMapping mapping;
+
+    DictionaryValue const &dict = args.at(1)->as<DictionaryValue>();
+    DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, dict.elements())
+    {
+        NativeFont::Spec spec;
+        ArrayValue const &key = i->first.value->as<ArrayValue>();
+        if(key.at(0).asText() == "italic")
+        {
+            spec.style = NativeFont::Italic;
+        }
+        spec.weight = roundi(key.at(1).asNumber());
+        mapping.insert(spec, i->second->asText());
+    }
+
+    NativeFont::defineMapping(args.at(0)->asText(), mapping);
+
+    return 0;
+}
 
 DENG2_PIMPL_NOREF(BaseGuiApp)
 {
+    Binder binder;
     QScopedPointer<PersistentState> uiState;
     GLShaderBank shaders;
     VRConfig vr;
@@ -30,7 +91,14 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
 
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
     : GuiApp(argc, argv), d(new Instance)
-{}
+{
+    // Override the system locale (affects number/time formatting).
+    QLocale::setDefault(QLocale("en_US.UTF-8"));
+
+    d->binder.init(scriptSystem().nativeModule("App"))
+            << DENG2_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
+            << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");
+}
 
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {

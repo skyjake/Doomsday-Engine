@@ -52,8 +52,8 @@ DENG2_OBSERVES(Widget, ChildRemoval)
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
-        self.audienceForChildAddition += this;
-        self.audienceForChildRemoval += this;
+        self.audienceForChildAddition() += this;
+        self.audienceForChildRemoval() += this;
 
         dismissTimer.setSingleShot(true);
         dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());

@@ -105,7 +105,7 @@ DENG2_PIMPL(CanvasWindow)
         canvas->makeCurrent();
         LIBGUI_ASSERT_GL_OK();
 
-        DENG2_FOR_EACH_OBSERVER(Canvas::GLInitAudience, i, canvas->audienceForGLInit)
+        DENG2_FOR_EACH_OBSERVER(Canvas::GLInitAudience, i, canvas->audienceForGLInit())
         {
             i->canvasGLInit(*canvas);
         }
@@ -127,7 +127,7 @@ DENG2_PIMPL(CanvasWindow)
         }
 
         // Restore the old focus change audience.
-        canvas->audienceForFocusChange = canvasFocusAudience;
+        canvas->audienceForFocusChange() = canvasFocusAudience;
 
         LOGDEV_GL_MSG("Canvas replaced with %p") << de::dintptr(canvas);
     }
@@ -139,8 +139,8 @@ CanvasWindow::CanvasWindow()
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas(this)); // takes ownership
 
-    d->canvas->audienceForGLReady += this;
-    d->canvas->audienceForGLDraw += this;
+    d->canvas->audienceForGLReady() += this;
+    d->canvas->audienceForGLDraw() += this;
 
     // All input goes to the canvas.
     d->canvas->setFocus();
@@ -166,8 +166,8 @@ void CanvasWindow::recreateCanvas()
 
     // Steal the focus change audience temporarily so no spurious focus
     // notifications are sent.
-    d->canvasFocusAudience = canvas().audienceForFocusChange;
-    canvas().audienceForFocusChange.clear();
+    d->canvasFocusAudience = canvas().audienceForFocusChange();
+    canvas().audienceForFocusChange().clear();
 
     // We'll re-trap the mouse after the new canvas is ready.
     d->mouseWasTrapped = canvas().isMouseTrapped();
@@ -178,7 +178,7 @@ void CanvasWindow::recreateCanvas()
     // Create the replacement Canvas. Once it's created and visible, we'll
     // finish the switch-over.
     d->recreated = new Canvas(this, d->canvas);
-    d->recreated->audienceForGLReady += this;
+    d->recreated->audienceForGLReady() += this;
 
     //d->recreated->setGeometry(d->canvas->geometry());
     d->recreated->show();

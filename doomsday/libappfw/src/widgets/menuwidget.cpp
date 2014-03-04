@@ -43,7 +43,7 @@ DENG2_PIMPL(MenuWidget)
     class SubAction : public de::Action, DENG2_OBSERVES(Widget, Deletion)
     {
     public:
-        SubAction(Instance *inst, ui::Item const &parentItem)
+        SubAction(MenuWidget::Instance *inst, ui::Item const &parentItem)
             : d(inst)
             , _parentItem(parentItem)
             , _dir(ui::Right)
@@ -65,7 +65,7 @@ DENG2_PIMPL(MenuWidget)
             // Popups need a parent.
             d->self.add(_widget);
 
-            _widget->audienceForDeletion += this;
+            _widget->audienceForDeletion() += this;
             _dir = openingDirection;
         }
 
@@ -95,7 +95,7 @@ DENG2_PIMPL(MenuWidget)
         }
 
     protected:
-        Instance *d;
+        MenuWidget::Instance *d;
         ui::Item const &_parentItem;
         ui::Direction _dir;
         PopupWidget *_widget;
@@ -107,7 +107,7 @@ DENG2_PIMPL(MenuWidget)
     class SubmenuAction : public SubAction
     {
     public:
-        SubmenuAction(Instance *inst, ui::SubmenuItem const &parentItem)
+        SubmenuAction(MenuWidget::Instance *inst, ui::SubmenuItem const &parentItem)
             : SubAction(inst, parentItem)
         {
             PopupMenuWidget *sub = new PopupMenuWidget;
@@ -124,7 +124,7 @@ DENG2_PIMPL(MenuWidget)
     class SubwidgetAction : public SubAction
     {
     public:
-        SubwidgetAction(Instance *inst, ui::SubwidgetItem const &parentItem)
+        SubwidgetAction(MenuWidget::Instance *inst, ui::SubwidgetItem const &parentItem)
             : SubAction(inst, parentItem)
             , _item(parentItem)
         {}
@@ -181,18 +181,18 @@ DENG2_PIMPL(MenuWidget)
         if(items)
         {
             // Get rid of the old context.
-            items->audienceForAddition -= this;
-            items->audienceForRemoval -= this;
-            items->audienceForOrderChange -= this;
+            items->audienceForAddition() -= this;
+            items->audienceForRemoval() -= this;
+            items->audienceForOrderChange() -= this;
             organizer.unsetContext();
         }
 
         items = ctx;
 
         // Take new context into use.
-        items->audienceForAddition += this;
-        items->audienceForRemoval += this;
-        items->audienceForOrderChange += this;
+        items->audienceForAddition() += this;
+        items->audienceForRemoval() += this;
+        items->audienceForOrderChange() += this;
         organizer.setContext(*items); // recreates widgets
     }
 
@@ -324,8 +324,8 @@ DENG2_PIMPL(MenuWidget)
 
         openSubs.insert(w);
 
-        w->audienceForClose += this;
-        w->audienceForDeletion += this;
+        w->audienceForClose() += this;
+        w->audienceForDeletion() += this;
     }
 
     bool isVisibleItem(Widget const *child) const

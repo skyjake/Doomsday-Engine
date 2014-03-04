@@ -40,7 +40,7 @@ public:
     /**
      * Audience to be notified whenever the toggle is toggled.
      */
-    DENG2_DEFINE_AUDIENCE(Toggle, void toggleStateChanged(ToggleWidget &toggle))
+    DENG2_DEFINE_AUDIENCE2(Toggle, void toggleStateChanged(ToggleWidget &toggle))
 
 public:
     ToggleWidget(String const &name = "");

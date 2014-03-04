@@ -106,8 +106,8 @@ DENG_GUI_PIMPL(AlertDialog)
 
         area.enableIndicatorDraw(true);
 
-        alerts->organizer().audienceForWidgetCreation += this;
-        alerts->organizer().audienceForWidgetUpdate += this;
+        alerts->organizer().audienceForWidgetCreation() += this;
+        alerts->organizer().audienceForWidgetUpdate() += this;
     }
 
     NotificationWidget &notifs()

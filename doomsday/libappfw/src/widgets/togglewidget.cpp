@@ -112,12 +112,12 @@ DENG2_OBSERVES(ButtonWidget, Press)
     {
         self.setImage(procImage); // base class owns it
 
-        self.audienceForPress += this;
+        self.audienceForPress() += this;
     }
 
     ~Instance()
     {
-        self.audienceForPress -= this;
+        self.audienceForPress() -= this;
     }
 
     void buttonPressed(ButtonWidget &)
@@ -127,7 +127,11 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         emit self.stateChangedByUser(self.toggleState());
     }
+
+    DENG2_PIMPL_AUDIENCE(Toggle)
 };
+
+DENG2_AUDIENCE_METHOD(ToggleWidget, Toggle)
 
 ToggleWidget::ToggleWidget(String const &name) : ButtonWidget(name), d(new Instance(this))
 {
@@ -144,7 +148,7 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
 
         if(notify)
         {
-            DENG2_FOR_AUDIENCE(Toggle, i) i->toggleStateChanged(*this);
+            DENG2_FOR_AUDIENCE2(Toggle, i) i->toggleStateChanged(*this);
         }
         emit stateChanged(state);
     }

@@ -126,7 +126,7 @@ public:
     /**
      * Returns the name of the variable.
      */
-    String const &name() const { return _name; }
+    String const &name() const;
 
     /**
      * Sets the value of the variable.
@@ -159,12 +159,15 @@ public:
      */
     Value &value();
 
+    Value *valuePtr();
+    Value const *valuePtr() const;
+
     /**
      * Returns the value of the variable.
      */
     template <typename Type>
     Type &value() {
-        Type *v = dynamic_cast<Type *>(_value);
+        Type *v = dynamic_cast<Type *>(valuePtr());
         if(!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
@@ -193,7 +196,7 @@ public:
      */
     template <typename Type>
     Type const &value() const {
-        Type const *v = dynamic_cast<Type const *>(_value);
+        Type const *v = dynamic_cast<Type const *>(valuePtr());
         if(!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
@@ -265,7 +268,7 @@ public:
      *
      * @param variable  Variable.
      */
-    DENG2_DEFINE_AUDIENCE(Deletion, void variableBeingDeleted(Variable &variable))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void variableBeingDeleted(Variable &variable))
 
     /**
      * The value of the variable has changed.
@@ -273,16 +276,10 @@ public:
      * @param variable  Variable.
      * @param newValue  New value of the variable.
      */
-    DENG2_DEFINE_AUDIENCE(Change, void variableValueChanged(Variable &variable, Value const &newValue))
+    DENG2_DEFINE_AUDIENCE2(Change, void variableValueChanged(Variable &variable, Value const &newValue))
 
 private:
-    String _name;
-
-    /// Value of the variable.
-    Value *_value;
-
-    /// Mode flags.
-    Flags _mode;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Variable::Flags)

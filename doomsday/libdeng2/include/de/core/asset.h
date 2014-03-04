@@ -51,15 +51,16 @@ public:
     /**
      * Notified whenever the state of the asset changes.
      */
-    DENG2_DEFINE_AUDIENCE(StateChange, void assetStateChanged(Asset &))
+    DENG2_DEFINE_AUDIENCE2(StateChange, void assetStateChanged(Asset &))
 
     /**
      * Notified when the asset is destroyed.
      */
-    DENG2_DEFINE_AUDIENCE(Deletion, void assetDeleted(Asset &))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void assetDeleted(Asset &))
 
 public:
     Asset(State initialState = NotReady);
+    Asset(Asset const &other);
     virtual ~Asset();
 
     void setState(State s);
@@ -72,7 +73,7 @@ public:
     virtual bool isReady() const;
 
 private:
-    State _state;
+    DENG2_PRIVATE(d)
 };
 
 /**

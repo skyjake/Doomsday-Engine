@@ -34,7 +34,7 @@ namespace ui {
 class LIBAPPFW_PUBLIC Margins
 {
 public:
-    DENG2_DEFINE_AUDIENCE(Change, void marginsChanged())
+    DENG2_DEFINE_AUDIENCE2(Change, void marginsChanged())
 
 public:
     Margins(String const &defaultMargin = "gap");

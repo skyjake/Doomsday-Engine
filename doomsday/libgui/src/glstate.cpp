@@ -104,11 +104,11 @@ namespace internal
         }
         void set(GLTarget *trg) {
             if(_target) {
-                _target->audienceForDeletion -= this;
+                _target->audienceForDeletion() -= this;
             }
             _target = trg;
             if(_target) {
-                _target->audienceForDeletion += this;
+                _target->audienceForDeletion() += this;
             }
         }
         CurrentTarget &operator = (GLTarget *trg) {
