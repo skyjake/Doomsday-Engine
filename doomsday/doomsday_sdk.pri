@@ -21,7 +21,8 @@ else {
     INCLUDEPATH += $$DENG_SDK_DIR/include
 }
 
-LIBS += -L$$DENG_SDK_DIR/lib
+win32: LIBS += -L$$DENG_SDK_DIR/lib
+ else: QMAKE_LFLAGS = -L$$DENG_SDK_DIR/lib $$QMAKE_LFLAGS
 
 # The core library is always required.
 LIBS += -ldeng2
