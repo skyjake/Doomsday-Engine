@@ -119,6 +119,9 @@ public:
      */
     virtual void handleEventAsFallback(Event const &event);
 
+protected:
+    virtual void loadCommonTextures();
+
 private:
     DENG2_PRIVATE(d)
 };
