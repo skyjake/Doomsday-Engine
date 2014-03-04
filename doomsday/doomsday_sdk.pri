@@ -66,7 +66,7 @@ defineTest(dengPack) {
     # 1: path of a .pack file
     # 2: actual root directory
     # 3: files to include, relative to the root
-    system(cd \"$$2\" && zip -r \"$$1\" $$3)
+    system(cd \"$$2\" && zip -r \"$$1\" $$3 -x \\*~)
 }
 
 defineTest(dengPackModules) {
