@@ -39,10 +39,10 @@ class DENG2_PUBLIC SavedSession
 {
 public:
     /// Notified whenever the status of the saved game session changes.
-    DENG2_DEFINE_AUDIENCE(StatusChange, void savedSessionStatusChanged(SavedSession &session))
+    DENG2_DEFINE_AUDIENCE2(StatusChange, void savedSessionStatusChanged(SavedSession &session))
 
     /// Notified whenever the metadata of the saved game session changes.
-    DENG2_DEFINE_AUDIENCE(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
+    DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
 
     /// Required/referenced repository is missing. @ingroup errors
     DENG2_ERROR(MissingRepositoryError);

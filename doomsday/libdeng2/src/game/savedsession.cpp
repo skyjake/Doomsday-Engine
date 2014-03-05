@@ -62,7 +62,7 @@ DENG2_PIMPL(SavedSession)
 
     void notifyMetadataChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(MetadataChange, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(MetadataChange, i)
         {
             i->savedSessionMetadataChanged(self);
         }
@@ -90,13 +90,19 @@ DENG2_PIMPL(SavedSession)
 
         if(status != oldStatus)
         {
-            DENG2_FOR_PUBLIC_AUDIENCE(StatusChange, i)
+            DENG2_FOR_PUBLIC_AUDIENCE2(StatusChange, i)
             {
                 i->savedSessionStatusChanged(self);
             }
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(StatusChange)
+    DENG2_PIMPL_AUDIENCE(MetadataChange)
 };
+
+DENG2_AUDIENCE_METHOD(SavedSession, StatusChange)
+DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
 
 SavedSession::SavedSession(String const &fileName) : d(new Instance(this))
 {
@@ -236,11 +242,12 @@ void SavedSession::deleteFilesInRepository()
             {
                 // Remove this file.
                 delete file;
+                d->needUpdateStatus = true;
             }
         }
     }
 
-    // Force a status update.
+    /// Force a status update. @todo necessary?
     updateFromRepository();
 }
 

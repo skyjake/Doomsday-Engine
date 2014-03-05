@@ -181,8 +181,8 @@ void SaveSlots::Slot::replaceSavedSession(SavedSession *newSession)
     if(d->gameMenuWidgetId)
     {
         // We want notification of subsequent changes so that we can update the menu widget.
-        session.audienceForStatusChange   += d;
-        session.audienceForMetadataChange += d;
+        session.audienceForStatusChange()   += d;
+        session.audienceForMetadataChange() += d;
     }
 }
 
