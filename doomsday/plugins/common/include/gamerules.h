@@ -1,7 +1,6 @@
 /** @file gamerules.h  Game rule set.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,23 +17,22 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAMERULES_H
-#define LIBCOMMON_GAMERULES_H
-
-#include "common.h"
+#ifndef DENG_CLIENT_GAMERULES_H
+#define DENG_CLIENT_GAMERULES_H
 
 #ifdef __cplusplus
+
+#include "doomsday.h"
+#include <de/Record>
 #include <de/String>
 
 /**
- * @ingroup libcommon
- *
  * @todo Separate behaviors so that each rule is singular.
-*/
+ */
 class GameRuleset
 {
 public:
-    skillmode_t skill;
+    int skill;
 #if !__JHEXEN__
     byte fast;
 #endif
@@ -50,9 +48,14 @@ public:
     GameRuleset();
     GameRuleset(GameRuleset const &other);
 
+    static GameRuleset *fromReader(Reader *reader);
+    static GameRuleset *fromRecord(de::Record const &rec);
+
     GameRuleset &operator = (GameRuleset const &other);
 
     de::String description() const;
+
+    de::Record *toRecord() const;
 
     void write(Writer *writer) const;
     void read(Reader *reader);
@@ -60,30 +63,8 @@ public:
     de::String asText() const;
 };
 
-#endif // __cplusplus
-
-// C wrapper API ---------------------------------------------------------------
-
-#ifdef __cplusplus
-extern "C" {
 #else
 typedef void *GameRuleset;
 #endif
 
-skillmode_t GameRuleset_Skill(GameRuleset const *rules);
-#if !__JHEXEN__
-byte GameRuleset_Fast(GameRuleset const *rules);
-#endif
-byte GameRuleset_Deathmatch(GameRuleset const *rules);
-byte GameRuleset_NoMonsters(GameRuleset const *rules);
-#if __JHEXEN__
-byte GameRuleset_RandomClasses(GameRuleset const *rules);
-#else
-byte GameRuleset_RespawnMonsters(GameRuleset const *rules);
-#endif
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBCOMMON_GAMERULES_H
+#endif // DENG_CLIENT_GAMERULES_H

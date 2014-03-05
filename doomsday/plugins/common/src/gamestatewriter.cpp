@@ -27,21 +27,18 @@
 #include "p_savedef.h"               // CONSISTENCY
 #include "p_saveio.h"
 #include "p_saveg.h"                 /// playerheader_t @todo remove me
-#include "savedsessionrepository.h"
 #include "thingarchive.h"
 #include <de/NativePath>
 
+using namespace de;
+
 DENG2_PIMPL(GameStateWriter)
 {
-    /// Saved game session record for the serialized game state to be written. Not owned.
-    SessionRecord *record;
-
     ThingArchive *thingArchive;
-    Writer *writer;
+    writer_s *writer;
 
     Instance(Public *i)
         : Base(i)
-        , record(0)
         , thingArchive(0)
         , writer(0)
     {}
@@ -73,9 +70,9 @@ DENG2_PIMPL(GameStateWriter)
 #endif
     }
 
-    void writeSessionHeader()
+    void writeSessionHeader(de::SessionMetadata const &metadata)
     {
-        record->meta().write(writer);
+        SV_WriteSessionMetadata(metadata, writer);
     }
 
     void writeWorldACScriptData()
@@ -88,18 +85,7 @@ DENG2_PIMPL(GameStateWriter)
 
     void writeMap()
     {
-#if __JHEXEN__ // The map state is actually written to a separate file.
-        // Close the game state file.
-        SV_CloseFile();
-
-        // Open the map state file.
-        SV_OpenFile(record->repository().savePath() / record->fileNameForMap(gameMapUri), true/*for write*/);
-#endif
-
         MapStateWriter(*thingArchive).write(writer);
-
-        writeConsistencyBytes(); // To be absolutely sure...
-        SV_CloseFile();
     }
 
     void writePlayers()
@@ -134,25 +120,22 @@ DENG2_PIMPL(GameStateWriter)
 GameStateWriter::GameStateWriter() : d(new Instance(this))
 {}
 
-void GameStateWriter::write(SessionRecord &record)
+void GameStateWriter::write(Path const &stateFilePath, Path const &mapStateFilePath,
+    de::SessionMetadata const &metadata)
 {
-    de::Path const path = record.repository().savePath() / record.fileName();
-
-    d->record = &record;
-
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(d->record->meta().sessionId);
+    NetSv_SaveGame(metadata["sessionId"].value().asNumber());
 #endif
 
-    if(!SV_OpenFile(path, true/*for writing*/))
+    if(!SV_OpenFile(stateFilePath, true/*for writing*/))
     {
-        throw FileAccessError("GameStateWriter", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
+        throw FileAccessError("GameStateWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\"");
     }
 
     d->writer = SV_NewWriter();
 
-    d->writeSessionHeader();
+    d->writeSessionHeader(metadata);
     d->writeWorldACScriptData();
 
     // Set the mobj archive numbers.
@@ -161,10 +144,24 @@ void GameStateWriter::write(SessionRecord &record)
 #if !__JHEXEN__
     Writer_WriteInt32(d->writer, d->thingArchive->size());
 #endif
-
     d->writePlayers();
+
+    if(mapStateFilePath != stateFilePath)
+    {
+        // The map state is actually written to a separate file.
+        // Close the game state file.
+        SV_CloseFile();
+
+        // Open the map state file.
+        SV_OpenFile(mapStateFilePath, true/*for write*/);
+    }
+
     d->writeMap();
 
+    d->writeConsistencyBytes(); // To be absolutely sure...
+    SV_CloseFile();
+
+    // Cleanup.
     delete d->thingArchive; d->thingArchive = 0;
     Writer_Delete(d->writer); d->writer = 0;
 }

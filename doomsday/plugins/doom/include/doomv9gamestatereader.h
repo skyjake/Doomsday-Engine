@@ -26,23 +26,24 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "gamestatereader.h"
+#include <de/game/IGameStateReader>
 
 /**
  * Doom ver 1.9 saved game state reader.
  *
  * @ingroup libdoom
  */
-class DoomV9GameStateReader : public IGameStateReader
+class DoomV9GameStateReader : public de::IGameStateReader
 {
 public:
     DoomV9GameStateReader();
     ~DoomV9GameStateReader();
 
-    static IGameStateReader *make();
-    static bool recognize(SessionRecord &record);
+    static de::IGameStateReader *make();
+    static bool recognize(de::Path const &stateFilePath, de::SessionMetadata &metadata);
 
-    void read(SessionRecord &record);
+    void read(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
+              de::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

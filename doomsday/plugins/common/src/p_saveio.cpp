@@ -21,7 +21,9 @@
 #include "common.h"
 #include "p_saveio.h"
 
+#include "g_common.h"
 #include "p_savedef.h"    // CONSISTENCY
+#include <de/ArrayValue>
 #include <de/NativePath>
 
 static LZFILE *savefile;
@@ -253,6 +255,47 @@ void SV_BeginSegment(int segType)
 void SV_EndSegment()
 {
     SV_BeginSegment(ASEG_END);
+}
+
+void SV_WriteSessionMetadata(de::SessionMetadata const &metadata, Writer *writer)
+{
+    DENG2_ASSERT(writer != 0);
+
+    Writer_WriteInt32(writer, metadata["magic"].value().asNumber());
+    Writer_WriteInt32(writer, metadata["version"].value().asNumber());
+
+    AutoStr *gameIdentityKeyStr = AutoStr_FromTextStd(metadata["gameIdentityKey"].value().asText().toUtf8().constData());
+    Str_Write(gameIdentityKeyStr, writer);
+
+    AutoStr *descriptionStr = AutoStr_FromTextStd(metadata["userDescription"].value().asText().toUtf8().constData());
+    Str_Write(descriptionStr, writer);
+
+    Uri *mapUri = Uri_NewWithPath2(metadata["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
+    Uri_Write(mapUri, writer);
+    Uri_Delete(mapUri); mapUri = 0;
+
+#if !__JHEXEN__
+    Writer_WriteInt32(writer, metadata["mapTime"].value().asNumber());
+#endif
+
+    GameRuleset *rules = GameRuleset::fromRecord(metadata["gameRules"].valueAsRecord());
+    rules->write(writer);
+    delete rules; rules = 0;
+
+#if !__JHEXEN__
+    de::ArrayValue const &players = metadata["players"].value().as<de::ArrayValue>();
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        Writer_WriteByte(writer, byte(players.at(i).asNumber()));
+    }
+#endif
+
+    Writer_WriteInt32(writer, metadata["sessionId"].value().asNumber());
+}
+
+void SV_ReadSessionMetadata(de::SessionMetadata &metadata, Reader *reader)
+{
+    G_ReadLegacySessionMetadata(&metadata, reader);
 }
 
 void SV_WriteConsistencyBytes()

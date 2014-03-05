@@ -22,11 +22,10 @@
 #define LIBCOMMON_SAVESLOTS_H
 
 #include "common.h"
-#include "savedsessionrepository.h"
 #include <de/Error>
+#include <de/Path>
+#include <de/SavedSession>
 #include <de/String>
-
-struct SessionMetadata;
 
 /**
  * Maps save-game session file names into a finite set of "save slots".
@@ -78,19 +77,40 @@ public:
         /**
          * Convenient method of looking up the deserialized session metadata for the logical save slot.
          */
-        SessionMetadata const &saveMetadata() const;
+        de::SessionMetadata const &saveMetadata() const;
 
         /**
-         * Returns the saved game session record associated with the logical save slot.
-         */
-        SessionRecord &sessionRecord() const;
-
-        /**
-         * Replace the existing saved game session record with @a newRecord.
+         * Returns the saved session game state file path (in the repository).
          *
-         * @param newRecord  New SessionRecord to replace with. Ownership is given.
+         * @see mapStateFilePath()
          */
-        void replaceSessionRecord(SessionRecord *newRecord);
+        de::Path stateFilePath() const;
+
+        /**
+         * Returns the saved session map state file path (in the repository). Note that
+         * depending on how the game is configured, this may be the same as the game state
+         * file path.
+         *
+         * @see stateFilePath()
+         */
+        de::Path mapStateFilePath(Uri const *mapUri) const;
+
+        /**
+         * Returns the saved session for the logical save slot.
+         */
+        de::SavedSession &savedSession() const;
+
+        /**
+         * Deletes all saved session state files associated for the logical save slot.
+         */
+        void clear();
+
+        /**
+         * Replace the existing saved session with @a newSession.
+         *
+         * @param newSession  New SavedSession to replace with. Ownership is given.
+         */
+        void replaceSavedSession(de::SavedSession *newSession);
 
     private:
         DENG2_PRIVATE(d)
@@ -148,25 +168,17 @@ public:
     Slot *slotByUserDescription(de::String description) const;
 
     /**
-     * Deletes all saved game session files associated with the specified save @a slotId.
-     *
-     * @see hasSlot()
-     */
-    void clearSlot(de::String slotId);
-
-    /**
-     * Copies all the saved game session files from one slot to another.
+     * Copies all the saved session state files from one slot to another.
      *
      * @see hasSlot()
      */
     void copySlot(de::String sourceSlotId, de::String destSlotId);
 
     /**
-     * Force an update of the cached game-save info. To be called (sparingly) at strategic
-     * points when an update is necessary (e.g., the game-save paths have changed).
+     * Force an update of all the saved sessions. To be called (sparingly) at strategic points
+     * when an update is necessary (e.g., the game-save paths have changed).
      *
-     * @note It is not necessary to call this after a game-save is made, this module will do
-     * so automatically.
+     * @note It is not necessary to call this after a game-save is made.
      */
     void updateAll();
 

@@ -71,16 +71,20 @@ int G_RegisterGames(int hookType, int param, void* data)
         "Hexen: Deathkings of the Dark Citadel", "Raven Software"
     };
     GameDef const hexenDef = {
-        "hexen", CONFIGDIR, "Hexen", "Raven Software"
+        "hexen", CONFIGDIR,
+        "Hexen", "Raven Software"
     };
     GameDef const hexenDemoDef = {
-        "hexen-demo", CONFIGDIR, "Hexen 4-map Demo", "Raven Software"
+        "hexen-demo", CONFIGDIR,
+        "Hexen 4-map Demo", "Raven Software"
     };
     GameDef const hexenBetaDemoDef = {
-        "hexen-betademo", CONFIGDIR, "Hexen 4-map Beta Demo", "Raven Software"
+        "hexen-betademo", CONFIGDIR,
+        "Hexen 4-map Beta Demo", "Raven Software"
     };
     GameDef const hexenV10Def = {
-        "hexen-v10", CONFIGDIR, "Hexen v1.0", "Raven Software"
+        "hexen-v10", CONFIGDIR,
+        "Hexen v1.0", "Raven Software"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

@@ -674,7 +674,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(GameRuleset_Skill(G_RulesPtr()) != SM_NIGHTMARE && !GameRuleset_Fast(G_RulesPtr()))
+        if(G_Ruleset_Skill() != SM_NIGHTMARE && !G_Ruleset_Fast())
         {
             newChaseDir(actor);
         }
@@ -697,8 +697,8 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(GameRuleset_Skill(G_RulesPtr()) != SM_NIGHTMARE &&
-             !GameRuleset_Fast(G_RulesPtr()) && actor->moveCount))
+        if(!(G_Ruleset_Skill() != SM_NIGHTMARE &&
+             !G_Ruleset_Fast() && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {

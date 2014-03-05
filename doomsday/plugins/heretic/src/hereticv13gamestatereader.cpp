@@ -36,7 +36,9 @@
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "r_common.h"       // R_UpdateConsoleView
+#include <de/ArrayValue>
 #include <de/NativePath>
+#include <de/NumberValue>
 #include <cstdio>
 #include <cstring>
 
@@ -640,18 +642,16 @@ static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
     }
 }
 
-static void SaveInfo_Read_Hr_v13(SessionRecord *info, Reader *reader)
+static void SaveInfo_Read_Hr_v13(de::SessionMetadata &metadata, Reader *reader)
 {
-    DENG_ASSERT(info != 0);
-
     char descBuf[24];
     Reader_Read(reader, descBuf, 24);
-    info->setUserDescription(de::String(descBuf, 24));
+    metadata.set("userDescription", de::String(descBuf, 24));
 
     char vcheck[16 + 1];
     Reader_Read(reader, vcheck, 16); vcheck[16] = 0;
     //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
-    info->setVersion(atoi(&vcheck[8]));
+    metadata.set("version", atoi(&vcheck[8]));
 
     // The Heretic v13 savegame format omitted the majority of the game rules...
     // Therefore we must assume the user has correctly configured the session accordingly.
@@ -659,32 +659,36 @@ static void SaveInfo_Read_Hr_v13(SessionRecord *info, Reader *reader)
                              " (The original save format omits this information).");
     GameRuleset rules(G_Rules());
     readLegacyGameRules(rules, reader);
-    info->setGameRules(rules);
+    metadata.add("gameRules", rules.toRecord());
 
     uint episode = Reader_ReadByte(reader) - 1;
     uint map     = Reader_ReadByte(reader) - 1;
-    info->setMapUri(G_ComposeMapUri(episode, map));
+    Uri *mapUri  = G_ComposeMapUri(episode, map);
+    metadata.set("mapUri", Str_Text(Uri_Compose(mapUri)));
+    Uri_Delete(mapUri); mapUri = 0;
 
-    SessionMetadata::Players players; de::zap(players);
-    for(int i = 0; i < 4; ++i)
+    de::ArrayValue *array = new de::ArrayValue;
+    int idx = 0;
+    while(idx++ < 4)
     {
-        players[i] = Reader_ReadByte(reader);
+        bool playerIsPresent = CPP_BOOL( Reader_ReadByte(reader) );
+        *array << de::NumberValue(playerIsPresent, de::NumberValue::Boolean);
     }
-    info->setPlayers(players);
+    while(idx++ < MAXPLAYERS)
+    {
+        *array << de::NumberValue(false, de::NumberValue::Boolean);
+    }
+    metadata.set("players", array);
 
     // Get the map time.
     int a = Reader_ReadByte(reader);
     int b = Reader_ReadByte(reader);
     int c = Reader_ReadByte(reader);
-    info->setMapTime((a << 16) + (b << 8) + c);
-
-    info->setMagic(0); // Initialize with *something*.
+    metadata.set("mapTime", ((a << 16) + (b << 8) + c));
 
     /// @note Kludge: Assume the current game mode.
-    info->setGameIdentityKey(G_IdentityKey());
+    metadata.set("gameIdentityKey", G_IdentityKey());
     /// Kludge end.
-
-    info->setSessionId(0); // None.
 }
 
 static bool SV_OpenFile_Hr_v13(de::Path filePath)
@@ -725,9 +729,7 @@ DENG2_PIMPL(HereticV13GameStateReader)
     {
         // Read the header again.
         /// @todo seek straight to the game state.
-        SessionRecord *tmp = new SessionRecord;
-        SaveInfo_Read_Hr_v13(tmp, reader);
-        delete tmp;
+        SaveInfo_Read_Hr_v13(de::SessionMetadata(), reader);
     }
 
     void readPlayers()
@@ -949,12 +951,11 @@ HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
 HereticV13GameStateReader::~HereticV13GameStateReader()
 {}
 
-bool HereticV13GameStateReader::recognize(SessionRecord &record) // static
+bool HereticV13GameStateReader::recognize(de::Path const &stateFilePath,
+    de::SessionMetadata &metadata) // static
 {
-    de::Path const path = record.repository().savePath() / record.fileName();
-
-    if(!SV_ExistingFile(path)) return false;
-    if(!SV_OpenFile_Hr_v13(path)) return false;
+    if(!SV_ExistingFile(stateFilePath)) return false;
+    if(!SV_OpenFile_Hr_v13(stateFilePath)) return false;
 
     Reader *reader = SV_NewReader_Hr_v13();
     bool result = false;
@@ -966,8 +967,8 @@ bool HereticV13GameStateReader::recognize(SessionRecord &record) // static
 
     if(strncmp(vcheck, "version ", 8))*/
     {
-        SaveInfo_Read_Hr_v13(&record, reader);
-        result = (record.meta().version == 130);
+        SaveInfo_Read_Hr_v13(metadata, reader);
+        result = (metadata["version"].value().asNumber() == 130);
     }
 
     Reader_Delete(reader); reader = 0;
@@ -976,33 +977,43 @@ bool HereticV13GameStateReader::recognize(SessionRecord &record) // static
     return result;
 }
 
-IGameStateReader *HereticV13GameStateReader::make()
+de::IGameStateReader *HereticV13GameStateReader::make()
 {
     return new HereticV13GameStateReader;
 }
 
-void HereticV13GameStateReader::read(SessionRecord &record)
+void HereticV13GameStateReader::read(de::Path const &stateFilePath, de::Path const & /*mapStateFilePath*/,
+    de::SessionMetadata const &metadata)
 {
-    de::Path const path = record.repository().savePath() / record.fileName();
-
-    if(!SV_OpenFile_Hr_v13(path))
+    if(!SV_OpenFile_Hr_v13(stateFilePath))
     {
-        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
+        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(stateFilePath).pretty() + "\"");
     }
 
     d->reader = SV_NewReader_Hr_v13();
 
     d->seekToGameState();
 
-    // We don't want to see a briefing if we're loading a save game.
+    /*
+     * Load the map and configure some game settings.
+     */
     briefDisabled = true;
 
-    // Load a base map.
-    G_NewSession(record.meta().mapUri, 0/*not saved??*/, &record.meta().gameRules);
+    Uri *mapUri        = Uri_NewWithPath2(metadata["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
+    GameRuleset *rules = 0;
+    if(metadata.hasSubrecord("gameRules"))
+    {
+        rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+    }
+
+    G_NewSession(mapUri, 0/*not saved??*/, rules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
+    delete rules; rules = 0;
+    Uri_Delete(mapUri); mapUri = 0;
+
     // Recreate map state.
-    mapTime = record.meta().mapTime;
+    mapTime = metadata["mapTime"].value().asNumber();
 
     d->readPlayers();
     d->readMap();

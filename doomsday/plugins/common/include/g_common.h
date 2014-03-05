@@ -24,7 +24,6 @@
 #include "dd_share.h"
 #include "mobj.h"
 #include "player.h"
-#include "gamerules.h"
 
 DENG_EXTERN_C dd_bool singledemo;
 
@@ -60,6 +59,8 @@ gameaction_t G_GameAction(void);
 void G_SetGameAction(gameaction_t action);
 
 uint G_GenerateSessionId(void);
+
+void G_ReadLegacySessionMetadata(void *metadata, Reader *reader);
 
 /**
  * Begin the titlescreen animation sequence.
@@ -154,6 +155,18 @@ uint G_CurrentLogicalMapNumber(void);
 
 AutoStr *G_GenerateUserSaveDescription(void);
 
+int G_Ruleset_Skill();
+#if !__JHEXEN__
+byte G_Ruleset_Fast();
+#endif
+byte G_Ruleset_Deathmatch();
+byte G_Ruleset_NoMonsters();
+#if __JHEXEN__
+byte G_Ruleset_RandomClasses();
+#else
+byte G_Ruleset_RespawnMonsters();
+#endif
+
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );
@@ -165,12 +178,11 @@ D_CMD( CCmdExitLevel );
 #endif
 
 #if __cplusplus
+#include <de/game/IGameStateReader>
 #include <de/String>
+#include "gamerules.h"
 
-class GameStateReaderFactory;
 class SaveSlots;
-class SavedSessionRepository;
-struct SessionMetadata;
 
 /**
  * Returns the game identity key (from the engine).
@@ -224,22 +236,20 @@ bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
  */
 bool G_LoadSession(de::String slotId);
 
-void G_ApplyCurrentSessionMetadata(SessionMetadata &metadata);
-
 /**
- * Returns the game's SavedSessionRepository.
+ * @return  New SessionMetadata (record). Ownership is given to the caller.
  */
-SavedSessionRepository &G_SavedSessionRepository();
-
-/**
- * Returns the game's GameStateReaderFactory.
- */
-GameStateReaderFactory &G_GameStateReaderFactory();
+de::SessionMetadata *G_CurrentSessionMetadata();
 
 /**
  * Returns the game's SaveSlots.
  */
 SaveSlots &G_SaveSlots();
+
+/**
+ * Returns the game's (i.e., the app's) SavedSessionRepository.
+ */
+de::SavedSessionRepository &G_SavedSessionRepository();
 
 /**
  * Parse @a str and determine whether it references a logical game-save slot.
@@ -263,15 +273,5 @@ de::String G_SaveSlotIdFromUserInput(de::String str);
 GameRuleset &G_Rules();
 
 #endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GameRuleset *G_RulesPtr(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // LIBCOMMON_GAME_H

@@ -42,6 +42,7 @@
 #include "resource/zip.h"
 #include "uri.hh"
 #include <de/Error>
+#include <de/SavedSessionRepository>
 #include <de/String>
 #include <de/System>
 #include <QList>
@@ -863,6 +864,11 @@ public:
     void purgeCacheQueue();
 
 #endif // __CLIENT__
+
+    /**
+     * Returns the SavedSessionRepository.
+     */
+    de::SavedSessionRepository &savedSessionRepository() const;
 
 public: /// @todo Should be private:
     void initCompositeTextures();

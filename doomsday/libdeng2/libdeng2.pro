@@ -93,6 +93,8 @@ HEADERS += \
     include/de/MonospaceLogSinkFormatter \
     include/de/Range \
     include/de/Rectangle \
+    include/de/SavedSession \
+    include/de/SavedSessionRepository \
     include/de/System \
     include/de/TextApp \
     include/de/TextStreamLogSink \
@@ -128,6 +130,8 @@ HEADERS += \
     include/de/core/monospacelogsinkformatter.h \
     include/de/core/range.h \
     include/de/core/rectangle.h \
+    include/de/core/savedsession.h \
+    include/de/core/savedsessionrepository.h \
     include/de/core/system.h \
     include/de/core/textapp.h \
     include/de/core/textstreamlogsink.h \
@@ -164,6 +168,8 @@ SOURCES += \
     src/core/loop.cpp \
     src/core/memorylogsink.cpp \
     src/core/monospacelogsinkformatter.cpp \
+    src/core/savedsession.cpp \
+    src/core/savedsessionrepository.cpp \
     src/core/system.cpp \
     src/core/textapp.cpp \
     src/core/textstreamlogsink.cpp \

@@ -41,7 +41,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source)) ||
-                (IS_NETGAME && !GameRuleset_Deathmatch(G_RulesPtr()) && mo->player))
+                (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player))
             {
                 return false; // Continue iteration.
             }
@@ -64,7 +64,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source->tracer)) ||
-                (IS_NETGAME && !GameRuleset_Deathmatch(G_RulesPtr()) && mo->player))
+                (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player))
             {
                 return false; // Continue iteration.
             }
@@ -84,7 +84,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
            !(mo->flags2 & MF2_DORMANT))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !GameRuleset_Deathmatch(G_RulesPtr()) && mo->player))
+               (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player))
             {
                 return false; // Continue iteration.
             }
@@ -110,7 +110,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
            !(mo->flags2 & MF2_DORMANT))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !GameRuleset_Deathmatch(G_RulesPtr()) && mo->player) ||
+               (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player) ||
                mo == params->source->target)
             {
                 return false; // Continue iteration.

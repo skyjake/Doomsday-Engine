@@ -21,8 +21,10 @@
 #include "common.h"
 #include "gamerules.h"
 
+using namespace de;
+
 GameRuleset::GameRuleset()
-    : skill(skillmode_t(0))
+    : skill(0)
 #if !__JHEXEN__
     , fast(0)
 #endif
@@ -49,6 +51,51 @@ GameRuleset::GameRuleset(GameRuleset const &other)
 #endif
 {}
 
+GameRuleset *GameRuleset::fromReader(reader_s *reader) // static
+{
+    GameRuleset *rules = new GameRuleset;
+    rules->read(reader);
+    return rules;
+}
+
+GameRuleset *GameRuleset::fromRecord(Record const &rec) // static
+{
+    GameRuleset *rules = new GameRuleset;
+
+    rules->skill           = int ( rec["skill"].value().asNumber() );
+#if !__JHEXEN__
+    rules->fast            = byte( rec["fast"].value().asNumber() );
+#endif
+    rules->deathmatch      = byte( rec["deathmatch"].value().asNumber() );
+    rules->noMonsters      = byte( rec["noMonsters"].value().asNumber() );
+#if __JHEXEN__
+    rules->randomClasses   = byte( rec["randomClasses"].value().asNumber() );
+#else
+    rules->respawnMonsters = byte( rec["respawnMonsters"].value().asNumber() );
+#endif
+
+    return rules;
+}
+
+Record *GameRuleset::toRecord() const
+{
+    Record *rec = new Record;
+
+    rec->addNumber ("skill",           skill);
+#if !__JHEXEN__
+    rec->addBoolean("fast",            CPP_BOOL(fast));
+#endif
+    rec->addNumber ("deathmatch",      deathmatch);
+    rec->addBoolean("noMonsters",      CPP_BOOL(noMonsters));
+#if __JHEXEN__
+    rec->addBoolean("randomClasses",   CPP_BOOL(randomClasses));
+#else
+    rec->addBoolean("respawnMonsters", CPP_BOOL(respawnMonsters));
+#endif
+
+    return rec;
+}
+
 GameRuleset &GameRuleset::operator = (GameRuleset const &other)
 {
     skill           = other.skill;
@@ -65,7 +112,7 @@ GameRuleset &GameRuleset::operator = (GameRuleset const &other)
     return *this;
 }
 
-de::String GameRuleset::description() const
+String GameRuleset::description() const
 {
     /// @todo Separate co-op behavior to new rules, avoiding netgame test.
     if(IS_NETGAME)
@@ -77,7 +124,7 @@ de::String GameRuleset::description() const
     return "Singleplayer";
 }
 
-void GameRuleset::write(Writer *writer) const
+void GameRuleset::write(writer_s *writer) const
 {
     DENG2_ASSERT(writer != 0);
 
@@ -94,11 +141,11 @@ void GameRuleset::write(Writer *writer) const
 #endif
 }
 
-void GameRuleset::read(Reader *reader)
+void GameRuleset::read(reader_s *reader)
 {
     DENG2_ASSERT(reader != 0);
 
-    skill           = (skillmode_t) Reader_ReadByte(reader);
+    skill           = Reader_ReadByte(reader);
     // Interpret skill modes outside the normal range as "spawn no things".
     if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
     {
@@ -117,12 +164,12 @@ void GameRuleset::read(Reader *reader)
 #endif
 }
 
-de::String GameRuleset::asText() const
+String GameRuleset::asText() const
 {
-    de::String str;
+    String str;
     QTextStream os(&str);
     os << "skillmode: " << int(skill);
-    os << " jumping: "  << (cfg.jumpEnabled ? "yes" : "no");
+    //os << " jumping: "  << (cfg.jumpEnabled ? "yes" : "no");
 #if __JHEXEN__
     os << " random player classes: " << (randomClasses ? "yes" : "no");
 #endif
@@ -133,47 +180,3 @@ de::String GameRuleset::asText() const
 #endif
     return str;
 }
-
-// C wrapper API ---------------------------------------------------------------
-
-skillmode_t GameRuleset_Skill(GameRuleset const *rules)
-{
-    DENG2_ASSERT(rules != 0);
-    return rules->skill;
-}
-
-#if !__JHEXEN__
-byte GameRuleset_Fast(GameRuleset const *rules)
-{
-    DENG2_ASSERT(rules != 0);
-    return rules->fast;
-}
-#endif
-
-byte GameRuleset_Deathmatch(GameRuleset const *rules)
-{
-    DENG2_ASSERT(rules != 0);
-    return rules->deathmatch;
-}
-
-byte GameRuleset_NoMonsters(GameRuleset const *rules)
-{
-    DENG2_ASSERT(rules != 0);
-    return rules->noMonsters;
-}
-
-#if __JHEXEN__
-byte GameRuleset_RandomClasses(GameRuleset const *rules)
-{
-    DENG2_ASSERT(rules != 0);
-    return rules->randomClasses;
-}
-#endif
-
-#if !__JHEXEN__
-byte GameRuleset_RespawnMonsters(GameRuleset const *rules)
-{
-    DENG2_ASSERT(rules != 0);
-    return rules->respawnMonsters;
-}
-#endif

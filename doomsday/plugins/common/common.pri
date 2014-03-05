@@ -69,9 +69,7 @@ HEADERS += \
     $$common_inc/player.h \
     $$common_inc/polyobjs.h \
     $$common_inc/r_common.h \
-    $$common_inc/savedsessionrepository.h \
     $$common_inc/saveslots.h \
-    $$common_inc/sessionmetadata.h \
     $$common_inc/thingarchive.h \
     $$common_inc/thinkerinfo.h \
     $$common_inc/x_hair.h \
@@ -137,9 +135,7 @@ SOURCES += \
     $$common_src/player.cpp \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
-    $$common_src/savedsessionrepository.cpp \
     $$common_src/saveslots.cpp \
-    $$common_src/sessionmetadata.cpp \
     $$common_src/thingarchive.cpp \
     $$common_src/thinkerinfo.cpp \
     $$common_src/x_hair.c

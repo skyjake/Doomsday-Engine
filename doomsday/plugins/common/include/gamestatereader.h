@@ -1,7 +1,6 @@
 /** @file gamestatereader.h  Saved game state reader.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,123 +20,7 @@
 #ifndef LIBCOMMON_GAMESTATEREADER_H
 #define LIBCOMMON_GAMESTATEREADER_H
 
-#include "common.h"
-#include "savedsessionrepository.h"
-#include <de/Error>
-#include <de/Path>
-
-/**
- * Interface for game state (savegame) readers.
- */
-class IGameStateReader
-{
-public:
-    /// An error occurred attempting to open the input file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
-
-    /// Base class for read errors. @ingroup errors
-    DENG2_ERROR(ReadError);
-
-public:
-    virtual ~IGameStateReader() {}
-
-    /**
-     * Attempt to load (read/interpret) the saved game state.
-     *
-     * @param record  Session record for the serialized game session to be read/interpreted.
-     */
-    virtual void read(SessionRecord &info) = 0;
-};
-
-/**
- * Game state recognizer function ptr.
- *
- * The job of a recognizer function is to determine whether the game session associated
- * with the given save @a info is interpretable as a potentially loadable savegame state.
- *
- * @param record  Session record to attempt to update the saved game metadata of.
- */
-typedef bool (*GameStateRecognizeFunc)(SessionRecord &record);
-
-/// Game state reader instantiator function ptr.
-typedef IGameStateReader *(*GameStateReaderMakeFunc)();
-
-/**
- * Factory for the construction of new IGameStateReader-derived instances.
- */
-class GameStateReaderFactory
-{
-public:
-    /**
-     * Register a game state reader.
-     *
-     * @param recognizer  Game state recognizer function.
-     * @param maker       Game state reader instantiator function.
-     */
-    void declareReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker)
-    {
-        DENG_ASSERT(recognizer != 0 && maker != 0);
-        ReaderInfo info;
-        info.recognize = recognizer;
-        info.newReader = maker;
-        readers.push_back(info);
-    }
-
-    /**
-     * Determines whether a IGameStateReader appropriate for the specified save game @a info
-     * is available and if so, reads the game session header.
-     *
-     * @param record  The game session metadata will be written here if recognized.
-     *
-     * @return  @c true= the game session metadata was read successfully.
-     *
-     * @see recognizeAndMakeReader()
-     */
-    bool recognize(SessionRecord &record) const
-    {
-        return readGameSessionMeta(record) != 0;
-    }
-
-    /**
-     * Determines whether a IGameStateReader appropriate for the specified save game @a info
-     * is available and if so, reads the game session header and returns a new reader instance
-     * for deserializing the game state.
-     *
-     * @param record  The game session metadata will be written here if recognized.
-     *
-     * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
-     *
-     * @see recognize()
-     */
-    IGameStateReader *recognizeAndMakeReader(SessionRecord &record) const
-    {
-        if(ReaderInfo const *rdrInfo = readGameSessionMeta(record))
-        {
-            return rdrInfo->newReader();
-        }
-        return 0; // Unrecognized
-    }
-
-private:
-    struct ReaderInfo {
-        GameStateRecognizeFunc recognize;
-        GameStateReaderMakeFunc newReader;
-    };
-    typedef std::list<ReaderInfo> ReaderInfos;
-    ReaderInfos readers;
-
-    ReaderInfo const *readGameSessionMeta(SessionRecord &record) const
-    {
-        DENG2_FOR_EACH_CONST(ReaderInfos, i, readers)
-        {
-            if(i->recognize(record))
-            {
-                return &*i;
-            }
-        }
-        return 0; // Unrecognized
-    }
-};
+#include <de/game/IGameStateReader>
 
 /**
  * Native saved game state reader.
@@ -145,16 +28,17 @@ private:
  * @ingroup libcommon
  * @see GameStateWriter
  */
-class GameStateReader : public IGameStateReader
+class GameStateReader : public de::IGameStateReader
 {
 public:
     GameStateReader();
     ~GameStateReader();
 
-    static IGameStateReader *make();
-    static bool recognize(SessionRecord &record);
+    static de::IGameStateReader *make();
+    static bool recognize(de::Path const &stateFilePath, de::SessionMetadata &metadata);
 
-    void read(SessionRecord &record);
+    void read(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
+              de::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

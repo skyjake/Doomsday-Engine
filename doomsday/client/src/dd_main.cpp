@@ -524,6 +524,12 @@ ResourceSystem &App_ResourceSystem()
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
+#undef DD_SavedSessionRepository
+void *DD_SavedSessionRepository()
+{
+    return &App_ResourceSystem().savedSessionRepository();
+}
+
 de::ResourceClass &App_ResourceClass(String className)
 {
     return App_ResourceSystem().resClass(className);
@@ -1064,12 +1070,45 @@ static int DD_ActivateGameWorker(void *context)
 {
     ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
+    ResourceSystem &resSys = App_ResourceSystem();
+
+    // Saved sessions cannot presently be recognized in Ring Zero as the necessary game
+    // state interpreters are not available.
+    ///
+    /// @todo Solution to this problem:
+    ///
+    /// - Extract vanilla game state interpretation into a new command line app which simply
+    ///   converts the given file set into a new savegame format supported by this system.
+    ///   Note that Hexen savegames are presently stored in a different folder.
+    ///
+    /// - Split the serialized map state for Doom/Heretic savegames into separate files (as
+    ///   per Hexen) and utilize a common engine-side logic for reading metadata from the
+    ///   game state file.
+    ///
+    if(App_GameLoaded())
+    {
+        // Determine the new root save directory.
+        Path newRootSaveDir;
+        if(int arg = App::commandLine().check("-savedir", 1))
+        {
+            // Using a custom root save directory.
+            App::commandLine().makeAbsolutePath(arg + 1);
+            newRootSaveDir = NativePath(App::commandLine().at(arg + 1)).withSeparators('/');
+        }
+        else
+        {
+            // Use the default for the current game.
+            newRootSaveDir = Path("/home/savegame") / App_CurrentGame().identityKey();
+        }
+        resSys.savedSessionRepository().setLocation(newRootSaveDir);
+    }
+
     // Texture resources are located now, prior to initializing the game.
-    App_ResourceSystem().initCompositeTextures();
-    App_ResourceSystem().initFlatTextures();
-    App_ResourceSystem().initSpriteTextures();
-    App_ResourceSystem().textureScheme("Lightmaps").clear();
-    App_ResourceSystem().textureScheme("Flaremaps").clear();
+    resSys.initCompositeTextures();
+    resSys.initFlatTextures();
+    resSys.initSpriteTextures();
+    resSys.textureScheme("Lightmaps").clear();
+    resSys.textureScheme("Flaremaps").clear();
 
     if(parms.initiatedBusyMode)
     {
@@ -1129,9 +1168,9 @@ static int DD_ActivateGameWorker(void *context)
         Con_SetProgress(130);
     }
 
-    App_ResourceSystem().initSprites(); // Fully initialize sprites.
+    resSys.initSprites(); // Fully initialize sprites.
 #ifdef __CLIENT__
-    App_ResourceSystem().initModels();
+    resSys.initModels();
 #endif
 
     Def_PostInit();
@@ -3015,5 +3054,6 @@ DENG_DECLARE_API(Base) =
     DD_GameInfo,
     DD_IsSharpTick,
     Net_SendPacket,
-    R_SetupMap
+    R_SetupMap,
+    DD_SavedSessionRepository
 };

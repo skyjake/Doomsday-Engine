@@ -68,28 +68,36 @@ int G_RegisterGames(int hookType, int param, void* data)
 #define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
 
     GameDef const hacxDef = {
-        "hacx", "hacx", "HACX - Twitch 'n Kill", "Banjo Software"
+        "hacx", "hacx",
+        "HACX - Twitch 'n Kill", "Banjo Software"
     };
     GameDef const chexDef = {
-        "chex", "chex", "Chex(R) Quest", "Digital Cafe"
+        "chex", "chex",
+        "Chex(R) Quest", "Digital Cafe"
     };
     GameDef const doom2TntDef = {
-        "doom2-tnt", "doom", "Final DOOM: TNT: Evilution", "Team TNT"
+        "doom2-tnt", "doom",
+        "Final DOOM: TNT: Evilution", "Team TNT"
     };
     GameDef const doom2PlutDef = {
-        "doom2-plut", "doom", "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
+        "doom2-plut", "doom",
+        "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
     };
     GameDef const doom2Def = {
-        "doom2", "doom", "DOOM 2: Hell on Earth", "id Software"
+        "doom2", "doom",
+        "DOOM 2: Hell on Earth", "id Software"
     };
     GameDef const doomUltimateDef = {
-        "doom1-ultimate", "doom", "Ultimate DOOM", "id Software"
+        "doom1-ultimate", "doom",
+        "Ultimate DOOM", "id Software"
     };
     GameDef const doomDef = {
-        "doom1", "doom", "DOOM Registered", "id Software"
+        "doom1", "doom",
+        "DOOM Registered", "id Software"
     };
     GameDef const doomShareDef = {
-        "doom1-share", "doom", "DOOM Shareware", "id Software"
+        "doom1-share", "doom",
+        "DOOM Shareware", "id Software"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

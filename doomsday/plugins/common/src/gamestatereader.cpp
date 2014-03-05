@@ -31,21 +31,24 @@
 #include "p_tick.h"         // mapTime
 #include "r_common.h"       // R_UpdateConsoleView
 #include "saveslots.h"
+#include <de/ArrayValue>
 #include <de/NativePath>
 #include <de/String>
 
+using namespace de;
+
 DENG2_PIMPL(GameStateReader)
 {
-    /// Saved game session record for the serialized game state to be read. Not owned.
-    SessionRecord *record;
+    /// Metadata for the serialized game state to be read. Not owned.
+    SessionMetadata const *metadata;
 
-    Reader *reader;
+    reader_s *reader;
     dd_bool loaded[MAXPLAYERS];
     dd_bool infile[MAXPLAYERS];
 
     Instance(Public *i)
         : Base(i)
-        , record(0)
+        , metadata(0)
         , reader(0)
     {
         de::zap(loaded);
@@ -62,7 +65,8 @@ DENG2_PIMPL(GameStateReader)
     {
         // Read the session metadata again.
         /// @todo seek straight to the game state.
-        delete SessionMetadata::fromReader(reader);
+        SessionMetadata tmp;
+        SV_ReadSessionMetadata(tmp, reader);
     }
 
     void beginSegment(int segId)
@@ -76,10 +80,10 @@ DENG2_PIMPL(GameStateReader)
         if(Reader_ReadInt32(reader) != segId)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("GameStateReader", "Corrupt save game, segment #" + de::String::number(segId) + " failed alignment check");
+            throw ReadError("GameStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
         }
 #else
-        DENG_UNUSED(segId);
+        DENG2_UNUSED(segId);
 #endif
     }
 
@@ -102,38 +106,27 @@ DENG2_PIMPL(GameStateReader)
     void readWorldACScriptData()
     {
 #if __JHEXEN__
-        if(record->meta().version >= 7)
+        int const saveVersion = (*metadata)["version"].value().asNumber();
+
+        if(saveVersion >= 7)
         {
             beginSegment(ASEG_WORLDSCRIPTDATA);
         }
-        Game_ACScriptInterpreter().readWorldScriptData(reader, record->meta().version);
+        Game_ACScriptInterpreter().readWorldScriptData(reader, saveVersion);
 #endif
     }
 
     void readMap(int thingArchiveSize)
     {
-#if __JHEXEN__ // The map state is actually read from a separate file.
-        // Close the game state file.
-        SV_HxReleaseSaveBuffer();
+        int const saveVersion = (*metadata)["version"].value().asNumber();
 
-        // Open the map state file.
-        de::Path path = record->repository().savePath() / record->fileNameForMap(gameMapUri);
-        if(!SV_OpenFile(path, false/*for read*/))
-        {
-            throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
-        }
-#endif
-
-        MapStateReader(record->meta().version, thingArchiveSize).read(reader);
+        MapStateReader(saveVersion, thingArchiveSize).read(reader);
 
         readConsistencyBytes();
 #if __JHEXEN__
         SV_HxReleaseSaveBuffer();
 #else
         SV_CloseFile();
-#endif
-#if __JHEXEN__
-        SV_ClearTargetPlayers();
 #endif
     }
 
@@ -143,27 +136,31 @@ DENG2_PIMPL(GameStateReader)
     // discarded.
     void readPlayers()
     {
+        int const saveVersion = (*metadata)["version"].value().asNumber();
 #if __JHEXEN__
-        if(record->meta().version >= 4)
+        if(saveVersion >= 4)
 #else
-        if(record->meta().version >= 5)
+        if(saveVersion >= 5)
 #endif
         {
             beginSegment(ASEG_PLAYER_HEADER);
         }
         playerheader_t plrHdr;
-        plrHdr.read(reader, record->meta().version);
+        plrHdr.read(reader, saveVersion);
 
         // Setup the dummy.
         ddplayer_t dummyDDPlayer;
         player_t dummyPlayer;
         dummyPlayer.plr = &dummyDDPlayer;
 
+#if !__JHEXEN__
+        de::ArrayValue const &presentPlayers = (*metadata)["players"].value().as<de::ArrayValue>();
+#endif
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
             loaded[i] = 0;
 #if !__JHEXEN__
-            infile[i] = record->meta().players[i];
+            infile[i] = presentPlayers.at(i).isTrue();;
 #endif
         }
 
@@ -280,15 +277,13 @@ GameStateReader::GameStateReader() : d(new Instance(this))
 GameStateReader::~GameStateReader()
 {}
 
-bool GameStateReader::recognize(SessionRecord &record) // static
+bool GameStateReader::recognize(Path const &stateFilePath, SessionMetadata &metadata) // static
 {
-    de::Path const path = record.repository().savePath() / record.fileName();
+    if(!SV_ExistingFile(stateFilePath)) return false;
+    if(!SV_OpenFile(stateFilePath, false/*for reading*/)) return false;
 
-    if(!SV_ExistingFile(path)) return false;
-    if(!SV_OpenFile(path, false/*for reading*/)) return false;
-
-    Reader *reader = SV_NewReader();
-    record.readMeta(reader);
+    reader_s *reader = SV_NewReader();
+    G_ReadLegacySessionMetadata(&metadata, reader);
     Reader_Delete(reader);
 
 #if __JHEXEN__
@@ -298,7 +293,8 @@ bool GameStateReader::recognize(SessionRecord &record) // static
 #endif
 
     // Magic must match.
-    if(record.meta().magic != MY_SAVE_MAGIC && record.meta().magic != MY_CLIENT_SAVE_MAGIC)
+    int const magic = metadata["magic"].value().asNumber();
+    if(magic != MY_SAVE_MAGIC && magic != MY_CLIENT_SAVE_MAGIC)
     {
         return false;
     }
@@ -306,7 +302,8 @@ bool GameStateReader::recognize(SessionRecord &record) // static
     /*
      * Check for unsupported versions.
      */
-    if(record.meta().version > MY_SAVE_VERSION) // Future version?
+    int const saveVersion = metadata["version"].value().asNumber();
+    if(saveVersion > MY_SAVE_VERSION) // Future version?
     {
         return false;
     }
@@ -314,7 +311,7 @@ bool GameStateReader::recognize(SessionRecord &record) // static
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sides (ver3 format's sides contain chunks of junk data).
-    if(record.meta().version == 3)
+    if(saveVersion == 3)
     {
         return false;
     }
@@ -328,16 +325,16 @@ IGameStateReader *GameStateReader::make() // static
     return new GameStateReader;
 }
 
-void GameStateReader::read(SessionRecord &record)
+void GameStateReader::read(Path const &stateFilePath, Path const &mapStateFilePath,
+    SessionMetadata const &metadata)
 {
-    de::Path const path = record.repository().savePath() / record.fileName();
-
-    d->record = &record;
-
-    if(!SV_OpenFile(path, false/*for reading*/))
+    if(!SV_OpenFile(stateFilePath, false/*for reading*/))
     {
-        throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
+        throw FileAccessError("GameStateReader", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\"");
     }
+
+    int const saveVersion = metadata["version"].value().asNumber();
+    d->metadata = &metadata;
 
     d->reader = SV_NewReader();
 
@@ -349,33 +346,66 @@ void GameStateReader::read(SessionRecord &record)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewSession(d->record->meta().mapUri, 0/*not saved??*/, &d->record->meta().gameRules);
+
+    Uri *mapUri        = Uri_NewWithPath2(metadata["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
+    GameRuleset *rules = 0;
+    if(metadata.hasSubrecord("gameRules"))
+    {
+        rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+    }
+
+    G_NewSession(mapUri, 0/*not saved??*/, rules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
+    delete rules; rules = 0;
+    Uri_Delete(mapUri); mapUri = 0;
+
 #if !__JHEXEN__
-    mapTime = d->record->meta().mapTime;
+    mapTime = metadata["mapTime"].value().asNumber();
 #endif
 
     int thingArchiveSize = 0;
 #if !__JHEXEN__
-    thingArchiveSize = (d->record->meta().version >= 5? Reader_ReadInt32(d->reader) : 1024);
+    thingArchiveSize = (saveVersion >= 5? Reader_ReadInt32(d->reader) : 1024);
 #endif
 
     d->readPlayers();
+
+    if(mapStateFilePath != stateFilePath)
+    {
+        // The map state is actually read from a separate file.
+#if __JHEXEN__
+        // Close the game state file.
+        SV_HxReleaseSaveBuffer();
+#else
+        SV_CloseFile();
+#endif
+
+        // Open the map state file.
+        if(!SV_OpenFile(mapStateFilePath, false/*for read*/))
+        {
+            throw FileAccessError("GameStateReader", "Failed opening \"" + NativePath(mapStateFilePath).pretty() + "\"");
+        }
+    }
+
     d->readMap(thingArchiveSize);
+
+#if __JHEXEN__
+    SV_ClearTargetPlayers();
+#endif
 
     // Notify the players that weren't in the savegame.
     d->kickMissingPlayers();
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(d->record->meta().sessionId);
+    NetSv_LoadGame(metadata["sessionId"].value().asNumber());
 #endif
 
     Reader_Delete(d->reader); d->reader = 0;
 
     // Material scrollers must be spawned for older savegame versions.
-    if(d->record->meta().version <= 10)
+    if(saveVersion <= 10)
     {
         P_SpawnAllMaterialOriginScrollers();
     }

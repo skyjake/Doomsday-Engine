@@ -21,9 +21,9 @@
 #ifndef LIBCOMMON_GAMESTATEWRITER_H
 #define LIBCOMMON_GAMESTATEWRITER_H
 
-#include "common.h"
-#include "savedsessionrepository.h"
 #include <de/Error>
+#include <de/game/IGameStateReader>
+#include <de/Path>
 
 /**
  * Native saved game state writer.
@@ -40,7 +40,8 @@ public:
 public:
     GameStateWriter();
 
-    void write(SessionRecord &record);
+    void write(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
+               de::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

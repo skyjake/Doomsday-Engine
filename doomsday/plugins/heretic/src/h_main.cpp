@@ -31,6 +31,7 @@
 #include "g_defs.h"
 #include "p_inventory.h"
 #include "saveslots.h"
+#include <de/SavedSessionRepository>
 #include <cstring>
 
 int verbose;
@@ -318,8 +319,8 @@ void H_PreInit()
     G_CommonPreInit();
 
     // Declare the Heretic V13 game state reader/interpreter.
-    G_GameStateReaderFactory().declareReader(&HereticV13GameStateReader::recognize,
-                                             &HereticV13GameStateReader::make);
+    de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    saveRepo.declareReader(&HereticV13GameStateReader::recognize, &HereticV13GameStateReader::make);
 }
 
 void H_PostInit()

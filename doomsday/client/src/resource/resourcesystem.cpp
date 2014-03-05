@@ -318,6 +318,8 @@ DENG2_PIMPL(ResourceSystem)
     typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
     SpriteGroups spriteGroups;
 
+    SavedSessionRepository saveRepo;
+
     Instance(Public *i)
         : Base(i)
         , defaultColorPalette(0)
@@ -3807,6 +3809,11 @@ void ResourceSystem::cacheForCurrentMap()
 }
 
 #endif // __CLIENT__
+
+SavedSessionRepository &ResourceSystem::savedSessionRepository() const
+{
+    return d->saveRepo;
+}
 
 byte precacheMapMaterials = true;
 byte precacheSprites = true;

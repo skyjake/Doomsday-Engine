@@ -29,9 +29,10 @@
 #include "p_saveio.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
-#include "savedsessionrepository.h"
 #include "saveslots.h"
+#include <de/game/IGameStateReader>
 #include <de/NativePath>
+#include <de/SavedSessionRepository>
 #include <de/String>
 #include <de/memory.h>
 #include <cstdio>
@@ -769,12 +770,6 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
  */
 static de::String saveNameForClientSessionId(uint sessionId)
 {
-    // Do we have a valid path?
-    if(!F_MakePath(de::NativePath(G_SavedSessionRepository().clientSavePath()).expand().toUtf8().constData()))
-    {
-        return "";
-    }
-
     // Compose the full game-save path and filename.
     return de::String(CLIENTSAVEGAMENAME "%1")
                    .arg(sessionId, 8, 16, QChar('0')).toUpper();
@@ -790,31 +785,29 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    saveRepo.folder().verifyWriteAccess();
 
-    if(saveRepo.clientSavePath().isEmpty())
-    {
-        return;
-    }
+    // Prepare new saved game session session.
+    de::SavedSession *session = new de::SavedSession(saveNameForClientSessionId(sessionId));
+    de::SessionMetadata *metadata = G_CurrentSessionMetadata();
+    metadata->set("sessionId", sessionId);
+    session->replaceMetadata(metadata);
+    session->setRepository(&saveRepo);
 
-    // Prepare new saved game session record.
-    SessionRecord *record = saveRepo.newRecord(saveNameForClientSessionId(sessionId));
-    record->applyCurrentSessionMetadata();
-    record->setSessionId(sessionId);
-
-    de::Path path = saveRepo.clientSavePath() / record->fileName();
+    de::Path path = saveRepo.folder().path() / "client" / session->fileName();
     if(!SV_OpenFile(path, true/*for write*/))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
                                  de::NativePath(path).pretty().toLatin1().constData());
 
-        // Discard the useless record.
-        delete record;
+        // Discard the useless session.
+        delete session;
         return;
     }
 
     Writer *writer = SV_NewWriter();
-    record->meta().write(writer);
+    SV_WriteSessionMetadata(*metadata, writer);
 
     // Some important information.
     // Our position and look angles.
@@ -839,7 +832,7 @@ void SV_SaveGameClient(uint sessionId)
 
     SV_CloseFile();
     Writer_Delete(writer);
-    delete record;
+    delete session;
 #else
     DENG2_UNUSED(sessionId);
 #endif
@@ -854,43 +847,59 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-
-    SessionRecord *record = saveRepo.newRecord(saveNameForClientSessionId(sessionId));
+    de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
 
     Reader *reader = SV_NewReader();
-    record->readMeta(reader);
 
-    de::Path path = saveRepo.clientSavePath() / record->fileName();
+    de::SavedSession *session = new de::SavedSession(saveNameForClientSessionId(sessionId));
+    de::SessionMetadata *metadata = new de::SessionMetadata;
+    G_ReadLegacySessionMetadata(metadata, reader);
+    metadata->set("sessionId", sessionId);
+    session->replaceMetadata(metadata);
+    session->setRepository(&saveRepo);
+
+    de::Path path = saveRepo.folder().path() / "client" / session->fileName();
     if(!SV_OpenFile(path, false/*for read*/))
     {
         Reader_Delete(reader);
-        delete record;
+        delete session;
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",
                                  de::NativePath(path).pretty().toLatin1().constData());
         return;
     }
 
-    if(record->meta().magic != MY_CLIENT_SAVE_MAGIC)
+    if((*metadata)["magic"].value().asNumber() != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
         Reader_Delete(reader);
-        delete record;
+        delete session;
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
     }
 
-    // Do we need to change the map?
-    if(!Uri_Equality(gameMapUri, record->meta().mapUri))
+    int const saveVersion = (*metadata)["version"].value().asNumber();
+    Uri *mapUri           = Uri_NewWithPath2((*metadata)["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
+    GameRuleset *rules    = 0;
+    if(metadata->hasSubrecord("gameRules"))
     {
-        G_NewSession(record->meta().mapUri, 0/*default*/, &record->meta().gameRules);
+        rules = GameRuleset::fromRecord(metadata->subrecord("gameRules"));
+    }
+
+    // Do we need to change the map?
+    if(!Uri_Equality(gameMapUri, mapUri))
+    {
+        G_NewSession(mapUri, 0/*default*/, rules);
         G_SetGameAction(GA_NONE); /// @todo Necessary?
     }
-    else
+    else if(rules)
     {
-        G_Rules() = record->meta().gameRules;
+        G_Rules() = *rules;
     }
-    mapTime = record->meta().mapTime;
+
+    delete rules; rules = 0;
+    Uri_Delete(mapUri); mapUri = 0;
+
+    mapTime = (*metadata)["mapTime"].value().asNumber();
 
     P_MobjUnlink(mo);
     mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
@@ -904,23 +913,23 @@ void SV_LoadGameClient(uint sessionId)
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
 #if __JHEXEN__
-    if(record->meta().version >= 4)
+    if(saveVersion >= 4)
 #else
-    if(record->meta().version >= 5)
+    if(saveVersion >= 5)
 #endif
     {
         SV_AssertSegment(ASEG_PLAYER_HEADER);
     }
     playerheader_t plrHdr;
-    plrHdr.read(reader, record->meta().version);
+    plrHdr.read(reader, saveVersion);
 
     cpl->read(reader, plrHdr);
 
-    MapStateReader(record->meta().version).read(reader);
+    MapStateReader(saveVersion).read(reader);
 
     SV_CloseFile();
     Reader_Delete(reader);
-    delete record;
+    delete session;
 #else
     DENG2_UNUSED(sessionId);
 #endif

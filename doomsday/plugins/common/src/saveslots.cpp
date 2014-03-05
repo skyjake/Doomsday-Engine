@@ -24,10 +24,9 @@
 #include "g_common.h"
 #include "hu_menu.h"
 #include "p_saveio.h"
-#include "savedsessionrepository.h"
 #include <de/NativePath>
 #include <de/Observers>
-#include <de/String>
+#include <de/SavedSessionRepository>
 #include <map>
 
 #define MAX_HUB_MAPS 99
@@ -38,8 +37,8 @@ static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 using namespace de;
 
 DENG2_PIMPL(SaveSlots::Slot)
-, DENG2_OBSERVES(SessionRecord, SessionStatusChange)
-, DENG2_OBSERVES(SessionRecord, UserDescriptionChange)
+, DENG2_OBSERVES(SavedSession, StatusChange)
+, DENG2_OBSERVES(SavedSession, MetadataChange)
 {
     String id;
     bool userWritable;
@@ -68,10 +67,11 @@ DENG2_PIMPL(SaveSlots::Slot)
         DENG2_ASSERT(ob->_type == MN_EDIT);
 
         MNObject_SetFlags(ob, FO_SET, MNF_DISABLED);
-        SessionRecord &record = self.sessionRecord();
-        if(record.gameSessionIsLoadable())
+        SavedSession &session = self.savedSession();
+        if(session.isLoadable())
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, record.meta().userDescription.toUtf8().constData());
+            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION,
+                           session.metadata()["userDescription"].value().asText().toUtf8().constData());
             MNObject_SetFlags(ob, FO_CLEAR, MNF_DISABLED);
         }
         else
@@ -87,19 +87,19 @@ DENG2_PIMPL(SaveSlots::Slot)
         }
     }
 
-    /// Observes SessionRecord SessionStatusChange
-    void sessionRecordStatusChanged(SessionRecord &record)
+    /// Observes SavedSession StatusChange
+    void savedSessionStatusChanged(SavedSession &session)
     {
-        DENG2_ASSERT(&record == &self.sessionRecord());
-        DENG2_UNUSED(record);
+        DENG2_ASSERT(&session == &self.savedSession());
+        DENG2_UNUSED(session);
         updateGameMenuWidget();
     }
 
-    /// Observes SessionRecord UserDescriptionChange
-    void sessionRecordUserDescriptionChanged(SessionRecord &record)
+    /// Observes SavedSession UserDescriptionChange
+    void savedSessionMetadataChanged(SavedSession &session)
     {
-        DENG2_ASSERT(&record == &self.sessionRecord());
-        DENG2_UNUSED(record);
+        DENG2_ASSERT(&session == &self.savedSession());
+        DENG2_UNUSED(session);
         updateGameMenuWidget();
     }
 };
@@ -112,7 +112,10 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String const &fileName, int 
     d->fileName         = fileName;
     d->gameMenuWidgetId = gameMenuWidgetId;
 
-    replaceSessionRecord(G_SavedSessionRepository().newRecord(d->fileName));
+    SavedSession *session = new SavedSession(d->fileName);
+    session->setRepository(&G_SavedSessionRepository());
+
+    replaceSavedSession(session);
 }
 
 String const &SaveSlots::Slot::id() const
@@ -132,26 +135,44 @@ String const &SaveSlots::Slot::fileName() const
 
 void SaveSlots::Slot::bindFileName(String newName)
 {
-    sessionRecord().setFileName(d->fileName = newName);
+    savedSession().setFileName(d->fileName = newName);
 }
 
 bool SaveSlots::Slot::isUsed() const
 {
-    if(!G_SavedSessionRepository().hasRecord(d->fileName)) return false;
-    return sessionRecord().gameSessionIsLoadable();
+    if(!G_SavedSessionRepository().contains(d->fileName)) return false;
+    return savedSession().isLoadable();
 }
 
 SessionMetadata const &SaveSlots::Slot::saveMetadata() const
 {
-    return sessionRecord().meta();
+    return savedSession().metadata();
 }
 
-void SaveSlots::Slot::replaceSessionRecord(SessionRecord *newRecord)
+SavedSession &SaveSlots::Slot::savedSession() const
 {
-    DENG2_ASSERT(newRecord != 0);
+    return G_SavedSessionRepository().session(d->fileName);
+}
 
-    G_SavedSessionRepository().replaceRecord(d->fileName, newRecord);
-    SessionRecord &record = sessionRecord();
+void SaveSlots::Slot::clear()
+{
+    // Should we announce this?
+#if !defined DENG_DEBUG // Always
+    if(isUserWritable())
+#endif
+    {
+        App_Log(DE2_RES_MSG, "Clearing save slot '%s'", d->id.toLatin1().constData());
+    }
+
+    savedSession().deleteFilesInRepository();
+}
+
+void SaveSlots::Slot::replaceSavedSession(SavedSession *newSession)
+{
+    DENG2_ASSERT(newSession != 0);
+
+    G_SavedSessionRepository().add(d->fileName, newSession);
+    SavedSession &session = savedSession();
 
     // Update the menu widget right away.
     d->updateGameMenuWidget();
@@ -159,19 +180,27 @@ void SaveSlots::Slot::replaceSessionRecord(SessionRecord *newRecord)
     if(d->gameMenuWidgetId)
     {
         // We want notification of subsequent changes so that we can update the menu widget.
-        record.audienceForSessionStatusChange   += d;
-        record.audienceForUserDescriptionChange += d;
+        session.audienceForStatusChange   += d;
+        session.audienceForMetadataChange += d;
     }
 }
 
-SessionRecord &SaveSlots::Slot::sessionRecord() const
+Path SaveSlots::Slot::stateFilePath() const
 {
-    return G_SavedSessionRepository().record(d->fileName);
+    SavedSession &session = savedSession();
+    return session.repository().folder().path() / session.fileName();
+}
+
+Path SaveSlots::Slot::mapStateFilePath(Uri const *mapUri) const
+{
+    SavedSession &session = savedSession();
+    return session.repository().folder().path() / session.fileNameForMap(Str_Text(Uri_Compose(mapUri)));
 }
 
 DENG2_PIMPL_NOREF(SaveSlots)
 {
     typedef std::map<String, Slot *> Slots;
+    typedef std::pair<String, Slot *> SlotItem;
     Slots sslots;
 
     Instance() {}
@@ -196,19 +225,20 @@ void SaveSlots::addSlot(String id, bool userWritable, String fileName, int gameM
     // Ensure the slot identifier is unique.
     if(d->slotById(id)) return;
 
-    // Also add an empty record to the saved session repository.
+    // Also add an empty saved session to the repository.
     /// @todo the engine should do this itself by scanning the saved game directory.
-    G_SavedSessionRepository().addRecord(fileName);
+    SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    saveRepo.add(fileName, 0);
 
     // Insert a new save slot.
-    d->sslots.insert(std::pair<String, Slot *>(id, new Slot(id, userWritable, fileName, gameMenuWidgetId)));
+    d->sslots.insert(Instance::SlotItem(id, new Slot(id, userWritable, fileName, gameMenuWidgetId)));
 }
 
 void SaveSlots::updateAll()
 {
     DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
     {
-        i->second->sessionRecord().updateFromFile();
+        i->second->savedSession().updateFromRepository();
     }
 }
 
@@ -232,49 +262,12 @@ SaveSlots::Slot &SaveSlots::slot(String slotId) const
     throw MissingSlotError("SaveSlots::slot", "Invalid slot id '" + slotId + "'");
 }
 
-void SaveSlots::clearSlot(String slotId)
-{
-    SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-
-    if(saveRepo.savePath().isEmpty())
-    {
-        return;
-    }
-
-    Slot &sslot = slot(slotId);
-
-    // Should we announce this?
-#if !defined DENG_DEBUG // Always
-    if(sslot.isUserWritable())
-#endif
-    {
-        App_Log(DE2_RES_MSG, "Clearing save slot '%s'", slotId.toLatin1().constData());
-    }
-
-    for(int i = 0; i < MAX_HUB_MAPS; ++i)
-    {
-        Uri *mapUri = G_ComposeMapUri(gameEpisode, i);
-        SV_RemoveFile(saveRepo.savePath() / sslot.sessionRecord().fileNameForMap(mapUri));
-        Uri_Delete(mapUri);
-    }
-
-    SV_RemoveFile(saveRepo.savePath() / sslot.sessionRecord().fileName());
-
-    // Force a status update.
-    /// @todo move clear logic into SaveInfo.
-    sslot.sessionRecord().updateFromFile();
-}
-
 void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
 {
     LOG_AS("SaveSlots::copySlot");
 
     SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-
-    if(saveRepo.savePath().isEmpty())
-    {
-        return;
-    }
+    saveRepo.folder().verifyWriteAccess();
 
     Slot &sourceSlot = slot(sourceSlotId);
     Slot &destSlot   = slot(destSlotId);
@@ -286,23 +279,21 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
     }
 
     // Clear all save files at destination slot.
-    clearSlot(destSlotId);
+    destSlot.clear();
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
         Uri *mapUri = G_ComposeMapUri(gameEpisode, i);
-        SV_CopyFile(saveRepo.savePath() / sourceSlot.sessionRecord().fileNameForMap(mapUri),
-                    saveRepo.savePath() / destSlot.sessionRecord().fileNameForMap(mapUri));
+        SV_CopyFile(sourceSlot.mapStateFilePath(mapUri), destSlot.mapStateFilePath(mapUri));
         Uri_Delete(mapUri);
     }
 
-    SV_CopyFile(saveRepo.savePath() / sourceSlot.sessionRecord().fileName(),
-                saveRepo.savePath() / destSlot.sessionRecord().fileName());
+    SV_CopyFile(sourceSlot.stateFilePath(), destSlot.stateFilePath());
 
     // Copy save info too.
-    destSlot.replaceSessionRecord(new SessionRecord(sourceSlot.sessionRecord()));
+    destSlot.replaceSavedSession(new SavedSession(sourceSlot.savedSession()));
     // Update the file path associated with the copied save info.
-    destSlot.sessionRecord().setFileName(destSlot.fileName());
+    destSlot.savedSession().setFileName(destSlot.fileName());
 }
 
 SaveSlots::Slot *SaveSlots::slotByUserDescription(String description) const
@@ -314,7 +305,7 @@ SaveSlots::Slot *SaveSlots::slotByUserDescription(String description) const
             SaveSlot &sslot = *i->second;
             if(!sslot.isUsed()) continue;
 
-            if(!sslot.saveMetadata().userDescription.compareWithoutCase(description))
+            if(!sslot.saveMetadata()["userDescription"].value().asText().compareWithoutCase(description))
             {
                 return &sslot;
             }
