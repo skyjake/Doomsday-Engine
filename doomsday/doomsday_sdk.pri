@@ -8,7 +8,8 @@
 # visit http://www.gnu.org/licenses/lgpl.html for details.
 #
 # Variables:
-# - DENG_CONFIG     Names of supporting libraries to use (gui, appfw, shell)
+# - DENG_CONFIG     Names of supporting libraries to use (gui, appfw, shell);
+#                   symlink: deploy libs as symbolic links
 
 DENG_SDK_DIR = $$PWD
 
@@ -136,7 +137,7 @@ defineTest(dengDeploy) {
         denglibs.path = $$dengFindLibDir($$prefix)
     }
 
-    unix {
+    contains(DENG_CONFIG, symlink):unix {
         # Symlink the libraries rather than copy.
         macx {
             QMAKE_BUNDLE_DATA -= denglibs
