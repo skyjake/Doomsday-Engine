@@ -60,7 +60,7 @@ public:
     {
         if(_observingAtlas)
         {
-            _observingAtlas->audienceForReposition -= this;
+            _observingAtlas->audienceForReposition() -= this;
         }
 
         /**
@@ -80,7 +80,7 @@ public:
         {
             // Automatically start observing the root atlas.
             _observingAtlas = &root().atlas();
-            _observingAtlas->audienceForReposition += this;
+            _observingAtlas->audienceForReposition() += this;
         }
     }
 

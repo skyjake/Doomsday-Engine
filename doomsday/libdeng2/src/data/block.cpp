@@ -75,7 +75,8 @@ void Block::get(Offset atPos, Byte *values, Size count) const
     if(atPos + count > size())
     {
         /// @throw OffsetError The accessed region of the block was out of range.
-        throw OffsetError("Block::get", "Out of range");
+        throw OffsetError("Block::get", "Out of range " +
+                          String("(%1[+%2] > %3)").arg(atPos).arg(count).arg(size()));
     }
 
     for(Offset i = atPos; count > 0; ++i, --count)

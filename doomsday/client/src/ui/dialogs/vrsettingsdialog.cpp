@@ -106,8 +106,6 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
     LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
     LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
-    LabelWidget *sampleLabel   = LabelWidget::newWithText(tr("Oculus Rift\nMultisampling:"), &area());
-    sampleLabel->setTextLineAlignment(ui::AlignRight);
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -118,20 +116,21 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *heightLabel   << *d->humanHeight
            << *ipdLabel      << *d->ipd
            << *dominantLabel << *d->dominantEye
-           << Const(0)       << *d->swapEyes
-           << *sampleLabel   << *d->riftSamples;
+           << Const(0)       << *d->swapEyes;
+
+    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
+    LabelWidget *sampleLabel = LabelWidget::newWithText(tr("Multisampling:"), &area());
+    ovrLabel->margins().setTop("gap");
+    sampleLabel->setTextLineAlignment(ui::AlignRight);
+
+    layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
+    layout.append(*ovrLabel, 2) << *sampleLabel << *d->riftSamples;
 
     if(vrCfg().oculusRift().isReady())
     {
-        LabelWidget *ovrLabel     = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
         LabelWidget *latencyLabel = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
         LabelWidget *utilLabel    = LabelWidget::newWithText(tr("Utilities:"), &area());
 
-        ovrLabel->margins().setTop("gap");
-
-        layout.setCellAlignment(Vector2i(0, 6), ui::AlignLeft);
-
-        layout.append(*ovrLabel, 2);
         layout << *latencyLabel << *d->riftPredictionLatency
                << *utilLabel    << *d->riftSetup
                << Const(0)      << *d->desktopSetup;

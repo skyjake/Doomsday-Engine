@@ -319,7 +319,7 @@ void OculusRift::update()
 
 Vector3f OculusRift::headOrientation() const
 {
-    de::Vector3f result;
+    Vector3f result;
 #ifdef DENG_HAVE_OCULUS_API
     DENG2_GUARD(d);
     if(isReady())
@@ -330,6 +330,14 @@ Vector3f OculusRift::headOrientation() const
     }
 #endif
     return result;
+}
+
+Matrix4f OculusRift::headModelViewMatrix() const
+{
+    Vector3f const pry = headOrientation();
+    return Matrix4f::rotate(pry[1], Vector3f(0, 0, 1)) *
+           Matrix4f::rotate(pry[0], Vector3f(1, 0, 0)) *
+           Matrix4f::rotate(pry[2], Vector3f(0, 1, 0));
 }
 
 float OculusRift::distortionScale() const

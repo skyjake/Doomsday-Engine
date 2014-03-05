@@ -54,13 +54,13 @@ DENG2_PIMPL(GLFramebuffer)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uBufTex   ("uTex",       GLUniform::Sampler2D)
     {
-        pDefaultSampleCount.audienceForChange += this;
+        pDefaultSampleCount.audienceForChange() += this;
         //DENG2_GUI_APP->audienceForGLContextChange += this;
     }
 
     ~Instance()
     {
-        pDefaultSampleCount.audienceForChange -= this;
+        pDefaultSampleCount.audienceForChange() -= this;
         //DENG2_GUI_APP->audienceForGLContextChange -= this;
     }
 

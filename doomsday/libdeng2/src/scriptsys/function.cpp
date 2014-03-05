@@ -96,7 +96,7 @@ Function::~Function()
     if(d->globals)
     {
         // Stop observing the namespace.
-        d->globals->audienceForDeletion.remove(this);
+        d->globals->audienceForDeletion() -= this;
     }
 }
 
@@ -230,7 +230,7 @@ void Function::setGlobals(Record *globals)
     if(!d->globals)
     {
         d->globals = globals;
-        d->globals->audienceForDeletion.add(this);
+        d->globals->audienceForDeletion() += this;
     }
     /*
     else if(d->globals != globals)

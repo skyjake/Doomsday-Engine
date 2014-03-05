@@ -50,15 +50,17 @@ static QRect desktopRect()
 
 static QRect centeredQRect(Vector2ui const &size)
 {
-    QSize screenSize = desktopRect().size();
+    Vector2ui const screenSize(desktopRect().size().width(),
+                               desktopRect().size().height());
+    Vector2ui const clamped = size.min(screenSize);
 
     LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i")
-            << screenSize.width() << screenSize.height();
+            << screenSize.x << screenSize.y;
 
     return QRect(desktopRect().topLeft() +
-                 QPoint((screenSize.width()  - size.x) / 2,
-                        (screenSize.height() - size.y) / 2),
-                 QSize(size.x, size.y));
+                 QPoint((screenSize.x - clamped.x) / 2,
+                        (screenSize.y - clamped.y) / 2),
+                 QSize(clamped.x, clamped.y));
 }
 
 static Rectanglei centeredRect(Vector2ui const &size)
@@ -737,7 +739,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         }
 
         // The queue is now empty; all modifications to state have been applied.
-        DENG2_FOR_PUBLIC_AUDIENCE(AttributeChange, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
         {
             i->windowAttributesChanged(self);
         }
@@ -761,7 +763,11 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         return st;
     }
+
+    DENG2_PIMPL_AUDIENCE(AttributeChange)
 };
+
+DENG2_AUDIENCE_METHOD(PersistentCanvasWindow, AttributeChange)
 
 PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     : d(new Instance(this, id))
@@ -896,7 +902,7 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
             d->state.setFlag(Instance::State::Centered, false);
 
             // Notify.
-            DENG2_FOR_AUDIENCE(AttributeChange, i)
+            DENG2_FOR_AUDIENCE2(AttributeChange, i)
             {
                 i->windowAttributesChanged(*this);
             }

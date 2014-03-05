@@ -29,7 +29,7 @@ DENG2_PIMPL(TextApp)
 
     Instance(Public *i) : Base(i)
     {
-        loop.audienceForIteration += self;
+        loop.audienceForIteration() += self;
 
         // In text-based apps, we can limit the loop frequency.
         loop.setRate(35);
@@ -41,6 +41,18 @@ TextApp::TextApp(int &argc, char **argv)
       App(applicationFilePath(), arguments()),
       d(new Instance(this))
 {}
+
+void TextApp::setMetadata(String const &orgName, String const &orgDomain,
+                          String const &appName, String const &appVersion)
+{
+    setName(appName);
+
+    // Qt metadata.
+    setOrganizationName  (orgName);
+    setOrganizationDomain(orgDomain);
+    setApplicationName   (appName);
+    setApplicationVersion(appVersion);
+}
 
 bool TextApp::notify(QObject *receiver, QEvent *event)
 {
@@ -83,7 +95,7 @@ Loop &TextApp::loop()
 
 NativePath TextApp::appDataPath() const
 {
-    return NativePath(QDir::homePath()) / ".doomsday";
+    return NativePath(QDir::homePath()) / unixHomeFolderName();
 }
 
 void TextApp::loopIteration()

@@ -28,7 +28,7 @@ win32 {
 }
 
 # Public headers.
-HEADERS += \
+publicHeaders(root, \
     include/de/AtlasProceduralImage \
     include/de/BaseGuiApp \
     include/de/BaseWindow \
@@ -70,12 +70,21 @@ HEADERS += \
     include/de/SequentialLayout \
     include/de/SignalAction \
     include/de/SliderWidget \
+    include/de/Style \
     include/de/TabWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
     include/de/VRWindowTransform \
     include/de/WindowSystem \
     include/de/WindowTransform \
+    include/de/VariableChoiceWidget \
+    include/de/VariableToggleWidget \
+    include/de/VRConfig \
+    \
+    include/de/libappfw.h \
+)
+
+publicHeaders(ui, \
     include/de/ui/ActionItem \
     include/de/ui/Data \
     include/de/ui/ImageItem \
@@ -86,12 +95,11 @@ HEADERS += \
     include/de/ui/SubmenuItem \
     include/de/ui/SubwidgetItem \
     include/de/ui/VariableToggleItem \
-    include/de/VariableChoiceWidget \
-    include/de/VariableToggleWidget \
-    include/de/VRConfig \
     \
-    include/de/dialogs/inputdialog.h \
-    include/de/dialogs/messagedialog.h \
+    include/de/ui/defs.h \
+)
+
+publicHeaders(framework, \
     include/de/framework/actionitem.h \
     include/de/framework/atlasproceduralimage.h \
     include/de/framework/baseguiapp.h \
@@ -123,10 +131,14 @@ HEADERS += \
     include/de/framework/vrwindowtransform.h \
     include/de/framework/windowsystem.h \
     include/de/framework/windowtransform.h \
-    include/de/libappfw.h \
-    include/de/ui/defs.h \
+)
+
+publicHeaders(vr, \
     include/de/vr/oculusrift.h \
     include/de/vr/vrconfig.h \
+)
+
+publicHeaders(widgets, \
     include/de/widgets/blurwidget.h \
     include/de/widgets/buttonwidget.h \
     include/de/widgets/choicewidget.h \
@@ -152,7 +164,13 @@ HEADERS += \
     include/de/widgets/tabwidget.h \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
-    include/de/widgets/variabletogglewidget.h
+    include/de/widgets/variabletogglewidget.h \
+)
+
+publicHeaders(dialogs, \
+    include/de/dialogs/inputdialog.h \
+    include/de/dialogs/messagedialog.h \
+)
 
 # Sources and private headers.
 SOURCES += \
@@ -223,4 +241,9 @@ macx {
 else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+
+deng_sdk {
+    INSTALLS *= target
+    target.path = $$DENG_SDK_LIB_DIR
 }

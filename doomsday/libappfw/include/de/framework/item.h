@@ -60,7 +60,7 @@ public:
     };
     Q_DECLARE_FLAGS(Semantics, SemanticFlag)
 
-    DENG2_DEFINE_AUDIENCE(Change, void itemChanged(Item const &item))
+    DENG2_DEFINE_AUDIENCE2(Change, void itemChanged(Item const &item))
 
 public:
     Item(Semantics semantics = DefaultSemantics);
@@ -75,14 +75,11 @@ public:
 
     String label() const;
 
-    void setDataContext(Data &context) { _context = &context; }
+    void setDataContext(Data &context);
 
-    bool hasDataContext() const { return _context != 0; }
+    bool hasDataContext() const;
 
-    Data &dataContext() const {
-        DENG2_ASSERT(hasDataContext());
-        return *_context;
-    }
+    Data &dataContext() const;
 
     /**
      * Returns a text string that should be used for sorting the item inside a
@@ -95,9 +92,9 @@ public:
      *
      * @param d  Variant data to be associated with the item.
      */
-    void setData(QVariant const &d) { _data = d; }
+    void setData(QVariant const &d);
 
-    QVariant const &data() const { return _data; }
+    QVariant const &data() const;
 
     DENG2_AS_IS_METHODS()
 
@@ -108,12 +105,7 @@ protected:
     void notifyChange();
 
 private:
-    Semantics _semantics;
-    Data *_context;
-    String _label;
-    QVariant _data;
-
-    friend class Data;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Item::Semantics)

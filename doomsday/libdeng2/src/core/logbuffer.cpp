@@ -230,7 +230,7 @@ void LogBuffer::setOutputFile(String const &path)
 
     if(d->outputFile)
     {
-        d->outputFile->audienceForDeletion -= this;
+        d->outputFile->audienceForDeletion() -= this;
         d->outputFile = 0;
     }
 
@@ -238,7 +238,7 @@ void LogBuffer::setOutputFile(String const &path)
     {
         d->outputFile = &App::rootFolder().replaceFile(path);
         d->outputFile->setMode(File::Write);
-        d->outputFile->audienceForDeletion += this;
+        d->outputFile->audienceForDeletion() += this;
 
         // Add a sink for the file.
         d->fileLogSink = new FileLogSink(*d->outputFile);

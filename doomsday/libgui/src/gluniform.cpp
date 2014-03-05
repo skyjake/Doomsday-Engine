@@ -71,7 +71,7 @@ DENG2_PIMPL(GLUniform)
 
     ~Instance()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->uniformDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self);
 
         switch(type)
         {
@@ -90,7 +90,7 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case Sampler2D:
-            if(value.tex) value.tex->audienceForDeletion -= this;
+            if(value.tex) value.tex->audienceForDeletion() -= this;
             break;
 
         default:
@@ -141,7 +141,7 @@ DENG2_PIMPL(GLUniform)
 
     void markAsChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(ValueChange, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(ValueChange, i)
         {
             i->uniformValueChanged(self);
         }
@@ -158,7 +158,13 @@ DENG2_PIMPL(GLUniform)
             }
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(ValueChange)
 };
+
+DENG2_AUDIENCE_METHOD(GLUniform, Deletion)
+DENG2_AUDIENCE_METHOD(GLUniform, ValueChange)
 
 GLUniform::GLUniform(char const *nameInShader, Type uniformType)
     : d(new Instance(this, QLatin1String(nameInShader), uniformType))
@@ -280,12 +286,12 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
     if(d->value.tex != texture)
     {
         // We will observe the texture this uniform refers to.
-        if(d->value.tex) d->value.tex->audienceForDeletion -= d;
+        if(d->value.tex) d->value.tex->audienceForDeletion() -= d;
 
         d->value.tex = texture;
         d->markAsChanged();
 
-        if(d->value.tex) d->value.tex->audienceForDeletion += d;
+        if(d->value.tex) d->value.tex->audienceForDeletion() += d;
     }
     return *this;
 }

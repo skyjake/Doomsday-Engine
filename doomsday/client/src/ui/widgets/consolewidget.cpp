@@ -88,12 +88,12 @@ DENG2_OBSERVES(Variable, Change)
 
         grabWidth  = style().rules().rule("gap").valuei();
 
-        App::config()["console.script"].audienceForChange += this;
+        App::config()["console.script"].audienceForChange() += this;
     }
 
     ~Instance()
     {
-        App::config()["console.script"].audienceForChange -= this;
+        App::config()["console.script"].audienceForChange() -= this;
 
         releaseRef(horizShift);
         releaseRef(width);

@@ -265,7 +265,7 @@ DENG2_OBSERVES(App, GameChange)
           firstColumnWidth(new IndirectRule)
     {
         // The editor will close automatically when going to Ring Zero.
-        App::app().audienceForGameChange += this;
+        App::app().audienceForGameChange() += this;
 
         settings.audienceForProfileChange += this;
 
@@ -570,7 +570,7 @@ DENG2_OBSERVES(App, GameChange)
 
     ~Instance()
     {
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForGameChange() -= this;
         settings.audienceForProfileChange -= this;
         releaseRef(firstColumnWidth);
     }

@@ -254,8 +254,8 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
 {
     clear();
 
-    d->esc.audienceForEscapeSequence += d;
-    d->esc.audienceForPlainText += d;
+    d->esc.audienceForEscapeSequence() += d;
+    d->esc.audienceForPlainText() += d;
 
     d->esc.parse(styledText);
 

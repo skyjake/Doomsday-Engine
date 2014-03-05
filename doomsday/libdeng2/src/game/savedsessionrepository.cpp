@@ -56,14 +56,14 @@ DENG2_PIMPL(SavedSessionRepository)
         : Base(i)
         , folder(0)
     {
-        App::app().audienceForGameUnload += this;
-        //App::app().audienceForGameChange += this;
+        App::app().audienceForGameUnload() += this;
+        //App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForGameUnload += this;
-        //App::app().audienceForGameChange += this;
+        App::app().audienceForGameUnload() += this;
+        //App::app().audienceForGameChange() += this;
 
         clearSessions();
     }

@@ -1,6 +1,6 @@
-/** @file action.cpp  Abstract base class for UI actions.
+/** @file mouseeventsource.cpp
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -13,32 +13,23 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Action"
+#include "de/MouseEventSource"
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Action)
+DENG2_PIMPL_NOREF(MouseEventSource)
 {
-    DENG2_PIMPL_AUDIENCE(Triggered)
+    DENG2_PIMPL_AUDIENCE(MouseStateChange)
+    DENG2_PIMPL_AUDIENCE(MouseEvent)
 };
 
-DENG2_AUDIENCE_METHOD(Action, Triggered)
+DENG2_AUDIENCE_METHOD(MouseEventSource, MouseStateChange)
+DENG2_AUDIENCE_METHOD(MouseEventSource, MouseEvent)
 
-Action::Action() : d(new Instance)
+MouseEventSource::MouseEventSource() : d(new Instance)
 {}
-
-Action::~Action()
-{}
-
-void Action::trigger()
-{
-    DENG2_FOR_AUDIENCE2(Triggered, i)
-    {
-        i->actionTriggered(*this);
-    }
-}
 
 } // namespace de

@@ -57,29 +57,29 @@ public:
      * screen. Note that the notification comes straight from the event loop
      * (timer signal) instead of during a paint event.
      */
-    DENG2_DEFINE_AUDIENCE(GLReady, void canvasGLReady(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLReady, void canvasGLReady(Canvas &))
 
     /**
      * Notified when the canvas's GL state needs to be initialized. This is
      * called immediately before drawing the contents of the canvas for the
      * first time (during a paint event).
      */
-    DENG2_DEFINE_AUDIENCE(GLInit, void canvasGLInit(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLInit, void canvasGLInit(Canvas &))
 
     /**
      * Notified when a canvas's size has changed.
      */
-    DENG2_DEFINE_AUDIENCE(GLResize, void canvasGLResized(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLResize, void canvasGLResized(Canvas &))
 
     /**
      * Notified when drawing of the canvas contents has been requested.
      */
-    DENG2_DEFINE_AUDIENCE(GLDraw, void canvasGLDraw(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLDraw, void canvasGLDraw(Canvas &))
 
     /**
      * Notified when the canvas gains or loses input focus.
      */
-    DENG2_DEFINE_AUDIENCE(FocusChange, void canvasFocusChanged(Canvas &, bool hasFocus))
+    DENG2_DEFINE_AUDIENCE2(FocusChange, void canvasFocusChanged(Canvas &, bool hasFocus))
 
 public:
     explicit Canvas(CanvasWindow *parent, QGLWidget* shared = 0);

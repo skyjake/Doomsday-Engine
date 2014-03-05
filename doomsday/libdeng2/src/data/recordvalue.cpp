@@ -36,7 +36,7 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
     if(!_ownership.testFlag(OwnsRecord))
     {
         // If we don't own it, someone may delete the record.
-        _record->audienceForDeletion += this;
+        _record->audienceForDeletion() += this;
     }
 }
 
@@ -44,7 +44,7 @@ RecordValue::RecordValue(Record &record)
     : _record(&record), _ownership(0), _oldOwnership(0)
 {
     // Someone may delete the record.
-    _record->audienceForDeletion += this;
+    _record->audienceForDeletion() += this;
 }
 
 RecordValue::~RecordValue()
@@ -72,7 +72,7 @@ void RecordValue::setRecord(Record *record)
     }
     else if(_record)
     {
-        _record->audienceForDeletion -= this;
+        _record->audienceForDeletion() -= this;
     }
 
     _record = record;
@@ -81,7 +81,7 @@ void RecordValue::setRecord(Record *record)
     if(_record)
     {
         // Since we don't own it, someone may delete the record.
-        _record->audienceForDeletion += this;
+        _record->audienceForDeletion() += this;
     }
 }
 

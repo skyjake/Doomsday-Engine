@@ -66,7 +66,7 @@ DENG2_PIMPL(ServerLink)
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration -= this;
+        Loop::appLoop().audienceForIteration() -= this;
     }
 
     void notifyDiscoveryUpdate()
@@ -183,7 +183,7 @@ DENG2_PIMPL(ServerLink)
         fetching = true;
         N_MAPost(MAC_REQUEST);
         N_MAPost(MAC_WAIT);
-        Loop::appLoop().audienceForIteration += this;
+        Loop::appLoop().audienceForIteration() += this;
     }
 
     void loopIteration()
@@ -193,7 +193,7 @@ DENG2_PIMPL(ServerLink)
         if(N_MADone())
         {
             fetching = false;
-            Loop::appLoop().audienceForIteration -= this;
+            Loop::appLoop().audienceForIteration() -= this;
 
             fromMaster.clear();
             int const count = N_MasterGet(0, 0);
@@ -208,27 +208,38 @@ DENG2_PIMPL(ServerLink)
         }
     }
 
-    Servers allFound() const
+    Servers allFound(FoundMask const &mask) const
     {
-        Servers all = discovered;
+        Servers all;
 
-        // Append from master (if available).
-        DENG2_FOR_EACH_CONST(Servers, i, fromMaster)
+        if(mask.testFlag(Direct))
         {
-            all.insert(i.key(), i.value());
+            all = discovered;
         }
 
-        // Append the ones from the server finder.
-        foreach(Address const &sv, finder.foundServers())
+        if(mask.testFlag(MasterServer))
         {
-            serverinfo_t info;
-            ServerInfo_FromRecord(&info, finder.messageFromServer(sv));
+            // Append from master (if available).
+            DENG2_FOR_EACH_CONST(Servers, i, fromMaster)
+            {
+                all.insert(i.key(), i.value());
+            }
+        }
 
-            // Update the address in the info, which is missing because this
-            // information didn't come from the master.
-            strncpy(info.address, sv.host().toString().toLatin1(), sizeof(info.address) - 1);
+        if(mask.testFlag(LocalNetwork))
+        {
+            // Append the ones from the server finder.
+            foreach(Address const &sv, finder.foundServers())
+            {
+                serverinfo_t info;
+                ServerInfo_FromRecord(&info, finder.messageFromServer(sv));
 
-            all.insert(sv, info);
+                // Update the address in the info, which is missing because this
+                // information didn't come from the master.
+                strncpy(info.address, sv.host().toString().toLatin1(), sizeof(info.address) - 1);
+
+                all.insert(sv, info);
+            }
         }
 
         return all;
@@ -330,33 +341,33 @@ bool ServerLink::isDiscovering() const
             d->fetching);
 }
 
-int ServerLink::foundServerCount() const
+int ServerLink::foundServerCount(FoundMask mask) const
 {
-    return d->allFound().size();
+    return d->allFound(mask).size();
 }
 
-QList<Address> ServerLink::foundServers() const
+QList<Address> ServerLink::foundServers(FoundMask mask) const
 {
-    return d->allFound().keys();
+    return d->allFound(mask).keys();
 }
 
-bool ServerLink::isFound(Address const &host) const
+bool ServerLink::isFound(Address const &host, FoundMask mask) const
 {
-    return d->allFound().contains(host);
+    return d->allFound(mask).contains(host);
 }
 
-bool ServerLink::foundServerInfo(int index, serverinfo_t *info) const
+bool ServerLink::foundServerInfo(int index, serverinfo_t *info, FoundMask mask) const
 {
-    Instance::Servers all = d->allFound();
+    Instance::Servers all = d->allFound(mask);
     QList<Address> listed = all.keys();
     if(index < 0 || index >= listed.size()) return false;
     memcpy(info, &all[listed[index]], sizeof(*info));
     return true;
 }
 
-bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info) const
+bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info, FoundMask mask) const
 {
-    Instance::Servers all = d->allFound();
+    Instance::Servers all = d->allFound(mask);
     if(!all.contains(host)) return false;
     memcpy(info, &all[host], sizeof(*info));
     return true;

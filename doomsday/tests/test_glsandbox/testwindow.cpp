@@ -81,9 +81,9 @@ DENG2_OBSERVES(Bank, Load)
         // Use this as the main window.
         setMain(i);
 
-        self.canvas().audienceForGLInit += this;
-        self.canvas().audienceForGLResize += this;
-        Clock::appClock().audienceForTimeChange += this;
+        self.canvas().audienceForGLInit() += this;
+        self.canvas().audienceForGLResize() += this;
+        Clock::appClock().audienceForTimeChange() += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
         atlas->setTotalSize(Vector2ui(256, 256));
@@ -91,7 +91,7 @@ DENG2_OBSERVES(Bank, Load)
 
         imageBank.add("rtt.cube", "/data/graphics/testpic.png");
         //imageBank.loadAll();
-        imageBank.audienceForLoad += this;
+        imageBank.audienceForLoad() += this;
     }
 
     void canvasGLInit(Canvas &cv)

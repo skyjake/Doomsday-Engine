@@ -85,14 +85,14 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
         DENG2_FOR_EACH(NativeModules, i, nativeModules)
         {
-            i.value()->audienceForDeletion -= this;
+            i.value()->audienceForDeletion() -= this;
         }
     }
 
     void addNativeModule(String const &name, Record &module)
     {
         nativeModules.insert(name, &module); // not owned
-        module.audienceForDeletion += this;
+        module.audienceForDeletion() += this;
     }
 
     void recordBeingDeleted(Record &record)

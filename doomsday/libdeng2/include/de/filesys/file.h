@@ -82,7 +82,7 @@ public:
      *
      * @param file  The file object being deleted.
      */
-    DENG2_DEFINE_AUDIENCE(Deletion, void fileBeingDeleted(File const &file))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void fileBeingDeleted(File const &file))
 
     /**
      * Stores the status of a file (size, time of last modification).
@@ -187,7 +187,7 @@ public:
     static FileSystem &fileSystem();
 
     /// Returns the name of the file.
-    String const &name() const { return _name; }
+    String const &name() const;
 
     /**
      * Returns a textual description of the file, intended only for humans.
@@ -210,12 +210,12 @@ public:
     /**
      * Sets the parent folder of this file.
      */
-    void setParent(Folder *parent) { _parent = parent; }
+    void setParent(Folder *parent);
 
     /**
      * Returns the parent folder. May be NULL.
      */
-    Folder *parent() const { return _parent; }
+    Folder *parent() const;
 
     /**
      * Sets the origin Feed of the File. The origin feed is the feed that is able
@@ -233,7 +233,7 @@ public:
      * Returns the origin Feed of the File.
      * @see setOriginFeed()
      */
-    Feed *originFeed() const { return _originFeed; }
+    Feed *originFeed() const;
 
     /**
      * Sets the source file of this file. The source is where this file is
@@ -306,10 +306,10 @@ public:
     virtual void setMode(Flags const &newMode);
 
     /// Returns the file information (const).
-    Record const &info() const { return _info; }
+    Record const &info() const;
 
     /// Returns the file information.
-    Record &info() { return _info; }
+    Record &info();
 
     /**
      * Makes sure that the file has write access.
@@ -333,27 +333,7 @@ protected:
     explicit File(String const &name = "");
 
 private:
-    /// The parent folder.
-    Folder *_parent;
-
-    /// The source file (NULL for non-interpreted files).
-    File *_source;
-
-    /// Feed that generated the file. This feed is called upon when the file needs
-    /// to be pruned. May also be NULL.
-    Feed *_originFeed;
-
-    /// Name of the file.
-    String _name;
-
-    /// Status of the file.
-    Status _status;
-
-    /// Mode flags.
-    Flags _mode;
-
-    /// File information.
-    Record _info;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(File::Flags)

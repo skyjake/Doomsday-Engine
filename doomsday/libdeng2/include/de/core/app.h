@@ -69,17 +69,17 @@ public:
     /**
      * Notified when application startup has been fully completed.
      */
-    DENG2_DEFINE_AUDIENCE(StartupComplete, void appStartupCompleted())
+    DENG2_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
 
     /**
      * Notified before the current game is unloaded.
      */
-    DENG2_DEFINE_AUDIENCE(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
+    DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
 
     /**
      * Notified after the current game has been changed.
      */
-    DENG2_DEFINE_AUDIENCE(GameChange, void currentGameChanged(game::Game const &newGame))
+    DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(game::Game const &newGame))
 
 public:
     /**
@@ -94,6 +94,51 @@ public:
     App(NativePath const &appFilePath, QStringList args);
 
     virtual ~App();
+
+    /**
+     * Defines metadata about the application.
+     *
+     * @param appName     Name of the application, as presented to humans.
+     * @param appVersion  Version of the application.
+     * @param orgName     Name of the author/organization.
+     * @param orgDomain   Network domain of the author/organization.
+     */
+    virtual void setMetadata(String const &orgName, String const &orgDomain,
+                             String const &appName, String const &appVersion) = 0;
+
+    /**
+     * Sets the path of the configuration script that will be automatically run if needed
+     * during application launch. The script governs the contents of the special
+     * persistent Config module. @see Config
+     *
+     * This method must be called before initSubsystems().
+     *
+     * @param path  Location of the @em Config.de script file. The default path of the
+     *              script is "/modules/Config.de".
+     */
+    void setConfigScript(Path const &path);
+
+    /**
+     * Sets the name of the application. Derived classes should call this from their
+     * implementation of setMetadata().
+     *
+     * @param appName  Application name. Defaults to "Doomsday Engine".
+     */
+    void setName(String const &appName);
+
+    /**
+     * Sets the Unix-style home folder name. For instance, ".doomsday" could be used.
+     *
+     * @param name  Name of the (usually hidden) user-specific home data folder.
+     */
+    void setUnixHomeFolderName(String const &name);
+
+    String unixHomeFolderName() const;
+
+    /**
+     * Returns the home folder name without the possible dot in the beginning.
+     */
+    String unixEtcFolderName() const;
 
     /**
      * Sets a callback to be called when an uncaught exception occurs.

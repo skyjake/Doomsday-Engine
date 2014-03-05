@@ -38,6 +38,20 @@ static bool itemGreaterThan(Item const &a, Item const &b)
     return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
 }
 
+DENG2_PIMPL_NOREF(Data)
+{
+    DENG2_PIMPL_AUDIENCE(Addition)
+    DENG2_PIMPL_AUDIENCE(Removal)
+    DENG2_PIMPL_AUDIENCE(OrderChange)
+};
+
+DENG2_AUDIENCE_METHOD(Data, Addition)
+DENG2_AUDIENCE_METHOD(Data, Removal)
+DENG2_AUDIENCE_METHOD(Data, OrderChange)
+
+Data::Data() : d(new Instance)
+{}
+
 void Data::sort(SortMethod method)
 {
     switch(method)

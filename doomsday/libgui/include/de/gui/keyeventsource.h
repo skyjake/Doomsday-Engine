@@ -32,10 +32,14 @@ namespace de {
 class LIBGUI_PUBLIC KeyEventSource
 {
 public:
-    DENG2_DEFINE_AUDIENCE(KeyEvent, void keyEvent(KeyEvent const &))
+    DENG2_DEFINE_AUDIENCE2(KeyEvent, void keyEvent(KeyEvent const &))
 
 public:
+    KeyEventSource();
     virtual ~KeyEventSource() {}
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

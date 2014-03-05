@@ -90,24 +90,11 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         checking->rule().setRect(self.rule());
         self.add(checking);
 
-        //settings = new ButtonWidget;
-        //self.add(settings);
-
-        /// @todo The dialog buttons should support a opposite-aligned button.
-        /*settings->setSizePolicy(ui::Filled, ui::Filled);
-        settings->setImage(self.style().images().image("gear"));
-        settings->rule()
-                .setInput(Rule::Left,   self.area().contentRule().left())
-                .setInput(Rule::Bottom, self.buttons().contentRule().bottom())
-                .setInput(Rule::Height, self.buttons().contentRule().height())
-                .setInput(Rule::Width,  settings->rule().height());
-        settings->setAction()));*/
-
         autoCheck = new ToggleWidget;
         self.area().add(autoCheck);
         autoCheck->setAlignment(ui::AlignLeft);
         autoCheck->setText(tr("Check for updates automatically"));
-        autoCheck->audienceForToggle += this;
+        autoCheck->audienceForToggle() += this;
 
         // Include the toggle in the layout.
         self.updateLayout();
@@ -225,7 +212,10 @@ void UpdateAvailableDialog::editSettings()
     st->setAnchorAndOpeningDirection(buttonWidget(DialogWidget::Id1)->rule(), ui::Up);
     st->setDeleteAfterDismissed(true);
     if(st->exec(root()))
-    {
+    {        
+        // The Gear button will soon be deleted, so we'll need to detach from it.
+        st->detachAnchor();
+
         d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
         d->showProgress(true, SHOW_ANIM_SPAN);
         emit checkAgain();

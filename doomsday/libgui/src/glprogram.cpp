@@ -140,8 +140,8 @@ DENG2_PIMPL(GLProgram)
     {
         foreach(GLUniform const *u, bound)
         {
-            u->audienceForValueChange -= this;
-            u->audienceForDeletion -= this;
+            u->audienceForValueChange() -= this;
+            u->audienceForDeletion() -= this;
         }
         texturesChanged = false;
         bound.clear();
@@ -351,8 +351,8 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
         d->bound.insert(&uniform);
         d->changed.insert(&uniform);
 
-        uniform.audienceForValueChange += d;
-        uniform.audienceForDeletion += d;
+        uniform.audienceForValueChange() += d;
+        uniform.audienceForDeletion() += d;
 
         if(uniform.type() == GLUniform::Sampler2D)
         {
@@ -370,8 +370,8 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
         d->bound.remove(&uniform);
         d->changed.remove(&uniform);
 
-        uniform.audienceForValueChange -= d.get();
-        uniform.audienceForDeletion -= d.get();
+        uniform.audienceForValueChange() -= d.get();
+        uniform.audienceForDeletion() -= d.get();
 
         if(uniform.type() == GLUniform::Sampler2D)
         {

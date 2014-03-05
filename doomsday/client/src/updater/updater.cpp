@@ -120,7 +120,6 @@ public:
         useMiniStyle();
         setColor("text");
         setShadowColor(""); // no shadow, please
-        setRotationSpeed(0);
         setSizePolicy(ui::Expand, ui::Expand);
 
         // The notification has a hidden button that can be clicked.
@@ -532,7 +531,7 @@ Updater::Updater() : d(new Instance(this))
     connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
 
     // Do a silent auto-update check when starting.
-    App::app().audienceForStartupComplete += d;
+    App::app().audienceForStartupComplete() += d;
 }
 
 void Updater::setupUI()

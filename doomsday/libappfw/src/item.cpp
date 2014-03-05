@@ -21,12 +21,30 @@
 namespace de {
 namespace ui {
 
+DENG2_PIMPL_NOREF(Item)
+{
+    Data *context;
+    Semantics semantics;
+    String label;
+    QVariant data;
+
+    Instance(Semantics sem, String const &text = "", QVariant var = QVariant())
+        : context(0)
+        , semantics(sem)
+        , label(text)
+        , data(var) {}
+
+    DENG2_PIMPL_AUDIENCE(Change)
+};
+
+DENG2_AUDIENCE_METHOD(Item, Change)
+
 Item::Item(Semantics semantics)
-    : _semantics(semantics), _context(0)
+    : d(new Instance(semantics))
 {}
 
 Item::Item(Semantics semantics, String const &label)
-    : _semantics(semantics), _context(0), _label(label)
+    : d(new Instance(semantics, label))
 {}
 
 Item::~Item()
@@ -34,28 +52,54 @@ Item::~Item()
 
 Item::Semantics Item::semantics() const
 {
-    return _semantics;
+    return d->semantics;
 }
 
 void Item::setLabel(String const &label)
 {
-    _label = label;
+    d->label = label;
     notifyChange();
 }
 
 String Item::label() const
 {
-    return _label;
+    return d->label;
+}
+
+void Item::setDataContext(Data &context)
+{
+    d->context = &context;
+}
+
+bool Item::hasDataContext() const
+{
+    return d->context != 0;
+}
+
+Data &Item::dataContext() const
+{
+    DENG2_ASSERT(hasDataContext());
+    return *d->context;
 }
 
 String Item::sortKey() const
 {
-    return _label;
+    return d->label;
+}
+
+void Item::setData(QVariant const &v)
+{
+    d->data = v;
+}
+
+QVariant const &Item::data() const
+{
+    return d->data;
 }
 
 void Item::notifyChange()
 {
-    DENG2_FOR_AUDIENCE(Change, i)
+    DENG2_FOR_AUDIENCE2(Change, i)
     {
         i->itemChanged(*this);
     }

@@ -70,7 +70,7 @@ NativeFont::NativeFont(String const &family) : d(new Instance(this))
     setFamily(family);
 }
 
-NativeFont::NativeFont(NativeFont const &other) : d(new Instance(this))
+NativeFont::NativeFont(NativeFont const &other) : Asset(other), d(new Instance(this))
 {
     *this = other;
 }

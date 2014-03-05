@@ -112,7 +112,7 @@ void Config::read()
         // If script is newer, it should be rerun.
         if(scriptFile.status().modifiedAt > d->refuge.lastWrittenAt())
         {
-            LOG_MSG("%s is newer than %s, rerunning the script.")
+            LOG_MSG("%s is newer than %s, rerunning the script")
                     << d->configPath << d->refuge.path();
             shouldRunScript = true;
         }
@@ -120,6 +120,11 @@ void Config::read()
     catch(Archive::NotFoundError const &)
     {
         // It is missing from persist.pack if the config hasn't been written yet.
+        shouldRunScript = true;
+    }
+    catch(IByteArray::OffsetError const &)
+    {
+        // Empty or missing serialization?
         shouldRunScript = true;
     }
     catch(Error const &error)

@@ -41,7 +41,7 @@ DialogContentStylist::~DialogContentStylist()
 {
     if(_container)
     {
-        _container->audienceForChildAddition -= this;
+        _container->audienceForChildAddition() -= this;
     }
 }
 
@@ -49,11 +49,11 @@ void DialogContentStylist::setContainer(GuiWidget &container)
 {
     if(_container)
     {
-        _container->audienceForChildAddition -= this;
+        _container->audienceForChildAddition() -= this;
     }
 
     _container = &container;
-    _container->audienceForChildAddition += this;
+    _container->audienceForChildAddition() += this;
 }
 
 void DialogContentStylist::widgetChildAdded(Widget &child)

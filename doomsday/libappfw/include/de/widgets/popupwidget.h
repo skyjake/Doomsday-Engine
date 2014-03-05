@@ -58,6 +58,11 @@ public:
     Rule const &anchorY() const;
 
     /**
+     * Replace the anchor with rules of matching constant value.
+     */
+    void detachAnchor();
+
+    /**
      * Tells the popup to delete itself after being dismissed. The default is that
      * the popup does not get deleted.
      *

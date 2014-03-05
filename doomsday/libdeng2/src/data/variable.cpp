@@ -31,29 +31,67 @@
 #include "de/Writer"
 #include "de/Log"
 
-using namespace de;
+namespace de {
+
+DENG2_PIMPL_NOREF(Variable)
+{
+    String name;
+
+    /// Value of the variable.
+    Value *value;
+
+    /// Mode flags.
+    Flags mode;
+
+    Instance() : value(0) {}
+
+    Instance(Instance const &other)
+        : name (other.name)
+        , value(other.value->duplicate())
+        , mode (other.mode)
+    {}
+
+    ~Instance()
+    {
+        delete value;
+    }
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(Change)
+};
+
+DENG2_AUDIENCE_METHOD(Variable, Deletion)
+DENG2_AUDIENCE_METHOD(Variable, Change)
 
 Variable::Variable(String const &name, Value *initial, Flags const &m)
-    : _name(name), _value(0), _mode(m)
+    : d(new Instance)
 {
+    d->name = name;
+    d->mode = m;
+
     std::auto_ptr<Value> v(initial);
     if(!initial)
     {
         v.reset(new NoneValue);
     }
-    verifyName(_name);
+    verifyName(d->name);
     verifyValid(*v);
-    _value = v.release();
+    d->value = v.release();
 }
 
 Variable::Variable(Variable const &other) 
-    : ISerializable(), _name(other._name), _value(other._value->duplicate()), _mode(other._mode)
+    : ISerializable()
+    , d(new Instance(*other.d))
 {}
 
 Variable::~Variable()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->variableBeingDeleted(*this);
-    delete _value;
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->variableBeingDeleted(*this);
+}
+
+String const &Variable::name() const
+{
+    return d->name;
 }
 
 Variable &Variable::operator = (Value *v)
@@ -72,11 +110,11 @@ Variable &Variable::set(Value *v)
     verifyWritable(*v);
     verifyValid(*v);
 
-    QScopedPointer<Value> oldValue(_value); // old value deleted afterwards
-    _value = val.take();
+    QScopedPointer<Value> oldValue(d->value); // old value deleted afterwards
+    d->value = val.take();
     
     // We'll only determine if actual change occurred if someone is interested.
-    if(!audienceForChange.isEmpty())
+    if(!audienceForChange().isEmpty())
     {
         bool notify = true;
         try
@@ -91,7 +129,7 @@ Variable &Variable::set(Value *v)
 
         if(notify)
         {
-            DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
+            DENG2_FOR_AUDIENCE2(Change, i) i->variableValueChanged(*this, *d->value);
         }
     }
     return *this;
@@ -105,14 +143,24 @@ Variable &Variable::set(Value const &v)
 
 Value const &Variable::value() const
 {
-    DENG2_ASSERT(_value != 0);
-    return *_value;
+    DENG2_ASSERT(d->value != 0);
+    return *d->value;
 }
 
 Value &Variable::value()
 {
-    DENG2_ASSERT(_value != 0);
-    return *_value;
+    DENG2_ASSERT(d->value != 0);
+    return *d->value;
+}
+
+Value *Variable::valuePtr()
+{
+    return d->value;
+}
+
+Value const *Variable::valuePtr() const
+{
+    return d->value;
 }
 
 Record const &Variable::valueAsRecord() const
@@ -142,30 +190,30 @@ Variable::operator ddouble () const
 
 Variable::Flags Variable::mode() const
 {
-    return _mode;
+    return d->mode;
 }
 
 void Variable::setMode(Flags const &flags, FlagOp operation)
 {
-    applyFlagOperation(_mode, flags, operation);
+    applyFlagOperation(d->mode, flags, operation);
 }
 
 Variable &Variable::setReadOnly()
 {
-    _mode |= ReadOnly;
+    d->mode |= ReadOnly;
     return *this;
 }
 
 bool Variable::isValid(Value const &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if((dynamic_cast<NoneValue const *>(&v)       && !_mode.testFlag(AllowNone)) ||
-       (dynamic_cast<NumberValue const *>(&v)     && !_mode.testFlag(AllowNumber)) ||
-       (dynamic_cast<TextValue const *>(&v)       && !_mode.testFlag(AllowText)) ||
-       (dynamic_cast<ArrayValue const *>(&v)      && !_mode.testFlag(AllowArray)) ||
-       (dynamic_cast<DictionaryValue const *>(&v) && !_mode.testFlag(AllowDictionary)) ||
-       (dynamic_cast<BlockValue const *>(&v)      && !_mode.testFlag(AllowBlock)) ||
-       (dynamic_cast<TimeValue const *>(&v)       && !_mode.testFlag(AllowTime)))
+    if((dynamic_cast<NoneValue const *>(&v)       && !d->mode.testFlag(AllowNone)) ||
+       (dynamic_cast<NumberValue const *>(&v)     && !d->mode.testFlag(AllowNumber)) ||
+       (dynamic_cast<TextValue const *>(&v)       && !d->mode.testFlag(AllowText)) ||
+       (dynamic_cast<ArrayValue const *>(&v)      && !d->mode.testFlag(AllowArray)) ||
+       (dynamic_cast<DictionaryValue const *>(&v) && !d->mode.testFlag(AllowDictionary)) ||
+       (dynamic_cast<BlockValue const *>(&v)      && !d->mode.testFlag(AllowBlock)) ||
+       (dynamic_cast<TimeValue const *>(&v)       && !d->mode.testFlag(AllowTime)))
     {
         return false;
     }
@@ -179,16 +227,16 @@ void Variable::verifyValid(Value const &v) const
     {
         /// @throw InvalidError  Value @a v is not allowed by the variable.
         throw InvalidError("Variable::verifyValid", 
-            "Value type is not allowed by the variable '" + _name + "'");
+            "Value type is not allowed by the variable '" + d->name + "'");
     }
 }
 
 void Variable::verifyWritable(Value const &attemptedNewValue)
 {
-    if(_mode & ReadOnly)
+    if(d->mode & ReadOnly)
     {
-        if(_value && typeid(*_value) == typeid(attemptedNewValue) &&
-           !_value->compare(attemptedNewValue))
+        if(d->value && typeid(*d->value) == typeid(attemptedNewValue) &&
+           !d->value->compare(attemptedNewValue))
         {
             // This is ok: the value doesn't change.
             return;
@@ -196,7 +244,7 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
 
         /// @throw ReadOnlyError  The variable is in read-only mode.
         throw ReadOnlyError("Variable::verifyWritable", 
-            "Variable '" + _name + "' is in read-only mode");
+            "Variable '" + d->name + "' is in read-only mode");
     }
 }
 
@@ -211,26 +259,28 @@ void Variable::verifyName(String const &s)
 
 void Variable::operator >> (Writer &to) const
 {
-    if(!_mode.testFlag(NoSerialize))
+    if(!d->mode.testFlag(NoSerialize))
     {
-        to << _name << duint32(_mode) << *_value;
+        to << d->name << duint32(d->mode) << *d->value;
     }
 }
 
 void Variable::operator << (Reader &from)
 {
     duint32 modeFlags = 0;
-    from >> _name >> modeFlags;
-    _mode = Flags(modeFlags);
-    delete _value;
+    from >> d->name >> modeFlags;
+    d->mode = Flags(modeFlags);
+    delete d->value;
     try
     {
-        _value = Value::constructFrom(from);
+        d->value = Value::constructFrom(from);
     }
     catch(Error const &)
     {
         // Always need to have a value.
-        _value = new NoneValue();
+        d->value = new NoneValue();
         throw;
     }    
 }
+
+} // namespace de

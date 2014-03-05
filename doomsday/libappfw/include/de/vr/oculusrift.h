@@ -22,6 +22,7 @@
 
 #include "../libappfw.h"
 #include <de/Vector>
+#include <de/Matrix>
 
 namespace de {
 
@@ -49,9 +50,17 @@ public:
 
     void update();
 
-    // Returns current pitch, roll, yaw angles, in radians. If no head tracking is available,
-    // the returned values are not valid.
+    /**
+     * Returns the current head orientation as a vector containing the pitch, roll and
+     * yaw angles, in radians. If no head tracking is available, the returned values are
+     * not valid.
+     */
     Vector3f headOrientation() const;
+
+    /**
+     * Returns a model-view matrix that applies the head's orientation.
+     */
+    Matrix4f headModelViewMatrix() const;
 
     float predictionLatency() const;
 

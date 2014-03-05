@@ -112,7 +112,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         fetch();
 
-        autoCheck->audienceForToggle += this;
+        autoCheck->audienceForToggle() += this;
 
         // Place the widgets into a grid.
         GridLayout layout(area.contentRule().left(), area.contentRule().top());

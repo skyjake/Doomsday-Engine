@@ -33,16 +33,16 @@ DENG2_OBSERVES(Variable, Change  )
     {
         updateFromVariable();
 
-        var->audienceForDeletion += this;
-        var->audienceForChange += this;
+        var->audienceForDeletion() += this;
+        var->audienceForChange() += this;
     }
 
     ~Instance()
     {
         if(var)
         {
-            var->audienceForDeletion -= this;
-            var->audienceForChange -= this;
+            var->audienceForDeletion() -= this;
+            var->audienceForChange() -= this;
         }
     }
 
@@ -57,9 +57,9 @@ DENG2_OBSERVES(Variable, Change  )
     {
         if(!var) return;
 
-        var->audienceForChange -= this;
+        var->audienceForChange() -= this;
         var->set(NumberValue(self.selectedItem().data().toInt()));
-        var->audienceForChange += this;
+        var->audienceForChange() += this;
     }
 
     void variableValueChanged(Variable &, Value const &)

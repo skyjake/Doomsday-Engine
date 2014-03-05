@@ -18,6 +18,7 @@
  */
 
 #include "de/VRConfig"
+#include "de/math.h"
 
 namespace de {
 
@@ -172,6 +173,63 @@ float VRConfig::dominantEye() const
 int VRConfig::riftFramebufferSampleCount() const
 {
     return d->riftFramebufferSamples;
+}
+
+float VRConfig::viewAspect(Vector2f const &viewPortSize) const
+{
+    if(mode() == OculusRift)
+    {
+        // Override with the Oculus Rift's aspect ratio.
+        return oculusRift().aspect();
+    }
+
+    // We're assuming pixels are squares.
+    return viewPortSize.x / viewPortSize.y;
+}
+
+float VRConfig::verticalFieldOfView(float horizFovDegrees, Vector2f const &viewPortSize) const
+{
+    // We're assuming pixels are squares.
+    float const aspect = viewAspect(viewPortSize);
+
+    if(mode() == OculusRift)
+    {
+        // A little trigonometry to apply aspect ratio to angles
+        float x = std::tan(.5f * degreeToRadian(horizFovDegrees));
+        return radianToDegree(2.f * std::atan2(x / aspect, 1.f));
+    }
+
+    return horizFovDegrees / aspect;
+}
+
+Matrix4f VRConfig::projectionMatrix(float fovDegrees,
+                                    Vector2f const &viewPortSize,
+                                    float nearClip, float farClip) const
+{
+    float const yfov = verticalFieldOfView(fovDegrees, viewPortSize);
+    float const fH   = std::tan(.5f * degreeToRadian(yfov)) * nearClip;
+    float const fW   = fH * viewAspect(viewPortSize);
+
+    /*
+     * Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
+     * Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
+     *  - AFS preserves identical near and far clipping planes in both views
+     *  - AFS shows items at/near infinity better
+     *  - AFS conforms to what stereo 3D photographers call "ortho stereo"
+     * Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only
+     * applies the viewpoint shift.
+     */
+    float shift = 0;
+    if(frustumShift())
+    {
+        shift = eyeShift() * nearClip / screenDistance();
+    }
+
+    return Matrix4f::frustum(-fW - shift, fW - shift,
+                             -fH, fH,
+                             nearClip, farClip) *
+           Matrix4f::translate(Vector3f(-eyeShift(), 0, 0)) *
+           Matrix4f::scale(Vector3f(1, 1, -1));
 }
 
 OculusRift &VRConfig::oculusRift()

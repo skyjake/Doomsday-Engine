@@ -49,14 +49,14 @@ DENG2_PIMPL(GameSessionWidget)
         self.add(popup = new DocumentPopupWidget);
         popup->setAnchorAndOpeningDirection(info->rule(), ui::Up);
         popup->document().setMaximumLineWidth(popup->style().rules().rule("document.popup.width").valuei());
-        info->audienceForPress += this;
+        info->audienceForPress() += this;
 
-        App::app().audienceForGameUnload += this;
+        App::app().audienceForGameUnload() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForGameUnload -= this;
+        App::app().audienceForGameUnload() -= this;
     }
 
     void aboutToUnloadGame(game::Game const &)
