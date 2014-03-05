@@ -17,6 +17,7 @@
  */
 
 #include "de/GLTexture"
+#include "de/GLInfo"
 #include "de/gui/opengl.h"
 
 namespace de {
@@ -46,16 +47,18 @@ DENG2_PIMPL(GLTexture)
     Filter magFilter;
     MipFilter mipFilter;
     Wraps wrap;
+    dfloat maxAnisotropy;
     TextureFlags flags;
 
     Instance(Public *i)
-        : Base(i),
-          format(Image::Unknown),
-          name(0),
-          texTarget(GL_TEXTURE_2D),
-          minFilter(Linear), magFilter(Linear), mipFilter(MipNone),
-          wrap(Wraps(Repeat, Repeat)),
-          flags(ParamsChanged)
+        : Base(i)
+        , format(Image::Unknown)
+        , name(0)
+        , texTarget(GL_TEXTURE_2D)
+        , minFilter(Linear), magFilter(Linear), mipFilter(MipNone)
+        , wrap(Wraps(Repeat, Repeat))
+        , maxAnisotropy(1.0f)
+        , flags(ParamsChanged)
     {}
 
     ~Instance()
@@ -156,11 +159,16 @@ DENG2_PIMPL(GLTexture)
      * calling.
      */
     void glUpdateParamsOfBoundTexture()
-    {
+    {        
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
         glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
         glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
+
+        if(GLInfo::extensions().EXT_texture_filter_anisotropic)
+        {
+            glTexParameteri(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+        }
 
         LIBGUI_ASSERT_GL_OK();
 
@@ -242,6 +250,12 @@ void GLTexture::setWrapT(Wrapping mode)
     d->flags |= ParamsChanged;
 }
 
+void GLTexture::setMaxAnisotropy(dfloat maxAnisotropy)
+{
+    d->maxAnisotropy = maxAnisotropy;
+    d->flags |= ParamsChanged;
+}
+
 Filter GLTexture::minFilter() const
 {
     return d->minFilter;
@@ -270,6 +284,11 @@ Wrapping GLTexture::wrapT() const
 GLTexture::Wraps GLTexture::wrap() const
 {
     return d->wrap;
+}
+
+dfloat GLTexture::maxAnisotropy() const
+{
+    return d->maxAnisotropy;
 }
 
 bool GLTexture::isCubeMap() const
