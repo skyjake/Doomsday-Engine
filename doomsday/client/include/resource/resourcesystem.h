@@ -42,7 +42,7 @@
 #include "resource/zip.h"
 #include "uri.hh"
 #include <de/Error>
-#include <de/SavedSessionRepository>
+#include <de/game/SavedSessionRepository>
 #include <de/String>
 #include <de/System>
 #include <QList>
@@ -868,7 +868,7 @@ public:
     /**
      * Returns the SavedSessionRepository.
      */
-    de::SavedSessionRepository &savedSessionRepository() const;
+    de::game::SavedSessionRepository &savedSessionRepository() const;
 
 public: /// @todo Should be private:
     void initCompositeTextures();

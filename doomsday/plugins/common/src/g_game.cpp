@@ -62,9 +62,9 @@
 
 #include <de/ArrayValue>
 #include <de/game/IGameStateReader>
+#include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/NumberValue>
-#include <de/SavedSessionRepository>
 #include <cctype>
 #include <cstring>
 #include <cmath>
@@ -483,7 +483,7 @@ static void initSaveSlots()
     DENG2_ASSERT(sslots.slotCount() == 0);
 
     // Declare the native game state reader.
-    de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
     saveRepo.declareReader(&GameStateReader::recognize, &GameStateReader::make);
 
     // Setup the logical save slot bindings.
@@ -979,9 +979,9 @@ SaveSlots &G_SaveSlots()
     return sslots;
 }
 
-de::SavedSessionRepository &G_SavedSessionRepository()
+de::game::SavedSessionRepository &G_SavedSessionRepository()
 {
-    return *static_cast<de::SavedSessionRepository *>(DD_SavedSessionRepository());
+    return *static_cast<de::game::SavedSessionRepository *>(DD_SavedSessionRepository());
 }
 
 de::String G_SaveSlotIdFromUserInput(de::String str)
@@ -2231,7 +2231,7 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                de::SessionMetadata const &saveMetadata = G_SaveSlots()[chosenSlot].saveMetadata();
+                de::game::SessionMetadata const &saveMetadata = G_SaveSlots()[chosenSlot].saveMetadata();
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, saveMetadata["userDescription"].value().asText().toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, 0, new de::String(chosenSlot));
@@ -2939,11 +2939,11 @@ static int saveGameStateWorker(void *context)
         }
     }
 
-    de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
     SaveSlot &sslot = G_SaveSlots()[logicalSlot];
 
-    de::SavedSession *session = new de::SavedSession(sslot.fileName());
-    de::SessionMetadata *metadata = G_CurrentSessionMetadata();
+    de::game::SavedSession *session = new de::game::SavedSession(sslot.fileName());
+    de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
     metadata->set("userDescription", userDescription);
     session->replaceMetadata(metadata);
     session->setRepository(&saveRepo);
@@ -3248,7 +3248,7 @@ void G_DoLoadSession(de::String slotId)
 
     try
     {
-        de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+        de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
         saveRepo.folder().verifyWriteAccess();
 
 #if __JHEXEN__
@@ -3358,9 +3358,9 @@ AutoStr *G_GenerateUserSaveDescription()
     return str;
 }
 
-de::SessionMetadata *G_CurrentSessionMetadata()
+de::game::SessionMetadata *G_CurrentSessionMetadata()
 {
-    de::SessionMetadata *metadata = new de::SessionMetadata;
+    de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
 
     metadata->set("magic",           int(IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC));
     metadata->set("version",         MY_SAVE_VERSION);
@@ -3390,7 +3390,7 @@ de::SessionMetadata *G_CurrentSessionMetadata()
 void G_ReadLegacySessionMetadata(void *metadata_, Reader *reader)
 {
     DENG2_ASSERT(metadata_ != 0);
-    de::SessionMetadata &metadata = *static_cast<de::SessionMetadata *>(metadata_);
+    de::game::SessionMetadata &metadata = *static_cast<de::game::SessionMetadata *>(metadata_);
 
 #if __JHEXEN__
     // Read the magic byte to determine the high-level format.

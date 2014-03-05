@@ -24,9 +24,9 @@
 #include "g_common.h"
 #include "hu_menu.h"
 #include "p_saveio.h"
+#include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/Observers>
-#include <de/SavedSessionRepository>
 #include <map>
 
 #define MAX_HUB_MAPS 99
@@ -35,6 +35,7 @@ static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game ses
 static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
 using namespace de;
+using namespace de::game;
 
 DENG2_PIMPL(SaveSlots::Slot)
 , DENG2_OBSERVES(SavedSession, StatusChange)

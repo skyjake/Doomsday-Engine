@@ -23,8 +23,8 @@
 #include "../Error"
 #include "../Folder"
 #include "../game/IGameStateReader"
+#include "../game/SavedSession"
 #include "../Path"
-#include "../SavedSession"
 #include "../String"
 
 /**
@@ -35,18 +35,19 @@
  *
  * @param metadata  The read metadata is written here.
  */
-typedef bool (*GameStateRecognizeFunc)(de::Path const &stateFilePath, de::SessionMetadata &metadata);
+typedef bool (*GameStateRecognizeFunc)(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
 
 /// Game state reader instantiator function ptr.
-typedef de::IGameStateReader *(*GameStateReaderMakeFunc)();
+typedef de::game::IGameStateReader *(*GameStateReaderMakeFunc)();
 
 namespace de {
+namespace game {
 
 /**
  * Centralized saved session repository. The saved game state file structure is automatically
  * initialized when the current game changes.
  *
- * @ingroup core
+ * @ingroup game
  */
 class DENG2_PUBLIC SavedSessionRepository
 {
@@ -130,6 +131,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+} // namespace game
 } // namespace de
 
 #endif // LIBDENG2_SAVEDSESSIONREPOSITORY_H

@@ -31,6 +31,7 @@
 #include <de/NativePath>
 
 using namespace de;
+using namespace de::game;
 
 DENG2_PIMPL(GameStateWriter)
 {
@@ -70,7 +71,7 @@ DENG2_PIMPL(GameStateWriter)
 #endif
     }
 
-    void writeSessionHeader(de::SessionMetadata const &metadata)
+    void writeSessionHeader(SessionMetadata const &metadata)
     {
         SV_WriteSessionMetadata(metadata, writer);
     }
@@ -121,7 +122,7 @@ GameStateWriter::GameStateWriter() : d(new Instance(this))
 {}
 
 void GameStateWriter::write(Path const &stateFilePath, Path const &mapStateFilePath,
-    de::SessionMetadata const &metadata)
+    SessionMetadata const &metadata)
 {
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__

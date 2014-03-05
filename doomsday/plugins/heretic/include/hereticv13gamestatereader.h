@@ -33,17 +33,17 @@
  *
  * @ingroup libheretic
  */
-class HereticV13GameStateReader : public de::IGameStateReader
+class HereticV13GameStateReader : public de::game::IGameStateReader
 {
 public:
     HereticV13GameStateReader();
     ~HereticV13GameStateReader();
 
-    static de::IGameStateReader *make();
-    static bool recognize(de::Path const &stateFilePath, de::SessionMetadata &metadata);
+    static de::game::IGameStateReader *make();
+    static bool recognize(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
 
     void read(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
-              de::SessionMetadata const &metadata);
+              de::game::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

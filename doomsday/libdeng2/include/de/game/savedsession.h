@@ -26,6 +26,7 @@
 #include "../String"
 
 namespace de {
+namespace game {
 
 class IGameStateReader;
 class SavedSessionRepository;
@@ -33,7 +34,7 @@ class SavedSessionRepository;
 /**
  * Logical component representing a serialized game state on disk.
  *
- * @ingroup core
+ * @ingroup game
  */
 class DENG2_PUBLIC SavedSession
 {
@@ -150,6 +151,7 @@ private:
 
 typedef SavedSession::Metadata SessionMetadata;
 
+} // namespace game
 } // namespace de
 
 #endif // LIBDENG2_SAVEDSESSION_H

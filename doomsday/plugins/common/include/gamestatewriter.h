@@ -41,7 +41,7 @@ public:
     GameStateWriter();
 
     void write(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
-               de::SessionMetadata const &metadata);
+               de::game::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

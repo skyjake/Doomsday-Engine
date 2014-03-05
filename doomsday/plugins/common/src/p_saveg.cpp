@@ -31,8 +31,8 @@
 #include "mapstatewriter.h"
 #include "saveslots.h"
 #include <de/game/IGameStateReader>
+#include <de/game/SavedSessionRepository>
 #include <de/NativePath>
-#include <de/SavedSessionRepository>
 #include <de/String>
 #include <de/memory.h>
 #include <cstdio>
@@ -785,12 +785,12 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
     saveRepo.folder().verifyWriteAccess();
 
     // Prepare new saved game session session.
-    de::SavedSession *session = new de::SavedSession(saveNameForClientSessionId(sessionId));
-    de::SessionMetadata *metadata = G_CurrentSessionMetadata();
+    de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
+    de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
     metadata->set("sessionId", sessionId);
     session->replaceMetadata(metadata);
     session->setRepository(&saveRepo);
@@ -847,12 +847,12 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
 
     Reader *reader = SV_NewReader();
 
-    de::SavedSession *session = new de::SavedSession(saveNameForClientSessionId(sessionId));
-    de::SessionMetadata *metadata = new de::SessionMetadata;
+    de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
+    de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
     G_ReadLegacySessionMetadata(metadata, reader);
     metadata->set("sessionId", sessionId);
     session->replaceMetadata(metadata);

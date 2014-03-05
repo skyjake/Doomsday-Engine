@@ -318,7 +318,7 @@ DENG2_PIMPL(ResourceSystem)
     typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
     SpriteGroups spriteGroups;
 
-    SavedSessionRepository saveRepo;
+    game::SavedSessionRepository saveRepo;
 
     Instance(Public *i)
         : Base(i)
@@ -3810,7 +3810,7 @@ void ResourceSystem::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
-SavedSessionRepository &ResourceSystem::savedSessionRepository() const
+game::SavedSessionRepository &ResourceSystem::savedSessionRepository() const
 {
     return d->saveRepo;
 }

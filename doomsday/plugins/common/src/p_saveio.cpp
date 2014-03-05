@@ -257,7 +257,7 @@ void SV_EndSegment()
     SV_BeginSegment(ASEG_END);
 }
 
-void SV_WriteSessionMetadata(de::SessionMetadata const &metadata, Writer *writer)
+void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer)
 {
     DENG2_ASSERT(writer != 0);
 
@@ -293,7 +293,7 @@ void SV_WriteSessionMetadata(de::SessionMetadata const &metadata, Writer *writer
     Writer_WriteInt32(writer, metadata["sessionId"].value().asNumber());
 }
 
-void SV_ReadSessionMetadata(de::SessionMetadata &metadata, Reader *reader)
+void SV_ReadSessionMetadata(de::game::SessionMetadata &metadata, Reader *reader)
 {
     G_ReadLegacySessionMetadata(&metadata, reader);
 }

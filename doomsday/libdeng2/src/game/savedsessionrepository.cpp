@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/SavedSessionRepository"
+#include "de/game/SavedSessionRepository"
 
 #include "de/App"
 #include "de/game/Game"
@@ -29,6 +29,7 @@
 #include <map>
 
 namespace de {
+namespace game {
 
 DENG2_PIMPL(SavedSessionRepository)
 , DENG2_OBSERVES(App, GameUnload)
@@ -198,4 +199,5 @@ IGameStateReader *SavedSessionRepository::recognizeAndMakeReader(SavedSession &s
     return 0; // Unrecognized
 }
 
+} // namespace game
 } // namespace de

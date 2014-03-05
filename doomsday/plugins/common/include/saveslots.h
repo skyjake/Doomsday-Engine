@@ -23,8 +23,8 @@
 
 #include "common.h"
 #include <de/Error>
+#include <de/game/SavedSession>
 #include <de/Path>
-#include <de/SavedSession>
 #include <de/String>
 
 /**
@@ -77,7 +77,7 @@ public:
         /**
          * Convenient method of looking up the deserialized session metadata for the logical save slot.
          */
-        de::SessionMetadata const &saveMetadata() const;
+        de::game::SessionMetadata const &saveMetadata() const;
 
         /**
          * Returns the saved session game state file path (in the repository).
@@ -98,7 +98,7 @@ public:
         /**
          * Returns the saved session for the logical save slot.
          */
-        de::SavedSession &savedSession() const;
+        de::game::SavedSession &savedSession() const;
 
         /**
          * Deletes all saved session state files associated for the logical save slot.
@@ -110,7 +110,7 @@ public:
          *
          * @param newSession  New SavedSession to replace with. Ownership is given.
          */
-        void replaceSavedSession(de::SavedSession *newSession);
+        void replaceSavedSession(de::game::SavedSession *newSession);
 
     private:
         DENG2_PRIVATE(d)

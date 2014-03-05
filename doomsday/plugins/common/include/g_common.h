@@ -239,7 +239,7 @@ bool G_LoadSession(de::String slotId);
 /**
  * @return  New SessionMetadata (record). Ownership is given to the caller.
  */
-de::SessionMetadata *G_CurrentSessionMetadata();
+de::game::SessionMetadata *G_CurrentSessionMetadata();
 
 /**
  * Returns the game's SaveSlots.
@@ -249,7 +249,7 @@ SaveSlots &G_SaveSlots();
 /**
  * Returns the game's (i.e., the app's) SavedSessionRepository.
  */
-de::SavedSessionRepository &G_SavedSessionRepository();
+de::game::SavedSessionRepository &G_SavedSessionRepository();
 
 /**
  * Parse @a str and determine whether it references a logical game-save slot.

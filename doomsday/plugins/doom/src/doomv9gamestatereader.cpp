@@ -621,7 +621,7 @@ static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
     }
 }
 
-static void SaveInfo_Read_Dm_v19(de::SessionMetadata &metadata, Reader *reader)
+static void SaveInfo_Read_Dm_v19(de::game::SessionMetadata &metadata, Reader *reader)
 {
     char descBuf[24];
     Reader_Read(reader, descBuf, 24);
@@ -708,7 +708,7 @@ DENG2_PIMPL(DoomV9GameStateReader)
     {
         // Read the header again.
         /// @todo seek straight to the game state.
-        SaveInfo_Read_Dm_v19(de::SessionMetadata(), reader);
+        SaveInfo_Read_Dm_v19(de::game::SessionMetadata(), reader);
     }
 
     void readPlayers()
@@ -938,7 +938,8 @@ DoomV9GameStateReader::DoomV9GameStateReader() : d(new Instance(this))
 DoomV9GameStateReader::~DoomV9GameStateReader()
 {}
 
-bool DoomV9GameStateReader::recognize(de::Path const &stateFilePath, de::SessionMetadata &metadata) // static
+bool DoomV9GameStateReader::recognize(de::Path const &stateFilePath,
+    de::game::SessionMetadata &metadata) // static
 {
     if(!SV_ExistingFile(stateFilePath)) return false;
     if(!SV_OpenFile_Dm_v19(stateFilePath)) return false;
@@ -963,13 +964,13 @@ bool DoomV9GameStateReader::recognize(de::Path const &stateFilePath, de::Session
     return result;
 }
 
-de::IGameStateReader *DoomV9GameStateReader::make()
+de::game::IGameStateReader *DoomV9GameStateReader::make()
 {
     return new DoomV9GameStateReader;
 }
 
 void DoomV9GameStateReader::read(de::Path const &stateFilePath, de::Path const & /*mapStateFilePath*/,
-    de::SessionMetadata const &metadata)
+    de::game::SessionMetadata const &metadata)
 {
     if(!SV_OpenFile_Dm_v19(stateFilePath))
     {

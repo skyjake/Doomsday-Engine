@@ -23,12 +23,15 @@
 #include <de/Error>
 #include <de/Path>
 #include <de/Record>
-#include <de/SavedSession>
+#include <de/game/SavedSession>
 
 namespace de {
+namespace game {
 
 /**
  * Interface for serialized game state (savegame) readers.
+ *
+ * @ingroup game
  */
 class DENG2_PUBLIC IGameStateReader
 {
@@ -55,6 +58,7 @@ public:
                       SavedSession::Metadata const &metadata) = 0;
 };
 
+} // namespace game
 } // namespace de
 
 #endif // LIBDENG2_IGAMESTATEREADER_H

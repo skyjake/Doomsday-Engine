@@ -642,7 +642,7 @@ static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
     }
 }
 
-static void SaveInfo_Read_Hr_v13(de::SessionMetadata &metadata, Reader *reader)
+static void SaveInfo_Read_Hr_v13(de::game::SessionMetadata &metadata, Reader *reader)
 {
     char descBuf[24];
     Reader_Read(reader, descBuf, 24);
@@ -729,7 +729,7 @@ DENG2_PIMPL(HereticV13GameStateReader)
     {
         // Read the header again.
         /// @todo seek straight to the game state.
-        SaveInfo_Read_Hr_v13(de::SessionMetadata(), reader);
+        SaveInfo_Read_Hr_v13(de::game::SessionMetadata(), reader);
     }
 
     void readPlayers()
@@ -952,7 +952,7 @@ HereticV13GameStateReader::~HereticV13GameStateReader()
 {}
 
 bool HereticV13GameStateReader::recognize(de::Path const &stateFilePath,
-    de::SessionMetadata &metadata) // static
+    de::game::SessionMetadata &metadata) // static
 {
     if(!SV_ExistingFile(stateFilePath)) return false;
     if(!SV_OpenFile_Hr_v13(stateFilePath)) return false;
@@ -977,13 +977,13 @@ bool HereticV13GameStateReader::recognize(de::Path const &stateFilePath,
     return result;
 }
 
-de::IGameStateReader *HereticV13GameStateReader::make()
+de::game::IGameStateReader *HereticV13GameStateReader::make()
 {
     return new HereticV13GameStateReader;
 }
 
 void HereticV13GameStateReader::read(de::Path const &stateFilePath, de::Path const & /*mapStateFilePath*/,
-    de::SessionMetadata const &metadata)
+    de::game::SessionMetadata const &metadata)
 {
     if(!SV_OpenFile_Hr_v13(stateFilePath))
     {

@@ -21,8 +21,8 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
+#include <de/game/SavedSession>
 #include <de/Path>
-#include <de/SavedSession>
 #include <de/reader.h>
 #include <de/writer.h>
 #include "lzss.h"
@@ -89,8 +89,8 @@ void SV_BeginSegment(int segmentId);
 
 void SV_EndSegment();
 
-void SV_WriteSessionMetadata(de::SessionMetadata const &metadata, Writer *writer);
-void SV_ReadSessionMetadata(de::SessionMetadata &metadata, Reader *reader);
+void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer);
+void SV_ReadSessionMetadata(de::game::SessionMetadata &metadata, Reader *reader);
 
 void SV_WriteConsistencyBytes();
 

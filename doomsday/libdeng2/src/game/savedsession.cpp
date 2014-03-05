@@ -17,19 +17,18 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/Savedsession"
+#include "de/game/Savedsession"
 
 #include "de/App"
 #include "de/game/Game"
+#include "de/game/SavedSessionRepository"
 #include "de/ArrayValue"
 #include "de/Log"
 #include "de/NumberValue"
 #include "de/NativePath"
-#include "de/SavedSessionRepository"
 
 namespace de {
-
-using namespace internal;
+namespace game {
 
 DENG2_PIMPL(SavedSession)
 {
@@ -270,4 +269,5 @@ std::auto_ptr<IGameStateReader> SavedSession::gameStateReader()
     return p;
 }
 
+} // namespace game
 } // namespace de

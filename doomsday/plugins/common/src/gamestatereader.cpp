@@ -36,6 +36,7 @@
 #include <de/String>
 
 using namespace de;
+using namespace de::game;
 
 DENG2_PIMPL(GameStateReader)
 {
