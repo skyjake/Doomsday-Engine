@@ -201,6 +201,9 @@ DENG2_PIMPL(OculusRift), public Lockable
                         info.ChromaAbCorrection[2],
                         info.ChromaAbCorrection[3]);
             eyeToScreenDistance = info.EyeToScreenDistance;
+
+            // Update the initial latency prediction.
+            oculusTracker->setLatency(latency);
         }
 #endif
     }
@@ -335,9 +338,9 @@ Vector3f OculusRift::headOrientation() const
 Matrix4f OculusRift::headModelViewMatrix() const
 {
     Vector3f const pry = headOrientation();
-    return Matrix4f::rotate(pry[1], Vector3f(0, 0, 1)) *
-           Matrix4f::rotate(pry[0], Vector3f(1, 0, 0)) *
-           Matrix4f::rotate(pry[2], Vector3f(0, 1, 0));
+    return Matrix4f::rotate(-radianToDegree(pry[1]), Vector3f(0, 0, 1)) *
+           Matrix4f::rotate(-radianToDegree(pry[0]), Vector3f(1, 0, 0)) *
+           Matrix4f::rotate(-radianToDegree(pry[2]), Vector3f(0, 1, 0));
 }
 
 float OculusRift::distortionScale() const
