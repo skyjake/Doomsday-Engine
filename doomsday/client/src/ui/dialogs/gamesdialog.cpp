@@ -19,7 +19,7 @@
 #include "ui/dialogs/gamesdialog.h"
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/dialogs/networksettingsdialog.h"
-
+#include "ui/dialogs/manualconnectiondialog.h"
 #include "CommandAction"
 
 #include <de/SignalAction>
@@ -28,9 +28,12 @@ using namespace de;
 
 DENG_GUI_PIMPL(GamesDialog)
 {
+    Mode mode;
     GameSelectionWidget *gameSel; //MenuWidget *list;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i, Mode m)
+        : Base(i)
+        , mode(m)
     {
         self.area().add(gameSel = new GameSelectionWidget("games"));
 
@@ -41,31 +44,76 @@ DENG_GUI_PIMPL(GamesDialog)
     }
 };
 
-GamesDialog::GamesDialog(String const &name)
-    : DialogWidget(name/*, WithHeading*/), d(new Instance(this))
+GamesDialog::GamesDialog(Mode mode, String const &name)
+    : DialogWidget(name/*, WithHeading*/)
+    , d(new Instance(this, mode))
 {
     connect(d->gameSel, SIGNAL(gameSessionSelected()), this, SLOT(accept()));
 
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(1, 0);
 
-    d->gameSel->filter().rule().setInput(Rule::Width, d->gameSel->rule().width());
+    if(d->mode == ShowAll)
+    {
+        // Include the filter in the layout.
+        d->gameSel->filter().rule().setInput(Rule::Width, d->gameSel->rule().width());
+        layout << d->gameSel->filter();
 
-    layout << d->gameSel->filter() << *d->gameSel;
+        d->gameSel->filter().setFilter(GameFilterWidget::AllGames);
+    }
+    else
+    {
+        // Select a suitable view as the user can't change the filter.
+        d->gameSel->filter().hide();
+        d->gameSel->filter().enableStateSerialization(false);
+        d->gameSel->filter().setFilter(d->mode == ShowSingleplayerOnly?
+                                           GameFilterWidget::Singleplayer :
+                                           GameFilterWidget::Multiplayer);
+
+        switch(d->mode)
+        {
+        case ShowSingleplayerOnly:
+            d->gameSel->subsetFold("available")->open();
+            d->gameSel->subsetFold("incomplete")->close();
+            break;
+
+        case ShowMultiplayerOnly:
+            d->gameSel->subsetFold("multi")->open();
+            break;
+
+        default:
+            break;
+        }
+    }
+    layout << *d->gameSel;
 
     area().setContentSize(layout.width(), layout.height());
 
-    buttons()
-            << new DialogButtonItem(Default | Accept, tr("Close"))
-            << new DialogButtonItem(Action | Id1,
-                                    style().images().image("gear"),
-                                    new SignalAction(this, SLOT(showSettings())));
+    // Buttons appropriate for the mode:
+    buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
+
+    if(d->mode != ShowSingleplayerOnly)
+    {
+        buttons() << new DialogButtonItem(Action | Id2, tr("Connect Manually..."),
+                                          new SignalAction(this, SLOT(connectManually())));
+    }
+
+    buttons() << new DialogButtonItem(Action | Id1, style().images().image("gear"),
+                                      new SignalAction(this, SLOT(showSettings())));
 }
 
 void GamesDialog::showSettings()
 {
     NetworkSettingsDialog *dlg = new NetworkSettingsDialog;
     dlg->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
+    dlg->setDeleteAfterDismissed(true);
+    dlg->exec(root());
+}
+
+void GamesDialog::connectManually()
+{
+    ManualConnectionDialog *dlg = new ManualConnectionDialog;
+    dlg->setAnchorAndOpeningDirection(buttonWidget(Id2)->rule(), ui::Up);
     dlg->setDeleteAfterDismissed(true);
     dlg->exec(root());
 }
