@@ -252,6 +252,14 @@ public:
 
     void removeEventHandler(IEventHandler *handler);
 
+    /**
+     * Enables or disables automatic state serialization for widgets derived from
+     * IPersistent. State serialization occurs when the widget is gl(De)Init'd.
+     *
+     * @param enabled  @c true to enable, @c false to disable.
+     */
+    void enableStateSerialization(bool enabled = true);
+
     // Events.
     void initialize();
     void deinitialize();
