@@ -90,6 +90,7 @@ public ChildWidgetOrganizer::IFilter
     bool needButtonUpdate;
     float normalGlow;
     bool animatingGlow;
+    bool needTrapAfterClose;
     DialogContentStylist stylist;
 
     Instance(Public *i, Flags const &dialogFlags)
@@ -100,6 +101,7 @@ public ChildWidgetOrganizer::IFilter
         , acceptAction(0)
         , needButtonUpdate(false)
         , animatingGlow(false)
+        , needTrapAfterClose(false)
     {
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
@@ -608,6 +610,13 @@ void DialogWidget::reject(int result)
 
 void DialogWidget::prepare()
 {
+    if(root().window().canvas().isMouseTrapped())
+    {
+        // Mouse needs to be untrapped for the user to be access the dialog.
+        root().window().canvas().trapMouse(false);
+        d->needTrapAfterClose = true;
+    }
+
     root().setFocus(0);
 
     if(openingDirection() == ui::NoDirection)
@@ -636,6 +645,12 @@ void DialogWidget::finish(int result)
 {
     root().setFocus(0);
     close();
+
+    if(d->needTrapAfterClose)
+    {
+        root().window().canvas().trapMouse();
+        d->needTrapAfterClose = false;
+    }
 
     if(result > 0)
     {

@@ -46,6 +46,7 @@
 #  include "render/lightgrid.h"
 #  include "render/blockmapvisual.h"
 #  include "edit_bias.h"
+#  include "ui/widgets/taskbarwidget.h"
 #endif
 
 #ifdef __SERVER__
@@ -1304,8 +1305,16 @@ D_CMD(Net)
         else if(!stricmp(argv[1], "setup"))
         {
             // Start network setup.
-            DD_NetSetup(!stricmp(argv[2], "server"));
-            CmdReturnValue = true;
+            if(!stricmp(argv[2], "client"))
+            {
+                CmdReturnValue = true;
+                ClientWindow::main().taskBar().close();
+                ClientWindow::main().taskBar().showMultiplayer();
+            }
+            else
+                return false;
+            //DD_NetSetup(!stricmp(argv[2], "server"));
+            //CmdReturnValue = true;
         }
 #endif
     }

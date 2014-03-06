@@ -720,7 +720,15 @@ void TaskBarWidget::showMultiplayer()
 {
     GamesDialog *games = new GamesDialog(GamesDialog::ShowMultiplayerOnly);
     games->setDeleteAfterDismissed(true);
-    games->exec(root());
+    if(isOpen())
+    {
+        games->exec(root());
+    }
+    else
+    {
+        root().add(games);
+        games->open();
+    }
 }
 
 void TaskBarWidget::connectToServerManually()
