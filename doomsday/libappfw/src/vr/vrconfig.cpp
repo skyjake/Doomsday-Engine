@@ -91,8 +91,8 @@ void VRConfig::setCurrentEye(Eye eye)
 {
     float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
 
-    // 0.95 because eyes are not at top of head
-    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.95 * d->playerPhysicalHeight);
+    // 0.925 because eyes are not at top of head
+    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.925 * d->playerPhysicalHeight);
     d->eyeShift = mapUnitsPerMeter * (eyePos - d->dominantEye) * 0.5 * d->ipd;
     if(d->swapEyes)
     {
@@ -143,6 +143,11 @@ bool VRConfig::modeNeedsStereoGLFormat(StereoMode mode)
 float VRConfig::interpupillaryDistance() const
 {
     return d->ipd;
+}
+
+float VRConfig::eyeHeightInMapUnits() const
+{
+    return d->eyeHeightInMapUnits;
 }
 
 float VRConfig::physicalPlayerHeight() const
