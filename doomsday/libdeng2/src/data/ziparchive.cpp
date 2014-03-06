@@ -564,7 +564,7 @@ void ZipArchive::operator >> (Writer &to) const
     }
 
     CentralEnd summary;
-    summary.diskEntryCount = summary.totalEntryCount = index().size();
+    summary.diskEntryCount = summary.totalEntryCount = index().leafNodes().size();
 
     // This is where the central directory begins.
     summary.offset = writer.offset();
