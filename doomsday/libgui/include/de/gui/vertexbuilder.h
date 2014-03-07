@@ -71,19 +71,20 @@ struct VertexBuilder
             return *this += quad;
         }
         /// Makes a 3D quad with indirect UV coords. The points p1...p4 are specified
-        /// with a clockwise winding.
+        /// with a clockwise winding (use Vertex3Tex2BoundsRgba).
         Vertices &makeQuadIndirect(Vector3f const &p1, Vector3f const &p2,
                                    Vector3f const &p3, Vector3f const &p4,
                                    Vector4f const &color, Rectanglef const &uv,
-                                   Vector4f const &uvBounds) {
+                                   Vector4f const &uvBounds, Vector2f const &texSize) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
             v.texBounds = uvBounds;
-            v.pos = p1; v.texCoord = uv.topLeft;      quad << v;
-            v.pos = p2; v.texCoord = uv.topRight();   quad << v;
-            v.pos = p4; v.texCoord = uv.bottomLeft(); quad << v;
-            v.pos = p3; v.texCoord = uv.bottomRight;  quad << v;
+            v.texCoord[1] = texSize;
+            v.pos = p1; v.texCoord[0] = uv.topLeft;      quad << v;
+            v.pos = p2; v.texCoord[0] = uv.topRight();   quad << v;
+            v.pos = p4; v.texCoord[0] = uv.bottomLeft(); quad << v;
+            v.pos = p3; v.texCoord[0] = uv.bottomRight;  quad << v;
             return *this += quad;
         }
         Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
@@ -111,48 +112,49 @@ struct VertexBuilder
                                    Vector3f const &maxPoint,
                                    Rectanglef const &uv,
                                    Vector4f const &uvBounds,
+                                   Vector2f const &texSize,
                                    Vector4f const faceColors[6]) {
             // Back.
             makeQuadIndirect(minPoint,
                              Vector3f(maxPoint.x, minPoint.y, minPoint.z),
                              Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
                              Vector3f(minPoint.x, maxPoint.y, minPoint.z),
-                             faceColors[0], uv, uvBounds);
+                             faceColors[0], uv, uvBounds, texSize);
 
             // Front.
             makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
                              Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
                              maxPoint,
                              Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
-                             faceColors[1], uv, uvBounds);
+                             faceColors[1], uv, uvBounds, texSize);
 
             // Left.
             makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
                              minPoint,
                              Vector3f(minPoint.x, maxPoint.y, minPoint.z),
                              Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
-                             faceColors[2], uv, uvBounds);
+                             faceColors[2], uv, uvBounds, texSize);
 
             // Right.
             makeQuadIndirect(Vector3f(maxPoint.x, minPoint.y, minPoint.z),
                              Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
                              maxPoint,
                              Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
-                             faceColors[3], uv, uvBounds);
+                             faceColors[3], uv, uvBounds, texSize);
 
             // Floor.
             makeQuadIndirect(Vector3f(minPoint.x, maxPoint.y, minPoint.z),
                              Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
                              maxPoint,
                              Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
-                             faceColors[4], uv, uvBounds);
+                             faceColors[4], uv, uvBounds, texSize);
 
             // Ceiling.
             makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
                              Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
                              Vector3f(maxPoint.x, minPoint.y, minPoint.z),
                              minPoint,
-                             faceColors[5], uv, uvBounds);
+                             faceColors[5], uv, uvBounds, texSize);
 
             return *this;
         }

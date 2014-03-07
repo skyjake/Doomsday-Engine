@@ -146,6 +146,20 @@ struct LIBGUI_PUBLIC Vertex3TexBoundsRgba
 };
 
 /**
+ * Vertex format with 3D coordinates, two sets of texture coordinates with indirect
+ * bounds, and an RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3Tex2BoundsRgba
+{
+    Vector3f pos;
+    Vector2f texCoord[2];
+    Vector4f texBounds;    ///< UV space: x, y, width, height
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(5)
+};
+
+/**
  * Vertex format with 3D coordinates, two sets of texture coordinates, and an
  * RGBA color.
  */
