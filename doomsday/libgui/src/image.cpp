@@ -329,6 +329,17 @@ void Image::draw(Image const &image, Vector2i const &topLeft)
     painter.drawImage(QPoint(topLeft.x, topLeft.y), image.d->image);
 }
 
+void Image::drawPartial(Image const &image, Rectanglei const &part, Vector2i const &topLeft)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+    IMAGE_ASSERT_EDITABLE(image.d);
+
+    QPainter painter(&d->image);
+    painter.drawImage(QPoint(topLeft.x, topLeft.y),
+                      image.d->image,
+                      QRect(part.left(), part.top(), part.width(), part.height()));
+}
+
 void Image::operator >> (Writer &to) const
 {
     to << duint8(d->format);

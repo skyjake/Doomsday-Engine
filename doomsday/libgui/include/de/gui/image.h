@@ -143,6 +143,7 @@ public:
     void fill(Color const &color);
     void fill(Rectanglei const &rect, Color const &color);
     void draw(Image const &image, Vector2i const &topLeft);
+    void drawPartial(Image const &image, Rectanglei const &part, Vector2i const &topLeft);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
