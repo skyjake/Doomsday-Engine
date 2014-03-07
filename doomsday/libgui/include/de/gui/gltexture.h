@@ -113,6 +113,7 @@ public:
         setWrapT(st.y);
     }
     void setMaxAnisotropy(dfloat maxAnisotropy);
+    void setMaxLevel(dfloat maxLevel);
 
     gl::Filter minFilter() const;
     gl::Filter magFilter() const;
@@ -121,6 +122,7 @@ public:
     gl::Wrapping wrapT() const;
     Wraps wrap() const;
     dfloat maxAnisotropy() const;
+    dfloat maxLevel() const;
 
     bool isCubeMap() const;
 

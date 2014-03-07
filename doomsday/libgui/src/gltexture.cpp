@@ -48,6 +48,7 @@ DENG2_PIMPL(GLTexture)
     MipFilter mipFilter;
     Wraps wrap;
     dfloat maxAnisotropy;
+    dfloat maxLevel;
     TextureFlags flags;
 
     Instance(Public *i)
@@ -58,6 +59,7 @@ DENG2_PIMPL(GLTexture)
         , minFilter(Linear), magFilter(Linear), mipFilter(MipNone)
         , wrap(Wraps(Repeat, Repeat))
         , maxAnisotropy(1.0f)
+        , maxLevel(1000.f)
         , flags(ParamsChanged)
     {}
 
@@ -164,10 +166,11 @@ DENG2_PIMPL(GLTexture)
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
         glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
         glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
+        glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
 
         if(GLInfo::extensions().EXT_texture_filter_anisotropic)
         {
-            glTexParameteri(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+            glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
         }
 
         LIBGUI_ASSERT_GL_OK();
@@ -256,6 +259,12 @@ void GLTexture::setMaxAnisotropy(dfloat maxAnisotropy)
     d->flags |= ParamsChanged;
 }
 
+void GLTexture::setMaxLevel(dfloat maxLevel)
+{
+    d->maxLevel = maxLevel;
+    d->flags |= ParamsChanged;
+}
+
 Filter GLTexture::minFilter() const
 {
     return d->minFilter;
@@ -289,6 +298,11 @@ GLTexture::Wraps GLTexture::wrap() const
 dfloat GLTexture::maxAnisotropy() const
 {
     return d->maxAnisotropy;
+}
+
+dfloat GLTexture::maxLevel() const
+{
+    return d->maxLevel;
 }
 
 bool GLTexture::isCubeMap() const
