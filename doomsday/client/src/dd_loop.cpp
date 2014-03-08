@@ -67,8 +67,8 @@ byte processSharpEventsAfterTickers = true;
 timespan_t sysTime, gameTime, demoTime;
 //timespan_t frameStartTime;
 
-dd_bool stopTime = false; // If true the time counters won't be incremented
-dd_bool tickUI = false; // If true the UI will be tick'd
+//dd_bool stopTime = false; // If true the time counters won't be incremented
+//dd_bool tickUI = false; // If true the UI will be tick'd
 dd_bool tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
 
 static int gameLoopExitCode = 0;
@@ -231,11 +231,12 @@ static void baseTicker(timespan_t time)
     // Console is always ticking.
     Con_Ticker(time);
 
+    /*
     // User interface ticks.
     if(tickUI)
     {
         UI_Ticker(time);
-    }
+    }*/
 
     // Plugins tick always.
     DD_CallHooks(HOOK_TICKER, 0, &time);
@@ -253,7 +254,7 @@ static void advanceTime(timespan_t delta)
 
     sysTime += delta;
 
-    if(!stopTime || netGame)
+    if(/*!stopTime ||*/ netGame)
     {
         oldGameTic = SECONDS_TO_TICKS(gameTime);
 

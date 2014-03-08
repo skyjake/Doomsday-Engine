@@ -43,16 +43,13 @@ DENG2_PIMPL(GameUIWidget)
         {
             R_RenderViewPorts(HUDLayer);
 
-            if(!(UI_IsActive() && UI_Alpha() >= 1.0))
-            {
-                UI2_Drawer();
+            UI2_Drawer();
 
-                // Draw any full window game graphics.
-                if(gx.DrawWindow)
-                {
-                    Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-                    gx.DrawWindow(&dimensions);
-                }
+            // Draw any full window game graphics.
+            if(gx.DrawWindow)
+            {
+                Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
+                gx.DrawWindow(&dimensions);
             }
         }
 
@@ -68,12 +65,6 @@ DENG2_PIMPL(GameUIWidget)
         }
         Net_Drawer();
         S_Drawer();
-
-        if(UI_IsActive())
-        {
-            // Draw user interface.
-            UI_Drawer();
-        }
 
         DGL_End();
     }

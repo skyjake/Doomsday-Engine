@@ -559,7 +559,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 close();
                 return true;
             }
-            else if(!UI_IsActive()) /// @todo Play nice with legacy engine UI (which is deprecated).
+            else
             {
                 // Task bar is closed, so let's open it.
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
