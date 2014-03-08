@@ -132,7 +132,6 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
     connect(&editor(), SIGNAL(enterPressed(QString)), this, SLOT(queryOrConnect()));
     connect(&editor(), SIGNAL(editorContentChanged()), this, SLOT(validate()));
     connect(&editor(), SIGNAL(editorContentChanged()), this, SLOT(contentChanged()));
-    connect(&ClientApp::serverLink(), SIGNAL(disconnected()), this, SLOT(disconnected()));
 
     updateLayout();
 }
@@ -200,11 +199,6 @@ void ManualConnectionDialog::validate()
     }
 
     d->connectButton().enable(valid);
-}
-
-void ManualConnectionDialog::disconnected()
-{
-    d->linkDiscoveryUpdate(ClientApp::serverLink());
 }
 
 void ManualConnectionDialog::finish(int result)

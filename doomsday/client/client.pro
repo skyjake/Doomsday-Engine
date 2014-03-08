@@ -273,7 +273,6 @@ DENG_HEADERS += \
     include/network/protocol.h \
     include/network/serverlink.h \
     include/network/sys_network.h \
-    include/network/ui_mpi.h \
     include/partition.h \
     include/r_util.h \
     include/render/biasdigest.h \
@@ -415,7 +414,6 @@ DENG_HEADERS += \
     include/ui/sys_input.h \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
-    include/ui/ui_panel.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/updater/downloaddialog.h \
@@ -603,7 +601,6 @@ SOURCES += \
     src/network/net_ping.cpp \
     src/network/serverlink.cpp \
     src/network/sys_network.cpp \
-    src/network/ui_mpi.cpp \
     src/r_util.cpp \
     src/render/api_render.cpp \
     src/render/biasdigest.cpp \
@@ -722,7 +719,6 @@ SOURCES += \
     src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
-    src/ui/ui_panel.cpp \
     src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \

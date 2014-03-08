@@ -47,6 +47,7 @@ DENG2_PIMPL(GuiWidget)
     bool inited;
     bool needGeometry;
     bool styleChanged;
+    bool stateSerializationEnabled;
     Background background;
     Animation opacity;
     Animation opacityWhenDisabled;
@@ -74,6 +75,7 @@ DENG2_PIMPL(GuiWidget)
         , inited(false)
         , needGeometry(true)
         , styleChanged(false)
+        , stateSerializationEnabled(true)
         , opacity(1.f, Animation::Linear)
         , opacityWhenDisabled(1.f, Animation::Linear)
         , firstUpdateAfterCreation(true)
@@ -319,6 +321,7 @@ DENG2_PIMPL(GuiWidget)
 
     void restoreState()
     {
+        if(!stateSerializationEnabled) return;
         try
         {
             if(IPersistent *po = self.maybeAs<IPersistent>())
@@ -336,6 +339,7 @@ DENG2_PIMPL(GuiWidget)
 
     void saveState()
     {
+        if(!stateSerializationEnabled) return;
         try
         {
             if(IPersistent *po = self.maybeAs<IPersistent>())
@@ -533,6 +537,11 @@ void GuiWidget::addEventHandler(IEventHandler *handler)
 void GuiWidget::removeEventHandler(IEventHandler *handler)
 {
     d->eventHandlers.removeOne(handler);
+}
+
+void GuiWidget::enableStateSerialization(bool enabled)
+{
+    d->stateSerializationEnabled = enabled;
 }
 
 void GuiWidget::initialize()

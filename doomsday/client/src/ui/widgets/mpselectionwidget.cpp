@@ -94,8 +94,8 @@ DENG_GUI_PIMPL(MPSelectionWidget)
 
                 serverinfo_t const &sv = item.info();
 
-                loadButton().enable(sv.canJoin);
-                if(sv.canJoin)
+                loadButton().enable(sv.canJoin && sv.version == DOOMSDAY_VERSION);
+                if(loadButton().isEnabled())
                 {
                     loadButton().setAction(new JoinAction(sv));
                 }

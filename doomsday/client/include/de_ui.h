@@ -32,8 +32,6 @@
 #  include "ui/clientwindowsystem.h"
 #  include "ui/clientwindow.h"
 #  include "ui/ui_main.h"
-#  include "ui/ui_panel.h"
-#  include "network/ui_mpi.h"
 #endif
 
 #endif /* LIBDENG_USER_INTERFACE_H */

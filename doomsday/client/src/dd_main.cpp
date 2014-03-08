@@ -73,13 +73,13 @@
 #endif
 #include "world/worldsystem.h"
 
-#include "ui/ui_main.h"
+#ifdef __CLIENT__
+#  include "ui/ui_main.h"
+#  include "ui/widgets/taskbarwidget.h"
+#endif
 #include "ui/ui2_main.h"
 #include "ui/fi_main.h"
 #include "ui/p_control.h"
-#ifdef __CLIENT__
-#  include "ui/widgets/taskbarwidget.h"
-#endif
 
 #include <de/ArrayValue>
 #include <de/DictionaryValue>

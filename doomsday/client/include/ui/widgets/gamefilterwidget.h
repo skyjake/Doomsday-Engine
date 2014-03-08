@@ -53,9 +53,9 @@ public:
     GameFilterWidget(de::String const &name = "gamefilter");
 
     void useInvertedStyle();
+    void setFilter(Filter flt);
 
     Filter filter() const;
-
     SortOrder sortOrder() const;
 
     // Implements IPersistent.
