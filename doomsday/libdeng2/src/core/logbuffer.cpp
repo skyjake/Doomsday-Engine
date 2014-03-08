@@ -80,6 +80,7 @@ DENG2_PIMPL_NOREF(LogBuffer)
         , outSink(QtDebugMsg)
         , errSink(QtWarningMsg)
 #endif
+        , lastFlushedAt(Time::invalidTime())
         , autoFlushTimer(0)
     {
         // Standard output enabled by default.
@@ -94,6 +95,23 @@ DENG2_PIMPL_NOREF(LogBuffer)
     {
         if(autoFlushTimer) autoFlushTimer->stop();
         delete fileLogSink;
+    }
+
+    void enableAutoFlush(bool yes)
+    {
+        DENG2_ASSERT(qApp);
+        if(yes)
+        {
+            if(!autoFlushTimer->isActive())
+            {
+                // Every now and then the buffer will be flushed.
+                autoFlushTimer->start(FLUSH_INTERVAL * 1000);
+            }
+        }
+        else
+        {
+            autoFlushTimer->stop();
+        }
     }
 
     void disposeFileLogSink()
@@ -190,20 +208,13 @@ void LogBuffer::add(LogEntry *entry)
 
     // We will not flush the new entry as it likely has not yet been given
     // all its arguments.
-    if(d->lastFlushedAt.since() > FLUSH_INTERVAL)
+    if(d->lastFlushedAt.isValid() && d->lastFlushedAt.since() > FLUSH_INTERVAL)
     {
         flush();
     }
 
     d->entries.push_back(entry);
     d->toBeFlushed.push_back(entry);
-
-    // Should we start autoflush?
-    if(!d->autoFlushTimer->isActive() && qApp)
-    {
-        // Every now and then the buffer will be flushed.
-        d->autoFlushTimer->start(FLUSH_INTERVAL * 1000);
-    }
 }
 
 void LogBuffer::enableStandardOutput(bool yes)
@@ -219,13 +230,18 @@ void LogBuffer::enableStandardOutput(bool yes)
 void LogBuffer::enableFlushing(bool yes)
 {
     d->flushingEnabled = yes;
+    d->enableAutoFlush(true);
 }
 
-void LogBuffer::setOutputFile(String const &path)
+void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
 {
     DENG2_GUARD(this);
 
-    flush();
+    if(behavior == FlushFirstToOldOutputs)
+    {
+        flush();
+    }
+
     d->disposeFileLogSink();
 
     if(d->outputFile)
