@@ -403,6 +403,7 @@ DENG_HEADERS += \
     include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
     include/ui/widgets/taskbarwidget.h \
+    include/ui/widgets/tutorialwidget.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
     include/ui/inputsystem.h \
@@ -737,6 +738,7 @@ SOURCES += \
     src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
+    src/ui/widgets/tutorialwidget.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \

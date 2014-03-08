@@ -66,6 +66,7 @@ public slots:
     void switchGame();
     void showMultiplayer();
     void connectToServerManually();
+    void showTutorial();
 
 protected slots:
     void updateCommandLineLayout();

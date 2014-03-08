@@ -61,9 +61,9 @@ using namespace de;
 
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
-, DENG2_OBSERVES(Canvas,           FocusChange)
-, DENG2_OBSERVES(App,              GameChange)
-, DENG2_OBSERVES(App,              StartupComplete)
+, DENG2_OBSERVES(Canvas, FocusChange)
+, DENG2_OBSERVES(App,    GameChange)
+, DENG2_OBSERVES(App,    StartupComplete)
 {
     bool needMainInit;
     bool needRecreateCanvas;
