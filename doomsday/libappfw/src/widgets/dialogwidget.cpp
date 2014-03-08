@@ -65,6 +65,11 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
         return true;
 #endif
     }
+    if(a.label().isEmpty() && !b.label().isEmpty())
+    {
+        // Label-less buttons go first.
+        return true;
+    }
 
     // Order unchanged.
     return false;
