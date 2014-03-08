@@ -56,7 +56,7 @@ Library &LibraryFile::library()
     }
     
     /// @todo A method for File for making a NativeFile out of any File.
-    NativeFile *native = dynamic_cast<NativeFile *>(source());
+    NativeFile *native = source()->maybeAs<NativeFile>();
     if(!native)
     {
         /// @throw UnsupportedSourceError Currently shared libraries are only loaded directly
@@ -112,8 +112,7 @@ bool LibraryFile::recognize(File const &file)
     // On Mac OS X, shared libraries are in the folder bundle format.
     // The LibraryFile will point to the actual binary inside the bundle.
     // Libraries must be loaded from native files.
-    NativeFile const *native = dynamic_cast<NativeFile const *>(&file);
-    if(native)
+    if(NativeFile const *native = file.maybeAs<NativeFile>())
     {
         // Check if the parent folder is a bundle.
         if(QLibrary::isLibrary(native->nativePath().fileNamePath().fileName()))
