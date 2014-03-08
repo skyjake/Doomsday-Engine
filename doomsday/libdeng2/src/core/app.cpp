@@ -446,6 +446,11 @@ Archive &App::persistentData()
     return *persist;
 }
 
+bool App::hasPersistentData()
+{
+    return DENG2_APP->d->persistentData != 0;
+}
+
 NativePath App::currentWorkPath()
 {
     return NativePath::workPath();

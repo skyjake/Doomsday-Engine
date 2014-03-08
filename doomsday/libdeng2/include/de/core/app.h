@@ -234,6 +234,8 @@ public:
      */
     static Archive &persistentData();
 
+    static bool hasPersistentData();
+
     /**
      * Returns the application's current native working directory.
      */
