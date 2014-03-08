@@ -61,10 +61,14 @@ class DENG2_PUBLIC App : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
     enum SubsystemInitFlag {
-        DefaultSubsystems   = 0x0,
-        DisablePlugins      = 0x1
+        DefaultSubsystems     = 0x0,
+        DisablePlugins        = 0x1,
+        DisablePersistentData = 0x2
     };
     Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
+
+    /// Throws if attempting to access persistent data when it has been disabled at init.
+    DENG2_ERROR(PersistentDataNotAvailable);
 
     /**
      * Notified when application startup has been fully completed.
