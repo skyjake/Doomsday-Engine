@@ -4,6 +4,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS +=  \
+    savegametool \
     shell   \
     md2tool \
     texc

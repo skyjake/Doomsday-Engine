@@ -57,7 +57,22 @@ public:
         Unused
     };
 
-    typedef Record Metadata;
+    /**
+     * Session metadata.
+     */
+    class DENG2_PUBLIC Metadata : public Record
+    {
+    public:
+        /**
+         * Generates a textual representation of the session metadata with Info syntax.
+         *
+         * See the Doomsday Wiki for an example of the syntax:
+         * http://dengine.net/dew/index.php?title=Info
+         *
+         * @todo Use a more generic Record => Info conversion logic.
+         */
+        String asTextWithInfoSyntax() const;
+    };
 
 public:
     SavedSession(String const &fileName = "");

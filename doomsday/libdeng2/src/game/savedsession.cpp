@@ -29,6 +29,50 @@
 namespace de {
 namespace game {
 
+String SavedSession::Metadata::asTextWithInfoSyntax() const
+{
+    String text;
+    QTextStream os(&text);
+    os.setCodec("UTF-8");
+
+    if(has("gameIdentityKey"))
+    {
+        os << "gameIdentityKey: \"" << (*this)["gameIdentityKey"].value().asText() << "\"";
+    }
+    if(hasSubrecord("gameRules"))
+    {
+        String rules = subrecord("gameRules").asText("          ", 0);
+        os << "\n      gameRules {\n" << rules << "\n      }";
+    }
+    if(has("mapTime"))
+    {
+       os << "\n        mapTime: "   << String::number(int((*this)["mapTime"].value().asNumber()));
+    }
+    if(has("mapUri"))
+    {
+        os << "\n         mapUri: \"" << (*this)["mapUri"].value().asText() << "\"";
+    }
+    if(has("players"))
+    {
+       os << "\n        players: "   << (*this)["players"].value().asText();
+    }
+    if(has("sessionId"))
+    {
+        os << "\n      sessionId: "   << String::number(int((*this)["sessionId"].value().asNumber()));
+    }
+    if(has("userDescription"))
+    {
+        String userDescription = (*this)["userDescription"].value().asText().replace("\"", "''");
+        os << "\nuserDescription: \"" << userDescription << "\"";
+    }
+    if(has("version"))
+    {
+        os << "\n        version: "   << (*this)["version"].value().asText();
+    }
+
+    return text;
+}
+
 DENG2_PIMPL(SavedSession)
 {
     SavedSessionRepository *repo; ///< The owning repository (if any).
