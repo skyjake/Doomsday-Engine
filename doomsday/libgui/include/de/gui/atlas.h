@@ -60,8 +60,10 @@ public:
         AllowDefragment = 0x2,
 
         /**
-         * If using a backing store, wrap borders using the source image instead
-         * of using black transparent borders. Set border size with setBorderSize().
+         * If using a backing store, wrap borders using the source image. This allows
+         * filtering the contents using wrapped coordinates. Borders are by default
+         * duplicated from neighboring pixels (for clamped filtering). Set border size
+         * with setBorderSize().
          */
         WrapBordersInBackingStore = 0x4,
 
@@ -72,7 +74,8 @@ public:
     typedef QSet<Id> Ids;
 
     /**
-     * Interface for allocator logic.
+     * Interface for allocator logic. Each Atlas requires one IAllocator object to
+     * determine where to place allocated images.
      */
     class LIBGUI_PUBLIC IAllocator
     {
