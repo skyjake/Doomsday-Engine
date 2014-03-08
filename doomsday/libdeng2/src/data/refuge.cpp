@@ -66,17 +66,27 @@ Refuge::~Refuge()
 
 void Refuge::read()
 {
-    Reader(App::persistentData().entryBlock(d->persistentPath)).withHeader() >> d->names;
+    if(App::hasPersistentData())
+    {
+        Reader(App::persistentData().entryBlock(d->persistentPath)).withHeader() >> d->names;
+    }
 }
 
 void Refuge::write() const
 {
-    Writer(App::persistentData().entryBlock(d->persistentPath)).withHeader() << d->names;
+    if(App::hasPersistentData())
+    {
+        Writer(App::persistentData().entryBlock(d->persistentPath)).withHeader() << d->names;
+    }
 }
 
 Time Refuge::lastWrittenAt() const
 {
-    return App::persistentData().entryStatus(d->persistentPath).modifiedAt;
+    if(App::hasPersistentData())
+    {
+        return App::persistentData().entryStatus(d->persistentPath).modifiedAt;
+    }
+    return Time::invalidTime();
 }
 
 Record &Refuge::names()

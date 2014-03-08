@@ -17,29 +17,71 @@
  */
 
 #include "ui/styledlogsinkformatter.h"
+#include <de/Variable>
+#include <de/Value>
+#include <de/App>
 
 using namespace de;
 
-StyledLogSinkFormatter::StyledLogSinkFormatter()
-    : _omitSectionIfNonDev(true)
-{
-    _format = LogEntry::Styled | LogEntry::OmitLevel;
+static char const *VAR_METADATA = "log.showMetadata";
 
-#ifndef _DEBUG
-    // No metadata in release builds.
-    _format |= LogEntry::Simple | LogEntry::OmitDomain;
-#endif
+DENG2_PIMPL(StyledLogSinkFormatter)
+, DENG2_OBSERVES(Variable, Change)
+{
+    LogEntry::Flags format;
+    bool observe;
+    bool omitSectionIfNonDev;
+    bool showMetadata;
+
+    Instance(Public *i, bool observeVars)
+        : Base(i)
+        , observe(observeVars)
+        , omitSectionIfNonDev(true)
+        , showMetadata(false)
+    {
+        if(observe)
+        {
+            showMetadata = App::config().getb(VAR_METADATA);
+            App::config()[VAR_METADATA].audienceForChange() += this;
+        }
+    }
+
+    ~Instance()
+    {
+        if(observe)
+        {
+            App::config()[VAR_METADATA].audienceForChange() -= this;
+        }
+    }
+
+    void variableValueChanged(Variable &, Value const &newValue)
+    {
+        showMetadata = newValue.isTrue();
+    }
+};
+
+StyledLogSinkFormatter::StyledLogSinkFormatter()
+    : d(new Instance(this, true /*observe*/))
+{
+    d->format = LogEntry::Styled | LogEntry::OmitLevel;
 }
 
 StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlags)
-    : _format(formatFlags),
-      _omitSectionIfNonDev(true)
-{}
+    : d(new Instance(this, false /*don't observe*/))
+{
+    d->format = formatFlags;
+}
 
 LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 {
-    LogEntry::Flags form = _format;
-    if(_omitSectionIfNonDev && !(entry.context() & LogEntry::Dev))
+    LogEntry::Flags form = d->format;
+
+    if(!d->showMetadata)
+    {
+        form |= LogEntry::Simple | LogEntry::OmitDomain;
+    }
+
+    if(d->omitSectionIfNonDev && !(entry.context() & LogEntry::Dev))
     {
         // The sections refer to names of native code functions, etc.
         // These are relevant only to developers. Non-dev messages must be
@@ -54,5 +96,5 @@ LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry 
 
 void StyledLogSinkFormatter::setOmitSectionIfNonDev(bool omit)
 {
-    _omitSectionIfNonDev = omit;
+    d->omitSectionIfNonDev = omit;
 }

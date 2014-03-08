@@ -93,19 +93,27 @@ void Config::read()
         LOG_DEBUG("Found serialized Config:\n") << names();
         
         // If the saved config is from a different version, rerun the script.
-        Value const &oldVersion = names()["__version__"].value();
-        d->setOldVersion(oldVersion);
-        if(oldVersion.compare(*version))
+        if(names().has("__version__"))
         {
-            // Version mismatch: store the old version in a separate variable.
-            d->config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
+            Value const &oldVersion = names()["__version__"].value();
+            d->setOldVersion(oldVersion);
+            if(oldVersion.compare(*version))
+            {
+                // Version mismatch: store the old version in a separate variable.
+                d->config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
                                                  Variable::AllowArray | Variable::ReadOnly));
-            shouldRunScript = true;
+                shouldRunScript = true;
+            }
+            else
+            {
+                // Versions match.
+                LOG_MSG("") << d->refuge.path() << " matches version " << version->asText();
+            }
         }
         else
         {
-            // Versions match.
-            LOG_MSG("") << d->refuge.path() << " matches version " << version->asText();
+            // Don't know what version this is, run script to be sure.
+            shouldRunScript = true;
         }
 
         // Also check the timestamp of written config vs. the config script.

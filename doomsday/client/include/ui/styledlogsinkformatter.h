@@ -42,8 +42,7 @@ public:
     void setOmitSectionIfNonDev(bool omit);
 
 private:
-    de::LogEntry::Flags _format;
-    bool _omitSectionIfNonDev;
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_STYLEDLOGSINKFORMATTER_H

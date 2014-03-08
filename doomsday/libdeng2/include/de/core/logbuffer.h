@@ -150,12 +150,19 @@ public:
      */
     void enableFlushing(bool yes = true);
 
+    enum OutputChangeBehavior {
+        FlushFirstToOldOutputs,
+        DontFlush
+    };
+
     /**
      * Sets the path of the file used for writing log entries to.
      *
-     * @param path  Path of the file.
+     * @param path      Path of the file.
+     * @param behavior  What to do with existing unflushed entries.
      */
-    void setOutputFile(String const &path);
+    void setOutputFile(String const &path,
+                       OutputChangeBehavior behavior = FlushFirstToOldOutputs);
 
     /**
      * Returns the path of the file used for log output.

@@ -35,7 +35,8 @@ def setDefaults(d)
     gui.setDefaults(d)    
     
     # Additional Log defaults.
-    d.log.filterBySubsystem = False        
+    d.log.filterBySubsystem = False
+    d.log.showMetadata = False
     record d.alert
     d.alert.generic  = Log.WARNING
     d.alert.resource = Log.WARNING
