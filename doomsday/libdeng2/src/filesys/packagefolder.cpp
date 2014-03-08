@@ -37,9 +37,7 @@ PackageFolder::~PackageFolder()
 Archive &PackageFolder::archive()
 {
     DENG2_ASSERT(!feeds().empty());
-    DENG2_ASSERT(dynamic_cast<ArchiveFeed *>(feeds().front()) != 0);
-
-    return static_cast<ArchiveFeed *>(feeds().front())->archive();
+    return feeds().front()->as<ArchiveFeed>().archive();
 }
 
 Archive const &PackageFolder::archive() const

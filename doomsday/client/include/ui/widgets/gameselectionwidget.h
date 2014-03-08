@@ -20,6 +20,7 @@
 #define DENG_CLIENT_GAMESELECTIONWIDGET_H
 
 #include <de/ScrollAreaWidget>
+#include <de/FoldPanelWidget>
 #include <de/ButtonWidget>
 #include <de/IPersistent>
 
@@ -45,6 +46,8 @@ public:
      * of the widget.
      */
     GameFilterWidget &filter();
+
+    de::FoldPanelWidget *subsetFold(de::String const &name);
 
     // Events.
     void update();

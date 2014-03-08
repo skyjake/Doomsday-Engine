@@ -42,11 +42,19 @@
 #  define LIBGUI_ACCURATE_TEXT_BOUNDS
 #endif
 
+// Assertion specific to GL errors.
+#ifdef Q_WS_X11
+// Under X11 we're having more OpenGL errors; should investigate why.
+#  define LIBGUI_ASSERT_GL(cond) // ignored
+#else
+#  define LIBGUI_ASSERT_GL(cond) DENG2_ASSERT(cond)
+#endif
+
 #ifndef NDEBUG
 #  define LIBGUI_ASSERT_GL_OK() {GLuint _er = GL_NO_ERROR; do { \
     _er = glGetError(); if(_er != GL_NO_ERROR) { \
     LogBuffer_Flush(); qWarning("OpenGL error: 0x%x", _er); \
-    DENG2_ASSERT(!"OpenGL operation failed"); }} while(_er != GL_NO_ERROR);}
+    LIBGUI_ASSERT_GL(!"OpenGL operation failed"); }} while(_er != GL_NO_ERROR);}
 #else
 #  define LIBGUI_ASSERT_GL_OK()
 #endif

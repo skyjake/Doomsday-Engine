@@ -438,9 +438,12 @@ NativePath App::nativeHomePath()
 
 Archive &App::persistentData()
 {
-    DENG2_ASSERT(DENG2_APP->d->persistentData != 0);
-
-    return *DENG2_APP->d->persistentData;
+    Archive *persist = DENG2_APP->d->persistentData;
+    if(!persist)
+    {
+        throw PersistentDataNotAvailable("App::persistentData", "Persistent data is disabled");
+    }
+    return *persist;
 }
 
 NativePath App::currentWorkPath()
@@ -485,17 +488,20 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     d->initFileSystem(allowPlugins);
 
-    if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
+    if(!flags.testFlag(DisablePersistentData))
     {
-        // Recreate the persistent state data package.
-        ZipArchive arch;
-        arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
-        Writer(homeFolder().replaceFile("persist.pack")) << arch;
+        if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
+        {
+            // Recreate the persistent state data package.
+            ZipArchive arch;
+            arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
+            Writer(homeFolder().replaceFile("persist.pack")) << arch;
 
-        homeFolder().populate(Folder::PopulateOnlyThisFolder);
-    }            
+            homeFolder().populate(Folder::PopulateOnlyThisFolder);
+        }
 
-    d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
+        d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
+    }
 
     // The configuration.
     d->config = new Config(d->configPath);

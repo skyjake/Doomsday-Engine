@@ -557,6 +557,11 @@ GameFilterWidget &GameSelectionWidget::filter()
     return *d->filter;
 }
 
+FoldPanelWidget *GameSelectionWidget::subsetFold(String const &name)
+{
+    return find(name)->maybeAs<FoldPanelWidget>();
+}
+
 void GameSelectionWidget::update()
 {
     d->addPendingGames();

@@ -76,7 +76,9 @@ DENG2_OBSERVES(Bank, Load)
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
           uTex      ("uTex",       GLUniform::Sampler2D),
-          atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment | Atlas::BackingStore))
+          atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment |
+                                                          Atlas::BackingStore |
+                                                          Atlas::WrapBordersInBackingStore))
     {
         // Use this as the main window.
         setMain(i);
@@ -87,6 +89,7 @@ DENG2_OBSERVES(Bank, Load)
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
         atlas->setTotalSize(Vector2ui(256, 256));
+        atlas->setBorderSize(2);
         atlas->setMagFilter(gl::Nearest);
 
         imageBank.add("rtt.cube", "/data/graphics/testpic.png");

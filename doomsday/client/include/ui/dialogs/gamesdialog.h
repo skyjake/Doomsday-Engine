@@ -29,10 +29,17 @@ class GamesDialog : public de::DialogWidget
     Q_OBJECT
 
 public:
-    GamesDialog(de::String const &name = "games");
+    enum Mode {
+        ShowAll,
+        ShowSingleplayerOnly,
+        ShowMultiplayerOnly
+    };
+
+    GamesDialog(Mode mode = ShowAll, de::String const &name = "games");
 
 public slots:
     void showSettings();
+    void connectManually();
 
 protected:
     void preparePanelForOpening();

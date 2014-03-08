@@ -118,6 +118,8 @@ public:
      * @return New feed instance. Caller gets ownership.
      */
     virtual Feed *newSubFeed(String const &name);
+
+    DENG2_AS_IS_METHODS()
 };
 
 } // namespace de

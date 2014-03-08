@@ -30,6 +30,7 @@ DENG2_PIMPL(Atlas)
     Flags flags;
     Size totalSize;
     int margin;
+    int border;
     std::auto_ptr<IAllocator> allocator;
     Image backing;
     bool needCommit;
@@ -39,8 +40,14 @@ DENG2_PIMPL(Atlas)
 
     // Minimum backing size is 1x1 pixels.
     Instance(Public *i, Flags const &flg, Size const &size)
-        : Base(i), flags(flg), totalSize(size.max(Size(1, 1))), margin(1),
-          needCommit(false), needFullCommit(true), mayDefrag(false)
+        : Base(i)
+        , flags(flg)
+        , totalSize(size.max(Size(1, 1)))
+        , margin(1)
+        , border(0)
+        , needCommit(false)
+        , needFullCommit(true)
+        , mayDefrag(false)
     {
         if(hasBacking())
         {
@@ -145,6 +152,18 @@ DENG2_PIMPL(Atlas)
         }
     }
 
+    Image::Size sizeWithBorders(Image::Size const &size)
+    {
+        return size + Image::Size(2 * border, 2 * border);
+    }
+
+    Rectanglei rectWithoutBorder(Id const &id) const
+    {
+        Rectanglei rect;
+        allocator->rect(id, rect);
+        return rect.shrunk(border);
+    }
+
     DENG2_PIMPL_AUDIENCE(Reposition)
     DENG2_PIMPL_AUDIENCE(OutOfSpace)
 };
@@ -168,6 +187,20 @@ void Atlas::setAllocator(IAllocator *allocator)
         d->allocator->clear(); // using new metrics
     }
     d->markFullyChanged();
+}
+
+void Atlas::setMarginSize(dint marginPixels)
+{
+    d->margin = marginPixels;
+    if(d->allocator.get())
+    {
+        d->allocator->setMetrics(d->totalSize, d->margin);
+    }
+}
+
+void Atlas::setBorderSize(dint borderPixels)
+{
+    d->border = borderPixels;
 }
 
 void Atlas::clear()
@@ -223,7 +256,7 @@ Id Atlas::alloc(Image const &image)
     DENG2_ASSERT(d->allocator.get());
 
     Rectanglei rect;
-    Id id = d->allocator->allocate(image.size(), rect);
+    Id id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect);
 
     if(id.isNone() && d->flags.testFlag(AllowDefragment) && d->mayDefrag)
     {
@@ -231,23 +264,50 @@ Id Atlas::alloc(Image const &image)
         d->defragment();
 
         // Try again...
-        id = d->allocator->allocate(image.size(), rect);
+        id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect);
     }
 
     if(!id.isNone())
     {
+        Rectanglei const noBorders  = rect.shrunk(d->border);
+        Rectanglei const withMargin = rect.expanded(d->margin);
+
         if(d->hasBacking())
         {
-            // Make sure the margin is cleared to black.
-            d->backing.fill(rect.expanded(d->margin), Image::Color(0, 0, 0, 0));
-            d->backing.draw(image, rect.topLeft);
+            // The margin is cleared to transparent black.
+            d->backing.fill(withMargin, Image::Color(0, 0, 0, 0));
+
+            if(d->border > 0)
+            {
+                if(d->flags.testFlag(WrapBordersInBackingStore))
+                {
+                    // Wrap using the source image (left, right, top, bottom edges).
+                    d->backing.drawPartial(image, Rectanglei(0, 0, d->border, image.height()),
+                                           rect.topRight() + Vector2i(-d->border, d->border));
+
+                    d->backing.drawPartial(image, Rectanglei(image.width() - d->border, 0,
+                                                             d->border, image.height()),
+                                           rect.topLeft + Vector2i(0, d->border));
+
+                    d->backing.drawPartial(image, Rectanglei(0, 0, image.width(), d->border),
+                                           rect.bottomLeft() + Vector2i(d->border, -d->border));
+
+                    d->backing.drawPartial(image, Rectanglei(0, image.height() - d->border,
+                                                             image.width(), d->border),
+                                           rect.topLeft + Vector2i(d->border, 0));
+                }
+            }
+            d->backing.draw(image, noBorders.topLeft);
+
+            //d->backing.toQImage().save(QString("backing-%1.png").arg(uint64_t(this)));
 
             d->markAsChanged(rect);
         }
         else
         {
             // No backing, must commit immediately.
-            commit(image, rect.topLeft);
+            /// @todo Apply borders here, too. -jk
+            commit(image, noBorders.topLeft);
         }
 
         // After a successful alloc we can attempt to defragment
@@ -308,10 +368,7 @@ Rectanglei Atlas::imageRect(Id const &id) const
 {
     DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
-
-    Rectanglei rect;
-    d->allocator->rect(id, rect);
-    return rect;
+    return d->rectWithoutBorder(id);
 }
 
 Rectanglef Atlas::imageRectf(Id const &id) const
@@ -319,14 +376,13 @@ Rectanglef Atlas::imageRectf(Id const &id) const
     DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
 
-    Rectanglei rect;
-    d->allocator->rect(id, rect);
+    Rectanglei const rect = d->rectWithoutBorder(id);
 
     // Normalize within the atlas area.
     return Rectanglef(float(rect.topLeft.x) / float(d->totalSize.x),
                       float(rect.topLeft.y) / float(d->totalSize.y),
-                      float(rect.width())   / float(d->totalSize.x),
-                      float(rect.height())  / float(d->totalSize.y));
+                      float(rect.width()  ) / float(d->totalSize.x),
+                      float(rect.height() ) / float(d->totalSize.y));
 }
 
 Image Atlas::image(Id const &id) const

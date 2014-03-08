@@ -149,8 +149,7 @@ void Folder::populate(PopulationBehavior behavior)
         // Call populate on subfolders.
         for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
         {
-            Folder *folder = dynamic_cast<Folder *>(i->second);
-            if(folder)
+            if(Folder *folder = i->second->maybeAs<Folder>())
             {
                 folder->populate();
             }
@@ -345,8 +344,7 @@ File *Folder::tryLocateFile(String const &path) const
     Contents::const_iterator found = _contents.find(component.lower());
     if(found != _contents.end())
     {
-        Folder *subFolder = dynamic_cast<Folder *>(found->second);
-        if(subFolder)
+        if(Folder *subFolder = found->second->maybeAs<Folder>())
         {
             // Continue recursively to the next component.
             return subFolder->tryLocateFile(remainder);

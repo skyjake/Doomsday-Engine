@@ -84,6 +84,15 @@ void GameFilterWidget::useInvertedStyle()
     d->sortLabel->setTextColor("inverted.text");
 }
 
+void GameFilterWidget::setFilter(Filter flt)
+{
+    ui::DataPos pos = d->tabs->items().findData(duint(flt));
+    if(pos != ui::Data::InvalidPos)
+    {
+        d->tabs->setCurrent(pos);
+    }
+}
+
 GameFilterWidget::Filter GameFilterWidget::filter() const
 {
     return Filter(d->tabs->currentItem().data().toUInt());

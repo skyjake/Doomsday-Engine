@@ -63,8 +63,8 @@ enum MenuItemPositions
     POS_GAMES             = 0,
     POS_UNLOAD            = 1,
     POS_GAMES_SEPARATOR   = 2,
-    POS_CONNECT           = 3,
-    POS_CONNECT_SEPARATOR = 4,
+    POS_MULTIPLAYER       = 3,
+    POS_CONNECT           = 4,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -258,24 +258,33 @@ DENG_GUI_PIMPL(TaskBarWidget)
         return *menu->menu().organizer().itemWidget(pos);
     }
 
+    void showOrHideMenuItems()
+    {
+        de::Game &game = App_CurrentGame();
+
+        itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
+        itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
+        itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
+        itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
+        itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
+
+        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
+        itemWidget(configMenu, POS_VR_SETTINGS)      .show(!game.isNull());
+        itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
+        itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
+        itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
+
+        if(self.hasRoot())
+        {
+            configMenu->menu().updateLayout();
+            mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
+        }
+    }
+
     void currentGameChanged(game::Game const &newGame)
     {
         updateStatus();
-
-        itemWidget(mainMenu, POS_GAMES)            .show(!newGame.isNull());
-        itemWidget(mainMenu, POS_UNLOAD)           .show(!newGame.isNull());
-        itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!newGame.isNull());
-        //itemWidget(mainMenu, POS_CONNECT)          .show(!newGame.isNull());
-        //itemWidget(mainMenu, POS_CONNECT_SEPARATOR).show(!newGame.isNull());
-
-        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
-        itemWidget(configMenu, POS_VR_SETTINGS)      .show(!newGame.isNull());
-        itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!newGame.isNull());
-        itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!newGame.isNull());
-        itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!newGame.isNull());
-
-        configMenu->menu().updateLayout();
-        mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
+        showOrHideMenuItems();
     }
 
     void networkGameJoined()
@@ -412,9 +421,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
     d->mainMenu->items()
-            << new ui::ActionItem(tr("Games..."), new SignalAction(this, SLOT(showGames())))
+            << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
@@ -422,17 +432,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
-    d->itemWidget(d->mainMenu, POS_GAMES).hide();
-    d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
-    d->itemWidget(d->mainMenu, POS_GAMES_SEPARATOR).hide();
-    //d->itemWidget(d->mainMenu, POS_CONNECT).hide();
-    //d->itemWidget(d->mainMenu, POS_CONNECT_SEPARATOR).hide();
-
-    d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
-    d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
-    d->itemWidget(d->configMenu, POS_CONFIG_SEPARATOR).hide();
-    d->itemWidget(d->configMenu, POS_AUDIO_SETTINGS).hide();
-    d->itemWidget(d->configMenu, POS_INPUT_SETTINGS).hide();
+    d->showOrHideMenuItems();
 
     conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
@@ -559,7 +559,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 close();
                 return true;
             }
-            else if(!UI_IsActive()) /// @todo Play nice with legacy engine UI (which is deprecated).
+            else
             {
                 // Task bar is closed, so let's open it.
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
@@ -709,11 +709,26 @@ void TaskBarWidget::showUpdaterSettings()
     dlg->open();
 }
 
-void TaskBarWidget::showGames()
+void TaskBarWidget::switchGame()
 {
-    GamesDialog *games = new GamesDialog;
+    GamesDialog *games = new GamesDialog(GamesDialog::ShowSingleplayerOnly);
     games->setDeleteAfterDismissed(true);
     games->exec(root());
+}
+
+void TaskBarWidget::showMultiplayer()
+{
+    GamesDialog *games = new GamesDialog(GamesDialog::ShowMultiplayerOnly);
+    games->setDeleteAfterDismissed(true);
+    if(isOpen())
+    {
+        games->exec(root());
+    }
+    else
+    {
+        root().add(games);
+        games->open();
+    }
 }
 
 void TaskBarWidget::connectToServerManually()

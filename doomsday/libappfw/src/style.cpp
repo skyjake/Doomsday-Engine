@@ -104,6 +104,26 @@ ImageBank const &Style::images() const
     return d->images;
 }
 
+RuleBank &Style::rules()
+{
+    return d->rules;
+}
+
+FontBank &Style::fonts()
+{
+    return d->fonts;
+}
+
+ColorBank &Style::colors()
+{
+    return d->colors;
+}
+
+ImageBank &Style::images()
+{
+    return d->images;
+}
+
 void Style::richStyleFormat(int contentStyle,
                             float &sizeFactor,
                             Font::RichFormat::Weight &fontWeight,

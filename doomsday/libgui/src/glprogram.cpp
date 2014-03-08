@@ -164,15 +164,16 @@ DENG2_PIMPL(GLProgram)
             char const *varName;
         }
         const names[] = {
-            { AttribSpec::Position,  "aVertex"    },
-            { AttribSpec::TexCoord0, "aUV"        },
-            { AttribSpec::TexCoord1, "aUV2"       },
-            { AttribSpec::TexCoord2, "aUV3"       },
-            { AttribSpec::TexCoord3, "aUV4"       },
-            { AttribSpec::Color,     "aColor"     },
-            { AttribSpec::Normal,    "aNormal"    },
-            { AttribSpec::Tangent,   "aTangent"   },
-            { AttribSpec::Bitangent, "aBitangent" }
+            { AttribSpec::Position,   "aVertex"    },
+            { AttribSpec::TexCoord0,  "aUV"        },
+            { AttribSpec::TexCoord1,  "aUV2"       },
+            { AttribSpec::TexCoord2,  "aUV3"       },
+            { AttribSpec::TexCoord3,  "aUV4"       },
+            { AttribSpec::TexBounds0, "aBounds"    },
+            { AttribSpec::Color,      "aColor"     },
+            { AttribSpec::Normal,     "aNormal"    },
+            { AttribSpec::Tangent,    "aTangent"   },
+            { AttribSpec::Bitangent,  "aBitangent" }
         };
 
         for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)

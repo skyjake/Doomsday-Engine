@@ -154,6 +154,8 @@ public:
 
     float interpupillaryDistance() const;
 
+    float eyeHeightInMapUnits() const;
+
     float physicalPlayerHeight() const;
 
     /**

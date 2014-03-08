@@ -187,6 +187,9 @@ public:
     Corner middle() const {
         return Corner((topLeft.x + bottomRight.x)/2.0, (topLeft.y + bottomRight.y)/2.0);
     }
+    Vector4<Type> xywh() const {
+        return Vector4<Type>(topLeft.x, topLeft.y, Type(width()), Type(height()));
+    }
 
 public:
     Corner topLeft;

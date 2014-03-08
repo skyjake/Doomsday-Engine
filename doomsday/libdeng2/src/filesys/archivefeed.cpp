@@ -52,10 +52,7 @@ DENG2_PIMPL(ArchiveFeed)
 
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
-        IByteArray *bytes = dynamic_cast<IByteArray *>(&f);
-
-        // Open the archive.
-        if(bytes)
+        if(IByteArray *bytes = f.maybeAs<IByteArray>())
         {
             LOG_RES_XVERBOSE("Source %s is a byte array") << f.description();
 
@@ -207,7 +204,7 @@ void ArchiveFeed::populate(Folder &folder)
 
 bool ArchiveFeed::prune(File &file) const
 {
-    ArchiveEntryFile *entryFile = dynamic_cast<ArchiveEntryFile *>(&file);
+    ArchiveEntryFile *entryFile = file.maybeAs<ArchiveEntryFile>();
     if(entryFile && &entryFile->archive() == &archive())
     {
         if(!archive().hasEntry(entryFile->entryPath()))

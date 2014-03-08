@@ -43,6 +43,7 @@ namespace internal
             TexCoord1,
             TexCoord2,
             TexCoord3,
+            TexBounds0,
             Color,
             Normal,
             Tangent,
@@ -128,6 +129,34 @@ struct LIBGUI_PUBLIC Vertex3TexRgba
     Vector4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(3)
+};
+
+/**
+ * Vertex format with 3D coordinates, one set of texture coordinates with indirect
+ * bounds, and an RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3TexBoundsRgba
+{
+    Vector3f pos;
+    Vector2f texCoord;  ///< mapped using texBounds
+    Vector4f texBounds; ///< UV space: x, y, width, height
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(4)
+};
+
+/**
+ * Vertex format with 3D coordinates, two sets of texture coordinates with indirect
+ * bounds, and an RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3Tex2BoundsRgba
+{
+    Vector3f pos;
+    Vector2f texCoord[2];
+    Vector4f texBounds;    ///< UV space: x, y, width, height
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
 
 /**

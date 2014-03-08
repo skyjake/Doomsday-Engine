@@ -48,6 +48,11 @@ public:
     ColorBank const &colors() const;
     ImageBank const &images() const;
 
+    RuleBank &rules();
+    FontBank &fonts();
+    ColorBank &colors();
+    ImageBank &images();
+
     // Partial implementation for Font::RichFormat::IStyle.
     void richStyleFormat(int contentStyle,
                          float &sizeFactor,

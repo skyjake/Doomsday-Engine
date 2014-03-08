@@ -63,7 +63,8 @@ public slots:
     void unloadGame();
     void showAbout();
     void showUpdaterSettings();
-    void showGames();
+    void switchGame();
+    void showMultiplayer();
     void connectToServerManually();
 
 protected slots:
