@@ -19,6 +19,7 @@
 #include "ui/widgets/consolewidget.h"
 #include "CommandAction"
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/inputbindingwidget.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/styledlogsinkformatter.h"
@@ -234,6 +235,27 @@ DENG2_OBSERVES(Variable, Change)
     }
 };
 
+static PopupWidget *consoleShortcutPopup()
+{
+    PopupWidget *pop = new PopupWidget;
+    // The 'padding' widget will provide empty margins around the content.
+    // Popups normally do not provide any margins.
+    GuiWidget *padding = new GuiWidget;
+    padding->margins().set("dialog.gap");
+    InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
+    bind->setSizePolicy(ui::Expand, ui::Expand);
+    padding->add(bind);
+    // Place the binding inside the padding.
+    bind->rule()
+            .setLeftTop(padding->rule().left() + padding->margins().left(),
+                        padding->rule().top()  + padding->margins().top());
+    padding->rule()
+            .setInput(Rule::Width,  bind->rule().width()  + padding->margins().width())
+            .setInput(Rule::Height, bind->rule().height() + padding->margins().height());
+    pop->setContent(padding);
+    return pop;
+}
+
 ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 {
     d->button = new ButtonWidget;
@@ -284,6 +306,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"])
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>)
+            << new ui::SubwidgetItem(tr("Shortcut Key"), ui::Right, consoleShortcutPopup)
             << new ui::Item(ui::Item::Separator)
             << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"]);
 
