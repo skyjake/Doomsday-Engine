@@ -134,22 +134,13 @@ public:
      */
     void updateFromRepository();
 
-    void deleteFilesInRepository();
+    void deleteFileInRepository();
 
     /**
      * Returns the name of the resource file (with extension) containing the game state.
      */
     String fileName() const;
     void setFileName(String newName);
-
-    /**
-     * Returns the name of the resource file (with extension) containing the map state.
-     *
-     * @param mapUri  Unique map identifier.
-     *
-     * @see fileName()
-     */
-    String fileNameForMap(String mapUriStr) const;
 
     /**
      * Provides read-only access to a copy of the deserialized saved session metadata.

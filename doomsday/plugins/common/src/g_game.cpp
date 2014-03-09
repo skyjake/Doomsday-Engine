@@ -1389,12 +1389,12 @@ int G_DoLoadMap(loadmap_params_t *p)
         try
         {
             SaveSlot &sslot = G_SaveSlots()["base"];
-            de::Path const stateFilePath = sslot.mapStateFilePath(gameMapUri);
+            de::Path const mapStateFilePath(Str_Text(Uri_Compose(gameMapUri)));
 
-            if(!SV_OpenFile(stateFilePath, false/*for read*/))
+            if(!SV_OpenFile(mapStateFilePath, false/*for read*/))
             {
                 Reader_Delete(reader);
-                throw de::Error("G_DoLoadMap", "Failed opening \"" + de::NativePath(stateFilePath).pretty() + "\" for read");
+                throw de::Error("G_DoLoadMap", "Failed opening \"" + de::NativePath(mapStateFilePath).pretty() + "\" for read");
             }
 
             MapStateReader(sslot.saveMetadata()["version"].value().asNumber()).read(reader);
@@ -2952,13 +2952,13 @@ static int saveGameStateWorker(void *context)
     {
         saveRepo.folder().verifyWriteAccess();
 
-        de::Path const stateFilePath    = sslot.stateFilePath();
-        de::Path const mapStateFilePath = sslot.mapStateFilePath(gameMapUri);
+        de::Path const filePath = sslot.filePath();
+        de::Path const mapStateFilePath(Str_Text(Uri_Resolved(gameMapUri)));
 
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
-                de::NativePath(stateFilePath).pretty().toLatin1().constData());
+                de::NativePath(filePath).pretty().toLatin1().constData());
 
-        GameStateWriter().write(stateFilePath, mapStateFilePath, *metadata);
+        GameStateWriter().write(filePath, mapStateFilePath, *metadata);
 
         // Swap the save info.
         sslot.replaceSavedSession(session);
@@ -3021,8 +3021,8 @@ void G_DoLeaveMap()
         if(!gameRules.deathmatch)
         {
             // Save current map.
-            SaveSlot &sslot = G_SaveSlots()["base"];
-            de::Path const mapStateFilePath = sslot.mapStateFilePath(gameMapUri);
+            // SaveSlot &sslot = G_SaveSlots()["base"];
+            de::Path const mapStateFilePath(Str_Text(Uri_Compose(gameMapUri)));
 
             if(!SV_OpenFile(mapStateFilePath, true/*for write*/))
             {
@@ -3260,15 +3260,15 @@ void G_DoLoadSession(de::String slotId)
 #endif
 
         SaveSlot &sslot = G_SaveSlots()[logicalSlot];
-        de::Path const stateFilePath    = sslot.stateFilePath();
-        de::Path const mapStateFilePath = sslot.mapStateFilePath(gameMapUri);
+        de::Path const filePath = sslot.filePath();
+        de::Path const mapStateFilePath(Str_Text(Uri_Resolved(gameMapUri)));
 
         // Attempt to recognize and load the saved game state.
         App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                de::NativePath(stateFilePath).pretty().toLatin1().constData());
+                de::NativePath(filePath).pretty().toLatin1().constData());
 
         sslot.savedSession()
-                .gameStateReader()->read(stateFilePath, mapStateFilePath,
+                .gameStateReader()->read(filePath, mapStateFilePath,
                                          sslot.saveMetadata());
 
         // Make note of the last used save slot.

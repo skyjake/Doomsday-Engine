@@ -232,11 +232,6 @@ void SavedSession::setFileName(String newName)
     }
 }
 
-String SavedSession::fileNameForMap(String mapUriStr) const
-{
-    return d->fileName + mapUriStr + ".save";
-}
-
 bool SavedSession::hasGameState() const
 {
     return repository().folder().has(fileName());
@@ -244,7 +239,10 @@ bool SavedSession::hasGameState() const
 
 bool SavedSession::hasMapState(String mapUriStr) const
 {
-    return repository().folder().has(fileNameForMap(mapUriStr));
+    if(mapUriStr.isEmpty()) return false;
+    String mapFileName = d->fileName + mapUriStr + ".save";
+    /// @todo Open the .save file and check the index.
+    return repository().folder().has(mapFileName);
 }
 
 void SavedSession::updateFromRepository()
@@ -273,23 +271,16 @@ void SavedSession::updateFromRepository()
     d->updateStatusIfNeeded();
 }
 
-void SavedSession::deleteFilesInRepository()
+void SavedSession::deleteFileInRepository()
 {
-    FS::FoundFiles files;
-    App::fileSystem().findAll(repository().folder().path(), files);
-    DENG2_FOR_EACH(FS::FoundFiles, i, files)
+    try
     {
-        if(File *file = (*i)->maybeAs<File>())
-        {
-            if(file->name().fileNameExtension() == ".save" &&
-               file->name().beginsWith(d->fileName))
-            {
-                // Remove this file.
-                delete file;
-                d->needUpdateStatus = true;
-            }
-        }
+        File *file = &App::fileSystem().find<File>(repository().folder().path() / d->fileName + ".save");
+        delete file;
+        d->needUpdateStatus = true;
     }
+    catch(FileSystem::NotFoundError const &)
+    {} // Ignore this error.
 
     /// Force a status update. @todo necessary?
     updateFromRepository();
