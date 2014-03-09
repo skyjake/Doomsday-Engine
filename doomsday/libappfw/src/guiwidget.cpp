@@ -803,6 +803,13 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                                 root().atlas().imageRectf(root().gradientFrame()));
         break;
 
+    case Background::Rounded:
+        verts.makeFlexibleFrame(rule().recti().shrunk(d->background.thickness - 4),
+                                d->background.thickness,
+                                d->background.color,
+                                root().atlas().imageRectf(root().roundCorners()));
+        break;
+
     case Background::BorderGlow:
     case Background::BlurredWithBorderGlow:
         verts.makeFlexibleFrame(rule().recti().expanded(d->background.thickness),

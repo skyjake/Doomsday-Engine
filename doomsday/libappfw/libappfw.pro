@@ -30,6 +30,7 @@ win32 {
 # Public headers.
 publicHeaders(root, \
     include/de/AtlasProceduralImage \
+    include/de/AuxButtonWidget \
     include/de/BaseGuiApp \
     include/de/BaseWindow \
     include/de/BlurWidget \
@@ -139,6 +140,7 @@ publicHeaders(vr, \
 )
 
 publicHeaders(widgets, \
+    include/de/widgets/auxbuttonwidget.h \
     include/de/widgets/blurwidget.h \
     include/de/widgets/buttonwidget.h \
     include/de/widgets/choicewidget.h \
@@ -198,6 +200,7 @@ SOURCES += \
     src/vrwindowtransform.cpp \
     src/vr/oculusrift.cpp \
     src/vr/vrconfig.cpp \
+    src/widgets/auxbuttonwidget.cpp \
     src/widgets/blurwidget.cpp \
     src/widgets/buttonwidget.cpp \
     src/widgets/choicewidget.cpp \

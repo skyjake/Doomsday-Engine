@@ -1,6 +1,6 @@
-/** @file messagedialog.h Dialog for showing a message.
+/** @file auxbuttonwidget.h  Button with an auxiliary button inside.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -13,32 +13,28 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_MESSAGEDIALOG_H
-#define LIBAPPFW_MESSAGEDIALOG_H
+#ifndef LIBAPPFW_AUXBUTTONWIDGET_H
+#define LIBAPPFW_AUXBUTTONWIDGET_H
 
-#include "../DialogWidget"
+#include <de/ButtonWidget>
 
 namespace de {
 
 /**
- * Dialog for showing a message.
+ * Button with another small auxiliary button inside.
  */
-class LIBAPPFW_PUBLIC MessageDialog : public DialogWidget
+class LIBAPPFW_PUBLIC AuxButtonWidget : public ButtonWidget
 {
 public:
-    MessageDialog(String const &name = "");
+    AuxButtonWidget(String const &name = "");
 
-    LabelWidget &title();
-    LabelWidget &message();
+    ButtonWidget &auxiliary();
 
-    /**
-     * Derived classes should call this after they add or remove widgets in the
-     * dialog content area.
-     */
-    void updateLayout();
+    void useNormalStyle();
+    void useInvertedStyle();
 
 private:
     DENG2_PRIVATE(d)
@@ -46,4 +42,4 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_MESSAGEDIALOG_H
+#endif // LIBAPPFW_AUXBUTTONWIDGET_H
