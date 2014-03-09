@@ -55,7 +55,6 @@ public Font::RichFormat::IStyle
     TimeDelta appearSpan;
 
     // Style.
-    Vector4i margin;
     DotPath gapId;
     int gap;
     ColorBank::Color highlightColor;
@@ -114,8 +113,7 @@ public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        margin = self.margins().toVector();
-        gap    = st.rules().rule(gapId).valuei();
+        gap = st.rules().rule(gapId).valuei();
 
         // Colors.
         highlightColor = st.colors().color("label.highlight");
@@ -127,6 +125,11 @@ public Font::RichFormat::IStyle
         glText.setFont(self.font());
 
         self.requestGeometry();
+    }
+
+    Vector4i margin() const
+    {
+        return self.margins().toVector();
     }
 
     Color richStyleColor(int index) const
@@ -239,7 +242,7 @@ public Font::RichFormat::IStyle
 
     Rectanglei contentArea() const
     {
-        return self.rule().recti().adjusted(margin.xy(), -margin.zw());
+        return self.rule().recti().adjusted(margin().xy(), -margin().zw());
     }
 
     /**
@@ -411,15 +414,15 @@ public Font::RichFormat::IStyle
         if(horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
-            w = root().viewSize().x - (margin.x + margin.z);
+            w = root().viewSize().x - (margin().x + margin().z);
         }
         else
         {
-            w = self.rule().width().valuei() - (margin.x + margin.z);
+            w = self.rule().width().valuei() - (margin().x + margin().z);
         }
         if(vertPolicy != Expand)
         {
-            h = self.rule().height().valuei() - (margin.y + margin.w);
+            h = self.rule().height().valuei() - (margin().y + margin().w);
         }
 
         if(hasImage())
@@ -456,8 +459,8 @@ public Font::RichFormat::IStyle
         ContentLayout layout;
         contentPlacement(layout);
         Rectanglef combined = layout.image | layout.text;
-        width->set (combined.width()  + margin.x + margin.z);
-        height->set(combined.height() + margin.y + margin.w);
+        width->set (combined.width()  + self.margins().width().valuei());
+        height->set(combined.height() + self.margins().height().valuei());
     }
 
     void updateAppearanceAnimation()
