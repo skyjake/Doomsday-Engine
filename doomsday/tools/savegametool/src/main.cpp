@@ -30,39 +30,6 @@
 #include <de/Writer>
 #include <de/ZipArchive>
 
-#ifdef __BIG_ENDIAN__
-static int16_t ShortSwap(int16_t n)
-{
-    return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
-}
-
-static int32_t LongSwap(int32_t n)
-{
-    return (((n & 0xff) << 24) | ((n & 0xff00) << 8) |
-            ((n & 0xff0000) >> 8) | ((n & 0xff000000) >> 24));
-}
-
-static float FloatSwap(float f)
-{
-    int32_t temp = 0;
-    float returnValue = 0;
-
-    std::memcpy(&temp, &f, 4); // Must be 4.
-    temp = LongSwap(temp);
-    std::memcpy(&returnValue, &temp, 4); // Must be 4.
-    return returnValue;
-}
-
-#  define SHORT(x) ShortSwap(x)
-#  define LONG(x)  LongSwap(x)
-#  define FLOAT(x) FloatSwap(x)
-
-#else
-#  define SHORT(x) (x)
-#  define LONG(x)  (x)
-#  define FLOAT(x) (x)
-#endif
-
 using namespace de;
 using de::game::SessionMetadata;
 
@@ -188,7 +155,7 @@ static Block *bufferFile()
 
     return buffer;
 
-#undef BSIZE
+#undef BLOCKSIZE
 }
 
 static void srSeek(reader_s *r, uint offset)
@@ -293,7 +260,6 @@ static String identityKeyForLegacyGamemode(int gamemode, SaveFormat saveFormat, 
             }
             return fallbackGameIdentityKey;
         }
-        /// kludge end.
     }
     if(saveFormat == Heretic && saveVersion < 8)
     {
@@ -476,19 +442,17 @@ static SaveFormat guessSaveFormatFromFileName(Path const &path)
 }
 
 /// @param oldSavePath  Path to the game state file [.dsg | .hsg | .hxs]
-static bool convertSaveGame(Path oldSavePath)
+static bool convertSavegame(Path oldSavePath)
 {
     /// @todo try all known extensions at the given path, if not specified.
     String saveName = oldSavePath.lastSegment().toString();
 
     try
     {
-        ZipArchive arch;
-
         if(!openFile(oldSavePath))
         {
             /// @throw Error Failed to open source file.
-            throw Error("convertSaveGame", "Failed to open \"" + NativePath(oldSavePath).pretty() + "\" for read");
+            throw Error("convertSavegame", "Failed to open \"" + NativePath(oldSavePath).pretty() + "\" for read");
         }
 
         reader_s *reader = newReader();
@@ -524,16 +488,16 @@ static bool convertSaveGame(Path oldSavePath)
         {
             Reader_Delete(reader);
             /// @throw Error Failed to determine the format of the saved game session.
-            throw Error("convertSaveGame", "Format of \"" + NativePath(oldSavePath).pretty() + "\" is unknown");
+            throw Error("convertSavegame", "Format of \"" + NativePath(oldSavePath).pretty() + "\" is unknown");
         }
 
         // Read and translate the game session metadata.
         SessionMetadata metadata;
         xlatLegacyMetadata(metadata, reader);
 
+        ZipArchive arch;
         arch.add("Info", composeInfo(metadata, oldSavePath, saveVersion).toUtf8());
 
-        String const mapUriStr = metadata["mapUri"].value().asText();
         if(saveFormat == Hexen)
         {
             // Serialized map states are written to similarly named "side car" files.
@@ -563,6 +527,7 @@ static bool convertSaveGame(Path oldSavePath)
             // Decompress the rest of the file and write it out to a new map state file.
             if(Block *mapStateData = bufferFile())
             {
+                String const mapUriStr = metadata["mapUri"].value().asText();
                 arch.add(Path("maps") / mapUriStr, *mapStateData);
                 delete mapStateData;
             }
@@ -623,7 +588,7 @@ int main(int argc, char **argv)
                 if(args.at(i).first() != '-') // Not an option?
                 {
                     // Process this savegame.
-                    convertSaveGame(args.at(i));
+                    convertSavegame(args.at(i));
                 }
             }
         }
