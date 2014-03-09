@@ -96,10 +96,10 @@ public:
     /**
      * Register a game state reader.
      *
-     * @param recognizer  Game state recognizer function.
-     * @param maker       Game state reader instantiator function.
+     * @param formatName  Symbolic identifier for the map format.
+     * @param maker       Map state reader instantiator function.
      */
-    void declareReader(/*GameStateRecognizeFunc recognizer,*/ MapStateReaderMakeFunc maker);
+    void declareReader(String formatName, MapStateReaderMakeFunc maker);
 
     /**
      * Determines whether a IMapStateReader appropriate for the specified saved @a session

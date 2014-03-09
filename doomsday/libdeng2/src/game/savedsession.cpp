@@ -130,10 +130,13 @@ DENG2_PIMPL(SavedSession)
         {
             status = Incompatible;
             // Game identity key missmatch?
-            if(!(*metadata)["gameIdentityKey"].value().asText().compareWithoutCase(App::game().id()))
+            if(metadata->has("gameIdentityKey"))
             {
-                /// @todo Validate loaded add-ons and checksum the definition database.
-                status = Loadable; // It's good!
+                if(!(*metadata)["gameIdentityKey"].value().asText().compareWithoutCase(App::game().id()))
+                {
+                    /// @todo Validate loaded add-ons and checksum the definition database.
+                    status = Loadable; // It's good!
+                }
             }
         }
 

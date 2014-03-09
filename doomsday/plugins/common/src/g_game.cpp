@@ -484,7 +484,7 @@ static void initSaveSlots()
 
     // Declare the native game state reader.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader(/*&GameStateReader::recognize,*/ &GameStateReader::make);
+    saveRepo.declareReader("Native", &GameStateReader::make);
 
     // Setup the logical save slot bindings.
     int const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {

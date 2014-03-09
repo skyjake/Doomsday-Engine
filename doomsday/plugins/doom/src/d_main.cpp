@@ -383,7 +383,7 @@ void D_PreInit()
 
     // Declare the Doom V9 game state reader/interpreter.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader(/*&DoomV9GameStateReader::recognize,*/ &DoomV9GameStateReader::make);
+    saveRepo.declareReader("DoomV9", &DoomV9GameStateReader::make);
 
     G_InitSpecialFilter();
 }

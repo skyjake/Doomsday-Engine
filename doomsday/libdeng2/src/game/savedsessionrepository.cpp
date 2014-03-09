@@ -42,13 +42,13 @@ DENG2_PIMPL(SavedSessionRepository)
     Sessions sessions;
 
     struct ReaderInfo {
-        //GameStateRecognizeFunc recognize;
+        String formatName;
         MapStateReaderMakeFunc newReader;
 
-        ReaderInfo(/*GameStateRecognizeFunc recognize,*/ MapStateReaderMakeFunc newReader)
-            : /*recognize(recognize),*/ newReader(newReader)
+        ReaderInfo(String formatName, MapStateReaderMakeFunc newReader)
+            : formatName(formatName), newReader(newReader)
         {
-            DENG2_ASSERT(/*recognize != 0 &&*/ newReader != 0);
+            DENG2_ASSERT(!formatName.isEmpty() && newReader != 0);
         }
     };
     typedef QList<ReaderInfo> ReaderInfos;
@@ -77,68 +77,70 @@ DENG2_PIMPL(SavedSessionRepository)
         sessions.clear();
     }
 
-    bool recognize(PackageFolder &pack, SessionMetadata &metadata) const
+    ReaderInfo const *infoForMapStateFormat(String const &name) const
+    {
+        foreach(ReaderInfo const &rdrInfo, readers)
+        {
+            if(!rdrInfo.formatName.compareWithoutCase(name))
+            {
+                return &rdrInfo;
+            }
+        }
+        return 0;
+    }
+
+    bool readSessionMetadata(PackageFolder const &pack, SessionMetadata &metadata) const
     {
         if(!pack.has("Info")) return false;
 
-        File &file = pack.locate<File>("Info");
-        Block raw;
-        file >> raw;
-
-        metadata.parse(String::fromUtf8(raw));
-
-        int const saveVersion = metadata["version"].value().asNumber();
-        if(saveVersion > 14) // Future version?
-        {
-            return false;
-        }
-        return true;
-    }
-
-    ReaderInfo const *readSessionMetadata(SavedSession &session) const
-    {
         try
         {
-            Path filePath = self.folder().path() / session.fileName();
-            File &sourceData = App::fileSystem().find<File>(filePath);
-            if(ZipArchive::recognize(sourceData))
+            File const &file = pack.locate<File const>("Info");
+            Block raw;
+            file >> raw;
+
+            metadata.parse(String::fromUtf8(raw));
+
+            int const saveVersion = metadata["version"].value().asNumber();
+            // Future version?
+            if(saveVersion > 14) return false;
+
+            // So far so good.
+            return true;
+        }
+        catch(IByteArray::OffsetError const &)
+        {
+            LOG_RES_WARNING("Archive in %s is truncated") << pack.description();
+        }
+        catch(IIStream::InputError const &)
+        {
+            LOG_RES_WARNING("%s cannot be read") << pack.description();
+        }
+        catch(Archive::FormatError const &)
+        {
+            LOG_RES_WARNING("Archive in \"%s\" is invalid") << pack.description();
+        }
+
+        return false;
+    }
+
+    ReaderInfo const *recognize(SavedSession &session) const
+    {
+        if(self.folder().has(session.fileName()))
+        {
+            PackageFolder &pack = self.folder().locate<PackageFolder>(session.fileName());
+
+            // Attempt to read the session metadata and recognize the map state.
+            QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
+            if(readSessionMetadata(pack, *metadata))
             {
-                try
-                {
-                    // It is a ZIP archive: we will represent it as a folder.
-                    QScopedPointer<PackageFolder> package(new PackageFolder(sourceData, sourceData.name()));
-
-                    // Archive opened successfully, give ownership of the source to the folder.
-                    package->setSource(&sourceData);
-
-                    foreach(ReaderInfo const &rdrInfo, readers)
-                    {
-                        // Attempt to recognize the game state and deserialize the metadata.
-                        QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
-                        if(recognize(*package, *metadata))
-                        {
-                            session.replaceMetadata(metadata.take());
-                            return &rdrInfo;
-                        }
-                    }
-                }
-                catch(Archive::FormatError const &)
-                {
-                    LOG_RES_WARNING("Archive in %s is invalid") << sourceData.description();
-                }
-                catch(IByteArray::OffsetError const &)
-                {
-                    LOG_RES_WARNING("Archive in %s is truncated") << sourceData.description();
-                }
-                catch(IIStream::InputError const &)
-                {
-                    LOG_RES_WARNING("%s cannot be read") << sourceData.description();
-                }
+                session.replaceMetadata(metadata.take());
+                /// @todo Recognize the map state file to determine the format.
+                ReaderInfo const *rdrInfo = infoForMapStateFormat("Native");
+                DENG2_ASSERT(rdrInfo != 0);
+                return rdrInfo;
             }
         }
-        catch(FileSystem::NotFoundError const &)
-        {}  // Ignore this error.
-
         return 0; // Unrecognized
     }
 
@@ -181,9 +183,7 @@ void SavedSessionRepository::setLocation(Path const &location)
         // Initialize the file structure.
         try
         {
-            d->folder = &App::fileSystem().makeFolder(location);
-            d->folder->populate(Folder::PopulateOnlyThisFolder);
-            /// @todo attach a feed to this folder.
+            d->folder = &App::fileSystem().makeFolder(location, FileSystem::PopulateNewFolder);
             /// @todo scan the indexed files and populate the saved session db.
             return;
         }
@@ -230,19 +230,19 @@ SavedSession &SavedSessionRepository::session(String fileName) const
     throw MissingSessionError("SavedSessionRepository::session", "Unknown session '" + fileName + "'");
 }
 
-void SavedSessionRepository::declareReader(/*GameStateRecognizeFunc recognizer,*/ MapStateReaderMakeFunc maker)
+void SavedSessionRepository::declareReader(String formatName, MapStateReaderMakeFunc maker)
 {
-    d->readers.append(Instance::ReaderInfo(/*recognizer,*/ maker));
+    d->readers.append(Instance::ReaderInfo(formatName, maker));
 }
 
 bool SavedSessionRepository::recognize(SavedSession &session) const
 {
-    return d->readSessionMetadata(session) != 0;
+    return d->recognize(session) != 0;
 }
 
 IMapStateReader *SavedSessionRepository::recognizeAndMakeReader(SavedSession &session) const
 {
-    if(Instance::ReaderInfo const *rdrInfo = d->readSessionMetadata(session))
+    if(Instance::ReaderInfo const *rdrInfo = d->recognize(session))
     {
         return rdrInfo->newReader();
     }
