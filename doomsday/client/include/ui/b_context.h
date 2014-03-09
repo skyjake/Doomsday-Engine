@@ -98,8 +98,13 @@ de::Action *B_ActionForEvent(ddevent_t const *event);
  */
 de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event, bool respectHigherAssociatedContexts);
 
-dd_bool         B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbinding_t* match2,
-                                      evbinding_t** evResult, dbinding_t** dResult);
+/**
+ * Looks through context @a bc and looks for a binding that matches either
+ * @a match1 or @a match2.
+ */
+dd_bool B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbinding_t* match2,
+                              evbinding_t** evResult, dbinding_t** dResult);
+
 void            B_PrintContexts(void);
 void            B_PrintAllBindings(void);
 void            B_WriteContextToFile(const bcontext_t* bc, FILE* file);

@@ -514,3 +514,16 @@ void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
         B_AppendConditionToString(&eb->conds[i], str);
     }
 }
+
+evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device)
+{
+    for(evbinding_t *i = listRoot->next; i != listRoot; i = i->next)
+    {
+        if(!qstricmp(i->command, command) &&
+           (device >= NUM_INPUT_DEVICES || i->device == device))
+        {
+            return i;
+        }
+    }
+    return 0;
+}

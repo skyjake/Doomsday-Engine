@@ -398,6 +398,7 @@ DENG_HEADERS += \
     include/ui/widgets/gameuiwidget.h \
     include/ui/widgets/gamewidget.h \
     include/ui/widgets/icvarwidget.h \
+    include/ui/widgets/inputbindingwidget.h \
     include/ui/widgets/keygrabberwidget.h \
     include/ui/widgets/mpselectionwidget.h \
     include/ui/widgets/multiplayermenuwidget.h \
@@ -733,6 +734,7 @@ SOURCES += \
     src/ui/widgets/gamesessionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
+    src/ui/widgets/inputbindingwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
     src/ui/widgets/mpselectionwidget.cpp \
     src/ui/widgets/multiplayermenuwidget.cpp \

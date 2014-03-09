@@ -57,6 +57,8 @@ struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
 struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
 struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bcontext_s** bContext);
 
+bool B_UnbindCommand(char const *command);
+
 // Utils
 /// @todo: move to b_util.h
 int B_NewIdentifier(void);
