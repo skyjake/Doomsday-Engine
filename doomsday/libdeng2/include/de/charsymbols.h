@@ -23,8 +23,11 @@
  * Unicode key symbols.
  */
 #ifdef MACOSX
-#  define DENG2_CHAR_CONTROL_KEY         "\u2318"
+#  define DENG2_CHAR_MAC_COMMAND_KEY     "\u2318"
+#  define DENG2_CHAR_MAC_CONTROL_KEY     "\u2303"
+#  define DENG2_CHAR_CONTROL_KEY         DENG2_CHAR_MAC_COMMAND_KEY
 #  define DENG2_CHAR_SHIFT_KEY           "\u21e7"
+#  define DENG2_CHAR_ALT_KEY             "\u2325"
 #  define DENG2_CHAR_UP_ARROW            "\u2191"
 #  define DENG2_CHAR_DOWN_ARROW          "\u2193"
 #  define DENG2_CHAR_UP_DOWN_ARROW       DENG2_CHAR_UP_ARROW " / " DENG2_CHAR_DOWN_ARROW
@@ -33,6 +36,7 @@
 #elif UNIX
 #  define DENG2_CHAR_CONTROL_KEY         "Ctrl-"
 #  define DENG2_CHAR_SHIFT_KEY           "\u21e7"
+#  define DENG2_CHAR_ALT_KEY             "Alt-"
 #  define DENG2_CHAR_UP_ARROW            "\u2191"
 #  define DENG2_CHAR_DOWN_ARROW          "\u2193"
 #  define DENG2_CHAR_UP_DOWN_ARROW       DENG2_CHAR_UP_ARROW " / " DENG2_CHAR_DOWN_ARROW
@@ -41,6 +45,7 @@
 #else
 #  define DENG2_CHAR_CONTROL_KEY         "Ctrl-"
 #  define DENG2_CHAR_SHIFT_KEY           "Shift-"
+#  define DENG2_CHAR_ALT_KEY             "Alt-"
 #  define DENG2_CHAR_UP_ARROW            "Up Arrow"
 #  define DENG2_CHAR_DOWN_ARROW          "Down Arrow"
 #  define DENG2_CHAR_UP_DOWN_ARROW       "Up/Down Arrow"
