@@ -1,4 +1,4 @@
-/** @file gamestatereader.h  Saved game state reader.
+/** @file gamestatereader.h  Saved game map state reader.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -20,25 +20,24 @@
 #ifndef LIBCOMMON_GAMESTATEREADER_H
 #define LIBCOMMON_GAMESTATEREADER_H
 
-#include <de/game/IGameStateReader>
+#include <de/game/IMapStateReader>
 
 /**
- * Native saved game state reader.
+ * Native saved game map state reader.
  *
  * @ingroup libcommon
  * @see GameStateWriter
  */
-class GameStateReader : public de::game::IGameStateReader
+class GameStateReader : public de::game::IMapStateReader
 {
 public:
     GameStateReader();
     ~GameStateReader();
 
-    static de::game::IGameStateReader *make();
-    static bool recognize(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
+    static de::game::IMapStateReader *make();
+    //static bool recognize(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
 
-    void read(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
-              de::game::SessionMetadata const &metadata);
+    void read(de::Path const &filePath, de::game::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

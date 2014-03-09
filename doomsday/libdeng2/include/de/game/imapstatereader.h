@@ -1,4 +1,4 @@
-/** @file igamestatereader.h  Interface for a serialized game state reader.
+/** @file imapstatereader.h  Interface for a serialized game map state reader.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_IGAMESTATEREADER_H
-#define LIBDENG2_IGAMESTATEREADER_H
+#ifndef LIBDENG2_IMAPSTATEREADER_H
+#define LIBDENG2_IMAPSTATEREADER_H
 
 #include <de/Error>
 #include <de/Path>
@@ -28,11 +28,11 @@ namespace de {
 namespace game {
 
 /**
- * Interface for serialized game state (savegame) readers.
+ * Interface for serialized game map state (savegame) readers.
  *
  * @ingroup game
  */
-class DENG2_PUBLIC IGameStateReader
+class DENG2_PUBLIC IMapStateReader
 {
 public:
     /// An error occurred attempting to open the input file. @ingroup errors
@@ -42,22 +42,19 @@ public:
     DENG2_ERROR(ReadError);
 
 public:
-    virtual ~IGameStateReader() {}
+    virtual ~IMapStateReader() {}
 
     /**
-     * Attempt to load (read/interpret) the serialized game state.
+     * Attempt to load (read/interpret) the serialized game map state.
      *
-     * @paran stateFilePath     Path to the game state file to be read/interpreted.
-     * @param mapStateFilePath  Path to the map state file to be read/interpreted.
+     * @param filePath  Path to the map state file to be read/interpreted.
      *
-     * @param metadata  Deserialized save session metadata for the game state. At this point
-     * the metadata has already been read once, so this is provided FYI.
+     * @param metadata  Deserialized save session metadata for the game state (FYI).
      */
-    virtual void read(Path const &stateFilePath, Path const &mapStateFilePath,
-                      SavedSession::Metadata const &metadata) = 0;
+    virtual void read(Path const &mapStateFilePath, SavedSession::Metadata const &metadata) = 0;
 };
 
 } // namespace game
 } // namespace de
 
-#endif // LIBDENG2_IGAMESTATEREADER_H
+#endif // LIBDENG2_IMAPSTATEREADER_H

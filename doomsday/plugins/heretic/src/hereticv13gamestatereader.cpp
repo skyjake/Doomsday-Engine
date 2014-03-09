@@ -951,6 +951,7 @@ HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
 HereticV13GameStateReader::~HereticV13GameStateReader()
 {}
 
+#if 0
 bool HereticV13GameStateReader::recognize(de::Path const &stateFilePath,
     de::game::SessionMetadata &metadata) // static
 {
@@ -976,18 +977,18 @@ bool HereticV13GameStateReader::recognize(de::Path const &stateFilePath,
 
     return result;
 }
+#endif
 
-de::game::IGameStateReader *HereticV13GameStateReader::make()
+de::game::IMapStateReader *HereticV13GameStateReader::make()
 {
     return new HereticV13GameStateReader;
 }
 
-void HereticV13GameStateReader::read(de::Path const &stateFilePath, de::Path const & /*mapStateFilePath*/,
-    de::game::SessionMetadata const &metadata)
+void HereticV13GameStateReader::read(de::Path const &filePath, de::game::SessionMetadata const &metadata)
 {
-    if(!SV_OpenFile_Hr_v13(stateFilePath))
+    if(!SV_OpenFile_Hr_v13(filePath))
     {
-        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(stateFilePath).pretty() + "\"");
+        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(filePath).pretty() + "\"");
     }
 
     d->reader = SV_NewReader_Hr_v13();

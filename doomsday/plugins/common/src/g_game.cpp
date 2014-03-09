@@ -61,7 +61,7 @@
 #include "x_hair.h"
 
 #include <de/ArrayValue>
-#include <de/game/IGameStateReader>
+#include <de/game/IMapStateReader>
 #include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/NumberValue>
@@ -484,7 +484,7 @@ static void initSaveSlots()
 
     // Declare the native game state reader.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader(&GameStateReader::recognize, &GameStateReader::make);
+    saveRepo.declareReader(/*&GameStateReader::recognize,*/ &GameStateReader::make);
 
     // Setup the logical save slot bindings.
     int const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
@@ -3260,16 +3260,13 @@ void G_DoLoadSession(de::String slotId)
 #endif
 
         SaveSlot &sslot = G_SaveSlots()[logicalSlot];
-        de::Path const filePath = sslot.filePath();
-        de::Path const mapStateFilePath(Str_Text(Uri_Resolved(gameMapUri)));
 
         // Attempt to recognize and load the saved game state.
         App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                de::NativePath(filePath).pretty().toLatin1().constData());
+                de::NativePath(sslot.filePath()).pretty().toLatin1().constData());
 
-        sslot.savedSession()
-                .gameStateReader()->read(filePath, mapStateFilePath,
-                                         sslot.saveMetadata());
+        sslot.savedSession().mapStateReader()
+                ->read(de::Path(Str_Text(Uri_Resolved(gameMapUri))), sslot.saveMetadata());
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);

@@ -20,7 +20,7 @@
 
 #include "de/App"
 #include "de/game/Game"
-#include "de/game/IGameStateReader"
+#include "de/game/IMapStateReader"
 #include "de/Log"
 #include "de/NativePath"
 
@@ -40,13 +40,13 @@ DENG2_PIMPL(SavedSessionRepository)
     Sessions sessions;
 
     struct ReaderInfo {
-        GameStateRecognizeFunc recognize;
+        //GameStateRecognizeFunc recognize;
         GameStateReaderMakeFunc newReader;
 
-        ReaderInfo(GameStateRecognizeFunc recognize, GameStateReaderMakeFunc newReader)
-            : recognize(recognize), newReader(newReader)
+        ReaderInfo(/*GameStateRecognizeFunc recognize,*/ GameStateReaderMakeFunc newReader)
+            : /*recognize(recognize),*/ newReader(newReader)
         {
-            DENG2_ASSERT(recognize != 0 && newReader != 0);
+            DENG2_ASSERT(/*recognize != 0 &&*/ newReader != 0);
         }
     };
     typedef QList<ReaderInfo> ReaderInfos;
@@ -75,20 +75,42 @@ DENG2_PIMPL(SavedSessionRepository)
         sessions.clear();
     }
 
+    bool recognize(File &file, SessionMetadata &metadata) const
+    {
+        Block raw;
+        file >> raw;
+
+        metadata.parse(String::fromUtf8(raw));
+
+        int const saveVersion = metadata["version"].value().asNumber();
+        if(saveVersion > 14) // Future version?
+        {
+            return false;
+        }
+        return true;
+    }
+
     ReaderInfo const *readSessionMetadata(SavedSession &session) const
     {
-        foreach(ReaderInfo const &rdrInfo, readers)
+        try
         {
-            Path stateFilePath = self.folder().path() / session.fileName();
+            Path filePath = self.folder().path() / session.fileName();
+            File &file = App::fileSystem().find<File>(filePath);
 
-            // Attempt to recognize the game state and deserialize the metadata.
-            QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
-            if(rdrInfo.recognize(stateFilePath, *metadata))
+            foreach(ReaderInfo const &rdrInfo, readers)
             {
-                session.replaceMetadata(metadata.take());
-                return &rdrInfo;
+                // Attempt to recognize the game state and deserialize the metadata.
+                QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
+                if(recognize(file, *metadata))
+                {
+                    session.replaceMetadata(metadata.take());
+                    return &rdrInfo;
+                }
             }
         }
+        catch(FileSystem::NotFoundError const &)
+        {}  // Ignore this error.
+
         return 0; // Unrecognized
     }
 
@@ -179,9 +201,9 @@ SavedSession &SavedSessionRepository::session(String fileName) const
     throw MissingSessionError("SavedSessionRepository::session", "Unknown session '" + fileName + "'");
 }
 
-void SavedSessionRepository::declareReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker)
+void SavedSessionRepository::declareReader(/*GameStateRecognizeFunc recognizer,*/ GameStateReaderMakeFunc maker)
 {
-    d->readers.append(Instance::ReaderInfo(recognizer, maker));
+    d->readers.append(Instance::ReaderInfo(/*recognizer,*/ maker));
 }
 
 bool SavedSessionRepository::recognize(SavedSession &session) const
@@ -189,7 +211,7 @@ bool SavedSessionRepository::recognize(SavedSession &session) const
     return d->readSessionMetadata(session) != 0;
 }
 
-IGameStateReader *SavedSessionRepository::recognizeAndMakeReader(SavedSession &session) const
+IMapStateReader *SavedSessionRepository::recognizeAndMakeReader(SavedSession &session) const
 {
     if(Instance::ReaderInfo const *rdrInfo = d->readSessionMetadata(session))
     {

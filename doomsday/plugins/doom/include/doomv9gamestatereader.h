@@ -1,4 +1,4 @@
-/** @file doomv9gamestatereader.h  Doom ver 1.9 saved game state reader.
+/** @file doomv9gamestatereader.h  Doom ver 1.9 saved game map state reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -26,24 +26,23 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include <de/game/IGameStateReader>
+#include <de/game/IMapStateReader>
 
 /**
- * Doom ver 1.9 saved game state reader.
+ * Doom ver 1.9 saved game map state reader.
  *
  * @ingroup libdoom
  */
-class DoomV9GameStateReader : public de::game::IGameStateReader
+class DoomV9GameStateReader : public de::game::IMapStateReader
 {
 public:
     DoomV9GameStateReader();
     ~DoomV9GameStateReader();
 
-    static de::game::IGameStateReader *make();
-    static bool recognize(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
+    static de::game::IMapStateReader *make();
+    //static bool recognize(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
 
-    void read(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
-              de::game::SessionMetadata const &metadata);
+    void read(de::Path const &filePath, de::game::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

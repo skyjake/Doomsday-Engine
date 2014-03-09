@@ -278,6 +278,7 @@ GameStateReader::GameStateReader() : d(new Instance(this))
 GameStateReader::~GameStateReader()
 {}
 
+#if 0
 bool GameStateReader::recognize(Path const &stateFilePath, SessionMetadata &metadata) // static
 {
     if(!SV_ExistingFile(stateFilePath)) return false;
@@ -320,18 +321,18 @@ bool GameStateReader::recognize(Path const &stateFilePath, SessionMetadata &meta
 
     return true;
 }
+#endif
 
-IGameStateReader *GameStateReader::make() // static
+IMapStateReader *GameStateReader::make() // static
 {
     return new GameStateReader;
 }
 
-void GameStateReader::read(Path const &stateFilePath, Path const &mapStateFilePath,
-    SessionMetadata const &metadata)
+void GameStateReader::read(Path const &filePath, SessionMetadata const &metadata)
 {
-    if(!SV_OpenFile(stateFilePath, false/*for reading*/))
+    if(!SV_OpenFile(filePath, false/*for reading*/))
     {
-        throw FileAccessError("GameStateReader", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\"");
+        throw FileAccessError("GameStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
     }
 
     int const saveVersion = metadata["version"].value().asNumber();
@@ -372,27 +373,16 @@ void GameStateReader::read(Path const &stateFilePath, Path const &mapStateFilePa
 
     d->readPlayers();
 
-    if(mapStateFilePath != stateFilePath)
-    {
-        // The map state is actually read from a separate file.
-#if __JHEXEN__
-        // Close the game state file.
-        SV_HxReleaseSaveBuffer();
-#else
-        SV_CloseFile();
-#endif
-
-        // Open the map state file.
-        if(!SV_OpenFile(mapStateFilePath, false/*for read*/))
-        {
-            throw FileAccessError("GameStateReader", "Failed opening \"" + NativePath(mapStateFilePath).pretty() + "\"");
-        }
-    }
-
     d->readMap(thingArchiveSize);
 
 #if __JHEXEN__
     SV_ClearTargetPlayers();
+#endif
+#if __JHEXEN__
+    // Close the game state file.
+    SV_HxReleaseSaveBuffer();
+#else
+    SV_CloseFile();
 #endif
 
     // Notify the players that weren't in the savegame.

@@ -178,7 +178,7 @@ D_CMD( CCmdExitLevel );
 #endif
 
 #if __cplusplus
-#include <de/game/IGameStateReader>
+#include <de/game/IMapStateReader>
 #include <de/String>
 #include "gamerules.h"
 

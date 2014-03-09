@@ -27,7 +27,7 @@
 namespace de {
 namespace game {
 
-class IGameStateReader;
+class IMapStateReader;
 class SavedSessionRepository;
 
 /**
@@ -47,8 +47,8 @@ public:
     /// Required/referenced repository is missing. @ingroup errors
     DENG2_ERROR(MissingRepositoryError);
 
-    /// The associated game state file was missing/unrecognized. @ingroup errors
-    DENG2_ERROR(UnrecognizedGameStateError);
+    /// The associated game map state file was missing/unrecognized. @ingroup errors
+    DENG2_ERROR(UnrecognizedMapStateError);
 
     /// Logical session status:
     enum Status {
@@ -63,6 +63,13 @@ public:
     class DENG2_PUBLIC Metadata : public Record
     {
     public:
+        /**
+         * Parses metadata in Info syntax from a text string.
+         *
+         * @param source  Source string to be parsed.
+         */
+        void parse(String const &source);
+
         /**
          * Generates a textual representation of the session metadata with Info syntax.
          *
@@ -148,7 +155,7 @@ public:
     Metadata const &metadata() const;
     void replaceMetadata(Metadata *newMetadata);
 
-    std::auto_ptr<IGameStateReader> gameStateReader();
+    std::auto_ptr<IMapStateReader> mapStateReader();
 
 private:
     DENG2_PRIVATE(d)

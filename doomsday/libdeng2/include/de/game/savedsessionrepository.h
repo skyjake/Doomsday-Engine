@@ -21,7 +21,7 @@
 
 #include "../Error"
 #include "../Folder"
-#include "../game/IGameStateReader"
+#include "../game/IMapStateReader"
 #include "../game/SavedSession"
 #include "../Path"
 #include "../String"
@@ -37,7 +37,7 @@
 typedef bool (*GameStateRecognizeFunc)(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
 
 /// Game state reader instantiator function ptr.
-typedef de::game::IGameStateReader *(*GameStateReaderMakeFunc)();
+typedef de::game::IMapStateReader *(*GameStateReaderMakeFunc)();
 
 namespace de {
 namespace game {
@@ -99,10 +99,10 @@ public:
      * @param recognizer  Game state recognizer function.
      * @param maker       Game state reader instantiator function.
      */
-    void declareReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker);
+    void declareReader(/*GameStateRecognizeFunc recognizer,*/ GameStateReaderMakeFunc maker);
 
     /**
-     * Determines whether a IGameStateReader appropriate for the specified saved @a session
+     * Determines whether a IMapStateReader appropriate for the specified saved @a session
      * is available and if so, reads the session metadata.
      *
      * @param record  The session metadata will be written here if recognized.
@@ -114,7 +114,7 @@ public:
     bool recognize(SavedSession &session) const;
 
     /**
-     * Determines whether a IGameStateReader appropriate for the specified saved @a session
+     * Determines whether a IMapStateReader appropriate for the specified saved @a session
      * is available and if so, reads the session metadata and returns a new reader instance
      * for deserializing the game state.
      *
@@ -124,7 +124,7 @@ public:
      *
      * @see recognize()
      */
-    IGameStateReader *recognizeAndMakeReader(SavedSession &session) const;
+    IMapStateReader *recognizeAndMakeReader(SavedSession &session) const;
 
 private:
     DENG2_PRIVATE(d)
