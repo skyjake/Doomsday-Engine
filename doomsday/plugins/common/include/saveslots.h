@@ -80,20 +80,9 @@ public:
         de::game::SessionMetadata const &saveMetadata() const;
 
         /**
-         * Returns the saved session game state file path (in the repository).
-         *
-         * @see mapStateFilePath()
+         * Returns the saved session file path (in the repository).
          */
-        de::Path stateFilePath() const;
-
-        /**
-         * Returns the saved session map state file path (in the repository). Note that
-         * depending on how the game is configured, this may be the same as the game state
-         * file path.
-         *
-         * @see stateFilePath()
-         */
-        de::Path mapStateFilePath(Uri const *mapUri) const;
+        de::Path filePath() const;
 
         /**
          * Returns the saved session for the logical save slot.
@@ -156,7 +145,7 @@ public:
     Slot &slot(de::String slotId) const;
 
     /**
-     * Lookup a slot by searching for a saved game session with a matching user description.
+     * Lookup a slot by searching for a saved session with a matching user description.
      * The search is in ascending slot identifier order.
      *
      * @param description  Description of the game-save to look for (not case sensitive).
@@ -168,7 +157,7 @@ public:
     Slot *slotByUserDescription(de::String description) const;
 
     /**
-     * Copies all the saved session state files from one slot to another.
+     * Copies the saved session file from one slot to another.
      *
      * @see hasSlot()
      */

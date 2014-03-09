@@ -29,8 +29,6 @@
 #include <de/Observers>
 #include <map>
 
-#define MAX_HUB_MAPS 99
-
 static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
 static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
@@ -165,7 +163,7 @@ void SaveSlots::Slot::clear()
         App_Log(DE2_RES_MSG, "Clearing save slot '%s'", d->id.toLatin1().constData());
     }
 
-    savedSession().deleteFilesInRepository();
+    savedSession().deleteFileInRepository();
 }
 
 void SaveSlots::Slot::replaceSavedSession(SavedSession *newSession)
@@ -186,16 +184,10 @@ void SaveSlots::Slot::replaceSavedSession(SavedSession *newSession)
     }
 }
 
-Path SaveSlots::Slot::stateFilePath() const
+Path SaveSlots::Slot::filePath() const
 {
     SavedSession &session = savedSession();
     return session.repository().folder().path() / session.fileName();
-}
-
-Path SaveSlots::Slot::mapStateFilePath(Uri const *mapUri) const
-{
-    SavedSession &session = savedSession();
-    return session.repository().folder().path() / session.fileNameForMap(Str_Text(Uri_Compose(mapUri)));
 }
 
 DENG2_PIMPL_NOREF(SaveSlots)
@@ -282,14 +274,7 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
     // Clear all save files at destination slot.
     destSlot.clear();
 
-    for(int i = 0; i < MAX_HUB_MAPS; ++i)
-    {
-        Uri *mapUri = G_ComposeMapUri(gameEpisode, i);
-        SV_CopyFile(sourceSlot.mapStateFilePath(mapUri), destSlot.mapStateFilePath(mapUri));
-        Uri_Delete(mapUri);
-    }
-
-    SV_CopyFile(sourceSlot.stateFilePath(), destSlot.stateFilePath());
+    SV_CopyFile(sourceSlot.filePath(), destSlot.filePath());
 
     // Copy save info too.
     destSlot.replaceSavedSession(new SavedSession(sourceSlot.savedSession()));
