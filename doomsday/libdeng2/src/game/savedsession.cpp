@@ -19,9 +19,10 @@
 #include "de/game/Savedsession"
 
 #include "de/App"
+#include "de/ArrayValue"
 #include "de/game/Game"
 #include "de/game/SavedSessionRepository"
-#include "de/ArrayValue"
+#include "de/Info"
 #include "de/Log"
 #include "de/NumberValue"
 #include "de/NativePath"
@@ -29,9 +30,62 @@
 namespace de {
 namespace game {
 
-void SavedSession::Metadata::parse(String const & /*source*/)
+void SavedSession::Metadata::parse(String const &source)
 {
-    DENG2_ASSERT(!"SavedSession::Metadata::parse - Not yet implemented");
+    clear();
+
+    /// @todo Info keys are converted to lowercase when parsed?
+    try
+    {
+        Info info;
+        info.setAllowDuplicateBlocksOfType(QStringList() << "gamerule");
+        info.parse(source);
+
+        // Rebuild the game rules subrecord.
+        Record &rules = addRecord("gameRules");
+        foreach(Info::Element const *elem, info.root().contentsInOrder())
+        {
+            if(!elem->isBlock()) continue;
+
+            // Perhaps a game rule?
+            Info::BlockElement const &ruleBlock = elem->as<Info::BlockElement>();
+            if(ruleBlock.blockType() == "gamerule")
+            {
+                rules.set(ruleBlock.name(), ruleBlock.keyValue("value").text);
+            }
+        }
+
+        // Apply the other known values.
+        String value;
+        if(info.findValueForKey("gameidentitykey", value))
+        {
+            set("gameIdentityKey", value);
+        }
+        if(info.findValueForKey("maptime", value))
+        {
+            set("mapTime", value.toInt());
+        }
+        if(info.findValueForKey("mapuri", value))
+        {
+            set("mapUri", value);
+        }
+        if(info.findValueForKey("sessionid", value))
+        {
+            set("sessionId", value.toInt());
+        }
+        if(info.findValueForKey("userdescription", value))
+        {
+            set("userDescription", value);
+        }
+        if(info.findValueForKey("version", value))
+        {
+            set("version", value.toInt());
+        }
+    }
+    catch(de::Error const &er)
+    {
+        LOG_WARNING(er.asText());
+    }
 }
 
 String SavedSession::Metadata::asTextWithInfoSyntax() const
@@ -42,24 +96,29 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
 
     if(has("gameIdentityKey"))
     {
-        os << "gameIdentityKey: \"" << (*this)["gameIdentityKey"].value().asText() << "\"";
+        os << "gameIdentityKey: " << (*this)["gameIdentityKey"].value().asText();
     }
     if(hasSubrecord("gameRules"))
     {
-        String rules = subrecord("gameRules").asText("          ", 0);
-        os << "\n      gameRules {\n" << rules << "\n      }";
+        Record const &rules = subrecord("gameRules");
+        for(Record::Members::const_iterator i = rules.members().begin();
+            i != rules.members().end(); ++i)
+        {
+            os << "\n      gamerule \"" << i.key() << "\" {"
+               << "\n          value: " << i.value()->value().asText().replace("\"", "''") << "\n      }";
+        }
     }
     if(has("mapTime"))
     {
-       os << "\n        mapTime: "   << String::number(int((*this)["mapTime"].value().asNumber()));
+        os << "\n        mapTime: "   << String::number(int((*this)["mapTime"].value().asNumber()));
     }
     if(has("mapUri"))
     {
-        os << "\n         mapUri: \"" << (*this)["mapUri"].value().asText() << "\"";
+        os << "\n         mapUri: " << (*this)["mapUri"].value().asText();
     }
     if(has("players"))
     {
-       os << "\n        players: "   << (*this)["players"].value().asText();
+        os << "\n        players: "   << (*this)["players"].value().asText();
     }
     if(has("sessionId"))
     {
@@ -68,7 +127,7 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     if(has("userDescription"))
     {
         String userDescription = (*this)["userDescription"].value().asText().replace("\"", "''");
-        os << "\nuserDescription: \"" << userDescription << "\"";
+        os << "\nuserDescription: " << userDescription;
     }
     if(has("version"))
     {

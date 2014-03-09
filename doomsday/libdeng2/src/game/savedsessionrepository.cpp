@@ -118,7 +118,7 @@ DENG2_PIMPL(SavedSessionRepository)
         }
         catch(Archive::FormatError const &)
         {
-            LOG_RES_WARNING("Archive in \"%s\" is invalid") << pack.description();
+            LOG_RES_WARNING("Archive in %s is invalid") << pack.description();
         }
 
         return false;
