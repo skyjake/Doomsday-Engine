@@ -423,6 +423,12 @@ bool LineEditWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
+        if(key.isModifier())
+        {
+            // Don't eat modifier keys; the bindings system needs them.
+            return false;
+        }
+        /*
         if(key.qtKey() == Qt::Key_Shift)
         {
             // Shift is not eaten so that Shift-Tilde can produce ~.
@@ -434,8 +440,8 @@ bool LineEditWidget::handleEvent(Event const &event)
            key.qtKey() == Qt::Key_Meta)
         {
             // Modifier keys alone will be eaten when focused.
-            return true;
-        }
+            return false;
+        }*/
 
         if(d->signalOnEnter && (key.qtKey() == Qt::Key_Enter || key.qtKey() == Qt::Key_Return))
         {
