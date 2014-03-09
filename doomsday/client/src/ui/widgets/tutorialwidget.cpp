@@ -19,7 +19,9 @@
 #include "ui/widgets/tutorialwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "ui/widgets/inputbindingwidget.h"
 #include "dd_version.h"
+#include "dd_main.h"
 
 #include <de/MessageDialog>
 #include <de/SignalAction>
@@ -48,7 +50,7 @@ DENG_GUI_PIMPL(TutorialWidget)
     {
         self.add(darken = new LabelWidget);
         darken->set(Background(style().colors().colorf("altaccent") *
-                               Vector4f(.3f, .3f, .3f, .5f)));
+                               Vector4f(.3f, .3f, .3f, .55f)));
         darken->setOpacity(0);
     }
 
@@ -144,16 +146,25 @@ DENG_GUI_PIMPL(TutorialWidget)
                                               as<GuiWidget>().rule(), ui::Left);
             break;
 
-        case ConsoleKey:
+        case ConsoleKey: {
             dlg->title().setText(tr("Console"));
-            dlg->message().setText(tr("The console is a \"Quake style\" command line prompt where "
-                                      "you enter commands and change variable values. To get started, "
-                                      "try typing %1.\n\n"
-                                      "Here you can set a keyboard shortcut for accessing the console quickly:")
-                                   .arg(_E(b) "help" _E(.)));
-            dlg->setAnchor(win.taskBar().rule().left(), win.taskBar().rule().top());
+            String msg = tr("The console is a \"Quake style\" command line prompt where "
+                            "you enter commands and change variable values. To get started, "
+                            "try typing %1.").arg(_E(b) "help" _E(.));
+            if(App_GameLoaded())
+            {
+                msg += "\n\nHere you can set a keyboard shortcut for accessing the console quickly. "
+                        "Click in the box below and then press the key or key combination you "
+                        "want to assign as the shortcut.";
+                dlg->area().add(InputBindingWidget::newTaskBarShortcut());
+            }
+            dlg->message().setText(msg);
+            dlg->setAnchor(win.taskBar().console().commandLine().rule().left() +
+                           style().rules().rule("gap"),
+                           win.taskBar().rule().top());
             dlg->setOpeningDirection(ui::Up);
-            break;
+            dlg->updateLayout();
+            break; }
 
         default:
             break;
