@@ -37,7 +37,7 @@
 typedef bool (*GameStateRecognizeFunc)(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
 
 /// Game state reader instantiator function ptr.
-typedef de::game::IMapStateReader *(*GameStateReaderMakeFunc)();
+typedef de::game::IMapStateReader *(*MapStateReaderMakeFunc)();
 
 namespace de {
 namespace game {
@@ -99,13 +99,13 @@ public:
      * @param recognizer  Game state recognizer function.
      * @param maker       Game state reader instantiator function.
      */
-    void declareReader(/*GameStateRecognizeFunc recognizer,*/ GameStateReaderMakeFunc maker);
+    void declareReader(/*GameStateRecognizeFunc recognizer,*/ MapStateReaderMakeFunc maker);
 
     /**
      * Determines whether a IMapStateReader appropriate for the specified saved @a session
      * is available and if so, reads the session metadata.
      *
-     * @param record  The session metadata will be written here if recognized.
+     * @param session  The session metadata will be written here if recognized.
      *
      * @return  @c true= the session metadata was read successfully.
      *
@@ -116,9 +116,9 @@ public:
     /**
      * Determines whether a IMapStateReader appropriate for the specified saved @a session
      * is available and if so, reads the session metadata and returns a new reader instance
-     * for deserializing the game state.
+     * for deserializing the game map state.
      *
-     * @param record  The session metadata will be written here if recognized.
+     * @param session  The session metadata will be written here if recognized.
      *
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
      *

@@ -23,6 +23,8 @@
 #include "de/game/IMapStateReader"
 #include "de/Log"
 #include "de/NativePath"
+#include "de/PackageFolder"
+#include "de/ZipArchive"
 
 #include <QList>
 #include <map>
@@ -41,9 +43,9 @@ DENG2_PIMPL(SavedSessionRepository)
 
     struct ReaderInfo {
         //GameStateRecognizeFunc recognize;
-        GameStateReaderMakeFunc newReader;
+        MapStateReaderMakeFunc newReader;
 
-        ReaderInfo(/*GameStateRecognizeFunc recognize,*/ GameStateReaderMakeFunc newReader)
+        ReaderInfo(/*GameStateRecognizeFunc recognize,*/ MapStateReaderMakeFunc newReader)
             : /*recognize(recognize),*/ newReader(newReader)
         {
             DENG2_ASSERT(/*recognize != 0 &&*/ newReader != 0);
@@ -75,8 +77,11 @@ DENG2_PIMPL(SavedSessionRepository)
         sessions.clear();
     }
 
-    bool recognize(File &file, SessionMetadata &metadata) const
+    bool recognize(PackageFolder &pack, SessionMetadata &metadata) const
     {
+        if(!pack.has("Info")) return false;
+
+        File &file = pack.locate<File>("Info");
         Block raw;
         file >> raw;
 
@@ -95,16 +100,39 @@ DENG2_PIMPL(SavedSessionRepository)
         try
         {
             Path filePath = self.folder().path() / session.fileName();
-            File &file = App::fileSystem().find<File>(filePath);
-
-            foreach(ReaderInfo const &rdrInfo, readers)
+            File &sourceData = App::fileSystem().find<File>(filePath);
+            if(ZipArchive::recognize(sourceData))
             {
-                // Attempt to recognize the game state and deserialize the metadata.
-                QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
-                if(recognize(file, *metadata))
+                try
                 {
-                    session.replaceMetadata(metadata.take());
-                    return &rdrInfo;
+                    // It is a ZIP archive: we will represent it as a folder.
+                    QScopedPointer<PackageFolder> package(new PackageFolder(sourceData, sourceData.name()));
+
+                    // Archive opened successfully, give ownership of the source to the folder.
+                    package->setSource(&sourceData);
+
+                    foreach(ReaderInfo const &rdrInfo, readers)
+                    {
+                        // Attempt to recognize the game state and deserialize the metadata.
+                        QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
+                        if(recognize(*package, *metadata))
+                        {
+                            session.replaceMetadata(metadata.take());
+                            return &rdrInfo;
+                        }
+                    }
+                }
+                catch(Archive::FormatError const &)
+                {
+                    LOG_RES_WARNING("Archive in %s is invalid") << sourceData.description();
+                }
+                catch(IByteArray::OffsetError const &)
+                {
+                    LOG_RES_WARNING("Archive in %s is truncated") << sourceData.description();
+                }
+                catch(IIStream::InputError const &)
+                {
+                    LOG_RES_WARNING("%s cannot be read") << sourceData.description();
                 }
             }
         }
@@ -143,7 +171,7 @@ Folder &SavedSessionRepository::folder()
 
 void SavedSessionRepository::setLocation(Path const &location)
 {
-    qDebug() << "(Re)Initializing saved session repository file structure";
+    qDebug() << "(Re)Initializing saved session repository file structure at" << location.asText();
 
     // Clear the saved session db, we're starting over.
     d->clearSessions();
@@ -154,6 +182,7 @@ void SavedSessionRepository::setLocation(Path const &location)
         try
         {
             d->folder = &App::fileSystem().makeFolder(location);
+            d->folder->populate(Folder::PopulateOnlyThisFolder);
             /// @todo attach a feed to this folder.
             /// @todo scan the indexed files and populate the saved session db.
             return;
@@ -201,7 +230,7 @@ SavedSession &SavedSessionRepository::session(String fileName) const
     throw MissingSessionError("SavedSessionRepository::session", "Unknown session '" + fileName + "'");
 }
 
-void SavedSessionRepository::declareReader(/*GameStateRecognizeFunc recognizer,*/ GameStateReaderMakeFunc maker)
+void SavedSessionRepository::declareReader(/*GameStateRecognizeFunc recognizer,*/ MapStateReaderMakeFunc maker)
 {
     d->readers.append(Instance::ReaderInfo(/*recognizer,*/ maker));
 }
