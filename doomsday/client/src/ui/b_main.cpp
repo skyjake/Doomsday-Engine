@@ -734,7 +734,7 @@ bool B_UnbindCommand(const char *command)
         bcontext_t *bc = B_ContextByPos(i);
         while(evbinding_t *ev = B_FindCommandBinding(&bc->commandBinds, command, NUM_INPUT_DEVICES))
         {
-            deleted |= B_DeleteBinding(bc, ev->bid);
+            deleted |= CPP_BOOL(B_DeleteBinding(bc, ev->bid));
         }
     }
     return deleted;
