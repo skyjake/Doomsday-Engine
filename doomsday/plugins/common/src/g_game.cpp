@@ -213,7 +213,7 @@ mobj_t *bodyQueue[BODYQUEUESIZE];
 int bodyQueueSlot;
 #endif
 
-static SaveSlots sslots;
+static SaveSlots *sslots;
 
 // vars used with game status cvars
 int gsvEpisode;
@@ -480,7 +480,8 @@ gameaction_t G_GameAction()
 
 static void initSaveSlots()
 {
-    DENG2_ASSERT(sslots.slotCount() == 0);
+    delete sslots;
+    sslots = new SaveSlots;
 
     // Declare the native game state reader.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
@@ -495,12 +496,12 @@ static void initSaveSlots()
     };
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
-        sslots.addSlot(de::String::number(i), true, de::String(SAVEGAMENAME "%1").arg(i),
-                       gameMenuSaveSlotWidgetIds[i]);
+        sslots->addSlot(de::String::number(i), true, de::String(SAVEGAMENAME "%1").arg(i),
+                        gameMenuSaveSlotWidgetIds[i]);
     }
-    sslots.addSlot("auto", false, de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT));
+    sslots->addSlot("auto", false, de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT));
 #if __JHEXEN__
-    sslots.addSlot("base", false, de::String(SAVEGAMENAME "%1").arg(BASE_SLOT));
+    sslots->addSlot("base", false, de::String(SAVEGAMENAME "%1").arg(BASE_SLOT));
 #endif
 }
 
@@ -510,10 +511,11 @@ static void initSaveSlots()
  */
 void G_CommonPreInit()
 {
-    int i, j;
-
-    DENG_ASSERT(gameMapUri == 0);
-    gameMapUri = Uri_New();
+    if(!gameMapUri)
+    {
+        gameMapUri = Uri_New();
+    }
+    Uri_Clear(gameMapUri);
     quitInProgress = false;
     verbose = CommandLine_Exists("-verbose");
 
@@ -521,20 +523,19 @@ void G_CommonPreInit()
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
     // Setup the players.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* pl = players + i;
+        player_t *pl = players + i;
 
         pl->plr = DD_GetPlayer(i);
         pl->plr->extraData = (void*) &players[i];
 
-        /// \todo Only necessary because the engine does not yet unload game
-        /// plugins when they are not in use; thus a game change may leave
-        /// these pointers dangling.
-        for(j = 0; j < NUMPSPRITES; ++j)
+        /// @todo Only necessary because the engine does not yet unload game plugins when they
+        /// are not in use; thus a game change may leave these pointers dangling.
+        for(int k = 0; k < NUMPSPRITES; ++k)
         {
-            pl->pSprites[j].state = NULL;
-            pl->plr->pSprites[j].statePtr = NULL;
+            pl->pSprites[k].state = NULL;
+            pl->plr->pSprites[k].statePtr = NULL;
         }
     }
 
@@ -976,7 +977,8 @@ void R_InitHud()
 
 SaveSlots &G_SaveSlots()
 {
-    return sslots;
+    DENG2_ASSERT(sslots != 0);
+    return *sslots;
 }
 
 de::game::SavedSessionRepository &G_SavedSessionRepository()
@@ -1071,6 +1073,7 @@ void G_CommonShutdown()
     ST_Shutdown();
     GUI_Shutdown();
 
+    delete sslots; sslots = 0;
     Uri_Delete(gameMapUri); gameMapUri = 0;
 }
 
