@@ -63,21 +63,21 @@ DENG_GUI_PIMPL(InputBindingWidget)
             return eventDesc;
         }
 
-        String name = eventDesc.mid(4, eventDesc.indexOf("-", 4) - 4);
-        name = name.mid(0, 1).toUpper() + name.mid(1).toLower();
+        String name = eventDesc.substr(Rangei(4, eventDesc.indexOf("-", 4)));
+        name = name.left(1).toUpper() + name.mid(1).toLower();
 
         // Any modifiers?
         int idx = eventDesc.indexOf("+");
         if(idx > 0)
         {
             String const conds = eventDesc.mid(idx + 1);
-            if(conds.contains("key-ctrl-down") || conds.contains("key-control-down"))
-            {
-                name = String(CONTROL_CHAR) + name;
-            }
             if(conds.contains("key-alt-down"))
             {
                 name = String(DENG2_CHAR_ALT_KEY) + name;
+            }
+            if(conds.contains("key-ctrl-down") || conds.contains("key-control-down"))
+            {
+                name = String(CONTROL_CHAR) + name;
             }
             if(conds.contains("key-shift-down"))
             {
