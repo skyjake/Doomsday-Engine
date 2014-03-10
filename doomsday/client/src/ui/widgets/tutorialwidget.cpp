@@ -56,16 +56,8 @@ DENG_GUI_PIMPL(TutorialWidget)
         , dlg(0)
         , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
         , untrapper(ClientWindow::main())
-    {/*
-        self.add(darken = new LabelWidget);
-        darken->set(Background(style().colors().colorf("altaccent") *
-                               Vector4f(.3f, .3f, .3f, .55f)));
-        darken->setOpacity(0);*/
-
+    {
         self.add(highlight = new LabelWidget);
-        /*highlight->set(Background(Background::BorderGlow,
-                                  style().colors().colorf("accent"),
-                                  style().rules().rule("glow").value()));*/
         highlight->set(Background(Background::GradientFrame,
                                   style().colors().colorf("accent"), 6));
         highlight->setOpacity(0);
@@ -155,9 +147,10 @@ DENG_GUI_PIMPL(TutorialWidget)
         {
         case Welcome:
             dlg->title().setText(tr("Welcome to Doomsday"));
-            dlg->message().setText(tr("%1 is a portable 2.5D game engine that allows "
-                                      "you to play classic DOOM based games on modern platforms.\n\n"
-                                      "This tutorial will introduce the central UI elements.")
+            dlg->message().setText(tr("This tutorial will give you a brief walkthrough of the "
+                                      "major features of Doomsday's UI. You will also get a "
+                                      "chance to pick a shortcut key for opening the console.\n\n"
+                                      "The tutorial can be restarted later via the application menu.")
                                    .arg(_E(b) DOOMSDAY_NICENAME _E(.)));
             dlg->setAnchor(self.rule().midX(), self.rule().top());
             dlg->setOpeningDirection(ui::Down);
@@ -165,11 +158,11 @@ DENG_GUI_PIMPL(TutorialWidget)
 
         case TaskBar:
             dlg->title().setText(tr("Task Bar"));
-            dlg->message().setText(tr("The task bar is where you find all the important features: loading "
+            dlg->message().setText(tr("The task bar is where you find all the important functionality: loading "
                                       "and switching games, joining a multiplayer game, "
                                       "configuration settings, "
                                       "and a console command line for advanced users.\n\n"
-                                      "Press %1 at any time to access the task bar.")
+                                      "Press %1 to access the task bar at any time.")
                                    .arg(_E(b) "Shift-Esc" _E(.)));
 
             win.taskBar().open();
@@ -181,8 +174,9 @@ DENG_GUI_PIMPL(TutorialWidget)
             break;
 
         case DEMenu:
-            dlg->title().setText(tr("DE Menu"));
-            dlg->message().setText(tr("Click in the bottom right corner to open the main menu of Doomsday. "
+            dlg->title().setText(tr("Application Menu"));
+            dlg->message().setText(tr("Click the DE icon in the bottom right corner to open "
+                                      "the application menu. "
                                       "You can check for available updates, switch games, or look for "
                                       "ongoing multiplayer games."));
             win.taskBar().openMainMenu();
@@ -192,7 +186,9 @@ DENG_GUI_PIMPL(TutorialWidget)
 
         case ConfigMenus:
             dlg->title().setText(tr("Settings"));
-            dlg->message().setText(tr("Configuration settings are under the Gear menu."));
+            dlg->message().setText(tr("Configuration menus are found under buttons with a gear icon. "
+                                      "The task bar's configuration button has the settings for "
+                                      "all of Doomsday's subsystems."));
             win.taskBar().openConfigMenu();
             dlg->setAnchorAndOpeningDirection(root().guiFind("conf-menu")->rule(), ui::Left);
             startHighlight(*root().guiFind("conf-button"));
@@ -202,11 +198,11 @@ DENG_GUI_PIMPL(TutorialWidget)
             dlg->title().setText(tr("Console"));
             String msg = tr("The console is a \"Quake style\" command line prompt where "
                             "you enter commands and change variable values. To get started, "
-                            "try typing %1.").arg(_E(b) "help" _E(.));
+                            "try typing %1 in the console.").arg(_E(b) "help" _E(.));
             if(App_GameLoaded())
             {
-                msg += "\n\nHere you can set a keyboard shortcut for accessing the console quickly. "
-                        "Click in the box below and then press the key or key combination you "
+                msg += "\n\nBelow you can see the current keyboard shortcut for accessing the console quickly. "
+                        "To change it, click in the box and then press the key or key combination you "
                         "want to assign as the shortcut.";
                 InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
                 bind->useInfoStyle();
@@ -224,11 +220,6 @@ DENG_GUI_PIMPL(TutorialWidget)
         default:
             break;
         }
-
-        // Keep the tutorial on top so any popup menus opened will stay darkened.
-        //GuiRootWidget &r = self.root();
-        //r.remove(self);
-        //r.addOnTop(thisPublic);
 
         self.root().addOnTop(dlg);
         dlg->open();
