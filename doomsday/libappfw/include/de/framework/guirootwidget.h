@@ -86,6 +86,8 @@ public:
      */
     GuiWidget const *globalHitTest(Vector2i const &pos) const;
 
+    GuiWidget const *guiFind(String const &name) const;
+
     // Events.
     void update();
     void draw();
