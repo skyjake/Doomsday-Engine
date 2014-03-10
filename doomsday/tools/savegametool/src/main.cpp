@@ -307,6 +307,13 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
         /// @throw Error Format is from the future.
         throw Error("xlatLegacyMetadata", "Incompatible format version " + String::number(saveVersion));
     }
+    // We are incompatible with v3 saves due to an invalid test used to determine present
+    // sides (ver3 format's sides contain chunks of junk data).
+    if(saveFormat == Hexen && saveVersion == 3)
+    {
+        /// @throw Error Map state is in an unsupported format.
+        throw Error("xlatLegacyMetadata", "Unsupported format version " + String::number(saveVersion));
+    }
     metadata.set("version",             int(14));
 
     // Translate gamemode identifiers from older save versions.
