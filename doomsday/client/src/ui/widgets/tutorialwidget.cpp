@@ -150,8 +150,8 @@ DENG_GUI_PIMPL(TutorialWidget)
             dlg->message().setText(tr("This tutorial will give you a brief walkthrough of the "
                                       "major features of Doomsday's UI. You will also get a "
                                       "chance to pick a shortcut key for opening the console.\n\n"
-                                      "The tutorial can be restarted later via the application menu.")
-                                   .arg(_E(b) DOOMSDAY_NICENAME _E(.)));
+                                      "The tutorial can be restarted later via the application menu."));
+                                   //.arg(_E(b) DOOMSDAY_NICENAME _E(.)));
             dlg->setAnchor(self.rule().midX(), self.rule().top());
             dlg->setOpeningDirection(ui::Down);
             break;
