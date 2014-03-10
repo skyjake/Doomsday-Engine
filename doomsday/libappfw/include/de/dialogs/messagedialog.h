@@ -31,6 +31,8 @@ class LIBAPPFW_PUBLIC MessageDialog : public DialogWidget
 public:
     MessageDialog(String const &name = "");
 
+    void useInfoStyle();
+
     LabelWidget &title();
     LabelWidget &message();
 

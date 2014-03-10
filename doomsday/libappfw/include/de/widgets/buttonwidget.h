@@ -66,6 +66,10 @@ public:
         ModulateColor
     };
 
+    void useInfoStyle();
+
+    bool isUsingInfoStyle() const;
+
     /**
      * Text color to use in the Hover state. The default is to use the normal text
      * color of the button (label).
@@ -97,9 +101,9 @@ public:
     void update();
     bool handleEvent(Event const &event);
 
-
 protected:
     void updateModelViewProjection(GLUniform &uMvp);
+    void updateStyle();
 
 private:
     DENG2_PRIVATE(d)

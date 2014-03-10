@@ -389,7 +389,11 @@ public ChildWidgetOrganizer::IFilter
     void updateBackground()
     {
         Background bg = self.background();
-        if(Style::appStyle().isBlurringAllowed())
+        if(self.isUsingInfoStyle())
+        {
+            bg = self.infoStyleBackground();
+        }
+        else if(Style::appStyle().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
             bg.type = Background::BlurredWithBorderGlow;
@@ -433,17 +437,10 @@ MenuWidget &DialogWidget::buttonsMenu()
     return *d->buttons;
 }
 
-/*
-MenuWidget &DialogWidget::buttons()
-{
-    return *d->buttons;
-}
-
-MenuWidget &DialogWidget::extraButtons()
+MenuWidget &DialogWidget::extraButtonsMenu()
 {
     return *d->extraButtons;
 }
-*/
 
 ui::Data &DialogWidget::buttons()
 {

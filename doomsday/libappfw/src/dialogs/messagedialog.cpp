@@ -18,6 +18,7 @@
 
 #include "de/MessageDialog"
 #include "de/SequentialLayout"
+#include "de/DialogContentStylist"
 
 namespace de {
 
@@ -27,6 +28,7 @@ DENG_GUI_PIMPL(MessageDialog)
 {
     LabelWidget *title;
     LabelWidget *message;
+    DialogContentStylist buttonStylist;
 
     Instance(Public *i) : Base(i)
     {
@@ -72,6 +74,19 @@ MessageDialog::MessageDialog(String const &name)
     : DialogWidget(name)
     , d(new Instance(this))
 {}
+
+void MessageDialog::useInfoStyle()
+{
+    DialogWidget::useInfoStyle();
+
+    title().setTextColor("inverted.accent");
+    message().setTextColor("inverted.text");
+
+    d->buttonStylist.addContainer(buttonsMenu());
+    d->buttonStylist.addContainer(extraButtonsMenu());
+    d->buttonStylist.setAdjustMargins(false);
+    d->buttonStylist.setInfoStyle(true);
+}
 
 LabelWidget &MessageDialog::title()
 {

@@ -84,6 +84,10 @@ public:
      */
     void useInfoStyle();
 
+    bool isUsingInfoStyle();
+
+    Background infoStyleBackground() const;
+
     // Events.
     bool handleEvent(Event const &event);
 

@@ -32,6 +32,7 @@ DENG2_OBSERVES(Action, Triggered)
     DotPath originalTextColor;
     DotPath bgColorId;
     HoverColorMode hoverColorMode;
+    bool infoStyle;
     Action *action;
     Animation scale;
     Animation frameOpacity;
@@ -42,6 +43,7 @@ DENG2_OBSERVES(Action, Triggered)
         , state(Up)
         , bgColorId("background")
         , hoverColorMode(ReplaceColor)
+        , infoStyle(false)
         , action(0)
         , scale(1.f)
         , frameOpacity(.08f, Animation::Linear)
@@ -150,7 +152,9 @@ DENG2_OBSERVES(Action, Triggered)
         if(bg.type == Background::GradientFrame)
         {
             bg.solidFill = style().colors().colorf(bgColorId);
-            bg.color = Vector4f(1, 1, 1, frameOpacity);
+            /// @todo Make this Style-able. -jk
+            bg.color = infoStyle? Vector4f(0, 0, 0, frameOpacity) :
+                                  Vector4f(1, 1, 1, frameOpacity);
             self.set(bg);
         }
     }
@@ -187,6 +191,20 @@ DENG2_AUDIENCE_METHOD(ButtonWidget, Triggered)
 
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
+
+void ButtonWidget::useInfoStyle()
+{
+    d->infoStyle = true;
+    setTextColor("inverted.text");
+    setHoverTextColor("inverted.text", ReplaceColor);
+    setBackgroundColor("inverted.background");
+    updateStyle();
+}
+
+bool ButtonWidget::isUsingInfoStyle() const
+{
+    return d->infoStyle;
+}
 
 void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode)
 {
@@ -294,6 +312,12 @@ void ButtonWidget::updateModelViewProjection(GLUniform &uMvp)
                 Matrix4f::scaleThenTranslate(d->scale, pos.middle()) *
                 Matrix4f::translate(-pos.middle());
     }
+}
+
+void ButtonWidget::updateStyle()
+{
+    LabelWidget::updateStyle();
+    d->updateBackground();
 }
 
 void ButtonWidget::update()

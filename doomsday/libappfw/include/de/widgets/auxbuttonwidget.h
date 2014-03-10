@@ -36,6 +36,9 @@ public:
     void useNormalStyle();
     void useInvertedStyle();
 
+protected:
+    void updateStyle();
+
 private:
     DENG2_PRIVATE(d)
 };

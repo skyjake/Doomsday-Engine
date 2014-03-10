@@ -26,6 +26,7 @@
 namespace de {
 
 class GuiRootWidget;
+class DialogContentStylist;
 
 /**
  * Popup dialog.
@@ -151,7 +152,7 @@ public:
      *
      * @return Widget for dialog's extra buttons.
      */
-    //MenuWidget &extraButtons();
+    MenuWidget &extraButtonsMenu();
 
     ui::Data &buttons();
 

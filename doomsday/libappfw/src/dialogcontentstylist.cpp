@@ -22,39 +22,69 @@
 #include "de/LabelWidget"
 #include "de/LineEditWidget"
 #include "de/AuxButtonWidget"
+#include <de/Zeroed>
 
 namespace de {
 
-DialogContentStylist::DialogContentStylist() : _container(0)
+DENG2_PIMPL_NOREF(DialogContentStylist)
+{
+    QList<GuiWidget *> containers;
+    bool useInfoStyle;
+    bool adjustMargins;
+
+    Instance()
+        : useInfoStyle(false)
+        , adjustMargins(true)
+    {}
+};
+
+DialogContentStylist::DialogContentStylist() : d(new Instance)
 {}
 
-DialogContentStylist::DialogContentStylist(DialogWidget &dialog) : _container(0)
+DialogContentStylist::DialogContentStylist(DialogWidget &dialog) : d(new Instance)
 {
     setContainer(dialog.area());
 }
 
-DialogContentStylist::DialogContentStylist(GuiWidget &container) : _container(0)
+DialogContentStylist::DialogContentStylist(GuiWidget &container) : d(new Instance)
 {
     setContainer(container);
 }
 
 DialogContentStylist::~DialogContentStylist()
 {
-    if(_container)
+    clear();
+}
+
+void DialogContentStylist::clear()
+{
+    foreach(GuiWidget *w, d->containers)
     {
-        _container->audienceForChildAddition() -= this;
+        w->audienceForChildAddition() -= this;
     }
+    d->containers.clear();
 }
 
 void DialogContentStylist::setContainer(GuiWidget &container)
 {
-    if(_container)
-    {
-        _container->audienceForChildAddition() -= this;
-    }
+    clear();
+    addContainer(container);
+}
 
-    _container = &container;
-    _container->audienceForChildAddition() += this;
+void DialogContentStylist::addContainer(GuiWidget &container)
+{
+    d->containers << &container;
+    container.audienceForChildAddition() += this;
+}
+
+void DialogContentStylist::setInfoStyle(bool useInfoStyle)
+{
+    d->useInfoStyle = useInfoStyle;
+}
+
+void DialogContentStylist::setAdjustMargins(bool yes)
+{
+    d->adjustMargins = yes;
 }
 
 void DialogContentStylist::widgetChildAdded(Widget &child)
@@ -64,15 +94,27 @@ void DialogContentStylist::widgetChildAdded(Widget &child)
 
 void DialogContentStylist::applyStyle(GuiWidget &w)
 {
-    if(!w.is<AuxButtonWidget>())
+    if(d->adjustMargins)
     {
-        w.margins().set("dialog.gap");
+        if(!w.is<AuxButtonWidget>())
+        {
+            w.margins().set("dialog.gap");
+        }
     }
 
     // All label-based widgets should expand on their own.
     if(LabelWidget *lab = w.maybeAs<LabelWidget>())
     {
         lab->setSizePolicy(ui::Expand, ui::Expand);
+    }
+
+    // Button background override?
+    if(ButtonWidget *but = w.maybeAs<ButtonWidget>())
+    {
+        if(d->useInfoStyle)
+        {
+            but->useInfoStyle();
+        }
     }
 
     // Toggles should have no background.
@@ -83,7 +125,7 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
 
     if(LineEditWidget *ed = w.maybeAs<LineEditWidget>())
     {
-        ed->rule().setInput(Rule::Width, _container->style().rules().rule("editor.width"));
+        ed->rule().setInput(Rule::Width, d->containers.first()->style().rules().rule("editor.width"));
     }
 }
 

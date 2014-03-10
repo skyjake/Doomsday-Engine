@@ -22,12 +22,11 @@
 #include "../libappfw.h"
 #include "../ui/Stylist"
 
-#include <de/Widget>
+#include <de/GuiWidget>
 
 namespace de {
 
 class DialogWidget;
-class GuiWidget;
 
 /**
  * Sets the style for widgets in a dialog.
@@ -43,7 +42,20 @@ public:
 
     ~DialogContentStylist();
 
+    void clear();
+
     void setContainer(GuiWidget &container);
+
+    /**
+     * Adds a new container without detaching from the existing one(s).
+     *
+     * @param container  New container to style.
+     */
+    void addContainer(GuiWidget &container);
+
+    void setInfoStyle(bool useInfoStyle);
+
+    void setAdjustMargins(bool yes);
 
     void applyStyle(GuiWidget &widget);
 
@@ -51,7 +63,7 @@ public:
     void widgetChildAdded(Widget &child);
 
 private:
-    GuiWidget *_container;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
