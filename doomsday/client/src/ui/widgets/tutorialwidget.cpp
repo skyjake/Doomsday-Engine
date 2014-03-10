@@ -43,7 +43,7 @@ DENG_GUI_PIMPL(TutorialWidget)
     };
 
     Step current;
-    LabelWidget *darken;
+    //LabelWidget *darken;
     MessageDialog *dlg;
     LabelWidget *highlight;
     QTimer flashing;
@@ -56,11 +56,11 @@ DENG_GUI_PIMPL(TutorialWidget)
         , dlg(0)
         , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
         , untrapper(ClientWindow::main())
-    {
+    {/*
         self.add(darken = new LabelWidget);
         darken->set(Background(style().colors().colorf("altaccent") *
                                Vector4f(.3f, .3f, .3f, .55f)));
-        darken->setOpacity(0);
+        darken->setOpacity(0);*/
 
         self.add(highlight = new LabelWidget);
         /*highlight->set(Background(Background::BorderGlow,
@@ -139,6 +139,7 @@ DENG_GUI_PIMPL(TutorialWidget)
 
         current = s;
         dlg = new MessageDialog;
+        dlg->useInfoStyle();
         dlg->setDeleteAfterDismissed(true);
         dlg->setClickToClose(false);
         QObject::connect(dlg, SIGNAL(accepted(int)), thisPublic, SLOT(continueToNextStep()));
@@ -169,7 +170,7 @@ DENG_GUI_PIMPL(TutorialWidget)
                                       "configuration settings, "
                                       "and a console command line for advanced users.\n\n"
                                       "Press %1 at any time to access the task bar.")
-                                   .arg(_E(b)_E(D) "Shift-Esc" _E(.)_E(.)));
+                                   .arg(_E(b) "Shift-Esc" _E(.)));
 
             win.taskBar().open();
             win.taskBar().closeMainMenu();
@@ -207,7 +208,9 @@ DENG_GUI_PIMPL(TutorialWidget)
                 msg += "\n\nHere you can set a keyboard shortcut for accessing the console quickly. "
                         "Click in the box below and then press the key or key combination you "
                         "want to assign as the shortcut.";
-                dlg->area().add(InputBindingWidget::newTaskBarShortcut());
+                InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
+                bind->useInfoStyle();
+                dlg->area().add(bind);
             }
             dlg->message().setText(msg);
             dlg->setAnchor(win.taskBar().console().commandLine().rule().left() +
@@ -223,9 +226,9 @@ DENG_GUI_PIMPL(TutorialWidget)
         }
 
         // Keep the tutorial on top so any popup menus opened will stay darkened.
-        GuiRootWidget &r = self.root();
-        r.remove(self);
-        r.addOnTop(thisPublic);
+        //GuiRootWidget &r = self.root();
+        //r.remove(self);
+        //r.addOnTop(thisPublic);
 
         self.root().addOnTop(dlg);
         dlg->open();
@@ -240,9 +243,11 @@ TutorialWidget::TutorialWidget()
 
 void TutorialWidget::start()
 {
-    // Darken the entire view.
-    d->darken->rule().setRect(rule());
-    d->darken->setOpacity(1, 0.5);
+    // Blur the rest of the view.
+    GuiWidget &blur = ClientWindow::main().taskBarBlur();
+    blur.show();
+    blur.setOpacity(0);
+    blur.setOpacity(1, .5);
 
     d->initStep(Instance::Welcome);
 }
@@ -257,12 +262,14 @@ void TutorialWidget::stop()
     d->deinitStep();
 
     // Animate away and unfade darkening.
-    d->darken->setOpacity(0, 0.5);
+    ClientWindow::main().taskBarBlur().setOpacity(0, .5);
+
     QTimer::singleShot(500, this, SLOT(dismiss()));
 }
 
 void TutorialWidget::dismiss()
 {
+    ClientWindow::main().taskBarBlur().hide();
     hide();
     guiDeleteLater();
 }
