@@ -742,6 +742,8 @@ void TaskBarWidget::connectToServerManually()
 
 void TaskBarWidget::showTutorial()
 {
+    if(BusyMode_Active()) return;
+
     // The widget will dispose of itself when finished.
     TutorialWidget *tutorial = new TutorialWidget;
     root().addOnTop(tutorial);

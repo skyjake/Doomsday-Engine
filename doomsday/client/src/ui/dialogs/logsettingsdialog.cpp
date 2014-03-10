@@ -74,7 +74,7 @@ DENG2_PIMPL(LogSettingsDialog)
                                              App::config()["log.filterBySubsystem"]));
 
             self.area().add(metadata =
-                    new VariableToggleWidget(tr("Show Metadata"),
+                    new VariableToggleWidget(tr("Show Metadata in Log"),
                                              App::config()["log.showMetadata"]));
 
             levels << new ChoiceItem(        tr("1 - X.Verbose"), LogEntry::XVerbose)
