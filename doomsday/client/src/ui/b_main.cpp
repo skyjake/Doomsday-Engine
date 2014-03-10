@@ -728,7 +728,7 @@ DENG_EXTERN_C int DD_GetKeyCode(const char* key)
 
 bool B_UnbindCommand(const char *command)
 {
-    bool deleted = false;
+    dd_bool deleted = false;
     for(int i = 0; i < B_ContextCount(); ++i)
     {
         bcontext_t *bc = B_ContextByPos(i);
@@ -737,5 +737,5 @@ bool B_UnbindCommand(const char *command)
             deleted |= B_DeleteBinding(bc, ev->bid);
         }
     }
-    return deleted;
+    return CPP_BOOL(deleted);
 }
