@@ -37,6 +37,7 @@ public slots:
     void continueToNextStep();
     void stop();
     void dismiss();
+    void flashHighlight();
 
 private:
     DENG2_PRIVATE(d)

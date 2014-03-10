@@ -345,7 +345,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Height, rule().height());
 
     // DE logo.
-    d->logo = new ButtonWidget;
+    d->logo = new ButtonWidget("de-button");
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -358,7 +358,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     add(d->logo);
 
     // Settings.
-    ButtonWidget *conf = new ButtonWidget;
+    ButtonWidget *conf = new ButtonWidget("conf-button");
     d->conf = conf;
     conf->setImage(style().images().image("gear"));
     conf->setSizePolicy(ui::Expand, ui::Filled);

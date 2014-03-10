@@ -42,6 +42,8 @@ DENG_GUI_PIMPL(TutorialWidget)
     Step current;
     LabelWidget *darken;
     MessageDialog *dlg;
+    LabelWidget *highlight;
+    QTimer flashing;
 
     Instance(Public *i)
         : Base(i)
@@ -52,6 +54,36 @@ DENG_GUI_PIMPL(TutorialWidget)
         darken->set(Background(style().colors().colorf("altaccent") *
                                Vector4f(.3f, .3f, .3f, .55f)));
         darken->setOpacity(0);
+
+        self.add(highlight = new LabelWidget);
+        highlight->set(Background(Background::BorderGlow,
+                                  style().colors().colorf("accent"),
+                                  style().rules().rule("glow").value()));
+        highlight->setOpacity(0);
+
+        flashing.setSingleShot(false);
+        flashing.setInterval(1000);
+    }
+
+    void flash()
+    {
+        highlight->setOpacity(.6f);
+        highlight->setOpacity(.3f, 1, .4f);
+    }
+
+    void startHighlight(GuiWidget const &w)
+    {
+        highlight->rule().setRect(w.rule());
+
+        highlight->show();
+        flashing.start();
+        flash();
+    }
+
+    void stopHighlight()
+    {
+        highlight->hide();
+        flashing.stop();
     }
 
     void deinitStep()
@@ -61,6 +93,8 @@ DENG_GUI_PIMPL(TutorialWidget)
             dlg->close(0);
             dlg = 0;
         }
+
+        stopHighlight();
 
         ClientWindow &win = ClientWindow::main();
         switch(current)
@@ -95,7 +129,8 @@ DENG_GUI_PIMPL(TutorialWidget)
         QObject::connect(dlg, SIGNAL(accepted(int)), thisPublic, SLOT(continueToNextStep()));
         QObject::connect(dlg, SIGNAL(rejected(int)), thisPublic, SLOT(stop()));
         dlg->buttons()
-                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Continue"))
+                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
+                                        (current == Finish - 1)? tr("Done") : tr("Continue"))
                 << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Action,  tr("Skip Tutorial"));
 
         // Insert the content for the dialog.
@@ -126,6 +161,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             win.taskBar().closeConfigMenu();
             dlg->setAnchor(self.rule().midX(), win.taskBar().rule().top());
             dlg->setOpeningDirection(ui::Up);
+            startHighlight(win.taskBar());
             break;
 
         case DEMenu:
@@ -134,16 +170,16 @@ DENG_GUI_PIMPL(TutorialWidget)
                                       "You can check for available updates, switch games, or look for "
                                       "ongoing multiplayer games."));
             win.taskBar().openMainMenu();
-            dlg->setAnchorAndOpeningDirection(root().find("de-menu")->
-                                              as<GuiWidget>().rule(), ui::Left);
+            dlg->setAnchorAndOpeningDirection(root().guiFind("de-menu")->rule(), ui::Left);
+            startHighlight(*root().guiFind("de-button"));
             break;
 
         case ConfigMenus:
             dlg->title().setText(tr("Settings"));
             dlg->message().setText(tr("Configuration settings are under the Gear menu."));
             win.taskBar().openConfigMenu();
-            dlg->setAnchorAndOpeningDirection(self.root().find("conf-menu")->
-                                              as<GuiWidget>().rule(), ui::Left);
+            dlg->setAnchorAndOpeningDirection(root().guiFind("conf-menu")->rule(), ui::Left);
+            startHighlight(*root().guiFind("conf-button"));
             break;
 
         case ConsoleKey: {
@@ -164,11 +200,17 @@ DENG_GUI_PIMPL(TutorialWidget)
                            win.taskBar().rule().top());
             dlg->setOpeningDirection(ui::Up);
             dlg->updateLayout();
+            startHighlight(win.taskBar().console().commandLine());
             break; }
 
         default:
             break;
         }
+
+        // Keep the tutorial on top so any popup menus opened will stay darkened.
+        GuiRootWidget &r = self.root();
+        r.remove(self);
+        r.addOnTop(thisPublic);
 
         self.root().addOnTop(dlg);
         dlg->open();
@@ -177,7 +219,9 @@ DENG_GUI_PIMPL(TutorialWidget)
 
 TutorialWidget::TutorialWidget()
     : GuiWidget("tutorial"), d(new Instance(this))
-{}
+{
+    connect(&d->flashing, SIGNAL(timeout()), this, SLOT(flashHighlight()));
+}
 
 void TutorialWidget::start()
 {
@@ -201,6 +245,11 @@ void TutorialWidget::dismiss()
 {
     hide();
     guiDeleteLater();
+}
+
+void TutorialWidget::flashHighlight()
+{
+    d->flash();
 }
 
 bool TutorialWidget::handleEvent(Event const &event)
