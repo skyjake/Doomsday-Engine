@@ -146,9 +146,10 @@ File *FileSystem::interpret(File *sourceData)
             {
                 LOG_RES_WARNING("Archive in %s is truncated") << sourceData->description();
             }
-            catch(IIStream::InputError const &)
+            catch(IIStream::InputError const &er)
             {
-                LOG_RES_WARNING("%s cannot be read") << sourceData->description();
+                LOG_RES_WARNING("Failed to read %s") << sourceData->description();
+                LOGDEV_RES_WARNING("%s") << er.asText();
             }
         }
     }

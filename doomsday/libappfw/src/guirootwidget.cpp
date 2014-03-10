@@ -322,6 +322,11 @@ GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const
     return 0;
 }
 
+GuiWidget const *GuiRootWidget::guiFind(String const &name) const
+{
+    return find(name)->maybeAs<GuiWidget>();
+}
+
 void GuiRootWidget::update()
 {
     if(window().canvas().isGLReady())

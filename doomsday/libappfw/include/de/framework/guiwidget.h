@@ -101,7 +101,8 @@ public:
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,
-            SharedBlur          ///< Use the blur background from a BlurWidget.
+            SharedBlur,         ///< Use the blur background from a BlurWidget.
+            Rounded
         };
         Vector4f solidFill;     ///< Always applied if opacity > 0.
         Type type;

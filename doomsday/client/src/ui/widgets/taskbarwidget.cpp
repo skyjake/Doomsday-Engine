@@ -19,6 +19,7 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/multiplayermenuwidget.h"
+#include "ui/widgets/tutorialwidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
@@ -344,7 +345,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Height, rule().height());
 
     // DE logo.
-    d->logo = new ButtonWidget;
+    d->logo = new ButtonWidget("de-button");
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -357,7 +358,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     add(d->logo);
 
     // Settings.
-    ButtonWidget *conf = new ButtonWidget;
+    ButtonWidget *conf = new ButtonWidget("conf-button");
     d->conf = conf;
     conf->setImage(style().images().image("gear"));
     conf->setSizePolicy(ui::Expand, ui::Filled);
@@ -428,6 +429,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
@@ -726,7 +728,7 @@ void TaskBarWidget::showMultiplayer()
     }
     else
     {
-        root().add(games);
+        root().addOnTop(games);
         games->open();
     }
 }
@@ -736,6 +738,17 @@ void TaskBarWidget::connectToServerManually()
     ManualConnectionDialog *dlg = new ManualConnectionDialog;
     dlg->setDeleteAfterDismissed(true);
     dlg->exec(root());
+}
+
+void TaskBarWidget::showTutorial()
+{
+    if(BusyMode_Active()) return;
+
+    // The widget will dispose of itself when finished.
+    TutorialWidget *tutorial = new TutorialWidget;
+    root().addOnTop(tutorial);
+    tutorial->rule().setRect(root().viewRule());
+    tutorial->start();
 }
 
 void TaskBarWidget::updateCommandLineLayout()

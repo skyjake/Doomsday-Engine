@@ -398,11 +398,13 @@ DENG_HEADERS += \
     include/ui/widgets/gameuiwidget.h \
     include/ui/widgets/gamewidget.h \
     include/ui/widgets/icvarwidget.h \
+    include/ui/widgets/inputbindingwidget.h \
     include/ui/widgets/keygrabberwidget.h \
     include/ui/widgets/mpselectionwidget.h \
     include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
     include/ui/widgets/taskbarwidget.h \
+    include/ui/widgets/tutorialwidget.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
     include/ui/inputsystem.h \
@@ -732,11 +734,13 @@ SOURCES += \
     src/ui/widgets/gamesessionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
+    src/ui/widgets/inputbindingwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
     src/ui/widgets/mpselectionwidget.cpp \
     src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
+    src/ui/widgets/tutorialwidget.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \

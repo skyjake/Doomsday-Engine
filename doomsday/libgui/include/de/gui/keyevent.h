@@ -64,6 +64,7 @@ public:
     inline int nativeCode() const { return _nativeCode; }
     inline de::String const &text() const { return _text; }
     inline Modifiers modifiers() const { return _mods; }
+    bool isModifier() const;
 
     /**
      * Translates a Qt key code to a Doomsday key code (see ddkey.h).

@@ -21,6 +21,7 @@
 #include "de/ToggleWidget"
 #include "de/LabelWidget"
 #include "de/LineEditWidget"
+#include "de/AuxButtonWidget"
 
 namespace de {
 
@@ -63,7 +64,10 @@ void DialogContentStylist::widgetChildAdded(Widget &child)
 
 void DialogContentStylist::applyStyle(GuiWidget &w)
 {
-    w.margins().set("dialog.gap");
+    if(!w.is<AuxButtonWidget>())
+    {
+        w.margins().set("dialog.gap");
+    }
 
     // All label-based widgets should expand on their own.
     if(LabelWidget *lab = w.maybeAs<LabelWidget>())

@@ -404,11 +404,9 @@ void B_ReorderContext(bcontext_t* bc, int pos)
 
 controlbinding_t* B_NewControlBinding(bcontext_t* bc)
 {
-    int                 i;
-
     controlbinding_t* conBin = (controlbinding_t *) M_Calloc(sizeof(controlbinding_t));
     conBin->bid = B_NewIdentifier();
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         B_InitDeviceBindingList(&conBin->deviceBinds[i]);
     }
@@ -724,10 +722,6 @@ dd_bool B_AreConditionsEqual(int count1, const statecondition_t* conds1,
     return true;
 }
 
-/**
- * Looks through context @a bc and looks for a binding that matches either
- * @a match1 or @a match2.
- */
 dd_bool B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
                               dbinding_t* match2, evbinding_t** evResult,
                               dbinding_t** dResult)

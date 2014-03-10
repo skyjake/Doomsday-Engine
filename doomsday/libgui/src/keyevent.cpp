@@ -430,4 +430,10 @@ KeyEvent::State KeyEvent::state() const
     }
 }
 
+bool KeyEvent::isModifier() const
+{
+    return _qtKey == Qt::Key_Shift || _qtKey == Qt::Key_Control ||
+           _qtKey == Qt::Key_Alt   || _qtKey == Qt::Key_Meta;
+}
+
 } // namespace de
