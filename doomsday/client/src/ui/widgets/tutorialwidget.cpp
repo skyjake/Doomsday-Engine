@@ -25,6 +25,7 @@
 
 #include <de/MessageDialog>
 #include <de/SignalAction>
+#include <de/Untrapper>
 
 using namespace de;
 
@@ -44,11 +45,15 @@ DENG_GUI_PIMPL(TutorialWidget)
     MessageDialog *dlg;
     LabelWidget *highlight;
     QTimer flashing;
+    bool taskBarInitiallyOpen;
+    Untrapper untrapper;
 
     Instance(Public *i)
         : Base(i)
         , current(Welcome)
         , dlg(0)
+        , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
+        , untrapper(ClientWindow::main())
     {
         self.add(darken = new LabelWidget);
         darken->set(Background(style().colors().colorf("altaccent") *
@@ -234,6 +239,11 @@ void TutorialWidget::start()
 
 void TutorialWidget::stop()
 {
+    if(!d->taskBarInitiallyOpen)
+    {
+        ClientWindow::main().taskBar().close();
+    }
+
     d->deinitStep();
 
     // Animate away and unfade darkening.
