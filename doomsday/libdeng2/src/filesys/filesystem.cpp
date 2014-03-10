@@ -148,8 +148,8 @@ File *FileSystem::interpret(File *sourceData)
             }
             catch(IIStream::InputError const &er)
             {
-                LOG_RES_WARNING("%s cannot be read: %s") << sourceData->description()
-                                                         << er.asText();
+                LOG_RES_WARNING("Failed to read %s") << sourceData->description();
+                LOGDEV_RES_WARNING("%s") << er.asText();
             }
         }
     }
