@@ -110,6 +110,16 @@ public:
         return *t;
     }
 
+    template <typename ValueType>
+    ValueType *maybeAs() {
+        return dynamic_cast<ValueType *>(this);
+    }
+
+    template <typename ValueType>
+    ValueType const *maybeAs() const {
+        return dynamic_cast<ValueType const *>(this);
+    }
+
     /**
      * Determine the size of the value.  The meaning of this
      * depends on the type of the value.

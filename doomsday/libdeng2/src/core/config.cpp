@@ -186,39 +186,64 @@ Version Config::upgradedFromVersion() const
     return d->oldVersion;
 }
 
-Value &Config::get(String const &name) const
+Value const &Config::get(String const &name) const
 {
-    return d->config.globals()[name].value();
+    return names().get(name);
 }
 
 dint Config::geti(String const &name) const
 {
-    return dint(get(name).asNumber());
+    return names().geti(name);
+}
+
+dint Config::geti(String const &name, dint defaultValue) const
+{
+    return names().geti(name, defaultValue);
 }
 
 bool Config::getb(String const &name) const
 {
-    return get(name).isTrue();
+    return names().getb(name);
+}
+
+bool Config::getb(String const &name, bool defaultValue) const
+{
+    return names().getb(name, defaultValue);
 }
 
 duint Config::getui(String const &name) const
 {
-    return duint(get(name).asNumber());
+    return names().getui(name);
+}
+
+duint Config::getui(String const &name, duint defaultValue) const
+{
+    return names().getui(name, defaultValue);
 }
 
 ddouble Config::getd(String const &name) const
 {
-    return get(name).asNumber();
+    return names().getd(name);
+}
+
+ddouble Config::getd(String const &name, ddouble defaultValue) const
+{
+    return names().getd(name, defaultValue);
 }
 
 String Config::gets(String const &name) const
 {
-    return get(name).asText();
+    return names().gets(name);
 }
 
-ArrayValue &Config::geta(String const &name) const
+String Config::gets(String const &name, String const &defaultValue) const
 {
-    return getAs<ArrayValue>(name);
+    return names().gets(name, defaultValue);
+}
+
+ArrayValue const &Config::geta(String const &name) const
+{
+    return names().getAs<ArrayValue>(name);
 }
 
 Variable &Config::set(String const &name, bool value)
