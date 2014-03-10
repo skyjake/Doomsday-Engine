@@ -58,6 +58,9 @@ public:
     /// All variables and subrecords in the record must have a name. @ingroup errors
     DENG2_ERROR(UnnamedError);
 
+    /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
+    DENG2_ERROR(ValueTypeError);
+
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
@@ -259,6 +262,31 @@ public:
      * @return  Caller gets ownership of the removed record.
      */
     Record *remove(String const &name);
+
+    // Convenient value getters:
+    Value const &get(String const &name) const;
+    dint geti(String const &name) const;
+    dint geti(String const &name, dint defaultValue) const;
+    bool getb(String const &name) const;
+    bool getb(String const &name, bool defaultValue) const;
+    duint getui(String const &name) const;
+    duint getui(String const &name, duint defaultValue) const;
+    ddouble getd(String const &name) const;
+    ddouble getd(String const &name, ddouble defaultValue) const;
+    String gets(String const &name) const;
+    String gets(String const &name, String const &defaultValue) const;
+    ArrayValue const &geta(String const &name) const;
+
+    template <typename ValueType>
+    ValueType const &getAs(String const &name) const {
+        ValueType const *v = get(name).maybeAs<ValueType>();
+        if(!v)
+        {
+            throw ValueTypeError("Record::getAs", String("Cannot cast to expected type (") +
+                                 DENG2_TYPE_NAME(ValueType) + ")");
+        }
+        return *v;
+    }
 
     /**
      * Sets the value of a variable, creating the variable if needed.

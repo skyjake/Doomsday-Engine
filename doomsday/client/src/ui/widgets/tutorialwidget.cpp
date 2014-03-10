@@ -25,8 +25,11 @@
 
 #include <de/MessageDialog>
 #include <de/SignalAction>
+#include <de/Untrapper>
 
 using namespace de;
+
+static TimeDelta const FLASH_SPAN = 0.6;
 
 DENG_GUI_PIMPL(TutorialWidget)
 {
@@ -44,11 +47,15 @@ DENG_GUI_PIMPL(TutorialWidget)
     MessageDialog *dlg;
     LabelWidget *highlight;
     QTimer flashing;
+    bool taskBarInitiallyOpen;
+    Untrapper untrapper;
 
     Instance(Public *i)
         : Base(i)
         , current(Welcome)
         , dlg(0)
+        , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
+        , untrapper(ClientWindow::main())
     {
         self.add(darken = new LabelWidget);
         darken->set(Background(style().colors().colorf("altaccent") *
@@ -56,25 +63,33 @@ DENG_GUI_PIMPL(TutorialWidget)
         darken->setOpacity(0);
 
         self.add(highlight = new LabelWidget);
-        highlight->set(Background(Background::BorderGlow,
+        /*highlight->set(Background(Background::BorderGlow,
                                   style().colors().colorf("accent"),
-                                  style().rules().rule("glow").value()));
+                                  style().rules().rule("glow").value()));*/
+        highlight->set(Background(Background::GradientFrame,
+                                  style().colors().colorf("accent"), 6));
         highlight->setOpacity(0);
 
         flashing.setSingleShot(false);
-        flashing.setInterval(1000);
+        flashing.setInterval(FLASH_SPAN.asMilliSeconds());
     }
 
     void flash()
     {
-        highlight->setOpacity(.6f);
-        highlight->setOpacity(.3f, 1, .4f);
+        if(highlight->opacity().target() > .5f)
+        {
+            highlight->setOpacity(.2f, FLASH_SPAN);
+        }
+        else
+        {
+            highlight->setOpacity(.8f, FLASH_SPAN);
+        }
     }
 
     void startHighlight(GuiWidget const &w)
     {
         highlight->rule().setRect(w.rule());
-
+        highlight->setOpacity(.2f);
         highlight->show();
         flashing.start();
         flash();
@@ -234,6 +249,11 @@ void TutorialWidget::start()
 
 void TutorialWidget::stop()
 {
+    if(!d->taskBarInitiallyOpen)
+    {
+        ClientWindow::main().taskBar().close();
+    }
+
     d->deinitStep();
 
     // Animate away and unfade darkening.

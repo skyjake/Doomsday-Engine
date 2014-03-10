@@ -50,10 +50,6 @@ class ArrayValue;
 class DENG2_PUBLIC Config
 {
 public:
-    /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
-    DENG2_ERROR(ValueTypeError);
-
-public:
     /**
      * Constructs a new configuration.
      *
@@ -68,36 +64,40 @@ public:
     void write() const;
 
     /// Returns the value of @a name as a Value.
-    Value &get(String const &name) const;
+    Value const &get(String const &name) const;
 
     /// Returns the value of @a name as an integer.
     dint geti(String const &name) const;
 
+    dint geti(String const &name, dint defaultValue) const;
+
     /// Returns the value of @a name as a boolean.
     bool getb(String const &name) const;
+
+    bool getb(String const &name, bool defaultValue) const;
 
     /// Returns the value of @a name as an unsigned integer.
     duint getui(String const &name) const;
 
+    duint getui(String const &name, duint defaultValue) const;
+
     /// Returns the value of @a name as a double-precision floating point number.
     ddouble getd(String const &name) const;
+
+    ddouble getd(String const &name, ddouble defaultValue) const;
 
     /// Returns the value of @a name as a string.
     String gets(String const &name) const;
 
+    String gets(String const &name, String const &defaultValue) const;
+
     /// Returns the value of @a name as an array value. An exception is thrown
     /// if the variable does not have an array value.
-    ArrayValue &geta(String const &name) const;
+    ArrayValue const &geta(String const &name) const;
 
     template <typename ValueType>
-    ValueType &getAs(String const &name) const {
-        ValueType *v = dynamic_cast<ValueType *>(&get(name));
-        if(!v)
-        {
-            throw ValueTypeError("Config::getAs", String("Cannot cast to expected type (") +
-                                 DENG2_TYPE_NAME(ValueType) + ")");
-        }
-        return *v;
+    ValueType const &getAs(String const &name) const {
+        return names().getAs<ValueType>(name);
     }
 
     /**

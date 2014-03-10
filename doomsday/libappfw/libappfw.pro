@@ -75,6 +75,7 @@ publicHeaders(root, \
     include/de/TabWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
+    include/de/Untrapper \
     include/de/VRWindowTransform \
     include/de/WindowSystem \
     include/de/WindowTransform \
@@ -128,6 +129,7 @@ publicHeaders(framework, \
     include/de/framework/submenuitem.h \
     include/de/framework/subwidgetitem.h \
     include/de/framework/textdrawable.h \
+    include/de/framework/untrapper.h \
     include/de/framework/variabletoggleitem.h \
     include/de/framework/vrwindowtransform.h \
     include/de/framework/windowsystem.h \
@@ -197,6 +199,7 @@ SOURCES += \
     src/signalaction.cpp \
     src/style.cpp \
     src/textdrawable.cpp \
+    src/untrapper.cpp \
     src/vrwindowtransform.cpp \
     src/vr/oculusrift.cpp \
     src/vr/vrconfig.cpp \

@@ -203,7 +203,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             Config &config = App::config();
 
             // The default state of the window is determined by these values.
-            ArrayValue &rect = config.geta(configName("rect"));
+            ArrayValue const &rect = config.geta(configName("rect"));
             if(rect.size() >= 4)
             {
                 windowRect = Rectanglei(rect.at(0).asNumber(),
@@ -212,7 +212,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
                                         rect.at(3).asNumber());
             }
 
-            ArrayValue &fs = config.geta(configName("fullSize"));
+            ArrayValue const &fs = config.geta(configName("fullSize"));
             if(fs.size() >= 2)
             {
                 fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());

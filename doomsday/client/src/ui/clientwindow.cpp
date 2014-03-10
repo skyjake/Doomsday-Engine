@@ -257,6 +257,14 @@ DENG2_PIMPL(ClientWindow)
         // Allow the background image to show.
         background->setImageColor(Vector4f(1, 1, 1, 1));
         taskBar->show();
+
+        // Show the tutorial if it hasn't been automatically shown yet.
+        if(!App::config().getb("tutorial.shown", false))
+        {
+            App::config().set("tutorial.shown", true);
+
+            taskBar->showTutorial();
+        }
     }
 
     void currentGameChanged(game::Game const &newGame)

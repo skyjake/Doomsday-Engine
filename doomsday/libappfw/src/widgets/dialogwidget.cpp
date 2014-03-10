@@ -25,6 +25,7 @@
 
 #include <de/KeyEvent>
 #include <de/MouseEvent>
+#include <de/Untrapper>
 #include <QEventLoop>
 
 namespace de {
@@ -95,7 +96,7 @@ public ChildWidgetOrganizer::IFilter
     bool needButtonUpdate;
     float normalGlow;
     bool animatingGlow;
-    bool needTrapAfterClose;
+    QScopedPointer<Untrapper> untrapper;
     DialogContentStylist stylist;
 
     Instance(Public *i, Flags const &dialogFlags)
@@ -106,7 +107,6 @@ public ChildWidgetOrganizer::IFilter
         , acceptAction(0)
         , needButtonUpdate(false)
         , animatingGlow(false)
-        , needTrapAfterClose(false)
     {
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
@@ -615,12 +615,8 @@ void DialogWidget::reject(int result)
 
 void DialogWidget::prepare()
 {
-    if(root().window().canvas().isMouseTrapped())
-    {
-        // Mouse needs to be untrapped for the user to be access the dialog.
-        root().window().canvas().trapMouse(false);
-        d->needTrapAfterClose = true;
-    }
+    // Mouse needs to be untrapped for the user to be access the dialog.
+    d->untrapper.reset(new Untrapper(root().window()));
 
     root().setFocus(0);
 
@@ -651,11 +647,7 @@ void DialogWidget::finish(int result)
     root().setFocus(0);
     close();
 
-    if(d->needTrapAfterClose)
-    {
-        root().window().canvas().trapMouse();
-        d->needTrapAfterClose = false;
-    }
+    d->untrapper.reset();
 
     if(result > 0)
     {

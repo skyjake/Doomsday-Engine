@@ -361,6 +361,71 @@ Record *Record::remove(String const &name)
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
 
+Value const &Record::get(String const &name) const
+{
+    return (*this)[name].value();
+}
+
+dint Record::geti(String const &name) const
+{
+    return dint(get(name).asNumber());
+}
+
+dint Record::geti(String const &name, dint defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return geti(name);
+}
+
+bool Record::getb(String const &name) const
+{
+    return get(name).isTrue();
+}
+
+bool Record::getb(String const &name, bool defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return getb(name);
+}
+
+duint Record::getui(String const &name) const
+{
+    return duint(get(name).asNumber());
+}
+
+duint Record::getui(String const &name, duint defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return getui(name);
+}
+
+ddouble Record::getd(String const &name) const
+{
+    return get(name).asNumber();
+}
+
+ddouble Record::getd(String const &name, ddouble defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return getd(name);
+}
+
+String Record::gets(String const &name) const
+{
+    return get(name).asText();
+}
+
+String Record::gets(String const &name, String const &defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return gets(name);
+}
+
+ArrayValue const &Record::geta(String const &name) const
+{
+    return getAs<ArrayValue>(name);
+}
+
 Variable &Record::set(String const &name, bool value)
 {
     if(hasMember(name))
