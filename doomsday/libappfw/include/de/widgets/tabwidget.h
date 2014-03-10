@@ -52,6 +52,8 @@ public:
 public:
     TabWidget(String const &name = "");
 
+    void useInvertedStyle();
+
     /**
      * Items representing the tabs in the widget.
      *

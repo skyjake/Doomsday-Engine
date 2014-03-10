@@ -33,11 +33,13 @@ DENG2_PIMPL(TabWidget)
     ui::Data::Pos current;
     MenuWidget *buttons;
     bool needUpdate;
+    bool invertedStyle;
 
     Instance(Public *i)
         : Base(i)
         , current(0)
         , needUpdate(false)
+        , invertedStyle(false)
     {
         self.add(buttons = new MenuWidget);
         buttons->enableScrolling(false);
@@ -62,6 +64,11 @@ DENG2_PIMPL(TabWidget)
         btn.setSizePolicy(ui::Expand, ui::Expand);
         btn.setFont("tab.label");
         btn.margins().set("dialog.gap");
+
+        if(invertedStyle)
+        {
+            btn.useInfoStyle();
+        }
 
         btn.audienceForPress() += this;
     }
@@ -98,7 +105,16 @@ DENG2_PIMPL(TabWidget)
             bool const sel = (i == current);
             ButtonWidget &w = buttons->itemWidget<ButtonWidget>(buttons->items().at(i));
             w.setFont(sel? "tab.selected" : "tab.label");
-            w.setTextColor(sel? "tab.selected" : "text");
+            if(!invertedStyle)
+            {
+                w.setTextColor(sel? "tab.selected" : "text");
+                w.setHoverTextColor(sel? "tab.selected" : "text");
+            }
+            else
+            {
+                w.setTextColor(sel? "tab.inverted.selected" : "inverted.text");
+                w.setHoverTextColor(sel? "tab.inverted.selected" : "inverted.text");
+            }
         }
     }
 };
@@ -107,6 +123,16 @@ TabWidget::TabWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
     rule().setInput(Rule::Height, d->buttons->rule().height());
+}
+
+void TabWidget::useInvertedStyle()
+{
+    d->invertedStyle = true;
+    foreach(Widget *w, d->buttons->childWidgets())
+    {
+        // Restyle each existing button.
+        w->as<ButtonWidget>().useInfoStyle();
+    }
 }
 
 ui::Data &TabWidget::items()
