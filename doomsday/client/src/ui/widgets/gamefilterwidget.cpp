@@ -81,7 +81,9 @@ GameFilterWidget::GameFilterWidget(String const &name)
 
 void GameFilterWidget::useInvertedStyle()
 {
+    d->tabs->useInvertedStyle();
     d->sortLabel->setTextColor("inverted.text");
+    d->sortBy->useInfoStyle();
 }
 
 void GameFilterWidget::setFilter(Filter flt)
