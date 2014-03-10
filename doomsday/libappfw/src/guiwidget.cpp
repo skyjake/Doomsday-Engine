@@ -297,7 +297,7 @@ DENG2_PIMPL(GuiWidget)
         // into the original target.
         if(background.solidFill.w > 0)
         {
-            self.drawBlurredRect(self.rule().recti(), background.solidFill);
+            self.drawBlurredRect(self.rule().recti(), background.solidFill, self.visibleOpacity());
         }
     }
 
@@ -739,7 +739,7 @@ void GuiWidget::glDeinit()
 void GuiWidget::drawContent()
 {}
 
-void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color)
+void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity)
 {
     DENG2_ASSERT(d->blurInited);
     if(!d->blurInited) return;
@@ -752,7 +752,7 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color)
     d->uBlurColor = Vector4f((1 - color.w) + color.x * color.w,
                              (1 - color.w) + color.y * color.w,
                              (1 - color.w) + color.z * color.w,
-                             1.f);
+                             opacity);
     d->uBlurWindow = Vector4f(rect.left()   / float(viewSize.x),
                               rect.top()    / float(viewSize.y),
                               rect.width()  / float(viewSize.x),
