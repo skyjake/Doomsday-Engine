@@ -271,8 +271,8 @@ DENG2_PIMPL(ClientWindow)
         if(!App::config().getb("tutorial.shown", false))
         {
             App::config().set("tutorial.shown", true);
-
-            taskBar->showTutorial();
+            LOG_NOTE("Starting tutorial (not shown before)");
+            QTimer::singleShot(500, taskBar, SLOT(showTutorial()));
         }
     }
 
