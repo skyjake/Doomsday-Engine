@@ -3263,13 +3263,47 @@ void G_DoLoadSession(de::String slotId)
 #endif
 
         SaveSlot &sslot = G_SaveSlots()[logicalSlot];
+        de::game::SavedSession &session           = sslot.savedSession();
+        de::game::SessionMetadata const &metadata = sslot.saveMetadata();
 
         // Attempt to recognize and load the saved game state.
         App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
                 de::NativePath(sslot.filePath()).pretty().toLatin1().constData());
 
-        sslot.savedSession().mapStateReader()
-                ->read(de::Path(Str_Text(Uri_Resolved(gameMapUri))), sslot.saveMetadata());
+#if __JHEXEN__
+        // Deserialize the world ACS data.
+        if(SV_OpenFile("ACScript", false /*for read*/))
+        {
+            Reader *reader = SV_NewReader();
+            Game_ACScriptInterpreter().readWorldScriptData(reader, metadata.geti("version"));
+            SV_HxReleaseSaveBuffer(); // SV_CloseFile();
+        }
+#endif
+
+        /*
+         * Load the map and configure some game settings.
+         */
+        briefDisabled = true;
+
+        Uri *mapUri        = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
+        GameRuleset *rules = 0;
+        if(metadata.hasSubrecord("gameRules"))
+        {
+            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+        }
+
+        G_NewSession(mapUri, 0/*not saved??*/, rules);
+        G_SetGameAction(GA_NONE); /// @todo Necessary?
+
+        delete rules; rules = 0;
+        Uri_Delete(mapUri); mapUri = 0;
+
+#if !__JHEXEN__
+        mapTime = metadata.geti("mapTime");
+#endif
+
+        session.mapStateReader()
+                ->read(de::Path(Str_Text(Uri_Resolved(gameMapUri))), metadata);
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);

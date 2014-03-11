@@ -61,15 +61,6 @@ DENG2_PIMPL(GameStateReader)
         Reader_Delete(reader);
     }
 
-    /// Assumes the reader is currently positioned at the start of the stream.
-    void seekToGameState()
-    {
-        // Read the session metadata again.
-        /// @todo seek straight to the game state.
-        SessionMetadata tmp;
-        SV_ReadSessionMetadata(tmp, reader);
-    }
-
     void beginSegment(int segId)
     {
 #if __JHEXEN__
@@ -104,22 +95,18 @@ DENG2_PIMPL(GameStateReader)
 #endif
     }
 
-    void readWorldACScriptData()
+    void readMap()
     {
-#if __JHEXEN__
-        int const saveVersion = (*metadata)["version"].value().asNumber();
+        reader = SV_NewReader();
 
-        if(saveVersion >= 7)
-        {
-            beginSegment(ASEG_WORLDSCRIPTDATA);
-        }
-        Game_ACScriptInterpreter().readWorldScriptData(reader, saveVersion);
+        int const saveVersion = metadata->geti("version");
+
+        int thingArchiveSize = 0;
+#if !__JHEXEN__
+        thingArchiveSize = (saveVersion >= 5? Reader_ReadInt32(reader) : 1024);
 #endif
-    }
 
-    void readMap(int thingArchiveSize)
-    {
-        int const saveVersion = (*metadata)["version"].value().asNumber();
+        readPlayers();
 
         MapStateReader(saveVersion, thingArchiveSize).read(reader);
 
@@ -129,6 +116,35 @@ DENG2_PIMPL(GameStateReader)
 #else
         SV_CloseFile();
 #endif
+
+#if __JHEXEN__
+        SV_ClearTargetPlayers();
+#endif
+
+        // Notify the players that weren't in the savegame.
+        kickMissingPlayers();
+
+#if !__JHEXEN__
+        // In netgames, the server tells the clients about this.
+        NetSv_LoadGame(metadata->geti("sessionId"));
+#endif
+
+        // Material scrollers must be spawned for older savegame versions.
+        if(saveVersion <= 10)
+        {
+            P_SpawnAllMaterialOriginScrollers();
+        }
+
+        // Let the engine know where the local players are now.
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            R_UpdateConsoleView(i);
+        }
+
+        // Inform the engine that map setup must be performed once more.
+        R_SetupMap(0, 0);
+
+        Reader_Delete(reader); reader = 0;
     }
 
     // We don't have the right to say which players are in the game. The players that already are
@@ -335,78 +351,13 @@ void GameStateReader::read(Path const &filePath, SessionMetadata const &metadata
         throw FileAccessError("GameStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
     }
 
-    int const saveVersion = metadata["version"].value().asNumber();
     d->metadata = &metadata;
 
-    d->reader = SV_NewReader();
-
-    d->seekToGameState();
-
-    d->readWorldACScriptData();
-
-    /*
-     * Load the map and configure some game settings.
-     */
-    briefDisabled = true;
-
-    Uri *mapUri        = Uri_NewWithPath2(metadata["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
-    GameRuleset *rules = 0;
-    if(metadata.hasSubrecord("gameRules"))
-    {
-        rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
-    }
-
-    G_NewSession(mapUri, 0/*not saved??*/, rules);
-    G_SetGameAction(GA_NONE); /// @todo Necessary?
-
-    delete rules; rules = 0;
-    Uri_Delete(mapUri); mapUri = 0;
-
-#if !__JHEXEN__
-    mapTime = metadata["mapTime"].value().asNumber();
-#endif
-
-    int thingArchiveSize = 0;
-#if !__JHEXEN__
-    thingArchiveSize = (saveVersion >= 5? Reader_ReadInt32(d->reader) : 1024);
-#endif
-
-    d->readPlayers();
-
-    d->readMap(thingArchiveSize);
+    d->readMap();
 
 #if __JHEXEN__
-    SV_ClearTargetPlayers();
-#endif
-#if __JHEXEN__
-    // Close the game state file.
     SV_HxReleaseSaveBuffer();
 #else
     SV_CloseFile();
 #endif
-
-    // Notify the players that weren't in the savegame.
-    d->kickMissingPlayers();
-
-#if !__JHEXEN__
-    // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(metadata["sessionId"].value().asNumber());
-#endif
-
-    Reader_Delete(d->reader); d->reader = 0;
-
-    // Material scrollers must be spawned for older savegame versions.
-    if(saveVersion <= 10)
-    {
-        P_SpawnAllMaterialOriginScrollers();
-    }
-
-    // Let the engine know where the local players are now.
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        R_UpdateConsoleView(i);
-    }
-
-    // Inform the engine that map setup must be performed once more.
-    R_SetupMap(0, 0);
 }

@@ -703,14 +703,6 @@ DENG2_PIMPL(DoomV9GameStateReader)
         , reader(0)
     {}
 
-    /// Assumes the reader is currently positioned at the start of the stream.
-    void seekToGameState()
-    {
-        // Read the header again.
-        /// @todo seek straight to the game state.
-        SaveInfo_Read_Dm_v19(de::game::SessionMetadata(), reader);
-    }
-
     void readPlayers()
     {
         for(int i = 0; i < 4; ++i)
@@ -738,6 +730,10 @@ DENG2_PIMPL(DoomV9GameStateReader)
 
     void readMap()
     {
+        reader = SV_NewReader_Dm_v19();
+
+        readPlayers();
+
         // Do sectors.
         for(int i = 0; i < numsectors; ++i)
         {
@@ -808,6 +804,20 @@ DENG2_PIMPL(DoomV9GameStateReader)
 
             throw ReadError("DoomV9GameStateReader", "Bad savegame (consistency test failed!)");
         }
+
+        // Material scrollers must be spawned.
+        P_SpawnAllMaterialOriginScrollers();
+
+        // Let the engine know where the local players are now.
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            R_UpdateConsoleView(i);
+        }
+
+        // Inform the engine that map setup must be performed once more.
+        R_SetupMap(0, 0);
+
+        Reader_Delete(reader); reader = 0;
     }
 
     void readThinkers()
@@ -978,46 +988,7 @@ void DoomV9GameStateReader::read(de::Path const &filePath, de::game::SessionMeta
         throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::NativePath(filePath).pretty() + "\"");
     }
 
-    d->reader = SV_NewReader_Dm_v19();
-
-    d->seekToGameState();
-
-    /*
-     * Load the map and configure some game settings.
-     */
-    briefDisabled = true;
-
-    Uri *mapUri        = Uri_NewWithPath2(metadata["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
-    GameRuleset *rules = 0;
-    if(metadata.hasSubrecord("gameRules"))
-    {
-        rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
-    }
-
-    G_NewSession(mapUri, 0/*not saved??*/, rules);
-    G_SetGameAction(GA_NONE); /// @todo Necessary?
-
-    delete rules; rules = 0;
-    Uri_Delete(mapUri); mapUri = 0;
-
-    // Recreate map state.
-    mapTime = metadata["mapTime"].value().asNumber();
-
-    d->readPlayers();
     d->readMap();
 
-    Reader_Delete(d->reader); d->reader = 0;
     SV_CloseFile_Dm_v19();
-
-    // Material scrollers must be spawned.
-    P_SpawnAllMaterialOriginScrollers();
-
-    // Let the engine know where the local players are now.
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        R_UpdateConsoleView(i);
-    }
-
-    // Inform the engine that map setup must be performed once more.
-    R_SetupMap(0, 0);
 }
