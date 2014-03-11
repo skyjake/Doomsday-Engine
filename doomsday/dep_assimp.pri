@@ -1,17 +1,30 @@
 # Open Asset Import Library
-!macx:!win32 {
+aiOpts   = ""
+aiIncDir = ""
+aiLibs   = ""
+
+!isEmpty(ASSIMP_DIR) {
+    aiIncDir = $$ASSIMP_DIR/include
+    aiLibs   = -L$$ASSIMP_DIR/lib -lassimp
+    *-g*|*-clang* {
+        # Inform the dynamic linker about a custom location.
+        QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib
+    }
+}
+else:!macx:!win32 {
     # Are the development files installed?
     !system(pkg-config --exists assimp) {
         error(Missing dependency: Open Asset Import Library)
     }
-    
-    opts = $$system(pkg-config --cflags assimp)
-    QMAKE_CFLAGS   += $$opts
-    QMAKE_CXXFLAGS += $$opts
-    LIBS += $$system(pkg-config --libs assimp)
+
+    aiOpts = $$system(pkg-config --cflags assimp)
+    aiLibs = $$system(pkg-config --libs assimp)
 }
 else {
-    isEmpty(ASSIMP_DIR): error(Open Asset Import Library location not defined (ASSIMP_DIR))
-
+    error(Open Asset Import Library location not defined (ASSIMP_DIR))
 }
 
+INCLUDEPATH    += $$aiIncDir
+QMAKE_CFLAGS   += $$aiOpts
+QMAKE_CXXFLAGS += $$aiOpts
+LIBS           += $$aiLibs
