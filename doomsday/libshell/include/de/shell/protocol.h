@@ -1,4 +1,4 @@
-/** @file protocol.h  Network protocol for communicating with a server.
+/** @file shell/protocol.h  Network protocol for communicating with a server.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

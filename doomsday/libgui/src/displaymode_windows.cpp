@@ -1,4 +1,4 @@
-/** @file displaymode_win32.cpp Win32 implementation of the DisplayMode native functionality.
+/** @file displaymode_windows.cpp  Windows implementation of the DisplayMode native functionality.
  * @ingroup gl
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>

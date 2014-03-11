@@ -373,6 +373,9 @@ desc = Toggle between fullscreen and windowed modes.
 [togglemaximized]
 desc = Toggle between maximized and normal window modes.
 
+[tutorial]
+desc = Show a tutorial that introduces Doomsday's UI.
+
 [uicolor]
 desc = Change Doomsday user interface colors.
 inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 1 1 1'.\nPossible objects are:\ntext, shadow, bglight, bgmed, bgdark,\nborhigh, bormed, borlow, help

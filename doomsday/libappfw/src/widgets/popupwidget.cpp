@@ -130,10 +130,7 @@ DENG_GUI_PIMPL(PopupWidget)
 
         if(useInfoStyle)
         {
-            self.set(Background(st.colors().colorf("popup.info.background"),
-                                Background::BorderGlow,
-                                st.colors().colorf("popup.info.glow"),
-                                st.rules().rule("glow").valuei()));
+            self.set(self.infoStyleBackground());
         }
         else
         {
@@ -265,6 +262,19 @@ void PopupWidget::useInfoStyle()
 {
     d->useInfoStyle = true;
     d->updateStyle();
+}
+
+bool PopupWidget::isUsingInfoStyle()
+{
+    return d->useInfoStyle;
+}
+
+GuiWidget::Background PopupWidget::infoStyleBackground() const
+{
+    return Background(style().colors().colorf("popup.info.background"),
+                      Background::BorderGlow,
+                      style().colors().colorf("popup.info.glow"),
+                      style().rules().rule("glow").valuei());
 }
 
 bool PopupWidget::handleEvent(Event const &event)

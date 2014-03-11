@@ -1,4 +1,4 @@
-/** @file logwidget.cpp  Widget for output message log.
+/** @file widgets/logwidget.cpp  Widget for output message log.
  *
  * @todo Refactor: Separate the non-Log-related functionality into its own
  * class that handles long text documents with a background thread used for

@@ -363,7 +363,7 @@ protected:
      */
     virtual void drawContent();
 
-    void drawBlurredRect(Rectanglei const &rect, Vector4f const &color);
+    void drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity = 1.0f);
 
     /**
      * Extensible mechanism for derived widgets to build their geometry. The

@@ -62,7 +62,7 @@ public:
      * Defines a height for all appended widgets. If the widget already has a
      * height defined, it will be overridden.
      *
-     * @param width  Height for all widgets in the layout.
+     * @param height  Height for all widgets in the layout.
      */
     void setOverrideHeight(Rule const &height);
 

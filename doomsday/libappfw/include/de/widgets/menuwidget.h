@@ -1,4 +1,4 @@
-/** @file menuwidget.h
+/** @file widgets/menuwidget.h
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

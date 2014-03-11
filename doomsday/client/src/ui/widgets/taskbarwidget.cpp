@@ -540,6 +540,12 @@ bool TaskBarWidget::handleEvent(Event const &event)
         }
     }
 
+    // Don't let modifier keys fall through to the game.
+    if(isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
+    {
+        return true;
+    }
+
     if(event.type() == Event::KeyPress)
     {
         KeyEvent const &key = event.as<KeyEvent>();

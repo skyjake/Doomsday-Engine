@@ -75,6 +75,7 @@ public:
 
     ClientRootWidget &root();
     TaskBarWidget &taskBar();
+    de::GuiWidget &taskBarBlur();
     ConsoleWidget &console();
     de::NotificationWidget &notifications();
     GameWidget &game();

@@ -728,14 +728,14 @@ DENG_EXTERN_C int DD_GetKeyCode(const char* key)
 
 bool B_UnbindCommand(const char *command)
 {
-    bool deleted = false;
+    dd_bool deleted = false;
     for(int i = 0; i < B_ContextCount(); ++i)
     {
         bcontext_t *bc = B_ContextByPos(i);
         while(evbinding_t *ev = B_FindCommandBinding(&bc->commandBinds, command, NUM_INPUT_DEVICES))
         {
-            deleted |= CPP_BOOL(B_DeleteBinding(bc, ev->bid));
+            deleted |= B_DeleteBinding(bc, ev->bid);
         }
     }
-    return deleted;
+    return CPP_BOOL(deleted);
 }

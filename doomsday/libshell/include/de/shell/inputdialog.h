@@ -1,4 +1,4 @@
-/** @file inputdialog.h  Dialog for querying text from the user.
+/** @file shell/inputdialog.h  Dialog for querying text from the user.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

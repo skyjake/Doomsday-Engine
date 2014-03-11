@@ -25,7 +25,8 @@
 #include <map>
 #include <set>
 
-using namespace de;
+namespace de {
+namespace internal {
 
 struct Garbage : public Lockable
 {
@@ -107,6 +108,12 @@ struct Garbages : public std::map<QThread *, Garbage *>, public Lockable
         }
     }
 };
+
+} // namespace internal
+} // namespace de
+
+using namespace de;
+using namespace de::internal;
 
 static Garbages garbages;
 

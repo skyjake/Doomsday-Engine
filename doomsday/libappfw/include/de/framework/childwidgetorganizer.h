@@ -110,7 +110,7 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(WidgetUpdate,
                           void widgetUpdatedForItem(GuiWidget &widget,
-                                                    ui::Item const &item))
+                                                    ui::Item const &item));
 
 public:
     ChildWidgetOrganizer(GuiWidget &container);

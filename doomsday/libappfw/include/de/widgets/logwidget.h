@@ -1,4 +1,4 @@
-/** @file logwidget.h  Scrollable widget for log message history.
+/** @file widgets/logwidget.h  Scrollable widget for log message history.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

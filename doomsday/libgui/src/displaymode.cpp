@@ -34,11 +34,15 @@
 #include <de/math.h>
 #include <de/Log>
 
+namespace de {
+
 static bool inited = false;
 static DisplayColorTransfer originalColorTransfer;
 static de::Binder binder;
 
 static float differenceToOriginalHz(float hz);
+
+namespace internal {
 
 struct Mode : public DisplayMode
 {
@@ -142,6 +146,10 @@ struct Mode : public DisplayMode
     }
 };
 
+} // namespace internal
+
+using namespace internal;
+
 typedef std::set<Mode> Modes; // note: no duplicates
 
 static Modes modes;
@@ -172,6 +180,10 @@ static de::Value *Function_DisplayMode_OriginalMode(de::Context &, de::Function:
 
     return dict;
 }
+
+} // namespace de
+
+using namespace de;
 
 int DisplayMode_Init(void)
 {

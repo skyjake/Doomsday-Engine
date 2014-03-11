@@ -77,6 +77,7 @@ DENG2_PIMPL(ClientWindow)
     GameWidget *game;
     GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
+    LabelWidget *taskBarBlur; ///< Blur everything below the task bar.
     NotificationWidget *notifications;
     AlertDialog *alerts;
     ColorAdjustmentDialog *colorAdjust;
@@ -107,6 +108,7 @@ DENG2_PIMPL(ClientWindow)
         , game(0)
         , gameUI(0)
         , taskBar(0)
+        , taskBarBlur(0)
         , notifications(0)
         , alerts(0)
         , colorAdjust(0)
@@ -216,6 +218,13 @@ DENG2_PIMPL(ClientWindow)
         fpsCounter->setSizePolicy(ui::Expand, ui::Expand);
         fpsCounter->setAlignment(ui::AlignRight);
 
+        // Everything behind the task bar can be blurred with this widget.
+        taskBarBlur = new LabelWidget("taskbar-blur");
+        taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
+        taskBarBlur->rule().setRect(root.viewRule());
+        taskBarBlur->hide(); // must be explicitly shown if needed
+        container().add(taskBarBlur);
+
         // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
         taskBar->rule()
@@ -262,8 +271,8 @@ DENG2_PIMPL(ClientWindow)
         if(!App::config().getb("tutorial.shown", false))
         {
             App::config().set("tutorial.shown", true);
-
-            taskBar->showTutorial();
+            LOG_NOTE("Starting tutorial (not shown before)");
+            QTimer::singleShot(500, taskBar, SLOT(showTutorial()));
         }
     }
 
@@ -547,6 +556,7 @@ DENG2_PIMPL(ClientWindow)
         container().remove(*gameSelMenu);
         if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
+        container().remove(*taskBarBlur);
         container().remove(*taskBar);
         container().remove(*cursor);
 
@@ -593,6 +603,7 @@ DENG2_PIMPL(ClientWindow)
         container().add(gameSelMenu);
         if(sidebar) container().add(sidebar);
         container().add(notifications);
+        container().add(taskBarBlur);
         container().add(taskBar);
 
         // Also the other widgets.
@@ -685,6 +696,11 @@ ClientRootWidget &ClientWindow::root()
 TaskBarWidget &ClientWindow::taskBar()
 {
     return *d->taskBar;
+}
+
+GuiWidget &ClientWindow::taskBarBlur()
+{
+    return *d->taskBarBlur;
 }
 
 ConsoleWidget &ClientWindow::console()

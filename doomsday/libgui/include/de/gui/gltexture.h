@@ -149,9 +149,11 @@ public:
     /**
      * Reserves a specific size of undefined memory for a cube map level.
      *
-     * @param face   Face of a cube map.
-     * @param size   Size in texels.
-     * @param level  Mipmap level.
+     * @param face    Face of a cube map.
+     * @param size    Size in texels.
+     * @param format  Pixel format that will be later used for uploading content.
+     *                Determines internal storage pixel format.
+     * @param level   Mipmap level.
      */
     void setUndefinedImage(gl::CubeFace face, Size const &size, Image::Format format, int level = 0);
 

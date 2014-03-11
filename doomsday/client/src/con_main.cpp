@@ -105,6 +105,7 @@ D_CMD(Echo);
 #ifdef __CLIENT__
 D_CMD(OpenClose);
 D_CMD(TaskBar);
+D_CMD(Tutorial);
 #endif
 D_CMD(Help);
 D_CMD(If);
@@ -147,6 +148,7 @@ void Con_Register(void)
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD("taskbar",        "",     TaskBar);
+    C_CMD("tutorial",       "",     Tutorial);
 #endif
     C_CMD("dec",            NULL,   IncDec);
     C_CMD("echo",           "s*",   Echo);
@@ -1641,6 +1643,13 @@ D_CMD(TaskBar)
     {
         win.taskBar().close();
     }
+    return true;
+}
+
+D_CMD(Tutorial)
+{
+    DENG2_UNUSED3(src, argc, argv);
+    ClientWindow::main().taskBar().showTutorial();
     return true;
 }
 

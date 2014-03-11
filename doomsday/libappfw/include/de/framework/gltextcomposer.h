@@ -56,7 +56,7 @@ public:
     /**
      * Sets the range of visible lines.
      *
-     * @param visibleLineRage  Visible range of lines.
+     * @param visibleLineRange  Visible range of lines.
      */
     void setRange(Rangei const &visibleLineRange);
 
@@ -93,10 +93,14 @@ public:
                       Vector4f const &color = Vector4f(1, 1, 1, 1));
 
     /**
-     * Generates vertices for all the text lines and concatenates them
-     * onto the existing triangle strip in @a triStrip.
+     * Generates vertices for all the text lines and concatenates them onto the existing
+     * triangle strip in @a triStrip.
      *
-     * @param triStrip  Vertices for a triangle strip.
+     * @param triStrip     Vertices for a triangle strip.
+     * @param rect         Rectangle inside which the text will be placed.
+     * @param alignInRect  Alignment within @a rect.
+     * @param lineAlign    Horizontal alignment for each line within the paragraph.
+     * @param color        Vertex color for the generated vertices.
      */
     void makeVertices(Vertices &triStrip,
                       Rectanglei const &rect,

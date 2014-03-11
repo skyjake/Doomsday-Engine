@@ -40,6 +40,12 @@ public:
         value = v;
         return *this;
     }
+    Type operator -> () {
+        return value;
+    }
+    Type const operator -> () const {
+        return value;
+    }
 
 public:
     Type value;

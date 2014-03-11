@@ -38,7 +38,7 @@ public:
      * Creates a number of fonts based on information in an Info document.
      * The file is parsed first.
      *
-     * @param source  File with Info source containing font definitions.
+     * @param file  File with Info source containing font definitions.
      */
     void addFromInfo(File const &file);
 

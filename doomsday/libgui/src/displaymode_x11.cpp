@@ -31,12 +31,16 @@
 #include <vector>
 #include <de/Log>
 
+namespace de {
+
 typedef std::vector<DisplayMode> DisplayModes;
 
 static int displayDepth;
 static Rotation displayRotation;
 static DisplayModes availableModes;
 static DisplayMode currentMode;
+
+namespace internal {
 
 /**
  * Wrapper for the Xrandr configuration info. The config is kept in memory only
@@ -71,7 +75,7 @@ public:
             }
         }
 
-        Time prevConfTime;
+        ::Time prevConfTime;
         _confTime = XRRConfigTimes(_conf, &prevConfTime);
     }
 
@@ -146,17 +150,23 @@ public:
         }
 
         // Update the current mode.
-        ::currentMode = *mode;
+        de::currentMode = *mode;
         return true;
     }
 
 private:
     XRRScreenConfiguration* _conf;
     XRRScreenSize* _sizes;
-    Time _confTime;
+    ::Time _confTime;
     int _numSizes;
     DisplayModes _modes;
 };
+
+} // namespace internal
+} // namespace de
+
+using namespace de;
+using namespace de::internal;
 
 void DisplayMode_Native_Init(void)
 {

@@ -23,8 +23,7 @@
 #include <QtAlgorithms>
 
 namespace de {
-
-using namespace ui;
+namespace ui {
 
 dsize const Data::InvalidPos = dsize(-1);
 
@@ -66,4 +65,5 @@ void Data::sort(SortMethod method)
     }
 }
 
+} // namespace ui
 } // namespace de

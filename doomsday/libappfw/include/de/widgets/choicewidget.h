@@ -1,4 +1,4 @@
-/** @file choicewidget.h  Widget for choosing from a set of alternatives.
+/** @file widgets/choicewidget.h  Widget for choosing from a set of alternatives.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

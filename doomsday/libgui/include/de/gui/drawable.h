@@ -177,7 +177,8 @@ public:
      * identifier is larger than any of the buffer identifiers currently in
      * use. The buffer will use a new program.
      *
-     * @param buffer  GL buffer. Drawable gets ownership.
+     * @param buffer       GL buffer. Drawable gets ownership.
+     * @param programName  Name for the program.
      *
      * @return  Identifier chosen for the buffer.
      */
@@ -198,7 +199,8 @@ public:
 
     /**
      * Creates a state or replaces an existing one with a default state.
-     * @param id  Identifier of the state.
+     * @param id     Identifier of the state.
+     * @param state  State to add.
      * @return GL state.
      */
     GLState &addState(Id id, GLState const &state = GLState());

@@ -24,7 +24,7 @@
 
 #include <QTextStream>
 
-using namespace de;
+namespace de {
 
 NumberValue::NumberValue(Number initialValue, SemanticHints semantic)
     : _value(initialValue), _semantic(semantic)
@@ -176,3 +176,5 @@ void NumberValue::operator << (Reader &from)
 
     _semantic = SemanticHints(flags & SEMANTIC_BOOLEAN? Boolean : 0);
 }
+
+} // namespace de

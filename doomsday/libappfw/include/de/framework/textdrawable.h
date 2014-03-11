@@ -63,7 +63,7 @@ public:
     /**
      * Sets the maximum width for text lines.
      *
-     * @param maxWidth  Maximum line width.
+     * @param maxLineWidth  Maximum line width.
      */
     void setLineWrapWidth(int maxLineWidth);
 

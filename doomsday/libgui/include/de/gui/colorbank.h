@@ -42,7 +42,7 @@ public:
      * Creates a number of colors based on information in an Info document.
      * The file is parsed first.
      *
-     * @param source  File with Info source containing color definitions.
+     * @param file  File with Info source containing color definitions.
      */
     void addFromInfo(File const &file);
 

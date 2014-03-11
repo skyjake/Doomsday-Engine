@@ -1,4 +1,4 @@
-/** @file menuwidget.h  Menu with shortcuts.
+/** @file shell/menuwidget.h  Menu with shortcuts.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
