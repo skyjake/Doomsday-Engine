@@ -30,6 +30,9 @@
 namespace de {
 namespace game {
 
+static String const BLOCK_GROUP    = "group";
+static String const BLOCK_GAMERULE = "gamerule";
+
 void SavedSession::Metadata::parse(String const &source)
 {
     clear();
@@ -38,7 +41,7 @@ void SavedSession::Metadata::parse(String const &source)
     try
     {
         Info info;
-        info.setAllowDuplicateBlocksOfType(QStringList() << "gamerule");
+        info.setAllowDuplicateBlocksOfType(QStringList() << BLOCK_GROUP << BLOCK_GAMERULE);
         info.parse(source);
 
         // Rebuild the game rules subrecord.
@@ -47,11 +50,21 @@ void SavedSession::Metadata::parse(String const &source)
         {
             if(!elem->isBlock()) continue;
 
-            // Perhaps a game rule?
-            Info::BlockElement const &ruleBlock = elem->as<Info::BlockElement>();
-            if(ruleBlock.blockType() == "gamerule")
+            // Perhaps a ruleset group?
+            Info::BlockElement const &groupBlock = elem->as<Info::BlockElement>();
+            if(groupBlock.blockType() == BLOCK_GROUP)
             {
-                rules.set(ruleBlock.name(), ruleBlock.keyValue("value").text);
+                foreach(Info::Element const *grpElem, groupBlock.contentsInOrder())
+                {
+                    if(!grpElem->isBlock()) continue;
+
+                    // Perhaps a gamerule?
+                    Info::BlockElement const &ruleBlock = grpElem->as<Info::BlockElement>();
+                    if(ruleBlock.blockType() == BLOCK_GAMERULE)
+                    {
+                        rules.set(ruleBlock.name(), ruleBlock.keyValue("value").text);
+                    }
+                }
             }
         }
 
@@ -94,44 +107,27 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     QTextStream os(&text);
     os.setCodec("UTF-8");
 
-    if(has("gameIdentityKey"))
-    {
-        os << "gameIdentityKey: " << (*this)["gameIdentityKey"].value().asText();
-    }
+    if(has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
+    if(has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
+    if(has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
+    if(has("players"))         os << "\nplayers: "         << geta("players").asText();
+    if(has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
+    if(has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
+    if(has("version"))         os << "\nversion: "         << String::number(geti("version"));
+
     if(hasSubrecord("gameRules"))
     {
+        os << "\n" << BLOCK_GROUP << " ruleset {";
+
         Record const &rules = subrecord("gameRules");
         for(Record::Members::const_iterator i = rules.members().begin();
             i != rules.members().end(); ++i)
         {
-            os << "\n      gamerule \"" << i.key() << "\" {"
-               << "\n          value: " << i.value()->value().asText().replace("\"", "''") << "\n      }";
+            os << "\n    " << BLOCK_GAMERULE << " \"" << i.key() << "\""
+               << " { value= \"" << i.value()->value().asText().replace("\"", "''") << "\" }";
         }
-    }
-    if(has("mapTime"))
-    {
-        os << "\n        mapTime: "   << String::number(int((*this)["mapTime"].value().asNumber()));
-    }
-    if(has("mapUri"))
-    {
-        os << "\n         mapUri: " << (*this)["mapUri"].value().asText();
-    }
-    if(has("players"))
-    {
-        os << "\n        players: "   << (*this)["players"].value().asText();
-    }
-    if(has("sessionId"))
-    {
-        os << "\n      sessionId: "   << String::number(int((*this)["sessionId"].value().asNumber()));
-    }
-    if(has("userDescription"))
-    {
-        String userDescription = (*this)["userDescription"].value().asText().replace("\"", "''");
-        os << "\nuserDescription: " << userDescription;
-    }
-    if(has("version"))
-    {
-        os << "\n        version: "   << (*this)["version"].value().asText();
+
+        os << "\n}";
     }
 
     return text;
