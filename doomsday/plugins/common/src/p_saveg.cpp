@@ -859,7 +859,7 @@ void SV_LoadGameClient(uint sessionId)
 
     de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
     de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
-    G_ReadLegacySessionMetadata(metadata, reader);
+    //G_ReadLegacySessionMetadata(metadata, reader);
     metadata->set("sessionId", sessionId);
     session->replaceMetadata(metadata);
     session->setRepository(&saveRepo);

@@ -90,7 +90,6 @@ void SV_BeginSegment(int segmentId);
 void SV_EndSegment();
 
 void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer);
-void SV_ReadSessionMetadata(de::game::SessionMetadata &metadata, Reader *reader);
 
 void SV_WriteConsistencyBytes();
 

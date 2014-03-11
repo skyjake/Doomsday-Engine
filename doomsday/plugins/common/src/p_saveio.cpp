@@ -293,11 +293,6 @@ void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *
     Writer_WriteInt32(writer, metadata["sessionId"].value().asNumber());
 }
 
-void SV_ReadSessionMetadata(de::game::SessionMetadata &metadata, Reader *reader)
-{
-    G_ReadLegacySessionMetadata(&metadata, reader);
-}
-
 void SV_WriteConsistencyBytes()
 {
 #if !__JHEXEN__
