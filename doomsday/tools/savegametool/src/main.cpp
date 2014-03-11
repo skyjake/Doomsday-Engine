@@ -20,6 +20,8 @@
 #include <cstring> // memcpy
 #include "lzss.h"
 #include <QDebug>
+#include <QList>
+#include <QMutableListIterator>
 #include <de/reader.h>            /// @todo remove me
 #include <de/TextApp>
 #include <de/ArrayValue>
@@ -40,6 +42,23 @@ enum SaveFormat
     Heretic,
     Hexen
 };
+
+typedef enum savestatesegment_e {
+    ASEG_MAP_HEADER = 102,  // Hexen only
+    ASEG_MAP_ELEMENTS,
+    ASEG_POLYOBJS,          // Hexen only
+    ASEG_MOBJS,             // Hexen < ver 4 only
+    ASEG_THINKERS,
+    ASEG_SCRIPTS,           // Hexen only
+    ASEG_PLAYERS,
+    ASEG_SOUNDS,            // Hexen only
+    ASEG_MISC,              // Hexen only
+    ASEG_END,               // = 111
+    ASEG_MATERIAL_ARCHIVE,
+    ASEG_MAP_HEADER2,
+    ASEG_PLAYER_HEADER,
+    ASEG_WORLDSCRIPTDATA   // Hexen only
+} savestatesegment_t;
 
 static String fallbackGameIdentityKey;
 
@@ -203,7 +222,7 @@ static reader_s *newReader()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 }
 
-static String composeMapUriStr(uint episode, uint map)
+static Path composeMapUriPath(uint episode, uint map)
 {
     if(episode > 0)
     {
@@ -364,7 +383,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
 
     uint episode = Reader_ReadByte(reader) - 1;
     uint map     = Reader_ReadByte(reader) - 1;
-    metadata.set("mapUri",              composeMapUriStr(episode, map));
+    metadata.set("mapUri",              composeMapUriPath(episode, map).asText());
 
     rules->set("deathmatch", Reader_ReadByte(reader));
     rules->set("noMonsters", Reader_ReadByte(reader));
@@ -448,6 +467,114 @@ static SaveFormat guessSaveFormatFromFileName(Path const &path)
     return Unknown;
 }
 
+/**
+ * (Deferred) ACScript translator utility.
+ */
+struct ACScriptTask : public IWritable
+{
+    dint32 mapNumber;
+    dint32 scriptNumber;
+    dbyte args[4];
+
+    static ACScriptTask *ACScriptTask::fromReader(reader_s *reader)
+    {
+        ACScriptTask *task = new ACScriptTask;
+        task->read(reader);
+        return task;
+    }
+
+    void read(reader_s *reader)
+    {
+        mapNumber    = Reader_ReadInt32(reader);
+        scriptNumber = Reader_ReadInt32(reader);
+        Reader_Read(reader, args, 4);
+    }
+
+    void operator >> (Writer &to) const
+    {
+        DENG2_ASSERT(mapNumber);
+
+        String mapUriScheme = "";
+        Path mapUriPath = composeMapUriPath(0, mapNumber + 1);
+        to << mapUriScheme << mapUriPath;
+
+        to << scriptNumber;
+
+        // Script arguments:
+        for(int i = 0; i < 4; ++i)
+        {
+            to << args[i];
+        }
+    }
+};
+typedef QList<ACScriptTask *> ACScriptTasks;
+
+static void xlatWorldACScriptData(reader_s *reader, Writer &writer)
+{
+#define MAX_ACS_WORLD_VARS 64
+
+    DENG2_ASSERT(saveFormat == Hexen);
+
+    if(saveVersion >= 7)
+    {
+        if(Reader_ReadInt32(reader) != ASEG_WORLDSCRIPTDATA)
+        {
+            /// @throw Error Failed alignment check.
+            throw Error("xlatWorldACScriptData", "Corrupt save game, segment #" + String::number(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
+        }
+    }
+
+    int const ver = (saveVersion >= 7)? Reader_ReadByte(reader) : 1;
+    if(ver < 1 || ver > 3)
+    {
+        /// @throw Error Format is from the future.
+        throw Error("xlatWorldACScriptData", "Incompatible data segment version " + String::number(ver));
+    }
+
+    dint32 worldVars[MAX_ACS_WORLD_VARS];
+    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        worldVars[i] = Reader_ReadInt32(reader);
+    }
+
+    // Read the deferred tasks into a temporary buffer for translation.
+    ACScriptTasks tasks;
+    tasks.reserve(20);
+    for(int i = 0; i < 20; ++i)
+    {
+        tasks.append(ACScriptTask::fromReader(reader));
+    }
+
+    /* skip junk */ if(saveVersion < 7) srSeek(reader, 12);
+
+    // Prune tasks with no map number set (unused).
+    QMutableListIterator<ACScriptTask *> it(tasks);
+    while(it.hasNext())
+    {
+        ACScriptTask *task = it.next();
+        if(!task->mapNumber)
+        {
+            it.remove();
+            delete task;
+        }
+    }
+
+    // Write out the translated data:
+
+    writer << dbyte(4); // segment version
+
+    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        writer << worldVars[i];
+    }
+
+    writer << dint32(tasks.count());
+    writer.writeObjects(tasks);
+    qDeleteAll(tasks);
+
+#undef MAX_ACS_WORLD_VARS
+}
+
 /// @param oldSavePath  Path to the game state file [.dsg | .hsg | .hxs]
 static bool convertSavegame(Path oldSavePath)
 {
@@ -507,6 +634,12 @@ static bool convertSavegame(Path oldSavePath)
 
         if(saveFormat == Hexen)
         {
+            // Translate and separate the serialized world ACS data into a new file.
+            Block worldACScriptData;
+            Writer writer(worldACScriptData);
+            xlatWorldACScriptData(reader, writer);
+            arch.add("ACScript", worldACScriptData);
+
             // Serialized map states are written to similarly named "side car" files.
             int const maxHubMaps = 99;
             for(int i = 0; i < maxHubMaps; ++i)
@@ -522,7 +655,7 @@ static bool convertSavegame(Path oldSavePath)
                 {
                     if(Block *mapStateData = bufferFile())
                     {
-                        arch.add(Path("maps") / composeMapUriStr(0, i), *mapStateData);
+                        arch.add(Path("maps") / composeMapUriPath(0, i), *mapStateData);
                         delete mapStateData;
                     }
                 }
