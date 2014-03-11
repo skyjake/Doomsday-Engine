@@ -199,6 +199,21 @@ struct LIBGUI_PUBLIC Vertex3NormalTexRgba
     LIBGUI_DECLARE_VERTEX_FORMAT(4)
 };
 
+/**
+ * Vertex format with 3D coordinates, normal/tangent/bitangent vectors, one set of
+ * texture coordinates, and an RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3NormalTangentTex
+{
+    Vector3f pos;
+    Vector3f normal;
+    Vector3f tangent;
+    Vector3f bitangent;
+    Vector2f texCoord;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(5)
+};
+
 namespace gl
 {
     enum Usage {
