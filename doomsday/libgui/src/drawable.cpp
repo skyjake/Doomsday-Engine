@@ -523,4 +523,3 @@ void Drawable::draw() const
 }
 
 } // namespace de
-

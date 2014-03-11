@@ -19,7 +19,8 @@
 #ifndef LIBGUI_MODELDRAWABLE_H
 #define LIBGUI_MODELDRAWABLE_H
 
-#include "../Drawable"
+//#include "../Drawable"
+#include <de/Asset>
 #include <de/File>
 
 namespace de {
@@ -32,7 +33,7 @@ namespace de {
  *
  * @ingroup gl
  */
-class ModelDrawable : public Drawable
+class ModelDrawable : public AssetGroup
 {
 public:
     /// An error occurred during the loading of the model data. @ingroup errors
@@ -69,6 +70,8 @@ public:
      * Releases all the GL resources of the model.
      */
     void glDeinit();
+
+    void draw();
 
 private:
     DENG2_PRIVATE(d)
