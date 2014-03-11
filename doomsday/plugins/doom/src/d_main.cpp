@@ -26,7 +26,7 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "p_saveg.h"
-#include "doomv9gamestatereader.h"
+#include "doomv9mapstatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include "saveslots.h"
@@ -383,7 +383,7 @@ void D_PreInit()
 
     // Declare the Doom V9 game state reader/interpreter.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader("DoomV9", &DoomV9GameStateReader::make);
+    saveRepo.declareReader("DoomV9", &DoomV9MapStateReader::make);
 
     G_InitSpecialFilter();
 }

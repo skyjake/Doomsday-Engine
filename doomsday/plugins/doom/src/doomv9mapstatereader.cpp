@@ -1,4 +1,4 @@
-/** @file doomv9gamestatereader.cpp  Doom ver 1.9 save game reader.
+/** @file doomv9mapstatereader.cpp  Doom ver 1.9 save game reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -20,7 +20,7 @@
  */
 
 #include "jdoom.h"
-#include "doomv9gamestatereader.h"
+#include "doomv9mapstatereader.h"
 
 #include "am_map.h"
 #include "dmu_lib.h"
@@ -635,7 +635,7 @@ static Reader *SV_NewReader_Dm_v19()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
 }
 
-DENG2_PIMPL(DoomV9GameStateReader)
+DENG2_PIMPL(DoomV9MapStateReader)
 {
     Reader *reader;
 
@@ -791,18 +791,18 @@ DENG2_PIMPL(DoomV9GameStateReader)
     }
 };
 
-DoomV9GameStateReader::DoomV9GameStateReader() : d(new Instance(this))
+DoomV9MapStateReader::DoomV9MapStateReader() : d(new Instance(this))
 {}
 
-DoomV9GameStateReader::~DoomV9GameStateReader()
+DoomV9MapStateReader::~DoomV9MapStateReader()
 {}
 
-de::game::IMapStateReader *DoomV9GameStateReader::make()
+de::game::IMapStateReader *DoomV9MapStateReader::make()
 {
-    return new DoomV9GameStateReader;
+    return new DoomV9MapStateReader;
 }
 
-void DoomV9GameStateReader::read(de::Path const &filePath, de::game::SessionMetadata const &metadata)
+void DoomV9MapStateReader::read(de::Path const &filePath, de::game::SessionMetadata const &metadata)
 {
     if(!SV_OpenFile_Dm_v19(filePath))
     {
