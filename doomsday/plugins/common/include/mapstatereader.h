@@ -47,7 +47,7 @@ public:
     /**
      * Deserialize the saved map state.
      */
-    void read(de::Path const &filePath, de::game::SessionMetadata const &metadata);
+    void read(de::game::SavedSession const &session, de::String const &mapUriStr);
 
     /**
      * Returns the logical map version of the saved map state.

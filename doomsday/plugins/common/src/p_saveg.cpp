@@ -931,7 +931,7 @@ void SV_LoadGameClient(uint sessionId)
 
     cpl->read(reader, plrHdr);
 
-    MapStateReader().read(de::Path(Str_Text(Uri_Resolved(mapUri))), *metadata);
+    MapStateReader().read(*session, Str_Text(Uri_Resolved(mapUri)));
 
     SV_CloseFile();
     Reader_Delete(reader);

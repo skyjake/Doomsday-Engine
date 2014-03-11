@@ -44,31 +44,33 @@
 #define SIZEOF_V19_THINKER_T            12
 #define V19_THINKER_T_FUNC_OFFSET       8
 
+using namespace de;
+
 static byte *savePtr;
 static byte *saveBuffer;
 
-static char sri8(Reader *r)
+static char sri8(reader_s *r)
 {
     if(!r) return 0;
     savePtr++;
     return *(char *) (savePtr - 1);
 }
 
-static short sri16(Reader *r)
+static short sri16(reader_s *r)
 {
     if(!r) return 0;
     savePtr += 2;
     return *(int16_t *) (savePtr - 2);
 }
 
-static int sri32(Reader *r)
+static int sri32(reader_s *r)
 {
     if(!r) return 0;
     savePtr += 4;
     return *(int32_t *) (savePtr - 4);
 }
 
-static void srd(Reader *r, char *data, int len)
+static void srd(reader_s *r, char *data, int len)
 {
     if(!r) return;
     if(data)
@@ -78,13 +80,13 @@ static void srd(Reader *r, char *data, int len)
     savePtr += len;
 }
 
-static Uri *readTextureUrn(Reader *reader, char const *schemeName)
+static Uri *readTextureUrn(reader_s *reader, char const *schemeName)
 {
     DENG_ASSERT(reader != 0 && schemeName != 0);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(reader))), RC_NULL);
 }
 
-static void readPlayer(player_t *pl, Reader *reader)
+static void readPlayer(player_t *pl, reader_s *reader)
 {
     Reader_ReadInt32(reader);
 
@@ -189,7 +191,7 @@ static void readPlayer(player_t *pl, Reader *reader)
     pl->didSecret  = !!Reader_ReadInt32(reader);
 }
 
-static void readMobj(Reader *reader)
+static void readMobj(reader_s *reader)
 {
 #define FF_FULLBRIGHT  0x8000 ///< Used to be a flag in thing->frame.
 #define FF_FRAMEMASK   0x7fff
@@ -348,7 +350,7 @@ static int removeThinker(thinker_t *th, void * /*context*/)
     return false; // Continue iteration.
 }
 
-static int readCeiling(ceiling_t *ceiling, Reader *reader)
+static int readCeiling(ceiling_t *ceiling, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -394,7 +396,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readDoor(door_t *door, Reader *reader)
+static int readDoor(door_t *door, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -430,7 +432,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readFloor(floor_t *floor, Reader *reader)
+static int readFloor(floor_t *floor, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -473,7 +475,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readPlat(plat_t *plat, Reader *reader)
+static int readPlat(plat_t *plat, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -522,7 +524,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readFlash(lightflash_t *flash, Reader *reader)
+static int readFlash(lightflash_t *flash, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -553,7 +555,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readStrobe(strobe_t *strobe, Reader *reader)
+static int readStrobe(strobe_t *strobe, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -584,7 +586,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readGlow(glow_t *glow, Reader *reader)
+static int readGlow(glow_t *glow, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -629,7 +631,7 @@ static void SV_CloseFile_Dm_v19()
     saveBuffer = savePtr = 0;
 }
 
-static Reader *SV_NewReader_Dm_v19()
+static reader_s *SV_NewReader_Dm_v19()
 {
     if(!saveBuffer) return 0;
     return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
@@ -637,7 +639,7 @@ static Reader *SV_NewReader_Dm_v19()
 
 DENG2_PIMPL(DoomV9MapStateReader)
 {
-    Reader *reader;
+    reader_s *reader;
 
     Instance(Public *i)
         : Base(i)
@@ -802,8 +804,11 @@ de::game::IMapStateReader *DoomV9MapStateReader::make()
     return new DoomV9MapStateReader;
 }
 
-void DoomV9MapStateReader::read(de::Path const &filePath, de::game::SessionMetadata const &metadata)
+void DoomV9MapStateReader::read(game::SavedSession const &session, String const &mapUriStr)
 {
+    game::SessionMetadata const &metadata = session.metadata();
+    Path const &filePath = Path(mapUriStr);
+
     if(!SV_OpenFile_Dm_v19(filePath))
     {
         throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::NativePath(filePath).pretty() + "\"");

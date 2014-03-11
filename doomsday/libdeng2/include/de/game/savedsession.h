@@ -21,6 +21,7 @@
 
 #include "../Error"
 #include "../Observers"
+#include "../Path"
 #include "../Record"
 #include "../String"
 
@@ -148,6 +149,11 @@ public:
      */
     String fileName() const;
     void setFileName(String newName);
+
+    /**
+     * Returns the full path to the saved session file package in the repository.
+     */
+    Path filePath() const;
 
     /**
      * Provides read-only access to a copy of the deserialized saved session metadata.

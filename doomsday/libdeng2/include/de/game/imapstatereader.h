@@ -20,9 +20,8 @@
 #define LIBDENG2_IMAPSTATEREADER_H
 
 #include <de/Error>
-#include <de/Path>
-#include <de/Record>
 #include <de/game/SavedSession>
+#include <de/String>
 
 namespace de {
 namespace game {
@@ -47,11 +46,10 @@ public:
     /**
      * Attempt to load (read/interpret) the serialized game map state.
      *
-     * @param filePath  Path to the map state file to be read/interpreted.
-     *
-     * @param metadata  Deserialized save session metadata for the game state (FYI).
+     * @param session    Saved session being loaded.
+     * @param mapUriStr  Unique identifier of the map state to deserialize.
      */
-    virtual void read(Path const &mapStateFilePath, SavedSession::Metadata const &metadata) = 0;
+    virtual void read(SavedSession const &session, String const &mapUriStr) = 0;
 };
 
 } // namespace game

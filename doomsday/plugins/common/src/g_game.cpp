@@ -1386,20 +1386,16 @@ int G_DoLoadMap(loadmap_params_t *p)
         // following check (player mobj redirection).
         targetPlayerAddrs = 0;
 
-        Reader *reader = SV_NewReader();
-
         try
         {
-            SaveSlot &sslot = G_SaveSlots()["base"];
-            MapStateReader().read(Str_Text(Uri_Compose(gameMapUri)), sslot.saveMetadata());
+            MapStateReader().read(G_SaveSlots()["base"].savedSession(),
+                                  Str_Text(Uri_Compose(gameMapUri)));
         }
         catch(de::Error const &er)
         {
             App_Log(DE2_RES_WARNING, "Error loading hub map save state:\n%s",
                     er.asText().toLatin1().constData());
         }
-
-        Reader_Delete(reader);
     }
 #endif
 
@@ -2223,8 +2219,8 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                de::game::SessionMetadata const &saveMetadata = G_SaveSlots()[chosenSlot].saveMetadata();
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, saveMetadata["userDescription"].value().asText().toUtf8().constData());
+                de::game::SavedSession const &session = G_SaveSlots()[chosenSlot].savedSession();
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, session.metadata().gets("userDescription").toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, 0, new de::String(chosenSlot));
             }
@@ -2914,7 +2910,8 @@ static int saveGameStateWorker(void *context)
             SaveSlot &sslot = G_SaveSlots()[p.slotId];
             if(sslot.isUsed())
             {
-                userDescription = sslot.saveMetadata()["userDescription"].value().asText();
+                de::game::SavedSession const &session = sslot.savedSession();
+                userDescription = session.metadata().gets("userDescription");
             }
         }
         catch(SaveSlots::MissingSlotError const &)
@@ -2944,7 +2941,7 @@ static int saveGameStateWorker(void *context)
     {
         saveRepo.folder().verifyWriteAccess();
 
-        de::Path const filePath = sslot.filePath();
+        de::Path const filePath = sslot.savedSession().filePath();
         de::Path const mapStateFilePath(Str_Text(Uri_Resolved(gameMapUri)));
 
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
@@ -3251,13 +3248,12 @@ void G_DoLoadSession(de::String slotId)
         }
 #endif
 
-        SaveSlot &sslot = G_SaveSlots()[logicalSlot];
-        de::game::SavedSession &session           = sslot.savedSession();
-        de::game::SessionMetadata const &metadata = sslot.saveMetadata();
+        de::game::SavedSession &session           = G_SaveSlots()[logicalSlot].savedSession();
+        de::game::SessionMetadata const &metadata = session.metadata();
 
         // Attempt to recognize and load the saved game state.
         App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                de::NativePath(sslot.filePath()).pretty().toLatin1().constData());
+                de::NativePath(session.filePath()).pretty().toLatin1().constData());
 
 #if __JHEXEN__
         // Deserialize the world ACS data.
@@ -3291,8 +3287,7 @@ void G_DoLoadSession(de::String slotId)
         mapTime = metadata.geti("mapTime");
 #endif
 
-        session.mapStateReader()
-                ->read(de::Path(Str_Text(Uri_Resolved(gameMapUri))), metadata);
+        session.mapStateReader()->read(session, Str_Text(Uri_Resolved(gameMapUri)));
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);
@@ -4253,7 +4248,8 @@ D_CMD(LoadSession)
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             // Compose the confirmation message.
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, sslot.saveMetadata()["userDescription"].value().asText().toUtf8().constData());
+            de::game::SavedSession const &session = sslot.savedSession();
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, session.metadata().gets("userDescription").toUtf8().constData());
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(slotId));
             return true;
         }
@@ -4353,15 +4349,13 @@ D_CMD(SaveSession)
         if(sslot.isUserWritable())
         {
             // A known slot identifier.
-            bool const slotIsUsed = sslot.isUsed();
-
             de::String userDescription;
             if(argc >= 3 && stricmp(argv[2], "confirm"))
             {
                 userDescription = argv[2];
             }
 
-            if(!slotIsUsed || confirmed || !cfg.confirmQuickGameSave)
+            if(!sslot.isUsed() || confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
@@ -4369,8 +4363,8 @@ D_CMD(SaveSession)
             }
 
             // Compose the confirmation message.
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
-                                       sslot.saveMetadata()["userDescription"].value().asText().toUtf8().constData());
+            de::game::SavedSession const &session = sslot.savedSession();
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, session.metadata().gets("userDescription").toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = slotId;
@@ -4468,8 +4462,8 @@ D_CMD(DeleteSavedSession)
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
 
                 // Compose the confirmation message.
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM,
-                                           sslot.saveMetadata()["userDescription"].value().asText().toUtf8().constData());
+                de::game::SavedSession const &session = sslot.savedSession();
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, session.metadata().gets("userDescription").toUtf8().constData());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(slotId));
             }
             return true;

@@ -26,16 +26,6 @@
 #include "../Path"
 #include "../String"
 
-/**
- * Game state recognizer function ptr.
- *
- * The job of a recognizer function is to determine whether the game state associated
- * with the given saved @a session is interpretable as a potentially loadable game state.
- *
- * @param metadata  The read metadata is written here.
- */
-typedef bool (*GameStateRecognizeFunc)(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
-
 /// Game state reader instantiator function ptr.
 typedef de::game::IMapStateReader *(*MapStateReaderMakeFunc)();
 

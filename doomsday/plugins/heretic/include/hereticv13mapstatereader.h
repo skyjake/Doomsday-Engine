@@ -41,7 +41,7 @@ public:
 
     static de::game::IMapStateReader *make();
 
-    void read(de::Path const &filePath, de::game::SessionMetadata const &metadata);
+    void read(de::game::SavedSession const &session, de::String const &mapUriStr);
 
 private:
     DENG2_PRIVATE(d)

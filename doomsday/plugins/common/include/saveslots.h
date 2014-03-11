@@ -75,22 +75,12 @@ public:
         void bindFileName(de::String newName);
 
         /**
-         * Convenient method of looking up the deserialized session metadata for the logical save slot.
-         */
-        de::game::SessionMetadata const &saveMetadata() const;
-
-        /**
-         * Returns the saved session file path (in the repository).
-         */
-        de::Path filePath() const;
-
-        /**
          * Returns the saved session for the logical save slot.
          */
         de::game::SavedSession &savedSession() const;
 
         /**
-         * Deletes all saved session state files associated for the logical save slot.
+         * Deletes the saved session package file for the logical save slot, from the repository.
          */
         void clear();
 

@@ -63,9 +63,7 @@ namespace internal
 }
 
 using namespace internal;
-
 using namespace de;
-using de::game::SessionMetadata;
 
 DENG2_PIMPL(MapStateReader)
 {
@@ -75,7 +73,7 @@ DENG2_PIMPL(MapStateReader)
     bool formatHasMapVersionNumber;
 
     /// Metadata for the serialized game state to be read. Not owned.
-    SessionMetadata const *metadata;
+    game::SessionMetadata const *metadata;
 
     dd_bool loaded[MAXPLAYERS];
     dd_bool infile[MAXPLAYERS];
@@ -740,8 +738,11 @@ game::IMapStateReader *MapStateReader::make() // static
     return new MapStateReader;
 }
 
-void MapStateReader::read(Path const &filePath, game::SessionMetadata const &metadata)
+void MapStateReader::read(game::SavedSession const &session, String const &mapUriStr)
 {
+    game::SessionMetadata const &metadata = session.metadata();
+    Path const &filePath = Path(mapUriStr);
+
     if(!SV_OpenFile(filePath, false/*for reading*/))
     {
         throw FileAccessError("MapStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");

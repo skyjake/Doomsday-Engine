@@ -277,8 +277,13 @@ String SavedSession::description() const
     return metadataAsStyledText(metadata()) + "\n" +
            String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"\n" _E(.)
                   _E(D) "Status: " _E(.) "%2")
-               .arg(NativePath(repository().folder().path() / fileName()).pretty())
+               .arg(NativePath(filePath()).pretty())
                .arg(statusAsText());
+}
+
+Path SavedSession::filePath() const
+{
+    return repository().folder().path() / fileName();
 }
 
 String SavedSession::fileName() const

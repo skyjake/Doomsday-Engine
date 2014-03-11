@@ -143,11 +143,6 @@ bool SaveSlots::Slot::isUsed() const
     return savedSession().isLoadable();
 }
 
-SessionMetadata const &SaveSlots::Slot::saveMetadata() const
-{
-    return savedSession().metadata();
-}
-
 SavedSession &SaveSlots::Slot::savedSession() const
 {
     return G_SavedSessionRepository().session(d->fileName);
@@ -182,12 +177,6 @@ void SaveSlots::Slot::replaceSavedSession(SavedSession *newSession)
         session.audienceForStatusChange()   += d;
         session.audienceForMetadataChange() += d;
     }
-}
-
-Path SaveSlots::Slot::filePath() const
-{
-    SavedSession &session = savedSession();
-    return session.repository().folder().path() / session.fileName();
 }
 
 DENG2_PIMPL_NOREF(SaveSlots)
@@ -274,7 +263,7 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
     // Clear all save files at destination slot.
     destSlot.clear();
 
-    SV_CopyFile(sourceSlot.filePath(), destSlot.filePath());
+    SV_CopyFile(sourceSlot.savedSession().filePath(), destSlot.savedSession().filePath());
 
     // Copy save info too.
     destSlot.replaceSavedSession(new SavedSession(sourceSlot.savedSession()));
@@ -291,7 +280,8 @@ SaveSlots::Slot *SaveSlots::slotByUserDescription(String description) const
             SaveSlot &sslot = *i->second;
             if(!sslot.isUsed()) continue;
 
-            if(!sslot.saveMetadata()["userDescription"].value().asText().compareWithoutCase(description))
+            SessionMetadata const &metadata = sslot.savedSession().metadata();
+            if(!metadata.gets("userDescription").compareWithoutCase(description))
             {
                 return &sslot;
             }
