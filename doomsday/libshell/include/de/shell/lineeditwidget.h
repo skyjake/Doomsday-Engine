@@ -1,4 +1,4 @@
-/** @file lineeditwidget.h  Widget for word-wrapped text editing.
+/** @file shell/lineeditwidget.h  Widget for word-wrapped text editing.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

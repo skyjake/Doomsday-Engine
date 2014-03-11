@@ -75,6 +75,7 @@ public:
      * color of the button (label).
      *
      * @param hoverTextId  Style color identifier.
+     * @param mode         Color hover behavior.
      */
     void setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode = ModulateColor);
 

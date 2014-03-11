@@ -75,6 +75,7 @@ public:
      * Defines a mapping from font family name plus style/weight to an actual platform
      * font.
      *
+     * @param family   Native font family name.
      * @param mapping  Mapping of styles to native font names.
      */
     static void defineMapping(String const &family, StyleMapping const &mapping);

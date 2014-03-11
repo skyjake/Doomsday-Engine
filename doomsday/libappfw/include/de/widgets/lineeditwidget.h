@@ -1,4 +1,4 @@
-/** @file lineeditwidget.h
+/** @file widgets/lineeditwidget.h
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

@@ -102,7 +102,8 @@ public:
      * Scrolls the view to a specified position. Position (0,0) means the top
      * left corner is visible at the top left corner of the ScrollAreaWidget.
      *
-     * @param to  Scroll position.
+     * @param to    Scroll position.
+     * @param span  Animation time span.
      */
     void scroll(Vector2i const &to, TimeDelta span = 0);
 

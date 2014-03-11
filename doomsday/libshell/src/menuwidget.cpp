@@ -1,4 +1,4 @@
-/** @file menuwidget.cpp  Menu with shortcuts.
+/** @file libshell/src/menuwidget.cpp  Menu with shortcuts.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

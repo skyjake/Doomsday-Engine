@@ -1,4 +1,4 @@
-/** @file dialogwidget.cpp  Base class for modal dialogs.
+/** @file libshell/src/dialogwidget.cpp  Base class for modal dialogs.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

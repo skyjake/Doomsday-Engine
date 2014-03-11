@@ -289,7 +289,7 @@ public:
      *
      * @param rect   Target window rectangle. Set a null rectangle to
      *               use the entire window (like normally).
-     * @param apply  Immediately update current OpenGL state accordingly.
+     * @param applyGLState  Immediately update current OpenGL state accordingly.
      */
     void setActiveRect(Rectangleui const &rect, bool applyGLState = false);
 

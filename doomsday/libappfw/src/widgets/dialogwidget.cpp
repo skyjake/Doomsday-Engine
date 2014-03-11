@@ -1,4 +1,4 @@
-/** @file dialogwidget.cpp  Popup dialog.
+/** @file widgets/dialogwidget.cpp  Popup dialog.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

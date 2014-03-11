@@ -1,4 +1,4 @@
-/** @file action.h  Maps a key event to a signal.
+/** @file libshell/src/action.cpp  Maps a key event to a signal.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

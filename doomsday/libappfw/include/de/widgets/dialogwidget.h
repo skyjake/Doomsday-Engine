@@ -1,4 +1,4 @@
-/** @file dialogwidget.h  Popup dialog.
+/** @file widgets/dialogwidget.h  Popup dialog.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -114,8 +114,9 @@ public:
 
         /**
          * Button with custom action.
-         * @param flags  Role flags for the button.
-         * @param label  Label for the button. If empty, the default label will be used.
+         * @param flags   Role flags for the button.
+         * @param label   Label for the button. If empty, the default label will be used.
+         * @param action  Action for the button.
          */
         ButtonItem(RoleFlags flags, String const &label, RefArg<de::Action> action);
 

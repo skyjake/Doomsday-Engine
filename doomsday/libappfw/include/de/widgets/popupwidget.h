@@ -74,7 +74,7 @@ public:
      * Lets the popup be closed when the user clicks with the mouse outside the
      * popup area. This is @c true by default.
      *
-     * @param clickClose  @c true to allow closing with a click.
+     * @param clickCloses  @c true to allow closing with a click.
      */
     void setClickToClose(bool clickCloses);
 

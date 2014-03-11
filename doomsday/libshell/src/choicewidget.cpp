@@ -1,4 +1,4 @@
-/** @file choicewidget.cpp  Widget for selecting an item from multiple choices.
+/** @file libshell/src/choicewidget.cpp  Widget for selecting an item from multiple choices.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

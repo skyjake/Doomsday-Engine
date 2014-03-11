@@ -1,4 +1,4 @@
-/** @file labelwidget.h  Widget for showing a label.
+/** @file shell/labelwidget.h  Widget for showing a label.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

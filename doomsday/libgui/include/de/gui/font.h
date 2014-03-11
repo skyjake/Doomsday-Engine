@@ -276,15 +276,6 @@ public:
     //QFont toQFont() const;
 
     /**
-     * Sets the font family name to be used if the font weight is changed. By default it
-     * is assumed that the same family name provides all weights.
-     *
-     * @param weight      Weight for the alternative family.
-     * @param familyName  Name of the alternative family.
-     */
-    //void setAltFamily(RichFormat::Weight weight, String const &familyName);
-
-    /**
      * Determines the size of the given line of text, i.e., how large an area
      * is covered by the glyphs. (0,0) is at the baseline, left edge of the
      * line. The rectangle may extend into negative coordinates.

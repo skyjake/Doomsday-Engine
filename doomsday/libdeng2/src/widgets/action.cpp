@@ -1,4 +1,4 @@
-/** @file action.cpp  Abstract base class for UI actions.
+/** @file widgets/action.cpp  Abstract base class for UI actions.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

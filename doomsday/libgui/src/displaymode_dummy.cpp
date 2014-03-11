@@ -1,4 +1,4 @@
-/** @file displaymode_dummy.c
+/** @file displaymode_dummy.cpp
  * Dummy implementation of the DisplayMode native functionality.
  * @ingroup gl
  *

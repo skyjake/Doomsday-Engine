@@ -142,9 +142,9 @@ public:
     /**
      * Grabs the contents of the window and saves it into a native image file.
      *
-     * @param fileName  Name of the file to save. May include a file extension
-     *                  that indicates which format to use (e.g, "screenshot.jpg").
-     *                  If omitted, defaults to PNG.
+     * @param path  Name of the file to save. May include a file extension
+     *              that indicates which format to use (e.g, "screenshot.jpg").
+     *              If omitted, defaults to PNG.
      *
      * @return @c true if successful, otherwise @c false.
      */

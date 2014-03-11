@@ -1,4 +1,4 @@
-/** @file protocol.cpp  Network protocol for communicating with a server.
+/** @file libshell/src/protocol.cpp  Network protocol for communicating with a server.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

@@ -1,4 +1,4 @@
-/** @file logwidget.cpp  Widget for output message log.
+/** @file libshell/src/logwidget.cpp  Widget for output message log.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

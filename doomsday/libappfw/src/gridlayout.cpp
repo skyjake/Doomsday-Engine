@@ -343,8 +343,11 @@ DENG2_PIMPL(GridLayout)
     /**
      * Appends a widget or empty cell into the grid.
      *
-     * @param widget  Widget.
-     * @param space   Empty cell.
+     * @param widget       Widget.
+     * @param space        Empty cell.
+     * @param cellSpan     Number of cells this widget/space will span.
+     * @param layoutWidth  Optionally, a width to use for layout calculations instead
+     *                     of the actual width of the widget/space.
      */
     void append(GuiWidget *widget, Rule const *space, int cellSpan = 1, Rule const *layoutWidth = 0)
     {

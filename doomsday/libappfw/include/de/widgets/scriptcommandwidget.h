@@ -1,4 +1,4 @@
-/** @file scriptwidget.h  Interactive Doomsday Script command line.
+/** @file scriptcommandwidget.h  Interactive Doomsday Script command line.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

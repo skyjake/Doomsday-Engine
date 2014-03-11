@@ -1,4 +1,4 @@
-/** @file lineeditwidget.cpp
+/** @file widgets/lineeditwidget.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

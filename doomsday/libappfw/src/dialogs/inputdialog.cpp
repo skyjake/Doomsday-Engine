@@ -1,4 +1,4 @@
-/** @file inputdialog.cpp Dialog for querying a string of text from the user.
+/** @file dialogs/inputdialog.cpp Dialog for querying a string of text from the user.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

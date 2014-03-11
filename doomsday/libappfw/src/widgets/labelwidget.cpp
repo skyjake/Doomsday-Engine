@@ -1,4 +1,4 @@
-/** @file labelwidget.cpp
+/** @file widgets/labelwidget.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -248,7 +248,7 @@ public Font::RichFormat::IStyle
     /**
      * Determines where the label's image and text should be drawn.
      *
-     * @param laoyut  Placement of the image and text.
+     * @param layout  Placement of the image and text.
      */
     void contentPlacement(ContentLayout &layout) const
     {

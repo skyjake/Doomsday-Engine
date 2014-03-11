@@ -1,4 +1,4 @@
-/** @file labelwidget.h
+/** @file widgets/labelwidget.h
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -166,10 +166,16 @@ public:
     bool hasImage() const;
 
     /**
-     * Allows or disallows the label to expand vertically to fit the provided
-     * content. By default, labels do not adjust their own size.
+     * Sets the policy for the widget to adjust its own width and/or height. By default,
+     * labels do not adjust their own size.
+     * - ui::Fixed means that the content uses its own size and the widget needs to be
+     *   sized by the user.
+     * - ui::Filled means content is expanded to fill the entire contents of the widget
+     *   area, but the widget still needs to be sized by the user.
+     * - ui::Expand means the widget resizes itself to the size of the content.
      *
-     * @param expand  @c true to allow the widget to modify its own height.
+     * @param horizontal  Horizontal sizing policy.
+     * @param vertical    Vertical sizing policy.
      */
     void setSizePolicy(ui::SizePolicy horizontal, ui::SizePolicy vertical) {
         setWidthPolicy(horizontal);

@@ -1,4 +1,4 @@
-/** @file choicewidget.h  Widget for selecting an item from multiple choices.
+/** @file shell/choicewidget.h  Widget for selecting an item from multiple choices.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

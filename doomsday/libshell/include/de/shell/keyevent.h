@@ -1,4 +1,4 @@
-/** @file keyevent.h Key event.
+/** @file shell/keyevent.h Key event.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

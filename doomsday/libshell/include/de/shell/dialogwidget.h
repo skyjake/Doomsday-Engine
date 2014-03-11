@@ -1,4 +1,4 @@
-/** @file dialogwidget.h  Base class for modal dialogs.
+/** @file shell/dialogwidget.h  Base class for modal dialogs.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
