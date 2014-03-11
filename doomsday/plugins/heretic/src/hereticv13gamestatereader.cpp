@@ -632,65 +632,6 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
-{
-    rules.skill = (skillmode_t) Reader_ReadByte(reader);
-    // Interpret skill levels outside the normal range as "spawn no things".
-    if(rules.skill < SM_BABY || rules.skill >= NUM_SKILL_MODES)
-    {
-        rules.skill = SM_NOTHINGS;
-    }
-}
-
-static void SaveInfo_Read_Hr_v13(de::game::SessionMetadata &metadata, Reader *reader)
-{
-    char descBuf[24];
-    Reader_Read(reader, descBuf, 24);
-    metadata.set("userDescription", de::String(descBuf, 24));
-
-    char vcheck[16 + 1];
-    Reader_Read(reader, vcheck, 16); vcheck[16] = 0;
-    //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
-    metadata.set("version", atoi(&vcheck[8]));
-
-    // The Heretic v13 savegame format omitted the majority of the game rules...
-    // Therefore we must assume the user has correctly configured the session accordingly.
-    App_Log(DE2_RES_WARNING, "Using current game rules as basis for Heretic v13 savegame."
-                             " (The original save format omits this information).");
-    GameRuleset rules(G_Rules());
-    readLegacyGameRules(rules, reader);
-    metadata.add("gameRules", rules.toRecord());
-
-    uint episode = Reader_ReadByte(reader) - 1;
-    uint map     = Reader_ReadByte(reader) - 1;
-    Uri *mapUri  = G_ComposeMapUri(episode, map);
-    metadata.set("mapUri", Str_Text(Uri_Compose(mapUri)));
-    Uri_Delete(mapUri); mapUri = 0;
-
-    de::ArrayValue *array = new de::ArrayValue;
-    int idx = 0;
-    while(idx++ < 4)
-    {
-        bool playerIsPresent = CPP_BOOL( Reader_ReadByte(reader) );
-        *array << de::NumberValue(playerIsPresent, de::NumberValue::Boolean);
-    }
-    while(idx++ < MAXPLAYERS)
-    {
-        *array << de::NumberValue(false, de::NumberValue::Boolean);
-    }
-    metadata.set("players", array);
-
-    // Get the map time.
-    int a = Reader_ReadByte(reader);
-    int b = Reader_ReadByte(reader);
-    int c = Reader_ReadByte(reader);
-    metadata.set("mapTime", ((a << 16) + (b << 8) + c));
-
-    /// @note Kludge: Assume the current game mode.
-    metadata.set("gameIdentityKey", G_IdentityKey());
-    /// Kludge end.
-}
-
 static bool SV_OpenFile_Hr_v13(de::Path filePath)
 {
     DENG_ASSERT(saveBuffer == 0);
@@ -743,101 +684,6 @@ DENG2_PIMPL(HereticV13GameStateReader)
                 }
             }
         }
-    }
-
-    void readMap()
-    {
-        reader = SV_NewReader_Hr_v13();
-
-        readPlayers();
-
-        // Do sectors.
-        for(int i = 0; i < numsectors; ++i)
-        {
-            Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
-            xsector_t *xsec = P_ToXSector(sec);
-
-            P_SetDoublep(sec, DMU_FLOOR_HEIGHT,     (coord_t)Reader_ReadInt16(reader));
-            P_SetDoublep(sec, DMU_CEILING_HEIGHT,   (coord_t)Reader_ReadInt16(reader));
-
-            Uri *floorTextureUrn = readTextureUrn(reader, "Flats");
-            P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   DD_MaterialForTextureUri(floorTextureUrn));
-            Uri_Delete(floorTextureUrn);
-
-            Uri *ceilingTextureUrn = readTextureUrn(reader, "Flats");
-            P_SetPtrp(sec, DMU_CEILING_MATERIAL, DD_MaterialForTextureUri(ceilingTextureUrn));
-            Uri_Delete(ceilingTextureUrn);
-
-            P_SetFloatp(sec, DMU_LIGHT_LEVEL,      (float) (Reader_ReadInt16(reader)) / 255.0f);
-
-            xsec->special = Reader_ReadInt16(reader); // needed?
-            /*xsec->tag = **/Reader_ReadInt16(reader); // needed?
-            xsec->specialData = 0;
-            xsec->soundTarget = 0;
-        }
-
-        // Do lines.
-        for(int i = 0; i < numlines; ++i)
-        {
-            Line *line     = (Line *)P_ToPtr(DMU_LINE, i);
-            xline_t *xline = P_ToXLine(line);
-
-            xline->flags   = Reader_ReadInt16(reader);
-            xline->special = Reader_ReadInt16(reader);
-            /*xline->tag    =*/Reader_ReadInt16(reader);
-
-            for(int k = 0; k < 2; ++k)
-            {
-                Side *sdef = (Side *)P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
-                if(!sdef) continue;
-
-                fixed_t offx = Reader_ReadInt16(reader) << FRACBITS;
-                fixed_t offy = Reader_ReadInt16(reader) << FRACBITS;
-                P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X,    offx);
-                P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y,    offy);
-                P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_X, offx);
-                P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
-                P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
-                P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
-
-                Uri *topTextureUrn = readTextureUrn(reader, "Textures");
-                P_SetPtrp(sdef, DMU_TOP_MATERIAL,    DD_MaterialForTextureUri(topTextureUrn));
-                Uri_Delete(topTextureUrn);
-
-                Uri *bottomTextureUrn = readTextureUrn(reader, "Textures");
-                P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, DD_MaterialForTextureUri(bottomTextureUrn));
-                Uri_Delete(bottomTextureUrn);
-
-                Uri *middleTextureUrn = readTextureUrn(reader, "Textures");
-                P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, DD_MaterialForTextureUri(middleTextureUrn));
-                Uri_Delete(middleTextureUrn);
-            }
-        }
-
-        readThinkers();
-        readSpecials();
-
-        if(Reader_ReadByte(reader) != 0x1d)
-        {
-            Reader_Delete(reader); reader = 0;
-            SV_CloseFile_Hr_v13();
-
-            throw ReadError("HereticV13GameStateReader", "Bad savegame (consistency test failed!)");
-        }
-
-        // Material scrollers must be spawned.
-        P_SpawnAllMaterialOriginScrollers();
-
-        // Let the engine know where the local players are now.
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            R_UpdateConsoleView(i);
-        }
-
-        // Inform the engine that map setup must be performed once more.
-        R_SetupMap(0, 0);
-
-        Reader_Delete(reader); reader = 0;
     }
 
     void readThinkers()
@@ -961,34 +807,6 @@ HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
 HereticV13GameStateReader::~HereticV13GameStateReader()
 {}
 
-#if 0
-bool HereticV13GameStateReader::recognize(de::Path const &stateFilePath,
-    de::game::SessionMetadata &metadata) // static
-{
-    if(!SV_ExistingFile(stateFilePath)) return false;
-    if(!SV_OpenFile_Hr_v13(stateFilePath)) return false;
-
-    Reader *reader = SV_NewReader_Hr_v13();
-    bool result = false;
-
-    /// @todo Use the 'version' string as the "magic" identifier.
-    /*char vcheck[VERSIONSIZE];
-    std::memset(vcheck, 0, sizeof(vcheck));
-    Reader_Read(svReader, vcheck, sizeof(vcheck));
-
-    if(strncmp(vcheck, "version ", 8))*/
-    {
-        SaveInfo_Read_Hr_v13(metadata, reader);
-        result = (metadata["version"].value().asNumber() == 130);
-    }
-
-    Reader_Delete(reader); reader = 0;
-    SV_CloseFile_Hr_v13();
-
-    return result;
-}
-#endif
-
 de::game::IMapStateReader *HereticV13GameStateReader::make()
 {
     return new HereticV13GameStateReader;
@@ -1001,7 +819,94 @@ void HereticV13GameStateReader::read(de::Path const &filePath, de::game::Session
         throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(filePath).pretty() + "\"");
     }
 
-    d->readMap();
+    d->reader = SV_NewReader_Hr_v13();
 
+    d->readPlayers();
+
+    // Do sectors.
+    for(int i = 0; i < numsectors; ++i)
+    {
+        Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
+
+        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,     (coord_t)Reader_ReadInt16(d->reader));
+        P_SetDoublep(sec, DMU_CEILING_HEIGHT,   (coord_t)Reader_ReadInt16(d->reader));
+
+        Uri *floorTextureUrn = readTextureUrn(d->reader, "Flats");
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   DD_MaterialForTextureUri(floorTextureUrn));
+        Uri_Delete(floorTextureUrn);
+
+        Uri *ceilingTextureUrn = readTextureUrn(d->reader, "Flats");
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, DD_MaterialForTextureUri(ceilingTextureUrn));
+        Uri_Delete(ceilingTextureUrn);
+
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL,      (float) (Reader_ReadInt16(d->reader)) / 255.0f);
+
+        xsec->special = Reader_ReadInt16(d->reader); // needed?
+        /*xsec->tag = **/Reader_ReadInt16(d->reader); // needed?
+        xsec->specialData = 0;
+        xsec->soundTarget = 0;
+    }
+
+    // Do lines.
+    for(int i = 0; i < numlines; ++i)
+    {
+        Line *line     = (Line *)P_ToPtr(DMU_LINE, i);
+        xline_t *xline = P_ToXLine(line);
+
+        xline->flags   = Reader_ReadInt16(d->reader);
+        xline->special = Reader_ReadInt16(d->reader);
+        /*xline->tag    =*/Reader_ReadInt16(d->reader);
+
+        for(int k = 0; k < 2; ++k)
+        {
+            Side *sdef = (Side *)P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
+            if(!sdef) continue;
+
+            fixed_t offx = Reader_ReadInt16(d->reader) << FRACBITS;
+            fixed_t offy = Reader_ReadInt16(d->reader) << FRACBITS;
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X,    offx);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y,    offy);
+            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
+
+            Uri *topTextureUrn = readTextureUrn(d->reader, "Textures");
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    DD_MaterialForTextureUri(topTextureUrn));
+            Uri_Delete(topTextureUrn);
+
+            Uri *bottomTextureUrn = readTextureUrn(d->reader, "Textures");
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, DD_MaterialForTextureUri(bottomTextureUrn));
+            Uri_Delete(bottomTextureUrn);
+
+            Uri *middleTextureUrn = readTextureUrn(d->reader, "Textures");
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, DD_MaterialForTextureUri(middleTextureUrn));
+            Uri_Delete(middleTextureUrn);
+        }
+    }
+
+    d->readThinkers();
+    d->readSpecials();
+
+    byte const consistency = Reader_ReadByte(d->reader);
+    Reader_Delete(d->reader); d->reader = 0;
     SV_CloseFile_Hr_v13();
+
+    if(consistency != 0x1d)
+    {
+        throw ReadError("HereticV13GameStateReader", "Bad savegame (consistency test failed!)");
+    }
+
+    // Material scrollers must be spawned.
+    P_SpawnAllMaterialOriginScrollers();
+
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Inform the engine that map setup must be performed once more.
+    R_SetupMap(0, 0);
 }

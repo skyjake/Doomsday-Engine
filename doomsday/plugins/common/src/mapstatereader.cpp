@@ -23,11 +23,19 @@
 
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
+#include "d_netsv.h"           /// @todo remove me
+#include "hu_log.h"
 #include "p_actor.h"
-#include "p_saveg.h"         // SV_ReadLine, SV_ReadSector
+#include "p_mapsetup.h"
+#include "p_savedef.h"
+#include "p_saveg.h"           // SV_ReadLine, SV_ReadSector
 #include "p_saveio.h"
+#include "player.h"
 #include "polyobjs.h"
+#include "r_common.h"
 #include "thinkerinfo.h"
+#include <de/ArrayValue>
+#include <de/NativePath>
 #include <de/String>
 
 #if !__JHEXEN__
@@ -56,12 +64,21 @@ namespace internal
 
 using namespace internal;
 
+using namespace de;
+using de::game::SessionMetadata;
+
 DENG2_PIMPL(MapStateReader)
 {
-    Reader *reader; // Not owned.
+    reader_s *reader;
     int saveVersion;
     int mapVersion;
     bool formatHasMapVersionNumber;
+
+    /// Metadata for the serialized game state to be read. Not owned.
+    SessionMetadata const *metadata;
+
+    dd_bool loaded[MAXPLAYERS];
+    dd_bool infile[MAXPLAYERS];
 
     int thingArchiveSize;
 
@@ -75,17 +92,22 @@ DENG2_PIMPL(MapStateReader)
         , saveVersion(0)
         , mapVersion(0)
         , formatHasMapVersionNumber(false)
+        , metadata(0)
         , thingArchiveSize(0)
         , thingArchive(0)
         , materialArchive(0)
         , sideArchive(0)
-    {}
+    {
+        de::zap(loaded);
+        de::zap(infile);
+    }
 
     ~Instance()
     {
         delete thingArchive;
         delete sideArchive;
         MaterialArchive_Delete(materialArchive);
+        Reader_Delete(reader);
     }
 
     void beginSegment(int segId)
@@ -138,6 +160,17 @@ DENG2_PIMPL(MapStateReader)
 #endif
     }
 
+    void readConsistencyBytes()
+    {
+#if !__JHEXEN__
+        if(Reader_ReadByte(reader) != CONSISTENCY)
+        {
+            /// @throw ReadError Failed alignment check.
+            throw ReadError("GameStateReader", "Corrupt save game, failed consistency check");
+        }
+#endif
+    }
+
     void readMaterialArchive()
     {
         materialArchive = MaterialArchive_NewEmpty(useMaterialArchiveSegments());
@@ -146,6 +179,146 @@ DENG2_PIMPL(MapStateReader)
 #endif
         {
             MaterialArchive_Read(materialArchive, reader, mapVersion < 6? 0 : -1);
+        }
+    }
+
+    // We don't have the right to say which players are in the game. The players that already are
+    // will continue to be. If the data for a given player is not in the savegame file, he will
+    // be notified. The data for players who were saved but are not currently in the game will be
+    // discarded.
+    void readPlayers()
+    {
+        int const saveVersion = metadata->geti("version");
+#if __JHEXEN__
+        if(saveVersion >= 4)
+#else
+        if(saveVersion >= 5)
+#endif
+        {
+            beginSegment(ASEG_PLAYER_HEADER);
+        }
+        playerheader_t plrHdr;
+        plrHdr.read(reader, saveVersion);
+
+        // Setup the dummy.
+        ddplayer_t dummyDDPlayer;
+        player_t dummyPlayer;
+        dummyPlayer.plr = &dummyDDPlayer;
+
+#if !__JHEXEN__
+        ArrayValue const &presentPlayers = (*metadata)["players"].value().as<de::ArrayValue>();
+#endif
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            loaded[i] = 0;
+#if !__JHEXEN__
+            infile[i] = presentPlayers.at(i).isTrue();;
+#endif
+        }
+
+        beginSegment(ASEG_PLAYERS);
+        {
+#if __JHEXEN__
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                infile[i] = Reader_ReadByte(reader);
+            }
+#endif
+
+            // Load the players.
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                // By default a saved player translates to nothing.
+                saveToRealPlayerNum[i] = -1;
+
+                if(!infile[i]) continue;
+
+                // The ID number will determine which player this actually is.
+                int pid = Reader_ReadInt32(reader);
+                player_t *player = 0;
+                for(int k = 0; k < MAXPLAYERS; ++k)
+                {
+                    if((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
+                       (!IS_NETGAME && k == 0))
+                    {
+                        // This is our guy.
+                        player = players + k;
+                        loaded[k] = true;
+                        // Later references to the player number 'i' must be translated!
+                        saveToRealPlayerNum[i] = k;
+                        App_Log(DE2_DEV_MAP_MSG, "readPlayers: saved %i is now %i", i, k);
+                        break;
+                    }
+                }
+
+                if(!player)
+                {
+                    // We have a missing player. Use a dummy to load the data.
+                    player = &dummyPlayer;
+                }
+
+                // Read the data.
+                player->read(reader, plrHdr);
+            }
+        }
+        endSegment();
+    }
+
+    void kickMissingPlayers()
+    {
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            bool notLoaded = false;
+
+#if __JHEXEN__
+            if(players[i].plr->inGame)
+            {
+                // Try to find a saved player that corresponds this one.
+                int k;
+                for(k = 0; k < MAXPLAYERS; ++k)
+                {
+                    if(saveToRealPlayerNum[k] == i)
+                    {
+                        break;
+                    }
+                }
+                if(k < MAXPLAYERS)
+                    continue; // Found; don't bother this player.
+
+                players[i].playerState = PST_REBORN;
+
+                if(!i)
+                {
+                    // If the CONSOLEPLAYER isn't in the save, it must be some
+                    // other player's file?
+                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                }
+                else
+                {
+                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
+                    notLoaded = true;
+                }
+            }
+#else
+            if(!loaded[i] && players[i].plr->inGame)
+            {
+                if(!i)
+                {
+                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                }
+                else
+                {
+                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
+                }
+                notLoaded = true;
+            }
+#endif
+
+            if(notLoaded)
+            {
+                // Kick this player out, he doesn't belong here.
+                DD_Executef(false, "kick %i", i);
+            }
         }
     }
 
@@ -556,19 +729,38 @@ DENG2_PIMPL(MapStateReader)
     }
 };
 
-MapStateReader::MapStateReader(int saveVersion, int thingArchiveSize)
-    : d(new Instance(this))
-{
-    d->saveVersion      = saveVersion;
-    d->mapVersion       = saveVersion; // Default: mapVersion == saveVersion
+MapStateReader::MapStateReader() : d(new Instance(this))
+{}
 
-    d->thingArchiveSize = thingArchiveSize;
+MapStateReader::~MapStateReader()
+{}
+
+game::IMapStateReader *MapStateReader::make() // static
+{
+    return new MapStateReader;
 }
 
-void MapStateReader::read(Reader *reader)
+void MapStateReader::read(Path const &filePath, game::SessionMetadata const &metadata)
 {
-    DENG_ASSERT(reader != 0);
-    d->reader = reader;
+    if(!SV_OpenFile(filePath, false/*for reading*/))
+    {
+        throw FileAccessError("MapStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
+    }
+
+    d->metadata = &metadata;
+
+    d->reader = SV_NewReader();
+    DENG2_ASSERT(d->reader != 0);
+
+    d->saveVersion = d->metadata->geti("version");
+    d->mapVersion  = d->saveVersion; // Default: mapVersion == saveVersion
+
+    d->thingArchiveSize = 0;
+#if !__JHEXEN__
+    d->thingArchiveSize = (d->saveVersion >= 5? Reader_ReadInt32(d->reader) : 1024);
+#endif
+
+    d->readPlayers();
 
     // Prepare and populate the side archive.
     d->sideArchive = new dmu_lib::SideArchive;
@@ -598,6 +790,42 @@ void MapStateReader::read(Reader *reader)
     delete d->thingArchive; d->thingArchive = 0;
     delete d->sideArchive; d->sideArchive = 0;
     MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
+
+    d->readConsistencyBytes();
+    Reader_Delete(d->reader); d->reader = 0;
+
+#if __JHEXEN__
+    SV_ClearTargetPlayers();
+#endif
+
+#if __JHEXEN__
+    SV_HxReleaseSaveBuffer();
+#else
+    SV_CloseFile();
+#endif
+
+    // Notify the players that weren't in the savegame.
+    d->kickMissingPlayers();
+
+#if !__JHEXEN__
+    // In netgames, the server tells the clients about this.
+    NetSv_LoadGame(d->metadata->geti("sessionId"));
+#endif
+
+    // Material scrollers must be spawned for older savegame versions.
+    if(d->saveVersion <= 10)
+    {
+        P_SpawnAllMaterialOriginScrollers();
+    }
+
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Inform the engine that map setup must be performed once more.
+    R_SetupMap(0, 0);
 }
 
 mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address) const
@@ -629,7 +857,7 @@ int MapStateReader::mapVersion()
     return d->mapVersion;
 }
 
-Reader *MapStateReader::reader()
+reader_s *MapStateReader::reader()
 {
     DENG_ASSERT(d->reader != 0);
     return d->reader;

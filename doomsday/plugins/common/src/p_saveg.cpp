@@ -778,6 +778,9 @@ static de::String saveNameForClientSessionId(uint sessionId)
 
 void SV_SaveGameClient(uint sessionId)
 {
+    DENG2_ASSERT(!"SV_SaveGameClient -- needs updating");
+    return;
+
 #if !__JHEXEN__ // unsupported in libhexen
     player_t *pl = &players[CONSOLEPLAYER];
     mobj_t *mo   = pl->plr->mo;
@@ -840,6 +843,9 @@ void SV_SaveGameClient(uint sessionId)
 
 void SV_LoadGameClient(uint sessionId)
 {
+    DENG2_ASSERT(!"SV_LoadGameClient -- needs updating");
+    return;
+
 #if !__JHEXEN__ // unsupported in libhexen
     player_t *cpl = players + CONSOLEPLAYER;
     mobj_t *mo    = cpl->plr->mo;
@@ -925,7 +931,7 @@ void SV_LoadGameClient(uint sessionId)
 
     cpl->read(reader, plrHdr);
 
-    MapStateReader(saveVersion).read(reader);
+    MapStateReader().read(de::Path(Str_Text(Uri_Resolved(mapUri))), *metadata);
 
     SV_CloseFile();
     Reader_Delete(reader);

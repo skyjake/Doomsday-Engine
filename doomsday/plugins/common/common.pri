@@ -24,7 +24,6 @@ HEADERS += \
     $$common_inc/g_eventsequence.h \
     $$common_inc/g_update.h \
     $$common_inc/gamerules.h \
-    $$common_inc/gamestatereader.h \
     $$common_inc/gamestatewriter.h \
     $$common_inc/gl_drawpatch.h \
     $$common_inc/hexlex.h \
@@ -90,7 +89,6 @@ SOURCES += \
     $$common_src/g_game.cpp \
     $$common_src/g_update.c \
     $$common_src/gamerules.cpp \
-    $$common_src/gamestatereader.cpp \
     $$common_src/gamestatewriter.cpp \
     $$common_src/gl_drawpatch.c \
     $$common_src/hexlex.cpp \

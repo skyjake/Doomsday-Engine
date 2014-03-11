@@ -30,7 +30,6 @@
 #include "g_controls.h"
 #include "g_eventsequence.h"
 #include "g_update.h"
-#include "gamestatereader.h"
 #include "gamestatewriter.h"
 #include "hu_lib.h"
 #include "hu_chat.h"
@@ -485,7 +484,7 @@ static void initSaveSlots()
 
     // Declare the native game state reader.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader("Native", &GameStateReader::make);
+    saveRepo.declareReader("Native", &MapStateReader::make);
 
     // Setup the logical save slot bindings.
     int const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
@@ -1392,17 +1391,7 @@ int G_DoLoadMap(loadmap_params_t *p)
         try
         {
             SaveSlot &sslot = G_SaveSlots()["base"];
-            de::Path const mapStateFilePath(Str_Text(Uri_Compose(gameMapUri)));
-
-            if(!SV_OpenFile(mapStateFilePath, false/*for read*/))
-            {
-                Reader_Delete(reader);
-                throw de::Error("G_DoLoadMap", "Failed opening \"" + de::NativePath(mapStateFilePath).pretty() + "\" for read");
-            }
-
-            MapStateReader(sslot.saveMetadata()["version"].value().asNumber()).read(reader);
-
-            SV_HxReleaseSaveBuffer();
+            MapStateReader().read(Str_Text(Uri_Compose(gameMapUri)), sslot.saveMetadata());
         }
         catch(de::Error const &er)
         {

@@ -640,7 +640,7 @@ static bool convertSavegame(Path oldSavePath)
             xlatWorldACScriptData(reader, writer);
             arch.add("ACScript", worldACScriptData);
 
-            // Serialized map states are written to similarly named "side car" files.
+            // Serialized map states are in similarly named "side car" files.
             int const maxHubMaps = 99;
             for(int i = 0; i < maxHubMaps; ++i)
             {

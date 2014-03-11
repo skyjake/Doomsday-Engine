@@ -24,6 +24,7 @@
 #include "common.h"
 #include "thingarchive.h"
 #include <de/Error>
+#include <de/game/IMapStateReader>
 
 /**
  * Performs saved game map state deserialization.
@@ -31,22 +32,22 @@
  * @ingroup libcommon
  * @see MapStateWriter
  */
-class MapStateReader
+class MapStateReader : public de::game::IMapStateReader
 {
 public:
     /// Base class for read-related errors. @ingroup errors
     DENG2_ERROR(ReadError);
 
 public:
-    /**
-     * @param saveVersion  Logical saved state version number.
-     */
-    MapStateReader(int saveVersion, int thingArchiveSize = 0);
+    MapStateReader();
+    ~MapStateReader();
+
+    static de::game::IMapStateReader *make();
 
     /**
-     * Deserialize the saved map state using the specified @a reader.
+     * Deserialize the saved map state.
      */
-    void read(Reader *reader);
+    void read(de::Path const &filePath, de::game::SessionMetadata const &metadata);
 
     /**
      * Returns the logical map version of the saved map state.
