@@ -1,4 +1,4 @@
-/** @file hereticv13gamestatereader.cpp  Heretic ver 1.3 save game reader.
+/** @file hereticv13mapstatereader.cpp  Heretic ver 1.3 save game reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,7 +20,7 @@
  */
 
 #include "jheretic.h"
-#include "hereticv13gamestatereader.h"
+#include "hereticv13mapstatereader.h"
 
 #include "am_map.h"
 #include "dmu_lib.h"
@@ -656,7 +656,7 @@ static Reader *SV_NewReader_Hr_v13()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-DENG2_PIMPL(HereticV13GameStateReader)
+DENG2_PIMPL(HereticV13MapStateReader)
 {
     Reader *reader;
 
@@ -801,18 +801,18 @@ DENG2_PIMPL(HereticV13GameStateReader)
     }
 };
 
-HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
+HereticV13MapStateReader::HereticV13MapStateReader() : d(new Instance(this))
 {}
 
-HereticV13GameStateReader::~HereticV13GameStateReader()
+HereticV13MapStateReader::~HereticV13MapStateReader()
 {}
 
-de::game::IMapStateReader *HereticV13GameStateReader::make()
+de::game::IMapStateReader *HereticV13MapStateReader::make()
 {
-    return new HereticV13GameStateReader;
+    return new HereticV13MapStateReader;
 }
 
-void HereticV13GameStateReader::read(de::Path const &filePath, de::game::SessionMetadata const &metadata)
+void HereticV13MapStateReader::read(de::Path const &filePath, de::game::SessionMetadata const &metadata)
 {
     if(!SV_OpenFile_Hr_v13(filePath))
     {

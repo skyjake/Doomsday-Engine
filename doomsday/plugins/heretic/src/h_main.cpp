@@ -26,7 +26,7 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "p_saveg.h"
-#include "hereticv13gamestatereader.h"
+#include "hereticv13mapstatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_inventory.h"
@@ -320,7 +320,7 @@ void H_PreInit()
 
     // Declare the Heretic V13 game state reader/interpreter.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader("HereticV13", &HereticV13GameStateReader::make);
+    saveRepo.declareReader("HereticV13", &HereticV13MapStateReader::make);
 }
 
 void H_PostInit()

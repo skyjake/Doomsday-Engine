@@ -1,4 +1,4 @@
-/** @file hereticv13gamestatereader.h  Heretic ver 1.3 saved game map state reader.
+/** @file hereticv13mapstatereader.h  Heretic ver 1.3 saved game map state reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_HERETICV13_GAMESTATEREADER
-#define LIBHERETIC_HERETICV13_GAMESTATEREADER
+#ifndef LIBHERETIC_HERETICV13_MAPSTATEREADER
+#define LIBHERETIC_HERETICV13_MAPSTATEREADER
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -33,14 +33,13 @@
  *
  * @ingroup libheretic
  */
-class HereticV13GameStateReader : public de::game::IMapStateReader
+class HereticV13MapStateReader : public de::game::IMapStateReader
 {
 public:
-    HereticV13GameStateReader();
-    ~HereticV13GameStateReader();
+    HereticV13MapStateReader();
+    ~HereticV13MapStateReader();
 
     static de::game::IMapStateReader *make();
-    //static bool recognize(de::Path const &stateFilePath, de::game::SessionMetadata &metadata);
 
     void read(de::Path const &filePath, de::game::SessionMetadata const &metadata);
 
@@ -48,4 +47,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBHERETIC_HERETICV13_GAMESTATEREADER
+#endif // LIBHERETIC_HERETICV13_MAPSTATEREADER
