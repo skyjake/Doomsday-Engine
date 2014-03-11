@@ -45,6 +45,8 @@ protected:
     ByteArrayFile(String const &name = "") : File(name) {}
 
 public:
+    dsize size() const;
+
     // Implements IIOStream.
     IOStream &operator << (IByteArray const &bytes);
     IIStream &operator >> (IByteArray &bytes);
