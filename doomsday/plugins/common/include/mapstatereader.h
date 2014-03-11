@@ -23,7 +23,6 @@
 
 #include "common.h"
 #include "thingarchive.h"
-#include <de/Error>
 #include <de/game/MapStateReader>
 
 /**
@@ -34,10 +33,6 @@
  */
 class MapStateReader : public de::game::MapStateReader
 {
-public:
-    /// Base class for read-related errors. @ingroup errors
-    DENG2_ERROR(ReadError);
-
 public:
     MapStateReader(de::game::SavedSession const &session);
     ~MapStateReader();
@@ -92,4 +87,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBCOMMON_NATIVEMAPSTATEREADER_H
+#endif // LIBCOMMON_MAPSTATEREADER_H
