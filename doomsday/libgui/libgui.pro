@@ -15,6 +15,7 @@ CONFIG += deng_qtgui deng_qtopengl
 
 include(../dep_deng2.pri)
 include(../dep_opengl.pri)
+include(../dep_assimp.pri)
 
 DEFINES += __LIBGUI__
 INCLUDEPATH += include
@@ -74,6 +75,7 @@ publicHeaders(root, \
     include/de/KeyEventSource \
     include/de/MouseEvent \
     include/de/MouseEventSource \
+    include/de/ModelDrawable \
     include/de/NativeFont \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
@@ -111,6 +113,7 @@ publicHeaders(gui, \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
+    include/de/gui/modeldrawable.h \
     include/de/gui/mouseevent.h \
     include/de/gui/mouseeventsource.h \
     include/de/gui/nativefont.h \
@@ -153,6 +156,7 @@ SOURCES +=  \
     src/keyeventsource.cpp \
     src/mouseevent.cpp \
     src/mouseeventsource.cpp \
+    src/modeldrawable.cpp \
     src/nativefont.cpp \
     src/qtnativefont.h \
     src/persistentcanvaswindow.cpp \
