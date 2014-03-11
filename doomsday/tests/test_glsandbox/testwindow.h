@@ -34,6 +34,7 @@ public:
 public slots:
     void testRenderToTexture();
     void testDynamicAtlas();
+    void testModel();
 
 private:
     DENG2_PRIVATE(d)

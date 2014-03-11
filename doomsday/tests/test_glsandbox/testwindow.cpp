@@ -30,6 +30,7 @@
 #include <de/GLTexture>
 #include <de/GLTarget>
 #include <de/AtlasTexture>
+#include <de/ModelDrawable>
 #include <de/GuiApp>
 #include <de/Clock>
 
@@ -44,7 +45,8 @@ DENG2_OBSERVES(Bank, Load)
     enum Mode
     {
         TestRenderToTexture,
-        TestDynamicAtlas
+        TestDynamicAtlas,
+        TestModel
     };
 
     Mode mode;
@@ -59,6 +61,7 @@ DENG2_OBSERVES(Bank, Load)
     GLUniform uTex;
     GLTexture frameTex;
     GLTexture testpic;
+    ModelDrawable model;
     std::auto_ptr<AtlasTexture> atlas;
     std::auto_ptr<GLTarget> frameTarget;
     Time startedAt;
@@ -95,6 +98,8 @@ DENG2_OBSERVES(Bank, Load)
         imageBank.add("rtt.cube", "/data/graphics/testpic.png");
         //imageBank.loadAll();
         imageBank.audienceForLoad() += this;
+
+        model.load(App::rootFolder().locate<File const>("/data/marine.md2"));
     }
 
     void canvasGLInit(Canvas &cv)
@@ -272,6 +277,12 @@ DENG2_OBSERVES(Bank, Load)
                     Matrix4f::scale(cv.height()/150.f) *
                     Matrix4f::translate(Vector2f(-50, -50));
             break;
+
+        case TestModel:
+            // 3D projection.
+            projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
+                         Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
+            break;
         }
     }
 
@@ -313,6 +324,10 @@ DENG2_OBSERVES(Bank, Load)
             drawAtlasFrame();
             GLState::pop();
             break;
+
+        case TestModel:
+            drawModel();
+            break;
         }
     }
 
@@ -342,6 +357,15 @@ DENG2_OBSERVES(Bank, Load)
         atlasOb.draw();
     }
 
+    void drawModel()
+    {
+        GLState::current().target().clear(GLTarget::ColorDepth);
+
+        // TODO: provide mvp matrix (projection * model)
+
+        model.draw();
+    }
+
     void timeChanged(Clock const &clock)
     {
         if(!startedAt.isValid())
@@ -353,6 +377,7 @@ DENG2_OBSERVES(Bank, Load)
         switch(mode)
         {
         case TestRenderToTexture:
+        case TestModel:
             modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
                           Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
             break;
@@ -421,6 +446,7 @@ TestWindow::TestWindow() : d(new Instance(this))
     QToolBar *tools = addToolBar(tr("Tests"));
     tools->addAction("RTT", this, SLOT(testRenderToTexture()));
     tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
+    tools->addAction("Model", this, SLOT(testModel()));
 }
 
 void TestWindow::canvasGLDraw(Canvas &canvas)
@@ -439,4 +465,9 @@ void TestWindow::testRenderToTexture()
 void TestWindow::testDynamicAtlas()
 {
     d->setMode(Instance::TestDynamicAtlas);
+}
+
+void TestWindow::testModel()
+{
+    d->setMode(Instance::TestModel);
 }

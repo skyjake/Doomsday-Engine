@@ -17,6 +17,7 @@ SOURCES += \
 deployTest($$TARGET)
 
 gfx.files = testpic.png
+model.files = marine.md2
 
 macx {
     linkBinaryToBundledLibdeng2($${TARGET}.app/Contents/MacOS/$${TARGET})
@@ -27,7 +28,8 @@ macx {
 }
 else {
     gfx.path = $$DENG_DATA_DIR/graphics
-    INSTALLS += gfx
+    model.path = $$DENG_DATA_DIR
+    INSTALLS += gfx model
 }
 
 HEADERS += \
