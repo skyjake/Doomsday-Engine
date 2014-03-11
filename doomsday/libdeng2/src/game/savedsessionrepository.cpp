@@ -20,7 +20,7 @@
 
 #include "de/App"
 #include "de/game/Game"
-#include "de/game/IMapStateReader"
+#include "de/game/MapStateReader"
 #include "de/Log"
 #include "de/NativePath"
 #include "de/PackageFolder"
@@ -240,11 +240,11 @@ bool SavedSessionRepository::recognize(SavedSession &session) const
     return d->recognize(session) != 0;
 }
 
-IMapStateReader *SavedSessionRepository::recognizeAndMakeReader(SavedSession &session) const
+MapStateReader *SavedSessionRepository::recognizeAndMakeReader(SavedSession &session) const
 {
     if(Instance::ReaderInfo const *rdrInfo = d->recognize(session))
     {
-        return rdrInfo->newReader();
+        return rdrInfo->newReader(session);
     }
     return 0; // Unrecognized
 }

@@ -727,20 +727,22 @@ DENG2_PIMPL(MapStateReader)
     }
 };
 
-MapStateReader::MapStateReader() : d(new Instance(this))
+MapStateReader::MapStateReader(game::SavedSession const &session)
+    : game::MapStateReader(session)
+    , d(new Instance(this))
 {}
 
 MapStateReader::~MapStateReader()
 {}
 
-game::IMapStateReader *MapStateReader::make() // static
+game::MapStateReader *MapStateReader::make(game::SavedSession const &session) // static
 {
-    return new MapStateReader;
+    return new MapStateReader(session);
 }
 
-void MapStateReader::read(game::SavedSession const &session, String const &mapUriStr)
+void MapStateReader::read(String const &mapUriStr)
 {
-    game::SessionMetadata const &metadata = session.metadata();
+    game::SessionMetadata const &metadata = session().metadata();
     Path const &filePath = Path(mapUriStr);
 
     if(!SV_OpenFile(filePath, false/*for reading*/))

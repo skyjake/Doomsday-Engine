@@ -22,7 +22,7 @@
 #define LIBCOMMON_GAMESTATEWRITER_H
 
 #include <de/Error>
-#include <de/game/IMapStateReader>
+#include <de/game/MapStateReader>
 #include <de/Path>
 
 /**

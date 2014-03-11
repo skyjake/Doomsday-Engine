@@ -367,9 +367,9 @@ void SavedSession::replaceMetadata(Metadata *newMetadata)
     d->needUpdateStatus = true;
 }
 
-std::auto_ptr<IMapStateReader> SavedSession::mapStateReader()
+std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
 {
-    std::auto_ptr<IMapStateReader> p(repository().recognizeAndMakeReader(*this));
+    std::auto_ptr<MapStateReader> p(repository().recognizeAndMakeReader(*this));
     if(!p.get())
     {
         /// @throw UnrecognizedMapStateError The game state format was not recognized.

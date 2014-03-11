@@ -26,22 +26,22 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include <de/game/IMapStateReader>
+#include <de/game/MapStateReader>
 
 /**
  * Doom ver 1.9 saved game map state reader.
  *
  * @ingroup libdoom
  */
-class DoomV9MapStateReader : public de::game::IMapStateReader
+class DoomV9MapStateReader : public de::game::MapStateReader
 {
 public:
-    DoomV9MapStateReader();
+    DoomV9MapStateReader(de::game::SavedSession const &session);
     ~DoomV9MapStateReader();
 
-    static de::game::IMapStateReader *make();
+    static de::game::MapStateReader *make(de::game::SavedSession const &session);
 
-    void read(de::game::SavedSession const &session, de::String const &mapUriStr);
+    void read(de::String const &mapUriStr);
 
 private:
     DENG2_PRIVATE(d)

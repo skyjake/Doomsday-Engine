@@ -26,22 +26,22 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include <de/game/IMapStateReader>
+#include <de/game/MapStateReader>
 
 /**
  * Heretic ver 1.3 saved game map state reader.
  *
  * @ingroup libheretic
  */
-class HereticV13MapStateReader : public de::game::IMapStateReader
+class HereticV13MapStateReader : public de::game::MapStateReader
 {
 public:
-    HereticV13MapStateReader();
+    HereticV13MapStateReader(de::game::SavedSession const &session);
     ~HereticV13MapStateReader();
 
-    static de::game::IMapStateReader *make();
+    static de::game::MapStateReader *make(de::game::SavedSession const &session);
 
-    void read(de::game::SavedSession const &session, de::String const &mapUriStr);
+    void read(de::String const &mapUriStr);
 
 private:
     DENG2_PRIVATE(d)

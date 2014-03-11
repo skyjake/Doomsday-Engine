@@ -613,10 +613,10 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static bool SV_OpenFile_Dm_v19(de::Path path)
+static bool SV_OpenFile_Dm_v19(Path path)
 {
     DENG_ASSERT(saveBuffer == 0);
-    if(!M_ReadFile(de::NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer))
+    if(!M_ReadFile(NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer))
     {
         return false;
     }
@@ -689,7 +689,7 @@ DENG2_PIMPL(DoomV9MapStateReader)
                 break;
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + de::String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
             }
         }
     }
@@ -787,31 +787,33 @@ DENG2_PIMPL(DoomV9MapStateReader)
                 break; }
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + de::String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
             }
         }
     }
 };
 
-DoomV9MapStateReader::DoomV9MapStateReader() : d(new Instance(this))
+DoomV9MapStateReader::DoomV9MapStateReader(game::SavedSession const &session)
+    : game::MapStateReader(session)
+    , d(new Instance(this))
 {}
 
 DoomV9MapStateReader::~DoomV9MapStateReader()
 {}
 
-de::game::IMapStateReader *DoomV9MapStateReader::make()
+game::MapStateReader *DoomV9MapStateReader::make(game::SavedSession const &session)
 {
-    return new DoomV9MapStateReader;
+    return new DoomV9MapStateReader(session);
 }
 
-void DoomV9MapStateReader::read(game::SavedSession const &session, String const &mapUriStr)
+void DoomV9MapStateReader::read(String const &mapUriStr)
 {
-    game::SessionMetadata const &metadata = session.metadata();
+    //game::SessionMetadata const &metadata = session().metadata();
     Path const &filePath = Path(mapUriStr);
 
     if(!SV_OpenFile_Dm_v19(filePath))
     {
-        throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::NativePath(filePath).pretty() + "\"");
+        throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
     }
 
     d->reader = SV_NewReader_Dm_v19();

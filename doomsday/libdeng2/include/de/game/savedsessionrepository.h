@@ -21,13 +21,13 @@
 
 #include "../Error"
 #include "../Folder"
-#include "../game/IMapStateReader"
+#include "../game/MapStateReader"
 #include "../game/SavedSession"
 #include "../Path"
 #include "../String"
 
-/// Game state reader instantiator function ptr.
-typedef de::game::IMapStateReader *(*MapStateReaderMakeFunc)();
+/// Game map state reader instantiator function ptr.
+typedef de::game::MapStateReader *(*MapStateReaderMakeFunc)(de::game::SavedSession const &session);
 
 namespace de {
 namespace game {
@@ -92,7 +92,7 @@ public:
     void declareReader(String formatName, MapStateReaderMakeFunc maker);
 
     /**
-     * Determines whether a IMapStateReader appropriate for the specified saved @a session
+     * Determines whether a MapStateReader appropriate for the specified saved @a session
      * is available and if so, reads the session metadata.
      *
      * @param session  The session metadata will be written here if recognized.
@@ -104,7 +104,7 @@ public:
     bool recognize(SavedSession &session) const;
 
     /**
-     * Determines whether a IMapStateReader appropriate for the specified saved @a session
+     * Determines whether a MapStateReader appropriate for the specified saved @a session
      * is available and if so, reads the session metadata and returns a new reader instance
      * for deserializing the game map state.
      *
@@ -114,7 +114,7 @@ public:
      *
      * @see recognize()
      */
-    IMapStateReader *recognizeAndMakeReader(SavedSession &session) const;
+    MapStateReader *recognizeAndMakeReader(SavedSession &session) const;
 
 private:
     DENG2_PRIVATE(d)

@@ -28,7 +28,7 @@
 namespace de {
 namespace game {
 
-class IMapStateReader;
+class MapStateReader;
 class SavedSessionRepository;
 
 /**
@@ -161,7 +161,7 @@ public:
     Metadata const &metadata() const;
     void replaceMetadata(Metadata *newMetadata);
 
-    std::auto_ptr<IMapStateReader> mapStateReader();
+    std::auto_ptr<MapStateReader> mapStateReader();
 
 private:
     DENG2_PRIVATE(d)

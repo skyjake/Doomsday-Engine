@@ -634,10 +634,10 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static bool SV_OpenFile_Hr_v13(de::Path filePath)
+static bool SV_OpenFile_Hr_v13(Path filePath)
 {
     DENG_ASSERT(saveBuffer == 0);
-    if(!M_ReadFile(de::NativePath(filePath).expand().toUtf8().constData(), (char **)&saveBuffer))
+    if(!M_ReadFile(NativePath(filePath).expand().toUtf8().constData(), (char **)&saveBuffer))
     {
         return false;
     }
@@ -705,7 +705,7 @@ DENG2_PIMPL(HereticV13MapStateReader)
                 break;
 
             default:
-                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + de::String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
             }
         }
     }
@@ -797,31 +797,33 @@ DENG2_PIMPL(HereticV13MapStateReader)
                 break; }
 
             default:
-                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + de::String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
             }
         }
     }
 };
 
-HereticV13MapStateReader::HereticV13MapStateReader() : d(new Instance(this))
+HereticV13MapStateReader::HereticV13MapStateReader(game::SavedSession const &session)
+    : game::MapStateReader(session)
+    , d(new Instance(this))
 {}
 
 HereticV13MapStateReader::~HereticV13MapStateReader()
 {}
 
-de::game::IMapStateReader *HereticV13MapStateReader::make()
+game::MapStateReader *HereticV13MapStateReader::make(game::SavedSession const &session)
 {
-    return new HereticV13MapStateReader;
+    return new HereticV13MapStateReader(session);
 }
 
-void HereticV13MapStateReader::read(game::SavedSession const &session, String const &mapUriStr)
+void HereticV13MapStateReader::read(String const &mapUriStr)
 {
-    game::SessionMetadata const &metadata = session.metadata();
+    //game::SessionMetadata const &metadata = session().metadata();
     Path const &filePath = Path(mapUriStr);
 
     if(!SV_OpenFile_Hr_v13(filePath))
     {
-        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(filePath).pretty() + "\"");
+        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
     }
 
     d->reader = SV_NewReader_Hr_v13();

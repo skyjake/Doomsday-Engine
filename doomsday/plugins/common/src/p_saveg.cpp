@@ -30,7 +30,7 @@
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
 #include "saveslots.h"
-#include <de/game/IMapStateReader>
+#include <de/game/MapStateReader>
 #include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/String>
@@ -931,7 +931,7 @@ void SV_LoadGameClient(uint sessionId)
 
     cpl->read(reader, plrHdr);
 
-    MapStateReader().read(*session, Str_Text(Uri_Resolved(mapUri)));
+    MapStateReader(*session).read(Str_Text(Uri_Resolved(mapUri)));
 
     SV_CloseFile();
     Reader_Delete(reader);

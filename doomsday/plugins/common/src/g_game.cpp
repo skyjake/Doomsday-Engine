@@ -60,7 +60,7 @@
 #include "x_hair.h"
 
 #include <de/ArrayValue>
-#include <de/game/IMapStateReader>
+#include <de/game/MapStateReader>
 #include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/NumberValue>
@@ -1388,8 +1388,8 @@ int G_DoLoadMap(loadmap_params_t *p)
 
         try
         {
-            MapStateReader().read(G_SaveSlots()["base"].savedSession(),
-                                  Str_Text(Uri_Compose(gameMapUri)));
+            de::game::SavedSession &session = G_SaveSlots()["base"].savedSession();
+            session.mapStateReader()->read(Str_Text(Uri_Compose(gameMapUri)));
         }
         catch(de::Error const &er)
         {
@@ -3287,7 +3287,7 @@ void G_DoLoadSession(de::String slotId)
         mapTime = metadata.geti("mapTime");
 #endif
 
-        session.mapStateReader()->read(session, Str_Text(Uri_Resolved(gameMapUri)));
+        session.mapStateReader()->read(Str_Text(Uri_Resolved(gameMapUri)));
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);

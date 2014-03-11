@@ -1,4 +1,4 @@
-/** @file imapstatereader.h  Interface for a serialized game map state reader.
+/** @file mapstatereader.h  Abstract base for serialized game map state readers.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_IMAPSTATEREADER_H
-#define LIBDENG2_IMAPSTATEREADER_H
+#ifndef LIBDENG2_MAPSTATEREADER_H
+#define LIBDENG2_MAPSTATEREADER_H
 
 #include <de/Error>
 #include <de/game/SavedSession>
@@ -27,11 +27,11 @@ namespace de {
 namespace game {
 
 /**
- * Interface for serialized game map state (savegame) readers.
+ * Abstract base class for serialized, game map state readers (savegames).
  *
  * @ingroup game
  */
-class DENG2_PUBLIC IMapStateReader
+class DENG2_PUBLIC MapStateReader
 {
 public:
     /// An error occurred attempting to open the input file. @ingroup errors
@@ -41,18 +41,31 @@ public:
     DENG2_ERROR(ReadError);
 
 public:
-    virtual ~IMapStateReader() {}
+    /**
+     * Construct a new MapStateReader for the given saved @a session.
+     *
+     * @param session  The saved session being loaded.
+     */
+    MapStateReader(SavedSession const &session);
+    virtual ~MapStateReader();
+
+    /**
+     * Returns the saved session being loaded.
+     */
+    SavedSession const &session() const;
 
     /**
      * Attempt to load (read/interpret) the serialized game map state.
      *
-     * @param session    Saved session being loaded.
      * @param mapUriStr  Unique identifier of the map state to deserialize.
      */
-    virtual void read(SavedSession const &session, String const &mapUriStr) = 0;
+    virtual void read(String const &mapUriStr) = 0;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace game
 } // namespace de
 
-#endif // LIBDENG2_IMAPSTATEREADER_H
+#endif // LIBDENG2_MAPSTATEREADER_H
