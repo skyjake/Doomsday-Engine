@@ -217,8 +217,29 @@ DENG2_PIMPL(ModelDrawable)
         // Initialize all meshes in the scene.
         for(duint i = 0; i < scene.mNumMeshes; ++i)
         {
-            qDebug() << "initing mesh" << i << "out of" << scene.mNumMeshes;
+            qDebug() << "initing mesh #" << i << "out of" << scene.mNumMeshes;
             meshBuffers[i] = makeBufferFromMesh(*scene.mMeshes[i]);
+        }
+
+        // Animations.
+        qDebug() << "animations:" << scene.mNumAnimations;
+
+        // Materials.
+        qDebug() << "materials:" << scene.mNumMaterials;
+        for(duint i = 0; i < scene.mNumMaterials; ++i)
+        {
+            aiMaterial const &mat = *scene.mMaterials[i];
+            qDebug() << "material #" << i
+                     << "texcount (diffuse):" << mat.GetTextureCount(aiTextureType_DIFFUSE);
+
+            aiString texPath;
+            for(duint s = 0; s < mat.GetTextureCount(aiTextureType_DIFFUSE); ++s)
+            {
+                if(mat.GetTexture(aiTextureType_DIFFUSE, s, &texPath) == AI_SUCCESS)
+                {
+                    qDebug() << "texture #" << s << texPath.C_Str();
+                }
+            }
         }
     }
 
@@ -260,6 +281,8 @@ DENG2_PIMPL(ModelDrawable)
         buf->setIndices(gl::Triangles, indx, gl::Static);
 
         qDebug() << "new GLbuf" << buf << "name:" << mesh.mName.C_Str();
+        qDebug() << "material:" << mesh.mMaterialIndex;
+        qDebug() << "bones:" << mesh.mNumBones << "ma:" << mesh.mNumAnimMeshes;
 
         //self.addBuffer(buf);
         return buf;
@@ -272,8 +295,6 @@ DENG2_PIMPL(ModelDrawable)
     /// Traverses the scene node tree and draws meshes in their current animated state.
     void draw()
     {
-        qDebug() << "drawing scene";
-
         DrawState state;
         drawNode(*importer.GetScene()->mRootNode, state);
     }
@@ -282,11 +303,17 @@ DENG2_PIMPL(ModelDrawable)
     {
         Matrix4f const xf(&node.mTransformation.a1);
 
-        qDebug() << "node:" << node.mName.C_Str() << "meshes:" << node.mNumMeshes;
-        qDebug() << "transform:" << xf.asText();
+        //qDebug() << "node:" << node.mName.C_Str() << "meshes:" << node.mNumMeshes;
+        //qDebug() << "transform:" << xf.asText();
 
         DrawState local = state;
         local.transform = state.transform * xf;
+
+        // Draw children, too.
+        for(duint i = 0; i < node.mNumChildren; ++i)
+        {
+            drawNode(*node.mChildren[i], local);
+        }
     }
 };
 
