@@ -21,6 +21,7 @@
 #include "de/App"
 #include "de/ArrayValue"
 #include "de/game/Game"
+#include "de/game/MapStateReader"
 #include "de/game/SavedSessionRepository"
 #include "de/Info"
 #include "de/Log"
@@ -217,7 +218,7 @@ DENG2_PIMPL(SavedSession)
         Status const oldStatus = status;
 
         status = Unused;
-        if(self.hasGameState())
+        if(self.hasFile())
         {
             status = Incompatible;
             // Game identity key missmatch?
@@ -247,6 +248,10 @@ DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
 SavedSession::SavedSession(String const &fileName) : d(new Instance(this))
 {
     d->fileName = fileName;
+    if(d->fileName.fileNameExtension().isEmpty())
+    {
+        d->fileName += ".save";
+    }
 }
 
 SavedSession::SavedSession(SavedSession const &other) : d(new Instance(this, *other.d))
@@ -263,7 +268,7 @@ bool SavedSession::recognizeFile()
     if(!d->repo) return false;
     if(d->repo->folder().has(fileName()))
     {
-        // Attempt to read the session metadata and recognize the map state.
+        // Attempt to read the session metadata.
         PackageFolder &pack = d->repo->folder().locate<PackageFolder>(fileName());
         if(SessionMetadata *metadata = Instance::readMetadata(pack))
         {
@@ -328,12 +333,12 @@ static String metadataAsStyledText(SavedSession::Metadata const &metadata)
                   _E(l) "Version: "     _E(.)_E(i) "%4 "  _E(.)
                   _E(l) "Session id: "  _E(.)_E(i) "%5\n" _E(.)
                   _E(D) "Game rules:\n" _E(.) "  %6")
-             .arg(metadata["userDescription"].value().asText())
-             .arg(metadata["gameIdentityKey"].value().asText())
-             .arg(metadata["mapUri"].value().asText())
-             .arg(metadata["version"].value().asNumber())
-             .arg(metadata["sessionId"].value().asNumber())
-             .arg(metadata["gameRules"].value().asText());
+             .arg(metadata.gets("userDescription", ""))
+             .arg(metadata.gets("gameIdentityKey", ""))
+             .arg(metadata.gets("mapUri", ""))
+             .arg(metadata.geti("version", 14))
+             .arg(metadata.geti("sessionId", 0))
+             .arg(metadata.gets("gameRules", ""));
 }
 
 String SavedSession::description() const
@@ -341,22 +346,22 @@ String SavedSession::description() const
     return metadataAsStyledText(metadata()) + "\n" +
            String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"\n" _E(.)
                   _E(D) "Status: " _E(.) "%2")
-               .arg(NativePath(filePath()).pretty())
+               .arg(d->repo? NativePath(filePath()).pretty() : "None")
                .arg(statusAsText());
-}
-
-Path SavedSession::filePath() const
-{
-    return repository().folder().path() / fileName();
 }
 
 String SavedSession::fileName() const
 {
-    return d->fileName + ".save";
+    return d->fileName;
 }
 
 void SavedSession::setFileName(String newName)
 {
+    if(newName.fileNameExtension().isEmpty())
+    {
+        newName += ".save";
+    }
+
     if(d->fileName != newName)
     {
         d->fileName         = newName;
@@ -364,7 +369,7 @@ void SavedSession::setFileName(String newName)
     }
 }
 
-bool SavedSession::hasGameState() const
+bool SavedSession::hasFile() const
 {
     return repository().folder().has(fileName());
 }
@@ -372,7 +377,7 @@ bool SavedSession::hasGameState() const
 bool SavedSession::hasMapState(String mapUriStr) const
 {
     if(mapUriStr.isEmpty()) return false;
-    String mapFileName = d->fileName + mapUriStr;
+    String mapFileName = d->fileName.fileNameWithoutExtension() + mapUriStr;
     /// @todo Open the .save file and check the index.
     return repository().folder().has(mapFileName);
 }

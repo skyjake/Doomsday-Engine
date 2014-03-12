@@ -21,16 +21,14 @@
 
 #include "../Error"
 #include "../Folder"
-#include "../game/MapStateReader"
-#include "../game/SavedSession"
 #include "../Path"
 #include "../String"
 
-/// Game map state reader instantiator function ptr.
-typedef de::game::MapStateReader *(*MapStateReaderMakeFunc)(de::game::SavedSession const &session);
-
 namespace de {
 namespace game {
+
+class MapStateReader;
+class SavedSession;
 
 /**
  * Centralized saved session repository. The saved game state file structure is automatically
@@ -46,6 +44,9 @@ public:
 
     /// Referenced session is not loadable. @ingroup errors
     DENG2_ERROR(UnloadableSessionError);
+
+    /// Game map state reader instantiator function ptr.
+    typedef MapStateReader *(*MapStateReaderMakeFunc)(SavedSession const &session);
 
 public:
     SavedSessionRepository();

@@ -23,13 +23,13 @@
 #include "../Observers"
 #include "../Path"
 #include "../Record"
+#include "../game/SavedSessionRepository"
 #include "../String"
 
 namespace de {
 namespace game {
 
 class MapStateReader;
-class SavedSessionRepository;
 
 /**
  * Logical component representing a serialized game state on disk.
@@ -132,6 +132,14 @@ public:
     void setRepository(SavedSessionRepository *newRepository);
 
     /**
+     * Determines whether a file package exists for the saved session. However, it may not be
+     * compatible with the current game session.
+     *
+     * @see isLoadable()
+     */
+    bool hasFile() const;
+
+    /**
      * Determines whether a file package exists for the saved session and if so, reads the
      * session metadata. A repository must be configured for this.
      *
@@ -142,9 +150,9 @@ public:
     bool recognizeFile();
 
     /**
-     * Attempt to update the status of the saved session status from the file package in the
-     * repository. If the file path is invalid, unreachable, or the package is not recognized
-     * then the saved session is returned to a valid but non-loadable state.
+     * Attempt to update the status of the saved session from the file package in the repository.
+     * If the file path is invalid, unreachable, or the package is not recognized then the saved
+     * session is returned to a valid but non-loadable state.
      *
      * @see setRepository(), isLoadable()
      */
@@ -158,20 +166,12 @@ public:
     void removeFile();
 
     /**
-     * Returns the full path to the saved session file package in the repository.
+     * Composes the full path to the saved session file package in the repository (FYI).
      */
-    Path filePath() const;
+    inline Path filePath() const { return repository().folder().path() / fileName(); }
 
     /**
-     * Determines whether a game state exists for the saved session. However, it may not be
-     * compatible with the current game session.
-     *
-     * @see isLoadable()
-     */
-    bool hasGameState() const;
-
-    /**
-     * Determines whether a map state exists for the saved session.
+     * Determines whether a serialized map state exists for the saved session.
      *
      * @param mapUri  Unique map identifier.
      */
