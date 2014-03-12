@@ -435,6 +435,15 @@ Variable &Record::set(String const &name, bool value)
     return addBoolean(name, value);
 }
 
+Variable &Record::set(String const &name, char const *value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(TextValue(value));
+    }
+    return addText(name, value);
+}
+
 Variable &Record::set(String const &name, Value::Text const &value)
 {
     if(hasMember(name))
