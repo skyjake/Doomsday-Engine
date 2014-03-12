@@ -367,15 +367,19 @@ void SavedSession::setFileName(String newName)
 
 bool SavedSession::hasFile() const
 {
-    return repository().folder().has(fileName());
+    if(!d->repo) return false;
+    return d->repo->folder().has(fileName());
 }
 
 bool SavedSession::hasMapState(String mapUriStr) const
 {
-    if(mapUriStr.isEmpty()) return false;
-    String mapFileName = d->fileName.fileNameWithoutExtension() + mapUriStr;
-    /// @todo Open the .save file and check the index.
-    return repository().folder().has(mapFileName);
+    if(!mapUriStr.isEmpty() && hasFile())
+    {
+        PackageFolder const &pack = d->repo->folder().locate<PackageFolder const>(d->fileName);
+        String mapStateFileName   = d->fileName.fileNameWithoutExtension() + mapUriStr;
+        return pack.has(mapStateFileName);
+    }
+    return false;
 }
 
 void SavedSession::updateFromFile()

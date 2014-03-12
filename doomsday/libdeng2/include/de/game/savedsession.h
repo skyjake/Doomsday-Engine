@@ -32,23 +32,23 @@ namespace game {
 class MapStateReader;
 
 /**
- * Logical component representing a serialized game state on disk.
+ * Logical component representing a serialized game session on disk.
  *
  * @ingroup game
  */
 class DENG2_PUBLIC SavedSession
 {
 public:
-    /// Notified whenever the status of the saved game session changes.
+    /// Notified whenever the status of the saved session changes.
     DENG2_DEFINE_AUDIENCE2(StatusChange, void savedSessionStatusChanged(SavedSession &session))
 
-    /// Notified whenever the metadata of the saved game session changes.
+    /// Notified whenever the metadata of the saved session changes.
     DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
 
     /// Required/referenced repository is missing. @ingroup errors
     DENG2_ERROR(MissingRepositoryError);
 
-    /// The associated game map state file was missing/unrecognized. @ingroup errors
+    /// The associated map state file was missing/unrecognized. @ingroup errors
     DENG2_ERROR(UnrecognizedMapStateError);
 
     /// Logical session status:
@@ -132,16 +132,16 @@ public:
     void setRepository(SavedSessionRepository *newRepository);
 
     /**
-     * Determines whether a file package exists for the saved session. However, it may not be
-     * compatible with the current game session.
+     * Determines whether a file package exists for the saved session in the repository. Note that
+     * it may not be compatible with the current game session, however.
      *
-     * @see isLoadable()
+     * @see setRepository(), isLoadable()
      */
     bool hasFile() const;
 
     /**
-     * Determines whether a file package exists for the saved session and if so, reads the
-     * session metadata. A repository must be configured for this.
+     * Determines whether a file package exists for the saved session in the repository and if so,
+     * reads the session metadata.
      *
      * @return  @c true iff the session metadata was read successfully.
      *
@@ -179,7 +179,9 @@ public:
 
     /**
      * Uses @a newMetadata to replace that associated with the saved session. Note that this will
-     * @em not alter file package in the repository. The MetadataChange audience is notified.
+     * @em not alter the file package in the repository. The MetadataChange audience is notified.
+     *
+     * @param newMetadata  Replacement Metadata. Ownership is given.
      */
     void replaceMetadata(Metadata *newMetadata);
 
@@ -193,9 +195,9 @@ public:
     bool hasMapState(String mapUriStr) const;
 
     /**
-     * Determines whether a file package exists for the saved session and if so, reads the
-     * session metadata and returns a new MapStateReader instance appropriate for deserializing
-     * map state data. A repository must be configured for this.
+     * Determines whether a file package exists for the saved session in the repository and if so,
+     * reads the session metadata and then returns a new MapStateReader instance appropriate for
+     * deserializing map state data.
      *
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
      */
