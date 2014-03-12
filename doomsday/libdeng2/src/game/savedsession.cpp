@@ -201,6 +201,12 @@ DENG2_PIMPL(SavedSession)
         return 0;
     }
 
+    PackageFolder *tryLocatePackage()
+    {
+        if(!self.hasFile()) return 0;
+        return repo->folder().tryLocate<PackageFolder>(fileName);
+    }
+
     void notifyMetadataChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(MetadataChange, i)
@@ -261,33 +267,6 @@ SavedSession &SavedSession::operator = (SavedSession const &other)
 {
     d.reset(new Instance(this, *other.d));
     return *this;
-}
-
-bool SavedSession::recognizeFile()
-{
-    if(!d->repo) return false;
-    if(d->repo->folder().has(fileName()))
-    {
-        // Attempt to read the session metadata.
-        PackageFolder &pack = d->repo->folder().locate<PackageFolder>(fileName());
-        if(SessionMetadata *metadata = Instance::readMetadata(pack))
-        {
-            replaceMetadata(metadata);
-            return true;
-        }
-    }
-    return 0; // Unrecognized
-}
-
-std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
-{
-    if(recognizeFile())
-    {
-        std::auto_ptr<MapStateReader> p(repository().makeReader(*this));
-        return p;
-    }
-    /// @throw UnrecognizedMapStateError The game state format was not recognized.
-    throw UnrecognizedMapStateError("SavedSession::mapStateReader", "Unrecognized map state format");
 }
 
 SavedSessionRepository &SavedSession::repository() const
@@ -371,14 +350,18 @@ bool SavedSession::hasFile() const
     return d->repo->folder().has(fileName());
 }
 
-bool SavedSession::hasMapState(String mapUriStr) const
+bool SavedSession::recognizeFile()
 {
-    if(!mapUriStr.isEmpty() && hasFile())
+    if(PackageFolder *pack = d->tryLocatePackage())
     {
-        PackageFolder const &pack = d->repo->folder().locate<PackageFolder const>(d->fileName);
-        return pack.has(Path("maps") / mapUriStr);
+        // Attempt to read the session metadata.
+        if(SessionMetadata *metadata = Instance::readMetadata(*pack))
+        {
+            replaceMetadata(metadata);
+            return true;
+        }
     }
-    return false;
+    return 0; // Unrecognized
 }
 
 void SavedSession::updateFromFile()
@@ -408,7 +391,7 @@ void SavedSession::updateFromFile()
 
 void SavedSession::removeFile()
 {
-    if(d->repo && d->repo->folder().has(fileName()))
+    if(hasFile())
     {
         d->repo->folder().removeFile(fileName());
         d->needUpdateStatus = true;
@@ -416,6 +399,29 @@ void SavedSession::removeFile()
 
     /// Force a status update. @todo necessary?
     updateFromFile();
+}
+
+bool SavedSession::hasMapState(String mapUriStr) const
+{
+    if(!mapUriStr.isEmpty())
+    {
+        if(PackageFolder const *pack = d->tryLocatePackage())
+        {
+            return pack->has(Path("maps") / mapUriStr);
+        }
+    }
+    return false;
+}
+
+std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
+{
+    if(recognizeFile())
+    {
+        std::auto_ptr<MapStateReader> p(repository().makeReader(*this));
+        return p;
+    }
+    /// @throw UnrecognizedMapStateError The game state format was not recognized.
+    throw UnrecognizedMapStateError("SavedSession::mapStateReader", "Unrecognized map state format");
 }
 
 SavedSession::Metadata const &SavedSession::metadata() const
