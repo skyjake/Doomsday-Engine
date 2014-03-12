@@ -58,10 +58,22 @@ inline Type const &min(Type const &a, Type const &b) {
     return (a < b? a : b);
 }
 
+/// Minimum of three values.
+template <typename Type>
+inline Type const &min(Type const &a, Type const &b, Type const &c) {
+    return min(a, min(b, c));
+}
+
 /// Maximum of two values.
 template <typename Type>
 inline Type const &max(Type const &a, Type const &b) {
     return (a > b? a : b);
+}
+
+/// Maximum of three values.
+template <typename Type>
+inline Type const &max(Type const &a, Type const &b, Type const &c) {
+    return max(a, max(b, c));
 }
 
 /// Clamp value within range.
