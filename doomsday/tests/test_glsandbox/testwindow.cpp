@@ -62,6 +62,7 @@ DENG2_OBSERVES(Bank, Load)
     GLTexture frameTex;
     GLTexture testpic;
     ModelDrawable model;
+    GLProgram modelProgram;
     std::auto_ptr<AtlasTexture> atlas;
     std::auto_ptr<GLTarget> frameTarget;
     Time startedAt;
@@ -231,6 +232,38 @@ DENG2_OBSERVES(Bank, Load)
                 << uTex;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+
+        modelProgram.build(
+                    ByteRefArray::fromCStr(
+                        "uniform highp mat4 uMvpMatrix;\n"
+                        "uniform highp vec4 uColor;\n"
+                        //"uniform highp float uTime;\n"
+
+                        "attribute highp vec4 aVertex;\n"
+                        "attribute highp vec3 aNormal;\n"
+                        "attribute highp vec2 aUV;\n"
+                        "attribute highp vec4 aColor;\n"
+
+                        "varying highp vec2 vUV;\n"
+                        "varying highp vec4 vColor;\n"
+                        "varying highp vec3 vNormal;\n"
+
+                        "void main(void) {\n"
+                        "  gl_Position = uMvpMatrix * aVertex;\n"
+                        //"  vUV = aUV + vec2(uTime/10.0, 0.0);\n"
+                        "  vColor = aColor;\n"
+                        "  vNormal = aNormal;\n"
+                        "}\n"),
+                    ByteRefArray::fromCStr(
+                        "uniform sampler2D uTex;\n"
+                        "varying highp vec2 vUV;\n"
+                        "varying highp vec3 vNormal;\n"
+                        "void main(void) {\n"
+                        //"  gl_FragColor = texture2D(uTex, vUV);\n"
+                        "  gl_FragColor = vec4(vec3((vNormal.x + 1.0) / 2.0), 1.0);"
+                        "}\n"))
+                << uMvpMatrix;
+        model.setProgram(modelProgram);
     }
 
     void bankLoaded(DotPath const &path)
@@ -361,8 +394,7 @@ DENG2_OBSERVES(Bank, Load)
     {
         GLState::current().target().clear(GLTarget::ColorDepth);
 
-        // TODO: provide mvp matrix (projection * model)
-
+        uMvpMatrix = projMatrix * modelMatrix;
         model.draw();
     }
 
@@ -377,9 +409,15 @@ DENG2_OBSERVES(Bank, Load)
         switch(mode)
         {
         case TestRenderToTexture:
-        case TestModel:
             modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
                           Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
+            break;
+
+        case TestModel:
+            modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
+                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0)) *
+                          Matrix4f::scale(3.f / de::max(model.dimensions().x, model.dimensions().y, model.dimensions().z)) *
+                          Matrix4f::translate(-model.midPoint());
             break;
 
         case TestDynamicAtlas:
