@@ -267,6 +267,7 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
         Folder &destFolder = destSlot.savedSession().repository().folder();
         de::Writer(destFolder.replaceFile(destSlot.savedSession().fileName()))
                 << sourceSlot.savedSession().locateFile().archive();
+        destFolder.populate(Folder::PopulateOnlyThisFolder);
     }
 
     // Copy the session too.
