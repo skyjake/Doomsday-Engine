@@ -44,6 +44,9 @@ public:
     /// Required/referenced session is missing. @ingroup errors
     DENG2_ERROR(MissingSessionError);
 
+    /// Referenced session is not loadable. @ingroup errors
+    DENG2_ERROR(UnloadableSessionError);
+
 public:
     SavedSessionRepository();
 
@@ -93,28 +96,15 @@ public:
 
     /**
      * Determines whether a MapStateReader appropriate for the specified saved @a session
-     * is available and if so, reads the session metadata.
+     * is available and if so, returns a new instance for deserializing the game map state.
      *
-     * @param session  The session metadata will be written here if recognized.
-     *
-     * @return  @c true= the session metadata was read successfully.
-     *
-     * @see recognizeAndMakeReader()
-     */
-    bool recognize(SavedSession &session) const;
-
-    /**
-     * Determines whether a MapStateReader appropriate for the specified saved @a session
-     * is available and if so, reads the session metadata and returns a new reader instance
-     * for deserializing the game map state.
-     *
-     * @param session  The session metadata will be written here if recognized.
+     * @param session  The saved session to obtain a reader for.
      *
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
      *
-     * @see recognize()
+     * @see SavedSession::isLoadable()
      */
-    MapStateReader *recognizeAndMakeReader(SavedSession &session) const;
+    MapStateReader *makeReader(SavedSession const &session) const;
 
 private:
     DENG2_PRIVATE(d)

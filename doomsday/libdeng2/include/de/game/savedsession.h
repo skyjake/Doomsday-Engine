@@ -88,15 +88,11 @@ public:
 
     SavedSession &operator = (SavedSession const &other);
 
-    inline bool isLoadable() const     { return status() == Loadable; }
-    inline bool isIncompatible() const { return status() == Incompatible; }
-    inline bool isUnused() const       { return status() == Unused; }
-
     /**
-     * Returns the saved session repository which owns the saved session (if any).
+     * Returns the name of the saved session file package (with extension).
      */
-    SavedSessionRepository &repository() const;
-    void setRepository(SavedSessionRepository *newRepository);
+    String fileName() const;
+    void setFileName(String newName);
 
     /**
      * Returns the logical status of the saved session. The StatusChange audience is notified
@@ -113,10 +109,58 @@ public:
      */
     String statusAsText() const;
 
+    inline bool isLoadable() const     { return status() == Loadable; }
+    inline bool isIncompatible() const { return status() == Incompatible; }
+    inline bool isUnused() const       { return status() == Unused; }
+
     /**
      * Composes a human-friendly, styled, textual description of the saved session.
      */
     String description() const;
+
+    /**
+     * Returns the saved session repository which owns the saved session (if any).
+     */
+    SavedSessionRepository &repository() const;
+
+    /**
+     * Configure the saved session to use the @a newRepository. Once set, the saved session file
+     * package (if present) is potentially @em loadable, @em updateable and @em removable.
+     *
+     * @param newRepository  New SavedSessionRepository to configure for.
+     */
+    void setRepository(SavedSessionRepository *newRepository);
+
+    /**
+     * Determines whether a file package exists for the saved session and if so, reads the
+     * session metadata. A repository must be configured for this.
+     *
+     * @return  @c true iff the session metadata was read successfully.
+     *
+     * @see setRepository()
+     */
+    bool recognizeFile();
+
+    /**
+     * Attempt to update the status of the saved session status from the file package in the
+     * repository. If the file path is invalid, unreachable, or the package is not recognized
+     * then the saved session is returned to a valid but non-loadable state.
+     *
+     * @see setRepository(), isLoadable()
+     */
+    void updateFromFile();
+
+    /**
+     * Removes the file package for the saved session from the repository (if configured).
+     *
+     * @see setRepository()
+     */
+    void removeFile();
+
+    /**
+     * Returns the full path to the saved session file package in the repository.
+     */
+    Path filePath() const;
 
     /**
      * Determines whether a game state exists for the saved session. However, it may not be
@@ -134,34 +178,19 @@ public:
     bool hasMapState(String mapUriStr) const;
 
     /**
-     * Attempt to update the saved session status from the game state source file. If the save
-     * path is invalid, unreachable, or the game state is not recognized -- the saved session
-     * is returned to a valid but non-loadable state.
+     * Determines whether a file package exists for the saved session and if so, reads the
+     * session metadata and returns a new MapStateReader instance appropriate for deserializing
+     * map state data. A repository must be configured for this.
      *
-     * @see isLoadable()
+     * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
      */
-    void updateFromRepository();
-
-    void deleteFileInRepository();
-
-    /**
-     * Returns the name of the resource file (with extension) containing the game state.
-     */
-    String fileName() const;
-    void setFileName(String newName);
-
-    /**
-     * Returns the full path to the saved session file package in the repository.
-     */
-    Path filePath() const;
+    std::auto_ptr<MapStateReader> mapStateReader();
 
     /**
      * Provides read-only access to a copy of the deserialized saved session metadata.
      */
     Metadata const &metadata() const;
     void replaceMetadata(Metadata *newMetadata);
-
-    std::auto_ptr<MapStateReader> mapStateReader();
 
 private:
     DENG2_PRIVATE(d)

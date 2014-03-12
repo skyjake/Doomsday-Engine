@@ -81,6 +81,12 @@ static void srd(reader_s *r, char *data, int len)
     savePtr += len;
 }
 
+static reader_s *SV_NewReader_Hr_v13()
+{
+    if(!saveBuffer) return 0;
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
+}
+
 static Uri *readTextureUrn(reader_s *reader, char const *schemeName)
 {
     DENG_ASSERT(reader != 0 && schemeName != 0);
@@ -652,12 +658,6 @@ static void SV_CloseFile_Hr_v13()
     saveBuffer = savePtr = 0;
 }
 
-static reader_s *SV_NewReader_Hr_v13()
-{
-    if(!saveBuffer) return 0;
-    return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
-}
-
 DENG2_PIMPL(HereticV13MapStateReader)
 {
     reader_s *reader;
@@ -666,6 +666,11 @@ DENG2_PIMPL(HereticV13MapStateReader)
         : Base(i)
         , reader(0)
     {}
+
+    ~Instance()
+    {
+        Reader_Delete(reader);
+    }
 
     void readPlayers()
     {
@@ -818,7 +823,6 @@ game::MapStateReader *HereticV13MapStateReader::make(game::SavedSession const &s
 
 void HereticV13MapStateReader::read(String const &mapUriStr)
 {
-    //game::SessionMetadata const &metadata = session().metadata();
     Path const &filePath = Path(mapUriStr);
 
     if(!SV_OpenFile_Hr_v13(filePath))

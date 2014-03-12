@@ -80,6 +80,12 @@ static void srd(reader_s *r, char *data, int len)
     savePtr += len;
 }
 
+static reader_s *SV_NewReader_Dm_v19()
+{
+    if(!saveBuffer) return 0;
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
+}
+
 static Uri *readTextureUrn(reader_s *reader, char const *schemeName)
 {
     DENG_ASSERT(reader != 0 && schemeName != 0);
@@ -631,12 +637,6 @@ static void SV_CloseFile_Dm_v19()
     saveBuffer = savePtr = 0;
 }
 
-static reader_s *SV_NewReader_Dm_v19()
-{
-    if(!saveBuffer) return 0;
-    return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
-}
-
 DENG2_PIMPL(DoomV9MapStateReader)
 {
     reader_s *reader;
@@ -645,6 +645,11 @@ DENG2_PIMPL(DoomV9MapStateReader)
         : Base(i)
         , reader(0)
     {}
+
+    ~Instance()
+    {
+        Reader_Delete(reader);
+    }
 
     void readPlayers()
     {
@@ -808,7 +813,6 @@ game::MapStateReader *DoomV9MapStateReader::make(game::SavedSession const &sessi
 
 void DoomV9MapStateReader::read(String const &mapUriStr)
 {
-    //game::SessionMetadata const &metadata = session().metadata();
     Path const &filePath = Path(mapUriStr);
 
     if(!SV_OpenFile_Dm_v19(filePath))

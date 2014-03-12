@@ -23,7 +23,6 @@
 #include "de/game/MapStateReader"
 #include "de/Log"
 #include "de/NativePath"
-#include "de/PackageFolder"
 #include "de/ZipArchive"
 
 #include <QList>
@@ -87,61 +86,6 @@ DENG2_PIMPL(SavedSessionRepository)
             }
         }
         return 0;
-    }
-
-    bool readSessionMetadata(PackageFolder const &pack, SessionMetadata &metadata) const
-    {
-        if(!pack.has("Info")) return false;
-
-        try
-        {
-            File const &file = pack.locate<File const>("Info");
-            Block raw;
-            file >> raw;
-
-            metadata.parse(String::fromUtf8(raw));
-
-            int const saveVersion = metadata["version"].value().asNumber();
-            // Future version?
-            if(saveVersion > 14) return false;
-
-            // So far so good.
-            return true;
-        }
-        catch(IByteArray::OffsetError const &)
-        {
-            LOG_RES_WARNING("Archive in %s is truncated") << pack.description();
-        }
-        catch(IIStream::InputError const &)
-        {
-            LOG_RES_WARNING("%s cannot be read") << pack.description();
-        }
-        catch(Archive::FormatError const &)
-        {
-            LOG_RES_WARNING("Archive in %s is invalid") << pack.description();
-        }
-
-        return false;
-    }
-
-    ReaderInfo const *recognize(SavedSession &session) const
-    {
-        if(self.folder().has(session.fileName()))
-        {
-            PackageFolder &pack = self.folder().locate<PackageFolder>(session.fileName());
-
-            // Attempt to read the session metadata and recognize the map state.
-            QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
-            if(readSessionMetadata(pack, *metadata))
-            {
-                session.replaceMetadata(metadata.take());
-                /// @todo Recognize the map state file to determine the format.
-                ReaderInfo const *rdrInfo = infoForMapStateFormat("Native");
-                DENG2_ASSERT(rdrInfo != 0);
-                return rdrInfo;
-            }
-        }
-        return 0; // Unrecognized
     }
 
     void aboutToUnloadGame(game::Game const & /*gameBeingUnloaded*/)
@@ -235,18 +179,17 @@ void SavedSessionRepository::declareReader(String formatName, MapStateReaderMake
     d->readers.append(Instance::ReaderInfo(formatName, maker));
 }
 
-bool SavedSessionRepository::recognize(SavedSession &session) const
+MapStateReader *SavedSessionRepository::makeReader(SavedSession const &session) const
 {
-    return d->recognize(session) != 0;
-}
-
-MapStateReader *SavedSessionRepository::recognizeAndMakeReader(SavedSession &session) const
-{
-    if(Instance::ReaderInfo const *rdrInfo = d->recognize(session))
+    if(session.isLoadable())
     {
+        /// @todo Recognize the map state file to determine the format.
+        Instance::ReaderInfo const *rdrInfo = d->infoForMapStateFormat("Native");
+        DENG2_ASSERT(rdrInfo != 0);
         return rdrInfo->newReader(session);
     }
-    return 0; // Unrecognized
+    /// @throw UnloadableSessionError The saved session is not loadable.
+    throw UnloadableSessionError("SavedSessionRepository::makeReader", "SavedSession '" + session.fileName() + "' is not loadable");
 }
 
 } // namespace game

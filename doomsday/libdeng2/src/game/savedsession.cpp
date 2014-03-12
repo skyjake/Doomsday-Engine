@@ -26,6 +26,7 @@
 #include "de/Log"
 #include "de/NumberValue"
 #include "de/NativePath"
+#include "de/PackageFolder"
 
 namespace de {
 namespace game {
@@ -164,6 +165,41 @@ DENG2_PIMPL(SavedSession)
         }
     }
 
+    static SessionMetadata *readMetadata(PackageFolder const &pack)
+    {
+        if(!pack.has("Info")) return 0;
+
+        try
+        {
+            File const &file = pack.locate<File const>("Info");
+            Block raw;
+            file >> raw;
+
+            QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
+            metadata->parse(String::fromUtf8(raw));
+
+            // Future version?
+            if(metadata->geti("version") > 14) return 0;
+
+            // So far so good.
+            return metadata.take();
+        }
+        catch(IByteArray::OffsetError const &)
+        {
+            LOG_RES_WARNING("Archive in %s is truncated") << pack.description();
+        }
+        catch(IIStream::InputError const &)
+        {
+            LOG_RES_WARNING("%s cannot be read") << pack.description();
+        }
+        catch(Archive::FormatError const &)
+        {
+            LOG_RES_WARNING("Archive in %s is invalid") << pack.description();
+        }
+
+        return 0;
+    }
+
     void notifyMetadataChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(MetadataChange, i)
@@ -185,13 +221,10 @@ DENG2_PIMPL(SavedSession)
         {
             status = Incompatible;
             // Game identity key missmatch?
-            if(metadata->has("gameIdentityKey"))
+            if(!metadata->gets("gameIdentityKey", "").compareWithoutCase(App::game().id()))
             {
-                if(!(*metadata)["gameIdentityKey"].value().asText().compareWithoutCase(App::game().id()))
-                {
-                    /// @todo Validate loaded add-ons and checksum the definition database.
-                    status = Loadable; // It's good!
-                }
+                /// @todo Validate loaded add-ons and checksum the definition database.
+                status = Loadable; // It's good!
             }
         }
 
@@ -223,6 +256,37 @@ SavedSession &SavedSession::operator = (SavedSession const &other)
 {
     d.reset(new Instance(this, *other.d));
     return *this;
+}
+
+bool SavedSession::recognizeFile()
+{
+    if(!d->repo) return false;
+    if(d->repo->folder().has(fileName()))
+    {
+        // Attempt to read the session metadata and recognize the map state.
+        PackageFolder &pack = d->repo->folder().locate<PackageFolder>(fileName());
+        if(SessionMetadata *metadata = Instance::readMetadata(pack))
+        {
+            replaceMetadata(metadata);
+            return true;
+        }
+    }
+    return 0; // Unrecognized
+}
+
+std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
+{
+    std::auto_ptr<MapStateReader> p;
+    if(recognizeFile())
+    {
+        p.reset(repository().makeReader(*this));
+    }
+    if(!p.get())
+    {
+        /// @throw UnrecognizedMapStateError The game state format was not recognized.
+        throw UnrecognizedMapStateError("SavedSession::mapStateReader", "Unrecognized map state format");
+    }
+    return p;
 }
 
 SavedSessionRepository &SavedSession::repository() const
@@ -308,20 +372,19 @@ bool SavedSession::hasGameState() const
 bool SavedSession::hasMapState(String mapUriStr) const
 {
     if(mapUriStr.isEmpty()) return false;
-    String mapFileName = d->fileName + mapUriStr + ".save";
+    String mapFileName = d->fileName + mapUriStr;
     /// @todo Open the .save file and check the index.
     return repository().folder().has(mapFileName);
 }
 
-void SavedSession::updateFromRepository()
+void SavedSession::updateFromFile()
 {
     LOGDEV_VERBOSE("Updating SavedSession %p from the repository") << this;
 
-    // Is this a recognized game state?
-    if(repository().recognize(*this))
+    if(recognizeFile())
     {
         // Ensure we have a valid description.
-        if((*d->metadata)["userDescription"].value().asText().isEmpty())
+        if(d->metadata->gets("userDescription", "").isEmpty())
         {
             d->metadata->set("userDescription", "UNNAMED");
             d->notifyMetadataChanged();
@@ -339,19 +402,16 @@ void SavedSession::updateFromRepository()
     d->updateStatusIfNeeded();
 }
 
-void SavedSession::deleteFileInRepository()
+void SavedSession::removeFile()
 {
-    try
+    if(d->repo && d->repo->folder().has(fileName()))
     {
-        File *file = &App::fileSystem().find<File>(repository().folder().path() / d->fileName + ".save");
-        delete file;
+        d->repo->folder().removeFile(fileName());
         d->needUpdateStatus = true;
     }
-    catch(FileSystem::NotFoundError const &)
-    {} // Ignore this error.
 
     /// Force a status update. @todo necessary?
-    updateFromRepository();
+    updateFromFile();
 }
 
 SavedSession::Metadata const &SavedSession::metadata() const
@@ -365,17 +425,6 @@ void SavedSession::replaceMetadata(Metadata *newMetadata)
     DENG2_ASSERT(newMetadata != 0);
     d->metadata.reset(newMetadata);
     d->needUpdateStatus = true;
-}
-
-std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
-{
-    std::auto_ptr<MapStateReader> p(repository().recognizeAndMakeReader(*this));
-    if(!p.get())
-    {
-        /// @throw UnrecognizedMapStateError The game state format was not recognized.
-        throw UnrecognizedMapStateError("SavedSession::mapStateReader", "Unrecognized map state format");
-    }
-    return p;
 }
 
 } // namespace game

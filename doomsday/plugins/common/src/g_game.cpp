@@ -3201,7 +3201,7 @@ bool G_LoadSession(de::String slotId)
         SaveSlot &sslot = G_SaveSlots()[slotId];
 
         // First ensure we have up-to-date info.
-        sslot.savedSession().updateFromRepository();
+        sslot.savedSession().updateFromFile();
 
         if(sslot.isUsed())
         {
@@ -4234,7 +4234,7 @@ D_CMD(LoadSession)
         SaveSlot &sslot = G_SaveSlots()[slotId];
 
         // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromRepository();
+        sslot.savedSession().updateFromFile();
 
         if(sslot.isUsed())
         {
@@ -4344,7 +4344,7 @@ D_CMD(SaveSession)
         SaveSlot &sslot = G_SaveSlots()[slotId];
 
         // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromRepository();
+        sslot.savedSession().updateFromFile();
 
         if(sslot.isUserWritable())
         {
@@ -4448,7 +4448,7 @@ D_CMD(DeleteSavedSession)
         SaveSlot &sslot = G_SaveSlots()[slotId];
 
         // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromRepository();
+        sslot.savedSession().updateFromFile();
 
         if(sslot.isUserWritable() && sslot.isUsed())
         {
@@ -4491,7 +4491,7 @@ D_CMD(InspectSavedSession)
         SaveSlot &sslot = G_SaveSlots()[slotId];
 
         // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromRepository();
+        sslot.savedSession().updateFromFile();
 
         if(sslot.isUsed())
         {

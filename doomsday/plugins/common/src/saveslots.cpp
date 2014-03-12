@@ -158,7 +158,7 @@ void SaveSlots::Slot::clear()
         App_Log(DE2_RES_MSG, "Clearing save slot '%s'", d->id.toLatin1().constData());
     }
 
-    savedSession().deleteFileInRepository();
+    savedSession().removeFile();
 }
 
 void SaveSlots::Slot::replaceSavedSession(SavedSession *newSession)
@@ -220,7 +220,7 @@ void SaveSlots::updateAll()
 {
     DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
     {
-        i->second->savedSession().updateFromRepository();
+        i->second->savedSession().updateFromFile();
     }
 }
 
