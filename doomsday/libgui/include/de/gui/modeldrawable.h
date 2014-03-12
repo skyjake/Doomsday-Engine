@@ -19,9 +19,10 @@
 #ifndef LIBGUI_MODELDRAWABLE_H
 #define LIBGUI_MODELDRAWABLE_H
 
-//#include "../Drawable"
 #include <de/Asset>
 #include <de/File>
+#include <de/GLProgram>
+#include <de/Vector>
 
 namespace de {
 
@@ -71,7 +72,26 @@ public:
      */
     void glDeinit();
 
+    /**
+     * Sets the GL program used for shading the model.
+     *
+     * @param program  GL program.
+     */
+    void setProgram(GLProgram &program);
+
+    void unsetProgram();
+
     void draw();
+
+    /**
+     * Dimensions of the default pose, in model space.
+     */
+    Vector3f dimensions() const;
+
+    /**
+     * Center of the default pose, in model space.
+     */
+    Vector3f midPoint() const;
 
 private:
     DENG2_PRIVATE(d)

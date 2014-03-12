@@ -22,6 +22,8 @@
 #include <de/ByteArrayFile>
 #include <de/Matrix>
 #include <de/GLBuffer>
+#include <de/GLProgram>
+#include <de/GLState>
 
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
@@ -154,8 +156,13 @@ DENG2_PIMPL(ModelDrawable)
     Assimp::Importer importer;
     Path sourcePath;
     QVector<VBuf *> meshBuffers;
+    GLProgram *program;
+    Vector3f minPoint; ///< Bounds in default pose.
+    Vector3f maxPoint;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i)
+        : Base(i)
+        , program(0)
     {
         // Use libdeng2 for file access.
         importer.SetIOHandler(new ImpIOSystem);
@@ -212,6 +219,9 @@ DENG2_PIMPL(ModelDrawable)
 
     void initFromScene(aiScene const &scene)
     {
+        maxPoint = Vector3f(1.0e-9, 1.0e-9, 1.0e-9);
+        minPoint = Vector3f(1.0e9, 1.0e9, 1.0e9);
+
         meshBuffers.resize(scene.mNumMeshes);
 
         // Initialize all meshes in the scene.
@@ -229,7 +239,7 @@ DENG2_PIMPL(ModelDrawable)
         for(duint i = 0; i < scene.mNumMaterials; ++i)
         {
             aiMaterial const &mat = *scene.mMaterials[i];
-            qDebug() << "material #" << i
+            qDebug() << "  material #" << i
                      << "texcount (diffuse):" << mat.GetTextureCount(aiTextureType_DIFFUSE);
 
             aiString texPath;
@@ -237,10 +247,16 @@ DENG2_PIMPL(ModelDrawable)
             {
                 if(mat.GetTexture(aiTextureType_DIFFUSE, s, &texPath) == AI_SUCCESS)
                 {
-                    qDebug() << "texture #" << s << texPath.C_Str();
+                    qDebug() << "    texture #" << s << texPath.C_Str();
                 }
             }
         }
+    }
+
+    void addToBounds(Vector3f const &point)
+    {
+        minPoint = minPoint.min(point);
+        maxPoint = maxPoint.max(point);
     }
 
     VBuf *makeBufferFromMesh(aiMesh const &mesh)
@@ -266,6 +282,8 @@ DENG2_PIMPL(ModelDrawable)
             v.bitangent = Vector3f(bitang->x, bitang->y, bitang->z);
             v.texCoord  = Vector2f(texCoord->x, texCoord->y);
             verts << v;
+
+            addToBounds(v.pos);
         }
 
         // Get face indices.
@@ -295,6 +313,8 @@ DENG2_PIMPL(ModelDrawable)
     /// Traverses the scene node tree and draws meshes in their current animated state.
     void draw()
     {
+        DENG2_ASSERT(program != 0);
+
         DrawState state;
         drawNode(*importer.GetScene()->mRootNode, state);
     }
@@ -308,6 +328,18 @@ DENG2_PIMPL(ModelDrawable)
 
         DrawState local = state;
         local.transform = state.transform * xf;
+
+        // Draw the meshes.
+        for(uint i = 0; i < node.mNumMeshes; ++i)
+        {
+            GLState::current().apply();
+            program->beginUse();
+
+            VBuf const *vb = meshBuffers[node.mMeshes[i]];
+            vb->draw();
+
+            program->endUse();
+        }
 
         // Draw children, too.
         for(duint i = 0; i < node.mNumChildren; ++i)
@@ -348,13 +380,33 @@ void ModelDrawable::glDeinit()
     d->glDeinit();
 }
 
+void ModelDrawable::setProgram(GLProgram &program)
+{
+    d->program = &program;
+}
+
+void ModelDrawable::unsetProgram()
+{
+    d->program = 0;
+}
+
 void ModelDrawable::draw()
 {
     glInit();
-    if(isReady())
+    if(isReady() && d->program)
     {
         d->draw();
     }
+}
+
+Vector3f ModelDrawable::dimensions() const
+{
+    return d->maxPoint - d->minPoint;
+}
+
+Vector3f ModelDrawable::midPoint() const
+{
+    return (d->maxPoint + d->minPoint) / 2.f;
 }
 
 } // namespace de
