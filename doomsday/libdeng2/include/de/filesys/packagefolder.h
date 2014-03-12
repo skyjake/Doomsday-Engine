@@ -43,7 +43,7 @@ namespace de {
  *
  * @see ArchiveFeed
  */
-class PackageFolder : public Folder
+class DENG2_PUBLIC PackageFolder : public Folder
 {
 public:
     /**

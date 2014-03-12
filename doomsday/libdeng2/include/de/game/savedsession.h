@@ -21,15 +21,16 @@
 
 #include "../Error"
 #include "../Observers"
+#include "../PackageFolder"
 #include "../Path"
 #include "../Record"
-#include "../game/SavedSessionRepository"
 #include "../String"
 
 namespace de {
 namespace game {
 
 class MapStateReader;
+class SavedSessionRepository;
 
 /**
  * Logical component representing a serialized game session on disk.
@@ -47,6 +48,9 @@ public:
 
     /// Required/referenced repository is missing. @ingroup errors
     DENG2_ERROR(MissingRepositoryError);
+
+    /// Required file package could not be located. @ingroup errors
+    DENG2_ERROR(MissingFileError);
 
     /// The associated map state file was missing/unrecognized. @ingroup errors
     DENG2_ERROR(UnrecognizedMapStateError);
@@ -140,6 +144,14 @@ public:
     bool hasFile() const;
 
     /**
+     * Attempt to locate the file package for the saved session from the repository.
+     *
+     * @return  The file package if found. Ownership is unaffected.
+     */
+    PackageFolder &locateFile();
+    PackageFolder const &locateFile() const;
+
+    /**
      * Determines whether a file package exists for the saved session in the repository and if so,
      * reads the session metadata.
      *
@@ -164,11 +176,6 @@ public:
      * @see setRepository()
      */
     void removeFile();
-
-    /**
-     * Composes the full path to the saved session file package in the repository (FYI).
-     */
-    inline Path filePath() const { return repository().folder().path() / fileName(); }
 
     /**
      * Provides read-only access to a copy of the deserialized saved session metadata.

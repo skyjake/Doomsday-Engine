@@ -31,6 +31,7 @@
 #ifdef __cplusplus
 #  include "mapstatereader.h"
 #  include "mapstatewriter.h"
+#  include <de/Reader>
 #endif
 
 #define MAX_ACS_SCRIPT_VARS     10
@@ -206,8 +207,8 @@ public:
      */
     AutoStr *scriptDescription(int scriptNumber);
 
-    void writeWorldScriptData(Writer *writer);
-    void readWorldScriptData(Reader *reader, int saveVersion);
+    void writeWorldScriptData(Writer *to);
+    void readWorldScriptData(de::Reader &from);
 
     void writeMapScriptData(MapStateWriter *msw);
     void readMapScriptData(MapStateReader *msr);
@@ -232,8 +233,8 @@ private:
         int scriptNumber; ///< On the target map.
         byte args[4];
 
-        void write(Writer *write) const;
-        void read(Reader *reader, int segmentVersion);
+        void write(Writer *to) const;
+        void read(de::Reader &from);
     };
 
     bool newDeferredTask(Uri const *mapUri, int scriptNumber, byte const args[4]);

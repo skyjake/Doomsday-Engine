@@ -176,7 +176,7 @@ SavedSession &SavedSessionRepository::session(String fileName) const
 
 void SavedSessionRepository::declareReader(String formatName, MapStateReaderMakeFunc maker)
 {
-    d->readers.append(Instance::ReaderInfo(formatName, maker));
+    d->readers << Instance::ReaderInfo(formatName, maker);
 }
 
 MapStateReader *SavedSessionRepository::makeReader(SavedSession const &session) const

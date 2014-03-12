@@ -2941,7 +2941,7 @@ static int saveGameStateWorker(void *context)
     {
         saveRepo.folder().verifyWriteAccess();
 
-        de::Path const filePath = sslot.savedSession().filePath();
+        de::Path const filePath = saveRepo.folder().path() / session->fileName();
         de::Path const mapStateFilePath(Str_Text(Uri_Resolved(gameMapUri)));
 
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
@@ -3235,39 +3235,35 @@ void G_DoLoadSession(de::String slotId)
     de::String const logicalSlot = slotId;
 #endif
 
-    try
-    {
-        de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-        saveRepo.folder().verifyWriteAccess();
-
 #if __JHEXEN__
-        // Copy all needed save files to the base slot.
-        if(slotId.compareWithoutCase("base"))
-        {
-            G_SaveSlots().copySlot(slotId, "base");
-        }
+    // Copy all needed save files to the base slot.
+    if(slotId.compareWithoutCase("base"))
+    {
+        G_SaveSlots().copySlot(slotId, "base");
+    }
 #endif
 
-        de::game::SavedSession &session           = G_SaveSlots()[logicalSlot].savedSession();
-        de::game::SessionMetadata const &metadata = session.metadata();
+    // Attempt to recognize and load the saved game state.
+    try
+    {
+        de::game::SavedSession &session   = G_SaveSlots()[logicalSlot].savedSession();
+        de::PackageFolder const &saveFile = session.locateFile();
 
-        // Attempt to recognize and load the saved game state.
         App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                de::NativePath(session.filePath()).pretty().toLatin1().constData());
+                de::NativePath(saveFile.path()).pretty().toLatin1().constData());
 
 #if __JHEXEN__
         // Deserialize the world ACS data.
-        if(SV_OpenFile("ACScript", false /*for read*/))
+        if(de::File *file = saveFile.tryLocateFile("ACScript"))
         {
-            Reader *reader = SV_NewReader();
-            Game_ACScriptInterpreter().readWorldScriptData(reader, metadata.geti("version"));
-            SV_HxReleaseSaveBuffer(); // SV_CloseFile();
+            Game_ACScriptInterpreter().readWorldScriptData(de::Reader(*file));
         }
 #endif
 
         /*
          * Load the map and configure some game settings.
          */
+        de::game::SessionMetadata const &metadata = session.metadata();
         briefDisabled = true;
 
         Uri *mapUri        = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);

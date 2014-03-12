@@ -201,18 +201,18 @@ DENG2_PIMPL(SavedSession)
         return 0;
     }
 
-    PackageFolder *tryLocatePackage()
-    {
-        if(!self.hasFile()) return 0;
-        return repo->folder().tryLocate<PackageFolder>(fileName);
-    }
-
     void notifyMetadataChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(MetadataChange, i)
         {
             i->savedSessionMetadataChanged(self);
         }
+    }
+
+    PackageFolder *tryLocatePackage()
+    {
+        if(!repo) return false;
+        return repo->folder().tryLocate<PackageFolder>(fileName);
     }
 
     void updateStatusIfNeeded()
@@ -321,7 +321,7 @@ String SavedSession::description() const
     return metadataAsStyledText(metadata()) + "\n" +
            String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"\n" _E(.)
                   _E(D) "Status: " _E(.) "%2")
-               .arg(d->repo? NativePath(filePath()).pretty() : "None")
+               .arg(d->repo? NativePath(d->repo->folder().path() / d->fileName).pretty() : "None")
                .arg(statusAsText());
 }
 
@@ -348,6 +348,21 @@ bool SavedSession::hasFile() const
 {
     if(!d->repo) return false;
     return d->repo->folder().has(fileName());
+}
+
+PackageFolder &SavedSession::locateFile()
+{
+    if(PackageFolder *pack = d->tryLocatePackage())
+    {
+        return *pack;
+    }
+    /// @throw MissingFileError Failed to locate the source file package.
+    throw MissingFileError("SavedSession::locateFile", "Source file for " + d->fileName + " could not be located");
+}
+
+PackageFolder const &SavedSession::locateFile() const
+{
+    return const_cast<PackageFolder &>(const_cast<SavedSession *>(this)->locateFile());
 }
 
 bool SavedSession::recognizeFile()
