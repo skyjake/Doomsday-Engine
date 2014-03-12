@@ -376,8 +376,7 @@ bool SavedSession::hasMapState(String mapUriStr) const
     if(!mapUriStr.isEmpty() && hasFile())
     {
         PackageFolder const &pack = d->repo->folder().locate<PackageFolder const>(d->fileName);
-        String mapStateFileName   = d->fileName.fileNameWithoutExtension() + mapUriStr;
-        return pack.has(mapStateFileName);
+        return pack.has(Path("maps") / mapUriStr);
     }
     return false;
 }
