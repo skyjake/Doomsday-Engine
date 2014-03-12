@@ -171,9 +171,24 @@ public:
     inline Path filePath() const { return repository().folder().path() / fileName(); }
 
     /**
+     * Provides read-only access to a copy of the deserialized saved session metadata.
+     *
+     * @see replaceMetadata()
+     */
+    Metadata const &metadata() const;
+
+    /**
+     * Uses @a newMetadata to replace that associated with the saved session. Note that this will
+     * @em not alter file package in the repository. The MetadataChange audience is notified.
+     */
+    void replaceMetadata(Metadata *newMetadata);
+
+    /**
      * Determines whether a serialized map state exists for the saved session.
      *
      * @param mapUri  Unique map identifier.
+     *
+     * @see mapStateReader()
      */
     bool hasMapState(String mapUriStr) const;
 
@@ -185,12 +200,6 @@ public:
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
      */
     std::auto_ptr<MapStateReader> mapStateReader();
-
-    /**
-     * Provides read-only access to a copy of the deserialized saved session metadata.
-     */
-    Metadata const &metadata() const;
-    void replaceMetadata(Metadata *newMetadata);
 
 private:
     DENG2_PRIVATE(d)

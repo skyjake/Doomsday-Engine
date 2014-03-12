@@ -248,7 +248,7 @@ DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
 SavedSession::SavedSession(String const &fileName) : d(new Instance(this))
 {
     d->fileName = fileName;
-    if(d->fileName.fileNameExtension().isEmpty())
+    if(!d->fileName.isEmpty() && d->fileName.fileNameExtension().isEmpty())
     {
         d->fileName += ".save";
     }
@@ -281,17 +281,13 @@ bool SavedSession::recognizeFile()
 
 std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
 {
-    std::auto_ptr<MapStateReader> p;
     if(recognizeFile())
     {
-        p.reset(repository().makeReader(*this));
+        std::auto_ptr<MapStateReader> p(repository().makeReader(*this));
+        return p;
     }
-    if(!p.get())
-    {
-        /// @throw UnrecognizedMapStateError The game state format was not recognized.
-        throw UnrecognizedMapStateError("SavedSession::mapStateReader", "Unrecognized map state format");
-    }
-    return p;
+    /// @throw UnrecognizedMapStateError The game state format was not recognized.
+    throw UnrecognizedMapStateError("SavedSession::mapStateReader", "Unrecognized map state format");
 }
 
 SavedSessionRepository &SavedSession::repository() const
@@ -357,7 +353,7 @@ String SavedSession::fileName() const
 
 void SavedSession::setFileName(String newName)
 {
-    if(newName.fileNameExtension().isEmpty())
+    if(!newName.isEmpty() && newName.fileNameExtension().isEmpty())
     {
         newName += ".save";
     }
