@@ -3246,15 +3246,15 @@ void G_DoLoadSession(de::String slotId)
     // Attempt to recognize and load the saved game state.
     try
     {
-        de::game::SavedSession &session   = G_SaveSlots()[logicalSlot].savedSession();
-        de::PackageFolder const &saveFile = session.locateFile();
+        de::game::SavedSession &session = G_SaveSlots()[logicalSlot].savedSession();
+        de::PackageFolder const &pack   = session.locateFile();
 
         App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                de::NativePath(saveFile.path()).pretty().toLatin1().constData());
+                de::NativePath(pack.path()).pretty().toLatin1().constData());
 
 #if __JHEXEN__
         // Deserialize the world ACS data.
-        if(de::File *file = saveFile.tryLocateFile("ACScript"))
+        if(de::File *file = pack.tryLocateFile("ACScript"))
         {
             Game_ACScriptInterpreter().readWorldScriptData(de::Reader(*file));
         }

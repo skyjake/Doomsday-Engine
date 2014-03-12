@@ -362,7 +362,7 @@ PackageFolder &SavedSession::locateFile()
 
 PackageFolder const &SavedSession::locateFile() const
 {
-    return const_cast<PackageFolder &>(const_cast<SavedSession *>(this)->locateFile());
+    return const_cast<SavedSession *>(this)->locateFile();
 }
 
 bool SavedSession::recognizeFile()

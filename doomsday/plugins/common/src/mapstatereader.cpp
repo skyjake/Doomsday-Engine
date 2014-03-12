@@ -737,16 +737,12 @@ game::MapStateReader *MapStateReader::make(game::SavedSession const &session) //
 
 void MapStateReader::read(String const &mapUriStr)
 {
+    PackageFolder const &pack             = session().locateFile();
     game::SessionMetadata const &metadata = session().metadata();
-    Path const &filePath = Path(mapUriStr);
 
-    if(!SV_OpenFile(filePath, false/*for read*/))
-    {
-        throw FileAccessError("MapStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
-    }
-
+    File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr);
+    //SV_OpenFile(mapStateFile);
     d->reader = SV_NewReader();
-    DENG2_ASSERT(d->reader != 0);
 
     d->saveVersion = metadata.geti("version");
     d->mapVersion  = d->saveVersion; // Default: mapVersion == saveVersion

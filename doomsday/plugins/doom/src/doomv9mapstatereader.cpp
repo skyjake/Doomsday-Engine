@@ -813,13 +813,11 @@ game::MapStateReader *DoomV9MapStateReader::make(game::SavedSession const &sessi
 
 void DoomV9MapStateReader::read(String const &mapUriStr)
 {
-    Path const &filePath = Path(mapUriStr);
+    PackageFolder const &pack             = session().locateFile();
+    //game::SessionMetadata const &metadata = session().metadata();
 
-    if(!SV_OpenFile_Dm_v19(filePath))
-    {
-        throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
-    }
-
+    File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr);
+    //SV_OpenFile(mapStateFile);
     d->reader = SV_NewReader_Dm_v19();
 
     d->readPlayers();

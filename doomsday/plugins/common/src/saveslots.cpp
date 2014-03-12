@@ -27,6 +27,7 @@
 #include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/Observers>
+#include <de/Writer>
 #include <map>
 
 static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
@@ -248,9 +249,6 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
 {
     LOG_AS("SaveSlots::copySlot");
 
-    SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.folder().verifyWriteAccess();
-
     Slot &sourceSlot = slot(sourceSlotId);
     Slot &destSlot   = slot(destSlotId);
 
@@ -260,14 +258,20 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
         return;
     }
 
-    // Clear all save files at destination slot.
+    // Clear the saved file package for the destination slot.
     destSlot.clear();
 
-    SV_CopyFile(sourceSlot.savedSession().filePath(), destSlot.savedSession().filePath());
+    // Copy the saved file package to the destination slot.
+    if(sourceSlot.savedSession().hasFile())
+    {
+        Folder &destFolder = destSlot.savedSession().repository().folder();
+        de::Writer(destFolder.replaceFile(destSlot.savedSession().fileName()))
+                << sourceSlot.savedSession().locateFile().archive();
+    }
 
-    // Copy save info too.
+    // Copy the session too.
     destSlot.replaceSavedSession(new SavedSession(sourceSlot.savedSession()));
-    // Update the file path associated with the copied save info.
+    // Update the file path associated with the copied session.
     destSlot.savedSession().setFileName(destSlot.fileName());
 }
 

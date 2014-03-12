@@ -823,13 +823,11 @@ game::MapStateReader *HereticV13MapStateReader::make(game::SavedSession const &s
 
 void HereticV13MapStateReader::read(String const &mapUriStr)
 {
-    Path const &filePath = Path(mapUriStr);
+    PackageFolder const &pack             = session().locateFile();
+    //game::SessionMetadata const &metadata = session().metadata();
 
-    if(!SV_OpenFile_Hr_v13(filePath))
-    {
-        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + NativePath(filePath).pretty() + "\"");
-    }
-
+    File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr);
+    //SV_OpenFile(mapStateFile);
     d->reader = SV_NewReader_Hr_v13();
 
     d->readPlayers();

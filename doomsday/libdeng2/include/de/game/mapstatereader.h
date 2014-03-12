@@ -34,9 +34,6 @@ namespace game {
 class DENG2_PUBLIC MapStateReader
 {
 public:
-    /// An error occurred attempting to open the input file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
-
     /// Base class for read errors. @ingroup errors
     DENG2_ERROR(ReadError);
 
