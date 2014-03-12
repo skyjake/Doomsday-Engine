@@ -197,7 +197,7 @@ DENG2_PIMPL(GLBuffer)
         return GL_TRIANGLES;
     }
 
-    void enableArrays(bool enable)
+    void enableArrays(bool enable) const
     {
         DENG2_ASSERT(specs.first != 0); // must have a spec
 
@@ -284,7 +284,7 @@ void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usa
     setIndices(primitive, indices.size(), indices.constData(), usage);
 }
 
-void GLBuffer::draw(duint first, dint count)
+void GLBuffer::draw(duint first, dint count) const
 {
     if(!isReady()) return;
 

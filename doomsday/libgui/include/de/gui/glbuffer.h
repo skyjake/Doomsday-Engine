@@ -265,7 +265,7 @@ public:
 
     void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
 
-    void draw(duint first = 0, dint count = -1);
+    void draw(duint first = 0, dint count = -1) const;
 
 protected:
     void setFormat(internal::AttribSpecs const &format);
