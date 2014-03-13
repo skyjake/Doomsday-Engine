@@ -208,12 +208,16 @@ DENG2_PIMPL(GLBuffer)
             if(enable)
             {
                 glEnableVertexAttribArray(index);
+                LIBGUI_ASSERT_GL_OK();
+
                 glVertexAttribPointer(index, spec.size, spec.type, spec.normalized, spec.stride,
                                       (void const *) dintptr(spec.startOffset));
+                LIBGUI_ASSERT_GL_OK();
             }
             else
             {
                 glDisableVertexAttribArray(index);
+                LIBGUI_ASSERT_GL_OK();
             }
         }
     }
@@ -304,6 +308,7 @@ void GLBuffer::draw(duint first, dint count) const
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         glDrawElements(Instance::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
                        (void const *) dintptr(first * 2));
+        LIBGUI_ASSERT_GL_OK();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
@@ -314,6 +319,7 @@ void GLBuffer::draw(duint first, dint count) const
         DENG2_ASSERT(count >= 0);
 
         glDrawArrays(Instance::glPrimitive(d->prim), first, count);
+        LIBGUI_ASSERT_GL_OK();
     }
 
     d->enableArrays(false);

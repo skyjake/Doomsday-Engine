@@ -47,7 +47,9 @@ namespace internal
             Color,
             Normal,
             Tangent,
-            Bitangent
+            Bitangent,
+            BoneIDs,
+            BoneWeights
         };
 
         Semantic semantic;
