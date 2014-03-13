@@ -159,22 +159,24 @@ struct ModelVertex
     Vector3f tangent;
     Vector3f bitangent;
     Vector2f texCoord;
+    Vector4f texBounds;
     Vector4f boneIds;
     Vector4f boneWeights;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(7)
+    LIBGUI_DECLARE_VERTEX_FORMAT(8)
 };
 
-AttribSpec const ModelVertex::_spec[7] = {
+AttribSpec const ModelVertex::_spec[8] = {
     { AttribSpec::Position,    3, GL_FLOAT, false, sizeof(ModelVertex), 0 },
     { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 3 * sizeof(float) },
     { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 6 * sizeof(float) },
     { AttribSpec::Bitangent,   3, GL_FLOAT, false, sizeof(ModelVertex), 9 * sizeof(float) },
     { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 12 * sizeof(float) },
-    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 14 * sizeof(float) },
-    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
+    { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 14 * sizeof(float) },
+    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
+    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 22 * sizeof(float))
+LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 26 * sizeof(float))
 
 static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
 {
@@ -210,7 +212,7 @@ DENG2_PIMPL(ModelDrawable)
     QVector<VertexBone> vertexBones; // indexed by vertex
     QHash<String, duint16> boneNameToIndex;
     QVector<BoneData> bones; // indexed by bone index
-    QHash<duint, Id> materialTexIds;
+    QVector<Id> materialTexIds; // indexed by material index
     Vector3f minPoint; ///< Bounds in default pose.
     Vector3f maxPoint;
     Matrix4f globalInverse;
@@ -255,7 +257,8 @@ DENG2_PIMPL(ModelDrawable)
                               aiProcess_JoinIdenticalVertices |
                               aiProcess_Triangulate |
                               aiProcess_GenUVCoords |
-                              aiProcess_SortByPType ))
+                              aiProcess_FlipUVs |
+                              aiProcess_SortByPType))
         {
             throw LoadError("ModelDrawable::import", String("Failed to load model from %s: %s")
                             .arg(file.description()).arg(importer.GetErrorString()));
@@ -313,7 +316,7 @@ DENG2_PIMPL(ModelDrawable)
     {
         if(!atlas) return;
 
-        foreach(Id const &id, materialTexIds.values())
+        foreach(Id const &id, materialTexIds)
         {
             atlas->release(id);
         }
@@ -363,6 +366,8 @@ DENG2_PIMPL(ModelDrawable)
     {
         DENG2_ASSERT(atlas != 0);
 
+        materialTexIds.resize(scene->mNumMaterials);
+
         qDebug() << "materials:" << scene->mNumMaterials;
         for(duint i = 0; i < scene->mNumMaterials; ++i)
         {
@@ -382,10 +387,10 @@ DENG2_PIMPL(ModelDrawable)
                     File const &texFile = App::rootFolder()
                             .locate<File>(sourcePath.fileNamePath() / String(texPath.C_Str()));
 
-                    qDebug() << "    from" << texFile.description();
+                    qDebug() << "    from" << texFile.description().toLatin1().constData();
 
                     Block imgData(texFile);
-                    QImage img = QImage::fromData(imgData);
+                    QImage img = QImage::fromData(imgData).convertToFormat(QImage::Format_ARGB32);
 
                     materialTexIds[i] = atlas->alloc(img);
                 }
@@ -499,11 +504,21 @@ DENG2_PIMPL(ModelDrawable)
                 aiVector3D const *bitang   = (mesh.HasTangentsAndBitangents()? &mesh.mBitangents[i] : &zero);
 
                 VBuf::Type v;
+
                 v.pos       = Vector3f(pos->x, pos->y, pos->z);
                 v.normal    = Vector3f(normal->x, normal->y, normal->z);
                 v.tangent   = Vector3f(tangent->x, tangent->y, tangent->z);
                 v.bitangent = Vector3f(bitang->x, bitang->y, bitang->z);
+
                 v.texCoord  = Vector2f(texCoord->x, texCoord->y);
+                if(scene->HasMaterials())
+                {
+                    v.texBounds = atlas->imageRectf(materialTexIds[mesh.mMaterialIndex]).xywh();
+                }
+                else
+                {
+                    v.texBounds = Vector4f(0, 0, 1, 1);
+                }
 
                 for(int b = 0; b < MAX_BONES_PER_VERTEX; ++b)
                 {
@@ -689,9 +704,13 @@ DENG2_PIMPL(ModelDrawable)
 
         GLState::current().apply();
 
+        program->bind(uBoneMatrices);
         program->beginUse();
+
         buffer->draw();
+
         program->endUse();
+        program->unbind(uBoneMatrices);
     }
 };
 
@@ -740,16 +759,10 @@ void ModelDrawable::unsetAtlas()
 void ModelDrawable::setProgram(GLProgram &program)
 {
     d->program = &program;
-    d->program->bind(d->uBoneMatrices);
 }
 
 void ModelDrawable::unsetProgram()
 {
-    if(d->program)
-    {
-        d->program->unbind(d->uBoneMatrices);
-    }
-
     d->program = 0;
 }
 
