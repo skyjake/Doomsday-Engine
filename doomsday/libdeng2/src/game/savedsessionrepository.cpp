@@ -174,6 +174,22 @@ SavedSession &SavedSessionRepository::session(String fileName) const
     throw MissingSessionError("SavedSessionRepository::session", "Unknown session '" + fileName + "'");
 }
 
+SavedSession *SavedSessionRepository::sessionByUserDescription(String description) const
+{
+    if(!description.isEmpty())
+    {
+        DENG2_FOR_EACH_CONST(Instance::Sessions, i, d->sessions)
+        {
+            SessionMetadata const &metadata = i->second->metadata();
+            if(!metadata.gets("userDescription").compareWithoutCase(description))
+            {
+                return i->second;
+            }
+        }
+    }
+    return 0; // Not found.
+}
+
 void SavedSessionRepository::declareReader(String formatName, MapStateReaderMakeFunc maker)
 {
     d->readers << Instance::ReaderInfo(formatName, maker);

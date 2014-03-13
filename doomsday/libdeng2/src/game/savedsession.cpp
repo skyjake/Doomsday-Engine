@@ -28,6 +28,7 @@
 #include "de/NumberValue"
 #include "de/NativePath"
 #include "de/PackageFolder"
+#include "de/Writer"
 
 namespace de {
 namespace game {
@@ -400,6 +401,17 @@ void SavedSession::updateFromFile()
     }
 
     d->updateStatusIfNeeded();
+}
+
+void SavedSession::copyFile(SavedSession const &source)
+{
+    if(&source == this) return; // Sanity check.
+
+    Writer(d->repo->folder().replaceFile(d->fileName)) << source.locateFile().archive();
+    d->repo->folder().populate(Folder::PopulateOnlyThisFolder);
+
+    // Perform recognition of the copied file and update the session status.
+    updateFromFile();
 }
 
 void SavedSession::removeFile()

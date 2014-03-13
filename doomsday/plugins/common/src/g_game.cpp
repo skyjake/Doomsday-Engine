@@ -988,9 +988,12 @@ de::game::SavedSessionRepository &G_SavedSessionRepository()
 de::String G_SaveSlotIdFromUserInput(de::String str)
 {
     // Perhaps user save game description?
-    if(SaveSlot *sslot = G_SaveSlots().slotByUserDescription(str))
+    if(SaveSlot *sslot = G_SaveSlots().slot(G_SavedSessionRepository().sessionByUserDescription(str)))
     {
-        return sslot->id();
+        if(sslot->isUsed())
+        {
+            return sslot->id();
+        }
     }
 
     // Perhaps a mnemonic?

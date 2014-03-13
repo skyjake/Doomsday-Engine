@@ -261,13 +261,10 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
     // Clear the saved file package for the destination slot.
     destSlot.clear();
 
-    // Copy the saved file package to the destination slot.
     if(sourceSlot.savedSession().hasFile())
     {
-        Folder &destFolder = destSlot.savedSession().repository().folder();
-        de::Writer(destFolder.replaceFile(destSlot.savedSession().fileName()))
-                << sourceSlot.savedSession().locateFile().archive();
-        destFolder.populate(Folder::PopulateOnlyThisFolder);
+        // Copy the saved file package to the destination slot.
+        destSlot.savedSession().copyFile(sourceSlot.savedSession());
     }
 
     // Copy the session too.
@@ -276,17 +273,15 @@ void SaveSlots::copySlot(String sourceSlotId, String destSlotId)
     destSlot.savedSession().setFileName(destSlot.fileName());
 }
 
-SaveSlots::Slot *SaveSlots::slotByUserDescription(String description) const
+SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
 {
-    if(!description.isEmpty())
+    if(session)
     {
+        String const sessionFileName = session->fileName().fileNameWithoutExtension();
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
             SaveSlot &sslot = *i->second;
-            if(!sslot.isUsed()) continue;
-
-            SessionMetadata const &metadata = sslot.savedSession().metadata();
-            if(!metadata.gets("userDescription").compareWithoutCase(description))
+            if(!sslot.fileName().compareWithoutCase(sessionFileName))
             {
                 return &sslot;
             }

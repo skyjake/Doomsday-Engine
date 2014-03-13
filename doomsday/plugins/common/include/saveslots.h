@@ -130,21 +130,14 @@ public:
     /**
      * Returns the logical save slot associated with @a slotId.
      *
-     * @see hasSlot(), slotByUserDescription()
+     * @see hasSlot()
      */
     Slot &slot(de::String slotId) const;
 
     /**
-     * Lookup a slot by searching for a saved session with a matching user description.
-     * The search is in ascending slot identifier order.
-     *
-     * @param description  Description of the game-save to look for (not case sensitive).
-     *
-     * @return  Pointer to the found slot; otherwise @c 0.
-     *
-     * @see slot()
+     * Returns the logical save slot associated with the given saved @a session.
      */
-    Slot *slotByUserDescription(de::String description) const;
+    Slot *slot(de::game::SavedSession const *session) const;
 
     /**
      * Copies the saved session file from one slot to another.

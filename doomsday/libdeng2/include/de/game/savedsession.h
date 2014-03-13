@@ -171,6 +171,17 @@ public:
     void updateFromFile();
 
     /**
+     * Replace the file package in the repository with a copy of that associated with the @a source
+     * saved session. The copied file package is named according to the @ref fileName() of "this"
+     * saved session.
+     *
+     * @param source  SavedSession to copy the file package from.
+     *
+     * @throws MissingFileError  If no source file package is found.
+     */
+    void copyFile(SavedSession const &source);
+
+    /**
      * Removes the file package for the saved session from the repository (if configured).
      *
      * @see setRepository()

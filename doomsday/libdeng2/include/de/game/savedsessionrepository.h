@@ -88,6 +88,18 @@ public:
     SavedSession &session(String fileName) const;
 
     /**
+     * Lookup the saved session with a matching user description. The search is in ascending
+     * saved session file name order.
+     *
+     * @param description  User description of the saved session to look for (not case sensitive).
+     *
+     * @return  The found SavedSession; otherwise @c 0.
+     *
+     * @see session()
+     */
+    SavedSession *sessionByUserDescription(String description) const;
+
+    /**
      * Register a game state reader.
      *
      * @param formatName  Symbolic identifier for the map format.
