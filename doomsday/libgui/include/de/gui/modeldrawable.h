@@ -81,6 +81,8 @@ public:
 
     void unsetProgram();
 
+    void setAnimationTime(TimeDelta const &time);
+
     void draw();
 
     /**
