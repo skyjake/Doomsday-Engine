@@ -100,7 +100,7 @@ DENG2_OBSERVES(Bank, Load)
         //imageBank.loadAll();
         imageBank.audienceForLoad() += this;
 
-        model.load(App::rootFolder().locate<File const>("/data/marine.md2"));
+        model.load(App::rootFolder().locate<File const>("/data/boblampclean.md5mesh"));
     }
 
     void canvasGLInit(Canvas &cv)
@@ -112,6 +112,8 @@ DENG2_OBSERVES(Bank, Load)
         }
         catch(Error const &er)
         {
+            qWarning() << er.asText();
+
             QMessageBox::critical(thisPublic, "GL Init Error", er.asText());
             exit(1);
         }
@@ -237,22 +239,30 @@ DENG2_OBSERVES(Bank, Load)
                     ByteRefArray::fromCStr(
                         "uniform highp mat4 uMvpMatrix;\n"
                         "uniform highp vec4 uColor;\n"
-                        //"uniform highp float uTime;\n"
+                        "uniform highp mat4 uBoneMatrices[64];\n"
 
                         "attribute highp vec4 aVertex;\n"
                         "attribute highp vec3 aNormal;\n"
                         "attribute highp vec2 aUV;\n"
                         "attribute highp vec4 aColor;\n"
+                        "attribute highp vec4 aBoneIDs;\n"
+                        "attribute highp vec4 aBoneWeights;\n"
 
                         "varying highp vec2 vUV;\n"
                         "varying highp vec4 vColor;\n"
                         "varying highp vec3 vNormal;\n"
 
                         "void main(void) {\n"
-                        "  gl_Position = uMvpMatrix * aVertex;\n"
-                        //"  vUV = aUV + vec2(uTime/10.0, 0.0);\n"
+                        "  highp mat4 bone =\n"
+                        "    uBoneMatrices[int(aBoneIDs.x)] * aBoneWeights.x + \n"
+                        "    uBoneMatrices[int(aBoneIDs.y)] * aBoneWeights.y + \n"
+                        "    uBoneMatrices[int(aBoneIDs.z)] * aBoneWeights.z + \n"
+                        "    uBoneMatrices[int(aBoneIDs.w)] * aBoneWeights.w;\n"
+                        "  highp vec4 modelPos = bone * aVertex;\n"
+                        "  gl_Position = uMvpMatrix * modelPos;\n"
+                        "  vUV = aUV;\n"
                         "  vColor = aColor;\n"
-                        "  vNormal = aNormal;\n"
+                        "  vNormal = (bone * vec4(aNormal, 0.0)).xyz;\n"
                         "}\n"),
                     ByteRefArray::fromCStr(
                         "uniform sampler2D uTex;\n"
@@ -314,7 +324,7 @@ DENG2_OBSERVES(Bank, Load)
         case TestModel:
             // 3D projection.
             projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
-                         Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
+                         Matrix4f::lookAt(Vector3f(), Vector3f(0, -5, 0), Vector3f(0, 0, 1));
             break;
         }
     }
@@ -395,6 +405,7 @@ DENG2_OBSERVES(Bank, Load)
         GLState::current().target().clear(GLTarget::ColorDepth);
 
         uMvpMatrix = projMatrix * modelMatrix;
+        model.setAnimationTime(startedAt.since());
         model.draw();
     }
 
