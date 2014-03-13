@@ -1996,14 +1996,13 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
+int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
-    assert(ob->_type == MN_EDIT);
+    mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
+    DENG_ASSERT(ob->_type == MN_EDIT);
 
-    switch(cmd)
+    if(cmd == MCMD_SELECT)
     {
-    case MCMD_SELECT:
         if(!(ob->_flags & MNF_ACTIVE))
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
@@ -2027,9 +2026,13 @@ int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
             }
         }
         return true;
-    case MCMD_NAV_OUT:
-        if(ob->_flags & MNF_ACTIVE)
+    }
+
+    if(ob->_flags & MNF_ACTIVE)
+    {
+        switch(cmd)
         {
+        case MCMD_NAV_OUT:
             Str_Copy(&edit->text, &edit->oldtext);
             ob->_flags &= ~MNF_ACTIVE;
             if(MNObject_HasAction(ob, MNA_CLOSE))
@@ -2037,10 +2040,18 @@ int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
                 MNObject_ExecAction(ob, MNA_CLOSE, NULL);
             }
             return true;
+
+        // Eat all other navigation commands, when active.
+        case MCMD_NAV_LEFT:
+        case MCMD_NAV_RIGHT:
+        case MCMD_NAV_DOWN:
+        case MCMD_NAV_UP:
+        case MCMD_NAV_PAGEDOWN:
+        case MCMD_NAV_PAGEUP:
+            return true;
         }
-        break;
-    default: break;
     }
+
     return false; // Not eaten.
 }
 
