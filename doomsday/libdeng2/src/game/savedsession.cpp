@@ -368,6 +368,9 @@ bool SavedSession::recognizeFile()
 {
     if(PackageFolder *pack = d->tryLocatePackage())
     {
+        // Ensure we have up-to-date info about the package contents.
+        pack->populate();
+
         // Attempt to read the session metadata.
         if(SessionMetadata *metadata = Instance::readMetadata(*pack))
         {
@@ -407,8 +410,8 @@ void SavedSession::copyFile(SavedSession const &source)
 {
     if(&source == this) return; // Sanity check.
 
-    Writer(d->repo->folder().replaceFile(d->fileName)) << source.locateFile().archive();
-    d->repo->folder().populate(Folder::PopulateOnlyThisFolder);
+    Writer(repository().folder().replaceFile(d->fileName)) << source.locateFile().archive();
+    repository().folder().populate(Folder::PopulateOnlyThisFolder);
 
     // Perform recognition of the copied file and update the session status.
     updateFromFile();

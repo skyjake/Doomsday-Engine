@@ -181,7 +181,7 @@ SavedSession *SavedSessionRepository::sessionByUserDescription(String descriptio
         DENG2_FOR_EACH_CONST(Instance::Sessions, i, d->sessions)
         {
             SessionMetadata const &metadata = i->second->metadata();
-            if(!metadata.gets("userDescription").compareWithoutCase(description))
+            if(!metadata.gets("userDescription", "").compareWithoutCase(description))
             {
                 return i->second;
             }
