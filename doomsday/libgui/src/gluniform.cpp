@@ -38,13 +38,20 @@ DENG2_PIMPL(GLUniform)
         Vector4f *vector;
         Matrix3f *mat3;
         Matrix4f *mat4;
-        GLTexture const *tex;
+        GLTexture const *tex;        
     } value;
+    duint elemCount;
 
-    Instance(Public *i, QLatin1String const &n, Type t)
-        : Base(i), name(n.latin1()), type(t)
+    Instance(Public *i, QLatin1String const &n, Type t, duint elems)
+        : Base(i)
+        , name(n.latin1())
+        , type(t)
+        , elemCount(elems)
     {
         name.append('\0');
+
+        DENG2_ASSERT((type == Mat4Array && elemCount >= 1) ||
+                     (type != Mat4Array && elemCount == 1));
 
         // Allocate the value type.
         zap(value);
@@ -62,6 +69,10 @@ DENG2_PIMPL(GLUniform)
 
         case Mat4:
             value.mat4 = new Matrix4f;
+            break;
+
+        case Mat4Array:
+            value.mat4 = new Matrix4f[elemCount];
             break;
 
         default:
@@ -87,6 +98,10 @@ DENG2_PIMPL(GLUniform)
 
         case Mat4:
             delete value.mat4;
+            break;
+
+        case Mat4Array:
+            delete [] value.mat4;
             break;
 
         case Sampler2D:
@@ -166,8 +181,8 @@ DENG2_PIMPL(GLUniform)
 DENG2_AUDIENCE_METHOD(GLUniform, Deletion)
 DENG2_AUDIENCE_METHOD(GLUniform, ValueChange)
 
-GLUniform::GLUniform(char const *nameInShader, Type uniformType)
-    : d(new Instance(this, QLatin1String(nameInShader), uniformType))
+GLUniform::GLUniform(char const *nameInShader, Type uniformType, duint elements)
+    : d(new Instance(this, QLatin1String(nameInShader), uniformType, elements))
 {}
 
 void GLUniform::setName(char const *nameInShader)
@@ -296,6 +311,17 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
     return *this;
 }
 
+GLUniform &GLUniform::set(duint elementIndex, Matrix4f const &mat)
+{
+    DENG2_ASSERT(d->type == Mat4Array);
+    DENG2_ASSERT(elementIndex < d->elemCount);
+
+    d->value.mat4[elementIndex] = mat;
+    d->markAsChanged();
+
+    return *this;
+}
+
 dint GLUniform::toInt() const
 {
     DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
@@ -407,34 +433,43 @@ void GLUniform::applyInProgram(GLProgram &program) const
     {
     case Int:
         glUniform1i(loc, d->value.int32);
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     case UInt:
         glUniform1i(loc, d->value.uint32);
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Float:
         glUniform1f(loc, d->value.float32);
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec2:
         glUniform2f(loc, d->value.vector->x, d->value.vector->y);
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec3:
         glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec4:
         glUniform4f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z, d->value.vector->w);
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat3:
         glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat4:
-        glUniformMatrix4fv(loc, 1, GL_FALSE, d->value.mat4->values());
+    case Mat4Array:
+        glUniformMatrix4fv(loc, d->elemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
+        LIBGUI_ASSERT_GL_OK();
         break;
 
     default:

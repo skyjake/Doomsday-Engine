@@ -61,7 +61,8 @@ public:
         Vec4,
         Mat3,
         Mat4,
-        Sampler2D
+        Sampler2D,
+        Mat4Array
     };
 
     /**
@@ -75,7 +76,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(Deletion, void uniformDeleted(GLUniform &))
 
 public:
-    GLUniform(char const *nameInShader, Type uniformType);
+    GLUniform(char const *nameInShader, Type uniformType, duint elements = 1);
 
     void setName(char const *nameInShader);
 
@@ -97,9 +98,11 @@ public:
     GLUniform &operator = (Vector3f const &vec);
     GLUniform &operator = (Vector4f const &vec);
     GLUniform &operator = (Matrix3f const &vec);
-    GLUniform &operator = (Matrix4f const &vec);
+    GLUniform &operator = (Matrix4f const &mat);
     GLUniform &operator = (GLTexture const &texture);
     GLUniform &operator = (GLTexture const *texture);
+
+    GLUniform &set(duint elementIndex, Matrix4f const &mat);
 
     operator dint() const              { return toInt(); }
     operator duint() const             { return toUInt(); }
