@@ -3270,11 +3270,7 @@ void G_DoLoadSession(de::String slotId)
         briefDisabled = true;
 
         Uri *mapUri        = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
-        GameRuleset *rules = 0;
-        if(metadata.hasSubrecord("gameRules"))
-        {
-            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
-        }
+        GameRuleset *rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
 
         G_NewSession(mapUri, 0/*not saved??*/, rules);
         G_SetGameAction(GA_NONE); /// @todo Necessary?
@@ -3298,12 +3294,16 @@ void G_DoLoadSession(de::String slotId)
             G_SaveSlots().copySlot("base", "auto");
         }
 #endif
+        return;
     }
     catch(de::Error const &er)
     {
         App_Log(DE2_RES_WARNING, "Error loading save slot #%s:\n%s",
                 slotId.toLatin1().constData(), er.asText().toLatin1().constData());
     }
+
+    // Failure... Return to the title loop.
+    G_StartTitle();
 }
 
 bool G_SessionSavingPossible()
