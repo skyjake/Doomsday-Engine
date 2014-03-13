@@ -28,15 +28,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #include "hu_chat.h"
 #include "hu_lib.h"
@@ -2049,6 +2041,8 @@ int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e cmd)
         case MCMD_NAV_PAGEDOWN:
         case MCMD_NAV_PAGEUP:
             return true;
+
+        default: break;
         }
     }
 
