@@ -130,16 +130,20 @@ DENG_GUI_PIMPL(TutorialWidget)
         }
 
         current = s;
+        bool const isFinalStep = (current == Finish - 1);
+
         dlg = new MessageDialog;
         dlg->useInfoStyle();
         dlg->setDeleteAfterDismissed(true);
         dlg->setClickToClose(false);
         QObject::connect(dlg, SIGNAL(accepted(int)), thisPublic, SLOT(continueToNextStep()));
         QObject::connect(dlg, SIGNAL(rejected(int)), thisPublic, SLOT(stop()));
-        dlg->buttons()
-                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
-                                        (current == Finish - 1)? tr("Done") : tr("Continue"))
-                << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Action,  tr("Skip Tutorial"));
+        dlg->buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
+                                               isFinalStep? tr("Done") : tr("Continue"));
+        if(!isFinalStep)
+        {
+            dlg->buttons() << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Action,  tr("Skip Tutorial"));
+        }
 
         // Insert the content for the dialog.
         ClientWindow &win = ClientWindow::main();
