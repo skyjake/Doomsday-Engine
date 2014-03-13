@@ -22,6 +22,7 @@
 #include <de/Asset>
 #include <de/File>
 #include <de/GLProgram>
+#include <de/AtlasTexture>
 #include <de/Vector>
 
 namespace de {
@@ -71,6 +72,19 @@ public:
      * Releases all the GL resources of the model.
      */
     void glDeinit();
+
+    /**
+     * Atlas to use for any textures needed by the model.
+     *
+     * @param atlas  Atlas for model textures.
+     */
+    void setAtlas(AtlasTexture &atlas);
+
+    /**
+     * Removes the model's atlas. All allocations this model has made from the atlas
+     * are freed.
+     */
+    void unsetAtlas();
 
     /**
      * Sets the GL program used for shading the model.

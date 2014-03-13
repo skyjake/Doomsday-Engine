@@ -62,9 +62,10 @@ DENG2_OBSERVES(Bank, Load)
     GLTexture frameTex;
     GLTexture testpic;
     ModelDrawable model;
+    QScopedPointer<AtlasTexture> modelAtlas;
     GLProgram modelProgram;
-    std::auto_ptr<AtlasTexture> atlas;
-    std::auto_ptr<GLTarget> frameTarget;
+    QScopedPointer<AtlasTexture> atlas;
+    QScopedPointer<GLTarget> frameTarget;
     Time startedAt;
     Time lastAtlasAdditionAt;
     bool eraseAtlas;
@@ -101,6 +102,9 @@ DENG2_OBSERVES(Bank, Load)
         imageBank.audienceForLoad() += this;
 
         model.load(App::rootFolder().locate<File const>("/data/boblampclean.md5mesh"));
+
+        modelAtlas.reset(AtlasTexture::newWithKdTreeAllocator(Atlas::DefaultFlags, Atlas::Size(2048, 2048)));
+        model.setAtlas(*modelAtlas);
     }
 
     void canvasGLInit(Canvas &cv)

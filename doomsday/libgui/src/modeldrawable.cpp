@@ -203,18 +203,20 @@ DENG2_PIMPL(ModelDrawable)
     };
 
     Asset modelAsset;
-    Path sourcePath;
+    String sourcePath;
     Assimp::Importer importer;
     aiScene const *scene;
 
     QVector<VertexBone> vertexBones; // indexed by vertex
     QHash<String, duint16> boneNameToIndex;
     QVector<BoneData> bones; // indexed by bone index
+    QHash<duint, Id> materialTexIds;
     Vector3f minPoint; ///< Bounds in default pose.
     Vector3f maxPoint;
     Matrix4f globalInverse;
     ddouble animTime;
 
+    AtlasTexture *atlas;
     VBuf *buffer;
     GLProgram *program;
     GLUniform uBoneMatrices;
@@ -223,6 +225,7 @@ DENG2_PIMPL(ModelDrawable)
         : Base(i)
         , scene(0)
         , animTime(0)
+        , atlas(0)
         , buffer(0)
         , program(0)
         , uBoneMatrices("uBoneMatrices", GLUniform::Mat4Array, MAX_BONES)
@@ -246,7 +249,7 @@ DENG2_PIMPL(ModelDrawable)
         scene = 0;
         sourcePath = file.path();
 
-        if(!importer.ReadFile(sourcePath.toString().toLatin1(),
+        if(!importer.ReadFile(sourcePath.toLatin1(),
                               aiProcess_CalcTangentSpace |
                               aiProcess_GenSmoothNormals |
                               aiProcess_JoinIdenticalVertices |
@@ -274,6 +277,7 @@ DENG2_PIMPL(ModelDrawable)
     void glInit()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
+        DENG2_ASSERT(atlas != 0);
 
         if(modelAsset.isReady())
         {
@@ -292,6 +296,8 @@ DENG2_PIMPL(ModelDrawable)
 
     void glDeinit()
     {
+        freeAtlas();
+
         /// @todo Free all GL resources.
         delete buffer;
         buffer = 0;
@@ -301,6 +307,17 @@ DENG2_PIMPL(ModelDrawable)
         boneNameToIndex.clear();
 
         modelAsset.setState(NotReady);
+    }
+
+    void freeAtlas()
+    {
+        if(!atlas) return;
+
+        foreach(Id const &id, materialTexIds.values())
+        {
+            atlas->release(id);
+        }
+        materialTexIds.clear();
     }
 
     void initFromScene()
@@ -319,9 +336,6 @@ DENG2_PIMPL(ModelDrawable)
             }
         }
 
-        // Initialize all meshes in the scene into a single GL buffer.
-        makeBuffer();
-
         // Print some information.
         qDebug() << "total bones:" << boneCount();
 
@@ -333,6 +347,22 @@ DENG2_PIMPL(ModelDrawable)
         }
 
         // Materials.
+        initTextures();
+
+        // Initialize all meshes in the scene into a single GL buffer.
+        makeBuffer();
+    }
+
+    void addToBounds(Vector3f const &point)
+    {
+        minPoint = minPoint.min(point);
+        maxPoint = maxPoint.max(point);
+    }
+
+    void initTextures()
+    {
+        DENG2_ASSERT(atlas != 0);
+
         qDebug() << "materials:" << scene->mNumMaterials;
         for(duint i = 0; i < scene->mNumMaterials; ++i)
         {
@@ -346,15 +376,21 @@ DENG2_PIMPL(ModelDrawable)
                 if(mat.GetTexture(aiTextureType_DIFFUSE, s, &texPath) == AI_SUCCESS)
                 {
                     qDebug() << "    texture #" << s << texPath.C_Str();
+
+                    /// @todo Insert resource finding intelligence here. -jk
+
+                    File const &texFile = App::rootFolder()
+                            .locate<File>(sourcePath.fileNamePath() / String(texPath.C_Str()));
+
+                    qDebug() << "    from" << texFile.description();
+
+                    Block imgData(texFile);
+                    QImage img = QImage::fromData(imgData);
+
+                    materialTexIds[i] = atlas->alloc(img);
                 }
             }
         }
-    }
-
-    void addToBounds(Vector3f const &point)
-    {
-        minPoint = minPoint.min(point);
-        maxPoint = maxPoint.max(point);
     }
 
     // Bone & Mesh Setup -----------------------------------------------------
@@ -648,8 +684,7 @@ DENG2_PIMPL(ModelDrawable)
         // Draw the meshes in this node.
         if(scene->HasAnimations())
         {
-            accumulateAnimationTransforms(animTime, *scene->mAnimations[0],
-                                          *scene->mRootNode);
+            accumulateAnimationTransforms(animTime, *scene->mAnimations[0], *scene->mRootNode);
         }
 
         GLState::current().apply();
@@ -691,6 +726,17 @@ void ModelDrawable::glDeinit()
     d->glDeinit();
 }
 
+void ModelDrawable::setAtlas(AtlasTexture &atlas)
+{
+    d->atlas = &atlas;
+}
+
+void ModelDrawable::unsetAtlas()
+{
+    d->freeAtlas();
+    d->atlas = 0;
+}
+
 void ModelDrawable::setProgram(GLProgram &program)
 {
     d->program = &program;
@@ -715,7 +761,7 @@ void ModelDrawable::setAnimationTime(TimeDelta const &time)
 void ModelDrawable::draw()
 {
     glInit();
-    if(isReady() && d->program)
+    if(isReady() && d->program && d->atlas)
     {
         d->draw();
     }
