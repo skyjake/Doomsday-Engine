@@ -63,6 +63,7 @@ DENG2_OBSERVES(Bank, Load)
     GLTexture testpic;
     ModelDrawable model;
     QScopedPointer<AtlasTexture> modelAtlas;
+    GLUniform uModelTex;
     GLProgram modelProgram;
     QScopedPointer<AtlasTexture> atlas;
     QScopedPointer<GLTarget> frameTarget;
@@ -81,6 +82,7 @@ DENG2_OBSERVES(Bank, Load)
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
           uTex      ("uTex",       GLUniform::Sampler2D),
+          uModelTex ("uTex",       GLUniform::Sampler2D),
           atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment |
                                                           Atlas::BackingStore |
                                                           Atlas::WrapBordersInBackingStore))
@@ -105,6 +107,7 @@ DENG2_OBSERVES(Bank, Load)
 
         modelAtlas.reset(AtlasTexture::newWithKdTreeAllocator(Atlas::DefaultFlags, Atlas::Size(2048, 2048)));
         model.setAtlas(*modelAtlas);
+        uModelTex = *modelAtlas;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -248,6 +251,7 @@ DENG2_OBSERVES(Bank, Load)
                         "attribute highp vec4 aVertex;\n"
                         "attribute highp vec3 aNormal;\n"
                         "attribute highp vec2 aUV;\n"
+                        "attribute highp vec4 aBounds;\n"
                         "attribute highp vec4 aColor;\n"
                         "attribute highp vec4 aBoneIDs;\n"
                         "attribute highp vec4 aBoneWeights;\n"
@@ -264,7 +268,7 @@ DENG2_OBSERVES(Bank, Load)
                         "    uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;\n"
                         "  highp vec4 modelPos = bone * aVertex;\n"
                         "  gl_Position = uMvpMatrix * modelPos;\n"
-                        "  vUV = aUV;\n"
+                        "  vUV = aBounds.xy + aUV * aBounds.zw;\n"
                         "  vColor = aColor;\n"
                         "  vNormal = (bone * vec4(aNormal, 0.0)).xyz;\n"
                         "}\n"),
@@ -273,10 +277,11 @@ DENG2_OBSERVES(Bank, Load)
                         "varying highp vec2 vUV;\n"
                         "varying highp vec3 vNormal;\n"
                         "void main(void) {\n"
-                        //"  gl_FragColor = texture2D(uTex, vUV);\n"
-                        "  gl_FragColor = vec4(vec3((vNormal.x + 1.0) / 2.0), 1.0);"
+                        "  gl_FragColor = texture2D(uTex, vUV) * "
+                            "vec4(vec3((vNormal.x + 1.0) / 2.0), 1.0);"
                         "}\n"))
-                << uMvpMatrix;
+                << uMvpMatrix
+                << uModelTex;
         model.setProgram(modelProgram);
     }
 
@@ -328,7 +333,7 @@ DENG2_OBSERVES(Bank, Load)
         case TestModel:
             // 3D projection.
             projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
-                         Matrix4f::lookAt(Vector3f(), Vector3f(0, -5, 0), Vector3f(0, 0, 1));
+                         Matrix4f::lookAt(Vector3f(), Vector3f(0, -3, 0), Vector3f(0, 0, 1));
             break;
         }
     }
@@ -429,8 +434,9 @@ DENG2_OBSERVES(Bank, Load)
             break;
 
         case TestModel:
-            modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
-                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0)) *
+            modelMatrix = Matrix4f::translate(Vector3f(0, std::cos(uTime.toFloat()/2.5f), 0)) *
+                          Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
+                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0)) *                         
                           Matrix4f::scale(3.f / de::max(model.dimensions().x, model.dimensions().y, model.dimensions().z)) *
                           Matrix4f::translate(-model.midPoint());
             break;
