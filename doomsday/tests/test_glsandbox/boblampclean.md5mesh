@@ -41,7 +41,7 @@ joints {
 }
 
 mesh {
-	shader "guard1_body.tga"
+	shader "guard1_body.png"
 
 	numverts 494
 	vert 0 ( 0.394531 0.513672 ) 0 1
@@ -2040,7 +2040,7 @@ mesh {
 }
 
 mesh {
-	shader "guard1_face.tga"
+	shader "guard1_face.png"
 
 	numverts 110
 	vert 0 ( 0.455078 0.386719 ) 0 2
@@ -2557,7 +2557,7 @@ mesh {
 }
 
 mesh {
-	shader "guard1_helmet.tga"
+	shader "guard1_helmet.png"
 
 	numverts 80
 	vert 0 ( 0.054688 0.992188 ) 0 1
@@ -2805,7 +2805,7 @@ mesh {
 }
 
 mesh {
-	shader "iron_grill.tga"
+	shader "iron_grill.png"
 
 	numverts 18
 	vert 0 ( 0.379416 0.167859 ) 0 1
@@ -2867,7 +2867,7 @@ mesh {
 }
 
 mesh {
-	shader "round_grill.tga"
+	shader "round_grill.png"
 
 	numverts 38
 	vert 0 ( 0.460938 0.136719 ) 0 1
@@ -2975,7 +2975,7 @@ mesh {
 }
 
 mesh {
-	shader "guard1_body.tga"
+	shader "guard1_body.png"
 
 	numverts 135
 	vert 0 ( 0.162109 0.550781 ) 0 1

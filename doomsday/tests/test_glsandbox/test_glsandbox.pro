@@ -17,7 +17,15 @@ SOURCES += \
 deployTest($$TARGET)
 
 gfx.files = testpic.png
-model.files = marine.md2 boblampclean.md5anim boblampclean.md5mesh
+model.files = \
+    marine.md2 \
+    boblampclean.md5anim \
+    boblampclean.md5mesh \
+    guard1_body.png \
+    guard1_face.png \
+    guard1_helmet.png \
+    iron_grill.png \
+    round_grill.png
 
 macx {
     linkBinaryToBundledLibdeng2($${TARGET}.app/Contents/MacOS/$${TARGET})
