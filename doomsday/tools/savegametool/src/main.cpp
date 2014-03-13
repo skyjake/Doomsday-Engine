@@ -472,7 +472,7 @@ static SaveFormat guessSaveFormatFromFileName(Path const &path)
  */
 struct ACScriptTask : public IWritable
 {
-    dint32 mapNumber;
+    duint32 mapNumber;
     dint32 scriptNumber;
     dbyte args[4];
 
@@ -485,7 +485,7 @@ struct ACScriptTask : public IWritable
 
     void read(reader_s *reader)
     {
-        mapNumber    = Reader_ReadInt32(reader);
+        mapNumber    = duint32(Reader_ReadInt32(reader));
         scriptNumber = Reader_ReadInt32(reader);
         Reader_Read(reader, args, 4);
     }
@@ -494,11 +494,8 @@ struct ACScriptTask : public IWritable
     {
         DENG2_ASSERT(mapNumber);
 
-        String mapUriScheme = "";
-        Path mapUriPath = composeMapUriPath(0, mapNumber + 1);
-        to << mapUriScheme << mapUriPath;
-
-        to << scriptNumber;
+        to << composeMapUriPath(0, mapNumber).asText()
+           << scriptNumber;
 
         // Script arguments:
         for(int i = 0; i < 4; ++i)
@@ -538,36 +535,39 @@ static void xlatWorldACScriptData(reader_s *reader, Writer &writer)
     }
 
     // Read the deferred tasks into a temporary buffer for translation.
+    int const oldStoreSize = Reader_ReadInt32(reader);
     ACScriptTasks tasks;
-    tasks.reserve(20);
-    for(int i = 0; i < 20; ++i)
+
+    if(oldStoreSize > 0)
     {
-        tasks.append(ACScriptTask::fromReader(reader));
+        tasks.reserve(oldStoreSize);
+        for(int i = 0; i < oldStoreSize; ++i)
+        {
+            tasks.append(ACScriptTask::fromReader(reader));
+        }
+
+        // Prune tasks with no map number set (unused).
+        QMutableListIterator<ACScriptTask *> it(tasks);
+        while(it.hasNext())
+        {
+            ACScriptTask *task = it.next();
+            if(!task->mapNumber)
+            {
+                it.remove();
+                delete task;
+            }
+        }
+        LOG_XVERBOSE("Translated %i deferred ACScript tasks") << tasks.count();
     }
 
     /* skip junk */ if(saveVersion < 7) srSeek(reader, 12);
 
-    // Prune tasks with no map number set (unused).
-    QMutableListIterator<ACScriptTask *> it(tasks);
-    while(it.hasNext())
-    {
-        ACScriptTask *task = it.next();
-        if(!task->mapNumber)
-        {
-            it.remove();
-            delete task;
-        }
-    }
-
     // Write out the translated data:
-
     writer << dbyte(4); // segment version
-
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
         writer << worldVars[i];
     }
-
     writer << dint32(tasks.count());
     writer.writeObjects(tasks);
     qDeleteAll(tasks);
@@ -638,7 +638,7 @@ static bool convertSavegame(Path oldSavePath)
             Block worldACScriptData;
             Writer writer(worldACScriptData);
             xlatWorldACScriptData(reader, writer);
-            arch.add("ACScript", worldACScriptData);
+            arch.add("ACScriptState", worldACScriptData);
 
             // Serialized map states are in similarly named "side car" files.
             int const maxHubMaps = 99;

@@ -76,9 +76,9 @@ void ACScriptInterpreter::DeferredTask::write(Writer *writer) const
 
 void ACScriptInterpreter::DeferredTask::read(de::Reader &from)
 {
-    de::String mapUriScheme, mapUriPath;
-    from >> mapUriScheme >> mapUriPath;
-    mapUri = Uri_NewWithPath2((mapUriScheme + ':' + mapUriPath).toUtf8().constData(), RC_NULL);
+    de::String mapUriStr;
+    from >> mapUriStr;
+    mapUri = Uri_NewWithPath2(mapUriStr.toUtf8().constData(), RC_NULL);
     from >> scriptNumber;
     for(int i = 0; i < 4; ++i)
     {
@@ -486,7 +486,7 @@ void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
 
 void ACScriptInterpreter::readWorldScriptData(de::Reader &from)
 {
-    int32_t ver; from >> ver;
+    byte ver; from >> ver;
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
