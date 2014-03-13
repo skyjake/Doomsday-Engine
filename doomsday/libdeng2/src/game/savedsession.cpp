@@ -160,10 +160,8 @@ DENG2_PIMPL(SavedSession)
         , status          (other.status)
         , needUpdateStatus(other.needUpdateStatus)
     {
-        if(!other.metadata.isNull())
-        {
-            metadata.reset(new Metadata(*other.metadata));
-        }
+        DENG2_ASSERT(!other.metadata.isNull());
+        metadata.reset(new Metadata(*other.metadata));
     }
 
     static SessionMetadata *readMetadata(PackageFolder const &pack)
