@@ -3257,7 +3257,7 @@ void G_DoLoadSession(de::String slotId)
 
 #if __JHEXEN__
         // Deserialize the world ACS data.
-        if(de::File *file = pack.tryLocateFile("ACScript"))
+        if(de::File *file = pack.tryLocateFile("ACScriptState"))
         {
             Game_ACScriptInterpreter().readWorldScriptData(de::Reader(*file));
         }

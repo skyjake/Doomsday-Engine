@@ -826,7 +826,7 @@ void HereticV13MapStateReader::read(String const &mapUriStr)
     PackageFolder const &pack             = session().locateFile();
     //game::SessionMetadata const &metadata = session().metadata();
 
-    File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr);
+    File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr + "State");
     //SV_OpenFile(mapStateFile);
     d->reader = SV_NewReader_Hr_v13();
 

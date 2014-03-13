@@ -655,7 +655,7 @@ static bool convertSavegame(Path oldSavePath)
                 {
                     if(Block *mapStateData = bufferFile())
                     {
-                        arch.add(Path("maps") / composeMapUriPath(0, i), *mapStateData);
+                        arch.add(Path("maps") / composeMapUriPath(0, i) + "State", *mapStateData);
                         delete mapStateData;
                     }
                 }
@@ -668,7 +668,7 @@ static bool convertSavegame(Path oldSavePath)
             if(Block *mapStateData = bufferFile())
             {
                 String const mapUriStr = metadata["mapUri"].value().asText();
-                arch.add(Path("maps") / mapUriStr, *mapStateData);
+                arch.add(Path("maps") / mapUriStr + "State", *mapStateData);
                 delete mapStateData;
             }
         }

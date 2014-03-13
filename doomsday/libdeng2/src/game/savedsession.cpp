@@ -435,7 +435,7 @@ bool SavedSession::hasMapState(String mapUriStr) const
     {
         if(PackageFolder const *pack = d->tryLocatePackage())
         {
-            return pack->has(Path("maps") / mapUriStr);
+            return pack->has(Path("maps") / mapUriStr + "State");
         }
     }
     return false;
