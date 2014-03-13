@@ -213,6 +213,22 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
            i.key().startsWith("__")) continue;
 
         Variable *var = new Variable(*i.value());
+
+        // Ownerships of copied subrecords should be retained in the copy.
+        if(RecordValue *recVal = var->value().maybeAs<RecordValue>())
+        {
+            DENG2_ASSERT(!recVal->hasOwnership()); // RecordValue duplication behavior
+
+            RecordValue const &original = i.value()->value().as<RecordValue>();
+            if(original.hasOwnership())
+            {
+                DENG2_ASSERT(recVal->record() == original.record());
+
+                // Make a true copy of the subrecord.
+                recVal->setRecord(new Record(*recVal->record()), RecordValue::OwnsRecord);
+            }
+        }
+
         var->audienceForDeletion() += this;
         d->members[i.key()] = var;
     }

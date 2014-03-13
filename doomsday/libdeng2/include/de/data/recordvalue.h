@@ -89,9 +89,10 @@ public:
     /**
      * Sets the record that the value is referencing.
      *
-     * @param record  Record to reference. Ownership is not given.
+     * @param record     Record to reference. Ownership is not given.
+     * @param ownership  OwnsRecord, if the value is given ownership of @a record.
      */
-    void setRecord(Record *record);
+    void setRecord(Record *record, OwnershipFlags ownership = 0);
 
     /**
      * Gives away ownership of the record, if the value owns the record.
