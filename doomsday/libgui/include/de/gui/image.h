@@ -155,6 +155,18 @@ public:
 
     static Image solidColor(Color const &color, Size const &size);
 
+    /**
+     * Loads an image from a block of data. The format of the image is autodetected.
+     * In addition to image formats supported by Qt, this can load 8-bit paletted PCX
+     * (ZSoft Paintbrush) images.
+     *
+     * @param data  Block of data containing image data.
+     */
+    static Image fromData(IByteArray const &data);
+
+    /// @copydoc fromData()
+    static Image fromData(Block const &data);
+
 private:
     DENG2_PRIVATE(d)
 };
