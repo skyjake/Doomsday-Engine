@@ -183,6 +183,9 @@ static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
     return Matrix4f(&aiMat.a1).transpose();
 }
 
+/// Bone used for vertices that have no bones.
+static String const DUMMY_BONE_NAME = "__deng_dummy-bone__";
+
 DENG2_PIMPL(ModelDrawable)
 {
     typedef GLBufferT<ModelVertex> VBuf;
@@ -301,7 +304,7 @@ DENG2_PIMPL(ModelDrawable)
 
     void glDeinit()
     {
-        freeAtlas();
+        releaseTexturesFromAtlas();
 
         /// @todo Free all GL resources.
         delete buffer;
@@ -312,12 +315,13 @@ DENG2_PIMPL(ModelDrawable)
         modelAsset.setState(NotReady);
     }
 
-    void freeAtlas()
+    void releaseTexturesFromAtlas()
     {
         if(!atlas) return;
 
         foreach(Id const &id, materialTexIds)
         {
+            qDebug() << "Releasing model texture" << id.asText();
             atlas->release(id);
         }
         materialTexIds.clear();
@@ -366,11 +370,13 @@ DENG2_PIMPL(ModelDrawable)
     {
         DENG2_ASSERT(atlas != 0);
 
-        materialTexIds.resize(scene->mNumMaterials);
+        materialTexIds.clear();
 
         qDebug() << "materials:" << scene->mNumMaterials;
         for(duint i = 0; i < scene->mNumMaterials; ++i)
-        {
+        {            
+            materialTexIds.append(Id::None);
+
             aiMaterial const &mat = *scene->mMaterials[i];
             qDebug() << "  material #" << i
                      << "texcount (diffuse):" << mat.GetTextureCount(aiTextureType_DIFFUSE);
@@ -382,23 +388,27 @@ DENG2_PIMPL(ModelDrawable)
                 {
                     qDebug() << "    texture #" << s << texPath.C_Str();
 
-                    /// @todo Insert resource finding intelligence here. -jk
+                    try
+                    {
+                        /// @todo Consult a resource finder object here. -jk
 
-                    File const &texFile = App::rootFolder()
-                            .locate<File>(sourcePath.fileNamePath() / String(texPath.C_Str()));
+                        File const &texFile = App::rootFolder()
+                                .locate<File>(sourcePath.fileNamePath() / String(texPath.C_Str()));
 
-                    qDebug() << "    from" << texFile.description().toLatin1().constData();
+                        qDebug() << "    from" << texFile.description().toLatin1().constData();
 
-                    Block imgData(texFile);
-                    QImage img = QImage::fromData(imgData).convertToFormat(QImage::Format_ARGB32);
-
-                    materialTexIds[i] = atlas->alloc(img);
+                        materialTexIds[i] = atlas->alloc(Image::fromData(texFile));
+                    }
+                    catch(Error const &er)
+                    {
+                        LOG_WARNING("Model material #%i not available: %s") << i << er.asText();
+                    }
                 }
             }
         }
     }
 
-    // Bone & Mesh Setup -----------------------------------------------------
+    // Bone & Mesh Setup ----------------------------------------------------------------
 
     void clearBones()
     {
@@ -466,17 +476,33 @@ DENG2_PIMPL(ModelDrawable)
     {
         vertexBones.resize(vertexBase + mesh.mNumVertices);
 
-        for(duint i = 0; i < mesh.mNumBones; ++i)
+        if(mesh.HasBones())
         {
-            aiBone const &bone = *mesh.mBones[i];
-
-            duint const boneIndex = addOrFindBone(bone.mName.C_Str());
-            bones[boneIndex].offset = convertMatrix(bone.mOffsetMatrix);
-
-            for(duint w = 0; w < bone.mNumWeights; ++w)
+            // Mark the per-vertex bone weights.
+            for(duint i = 0; i < mesh.mNumBones; ++i)
             {
-                addVertexWeight(vertexBase + bone.mWeights[w].mVertexId,
-                                boneIndex, bone.mWeights[w].mWeight);
+                aiBone const &bone = *mesh.mBones[i];
+
+                duint const boneIndex = addOrFindBone(bone.mName.C_Str());
+                bones[boneIndex].offset = convertMatrix(bone.mOffsetMatrix);
+
+                for(duint w = 0; w < bone.mNumWeights; ++w)
+                {
+                    addVertexWeight(vertexBase + bone.mWeights[w].mVertexId,
+                                    boneIndex, bone.mWeights[w].mWeight);
+                }
+            }
+        }
+        else
+        {
+            // No bones; make one dummy bone so we can render it the same way.
+            duint const boneIndex = addOrFindBone(DUMMY_BONE_NAME);
+            bones[boneIndex].offset = Matrix4f();
+
+            // All vertices fully affected by this bone.
+            for(duint i = 0; i < mesh.mNumVertices; ++i)
+            {
+                addVertexWeight(vertexBase + i, boneIndex, 1.f);
             }
         }
     }
@@ -571,7 +597,7 @@ DENG2_PIMPL(ModelDrawable)
         return buffer;
     }
 
-    // Animation -------------------------------------------------------------
+    // Animation ------------------------------------------------------------------------
 
     struct AccumData
     {
@@ -712,7 +738,7 @@ DENG2_PIMPL(ModelDrawable)
                                                 anim.mNumPositionKeys));
     }
 
-    // Drawing ---------------------------------------------------------------
+    // Drawing --------------------------------------------------------------------------
 
     void draw()
     {
@@ -775,7 +801,7 @@ void ModelDrawable::setAtlas(AtlasTexture &atlas)
 
 void ModelDrawable::unsetAtlas()
 {
-    d->freeAtlas();
+    d->releaseTexturesFromAtlas();
     d->atlas = 0;
 }
 
