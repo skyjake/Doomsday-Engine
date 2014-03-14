@@ -43,8 +43,6 @@ using namespace de;
 
 static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
 
-static uint const POS_SCRIPT_MODE = 5;
-
 DENG_GUI_PIMPL(ConsoleWidget),
 DENG2_OBSERVES(Variable, Change)
 {

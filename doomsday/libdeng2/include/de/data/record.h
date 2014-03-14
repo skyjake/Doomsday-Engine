@@ -299,6 +299,9 @@ public:
     Variable &set(String const &name, bool value);
 
     /// @copydoc set()
+    Variable &set(String const &name, char const *value);
+
+    /// @copydoc set()
     Variable &set(String const &name, Value::Text const &value);
 
     /// @copydoc set()

@@ -62,6 +62,16 @@ int main(int argc, char **argv)
         
         Reader(b) >> rec2;        
         LOG_MSG("After being deserialized:\n") << rec2;
+
+        Record before;
+        before.addRecord("subrecord");
+        before.subrecord("subrecord").set("value", true);
+        DENG2_ASSERT(before.hasSubrecord("subrecord"));
+        LOG_MSG("Before copying:\n") << before;
+
+        Record copied = before;
+        DENG2_ASSERT(copied.hasSubrecord("subrecord"));
+        LOG_MSG("Copied:\n") << copied;
     }
     catch(Error const &err)
     {

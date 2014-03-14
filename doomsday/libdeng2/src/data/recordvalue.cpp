@@ -62,7 +62,7 @@ bool RecordValue::usedToHaveOwnership() const
     return _oldOwnership.testFlag(OwnsRecord);
 }
 
-void RecordValue::setRecord(Record *record)
+void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 {
     if(record == _record) return; // Got it already.
 
@@ -76,9 +76,9 @@ void RecordValue::setRecord(Record *record)
     }
 
     _record = record;
-    _ownership = 0;
+    _ownership = ownership;
 
-    if(_record)
+    if(_record && !_ownership.testFlag(OwnsRecord))
     {
         // Since we don't own it, someone may delete the record.
         _record->audienceForDeletion() += this;

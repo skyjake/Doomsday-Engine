@@ -43,7 +43,7 @@
 #endif
 
 // Assertion specific to GL errors.
-#ifdef Q_WS_X11
+#if defined(Q_WS_X11) || defined(WIN32)
 // Under X11 we're having more OpenGL errors; should investigate why.
 #  define LIBGUI_ASSERT_GL(cond) // ignored
 #else
