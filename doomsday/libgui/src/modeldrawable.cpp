@@ -265,6 +265,8 @@ DENG2_PIMPL(ModelDrawable)
         }
 
         scene = importer.GetScene();
+
+        initBones();
     }
 
     /// Release all loaded model data.
@@ -305,9 +307,7 @@ DENG2_PIMPL(ModelDrawable)
         delete buffer;
         buffer = 0;
 
-        vertexBones.clear();
-        bones.clear();
-        boneNameToIndex.clear();
+        clearBones();
 
         modelAsset.setState(NotReady);
     }
@@ -400,6 +400,13 @@ DENG2_PIMPL(ModelDrawable)
 
     // Bone & Mesh Setup -----------------------------------------------------
 
+    void clearBones()
+    {
+        vertexBones.clear();
+        bones.clear();
+        boneNameToIndex.clear();
+    }
+
     int boneCount() const
     {
         return bones.size();
@@ -455,7 +462,7 @@ DENG2_PIMPL(ModelDrawable)
      * @param mesh        Source mesh.
      * @param vertexBase  Index of the first vertex of the mesh.
      */
-    void initBones(aiMesh const &mesh, duint vertexBase)
+    void initMeshBones(aiMesh const &mesh, duint vertexBase)
     {
         vertexBones.resize(vertexBase + mesh.mNumVertices);
 
@@ -474,6 +481,26 @@ DENG2_PIMPL(ModelDrawable)
         }
     }
 
+    /**
+     * Initializes all bones in the scene.
+     */
+    void initBones()
+    {
+        clearBones();
+
+        int base = 0;
+        for(duint i = 0; i < scene->mNumMeshes; ++i)
+        {
+            aiMesh const &mesh = *scene->mMeshes[i];
+
+            qDebug() << "initializing bones for mesh:" << mesh.mName.C_Str();
+            qDebug() << "  bones:" << mesh.mNumBones;
+
+            initMeshBones(mesh, base);
+            base += mesh.mNumVertices;
+        }
+    }
+
     VBuf *makeBuffer()
     {
         VBuf::Vertices verts;
@@ -481,18 +508,12 @@ DENG2_PIMPL(ModelDrawable)
 
         aiVector3D const zero(0, 0, 0);
 
+        int base = 0;
+
         // All of the scene's meshes are combined into one GL buffer.
         for(duint m = 0; m < scene->mNumMeshes; ++m)
         {
             aiMesh const &mesh = *scene->mMeshes[m];
-
-            qDebug() << "initializing mesh:" << mesh.mName.C_Str();
-            qDebug() << "  material:" << mesh.mMaterialIndex;
-            qDebug() << "  bones:" << mesh.mNumBones;
-
-            int vtxBase = vertexBones.size();
-
-            initBones(mesh, vtxBase);
 
             // Load vertices into the buffer.
             for(duint i = 0; i < mesh.mNumVertices; ++i)
@@ -522,8 +543,8 @@ DENG2_PIMPL(ModelDrawable)
 
                 for(int b = 0; b < MAX_BONES_PER_VERTEX; ++b)
                 {
-                    v.boneIds[b]     = vertexBones[vtxBase + i].ids[b];
-                    v.boneWeights[b] = vertexBones[vtxBase + i].weights[b];
+                    v.boneIds[b]     = vertexBones[base + i].ids[b];
+                    v.boneWeights[b] = vertexBones[base + i].weights[b];
                 }
 
                 verts << v;
@@ -534,17 +555,19 @@ DENG2_PIMPL(ModelDrawable)
             {
                 aiFace const &face = mesh.mFaces[i];
                 DENG2_ASSERT(face.mNumIndices == 3); // expecting triangles
-                indx << face.mIndices[0] + vtxBase
-                     << face.mIndices[1] + vtxBase
-                     << face.mIndices[2] + vtxBase;
+                indx << face.mIndices[0] + base
+                     << face.mIndices[1] + base
+                     << face.mIndices[2] + base;
             }
+
+            base += mesh.mNumVertices;
         }
 
         buffer = new VBuf;
         buffer->setVertices(verts, gl::Static);
         buffer->setIndices(gl::Triangles, indx, gl::Static);
 
-        qDebug() << "new GLbuf" << buffer << "verts:" << verts.size();
+        //qDebug() << "new GLbuf" << buffer << "verts:" << verts.size();
         return buffer;
     }
 
