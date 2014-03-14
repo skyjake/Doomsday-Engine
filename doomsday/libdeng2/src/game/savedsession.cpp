@@ -268,6 +268,11 @@ SavedSession &SavedSession::operator = (SavedSession const &other)
     return *this;
 }
 
+bool SavedSession::hasRepository() const
+{
+    return d->repo != 0;
+}
+
 SavedSessionRepository &SavedSession::repository() const
 {
     if(d->repo)

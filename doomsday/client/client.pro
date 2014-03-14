@@ -347,6 +347,7 @@ DENG_HEADERS += \
     include/resource/pcx.h \
     include/resource/rawtexture.h \
     include/resource/resourcesystem.h \
+    include/resource/savegameconverter.h \
     include/resource/sprite.h \
     include/resource/texture.h \
     include/resource/texturemanifest.h \
@@ -676,6 +677,7 @@ SOURCES += \
     src/resource/patchname.cpp \
     src/resource/pcx.cpp \
     src/resource/resourcesystem.cpp \
+    src/resource/savegameconverter.cpp \
     src/resource/sprite.cpp \
     src/resource/texture.cpp \
     src/resource/texturemanifest.cpp \

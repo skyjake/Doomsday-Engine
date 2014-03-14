@@ -123,7 +123,14 @@ public:
     String description() const;
 
     /**
-     * Returns the saved session repository which owns the saved session (if any).
+     * Determines whether a repository is configured for the saved session.
+     */
+    bool hasRepository() const;
+
+    /**
+     * Returns the saved session repository which owns the saved session.
+     *
+     * @see hasRepository()
      */
     SavedSessionRepository &repository() const;
 
