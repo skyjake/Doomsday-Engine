@@ -112,6 +112,11 @@ DENG2_OBSERVES(Bank, Load)
         uModelTex = *modelAtlas;
     }
 
+    ~Instance()
+    {
+        model.glDeinit();
+    }
+
     void canvasGLInit(Canvas &cv)
     {
         try
