@@ -20,6 +20,8 @@
 #include "de/gui/opengl.h"
 #include <de/Reader>
 #include <de/Writer>
+#include <de/Block>
+#include <de/FixedByteArray>
 
 #include <QDataStream>
 #include <QPainter>
@@ -27,6 +29,116 @@
 namespace de {
 
 #define IMAGE_ASSERT_EDITABLE(d) DENG2_ASSERT(d->format == UseQImageFormat)
+
+namespace internal {
+
+static dbyte const PCX_MAGIC        = 0x0a;
+static dbyte const PCX_RLE_ENCODING = 1;
+static dsize const PCX_HEADER_SIZE  = 128;
+
+struct PCXHeader : public IReadable
+{
+    dbyte magic;
+    dbyte version;
+    dbyte encoding;
+    dbyte bitsPerPixel;
+    duint16 xMin, yMin;
+    duint16 xMax, yMax;
+    duint16 hRes, vRes;
+    dbyte colorPlanes;
+    duint16 bytesPerLine;
+    duint16 paletteType;
+
+    void operator << (Reader &from)
+    {
+        from >> magic
+             >> version
+             >> encoding
+             >> bitsPerPixel
+             >> xMin
+             >> yMin
+             >> xMax
+             >> yMax
+             >> hRes
+             >> vRes;
+
+        from.seek(48);  // skip EGA palette
+        from.seek(1);   // skip reserved field
+
+        from >> colorPlanes
+             >> bytesPerLine
+             >> paletteType;
+    }
+};
+
+static bool isPCXFormat(Block const &data)
+{
+    try
+    {
+        PCXHeader header;
+        Reader(data) >> header;
+
+        // Only paletted format supported.
+        return (header.magic == PCX_MAGIC &&
+                header.version == 5 /* latest */ &&
+                header.encoding == PCX_RLE_ENCODING &&
+                header.bitsPerPixel == 8);
+    }
+    catch(Error const &)
+    {
+        return false;
+    }
+}
+
+/**
+ * Loads a PCX image into a QImage using an RGB888 buffer. The PCX palette is used
+ * to map color indices to RGB values.
+ *
+ * @param data  Source data containing a PCX image.
+ *
+ * @return QImage using the RGB888 (24-bit) format.
+ */
+static QImage loadPCX(Block const &data)
+{
+    PCXHeader header;
+    Reader reader(data);
+    reader >> header;
+
+    Image::Size const size(header.xMax + 1, header.yMax + 1);
+
+    QImage image(size.x, size.y, QImage::Format_RGB888);
+    DENG2_ASSERT(image.depth() == 24);
+
+    dbyte const *palette = data.data() + data.size() - 768;
+    dbyte const *pos = data.data() + PCX_HEADER_SIZE;
+    dbyte *dst = image.bits();
+
+    for(duint y = 0; y < size.y; ++y, dst += size.x * 3)
+    {
+        for(duint x = 0; x < size.x; )
+        {
+            dbyte value = *pos++;
+
+            // RLE inflation.
+            int runLength = 1;
+            if((value & 0xc0) == 0xc0)
+            {
+                runLength = value & 0x3f;
+                value = *pos++;
+            }
+            while(runLength-- > 0)
+            {
+                // Get the RGB triplets from the palette.
+                std::memcpy(&dst[3 * x++], &palette[3 * value], 3);
+            }
+        }
+    }
+
+    return image;
+}
+
+} // namespace internal
+using namespace internal;
 
 DENG2_PIMPL(Image)
 {
@@ -57,7 +169,7 @@ DENG2_PIMPL(Image)
 
     Instance(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
         : Base(i), format(imgFormat), size(imgSize), refPixels(imgRefPixels)
-    {}
+    {}   
 };
 
 Image::Image() : d(new Instance(this))
@@ -465,6 +577,23 @@ Image Image::solidColor(Color const &color, Size const &size)
     QImage img(QSize(size.x, size.y), QImage::Format_ARGB32);
     img.fill(QColor(color.x, color.y, color.z, color.w).rgba());
     return img;
+}
+
+Image Image::fromData(IByteArray const &data)
+{
+    return fromData(Block(data));
+}
+
+Image Image::fromData(Block const &data)
+{
+    if(isPCXFormat(data))
+    {
+        // Qt does not support PCX images (too old school?).
+        return loadPCX(data);
+    }
+    /// @todo Could check when alpha channel isn't needed and return an RGB888
+    /// image instead. -jk
+    return QImage::fromData(data).convertToFormat(QImage::Format_ARGB32);
 }
 
 } // namespace de
