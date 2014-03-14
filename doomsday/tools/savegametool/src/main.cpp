@@ -381,11 +381,15 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
         rules->set("skill", skill);
     }
 
-    uint episode = Reader_ReadByte(reader) - 1;
+    uint episode = Reader_ReadByte(reader);
     uint map     = Reader_ReadByte(reader) - 1;
     metadata.set("mapUri",              composeMapUriPath(episode, map).asText());
 
     rules->set("deathmatch", Reader_ReadByte(reader));
+    if(saveFormat != Hexen && saveVersion == 13)
+    {
+        rules->set("fast", Reader_ReadByte(reader));
+    }
     rules->set("noMonsters", Reader_ReadByte(reader));
     if(saveFormat == Hexen)
     {
