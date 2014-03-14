@@ -20,6 +20,7 @@
 #include "resource/savegameconverter.h"
 
 #include "dd_main.h"
+#include <de/Error>
 #include <de/game/SavedSessionRepository>
 #include <de/Log>
 #include <de/NativePath>
@@ -34,15 +35,15 @@ static void tryConversion(Path const &inputFilePath, Path const &outputFilePath)
     Str_Set(Str_InitStd(&parm.inputFilePath),  NativePath(inputFilePath).expand().asText().toUtf8().constData());
     Str_Set(Str_InitStd(&parm.outputFilePath), NativePath(outputFilePath).expand().asText().toUtf8().constData());
 
-    // Try to converter the savegame via each plugin in turn.
+    // Try to convert the savegame via each plugin in turn.
     dd_bool success = DD_CallHooks(HOOK_MAP_CONVERT, 0, &parm);
 
     Str_Free(&parm.inputFilePath);
-    Str_Free(&parm.inputFilePath);
+    Str_Free(&parm.outputFilePath);
 
     if(!success)
     {
-        /// @throw Error Seemingly no converter was able to fulfill our request.
+        /// @throw Error Seemingly no plugin was able to fulfill our request.
         throw Error("SavegameConverter", "Savegame file format was not recognized");
     }
 }

@@ -30,6 +30,9 @@ namespace de {
  * @param inputFilePath  Path to the savegame file to be converted.
  * @param session        SavedSession to update if conversion is successful.
  *
+ * @return  @c true if conversion completed successfully. Note that this is not a
+ * guarantee that the given @a session is now loadable, however.
+ *
  * @ingroup resource
  */
 bool convertSavegame(de::Path inputFilePath, de::game::SavedSession &session);
