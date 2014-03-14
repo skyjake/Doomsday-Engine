@@ -17,15 +17,7 @@ SOURCES += \
 deployTest($$TARGET)
 
 gfx.files = testpic.png
-model.files = \
-    marine.md2 \
-    boblampclean.md5anim \
-    boblampclean.md5mesh \
-    guard1_body.png \
-    guard1_face.png \
-    guard1_helmet.png \
-    iron_grill.png \
-    round_grill.png
+models.files = models/*
 
 macx {
     linkBinaryToBundledLibdeng2($${TARGET}.app/Contents/MacOS/$${TARGET})
@@ -36,8 +28,8 @@ macx {
 }
 else {
     gfx.path = $$DENG_DATA_DIR/graphics
-    model.path = $$DENG_DATA_DIR
-    INSTALLS += gfx model
+    models.path = $$DENG_DATA_DIR/models
+    INSTALLS += gfx models
 }
 
 HEADERS += \

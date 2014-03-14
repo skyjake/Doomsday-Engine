@@ -103,7 +103,7 @@ DENG2_OBSERVES(Bank, Load)
         //imageBank.loadAll();
         imageBank.audienceForLoad() += this;
 
-        model.load(App::rootFolder().locate<File const>("/data/boblampclean.md5mesh"));
+        model.load(App::rootFolder().locate<File>("/data/models/boblampclean.md5mesh"));
 
         modelAtlas.reset(AtlasTexture::newWithKdTreeAllocator(Atlas::DefaultFlags, Atlas::Size(2048, 2048)));
         model.setAtlas(*modelAtlas);
