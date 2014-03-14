@@ -42,6 +42,8 @@ DENG2_OBSERVES(Canvas, GLResize),
 DENG2_OBSERVES(Clock, TimeChange),
 DENG2_OBSERVES(Bank, Load)
 {
+    QToolBar *modelChoice;
+
     enum Mode
     {
         TestRenderToTexture,
@@ -103,7 +105,7 @@ DENG2_OBSERVES(Bank, Load)
         //imageBank.loadAll();
         imageBank.audienceForLoad() += this;
 
-        model.load(App::rootFolder().locate<File>("/data/models/boblampclean.md5mesh"));
+        //model.load(App::rootFolder().locate<File>("/data/models/marine.md2")); //boblampclean.md5mesh"));
 
         modelAtlas.reset(AtlasTexture::newWithKdTreeAllocator(Atlas::DefaultFlags, Atlas::Size(2048, 2048)));
         model.setAtlas(*modelAtlas);
@@ -343,11 +345,17 @@ DENG2_OBSERVES(Bank, Load)
         mode = newMode;
         updateProjection(self.canvas());
 
+        modelChoice->hide();
+
         switch(mode)
         {
         case TestDynamicAtlas:
             lastAtlasAdditionAt = Time();
             uMvpMatrix = projMatrix;
+            break;
+
+        case TestModel:
+            modelChoice->show();
             break;
 
         default:
@@ -506,6 +514,12 @@ TestWindow::TestWindow() : d(new Instance(this))
     tools->addAction("RTT", this, SLOT(testRenderToTexture()));
     tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
     tools->addAction("Model", this, SLOT(testModel()));
+
+    d->modelChoice = new QToolBar(tr("Models"));
+    d->modelChoice->addAction("MD2", this, SLOT(loadMD2Model()));
+    d->modelChoice->addAction("MD5", this, SLOT(loadMD5Model()));
+    addToolBar(Qt::RightToolBarArea, d->modelChoice);
+    d->modelChoice->hide();
 }
 
 void TestWindow::canvasGLDraw(Canvas &canvas)
@@ -529,4 +543,14 @@ void TestWindow::testDynamicAtlas()
 void TestWindow::testModel()
 {
     d->setMode(Instance::TestModel);
+}
+
+void TestWindow::loadMD2Model()
+{
+    d->model.load(App::rootFolder().locate<File>("/data/models/marine.md2"));
+}
+
+void TestWindow::loadMD5Model()
+{
+    d->model.load(App::rootFolder().locate<File>("/data/models/boblampclean.md5mesh"));
 }

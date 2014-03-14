@@ -35,6 +35,8 @@ public slots:
     void testRenderToTexture();
     void testDynamicAtlas();
     void testModel();
+    void loadMD2Model();
+    void loadMD5Model();
 
 private:
     DENG2_PRIVATE(d)
