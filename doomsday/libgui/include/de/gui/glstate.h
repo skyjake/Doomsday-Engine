@@ -157,6 +157,7 @@ public:
     gl::ColorMask colorMask() const;
     GLTarget &target() const;
     Rectangleui viewport() const;
+    Rectanglef normalizedViewport() const;
     bool scissor() const;
     Rectangleui scissorRect() const;
 
