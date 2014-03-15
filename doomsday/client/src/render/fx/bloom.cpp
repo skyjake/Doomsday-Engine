@@ -31,6 +31,7 @@ static int   bloomEnabled    = true;
 static float bloomIntensity  = .65f;
 static float bloomThreshold  = .35f;
 static float bloomDispersion = 1.75f;
+static int   bloomComplexity = 1;
 
 DENG2_PIMPL(Bloom)
 {
@@ -54,7 +55,7 @@ DENG2_PIMPL(Bloom)
         , uBlurStep ("uBlurStep",  GLUniform::Vec2)
         , uWindow   ("uWindow",    GLUniform::Vec4)
         , uThreshold("uThreshold", GLUniform::Float)
-        , uIntensity("uIntensity", GLUniform::Float)
+        , uIntensity("uIntensity", GLUniform::Float)       
     {}
 
     void glInit()
@@ -88,6 +89,53 @@ DENG2_PIMPL(Bloom)
     {
         bloom.clear();
         workFB.glDeinit();
+    }
+
+    /**
+     * Takes the current rendered frame buffer contents and applies bloom on it.
+     */
+    void draw()
+    {
+        GLTarget &target = GLState::current().target();
+        GLTexture *colorTex = target.attachedTexture(GLTarget::Color);
+
+        // Must have access to the color texture containing the frame buffer contents.
+        if(!colorTex) return;
+
+        // Determine the dimensions of the viewport and the target.
+        Rectanglef const rectf = GLState::current().normalizedViewport();
+        Vector2ui const targetSize = (rectf.size() * target.rectInUse().size()).toVector2ui();
+
+        // Quarter resolution is used for better efficiency (without significant loss
+        // of quality).
+        Vector2ui blurSize = (targetSize / 4).max(Vector2ui(1, 1));
+
+        // Update the size of the work buffer if needed. Also ensure linear filtering
+        // is used for better-quality blurring.
+        workFB.resize(blurSize);
+        workFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+
+        GLState::push()
+                .setDepthWrite(false) // don't mess with depth information
+                .setDepthTest(false);
+
+        switch(bloomComplexity)
+        {
+        case 1:
+            // Two passes result in a better glow effect: combining multiple Gaussian curves
+            // ensures that the middle peak is higher/sharper.
+            drawBloomPass(rectf, targetSize, *colorTex, .5f, .75f);
+            drawBloomPass(rectf, targetSize, *colorTex, 1.f, 1.f);
+            break;
+
+        default:
+            // Single-pass for HW with slow fill rate.
+            drawBloomPass(rectf, targetSize, *colorTex, 1.f, 1.75f);
+            break;
+        }
+
+
+        GLState::pop().apply();
     }
 
     /**
@@ -165,42 +213,6 @@ DENG2_PIMPL(Bloom)
 
         GLState::pop();
     }
-
-    /**
-     * Takes the current rendered frame buffer contents and applies bloom on it.
-     */
-    void draw()
-    {
-        GLTarget &target = GLState::current().target();
-        GLTexture *colorTex = target.attachedTexture(GLTarget::Color);
-
-        // Must have access to the color texture containing the frame buffer contents.
-        if(!colorTex) return;
-
-        // Determine the dimensions of the viewport and the target.
-        Rectanglef const rectf = GLState::current().normalizedViewport();
-        Vector2ui const targetSize = (rectf.size() * target.rectInUse().size()).toVector2ui();
-
-        // Quarter resolution is used for better efficiency (without significant loss
-        // of quality).
-        Vector2ui blurSize = (targetSize / 4).max(Vector2ui(1, 1));
-
-        // Update the size of the work buffer if needed. Also ensure linear filtering
-        // is used for better-quality blurring.
-        workFB.resize(blurSize);
-        workFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
-
-        GLState::push()
-                .setDepthWrite(false) // don't mess with depth information
-                .setDepthTest(false);
-
-        // Two passes result in a better glow effect: combining multiple Gaussian curves
-        // ensures that the middle peak is higher/sharper.
-        drawBloomPass(rectf, targetSize, *colorTex, .5f, .75f);
-        drawBloomPass(rectf, targetSize, *colorTex, 1.f, 1.f);
-
-        GLState::pop().apply();
-    }
 };
 
 Bloom::Bloom(int console)
@@ -241,6 +253,7 @@ void Bloom::consoleRegister()
     C_VAR_FLOAT("rend-bloom-threshold",  &bloomThreshold,  0, 0, 1);
     C_VAR_FLOAT("rend-bloom-intensity",  &bloomIntensity,  0, 0, 10);
     C_VAR_FLOAT("rend-bloom-dispersion", &bloomDispersion, 0, 0, 3.5f);
+    C_VAR_INT  ("rend-bloom-complexity", &bloomComplexity, 0, 0, 1);
 }
 
 } // namespace fx
