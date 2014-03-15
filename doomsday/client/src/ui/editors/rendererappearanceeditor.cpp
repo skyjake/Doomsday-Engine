@@ -390,6 +390,18 @@ DENG2_OBSERVES(App, GameChange)
         haloGroup = new Group(this, tr("Camera Lens"));
 
         haloGroup->addSpace();
+        haloGroup->addToggle("rend-bloom", tr("Bloom"));
+
+        haloGroup->addLabel(tr("Bloom Threshold:"));
+        haloGroup->addSlider("rend-bloom-threshold");
+
+        haloGroup->addLabel(tr("Bloom Intensity:"));
+        haloGroup->addSlider("rend-bloom-intensity");
+
+        haloGroup->addLabel(tr("Bloom Dispersion:"));
+        haloGroup->addSlider("rend-bloom-dispersion");
+
+        haloGroup->addSpace();
         haloGroup->addToggle("rend-vignette", tr("Vignetting"));
 
         haloGroup->addLabel(tr("Vignette Darkness:"));

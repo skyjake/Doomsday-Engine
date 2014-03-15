@@ -142,7 +142,7 @@ DENG2_PIMPL(GLFramebuffer)
         // Configure textures for the framebuffer.
         color.setUndefinedImage(size, colorFormat);
         color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        color.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+        color.setFilter(gl::Nearest, gl::Linear, gl::MipNone);
 
         depthStencil.setDepthStencilContent(size);
         depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
