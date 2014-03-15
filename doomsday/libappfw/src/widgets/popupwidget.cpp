@@ -25,6 +25,7 @@
 #include <de/Drawable>
 #include <de/MouseEvent>
 #include <de/ScalarRule>
+#include <de/Garbage>
 #include <de/math.h>
 #include <QTimer>
 
@@ -446,13 +447,18 @@ void PopupWidget::panelDismissed()
         d->realParent = &root();
     }
     parentWidget()->remove(*this);
-    d->realParent->add(this);
-    d->realParent = 0;
 
     if(d->deleteAfterDismiss)
     {
+        // Don't bother putting it back in the original parent.
         guiDeleteLater();
     }
+    else
+    {
+        d->realParent->add(this);
+    }
+
+    d->realParent = 0;
 }
 
 } // namespace de
