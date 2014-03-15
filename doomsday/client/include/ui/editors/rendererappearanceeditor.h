@@ -20,6 +20,7 @@
 #define DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
 
 #include <de/PanelWidget>
+#include <de/IPersistent>
 
 /**
  * Editor for modifying the settings for the renderer's visual appearance.
@@ -28,12 +29,16 @@
  *
  * @see ClientApp::rendererAppearanceSettings()
  */
-class RendererAppearanceEditor : public de::PanelWidget
+class RendererAppearanceEditor : public de::PanelWidget,
+                                 public de::IPersistent
 {
     Q_OBJECT
 
 public:
     RendererAppearanceEditor();
+
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 public slots:
     void foldAll();
