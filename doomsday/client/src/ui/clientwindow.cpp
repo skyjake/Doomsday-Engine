@@ -683,9 +683,9 @@ ClientWindow::ClientWindow(String const &id)
     d->setupUI();
 }
 
-Vector2f ClientWindow::windowContentSize()
+Vector2f ClientWindow::windowContentSize() const
 {
-    return Vector2f(root().viewWidth().value(), root().viewHeight().value());
+    return Vector2f(d->root.viewWidth().value(), d->root.viewHeight().value());
 }
 
 ClientRootWidget &ClientWindow::root()
