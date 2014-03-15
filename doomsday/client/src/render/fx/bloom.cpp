@@ -29,7 +29,7 @@ namespace fx {
 
 static int   bloomEnabled    = true;
 static float bloomIntensity  = .65f;
-static float bloomThreshold  = .3f;
+static float bloomThreshold  = .35f;
 static float bloomDispersion = 1.75f;
 
 DENG2_PIMPL(Bloom)
@@ -222,6 +222,11 @@ void Bloom::glDeinit()
 
 void Bloom::draw()
 {
+    if(!ClientApp::worldSystem().hasMap())
+    {
+        return;
+    }
+
     if(!bloomEnabled || bloomIntensity <= 0)
     {
         return;
