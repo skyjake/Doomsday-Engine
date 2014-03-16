@@ -120,6 +120,18 @@ public:
     void shift(float valueDelta);
 
     /**
+     * Pauses the animation, if it is currently ongoing. resume() can then be called
+     * later to continue at a later point in time, with the end point appropriately
+     * postponed into the future.
+     */
+    void pause();
+
+    /**
+     * Resumes a previously paused animation.
+     */
+    void resume();
+
+    /**
      * Complete the ongoing transition immediately.
      */
     void finish();

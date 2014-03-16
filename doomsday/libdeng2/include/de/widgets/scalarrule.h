@@ -66,6 +66,10 @@ public:
 
     void finish();
 
+    void pause();
+
+    void resume();
+
     String description() const;
 
 protected:
