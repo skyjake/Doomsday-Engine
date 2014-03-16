@@ -168,7 +168,7 @@ DENG_GUI_PIMPL(PanelWidget)
             {
                 *pendingShow += *asset;
 
-                LOGDEV_VERBOSE("Found " _E(m) "NotReady" _E(.) " visible asset %s (%p)")
+                LOGDEV_VERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)")
                         << widget->path() << widget;
             }
         }
