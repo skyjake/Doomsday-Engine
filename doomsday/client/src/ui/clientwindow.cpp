@@ -862,18 +862,16 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setStereo(true);
     }
 
-    /*
+#ifdef WIN32
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
-        fmt.setSwapInterval(0); // vsync off
-        LOG_GL_VERBOSE("Vertical sync off");
+        fmt.setSwapInterval(0);
     }
     else
     {
         fmt.setSwapInterval(1);
-        LOG_GL_VERBOSE("Vertical sync on");
     }
-    */
+#endif
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.
