@@ -32,6 +32,7 @@ static TimeDelta const OPENING_ANIM_SPAN = 0.4;
 static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 
 DENG_GUI_PIMPL(PanelWidget)
+, DENG2_OBSERVES(Asset, StateChange)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -42,18 +43,20 @@ DENG_GUI_PIMPL(PanelWidget)
     ScalarRule *openingRule;
     QTimer dismissTimer;
 
+    QScopedPointer<AssetGroup> pendingShow;
+
     // GL objects.
     Drawable drawable;
     GLUniform uMvpMatrix;
     //GLUniform uColor;
 
     Instance(Public *i)
-        : Base(i),
-          opened(false),
-          dir(ui::Down),
-          secondaryPolicy(ui::Expand),
-          content(0),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        : Base(i)
+        , opened(false)
+        , dir(ui::Down)
+        , secondaryPolicy(ui::Expand)
+        , content(0)
+        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
         openingRule = new ScalarRule(0);
 
@@ -155,6 +158,61 @@ DENG_GUI_PIMPL(PanelWidget)
 
         dismissTimer.start();
         dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());
+    }
+
+    void findAssets(Widget const *widget)
+    {
+        if(Asset const *asset = widget->maybeAs<Asset>())
+        {
+            if(!asset->isReady())
+            {
+                *pendingShow += *asset;
+
+                LOGDEV_VERBOSE("Found " _E(m) "NotReady" _E(.) " visible asset %s (%p)")
+                        << widget->path() << widget;
+            }
+        }
+
+        foreach(Widget const *child, widget->children())
+        {
+            findAssets(child);
+        }
+    }
+
+    void waitForAssetsInContent()
+    {
+        LOG_AS("PanelWidget");
+
+        pendingShow.reset(new AssetGroup);
+
+        LOGDEV_VERBOSE("Checking for assets that need waiting for...");
+        findAssets(content);
+
+        if(pendingShow->isEmpty())
+        {
+            // Nothing to wait for, actually.
+            pendingShow.reset();
+            return;
+        }
+
+        LOGDEV_VERBOSE("Waiting for %i assets to become ready") << pendingShow->size();
+
+        pendingShow->audienceForStateChange() += this;
+        openingRule->pause();
+    }
+
+    void assetStateChanged(Asset &)
+    {
+        LOG_AS("PanelWidget");
+
+        // All of the assets in the pending show group are now ready, let's open!
+        if(pendingShow->isReady())
+        {
+            LOGDEV_VERBOSE("All assets ready, resuming animation");
+
+            openingRule->resume();
+            pendingShow.reset();
+        }
     }
 
     DENG2_PIMPL_AUDIENCE(Close)
@@ -299,6 +357,9 @@ void PanelWidget::open()
     d->opened = true;
 
     emit opened();
+
+    // The animation might have to be paused until all assets are prepared.
+    d->waitForAssetsInContent();
 }
 
 void PanelWidget::close()

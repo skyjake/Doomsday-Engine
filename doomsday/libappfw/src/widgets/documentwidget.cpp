@@ -70,7 +70,7 @@ public Font::RichFormat::IStyle
         updateStyle();
 
         // Widget to show while lines are being wrapped.
-        progress = new ProgressWidget;
+        progress = new ProgressWidget("progress-indicator");
         progress->setColor("progress.dark.wheel");
         progress->setShadowColor("progress.dark.shadow");
         progress->rule().setRect(self.rule());

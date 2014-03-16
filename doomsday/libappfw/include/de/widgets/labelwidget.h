@@ -62,9 +62,14 @@ namespace de {
  * Additionally, LabelWidget::setImageFit() defines how the image will be
  * scaled inside the area reserved for the image.
  *
+ * LabelWidget is an Asset because the preparation of text for drawing occurs
+ * asynchronously, and meanwhile the content size of the text is (0,0).
+ * Observing the asset state allows others to determine when the label is ready
+ * to be drawn/laid out with the final dimensions.
+ *
  * @ingroup gui
  */
-class LIBAPPFW_PUBLIC LabelWidget : public GuiWidget
+class LIBAPPFW_PUBLIC LabelWidget : public GuiWidget, public AssetGroup
 {
 public:
     LabelWidget(String const &name = "");

@@ -66,6 +66,7 @@ public Font::RichFormat::IStyle
 
     TextDrawable glText;
     mutable Vector2ui latestTextSize;
+    bool wasVisible;
 
     QScopedPointer<ProceduralImage> image;
     QScopedPointer<ProceduralImage> overlayImage;
@@ -92,6 +93,7 @@ public Font::RichFormat::IStyle
         , appearSpan  (0.0)
         , gapId       ("label.gap")
         , richStyle   (0)
+        , wasVisible  (true)
         , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
         , uColor      ("uColor",     GLUniform::Vec4)
     {
@@ -100,6 +102,9 @@ public Font::RichFormat::IStyle
 
         uColor = Vector4f(1, 1, 1, 1);        
         updateStyle();
+
+        // The readiness of the LabelWidget depends on glText being ready.
+        self += glText;
     }
 
     ~Instance()
@@ -675,7 +680,22 @@ void LabelWidget::update()
 {
     GuiWidget::update();
 
-    d->updateSize();
+    // Check for visibility changes that affect asset readiness.
+    bool visibleNow = isVisible();
+    if(d->wasVisible && !visibleNow)
+    {
+        setPolicy(d->glText, Ignore);
+    }
+    else if(!d->wasVisible && visibleNow)
+    {
+        setPolicy(d->glText, Required);
+    }
+    d->wasVisible = visibleNow;
+
+    if(isInitialized())
+    {
+        d->updateGeometry();
+    }
     d->updateAppearanceAnimation();
 }
 

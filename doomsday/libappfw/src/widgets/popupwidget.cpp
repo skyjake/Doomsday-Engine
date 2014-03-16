@@ -31,9 +31,6 @@
 
 namespace de {
 
-static TimeDelta const OPENING_ANIM_SPAN = 0.4;
-static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
-
 DENG_GUI_PIMPL(PopupWidget)
 , DENG2_OBSERVES(Widget, Deletion)
 {
