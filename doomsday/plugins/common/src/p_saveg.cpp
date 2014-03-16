@@ -789,7 +789,6 @@ void SV_SaveGameClient(uint sessionId)
         return;
 
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.folder().verifyWriteAccess();
 
     // Prepare new saved game session session.
     de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
@@ -798,11 +797,11 @@ void SV_SaveGameClient(uint sessionId)
     session->replaceMetadata(metadata);
     session->setRepository(&saveRepo);
 
-    de::Path path = saveRepo.folder().path() / "client" / session->fileName();
+    de::Path path = de::String("/savegame") / "client" / session->path();
     if(!SV_OpenFile(path, true/*for write*/))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
-                                 de::NativePath(path).pretty().toLatin1().constData());
+                path.toString().toLatin1().constData());
 
         // Discard the useless session.
         delete session;
@@ -864,13 +863,13 @@ void SV_LoadGameClient(uint sessionId)
     session->replaceMetadata(metadata);
     session->setRepository(&saveRepo);
 
-    de::Path path = saveRepo.folder().path() / "client" / session->fileName();
+    de::Path path = de::String("/savegame") / "client" / session->path();
     if(!SV_OpenFile(path, false/*for read*/))
     {
         Reader_Delete(reader);
         delete session;
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",
-                                 de::NativePath(path).pretty().toLatin1().constData());
+                path.toString().toLatin1().constData());
         return;
     }
 

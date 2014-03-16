@@ -195,6 +195,9 @@ public:
     /// Extracts the path of the string.
     String fileNamePath(QChar dirChar = '/') const;
 
+    /// Extracts everything but the extension from string.
+    String fileNameAndPathWithoutExtension(QChar dirChar = '/') const;
+
     /**
      * Compare two strings (case sensitive).
      *

@@ -40,12 +40,6 @@ class SavedSessionRepository;
 class DENG2_PUBLIC SavedSession
 {
 public:
-    /// Notified whenever the status of the saved session changes.
-    DENG2_DEFINE_AUDIENCE2(StatusChange, void savedSessionStatusChanged(SavedSession &session))
-
-    /// Notified whenever the metadata of the saved session changes.
-    DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
-
     /// Required/referenced repository is missing. @ingroup errors
     DENG2_ERROR(MissingRepositoryError);
 
@@ -55,12 +49,8 @@ public:
     /// The associated map state file was missing/unrecognized. @ingroup errors
     DENG2_ERROR(UnrecognizedMapStateError);
 
-    /// Logical session status:
-    enum Status {
-        Loadable,
-        Incompatible,
-        Unused
-    };
+    /// Notified whenever the metadata of the saved session changes.
+    DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
 
     /**
      * Session metadata.
@@ -87,35 +77,16 @@ public:
     };
 
 public:
-    SavedSession(String const &fileName = "");
+    SavedSession(String repoPath);
     SavedSession(SavedSession const &other);
 
     SavedSession &operator = (SavedSession const &other);
 
     /**
-     * Returns the name of the saved session file package (with extension).
+     * Returns the relative path and identifier of the state file package (with extension).
      */
-    String fileName() const;
-    void setFileName(String newName);
-
-    /**
-     * Returns the logical status of the saved session. The StatusChange audience is notified
-     * whenever the status changes.
-     *
-     * @see statusAsText()
-     */
-    Status status() const;
-
-    /**
-     * Returns a textual representation of the current status of the saved session.
-     *
-     * @see status()
-     */
-    String statusAsText() const;
-
-    inline bool isLoadable() const     { return status() == Loadable; }
-    inline bool isIncompatible() const { return status() == Incompatible; }
-    inline bool isUnused() const       { return status() == Unused; }
+    String path() const;
+    void setPath(String newPath);
 
     /**
      * Composes a human-friendly, styled, textual description of the saved session.
@@ -146,7 +117,7 @@ public:
      * Determines whether a file package exists for the saved session in the repository. Note that
      * it may not be compatible with the current game session, however.
      *
-     * @see setRepository(), isLoadable()
+     * @see setRepository()
      */
     bool hasFile() const;
 
@@ -173,14 +144,14 @@ public:
      * If the file path is invalid, unreachable, or the package is not recognized then the saved
      * session is returned to a valid but non-loadable state.
      *
-     * @see setRepository(), isLoadable()
+     * @see setRepository()
      */
     void updateFromFile();
 
     /**
      * Replace the file package in the repository with a copy of that associated with the @a source
-     * saved session. The copied file package is named according to the @ref fileName() of "this"
-     * saved session.
+     * saved session. The copied file package is named according to the @ref path() of "this" saved
+     * session.
      *
      * @param source  SavedSession to copy the file package from.
      *

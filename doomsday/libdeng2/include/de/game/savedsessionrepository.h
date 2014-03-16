@@ -20,8 +20,7 @@
 #define LIBDENG2_SAVEDSESSIONREPOSITORY_H
 
 #include "../Error"
-#include "../Folder"
-#include "../Path"
+#include "../Observers"
 #include "../String"
 
 namespace de {
@@ -31,8 +30,7 @@ class MapStateReader;
 class SavedSession;
 
 /**
- * Centralized saved session repository. The saved game state file structure is automatically
- * initialized when the current game changes.
+ * Centralized saved session repository.
  *
  * @ingroup game
  */
@@ -42,50 +40,45 @@ public:
     /// Required/referenced session is missing. @ingroup errors
     DENG2_ERROR(MissingSessionError);
 
-    /// Referenced session is not loadable. @ingroup errors
-    DENG2_ERROR(UnloadableSessionError);
+    /// Notified whenever a saved session is added/removed from the repository.
+    DENG2_DEFINE_AUDIENCE2(AvailabilityUpdate, void repositoryAvailabilityUpdate(SavedSessionRepository const &repository))
 
     /// Game map state reader instantiator function ptr.
-    typedef MapStateReader *(*MapStateReaderMakeFunc)(SavedSession const &session);
+    typedef MapStateReader *(*MapStateReaderMakeFunc)(SavedSession const &find);
+
+    typedef std::map<String, SavedSession *> All;
 
 public:
     SavedSessionRepository();
 
-    /**
-     * @param location  Path to the new root of the saved session repository.
-     */
-    void setLocation(Path const &location);
-
-    /**
-     * Returns the root folder of the saved session repository file structure.
-     */
-    Folder const &folder() const;
-
-    /// @copydoc folder()
-    Folder &folder();
-
-    /**
-     * Determines whether a saved session exists for @a fileName.
-     *
-     * @see session()
-     */
-    bool contains(String fileName) const;
+    void clear();
 
     /**
      * Add/replace a saved session in the repository. If a session already exists, it is
      * replaced by the new one.
      *
-     * @param fileName    Name of the associated saved session game state file.
+     * @param path        Relative path of the associated game state file package.
      * @param newSession  New saved session to replace with. Ownership is given.
      */
-    void add(String fileName, SavedSession *session);
+    void add(String path, SavedSession *find);
 
     /**
-     * Lookup the SavedSession for @a fileName.
+     * Determines whether a saved session exists for @a path.
      *
-     * @see contains()
+     * @see find()
      */
-    SavedSession &session(String fileName) const;
+    bool has(String path) const;
+
+    /**
+     * Lookup the SavedSession for @a path.
+     *
+     * @see has()
+     */
+    SavedSession &find(String path) const;
+
+    inline SavedSession *findPtr(String path) const {
+        return has(path)? &find(path) : 0;
+    }
 
     /**
      * Lookup the saved session with a matching user description. The search is in ascending
@@ -95,29 +88,37 @@ public:
      *
      * @return  The found SavedSession; otherwise @c 0.
      *
-     * @see session()
+     * @see find()
      */
-    SavedSession *sessionByUserDescription(String description) const;
+    SavedSession *findByUserDescription(String description) const;
 
     /**
-     * Register a game state reader.
+     * Provides access to the saved session dataset, for efficient traversal.
+     */
+    All const &all() const;
+
+    /**
+     * Register a map state reader.
      *
      * @param formatName  Symbolic identifier for the map format.
      * @param maker       Map state reader instantiator function.
      */
-    void declareReader(String formatName, MapStateReaderMakeFunc maker);
+    void declareMapStateReader(String formatName, MapStateReaderMakeFunc maker);
+
+    /**
+     * Unregister all map state readers.
+     */
+    void clearMapStateReaders();
 
     /**
      * Determines whether a MapStateReader appropriate for the specified saved @a session
-     * is available and if so, returns a new instance for deserializing the game map state.
+     * is available and if so, returns a new instance for deserializing the map state.
      *
      * @param session  The saved session to obtain a reader for.
      *
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
-     *
-     * @see SavedSession::isLoadable()
      */
-    MapStateReader *makeReader(SavedSession const &session) const;
+    MapStateReader *makeMapStateReader(SavedSession const &find) const;
 
 private:
     DENG2_PRIVATE(d)

@@ -482,9 +482,9 @@ static void initSaveSlots()
     delete sslots;
     sslots = new SaveSlots;
 
-    // Declare the native game map state reader.
+    // Declare the native map state reader.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader("Native", &MapStateReader::make);
+    saveRepo.declareMapStateReader("Native", &MapStateReader::make);
 
     // Setup the logical save slot bindings.
     int const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
@@ -495,12 +495,13 @@ static void initSaveSlots()
     };
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
-        sslots->addSlot(de::String::number(i), true, de::String(SAVEGAMENAME "%1").arg(i),
-                        gameMenuSaveSlotWidgetIds[i]);
+        sslots->add(de::String::number(i), true,
+                    de::String("%1/%2%3").arg(G_IdentityKey()).arg(SAVEGAMENAME).arg(i),
+                    gameMenuSaveSlotWidgetIds[i]);
     }
-    sslots->addSlot("auto", false, de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT));
+    sslots->add("auto", false, de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT));
 #if __JHEXEN__
-    sslots->addSlot("base", false, de::String(SAVEGAMENAME "%1").arg(BASE_SLOT));
+    sslots->add("base", false, de::String(SAVEGAMENAME "%1").arg(BASE_SLOT));
 #endif
 }
 
@@ -545,8 +546,6 @@ void G_CommonPreInit()
     R_LoadColorPalettes();
 
     P_InitPicAnims();
-
-    initSaveSlots();
 
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();     // Main command list.
@@ -965,11 +964,6 @@ void R_InitHud()
     App_Log(DE2_LOG_VERBOSE, "Initializing menu...");
     Hu_MenuInit();
 
-    // Manually force an update of the save slots to ensure that saved session metadata is reflected
-    // in the relevant menu widgets.
-    /// @todo The menu widgets should do this and observe SaveInfo changes directly.
-    G_SaveSlots().updateAll();
-
     App_Log(DE2_LOG_VERBOSE, "Initializing status-message/question system...");
     Hu_MsgInit();
 }
@@ -987,13 +981,18 @@ de::game::SavedSessionRepository &G_SavedSessionRepository()
 
 de::String G_SaveSlotIdFromUserInput(de::String str)
 {
-    // Perhaps user save game description?
-    if(SaveSlot *sslot = G_SaveSlots().slot(G_SavedSessionRepository().sessionByUserDescription(str)))
+    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
+
+    // Perhaps a user description of a saved session?
+    if(SaveSlot *sslot = G_SaveSlots().slot(saveRepo.findByUserDescription(str)))
     {
-        if(sslot->isUsed())
-        {
-            return sslot->id();
-        }
+        return sslot->id();
+    }
+
+    // Perhaps a saved session package file name?
+    if(SaveSlot *sslot = G_SaveSlots().slot(saveRepo.findPtr(de::Path(G_IdentityKey()) / str)))
+    {
+        return sslot->id();
     }
 
     // Perhaps a mnemonic?
@@ -1018,7 +1017,7 @@ de::String G_SaveSlotIdFromUserInput(de::String str)
 #endif
 
     // Perhaps a unique slot identifier?
-    if(G_SaveSlots().hasSlot(str))
+    if(G_SaveSlots().has(str))
     {
         return str;
     }
@@ -1042,6 +1041,8 @@ void G_CommonPostInit()
 
     App_Log(DE2_LOG_VERBOSE, "Initializing head-up displays...");
     R_InitHud();
+
+    initSaveSlots();
 
     G_InitEventSequences();
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
@@ -2142,7 +2143,7 @@ static int rebornLoadConfirmResponse(msgresponse_t response, int /*userValue*/, 
     {
 #if __JHEXEN__
         // Load the last autosave? (Not optional in Hexen).
-        if(G_SaveSlots()["auto"].isUsed())
+        if(G_SaveSlots()["auto"].hasLoadableSavedSession())
         {
             gaLoadSessionSlot = "auto";
             G_SetGameAction(GA_LOADSESSION);
@@ -2174,45 +2175,42 @@ void G_DoReborn(int plrNum)
 
     if(G_SessionLoadingPossible())
     {
-        // First ensure we have up-to-date info.
-        G_SaveSlots().updateAll();
-
         // Use the latest save?
-        de::String lastSlot;
+        de::String lastSlotId;
         if(cfg.loadLastSaveOnReborn)
         {
-            lastSlot = de::String::number(Con_GetInteger("game-save-last-slot"));
-            if(!G_SaveSlots()[lastSlot].isUsed())
+            SaveSlot const &sslot = G_SaveSlots()[de::String::number(Con_GetInteger("game-save-last-slot"))];
+            if(sslot.hasLoadableSavedSession())
             {
-                lastSlot.clear();
+                lastSlotId = sslot.id();
             }
         }
 
         // Use the latest autosave? (Not optional in Hexen).
 #if !__JHEXEN__
-        de::String autoSlot;
+        de::String autoSlotId;
         if(cfg.loadAutoSaveOnReborn)
         {
-            autoSlot = "auto";
-            if(!G_SaveSlots()[autoSlot].isUsed())
+            SaveSlot const &sslot = G_SaveSlots()["auto"];
+            if(sslot.hasLoadableSavedSession())
             {
-                autoSlot.clear();
+                autoSlotId = sslot.id();
             }
         }
 #endif
 
         // Have we chosen a save state to load?
-        if(!lastSlot.isEmpty()
+        if(!lastSlotId.isEmpty()
 #if !__JHEXEN__
-           || !autoSlot.isEmpty()
+           || !autoSlotId.isEmpty()
 #endif
            )
         {
             // Everything appears to be in order - schedule the game-save load!
 #if !__JHEXEN__
-            de::String chosenSlot = (!lastSlot.isEmpty()? lastSlot : autoSlot);
+            de::String chosenSlot = (!lastSlotId.isEmpty()? lastSlotId : autoSlotId);
 #else
-            de::String chosenSlot = lastSlot;
+            de::String chosenSlot = lastSlotId;
 #endif
             if(!cfg.confirmRebornLoad)
             {
@@ -2232,7 +2230,7 @@ void G_DoReborn(int plrNum)
 
         // Autosave loading cannot be disabled in Hexen.
 #if __JHEXEN__
-        if(G_SaveSlots()["auto"].isUsed())
+        if(G_SaveSlots()["auto"].hasLoadableSavedSession())
         {
             gaLoadSessionSlot = "auto";
             G_SetGameAction(GA_LOADSESSION);
@@ -2896,7 +2894,7 @@ static int saveGameStateWorker(void *context)
     de::String const logicalSlot = p.slotId;
 #endif
 
-    if(!G_SaveSlots().hasSlot(p.slotId))
+    if(!G_SaveSlots().has(p.slotId))
     {
         DENG2_ASSERT(!"Invalid slot specified");
 
@@ -2910,8 +2908,8 @@ static int saveGameStateWorker(void *context)
         // If the slot is already in use, reuse the existing description.
         try
         {
-            SaveSlot &sslot = G_SaveSlots()[p.slotId];
-            if(sslot.isUsed())
+            SaveSlot const &sslot = G_SaveSlots()[p.slotId];
+            if(sslot.hasSavedSession())
             {
                 de::game::SavedSession const &session = sslot.savedSession();
                 userDescription = session.metadata().gets("userDescription");
@@ -2934,7 +2932,7 @@ static int saveGameStateWorker(void *context)
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
     SaveSlot &sslot = G_SaveSlots()[logicalSlot];
 
-    de::game::SavedSession *session = new de::game::SavedSession(sslot.fileName());
+    de::game::SavedSession *session = new de::game::SavedSession(sslot.repositoryPath());
     de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
     metadata->set("userDescription", userDescription);
     session->replaceMetadata(metadata);
@@ -2942,22 +2940,20 @@ static int saveGameStateWorker(void *context)
 
     try
     {
-        saveRepo.folder().verifyWriteAccess();
-
-        de::Path const filePath = saveRepo.folder().path() / session->fileName();
+        de::Path const sessionPath = de::String("/savegame") / session->path();
         de::Path const mapStateFilePath(Str_Text(Uri_Resolved(gameMapUri)));
 
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
-                de::NativePath(filePath).pretty().toLatin1().constData());
+                sessionPath.toString().toLatin1().constData());
 
-        GameStateWriter().write(filePath, mapStateFilePath, *metadata);
+        GameStateWriter().write(sessionPath, mapStateFilePath, *metadata);
 
-        // Swap the save info.
-        sslot.replaceSavedSession(session);
+        // Swap the saved session file.
+        G_SavedSessionRepository().add(sslot.repositoryPath(), session);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
-        G_SaveSlots().copySlot(logicalSlot, p.slotId);
+        G_SaveSlots().copySavedSessionFile(logicalSlot, p.slotId);
 #endif
 
         // Make note of the last used save slot.
@@ -3201,12 +3197,7 @@ bool G_LoadSession(de::String slotId)
 
     try
     {
-        SaveSlot &sslot = G_SaveSlots()[slotId];
-
-        // First ensure we have up-to-date info.
-        sslot.savedSession().updateFromFile();
-
-        if(sslot.isUsed())
+        if(G_SaveSlots()[slotId].hasLoadableSavedSession())
         {
             // Everything appears to be in order - schedule the game-save load!
             gaLoadSessionSlot = slotId;
@@ -3242,7 +3233,7 @@ void G_DoLoadSession(de::String slotId)
     // Copy all needed save files to the base slot.
     if(slotId.compareWithoutCase("base"))
     {
-        G_SaveSlots().copySlot(slotId, "base");
+        G_SaveSlots().copySavedSessionFile(slotId, "base");
     }
 #endif
 
@@ -3291,7 +3282,7 @@ void G_DoLoadSession(de::String slotId)
         if(mustCopyBaseToAutoSlot)
         {
             // Copy the base slot to the autosave slot.
-            G_SaveSlots().copySlot("base", "auto");
+            G_SaveSlots().copySavedSessionFile("base", "auto");
         }
 #endif
         return;
@@ -3320,7 +3311,7 @@ bool G_SessionSavingPossible()
 bool G_SaveSession(de::String slotId, de::String *userDescription)
 {
     if(!G_SessionSavingPossible()) return false;
-    if(!G_SaveSlots().hasSlot(slotId)) return false;
+    if(!G_SaveSlots().has(slotId)) return false;
 
     gaSaveSessionSlot = slotId;
 
@@ -4231,11 +4222,7 @@ D_CMD(LoadSession)
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
-
-        // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromFile();
-
-        if(sslot.isUsed())
+        if(sslot.hasLoadableSavedSession())
         {
             // A known used slot identifier.
             if(confirmed || !cfg.confirmQuickGameSave)
@@ -4263,7 +4250,7 @@ D_CMD(LoadSession)
         return true;
     }
 
-    if(!G_SaveSlots().hasSlot(slotId))
+    if(!G_SaveSlots().has(slotId))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
@@ -4341,10 +4328,6 @@ D_CMD(SaveSession)
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
-
-        // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromFile();
-
         if(sslot.isUserWritable())
         {
             // A known slot identifier.
@@ -4354,7 +4337,7 @@ D_CMD(SaveSession)
                 userDescription = argv[2];
             }
 
-            if(!sslot.isUsed() || confirmed || !cfg.confirmQuickGameSave)
+            if(!sslot.hasSavedSession() || confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
@@ -4389,7 +4372,7 @@ D_CMD(SaveSession)
         return true;
     }
 
-    if(!G_SaveSlots().hasSlot(slotId))
+    if(!G_SaveSlots().has(slotId))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
@@ -4445,11 +4428,7 @@ D_CMD(DeleteSavedSession)
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
-
-        // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromFile();
-
-        if(sslot.isUserWritable() && sslot.isUsed())
+        if(sslot.isUserWritable() && sslot.hasSavedSession())
         {
             // A known slot identifier.
             if(confirmed)
@@ -4484,15 +4463,10 @@ D_CMD(InspectSavedSession)
     DENG2_UNUSED2(src, argc);
 
     de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
-
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
-
-        // Ensure we have up-to-date info.
-        sslot.savedSession().updateFromFile();
-
-        if(sslot.isUsed())
+        if(sslot.hasSavedSession())
         {
             App_Log(DE2_LOG_MESSAGE, "%s", sslot.savedSession().description().toLatin1().constData());
             return true;

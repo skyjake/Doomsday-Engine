@@ -27,15 +27,17 @@ namespace de {
 /**
  * Utility for converting legacy savegame file formats (via plugins).
  *
- * @param inputFilePath  Path to the savegame file to be converted.
- * @param session        SavedSession to update if conversion is successful.
+ * @param inputFilePath            Path to the savegame file to be converted.
+ * @param session                  SavedSession to update if conversion is successful.
+ * @param fallbackGameIdentityKey  Identity key to use when resolving ambiguous savegame formats.
  *
  * @return  @c true if conversion completed successfully. Note that this is not a
  * guarantee that the given @a session is now loadable, however.
  *
  * @ingroup resource
  */
-bool convertSavegame(de::Path inputFilePath, de::game::SavedSession &session);
+bool convertSavegame(de::Path inputFilePath, de::game::SavedSession &session,
+                     de::String fallbackGameIdentityKey);
 
 }
 

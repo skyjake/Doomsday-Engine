@@ -20,26 +20,31 @@
 #include "resource/savegameconverter.h"
 
 #include "dd_main.h"
+#include <de/App>
 #include <de/Error>
+#include <de/Folder>
 #include <de/game/SavedSessionRepository>
 #include <de/Log>
 #include <de/NativePath>
 
 namespace de {
 
-static void tryConversion(Path const &inputFilePath, Path const &outputFilePath)
+static void tryConversion(Path const &inputFilePath, Path const &outputFilePath,
+    String const &fallbackGameIdentityKey)
 {
     LOG_DEBUG("Attempting \"%s\"...") << NativePath(inputFilePath).pretty();
 
     ddhook_savegame_convert_t parm;
-    Str_Set(Str_InitStd(&parm.inputFilePath),  NativePath(inputFilePath).expand().asText().toUtf8().constData());
-    Str_Set(Str_InitStd(&parm.outputFilePath), NativePath(outputFilePath).expand().asText().toUtf8().constData());
+    Str_Set(Str_InitStd(&parm.inputFilePath),           NativePath(inputFilePath).expand().asText().toUtf8().constData());
+    Str_Set(Str_InitStd(&parm.outputFilePath),          NativePath(outputFilePath).expand().asText().toUtf8().constData());
+    Str_Set(Str_InitStd(&parm.fallbackGameIdentityKey), fallbackGameIdentityKey.toUtf8().constData());
 
     // Try to convert the savegame via each plugin in turn.
     dd_bool success = DD_CallHooks(HOOK_MAP_CONVERT, 0, &parm);
 
     Str_Free(&parm.inputFilePath);
     Str_Free(&parm.outputFilePath);
+    Str_Free(&parm.fallbackGameIdentityKey);
 
     if(!success)
     {
@@ -48,16 +53,17 @@ static void tryConversion(Path const &inputFilePath, Path const &outputFilePath)
     }
 }
 
-bool convertSavegame(Path inputFilePath, game::SavedSession &session)
+bool convertSavegame(Path inputFilePath, game::SavedSession &session, String fallbackGameIdentityKey)
 {
     DENG2_ASSERT(!inputFilePath.isEmpty());
 
     LOG_AS("SavegameConverter");
     try
     {
-        tryConversion(inputFilePath, session.repository().folder().path() / session.fileName());
+        Folder &outputFolder = App::app().homeFolder().locate<Folder>("/savegame");
+        tryConversion(inputFilePath, outputFolder.path() / session.path(), fallbackGameIdentityKey);
         // Successful, update the relevant feed and saved session.
-        session.repository().folder().populate(Folder::PopulateOnlyThisFolder);
+        outputFolder.populate(Folder::PopulateOnlyThisFolder);
         session.updateFromFile();
         return true;
     }

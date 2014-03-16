@@ -384,6 +384,11 @@ String String::fileNamePath(QChar dirChar) const
     return "";
 }
 
+String String::fileNameAndPathWithoutExtension(QChar dirChar) const
+{
+    return fileNamePath(dirChar) / fileNameWithoutExtension();
+}
+
 dint String::compareWithCase(String const &str) const
 {
     return compare(str, Qt::CaseSensitive);

@@ -1,7 +1,7 @@
 /** @file resourcesystem.cpp  Resource subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -33,6 +33,7 @@
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
+#include "resource/savegameconverter.h"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
@@ -60,7 +61,10 @@
 #  include "Surface"
 #endif
 
+#include <de/App>
 #include <de/ByteRefArray>
+#include <de/DirectoryFeed>
+#include <de/game/SavedSession>
 #include <de/Log>
 #include <de/Reader>
 #include <de/Time>
@@ -158,6 +162,8 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 #endif // __CLIENT__
 
 DENG2_PIMPL(ResourceSystem)
+, DENG2_OBSERVES(App,              GameUnload)      // Serialized map state format clearing
+, DENG2_OBSERVES(Games,            Addition)        // Saved session repository population
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -367,10 +373,35 @@ DENG2_PIMPL(ResourceSystem)
         createFontScheme("System");
         createFontScheme("Game");
 #endif
+
+        App_Games().audienceForAddition += this;
+        App::app().audienceForGameUnload() += this;
+
+        // Determine the root directory of the saved session repository.
+        NativePath nativeSavePath;
+        if(int arg = App::commandLine().check("-savedir", 1))
+        {
+            // Using a custom root save directory.
+            App::commandLine().makeAbsolutePath(arg + 1);
+            nativeSavePath = App::commandLine().at(arg + 1);
+        }
+        else
+        {
+            // Use the default.
+            nativeSavePath = App::app().nativeHomePath() / "savegame";
+        }
+
+        // Create the user's saved game folder if it doesn't yet exist.
+        App::fileSystem().makeFolder("/savegame", FS::DontInheritFeeds)
+                .attach(new DirectoryFeed(nativeSavePath,
+                        DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
     }
 
     ~Instance()
     {
+        App_Games().audienceForAddition -= this;
+        App::app().audienceForGameUnload() -= this;
+
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
 #ifdef __CLIENT__
@@ -1889,6 +1920,51 @@ DENG2_PIMPL(ResourceSystem)
     }
 
 #endif // __CLIENT__
+
+    void gameAdded(Game &game)
+    {
+        // Called from a non-UI thread.
+        LOG_AS("ResourceSystem");
+        String gameId = game.identityKey();
+
+        // Attempt to create a new subfolder in the saved session repository for the game.
+        // Once created, any existing saved sessions in this folder will be added automatically.
+
+        // Make the native folder if necessary and populate the folder contents.
+        Folder &saveFolder = App::fileSystem().makeFolder(String("/savegame") / gameId);
+
+        // Find any .save files in this folder and generate sessions for the db.
+        DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
+        {
+            if(i->first.fileNameExtension() == ".save")
+            {
+                String const &relPath = saveFolder.name() / i->first.fileNameWithoutExtension();
+                game::SavedSession *newSession = new game::SavedSession(relPath);
+                newSession->setRepository(&saveRepo);
+                saveRepo.add(relPath, newSession);
+
+                newSession->updateFromFile();
+            }
+        }
+
+        /// @todo Attempt to automatically convert any legacy saved game sessions.
+        /*for(;;)
+        {
+            String const &relPath = saveFolder.name() / outFileName;
+            QScopedPointer<game::SavedSession> newSession(new game::SavedSession(relPath));
+            newSession->setRepository(&saveRepo);
+            if(convertSavegame(inputPath, *newSavedSession, gameId))
+            {
+                saveRepo.add(relPath, newSession.take());
+            }
+        }*/
+    }
+
+    void aboutToUnloadGame(game::Game const &)
+    {
+        // Clear the game-registered map state formats.
+        saveRepo.clearMapStateReaders();
+    }
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))

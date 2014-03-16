@@ -140,26 +140,20 @@ DENG2_PIMPL(SavedSession)
 {
     SavedSessionRepository *repo; ///< The owning repository (if any).
 
-    String fileName; ///< Name of the game session file.
+    String repoPath; ///< Relative path to the game session file.
 
     QScopedPointer<Metadata> metadata;
-    Status status;
-    bool needUpdateStatus;
 
     Instance(Public *i)
         : Base(i)
         , repo            (0)
         , metadata        (new Metadata)
-        , status          (Unused)
-        , needUpdateStatus(true)
     {}
 
     Instance(Public *i, Instance const &other)
         : Base(i)
         , repo            (other.repo)
-        , fileName        (other.fileName)
-        , status          (other.status)
-        , needUpdateStatus(other.needUpdateStatus)
+        , repoPath        (other.repoPath)
     {
         DENG2_ASSERT(!other.metadata.isNull());
         metadata.reset(new Metadata(*other.metadata));
@@ -211,51 +205,21 @@ DENG2_PIMPL(SavedSession)
     PackageFolder *tryLocatePackage()
     {
         if(!repo) return false;
-        return repo->folder().tryLocate<PackageFolder>(fileName);
+        return App::fileSystem().root().tryLocate<PackageFolder>(String("/savegame") / repoPath);
     }
 
-    void updateStatusIfNeeded()
-    {
-        if(!needUpdateStatus) return;
-
-        needUpdateStatus = false;
-        LOGDEV_XVERBOSE("Updating SavedSession %p status") << thisPublic;
-        Status const oldStatus = status;
-
-        status = Unused;
-        if(self.hasFile())
-        {
-            status = Incompatible;
-            // Game identity key missmatch?
-            if(!metadata->gets("gameIdentityKey", "").compareWithoutCase(App::game().id()))
-            {
-                /// @todo Validate loaded add-ons and checksum the definition database.
-                status = Loadable; // It's good!
-            }
-        }
-
-        if(status != oldStatus)
-        {
-            DENG2_FOR_PUBLIC_AUDIENCE2(StatusChange, i)
-            {
-                i->savedSessionStatusChanged(self);
-            }
-        }
-    }
-
-    DENG2_PIMPL_AUDIENCE(StatusChange)
     DENG2_PIMPL_AUDIENCE(MetadataChange)
 };
 
-DENG2_AUDIENCE_METHOD(SavedSession, StatusChange)
 DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
 
-SavedSession::SavedSession(String const &fileName) : d(new Instance(this))
+SavedSession::SavedSession(String repoPath) : d(new Instance(this))
 {
-    d->fileName = fileName;
-    if(!d->fileName.isEmpty() && d->fileName.fileNameExtension().isEmpty())
+    DENG2_ASSERT(!repoPath.isEmpty());
+    d->repoPath = repoPath;
+    if(d->repoPath.fileNameExtension().isEmpty())
     {
-        d->fileName += ".save";
+        d->repoPath += ".save";
     }
 }
 
@@ -288,21 +252,6 @@ void SavedSession::setRepository(SavedSessionRepository *newRepository)
     d->repo = newRepository;
 }
 
-SavedSession::Status SavedSession::status() const
-{
-    d->updateStatusIfNeeded();
-    return d->status;
-}
-
-String SavedSession::statusAsText() const
-{
-    static String const statusTexts[] = {
-        "Loadable",
-        "Incompatible",
-        "Unused",
-    };
-    return statusTexts[int(status())];
-}
 
 static String metadataAsStyledText(SavedSession::Metadata const &metadata)
 {
@@ -323,35 +272,30 @@ static String metadataAsStyledText(SavedSession::Metadata const &metadata)
 String SavedSession::description() const
 {
     return metadataAsStyledText(metadata()) + "\n" +
-           String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"\n" _E(.)
-                  _E(D) "Status: " _E(.) "%2")
-               .arg(d->repo? NativePath(d->repo->folder().path() / d->fileName).pretty() : "None")
-               .arg(statusAsText());
+           String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"")
+               .arg(hasFile()? NativePath(String("/home/savegame") / d->repoPath).pretty() : "None");
 }
 
-String SavedSession::fileName() const
+String SavedSession::path() const
 {
-    return d->fileName;
+    return d->repoPath;
 }
 
-void SavedSession::setFileName(String newName)
+void SavedSession::setPath(String newPath)
 {
-    if(!newName.isEmpty() && newName.fileNameExtension().isEmpty())
-    {
-        newName += ".save";
-    }
+    DENG2_ASSERT(!newPath.isEmpty());
 
-    if(d->fileName != newName)
+    d->repoPath = newPath;
+    if(d->repoPath.fileNameExtension().isEmpty())
     {
-        d->fileName         = newName;
-        d->needUpdateStatus = true;
+        d->repoPath += ".save";
     }
 }
 
 bool SavedSession::hasFile() const
 {
     if(!d->repo) return false;
-    return d->repo->folder().has(fileName());
+    return App::fileSystem().root().has(String("/savegame") / d->repoPath);
 }
 
 PackageFolder &SavedSession::locateFile()
@@ -361,7 +305,7 @@ PackageFolder &SavedSession::locateFile()
         return *pack;
     }
     /// @throw MissingFileError Failed to locate the source file package.
-    throw MissingFileError("SavedSession::locateFile", "Source file for " + d->fileName + " could not be located");
+    throw MissingFileError("SavedSession::locateFile", "Source file for " + d->repoPath + " could not be located");
 }
 
 PackageFolder const &SavedSession::locateFile() const
@@ -407,16 +351,15 @@ void SavedSession::updateFromFile()
         d->metadata->set("sessionId", duint32(0));
         d->notifyMetadataChanged();
     }
-
-    d->updateStatusIfNeeded();
 }
 
 void SavedSession::copyFile(SavedSession const &source)
 {
     if(&source == this) return; // Sanity check.
 
-    Writer(repository().folder().replaceFile(d->fileName)) << source.locateFile().archive();
-    repository().folder().populate(Folder::PopulateOnlyThisFolder);
+    File &destFile = App::fileSystem().root().replaceFile(String("/savegame") / d->repoPath);
+    Writer(destFile) << source.locateFile().archive();
+    destFile.parent()->populate(Folder::PopulateOnlyThisFolder);
 
     // Perform recognition of the copied file and update the session status.
     updateFromFile();
@@ -426,11 +369,10 @@ void SavedSession::removeFile()
 {
     if(hasFile())
     {
-        d->repo->folder().removeFile(fileName());
-        d->needUpdateStatus = true;
+        App::fileSystem().root().removeFile(String("/savegame") / d->repoPath);
     }
 
-    /// Force a status update. @todo necessary?
+    /// Force a metadata update.
     updateFromFile();
 }
 
@@ -450,7 +392,7 @@ std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
 {
     if(recognizeFile())
     {
-        std::auto_ptr<MapStateReader> p(repository().makeReader(*this));
+        std::auto_ptr<MapStateReader> p(repository().makeMapStateReader(*this));
         return p;
     }
     /// @throw UnrecognizedMapStateError The game state format was not recognized.
@@ -467,7 +409,7 @@ void SavedSession::replaceMetadata(Metadata *newMetadata)
 {
     DENG2_ASSERT(newMetadata != 0);
     d->metadata.reset(newMetadata);
-    d->needUpdateStatus = true;
+    d->notifyMetadataChanged();
 }
 
 } // namespace game

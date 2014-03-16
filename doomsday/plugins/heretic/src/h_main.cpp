@@ -320,7 +320,7 @@ void H_PreInit()
 
     // Declare the Heretic V13 game state reader/interpreter.
     de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareReader("HereticV13", &HereticV13MapStateReader::make);
+    saveRepo.declareMapStateReader("HereticV13", &HereticV13MapStateReader::make);
 }
 
 void H_PostInit()

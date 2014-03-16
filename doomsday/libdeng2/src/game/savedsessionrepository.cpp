@@ -32,153 +32,117 @@ namespace de {
 namespace game {
 
 DENG2_PIMPL(SavedSessionRepository)
-, DENG2_OBSERVES(App, GameUnload)
-//, DENG2_OBSERVES(App, GameChange)
 {
-    Folder *folder; ///< Root of the saved session repository file structure.
+    All sessions;
+    bool availabilityUpdateDisabled;
 
-    typedef std::map<String, SavedSession *> Sessions;
-    Sessions sessions;
+    struct FormatInfo {
+        String name;
+        MapStateReaderMakeFunc newMapStateReader;
 
-    struct ReaderInfo {
-        String formatName;
-        MapStateReaderMakeFunc newReader;
-
-        ReaderInfo(String formatName, MapStateReaderMakeFunc newReader)
-            : formatName(formatName), newReader(newReader)
+        FormatInfo(String name, MapStateReaderMakeFunc newMapStateReader)
+            : name(name), newMapStateReader(newMapStateReader)
         {
-            DENG2_ASSERT(!formatName.isEmpty() && newReader != 0);
+            DENG2_ASSERT(!name.isEmpty() && newMapStateReader != 0);
         }
     };
-    typedef QList<ReaderInfo> ReaderInfos;
-    ReaderInfos readers;
+    typedef QList<FormatInfo> FormatInfos;
+    FormatInfos formats;
 
     Instance(Public *i)
         : Base(i)
-        , folder(0)
-    {
-        App::app().audienceForGameUnload() += this;
-        //App::app().audienceForGameChange() += this;
-    }
+        , availabilityUpdateDisabled(false)
+    {}
 
     ~Instance()
     {
-        App::app().audienceForGameUnload() += this;
-        //App::app().audienceForGameChange() += this;
-
-        clearSessions();
+        self.clear();
     }
 
-    void clearSessions()
+    void notifyAvailabilityUpdate()
     {
-        qDebug() << "Clearing saved sessions in the repository";
-        DENG2_FOR_EACH(Sessions, i, sessions) { delete i->second; }
-        sessions.clear();
+        if(availabilityUpdateDisabled) return;
+        DENG2_FOR_PUBLIC_AUDIENCE2(AvailabilityUpdate, i) i->repositoryAvailabilityUpdate(self);
     }
 
-    ReaderInfo const *infoForMapStateFormat(String const &name) const
+    FormatInfo const *infoForMapStateFormat(String const &name)
     {
-        foreach(ReaderInfo const &rdrInfo, readers)
+        foreach(FormatInfo const &fmtInfo, formats)
         {
-            if(!rdrInfo.formatName.compareWithoutCase(name))
+            if(!fmtInfo.name.compareWithoutCase(name))
             {
-                return &rdrInfo;
+                return &fmtInfo;
             }
         }
         return 0;
     }
 
-    void aboutToUnloadGame(game::Game const & /*gameBeingUnloaded*/)
-    {
-        // Remove the saved sessions (not serialized state files).
-        /// @note Once the game state file is read with an engine-side file reader, clearing
-        /// the sessions at this time is not necessary.
-        clearSessions();
-
-        // Clear the registered game state readers too.
-        readers.clear();
-    }
+    DENG2_PIMPL_AUDIENCE(AvailabilityUpdate)
 };
+
+DENG2_AUDIENCE_METHOD(SavedSessionRepository, AvailabilityUpdate)
 
 SavedSessionRepository::SavedSessionRepository() : d(new Instance(this))
 {}
 
-Folder const &SavedSessionRepository::folder() const
+void SavedSessionRepository::clear()
 {
-    DENG2_ASSERT(d->folder != 0);
-    return *d->folder;
+    // Disable updates for now, we'll do that when we're done.
+    d->availabilityUpdateDisabled = true;
+
+    // Clear the session db, we're starting over.
+    qDebug() << "Clearing saved sessions in the repository";
+    DENG2_FOR_EACH(All, i, d->sessions) { delete i->second; }
+    d->sessions.clear();
+
+    // Now perform the availability notifications.
+    d->availabilityUpdateDisabled = false;
+    d->notifyAvailabilityUpdate();
 }
 
-Folder &SavedSessionRepository::folder()
+bool SavedSessionRepository::has(String path) const
 {
-    DENG2_ASSERT(d->folder != 0);
-    return *d->folder;
+    return d->sessions.find(path.toLower()) != d->sessions.end();
 }
 
-void SavedSessionRepository::setLocation(Path const &location)
+void SavedSessionRepository::add(String path, SavedSession *session)
 {
-    qDebug() << "(Re)Initializing saved session repository file structure at" << location.asText();
+    path = path.toLower();
 
-    // Clear the saved session db, we're starting over.
-    d->clearSessions();
-
-    if(!location.isEmpty())
-    {
-        // Initialize the file structure.
-        try
-        {
-            d->folder = &App::fileSystem().makeFolder(location, FileSystem::PopulateNewFolder);
-            /// @todo scan the indexed files and populate the saved session db.
-            return;
-        }
-        catch(Error const &)
-        {}
-    }
-
-    LOG_RES_ERROR("\"%s\" could not be accessed. Perhaps it could not be created (insufficient permissions?)."
-                  " Saving will not be possible.") << NativePath(location).pretty();
-}
-
-bool SavedSessionRepository::contains(String fileName) const
-{
-    return d->sessions.find(fileName) != d->sessions.end();
-}
-
-void SavedSessionRepository::add(String fileName, SavedSession *session)
-{
-    // Ensure the session identifier is unique.
-    Instance::Sessions::iterator existing = d->sessions.find(fileName);
+    // Ensure the session identifier (i.e., the relative path) is unique.
+    All::iterator existing = d->sessions.find(path);
     if(existing != d->sessions.end())
     {
         if(existing->second != session)
         {
             delete existing->second;
             existing->second = session;
+            d->notifyAvailabilityUpdate();
         }
     }
     else
     {
-        d->sessions[fileName] = session;
+        d->sessions[path] = session;
+        d->notifyAvailabilityUpdate();
     }
 }
 
-SavedSession &SavedSessionRepository::session(String fileName) const
+SavedSession &SavedSessionRepository::find(String path) const
 {
-    Instance::Sessions::iterator found = d->sessions.find(fileName);
+    All::iterator found = d->sessions.find(path.toLower());
     if(found != d->sessions.end())
     {
-        DENG2_ASSERT(found->second != 0);
         return *found->second;
     }
     /// @throw MissingSessionError An unknown session was referenced.
-    throw MissingSessionError("SavedSessionRepository::session", "Unknown session '" + fileName + "'");
+    throw MissingSessionError("SavedSessionRepository::find", "Unknown session '" + path + "'");
 }
 
-SavedSession *SavedSessionRepository::sessionByUserDescription(String description) const
+SavedSession *SavedSessionRepository::findByUserDescription(String description) const
 {
     if(!description.isEmpty())
     {
-        DENG2_FOR_EACH_CONST(Instance::Sessions, i, d->sessions)
+        DENG2_FOR_EACH_CONST(All, i, d->sessions)
         {
             SessionMetadata const &metadata = i->second->metadata();
             if(!metadata.gets("userDescription", "").compareWithoutCase(description))
@@ -190,22 +154,27 @@ SavedSession *SavedSessionRepository::sessionByUserDescription(String descriptio
     return 0; // Not found.
 }
 
-void SavedSessionRepository::declareReader(String formatName, MapStateReaderMakeFunc maker)
+SavedSessionRepository::All const &SavedSessionRepository::all() const
 {
-    d->readers << Instance::ReaderInfo(formatName, maker);
+    return d->sessions;
 }
 
-MapStateReader *SavedSessionRepository::makeReader(SavedSession const &session) const
+void SavedSessionRepository::declareMapStateReader(String formatName, MapStateReaderMakeFunc maker)
 {
-    if(session.isLoadable())
-    {
-        /// @todo Recognize the map state file to determine the format.
-        Instance::ReaderInfo const *rdrInfo = d->infoForMapStateFormat("Native");
-        DENG2_ASSERT(rdrInfo != 0);
-        return rdrInfo->newReader(session);
-    }
-    /// @throw UnloadableSessionError The saved session is not loadable.
-    throw UnloadableSessionError("SavedSessionRepository::makeReader", "SavedSession '" + session.fileName() + "' is not loadable");
+    d->formats << Instance::FormatInfo(formatName, maker);
+}
+
+void SavedSessionRepository::clearMapStateReaders()
+{
+    d->formats.clear();
+}
+
+MapStateReader *SavedSessionRepository::makeMapStateReader(SavedSession const &session) const
+{
+    /// @todo Recognize the map state file to determine the format.
+    Instance::FormatInfo const *fmtInfo = d->infoForMapStateFormat("Native");
+    DENG2_ASSERT(fmtInfo != 0);
+    return fmtInfo->newMapStateReader(session);
 }
 
 } // namespace game

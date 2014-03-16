@@ -85,6 +85,7 @@ typedef struct {
 typedef struct {
     Str inputFilePath;
     Str outputFilePath;
+    Str fallbackGameIdentityKey;
 } ddhook_savegame_convert_t;
 
 DENG_API_TYPEDEF(Plug) // v1

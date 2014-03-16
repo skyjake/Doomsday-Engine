@@ -1072,37 +1072,6 @@ static int DD_ActivateGameWorker(void *context)
 
     ResourceSystem &resSys = App_ResourceSystem();
 
-    // Saved sessions cannot presently be recognized in Ring Zero as the necessary game
-    // state interpreters are not available.
-    ///
-    /// @todo Solution to this problem:
-    ///
-    /// - Extract vanilla game state interpretation into a new command line app which simply
-    ///   converts the given file set into a new savegame format supported by this system.
-    ///   Note that Hexen savegames are presently stored in a different folder.
-    ///
-    /// - Split the serialized map state for Doom/Heretic savegames into separate files (as
-    ///   per Hexen) and utilize a common engine-side logic for reading metadata from the
-    ///   game state file.
-    ///
-    if(App_GameLoaded())
-    {
-        // Determine the new root save directory.
-        Path newRootSaveDir;
-        if(int arg = App::commandLine().check("-savedir", 1))
-        {
-            // Using a custom root save directory.
-            App::commandLine().makeAbsolutePath(arg + 1);
-            newRootSaveDir = NativePath(App::commandLine().at(arg + 1)).withSeparators('/');
-        }
-        else
-        {
-            // Use the default for the current game.
-            newRootSaveDir = Path("/home/savegame") / App_CurrentGame().identityKey();
-        }
-        resSys.savedSessionRepository().setLocation(newRootSaveDir);
-    }
-
     // Texture resources are located now, prior to initializing the game.
     resSys.initCompositeTextures();
     resSys.initFlatTextures();
