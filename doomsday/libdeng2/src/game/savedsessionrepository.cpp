@@ -19,14 +19,7 @@
 #include "de/game/SavedSessionRepository"
 
 #include "de/App"
-#include "de/game/Game"
-#include "de/game/MapStateReader"
-#include "de/Log"
-#include "de/NativePath"
-#include "de/ZipArchive"
-
-#include <QList>
-#include <map>
+#include "de/game/SavedSession"
 
 namespace de {
 namespace game {
@@ -36,15 +29,8 @@ DENG2_PIMPL(SavedSessionRepository)
     All sessions;
     bool availabilityUpdateDisabled;
 
-    Instance(Public *i)
-        : Base(i)
-        , availabilityUpdateDisabled(false)
-    {}
-
-    ~Instance()
-    {
-        self.clear();
-    }
+    Instance(Public *i) : Base(i), availabilityUpdateDisabled(false) {}
+    ~Instance() { self.clear(); }
 
     void notifyAvailabilityUpdate()
     {

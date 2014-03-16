@@ -22,6 +22,7 @@
 #include "../Error"
 #include "../Observers"
 #include "../String"
+#include <map>
 
 namespace de {
 namespace game {
