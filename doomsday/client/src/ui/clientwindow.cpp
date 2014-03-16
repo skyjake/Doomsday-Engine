@@ -196,6 +196,7 @@ DENG2_PIMPL(ClientWindow)
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
         gameSelMenu->filter().useInvertedStyle();
+        gameSelMenu->filter().setOpacity(.9f);
         gameSelMenu->filter().rule()
                 .setInput(Rule::Left,  gameSelMenu->rule().left() + gameSelMenu->margins().left())
                 .setInput(Rule::Width, gameSelMenu->rule().width() - gameSelMenu->margins().width())
