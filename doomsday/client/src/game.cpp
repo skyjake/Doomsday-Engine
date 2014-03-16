@@ -25,6 +25,7 @@
 #include "filesys/manifest.h"
 
 #include <de/Error>
+#include <de/game/SavedSession>
 #include <de/Log>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>

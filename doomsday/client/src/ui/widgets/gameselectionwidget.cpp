@@ -1,6 +1,7 @@
 /** @file gameselectionwidget.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,6 +21,7 @@
 #include "ui/widgets/gamesessionwidget.h"
 #include "ui/widgets/mpselectionwidget.h"
 #include "ui/widgets/gamefilterwidget.h"
+#include "ui/widgets/savegameselectionwidget.h"
 #include "CommandAction"
 #include "clientapp.h"
 #include "games.h"
@@ -79,7 +81,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         enum Type {
             NormalGames,
-            MultiplayerGames
+            MultiplayerGames,
+            SavedGames
         };
 
         String titleText;
@@ -110,6 +113,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
             case MultiplayerGames:
                 menu = new MPSelectionWidget(MPSelectionWidget::DiscoverUsingMaster);
+                QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
+                QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
+                break;
+
+            case SavedGames:
+                menu = new SavegameSelectionWidget;
                 QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
                 QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
                 break;
@@ -210,6 +219,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     SubsetWidget *available;
     SubsetWidget *incomplete;
     SubsetWidget *multi;
+    SubsetWidget *saved;
     QList<SubsetWidget *> subsets; // not owned
 
     Instance(Public *i)
@@ -229,8 +239,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         self.add(multi = new SubsetWidget("multi", SubsetWidget::MultiplayerGames,
                                           tr("Multiplayer Games"), this));
 
+        // Menu of saved games.
+        self.add(saved = new SubsetWidget("saved", SubsetWidget::SavedGames,
+                                          tr("Saved Games"), this));
+
         // Keep all sets in a handy list.
-        subsets << available << incomplete << multi;
+        subsets << available << incomplete << multi << saved;
 
         self.add(filter = new GameFilterWidget);
 
@@ -263,6 +277,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         incomplete->show(sp);
         incomplete->title().show(sp);
 
+        saved->show(sp);
+        saved->title().show(sp);
+
         multi->show(mp);
         multi->title().show(mp);
     }
@@ -278,11 +295,11 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         QList<SubsetWidget *> order;
         if(!App_GameLoaded())
         {
-            order << available << multi << incomplete;
+            order << available << multi << saved << incomplete;
         }
         else
         {
-            order << multi << available << incomplete;
+            order << saved << multi << available << incomplete;
         }
 
         updateSubsetVisibility();
@@ -293,6 +310,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         {
             order.removeOne(available);
             order.removeOne(incomplete);
+            order.removeOne(saved);
         }
         if(!flt.testFlag(GameFilterWidget::Multiplayer))
         {
