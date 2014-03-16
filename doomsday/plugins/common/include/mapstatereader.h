@@ -37,8 +37,6 @@ public:
     MapStateReader(de::game::SavedSession const &session);
     ~MapStateReader();
 
-    static de::game::MapStateReader *make(de::game::SavedSession const &session);
-
     /**
      * Deserialize the saved map state.
      */

@@ -162,7 +162,6 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 #endif // __CLIENT__
 
 DENG2_PIMPL(ResourceSystem)
-, DENG2_OBSERVES(App,              GameUnload)      // Serialized map state format clearing
 , DENG2_OBSERVES(Games,            Addition)        // Saved session repository population
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
@@ -375,7 +374,6 @@ DENG2_PIMPL(ResourceSystem)
 #endif
 
         App_Games().audienceForAddition += this;
-        App::app().audienceForGameUnload() += this;
 
         // Determine the root directory of the saved session repository.
         NativePath nativeSavePath;
@@ -400,7 +398,6 @@ DENG2_PIMPL(ResourceSystem)
     ~Instance()
     {
         App_Games().audienceForAddition -= this;
-        App::app().audienceForGameUnload() -= this;
 
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
@@ -1940,7 +1937,6 @@ DENG2_PIMPL(ResourceSystem)
             {
                 String const &relPath = saveFolder.name() / i->first.fileNameWithoutExtension();
                 game::SavedSession *newSession = new game::SavedSession(relPath);
-                newSession->setRepository(&saveRepo);
                 saveRepo.add(relPath, newSession);
 
                 newSession->updateFromFile();
@@ -1952,18 +1948,11 @@ DENG2_PIMPL(ResourceSystem)
         {
             String const &relPath = saveFolder.name() / outFileName;
             QScopedPointer<game::SavedSession> newSession(new game::SavedSession(relPath));
-            newSession->setRepository(&saveRepo);
             if(convertSavegame(inputPath, *newSavedSession, gameId))
             {
                 saveRepo.add(relPath, newSession.take());
             }
         }*/
-    }
-
-    void aboutToUnloadGame(game::Game const &)
-    {
-        // Clear the game-registered map state formats.
-        saveRepo.clearMapStateReaders();
     }
 };
 

@@ -794,11 +794,6 @@ MapStateReader::MapStateReader(game::SavedSession const &session)
 MapStateReader::~MapStateReader()
 {}
 
-game::MapStateReader *MapStateReader::make(game::SavedSession const &session) // static
-{
-    return new MapStateReader(session);
-}
-
 void MapStateReader::read(String const &mapUriStr)
 {
     PackageFolder const &pack             = session().locateFile();

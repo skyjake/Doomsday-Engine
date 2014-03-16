@@ -39,8 +39,6 @@ public:
     DoomV9MapStateReader(de::game::SavedSession const &session);
     ~DoomV9MapStateReader();
 
-    static de::game::MapStateReader *make(de::game::SavedSession const &session);
-
     void read(de::String const &mapUriStr);
 
 private:

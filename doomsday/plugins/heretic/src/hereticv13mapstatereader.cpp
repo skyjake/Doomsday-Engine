@@ -816,11 +816,6 @@ HereticV13MapStateReader::HereticV13MapStateReader(game::SavedSession const &ses
 HereticV13MapStateReader::~HereticV13MapStateReader()
 {}
 
-game::MapStateReader *HereticV13MapStateReader::make(game::SavedSession const &session)
-{
-    return new HereticV13MapStateReader(session);
-}
-
 void HereticV13MapStateReader::read(String const &mapUriStr)
 {
     PackageFolder const &pack             = session().locateFile();

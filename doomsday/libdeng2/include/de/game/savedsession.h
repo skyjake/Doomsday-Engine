@@ -30,7 +30,6 @@ namespace de {
 namespace game {
 
 class MapStateReader;
-class SavedSessionRepository;
 
 /**
  * Logical component representing a serialized game session on disk.
@@ -40,14 +39,8 @@ class SavedSessionRepository;
 class DENG2_PUBLIC SavedSession
 {
 public:
-    /// Required/referenced repository is missing. @ingroup errors
-    DENG2_ERROR(MissingRepositoryError);
-
     /// Required file package could not be located. @ingroup errors
     DENG2_ERROR(MissingFileError);
-
-    /// The associated map state file was missing/unrecognized. @ingroup errors
-    DENG2_ERROR(UnrecognizedMapStateError);
 
     /// Notified whenever the metadata of the saved session changes.
     DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
@@ -94,30 +87,8 @@ public:
     String description() const;
 
     /**
-     * Determines whether a repository is configured for the saved session.
-     */
-    bool hasRepository() const;
-
-    /**
-     * Returns the saved session repository which owns the saved session.
-     *
-     * @see hasRepository()
-     */
-    SavedSessionRepository &repository() const;
-
-    /**
-     * Configure the saved session to use the @a newRepository. Once set, the saved session file
-     * package (if present) is potentially @em loadable, @em updateable and @em removable.
-     *
-     * @param newRepository  New SavedSessionRepository to configure for.
-     */
-    void setRepository(SavedSessionRepository *newRepository);
-
-    /**
      * Determines whether a file package exists for the saved session in the repository. Note that
      * it may not be compatible with the current game session, however.
-     *
-     * @see setRepository()
      */
     bool hasFile() const;
 
@@ -134,8 +105,6 @@ public:
      * reads the session metadata.
      *
      * @return  @c true iff the session metadata was read successfully.
-     *
-     * @see setRepository()
      */
     bool recognizeFile();
 
@@ -143,8 +112,6 @@ public:
      * Attempt to update the status of the saved session from the file package in the repository.
      * If the file path is invalid, unreachable, or the package is not recognized then the saved
      * session is returned to a valid but non-loadable state.
-     *
-     * @see setRepository()
      */
     void updateFromFile();
 
@@ -161,8 +128,6 @@ public:
 
     /**
      * Removes the file package for the saved session from the repository (if configured).
-     *
-     * @see setRepository()
      */
     void removeFile();
 
@@ -185,19 +150,8 @@ public:
      * Determines whether a serialized map state exists for the saved session.
      *
      * @param mapUri  Unique map identifier.
-     *
-     * @see mapStateReader()
      */
     bool hasMapState(String mapUriStr) const;
-
-    /**
-     * Determines whether a file package exists for the saved session in the repository and if so,
-     * reads the session metadata and then returns a new MapStateReader instance appropriate for
-     * deserializing map state data.
-     *
-     * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
-     */
-    std::auto_ptr<MapStateReader> mapStateReader();
 
 private:
     DENG2_PRIVATE(d)

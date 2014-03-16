@@ -39,8 +39,6 @@ public:
     HereticV13MapStateReader(de::game::SavedSession const &session);
     ~HereticV13MapStateReader();
 
-    static de::game::MapStateReader *make(de::game::SavedSession const &session);
-
     void read(de::String const &mapUriStr);
 
 private:

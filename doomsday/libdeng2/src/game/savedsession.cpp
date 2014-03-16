@@ -21,8 +21,6 @@
 #include "de/App"
 #include "de/ArrayValue"
 #include "de/game/Game"
-#include "de/game/MapStateReader"
-#include "de/game/SavedSessionRepository"
 #include "de/Info"
 #include "de/Log"
 #include "de/NumberValue"
@@ -138,21 +136,16 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
 
 DENG2_PIMPL(SavedSession)
 {
-    SavedSessionRepository *repo; ///< The owning repository (if any).
-
     String repoPath; ///< Relative path to the game session file.
-
     QScopedPointer<Metadata> metadata;
 
     Instance(Public *i)
         : Base(i)
-        , repo            (0)
         , metadata        (new Metadata)
     {}
 
     Instance(Public *i, Instance const &other)
         : Base(i)
-        , repo            (other.repo)
         , repoPath        (other.repoPath)
     {
         DENG2_ASSERT(!other.metadata.isNull());
@@ -204,7 +197,6 @@ DENG2_PIMPL(SavedSession)
 
     PackageFolder *tryLocatePackage()
     {
-        if(!repo) return false;
         return App::fileSystem().root().tryLocate<PackageFolder>(String("/savegame") / repoPath);
     }
 
@@ -231,27 +223,6 @@ SavedSession &SavedSession::operator = (SavedSession const &other)
     d.reset(new Instance(this, *other.d));
     return *this;
 }
-
-bool SavedSession::hasRepository() const
-{
-    return d->repo != 0;
-}
-
-SavedSessionRepository &SavedSession::repository() const
-{
-    if(d->repo)
-    {
-        return *d->repo;
-    }
-    /// @throw MissingRepositoryError No repository is configured.
-    throw MissingRepositoryError("SavedSession::repository", "No repository is configured");
-}
-
-void SavedSession::setRepository(SavedSessionRepository *newRepository)
-{
-    d->repo = newRepository;
-}
-
 
 static String metadataAsStyledText(SavedSession::Metadata const &metadata)
 {
@@ -294,7 +265,6 @@ void SavedSession::setPath(String newPath)
 
 bool SavedSession::hasFile() const
 {
-    if(!d->repo) return false;
     return App::fileSystem().root().has(String("/savegame") / d->repoPath);
 }
 
@@ -386,17 +356,6 @@ bool SavedSession::hasMapState(String mapUriStr) const
         }
     }
     return false;
-}
-
-std::auto_ptr<MapStateReader> SavedSession::mapStateReader()
-{
-    if(recognizeFile())
-    {
-        std::auto_ptr<MapStateReader> p(repository().makeMapStateReader(*this));
-        return p;
-    }
-    /// @throw UnrecognizedMapStateError The game state format was not recognized.
-    throw UnrecognizedMapStateError("SavedSession::mapStateReader", "Unrecognized map state format");
 }
 
 SavedSession::Metadata const &SavedSession::metadata() const

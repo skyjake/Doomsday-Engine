@@ -26,7 +26,6 @@
 namespace de {
 namespace game {
 
-class MapStateReader;
 class SavedSession;
 
 /**
@@ -42,9 +41,6 @@ public:
 
     /// Notified whenever a saved session is added/removed from the repository.
     DENG2_DEFINE_AUDIENCE2(AvailabilityUpdate, void repositoryAvailabilityUpdate(SavedSessionRepository const &repository))
-
-    /// Game map state reader instantiator function ptr.
-    typedef MapStateReader *(*MapStateReaderMakeFunc)(SavedSession const &find);
 
     typedef std::map<String, SavedSession *> All;
 
@@ -96,29 +92,6 @@ public:
      * Provides access to the saved session dataset, for efficient traversal.
      */
     All const &all() const;
-
-    /**
-     * Register a map state reader.
-     *
-     * @param formatName  Symbolic identifier for the map format.
-     * @param maker       Map state reader instantiator function.
-     */
-    void declareMapStateReader(String formatName, MapStateReaderMakeFunc maker);
-
-    /**
-     * Unregister all map state readers.
-     */
-    void clearMapStateReaders();
-
-    /**
-     * Determines whether a MapStateReader appropriate for the specified saved @a session
-     * is available and if so, returns a new instance for deserializing the map state.
-     *
-     * @param session  The saved session to obtain a reader for.
-     *
-     * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
-     */
-    MapStateReader *makeMapStateReader(SavedSession const &find) const;
 
 private:
     DENG2_PRIVATE(d)

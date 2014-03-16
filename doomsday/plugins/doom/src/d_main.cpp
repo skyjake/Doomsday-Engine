@@ -381,10 +381,6 @@ void D_PreInit()
     // Do the common pre init routine;
     G_CommonPreInit();
 
-    // Declare the Doom V9 game state reader/interpreter.
-    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareMapStateReader("DoomV9", &DoomV9MapStateReader::make);
-
     G_InitSpecialFilter();
 }
 

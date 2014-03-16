@@ -28,6 +28,15 @@
 class MapStateReader;
 class MapStateWriter;
 
+/**
+ * Determines whether a file package exists for the saved session in the repository and if so,
+ * reads the session metadata and then returns a new MapStateReader instance appropriate for
+ * deserializing map state data.
+ *
+ * @return  New reader instance if recognized. Ownership given to the caller.
+ */
+std::auto_ptr<de::game::MapStateReader> SV_MapStateReader(de::game::SavedSession &session);
+
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
 #if __JHEXEN__

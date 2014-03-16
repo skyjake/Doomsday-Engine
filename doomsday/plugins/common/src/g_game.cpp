@@ -482,10 +482,6 @@ static void initSaveSlots()
     delete sslots;
     sslots = new SaveSlots;
 
-    // Declare the native map state reader.
-    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-    saveRepo.declareMapStateReader("Native", &MapStateReader::make);
-
     // Setup the logical save slot bindings.
     int const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
         MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
@@ -1393,7 +1389,7 @@ int G_DoLoadMap(loadmap_params_t *p)
         try
         {
             de::game::SavedSession &session = G_SaveSlots()["base"].savedSession();
-            session.mapStateReader()->read(Str_Text(Uri_Compose(gameMapUri)));
+            SV_MapStateReader(session)->read(Str_Text(Uri_Compose(gameMapUri)));
         }
         catch(de::Error const &er)
         {
@@ -2929,14 +2925,12 @@ static int saveGameStateWorker(void *context)
         }
     }
 
-    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
     SaveSlot &sslot = G_SaveSlots()[logicalSlot];
 
     de::game::SavedSession *session = new de::game::SavedSession(sslot.repositoryPath());
     de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
     metadata->set("userDescription", userDescription);
     session->replaceMetadata(metadata);
-    session->setRepository(&saveRepo);
 
     try
     {
@@ -3273,7 +3267,7 @@ void G_DoLoadSession(de::String slotId)
         mapTime = metadata.geti("mapTime");
 #endif
 
-        session.mapStateReader()->read(Str_Text(Uri_Resolved(gameMapUri)));
+        SV_MapStateReader(session)->read(Str_Text(Uri_Resolved(gameMapUri)));
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);

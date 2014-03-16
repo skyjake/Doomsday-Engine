@@ -21,6 +21,13 @@
 #include "common.h"
 #include "p_saveg.h"
 
+#if __JDOOM__
+#  include "doomv9mapstatereader.h"
+#endif
+#if __JHERETIC__
+#  include "hereticv13mapstatereader.h"
+#endif
+
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "p_actor.h"
@@ -42,6 +49,24 @@ int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
 targetplraddress_t *targetPlayerAddrs;
 #endif
+
+std::auto_ptr<de::game::MapStateReader> SV_MapStateReader(de::game::SavedSession &session)
+{
+    if(session.recognizeFile())
+    {
+        /// @todo Recognize the map state file to determine the format.
+        std::auto_ptr<de::game::MapStateReader> p(new MapStateReader(session)); // Native format.
+/*#if __JDOOM__
+        p.reset(new DoomV9MapStateReader(session)); // DoomV9
+#endif
+#if __JHERETIC__
+        p.reset(new HereticV13MapStateReader(session)); // HereticV13
+#endif*/
+        return p;
+    }
+    /// @throw de::Error The game state format was not recognized.
+    throw de::Error("SV_MapStateReader", "Unrecognized map state format");
+}
 
 #if __JHEXEN__
 void SV_InitTargetPlayers()
@@ -788,14 +813,11 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-
     // Prepare new saved game session session.
     de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
     de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
     metadata->set("sessionId", sessionId);
     session->replaceMetadata(metadata);
-    session->setRepository(&saveRepo);
 
     de::Path path = de::String("/savegame") / "client" / session->path();
     if(!SV_OpenFile(path, true/*for write*/))
@@ -852,8 +874,6 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-
     Reader *reader = SV_NewReader();
 
     de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
@@ -861,7 +881,6 @@ void SV_LoadGameClient(uint sessionId)
     //G_ReadLegacySessionMetadata(metadata, reader);
     metadata->set("sessionId", sessionId);
     session->replaceMetadata(metadata);
-    session->setRepository(&saveRepo);
 
     de::Path path = de::String("/savegame") / "client" / session->path();
     if(!SV_OpenFile(path, false/*for read*/))

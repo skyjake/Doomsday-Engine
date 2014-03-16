@@ -36,19 +36,6 @@ DENG2_PIMPL(SavedSessionRepository)
     All sessions;
     bool availabilityUpdateDisabled;
 
-    struct FormatInfo {
-        String name;
-        MapStateReaderMakeFunc newMapStateReader;
-
-        FormatInfo(String name, MapStateReaderMakeFunc newMapStateReader)
-            : name(name), newMapStateReader(newMapStateReader)
-        {
-            DENG2_ASSERT(!name.isEmpty() && newMapStateReader != 0);
-        }
-    };
-    typedef QList<FormatInfo> FormatInfos;
-    FormatInfos formats;
-
     Instance(Public *i)
         : Base(i)
         , availabilityUpdateDisabled(false)
@@ -63,18 +50,6 @@ DENG2_PIMPL(SavedSessionRepository)
     {
         if(availabilityUpdateDisabled) return;
         DENG2_FOR_PUBLIC_AUDIENCE2(AvailabilityUpdate, i) i->repositoryAvailabilityUpdate(self);
-    }
-
-    FormatInfo const *infoForMapStateFormat(String const &name)
-    {
-        foreach(FormatInfo const &fmtInfo, formats)
-        {
-            if(!fmtInfo.name.compareWithoutCase(name))
-            {
-                return &fmtInfo;
-            }
-        }
-        return 0;
     }
 
     DENG2_PIMPL_AUDIENCE(AvailabilityUpdate)
@@ -157,24 +132,6 @@ SavedSession *SavedSessionRepository::findByUserDescription(String description) 
 SavedSessionRepository::All const &SavedSessionRepository::all() const
 {
     return d->sessions;
-}
-
-void SavedSessionRepository::declareMapStateReader(String formatName, MapStateReaderMakeFunc maker)
-{
-    d->formats << Instance::FormatInfo(formatName, maker);
-}
-
-void SavedSessionRepository::clearMapStateReaders()
-{
-    d->formats.clear();
-}
-
-MapStateReader *SavedSessionRepository::makeMapStateReader(SavedSession const &session) const
-{
-    /// @todo Recognize the map state file to determine the format.
-    Instance::FormatInfo const *fmtInfo = d->infoForMapStateFormat("Native");
-    DENG2_ASSERT(fmtInfo != 0);
-    return fmtInfo->newMapStateReader(session);
 }
 
 } // namespace game

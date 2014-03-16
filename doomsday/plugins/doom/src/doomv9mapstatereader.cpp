@@ -806,11 +806,6 @@ DoomV9MapStateReader::DoomV9MapStateReader(game::SavedSession const &session)
 DoomV9MapStateReader::~DoomV9MapStateReader()
 {}
 
-game::MapStateReader *DoomV9MapStateReader::make(game::SavedSession const &session)
-{
-    return new DoomV9MapStateReader(session);
-}
-
 void DoomV9MapStateReader::read(String const &mapUriStr)
 {
     PackageFolder const &pack             = session().locateFile();
