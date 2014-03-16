@@ -113,7 +113,7 @@ cvartemplate_t gameCVars[] = {
 
 // Player
     // Player data
-    {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 3},
+    {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 4},
     {"player-eyeheight", 0, CVT_INT, &cfg.plrViewHeight, 41, 54, G_UpdateEyeHeight},
 
     // Movment

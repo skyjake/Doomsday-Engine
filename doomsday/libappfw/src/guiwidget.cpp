@@ -489,6 +489,11 @@ void GuiWidget::guiDeleteLater()
     Garbage_TrashInstance(this, deleteGuiWidget);
 }
 
+void GuiWidget::recycleTrashedWidgets()
+{
+    Garbage_RecycleAllWithDestructor(deleteGuiWidget);
+}
+
 void GuiWidget::set(Background const &bg)
 {
     d->background = bg;

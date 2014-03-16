@@ -559,6 +559,16 @@ Rectangleui GLState::viewport() const
                        d->props[ViewportHeight]);
 }
 
+Rectanglef GLState::normalizedViewport() const
+{
+    GLTarget::Size const size = target().size();
+    Rectangleui const vp = viewport();
+    return Rectanglef(float(vp.left())   / float(size.x),
+                      float(vp.top())    / float(size.y),
+                      float(vp.width())  / float(size.x),
+                      float(vp.height()) / float(size.y));
+}
+
 bool GLState::scissor() const
 {
     return d->props.asBool(Scissor);

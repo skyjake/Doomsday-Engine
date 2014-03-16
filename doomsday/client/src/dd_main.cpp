@@ -1991,16 +1991,10 @@ dd_bool DD_Init(void)
         // Lets play a nice title animation.
         DD_StartTitle();
 
-        // We'll open the console and print a list of the known games too.
-        //Con_Execute(CMDS_DDAY, "conopen", true, false);
         if(!CommandLine_Exists("-noautoselect"))
         {
-            LOG_WARNING("Game could not be selected automatically");
+            LOG_NOTE("Game could not be selected automatically");
         }
-        /// @todo Whether or not to list the games depends on whether the app
-        /// has a graphical interface. The graphical client will display the
-        /// GameSelection widget where as the server will not.
-        //Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
     return true;

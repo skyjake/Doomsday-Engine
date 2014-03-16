@@ -72,6 +72,7 @@
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/vissprite.h"
+#include "render/fx/bloom.h"
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
 #include "render/vr.h"
@@ -427,6 +428,7 @@ void Rend_Register()
     Rend_RadioRegister();
     Rend_SpriteRegister();
     LensFx_Register();
+    fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
     VR_ConsoleRegister();

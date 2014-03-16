@@ -95,7 +95,7 @@ struct VertexBuilder
             VertexType v;
             v.rgba = color;
             for(int i = 0; i <= divisions; ++i) {
-                float const ang = 2 * PI * i / divisions;
+                float const ang = 2 * PI * (i == divisions? 0 : i) / divisions;
                 Vector2f r(cos(ang), sin(ang));
                 // Outer.
                 v.pos = center + r * outerRadius;

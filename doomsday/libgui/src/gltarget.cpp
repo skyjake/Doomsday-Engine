@@ -348,7 +348,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
         if(status != GL_FRAMEBUFFER_COMPLETE)
         {
-            self.setState(NotReady);
+            releaseAndReset();
 
             throw ConfigError("GLTarget::validate",
                 status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT? "Incomplete attachments" :

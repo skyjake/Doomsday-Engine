@@ -264,24 +264,31 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         App::app().audienceForGameChange() -= this;
     }
 
-    void updateSubsetVisibility()
+    /**
+     * Determines if a subset should be visible according to the current filter value.
+     */
+    bool isSubsetVisible(SubsetWidget const *sub) const
     {
         GameFilterWidget::Filter flt = filter->filter();
+        if(sub == available || sub == incomplete || sub == saved)
+        {
+            return flt.testFlag(GameFilterWidget::Singleplayer);
+        }
+        if(sub == multi)
+        {
+            return flt.testFlag(GameFilterWidget::Multiplayer);
+        }
+        return false;
+    }
 
-        bool const sp = flt.testFlag(GameFilterWidget::Singleplayer);
-        bool const mp = flt.testFlag(GameFilterWidget::Multiplayer);
-
-        available->show(sp);
-        available->title().show(sp);
-
-        incomplete->show(sp);
-        incomplete->title().show(sp);
-
-        saved->show(sp);
-        saved->title().show(sp);
-
-        multi->show(mp);
-        multi->title().show(mp);
+    void updateSubsetVisibility()
+    {
+        foreach(SubsetWidget *sub, subsets)
+        {
+            bool shown = isSubsetVisible(sub);
+            sub->show(shown);
+            sub->title().show(shown);
+        }
     }
 
     /**
@@ -612,13 +619,16 @@ void GameSelectionWidget::operator << (PersistentState const &fromState)
         // Restore the fold open/closed state.
         if(st[name() + "." + s->name() + ".open"].value().isTrue())
         {
-            s->open();
+            s->open(); // automatically shows the panel
         }
         else
         {
             s->close(0); // instantly
         }
     }
+
+    // Ensure subsets that are supposed to be hidden stay that way.
+    d->updateSubsetVisibility();
 }
 
 void GameSelectionWidget::updateSubsetLayout()
