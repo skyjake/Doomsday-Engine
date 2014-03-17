@@ -49,9 +49,9 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         , angle(0)
         , rotationSpeed(20)
         , mini(false)
-        , colorId("progress.light.wheel")
+        , colorId      ("progress.light.wheel")
         , shadowColorId("progress.light.shadow")
-        , gearId("progress.gear")
+        , gearId       ("progress.gear")
         , updateAt(Time::invalidTime())
         , framesWhileAnimDone(0)
     {
@@ -190,7 +190,10 @@ void ProgressWidget::update()
 
     d->angle = de::wrap(d->angle + float(elapsed * d->rotationSpeed), 0.f, 360.f);
 
-    requestGeometry();
+    if(isVisible())
+    {
+        requestGeometry();
+    }
 }
 
 void ProgressWidget::glInit()

@@ -80,7 +80,7 @@ DENG2_PIMPL_NOREF(Animation)
         : value(val)
         , target(val)
         , startDelay(0)
-        , setTime(Animation::currentTime())
+        , setTime   (Animation::currentTime())
         , targetTime(Animation::currentTime())
         , style(s)
         , spring(DEFAULT_SPRING)
@@ -158,7 +158,7 @@ DENG2_PIMPL_NOREF(Animation)
         return target;
     }
 
-    Time currentTime() const
+    Time const &currentTime() const
     {
         if(flags.testFlag(Paused)) return pauseTime;
         return Animation::currentTime();
@@ -206,7 +206,7 @@ void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay
 {
     resume();
 
-    Time now = d->currentTime();
+    Time const &now = d->currentTime();
 
     if(transitionSpan <= 0)
     {
@@ -256,7 +256,7 @@ void Animation::adjustTarget(float newTarget)
 
 TimeDelta Animation::remainingTime() const
 {
-    Time const now = d->currentTime();
+    Time const &now = d->currentTime();
     if(now >= d->targetTime)
     {
         return 0;
@@ -311,7 +311,7 @@ Clock const &Animation::clock()
 
 void Animation::operator >> (Writer &to) const
 {
-    Time now = currentTime();
+    Time const &now = currentTime();
 
     to << d->value << d->target;
     // Write times relative to current frame time.
@@ -322,7 +322,7 @@ void Animation::operator >> (Writer &to) const
 
 void Animation::operator << (Reader &from)
 {
-    Time const now = currentTime();
+    Time const &now = currentTime();
 
     from >> d->value >> d->target;
 
@@ -347,7 +347,7 @@ void Animation::setClock(Clock const *clock)
     _clock = clock;
 }
 
-Time Animation::currentTime()
+Time const &Animation::currentTime()
 {
     DENG2_ASSERT(_clock != 0);
     if(!_clock)
