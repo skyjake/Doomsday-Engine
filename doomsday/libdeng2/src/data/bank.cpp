@@ -815,7 +815,7 @@ dint Bank::allItems(Names &names) const
     d->items.findAllPaths(paths, PathTree::NoBranch);
     DENG2_FOR_EACH(PathTree::FoundPaths, i, paths)
     {
-        names.insert(*i);
+        names.insert(Path(*i).withSeparators('.'));
     }
     return dint(names.size());
 }
