@@ -696,8 +696,14 @@ static bool convertSavegame(Path oldSavePath)
                 closeFile();
                 if(openFile(oldMapStatePath))
                 {
-                    if(Block *mapStateData = bufferFile())
+                    if(Block *xlatedData = bufferFile())
                     {
+                        // Append the remaining translated data to header, forming the new serialized
+                        // map state data file.
+                        Block *mapStateData = mapStateHeader();
+                        *mapStateData += *xlatedData;
+                        delete xlatedData;
+
                         arch.add(Path("maps") / composeMapUriPath(0, i) + "State", *mapStateData);
                         delete mapStateData;
                     }
@@ -708,9 +714,16 @@ static bool convertSavegame(Path oldSavePath)
         {
             // The only serialized map state follows the session metadata in the game state file.
             // Decompress the rest of the file and write it out to a new map state file.
-            if(Block *mapStateData = bufferFile())
+            if(Block *xlatedData = bufferFile())
             {
                 String const mapUriStr = metadata["mapUri"].value().asText();
+
+                // Append the remaining translated data to header, forming the new serialized
+                // map state data file.
+                Block *mapStateData = mapStateHeader();
+                *mapStateData += *xlatedData;
+                delete xlatedData;
+
                 arch.add(Path("maps") / mapUriStr + "State", *mapStateData);
                 delete mapStateData;
             }
