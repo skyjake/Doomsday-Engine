@@ -525,8 +525,7 @@ float GuiWidget::visibleOpacity() const
     float opacity = d->currentOpacity();
     for(Widget *i = Widget::parent(); i != 0; i = i->parent())
     {
-        GuiWidget *w = dynamic_cast<GuiWidget *>(i);
-        if(w)
+        if(GuiWidget *w = i->maybeAs<GuiWidget>())
         {
             opacity *= w->d->currentOpacity();
         }
@@ -805,7 +804,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         verts.makeFlexibleFrame(rule().recti().shrunk(1),
                                 d->background.thickness,
                                 d->background.color,
-                                root().atlas().imageRectf(root().gradientFrame()));
+                                root().atlas().imageRectf(root().boldRoundCorners()));
         break;
 
     case Background::Rounded:

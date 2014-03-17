@@ -18,6 +18,7 @@
 
 #include "de/ProgressWidget"
 #include "de/GuiRootWidget"
+#include "de/StyleProceduralImage"
 
 #include <de/Animation>
 #include <de/Lockable>
@@ -71,12 +72,11 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
     void glInit()
     {
-        gearTex = atlas().alloc(style().images().image(gearId));
+        gearTex = root().styleTexture(gearId);
     }
 
     void glDeinit()
     {
-        atlas().release(gearTex);
         gearTex = Id::None;
     }
 };
@@ -89,7 +89,7 @@ ProgressWidget::ProgressWidget(String const &name)
     setSizePolicy(ui::Filled, ui::Filled);
 
     // Set up the static progress ring image.
-    setImage(style().images().image("progress.wheel"));
+    setImage(new StyleProceduralImage("progress.wheel", *this));
     setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
     setImageScale(.6f);
 

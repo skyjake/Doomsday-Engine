@@ -58,11 +58,18 @@ public:
     GLUniform &uAtlas();
     Id solidWhitePixel() const;
     Id roundCorners() const;
-    Id gradientFrame() const;
+    Id boldRoundCorners() const;
     Id borderGlow() const;
-    Id toggleOnOff() const;
     Id tinyDot() const;
-    Id fold() const;
+
+    /**
+     * Gets the identifier of a style image allocated on the shared UI atlas texture.
+     *
+     * @param styleImagePath  Path of the style image in the style's image bank.
+     *
+     * @return Id of the texture allocation.
+     */
+    Id styleTexture(DotPath const &styleImagePath) const;
 
     static GLShaderBank &shaders();
 

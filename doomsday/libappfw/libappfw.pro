@@ -72,6 +72,7 @@ publicHeaders(root, \
     include/de/SignalAction \
     include/de/SliderWidget \
     include/de/Style \
+    include/de/StyleProceduralImage \
     include/de/TabWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
@@ -125,6 +126,7 @@ publicHeaders(framework, \
     include/de/framework/sequentiallayout.h \
     include/de/framework/signalaction.h \
     include/de/framework/style.h \
+    include/de/framework/styleproceduralimage.h \
     include/de/framework/stylist.h \
     include/de/framework/submenuitem.h \
     include/de/framework/subwidgetitem.h \
