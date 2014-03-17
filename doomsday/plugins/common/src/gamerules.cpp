@@ -62,16 +62,17 @@ GameRuleset *GameRuleset::fromRecord(Record const &rec) // static
 {
     GameRuleset *rules = new GameRuleset;
 
-    rules->skill           = int ( rec["skill"].value().asNumber() );
+    /// @todo Info keys are converted to lowercase when parsed.
+    rules->skill           = rec.geti("skill");
 #if !__JHEXEN__
-    rules->fast            = byte( rec["fast"].value().asNumber() );
+    rules->fast            = byte( rec.geti("fast") );
 #endif
-    rules->deathmatch      = byte( rec["deathmatch"].value().asNumber() );
-    rules->noMonsters      = byte( rec["noMonsters"].value().asNumber() );
+    rules->deathmatch      = byte( rec.geti("deathmatch") );
+    rules->noMonsters      = byte( rec.geti("nomonsters") );
 #if __JHEXEN__
-    rules->randomClasses   = byte( rec["randomClasses"].value().asNumber() );
+    rules->randomClasses   = byte( rec.geti("randomclasses") );
 #else
-    rules->respawnMonsters = byte( rec["respawnMonsters"].value().asNumber() );
+    rules->respawnMonsters = byte( rec.geti("respawnmonsters") );
 #endif
 
     return rules;
