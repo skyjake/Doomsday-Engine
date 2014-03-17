@@ -137,19 +137,6 @@
 #  define DENG2_DEBUG
 #  ifdef DENG2_USE_QT
 #    define DENG2_ASSERT(x) Q_ASSERT(x)
-#    ifdef UNIX
-#      include <execinfo.h>
-/**
- * @macro DENG2_PRINT_BACKTRACE
- * Debug utility for dumping the current backtrace using qDebug.
- */
-#      define DENG2_PRINT_BACKTRACE() { \
-    void *callstack[128]; \
-    int i, frames = backtrace(callstack, 128); \
-    char** strs = backtrace_symbols(callstack, frames); \
-    for(i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
-    free(strs); }
-#    endif
 #  else
 #    define DENG2_ASSERT(x) assert(x)
 #  endif
@@ -158,6 +145,22 @@
 #  define DENG2_NO_DEBUG
 #  define DENG2_ASSERT(x)
 #  define DENG2_DEBUG_ONLY(x)
+#endif
+
+#ifdef DENG2_USE_QT
+#  ifdef UNIX
+#    include <execinfo.h>
+/**
+ * @macro DENG2_PRINT_BACKTRACE
+ * Debug utility for dumping the current backtrace using qDebug.
+ */
+#    define DENG2_PRINT_BACKTRACE() { \
+    void *callstack[128]; \
+    int i, frames = backtrace(callstack, 128); \
+    char** strs = backtrace_symbols(callstack, frames); \
+    for(i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
+    free(strs); }
+#  endif
 #endif
 
 /**
