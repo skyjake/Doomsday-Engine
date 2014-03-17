@@ -22,6 +22,8 @@
 #include <QDebug>
 #include <QList>
 #include <QMutableListIterator>
+#include <QStringList>
+#include <QtAlgorithms>
 #include <de/reader.h>            /// @todo remove me
 #include <de/TextApp>
 #include <de/ArrayValue>
@@ -34,14 +36,6 @@
 
 using namespace de;
 using de::game::SessionMetadata;
-
-enum SaveFormat
-{
-    Unknown,
-    Doom,
-    Heretic,
-    Hexen
-};
 
 typedef enum savestatesegment_e {
     ASEG_MAP_HEADER = 102,  // Hexen only
@@ -60,11 +54,85 @@ typedef enum savestatesegment_e {
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
+enum SaveFormatId
+{
+    Doom,
+    Heretic,
+    Hexen
+};
+
+struct SaveFormat
+{
+    SaveFormatId id;
+    bool useMagic;                    //< @c true= format uses a magic identifer.
+    int magic;                        //< "Magic" format identifier.
+    QStringList knownFileExtensions;
+    QStringList baseGameIdentityKeys;
+
+    SaveFormat(SaveFormatId id, bool useMagic, int magic, QStringList knownFileExtensions, QStringList baseGameIdentityKeys)
+        : id(id)
+        , useMagic(useMagic)
+        , magic(magic)
+        , knownFileExtensions(knownFileExtensions)
+        , baseGameIdentityKeys(baseGameIdentityKeys)
+    {}
+};
+typedef QList<SaveFormat *> SaveFormats;
+
+static SaveFormats saveFormats;
+
+static void initSaveFormats()
+{
+    saveFormats << new SaveFormat(Doom,    true, 0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
+    saveFormats << new SaveFormat(Heretic, true, 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
+    saveFormats << new SaveFormat(Hexen,   true, 0x1B17CC00, QStringList(".hxs"), QStringList() << "hexen");
+}
+
+static SaveFormat *saveFormatForMagic(int magic)
+{
+    foreach(SaveFormat *fmt, saveFormats)
+    {
+        if(fmt->useMagic && fmt->magic == magic) return fmt;
+    }
+    return 0; // Not found.
+}
+
+static SaveFormat *saveFormatForGameIdentityKey(String const &idKey)
+{
+    foreach(SaveFormat *fmt, saveFormats)
+    foreach(QString const &baseIdentityKey, fmt->baseGameIdentityKeys)
+    {
+        if(idKey.beginsWith(baseIdentityKey)) return fmt;
+    }
+    return 0; // Not found.
+}
+
+static SaveFormat *guessSaveFormatFromFileName(Path const &path)
+{
+    String ext = path.lastSegment().toString().fileNameExtension().toLower();
+    foreach(SaveFormat *fmt, saveFormats)
+    foreach(QString const &knownExtension, fmt->knownFileExtensions)
+    {
+        if(!knownExtension.compare(ext, Qt::CaseInsensitive)) return fmt;
+    }
+    return 0; // Not found.
+}
+
 static String fallbackGameIdentityKey;
 
+static SaveFormat *knownSaveFormat;
 static LZFILE *saveFile;
-static SaveFormat saveFormat;
 static int saveVersion;
+
+/// Returns the current, known save format.
+static SaveFormat &saveFormat()
+{
+    if(knownSaveFormat)
+    {
+        return *knownSaveFormat;
+    }
+    throw Error("saveFormat", "Current save format is unknown");
+}
 
 static String versionText()
 {
@@ -231,7 +299,7 @@ static Path composeMapUriPath(uint episode, uint map)
     return String("MAP%1").arg(map > 0? map : 1, 2, 10, QChar('0'));
 }
 
-static String identityKeyForLegacyGamemode(int gamemode, SaveFormat saveFormat, int saveVersion)
+static String identityKeyForLegacyGamemode(int gamemode, SaveFormatId saveFormat, int saveVersion)
 {
     static char const *doomGameIdentityKeys[] = {
         /*doom_shareware*/    "doom1-share",
@@ -328,7 +396,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
     }
     // We are incompatible with v3 saves due to an invalid test used to determine present
     // sides (ver3 format's sides contain chunks of junk data).
-    if(saveFormat == Hexen && saveVersion == 3)
+    if(saveFormat().id == Hexen && saveVersion == 3)
     {
         /// @throw Error Map state is in an unsupported format.
         throw Error("xlatLegacyMetadata", "Unsupported format version " + String::number(saveVersion));
@@ -337,7 +405,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
 
     // Translate gamemode identifiers from older save versions.
     int oldGamemode = Reader_ReadInt32(reader);
-    metadata.set("gameIdentityKey",     identityKeyForLegacyGamemode(oldGamemode, saveFormat, saveVersion));
+    metadata.set("gameIdentityKey",     identityKeyForLegacyGamemode(oldGamemode, saveFormat().id, saveVersion));
 
     // User description. A fixed 24 characters in length in "really old" versions.
     size_t const len = (saveVersion < 10? 24 : (unsigned)Reader_ReadInt32(reader));
@@ -348,7 +416,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
     free(descBuf); descBuf = 0;
 
     QScopedPointer<Record> rules(new Record);
-    if(saveFormat != Hexen && saveVersion < 13)
+    if(saveFormat().id != Hexen && saveVersion < 13)
     {
         // In DOOM the high bit of the skill mode byte is also used for the
         // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
@@ -386,12 +454,12 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
     metadata.set("mapUri",              composeMapUriPath(episode, map).asText());
 
     rules->set("deathmatch", Reader_ReadByte(reader));
-    if(saveFormat != Hexen && saveVersion == 13)
+    if(saveFormat().id != Hexen && saveVersion == 13)
     {
         rules->set("fast", Reader_ReadByte(reader));
     }
     rules->set("noMonsters", Reader_ReadByte(reader));
-    if(saveFormat == Hexen)
+    if(saveFormat().id == Hexen)
     {
         rules->set("randomClasses", Reader_ReadByte(reader));
     }
@@ -402,7 +470,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
 
     metadata.add("gameRules",           rules.take());
 
-    if(saveFormat != Hexen)
+    if(saveFormat().id != Hexen)
     {
         /*skip old junk*/ if(saveVersion < 10) srSeek(reader, 2);
 
@@ -443,32 +511,6 @@ static String composeInfo(SessionMetadata const &metadata, Path const &sourceFil
     os << "\n\n" + metadata.asTextWithInfoSyntax() + "\n";
 
     return info;
-}
-
-static SaveFormat saveFormatForGameIdentityKey(String const &idKey)
-{
-    if(idKey.beginsWith("doom") || !idKey.compare("hacx") || !idKey.compare("chex"))
-    {
-        return Doom;
-    }
-    if(idKey.beginsWith("heretic"))
-    {
-        return Heretic;
-    }
-    if(idKey.beginsWith("hexen"))
-    {
-        return Hexen;
-    }
-    return Unknown;
-}
-
-static SaveFormat guessSaveFormatFromFileName(Path const &path)
-{
-    String ext = path.lastSegment().toString().fileNameExtension().toLower();
-    if(!ext.compare(".dsg")) return Doom;
-    if(!ext.compare(".hsg")) return Heretic;
-    if(!ext.compare(".hxs")) return Hexen;
-    return Unknown;
 }
 
 /**
@@ -514,7 +556,7 @@ static void xlatWorldACScriptData(reader_s *reader, Writer &writer)
 {
 #define MAX_ACS_WORLD_VARS 64
 
-    DENG2_ASSERT(saveFormat == Hexen);
+    DENG2_ASSERT(saveFormat().id == Hexen);
 
     if(saveVersion >= 7)
     {
@@ -579,6 +621,13 @@ static void xlatWorldACScriptData(reader_s *reader, Writer &writer)
 #undef MAX_ACS_WORLD_VARS
 }
 
+static Block *mapStateHeader()
+{
+    Block *hdr = new Block;
+    Writer(*hdr) << saveFormat().magic << saveVersion;
+    return hdr;
+}
+
 /// @param oldSavePath  Path to the game state file [.dsg | .hsg | .hxs]
 static bool convertSavegame(Path oldSavePath)
 {
@@ -595,34 +644,24 @@ static bool convertSavegame(Path oldSavePath)
 
         reader_s *reader = newReader();
 
-        int const magic = Reader_ReadInt32(reader);
-        if(magic == 0x1DEAD666)
+        knownSaveFormat = saveFormatForMagic(Reader_ReadInt32(reader));
+
+        if(!knownSaveFormat)
         {
-            saveFormat = Doom;
-        }
-        else if(magic == 0x7D9A12C5)
-        {
-            saveFormat = Heretic;
-        }
-        else if(magic == 0x1B17CC00)
-        {
-            saveFormat = Hexen;
-        }
-        else // Unknown magic
-        {
+            // Unknown magic
             if(!fallbackGameIdentityKey.isEmpty())
             {
                 // Use whichever format is applicable for the specified identity key.
-                saveFormat = saveFormatForGameIdentityKey(fallbackGameIdentityKey);
+                knownSaveFormat = saveFormatForGameIdentityKey(fallbackGameIdentityKey);
             }
             else if(!saveName.fileNameExtension().isEmpty())
             {
                 // We'll try to guess the save format...
-                saveFormat = guessSaveFormatFromFileName(saveName);
+                knownSaveFormat = guessSaveFormatFromFileName(saveName);
             }
         }
 
-        if(saveFormat == Unknown)
+        if(!knownSaveFormat)
         {
             Reader_Delete(reader);
             /// @throw Error Failed to determine the format of the saved game session.
@@ -636,7 +675,7 @@ static bool convertSavegame(Path oldSavePath)
         ZipArchive arch;
         arch.add("Info", composeInfo(metadata, oldSavePath, saveVersion).toUtf8());
 
-        if(saveFormat == Hexen)
+        if(saveFormat().id == Hexen)
         {
             // Translate and separate the serialized world ACS data into a new file.
             Block worldACScriptData;
@@ -682,7 +721,7 @@ static bool convertSavegame(Path oldSavePath)
 
         File &saveFile = DENG2_TEXT_APP->homeFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
         saveFile.setMode(File::Write | File::Truncate);
-        de::Writer(saveFile) << arch;
+        Writer(saveFile) << arch;
         LOG_MSG("Wrote ") << saveFile.path();
 
         return true;
@@ -698,6 +737,8 @@ static bool convertSavegame(Path oldSavePath)
 
 int main(int argc, char **argv)
 {
+    initSaveFormats();
+
     try
     {
         TextApp app(argc, argv);
@@ -742,5 +783,6 @@ int main(int argc, char **argv)
         qWarning() << err.asText();
     }
 
+    qDeleteAll(saveFormats);
     return 0;
 }
