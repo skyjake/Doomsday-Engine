@@ -7,7 +7,6 @@
 
 include(../../config.pri)
 include(../../dep_deng2.pri)
-include(../../dep_deng1.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = app

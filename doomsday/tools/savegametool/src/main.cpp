@@ -24,7 +24,6 @@
 #include <QMutableListIterator>
 #include <QStringList>
 #include <QtAlgorithms>
-#include <de/reader.h>            /// @todo remove me
 #include <de/TextApp>
 #include <de/ArrayValue>
 #include <de/game/savedsession.h>
@@ -54,53 +53,233 @@ typedef enum savestatesegment_e {
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
+static LZFILE *saveFile;
+
 enum SaveFormatId
 {
+    // Doomsday-native formats:
     Doom,
     Heretic,
     Hexen
 };
 
-struct SaveFormat
+/**
+ * Base class for known save formats.
+ */
+class SaveFormat
 {
-    SaveFormatId id;
-    bool useMagic;                    //< @c true= format uses a magic identifer.
-    int magic;                        //< "Magic" format identifier.
-    QStringList knownFileExtensions;
-    QStringList baseGameIdentityKeys;
+public:
+    /// An error occured when attempting to open the source file. @ingroup errors
+    DENG2_ERROR(FileOpenError);
 
-    SaveFormat(SaveFormatId id, bool useMagic, int magic, QStringList knownFileExtensions, QStringList baseGameIdentityKeys)
-        : id(id)
-        , useMagic(useMagic)
-        , magic(magic)
-        , knownFileExtensions(knownFileExtensions)
-        , baseGameIdentityKeys(baseGameIdentityKeys)
+    /**
+     * Base class for save format file readers.
+     */
+    class Reader
+    {
+    public:
+        virtual ~Reader() {}
+
+        virtual void seek(uint offset) = 0;
+        virtual char readInt8() = 0;
+        virtual short readInt16() = 0;
+        virtual int readInt32() = 0;
+        virtual float readFloat() = 0;
+        virtual void read(char *data, int len) = 0;
+    };
+
+    SaveFormatId id;
+    String textualId;
+    int magic;
+    QStringList knownExtensions;
+    QStringList baseGameIdKeys;
+
+public:
+    /**
+     * @param id               Unique identifier for the format.
+     * @param textualId        Textual identifier for the format, used for log/error messages.
+     * @param magic            Native "magic" idenifier, used for format recognition.
+     * @param knownExtensions  List of known file extensions for the format.
+     * @param baseGameIdKeys   List of supported base game identity keys for the format.
+     */
+    SaveFormat(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
+               QStringList baseGameIdKeys)
+        : id             (id)
+        , textualId      (textualId)
+        , magic          (magic)
+        , knownExtensions(knownExtensions)
+        , baseGameIdKeys (baseGameIdKeys)
     {}
+
+    /**
+     * Attempt to recognize the format of the given file.
+     *
+     * @param path  Path to the file to be recognized.
+     */
+    virtual bool recognize(Path path) = 0;
+
+    /**
+     * Try to open the given file.
+     *
+     * @param path  Path to the file to be opened.
+     */
+    virtual void openFile(Path path) = 0;
+
+    /**
+     * Close the already open file.
+     */
+    virtual void closeFile() = 0;
+
+    /**
+     * Instantiate a new reader for the already open file.
+     */
+    virtual Reader *newReader() const = 0;
+
+    /**
+     * Buffer the rest of the open file into a newly allocated memory buffer.
+     *
+     * @return  The read data buffer; otherwise @c 0 if at the end of the file.
+     */
+     virtual Block *bufferFile() const = 0;
 };
+
+/**
+ * Specialized SaveFormat suitable for translating (old) Doomsday-native save formats.
+ */
+class NativeSaveFormat : public SaveFormat
+{
+public:
+    /**
+     * Reader for the old native save format, which is compressed with LZSS.
+     */
+    class Reader : public SaveFormat::Reader
+    {
+    public:
+        void seek(uint offset)
+        {
+            lzSeek(saveFile, offset);
+        }
+
+        char readInt8()
+        {
+            return lzGetC(saveFile);
+        }
+
+        short readInt16()
+        {
+            return lzGetW(saveFile);
+        }
+
+        int readInt32()
+        {
+            return lzGetL(saveFile);
+        }
+
+        float readFloat()
+        {
+            DENG2_ASSERT(sizeof(float) == 4);
+            int32_t val = lzGetL(saveFile);
+            float returnValue = 0;
+            std::memcpy(&returnValue, &val, 4);
+            return returnValue;
+        }
+
+        void read(char *data, int len)
+        {
+            lzRead(data, len, saveFile);
+        }
+    };
+
+public:
+    NativeSaveFormat(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
+                     QStringList baseGameIdKeys)
+        : SaveFormat(id, textualId, magic, knownExtensions, baseGameIdKeys)
+    {}
+    virtual ~NativeSaveFormat() {}
+
+    bool recognize(Path path)
+    {
+        bool result = false;
+        try
+        {
+            openFile(path);
+            Reader *reader = newReader();
+            // Native save formats can be recognized by their "magic" byte identifier.
+            result = (reader->readInt32() == magic);
+            delete reader;
+        }
+        catch(...)
+        {}
+        closeFile();
+        return result;
+    }
+
+    void openFile(Path path)
+    {
+        LOG_TRACE("NativeSaveFormat::openFile: Opening \"%s\"") << NativePath(path).pretty();
+        DENG2_ASSERT(saveFile == 0);
+        saveFile = lzOpen(NativePath(path).expand().toUtf8().constData(), "rp");
+        if(!saveFile)
+        {
+            throw FileOpenError("NativeSaveFormat", "Failed opening \"" + NativePath(path).pretty() + "\"");
+        }
+    }
+
+    void closeFile()
+    {
+        if(saveFile)
+        {
+            lzClose(saveFile);
+            saveFile = 0;
+        }
+    }
+
+    Reader *newReader() const
+    {
+        return new Reader;
+    }
+
+    Block *bufferFile() const
+    {
+#define BLOCKSIZE 1024  // Read in 1kb blocks.
+
+        DENG2_ASSERT(saveFile != 0);
+
+        Block *buffer = 0;
+        dint8 readBuf[BLOCKSIZE];
+
+        while(!lzEOF(saveFile))
+        {
+            dsize bytesRead = lzRead(readBuf, BLOCKSIZE, saveFile);
+            if(!buffer)
+            {
+                buffer = new Block;
+            }
+            buffer->append((char *)readBuf, bytesRead);
+        }
+
+        return buffer;
+
+#undef BLOCKSIZE
+    }
+};
+
 typedef QList<SaveFormat *> SaveFormats;
 
 static SaveFormats saveFormats;
 
 static void initSaveFormats()
 {
-    saveFormats << new SaveFormat(Doom,    true, 0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    saveFormats << new SaveFormat(Heretic, true, 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
-    saveFormats << new SaveFormat(Hexen,   true, 0x1B17CC00, QStringList(".hxs"), QStringList() << "hexen");
-}
-
-static SaveFormat *saveFormatForMagic(int magic)
-{
-    foreach(SaveFormat *fmt, saveFormats)
-    {
-        if(fmt->useMagic && fmt->magic == magic) return fmt;
-    }
-    return 0; // Not found.
+    // Add Doomsday-native formats:
+    saveFormats << new NativeSaveFormat(Doom,    "Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
+    saveFormats << new NativeSaveFormat(Heretic, "Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
+    saveFormats << new NativeSaveFormat(Hexen,   "Hexen",   0x1B17CC00, QStringList(".hxs"), QStringList() << "hexen");
 }
 
 static SaveFormat *saveFormatForGameIdentityKey(String const &idKey)
 {
     foreach(SaveFormat *fmt, saveFormats)
-    foreach(QString const &baseIdentityKey, fmt->baseGameIdentityKeys)
+    foreach(QString const &baseIdentityKey, fmt->baseGameIdKeys)
     {
         if(idKey.beginsWith(baseIdentityKey)) return fmt;
     }
@@ -111,17 +290,16 @@ static SaveFormat *guessSaveFormatFromFileName(Path const &path)
 {
     String ext = path.lastSegment().toString().fileNameExtension().toLower();
     foreach(SaveFormat *fmt, saveFormats)
-    foreach(QString const &knownExtension, fmt->knownFileExtensions)
+    foreach(QString const &knownExtension, fmt->knownExtensions)
     {
         if(!knownExtension.compare(ext, Qt::CaseInsensitive)) return fmt;
     }
     return 0; // Not found.
 }
 
-static String fallbackGameIdentityKey;
+static String fallbackGameId;
 
 static SaveFormat *knownSaveFormat;
-static LZFILE *saveFile;
 static int saveVersion;
 
 /// Returns the current, known save format.
@@ -187,7 +365,7 @@ static void setFallbackGameIdentityKey(String const &idKey)
     {
         if(!idKey.compare(knownIdKeys[i]))
         {
-            fallbackGameIdentityKey = idKey;
+            fallbackGameId = idKey;
             break;
         }
     }
@@ -197,97 +375,6 @@ static void setFallbackGameIdentityKey(String const &idKey)
                     " Any converted savegame which relies on this may not be valid")
                 << idKey;
     }
-}
-
-static bool openFile(Path path)
-{
-    LOG_TRACE("openFile: Opening \"%s\"") << NativePath(path).pretty();
-    DENG2_ASSERT(saveFile == 0);
-    saveFile = lzOpen(NativePath(path).expand().toUtf8().constData(), "rp");
-    return saveFile != 0;
-}
-
-static void closeFile()
-{
-    if(saveFile)
-    {
-        lzClose(saveFile);
-        saveFile = 0;
-    }
-}
-
-/**
- * Decompress the rest of the open file into a newly allocated memory buffer.
- *
- * @return  The decompressed data buffer; otherwise @c 0 if at the end of the file.
- */
-static Block *bufferFile()
-{
-#define BLOCKSIZE 1024  // Read in 1kb blocks.
-
-    DENG2_ASSERT(saveFile);
-
-    Block *buffer = 0;
-    dint8 readBuf[BLOCKSIZE];
-
-    while(!lzEOF(saveFile))
-    {
-        dsize bytesRead = lzRead(readBuf, BLOCKSIZE, saveFile);
-        if(!buffer)
-        {
-            buffer = new Block;
-        }
-        buffer->append((char *)readBuf, bytesRead);
-    }
-
-    return buffer;
-
-#undef BLOCKSIZE
-}
-
-static void srSeek(reader_s *r, uint offset)
-{
-    if(!r) return;
-    lzSeek(saveFile, offset);
-}
-
-static char sri8(reader_s *r)
-{
-    if(!r) return 0;
-    return lzGetC(saveFile);
-}
-
-static short sri16(reader_s *r)
-{
-    if(!r) return 0;
-    return lzGetW(saveFile);
-}
-
-static int sri32(reader_s *r)
-{
-    if(!r) return 0;
-    return lzGetL(saveFile);
-}
-
-static float srf(reader_s *r)
-{
-    if(!r) return 0;
-    DENG2_ASSERT(sizeof(float) == 4);
-    int32_t val = lzGetL(saveFile);
-    float returnValue = 0;
-    std::memcpy(&returnValue, &val, 4);
-    return returnValue;
-}
-
-static void srd(reader_s *r, char *data, int len)
-{
-    if(!r) return;
-    lzRead(data, len, saveFile);
-}
-
-static reader_s *newReader()
-{
-    return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 }
 
 static Path composeMapUriPath(uint episode, uint map)
@@ -340,12 +427,12 @@ static String identityKeyForLegacyGamemode(int gamemode, SaveFormatId saveFormat
         // determine the game identity key unambigously, without some assistance.
         if(gamemode == 4 /*doom2*/)
         {
-            if(fallbackGameIdentityKey.isEmpty())
+            if(fallbackGameId.isEmpty())
             {
                 /// @throw Error Game identity key could not be determined unambiguously.
                 throw Error("identityKeyForLegacyGamemode", "Game identity key is ambiguous");
             }
-            return fallbackGameIdentityKey;
+            return fallbackGameId;
         }
     }
     if(saveFormat == Heretic && saveVersion < 8)
@@ -380,14 +467,16 @@ static String identityKeyForLegacyGamemode(int gamemode, SaveFormatId saveFormat
 /**
  * Supports native Doomsday savegame formats up to and including version 13.
  */
-static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
+static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &reader)
 {
 #define SM_NOTHINGS     -1
 #define SM_BABY         0
 #define NUM_SKILL_MODES 5
 #define MAXPLAYERS      16
 
-    saveVersion = Reader_ReadInt32(reader);
+    /*magic*/ reader.readInt32();
+
+    saveVersion = reader.readInt32();
     DENG2_ASSERT(saveVersion >= 0 && saveVersion <= 13);
     if(saveVersion > 13)
     {
@@ -404,14 +493,14 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
     metadata.set("version",             int(14));
 
     // Translate gamemode identifiers from older save versions.
-    int oldGamemode = Reader_ReadInt32(reader);
+    int oldGamemode = reader.readInt32();
     metadata.set("gameIdentityKey",     identityKeyForLegacyGamemode(oldGamemode, saveFormat().id, saveVersion));
 
     // User description. A fixed 24 characters in length in "really old" versions.
-    size_t const len = (saveVersion < 10? 24 : (unsigned)Reader_ReadInt32(reader));
+    size_t const len = (saveVersion < 10? 24 : (unsigned)reader.readInt32());
     char *descBuf = (char *)malloc(len + 1);
     DENG2_ASSERT(descBuf != 0);
-    Reader_Read(reader, descBuf, len);
+    reader.read(descBuf, len);
     metadata.set("userDescription",     String(descBuf, len));
     free(descBuf); descBuf = 0;
 
@@ -425,7 +514,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
         // Here we decipher this assuming that if the skill mode is invalid then
         // by default this means "spawn no things" and if so then the "fast" game
         // rule is meaningless so it is forced off.
-        byte skillModePlusFastBit = Reader_ReadByte(reader);
+        dbyte skillModePlusFastBit = reader.readInt8();
         int skill = (skillModePlusFastBit & 0x7f);
         if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
         {
@@ -434,13 +523,13 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
         }
         else
         {
-            rules->addBoolean("fast", CPP_BOOL(skillModePlusFastBit & 0x80));
+            rules->addBoolean("fast", (skillModePlusFastBit & 0x80) != 0);
         }
         rules->set("skill", skill);
     }
     else
     {
-        int skill = Reader_ReadByte(reader) & 0x7f;
+        int skill = reader.readInt8() & 0x7f;
         // Interpret skill levels outside the normal range as "spawn no things".
         if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
         {
@@ -449,42 +538,42 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, reader_s *reader)
         rules->set("skill", skill);
     }
 
-    uint episode = Reader_ReadByte(reader);
-    uint map     = Reader_ReadByte(reader) - 1;
+    uint episode = reader.readInt8();
+    uint map     = reader.readInt8() - 1;
     metadata.set("mapUri",              composeMapUriPath(episode, map).asText());
 
-    rules->set("deathmatch", Reader_ReadByte(reader));
+    rules->set("deathmatch", reader.readInt8());
     if(saveFormat().id != Hexen && saveVersion == 13)
     {
-        rules->set("fast", Reader_ReadByte(reader));
+        rules->set("fast", reader.readInt8());
     }
-    rules->set("noMonsters", Reader_ReadByte(reader));
+    rules->set("noMonsters", reader.readInt8());
     if(saveFormat().id == Hexen)
     {
-        rules->set("randomClasses", Reader_ReadByte(reader));
+        rules->set("randomClasses", reader.readInt8());
     }
     else
     {
-        rules->set("respawnMonsters", Reader_ReadByte(reader));
+        rules->set("respawnMonsters", reader.readInt8());
     }
 
     metadata.add("gameRules",           rules.take());
 
     if(saveFormat().id != Hexen)
     {
-        /*skip old junk*/ if(saveVersion < 10) srSeek(reader, 2);
+        /*skip junk*/ if(saveVersion < 10) reader.seek(2);
 
-        metadata.set("mapTime",         Reader_ReadInt32(reader));
+        metadata.set("mapTime",         reader.readInt32());
 
         ArrayValue *array = new de::ArrayValue;
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            *array << NumberValue(CPP_BOOL(Reader_ReadByte(reader)), NumberValue::Boolean);
+            *array << NumberValue(reader.readInt8() != 0, NumberValue::Boolean);
         }
         metadata.set("players",         array);
     }
 
-    metadata.set("sessionId",           Reader_ReadInt32(reader));
+    metadata.set("sessionId",           reader.readInt32());
 
 #undef MAXPLAYERS
 #undef NUM_SKILL_MODES
@@ -522,18 +611,18 @@ struct ACScriptTask : public IWritable
     dint32 scriptNumber;
     dbyte args[4];
 
-    static ACScriptTask *ACScriptTask::fromReader(reader_s *reader)
+    static ACScriptTask *ACScriptTask::fromReader(SaveFormat::Reader &reader)
     {
         ACScriptTask *task = new ACScriptTask;
         task->read(reader);
         return task;
     }
 
-    void read(reader_s *reader)
+    void read(SaveFormat::Reader &reader)
     {
-        mapNumber    = duint32(Reader_ReadInt32(reader));
-        scriptNumber = Reader_ReadInt32(reader);
-        Reader_Read(reader, args, 4);
+        mapNumber    = duint32(reader.readInt32());
+        scriptNumber = reader.readInt32();
+        reader.read((char *)args, 4);
     }
 
     void operator >> (Writer &to) const
@@ -552,22 +641,20 @@ struct ACScriptTask : public IWritable
 };
 typedef QList<ACScriptTask *> ACScriptTasks;
 
-static void xlatWorldACScriptData(reader_s *reader, Writer &writer)
+static void xlatWorldACScriptData(SaveFormat::Reader &reader, Writer &writer)
 {
 #define MAX_ACS_WORLD_VARS 64
 
-    DENG2_ASSERT(saveFormat().id == Hexen);
-
     if(saveVersion >= 7)
     {
-        if(Reader_ReadInt32(reader) != ASEG_WORLDSCRIPTDATA)
+        if(reader.readInt32() != ASEG_WORLDSCRIPTDATA)
         {
             /// @throw Error Failed alignment check.
             throw Error("xlatWorldACScriptData", "Corrupt save game, segment #" + String::number(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
         }
     }
 
-    int const ver = (saveVersion >= 7)? Reader_ReadByte(reader) : 1;
+    int const ver = (saveVersion >= 7)? reader.readInt8() : 1;
     if(ver < 1 || ver > 3)
     {
         /// @throw Error Format is from the future.
@@ -577,11 +664,11 @@ static void xlatWorldACScriptData(reader_s *reader, Writer &writer)
     dint32 worldVars[MAX_ACS_WORLD_VARS];
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        worldVars[i] = Reader_ReadInt32(reader);
+        worldVars[i] = reader.readInt32();
     }
 
     // Read the deferred tasks into a temporary buffer for translation.
-    int const oldStoreSize = Reader_ReadInt32(reader);
+    int const oldStoreSize = reader.readInt32();
     ACScriptTasks tasks;
 
     if(oldStoreSize > 0)
@@ -606,7 +693,7 @@ static void xlatWorldACScriptData(reader_s *reader, Writer &writer)
         LOG_XVERBOSE("Translated %i deferred ACScript tasks") << tasks.count();
     }
 
-    /* skip junk */ if(saveVersion < 7) srSeek(reader, 12);
+    /* skip junk */ if(saveVersion < 7) reader.seek(12);
 
     // Write out the translated data:
     writer << dbyte(4); // segment version
@@ -636,23 +723,24 @@ static bool convertSavegame(Path oldSavePath)
 
     try
     {
-        if(!openFile(oldSavePath))
+        foreach(SaveFormat *fmt, saveFormats)
         {
-            /// @throw Error Failed to open source file.
-            throw Error("convertSavegame", "Failed to open \"" + NativePath(oldSavePath).pretty() + "\" for read");
+            if(fmt->recognize(oldSavePath))
+            {
+                LOG_VERBOSE("Recognized \"%s\" as a %s format savegame")
+                    << NativePath(oldSavePath).pretty() << fmt->textualId;
+                knownSaveFormat = fmt;
+            }
         }
 
-        reader_s *reader = newReader();
-
-        knownSaveFormat = saveFormatForMagic(Reader_ReadInt32(reader));
-
+        // Still unknown? Try again with "fuzzy" logic.
         if(!knownSaveFormat)
         {
             // Unknown magic
-            if(!fallbackGameIdentityKey.isEmpty())
+            if(!fallbackGameId.isEmpty())
             {
                 // Use whichever format is applicable for the specified identity key.
-                knownSaveFormat = saveFormatForGameIdentityKey(fallbackGameIdentityKey);
+                knownSaveFormat = saveFormatForGameIdentityKey(fallbackGameId);
             }
             else if(!saveName.fileNameExtension().isEmpty())
             {
@@ -661,16 +749,19 @@ static bool convertSavegame(Path oldSavePath)
             }
         }
 
+        // Still unknown!?
         if(!knownSaveFormat)
         {
-            Reader_Delete(reader);
             /// @throw Error Failed to determine the format of the saved game session.
             throw Error("convertSavegame", "Format of \"" + NativePath(oldSavePath).pretty() + "\" is unknown");
         }
 
+        saveFormat().openFile(oldSavePath);
+        SaveFormat::Reader *reader = saveFormat().newReader();
+
         // Read and translate the game session metadata.
         SessionMetadata metadata;
-        xlatLegacyMetadata(metadata, reader);
+        xlatLegacyMetadata(metadata, *reader);
 
         ZipArchive arch;
         arch.add("Info", composeInfo(metadata, oldSavePath, saveVersion).toUtf8());
@@ -680,9 +771,12 @@ static bool convertSavegame(Path oldSavePath)
             // Translate and separate the serialized world ACS data into a new file.
             Block worldACScriptData;
             Writer writer(worldACScriptData);
-            xlatWorldACScriptData(reader, writer);
+            xlatWorldACScriptData(*reader, writer);
             arch.add("ACScriptState", worldACScriptData);
+        }
 
+        if(saveFormat().id == Hexen)
+        {
             // Serialized map states are in similarly named "side car" files.
             int const maxHubMaps = 99;
             for(int i = 0; i < maxHubMaps; ++i)
@@ -693,10 +787,12 @@ static bool convertSavegame(Path oldSavePath)
                             + String("%1").arg(i + 1, 2, 10, QChar('0'))
                             + saveName.fileNameExtension();
 
-                closeFile();
-                if(openFile(oldMapStatePath))
+                saveFormat().closeFile();
+                try
                 {
-                    if(Block *xlatedData = bufferFile())
+                    saveFormat().openFile(oldMapStatePath);
+                    // Buffer the file and write it out to a new map state file.
+                    if(Block *xlatedData = saveFormat().bufferFile())
                     {
                         // Append the remaining translated data to header, forming the new serialized
                         // map state data file.
@@ -708,13 +804,15 @@ static bool convertSavegame(Path oldSavePath)
                         delete mapStateData;
                     }
                 }
+                catch(SaveFormat::FileOpenError const &)
+                {} // Ignore this error.
             }
         }
         else
         {
             // The only serialized map state follows the session metadata in the game state file.
-            // Decompress the rest of the file and write it out to a new map state file.
-            if(Block *xlatedData = bufferFile())
+            // Buffer the rest of the file and write it out to a new map state file.
+            if(Block *xlatedData = saveFormat().bufferFile())
             {
                 String const mapUriStr = metadata["mapUri"].value().asText();
 
@@ -729,8 +827,8 @@ static bool convertSavegame(Path oldSavePath)
             }
         }
 
-        Reader_Delete(reader); reader = 0;
-        closeFile();
+        delete reader;
+        saveFormat().closeFile();
 
         File &saveFile = DENG2_TEXT_APP->homeFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
         saveFile.setMode(File::Write | File::Truncate);
@@ -741,7 +839,7 @@ static bool convertSavegame(Path oldSavePath)
     }
     catch(Error const &er)
     {
-        closeFile();
+        if(knownSaveFormat) saveFormat().closeFile();
         LOG_ERROR("%s failed conversion:\n") << oldSavePath << er.asText();
     }
 
