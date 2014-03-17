@@ -149,6 +149,8 @@ public:
         virtual Time modifiedAt() const {
             return Time::invalidTime();
         }
+
+        DENG2_AS_IS_METHODS()
     };
 
     /**
@@ -168,6 +170,8 @@ public:
 
         /// Called to notify the data that it is leaving the memory cache.
         virtual void aboutToUnload() {}
+
+        DENG2_AS_IS_METHODS()
     };
 
     typedef std::set<String> Names; // alphabetical order
