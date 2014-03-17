@@ -1371,8 +1371,8 @@ int G_DoLoadMap(loadmap_params_t *p)
 
     // Is MapInfo data available for this map?
     ddmapinfo_t mapInfo;
-    AutoStr *mapUriStr = Uri_Compose(p->mapUri);
-    bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
+    de::String mapUriStr = Str_Text(Uri_Compose(p->mapUri));
+    bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, mapUriStr.toUtf8().constData(), &mapInfo);
 
     P_SetupMap(p->mapUri);
     initFogForMap(haveMapInfo? &mapInfo : 0);
@@ -1389,7 +1389,7 @@ int G_DoLoadMap(loadmap_params_t *p)
         try
         {
             de::game::SavedSession &session = G_SaveSlots()["base"].savedSession();
-            SV_MapStateReader(session)->read(Str_Text(Uri_Compose(gameMapUri)));
+            SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
         }
         catch(de::Error const &er)
         {
@@ -3006,7 +3006,7 @@ void G_DoLeaveMap()
             // SaveSlot &sslot = G_SaveSlots()["base"];
             de::Path const mapStateFilePath(Str_Text(Uri_Compose(gameMapUri)));
 
-            if(!SV_OpenFile(mapStateFilePath, true/*for write*/))
+            if(!SV_OpenFile_LZSS(mapStateFilePath))
             {
                 throw de::Error("G_DoLeaveMap", "Failed opening \"" + de::NativePath(mapStateFilePath).pretty() + "\" for write");
             }
@@ -3019,10 +3019,8 @@ void G_DoLeaveMap()
 
             MapStateWriter(thingArchive).write(writer);
 
-            // Close the output file
-            SV_CloseFile();
-
             Writer_Delete(writer);
+            SV_CloseFile_LZSS();
         }
     }
     else // Entering new hub.
@@ -3267,7 +3265,8 @@ void G_DoLoadSession(de::String slotId)
         mapTime = metadata.geti("mapTime");
 #endif
 
-        SV_MapStateReader(session)->read(Str_Text(Uri_Resolved(gameMapUri)));
+        de::String mapUriStr = Str_Text(Uri_Resolved(gameMapUri));
+        SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);

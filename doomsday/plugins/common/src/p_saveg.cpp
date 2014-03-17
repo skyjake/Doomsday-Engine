@@ -50,21 +50,44 @@ int saveToRealPlayerNum[MAXPLAYERS];
 targetplraddress_t *targetPlayerAddrs;
 #endif
 
-std::auto_ptr<de::game::MapStateReader> SV_MapStateReader(de::game::SavedSession &session)
+std::auto_ptr<de::game::MapStateReader>
+SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
 {
-    if(session.recognizeFile())
+    de::PackageFolder const &pack = session.locateFile();
+    de::File const &mapStateFile = pack.locate<de::File>(de::Path("maps") / mapUriStr + "State");
+    if(!SV_OpenFile(mapStateFile))
     {
-        /// @todo Recognize the map state file to determine the format.
-        std::auto_ptr<de::game::MapStateReader> p(new MapStateReader(session)); // Native format.
+        /// @throw de::Error The serialized map state file could not be opened for read.
+        throw de::Error("SV_MapStateReader", "Failed to open \"" + mapStateFile.path() + "\" for read");
+    }
+
+    {
+        std::auto_ptr<de::game::MapStateReader> p;
+        Reader *reader = SV_NewReader();
+        int const magic = Reader_ReadInt32(reader);
+        if(magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC) // Native format.
+        {
+            p.reset(new MapStateReader(session));
+        }
 /*#if __JDOOM__
-        p.reset(new DoomV9MapStateReader(session)); // DoomV9
+        else if(magic == ?)
+        {
+            p.reset(new DoomV9MapStateReader(session)); // DoomV9
+        }
 #endif
 #if __JHERETIC__
-        p.reset(new HereticV13MapStateReader(session)); // HereticV13
+        else if(magic == ?)
+        {
+            p.reset(new HereticV13MapStateReader(session)); // HereticV13
+        }
 #endif*/
-        return p;
+        SV_CloseFile();
+        if(p.get())
+        {
+            return p;
+        }
     }
-    /// @throw de::Error The game state format was not recognized.
+    /// @throw de::Error The format of the serialized map state was not recognized.
     throw de::Error("SV_MapStateReader", "Unrecognized map state format");
 }
 
@@ -784,7 +807,7 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 #endif
 }
 
-#if !__JHEXEN__
+#if 0 //!__JHEXEN__
 /**
  * Compose the save game file name for the specified @a sessionId.
  *
@@ -801,11 +824,11 @@ static de::String saveNameForClientSessionId(uint sessionId)
 }
 #endif
 
-void SV_SaveGameClient(uint sessionId)
+void SV_SaveGameClient(uint /*sessionId*/)
 {
-    DENG2_ASSERT(!"SV_SaveGameClient -- needs updating");
-    return;
+    throw de::Error("SV_SaveGameClient", "Not currently implemented");
 
+#if 0
 #if !__JHEXEN__ // unsupported in libhexen
     player_t *pl = &players[CONSOLEPLAYER];
     mobj_t *mo   = pl->plr->mo;
@@ -820,7 +843,7 @@ void SV_SaveGameClient(uint sessionId)
     session->replaceMetadata(metadata);
 
     de::Path path = de::String("/savegame") / "client" / session->path();
-    if(!SV_OpenFile(path, true/*for write*/))
+    if(!SV_OpenFile_LZSS(path))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
                 path.toString().toLatin1().constData());
@@ -854,27 +877,26 @@ void SV_SaveGameClient(uint sessionId)
     MapStateWriter(thingArchive).write(writer);
     /// @todo No consistency bytes in client saves?
 
-    SV_CloseFile();
+    SV_CloseFile_LZSS();
     Writer_Delete(writer);
     delete session;
 #else
     DENG2_UNUSED(sessionId);
 #endif
+#endif
 }
 
-void SV_LoadGameClient(uint sessionId)
+void SV_LoadGameClient(uint /*sessionId*/)
 {
-    DENG2_ASSERT(!"SV_LoadGameClient -- needs updating");
-    return;
+    throw de::Error("SV_LoadGameClient", "Not currently implemented");
 
+#if 0
 #if !__JHEXEN__ // unsupported in libhexen
     player_t *cpl = players + CONSOLEPLAYER;
     mobj_t *mo    = cpl->plr->mo;
 
     if(!IS_CLIENT || !mo)
         return;
-
-    Reader *reader = SV_NewReader();
 
     de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
     de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
@@ -883,9 +905,8 @@ void SV_LoadGameClient(uint sessionId)
     session->replaceMetadata(metadata);
 
     de::Path path = de::String("/savegame") / "client" / session->path();
-    if(!SV_OpenFile(path, false/*for read*/))
+    if(!SV_OpenFile(path))
     {
-        Reader_Delete(reader);
         delete session;
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",
                 path.toString().toLatin1().constData());
@@ -895,11 +916,12 @@ void SV_LoadGameClient(uint sessionId)
     if((*metadata)["magic"].value().asNumber() != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
-        Reader_Delete(reader);
         delete session;
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
     }
+
+    Reader *reader = SV_NewReader();
 
     int const saveVersion = (*metadata)["version"].value().asNumber();
     Uri *mapUri           = Uri_NewWithPath2((*metadata)["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
@@ -956,5 +978,6 @@ void SV_LoadGameClient(uint sessionId)
     delete session;
 #else
     DENG2_UNUSED(sessionId);
+#endif
 #endif
 }

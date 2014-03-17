@@ -23,9 +23,10 @@
 
 #include <de/game/SavedSession>
 #include <de/Path>
+#include <de/Reader>
 #include <de/reader.h>
 #include <de/writer.h>
-#include "lzss.h"
+#include "lzss.h" /// @todo remove me
 
 typedef enum savestatesegment_e {
     ASEG_MAP_HEADER = 102,  // Hexen only
@@ -44,39 +45,18 @@ typedef enum savestatesegment_e {
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
-#if __JHEXEN__
-typedef union saveptr_u {
-    byte *b;
-    short *w;
-    int *l;
-    float *f;
-} saveptr_t;
-#endif
-
 /*
  * File management
  */
 
-bool SV_ExistingFile(de::Path filePath);
-
-int SV_RemoveFile(de::Path filePath);
-
-void SV_CopyFile(de::Path srcFilePath, de::Path destFilePath);
-
-bool SV_OpenFile(de::Path filePath, bool write);
-
 void SV_CloseFile();
+bool SV_OpenFile(de::File const &file);
 
-#if __JHEXEN__
-saveptr_t *SV_HxSavePtr();
+/// @todo remove me
+bool SV_OpenFile_LZSS(de::Path filePath);
+void SV_CloseFile_LZSS();
 
-void SV_HxSetSaveEndPtr(void *endPtr);
-
-size_t SV_HxBytesLeft();
-
-void SV_HxReleaseSaveBuffer();
-#endif // __JHEXEN__
-
+#if 0
 /**
  * Exit with a fatal error if the value at the current location in the
  * game-save file does not match that associated with the segment id.
@@ -89,19 +69,19 @@ void SV_BeginSegment(int segmentId);
 
 void SV_EndSegment();
 
+#endif
+
 void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer);
 
 void SV_WriteConsistencyBytes();
 
-void SV_ReadConsistencyBytes();
-
-/**
- * Seek forward @a offset bytes in the save file.
- */
-void SV_Seek(uint offset);
+//void SV_ReadConsistencyBytes();
 
 Writer *SV_NewWriter();
 
 Reader *SV_NewReader();
+
+/// Provides access to the wrapped de::Reader instance used for deserialization.
+de::Reader &SV_RawReader();
 
 #endif // LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H

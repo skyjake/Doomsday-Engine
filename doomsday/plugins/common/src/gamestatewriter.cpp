@@ -129,9 +129,9 @@ void GameStateWriter::write(Path const &stateFilePath, Path const &mapStateFileP
     NetSv_SaveGame(metadata["sessionId"].value().asNumber());
 #endif
 
-    if(!SV_OpenFile(stateFilePath, true/*for writing*/))
+    if(!SV_OpenFile_LZSS(stateFilePath))
     {
-        throw FileAccessError("GameStateWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\"");
+        throw FileAccessError("GameStateWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\" for write");
     }
 
     d->writer = SV_NewWriter();
@@ -151,16 +151,16 @@ void GameStateWriter::write(Path const &stateFilePath, Path const &mapStateFileP
     {
         // The map state is actually written to a separate file.
         // Close the game state file.
-        SV_CloseFile();
+        SV_CloseFile_LZSS();
 
         // Open the map state file.
-        SV_OpenFile(mapStateFilePath, true/*for write*/);
+        SV_OpenFile_LZSS(mapStateFilePath);
     }
 
     d->writeMap();
 
     d->writeConsistencyBytes(); // To be absolutely sure...
-    SV_CloseFile();
+    SV_CloseFile_LZSS();
 
     // Cleanup.
     delete d->thingArchive; d->thingArchive = 0;

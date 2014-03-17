@@ -35,7 +35,8 @@ class MapStateWriter;
  *
  * @return  New reader instance if recognized. Ownership given to the caller.
  */
-std::auto_ptr<de::game::MapStateReader> SV_MapStateReader(de::game::SavedSession &session);
+std::auto_ptr<de::game::MapStateReader>
+SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr);
 
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
@@ -88,12 +89,6 @@ void SV_ReadLine(Line *line, MapStateReader *msr);
 void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
 
-#endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if !__JHEXEN__
 /**
  * Saves a snapshot of the world, a still image.
@@ -104,8 +99,6 @@ void SV_SaveGameClient(uint gameId);
 void SV_LoadGameClient(uint gameId);
 #endif
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+#endif // __cplusplus
 
 #endif // LIBCOMMON_SAVESTATE_H

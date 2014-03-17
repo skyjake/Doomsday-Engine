@@ -35,9 +35,7 @@
 #include "r_common.h"
 #include "thinkerinfo.h"
 #include <de/ArrayValue>
-#include <de/FixedByteArray>
 #include <de/NativePath>
-#include <de/Reader>
 #include <de/String>
 
 namespace internal
@@ -57,81 +55,6 @@ namespace internal
         return 0;
         DENG2_UNUSED(mapVersion);
 #endif
-    }
-
-    static de::Reader *reader;
-
-    static char sri8(reader_s *r)
-    {
-        if(!r) return 0;
-        int8_t val;
-        DENG2_ASSERT(reader);
-        *reader >> val;
-        return char(val);
-    }
-
-    static short sri16(reader_s *r)
-    {
-        if(!r) return 0;
-        int16_t val;
-        DENG2_ASSERT(reader);
-        *reader >> val;
-        return short(val);
-    }
-
-    static int sri32(reader_s *r)
-    {
-        if(!r) return 0;
-        DENG2_ASSERT(reader);
-        int32_t val;
-        *reader >> val;
-        return int(val);
-    }
-
-    static float srf(reader_s *r)
-    {
-        if(!r) return 0;
-        DENG2_ASSERT(reader);
-        DENG2_ASSERT(sizeof(float) == 4);
-        int32_t val;
-        *reader >> val;
-        float rerVal = 0;
-        std::memcpy(&rerVal, &val, 4);
-        return rerVal;
-    }
-
-    static void srd(reader_s *r, char *data, int len)
-    {
-        if(!r) return;
-        DENG2_ASSERT(reader);
-        if(data)
-        {
-            de::Block tmp(len);
-            *reader >> de::FixedByteArray(tmp);
-            tmp.get(0, (de::Block::Byte *)data, len);
-        }
-        else
-        {
-            reader->seek(len);
-        }
-    }
-
-    static reader_s *newReader()
-    {
-        DENG2_ASSERT(reader != 0);
-        return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
-    }
-
-    static void closeFile()
-    {
-        delete reader; reader = 0;
-    }
-
-    static bool openFile(de::File const &file)
-    {
-        closeFile();
-        reader = new de::Reader(file);
-        return true;
     }
 }
 
@@ -180,7 +103,7 @@ DENG2_PIMPL(MapStateReader)
     void beginSegment(int segId)
     {
 #if __JHEXEN__
-        if(segId == ASEG_END && (::reader)->source()->size() - (::reader)->offset() < 4)
+        if(segId == ASEG_END && SV_RawReader().source()->size() - SV_RawReader().offset() < 4)
         {
             App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)");
             return;
@@ -815,8 +738,8 @@ void MapStateReader::read(String const &mapUriStr)
     game::SessionMetadata const &metadata = session().metadata();
 
     File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr + "State");
-    openFile(mapStateFile);
-    d->reader = newReader();
+    SV_OpenFile(mapStateFile);
+    d->reader = SV_NewReader();
 
     d->saveVersion = metadata.geti("version");
     d->mapVersion  = d->saveVersion; // Default: mapVersion == saveVersion
@@ -864,7 +787,7 @@ void MapStateReader::read(String const &mapUriStr)
     SV_ClearTargetPlayers();
 #endif
 
-    closeFile();
+    SV_CloseFile();
 
     // Notify the players that weren't in the savegame.
     d->kickMissingPlayers();

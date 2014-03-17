@@ -24,116 +24,119 @@
 #include "g_common.h"
 #include "p_savedef.h"    // CONSISTENCY
 #include <de/ArrayValue>
+#include <de/FixedByteArray>
 #include <de/NativePath>
 
+// Used during write:
 static LZFILE *savefile;
-
 #if __JHEXEN__
 static byte *saveBuffer;
-static saveptr_t saveptr;
+//static saveptr_t saveptr;
 static void *saveEndPtr;
 #endif
 
-bool SV_ExistingFile(de::Path filePath)
+// Used during read:
+static de::Reader *reader;
+
+static char sri8(reader_s *r)
 {
-    if(FILE *fp = fopen(de::NativePath(filePath).expand().toUtf8().constData(), "rb"))
-    {
-        fclose(fp);
-        return true;
-    }
-    return false;
+    if(!r) return 0;
+    int8_t val;
+    DENG2_ASSERT(reader);
+    *reader >> val;
+    return char(val);
 }
 
-int SV_RemoveFile(de::Path filePath)
+static short sri16(reader_s *r)
 {
-    return remove(de::NativePath(filePath).expand().toUtf8().constData());
+    if(!r) return 0;
+    int16_t val;
+    DENG2_ASSERT(reader);
+    *reader >> val;
+    return short(val);
 }
 
-void SV_CopyFile(de::Path srcPath, de::Path destPath)
+static int sri32(reader_s *r)
 {
-    if(!SV_ExistingFile(srcPath)) return;
-
-    char *buffer;
-    size_t length = M_ReadFile(de::NativePath(srcPath).expand().toUtf8().constData(), &buffer);
-    if(!length)
-    {
-        App_Log(DE2_RES_ERROR, "SV_CopyFile: Failed opening \"%s\" for reading",
-                               de::NativePath(srcPath).pretty().toLatin1().constData());
-        return;
-    }
-
-    if(LZFILE *outf = lzOpen(de::NativePath(destPath).expand().toUtf8().constData(), "wp"))
-    {
-        lzWrite(buffer, length, outf);
-        lzClose(outf);
-    }
-
-    Z_Free(buffer);
+    if(!r) return 0;
+    DENG2_ASSERT(reader);
+    int32_t val;
+    *reader >> val;
+    return int(val);
 }
 
-bool SV_OpenFile(de::Path path, bool write)
+static float srf(reader_s *r)
+{
+    if(!r) return 0;
+    DENG2_ASSERT(reader);
+    DENG2_ASSERT(sizeof(float) == 4);
+    int32_t val;
+    *reader >> val;
+    float rerVal = 0;
+    std::memcpy(&rerVal, &val, 4);
+    return rerVal;
+}
+
+static void srd(reader_s *r, char *data, int len)
+{
+    if(!r) return;
+    DENG2_ASSERT(reader);
+    if(data)
+    {
+        de::Block tmp(len);
+        *reader >> de::FixedByteArray(tmp);
+        tmp.get(0, (de::Block::Byte *)data, len);
+    }
+    else
+    {
+        reader->seek(len);
+    }
+}
+
+reader_s *SV_NewReader()
+{
+    DENG2_ASSERT(reader != 0);
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
+}
+
+de::Reader &SV_RawReader()
+{
+    if(reader != 0)
+    {
+        return *reader;
+    }
+    throw de::Error("SV_RawReader", "No map reader exists");
+}
+
+void SV_CloseFile()
+{
+    delete reader; reader = 0;
+}
+
+bool SV_OpenFile(de::File const &file)
+{
+    SV_CloseFile();
+    reader = new de::Reader(file);
+    return true;
+}
+
+bool SV_OpenFile_LZSS(de::Path path)
 {
     App_Log(DE2_DEV_RES_XVERBOSE, "SV_OpenFile: Opening \"%s\"",
             de::NativePath(path).pretty().toLatin1().constData());
 
-#if __JHEXEN__
-    if(!write)
-    {
-        size_t bufferSize = M_ReadFile(de::NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer);
-        if(!bufferSize) return false;
-
-        SV_HxSavePtr()->b = saveBuffer;
-        SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
-
-        return true;
-    }
-    else
-#endif
-    {
-        DENG2_ASSERT(savefile == 0);
-        savefile = lzOpen(de::NativePath(path).expand().toUtf8().constData(), write? "wp" : "rp");
-        return savefile != 0;
-    }
+    DENG2_ASSERT(savefile == 0);
+    savefile = lzOpen(de::NativePath(path).expand().toUtf8().constData(), "wp");
+    return savefile != 0;
 }
 
-void SV_CloseFile()
+void SV_CloseFile_LZSS()
 {
     if(savefile)
     {
         lzClose(savefile);
         savefile = 0;
     }
-}
-
-#if __JHEXEN__
-saveptr_t *SV_HxSavePtr()
-{
-    return &saveptr;
-}
-
-void SV_HxSetSaveEndPtr(void *endPtr)
-{
-    saveEndPtr = endPtr;
-}
-
-size_t SV_HxBytesLeft()
-{
-    return (byte *) saveEndPtr - saveptr.b;
-}
-
-void SV_HxReleaseSaveBuffer()
-{
-    Z_Free(saveBuffer);
-}
-#endif
-
-void SV_Seek(uint offset)
-{
-#if __JHEXEN__
-    saveptr.b += offset;
-#else
-    lzSeek(savefile, offset);
-#endif
 }
 
 void SV_Write(void const *data, int len)
@@ -173,59 +176,7 @@ void SV_WriteFloat(float val)
     lzPutL(temp, savefile);
 }
 
-void SV_Read(void *data, int len)
-{
-#if __JHEXEN__
-    std::memcpy(data, saveptr.b, len);
-    saveptr.b += len;
-#else
-    lzRead(data, len, savefile);
-#endif
-}
-
-byte SV_ReadByte()
-{
-#if __JHEXEN__
-    DENG2_ASSERT((saveptr.b + 1) <= (byte *) saveEndPtr);
-    return (*saveptr.b++);
-#else
-    return lzGetC(savefile);
-#endif
-}
-
-short SV_ReadShort()
-{
-#if __JHEXEN__
-    DENG2_ASSERT((saveptr.w + 1) <= (short *) saveEndPtr);
-    return (SHORT(*saveptr.w++));
-#else
-    return lzGetW(savefile);
-#endif
-}
-
-long SV_ReadLong()
-{
-#if __JHEXEN__
-    DENG2_ASSERT((saveptr.l + 1) <= (int *) saveEndPtr);
-    return (LONG(*saveptr.l++));
-#else
-    return lzGetL(savefile);
-#endif
-}
-
-float SV_ReadFloat()
-{
-    DENG2_ASSERT(sizeof(float) == 4);
-#if __JHEXEN__
-    return (FLOAT(*saveptr.f++));
-#else
-    int32_t val = lzGetL(savefile);
-    float returnValue = 0;
-    std::memcpy(&returnValue, &val, 4);
-    return returnValue;
-#endif
-}
-
+#if 0
 void SV_AssertSegment(int segmentId)
 {
 #if __JHEXEN__
@@ -242,6 +193,7 @@ void SV_AssertSegment(int segmentId)
     DENG_UNUSED(segmentId);
 #endif
 }
+#endif
 
 void SV_BeginSegment(int segType)
 {
@@ -300,7 +252,7 @@ void SV_WriteConsistencyBytes()
 #endif
 }
 
-void SV_ReadConsistencyBytes()
+/*void SV_ReadConsistencyBytes()
 {
 #if !__JHEXEN__
     if(SV_ReadByte() != CONSISTENCY)
@@ -308,7 +260,7 @@ void SV_ReadConsistencyBytes()
         Con_Error("Corrupt save game: Consistency test failed.");
     }
 #endif
-}
+}*/
 
 static void swi8(Writer *w, char i)
 {
@@ -343,39 +295,4 @@ static void swd(Writer *w, char const *data, int len)
 Writer *SV_NewWriter()
 {
     return Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
-}
-
-static char sri8(Reader *r)
-{
-    if(!r) return 0;
-    return SV_ReadByte();
-}
-
-static short sri16(Reader *r)
-{
-    if(!r) return 0;
-    return SV_ReadShort();
-}
-
-static int sri32(Reader *r)
-{
-    if(!r) return 0;
-    return SV_ReadLong();
-}
-
-static float srf(Reader *r)
-{
-    if(!r) return 0;
-    return SV_ReadFloat();
-}
-
-static void srd(Reader *r, char *data, int len)
-{
-    if(!r) return;
-    SV_Read(data, len);
-}
-
-Reader *SV_NewReader()
-{
-    return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 }
