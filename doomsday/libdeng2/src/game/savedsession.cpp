@@ -83,6 +83,16 @@ void SavedSession::Metadata::parse(String const &source)
         {
             set("mapUri", value);
         }
+        if(Info::ListElement const *list = info.findByPath("players")->maybeAs<Info::ListElement>())
+        {
+            QScopedPointer<ArrayValue> arr(new ArrayValue);
+            foreach(Info::Element::Value const &v, list->values())
+            {
+                bool value = !String(v).compareWithoutCase("True");
+                *arr << new NumberValue(value, NumberValue::Boolean);
+            }
+            set("players", arr.take());
+        }
         if(info.findValueForKey("sessionid", value))
         {
             set("sessionId", value.toInt());
@@ -111,7 +121,18 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     if(has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
     if(has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
     if(has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
-    if(has("players"))         os << "\nplayers: "         << geta("players").asText();
+    if(has("players"))
+    {
+        ArrayValue const &array = geta("players");
+        os << "\nplayers <";
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, array.elements())
+        {
+            Value const *value = *i;
+            if(i != array.elements().begin()) os << ", ";
+            os << (value->as<NumberValue>().isTrue()? "True" : "False");
+        }
+        os << ">";
+    }
     if(has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
     if(has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
     if(has("version"))         os << "\nversion: "         << String::number(geti("version"));
@@ -121,8 +142,7 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
         os << "\n" << BLOCK_GROUP << " ruleset {";
 
         Record const &rules = subrecord("gameRules");
-        for(Record::Members::const_iterator i = rules.members().begin();
-            i != rules.members().end(); ++i)
+        DENG2_FOR_EACH_CONST(Record::Members, i, rules.members())
         {
             os << "\n    " << BLOCK_GAMERULE << " \"" << i.key() << "\""
                << " { value= \"" << i.value()->value().asText().replace("\"", "''") << "\" }";
