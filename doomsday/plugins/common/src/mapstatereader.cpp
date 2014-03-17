@@ -741,7 +741,9 @@ void MapStateReader::read(String const &mapUriStr)
     SV_OpenFile(mapStateFile);
     d->reader = SV_NewReader();
 
-    d->saveVersion = metadata.geti("version");
+    /*magic*/ Reader_ReadInt32(d->reader);
+
+    d->saveVersion = Reader_ReadInt32(d->reader);
     d->mapVersion  = d->saveVersion; // Default: mapVersion == saveVersion
 
     d->thingArchiveSize = 0;
