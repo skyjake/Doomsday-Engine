@@ -88,6 +88,18 @@ namespace internal
         return int(val);
     }
 
+    static float srf(reader_s *r)
+    {
+        if(!r) return 0;
+        DENG2_ASSERT(reader);
+        DENG2_ASSERT(sizeof(float) == 4);
+        int32_t val;
+        *reader >> val;
+        float rerVal = 0;
+        std::memcpy(&rerVal, &val, 4);
+        return rerVal;
+    }
+
     static void srd(reader_s *r, char *data, int len)
     {
         if(!r) return;
@@ -98,13 +110,16 @@ namespace internal
             *reader >> de::FixedByteArray(tmp);
             tmp.get(0, (de::Block::Byte *)data, len);
         }
-        reader->seek(len);
+        else
+        {
+            reader->seek(len);
+        }
     }
 
     static reader_s *newReader()
     {
         DENG2_ASSERT(reader != 0);
-        return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
+        return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
     }
 
     static void closeFile()
