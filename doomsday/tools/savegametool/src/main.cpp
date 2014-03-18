@@ -70,9 +70,9 @@ enum SaveFormatId
 };
 
 /**
- * Base class for known save formats.
+ * Base class savegame package formatters.
  */
-class SaveFormat
+class PackageFormatter
 {
 public:
     /// An error occured when attempting to open the source file. @ingroup errors
@@ -108,7 +108,7 @@ public:
      * @param knownExtensions  List of known file extensions for the format.
      * @param baseGameIdKeys   List of supported base game identity keys for the format.
      */
-    SaveFormat(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
+    PackageFormatter(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
                QStringList baseGameIdKeys)
         : id             (id)
         , textualId      (textualId)
@@ -150,15 +150,15 @@ public:
 };
 
 /**
- * Specialized SaveFormat suitable for translating (old) Doomsday-native save formats.
+ * Specialized PackageFormatter suitable for translating (old) Doomsday-native save formats.
  */
-class NativeSaveFormat : public SaveFormat
+class NativeTranslator : public PackageFormatter
 {
 public:
     /**
      * Reader for the old native save format, which is compressed with LZSS.
      */
-    class Reader : public SaveFormat::Reader
+    class Reader : public PackageFormatter::Reader
     {
     public:
         void seek(uint offset)
@@ -197,11 +197,11 @@ public:
     };
 
 public:
-    NativeSaveFormat(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
+    NativeTranslator(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
                      QStringList baseGameIdKeys)
-        : SaveFormat(id, textualId, magic, knownExtensions, baseGameIdKeys)
+        : PackageFormatter(id, textualId, magic, knownExtensions, baseGameIdKeys)
     {}
-    virtual ~NativeSaveFormat() {}
+    virtual ~NativeTranslator() {}
 
     bool recognize(Path path)
     {
@@ -222,12 +222,12 @@ public:
 
     void openFile(Path path)
     {
-        LOG_TRACE("NativeSaveFormat::openFile: Opening \"%s\"") << NativePath(path).pretty();
+        LOG_TRACE("NativeTranslator::openFile: Opening \"%s\"") << NativePath(path).pretty();
         DENG2_ASSERT(saveFile == 0);
         saveFile = lzOpen(NativePath(path).expand().toUtf8().constData(), "rp");
         if(!saveFile)
         {
-            throw FileOpenError("NativeSaveFormat", "Failed opening \"" + NativePath(path).pretty() + "\"");
+            throw FileOpenError("NativeTranslator", "Failed opening \"" + NativePath(path).pretty() + "\"");
         }
     }
 
@@ -270,13 +270,13 @@ public:
     }
 };
 
-class VanillaSaveFormat : public SaveFormat
+class VanillaTranslator : public PackageFormatter
 {
 public:
     /**
      * Reader for the vanilla save format.
      */
-    class Reader : public SaveFormat::Reader
+    class Reader : public PackageFormatter::Reader
     {
     public:
         Reader(de::File &file) : _reader(new de::Reader(file))
@@ -337,11 +337,11 @@ public:
     };
 
 public:
-    VanillaSaveFormat(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
+    VanillaTranslator(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
                       QStringList baseGameIdKeys)
-        : SaveFormat(id, textualId, magic, knownExtensions, baseGameIdKeys)
+        : PackageFormatter(id, textualId, magic, knownExtensions, baseGameIdKeys)
     {}
-    virtual ~VanillaSaveFormat() {}
+    virtual ~VanillaTranslator() {}
 
     bool recognize(Path /*path*/)
     {
@@ -351,12 +351,12 @@ public:
 
     void openFile(Path path)
     {
-        LOG_TRACE("VanillaSaveFormat::openFile: Opening \"%s\"") << NativePath(path).pretty();
+        LOG_TRACE("VanillaTranslator::openFile: Opening \"%s\"") << NativePath(path).pretty();
         DENG2_ASSERT(saveFile == 0);
         saveFile = 0;
         if(!saveFile)
         {
-            throw FileOpenError("VanillaSaveFormat", "Failed opening \"" + NativePath(path).pretty() + "\"");
+            throw FileOpenError("VanillaTranslator", "Failed opening \"" + NativePath(path).pretty() + "\"");
         }
     }
 
@@ -376,30 +376,30 @@ public:
 
     Block *bufferFile() const
     {
-        DENG2_ASSERT(!"VanillaSaveFormat::bufferFile -- not yet implemented");
+        DENG2_ASSERT(!"VanillaTranslator::bufferFile -- not yet implemented");
         return 0;
     }
 };
 
-typedef QList<SaveFormat *> SaveFormats;
+typedef QList<PackageFormatter *> FormatTranslators;
 
-static SaveFormats saveFormats;
+static FormatTranslators translators;
 
-static void initSaveFormats()
+static void initTranslators()
 {
     // Add Doomsday-native formats:
-    saveFormats << new NativeSaveFormat(Doom,    "Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    saveFormats << new NativeSaveFormat(Heretic, "Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
-    saveFormats << new NativeSaveFormat(Hexen,   "Hexen",   0x1B17CC00, QStringList(".hxs"), QStringList() << "hexen");
+    translators << new NativeTranslator(Doom,    "Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
+    translators << new NativeTranslator(Heretic, "Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
+    translators << new NativeTranslator(Hexen,   "Hexen",   0x1B17CC00, QStringList(".hxs"), QStringList() << "hexen");
 
     // Add vanilla formats:
-    saveFormats << new VanillaSaveFormat(DoomV9,     "Vanilla Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    saveFormats << new VanillaSaveFormat(HereticV13, "Vanilla Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
+    translators << new VanillaTranslator(DoomV9,     "Vanilla Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
+    translators << new VanillaTranslator(HereticV13, "Vanilla Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
 }
 
-static SaveFormat *saveFormatForGameIdentityKey(String const &idKey)
+static PackageFormatter *saveFormatForGameIdentityKey(String const &idKey)
 {
-    foreach(SaveFormat *fmt, saveFormats)
+    foreach(PackageFormatter *fmt, translators)
     foreach(QString const &baseIdentityKey, fmt->baseGameIdKeys)
     {
         if(idKey.beginsWith(baseIdentityKey)) return fmt;
@@ -407,10 +407,10 @@ static SaveFormat *saveFormatForGameIdentityKey(String const &idKey)
     return 0; // Not found.
 }
 
-static SaveFormat *guessSaveFormatFromFileName(Path const &path)
+static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
 {
     String ext = path.lastSegment().toString().fileNameExtension().toLower();
-    foreach(SaveFormat *fmt, saveFormats)
+    foreach(PackageFormatter *fmt, translators)
     foreach(QString const &knownExtension, fmt->knownExtensions)
     {
         if(!knownExtension.compare(ext, Qt::CaseInsensitive)) return fmt;
@@ -420,17 +420,17 @@ static SaveFormat *guessSaveFormatFromFileName(Path const &path)
 
 static String fallbackGameId;
 
-static SaveFormat *knownSaveFormat;
+static PackageFormatter *knownTranslator;
 static int saveVersion;
 
-/// Returns the current, known save format.
-static SaveFormat &saveFormat()
+/// Returns the current, known format translator.
+static PackageFormatter &translator()
 {
-    if(knownSaveFormat)
+    if(knownTranslator)
     {
-        return *knownSaveFormat;
+        return *knownTranslator;
     }
-    throw Error("saveFormat", "Current save format is unknown");
+    throw Error("translator", "Current save format is unknown");
 }
 
 static String versionText()
@@ -588,7 +588,7 @@ static String identityKeyForLegacyGamemode(int gamemode, SaveFormatId saveFormat
 /**
  * Supports native Doomsday savegame formats up to and including version 13.
  */
-static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &reader)
+static void xlatLegacyMetadata(SessionMetadata &metadata, PackageFormatter::Reader &reader)
 {
 #define SM_NOTHINGS     -1
 #define SM_BABY         0
@@ -606,7 +606,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &re
     }
     // We are incompatible with v3 saves due to an invalid test used to determine present
     // sides (ver3 format's sides contain chunks of junk data).
-    if(saveFormat().id == Hexen && saveVersion == 3)
+    if(translator().id == Hexen && saveVersion == 3)
     {
         /// @throw Error Map state is in an unsupported format.
         throw Error("xlatLegacyMetadata", "Unsupported format version " + String::number(saveVersion));
@@ -615,7 +615,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &re
 
     // Translate gamemode identifiers from older save versions.
     int oldGamemode = reader.readInt32();
-    metadata.set("gameIdentityKey",     identityKeyForLegacyGamemode(oldGamemode, saveFormat().id, saveVersion));
+    metadata.set("gameIdentityKey",     identityKeyForLegacyGamemode(oldGamemode, translator().id, saveVersion));
 
     // User description. A fixed 24 characters in length in "really old" versions.
     size_t const len = (saveVersion < 10? 24 : (unsigned)reader.readInt32());
@@ -626,7 +626,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &re
     free(descBuf); descBuf = 0;
 
     QScopedPointer<Record> rules(new Record);
-    if(saveFormat().id != Hexen && saveVersion < 13)
+    if(translator().id != Hexen && saveVersion < 13)
     {
         // In DOOM the high bit of the skill mode byte is also used for the
         // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
@@ -664,12 +664,12 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &re
     metadata.set("mapUri",              composeMapUriPath(episode, map).asText());
 
     rules->set("deathmatch", reader.readInt8());
-    if(saveFormat().id != Hexen && saveVersion == 13)
+    if(translator().id != Hexen && saveVersion == 13)
     {
         rules->set("fast", reader.readInt8());
     }
     rules->set("noMonsters", reader.readInt8());
-    if(saveFormat().id == Hexen)
+    if(translator().id == Hexen)
     {
         rules->set("randomClasses", reader.readInt8());
     }
@@ -680,7 +680,7 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &re
 
     metadata.add("gameRules",           rules.take());
 
-    if(saveFormat().id != Hexen)
+    if(translator().id != Hexen)
     {
         /*skip junk*/ if(saveVersion < 10) reader.seek(2);
 
@@ -732,14 +732,14 @@ struct ACScriptTask : public IWritable
     dint32 scriptNumber;
     dbyte args[4];
 
-    static ACScriptTask *ACScriptTask::fromReader(SaveFormat::Reader &reader)
+    static ACScriptTask *ACScriptTask::fromReader(PackageFormatter::Reader &reader)
     {
         ACScriptTask *task = new ACScriptTask;
         task->read(reader);
         return task;
     }
 
-    void read(SaveFormat::Reader &reader)
+    void read(PackageFormatter::Reader &reader)
     {
         mapNumber    = duint32(reader.readInt32());
         scriptNumber = reader.readInt32();
@@ -762,7 +762,7 @@ struct ACScriptTask : public IWritable
 };
 typedef QList<ACScriptTask *> ACScriptTasks;
 
-static void xlatWorldACScriptData(SaveFormat::Reader &reader, Writer &writer)
+static void xlatWorldACScriptData(PackageFormatter::Reader &reader, Writer &writer)
 {
 #define MAX_ACS_WORLD_VARS 64
 
@@ -832,7 +832,7 @@ static void xlatWorldACScriptData(SaveFormat::Reader &reader, Writer &writer)
 static Block *mapStateHeader()
 {
     Block *hdr = new Block;
-    Writer(*hdr) << saveFormat().magic << saveVersion;
+    Writer(*hdr) << translator().magic << saveVersion;
     return hdr;
 }
 
@@ -844,42 +844,42 @@ static bool convertSavegame(Path oldSavePath)
 
     try
     {
-        foreach(SaveFormat *fmt, saveFormats)
+        foreach(PackageFormatter *fmt, translators)
         {
             if(fmt->recognize(oldSavePath))
             {
                 LOG_VERBOSE("Recognized \"%s\" as a %s format savegame")
                         << NativePath(oldSavePath).pretty() << fmt->textualId;
-                knownSaveFormat = fmt;
+                knownTranslator = fmt;
                 break;
             }
         }
 
         // Still unknown? Try again with "fuzzy" logic.
-        if(!knownSaveFormat)
+        if(!knownTranslator)
         {
             // Unknown magic
             if(!fallbackGameId.isEmpty())
             {
                 // Use whichever format is applicable for the specified identity key.
-                knownSaveFormat = saveFormatForGameIdentityKey(fallbackGameId);
+                knownTranslator = saveFormatForGameIdentityKey(fallbackGameId);
             }
             else if(!saveName.fileNameExtension().isEmpty())
             {
                 // We'll try to guess the save format...
-                knownSaveFormat = guessSaveFormatFromFileName(saveName);
+                knownTranslator = guessSaveFormatFromFileName(saveName);
             }
         }
 
         // Still unknown!?
-        if(!knownSaveFormat)
+        if(!knownTranslator)
         {
             /// @throw Error Failed to determine the format of the saved game session.
             throw Error("convertSavegame", "Format of \"" + NativePath(oldSavePath).pretty() + "\" is unknown");
         }
 
-        saveFormat().openFile(oldSavePath);
-        SaveFormat::Reader *reader = saveFormat().newReader();
+        translator().openFile(oldSavePath);
+        PackageFormatter::Reader *reader = translator().newReader();
 
         // Read and translate the game session metadata.
         SessionMetadata metadata;
@@ -888,7 +888,7 @@ static bool convertSavegame(Path oldSavePath)
         ZipArchive arch;
         arch.add("Info", composeInfo(metadata, oldSavePath, saveVersion).toUtf8());
 
-        if(saveFormat().id == Hexen)
+        if(translator().id == Hexen)
         {
             // Translate and separate the serialized world ACS data into a new file.
             Block worldACScriptData;
@@ -897,7 +897,7 @@ static bool convertSavegame(Path oldSavePath)
             arch.add("ACScriptState", worldACScriptData);
         }
 
-        if(saveFormat().id == Hexen)
+        if(translator().id == Hexen)
         {
             // Serialized map states are in similarly named "side car" files.
             int const maxHubMaps = 99;
@@ -909,12 +909,12 @@ static bool convertSavegame(Path oldSavePath)
                             + String("%1").arg(i + 1, 2, 10, QChar('0'))
                             + saveName.fileNameExtension();
 
-                saveFormat().closeFile();
+                translator().closeFile();
                 try
                 {
-                    saveFormat().openFile(oldMapStatePath);
+                    translator().openFile(oldMapStatePath);
                     // Buffer the file and write it out to a new map state file.
-                    if(Block *xlatedData = saveFormat().bufferFile())
+                    if(Block *xlatedData = translator().bufferFile())
                     {
                         // Append the remaining translated data to header, forming the new serialized
                         // map state data file.
@@ -926,7 +926,7 @@ static bool convertSavegame(Path oldSavePath)
                         delete mapStateData;
                     }
                 }
-                catch(SaveFormat::FileOpenError const &)
+                catch(PackageFormatter::FileOpenError const &)
                 {} // Ignore this error.
             }
         }
@@ -934,7 +934,7 @@ static bool convertSavegame(Path oldSavePath)
         {
             // The only serialized map state follows the session metadata in the game state file.
             // Buffer the rest of the file and write it out to a new map state file.
-            if(Block *xlatedData = saveFormat().bufferFile())
+            if(Block *xlatedData = translator().bufferFile())
             {
                 String const mapUriStr = metadata["mapUri"].value().asText();
 
@@ -950,7 +950,7 @@ static bool convertSavegame(Path oldSavePath)
         }
 
         delete reader;
-        saveFormat().closeFile();
+        translator().closeFile();
 
         File &saveFile = DENG2_TEXT_APP->homeFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
         saveFile.setMode(File::Write | File::Truncate);
@@ -961,7 +961,7 @@ static bool convertSavegame(Path oldSavePath)
     }
     catch(Error const &er)
     {
-        if(knownSaveFormat) saveFormat().closeFile();
+        if(knownTranslator) translator().closeFile();
         LOG_ERROR("\"%s\" failed conversion:\n")
                 << NativePath(oldSavePath).pretty() << er.asText();
     }
@@ -971,7 +971,7 @@ static bool convertSavegame(Path oldSavePath)
 
 int main(int argc, char **argv)
 {
-    initSaveFormats();
+    initTranslators();
 
     try
     {
@@ -1017,6 +1017,6 @@ int main(int argc, char **argv)
         qWarning() << err.asText();
     }
 
-    qDeleteAll(saveFormats);
+    qDeleteAll(translators);
     return 0;
 }
