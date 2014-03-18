@@ -22,6 +22,9 @@
 
 #include "packageformatter.h"
 
+/**
+ * Specialized PackageFormatter suitable for translating id Tech 1 save formats.
+ */
 class Id1Translator : public PackageFormatter
 {
 public:
@@ -45,4 +48,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // SAVEGAMETOOl_ID1TRANSLATOR_H
+#endif // SAVEGAMETOOL_ID1TRANSLATOR_H

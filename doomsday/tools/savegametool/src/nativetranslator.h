@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef SAVEGAMETOOl_NATIVETRANSLATOR_H
-#define SAVEGAMETOOl_NATIVETRANSLATOR_H
+#ifndef SAVEGAMETOOL_NATIVETRANSLATOR_H
+#define SAVEGAMETOOL_NATIVETRANSLATOR_H
 
 #include "packageformatter.h"
 
@@ -46,10 +46,10 @@ public:
 
     bool recognize(de::Path path);
 
-    void convert(de::Path oldSavePath);
+    void convert(de::Path path);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // SAVEGAMETOOl_NATIVETRANSLATOR_H
+#endif // SAVEGAMETOOL_NATIVETRANSLATOR_H

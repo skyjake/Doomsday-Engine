@@ -32,9 +32,12 @@ String fallbackGameId;
 
 typedef QList<PackageFormatter *> FormatTranslators;
 static FormatTranslators translators;
+static PackageFormatter *knownTranslator;
 
 static void initTranslators()
 {
+    // Order defines save format translator recognition order.
+
     // Add Doomsday-native formats:
     translators << new NativeTranslator(NativeTranslator::Doom,    QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
     translators << new NativeTranslator(NativeTranslator::Heretic, QStringList(".hsg"), QStringList() << "heretic");
@@ -99,8 +102,6 @@ static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
     }
     return 0; // Not found.
 }
-
-static PackageFormatter *knownTranslator;
 
 /// Returns the current, known format translator.
 static PackageFormatter &translator()

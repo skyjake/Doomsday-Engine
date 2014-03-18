@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef SAVEGAMETOOl_PACKAGEFORMATER_H
-#define SAVEGAMETOOl_PACKAGEFORMATER_H
+#ifndef SAVEGAMETOOL_PACKAGEFORMATER_H
+#define SAVEGAMETOOL_PACKAGEFORMATER_H
 
 #include <QStringList>
 #include <de/Error>
@@ -95,4 +95,4 @@ public:
     virtual void convert(de::Path savePath) = 0;
 };
 
-#endif // SAVEGAMETOOl_PACKAGEFORMATER_H
+#endif // SAVEGAMETOOL_PACKAGEFORMATER_H

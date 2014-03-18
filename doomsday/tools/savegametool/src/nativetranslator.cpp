@@ -160,7 +160,7 @@ DENG2_PIMPL(NativeTranslator)
         case Heretic: return 0x7D9A12C5;
         case Hexen:   return 0x1B17CC00;
         }
-        DENG2_ASSERT(!"NativeTranslator::formatName: Invalid format id");
+        DENG2_ASSERT(!"NativeTranslator::magic: Invalid format id");
         return 0;
     }
 
@@ -304,7 +304,7 @@ DENG2_PIMPL(NativeTranslator)
     /**
      * Supports native formats up to and including version 13.
      */
-    void translateInfo(SessionMetadata &metadata, LZReader &from)
+    void translateMetadata(SessionMetadata &metadata, LZReader &from)
     {
 #define SM_NOTHINGS     -1
 #define SM_BABY         0
@@ -318,14 +318,14 @@ DENG2_PIMPL(NativeTranslator)
         if(saveVersion > 13)
         {
             /// @throw UnknownFormatError Format is from the future.
-            throw UnknownFormatError("translateInfo", "Incompatible format version " + String::number(saveVersion));
+            throw UnknownFormatError("translateMetadata", "Incompatible format version " + String::number(saveVersion));
         }
         // We are incompatible with v3 saves due to an invalid test used to determine present
         // sides (ver3 format's sides contain chunks of junk data).
         if(id == Hexen && saveVersion == 3)
         {
             /// @throw UnknownFormatError Map state is in an unsupported format.
-            throw UnknownFormatError("translateInfo", "Unsupported format version " + String::number(saveVersion));
+            throw UnknownFormatError("translateMetadata", "Unsupported format version " + String::number(saveVersion));
         }
         metadata.set("version",             dint(14));
 
@@ -602,22 +602,22 @@ bool NativeTranslator::recognize(Path path)
     return result;
 }
 
-void NativeTranslator::convert(Path oldSavePath)
+void NativeTranslator::convert(Path path)
 {
     LOG_AS("NativeTranslator");
 
     /// @todo try all known extensions at the given path, if not specified.
-    String saveName = oldSavePath.lastSegment().toString();
+    String saveName = path.lastSegment().toString();
 
-    d->openFile(oldSavePath);
+    d->openFile(path);
     LZReader *from = d->newReader();
 
     // Read and translate the game session metadata.
     SessionMetadata metadata;
-    d->translateInfo(metadata, *from);
+    d->translateMetadata(metadata, *from);
 
     ZipArchive arch;
-    arch.add("Info", composeInfo(metadata, oldSavePath, d->saveVersion).toUtf8());
+    arch.add("Info", composeInfo(metadata, path, d->saveVersion).toUtf8());
 
     if(d->id == Hexen)
     {
@@ -635,15 +635,15 @@ void NativeTranslator::convert(Path oldSavePath)
         for(int i = 0; i < maxHubMaps; ++i)
         {
             // Open the map state file.
-            Path oldMapStatePath =
-                    oldSavePath.toString().fileNamePath() / saveName.fileNameWithoutExtension()
+            Path mapStatePath =
+                    path.toString().fileNamePath() / saveName.fileNameWithoutExtension()
                         + String("%1").arg(i + 1, 2, 10, QChar('0'))
                         + saveName.fileNameExtension();
 
             d->closeFile();
             try
             {
-                d->openFile(oldMapStatePath);
+                d->openFile(mapStatePath);
                 // Buffer the file and write it out to a new map state file.
                 if(Block *xlatedData = d->bufferFile())
                 {

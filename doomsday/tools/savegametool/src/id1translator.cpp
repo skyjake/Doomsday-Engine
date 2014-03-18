@@ -19,14 +19,17 @@
 
 #include <cstring> // memcpy
 #include <de/TextApp>
+#include <de/ArrayValue>
 #include <de/File>
 #include <de/FixedByteArray>
+#include <de/NumberValue>
 #include <de/Reader>
 #include <de/Writer>
 #include <de/ZipArchive>
 #include "id1translator.h"
 
 extern de::String fallbackGameId;
+extern de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
 
 using namespace de;
 
@@ -58,7 +61,7 @@ DENG2_PIMPL(Id1Translator)
         case DoomV9:     return 0x1DEAD666;
         case HereticV13: return 0x7D9A12C5;
         }
-        DENG2_ASSERT(!"Id1Translator::formatName: Invalid format id");
+        DENG2_ASSERT(!"Id1Translator::magic: Invalid format id");
         return 0;
     }
 
@@ -100,9 +103,79 @@ DENG2_PIMPL(Id1Translator)
         return 0;
     }
 
-    void translateInfo(SessionMetadata &/*metadata*/, Reader &/*from*/)
+    void translateMetadata(SessionMetadata &metadata, Reader &from)
     {
-        DENG2_ASSERT(!"translateInfo -- not yet implemented");
+#define SM_NOTHINGS     -1
+#define SM_BABY         0
+#define NUM_SKILL_MODES 5
+#define MAXPLAYERS      16
+
+        {
+            Block tmp(24);
+            from >> FixedByteArray(tmp);
+            char descBuf[24];
+            tmp.get(0, (Block::Byte *)descBuf, 24);
+            metadata.set("userDescription", String(descBuf, 24));
+        }
+
+        {
+            Block tmp(16);
+            from >> FixedByteArray(tmp);
+            char vcheck[16 + 1];
+            tmp.get(0, (Block::Byte *)vcheck, tmp.size()); vcheck[16] = 0;
+            //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
+            metadata.set("version", String(vcheck[8], 8).toInt(0, 10, String::AllowSuffix));
+        }
+
+        // Id Tech 1 formats omitted the majority of the game rules...
+        QScopedPointer<Record> rules(new Record);
+        dbyte skill;
+        from >> skill;
+        // Interpret skill levels outside the normal range as "spawn no things".
+        if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
+        {
+            skill = SM_NOTHINGS;
+        }
+        rules->set("skill", skill);
+        metadata.add("gameRules", rules.take());
+
+        uint episode, map;
+        from.readAs<dchar>(episode);
+        from.readAs<dchar>(map);
+        DENG2_ASSERT(episode > 0 && map > 0);
+        metadata.set("mapUri", composeMapUriPath(episode - 1, map - 1).asText());
+
+        ArrayValue *array = new ArrayValue;
+        int idx = 0;
+        while(idx++ < 4)
+        {
+            dbyte playerPresent;
+            from >> playerPresent;
+            *array << NumberValue(playerPresent != 0, NumberValue::Boolean);
+        }
+        while(idx++ < MAXPLAYERS)
+        {
+            *array << NumberValue(false, de::NumberValue::Boolean);
+        }
+        metadata.set("players", array);
+
+        // Get the map time.
+        int a, b, c;
+        from.readAs<dchar>(a);
+        from.readAs<dchar>(b);
+        from.readAs<dchar>(c);
+        metadata.set("mapTime", ((a << 16) + (b << 8) + c));
+
+        /// @note Kludge: Assume the current game mode.
+        metadata.set("gameIdentityKey",     fallbackGameId);
+        /// Kludge end.
+
+        metadata.set("sessionId",           0);
+
+#undef MAXPLAYERS
+#undef NUM_SKILL_MODES
+#undef SM_BABY
+#undef SM_NOTHINGS
     }
 };
 
@@ -134,22 +207,22 @@ bool Id1Translator::recognize(Path /*path*/)
     return false;
 }
 
-void Id1Translator::convert(Path oldSavePath)
+void Id1Translator::convert(Path path)
 {
     LOG_AS("Id1Translator");
 
     /// @todo try all known extensions at the given path, if not specified.
-    String saveName = oldSavePath.lastSegment().toString();
+    String saveName = path.lastSegment().toString();
 
-    d->openFile(oldSavePath);
+    d->openFile(path);
     Reader *from = new Reader(*d->saveFile());
 
     // Read and translate the game session metadata.
     SessionMetadata metadata;
-    d->translateInfo(metadata, *from);
+    d->translateMetadata(metadata, *from);
 
     ZipArchive arch;
-    arch.add("Info", composeInfo(metadata, oldSavePath, 1).toUtf8());
+    arch.add("Info", composeInfo(metadata, path, 1).toUtf8());
 
     // The only serialized map state follows the session metadata in the game state file.
     // Buffer the rest of the file and write it out to a new map state file.
