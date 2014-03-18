@@ -1,4 +1,4 @@
-/** @file id1translator.cpp  Savegame translator for old id-tech1 formats.
+/** @file id1translator.cpp  Savegame translator for id-tech1 formats.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -19,9 +19,7 @@
 
 #include <cstring> // memcpy
 #include <de/TextApp>
-#include <de/Block>
 #include <de/FixedByteArray>
-#include <de/game/SavedSession>
 #include <de/Reader>
 #include <de/Writer>
 #include <de/ZipArchive>

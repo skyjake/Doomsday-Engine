@@ -39,6 +39,12 @@ public:
     /// An error occured when attempting to open the source file. @ingroup errors
     DENG2_ERROR(FileOpenError);
 
+    /// Base class for read-related errors. @ingroup errors
+    DENG2_ERROR(ReadError);
+
+    /// The source file format is unknown/unsupported. @ingroup errors
+    DENG2_SUB_ERROR(ReadError, UnknownFormatError);
+
     de::String textualId;
     int magic;
     QStringList knownExtensions;

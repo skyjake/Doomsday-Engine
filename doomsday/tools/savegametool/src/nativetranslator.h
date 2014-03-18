@@ -29,7 +29,7 @@ class NativeTranslator : public PackageFormatter
 {
 public:
     /// The game identity key of the source data is ambious. @ingroup errors
-    DENG2_ERROR(AmbigousGameIdError);
+    DENG2_SUB_ERROR(ReadError, AmbigousGameIdError);
 
     /// Logical identifiers for supported save formats.
     enum FormatId {

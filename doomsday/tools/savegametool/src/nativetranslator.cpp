@@ -19,7 +19,6 @@
 
 #include "lzss.h"
 #include <de/TextApp>
-#include <de/game/SavedSession>
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/Writer>
@@ -208,7 +207,7 @@ DENG2_PIMPL(NativeTranslator)
                     return fallbackGameId;
                 }
                 /// @throw Error Game identity key could not be determined unambiguously.
-                throw Error("translateGamemode", "Game identity key is ambiguous");
+                throw AmbigousGameIdError("translateGamemode", "Game identity key is ambiguous");
             }
         }
         if(id == Heretic && saveVersion < 8)
@@ -298,20 +297,20 @@ DENG2_PIMPL(NativeTranslator)
 #define MAXPLAYERS      16
 
         dint32 oldMagic;
-        from >> oldMagic >>saveVersion;
+        from >> oldMagic >> saveVersion;
 
         DENG2_ASSERT(saveVersion >= 0 && saveVersion <= 13);
         if(saveVersion > 13)
         {
-            /// @throw Error Format is from the future.
-            throw Error("translate", "Incompatible format version " + String::number(saveVersion));
+            /// @throw UnknownFormatError Format is from the future.
+            throw UnknownFormatError("translateInfo", "Incompatible format version " + String::number(saveVersion));
         }
         // We are incompatible with v3 saves due to an invalid test used to determine present
         // sides (ver3 format's sides contain chunks of junk data).
         if(id == Hexen && saveVersion == 3)
         {
-            /// @throw Error Map state is in an unsupported format.
-            throw Error("translate", "Unsupported format version " + String::number(saveVersion));
+            /// @throw UnknownFormatError Map state is in an unsupported format.
+            throw UnknownFormatError("translateInfo", "Unsupported format version " + String::number(saveVersion));
         }
         metadata.set("version",             dint(14));
 
@@ -479,8 +478,8 @@ DENG2_PIMPL(NativeTranslator)
             from >> segId;
             if(segId != ASEG_WORLDSCRIPTDATA)
             {
-                /// @throw Error Failed alignment check.
-                throw Error("translateACScriptState", "Corrupt save game, segment #" + String::number(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
+                /// @throw ReadError Failed alignment check.
+                throw ReadError("translateACScriptState", "Corrupt save game, segment #" + String::number(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
             }
         }
 
@@ -491,8 +490,8 @@ DENG2_PIMPL(NativeTranslator)
         }
         if(ver < 1 || ver > 3)
         {
-            /// @throw Error Format is from the future.
-            throw Error("translateACScriptState", "Incompatible data segment version " + String::number(ver));
+            /// @throw UnknownFormatError Format is from the future.
+            throw UnknownFormatError("translateACScriptState", "Incompatible data segment version " + String::number(ver));
         }
 
         dint32 worldVars[MAX_ACS_WORLD_VARS];
@@ -631,7 +630,7 @@ void NativeTranslator::convert(Path oldSavePath)
                     delete mapStateData;
                 }
             }
-            catch(PackageFormatter::FileOpenError const &)
+            catch(FileOpenError const &)
             {} // Ignore this error.
         }
     }
