@@ -26,8 +26,10 @@
 #include <QtAlgorithms>
 #include <de/TextApp>
 #include <de/ArrayValue>
+#include <de/FixedByteArray>
 #include <de/game/savedsession.h>
 #include <de/NumberValue>
+#include <de/Reader>
 #include <de/RecordValue>
 #include <de/Time>
 #include <de/Writer>
@@ -57,10 +59,14 @@ static LZFILE *saveFile;
 
 enum SaveFormatId
 {
-    // Doomsday-native formats:
+    // Old Doomsday-native formats:
     Doom,
     Heretic,
-    Hexen
+    Hexen,
+
+    // Vanilla formats:
+    DoomV9,
+    HereticV13
 };
 
 /**
@@ -80,12 +86,12 @@ public:
     public:
         virtual ~Reader() {}
 
-        virtual void seek(uint offset) = 0;
-        virtual char readInt8() = 0;
-        virtual short readInt16() = 0;
-        virtual int readInt32() = 0;
-        virtual float readFloat() = 0;
-        virtual void read(char *data, int len) = 0;
+        virtual void   seek(uint offset) = 0;
+        virtual dint8  readInt8 () = 0;
+        virtual dint16 readInt16() = 0;
+        virtual dint32 readInt32() = 0;
+        virtual dfloat readFloat() = 0;
+        virtual void   read(dint8 *data, int len) = 0;
     };
 
     SaveFormatId id;
@@ -98,7 +104,7 @@ public:
     /**
      * @param id               Unique identifier for the format.
      * @param textualId        Textual identifier for the format, used for log/error messages.
-     * @param magic            Native "magic" idenifier, used for format recognition.
+     * @param magic            Native "magic" identifier, used for format recognition.
      * @param knownExtensions  List of known file extensions for the format.
      * @param baseGameIdKeys   List of supported base game identity keys for the format.
      */
@@ -160,22 +166,22 @@ public:
             lzSeek(saveFile, offset);
         }
 
-        char readInt8()
+        dint8 readInt8()
         {
             return lzGetC(saveFile);
         }
 
-        short readInt16()
+        dint16 readInt16()
         {
             return lzGetW(saveFile);
         }
 
-        int readInt32()
+        dint32 readInt32()
         {
             return lzGetL(saveFile);
         }
 
-        float readFloat()
+        dfloat readFloat()
         {
             DENG2_ASSERT(sizeof(float) == 4);
             int32_t val = lzGetL(saveFile);
@@ -184,7 +190,7 @@ public:
             return returnValue;
         }
 
-        void read(char *data, int len)
+        void read(dint8 *data, int len)
         {
             lzRead(data, len, saveFile);
         }
@@ -264,6 +270,117 @@ public:
     }
 };
 
+class VanillaSaveFormat : public SaveFormat
+{
+public:
+    /**
+     * Reader for the vanilla save format.
+     */
+    class Reader : public SaveFormat::Reader
+    {
+    public:
+        Reader(de::File &file) : _reader(new de::Reader(file))
+        {}
+
+        void seek(uint offset)
+        {
+            _reader->seek(offset);
+        }
+
+        dint8 readInt8()
+        {
+            dint8 val;
+            *_reader >> val;
+            return lzGetC(saveFile);
+        }
+
+        dint16 readInt16()
+        {
+            dint16 val;
+            *_reader >> val;
+            return val;
+        }
+
+        dint32 readInt32()
+        {
+            dint32 val;
+            *_reader >> val;
+            return val;
+        }
+
+        dfloat readFloat()
+        {
+            DENG2_ASSERT(sizeof(float) == 4);
+            dint32 val;
+            *_reader >> val;
+            dfloat retVal = 0;
+            std::memcpy(&retVal, &val, 4);
+            return retVal;
+        }
+
+        void read(dint8 *data, int len)
+        {
+            if(data)
+            {
+                de::Block tmp(len);
+                *_reader >> de::FixedByteArray(tmp);
+                tmp.get(0, (de::Block::Byte *)data, len);
+            }
+            else
+            {
+                _reader->seek(len);
+            }
+        }
+
+    private:
+        de::Reader *_reader;
+    };
+
+public:
+    VanillaSaveFormat(SaveFormatId id, String textualId, int magic, QStringList knownExtensions,
+                      QStringList baseGameIdKeys)
+        : SaveFormat(id, textualId, magic, knownExtensions, baseGameIdKeys)
+    {}
+    virtual ~VanillaSaveFormat() {}
+
+    bool recognize(Path /*path*/)
+    {
+        // Vanilla formats can't be recognized, they require "fuzzy" logic.
+        return false;
+    }
+
+    void openFile(Path path)
+    {
+        LOG_TRACE("VanillaSaveFormat::openFile: Opening \"%s\"") << NativePath(path).pretty();
+        DENG2_ASSERT(saveFile == 0);
+        saveFile = 0;
+        if(!saveFile)
+        {
+            throw FileOpenError("VanillaSaveFormat", "Failed opening \"" + NativePath(path).pretty() + "\"");
+        }
+    }
+
+    void closeFile()
+    {
+        if(saveFile)
+        {
+            saveFile = 0;
+        }
+    }
+
+    Reader *newReader() const
+    {
+        DENG2_ASSERT(saveFile != 0);
+        return new Reader(*(de::File *)(saveFile));
+    }
+
+    Block *bufferFile() const
+    {
+        DENG2_ASSERT(!"VanillaSaveFormat::bufferFile -- not yet implemented");
+        return 0;
+    }
+};
+
 typedef QList<SaveFormat *> SaveFormats;
 
 static SaveFormats saveFormats;
@@ -274,6 +391,10 @@ static void initSaveFormats()
     saveFormats << new NativeSaveFormat(Doom,    "Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
     saveFormats << new NativeSaveFormat(Heretic, "Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
     saveFormats << new NativeSaveFormat(Hexen,   "Hexen",   0x1B17CC00, QStringList(".hxs"), QStringList() << "hexen");
+
+    // Add vanilla formats:
+    saveFormats << new VanillaSaveFormat(DoomV9,     "Vanilla Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
+    saveFormats << new VanillaSaveFormat(HereticV13, "Vanilla Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
 }
 
 static SaveFormat *saveFormatForGameIdentityKey(String const &idKey)
@@ -498,10 +619,10 @@ static void xlatLegacyMetadata(SessionMetadata &metadata, SaveFormat::Reader &re
 
     // User description. A fixed 24 characters in length in "really old" versions.
     size_t const len = (saveVersion < 10? 24 : (unsigned)reader.readInt32());
-    char *descBuf = (char *)malloc(len + 1);
+    dint8 *descBuf = (dint8 *)malloc(len + 1);
     DENG2_ASSERT(descBuf != 0);
     reader.read(descBuf, len);
-    metadata.set("userDescription",     String(descBuf, len));
+    metadata.set("userDescription",     String((char *)descBuf, len));
     free(descBuf); descBuf = 0;
 
     QScopedPointer<Record> rules(new Record);
@@ -622,7 +743,7 @@ struct ACScriptTask : public IWritable
     {
         mapNumber    = duint32(reader.readInt32());
         scriptNumber = reader.readInt32();
-        reader.read((char *)args, 4);
+        reader.read((dint8 *)args, 4);
     }
 
     void operator >> (Writer &to) const
@@ -728,8 +849,9 @@ static bool convertSavegame(Path oldSavePath)
             if(fmt->recognize(oldSavePath))
             {
                 LOG_VERBOSE("Recognized \"%s\" as a %s format savegame")
-                    << NativePath(oldSavePath).pretty() << fmt->textualId;
+                        << NativePath(oldSavePath).pretty() << fmt->textualId;
                 knownSaveFormat = fmt;
+                break;
             }
         }
 
@@ -840,7 +962,8 @@ static bool convertSavegame(Path oldSavePath)
     catch(Error const &er)
     {
         if(knownSaveFormat) saveFormat().closeFile();
-        LOG_ERROR("%s failed conversion:\n") << oldSavePath << er.asText();
+        LOG_ERROR("\"%s\" failed conversion:\n")
+                << NativePath(oldSavePath).pretty() << er.asText();
     }
 
     return false;
