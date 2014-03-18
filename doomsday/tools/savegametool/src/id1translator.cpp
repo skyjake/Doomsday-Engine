@@ -121,12 +121,6 @@ DENG2_PIMPL(Id1Translator)
         return saveFilePtr;
     }
 
-    bool recognize(Path /*path*/)
-    {
-        // id Tech 1 formats can't be recognized, they require "fuzzy" logic.
-        return false;
-    }
-
     void openFile(Path path)
     {
         DENG2_ASSERT(!"openFile -- not yet implemented");
