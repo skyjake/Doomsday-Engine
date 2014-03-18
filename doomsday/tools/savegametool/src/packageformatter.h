@@ -20,6 +20,7 @@
 #ifndef SAVEGAMETOOl_PACKAGEFORMATER_H
 #define SAVEGAMETOOl_PACKAGEFORMATER_H
 
+#include <QStringList>
 #include <de/Error>
 #include <de/Block>
 #include <de/game/SavedSession>
@@ -53,9 +54,26 @@ public:
     PackageFormatter(de::String textualId, int magic, QStringList knownExtensions,
                      QStringList baseGameIdKeys);
 
+    /**
+     * Formats .save package Info.
+     *
+     * @param metadata        Session metadata to be formatted.
+     * @param sourceFile      Path to the original source file being reformatted.
+     * @param oldSaveVersion  Original save format version.
+     *
+     * @return  Formated Info data.
+     */
     de::String composeInfo(SessionMetadata const &metadata, de::Path const &sourceFile,
                            de::dint32 oldSaveVersion) const;
 
+    /**
+     * Formats .save map state headers.
+     *
+     * @param magic        Native "magic" identifier, used for format recognition.
+     * @param saveVersion  Save format Version.
+     *
+     * @return  Prepared map state header block.
+     */
     de::Block *composeMapStateHeader(de::dint32 magic, de::dint32 saveVersion) const;
 
     /**

@@ -92,8 +92,6 @@ public:
 
 using namespace internal;
 using namespace de;
-using de::game::SavedSession;
-using de::game::SessionMetadata;
 
 DENG2_PIMPL(Id1Translator)
 {
