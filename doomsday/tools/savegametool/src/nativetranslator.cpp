@@ -1,4 +1,4 @@
-/** @file main.cpp  Savegame tool.
+/** @file nativetranslator.cpp  Savegame tool.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -27,6 +27,7 @@
 #include "nativetranslator.h"
 
 extern de::String fallbackGameId;
+extern de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
 
 namespace internal {
 

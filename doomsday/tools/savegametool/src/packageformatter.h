@@ -26,8 +26,6 @@
 #include <de/Path>
 #include <de/String>
 
-de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
-
 /**
  * Base class for .save package formatters.
  */

@@ -1,4 +1,4 @@
-/** @file nativetranslator.h  Savegame translator for old id-tech1 formats.
+/** @file id1translator.h  Savegame translator for old id-tech1 formats.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
