@@ -20,7 +20,14 @@ CONFIG -= app_bundle
 # Sources ----------------------------------------------------------------------
 
 SOURCES += \
-    src/main.cpp
+    src/id1translator.h \
+    src/packageformatter.h \
+    src/nativetranslator.h \
+    \
+    src/id1translator.cpp \
+    src/main.cpp \
+    src/nativetranslator.cpp \
+    src/packageformatter.cpp
 
 # Deployment -------------------------------------------------------------------
 
