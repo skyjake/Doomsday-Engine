@@ -74,6 +74,16 @@ void ScalarRule::finish()
     _animation.finish();
 }
 
+void ScalarRule::pause()
+{
+    _animation.pause();
+}
+
+void ScalarRule::resume()
+{
+    _animation.resume();
+}
+
 String ScalarRule::description() const
 {
     String desc = "Scalar(" + _animation.asText();

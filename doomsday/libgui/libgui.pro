@@ -79,6 +79,7 @@ publicHeaders(root, \
     include/de/NativeFont \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
+    include/de/TextureBank \
     include/de/VertexBuilder \
 )
 
@@ -120,6 +121,7 @@ publicHeaders(gui, \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
     include/de/gui/rowatlasallocator.h \
+    include/de/gui/texturebank.h \
     include/de/gui/vertexbuilder.h \
 )
 
@@ -158,10 +160,11 @@ SOURCES +=  \
     src/mouseeventsource.cpp \
     src/modeldrawable.cpp \
     src/nativefont.cpp \
+    src/qtnativefont.cpp \
     src/qtnativefont.h \
     src/persistentcanvaswindow.cpp \
     src/rowatlasallocator.cpp \
-    src/qtnativefont.cpp
+    src/texturebank.cpp
 
 macx:!deng_macx6_32bit_64bit: SOURCES += \
     src/coretextnativefont_macx.h \

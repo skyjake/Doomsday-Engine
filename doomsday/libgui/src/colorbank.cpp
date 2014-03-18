@@ -92,7 +92,7 @@ ColorBank::Color ColorBank::color(DotPath const &path) const
 ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
 {
     if(path.isEmpty()) return Colorf();
-    Vector4d clamped = static_cast<Instance::ColorData &>(data(path)).color;
+    Vector4d clamped = data(path).as<Instance::ColorData>().color;
     clamped = clamped.max(Vector4d(0, 0, 0, 0)).min(Vector4d(1, 1, 1, 1));
     return Colorf(float(clamped.x), float(clamped.y), float(clamped.z), float(clamped.w));
 }
@@ -104,7 +104,7 @@ Bank::ISource *ColorBank::newSourceFromInfo(String const &id)
 
 Bank::IData *ColorBank::loadFromSource(ISource &source)
 {
-    return new Instance::ColorData(static_cast<Instance::ColorSource &>(source).load());
+    return new Instance::ColorData(source.as<Instance::ColorSource>().load());
 }
 
 } // namespace de

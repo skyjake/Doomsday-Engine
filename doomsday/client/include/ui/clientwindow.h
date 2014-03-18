@@ -161,7 +161,7 @@ public:
     void canvasGLResized(de::Canvas &);
 
     // Implements BaseWindow.
-    de::Vector2f windowContentSize();
+    de::Vector2f windowContentSize() const;
     void drawWindowContent();
     void preDraw();
     void postDraw();

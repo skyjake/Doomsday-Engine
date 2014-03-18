@@ -32,6 +32,9 @@ template <typename VertexType>
 struct VertexBuilder
 {
     struct Vertices : public QVector<VertexType> {
+        Vertices() {
+            QVector<VertexType>::reserve(128);
+        }
         Vertices &operator += (Vertices const &other) {
             concatenate(other, *this);
             return *this;
@@ -87,27 +90,6 @@ struct VertexBuilder
             v.pos = p3; v.texCoord[0] = uv.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
-                           int divisions, Vector4f const &color, Rectanglef const &uv,
-                           float innerTexRadius = -1) {
-            if(innerTexRadius < 0) innerTexRadius = innerRadius / outerRadius;
-            Vertices ring;
-            VertexType v;
-            v.rgba = color;
-            for(int i = 0; i <= divisions; ++i) {
-                float const ang = 2 * PI * i / divisions;
-                Vector2f r(cos(ang), sin(ang));
-                // Outer.
-                v.pos = center + r * outerRadius;
-                v.texCoord = uv.middle() + r * .5f * uv.size();
-                ring << v;
-                // Inner.
-                v.pos = center + r * innerRadius;
-                v.texCoord = uv.middle() + r * (.5f * innerTexRadius) * uv.size();
-                ring << v;
-            }
-            return *this += ring;
-        }
         Vertices &makeCubeIndirect(Vector3f const &minPoint,
                                    Vector3f const &maxPoint,
                                    Rectanglef const &uv,
@@ -157,6 +139,27 @@ struct VertexBuilder
                              faceColors[5], uv, uvBounds, texSize);
 
             return *this;
+        }
+        Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
+                           int divisions, Vector4f const &color, Rectanglef const &uv,
+                           float innerTexRadius = -1) {
+            if(innerTexRadius < 0) innerTexRadius = innerRadius / outerRadius;
+            Vertices ring;
+            VertexType v;
+            v.rgba = color;
+            for(int i = 0; i <= divisions; ++i) {
+                float const ang = 2 * PI * (i == divisions? 0 : i) / divisions;
+                Vector2f r(cos(ang), sin(ang));
+                // Outer.
+                v.pos = center + r * outerRadius;
+                v.texCoord = uv.middle() + r * .5f * uv.size();
+                ring << v;
+                // Inner.
+                v.pos = center + r * innerRadius;
+                v.texCoord = uv.middle() + r * (.5f * innerTexRadius) * uv.size();
+                ring << v;
+            }
+            return *this += ring;
         }
         Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
                            int divisions, Vector4f const &color, Vector2f const &uv) {

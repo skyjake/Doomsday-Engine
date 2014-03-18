@@ -128,24 +128,26 @@ Path::hash_type PathTree::Node::hash() const
     return tree().segmentHash(d->segmentId);
 }
 
-/// @todo This logic should be encapsulated in de::Path or de::Path::Segment; use QChar.
-static int matchName(char const *string, char const *pattern)
+/// @todo This logic should be encapsulated in de::Path or de::Path::Segment.
+static int matchName(QChar const *string,  dsize stringSize,
+                     QChar const *pattern, dsize patternSize)
 {
-    char const *in = string, *st = pattern;
+    QChar const *in    = string;
+    QChar const *inEnd = string + stringSize;
+    QChar const *st    = pattern;
 
-    while(*in)
+    while(in < inEnd)
     {
-        if(*st == '*')
+        if(*st == QChar('*'))
         {
             st++;
             continue;
         }
 
-        if(*st != '?' && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
+        if(*st != QChar('?') && (st->toLower() != in->toLower()))
         {
             // A mismatch. Hmm. Go back to a previous '*'.
-            while(st >= pattern && *st != '*')
-            { st--; }
+            while(st >= pattern && *st != QChar('*')) { st--; }
 
             // No match?
             if(st < pattern) return false;
@@ -159,11 +161,10 @@ static int matchName(char const *string, char const *pattern)
     }
 
     // Skip remaining asterisks.
-    while(*st == '*')
-    { st++; }
+    while(*st == QChar('*')) { st++; }
 
     // Match is good if the end of the pattern was reached.
-    return *st == 0;
+    return st == (pattern + patternSize);
 }
 
 int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
@@ -182,7 +183,7 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
         PathTree::Node const *node = this;
         for(int i = 0; i < pathNodeCount; ++i)
         {
-            bool const snameIsWild = !snode->toString().compare("*");
+            bool const snameIsWild = !snode->toStringRef().compare("*");
             if(!snameIsWild)
             {
                 // If the hashes don't match it can't possibly be this.
@@ -192,11 +193,8 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
                 }
 
                 // Compare the names.
-                /// @todo Optimize: conversion to string is unnecessary.
-                QByteArray name  = node->name().toUtf8();
-                QByteArray sname = snode->toString().toUtf8();
-
-                if(!matchName(name.constData(), sname.constData()))
+                if(!matchName(node->name().constData(), node->name().size(),
+                              snode->toStringRef().constData(), snode->toStringRef().size()))
                 {
                     return 1;
                 }

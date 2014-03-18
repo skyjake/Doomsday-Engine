@@ -1230,14 +1230,14 @@ D_CMD(Help)
 #ifdef __CLIENT__
     LOG_SCR_MSG(_E(D) "Keys:" _E(.))
             << TABBED(DENG2_CHAR_SHIFT_KEY "Esc", "Open the taskbar and console")
+            << TABBED("Tab", "Autocomplete the word at the cursor")
+            << TABBED(DENG2_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
             << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
             << TABBED(DENG2_CHAR_SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
-            << TABBED("F5", "Clear the console message history")
             << TABBED("Home", "Move the cursor to the start of the command line")
             << TABBED("End", "Move the cursor to the end of the command line")
-            << TABBED("Tab", "Attempt autocompletion of the last word on the input line")
-            << TABBED(DENG2_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
-            << TABBED(DENG2_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position");
+            << TABBED(DENG2_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position")
+            << TABBED("F5", "Clear the console message history");
 #endif
     LOG_SCR_MSG(_E(D) "Getting started:");
     LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "help (what)" _E(.) " for information about " _E(l) "(what)");

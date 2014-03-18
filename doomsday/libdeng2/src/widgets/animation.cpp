@@ -25,6 +25,8 @@ namespace de {
 
 static float const DEFAULT_SPRING = 3.f;
 
+namespace internal {
+
 static inline float easeOut(TimeDelta t)
 {
     return t * (2 - t);
@@ -49,6 +51,16 @@ static inline float easeBoth(TimeDelta t)
     }
 }
 
+enum AnimationFlag
+{
+    Paused = 0x1
+};
+Q_DECLARE_FLAGS(AnimationFlags, AnimationFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationFlags)
+
+} // namespace internal
+using namespace internal;
+
 /// Global animation time source.
 Clock const *Animation::_clock = 0;
 
@@ -61,15 +73,17 @@ DENG2_PIMPL_NOREF(Animation)
     Time targetTime;
     Style style;
     float spring;
+    AnimationFlags flags;
+    Time pauseTime;
 
     Instance(float val, Style s)
-        : value(val),
-          target(val),
-          startDelay(0),
-          setTime(currentTime()),
-          targetTime(currentTime()),
-          style(s),
-          spring(DEFAULT_SPRING)
+        : value(val)
+        , target(val)
+        , startDelay(0)
+        , setTime   (Animation::currentTime())
+        , targetTime(Animation::currentTime())
+        , style(s)
+        , spring(DEFAULT_SPRING)
     {}
 
     /**
@@ -143,6 +157,12 @@ DENG2_PIMPL_NOREF(Animation)
 
         return target;
     }
+
+    Time const &currentTime() const
+    {
+        if(flags.testFlag(Paused)) return pauseTime;
+        return Animation::currentTime();
+    }
 };
 
 Animation::Animation(float val, Style s) : d(new Instance(val, s))
@@ -184,7 +204,9 @@ float Animation::bounce() const
 
 void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay)
 {
-    Time now = currentTime();
+    resume();
+
+    Time const &now = d->currentTime();
 
     if(transitionSpan <= 0)
     {
@@ -214,12 +236,12 @@ void Animation::setValueFrom(float fromValue, float toValue, TimeDelta transitio
 
 float Animation::value() const
 {
-    return d->valueAt(currentTime());
+    return d->valueAt(d->currentTime());
 }
 
 bool Animation::done() const
 {
-    return (currentTime() >= d->targetTime);
+    return (d->currentTime() >= d->targetTime);
 }
 
 float Animation::target() const
@@ -234,7 +256,7 @@ void Animation::adjustTarget(float newTarget)
 
 TimeDelta Animation::remainingTime() const
 {
-    Time const now = currentTime();
+    Time const &now = d->currentTime();
     if(now >= d->targetTime)
     {
         return 0;
@@ -246,6 +268,25 @@ void Animation::shift(float valueDelta)
 {
     d->value  += valueDelta;
     d->target += valueDelta;
+}
+
+void Animation::pause()
+{
+    if(d->flags.testFlag(Paused) || done()) return;
+
+    d->pauseTime = d->currentTime();
+    d->flags |= Paused;
+}
+
+void Animation::resume()
+{
+    if(!d->flags.testFlag(Paused)) return;
+
+    d->flags &= ~Paused;
+
+    TimeDelta const delta = d->currentTime() - d->pauseTime;
+    d->setTime    += delta;
+    d->targetTime += delta;
 }
 
 void Animation::finish()
@@ -270,7 +311,7 @@ Clock const &Animation::clock()
 
 void Animation::operator >> (Writer &to) const
 {
-    Time now = currentTime();
+    Time const &now = currentTime();
 
     to << d->value << d->target;
     // Write times relative to current frame time.
@@ -281,7 +322,7 @@ void Animation::operator >> (Writer &to) const
 
 void Animation::operator << (Reader &from)
 {
-    Time const now = currentTime();
+    Time const &now = currentTime();
 
     from >> d->value >> d->target;
 
@@ -306,7 +347,7 @@ void Animation::setClock(Clock const *clock)
     _clock = clock;
 }
 
-Time Animation::currentTime()
+Time const &Animation::currentTime()
 {
     DENG2_ASSERT(_clock != 0);
     if(!_clock)

@@ -147,6 +147,22 @@
 #  define DENG2_DEBUG_ONLY(x)
 #endif
 
+#ifdef DENG2_USE_QT
+#  ifdef UNIX
+#    include <execinfo.h>
+/**
+ * @macro DENG2_PRINT_BACKTRACE
+ * Debug utility for dumping the current backtrace using qDebug.
+ */
+#    define DENG2_PRINT_BACKTRACE() { \
+    void *callstack[128]; \
+    int i, frames = backtrace(callstack, 128); \
+    char** strs = backtrace_symbols(callstack, frames); \
+    for(i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
+    free(strs); }
+#  endif
+#endif
+
 /**
  * Macro for determining the name of a type (using RTTI).
  */

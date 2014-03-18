@@ -120,6 +120,18 @@ public:
     void shift(float valueDelta);
 
     /**
+     * Pauses the animation, if it is currently ongoing. resume() can then be called
+     * later to continue at a later point in time, with the end point appropriately
+     * postponed into the future.
+     */
+    void pause();
+
+    /**
+     * Resumes a previously paused animation.
+     */
+    void resume();
+
+    /**
      * Complete the ongoing transition immediately.
      */
     void finish();
@@ -159,7 +171,7 @@ public:
      */
     static void setClock(Clock const *clock);
 
-    static Time currentTime();
+    static Time const &currentTime();
 
     static Animation range(Style style, float from, float to, TimeDelta span, TimeDelta delay = 0);
 

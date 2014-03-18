@@ -287,6 +287,7 @@ DENG_HEADERS += \
     include/render/decoration.h \
     include/render/drawlist.h \
     include/render/drawlists.h \
+    include/render/fx/bloom.h \
     include/render/fx/colorfilter.h \
     include/render/fx/lensflares.h \
     include/render/fx/postprocessing.h \
@@ -617,6 +618,7 @@ SOURCES += \
     src/render/decoration.cpp \
     src/render/drawlist.cpp \
     src/render/drawlists.cpp \
+    src/render/fx/bloom.cpp \
     src/render/fx/colorfilter.cpp \
     src/render/fx/lensflares.cpp \
     src/render/fx/postprocessing.cpp \

@@ -110,57 +110,37 @@ group generic {
 }
 
 group fx {
+    # Blurring is done in two passes: horizontal and vertical. This is more
+    # efficient than doing the equivalent amount of blurring in a single pass.
     group blur {
         shader horizontal {
-            path.vertex = "shaders/blur.vsh"
-            fragment = "
-                uniform sampler2D uTex;
-                uniform highp vec2 uBlurStep;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
-                void main(void) {
-                    highp vec4 sum = vec4(0.0);
-                    sum += texture2D(uTex, vec2(vUV.s - 4.0 * uBlurStep.s, vUV.t)) * 0.05;
-                    sum += texture2D(uTex, vec2(vUV.s - 3.0 * uBlurStep.s, vUV.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s - 2.0 * uBlurStep.s, vUV.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s - uBlurStep.s,       vUV.t)) * 0.154;
-                    sum += texture2D(uTex, vUV)                                    * 0.165;
-                    sum += texture2D(uTex, vec2(vUV.s + uBlurStep.s,       vUV.t)) * 0.154;
-                    sum += texture2D(uTex, vec2(vUV.s + 2.0 * uBlurStep.s, vUV.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s + 3.0 * uBlurStep.s, vUV.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s + 4.0 * uBlurStep.s, vUV.t)) * 0.05;
-                    gl_FragColor = sum;
-                    gl_FragColor.a = 1.0;
-                }"
+            path.vertex   = "shaders/blur.vsh"
+            path.fragment = "shaders/blur-horizontal.fsh"
         }
         shader vertical {
-            path.vertex = "shaders/blur.vsh"
-            fragment = "
-                uniform sampler2D uTex;
-                uniform highp vec2 uBlurStep;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
-                void main(void) {
-                    highp vec4 sum = vec4(0.0);
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - 4.0 * uBlurStep.t)) * 0.05;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - 3.0 * uBlurStep.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - 2.0 * uBlurStep.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - uBlurStep.t      )) * 0.154;
-                    sum += texture2D(uTex, vUV)                                    * 0.165;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + uBlurStep.t      )) * 0.154;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + 2.0 * uBlurStep.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + 3.0 * uBlurStep.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + 4.0 * uBlurStep.t)) * 0.05;
-                    gl_FragColor = sum * vColor;
-                }"
+            path.vertex   = "shaders/blur.vsh"
+            path.fragment = "shaders/blur-vertical.fsh"
         }
     }
-    
+
+    # Bloom is a specialized additive blur that only applies to bright pixels 
+    # (given a configurable threshold for brightness).
+    group bloom {
+        shader horizontal {
+            path.vertex   = "shaders/bloom.vsh"
+            path.fragment = "shaders/bloom-horizontal.fsh"
+        }
+        shader vertical {
+            path.vertex   = "shaders/bloom.vsh"
+            path.fragment = "shaders/bloom-vertical.fsh"
+        }
+    }
+
     shader lensflares {
         path.vertex   = "shaders/lensflares.vsh"
         path.fragment = "shaders/lensflares.fsh"
     }
-    
+
     # Post-processing shaders need to have uFadeInOut (0..1) for
     # fading the effect in/out.
     group post {
