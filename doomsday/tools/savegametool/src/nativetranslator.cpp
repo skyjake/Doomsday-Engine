@@ -48,6 +48,11 @@ public:
         lzSeek(&file(), offset);
     }
 
+    void read(de::dint8 *data, int len)
+    {
+        lzRead(data, len, &file());
+    }
+
     LZReader &LZReader::operator >> (char &byte)
     {
         *this >> reinterpret_cast<de::duchar &>(byte);
@@ -96,11 +101,6 @@ public:
         return *this;
     }
 
-    void read(de::dint8 *data, int len)
-    {
-        lzRead(data, len, &file());
-    }
-
 private:
     LZFILE &file() const
     {
@@ -147,6 +147,21 @@ DENG2_PIMPL(NativeTranslator)
     ~Instance()
     {
         closeFile();
+    }
+
+    /**
+     * Returns the native "magic" identifier, used for format recognition.
+     */
+    dint32 magic() const
+    {
+        switch(id)
+        {
+        case Doom:    return 0x1DEAD666;
+        case Heretic: return 0x7D9A12C5;
+        case Hexen:   return 0x1B17CC00;
+        }
+        DENG2_ASSERT(!"NativeTranslator::formatName: Invalid format id");
+        return 0;
     }
 
     LZFILE *saveFile()
@@ -543,9 +558,9 @@ DENG2_PIMPL(NativeTranslator)
     }
 };
 
-NativeTranslator::NativeTranslator(FormatId formatId, String textualId, int magic,
-    QStringList knownExtensions, QStringList baseGameIdKeys)
-    : PackageFormatter(textualId, magic, knownExtensions, baseGameIdKeys)
+NativeTranslator::NativeTranslator(FormatId formatId, QStringList knownExtensions,
+                                   QStringList baseGameIdKeys)
+    : PackageFormatter(knownExtensions, baseGameIdKeys)
     , d(new Instance(this))
 {
     d->id = formatId;
@@ -553,6 +568,18 @@ NativeTranslator::NativeTranslator(FormatId formatId, String textualId, int magi
 
 NativeTranslator::~NativeTranslator()
 {}
+
+String NativeTranslator::formatName() const
+{
+    switch(d->id)
+    {
+    case Doom:      return "Doom";
+    case Heretic:   return "Heretic";
+    case Hexen:     return "Hexen";
+    }
+    DENG2_ASSERT(!"NativeTranslator::formatName: Invalid format id");
+    return "";
+}
 
 bool NativeTranslator::recognize(Path path)
 {
@@ -566,7 +593,7 @@ bool NativeTranslator::recognize(Path path)
         // Native save formats can be recognized by their "magic" byte identifier.
         dint32 oldMagic;
         *from >> oldMagic;
-        result = (oldMagic == magic);
+        result = (oldMagic == d->magic());
         delete from;
     }
     catch(...)
@@ -622,7 +649,7 @@ void NativeTranslator::convert(Path oldSavePath)
                 {
                     // Append the remaining translated data to header, forming the new serialized
                     // map state data file.
-                    Block *mapStateData = composeMapStateHeader(magic, d->saveVersion);
+                    Block *mapStateData = composeMapStateHeader(d->magic(), d->saveVersion);
                     *mapStateData += *xlatedData;
                     delete xlatedData;
 
@@ -642,7 +669,7 @@ void NativeTranslator::convert(Path oldSavePath)
         {
             // Append the remaining translated data to header, forming the new serialized
             // map state data file.
-            Block *mapStateData = composeMapStateHeader(magic, d->saveVersion);
+            Block *mapStateData = composeMapStateHeader(d->magic(), d->saveVersion);
             *mapStateData += *xlatedData;
             delete xlatedData;
 

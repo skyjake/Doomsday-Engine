@@ -26,11 +26,8 @@ using namespace de;
 
 extern String versionText();
 
-PackageFormatter::PackageFormatter(String textualId, int magic, QStringList knownExtensions,
-    QStringList baseGameIdKeys)
-    : textualId      (textualId)
-    , magic          (magic)
-    , knownExtensions(knownExtensions)
+PackageFormatter::PackageFormatter(QStringList knownExtensions, QStringList baseGameIdKeys)
+    : knownExtensions(knownExtensions)
     , baseGameIdKeys (baseGameIdKeys)
 {}
 

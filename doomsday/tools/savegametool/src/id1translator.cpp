@@ -1,4 +1,4 @@
-/** @file id1translator.cpp  Savegame translator for id-tech1 formats.
+/** @file id1translator.cpp  Savegame translator for id Tech1 formats.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -19,6 +19,7 @@
 
 #include <cstring> // memcpy
 #include <de/TextApp>
+#include <de/File>
 #include <de/FixedByteArray>
 #include <de/Reader>
 #include <de/Writer>
@@ -27,68 +28,6 @@
 
 extern de::String fallbackGameId;
 
-namespace internal {
-
-/**
- * Reader for the vanilla save format.
- */
-class Id1Reader
-{
-public:
-    de::Reader *_reader;
-    explicit Id1Reader(de::File &file)
-        : _reader(new de::Reader(file))
-    {}
-
-    de::dint8 readInt8()
-    {
-        de::dint8 val;
-        *_reader >> val;
-        return val;
-    }
-
-    de::dint16 readInt16()
-    {
-        de::dint16 val;
-        *_reader >> val;
-        return val;
-    }
-
-    de::dint32 readInt32()
-    {
-        de::dint32 val;
-        *_reader >> val;
-        return val;
-    }
-
-    de::dfloat readFloat()
-    {
-        DENG2_ASSERT(sizeof(float) == 4);
-        de::dint32 val;
-        *_reader >> val;
-        de::dfloat retVal = 0;
-        std::memcpy(&retVal, &val, 4);
-        return retVal;
-    }
-
-    void read(de::dint8 *data, int len)
-    {
-        if(data)
-        {
-            de::Block tmp(len);
-            *_reader >> de::FixedByteArray(tmp);
-            tmp.get(0, (de::Block::Byte *)data, len);
-        }
-        else
-        {
-            _reader->seek(len);
-        }
-    }
-};
-
-} // namespace internal
-
-using namespace internal;
 using namespace de;
 
 DENG2_PIMPL(Id1Translator)
@@ -107,6 +46,20 @@ DENG2_PIMPL(Id1Translator)
     ~Instance()
     {
         closeFile();
+    }
+
+    /**
+     * Returns the native "magic" identifier, used for format recognition.
+     */
+    dint32 magic() const
+    {
+        switch(id)
+        {
+        case DoomV9:     return 0x1DEAD666;
+        case HereticV13: return 0x7D9A12C5;
+        }
+        DENG2_ASSERT(!"Id1Translator::formatName: Invalid format id");
+        return 0;
     }
 
     File *saveFile()
@@ -141,26 +94,20 @@ DENG2_PIMPL(Id1Translator)
         }
     }
 
-    Id1Reader *newReader() const
-    {
-        return new Id1Reader(*const_cast<Instance *>(this)->saveFile());
-    }
-
     Block *bufferFile() const
     {
         DENG2_ASSERT(!"bufferFile -- not yet implemented");
         return 0;
     }
 
-    void translateInfo(SessionMetadata &/*metadata*/, Id1Reader &/*from*/)
+    void translateInfo(SessionMetadata &/*metadata*/, Reader &/*from*/)
     {
         DENG2_ASSERT(!"translateInfo -- not yet implemented");
     }
 };
 
-Id1Translator::Id1Translator(FormatId id, String textualId, int magic, QStringList knownExtensions,
-    QStringList baseGameIdKeys)
-    : PackageFormatter(textualId, magic, knownExtensions, baseGameIdKeys)
+Id1Translator::Id1Translator(FormatId id, QStringList knownExtensions, QStringList baseGameIdKeys)
+    : PackageFormatter(knownExtensions, baseGameIdKeys)
     , d(new Instance(this))
 {
     d->id = id;
@@ -168,6 +115,17 @@ Id1Translator::Id1Translator(FormatId id, String textualId, int magic, QStringLi
 
 Id1Translator::~Id1Translator()
 {}
+
+String Id1Translator::formatName() const
+{
+    switch(d->id)
+    {
+    case DoomV9:      return "Doom (id Tech 1)";
+    case HereticV13:  return "Heretic (id Tech 1)";
+    }
+    DENG2_ASSERT(!"Id1Translator::formatName: Invalid format id");
+    return "";
+}
 
 bool Id1Translator::recognize(Path /*path*/)
 {
@@ -184,7 +142,7 @@ void Id1Translator::convert(Path oldSavePath)
     String saveName = oldSavePath.lastSegment().toString();
 
     d->openFile(oldSavePath);
-    Id1Reader *from = d->newReader();
+    Reader *from = new Reader(*d->saveFile());
 
     // Read and translate the game session metadata.
     SessionMetadata metadata;
@@ -199,7 +157,7 @@ void Id1Translator::convert(Path oldSavePath)
     {
         // Append the remaining translated data to header, forming the new serialized
         // map state data file.
-        Block *mapStateData = composeMapStateHeader(magic, d->saveVersion);
+        Block *mapStateData = composeMapStateHeader(d->magic(), d->saveVersion);
         *mapStateData += *xlatedData;
         delete xlatedData;
 

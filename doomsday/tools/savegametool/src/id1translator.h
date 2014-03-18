@@ -1,4 +1,4 @@
-/** @file id1translator.h  Savegame translator for old id-tech1 formats.
+/** @file id1translator.h  Savegame translator for id Tech1 formats.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -32,9 +32,10 @@ public:
     };
 
 public:
-    Id1Translator(FormatId id, de::String textualId, int magic, QStringList knownExtensions,
-                  QStringList baseGameIdKeys);
+    Id1Translator(FormatId id, QStringList knownExtensions, QStringList baseGameIdKeys);
     virtual ~Id1Translator();
+
+    de::String formatName() const;
 
     bool recognize(de::Path path);
 

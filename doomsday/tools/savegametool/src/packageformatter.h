@@ -45,20 +45,15 @@ public:
     /// The source file format is unknown/unsupported. @ingroup errors
     DENG2_SUB_ERROR(ReadError, UnknownFormatError);
 
-    de::String textualId;
-    int magic;
     QStringList knownExtensions;
     QStringList baseGameIdKeys;
 
 public:
     /**
-     * @param textualId        Textual identifier for the format, used for log/error messages.
-     * @param magic            Native "magic" identifier, used for format recognition.
      * @param knownExtensions  List of known file extensions for the format.
      * @param baseGameIdKeys   List of supported base game identity keys for the format.
      */
-    PackageFormatter(de::String textualId, int magic, QStringList knownExtensions,
-                     QStringList baseGameIdKeys);
+    PackageFormatter(QStringList knownExtensions, QStringList baseGameIdKeys);
 
     /**
      * Formats .save package Info.
@@ -81,6 +76,11 @@ public:
      * @return  Prepared map state header block.
      */
     de::Block *composeMapStateHeader(de::dint32 magic, de::dint32 saveVersion) const;
+
+    /**
+     * Returns the textual name for the format, used for log/error messages.
+     */
+    virtual de::String formatName() const = 0;
 
     /**
      * Attempt to recognize the format of the given file.

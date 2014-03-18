@@ -36,13 +36,13 @@ static FormatTranslators translators;
 static void initTranslators()
 {
     // Add Doomsday-native formats:
-    translators << new NativeTranslator(NativeTranslator::Doom,    "Doom",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    translators << new NativeTranslator(NativeTranslator::Heretic, "Heretic", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
-    translators << new NativeTranslator(NativeTranslator::Hexen,   "Hexen",   0x1B17CC00, QStringList(".hxs"), QStringList() << "hexen");
+    translators << new NativeTranslator(NativeTranslator::Doom,    QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
+    translators << new NativeTranslator(NativeTranslator::Heretic, QStringList(".hsg"), QStringList() << "heretic");
+    translators << new NativeTranslator(NativeTranslator::Hexen,   QStringList(".hxs"), QStringList() << "hexen");
 
-    // Add IdTech1 formats:
-    translators << new Id1Translator(Id1Translator::DoomV9,     "Doom (id Tech 1)",    0x1DEAD666, QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    translators << new Id1Translator(Id1Translator::HereticV13, "Heretic (id Tech 1)", 0x7D9A12C5, QStringList(".hsg"), QStringList() << "heretic");
+    // Add id Tech1 formats:
+    translators << new Id1Translator(Id1Translator::DoomV9,     QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
+    translators << new Id1Translator(Id1Translator::HereticV13, QStringList(".hsg"), QStringList() << "heretic");
 }
 
 static void printUsage()
@@ -125,7 +125,7 @@ static bool convertSavegame(Path oldSavePath)
             if(fmt->recognize(oldSavePath))
             {
                 LOG_VERBOSE("Recognized \"%s\" as a %s format savegame")
-                        << NativePath(oldSavePath).pretty() << fmt->textualId;
+                        << NativePath(oldSavePath).pretty() << fmt->formatName();
                 knownTranslator = fmt;
                 break;
             }

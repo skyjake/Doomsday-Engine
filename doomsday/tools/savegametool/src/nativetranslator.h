@@ -39,9 +39,10 @@ public:
     };
 
 public:
-    NativeTranslator(FormatId formatId, de::String textualId, int magic,
-                     QStringList knownExtensions, QStringList baseGameIdKeys);
+    NativeTranslator(FormatId formatId, QStringList knownExtensions, QStringList baseGameIdKeys);
     virtual ~NativeTranslator();
+
+    de::String formatName() const;
 
     bool recognize(de::Path path);
 
