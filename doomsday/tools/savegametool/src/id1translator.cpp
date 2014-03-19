@@ -122,9 +122,9 @@ DENG2_PIMPL(Id1Translator)
         {
             Block tmp(24);
             from >> FixedByteArray(tmp);
-            char descBuf[24];
-            tmp.get(0, (Block::Byte *)descBuf, 24);
-            metadata.set("userDescription", String(descBuf, 24));
+            char descBuf[24 + 1];
+            tmp.get(0, (Block::Byte *)descBuf, 24); descBuf[24] = 0;
+            metadata.set("userDescription", descBuf);
         }
 
         {
@@ -152,8 +152,8 @@ DENG2_PIMPL(Id1Translator)
         uint episode, map;
         from.readAs<dchar>(episode);
         from.readAs<dchar>(map);
-        DENG2_ASSERT(episode > 0 && map > 0);
-        metadata.set("mapUri", composeMapUriPath(episode - 1, map - 1).asText());
+        DENG2_ASSERT(map > 0);
+        metadata.set("mapUri", composeMapUriPath(episode, map - 1).asText());
 
         ArrayValue *array = new ArrayValue;
         int idx = 0;

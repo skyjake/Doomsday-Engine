@@ -17,9 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDebug>
 #include <QList>
-#include <QMutableListIterator>
 #include <QtAlgorithms>
 #include <de/DirectoryFeed>
 #include <de/TextApp>
@@ -188,7 +186,7 @@ int main(int argc, char **argv)
                     if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
                     {
                         fallbackGameId = args.at(i + 1).strip().toLower();
-                        i += 2;
+                        i += 1;
                     }
                     continue;
                 }

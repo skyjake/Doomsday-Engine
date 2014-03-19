@@ -18,6 +18,8 @@
  */
 
 #include "lzss.h"
+#include <QList>
+#include <QMutableListIterator>
 #include <de/TextApp>
 #include <de/ArrayValue>
 #include <de/NativeFile>
