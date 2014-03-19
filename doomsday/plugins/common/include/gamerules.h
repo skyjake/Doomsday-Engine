@@ -49,7 +49,7 @@ public:
     GameRuleset(GameRuleset const &other);
 
     static GameRuleset *fromReader(Reader *reader);
-    static GameRuleset *fromRecord(de::Record const &rec);
+    static GameRuleset *fromRecord(de::Record const &rec, GameRuleset const *defaults = 0);
 
     GameRuleset &operator = (GameRuleset const &other);
 

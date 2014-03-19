@@ -58,23 +58,32 @@ GameRuleset *GameRuleset::fromReader(reader_s *reader) // static
     return rules;
 }
 
-GameRuleset *GameRuleset::fromRecord(Record const &rec) // static
+GameRuleset *GameRuleset::fromRecord(Record const &record, GameRuleset const *defaults) // static
 {
     GameRuleset *rules = new GameRuleset;
 
+    Record const *rec = &record;
+    if(defaults)
+    {
+        Record *merged = defaults->toRecord();
+        merged->copyMembersFrom(record);
+        rec = merged;
+    }
+
     /// @todo Info keys are converted to lowercase when parsed.
-    rules->skill           = rec.geti("skill");
+    rules->skill           = rec->geti("skill");
 #if !__JHEXEN__
-    rules->fast            = byte( rec.geti("fast") );
+    rules->fast            = byte( rec->geti("fast") );
 #endif
-    rules->deathmatch      = byte( rec.geti("deathmatch") );
-    rules->noMonsters      = byte( rec.geti("nomonsters") );
+    rules->deathmatch      = byte( rec->geti("deathmatch") );
+    rules->noMonsters      = byte( rec->geti("nomonsters") );
 #if __JHEXEN__
-    rules->randomClasses   = byte( rec.geti("randomclasses") );
+    rules->randomClasses   = byte( rec->geti("randomclasses") );
 #else
-    rules->respawnMonsters = byte( rec.geti("respawnmonsters") );
+    rules->respawnMonsters = byte( rec->geti("respawnmonsters") );
 #endif
 
+    if(rec != &record) delete const_cast<Record *>(rec);
     return rules;
 }
 

@@ -3249,11 +3249,29 @@ void G_DoLoadSession(de::String slotId)
         /*
          * Load the map and configure some game settings.
          */
-        de::game::SessionMetadata const &metadata = session.metadata();
         briefDisabled = true;
 
-        Uri *mapUri        = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
-        GameRuleset *rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+        de::game::SessionMetadata const &metadata = session.metadata();
+        Uri *mapUri = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
+
+        // Ensure a complete ruleset is available.
+        GameRuleset *rules;
+        try
+        {
+            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+        }
+        catch(de::Record::NotFoundError const &)
+        {
+            // The game rules are incomplete. Likely because they were missing from a savegame that
+            // was converted from a vanilla format (in which most of these values are omitted).
+            // Therefore we must assume the user has correctly configured the session accordingly.
+            LOG_WARNING("Using current game rules as basis for loading savegame \"%s\"."
+                        " (The original save format omits this information).")
+                    << de::NativePath(pack.path()).pretty();
+
+            // Use the current rules as our basis.
+            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &G_Rules());
+        }
 
         G_NewSession(mapUri, 0/*not saved??*/, rules);
         G_SetGameAction(GA_NONE); /// @todo Necessary?
