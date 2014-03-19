@@ -21,6 +21,7 @@
 #include <QList>
 #include <QMutableListIterator>
 #include <QtAlgorithms>
+#include <de/DirectoryFeed>
 #include <de/TextApp>
 #include <de/Time>
 #include "id1translator.h"
@@ -114,55 +115,43 @@ static PackageFormatter &translator()
 }
 
 /// @param oldSavePath  Path to the game state file [.dsg | .hsg | .hxs]
-static bool convertSavegame(Path oldSavePath)
+static void convertSavegame(Path inputPath)
 {
-    /// @todo try all known extensions at the given path, if not specified.
-    String saveName = oldSavePath.lastSegment().toString();
-
-    try
+    foreach(PackageFormatter *xlator, translators)
     {
-        foreach(PackageFormatter *fmt, translators)
+        if(xlator->recognize(inputPath))
         {
-            if(fmt->recognize(oldSavePath))
-            {
-                LOG_VERBOSE("Recognized \"%s\" as a %s format savegame")
-                        << NativePath(oldSavePath).pretty() << fmt->formatName();
-                knownTranslator = fmt;
-                break;
-            }
+            LOG_VERBOSE("Recognized \"%s\" as a %s format savegame")
+                    << NativePath(inputPath).pretty() << xlator->formatName();
+            knownTranslator = xlator;
+            break;
         }
-
-        // Still unknown? Try again with "fuzzy" logic.
-        if(!knownTranslator)
-        {
-            // Unknown magic
-            if(!fallbackGameId.isEmpty())
-            {
-                // Use whichever format is applicable for the specified identity key.
-                knownTranslator = saveFormatForGameIdentityKey(fallbackGameId);
-            }
-            else if(!saveName.fileNameExtension().isEmpty())
-            {
-                // We'll try to guess the save format...
-                knownTranslator = guessSaveFormatFromFileName(saveName);
-            }
-        }
-
-        if(knownTranslator)
-        {
-            translator().convert(oldSavePath);
-            return true;
-        }
-        /// @throw Error  Ambigous/unknown format.
-        throw Error("convertSavegame", "Format of \"" + NativePath(oldSavePath).pretty() + "\" is unknown");
-    }
-    catch(Error const &er)
-    {
-        LOG_ERROR("\"%s\" failed conversion:\n")
-                << NativePath(oldSavePath).pretty() << er.asText();
     }
 
-    return false;
+    // Still unknown? Try again with "fuzzy" logic.
+    if(!knownTranslator)
+    {
+        // Unknown magic
+        if(!fallbackGameId.isEmpty())
+        {
+            // Use whichever format is applicable for the specified identity key.
+            knownTranslator = saveFormatForGameIdentityKey(fallbackGameId);
+        }
+        else if(!inputPath.toString().fileNameExtension().isEmpty())
+        {
+            // We'll try to guess the save format...
+            knownTranslator = guessSaveFormatFromFileName(inputPath);
+        }
+    }
+
+    if(knownTranslator)
+    {
+        translator().convert(inputPath);
+        return;
+    }
+
+    /// @throw Error  Ambigous/unknown format.
+    throw Error("convertSavegame", "Format of \"" + NativePath(inputPath).pretty() + "\" is unknown");
 }
 
 int main(int argc, char **argv)
@@ -200,10 +189,50 @@ int main(int argc, char **argv)
             // Scan the command line arguments looking for savegame names/paths.
             for(int i = 1; i < args.count(); ++i)
             {
-                if(args.at(i).first() != '-') // Not an option?
+                if(args.at(i).first() == '-') // Not an option?
+                    continue;
+
+                // Process the named savegame on this input path.
+                args.makeAbsolutePath(i);
+                Path const inputPath = NativePath(args.at(i)).withSeparators('/');
+
+                // A file name is required.
+                if(inputPath.fileName().isEmpty())
                 {
-                    // Process this savegame.
-                    convertSavegame(args.at(i));
+                    LOG_ERROR("\"%s\" is missing a file name, cannot convert")
+                            << NativePath(inputPath).pretty();
+                    continue;
+                }
+
+                // Ensure we have read access to the input folder on the local fs.
+                NativePath nativeInputFolderPath = inputPath.toString().fileNamePath();
+                if(!nativeInputFolderPath.exists() || !nativeInputFolderPath.isReadable())
+                {
+                    LOG_ERROR("\"%s\" is not accessible (insufficient permissions?) and will not be converted")
+                            << NativePath(inputPath).pretty();
+                    continue;
+                }
+
+                // Clear the virtual /input folder in native fs if it already exists.
+                if(Folder *existingFolder = app.rootFolder().tryLocate<Folder>("/input"))
+                {
+                    delete existingFolder;
+                }
+
+                // Repopulate the /input folder using the input folder on the local fs.
+                Folder &inputFolder = app.fileSystem().makeFolder("/input");
+                inputFolder.attach(new DirectoryFeed(nativeInputFolderPath));
+                inputFolder.populate(Folder::PopulateOnlyThisFolder);
+
+                // Convert the named save game.
+                try
+                {
+                    convertSavegame(Path("/input") / inputPath.fileName());
+                }
+                catch(Error const &er)
+                {
+                    LOG_ERROR("\"%s\" failed conversion:\n")
+                            << NativePath(inputPath).pretty() << er.asText();
                 }
             }
         }

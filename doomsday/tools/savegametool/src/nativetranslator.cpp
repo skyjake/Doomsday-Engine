@@ -20,6 +20,7 @@
 #include "lzss.h"
 #include <de/TextApp>
 #include <de/ArrayValue>
+#include <de/NativeFile>
 #include <de/NumberValue>
 #include <de/Writer>
 #include <de/ZipArchive>
@@ -256,12 +257,14 @@ DENG2_PIMPL(NativeTranslator)
 
     void openFile(Path path)
     {
-        LOG_TRACE("openFile: Opening \"%s\"") << NativePath(path).pretty();
+        LOG_TRACE("openFile: Opening \"%s\"") << path;
+        NativeFile const &nativeFile = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path);
         DENG2_ASSERT(saveFilePtr == 0);
-        saveFilePtr = lzOpen(NativePath(path).expand().toUtf8().constData(), "rp");
+        NativePath const nativeFilePath = nativeFile.nativePath();
+        saveFilePtr = lzOpen(nativeFilePath.toUtf8().constData(), "rp");
         if(!saveFilePtr)
         {
-            throw FileOpenError("NativeTranslator", "Failed opening \"" + NativePath(path).pretty() + "\"");
+            throw FileOpenError("NativeTranslator", "LZSS module failed to open \"" + nativeFilePath.pretty() + "\"");
         }
     }
 
@@ -337,7 +340,9 @@ DENG2_PIMPL(NativeTranslator)
         // User description. A fixed 24 characters in length in "really old" versions.
         dint32 len = 24;
         if(saveVersion >= 10)
+        {
             from >> len;
+        }
         dint8 *descBuf = (dint8 *)malloc(len + 1);
         DENG2_ASSERT(descBuf != 0);
         from.read(descBuf, len);
@@ -585,7 +590,7 @@ bool NativeTranslator::recognize(Path path)
 {
     LOG_AS("NativeTranslator");
 
-    bool result = false;
+    bool recognized = false;
     try
     {
         d->openFile(path);
@@ -593,13 +598,13 @@ bool NativeTranslator::recognize(Path path)
         // Native save formats can be recognized by their "magic" byte identifier.
         dint32 oldMagic;
         *from >> oldMagic;
-        result = (oldMagic == d->magic());
+        recognized = (oldMagic == d->magic());
         delete from;
     }
     catch(...)
     {}
     d->closeFile();
-    return result;
+    return recognized;
 }
 
 void NativeTranslator::convert(Path path)
