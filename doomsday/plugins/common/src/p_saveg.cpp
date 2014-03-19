@@ -69,18 +69,18 @@ SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
         {
             p.reset(new MapStateReader(session));
         }
-/*#if __JDOOM__
-        else if(magic == ?)
+#if __JDOOM__
+        else if(magic == 0x1DEAD600) // DoomV9
         {
-            p.reset(new DoomV9MapStateReader(session)); // DoomV9
+            p.reset(new DoomV9MapStateReader(session));
         }
 #endif
 #if __JHERETIC__
-        else if(magic == ?)
+        else if(magic == 0x7D9A1200) // HereticV13
         {
-            p.reset(new HereticV13MapStateReader(session)); // HereticV13
+            p.reset(new HereticV13MapStateReader(session));
         }
-#endif*/
+#endif
         SV_CloseFile();
         if(p.get())
         {
