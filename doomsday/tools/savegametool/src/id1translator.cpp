@@ -20,8 +20,8 @@
 #include <cstring> // memcpy
 #include <de/TextApp>
 #include <de/ArrayValue>
-#include <de/File>
 #include <de/FixedByteArray>
+#include <de/NativeFile>
 #include <de/NumberValue>
 #include <de/Reader>
 #include <de/Writer>
@@ -36,7 +36,7 @@ using namespace de;
 DENG2_PIMPL(Id1Translator)
 {
     FormatId id;
-    File *saveFilePtr;
+    NativeFile const *saveFilePtr;
     dint32 saveVersion;
 
     Instance(Public *i)
@@ -65,10 +65,15 @@ DENG2_PIMPL(Id1Translator)
         return 0;
     }
 
-    File *saveFile()
+    bool knownFormatVersion(int verId) const
     {
-        DENG2_ASSERT(saveFilePtr != 0);
-        return saveFilePtr;
+        switch(id)
+        {
+        case DoomV9:     return verId == 90;
+        case HereticV13: return verId == 130;
+        }
+        DENG2_ASSERT(!"Id1Translator::knownFormatVersion: Invalid format id");
+        return false;
     }
 
     File const *saveFile() const
@@ -79,14 +84,17 @@ DENG2_PIMPL(Id1Translator)
 
     void openFile(Path path)
     {
-        DENG2_ASSERT(!"openFile -- not yet implemented");
-        /*LOG_TRACE("openFile: Opening \"%s\"") << NativePath(path).pretty();
+        LOG_TRACE("openFile: Opening \"%s\"") << NativePath(path).pretty();
         DENG2_ASSERT(saveFilePtr == 0);
-        saveFilePtr = 0;
-        if(!saveFilePtr)
+        try
         {
-            throw FileOpenError("Id1Translator", "Failed opening \"" + NativePath(path).pretty() + "\"");
-        }*/
+            saveFilePtr = &DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path);
+            return;
+        }
+        catch(...)
+        {}
+        closeFile();
+        throw FileOpenError("Id1Translator", "Failed opening \"" + NativePath(path).pretty() + "\"");
     }
 
     void closeFile()
@@ -123,7 +131,6 @@ DENG2_PIMPL(Id1Translator)
             from >> FixedByteArray(tmp);
             char vcheck[16 + 1];
             tmp.get(0, (Block::Byte *)vcheck, tmp.size()); vcheck[16] = 0;
-            //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
             metadata.set("version", String(vcheck[8], 8).toInt(0, 10, String::AllowSuffix));
         }
 
@@ -200,11 +207,36 @@ String Id1Translator::formatName() const
     return "";
 }
 
-bool Id1Translator::recognize(Path /*path*/)
+bool Id1Translator::recognize(Path path)
 {
     LOG_AS("Id1Translator");
-    // id Tech1 save formats cannot be recognized, "fuzzy" logic is required.
-    return false;
+
+    bool recognized = false;
+    try
+    {
+        d->openFile(path);
+        Reader from(*d->saveFile());
+        // We'll use the version number string for recognition purposes.
+        // Seek past the user description.
+        from.seek(24);
+        Block tmp(16);
+        from >> FixedByteArray(tmp);
+        char vcheck[16 + 1];
+        tmp.get(0, (Block::Byte *)vcheck, tmp.size()); vcheck[16] = 0;
+        if(!String(vcheck, 8).compare("version "))
+        {
+            // The version id can be used to determine which game format the save is in.
+            int verId = String(vcheck + 8).toInt(0, 10, String::AllowSuffix);
+            if(d->knownFormatVersion(verId))
+            {
+                recognized = true;
+            }
+        }
+    }
+    catch(...)
+    {}
+    d->closeFile();
+    return recognized;
 }
 
 void Id1Translator::convert(Path path)
