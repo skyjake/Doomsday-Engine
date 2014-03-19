@@ -75,7 +75,7 @@ GameRuleset *GameRuleset::fromRecord(Record const &record, GameRuleset const *de
 #if !__JHEXEN__
     if(!defaults || rec->has("fast"))            rules->fast            = byte( rec->geti("fast") );
 #endif
-    if(!defaults || rec->has("deatchmath"))      rules->deathmatch      = byte( rec->geti("deathmatch") );
+    if(!defaults || rec->has("deathmatch"))      rules->deathmatch      = byte( rec->geti("deathmatch") );
     if(!defaults || rec->has("nomonsters"))      rules->noMonsters      = byte( rec->geti("nomonsters") );
 #if __JHEXEN__
     if(!defaults || rec->has("randomclasses"))   rules->randomClasses   = byte( rec->geti("randomclasses") );
