@@ -114,7 +114,7 @@ static PackageFormatter &translator()
     throw Error("translator", "Current save format is unknown");
 }
 
-/// @param oldSavePath  Path to the game state file [.dsg | .hsg | .hxs]
+/// @param inputPath  Path to the game state file [.dsg | .hsg | .hxs] in the vfs.
 static void convertSavegame(Path inputPath)
 {
     foreach(PackageFormatter *xlator, translators)
@@ -180,17 +180,18 @@ int main(int argc, char **argv)
         }
         else
         {
-            // Was a fallback game identity key specified?
-            if(int arg = args.check("-idkey", 1))
-            {
-                fallbackGameId = args.at(arg + 1).strip().toLower();
-            }
-
-            // Scan the command line arguments looking for savegame names/paths.
             for(int i = 1; i < args.count(); ++i)
             {
-                if(args.at(i).first() == '-') // Not an option?
+                if(args.isOption(i))
+                {
+                    // Was a fallback game identity key specified?
+                    if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
+                    {
+                        fallbackGameId = args.at(i + 1).strip().toLower();
+                        i += 2;
+                    }
                     continue;
+                }
 
                 // Process the named savegame on this input path.
                 args.makeAbsolutePath(i);
@@ -221,6 +222,7 @@ int main(int argc, char **argv)
 
                 // Repopulate the /input folder using the input folder on the local fs.
                 Folder &inputFolder = app.fileSystem().makeFolder("/input");
+                inputFolder.setMode(Folder::ReadOnly);
                 inputFolder.attach(new DirectoryFeed(nativeInputFolderPath));
                 inputFolder.populate(Folder::PopulateOnlyThisFolder);
 

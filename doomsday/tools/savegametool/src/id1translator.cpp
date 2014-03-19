@@ -20,6 +20,7 @@
 #include <cstring> // memcpy
 #include <de/TextApp>
 #include <de/ArrayValue>
+#include <de/File>
 #include <de/FixedByteArray>
 #include <de/NativeFile>
 #include <de/NumberValue>
@@ -36,7 +37,7 @@ using namespace de;
 DENG2_PIMPL(Id1Translator)
 {
     FormatId id;
-    NativeFile const *saveFilePtr;
+    File const *saveFilePtr;
     dint32 saveVersion;
 
     Instance(Public *i)
@@ -58,8 +59,8 @@ DENG2_PIMPL(Id1Translator)
     {
         switch(id)
         {
-        case DoomV9:     return 0x1DEAD666;
-        case HereticV13: return 0x7D9A12C5;
+        case DoomV9:     return 0x1DEAD600;
+        case HereticV13: return 0x7D9A1200;
         }
         DENG2_ASSERT(!"Id1Translator::magic: Invalid format id");
         return 0;
@@ -84,17 +85,17 @@ DENG2_PIMPL(Id1Translator)
 
     void openFile(Path path)
     {
-        LOG_TRACE("openFile: Opening \"%s\"") << NativePath(path).pretty();
+        LOG_TRACE("openFile: Opening \"%s\"") << path;
         DENG2_ASSERT(saveFilePtr == 0);
         try
         {
-            saveFilePtr = &DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path);
+            saveFilePtr = &DENG2_TEXT_APP->fileSystem().find<File const>(path);
             return;
         }
         catch(...)
         {}
         closeFile();
-        throw FileOpenError("Id1Translator", "Failed opening \"" + NativePath(path).pretty() + "\"");
+        throw FileOpenError("Id1Translator", "Failed opening \"" + path + "\"");
     }
 
     void closeFile()
@@ -105,10 +106,10 @@ DENG2_PIMPL(Id1Translator)
         }
     }
 
-    Block *bufferFile() const
+    Block *bufferFile(Reader &from) const
     {
-        DENG2_ASSERT(!"bufferFile -- not yet implemented");
-        return 0;
+        IByteArray const &source = *from.source();
+        return new Block(source, from.offset(), source.size() - from.offset());
     }
 
     void translateMetadata(SessionMetadata &metadata, Reader &from)
@@ -131,7 +132,9 @@ DENG2_PIMPL(Id1Translator)
             from >> FixedByteArray(tmp);
             char vcheck[16 + 1];
             tmp.get(0, (Block::Byte *)vcheck, tmp.size()); vcheck[16] = 0;
-            metadata.set("version", String(vcheck[8], 8).toInt(0, 10, String::AllowSuffix));
+            saveVersion = String(vcheck + 8).toInt(0, 10, String::AllowSuffix);
+            DENG2_ASSERT(knownFormatVersion(saveVersion));
+            metadata.set("version", 14);
         }
 
         // Id Tech 1 formats omitted the majority of the game rules...
@@ -160,7 +163,7 @@ DENG2_PIMPL(Id1Translator)
             from >> playerPresent;
             *array << NumberValue(playerPresent != 0, NumberValue::Boolean);
         }
-        while(idx++ < MAXPLAYERS)
+        while(idx++ <= MAXPLAYERS)
         {
             *array << NumberValue(false, de::NumberValue::Boolean);
         }
@@ -173,9 +176,12 @@ DENG2_PIMPL(Id1Translator)
         from.readAs<dchar>(c);
         metadata.set("mapTime", ((a << 16) + (b << 8) + c));
 
-        /// @note Kludge: Assume the current game mode.
+        if(fallbackGameId.isEmpty())
+        {
+            /// @throw Error Game identity key could not be determined unambiguously.
+            throw AmbigousGameIdError("translateMetadata", "Game identity key is ambiguous");
+        }
         metadata.set("gameIdentityKey",     fallbackGameId);
-        /// Kludge end.
 
         metadata.set("sessionId",           0);
 
@@ -247,22 +253,23 @@ void Id1Translator::convert(Path path)
     String saveName = path.lastSegment().toString();
 
     d->openFile(path);
-    Reader *from = new Reader(*d->saveFile());
+    String const nativeFilePath = d->saveFile()->source()->as<NativeFile>().nativePath();
+    QScopedPointer<Reader> from(new Reader(*d->saveFile()));
 
     // Read and translate the game session metadata.
     SessionMetadata metadata;
     d->translateMetadata(metadata, *from);
 
     ZipArchive arch;
-    arch.add("Info", composeInfo(metadata, path, 1).toUtf8());
+    arch.add("Info", composeInfo(metadata, nativeFilePath, d->saveVersion).toUtf8());
 
     // The only serialized map state follows the session metadata in the game state file.
     // Buffer the rest of the file and write it out to a new map state file.
-    if(Block *xlatedData = d->bufferFile())
+    if(Block *xlatedData = d->bufferFile(*from))
     {
         // Append the remaining translated data to header, forming the new serialized
         // map state data file.
-        Block *mapStateData = composeMapStateHeader(d->magic(), d->saveVersion);
+        Block *mapStateData = composeMapStateHeader(d->magic(), 14);
         *mapStateData += *xlatedData;
         delete xlatedData;
 
@@ -270,7 +277,6 @@ void Id1Translator::convert(Path path)
         delete mapStateData;
     }
 
-    delete from;
     d->closeFile();
 
     File &outFile = DENG2_TEXT_APP->homeFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");

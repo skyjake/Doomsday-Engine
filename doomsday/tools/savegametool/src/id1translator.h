@@ -28,6 +28,9 @@
 class Id1Translator : public PackageFormatter
 {
 public:
+    /// The game identity key of the source data is ambious. @ingroup errors
+    DENG2_SUB_ERROR(ReadError, AmbigousGameIdError);
+
     /// Logical identifiers for supported save formats.
     enum FormatId {
         DoomV9,

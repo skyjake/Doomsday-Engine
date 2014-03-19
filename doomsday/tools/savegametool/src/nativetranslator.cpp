@@ -615,6 +615,7 @@ void NativeTranslator::convert(Path path)
     String saveName = path.lastSegment().toString();
 
     d->openFile(path);
+    String const nativeFilePath = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath().toString();
     LZReader *from = d->newReader();
 
     // Read and translate the game session metadata.
@@ -622,7 +623,7 @@ void NativeTranslator::convert(Path path)
     d->translateMetadata(metadata, *from);
 
     ZipArchive arch;
-    arch.add("Info", composeInfo(metadata, path, d->saveVersion).toUtf8());
+    arch.add("Info", composeInfo(metadata, nativeFilePath, d->saveVersion).toUtf8());
 
     if(d->id == Hexen)
     {
