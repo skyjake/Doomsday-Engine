@@ -355,6 +355,8 @@ bool PopupWidget::handleEvent(Event const &event)
 
 void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
+    if(rule().recti().isNull()) return; // Still closed.
+
     PanelWidget::glMakeGeometry(verts);
 
     ui::Direction const dir = openingDirection();

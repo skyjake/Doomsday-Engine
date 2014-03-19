@@ -144,22 +144,24 @@ DotPath Widget::path() const
 bool Widget::hasRoot() const
 {
     Widget const *w = this;
-    while(w)
+    // Root widgets do not have a parent.
+    while(w->parent())
     {
-        if(dynamic_cast<RootWidget const *>(w)) return true;
         w = w->parent();
     }
-    return false;
+    return w->is<RootWidget>();
 }
 
 RootWidget &Widget::root() const
 {
     Widget const *w = this;
-    while(w)
+    while(w->parent())
     {
-        RootWidget const *rw = dynamic_cast<RootWidget const *>(w);
-        if(rw) return *const_cast<RootWidget *>(rw);
         w = w->parent();
+    }
+    if(w->is<RootWidget>())
+    {
+        return const_cast<RootWidget &>(w->as<RootWidget>());
     }
     throw NotFoundError("Widget::root", "No root widget found");
 }

@@ -18,6 +18,7 @@
 
 #include "de/ProgressWidget"
 #include "de/GuiRootWidget"
+#include "de/StyleProceduralImage"
 
 #include <de/Animation>
 #include <de/Lockable>
@@ -48,9 +49,9 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         , angle(0)
         , rotationSpeed(20)
         , mini(false)
-        , colorId("progress.light.wheel")
+        , colorId      ("progress.light.wheel")
         , shadowColorId("progress.light.shadow")
-        , gearId("progress.gear")
+        , gearId       ("progress.gear")
         , updateAt(Time::invalidTime())
         , framesWhileAnimDone(0)
     {
@@ -71,12 +72,11 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
     void glInit()
     {
-        gearTex = atlas().alloc(style().images().image(gearId));
+        gearTex = root().styleTexture(gearId);
     }
 
     void glDeinit()
     {
-        atlas().release(gearTex);
         gearTex = Id::None;
     }
 };
@@ -89,7 +89,7 @@ ProgressWidget::ProgressWidget(String const &name)
     setSizePolicy(ui::Filled, ui::Filled);
 
     // Set up the static progress ring image.
-    setImage(style().images().image("progress.wheel"));
+    setImage(new StyleProceduralImage("progress.wheel", *this));
     setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
     setImageScale(.6f);
 
@@ -190,7 +190,10 @@ void ProgressWidget::update()
 
     d->angle = de::wrap(d->angle + float(elapsed * d->rotationSpeed), 0.f, 360.f);
 
-    requestGeometry();
+    if(isVisible())
+    {
+        requestGeometry();
+    }
 }
 
 void ProgressWidget::glInit()

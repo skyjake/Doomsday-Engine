@@ -149,7 +149,7 @@ void GLShaderBank::addFromInfo(File const &file)
 
 GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 {
-    Instance::Data &i = static_cast<Instance::Data &>(data(path));
+    Instance::Data &i = data(path).as<Instance::Data>();
 
     if(type == GLShader::Vertex)
     {
@@ -163,7 +163,7 @@ GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 
 GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 {
-    Instance::Data &i = static_cast<Instance::Data &>(data(path));
+    Instance::Data &i = data(path).as<Instance::Data>();
     program.build(i.vertex, i.fragment);
     return program;
 }
@@ -211,8 +211,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
 
 Bank::IData *GLShaderBank::loadFromSource(ISource &source)
 {
-    Instance::Source &src = static_cast<Instance::Source &>(source);
-
+    Instance::Source &src = source.as<Instance::Source>();
     return new Instance::Data(src.load(GLShader::Vertex),
                               src.load(GLShader::Fragment));
 }

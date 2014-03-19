@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(ImageBank)
         {
             Block imageData;
             App::rootFolder().locate<File const>(filePath) >> imageData;
-            return QImage::fromData(imageData);
+            return Image::fromData(imageData);
         }
     };
 
@@ -83,7 +83,7 @@ void ImageBank::addFromInfo(File const &file)
 
 Image &ImageBank::image(DotPath const &path) const
 {
-    return static_cast<Instance::ImageData &>(data(path)).image;
+    return data(path).as<Instance::ImageData>().image;
 }
 
 Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
@@ -94,7 +94,7 @@ Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)
 {
-    return new Instance::ImageData(static_cast<Instance::ImageSource &>(source).load());
+    return new Instance::ImageData(source.as<Instance::ImageSource>().load());
 }
 
 Bank::IData *ImageBank::newData()

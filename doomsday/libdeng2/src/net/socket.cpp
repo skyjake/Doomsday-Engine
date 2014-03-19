@@ -518,8 +518,8 @@ duint Socket::channel() const
 
 void Socket::setChannel(duint number)
 {
-    DENG2_ASSERT(number < MAX_CHANNELS);
-    d->activeChannel = number;
+    DENG2_ASSERT(number < MAX_CHANNELS);    
+    d->activeChannel = min(number, MAX_CHANNELS - 1);
 }
 
 void Socket::send(IByteArray const &packet)

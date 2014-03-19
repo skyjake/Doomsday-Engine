@@ -94,7 +94,7 @@ void FontBank::addFromInfo(File const &file)
 
 Font const &FontBank::font(DotPath const &path) const
 {
-    return *static_cast<Instance::FontData &>(data(path)).font;
+    return *data(path).as<Instance::FontData>().font;
 }
 
 void FontBank::setFontSizeFactor(float sizeFactor)
@@ -109,7 +109,7 @@ Bank::ISource *FontBank::newSourceFromInfo(String const &id)
 
 Bank::IData *FontBank::loadFromSource(ISource &source)
 {
-    return new Instance::FontData(static_cast<Instance::FontSource &>(source).load());
+    return new Instance::FontData(source.as<Instance::FontSource>().load());
 }
 
 } // namespace de
