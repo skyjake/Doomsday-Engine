@@ -71,16 +71,16 @@ GameRuleset *GameRuleset::fromRecord(Record const &record, GameRuleset const *de
     }
 
     /// @todo Info keys are converted to lowercase when parsed.
-    rules->skill           = rec->geti("skill");
+    if(!defaults || rec->has("skill"))           rules->skill           = rec->geti("skill");
 #if !__JHEXEN__
-    rules->fast            = byte( rec->geti("fast") );
+    if(!defaults || rec->has("fast"))            rules->fast            = byte( rec->geti("fast") );
 #endif
-    rules->deathmatch      = byte( rec->geti("deathmatch") );
-    rules->noMonsters      = byte( rec->geti("nomonsters") );
+    if(!defaults || rec->has("deatchmath"))      rules->deathmatch      = byte( rec->geti("deathmatch") );
+    if(!defaults || rec->has("nomonsters"))      rules->noMonsters      = byte( rec->geti("nomonsters") );
 #if __JHEXEN__
-    rules->randomClasses   = byte( rec->geti("randomclasses") );
+    if(!defaults || rec->has("randomclasses"))   rules->randomClasses   = byte( rec->geti("randomclasses") );
 #else
-    rules->respawnMonsters = byte( rec->geti("respawnmonsters") );
+    if(!defaults || rec->has("respawnmonsters")) rules->respawnMonsters = byte( rec->geti("respawnmonsters") );
 #endif
 
     if(rec != &record) delete const_cast<Record *>(rec);
