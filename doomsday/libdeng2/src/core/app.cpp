@@ -24,6 +24,7 @@
 #include "de/Block"
 #include "de/DictionaryValue"
 #include "de/DirectoryFeed"
+#include "de/FileLogSink"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
@@ -92,6 +93,9 @@ DENG2_PIMPL(App)
 
     void (*terminateFunc)(char const *);
 
+    /// Optional sink for warnings and errors (set with "-errors").
+    QScopedPointer<FileLogSink> errorSink;
+
     /**
      * Delegates game change notifications to scripts.
      */
@@ -141,6 +145,11 @@ DENG2_PIMPL(App)
 
     ~Instance()
     {
+        if(!errorSink.isNull())
+        {
+            logBuffer.removeSink(*errorSink);
+        }
+
         clock.audienceForTimeChange() -= self;
 
         if(config)
@@ -250,6 +259,19 @@ DENG2_PIMPL(App)
         if(cmdLine.has("-nodevlog"))
         {
             logFilter.setAllowDev(LogEntry::AllDomains, false);
+        }
+    }
+
+    void checkForErrorDumpFile()
+    {
+        int pos = cmdLine.check("-errors", 1);
+        if(pos > 0)
+        {
+            File &errors = self.rootFolder().replaceFile(Path("/home") / cmdLine.at(pos + 1));
+            errors.setMode(File::Write);
+            errorSink.reset(new FileLogSink(errors));
+            errorSink->setMode(LogSink::OnlyWarningEntries);
+            logBuffer.addSink(*errorSink);
         }
     }
 
@@ -548,6 +570,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         LOG_WARNING("Failed to set log output file:\n" + er.asText());
     }
+
+    // Check if a separate error output file is requested.
+    d->checkForErrorDumpFile();
 
     try
     {
