@@ -279,7 +279,7 @@ void Id1Translator::convert(Path path)
 
     d->closeFile();
 
-    File &outFile = DENG2_TEXT_APP->homeFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
+    File &outFile = DENG2_TEXT_APP->homeFolder().replaceFile(Path("/output") / saveName.fileNameWithoutExtension() + ".save");
     outFile.setMode(File::Write | File::Truncate);
     Writer(outFile) << arch;
     LOG_MSG("Wrote ") << outFile.path();

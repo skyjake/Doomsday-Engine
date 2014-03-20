@@ -166,6 +166,10 @@ int main(int argc, char **argv)
         LogBuffer::appBuffer().setOutputFile(app.homeFolder().path() / "savegametool.out",
                                              LogBuffer::DontFlush);
 
+        // Default /output to the current working directory.
+        app.fileSystem().makeFolder("/output").attach(new DirectoryFeed(NativePath::workPath(),
+            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+
         // Print a banner.
         LOG_MSG("") << versionText();
 
