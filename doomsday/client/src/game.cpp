@@ -24,6 +24,7 @@
 #include "con_main.h"
 #include "filesys/manifest.h"
 
+#include <de/App>
 #include <de/Error>
 #include <de/game/SavedSession>
 #include <de/Log>
@@ -167,6 +168,42 @@ String Game::logoImageId() const
     }
 
     return "logo.game." + plugName;
+}
+
+String Game::legacySavegameExtension() const
+{
+    String const idKey = identityKey();
+    /// @todo Use GameDef to define these.
+    if(idKey.beginsWith("doom"))    return ".dsg";
+    if(idKey.beginsWith("heretic")) return ".hsg";
+    if(idKey.beginsWith("hexen"))   return ".hxs";
+    if(idKey.beginsWith("chex"))    return ".dsg";
+    if(idKey.beginsWith("hacx"))    return ".dsg";
+    return "";
+}
+
+String Game::legacySavegamePath() const
+{
+    NativePath nativeSavePath = App_ResourceSystem().nativeSavePath();
+
+    if(nativeSavePath.isEmpty()) return "";
+    if(isNull()) return "";
+
+    if(App::commandLine().has("-savedir"))
+    {
+        // A custom path. The savegames are in the root of this folder.
+        return nativeSavePath;
+    }
+
+    // The default save path. The savegames are in a game-specific folder.
+    String const idKey = identityKey();
+    if(idKey.beginsWith("doom"))    return App::app().nativeHomePath() / "savegame" / idKey;
+    if(idKey.beginsWith("heretic")) return App::app().nativeHomePath() / "savegame" / idKey;
+    if(idKey.beginsWith("hexen"))   return App::app().nativeHomePath() / "hexndata" / idKey;
+    if(idKey.beginsWith("chex"))    return App::app().nativeHomePath() / "savegame" / idKey;
+    if(idKey.beginsWith("hacx"))    return App::app().nativeHomePath() / "savegame" / idKey;
+
+    return "";
 }
 
 Path const &Game::mainConfig() const

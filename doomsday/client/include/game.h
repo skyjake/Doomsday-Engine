@@ -125,6 +125,21 @@ public:
     de::String logoImageId() const;
 
     /**
+     * Returns the file extension used by legacy savegame files.
+     */
+    String legacySavegameExtension() const;
+
+    /**
+     * Determine the absolute path to the legacy savegame folder for the specified @a game.
+     * If there is no possibility of a legacy savegame existing (e.g., because the game is
+     * newer than the introduction of the modern, package-based .save format) then a zero
+     * length string is returned.
+     *
+     * @param game  Game to return the legacy savegame folder path for.
+     */
+    String legacySavegamePath() const;
+
+    /**
      * Add a new manifest to the list of manifests.
      *
      * @note Registration order defines load order (among files of the same class).

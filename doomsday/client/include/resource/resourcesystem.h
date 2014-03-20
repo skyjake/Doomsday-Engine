@@ -870,6 +870,11 @@ public:
      */
     de::game::SavedSessionRepository &savedSessionRepository() const;
 
+    /**
+     * Returns the native path of the root of the saved session repository
+     */
+    de::NativePath nativeSavePath();
+
 public: /// @todo Should be private:
     void initCompositeTextures();
     void initFlatTextures();

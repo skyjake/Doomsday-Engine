@@ -1915,51 +1915,6 @@ DENG2_PIMPL(ResourceSystem)
 
 #endif // __CLIENT__
 
-    /// @todo Move to Game?
-    String legacySavegameExtension(Game const &game)
-    {
-        String const gameId = game.identityKey();
-        if(gameId.beginsWith("doom"))    return ".dsg";
-        if(gameId.beginsWith("heretic")) return ".hsg";
-        if(gameId.beginsWith("hexen"))   return ".hxs";
-        if(gameId.beginsWith("doom"))    return ".dsg";
-        if(gameId.beginsWith("chex"))    return ".dsg";
-        if(gameId.beginsWith("hacx"))    return ".dsg";
-        return "";
-    }
-
-    /**
-     * Determine the absolute path to the legacy savegame folder for the specified @a game.
-     * If there is no possibility of a legacy savegame existing (e.g., because the game is
-     * newer than the introduction of the modern, package-based .save format) then a zero
-     * length string is returned.
-     *
-     * @param game  Game to return the legacy savegame folder path for.
-     *
-     * @todo Move to Game?
-     */
-    String legacySavegamePath(Game const &game)
-    {
-        if(nativeSavePath.isEmpty()) return "";
-        if(game.isNull()) return "";
-
-        if(App::commandLine().has("-savedir"))
-        {
-            // A custom path. The savegames are in the root of this folder.
-            return nativeSavePath;
-        }
-
-        // The default save path. The savegames are in a game-specific folder.
-        String const gameId = game.identityKey();
-        if(gameId.beginsWith("doom"))    return App::app().nativeHomePath() / "savegame" / gameId;
-        if(gameId.beginsWith("heretic")) return App::app().nativeHomePath() / "savegame" / gameId;
-        if(gameId.beginsWith("hexen"))   return App::app().nativeHomePath() / "hexndata" / gameId;
-        if(gameId.beginsWith("chex"))    return App::app().nativeHomePath() / "savegame" / gameId;
-        if(gameId.beginsWith("hacx"))    return App::app().nativeHomePath() / "savegame" / gameId;
-
-        return "";
-    }
-
     /**
      * Insert/replace a SavedSession in the db.
      *
@@ -2037,10 +1992,10 @@ DENG2_PIMPL(ResourceSystem)
         }
 
         // Perhaps there are legacy saved game sessions which need to be converted?
-        NativePath const oldSavePath = legacySavegamePath(game);
+        NativePath const oldSavePath = game.legacySavegamePath();
         if(oldSavePath.exists() && oldSavePath.isReadable())
         {
-            String const oldSaveExt = legacySavegameExtension(game);
+            String const oldSaveExt = game.legacySavegameExtension();
             DENG2_ASSERT(!oldSaveExt.isEmpty());
 
             Folder &sourceFolder = App::fileSystem().makeFolder("/oldsavegames");
@@ -3993,6 +3948,11 @@ void ResourceSystem::cacheForCurrentMap()
 game::SavedSessionRepository &ResourceSystem::savedSessionRepository() const
 {
     return d->saveRepo;
+}
+
+NativePath ResourceSystem::nativeSavePath()
+{
+    return d->nativeSavePath;
 }
 
 byte precacheMapMaterials = true;
