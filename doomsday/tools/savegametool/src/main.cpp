@@ -202,7 +202,7 @@ int main(int argc, char **argv)
                     // The -output option can be used to redirect .save output.
                     if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
                     {
-                        args.makeAbsolutePath(i);
+                        args.makeAbsolutePath(i + 1);
                         delete outputFolder().detach(*outputFolder().feeds().front());
                         outputFolder().attach(new DirectoryFeed(NativePath(args.at(i + 1)),
                             DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
