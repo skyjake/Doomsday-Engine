@@ -1922,6 +1922,9 @@ DENG2_PIMPL(ResourceSystem)
         if(gameId.beginsWith("doom"))    return ".dsg";
         if(gameId.beginsWith("heretic")) return ".hsg";
         if(gameId.beginsWith("hexen"))   return ".hxs";
+        if(gameId.beginsWith("doom"))    return ".dsg";
+        if(gameId.beginsWith("chex"))    return ".dsg";
+        if(gameId.beginsWith("hacx"))    return ".dsg";
         return "";
     }
 
@@ -1951,6 +1954,8 @@ DENG2_PIMPL(ResourceSystem)
         if(gameId.beginsWith("doom"))    return App::app().nativeHomePath() / "savegame" / gameId;
         if(gameId.beginsWith("heretic")) return App::app().nativeHomePath() / "savegame" / gameId;
         if(gameId.beginsWith("hexen"))   return App::app().nativeHomePath() / "hexndata" / gameId;
+        if(gameId.beginsWith("chex"))    return App::app().nativeHomePath() / "savegame" / gameId;
+        if(gameId.beginsWith("hacx"))    return App::app().nativeHomePath() / "savegame" / gameId;
 
         return "";
     }
@@ -1981,7 +1986,7 @@ DENG2_PIMPL(ResourceSystem)
     void convertLegacySavegame(String const &sourcePath, String const &gameId)
     {
         String const repoPath   = gameId / sourcePath.fileNameWithoutExtension();
-        String const outputPath = nativeSavePath / repoPath;
+        String const outputPath = nativeSavePath / gameId;
 
         // Attempt the conversion via a plugin (each is tried in turn.
         ddhook_savegame_convert_t parm;
