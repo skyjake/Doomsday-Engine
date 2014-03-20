@@ -1,0 +1,4 @@
+@summary{
+    Input threshold for bloom: pixels darker than this will not be affected
+    by bloom (range: 0...1).
+}
