@@ -52,7 +52,8 @@ static void printUsage()
     LOG_INFO("Usage: %s [options] savegame-path ...\n"
              "Options:\n"
              "--help, -h, -?  Show usage information."
-             "-idKey  Fallback game identity key. Used to resolve ambigous savegame formats.")
+             "-idKey  Fallback game identity key. Used to resolve ambigous savegame formats."
+             "-output  Redirect .save output to this directory (default is the working directory).")
             << DENG2_TEXT_APP->commandLine().at(0);
 }
 
@@ -172,8 +173,8 @@ int main(int argc, char **argv)
                                              LogBuffer::DontFlush);
 
         // Default /output to the current working directory.
-        app.fileSystem().makeFolder("/output").attach(new DirectoryFeed(NativePath::workPath(),
-            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+        app.fileSystem().makeFolder("/output").attach(
+            new DirectoryFeed(NativePath::workPath(), DirectoryFeed::AllowWrite));
         outputFolder().setMode(File::Write | File::Truncate);
 
         // Print a banner.
@@ -196,6 +197,17 @@ int main(int argc, char **argv)
                     if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
                     {
                         fallbackGameId = args.at(i + 1).strip().toLower();
+                        i += 1;
+                    }
+                    // The -output option can be used to redirect .save output.
+                    if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
+                    {
+                        args.makeAbsolutePath(i);
+                        delete outputFolder().detach(*outputFolder().feeds().front());
+                        outputFolder().attach(new DirectoryFeed(NativePath(args.at(i + 1)),
+                            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+                        outputFolder().setMode(File::Write | File::Truncate);
+                        outputFolder().populate(Folder::PopulateOnlyThisFolder);
                         i += 1;
                     }
                     continue;
