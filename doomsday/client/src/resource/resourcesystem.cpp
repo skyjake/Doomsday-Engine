@@ -1958,8 +1958,11 @@ DENG2_PIMPL(ResourceSystem)
 
         if(success)
         {
-            /// Update the /savegame folder. @todo necessary?
-            Folder &outputFolder = App::rootFolder().locate<Folder>("/savegame");
+            /// @todo kludge: Give the converter a chance to complete.
+            TimeDelta::fromMilliSeconds(1000).sleep();
+
+            /// Update the /savegame folder.
+            Folder &outputFolder = App::rootFolder().locate<Folder>(String("/savegame") / gameId);
             outputFolder.populate(Folder::PopulateOnlyThisFolder);
 
             addSavedSession(repoPath);
