@@ -270,7 +270,7 @@ SavegameSelectionWidget::LoadAction::LoadAction(SavedSession const &session)
     : d(new Instance)
 {
     d->gameId = session.metadata().gets("gameIdentityKey");
-    d->cmd = "loadgame " + session.path() + " confirm";
+    d->cmd = "loadgame " + session.path().fileName() + " confirm";
 }
 
 void SavegameSelectionWidget::LoadAction::trigger()
