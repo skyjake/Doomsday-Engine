@@ -30,7 +30,7 @@
 #include "g_controls.h"
 #include "g_eventsequence.h"
 #include "g_update.h"
-#include "gamestatewriter.h"
+#include "gamesessionwriter.h"
 #include "hu_lib.h"
 #include "hu_chat.h"
 #include "hu_inventory.h"
@@ -2940,7 +2940,7 @@ static int saveGameStateWorker(void *context)
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
                 sessionPath.toString().toLatin1().constData());
 
-        GameStateWriter().write(sessionPath, mapStateFilePath, *metadata);
+        GameSessionWriter().write(sessionPath, mapStateFilePath, *metadata);
 
         // Swap the saved session file.
         G_SavedSessionRepository().add(sslot.repositoryPath(), session);

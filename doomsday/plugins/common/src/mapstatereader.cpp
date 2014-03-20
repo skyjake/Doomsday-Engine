@@ -156,7 +156,7 @@ DENG2_PIMPL(MapStateReader)
         if(Reader_ReadByte(reader) != CONSISTENCY)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("GameStateReader", "Corrupt save game, failed consistency check");
+            throw ReadError("MapStateReader", "Corrupt save game, failed consistency check");
         }
 #endif
     }

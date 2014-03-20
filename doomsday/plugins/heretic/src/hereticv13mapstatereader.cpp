@@ -710,7 +710,7 @@ DENG2_PIMPL(HereticV13MapStateReader)
                 break;
 
             default:
-                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13MapStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
             }
         }
     }
@@ -802,7 +802,7 @@ DENG2_PIMPL(HereticV13MapStateReader)
                 break; }
 
             default:
-                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13MapStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
             }
         }
     }
@@ -899,7 +899,7 @@ void HereticV13MapStateReader::read(String const &mapUriStr)
 
     if(consistency != 0x1d)
     {
-        throw ReadError("HereticV13GameStateReader", "Bad savegame (consistency test failed!)");
+        throw ReadError("HereticV13MapStateReader", "Bad savegame (consistency test failed!)");
     }
 
     // Material scrollers must be spawned.

@@ -1,4 +1,4 @@
-/** @file gamestatewriter.h  Saved game state writer.
+/** @file gamesessionwriter.h  Serializing game state to a saved session.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -18,27 +18,26 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAMESTATEWRITER_H
-#define LIBCOMMON_GAMESTATEWRITER_H
+#ifndef LIBCOMMON_GAMESESSIONWRITER_H
+#define LIBCOMMON_GAMESESSIONWRITER_H
 
 #include <de/Error>
 #include <de/game/MapStateReader>
 #include <de/Path>
 
 /**
- * Native saved game state writer.
+ * Native game state saved session writer.
  *
  * @ingroup libcommon
- * @see GameStateReader
  */
-class GameStateWriter
+class GameSessionWriter
 {
 public:
     /// An error occurred attempting to open the output file. @ingroup errors
     DENG2_ERROR(FileAccessError);
 
 public:
-    GameStateWriter();
+    GameSessionWriter();
 
     void write(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
                de::game::SessionMetadata const &metadata);
@@ -47,4 +46,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBCOMMON_GAMESTATEWRITER_H
+#endif // LIBCOMMON_GAMESESSIONWRITER_H

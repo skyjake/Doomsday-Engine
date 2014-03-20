@@ -1,4 +1,4 @@
-/** @file gamestatewriter.cpp  Saved game state writer.
+/** @file gamesessionwriter.cpp  Serializing game state to a saved session.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,21 +19,21 @@
  */
 
 #include "common.h"
-#include "gamestatewriter.h"
+#include "gamesessionwriter.h"
 
-#include "d_net.h"                   // NetSv_SaveGame
-#include "g_common.h"                // gameMapUri
+#include "d_net.h"           // NetSv_SaveGame
+#include "g_common.h"        // gameMapUri
 #include "mapstatewriter.h"
-#include "p_savedef.h"               // CONSISTENCY
+#include "p_savedef.h"       // CONSISTENCY
 #include "p_saveio.h"
-#include "p_saveg.h"                 /// playerheader_t @todo remove me
+#include "p_saveg.h"         /// playerheader_t @todo remove me
 #include "thingarchive.h"
 #include <de/NativePath>
 
 using namespace de;
 using namespace de::game;
 
-DENG2_PIMPL(GameStateWriter)
+DENG2_PIMPL(GameSessionWriter)
 {
     ThingArchive *thingArchive;
     writer_s *writer;
@@ -118,10 +118,10 @@ DENG2_PIMPL(GameStateWriter)
     }
 };
 
-GameStateWriter::GameStateWriter() : d(new Instance(this))
+GameSessionWriter::GameSessionWriter() : d(new Instance(this))
 {}
 
-void GameStateWriter::write(Path const &stateFilePath, Path const &mapStateFilePath,
+void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFilePath,
     SessionMetadata const &metadata)
 {
     // In networked games the server tells the clients to save their games.
@@ -131,7 +131,7 @@ void GameStateWriter::write(Path const &stateFilePath, Path const &mapStateFileP
 
     if(!SV_OpenFile_LZSS(stateFilePath))
     {
-        throw FileAccessError("GameStateWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\" for write");
+        throw FileAccessError("GameSessionWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\" for write");
     }
 
     d->writer = SV_NewWriter();

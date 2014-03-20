@@ -694,7 +694,7 @@ DENG2_PIMPL(DoomV9MapStateReader)
                 break;
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9MapStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
             }
         }
     }
@@ -792,7 +792,7 @@ DENG2_PIMPL(DoomV9MapStateReader)
                 break; }
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9MapStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
             }
         }
     }
@@ -886,7 +886,7 @@ void DoomV9MapStateReader::read(String const &mapUriStr)
 
     if(consistency != 0x1d)
     {
-        throw ReadError("DoomV9GameStateReader", "Bad savegame (consistency test failed!)");
+        throw ReadError("DoomV9MapStateReader", "Bad savegame (consistency test failed!)");
     }
 
     // Material scrollers must be spawned.
