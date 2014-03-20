@@ -87,7 +87,7 @@ ServerFinder::ServerFinder() : d(new Instance)
         connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
         QTimer::singleShot(1000, this, SLOT(expire()));
 
-        if(App::appExists() && !App::commandLine().has("-nodiscovery"))
+        if(!App::appExists() || !App::commandLine().has("-nodiscovery"))
         {
             d->beacon.discover(0 /* no timeout */, 2);
         }

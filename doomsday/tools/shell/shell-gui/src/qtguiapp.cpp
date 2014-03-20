@@ -35,6 +35,8 @@ DENG2_PIMPL(QtGuiApp)
         LogBuffer::setAppBuffer(logBuffer);
         Clock::setAppClock(&clock);
         Animation::setClock(&clock);
+
+        logBuffer.setAutoFlushInterval(0.1);
     }
 
     ~Instance()

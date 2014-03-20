@@ -142,6 +142,7 @@ ShellApp::ShellApp(int &argc, char **argv)
     // Configure the log buffer.
     LogBuffer &buf = LogBuffer::appBuffer();
     buf.setMaxEntryCount(50); // buffered here rather than appBuffer
+    buf.enableFlushing();
     buf.addSink(d->log->logSink());
 
     QStringList args = arguments();
