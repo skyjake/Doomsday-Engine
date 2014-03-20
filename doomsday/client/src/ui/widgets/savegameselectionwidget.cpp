@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
     public:
         SavegameListItem(SavedSession const &session)
         {
-            setData(session.path().fileNameAndPathWithoutExtension());
+            setData(session.path());
             _session  = &session;
         }
 
@@ -197,7 +197,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         DENG2_FOR_EACH_CONST(SavedSessionRepository::All, i, repository.all())
         {
             SavedSession const &session = *i->second;
-            ui::Data::Pos found = self.items().findData(session.path().fileNameAndPathWithoutExtension());
+            ui::Data::Pos found = self.items().findData(session.path());
             if(found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
@@ -270,7 +270,7 @@ SavegameSelectionWidget::LoadAction::LoadAction(SavedSession const &session)
     : d(new Instance)
 {
     d->gameId = session.metadata().gets("gameIdentityKey");
-    d->cmd = "loadgame " + session.path().fileNameWithoutExtension() + " confirm";
+    d->cmd = "loadgame " + session.path() + " confirm";
 }
 
 void SavegameSelectionWidget::LoadAction::trigger()

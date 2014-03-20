@@ -312,7 +312,7 @@ SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
 {
     if(session)
     {
-        String const repoPath = session->path().fileNameAndPathWithoutExtension();
+        String const repoPath = session->path();
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
             if(!i->second->repositoryPath().compareWithoutCase(repoPath))

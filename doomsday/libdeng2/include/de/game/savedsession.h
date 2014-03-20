@@ -76,7 +76,7 @@ public:
     SavedSession &operator = (SavedSession const &other);
 
     /**
-     * Returns the relative path and identifier of the state file package (with extension).
+     * Returns the relative path and identifier of the state file package.
      */
     String path() const;
     void setPath(String newPath);
