@@ -1950,13 +1950,13 @@ DENG2_PIMPL(ResourceSystem)
         Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
 
         // Try to convert the savegame via each plugin in turn.
-        dd_bool success = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+        dd_bool conversionAttempted = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
 
         Str_Free(&parm.sourcePaths);
         Str_Free(&parm.outputPath);
         Str_Free(&parm.fallbackGameId);
 
-        if(success)
+        if(conversionAttempted)
         {
             /// @todo kludge: Give the converter a chance to complete.
             TimeDelta::fromMilliSeconds(1000).sleep();
