@@ -56,6 +56,9 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
     cmd.append("-idkey");
     cmd.append(Str_Text(&parm.fallbackGameId));
 
+    cmd.append("-output");
+    cmd.append(Str_Text(&parm.outputPath));
+
     cmd.append(Str_Text(&parm.sourcePaths));
 
     LOG_RES_NOTE("Starting conversion of \"%s\" using Savegame Tool")
