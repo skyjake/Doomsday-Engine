@@ -1,5 +1,14 @@
 profile {
     name: Amplified (built-in)
+    setting "rend-bloom" {
+        value: 1
+    }    
+    setting "rend-bloom-intensity" {
+        value: 0.8
+    }   
+    setting "rend-bloom-threshold" {
+        value: 0.3
+    }        
     setting "rend-fakeradio" {
         value: 1
     }

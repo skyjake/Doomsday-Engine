@@ -253,7 +253,7 @@ DENG_GUI_PIMPL(SliderWidget)
         verts.makeQuad(slider.expanded(2), state == Grabbed? textColor : invTextColor,
                        atlas().imageRectf(root().solidWhitePixel()).middle());
         verts.makeFlexibleFrame(slider.expanded(5), 6, Vector4f(1, 1, 1, frameOpacity),
-                                atlas().imageRectf(root().gradientFrame()));
+                                atlas().imageRectf(root().boldRoundCorners()));
 
         // Labels.        
         if(labels[Start].isReady())

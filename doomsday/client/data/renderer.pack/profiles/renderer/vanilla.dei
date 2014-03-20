@@ -1,5 +1,8 @@
 profile {
     name: Vanilla (built-in)
+    setting "rend-bloom" {
+        value: 0
+    }
     setting "rend-fakeradio" {
         value: 0
     }

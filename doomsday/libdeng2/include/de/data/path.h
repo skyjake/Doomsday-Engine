@@ -84,6 +84,8 @@ public:
          */
         String toString() const;
 
+        inline QStringRef const &toStringRef() const { return range; }
+
         /**
          * Determines the length of the segment in characters.
          * Same as size().

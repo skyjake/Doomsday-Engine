@@ -56,6 +56,7 @@ public:
     void paintEvent(QPaintEvent *ev);
 
 protected slots:
+    void updateIfRequested();
     void blink();
     void cursorBlink();
 

@@ -196,6 +196,7 @@ DENG2_PIMPL(ClientWindow)
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
         gameSelMenu->filter().useInvertedStyle();
+        gameSelMenu->filter().setOpacity(.9f);
         gameSelMenu->filter().rule()
                 .setInput(Rule::Left,  gameSelMenu->rule().left() + gameSelMenu->margins().left())
                 .setInput(Rule::Width, gameSelMenu->rule().width() - gameSelMenu->margins().width())
@@ -683,9 +684,9 @@ ClientWindow::ClientWindow(String const &id)
     d->setupUI();
 }
 
-Vector2f ClientWindow::windowContentSize()
+Vector2f ClientWindow::windowContentSize() const
 {
-    return Vector2f(root().viewWidth().value(), root().viewHeight().value());
+    return Vector2f(d->root.viewWidth().value(), d->root.viewHeight().value());
 }
 
 ClientRootWidget &ClientWindow::root()
@@ -861,18 +862,16 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setStereo(true);
     }
 
-    /*
+#ifdef WIN32
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
-        fmt.setSwapInterval(0); // vsync off
-        LOG_GL_VERBOSE("Vertical sync off");
+        fmt.setSwapInterval(0);
     }
     else
     {
         fmt.setSwapInterval(1);
-        LOG_GL_VERBOSE("Vertical sync on");
     }
-    */
+#endif
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.

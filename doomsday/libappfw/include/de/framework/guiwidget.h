@@ -334,6 +334,13 @@ public:
     static Rectanglef normalizedRect(Rectanglei const &rect,
                                      Rectanglei const &containerRect);
 
+    /**
+     * Immediately deletes all the widgets in the garbage. This is useful to
+     * avoid double deletion in case a trashed widget's parent is deleted
+     * before recycling occurs.
+     */
+    static void recycleTrashedWidgets();
+
 protected:
     /**
      * Called by GuiWidget::update() the first time an update is being carried

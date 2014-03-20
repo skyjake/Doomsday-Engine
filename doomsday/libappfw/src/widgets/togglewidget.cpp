@@ -72,7 +72,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
             verts.makeQuad(recti, (_accentColor * p + _textColor * (1-p)) * Vector4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
-            Id onOff = _owner.root().toggleOnOff();
+            Id onOff = _owner.root().styleTexture("toggle.onoff");
 
             // The on/off graphic.
             verts.makeQuad(recti, _accentColor * p + _textColor * (1-p) * .8f, atlas().imageRectf(onOff));

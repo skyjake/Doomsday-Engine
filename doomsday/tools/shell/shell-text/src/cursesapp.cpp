@@ -88,6 +88,7 @@ DENG2_PIMPL(CursesApp)
     Instance(Public &i) : Base(i), unicodeContinuation(0), rootWidget(0)
     {
         logBuffer.enableStandardOutput(false);
+        logBuffer.setAutoFlushInterval(0.1);
 
         de::LogBuffer::setAppBuffer(logBuffer);
         de::Animation::setClock(&clock);

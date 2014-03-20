@@ -50,7 +50,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
                                     atlas.imageRectf(root.roundCorners()));
 
-            Rectanglef uv = atlas.imageRectf(root.fold());
+            Rectanglef uv = atlas.imageRectf(root.styleTexture("fold"));
             if(!fold.isOpen())
             {
                 // Flip it.

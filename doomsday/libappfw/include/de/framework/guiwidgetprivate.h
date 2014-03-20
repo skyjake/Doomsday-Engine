@@ -98,7 +98,7 @@ public:
     AtlasTexture &atlas() const
     {        
         observeRootAtlas();
-        return root().atlas();
+        return *_observingAtlas;
     }
 
     GLUniform &uAtlas() const
@@ -127,7 +127,7 @@ public:
     }
 
 private:
-    mutable Atlas *_observingAtlas;
+    mutable AtlasTexture *_observingAtlas;
 };
 
 #define DENG_GUI_PIMPL(ClassName) \

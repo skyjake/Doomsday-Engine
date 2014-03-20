@@ -353,8 +353,11 @@ DENG2_OBSERVES(App, GameChange)
                         if(!e->isBlock()) continue;
 
                         de::Info::BlockElement const &setBlock = e->as<de::Info::BlockElement>();
-                        prof->values[setBlock.name()] = textToSettingValue(setBlock.keyValue("value").text,
-                                                                           setBlock.name());
+                        if(settings.contains(setBlock.name())) // ignore unknown settings
+                        {
+                            prof->values[setBlock.name()] = textToSettingValue(setBlock.keyValue("value").text,
+                                                                               setBlock.name());
+                        }
                     }
                 }
             }

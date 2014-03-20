@@ -40,7 +40,7 @@ DENG2_PIMPL(TextDrawable)
             DENG2_GUARD_FOR(d->backWrap, G);
 
             //qDebug() << "running WrapTask" << _width;
-            //TimeDelta(0.5).sleep();
+            //TimeDelta(0.05).sleep();
 
             d->backWrap->wrapTextToWidth(d->backWrap->plainText, d->backWrap->format, _width);
             d->needSwap = true;
