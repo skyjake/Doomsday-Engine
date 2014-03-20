@@ -29,7 +29,8 @@
 using namespace de;
 using namespace de::shell;
 
-const int BLINK_INTERVAL = 500; // ms
+static int const REFRESH_INTERVAL = 1000 / 30; // ms
+static int const BLINK_INTERVAL   = 500;       // ms
 
 #ifdef MACOSX
 #  define CONTROL_MOD   Qt::MetaModifier
@@ -93,6 +94,11 @@ QtRootWidget::QtRootWidget(QWidget *parent)
     : QWidget(parent), d(new Instance(*this))
 {
     setFocusPolicy(Qt::StrongFocus);
+
+    // Continually check for need to update.
+    QTimer *refresh = new QTimer(this);
+    connect(refresh, SIGNAL(timeout()), this, SLOT(updateIfRequested()));
+    refresh->start(REFRESH_INTERVAL);
 
     // Blinking timers.
     d->blinkTimer = new QTimer(this);
@@ -253,6 +259,14 @@ void QtRootWidget::paintEvent(QPaintEvent *)
         painter.drawText(QRect(2, 2, width(), height()), d->overlay, QTextOption(Qt::AlignCenter));
         painter.setPen(fg);
         painter.drawText(rect(), d->overlay, QTextOption(Qt::AlignCenter));
+    }
+}
+
+void QtRootWidget::updateIfRequested()
+{
+    if(d->root.drawWasRequested())
+    {
+        update();
     }
 }
 

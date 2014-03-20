@@ -90,6 +90,7 @@ DENG2_PIMPL(LinkWindow)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
+        logBuffer.setAutoFlushInterval(0.1);
     }
 
     ~Instance()

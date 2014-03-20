@@ -123,6 +123,8 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
 
     cmd.append("-userdir");
     cmd.append(userDir);
+    cmd.append("-errors");
+    cmd.append("doomsday-errors.out");
     cmd.append("-game");
     cmd.append(gameMode);
     cmd.append("-cmd");

@@ -27,6 +27,7 @@
 #include <QFormLayout>
 #include <QPushButton>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QLineEdit>
 #include <QTextEdit>
 #include <QLabel>
@@ -45,6 +46,9 @@ DENG2_PIMPL(LocalServerDialog)
     QComboBox *games;
     QLineEdit *port;
     QLabel *portMsg;
+    QCheckBox *announce;
+    QLineEdit *password;
+    QLabel *passwordMsg;
     QTextEdit *options;
     FolderSelection *runtime;
     bool portChanged;
@@ -88,10 +92,28 @@ DENG2_PIMPL(LocalServerDialog)
         opt->setDisabled(true);
         form->addRow(0, opt);
 
+        form->addRow(0, announce = new QCheckBox(tr("&Public server (visible to all)")));
+        announce->setChecked(st.value("LocalServer/announce", false).toBool());
+
         QHBoxLayout *hb = new QHBoxLayout;
+        password = new QLineEdit;
+        password->setMinimumWidth(90);
+        password->setMaximumWidth(90);
+        password->setText(st.value("LocalServer/password", "").toString());
+
+        passwordMsg = new QLabel;
+        QPalette pal = passwordMsg->palette();
+        pal.setColor(passwordMsg->foregroundRole(), Qt::red);
+        passwordMsg->setPalette(pal);
+        hb->addWidget(password, 0);
+        hb->addWidget(passwordMsg, 1);
+        passwordMsg->hide();
+        form->addRow(tr("Shell password:"), hb);
+
+        hb = new QHBoxLayout;
         port = new QLineEdit;
-        port->setMinimumWidth(80);
-        port->setMaximumWidth(80);
+        port->setMinimumWidth(90);
+        port->setMaximumWidth(90);
         port->setText(QString::number(st.value("LocalServer/port", 13209).toInt()));
         /*
         // Find an unused port.
@@ -110,8 +132,6 @@ DENG2_PIMPL(LocalServerDialog)
         portChanged = false;
         port->setToolTip(tr("The default port is 13209."));
         portMsg = new QLabel;
-        QPalette pal = portMsg->palette();
-        pal.setColor(portMsg->foregroundRole(), Qt::red);
         portMsg->setPalette(pal);
         hb->addWidget(port, 0);
         hb->addWidget(portMsg, 1);
@@ -174,6 +194,8 @@ LocalServerDialog::LocalServerDialog(QWidget *parent)
     : QDialog(parent), d(new Instance(*this))
 {
     connect(d->port, SIGNAL(textChanged(QString)), this, SLOT(validate()));
+    connect(d->announce, SIGNAL(stateChanged(int)), this, SLOT(validate()));
+    connect(d->password, SIGNAL(textEdited(QString)), this, SLOT(validate()));
     connect(d->port, SIGNAL(textEdited(QString)), this, SLOT(portChanged())); // causes port to be saved
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
     connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()), this, SLOT(validate()));
@@ -198,7 +220,10 @@ QString LocalServerDialog::gameMode() const
 
 QStringList LocalServerDialog::additionalOptions() const
 {
-    QStringList opts = d->options->toPlainText().split(' ', QString::SkipEmptyParts);
+    QStringList opts;
+    opts << "-cmd" << QString("server-password \"%1\"").arg(d->password->text());
+    opts << "-cmd" << QString("server-public %1").arg(d->announce->isChecked()? 1 : 0);
+    opts << d->options->toPlainText().split(' ', QString::SkipEmptyParts);
     return opts;
 }
 
@@ -225,6 +250,8 @@ void LocalServerDialog::saveState()
     {
         st.setValue("LocalServer/port", d->port->text().toInt());
     }
+    st.setValue("LocalServer/announce", d->announce->isChecked());
+    st.setValue("LocalServer/password", d->password->text());
     st.setValue("LocalServer/runtime", d->runtime->path().toString());
     st.setValue("LocalServer/options", d->options->toPlainText());
 }
@@ -251,6 +278,17 @@ void LocalServerDialog::validate()
             d->portMsg->setText(tr("Port already in use."));
         }
         d->portMsg->setVisible(inUse);
+    }
+
+    if(d->announce->isChecked() && d->password->text().isEmpty())
+    {
+        isValid = false;
+        d->passwordMsg->show();
+        d->passwordMsg->setText(tr("Required."));
+    }
+    else
+    {
+        d->passwordMsg->hide();
     }
 
     if(d->runtime->path().isEmpty()) isValid = false;
