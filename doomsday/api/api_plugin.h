@@ -83,9 +83,9 @@ typedef struct {
 
 /// Parameters for HOOK_SAVEGAME_CONVERT
 typedef struct {
-    Str inputFilePath;
-    Str outputFilePath;
-    Str fallbackGameIdentityKey;
+    Str sourcePaths;
+    Str outputPath;
+    Str fallbackGameId;
 } ddhook_savegame_convert_t;
 
 DENG_API_TYPEDEF(Plug) // v1

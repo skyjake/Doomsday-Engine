@@ -54,12 +54,12 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
     cmd.append(bin);
 
     cmd.append("-idkey");
-    cmd.append(Str_Text(&parm.fallbackGameIdentityKey));
+    cmd.append(Str_Text(&parm.fallbackGameId));
 
-    cmd.append(Str_Text(&parm.inputFilePath));
+    cmd.append(Str_Text(&parm.sourcePaths));
 
     LOG_RES_NOTE("Starting conversion of \"%s\" using Savegame Tool")
-            << NativePath(Str_Text(&parm.inputFilePath)).pretty();
+            << NativePath(Str_Text(&parm.sourcePaths)).pretty();
     cmd.execute();
 
     return true; // A conversion attempt was made (using Savegame Tool).

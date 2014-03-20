@@ -33,7 +33,6 @@
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
-#include "resource/savegameconverter.h"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
@@ -1926,27 +1925,89 @@ DENG2_PIMPL(ResourceSystem)
         return "";
     }
 
-    /// @todo Move to Game?
-    String legacySavegameSubfolder(Game const &game)
+    /**
+     * Determine the absolute path to the legacy savegame folder for the specified @a game.
+     * If there is no possibility of a legacy savegame existing (e.g., because the game is
+     * newer than the introduction of the modern, package-based .save format) then a zero
+     * length string is returned.
+     *
+     * @param game  Game to return the legacy savegame folder path for.
+     *
+     * @todo Move to Game?
+     */
+    String legacySavegamePath(Game const &game)
     {
+        if(nativeSavePath.isEmpty()) return "";
+        if(game.isNull()) return "";
+
+        if(App::commandLine().has("-savedir"))
+        {
+            // A custom path. The savegames are in the root of this folder.
+            return nativeSavePath;
+        }
+
+        // The default save path. The savegames are in a game-specific folder.
         String const gameId = game.identityKey();
-        if(gameId.beginsWith("doom"))    return "savegame";
-        if(gameId.beginsWith("heretic")) return "savegame";
-        if(gameId.beginsWith("hexen"))   return "hexndata";
+        if(gameId.beginsWith("doom"))    return App::app().nativeHomePath() / "savegame" / gameId;
+        if(gameId.beginsWith("heretic")) return App::app().nativeHomePath() / "savegame" / gameId;
+        if(gameId.beginsWith("hexen"))   return App::app().nativeHomePath() / "hexndata" / gameId;
+
         return "";
     }
 
     /**
-     * Determine the absolute path to the legacy savegame folder for the specified @a game.
-     * If there is no possibility of a legacy savegame existing (e.g., because the game is
-     * newer than the introduction of the modern, packaged based save format) then a zero
-     * length string is returned.
+     * Insert/replace a SavedSession in the db.
      *
-     * @param game  Game to return the legacy savegame folder path for.
+     * @param repoPath  Unique /savegame relative path (and identifier for the saved session).
+     *
+     * @todo This extra step is unnecessary. SavedSession should inherit from PackageFolder.
      */
-    String legacySavePath(Game const &/*game*/)
+    void addSavedSession(String const &repoPath)
     {
-        return nativeSavePath;// / legacySavegameSubfolder(game);
+        game::SavedSession *session = new game::SavedSession(repoPath);
+        saveRepo.add(repoPath, session);
+        session->updateFromFile();
+    }
+
+    /**
+     * Utility for initiating a legacy savegame conversion.
+     *
+     * @param sourcePath  Native path to the legacy savegame file to be converted.
+     * @param session     SavedSession to update if conversion is successful.
+     * @param gameId      Identity key of the game and corresponding subfolder name within
+     *                    save repository to output the converted savegame to. Also used for
+     *                    resolving ambiguous savegame formats.
+     */
+    void convertLegacySavegame(String const &sourcePath, String const &gameId)
+    {
+        String const repoPath   = gameId / sourcePath.fileNameWithoutExtension();
+        String const outputPath = nativeSavePath / repoPath;
+
+        // Attempt the conversion via a plugin (each is tried in turn.
+        ddhook_savegame_convert_t parm;
+        Str_Set(Str_InitStd(&parm.sourcePaths),    NativePath(sourcePath).expand().toUtf8().constData());
+        Str_Set(Str_InitStd(&parm.outputPath),     NativePath(outputPath).expand().toUtf8().constData());
+        Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
+
+        // Try to convert the savegame via each plugin in turn.
+        dd_bool success = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+
+        Str_Free(&parm.sourcePaths);
+        Str_Free(&parm.outputPath);
+        Str_Free(&parm.fallbackGameId);
+
+        if(success)
+        {
+            /// Update the /savegame folder. @todo necessary?
+            Folder &outputFolder = App::rootFolder().locate<Folder>("/savegame");
+            outputFolder.populate(Folder::PopulateOnlyThisFolder);
+
+            addSavedSession(repoPath);
+            return;
+        }
+
+        /// @throw Error Seemingly no plugin was able to fulfill our request.
+        throw Error("tryConvertSavegame", "Unrecognized file format");
     }
 
     void gameAdded(Game &game)
@@ -1961,54 +2022,46 @@ DENG2_PIMPL(ResourceSystem)
         // Make the native folder if necessary and populate the folder contents.
         Folder &saveFolder = App::fileSystem().makeFolder(String("/savegame") / gameId);
 
-        // Find any .save files in this folder and generate sessions for the db.
-        /// @todo This extra step is unnecessary. SavedSession should inherit from PackageFolder.
+        // Find any .save packages in this folder and generate sessions for the db.
         DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
         {
             if(i->first.fileNameExtension() == ".save")
             {
-                String const &repoPath = gameId / i->first.fileNameWithoutExtension();
-                game::SavedSession *newSession = new game::SavedSession(repoPath);
-                saveRepo.add(repoPath, newSession);
-
-                newSession->updateFromFile();
+                addSavedSession(gameId / i->first.fileNameWithoutExtension());
             }
         }
 
         // Perhaps there are legacy saved game sessions which need to be converted?
-        NativePath oldSavePath = legacySavePath(game);
-        if(oldSavePath.isEmpty()) return;
-
-        oldSavePath = oldSavePath / gameId;
-
-        // Attempt to automatically convert the legacy save games. Try in both the root of
-        // this folder and in the game-specific subfolder.
+        NativePath const oldSavePath = legacySavegamePath(game);
         if(oldSavePath.exists() && oldSavePath.isReadable())
         {
-            Folder &oldSaveFolder = App::fileSystem().makeFolder("/oldsavegames");
-            oldSaveFolder.setMode(Folder::ReadOnly);
-            oldSaveFolder.attach(new DirectoryFeed(oldSavePath));
-            oldSaveFolder.populate(Folder::PopulateOnlyThisFolder);
-
             String const oldSaveExt = legacySavegameExtension(game);
-            DENG2_FOR_EACH_CONST(Folder::Contents, i, oldSaveFolder.contents())
+            DENG2_ASSERT(!oldSaveExt.isEmpty());
+
+            Folder &sourceFolder = App::fileSystem().makeFolder("/oldsavegames");
+            sourceFolder.setMode(Folder::ReadOnly);
+            sourceFolder.attach(new DirectoryFeed(oldSavePath));
+            sourceFolder.populate(Folder::PopulateOnlyThisFolder);
+
+            DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
             {
                 if(i->first.fileNameExtension() == oldSaveExt)
                 {
-                    String const oldFileName = i->first.fileNameWithoutExtension();
-                    String const oldFilePath = i->second->as<NativeFile>().nativePath().withSeparators('/');
-
-                    String const &repoPath = gameId / oldFileName;
-                    QScopedPointer<game::SavedSession> newSession(new game::SavedSession(repoPath));
-                    if(convertSavegame(oldFilePath, *newSession, gameId))
+                    String const sourcePath = i->second->as<NativeFile>().nativePath().withSeparators('/');
+                    try
                     {
-                        saveRepo.add(repoPath, newSession.take());
+                        convertLegacySavegame(sourcePath, gameId);
+                    }
+                    catch(Error const &er)
+                    {
+                        LOG_RES_WARNING("Failed conversion of \"%s\":\n")
+                                << NativePath(sourcePath).pretty() << er.asText();
                     }
                 }
             }
 
             // We're done with this folder.
-            delete &oldSaveFolder;
+            delete &sourceFolder;
         }
     }
 };
