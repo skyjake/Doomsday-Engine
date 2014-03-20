@@ -17,18 +17,52 @@
  * 02110-1301 USA</small>
  */
 
+#include <QCoreApplication>
+#include <de/CommandLine>
 #include <de/Log>
+#include <de/NativePath>
 #include <de/String>
 
 #include "savegameconverter.h"
 
 using namespace de;
 
-int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void * /*data*/)
+int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
 {
+    DENG2_ASSERT(data != 0);
+    ddhook_savegame_convert_t const &parm = *static_cast<ddhook_savegame_convert_t *>(data);
+
     LOG_AS("SavegameConverter");
-    LOG_NOTE("No conversion attempted. Returning false");
-    return false; // Conversion failed.
+
+    CommandLine cmd;
+
+#ifdef MACOSX
+    // First locate the savegametool executable.
+    NativePath bin = NativePath(qApp->applicationDirPath()) / "../Resources/savegametool";
+    /// @todo fixme: Need to try alternate locations?
+#elif WIN32
+    NativePath bin = NativePath(qApp->applicationDirPath()) / "savegametool.exe";
+#else // UNIX
+    NativePath bin = NativePath(qApp->applicationDirPath()) / "savegametool";
+    /// @todo fixme: Need to try alternate locations?
+#endif
+    if(!bin.exists())
+    {
+        LOG_RES_ERROR("Failed to locate Savegame Tool");
+        return false;
+    }
+    cmd.append(bin);
+
+    cmd.append("-idkey");
+    cmd.append(Str_Text(&parm.fallbackGameIdentityKey));
+
+    cmd.append(Str_Text(&parm.inputFilePath));
+
+    LOG_RES_NOTE("Starting conversion of \"%s\" using Savegame Tool")
+            << NativePath(Str_Text(&parm.inputFilePath)).pretty();
+    cmd.execute();
+
+    return true; // A conversion attempt was made (using Savegame Tool).
 }
 
 /**
