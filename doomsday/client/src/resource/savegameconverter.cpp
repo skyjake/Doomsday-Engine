@@ -40,7 +40,7 @@ static void tryConversion(Path const &inputFilePath, Path const &outputFilePath,
     Str_Set(Str_InitStd(&parm.fallbackGameIdentityKey), fallbackGameIdentityKey.toUtf8().constData());
 
     // Try to convert the savegame via each plugin in turn.
-    dd_bool success = DD_CallHooks(HOOK_MAP_CONVERT, 0, &parm);
+    dd_bool success = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
 
     Str_Free(&parm.inputFilePath);
     Str_Free(&parm.outputFilePath);

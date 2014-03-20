@@ -66,6 +66,7 @@
 #include <de/DirectoryFeed>
 #include <de/game/SavedSession>
 #include <de/Log>
+#include <de/NativeFile>
 #include <de/Reader>
 #include <de/Time>
 #ifdef __CLIENT__
@@ -323,20 +324,22 @@ DENG2_PIMPL(ResourceSystem)
     typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
     SpriteGroups spriteGroups;
 
+    NativePath nativeSavePath;
     game::SavedSessionRepository saveRepo;
 
     Instance(Public *i)
         : Base(i)
-        , defaultColorPalette(0)
-        , materialManifestCount(0)
+        , defaultColorPalette      (0)
+        , materialManifestCount    (0)
         , materialManifestIdMapSize(0)
-        , materialManifestIdMap(0)
+        , materialManifestIdMap    (0)
 #ifdef __CLIENT__
-        , fontManifestCount(0)
-        , fontManifestIdMapSize(0)
-        , fontManifestIdMap(0)
-        , modelRepository(0)
+        , fontManifestCount        (0)
+        , fontManifestIdMapSize    (0)
+        , fontManifestIdMap        (0)
+        , modelRepository          (0)
 #endif
+        , nativeSavePath           (App::app().nativeHomePath() / "savegame") // default
     {
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
@@ -376,18 +379,13 @@ DENG2_PIMPL(ResourceSystem)
         App_Games().audienceForAddition += this;
 
         // Determine the root directory of the saved session repository.
-        NativePath nativeSavePath;
         if(int arg = App::commandLine().check("-savedir", 1))
         {
             // Using a custom root save directory.
             App::commandLine().makeAbsolutePath(arg + 1);
             nativeSavePath = App::commandLine().at(arg + 1);
         }
-        else
-        {
-            // Use the default.
-            nativeSavePath = App::app().nativeHomePath() / "savegame";
-        }
+        // Else use the default.
 
         // Create the user's saved game folder if it doesn't yet exist.
         App::fileSystem().makeFolder("/savegame", FS::DontInheritFeeds)
@@ -1918,11 +1916,44 @@ DENG2_PIMPL(ResourceSystem)
 
 #endif // __CLIENT__
 
+    /// @todo Move to Game?
+    String legacySavegameExtension(Game const &game)
+    {
+        String const gameId = game.identityKey();
+        if(gameId.beginsWith("doom"))    return ".dsg";
+        if(gameId.beginsWith("heretic")) return ".hsg";
+        if(gameId.beginsWith("hexen"))   return ".hxs";
+        return "";
+    }
+
+    /// @todo Move to Game?
+    String legacySavegameSubfolder(Game const &game)
+    {
+        String const gameId = game.identityKey();
+        if(gameId.beginsWith("doom"))    return "savegame";
+        if(gameId.beginsWith("heretic")) return "savegame";
+        if(gameId.beginsWith("hexen"))   return "hexndata";
+        return "";
+    }
+
+    /**
+     * Determine the absolute path to the legacy savegame folder for the specified @a game.
+     * If there is no possibility of a legacy savegame existing (e.g., because the game is
+     * newer than the introduction of the modern, packaged based save format) then a zero
+     * length string is returned.
+     *
+     * @param game  Game to return the legacy savegame folder path for.
+     */
+    String legacySavePath(Game const &/*game*/)
+    {
+        return nativeSavePath;// / legacySavegameSubfolder(game);
+    }
+
     void gameAdded(Game &game)
     {
         // Called from a non-UI thread.
         LOG_AS("ResourceSystem");
-        String gameId = game.identityKey();
+        String const gameId = game.identityKey();
 
         // Attempt to create a new subfolder in the saved session repository for the game.
         // Once created, any existing saved sessions in this folder will be added automatically.
@@ -1931,28 +1962,54 @@ DENG2_PIMPL(ResourceSystem)
         Folder &saveFolder = App::fileSystem().makeFolder(String("/savegame") / gameId);
 
         // Find any .save files in this folder and generate sessions for the db.
+        /// @todo This extra step is unnecessary. SavedSession should inherit from PackageFolder.
         DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
         {
             if(i->first.fileNameExtension() == ".save")
             {
-                String const &relPath = saveFolder.name() / i->first.fileNameWithoutExtension();
-                game::SavedSession *newSession = new game::SavedSession(relPath);
-                saveRepo.add(relPath, newSession);
+                String const &repoPath = gameId / i->first.fileNameWithoutExtension();
+                game::SavedSession *newSession = new game::SavedSession(repoPath);
+                saveRepo.add(repoPath, newSession);
 
                 newSession->updateFromFile();
             }
         }
 
-        /// @todo Attempt to automatically convert any legacy saved game sessions.
-        /*for(;;)
+        // Perhaps there are legacy saved game sessions which need to be converted?
+        NativePath oldSavePath = legacySavePath(game);
+        if(oldSavePath.isEmpty()) return;
+
+        oldSavePath = oldSavePath / gameId;
+
+        // Attempt to automatically convert the legacy save games. Try in both the root of
+        // this folder and in the game-specific subfolder.
+        if(oldSavePath.exists() && oldSavePath.isReadable())
         {
-            String const &relPath = saveFolder.name() / outFileName;
-            QScopedPointer<game::SavedSession> newSession(new game::SavedSession(relPath));
-            if(convertSavegame(inputPath, *newSavedSession, gameId))
+            Folder &oldSaveFolder = App::fileSystem().makeFolder("/oldsavegames");
+            oldSaveFolder.setMode(Folder::ReadOnly);
+            oldSaveFolder.attach(new DirectoryFeed(oldSavePath));
+            oldSaveFolder.populate(Folder::PopulateOnlyThisFolder);
+
+            String const oldSaveExt = legacySavegameExtension(game);
+            DENG2_FOR_EACH_CONST(Folder::Contents, i, oldSaveFolder.contents())
             {
-                saveRepo.add(relPath, newSession.take());
+                if(i->first.fileNameExtension() == oldSaveExt)
+                {
+                    String const oldFileName = i->first.fileNameWithoutExtension();
+                    String const oldFilePath = i->second->as<NativeFile>().nativePath().withSeparators('/');
+
+                    String const &repoPath = gameId / oldFileName;
+                    QScopedPointer<game::SavedSession> newSession(new game::SavedSession(repoPath));
+                    if(convertSavegame(oldFilePath, *newSession, gameId))
+                    {
+                        saveRepo.add(repoPath, newSession.take());
+                    }
+                }
             }
-        }*/
+
+            // We're done with this folder.
+            delete &oldSaveFolder;
+        }
     }
 };
 
