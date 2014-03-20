@@ -105,7 +105,7 @@ DENG2_PIMPL_NOREF(LogBuffer)
             if(!autoFlushTimer->isActive())
             {
                 // Every now and then the buffer will be flushed.
-                autoFlushTimer->start(FLUSH_INTERVAL * 1000);
+                autoFlushTimer->start(FLUSH_INTERVAL.asMilliSeconds());
             }
         }
         else
@@ -231,6 +231,13 @@ void LogBuffer::enableFlushing(bool yes)
 {
     d->flushingEnabled = yes;
     d->enableAutoFlush(true);
+}
+
+void LogBuffer::setAutoFlushInterval(TimeDelta const &interval)
+{
+    enableFlushing();
+
+    d->autoFlushTimer->setInterval(interval.asMilliSeconds());
 }
 
 void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
