@@ -130,12 +130,10 @@ public:
     String legacySavegameExtension() const;
 
     /**
-     * Determine the absolute path to the legacy savegame folder for the specified @a game.
-     * If there is no possibility of a legacy savegame existing (e.g., because the game is
-     * newer than the introduction of the modern, package-based .save format) then a zero
-     * length string is returned.
-     *
-     * @param game  Game to return the legacy savegame folder path for.
+     * Determine the absolute path to the legacy savegame folder for the game. If there is
+     * no possibility of a legacy savegame existing (e.g., because the game is newer than
+     * the introduction of the modern, package-based .save format) then a zero length string
+     * is returned.
      */
     String legacySavegamePath() const;
 
