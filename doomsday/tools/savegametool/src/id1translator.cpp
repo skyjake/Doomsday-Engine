@@ -31,6 +31,7 @@
 
 extern de::String fallbackGameId;
 extern de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
+extern de::Folder &outputFolder();
 
 using namespace de;
 
@@ -279,8 +280,7 @@ void Id1Translator::convert(Path path)
 
     d->closeFile();
 
-    File &outFile = DENG2_TEXT_APP->homeFolder().replaceFile(Path("/output") / saveName.fileNameWithoutExtension() + ".save");
-    outFile.setMode(File::Write | File::Truncate);
+    File &outFile = outputFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
     Writer(outFile) << arch;
-    LOG_MSG("Wrote ") << outFile.path();
+    LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 }

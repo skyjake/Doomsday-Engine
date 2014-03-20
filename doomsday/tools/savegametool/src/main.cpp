@@ -81,6 +81,11 @@ Path composeMapUriPath(duint32 episode, duint32 map)
     return String("MAP%1").arg(map > 0? map : 1, 2, 10, QChar('0'));
 }
 
+Folder &outputFolder()
+{
+    return DENG2_TEXT_APP->rootFolder().locate<Folder>("output");
+}
+
 static PackageFormatter *saveFormatForGameIdentityKey(String const &idKey)
 {
     foreach(PackageFormatter *fmt, translators)
@@ -169,6 +174,7 @@ int main(int argc, char **argv)
         // Default /output to the current working directory.
         app.fileSystem().makeFolder("/output").attach(new DirectoryFeed(NativePath::workPath(),
             DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+        outputFolder().setMode(File::Write | File::Truncate);
 
         // Print a banner.
         LOG_MSG("") << versionText();
