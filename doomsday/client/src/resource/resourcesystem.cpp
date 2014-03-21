@@ -1933,7 +1933,6 @@ DENG2_PIMPL(ResourceSystem)
      * Utility for initiating a legacy savegame conversion.
      *
      * @param sourcePath  Native path to the legacy savegame file to be converted.
-     * @param session     SavedSession to update if conversion is successful.
      * @param gameId      Identity key of the game and corresponding subfolder name within
      *                    save repository to output the converted savegame to. Also used for
      *                    resolving ambiguous savegame formats.
@@ -1943,7 +1942,7 @@ DENG2_PIMPL(ResourceSystem)
         String const repoPath   = gameId / sourcePath.fileNameWithoutExtension();
         String const outputPath = nativeSavePath / gameId;
 
-        // Attempt the conversion via a plugin (each is tried in turn.
+        // Attempt the conversion via a plugin (each is tried in turn).
         ddhook_savegame_convert_t parm;
         Str_Set(Str_InitStd(&parm.sourcePaths),    NativePath(sourcePath).expand().toUtf8().constData());
         Str_Set(Str_InitStd(&parm.outputPath),     NativePath(outputPath).expand().toUtf8().constData());
