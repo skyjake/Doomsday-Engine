@@ -186,8 +186,10 @@ public:
     virtual void deindex();
 
     /**
-     * Commits any buffered changes to the content of the file. All subclasses
-     * of File must make sure they flush themselves right before they get deleted.
+     * Commits any buffered changes to the content of the file. All subclasses of File
+     * must make sure they flush themselves right before they get deleted. Subclasses
+     * must also flush themselves when a file in write mode is changed to read-only mode,
+     * if necessary.
      */
     virtual void flush();
 
