@@ -97,7 +97,7 @@ void GameSessionWriter::write(String const &userDescription)
         Writer_Delete(writer);
     }
 
-    File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
+    File &outFile = App::rootFolder().locate<Folder>("/savegames").replaceFile(d->session.path() + ".save");
     de::Writer(outFile) << arch;
     outFile.flush();
     outFile.setMode(File::ReadOnly);

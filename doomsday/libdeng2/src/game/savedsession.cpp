@@ -215,7 +215,7 @@ DENG2_PIMPL(SavedSession)
 
     PackageFolder *tryLocatePackage()
     {
-        return App::fileSystem().root().tryLocate<PackageFolder>(String("/savegame") / repoPath + ".save");
+        return App::fileSystem().root().tryLocate<PackageFolder>(String("/savegames") / repoPath + ".save");
     }
 
     DENG2_PIMPL_AUDIENCE(MetadataChange)
@@ -257,7 +257,7 @@ String SavedSession::description() const
 {
     return metadataAsStyledText(metadata()) + "\n" +
            String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"")
-            .arg(hasFile()? NativePath(String("/home/savegame") / d->repoPath + ".save").pretty() : "None");
+            .arg(hasFile()? NativePath(String("/home/savegames") / d->repoPath + ".save").pretty() : "None");
 }
 
 String SavedSession::path() const
@@ -272,7 +272,7 @@ void SavedSession::setPath(String newPath)
 
 bool SavedSession::hasFile() const
 {
-    return App::fileSystem().root().has(String("/savegame") / d->repoPath + ".save");
+    return App::fileSystem().root().has(String("/savegames") / d->repoPath + ".save");
 }
 
 PackageFolder &SavedSession::locateFile()
@@ -334,7 +334,7 @@ void SavedSession::copyFile(SavedSession const &source)
 {
     if(&source == this) return; // Sanity check.
 
-    File &destFile = App::fileSystem().root().replaceFile(String("/savegame") / d->repoPath + ".save");
+    File &destFile = App::fileSystem().root().replaceFile(String("/savegames") / d->repoPath + ".save");
     Writer(destFile) << source.locateFile().archive();
     destFile.flush();
     destFile.setMode(File::ReadOnly);
@@ -348,7 +348,7 @@ void SavedSession::removeFile()
 {
     if(hasFile())
     {
-        App::fileSystem().root().removeFile(String("/savegame") / d->repoPath + ".save");
+        App::fileSystem().root().removeFile(String("/savegames") / d->repoPath + ".save");
     }
 
     /// Force a metadata update.

@@ -2931,7 +2931,7 @@ static int saveGameStateWorker(void *context)
 
     try
     {
-        de::Path const sessionPath = de::String("/savegame") / session->path();
+        de::Path const sessionPath = de::String("/savegames") / session->path();
 
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
                 sessionPath.toString().toLatin1().constData());

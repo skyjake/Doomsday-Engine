@@ -338,7 +338,7 @@ DENG2_PIMPL(ResourceSystem)
         , fontManifestIdMap        (0)
         , modelRepository          (0)
 #endif
-        , nativeSavePath           (App::app().nativeHomePath() / "savegame") // default
+        , nativeSavePath           (App::app().nativeHomePath() / "savegames") // default
     {
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
@@ -387,7 +387,7 @@ DENG2_PIMPL(ResourceSystem)
         // Else use the default.
 
         // Create the user's saved game folder if it doesn't yet exist.
-        App::fileSystem().makeFolder("/savegame", FS::DontInheritFeeds)
+        App::fileSystem().makeFolder("/savegames", FS::DontInheritFeeds)
                 .attach(new DirectoryFeed(nativeSavePath,
                         DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
     }
@@ -1918,7 +1918,7 @@ DENG2_PIMPL(ResourceSystem)
     /**
      * Insert/replace a SavedSession in the db.
      *
-     * @param repoPath  Unique /savegame relative path (and identifier for the saved session).
+     * @param repoPath  Unique /savegames relative path (and identifier for the saved session).
      *
      * @todo This extra step is unnecessary. SavedSession should inherit from PackageFolder.
      */
@@ -1960,8 +1960,8 @@ DENG2_PIMPL(ResourceSystem)
             /// @todo kludge: Give the converter a chance to complete.
             TimeDelta::fromMilliSeconds(1000).sleep();
 
-            /// Update the /savegame folder.
-            Folder &outputFolder = App::rootFolder().locate<Folder>(String("/savegame") / gameId);
+            /// Update the /savegames folder.
+            Folder &outputFolder = App::rootFolder().locate<Folder>(String("/savegames") / gameId);
             outputFolder.populate(Folder::PopulateOnlyThisFolder);
 
             addSavedSession(repoPath);
@@ -1982,7 +1982,7 @@ DENG2_PIMPL(ResourceSystem)
         // Once created, any existing saved sessions in this folder will be added automatically.
 
         // Make the native folder if necessary and populate the folder contents.
-        Folder &saveFolder = App::fileSystem().makeFolder(String("/savegame") / gameId);
+        Folder &saveFolder = App::fileSystem().makeFolder(String("/savegames") / gameId);
 
         // Find any .save packages in this folder and generate sessions for the db.
         DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
