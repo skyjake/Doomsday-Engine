@@ -52,7 +52,7 @@ typedef enum savestatesegment_e {
 
 void SV_CloseFile();
 bool SV_OpenFileForRead(de::File const &file);
-bool SV_OpenFileForWrite(de::File &file);
+bool SV_OpenFileForWrite(de::IByteArray &block);
 
 #if 0
 bool SV_OpenFile_LZSS(de::Path filePath);

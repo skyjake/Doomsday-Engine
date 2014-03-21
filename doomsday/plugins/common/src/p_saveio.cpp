@@ -116,10 +116,10 @@ bool SV_OpenFileForRead(de::File const &file)
     return true;
 }
 
-bool SV_OpenFileForWrite(de::File &file)
+bool SV_OpenFileForWrite(de::IByteArray &block)
 {
     SV_CloseFile();
-    writer = new de::Writer(file);
+    writer = new de::Writer(block);
     return true;
 }
 
@@ -270,7 +270,7 @@ static void swd(Writer *w, char const *data, int len)
     }
 }
 
-Writer *SV_NewWriter()
+writer_s *SV_NewWriter()
 {
     return Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
 }

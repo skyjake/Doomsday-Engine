@@ -63,13 +63,6 @@ DENG2_PIMPL(GameSessionWriter)
         Game_ACScriptInterpreter().writeWorldScriptData(to);
 #endif
     }
-
-    void writeMap()
-    {
-        writer_s *writer = SV_NewWriter();
-        MapStateWriter().write(writer);
-        Writer_Delete(writer);
-    }
 };
 
 GameSessionWriter::GameSessionWriter(SavedSession &session)
@@ -85,12 +78,6 @@ void GameSessionWriter::write(String const &userDescription)
     NetSv_SaveGame(metadata->geti("sessionId"));
 #endif
 
-    if(!SV_OpenFileForWrite(stateFilePath))
-    {
-        delete metadata;
-        throw FileAccessError("GameSessionWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\" for write");
-    }
-
     metadata->set("userDescription", userDescription);
     //d->session.replaceMetadata(metadata);
 
@@ -103,12 +90,14 @@ void GameSessionWriter::write(String const &userDescription)
     arch.add("ACScriptState", worldACScriptData);
 
     // Serialized map states are written to separate files.
-    SV_CloseFile();
-    SV_OpenFileForWrite(mapStateFilePath);
-
-    d->writeMap();
-
-    SV_CloseFile();
+    {
+        Block mapStateData;
+        SV_OpenFileForWrite(mapStateData);
+        writer_s *writer = SV_NewWriter();
+        MapStateWriter().write(writer);
+        arch.add(Path("maps") / metadata->gets("mapUri") + "State", mapStateData);
+        Writer_Delete(writer);
+    }
 
     File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
     de::Writer(outFile) << arch;
