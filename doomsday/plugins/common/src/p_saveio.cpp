@@ -28,12 +28,7 @@
 #include <de/NativePath>
 
 // Used during write:
-static LZFILE *savefile;
-#if __JHEXEN__
-static byte *saveBuffer;
-//static saveptr_t saveptr;
-static void *saveEndPtr;
-#endif
+static de::Writer *writer;
 
 // Used during read:
 static de::Reader *reader;
@@ -120,6 +115,7 @@ bool SV_OpenFile(de::File const &file)
     return true;
 }
 
+#if 0
 bool SV_OpenFile_LZSS(de::Path path)
 {
     App_Log(DE2_DEV_RES_XVERBOSE, "SV_OpenFile: Opening \"%s\"",
@@ -138,15 +134,16 @@ void SV_CloseFile_LZSS()
         savefile = 0;
     }
 }
+#endif
 
 void SV_Write(void const *data, int len)
 {
-    lzWrite((void *)data, len, savefile);
+    //lzWrite((void *)data, len, savefile);
 }
 
 void SV_WriteByte(byte val)
 {
-    lzPutC(val, savefile);
+    //lzPutC(val, savefile);
 }
 
 #if __JHEXEN__
@@ -155,7 +152,7 @@ void SV_WriteShort(unsigned short val)
 void SV_WriteShort(short val)
 #endif
 {
-    lzPutW(val, savefile);
+    //lzPutW(val, savefile);
 }
 
 #if __JHEXEN__
@@ -164,7 +161,7 @@ void SV_WriteLong(unsigned int val)
 void SV_WriteLong(long val)
 #endif
 {
-    lzPutL(val, savefile);
+    //lzPutL(val, savefile);
 }
 
 void SV_WriteFloat(float val)
@@ -173,7 +170,7 @@ void SV_WriteFloat(float val)
 
     int32_t temp = 0;
     std::memcpy(&temp, &val, 4);
-    lzPutL(temp, savefile);
+    //lzPutL(temp, savefile);
 }
 
 #if 0
@@ -209,6 +206,7 @@ void SV_EndSegment()
     SV_BeginSegment(ASEG_END);
 }
 
+#if 0
 void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer)
 {
     DENG2_ASSERT(writer != 0);
@@ -244,6 +242,7 @@ void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *
 
     Writer_WriteInt32(writer, metadata["sessionId"].value().asNumber());
 }
+#endif
 
 void SV_WriteConsistencyBytes()
 {
@@ -295,4 +294,13 @@ static void swd(Writer *w, char const *data, int len)
 Writer *SV_NewWriter()
 {
     return Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
+}
+
+de::Writer &SV_RawWriter()
+{
+    if(writer != 0)
+    {
+        return *writer;
+    }
+    throw de::Error("SV_RawWriter", "No map writer exists");
 }

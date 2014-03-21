@@ -160,7 +160,7 @@ void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFil
     {
         // The map state is actually written to a separate file.
         // Close the game state file.
-        SV_CloseFile();
+        //SV_CloseFile();
 
         // Open the map state file.
         SV_OpenFile(mapStateFilePath);
@@ -169,7 +169,7 @@ void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFil
     d->writeMap();
 
     d->writeConsistencyBytes(); // To be absolutely sure...
-    SV_CloseFile();
+    //SV_CloseFile();
 
     File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
     de::Writer(outFile) << arch;

@@ -24,9 +24,9 @@
 #include <de/game/SavedSession>
 #include <de/Path>
 #include <de/Reader>
+#include <de/Writer>
 #include <de/reader.h>
 #include <de/writer.h>
-#include "lzss.h" /// @todo remove me
 
 typedef enum savestatesegment_e {
     ASEG_MAP_HEADER = 102,  // Hexen only
@@ -52,11 +52,10 @@ typedef enum savestatesegment_e {
 void SV_CloseFile();
 bool SV_OpenFile(de::File const &file);
 
-/// @todo remove me
+#if 0
 bool SV_OpenFile_LZSS(de::Path filePath);
 void SV_CloseFile_LZSS();
 
-#if 0
 /**
  * Exit with a fatal error if the value at the current location in the
  * game-save file does not match that associated with the segment id.
@@ -69,15 +68,17 @@ void SV_BeginSegment(int segmentId);
 
 void SV_EndSegment();
 
-#endif
-
 void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer);
+#endif
 
 void SV_WriteConsistencyBytes();
 
 //void SV_ReadConsistencyBytes();
 
 Writer *SV_NewWriter();
+
+/// Provides access to the wrapped de::Writer instance used for serialization.
+de::Writer &SV_RawWriter();
 
 Reader *SV_NewReader();
 
