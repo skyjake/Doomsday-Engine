@@ -237,6 +237,16 @@ SavedSession &SavedSession::operator = (SavedSession const &other)
 
 static String metadataAsStyledText(SavedSession::Metadata const &metadata)
 {
+    // Try to format the game rules so they look a little prettier.
+    QStringList rules = metadata.gets("gameRules", "").split("\n", QString::SkipEmptyParts);
+    rules.replaceInStrings(QRegExp("^(.*)= (.*)$"), _E(l) "\\1: " _E(.)_E(i) "\\2" _E(.));
+    String gameRulesText;
+    for(int i = 0; i < rules.size(); ++i)
+    {
+        if(i) gameRulesText += "\n";
+        gameRulesText += " - " + rules.at(i).trimmed();
+    }
+
     return String(_E(b) "%1\n" _E(.)
                   _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
                   _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
@@ -246,14 +256,14 @@ static String metadataAsStyledText(SavedSession::Metadata const &metadata)
              .arg(metadata.gets("gameIdentityKey", ""))
              .arg(metadata.gets("mapUri", ""))
              .arg(metadata.geti("sessionId", 0))
-             .arg(metadata.gets("gameRules", ""));
+             .arg(gameRulesText);
 }
 
 String SavedSession::description() const
 {
     return metadataAsStyledText(metadata()) + "\n" +
-           String(_E(l) "Source file: " _E(.)_E(i) "\"%1\"")
-            .arg(hasFile()? NativePath(String("/home/savegames") / d->repoPath + ".save").pretty() : "None");
+           String(_E(D) "Resource: " _E(.)_E(i) "\"%1\"")
+             .arg(hasFile()? NativePath(String("/home/savegames") / d->repoPath + ".save").pretty() : "None");
 }
 
 String SavedSession::path() const
