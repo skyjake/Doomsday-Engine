@@ -83,12 +83,10 @@ DENG2_PIMPL(MapStateWriter)
 
     void writeMapHeader()
     {
-        Writer_WriteInt32(writer, MY_SAVE_MAGIC);
-
-        // Map states have a version number.
-        Writer_WriteInt32(writer, MY_SAVE_VERSION);
-
 #if __JHEXEN__
+        // Maps have their own version number.
+        Writer_WriteByte(writer, MY_SAVE_VERSION);
+
         // Write the map timer
         Writer_WriteInt32(writer, mapTime);
 #endif
@@ -97,6 +95,34 @@ DENG2_PIMPL(MapStateWriter)
     void writeMaterialArchive()
     {
         MaterialArchive_Write(materialArchive, writer);
+    }
+
+    void writePlayers()
+    {
+        beginSegment(ASEG_PLAYER_HEADER);
+        playerheader_t plrHdr;
+        plrHdr.write(writer);
+
+        beginSegment(ASEG_PLAYERS);
+        {
+#if __JHEXEN__
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                Writer_WriteByte(writer, players[i].plr->inGame);
+            }
+#endif
+
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                player_t *plr = players + i;
+                if(!plr->plr->inGame)
+                    continue;
+
+                Writer_WriteInt32(writer, Net_GetPlayerID(i));
+                plr->write(writer, plrHdr);
+            }
+        }
+        endSegment();
     }
 
     void writeElements()
@@ -282,6 +308,18 @@ void MapStateWriter::write(Writer *writer)
 
     // Prepare and populate the material archive.
     d->materialArchive = MaterialArchive_New(useMaterialArchiveSegments());
+
+    Writer_WriteInt32(writer, MY_SAVE_MAGIC);
+    Writer_WriteInt32(writer, MY_SAVE_VERSION);
+
+    // Set the mobj archive numbers.
+    d->thingArchive = new ThingArchive;
+    d->thingArchive->initForSave(false/*do not exclude players*/);
+#if !__JHEXEN__
+    Writer_WriteInt32(d->writer, d->thingArchive->size());
+#endif
+
+    d->writePlayers();
 
     // Serialize the map.
     d->beginSegment(ASEG_MAP_HEADER2);

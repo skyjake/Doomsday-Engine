@@ -83,34 +83,6 @@ DENG2_PIMPL(GameSessionWriter)
     {
         MapStateWriter(*thingArchive).write(writer);
     }
-
-    void writePlayers()
-    {
-        beginSegment(ASEG_PLAYER_HEADER);
-        playerheader_t plrHdr;
-        plrHdr.write(writer);
-
-        beginSegment(ASEG_PLAYERS);
-        {
-#if __JHEXEN__
-            for(int i = 0; i < MAXPLAYERS; ++i)
-            {
-                Writer_WriteByte(writer, players[i].plr->inGame);
-            }
-#endif
-
-            for(int i = 0; i < MAXPLAYERS; ++i)
-            {
-                player_t *plr = players + i;
-                if(!plr->plr->inGame)
-                    continue;
-
-                Writer_WriteInt32(writer, Net_GetPlayerID(i));
-                plr->write(writer, plrHdr);
-            }
-        }
-        endSegment();
-    }
 };
 
 GameSessionWriter::GameSessionWriter(SavedSession &session)
@@ -119,7 +91,7 @@ GameSessionWriter::GameSessionWriter(SavedSession &session)
 
 void GameSessionWriter::write(String const &userDescription)
 {
-    de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
+    SessionMetadata *metadata = G_CurrentSessionMetadata();
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
@@ -140,14 +112,6 @@ void GameSessionWriter::write(String const &userDescription)
 
     d->writer = SV_NewWriter();
     d->writeWorldACScriptData();
-
-    // Set the mobj archive numbers.
-    d->thingArchive = new ThingArchive;
-    d->thingArchive->initForSave(false/*do not exclude players*/);
-#if !__JHEXEN__
-    Writer_WriteInt32(d->writer, d->thingArchive->size());
-#endif
-    d->writePlayers();
 
     // Serialized map states are written to separate files.
     SV_CloseFile();
