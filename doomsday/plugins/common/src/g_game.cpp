@@ -3372,7 +3372,6 @@ de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDescri
 {
     de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
 
-    metadata->set("magic",           int(IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC));
     metadata->set("gameIdentityKey", G_IdentityKey());
     metadata->set("userDescription", userDescription);
     metadata->set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
