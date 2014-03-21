@@ -139,8 +139,14 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
         Record const &rules = subrecord("gameRules");
         DENG2_FOR_EACH_CONST(Record::Members, i, rules.members())
         {
+            Value const &value = i.value()->value();
+            String valueAsText = value.asText();
+            if(value.is<Value::Text>())
+            {
+                valueAsText = "\"" + valueAsText.replace("\"", "''") + "\"";
+            }
             os << "\n    " << BLOCK_GAMERULE << " \"" << i.key() << "\""
-               << " { value= \"" << i.value()->value().asText().replace("\"", "''") << "\" }";
+               << " { value= " << valueAsText << " }";
         }
 
         os << "\n}";

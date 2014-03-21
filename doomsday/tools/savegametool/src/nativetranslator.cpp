@@ -401,24 +401,24 @@ DENG2_PIMPL(NativeTranslator)
         {
             dbyte fast;
             from >> fast;
-            rules->set("fast", fast);
+            rules->addBoolean("fast", fast);
         }
 
         dbyte noMonsters;
         from >> noMonsters;
-        rules->set("noMonsters", noMonsters);
+        rules->addBoolean("noMonsters", noMonsters);
 
         if(id == Hexen)
         {
             dbyte randomClasses;
             from >> randomClasses;
-            rules->set("randomClasses", randomClasses);
+            rules->addBoolean("randomClasses", randomClasses);
         }
         else
         {
             dbyte respawnMonsters;
             from >> respawnMonsters;
-            rules->set("respawnMonsters", respawnMonsters);
+            rules->addBoolean("respawnMonsters", respawnMonsters);
         }
 
         metadata.add("gameRules",           rules.take());
