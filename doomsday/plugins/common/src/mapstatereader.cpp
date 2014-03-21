@@ -738,7 +738,7 @@ void MapStateReader::read(String const &mapUriStr)
     game::SessionMetadata const &metadata = session().metadata();
 
     File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr + "State");
-    SV_OpenFile(mapStateFile);
+    SV_OpenFileForRead(mapStateFile);
     d->reader = SV_NewReader();
 
     /*magic*/ Reader_ReadInt32(d->reader);

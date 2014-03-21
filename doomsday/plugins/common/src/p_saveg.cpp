@@ -55,7 +55,7 @@ SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
 {
     de::PackageFolder const &pack = session.locateFile();
     de::File const &mapStateFile = pack.locate<de::File>(de::Path("maps") / mapUriStr + "State");
-    if(!SV_OpenFile(mapStateFile))
+    if(!SV_OpenFileForRead(mapStateFile))
     {
         /// @throw de::Error The serialized map state file could not be opened for read.
         throw de::Error("SV_MapStateReader", "Failed to open \"" + mapStateFile.path() + "\" for read");
@@ -843,7 +843,7 @@ void SV_SaveGameClient(uint /*sessionId*/)
     session->replaceMetadata(metadata);
 
     de::Path path = de::String("/savegame") / "client" / session->path();
-    if(!SV_OpenFile_LZSS(path))
+    if(!SV_OpenFileForWrite(path))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
                 path.toString().toLatin1().constData());
@@ -877,7 +877,7 @@ void SV_SaveGameClient(uint /*sessionId*/)
     MapStateWriter(thingArchive).write(writer);
     /// @todo No consistency bytes in client saves?
 
-    SV_CloseFile_LZSS();
+    SV_CloseFile();
     Writer_Delete(writer);
     delete session;
 #else
@@ -905,7 +905,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     session->replaceMetadata(metadata);
 
     de::Path path = de::String("/savegame") / "client" / session->path();
-    if(!SV_OpenFile(path))
+    if(!SV_OpenFileForRead(path))
     {
         delete session;
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",

@@ -3005,7 +3005,7 @@ void G_DoLeaveMap()
             // SaveSlot &sslot = G_SaveSlots()["base"];
             de::Path const mapStateFilePath(Str_Text(Uri_Compose(gameMapUri)));
 
-            if(!SV_OpenFile_LZSS(mapStateFilePath))
+            if(!SV_OpenFileForWrite(mapStateFilePath))
             {
                 throw de::Error("G_DoLeaveMap", "Failed opening \"" + de::NativePath(mapStateFilePath).pretty() + "\" for write");
             }
@@ -3019,7 +3019,7 @@ void G_DoLeaveMap()
             MapStateWriter(thingArchive).write(writer);
 
             Writer_Delete(writer);
-            SV_CloseFile_LZSS();
+            SV_CloseFile();
         }
     }
     else // Entering new hub.

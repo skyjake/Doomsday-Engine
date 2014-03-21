@@ -106,12 +106,20 @@ de::Reader &SV_RawReader()
 void SV_CloseFile()
 {
     delete reader; reader = 0;
+    delete writer; writer = 0;
 }
 
-bool SV_OpenFile(de::File const &file)
+bool SV_OpenFileForRead(de::File const &file)
 {
     SV_CloseFile();
     reader = new de::Reader(file);
+    return true;
+}
+
+bool SV_OpenFileForWrite(de::File &file)
+{
+    SV_CloseFile();
+    writer = new de::Writer(file);
     return true;
 }
 
@@ -134,46 +142,7 @@ void SV_CloseFile_LZSS()
         savefile = 0;
     }
 }
-#endif
 
-void SV_Write(void const *data, int len)
-{
-    //lzWrite((void *)data, len, savefile);
-}
-
-void SV_WriteByte(byte val)
-{
-    //lzPutC(val, savefile);
-}
-
-#if __JHEXEN__
-void SV_WriteShort(unsigned short val)
-#else
-void SV_WriteShort(short val)
-#endif
-{
-    //lzPutW(val, savefile);
-}
-
-#if __JHEXEN__
-void SV_WriteLong(unsigned int val)
-#else
-void SV_WriteLong(long val)
-#endif
-{
-    //lzPutL(val, savefile);
-}
-
-void SV_WriteFloat(float val)
-{
-    DENG2_ASSERT(sizeof(val) == 4);
-
-    int32_t temp = 0;
-    std::memcpy(&temp, &val, 4);
-    //lzPutL(temp, savefile);
-}
-
-#if 0
 void SV_AssertSegment(int segmentId)
 {
 #if __JHEXEN__
@@ -190,7 +159,6 @@ void SV_AssertSegment(int segmentId)
     DENG_UNUSED(segmentId);
 #endif
 }
-#endif
 
 void SV_BeginSegment(int segType)
 {
@@ -206,7 +174,6 @@ void SV_EndSegment()
     SV_BeginSegment(ASEG_END);
 }
 
-#if 0
 void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer)
 {
     DENG2_ASSERT(writer != 0);
@@ -242,7 +209,6 @@ void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *
 
     Writer_WriteInt32(writer, metadata["sessionId"].value().asNumber());
 }
-#endif
 
 void SV_WriteConsistencyBytes()
 {
@@ -251,7 +217,7 @@ void SV_WriteConsistencyBytes()
 #endif
 }
 
-/*void SV_ReadConsistencyBytes()
+void SV_ReadConsistencyBytes()
 {
 #if !__JHEXEN__
     if(SV_ReadByte() != CONSISTENCY)
@@ -259,36 +225,49 @@ void SV_WriteConsistencyBytes()
         Con_Error("Corrupt save game: Consistency test failed.");
     }
 #endif
-}*/
+}
+#endif
 
-static void swi8(Writer *w, char i)
+static void swi8(writer_s *w, char val)
 {
     if(!w) return;
-    SV_WriteByte(i);
+    DENG2_ASSERT(writer);
+    *writer << val;
 }
 
-static void swi16(Writer *w, short i)
+static void swi16(Writer *w, short val)
 {
     if(!w) return;
-    SV_WriteShort(i);
+    DENG2_ASSERT(writer);
+    *writer << val;
 }
 
-static void swi32(Writer *w, int i)
+static void swi32(Writer *w, int val)
 {
     if(!w) return;
-    SV_WriteLong(i);
+    DENG2_ASSERT(writer);
+    *writer << val;
 }
 
-static void swf(Writer *w, float i)
+static void swf(Writer *w, float val)
 {
     if(!w) return;
-    SV_WriteFloat(i);
+    DENG2_ASSERT(writer);
+    DENG2_ASSERT(sizeof(float) == 4);
+
+    int32_t temp = 0;
+    std::memcpy(&temp, &val, 4);
+    *writer << val;
 }
 
 static void swd(Writer *w, char const *data, int len)
 {
     if(!w) return;
-    SV_Write(data, len);
+    DENG2_ASSERT(writer);
+    if(data)
+    {
+        *writer << de::Block(data, len);
+    }
 }
 
 Writer *SV_NewWriter()

@@ -21,8 +21,9 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
-#include <de/game/SavedSession>
-#include <de/Path>
+//#include <de/game/SavedSession>
+//#include <de/Path>
+#include <de/File>
 #include <de/Reader>
 #include <de/Writer>
 #include <de/reader.h>
@@ -50,7 +51,8 @@ typedef enum savestatesegment_e {
  */
 
 void SV_CloseFile();
-bool SV_OpenFile(de::File const &file);
+bool SV_OpenFileForRead(de::File const &file);
+bool SV_OpenFileForWrite(de::File &file);
 
 #if 0
 bool SV_OpenFile_LZSS(de::Path filePath);
@@ -69,11 +71,11 @@ void SV_BeginSegment(int segmentId);
 void SV_EndSegment();
 
 void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer);
-#endif
 
 void SV_WriteConsistencyBytes();
 
-//void SV_ReadConsistencyBytes();
+void SV_ReadConsistencyBytes();
+#endif
 
 Writer *SV_NewWriter();
 
