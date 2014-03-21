@@ -3368,19 +3368,20 @@ AutoStr *G_GenerateUserSaveDescription()
     return str;
 }
 
-de::game::SessionMetadata *G_CurrentSessionMetadata()
+de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDescription)
 {
     de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
 
     metadata->set("magic",           int(IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC));
     metadata->set("version",         MY_SAVE_VERSION);
     metadata->set("gameIdentityKey", G_IdentityKey());
+    metadata->set("userDescription", userDescription);
     metadata->set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
 #if !__JHEXEN__
     metadata->set("mapTime",         mapTime);
 #endif
 
-    metadata->add("gameRules",       G_Rules().toRecord()); // Make a copy.
+    metadata->add("gameRules",       G_Rules().toRecord()); // Takes owership.
 
 #if !__JHEXEN__
     de::ArrayValue *array = new de::ArrayValue;
@@ -3389,7 +3390,7 @@ de::game::SessionMetadata *G_CurrentSessionMetadata()
         bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
         *array << de::NumberValue(playerIsPresent, de::NumberValue::Boolean);
     }
-    metadata->set("players", array);
+    metadata->set("players", array); // Takes owership.
 #endif
 
     metadata->set("sessionId",       G_GenerateSessionId());

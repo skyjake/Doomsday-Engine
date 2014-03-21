@@ -66,15 +66,12 @@ GameSessionWriter::GameSessionWriter(SavedSession &session)
 
 void GameSessionWriter::write(String const &userDescription)
 {
-    SessionMetadata *metadata = G_CurrentSessionMetadata();
+    SessionMetadata const *metadata = G_CurrentSessionMetadata(userDescription);
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
     NetSv_SaveGame(metadata->geti("sessionId"));
 #endif
-
-    metadata->set("userDescription", userDescription);
-    //d->session.replaceMetadata(metadata);
 
     // Write the Info file for this .save package.
     ZipArchive arch;
@@ -105,5 +102,6 @@ void GameSessionWriter::write(String const &userDescription)
     outFile.flush();
     LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
-    delete metadata;
+    // Update the cached metadata so we can try to avoid reopening the session.
+    d->session.replaceMetadata(const_cast<SessionMetadata *>(metadata));
 }

@@ -238,9 +238,11 @@ bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
 bool G_LoadSession(de::String slotId);
 
 /**
- * @return  New SessionMetadata (record). Ownership is given to the caller.
+ * Returns new SessionMetadata (record). Ownership is given to the caller.
+ *
+ * @param userDescription  Textual description of the save provided by the user.
  */
-de::game::SessionMetadata *G_CurrentSessionMetadata();
+de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDecription = "");
 
 /**
  * Returns the game's SaveSlots.
