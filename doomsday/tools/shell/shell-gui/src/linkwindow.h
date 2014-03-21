@@ -21,6 +21,7 @@
 
 #include <QMainWindow>
 #include <de/String>
+#include <de/NativePath>
 #include <de/shell/Link>
 
 /**
@@ -48,7 +49,7 @@ signals:
 
 public slots:
     void openConnection(QString address);
-    void openConnection(de::shell::Link *link, de::String name = "");
+    void openConnection(de::shell::Link *link, de::NativePath const &errorLogPath, de::String name = "");
     void closeConnection();
     void sendCommandToServer(de::String command);
     void switchToStatus();

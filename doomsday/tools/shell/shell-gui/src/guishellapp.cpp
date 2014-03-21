@@ -224,7 +224,7 @@ void GuiShellApp::startLocalServer()
             }
             sv.start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
 
-            newOrReusedConnectionWindow()->openConnection(sv.openLink());
+            newOrReusedConnectionWindow()->openConnection(sv.openLink(), sv.errorLogPath());
         }
     }
     catch(Error const &er)
