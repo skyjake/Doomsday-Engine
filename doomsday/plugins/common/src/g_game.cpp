@@ -3008,14 +3008,9 @@ void G_DoLeaveMap()
             }
 
             Writer *writer = SV_NewWriter();
-
-            // Set the mobj archive numbers
-            ThingArchive thingArchive;
-            thingArchive.initForSave(true/*exclude players*/);
-
-            MapStateWriter(thingArchive).write(writer);
-
+            MapStateWriter().write(writer, true/*exclude players*/);
             Writer_Delete(writer);
+
             SV_CloseFile();
         }
     }

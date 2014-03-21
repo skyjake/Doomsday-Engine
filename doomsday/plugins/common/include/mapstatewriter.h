@@ -37,8 +37,10 @@ public:
 
     /**
      * Serialize the map state using the specified @a reader.
+     *
+     * @param excludePlayers  @c true= Do not include players in the ThingArchive.
      */
-    void write(Writer *writer);
+    void write(Writer *writer, bool excludePlayers = false);
 
     /**
      * Returns the writer to use when serializing the map state.

@@ -299,7 +299,7 @@ DENG2_PIMPL(MapStateWriter)
 MapStateWriter::MapStateWriter() : d(new Instance(this))
 {}
 
-void MapStateWriter::write(Writer *writer)
+void MapStateWriter::write(Writer *writer, bool excludePlayers)
 {
     DENG_ASSERT(writer != 0);
     d->writer = writer;
@@ -312,7 +312,7 @@ void MapStateWriter::write(Writer *writer)
 
     // Set the mobj archive numbers.
     d->thingArchive = new ThingArchive;
-    d->thingArchive->initForSave(false/*do not exclude players*/);
+    d->thingArchive->initForSave(excludePlayers);
 #if !__JHEXEN__
     Writer_WriteInt32(d->writer, d->thingArchive->size());
 #endif
