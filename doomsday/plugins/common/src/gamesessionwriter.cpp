@@ -22,12 +22,8 @@
 #include "gamesessionwriter.h"
 
 #include "d_net.h"           // NetSv_SaveGame
-#include "g_common.h"        // gameMapUri
 #include "mapstatewriter.h"
-#include "p_savedef.h"       // CONSISTENCY
 #include "p_saveio.h"
-#include "p_saveg.h"         /// playerheader_t @todo remove me
-#include "thingarchive.h"
 #include <de/App>
 #include <de/NativeFile>
 #include <de/PackageFolder>
@@ -40,13 +36,13 @@ using de::game::SessionMetadata;
 
 DENG2_PIMPL(GameSessionWriter)
 {
-    SavedSession &session; // Saved session to be updated Not owned.
+    SavedSession &session; // Saved session to be updated. Not owned.
     writer_s *writer;
 
     Instance(Public *i, SavedSession &session)
         : Base(i)
-        , session     (session)
-        , writer      (0)
+        , session(session)
+        , writer (0)
     {}
 
     ~Instance()
