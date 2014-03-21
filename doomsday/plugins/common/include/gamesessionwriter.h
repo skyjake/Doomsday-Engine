@@ -22,8 +22,7 @@
 #define LIBCOMMON_GAMESESSIONWRITER_H
 
 #include <de/Error>
-#include <de/game/MapStateReader>
-#include <de/Path>
+#include <de/game/SavedSession>
 
 /**
  * Native game state saved session writer.
@@ -39,13 +38,7 @@ public:
 public:
     GameSessionWriter(de::game::SavedSession &session);
 
-    /**
-     * @param stateFilePath
-     * @param mapStateFilePath
-     * @param metadata          New metadata for the session. Ownership is given.
-     */
-    void write(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
-               de::game::SessionMetadata *metadata);
+    void write(de::String const &userDescription = "");
 
 private:
     DENG2_PRIVATE(d)

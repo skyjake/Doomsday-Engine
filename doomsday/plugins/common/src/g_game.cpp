@@ -2928,18 +2928,15 @@ static int saveGameStateWorker(void *context)
     SaveSlot &sslot = G_SaveSlots()[logicalSlot];
 
     de::game::SavedSession *session = new de::game::SavedSession(sslot.repositoryPath());
-    de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
-    metadata->set("userDescription", userDescription);
 
     try
     {
         de::Path const sessionPath = de::String("/savegame") / session->path();
-        de::Path const mapStateFilePath(Str_Text(Uri_Resolved(gameMapUri)));
 
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
                 sessionPath.toString().toLatin1().constData());
 
-        GameSessionWriter(*session).write(sessionPath, mapStateFilePath, metadata);
+        GameSessionWriter(*session).write(userDescription);
 
         // Swap the saved session file.
         G_SavedSessionRepository().add(sslot.repositoryPath(), session);

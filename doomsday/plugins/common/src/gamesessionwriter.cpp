@@ -71,13 +71,6 @@ DENG2_PIMPL(GameSessionWriter)
         beginSegment(ASEG_END);
     }
 
-    void writeConsistencyBytes()
-    {
-#if !__JHEXEN__
-        Writer_WriteByte(writer, CONSISTENCY);
-#endif
-    }
-
     void writeWorldACScriptData()
     {
 #if __JHEXEN__
@@ -124,10 +117,9 @@ GameSessionWriter::GameSessionWriter(SavedSession &session)
     : d(new Instance(this, session))
 {}
 
-void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFilePath,
-    SessionMetadata *metadata)
+void GameSessionWriter::write(String const &userDescription)
 {
-    DENG2_ASSERT(metadata != 0);
+    de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
@@ -136,16 +128,17 @@ void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFil
 
     if(!SV_OpenFileForWrite(stateFilePath))
     {
+        delete metadata;
         throw FileAccessError("GameSessionWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\" for write");
     }
 
-    d->writer = SV_NewWriter();
-
+    metadata->set("userDescription", userDescription);
     //d->session.replaceMetadata(metadata);
 
     ZipArchive arch;
     arch.add("Info", metadata->asTextWithInfoSyntax().toUtf8());
 
+    d->writer = SV_NewWriter();
     d->writeWorldACScriptData();
 
     // Set the mobj archive numbers.
@@ -156,19 +149,12 @@ void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFil
 #endif
     d->writePlayers();
 
-    if(mapStateFilePath != stateFilePath)
-    {
-        // The map state is actually written to a separate file.
-        // Close the game state file.
-        SV_CloseFile();
-
-        // Open the map state file.
-        SV_OpenFileForWrite(mapStateFilePath);
-    }
+    // Serialized map states are written to separate files.
+    SV_CloseFile();
+    SV_OpenFileForWrite(mapStateFilePath);
 
     d->writeMap();
 
-    d->writeConsistencyBytes(); // To be absolutely sure...
     SV_CloseFile();
 
     File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
@@ -179,5 +165,5 @@ void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFil
     delete d->thingArchive; d->thingArchive = 0;
     Writer_Delete(d->writer); d->writer = 0;
 
-    delete metadata; // We have ownership.
+    delete metadata;
 }

@@ -74,6 +74,13 @@ DENG2_PIMPL(MapStateWriter)
         beginSegment(ASEG_END);
     }
 
+    void writeConsistencyBytes()
+    {
+#if !__JHEXEN__
+        Writer_WriteByte(writer, CONSISTENCY);
+#endif
+    }
+
     void writeMapHeader()
     {
         Writer_WriteInt32(writer, MY_SAVE_MAGIC);
@@ -291,6 +298,7 @@ void MapStateWriter::write(Writer *writer)
         d->writeSoundTargets();
     }
     d->endSegment();
+    d->writeConsistencyBytes(); // To be absolutely sure...
 
     // Cleanup.
     MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
