@@ -37,32 +37,45 @@ class Folder;
 class Feed;
 
 /**
- * Base class for all files stored in the file system.
+ * Base class for all files stored in the file system. @ingroup fs
  *
- * All files are Lockable so that multiple threads can use them
- * simultaneously. As a general rule, the user of a file does not need to
- * lock the file manually; files will lock themselves as appropriate. A
- * user may lock the file manually if long-term exclusive access is
- * required.
+ * Implements the IIOStream interface to allow files to receive and send out a stream of
+ * bytes. The default implementation only throws an exception -- it is up to subclasses
+ * to implement the stream in the context of the concrete file class.
  *
- * Implements the IIOStream interface to allow files to receive and send
- * out a stream of bytes. The default implementation only throws an
- * exception -- it is up to subclasses to implement the stream in the
- * context of the concrete file class.
+ * Note that the constructor of File is protected: only subclasses can be instantiated.
  *
- * Note that the constructor of File is protected: only subclasses can be
- * instantiated.
+ * @par Reading and writing
+ *
+ * The File class provides a stream-based interface for reading and writing the (entire)
+ * contents of the file. Subclasses may provide a more fine-grained or random access
+ * interface (e.g., ByteArrayFile).
+ *
+ * As a rule, newly created files are in write mode, because the assumption is that after
+ * creation the next step is to write some content into the file. After all the content
+ * has been written, the file should be put to read-only mode. This ensures that no
+ * unwanted or accidental writes will occur, and that everybody can access the contents
+ * of the file without needing to worry about the content changing. Also, subclasses may
+ * depend on this for releasing some internal resources (like a native file write
+ * handle).
+ *
+ * @par Deriving from File
  *
  * Subclasses have some special requirements for their destructors:
- * - deindex() must be called in all subclass destructors so that the
- *   instances indexed under the subclasses' type are removed from the
- *   file system's index also.
- * - The file must be automatically flushed before it gets destroyed
- *   (see flush()).
- * - The deletion audience must be notified and @c audienceForDeletion
- *   must be cleared afterwards.
+ * - deindex() must be called in all subclass destructors so that the instances indexed
+ *   under the subclasses' type are removed from the file system's index also.
+ * - The file must be automatically flushed before it gets destroyed (see flush()).
+ * - The deletion audience must be notified and @c audienceForDeletion must be cleared
+ *   afterwards.
  *
- * @ingroup fs
+ * Note that classes derived from Folder are subject to the same rules.
+ *
+ * @par Thread-safety
+ *
+ * All files are Lockable so that multiple threads can use them simultaneously. As a
+ * general rule, the user of a file does not need to lock the file manually; files will
+ * lock themselves as appropriate. A user may lock the file manually if long-term
+ * exclusive access is required.
  */
 class DENG2_PUBLIC File : public Lockable, public IIOStream
 {
@@ -173,8 +186,10 @@ public:
     virtual void deindex();
 
     /**
-     * Commits any buffered changes to the content of the file. All subclasses
-     * of File must make sure they flush themselves right before they get deleted.
+     * Commits any buffered changes to the content of the file. All subclasses of File
+     * must make sure they flush themselves right before they get deleted. Subclasses
+     * must also flush themselves when a file in write mode is changed to read-only mode,
+     * if necessary.
      */
     virtual void flush();
 

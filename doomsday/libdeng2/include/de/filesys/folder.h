@@ -33,12 +33,16 @@ class Feed;
 /**
  * A folder contains a set of files. It is used for building a tree of files
  * in the file system (de::FS). This is the base class for all types of folders.
+ * @ingroup fs
  *
  * The first Feed attached to a Folder is the primary feed.
  *
- * @see Feed
+ * @par Deriving from Folder
  *
- * @ingroup fs
+ * See the requirements that apply to deriving from File; the same apply for Folder,
+ * as it is itself derived from File.
+ *
+ * @see Feed
  */
 class DENG2_PUBLIC Folder : public File
 {

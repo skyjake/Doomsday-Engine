@@ -359,7 +359,8 @@ void Canvas::resizeGL(int w, int h)
     if(d->currentSize != d->pendingSize)
     {
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-        qDebug() << "Canvas" << this << "triggered size to" << w << h << "from" << d->currentSize.asText();
+        LOGDEV_GL_MSG("Canvas %p triggered size to %ix%i from %s")
+                << this << w << h << d->currentSize.asText();
         d->resizeTimer.start(100);
 #else
         updateSize();
@@ -370,14 +371,7 @@ void Canvas::resizeGL(int w, int h)
 void Canvas::updateSize()
 {
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-    /*
-    if(d->parent && d->parent->isRecreationInProgress())
-    {
-        d->resizeTimer.start(100);
-        return;
-    }
-    */
-    qDebug() << this << "resizing now";
+    LOGDEV_GL_MSG("Canvas %p resizing now") << this;
 #endif
 
     makeCurrent();
