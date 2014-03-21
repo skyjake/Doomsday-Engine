@@ -37,10 +37,15 @@ public:
     DENG2_ERROR(FileAccessError);
 
 public:
-    GameSessionWriter();
+    GameSessionWriter(de::game::SavedSession &session);
 
+    /**
+     * @param stateFilePath
+     * @param mapStateFilePath
+     * @param metadata          New metadata for the session. Ownership is given.
+     */
     void write(de::Path const &stateFilePath, de::Path const &mapStateFilePath,
-               de::game::SessionMetadata const &metadata);
+               de::game::SessionMetadata *metadata);
 
 private:
     DENG2_PRIVATE(d)

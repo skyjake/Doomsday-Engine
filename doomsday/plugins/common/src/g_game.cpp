@@ -2930,7 +2930,6 @@ static int saveGameStateWorker(void *context)
     de::game::SavedSession *session = new de::game::SavedSession(sslot.repositoryPath());
     de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
     metadata->set("userDescription", userDescription);
-    session->replaceMetadata(metadata);
 
     try
     {
@@ -2940,7 +2939,7 @@ static int saveGameStateWorker(void *context)
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
                 sessionPath.toString().toLatin1().constData());
 
-        GameSessionWriter().write(sessionPath, mapStateFilePath, *metadata);
+        GameSessionWriter(*session).write(sessionPath, mapStateFilePath, metadata);
 
         // Swap the saved session file.
         G_SavedSessionRepository().add(sslot.repositoryPath(), session);

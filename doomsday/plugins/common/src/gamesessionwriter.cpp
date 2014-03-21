@@ -28,20 +28,27 @@
 #include "p_saveio.h"
 #include "p_saveg.h"         /// playerheader_t @todo remove me
 #include "thingarchive.h"
-#include <de/NativePath>
+#include <de/App>
+#include <de/NativeFile>
+#include <de/PackageFolder>
+#include <de/Writer>
+#include <de/ZipArchive>
 
 using namespace de;
-using namespace de::game;
+using de::game::SavedSession;
+using de::game::SessionMetadata;
 
 DENG2_PIMPL(GameSessionWriter)
 {
+    SavedSession &session; // Saved session to be updated Not owned.
     ThingArchive *thingArchive;
     writer_s *writer;
 
-    Instance(Public *i)
+    Instance(Public *i, SavedSession &session)
         : Base(i)
+        , session     (session)
         , thingArchive(0)
-        , writer(0)
+        , writer      (0)
     {}
 
     ~Instance()
@@ -69,11 +76,6 @@ DENG2_PIMPL(GameSessionWriter)
 #if !__JHEXEN__
         Writer_WriteByte(writer, CONSISTENCY);
 #endif
-    }
-
-    void writeSessionHeader(SessionMetadata const &metadata)
-    {
-        SV_WriteSessionMetadata(metadata, writer);
     }
 
     void writeWorldACScriptData()
@@ -118,25 +120,32 @@ DENG2_PIMPL(GameSessionWriter)
     }
 };
 
-GameSessionWriter::GameSessionWriter() : d(new Instance(this))
+GameSessionWriter::GameSessionWriter(SavedSession &session)
+    : d(new Instance(this, session))
 {}
 
 void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFilePath,
-    SessionMetadata const &metadata)
+    SessionMetadata *metadata)
 {
+    DENG2_ASSERT(metadata != 0);
+
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(metadata["sessionId"].value().asNumber());
+    NetSv_SaveGame(metadata->geti("sessionId"));
 #endif
 
-    if(!SV_OpenFile_LZSS(stateFilePath))
+    if(!SV_OpenFile(stateFilePath))
     {
         throw FileAccessError("GameSessionWriter", "Failed opening \"" + NativePath(stateFilePath).pretty() + "\" for write");
     }
 
     d->writer = SV_NewWriter();
 
-    d->writeSessionHeader(metadata);
+    //d->session.replaceMetadata(metadata);
+
+    ZipArchive arch;
+    arch.add("Info", metadata->asTextWithInfoSyntax().toUtf8());
+
     d->writeWorldACScriptData();
 
     // Set the mobj archive numbers.
@@ -151,18 +160,24 @@ void GameSessionWriter::write(Path const &stateFilePath, Path const &mapStateFil
     {
         // The map state is actually written to a separate file.
         // Close the game state file.
-        SV_CloseFile_LZSS();
+        SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile_LZSS(mapStateFilePath);
+        SV_OpenFile(mapStateFilePath);
     }
 
     d->writeMap();
 
     d->writeConsistencyBytes(); // To be absolutely sure...
-    SV_CloseFile_LZSS();
+    SV_CloseFile();
+
+    File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
+    de::Writer(outFile) << arch;
+    LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
     // Cleanup.
     delete d->thingArchive; d->thingArchive = 0;
     Writer_Delete(d->writer); d->writer = 0;
+
+    delete metadata; // We have ownership.
 }
