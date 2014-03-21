@@ -135,7 +135,6 @@ DENG2_PIMPL(Id1Translator)
             tmp.get(0, (Block::Byte *)vcheck, tmp.size()); vcheck[16] = 0;
             saveVersion = String(vcheck + 8).toInt(0, 10, String::AllowSuffix);
             DENG2_ASSERT(knownFormatVersion(saveVersion));
-            metadata.set("version", 14);
         }
 
         // Id Tech 1 formats omitted the majority of the game rules...

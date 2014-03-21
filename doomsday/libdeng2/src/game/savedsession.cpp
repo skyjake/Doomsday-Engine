@@ -101,10 +101,6 @@ void SavedSession::Metadata::parse(String const &source)
         {
             set("userDescription", value);
         }
-        if(info.findValueForKey("version", value))
-        {
-            set("version", value.toInt());
-        }
     }
     catch(de::Error const &er)
     {
@@ -135,7 +131,6 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     }
     if(has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
     if(has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
-    if(has("version"))         os << "\nversion: "         << String::number(geti("version"));
 
     if(hasSubrecord("gameRules"))
     {
@@ -182,9 +177,6 @@ DENG2_PIMPL(SavedSession)
 
             QScopedPointer<SessionMetadata> metadata(new SessionMetadata);
             metadata->parse(String::fromUtf8(raw));
-
-            // Future version?
-            if(metadata->geti("version") > 14) return 0;
 
             // So far so good.
             return metadata.take();
@@ -242,13 +234,11 @@ static String metadataAsStyledText(SavedSession::Metadata const &metadata)
     return String(_E(b) "%1\n" _E(.)
                   _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
                   _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Version: "     _E(.)_E(i) "%4 "  _E(.)
-                  _E(l) "Session id: "  _E(.)_E(i) "%5\n" _E(.)
-                  _E(D) "Game rules:\n" _E(.) "  %6")
+                  _E(l) "Session id: "  _E(.)_E(i) "%4\n" _E(.)
+                  _E(D) "Game rules:\n" _E(.) "  %5")
              .arg(metadata.gets("userDescription", ""))
              .arg(metadata.gets("gameIdentityKey", ""))
              .arg(metadata.gets("mapUri", ""))
-             .arg(metadata.geti("version", 14))
              .arg(metadata.geti("sessionId", 0))
              .arg(metadata.gets("gameRules", ""));
 }

@@ -333,7 +333,6 @@ DENG2_PIMPL(NativeTranslator)
             /// @throw UnknownFormatError Map state is in an unsupported format.
             throw UnknownFormatError("translateMetadata", "Unsupported format version " + String::number(saveVersion));
         }
-        metadata.set("version",             dint(14));
 
         // Translate gamemode identifiers from older save versions.
         dint32 oldGamemode;
