@@ -28,6 +28,7 @@
 #include <de/App>
 #include <de/NativeFile>
 #include <de/PackageFolder>
+#include <de/Time>
 #include <de/Writer>
 #include <de/ZipArchive>
 
@@ -39,6 +40,24 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
 {
     SavedSession &session; // Saved session to be updated. Not owned.
     Instance(SavedSession &session) : session(session) {}
+
+    String composeInfo(SessionMetadata const &metadata) const
+    {
+        String info;
+        QTextStream os(&info);
+        os.setCodec("UTF-8");
+
+        // Write header and misc info.
+        Time now;
+        os << "# Doomsday Engine saved game session package.\n#"
+           << "\n# Generator: GameSessionWriter (libcommon)"
+           << "\n# Generation Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate);
+
+        // Write metadata.
+        os << "\n\n" + metadata.asTextWithInfoSyntax() + "\n";
+
+        return info;
+    }
 };
 
 GameSessionWriter::GameSessionWriter(SavedSession &session)
@@ -59,7 +78,7 @@ void GameSessionWriter::write(String const &userDescription)
 
     // Write the Info file for this .save package.
     ZipArchive arch;
-    arch.add("Info", metadata->asTextWithInfoSyntax().toUtf8());
+    arch.add("Info", d->composeInfo(*metadata).toUtf8());
 
 #if __JHEXEN__
     // Serialize the world ACScript state.
@@ -84,6 +103,7 @@ void GameSessionWriter::write(String const &userDescription)
 
     File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
     de::Writer(outFile) << arch;
+    outFile.flush();
     LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
     delete metadata;

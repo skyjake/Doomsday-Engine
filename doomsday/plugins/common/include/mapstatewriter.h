@@ -36,7 +36,7 @@ public:
     MapStateWriter();
 
     /**
-     * Serialize the map state using the specified @a reader.
+     * Serialize the @em current map state using the specified @a writer.
      *
      * @param excludePlayers  @c true= Do not include players in the ThingArchive.
      */

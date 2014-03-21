@@ -3002,10 +3002,10 @@ void G_DoLeaveMap()
             // SaveSlot &sslot = G_SaveSlots()["base"];
             de::Path const mapStateFilePath(Str_Text(Uri_Compose(gameMapUri)));
 
-            if(!SV_OpenFileForWrite(mapStateFilePath))
+            /*if(!SV_OpenFileForWrite(mapStateFilePath))
             {
                 throw de::Error("G_DoLeaveMap", "Failed opening \"" + de::NativePath(mapStateFilePath).pretty() + "\" for write");
-            }
+            }*/
 
             Writer *writer = SV_NewWriter();
             MapStateWriter().write(writer, true/*exclude players*/);
