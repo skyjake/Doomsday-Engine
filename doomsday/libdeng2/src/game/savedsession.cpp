@@ -336,7 +336,6 @@ void SavedSession::copyFile(SavedSession const &source)
 
     File &destFile = App::fileSystem().root().replaceFile(String("/savegames") / d->repoPath + ".save");
     Writer(destFile) << source.locateFile().archive();
-    destFile.flush();
     destFile.setMode(File::ReadOnly);
     destFile.parent()->populate(Folder::PopulateOnlyThisFolder);
 
