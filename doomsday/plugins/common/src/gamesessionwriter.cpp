@@ -85,7 +85,6 @@ void GameSessionWriter::write(String const &userDescription)
     {
         Block worldACScriptData;
         de::Writer writer(worldACScriptData);
-        writer << dint32(ASEG_WORLDSCRIPTDATA);
         Game_ACScriptInterpreter().writeWorldScriptData(writer);
         arch.add("ACScriptState", worldACScriptData);
     }

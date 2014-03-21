@@ -25,6 +25,7 @@
 #include "dmu_archiveindex.h"
 #include "d_netsv.h"           /// @todo remove me
 #include "hu_log.h"
+#include "mapstatewriter.h"    // ChunkId
 #include "p_actor.h"
 #include "p_mapsetup.h"
 #include "p_savedef.h"
@@ -734,8 +735,7 @@ MapStateReader::~MapStateReader()
 
 void MapStateReader::read(String const &mapUriStr)
 {
-    PackageFolder const &pack             = session().locateFile();
-    game::SessionMetadata const &metadata = session().metadata();
+    PackageFolder const &pack = session().locateFile();
 
     File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr + "State");
     SV_OpenFileForRead(mapStateFile);
@@ -796,7 +796,7 @@ void MapStateReader::read(String const &mapUriStr)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(metadata.geti("sessionId"));
+    NetSv_LoadGame(session().metadata().geti("sessionId"));
 #endif
 
     // Material scrollers must be spawned for older savegame versions.

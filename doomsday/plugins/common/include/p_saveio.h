@@ -21,30 +21,11 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
-//#include <de/game/SavedSession>
-//#include <de/Path>
 #include <de/File>
 #include <de/Reader>
 #include <de/Writer>
 #include <de/reader.h>
 #include <de/writer.h>
-
-typedef enum savestatesegment_e {
-    ASEG_MAP_HEADER = 102,  // Hexen only
-    ASEG_MAP_ELEMENTS,
-    ASEG_POLYOBJS,          // Hexen only
-    ASEG_MOBJS,             // Hexen < ver 4 only
-    ASEG_THINKERS,
-    ASEG_SCRIPTS,           // Hexen only
-    ASEG_PLAYERS,
-    ASEG_SOUNDS,            // Hexen only
-    ASEG_MISC,              // Hexen only
-    ASEG_END,               // = 111
-    ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2,
-    ASEG_PLAYER_HEADER,
-    ASEG_WORLDSCRIPTDATA   // Hexen only
-} savestatesegment_t;
 
 /*
  * File management
@@ -53,29 +34,6 @@ typedef enum savestatesegment_e {
 void SV_CloseFile();
 bool SV_OpenFileForRead(de::File const &file);
 bool SV_OpenFileForWrite(de::IByteArray &block);
-
-#if 0
-bool SV_OpenFile_LZSS(de::Path filePath);
-void SV_CloseFile_LZSS();
-
-/**
- * Exit with a fatal error if the value at the current location in the
- * game-save file does not match that associated with the segment id.
- *
- * @param segmentId  Identifier of the segment to check alignment of.
- */
-void SV_AssertSegment(int segmentId);
-
-void SV_BeginSegment(int segmentId);
-
-void SV_EndSegment();
-
-void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer);
-
-void SV_WriteConsistencyBytes();
-
-void SV_ReadConsistencyBytes();
-#endif
 
 Writer *SV_NewWriter();
 

@@ -24,6 +24,7 @@
 #include "common.h"
 #include "thingarchive.h"
 #include <de/game/MapStateReader>
+#include <de/String>
 
 /**
  * Performs native saved game map state deserialization.
@@ -35,7 +36,7 @@ class MapStateReader : public de::game::MapStateReader
 {
 public:
     MapStateReader(de::game::SavedSession const &session);
-    ~MapStateReader();
+    virtual ~MapStateReader();
 
     /**
      * Deserialize the saved map state.

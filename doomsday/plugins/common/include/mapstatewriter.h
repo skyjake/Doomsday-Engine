@@ -25,6 +25,26 @@
 #include "thingarchive.h"
 
 /**
+ * Serialized map states are separated into identifiable chunks (in Hexen).
+ */
+enum MapStateChunkId
+{
+    ASEG_MAP_HEADER = 102,  // Hexen only
+    ASEG_MAP_ELEMENTS,
+    ASEG_POLYOBJS,          // Hexen only
+    ASEG_MOBJS,             // Hexen < ver 4 only
+    ASEG_THINKERS,
+    ASEG_SCRIPTS,           // Hexen only
+    ASEG_PLAYERS,
+    ASEG_SOUNDS,            // Hexen only
+    ASEG_MISC,              // Hexen only
+    ASEG_END,               // = 111
+    ASEG_MATERIAL_ARCHIVE,
+    ASEG_MAP_HEADER2,
+    ASEG_PLAYER_HEADER
+};
+
+/**
  * Performs saved game map state serialization.
  *
  * @ingroup libcommon
