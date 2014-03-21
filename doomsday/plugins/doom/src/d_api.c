@@ -66,38 +66,48 @@ static __inline gameid_t toGameId(int gamemode)
 int G_RegisterGames(int hookType, int param, void* data)
 {
 #define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
+#define LEGACYSAVEGAMEEXTENSION ".dsg"
+#define LEGACYSAVEGAMESUBFOLDER "savegame"
 
     GameDef const hacxDef = {
         "hacx", "hacx",
-        "HACX - Twitch 'n Kill", "Banjo Software"
+        "HACX - Twitch 'n Kill", "Banjo Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const chexDef = {
         "chex", "chex",
-        "Chex(R) Quest", "Digital Cafe"
+        "Chex(R) Quest", "Digital Cafe",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doom2TntDef = {
         "doom2-tnt", "doom",
-        "Final DOOM: TNT: Evilution", "Team TNT"
+        "Final DOOM: TNT: Evilution", "Team TNT",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doom2PlutDef = {
         "doom2-plut", "doom",
-        "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
+        "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doom2Def = {
         "doom2", "doom",
-        "DOOM 2: Hell on Earth", "id Software"
+        "DOOM 2: Hell on Earth", "id Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doomUltimateDef = {
         "doom1-ultimate", "doom",
-        "Ultimate DOOM", "id Software"
+        "Ultimate DOOM", "id Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doomDef = {
         "doom1", "doom",
-        "DOOM Registered", "id Software"
+        "DOOM Registered", "id Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doomShareDef = {
         "doom1-share", "doom",
-        "DOOM Shareware", "id Software"
+        "DOOM Shareware", "id Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

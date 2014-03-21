@@ -63,28 +63,35 @@ static __inline gameid_t toGameId(int gamemode)
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
-#define CONFIGDIR       "hexen"
-#define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
+#define CONFIGDIR               "hexen"
+#define STARTUPPK3              PLUGIN_NAMETEXT2 ".pk3"
+#define LEGACYSAVEGAMEEXTENSION ".hxs"
+#define LEGACYSAVEGAMESUBFOLDER "hexndata"
 
     GameDef const deathkingsDef = {
         "hexen-dk", CONFIGDIR,
-        "Hexen: Deathkings of the Dark Citadel", "Raven Software"
+        "Hexen: Deathkings of the Dark Citadel", "Raven Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hexenDef = {
         "hexen", CONFIGDIR,
-        "Hexen", "Raven Software"
+        "Hexen", "Raven Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hexenDemoDef = {
         "hexen-demo", CONFIGDIR,
-        "Hexen 4-map Demo", "Raven Software"
+        "Hexen 4-map Demo", "Raven Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hexenBetaDemoDef = {
         "hexen-betademo", CONFIGDIR,
-        "Hexen 4-map Beta Demo", "Raven Software"
+        "Hexen 4-map Beta Demo", "Raven Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hexenV10Def = {
         "hexen-v10", CONFIGDIR,
-        "Hexen v1.0", "Raven Software"
+        "Hexen v1.0", "Raven Software",
+        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

@@ -57,9 +57,15 @@ public:
     /**
      * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
      * @param configDir     Name of the config directory.
+     *
+     * @param legacySavegameExtension  File extension for legacy savegames.
+     * @param legacySavegameSubfoler   Game-specific subdirectory of /home for legacy savegames.
      */
     Game(String const &identityKey, Path const &configDir,
-         String const &title = "Unnamed", String const &author = "Unknown");
+         String const &title                   = "Unnamed",
+         String const &author                  = "Unknown",
+         String const &legacySavegameExtension = "",
+         String const &legacySavegameSubfolder = "");
 
     virtual ~Game();
 

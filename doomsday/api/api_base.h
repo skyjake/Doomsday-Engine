@@ -51,6 +51,12 @@ typedef struct gamedef_s {
     /// Default author. May be overridden later.
     /// Used for (e.g.) the map author name if not specified in a Map Info definition.
     char const *defaultAuthor;
+
+    /*
+     * Used when converting legacy savegames:
+     */
+    char const *legacySavegameExtension;
+    char const *legacySavegameSubfolder;
 } GameDef;
 
 /**
@@ -66,7 +72,7 @@ typedef struct gameinfo_s {
 /// @}
 
 // The Base API.
-DENG_API_TYPEDEF(Base) // v1
+DENG_API_TYPEDEF(Base) // v2
 {
     de_api_t api;
 

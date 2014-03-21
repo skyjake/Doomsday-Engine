@@ -45,6 +45,9 @@ DENG2_PIMPL(Game)
     Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
     Path bindingConfig;  ///< Control binding file name (set automatically).
 
+    String legacySavegameExtension;
+    String legacySavegameSubfolder;
+
     Instance(Public &a, String const &identityKey, Path const &configDir,
              String const &title, String const &author)
         : Base(a)
@@ -62,11 +65,14 @@ DENG2_PIMPL(Game)
     }
 };
 
-Game::Game(String const &identityKey, Path const &configDir, String const &title,
-    String const &author)
+Game::Game(String const &identityKey, Path const &configDir, String const &title, String const &author,
+    String const &legacySavegameExtension_, String const &legacySavegameSubfolder)
     : game::Game(identityKey)
     , d(new Instance(*this, identityKey, configDir, title, author))
-{}
+{
+    d->legacySavegameExtension = legacySavegameExtension_;
+    d->legacySavegameSubfolder = legacySavegameSubfolder;
+}
 
 Game::~Game()
 {}
@@ -172,14 +178,7 @@ String Game::logoImageId() const
 
 String Game::legacySavegameExtension() const
 {
-    String const idKey = identityKey();
-    /// @todo Use GameDef to define these.
-    if(idKey.beginsWith("doom"))    return ".dsg";
-    if(idKey.beginsWith("heretic")) return ".hsg";
-    if(idKey.beginsWith("hexen"))   return ".hxs";
-    if(idKey.beginsWith("chex"))    return ".dsg";
-    if(idKey.beginsWith("hacx"))    return ".dsg";
-    return "";
+    return d->legacySavegameExtension;
 }
 
 String Game::legacySavegamePath() const
@@ -196,12 +195,10 @@ String Game::legacySavegamePath() const
     }
 
     // The default save path. The savegames are in a game-specific folder.
-    String const idKey = identityKey();
-    if(idKey.beginsWith("doom"))    return App::app().nativeHomePath() / "savegame" / idKey;
-    if(idKey.beginsWith("heretic")) return App::app().nativeHomePath() / "savegame" / idKey;
-    if(idKey.beginsWith("hexen"))   return App::app().nativeHomePath() / "hexndata" / idKey;
-    if(idKey.beginsWith("chex"))    return App::app().nativeHomePath() / "savegame" / idKey;
-    if(idKey.beginsWith("hacx"))    return App::app().nativeHomePath() / "savegame" / idKey;
+    if(!d->legacySavegameSubfolder.isEmpty())
+    {
+        return App::app().nativeHomePath() / d->legacySavegameSubfolder / identityKey();
+    }
 
     return "";
 }
@@ -261,7 +258,8 @@ bool Game::isRequiredFile(File1 &file)
 Game *Game::fromDef(GameDef const &def)
 {
     return new Game(def.identityKey, NativePath(def.configDir).expand().withSeparators('/'),
-                    def.defaultTitle, def.defaultAuthor);
+                    def.defaultTitle, def.defaultAuthor, def.legacySavegameExtension,
+                    def.legacySavegameSubfolder);
 }
 
 void Game::printBanner(Game const &game)

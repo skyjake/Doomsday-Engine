@@ -68,7 +68,8 @@ int G_RegisterGames(int hookType, int param, void* data)
 
     GameDef const doom64Def = {
         "doom64", CONFIGDIR,
-        "Doom 64", "Midway Software"
+        "Doom 64", "Midway Software",
+        "", ""
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
