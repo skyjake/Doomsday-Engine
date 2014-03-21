@@ -33,7 +33,7 @@
 class MapStateWriter
 {
 public:
-    MapStateWriter(ThingArchive &thingArchive);
+    MapStateWriter();
 
     /**
      * Serialize the map state using the specified @a reader.

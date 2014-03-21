@@ -44,7 +44,7 @@ using namespace internal;
 
 DENG2_PIMPL(MapStateWriter)
 {
-    ThingArchive *thingArchive; // Not owned.
+    ThingArchive *thingArchive;
     MaterialArchive *materialArchive;
     Writer *writer; // Not owned.
 
@@ -58,6 +58,7 @@ DENG2_PIMPL(MapStateWriter)
     ~Instance()
     {
         MaterialArchive_Delete(materialArchive);
+        delete thingArchive;
     }
 
     void beginSegment(int segId)
@@ -295,11 +296,8 @@ DENG2_PIMPL(MapStateWriter)
     }
 };
 
-MapStateWriter::MapStateWriter(ThingArchive &thingArchive)
-    : d(new Instance(this))
-{
-    d->thingArchive = &thingArchive;
-}
+MapStateWriter::MapStateWriter() : d(new Instance(this))
+{}
 
 void MapStateWriter::write(Writer *writer)
 {
@@ -340,6 +338,7 @@ void MapStateWriter::write(Writer *writer)
 
     // Cleanup.
     MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
+    delete d->thingArchive; d->thingArchive = 0;
 }
 
 ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)

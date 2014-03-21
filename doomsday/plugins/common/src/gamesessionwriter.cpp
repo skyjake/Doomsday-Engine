@@ -41,20 +41,17 @@ using de::game::SessionMetadata;
 DENG2_PIMPL(GameSessionWriter)
 {
     SavedSession &session; // Saved session to be updated Not owned.
-    ThingArchive *thingArchive;
     writer_s *writer;
 
     Instance(Public *i, SavedSession &session)
         : Base(i)
         , session     (session)
-        , thingArchive(0)
         , writer      (0)
     {}
 
     ~Instance()
     {
         Writer_Delete(writer);
-        delete thingArchive;
     }
 
     void beginSegment(int segId)
@@ -81,7 +78,7 @@ DENG2_PIMPL(GameSessionWriter)
 
     void writeMap()
     {
-        MapStateWriter(*thingArchive).write(writer);
+        MapStateWriter().write(writer);
     }
 };
 
@@ -126,7 +123,6 @@ void GameSessionWriter::write(String const &userDescription)
     LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
     // Cleanup.
-    delete d->thingArchive; d->thingArchive = 0;
     Writer_Delete(d->writer); d->writer = 0;
 
     delete metadata;
