@@ -24,10 +24,8 @@
 #include "dmu_lib.h"
 #include "p_savedef.h"   // MY_SAVE_VERSION
 #include "p_saveg.h"     // SV_WriteSector, SV_WriteLine
-#include "p_saveio.h"
 #include "polyobjs.h"
 #include "thinkerinfo.h"
-#include <de/String>
 
 namespace internal
 {

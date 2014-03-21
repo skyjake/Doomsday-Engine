@@ -21,11 +21,8 @@
 #include "common.h"
 #include "p_saveio.h"
 
-#include "g_common.h"
-#include "p_savedef.h"    // CONSISTENCY
-#include <de/ArrayValue>
+#include <de/Error>
 #include <de/FixedByteArray>
-#include <de/NativePath>
 
 // Used during write:
 static de::Writer *writer;
@@ -122,111 +119,6 @@ bool SV_OpenFileForWrite(de::IByteArray &block)
     writer = new de::Writer(block);
     return true;
 }
-
-#if 0
-bool SV_OpenFile_LZSS(de::Path path)
-{
-    App_Log(DE2_DEV_RES_XVERBOSE, "SV_OpenFile: Opening \"%s\"",
-            de::NativePath(path).pretty().toLatin1().constData());
-
-    DENG2_ASSERT(savefile == 0);
-    savefile = lzOpen(de::NativePath(path).expand().toUtf8().constData(), "wp");
-    return savefile != 0;
-}
-
-void SV_CloseFile_LZSS()
-{
-    if(savefile)
-    {
-        lzClose(savefile);
-        savefile = 0;
-    }
-}
-
-void SV_AssertSegment(int segmentId)
-{
-#if __JHEXEN__
-    if(segmentId == ASEG_END && SV_HxBytesLeft() < 4)
-    {
-        App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)");
-        return;
-    }
-    if(SV_ReadLong() != segmentId)
-    {
-        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
-    }
-#else
-    DENG_UNUSED(segmentId);
-#endif
-}
-
-void SV_BeginSegment(int segType)
-{
-#if __JHEXEN__
-    SV_WriteLong(segType);
-#else
-    DENG_UNUSED(segType);
-#endif
-}
-
-void SV_EndSegment()
-{
-    SV_BeginSegment(ASEG_END);
-}
-
-void SV_WriteSessionMetadata(de::game::SessionMetadata const &metadata, Writer *writer)
-{
-    DENG2_ASSERT(writer != 0);
-
-    Writer_WriteInt32(writer, metadata["magic"].value().asNumber());
-    Writer_WriteInt32(writer, metadata["version"].value().asNumber());
-
-    AutoStr *gameIdentityKeyStr = AutoStr_FromTextStd(metadata["gameIdentityKey"].value().asText().toUtf8().constData());
-    Str_Write(gameIdentityKeyStr, writer);
-
-    AutoStr *descriptionStr = AutoStr_FromTextStd(metadata["userDescription"].value().asText().toUtf8().constData());
-    Str_Write(descriptionStr, writer);
-
-    Uri *mapUri = Uri_NewWithPath2(metadata["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
-    Uri_Write(mapUri, writer);
-    Uri_Delete(mapUri); mapUri = 0;
-
-#if !__JHEXEN__
-    Writer_WriteInt32(writer, metadata["mapTime"].value().asNumber());
-#endif
-
-    GameRuleset *rules = GameRuleset::fromRecord(metadata["gameRules"].valueAsRecord());
-    rules->write(writer);
-    delete rules; rules = 0;
-
-#if !__JHEXEN__
-    de::ArrayValue const &players = metadata["players"].value().as<de::ArrayValue>();
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        Writer_WriteByte(writer, byte(players.at(i).asNumber()));
-    }
-#endif
-
-    Writer_WriteInt32(writer, metadata["sessionId"].value().asNumber());
-}
-
-void SV_WriteConsistencyBytes()
-{
-#if !__JHEXEN__
-    SV_WriteByte(CONSISTENCY);
-#endif
-}
-
-void SV_ReadConsistencyBytes()
-{
-#if !__JHEXEN__
-    if(SV_ReadByte() != CONSISTENCY)
-    {
-        Con_Error("Corrupt save game: Consistency test failed.");
-    }
-#endif
-}
-#endif
 
 static void swi8(writer_s *w, char val)
 {
