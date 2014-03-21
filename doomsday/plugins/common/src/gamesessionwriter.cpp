@@ -22,6 +22,7 @@
 #include "gamesessionwriter.h"
 
 #include "d_net.h"           // NetSv_SaveGame
+#include "g_common.h"
 #include "mapstatewriter.h"
 #include "p_saveio.h"
 #include <de/App>
@@ -34,39 +35,14 @@ using namespace de;
 using de::game::SavedSession;
 using de::game::SessionMetadata;
 
-DENG2_PIMPL(GameSessionWriter)
+DENG2_PIMPL_NOREF(GameSessionWriter)
 {
     SavedSession &session; // Saved session to be updated. Not owned.
-
-    Instance(Public *i, SavedSession &session)
-        : Base(i), session(session)
-    {}
-
-    void beginSegment(int segId)
-    {
-#if __JHEXEN__
-        Writer_WriteInt32(writer, segId);
-#else
-        DENG_UNUSED(segId);
-#endif
-    }
-
-    void endSegment()
-    {
-        beginSegment(ASEG_END);
-    }
-
-    void writeWorldACScriptData(de::Writer &to)
-    {
-#if __JHEXEN__
-        to << dint32(ASEG_WORLDSCRIPTDATA);
-        Game_ACScriptInterpreter().writeWorldScriptData(to);
-#endif
-    }
+    Instance(SavedSession &session) : session(session) {}
 };
 
 GameSessionWriter::GameSessionWriter(SavedSession &session)
-    : d(new Instance(this, session))
+    : d(new Instance(session))
 {}
 
 void GameSessionWriter::write(String const &userDescription)
@@ -81,15 +57,22 @@ void GameSessionWriter::write(String const &userDescription)
     metadata->set("userDescription", userDescription);
     //d->session.replaceMetadata(metadata);
 
+    // Write the Info file for this .save package.
     ZipArchive arch;
     arch.add("Info", metadata->asTextWithInfoSyntax().toUtf8());
 
-    Block worldACScriptData;
-    de::Writer writer(worldACScriptData);
-    d->writeWorldACScriptData(writer);
-    arch.add("ACScriptState", worldACScriptData);
+#if __JHEXEN__
+    // Serialize the world ACScript state.
+    {
+        Block worldACScriptData;
+        de::Writer writer(worldACScriptData);
+        writer << dint32(ASEG_WORLDSCRIPTDATA);
+        Game_ACScriptInterpreter().writeWorldScriptData(writer);
+        arch.add("ACScriptState", worldACScriptData);
+    }
+#endif
 
-    // Serialized map states are written to separate files.
+    // Serialize the current map state.
     {
         Block mapStateData;
         SV_OpenFileForWrite(mapStateData);
