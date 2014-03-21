@@ -103,6 +103,6 @@ void GameSessionWriter::write(String const &userDescription)
     outFile.setMode(File::ReadOnly);
     LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
-    // Update the cached metadata so we can try to avoid reopening the session.
+    // Update the cached metadata so we can try to avoid reopening the .save package.
     d->session.replaceMetadata(const_cast<SessionMetadata *>(metadata));
 }

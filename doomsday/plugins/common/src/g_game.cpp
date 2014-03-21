@@ -3381,7 +3381,7 @@ de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDescri
     metadata->set("mapTime",         mapTime);
 #endif
 
-    metadata->add("gameRules",       G_Rules().toRecord()); // Takes owership.
+    metadata->add("gameRules",       G_Rules().toRecord()); // Takes ownership.
 
 #if !__JHEXEN__
     de::ArrayValue *array = new de::ArrayValue;
@@ -3390,7 +3390,7 @@ de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDescri
         bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
         *array << de::NumberValue(playerIsPresent, de::NumberValue::Boolean);
     }
-    metadata->set("players", array); // Takes owership.
+    metadata->set("players", array); // Takes ownership.
 #endif
 
     metadata->set("sessionId",       G_GenerateSessionId());
