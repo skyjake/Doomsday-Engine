@@ -158,7 +158,8 @@ static void swd(Writer *w, char const *data, int len)
     DENG2_ASSERT(writer);
     if(data)
     {
-        *writer << de::Block(data, len);
+        de::Block tmp(data, len);
+        *writer << de::FixedByteArray(tmp);
     }
 }
 
