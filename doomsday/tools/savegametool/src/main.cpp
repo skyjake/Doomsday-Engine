@@ -49,11 +49,11 @@ static void initTranslators()
 
 static void printUsage()
 {
-    LOG_INFO("Usage: %s [options] savegame-path ...\n"
-             "Options:\n"
-             "--help, -h, -?  Show usage information."
-             "-idKey  Fallback game identity key. Used to resolve ambigous savegame formats."
-             "-output  Redirect .save output to this directory (default is the working directory).")
+    LOG_INFO(  "Usage: %s [options] savegame-path ..."
+             "\nOptions:"
+             "\n--help, -h, -?  Show usage information."
+             "\n-idKey   Fallback game identity key. Used to resolve ambigous savegame formats."
+             "\n-output  Redirect .save output to this directory (default is the working directory).")
             << DENG2_TEXT_APP->commandLine().at(0);
 }
 
