@@ -37,18 +37,10 @@ using de::game::SessionMetadata;
 DENG2_PIMPL(GameSessionWriter)
 {
     SavedSession &session; // Saved session to be updated. Not owned.
-    writer_s *writer;
 
     Instance(Public *i, SavedSession &session)
-        : Base(i)
-        , session(session)
-        , writer (0)
+        : Base(i), session(session)
     {}
-
-    ~Instance()
-    {
-        Writer_Delete(writer);
-    }
 
     void beginSegment(int segId)
     {
@@ -64,17 +56,19 @@ DENG2_PIMPL(GameSessionWriter)
         beginSegment(ASEG_END);
     }
 
-    void writeWorldACScriptData()
+    void writeWorldACScriptData(de::Writer &to)
     {
 #if __JHEXEN__
-        beginSegment(ASEG_WORLDSCRIPTDATA);
-        Game_ACScriptInterpreter().writeWorldScriptData(writer);
+        to << dint32(ASEG_WORLDSCRIPTDATA);
+        Game_ACScriptInterpreter().writeWorldScriptData(to);
 #endif
     }
 
     void writeMap()
     {
+        writer_s *writer = SV_NewWriter();
         MapStateWriter().write(writer);
+        Writer_Delete(writer);
     }
 };
 
@@ -103,8 +97,10 @@ void GameSessionWriter::write(String const &userDescription)
     ZipArchive arch;
     arch.add("Info", metadata->asTextWithInfoSyntax().toUtf8());
 
-    d->writer = SV_NewWriter();
-    d->writeWorldACScriptData();
+    Block worldACScriptData;
+    de::Writer writer(worldACScriptData);
+    d->writeWorldACScriptData(writer);
+    arch.add("ACScriptState", worldACScriptData);
 
     // Serialized map states are written to separate files.
     SV_CloseFile();
@@ -117,9 +113,6 @@ void GameSessionWriter::write(String const &userDescription)
     File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
     de::Writer(outFile) << arch;
     LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
-
-    // Cleanup.
-    Writer_Delete(d->writer); d->writer = 0;
 
     delete metadata;
 }

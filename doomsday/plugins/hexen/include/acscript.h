@@ -207,7 +207,7 @@ public:
      */
     AutoStr *scriptDescription(int scriptNumber);
 
-    void writeWorldScriptData(Writer *to);
+    void writeWorldScriptData(de::Writer &to);
     void readWorldScriptData(de::Reader &from);
 
     void writeMapScriptData(MapStateWriter *msw);

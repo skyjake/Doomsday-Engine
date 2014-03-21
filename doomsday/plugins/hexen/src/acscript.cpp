@@ -64,13 +64,13 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
-void ACScriptInterpreter::DeferredTask::write(Writer *writer) const
+void ACScriptInterpreter::DeferredTask::write(de::Writer &to) const
 {
-    Uri_Write(mapUri, writer);
-    Writer_WriteInt32(writer, scriptNumber);
+    to << de::String(Str_Text(Uri_Compose(mapUri)))
+       << scriptNumber;
     for(int i = 0; i < 4; ++i)
     {
-        Writer_WriteByte(writer, args[i]);
+        to << args[i];
     }
 }
 
@@ -467,20 +467,21 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     Thinker_Remove(&script->thinker);
 }
 
-void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
+void ACScriptInterpreter::writeWorldScriptData(Writer &to)
 {
-    Writer_WriteByte(writer, 4); // version byte
+    byte ver = 4;
+    to << ver; // version byte
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        Writer_WriteInt32(writer, worldVars[i]);
+        to << worldVars[i];
     }
 
     // Serialize the deferred task queue.
-    Writer_WriteInt32(writer, _deferredTasksSize);
+    to << _deferredTasksSize;
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        _deferredTasks[i].write(writer);
+        _deferredTasks[i].write(to);
     }
 }
 
