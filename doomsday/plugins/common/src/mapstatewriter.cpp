@@ -76,10 +76,12 @@ DENG2_PIMPL(MapStateWriter)
 
     void writeMapHeader()
     {
-#if __JHEXEN__
-        // Maps have their own version number.
-        Writer_WriteByte(writer, MY_SAVE_VERSION);
+        Writer_WriteInt32(writer, MY_SAVE_MAGIC);
 
+        // Map states have a version number.
+        Writer_WriteInt32(writer, MY_SAVE_VERSION);
+
+#if __JHEXEN__
         // Write the map timer
         Writer_WriteInt32(writer, mapTime);
 #endif
