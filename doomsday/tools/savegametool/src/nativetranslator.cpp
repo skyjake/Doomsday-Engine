@@ -693,5 +693,6 @@ void NativeTranslator::convert(Path path)
     File &outFile = outputFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
     Writer(outFile) << arch;
     outFile.flush();
+    outFile.setMode(File::ReadOnly);
     LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 }

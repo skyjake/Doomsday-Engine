@@ -100,6 +100,7 @@ void GameSessionWriter::write(String const &userDescription)
     File &outFile = App::rootFolder().locate<Folder>("/savegame").replaceFile(d->session.path() + ".save");
     de::Writer(outFile) << arch;
     outFile.flush();
+    outFile.setMode(File::ReadOnly);
     LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
     // Update the cached metadata so we can try to avoid reopening the session.
