@@ -467,17 +467,17 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     Thinker_Remove(&script->thinker);
 }
 
-void ACScriptInterpreter::writeWorldScriptData(Writer &to)
+void ACScriptInterpreter::writeWorldScriptData(de::Writer &to) const
 {
-    byte ver = 4;
-    to << ver; // version byte
+    to << byte(4); // Version.
 
+    // Write the world-global variable namespace.
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
         to << worldVars[i];
     }
 
-    // Serialize the deferred task queue.
+    // Write the deferred task queue.
     to << _deferredTasksSize;
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
@@ -489,12 +489,13 @@ void ACScriptInterpreter::readWorldScriptData(de::Reader &from)
 {
     byte ver; from >> ver;
 
+    // Read the world-global variable namespace.
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
         from >> worldVars[i];
     }
 
-    // Deserialize the deferred task queue.
+    // Read the deferred task queue.
     clearDeferredTasks();
     from >> _deferredTasksSize;
     if(_deferredTasksSize)

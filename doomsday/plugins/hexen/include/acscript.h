@@ -207,7 +207,7 @@ public:
      */
     AutoStr *scriptDescription(int scriptNumber);
 
-    void writeWorldScriptData(de::Writer &to);
+    void writeWorldScriptData(de::Writer &to) const;
     void readWorldScriptData(de::Reader &from);
 
     void writeMapScriptData(MapStateWriter *msw);
@@ -233,7 +233,7 @@ private:
         int scriptNumber; ///< On the target map.
         byte args[4];
 
-        void write(Writer *to) const;
+        void write(de::Writer &to) const;
         void read(de::Reader &from);
     };
 
