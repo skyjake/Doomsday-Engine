@@ -44,7 +44,7 @@ for ln in lines:
     #    print '\nBuilding in ' + found.group(1) + '...\n'
     #    continue
         
-    found = re.search('.*(clang|gcc).*/doomsday/(.*/)([A-Za-z_0-9]+\.c[p]*)', ln)
+    found = re.search('.*(clang|gcc|g++).*/doomsday/(.*/)([A-Za-z_0-9]+\.c[p]*)', ln)
     if found:
         mod = Module()
         mod.name = found.group(3)
