@@ -80,7 +80,7 @@ public:
          * Convenient method for determining whether a loadable saved session exists for the
          * logical save slot.
          *
-         * @see hasSavedSession(), de::game::SavedSession::isLoadable()
+         * @see hasSavedSession(), isLoadable()
          */
         inline bool hasLoadableSavedSession() const {
             return hasSavedSession() && isLoadable();
@@ -98,6 +98,11 @@ public:
          * @param newSession  New SavedSession to apply. Use @c 0 to clear.
          */
         void setSavedSession(de::game::SavedSession *newSession);
+
+        /**
+         * Copies the saved session from the @a source slot.
+         */
+        void copySavedSessionFile(Slot const &source);
 
         /**
          * Returns the unique identifier/name for the logical save slot.
@@ -171,13 +176,6 @@ public:
      * Returns the logical save slot associated with the given saved @a session.
      */
     Slot *slot(de::game::SavedSession const *session) const;
-
-    /**
-     * Copies the saved session file from one slot to another.
-     *
-     * @see has()
-     */
-    void copySavedSessionFile(de::String sourceSlotId, de::String destSlotId);
 
     /**
      * Register the console commands and variables of this module.

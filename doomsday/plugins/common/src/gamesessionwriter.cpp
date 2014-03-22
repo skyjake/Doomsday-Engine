@@ -21,7 +21,6 @@
 #include "common.h"
 #include "gamesessionwriter.h"
 
-#include "d_net.h"           // NetSv_SaveGame
 #include "g_common.h"
 #include "mapstatewriter.h"
 #include "p_saveio.h"
@@ -38,8 +37,7 @@ using de::game::SessionMetadata;
 
 DENG2_PIMPL_NOREF(GameSessionWriter)
 {
-    SavedSession &session; // Saved session to be updated. Not owned.
-    Instance(SavedSession &session) : session(session) {}
+    String repoPath; // Path to the saved session in the repository.
 
     String composeInfo(SessionMetadata const &metadata) const
     {
@@ -49,7 +47,7 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
 
         // Write header and misc info.
         Time now;
-        os << "# Doomsday Engine saved game session package.\n#"
+        os <<   "# Doomsday Engine saved game session package.\n#"
            << "\n# Generator: GameSessionWriter (libcommon)"
            << "\n# Generation Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate);
 
@@ -60,22 +58,20 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
     }
 };
 
-GameSessionWriter::GameSessionWriter(SavedSession &session)
-    : d(new Instance(session))
-{}
-
-void GameSessionWriter::write(String const &userDescription)
+GameSessionWriter::GameSessionWriter(String repositoryPath) : d(new Instance())
 {
-    SessionMetadata const *metadata = G_CurrentSessionMetadata(userDescription);
+    DENG2_ASSERT(repositoryPath != 0);
+    d->repoPath = repositoryPath;
+}
 
-    // In networked games the server tells the clients to save their games.
-#if !__JHEXEN__
-    NetSv_SaveGame(metadata->geti("sessionId"));
-#endif
+void GameSessionWriter::write(SessionMetadata const &metadata)
+{
+    LOG_AS("GameSessionWriter");
+    LOG_RES_VERBOSE("Serializing game state to \"/savegames/%s\"...") << d->repoPath;
 
     // Write the Info file for this .save package.
     ZipArchive arch;
-    arch.add("Info", d->composeInfo(*metadata).toUtf8());
+    arch.add("Info", d->composeInfo(metadata).toUtf8());
 
 #if __JHEXEN__
     // Serialize the world ACScript state.
@@ -89,19 +85,23 @@ void GameSessionWriter::write(String const &userDescription)
 
     // Serialize the current map state.
     {
+        String const mapUriStr(Str_Text(Uri_Compose(gameMapUri)));
         Block mapStateData;
         SV_OpenFileForWrite(mapStateData);
         writer_s *writer = SV_NewWriter();
         MapStateWriter().write(writer);
-        arch.add(Path("maps") / metadata->gets("mapUri") + "State", mapStateData);
+        arch.add(Path("maps") / mapUriStr + "State", mapStateData);
         Writer_Delete(writer);
     }
 
-    File &outFile = App::rootFolder().locate<Folder>("/savegames").replaceFile(d->session.path() + ".save");
+    File &outFile = App::rootFolder().locate<Folder>("savegames").replaceFile(d->repoPath + ".save");
     de::Writer(outFile) << arch;
     outFile.setMode(File::ReadOnly);
-    LOG_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
+    outFile.parent()->populate(Folder::PopulateOnlyThisFolder);
+    LOG_RES_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
-    // Update the cached metadata so we can try to avoid reopening the .save package.
-    d->session.replaceMetadata(const_cast<SessionMetadata *>(metadata));
+    // Generate a saved session for the db.
+    SavedSession *session = new SavedSession(d->repoPath);
+    session->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+    G_SavedSessionRepository().add(d->repoPath, session);
 }

@@ -54,10 +54,10 @@ public:
      * Add/replace a saved session in the repository. If a session already exists, it is
      * replaced by the new one.
      *
-     * @param path        Relative path of the associated game state file package.
-     * @param newSession  New saved session to replace with. Ownership is given.
+     * @param path     Relative path of the associated game state file package.
+     * @param session  New saved session to replace with. Ownership is given.
      */
-    void add(String path, SavedSession *find);
+    void add(String path, SavedSession *session);
 
     /**
      * Determines whether a saved session exists for @a path.

@@ -58,10 +58,6 @@ gameaction_t G_GameAction(void);
 
 void G_SetGameAction(gameaction_t action);
 
-uint G_GenerateSessionId(void);
-
-void G_ReadLegacySessionMetadata(void *metadata, Reader *reader);
-
 /**
  * Begin the titlescreen animation sequence.
  */
@@ -153,6 +149,9 @@ uint G_LogicalMapNumber(uint episode, uint map);
 /// @return  Logical map number.
 uint G_CurrentLogicalMapNumber(void);
 
+/**
+ * Automatically generate a useful savegame description (map name, map time, etc...).
+ */
 AutoStr *G_GenerateUserSaveDescription(void);
 
 int G_Ruleset_Skill();
@@ -189,11 +188,6 @@ class SaveSlots;
  * Returns the game identity key (from the engine).
  */
 de::String G_IdentityKey();
-
-/**
- * Translates a legacy game mode identifier to a game identity key.
- */
-de::String G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
 
 /**
  * @param mapUri       Map identifier.
@@ -237,12 +231,14 @@ bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
  */
 bool G_LoadSession(de::String slotId);
 
+uint G_GenerateSessionId(void);
+
 /**
  * Returns new SessionMetadata (record). Ownership is given to the caller.
  *
  * @param userDescription  Textual description of the save provided by the user.
  */
-de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDecription = "");
+de::game::SessionMetadata *G_GenerateSessionMetadata(de::String const &userDecription = "");
 
 /**
  * Returns the game's SaveSlots.

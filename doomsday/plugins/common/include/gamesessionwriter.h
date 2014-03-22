@@ -21,8 +21,8 @@
 #ifndef LIBCOMMON_GAMESESSIONWRITER_H
 #define LIBCOMMON_GAMESESSIONWRITER_H
 
-#include <de/Error>
 #include <de/game/SavedSession>
+#include <de/String>
 
 /**
  * Native game state saved session writer.
@@ -32,13 +32,15 @@
 class GameSessionWriter
 {
 public:
-    /// An error occurred attempting to open the output file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
+    /**
+     * @param repositoryPath  Saved session path in the repository.
+     */
+    GameSessionWriter(de::String repositoryPath);
 
-public:
-    GameSessionWriter(de::game::SavedSession &session);
-
-    void write(de::String const &userDescription = "");
+    /**
+     * @param metadata  Session metadata to be written. A copy is made.
+     */
+    void write(de::game::SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

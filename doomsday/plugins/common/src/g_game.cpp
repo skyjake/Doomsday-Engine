@@ -2869,100 +2869,97 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
 }
 #endif // __JHEXEN__
 
-struct savegamestateworker_params_t
+/**
+ * Convenient method of returning the existing user description for a saved session.
+ *
+ * @param slotId  Unique identifier of the save slot to return the description for.
+ */
+static de::String userDescriptionForSavedSession(de::String const &slotId)
+{
+    if(G_SaveSlots().has(slotId))
+    {
+        SaveSlot const &sslot = G_SaveSlots()[slotId];
+        if(sslot.hasSavedSession())
+        {
+            return sslot.savedSession().metadata().gets("userDescription");
+        }
+    }
+    return "";
+}
+
+struct savegamesessionworker_params_t
 {
     de::String userDescription;
     de::String slotId;
 };
 
 /**
- * Save the current game state to the specified save slot.
+ * Serialize game state to a new .save package in the repository.
  *
  * @return  Non-zero iff the game state was saved successfully.
  */
-static int saveGameStateWorker(void *context)
+static int saveGameSessionWorker(void *context)
 {
-    savegamestateworker_params_t &p = *static_cast<savegamestateworker_params_t *>(context);
-
+    savegamesessionworker_params_t const &parm = *static_cast<savegamesessionworker_params_t *>(context);
 #if __JHEXEN__
     de::String const logicalSlot = "base";
 #else
-    de::String const logicalSlot = p.slotId;
+    de::String const logicalSlot = parm.slotId;
 #endif
 
-    if(!G_SaveSlots().has(p.slotId))
+    if(!G_SaveSlots().has(parm.slotId))
     {
         DENG2_ASSERT(!"Invalid slot specified");
-
         BusyMode_WorkerEnd();
         return false;
     }
 
-    de::String userDescription = p.userDescription;
+    de::String userDescription = parm.userDescription;
     if(userDescription.isEmpty())
     {
         // If the slot is already in use, reuse the existing description.
-        try
-        {
-            SaveSlot const &sslot = G_SaveSlots()[p.slotId];
-            if(sslot.hasSavedSession())
-            {
-                de::game::SavedSession const &session = sslot.savedSession();
-                userDescription = session.metadata().gets("userDescription");
-            }
-        }
-        catch(SaveSlots::MissingSlotError const &)
-        {}
+        userDescription = userDescriptionForSavedSession(parm.slotId);
 
-        // Still empty?
-        if(userDescription.isEmpty())
+        // Still empty? Should we autogenerate a description?
+        if(userDescription.isEmpty() && gaSaveSessionGenerateDescription)
         {
-            // Should we autogenerate a description?
-            if(gaSaveSessionGenerateDescription)
-            {
-                userDescription = Str_Text(G_GenerateUserSaveDescription());
-            }
+            userDescription = Str_Text(G_GenerateUserSaveDescription());
         }
     }
 
-    SaveSlot &sslot = G_SaveSlots()[logicalSlot];
-
-    de::game::SavedSession *session = new de::game::SavedSession(sslot.repositoryPath());
+    dd_bool didSave = false;
+    de::game::SessionMetadata *metadata = G_GenerateSessionMetadata(userDescription);
 
     try
     {
-        de::Path const sessionPath = de::String("/savegames") / session->path();
+        SaveSlot const &sslot = G_SaveSlots()[logicalSlot];
 
-        App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
-                sessionPath.toString().toLatin1().constData());
+        // In networked games the server tells the clients to save also.
+        NetSv_SaveGame(metadata->geti("sessionId"));
 
-        GameSessionWriter(*session).write(userDescription);
-
-        // Swap the saved session file.
-        G_SavedSessionRepository().add(sslot.repositoryPath(), session);
+        // Serialize the game state to a new .save package in the repository.
+        GameSessionWriter(sslot.repositoryPath()).write(*metadata);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
-        G_SaveSlots().copySavedSessionFile(logicalSlot, p.slotId);
+        G_SaveSlots()[parm.slotId].copySavedSessionFile(sslot);
 #endif
 
         // Make note of the last used save slot.
-        Con_SetInteger2("game-save-last-slot", p.slotId.toInt(), SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("game-save-last-slot", parm.slotId.toInt(), SVF_WRITE_OVERRIDE);
 
-        BusyMode_WorkerEnd();
-        return true;
+        didSave = true;
     }
     catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Error writing to save slot '%s':\n%s",
-                p.slotId.toLatin1().constData(), er.asText().toLatin1().constData());
+        LOG_RES_WARNING("Error writing to save slot '%s':\n")
+                << parm.slotId << er.asText();
     }
 
-    // Discard the useless saved session.
-    delete session;
+    delete metadata;
 
     BusyMode_WorkerEnd();
-    return false;
+    return didSave;
 }
 
 void G_DoLeaveMap()
@@ -3117,12 +3114,12 @@ void G_DoLeaveMap()
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
     if(!IS_NETGAME && !gameRules.deathmatch)
     {
-        savegamestateworker_params_t p;
+        savegamesessionworker_params_t p;
         p.slotId = "auto";
 
         /// @todo Use progress bar mode and update progress during the setup.
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    saveGameStateWorker, &p, "Auto-Saving game...");
+                                    saveGameSessionWorker, &p, "Auto-Saving game...");
     }
 }
 
@@ -3216,7 +3213,7 @@ void G_DoLoadSession(de::String slotId)
     // Copy all needed save files to the base slot.
     if(slotId.compareWithoutCase("base"))
     {
-        G_SaveSlots().copySavedSessionFile(slotId, "base");
+        G_SaveSlots()["base"].copySavedSessionFile(G_SaveSlots()[slotId]);
     }
 #endif
 
@@ -3283,10 +3280,10 @@ void G_DoLoadSession(de::String slotId)
 #if __JHEXEN__
         if(mustCopyBaseToAutoSlot)
         {
-            // Copy the base slot to the autosave slot.
-            G_SaveSlots().copySavedSessionFile("base", "auto");
+            G_SaveSlots()["auto"].copySavedSessionFile(G_SaveSlots()["base"]);
         }
 #endif
+
         return;
     }
     catch(de::Error const &er)
@@ -3368,7 +3365,12 @@ AutoStr *G_GenerateUserSaveDescription()
     return str;
 }
 
-de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDescription)
+uint G_GenerateSessionId()
+{
+    return Timer_RealMilliseconds() + (mapTime << 24);
+}
+
+de::game::SessionMetadata *G_GenerateSessionMetadata(de::String const &userDescription)
 {
     de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
 
@@ -3401,13 +3403,13 @@ de::game::SessionMetadata *G_CurrentSessionMetadata(de::String const &userDescri
  */
 void G_DoSaveSession(de::String slotId, de::String userDescription)
 {
-    savegamestateworker_params_t p;
+    savegamesessionworker_params_t p;
     p.userDescription = userDescription;
     p.slotId          = slotId;
 
     /// @todo Use progress bar mode and update progress during the setup.
     bool didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                                saveGameStateWorker, &p, "Saving game...") != 0);
+                                                saveGameSessionWorker, &p, "Saving game...") != 0);
     if(didSave)
     {
         P_SetMessage(&players[CONSOLEPLAYER], 0, TXT_GAMESAVED);
@@ -3621,84 +3623,6 @@ de::String G_IdentityKey()
     }
     /// @throw Error GameInfo is unavailable.
     throw de::Error("G_IdentityKey", "Failed retrieving GameInfo");
-}
-
-de::String G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
-{
-    static char const *identityKeys[] = {
-#if __JDOOM__
-        /*doom_shareware*/    "doom1-share",
-        /*doom*/              "doom1",
-        /*doom_ultimate*/     "doom1-ultimate",
-        /*doom_chex*/         "chex",
-        /*doom2*/             "doom2",
-        /*doom2_plut*/        "doom2-plut",
-        /*doom2_tnt*/         "doom2-tnt",
-        /*doom2_hacx*/        "hacx",
-#elif __JHERETIC__
-        /*heretic_shareware*/ "heretic-share",
-        /*heretic*/           "heretic",
-        /*heretic_extended*/  "heretic-ext",
-#elif __JHEXEN__
-        /*hexen_demo*/        "hexen-demo",
-        /*hexen*/             "hexen",
-        /*hexen_deathkings*/  "hexen-dk",
-        /*hexen_betademo*/    "hexen-betademo",
-        /*hexen_v10*/         "hexen-v10",
-#endif
-        ""
-    };
-#if __JDOOM__ || __JHERETIC__
-    static gamemode_t const oldGamemodes[] = {
-# if __JDOOM__
-        doom_shareware,
-        doom,
-        doom2,
-        doom_ultimate
-# else // __JHERETIC__
-        heretic_shareware,
-        heretic,
-        heretic_extended
-# endif
-    };
-#endif
-
-    // The gamemode may first need to be translated (if *really* old).
-#if __JDOOM__ || __JHERETIC__
-# if __JDOOM__
-    if(saveVersion < 9)
-# elif __JHERETIC__
-    if(saveVersion < 8)
-# endif
-    {
-        DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
-        gamemode = oldGamemodes[(int)(gamemode)];
-
-# if __JDOOM__
-        /**
-         * @note Kludge: Older versions did not differentiate between versions
-         * of Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
-         * that this save is from some version of Doom2, replace the marked
-         * gamemode with the current gamemode.
-         */
-        if(gamemode == doom2 && (gameModeBits & GM_ANY_DOOM2))
-        {
-            return G_IdentityKey();
-        }
-        /// kludge end.
-# endif
-    }
-#else
-    DENG2_UNUSED(saveVersion);
-#endif
-
-    DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(identityKeys) / sizeof(identityKeys[0]));
-    return identityKeys[gamemode];
-}
-
-uint G_GenerateSessionId()
-{
-    return Timer_RealMilliseconds() + (mapTime << 24);
 }
 
 uint G_LogicalMapNumber(uint episode, uint map)

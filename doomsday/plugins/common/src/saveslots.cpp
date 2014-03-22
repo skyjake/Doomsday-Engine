@@ -60,11 +60,16 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
     }
 
+    inline SavedSessionRepository &repo() const
+    {
+        return G_SavedSessionRepository();
+    }
+
     void updateStatus()
     {
         LOGDEV_XVERBOSE("Updating SaveSlot '%s' status") << id;
         status = Unused;
-        if(session && session->hasFile())
+        if(session)
         {
             status = Incompatible;
             // Game identity key missmatch?
@@ -131,9 +136,9 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String repoPath, int menuWid
     d->menuWidgetId = menuWidgetId;
 
     // See if a saved session already exists for this slot.
-    if(G_SavedSessionRepository().has(d->repoPath))
+    if(d->repo().has(d->repoPath))
     {
-        setSavedSession(&G_SavedSessionRepository().find(d->repoPath));
+        setSavedSession(&d->repo().find(d->repoPath));
     }
 }
 
@@ -162,7 +167,7 @@ void SaveSlots::Slot::bindRepositoryPath(String newPath)
     if(d->repoPath != newPath)
     {
         d->repoPath = newPath;
-        setSavedSession(G_SavedSessionRepository().findPtr(d->repoPath));
+        setSavedSession(d->repo().findPtr(d->repoPath));
     }
 }
 
@@ -198,6 +203,27 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
     }
 }
 
+void SaveSlots::Slot::copySavedSessionFile(Slot const &source)
+{
+    LOG_AS("SaveSlots::Slot::copySavedSessionFile");
+
+    // Sanity check.
+    if(&source == this) return;
+
+    // Clear the existing session (if any).
+    clear();
+
+    SavedSession const &sourceSession = source.savedSession();
+    // Copy the .save package.
+    savedSession().copyFile(sourceSession);
+
+    // Duplicate and Link with the new session.
+    SavedSession *session = new SavedSession(d->repoPath);
+    session->cacheMetadata(sourceSession.metadata());
+    d->repo().add(d->repoPath, session);
+    setSavedSession(session);
+}
+
 void SaveSlots::Slot::clear()
 {
     // Should we announce this?
@@ -212,6 +238,7 @@ void SaveSlots::Slot::clear()
     {
         d->session->removeFile();
         setSavedSession(0);
+        d->repo().add(d->repoPath, 0);
     }
 }
 
@@ -322,31 +349,6 @@ SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
         }
     }
     return 0; // Not found.
-}
-
-void SaveSlots::copySavedSessionFile(String sourceId, String destId)
-{
-    LOG_AS("SaveSlots::copySavedSessionFile");
-
-    Slot &source = slot(sourceId);
-    Slot &dest   = slot(destId);
-
-    // Sanity check.
-    if(&source == &dest) return;
-
-    // Clear the saved file package for the destination slot.
-    dest.clear();
-
-    if(source.savedSession().hasFile())
-    {
-        // Copy the saved file package to the destination slot.
-        dest.savedSession().copyFile(source.savedSession());
-    }
-
-    // Copy the session too.
-    dest.setSavedSession(new SavedSession(source.savedSession()));
-    // Update the repository path associated with the copied session.
-    dest.savedSession().setPath(dest.repositoryPath());
 }
 
 void SaveSlots::consoleRegister() // static

@@ -42,7 +42,7 @@ public:
     /// Required file package could not be located. @ingroup errors
     DENG2_ERROR(MissingFileError);
 
-    /// Notified whenever the metadata of the saved session changes.
+    /// Notified whenever the cached metadata of the saved session changes.
     DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
 
     /**
@@ -71,9 +71,6 @@ public:
 
 public:
     SavedSession(String repoPath);
-    SavedSession(SavedSession const &other);
-
-    SavedSession &operator = (SavedSession const &other);
 
     /**
      * Returns the relative path and identifier of the state file package.
@@ -87,26 +84,12 @@ public:
     String description() const;
 
     /**
-     * Determines whether a file package exists for the saved session in the repository. Note that
-     * it may not be compatible with the current game session, however.
-     */
-    bool hasFile() const;
-
-    /**
      * Attempt to locate the file package for the saved session from the repository.
      *
      * @return  The file package if found. Ownership is unaffected.
      */
     PackageFolder &locateFile();
     PackageFolder const &locateFile() const;
-
-    /**
-     * Determines whether a file package exists for the saved session in the repository and if so,
-     * reads the session metadata.
-     *
-     * @return  @c true iff the session metadata was read successfully.
-     */
-    bool recognizeFile();
 
     /**
      * Attempt to update the status of the saved session from the file package in the repository.
@@ -139,12 +122,12 @@ public:
     Metadata const &metadata() const;
 
     /**
-     * Uses @a newMetadata to replace that associated with the saved session. Note that this will
-     * @em not alter the file package in the repository. The MetadataChange audience is notified.
+     * Replace the cached metadata with a copy of @a original. Note that this will @em not alter
+     * the .save package in the repository. The MetadataChange audience is notified.
      *
-     * @param newMetadata  Replacement Metadata. Ownership is given.
+     * @param copied  Replacement Metadata. A copy is made.
      */
-    void replaceMetadata(Metadata *newMetadata);
+    void cacheMetadata(Metadata const &copied);
 
     /**
      * Determines whether a serialized map state exists for the saved session.

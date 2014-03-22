@@ -1407,15 +1407,21 @@ void NetSv_DoDamage(int player, Reader *msg)
                   false /*not stomping*/, true /*just do it*/);
 }
 
-void NetSv_SaveGame(uint gameId)
+void NetSv_SaveGame(uint sessionId)
 {
+#if !__JHEXEN__
+
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
     // This will make the clients save their games.
     Writer *writer = D_NetWrite();
-    Writer_WriteUInt32(writer, gameId);
+    Writer_WriteUInt32(writer, sessionId);
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
+
+#else
+    DENG_UNUSED(sessionId);
+#endif
 }
 
 void NetSv_LoadGame(uint gameId)
