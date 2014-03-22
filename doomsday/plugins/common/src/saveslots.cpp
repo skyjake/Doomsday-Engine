@@ -23,8 +23,10 @@
 
 #include "g_common.h"
 #include "hu_menu.h"
+#include <de/Folder>
 #include <de/game/SavedSessionRepository>
 #include <de/Observers>
+#include <de/Writer>
 #include <map>
 
 static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
@@ -215,11 +217,15 @@ void SaveSlots::Slot::copySavedSessionFile(Slot const &source)
 
     SavedSession const &sourceSession = source.savedSession();
     // Copy the .save package.
-    savedSession().copyFile(sourceSession);
+    //savedSession().copyFile(sourceSession);
+    if(&sourceSession == d->session) return; // Sanity check.
 
-    // Duplicate and Link with the new session.
-    SavedSession *session = new SavedSession(d->repoPath);
-    session->cacheMetadata(sourceSession.metadata());
+    File &destFile = d->repo().folder().replaceFile(d->repoPath + ".save");
+    de::Writer(destFile) << sourceSession.archive();
+    destFile.setMode(File::ReadOnly);
+    destFile.parent()->populate(Folder::PopulateOnlyThisFolder);
+
+    SavedSession *session = &destFile.as<SavedSession>();
     d->repo().add(d->repoPath, session);
     setSavedSession(session);
 }
@@ -236,9 +242,10 @@ void SaveSlots::Slot::clear()
 
     if(d->session)
     {
-        d->session->removeFile();
+        SavedSession &session = *d->session;
         setSavedSession(0);
         d->repo().add(d->repoPath, 0);
+        delete &session;
     }
 }
 
@@ -339,10 +346,9 @@ SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
 {
     if(session)
     {
-        String const repoPath = session->path();
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
-            if(!i->second->repositoryPath().compareWithoutCase(repoPath))
+            if(i->second->savedSessionPtr() == session)
             {
                 return i->second;
             }

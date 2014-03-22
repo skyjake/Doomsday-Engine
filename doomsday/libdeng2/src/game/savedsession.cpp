@@ -156,7 +156,7 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     return text;
 }
 
-static inline bool packageExists(String const &repoPath)
+/*static inline bool packageExists(String const &repoPath)
 {
     return App::rootFolder().has(String("/savegames") / repoPath + ".save");
 }
@@ -164,23 +164,22 @@ static inline bool packageExists(String const &repoPath)
 static inline PackageFolder *tryLocatePackage(String const &repoPath)
 {
     return App::rootFolder().tryLocate<PackageFolder>(String("/savegames") / repoPath + ".save");
-}
+}*/
 
-DENG2_PIMPL_NOREF(SavedSession)
+DENG2_PIMPL(SavedSession)
 {
-    String repoPath;    ///< Relative path and identifier of this package in the repository.
     Metadata metadata;  ///< Cached metadata.
 
-    static bool readMetadata(Metadata &metadata, PackageFolder *pack)
-    {
-        if(!pack) return false; // Huh?
+    Instance(Public *i) : Base(i) {}
 
+    /*static*/ bool readMetadata(Metadata &metadata)//, SavedSession *session)
+    {
         try
         {
             // Ensure we have up-to-date info about the package contents.
-            pack->populate();
+            self.populate();
 
-            File const &file = pack->locate<File const>("Info");
+            File const &file = self.locate<File const>("Info");
             Block raw;
             file >> raw;
 
@@ -191,19 +190,19 @@ DENG2_PIMPL_NOREF(SavedSession)
         }
         catch(IByteArray::OffsetError const &)
         {
-            LOG_RES_WARNING("Archive in %s is truncated") << pack->description();
+            LOG_RES_WARNING("Archive in %s is truncated") << self.description();
         }
         catch(IIStream::InputError const &)
         {
-            LOG_RES_WARNING("%s cannot be read") << pack->description();
+            LOG_RES_WARNING("%s cannot be read") << self.description();
         }
         catch(Archive::FormatError const &)
         {
-            LOG_RES_WARNING("Archive in %s is invalid") << pack->description();
+            LOG_RES_WARNING("Archive in %s is invalid") << self.description();
         }
         catch(Folder::NotFoundError const &)
         {
-            LOG_RES_WARNING("%s does not appear to be a .save package") << pack->description();
+            LOG_RES_WARNING("%s does not appear to be a .save package") << self.description();
         }
 
         return 0;
@@ -214,10 +213,13 @@ DENG2_PIMPL_NOREF(SavedSession)
 
 DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
 
-SavedSession::SavedSession(String repoPath) : d(new Instance)
-{
-    d->repoPath = repoPath;
-}
+SavedSession::SavedSession(File &sourceArchiveFile, String const &name)
+    : PackageFolder(sourceArchiveFile, name)
+    , d(new Instance(this))
+{}
+
+SavedSession::~SavedSession()
+{}
 
 static String metadataAsStyledText(SavedSession::Metadata const &metadata)
 {
@@ -243,24 +245,14 @@ static String metadataAsStyledText(SavedSession::Metadata const &metadata)
              .arg(gameRulesText);
 }
 
-String SavedSession::description() const
+String SavedSession::styledDescription() const
 {
     return metadataAsStyledText(metadata()) + "\n" +
            String(_E(D) "Resource: " _E(.)_E(i) "\"%1\"")
-             .arg(NativePath(String("/home/savegames") / d->repoPath + ".save").pretty());
+               .arg(NativePath(String("/home") / repoPath() + ".save").pretty());
 }
 
-String SavedSession::path() const
-{
-    return d->repoPath;
-}
-
-void SavedSession::setPath(String newPath)
-{
-    d->repoPath = newPath;
-}
-
-PackageFolder &SavedSession::locateFile()
+/*PackageFolder &SavedSession::locateFile()
 {
     if(PackageFolder *pack = tryLocatePackage(d->repoPath))
     {
@@ -268,20 +260,20 @@ PackageFolder &SavedSession::locateFile()
     }
     /// @throw MissingFileError Failed to locate the source file package.
     throw MissingFileError("SavedSession::locateFile", "Source file for " + d->repoPath + " could not be located");
-}
+}*/
 
-PackageFolder const &SavedSession::locateFile() const
+/*PackageFolder const &SavedSession::locateFile() const
 {
     return const_cast<SavedSession *>(this)->locateFile();
-}
+}*/
 
-void SavedSession::updateFromFile()
+void SavedSession::readMetadata()
 {
-    LOGDEV_VERBOSE("Updating SavedSession %p from the repository") << this;
+    LOGDEV_VERBOSE("Updating SavedSession metadata %p") << this;
 
     // Determine if a .save package exists in the repository and if so, read the metadata.
     Metadata newMetadata;
-    if(!d->readMetadata(newMetadata, tryLocatePackage(d->repoPath)))
+    if(!d->readMetadata(newMetadata))//tryLocatePackage(d->repoPath)))
     {
         // Unrecognized or the file could not be accessed (perhaps its a network path?).
         // Return the session to the "null/invalid" state.
@@ -292,7 +284,7 @@ void SavedSession::updateFromFile()
     cacheMetadata(newMetadata);
 }
 
-void SavedSession::copyFile(SavedSession const &source)
+/*void SavedSession::copyFile(SavedSession const &source)
 {
     if(&source == this) return; // Sanity check.
 
@@ -302,10 +294,10 @@ void SavedSession::copyFile(SavedSession const &source)
     destFile.parent()->populate(Folder::PopulateOnlyThisFolder);
 
     // Perform recognition of the copied file and update the session status.
-    updateFromFile();
-}
+    readMetadata();
+}*/
 
-void SavedSession::removeFile()
+/*void SavedSession::removeFile()
 {
     if(packageExists(d->repoPath))
     {
@@ -313,16 +305,16 @@ void SavedSession::removeFile()
     }
 
     /// Force a metadata update.
-    updateFromFile();
-}
+    readMetadata();
+}*/
 
 bool SavedSession::hasMapState(String mapUriStr) const
 {
     if(!mapUriStr.isEmpty())
     {
-        if(PackageFolder const *pack = tryLocatePackage(d->repoPath))
+        //if(PackageFolder const *pack = tryLocatePackage(d->repoPath))
         {
-            return pack->has(Path("maps") / mapUriStr + "State");
+            return has(Path("maps") / mapUriStr + "State");
         }
     }
     return false;

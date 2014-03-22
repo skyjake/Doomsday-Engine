@@ -30,7 +30,6 @@ DENG2_PIMPL(SavedSessionRepository)
     bool availabilityUpdateDisabled;
 
     Instance(Public *i) : Base(i), availabilityUpdateDisabled(false) {}
-    ~Instance() { self.clear(); }
 
     void notifyAvailabilityUpdate()
     {
@@ -46,14 +45,18 @@ DENG2_AUDIENCE_METHOD(SavedSessionRepository, AvailabilityUpdate)
 SavedSessionRepository::SavedSessionRepository() : d(new Instance(this))
 {}
 
+Folder &SavedSessionRepository::folder() const
+{
+    return App::rootFolder().locate<Folder>("/savegames");
+}
+
 void SavedSessionRepository::clear()
 {
     // Disable updates for now, we'll do that when we're done.
     d->availabilityUpdateDisabled = true;
 
     // Clear the session db, we're starting over.
-    qDebug() << "Clearing saved sessions in the repository";
-    DENG2_FOR_EACH(All, i, d->sessions) { delete i->second; }
+    qDebug() << "Clearing repository saved session db";
     d->sessions.clear();
 
     // Now perform the availability notifications.
@@ -69,23 +72,8 @@ bool SavedSessionRepository::has(String path) const
 void SavedSessionRepository::add(String path, SavedSession *session)
 {
     path = path.toLower();
-
-    // Ensure the session identifier (i.e., the relative path) is unique.
-    All::iterator existing = d->sessions.find(path);
-    if(existing != d->sessions.end())
-    {
-        if(existing->second != session)
-        {
-            delete existing->second;
-            existing->second = session;
-            d->notifyAvailabilityUpdate();
-        }
-    }
-    else
-    {
-        d->sessions[path] = session;
-        d->notifyAvailabilityUpdate();
-    }
+    d->sessions[path] = session;
+    d->notifyAvailabilityUpdate();
 }
 
 SavedSession &SavedSessionRepository::find(String path) const

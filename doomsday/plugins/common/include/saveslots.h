@@ -91,6 +91,10 @@ public:
          */
         de::game::SavedSession &savedSession() const;
 
+        inline de::game::SavedSession *savedSessionPtr() const {
+            return hasSavedSession()? &savedSession() : 0;
+        }
+
         /**
          * Change the saved session linked with the logical save slot. It is not usually
          * necessary to call this.

@@ -32,16 +32,13 @@ namespace game {
 class MapStateReader;
 
 /**
- * Logical component representing a serialized game session on disk.
- *
+ * Specialized PackageFolder that hosts a serialized game session.
+
  * @ingroup game
  */
-class DENG2_PUBLIC SavedSession
+class DENG2_PUBLIC SavedSession : public PackageFolder
 {
 public:
-    /// Required file package could not be located. @ingroup errors
-    DENG2_ERROR(MissingFileError);
-
     /// Notified whenever the cached metadata of the saved session changes.
     DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
 
@@ -70,33 +67,34 @@ public:
     };
 
 public:
-    SavedSession(String repoPath);
+    SavedSession(File &sourceArchiveFile, String const &name = "");
 
-    /**
-     * Returns the relative path and identifier of the state file package.
-     */
-    String path() const;
-    void setPath(String newPath);
+    virtual ~SavedSession();
+
+    /// @todo remove me
+    inline String repoPath() const {
+        return parent()->name() / name().fileNameWithoutExtension();
+    }
 
     /**
      * Composes a human-friendly, styled, textual description of the saved session.
      */
-    String description() const;
+    String styledDescription() const;
 
     /**
      * Attempt to locate the file package for the saved session from the repository.
      *
      * @return  The file package if found. Ownership is unaffected.
      */
-    PackageFolder &locateFile();
-    PackageFolder const &locateFile() const;
+    //PackageFolder &locateFile();
+    //PackageFolder const &locateFile() const;
 
     /**
      * Attempt to update the status of the saved session from the file package in the repository.
      * If the file path is invalid, unreachable, or the package is not recognized then the saved
      * session is returned to a valid but non-loadable state.
      */
-    void updateFromFile();
+    void readMetadata();
 
     /**
      * Replace the file package in the repository with a copy of that associated with the @a source
@@ -107,12 +105,12 @@ public:
      *
      * @throws MissingFileError  If no source file package is found.
      */
-    void copyFile(SavedSession const &source);
+    //void copyFile(SavedSession const &source);
 
     /**
      * Removes the file package for the saved session from the repository (if configured).
      */
-    void removeFile();
+    //void removeFile();
 
     /**
      * Provides read-only access to a copy of the deserialized saved session metadata.

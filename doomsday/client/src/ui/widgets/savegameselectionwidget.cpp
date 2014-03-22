@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
     public:
         SavegameListItem(SavedSession const &session)
         {
-            setData(session.path());
+            setData(session.repoPath());
             _session  = &session;
         }
 
@@ -98,7 +98,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
                                          .arg(ssGame.identityKey()));
 
                 // Extra information.
-                document().setText(ss.description());
+                document().setText(ss.styledDescription());
             }
             catch(Error const &)
             {
@@ -185,8 +185,8 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         // Remove obsolete entries.
         for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
-            String const fileName = self.items().at(idx).data().toString();
-            if(!repository.has(fileName))
+            String const repoPath = self.items().at(idx).data().toString();
+            if(!repository.has(repoPath))
             {
                 self.items().remove(idx--);
                 changed = true;
@@ -197,7 +197,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         DENG2_FOR_EACH_CONST(SavedSessionRepository::All, i, repository.all())
         {
             SavedSession const &session = *i->second;
-            ui::Data::Pos found = self.items().findData(session.path());
+            ui::Data::Pos found = self.items().findData(session.repoPath());
             if(found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
@@ -270,7 +270,7 @@ SavegameSelectionWidget::LoadAction::LoadAction(SavedSession const &session)
     : d(new Instance)
 {
     d->gameId = session.metadata().gets("gameIdentityKey");
-    d->cmd = "loadgame " + session.path().fileName() + " confirm";
+    d->cmd = "loadgame " + session.name().fileNameWithoutExtension() + " confirm";
 }
 
 void SavegameSelectionWidget::LoadAction::trigger()

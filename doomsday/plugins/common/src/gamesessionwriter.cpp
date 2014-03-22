@@ -25,6 +25,7 @@
 #include "mapstatewriter.h"
 #include "p_saveio.h"
 #include <de/App>
+#include <de/game/SavedSessionRepository>
 #include <de/NativeFile>
 #include <de/PackageFolder>
 #include <de/Time>
@@ -34,10 +35,16 @@
 using namespace de;
 using de::game::SavedSession;
 using de::game::SessionMetadata;
+using de::game::SavedSessionRepository;
 
 DENG2_PIMPL_NOREF(GameSessionWriter)
 {
     String repoPath; // Path to the saved session in the repository.
+
+    inline SavedSessionRepository &repo() const
+    {
+        return G_SavedSessionRepository();
+    }
 
     String composeInfo(SessionMetadata const &metadata) const
     {
@@ -94,14 +101,16 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
         Writer_Delete(writer);
     }
 
-    File &outFile = App::rootFolder().locate<Folder>("savegames").replaceFile(d->repoPath + ".save");
+    File &outFile = d->repo().folder().replaceFile(d->repoPath + ".save");
     de::Writer(outFile) << arch;
     outFile.setMode(File::ReadOnly);
     outFile.parent()->populate(Folder::PopulateOnlyThisFolder);
     LOG_RES_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
 
     // Generate a saved session for the db.
-    SavedSession *session = new SavedSession(d->repoPath);
-    session->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-    G_SavedSessionRepository().add(d->repoPath, session);
+    //SavedSession *session = new SavedSession(d->repoPath);
+
+    SavedSession &session = d->repo().folder().locate<SavedSession>(d->repoPath + ".save");
+    session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+    G_SavedSessionRepository().add(d->repoPath, &session);
 }

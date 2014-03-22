@@ -20,6 +20,7 @@
 #define LIBDENG2_SAVEDSESSIONREPOSITORY_H
 
 #include "../Error"
+#include "../Folder"
 #include "../Observers"
 #include "../String"
 #include <map>
@@ -47,6 +48,8 @@ public:
 
 public:
     SavedSessionRepository();
+
+    Folder &folder() const;
 
     void clear();
 

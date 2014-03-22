@@ -1922,11 +1922,11 @@ DENG2_PIMPL(ResourceSystem)
      *
      * @todo This extra step is unnecessary. SavedSession should inherit from PackageFolder.
      */
-    void addSavedSession(String const &repoPath)
+    void addSavedSession(game::SavedSession &session)//String const &repoPath)
     {
-        game::SavedSession *session = new game::SavedSession(repoPath);
-        saveRepo.add(repoPath, session);
-        session->updateFromFile();
+        //game::SavedSession &session = saveRepo.folder().locate<game::SavedSession>(repoPath + ".save");
+        saveRepo.add(session.repoPath(), &session);
+        session.readMetadata();
     }
 
     /**
@@ -1939,7 +1939,8 @@ DENG2_PIMPL(ResourceSystem)
      */
     void convertLegacySavegame(String const &sourcePath, String const &gameId)
     {
-        String const repoPath   = gameId / sourcePath.fileNameWithoutExtension();
+        //String const repoPath   = gameId / sourcePath.fileNameWithoutExtension();
+        String const outputName = sourcePath.fileNameWithoutExtension() + ".save";
         String const outputPath = nativeSavePath / gameId;
 
         // Attempt the conversion via a plugin (each is tried in turn).
@@ -1960,12 +1961,18 @@ DENG2_PIMPL(ResourceSystem)
             /// @todo kludge: Give the converter a chance to complete.
             TimeDelta::fromMilliSeconds(1000).sleep();
 
-            /// Update the /savegames folder.
-            Folder &outputFolder = App::rootFolder().locate<Folder>(String("/savegames") / gameId);
-            outputFolder.populate(Folder::PopulateOnlyThisFolder);
+            try
+            {
+                /// Update the /savegames/<gameId> folder.
+                Folder &outputFolder = saveRepo.folder().locate<Folder>(gameId);
+                outputFolder.populate(Folder::PopulateOnlyThisFolder);
+                game::SavedSession &session = outputFolder.locate<game::SavedSession>(outputName);
 
-            addSavedSession(repoPath);
-            return;
+                addSavedSession(session);
+                return;
+            }
+            catch(Folder::NotFoundError const &)
+            {} // Ignore.
         }
 
         /// @throw Error Seemingly no plugin was able to fulfill our request.
@@ -1989,7 +1996,10 @@ DENG2_PIMPL(ResourceSystem)
         {
             if(i->first.fileNameExtension() == ".save")
             {
-                addSavedSession(gameId / i->first.fileNameWithoutExtension());
+                if(game::SavedSession *session = i->second->maybeAs<game::SavedSession>())
+                {
+                    addSavedSession(*session);//gameId / i->first.fileNameWithoutExtension());
+                }
             }
         }
 
