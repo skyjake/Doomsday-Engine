@@ -28,6 +28,7 @@
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
 #include <de/shell/Link>
+#include <QFile>
 #include <QToolBar>
 #include <QMenuBar>
 #include <QInputDialog>
