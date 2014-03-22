@@ -85,8 +85,13 @@ def todays_platform_release():
                                      '/main/binary-%s' % arch, n))
                                  
     # Also the build logs.
-    remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
-    remote_copy('builderrors.txt', ev.file_path('doomsday-err-%s.txt' % sys_id()))
+    if sys.platform[:3] != 'win':
+        system_command('./logcleanup.py buildlog.txt builderrors.txt > buildsummary.txt')
+        remote_copy('buildsummary.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
+    else:        
+        remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
+        remote_copy('builderrors.txt', ev.file_path('doomsday-err-%s.txt' % sys_id()))
+
     if 'linux' in sys_id():
         remote_copy('dsfmod/fmod-out-%s.txt' % sys_id(), ev.file_path('fmod-out-%s.txt' % sys_id()))
         remote_copy('dsfmod/fmod-err-%s.txt' % sys_id(), ev.file_path('fmod-err-%s.txt' % sys_id()))
