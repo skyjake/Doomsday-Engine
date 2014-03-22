@@ -26,11 +26,10 @@ class Module:
         self.location = ''
         self.cached = False
 
-c = 0
+clangMode = False
+
 for ln in lines:
     ln = ln.rstrip()
-
-    c += 1
 
     # What kind of a line do we have?
     found = re.search('[a-z]+\.pro', ln)
@@ -38,13 +37,14 @@ for ln in lines:
         print prefix_white(ln) + 'qmake ' + found.group(0)   
         continue
 
-    
     #found = re.search('Entering directory.*/(deng/.*)\'', ln)
     #if found:
     #    print '\nBuilding in ' + found.group(1) + '...\n'
     #    continue
+
+    if 'clang' in ln: clangMode = True
         
-    found = re.search('.*(clang|gcc|g++).*/doomsday/(.*/)([A-Za-z_0-9]+\.c[p]*)', ln)
+    found = re.search('.*(clang|gcc|g\+\+).*/doomsday/(.*/)([A-Za-z_0-9]+\.c[p]*)', ln)
     if found:
         mod = Module()
         mod.name = found.group(3)
@@ -70,7 +70,7 @@ current = None
 for ln in erlines:
     ln = ln.rstrip()
     
-    if current:
+    if current and clangMode:
         if re.match('^[~^ ]+$', ln): 
             current = None
         else:
@@ -82,7 +82,7 @@ for ln in erlines:
         qmakeOut.append(found.group(2))
         continue    
 
-    found = re.search('^([a-z0-9_/\.]+/[a-z_0-9]+\.[ch][p]*):[0-9]+', ln, re.IGNORECASE)
+    found = re.search('^([a-z0-9_/\.\-]+/[a-z_0-9]+\.[ch][p]*):[0-9]+', ln, re.IGNORECASE)
     if found:
         grp = re.search('/doomsday/(.*/)([a-z_0-9]+\.[ch][p]*)', found.group(1), re.IGNORECASE)
         if grp:
