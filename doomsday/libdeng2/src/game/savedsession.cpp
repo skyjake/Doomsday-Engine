@@ -158,12 +158,12 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
 
 /*static inline bool packageExists(String const &repoPath)
 {
-    return App::rootFolder().has(String("/savegames") / repoPath + ".save");
+    return App::homeFolder().has(String("savegames") / repoPath + ".save");
 }
 
 static inline PackageFolder *tryLocatePackage(String const &repoPath)
 {
-    return App::rootFolder().tryLocate<PackageFolder>(String("/savegames") / repoPath + ".save");
+    return App::homeFolder().tryLocate<PackageFolder>(String("savegames") / repoPath + ".save");
 }*/
 
 DENG2_PIMPL(SavedSession)
@@ -249,7 +249,7 @@ String SavedSession::styledDescription() const
 {
     return metadataAsStyledText(metadata()) + "\n" +
            String(_E(D) "Resource: " _E(.)_E(i) "\"%1\"")
-               .arg(NativePath(String("/home") / repoPath() + ".save").pretty());
+               .arg(NativePath(String("/home/savegames") / repoPath() + ".save").pretty());
 }
 
 /*PackageFolder &SavedSession::locateFile()
@@ -288,7 +288,7 @@ void SavedSession::readMetadata()
 {
     if(&source == this) return; // Sanity check.
 
-    File &destFile = App::fileSystem().root().replaceFile(String("/savegames") / d->repoPath + ".save");
+    File &destFile = App::homeFolder().replaceFile(String("savegames") / d->repoPath + ".save");
     Writer(destFile) << source.locateFile().archive();
     destFile.setMode(File::ReadOnly);
     destFile.parent()->populate(Folder::PopulateOnlyThisFolder);
@@ -301,7 +301,7 @@ void SavedSession::readMetadata()
 {
     if(packageExists(d->repoPath))
     {
-        App::rootFolder().removeFile(String("/savegames") / d->repoPath + ".save");
+        App::homeFolder().removeFile(String("savegames") / d->repoPath + ".save");
     }
 
     /// Force a metadata update.

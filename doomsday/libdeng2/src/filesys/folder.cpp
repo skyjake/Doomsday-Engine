@@ -298,13 +298,15 @@ File *Folder::tryLocateFile(String const &path) const
 {
     if(path.empty())
     {
-        return const_cast<Folder *>(this);
+        File *file = const_cast<Folder *>(this);
+        return file;
     }
 
     if(path[0] == '/')
     {
         // Route back to the root of the file system.
-        return fileSystem().root().tryLocateFile(path.substr(1));
+        File *file = fileSystem().root().tryLocateFile(path.substr(1));
+        return file;
     }
 
     DENG2_GUARD(this);
@@ -317,7 +319,8 @@ File *Folder::tryLocateFile(String const &path) const
         Contents::const_iterator found = _contents.find(path.lower());
         if(found != _contents.end())
         {
-            return found->second;
+            File *file = found->second;
+            return file;
         }
         return 0;
     }
@@ -328,7 +331,8 @@ File *Folder::tryLocateFile(String const &path) const
     // Check for some special cases.
     if(component == ".")
     {
-        return tryLocateFile(remainder);
+        File *file = tryLocateFile(remainder);
+        return file;
     }
     if(component == "..")
     {
@@ -337,7 +341,8 @@ File *Folder::tryLocateFile(String const &path) const
             // Can't go there.
             return 0;
         }
-        return parent()->tryLocateFile(remainder);
+        File *file = parent()->tryLocateFile(remainder);
+        return file;
     }
     
     // Do we have a folder for this?
@@ -347,7 +352,8 @@ File *Folder::tryLocateFile(String const &path) const
         if(Folder *subFolder = found->second->maybeAs<Folder>())
         {
             // Continue recursively to the next component.
-            return subFolder->tryLocateFile(remainder);
+            File *file = subFolder->tryLocateFile(remainder);
+            return file;
         }
     }
     

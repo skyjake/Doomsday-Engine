@@ -47,7 +47,7 @@ SavedSessionRepository::SavedSessionRepository() : d(new Instance(this))
 
 Folder &SavedSessionRepository::folder() const
 {
-    return App::rootFolder().locate<Folder>("/savegames");
+    return App::homeFolder().locate<Folder>("savegames");
 }
 
 void SavedSessionRepository::clear()

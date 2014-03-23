@@ -387,9 +387,7 @@ DENG2_PIMPL(ResourceSystem)
         // Else use the default.
 
         // Create the user's saved game folder if it doesn't yet exist.
-        App::fileSystem().makeFolder("/savegames", FS::DontInheritFeeds)
-                .attach(new DirectoryFeed(nativeSavePath,
-                        DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+        App::fileSystem().makeFolder("/home/savegames");
     }
 
     ~Instance()
@@ -1939,7 +1937,6 @@ DENG2_PIMPL(ResourceSystem)
      */
     void convertLegacySavegame(String const &sourcePath, String const &gameId)
     {
-        //String const repoPath   = gameId / sourcePath.fileNameWithoutExtension();
         String const outputName = sourcePath.fileNameWithoutExtension() + ".save";
         String const outputPath = nativeSavePath / gameId;
 
@@ -1963,12 +1960,11 @@ DENG2_PIMPL(ResourceSystem)
 
             try
             {
-                /// Update the /savegames/<gameId> folder.
-                Folder &outputFolder = saveRepo.folder().locate<Folder>(gameId);
-                outputFolder.populate(Folder::PopulateOnlyThisFolder);
-                game::SavedSession &session = outputFolder.locate<game::SavedSession>(outputName);
+                // Update the /home/savegames/<gameId> folder.
+                Folder &saveFolder = saveRepo.folder().locate<Folder>(gameId);
+                saveFolder.populate(Folder::PopulateOnlyThisFolder);
 
-                addSavedSession(session);
+                addSavedSession(saveFolder.locate<game::SavedSession>(outputName));
                 return;
             }
             catch(Folder::NotFoundError const &)
@@ -1989,7 +1985,7 @@ DENG2_PIMPL(ResourceSystem)
         // Once created, any existing saved sessions in this folder will be added automatically.
 
         // Make the native folder if necessary and populate the folder contents.
-        Folder &saveFolder = App::fileSystem().makeFolder(String("/savegames") / gameId);
+        Folder &saveFolder = App::fileSystem().makeFolder(String("/home/savegames") / gameId);//, FS::DontInheritFeeds | FS::PopulateNewFolder);
 
         // Find any .save packages in this folder and generate sessions for the db.
         DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
