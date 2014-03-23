@@ -31,6 +31,35 @@
 namespace de {
 namespace game {
 
+namespace internal {
+
+static String metadataAsStyledText(SavedSession::Metadata const &metadata)
+{
+    // Try to format the game rules so they look a little prettier.
+    QStringList rules = metadata.gets("gameRules", "").split("\n", QString::SkipEmptyParts);
+    rules.replaceInStrings(QRegExp("^(.*)= (.*)$"), _E(l) "\\1: " _E(.)_E(i) "\\2" _E(.));
+    String gameRulesText;
+    for(int i = 0; i < rules.size(); ++i)
+    {
+        if(i) gameRulesText += "\n";
+        gameRulesText += " - " + rules.at(i).trimmed();
+    }
+
+    return String(_E(b) "%1\n" _E(.)
+                  _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
+                  _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
+                  _E(l) "Session id: "  _E(.)_E(i) "%4\n" _E(.)
+                  _E(D) "Game rules:\n" _E(.) "%5")
+             .arg(metadata.gets("userDescription", ""))
+             .arg(metadata.gets("gameIdentityKey", ""))
+             .arg(metadata.gets("mapUri", ""))
+             .arg(metadata.geti("sessionId", 0))
+             .arg(gameRulesText);
+}
+
+} // namespace internal
+using namespace internal;
+
 static String const BLOCK_GROUP    = "group";
 static String const BLOCK_GAMERULE = "gamerule";
 
@@ -109,6 +138,12 @@ void SavedSession::Metadata::parse(String const &source)
     }
 }
 
+/**
+ * See the Doomsday Wiki for an example of the syntax:
+ * http://dengine.net/dew/index.php?title=Info
+ *
+ * @todo Use a more generic Record => Info conversion logic.
+ */
 String SavedSession::Metadata::asTextWithInfoSyntax() const
 {
     String text;
@@ -156,23 +191,13 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     return text;
 }
 
-/*static inline bool packageExists(String const &repoPath)
-{
-    return App::homeFolder().has(String("savegames") / repoPath + ".save");
-}
-
-static inline PackageFolder *tryLocatePackage(String const &repoPath)
-{
-    return App::homeFolder().tryLocate<PackageFolder>(String("savegames") / repoPath + ".save");
-}*/
-
 DENG2_PIMPL(SavedSession)
 {
     Metadata metadata;  ///< Cached metadata.
 
     Instance(Public *i) : Base(i) {}
 
-    /*static*/ bool readMetadata(Metadata &metadata)//, SavedSession *session)
+    bool readMetadata(Metadata &metadata)
     {
         try
         {
@@ -221,30 +246,6 @@ SavedSession::SavedSession(File &sourceArchiveFile, String const &name)
 SavedSession::~SavedSession()
 {}
 
-static String metadataAsStyledText(SavedSession::Metadata const &metadata)
-{
-    // Try to format the game rules so they look a little prettier.
-    QStringList rules = metadata.gets("gameRules", "").split("\n", QString::SkipEmptyParts);
-    rules.replaceInStrings(QRegExp("^(.*)= (.*)$"), _E(l) "\\1: " _E(.)_E(i) "\\2" _E(.));
-    String gameRulesText;
-    for(int i = 0; i < rules.size(); ++i)
-    {
-        if(i) gameRulesText += "\n";
-        gameRulesText += " - " + rules.at(i).trimmed();
-    }
-
-    return String(_E(b) "%1\n" _E(.)
-                  _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
-                  _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Session id: "  _E(.)_E(i) "%4\n" _E(.)
-                  _E(D) "Game rules:\n" _E(.) "%5")
-             .arg(metadata.gets("userDescription", ""))
-             .arg(metadata.gets("gameIdentityKey", ""))
-             .arg(metadata.gets("mapUri", ""))
-             .arg(metadata.geti("sessionId", 0))
-             .arg(gameRulesText);
-}
-
 String SavedSession::styledDescription() const
 {
     return metadataAsStyledText(metadata()) + "\n" +
@@ -252,28 +253,13 @@ String SavedSession::styledDescription() const
                .arg(NativePath(String("/home/savegames") / repoPath() + ".save").pretty());
 }
 
-/*PackageFolder &SavedSession::locateFile()
-{
-    if(PackageFolder *pack = tryLocatePackage(d->repoPath))
-    {
-        return *pack;
-    }
-    /// @throw MissingFileError Failed to locate the source file package.
-    throw MissingFileError("SavedSession::locateFile", "Source file for " + d->repoPath + " could not be located");
-}*/
-
-/*PackageFolder const &SavedSession::locateFile() const
-{
-    return const_cast<SavedSession *>(this)->locateFile();
-}*/
-
 void SavedSession::readMetadata()
 {
     LOGDEV_VERBOSE("Updating SavedSession metadata %p") << this;
 
     // Determine if a .save package exists in the repository and if so, read the metadata.
     Metadata newMetadata;
-    if(!d->readMetadata(newMetadata))//tryLocatePackage(d->repoPath)))
+    if(!d->readMetadata(newMetadata))
     {
         // Unrecognized or the file could not be accessed (perhaps its a network path?).
         // Return the session to the "null/invalid" state.
@@ -284,38 +270,11 @@ void SavedSession::readMetadata()
     cacheMetadata(newMetadata);
 }
 
-/*void SavedSession::copyFile(SavedSession const &source)
-{
-    if(&source == this) return; // Sanity check.
-
-    File &destFile = App::homeFolder().replaceFile(String("savegames") / d->repoPath + ".save");
-    Writer(destFile) << source.locateFile().archive();
-    destFile.setMode(File::ReadOnly);
-    destFile.parent()->populate(Folder::PopulateOnlyThisFolder);
-
-    // Perform recognition of the copied file and update the session status.
-    readMetadata();
-}*/
-
-/*void SavedSession::removeFile()
-{
-    if(packageExists(d->repoPath))
-    {
-        App::homeFolder().removeFile(String("savegames") / d->repoPath + ".save");
-    }
-
-    /// Force a metadata update.
-    readMetadata();
-}*/
-
 bool SavedSession::hasMapState(String mapUriStr) const
 {
     if(!mapUriStr.isEmpty())
     {
-        //if(PackageFolder const *pack = tryLocatePackage(d->repoPath))
-        {
-            return has(Path("maps") / mapUriStr + "State");
-        }
+        return has(Path("maps") / mapUriStr + "State");
     }
     return false;
 }
@@ -327,7 +286,7 @@ SavedSession::Metadata const &SavedSession::metadata() const
 
 void SavedSession::cacheMetadata(Metadata const &copied)
 {
-    d->metadata = copied; // Make a copy.
+    d->metadata = copied;
     DENG2_FOR_AUDIENCE2(MetadataChange, i)
     {
         i->savedSessionMetadataChanged(*this);

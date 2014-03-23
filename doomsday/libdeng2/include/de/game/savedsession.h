@@ -22,7 +22,6 @@
 #include "../Error"
 #include "../Observers"
 #include "../PackageFolder"
-#include "../Path"
 #include "../Record"
 #include "../String"
 
@@ -33,7 +32,10 @@ class MapStateReader;
 
 /**
  * Specialized PackageFolder that hosts a serialized game session.
-
+ *
+ * Expands upon the services provided by the base class adding various convenience methods
+ * for inspecting the data within.
+ *
  * @ingroup game
  */
 class DENG2_PUBLIC SavedSession : public PackageFolder
@@ -57,11 +59,6 @@ public:
 
         /**
          * Generates a textual representation of the session metadata with Info syntax.
-         *
-         * See the Doomsday Wiki for an example of the syntax:
-         * http://dengine.net/dew/index.php?title=Info
-         *
-         * @todo Use a more generic Record => Info conversion logic.
          */
         String asTextWithInfoSyntax() const;
     };
@@ -71,68 +68,43 @@ public:
 
     virtual ~SavedSession();
 
-    /// @todo remove me
-    inline String repoPath() const {
-        return parent()->name() / name().fileNameWithoutExtension();
-    }
-
     /**
-     * Composes a human-friendly, styled, textual description of the saved session.
+     * Composes a human-friendly, styled, textual description of the saved session that
+     * is suitable for use in user facing contexts (e.g., GUI widgets).
      */
     String styledDescription() const;
 
     /**
-     * Attempt to locate the file package for the saved session from the repository.
-     *
-     * @return  The file package if found. Ownership is unaffected.
-     */
-    //PackageFolder &locateFile();
-    //PackageFolder const &locateFile() const;
-
-    /**
-     * Attempt to update the status of the saved session from the file package in the repository.
-     * If the file path is invalid, unreachable, or the package is not recognized then the saved
-     * session is returned to a valid but non-loadable state.
+     * Re-read the metadata for the saved session from the package and cache it.
      */
     void readMetadata();
 
     /**
-     * Replace the file package in the repository with a copy of that associated with the @a source
-     * saved session. The copied file package is named according to the @ref path() of "this" saved
-     * session.
-     *
-     * @param source  SavedSession to copy the file package from.
-     *
-     * @throws MissingFileError  If no source file package is found.
-     */
-    //void copyFile(SavedSession const &source);
-
-    /**
-     * Removes the file package for the saved session from the repository (if configured).
-     */
-    //void removeFile();
-
-    /**
-     * Provides read-only access to a copy of the deserialized saved session metadata.
-     *
-     * @see replaceMetadata()
+     * Provides read-only access to a copy of the deserialized session metadata.
      */
     Metadata const &metadata() const;
 
     /**
-     * Replace the cached metadata with a copy of @a original. Note that this will @em not alter
-     * the .save package in the repository. The MetadataChange audience is notified.
+     * Update the cached metadata with @a copied. Note that this will @em not alter the
+     * package itself and only affects the local cache. The MetadataChange audience is
+     * notified.
      *
      * @param copied  Replacement Metadata. A copy is made.
      */
     void cacheMetadata(Metadata const &copied);
 
     /**
-     * Determines whether a serialized map state exists for the saved session.
+     * Convenient method of determining whether the saved session contains serialized state
+     * data for the specified map.
      *
-     * @param mapUri  Unique map identifier.
+     * @param mapUri  Unique identifier of the map to look up state data for.
      */
     bool hasMapState(String mapUriStr) const;
+
+    /// @todo remove me
+    inline String repoPath() const {
+        return parent()->name() / name().fileNameWithoutExtension();
+    }
 
 private:
     DENG2_PRIVATE(d)
