@@ -806,13 +806,8 @@ DoomV9MapStateReader::DoomV9MapStateReader(game::SavedSession const &session)
 DoomV9MapStateReader::~DoomV9MapStateReader()
 {}
 
-void DoomV9MapStateReader::read(String const &mapUriStr)
+void DoomV9MapStateReader::read(String const & /*mapUriStr*/)
 {
-    PackageFolder const &pack             = session();//.locateFile();
-    //game::SessionMetadata const &metadata = session().metadata();
-
-    File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr + "State");
-    //SV_OpenFile(mapStateFile);
     d->reader = SV_NewReader_Dm_v19();
 
     d->readPlayers();
@@ -882,7 +877,6 @@ void DoomV9MapStateReader::read(String const &mapUriStr)
 
     byte const consistency = Reader_ReadByte(d->reader);
     Reader_Delete(d->reader); d->reader = 0;
-    SV_CloseFile_Dm_v19();
 
     if(consistency != 0x1d)
     {

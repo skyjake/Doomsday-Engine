@@ -816,13 +816,8 @@ HereticV13MapStateReader::HereticV13MapStateReader(game::SavedSession const &ses
 HereticV13MapStateReader::~HereticV13MapStateReader()
 {}
 
-void HereticV13MapStateReader::read(String const &mapUriStr)
+void HereticV13MapStateReader::read(String const & /*mapUriStr*/)
 {
-    PackageFolder const &pack             = session();//.locateFile();
-    //game::SessionMetadata const &metadata = session().metadata();
-
-    File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr + "State");
-    //SV_OpenFile(mapStateFile);
     d->reader = SV_NewReader_Hr_v13();
 
     d->readPlayers();
@@ -895,7 +890,6 @@ void HereticV13MapStateReader::read(String const &mapUriStr)
 
     byte const consistency = Reader_ReadByte(d->reader);
     Reader_Delete(d->reader); d->reader = 0;
-    SV_CloseFile_Hr_v13();
 
     if(consistency != 0x1d)
     {

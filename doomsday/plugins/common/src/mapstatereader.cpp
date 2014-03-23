@@ -735,7 +735,7 @@ MapStateReader::~MapStateReader()
 
 void MapStateReader::read(String const &mapUriStr)
 {
-    PackageFolder const &pack = session();//.locateFile();
+    PackageFolder const &pack = session();
 
     File const &mapStateFile = pack.locate<File>(Path("maps") / mapUriStr + "State");
     SV_OpenFileForRead(mapStateFile);

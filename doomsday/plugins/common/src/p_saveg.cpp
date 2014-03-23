@@ -53,7 +53,7 @@ targetplraddress_t *targetPlayerAddrs;
 std::auto_ptr<de::game::MapStateReader>
 SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
 {
-    de::PackageFolder const &pack = session;//.locateFile();
+    de::PackageFolder const &pack = session;
     de::File const &mapStateFile = pack.locate<de::File>(de::Path("maps") / mapUriStr + "State");
     if(!SV_OpenFileForRead(mapStateFile))
     {

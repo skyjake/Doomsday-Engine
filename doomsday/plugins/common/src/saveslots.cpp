@@ -214,11 +214,10 @@ void SaveSlots::Slot::copySavedSessionFile(Slot const &source)
     clear();
 
     SavedSession const &sourceSession = source.savedSession();
-    // Copy the .save package.
-    //savedSession().copyFile(sourceSession);
     if(&sourceSession == d->session) return; // Sanity check.
 
     {
+        // Copy the .save package.
         File &save = G_SaveFolder().replaceFile(d->saveFileName());
         de::Writer(save) << sourceSession.archive();
         save.setMode(File::ReadOnly);
