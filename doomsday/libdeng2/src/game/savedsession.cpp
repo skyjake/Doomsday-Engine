@@ -270,15 +270,6 @@ void SavedSession::readMetadata()
     cacheMetadata(newMetadata);
 }
 
-bool SavedSession::hasMapState(String mapUriStr) const
-{
-    if(!mapUriStr.isEmpty())
-    {
-        return has(Path("maps") / mapUriStr + "State");
-    }
-    return false;
-}
-
 SavedSession::Metadata const &SavedSession::metadata() const
 {
     return d->metadata;
@@ -291,6 +282,12 @@ void SavedSession::cacheMetadata(Metadata const &copied)
     {
         i->savedSessionMetadataChanged(*this);
     }
+}
+
+String SavedSession::stateFileName(String const &name) //static
+{
+    if(!name.isEmpty()) return name + "State";
+    return "";
 }
 
 } // namespace game

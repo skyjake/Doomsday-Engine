@@ -92,17 +92,45 @@ public:
     void cacheMetadata(Metadata const &copied);
 
     /**
-     * Convenient method of determining whether the saved session contains serialized state
-     * data for the specified map.
+     * Checks whether the saved session contains state data on the specified @a path.
      *
-     * @param mapUri  Unique identifier of the map to look up state data for.
+     * @param path  Of the state data to check for. Not case sensitive.
      */
-    bool hasMapState(String mapUriStr) const;
+    inline bool hasState(String const &path) const {
+        if(path.isEmpty()) return false;
+        return has(stateFileName(path));
+    }
+
+    /**
+     * Locates a state data file in this saved session or in one of its subfolders. Looks
+     * recursively through subfolders.
+     *
+     * @param path  Path to look for. Relative to this folder.
+     *
+     * @return  The located file, or @c NULL if the path was not found.
+     */
+    inline File *tryLocateStateFile(String const &path) const {
+        if(path.isEmpty()) return false;
+        return tryLocateFile(stateFileName(path));
+    }
+
+    template <typename Type>
+    Type *tryLocateState(String const &path) const {
+        return dynamic_cast<Type *>(tryLocateStateFile(path));
+    }
 
     /// @todo remove me
     inline String repoPath() const {
         return parent()->name() / name().fileNameWithoutExtension();
     }
+
+public:
+    /**
+     * Utility for composing the full name of a state data file in the saved session.
+     *
+     * @param name  Symbolic name of the state data.
+     */
+    static String stateFileName(String const &name);
 
 private:
     DENG2_PRIVATE(d)

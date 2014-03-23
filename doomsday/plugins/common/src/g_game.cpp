@@ -3241,14 +3241,11 @@ void G_DoLoadSession(de::String slotId)
     try
     {
         de::game::SavedSession const &session = G_SaveSlots()[logicalSlot].savedSession();
-        //de::PackageFolder const &pack   = session.locateFile();
-
-        App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                de::NativePath(session.path()).pretty().toLatin1().constData());
+        LOG_VERBOSE("Attempting to load saved game from \"%s\"") << session.path();
 
 #if __JHEXEN__
         // Deserialize the world ACS data.
-        if(de::File *file = session.tryLocateFile("ACScriptState"))
+        if(de::File *file = session.tryLocateStateFile("ACScript"))
         {
             Game_ACScriptInterpreter().readWorldScriptData(de::Reader(*file));
         }
@@ -3275,7 +3272,7 @@ void G_DoLoadSession(de::String slotId)
             // Therefore we must assume the user has correctly configured the session accordingly.
             LOG_WARNING("Using current game rules as basis for loading savegame \"%s\"."
                         " (The original save format omits this information).")
-                    << de::NativePath(session.path()).pretty();
+                    << session.path();
 
             // Use the current rules as our basis.
             rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &G_Rules());
@@ -3308,8 +3305,8 @@ void G_DoLoadSession(de::String slotId)
     }
     catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Error loading save slot #%s:\n%s",
-                slotId.toLatin1().constData(), er.asText().toLatin1().constData());
+        LOG_RES_WARNING("Error loading save slot #%s:\n")
+                << slotId << er.asText();
     }
 
     // Failure... Return to the title loop.

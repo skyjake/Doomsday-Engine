@@ -82,7 +82,7 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
         Block worldACScriptData;
         de::Writer writer(worldACScriptData);
         Game_ACScriptInterpreter().writeWorldScriptData(writer);
-        arch.add("ACScriptState", worldACScriptData);
+        arch.add(SavedSession::stateFileName("ACScript"), worldACScriptData);
     }
 #endif
 
@@ -93,7 +93,7 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
         SV_OpenFileForWrite(mapStateData);
         writer_s *writer = SV_NewWriter();
         MapStateWriter().write(writer);
-        arch.add(Path("maps") / mapUriStr + "State", mapStateData);
+        arch.add(SavedSession::stateFileName(Path("maps") / mapUriStr), mapStateData);
         Writer_Delete(writer);
     }
 
