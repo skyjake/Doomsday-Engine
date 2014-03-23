@@ -102,10 +102,10 @@ public:
     }
 
     /**
-     * Locates a state data file in this saved session or in one of its subfolders. Looks
-     * recursively through subfolders.
+     * Locates a state data file in this saved session, or in one of its subfolders.
+     * Looks recursively through subfolders.
      *
-     * @param path  Path to look for. Relative to this folder.
+     * @param path  Path to look for. Relative to the root.
      *
      * @return  The located file, or @c NULL if the path was not found.
      */
