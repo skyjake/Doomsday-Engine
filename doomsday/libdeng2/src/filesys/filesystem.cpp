@@ -128,18 +128,18 @@ File *FileSystem::interpret(File *sourceData)
         {
             try
             {
-                LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
-
                 // It is a ZIP archive: we will represent it as a folder.
                 std::auto_ptr<PackageFolder> package;
 
                 if(sourceData->name().fileNameExtension() == ".save")
                 {
                     /// @todo fixme: Don't assume this is a save package.
+                    LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
                     package.reset(new game::SavedSession(*sourceData, sourceData->name()));
                 }
                 else
                 {
+                    LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
                     package.reset(new PackageFolder(*sourceData, sourceData->name()));
                 }
 
