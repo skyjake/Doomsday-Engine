@@ -19,11 +19,10 @@
 #ifndef LIBDENG2_SAVEDSESSIONREPOSITORY_H
 #define LIBDENG2_SAVEDSESSIONREPOSITORY_H
 
-#include "../Error"
 #include "../Folder"
 #include "../Observers"
 #include "../String"
-#include <map>
+#include <QMap>
 
 namespace de {
 namespace game {
@@ -31,66 +30,47 @@ namespace game {
 class SavedSession;
 
 /**
- * Centralized saved session repository.
+ * Index of available SavedSessions.
  *
  * @ingroup game
  */
 class DENG2_PUBLIC SavedSessionRepository
 {
 public:
-    /// Required/referenced session is missing. @ingroup errors
-    DENG2_ERROR(MissingSessionError);
-
     /// Notified whenever a saved session is added/removed from the repository.
     DENG2_DEFINE_AUDIENCE2(AvailabilityUpdate, void repositoryAvailabilityUpdate(SavedSessionRepository const &repository))
 
-    typedef std::map<String, SavedSession *> All;
+    typedef QMap<String, SavedSession *> All;
 
 public:
     SavedSessionRepository();
 
     Folder &folder() const;
 
+    /**
+     * Clear the SavedSession index.
+     */
     void clear();
 
     /**
-     * Add/replace a saved session in the repository. If a session already exists, it is
-     * replaced by the new one.
+     * Add a saved session in the index. If an entry for the session already exists,
+     * it is replaced by the new one.
      *
-     * @param path     Relative path of the associated game state file package.
-     * @param session  New saved session to replace with. Ownership is given.
+     * @param session  SavedSession to add to the index.
      */
-    void add(String path, SavedSession *session);
+    void add(SavedSession &session);
 
     /**
-     * Determines whether a saved session exists for @a path.
+     * Remove a saved session from the index (if present).
      *
-     * @see find()
+     * @param path  Relative path of the associated .save package.
      */
-    bool has(String path) const;
+    void remove(String path);
 
     /**
-     * Lookup the SavedSession for @a path.
-     *
-     * @see has()
+     * Lookup a SavedSession in the index.
      */
-    SavedSession &find(String path) const;
-
-    inline SavedSession *findPtr(String path) const {
-        return has(path)? &find(path) : 0;
-    }
-
-    /**
-     * Lookup the saved session with a matching user description. The search is in ascending
-     * saved session file name order.
-     *
-     * @param description  User description of the saved session to look for (not case sensitive).
-     *
-     * @return  The found SavedSession; otherwise @c 0.
-     *
-     * @see find()
-     */
-    SavedSession *findByUserDescription(String description) const;
+    SavedSession *find(String path) const;
 
     /**
      * Provides access to the saved session dataset, for efficient traversal.

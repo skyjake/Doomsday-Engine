@@ -974,19 +974,39 @@ de::game::SavedSessionRepository &G_SavedSessionRepository()
 {
     return *static_cast<de::game::SavedSessionRepository *>(DD_SavedSessionRepository());
 }
+de::Folder &G_SaveFolder()
+{
+    return G_SavedSessionRepository().folder().locate<de::Folder>(G_IdentityKey());
+}
+
+static de::game::SavedSession *savedSessionByUserDescription(de::String description)
+{
+    if(!description.isEmpty())
+    {
+        DENG2_FOR_EACH_CONST(de::Folder::Contents, i, G_SaveFolder().contents())
+        {
+            if(de::game::SavedSession *session = i->second->maybeAs<de::game::SavedSession>())
+            {
+                if(!session->metadata().gets("userDescription", "").compareWithoutCase(description))
+                {
+                    return session;
+                }
+            }
+        }
+    }
+    return 0; // Not found.
+}
 
 de::String G_SaveSlotIdFromUserInput(de::String str)
 {
-    de::game::SavedSessionRepository &saveRepo = G_SavedSessionRepository();
-
     // Perhaps a user description of a saved session?
-    if(SaveSlot *sslot = G_SaveSlots().slot(saveRepo.findByUserDescription(str)))
+    if(SaveSlot *sslot = G_SaveSlots().slot(savedSessionByUserDescription(str)))
     {
         return sslot->id();
     }
 
     // Perhaps a saved session package file name?
-    if(SaveSlot *sslot = G_SaveSlots().slot(saveRepo.findPtr(de::Path(G_IdentityKey()) / str)))
+    if(SaveSlot *sslot = G_SaveSlots().slot(G_SaveFolder().tryLocate<de::game::SavedSession>(str)))
     {
         return sslot->id();
     }

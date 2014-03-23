@@ -1914,20 +1914,6 @@ DENG2_PIMPL(ResourceSystem)
 #endif // __CLIENT__
 
     /**
-     * Insert/replace a SavedSession in the db.
-     *
-     * @param repoPath  Unique /savegames relative path (and identifier for the saved session).
-     *
-     * @todo This extra step is unnecessary. SavedSession should inherit from PackageFolder.
-     */
-    void addSavedSession(game::SavedSession &session)//String const &repoPath)
-    {
-        //game::SavedSession &session = saveRepo.folder().locate<game::SavedSession>(repoPath + ".save");
-        saveRepo.add(session.repoPath(), &session);
-        session.readMetadata();
-    }
-
-    /**
      * Utility for initiating a legacy savegame conversion.
      *
      * @param sourcePath  Native path to the legacy savegame file to be converted.
@@ -1963,8 +1949,7 @@ DENG2_PIMPL(ResourceSystem)
                 // Update the /home/savegames/<gameId> folder.
                 Folder &saveFolder = saveRepo.folder().locate<Folder>(gameId);
                 saveFolder.populate(Folder::PopulateOnlyThisFolder);
-
-                addSavedSession(saveFolder.locate<game::SavedSession>(outputName));
+                saveRepo.add(saveFolder.locate<game::SavedSession>(outputName));
                 return;
             }
             catch(Folder::NotFoundError const &)
@@ -1985,7 +1970,7 @@ DENG2_PIMPL(ResourceSystem)
         // Once created, any existing saved sessions in this folder will be added automatically.
 
         // Make the native folder if necessary and populate the folder contents.
-        Folder &saveFolder = App::fileSystem().makeFolder(String("/home/savegames") / gameId);//, FS::DontInheritFeeds | FS::PopulateNewFolder);
+        Folder &saveFolder = App::fileSystem().makeFolder(String("/home/savegames") / gameId);
 
         // Find any .save packages in this folder and generate sessions for the db.
         DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
@@ -1994,7 +1979,7 @@ DENG2_PIMPL(ResourceSystem)
             {
                 if(game::SavedSession *session = i->second->maybeAs<game::SavedSession>())
                 {
-                    addSavedSession(*session);//gameId / i->first.fileNameWithoutExtension());
+                    saveRepo.add(*session);
                 }
             }
         }

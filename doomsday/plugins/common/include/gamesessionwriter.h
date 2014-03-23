@@ -33,9 +33,9 @@ class GameSessionWriter
 {
 public:
     /**
-     * @param repositoryPath  Saved session path in the repository.
+     * @param sessionName  Name of the saved session in the repository.
      */
-    GameSessionWriter(de::String repositoryPath);
+    GameSessionWriter(de::String sessionName);
 
     /**
      * @param metadata  Session metadata to be written. A copy is made.

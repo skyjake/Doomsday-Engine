@@ -177,6 +177,7 @@ D_CMD( CCmdExitLevel );
 #endif
 
 #if __cplusplus
+#include <de/Folder>
 #include <de/game/MapStateReader>
 #include <de/game/SavedSessionRepository>
 #include <de/String>
@@ -244,6 +245,11 @@ de::game::SessionMetadata *G_GenerateSessionMetadata(de::String const &userDecri
  * Returns the game's SaveSlots.
  */
 SaveSlots &G_SaveSlots();
+
+/**
+ * Returns the game's savegame Folder.
+ */
+de::Folder &G_SaveFolder();
 
 /**
  * Returns the game's (i.e., the app's) SavedSessionRepository.

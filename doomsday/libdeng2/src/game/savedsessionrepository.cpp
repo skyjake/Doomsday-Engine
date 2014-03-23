@@ -55,8 +55,8 @@ void SavedSessionRepository::clear()
     // Disable updates for now, we'll do that when we're done.
     d->availabilityUpdateDisabled = true;
 
-    // Clear the session db, we're starting over.
-    qDebug() << "Clearing repository saved session db";
+    // Clear the index we're starting over.
+    qDebug() << "Clearing SavedSession index";
     d->sessions.clear();
 
     // Now perform the availability notifications.
@@ -64,41 +64,24 @@ void SavedSessionRepository::clear()
     d->notifyAvailabilityUpdate();
 }
 
-bool SavedSessionRepository::has(String path) const
+void SavedSessionRepository::add(SavedSession &session)
 {
-    return d->sessions.find(path.toLower()) != d->sessions.end();
-}
-
-void SavedSessionRepository::add(String path, SavedSession *session)
-{
-    path = path.toLower();
-    d->sessions[path] = session;
+    d->sessions[session.repoPath().toLower()] = &session;
     d->notifyAvailabilityUpdate();
 }
 
-SavedSession &SavedSessionRepository::find(String path) const
+void SavedSessionRepository::remove(String path)
+{
+    d->sessions.remove(path);
+    d->notifyAvailabilityUpdate();
+}
+
+SavedSession *SavedSessionRepository::find(String path) const
 {
     All::iterator found = d->sessions.find(path.toLower());
     if(found != d->sessions.end())
     {
-        return *found->second;
-    }
-    /// @throw MissingSessionError An unknown session was referenced.
-    throw MissingSessionError("SavedSessionRepository::find", "Unknown session '" + path + "'");
-}
-
-SavedSession *SavedSessionRepository::findByUserDescription(String description) const
-{
-    if(!description.isEmpty())
-    {
-        DENG2_FOR_EACH_CONST(All, i, d->sessions)
-        {
-            SessionMetadata const &metadata = i->second->metadata();
-            if(!metadata.gets("userDescription", "").compareWithoutCase(description))
-            {
-                return i->second;
-            }
-        }
+        return found.value();
     }
     return 0; // Not found.
 }

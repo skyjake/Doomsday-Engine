@@ -186,7 +186,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
             String const repoPath = self.items().at(idx).data().toString();
-            if(!repository.has(repoPath))
+            if(!repository.find(repoPath))
             {
                 self.items().remove(idx--);
                 changed = true;
@@ -196,12 +196,11 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         // Add new entries.
         DENG2_FOR_EACH_CONST(SavedSessionRepository::All, i, repository.all())
         {
-            SavedSession const &session = *i->second;
-            ui::Data::Pos found = self.items().findData(session.repoPath());
+            ui::Data::Pos found = self.items().findData(i.key());
             if(found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
-                self.items().append(new SavegameListItem(session));
+                self.items().append(new SavegameListItem(*i.value()));
                 changed = true;
             }
         }

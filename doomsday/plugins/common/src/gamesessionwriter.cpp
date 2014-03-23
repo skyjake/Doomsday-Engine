@@ -39,17 +39,7 @@ using de::game::SavedSessionRepository;
 
 DENG2_PIMPL_NOREF(GameSessionWriter)
 {
-    String repoPath; // Path to the saved session in the repository.
-
-    inline String saveFileName() const
-    {
-        return repoPath.fileName() + ".save";
-    }
-
-    inline Folder &saveFolder() const
-    {
-        return G_SavedSessionRepository().folder().locate<Folder>(repoPath.fileNamePath());
-    }
+    String saveFileName; // Name of the saved session in the repository.
 
     String composeInfo(SessionMetadata const &metadata) const
     {
@@ -70,16 +60,17 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
     }
 };
 
-GameSessionWriter::GameSessionWriter(String repositoryPath) : d(new Instance())
+GameSessionWriter::GameSessionWriter(String sessionName) : d(new Instance())
 {
-    DENG2_ASSERT(repositoryPath != 0);
-    d->repoPath = repositoryPath;
+    DENG2_ASSERT(sessionName != 0);
+    d->saveFileName = sessionName.fileNameWithoutExtension() + ".save";
 }
 
 void GameSessionWriter::write(SessionMetadata const &metadata)
 {
     LOG_AS("GameSessionWriter");
-    LOG_RES_VERBOSE("Serializing game state to \"/home/savegames/%s\"...") << d->repoPath;
+    LOG_RES_VERBOSE("Serializing game state to \"%s\"...")
+            << Path(G_SaveFolder().path() / d->saveFileName);
 
     // Write the Info file for this .save package.
     ZipArchive arch;
@@ -107,15 +98,14 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
     }
 
     {
-        File &save = d->saveFolder().replaceFile(d->saveFileName());
+        File &save = G_SaveFolder().replaceFile(d->saveFileName);
         de::Writer(save) << arch;
         save.setMode(File::ReadOnly);
         save.parent()->populate(Folder::PopulateOnlyThisFolder);
     }
 
-    SavedSession &session = d->saveFolder().locate<SavedSession>(d->saveFileName());
+    SavedSession &session = G_SaveFolder().locate<SavedSession>(d->saveFileName);
     LOG_RES_MSG("Wrote ") << session.as<NativeFile>().nativePath().pretty();
-
     session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-    G_SavedSessionRepository().add(d->repoPath, &session);
+    G_SavedSessionRepository().add(session);
 }
