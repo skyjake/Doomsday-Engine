@@ -33,7 +33,7 @@ class MapStateReader;
 /**
  * Specialized PackageFolder that hosts a serialized game session.
  *
- * Expands upon the services provided by the base class adding various convenience methods
+ * Expands upon the services provided by the base class, adding various convenience methods
  * for inspecting the data within.
  *
  * @ingroup game
@@ -51,9 +51,7 @@ public:
     {
     public:
         /**
-         * Parses metadata in Info syntax from a text string.
-         *
-         * @param source  Source string to be parsed.
+         * Parses metadata in Info syntax from @a source.
          */
         void parse(String const &source);
 
