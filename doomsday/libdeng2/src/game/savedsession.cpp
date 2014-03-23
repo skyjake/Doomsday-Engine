@@ -191,6 +191,25 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     return text;
 }
 
+DENG2_PIMPL_NOREF(SavedSession::MapStateReader)
+{
+    SavedSession const *session; ///< Saved session being read. Not Owned.
+    Instance(SavedSession const &session) : session(&session) {}
+};
+
+SavedSession::MapStateReader::MapStateReader(SavedSession const &session)
+    : d(new Instance(session))
+{}
+
+SavedSession::MapStateReader::~MapStateReader()
+{}
+
+SavedSession const &SavedSession::MapStateReader::session() const
+{
+    DENG2_ASSERT(d->session != 0);
+    return *d->session;
+}
+
 DENG2_PIMPL(SavedSession)
 {
     Metadata metadata;  ///< Cached metadata.

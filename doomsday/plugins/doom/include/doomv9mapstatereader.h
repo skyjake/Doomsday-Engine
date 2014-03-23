@@ -26,14 +26,14 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include <de/game/MapStateReader>
+#include <de/game/SavedSession>
 
 /**
  * Doom ver 1.9 saved game map state reader.
  *
  * @ingroup libdoom
  */
-class DoomV9MapStateReader : public de::game::MapStateReader
+class DoomV9MapStateReader : public de::game::SavedSession::MapStateReader
 {
 public:
     DoomV9MapStateReader(de::game::SavedSession const &session);

@@ -23,7 +23,7 @@
 
 #include "common.h"
 #include "thingarchive.h"
-#include <de/game/MapStateReader>
+#include <de/game/SavedSession>
 #include <de/String>
 
 /**
@@ -32,7 +32,7 @@
  * @ingroup libcommon
  * @see MapStateWriter
  */
-class MapStateReader : public de::game::MapStateReader
+class MapStateReader : public de::game::SavedSession::MapStateReader
 {
 public:
     MapStateReader(de::game::SavedSession const &session);

@@ -37,7 +37,6 @@
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
 #include "saveslots.h"
-#include <de/game/MapStateReader>
 #include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/String>
@@ -50,7 +49,7 @@ int saveToRealPlayerNum[MAXPLAYERS];
 targetplraddress_t *targetPlayerAddrs;
 #endif
 
-std::auto_ptr<de::game::MapStateReader>
+std::auto_ptr<de::game::SavedSession::MapStateReader>
 SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
 {
     de::PackageFolder const &pack = session;
@@ -62,7 +61,7 @@ SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
     }
 
     {
-        std::auto_ptr<de::game::MapStateReader> p;
+        std::auto_ptr<de::game::SavedSession::MapStateReader> p;
         Reader *reader = SV_NewReader();
         int const magic = Reader_ReadInt32(reader);
         if(magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC) // Native format.

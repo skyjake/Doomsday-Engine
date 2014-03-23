@@ -60,7 +60,7 @@
 #include "x_hair.h"
 
 #include <de/ArrayValue>
-#include <de/game/MapStateReader>
+#include <de/game/SavedSession>
 #include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/NumberValue>
@@ -3004,7 +3004,7 @@ void G_DoLeaveMap()
      */
     Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
-    revisit = G_SaveSlots()["base"].savedSession().hasMapState(Str_Text(Uri_Compose(nextMapUri)));
+    revisit = G_SaveSlots()["base"].savedSession().hasState(Str_Text(Uri_Compose(nextMapUri)));
     if(gameRules.deathmatch)
     {
         revisit = false;

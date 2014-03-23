@@ -24,8 +24,8 @@
 #ifdef __cplusplus
 
 #include "common.h"
+#include <de/game/SavedSession>
 
-class MapStateReader;
 class MapStateWriter;
 
 /**
@@ -35,7 +35,7 @@ class MapStateWriter;
  *
  * @return  New reader instance if recognized. Ownership given to the caller.
  */
-std::auto_ptr<de::game::MapStateReader>
+std::auto_ptr<de::game::SavedSession::MapStateReader>
 SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr);
 
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];

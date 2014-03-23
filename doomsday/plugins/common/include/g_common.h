@@ -178,7 +178,6 @@ D_CMD( CCmdExitLevel );
 
 #if __cplusplus
 #include <de/Folder>
-#include <de/game/MapStateReader>
 #include <de/game/SavedSessionRepository>
 #include <de/String>
 #include "gamerules.h"

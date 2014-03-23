@@ -809,7 +809,7 @@ DENG2_PIMPL(HereticV13MapStateReader)
 };
 
 HereticV13MapStateReader::HereticV13MapStateReader(game::SavedSession const &session)
-    : game::MapStateReader(session)
+    : game::SavedSession::MapStateReader(session)
     , d(new Instance(this))
 {}
 

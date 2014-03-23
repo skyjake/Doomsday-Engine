@@ -61,6 +61,40 @@ public:
         String asTextWithInfoSyntax() const;
     };
 
+    /**
+     * Abstract base class for serialized, map state readers.
+     */
+    class DENG2_PUBLIC MapStateReader
+    {
+    public:
+        /// Base class for read errors. @ingroup errors
+        DENG2_ERROR(ReadError);
+
+    public:
+        /**
+         * Construct a new MapStateReader for the given saved @a session.
+         *
+         * @param session  The saved session to be read.
+         */
+        MapStateReader(SavedSession const &session);
+        virtual ~MapStateReader();
+
+        /**
+         * Returns the saved session being read.
+         */
+        SavedSession const &session() const;
+
+        /**
+         * Attempt to load (read/interpret) the serialized map state.
+         *
+         * @param mapUriStr  Unique identifier of the map state to deserialize.
+         */
+        virtual void read(String const &mapUriStr) = 0;
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
 public:
     SavedSession(File &sourceArchiveFile, String const &name = "");
 
