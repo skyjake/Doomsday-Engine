@@ -25,6 +25,7 @@
 #include "hu_menu.h"
 #include <de/Folder>
 #include <de/game/SavedSessionRepository>
+#include <de/NativeFile>
 #include <de/Observers>
 #include <de/Writer>
 #include <map>
@@ -62,9 +63,14 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
     }
 
-    inline SavedSessionRepository &repo() const
+    inline String saveFileName() const
     {
-        return G_SavedSessionRepository();
+        return repoPath.fileName();
+    }
+
+    inline Folder &saveFolder() const
+    {
+        return G_SavedSessionRepository().folder().locate<Folder>(repoPath.fileNamePath());
     }
 
     void updateStatus()
@@ -138,10 +144,7 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String repoPath, int menuWid
     d->menuWidgetId = menuWidgetId;
 
     // See if a saved session already exists for this slot.
-    if(d->repo().has(d->repoPath))
-    {
-        setSavedSession(&d->repo().find(d->repoPath));
-    }
+    setSavedSession(d->saveFolder().tryLocate<SavedSession>(d->saveFileName()));
 }
 
 SaveSlots::Slot::SessionStatus SaveSlots::Slot::sessionStatus() const
@@ -169,7 +172,7 @@ void SaveSlots::Slot::bindRepositoryPath(String newPath)
     if(d->repoPath != newPath)
     {
         d->repoPath = newPath;
-        setSavedSession(d->repo().findPtr(d->repoPath));
+        setSavedSession(d->saveFolder().tryLocate<SavedSession>(d->saveFileName()));
     }
 }
 
@@ -220,14 +223,18 @@ void SaveSlots::Slot::copySavedSessionFile(Slot const &source)
     //savedSession().copyFile(sourceSession);
     if(&sourceSession == d->session) return; // Sanity check.
 
-    File &destFile = d->repo().folder().replaceFile(d->repoPath + ".save");
-    de::Writer(destFile) << sourceSession.archive();
-    destFile.setMode(File::ReadOnly);
-    destFile.parent()->populate(Folder::PopulateOnlyThisFolder);
+    {
+        File &save = d->saveFolder().replaceFile(d->saveFileName());
+        de::Writer(save) << sourceSession.archive();
+        save.setMode(File::ReadOnly);
+        save.parent()->populate(Folder::PopulateOnlyThisFolder);
+    }
 
-    SavedSession *session = &destFile.as<SavedSession>();
-    d->repo().add(d->repoPath, session);
-    setSavedSession(session);
+    SavedSession &session = d->saveFolder().locate<SavedSession>(d->saveFileName());
+    LOG_RES_MSG("Wrote ") << session.as<NativeFile>().nativePath().pretty();
+
+    G_SavedSessionRepository().add(d->repoPath, &session);
+    setSavedSession(&session);
 }
 
 void SaveSlots::Slot::clear()
@@ -244,7 +251,7 @@ void SaveSlots::Slot::clear()
     {
         SavedSession &session = *d->session;
         setSavedSession(0);
-        d->repo().add(d->repoPath, 0);
+        G_SavedSessionRepository().add(d->repoPath, 0);
         delete &session;
     }
 }

@@ -41,9 +41,14 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
 {
     String repoPath; // Path to the saved session in the repository.
 
-    inline SavedSessionRepository &repo() const
+    inline String saveFileName() const
     {
-        return G_SavedSessionRepository();
+        return repoPath.fileName() + ".save";
+    }
+
+    inline Folder &saveFolder() const
+    {
+        return G_SavedSessionRepository().folder().locate<Folder>(repoPath.fileNamePath());
     }
 
     String composeInfo(SessionMetadata const &metadata) const
@@ -74,7 +79,7 @@ GameSessionWriter::GameSessionWriter(String repositoryPath) : d(new Instance())
 void GameSessionWriter::write(SessionMetadata const &metadata)
 {
     LOG_AS("GameSessionWriter");
-    LOG_RES_VERBOSE("Serializing game state to \"/savegames/%s\"...") << d->repoPath;
+    LOG_RES_VERBOSE("Serializing game state to \"/home/savegames/%s\"...") << d->repoPath;
 
     // Write the Info file for this .save package.
     ZipArchive arch;
@@ -101,16 +106,16 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
         Writer_Delete(writer);
     }
 
-    File &outFile = d->repo().folder().replaceFile(d->repoPath + ".save");
-    de::Writer(outFile) << arch;
-    outFile.setMode(File::ReadOnly);
-    outFile.parent()->populate(Folder::PopulateOnlyThisFolder);
-    LOG_RES_MSG("Wrote ") << outFile.as<NativeFile>().nativePath().pretty();
+    {
+        File &save = d->saveFolder().replaceFile(d->saveFileName());
+        de::Writer(save) << arch;
+        save.setMode(File::ReadOnly);
+        save.parent()->populate(Folder::PopulateOnlyThisFolder);
+    }
 
-    // Generate a saved session for the db.
-    //SavedSession *session = new SavedSession(d->repoPath);
+    SavedSession &session = d->saveFolder().locate<SavedSession>(d->saveFileName());
+    LOG_RES_MSG("Wrote ") << session.as<NativeFile>().nativePath().pretty();
 
-    SavedSession &session = d->repo().folder().locate<SavedSession>(d->repoPath + ".save");
     session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     G_SavedSessionRepository().add(d->repoPath, &session);
 }
