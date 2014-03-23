@@ -146,7 +146,7 @@ def count_log_word(fn, word):
             if 'deprecated' in txt: continue
             try:
                 if txt[pos-1] not in '/\\_'+string.ascii_letters and \
-                    txt[pos+len(word)] not in 's.' and \
+                    txt[pos+len(word)] not in string.ascii_letters+'.' and \
                     txt[pos-11:pos] != 'shlibdeps: ' and txt[pos-12:pos] != 'genchanges: ' and \
                     txt[pos-12:pos] != 'cc1objplus: ':
                     count += 1            
