@@ -60,6 +60,8 @@ public:
 
     virtual ~PackageFolder();
 
+    String describe() const;
+
     /**
      * Returns the Archive of the package.
      */

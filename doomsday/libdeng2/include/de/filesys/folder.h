@@ -101,6 +101,8 @@ public:
     virtual ~Folder();
 
     String describe() const;
+    
+    String describeFeeds() const;
 
     /**
      * Populates the folder with a set of File instances. Each feed

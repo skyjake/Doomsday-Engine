@@ -25,6 +25,7 @@
 #include "de/Date"
 #include "de/NumberValue"
 #include "de/Guard"
+#include "de/DirectoryFeed"
 
 namespace de {
 
@@ -122,23 +123,53 @@ String File::description() const
 {
     DENG2_GUARD(this);
 
+    // describe() gives the actual description of this file.
     String desc = describe();
-    if(parent())
-    {
-        desc += " at path \"" + path() + "\"";
-    }
+
     if(!mode().testFlag(Write))
     {
         desc = "read-only " + desc;
     }
-    if(source() != this)
+
+    // Check for additional contextual information that may be relevant. First
+    // determine if this is being called for a log entry.
+    Log &log = Log::threadLog();
+    int verbosity = 0;
+    if(!log.isStaging() || (log.currentEntryMetadata() & LogEntry::Dev))
     {
-        desc += " (sourced from " + source()->description() + ")";
+        // For dev entries and everything outside log entries, use a full description.
+        verbosity = 2;
     }
-    if(originFeed())
+    else if((log.currentEntryMetadata() & LogEntry::LevelMask) <= LogEntry::Verbose)
     {
-        desc += " (out of " + originFeed()->description() + ")";
+        // Verbose entries can contain some additional information.
+        verbosity = 1;
     }
+
+    if(verbosity >= 1)
+    {
+        if(parent())
+        {
+            desc += " [path \"" + path() + "\"]";
+        }
+    }
+
+    // In case of DirectoryFeed, the native file desciption itself already contains
+    // information about the full native path, so we don't have to describe the
+    // feed itself (would be redundant).
+    if(originFeed() && (verbosity >= 2 || !originFeed()->is<DirectoryFeed>()))
+    {
+        desc += " from " + originFeed()->description();
+    }
+
+    if(verbosity >= 2)
+    {
+        if(source() != this)
+        {
+            desc += " (data sourced from " + source()->description() + ")";
+        }
+    }
+
     return desc;
 }
 
