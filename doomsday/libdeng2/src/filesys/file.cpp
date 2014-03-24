@@ -113,7 +113,7 @@ FileSystem &File::fileSystem()
     return DENG2_APP->fileSystem();
 }
 
-String const &File::name() const
+String File::name() const
 {
     return d->name;
 }
