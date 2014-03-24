@@ -33,8 +33,8 @@ namespace de {
 /**
  * Menu with an N-by-M grid of items (child widgets).
  *
- * One of the dimensions of the grid can be configured to use ui::Expand
- * policy, but then the child widgets must manage their size on that axis by
+ * One or both of the dimensions of the menu grid can be configured to use ui::Expand
+ * policy, in which case the child widgets must manage their size on that axis by
  * themselves.
  *
  * A sort order for the items can be optionally defined using
@@ -62,10 +62,12 @@ public:
      * and the size of the children is adjusted to evenly fill the entire menu
      * rectangle.
      *
-     * If one of the dimensions is set to ui::Expand policy, the menu's size in
-     * that dimension is determined by the summed up size of the children, and
-     * the specified number of columns/rows is ignored for that dimension. Both
-     * dimensions cannot be set to zero columns/rows.
+     * If a dimension is set to ui::Expand policy, the menu's size in that dimension is
+     * determined by the summed up size of the children.
+     *
+     * If the number of columns/rows is set to zero, it means that the number of
+     * columns/rows will increase without limitation. Both dimensions cannot be set to
+     * zero columns/rows.
      *
      * @param columns       Number of columns in the grid.
      * @param columnPolicy  Policy for sizing columns.

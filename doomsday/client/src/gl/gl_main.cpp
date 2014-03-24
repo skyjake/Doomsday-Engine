@@ -50,6 +50,7 @@
 #include <de/DisplayMode>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <de/App>
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -113,6 +114,9 @@ static void videoVsyncChanged()
 
 void GL_Register()
 {
+    // Update values from saved Config.
+    fsaaEnabled = App::config().getb("window.fsaa", true);
+
     // Cvars
     C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);

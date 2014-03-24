@@ -59,18 +59,49 @@ String Folder::describe() const
 {
     DENG2_GUARD(this);
 
-    String desc = String("folder \"%1\" (with %2 items from %3 feeds")
-            .arg(name()).arg(_contents.size()).arg(_feeds.size());
+    String desc = String("folder \"%1\"").arg(name());
 
-    if(!_feeds.empty())
+    String const feedDesc = describeFeeds();
+    if(!feedDesc.isEmpty())
     {
+        desc += String(" (%1)").arg(feedDesc);
+    }
+
+    return desc;
+}
+
+String Folder::describeFeeds() const
+{
+    DENG2_GUARD(this);
+
+    String desc;
+
+    if(_feeds.size() == 1)
+    {
+        desc += String("contains %1 file%2 from %3")
+                .arg(_contents.size())
+                .arg(DENG2_PLURAL_S(_contents.size()))
+                .arg(_feeds.front()->description());
+    }
+    else if(_feeds.size() > 1)
+    {
+        desc += String("contains %1 file%2 from %3 feed%4")
+                .arg(_contents.size())
+                .arg(DENG2_PLURAL_S(_contents.size()))
+                .arg(_feeds.size())
+                .arg(DENG2_PLURAL_S(_feeds.size()));
+
         int n = 0;
         DENG2_FOR_EACH_CONST(Feeds, i, _feeds)
         {
-            desc += String("; feed #%1 is %2").arg(++n).arg((*i)->description());
+            desc += String("; feed #%2 is %3")
+                    .arg(n + 1)
+                    .arg((*i)->description());
+            ++n;
         }
     }
-    return desc + ")";
+
+    return desc;
 }
 
 void Folder::clear()

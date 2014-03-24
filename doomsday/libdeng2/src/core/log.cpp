@@ -584,26 +584,56 @@ Log::Section::~Section()
     _log.endSection(_name);
 }
 
-Log::Log() : _throwawayEntry(0)
+DENG2_PIMPL_NOREF(Log)
 {
-    _throwawayEntry = new LogEntry; // disabled LogEntry, so doesn't accept arguments
-    _sectionStack.push_back(MAIN_SECTION);
+    typedef QList<char const *> SectionStack;
+    SectionStack sectionStack;
+    LogEntry *throwawayEntry;
+    duint32 currentEntryMedata; ///< Applies to the current entry being staged in the thread.
+
+    Instance()
+        : throwawayEntry(new LogEntry) ///< A disabled LogEntry, so doesn't accept arguments.
+        , currentEntryMedata(0)
+    {
+        sectionStack.push_back(MAIN_SECTION);
+    }
+
+    ~Instance()
+    {
+        delete throwawayEntry;
+    }
+};
+
+Log::Log() : d(new Instance)
+{}
+
+Log::~Log() // virtual
+{}
+
+void Log::setCurrentEntryMetadata(duint32 metadata)
+{
+    d->currentEntryMedata = metadata;
 }
 
-Log::~Log()
+duint32 Log::currentEntryMetadata() const
 {
-    delete _throwawayEntry;
+    return d->currentEntryMedata;
+}
+
+bool Log::isStaging() const
+{
+    return d->currentEntryMedata != 0;
 }
 
 void Log::beginSection(char const *name)
 {
-    _sectionStack.append(name);
+    d->sectionStack.append(name);
 }
 
 void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
 {
-    DENG2_ASSERT(_sectionStack.back() == name);
-    _sectionStack.takeLast();
+    DENG2_ASSERT(d->sectionStack.back() == name);
+    d->sectionStack.takeLast();
 }
 
 LogEntry &Log::enter(String const &format, LogEntry::Args arguments)
@@ -613,19 +643,22 @@ LogEntry &Log::enter(String const &format, LogEntry::Args arguments)
 
 LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args arguments)
 {
+    // Staging done.
+    d->currentEntryMedata = 0;
+
     if(!LogBuffer::appBuffer().isEnabled(metadata))
     {
         DENG2_ASSERT(arguments.isEmpty());
 
         // If the level is disabled, no messages are entered into it.
-        return *_throwawayEntry;
+        return *d->throwawayEntry;
     }
     
     // Collect the sections.
     String context;
     String latest;
     int depth = 0;
-    foreach(char const *i, _sectionStack)
+    foreach(char const *i, d->sectionStack)
     {
         if(i == latest)
         {
@@ -708,6 +741,17 @@ LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
     if(!_disabled)
     {
         _format = format;
+
+        LOG().setCurrentEntryMetadata(_metadata);
+    }
+}
+
+LogEntryStager::~LogEntryStager()
+{
+    if(!_disabled)
+    {
+        // Ownership of the args is transferred to the LogEntry.
+        LOG().enter(_metadata, _format, _args);
     }
 }
 

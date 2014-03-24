@@ -122,6 +122,13 @@ public:
         setShadowColor(""); // no shadow, please
         setSizePolicy(ui::Expand, ui::Expand);
 
+        _icon = new LabelWidget;
+        _icon->setImage(ClientApp::windowSystem().style().images().image("updater"));
+        _icon->setOverrideImageSize(overrideImageSize());
+        _icon->rule().setRect(rule());
+        add(_icon);
+        hideIcon();
+
         // The notification has a hidden button that can be clicked.
         _clickable = new ButtonWidget;
         _clickable->setOpacity(0); // not drawn
@@ -131,7 +138,18 @@ public:
         add(_clickable);
     }
 
+    void showIcon(DotPath const &path)
+    {
+        _icon->setImageColor(ClientApp::windowSystem().style().colors().colorf(path));
+    }
+
+    void hideIcon()
+    {
+        _icon->setImageColor(Vector4f());
+    }
+
 private:
+    LabelWidget *_icon;
     ButtonWidget *_clickable;
 };
 
@@ -271,21 +289,20 @@ DENG2_OBSERVES(App, StartupComplete)
     {
         status->setRange(Rangei(0, 1));
         status->setProgress(0, 0);
-        status->setImage(ClientApp::windowSystem().style().images().image("updater"));
-        status->setImageColor(ClientApp::windowSystem().style().colors().colorf("text"));
+        status->showIcon("text");
         showNotification(true);
     }
 
     void showUpdateAvailableNotification()
     {
         showCheckingNotification();
-        status->setImageColor(ClientApp::windowSystem().style().colors().colorf("accent"));
+        status->showIcon("accent");
     }
 
     void showDownloadNotification()
     {
         status->setMode(ProgressWidget::Indefinite);
-        status->setImage(Image());
+        status->hideIcon();
         showNotification(true);
     }
 

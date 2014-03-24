@@ -162,6 +162,8 @@ public:
      */
     void setOverrideImageSize(Vector2f const &size);
 
+    Vector2f overrideImageSize() const;
+
     void setOverrideImageSize(float widthAndHeight);
 
     void setImageScale(float scaleFactor);

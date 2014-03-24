@@ -188,6 +188,8 @@
  */
 #define DENG2_UNUSED4(a, b, c, d) (void)a, (void)b, (void)c, (void)d
 
+#define DENG2_PLURAL_S(Count) ((Count) != 1? "s" : "")
+
 /**
  * Forms an escape sequence string literal. Escape sequences begin
  * with an ASCII Escape character.

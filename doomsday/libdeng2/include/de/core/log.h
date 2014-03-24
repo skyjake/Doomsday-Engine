@@ -653,6 +653,27 @@ public:
     virtual ~Log();
 
     /**
+     * Sets the metadata that applies to the current entry being staged. This can be
+     * checked by print methods interested in adapting their content to the context
+     * of the entry.
+     *
+     * @param metadata  Entry metadata flags.
+     */
+    void setCurrentEntryMetadata(duint32 metadata);
+
+    /**
+     * Returns the metadata for the entry currently being staged.
+     *
+     * @return Metadata flags, or 0 if no entry is being staged.
+     */
+    duint32 currentEntryMetadata() const;
+
+    /**
+     * Determines if an entry is currently being staged using LogEntryStager.
+     */
+    bool isStaging() const;
+
+    /**
      * Begins a new section in the log. Sections can be nested.
      *
      * @param name  Name of the section. No copy of this string is made,
@@ -699,10 +720,7 @@ public:
     static void disposeThreadLog();
 
 private:
-    typedef QList<char const *> SectionStack;
-    SectionStack _sectionStack;
-
-    LogEntry *_throwawayEntry;
+    DENG2_PRIVATE(d)
 };
 
 /**
@@ -726,12 +744,7 @@ public:
         return *this;
     }
 
-    ~LogEntryStager() {
-        if(!_disabled) {
-            // Ownership of the args is transferred to the LogEntry.
-            LOG().enter(_metadata, _format, _args);
-        }
-    }
+    ~LogEntryStager();
 
 private:
     bool _disabled;

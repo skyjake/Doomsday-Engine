@@ -61,6 +61,13 @@ public:
      */
     Link *openLink();
 
+    /**
+     * Reads the path of the error log. This is useful after a failed server start.
+     *
+     * @return Native path of the error log.
+     */
+    NativePath errorLogPath() const;
+
 private:
     DENG2_PRIVATE(d)
 };

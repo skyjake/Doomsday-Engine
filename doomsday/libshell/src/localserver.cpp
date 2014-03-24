@@ -26,11 +26,14 @@
 namespace de {
 namespace shell {
 
+static String const ERROR_LOG_NAME = "doomsday-errors.out";
+
 DENG2_PIMPL_NOREF(LocalServer)
 {
     Link *link;
     duint16 port;
     String name;
+    NativePath userDir;
 
     Instance() : link(0), port(0) {}
 };
@@ -44,18 +47,23 @@ void LocalServer::setName(String const &name)
     d->name.replace("\"", "\\\""); // for use on command line
 }
 
-void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions,
+void LocalServer::start(duint16 port,
+                        String const &gameMode,
+                        QStringList additionalOptions,
                         NativePath const &runtimePath)
 {
     d->port = port;
 
-    NativePath userDir = runtimePath;
+    d->userDir = runtimePath;
 
-    if(userDir.isEmpty())
+    if(d->userDir.isEmpty())
     {
         // Default runtime location.
-        userDir = DoomsdayInfo::defaultServerRuntimeFolder();
+        d->userDir = DoomsdayInfo::defaultServerRuntimeFolder();
     }
+
+    // Get rid of a previous error log in this location.
+    QDir(d->userDir).remove(ERROR_LOG_NAME);
 
     DENG2_ASSERT(d->link == 0);
 
@@ -122,7 +130,9 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
 #endif
 
     cmd.append("-userdir");
-    cmd.append(userDir);
+    cmd.append(d->userDir);
+    cmd.append("-errors");
+    cmd.append(ERROR_LOG_NAME);
     cmd.append("-game");
     cmd.append(gameMode);
     cmd.append("-cmd");
@@ -150,6 +160,11 @@ void LocalServer::stop()
 Link *LocalServer::openLink()
 {
     return new Link(String("localhost:%1").arg(d->port), 30);
+}
+
+NativePath LocalServer::errorLogPath() const
+{
+    return d->userDir / ERROR_LOG_NAME;
 }
 
 } // namespace shell

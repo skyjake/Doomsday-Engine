@@ -376,7 +376,7 @@ DENG2_OBSERVES(Asset, Deletion)
 #ifdef _DEBUG
         if(!flags.testFlag(Changed))
         {
-            qDebug() << "GLTarget: " << fbo << "being updated from proxy without Changed flag (!)";
+            //qDebug() << "GLTarget: " << fbo << "being updated from proxy without Changed flag (!)";
         }
 #endif
 

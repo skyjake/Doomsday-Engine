@@ -553,6 +553,21 @@ desc = Sector lightlevel that is biased completely to zero.
 [rend-bias]
 desc = 1=Enable the experimental shadow bias test setup.
 
+[rend-bloom-complexity]
+desc = 0=One-pass bloom (faster). 1=Two-pass bloom (more realistic).
+
+[rend-bloom-dispersion]
+desc = Determines how much the bloom filter spreads out color values when blurring (1.0=normal).
+
+[rend-bloom-intensity]
+desc = Output intensity for the bloom filter.
+
+[rend-bloom-threshold]
+desc = Input threshold for bloom: pixels darker than this will not be affected by bloom (range: 0...1).
+
+[rend-bloom]
+desc = 1=Enable the bloom filter for frame post-processing. Bloom makes bright areas of the frame glow more intensely.
+
 [rend-camera-fov]
 desc = Field of view.
 
