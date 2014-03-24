@@ -225,7 +225,7 @@ public Font::RichFormat::IStyle
                                                     *_sink.d->entryAtlas);
                 cached->wrap(_styledText, _sink._width);
 
-                //usleep(75000); // TODO -- remove this testing aid
+                //usleep(75000); // testing aid
 
                 DENG2_GUARD_FOR(_sink._wrappedEntries, G);
                 _sink._wrappedEntries << cached;
