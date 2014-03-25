@@ -316,6 +316,40 @@ void File::verifyWriteAccess()
     }
 }
 
+File *File::reinterpret()
+{
+    Folder *folder  = parent();
+    File *original  = source();
+    File *result    = this;
+    bool deleteThis = false;
+
+    if(original != this)
+    {
+        // Already interpreted. The current interpretation will be replaced.
+        DENG2_ASSERT(!original->parent());
+        d->source = 0; // source is owned, so take it away
+        deleteThis = true;
+    }
+    if(folder)
+    {
+        folder->remove(*this);
+    }
+
+    original->flush();
+    result = fileSystem().interpret(original);
+
+    if(deleteThis)
+    {
+        DENG2_ASSERT(result != this);
+        delete this;
+    }
+    if(folder)
+    {
+        folder->add(result);
+    }
+    return result;
+}
+
 IOStream &File::operator << (IByteArray const &bytes)
 {
     DENG2_UNUSED(bytes);
