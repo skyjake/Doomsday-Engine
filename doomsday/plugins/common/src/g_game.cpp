@@ -479,7 +479,7 @@ gameaction_t G_GameAction()
     return gameAction;
 }
 
-/// @return  Relative path to a saved session in /home/savegames
+/// @return  Absolute path to a saved session in /home/savegames
 static inline de::String composeSavedSessionPathForSlot(int slot)
 {
     return de::String("/home/savegames") / G_IdentityKey() / SAVEGAMENAME + de::String::number(slot) + ".save";
@@ -986,7 +986,7 @@ static de::game::SavedSession *savedSessionByUserDescription(de::String descript
 {
     if(!description.isEmpty())
     {
-        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>("home/savegames");
+        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(de::String("home/savegames") / G_IdentityKey());
         DENG2_FOR_EACH_CONST(de::Folder::Contents, i, saveFolder.contents())
         {
             if(de::game::SavedSession *session = i->second->maybeAs<de::game::SavedSession>())
@@ -3035,6 +3035,8 @@ void G_DoLeaveMap()
             Writer_Delete(writer);
             SV_CloseFile();
             outFile.setMode(de::File::ReadOnly);
+
+            saveFolder.populate(); // Populate the new contents of the archive.
         }
     }
     else // Entering new hub.

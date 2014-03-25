@@ -105,9 +105,12 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
     de::Writer(save) << arch;
     save.setMode(File::ReadOnly);
     LOG_RES_MSG("Wrote ") << save.description();
-    folder.populate();
 
-    SavedSession &session = folder.locate<SavedSession>(d->savePath.fileName());
+    // We can now reinterpret and populate the contents of the archive.
+    File *updated = save.reinterpret();
+    updated->as<Folder>().populate();
+
+    SavedSession &session = updated->as<SavedSession>();
     session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     d->saveRepo().add(session);
 }

@@ -224,9 +224,12 @@ void SaveSlots::Slot::copySavedSession(Slot const &source)
     de::Writer(save) << sourceSession.archive();
     save.setMode(File::ReadOnly);
     LOG_RES_MSG("Wrote ") << save.description();
-    saveFolder.populate();
 
-    SavedSession &session = saveFolder.locate<SavedSession>(d->savePath.fileName());
+    // We can now reinterpret and populate the contents of the archive.
+    File *updated = save.reinterpret();
+    updated->as<Folder>().populate();
+
+    SavedSession &session = updated->as<SavedSession>();
     session.cacheMetadata(sourceSession.metadata()); // Avoid immediately opening the .save package.
     d->saveRepo().add(session);
     DENG2_ASSERT(d->session == &session); // Sanity check.
