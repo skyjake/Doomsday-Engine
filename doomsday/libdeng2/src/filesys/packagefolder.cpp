@@ -34,6 +34,21 @@ PackageFolder::~PackageFolder()
     deindex();
 }
 
+String PackageFolder::describe() const
+{
+    DENG2_GUARD(this);
+
+    String desc = String("package \"%1\"").arg(name());
+
+    String const feedDesc = describeFeeds();
+    if(!feedDesc.isEmpty())
+    {
+        desc += String(" (%1)").arg(feedDesc);
+    }
+
+    return desc;
+}
+
 Archive &PackageFolder::archive()
 {
     DENG2_ASSERT(!feeds().empty());

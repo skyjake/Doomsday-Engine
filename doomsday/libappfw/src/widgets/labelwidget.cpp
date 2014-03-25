@@ -655,6 +655,11 @@ void LabelWidget::setOverrideImageSize(Vector2f const &size)
     d->overrideImageSize = size;
 }
 
+Vector2f LabelWidget::overrideImageSize() const
+{
+    return d->overrideImageSize;
+}
+
 void LabelWidget::setOverrideImageSize(float widthAndHeight)
 {
     d->overrideImageSize = Vector2f(widthAndHeight, widthAndHeight);

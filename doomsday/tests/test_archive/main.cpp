@@ -48,6 +48,10 @@ int main(int argc, char **argv)
         LOG_MSG("Here's test.zip's info:\n") << zip.info();
         LOG_MSG("Root folder's info:\n") << app.rootFolder().info();
         
+        LOG_MSG    ("General description: %s")   << zip.description();
+        LOG_VERBOSE("Verbose description: %s")   << zip.description();
+        LOGDEV_MSG ("Developer description: %s") << zip.description();
+
         File const &hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
         LOG_MSG("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
@@ -76,6 +80,10 @@ int main(int argc, char **argv)
         Writer(zip2) << arch;
         LOG_MSG("Wrote ") << zip2.path();
         LOG_MSG("") << zip2.info();
+
+        LOG_MSG    ("General description: %s")   << zip2.description();
+        LOG_VERBOSE("Verbose description: %s")   << zip2.description();
+        LOGDEV_MSG ("Developer description: %s") << zip2.description();
     }
     catch(Error const &err)
     {

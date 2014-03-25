@@ -202,7 +202,7 @@ public:
     static FileSystem &fileSystem();
 
     /// Returns the name of the file.
-    String const &name() const;
+    String name() const;
 
     /**
      * Returns a textual description of the file, intended only for humans.
