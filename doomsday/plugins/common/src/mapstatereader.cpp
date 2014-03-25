@@ -196,7 +196,7 @@ DENG2_PIMPL(MapStateReader)
         dummyPlayer.plr = &dummyDDPlayer;
 
 #if !__JHEXEN__
-        ArrayValue const &presentPlayers = self.session().metadata().geta("players");
+        ArrayValue const &presentPlayers = self.metadata().geta("players");
 #endif
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -792,10 +792,8 @@ void MapStateReader::read(String const &mapUriStr)
     // Notify the players that weren't in the savegame.
     d->kickMissingPlayers();
 
-#if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(session().metadata().geti("sessionId"));
-#endif
+    NetSv_LoadGame(metadata().geti("sessionId"));
 
     // Material scrollers must be spawned for older savegame versions.
     if(d->saveVersion <= 10)

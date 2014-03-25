@@ -1420,18 +1420,24 @@ void NetSv_SaveGame(uint sessionId)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
 
 #else
-    DENG_UNUSED(sessionId);
+    DENG2_UNUSED(sessionId);
 #endif
 }
 
-void NetSv_LoadGame(uint gameId)
+void NetSv_LoadGame(uint sessionId)
 {
+#if !__JHEXEN__
+
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
     Writer *writer = D_NetWrite();
-    Writer_WriteUInt32(writer, gameId);
+    Writer_WriteUInt32(writer, sessionId);
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
+
+#else
+    DENG2_UNUSED(sessionId);
+#endif
 }
 
 void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)

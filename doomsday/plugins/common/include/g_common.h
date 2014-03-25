@@ -234,21 +234,16 @@ bool G_LoadSession(de::String slotId);
 uint G_GenerateSessionId(void);
 
 /**
- * Returns new SessionMetadata (record). Ownership is given to the caller.
+ * Configures @a metadata according to the current game session configuration.
  *
- * @param userDescription  Textual description of the save provided by the user.
+ * @param metadata  Current session metadata is written here.
  */
-de::game::SessionMetadata *G_GenerateSessionMetadata(de::String const &userDecription = "");
+void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata);
 
 /**
  * Returns the game's SaveSlots.
  */
 SaveSlots &G_SaveSlots();
-
-/**
- * Returns the game's savegame Folder.
- */
-de::Folder &G_SaveFolder();
 
 /**
  * Returns the game's (i.e., the app's) SavedSessionRepository.

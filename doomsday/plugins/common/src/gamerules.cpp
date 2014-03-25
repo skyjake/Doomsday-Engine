@@ -83,7 +83,7 @@ GameRuleset *GameRuleset::fromRecord(Record const &record, GameRuleset const *de
     if(!defaults || rec->has("respawnmonsters")) rules->respawnMonsters = byte( rec->geti("respawnmonsters") );
 #endif
 
-    if(rec != &record) delete const_cast<Record *>(rec);
+    if(rec != &record) delete rec;
     return rules;
 }
 

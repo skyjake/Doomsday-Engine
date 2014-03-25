@@ -2895,12 +2895,12 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
 #endif // __JHEXEN__
 
 /**
- * Convenient method of returning the existing user description for a saved session.
- *
- * @param slotId  Unique identifier of the save slot to return the description for.
+ * @param slotId  Unique identifier of a saved slot from which the existing description should
+ *                be re-used. Use a zero-length string to disable.
  */
-static de::String userDescriptionForSavedSession(de::String const &slotId)
+static de::String defaultSavedSessionUserDescription(de::String const &slotId)
 {
+    // If the slot is already in use then choose existing description.
     if(G_SaveSlots().has(slotId))
     {
         SaveSlot const &sslot = G_SaveSlots()[slotId];
@@ -2909,6 +2909,13 @@ static de::String userDescriptionForSavedSession(de::String const &slotId)
             return sslot.savedSession().metadata().gets("userDescription");
         }
     }
+
+    /// Autogenerate a suitable description. @todo Why is this optional?
+    if(gaSaveSessionGenerateDescription)
+    {
+        return Str_Text(G_GenerateUserSaveDescription());
+    }
+
     return "";
 }
 
@@ -2939,35 +2946,33 @@ static int saveGameSessionWorker(void *context)
         return false;
     }
 
-    de::String userDescription = parm.userDescription;
-    if(userDescription.isEmpty())
-    {
-        // If the slot is already in use, reuse the existing description.
-        userDescription = userDescriptionForSavedSession(parm.slotId);
-
-        // Still empty? Should we autogenerate a description?
-        if(userDescription.isEmpty() && gaSaveSessionGenerateDescription)
-        {
-            userDescription = Str_Text(G_GenerateUserSaveDescription());
-        }
-    }
-
     dd_bool didSave = false;
-    de::game::SessionMetadata *metadata = G_GenerateSessionMetadata(userDescription);
-
     try
     {
         SaveSlot const &sslot = G_SaveSlots()[logicalSlot];
 
-        // In networked games the server tells the clients to save also.
-        NetSv_SaveGame(metadata->geti("sessionId"));
+        de::game::SessionMetadata metadata;
+        G_ApplyCurrentSessionMetadata(metadata);
 
-        // Serialize the game state to a new .save package in the repository.
-        GameSessionWriter(sslot.repositoryPath()).write(*metadata);
+        // Apply the given user description.
+        if(!parm.userDescription.isEmpty())
+        {
+            metadata.set("userDescription", parm.userDescription);
+        }
+        else // We'll generate a suitable description automatically.
+        {
+            metadata.set("userDescription", defaultSavedSessionUserDescription(parm.slotId));
+        }
+
+        // In networked games the server tells the clients to save also.
+        NetSv_SaveGame(metadata.geti("sessionId"));
+
+        // Serialize the game state to a new saved session.
+        GameSessionWriter(sslot.savePath()).write(metadata);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
-        G_SaveSlots()[parm.slotId].copySavedSessionFile(sslot);
+        G_SaveSlots()[parm.slotId].copySavedSession(sslot);
 #endif
 
         // Make note of the last used save slot.
@@ -3007,10 +3012,10 @@ void G_DoLeaveMap()
      */
     Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
-    revisit = G_SaveSlots()["base"].savedSession().hasState(Str_Text(Uri_Compose(nextMapUri)));
-    if(gameRules.deathmatch)
+    revisit = false;
+    if(!gameRules.deathmatch) // Never revist in deathmatch.
     {
-        revisit = false;
+        revisit = G_SaveSlots()["base"].savedSession().hasState(de::String("maps") / Str_Text(Uri_Compose(nextMapUri)));
     }
 
     // Same hub?
@@ -3019,19 +3024,17 @@ void G_DoLeaveMap()
         if(!gameRules.deathmatch)
         {
             // Save current map.
-            // SaveSlot &sslot = G_SaveSlots()["base"];
-            de::Path const mapStateFilePath(Str_Text(Uri_Compose(gameMapUri)));
+            de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(G_SaveSlots()["base"].savePath());
 
-            /*if(!SV_OpenFileForWrite(mapStateFilePath))
-            {
-                throw de::Error("G_DoLeaveMap", "Failed opening \"" + de::NativePath(mapStateFilePath).pretty() + "\" for write");
-            }*/
-
-            Writer *writer = SV_NewWriter();
-            MapStateWriter().write(writer, true/*exclude players*/);
+            de::File &outFile = saveFolder.replaceFile(de::String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State");
+            de::Block mapStateData;
+            SV_OpenFileForWrite(mapStateData);
+            writer_s *writer = SV_NewWriter();
+            MapStateWriter().write(writer);
+            outFile << de::FixedByteArray(mapStateData);
             Writer_Delete(writer);
-
             SV_CloseFile();
+            outFile.setMode(de::File::ReadOnly);
         }
     }
     else // Entering new hub.
@@ -3299,7 +3302,7 @@ void G_DoLoadSession(de::String slotId)
 #if __JHEXEN__
         if(mustCopyBaseToAutoSlot)
         {
-            G_SaveSlots()["auto"].copySavedSessionFile(G_SaveSlots()["base"]);
+            G_SaveSlots()["auto"].copySavedSession(G_SaveSlots()["base"]);
         }
 #endif
 
@@ -3388,18 +3391,18 @@ uint G_GenerateSessionId()
     return Timer_RealMilliseconds() + (mapTime << 24);
 }
 
-de::game::SessionMetadata *G_GenerateSessionMetadata(de::String const &userDescription)
+void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
 {
-    de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
+    metadata.clear();
 
-    metadata->set("gameIdentityKey", G_IdentityKey());
-    metadata->set("userDescription", userDescription);
-    metadata->set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
+    metadata.set("gameIdentityKey", G_IdentityKey());
+    metadata.set("userDescription", ""); // Applied later.
+    metadata.set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
 #if !__JHEXEN__
-    metadata->set("mapTime",         mapTime);
+    metadata.set("mapTime",         mapTime);
 #endif
 
-    metadata->add("gameRules",       G_Rules().toRecord()); // Takes ownership.
+    metadata.add("gameRules",       G_Rules().toRecord()); // Takes ownership.
 
 #if !__JHEXEN__
     de::ArrayValue *array = new de::ArrayValue;
@@ -3408,12 +3411,10 @@ de::game::SessionMetadata *G_GenerateSessionMetadata(de::String const &userDescr
         bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
         *array << de::NumberValue(playerIsPresent, de::NumberValue::Boolean);
     }
-    metadata->set("players", array); // Takes ownership.
+    metadata.set("players", array); // Takes ownership.
 #endif
 
-    metadata->set("sessionId",       G_GenerateSessionId());
-
-    return metadata;
+    metadata.set("sessionId",       G_GenerateSessionId());
 }
 
 /**
