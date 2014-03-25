@@ -2894,11 +2894,7 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
 }
 #endif // __JHEXEN__
 
-/**
- * @param slotId  Unique identifier of a saved slot from which the existing description should
- *                be re-used. Use a zero-length string to disable.
- */
-static de::String defaultSavedSessionUserDescription(de::String const &slotId)
+de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool autogenerate)
 {
     // If the slot is already in use then choose existing description.
     if(G_SaveSlots().has(slotId))
@@ -2910,13 +2906,40 @@ static de::String defaultSavedSessionUserDescription(de::String const &slotId)
         }
     }
 
-    /// Autogenerate a suitable description. @todo Why is this optional?
-    if(gaSaveSessionGenerateDescription)
+    if(!autogenerate) return "";
+
+    // Autogenerate a suitable description.
+    de::String description;
+
+    // Include the source file name, for custom maps.
+    AutoStr const *mapPath = Uri_Compose(gameMapUri);
+    if(P_MapIsCustom(Str_Text(mapPath)))
     {
-        return Str_Text(G_GenerateUserSaveDescription());
+        de::String const &mapSourcePath = de::String(Str_Text(P_MapSourceFile(Str_Text(mapPath))));
+        description += mapSourcePath.fileNameWithoutExtension() + ":";
     }
 
-    return "";
+    // Include the map title.
+    de::String mapTitle = de::String(P_MapTitle(0/*current map*/));
+    // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
+    /// @todo Move this logic engine-side.
+    if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')
+    {
+        mapTitle = Str_Text(mapPath);
+    }
+    description += mapTitle;
+
+    // Include the game time also.
+    int time = mapTime / TICRATE;
+    int const hours   = time / 3600; time -= hours * 3600;
+    int const minutes = time / 60;   time -= minutes * 60;
+    int const seconds = time;
+    description += de::String("%1:%2:%3")
+                         .arg(hours,   2, 10, QChar('0'))
+                         .arg(minutes, 2, 10, QChar('0'))
+                         .arg(seconds, 2, 10, QChar('0'));
+
+    return description;
 }
 
 struct savegamesessionworker_params_t
@@ -2961,7 +2984,7 @@ static int saveGameSessionWorker(void *context)
         }
         else // We'll generate a suitable description automatically.
         {
-            metadata.set("userDescription", defaultSavedSessionUserDescription(parm.slotId));
+            metadata.set("userDescription", G_DefaultSavedSessionUserDescription(parm.slotId));
         }
 
         // In networked games the server tells the clients to save also.
@@ -3354,45 +3377,6 @@ bool G_SaveSession(de::String slotId, de::String *userDescription)
     return true;
 }
 
-AutoStr *G_GenerateUserSaveDescription()
-{
-    int time = mapTime / TICRATE;
-
-    int const hours   = time / 3600; time -= hours * 3600;
-    int const minutes = time / 60;   time -= minutes * 60;
-    int const seconds = time;
-
-    AutoStr *mapPath     = Uri_Compose(gameMapUri);
-    char const *mapTitle = P_MapTitle(0/*current map*/);
-
-    // Still no map title? Use the identifier.
-    // Some tricksy modders provide us with an empty title...
-    /// @todo Move this logic engine-side.
-    if(!mapTitle || !mapTitle[0] || mapTitle[0] == ' ')
-    {
-        mapTitle = Str_Text(mapPath);
-    }
-
-    char baseNameBuf[256];
-    char const *baseName = 0;
-    if(P_MapIsCustom(Str_Text(mapPath)))
-    {
-        F_ExtractFileBase(baseNameBuf, Str_Text(P_MapSourceFile(Str_Text(mapPath))), 256);
-        baseName = baseNameBuf;
-    }
-
-    AutoStr *str = AutoStr_New();
-    Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (baseName? baseName : ""),
-                (baseName? ":" : ""), mapTitle, hours, minutes, seconds);
-
-    return str;
-}
-
-uint G_GenerateSessionId()
-{
-    return Timer_RealMilliseconds() + (mapTime << 24);
-}
-
 void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
 {
     metadata.clear();
@@ -3416,7 +3400,7 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
     metadata.set("players", array); // Takes ownership.
 #endif
 
-    metadata.set("sessionId",       G_GenerateSessionId());
+    metadata.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
 }
 
 /**

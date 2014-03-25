@@ -149,11 +149,6 @@ uint G_LogicalMapNumber(uint episode, uint map);
 /// @return  Logical map number.
 uint G_CurrentLogicalMapNumber(void);
 
-/**
- * Automatically generate a useful savegame description (map name, map time, etc...).
- */
-AutoStr *G_GenerateUserSaveDescription(void);
-
 int G_Ruleset_Skill();
 #if !__JHEXEN__
 byte G_Ruleset_Fast();
@@ -231,7 +226,15 @@ bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
  */
 bool G_LoadSession(de::String slotId);
 
-uint G_GenerateSessionId(void);
+/**
+ * Chooses a default user description for a saved session.
+ *
+ * @param slotId        Unique identifier of a saved slot from which the existing description should
+ *                      be re-used. Use a zero-length string to disable.
+ * @param autogenerate  @c true= generate a useful description (map name, map time, etc...) if none
+ *                      exists for the referenced save @a slotId.
+ */
+de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool autogenerate = true);
 
 /**
  * Configures @a metadata according to the current game session configuration.
