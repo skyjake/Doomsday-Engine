@@ -185,8 +185,8 @@ IntType ceilPow2(IntType const &num) {
  * @param pos    Normalized interpolation point [0..1].
  */
 template <typename Type>
-inline Type lerp(Type start, Type end, float pos) {
-    return end * pos + (start * (1 - pos));
+inline Type lerp(Type const &start, Type const &end, float pos) {
+    return end * pos + (start * (1.f - pos));
 }
 
 } // namespace de
