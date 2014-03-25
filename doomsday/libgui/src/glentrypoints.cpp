@@ -91,6 +91,7 @@ PFNGLUNIFORM1IPROC                glUniform1i;
 PFNGLUNIFORM2FPROC                glUniform2f;
 PFNGLUNIFORM3FPROC                glUniform3f;
 PFNGLUNIFORM4FPROC                glUniform4f;
+PFNGLUNIFORM4FVPROC               glUniform4fv;
 PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv;
 PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv;
 PFNGLUSEPROGRAMPROC               glUseProgram;
@@ -185,6 +186,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glUniform2f);
     GET_PROC(glUniform3f);
     GET_PROC(glUniform4f);
+    GET_PROC(glUniform4fv);
     GET_PROC(glUniformMatrix3fv);
     GET_PROC(glUniformMatrix4fv);
     GET_PROC(glUseProgram);

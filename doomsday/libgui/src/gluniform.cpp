@@ -50,8 +50,7 @@ DENG2_PIMPL(GLUniform)
     {
         name.append('\0');
 
-        DENG2_ASSERT((type == Mat4Array && elemCount >= 1) ||
-                     (type != Mat4Array && elemCount == 1));
+        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == Mat4Array || type == Vec4Array)));
 
         // Allocate the value type.
         zap(value);
@@ -61,6 +60,10 @@ DENG2_PIMPL(GLUniform)
         case Vec3:
         case Vec4:
             value.vector = new Vector4f;
+            break;
+
+        case Vec4Array:
+            value.vector = new Vector4f[elemCount];
             break;
 
         case Mat3:
@@ -90,6 +93,10 @@ DENG2_PIMPL(GLUniform)
         case Vec3:
         case Vec4:
             delete value.vector;
+            break;
+
+        case Vec4Array:
+            delete [] value.vector;
             break;
 
         case Mat3:
@@ -311,6 +318,19 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
     return *this;
 }
 
+GLUniform &GLUniform::set(duint elementIndex, Vector4f const &vec)
+{
+    DENG2_ASSERT(d->type == Vec4Array);
+    DENG2_ASSERT(elementIndex < d->elemCount);
+
+    if(d->value.vector[elementIndex] != vec)
+    {
+        d->value.vector[elementIndex] = vec;
+        d->markAsChanged();
+    }
+    return *this;
+}
+
 GLUniform &GLUniform::set(duint elementIndex, Matrix4f const &mat)
 {
     DENG2_ASSERT(d->type == Mat4Array);
@@ -457,7 +477,8 @@ void GLUniform::applyInProgram(GLProgram &program) const
         break;
 
     case Vec4:
-        glUniform4f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z, d->value.vector->w);
+    case Vec4Array:
+        glUniform4fv(loc, d->elemCount, &d->value.vector->x); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 

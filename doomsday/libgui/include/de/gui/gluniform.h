@@ -62,6 +62,7 @@ public:
         Mat3,
         Mat4,
         Sampler2D,
+        Vec4Array,
         Mat4Array
     };
 
@@ -102,6 +103,7 @@ public:
     GLUniform &operator = (GLTexture const &texture);
     GLUniform &operator = (GLTexture const *texture);
 
+    GLUniform &set(duint elementIndex, Vector4f const &vec);
     GLUniform &set(duint elementIndex, Matrix4f const &mat);
 
     operator dint() const              { return toInt(); }
