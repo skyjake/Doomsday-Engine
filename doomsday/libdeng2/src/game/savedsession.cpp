@@ -212,9 +212,13 @@ SavedSession const &SavedSession::MapStateReader::session() const
 
 DENG2_PIMPL(SavedSession)
 {
-    Metadata metadata;  ///< Cached metadata.
+    Metadata metadata;  ///< Cached.
+    bool needCacheMetadata;
 
-    Instance(Public *i) : Base(i) {}
+    Instance(Public *i)
+        : Base(i)
+        , needCacheMetadata(true)
+    {}
 
     bool readMetadata(Metadata &metadata)
     {
@@ -291,12 +295,17 @@ void SavedSession::readMetadata()
 
 SavedSession::Metadata const &SavedSession::metadata() const
 {
+    if(d->needCacheMetadata)
+    {
+        const_cast<SavedSession *>(this)->readMetadata();
+    }
     return d->metadata;
 }
 
 void SavedSession::cacheMetadata(Metadata const &copied)
 {
-    d->metadata = copied;
+    d->metadata          = copied;
+    d->needCacheMetadata = false;
     DENG2_FOR_AUDIENCE2(MetadataChange, i)
     {
         i->savedSessionMetadataChanged(*this);
