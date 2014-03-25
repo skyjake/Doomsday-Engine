@@ -1920,15 +1920,16 @@ static void drawEditBackground(mn_object_t const *ob, int x, int y, int width, f
     }
 }
 
-void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
+void MNEdit_Drawer(mn_object_t *ob, Point2Raw const *_origin)
 {
-    const mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
+    mndata_edit_t const *edit = (mndata_edit_t *) ob->_typedata;
     fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
     float light = 1, textAlpha = rs.pageAlpha;
     uint numVisCharacters;
-    const char* string = 0;
+    char const *string = 0;
     Point2Raw origin;
-    assert(ob->_type == MN_EDIT);
+
+    DENG_ASSERT(ob->_type == MN_EDIT);
 
     origin.x = _origin->x + MNDATA_EDIT_OFFSET_X;
     origin.y = _origin->y + MNDATA_EDIT_OFFSET_Y;
@@ -1949,20 +1950,22 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
 
     numVisCharacters = string? strlen(string) : 0;
     if(edit->maxVisibleChars > 0 && edit->maxVisibleChars < numVisCharacters)
+    {
         numVisCharacters = edit->maxVisibleChars;
+    }
 
     drawEditBackground(ob, origin.x + MNDATA_EDIT_BACKGROUND_OFFSET_X,
                            origin.y + MNDATA_EDIT_BACKGROUND_OFFSET_Y,
                        Rect_Width(ob->_geometry), rs.pageAlpha);
 
-    if(string)
+    //if(string)
     {
         float color[4], t = 0;
 
         // Flash if focused?
         if(!(ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
         {
-            const float speed = cfg.menuTextFlashSpeed / 2.f;
+            float const speed = cfg.menuTextFlashSpeed / 2.f;
             t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }
 
