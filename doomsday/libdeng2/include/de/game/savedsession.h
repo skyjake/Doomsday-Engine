@@ -56,6 +56,12 @@ public:
         void parse(String const &source);
 
         /**
+         * Composes a human-friendly, styled, textual representation suitable for use in user
+         * facing contexts (e.g., GUI widgets).
+         */
+        String asStyledText() const;
+
+        /**
          * Generates a textual representation of the session metadata with Info syntax.
          */
         String asTextWithInfoSyntax() const;
@@ -99,12 +105,6 @@ public:
     SavedSession(File &sourceArchiveFile, String const &name = "");
 
     virtual ~SavedSession();
-
-    /**
-     * Composes a human-friendly, styled, textual description of the saved session that
-     * is suitable for use in user facing contexts (e.g., GUI widgets).
-     */
-    String styledDescription() const;
 
     /**
      * Re-read the metadata for the saved session from the package and cache it.

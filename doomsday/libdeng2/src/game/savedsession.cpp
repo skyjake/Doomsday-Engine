@@ -31,35 +31,6 @@
 namespace de {
 namespace game {
 
-namespace internal {
-
-static String metadataAsStyledText(SavedSession::Metadata const &metadata)
-{
-    // Try to format the game rules so they look a little prettier.
-    QStringList rules = metadata.gets("gameRules", "").split("\n", QString::SkipEmptyParts);
-    rules.replaceInStrings(QRegExp("^(.*)= (.*)$"), _E(l) "\\1: " _E(.)_E(i) "\\2" _E(.));
-    String gameRulesText;
-    for(int i = 0; i < rules.size(); ++i)
-    {
-        if(i) gameRulesText += "\n";
-        gameRulesText += " - " + rules.at(i).trimmed();
-    }
-
-    return String(_E(b) "%1\n" _E(.)
-                  _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
-                  _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Session id: "  _E(.)_E(i) "%4\n" _E(.)
-                  _E(D) "Game rules:\n" _E(.) "%5")
-             .arg(metadata.gets("userDescription", ""))
-             .arg(metadata.gets("gameIdentityKey", ""))
-             .arg(metadata.gets("mapUri", ""))
-             .arg(metadata.geti("sessionId", 0))
-             .arg(gameRulesText);
-}
-
-} // namespace internal
-using namespace internal;
-
 static String const BLOCK_GROUP    = "group";
 static String const BLOCK_GAMERULE = "gamerule";
 
@@ -136,6 +107,30 @@ void SavedSession::Metadata::parse(String const &source)
     {
         LOG_WARNING(er.asText());
     }
+}
+
+String SavedSession::Metadata::asStyledText() const
+{
+    // Try to format the game rules so they look a little prettier.
+    QStringList rules = gets("gameRules", "None").split("\n", QString::SkipEmptyParts);
+    rules.replaceInStrings(QRegExp("^(.*)= (.*)$"), _E(l) "\\1: " _E(.)_E(i) "\\2" _E(.));
+    String gameRulesText;
+    for(int i = 0; i < rules.size(); ++i)
+    {
+        if(i) gameRulesText += "\n";
+        gameRulesText += " - " + rules.at(i).trimmed();
+    }
+
+    return String(_E(b) "%1\n" _E(.)
+                  _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
+                  _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
+                  _E(l) "Session id: "  _E(.)_E(i) "%4\n" _E(.)
+                  _E(D) "Game rules:\n" _E(.) "%5")
+             .arg(gets("userDescription", ""))
+             .arg(gets("gameIdentityKey", ""))
+             .arg(gets("mapUri", ""))
+             .arg(geti("sessionId", 0))
+             .arg(gameRulesText);
 }
 
 /**
@@ -268,13 +263,6 @@ SavedSession::SavedSession(File &sourceArchiveFile, String const &name)
 
 SavedSession::~SavedSession()
 {}
-
-String SavedSession::styledDescription() const
-{
-    return metadataAsStyledText(metadata()) + "\n" +
-           String(_E(D) "Resource: " _E(.)_E(i) "\"%1\"")
-               .arg(NativePath(String("/home/savegames") / repoPath() + ".save").pretty());
-}
 
 void SavedSession::readMetadata()
 {

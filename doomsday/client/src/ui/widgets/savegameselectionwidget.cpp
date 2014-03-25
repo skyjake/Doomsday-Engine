@@ -78,27 +78,31 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         {
             try
             {
-                SavedSession const &ss = item.savedSession();
+                SavedSession const &session = item.savedSession();
 
-                Game const &ssGame = App_Games().byIdentityKey(ss.metadata().gets("gameIdentityKey", ""));
-                if(style().images().has(ssGame.logoImageId()))
+                Game const &sGame = App_Games().byIdentityKey(session.metadata().gets("gameIdentityKey", ""));
+                if(style().images().has(sGame.logoImageId()))
                 {
-                    loadButton().setImage(style().images().image(ssGame.logoImageId()));
+                    loadButton().setImage(style().images().image(sGame.logoImageId()));
                 }
 
-                loadButton().enable(ssGame.status() == Game::Loaded ||
-                                    ssGame.status() == Game::Complete);
+                loadButton().enable(sGame.status() == Game::Loaded ||
+                                    sGame.status() == Game::Complete);
                 if(loadButton().isEnabled())
                 {
-                    loadButton().setAction(new LoadAction(ss));
+                    loadButton().setAction(new LoadAction(session));
                 }
 
                 loadButton().setText(String(_E(b) "%1" _E(.) "\n" _E(l)_E(D) "%2")
-                                         .arg(ss.metadata().gets("userDescription"))
-                                         .arg(ssGame.identityKey()));
+                                         .arg(session.metadata().gets("userDescription"))
+                                         .arg(sGame.identityKey()));
 
                 // Extra information.
-                document().setText(ss.styledDescription());
+                document().setText(session.metadata().asStyledText() + "\n" +
+                                   String(_E(D) "Resource: " _E(.)_E(i) "\"%1\"\n" _E(.)
+                                          _E(l) "Modified: " _E(.)_E(i) "%2")
+                                        .arg(session.path())
+                                        .arg(session.status().modifiedAt.asText(Time::FriendlyFormat)));
             }
             catch(Error const &)
             {
