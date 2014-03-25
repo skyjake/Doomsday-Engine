@@ -64,7 +64,7 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
-void ACScriptInterpreter::DeferredTask::write(de::Writer &to) const
+void ACScriptInterpreter::DeferredTask::operator >> (de::Writer &to) const
 {
     to << de::String(Str_Text(Uri_Compose(mapUri)))
        << scriptNumber;
@@ -74,7 +74,7 @@ void ACScriptInterpreter::DeferredTask::write(de::Writer &to) const
     }
 }
 
-void ACScriptInterpreter::DeferredTask::read(de::Reader &from)
+void ACScriptInterpreter::DeferredTask::operator << (de::Reader &from)
 {
     de::String mapUriStr;
     from >> mapUriStr;
@@ -479,9 +479,10 @@ void ACScriptInterpreter::writeWorldScriptData(de::Writer &to) const
 
     // Write the deferred task queue.
     to << _deferredTasksSize;
+
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        _deferredTasks[i].write(to);
+        to << _deferredTasks[i];
     }
 }
 
@@ -503,7 +504,7 @@ void ACScriptInterpreter::readWorldScriptData(de::Reader &from)
         _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * _deferredTasksSize, PU_GAMESTATIC);
         for(int i = 0; i < _deferredTasksSize; ++i)
         {
-            _deferredTasks[i].read(from);
+            from >> _deferredTasks[i];
         }
     }
 }

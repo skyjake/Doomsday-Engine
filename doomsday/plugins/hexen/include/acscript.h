@@ -31,7 +31,9 @@
 #ifdef __cplusplus
 #  include "mapstatereader.h"
 #  include "mapstatewriter.h"
+#  include <de/ISerializable>
 #  include <de/Reader>
+#  include <de/Writer>
 #endif
 
 #define MAX_ACS_SCRIPT_VARS     10
@@ -227,14 +229,14 @@ private:
     /**
      * A deferred task is enqueued when a script is started on a map not currently loaded.
      */
-    struct DeferredTask
+    struct DeferredTask : public de::ISerializable
     {
         Uri *mapUri;      ///< Target map.
         int scriptNumber; ///< On the target map.
         byte args[4];
 
-        void write(de::Writer &to) const;
-        void read(de::Reader &from);
+        void operator >> (de::Writer &to) const;
+        void operator << (de::Reader &from);
     };
 
     bool newDeferredTask(Uri const *mapUri, int scriptNumber, byte const args[4]);
