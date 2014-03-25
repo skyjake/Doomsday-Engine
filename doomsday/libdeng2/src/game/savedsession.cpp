@@ -199,9 +199,13 @@ SavedSession::MapStateReader::MapStateReader(SavedSession const &session)
 SavedSession::MapStateReader::~MapStateReader()
 {}
 
-SavedSession const &SavedSession::MapStateReader::session() const
+SavedSession::Metadata const &SavedSession::MapStateReader::metadata() const
 {
-    DENG2_ASSERT(d->session != 0);
+    return d->session->metadata();
+}
+
+Folder const &SavedSession::MapStateReader::folder() const
+{
     return *d->session;
 }
 
@@ -300,9 +304,12 @@ void SavedSession::cacheMetadata(Metadata const &copied)
     }
 }
 
-String SavedSession::stateFileName(String const &name) //static
+String SavedSession::stateFilePath(String const &path) //static
 {
-    if(!name.isEmpty()) return name + "State";
+    if(!path.fileName().isEmpty())
+    {
+        return path + "State";
+    }
     return "";
 }
 

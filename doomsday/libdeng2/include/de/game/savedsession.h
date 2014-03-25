@@ -86,9 +86,14 @@ public:
         virtual ~MapStateReader();
 
         /**
-         * Returns the saved session being read.
+         * Returns the deserialized metadata for the saved session being read.
          */
-        SavedSession const &session() const;
+        Metadata const &metadata() const;
+
+        /**
+         * Returns the root folder of the saved session being read.
+         */
+        Folder const &folder() const;
 
         /**
          * Attempt to load (read/interpret) the serialized map state.
@@ -131,8 +136,7 @@ public:
      * @param path  Of the state data to check for. Not case sensitive.
      */
     inline bool hasState(String const &path) const {
-        if(path.isEmpty()) return false;
-        return has(stateFileName(path));
+        return has(stateFilePath(path));
     }
 
     /**
@@ -144,27 +148,34 @@ public:
      * @return  The located file, or @c NULL if the path was not found.
      */
     inline File *tryLocateStateFile(String const &path) const {
-        if(path.isEmpty()) return false;
-        return tryLocateFile(stateFileName(path));
+        return tryLocateFile(stateFilePath(path));
     }
 
     template <typename Type>
     Type *tryLocateState(String const &path) const {
-        return dynamic_cast<Type *>(tryLocateStateFile(path));
+        return tryLocateFile<Type>(stateFilePath(path));
     }
 
-    /// @todo remove me
-    inline String repoPath() const {
-        return parent()->name() / name().fileNameWithoutExtension();
+    /**
+     * Locates a state data file in this saved or in one of its subfolders. Looks recusively
+     * through subfolders.
+     *
+     * @param path  Path to look for. Relative to this folder.
+     *
+     * @return  The found file.
+     */
+    template <typename Type>
+    Type &locateState(String const &path) const {
+        return locate<Type>(stateFilePath(path));
     }
 
 public:
     /**
-     * Utility for composing the full name of a state data file in the saved session.
+     * Utility for composing the full path of a state data file in the saved session.
      *
-     * @param name  Symbolic name of the state data.
+     * @param path  Path to and symbolic name of the state data.
      */
-    static String stateFileName(String const &name);
+    static String stateFilePath(String const &path);
 
 private:
     DENG2_PRIVATE(d)
