@@ -3277,7 +3277,7 @@ void G_DoLoadSession(de::String slotId)
         // Deserialize the world ACS data.
         if(de::File const *file = session.tryLocateStateFile("ACScript"))
         {
-            Game_ACScriptInterpreter().readWorldScriptData(de::Reader(*file));
+            Game_ACScriptInterpreter().readWorldState(de::Reader(*file));
         }
 #endif
 

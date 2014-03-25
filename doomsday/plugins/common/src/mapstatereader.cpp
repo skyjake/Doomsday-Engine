@@ -668,7 +668,7 @@ DENG2_PIMPL(MapStateReader)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().readMapScriptData(thisPublic);
+        Game_ACScriptInterpreter().readMapState(thisPublic);
         // endSegment();
 #endif
     }

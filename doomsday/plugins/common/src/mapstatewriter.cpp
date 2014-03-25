@@ -231,7 +231,7 @@ DENG2_PIMPL(MapStateWriter)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().writeMapScriptData(thisPublic);
+        Game_ACScriptInterpreter().writeMapState(thisPublic);
         // endSegment();
 #endif
     }

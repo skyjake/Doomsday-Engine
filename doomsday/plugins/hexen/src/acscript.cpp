@@ -467,7 +467,7 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     Thinker_Remove(&script->thinker);
 }
 
-void ACScriptInterpreter::writeWorldScriptData(de::Writer &to) const
+void ACScriptInterpreter::writeWorldState(de::Writer &to) const
 {
     to << byte(4); // Version.
 
@@ -479,14 +479,13 @@ void ACScriptInterpreter::writeWorldScriptData(de::Writer &to) const
 
     // Write the deferred task queue.
     to << _deferredTasksSize;
-
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
         to << _deferredTasks[i];
     }
 }
 
-void ACScriptInterpreter::readWorldScriptData(de::Reader &from)
+void ACScriptInterpreter::readWorldState(de::Reader &from)
 {
     byte ver; from >> ver;
 
@@ -509,7 +508,7 @@ void ACScriptInterpreter::readWorldScriptData(de::Reader &from)
     }
 }
 
-void ACScriptInterpreter::writeMapScriptData(MapStateWriter *msw)
+void ACScriptInterpreter::writeMapState(MapStateWriter *msw)
 {
     Writer *writer = msw->writer();
 
@@ -526,7 +525,7 @@ void ACScriptInterpreter::writeMapScriptData(MapStateWriter *msw)
     }
 }
 
-void ACScriptInterpreter::readMapScriptData(MapStateReader *msr)
+void ACScriptInterpreter::readMapState(MapStateReader *msr)
 {
     Reader *reader = msr->reader();
 

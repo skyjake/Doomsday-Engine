@@ -209,11 +209,11 @@ public:
      */
     AutoStr *scriptDescription(int scriptNumber);
 
-    void writeWorldScriptData(de::Writer &to) const;
-    void readWorldScriptData(de::Reader &from);
+    void writeWorldState(de::Writer &to) const;
+    void readWorldState(de::Reader &from);
 
-    void writeMapScriptData(MapStateWriter *msw);
-    void readMapScriptData(MapStateReader *msr);
+    void writeMapState(MapStateWriter *msw);
+    void readMapState(MapStateReader *msr);
 
 public: /// @todo make private:
     BytecodeScriptInfo &scriptInfoByIndex(int index);

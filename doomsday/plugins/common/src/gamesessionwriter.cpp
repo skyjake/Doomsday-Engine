@@ -63,7 +63,7 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
 #if __JHEXEN__
         Block data;
         de::Writer writer(data);
-        Game_ACScriptInterpreter().writeWorldScriptData(writer);
+        Game_ACScriptInterpreter().writeWorldState(writer);
         arch.add("ACScriptState", data);
 #endif
     }
