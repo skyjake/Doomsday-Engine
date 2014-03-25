@@ -23,9 +23,9 @@
 
 #include "g_common.h"
 #include "hu_menu.h"
+#include <de/App>
 #include <de/Folder>
 #include <de/game/SavedSessionRepository>
-#include <de/NativeFile>
 #include <de/Observers>
 #include <de/Writer>
 #include <map>
@@ -42,7 +42,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
 {
     String id;
     bool userWritable;
-    String repoPath;
+    String savePath;
     int menuWidgetId;
 
     SavedSession *session; // Not owned.
@@ -63,9 +63,8 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
     }
 
-    inline String saveFileName() const
-    {
-        return repoPath.fileName() + ".save";
+    inline SavedSessionRepository &saveRepo() {
+        return G_SavedSessionRepository();
     }
 
     void updateStatus()
@@ -130,16 +129,16 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     }
 };
 
-SaveSlots::Slot::Slot(String id, bool userWritable, String repoPath, int menuWidgetId)
+SaveSlots::Slot::Slot(String id, bool userWritable, String savePath, int menuWidgetId)
     : d(new Instance())
 {
     d->id           = id;
     d->userWritable = userWritable;
-    d->repoPath     = repoPath;
+    d->savePath     = savePath;
     d->menuWidgetId = menuWidgetId;
 
     // See if a saved session already exists for this slot.
-    setSavedSession(G_SaveFolder().tryLocate<SavedSession>(d->saveFileName()));
+    setSavedSession(DENG2_APP->rootFolder().tryLocate<SavedSession>(d->savePath));
 }
 
 SaveSlots::Slot::SessionStatus SaveSlots::Slot::sessionStatus() const
@@ -157,17 +156,17 @@ String const &SaveSlots::Slot::id() const
     return d->id;
 }
 
-String const &SaveSlots::Slot::repositoryPath() const
+String const &SaveSlots::Slot::savePath() const
 {
-    return d->repoPath;
+    return d->savePath;
 }
 
-void SaveSlots::Slot::bindRepositoryPath(String newPath)
+void SaveSlots::Slot::bindSavePath(String newPath)
 {
-    if(d->repoPath != newPath)
+    if(d->savePath != newPath)
     {
-        d->repoPath = newPath;
-        setSavedSession(G_SaveFolder().tryLocate<SavedSession>(d->saveFileName()));
+        d->savePath = newPath;
+        setSavedSession(DENG2_APP->rootFolder().tryLocate<SavedSession>(d->savePath));
     }
 }
 
@@ -182,11 +181,13 @@ SavedSession &SaveSlots::Slot::savedSession() const
     {
         return *d->session;
     }
-    throw MissingSessionError("SaveSlots::Slot::savedSession", "No saved session exists");
+    throw MissingSessionError("SaveSlots::Slot::savedSession", "No linked session");
 }
 
 void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
 {
+    if(d->session == newSession) return;
+
     // We want notification of subsequent changes so that we can update the session status
     // (and the menu, in turn).
     if(d->session)
@@ -201,34 +202,34 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
     {
         d->session->audienceForMetadataChange() += d;
     }
+
+    LOG_VERBOSE("Save slot '%s' now linked with saved session \"%s\"")
+            << d->id << (d->session? d->session->path() : "(none)");
 }
 
-void SaveSlots::Slot::copySavedSessionFile(Slot const &source)
+void SaveSlots::Slot::copySavedSession(Slot const &source)
 {
     LOG_AS("SaveSlots::Slot::copySavedSessionFile");
 
-    // Sanity check.
-    if(&source == this) return;
+    if(&source == this) return; // Sanity check.
 
-    // Clear the existing session (if any).
+    // Clear the existing session and .save package (if any).
     clear();
 
+    Folder &saveFolder = DENG2_APP->rootFolder().locate<Folder>(d->savePath.fileNamePath());
     SavedSession const &sourceSession = source.savedSession();
-    if(&sourceSession == d->session) return; // Sanity check.
 
-    {
-        // Copy the .save package.
-        File &save = G_SaveFolder().replaceFile(d->saveFileName());
-        de::Writer(save) << sourceSession.archive();
-        save.setMode(File::ReadOnly);
-        save.parent()->populate(Folder::PopulateOnlyThisFolder);
-    }
+    // Copy the .save package.
+    File &save = saveFolder.replaceFile(d->savePath.fileName());
+    de::Writer(save) << sourceSession.archive();
+    save.setMode(File::ReadOnly);
+    LOG_RES_MSG("Wrote ") << save.description();
+    saveFolder.populate();
 
-    SavedSession &session = G_SaveFolder().locate<SavedSession>(d->saveFileName());
-    LOG_RES_MSG("Wrote ") << session.as<NativeFile>().nativePath().pretty();
-    G_SavedSessionRepository().add(session);
-
-    setSavedSession(&session);
+    SavedSession &session = saveFolder.locate<SavedSession>(d->savePath.fileName());
+    session.cacheMetadata(sourceSession.metadata()); // Avoid immediately opening the .save package.
+    d->saveRepo().add(session);
+    DENG2_ASSERT(d->session == &session); // Sanity check.
 }
 
 void SaveSlots::Slot::clear()
@@ -238,14 +239,14 @@ void SaveSlots::Slot::clear()
     if(isUserWritable())
 #endif
     {
-        App_Log(DE2_RES_MSG, "Clearing save slot '%s'", d->id.toLatin1().constData());
+        LOG_RES_MSG("Clearing save slot '%s'") << d->id;
     }
 
     if(d->session)
     {
-        G_SavedSessionRepository().remove(d->session->repoPath());
-        setSavedSession(0);
-        delete d->session;
+        d->saveRepo().remove(d->savePath); // invalidates d->session
+        DENG2_ASSERT(d->session == 0); // Sanity check.
+        DENG2_APP->rootFolder().removeFile(d->savePath);
     }
 }
 
@@ -277,11 +278,11 @@ DENG2_PIMPL(SaveSlots)
         return 0; // Not found.
     }
 
-    SaveSlot *slotByRepoPath(String path)
+    SaveSlot *slotBySavePath(String path)
     {
         DENG2_FOR_EACH(Slots, i, sslots)
         {
-            if(!i->second->repositoryPath().compareWithoutCase(path))
+            if(!i->second->savePath().compareWithoutCase(path))
             {
                 return i->second;
             }
@@ -294,7 +295,7 @@ DENG2_PIMPL(SaveSlots)
         DENG2_FOR_EACH(Slots, i, sslots)
         {
             SaveSlot *sslot = i->second;
-            if(!repo.find(sslot->repositoryPath()))
+            if(!repo.find(sslot->savePath()))
             {
                 sslot->setSavedSession(0);
             }
@@ -302,7 +303,7 @@ DENG2_PIMPL(SaveSlots)
 
         DENG2_FOR_EACH_CONST(SavedSessionRepository::All, i, repo.all())
         {
-            if(SaveSlot *sslot = slotByRepoPath(i.key()))
+            if(SaveSlot *sslot = slotBySavePath(i.key()))
             {
                 sslot->setSavedSession(i.value());
             }
@@ -313,13 +314,13 @@ DENG2_PIMPL(SaveSlots)
 SaveSlots::SaveSlots() : d(new Instance(this))
 {}
 
-void SaveSlots::add(String id, bool userWritable, String repoPath, int menuWidgetId)
+void SaveSlots::add(String id, bool userWritable, String savePath, int menuWidgetId)
 {
     // Ensure the slot identifier is unique.
     if(d->slotById(id)) return;
 
     // Insert a new save slot.
-    d->sslots.insert(Instance::SlotItem(id, new Slot(id, userWritable, repoPath, menuWidgetId)));
+    d->sslots.insert(Instance::SlotItem(id, new Slot(id, userWritable, savePath, menuWidgetId)));
 }
 
 int SaveSlots::count() const
@@ -348,9 +349,10 @@ SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
     {
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
-            if(i->second->savedSessionPtr() == session)
+            Slot *sslot = i->second;
+            if(sslot->hasSavedSession() && &sslot->savedSession() == session)
             {
-                return i->second;
+                return sslot;
             }
         }
     }

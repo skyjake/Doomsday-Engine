@@ -45,8 +45,6 @@ public:
 public:
     SavedSessionRepository();
 
-    Folder &folder() const;
-
     /**
      * Clear the SavedSession index.
      */
@@ -63,12 +61,12 @@ public:
     /**
      * Remove a saved session from the index (if present).
      *
-     * @param path  Relative path of the associated .save package.
+     * @param path  Absolute path of the associated .save package.
      */
     void remove(String path);
 
     /**
-     * Lookup a SavedSession in the index.
+     * Lookup a SavedSession in the index by absolute path.
      */
     SavedSession *find(String path) const;
 

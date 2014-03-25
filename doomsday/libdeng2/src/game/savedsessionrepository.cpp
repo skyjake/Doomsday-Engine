@@ -45,11 +45,6 @@ DENG2_AUDIENCE_METHOD(SavedSessionRepository, AvailabilityUpdate)
 SavedSessionRepository::SavedSessionRepository() : d(new Instance(this))
 {}
 
-Folder &SavedSessionRepository::folder() const
-{
-    return App::homeFolder().locate<Folder>("savegames");
-}
-
 void SavedSessionRepository::clear()
 {
     // Disable updates for now, we'll do that when we're done.
@@ -66,14 +61,16 @@ void SavedSessionRepository::clear()
 
 void SavedSessionRepository::add(SavedSession &session)
 {
-    d->sessions[session.repoPath().toLower()] = &session;
+    d->sessions[session.path().toLower()] = &session;
     d->notifyAvailabilityUpdate();
 }
 
 void SavedSessionRepository::remove(String path)
 {
-    d->sessions.remove(path);
-    d->notifyAvailabilityUpdate();
+    if(d->sessions.remove(path.toLower()))
+    {
+        d->notifyAvailabilityUpdate();
+    }
 }
 
 SavedSession *SavedSessionRepository::find(String path) const

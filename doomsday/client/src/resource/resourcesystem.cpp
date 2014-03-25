@@ -1947,8 +1947,8 @@ DENG2_PIMPL(ResourceSystem)
             try
             {
                 // Update the /home/savegames/<gameId> folder.
-                Folder &saveFolder = saveRepo.folder().locate<Folder>(gameId);
-                saveFolder.populate(Folder::PopulateOnlyThisFolder);
+                Folder &saveFolder = App::rootFolder().locate<Folder>(String("home/savegames") / gameId);
+                saveFolder.populate();
                 saveRepo.add(saveFolder.locate<game::SavedSession>(outputName));
                 return;
             }

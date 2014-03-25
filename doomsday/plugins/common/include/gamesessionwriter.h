@@ -32,15 +32,19 @@
 class GameSessionWriter
 {
 public:
+    typedef de::game::SavedSession    SavedSession;
+    typedef de::game::SessionMetadata SessionMetadata;
+
+public:
     /**
-     * @param sessionName  Name of the saved session in the repository.
+     * @param savePath  Path of the saved session being written to.
      */
-    GameSessionWriter(de::String sessionName);
+    GameSessionWriter(de::String const &savePath);
 
     /**
      * @param metadata  Session metadata to be written. A copy is made.
      */
-    void write(de::game::SessionMetadata const &metadata);
+    void write(SessionMetadata const &metadata);
 
 private:
     DENG2_PRIVATE(d)

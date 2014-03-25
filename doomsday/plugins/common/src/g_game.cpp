@@ -59,16 +59,18 @@
 #include "saveslots.h"
 #include "x_hair.h"
 
-#include <de/ArrayValue>
-#include <de/game/SavedSession>
-#include <de/game/SavedSessionRepository>
-#include <de/NativePath>
-#include <de/NumberValue>
 #include <cctype>
 #include <cstring>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <de/App>
+#include <de/ArrayValue>
+#include <de/FixedByteArray>
+#include <de/game/SavedSession>
+#include <de/game/SavedSessionRepository>
+#include <de/NativePath>
+#include <de/NumberValue>
 
 #define BODYQUEUESIZE       (32)
 
@@ -477,6 +479,12 @@ gameaction_t G_GameAction()
     return gameAction;
 }
 
+/// @return  Relative path to a saved session in /home/savegames
+static inline de::String composeSavedSessionPathForSlot(int slot)
+{
+    return de::String("/home/savegames") / G_IdentityKey() / SAVEGAMENAME + de::String::number(slot) + ".save";
+}
+
 static void initSaveSlots()
 {
     delete sslots;
@@ -491,13 +499,12 @@ static void initSaveSlots()
     };
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
-        sslots->add(de::String::number(i), true,
-                    de::String("%1/%2%3").arg(G_IdentityKey()).arg(SAVEGAMENAME).arg(i),
+        sslots->add(de::String::number(i), true, composeSavedSessionPathForSlot(i),
                     gameMenuSaveSlotWidgetIds[i]);
     }
-    sslots->add("auto", false, de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT));
+    sslots->add("auto", false, composeSavedSessionPathForSlot(AUTO_SLOT));
 #if __JHEXEN__
-    sslots->add("base", false, de::String(SAVEGAMENAME "%1").arg(BASE_SLOT));
+    sslots->add("base", false, composeSavedSessionPathForSlot(BASE_SLOT));
 #endif
 }
 
@@ -974,16 +981,13 @@ de::game::SavedSessionRepository &G_SavedSessionRepository()
 {
     return *static_cast<de::game::SavedSessionRepository *>(DD_SavedSessionRepository());
 }
-de::Folder &G_SaveFolder()
-{
-    return G_SavedSessionRepository().folder().locate<de::Folder>(G_IdentityKey());
-}
 
 static de::game::SavedSession *savedSessionByUserDescription(de::String description)
 {
     if(!description.isEmpty())
     {
-        DENG2_FOR_EACH_CONST(de::Folder::Contents, i, G_SaveFolder().contents())
+        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>("home/savegames");
+        DENG2_FOR_EACH_CONST(de::Folder::Contents, i, saveFolder.contents())
         {
             if(de::game::SavedSession *session = i->second->maybeAs<de::game::SavedSession>())
             {
@@ -1005,8 +1009,9 @@ de::String G_SaveSlotIdFromUserInput(de::String str)
         return sslot->id();
     }
 
-    // Perhaps a saved session package file name?
-    if(SaveSlot *sslot = G_SaveSlots().slot(G_SaveFolder().tryLocate<de::game::SavedSession>(str)))
+    // Perhaps a saved session file name?
+    de::String savePath = de::String("home/savegames") / G_IdentityKey() / str + ".save";
+    if(SaveSlot *sslot = G_SaveSlots().slot(DENG2_APP->rootFolder().tryLocate<de::game::SavedSession const>(savePath)))
     {
         return sslot->id();
     }
@@ -1408,7 +1413,7 @@ int G_DoLoadMap(loadmap_params_t *p)
 
         try
         {
-            de::game::SavedSession &session = G_SaveSlots()["base"].savedSession();
+            de::game::SavedSession const &session = G_SaveSlots()["base"].savedSession();
             SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
         }
         catch(de::Error const &er)
@@ -2976,8 +2981,6 @@ static int saveGameSessionWorker(void *context)
                 << parm.slotId << er.asText();
     }
 
-    delete metadata;
-
     BusyMode_WorkerEnd();
     return didSave;
 }
@@ -3229,23 +3232,22 @@ void G_DoLoadSession(de::String slotId)
     de::String const logicalSlot = slotId;
 #endif
 
-#if __JHEXEN__
-    // Copy all needed save files to the base slot.
-    if(slotId.compareWithoutCase("base"))
-    {
-        G_SaveSlots()["base"].copySavedSessionFile(G_SaveSlots()[slotId]);
-    }
-#endif
-
-    // Attempt to recognize and load the saved game state.
+    // Attempt to load the saved game state.
     try
     {
+#if __JHEXEN__
+        if(slotId.compareWithoutCase("base"))
+        {
+            G_SaveSlots()["base"].copySavedSession(G_SaveSlots()[slotId]);
+        }
+#endif
+
         de::game::SavedSession const &session = G_SaveSlots()[logicalSlot].savedSession();
         LOG_VERBOSE("Attempting to load saved game from \"%s\"") << session.path();
 
 #if __JHEXEN__
         // Deserialize the world ACS data.
-        if(de::File *file = session.tryLocateStateFile("ACScript"))
+        if(de::File const *file = session.tryLocateStateFile("ACScript"))
         {
             Game_ACScriptInterpreter().readWorldScriptData(de::Reader(*file));
         }
@@ -3305,8 +3307,7 @@ void G_DoLoadSession(de::String slotId)
     }
     catch(de::Error const &er)
     {
-        LOG_RES_WARNING("Error loading save slot #%s:\n")
-                << slotId << er.asText();
+        LOG_RES_WARNING("Error loading save slot #%s:\n") << slotId << er.asText();
     }
 
     // Failure... Return to the title loop.
@@ -4407,18 +4408,18 @@ D_CMD(InspectSavedSession)
     de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
     try
     {
-        SaveSlot &sslot = G_SaveSlots()[slotId];
-        if(sslot.hasSavedSession())
-        {
-            App_Log(DE2_LOG_MESSAGE, "%s", sslot.savedSession().description().toLatin1().constData());
-            return true;
-        }
-
-        App_Log(DE2_LOG_ERROR, "Save slot '%s' is not in use", slotId.toLatin1().constData());
+        de::game::SavedSession const &session = G_SaveSlots()[slotId].savedSession();
+        LOG_SCR_MSG("%s") << session.metadata().asStyledText();
+        LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << session.path();
+        return true;
+    }
+    catch(SaveSlot::MissingSessionError const &)
+    {
+        LOG_WARNING("Save slot '%s' is not in use") << slotId;
     }
     catch(SaveSlots::MissingSlotError const &)
     {
-        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
+        LOG_WARNING("Failed to determine save slot from \"%s\"") << argv[1];
     }
 
     // No action means the command failed.

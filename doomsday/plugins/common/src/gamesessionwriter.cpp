@@ -26,22 +26,21 @@
 #include "p_saveio.h"
 #include <de/App>
 #include <de/game/SavedSessionRepository>
-#include <de/NativeFile>
-#include <de/PackageFolder>
 #include <de/Time>
 #include <de/Writer>
 #include <de/ZipArchive>
 
 using namespace de;
-using de::game::SavedSession;
-using de::game::SessionMetadata;
-using de::game::SavedSessionRepository;
 
 DENG2_PIMPL_NOREF(GameSessionWriter)
 {
-    String saveFileName; // Name of the saved session in the repository.
+    String savePath;
 
-    String composeInfo(SessionMetadata const &metadata) const
+    inline de::game::SavedSessionRepository &saveRepo() {
+        return G_SavedSessionRepository();
+    }
+
+    String composeInfo(SessionMetadata const &metadata)
     {
         String info;
         QTextStream os(&info);
@@ -58,54 +57,57 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
 
         return info;
     }
+
+    void writeACScriptState(ZipArchive &arch)
+    {
+#if __JHEXEN__
+        Block data;
+        de::Writer writer(data);
+        Game_ACScriptInterpreter().writeWorldScriptData(writer);
+        arch.add("ACScriptState", data);
+#endif
+    }
+
+    void writeMapState(ZipArchive &arch, String const &mapUriStr)
+    {
+        Block data;
+        SV_OpenFileForWrite(data);
+        writer_s *writer = SV_NewWriter();
+        MapStateWriter().write(writer);
+        arch.add(String("maps") / mapUriStr + "State", data);
+        Writer_Delete(writer);
+        SV_CloseFile();
+    }
 };
 
-GameSessionWriter::GameSessionWriter(String sessionName) : d(new Instance())
+GameSessionWriter::GameSessionWriter(String const &savePath) : d(new Instance())
 {
-    DENG2_ASSERT(sessionName != 0);
-    d->saveFileName = sessionName.fileNameWithoutExtension() + ".save";
+    DENG2_ASSERT(!savePath.isEmpty());
+    d->savePath = savePath;
 }
 
 void GameSessionWriter::write(SessionMetadata const &metadata)
 {
     LOG_AS("GameSessionWriter");
-    LOG_RES_VERBOSE("Serializing game state to \"%s\"...")
-            << Path(G_SaveFolder().path() / d->saveFileName);
+    LOG_RES_VERBOSE("Serializing to \"%s\"...") << d->savePath;
 
-    // Write the Info file for this .save package.
+    // Serialize the game state to a new .save package.
     ZipArchive arch;
     arch.add("Info", d->composeInfo(metadata).toUtf8());
+    d->writeACScriptState(arch);
+    d->writeMapState(arch, Str_Text(Uri_Compose(gameMapUri))); // current map.
 
-#if __JHEXEN__
-    // Serialize the world ACScript state.
-    {
-        Block worldACScriptData;
-        de::Writer writer(worldACScriptData);
-        Game_ACScriptInterpreter().writeWorldScriptData(writer);
-        arch.add(SavedSession::stateFileName("ACScript"), worldACScriptData);
-    }
-#endif
+    d->saveRepo().remove(d->savePath);
 
-    // Serialize the current map state.
-    {
-        String const mapUriStr(Str_Text(Uri_Compose(gameMapUri)));
-        Block mapStateData;
-        SV_OpenFileForWrite(mapStateData);
-        writer_s *writer = SV_NewWriter();
-        MapStateWriter().write(writer);
-        arch.add(SavedSession::stateFileName(Path("maps") / mapUriStr), mapStateData);
-        Writer_Delete(writer);
-    }
+    // Write the new package to /home/savegames/<game-id>/<session-name>.save
+    Folder &folder = DENG2_APP->rootFolder().locate<Folder>(d->savePath.fileNamePath());
+    File &save = folder.replaceFile(d->savePath.fileName());
+    de::Writer(save) << arch;
+    save.setMode(File::ReadOnly);
+    LOG_RES_MSG("Wrote ") << save.description();
+    folder.populate();
 
-    {
-        File &save = G_SaveFolder().replaceFile(d->saveFileName);
-        de::Writer(save) << arch;
-        save.setMode(File::ReadOnly);
-        save.parent()->populate(Folder::PopulateOnlyThisFolder);
-    }
-
-    SavedSession &session = G_SaveFolder().locate<SavedSession>(d->saveFileName);
-    LOG_RES_MSG("Wrote ") << session.as<NativeFile>().nativePath().pretty();
+    SavedSession &session = folder.locate<SavedSession>(d->savePath.fileName());
     session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-    G_SavedSessionRepository().add(session);
+    d->saveRepo().add(session);
 }

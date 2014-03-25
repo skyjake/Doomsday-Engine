@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
     public:
         SavegameListItem(SavedSession const &session)
         {
-            setData(session.repoPath());
+            setData(session.path().toLower());
             _session  = &session;
         }
 
@@ -185,8 +185,8 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         // Remove obsolete entries.
         for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
-            String const repoPath = self.items().at(idx).data().toString();
-            if(!repository.find(repoPath))
+            String const savePath = self.items().at(idx).data().toString();
+            if(!repository.find(savePath))
             {
                 self.items().remove(idx--);
                 changed = true;
@@ -248,6 +248,7 @@ void SavegameSelectionWidget::update()
 {
     if(d->needUpdateFromRepository)
     {
+        d->needUpdateFromRepository = false;
         d->updateItemsFromRepository();
     }
     MenuWidget::update();

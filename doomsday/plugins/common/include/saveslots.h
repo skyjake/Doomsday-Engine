@@ -54,8 +54,7 @@ public:
         };
 
     public:
-        Slot(de::String id, bool userWritable, de::String repositoryPath,
-             int menuWidgetId = 0);
+        Slot(de::String id, bool userWritable, de::String savePath, int menuWidgetId = 0);
 
         /**
          * Returns the logical status of the saved session associated with the logical save slot.
@@ -91,10 +90,6 @@ public:
          */
         de::game::SavedSession &savedSession() const;
 
-        inline de::game::SavedSession *savedSessionPtr() const {
-            return hasSavedSession()? &savedSession() : 0;
-        }
-
         /**
          * Change the saved session linked with the logical save slot. It is not usually
          * necessary to call this.
@@ -106,7 +101,7 @@ public:
         /**
          * Copies the saved session from the @a source slot.
          */
-        void copySavedSessionFile(Slot const &source);
+        void copySavedSession(Slot const &source);
 
         /**
          * Returns the unique identifier/name for the logical save slot.
@@ -114,22 +109,19 @@ public:
         de::String const &id() const;
 
         /**
-         * Returns the relative path and identifier of the saved session, in the repository,
-         * bound to the logical save slot.
+         * Returns the absolute path of the saved session, bound to the logical save slot.
          */
-        de::String const &repositoryPath() const;
+        de::String const &savePath() const;
 
         /**
-         * Change the relative path and identifier of the saved session, in the repository,
-         * bound to the logical save slot.
+         * Change the absolute path of the saved session, bound to the logical save slot.
          *
-         * @param newPath  New relative path for the saved session to bind to.
+         * @param newPath  New absolute path of the saved session to bind to.
          */
-        void bindRepositoryPath(de::String newPath);
+        void bindSavePath(de::String newPath);
 
         /**
-         * Deletes the file package for saved session (from the repository) which is bound
-         * to the logical save slot.
+         * Deletes the saved session linked to the logical save slot (if any).
          */
         void clear();
 
@@ -149,7 +141,7 @@ public:
      * @param menuWidgetId    Unique identifier of the game menu widget to associate this slot with.
      *                        Use @c 0 for none.
      */
-    void add(de::String id, bool userWritable, de::String repositoryPath, int menuWidgetId = 0);
+    void add(de::String id, bool userWritable, de::String savePath, int menuWidgetId = 0);
 
     /**
      * Returns the total number of logical save slots.

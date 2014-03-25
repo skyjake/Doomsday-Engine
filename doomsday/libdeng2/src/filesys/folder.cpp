@@ -246,6 +246,8 @@ bool Folder::has(String const &name) const
 {
     DENG2_GUARD(this);
 
+    if(name.isEmpty()) return false;
+
     // Check if we were given a path rather than just a name.
     String path = name.fileNamePath();
     if(!path.empty())

@@ -52,8 +52,7 @@ targetplraddress_t *targetPlayerAddrs;
 std::auto_ptr<de::game::SavedSession::MapStateReader>
 SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
 {
-    de::PackageFolder const &pack = session;
-    de::File const &mapStateFile = pack.locate<de::File>(de::Path("maps") / mapUriStr + "State");
+    de::File const &mapStateFile = session.locateState<de::File const>(de::String("maps") / mapUriStr);
     if(!SV_OpenFileForRead(mapStateFile))
     {
         /// @throw de::Error The serialized map state file could not be opened for read.
