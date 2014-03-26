@@ -110,6 +110,16 @@ struct LIBGUI_PUBLIC Vertex2TexRgba
 };
 
 /**
+ * Vertex format with just 3D coordinates.
+ */
+struct LIBGUI_PUBLIC Vertex3
+{
+    Vector3f pos;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(1)
+};
+
+/**
  * Vertex format with 3D coordinates and one set of texture coordinates.
  */
 struct LIBGUI_PUBLIC Vertex3Tex

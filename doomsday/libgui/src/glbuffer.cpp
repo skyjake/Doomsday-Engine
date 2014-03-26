@@ -34,8 +34,8 @@ AttribSpec const Vertex2Tex::_spec[2] = {
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex2Tex, 4 * sizeof(float))
 
 AttribSpec const Vertex2Rgba::_spec[2] = {
-    { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Rgba), 0 },
-    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2Rgba), 2 * sizeof(float) }
+    { AttribSpec::Position, 2, GL_FLOAT, false, sizeof(Vertex2Rgba), 0 },
+    { AttribSpec::Color,    4, GL_FLOAT, false, sizeof(Vertex2Rgba), 2 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex2Rgba, 6 * sizeof(float))
 
@@ -45,6 +45,11 @@ AttribSpec const Vertex2TexRgba::_spec[3] = {
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2TexRgba), 4 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex2TexRgba, 8 * sizeof(float))
+
+AttribSpec const Vertex3::_spec[1] = {
+    { AttribSpec::Position, 3, GL_FLOAT, false, sizeof(Vertex3), 0 },
+};
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex3, 3 * sizeof(float))
 
 AttribSpec const Vertex3Tex::_spec[2] = {
     { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3Tex), 0 },
