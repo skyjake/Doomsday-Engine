@@ -284,11 +284,6 @@ DENG2_PIMPL(NativeTranslator)
         }
     }
 
-    LZReader *newReader() const
-    {
-        return new LZReader(const_cast<Instance *>(this)->saveFile());
-    }
-
     Block *bufferFile() const
     {
 #define BLOCKSIZE 1024  // Read in 1kb blocks.
@@ -324,8 +319,7 @@ DENG2_PIMPL(NativeTranslator)
         dint32 oldMagic;
         from >> oldMagic >> saveVersion;
 
-        DENG2_ASSERT(saveVersion >= 0 && saveVersion <= 13);
-        if(saveVersion > 13)
+        if(saveVersion < 0 || saveVersion > 13)
         {
             /// @throw UnknownFormatError Format is from the future.
             throw UnknownFormatError("translateMetadata", "Incompatible format version " + String::number(saveVersion));
@@ -601,12 +595,26 @@ bool NativeTranslator::recognize(Path path)
     try
     {
         d->openFile(path);
-        LZReader *from = d->newReader();
+        LZReader from(d->saveFile());
         // Native save formats can be recognized by their "magic" byte identifier.
         dint32 oldMagic;
-        *from >> oldMagic;
-        recognized = (oldMagic == d->magic());
-        delete from;
+        from >> oldMagic;
+
+        if(oldMagic == d->magic())
+        {
+            // Ensure this is a compatible save version.
+            dint32 saveVersion;
+            from >> saveVersion;
+            if(saveVersion >= 0 && saveVersion <= 13)
+            {
+                // We are incompatible with v3 saves due to an invalid test used to determine present
+                // sides (ver3 format's sides contain chunks of junk data).
+                if(!(d->id == Hexen && saveVersion == 3))
+                {
+                    recognized = true;
+                }
+            }
+        }
     }
     catch(...)
     {}
@@ -623,11 +631,11 @@ void NativeTranslator::convert(Path path)
 
     d->openFile(path);
     String const nativeFilePath = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath().toString();
-    LZReader *from = d->newReader();
+    LZReader from(d->saveFile());
 
     // Read and translate the game session metadata.
     SessionMetadata metadata;
-    d->translateMetadata(metadata, *from);
+    d->translateMetadata(metadata, from);
 
     ZipArchive arch;
     arch.add("Info", composeInfo(metadata, nativeFilePath, d->saveVersion).toUtf8());
@@ -635,7 +643,7 @@ void NativeTranslator::convert(Path path)
     if(d->id == Hexen)
     {
         // Translate and separate the serialized world ACS data into a new file.
-        d->translateACScriptState(arch, *from);
+        d->translateACScriptState(arch, from);
     }
 
     if(d->id == Hexen)
@@ -688,7 +696,6 @@ void NativeTranslator::convert(Path path)
         }
     }
 
-    delete from;
     d->closeFile();
 
     File &outFile = outputFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
