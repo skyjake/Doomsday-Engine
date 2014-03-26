@@ -266,7 +266,11 @@ SavedSession::SavedSession(File &sourceArchiveFile, String const &name)
 {}
 
 SavedSession::~SavedSession()
-{}
+{
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion().clear();
+    deindex();
+}
 
 void SavedSession::readMetadata()
 {
