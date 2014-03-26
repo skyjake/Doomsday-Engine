@@ -111,6 +111,6 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
     updated->as<Folder>().populate();
 
     SavedSession &session = updated->as<SavedSession>();
-    session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+    //session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     d->saveRepo().add(session);
 }
