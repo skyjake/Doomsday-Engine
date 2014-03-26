@@ -2934,7 +2934,7 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool a
     int const hours   = time / 3600; time -= hours * 3600;
     int const minutes = time / 60;   time -= minutes * 60;
     int const seconds = time;
-    description += de::String("%1:%2:%3")
+    description += de::String(" %1:%2:%3")
                          .arg(hours,   2, 10, QChar('0'))
                          .arg(minutes, 2, 10, QChar('0'))
                          .arg(seconds, 2, 10, QChar('0'));
