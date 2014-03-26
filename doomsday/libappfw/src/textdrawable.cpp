@@ -67,12 +67,20 @@ DENG2_PIMPL(TextDrawable)
 
     Wrapper *frontWrap; ///< For drawing.
     Wrapper *backWrap;  ///< For background task.
+    String pendingStyledText;
+    bool pending;
     bool needSwap;
     bool needUpdate;
     TaskPool tasks;
     volatile duint32 validWrapId;
 
-    Instance(Public *i) : Base(i), inited(false), needSwap(false), needUpdate(false), validWrapId(0)
+    Instance(Public *i)
+        : Base(i)
+        , inited(false)
+        , pending(false)
+        , needSwap(false)
+        , needUpdate(false)
+        , validWrapId(0)
     {
         frontWrap = new Wrapper;
         backWrap  = new Wrapper;
@@ -191,6 +199,16 @@ void TextDrawable::setLineWrapWidth(int maxLineWidth)
 
 void TextDrawable::setText(String const &styledText)
 {
+    // If backWrap is being wrapped right now we shouldn't block, but add a pending wrap
+    // task instead.
+    if(!d->tasks.isDone())
+    {
+        // Cannot interrupt the ongoing backWrap.
+        d->pendingStyledText = styledText;
+        d->pending = true;
+        return;
+    }
+
     d->backWrap->clear();
     d->needUpdate = true;
 
@@ -231,7 +249,16 @@ bool TextDrawable::update()
 
     bool wasNotReady = !isReady();
     bool changed = GLTextComposer::update() || swapped || (isReady() && wasNotReady);
-    return changed && !isBeingWrapped();
+    bool result = changed && !isBeingWrapped();
+
+    // Begin a pending wrap?
+    if(!isBeingWrapped() && d->pending)
+    {
+        d->pending = false;
+        setText(d->pendingStyledText);
+    }
+
+    return result;
 }
 
 FontLineWrapping const &TextDrawable::wraps() const
