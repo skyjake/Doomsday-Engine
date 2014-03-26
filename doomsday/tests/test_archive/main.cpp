@@ -84,6 +84,17 @@ int main(int argc, char **argv)
         LOG_MSG    ("General description: %s")   << zip2.description();
         LOG_VERBOSE("Verbose description: %s")   << zip2.description();
         LOGDEV_MSG ("Developer description: %s") << zip2.description();
+
+        // Manual reinterpretation can be requested.
+        DENG2_ASSERT(zip2.parent() != 0);
+        File *updated = zip2.reinterpret();
+        DENG2_ASSERT(!zip2.parent()); // became a source
+
+        // This should now be a package folder so let's fill it with the archive
+        // contents.
+        updated->as<Folder>().populate();
+
+        LOG_MSG("After reinterpretation: %s") << updated->description();
     }
     catch(Error const &err)
     {

@@ -331,6 +331,24 @@ public:
      */
     void verifyWriteAccess();
 
+    /**
+     * Reinterprets the file. If there is a known interpretation for the file contents,
+     * the interpreter will replace this file in the folder. If the file is already
+     * interpreted, the previous interpreter is deleted and the original source file is
+     * reinterpreted.
+     *
+     * If the file is in a folder, the folder takes ownership of the returned
+     * interpreter. If the file does not have a parent, ownership of the interpreter is
+     * given to the caller, while this file's ownership transfers to the interpreter.
+     *
+     * Note that feeds have the responsibility to apply interpretation on the files they
+     * produce (using FileSystem::interpret()).
+     *
+     * @return The new interpreter, or this file if left uninterpreted. See above for
+     * ownership policy.
+     */
+    File *reinterpret();
+
     // Implements IIOStream.
     IOStream &operator << (IByteArray const &bytes);
     IIStream &operator >> (IByteArray &bytes);

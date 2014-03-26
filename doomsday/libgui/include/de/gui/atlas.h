@@ -67,6 +67,13 @@ public:
          */
         WrapBordersInBackingStore = 0x4,
 
+        /**
+         * All commits are logged as XVerbose log entries. A commit occurs when the
+         * atlas backing store contents are copied to the actual atlas storage (for
+         * instance a GL texture).
+         */
+        LogCommitsAsXVerbose = 0x8,
+
         DefaultFlags = 0
     };
     Q_DECLARE_FLAGS(Flags, Flag)

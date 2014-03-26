@@ -48,8 +48,6 @@ DENG2_PIMPL(ArchiveFeed)
 
     Instance(Public *feed, File &f) : Base(feed), file(&f), arch(0), parentFeed(0)
     {
-        file->audienceForDeletion() += this;
-
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
         if(IByteArray *bytes = f.maybeAs<IByteArray>())
@@ -67,6 +65,8 @@ DENG2_PIMPL(ArchiveFeed)
             f >> serializedArchive;
             arch = new ZipArchive(serializedArchive);
         }
+
+        file->audienceForDeletion() += this;
     }
 
     Instance(Public *feed, ArchiveFeed &parentFeed, String const &path)
