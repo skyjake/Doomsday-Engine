@@ -261,14 +261,18 @@ DENG2_PIMPL(NativeTranslator)
     void openFile(Path path)
     {
         LOG_TRACE("openFile: Opening \"%s\"") << path;
-        NativeFile const &nativeFile = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path);
         DENG2_ASSERT(saveFilePtr == 0);
-        NativePath const nativeFilePath = nativeFile.nativePath();
-        saveFilePtr = lzOpen(nativeFilePath.toUtf8().constData(), "rp");
-        if(!saveFilePtr)
+        try
         {
-            throw FileOpenError("NativeTranslator", "LZSS module failed to open \"" + nativeFilePath.pretty() + "\"");
+            NativeFile const &nativeFile = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path);
+            NativePath const nativeFilePath = nativeFile.nativePath();
+            saveFilePtr = lzOpen(nativeFilePath.toUtf8().constData(), "rp");
+            return;
         }
+        catch(FileSystem::NotFoundError const &)
+        {} // We'll thow our own.
+
+        throw FileOpenError("NativeTranslator", "Failed opening \"" + path + "\"");
     }
 
     void closeFile()
@@ -390,6 +394,7 @@ DENG2_PIMPL(NativeTranslator)
 
         dbyte episode, map;
         from >> episode >> map;
+        if(id == Hexen) episode = 0; // Why is this > 0??
         DENG2_ASSERT(map > 0);
         metadata.set("mapUri",              composeMapUriPath(episode, map - 1).asText());
 
@@ -489,7 +494,7 @@ DENG2_PIMPL(NativeTranslator)
     };
     typedef QList<ACScriptTask *> ACScriptTasks;
 
-    void translateACScriptState(LZReader &from, Writer &writer)
+    void translateACScriptState(ZipArchive &arch, LZReader &from)
     {
 #define MAX_ACS_WORLD_VARS 64
 
@@ -552,7 +557,7 @@ DENG2_PIMPL(NativeTranslator)
         /* skip junk */ if(saveVersion < 7) from.seek(12);
 
         // Write out the translated data:
-        writer << dbyte(4); // segment version
+        Writer writer = Writer(arch.entryBlock("ACScriptState")).withHeader();
         for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
         {
             writer << worldVars[i];
@@ -630,10 +635,7 @@ void NativeTranslator::convert(Path path)
     if(d->id == Hexen)
     {
         // Translate and separate the serialized world ACS data into a new file.
-        Block worldACScriptData;
-        Writer writer(worldACScriptData);
-        d->translateACScriptState(*from, writer);
-        arch.add("ACScriptState", worldACScriptData);
+        d->translateACScriptState(arch, *from);
     }
 
     if(d->id == Hexen)

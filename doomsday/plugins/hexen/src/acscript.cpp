@@ -469,8 +469,6 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
 
 void ACScriptInterpreter::writeWorldState(de::Writer &to) const
 {
-    to << byte(4); // Version.
-
     // Write the world-global variable namespace.
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
@@ -487,8 +485,6 @@ void ACScriptInterpreter::writeWorldState(de::Writer &to) const
 
 void ACScriptInterpreter::readWorldState(de::Reader &from)
 {
-    byte ver; from >> ver;
-
     // Read the world-global variable namespace.
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {

@@ -64,7 +64,7 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
         Block data;
         de::Writer writer(data);
         Game_ACScriptInterpreter().writeWorldState(writer);
-        arch.add("ACScriptState", data);
+        de::Writer(arch.entryBlock("ACScriptState")).withHeader() << data;
 #endif
     }
 
