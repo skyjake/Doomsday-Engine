@@ -65,23 +65,23 @@ int G_RegisterGames(int hookType, int param, void* data)
 {
 #define CONFIGDIR               "heretic"
 #define STARTUPPK3              PLUGIN_NAMETEXT2 ".pk3"
-#define LEGACYSAVEGAMEEXTENSION ".hsg"
+#define LEGACYSAVEGAMENAMEEXP   "^(?:HticSav)[0-9]{1,1}(?:.hsg)"
 #define LEGACYSAVEGAMESUBFOLDER "savegame"
 
     GameDef const hereticExtDef = {
         "heretic-ext", CONFIGDIR,
         "Heretic: Shadow of the Serpent Riders", "Raven Software",
-        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hereticDef = {
         "heretic", CONFIGDIR,
         "Heretic Registered", "Raven Software",
-        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hereticShareDef = {
         "heretic-share", CONFIGDIR,
         "Heretic Shareware", "Raven Software",
-        LEGACYSAVEGAMEEXTENSION, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

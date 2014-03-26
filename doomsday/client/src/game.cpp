@@ -45,7 +45,7 @@ DENG2_PIMPL(Game)
     Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
     Path bindingConfig;  ///< Control binding file name (set automatically).
 
-    String legacySavegameExtension;
+    String legacySavegameNameExp;
     String legacySavegameSubfolder;
 
     Instance(Public &a, String const &identityKey, Path const &configDir,
@@ -66,11 +66,11 @@ DENG2_PIMPL(Game)
 };
 
 Game::Game(String const &identityKey, Path const &configDir, String const &title, String const &author,
-    String const &legacySavegameExtension_, String const &legacySavegameSubfolder)
+    String const &legacySavegameNameExp_, String const &legacySavegameSubfolder)
     : game::Game(identityKey)
     , d(new Instance(*this, identityKey, configDir, title, author))
 {
-    d->legacySavegameExtension = legacySavegameExtension_;
+    d->legacySavegameNameExp   = legacySavegameNameExp_;
     d->legacySavegameSubfolder = legacySavegameSubfolder;
 }
 
@@ -176,9 +176,9 @@ String Game::logoImageId() const
     return "logo.game." + plugName;
 }
 
-String Game::legacySavegameExtension() const
+String Game::legacySavegameNameExp() const
 {
-    return d->legacySavegameExtension;
+    return d->legacySavegameNameExp;
 }
 
 String Game::legacySavegamePath() const
@@ -258,7 +258,7 @@ bool Game::isRequiredFile(File1 &file)
 Game *Game::fromDef(GameDef const &def)
 {
     return new Game(def.identityKey, NativePath(def.configDir).expand().withSeparators('/'),
-                    def.defaultTitle, def.defaultAuthor, def.legacySavegameExtension,
+                    def.defaultTitle, def.defaultAuthor, def.legacySavegameNameExp,
                     def.legacySavegameSubfolder);
 }
 

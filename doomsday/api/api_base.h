@@ -55,7 +55,7 @@ typedef struct gamedef_s {
     /*
      * Used when converting legacy savegames:
      */
-    char const *legacySavegameExtension;
+    char const *legacySavegameNameExp;
     char const *legacySavegameSubfolder;
 } GameDef;
 

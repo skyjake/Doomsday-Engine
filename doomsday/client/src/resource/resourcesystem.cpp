@@ -1988,33 +1988,35 @@ DENG2_PIMPL(ResourceSystem)
         NativePath const oldSavePath = game.legacySavegamePath();
         if(oldSavePath.exists() && oldSavePath.isReadable())
         {
-            String const oldSaveExt = game.legacySavegameExtension();
-            DENG2_ASSERT(!oldSaveExt.isEmpty());
+            QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
 
-            Folder &sourceFolder = App::fileSystem().makeFolder("/oldsavegames");
-            sourceFolder.setMode(Folder::ReadOnly);
-            sourceFolder.attach(new DirectoryFeed(oldSavePath));
-            sourceFolder.populate(Folder::PopulateOnlyThisFolder);
-
-            DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
+            if(namePattern.isValid() && !namePattern.isEmpty())
             {
-                if(i->first.fileNameExtension() == oldSaveExt)
+                Folder &sourceFolder = App::fileSystem().makeFolder("/oldsavegames");
+                sourceFolder.setMode(Folder::ReadOnly);
+                sourceFolder.attach(new DirectoryFeed(oldSavePath));
+                sourceFolder.populate(Folder::PopulateOnlyThisFolder);
+
+                DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
                 {
-                    String const sourcePath = i->second->as<NativeFile>().nativePath().withSeparators('/');
-                    try
+                    if(namePattern.exactMatch(i->first.fileName()))
                     {
-                        convertLegacySavegame(sourcePath, gameId);
-                    }
-                    catch(Error const &er)
-                    {
-                        LOG_RES_WARNING("Failed conversion of \"%s\":\n")
-                                << NativePath(sourcePath).pretty() << er.asText();
+                        String const sourcePath = i->second->as<NativeFile>().nativePath().withSeparators('/');
+                        try
+                        {
+                            convertLegacySavegame(sourcePath, gameId);
+                        }
+                        catch(Error const &er)
+                        {
+                            LOG_RES_WARNING("Failed conversion of \"%s\":\n")
+                                    << NativePath(sourcePath).pretty() << er.asText();
+                        }
                     }
                 }
-            }
 
-            // We're done with this folder.
-            delete &sourceFolder;
+                // We're done with this folder.
+                delete &sourceFolder;
+            }
         }
     }
 };
