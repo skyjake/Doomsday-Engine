@@ -223,11 +223,40 @@ public:
          */
         Element *findByPath(String const &path) const;
 
+        /**
+         * Moves all elements in this block to the destination block. This block
+         * will be empty afterwards.
+         *
+         * @param destination  Block.
+         */
+        void moveContents(BlockElement &destination);
+
     private:
         Info &_info;
         String _blockType;
         Contents _contents;
         ContentsInOrder _contentsInOrder;
+    };
+
+    /**
+     * Interface for objects that provide included document content. @ingroup data
+     */
+    class DENG2_PUBLIC IIncludeFinder
+    {
+    public:
+        virtual ~IIncludeFinder() {}
+
+        /**
+         * Finds an Info document.
+         * @param includeName  Name of the Info document as specified in an \@include
+         *                     directive.
+         * @param from         Info document where the inclusion occurs.
+         * @return Content of the included document.
+         */
+        virtual String findIncludedInfoSource(String const &includeName, Info const &from) const = 0;
+
+        /// The included document could not be found. @ingroup errors
+        DENG2_ERROR(NotFoundError);
     };
 
 public:
@@ -238,11 +267,21 @@ public:
     Info();
 
     /**
+     * Sets the finder for included documents. By default, attempts to locate Info files
+     * by treating the name of the included file as an absolute path.
+     *
+     * @param finder  Include finder object. Info does not take ownership.
+     */
+    void setFinder(IIncludeFinder const &finder);
+
+    /**
      * Parses a string of text as Info source.
      *
      * @param source  Info source text.
      */
     Info(String const &source);
+
+    Info(String const &source, IIncludeFinder const &finder);
 
     /**
      * Sets all the block types whose content is parsed using a script parser.

@@ -21,6 +21,7 @@
 #include "de/ScriptLex"
 #include "de/Log"
 #include "de/LogBuffer"
+#include "de/App"
 #include <QFile>
 
 using namespace de;
@@ -28,11 +29,30 @@ using namespace de;
 static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
 static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
+static QString const INCLUDE_TOKEN = "@include";
 
 DENG2_PIMPL(Info)
 {
     DENG2_ERROR(OutOfElements);
     DENG2_ERROR(EndOfFile);
+
+    struct DefaultIncludeFinder : public IIncludeFinder
+    {
+        String findIncludedInfoSource(String const &includeName, Info const &) const
+        {
+            try
+            {
+                return String::fromUtf8(Block(App::rootFolder().locate<File const>(includeName)));
+            }
+            catch(Error const &er)
+            {
+                throw NotFoundError("Info::DefaultIncludeFinder",
+                                    QString("Cannot include '%1': %2")
+                                    .arg(includeName)
+                                    .arg(er.asText()));
+            }
+        }
+    };
 
     QStringList scriptBlockTypes;
     QStringList allowDuplicateBlocksOfType;
@@ -43,13 +63,18 @@ DENG2_PIMPL(Info)
     int tokenStartOffset;
     String currentToken;
     BlockElement rootBlock;
+    DefaultIncludeFinder defaultFinder;
+    IIncludeFinder const *finder;
 
     typedef Info::Element::Value InfoValue;
 
     Instance(Public *i)
-        : Base(i),
-          currentLine(0), cursor(0), tokenStartOffset(0),
-          rootBlock("", "", *i)
+        : Base(i)
+        , currentLine(0)
+        , cursor(0)
+        , tokenStartOffset(0)
+        , rootBlock("", "", *i)
+        , finder(&defaultFinder)
     {
         scriptBlockTypes << "script";
     }
@@ -546,6 +571,16 @@ success:;
         return block.take();
     }
 
+    void includeFrom(String const &includeName)
+    {
+        DENG2_ASSERT(finder != 0);
+
+        Info included(finder->findIncludedInfoSource(includeName, self), *finder);
+
+        // Move the contents of the resulting root block to our root block.
+        included.d->rootBlock.moveContents(rootBlock);
+    }
+
     void parse(String const &source)
     {
         init(source);
@@ -553,6 +588,17 @@ success:;
         {
             Element *e = parseElement();
             if(!e) break;
+
+            // If this is an include directive, try to acquire the inclusion and parse it
+            // instead. Inclusions are only possible at the root level.
+            if(e->isList() && e->name() == INCLUDE_TOKEN)
+            {
+                foreach(Element::Value const &val, e->as<ListElement>().values())
+                {
+                    includeFrom(val);
+                }
+            }
+
             rootBlock.add(e);
         }
     }
@@ -576,24 +622,6 @@ void Info::BlockElement::clear()
 void Info::BlockElement::add(Info::Element *elem)
 {
     DENG2_ASSERT(elem != 0);
-
-	/*
-
-	/// @todo This check is at the wrong level. Conditions may be applied
-	/// to resolve duplicates. Check when processing...
-
-    // Check for duplicate identifiers in this block.
-    if(elem->name() && _contents.contains(elem->name()))
-    {
-        if(!elem->isBlock() || !info().d->allowDuplicateBlocksOfType.contains(
-                    elem->as<BlockElement>().blockType()))
-        {
-            LOG_AS("Info::BlockElement");
-            LOG_WARNING("Block '%s' already has an element named '%s'")
-                    << name() << elem->name();
-        }
-    }
-	*/
 
     elem->setParent(this);
     _contentsInOrder.append(elem); // owned
@@ -645,6 +673,18 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     return e;
 }
 
+void Info::BlockElement::moveContents(BlockElement &destination)
+{
+    foreach(Element *e, _contentsInOrder)
+    {
+        destination.add(e);
+    }
+    _contentsInOrder.clear();
+    _contents.clear();
+}
+
+//---------------------------------------------------------------------------------------
+
 Info::Info() : d(new Instance(this))
 {}
 
@@ -653,6 +693,19 @@ Info::Info(String const &source)
     QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
     inst->parse(source);
     d.reset(inst.take());
+}
+
+Info::Info(String const &source, IIncludeFinder const &finder)
+{
+    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
+    inst->finder = &finder;
+    inst->parse(source);
+    d.reset(inst.take());
+}
+
+void Info::setFinder(IIncludeFinder const &finder)
+{
+    d->finder = &finder;
 }
 
 void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
