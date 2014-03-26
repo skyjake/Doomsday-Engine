@@ -101,6 +101,10 @@ void GameSessionWriter::write(SessionMetadata const &metadata)
 
     // Write the new package to /home/savegames/<game-id>/<session-name>.save
     Folder &folder = DENG2_APP->rootFolder().locate<Folder>(d->savePath.fileNamePath());
+    if(SavedSession *existing = folder.tryLocate<SavedSession>(d->savePath.fileName()))
+    {
+        existing->setMode(File::Write);
+    }
     File &save = folder.replaceFile(d->savePath.fileName());
     de::Writer(save) << arch;
     save.setMode(File::ReadOnly);

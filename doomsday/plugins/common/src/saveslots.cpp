@@ -209,9 +209,10 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
 
 void SaveSlots::Slot::copySavedSession(Slot const &source)
 {
-    LOG_AS("SaveSlots::Slot::copySavedSessionFile");
-
     if(&source == this) return; // Sanity check.
+
+    LOG_AS("SaveSlots::Slot::copySavedSession");
+    LOG_RES_VERBOSE("From '%s' to '%s'") << source.id() << d->id;
 
     // Clear the existing session and .save package (if any).
     clear();

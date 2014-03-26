@@ -3047,9 +3047,10 @@ void G_DoLeaveMap()
         if(!gameRules.deathmatch)
         {
             // Save current map.
-            de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(G_SaveSlots()["base"].savePath());
+            de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(G_SaveSlots()["base"].savePath() / "maps");
+            saveFolder.setMode(de::File::Write);
 
-            de::File &outFile = saveFolder.replaceFile(de::String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State");
+            de::File &outFile = saveFolder.replaceFile(de::String(Str_Text(Uri_Compose(gameMapUri))) + "State");
             de::Block mapStateData;
             SV_OpenFileForWrite(mapStateData);
             writer_s *writer = SV_NewWriter();
@@ -3057,9 +3058,9 @@ void G_DoLeaveMap()
             outFile << de::FixedByteArray(mapStateData);
             Writer_Delete(writer);
             SV_CloseFile();
-            outFile.setMode(de::File::ReadOnly);
 
-            saveFolder.populate(); // Populate the new contents of the archive.
+            saveFolder.setMode(de::File::ReadOnly); // flush to disk.
+            saveFolder.populate(); // Populate the new contents of the folder.
         }
     }
     else // Entering new hub.
