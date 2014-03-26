@@ -23,6 +23,7 @@
 #include <de/Error>
 #include <de/Counted>
 #include <de/Asset>
+#include <de/Block>
 #include <de/IByteArray>
 
 #include "libgui.h"
@@ -63,6 +64,18 @@ public:
     void compile(Type shaderType, IByteArray const &source);
 
     void recompile();
+
+    /**
+     * Prefixes a piece of shader source code to another shader source. This takes
+     * into account that certain elements must remain at the beginning of the source
+     * (#version).
+     *
+     * @param source  Main source where prefixing is done.
+     * @param prefix  Source to prefix in the beginning of @a source.
+     *
+     * @return The resulting combination.
+     */
+    static Block prefixToSource(Block const &source, Block const &prefix);
 
 private:
     DENG2_PRIVATE(d)

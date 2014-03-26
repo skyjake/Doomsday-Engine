@@ -22,6 +22,7 @@
 
 #include <de/App>
 #include <de/ScriptedInfo>
+#include <de/ArrayValue>
 #include <de/ByteArrayFile>
 #include <de/math.h>
 
@@ -34,16 +35,36 @@ DENG2_PIMPL(GLShaderBank)
     struct Source : public ISource
     {
         /// Information about a shader source.
-        struct ShaderSource {
+        struct ShaderSource
+        {
             String source;
-            enum Type {
+            enum Type
+            {
                 FilePath,
                 ShaderSourceText
             };
             Type type;
 
             ShaderSource(String const &str = "", Type t = ShaderSourceText)
-                : source(str), type(t) {}
+                : source(str), type(t) {}            
+
+            void convertToSourceText()
+            {
+                if(type == FilePath)
+                {
+                    source = String::fromLatin1(Block(App::rootFolder().locate<File const>(source)));
+                    type = ShaderSourceText;
+                }
+            }
+
+            void insertFromFile(String const &path)
+            {
+                convertToSourceText();
+                source += "\n";
+                Block combo = GLShader::prefixToSource(source.toLatin1(),
+                        Block(App::rootFolder().locate<File const>(path)));
+                source = String::fromLatin1(combo);
+            }
         };
 
         GLShaderBank &bank;
@@ -56,7 +77,7 @@ DENG2_PIMPL(GLShaderBank)
 
         Time sourceModifiedAt(ShaderSource const &src) const
         {
-            if(src.type == ShaderSource::FilePath)
+            if(src.type == ShaderSource::FilePath && !src.source.isEmpty())
             {
                 return App::rootFolder().locate<File const>(src.source).status().modifiedAt;
             }
@@ -204,6 +225,22 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     else if(def.has("path"))
     {
         frag = ShaderSource(d->relativeToPath / def["path"] + ".fsh", ShaderSource::FilePath);
+    }
+
+    // Additional shaders to append to the main source.
+    if(def.has("include.vertex"))
+    {
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.vertex"].value().as<ArrayValue>().elements())
+        {
+            vtx.insertFromFile(d->relativeToPath / (*i)->asText());
+        }
+    }
+    if(def.has("include.fragment"))
+    {
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.fragment"].value().as<ArrayValue>().elements())
+        {
+            frag.insertFromFile(d->relativeToPath / (*i)->asText());
+        }
     }
 
     return new Source(*this, vtx, frag);
