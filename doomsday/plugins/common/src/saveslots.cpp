@@ -29,6 +29,7 @@
 #include <de/Observers>
 #include <de/Writer>
 #include <map>
+#include <utility>
 
 static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
 static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.

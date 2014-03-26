@@ -2991,7 +2991,9 @@ static int saveGameSessionWorker(void *context)
         NetSv_SaveGame(metadata.geti("sessionId"));
 
         // Serialize the game state to a new saved session.
-        GameSessionWriter(sslot.savePath()).write(metadata);
+        de::String const savePath = sslot.savePath();
+        common::writeGameSession(DENG2_APP->rootFolder().locate<de::Folder>(savePath.fileNamePath()),
+                               savePath.fileName(), metadata);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.

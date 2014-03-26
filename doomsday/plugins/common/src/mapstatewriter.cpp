@@ -64,7 +64,7 @@ DENG2_PIMPL(MapStateWriter)
 #if __JHEXEN__
         Writer_WriteInt32(writer, segId);
 #else
-        DENG_UNUSED(segId);
+        DENG2_UNUSED(segId);
 #endif
     }
 
@@ -150,7 +150,7 @@ DENG2_PIMPL(MapStateWriter)
         for(int i = 0; i < numpolyobjs; ++i)
         {
             Polyobj *po = Polyobj_ById(i);
-            DENG_ASSERT(po != 0);
+            DENG2_ASSERT(po != 0);
             po->write(thisPublic);
         }
 
@@ -169,7 +169,7 @@ DENG2_PIMPL(MapStateWriter)
      */
     static int writeThinkerWorker(thinker_t *th, void *context)
     {
-        writethinkerworker_params_t &p = *static_cast<writethinkerworker_params_t *>(context);
+        writethinkerworker_params_t const &p = *static_cast<writethinkerworker_params_t *>(context);
 
         // We are only concerned with thinkers we have save info for.
         ThinkerClassInfo *thInfo = SV_ThinkerInfo(*th);
@@ -255,7 +255,7 @@ DENG2_PIMPL(MapStateWriter)
         }
 #endif
 #if __JDOOM__
-        DENG_ASSERT(theBossBrain != 0);
+        DENG2_ASSERT(theBossBrain != 0);
         theBossBrain->write(thisPublic);
 #endif
     }
@@ -299,7 +299,7 @@ MapStateWriter::MapStateWriter() : d(new Instance(this))
 
 void MapStateWriter::write(Writer *writer, bool excludePlayers)
 {
-    DENG_ASSERT(writer != 0);
+    DENG2_ASSERT(writer != 0);
     d->writer = writer;
 
     // Prepare and populate the material archive.
@@ -341,18 +341,18 @@ void MapStateWriter::write(Writer *writer, bool excludePlayers)
 
 ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)
 {
-    DENG_ASSERT(d->thingArchive != 0);
+    DENG2_ASSERT(d->thingArchive != 0);
     return d->thingArchive->serialIdFor(mobj);
 }
 
 materialarchive_serialid_t MapStateWriter::serialIdFor(Material *material)
 {
-    DENG_ASSERT(d->materialArchive != 0);
+    DENG2_ASSERT(d->materialArchive != 0);
     return MaterialArchive_FindUniqueSerialId(d->materialArchive, material);
 }
 
 Writer *MapStateWriter::writer()
 {
-    DENG_ASSERT(d->writer != 0);
+    DENG2_ASSERT(d->writer != 0);
     return d->writer;
 }

@@ -31,12 +31,28 @@
 #include <de/ZipArchive>
 
 using namespace de;
+using de::game::SavedSession;
+using de::game::SavedSessionRepository;
+using de::game::SessionMetadata;
 
-DENG2_PIMPL_NOREF(GameSessionWriter)
+namespace common {
+namespace internal {
+
+class GameSessionWriter
 {
-    String savePath;
+    Folder &folder;
+    String const &fileName;
+    SessionMetadata const &metadata;
 
-    inline de::game::SavedSessionRepository &saveRepo() {
+public:
+    GameSessionWriter(Folder &saveFolder, String const &saveFileName,
+                      SessionMetadata const &metadata)
+        : folder  (saveFolder)
+        , fileName(saveFileName)
+        , metadata(metadata)
+    {}
+
+    inline SavedSessionRepository &saveRepo() {
         return G_SavedSessionRepository();
     }
 
@@ -58,63 +74,74 @@ DENG2_PIMPL_NOREF(GameSessionWriter)
         return info;
     }
 
-    void writeACScriptState(ZipArchive &arch)
-    {
 #if __JHEXEN__
+    Block serializeACScriptWorldState()
+    {
         Block data;
         de::Writer writer(data);
         Game_ACScriptInterpreter().writeWorldState(writer);
-        de::Writer(arch.entryBlock("ACScriptState")).withHeader() << data;
-#endif
+        return data;
     }
+#endif
 
-    void writeMapState(ZipArchive &arch, String const &mapUriStr)
+    Block serializeCurrentMapState()
     {
         Block data;
         SV_OpenFileForWrite(data);
         writer_s *writer = SV_NewWriter();
         MapStateWriter().write(writer);
-        arch.add(String("maps") / mapUriStr + "State", data);
         Writer_Delete(writer);
         SV_CloseFile();
+        return data;
+    }
+
+    void serializeState(Archive &arch)
+    {
+        arch.add("Info", composeInfo(metadata).toUtf8());
+
+#if __JHEXEN__
+        de::Writer(arch.entryBlock("ACScriptState")).withHeader()
+                << serializeACScriptWorldState();
+#endif
+
+        arch.add(String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State",
+                 serializeCurrentMapState());
+    }
+
+    void write()
+    {
+        LOG_AS("GameSessionWriter");
+        LOG_RES_VERBOSE("Serializing to \"%s\"...") << (folder.path() / fileName);
+
+        ZipArchive arch;
+        serializeState(arch);
+
+        saveRepo().remove(folder.path() / fileName);
+
+        if(SavedSession *existing = folder.tryLocate<SavedSession>(fileName))
+        {
+            existing->setMode(File::Write);
+        }
+        File &save = folder.replaceFile(fileName);
+        de::Writer(save) << arch;
+        save.setMode(File::ReadOnly);
+        LOG_RES_MSG("Wrote ") << save.description();
+
+        // We can now reinterpret and populate the contents of the archive.
+        File *updated = save.reinterpret();
+        updated->as<Folder>().populate();
+
+        SavedSession &session = updated->as<SavedSession>();
+        //session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+        saveRepo().add(session);
     }
 };
 
-GameSessionWriter::GameSessionWriter(String const &savePath) : d(new Instance())
+} // namespace internal
+
+void writeGameSession(Folder &saveFolder, String const &saveFileName, SessionMetadata const &metadata)
 {
-    DENG2_ASSERT(!savePath.isEmpty());
-    d->savePath = savePath;
+    return internal::GameSessionWriter(saveFolder, saveFileName, metadata).write();
 }
 
-void GameSessionWriter::write(SessionMetadata const &metadata)
-{
-    LOG_AS("GameSessionWriter");
-    LOG_RES_VERBOSE("Serializing to \"%s\"...") << d->savePath;
-
-    // Serialize the game state to a new .save package.
-    ZipArchive arch;
-    arch.add("Info", d->composeInfo(metadata).toUtf8());
-    d->writeACScriptState(arch);
-    d->writeMapState(arch, Str_Text(Uri_Compose(gameMapUri))); // current map.
-
-    d->saveRepo().remove(d->savePath);
-
-    // Write the new package to /home/savegames/<game-id>/<session-name>.save
-    Folder &folder = DENG2_APP->rootFolder().locate<Folder>(d->savePath.fileNamePath());
-    if(SavedSession *existing = folder.tryLocate<SavedSession>(d->savePath.fileName()))
-    {
-        existing->setMode(File::Write);
-    }
-    File &save = folder.replaceFile(d->savePath.fileName());
-    de::Writer(save) << arch;
-    save.setMode(File::ReadOnly);
-    LOG_RES_MSG("Wrote ") << save.description();
-
-    // We can now reinterpret and populate the contents of the archive.
-    File *updated = save.reinterpret();
-    updated->as<Folder>().populate();
-
-    SavedSession &session = updated->as<SavedSession>();
-    //session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-    d->saveRepo().add(session);
-}
+} // namespace common

@@ -24,30 +24,20 @@
 #include <de/game/SavedSession>
 #include <de/String>
 
+namespace common {
+
 /**
  * Native game state saved session writer.
  *
+ * @param saveFolder    Folder in which the new .save package will be written.
+ * @param saveFileName  Name of the session .save package being written to.
+ * @param metadata      Session metadata to be written. A copy is made.
+ *
  * @ingroup libcommon
  */
-class GameSessionWriter
-{
-public:
-    typedef de::game::SavedSession    SavedSession;
-    typedef de::game::SessionMetadata SessionMetadata;
+void writeGameSession(de::Folder &saveFolder, de::String const &saveFileName,
+                      de::game::SessionMetadata const &metadata);
 
-public:
-    /**
-     * @param savePath  Path of the saved session being written to.
-     */
-    GameSessionWriter(de::String const &savePath);
-
-    /**
-     * @param metadata  Session metadata to be written. A copy is made.
-     */
-    void write(SessionMetadata const &metadata);
-
-private:
-    DENG2_PRIVATE(d)
-};
+}
 
 #endif // LIBCOMMON_GAMESESSIONWRITER_H
