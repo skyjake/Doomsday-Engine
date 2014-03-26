@@ -338,6 +338,9 @@ File *File::reinterpret()
     original->flush();
     result = fileSystem().interpret(original);
 
+    // The interpreter should use whatever origin feed the file was previously using.
+    result->setOriginFeed(d->originFeed);
+
     if(deleteThis)
     {
         DENG2_ASSERT(result != this);
