@@ -153,7 +153,7 @@ public:
 
     template <typename Type>
     Type *tryLocateState(String const &path) const {
-        return tryLocateFile<Type>(stateFilePath(path));
+        return tryLocate<Type>(stateFilePath(path));
     }
 
     /**

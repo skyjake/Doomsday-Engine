@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/game/Savedsession"
+#include "de/game/savedsession.h"
 
 #include "de/App"
 #include "de/ArrayValue"
