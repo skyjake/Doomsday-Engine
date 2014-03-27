@@ -88,19 +88,33 @@ macx {
     }
 }
 
-defineTest(publicHeaders) {
-    # 1: id ("root" for the main include dir)
-    # 2: header files
+defineTest(publicSubHeaders) {
+    # 1: id
+    # 2: "root" for the main include dir
+    # 3: header files
     deng_sdk {
-        dir = $$1
+        ident = $$1
+        dir = $$2
         contains(1, root): dir = .
-        eval(sdk_headers_$${1}.files += $$2)
+        eval(sdk_headers_$${1}.files += $$3)
         eval(sdk_headers_$${1}.path = $$DENG_SDK_HEADER_DIR/$$dir)
         INSTALLS *= sdk_headers_$$1
         export(INSTALLS)
         export(sdk_headers_$${1}.files)
         export(sdk_headers_$${1}.path)
     }
-    HEADERS += $$2
+    HEADERS += $$3
     export(HEADERS)
+}
+
+defineTest(publicHeaders) {
+    # 1: id/root dir
+    # 2: header files
+    publicSubHeaders($$1, $$1, $$2)
+    export(HEADERS)
+    deng_sdk {
+        export(INSTALLS)
+        export(sdk_headers_$${1}.files)
+        export(sdk_headers_$${1}.path)
+    }
 }

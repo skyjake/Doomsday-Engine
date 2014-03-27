@@ -1,1 +1,1 @@
-#include "gui/glbuffer.h"
+#include "graphics/glbuffer.h"

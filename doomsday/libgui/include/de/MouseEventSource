@@ -1,1 +1,1 @@
-#include "gui/mouseeventsource.h"
+#include "input/mouseeventsource.h"

@@ -81,94 +81,112 @@ publicHeaders(root, \
     include/de/RowAtlasAllocator \
     include/de/TextureBank \
     include/de/VertexBuilder \
+    include/de/Waveform \
+    include/de/WaveformBank \
 )
 
 publicHeaders(gui, \
-    include/de/gui/atlas.h \
-    include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
     include/de/gui/canvaswindow.h \
-    include/de/gui/colorbank.h \
-    include/de/gui/ddkey.h \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
-    include/de/gui/drawable.h \
-    include/de/gui/font.h \
-    include/de/gui/fontbank.h \
-    include/de/gui/glbuffer.h \
-    include/de/gui/glentrypoints.h \
-    include/de/gui/glframebuffer.h \
-    include/de/gui/glinfo.h \
-    include/de/gui/glpixelformat.h \
-    include/de/gui/glprogram.h \
-    include/de/gui/glshader.h \
-    include/de/gui/glshaderbank.h \
-    include/de/gui/glstate.h \
-    include/de/gui/gltarget.h \
-    include/de/gui/gltexture.h \
-    include/de/gui/gluniform.h \
     include/de/gui/guiapp.h \
-    include/de/gui/image.h \
-    include/de/gui/imagebank.h \
-    include/de/gui/kdtreeatlasallocator.h \
-    include/de/gui/keyevent.h \
-    include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
-    include/de/gui/modeldrawable.h \
-    include/de/gui/mouseevent.h \
-    include/de/gui/mouseeventsource.h \
-    include/de/gui/nativefont.h \
-    include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
-    include/de/gui/rowatlasallocator.h \
-    include/de/gui/texturebank.h \
-    include/de/gui/vertexbuilder.h \
+)
+
+publicHeaders(audio, \
+    include/de/audio/waveform.h \
+    include/de/audio/waveformbank.h \
+)
+
+publicHeaders(graphics, \
+    include/de/graphics/atlas.h \
+    include/de/graphics/atlastexture.h \
+    include/de/graphics/colorbank.h \
+    include/de/graphics/drawable.h \
+    include/de/graphics/glbuffer.h \
+    include/de/graphics/glentrypoints.h \
+    include/de/graphics/glframebuffer.h \
+    include/de/graphics/glinfo.h \
+    include/de/graphics/glpixelformat.h \
+    include/de/graphics/glprogram.h \
+    include/de/graphics/glshader.h \
+    include/de/graphics/glshaderbank.h \
+    include/de/graphics/glstate.h \
+    include/de/graphics/gltarget.h \
+    include/de/graphics/gltexture.h \
+    include/de/graphics/gluniform.h \
+    include/de/graphics/image.h \
+    include/de/graphics/imagebank.h \
+    include/de/graphics/kdtreeatlasallocator.h \
+    include/de/graphics/opengl.h \
+    include/de/graphics/modeldrawable.h \
+    include/de/graphics/rowatlasallocator.h \
+    include/de/graphics/texturebank.h \
+    include/de/graphics/vertexbuilder.h \
+)
+
+publicHeaders(input, \
+    include/de/input/ddkey.h \
+    include/de/input/keyevent.h \
+    include/de/input/keyeventsource.h \
+    include/de/input/mouseevent.h \
+    include/de/input/mouseeventsource.h \
+)
+
+publicHeaders(font, \
+    include/de/font/font.h \
+    include/de/font/fontbank.h \
+    include/de/font/nativefont.h \
 )
 
 # Sources and private headers.
 SOURCES +=  \
-    src/atlas.cpp \
-    src/atlastexture.cpp \
+    src/audio/waveform.cpp \
+    src/audio/waveformbank.cpp \
     src/canvas.cpp \
     src/canvaswindow.cpp \
-    src/colorbank.cpp \
     src/displaymode.cpp \
-    src/drawable.cpp \
-    src/font.cpp \
-    src/font_richformat.cpp \
-    src/fontbank.cpp \
-    src/glbuffer.cpp \
-    src/glentrypoints.cpp \
-    src/glentrypoints_x11.cpp \
-    src/glframebuffer.cpp \
-    src/glinfo.cpp \
-    src/glprogram.cpp \
-    src/glshader.cpp \
-    src/glshaderbank.cpp \
-    src/glstate.cpp \
-    src/gltarget.cpp \
-    src/gltarget_alternativebuffer.cpp \
-    src/gltexture.cpp \
-    src/gluniform.cpp \
+    src/font/fontbank.cpp \
+    src/font/font.cpp \
+    src/font/font_richformat.cpp \
+    src/font/nativefont.cpp \
+    src/font/qtnativefont.cpp \
+    src/font/qtnativefont.h \
+    src/graphics/atlas.cpp \
+    src/graphics/atlastexture.cpp \
+    src/graphics/colorbank.cpp \
+    src/graphics/drawable.cpp \
+    src/graphics/glbuffer.cpp \
+    src/graphics/glentrypoints.cpp \
+    src/graphics/glentrypoints_x11.cpp \
+    src/graphics/glframebuffer.cpp \
+    src/graphics/glinfo.cpp \
+    src/graphics/glprogram.cpp \
+    src/graphics/glshaderbank.cpp \
+    src/graphics/glshader.cpp \
+    src/graphics/glstate.cpp \
+    src/graphics/gltarget_alternativebuffer.cpp \
+    src/graphics/gltarget.cpp \
+    src/graphics/gltexture.cpp \
+    src/graphics/gluniform.cpp \
+    src/graphics/imagebank.cpp \
+    src/graphics/image.cpp \
+    src/graphics/kdtreeatlasallocator.cpp \
+    src/graphics/modeldrawable.cpp \
+    src/graphics/rowatlasallocator.cpp \
+    src/graphics/texturebank.cpp \
     src/guiapp.cpp \
-    src/image.cpp \
-    src/imagebank.cpp \
-    src/kdtreeatlasallocator.cpp \
-    src/keyevent.cpp \
-    src/keyeventsource.cpp \
-    src/mouseevent.cpp \
-    src/mouseeventsource.cpp \
-    src/modeldrawable.cpp \
-    src/nativefont.cpp \
-    src/qtnativefont.cpp \
-    src/qtnativefont.h \
-    src/persistentcanvaswindow.cpp \
-    src/rowatlasallocator.cpp \
-    src/texturebank.cpp
+    src/input/keyevent.cpp \
+    src/input/keyeventsource.cpp \
+    src/input/mouseevent.cpp \
+    src/input/mouseeventsource.cpp \
+    src/persistentcanvaswindow.cpp
 
 macx:!deng_macx6_32bit_64bit: SOURCES += \
-    src/coretextnativefont_macx.h \
-    src/coretextnativefont_macx.cpp
+    src/font/coretextnativefont_macx.h \
+    src/font/coretextnativefont_macx.cpp
 
 # DisplayMode
 !deng_nodisplaymode {
@@ -180,7 +198,7 @@ else {
     SOURCES += src/displaymode_dummy.cpp
 }
 
-unix:!macx: SOURCES += src/imKStoUCS_x11.c
+unix:!macx: SOURCES += src/input/imKStoUCS_x11.c
 
 scripts.files = \
     modules/gui.de

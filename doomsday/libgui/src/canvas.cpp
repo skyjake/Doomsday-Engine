@@ -20,7 +20,7 @@
 #include "de/CanvasWindow"
 #include "de/GLState"
 #include "de/GLTexture"
-#include "de/gui/opengl.h"
+#include "de/graphics/opengl.h"
 
 #include <de/App>
 #include <de/Log>

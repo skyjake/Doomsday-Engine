@@ -1,2 +1,2 @@
-#include "gui/modeldrawable.h"
+#include "graphics/modeldrawable.h"
 
