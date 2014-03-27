@@ -162,7 +162,9 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 #endif // __CLIENT__
 
 DENG2_PIMPL(ResourceSystem)
+#ifdef __CLIENT__
 , DENG2_OBSERVES(Games,            Addition)        // Saved session repository population
+#endif
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -375,6 +377,7 @@ DENG2_PIMPL(ResourceSystem)
         createFontScheme("Game");
 #endif
 
+#ifdef __CLIENT__
         App_Games().audienceForAddition += this;
 
         // Determine the root directory of the saved session repository.
@@ -388,11 +391,14 @@ DENG2_PIMPL(ResourceSystem)
 
         // Create the user's saved game folder if it doesn't yet exist.
         App::fileSystem().makeFolder("/home/savegames");
+#endif
     }
 
     ~Instance()
     {
+#ifdef __CLIENT__
         App_Games().audienceForAddition -= this;
+#endif
 
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
@@ -1911,8 +1917,6 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-#endif // __CLIENT__
-
     /**
      * Utility for initiating a legacy savegame conversion.
      *
@@ -2019,6 +2023,8 @@ DENG2_PIMPL(ResourceSystem)
             }
         }
     }
+
+#endif // __CLIENT__
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
