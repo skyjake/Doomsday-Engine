@@ -1,4 +1,4 @@
-/** @file
+/** @file waveformbank.cpp  Bank containing Waveform instances.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,4 +16,86 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de/WaveformBank"
+#include "de/App"
+
+#include <de/ScriptedInfo>
+
+namespace de {
+
+DENG2_PIMPL_NOREF(WaveformBank)
+{
+    struct Source : public ISource
+    {
+        String filePath;
+
+        Source(String const &path) : filePath(path) {}
+
+        Time modifiedAt() const
+        {
+            return App::rootFolder().locate<File>(filePath).status().modifiedAt;
+        }
+
+        Waveform *load() const
+        {
+            QScopedPointer<Waveform> wf(new Waveform);
+            wf->load(App::rootFolder().locate<File const>(filePath));
+            return wf.take();
+        }
+    };
+
+    struct Data : public IData
+    {
+        Waveform *waveform;
+
+        Data(Waveform *wf = 0) : waveform(wf) {}
+
+        duint sizeInMemory() const
+        {
+            if(!waveform) return 0;
+            return waveform->sampleData().size();
+        }
+    };
+
+    String relativeToPath;
+};
+
+WaveformBank::WaveformBank(Flags const &flags) : InfoBank(flags), d(new Instance)
+{}
+
+void WaveformBank::add(DotPath const &id, String const &waveformFilePath)
+{
+    Bank::add(id, new Instance::Source(waveformFilePath));
+}
+
+void WaveformBank::addFromInfo(File const &file)
+{
+    LOG_AS("WaveformBank");
+    d->relativeToPath = file.path().fileNamePath();
+    parse(file);
+    addFromInfoBlocks("waveform");
+}
+
+Waveform const &WaveformBank::waveform(DotPath const &id) const
+{
+    return *data(id).as<Instance::Data>().waveform;
+}
+
+Bank::ISource *WaveformBank::newSourceFromInfo(String const &id)
+{
+    Record const &def = info()[id];
+    return new Instance::Source(d->relativeToPath / def["path"]);
+}
+
+Bank::IData *WaveformBank::loadFromSource(ISource &source)
+{
+    return new Instance::Data(source.as<Instance::Source>().load());
+}
+
+Bank::IData *WaveformBank::newData()
+{
+    return new Instance::Data();
+}
+
+} // namespace de
 

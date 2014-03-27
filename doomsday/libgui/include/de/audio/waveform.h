@@ -1,4 +1,4 @@
-/** @file
+/** @file waveform.h  Audio waveform.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,92 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef WAVEFORM_H
-#define WAVEFORM_H
+#ifndef LIBGUI_WAVEFORM_H
+#define LIBGUI_WAVEFORM_H
 
-#endif // WAVEFORM_H
+#include "../gui/libgui.h"
+#include <de/Time>
+#include <de/File>
+
+namespace de {
+
+namespace audio ///< Namespace for audio related enumerations and constants.
+{
+    enum Format {
+        RawSamples,
+        CompressedSamples
+    };
+}
+
+/**
+ * Audio waveform consisting of a sequence of audio samples in raw form or in some
+ * compressed format. The sample data may be stored in memory or might be streamed from a
+ * File.
+ *
+ * @ingroup audio
+ */
+class LIBGUI_PUBLIC Waveform
+{
+public:
+    /// Failed to load audio data from source. @ingroup errors
+    DENG2_ERROR(LoadError);
+
+    /// Format of the source data is not supported. @ingroup errors
+    DENG2_SUB_ERROR(LoadError, UnsupportedFormatError);
+
+public:
+    Waveform();
+
+    void clear();
+
+    /**
+     * Loads an audio waveform from a file.
+     *
+     * @param file  File to load from.
+     */
+    void load(File const &file);
+
+    audio::Format format() const;
+
+    /**
+     * Provides the sample data of the audio waveform in a memory buffer. For compressed
+     * formats, the returned data is the contents of the source file.
+     *
+     * @return Block of audio samples.
+     */
+    Block sampleData() const;
+
+    /**
+     * Returns the File this Waveform has been loaded from.
+     *
+     * @return File with source data.
+     */
+    File const *sourceFile() const;
+
+    duint channelCount() const;
+
+    /**
+     * Bits per sample on a channel.
+     */
+    duint bitsPerSample() const;
+
+    dsize sampleCount() const;
+
+    /**
+     * Number of samples to play per second.
+     */
+    ddouble sampleRate() const;
+
+    /**
+     * Playing duration of the audio waveform, assuming sample count and sample rate
+     * are known.
+     */
+    TimeDelta duration() const;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+} // namespace de
+
+#endif // LIBGUI_WAVEFORM_H

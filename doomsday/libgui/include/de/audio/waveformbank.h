@@ -1,4 +1,4 @@
-/** @file
+/** @file waveformbank.h  Bank containing Waveform instances.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,45 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef WAVEFORMBANK_H
-#define WAVEFORMBANK_H
+#ifndef LIBGUI_WAVEFORMBANK_H
+#define LIBGUI_WAVEFORMBANK_H
 
-#endif // WAVEFORMBANK_H
+#include "../Waveform"
+#include <de/InfoBank>
+
+namespace de {
+
+class File;
+
+/**
+ * Bank containing Waveform instances loaded from files.
+ *
+ * @ingroup data
+ */
+class LIBGUI_PUBLIC WaveformBank : public InfoBank
+{
+public:
+    /**
+     * Constructs a new audio waveform bank.
+     *
+     * @param flags  Bank behavior.
+     */
+    WaveformBank(Flags const &flags = DisableHotStorage);
+
+    void add(DotPath const &id, String const &waveformFilePath);
+    void addFromInfo(File const &file);
+
+    Waveform const &waveform(DotPath const &id) const;
+
+protected:
+    ISource *newSourceFromInfo(String const &id);
+    IData *loadFromSource(ISource &source);
+    IData *newData();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+} // namespace de
+
+#endif // LIBGUI_WAVEFORMBANK_H
