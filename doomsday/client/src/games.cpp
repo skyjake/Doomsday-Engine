@@ -31,19 +31,39 @@
 #include "resource/zip.h"
 
 #include <de/App>
+#include <de/ArrayValue>
+#include <de/DictionaryValue>
 #include <de/Log>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
 
 namespace de {
 
+/// @todo Belongs in App
 DENG2_PIMPL(Games)
 {
     /// The actual collection.
-    Games::All games;
+    All games;
 
     /// Special "null-game" object for this collection.
     NullGame *nullGame;
+
+    /**
+     * Delegates game addition notifications to scripts.
+     */
+    class GameAdditionScriptAudience : DENG2_OBSERVES(Games, Addition)
+    {
+    public:
+        void gameAdded(Game &game)
+        {
+            ArrayValue args;
+            args << DictionaryValue() << TextValue(game.id());
+            App::scriptSystem().nativeModule("App")["audienceForGameAddition"]
+                    .value<ArrayValue>().callElements(args);
+        }
+    };
+
+    GameAdditionScriptAudience scriptAudienceForGameAddition;
 
     Instance(Public *i) : Base(i), games(), nullGame(0)
     {
@@ -52,6 +72,11 @@ DENG2_PIMPL(Games)
          * object (activated once created).
          */
         nullGame = new NullGame;
+
+        // Extend the native App module with a script audience for observing game addition.
+        App::scriptSystem().nativeModule("App").addArray("audienceForGameAddition");
+
+        audienceForAddition += scriptAudienceForGameAddition;
     }
 
     ~Instance()
