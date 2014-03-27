@@ -67,7 +67,11 @@ DENG2_PIMPL(Games)
         qDeleteAll(games);
         games.clear();
     }
+
+    DENG2_PIMPL_AUDIENCE(Addition)
 };
+
+DENG2_AUDIENCE_METHOD(Games, Addition)
 
 Games::Games() : d(new Instance(this))
 {}
@@ -172,7 +176,7 @@ void Games::add(Game &game)
 
     d->games.push_back(&game);
 
-    DENG2_FOR_AUDIENCE(Addition, i)
+    DENG2_FOR_AUDIENCE2(Addition, i)
     {
         i->gameAdded(game);
     }

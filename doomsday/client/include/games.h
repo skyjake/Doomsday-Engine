@@ -61,7 +61,7 @@ public:
     typedef QList<Game *> All;
 
     /// Notified when a new game is added.
-    DENG2_DEFINE_AUDIENCE(Addition, void gameAdded(Game &game))
+    DENG2_DEFINE_AUDIENCE2(Addition, void gameAdded(Game &game))
 
 public:
     Games();

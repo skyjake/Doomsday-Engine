@@ -378,7 +378,7 @@ DENG2_PIMPL(ResourceSystem)
 #endif
 
 #ifdef __CLIENT__
-        App_Games().audienceForAddition += this;
+        App_Games().audienceForAddition() += this;
 
         // Determine the root directory of the saved session repository.
         if(int arg = App::commandLine().check("-savedir", 1))
@@ -397,7 +397,7 @@ DENG2_PIMPL(ResourceSystem)
     ~Instance()
     {
 #ifdef __CLIENT__
-        App_Games().audienceForAddition -= this;
+        App_Games().audienceForAddition() -= this;
 #endif
 
         qDeleteAll(resClasses);
