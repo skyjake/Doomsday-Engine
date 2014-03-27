@@ -135,10 +135,10 @@ publicHeaders(input, \
     include/de/input/mouseeventsource.h \
 )
 
-publicHeaders(font, \
-    include/de/font/font.h \
-    include/de/font/fontbank.h \
-    include/de/font/nativefont.h \
+publicHeaders(text, \
+    include/de/text/font.h \
+    include/de/text/fontbank.h \
+    include/de/text/nativefont.h \
 )
 
 # Sources and private headers.
@@ -148,12 +148,6 @@ SOURCES +=  \
     src/canvas.cpp \
     src/canvaswindow.cpp \
     src/displaymode.cpp \
-    src/font/fontbank.cpp \
-    src/font/font.cpp \
-    src/font/font_richformat.cpp \
-    src/font/nativefont.cpp \
-    src/font/qtnativefont.cpp \
-    src/font/qtnativefont.h \
     src/graphics/atlas.cpp \
     src/graphics/atlastexture.cpp \
     src/graphics/colorbank.cpp \
@@ -182,11 +176,17 @@ SOURCES +=  \
     src/input/keyeventsource.cpp \
     src/input/mouseevent.cpp \
     src/input/mouseeventsource.cpp \
-    src/persistentcanvaswindow.cpp
+    src/persistentcanvaswindow.cpp \
+    src/text/fontbank.cpp \
+    src/text/font.cpp \
+    src/text/font_richformat.cpp \
+    src/text/nativefont.cpp \
+    src/text/qtnativefont.cpp \
+    src/text/qtnativefont.h
 
 macx:!deng_macx6_32bit_64bit: SOURCES += \
-    src/font/coretextnativefont_macx.h \
-    src/font/coretextnativefont_macx.cpp
+    src/text/coretextnativefont_macx.h \
+    src/text/coretextnativefont_macx.cpp
 
 # DisplayMode
 !deng_nodisplaymode {
