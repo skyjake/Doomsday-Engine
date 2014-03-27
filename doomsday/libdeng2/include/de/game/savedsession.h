@@ -28,8 +28,6 @@
 namespace de {
 namespace game {
 
-class MapStateReader;
-
 /**
  * Specialized PackageFolder that hosts a serialized game session.
  *
