@@ -347,6 +347,12 @@ Reader &Reader::operator >> (FixedByteArray &fixedByteArray)
     return *this;
 }
 
+Reader &Reader::readBytes(dsize count, IByteArray &destination)
+{
+    FixedByteArray dest(destination, 0, count);
+    return *this >> dest;
+}
+
 Reader &Reader::operator >> (Block &block)
 {
     duint size = 0;
