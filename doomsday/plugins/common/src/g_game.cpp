@@ -2993,7 +2993,7 @@ static int saveGameSessionWorker(void *context)
         // Serialize the game state to a new saved session.
         de::String const savePath = sslot.savePath();
         common::writeGameSession(DENG2_APP->rootFolder().locate<de::Folder>(savePath.fileNamePath()),
-                               savePath.fileName(), metadata);
+                                 savePath.fileName(), metadata);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
