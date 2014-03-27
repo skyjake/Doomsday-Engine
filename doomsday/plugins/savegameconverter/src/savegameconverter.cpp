@@ -18,8 +18,12 @@
  */
 
 #include <QCoreApplication>
+#include <de/App>
 #include <de/CommandLine>
+#include <de/DirectoryFeed>
+#include <de/Error>
 #include <de/Log>
+#include <de/NativeFile>
 #include <de/NativePath>
 #include <de/String>
 
@@ -56,16 +60,29 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
     cmd.append("-idkey");
     cmd.append(Str_Text(&parm.fallbackGameId));
 
-    cmd.append("-output");
-    cmd.append(Str_Text(&parm.outputPath));
+    // We can only convert native files and output to native folders using Savegame Tool.
+    try
+    {
+        cmd.append("-output");
+        cmd.append(DENG2_APP->rootFolder().locate<Folder>(Str_Text(&parm.outputPath))
+                        .feeds().front()->as<DirectoryFeed>().nativePath().expand());
 
-    cmd.append(Str_Text(&parm.sourcePaths));
+        NativeFile &file = DENG2_APP->rootFolder().locate<NativeFile>(Str_Text(&parm.sourcePath));
+        cmd.append(file.nativePath());
 
-    LOG_RES_NOTE("Starting conversion of \"%s\" using Savegame Tool")
-            << NativePath(Str_Text(&parm.sourcePaths)).pretty();
-    cmd.execute();
+        LOG_RES_NOTE("Starting conversion of \"%s\" using Savegame Tool")
+                << Path(Str_Text(&parm.sourcePath));
+        cmd.execute();
 
-    return true; // A conversion attempt was made (using Savegame Tool).
+        return true;
+    }
+    catch(Error const &er)
+    {
+        LOG_RES_NOTE("Failed conversion of \"%s\":\n")
+                << Path(Str_Text(&parm.sourcePath)) << er.asText();
+    }
+
+    return false;
 }
 
 /**

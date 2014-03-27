@@ -83,7 +83,7 @@ typedef struct {
 
 /// Parameters for HOOK_SAVEGAME_CONVERT
 typedef struct {
-    Str sourcePaths;
+    Str sourcePath;
     Str outputPath;
     Str fallbackGameId;
 } ddhook_savegame_convert_t;

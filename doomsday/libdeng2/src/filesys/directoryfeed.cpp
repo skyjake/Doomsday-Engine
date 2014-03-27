@@ -40,6 +40,11 @@ String DirectoryFeed::description() const
     return "directory \"" + _nativePath.pretty() + "\"";
 }
 
+NativePath const &DirectoryFeed::nativePath() const
+{
+    return _nativePath;
+}
+
 void DirectoryFeed::populate(Folder &folder)
 {
     if(_mode & AllowWrite)

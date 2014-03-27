@@ -1917,52 +1917,6 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    /**
-     * Utility for initiating a legacy savegame conversion.
-     *
-     * @param sourcePath  Native path to the legacy savegame file to be converted.
-     * @param gameId      Identity key of the game and corresponding subfolder name within
-     *                    save repository to output the converted savegame to. Also used for
-     *                    resolving ambiguous savegame formats.
-     */
-    void convertLegacySavegame(String const &sourcePath, String const &gameId)
-    {
-        String const outputName = sourcePath.fileNameWithoutExtension() + ".save";
-        String const outputPath = nativeSavePath / gameId;
-
-        // Attempt the conversion via a plugin (each is tried in turn).
-        ddhook_savegame_convert_t parm;
-        Str_Set(Str_InitStd(&parm.sourcePaths),    NativePath(sourcePath).expand().toUtf8().constData());
-        Str_Set(Str_InitStd(&parm.outputPath),     NativePath(outputPath).expand().toUtf8().constData());
-        Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
-
-        // Try to convert the savegame via each plugin in turn.
-        dd_bool conversionAttempted = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
-
-        Str_Free(&parm.sourcePaths);
-        Str_Free(&parm.outputPath);
-        Str_Free(&parm.fallbackGameId);
-
-        if(conversionAttempted)
-        {
-            /// @todo kludge: Give the converter a chance to complete.
-            TimeDelta::fromMilliSeconds(1000).sleep();
-
-            try
-            {
-                // Update the /home/savegames/<gameId> folder.
-                Folder &saveFolder = App::rootFolder().locate<Folder>(String("home/savegames") / gameId);
-                saveFolder.populate();
-                saveRepo.add(saveFolder.locate<game::SavedSession>(outputName));
-                return;
-            }
-            catch(Folder::NotFoundError const &)
-            {} // Ignore.
-        }
-
-        /// @throw Error Seemingly no plugin was able to fulfill our request.
-        throw Error("tryConvertSavegame", "Unrecognized file format");
-    }
 
     void gameAdded(Game &game)
     {
@@ -1996,30 +1950,20 @@ DENG2_PIMPL(ResourceSystem)
 
             if(namePattern.isValid() && !namePattern.isEmpty())
             {
-                Folder &sourceFolder = App::fileSystem().makeFolder("/oldsavegames");
-                sourceFolder.setMode(Folder::ReadOnly);
+                Folder &sourceFolder = App::fileSystem().makeFolder(de::String("/legacySavegames") / gameId, FS::DontInheritFeeds);
                 sourceFolder.attach(new DirectoryFeed(oldSavePath));
                 sourceFolder.populate(Folder::PopulateOnlyThisFolder);
+                sourceFolder.setMode(Folder::ReadOnly);
 
                 DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
                 {
                     if(namePattern.exactMatch(i->first.fileName()))
                     {
-                        String const sourcePath = i->second->as<NativeFile>().nativePath().withSeparators('/');
-                        try
-                        {
-                            convertLegacySavegame(sourcePath, gameId);
-                        }
-                        catch(Error const &er)
-                        {
-                            LOG_RES_WARNING("Failed conversion of \"%s\":\n")
-                                    << NativePath(sourcePath).pretty() << er.asText();
-                        }
+
+                        self.convertLegacySavegame(i->second->path(), gameId);
                     }
                 }
 
-                // We're done with this folder.
-                delete &sourceFolder;
             }
         }
     }
@@ -3954,6 +3898,45 @@ game::SavedSessionRepository &ResourceSystem::savedSessionRepository() const
 NativePath ResourceSystem::nativeSavePath()
 {
     return d->nativeSavePath;
+}
+
+bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String const &gameId)
+{
+    String const outputName = sourcePath.fileNameWithoutExtension() + ".save";
+    String const outputPath = String("/home/savegames") / gameId;
+
+    // Attempt the conversion via a plugin (each is tried in turn).
+    ddhook_savegame_convert_t parm;
+    Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath.toUtf8().constData());
+    Str_Set(Str_InitStd(&parm.outputPath),     outputPath.toUtf8().constData());
+    Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
+
+    // Try to convert the savegame via each plugin in turn.
+    dd_bool conversionAttempted = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+
+    Str_Free(&parm.sourcePath);
+    Str_Free(&parm.outputPath);
+    Str_Free(&parm.fallbackGameId);
+
+    if(conversionAttempted)
+    {
+        /// @todo kludge: Give the converter a chance to complete.
+        TimeDelta::fromMilliSeconds(1000).sleep();
+
+        try
+        {
+            // Update the /home/savegames/<gameId> folder.
+            Folder &saveFolder = App::rootFolder().locate<Folder>(outputPath);
+            saveFolder.populate();
+            d->saveRepo.add(saveFolder.locate<game::SavedSession>(outputName));
+            return true;
+        }
+        catch(Folder::NotFoundError const &)
+        {} // Ignore.
+    }
+
+    // Seemingly no plugin was able to fulfill our request.
+    return false;
 }
 
 byte precacheMapMaterials = true;

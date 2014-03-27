@@ -70,6 +70,11 @@ public:
 
     String description() const;
 
+    /**
+     * Returns the native path of the source folder.
+     */
+    NativePath const &nativePath() const;
+
     void populate(Folder &folder);
     bool prune(File &file) const;
     File *newFile(String const &name);
