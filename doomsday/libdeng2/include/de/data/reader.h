@@ -157,6 +157,17 @@ public:
      */
     Reader &operator >> (FixedByteArray &fixedByteArray);
 
+    /**
+     * Reads a specific number of bytes and puts it to a destination
+     * byte array.
+     *
+     * @param count        Number of bytes to read.
+     * @param destination  Destination array.
+     *
+     * @return Reference to the Reader.
+     */
+    Reader &readBytes(dsize count, IByteArray &destination);
+
     /// Reads a Block from the source buffer.
     Reader &operator >> (Block &block);
 
