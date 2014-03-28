@@ -3057,7 +3057,7 @@ void G_DoLeaveMap()
             SV_OpenFileForWrite(mapStateData);
             writer_s *writer = SV_NewWriter();
             MapStateWriter().write(writer);
-            outFile << de::FixedByteArray(mapStateData);
+            outFile << mapStateData;
             Writer_Delete(writer);
             SV_CloseFile();
 
