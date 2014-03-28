@@ -219,7 +219,7 @@ bool Id1Translator::recognize(Path path)
         from.seek(24);
         Block vcheck;
         from.readBytes(16, vcheck);
-        if(!String(vcheck.constData(), 8).compare("version "))
+        if(vcheck.startsWith("version "))
         {
             // The version id can be used to determine which game format the save is in.
             int verId = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
