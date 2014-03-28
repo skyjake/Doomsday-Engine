@@ -23,6 +23,7 @@
 
 #include <de/Error>
 #include <de/FixedByteArray>
+#include <de/ByteRefArray>
 
 // Used during write:
 static de::Writer *writer;
@@ -74,10 +75,9 @@ static void srd(reader_s *r, char *data, int len)
     if(!r) return;
     DENG2_ASSERT(reader);
     if(data)
-    {
-        de::Block tmp(len);
-        *reader >> de::FixedByteArray(tmp);
-        tmp.get(0, (de::Block::Byte *)data, len);
+    {        
+        de::ByteRefArray ref(data, len);
+        reader->readPresetSize(ref);
     }
     else
     {
@@ -158,8 +158,7 @@ static void swd(Writer *w, char const *data, int len)
     DENG2_ASSERT(writer);
     if(data)
     {
-        de::Block tmp(data, len);
-        *writer << de::FixedByteArray(tmp);
+        writer->writePresetSize(de::ByteRefArray(data, len));
     }
 }
 
