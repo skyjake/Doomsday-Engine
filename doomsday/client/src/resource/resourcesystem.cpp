@@ -61,11 +61,14 @@
 #endif
 
 #include <de/App>
+#include <de/ArrayValue>
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
 #include <de/game/SavedSession>
 #include <de/Log>
+#include <de/Module>
 #include <de/NativeFile>
+#include <de/NumberValue>
 #include <de/Reader>
 #include <de/Time>
 #ifdef __CLIENT__
@@ -160,6 +163,16 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
 
 #endif // __CLIENT__
+
+/**
+ * Native Doomsday Script utility for executing a legacy savegame conversion.
+ */
+Value *Function_SavedSession_Convert(Context &, Function::ArgumentValues const &args)
+{
+    String sourcePath = args[0]->asText();
+    String gameId     = args[1]->asText();
+    return new NumberValue(App_ResourceSystem().convertLegacySavegame(sourcePath, gameId));
+}
 
 DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
@@ -328,6 +341,9 @@ DENG2_PIMPL(ResourceSystem)
     NativePath nativeSavePath;
     game::SavedSessionRepository saveRepo;
 
+    Binder binder;
+    Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
+
     Instance(Public *i)
         : Base(i)
         , defaultColorPalette      (0)
@@ -378,6 +394,11 @@ DENG2_PIMPL(ResourceSystem)
 #endif
 
 #ifdef __CLIENT__
+        // Setup the SavedSession module.
+        binder.init(savedSessionModule)
+                << DENG2_FUNC(SavedSession_Convert, "convert", "nativePath" << "gameId");
+        App::scriptSystem().addNativeModule("SavedSession", savedSessionModule);
+
         App_Games().audienceForAddition() += this;
 
         // Determine the root directory of the saved session repository.
@@ -1955,15 +1976,22 @@ DENG2_PIMPL(ResourceSystem)
                 sourceFolder.populate(Folder::PopulateOnlyThisFolder);
                 sourceFolder.setMode(Folder::ReadOnly);
 
+                //ArrayValue *pathList = 0;
                 DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
                 {
                     if(namePattern.exactMatch(i->first.fileName()))
                     {
+                        //if(!pathList) pathList = new ArrayValue;
+                        //(*pathList) << TextValue(i->second->path());
 
                         self.convertLegacySavegame(i->second->path(), gameId);
                     }
                 }
 
+                /*if(pathList)
+                {
+                    savedSessionModule.addArray(gameId + ".legacySavegames", pathList);
+                }*/
             }
         }
     }
