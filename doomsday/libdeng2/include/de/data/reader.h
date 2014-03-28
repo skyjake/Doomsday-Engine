@@ -168,6 +168,17 @@ public:
      */
     Reader &readBytes(dsize count, IByteArray &destination);
 
+    /**
+     * Reads a fixed number of bytes and puts them into a destination
+     * byte array. The complete @a destination is filled with new bytes;
+     * its size won't change.
+     *
+     * @param destination  Destination array. The size of this array
+     *                     determines how many bytes to read.
+     * @return Reference to the Reader.
+     */
+    Reader &readPresetSize(IByteArray &destination);
+
     /// Reads a Block from the source buffer.
     Reader &operator >> (Block &block);
 

@@ -32,6 +32,11 @@ class IIStream;
 /**
  * Data buffer that implements the byte array interface.
  *
+ * Note that Block is based on QByteArray, and thus automatically always ensures
+ * that the data is followed by a terminating \0 character (even if one is not
+ * part of the actual Block contents). Therefore it is safe to use it in functions
+ * that assume zero-terminated strings.
+ *
  * @ingroup data
  */
 class DENG2_PUBLIC Block : public QByteArray, public IByteArray, public IBlock

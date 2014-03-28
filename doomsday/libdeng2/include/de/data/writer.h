@@ -158,6 +158,30 @@ public:
     Writer &operator << (FixedByteArray const &fixedByteArray);
 
     /**
+     * Writes a fixed-size sequence of bytes to the destination buffer.
+     * The size of the sequence is @em NOT included in the written data.
+     * When reading, the reader must know the size beforehand.
+     *
+     * @param count  Number of bytes to write.
+     * @param array  Data to write.
+     *
+     * @return  Reference to the Writer.
+     */
+    Writer &writeBytes(dsize count, IByteArray const &array);
+
+    /**
+     * Writes a fixed-size sequence of bytes to the destination buffer.
+     * The size of the sequence is @em NOT included in the written data.
+     * When reading, the reader must know the size beforehand
+     * (Reader::readPresetSize()).
+     *
+     * @param array  Array to write.
+     *
+     * @return Reference to the Writer.
+     */
+    Writer &writePresetSize(IByteArray const &array);
+
+    /**
      * Writes @a block into the destination buffer. Writes the size of the
      * block in addition to its contents, so a Reader will not need to know
      * beforehand how large the block is.
