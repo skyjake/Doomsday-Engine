@@ -1,0 +1,114 @@
+/** @file sound.h  Base class for playable audio waveforms.
+ *
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
+#ifndef LIBGUI_SOUND_H
+#define LIBGUI_SOUND_H
+
+#include <de/Id>
+#include <de/Observers>
+#include <de/Vector>
+
+namespace de {
+
+/**
+ * Abstract base class for a playing sound. Provides methods for controlling how the
+ * sound is played, and querying the status of the sound.
+ *
+ * After creation, sounds are in a paused state, after which they can be configured with
+ * volume, frequency, etc. and started in either looping or non-looping mode.
+ *
+ * By default, sounds use 2D stereo positioning. 3D positioning is enabled when
+ * calling Sound::setPosition().
+ *
+ * @ingroup audio
+ */
+class Sound
+{
+public:
+    Sound();
+
+    /**
+     * Sounds are automatically stopped when deleted.
+     */
+    virtual ~Sound() {}
+
+    enum PlayingMode {
+        NotPlaying,
+        Once,           ///< Play once then pause the sound.
+        OnceThenDelete, ///< Play once and then delete the sound.
+        Looping         ///< Keep looping the sound.
+    };
+
+    enum Positioning {
+        Stereo,         ///< Simple 2D stereo, not 3D.
+        Absolute,
+        HeadRelative
+    };
+
+    // Methods for controlling the sound:
+
+    /**
+     * Starts playing the sound. If the sound is already playing, does nothing:
+     * to change the playing mode, one has to first stop the sound.
+     *
+     * @param mode  Playing mode.
+     */
+    virtual void play(PlayingMode mode = Once) = 0;
+
+    virtual void stop() = 0;
+    virtual void pause() = 0;
+    virtual void resume() = 0;
+
+    virtual void setVolume(dfloat volume);
+    virtual void setPan(dfloat pan);
+    virtual void setFrequency(dfloat factor);
+    virtual void setPosition(de::Vector3f const &position, Positioning positioning = Absolute);
+    virtual void setVelocity(de::Vector3f const &velocity);
+
+    // Methods for querying the sound status:
+
+    virtual PlayingMode mode() const = 0;
+    virtual bool isPaused() const = 0;
+
+    virtual bool isPlaying() const;
+    virtual dfloat volume() const;
+    virtual dfloat pan() const;
+    virtual dfloat frequency() const;
+    virtual Positioning positioning() const;
+    virtual de::Vector3f position() const;
+    virtual de::Vector3f velocity() const;
+
+    DENG2_AS_IS_METHODS()
+
+    /// Audience that is notified when the sound stops.
+    DENG2_DEFINE_AUDIENCE2(Stop, void soundStopped(Sound &))
+
+    /// Audience that is notified when the sound instance is deleted.
+    DENG2_DEFINE_AUDIENCE2(Deletion, void soundBeingDeleted(Sound &))
+
+protected:
+    /// Called after a property value has been changed.
+    virtual void update() = 0;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+} // namespace de
+
+#endif // LIBGUI_SOUND_H

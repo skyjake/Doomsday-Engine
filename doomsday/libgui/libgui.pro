@@ -79,6 +79,7 @@ publicHeaders(root, \
     include/de/NativeFont \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
+    include/de/Sound \
     include/de/TextureBank \
     include/de/VertexBuilder \
     include/de/Waveform \
@@ -96,6 +97,7 @@ publicHeaders(gui, \
 )
 
 publicHeaders(audio, \
+    include/de/audio/sound.h \
     include/de/audio/waveform.h \
     include/de/audio/waveformbank.h \
 )
@@ -143,6 +145,7 @@ publicHeaders(text, \
 
 # Sources and private headers.
 SOURCES +=  \
+    src/audio/sound.cpp \
     src/audio/waveform.cpp \
     src/audio/waveformbank.cpp \
     src/canvas.cpp \
