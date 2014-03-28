@@ -396,7 +396,7 @@ DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
         // Setup the SavedSession module.
         binder.init(savedSessionModule)
-                << DENG2_FUNC(SavedSession_Convert, "convert", "nativePath" << "gameId");
+                << DENG2_FUNC(SavedSession_Convert, "convert", "savegamePath" << "gameId");
         App::scriptSystem().addNativeModule("SavedSession", savedSessionModule);
 
         App_Games().audienceForAddition() += this;
