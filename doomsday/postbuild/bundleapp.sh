@@ -32,6 +32,9 @@ $CP $BUILDDIR/../libshell/libdeng_shell*dylib $APPDIR/Frameworks
 echo "Copying server..."
 $CP server/doomsday-server $APPDIR/Resources
 
+echo "Copying savegametool..."
+$CP tools/savegametool/savegametool $APPDIR/Resources
+
 echo "Copying shell-text..."
 $CP tools/shell/shell-text/doomsday-shell-text $APPDIR/Resources
 

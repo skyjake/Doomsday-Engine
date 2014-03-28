@@ -7,6 +7,7 @@
 
 include(../../config.pri)
 include(../../dep_deng2.pri)
+include(../../dep_deng1.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = app
@@ -14,8 +15,8 @@ TARGET   = savegametool
 
 # Build Configuration ----------------------------------------------------------
 
-CONFIG += console
 CONFIG -= app_bundle
+win32: CONFIG += console
 
 # Sources ----------------------------------------------------------------------
 
@@ -33,6 +34,7 @@ SOURCES += \
 
 macx {
     linkBinaryToBundledLibdeng2($$TARGET)
+    linkBinaryToBundledLibdeng1($$TARGET)
 }
 else {
     INSTALLS += target
