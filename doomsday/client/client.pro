@@ -404,6 +404,7 @@ DENG_HEADERS += \
     include/ui/widgets/mpselectionwidget.h \
     include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
+    include/ui/widgets/savegameselectionwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/tutorialwidget.h \
     include/ui/fi_main.h \
@@ -741,6 +742,7 @@ SOURCES += \
     src/ui/widgets/mpselectionwidget.cpp \
     src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
+    src/ui/widgets/savegameselectionwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/tutorialwidget.cpp \
     src/ui/zonedebug.cpp \

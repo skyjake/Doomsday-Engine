@@ -26,11 +26,12 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "p_saveg.h"
-#include "hereticv13gamestatereader.h"
+#include "hereticv13mapstatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_inventory.h"
 #include "saveslots.h"
+#include <de/game/SavedSessionRepository>
 #include <cstring>
 
 int verbose;
@@ -316,10 +317,6 @@ void H_PreInit()
 
     // Do the common pre init routine;
     G_CommonPreInit();
-
-    // Declare the Heretic V13 game state reader/interpreter.
-    G_GameStateReaderFactory().declareReader(&HereticV13GameStateReader::recognize,
-                                             &HereticV13GameStateReader::make);
 }
 
 void H_PostInit()

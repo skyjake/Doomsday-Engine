@@ -23,16 +23,21 @@
 
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
+#include "d_netsv.h"           /// @todo remove me
+#include "hu_log.h"
+#include "mapstatewriter.h"    // ChunkId
 #include "p_actor.h"
-#include "p_saveg.h"         // SV_ReadLine, SV_ReadSector
+#include "p_mapsetup.h"
+#include "p_savedef.h"
+#include "p_saveg.h"           // SV_ReadLine, SV_ReadSector
 #include "p_saveio.h"
+#include "player.h"
 #include "polyobjs.h"
+#include "r_common.h"
 #include "thinkerinfo.h"
+#include <de/ArrayValue>
+#include <de/NativePath>
 #include <de/String>
-
-#if !__JHEXEN__
-#define PRE_VER5_END_SPECIALS  7
-#endif
 
 namespace internal
 {
@@ -49,19 +54,23 @@ namespace internal
         return mapVersion >= 4? 1 : 0;
 #else
         return 0;
-        DENG_UNUSED(mapVersion);
+        DENG2_UNUSED(mapVersion);
 #endif
     }
 }
 
 using namespace internal;
+using namespace de;
 
 DENG2_PIMPL(MapStateReader)
 {
-    Reader *reader; // Not owned.
+    reader_s *reader;
     int saveVersion;
     int mapVersion;
     bool formatHasMapVersionNumber;
+
+    dd_bool loaded[MAXPLAYERS];
+    dd_bool infile[MAXPLAYERS];
 
     int thingArchiveSize;
 
@@ -79,19 +88,23 @@ DENG2_PIMPL(MapStateReader)
         , thingArchive(0)
         , materialArchive(0)
         , sideArchive(0)
-    {}
+    {
+        de::zap(loaded);
+        de::zap(infile);
+    }
 
     ~Instance()
     {
         delete thingArchive;
         delete sideArchive;
         MaterialArchive_Delete(materialArchive);
+        Reader_Delete(reader);
     }
 
     void beginSegment(int segId)
     {
 #if __JHEXEN__
-        if(segId == ASEG_END && SV_HxBytesLeft() < 4)
+        if(segId == ASEG_END && SV_RawReader().source()->size() - SV_RawReader().offset() < 4)
         {
             App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)");
             return;
@@ -99,10 +112,10 @@ DENG2_PIMPL(MapStateReader)
         if(Reader_ReadInt32(reader) != segId)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("MapStateReader", "Corrupt save game, segment #" + de::String::number(segId) + " failed alignment check");
+            throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
         }
 #else
-        DENG_UNUSED(segId);
+        DENG2_UNUSED(segId);
 #endif
     }
 
@@ -114,7 +127,7 @@ DENG2_PIMPL(MapStateReader)
         if(segId != ASEG_MAP_HEADER2 && segId != ASEG_MAP_HEADER)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("MapStateReader", "Corrupt save game, segment #" + de::String::number(segId) + " failed alignment check");
+            throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
         }
         formatHasMapVersionNumber = (segId == ASEG_MAP_HEADER2);
 #else
@@ -138,6 +151,17 @@ DENG2_PIMPL(MapStateReader)
 #endif
     }
 
+    void readConsistencyBytes()
+    {
+#if !__JHEXEN__
+        if(Reader_ReadByte(reader) != CONSISTENCY)
+        {
+            /// @throw ReadError Failed alignment check.
+            throw ReadError("MapStateReader", "Corrupt save game, failed consistency check");
+        }
+#endif
+    }
+
     void readMaterialArchive()
     {
         materialArchive = MaterialArchive_NewEmpty(useMaterialArchiveSegments());
@@ -146,6 +170,145 @@ DENG2_PIMPL(MapStateReader)
 #endif
         {
             MaterialArchive_Read(materialArchive, reader, mapVersion < 6? 0 : -1);
+        }
+    }
+
+    // We don't have the right to say which players are in the game. The players that already are
+    // will continue to be. If the data for a given player is not in the savegame file, he will
+    // be notified. The data for players who were saved but are not currently in the game will be
+    // discarded.
+    void readPlayers()
+    {
+#if __JHEXEN__
+        if(saveVersion >= 4)
+#else
+        if(saveVersion >= 5)
+#endif
+        {
+            beginSegment(ASEG_PLAYER_HEADER);
+        }
+        playerheader_t plrHdr;
+        plrHdr.read(reader, saveVersion);
+
+        // Setup the dummy.
+        ddplayer_t dummyDDPlayer;
+        player_t dummyPlayer;
+        dummyPlayer.plr = &dummyDDPlayer;
+
+#if !__JHEXEN__
+        ArrayValue const &presentPlayers = self.metadata().geta("players");
+#endif
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            loaded[i] = 0;
+#if !__JHEXEN__
+            infile[i] = presentPlayers.at(i).isTrue();;
+#endif
+        }
+
+        beginSegment(ASEG_PLAYERS);
+        {
+#if __JHEXEN__
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                infile[i] = Reader_ReadByte(reader);
+            }
+#endif
+
+            // Load the players.
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                // By default a saved player translates to nothing.
+                saveToRealPlayerNum[i] = -1;
+
+                if(!infile[i]) continue;
+
+                // The ID number will determine which player this actually is.
+                int pid = Reader_ReadInt32(reader);
+                player_t *player = 0;
+                for(int k = 0; k < MAXPLAYERS; ++k)
+                {
+                    if((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
+                       (!IS_NETGAME && k == 0))
+                    {
+                        // This is our guy.
+                        player = players + k;
+                        loaded[k] = true;
+                        // Later references to the player number 'i' must be translated!
+                        saveToRealPlayerNum[i] = k;
+                        App_Log(DE2_DEV_MAP_MSG, "readPlayers: saved %i is now %i", i, k);
+                        break;
+                    }
+                }
+
+                if(!player)
+                {
+                    // We have a missing player. Use a dummy to load the data.
+                    player = &dummyPlayer;
+                }
+
+                // Read the data.
+                player->read(reader, plrHdr);
+            }
+        }
+        endSegment();
+    }
+
+    void kickMissingPlayers()
+    {
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            bool notLoaded = false;
+
+#if __JHEXEN__
+            if(players[i].plr->inGame)
+            {
+                // Try to find a saved player that corresponds this one.
+                int k;
+                for(k = 0; k < MAXPLAYERS; ++k)
+                {
+                    if(saveToRealPlayerNum[k] == i)
+                    {
+                        break;
+                    }
+                }
+                if(k < MAXPLAYERS)
+                    continue; // Found; don't bother this player.
+
+                players[i].playerState = PST_REBORN;
+
+                if(!i)
+                {
+                    // If the CONSOLEPLAYER isn't in the save, it must be some
+                    // other player's file?
+                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                }
+                else
+                {
+                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
+                    notLoaded = true;
+                }
+            }
+#else
+            if(!loaded[i] && players[i].plr->inGame)
+            {
+                if(!i)
+                {
+                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                }
+                else
+                {
+                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
+                }
+                notLoaded = true;
+            }
+#endif
+
+            if(notLoaded)
+            {
+                // Kick this player out, he doesn't belong here.
+                DD_Executef(false, "kick %i", i);
+            }
         }
     }
 
@@ -174,13 +337,13 @@ DENG2_PIMPL(MapStateReader)
         beginSegment(ASEG_POLYOBJS);
 
         int const writtenPolyobjCount = Reader_ReadInt32(reader);
-        DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
+        DENG2_ASSERT(writtenPolyobjCount == numpolyobjs);
         for(int i = 0; i < writtenPolyobjCount; ++i)
         {
             /*Skip unused version byte*/ if(mapVersion >= 3) Reader_ReadByte(reader);
 
             Polyobj *po = Polyobj_ByTag(Reader_ReadInt32(reader));
-            DENG_ASSERT(po != 0);
+            DENG2_ASSERT(po != 0);
             po->read(thisPublic);
         }
 
@@ -345,6 +508,10 @@ DENG2_PIMPL(MapStateReader)
 
     void readThinkers()
     {
+#if !__JHEXEN__
+#define PRE_VER5_END_SPECIALS  7
+#endif
+
         bool const formatHasStasisInfo = (mapVersion >= 6);
 
         removeLoadSpawnedThinkers();
@@ -436,9 +603,9 @@ DENG2_PIMPL(MapStateReader)
                 break; // End of the list.
 
             ThinkerClassInfo *thInfo = SV_ThinkerInfoForClass(thinkerclass_t(tClass));
-            DENG_ASSERT(thInfo != 0);
+            DENG2_ASSERT(thInfo != 0);
             // Not for us? (it shouldn't be here anyway!).
-            DENG_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
+            DENG2_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
 
             // Mobjs use a special engine-side allocator.
             thinker_t *th = 0;
@@ -493,13 +660,15 @@ DENG2_PIMPL(MapStateReader)
             }
         }
 #endif
+
+#undef PRE_VER5_END_SPECIALS
     }
 
     void readACScriptData()
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().readMapScriptData(thisPublic);
+        Game_ACScriptInterpreter().readMapState(thisPublic);
         // endSegment();
 #endif
     }
@@ -524,7 +693,7 @@ DENG2_PIMPL(MapStateReader)
         }
 #endif
 #if __JDOOM__
-        DENG_ASSERT(theBossBrain != 0);
+        DENG2_ASSERT(theBossBrain != 0);
         theBossBrain->read(thisPublic);
 #endif
     }
@@ -541,11 +710,11 @@ DENG2_PIMPL(MapStateReader)
         for(int i = 0; i < numTargets; ++i)
         {
             xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader)));
-            DENG_ASSERT(xsec != 0);
+            DENG2_ASSERT(xsec != 0);
 
             if(!xsec)
             {
-                DENG_UNUSED(Reader_ReadInt16(reader));
+                DENG2_UNUSED(Reader_ReadInt16(reader));
                 continue;
             }
 
@@ -556,19 +725,31 @@ DENG2_PIMPL(MapStateReader)
     }
 };
 
-MapStateReader::MapStateReader(int saveVersion, int thingArchiveSize)
-    : d(new Instance(this))
-{
-    d->saveVersion      = saveVersion;
-    d->mapVersion       = saveVersion; // Default: mapVersion == saveVersion
+MapStateReader::MapStateReader(game::SavedSession const &session)
+    : game::SavedSession::MapStateReader(session)
+    , d(new Instance(this))
+{}
 
-    d->thingArchiveSize = thingArchiveSize;
-}
+MapStateReader::~MapStateReader()
+{}
 
-void MapStateReader::read(Reader *reader)
+void MapStateReader::read(String const &mapUriStr)
 {
-    DENG_ASSERT(reader != 0);
-    d->reader = reader;
+    File const &mapStateFile = folder().locate<File const>(String("maps") / mapUriStr + "State");
+    SV_OpenFileForRead(mapStateFile);
+    d->reader = SV_NewReader();
+
+    /*magic*/ Reader_ReadInt32(d->reader);
+
+    d->saveVersion = Reader_ReadInt32(d->reader);
+    d->mapVersion  = d->saveVersion; // Default: mapVersion == saveVersion
+
+    d->thingArchiveSize = 0;
+#if !__JHEXEN__
+    d->thingArchiveSize = (d->saveVersion >= 5? Reader_ReadInt32(d->reader) : 1024);
+#endif
+
+    d->readPlayers();
 
     // Prepare and populate the side archive.
     d->sideArchive = new dmu_lib::SideArchive;
@@ -598,29 +779,59 @@ void MapStateReader::read(Reader *reader)
     delete d->thingArchive; d->thingArchive = 0;
     delete d->sideArchive; d->sideArchive = 0;
     MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
+
+    d->readConsistencyBytes();
+    Reader_Delete(d->reader); d->reader = 0;
+
+#if __JHEXEN__
+    SV_ClearTargetPlayers();
+#endif
+
+    SV_CloseFile();
+
+    // Notify the players that weren't in the savegame.
+    d->kickMissingPlayers();
+
+    // In netgames, the server tells the clients about this.
+    NetSv_LoadGame(metadata().geti("sessionId"));
+
+    // Material scrollers must be spawned for older savegame versions.
+    if(d->saveVersion <= 10)
+    {
+        P_SpawnAllMaterialOriginScrollers();
+    }
+
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Inform the engine that map setup must be performed once more.
+    R_SetupMap(0, 0);
 }
 
 mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address) const
 {
-    DENG_ASSERT(d->thingArchive != 0);
+    DENG2_ASSERT(d->thingArchive != 0);
     return d->thingArchive->mobj(serialId, address);
 }
 
 Material *MapStateReader::material(materialarchive_serialid_t serialId, int group) const
 {
-    DENG_ASSERT(d->materialArchive != 0);
+    DENG2_ASSERT(d->materialArchive != 0);
     return MaterialArchive_Find(d->materialArchive, serialId, group);
 }
 
 Side *MapStateReader::side(int sideIndex) const
 {
-    DENG_ASSERT(d->sideArchive != 0);
+    DENG2_ASSERT(d->sideArchive != 0);
     return (Side *)d->sideArchive->at(sideIndex);
 }
 
 player_t *MapStateReader::player(int serialId) const
 {
-    DENG_ASSERT(serialId > 0 && serialId <= MAXPLAYERS);
+    DENG2_ASSERT(serialId > 0 && serialId <= MAXPLAYERS);
     return players + saveToRealPlayerNum[serialId - 1];
 }
 
@@ -629,14 +840,14 @@ int MapStateReader::mapVersion()
     return d->mapVersion;
 }
 
-Reader *MapStateReader::reader()
+reader_s *MapStateReader::reader()
 {
-    DENG_ASSERT(d->reader != 0);
+    DENG2_ASSERT(d->reader != 0);
     return d->reader;
 }
 
 void MapStateReader::addMobjToThingArchive(mobj_t *mobj, ThingArchive::SerialId serialId)
 {
-    DENG_ASSERT(d->thingArchive != 0);
+    DENG2_ASSERT(d->thingArchive != 0);
     d->thingArchive->insert(mobj, serialId);
 }

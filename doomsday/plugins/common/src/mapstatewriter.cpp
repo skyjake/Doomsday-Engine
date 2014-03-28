@@ -22,11 +22,10 @@
 #include "mapstatewriter.h"
 
 #include "dmu_lib.h"
+#include "p_savedef.h"   // MY_SAVE_VERSION
 #include "p_saveg.h"     // SV_WriteSector, SV_WriteLine
-#include "p_saveio.h"
 #include "polyobjs.h"
 #include "thinkerinfo.h"
-#include <de/String>
 
 namespace internal
 {
@@ -43,7 +42,7 @@ using namespace internal;
 
 DENG2_PIMPL(MapStateWriter)
 {
-    ThingArchive *thingArchive; // Not owned.
+    ThingArchive *thingArchive;
     MaterialArchive *materialArchive;
     Writer *writer; // Not owned.
 
@@ -57,6 +56,7 @@ DENG2_PIMPL(MapStateWriter)
     ~Instance()
     {
         MaterialArchive_Delete(materialArchive);
+        delete thingArchive;
     }
 
     void beginSegment(int segId)
@@ -64,13 +64,20 @@ DENG2_PIMPL(MapStateWriter)
 #if __JHEXEN__
         Writer_WriteInt32(writer, segId);
 #else
-        DENG_UNUSED(segId);
+        DENG2_UNUSED(segId);
 #endif
     }
 
     void endSegment()
     {
         beginSegment(ASEG_END);
+    }
+
+    void writeConsistencyBytes()
+    {
+#if !__JHEXEN__
+        Writer_WriteByte(writer, CONSISTENCY);
+#endif
     }
 
     void writeMapHeader()
@@ -87,6 +94,34 @@ DENG2_PIMPL(MapStateWriter)
     void writeMaterialArchive()
     {
         MaterialArchive_Write(materialArchive, writer);
+    }
+
+    void writePlayers()
+    {
+        beginSegment(ASEG_PLAYER_HEADER);
+        playerheader_t plrHdr;
+        plrHdr.write(writer);
+
+        beginSegment(ASEG_PLAYERS);
+        {
+#if __JHEXEN__
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                Writer_WriteByte(writer, players[i].plr->inGame);
+            }
+#endif
+
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                player_t *plr = players + i;
+                if(!plr->plr->inGame)
+                    continue;
+
+                Writer_WriteInt32(writer, Net_GetPlayerID(i));
+                plr->write(writer, plrHdr);
+            }
+        }
+        endSegment();
     }
 
     void writeElements()
@@ -115,7 +150,7 @@ DENG2_PIMPL(MapStateWriter)
         for(int i = 0; i < numpolyobjs; ++i)
         {
             Polyobj *po = Polyobj_ById(i);
-            DENG_ASSERT(po != 0);
+            DENG2_ASSERT(po != 0);
             po->write(thisPublic);
         }
 
@@ -134,7 +169,7 @@ DENG2_PIMPL(MapStateWriter)
      */
     static int writeThinkerWorker(thinker_t *th, void *context)
     {
-        writethinkerworker_params_t &p = *static_cast<writethinkerworker_params_t *>(context);
+        writethinkerworker_params_t const &p = *static_cast<writethinkerworker_params_t *>(context);
 
         // We are only concerned with thinkers we have save info for.
         ThinkerClassInfo *thInfo = SV_ThinkerInfo(*th);
@@ -196,7 +231,7 @@ DENG2_PIMPL(MapStateWriter)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().writeMapScriptData(thisPublic);
+        Game_ACScriptInterpreter().writeMapState(thisPublic);
         // endSegment();
 #endif
     }
@@ -220,7 +255,7 @@ DENG2_PIMPL(MapStateWriter)
         }
 #endif
 #if __JDOOM__
-        DENG_ASSERT(theBossBrain != 0);
+        DENG2_ASSERT(theBossBrain != 0);
         theBossBrain->write(thisPublic);
 #endif
     }
@@ -259,19 +294,28 @@ DENG2_PIMPL(MapStateWriter)
     }
 };
 
-MapStateWriter::MapStateWriter(ThingArchive &thingArchive)
-    : d(new Instance(this))
-{
-    d->thingArchive = &thingArchive;
-}
+MapStateWriter::MapStateWriter() : d(new Instance(this))
+{}
 
-void MapStateWriter::write(Writer *writer)
+void MapStateWriter::write(Writer *writer, bool excludePlayers)
 {
-    DENG_ASSERT(writer != 0);
+    DENG2_ASSERT(writer != 0);
     d->writer = writer;
 
     // Prepare and populate the material archive.
     d->materialArchive = MaterialArchive_New(useMaterialArchiveSegments());
+
+    Writer_WriteInt32(writer, MY_SAVE_MAGIC);
+    Writer_WriteInt32(writer, MY_SAVE_VERSION);
+
+    // Set the mobj archive numbers.
+    d->thingArchive = new ThingArchive;
+    d->thingArchive->initForSave(excludePlayers);
+#if !__JHEXEN__
+    Writer_WriteInt32(d->writer, d->thingArchive->size());
+#endif
+
+    d->writePlayers();
 
     // Serialize the map.
     d->beginSegment(ASEG_MAP_HEADER2);
@@ -288,25 +332,27 @@ void MapStateWriter::write(Writer *writer)
         d->writeSoundTargets();
     }
     d->endSegment();
+    d->writeConsistencyBytes(); // To be absolutely sure...
 
     // Cleanup.
     MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
+    delete d->thingArchive; d->thingArchive = 0;
 }
 
 ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)
 {
-    DENG_ASSERT(d->thingArchive != 0);
+    DENG2_ASSERT(d->thingArchive != 0);
     return d->thingArchive->serialIdFor(mobj);
 }
 
 materialarchive_serialid_t MapStateWriter::serialIdFor(Material *material)
 {
-    DENG_ASSERT(d->materialArchive != 0);
+    DENG2_ASSERT(d->materialArchive != 0);
     return MaterialArchive_FindUniqueSerialId(d->materialArchive, material);
 }
 
 Writer *MapStateWriter::writer()
 {
-    DENG_ASSERT(d->writer != 0);
+    DENG2_ASSERT(d->writer != 0);
     return d->writer;
 }

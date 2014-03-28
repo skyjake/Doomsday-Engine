@@ -1,4 +1,4 @@
-/** @file mapstatereader.h  Saved map state reader.
+/** @file mapstatereader.h  Common (native) saved map state reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -23,30 +23,25 @@
 
 #include "common.h"
 #include "thingarchive.h"
-#include <de/Error>
+#include <de/game/SavedSession>
+#include <de/String>
 
 /**
- * Performs saved game map state deserialization.
+ * Performs native saved game map state deserialization.
  *
  * @ingroup libcommon
  * @see MapStateWriter
  */
-class MapStateReader
+class MapStateReader : public de::game::SavedSession::MapStateReader
 {
 public:
-    /// Base class for read-related errors. @ingroup errors
-    DENG2_ERROR(ReadError);
-
-public:
-    /**
-     * @param saveVersion  Logical saved state version number.
-     */
-    MapStateReader(int saveVersion, int thingArchiveSize = 0);
+    MapStateReader(de::game::SavedSession const &session);
+    virtual ~MapStateReader();
 
     /**
-     * Deserialize the saved map state using the specified @a reader.
+     * Deserialize the saved map state.
      */
-    void read(Reader *reader);
+    void read(de::String const &mapUriStr);
 
     /**
      * Returns the logical map version of the saved map state.

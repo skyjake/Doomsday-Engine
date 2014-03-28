@@ -64,30 +64,25 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
-void ACScriptInterpreter::DeferredTask::write(Writer *writer) const
+void ACScriptInterpreter::DeferredTask::operator >> (de::Writer &to) const
 {
-    Uri_Write(mapUri, writer);
-    Writer_WriteInt32(writer, scriptNumber);
+    to << de::String(Str_Text(Uri_Compose(mapUri)))
+       << scriptNumber;
     for(int i = 0; i < 4; ++i)
     {
-        Writer_WriteByte(writer, args[i]);
+        to << args[i];
     }
 }
 
-void ACScriptInterpreter::DeferredTask::read(Reader *reader, int segmentVersion)
+void ACScriptInterpreter::DeferredTask::operator << (de::Reader &from)
 {
-    if(segmentVersion >= 4)
-    {
-        mapUri = Uri_FromReader(reader);
-    }
-    else
-    {
-        mapUri = G_ComposeMapUri(gameEpisode, Reader_ReadInt32(reader));
-    }
-    scriptNumber = Reader_ReadInt32(reader);
+    de::String mapUriStr;
+    from >> mapUriStr;
+    mapUri = Uri_NewWithPath2(mapUriStr.toUtf8().constData(), RC_NULL);
+    from >> scriptNumber;
     for(int i = 0; i < 4; ++i)
     {
-        args[i] = Reader_ReadByte(reader);
+        from >> args[i];
     }
 }
 
@@ -472,80 +467,44 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     Thinker_Remove(&script->thinker);
 }
 
-void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
+void ACScriptInterpreter::writeWorldState(de::Writer &to) const
 {
-    Writer_WriteByte(writer, 4); // version byte
-
+    // Write the world-global variable namespace.
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        Writer_WriteInt32(writer, worldVars[i]);
+        to << worldVars[i];
     }
 
-    // Serialize the deferred task queue.
-    Writer_WriteInt32(writer, _deferredTasksSize);
+    // Write the deferred task queue.
+    to << _deferredTasksSize;
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        _deferredTasks[i].write(writer);
+        to << _deferredTasks[i];
     }
 }
 
-void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
+void ACScriptInterpreter::readWorldState(de::Reader &from)
 {
-    int ver = 1;
-
-    if(saveVersion >= 7)
-    {
-        ver = Reader_ReadByte(reader);
-    }
-
+    // Read the world-global variable namespace.
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        worldVars[i] = Reader_ReadInt32(reader);
+        from >> worldVars[i];
     }
 
-    // Deserialize the deferred task queue.
+    // Read the deferred task queue.
     clearDeferredTasks();
-    if(ver >= 3)
+    from >> _deferredTasksSize;
+    if(_deferredTasksSize)
     {
-        _deferredTasksSize = Reader_ReadInt32(reader);
-        if(_deferredTasksSize)
+        _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * _deferredTasksSize, PU_GAMESTATIC);
+        for(int i = 0; i < _deferredTasksSize; ++i)
         {
-            _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * _deferredTasksSize, PU_GAMESTATIC);
-            for(int i = 0; i < _deferredTasksSize; ++i)
-            {
-                _deferredTasks[i].read(reader, ver);
-            }
-        }
-    }
-    else
-    {
-        // Old format.
-        for(int i = 0; i < 20; ++i)
-        {
-            int map          = Reader_ReadInt32(reader);
-            int scriptNumber = Reader_ReadInt32(reader);
-            byte args[4];
-            for(int k = 0; k < 4; ++k)
-            {
-                args[k] = Reader_ReadByte(reader);
-            }
-
-            if(map > 0)
-            {
-                Uri *mapUri = G_ComposeMapUri(gameEpisode, map - 1);
-                newDeferredTask(mapUri, scriptNumber, args);
-                Uri_Delete(mapUri);
-            }
-        }
-
-        if(saveVersion < 7)
-        {
-            SV_Seek(12); // Junk.
+            from >> _deferredTasks[i];
         }
     }
 }
 
-void ACScriptInterpreter::writeMapScriptData(MapStateWriter *msw)
+void ACScriptInterpreter::writeMapState(MapStateWriter *msw)
 {
     Writer *writer = msw->writer();
 
@@ -562,7 +521,7 @@ void ACScriptInterpreter::writeMapScriptData(MapStateWriter *msw)
     }
 }
 
-void ACScriptInterpreter::readMapScriptData(MapStateReader *msr)
+void ACScriptInterpreter::readMapState(MapStateReader *msr)
 {
     Reader *reader = msr->reader();
 

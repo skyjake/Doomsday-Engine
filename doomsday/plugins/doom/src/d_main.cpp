@@ -26,10 +26,11 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "p_saveg.h"
-#include "doomv9gamestatereader.h"
+#include "doomv9mapstatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include "saveslots.h"
+#include <de/game/SavedSessionRepository>
 
 int verbose;
 
@@ -379,10 +380,6 @@ void D_PreInit()
 
     // Do the common pre init routine;
     G_CommonPreInit();
-
-    // Declare the Doom V9 game state reader/interpreter.
-    G_GameStateReaderFactory().declareReader(&DoomV9GameStateReader::recognize,
-                                             &DoomV9GameStateReader::make);
 
     G_InitSpecialFilter();
 }

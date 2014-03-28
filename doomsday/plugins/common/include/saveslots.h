@@ -21,18 +21,13 @@
 #ifndef LIBCOMMON_SAVESLOTS_H
 #define LIBCOMMON_SAVESLOTS_H
 
-#include "common.h"
 #include <de/Error>
+#include <de/game/SavedSession>
+#include <de/Path>
 #include <de/String>
-
-class SaveInfo;
 
 /**
  * Maps save-game session file names into a finite set of "save slots".
- *
- * @todo At present the associated SaveInfos are actually owned by this class. In the future
- * these should be referenced from another container which has none of the restrictions of
- * the slot-based mechanism.
  *
  * @ingroup libcommon
  */
@@ -48,13 +43,27 @@ public:
     class Slot
     {
     public:
-        Slot(de::String id, bool userWritable, de::String const &fileName = "",
-             int gameMenuWidgetId = 0);
+        /// No SavedSession exists for the logical save slot. @ingroup errors
+        DENG2_ERROR(MissingSessionError);
+
+        /// Logical saved session status:
+        enum SessionStatus {
+             Loadable,
+             Incompatible,
+             Unused
+        };
+
+    public:
+        Slot(de::String id, bool userWritable, de::String savePath, int menuWidgetId = 0);
 
         /**
-         * Returns @c true iff a saved game session exists for the logical save slot.
+         * Returns the logical status of the saved session associated with the logical save slot.
          */
-        bool isUsed() const;
+        SessionStatus sessionStatus() const;
+
+        inline bool isLoadable() const     { return sessionStatus() == Loadable; }
+        inline bool isIncompatible() const { return sessionStatus() == Incompatible; }
+        inline bool isUnused() const       { return sessionStatus() == Unused; }
 
         /**
          * Returns @c true iff the logical save slot is user-writable.
@@ -62,33 +71,59 @@ public:
         bool isUserWritable() const;
 
         /**
+         * Returns @c true iff a saved game session exists for the logical save slot.
+         */
+        bool hasSavedSession() const;
+
+        /**
+         * Convenient method for determining whether a loadable saved session exists for the
+         * logical save slot.
+         *
+         * @see hasSavedSession(), isLoadable()
+         */
+        inline bool hasLoadableSavedSession() const {
+            return hasSavedSession() && isLoadable();
+        }
+
+        /**
+         * Returns the saved session for the logical save slot.
+         */
+        de::game::SavedSession &savedSession() const;
+
+        /**
+         * Change the saved session linked with the logical save slot. It is not usually
+         * necessary to call this.
+         *
+         * @param newSession  New SavedSession to apply. Use @c 0 to clear.
+         */
+        void setSavedSession(de::game::SavedSession *newSession);
+
+        /**
+         * Copies the saved session from the @a source slot.
+         */
+        void copySavedSession(Slot const &source);
+
+        /**
          * Returns the unique identifier/name for the logical save slot.
          */
         de::String const &id() const;
 
         /**
-         * Returns the session file name bound to the logical save slot.
+         * Returns the absolute path of the saved session, bound to the logical save slot.
          */
-        de::String const &fileName() const;
+        de::String const &savePath() const;
 
         /**
-         * Change the session file name bound to the logical save slot.
+         * Change the absolute path of the saved session, bound to the logical save slot.
          *
-         * @param newName  New session file name to be bound.
+         * @param newPath  New absolute path of the saved session to bind to.
          */
-        void bindFileName(de::String newName);
+        void bindSavePath(de::String newPath);
 
         /**
-         * Returns the SaveInfo associated with the logical save slot.
+         * Deletes the saved session linked to the logical save slot (if any).
          */
-        SaveInfo &saveInfo() const;
-
-        /**
-         * Replace the existing save info with @a newInfo.
-         *
-         * @param newInfo  New SaveInfo to replace with. Ownership is given.
-         */
-        void replaceSaveInfo(SaveInfo *newInfo);
+        void clear();
 
     private:
         DENG2_PRIVATE(d)
@@ -100,26 +135,26 @@ public:
     /**
      * Add a new logical save slot.
      *
-     * @param id                Unique identifier for this slot.
-     * @param userWritable      @c true= allow the user to write to this slot.
-     * @param fileName          File name to bind to this slot.
-     * @param gameMenuWidgetId  Unique identifier of the game menu widget to associate this slot with;
-     *                          otherwise @c 0= none.
+     * @param id              Unique identifier for this slot.
+     * @param userWritable    @c true= allow the user to write to this slot.
+     * @param repositoryPath  Relative path in the repository to bind to this slot.
+     * @param menuWidgetId    Unique identifier of the game menu widget to associate this slot with.
+     *                        Use @c 0 for none.
      */
-    void addSlot(de::String id, bool userWritable, de::String fileName, int gameMenuWidgetId = 0);
+    void add(de::String id, bool userWritable, de::String savePath, int menuWidgetId = 0);
 
     /**
      * Returns the total number of logical save slots.
      */
-    int slotCount() const;
+    int count() const;
 
-    /// @see slotCount()
-    inline int size() const { return slotCount(); }
+    /// @copydoc count()
+    inline int size() const { return count(); }
 
     /**
      * Returns @c true iff @a value is interpretable as a logical slot identifier.
      */
-    bool hasSlot(de::String value) const;
+    bool has(de::String value) const;
 
     /// @see slot()
     inline Slot &operator [] (de::String slotId) {
@@ -129,44 +164,14 @@ public:
     /**
      * Returns the logical save slot associated with @a slotId.
      *
-     * @see hasSlot(), slotByUserDescription()
+     * @see has()
      */
     Slot &slot(de::String slotId) const;
 
     /**
-     * Lookup a slot by searching for a saved game session with a matching user description.
-     * The search is in ascending slot identifier order.
-     *
-     * @param description  Description of the game-save to look for (not case sensitive).
-     *
-     * @return  Pointer to the found slot; otherwise @c 0.
-     *
-     * @see slot()
+     * Returns the logical save slot associated with the given saved @a session.
      */
-    Slot *slotByUserDescription(de::String description) const;
-
-    /**
-     * Deletes all saved game session files associated with the specified save @a slotId.
-     *
-     * @see hasSlot()
-     */
-    void clearSlot(de::String slotId);
-
-    /**
-     * Copies all the saved game session files from one slot to another.
-     *
-     * @see hasSlot()
-     */
-    void copySlot(de::String sourceSlotId, de::String destSlotId);
-
-    /**
-     * Force an update of the cached game-save info. To be called (sparingly) at strategic
-     * points when an update is necessary (e.g., the game-save paths have changed).
-     *
-     * @note It is not necessary to call this after a game-save is made, this module will do
-     * so automatically.
-     */
-    void updateAll();
+    Slot *slot(de::game::SavedSession const *session) const;
 
     /**
      * Register the console commands and variables of this module.

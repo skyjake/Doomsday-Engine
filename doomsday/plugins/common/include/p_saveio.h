@@ -21,98 +21,28 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
-#include "api_materialarchive.h"
-#include "p_savedef.h"
-#include <de/Path>
-#include "lzss.h"
-
-typedef enum savestatesegment_e {
-    ASEG_MAP_HEADER = 102,  // Hexen only
-    ASEG_MAP_ELEMENTS,
-    ASEG_POLYOBJS,          // Hexen only
-    ASEG_MOBJS,             // Hexen < ver 4 only
-    ASEG_THINKERS,
-    ASEG_SCRIPTS,           // Hexen only
-    ASEG_PLAYERS,
-    ASEG_SOUNDS,            // Hexen only
-    ASEG_MISC,              // Hexen only
-    ASEG_END,               // = 111
-    ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2,
-    ASEG_PLAYER_HEADER,
-    ASEG_WORLDSCRIPTDATA   // Hexen only
-} savestatesegment_t;
-
-#if __JHEXEN__
-typedef union saveptr_u {
-    byte *b;
-    short *w;
-    int *l;
-    float *f;
-} saveptr_t;
-#endif
-
-void SV_InitIO();
-void SV_ShutdownIO();
-
-/**
- * Create the saved game directories.
- */
-void SV_SetupSaveDirectory(de::Path);
-
-de::Path SV_SavePath();
-
-#if !__JHEXEN__
-de::Path SV_ClientSavePath();
-#endif
+#include <de/File>
+#include <de/Reader>
+#include <de/Writer>
+#include <de/reader.h>
+#include <de/writer.h>
 
 /*
  * File management
  */
 
-bool SV_ExistingFile(de::Path filePath);
-
-int SV_RemoveFile(de::Path filePath);
-
-void SV_CopyFile(de::Path srcFilePath, de::Path destFilePath);
-
-bool SV_OpenFile(de::Path filePath, bool write);
-
 void SV_CloseFile();
-
-#if __JHEXEN__
-saveptr_t *SV_HxSavePtr();
-
-void SV_HxSetSaveEndPtr(void *endPtr);
-
-size_t SV_HxBytesLeft();
-
-void SV_HxReleaseSaveBuffer();
-#endif // __JHEXEN__
-
-/**
- * Exit with a fatal error if the value at the current location in the
- * game-save file does not match that associated with the segment id.
- *
- * @param segmentId  Identifier of the segment to check alignment of.
- */
-void SV_AssertSegment(int segmentId);
-
-void SV_BeginSegment(int segmentId);
-
-void SV_EndSegment();
-
-void SV_WriteConsistencyBytes();
-
-void SV_ReadConsistencyBytes();
-
-/**
- * Seek forward @a offset bytes in the save file.
- */
-void SV_Seek(uint offset);
+bool SV_OpenFileForRead(de::File const &file);
+bool SV_OpenFileForWrite(de::IByteArray &block);
 
 Writer *SV_NewWriter();
 
+/// Provides access to the wrapped de::Writer instance used for serialization.
+de::Writer &SV_RawWriter();
+
 Reader *SV_NewReader();
+
+/// Provides access to the wrapped de::Reader instance used for deserialization.
+de::Reader &SV_RawReader();
 
 #endif // LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H

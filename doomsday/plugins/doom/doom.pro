@@ -45,7 +45,7 @@ HEADERS += \
     include/doomdata.h \
     include/doomdef.h \
     include/doomtype.h \
-    include/doomv9gamestatereader.h \
+    include/doomv9mapstatereader.h \
     include/dstrings.h \
     include/g_game.h \
     include/info.h \
@@ -77,7 +77,7 @@ SOURCES += \
     src/d_items.c \
     src/d_main.cpp \
     src/d_refresh.cpp \
-    src/doomv9gamestatereader.cpp \
+    src/doomv9mapstatereader.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \

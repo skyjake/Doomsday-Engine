@@ -114,7 +114,7 @@ DENG_HEADERS += \
     $$SRC/include/EntityDatabase \
     $$SRC/include/Game \
     $$SRC/include/Games \
-    $$SRC/include/Interceptor \
+    $$SRC/include/Interceptor
 
 # Private headers.
 DENG_HEADERS += \

@@ -29,8 +29,6 @@
 #  define CONSISTENCY           0x2c
 #  define SAVEGAMENAME          "DoomSav"
 #  define CLIENTSAVEGAMENAME    "DoomCl"
-#  define SAVEGAMEEXTENSION     "dsg"
-#  define SAVEGAME_DEFAULT_DIR  "savegame"
 
 #  define NUMSAVESLOTS          8
 //#  define BASE_SLOT             8
@@ -42,8 +40,6 @@
 #  define CONSISTENCY           0x2c
 #  define SAVEGAMENAME          "D64Sav"
 #  define CLIENTSAVEGAMENAME    "D64Cl"
-#  define SAVEGAMEEXTENSION     "6sg"
-#  define SAVEGAME_DEFAULT_DIR  "savegame"
 
 #  define NUMSAVESLOTS          8
 //#  define BASE_SLOT             8
@@ -55,8 +51,6 @@
 #  define CONSISTENCY           0x9d
 #  define SAVEGAMENAME          "HticSav"
 #  define CLIENTSAVEGAMENAME    "HticCl"
-#  define SAVEGAMEEXTENSION     "hsg"
-#  define SAVEGAME_DEFAULT_DIR  "savegame"
 
 #  define NUMSAVESLOTS          8
 //#  define BASE_SLOT             8
@@ -67,8 +61,6 @@
 #  define MY_CLIENT_SAVE_MAGIC  0x2B17CC00
 #  define SAVEGAMENAME          "hex"
 #  define CLIENTSAVEGAMENAME    "hexencl"
-#  define SAVEGAMEEXTENSION     "hxs"
-#  define SAVEGAME_DEFAULT_DIR  "hexndata"
 
 #  define NUMSAVESLOTS          6
 #  define BASE_SLOT             6

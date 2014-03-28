@@ -51,6 +51,12 @@ typedef struct gamedef_s {
     /// Default author. May be overridden later.
     /// Used for (e.g.) the map author name if not specified in a Map Info definition.
     char const *defaultAuthor;
+
+    /*
+     * Used when converting legacy savegames:
+     */
+    char const *legacySavegameNameExp;
+    char const *legacySavegameSubfolder;
 } GameDef;
 
 /**
@@ -66,7 +72,7 @@ typedef struct gameinfo_s {
 /// @}
 
 // The Base API.
-DENG_API_TYPEDEF(Base) // v1
+DENG_API_TYPEDEF(Base) // v2
 {
     de_api_t api;
 
@@ -159,22 +165,29 @@ DENG_API_TYPEDEF(Base) // v1
      * perform map setup once more.
      */
     void (*SetupMap)(int mode, int flags);
+
+    /**
+     * Returns a pointer to the application's saved session repository.
+     * @todo Somewhat of a kludge...
+     */
+    void *(*SavedSessionRepository)(void);
 }
 DENG_API_T(Base);
 
 #ifndef DENG_NO_API_MACROS_BASE
-#define Sys_Quit            _api_Base.Quit
-#define DD_GetInteger       _api_Base.GetInteger
-#define DD_SetInteger       _api_Base.SetInteger
-#define DD_GetVariable      _api_Base.GetVariable
-#define DD_SetVariable      _api_Base.SetVariable
-#define DD_DefineGame       _api_Base.DefineGame
-#define DD_GameIdForKey     _api_Base.GameIdForKey
-#define DD_AddGameResource  _api_Base.AddGameResource
-#define DD_GameInfo         _api_Base.gameInfo
-#define DD_IsSharpTick      _api_Base.IsSharpTick
-#define Net_SendPacket      _api_Base.SendPacket
-#define R_SetupMap          _api_Base.SetupMap
+#define Sys_Quit                  _api_Base.Quit
+#define DD_GetInteger             _api_Base.GetInteger
+#define DD_SetInteger             _api_Base.SetInteger
+#define DD_GetVariable            _api_Base.GetVariable
+#define DD_SetVariable            _api_Base.SetVariable
+#define DD_DefineGame             _api_Base.DefineGame
+#define DD_GameIdForKey           _api_Base.GameIdForKey
+#define DD_AddGameResource        _api_Base.AddGameResource
+#define DD_GameInfo               _api_Base.gameInfo
+#define DD_IsSharpTick            _api_Base.IsSharpTick
+#define Net_SendPacket            _api_Base.SendPacket
+#define R_SetupMap                _api_Base.SetupMap
+#define DD_SavedSessionRepository _api_Base.SavedSessionRepository
 #endif
 
 #ifdef __DOOMSDAY__

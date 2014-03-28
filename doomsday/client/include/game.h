@@ -57,9 +57,15 @@ public:
     /**
      * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
      * @param configDir     Name of the config directory.
+     *
+     * @param legacySavegameNameExp   Regular expression used for matching legacy savegame names.
+     * @param legacySavegameSubfoler  Game-specific subdirectory of /home for legacy savegames.
      */
     Game(String const &identityKey, Path const &configDir,
-         String const &title = "Unnamed", String const &author = "Unknown");
+         String const &title                   = "Unnamed",
+         String const &author                  = "Unknown",
+         String const &legacySavegameNameExp   = "",
+         String const &legacySavegameSubfolder = "");
 
     virtual ~Game();
 
@@ -123,6 +129,19 @@ public:
      * Returns the identifier of the Style logo image to represent this game.
      */
     de::String logoImageId() const;
+
+    /**
+     * Returns the regular expression used for locating legacy savegame files.
+     */
+    String legacySavegameNameExp() const;
+
+    /**
+     * Determine the absolute path to the legacy savegame folder for the game. If there is
+     * no possibility of a legacy savegame existing (e.g., because the game is newer than
+     * the introduction of the modern, package-based .save format) then a zero length string
+     * is returned.
+     */
+    String legacySavegamePath() const;
 
     /**
      * Add a new manifest to the list of manifests.

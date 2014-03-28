@@ -28,15 +28,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #include "hu_chat.h"
 #include "hu_lib.h"
@@ -1928,15 +1920,16 @@ static void drawEditBackground(mn_object_t const *ob, int x, int y, int width, f
     }
 }
 
-void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
+void MNEdit_Drawer(mn_object_t *ob, Point2Raw const *_origin)
 {
-    const mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
+    mndata_edit_t const *edit = (mndata_edit_t *) ob->_typedata;
     fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
     float light = 1, textAlpha = rs.pageAlpha;
     uint numVisCharacters;
-    const char* string = 0;
+    char const *string = 0;
     Point2Raw origin;
-    assert(ob->_type == MN_EDIT);
+
+    DENG_ASSERT(ob->_type == MN_EDIT);
 
     origin.x = _origin->x + MNDATA_EDIT_OFFSET_X;
     origin.y = _origin->y + MNDATA_EDIT_OFFSET_Y;
@@ -1957,20 +1950,22 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
 
     numVisCharacters = string? strlen(string) : 0;
     if(edit->maxVisibleChars > 0 && edit->maxVisibleChars < numVisCharacters)
+    {
         numVisCharacters = edit->maxVisibleChars;
+    }
 
     drawEditBackground(ob, origin.x + MNDATA_EDIT_BACKGROUND_OFFSET_X,
                            origin.y + MNDATA_EDIT_BACKGROUND_OFFSET_Y,
                        Rect_Width(ob->_geometry), rs.pageAlpha);
 
-    if(string)
+    //if(string)
     {
         float color[4], t = 0;
 
         // Flash if focused?
         if(!(ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
         {
-            const float speed = cfg.menuTextFlashSpeed / 2.f;
+            float const speed = cfg.menuTextFlashSpeed / 2.f;
             t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }
 
@@ -1996,14 +1991,13 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
+int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
-    assert(ob->_type == MN_EDIT);
+    mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
+    DENG_ASSERT(ob->_type == MN_EDIT);
 
-    switch(cmd)
+    if(cmd == MCMD_SELECT)
     {
-    case MCMD_SELECT:
         if(!(ob->_flags & MNF_ACTIVE))
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
@@ -2027,9 +2021,13 @@ int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
             }
         }
         return true;
-    case MCMD_NAV_OUT:
-        if(ob->_flags & MNF_ACTIVE)
+    }
+
+    if(ob->_flags & MNF_ACTIVE)
+    {
+        switch(cmd)
         {
+        case MCMD_NAV_OUT:
             Str_Copy(&edit->text, &edit->oldtext);
             ob->_flags &= ~MNF_ACTIVE;
             if(MNObject_HasAction(ob, MNA_CLOSE))
@@ -2037,10 +2035,20 @@ int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
                 MNObject_ExecAction(ob, MNA_CLOSE, NULL);
             }
             return true;
+
+        // Eat all other navigation commands, when active.
+        case MCMD_NAV_LEFT:
+        case MCMD_NAV_RIGHT:
+        case MCMD_NAV_DOWN:
+        case MCMD_NAV_UP:
+        case MCMD_NAV_PAGEDOWN:
+        case MCMD_NAV_PAGEUP:
+            return true;
+
+        default: break;
         }
-        break;
-    default: break;
     }
+
     return false; // Not eaten.
 }
 

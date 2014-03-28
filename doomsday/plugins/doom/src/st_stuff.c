@@ -303,7 +303,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    if(!GameRuleset_Deathmatch(G_RulesPtr()))
+    if(!G_Ruleset_Deathmatch())
     {
         haveArms = R_GetPatchInfo(pArmsBackground, &armsInfo);
 
@@ -1249,7 +1249,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
-    if(!GameRuleset_Deathmatch(G_RulesPtr())) return;
+    if(!G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -1292,7 +1292,7 @@ void SBarFrags_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(!GameRuleset_Deathmatch(G_RulesPtr())) return;
+    if(!G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -1512,7 +1512,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
-    if(GameRuleset_Deathmatch(G_RulesPtr())) return;
+    if(G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
@@ -1553,7 +1553,7 @@ void WeaponSlot_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(GameRuleset_Deathmatch(G_RulesPtr())) return;
+    if(G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(!text && !R_GetPatchInfo(wpns->patchId, &info)) return;
@@ -1655,7 +1655,7 @@ void Frags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     char buf[20];
 
     if(!cfg.hudShown[HUD_FRAGS]) return;
-    if(!GameRuleset_Deathmatch(G_RulesPtr())) return;
+    if(!G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
@@ -1685,7 +1685,7 @@ void Frags_UpdateGeometry(uiwidget_t* obj)
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
     if(!cfg.hudShown[HUD_FRAGS]) return;
-    if(!GameRuleset_Deathmatch(G_RulesPtr())) return;
+    if(!G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
@@ -2778,7 +2778,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(GameRuleset_Skill(G_RulesPtr()) == SM_BABY && cfg.automapBabyKeys)
+    if(G_Ruleset_Skill() == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);

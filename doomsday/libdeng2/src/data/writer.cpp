@@ -210,6 +210,16 @@ Writer &Writer::operator << (FixedByteArray const &fixedByteArray)
     return *this;
 }
 
+Writer &Writer::writeBytes(dsize count, IByteArray const &array)
+{
+    return *this << FixedByteArray(array, 0, count);
+}
+
+Writer &Writer::writePresetSize(IByteArray const &array)
+{
+    return *this << FixedByteArray(array);
+}
+
 Writer &Writer::operator << (Block const &block)
 {
     // First write the length of the block.

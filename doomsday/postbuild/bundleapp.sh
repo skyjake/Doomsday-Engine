@@ -32,6 +32,9 @@ $CP $BUILDDIR/../libshell/libdeng_shell*dylib $APPDIR/Frameworks
 echo "Copying server..."
 $CP server/doomsday-server $APPDIR/Resources
 
+echo "Copying savegametool..."
+$CP tools/savegametool/savegametool $APPDIR/Resources
+
 echo "Copying shell-text..."
 $CP tools/shell/shell-text/doomsday-shell-text $APPDIR/Resources
 
@@ -39,14 +42,15 @@ echo "Copying bundles from plugins..."
 PLUGDIR=$APPDIR/DengPlugins
 rm -rf $PLUGDIR
 mkdir -p $PLUGDIR
-$CP plugins/dehread/dehread.bundle                 $PLUGDIR/
-$CP plugins/wadmapconverter/wadmapconverter.bundle $PLUGDIR/
-$CP plugins/doom/doom.bundle                       $PLUGDIR/
-$CP plugins/heretic/heretic.bundle                 $PLUGDIR/
-$CP plugins/hexen/hexen.bundle                     $PLUGDIR/
-$CP plugins/doom64/doom64.bundle                   $PLUGDIR/
-$CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
-$CP plugins/example/example.bundle                 $PLUGDIR/
+$CP plugins/dehread/dehread.bundle                     $PLUGDIR/
+$CP plugins/savegameconverter/savegameconverter.bundle $PLUGDIR/
+$CP plugins/wadmapconverter/wadmapconverter.bundle     $PLUGDIR/
+$CP plugins/doom/doom.bundle                           $PLUGDIR/
+$CP plugins/heretic/heretic.bundle                     $PLUGDIR/
+$CP plugins/hexen/hexen.bundle                         $PLUGDIR/
+$CP plugins/doom64/doom64.bundle                       $PLUGDIR/
+$CP plugins/fmod/audio_fmod.bundle                     $PLUGDIR/
+$CP plugins/example/example.bundle                     $PLUGDIR/
 
 # Tools
 #$CP tools/wadtool/wadtool $APPDIR/Resources

@@ -63,33 +63,51 @@ static __inline gameid_t toGameId(int gamemode)
 /**
  * Register the game modes supported by this plugin.
  */
-int G_RegisterGames(int hookType, int param, void* data)
+int G_RegisterGames(int hookType, int param, void *data)
 {
-#define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
+#define STARTUPPK3              PLUGIN_NAMETEXT2 ".pk3"
+#define LEGACYSAVEGAMENAMEEXP   "^(?:DoomSav)[0-9]{1,1}(?:.dsg)"
+#define LEGACYSAVEGAMESUBFOLDER "savegame"
 
     GameDef const hacxDef = {
-        "hacx", "hacx", "HACX - Twitch 'n Kill", "Banjo Software"
+        "hacx", "hacx",
+        "HACX - Twitch 'n Kill", "Banjo Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const chexDef = {
-        "chex", "chex", "Chex(R) Quest", "Digital Cafe"
+        "chex", "chex",
+        "Chex(R) Quest", "Digital Cafe",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doom2TntDef = {
-        "doom2-tnt", "doom", "Final DOOM: TNT: Evilution", "Team TNT"
+        "doom2-tnt", "doom",
+        "Final DOOM: TNT: Evilution", "Team TNT",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doom2PlutDef = {
-        "doom2-plut", "doom", "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
+        "doom2-plut", "doom",
+        "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doom2Def = {
-        "doom2", "doom", "DOOM 2: Hell on Earth", "id Software"
+        "doom2", "doom",
+        "DOOM 2: Hell on Earth", "id Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doomUltimateDef = {
-        "doom1-ultimate", "doom", "Ultimate DOOM", "id Software"
+        "doom1-ultimate", "doom",
+        "Ultimate DOOM", "id Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doomDef = {
-        "doom1", "doom", "DOOM Registered", "id Software"
+        "doom1", "doom",
+        "DOOM Registered", "id Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const doomShareDef = {
-        "doom1-share", "doom", "DOOM Shareware", "id Software"
+        "doom1-share", "doom",
+        "DOOM Shareware", "id Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

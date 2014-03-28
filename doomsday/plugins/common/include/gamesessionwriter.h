@@ -1,8 +1,7 @@
-/** @file doomv9gamestatereader.h  Doom ver 1.9 saved game state reader.
+/** @file gamesessionwriter.h  Serializing game state to a saved session.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,33 +18,26 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_DOOMV9_GAMESTATEREADER
-#define LIBDOOM_DOOMV9_GAMESTATEREADER
+#ifndef LIBCOMMON_GAMESESSIONWRITER_H
+#define LIBCOMMON_GAMESESSIONWRITER_H
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
-#endif
+#include <de/game/SavedSession>
+#include <de/String>
 
-#include "gamestatereader.h"
+namespace common {
 
 /**
- * Doom ver 1.9 saved game state reader.
+ * Native game state saved session writer.
  *
- * @ingroup libdoom
+ * @param saveFolder    Folder in which the new .save package will be written.
+ * @param saveFileName  Name of the session .save package being written to.
+ * @param metadata      Session metadata to be written. A copy is made.
+ *
+ * @ingroup libcommon
  */
-class DoomV9GameStateReader : public IGameStateReader
-{
-public:
-    DoomV9GameStateReader();
-    ~DoomV9GameStateReader();
+void writeGameSession(de::Folder &saveFolder, de::String const &saveFileName,
+                      de::game::SessionMetadata const &metadata);
 
-    static IGameStateReader *make();
-    static bool recognize(SaveInfo &info);
+}
 
-    void read(SaveInfo &info);
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-#endif // LIBDOOM_DOOMV9_GAMESTATEREADER
+#endif // LIBCOMMON_GAMESESSIONWRITER_H

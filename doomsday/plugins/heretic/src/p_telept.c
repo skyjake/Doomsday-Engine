@@ -223,7 +223,7 @@ void P_ArtiTele(player_t *player)
     playerstart_t const *start;
 
     // Get a random deathmatch start.
-    if((start = P_GetPlayerStart(0, GameRuleset_Deathmatch(G_RulesPtr())? -1 : 0, GameRuleset_Deathmatch(G_RulesPtr()))))
+    if((start = P_GetPlayerStart(0, G_Ruleset_Deathmatch()? -1 : 0, G_Ruleset_Deathmatch())))
     {
         mapspot_t const *spot = &mapSpots[start->spot];
         P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);

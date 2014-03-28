@@ -24,7 +24,6 @@
 #include "dd_share.h"
 #include "mobj.h"
 #include "player.h"
-#include "gamerules.h"
 
 DENG_EXTERN_C dd_bool singledemo;
 
@@ -58,10 +57,6 @@ void G_ChangeGameState(gamestate_t state);
 gameaction_t G_GameAction(void);
 
 void G_SetGameAction(gameaction_t action);
-
-AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
-
-uint G_GenerateSessionId(void);
 
 /**
  * Begin the titlescreen animation sequence.
@@ -154,7 +149,17 @@ uint G_LogicalMapNumber(uint episode, uint map);
 /// @return  Logical map number.
 uint G_CurrentLogicalMapNumber(void);
 
-AutoStr *G_GenerateUserSaveDescription(void);
+int G_Ruleset_Skill();
+#if !__JHEXEN__
+byte G_Ruleset_Fast();
+#endif
+byte G_Ruleset_Deathmatch();
+byte G_Ruleset_NoMonsters();
+#if __JHEXEN__
+byte G_Ruleset_RandomClasses();
+#else
+byte G_Ruleset_RespawnMonsters();
+#endif
 
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );
@@ -167,10 +172,17 @@ D_CMD( CCmdExitLevel );
 #endif
 
 #if __cplusplus
+#include <de/Folder>
+#include <de/game/SavedSessionRepository>
 #include <de/String>
+#include "gamerules.h"
 
-class GameStateReaderFactory;
 class SaveSlots;
+
+/**
+ * Returns the game identity key (from the engine).
+ */
+de::String G_IdentityKey();
 
 /**
  * @param mapUri       Map identifier.
@@ -215,14 +227,31 @@ bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
 bool G_LoadSession(de::String slotId);
 
 /**
- * Returns the game's GameStateReaderFactory.
+ * Chooses a default user description for a saved session.
+ *
+ * @param slotId        Unique identifier of a saved slot from which the existing description should
+ *                      be re-used. Use a zero-length string to disable.
+ * @param autogenerate  @c true= generate a useful description (map name, map time, etc...) if none
+ *                      exists for the referenced save @a slotId.
  */
-GameStateReaderFactory &G_GameStateReaderFactory();
+de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool autogenerate = true);
+
+/**
+ * Configures @a metadata according to the current game session configuration.
+ *
+ * @param metadata  Current session metadata is written here.
+ */
+void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata);
 
 /**
  * Returns the game's SaveSlots.
  */
 SaveSlots &G_SaveSlots();
+
+/**
+ * Returns the game's (i.e., the app's) SavedSessionRepository.
+ */
+de::game::SavedSessionRepository &G_SavedSessionRepository();
 
 /**
  * Parse @a str and determine whether it references a logical game-save slot.
@@ -246,15 +275,5 @@ de::String G_SaveSlotIdFromUserInput(de::String str);
 GameRuleset &G_Rules();
 
 #endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GameRuleset *G_RulesPtr(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // LIBCOMMON_GAME_H

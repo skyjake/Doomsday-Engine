@@ -25,6 +25,26 @@
 #include "thingarchive.h"
 
 /**
+ * Serialized map states are separated into identifiable chunks (in Hexen).
+ */
+enum MapStateChunkId
+{
+    ASEG_MAP_HEADER = 102,  // Hexen only
+    ASEG_MAP_ELEMENTS,
+    ASEG_POLYOBJS,          // Hexen only
+    ASEG_MOBJS,             // Hexen < ver 4 only
+    ASEG_THINKERS,
+    ASEG_SCRIPTS,           // Hexen only
+    ASEG_PLAYERS,
+    ASEG_SOUNDS,            // Hexen only
+    ASEG_MISC,              // Hexen only
+    ASEG_END,               // = 111
+    ASEG_MATERIAL_ARCHIVE,
+    ASEG_MAP_HEADER2,
+    ASEG_PLAYER_HEADER
+};
+
+/**
  * Performs saved game map state serialization.
  *
  * @ingroup libcommon
@@ -33,12 +53,14 @@
 class MapStateWriter
 {
 public:
-    MapStateWriter(ThingArchive &thingArchive);
+    MapStateWriter();
 
     /**
-     * Serialize the map state using the specified @a reader.
+     * Serialize the @em current map state using the specified @a writer.
+     *
+     * @param excludePlayers  @c true= Do not include players in the ThingArchive.
      */
-    void write(Writer *writer);
+    void write(Writer *writer, bool excludePlayers = false);
 
     /**
      * Returns the writer to use when serializing the map state.

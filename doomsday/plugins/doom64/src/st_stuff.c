@@ -262,7 +262,7 @@ static void drawWidgets(hudstate_t* hud)
 {
 #define MAXDIGITS           ST_FRAGSWIDTH
 
-    if(GameRuleset_Deathmatch(G_RulesPtr()))
+    if(G_Ruleset_Deathmatch())
     {
         char buf[20];
         if(hud->currentFragsCount == 1994)
@@ -370,7 +370,7 @@ void ST_doFullscreenStuff(int player)
 
     FR_LoadDefaultAttrib();
 
-    if(IS_NETGAME && GameRuleset_Deathmatch(G_RulesPtr()) && cfg.hudShown[HUD_FRAGS])
+    if(IS_NETGAME && G_Ruleset_Deathmatch() && cfg.hudShown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - HUDBORDERY;
@@ -625,7 +625,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(GameRuleset_Skill(G_RulesPtr()) == SM_BABY && cfg.automapBabyKeys)
+    if(G_Ruleset_Skill() == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);

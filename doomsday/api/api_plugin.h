@@ -55,6 +55,7 @@ enum {
     HOOK_FINALE_SCRIPT_TICKER = 8,  ///< Called each time a script 'thinks'.
     HOOK_FINALE_EVAL_IF = 9,        ///< Called to evaluate an IF conditional statement.
     HOOK_VIEWPORT_RESHAPE = 10,     ///< Called when viewport dimensions change.
+    HOOK_SAVEGAME_CONVERT = 11,     ///< Called when a legacy savegame needs converting.
     NUM_HOOK_TYPES
 };
 
@@ -79,6 +80,13 @@ typedef struct {
     RectRaw geometry; // New/Current.
     RectRaw oldGeometry; // Previous.
 } ddhook_viewport_reshape_t;
+
+/// Parameters for HOOK_SAVEGAME_CONVERT
+typedef struct {
+    Str sourcePath;
+    Str outputPath;
+    Str fallbackGameId;
+} ddhook_savegame_convert_t;
 
 DENG_API_TYPEDEF(Plug) // v1
 {

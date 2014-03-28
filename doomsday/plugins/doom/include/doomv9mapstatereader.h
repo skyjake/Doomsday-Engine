@@ -1,7 +1,8 @@
-/** @file gamestatewriter.h  Saved game state writer.
+/** @file doomv9mapstatereader.h  Doom ver 1.9 saved game map state reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,32 +19,30 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAMESTATEWRITER_H
-#define LIBCOMMON_GAMESTATEWRITER_H
+#ifndef LIBDOOM_DOOMV9_MAPSTATEREADER
+#define LIBDOOM_DOOMV9_MAPSTATEREADER
 
-#include "common.h"
-#include "saveinfo.h"
-#include <de/Error>
+#ifndef __JDOOM__
+#  error "Using jDoom headers without __JDOOM__"
+#endif
+
+#include <de/game/SavedSession>
 
 /**
- * Native saved game state writer.
+ * Doom ver 1.9 saved game map state reader.
  *
- * @ingroup libcommon
- * @see GameStateReader
+ * @ingroup libdoom
  */
-class GameStateWriter
+class DoomV9MapStateReader : public de::game::SavedSession::MapStateReader
 {
 public:
-    /// An error occurred attempting to open the output file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
+    DoomV9MapStateReader(de::game::SavedSession const &session);
+    ~DoomV9MapStateReader();
 
-public:
-    GameStateWriter();
-
-    void write(SaveInfo &info);
+    void read(de::String const &mapUriStr);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBCOMMON_GAMESTATEWRITER_H
+#endif // LIBDOOM_DOOMV9_MAPSTATEREADER

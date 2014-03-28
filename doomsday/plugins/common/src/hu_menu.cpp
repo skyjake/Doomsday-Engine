@@ -34,7 +34,6 @@
 #include "g_common.h"
 #include "r_common.h"
 #include "m_ctrl.h"
-#include "saveinfo.h"
 #include "saveslots.h"
 #include <de/memory.h>
 #include <cstdlib>
@@ -5848,15 +5847,13 @@ int Hu_MenuCvarList(mn_object_t *obj, mn_actionid_t action, void *parameters)
     return 0;
 }
 
-int Hu_MenuSaveSlotEdit(mn_object_t *obj, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSaveSlotEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
     if(MNA_ACTIVE != action) return 1;
-
-    // Are we suggesting a new name?
     if(cfg.menuGameSaveSuggestDescription)
     {
-        AutoStr *suggestion = G_GenerateUserSaveDescription();
-        MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, Str_Text(suggestion));
+        de::String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse the existing description*/);
+        MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, description.toLatin1().constData());
     }
     return 0;
 }

@@ -47,10 +47,11 @@ def find_version(fn):
 def print_version(out, id, fn):
     print >> out, '%s_VERSION = %s' % (id, find_version(fn))
 
-print_version(out, 'DEHREAD',         'plugins/dehread/include/version.h')
-print_version(out, 'WADMAPCONVERTER', 'plugins/wadmapconverter/include/version.h')
-print_version(out, 'DIRECTSOUND',     'plugins/directsound/include/version.h')
-print_version(out, 'OPENAL',          'plugins/openal/include/version.h')
-print_version(out, 'FMOD',            'plugins/fmod/include/version.h')
-print_version(out, 'WINMM',           'plugins/winmm/include/version.h')
-print_version(out, 'EXAMPLE',         'plugins/example/include/version.h')
+print_version(out, 'DEHREAD',           'plugins/dehread/include/version.h')
+print_version(out, 'SAVEGAMECONVERTER', 'plugins/savegameconverter/include/version.h')
+print_version(out, 'WADMAPCONVERTER',   'plugins/wadmapconverter/include/version.h')
+print_version(out, 'DIRECTSOUND',       'plugins/directsound/include/version.h')
+print_version(out, 'OPENAL',            'plugins/openal/include/version.h')
+print_version(out, 'FMOD',              'plugins/fmod/include/version.h')
+print_version(out, 'WINMM',             'plugins/winmm/include/version.h')
+print_version(out, 'EXAMPLE',           'plugins/example/include/version.h')

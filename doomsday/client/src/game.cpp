@@ -24,7 +24,9 @@
 #include "con_main.h"
 #include "filesys/manifest.h"
 
+#include <de/App>
 #include <de/Error>
+#include <de/game/SavedSession>
 #include <de/Log>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
@@ -43,6 +45,9 @@ DENG2_PIMPL(Game)
     Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
     Path bindingConfig;  ///< Control binding file name (set automatically).
 
+    String legacySavegameNameExp;
+    String legacySavegameSubfolder;
+
     Instance(Public &a, String const &identityKey, Path const &configDir,
              String const &title, String const &author)
         : Base(a)
@@ -60,11 +65,14 @@ DENG2_PIMPL(Game)
     }
 };
 
-Game::Game(String const &identityKey, Path const &configDir, String const &title,
-    String const &author)
+Game::Game(String const &identityKey, Path const &configDir, String const &title, String const &author,
+    String const &legacySavegameNameExp_, String const &legacySavegameSubfolder)
     : game::Game(identityKey)
     , d(new Instance(*this, identityKey, configDir, title, author))
-{}
+{
+    d->legacySavegameNameExp   = legacySavegameNameExp_;
+    d->legacySavegameSubfolder = legacySavegameSubfolder;
+}
 
 Game::~Game()
 {}
@@ -168,6 +176,33 @@ String Game::logoImageId() const
     return "logo.game." + plugName;
 }
 
+String Game::legacySavegameNameExp() const
+{
+    return d->legacySavegameNameExp;
+}
+
+String Game::legacySavegamePath() const
+{
+    NativePath nativeSavePath = App_ResourceSystem().nativeSavePath();
+
+    if(nativeSavePath.isEmpty()) return "";
+    if(isNull()) return "";
+
+    if(App::commandLine().has("-savedir"))
+    {
+        // A custom path. The savegames are in the root of this folder.
+        return nativeSavePath;
+    }
+
+    // The default save path. The savegames are in a game-specific folder.
+    if(!d->legacySavegameSubfolder.isEmpty())
+    {
+        return App::app().nativeHomePath() / d->legacySavegameSubfolder / identityKey();
+    }
+
+    return "";
+}
+
 Path const &Game::mainConfig() const
 {
     return d->mainConfig;
@@ -223,7 +258,8 @@ bool Game::isRequiredFile(File1 &file)
 Game *Game::fromDef(GameDef const &def)
 {
     return new Game(def.identityKey, NativePath(def.configDir).expand().withSeparators('/'),
-                    def.defaultTitle, def.defaultAuthor);
+                    def.defaultTitle, def.defaultAuthor, def.legacySavegameNameExp,
+                    def.legacySavegameSubfolder);
 }
 
 void Game::printBanner(Game const &game)

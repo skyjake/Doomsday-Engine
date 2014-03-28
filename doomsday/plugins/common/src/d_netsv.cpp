@@ -678,14 +678,13 @@ void NetSv_SendGameState(int flags, int to)
 {
     if(!IS_NETWORK_SERVER) return;
 
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
+    de::String const identityKey = G_IdentityKey();
 
     // Print a short message that describes the game state.
-    AutoStr *str = Uri_Resolved(gameMapUri);
-
     App_Log(DE2_NET_NOTE, "Sending game setup: %s %s %s",
-            Str_Text(gameInfo.identityKey), Str_Text(str), gameConfigString);
+            identityKey.toLatin1().constData(),
+            Str_Text(Uri_Resolved(gameMapUri)),
+            gameConfigString);
 
     // Send an update to all the players in the game.
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -697,8 +696,8 @@ void NetSv_SendGameState(int flags, int to)
         Writer_WriteByte(writer, flags);
 
         // Game identity key.
-        Writer_WriteByte(writer, Str_Length(gameInfo.identityKey));
-        Writer_Write(writer, Str_Text(gameInfo.identityKey), Str_Length(gameInfo.identityKey));
+        Writer_WriteByte(writer, identityKey.length());
+        Writer_Write(writer, identityKey.toLatin1().constData(), identityKey.length());
 
         // The current map.
         Uri_Write(gameMapUri, writer);
@@ -1408,25 +1407,37 @@ void NetSv_DoDamage(int player, Reader *msg)
                   false /*not stomping*/, true /*just do it*/);
 }
 
-void NetSv_SaveGame(uint gameId)
+void NetSv_SaveGame(uint sessionId)
 {
+#if !__JHEXEN__
+
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
     // This will make the clients save their games.
     Writer *writer = D_NetWrite();
-    Writer_WriteUInt32(writer, gameId);
+    Writer_WriteUInt32(writer, sessionId);
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
+
+#else
+    DENG2_UNUSED(sessionId);
+#endif
 }
 
-void NetSv_LoadGame(uint gameId)
+void NetSv_LoadGame(uint sessionId)
 {
+#if !__JHEXEN__
+
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
     Writer *writer = D_NetWrite();
-    Writer_WriteUInt32(writer, gameId);
+    Writer_WriteUInt32(writer, sessionId);
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
+
+#else
+    DENG2_UNUSED(sessionId);
+#endif
 }
 
 void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)

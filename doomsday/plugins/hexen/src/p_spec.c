@@ -515,7 +515,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 success = true;
-                if(GameRuleset_Deathmatch(G_RulesPtr()))
+                if(G_Ruleset_Deathmatch())
                 {
                     // Winning in deathmatch just goes back to map 1
                     G_LeaveMap(0, 0, false);

@@ -1,4 +1,4 @@
-/** @file doomv9gamestatereader.cpp  Doom ver 1.9 save game reader.
+/** @file doomv9mapstatereader.cpp  Doom ver 1.9 save game reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -20,10 +20,11 @@
  */
 
 #include "jdoom.h"
-#include "doomv9gamestatereader.h"
+#include "doomv9mapstatereader.h"
 
 #include "am_map.h"
 #include "dmu_lib.h"
+#include "g_game.h"
 #include "p_ceiling.h"
 #include "p_door.h"
 #include "p_floor.h"
@@ -33,39 +34,43 @@
 #include "p_saveio.h"
 #include "p_saveg.h"
 #include "p_tick.h"
-#include "r_common.h"       // R_UpdateConsoleView
+#include "r_common.h"    // R_UpdateConsoleView
+#include <de/ArrayValue>
 #include <de/NativePath>
+#include <de/NumberValue>
 
 #define PADSAVEP()                      savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
 
 #define SIZEOF_V19_THINKER_T            12
 #define V19_THINKER_T_FUNC_OFFSET       8
 
+using namespace de;
+
 static byte *savePtr;
 static byte *saveBuffer;
 
-static char sri8(Reader *r)
+static char sri8(reader_s *r)
 {
     if(!r) return 0;
     savePtr++;
     return *(char *) (savePtr - 1);
 }
 
-static short sri16(Reader *r)
+static short sri16(reader_s *r)
 {
     if(!r) return 0;
     savePtr += 2;
     return *(int16_t *) (savePtr - 2);
 }
 
-static int sri32(Reader *r)
+static int sri32(reader_s *r)
 {
     if(!r) return 0;
     savePtr += 4;
     return *(int32_t *) (savePtr - 4);
 }
 
-static void srd(Reader *r, char *data, int len)
+static void srd(reader_s *r, char *data, int len)
 {
     if(!r) return;
     if(data)
@@ -75,13 +80,19 @@ static void srd(Reader *r, char *data, int len)
     savePtr += len;
 }
 
-static Uri *readTextureUrn(Reader *reader, char const *schemeName)
+static reader_s *SV_NewReader_Dm_v19()
+{
+    if(!saveBuffer) return 0;
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
+}
+
+static Uri *readTextureUrn(reader_s *reader, char const *schemeName)
 {
     DENG_ASSERT(reader != 0 && schemeName != 0);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(reader))), RC_NULL);
 }
 
-static void readPlayer(player_t *pl, Reader *reader)
+static void readPlayer(player_t *pl, reader_s *reader)
 {
     Reader_ReadInt32(reader);
 
@@ -186,7 +197,7 @@ static void readPlayer(player_t *pl, Reader *reader)
     pl->didSecret  = !!Reader_ReadInt32(reader);
 }
 
-static void readMobj(Reader *reader)
+static void readMobj(reader_s *reader)
 {
 #define FF_FULLBRIGHT  0x8000 ///< Used to be a flag in thing->frame.
 #define FF_FRAMEMASK   0x7fff
@@ -345,7 +356,7 @@ static int removeThinker(thinker_t *th, void * /*context*/)
     return false; // Continue iteration.
 }
 
-static int readCeiling(ceiling_t *ceiling, Reader *reader)
+static int readCeiling(ceiling_t *ceiling, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -391,7 +402,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readDoor(door_t *door, Reader *reader)
+static int readDoor(door_t *door, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -427,7 +438,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readFloor(floor_t *floor, Reader *reader)
+static int readFloor(floor_t *floor, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -470,7 +481,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readPlat(plat_t *plat, Reader *reader)
+static int readPlat(plat_t *plat, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -519,7 +530,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readFlash(lightflash_t *flash, Reader *reader)
+static int readFlash(lightflash_t *flash, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -550,7 +561,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readStrobe(strobe_t *strobe, Reader *reader)
+static int readStrobe(strobe_t *strobe, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -581,7 +592,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int readGlow(glow_t *glow, Reader *reader)
+static int readGlow(glow_t *glow, reader_s *reader)
 {
 /* Original DOOM format:
 typedef struct {
@@ -608,69 +619,10 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static void readLegacyGameRules(GameRuleset &rules, Reader *reader)
-{
-    rules.skill = (skillmode_t) Reader_ReadByte(reader);
-    // Interpret skill levels outside the normal range as "spawn no things".
-    if(rules.skill < SM_BABY || rules.skill >= NUM_SKILL_MODES)
-    {
-        rules.skill = SM_NOTHINGS;
-    }
-}
-
-static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
-{
-    DENG_ASSERT(info != 0);
-
-    char descBuf[24];
-    Reader_Read(reader, descBuf, 24);
-    info->setUserDescription(de::String(descBuf, 24));
-
-    char vcheck[16 + 1];
-    Reader_Read(reader, vcheck, 16); vcheck[16] = 0;
-    //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
-    info->setVersion(atoi(&vcheck[8]));
-
-    // The DOOM v9 savegame format omitted the majority of the game rules...
-    // Therefore we must assume the user has correctly configured the session accordingly.
-    App_Log(DE2_RES_WARNING, "Using current game rules as basis for Doom v9 savegame."
-                             " (The original save format omits this information).");
-    GameRuleset rules(G_Rules());
-    readLegacyGameRules(rules, reader);
-    info->setGameRules(rules);
-
-    uint episode = Reader_ReadByte(reader) - 1;
-    uint map     = Reader_ReadByte(reader) - 1;
-    info->setMapUri(G_ComposeMapUri(episode, map));
-
-    SaveInfo::Players players; de::zap(players);
-    for(int i = 0; i < 4; ++i)
-    {
-        players[i] = Reader_ReadByte(reader);
-    }
-    info->setPlayers(players);
-
-    // Get the map time.
-    int a = Reader_ReadByte(reader);
-    int b = Reader_ReadByte(reader);
-    int c = Reader_ReadByte(reader);
-    info->setMapTime((a << 16) + (b << 8) + c);
-
-    info->setMagic(0); // Initialize with *something*.
-
-    /// @note Kludge: Assume the current game mode.
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    info->setGameIdentityKey(Str_Text(gameInfo.identityKey));
-    /// Kludge end.
-
-    info->setSessionId(0); // None.
-}
-
-static bool SV_OpenFile_Dm_v19(de::Path path)
+static bool SV_OpenFile_Dm_v19(Path path)
 {
     DENG_ASSERT(saveBuffer == 0);
-    if(!M_ReadFile(de::NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer))
+    if(!M_ReadFile(NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer))
     {
         return false;
     }
@@ -685,29 +637,18 @@ static void SV_CloseFile_Dm_v19()
     saveBuffer = savePtr = 0;
 }
 
-static Reader *SV_NewReader_Dm_v19()
+DENG2_PIMPL(DoomV9MapStateReader)
 {
-    if(!saveBuffer) return 0;
-    return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
-}
-
-DENG2_PIMPL(DoomV9GameStateReader)
-{
-    Reader *reader;
+    reader_s *reader;
 
     Instance(Public *i)
         : Base(i)
         , reader(0)
     {}
 
-    /// Assumes the reader is currently positioned at the start of the stream.
-    void seekToGameState()
+    ~Instance()
     {
-        // Read the header again.
-        /// @todo seek straight to the game state.
-        SaveInfo *tmp = new SaveInfo;
-        SaveInfo_Read_Dm_v19(tmp, reader);
-        delete tmp;
+        Reader_Delete(reader);
     }
 
     void readPlayers()
@@ -735,80 +676,6 @@ DENG2_PIMPL(DoomV9GameStateReader)
         }
     }
 
-    void readMap()
-    {
-        // Do sectors.
-        for(int i = 0; i < numsectors; ++i)
-        {
-            Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
-            xsector_t *xsec = P_ToXSector(sec);
-
-            P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t) Reader_ReadInt16(reader));
-            P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t) Reader_ReadInt16(reader));
-
-            Uri *floorTextureUrn = readTextureUrn(reader, "Flats");
-            P_SetPtrp   (sec, DMU_FLOOR_MATERIAL,   DD_MaterialForTextureUri(floorTextureUrn));
-            Uri_Delete(floorTextureUrn);
-
-            Uri *ceilingTextureUrn = readTextureUrn(reader, "Flats");
-            P_SetPtrp   (sec, DMU_CEILING_MATERIAL, DD_MaterialForTextureUri(ceilingTextureUrn));
-            Uri_Delete(ceilingTextureUrn);
-
-            P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (Reader_ReadInt16(reader)) / 255.0f);
-            xsec->special = Reader_ReadInt16(reader); // needed?
-            /*xsec->tag = */Reader_ReadInt16(reader); // needed?
-            xsec->specialData = 0;
-            xsec->soundTarget = 0;
-        }
-
-        // Do lines.
-        for(int i = 0; i < numlines; ++i)
-        {
-            Line *line     = (Line *)P_ToPtr(DMU_LINE, i);
-            xline_t *xline = P_ToXLine(line);
-
-            xline->flags   = Reader_ReadInt16(reader);
-            xline->special = Reader_ReadInt16(reader);
-            /*xline->tag    =*/Reader_ReadInt16(reader);
-
-            for(int k = 0; k < 2; ++k)
-            {
-                Side *sdef = (Side *)P_GetPtrp(line, (k? DMU_BACK:DMU_FRONT));
-                if(!sdef) continue;
-
-                float matOffset[2];
-                matOffset[VX] = (float) (Reader_ReadInt16(reader));
-                matOffset[VY] = (float) (Reader_ReadInt16(reader));
-                P_SetFloatpv(sdef, DMU_TOP_MATERIAL_OFFSET_XY,    matOffset);
-                P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
-                P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
-
-                Uri *topTextureUrn = readTextureUrn(reader, "Textures");
-                P_SetPtrp(sdef, DMU_TOP_MATERIAL,    DD_MaterialForTextureUri(topTextureUrn));
-                Uri_Delete(topTextureUrn);
-
-                Uri *bottomTextureUrn = readTextureUrn(reader, "Textures");
-                P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, DD_MaterialForTextureUri(bottomTextureUrn));
-                Uri_Delete(bottomTextureUrn);
-
-                Uri *middleTextureUrn = readTextureUrn(reader, "Textures");
-                P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, DD_MaterialForTextureUri(middleTextureUrn));
-                Uri_Delete(middleTextureUrn);
-            }
-        }
-
-        readThinkers();
-        readSpecials();
-
-        if(Reader_ReadByte(reader) != 0x1d)
-        {
-            Reader_Delete(reader); reader = 0;
-            SV_CloseFile_Dm_v19();
-
-            throw ReadError("DoomV9GameStateReader", "Bad savegame (consistency test failed!)");
-        }
-    }
-
     void readThinkers()
     {
         // Remove all the current thinkers.
@@ -827,7 +694,7 @@ DENG2_PIMPL(DoomV9GameStateReader)
                 break;
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + de::String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9MapStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
             }
         }
     }
@@ -925,78 +792,96 @@ DENG2_PIMPL(DoomV9GameStateReader)
                 break; }
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + de::String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9MapStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
             }
         }
     }
 };
 
-DoomV9GameStateReader::DoomV9GameStateReader() : d(new Instance(this))
+DoomV9MapStateReader::DoomV9MapStateReader(game::SavedSession const &session)
+    : game::SavedSession::MapStateReader(session)
+    , d(new Instance(this))
 {}
 
-DoomV9GameStateReader::~DoomV9GameStateReader()
+DoomV9MapStateReader::~DoomV9MapStateReader()
 {}
 
-bool DoomV9GameStateReader::recognize(SaveInfo &info) // static
+void DoomV9MapStateReader::read(String const & /*mapUriStr*/)
 {
-    de::Path const path = SV_SavePath() / info.fileName();
-
-    if(!SV_ExistingFile(path)) return false;
-    if(!SV_OpenFile_Dm_v19(path)) return false;
-
-    Reader *reader = SV_NewReader_Dm_v19();
-    bool result = false;
-
-    /// @todo Use the 'version' string as the "magic" identifier.
-    /*char vcheck[16];
-    std::memset(vcheck, 0, sizeof(vcheck));
-    Reader_Read(svReader, vcheck, sizeof(vcheck));
-
-    if(strncmp(vcheck, "version ", 8))*/
-    {
-        SaveInfo_Read_Dm_v19(&info, reader);
-        result = (info.version() <= 500);
-    }
-
-    Reader_Delete(reader); reader = 0;
-    SV_CloseFile_Dm_v19();
-
-    return result;
-}
-
-IGameStateReader *DoomV9GameStateReader::make()
-{
-    return new DoomV9GameStateReader;
-}
-
-void DoomV9GameStateReader::read(SaveInfo &info)
-{
-    de::Path const path = SV_SavePath() / info.fileName();
-
-    if(!SV_OpenFile_Dm_v19(path))
-    {
-        throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
-    }
-
     d->reader = SV_NewReader_Dm_v19();
 
-    d->seekToGameState();
-
-    /*
-     * Load the map and configure some game settings.
-     */
-    briefDisabled = true;
-    G_NewSession(info.mapUri(), 0/*not saved??*/, &info.gameRules());
-    G_SetGameAction(GA_NONE); /// @todo Necessary?
-
-    // Recreate map state.
-    mapTime = info.mapTime();
-
     d->readPlayers();
-    d->readMap();
 
+    // Do sectors.
+    for(int i = 0; i < numsectors; ++i)
+    {
+        Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
+
+        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t) Reader_ReadInt16(d->reader));
+        P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t) Reader_ReadInt16(d->reader));
+
+        Uri *floorTextureUrn = readTextureUrn(d->reader, "Flats");
+        P_SetPtrp   (sec, DMU_FLOOR_MATERIAL,   DD_MaterialForTextureUri(floorTextureUrn));
+        Uri_Delete(floorTextureUrn);
+
+        Uri *ceilingTextureUrn = readTextureUrn(d->reader, "Flats");
+        P_SetPtrp   (sec, DMU_CEILING_MATERIAL, DD_MaterialForTextureUri(ceilingTextureUrn));
+        Uri_Delete(ceilingTextureUrn);
+
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (Reader_ReadInt16(d->reader)) / 255.0f);
+        xsec->special = Reader_ReadInt16(d->reader); // needed?
+        /*xsec->tag = */Reader_ReadInt16(d->reader); // needed?
+        xsec->specialData = 0;
+        xsec->soundTarget = 0;
+    }
+
+    // Do lines.
+    for(int i = 0; i < numlines; ++i)
+    {
+        Line *line     = (Line *)P_ToPtr(DMU_LINE, i);
+        xline_t *xline = P_ToXLine(line);
+
+        xline->flags   = Reader_ReadInt16(d->reader);
+        xline->special = Reader_ReadInt16(d->reader);
+        /*xline->tag    =*/Reader_ReadInt16(d->reader);
+
+        for(int k = 0; k < 2; ++k)
+        {
+            Side *sdef = (Side *)P_GetPtrp(line, (k? DMU_BACK:DMU_FRONT));
+            if(!sdef) continue;
+
+            float matOffset[2];
+            matOffset[VX] = (float) (Reader_ReadInt16(d->reader));
+            matOffset[VY] = (float) (Reader_ReadInt16(d->reader));
+            P_SetFloatpv(sdef, DMU_TOP_MATERIAL_OFFSET_XY,    matOffset);
+            P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
+            P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
+
+            Uri *topTextureUrn = readTextureUrn(d->reader, "Textures");
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    DD_MaterialForTextureUri(topTextureUrn));
+            Uri_Delete(topTextureUrn);
+
+            Uri *bottomTextureUrn = readTextureUrn(d->reader, "Textures");
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, DD_MaterialForTextureUri(bottomTextureUrn));
+            Uri_Delete(bottomTextureUrn);
+
+            Uri *middleTextureUrn = readTextureUrn(d->reader, "Textures");
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, DD_MaterialForTextureUri(middleTextureUrn));
+            Uri_Delete(middleTextureUrn);
+        }
+    }
+
+    d->readThinkers();
+    d->readSpecials();
+
+    byte const consistency = Reader_ReadByte(d->reader);
     Reader_Delete(d->reader); d->reader = 0;
-    SV_CloseFile_Dm_v19();
+
+    if(consistency != 0x1d)
+    {
+        throw ReadError("DoomV9MapStateReader", "Bad savegame (consistency test failed!)");
+    }
 
     // Material scrollers must be spawned.
     P_SpawnAllMaterialOriginScrollers();

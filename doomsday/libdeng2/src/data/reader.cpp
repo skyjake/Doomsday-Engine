@@ -353,6 +353,12 @@ Reader &Reader::readBytes(dsize count, IByteArray &destination)
     return *this >> dest;
 }
 
+Reader &Reader::readPresetSize(IByteArray &destination)
+{
+    FixedByteArray dest(destination);
+    return *this >> dest;
+}
+
 Reader &Reader::operator >> (Block &block)
 {
     duint size = 0;

@@ -1,7 +1,7 @@
 /** @file resourcesystem.cpp  Resource subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -60,8 +60,15 @@
 #  include "Surface"
 #endif
 
+#include <de/App>
+#include <de/ArrayValue>
 #include <de/ByteRefArray>
+#include <de/DirectoryFeed>
+#include <de/game/SavedSession>
 #include <de/Log>
+#include <de/Module>
+#include <de/NativeFile>
+#include <de/NumberValue>
 #include <de/Reader>
 #include <de/Time>
 #ifdef __CLIENT__
@@ -157,7 +164,20 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 
 #endif // __CLIENT__
 
+/**
+ * Native Doomsday Script utility for executing a legacy savegame conversion.
+ */
+Value *Function_SavedSession_Convert(Context &, Function::ArgumentValues const &args)
+{
+    String sourcePath = args[0]->asText();
+    String gameId     = args[1]->asText();
+    return new NumberValue(App_ResourceSystem().convertLegacySavegame(sourcePath, gameId));
+}
+
 DENG2_PIMPL(ResourceSystem)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(Games,            Addition)        // Saved session repository population
+#endif
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -318,18 +338,25 @@ DENG2_PIMPL(ResourceSystem)
     typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
     SpriteGroups spriteGroups;
 
+    NativePath nativeSavePath;
+    game::SavedSessionRepository saveRepo;
+
+    Binder binder;
+    Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
+
     Instance(Public *i)
         : Base(i)
-        , defaultColorPalette(0)
-        , materialManifestCount(0)
+        , defaultColorPalette      (0)
+        , materialManifestCount    (0)
         , materialManifestIdMapSize(0)
-        , materialManifestIdMap(0)
+        , materialManifestIdMap    (0)
 #ifdef __CLIENT__
-        , fontManifestCount(0)
-        , fontManifestIdMapSize(0)
-        , fontManifestIdMap(0)
-        , modelRepository(0)
+        , fontManifestCount        (0)
+        , fontManifestIdMapSize    (0)
+        , fontManifestIdMap        (0)
+        , modelRepository          (0)
 #endif
+        , nativeSavePath           (App::app().nativeHomePath() / "savegames") // default
     {
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
@@ -365,10 +392,35 @@ DENG2_PIMPL(ResourceSystem)
         createFontScheme("System");
         createFontScheme("Game");
 #endif
+
+#ifdef __CLIENT__
+        // Setup the SavedSession module.
+        binder.init(savedSessionModule)
+                << DENG2_FUNC(SavedSession_Convert, "convert", "savegamePath" << "gameId");
+        App::scriptSystem().addNativeModule("SavedSession", savedSessionModule);
+
+        App_Games().audienceForAddition() += this;
+
+        // Determine the root directory of the saved session repository.
+        if(int arg = App::commandLine().check("-savedir", 1))
+        {
+            // Using a custom root save directory.
+            App::commandLine().makeAbsolutePath(arg + 1);
+            nativeSavePath = App::commandLine().at(arg + 1);
+        }
+        // Else use the default.
+
+        // Create the user's saved game folder if it doesn't yet exist.
+        App::fileSystem().makeFolder("/home/savegames");
+#endif
     }
 
     ~Instance()
     {
+#ifdef __CLIENT__
+        App_Games().audienceForAddition() -= this;
+#endif
+
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
 #ifdef __CLIENT__
@@ -1882,6 +1934,64 @@ DENG2_PIMPL(ResourceSystem)
             if(cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
             {
                 texture->releaseGLTextures();
+            }
+        }
+    }
+
+
+    void gameAdded(Game &game)
+    {
+        // Called from a non-UI thread.
+        LOG_AS("ResourceSystem");
+        String const gameId = game.identityKey();
+
+        // Attempt to create a new subfolder in the saved session repository for the game.
+        // Once created, any existing saved sessions in this folder will be added automatically.
+
+        // Make the native folder if necessary and populate the folder contents.
+        Folder &saveFolder = App::fileSystem().makeFolder(String("/home/savegames") / gameId);
+
+        // Find any .save packages in this folder and generate sessions for the db.
+        DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
+        {
+            if(i->first.fileNameExtension() == ".save")
+            {
+                if(game::SavedSession *session = i->second->maybeAs<game::SavedSession>())
+                {
+                    saveRepo.add(*session);
+                }
+            }
+        }
+
+        // Perhaps there are legacy saved game sessions which need to be converted?
+        NativePath const oldSavePath = game.legacySavegamePath();
+        if(oldSavePath.exists() && oldSavePath.isReadable())
+        {
+            QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
+
+            if(namePattern.isValid() && !namePattern.isEmpty())
+            {
+                Folder &sourceFolder = App::fileSystem().makeFolder(de::String("/legacySavegames") / gameId, FS::DontInheritFeeds);
+                sourceFolder.attach(new DirectoryFeed(oldSavePath));
+                sourceFolder.populate(Folder::PopulateOnlyThisFolder);
+                sourceFolder.setMode(Folder::ReadOnly);
+
+                //ArrayValue *pathList = 0;
+                DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
+                {
+                    if(namePattern.exactMatch(i->first.fileName()))
+                    {
+                        //if(!pathList) pathList = new ArrayValue;
+                        //(*pathList) << TextValue(i->second->path());
+
+                        self.convertLegacySavegame(i->second->path(), gameId);
+                    }
+                }
+
+                /*if(pathList)
+                {
+                    savedSessionModule.addArray(gameId + ".legacySavegames", pathList);
+                }*/
             }
         }
     }
@@ -3807,6 +3917,55 @@ void ResourceSystem::cacheForCurrentMap()
 }
 
 #endif // __CLIENT__
+
+game::SavedSessionRepository &ResourceSystem::savedSessionRepository() const
+{
+    return d->saveRepo;
+}
+
+NativePath ResourceSystem::nativeSavePath()
+{
+    return d->nativeSavePath;
+}
+
+bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String const &gameId)
+{
+    String const outputName = sourcePath.fileNameWithoutExtension() + ".save";
+    String const outputPath = String("/home/savegames") / gameId;
+
+    // Attempt the conversion via a plugin (each is tried in turn).
+    ddhook_savegame_convert_t parm;
+    Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath.toUtf8().constData());
+    Str_Set(Str_InitStd(&parm.outputPath),     outputPath.toUtf8().constData());
+    Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
+
+    // Try to convert the savegame via each plugin in turn.
+    dd_bool conversionAttempted = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+
+    Str_Free(&parm.sourcePath);
+    Str_Free(&parm.outputPath);
+    Str_Free(&parm.fallbackGameId);
+
+    if(conversionAttempted)
+    {
+        /// @todo kludge: Give the converter a chance to complete.
+        TimeDelta::fromMilliSeconds(1000).sleep();
+
+        try
+        {
+            // Update the /home/savegames/<gameId> folder.
+            Folder &saveFolder = App::rootFolder().locate<Folder>(outputPath);
+            saveFolder.populate();
+            d->saveRepo.add(saveFolder.locate<game::SavedSession>(outputName));
+            return true;
+        }
+        catch(Folder::NotFoundError const &)
+        {} // Ignore.
+    }
+
+    // Seemingly no plugin was able to fulfill our request.
+    return false;
+}
 
 byte precacheMapMaterials = true;
 byte precacheSprites = true;

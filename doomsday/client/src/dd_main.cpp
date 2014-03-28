@@ -524,6 +524,12 @@ ResourceSystem &App_ResourceSystem()
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
+#undef DD_SavedSessionRepository
+void *DD_SavedSessionRepository()
+{
+    return &App_ResourceSystem().savedSessionRepository();
+}
+
 de::ResourceClass &App_ResourceClass(String className)
 {
     return App_ResourceSystem().resClass(className);
@@ -1064,12 +1070,14 @@ static int DD_ActivateGameWorker(void *context)
 {
     ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
+    ResourceSystem &resSys = App_ResourceSystem();
+
     // Texture resources are located now, prior to initializing the game.
-    App_ResourceSystem().initCompositeTextures();
-    App_ResourceSystem().initFlatTextures();
-    App_ResourceSystem().initSpriteTextures();
-    App_ResourceSystem().textureScheme("Lightmaps").clear();
-    App_ResourceSystem().textureScheme("Flaremaps").clear();
+    resSys.initCompositeTextures();
+    resSys.initFlatTextures();
+    resSys.initSpriteTextures();
+    resSys.textureScheme("Lightmaps").clear();
+    resSys.textureScheme("Flaremaps").clear();
 
     if(parms.initiatedBusyMode)
     {
@@ -1129,9 +1137,9 @@ static int DD_ActivateGameWorker(void *context)
         Con_SetProgress(130);
     }
 
-    App_ResourceSystem().initSprites(); // Fully initialize sprites.
+    resSys.initSprites(); // Fully initialize sprites.
 #ifdef __CLIENT__
-    App_ResourceSystem().initModels();
+    resSys.initModels();
 #endif
 
     Def_PostInit();
@@ -3009,5 +3017,6 @@ DENG_DECLARE_API(Base) =
     DD_GameInfo,
     DD_IsSharpTick,
     Net_SendPacket,
-    R_SetupMap
+    R_SetupMap,
+    DD_SavedSessionRepository
 };

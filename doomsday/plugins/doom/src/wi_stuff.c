@@ -1102,7 +1102,7 @@ static void initShowStats(void)
 
 static void tickShowStats(void)
 {
-    if(GameRuleset_Deathmatch(G_RulesPtr()))
+    if(G_Ruleset_Deathmatch())
     {
         updateDeathmatchStats();
         return;
@@ -1220,7 +1220,7 @@ static void tickShowStats(void)
 
 static void drawStats(void)
 {
-    if(GameRuleset_Deathmatch(G_RulesPtr()))
+    if(G_Ruleset_Deathmatch())
     {
         drawDeathmatchStats();
     }
@@ -1455,7 +1455,7 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
         }
     }
 
-    if(GameRuleset_Deathmatch(G_RulesPtr()))
+    if(G_Ruleset_Deathmatch())
     {
         initDeathmatchStats();
         beginAnimations();

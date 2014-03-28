@@ -904,7 +904,7 @@ void P_MobjThinker(void *thinkerPtr)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!GameRuleset_RespawnMonsters(G_RulesPtr()))
+        if(!G_Ruleset_RespawnMonsters())
             return;
 
         mobj->moveCount++;
@@ -950,7 +950,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
      */
 
     // Not for deathmatch?
-    if(GameRuleset_Deathmatch(G_RulesPtr()) && (info->flags & MF_NOTDMATCH))
+    if(G_Ruleset_Deathmatch() && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
@@ -978,7 +978,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     }
 
     // Don't spawn any monsters?
-    if(GameRuleset_NoMonsters(G_RulesPtr()) && (info->flags & MF_COUNTKILL))
+    if(G_Ruleset_NoMonsters() && (info->flags & MF_COUNTKILL))
         return 0;
 
     if(info->flags & MF_SOLID)
@@ -999,7 +999,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
-    if(GameRuleset_Skill(G_RulesPtr()) != SM_NIGHTMARE)
+    if(G_Ruleset_Skill() != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;

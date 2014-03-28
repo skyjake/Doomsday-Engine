@@ -1,6 +1,6 @@
 /** @file resourcesystem.h  Resource subsystem.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -42,6 +42,7 @@
 #include "resource/zip.h"
 #include "uri.hh"
 #include <de/Error>
+#include <de/game/SavedSessionRepository>
 #include <de/String>
 #include <de/System>
 #include <QList>
@@ -863,6 +864,26 @@ public:
     void purgeCacheQueue();
 
 #endif // __CLIENT__
+
+    /**
+     * Returns the SavedSessionRepository.
+     */
+    de::game::SavedSessionRepository &savedSessionRepository() const;
+
+    /**
+     * Returns the native path of the root of the saved session repository
+     */
+    de::NativePath nativeSavePath();
+
+    /**
+     * Utility for initiating a legacy savegame conversion.
+     *
+     * @param sourcePath  Path to the legacy savegame file to be converted.
+     * @param gameId      Identity key of the game and corresponding subfolder name within
+     *                    save repository to output the converted savegame to. Also used for
+     *                    resolving ambiguous savegame formats.
+     */
+    bool convertLegacySavegame(de::String const &sourcePath, de::String const &gameId);
 
 public: /// @todo Should be private:
     void initCompositeTextures();
