@@ -31,6 +31,9 @@ PackageFormatter::PackageFormatter(QStringList knownExtensions, QStringList base
     , baseGameIdKeys (baseGameIdKeys)
 {}
 
+PackageFormatter::~PackageFormatter() // virtual
+{}
+
 String PackageFormatter::composeInfo(SessionMetadata const &metadata, Path const &sourceFile,
     dint32 oldSaveVersion) const
 {

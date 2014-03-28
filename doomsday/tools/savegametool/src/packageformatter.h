@@ -55,6 +55,8 @@ public:
      */
     PackageFormatter(QStringList knownExtensions, QStringList baseGameIdKeys);
 
+    virtual ~PackageFormatter();
+
     /**
      * Formats .save package Info.
      *
