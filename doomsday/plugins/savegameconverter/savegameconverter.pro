@@ -33,7 +33,7 @@ win32 {
 }
 
 macx {
-    fixPluginInstallId($$TARGET, 2)
+    fixPluginInstallId($$TARGET, 1)
     linkToBundledLibdeng2($$TARGET)
     linkToBundledLibdeng1($$TARGET)
 }
