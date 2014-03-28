@@ -90,7 +90,7 @@ public:
     /**
      * Number of samples to play per second.
      */
-    ddouble sampleRate() const;
+    duint sampleRate() const;
 
     /**
      * Playing duration of the audio waveform, assuming sample count and sample rate

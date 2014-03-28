@@ -75,7 +75,7 @@ DENG2_PIMPL(Waveform)
     duint channelCount;
     duint bitsPerSample;
     dsize sampleCount;
-    ddouble sampleRate;
+    duint sampleRate;
 
     Instance(Public *i)
         : Base(i)
@@ -244,7 +244,7 @@ dsize Waveform::sampleCount() const
     return d->sampleCount;
 }
 
-ddouble Waveform::sampleRate() const
+duint Waveform::sampleRate() const
 {
     return d->sampleRate;
 }
