@@ -151,7 +151,7 @@ DENG2_PIMPL(Waveform)
         reader.seek(12); // skip past header
 
         WAVFormat wav;
-        while(!reader.atEnd())
+        while(reader.remainingSize() >= 8)
         {
             WAVChunk chunk;
             reader >> chunk;
@@ -173,11 +173,9 @@ DENG2_PIMPL(Waveform)
             }
             else if(chunk.id == "data") // Sample data chunk.
             {
-                DENG2_ASSERT(wav.blockAlign == channelCount * sampleCount * bitsPerSample/8);
-
                 sampleCount = chunk.size / wav.blockAlign;
-                sampleData.resize(channelCount * sampleCount * bitsPerSample/8);
-                reader.readBytes(sampleData.size(), sampleData); // keep it little endian
+                sampleData.resize(chunk.size);
+                reader.readPresetSize(sampleData); // keep it little endian
             }
             else
             {
