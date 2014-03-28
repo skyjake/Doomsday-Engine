@@ -599,13 +599,13 @@ void Info::BlockElement::add(Info::Element *elem)
     _contentsInOrder.append(elem); // owned
     if(!elem->name().isEmpty())
     {
-        _contents.insert(elem->name(), elem); // not owned (name may be empty)
+        _contents.insert(elem->name().toLower(), elem); // not owned (name may be empty)
     }
 }
 
 Info::Element *Info::BlockElement::find(String const &name) const
 {
-    Contents::const_iterator found = _contents.find(name);
+    Contents::const_iterator found = _contents.find(name.toLower());
     if(found == _contents.end()) return 0;
     return found.value();
 }
