@@ -57,49 +57,49 @@ public:
         lzRead(data, len, &file());
     }
 
-    LZReader &LZReader::operator >> (char &byte)
+    LZReader &operator >> (char &byte)
     {
         *this >> reinterpret_cast<de::duchar &>(byte);
         return *this;
     }
 
-    LZReader &LZReader::operator >> (de::dchar &byte)
+    LZReader &operator >> (de::dchar &byte)
     {
         *this >> reinterpret_cast<de::duchar &>(byte);
         return *this;
     }
 
-    LZReader &LZReader::operator >> (de::duchar &byte)
+    LZReader &operator >> (de::duchar &byte)
     {
         byte = lzGetC(&file());
         return *this;
     }
 
-    LZReader &LZReader::operator >> (de::dint16 &word)
+    LZReader &operator >> (de::dint16 &word)
     {
         *this >> reinterpret_cast<de::duint16 &>(word);
         return *this;
     }
 
-    LZReader &LZReader::operator >> (de::duint16 &word)
+    LZReader &operator >> (de::duint16 &word)
     {
         word = lzGetW(&file());
         return *this;
     }
 
-    LZReader &LZReader::operator >> (de::dint32 &dword)
+    LZReader &operator >> (de::dint32 &dword)
     {
         *this >> reinterpret_cast<de::duint32 &>(dword);
         return *this;
     }
 
-    LZReader &LZReader::operator >> (de::duint32 &dword)
+    LZReader &operator >> (de::duint32 &dword)
     {
         dword = lzGetL(&file());
         return *this;
     }
 
-    LZReader &LZReader::operator >> (de::dfloat &value)
+    LZReader &operator >> (de::dfloat &value)
     {
         *this >> *reinterpret_cast<de::duint32 *>(&value);
         return *this;
@@ -459,7 +459,7 @@ DENG2_PIMPL(NativeTranslator)
         dint32 scriptNumber;
         dbyte args[4];
 
-        static ACScriptTask *ACScriptTask::fromReader(LZReader &reader)
+        static ACScriptTask *fromReader(LZReader &reader)
         {
             ACScriptTask *task = new ACScriptTask;
             task->read(reader);
