@@ -120,22 +120,14 @@ DENG2_PIMPL(Id1Translator)
 #define NUM_SKILL_MODES 5
 #define MAXPLAYERS      16
 
-        {
-            Block tmp(24);
-            from >> FixedByteArray(tmp);
-            char descBuf[24 + 1];
-            tmp.get(0, (Block::Byte *)descBuf, 24); descBuf[24] = 0;
-            metadata.set("userDescription", descBuf);
-        }
+        Block desc;
+        from.readBytes(24, desc);
+        metadata.set("userDescription", desc.constData());
 
-        {
-            Block tmp(16);
-            from >> FixedByteArray(tmp);
-            char vcheck[16 + 1];
-            tmp.get(0, (Block::Byte *)vcheck, tmp.size()); vcheck[16] = 0;
-            saveVersion = String(vcheck + 8).toInt(0, 10, String::AllowSuffix);
-            DENG2_ASSERT(knownFormatVersion(saveVersion));
-        }
+        Block vcheck;
+        from.readBytes(16, vcheck);
+        saveVersion = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
+        DENG2_ASSERT(knownFormatVersion(saveVersion));
 
         // Id Tech 1 formats omitted the majority of the game rules...
         QScopedPointer<Record> rules(new Record);
@@ -225,14 +217,12 @@ bool Id1Translator::recognize(Path path)
         // We'll use the version number string for recognition purposes.
         // Seek past the user description.
         from.seek(24);
-        Block tmp(16);
-        from >> FixedByteArray(tmp);
-        char vcheck[16 + 1];
-        tmp.get(0, (Block::Byte *)vcheck, tmp.size()); vcheck[16] = 0;
-        if(!String(vcheck, 8).compare("version "))
+        Block vcheck;
+        from.readBytes(16, vcheck);
+        if(!String(vcheck.constData(), 8).compare("version "))
         {
             // The version id can be used to determine which game format the save is in.
-            int verId = String(vcheck + 8).toInt(0, 10, String::AllowSuffix);
+            int verId = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
             if(d->knownFormatVersion(verId))
             {
                 recognized = true;
