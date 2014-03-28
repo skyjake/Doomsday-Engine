@@ -28,8 +28,8 @@ namespace de {
 namespace audio ///< Namespace for audio related enumerations and constants.
 {
     enum Format {
-        RawSamples,
-        CompressedSamples
+        RawPCMLittleEndian,
+        Compressed
     };
 }
 

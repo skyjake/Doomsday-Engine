@@ -30,8 +30,7 @@ struct WAVChunk : public IReadable
     duint32 size;
 
     WAVChunk() : id(4), size(0) {}
-    void operator << (Reader &from)
-    {
+    void operator << (Reader &from) {
         from.readBytes(4, id) >> size;
     }
 };
@@ -52,6 +51,7 @@ struct WAVFormat : public IReadable
         , averageBytesPerSecond(0)
         , blockAlign(0)
         , bitsPerSample(0) {}
+
     void operator << (Reader &from)
     {
         from >> formatTag
@@ -79,7 +79,7 @@ DENG2_PIMPL(Waveform)
 
     Instance(Public *i)
         : Base(i)
-        , format(audio::RawSamples)
+        , format(audio::RawPCMLittleEndian)
         , source(0)
         , channelCount (0)
         , bitsPerSample(0)
@@ -102,7 +102,7 @@ DENG2_PIMPL(Waveform)
     void clear()
     {
         setSource(0);
-        format = audio::RawSamples;
+        format = audio::RawPCMLittleEndian;
         sampleData.clear();
         channelCount  = 0;
         bitsPerSample = 0;
@@ -120,7 +120,7 @@ DENG2_PIMPL(Waveform)
         else
         {
             // Let's assume it's a compressed audio format.
-            format = audio::CompressedSamples;
+            format = audio::Compressed;
         }
 
         setSource(&src);
@@ -166,11 +166,6 @@ DENG2_PIMPL(Waveform)
                     throw UnsupportedFormatError("Waveform::loadWAV",
                                                  "Only PCM samples supported");
                 }
-                if(wav.bitsPerSample != 8 && wav.bitsPerSample != 16)
-                {
-                    throw UnsupportedFormatError("Waveform::loadWAV",
-                                                 "Only 8 or 16 bits per sample supported");
-                }
 
                 channelCount  = wav.channels;
                 sampleRate    = wav.sampleRate;
@@ -182,20 +177,7 @@ DENG2_PIMPL(Waveform)
 
                 sampleCount = chunk.size / wav.blockAlign;
                 sampleData.resize(channelCount * sampleCount * bitsPerSample/8);
-                if(bitsPerSample == 8)
-                {
-                    // Just read it as-is.
-                    reader.readBytes(sampleData.size(), sampleData);
-                }
-                else
-                {
-                    // Endianness will affect this.
-                    duint16 *buf = reinterpret_cast<duint16 *>(sampleData.data());
-                    for(dsize i = 0; i < sampleCount; ++i)
-                    {
-                        reader >> buf[i];
-                    }
-                }
+                reader.readBytes(sampleData.size(), sampleData); // keep it little endian
             }
             else
             {
@@ -203,6 +185,8 @@ DENG2_PIMPL(Waveform)
                 reader.seek(chunk.size);
             }
         }
+
+        format = audio::RawPCMLittleEndian;
     }
 
     void fileBeingDeleted(File const &delFile)
