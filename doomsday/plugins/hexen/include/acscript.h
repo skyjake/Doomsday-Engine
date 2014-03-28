@@ -235,6 +235,16 @@ private:
         int scriptNumber; ///< On the target map.
         byte args[4];
 
+        /**
+         * @param mapUri        Unique identifier of the target map. A copy is made.
+         * @param scriptNumber  Script number to execute on the target map.
+         * @param args          Script arguments.
+         */
+        DeferredTask(Uri const &mapUri, int scriptNumber, byte const args[4]);
+        ~DeferredTask();
+
+        static DeferredTask *newFromReader(de::Reader &from);
+
         void operator >> (de::Writer &to) const;
         void operator << (de::Reader &from);
     };
@@ -250,7 +260,7 @@ private:
     Str *_strings;
 
     int _deferredTasksSize;
-    DeferredTask *_deferredTasks;
+    DeferredTask **_deferredTasks;
 };
 
 /// @return  The game's global ACScript interpreter.
