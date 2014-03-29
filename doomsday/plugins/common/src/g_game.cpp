@@ -503,8 +503,18 @@ static void initSaveSlots()
                     gameMenuSaveSlotWidgetIds[i]);
     }
     sslots->add("auto", false, composeSavedSessionPathForSlot(AUTO_SLOT));
+
 #if __JHEXEN__
-    sslots->add("base", false, composeSavedSessionPathForSlot(BASE_SLOT));
+    // Create the internal savegame folder if it doesn't yet exist.
+    de::App::fileSystem().makeFolder("/home/cache");
+    // Ensure that any previous internal save is destroyed before going further.
+    try
+    {
+        de::App::rootFolder().removeFile("/home/cache/internal.save");
+    }
+    catch(de::Folder::NotFoundError &)
+    {} // Ignore
+    sslots->add("base", false, de::String("/home/cache/internal.save"));
 #endif
 }
 
@@ -1029,13 +1039,6 @@ de::String G_SaveSlotIdFromUserInput(de::String str)
     {
         return "auto";
     }
-#if __JHEXEN__
-    // Never match the base slot.
-    if(!str.compareWithoutCase("base") || !str.compareWithoutCase("<base>"))
-    {
-        return "";
-    }
-#endif
 
     // Perhaps a unique slot identifier?
     if(G_SaveSlots().has(str))
