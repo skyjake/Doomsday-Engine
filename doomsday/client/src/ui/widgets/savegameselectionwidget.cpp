@@ -204,7 +204,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
             if(found == ui::Data::InvalidPos)
             {
                 SavedSession &session = *i.value();
-                if(!session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
+                if(session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
                 {
                     // Needs to be added.
                     self.items().append(new SavegameListItem(session));
