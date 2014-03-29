@@ -362,7 +362,7 @@ DENG2_PIMPL(NativeTranslator)
             dbyte skillModePlusFastBit;
             from >> skillModePlusFastBit;
             int skill = (skillModePlusFastBit & 0x7f);
-            if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
+            if(skill >= NUM_SKILL_MODES)
             {
                 skill = SM_NOTHINGS;
                 rules->addBoolean("fast", false);
@@ -379,7 +379,7 @@ DENG2_PIMPL(NativeTranslator)
             from >> skill;
             skill &= 0x7f;
             // Interpret skill levels outside the normal range as "spawn no things".
-            if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
+            if(skill >= NUM_SKILL_MODES)
             {
                 skill = SM_NOTHINGS;
             }
@@ -388,9 +388,12 @@ DENG2_PIMPL(NativeTranslator)
 
         dbyte episode, map;
         from >> episode >> map;
-        if(id == Hexen) episode = 0; // Why is this > 0??
-        DENG2_ASSERT(map > 0);
-        metadata.set("mapUri",              composeMapUriPath(episode, map - 1).asText());
+        if(fallbackGameId.beginsWith("hexen") || fallbackGameId.beginsWith("doom2") ||
+            fallbackGameId.beginsWith("chex") || fallbackGameId.beginsWith("hacx"))
+        {
+            episode = 0; // Why is this > 0??
+        }
+        metadata.set("mapUri",              composeMapUriPath(episode, map).asText());
 
         dbyte deathmatch;
         from >> deathmatch;
