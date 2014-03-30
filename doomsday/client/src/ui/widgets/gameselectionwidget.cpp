@@ -533,6 +533,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 GameSelectionWidget::GameSelectionWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
 {
+    enableIndicatorDraw(true);
+    setScrollBarColor("inverted.accent");
+
     // By default attach the filter above the widget.
     d->filter->rule()
             .setInput(Rule::Width,  rule().width())
