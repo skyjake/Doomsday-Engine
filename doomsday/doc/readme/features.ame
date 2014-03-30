@@ -15,7 +15,7 @@ Graphics:
 @list/thin{
 @item OpenGL based renderer
 @item Dynamic @wikiterm{ambient occlusion} (corner shadowing) for world surfaces
-@item @wikiterm{Dynamic lights} and @wikiterm{halos} and @wikiterm{lens flares}
+@item @wikiterm{Dynamic lights} with @wikiterm{halos}, @wikiterm{bloom} and @wikiterm{lens flares}
 @item Dynamic shadowing effects for world objects
 @item @wikiterm{Particle effects} system
 @item 3D models for world objects (with per-vertex lighting and multiple light sources), @wikiterm{skies}, @wikiterm{skyboxes}, and @wikiterm{particles}
