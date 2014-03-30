@@ -38,7 +38,6 @@ void SavedSession::Metadata::parse(String const &source)
 {
     clear();
 
-    /// @todo Info keys are converted to lowercase when parsed?
     try
     {
         Info info;
@@ -49,58 +48,47 @@ void SavedSession::Metadata::parse(String const &source)
         Record &rules = addRecord("gameRules");
         foreach(Info::Element const *elem, info.root().contentsInOrder())
         {
-            if(!elem->isBlock()) continue;
-
-            // Perhaps a ruleset group?
-            Info::BlockElement const &groupBlock = elem->as<Info::BlockElement>();
-            if(groupBlock.blockType() == BLOCK_GROUP)
+            if(Info::KeyElement const *key = elem->maybeAs<Info::KeyElement>())
             {
-                foreach(Info::Element const *grpElem, groupBlock.contentsInOrder())
+                set(key->name(), key->value());
+                continue;
+            }
+            if(Info::ListElement const *list = elem->maybeAs<Info::ListElement>())
+            {
+                QScopedPointer<ArrayValue> arr(new ArrayValue);
+                foreach(Info::Element::Value const &v, list->values())
                 {
-                    if(!grpElem->isBlock()) continue;
-
-                    // Perhaps a gamerule?
-                    Info::BlockElement const &ruleBlock = grpElem->as<Info::BlockElement>();
-                    if(ruleBlock.blockType() == BLOCK_GAMERULE)
+                    bool value = !String(v).compareWithoutCase("True");
+                    *arr << new NumberValue(value, NumberValue::Boolean);
+                }
+                set(list->name(), arr.take());
+                continue;
+            }
+            if(Info::BlockElement const *block = elem->maybeAs<Info::BlockElement>())
+            {
+                // Perhaps a ruleset group?
+                if(block->blockType() == BLOCK_GROUP)
+                {
+                    foreach(Info::Element const *grpElem, block->contentsInOrder())
                     {
-                        rules.set(ruleBlock.name(), ruleBlock.keyValue("value").text);
+                        if(!grpElem->isBlock()) continue;
+
+                        // Perhaps a gamerule?
+                        Info::BlockElement const &ruleBlock = grpElem->as<Info::BlockElement>();
+                        if(ruleBlock.blockType() == BLOCK_GAMERULE)
+                        {
+                            rules.set(ruleBlock.name(), ruleBlock.keyValue("value").text);
+                        }
                     }
                 }
+                continue;
             }
         }
 
-        // Apply the other known values.
-        String value;
-        if(info.findValueForKey("gameidentitykey", value))
+        // Ensure we have a valid description.
+        if(gets("userDescription").isEmpty())
         {
-            set("gameIdentityKey", value);
-        }
-        if(info.findValueForKey("maptime", value))
-        {
-            set("mapTime", value.toInt());
-        }
-        if(info.findValueForKey("mapuri", value))
-        {
-            set("mapUri", value);
-        }
-        if(Info::ListElement const *list = info.findByPath("players")->maybeAs<Info::ListElement>())
-        {
-            QScopedPointer<ArrayValue> arr(new ArrayValue);
-            foreach(Info::Element::Value const &v, list->values())
-            {
-                bool value = !String(v).compareWithoutCase("True");
-                *arr << new NumberValue(value, NumberValue::Boolean);
-            }
-            set("players", arr.take());
-        }
-        if(info.findValueForKey("sessionid", value))
-        {
-            set("sessionId", value.toInt());
-        }
-        if(info.findValueForKey("userdescription", value))
-        {
-            // Ensure we have a valid description.
-            set("userDescription", value.isEmpty()? "UNNAMED" : value);
+            set("userDescription", "UNNAMED");
         }
     }
     catch(de::Error const &er)
