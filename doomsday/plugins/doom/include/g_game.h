@@ -85,18 +85,6 @@ void G_QuitGame(void);
 
 void G_StopDemo(void);
 
-/**
- * Check if there is a finale before the map.
- * Returns true if a finale was found.
- */
-int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
-
-/**
- * Check if there is a finale after the map.
- * Returns true if a finale was found.
- */
-int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
-
 void G_DoReborn(int playernum);
 void G_PlayerReborn(int player);
 

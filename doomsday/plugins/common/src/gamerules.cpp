@@ -76,11 +76,11 @@ GameRuleset *GameRuleset::fromRecord(Record const &record, GameRuleset const *de
     if(!defaults || rec->has("fast"))            rules->fast            = byte( rec->geti("fast") );
 #endif
     if(!defaults || rec->has("deathmatch"))      rules->deathmatch      = byte( rec->geti("deathmatch") );
-    if(!defaults || rec->has("nomonsters"))      rules->noMonsters      = byte( rec->geti("nomonsters") );
+    if(!defaults || rec->has("noMonsters"))      rules->noMonsters      = byte( rec->geti("noMonsters") );
 #if __JHEXEN__
-    if(!defaults || rec->has("randomclasses"))   rules->randomClasses   = byte( rec->geti("randomclasses") );
+    if(!defaults || rec->has("randomClasses"))   rules->randomClasses   = byte( rec->geti("randomClasses") );
 #else
-    if(!defaults || rec->has("respawnmonsters")) rules->respawnMonsters = byte( rec->geti("respawnmonsters") );
+    if(!defaults || rec->has("respawnMonsters")) rules->respawnMonsters = byte( rec->geti("respawnMonsters") );
 #endif
 
     if(rec != &record) delete rec;

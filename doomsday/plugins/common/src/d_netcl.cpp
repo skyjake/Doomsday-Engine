@@ -100,16 +100,15 @@ void NetCl_UpdateGameState(Reader *msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewSession(gsMapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
-        G_SetGameAction(GA_NONE); /// @todo Necessary?
+        G_NewSession(*gsMapUri, gameMapEntrance /*gsMapEntrance*/, gsRules);
     }
     else
     {
-        Uri_Copy(gameMapUri, gsMapUri);
-        gameEpisode     = G_EpisodeNumberFor(gsMapUri);
-        gameMap         = G_MapNumberFor(gsMapUri);
-        //gameMapEntrance = gsMapEntrance; /// @todo Not communicated to clients??
-        G_Rules()       = gsRules;
+        DENG2_ASSERT(Uri_Equality(gsMapUri, gameMapUri));
+
+        G_ApplyNewGameRules(gsRules);
+        G_SetCurrentMap(*gsMapUri);
+        //gameMapEntrance = gsMapEntrance;
     }
 
     // Set gravity.

@@ -129,6 +129,12 @@ public:
     void loadBytecode(lumpnum_t lump);
 
     /**
+     * To be called when a new game session begins to reset the interpreter. The world state is
+     * discarded and any deferred tasks are cleared.
+     */
+    void reset();
+
+    /**
      * Returns the total number of script entrypoints in the loaded bytecode.
      */
     int scriptCount() const;
@@ -273,11 +279,6 @@ ACScriptInterpreter &Game_ACScriptInterpreter();
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * To be called when a new game session begins to initialize ACS scripting.
- */
-void Game_InitACScriptsForNewSession(void);
 
 dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, Uri const *mapUri,
     byte const args[4], mobj_t *activator, Line *line, int side);

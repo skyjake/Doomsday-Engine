@@ -71,9 +71,6 @@ void G_QuitGame(void);
 
 void G_StopDemo(void);
 
-int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
-int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
-
 // Confusing no?
 void G_DoReborn(int playernum);
 void G_PlayerReborn(int player);

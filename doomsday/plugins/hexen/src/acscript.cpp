@@ -246,6 +246,12 @@ void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
 #undef OPEN_SCRIPTS_BASE
 }
 
+void ACScriptInterpreter::reset()
+{
+    de::zap(worldVars);
+    clearDeferredTasks();
+}
+
 int ACScriptInterpreter::scriptCount() const
 {
     return _scriptCount;
@@ -1814,12 +1820,6 @@ static ACScriptInterpreter interp;
 ACScriptInterpreter &Game_ACScriptInterpreter()
 {
     return interp;
-}
-
-void Game_InitACScriptsForNewSession()
-{
-    memset(interp.worldVars, 0, sizeof(interp.worldVars));
-    interp.clearDeferredTasks();
 }
 
 void Game_ACScriptInterpreter_RunDeferredTasks(Uri const *mapUri)

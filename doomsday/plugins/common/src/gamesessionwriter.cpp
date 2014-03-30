@@ -132,7 +132,7 @@ public:
         updated->as<Folder>().populate();
 
         SavedSession &session = updated->as<SavedSession>();
-        //session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+        session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
         saveRepo().add(session);
     }
 };

@@ -99,11 +99,6 @@ public:
         void setSavedSession(de::game::SavedSession *newSession);
 
         /**
-         * Copies the saved session from the @a source slot.
-         */
-        void copySavedSession(Slot const &source);
-
-        /**
          * Returns the unique identifier/name for the logical save slot.
          */
         de::String const &id() const;
@@ -119,11 +114,6 @@ public:
          * @param newPath  New absolute path of the saved session to bind to.
          */
         void bindSavePath(de::String newPath);
-
-        /**
-         * Deletes the saved session linked to the logical save slot (if any).
-         */
-        void clear();
 
     private:
         DENG2_PRIVATE(d)

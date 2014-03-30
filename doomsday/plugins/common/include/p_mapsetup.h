@@ -44,7 +44,7 @@ void P_FinalizeMapChange(Uri const *uri);
  *
  * @param uri  URI e.g., "E1M1".
  */
-void P_SetupMap(Uri *uri);
+void P_SetupMap(Uri const *uri);
 
 /**
  * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
