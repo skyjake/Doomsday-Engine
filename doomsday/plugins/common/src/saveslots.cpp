@@ -167,20 +167,6 @@ void SaveSlots::Slot::bindSavePath(String newPath)
     }
 }
 
-bool SaveSlots::Slot::hasSavedSession() const
-{
-    return d->session != 0;
-}
-
-SavedSession &SaveSlots::Slot::savedSession() const
-{
-    if(d->session)
-    {
-        return *d->session;
-    }
-    throw MissingSessionError("SaveSlots::Slot::savedSession", "No linked session");
-}
-
 void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
 {
     if(d->session == newSession) return;
@@ -208,7 +194,7 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
         d->session->audienceForMetadataChange() += d;
     }
 
-    LOG_VERBOSE("Save slot '%s' now linked with saved session \"%s\"")
+    LOG_VERBOSE("Save slot '%s' now associated with session \"%s\"")
             << d->id << (d->session? d->session->path() : "(none)");
 }
 
@@ -312,7 +298,7 @@ SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
             Slot *sslot = i->second;
-            if(sslot->hasSavedSession() && &sslot->savedSession() == session)
+            if(sslot->d->session == session)
             {
                 return sslot;
             }

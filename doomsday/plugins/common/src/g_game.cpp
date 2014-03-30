@@ -2173,7 +2173,7 @@ static int rebornLoadConfirmResponse(msgresponse_t response, int /*userValue*/, 
     {
 #if __JHEXEN__
         // Load the last autosave? (Not optional in Hexen).
-        if(G_SaveSlots()["auto"].hasLoadableSavedSession())
+        if(G_SaveSlots()["auto"].isLoadable())
         {
             gaLoadSessionSlot = "auto";
             G_SetGameAction(GA_LOADSESSION);
@@ -2210,7 +2210,7 @@ void G_DoReborn(int plrNum)
         if(cfg.loadLastSaveOnReborn)
         {
             SaveSlot const &sslot = G_SaveSlots()[de::String::number(Con_GetInteger("game-save-last-slot"))];
-            if(sslot.hasLoadableSavedSession())
+            if(sslot.isLoadable())
             {
                 lastSlotId = sslot.id();
             }
@@ -2222,7 +2222,7 @@ void G_DoReborn(int plrNum)
         if(cfg.loadAutoSaveOnReborn)
         {
             SaveSlot const &sslot = G_SaveSlots()["auto"];
-            if(sslot.hasLoadableSavedSession())
+            if(sslot.isLoadable())
             {
                 autoSlotId = sslot.id();
             }
@@ -2250,7 +2250,7 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                de::game::SavedSession const &session = G_SaveSlots()[chosenSlot].savedSession();
+                de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(G_SaveSlots()[chosenSlot].savePath());
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, session.metadata().gets("userDescription").toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, 0, new de::String(chosenSlot));
@@ -2260,7 +2260,7 @@ void G_DoReborn(int plrNum)
 
         // Autosave loading cannot be disabled in Hexen.
 #if __JHEXEN__
-        if(G_SaveSlots()["auto"].hasLoadableSavedSession())
+        if(G_SaveSlots()["auto"].isLoadable())
         {
             gaLoadSessionSlot = "auto";
             G_SetGameAction(GA_LOADSESSION);
@@ -2882,9 +2882,9 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool a
     if(G_SaveSlots().has(slotId))
     {
         SaveSlot const &sslot = G_SaveSlots()[slotId];
-        if(sslot.hasSavedSession())
+        if(de::game::SavedSession const *existing = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath()))
         {
-            return sslot.savedSession().metadata().gets("userDescription");
+            return existing->metadata().gets("userDescription");
         }
     }
 
@@ -3144,7 +3144,7 @@ bool G_LoadSession(de::String slotId)
 
     try
     {
-        if(G_SaveSlots()[slotId].hasLoadableSavedSession())
+        if(G_SaveSlots()[slotId].isLoadable())
         {
             // Everything appears to be in order - schedule the game-save load!
             gaLoadSessionSlot = slotId;
@@ -3234,11 +3234,8 @@ void G_DoLoadSession(de::String slotId)
         de::String mapUriStr = Str_Text(Uri_Resolved(gameMapUri));
         SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
 
-        if(!slotId.compareWithoutCase("base"))
-        {
-            // Make note of the last used save slot.
-            Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);
-        }
+        // Make note of the last used save slot.
+        Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);
 
 #if __JHEXEN__
         if(mustCopyToAutoSlot)
@@ -4079,7 +4076,7 @@ static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
 
 D_CMD(LoadSession)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
 
     bool const confirmed = (argc == 3 && !stricmp(argv[2], "confirm"));
 
@@ -4097,21 +4094,21 @@ D_CMD(LoadSession)
     try
     {
         SaveSlot &sslot = G_SaveSlots()[slotId];
-        if(sslot.hasLoadableSavedSession())
+        if(sslot.isLoadable())
         {
             // A known used slot identifier.
             if(confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_LOADSESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                return G_LoadSession(slotId);
+                return G_LoadSession(sslot.id());
             }
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             // Compose the confirmation message.
-            de::game::SavedSession const &session = sslot.savedSession();
+            de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot.savePath());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, session.metadata().gets("userDescription").toUtf8().constData());
-            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(slotId));
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(sslot.id()));
             return true;
         }
     }
@@ -4212,7 +4209,9 @@ D_CMD(SaveSession)
                 userDescription = argv[2];
             }
 
-            if(!sslot.hasSavedSession() || confirmed || !cfg.confirmQuickGameSave)
+            de::game::SavedSession const *session = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath());
+
+            if(!session || confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
@@ -4220,8 +4219,7 @@ D_CMD(SaveSession)
             }
 
             // Compose the confirmation message.
-            de::game::SavedSession const &session = sslot.savedSession();
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, session.metadata().gets("userDescription").toUtf8().constData());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, session->metadata().gets("userDescription").toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = slotId;
@@ -4284,21 +4282,23 @@ D_CMD(DeleteSavedSession)
     try
     {
         SaveSlot &sslot = G_SaveSlots()[G_SaveSlotIdFromUserInput(argv[1])];
-        if(sslot.isUserWritable() && sslot.hasSavedSession())
+        if(sslot.isUserWritable())
         {
             // A known slot identifier.
+            de::game::SavedSession const *session = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath());
+            if(!session) return false;
+
             if(confirmed)
             {
-                G_DeleteSavedSession(sslot.savePath());
+                G_DeleteSavedSession(session->path());
             }
             else
             {
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
 
                 // Compose the confirmation message.
-                de::game::SavedSession const &session = sslot.savedSession();
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, session.metadata().gets("userDescription").toUtf8().constData());
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(sslot.savePath()));
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, session->metadata().gets("userDescription").toUtf8().constData());
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(session->path()));
             }
             return true;
         }
@@ -4321,12 +4321,12 @@ D_CMD(InspectSavedSession)
     de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
     try
     {
-        de::game::SavedSession const &session = G_SaveSlots()[slotId].savedSession();
+        de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(G_SaveSlots()[slotId].savePath());
         LOG_SCR_MSG("%s") << session.metadata().asStyledText();
         LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << session.path();
         return true;
     }
-    catch(SaveSlot::MissingSessionError const &)
+    catch(de::Folder::NotFoundError const &)
     {
         LOG_WARNING("Save slot '%s' is not in use") << slotId;
     }

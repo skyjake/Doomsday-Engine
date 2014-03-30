@@ -43,9 +43,6 @@ public:
     class Slot
     {
     public:
-        /// No SavedSession exists for the logical save slot. @ingroup errors
-        DENG2_ERROR(MissingSessionError);
-
         /// Logical saved session status:
         enum SessionStatus {
              Loadable,
@@ -71,34 +68,6 @@ public:
         bool isUserWritable() const;
 
         /**
-         * Returns @c true iff a saved game session exists for the logical save slot.
-         */
-        bool hasSavedSession() const;
-
-        /**
-         * Convenient method for determining whether a loadable saved session exists for the
-         * logical save slot.
-         *
-         * @see hasSavedSession(), isLoadable()
-         */
-        inline bool hasLoadableSavedSession() const {
-            return hasSavedSession() && isLoadable();
-        }
-
-        /**
-         * Returns the saved session for the logical save slot.
-         */
-        de::game::SavedSession &savedSession() const;
-
-        /**
-         * Change the saved session linked with the logical save slot. It is not usually
-         * necessary to call this.
-         *
-         * @param newSession  New SavedSession to apply. Use @c 0 to clear.
-         */
-        void setSavedSession(de::game::SavedSession *newSession);
-
-        /**
          * Returns the unique identifier/name for the logical save slot.
          */
         de::String const &id() const;
@@ -116,6 +85,9 @@ public:
         void bindSavePath(de::String newPath);
 
     private:
+        friend class SaveSlots;
+        void setSavedSession(de::game::SavedSession *newSession);
+
         DENG2_PRIVATE(d)
     };
 
