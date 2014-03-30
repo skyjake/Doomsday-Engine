@@ -30,8 +30,11 @@ namespace de {
  * You should first set the container of the folding panel with setContent(). This
  * ensures that widgets added to the panel use the appropriate stylist.
  *
- * When dismissed, the panel contents are GL-deinitialized and removed from the widget
- * tree entirely.
+ * When the fold is closed, the panel contents are GL-deinitialized and removed from the
+ * widget tree entirely.
+ *
+ * @note When the fold is closed, the content widget receives no update() notifications
+ * or events because it is not part of the widget tree.
  *
  * If needed, FoldPanelWidget can create a title button for toggling the panel open and
  * closed. It is the user's responsibility to lay out this button appropriately.
