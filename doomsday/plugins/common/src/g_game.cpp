@@ -138,7 +138,6 @@ void G_DoMapCompleted();
 void G_DoEndDebriefing();
 void G_DoVictory();
 void G_DoLeaveMap();
-void G_DoRestartMap();
 void G_DoScreenShot();
 void G_DoQuitGame();
 
@@ -1697,7 +1696,16 @@ static void runGameAction()
             break;
 
         case GA_RESTARTMAP:
-            G_DoRestartMap();
+            // This is a restart, so we won't brief again.
+            briefDisabled = true;
+#if !__JHEXEN__
+            G_StopDemo();
+            G_LoadCurrentMap();
+#else
+            // Restart the game session entirely.
+            G_EndSession();
+            G_NewSession(*dMapUri, dMapEntrance, dRules);
+#endif
             G_SetGameAction(GA_NONE);
             break;
 
@@ -2988,22 +2996,16 @@ static int saveGameSessionWorker(void *context)
 
 void G_DoLeaveMap()
 {
-    bool const saveProgress = !gameRules.deathmatch; // Never in deathmatch.
-    bool revisit = false;
-
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
 
     // Ensure that the episode and map indices are good.
     G_ValidateMap(&gameEpisode, &nextMap);
 
+    Uri const *nextMapUri   = G_ComposeMapUri(gameEpisode, nextMap);
+    bool revisit            = false;
+    bool const saveProgress = !gameRules.deathmatch; // Never in deathmatch.
 #if __JHEXEN__
-    /*
-     * First, determine whether we've been to this map previously and if so,
-     * whether we need to load the archived map state.
-     */
-    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-
     if(saveProgress)
     {
         de::String const savePath = "/home/cache/internal.save";
@@ -3056,7 +3058,6 @@ void G_DoLeaveMap()
             saveFolder.populate(); // Populate the new contents of the folder.
         }
     }
-    Uri_Delete(nextMapUri); nextMapUri = 0;
 
     // Take a copy of the player objects (they will be cleared in the process
     // of calling P_SetupMap() and we need to restore them after).
@@ -3088,8 +3089,7 @@ void G_DoLeaveMap()
 #endif
 
     // Change the current map.
-    Uri_Copy(gameMapUri, G_ComposeMapUri(gameEpisode, nextMap));
-    gameMap         = nextMap;
+    G_SetCurrentMap(*nextMapUri);
 #if __JHEXEN__
     gameMapEntrance = nextMapEntrance;
 #else
@@ -3125,21 +3125,8 @@ void G_DoLeaveMap()
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     saveGameSessionWorker, &p, "Auto-Saving game...");
     }
-}
 
-void G_DoRestartMap()
-{
-    // This is a restart, so we won't brief again.
-    briefDisabled = true;
-
-#if !__JHEXEN__
-    G_StopDemo();
-    G_LoadCurrentMap();
-#else
-    // Restart the game session entirely.
-    G_EndSession();
-    G_NewSession(*dMapUri, dMapEntrance, dRules);
-#endif
+    Uri_Delete(const_cast<Uri *>(nextMapUri));
 }
 
 bool G_SessionLoadingPossible()
@@ -3419,7 +3406,7 @@ void G_DeleteSavedSession(de::String const &savePath)
 {
     if(DENG2_APP->rootFolder().has(savePath))
     {
-        G_SavedSessionRepository().remove(savePath); // invalidates d->session
+        G_SavedSessionRepository().remove(savePath);
         DENG2_APP->rootFolder().removeFile(savePath);
     }
 }
