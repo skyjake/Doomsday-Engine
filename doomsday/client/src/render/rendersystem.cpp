@@ -160,7 +160,7 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::IntCVar,   "rend-bloom", 1)
                 .define(SReg::FloatCVar, "rend-bloom-intensity", .65f)
                 .define(SReg::FloatCVar, "rend-bloom-threshold", .35f)
-                .define(SReg::FloatCVar, "rend-bloom-dispersion", 1.75f)
+                .define(SReg::FloatCVar, "rend-bloom-dispersion", 1)
 
                 .define(SReg::IntCVar,   "rend-fakeradio", 1)
                 .define(SReg::FloatCVar, "rend-fakeradio-darkness", 1.2f)
