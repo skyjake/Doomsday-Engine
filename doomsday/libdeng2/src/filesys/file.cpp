@@ -276,6 +276,12 @@ void File::setMode(Flags const &newMode)
 {
     DENG2_GUARD(this);
 
+    // Implicitly flush the file before switching away from write mode.
+    if(d->mode.testFlag(Write) && !newMode.testFlag(Write))
+    {
+        flush();
+    }
+
     if(this != d->source)
     {
         d->source->setMode(newMode);
