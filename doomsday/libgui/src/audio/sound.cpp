@@ -46,35 +46,40 @@ DENG2_AUDIENCE_METHOD(Sound, Deletion)
 Sound::Sound() : d(new Instance)
 {}
 
-void Sound::setVolume(dfloat volume)
+Sound &Sound::setVolume(dfloat volume)
 {
     d->volume = volume;
     update();
+    return *this;
 }
 
-void Sound::setPan(dfloat pan)
+Sound &Sound::setPan(dfloat pan)
 {
     d->pan = pan;
     update();
+    return *this;
 }
 
-void Sound::setFrequency(dfloat factor)
+Sound &Sound::setFrequency(dfloat factor)
 {
     d->frequency = factor;
     update();
+    return *this;
 }
 
-void Sound::setPosition(Vector3f const &position, Positioning positioning)
+Sound &Sound::setPosition(Vector3f const &position, Positioning positioning)
 {
     d->position = position;
     d->positioning = positioning;
     update();
+    return *this;
 }
 
-void Sound::setVelocity(Vector3f const &velocity)
+Sound &Sound::setVelocity(Vector3f const &velocity)
 {
     d->velocity = velocity;
     update();
+    return *this;
 }
 
 bool Sound::isPlaying() const

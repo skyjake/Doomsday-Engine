@@ -74,11 +74,11 @@ public:
     virtual void pause() = 0;
     virtual void resume() = 0;
 
-    virtual void setVolume(dfloat volume);
-    virtual void setPan(dfloat pan);
-    virtual void setFrequency(dfloat factor);
-    virtual void setPosition(de::Vector3f const &position, Positioning positioning = Absolute);
-    virtual void setVelocity(de::Vector3f const &velocity);
+    virtual Sound &setVolume(dfloat volume);
+    virtual Sound &setPan(dfloat pan);
+    virtual Sound &setFrequency(dfloat factor);
+    virtual Sound &setPosition(de::Vector3f const &position, Positioning positioning = Absolute);
+    virtual Sound &setVelocity(de::Vector3f const &velocity);
 
     // Methods for querying the sound status:
 
