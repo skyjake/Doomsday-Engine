@@ -49,8 +49,8 @@ public:
 
     enum PlayingMode {
         NotPlaying,
-        Once,           ///< Play once then pause the sound.
-        OnceThenDelete, ///< Play once and then delete the sound.
+        Once,           ///< Play once and then delete the sound.
+        OnceDontDelete, ///< Play once then pause the sound.
         Looping         ///< Keep looping the sound.
     };
 
