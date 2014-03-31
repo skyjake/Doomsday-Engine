@@ -104,6 +104,7 @@ DENG2_PIMPL(ArchiveFeed)
 
             file->clear();
             Writer(*file) << *arch;
+            file->flush();
         }
         else
         {
@@ -255,6 +256,11 @@ Archive const &ArchiveFeed::archive() const
 String const &ArchiveFeed::basePath() const
 {
     return d->basePath;
+}
+
+void ArchiveFeed::rewriteFile()
+{
+    d->writeIfModified();
 }
 
 } // namespace de
