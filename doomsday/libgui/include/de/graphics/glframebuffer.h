@@ -33,7 +33,8 @@ namespace gl {
         SwapMonoBuffer,
         SwapStereoLeftBuffer,
         SwapStereoRightBuffer,
-        SwapStereoBuffers
+        SwapStereoBuffers,
+        SwapWithAlpha
     };
 }
 
@@ -89,6 +90,8 @@ public:
      *      - gl::SwapStereoRightBuffer: swap updates the back/right stereo buffer
      */
     void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
+
+    void drawBuffer(float opacity);
 
 public:
     /**

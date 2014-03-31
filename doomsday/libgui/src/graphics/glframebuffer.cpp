@@ -45,6 +45,7 @@ DENG2_PIMPL(GLFramebuffer)
     Drawable bufSwap;
     GLUniform uMvpMatrix;
     GLUniform uBufTex;
+    GLUniform uColor;
     typedef GLBufferT<Vertex2Tex> VBuf;
 
     Instance(Public *i)
@@ -53,6 +54,7 @@ DENG2_PIMPL(GLFramebuffer)
         , _samples(0)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uBufTex   ("uTex",       GLUniform::Sampler2D)
+        , uColor    ("uColor",     GLUniform::Vec4)
     {
         pDefaultSampleCount.audienceForChange() += this;
         //DENG2_GUI_APP->audienceForGLContextChange += this;
@@ -109,11 +111,13 @@ DENG2_PIMPL(GLFramebuffer)
                                           "vUV = aUV; }"),
                                 // Fragment shader:
                                 Block("uniform sampler2D uTex; "
+                                      "uniform highp vec4 uColor; "
                                       "varying highp vec2 vUV; "
                                       "void main(void) { "
-                                          "gl_FragColor = texture2D(uTex, vUV); }"))
+                                          "gl_FragColor = uColor * texture2D(uTex, vUV); }"))
                 << uMvpMatrix
-                << uBufTex;
+                << uBufTex
+                << uColor;
 
         buf->setVertices(gl::TriangleStrip,
                          VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
@@ -121,6 +125,7 @@ DENG2_PIMPL(GLFramebuffer)
 
         uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
         uBufTex = color;
+        uColor = Vector4f(1, 1, 1, 1);
     }
 
     void release()
@@ -236,9 +241,13 @@ noMultisampling:
             else
             {
                 // Fallback: draw the back buffer texture to the main framebuffer.
-                bufSwap.draw();
+                drawSwap();
             }
             canvas.QGLWidget::swapBuffers();
+            break;
+
+        case gl::SwapWithAlpha:
+            drawSwap();
             break;
 
         case gl::SwapStereoLeftBuffer:
@@ -351,6 +360,18 @@ GLTexture &GLFramebuffer::depthStencilTexture() const
 void GLFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
 {
     d->swapBuffers(canvas, swapMode);
+}
+
+void GLFramebuffer::drawBuffer(float opacity)
+{
+    d->uColor = Vector4f(1, 1, 1, opacity);
+    GLState::push()
+            .setCull(gl::None)
+            .setDepthTest(false)
+            .setDepthWrite(false);
+    d->drawSwap();
+    GLState::pop();
+    d->uColor = Vector4f(1, 1, 1, 1);
 }
 
 bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
