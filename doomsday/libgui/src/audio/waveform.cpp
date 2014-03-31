@@ -79,7 +79,7 @@ DENG2_PIMPL(Waveform)
 
     Instance(Public *i)
         : Base(i)
-        , format(audio::RawPCMLittleEndian)
+        , format(audio::PCMLittleEndian)
         , source(0)
         , channelCount (0)
         , bitsPerSample(0)
@@ -102,7 +102,7 @@ DENG2_PIMPL(Waveform)
     void clear()
     {
         setSource(0);
-        format = audio::RawPCMLittleEndian;
+        format = audio::PCMLittleEndian;
         sampleData.clear();
         channelCount  = 0;
         bitsPerSample = 0;
@@ -184,7 +184,7 @@ DENG2_PIMPL(Waveform)
             }
         }
 
-        format = audio::RawPCMLittleEndian;
+        format = audio::PCMLittleEndian;
     }
 
     void fileBeingDeleted(File const &delFile)
