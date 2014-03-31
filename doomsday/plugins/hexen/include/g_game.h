@@ -57,9 +57,6 @@ void Mobj_UpdateTranslationClassAndMap(mobj_t *mo);
 
 void G_PrintMapList(void);
 
-int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
-int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
-
 void G_QuitGame(void);
 
 void G_CommonPreInit(void);

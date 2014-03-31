@@ -64,10 +64,6 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
     }
 
-    inline SavedSessionRepository &saveRepo() {
-        return G_SavedSessionRepository();
-    }
-
     void updateStatus()
     {
         LOGDEV_XVERBOSE("Updating SaveSlot '%s' status") << id;
@@ -171,20 +167,6 @@ void SaveSlots::Slot::bindSavePath(String newPath)
     }
 }
 
-bool SaveSlots::Slot::hasSavedSession() const
-{
-    return d->session != 0;
-}
-
-SavedSession &SaveSlots::Slot::savedSession() const
-{
-    if(d->session)
-    {
-        return *d->session;
-    }
-    throw MissingSessionError("SaveSlots::Slot::savedSession", "No linked session");
-}
-
 void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
 {
     if(d->session == newSession) return;
@@ -193,6 +175,14 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
     // (and the menu, in turn).
     if(d->session)
     {
+        // Should we announce this?
+#if !defined DENG_DEBUG // Always
+        if(!newSession && isUserWritable())
+#endif
+        {
+            LOG_RES_MSG("Save slot '%s' was cleared") << d->id;
+        }
+
         d->session->audienceForMetadataChange() -= d;
     }
 
@@ -204,55 +194,8 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
         d->session->audienceForMetadataChange() += d;
     }
 
-    LOG_VERBOSE("Save slot '%s' now linked with saved session \"%s\"")
+    LOG_VERBOSE("Save slot '%s' now associated with session \"%s\"")
             << d->id << (d->session? d->session->path() : "(none)");
-}
-
-void SaveSlots::Slot::copySavedSession(Slot const &source)
-{
-    if(&source == this) return; // Sanity check.
-
-    LOG_AS("SaveSlots::Slot::copySavedSession");
-    LOG_RES_VERBOSE("From '%s' to '%s'") << source.id() << d->id;
-
-    // Clear the existing session and .save package (if any).
-    clear();
-
-    Folder &saveFolder = DENG2_APP->rootFolder().locate<Folder>(d->savePath.fileNamePath());
-    SavedSession const &sourceSession = source.savedSession();
-
-    // Copy the .save package.
-    File &save = saveFolder.replaceFile(d->savePath.fileName());
-    de::Writer(save) << sourceSession.archive();
-    save.setMode(File::ReadOnly);
-    LOG_RES_MSG("Wrote ") << save.description();
-
-    // We can now reinterpret and populate the contents of the archive.
-    File *updated = save.reinterpret();
-    updated->as<Folder>().populate();
-
-    SavedSession &session = updated->as<SavedSession>();
-    //session.cacheMetadata(sourceSession.metadata()); // Avoid immediately opening the .save package.
-    d->saveRepo().add(session);
-    DENG2_ASSERT(d->session == &session); // Sanity check.
-}
-
-void SaveSlots::Slot::clear()
-{
-    // Should we announce this?
-#if !defined DENG_DEBUG // Always
-    if(isUserWritable())
-#endif
-    {
-        LOG_RES_MSG("Clearing save slot '%s'") << d->id;
-    }
-
-    if(d->session)
-    {
-        d->saveRepo().remove(d->savePath); // invalidates d->session
-        DENG2_ASSERT(d->session == 0); // Sanity check.
-        DENG2_APP->rootFolder().removeFile(d->savePath);
-    }
 }
 
 DENG2_PIMPL(SaveSlots)
@@ -355,7 +298,7 @@ SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
             Slot *sslot = i->second;
-            if(sslot->hasSavedSession() && &sslot->savedSession() == session)
+            if(sslot->d->session == session)
             {
                 return sslot;
             }

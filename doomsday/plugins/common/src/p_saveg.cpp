@@ -932,8 +932,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     // Do we need to change the map?
     if(!Uri_Equality(gameMapUri, mapUri))
     {
-        G_NewSession(mapUri, 0/*default*/, rules);
-        G_SetGameAction(GA_NONE); /// @todo Necessary?
+        G_NewSession(*mapUri, 0/*default*/, *rules);
     }
     else if(rules)
     {

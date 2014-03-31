@@ -64,6 +64,35 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
+ACScriptInterpreter::DeferredTask::DeferredTask(Uri const &mapUri, int scriptNumber, byte const args_[])
+    : mapUri(Uri_Dup(&mapUri))
+    , scriptNumber(scriptNumber)
+{
+    std::memcpy(args, args_, sizeof(args));
+}
+
+ACScriptInterpreter::DeferredTask::~DeferredTask()
+{
+    Uri_Delete(mapUri);
+}
+
+ACScriptInterpreter::DeferredTask *ACScriptInterpreter::DeferredTask::newFromReader(de::Reader &from) //static
+{
+    de::String mapUriStr;
+    from >> mapUriStr;
+    Uri *mapUri = Uri_NewWithPath2(mapUriStr.toUtf8().constData(), RC_NULL);
+    int scriptNumber; ///< On the target map.
+    from >> scriptNumber;
+    byte args[4];
+    for(int i = 0; i < 4; ++i)
+    {
+        from >> args[i];
+    }
+    DeferredTask *task = new DeferredTask(*mapUri, scriptNumber, args);
+    Uri_Delete(mapUri);
+    return task;
+}
+
 void ACScriptInterpreter::DeferredTask::operator >> (de::Writer &to) const
 {
     to << de::String(Str_Text(Uri_Compose(mapUri)))
@@ -113,7 +142,7 @@ ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const 
 
     for(int i = 0; i < info.argCount; ++i)
     {
-        DENG_ASSERT(args != 0);
+        DENG2_ASSERT(args != 0);
         script->vars[i] = args[i];
     }
 
@@ -129,7 +158,7 @@ bool ACScriptInterpreter::newDeferredTask(Uri const *mapUri, int scriptNumber, b
     // Don't allow duplicates.
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        DeferredTask &task = _deferredTasks[i];
+        DeferredTask &task = *_deferredTasks[i];
         if(task.scriptNumber == scriptNumber &&
            Uri_Equality(task.mapUri, mapUri))
         {
@@ -137,16 +166,8 @@ bool ACScriptInterpreter::newDeferredTask(Uri const *mapUri, int scriptNumber, b
         }
     }
 
-    _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * ++_deferredTasksSize, PU_GAMESTATIC);
-    DeferredTask *task = &_deferredTasks[_deferredTasksSize - 1];
-
-    task->mapUri       = Uri_Dup(mapUri);
-    task->scriptNumber = scriptNumber;
-    task->args[0]      = args[0];
-    task->args[1]      = args[1];
-    task->args[2]      = args[2];
-    task->args[3]      = args[3];
-
+    _deferredTasks = (DeferredTask **) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * ++_deferredTasksSize, PU_GAMESTATIC);
+    _deferredTasks[_deferredTasksSize - 1] = new DeferredTask(*mapUri, scriptNumber, args);
     return true;
 }
 
@@ -164,7 +185,7 @@ void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
 {
 #define OPEN_SCRIPTS_BASE 1000
 
-    DENG_ASSERT(!IS_CLIENT);
+    DENG2_ASSERT(!IS_CLIENT);
 
     size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
 
@@ -212,7 +233,7 @@ void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
             info->scriptNumber -= OPEN_SCRIPTS_BASE;
         }
 
-        DENG_ASSERT(info->argCount <= MAX_ACS_SCRIPT_VARS);
+        DENG2_ASSERT(info->argCount <= MAX_ACS_SCRIPT_VARS);
     }
 
     _stringCount = LONG(*readBuf++);
@@ -225,6 +246,12 @@ void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
 #undef OPEN_SCRIPTS_BASE
 }
 
+void ACScriptInterpreter::reset()
+{
+    de::zap(worldVars);
+    clearDeferredTasks();
+}
+
 int ACScriptInterpreter::scriptCount() const
 {
     return _scriptCount;
@@ -232,7 +259,7 @@ int ACScriptInterpreter::scriptCount() const
 
 void ACScriptInterpreter::startOpenScripts()
 {
-    DENG_ASSERT(!IS_CLIENT);
+    DENG2_ASSERT(!IS_CLIENT);
 
     // Each is allotted 1 second for initialization.
     for(int i = 0; i < _scriptCount; ++i)
@@ -242,8 +269,8 @@ void ACScriptInterpreter::startOpenScripts()
         if(info.flags & BytecodeScriptInfo::Open)
         {
             ACScript *script = newACScript(info, 0/*no args*/, TICSPERSEC);
-            DENG_ASSERT(script != 0);
-            DENG_UNUSED(script);
+            DENG2_ASSERT(script != 0);
+            DENG2_UNUSED(script);
         }
     }
 }
@@ -251,7 +278,7 @@ void ACScriptInterpreter::startOpenScripts()
 bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
     byte const args[], mobj_t *activator, Line *line, int side)
 {
-    DENG_ASSERT(!IS_CLIENT);
+    DENG2_ASSERT(!IS_CLIENT);
 
     if(mapUri)
     {
@@ -365,7 +392,7 @@ BytecodeScriptInfo &ACScriptInterpreter::scriptInfo(int scriptNumber)
 
 Str const *ACScriptInterpreter::string(int stringNumber) const
 {
-    DENG_ASSERT(stringNumber >= 0 && stringNumber < _stringCount);
+    DENG2_ASSERT(stringNumber >= 0 && stringNumber < _stringCount);
     return &_strings[stringNumber];
 }
 
@@ -378,7 +405,7 @@ void ACScriptInterpreter::clearDeferredTasks()
 {
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        Uri_Delete(_deferredTasks[i].mapUri);
+        delete _deferredTasks[i];
     }
     Z_Free(_deferredTasks); _deferredTasks = 0;
     _deferredTasksSize = 0;
@@ -398,7 +425,7 @@ void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
     int i = 0;
     while(i < _deferredTasksSize)
     {
-        DeferredTask *task = &_deferredTasks[i];
+        DeferredTask *task = _deferredTasks[i];
         int scriptNumber = task->scriptNumber;
 
         if(!Uri_Equality(task->mapUri, mapUri))
@@ -424,7 +451,7 @@ void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
             App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
         }
 
-        Uri_Delete(_deferredTasks[i].mapUri);
+        delete _deferredTasks[i];
 
         _deferredTasksSize -= 1;
         if(i == _deferredTasksSize)
@@ -437,7 +464,7 @@ void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
     {
         if(_deferredTasksSize)
         {
-            _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
+            _deferredTasks = (DeferredTask **) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
         }
         else
         {
@@ -479,7 +506,7 @@ void ACScriptInterpreter::writeWorldState(de::Writer &to) const
     to << _deferredTasksSize;
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        to << _deferredTasks[i];
+        to << *_deferredTasks[i];
     }
 }
 
@@ -496,10 +523,10 @@ void ACScriptInterpreter::readWorldState(de::Reader &from)
     from >> _deferredTasksSize;
     if(_deferredTasksSize)
     {
-        _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * _deferredTasksSize, PU_GAMESTATIC);
+        _deferredTasks = (DeferredTask **) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * _deferredTasksSize, PU_GAMESTATIC);
         for(int i = 0; i < _deferredTasksSize; ++i)
         {
-            from >> _deferredTasks[i];
+            _deferredTasks[i] = DeferredTask::newFromReader(from);
         }
     }
 }
@@ -1793,12 +1820,6 @@ static ACScriptInterpreter interp;
 ACScriptInterpreter &Game_ACScriptInterpreter()
 {
     return interp;
-}
-
-void Game_InitACScriptsForNewSession()
-{
-    memset(interp.worldVars, 0, sizeof(interp.worldVars));
-    interp.clearDeferredTasks();
 }
 
 void Game_ACScriptInterpreter_RunDeferredTasks(Uri const *mapUri)

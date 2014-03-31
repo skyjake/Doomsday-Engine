@@ -643,7 +643,7 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-void P_SetupMap(Uri *mapUri)
+void P_SetupMap(Uri const *mapUri)
 {
     AutoStr *mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
     if(!mapUriStr) return;

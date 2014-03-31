@@ -980,6 +980,17 @@ static void clearViewPorts()
 {
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
 
+    if(Con_GetInteger("rend-bloom"))
+    {
+        /*
+         * Parts of the previous frame might leak in the bloom unless we clear the color
+         * buffer. Not doing this would result in very bright HOMs in map holes and game
+         * UI elements glowing in the frame (UI elements are normally on a separate layer
+         * and should not affect bloom).
+         */
+        bits |= GL_COLOR_BUFFER_BIT;
+    }
+
     if(!devRendSkyMode)
         bits |= GL_STENCIL_BUFFER_BIT;
 

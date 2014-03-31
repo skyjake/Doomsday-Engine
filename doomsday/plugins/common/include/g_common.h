@@ -179,6 +179,10 @@ D_CMD( CCmdExitLevel );
 
 class SaveSlots;
 
+char const *G_InFineBriefing(Uri const *mapUri);
+
+char const *G_InFineDebriefing(Uri const *mapUri);
+
 /**
  * Returns the game identity key (from the engine).
  */
@@ -189,11 +193,24 @@ de::String G_IdentityKey();
  * @param mapEntrance  Logical map entry point number.
  * @param rules        Game rules to apply.
  */
-void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+void G_NewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
-void G_DeferredNewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+void G_DeferredNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
-void G_EndSession(void);
+/**
+ * End the current game session.
+ */
+void G_EndSession();
+
+/**
+ * Deletes the saved session at @a path (if any).
+ */
+void G_DeleteSavedSession(de::String const &path);
+
+/**
+ * Copies the saved session at @a sourcePath to @a destPath.
+ */
+void G_CopySavedSession(de::String const &destPath, de::String const &sourcePath);
 
 /**
  * Determines whether game session loading is presently possible.
@@ -274,6 +291,15 @@ de::String G_SaveSlotIdFromUserInput(de::String str);
  */
 GameRuleset &G_Rules();
 
+/**
+ * To be called when a new game begins to effect the game rules. Note that some
+ * of the rules may be overridden here (e.g., in a networked game).
+ */
+void G_ApplyNewGameRules(GameRuleset const &rules);
+
+void G_SetCurrentMap(Uri const &mapUri);
+
+void G_LoadCurrentMap(bool revisit = false);
 #endif // __cplusplus
 
 #endif // LIBCOMMON_GAME_H

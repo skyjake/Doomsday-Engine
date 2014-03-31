@@ -123,11 +123,12 @@ void LensFx_Init()
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         ConsoleEffectStack &stack = fxConsole[i];
-        stack.effects.append(new fx::Vignette(i));
-        stack.effects.append(new fx::Bloom(i));
-        stack.effects.append(new fx::LensFlares(i));     // IDX_LENS_FLARES
-        stack.effects.append(new fx::ColorFilter(i));
-        stack.effects.append(new fx::PostProcessing(i)); // IDX_POST_PROCESSING
+        stack.effects
+                << new fx::Bloom(i)
+                << new fx::Vignette(i)
+                << new fx::LensFlares(i)        // IDX_LENS_FLARES
+                << new fx::ColorFilter(i)
+                << new fx::PostProcessing(i);   // IDX_POST_PROCESSING
     }
 }
 

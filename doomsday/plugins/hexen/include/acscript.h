@@ -129,6 +129,12 @@ public:
     void loadBytecode(lumpnum_t lump);
 
     /**
+     * To be called when a new game session begins to reset the interpreter. The world state is
+     * discarded and any deferred tasks are cleared.
+     */
+    void reset();
+
+    /**
      * Returns the total number of script entrypoints in the loaded bytecode.
      */
     int scriptCount() const;
@@ -235,6 +241,16 @@ private:
         int scriptNumber; ///< On the target map.
         byte args[4];
 
+        /**
+         * @param mapUri        Unique identifier of the target map. A copy is made.
+         * @param scriptNumber  Script number to execute on the target map.
+         * @param args          Script arguments.
+         */
+        DeferredTask(Uri const &mapUri, int scriptNumber, byte const args[4]);
+        ~DeferredTask();
+
+        static DeferredTask *newFromReader(de::Reader &from);
+
         void operator >> (de::Writer &to) const;
         void operator << (de::Reader &from);
     };
@@ -250,7 +266,7 @@ private:
     Str *_strings;
 
     int _deferredTasksSize;
-    DeferredTask *_deferredTasks;
+    DeferredTask **_deferredTasks;
 };
 
 /// @return  The game's global ACScript interpreter.
@@ -263,11 +279,6 @@ ACScriptInterpreter &Game_ACScriptInterpreter();
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * To be called when a new game session begins to initialize ACS scripting.
- */
-void Game_InitACScriptsForNewSession(void);
 
 dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, Uri const *mapUri,
     byte const args[4], mobj_t *activator, Line *line, int side);

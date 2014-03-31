@@ -64,9 +64,6 @@ public:
 
     de::game::SavedSession const &savedSession(de::ui::DataPos pos) const;
 
-    // Events.
-    void update();
-
 signals:
     void availabilityChanged();
     void gameSelected();

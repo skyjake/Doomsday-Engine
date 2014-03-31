@@ -39,6 +39,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
 , DENG2_OBSERVES(App,                    StartupComplete)
 , DENG2_OBSERVES(SavedSessionRepository, AvailabilityUpdate)
 , DENG2_OBSERVES(ButtonWidget,           Press)
+, DENG2_OBSERVES(Loop,                   Iteration) // deferred refresh
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -112,12 +113,10 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
     };
 
     bool loadWhenSelected;
-    bool needUpdateFromRepository;
 
     Instance(Public *i)
         : Base(i)
         , loadWhenSelected(true)
-        , needUpdateFromRepository(false)
     {
         self.organizer().setWidgetFactory(*this);
 
@@ -203,9 +202,13 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
             ui::Data::Pos found = self.items().findData(i.key());
             if(found == ui::Data::InvalidPos)
             {
-                // Needs to be added.
-                self.items().append(new SavegameListItem(*i.value()));
-                changed = true;
+                SavedSession &session = *i.value();
+                if(session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
+                {
+                    // Needs to be added.
+                    self.items().append(new SavegameListItem(session));
+                    changed = true;
+                }
             }
         }
 
@@ -221,9 +224,20 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         if(!App::inMainThread())
         {
             // We'll have to defer the update for now.
-            needUpdateFromRepository = true;
+            deferUpdate();
             return;
         }
+        updateItemsFromRepository();
+    }
+
+    void deferUpdate()
+    {
+        Loop::appLoop().audienceForIteration() += this;
+    }
+
+    void loopIteration()
+    {
+        Loop::appLoop().audienceForIteration() -= this;
         updateItemsFromRepository();
     }
 };
@@ -232,7 +246,7 @@ SavegameSelectionWidget::SavegameSelectionWidget()
     : MenuWidget("savegame-selection"), d(new Instance(this))
 {
     setGridSize(3, ui::Filled, 0, ui::Expand);
-    d->needUpdateFromRepository = true;
+    d->updateItemsFromRepository();
 }
 
 void SavegameSelectionWidget::setLoadGameWhenSelected(bool enableLoad)
@@ -246,16 +260,6 @@ void SavegameSelectionWidget::setColumns(int numberOfColumns)
     {
         setGridSize(numberOfColumns, ui::Filled, 0, ui::Expand);
     }
-}
-
-void SavegameSelectionWidget::update()
-{
-    if(d->needUpdateFromRepository)
-    {
-        d->needUpdateFromRepository = false;
-        d->updateItemsFromRepository();
-    }
-    MenuWidget::update();
 }
 
 SavedSession const &SavegameSelectionWidget::savedSession(ui::DataPos pos) const

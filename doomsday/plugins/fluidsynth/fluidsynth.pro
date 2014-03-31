@@ -67,7 +67,7 @@ DEFINES += FLUIDSYNTH_NOT_A_DLL WITH_FLOAT \
 *-clang* {
     QMAKE_CFLAGS += -fomit-frame-pointer -finline-functions -fdiagnostics-show-option
     QMAKE_CFLAGS_WARN_ON -= -Wall -W
-    QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations -Wno-parentheses
+    QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations -Wno-parentheses -Wno-unused-value
 }
 
 macx {

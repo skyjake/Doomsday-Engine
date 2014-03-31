@@ -30,7 +30,7 @@ namespace fx {
 static int   bloomEnabled    = true;
 static float bloomIntensity  = .65f;
 static float bloomThreshold  = .35f;
-static float bloomDispersion = 1.75f;
+static float bloomDispersion = 1;
 static int   bloomComplexity = 1;
 
 DENG2_PIMPL(Bloom)

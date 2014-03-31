@@ -148,10 +148,8 @@ int D_NetServerStarted(int before)
     GameRuleset netRules = G_Rules(); // Make a copy of the current rules.
     netRules.skill = skillmode_t(cfg.netSkill);
 
-    G_NewSession(netMapUri, 0/*default*/, &netRules);
-
-    /// @todo Necessary?
-    G_SetGameAction(GA_NONE);
+    G_NewSession(*netMapUri, 0/*default*/, netRules);
+    G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     Uri_Delete(netMapUri);
 

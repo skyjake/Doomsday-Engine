@@ -31,7 +31,6 @@
 #  define CLIENTSAVEGAMENAME    "DoomCl"
 
 #  define NUMSAVESLOTS          8
-//#  define BASE_SLOT             8
 #  define AUTO_SLOT             9
 
 #elif __JDOOM64__
@@ -42,7 +41,6 @@
 #  define CLIENTSAVEGAMENAME    "D64Cl"
 
 #  define NUMSAVESLOTS          8
-//#  define BASE_SLOT             8
 #  define AUTO_SLOT             9
 
 #elif __JHERETIC__
@@ -53,7 +51,6 @@
 #  define CLIENTSAVEGAMENAME    "HticCl"
 
 #  define NUMSAVESLOTS          8
-//#  define BASE_SLOT             8
 #  define AUTO_SLOT             9
 
 #elif __JHEXEN__
@@ -63,7 +60,6 @@
 #  define CLIENTSAVEGAMENAME    "hexencl"
 
 #  define NUMSAVESLOTS          6
-#  define BASE_SLOT             6
 #  define AUTO_SLOT             7
 
 #endif
