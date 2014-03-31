@@ -52,6 +52,11 @@ inline duint abs(duint const &a) {
     return a;
 }
 
+template <typename Type>
+inline Type sign(Type const &a) {
+    if(a < 0) return Type(-1); else return Type(1);
+}
+
 /// Minimum of two values.
 template <typename Type>
 inline Type const &min(Type const &a, Type const &b) {
@@ -80,6 +85,12 @@ inline Type const &max(Type const &a, Type const &b, Type const &c) {
 template <typename Type>
 inline Type clamp(Type const &low, Type const &value, Type const &high) {
     return min(max(value, low), high);
+}
+
+/// Clamp value within @a lowHighLimit and @a -lowHighLimit.
+template <typename Type>
+inline Type clamp(Type const &value, Type const &lowHighLimit) {
+    return clamp(-lowHighLimit, value, lowHighLimit);
 }
 
 /// Wrap value within range [low, high).
