@@ -60,6 +60,8 @@ public:
 
     virtual ~PackageFolder();
 
+    void flush();
+
     String describe() const;
 
     /**

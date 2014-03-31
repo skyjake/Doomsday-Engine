@@ -34,6 +34,12 @@ PackageFolder::~PackageFolder()
     deindex();
 }
 
+void PackageFolder::flush()
+{
+    Folder::flush();
+    feeds().front()->as<ArchiveFeed>().rewriteFile();
+}
+
 String PackageFolder::describe() const
 {
     DENG2_GUARD(this);

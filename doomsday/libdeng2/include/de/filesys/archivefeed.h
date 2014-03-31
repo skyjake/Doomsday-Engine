@@ -80,6 +80,13 @@ public:
      */
     String const &basePath() const;
 
+    /**
+     * Serializes the contents of the in-memory Archive to the File associated with
+     * this feed. The entire source file is overwritten. If the Archive has not been
+     * modified since the feed was created, nothing is done.
+     */
+    void rewriteFile();
+
 private:
     DENG2_PRIVATE(d)
 };
