@@ -94,14 +94,14 @@ public:
     void endAndBeginTitle();
 
     /**
-     * Configure and begin a new game session. Note that a new session can only begin if one
-     * has not already @ref hasBegun(), if so the session must be ended first.
+     * Configure and begin a new game session. Note that a @em new session cannot @em begin if
+     * one already @ref hasBegun() (if so, the session must be ended first).
      *
      * @param mapUri       Map identifier.
      * @param mapEntrance  Logical map entry point number.
      * @param rules        Game rules to apply.
      *
-     * @throws BeginError if the session has already begun.
+     * @throws InProgressError if the session has already begun.
      */
     void begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
@@ -137,7 +137,7 @@ public: // Saved session management --------------------------------------------
      *
      * @param slotId  Unique identifier of the save slot to use.
      *
-     * @todo replace @a slotId with user save nameb.
+     * @todo replace @a slotId with user save name.
      */
     void load(de::String const &slotId);
 
