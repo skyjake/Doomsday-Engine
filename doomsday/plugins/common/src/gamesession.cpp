@@ -77,13 +77,13 @@ DENG2_PIMPL(GameSession)
 
     void deleteSaved(String const &path)
     {
-        try
+        if(File *existing = App::rootFolder().tryLocateFile(path))
         {
-            self.saveIndex().remove(path);
-            App::rootFolder().removeFile(path);
+            self.saveIndex().remove(existing->path());
+            // We need write access to remove.
+            existing->setMode(File::Write);
+            App::rootFolder().removeFile(existing->path());
         }
-        catch(Folder::NotFoundError &)
-        {} // Ignore
     }
 
     void copySaved(String const &destPath, String const &sourcePath)
@@ -706,22 +706,25 @@ void GameSession::leaveMap()
     {
         savedSession = &DENG2_APP->rootFolder().locate<SavedSession>(internalSavePath);
 
-#if __JHEXEN__
         savedSession->setMode(File::Write);
 
         Folder &mapsFolder = savedSession->locate<Folder>("maps");
         mapsFolder.setMode(File::Write);
 
         // Are we entering a new hub?
+#if __JHEXEN__
         if(P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub)
+#endif
         {
             //qDebug() << "Clearing all map states";
             // Clear all saved map states in the old hub.
-            DENG2_FOR_EACH_CONST(Folder::Contents, i, mapsFolder.contents())
+            Folder::Contents contents = mapsFolder.contents();
+            DENG2_FOR_EACH_CONST(Folder::Contents, i, contents)
             {
-                delete mapsFolder.remove(*i->second);
+                mapsFolder.removeFile(i->first);
             }
         }
+#if __JHEXEN__
         else
         {
             //qDebug() << "Updating current map state";
@@ -740,13 +743,13 @@ void GameSession::leaveMap()
             Writer_Delete(writer);
             SV_CloseFile();
         }
+#endif
 
         mapsFolder.setMode(File::ReadOnly);
         mapsFolder.populate(); // Populate the new contents of the maps folder.
 
         savedSession->flush();
         savedSession->setMode(File::ReadOnly);
-#endif
     }
 
 #if __JHEXEN__
