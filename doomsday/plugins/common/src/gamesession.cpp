@@ -545,8 +545,8 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
 
     M_ResetRandom();
 
-    d->inProgress = true;
     G_ApplyNewGameRules(rules);
+    d->inProgress = true;
     d->setMap(mapUri);
     ::gameMapEntrance = mapEntrance;
 
@@ -857,7 +857,7 @@ void GameSession::save(String const &slotId, String const &userDescription)
 
     if(!hasBegun())
     {
-        /// @throw InProgressError Cannot load a map unless the game is in progress.
+        /// @throw InProgressError Cannot save a map unless the game is in progress.
         throw InProgressError("GameSession::save", "No game session is in progress");
     }
 
