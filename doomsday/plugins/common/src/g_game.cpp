@@ -415,9 +415,9 @@ void G_Register()
         Con_AddVariable(gamestatusCVars + i);
     }
 
-#if !__JHEXEN__
+//#if !__JHEXEN__
     C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
-#endif
+//#endif
     C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
     C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
     C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
@@ -1645,14 +1645,14 @@ static void runGameAction()
         case GA_RESTARTMAP:
             // This is a restart, so we won't brief again.
             briefDisabled = true;
-#if !__JHEXEN__
+//#if !__JHEXEN__
             //G_StopDemo();
             COMMON_GAMESESSION->reloadMap();
-#else
+/*#else
             // Restart the game session entirely.
             COMMON_GAMESESSION->end();
             COMMON_GAMESESSION->begin(*dMapUri, dMapEntrance, dRules);
-#endif
+#endif*/
             G_SetGameAction(GA_NONE);
             break;
 
@@ -2118,7 +2118,7 @@ static int rebornLoadConfirmed(msgresponse_t response, int /*userValue*/, void *
     }
     else
     {
-#if __JHEXEN__
+/*#if __JHEXEN__
         // Load the last autosave? (Not optional in Hexen).
         if(G_SaveSlots()["auto"].isLoadable())
         {
@@ -2126,7 +2126,7 @@ static int rebornLoadConfirmed(msgresponse_t response, int /*userValue*/, void *
             G_SetGameAction(GA_LOADSESSION);
         }
         else
-#endif
+#endif*/
         {
             // Restart the current map, discarding all items obtained by players.
             G_SetGameAction(GA_RESTARTMAP);
@@ -2164,7 +2164,7 @@ void G_DoReborn(int plrNum)
         }
 
         // Use the latest autosave? (Not optional in Hexen).
-#if !__JHEXEN__
+//#if !__JHEXEN__
         de::String autoSlotId;
         if(cfg.loadAutoSaveOnReborn)
         {
@@ -2174,21 +2174,21 @@ void G_DoReborn(int plrNum)
                 autoSlotId = sslot.id();
             }
         }
-#endif
+//#endif
 
         // Have we chosen a save state to load?
         if(!lastSlotId.isEmpty()
-#if !__JHEXEN__
+//#if !__JHEXEN__
            || !autoSlotId.isEmpty()
-#endif
+//#endif
            )
         {
             // Everything appears to be in order - schedule the game-save load!
-#if !__JHEXEN__
+//#if !__JHEXEN__
             de::String chosenSlot = (!lastSlotId.isEmpty()? lastSlotId : autoSlotId);
-#else
+/*#else
             de::String chosenSlot = lastSlotId;
-#endif
+#endif*/
             if(!cfg.confirmRebornLoad)
             {
                 gaLoadSessionSlot = chosenSlot;
@@ -2206,14 +2206,14 @@ void G_DoReborn(int plrNum)
         }
 
         // Autosave loading cannot be disabled in Hexen.
-#if __JHEXEN__
+/*#if __JHEXEN__
         if(G_SaveSlots()["auto"].isLoadable())
         {
             gaLoadSessionSlot = "auto";
             G_SetGameAction(GA_LOADSESSION);
             return;
         }
-#endif
+#endif*/
     }
 
     // Restart the current map, discarding all items obtained by players.

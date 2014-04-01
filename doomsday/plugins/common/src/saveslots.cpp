@@ -194,7 +194,7 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
         String statusText;
         if(d->session)
         {
-            statusText = de::String("associated with \"%s\"").arg(d->session->path());
+            statusText = String("associated with \"%1\"").arg(d->session->path());
         }
         else
         {

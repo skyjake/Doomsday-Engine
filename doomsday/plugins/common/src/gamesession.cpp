@@ -260,6 +260,88 @@ DENG2_PIMPL(GameSession)
         ::gsvEpisode = (unsigned)::gameEpisode;
     }
 
+    /**
+     * Reload the @em current map.
+     *
+     * @param revisit  @c true= load progress in this map from a previous visit in the current
+     * game session. If no saved progress exists then the map will be in the default state.
+     */
+    void changeMap(bool revisit = false)
+    {
+        DENG2_ASSERT(inProgress);
+
+        Pause_End();
+
+        // Close open HUDs.
+        for(uint i = 0; i < MAXPLAYERS; ++i)
+        {
+            player_t *plr = players + i;
+            if(plr->plr->inGame)
+            {
+                ST_AutomapOpen(i, false, true);
+#if __JHERETIC__ || __JHEXEN__
+                Hu_InventoryOpen(i, false);
+#endif
+            }
+        }
+
+        // Delete raw images to conserve texture memory.
+        DD_Executef(true, "texreset raw");
+
+        // Are we playing a briefing?
+        char const *briefing = G_InFineBriefing(gameMapUri);
+        if(!briefing)
+        {
+            // Restart the map music.
+#if __JHEXEN__
+            /**
+             * @note Kludge: Due to the way music is managed with Hexen, unless we explicitly stop
+             * the current playing track the engine will not change tracks. This is due to the use
+             * of the runtime-updated "currentmap" definition (the engine thinks music has not changed
+             * because the current Music definition is the same).
+             *
+             * It only worked previously was because the waiting-for-map-load song was started prior
+             * to map loading.
+             *
+             * @todo Rethink the Music definition stuff with regard to Hexen. Why not create definitions
+             * during startup by parsing MAPINFO?
+             */
+            S_StopMusic();
+            //S_StartMusic("chess", true); // Waiting-for-map-load song
+#endif
+
+            S_MapMusic(gameMapUri);
+            S_PauseMusic(true);
+        }
+
+        // If we're the server, let clients know the map will change.
+        NetSv_UpdateGameConfigDescription();
+        NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+
+        P_SetupMap(gameMapUri);
+
+        if(revisit)
+        {
+            // We've been here before; deserialize this map's save state.
+#if __JHEXEN__
+            targetPlayerAddrs = 0; // player mobj redirection...
+#endif
+
+            SavedSession const &session = DENG2_APP->rootFolder().locate<SavedSession>(internalSavePath);
+            String const mapUriStr = Str_Text(Uri_Compose(gameMapUri));
+            SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
+        }
+
+        if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
+        {
+            // No briefing; begin the map.
+            HU_WakeWidgets(-1/* all players */);
+            G_BeginMap();
+        }
+
+        Z_CheckHeap();
+    }
+
 #if __JHEXEN__
     struct playerbackup_t
     {
@@ -550,7 +632,7 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
     d->setMap(mapUri);
     ::gameMapEntrance = mapEntrance;
 
-    reloadMap();
+    d->changeMap();
 
     // Serialize the game state to the internal saved session.
     LOG_AS("GameSession");
@@ -590,9 +672,15 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
     SavedSession &session = updated->as<SavedSession>();
     session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     saveIndex().add(session);
+
+    // In a non-network, make a copy of the internal save to the autosave slot.
+    /*if(!IS_NETGAME)
+    {
+        d->copySaved(G_SaveSlots()["auto"].savePath(), session.path());
+    }*/
 }
 
-void GameSession::reloadMap(bool revisit)
+void GameSession::reloadMap()//bool revisit)
 {
     if(!hasBegun())
     {
@@ -600,76 +688,16 @@ void GameSession::reloadMap(bool revisit)
         throw InProgressError("GameSession::reloadMap", "No game session is in progress");
     }
 
-    Pause_End();
-
-    // Close open HUDs.
-    for(uint i = 0; i < MAXPLAYERS; ++i)
+    if(G_Rules().deathmatch)
     {
-        player_t *plr = players + i;
-        if(plr->plr->inGame)
-        {
-            ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-            Hu_InventoryOpen(i, false);
-#endif
-        }
+        // Restart the session entirely.
+        end();
+        begin(*::gameMapUri, ::gameMapEntrance, G_Rules());
     }
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
-    // Are we playing a briefing?
-    char const *briefing = G_InFineBriefing(gameMapUri);
-    if(!briefing)
+    else
     {
-        // Restart the map music.
-#if __JHEXEN__
-        /**
-         * @note Kludge: Due to the way music is managed with Hexen, unless we explicitly stop
-         * the current playing track the engine will not change tracks. This is due to the use
-         * of the runtime-updated "currentmap" definition (the engine thinks music has not changed
-         * because the current Music definition is the same).
-         *
-         * It only worked previously was because the waiting-for-map-load song was started prior
-         * to map loading.
-         *
-         * @todo Rethink the Music definition stuff with regard to Hexen. Why not create definitions
-         * during startup by parsing MAPINFO?
-         */
-        S_StopMusic();
-        //S_StartMusic("chess", true); // Waiting-for-map-load song
-#endif
-
-        S_MapMusic(gameMapUri);
-        S_PauseMusic(true);
+        load("");
     }
-
-    // If we're the server, let clients know the map will change.
-    NetSv_UpdateGameConfigDescription();
-    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-    P_SetupMap(gameMapUri);
-
-    if(revisit)
-    {
-        // We've been here before; deserialize this map's save state.
-#if __JHEXEN__
-        targetPlayerAddrs = 0; // player mobj redirection...
-#endif
-
-        SavedSession const &session = DENG2_APP->rootFolder().locate<SavedSession>(internalSavePath);
-        String const mapUriStr = Str_Text(Uri_Compose(gameMapUri));
-        SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
-    }
-
-    if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
-    {
-        // No briefing; begin the map.
-        HU_WakeWidgets(-1/* all players */);
-        G_BeginMap();
-    }
-
-    Z_CheckHeap();
 }
 
 void GameSession::leaveMap()
@@ -731,6 +759,7 @@ void GameSession::leaveMap()
             // Update the saved state for the current map.
             if(File *existing = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
             {
+                qDebug() << "Exisiting" << (String(Str_Text(Uri_Compose(gameMapUri))) + "State") << "now Write";
                 existing->setMode(File::Write);
             }
             File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
@@ -745,11 +774,13 @@ void GameSession::leaveMap()
         }
 #endif
 
+        mapsFolder.flush();
         mapsFolder.setMode(File::ReadOnly);
         mapsFolder.populate(); // Populate the new contents of the maps folder.
 
         savedSession->flush();
         savedSession->setMode(File::ReadOnly);
+        savedSession->populate();
     }
 
 #if __JHEXEN__
@@ -788,7 +819,7 @@ void GameSession::leaveMap()
     {
         briefDisabled = true;
     }
-    reloadMap(revisit);
+    d->changeMap(revisit);
 
     // On exit logic:
 #if __JHEXEN__
@@ -845,6 +876,7 @@ void GameSession::leaveMap()
         Writer_Delete(writer);
         SV_CloseFile();
 
+        mapsFolder.flush();
         mapsFolder.setMode(File::ReadOnly);
         mapsFolder.populate(); // Populate the new contents of the maps folder.
 
@@ -856,10 +888,10 @@ void GameSession::leaveMap()
     }
 
     // In a non-network, make a copy of the internal save to the autosave slot.
-    if(!IS_NETGAME && savedSession)
+    /*if(!IS_NETGAME && savedSession)
     {
         d->copySaved(G_SaveSlots()["auto"].savePath(), savedSession->path());
-    }
+    }*/
 }
 
 void GameSession::save(String const &slotId, String const &userDescription)
@@ -894,10 +926,10 @@ void GameSession::save(String const &slotId, String const &userDescription)
 
 void GameSession::load(String const &slotId)
 {
-    String const savePath         = G_SaveSlots()[slotId].savePath();
-#if __JHEXEN__
+    String const savePath         = slotId.isEmpty()? internalSavePath : G_SaveSlots()[slotId].savePath();
+/*#if __JHEXEN__
     bool const mustCopyToAutoSlot = (slotId.compareWithoutCase("auto") && !IS_NETGAME);
-#endif
+#endif*/
 
     ::briefDisabled = true;
 
@@ -928,11 +960,14 @@ void GameSession::load(String const &slotId)
 
     d->inProgress = false;
 
-    // Perform necessary prep.
-    d->cleanupInternalSave();
+    if(!slotId.isEmpty())
+    {
+        // Perform necessary prep.
+        d->cleanupInternalSave();
 
-    // Copy the save for the specified slot to the internal savegame.
-    d->copySaved(internalSavePath, savePath);
+        // Copy the save for the specified slot to the internal savegame.
+        d->copySaved(internalSavePath, savePath);
+    }
 
     /*
      * SavedSession deserialization begins.
@@ -976,7 +1011,7 @@ void GameSession::load(String const &slotId)
     Uri_Delete(mapUri); mapUri = 0;
     //::gameMapEntrance = mapEntrance; // not saved??
 
-    reloadMap();
+    d->changeMap();
 #if !__JHEXEN__
     ::mapTime = metadata.geti("mapTime");
 #endif
@@ -984,14 +1019,17 @@ void GameSession::load(String const &slotId)
     String mapUriStr = Str_Text(Uri_Resolved(::gameMapUri));
     SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
 
-#if __JHEXEN__
+/*#if __JHEXEN__
     if(mustCopyToAutoSlot)
     {
         d->copySaved(G_SaveSlots()["auto"].savePath(), internalSavePath);
     }
-#endif
+#endif*/
 
-    P_SetMessage(&players[CONSOLEPLAYER], 0, "Game loaded");
+    if(!slotId.isEmpty())
+    {
+        P_SetMessage(&players[CONSOLEPLAYER], 0, "Game loaded");
+    }
 }
 
 void GameSession::deleteSaved(String const &saveName)

@@ -191,6 +191,7 @@ void X_PreInit()
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;
+    cfg.loadAutoSaveOnReborn = false;
     cfg.loadLastSaveOnReborn = false;
 
     cfg.hudFog = 5;

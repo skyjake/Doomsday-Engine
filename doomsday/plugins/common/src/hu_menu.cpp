@@ -180,9 +180,9 @@ cvarbutton_t mnCVarButtons[] = {
 #endif
     cvarbutton_t(0, "game-save-confirm"),
     cvarbutton_t(0, "game-save-confirm-loadonreborn"),
-#if !__JHEXEN__
+//#if !__JHEXEN__
     cvarbutton_t(0, "game-save-auto-loadonreborn"),
-#endif
+//#endif
     cvarbutton_t(0, "game-save-last-loadonreborn"),
 #if __JDOOM__ || __JDOOM64__
     cvarbutton_t(0, "game-skullsinwalls"),
@@ -1704,11 +1704,11 @@ void Hu_MenuInitPlayerSetupPage()
 void Hu_MenuInitSaveOptionsPage()
 {
     Point2Raw const origin(60, 50);
-#if !__JHEXEN__
+//#if !__JHEXEN__
     uint const numObjects = 10;
-#else
+/*#else
     uint const numObjects = 8;
-#endif
+#endif*/
 
     mn_page_t *page = Hu_MenuNewPage("SaveOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     MNPage_SetTitle(page, "Save Options");
@@ -1794,7 +1794,7 @@ void Hu_MenuInitSaveOptionsPage()
     }
     ob++;
 
-#if !__JHEXEN__
+//#if !__JHEXEN__
     ob->_type          = MN_TEXT;
     ob->_group         = 1;
     ob->_pageFontIdx   = MENU_FONT1;
@@ -1827,7 +1827,7 @@ void Hu_MenuInitSaveOptionsPage()
         btn->data         = (void *)"game-save-auto-loadonreborn";
     }
     ob++;
-#endif
+//#endif
 
     ob->_type          = MN_TEXT;
     ob->_group         = 1;

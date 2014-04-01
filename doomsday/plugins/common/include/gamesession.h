@@ -111,7 +111,7 @@ public:
      * @param revisit  @c true= load progress in this map from a previous visit in the current
      * game session. If no saved progress exists then the map will be in the default state.
      */
-    void reloadMap(bool revisit = false);
+    void reloadMap();//(bool revisit = false);
 
     /**
      * Leave the @em current map (automatically saving progress to the backing store) and then
