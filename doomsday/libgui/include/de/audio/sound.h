@@ -66,7 +66,13 @@ public:
      * Starts playing the sound. If the sound is already playing, does nothing:
      * to change the playing mode, one has to first stop the sound.
      *
-     * @param mode  Playing mode.
+     * @param mode  Playing mode:
+     *              - Sound::Once: Play once, after which the sound gets automatically
+     *                deleted. The caller is expected to observe the Sound instance
+     *                for deletion or not retain a reference to it.
+     *              - Sound::OnceDontDelete: Play once, after which the sound remains
+     *                in a paused state. The sound can then be restarted later.
+     *              - Sound::Looping: Play and keep looping indefinitely.
      */
     virtual void play(PlayingMode mode = Once) = 0;
 
