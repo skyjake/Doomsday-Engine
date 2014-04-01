@@ -583,7 +583,7 @@ static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
 
     case 52:
         // EXIT!
-        G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
         break;
 
     case 53:
@@ -630,7 +630,7 @@ static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
 
     case 105:
         // Secret EXIT
-        G_LeaveMap(G_NextLogicalMapNumber(true), 0, true);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
         break;
 
     case 106:
@@ -1199,7 +1199,7 @@ dd_bool P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
         P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         break;
@@ -1296,7 +1296,7 @@ dd_bool P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveMap(G_NextLogicalMapNumber(true), 0, true);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
         P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         break;

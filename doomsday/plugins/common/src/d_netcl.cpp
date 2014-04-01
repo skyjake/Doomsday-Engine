@@ -21,11 +21,12 @@
 #include "common.h"
 #include "d_netcl.h"
 
+#include "g_common.h"
+#include "gamesession.h"
 #include "p_saveg.h"
 #include "player.h"
 #include "p_map.h"
 #include "p_start.h"
-#include "g_common.h"
 #include "p_actor.h"
 #include "p_inventory.h"
 #include "hu_inventory.h"
@@ -33,6 +34,8 @@
 
 #include <cstdio>
 #include <cstring>
+
+using namespace common;
 
 void NetCl_UpdateGameState(Reader *msg)
 {
@@ -100,14 +103,16 @@ void NetCl_UpdateGameState(Reader *msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewSession(*gsMapUri, gameMapEntrance /*gsMapEntrance*/, gsRules);
+        COMMON_GAMESESSION->begin(*gsMapUri, gameMapEntrance /*gsMapEntrance*/, gsRules);
     }
     else
     {
+        /// @todo Breaks session management logic; rules cannot change once the session has
+        /// begun and setting the current map and/or entrance is illogical at this point.
         DENG2_ASSERT(Uri_Equality(gsMapUri, gameMapUri));
 
         G_ApplyNewGameRules(gsRules);
-        G_SetCurrentMap(*gsMapUri);
+        //COMMON_GAMESESSION->setMap(*gsMapUri);
         //gameMapEntrance = gsMapEntrance;
     }
 

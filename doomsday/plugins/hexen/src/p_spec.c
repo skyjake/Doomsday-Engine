@@ -502,7 +502,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             // Players must be alive to teleport
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
-                G_LeaveMap((args[0]!= 0? args[0]-1 : 0), args[1], false);
+                G_SetGameActionMapCompleted((args[0]!= 0? args[0]-1 : 0), args[1], false);
                 success = true;
             }
         }
@@ -518,12 +518,12 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 if(G_Ruleset_Deathmatch())
                 {
                     // Winning in deathmatch just goes back to map 1
-                    G_LeaveMap(0, 0, false);
+                    G_SetGameActionMapCompleted(0, 0, false);
                 }
                 else
                 {
                     // Passing DDMAXINT, DDMAXINT to G_LeaveMap() starts the Finale
-                    G_LeaveMap(DDMAXINT, DDMAXINT, false);
+                    G_SetGameActionMapCompleted(DDMAXINT, DDMAXINT, false);
                 }
             }
         }

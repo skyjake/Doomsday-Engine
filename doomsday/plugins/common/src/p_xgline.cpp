@@ -2117,7 +2117,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveMap(G_NextLogicalMapNumber(true), 0, true);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
         return false;
     }
 
@@ -2158,7 +2158,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
         map = G_NextLogicalMapNumber(false);
     }
 
-    G_LeaveMap(map, 0, false);
+    G_SetGameActionMapCompleted(map, 0, false);
     return false; // Only do this once!
 }
 

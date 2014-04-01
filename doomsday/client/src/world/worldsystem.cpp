@@ -522,7 +522,7 @@ DENG2_PIMPL(WorldSystem)
         if(!map) return;
 
         // We cannot make an editable map current.
-        DENG_ASSERT(!map->isEditable());
+        DENG2_ASSERT(!map->isEditable());
 
         // Should we cache this map?
         /*MapCacheRecord &rec = createCacheRecord(map->uri());
@@ -545,8 +545,8 @@ DENG2_PIMPL(WorldSystem)
 #endif
 
         // Print summary information about this map.
-        LOG_MAP_MSG(_E(b) "Current map elements:");
-        LOG_MAP_MSG("%s") << map->elementSummaryAsStyledText();
+        LOG_MAP_NOTE(_E(b) "Current map elements:");
+        LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));

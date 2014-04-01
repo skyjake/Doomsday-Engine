@@ -43,6 +43,7 @@
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
 DENG_EXTERN_C uint nextMap;
+DENG_EXTERN_C uint nextMapEntrance;
 DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
 DENG_EXTERN_C wbstartstruct_t wmInfo;

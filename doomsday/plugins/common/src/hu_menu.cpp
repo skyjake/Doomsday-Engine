@@ -5528,7 +5528,7 @@ int Hu_MenuSelectLoadSlot(mn_object_t *obj, mn_actionid_t action, void * /*conte
     mn_page_t *saveGamePage = Hu_MenuFindPageByName("SaveGame");
     MNPage_SetFocus(saveGamePage, MNPage_FindObject(saveGamePage, 0, obj->data2));
 
-    G_LoadSession((char *)edit->data1);
+    G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
     return 0;
 }
@@ -5756,7 +5756,7 @@ int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void * /*contex
     }
 
     de::String userDescription = Str_Text(MNEdit_Text(ob));
-    if(!G_SaveSession(saveSlotId, &userDescription))
+    if(!G_SetGameActionSaveSession(saveSlotId, &userDescription))
     {
         return 0;
     }
@@ -6493,7 +6493,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     Uri *newMapUri = G_ComposeMapUri(mnEpisode, 0);
 #endif
 
-    G_DeferredNewSession(*newMapUri, 0/*default*/, newRules);
+    G_SetGameActionNewSession(*newMapUri, 0/*default*/, newRules);
     Uri_Delete(newMapUri);
 }
 

@@ -215,7 +215,7 @@ public:
      */
     AutoStr *scriptDescription(int scriptNumber);
 
-    void writeWorldState(de::Writer &to) const;
+    de::Block serializeWorldState() const;
     void readWorldState(de::Reader &from);
 
     void writeMapState(MapStateWriter *msw);

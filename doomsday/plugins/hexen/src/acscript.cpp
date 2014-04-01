@@ -494,20 +494,25 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     Thinker_Remove(&script->thinker);
 }
 
-void ACScriptInterpreter::writeWorldState(de::Writer &to) const
+de::Block ACScriptInterpreter::serializeWorldState() const
 {
+    de::Block data;
+    de::Writer writer(data);
+
     // Write the world-global variable namespace.
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        to << worldVars[i];
+        writer << worldVars[i];
     }
 
     // Write the deferred task queue.
-    to << _deferredTasksSize;
+    writer << _deferredTasksSize;
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        to << *_deferredTasks[i];
+        writer << *_deferredTasks[i];
     }
+
+    return data;
 }
 
 void ACScriptInterpreter::readWorldState(de::Reader &from)

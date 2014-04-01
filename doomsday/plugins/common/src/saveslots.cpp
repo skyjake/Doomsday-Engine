@@ -22,10 +22,10 @@
 #include "saveslots.h"
 
 #include "g_common.h"
+#include "gamesession.h"
 #include "hu_menu.h"
 #include <de/App>
 #include <de/Folder>
-#include <de/game/SavedSessionRepository>
 #include <de/Observers>
 #include <de/Writer>
 #include <map>
@@ -175,14 +175,6 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
     // (and the menu, in turn).
     if(d->session)
     {
-        // Should we announce this?
-#if !defined DENG_DEBUG // Always
-        if(!newSession && isUserWritable())
-#endif
-        {
-            LOG_RES_MSG("Save slot '%s' was cleared") << d->id;
-        }
-
         d->session->audienceForMetadataChange() -= d;
     }
 
@@ -194,8 +186,22 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
         d->session->audienceForMetadataChange() += d;
     }
 
-    LOG_VERBOSE("Save slot '%s' now associated with session \"%s\"")
-            << d->id << (d->session? d->session->path() : "(none)");
+    // Should we announce this?
+#if !defined DENG_DEBUG // Always
+    if(isUserWritable())
+#endif
+    {
+        String statusText;
+        if(d->session)
+        {
+            statusText = de::String("associated with \"%s\"").arg(d->session->path());
+        }
+        else
+        {
+            statusText = "unused";
+        }
+        LOG_VERBOSE("Save slot '%s' now %s") << d->id << statusText;
+    }
 }
 
 DENG2_PIMPL(SaveSlots)
@@ -207,12 +213,12 @@ DENG2_PIMPL(SaveSlots)
 
     Instance(Public *i) : Base(i)
     {
-        G_SavedSessionRepository().audienceForAvailabilityUpdate() += this;
+        COMMON_GAMESESSION->saveIndex().audienceForAvailabilityUpdate() += this;
     }
 
     ~Instance()
     {
-        G_SavedSessionRepository().audienceForAvailabilityUpdate() -= this;
+        COMMON_GAMESESSION->saveIndex().audienceForAvailabilityUpdate() -= this;
         DENG2_FOR_EACH(Slots, i, sslots) { delete i->second; }
     }
 

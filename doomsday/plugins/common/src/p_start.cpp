@@ -1151,7 +1151,7 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
     if(parm.line)
     {
         mo->angle = P_GetAnglep(parm.line, DMU_ANGLE) - ANGLE_90;
-        App_Log(DE2_MAP_VERBOSE, "Turning mobj to nearest line: mo=%i angle=%x",  mo->thinker.id, mo->angle);
+        App_Log(DE2_MAP_XVERBOSE, "Turning mobj to nearest line: mo=%i angle=%x",  mo->thinker.id, mo->angle);
     }
     else
     {

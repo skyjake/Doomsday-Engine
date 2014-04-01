@@ -97,7 +97,7 @@ void P_DoTick(void)
     {
         if(!--timerGame)
         {
-            G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
+            G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
         }
     }
 
