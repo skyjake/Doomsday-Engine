@@ -56,8 +56,6 @@ DENG2_PIMPL_NOREF(WaveformBank)
             return waveform->sampleData().size();
         }
     };
-
-    String relativeToPath;
 };
 
 WaveformBank::WaveformBank(Flags const &flags) : InfoBank(flags), d(new Instance)
@@ -71,7 +69,7 @@ void WaveformBank::add(DotPath const &id, String const &waveformFilePath)
 void WaveformBank::addFromInfo(File const &file)
 {
     LOG_AS("WaveformBank");
-    d->relativeToPath = file.path().fileNamePath();
+    //d->relativeToPath = file.path().fileNamePath();
     parse(file);
     addFromInfoBlocks("waveform");
 }
@@ -84,7 +82,7 @@ Waveform const &WaveformBank::waveform(DotPath const &id) const
 Bank::ISource *WaveformBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Instance::Source(d->relativeToPath / def["path"]);
+    return new Instance::Source(relativeToPath() / def["path"]);
 }
 
 Bank::IData *WaveformBank::loadFromSource(ISource &source)

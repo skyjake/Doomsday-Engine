@@ -120,7 +120,7 @@ DENG2_PIMPL(GLShaderBank)
     typedef QMap<String, GLShader *> Shaders; // path -> shader
     Shaders shaders;
 
-    String relativeToPath;
+    //String relativeToPath;
 
     Instance(Public *i) : Base(i)
     {}
@@ -163,7 +163,7 @@ GLShaderBank::GLShaderBank() : d(new Instance(this))
 void GLShaderBank::addFromInfo(File const &file)
 {
     LOG_AS("GLShaderBank");
-    d->relativeToPath = file.path().fileNamePath();
+    //d->relativeToPath = file.path().fileNamePath();
     parse(file);
     addFromInfoBlocks("shader");
 }
@@ -206,11 +206,11 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     }
     else if(def.has("path.vertex"))
     {
-        vtx = ShaderSource(d->relativeToPath / def["path.vertex"], ShaderSource::FilePath);
+        vtx = ShaderSource(relativeToPath() / def["path.vertex"], ShaderSource::FilePath);
     }
     else if(def.has("path"))
     {
-        vtx = ShaderSource(d->relativeToPath / def["path"] + ".vsh", ShaderSource::FilePath);
+        vtx = ShaderSource(relativeToPath() / def["path"] + ".vsh", ShaderSource::FilePath);
     }
 
     // Fragment shader definition.
@@ -220,11 +220,11 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     }
     else if(def.has("path.fragment"))
     {
-        frag = ShaderSource(d->relativeToPath / def["path.fragment"], ShaderSource::FilePath);
+        frag = ShaderSource(relativeToPath() / def["path.fragment"], ShaderSource::FilePath);
     }
     else if(def.has("path"))
     {
-        frag = ShaderSource(d->relativeToPath / def["path"] + ".fsh", ShaderSource::FilePath);
+        frag = ShaderSource(relativeToPath() / def["path"] + ".fsh", ShaderSource::FilePath);
     }
 
     // Additional shaders to append to the main source.
@@ -232,14 +232,14 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     {
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.vertex"].value().as<ArrayValue>().elements())
         {
-            vtx.insertFromFile(d->relativeToPath / (*i)->asText());
+            vtx.insertFromFile(relativeToPath() / (*i)->asText());
         }
     }
     if(def.has("include.fragment"))
     {
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.fragment"].value().as<ArrayValue>().elements())
         {
-            frag.insertFromFile(d->relativeToPath / (*i)->asText());
+            frag.insertFromFile(relativeToPath() / (*i)->asText());
         }
     }
 

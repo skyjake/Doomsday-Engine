@@ -62,7 +62,7 @@ DENG2_PIMPL_NOREF(ImageBank)
         }
     };
 
-    String relativeToPath;
+    //String relativeToPath;
 };
 
 ImageBank::ImageBank(Flags const &flags) : InfoBank(flags), d(new Instance)
@@ -76,7 +76,7 @@ void ImageBank::add(DotPath const &path, String const &imageFilePath)
 void ImageBank::addFromInfo(File const &file)
 {
     LOG_AS("ImageBank");
-    d->relativeToPath = file.path().fileNamePath();
+    //d->relativeToPath = file.path().fileNamePath();
     parse(file);
     addFromInfoBlocks("image");
 }
@@ -89,7 +89,7 @@ Image const &ImageBank::image(DotPath const &path) const
 Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Instance::ImageSource(d->relativeToPath / def["path"]);
+    return new Instance::ImageSource(relativeToPath() / def["path"]);
 }
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)
