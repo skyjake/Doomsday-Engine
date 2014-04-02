@@ -1602,16 +1602,14 @@ static void runGameAction()
             // Attempt to load the saved game session.
             try
             {
-                SaveSlot &slot = G_SaveSlots()[gaLoadSessionSlot];
-
-                COMMON_GAMESESSION->load(slot.id());
+                COMMON_GAMESESSION->load(G_SaveSlots()[gaLoadSessionSlot].saveName());
 
                 // Make note of the last used save slot.
-                Con_SetInteger2("game-save-last-slot", slot.id().toInt(), SVF_WRITE_OVERRIDE);
+                Con_SetInteger2("game-save-last-slot", gaLoadSessionSlot.toInt(), SVF_WRITE_OVERRIDE);
             }
             catch(de::Error const &er)
             {
-                LOG_RES_WARNING("Error loading save slot #%s:\n")
+                LOG_RES_WARNING("Error loading from save slot #%s:\n")
                         << gaLoadSessionSlot << er.asText();
             }
 
@@ -1623,8 +1621,20 @@ static void runGameAction()
             break;
 
         case GA_SAVESESSION:
-            COMMON_GAMESESSION->save(gaSaveSessionSlot, gaSaveSessionUserDescription);
             G_SetGameAction(GA_NONE);
+            try
+            {
+                COMMON_GAMESESSION->save(G_SaveSlots()[gaSaveSessionSlot].saveName(),
+                                         gaSaveSessionUserDescription);
+
+                // Make note of the last used save slot.
+                Con_SetInteger2("game-save-last-slot", gaSaveSessionSlot.toInt(), SVF_WRITE_OVERRIDE);
+            }
+            catch(de::Error const &er)
+            {
+                LOG_RES_WARNING("Error saving to save slot #%s:\n")
+                        << gaSaveSessionSlot << er.asText();
+            }
             break;
 
         case GA_QUIT:
@@ -2197,8 +2207,8 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(G_SaveSlots()[chosenSlot].savePath());
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, session.metadata().gets("userDescription").toUtf8().constData());
+                de::String const savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(G_SaveSlots()[chosenSlot].saveName());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, savegameUserDescription.toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmed, 0, new de::String(chosenSlot));
             }
@@ -2608,16 +2618,13 @@ void G_DoEndDebriefing()
     G_IntermissionDone();
 }
 
-de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool autogenerate)
+de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate)
 {
     // If the slot is already in use then choose existing description.
-    if(G_SaveSlots().has(slotId))
+    if(!saveName.isEmpty())
     {
-        SaveSlot const &sslot = G_SaveSlots()[slotId];
-        if(de::game::SavedSession const *existing = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath()))
-        {
-            return existing->metadata().gets("userDescription");
-        }
+        de::String const existing = COMMON_GAMESESSION->savedUserDescription(saveName);
+        if(!existing.isEmpty()) return existing;
     }
 
     if(!autogenerate) return "";
@@ -3366,8 +3373,8 @@ D_CMD(LoadSession)
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             // Compose the confirmation message.
-            de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot.savePath());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, session.metadata().gets("userDescription").toUtf8().constData());
+            de::String const &savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, savegameUserDescription.toUtf8().constData());
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(sslot.id()));
             return true;
         }
@@ -3469,9 +3476,7 @@ D_CMD(SaveSession)
                 userDescription = argv[2];
             }
 
-            de::game::SavedSession const *session = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath());
-
-            if(!session || confirmed || !cfg.confirmQuickGameSave)
+            if(sslot.isUnused() || confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
@@ -3479,7 +3484,8 @@ D_CMD(SaveSession)
             }
 
             // Compose the confirmation message.
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, session->metadata().gets("userDescription").toUtf8().constData());
+            userDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, userDescription.toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = slotId;
@@ -3545,20 +3551,20 @@ D_CMD(DeleteSavedSession)
         if(sslot.isUserWritable())
         {
             // A known slot identifier.
-            de::game::SavedSession const *session = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath());
-            if(!session) return false;
+            if(sslot.isUnused()) return false;
 
             if(confirmed)
             {
-                COMMON_GAMESESSION->deleteSaved(session->path().fileNameWithoutExtension());
+                COMMON_GAMESESSION->deleteSaved(sslot.saveName());
             }
             else
             {
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
 
                 // Compose the confirmation message.
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, session->metadata().gets("userDescription").toUtf8().constData());
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(session->path().fileNameWithoutExtension()));
+                de::String const savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, savegameUserDescription.toUtf8().constData());
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(sslot.saveName()));
             }
             return true;
         }
@@ -3581,7 +3587,8 @@ D_CMD(InspectSavedSession)
     de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
     try
     {
-        de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(G_SaveSlots()[slotId].savePath());
+        SaveSlot const &sslot = G_SaveSlots()[slotId];
+        de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot.savePath());
         LOG_SCR_MSG("%s") << session.metadata().asStyledText();
         LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << session.path();
         return true;

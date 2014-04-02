@@ -241,12 +241,12 @@ de::String G_IdentityKey();
 /**
  * Chooses a default user description for a saved session.
  *
- * @param slotId        Unique identifier of a saved slot from which the existing description should
- *                      be re-used. Use a zero-length string to disable.
+ * @param saveName      Name of the saved session from which the existing description should be
+ *                      re-used. Use a zero-length string to disable.
  * @param autogenerate  @c true= generate a useful description (map name, map time, etc...) if none
  *                      exists for the referenced save @a slotId.
  */
-de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool autogenerate = true);
+de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
 
 /**
  * Configures @a metadata according to the current game session configuration.

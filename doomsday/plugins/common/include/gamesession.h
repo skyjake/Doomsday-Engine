@@ -106,12 +106,10 @@ public:
     void begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
     /**
-     * Reload the @em current map.
-     *
-     * @param revisit  @c true= load progress in this map from a previous visit in the current
-     * game session. If no saved progress exists then the map will be in the default state.
+     * Reload the @em current map (automatically loading any saved progress from the backing store).
+     * If no saved progress exists then the map will be in the default state.
      */
-    void reloadMap();//(bool revisit = false);
+    void reloadMap();
 
     /**
      * Leave the @em current map (automatically saving progress to the backing store) and then
@@ -122,24 +120,20 @@ public:
 public: // Saved session management ----------------------------------------------------------
 
     /**
-     * Save the @em current game state to a new saved session.
+     * Save the current game state to a new user saved session.
      *
-     * @param slotId           Unique identifier of the save slot to use.
+     * @param saveName         Name of the new saved session.
      * @param userDescription  Textual description of the current game state provided either
      *                         by the user or possibly generated automatically.
-     *
-     * @todo replace @a slotId with user save name.
      */
     void save(de::String const &slotId, de::String const &userDescription);
 
     /**
      * Load the game state from the saved session specified.
      *
-     * @param slotId  Unique identifier of the save slot to use.
-     *
-     * @todo replace @a slotId with user save name.
+     * @param saveName  Name of the saved session to be loaded.
      */
-    void load(de::String const &slotId);
+    void load(de::String const &saveName);
 
     /**
      * Deletes the saved session /home/savegames/<gameId>/<@a saveName>.save
@@ -149,10 +143,19 @@ public: // Saved session management --------------------------------------------
     /**
      * Makes a copy of the named saved session in /home/savegames/<gameId>
      *
-     * @param destName    Name of the new/replaced session.
-     * @param sourceName  Name of the session to be copied.
+     * @param destName    Name of the new/replaced saved session.
+     * @param sourceName  Name of the saved session to be copied.
      */
     void copySaved(de::String const &destName, de::String const &sourceName);
+
+    /**
+     * Convenient method of looking up the user description of an existing saved session.
+     *
+     * @param saveName  Name of the saved session to lookup.
+     *
+     * @return  User description of the named session or a zero-length string if not found.
+     */
+    de::String savedUserDescription(de::String const &saveName);
 
     /**
      * Provides access to the saved session index.

@@ -5852,7 +5852,7 @@ int Hu_MenuSaveSlotEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*
     if(MNA_ACTIVE != action) return 1;
     if(cfg.menuGameSaveSuggestDescription)
     {
-        de::String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse the existing description*/);
+        de::String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/);
         MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, description.toLatin1().constData());
     }
     return 0;

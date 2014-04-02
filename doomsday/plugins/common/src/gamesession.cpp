@@ -94,10 +94,10 @@ DENG2_PIMPL(GameSession)
 
         deleteSaved(destPath);
 
-        SavedSession const &sourceSession = DENG2_APP->rootFolder().locate<SavedSession>(sourcePath);
+        SavedSession const &sourceSession = App::rootFolder().locate<SavedSession>(sourcePath);
 
         // Copy the .save package.
-        File &save = DENG2_APP->rootFolder().replaceFile(destPath);
+        File &save = App::rootFolder().replaceFile(destPath);
         de::Writer(save) << sourceSession.archive();
         save.setMode(File::ReadOnly);
         LOG_RES_XVERBOSE("Wrote ") << save.description();
@@ -151,7 +151,7 @@ DENG2_PIMPL(GameSession)
     {
         Instance *inst;
         String userDescription;
-        String slotId;
+        String savePath;
     };
 
     /**
@@ -163,11 +163,9 @@ DENG2_PIMPL(GameSession)
     {
         saveworker_params_t const &p = *static_cast<saveworker_params_t *>(context);
 
-        dd_bool didSave = false;
+        bool didSave = false;
         try
         {
-            SaveSlot &destSlot = G_SaveSlots()[p.slotId];
-
             LOG_AS("GameSession");
             LOG_RES_VERBOSE("Serializing to \"%s\"...") << internalSavePath;
 
@@ -181,7 +179,7 @@ DENG2_PIMPL(GameSession)
             }
             else // We'll generate a suitable description automatically.
             {
-                metadata.set("userDescription", G_DefaultSavedSessionUserDescription(destSlot.id()));
+                metadata.set("userDescription", G_DefaultSavedSessionUserDescription(p.savePath.fileNameWithoutExtension()));
             }
 
             // In networked games the server tells the clients to save also.
@@ -201,7 +199,7 @@ DENG2_PIMPL(GameSession)
 
             p.inst->self.saveIndex().remove(internalSavePath);
 
-            Folder &saveFolder = DENG2_APP->rootFolder().locate<Folder>(internalSavePath.fileNamePath());
+            Folder &saveFolder = App::rootFolder().locate<Folder>(internalSavePath.fileNamePath());
             if(SavedSession *existing = saveFolder.tryLocate<SavedSession>(internalSavePath.fileName()))
             {
                 existing->setMode(File::Write);
@@ -220,21 +218,107 @@ DENG2_PIMPL(GameSession)
             p.inst->self.saveIndex().add(session);
 
             // Copy the internal saved session to the destination slot.
-            p.inst->copySaved(destSlot.savePath(), internalSavePath);
-
-            // Make note of the last used save slot.
-            Con_SetInteger2("game-save-last-slot", destSlot.id().toInt(), SVF_WRITE_OVERRIDE);
+            p.inst->copySaved(p.savePath, internalSavePath);
 
             didSave = true;
         }
         catch(Error const &er)
         {
-            LOG_RES_WARNING("Error writing to save slot '%s':\n")
-                    << p.slotId << er.asText();
+            LOG_RES_WARNING("Error saving game session to '%s':\n")
+                    << p.savePath << er.asText();
         }
 
         BusyMode_WorkerEnd();
         return didSave;
+    }
+
+    void loadSaved(String const &savePath)
+    {
+        ::briefDisabled = true;
+
+        G_StopDemo();
+        Hu_MenuCommand(MCMD_CLOSEFAST);
+        FI_StackClear(); // Stop any running InFine scripts.
+
+        M_ResetRandom();
+        if(!IS_CLIENT)
+        {
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                player_t *plr = players + i;
+                if(plr->plr->inGame)
+                {
+                // Force players to be initialized upon first map load.
+                    plr->playerState = PST_REBORN;
+#if __JHEXEN__
+                    plr->worldTimer = 0;
+#else
+                    plr->didSecret = false;
+#endif
+                }
+            }
+        }
+
+        inProgress = false;
+
+        if(savePath.compareWithoutCase(internalSavePath))
+        {
+            // Perform necessary prep.
+            cleanupInternalSave();
+
+            // Copy the save to the internal savegame.
+            copySaved(internalSavePath, savePath);
+        }
+
+        /*
+         * SavedSession deserialization begins.
+         */
+        SavedSession const &session     = App::rootFolder().locate<SavedSession>(internalSavePath);
+        SessionMetadata const &metadata = session.metadata();
+
+        // Ensure a complete game ruleset is available.
+        GameRuleset *rules;
+        try
+        {
+            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+        }
+        catch(Record::NotFoundError const &)
+        {
+            // The game rules are incomplete. Likely because they were missing from a savegame that
+            // was converted from a vanilla format (in which most of these values are omitted).
+            // Therefore we must assume the user has correctly configured the session accordingly.
+            LOG_WARNING("Using current game rules as basis for loading savegame \"%s\"."
+                        " (The original save format omits this information).")
+                    << session.path();
+
+            // Use the current rules as our basis.
+            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &G_Rules());
+        }
+        G_ApplyNewGameRules(*rules);
+        delete rules; rules = 0;
+
+#if __JHEXEN__
+        // Deserialize the world ACS state.
+        if(File const *file = session.tryLocateStateFile("ACScript"))
+        {
+            Game_ACScriptInterpreter().readWorldState(de::Reader(*file).withHeader());
+        }
+#endif
+
+        inProgress = true;
+
+        Uri *mapUri = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
+        setMap(*mapUri);
+        Uri_Delete(mapUri); mapUri = 0;
+        //::gameMapEntrance = mapEntrance; // not saved??
+
+        reloadMap();
+#if !__JHEXEN__
+        ::mapTime = metadata.geti("mapTime");
+#endif
+
+        String mapUriStr = Str_Text(Uri_Resolved(::gameMapUri));
+        SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
     }
 
     void setMap(Uri const &mapUri)
@@ -266,7 +350,7 @@ DENG2_PIMPL(GameSession)
      * @param revisit  @c true= load progress in this map from a previous visit in the current
      * game session. If no saved progress exists then the map will be in the default state.
      */
-    void changeMap(bool revisit = false)
+    void reloadMap(bool revisit = false)
     {
         DENG2_ASSERT(inProgress);
 
@@ -288,11 +372,16 @@ DENG2_PIMPL(GameSession)
         // Delete raw images to conserve texture memory.
         DD_Executef(true, "texreset raw");
 
-        // Are we playing a briefing?
+        // Are we playing a briefing? (No, if we've already visited this map).
+        if(revisit)
+        {
+            briefDisabled = true;
+        }
         char const *briefing = G_InFineBriefing(gameMapUri);
+
+        // Restart the map music?
         if(!briefing)
         {
-            // Restart the map music.
 #if __JHEXEN__
             /**
              * @note Kludge: Due to the way music is managed with Hexen, unless we explicitly stop
@@ -327,7 +416,7 @@ DENG2_PIMPL(GameSession)
             targetPlayerAddrs = 0; // player mobj redirection...
 #endif
 
-            SavedSession const &session = DENG2_APP->rootFolder().locate<SavedSession>(internalSavePath);
+            SavedSession const &session = App::rootFolder().locate<SavedSession>(internalSavePath);
             String const mapUriStr = Str_Text(Uri_Compose(gameMapUri));
             SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
         }
@@ -356,8 +445,8 @@ DENG2_PIMPL(GameSession)
 
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            playerbackup_t *pb = playerBackup + i;
-            player_t *plr      = players + i;
+            playerbackup_t *pb  = playerBackup + i;
+            player_t const *plr = players + i;
 
             std::memcpy(&pb->player, plr, sizeof(player_t));
 
@@ -632,7 +721,7 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
     d->setMap(mapUri);
     ::gameMapEntrance = mapEntrance;
 
-    d->changeMap();
+    d->reloadMap();
 
     // Serialize the game state to the internal saved session.
     LOG_AS("GameSession");
@@ -654,7 +743,7 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
 
     saveIndex().remove(internalSavePath);
 
-    Folder &saveFolder        = DENG2_APP->rootFolder().locate<Folder>(internalSavePath.fileNamePath());
+    Folder &saveFolder        = App::rootFolder().locate<Folder>(internalSavePath.fileNamePath());
     String const saveFileName = internalSavePath.fileName();
     if(SavedSession *existing = saveFolder.tryLocate<SavedSession>(saveFileName))
     {
@@ -672,15 +761,9 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
     SavedSession &session = updated->as<SavedSession>();
     session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     saveIndex().add(session);
-
-    // In a non-network, make a copy of the internal save to the autosave slot.
-    /*if(!IS_NETGAME)
-    {
-        d->copySaved(G_SaveSlots()["auto"].savePath(), session.path());
-    }*/
 }
 
-void GameSession::reloadMap()//bool revisit)
+void GameSession::reloadMap()
 {
     if(!hasBegun())
     {
@@ -696,7 +779,18 @@ void GameSession::reloadMap()//bool revisit)
     }
     else
     {
-        load("");
+        try
+        {
+            d->loadSaved(internalSavePath);
+            return;
+        }
+        catch(Error const &er)
+        {
+            LOG_AS("GameSession");
+            LOG_WARNING("Error reloading current map state:\n") << er.asText();
+        }
+        // If we ever reach here then there is an insurmountable problem...
+        endAndBeginTitle();
     }
 }
 
@@ -707,8 +801,6 @@ void GameSession::leaveMap()
         /// @throw InProgressError Cannot leave a map unless the game is in progress.
         throw InProgressError("GameSession::leaveMap", "No game session is in progress");
     }
-
-    //LOG_AS("GameSession");
 
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
@@ -732,8 +824,7 @@ void GameSession::leaveMap()
     SavedSession *savedSession = 0;
     if(!G_Rules().deathmatch) // Never save in deathmatch.
     {
-        savedSession = &DENG2_APP->rootFolder().locate<SavedSession>(internalSavePath);
-
+        savedSession = &App::rootFolder().locate<SavedSession>(internalSavePath);
         savedSession->setMode(File::Write);
 
         Folder &mapsFolder = savedSession->locate<Folder>("maps");
@@ -744,7 +835,6 @@ void GameSession::leaveMap()
         if(P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub)
 #endif
         {
-            //qDebug() << "Clearing all map states";
             // Clear all saved map states in the old hub.
             Folder::Contents contents = mapsFolder.contents();
             DENG2_FOR_EACH_CONST(Folder::Contents, i, contents)
@@ -755,11 +845,9 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         else
         {
-            //qDebug() << "Updating current map state";
             // Update the saved state for the current map.
             if(File *existing = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
             {
-                qDebug() << "Exisiting" << (String(Str_Text(Uri_Compose(gameMapUri))) + "State") << "now Write";
                 existing->setMode(File::Write);
             }
             File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
@@ -807,15 +895,8 @@ void GameSession::leaveMap()
     Uri_Delete(const_cast<Uri *>(nextMapUri)); nextMapUri = 0;
 
     // Are we revisiting a previous map?
-    bool revisit = savedSession && savedSession->hasState(String("maps") / Str_Text(Uri_Compose(gameMapUri)));
-    //qDebug() << "Revisit:" << revisit;
-
-    // We don't want to see a briefing if we've already visited this map.
-    if(revisit)
-    {
-        briefDisabled = true;
-    }
-    d->changeMap(revisit);
+    bool const revisit = savedSession && savedSession->hasState(String("maps") / Str_Text(Uri_Compose(gameMapUri)));
+    d->reloadMap(revisit);
 
     // On exit logic:
 #if __JHEXEN__
@@ -836,8 +917,6 @@ void GameSession::leaveMap()
 
     if(savedSession && !revisit)
     {
-        //qDebug() << "Writing new map state" << Str_Text(Uri_Compose(gameMapUri));
-
         savedSession->setMode(File::Write);
 
         SessionMetadata metadata;
@@ -878,30 +957,23 @@ void GameSession::leaveMap()
 
         savedSession->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     }
-
-    // In a non-network, make a copy of the internal save to the autosave slot.
-    /*if(!IS_NETGAME && savedSession)
-    {
-        d->copySaved(G_SaveSlots()["auto"].savePath(), savedSession->path());
-    }*/
 }
 
-void GameSession::save(String const &slotId, String const &userDescription)
+void GameSession::save(String const &saveName, String const &userDescription)
 {
-    String const sessionPath = G_SaveSlots()[slotId].savePath();
-
     if(!hasBegun())
     {
         /// @throw InProgressError Cannot save a map unless the game is in progress.
         throw InProgressError("GameSession::save", "No game session is in progress");
     }
 
-    LOG_MSG("Saving game to \"%s\"...") << sessionPath;
+    String const savePath = d->userSavePath(saveName);
+    LOG_MSG("Saving game to \"%s\"...") << savePath;
 
     Instance::saveworker_params_t parm;
     parm.inst            = d;
     parm.userDescription = userDescription;
-    parm.slotId          = slotId;
+    parm.savePath        = savePath;
 
     bool didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                                 Instance::saveWorker, &parm, "Saving game...") != 0);
@@ -916,112 +988,13 @@ void GameSession::save(String const &slotId, String const &userDescription)
     }
 }
 
-void GameSession::load(String const &slotId)
+/// @todo Use busy mode here.
+void GameSession::load(String const &saveName)
 {
-    String const savePath         = slotId.isEmpty()? internalSavePath : G_SaveSlots()[slotId].savePath();
-/*#if __JHEXEN__
-    bool const mustCopyToAutoSlot = (slotId.compareWithoutCase("auto") && !IS_NETGAME);
-#endif*/
-
-    ::briefDisabled = true;
-
+    String const savePath = d->userSavePath(saveName);
     LOG_MSG("Loading game from \"%s\"...") << savePath;
-
-    G_StopDemo();
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-    FI_StackClear(); // Stop any running InFine scripts.
-
-    M_ResetRandom();
-    if(!IS_CLIENT)
-    {
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t *plr = players + i;
-            if(plr->plr->inGame)
-            {
-                // Force players to be initialized upon first map load.
-                plr->playerState = PST_REBORN;
-#if __JHEXEN__
-                plr->worldTimer = 0;
-#else
-                plr->didSecret = false;
-#endif
-            }
-        }
-    }
-
-    d->inProgress = false;
-
-    if(!slotId.isEmpty())
-    {
-        // Perform necessary prep.
-        d->cleanupInternalSave();
-
-        // Copy the save for the specified slot to the internal savegame.
-        d->copySaved(internalSavePath, savePath);
-    }
-
-    /*
-     * SavedSession deserialization begins.
-     */
-    SavedSession const &session     = DENG2_APP->rootFolder().locate<SavedSession>(internalSavePath);
-    SessionMetadata const &metadata = session.metadata();
-
-    // Ensure a complete game ruleset is available.
-    GameRuleset *rules;
-    try
-    {
-        rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
-    }
-    catch(Record::NotFoundError const &)
-    {
-        // The game rules are incomplete. Likely because they were missing from a savegame that
-        // was converted from a vanilla format (in which most of these values are omitted).
-        // Therefore we must assume the user has correctly configured the session accordingly.
-        LOG_WARNING("Using current game rules as basis for loading savegame \"%s\"."
-                    " (The original save format omits this information).")
-                << session.path();
-
-        // Use the current rules as our basis.
-        rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &G_Rules());
-    }
-    G_ApplyNewGameRules(*rules);
-    delete rules; rules = 0;
-
-#if __JHEXEN__
-    // Deserialize the world ACS state.
-    if(File const *file = session.tryLocateStateFile("ACScript"))
-    {
-        Game_ACScriptInterpreter().readWorldState(de::Reader(*file).withHeader());
-    }
-#endif
-
-    d->inProgress = true;
-
-    Uri *mapUri = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
-    d->setMap(*mapUri);
-    Uri_Delete(mapUri); mapUri = 0;
-    //::gameMapEntrance = mapEntrance; // not saved??
-
-    d->changeMap();
-#if !__JHEXEN__
-    ::mapTime = metadata.geti("mapTime");
-#endif
-
-    String mapUriStr = Str_Text(Uri_Resolved(::gameMapUri));
-    SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
-
-/*#if __JHEXEN__
-    if(mustCopyToAutoSlot)
-    {
-        d->copySaved(G_SaveSlots()["auto"].savePath(), internalSavePath);
-    }
-#endif*/
-
-    if(!slotId.isEmpty())
-    {
-        P_SetMessage(&players[CONSOLEPLAYER], 0, "Game loaded");
-    }
+    d->loadSaved(savePath);
+    P_SetMessage(&players[CONSOLEPLAYER], 0, "Game loaded");
 }
 
 void GameSession::deleteSaved(String const &saveName)
@@ -1032,6 +1005,16 @@ void GameSession::deleteSaved(String const &saveName)
 void GameSession::copySaved(String const &destName, String const &sourceName)
 {
     d->copySaved(d->userSavePath(destName), d->userSavePath(sourceName));
+}
+
+String GameSession::savedUserDescription(String const &saveName)
+{
+    String const savePath = d->userSavePath(saveName);
+    if(SavedSession const *session = App::rootFolder().tryLocate<SavedSession>(savePath))
+    {
+        return session->metadata().gets("userDescription", "");
+    }
+    return ""; // Not found.
 }
 
 game::SavedSessionRepository &GameSession::saveIndex() const
