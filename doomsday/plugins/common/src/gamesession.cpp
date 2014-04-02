@@ -774,11 +774,7 @@ void GameSession::leaveMap()
         }
 #endif
 
-        mapsFolder.flush();
         mapsFolder.setMode(File::ReadOnly);
-        mapsFolder.populate(); // Populate the new contents of the maps folder.
-
-        savedSession->flush();
         savedSession->setMode(File::ReadOnly);
         savedSession->populate();
     }
@@ -876,11 +872,7 @@ void GameSession::leaveMap()
         Writer_Delete(writer);
         SV_CloseFile();
 
-        mapsFolder.flush();
         mapsFolder.setMode(File::ReadOnly);
-        mapsFolder.populate(); // Populate the new contents of the maps folder.
-
-        savedSession->flush();
         savedSession->setMode(File::ReadOnly);
         savedSession->populate();
 
