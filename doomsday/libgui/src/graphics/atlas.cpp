@@ -246,9 +246,11 @@ Atlas::Size Atlas::totalSize() const
 }
 
 Id Atlas::alloc(Image const &image)
-{
+{    
     if(image.isNull())
     {
+        LOG_AS("Atlas");
+        LOGDEV_GL_WARNING("Cannot allocate a zero-size image");
         return Id::None;
     }
 
@@ -316,7 +318,8 @@ Id Atlas::alloc(Image const &image)
     }
     else
     {
-        LOG_GL_XVERBOSE("Atlas is full with %.1f%% usage") << d->usedPercentage()*100;
+        LOG_AS("Atlas");
+        LOGDEV_GL_XVERBOSE("Full with %.1f%% usage") << d->usedPercentage()*100;
 
         DENG2_FOR_AUDIENCE2(OutOfSpace, i)
         {
