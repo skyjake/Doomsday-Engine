@@ -22,6 +22,8 @@
 #include <de/Writer>
 #include <de/Block>
 #include <de/FixedByteArray>
+#include <de/Vector>
+#include <de/Zeroed>
 
 #include <QDataStream>
 #include <QPainter>
@@ -32,11 +34,13 @@ namespace de {
 
 namespace internal {
 
-static dbyte const PCX_MAGIC        = 0x0a;
-static dbyte const PCX_RLE_ENCODING = 1;
-static dsize const PCX_HEADER_SIZE  = 128;
+namespace pcx {
 
-struct PCXHeader : public IReadable
+static dbyte const MAGIC        = 0x0a;
+static dbyte const RLE_ENCODING = 1;
+static dsize const HEADER_SIZE  = 128;
+
+struct Header : public IReadable
 {
     dbyte magic;
     dbyte version;
@@ -71,17 +75,17 @@ struct PCXHeader : public IReadable
     }
 };
 
-static bool isPCXFormat(Block const &data)
+static bool recognize(Block const &data)
 {
     try
     {
-        PCXHeader header;
+        Header header;
         Reader(data) >> header;
 
         // Only paletted format supported.
-        return (header.magic == PCX_MAGIC &&
+        return (header.magic == MAGIC &&
                 header.version == 5 /* latest */ &&
-                header.encoding == PCX_RLE_ENCODING &&
+                header.encoding == RLE_ENCODING &&
                 header.bitsPerPixel == 8);
     }
     catch(Error const &)
@@ -98,9 +102,9 @@ static bool isPCXFormat(Block const &data)
  *
  * @return QImage using the RGB888 (24-bit) format.
  */
-static QImage loadPCX(Block const &data)
+static QImage load(Block const &data)
 {
-    PCXHeader header;
+    Header header;
     Reader reader(data);
     reader >> header;
 
@@ -110,7 +114,7 @@ static QImage loadPCX(Block const &data)
     DENG2_ASSERT(image.depth() == 24);
 
     dbyte const *palette = data.data() + data.size() - 768;
-    dbyte const *pos = data.data() + PCX_HEADER_SIZE;
+    dbyte const *pos = data.data() + HEADER_SIZE;
     dbyte *dst = image.bits();
 
     for(duint y = 0; y < size.y; ++y, dst += size.x * 3)
@@ -136,6 +140,181 @@ static QImage loadPCX(Block const &data)
 
     return image;
 }
+
+} // namespace pcx
+
+namespace tga {
+
+struct Header : public IReadable
+{
+    enum Flag
+    {
+        NoFlags           = 0,
+        ScreenOriginUpper = 0x1,
+        InterleaveTwoWay  = 0x2,
+        InterleaveFourWay = 0x4
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    enum ColorMapType
+    {
+        ColorMapNone = 0,
+        ColorMap256  = 1 // not supported
+    };
+
+    enum ImageType
+    {
+        RGB    = 2, ///< Uncompressed RGB.
+        RleRGB = 10 ///< Run length encoded RGB.
+    };
+
+    Block identification;
+    Zeroed<duint8> colorMapType;
+    Zeroed<duint8> imageType;
+
+    // Color map.
+    Zeroed<dint16> mapIndex;
+    Zeroed<dint16> mapCount;        ///< Number of color map entries.
+    Zeroed<duint8> mapEntrySize;    ///< Bits in a color map entry.
+
+    // Image specification.
+    Flags flags;
+    Vector2<dint16> origin;
+    Vector2<dint16> size;
+    Zeroed<duint8> depth;
+    Zeroed<duint8> attrib;
+
+    void operator << (Reader &from)
+    {
+        duint8 identificationSize;
+        from >> identificationSize
+             >> colorMapType
+             >> imageType
+
+             >> mapIndex
+             >> mapCount
+             >> mapEntrySize
+
+             >> origin.x >> origin.y
+             >> size.x >> size.y
+             >> depth;
+
+        duint8 f;
+        from >> f;
+
+        /*
+           Flags:
+             0-3 : Number of attribute bits
+               4 : reserved
+               5 : Screen origin in upper left corner
+             6-7 : Data storage interleave
+                   00 - no interleave
+                   01 - even/odd interleave
+                   10 - four way interleave
+                   11 - reserved
+        */
+
+        attrib = f & 0x0f;
+
+        flags = (f & 0x20? ScreenOriginUpper : NoFlags);
+        if((f & 0xc0) == 0x40) flags |= InterleaveTwoWay;
+        if((f & 0xc0) == 0x80) flags |= InterleaveFourWay;
+
+        from.readBytes(identificationSize, identification);
+    }
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Header::Flags)
+
+static bool recognize(Block const &data)
+{
+    try
+    {
+        Header header;
+        Reader(data) >> header;
+        return (header.imageType == Header::RGB || header.imageType == Header::RleRGB) &&
+               header.colorMapType == Header::ColorMapNone &&
+               (header.depth == 24 || header.depth == 32) &&
+               !header.flags.testFlag(Header::ScreenOriginUpper);
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+static QImage load(Block const &data)
+{
+    Header header;
+    Reader input(data);
+    input >> header;
+
+    int const pixelSize = header.depth / 8;
+    QImage img(QSize(header.size.x, header.size.y),
+               pixelSize == 4? QImage::Format_ARGB32 : QImage::Format_RGB888);
+    dbyte *base = img.bits();
+
+    // RGB can be read line by line.
+    if(header.imageType == Header::RGB)
+    {
+        for(int y = 0; y < header.size.y; y++)
+        {
+            int inY = (header.flags.testFlag(Header::ScreenOriginUpper)? y : (header.size.y - y - 1));
+
+            ByteRefArray line(base + (inY * header.size.x * pixelSize), header.size.x * pixelSize);
+            input.readPresetSize(line);
+        }
+    }
+    else if(header.imageType == Header::RleRGB)
+    {
+        // RLE packets may cross over to the next line.
+        int x = 0;
+        int y = (header.flags.testFlag(Header::ScreenOriginUpper)? 0 : (header.size.y - 1));
+        int endY = header.size.y - y - 1;
+        int stepY = (header.flags.testFlag(Header::ScreenOriginUpper)? 1 : -1);
+
+        while(y != endY && x < header.size.x)
+        {
+            dbyte rle;
+            input >> rle;
+
+            int count;
+            bool repeat = false;
+            if(rle & 0x80) // Repeat?
+            {
+                repeat = true;
+                count = (rle & 0x7f) + 1;
+            }
+            else
+            {
+                count = rle + 1;
+            }
+
+            Block pixel;
+            for(int i = 0; i < count; ++i)
+            {
+                if(i == 0 || !repeat)
+                {
+                    // Read the first/next byte.
+                    input.readBytes(pixelSize, pixel);
+                }
+
+                std::memcpy(base + (x + y * header.size.x) * pixelSize,
+                            pixel.constData(), pixelSize);
+                if(++x == header.size.x)
+                {
+                    x = 0;
+                    y += stepY;
+                }
+            }
+        }
+    }
+
+    // Pixels were stored in ABGR format.
+    return img.rgbSwapped();
+}
+
+} // namespace tga
 
 } // namespace internal
 using namespace internal;
@@ -579,18 +758,25 @@ Image Image::solidColor(Color const &color, Size const &size)
     return img;
 }
 
-Image Image::fromData(IByteArray const &data)
+Image Image::fromData(IByteArray const &data, String const &formatHint)
 {
-    return fromData(Block(data));
+    return fromData(Block(data), formatHint);
 }
 
-Image Image::fromData(Block const &data)
+Image Image::fromData(Block const &data, String const &formatHint)
 {
-    if(isPCXFormat(data))
+    // Targa doesn't have a reliable "magic" identifier so we require a hint.
+    if(!formatHint.compareWithoutCase(".tga") && tga::recognize(data))
     {
-        // Qt does not support PCX images (too old school?).
-        return loadPCX(data);
+        return tga::load(data);
     }
+
+    // Qt does not support PCX images (too old school?).
+    if(pcx::recognize(data))
+    {
+        return pcx::load(data);
+    }
+
     /// @todo Could check when alpha channel isn't needed and return an RGB888
     /// image instead. -jk
     return QImage::fromData(data).convertToFormat(QImage::Format_ARGB32);

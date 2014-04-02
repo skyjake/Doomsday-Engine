@@ -160,12 +160,13 @@ public:
      * In addition to image formats supported by Qt, this can load 8-bit paletted PCX
      * (ZSoft Paintbrush) images.
      *
-     * @param data  Block of data containing image data.
+     * @param data        Block of data containing image data.
+     * @param formatHint  Optionally, file name extension with dot included (".tga").
      */
-    static Image fromData(IByteArray const &data);
+    static Image fromData(IByteArray const &data, String const &formatHint = "");
 
     /// @copydoc fromData()
-    static Image fromData(Block const &data);
+    static Image fromData(Block const &data, String const &formatHint = "");
 
 private:
     DENG2_PRIVATE(d)
