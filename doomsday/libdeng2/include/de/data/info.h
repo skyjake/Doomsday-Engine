@@ -282,6 +282,8 @@ public:
      */
     void setFinder(IIncludeFinder const &finder);
 
+    void useDefaultFinder();
+
     /**
      * Parses a string of text as Info source.
      *

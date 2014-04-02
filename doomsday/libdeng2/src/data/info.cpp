@@ -40,17 +40,7 @@ DENG2_PIMPL(Info)
     {
         String findIncludedInfoSource(String const &includeName, Info const &) const
         {
-            try
-            {
-                return String::fromUtf8(Block(App::rootFolder().locate<File const>(includeName)));
-            }
-            catch(Error const &er)
-            {
-                throw NotFoundError("Info::DefaultIncludeFinder",
-                                    QString("Cannot include '%1': %2")
-                                    .arg(includeName)
-                                    .arg(er.asText()));
-            }
+            return String::fromUtf8(Block(App::rootFolder().locate<File const>(includeName)));
         }
     };
 
@@ -573,12 +563,22 @@ success:;
 
     void includeFrom(String const &includeName)
     {
-        DENG2_ASSERT(finder != 0);
+        try
+        {
+            DENG2_ASSERT(finder != 0);
 
-        Info included(finder->findIncludedInfoSource(includeName, self), *finder);
+            Info included(finder->findIncludedInfoSource(includeName, self), *finder);
 
-        // Move the contents of the resulting root block to our root block.
-        included.d->rootBlock.moveContents(rootBlock);
+            // Move the contents of the resulting root block to our root block.
+            included.d->rootBlock.moveContents(rootBlock);
+        }
+        catch(Error const &er)
+        {
+            throw IIncludeFinder::NotFoundError("Info::includeFrom",
+                    QString("Cannot include '%1': %2")
+                    .arg(includeName)
+                    .arg(er.asText()));
+        }
     }
 
     void parse(String const &source)
@@ -706,6 +706,11 @@ Info::Info(String const &source, IIncludeFinder const &finder)
 void Info::setFinder(IIncludeFinder const &finder)
 {
     d->finder = &finder;
+}
+
+void Info::useDefaultFinder()
+{
+    d->finder = &d->defaultFinder;
 }
 
 void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)

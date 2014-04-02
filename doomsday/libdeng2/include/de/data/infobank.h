@@ -57,6 +57,7 @@ public:
     void addFromInfoBlocks(String const &blockType);
 
     Time sourceModifiedAt() const;
+    String relativeToPath() const;
 
 protected:
     virtual ISource *newSourceFromInfo(String const &id) = 0;
