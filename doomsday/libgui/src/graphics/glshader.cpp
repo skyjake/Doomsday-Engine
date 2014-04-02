@@ -144,7 +144,6 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     // Prepare the shader source. This would be the time to substitute any
     // remaining symbols in the shader source.
     Block src = prefixToSource(source, prefix);
-    src.append('\0');
 
     char const *srcPtr = src.constData();
     glShaderSource(d->name, 1, &srcPtr, 0);
