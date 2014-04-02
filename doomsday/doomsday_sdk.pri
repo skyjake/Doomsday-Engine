@@ -35,10 +35,16 @@ contains(DENG_CONFIG, gui):   LIBS += -ldeng_gui
 contains(DENG_CONFIG, appfw): LIBS += -ldeng_appfw
 contains(DENG_CONFIG, shell): LIBS += -ldeng_shell
 
-# Instruct the dynamic linker to load the libs from the SDK lib dir.
-*-g++*|*-gcc*|*-clang* {
-    QMAKE_LFLAGS += -Wl,-rpath,$$DENG_SDK_DIR/lib
+defineTest(dengDynamicLinkPath) {
+    # 1: path to search dynamic libraries from
+    *-g++*|*-gcc*|*-clang* {
+        QMAKE_LFLAGS += -Wl,-rpath,$$1
+        export(QMAKE_LFLAGS)
+    }
 }
+
+# Instruct the dynamic linker to load the libs from the SDK lib dir.
+dengDynamicLinkPath($$DENG_SDK_DIR/lib)
 
 macx {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
