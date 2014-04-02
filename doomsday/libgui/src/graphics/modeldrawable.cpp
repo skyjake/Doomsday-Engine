@@ -397,7 +397,7 @@ DENG2_PIMPL(ModelDrawable)
 
                         qDebug() << "    from" << texFile.description().toLatin1().constData();
 
-                        materialTexIds[i] = atlas->alloc(Image::fromData(texFile));
+                        materialTexIds[i] = atlas->alloc(Image::fromData(texFile, texFile.name().fileNameExtension()));
                     }
                     catch(Error const &er)
                     {
