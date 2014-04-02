@@ -59,7 +59,15 @@ String Folder::describe() const
 {
     DENG2_GUARD(this);
 
-    String desc = String("folder \"%1\"").arg(name());
+    String desc;
+    if(name().isEmpty())
+    {
+        desc = "root folder";
+    }
+    else
+    {
+        desc = String("folder \"%1\"").arg(name());
+    }
 
     String const feedDesc = describeFeeds();
     if(!feedDesc.isEmpty())
