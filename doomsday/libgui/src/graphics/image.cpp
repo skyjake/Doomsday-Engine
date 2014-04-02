@@ -254,24 +254,27 @@ static QImage load(Block const &data)
                pixelSize == 4? QImage::Format_ARGB32 : QImage::Format_RGB888);
     dbyte *base = img.bits();
 
+    bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
+
     // RGB can be read line by line.
     if(header.imageType == Header::RGB)
     {
         for(int y = 0; y < header.size.y; y++)
         {
-            int inY = (header.flags.testFlag(Header::ScreenOriginUpper)? y : (header.size.y - y - 1));
-
+            int inY = (isUpperOrigin? y : (header.size.y - y - 1));
             ByteRefArray line(base + (inY * header.size.x * pixelSize), header.size.x * pixelSize);
             input.readPresetSize(line);
         }
     }
     else if(header.imageType == Header::RleRGB)
     {
+        img.fill(0);
+
         // RLE packets may cross over to the next line.
         int x = 0;
-        int y = (header.flags.testFlag(Header::ScreenOriginUpper)? 0 : (header.size.y - 1));
+        int y = (isUpperOrigin? 0 : (header.size.y - 1));
         int endY = header.size.y - y - 1;
-        int stepY = (header.flags.testFlag(Header::ScreenOriginUpper)? 1 : -1);
+        int stepY = (isUpperOrigin? 1 : -1);
 
         while(y != endY && x < header.size.x)
         {
@@ -301,6 +304,8 @@ static QImage load(Block const &data)
 
                 std::memcpy(base + (x + y * header.size.x) * pixelSize,
                             pixel.constData(), pixelSize);
+
+                // Advance the position.
                 if(++x == header.size.x)
                 {
                     x = 0;
@@ -310,8 +315,7 @@ static QImage load(Block const &data)
         }
     }
 
-    // Pixels were stored in ABGR format.
-    return img.rgbSwapped();
+    return img;
 }
 
 } // namespace tga
