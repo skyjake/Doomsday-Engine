@@ -21,6 +21,7 @@
 #include "de/Process"
 #include "de/ArrayValue"
 #include "de/RecordValue"
+#include "de/App"
 
 namespace de {
 
@@ -30,6 +31,7 @@ static String const KEY_BLOCK_TYPE  = "__type__";
 static String const KEY_INHERIT     = "inherits";
 
 DENG2_PIMPL(ScriptedInfo)
+, public Info::IIncludeFinder
 {
     typedef Info::Element::Value InfoValue;
 
@@ -41,6 +43,8 @@ DENG2_PIMPL(ScriptedInfo)
 
     Instance(Public *i) : Base(i)
     {
+        info.setFinder(*this); // finding includes based on sourcePath
+
         // No limitation on duplicates for the special block types.
         info.setAllowDuplicateBlocksOfType(
                     QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
@@ -51,6 +55,12 @@ DENG2_PIMPL(ScriptedInfo)
         info.clear();
         process.clear();
         script.reset();
+    }
+
+    String findIncludedInfoSource(String const &includeName, Info const &) const
+    {
+        return String::fromUtf8(Block(App::rootFolder().locate<File const>
+                                      (sourcePath.fileNamePath() / includeName)));
     }
 
     /**
