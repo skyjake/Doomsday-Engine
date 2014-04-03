@@ -210,7 +210,6 @@ void D_PreInit()
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;
-    cfg.loadAutoSaveOnReborn = false;
     cfg.loadLastSaveOnReborn = false;
 
     cfg.maxSkulls = true;

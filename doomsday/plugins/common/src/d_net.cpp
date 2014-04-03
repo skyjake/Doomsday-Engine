@@ -242,7 +242,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         {
             // Client responds to new player?
             App_Log(DE2_LOG_NOTE, "Player %i has arrived in the game", plrNumber);
-            G_DoReborn(plrNumber);
+            P_RebornPlayerInMultiplayer(plrNumber);
             //players[plrNumber].playerstate = PST_REBORN;
         }
         if(showmsg)

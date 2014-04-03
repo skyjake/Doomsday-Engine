@@ -180,9 +180,6 @@ cvarbutton_t mnCVarButtons[] = {
 #endif
     cvarbutton_t(0, "game-save-confirm"),
     cvarbutton_t(0, "game-save-confirm-loadonreborn"),
-//#if !__JHEXEN__
-    cvarbutton_t(0, "game-save-auto-loadonreborn"),
-//#endif
     cvarbutton_t(0, "game-save-last-loadonreborn"),
 #if __JDOOM__ || __JDOOM64__
     cvarbutton_t(0, "game-skullsinwalls"),
@@ -1704,11 +1701,7 @@ void Hu_MenuInitPlayerSetupPage()
 void Hu_MenuInitSaveOptionsPage()
 {
     Point2Raw const origin(60, 50);
-//#if !__JHEXEN__
-    uint const numObjects = 10;
-/*#else
     uint const numObjects = 8;
-#endif*/
 
     mn_page_t *page = Hu_MenuNewPage("SaveOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     MNPage_SetTitle(page, "Save Options");
@@ -1793,41 +1786,6 @@ void Hu_MenuInitSaveOptionsPage()
         text->text = "Reborn preferences";
     }
     ob++;
-
-//#if !__JHEXEN__
-    ob->_type          = MN_TEXT;
-    ob->_group         = 1;
-    ob->_pageFontIdx   = MENU_FONT1;
-    ob->_pageColorIdx  = MENU_COLOR1;
-    ob->ticker         = MNText_Ticker;
-    ob->updateGeometry = MNText_UpdateGeometry;
-    ob->drawer         = MNText_Drawer;
-    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
-    {
-        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
-        text->text = "Load auto save";
-    }
-    ob++;
-
-    ob->_type          = MN_BUTTON;
-    ob->_group         = 1;
-    ob->_shortcut      = 'a';
-    ob->_pageFontIdx   = MENU_FONT1;
-    ob->_pageColorIdx  = MENU_COLOR3;
-    ob->ticker         = MNButton_Ticker;
-    ob->updateGeometry = MNButton_UpdateGeometry;
-    ob->drawer         = MNButton_Drawer;
-    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-    ob->cmdResponder   = MNButton_CommandResponder;
-    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
-    {
-        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
-        btn->staydownMode = true;
-        btn->data         = (void *)"game-save-auto-loadonreborn";
-    }
-    ob++;
-//#endif
 
     ob->_type          = MN_TEXT;
     ob->_group         = 1;

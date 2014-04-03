@@ -649,6 +649,16 @@ bool GameSession::savingPossible() const
     return true;
 }
 
+bool GameSession::progressRestoredOnReload() const
+{
+    if(G_Rules().deathmatch) return false; // Never.
+#if __JHEXEN__
+    return true; // Cannot be disabled.
+#else
+    return cfg.loadLastSaveOnReborn;
+#endif
+}
+
 void GameSession::end()
 {
     if(!hasBegun()) return;
@@ -771,13 +781,7 @@ void GameSession::reloadMap()
         throw InProgressError("GameSession::reloadMap", "No game session is in progress");
     }
 
-    if(G_Rules().deathmatch)
-    {
-        // Restart the session entirely.
-        end();
-        begin(*::gameMapUri, ::gameMapEntrance, G_Rules());
-    }
-    else
+    if(progressRestoredOnReload())
     {
         try
         {
@@ -787,10 +791,17 @@ void GameSession::reloadMap()
         catch(Error const &er)
         {
             LOG_AS("GameSession");
-            LOG_WARNING("Error reloading current map state:\n") << er.asText();
+            LOG_WARNING("Error loading current map state:\n") << er.asText();
         }
         // If we ever reach here then there is an insurmountable problem...
         endAndBeginTitle();
+    }
+    else
+    {
+        // Restart the session entirely.
+        briefDisabled = true; // We won't brief again.
+        end();
+        begin(*::gameMapUri, ::gameMapEntrance, G_Rules());
     }
 }
 
@@ -959,11 +970,17 @@ void GameSession::leaveMap()
     }
 }
 
+String GameSession::userDescription() const
+{
+    if(!hasBegun()) return "";
+    return App::rootFolder().locate<SavedSession>(internalSavePath).metadata().gets("userDescription", "");
+}
+
 void GameSession::save(String const &saveName, String const &userDescription)
 {
     if(!hasBegun())
     {
-        /// @throw InProgressError Cannot save a map unless the game is in progress.
+        /// @throw InProgressError Cannot save unless the game is in progress.
         throw InProgressError("GameSession::save", "No game session is in progress");
     }
 
@@ -1010,9 +1027,9 @@ void GameSession::copySaved(String const &destName, String const &sourceName)
 String GameSession::savedUserDescription(String const &saveName)
 {
     String const savePath = d->userSavePath(saveName);
-    if(SavedSession const *session = App::rootFolder().tryLocate<SavedSession>(savePath))
+    if(SavedSession const *saved = App::rootFolder().tryLocate<SavedSession>(savePath))
     {
-        return session->metadata().gets("userDescription", "");
+        return saved->metadata().gets("userDescription", "");
     }
     return ""; // Not found.
 }

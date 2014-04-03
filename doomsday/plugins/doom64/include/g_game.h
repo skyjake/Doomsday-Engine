@@ -73,7 +73,7 @@ void G_QuitGame(void);
 void G_StopDemo(void);
 
 // Confusing no?
-void G_DoReborn(int playernum);
+//void G_DoReborn(int playernum);
 void G_PlayerReborn(int player);
 
 void G_IntermissionDone(void);

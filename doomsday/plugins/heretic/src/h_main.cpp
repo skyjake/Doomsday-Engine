@@ -214,7 +214,6 @@ void H_PreInit()
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;
-    cfg.loadAutoSaveOnReborn = false;
     cfg.loadLastSaveOnReborn = false;
 
     cfg.monstersStuckInDoors = false;

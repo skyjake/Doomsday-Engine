@@ -130,7 +130,6 @@ D_CMD(OpenLoadMenu);
 D_CMD(OpenSaveMenu);
 
 void G_PlayerReborn(int player);
-void G_DoReborn(int playernum);
 
 void G_DoPlayDemo();
 void G_DoMapCompleted();
@@ -415,9 +414,6 @@ void G_Register()
         Con_AddVariable(gamestatusCVars + i);
     }
 
-//#if !__JHEXEN__
-    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
-//#endif
     C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
     C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
     C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
@@ -1590,9 +1586,9 @@ static void runGameAction()
         switch(currentAction)
         {
         case GA_NEWSESSION:
+            G_SetGameAction(GA_NONE);
             COMMON_GAMESESSION->end();
             COMMON_GAMESESSION->begin(*dMapUri, dMapEntrance, dRules);
-            G_SetGameAction(GA_NONE);
             break;
 
         case GA_LOADSESSION:
@@ -1643,27 +1639,18 @@ static void runGameAction()
             return;
 
         case GA_SCREENSHOT:
-            G_DoScreenShot();
             G_SetGameAction(GA_NONE);
+            G_DoScreenShot();
             break;
 
         case GA_LEAVEMAP:
-            COMMON_GAMESESSION->leaveMap();
             G_SetGameAction(GA_NONE);
+            COMMON_GAMESESSION->leaveMap();
             break;
 
         case GA_RESTARTMAP:
-            // This is a restart, so we won't brief again.
-            briefDisabled = true;
-//#if !__JHEXEN__
-            //G_StopDemo();
-            COMMON_GAMESESSION->reloadMap();
-/*#else
-            // Restart the game session entirely.
-            COMMON_GAMESESSION->end();
-            COMMON_GAMESESSION->begin(*dMapUri, dMapEntrance, dRules);
-#endif*/
             G_SetGameAction(GA_NONE);
+            COMMON_GAMESESSION->reloadMap();
             break;
 
         case GA_MAPCOMPLETED:
@@ -1683,37 +1670,79 @@ static void runGameAction()
     }
 }
 
+static int rebornLoadConfirmed(msgresponse_t response, int, void *)
+{
+    if(response == MSG_YES)
+    {
+        G_SetGameAction(GA_RESTARTMAP);
+    }
+    else
+    {
+        // Player seemingly wishes to extend their stay in limbo?
+        player_t *plr    = players;
+        plr->rebornWait  = PLAYER_REBORN_TICS;
+        plr->playerState = PST_DEAD;
+    }
+    return true;
+}
+
 /**
  * Do needed reborns for any fallen players.
  */
 static void rebornPlayers()
 {
+    if(!IS_NETGAME && P_CountPlayersInGame(LocalOnly) == 1)
+    {
+        if(Player_WaitingForReborn(&players[0]))
+        {
+            // Are we still awaiting a response to a previous confirmation?
+            if(Hu_IsMessageActiveWithCallback(rebornLoadConfirmed))
+                return;
+
+            // Do we need user confirmation?
+            if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.confirmRebornLoad)
+            {
+                S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
+                de::String savegameDescription = COMMON_GAMESESSION->userDescription();
+                if(savegameDescription.isEmpty()) // Not yet saved.
+                {
+                    savegameDescription = "(Unsaved)";
+                }
+                Str msg; Str_Appendf(Str_Init(&msg), REBORNLOAD_CONFIRM, savegameDescription.toUtf8().constData());
+                Hu_MsgStart(MSG_YESNO, Str_Text(&msg), rebornLoadConfirmed, 0, 0);
+                return;
+            }
+
+            rebornLoadConfirmed(MSG_YES, 0, 0);
+        }
+        return;
+    }
+
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr     = &players[i];
-        ddplayer_t *ddplr = plr->plr;
-        mobj_t *mo        = ddplr->mo;
+        player_t *plr = &players[i];
 
-        if(ddplr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(mo))
+        if(Player_WaitingForReborn(plr))
         {
-            G_DoReborn(i);
+            P_RebornPlayerInMultiplayer(i);
         }
 
         // Player has left?
         if((int)plr->playerState == PST_GONE)
         {
-            plr->playerState = PST_REBORN;
-            if(mo)
+            plr->playerState  = PST_REBORN;
+            ddplayer_t *ddplr = plr->plr;
+            if(mobj_t *plmo = ddplr->mo)
             {
                 if(!IS_CLIENT)
                 {
-                    P_SpawnTeleFog(mo->origin[VX], mo->origin[VY], mo->angle + ANG180);
+                    P_SpawnTeleFog(plmo->origin[VX], plmo->origin[VY], plmo->angle + ANG180);
                 }
 
                 // Let's get rid of the mobj.
                 App_Log(DE2_DEV_MAP_MSG, "rebornPlayers: Removing player %i's mobj", i);
 
-                P_MobjRemove(mo, true);
+                P_MobjRemove(plmo, true);
                 ddplr->mo = 0;
             }
         }
@@ -1723,7 +1752,7 @@ static void rebornPlayers()
 /**
  * The core of the timing loop. Game state, game actions etc occur here.
  *
- * @param ticLength     How long this tick is, in seconds.
+ * @param ticLength  How long this tick is, in seconds.
  */
 void G_Ticker(timespan_t ticLength)
 {
@@ -2116,119 +2145,6 @@ void G_QueueBody(mobj_t *mo)
     bodyQueueSlot++;
 }
 #endif
-
-static int rebornLoadConfirmed(msgresponse_t response, int /*userValue*/, void *context)
-{
-    de::String *slotId = static_cast<de::String *>(context);
-    DENG2_ASSERT(slotId != 0);
-    if(response == MSG_YES)
-    {
-        gaLoadSessionSlot = *slotId;
-        G_SetGameAction(GA_LOADSESSION);
-    }
-    else
-    {
-/*#if __JHEXEN__
-        // Load the last autosave? (Not optional in Hexen).
-        if(G_SaveSlots()["auto"].isLoadable())
-        {
-            gaLoadSessionSlot = "auto";
-            G_SetGameAction(GA_LOADSESSION);
-        }
-        else
-#endif*/
-        {
-            // Restart the current map, discarding all items obtained by players.
-            G_SetGameAction(GA_RESTARTMAP);
-        }
-    }
-    delete slotId;
-    return true;
-}
-
-void G_DoReborn(int plrNum)
-{
-    // Are we still awaiting a response to a previous reborn confirmation?
-    if(Hu_IsMessageActiveWithCallback(rebornLoadConfirmed)) return;
-
-    if(plrNum < 0 || plrNum >= MAXPLAYERS)
-        return; // Wha?
-
-    if(IS_NETGAME)
-    {
-        P_RebornPlayerInMultiplayer(plrNum);
-        return;
-    }
-
-    if(COMMON_GAMESESSION->loadingPossible())
-    {
-        // Use the latest save?
-        de::String lastSlotId;
-        if(cfg.loadLastSaveOnReborn)
-        {
-            SaveSlot const &sslot = G_SaveSlots()[de::String::number(Con_GetInteger("game-save-last-slot"))];
-            if(sslot.isLoadable())
-            {
-                lastSlotId = sslot.id();
-            }
-        }
-
-        // Use the latest autosave? (Not optional in Hexen).
-//#if !__JHEXEN__
-        de::String autoSlotId;
-        if(cfg.loadAutoSaveOnReborn)
-        {
-            SaveSlot const &sslot = G_SaveSlots()["auto"];
-            if(sslot.isLoadable())
-            {
-                autoSlotId = sslot.id();
-            }
-        }
-//#endif
-
-        // Have we chosen a save state to load?
-        if(!lastSlotId.isEmpty()
-//#if !__JHEXEN__
-           || !autoSlotId.isEmpty()
-//#endif
-           )
-        {
-            // Everything appears to be in order - schedule the game-save load!
-//#if !__JHEXEN__
-            de::String chosenSlot = (!lastSlotId.isEmpty()? lastSlotId : autoSlotId);
-/*#else
-            de::String chosenSlot = lastSlotId;
-#endif*/
-            if(!cfg.confirmRebornLoad)
-            {
-                gaLoadSessionSlot = chosenSlot;
-                G_SetGameAction(GA_LOADSESSION);
-            }
-            else
-            {
-                // Compose the confirmation message.
-                de::String const savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(G_SaveSlots()[chosenSlot].saveName());
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, savegameUserDescription.toUtf8().constData());
-                S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmed, 0, new de::String(chosenSlot));
-            }
-            return;
-        }
-
-        // Autosave loading cannot be disabled in Hexen.
-/*#if __JHEXEN__
-        if(G_SaveSlots()["auto"].isLoadable())
-        {
-            gaLoadSessionSlot = "auto";
-            G_SetGameAction(GA_LOADSESSION);
-            return;
-        }
-#endif*/
-    }
-
-    // Restart the current map, discarding all items obtained by players.
-    G_SetGameAction(GA_RESTARTMAP);
-}
 
 #if __JDOOM__ || __JDOOM64__
 static void G_ApplyGameRuleFastMonsters(dd_bool fast)

@@ -82,6 +82,12 @@ public:
     bool loadingPossible() const;
 
     /**
+     * Determines whether saved game progress will be restored when the current map is reloaded,
+     * according to the current game state and user configuration.
+     */
+    bool progressRestoredOnReload() const;
+
+    /**
      * End the game session (if in progress).
      * @see hasBegun()
      */
@@ -106,8 +112,9 @@ public:
     void begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
     /**
-     * Reload the @em current map (automatically loading any saved progress from the backing store).
-     * If no saved progress exists then the map will be in the default state.
+     * Reload the @em current map, automatically loading any saved progress from the backing
+     * store if @ref progressRestoredOnReload(). If no saved progress exists then the map will
+     * be in the default state.
      */
     void reloadMap();
 
@@ -116,6 +123,13 @@ public:
      * load up the next map according to the defined game progression.
      */
     void leaveMap();
+
+    /**
+     * Convenient method of looking up the user description of the game session in progress.
+     *
+     * @return  User description of the session if it @ref hasBegun() or a zero-length string.
+     */
+    de::String userDescription() const;
 
 public: // Saved session management ----------------------------------------------------------
 

@@ -92,7 +92,6 @@ typedef struct {
 
     byte            confirmQuickGameSave;
     byte            confirmRebornLoad;
-    byte            loadAutoSaveOnReborn;
     byte            loadLastSaveOnReborn;
 
     int             jumpEnabled;

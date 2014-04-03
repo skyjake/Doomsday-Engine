@@ -117,7 +117,6 @@ typedef struct jdoom_config_s {
 
     byte            confirmQuickGameSave;
     byte            confirmRebornLoad;
-    byte            loadAutoSaveOnReborn;
     byte            loadLastSaveOnReborn;
 
     int             hudPatchReplaceMode;
