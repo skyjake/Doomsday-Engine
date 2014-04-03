@@ -22,22 +22,19 @@
 
 #include <de/App>
 #include <de/game/SavedSession>
-#include <de/game/SavedSessionRepository>
 #include <de/Time>
 #include <de/ZipArchive>
 #include "d_netsv.h"
 #include "g_common.h"
-#include "gamerules.h"
 #include "hu_inventory.h"
 #include "mapstatewriter.h"
 #include "p_inventory.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
-#include "p_tick.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
 #include "p_sound.h"
-#include "saveslots.h"
+#include "p_tick.h"
 
 using namespace de;
 using de::game::SavedSession;
@@ -74,17 +71,17 @@ DENG2_PIMPL(GameSession)
         // This may happen if the game was not shutdown properly in the event of a crash.
         /// @todo It may be possible to recover this session if it was written successfully
         /// before the fatal error occurred.
-        deleteSaved(internalSavePath);
+        removeSaved(internalSavePath);
     }
 
-    void deleteSaved(String const &path)
+    void removeSaved(String const &path)
     {
-        if(File *existing = App::rootFolder().tryLocateFile(path))
+        if(File *saved = App::rootFolder().tryLocateFile(path))
         {
-            self.saveIndex().remove(existing->path());
+            self.saveIndex().remove(saved->path());
             // We need write access to remove.
-            existing->setMode(File::Write);
-            App::rootFolder().removeFile(existing->path());
+            saved->setMode(File::Write);
+            App::rootFolder().removeFile(saved->path());
         }
     }
 
@@ -94,22 +91,22 @@ DENG2_PIMPL(GameSession)
 
         LOG_AS("GameSession");
 
-        deleteSaved(destPath);
+        removeSaved(destPath);
 
-        SavedSession const &sourceSession = App::rootFolder().locate<SavedSession>(sourcePath);
+        SavedSession const &saved = App::rootFolder().locate<SavedSession>(sourcePath);
 
         // Copy the .save package.
-        File &save = App::rootFolder().replaceFile(destPath);
-        de::Writer(save) << sourceSession.archive();
-        save.setMode(File::ReadOnly);
-        LOG_RES_XVERBOSE("Wrote ") << save.description();
+        File &copied = App::rootFolder().replaceFile(destPath);
+        de::Writer(copied) << saved.archive();
+        copied.setMode(File::ReadOnly);
+        LOG_RES_XVERBOSE("Wrote ") << copied.description();
 
         // We can now reinterpret and populate the contents of the archive.
-        File *updated = save.reinterpret();
+        File *updated = copied.reinterpret();
         updated->as<Folder>().populate();
 
         SavedSession &session = updated->as<SavedSession>();
-        session.cacheMetadata(sourceSession.metadata()); // Avoid immediately opening the .save package.
+        session.cacheMetadata(saved.metadata()); // Avoid immediately opening the .save package.
         self.saveIndex().add(session);
 
         // Announce the copy if both are user savegame paths.
@@ -250,7 +247,7 @@ DENG2_PIMPL(GameSession)
                 player_t *plr = players + i;
                 if(plr->plr->inGame)
                 {
-                // Force players to be initialized upon first map load.
+                    // Force players to be initialized upon first map load.
                     plr->playerState = PST_REBORN;
 #if __JHEXEN__
                     plr->worldTimer = 0;
@@ -301,9 +298,9 @@ DENG2_PIMPL(GameSession)
 
 #if __JHEXEN__
         // Deserialize the world ACS state.
-        if(File const *file = session.tryLocateStateFile("ACScript"))
+        if(File const *state = session.tryLocateStateFile("ACScript"))
         {
-            Game_ACScriptInterpreter().readWorldState(de::Reader(*file).withHeader());
+            Game_ACScriptInterpreter().readWorldState(de::Reader(*state).withHeader());
         }
 #endif
 
@@ -413,14 +410,14 @@ DENG2_PIMPL(GameSession)
 
         if(revisit)
         {
-            // We've been here before; deserialize this map's save state.
+            // We've been here before; deserialize the saved map state.
 #if __JHEXEN__
             targetPlayerAddrs = 0; // player mobj redirection...
 #endif
 
-            SavedSession const &session = App::rootFolder().locate<SavedSession>(internalSavePath);
+            SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
             String const mapUriStr = Str_Text(Uri_Compose(gameMapUri));
-            SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
+            SV_MapStateReader(saved, mapUriStr)->read(mapUriStr);
         }
 
         if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
@@ -668,7 +665,7 @@ void GameSession::end()
 #if __JHEXEN__
     Game_ACScriptInterpreter().reset();
 #endif
-    d->deleteSaved(internalSavePath);
+    d->removeSaved(internalSavePath);
 
     d->inProgress = false;
     LOG_MSG("Game ended");
@@ -835,13 +832,13 @@ void GameSession::leaveMap()
 #endif
 
     // Are we saving progress?
-    SavedSession *savedSession = 0;
+    SavedSession *saved = 0;
     if(!G_Rules().deathmatch) // Never save in deathmatch.
     {
-        savedSession = &App::rootFolder().locate<SavedSession>(internalSavePath);
-        savedSession->setMode(File::Write);
+        saved = &App::rootFolder().locate<SavedSession>(internalSavePath);
+        saved->setMode(File::Write);
 
-        Folder &mapsFolder = savedSession->locate<Folder>("maps");
+        Folder &mapsFolder = saved->locate<Folder>("maps");
         mapsFolder.setMode(File::Write);
 
         // Are we entering a new hub?
@@ -860,9 +857,9 @@ void GameSession::leaveMap()
         else
         {
             // Update the saved state for the current map.
-            if(File *existing = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
+            if(File *state = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
             {
-                existing->setMode(File::Write);
+                state->setMode(File::Write);
             }
             File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
             Block mapStateData;
@@ -877,8 +874,8 @@ void GameSession::leaveMap()
 #endif
 
         mapsFolder.setMode(File::ReadOnly);
-        savedSession->setMode(File::ReadOnly);
-        savedSession->populate();
+        saved->setMode(File::ReadOnly);
+        saved->populate();
     }
 
 #if __JHEXEN__
@@ -909,7 +906,7 @@ void GameSession::leaveMap()
     Uri_Delete(const_cast<Uri *>(nextMapUri)); nextMapUri = 0;
 
     // Are we revisiting a previous map?
-    bool const revisit = savedSession && savedSession->hasState(String("maps") / Str_Text(Uri_Compose(gameMapUri)));
+    bool const revisit = saved && saved->hasState(String("maps") / Str_Text(Uri_Compose(gameMapUri)));
     d->reloadMap(revisit);
 
     // On exit logic:
@@ -929,30 +926,30 @@ void GameSession::leaveMap()
     Game_ACScriptInterpreter_RunDeferredTasks(gameMapUri);
 #endif
 
-    if(savedSession && !revisit)
+    if(saved && !revisit)
     {
-        savedSession->setMode(File::Write);
+        saved->setMode(File::Write);
 
         SessionMetadata metadata;
         G_ApplyCurrentSessionMetadata(metadata);
         /// @todo Use the existing sessionId?
         //metadata.set("sessionId", savedSession->metadata().geti("sessionId"));
         metadata.set("userDescription", unsavedDescription);
-        savedSession->replaceFile("Info") << Instance::composeSaveInfo(metadata).toUtf8();
+        saved->replaceFile("Info") << Instance::composeSaveInfo(metadata).toUtf8();
 
 #if __JHEXEN__
         // Save the world-state of the ACScript interpreter.
-        de::Writer(savedSession->replaceFile("ACScriptState")).withHeader()
+        de::Writer(saved->replaceFile("ACScriptState")).withHeader()
                 << Game_ACScriptInterpreter().serializeWorldState();
 #endif
 
         // Save the state of the current map.
-        Folder &mapsFolder = savedSession->locate<Folder>("maps");
+        Folder &mapsFolder = saved->locate<Folder>("maps");
         mapsFolder.setMode(File::Write);
 
-        if(File *existing = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
+        if(File *state = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
         {
-            existing->setMode(File::Write);
+            state->setMode(File::Write);
         }
         File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
         Block mapStateData;
@@ -965,10 +962,10 @@ void GameSession::leaveMap()
         SV_CloseFile();
 
         mapsFolder.setMode(File::ReadOnly);
-        savedSession->setMode(File::ReadOnly);
-        savedSession->populate();
+        saved->setMode(File::ReadOnly);
+        saved->populate();
 
-        savedSession->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+        saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     }
 }
 
@@ -1016,14 +1013,14 @@ void GameSession::load(String const &saveName)
     P_SetMessage(&players[CONSOLEPLAYER], 0, "Game loaded");
 }
 
-void GameSession::deleteSaved(String const &saveName)
-{
-    d->deleteSaved(d->userSavePath(saveName));
-}
-
 void GameSession::copySaved(String const &destName, String const &sourceName)
 {
     d->copySaved(d->userSavePath(destName), d->userSavePath(sourceName));
+}
+
+void GameSession::removeSaved(String const &saveName)
+{
+    d->removeSaved(d->userSavePath(saveName));
 }
 
 String GameSession::savedUserDescription(String const &saveName)

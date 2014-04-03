@@ -140,27 +140,27 @@ public: // Saved session management --------------------------------------------
      * @param userDescription  Textual description of the current game state provided either
      *                         by the user or possibly generated automatically.
      */
-    void save(de::String const &slotId, de::String const &userDescription);
+    void save(de::String const &saveName, de::String const &userDescription);
 
     /**
-     * Load the game state from the saved session specified.
+     * Load the game state from the user saved session specified.
      *
      * @param saveName  Name of the saved session to be loaded.
      */
     void load(de::String const &saveName);
 
     /**
-     * Deletes the saved session /home/savegames/<gameId>/<@a saveName>.save
-     */
-    void deleteSaved(de::String const &saveName);
-
-    /**
-     * Makes a copy of the named saved session in /home/savegames/<gameId>
+     * Makes a copy of the user saved session specified in /home/savegames/<gameId>
      *
      * @param destName    Name of the new/replaced saved session.
      * @param sourceName  Name of the saved session to be copied.
      */
     void copySaved(de::String const &destName, de::String const &sourceName);
+
+    /**
+     * Removes the user saved session /home/savegames/<gameId>/<@a saveName>.save
+     */
+    void removeSaved(de::String const &saveName);
 
     /**
      * Convenient method of looking up the user description of an existing saved session.

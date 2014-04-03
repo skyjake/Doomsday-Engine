@@ -3443,7 +3443,7 @@ static int deleteSavedSessionConfirmed(msgresponse_t response, int /*userValue*/
     DENG2_ASSERT(saveName != 0);
     if(response == MSG_YES)
     {
-        COMMON_GAMESESSION->deleteSaved(*saveName);
+        COMMON_GAMESESSION->removeSaved(*saveName);
     }
     delete saveName;
     return true;
@@ -3466,7 +3466,7 @@ D_CMD(DeleteSavedSession)
 
             if(confirmed)
             {
-                COMMON_GAMESESSION->deleteSaved(sslot.saveName());
+                COMMON_GAMESESSION->removeSaved(sslot.saveName());
             }
             else
             {
