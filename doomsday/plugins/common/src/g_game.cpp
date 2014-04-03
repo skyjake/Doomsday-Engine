@@ -1703,12 +1703,7 @@ static void rebornPlayers()
             if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                de::String savegameDescription = COMMON_GAMESESSION->userDescription();
-                if(savegameDescription.isEmpty()) // Not yet saved.
-                {
-                    savegameDescription = "(Unsaved)";
-                }
-                Str msg; Str_Appendf(Str_Init(&msg), REBORNLOAD_CONFIRM, savegameDescription.toUtf8().constData());
+                Str msg; Str_Appendf(Str_Init(&msg), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
                 Hu_MsgStart(MSG_YESNO, Str_Text(&msg), rebornLoadConfirmed, 0, 0);
                 return;
             }
