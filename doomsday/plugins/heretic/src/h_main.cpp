@@ -32,7 +32,6 @@
 #include "g_defs.h"
 #include "p_inventory.h"
 #include "saveslots.h"
-//#include <de/game/SavedSessionRepository>
 #include <cstring>
 
 using namespace common;

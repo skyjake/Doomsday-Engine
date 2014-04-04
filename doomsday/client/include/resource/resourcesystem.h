@@ -42,7 +42,6 @@
 #include "resource/zip.h"
 #include "uri.hh"
 #include <de/Error>
-#include <de/game/SavedSessionRepository>
 #include <de/String>
 #include <de/System>
 #include <QList>
@@ -864,11 +863,6 @@ public:
     void purgeCacheQueue();
 
 #endif // __CLIENT__
-
-    /**
-     * Returns the SavedSessionRepository.
-     */
-    de::game::SavedSessionRepository &savedSessionRepository() const;
 
     /**
      * Returns the native path of the root of the saved session repository

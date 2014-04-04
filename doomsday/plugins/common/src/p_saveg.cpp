@@ -37,7 +37,7 @@
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
 #include "saveslots.h"
-#include <de/game/SavedSessionRepository>
+#include <de/game/Session>
 #include <de/NativePath>
 #include <de/String>
 #include <de/memory.h>

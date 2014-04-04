@@ -25,6 +25,7 @@
 #include "gamesession.h"
 #include "hu_menu.h"
 #include <de/App>
+#include <de/game/Session>
 #include <de/Folder>
 #include <de/Observers>
 #include <de/Writer>
@@ -35,8 +36,9 @@ static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game ses
 static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
 using namespace de;
+using namespace common;
+
 using de::game::SavedSession;
-using de::game::SavedSessionRepository;
 
 DENG2_PIMPL_NOREF(SaveSlots::Slot)
 , DENG2_OBSERVES(SavedSession, MetadataChange)
@@ -205,7 +207,7 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
 }
 
 DENG2_PIMPL(SaveSlots)
-, DENG2_OBSERVES(SavedSessionRepository, AvailabilityUpdate)
+, DENG2_OBSERVES(GameSession::SavedIndex, AvailabilityUpdate)
 {
     typedef std::map<String, Slot *> Slots;
     typedef std::pair<String, Slot *> SlotItem;
@@ -213,12 +215,12 @@ DENG2_PIMPL(SaveSlots)
 
     Instance(Public *i) : Base(i)
     {
-        COMMON_GAMESESSION->saveIndex().audienceForAvailabilityUpdate() += this;
+        GameSession::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
     ~Instance()
     {
-        COMMON_GAMESESSION->saveIndex().audienceForAvailabilityUpdate() -= this;
+        GameSession::savedIndex().audienceForAvailabilityUpdate() -= this;
         DENG2_FOR_EACH(Slots, i, sslots) { delete i->second; }
     }
 
@@ -244,18 +246,18 @@ DENG2_PIMPL(SaveSlots)
         return 0; // Not found.
     }
 
-    void repositoryAvailabilityUpdate(SavedSessionRepository const &repo)
+    void savedIndexAvailabilityUpdate(GameSession::SavedIndex const &index)
     {
         DENG2_FOR_EACH(Slots, i, sslots)
         {
             SaveSlot *sslot = i->second;
-            if(!repo.find(sslot->savePath()))
+            if(!index.find(sslot->savePath()))
             {
                 sslot->setSavedSession(0);
             }
         }
 
-        DENG2_FOR_EACH_CONST(SavedSessionRepository::All, i, repo.all())
+        DENG2_FOR_EACH_CONST(GameSession::SavedIndex::All, i, index.all())
         {
             if(SaveSlot *sslot = slotBySavePath(i.key()))
             {

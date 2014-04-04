@@ -65,6 +65,7 @@
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
 #include <de/game/SavedSession>
+#include <de/game/Session>
 #include <de/Log>
 #include <de/Module>
 #include <de/NativeFile>
@@ -339,7 +340,6 @@ DENG2_PIMPL(ResourceSystem)
     SpriteGroups spriteGroups;
 
     NativePath nativeSavePath;
-    game::SavedSessionRepository saveRepo;
 
     Binder binder;
     Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
@@ -1958,7 +1958,7 @@ DENG2_PIMPL(ResourceSystem)
             {
                 if(game::SavedSession *session = i->second->maybeAs<game::SavedSession>())
                 {
-                    saveRepo.add(*session);
+                    game::Session::savedIndex().add(*session);
                 }
             }
         }
@@ -3918,11 +3918,6 @@ void ResourceSystem::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
-game::SavedSessionRepository &ResourceSystem::savedSessionRepository() const
-{
-    return d->saveRepo;
-}
-
 NativePath ResourceSystem::nativeSavePath()
 {
     return d->nativeSavePath;
@@ -3956,7 +3951,7 @@ bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String cons
             // Update the /home/savegames/<gameId> folder.
             Folder &saveFolder = App::rootFolder().locate<Folder>(outputPath);
             saveFolder.populate();
-            d->saveRepo.add(saveFolder.locate<game::SavedSession>(outputName));
+            game::Session::savedIndex().add(saveFolder.locate<game::SavedSession>(outputName));
             return true;
         }
         catch(Folder::NotFoundError const &)

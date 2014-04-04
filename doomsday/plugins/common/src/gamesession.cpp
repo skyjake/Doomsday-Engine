@@ -22,6 +22,7 @@
 
 #include <de/App>
 #include <de/game/SavedSession>
+#include <de/game/Session>
 #include <de/Time>
 #include <de/ZipArchive>
 #include "d_netsv.h"
@@ -54,7 +55,8 @@ DENG2_PIMPL(GameSession)
 
     Instance(Public *i) : Base(i), inProgress(false)
     {
-        singleton = i;
+        DENG2_ASSERT(singleton == 0);
+        singleton = thisPublic;
     }
 
     String userSavePath(String const &fileName)
@@ -71,50 +73,7 @@ DENG2_PIMPL(GameSession)
         // This may happen if the game was not shutdown properly in the event of a crash.
         /// @todo It may be possible to recover this session if it was written successfully
         /// before the fatal error occurred.
-        removeSaved(internalSavePath);
-    }
-
-    void removeSaved(String const &path)
-    {
-        if(File *saved = App::rootFolder().tryLocateFile(path))
-        {
-            self.saveIndex().remove(saved->path());
-            // We need write access to remove.
-            saved->setMode(File::Write);
-            App::rootFolder().removeFile(saved->path());
-        }
-    }
-
-    void copySaved(String const &destPath, String const &sourcePath)
-    {
-        if(!destPath.compareWithoutCase(sourcePath)) return;
-
-        LOG_AS("GameSession");
-
-        removeSaved(destPath);
-
-        SavedSession const &saved = App::rootFolder().locate<SavedSession>(sourcePath);
-
-        // Copy the .save package.
-        File &copied = App::rootFolder().replaceFile(destPath);
-        de::Writer(copied) << saved.archive();
-        copied.setMode(File::ReadOnly);
-        LOG_RES_XVERBOSE("Wrote ") << copied.description();
-
-        // We can now reinterpret and populate the contents of the archive.
-        File *updated = copied.reinterpret();
-        updated->as<Folder>().populate();
-
-        SavedSession &session = updated->as<SavedSession>();
-        session.cacheMetadata(saved.metadata()); // Avoid immediately opening the .save package.
-        self.saveIndex().add(session);
-
-        // Announce the copy if both are user savegame paths.
-        if(!sourcePath.beginsWith(internalSavePath.fileNamePath()) &&
-           !destPath.beginsWith(internalSavePath.fileNamePath()))
-        {
-            LOG_MSG("Copied savegame \"%s\" to \"%s\"") << sourcePath << destPath;
-        }
+        Session::removeSaved(internalSavePath);
     }
 
     static String composeSaveInfo(SessionMetadata const &metadata)
@@ -196,7 +155,7 @@ DENG2_PIMPL(GameSession)
             arch.add(String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State",
                      p.inst->serializeCurrentMapState());
 
-            p.inst->self.saveIndex().remove(internalSavePath);
+            Session::savedIndex().remove(internalSavePath);
 
             Folder &saveFolder = App::rootFolder().locate<Folder>(internalSavePath.fileNamePath());
             if(SavedSession *existing = saveFolder.tryLocate<SavedSession>(internalSavePath.fileName()))
@@ -214,10 +173,10 @@ DENG2_PIMPL(GameSession)
 
             SavedSession &session = updated->as<SavedSession>();
             session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-            p.inst->self.saveIndex().add(session);
+            Session::savedIndex().add(session);
 
             // Copy the internal saved session to the destination slot.
-            p.inst->copySaved(p.savePath, internalSavePath);
+            Session::copySaved(p.savePath, internalSavePath);
 
             didSave = true;
         }
@@ -266,7 +225,7 @@ DENG2_PIMPL(GameSession)
             cleanupInternalSave();
 
             // Copy the save to the internal savegame.
-            copySaved(internalSavePath, savePath);
+            Session::copySaved(internalSavePath, savePath);
         }
 
         /*
@@ -608,7 +567,8 @@ DENG2_PIMPL(GameSession)
 #endif // __JHEXEN__
 };
 
-GameSession::GameSession() : d(new Instance(this))
+GameSession::GameSession()
+    : d(new Instance(this))
 {}
 
 GameSession::~GameSession()
@@ -624,17 +584,17 @@ GameSession &GameSession::gameSession()
     return *singleton;
 }
 
-bool GameSession::hasBegun() const
+bool GameSession::hasBegun()
 {
     return d->inProgress;
 }
 
-bool GameSession::loadingPossible() const
+bool GameSession::loadingPossible()
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
 }
 
-bool GameSession::savingPossible() const
+bool GameSession::savingPossible()
 {
     if(IS_CLIENT || Get(DD_PLAYBACK)) return false;
 
@@ -665,7 +625,7 @@ void GameSession::end()
 #if __JHEXEN__
     Game_ACScriptInterpreter().reset();
 #endif
-    d->removeSaved(internalSavePath);
+    Session::removeSaved(internalSavePath);
 
     d->inProgress = false;
     LOG_MSG("Game ended");
@@ -751,7 +711,7 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
     arch.add(String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State",
              d->serializeCurrentMapState());
 
-    saveIndex().remove(internalSavePath);
+    savedIndex().remove(internalSavePath);
 
     Folder &saveFolder        = App::rootFolder().locate<Folder>(internalSavePath.fileNamePath());
     String const saveFileName = internalSavePath.fileName();
@@ -770,7 +730,7 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
 
     SavedSession &session = updated->as<SavedSession>();
     session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-    saveIndex().add(session);
+    savedIndex().add(session);
 }
 
 void GameSession::reloadMap()
@@ -969,7 +929,7 @@ void GameSession::leaveMap()
     }
 }
 
-String GameSession::userDescription() const
+String GameSession::userDescription()
 {
     if(!hasBegun()) return "";
     return App::rootFolder().locate<SavedSession>(internalSavePath).metadata().gets("userDescription", "");
@@ -1015,12 +975,13 @@ void GameSession::load(String const &saveName)
 
 void GameSession::copySaved(String const &destName, String const &sourceName)
 {
-    d->copySaved(d->userSavePath(destName), d->userSavePath(sourceName));
+    Session::copySaved(d->userSavePath(destName), d->userSavePath(sourceName));
+    LOG_MSG("Copied savegame \"%s\" to \"%s\"") << sourceName << destName;
 }
 
 void GameSession::removeSaved(String const &saveName)
 {
-    d->removeSaved(d->userSavePath(saveName));
+    Session::removeSaved(d->userSavePath(saveName));
 }
 
 String GameSession::savedUserDescription(String const &saveName)
@@ -1031,11 +992,6 @@ String GameSession::savedUserDescription(String const &saveName)
         return saved->metadata().gets("userDescription", "");
     }
     return ""; // Not found.
-}
-
-game::SavedSessionRepository &GameSession::saveIndex() const
-{
-    return *static_cast<game::SavedSessionRepository *>(DD_SavedSessionRepository());
 }
 
 } // namespace common

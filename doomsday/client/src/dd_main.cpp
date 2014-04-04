@@ -524,12 +524,6 @@ ResourceSystem &App_ResourceSystem()
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
-#undef DD_SavedSessionRepository
-void *DD_SavedSessionRepository()
-{
-    return &App_ResourceSystem().savedSessionRepository();
-}
-
 de::ResourceClass &App_ResourceClass(String className)
 {
     return App_ResourceSystem().resClass(className);
@@ -3017,6 +3011,5 @@ DENG_DECLARE_API(Base) =
     DD_GameInfo,
     DD_IsSharpTick,
     Net_SendPacket,
-    R_SetupMap,
-    DD_SavedSessionRepository
+    R_SetupMap
 };
