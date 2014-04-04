@@ -254,33 +254,30 @@ static void advanceTime(timespan_t delta)
 
     sysTime += delta;
 
-    if(/*!stopTime ||*/ netGame)
+    oldGameTic = SECONDS_TO_TICKS(gameTime);
+
+    // The difference between gametic and demotic is that demotic
+    // is not altered at any point. Gametic changes at handshakes.
+    gameTime += delta;
+    demoTime += delta;
+
+    if(DD_IsSharpTick())
     {
-        oldGameTic = SECONDS_TO_TICKS(gameTime);
-
-        // The difference between gametic and demotic is that demotic
-        // is not altered at any point. Gametic changes at handshakes.
-        gameTime += delta;
-        demoTime += delta;
-
-        if(DD_IsSharpTick())
+        // When a new sharp tick begins, we want that the 35 Hz tick
+        // calculated from gameTime also changes. If this is not the
+        // case, we will adjust gameTime slightly so that it syncs again.
+        if(oldGameTic == SECONDS_TO_TICKS(gameTime))
         {
-            // When a new sharp tick begins, we want that the 35 Hz tick
-            // calculated from gameTime also changes. If this is not the
-            // case, we will adjust gameTime slightly so that it syncs again.
-            if(oldGameTic == SECONDS_TO_TICKS(gameTime))
-            {
-                LOGDEV_XVERBOSE("Syncing gameTime with sharp ticks (tic=%i pos=%f)")
-                        << oldGameTic << frameTimePos;
+            LOGDEV_XVERBOSE("Syncing gameTime with sharp ticks (tic=%i pos=%f)")
+                    << oldGameTic << frameTimePos;
 
-                // Realign.
-                gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;
-            }
+            // Realign.
+            gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;
         }
-
-        // World time always advances unless a local game is paused on client-side.
-        App_WorldSystem().advanceTime(delta);
     }
+
+    // World time always advances unless a local game is paused on client-side.
+    App_WorldSystem().advanceTime(delta);
 }
 
 void DD_ResetTimer(void)
