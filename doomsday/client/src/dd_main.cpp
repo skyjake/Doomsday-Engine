@@ -83,6 +83,7 @@
 
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
+#include <de/game/Session>
 #include <de/NativePath>
 #include <de/Log>
 #include <de/memory.h>
@@ -175,10 +176,6 @@ static NullFileType nullFileType;
 
 /// A symbolic name => file type map.
 static FileTypes fileTypeMap;
-
-// List of session data files (specified via the command line or in a cfg, or
-// found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
-static QStringList sessionResourceFiles;
 
 static void registerResourceFileTypes()
 {
@@ -972,6 +969,8 @@ static int DD_LoadAddonResourcesWorker(void *context)
         /**
          * Phase 3: Add real files from the Auto directory.
          */
+        game::Session::Profile &prof = game::Session::profile();
+
         FS1::PathList found;
         findAllGameDataPaths(found);
         DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
@@ -980,14 +979,14 @@ static int DD_LoadAddonResourcesWorker(void *context)
             if(i->attrib & A_SUBDIR) continue;
 
             /// @todo Is expansion of symbolics still necessary here?
-            sessionResourceFiles << NativePath(i->path).expand().withSeparators('/');
+            prof.resourceFiles << NativePath(i->path).expand().withSeparators('/');
         }
 
-        if(!sessionResourceFiles.isEmpty())
+        if(!prof.resourceFiles.isEmpty())
         {
             // First ZIPs then WADs (they may contain WAD files).
-            addListFiles(sessionResourceFiles, DD_FileTypeByName("FT_ZIP"));
-            addListFiles(sessionResourceFiles, DD_FileTypeByName("FT_WAD"));
+            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_ZIP"));
+            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.
@@ -1152,7 +1151,6 @@ dd_bool App_GameLoaded()
 
 void DD_DestroyGames()
 {
-    sessionResourceFiles.clear();
     App_Games().clear();
     App::app().setGame(App_Games().nullGame());
 }
@@ -1380,6 +1378,9 @@ bool App_ChangeGame(Game &game, bool allowReload)
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
         }
+
+        // We do not want to load session resources specified on the command line again.
+        game::Session::profile().resourceFiles.clear();
 
         // The current game is now the special "null-game".
         App::app().setGame(App_Games().nullGame());
@@ -1776,9 +1777,11 @@ dd_bool DD_Init(void)
     {
         if(de::Game *game = DD_AutoselectGame())
         {
-            // An implicit game session has been defined.
+            // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line
-            // to the list for this session.
+            // to the list for the session.
+            game::Session::Profile &prof = game::Session::profile();
+
             for(int p = 0; p < CommandLine_Count(); ++p)
             {
                 if(!CommandLine_IsMatchingAlias("-file", CommandLine_At(p)))
@@ -1788,7 +1791,7 @@ dd_bool DD_Init(void)
 
                 while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    sessionResourceFiles << NativePath(CommandLine_PathAt(p)).expand().withSeparators('/');
+                    prof.resourceFiles << NativePath(CommandLine_PathAt(p)).expand().withSeparators('/');
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -1796,9 +1799,6 @@ dd_bool DD_Init(void)
 
             // Begin the game session.
             App_ChangeGame(*game);
-
-            // We do not want to load these resources again on next game change.
-            sessionResourceFiles.clear();
         }
 #ifdef __SERVER__
         else
