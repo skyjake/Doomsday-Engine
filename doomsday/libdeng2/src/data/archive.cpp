@@ -114,14 +114,14 @@ dint Archive::listFiles(Archive::Names &names, Path const &folder) const
     names.clear();
 
     // Find the folder in the index.
-    PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
-
-    // Traverse the parent's nodes.
-    for(PathTreeIterator<PathTree> iter(parent.children().leaves); iter.hasNext(); )
+    if(PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
     {
-        names.insert(iter.next().name());
+        // Traverse the parent's nodes.
+        for(PathTreeIterator<PathTree> iter(parent->children().leaves); iter.hasNext(); )
+        {
+            names.insert(iter.next().name());
+        }
     }
-
     return dint(names.size());
 }
 
@@ -132,14 +132,14 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
     names.clear();
 
     // Find the folder in the index.
-    PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
-
-    // Traverse the parent's nodes.
-    for(PathTreeIterator<PathTree> iter(parent.children().branches); iter.hasNext(); )
+    if(PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
     {
-        names.insert(iter.next().name());
+        // Traverse the parent's nodes.
+        for(PathTreeIterator<PathTree> iter(parent->children().branches); iter.hasNext(); )
+        {
+            names.insert(iter.next().name());
+        }
     }
-
     return dint(names.size());
 }
 

@@ -326,10 +326,14 @@ public:
      */
     Node const &find(Path const &path, ComparisonFlags flags) const;
 
+    Node const *tryFind(Path const &path, ComparisonFlags flags) const;
+
     /**
      * @copydoc find()
      */
     Node &find(Path const &path, ComparisonFlags flags);
+
+    Node *tryFind(Path const &path, ComparisonFlags flags);
 
     /**
      * Collate all referenced paths in the hierarchy into a list.

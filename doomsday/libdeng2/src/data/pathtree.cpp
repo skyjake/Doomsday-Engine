@@ -323,10 +323,22 @@ PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags fla
     return *found;
 }
 
+PathTree::Node const *PathTree::tryFind(Path const &path, ComparisonFlags flags) const
+{
+    DENG2_GUARD(this);
+    return d->find(path, flags);
+}
+
 PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
 {
     Node const &node = const_cast<PathTree const *>(this)->find(path, flags);
     return const_cast<Node &>(node);
+}
+
+PathTree::Node *PathTree::tryFind(Path const &path, ComparisonFlags flags)
+{
+    DENG2_GUARD(this);
+    return d->find(path, flags);
 }
 
 String const &PathTree::segmentName(SegmentId segmentId) const

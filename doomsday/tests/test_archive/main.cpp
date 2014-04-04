@@ -76,7 +76,7 @@ int main(int argc, char **argv)
         File &zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::Write | File::Truncate);
         ZipArchive arch;
-        arch.add(Path("world.txt"), content.toUtf8());
+        arch.add(Path("world.txt"), content.toUtf8());        
         Writer(zip2) << arch;
         LOG_MSG("Wrote ") << zip2.path();
         LOG_MSG("") << zip2.info();
@@ -87,14 +87,23 @@ int main(int argc, char **argv)
 
         // Manual reinterpretation can be requested.
         DENG2_ASSERT(zip2.parent() != 0);
-        File *updated = zip2.reinterpret();
+        Folder &updated = zip2.reinterpret()->as<Folder>();
         DENG2_ASSERT(!zip2.parent()); // became a source
 
         // This should now be a package folder so let's fill it with the archive
         // contents.
-        updated->as<Folder>().populate();
+        updated.populate();
 
-        LOG_MSG("After reinterpretation: %s") << updated->description();
+        LOG_MSG("After reinterpretation: %s with path %s") << updated.description() << updated.path();
+
+        LOG_MSG("Trying to get folder ") << updated.path() / "subtest";
+        Folder &subFolder = App::fileSystem().makeFolder(updated.path() / "subtest");
+
+        Writer(subFolder.replaceFile("world2.txt")) << content.toUtf8();
+
+        Writer(subFolder.replaceFile("world3.txt")) << content.toUtf8();
+
+        Writer(subFolder.replaceFile("world2.txt")) << content.toUtf8();
     }
     catch(Error const &err)
     {
