@@ -30,7 +30,7 @@
 #include "g_controls.h"
 #include "g_eventsequence.h"
 #include "g_update.h"
-#include "gamesessionwriter.h"
+#include "gamesession.h"
 #include "hu_lib.h"
 #include "hu_chat.h"
 #include "hu_inventory.h"
@@ -66,11 +66,12 @@
 #include <cstdlib>
 #include <de/App>
 #include <de/ArrayValue>
-#include <de/FixedByteArray>
-#include <de/game/SavedSession>
-#include <de/game/SavedSessionRepository>
 #include <de/NativePath>
 #include <de/NumberValue>
+
+using namespace common;
+
+static GameSession session;
 
 #define BODYQUEUESIZE       (32)
 
@@ -129,15 +130,11 @@ D_CMD(OpenLoadMenu);
 D_CMD(OpenSaveMenu);
 
 void G_PlayerReborn(int player);
-void G_DoReborn(int playernum);
 
-void G_DoLoadSession(de::String slotId);
-void G_DoSaveSession(de::String slotId, de::String userDescription);
 void G_DoPlayDemo();
 void G_DoMapCompleted();
 void G_DoEndDebriefing();
 void G_DoVictory();
-void G_DoLeaveMap();
 void G_DoScreenShot();
 void G_DoQuitGame();
 
@@ -159,7 +156,6 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
-dd_bool gameInProgress;
 GameRuleset gameRules;
 uint gameEpisode;
 
@@ -168,9 +164,7 @@ uint gameMapEntrance; ///< Entry point, for reborn.
 uint gameMap;
 
 uint nextMap;
-#if __JHEXEN__
 uint nextMapEntrance;
-#endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 dd_bool secretExit;
@@ -420,9 +414,6 @@ void G_Register()
         Con_AddVariable(gamestatusCVars + i);
     }
 
-#if !__JHEXEN__
-    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
-#endif
     C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
     C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
     C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
@@ -463,6 +454,114 @@ void G_SetGameAction(gameaction_t newAction)
     }
 }
 
+void G_SetGameActionNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules)
+{
+    if(!dMapUri)
+    {
+        dMapUri = Uri_New();
+    }
+    Uri_Copy(dMapUri, &mapUri);
+    dMapEntrance = mapEntrance;
+    dRules       = rules; // make a copy.
+
+    G_SetGameAction(GA_NEWSESSION);
+}
+
+bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription)
+{
+    if(!COMMON_GAMESESSION->savingPossible()) return false;
+    if(!G_SaveSlots().has(slotId)) return false;
+
+    gaSaveSessionSlot = slotId;
+
+    if(userDescription && !userDescription->isEmpty())
+    {
+        // A new description.
+        gaSaveSessionGenerateDescription = false;
+        gaSaveSessionUserDescription = *userDescription;
+    }
+    else
+    {
+        // Reusing the current name or generating a new one.
+        gaSaveSessionGenerateDescription = (userDescription && userDescription->isEmpty());
+        gaSaveSessionUserDescription.clear();
+    }
+
+    G_SetGameAction(GA_SAVESESSION);
+    return true;
+}
+
+bool G_SetGameActionLoadSession(de::String slotId)
+{
+    if(!COMMON_GAMESESSION->loadingPossible()) return false;
+
+    // Check whether this slot is in use. We do this here also because we need to provide our
+    // caller with instant feedback. Naturally this is no guarantee that the game-save will
+    // be accessible come load time.
+
+    try
+    {
+        if(G_SaveSlots()[slotId].isLoadable())
+        {
+            // Everything appears to be in order - schedule the game-save load!
+            gaLoadSessionSlot = slotId;
+            G_SetGameAction(GA_LOADSESSION);
+            return true;
+        }
+
+        App_Log(DE2_RES_ERROR, "Cannot load from save slot '%s': not in use",
+                slotId.toLatin1().constData());
+    }
+    catch(SaveSlots::MissingSlotError const &)
+    {}
+
+    return false;
+}
+
+void G_SetGameActionMapCompleted(uint newMap, uint _entryPoint, dd_bool _secretExit)
+{
+#if __JHEXEN__
+    DENG2_UNUSED(_secretExit);
+#else
+    DENG2_UNUSED2(newMap, _entryPoint);
+#endif
+
+    if(IS_CLIENT) return;
+    if(cyclingMaps && mapCycleNoExit) return;
+
+#if __JHEXEN__
+    if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
+    {
+        // Not possible in the 4-map demo.
+        P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
+        return;
+    }
+#endif
+
+#if __JHEXEN__
+    nextMap         = newMap;
+    nextMapEntrance = _entryPoint;
+#else
+    secretExit      = _secretExit;
+
+# if __JDOOM__
+    // If no Wolf3D maps, no secret exit!
+    if(secretExit && (gameModeBits & GM_ANY_DOOM2))
+    {
+        Uri *mapUri      = G_ComposeMapUri(0, 30);
+        AutoStr *mapPath = Uri_Compose(mapUri);
+        if(!P_MapExists(Str_Text(mapPath)))
+        {
+            secretExit = false;
+        }
+        Uri_Delete(mapUri);
+    }
+# endif
+#endif
+
+    G_SetGameAction(GA_MAPCOMPLETED);
+}
+
 gameaction_t G_GameAction()
 {
     return gameAction;
@@ -492,18 +591,6 @@ static void initSaveSlots()
                     gameMenuSaveSlotWidgetIds[i]);
     }
     sslots->add("auto", false, composeSavedSessionPathForSlot(AUTO_SLOT));
-
-#if __JHEXEN__
-    // Create the internal savegame folder if it doesn't yet exist.
-    de::App::fileSystem().makeFolder("/home/cache");
-    // Ensure that any previous internal save is destroyed before going further.
-    try
-    {
-        de::App::rootFolder().removeFile("/home/cache/internal.save");
-    }
-    catch(de::Folder::NotFoundError &)
-    {} // Ignore
-#endif
 }
 
 /**
@@ -975,16 +1062,11 @@ SaveSlots &G_SaveSlots()
     return *sslots;
 }
 
-de::game::SavedSessionRepository &G_SavedSessionRepository()
-{
-    return *static_cast<de::game::SavedSessionRepository *>(DD_SavedSessionRepository());
-}
-
 static de::game::SavedSession *savedSessionByUserDescription(de::String description)
 {
     if(!description.isEmpty())
     {
-        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(de::String("home/savegames") / G_IdentityKey());
+        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(de::String("/home/savegames") / G_IdentityKey());
         DENG2_FOR_EACH_CONST(de::Folder::Contents, i, saveFolder.contents())
         {
             if(de::game::SavedSession *session = i->second->maybeAs<de::game::SavedSession>())
@@ -999,6 +1081,7 @@ static de::game::SavedSession *savedSessionByUserDescription(de::String descript
     return 0; // Not found.
 }
 
+/// @todo Encapsulate in SaveSlots?
 de::String G_SaveSlotIdFromUserInput(de::String str)
 {
     // Perhaps a user description of a saved session?
@@ -1008,7 +1091,7 @@ de::String G_SaveSlotIdFromUserInput(de::String str)
     }
 
     // Perhaps a saved session file name?
-    de::String savePath = de::String("home/savegames") / G_IdentityKey() / str + ".save";
+    de::String savePath = de::String("/home/savegames") / G_IdentityKey() / str + ".save";
     if(SaveSlot *sslot = G_SaveSlots().slot(DENG2_APP->rootFolder().tryLocate<de::game::SavedSession const>(savePath)))
     {
         return sslot->id();
@@ -1074,6 +1157,8 @@ void G_CommonPostInit()
  */
 void G_CommonShutdown()
 {
+    COMMON_GAMESESSION->end();
+
     Plug_RemoveHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
     Hu_MsgShutdown();
@@ -1194,7 +1279,7 @@ void G_ChangeGameState(gamestate_t state)
     }
 }
 
-bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId)
+dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId)
 {
     if(!script || !script[0])
         return false;
@@ -1216,20 +1301,6 @@ bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const
     FI_StackExecuteWithId(script, flags, mode, defId);
 
     return true;
-}
-
-void G_StartTitle()
-{
-    ddfinale_t fin;
-
-    G_StopDemo();
-    gameInProgress = false;
-
-    // The title script must always be defined.
-    if(!Def_Get(DD_DEF_FINALE, "title", &fin))
-        Con_Error("G_StartTitle: A title script must be defined.");
-
-    G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "title");
 }
 
 void G_StartHelp()
@@ -1279,6 +1350,7 @@ static void printMapBanner()
 
     App_Log(DE2_LOG_NOTE, "Author: %s", author);
 #endif
+    App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 }
 
 void G_BeginMap()
@@ -1301,157 +1373,6 @@ void G_BeginMap()
 
     // The music may have been paused for the briefing; unpause.
     S_PauseMusic(false);
-}
-
-/// @param mapInfo  Can be @c NULL.
-static void initFogForMap(ddmapinfo_t *ddMapInfo)
-{
-    if(IS_DEDICATED) return;
-
-    if(!ddMapInfo || !(ddMapInfo->flags & MIF_FOG))
-    {
-        R_SetupFogDefaults();
-    }
-    else
-    {
-        R_SetupFog(ddMapInfo->fogStart, ddMapInfo->fogEnd, ddMapInfo->fogDensity, ddMapInfo->fogColor);
-    }
-
-#if __JHEXEN__
-    if(mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/))
-    {
-        int fadeTable = mapInfo->fadeTable;
-        if(fadeTable == W_GetLumpNumForName("COLORMAP"))
-        {
-            // We don't want fog in this case.
-            GL_UseFog(false);
-        }
-        else
-        {
-            // Probably fog ... don't use fullbright sprites
-            if(fadeTable == W_GetLumpNumForName("FOGMAP"))
-            {
-                // Tell the renderer to turn on the fog.
-                GL_UseFog(true);
-            }
-        }
-    }
-#endif
-}
-
-void G_SetCurrentMap(Uri const &mapUri)
-{
-    Uri_Copy(gameMapUri, &mapUri);
-    gameEpisode     = G_EpisodeNumberFor(gameMapUri);
-    gameMap         = G_MapNumberFor(gameMapUri);
-
-    // Make sure that the episode and map numbers are good.
-    if(!G_ValidateMap(&gameEpisode, &gameMap))
-    {
-        Uri *validMapUri = G_ComposeMapUri(gameEpisode, gameMap);
-        Uri_Copy(gameMapUri, validMapUri);
-        gameEpisode = G_EpisodeNumberFor(gameMapUri);
-        gameMap     = G_MapNumberFor(gameMapUri);
-        Uri_Delete(validMapUri);
-    }
-
-    // Update game status cvars:
-    gsvMap     = (unsigned)gameMap;
-    gsvEpisode = (unsigned)gameEpisode;
-}
-
-void G_LoadCurrentMap(bool revisit)
-{
-    // Unpause the current game.
-    Pause_End();
-
-    // Close open HUDs.
-    for(uint i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t *plr = players + i;
-        if(plr->plr->inGame)
-        {
-            ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-            Hu_InventoryOpen(i, false);
-#endif
-        }
-    }
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
-    // Are we playing a briefing?
-    char const *briefing = G_InFineBriefing(gameMapUri);
-    if(!briefing)
-    {
-        // Restart the map music.
-#if __JHEXEN__
-        /**
-         * @note Kludge: Due to the way music is managed with Hexen, unless
-         * we explicitly stop the current playing track the engine will not
-         * change tracks. This is due to the use of the runtime-updated
-         * "currentmap" definition (the engine thinks music has not changed
-         * because the current Music definition is the same).
-         *
-         * It only worked previously was because the waiting-for-map-load
-         * song was started prior to map loading.
-         *
-         * @todo Rethink the Music definition stuff with regard to Hexen.
-         * Why not create definitions during startup by parsing MAPINFO?
-         */
-        S_StopMusic();
-        //S_StartMusic("chess", true); // Waiting-for-map-load song
-#endif
-
-        S_MapMusic(gameMapUri);
-        S_PauseMusic(true);
-    }
-
-    // If we're the server, let clients know the map will change.
-    NetSv_UpdateGameConfigDescription();
-    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-    // Is MapInfo data available for this map?
-    ddmapinfo_t mapInfo;
-    de::String mapUriStr = Str_Text(Uri_Compose(gameMapUri));
-    bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, mapUriStr.toUtf8().constData(), &mapInfo);
-
-    P_SetupMap(gameMapUri);
-    initFogForMap(haveMapInfo? &mapInfo : 0);
-
-#if __JHEXEN__
-    if(revisit)
-    {
-        // We've been here before; deserialize this map's save state.
-
-        // Only readMap() uses targetPlayerAddrs, so it's NULLed here for the
-        // following check (player mobj redirection).
-        targetPlayerAddrs = 0;
-
-        try
-        {
-            de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>("/home/cache/internal.save");
-            SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
-        }
-        catch(de::Error const &er)
-        {
-            App_Log(DE2_RES_WARNING, "Error loading map state from internal.save:\n%s",
-                    er.asText().toLatin1().constData());
-        }
-    }
-#else
-    DENG2_UNUSED(revisit);
-#endif
-
-    if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
-    {
-        // No briefing; begin the map.
-        HU_WakeWidgets(-1/* all players */);
-        G_BeginMap();
-    }
-
-    Z_CheckHeap();
 }
 
 int G_Responder(event_t *ev)
@@ -1665,19 +1586,51 @@ static void runGameAction()
         switch(currentAction)
         {
         case GA_NEWSESSION:
-            G_EndSession();
-            G_NewSession(*dMapUri, dMapEntrance, dRules);
             G_SetGameAction(GA_NONE);
+            COMMON_GAMESESSION->end();
+            COMMON_GAMESESSION->begin(*dMapUri, dMapEntrance, dRules);
             break;
 
         case GA_LOADSESSION:
-            G_DoLoadSession(gaLoadSessionSlot);
             G_SetGameAction(GA_NONE);
+            COMMON_GAMESESSION->end();
+
+            // Attempt to load the saved game session.
+            try
+            {
+                COMMON_GAMESESSION->load(G_SaveSlots()[gaLoadSessionSlot].saveName());
+
+                // Make note of the last used save slot.
+                Con_SetInteger2("game-save-last-slot", gaLoadSessionSlot.toInt(), SVF_WRITE_OVERRIDE);
+            }
+            catch(de::Error const &er)
+            {
+                LOG_RES_WARNING("Error loading from save slot #%s:\n")
+                        << gaLoadSessionSlot << er.asText();
+            }
+
+            // Return to the title loop if loading did not succeed.
+            if(!COMMON_GAMESESSION->hasBegun())
+            {
+                COMMON_GAMESESSION->endAndBeginTitle();
+            }
             break;
 
         case GA_SAVESESSION:
-            G_DoSaveSession(gaSaveSessionSlot, gaSaveSessionUserDescription);
             G_SetGameAction(GA_NONE);
+            try
+            {
+                COMMON_GAMESESSION->save(G_SaveSlots()[gaSaveSessionSlot].saveName(),
+                                         gaSaveSessionUserDescription);
+
+                // Make note of the last used save slot.
+                Con_SetInteger2("game-save-last-slot", gaSaveSessionSlot.toInt(), SVF_WRITE_OVERRIDE);
+            }
+            catch(de::Error const &er)
+            {
+                LOG_RES_WARNING("Error saving to save slot #%s:\n")
+                        << gaSaveSessionSlot << er.asText();
+            }
             break;
 
         case GA_QUIT:
@@ -1686,27 +1639,18 @@ static void runGameAction()
             return;
 
         case GA_SCREENSHOT:
-            G_DoScreenShot();
             G_SetGameAction(GA_NONE);
+            G_DoScreenShot();
             break;
 
         case GA_LEAVEMAP:
-            G_DoLeaveMap();
             G_SetGameAction(GA_NONE);
+            COMMON_GAMESESSION->leaveMap();
             break;
 
         case GA_RESTARTMAP:
-            // This is a restart, so we won't brief again.
-            briefDisabled = true;
-#if !__JHEXEN__
-            G_StopDemo();
-            G_LoadCurrentMap();
-#else
-            // Restart the game session entirely.
-            G_EndSession();
-            G_NewSession(*dMapUri, dMapEntrance, dRules);
-#endif
             G_SetGameAction(GA_NONE);
+            COMMON_GAMESESSION->reloadMap();
             break;
 
         case GA_MAPCOMPLETED:
@@ -1726,37 +1670,74 @@ static void runGameAction()
     }
 }
 
+static int rebornLoadConfirmed(msgresponse_t response, int, void *)
+{
+    if(response == MSG_YES)
+    {
+        G_SetGameAction(GA_RESTARTMAP);
+    }
+    else
+    {
+        // Player seemingly wishes to extend their stay in limbo?
+        player_t *plr    = players;
+        plr->rebornWait  = PLAYER_REBORN_TICS;
+        plr->playerState = PST_DEAD;
+    }
+    return true;
+}
+
 /**
  * Do needed reborns for any fallen players.
  */
 static void rebornPlayers()
 {
+    if(!IS_NETGAME && P_CountPlayersInGame(LocalOnly) == 1)
+    {
+        if(Player_WaitingForReborn(&players[0]))
+        {
+            // Are we still awaiting a response to a previous confirmation?
+            if(Hu_IsMessageActiveWithCallback(rebornLoadConfirmed))
+                return;
+
+            // Do we need user confirmation?
+            if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.confirmRebornLoad)
+            {
+                S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
+                Str msg; Str_Appendf(Str_Init(&msg), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
+                Hu_MsgStart(MSG_YESNO, Str_Text(&msg), rebornLoadConfirmed, 0, 0);
+                return;
+            }
+
+            rebornLoadConfirmed(MSG_YES, 0, 0);
+        }
+        return;
+    }
+
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr     = &players[i];
-        ddplayer_t *ddplr = plr->plr;
-        mobj_t *mo        = ddplr->mo;
+        player_t *plr = &players[i];
 
-        if(ddplr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(mo))
+        if(Player_WaitingForReborn(plr))
         {
-            G_DoReborn(i);
+            P_RebornPlayerInMultiplayer(i);
         }
 
         // Player has left?
         if((int)plr->playerState == PST_GONE)
         {
-            plr->playerState = PST_REBORN;
-            if(mo)
+            plr->playerState  = PST_REBORN;
+            ddplayer_t *ddplr = plr->plr;
+            if(mobj_t *plmo = ddplr->mo)
             {
                 if(!IS_CLIENT)
                 {
-                    P_SpawnTeleFog(mo->origin[VX], mo->origin[VY], mo->angle + ANG180);
+                    P_SpawnTeleFog(plmo->origin[VX], plmo->origin[VY], plmo->angle + ANG180);
                 }
 
                 // Let's get rid of the mobj.
                 App_Log(DE2_DEV_MAP_MSG, "rebornPlayers: Removing player %i's mobj", i);
 
-                P_MobjRemove(mo, true);
+                P_MobjRemove(plmo, true);
                 ddplr->mo = 0;
             }
         }
@@ -1766,7 +1747,7 @@ static void rebornPlayers()
 /**
  * The core of the timing loop. Game state, game actions etc occur here.
  *
- * @param ticLength     How long this tick is, in seconds.
+ * @param ticLength  How long this tick is, in seconds.
  */
 void G_Ticker(timespan_t ticLength)
 {
@@ -2160,119 +2141,6 @@ void G_QueueBody(mobj_t *mo)
 }
 #endif
 
-static int rebornLoadConfirmResponse(msgresponse_t response, int /*userValue*/, void *context)
-{
-    de::String *slotId = static_cast<de::String *>(context);
-    DENG2_ASSERT(slotId != 0);
-    if(response == MSG_YES)
-    {
-        gaLoadSessionSlot = *slotId;
-        G_SetGameAction(GA_LOADSESSION);
-    }
-    else
-    {
-#if __JHEXEN__
-        // Load the last autosave? (Not optional in Hexen).
-        if(G_SaveSlots()["auto"].isLoadable())
-        {
-            gaLoadSessionSlot = "auto";
-            G_SetGameAction(GA_LOADSESSION);
-        }
-        else
-#endif
-        {
-            // Restart the current map, discarding all items obtained by players.
-            G_SetGameAction(GA_RESTARTMAP);
-        }
-    }
-    delete slotId;
-    return true;
-}
-
-void G_DoReborn(int plrNum)
-{
-    // Are we still awaiting a response to a previous reborn confirmation?
-    if(Hu_IsMessageActiveWithCallback(rebornLoadConfirmResponse)) return;
-
-    if(plrNum < 0 || plrNum >= MAXPLAYERS)
-        return; // Wha?
-
-    if(IS_NETGAME)
-    {
-        P_RebornPlayerInMultiplayer(plrNum);
-        return;
-    }
-
-    if(G_SessionLoadingPossible())
-    {
-        // Use the latest save?
-        de::String lastSlotId;
-        if(cfg.loadLastSaveOnReborn)
-        {
-            SaveSlot const &sslot = G_SaveSlots()[de::String::number(Con_GetInteger("game-save-last-slot"))];
-            if(sslot.isLoadable())
-            {
-                lastSlotId = sslot.id();
-            }
-        }
-
-        // Use the latest autosave? (Not optional in Hexen).
-#if !__JHEXEN__
-        de::String autoSlotId;
-        if(cfg.loadAutoSaveOnReborn)
-        {
-            SaveSlot const &sslot = G_SaveSlots()["auto"];
-            if(sslot.isLoadable())
-            {
-                autoSlotId = sslot.id();
-            }
-        }
-#endif
-
-        // Have we chosen a save state to load?
-        if(!lastSlotId.isEmpty()
-#if !__JHEXEN__
-           || !autoSlotId.isEmpty()
-#endif
-           )
-        {
-            // Everything appears to be in order - schedule the game-save load!
-#if !__JHEXEN__
-            de::String chosenSlot = (!lastSlotId.isEmpty()? lastSlotId : autoSlotId);
-#else
-            de::String chosenSlot = lastSlotId;
-#endif
-            if(!cfg.confirmRebornLoad)
-            {
-                gaLoadSessionSlot = chosenSlot;
-                G_SetGameAction(GA_LOADSESSION);
-            }
-            else
-            {
-                // Compose the confirmation message.
-                de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(G_SaveSlots()[chosenSlot].savePath());
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, session.metadata().gets("userDescription").toUtf8().constData());
-                S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, 0, new de::String(chosenSlot));
-            }
-            return;
-        }
-
-        // Autosave loading cannot be disabled in Hexen.
-#if __JHEXEN__
-        if(G_SaveSlots()["auto"].isLoadable())
-        {
-            gaLoadSessionSlot = "auto";
-            G_SetGameAction(GA_LOADSESSION);
-            return;
-        }
-#endif
-    }
-
-    // Restart the current map, discarding all items obtained by players.
-    G_SetGameAction(GA_RESTARTMAP);
-}
-
 #if __JDOOM__ || __JDOOM64__
 static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 {
@@ -2324,6 +2192,13 @@ static void G_ApplyGameRuleFastMissiles(dd_bool fast)
  */
 void G_ApplyNewGameRules(GameRuleset const &rules)
 {
+#ifdef DENG2_DEBUG
+    if(COMMON_GAMESESSION->hasBegun())
+    {
+        LOG_WARNING("Applied new rules to a game session in progress!");
+    }
+#endif
+
     gameRules = rules;
 
     if(gameRules.skill < SM_NOTHINGS)
@@ -2423,50 +2298,6 @@ byte G_Ruleset_RespawnMonsters()
     return gameRules.respawnMonsters;
 }
 #endif
-
-void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
-{
-#if __JHEXEN__
-    DENG2_UNUSED(_secretExit);
-#else
-    DENG2_UNUSED2(newMap, _entryPoint);
-#endif
-
-    if(IS_CLIENT) return;
-    if(cyclingMaps && mapCycleNoExit) return;
-
-#if __JHEXEN__
-    if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
-    {
-        // Not possible in the 4-map demo.
-        P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
-        return;
-    }
-#endif
-
-#if __JHEXEN__
-    nextMap         = newMap;
-    nextMapEntrance = _entryPoint;
-#else
-    secretExit      = _secretExit;
-
-# if __JDOOM__
-    // If no Wolf3D maps, no secret exit!
-    if(secretExit && (gameModeBits & GM_ANY_DOOM2))
-    {
-        Uri *mapUri      = G_ComposeMapUri(0, 30);
-        AutoStr *mapPath = Uri_Compose(mapUri);
-        if(!P_MapExists(Str_Text(mapPath)))
-        {
-            secretExit = false;
-        }
-        Uri_Delete(mapUri);
-    }
-# endif
-#endif
-
-    G_SetGameAction(GA_MAPCOMPLETED);
-}
 
 /**
  * @return  @c true iff the game has been completed.
@@ -2698,194 +2529,13 @@ void G_DoEndDebriefing()
     G_IntermissionDone();
 }
 
-#if __JHEXEN__
-
-struct playerbackup_t
-{
-    player_t player;
-    uint numInventoryItems[NUM_INVENTORYITEM_TYPES];
-    inventoryitemtype_t readyItem;
-};
-
-static void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
-{
-    DENG_ASSERT(playerBackup != 0);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        playerbackup_t *pb = playerBackup + i;
-        player_t *plr      = players + i;
-
-        memcpy(&pb->player, plr, sizeof(player_t));
-
-        // Make a copy of the inventory states also.
-        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
-        {
-            pb->numInventoryItems[k] = P_InventoryCount(i, inventoryitemtype_t(k));
-        }
-        pb->readyItem = P_InventoryReadyItem(i);
-    }
-}
-
-/**
- * @param playerBackup  Player state backup.
- * @param mapEntrance   Logical entry point number used to enter the map.
- */
-static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
-{
-    DENG_ASSERT(playerBackup != 0);
-
-    mobj_t *targetPlayerMobj = 0;
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        playerbackup_t *pb = playerBackup + i;
-        player_t *plr      = players + i;
-        ddplayer_t *ddplr  = plr->plr;
-        int oldKeys = 0, oldPieces = 0;
-        dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
-
-        if(!ddplr->inGame) continue;
-
-        memcpy(plr, &pb->player, sizeof(player_t));
-
-        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
-        {
-            // Don't give back the wings of wrath if reborn.
-            if(k == IIT_FLY && plr->playerState == PST_REBORN)
-                continue;
-
-            for(uint m = 0; m < pb->numInventoryItems[k]; ++m)
-            {
-                P_InventoryGive(i, inventoryitemtype_t(k), true);
-            }
-        }
-        P_InventorySetReadyItem(i, pb->readyItem);
-
-        ST_LogEmpty(i);
-        plr->attacker = 0;
-        plr->poisoner = 0;
-
-        if(IS_NETGAME || gameRules.deathmatch)
-        {
-            // In a network game, force all players to be alive
-            if(plr->playerState == PST_DEAD)
-            {
-                plr->playerState = PST_REBORN;
-            }
-
-            if(!gameRules.deathmatch)
-            {
-                // Cooperative net-play; retain keys and weapons.
-                oldKeys   = plr->keys;
-                oldPieces = plr->pieces;
-
-                for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
-                {
-                    oldWeaponOwned[k] = plr->weapons[k].owned;
-                }
-            }
-        }
-
-        bool wasReborn = (plr->playerState == PST_REBORN);
-
-        if(gameRules.deathmatch)
-        {
-            de::zap(plr->frags);
-            ddplr->mo = 0;
-            G_DeathMatchSpawnPlayer(i);
-        }
-        else
-        {
-            if(playerstart_t const *start = P_GetPlayerStart(mapEntrance, i, false))
-            {
-                mapspot_t const *spot = &mapSpots[start->spot];
-                P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
-                              spot->origin[VY], spot->origin[VZ], spot->angle,
-                              spot->flags, false, true);
-            }
-            else
-            {
-                P_SpawnPlayer(i, cfg.playerClass[i], 0, 0, 0, 0,
-                              MSF_Z_FLOOR, true, true);
-            }
-        }
-
-        if(wasReborn && IS_NETGAME && !gameRules.deathmatch)
-        {
-            int bestWeapon = 0;
-
-            // Restore keys and weapons when reborn in co-op.
-            plr->keys   = oldKeys;
-            plr->pieces = oldPieces;
-
-            for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
-            {
-                if(oldWeaponOwned[k])
-                {
-                    bestWeapon = k;
-                    plr->weapons[k].owned = true;
-                }
-            }
-
-            plr->ammo[AT_BLUEMANA].owned = 25; /// @todo values.ded
-            plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
-
-            // Bring up the best weapon.
-            if(bestWeapon)
-            {
-                plr->pendingWeapon = weapontype_t(bestWeapon);
-            }
-        }
-    }
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t *plr     = players + i;
-        ddplayer_t *ddplr = plr->plr;
-
-        if(!ddplr->inGame) continue;
-
-        if(!targetPlayerMobj)
-        {
-            targetPlayerMobj = ddplr->mo;
-        }
-    }
-
-    /// @todo Redirect anything targeting a player mobj
-    /// FIXME! This only supports single player games!!
-    if(targetPlayerAddrs)
-    {
-        for(targetplraddress_t *p = targetPlayerAddrs; p; p = p->next)
-        {
-            *(p->address) = targetPlayerMobj;
-        }
-
-        SV_ClearTargetPlayers();
-
-        /*
-         * When XG is available in Hexen, call this after updating target player
-         * references (after a load) - ds
-        // The activator mobjs must be set.
-        XL_UpdateActivators();
-        */
-    }
-
-    // Destroy all things touching players.
-    P_TelefragMobjsTouchingPlayers();
-}
-#endif // __JHEXEN__
-
-de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool autogenerate)
+de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate)
 {
     // If the slot is already in use then choose existing description.
-    if(G_SaveSlots().has(slotId))
+    if(!saveName.isEmpty())
     {
-        SaveSlot const &sslot = G_SaveSlots()[slotId];
-        if(de::game::SavedSession const *existing = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath()))
-        {
-            return existing->metadata().gets("userDescription");
-        }
+        de::String const existing = COMMON_GAMESESSION->savedUserDescription(saveName);
+        if(!existing.isEmpty()) return existing;
     }
 
     if(!autogenerate) return "";
@@ -2924,372 +2574,6 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool a
     return description;
 }
 
-struct savegamesessionworker_params_t
-{
-    de::String userDescription;
-    de::String slotId;
-};
-
-/**
- * Serialize game state to a new .save package in the repository.
- *
- * @return  Non-zero iff the game state was saved successfully.
- */
-static int saveGameSessionWorker(void *context)
-{
-    savegamesessionworker_params_t const &parm = *static_cast<savegamesessionworker_params_t *>(context);
-#if __JHEXEN__
-    de::String const savePath = "/home/cache/internal.save";
-#else
-    de::String const savePath = G_SaveSlots()[parm.slotId].savePath();
-#endif
-
-    if(!G_SaveSlots().has(parm.slotId))
-    {
-        DENG2_ASSERT(!"Invalid slot specified");
-        BusyMode_WorkerEnd();
-        return false;
-    }
-
-    dd_bool didSave = false;
-    try
-    {
-        de::game::SessionMetadata metadata;
-        G_ApplyCurrentSessionMetadata(metadata);
-
-        // Apply the given user description.
-        if(!parm.userDescription.isEmpty())
-        {
-            metadata.set("userDescription", parm.userDescription);
-        }
-        else // We'll generate a suitable description automatically.
-        {
-            metadata.set("userDescription", G_DefaultSavedSessionUserDescription(parm.slotId));
-        }
-
-        // In networked games the server tells the clients to save also.
-        NetSv_SaveGame(metadata.geti("sessionId"));
-
-        // Serialize the game state to a new saved session.
-        common::writeGameSession(DENG2_APP->rootFolder().locate<de::Folder>(savePath.fileNamePath()),
-                                 savePath.fileName(), metadata);
-
-#if __JHEXEN__
-        // Copy the internal saved session to the destination slot.
-        G_CopySavedSession(G_SaveSlots()[parm.slotId].savePath(), savePath);
-#endif
-
-        // Make note of the last used save slot.
-        Con_SetInteger2("game-save-last-slot", parm.slotId.toInt(), SVF_WRITE_OVERRIDE);
-
-        didSave = true;
-    }
-    catch(de::Error const &er)
-    {
-        LOG_RES_WARNING("Error writing to save slot '%s':\n")
-                << parm.slotId << er.asText();
-    }
-
-    BusyMode_WorkerEnd();
-    return didSave;
-}
-
-void G_DoLeaveMap()
-{
-    // If there are any InFine scripts running, they must be stopped.
-    FI_StackClear();
-
-    // Ensure that the episode and map indices are good.
-    G_ValidateMap(&gameEpisode, &nextMap);
-
-    Uri const *nextMapUri   = G_ComposeMapUri(gameEpisode, nextMap);
-    bool revisit            = false;
-    bool const saveProgress = !gameRules.deathmatch; // Never in deathmatch.
-#if __JHEXEN__
-    if(saveProgress)
-    {
-        de::String const savePath = "/home/cache/internal.save";
-
-        // Are we entering a new hub?
-        if(P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub)
-        {
-            // Yes, clear the saved session entirely (if it exists).
-            G_DeleteSavedSession(savePath);
-        }
-        else
-        {
-            DENG2_ASSERT(!Uri_Equality(gameMapUri, nextMapUri)); // sanity check.
-
-            if(de::game::SavedSession *existing = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(savePath))
-            {
-                // Are we revisiting a previous map?
-                revisit = existing->hasState(de::String("maps") / Str_Text(Uri_Compose(nextMapUri)));
-
-                // We don't want to see a briefing if we've already visited this map.
-                if(revisit)
-                {
-                    briefDisabled = true;
-                }
-            }
-            else
-            {
-                // Serialize the game state to a new saved session.
-                de::game::SessionMetadata metadata;
-                G_ApplyCurrentSessionMetadata(metadata);
-
-                common::writeGameSession(DENG2_APP->rootFolder().locate<de::Folder>(savePath.fileNamePath()),
-                                         savePath.fileName(), metadata);
-            }
-
-            // Save the current map state.
-            de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(savePath / "maps");
-            saveFolder.setMode(de::File::Write);
-
-            de::File &outFile = saveFolder.replaceFile(de::String(Str_Text(Uri_Compose(gameMapUri))) + "State");
-            de::Block mapStateData;
-            SV_OpenFileForWrite(mapStateData);
-            writer_s *writer = SV_NewWriter();
-            MapStateWriter().write(writer);
-            outFile << mapStateData;
-            Writer_Delete(writer);
-            SV_CloseFile();
-
-            saveFolder.setMode(de::File::ReadOnly); // flush to disk.
-            saveFolder.populate(); // Populate the new contents of the folder.
-        }
-    }
-
-    // Take a copy of the player objects (they will be cleared in the process
-    // of calling P_SetupMap() and we need to restore them after).
-    playerbackup_t playerBackup[MAXPLAYERS];
-    backupPlayersInHub(playerBackup);
-
-    // Disable class randomization (all players must spawn as their existing class).
-    byte oldRandomClassesRule = gameRules.randomClasses;
-    gameRules.randomClasses = false;
-
-    /// @todo Necessary?
-    if(!IS_CLIENT)
-    {
-        // Force players to be initialized upon first map load.
-        for(uint i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t *plr = players + i;
-            if(plr->plr->inGame)
-            {
-                plr->playerState = PST_REBORN;
-                plr->worldTimer = 0;
-            }
-        }
-    }
-    //<- todo end.
-
-    // In Hexen the RNG is re-seeded each time the map changes.
-    M_ResetRandom();
-#endif
-
-    // Change the current map.
-    G_SetCurrentMap(*nextMapUri);
-#if __JHEXEN__
-    gameMapEntrance = nextMapEntrance;
-#else
-    gameMapEntrance = 0;
-#endif
-
-    G_LoadCurrentMap(revisit);
-
-    // On exit logic:
-#if __JHEXEN__
-    if(!revisit)
-    {
-        // First visit; destroy all freshly spawned players (??).
-        P_RemoveAllPlayerMobjs();
-    }
-
-    restorePlayersInHub(playerBackup, nextMapEntrance);
-
-    // Restore the random class rule.
-    gameRules.randomClasses = oldRandomClassesRule;
-
-    // Launch waiting scripts.
-    Game_ACScriptInterpreter_RunDeferredTasks(gameMapUri);
-#endif
-
-    // In a non-network, save immediately into the autosave slot.
-    if(!IS_NETGAME && saveProgress)
-    {
-        savegamesessionworker_params_t p;
-        p.slotId = "auto";
-
-        /// @todo Use progress bar mode and update progress during the setup.
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    saveGameSessionWorker, &p, "Auto-Saving game...");
-    }
-
-    Uri_Delete(const_cast<Uri *>(nextMapUri));
-}
-
-bool G_SessionLoadingPossible()
-{
-    return !(IS_CLIENT && !Get(DD_PLAYBACK));
-}
-
-bool G_LoadSession(de::String slotId)
-{
-    if(!G_SessionLoadingPossible()) return false;
-
-    // Check whether this slot is in use. We do this here also because we need to provide our
-    // caller with instant feedback. Naturally this is no guarantee that the game-save will
-    // be accessible come load time.
-
-    try
-    {
-        if(G_SaveSlots()[slotId].isLoadable())
-        {
-            // Everything appears to be in order - schedule the game-save load!
-            gaLoadSessionSlot = slotId;
-            G_SetGameAction(GA_LOADSESSION);
-            return true;
-        }
-
-        App_Log(DE2_RES_ERROR, "Cannot load from save slot '%s': not in use",
-                slotId.toLatin1().constData());
-    }
-    catch(SaveSlots::MissingSlotError const &)
-    {}
-
-    return false;
-}
-
-/**
- * Called by G_Ticker based on gameaction.
- */
-void G_DoLoadSession(de::String slotId)
-{
-#if __JHEXEN__
-    bool mustCopyToAutoSlot = (slotId.compareWithoutCase("auto") && !IS_NETGAME);
-#endif
-
-    // Attempt to load the saved game session.
-    try
-    {
-#if __JHEXEN__
-        de::String const savePath = "/home/cache/internal.save";
-#else
-        de::String const savePath = G_SaveSlots()[slotId].savePath();
-#endif
-
-#if __JHEXEN__
-        // Copy the session for the specified slot to the internal savegame.
-        G_CopySavedSession(savePath, G_SaveSlots()[slotId].savePath());
-#endif
-
-        de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(savePath);
-        LOG_VERBOSE("Attempting to load saved game from \"%s\"") << session.path();
-
-#if __JHEXEN__
-        // Deserialize the world ACS state.
-        if(de::File const *file = session.tryLocateStateFile("ACScript"))
-        {
-            Game_ACScriptInterpreter().readWorldState(de::Reader(*file).withHeader());
-        }
-#endif
-
-        /*
-         * Load the map and configure some game settings.
-         */
-        briefDisabled = true;
-
-        de::game::SessionMetadata const &metadata = session.metadata();
-        Uri *mapUri = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
-
-        // Ensure a complete ruleset is available.
-        GameRuleset *rules;
-        try
-        {
-            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
-        }
-        catch(de::Record::NotFoundError const &)
-        {
-            // The game rules are incomplete. Likely because they were missing from a savegame that
-            // was converted from a vanilla format (in which most of these values are omitted).
-            // Therefore we must assume the user has correctly configured the session accordingly.
-            LOG_WARNING("Using current game rules as basis for loading savegame \"%s\"."
-                        " (The original save format omits this information).")
-                    << session.path();
-
-            // Use the current rules as our basis.
-            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &G_Rules());
-        }
-
-        G_NewSession(*mapUri, 0/*not saved??*/, *rules);
-
-        delete rules; rules = 0;
-        Uri_Delete(mapUri); mapUri = 0;
-
-#if !__JHEXEN__
-        mapTime = metadata.geti("mapTime");
-#endif
-
-        de::String mapUriStr = Str_Text(Uri_Resolved(gameMapUri));
-        SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
-
-        // Make note of the last used save slot.
-        Con_SetInteger2("game-save-last-slot", slotId.toInt(), SVF_WRITE_OVERRIDE);
-
-#if __JHEXEN__
-        if(mustCopyToAutoSlot)
-        {
-            G_CopySavedSession(G_SaveSlots()["auto"].savePath(), savePath);
-        }
-#endif
-
-        return;
-    }
-    catch(de::Error const &er)
-    {
-        LOG_RES_WARNING("Error loading save slot #%s:\n") << slotId << er.asText();
-    }
-
-    // Failure... Return to the title loop.
-    G_StartTitle();
-}
-
-bool G_SessionSavingPossible()
-{
-    if(IS_CLIENT || Get(DD_PLAYBACK)) return false;
-    if(GS_MAP != G_GameState()) return false;
-
-    player_t *player = &players[CONSOLEPLAYER];
-    if(PST_DEAD == player->playerState) return false;
-
-    return true;
-}
-
-bool G_SaveSession(de::String slotId, de::String *userDescription)
-{
-    if(!G_SessionSavingPossible()) return false;
-    if(!G_SaveSlots().has(slotId)) return false;
-
-    gaSaveSessionSlot = slotId;
-
-    if(userDescription && !userDescription->isEmpty())
-    {
-        // A new description.
-        gaSaveSessionGenerateDescription = false;
-        gaSaveSessionUserDescription = *userDescription;
-    }
-    else
-    {
-        // Reusing the current name or generating a new one.
-        gaSaveSessionGenerateDescription = (userDescription && userDescription->isEmpty());
-        gaSaveSessionUserDescription.clear();
-    }
-
-    G_SetGameAction(GA_SAVESESSION);
-    return true;
-}
-
 void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
 {
     metadata.clear();
@@ -3314,29 +2598,6 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
 #endif
 
     metadata.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
-}
-
-/**
- * Called by G_Ticker based on gameaction.
- */
-void G_DoSaveSession(de::String slotId, de::String userDescription)
-{
-    savegamesessionworker_params_t p;
-    p.userDescription = userDescription;
-    p.slotId          = slotId;
-
-    /// @todo Use progress bar mode and update progress during the setup.
-    bool didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                                saveGameSessionWorker, &p, "Saving game...") != 0);
-    if(didSave)
-    {
-        P_SetMessage(&players[CONSOLEPLAYER], 0, TXT_GAMESAVED);
-
-        // Notify the engine that the game was saved.
-        /// @todo After the engine has the primary responsibility of
-        /// saving the game, this notification is unnecessary.
-        Plug_Notify(DD_NOTIFY_GAME_SAVED, NULL);
-    }
 }
 
 /// @todo Get this from MAPINFO
@@ -3387,100 +2648,7 @@ uint G_MapNumberFor(Uri const *mapUri)
     return 0;
 }
 
-void G_EndSession()
-{
-#if __JHEXEN__
-    Game_ACScriptInterpreter().reset();
-#endif
-
-    G_DeleteSavedSession(G_SaveSlots()["auto"].savePath());
-#if __JHEXEN__
-    G_DeleteSavedSession("/home/cache/internal.save");
-#endif
-}
-
-void G_DeleteSavedSession(de::String const &savePath)
-{
-    if(DENG2_APP->rootFolder().has(savePath))
-    {
-        G_SavedSessionRepository().remove(savePath);
-        DENG2_APP->rootFolder().removeFile(savePath);
-    }
-}
-
-void G_CopySavedSession(de::String const &destPath, de::String const &sourcePath)
-{
-    G_DeleteSavedSession(destPath);
-
-    de::game::SavedSession const &sourceSession = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sourcePath);
-
-    // Copy the .save package.
-    de::File &save = DENG2_APP->rootFolder().replaceFile(destPath);
-    de::Writer(save) << sourceSession.archive();
-    save.setMode(de::File::ReadOnly);
-    LOG_RES_MSG("Wrote ") << save.description();
-
-    // We can now reinterpret and populate the contents of the archive.
-    de::File *updated = save.reinterpret();
-    updated->as<de::Folder>().populate();
-
-    de::game::SavedSession &session = updated->as<de::game::SavedSession>();
-    session.cacheMetadata(sourceSession.metadata()); // Avoid immediately opening the .save package.
-    G_SavedSessionRepository().add(session);
-}
-
-void G_NewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules)
-{
-    G_StopDemo();
-
-    // Clear the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // If there are any InFine scripts running, they must be stopped.
-    FI_StackClear();
-
-    if(!IS_CLIENT)
-    {
-        for(uint i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t *plr = players + i;
-            if(plr->plr->inGame)
-            {
-                // Force players to be initialized upon first map load.
-                plr->playerState = PST_REBORN;
-#if __JHEXEN__
-                plr->worldTimer = 0;
-#else
-                plr->didSecret = false;
-#endif
-            }
-        }
-    }
-
-    M_ResetRandom();
-
-    gameInProgress = true;
-    G_ApplyNewGameRules(rules);
-    G_SetCurrentMap(mapUri);
-    gameMapEntrance = mapEntrance;
-
-    G_LoadCurrentMap();
-}
-
-void G_DeferredNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules)
-{
-    if(!dMapUri)
-    {
-        dMapUri = Uri_New();
-    }
-    Uri_Copy(dMapUri, &mapUri);
-    dMapEntrance = mapEntrance;
-    dRules       = rules; // make a copy.
-
-    G_SetGameAction(GA_NEWSESSION);
-}
-
-int G_QuitGameResponse(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
+static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
 {
     if(response == MSG_YES)
     {
@@ -3493,7 +2661,7 @@ void G_QuitGame()
 {
     if(G_QuitInProgress()) return;
 
-    if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
+    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
     {
         // User has re-tried to quit with "quit" when the question is already on
         // the screen. Apparently we should quit...
@@ -3509,7 +2677,7 @@ void G_QuitGame()
 #endif
 
     Con_Open(false);
-    Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
+    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
 }
 
 de::String G_IdentityKey()
@@ -3790,14 +2958,14 @@ void G_PrintFormattedMapList(uint episode, char const **files, uint count)
         {
             // Print a range.
             uint len = i - rangeStart;
-            LogBuffer_Printf(DE2_LOG_MAP, "  "); // Indentation.
+            LogBuffer_Printf(DE2_RES_MSG, "  "); // Indentation.
             if(len <= 2)
             {
                 for(uint k = rangeStart; k < i; ++k)
                 {
                     Uri *mapUri = G_ComposeMapUri(episode, k);
                     AutoStr *path = Uri_ToString(mapUri);
-                    LogBuffer_Printf(DE2_LOG_MAP, "%s%s", Str_Text(path), (k != i - 1) ? "," : "");
+                    LogBuffer_Printf(DE2_RES_MSG, "%s%s", Str_Text(path), (k != i - 1) ? "," : "");
                     Uri_Delete(mapUri);
                 }
             }
@@ -3806,15 +2974,15 @@ void G_PrintFormattedMapList(uint episode, char const **files, uint count)
                 Uri *mapUri = G_ComposeMapUri(episode, rangeStart);
                 AutoStr *path = Uri_ToString(mapUri);
 
-                LogBuffer_Printf(DE2_LOG_MAP, "%s-", Str_Text(path));
+                LogBuffer_Printf(DE2_RES_MSG, "%s-", Str_Text(path));
                 Uri_Delete(mapUri);
 
                 mapUri = G_ComposeMapUri(episode, i-1);
                 path = Uri_ToString(mapUri);
-                LogBuffer_Printf(DE2_LOG_MAP, "%s", Str_Text(path));
+                LogBuffer_Printf(DE2_RES_MSG, "%s", Str_Text(path));
                 Uri_Delete(mapUri);
             }
-            LogBuffer_Printf(DE2_LOG_MAP, " " DE2_ESC(2) DE2_ESC(>) "%s\n", F_PrettyPath(current));
+            LogBuffer_Printf(DE2_RES_MSG, " " DE2_ESC(2) DE2_ESC(>) "%s\n", F_PrettyPath(current));
 
             // Moving on to a different file.
             current = files[i];
@@ -3857,9 +3025,19 @@ void G_PrintMapList()
     }
 }
 
+char const *G_InFine(char const *scriptId)
+{
+    ddfinale_t fin;
+    if(Def_Get(DD_DEF_FINALE, scriptId, &fin))
+    {
+        return fin.script;
+    }
+    return 0;
+}
+
 char const *G_InFineBriefing(Uri const *mapUri)
 {
-    DENG_ASSERT(mapUri != 0);
+    DENG2_ASSERT(mapUri != 0);
 
     // If we're already in the INFINE state, don't start a finale.
     if(briefDisabled)
@@ -3870,11 +3048,11 @@ char const *G_InFineBriefing(Uri const *mapUri)
 
     // Is there such a finale definition?
     ddfinale_t fin;
-    if(!Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(Uri_Compose(mapUri)), &fin))
+    if(Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(Uri_Compose(mapUri)), &fin))
     {
-        return 0;
+        return fin.script;
     }
-    return fin.script;
+    return 0;
 }
 
 char const *G_InFineDebriefing(Uri const *mapUri)
@@ -3904,11 +3082,11 @@ char const *G_InFineDebriefing(Uri const *mapUri)
 
     // Is there such a finale definition?
     ddfinale_t fin;
-    if(!Def_Get(DD_DEF_FINALE_AFTER, Str_Text(Uri_Compose(mapUri)), &fin))
+    if(Def_Get(DD_DEF_FINALE_AFTER, Str_Text(Uri_Compose(mapUri)), &fin))
     {
-        return 0;
+        return fin.script;
     }
-    return fin.script;
+    return 0;
 }
 
 /**
@@ -4001,7 +3179,7 @@ D_CMD(OpenLoadMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!G_SessionLoadingPossible()) return false;
+    if(!COMMON_GAMESESSION->loadingPossible()) return false;
     DD_Execute(true, "menu loadgame");
     return true;
 }
@@ -4010,7 +3188,7 @@ D_CMD(OpenSaveMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!G_SessionSavingPossible()) return false;
+    if(!COMMON_GAMESESSION->savingPossible()) return false;
     DD_Execute(true, "menu savegame");
     return true;
 }
@@ -4025,7 +3203,7 @@ static int endSessionConfirmed(msgresponse_t response, int /*userValue*/, void *
         }
         else
         {
-            G_StartTitle();
+            COMMON_GAMESESSION->endAndBeginTitle();
         }
     }
     return true;
@@ -4037,7 +3215,7 @@ D_CMD(EndSession)
 
     if(G_QuitInProgress()) return true;
 
-    if(!gameInProgress)
+    if(!COMMON_GAMESESSION->hasBegun())
     {
         if(IS_NETGAME && IS_SERVER)
         {
@@ -4053,7 +3231,7 @@ D_CMD(EndSession)
     if(IS_NETGAME && IS_SERVER)
     {
         // Just do it, no questions asked.
-        G_StartTitle();
+        COMMON_GAMESESSION->endAndBeginTitle();
         return true;
     }
 
@@ -4068,7 +3246,7 @@ static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
     DENG2_ASSERT(slotId != 0);
     if(response == MSG_YES)
     {
-        G_LoadSession(*slotId);
+        G_SetGameActionLoadSession(*slotId);
     }
     delete slotId;
     return true;
@@ -4081,7 +3259,7 @@ D_CMD(LoadSession)
     bool const confirmed = (argc == 3 && !stricmp(argv[2], "confirm"));
 
     if(G_QuitInProgress()) return false;
-    if(!G_SessionLoadingPossible()) return false;
+    if(!COMMON_GAMESESSION->loadingPossible()) return false;
 
     if(IS_NETGAME)
     {
@@ -4101,13 +3279,13 @@ D_CMD(LoadSession)
             {
                 // Try to schedule a GA_LOADSESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                return G_LoadSession(sslot.id());
+                return G_SetGameActionLoadSession(sslot.id());
             }
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             // Compose the confirmation message.
-            de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot.savePath());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, session.metadata().gets("userDescription").toUtf8().constData());
+            de::String const &savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, savegameUserDescription.toUtf8().constData());
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(sslot.id()));
             return true;
         }
@@ -4161,7 +3339,7 @@ static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
     DENG2_ASSERT(p != 0);
     if(response == MSG_YES)
     {
-        G_SaveSession(p->slotId, &p->userDescription);
+        G_SetGameActionSaveSession(p->slotId, &p->userDescription);
     }
     delete p;
     return true;
@@ -4169,7 +3347,7 @@ static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
 
 D_CMD(SaveSession)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
 
     bool const confirmed = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
 
@@ -4209,17 +3387,16 @@ D_CMD(SaveSession)
                 userDescription = argv[2];
             }
 
-            de::game::SavedSession const *session = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath());
-
-            if(!session || confirmed || !cfg.confirmQuickGameSave)
+            if(sslot.isUnused() || confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                return G_SaveSession(slotId, &userDescription);
+                return G_SetGameActionSaveSession(slotId, &userDescription);
             }
 
             // Compose the confirmation message.
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, session->metadata().gets("userDescription").toUtf8().constData());
+            userDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, userDescription.toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = slotId;
@@ -4262,13 +3439,13 @@ D_CMD(QuickSaveSession)
 
 static int deleteSavedSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
-    de::String const *savePath = static_cast<de::String const *>(context);
-    DENG2_ASSERT(savePath != 0);
+    de::String const *saveName = static_cast<de::String const *>(context);
+    DENG2_ASSERT(saveName != 0);
     if(response == MSG_YES)
     {
-        G_DeleteSavedSession(*savePath);
+        COMMON_GAMESESSION->removeSaved(*saveName);
     }
-    delete savePath;
+    delete saveName;
     return true;
 }
 
@@ -4285,20 +3462,20 @@ D_CMD(DeleteSavedSession)
         if(sslot.isUserWritable())
         {
             // A known slot identifier.
-            de::game::SavedSession const *session = DENG2_APP->rootFolder().tryLocate<de::game::SavedSession>(sslot.savePath());
-            if(!session) return false;
+            if(sslot.isUnused()) return false;
 
             if(confirmed)
             {
-                G_DeleteSavedSession(session->path());
+                COMMON_GAMESESSION->removeSaved(sslot.saveName());
             }
             else
             {
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
 
                 // Compose the confirmation message.
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, session->metadata().gets("userDescription").toUtf8().constData());
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(session->path()));
+                de::String const savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, savegameUserDescription.toUtf8().constData());
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(sslot.saveName()));
             }
             return true;
         }
@@ -4321,7 +3498,8 @@ D_CMD(InspectSavedSession)
     de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
     try
     {
-        de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(G_SaveSlots()[slotId].savePath());
+        SaveSlot const &sslot = G_SaveSlots()[slotId];
+        de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot.savePath());
         LOG_SCR_MSG("%s") << session.metadata().asStyledText();
         LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << session.path();
         return true;
@@ -4444,7 +3622,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(!forceNewSession && gameInProgress &&
+    if(!forceNewSession && COMMON_GAMESESSION->hasBegun() &&
        Uri_Equality(gameMapUri, newMapUri))
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
@@ -4471,19 +3649,19 @@ D_CMD(WarpMap)
     // So be it.
     briefDisabled = true;
 
-    if(!forceNewSession && gameInProgress)
+    if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
     {
 #if __JHEXEN__
         nextMap         = map;
         nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_DeferredNewSession(*newMapUri, 0/*default*/, gameRules);
+        G_SetGameActionNewSession(*newMapUri, 0/*default*/, gameRules);
 #endif
     }
     else
     {
-        G_DeferredNewSession(*newMapUri, 0/*default*/, gameRules);
+        G_SetGameActionNewSession(*newMapUri, 0/*default*/, gameRules);
     }
 
     // If the command source was "us" the game library then it was probably in

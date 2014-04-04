@@ -26,12 +26,15 @@
 #include "am_map.h"
 #include "d_netsv.h"
 #include "g_defs.h"
+#include "gamesession.h"
 #include "m_argv.h"
 #include "p_inventory.h"
-#include "p_saveg.h"
+//#include "p_saveg.h"
 #include "p_map.h"
 #include "saveslots.h"
 #include <cstring>
+
+using namespace common;
 
 int verbose;
 float turboMul; // Multiplier for turbo.
@@ -207,7 +210,6 @@ void D_PreInit()
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;
-    cfg.loadAutoSaveOnReborn = false;
     cfg.loadLastSaveOnReborn = false;
 
     cfg.maxSkulls = true;
@@ -361,7 +363,7 @@ void D_PostInit()
         try
         {
             de::String const slotId = G_SaveSlotIdFromUserInput(CommandLine_At(p + 1));
-            if(G_SaveSlots()[slotId].isUserWritable() && G_LoadSession(slotId))
+            if(G_SaveSlots()[slotId].isUserWritable() && G_SetGameActionLoadSession(slotId))
             {
                 // No further initialization is to be done.
                 return;
@@ -405,11 +407,11 @@ void D_PostInit()
     AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        G_DeferredNewSession(*startMapUri, 0/*default*/, G_Rules());
+        G_SetGameActionNewSession(*startMapUri, 0/*default*/, G_Rules());
     }
     else
     {
-        G_StartTitle(); // Start up intro loop.
+        COMMON_GAMESESSION->endAndBeginTitle(); // Start up intro loop.
     }
 
     Uri_Delete(startMapUri);

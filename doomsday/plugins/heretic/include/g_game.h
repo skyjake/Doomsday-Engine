@@ -43,6 +43,7 @@
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
 DENG_EXTERN_C uint nextMap;
+DENG_EXTERN_C uint nextMapEntrance;
 DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
 DENG_EXTERN_C wbstartstruct_t wmInfo;
@@ -71,7 +72,7 @@ void G_QuitGame(void);
 
 void G_StopDemo(void);
 
-void G_DoReborn(int playernum);
+//void G_DoReborn(int playernum);
 void G_PlayerReborn(int player);
 
 void G_IntermissionDone(void);

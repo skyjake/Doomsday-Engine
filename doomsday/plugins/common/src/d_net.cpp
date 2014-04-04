@@ -22,10 +22,13 @@
 #include "d_net.h"
 
 #include "g_common.h"
+#include "gamesession.h"
 #include "player.h"
 #include "hu_menu.h"
 #include "p_start.h"
 #include "fi_lib.h"
+
+using namespace common;
 
 D_CMD(SetColor);
 #if __JHEXEN__
@@ -148,7 +151,8 @@ int D_NetServerStarted(int before)
     GameRuleset netRules = G_Rules(); // Make a copy of the current rules.
     netRules.skill = skillmode_t(cfg.netSkill);
 
-    G_NewSession(*netMapUri, 0/*default*/, netRules);
+    COMMON_GAMESESSION->end();
+    COMMON_GAMESESSION->begin(*netMapUri, 0/*default*/, netRules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     Uri_Delete(netMapUri);
@@ -209,7 +213,7 @@ int D_NetDisconnect(int before)
     D_NetClearBuffer();
 
     // Start demo.
-    G_StartTitle();
+    COMMON_GAMESESSION->endAndBeginTitle();
     return true;
 }
 
@@ -238,7 +242,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         {
             // Client responds to new player?
             App_Log(DE2_LOG_NOTE, "Player %i has arrived in the game", plrNumber);
-            G_DoReborn(plrNumber);
+            P_RebornPlayerInMultiplayer(plrNumber);
             //players[plrNumber].playerstate = PST_REBORN;
         }
         if(showmsg)

@@ -22,17 +22,24 @@
 #define LIBCOMMON_GAME_H
 
 #include "dd_share.h"
+#include "fi_lib.h"
 #include "mobj.h"
 #include "player.h"
 
 DENG_EXTERN_C dd_bool singledemo;
 
-DENG_EXTERN_C dd_bool gameInProgress;
 DENG_EXTERN_C uint gameEpisode;
 
 DENG_EXTERN_C Uri *gameMapUri;
 DENG_EXTERN_C uint gameMapEntrance;
 DENG_EXTERN_C uint gameMap; ///< @todo refactor away.
+
+// Game status cvars:
+DENG_EXTERN_C int gsvEpisode;
+DENG_EXTERN_C int gsvMap;
+#if __JHEXEN__
+DENG_EXTERN_C int gsvHub;
+#endif
 
 #if __cplusplus
 extern "C" {
@@ -58,23 +65,44 @@ gameaction_t G_GameAction(void);
 
 void G_SetGameAction(gameaction_t action);
 
-/**
- * Begin the titlescreen animation sequence.
- */
-void G_StartTitle(void);
+#if __cplusplus
+} // extern "C"
 
 /**
- * Begin the helpscreen animation sequence.
+ * Schedule a new game session (deferred).
+ *
+ * @param mapUri       Map identifier.
+ * @param mapEntrance  Logical map entry point number.
+ * @param rules        Game rules to apply.
  */
-void G_StartHelp(void);
+void G_SetGameActionNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
 /**
- * Signal that play on the current map may now begin.
+ * Schedule a game session save (deferred).
+ *
+ * @param slotId           Unique identifier of the save slot to use.
+ * @param userDescription  New user description for the game-save. Can be @c NULL in which
+ *                         case it will not change if the slot has already been used.
+ *                         If an empty string a new description will be generated automatically.
+ *
+ * @return  @c true iff @a slotId is valid and saving is presently possible.
  */
-void G_BeginMap(void);
+bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription = 0);
 
 /**
- * Leave the current map and start intermission routine.
+ * Schedule a game session load (deferred).
+ *
+ * @param slotId  Unique identifier of the save slot to use.
+ *
+ * @return  @c true iff @a slotId is in use and loading is presently possible.
+ */
+bool G_SetGameActionLoadSession(de::String slotId);
+
+extern "C" {
+#endif
+
+/**
+ * Schedule a game session map exit, possibly leading into an intermission sequence.
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
  * hub and in DeathMatch games)
  *
@@ -82,7 +110,35 @@ void G_BeginMap(void);
  * @param mapEntryPoint  Logical map entry point on the new map.
  * @param secretExit     @c true if the exit taken was marked as 'secret'.
  */
-void G_LeaveMap(uint newMap, uint mapEntryPoint, dd_bool secretExit);
+void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExit);
+
+/**
+ * Returns the InFine script with the specified @a scriptId; otherwise @c 0.
+ */
+char const *G_InFine(char const *scriptId);
+
+/**
+ * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
+ */
+char const *G_InFineBriefing(Uri const *mapUri);
+
+/**
+ * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
+ */
+char const *G_InFineDebriefing(Uri const *mapUri);
+
+/**
+ * Reveal the game @em help display.
+ */
+void G_StartHelp(void);
+
+/// @todo Should not be a global function; mode breaks game session separation.
+dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId);
+
+/**
+ * Signal that play on the current map may now begin.
+ */
+void G_BeginMap(void);
 
 /**
  * Called when a player leaves a map.
@@ -172,16 +228,10 @@ D_CMD( CCmdExitLevel );
 #endif
 
 #if __cplusplus
-#include <de/Folder>
-#include <de/game/SavedSessionRepository>
 #include <de/String>
 #include "gamerules.h"
 
 class SaveSlots;
-
-char const *G_InFineBriefing(Uri const *mapUri);
-
-char const *G_InFineDebriefing(Uri const *mapUri);
 
 /**
  * Returns the game identity key (from the engine).
@@ -189,69 +239,14 @@ char const *G_InFineDebriefing(Uri const *mapUri);
 de::String G_IdentityKey();
 
 /**
- * @param mapUri       Map identifier.
- * @param mapEntrance  Logical map entry point number.
- * @param rules        Game rules to apply.
- */
-void G_NewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
-
-void G_DeferredNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
-
-/**
- * End the current game session.
- */
-void G_EndSession();
-
-/**
- * Deletes the saved session at @a path (if any).
- */
-void G_DeleteSavedSession(de::String const &path);
-
-/**
- * Copies the saved session at @a sourcePath to @a destPath.
- */
-void G_CopySavedSession(de::String const &destPath, de::String const &sourcePath);
-
-/**
- * Determines whether game session loading is presently possible.
- */
-bool G_SessionLoadingPossible();
-
-/**
- * Determines whether game session saving is presently possible.
- */
-bool G_SessionSavingPossible();
-
-/**
- * Schedule a game session save (deferred).
- *
- * @param slotId           Unique identifier of the save slot to use.
- * @param userDescription  New user description for the game-save. Can be @c NULL in which
- *                         case it will not change if the slot has already been used.
- *                         If an empty string a new description will be generated automatically.
- *
- * @return  @c true iff @a slotId is valid and saving is presently possible.
- */
-bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
-
-/**
- * Schedule a game session load (deferred).
- *
- * @param slotId  Unique identifier of the save slot to use.
- *
- * @return  @c true iff @a slotId is in use and loading is presently possible.
- */
-bool G_LoadSession(de::String slotId);
-
-/**
  * Chooses a default user description for a saved session.
  *
- * @param slotId        Unique identifier of a saved slot from which the existing description should
- *                      be re-used. Use a zero-length string to disable.
+ * @param saveName      Name of the saved session from which the existing description should be
+ *                      re-used. Use a zero-length string to disable.
  * @param autogenerate  @c true= generate a useful description (map name, map time, etc...) if none
  *                      exists for the referenced save @a slotId.
  */
-de::String G_DefaultSavedSessionUserDescription(de::String const &slotId, bool autogenerate = true);
+de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
 
 /**
  * Configures @a metadata according to the current game session configuration.
@@ -264,11 +259,6 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata);
  * Returns the game's SaveSlots.
  */
 SaveSlots &G_SaveSlots();
-
-/**
- * Returns the game's (i.e., the app's) SavedSessionRepository.
- */
-de::game::SavedSessionRepository &G_SavedSessionRepository();
 
 /**
  * Parse @a str and determine whether it references a logical game-save slot.
@@ -297,9 +287,6 @@ GameRuleset &G_Rules();
  */
 void G_ApplyNewGameRules(GameRuleset const &rules);
 
-void G_SetCurrentMap(Uri const &mapUri);
-
-void G_LoadCurrentMap(bool revisit = false);
 #endif // __cplusplus
 
 #endif // LIBCOMMON_GAME_H

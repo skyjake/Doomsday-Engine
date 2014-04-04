@@ -1472,7 +1472,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     if(!game.isNull())
     {
-        LOG_VERBOSE("Selecting game '%s'...") << game.identityKey();
+        LOG_MSG("Selecting game '%s'...") << game.identityKey();
     }
     else if(!isReload)
     {

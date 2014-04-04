@@ -78,6 +78,12 @@ public:
         de::String const &savePath() const;
 
         /**
+         * Returns the name of the saved session, bound to the logical save slot.
+         * @see savePath()
+         */
+        inline de::String const saveName() const { return savePath().fileNameWithoutExtension(); }
+
+        /**
          * Change the absolute path of the saved session, bound to the logical save slot.
          *
          * @param newPath  New absolute path of the saved session to bind to.

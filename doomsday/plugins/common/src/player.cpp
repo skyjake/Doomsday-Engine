@@ -246,16 +246,17 @@ int P_GetPlayerCheats(player_t const *player)
     return player->cheats;
 }
 
-int P_CountPlayersInGame()
+int P_CountPlayersInGame(PlayerSelectionCriteria const &criteria)
 {
     int count = 0;
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *player = players + i;
-        if(player->plr->inGame)
-        {
-            count += 1;
-        }
+
+        if(!player->plr->inGame) continue;
+        if((criteria & LocalOnly) && !(player->plr->flags & DDPF_LOCAL)) continue;
+
+        count += 1;
     }
     return count;
 }
@@ -1205,6 +1206,12 @@ D_CMD(SpawnMobj)
     }
 
     return true;
+}
+
+dd_bool Player_WaitingForReborn(player_t const *plr)
+{
+    DENG2_ASSERT(plr != 0);
+    return (plr->plr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(plr->plr->mo));
 }
 
 angle_t Player_ViewYawAngle(int playerNum)

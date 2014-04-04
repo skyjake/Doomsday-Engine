@@ -1273,5 +1273,5 @@ Text {
 
 Text {
   ID = "REBORNLOAD_CONFIRM";
-  Text = "Load save game\n\n'%s'?\n\n(No to restart map)";
+  Text = "Load save game\n\n'%s'?";
 }

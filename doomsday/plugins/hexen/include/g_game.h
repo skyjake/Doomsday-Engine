@@ -74,7 +74,7 @@ void G_PlayDemo(char *name);
 void G_TimeDemo(char *name);
 void G_IntermissionDone(void);
 void G_ScreenShot(void);
-void G_DoReborn(int playernum);
+//void G_DoReborn(int playernum);
 void G_StopDemo(void);
 
 void G_Ticker(timespan_t ticLength);

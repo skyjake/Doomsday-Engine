@@ -82,13 +82,26 @@ int P_GetPlayerNum(player_t const *plr);
  */
 int P_GetPlayerCheats(player_t const *plr);
 
+#ifdef __cplusplus
+} // extern "C"
+
+enum PlayerSelectionCriteria {
+    All       = 0,
+    LocalOnly = 0x1
+};
+
 /**
  * Count the number of players currently marked as "in game". Note that an in-game player may not
  * yet have a (CL)Mobj assigned to them, this is a count of players in the current game session.
  *
+ * @param criteria  Criteria for inclussion.
+ *
  * @return  Total count.
  */
-int P_CountPlayersInGame(void);
+int P_CountPlayersInGame(PlayerSelectionCriteria const &criteria = All);
+
+extern "C" {
+#endif
 
 /**
  * Determines whether the player's state is one of the walking states.
@@ -203,6 +216,11 @@ int P_CameraXYMovement(mobj_t *mo);
 int P_CameraZMovement(mobj_t *mo);
 
 void P_Thrust3D(player_t *player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
+
+/**
+ * Determines whether the player is currently waiting to be reborn.
+ */
+dd_bool Player_WaitingForReborn(player_t const *player);
 
 /**
  * Determine the viewing yaw angle for a player. If a body yaw has been applied to the player,

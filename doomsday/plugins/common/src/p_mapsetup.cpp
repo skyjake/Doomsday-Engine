@@ -643,10 +643,45 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
+/// @param mapInfo  Can be @c NULL.
+static void initFog(ddmapinfo_t *ddMapInfo)
+{
+    if(IS_DEDICATED) return;
+
+    if(!ddMapInfo || !(ddMapInfo->flags & MIF_FOG))
+    {
+        R_SetupFogDefaults();
+    }
+    else
+    {
+        R_SetupFog(ddMapInfo->fogStart, ddMapInfo->fogEnd, ddMapInfo->fogDensity, ddMapInfo->fogColor);
+    }
+
+#if __JHEXEN__
+    if(mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/))
+    {
+        int fadeTable = mapInfo->fadeTable;
+        if(fadeTable == W_GetLumpNumForName("COLORMAP"))
+        {
+            // We don't want fog in this case.
+            GL_UseFog(false);
+        }
+        else
+        {
+            // Probably fog ... don't use fullbright sprites
+            if(fadeTable == W_GetLumpNumForName("FOGMAP"))
+            {
+                // Tell the renderer to turn on the fog.
+                GL_UseFog(true);
+            }
+        }
+    }
+#endif
+}
+
 void P_SetupMap(Uri const *mapUri)
 {
-    AutoStr *mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
-    if(!mapUriStr) return;
+    DENG2_ASSERT(mapUri != 0);
 
     if(IS_DEDICATED)
     {
@@ -662,11 +697,20 @@ void P_SetupMap(Uri const *mapUri)
     // Initialize The Logical Sound Manager.
     S_MapChange();
 
+    AutoStr *mapUriStr = Uri_Compose(mapUri);
     if(!P_MapChange(Str_Text(mapUriStr)))
     {
         AutoStr *path = Uri_ToString(mapUri);
         Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", Str_Text(path));
         exit(1); // Unreachable.
+    }
+
+    // Is MapInfo data available for this map?
+    {
+        AutoStr *mapUriStr = Uri_Compose(mapUri);
+        ddmapinfo_t mapInfo;
+        bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
+        initFog(haveMapInfo? &mapInfo : 0);
     }
 
     // Make sure the game is paused for the requested period.
