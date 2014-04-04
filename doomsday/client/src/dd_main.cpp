@@ -178,8 +178,7 @@ static FileTypes fileTypeMap;
 
 // List of session data files (specified via the command line or in a cfg, or
 // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
-static ddstring_t **sessionResourceFileList;
-static size_t numSessionResourceFileList;
+static QStringList sessionResourceFiles;
 
 static void registerResourceFileTypes()
 {
@@ -548,19 +547,6 @@ WorldSystem &App_WorldSystem()
     throw Error("App_WorldSystem", "App not yet initialized");
 }
 
-static void addToPathList(ddstring_t ***list, size_t *listSize, char const *rawPath)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0 && rawPath != 0 && rawPath[0]);
-
-    ddstring_t *newPath = Str_New();
-    Str_Set(newPath, rawPath);
-    F_FixSlashes(newPath, newPath);
-    F_ExpandBasePath(newPath, newPath);
-
-    *list = (ddstring_t **) M_Realloc(*list, sizeof(**list) * ++(*listSize));
-    (*list)[(*listSize)-1] = newPath;
-}
-
 static void parseStartupFilePathsAndAddFiles(char const *pathString)
 {
 #define ATWSEPS                 ",; \t"
@@ -580,20 +566,6 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     M_Free(buffer);
 
 #undef ATWSEPS
-}
-
-static void destroyPathList(ddstring_t ***list, size_t *listSize)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0);
-    if(*list)
-    {
-        for(size_t i = 0; i < *listSize; ++i)
-        {
-            Str_Delete((*list)[i]);
-        }
-        M_Free(*list); *list = 0;
-    }
-    *listSize = 0;
 }
 
 /**
@@ -678,32 +650,6 @@ static int loadFilesFromDataGameAuto()
         }
     }
     return numLoaded;
-}
-
-/**
- * Find and list all game data file paths in the auto directory.
- *
- * @return Number of new files that were added to the list.
- */
-static int listFilesFromDataGameAuto(ddstring_t ***list, size_t *listSize)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0);
-
-    FS1::PathList found;
-    findAllGameDataPaths(found);
-
-    int numFilesAdded = 0;
-    DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-    {
-        // Ignore directories.
-        if(i->attrib & A_SUBDIR) continue;
-
-        QByteArray foundPath = i->path.toUtf8();
-        addToPathList(list, listSize, foundPath.constData());
-
-        numFilesAdded += 1;
-    }
-    return numFilesAdded;
 }
 
 #ifndef WIN32
@@ -834,23 +780,22 @@ static int DD_LoadGameStartupResourcesWorker(void *context)
     return 0;
 }
 
-static int addListFiles(ddstring_t ***list, size_t *listSize, FileType const &ftype)
+static int addListFiles(QStringList const &list, FileType const &ftype)
 {
-    int count = 0;
-    if(!list || !listSize) return 0;
-    for(size_t i = 0; i < *listSize; ++i)
+    int numAdded = 0;
+    foreach(QString const &path, list)
     {
-        if(&ftype != &DD_GuessFileTypeFromFileName(Str_Text((*list)[i])))
+        if(&ftype != &DD_GuessFileTypeFromFileName(path))
         {
             continue;
         }
 
-        if(tryLoadFile(de::Uri(Str_Text((*list)[i]), RC_NULL)))
+        if(tryLoadFile(de::Uri(path, RC_NULL)))
         {
-            count += 1;
+            numAdded += 1;
         }
     }
-    return count;
+    return numAdded;
 }
 
 /**
@@ -1026,14 +971,23 @@ static int DD_LoadAddonResourcesWorker(void *context)
     {
         /**
          * Phase 3: Add real files from the Auto directory.
-         * First ZIPs then WADs (they may contain WAD files).
          */
-        listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
-        if(numSessionResourceFileList > 0)
+        FS1::PathList found;
+        findAllGameDataPaths(found);
+        DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
         {
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_ZIP"));
+            // Ignore directories.
+            if(i->attrib & A_SUBDIR) continue;
 
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_WAD"));
+            /// @todo Is expansion of symbolics still necessary here?
+            sessionResourceFiles << NativePath(i->path).expand().withSeparators('/');
+        }
+
+        if(!sessionResourceFiles.isEmpty())
+        {
+            // First ZIPs then WADs (they may contain WAD files).
+            addListFiles(sessionResourceFiles, DD_FileTypeByName("FT_ZIP"));
+            addListFiles(sessionResourceFiles, DD_FileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.
@@ -1198,7 +1152,7 @@ dd_bool App_GameLoaded()
 
 void DD_DestroyGames()
 {
-    destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
+    sessionResourceFiles.clear();
     App_Games().clear();
     App::app().setGame(App_Games().nullGame());
 }
@@ -1834,7 +1788,7 @@ dd_bool DD_Init(void)
 
                 while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    addToPathList(&sessionResourceFileList, &numSessionResourceFileList, CommandLine_PathAt(p));
+                    sessionResourceFiles << NativePath(CommandLine_PathAt(p)).expand().withSeparators('/');
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -1844,7 +1798,7 @@ dd_bool DD_Init(void)
             App_ChangeGame(*game);
 
             // We do not want to load these resources again on next game change.
-            destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
+            sessionResourceFiles.clear();
         }
 #ifdef __SERVER__
         else
