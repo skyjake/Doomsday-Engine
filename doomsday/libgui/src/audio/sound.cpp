@@ -28,12 +28,16 @@ DENG2_PIMPL_NOREF(Sound)
     Vector3f position;
     Vector3f velocity;
     Positioning positioning;
+    dfloat minDistance;
+    dfloat spread;
 
     Instance()
         : volume(1.f)
         , pan(0.f)
         , frequency(1.f)
         , positioning(Stereo)
+        , minDistance(1.f)
+        , spread(0)
     {}
 
     DENG2_PIMPL_AUDIENCE(Stop)
@@ -82,6 +86,20 @@ Sound &Sound::setVelocity(Vector3f const &velocity)
     return *this;
 }
 
+Sound &Sound::setMinDistance(dfloat minDistance)
+{
+    d->minDistance = minDistance;
+    update();
+    return *this;
+}
+
+Sound &Sound::setSpatialSpread(dfloat degrees)
+{
+    d->spread = degrees;
+    update();
+    return *this;
+}
+
 bool Sound::isPlaying() const
 {
     return mode() != NotPlaying;
@@ -115,6 +133,16 @@ Sound::Positioning Sound::positioning() const
 Vector3f Sound::velocity() const
 {
     return d->velocity;
+}
+
+dfloat Sound::minDistance() const
+{
+    return d->minDistance;
+}
+
+dfloat Sound::spatialSpread() const
+{
+    return d->spread;
 }
 
 } // namespace de

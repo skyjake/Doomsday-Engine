@@ -85,6 +85,8 @@ public:
     virtual Sound &setFrequency(dfloat factor);
     virtual Sound &setPosition(de::Vector3f const &position, Positioning positioning = Absolute);
     virtual Sound &setVelocity(de::Vector3f const &velocity);
+    virtual Sound &setMinDistance(dfloat minDistance);
+    virtual Sound &setSpatialSpread(dfloat degrees);
 
     // Methods for querying the sound status:
 
@@ -98,6 +100,8 @@ public:
     virtual Positioning positioning() const;
     virtual de::Vector3f position() const;
     virtual de::Vector3f velocity() const;
+    virtual dfloat minDistance() const;
+    virtual dfloat spatialSpread() const;
 
     DENG2_AS_IS_METHODS()
 
