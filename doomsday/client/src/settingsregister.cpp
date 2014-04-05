@@ -521,7 +521,7 @@ DENG2_OBSERVES(App, GameChange)
         // Create the pack and update the file system.
         File &outFile = App::rootFolder().replaceFile(fileName());
         outFile << info.toUtf8();
-        outFile.setMode(File::ReadOnly); // we're done
+        outFile.flush(); // we're done
 
         LOG_VERBOSE("Wrote \"%s\" with %i profile%s") << fileName() << count << (count != 1? "s" : "");
     }

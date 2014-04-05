@@ -1971,10 +1971,10 @@ DENG2_PIMPL(ResourceSystem)
 
             if(namePattern.isValid() && !namePattern.isEmpty())
             {
-                Folder &sourceFolder = App::fileSystem().makeFolder(de::String("/legacySavegames") / gameId, FS::DontInheritFeeds);
-                sourceFolder.attach(new DirectoryFeed(oldSavePath));
-                sourceFolder.populate(Folder::PopulateOnlyThisFolder);
-                sourceFolder.setMode(Folder::ReadOnly);
+                Folder &sourceFolder = App::fileSystem().makeFolderWithFeed(
+                            de::String("/legacySavegames") / gameId,
+                            new DirectoryFeed(oldSavePath),
+                            Folder::PopulateOnlyThisFolder /* no need to go deep */);
 
                 //ArrayValue *pathList = 0;
                 DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())

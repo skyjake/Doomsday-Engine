@@ -31,8 +31,8 @@ namespace game {
 /**
  * Specialized PackageFolder that hosts a serialized game session.
  *
- * Expands upon the services provided by the base class, adding various convenience methods
- * for inspecting the data within.
+ * Expands upon the services provided by the base class, adding various
+ * convenience methods for inspecting the data within.
  *
  * @ingroup game
  */
