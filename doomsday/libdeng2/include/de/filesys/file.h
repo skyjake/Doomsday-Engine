@@ -357,6 +357,17 @@ public:
     // Standard casting methods.
     DENG2_AS_IS_METHODS()
 
+public:
+    /**
+     * Prints a list of files as text with status and mode information included
+     * (cf. "ls -l").
+     *
+     * @param files  List of files to print.
+     *
+     * @return Text preformatted for fixed-width printing (padded with spaces).
+     */
+    static String fileListAsText(QList<File const *> files);
+
 protected:
     /**
      * Constructs a new file. By default files are in read-only mode.
