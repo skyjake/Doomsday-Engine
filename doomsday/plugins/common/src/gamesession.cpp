@@ -60,7 +60,7 @@ DENG2_PIMPL(GameSession)
     }
 
     inline String userSavePath(String const &fileName) {
-        return self.savedPath() / fileName + ".save";
+        return self.savePath() / fileName + ".save";
     }
 
     void cleanupInternalSave()
