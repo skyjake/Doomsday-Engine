@@ -18,6 +18,7 @@
  */
 
 #include "de/ArchiveEntryFile"
+#include "de/ArchiveFeed"
 #include "de/Archive"
 #include "de/Block"
 #include "de/Guard"
@@ -54,6 +55,8 @@ void ArchiveEntryFile::clear()
 {
     DENG2_GUARD(this);
 
+    verifyWriteAccess();
+
     File::clear();
     
     archive().entryBlock(_entryPath).clear();
@@ -63,6 +66,15 @@ void ArchiveEntryFile::clear()
     st.size = 0;
     st.modifiedAt = Time();
     setStatus(st);
+}
+
+void ArchiveEntryFile::flush()
+{
+    ByteArrayFile::flush();
+    if(ArchiveFeed *feed = originFeed()->maybeAs<ArchiveFeed>())
+    {
+        feed->rewriteFile();
+    }
 }
 
 IByteArray::Size ArchiveEntryFile::size() const

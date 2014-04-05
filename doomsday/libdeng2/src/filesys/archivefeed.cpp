@@ -46,7 +46,14 @@ DENG2_PIMPL(ArchiveFeed)
     /// The feed whose archive this feed is using.
     ArchiveFeed *parentFeed;
 
-    Instance(Public *feed, File &f) : Base(feed), file(&f), arch(0), parentFeed(0)
+    bool allowWrite;
+
+    Instance(Public *feed, File &f)
+        : Base(feed)
+        , file(&f)
+        , arch(0)
+        , parentFeed(0)
+        , allowWrite(f.mode().testFlag(File::Write)) // write access depends on file
     {
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
@@ -70,7 +77,12 @@ DENG2_PIMPL(ArchiveFeed)
     }
 
     Instance(Public *feed, ArchiveFeed &parentFeed, String const &path)
-        : Base(feed), file(parentFeed.d->file), arch(0), basePath(path), parentFeed(&parentFeed)
+        : Base(feed)
+        , file(parentFeed.d->file)
+        , arch(0)
+        , basePath(path)
+        , parentFeed(&parentFeed)
+        , allowWrite(isWriteAllowed())
     {
         file->audienceForDeletion() += this;
     }
@@ -87,6 +99,15 @@ DENG2_PIMPL(ArchiveFeed)
             writeIfModified();
             delete arch;
         }
+    }
+
+    bool isWriteAllowed() const
+    {
+        if(parentFeed)
+        {
+            return parentFeed->d->isWriteAllowed();
+        }
+        return allowWrite;
     }
 
     void writeIfModified()
@@ -149,6 +170,9 @@ DENG2_PIMPL(ArchiveFeed)
 
             std::auto_ptr<ArchiveEntryFile> archFile(new ArchiveEntryFile(*i, archive(), entry));
 
+            // Write access is inherited from the main source file.
+            if(allowWrite) archFile->setMode(File::Write);
+
             // Use the status of the entry within the archive.
             archFile->setStatus(archive().entryStatus(entry));
 
@@ -189,11 +213,7 @@ ArchiveFeed::~ArchiveFeed()
 
 String ArchiveFeed::description() const
 {
-    if(d->file)
-    {
-        return "archive in " + d->file->description();
-    }
-    return "archive in (no file)";
+    return "archive in " + (d->file? d->file->description() : "(deleted file)");
 }
 
 void ArchiveFeed::populate(Folder &folder)
@@ -260,7 +280,16 @@ String const &ArchiveFeed::basePath() const
 
 void ArchiveFeed::rewriteFile()
 {
-    d->writeIfModified();
+    if(d->parentFeed)
+    {
+        DENG2_ASSERT(!d->arch);
+        d->parentFeed->rewriteFile();
+    }
+    else
+    {
+        DENG2_ASSERT(d->arch != 0);
+        d->writeIfModified();
+    }
 }
 
 } // namespace de
