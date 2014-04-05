@@ -173,9 +173,9 @@ int main(int argc, char **argv)
                                              LogBuffer::DontFlush);
 
         // Default /output to the current working directory.
-        app.fileSystem().makeFolder("/output").attach(
-            new DirectoryFeed(NativePath::workPath(), DirectoryFeed::AllowWrite));
-        outputFolder().setMode(File::Write | File::Truncate);
+        app.fileSystem().makeFolderWithFeed("/output",
+                new DirectoryFeed(NativePath::workPath(), DirectoryFeed::AllowWrite),
+                Folder::PopulateOnlyThisFolder);
 
         // Print a banner.
         LOG_MSG("") << versionText();
@@ -203,11 +203,16 @@ int main(int argc, char **argv)
                     if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
                     {
                         args.makeAbsolutePath(i + 1);
+                        /*
                         delete outputFolder().detach(*outputFolder().feeds().front());
-                        outputFolder().attach(new DirectoryFeed(NativePath(args.at(i + 1)),
-                            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+                        outputFolder().attach();
                         outputFolder().setMode(File::Write | File::Truncate);
                         outputFolder().populate(Folder::PopulateOnlyThisFolder);
+                        */
+                        app.fileSystem().makeFolderWithFeed("/output",
+                                new DirectoryFeed(NativePath(args.at(i + 1)),
+                                                  DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing),
+                                Folder::PopulateOnlyThisFolder);
                         i += 1;
                     }
                     continue;
@@ -234,17 +239,10 @@ int main(int argc, char **argv)
                     continue;
                 }
 
-                // Clear the virtual /input folder in native fs if it already exists.
-                if(Folder *existingFolder = app.rootFolder().tryLocate<Folder>("/input"))
-                {
-                    delete existingFolder;
-                }
-
-                // Repopulate the /input folder using the input folder on the local fs.
-                Folder &inputFolder = app.fileSystem().makeFolder("/input");
-                inputFolder.setMode(Folder::ReadOnly);
-                inputFolder.attach(new DirectoryFeed(nativeInputFolderPath));
-                inputFolder.populate(Folder::PopulateOnlyThisFolder);
+                // Update the /input folder using the input folder on the local fs.
+                app.fileSystem().makeFolderWithFeed(
+                            "/input", new DirectoryFeed(nativeInputFolderPath),
+                            Folder::PopulateOnlyThisFolder /* no need to go deeper */);
 
                 // Convert the named save game.
                 try
