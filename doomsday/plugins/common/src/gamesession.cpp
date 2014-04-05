@@ -143,7 +143,8 @@ DENG2_PIMPL(GameSession)
             // In networked games the server tells the clients to save also.
             NetSv_SaveGame(metadata.geti("sessionId"));
 
-            // Serialize the game state to a new saved session.
+            // Serialize the game state to a new saved session. We'll compile a ZIP
+            // format achive that will be written to a file.
             ZipArchive arch;
             arch.add("Info", composeSaveInfo(metadata).toUtf8());
 

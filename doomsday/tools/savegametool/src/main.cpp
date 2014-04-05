@@ -203,12 +203,6 @@ int main(int argc, char **argv)
                     if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
                     {
                         args.makeAbsolutePath(i + 1);
-                        /*
-                        delete outputFolder().detach(*outputFolder().feeds().front());
-                        outputFolder().attach();
-                        outputFolder().setMode(File::Write | File::Truncate);
-                        outputFolder().populate(Folder::PopulateOnlyThisFolder);
-                        */
                         app.fileSystem().makeFolderWithFeed("/output",
                                 new DirectoryFeed(NativePath(args.at(i + 1)),
                                                   DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing),
