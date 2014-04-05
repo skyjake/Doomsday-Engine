@@ -151,7 +151,7 @@ void NativeFile::close()
     DENG2_GUARD(this);
 
     flush();
-    DENG2_ASSERT(!out);
+    DENG2_ASSERT(!d->out);
 
     d->closeInput();
 }
@@ -161,7 +161,7 @@ void NativeFile::flush()
     DENG2_GUARD(this);
 
     d->closeOutput();
-    DENG2_ASSERT(!out);
+    DENG2_ASSERT(!d->out);
 }
 
 NativePath const &NativeFile::nativePath() const
