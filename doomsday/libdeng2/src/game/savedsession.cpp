@@ -211,12 +211,8 @@ DENG2_PIMPL(SavedSession)
     {
         try
         {
-            // Ensure we have up-to-date info about the package contents.
-            self.populate();
-
-            File const &file = self.locate<File const>("Info");
             Block raw;
-            file >> raw;
+            self.locate<File const>("Info") >> raw;
 
             metadata.parse(String::fromUtf8(raw));
 
