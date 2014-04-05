@@ -205,7 +205,7 @@ String const File::path() const
     DENG2_GUARD(this);
 
     String thePath = name();
-    for(Folder *i = d->parent; i; i = i->d->parent)
+    for(Folder *i = d->parent; i; i = i->File::d->parent)
     {
         thePath = i->name() / thePath;
     }
