@@ -57,7 +57,7 @@ public:
     /**
      * Returns the native path of the file.
      */
-    NativePath const &nativePath() const { return _nativePath; }
+    NativePath const &nativePath() const;
 
     void setMode(Flags const &newMode);
 
@@ -77,14 +77,7 @@ protected:
     void close();
 
 private:
-    /// Path of the native file in the OS file system.
-    NativePath _nativePath;
-
-    /// Input stream.
-    mutable QFile *_in;
-
-    /// Output stream.
-    QFile *_out;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

@@ -21,11 +21,112 @@
 #include "de/Guard"
 #include "de/math.h"
 
-using namespace de;
+namespace de {
+
+DENG2_PIMPL(NativeFile)
+{
+    /// Path of the native file in the OS file system.
+    NativePath nativePath;
+
+    /// Input stream.
+    mutable QFile *in;
+
+    /// Output stream. Kept open until flush() is called.
+    /// (Re)opened before changing the contents of the file.
+    QFile *out;
+
+    /// Output file should be truncated before the next write.
+    bool needTruncation;
+
+    Instance(Public *i)
+        : Base(i)
+        , in(0)
+        , out(0)
+        , needTruncation(false)
+    {}
+
+    ~Instance()
+    {
+        DENG2_ASSERT(!in);
+        DENG2_ASSERT(!out);
+    }
+
+    QFile &getInput()
+    {
+        if(!in)
+        {
+            // Reading is allowed always.
+            in = new QFile(nativePath);
+            if(!in->open(QFile::ReadOnly))
+            {
+                delete in;
+                in = 0;
+                /// @throw InputError  Opening the input stream failed.
+                throw InputError("NativeFile::openInput", "Failed to read " + nativePath);
+            }
+        }
+        return *in;
+    }
+
+    QFile &getOutput()
+    {
+        if(!out)
+        {
+            // Are we allowed to output?
+            self.verifyWriteAccess();
+
+            QFile::OpenMode fileMode = QFile::ReadWrite;
+            if(self.mode() & Truncate)
+            {
+                if(needTruncation)
+                {
+                    fileMode |= QFile::Truncate;
+                    needTruncation = false;
+                }
+            }
+            out = new QFile(nativePath);
+            if(!out->open(fileMode))
+            {
+                delete out;
+                out = 0;
+                /// @throw OutputError  Opening the output stream failed.
+                throw OutputError("NativeFile::output", "Failed to write " + nativePath);
+            }
+            if(self.mode() & Truncate)
+            {
+                Status st = self.status();
+                st.size = 0;
+                st.modifiedAt = Time();
+                self.setStatus(st);
+            }
+        }
+        return *out;
+    }
+
+    void closeInput()
+    {
+        if(in)
+        {
+            delete in;
+            in = 0;
+        }
+    }
+
+    void closeOutput()
+    {
+        if(out)
+        {
+            delete out;
+            out = 0;
+        }
+    }
+};
 
 NativeFile::NativeFile(String const &name, NativePath const &nativePath)
-    : ByteArrayFile(name), _nativePath(nativePath), _in(0), _out(0)
-{}
+    : ByteArrayFile(name), d(new Instance(this))
+{
+    d->nativePath = nativePath;
+}
 
 NativeFile::~NativeFile()
 {
@@ -40,7 +141,9 @@ NativeFile::~NativeFile()
 
 String NativeFile::describe() const
 {
-    return String("\"%1\"").arg(_nativePath.pretty());
+    DENG2_GUARD(this);
+
+    return String("\"%1\"").arg(d->nativePath.pretty());
 }
 
 void NativeFile::close()
@@ -48,26 +151,24 @@ void NativeFile::close()
     DENG2_GUARD(this);
 
     flush();
-    if(_in)
-    {
-        delete _in;
-        _in = 0;
-    }
-    if(_out)
-    {
-        delete _out;
-        _out = 0;
-    }
+    DENG2_ASSERT(!out);
+
+    d->closeInput();
 }
 
 void NativeFile::flush()
 {
     DENG2_GUARD(this);
 
-    if(_out)
-    {
-        _out->flush();
-    }
+    d->closeOutput();
+    DENG2_ASSERT(!out);
+}
+
+NativePath const &NativeFile::nativePath() const
+{
+    DENG2_GUARD(this);
+
+    return d->nativePath;
 }
 
 void NativeFile::clear()
@@ -78,7 +179,7 @@ void NativeFile::clear()
     
     Flags oldMode = mode();
     setMode(Write | Truncate);
-    output();
+    d->getOutput();
     File::setMode(oldMode);
 }
 
@@ -137,56 +238,25 @@ void NativeFile::setMode(Flags const &newMode)
 
     close();
     File::setMode(newMode);
+
+    if(newMode.testFlag(Truncate))
+    {
+        d->needTruncation = true;
+    }
 }
 
 QFile &NativeFile::input() const
 {
     DENG2_GUARD(this);
 
-    if(!_in)
-    {
-        // Reading is allowed always.
-        _in = new QFile(_nativePath);
-        if(!_in->open(QFile::ReadOnly))
-        {
-            delete _in;
-            _in = 0;
-            /// @throw InputError  Opening the input stream failed.
-            throw InputError("NativeFile::input", "Failed to read " + _nativePath);
-        }
-    }
-    return *_in;
+    return d->getInput();
 }
 
 QFile &NativeFile::output()
 {
     DENG2_GUARD(this);
 
-    if(!_out)
-    {
-        // Are we allowed to output?
-        verifyWriteAccess();
-        
-        QFile::OpenMode fileMode = QFile::ReadWrite;
-        if(mode() & Truncate)
-        {
-            fileMode |= QFile::Truncate;
-        }
-        _out = new QFile(_nativePath);
-        if(!_out->open(fileMode))
-        {
-            delete _out;
-            _out = 0;
-            /// @throw OutputError  Opening the output stream failed.
-            throw OutputError("NativeFile::output", "Failed to write " + _nativePath);
-        }
-        if(mode() & Truncate)
-        {
-            Status st = status();
-            st.size = 0;
-            st.modifiedAt = Time();
-            setStatus(st);
-        }
-    }
-    return *_out;
+    return d->getOutput();
 }
+
+} // namespace de
