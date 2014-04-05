@@ -260,7 +260,6 @@ void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
     if(!path.isEmpty())
     {
         d->outputFile = &App::rootFolder().replaceFile(path);
-        d->outputFile->setMode(File::Write);
         d->outputFile->audienceForDeletion() += this;
 
         // Add a sink for the file.

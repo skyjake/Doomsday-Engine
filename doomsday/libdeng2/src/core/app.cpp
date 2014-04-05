@@ -268,7 +268,6 @@ DENG2_PIMPL(App)
         if(pos > 0)
         {
             File &errors = self.rootFolder().replaceFile(Path("/home") / cmdLine.at(pos + 1));
-            errors.setMode(File::Write);
             errorSink.reset(new FileLogSink(errors));
             errorSink->setMode(LogSink::OnlyWarningEntries);
             logBuffer.addSink(*errorSink);
