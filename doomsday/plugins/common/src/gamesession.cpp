@@ -22,7 +22,6 @@
 
 #include <de/App>
 #include <de/game/SavedSession>
-#include <de/game/Session>
 #include <de/Time>
 #include <de/ZipArchive>
 #include "d_netsv.h"
@@ -800,7 +799,7 @@ void GameSession::leaveMap()
             Block mapStateData;
             SV_OpenFileForWrite(mapStateData);
             writer_s *writer = SV_NewWriter();
-            MapStateWriter().write(writer);
+            MapStateWriter().write(writer, true /*exclude players*/);
             outFile << mapStateData; // we'll flush whole package soon
             Writer_Delete(writer);
             SV_CloseFile();
