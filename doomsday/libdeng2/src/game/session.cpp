@@ -29,7 +29,7 @@ namespace game {
 static Session::Profile currentProfile;
 static Session::SavedIndex sharedSavedIndex;
 
-Session::Profile &Session::profile()
+Session::Profile &Session::profile() //static
 {
     /// @todo None current profiles should be stored persistently when the game changes.
     return currentProfile;

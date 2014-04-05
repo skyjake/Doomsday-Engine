@@ -59,6 +59,11 @@ public:
     bool loadingPossible();
 
     /**
+     * Convenient method of looking up the game identity key from the game session profile.
+     */
+    inline de::String gameId() const { return Session::profile().gameId; }
+
+    /**
      * Determines whether saved game progress will be restored when the current map is reloaded,
      * according to the current game state and user configuration.
      */
@@ -109,6 +114,11 @@ public:
     de::String userDescription();
 
 public: // Saved session management ----------------------------------------------------------
+
+    /**
+     * Compose the absolute path of the @em user saved session folder for the game session.
+     */
+    inline de::String savePath() { return de::String("/home/savegames") / gameId(); }
 
     /**
      * Save the current game state to a new @em user saved session.

@@ -86,10 +86,10 @@ void NetCl_UpdateGameState(Reader *msg)
     /// @todo  Automatically load the server's game if it is available.
     /// However, note that this can only occur if the server changes its game
     /// while a netgame is running (which currently will end the netgame).
-    if(G_IdentityKey().compare(gsGameIdentity))
+    if(COMMON_GAMESESSION->gameId().compare(gsGameIdentity))
     {
         App_Log(DE2_NET_ERROR, "Game mismatch: server's identity key (%s) is different to yours (%s)",
-                gsGameIdentity, G_IdentityKey().toLatin1().constData());
+                gsGameIdentity, COMMON_GAMESESSION->gameId().toLatin1().constData());
         DD_Execute(false, "net disconnect");
         return;
     }

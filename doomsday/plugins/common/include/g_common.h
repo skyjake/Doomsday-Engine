@@ -234,11 +234,6 @@ D_CMD( CCmdExitLevel );
 class SaveSlots;
 
 /**
- * Returns the game identity key (from the engine).
- */
-de::String G_IdentityKey();
-
-/**
  * Chooses a default user description for a saved session.
  *
  * @param saveName      Name of the saved session from which the existing description should be

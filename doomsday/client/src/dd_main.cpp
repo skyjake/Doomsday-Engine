@@ -1421,7 +1421,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     if(!game.isNull())
     {
-        LOG_MSG("Selecting game '%s'...") << game.identityKey();
+        LOG_MSG("Selecting game '%s'...") << game.id();
     }
     else if(!isReload)
     {
@@ -1439,7 +1439,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            LOG_WARNING("Game plugin '%s' is invalid") << game.identityKey();
+            LOG_WARNING("Game plugin for '%s' is invalid") << game.id();
             LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
                     << int(game.pluginId());
             return false;
@@ -1450,6 +1450,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     // This is now the current game.
     App::app().setGame(game);
+    game::Session::profile().gameId = game.id();
 
 #ifdef __CLIENT__
     ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());

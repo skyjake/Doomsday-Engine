@@ -23,6 +23,7 @@
 #include "d_netsv.h"
 
 #include "d_net.h"
+#include "gamesession.h"
 #include "player.h"
 #include "p_user.h"
 #include "p_map.h"
@@ -678,11 +679,11 @@ void NetSv_SendGameState(int flags, int to)
 {
     if(!IS_NETWORK_SERVER) return;
 
-    de::String const identityKey = G_IdentityKey();
+    de::String const gameId = COMMON_GAMESESSION->gameId();
 
     // Print a short message that describes the game state.
     App_Log(DE2_NET_NOTE, "Sending game setup: %s %s %s",
-            identityKey.toLatin1().constData(),
+            gameId.toLatin1().constData(),
             Str_Text(Uri_Resolved(gameMapUri)),
             gameConfigString);
 
@@ -696,8 +697,8 @@ void NetSv_SendGameState(int flags, int to)
         Writer_WriteByte(writer, flags);
 
         // Game identity key.
-        Writer_WriteByte(writer, identityKey.length());
-        Writer_Write(writer, identityKey.toLatin1().constData(), identityKey.length());
+        Writer_WriteByte(writer, gameId.length());
+        Writer_Write(writer, gameId.toLatin1().constData(), gameId.length());
 
         // The current map.
         Uri_Write(gameMapUri, writer);

@@ -59,9 +59,8 @@ DENG2_PIMPL(GameSession)
         singleton = thisPublic;
     }
 
-    String userSavePath(String const &fileName)
-    {
-        return String("/home/savegames/%1/%2.save").arg(G_IdentityKey()).arg(fileName);
+    inline String userSavePath(String const &fileName) {
+        return self.savedPath() / fileName + ".save";
     }
 
     void cleanupInternalSave()

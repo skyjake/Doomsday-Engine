@@ -47,6 +47,24 @@ public:
     virtual ~Session() {}
 
     /**
+     * Configuration profile.
+     */
+    struct Profile
+    {
+        // Unique identifier of the game this profile is used with.
+        String gameId;
+
+        // List of resource files (specified via the command line or in a cfg, or found using
+        // the default search algorithm (e.g., /auto and DOOMWADDIR)).
+        QStringList resourceFiles;
+    };
+
+    /**
+     * Returns the current configuration profile for the game session.
+     */
+    static Profile &profile();
+
+    /**
      * Determines whether the currently configured game session is in progress. Usually this
      * will not be the case during title sequences (for example).
      */
@@ -77,21 +95,6 @@ public:
      * @param saveName  Name of the saved session to be loaded.
      */
     virtual void load(String const &saveName) = 0;
-
-    /**
-     * Session configuration profile.
-     */
-    struct Profile
-    {
-        // List of resource files (specified via the command line or in a cfg, or
-        // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
-        QStringList resourceFiles;
-    };
-
-    /**
-     * Returns the configuration profile for the game session.
-     */
-    static Profile &profile();
 
 protected: // Saved session management -------------------------------------------------------
 
