@@ -156,25 +156,7 @@ DENG2_PIMPL(GameSession)
             arch.add(String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State",
                      p.inst->serializeCurrentMapState());
 
-            Session::savedIndex().remove(internalSavePath);
-
-            Folder &saveFolder = App::rootFolder().locate<Folder>(internalSavePath.fileNamePath());
-            if(SavedSession *existing = saveFolder.tryLocate<SavedSession>(internalSavePath.fileName()))
-            {
-                existing->setMode(File::Write);
-            }
-            File &save = saveFolder.replaceFile(internalSavePath.fileName());
-            de::Writer(save) << arch;
-            save.setMode(File::ReadOnly);
-            LOG_RES_XVERBOSE("Wrote ") << save.description();
-
-            // We can now reinterpret and populate the contents of the archive.
-            File *updated = save.reinterpret();
-            updated->as<Folder>().populate();
-
-            SavedSession &session = updated->as<SavedSession>();
-            session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-            Session::savedIndex().add(session);
+            writeArchivedSession(internalSavePath, arch, metadata);
 
             // Copy the internal saved session to the destination slot.
             Session::copySaved(p.savePath, internalSavePath);
@@ -189,6 +171,23 @@ DENG2_PIMPL(GameSession)
 
         BusyMode_WorkerEnd();
         return didSave;
+    }
+
+    static void writeArchivedSession(String const &path, Archive const &arch, SessionMetadata const &metadata)
+    {
+        Session::savedIndex().remove(path);
+
+        File &save = App::rootFolder().replaceFile(path);
+        de::Writer(save) << arch; // serialize
+        save.flush();
+        LOG_RES_XVERBOSE("Wrote ") << save.description();
+
+        // We can now reinterpret and populate the contents of the archive.
+        SavedSession &session = save.reinterpret()->as<SavedSession>();
+        session.populate(); // prepare for access
+        session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+
+        Session::savedIndex().add(session);
     }
 
     void loadSaved(String const &savePath)
@@ -712,26 +711,7 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
     arch.add(String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State",
              d->serializeCurrentMapState());
 
-    savedIndex().remove(internalSavePath);
-
-    Folder &saveFolder        = App::rootFolder().locate<Folder>(internalSavePath.fileNamePath());
-    String const saveFileName = internalSavePath.fileName();
-    if(SavedSession *existing = saveFolder.tryLocate<SavedSession>(saveFileName))
-    {
-        existing->setMode(File::Write);
-    }
-    File &save = saveFolder.replaceFile(saveFileName);
-    de::Writer(save) << arch;
-    save.setMode(File::ReadOnly);
-    LOG_RES_XVERBOSE("Wrote ") << save.description();
-
-    // We can now reinterpret and populate the contents of the archive.
-    File *updated = save.reinterpret();
-    updated->as<Folder>().populate();
-
-    SavedSession &session = updated->as<SavedSession>();
-    session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-    savedIndex().add(session);
+    d->writeArchivedSession(internalSavePath, arch, metadata);
 }
 
 void GameSession::reloadMap()
@@ -797,10 +777,10 @@ void GameSession::leaveMap()
     if(!G_Rules().deathmatch) // Never save in deathmatch.
     {
         saved = &App::rootFolder().locate<SavedSession>(internalSavePath);
-        saved->setMode(File::Write);
-
         Folder &mapsFolder = saved->locate<Folder>("maps");
-        mapsFolder.setMode(File::Write);
+
+        DENG2_ASSERT(saved->mode().testFlag(File::Write));
+        DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
         // Are we entering a new hub?
 #if __JHEXEN__
@@ -817,26 +797,19 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         else
         {
-            // Update the saved state for the current map.
-            if(File *state = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
-            {
-                state->setMode(File::Write);
-            }
             File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
             Block mapStateData;
             SV_OpenFileForWrite(mapStateData);
             writer_s *writer = SV_NewWriter();
             MapStateWriter().write(writer);
-            outFile << mapStateData;
-            outFile.setMode(File::ReadOnly);
+            outFile << mapStateData; // we'll flush whole package soon
             Writer_Delete(writer);
             SV_CloseFile();
         }
 #endif
-
-        mapsFolder.setMode(File::ReadOnly);
-        saved->setMode(File::ReadOnly);
-        saved->populate();
+        // Ensure changes are written to disk right away (otherwise would stay
+        // in memory only).
+        saved->flush();
     }
 
 #if __JHEXEN__
@@ -889,7 +862,7 @@ void GameSession::leaveMap()
 
     if(saved && !revisit)
     {
-        saved->setMode(File::Write);
+        DENG2_ASSERT(saved->mode().testFlag(File::Write));
 
         SessionMetadata metadata;
         G_ApplyCurrentSessionMetadata(metadata);
@@ -906,25 +879,19 @@ void GameSession::leaveMap()
 
         // Save the state of the current map.
         Folder &mapsFolder = saved->locate<Folder>("maps");
-        mapsFolder.setMode(File::Write);
+        DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        if(File *state = mapsFolder.tryLocateFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State"))
-        {
-            state->setMode(File::Write);
-        }
         File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
         Block mapStateData;
         SV_OpenFileForWrite(mapStateData);
         writer_s *writer = SV_NewWriter();
         MapStateWriter().write(writer);
-        outFile << mapStateData;
-        outFile.setMode(File::ReadOnly);
+        outFile << mapStateData; // we'll flush the whole package soon
         Writer_Delete(writer);
         SV_CloseFile();
 
-        mapsFolder.setMode(File::ReadOnly);
-        saved->setMode(File::ReadOnly);
-        saved->populate();
+        // Write all changes to the package.
+        saved->flush();
 
         saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     }
