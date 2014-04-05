@@ -26,7 +26,14 @@
 namespace de {
 namespace game {
 
+static Session::Profile currentProfile;
 static Session::SavedIndex sharedSavedIndex;
+
+Session::Profile &Session::profile() //static
+{
+    /// @todo None current profiles should be stored persistently when the game changes.
+    return currentProfile;
+}
 
 void Session::removeSaved(String const &path) //static
 {

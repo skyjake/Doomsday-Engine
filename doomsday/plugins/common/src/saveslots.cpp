@@ -74,7 +74,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         {
             status = Incompatible;
             // Game identity key missmatch?
-            if(!session->metadata().gets("gameIdentityKey", "").compareWithoutCase(G_IdentityKey()))
+            if(!session->metadata().gets("gameIdentityKey").compareWithoutCase(COMMON_GAMESESSION->gameId()))
             {
                 /// @todo Validate loaded add-ons and checksum the definition database.
                 status = Loadable; // It's good!
