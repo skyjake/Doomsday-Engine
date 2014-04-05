@@ -100,10 +100,41 @@ int main(int argc, char **argv)
         Folder &subFolder = App::fileSystem().makeFolder(updated.path() / "subtest");
 
         Writer(subFolder.replaceFile("world2.txt")) << content.toUtf8();
-
+        Writer(subFolder.replaceFile("world3.txt")) << content.toUtf8();
+        Writer(subFolder.replaceFile("world2.txt")) << content.toUtf8();
+        Writer(subFolder.replaceFile("world2.txt")) << content.toUtf8();
         Writer(subFolder.replaceFile("world3.txt")) << content.toUtf8();
 
-        Writer(subFolder.replaceFile("world2.txt")) << content.toUtf8();
+        try
+        {
+            File &denied = subFolder.locate<File>("world3.txt");
+            denied.setMode(File::ReadOnly);
+            Writer(denied) << content.toUtf8();
+        }
+        catch(Error const &er)
+        {
+            LOG_MSG("Correctly denied access to read-only file within archive: %s")
+                    << er.asText();
+        }
+
+        LOG_MSG("Contents of subtest folder:\n") << updated.locate<Folder const>("subtest").contentsAsText();
+
+        LOG_MSG("Before flushing:\n") << app.homeFolder().contentsAsText();
+
+        TimeDelta(0.5).sleep(); // make the time difference clearer
+
+        // Changes were made to the archive via files. The archive won't be
+        // written back to its source file until the PackageFolder instance
+        // is deleted or when a flush is done.
+        updated.flush();
+
+        LOG_MSG("After flushing:\n") << app.homeFolder().contentsAsText();
+
+        App::fileSystem().copySerialized(updated.path(), "home/copied.zip", FS::PlainFileCopy);
+        LOG_MSG("Plain copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
+
+        App::fileSystem().copySerialized(updated.path(), "home/copied.zip");
+        LOG_MSG("Normal copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
     }
     catch(Error const &err)
     {
