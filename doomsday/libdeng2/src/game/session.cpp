@@ -30,12 +30,10 @@ static Session::SavedIndex sharedSavedIndex;
 
 void Session::removeSaved(String const &path) //static
 {
-    if(File *saved = App::rootFolder().tryLocateFile(path))
+    if(App::rootFolder().has(path))
     {
-        savedIndex().remove(saved->path());
-        // We need write access to remove.
-        saved->setMode(File::Write);
-        App::rootFolder().removeFile(saved->path());
+        savedIndex().remove(path);
+        App::rootFolder().removeFile(path);
     }
 }
 
@@ -47,21 +45,10 @@ void Session::copySaved(String const &destPath, String const &sourcePath) //stat
 
     removeSaved(destPath);
 
-    SavedSession const &saved = App::rootFolder().locate<SavedSession>(sourcePath);
-
-    // Copy the .save package.
-    File &copied = App::rootFolder().replaceFile(destPath);
-    Writer(copied) << saved.archive();
-    copied.setMode(File::ReadOnly);
-    LOG_RES_XVERBOSE("Wrote ") << copied.description();
-
-    // We can now reinterpret and populate the contents of the archive.
-    File *updated = copied.reinterpret();
-    updated->as<Folder>().populate();
-
-    SavedSession &session = updated->as<SavedSession>();
-    session.cacheMetadata(saved.metadata()); // Avoid immediately opening the .save package.
-    savedIndex().add(session);
+    SavedSession const &original = App::rootFolder().locate<SavedSession>(sourcePath);
+    SavedSession &copied = App::fileSystem().copySerialized(sourcePath, destPath).as<SavedSession>();
+    copied.cacheMetadata(original.metadata()); // Avoid immediately opening the .save package.
+    savedIndex().add(copied);
 }
 
 DENG2_PIMPL(Session::SavedIndex)
