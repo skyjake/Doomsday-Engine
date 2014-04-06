@@ -20,7 +20,7 @@
 
 #include "de/App"
 #include "de/ArrayValue"
-#include "de/game/Game"
+#include "de/game/Session"
 #include "de/Info"
 #include "de/Log"
 #include "de/NumberValue"
@@ -254,6 +254,13 @@ SavedSession::~SavedSession()
     DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
+    Session::savedIndex().remove(path());
+}
+
+void SavedSession::populate(PopulationBehavior behavior)
+{
+    PackageFolder::populate(behavior);
+    Session::savedIndex().add(*this);
 }
 
 void SavedSession::readMetadata()

@@ -39,7 +39,6 @@ void Session::removeSaved(String const &path) //static
 {
     if(App::rootFolder().has(path))
     {
-        savedIndex().remove(path);
         App::rootFolder().removeFile(path);
     }
 }
@@ -55,7 +54,6 @@ void Session::copySaved(String const &destPath, String const &sourcePath) //stat
     SavedSession const &original = App::rootFolder().locate<SavedSession>(sourcePath);
     SavedSession &copied = App::fileSystem().copySerialized(sourcePath, destPath).as<SavedSession>();
     copied.cacheMetadata(original.metadata()); // Avoid immediately opening the .save package.
-    savedIndex().add(copied);
 }
 
 DENG2_PIMPL(Session::SavedIndex)
@@ -95,8 +93,12 @@ void Session::SavedIndex::clear()
 
 void Session::SavedIndex::add(SavedSession &saved)
 {
-    d->entries[saved.path().toLower()] = &saved;
-    d->notifyAvailabilityUpdate();
+    String const path = saved.path().toLower();
+    if(!d->entries.contains(path) || d->entries[path] != &saved)
+    {
+        d->entries[path] = &saved;
+        d->notifyAvailabilityUpdate();
+    }
 }
 
 void Session::SavedIndex::remove(String path)

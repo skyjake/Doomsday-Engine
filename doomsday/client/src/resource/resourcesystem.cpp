@@ -1945,23 +1945,10 @@ DENG2_PIMPL(ResourceSystem)
         LOG_AS("ResourceSystem");
         String const gameId = game.identityKey();
 
-        // Attempt to create a new subfolder in the saved session repository for the game.
-        // Once created, any existing saved sessions in this folder will be added automatically.
-
-        // Make the native folder if necessary and populate the folder contents.
-        Folder &saveFolder = App::fileSystem().makeFolder(String("/home/savegames") / gameId);
-
-        // Find any .save packages in this folder and generate sessions for the db.
-        DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
-        {
-            if(i->first.fileNameExtension() == ".save")
-            {
-                if(game::SavedSession *session = i->second->maybeAs<game::SavedSession>())
-                {
-                    game::Session::savedIndex().add(*session);
-                }
-            }
-        }
+        // Make the native savegames folder if it does not yet exist.
+        // Once created, any SavedSessions in this folder will be found and indexed
+        // automatically into the file system.
+        App::fileSystem().makeFolder(String("/home/savegames") / gameId);
 
         // Perhaps there are legacy saved game sessions which need to be converted?
         NativePath const oldSavePath = game.legacySavegamePath();
@@ -3925,7 +3912,6 @@ NativePath ResourceSystem::nativeSavePath()
 
 bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String const &gameId)
 {
-    String const outputName = sourcePath.fileNameWithoutExtension() + ".save";
     String const outputPath = String("/home/savegames") / gameId;
 
     // Attempt the conversion via a plugin (each is tried in turn).
@@ -3951,7 +3937,6 @@ bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String cons
             // Update the /home/savegames/<gameId> folder.
             Folder &saveFolder = App::rootFolder().locate<Folder>(outputPath);
             saveFolder.populate();
-            game::Session::savedIndex().add(saveFolder.locate<game::SavedSession>(outputName));
             return true;
         }
         catch(Folder::NotFoundError const &)

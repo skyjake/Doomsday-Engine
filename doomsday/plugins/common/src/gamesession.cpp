@@ -173,8 +173,6 @@ DENG2_PIMPL(GameSession)
 
     static void writeArchivedSession(String const &path, Archive const &arch, SessionMetadata const &metadata)
     {
-        Session::savedIndex().remove(path);
-
         File &save = App::rootFolder().replaceFile(path);
         de::Writer(save) << arch; // serialize
         save.flush();
@@ -184,8 +182,6 @@ DENG2_PIMPL(GameSession)
         SavedSession &session = save.reinterpret()->as<SavedSession>();
         session.populate(); // prepare for access
         session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-
-        Session::savedIndex().add(session);
     }
 
     void loadSaved(String const &savePath)
