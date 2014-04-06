@@ -2363,7 +2363,7 @@ void ResourceSystem::initSpriteTextures()
         String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
         if(!validateSpriteName(decodedFileName))
         {
-            LOG_RES_WARNING("Ignoring invalid sprite name '%s'") << decodedFileName;
+            LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
             continue;
         }
 
