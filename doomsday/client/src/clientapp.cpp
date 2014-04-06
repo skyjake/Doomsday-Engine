@@ -135,6 +135,15 @@ DENG2_PIMPL(ClientApp)
         {
             if(alertMask.shouldRaiseAlert(entry.metadata()))
             {
+                // We don't want to raise alerts about problems in id/Raven WADs,
+                // since these just have to be accepted by the user.
+                if((entry.metadata() & LogEntry::Map) &&
+                   ClientApp::worldSystem().hasMap() &&
+                   !ClientApp::worldSystem().map().isCustom())
+                {
+                    return *this;
+                }
+
                 foreach(String msg, formatter.logEntryToTextLines(entry))
                 {
                     ClientApp::alert(msg, entry.level());
