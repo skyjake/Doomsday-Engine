@@ -194,6 +194,14 @@ public:
     void setOldUniqueId(char const *newUniqueId);
 
     /**
+     * Determines if the map is from a container that has been flagged as a
+     * Custom resource.
+     *
+     * @see P_MapIsCustom()
+     */
+    bool isCustom() const;
+
+    /**
      * Returns the points which describe the boundary of the map coordinate
      * space, which, are defined by the minimal and maximal vertex coordinates
      * of the non-editable, non-polyobj line geometries).
