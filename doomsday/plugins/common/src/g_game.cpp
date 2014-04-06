@@ -3057,7 +3057,7 @@ char const *G_InFineDebriefing(Uri const *mapUri)
         if(P_MapInfo(mapUri)->hub != P_MapInfo(nextMapUri)->hub)
         {
             Uri_Delete(nextMapUri);
-            return false;
+            return 0;
         }
         Uri_Delete(nextMapUri);
     }
