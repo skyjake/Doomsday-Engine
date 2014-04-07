@@ -611,7 +611,7 @@ void GameSelectionWidget::operator >> (PersistentState &toState) const
     {
         // Save the fold open/closed state.
         st.set(name() + "." + s->name() + ".open", s->isOpen());
-    }
+    }    
 }
 
 void GameSelectionWidget::operator << (PersistentState const &fromState)
