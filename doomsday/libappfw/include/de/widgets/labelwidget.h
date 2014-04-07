@@ -101,6 +101,9 @@ public:
      */
     Vector2ui textSize() const;
 
+    Rule const &contentWidth() const;
+    Rule const &contentHeight() const;
+
     /**
      * Sets the gap between the text and image. Defaults to "label.gap".
      *
