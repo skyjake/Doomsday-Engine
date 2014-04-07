@@ -169,6 +169,9 @@ public:
     ddouble length() const {
         return std::sqrt(ddouble(x*x + y*y));
     }
+    void setLength(ddouble len) {
+        *this = *this / length() * len;
+    }
     Vector2 normalize() const {
         ddouble const len = length();
         if(len != 0) {
@@ -352,6 +355,9 @@ public:
     }
     inline ddouble length() const {
         return std::sqrt(lengthSquared());
+    }
+    void setLength(ddouble len) {
+        *this = *this / length() * len;
     }
     ddouble lengthSquared() const {
         return Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z;
