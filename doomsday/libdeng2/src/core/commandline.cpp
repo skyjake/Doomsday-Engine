@@ -442,3 +442,26 @@ bool CommandLine::execute() const
     LOG_DEBUG("Started detached process %i using \"%s\"") << pid << at(0);
     return true;
 }
+
+bool CommandLine::executeAndWait(String *output) const
+{
+    LOG_AS("CommandLine");
+
+    if(count() < 1) return false;
+
+    QStringList args;
+    for(int i = 1; i < count(); ++i) args << at(i);
+
+    LOG_DEBUG("Starting process \"%s\"") << at(0);
+
+    QProcess proc;
+    proc.start(at(0), args);
+    bool result = proc.waitForFinished();
+
+    if(output)
+    {
+        *output = String::fromUtf8(Block(proc.readAll()));
+    }
+
+    return result;
+}

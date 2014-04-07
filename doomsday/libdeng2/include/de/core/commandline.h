@@ -92,6 +92,11 @@ public:
      */
     void append(String const &arg);
 
+    CommandLine &operator << (String const &arg) {
+        append(arg);
+        return *this;
+    }
+
     /**
      * Inserts a new argument to the list of arguments at index @a pos.
      *
@@ -211,6 +216,16 @@ public:
      * @return @c true if successful, otherwise @c false.
      */
     bool execute() const;
+
+    /**
+     * Spawns a new process using the command line and blocks until it
+     * finishes running.
+     *
+     * @param output  Output produced by the started process.
+     *
+     * @return @c true if successful, otherwise @c false.
+     */
+    bool executeAndWait(String *output = 0) const;
 
 private:
     DENG2_PRIVATE(d)
