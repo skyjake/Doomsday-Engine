@@ -18,6 +18,7 @@
  */
 
 #include <QCoreApplication>
+#include <QProcess>
 #include <de/App>
 #include <de/CommandLine>
 #include <de/DirectoryFeed>
@@ -38,7 +39,7 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
 
     LOG_AS("SavegameConverter");
 
-    CommandLine cmd;
+    QStringList args;
 
 #ifdef MACOSX
     // First locate the savegametool executable.
@@ -55,26 +56,30 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
         LOG_RES_ERROR("Failed to locate Savegame Tool");
         return false;
     }
-    cmd.append(bin);
 
-    cmd.append("-idkey");
-    cmd.append(Str_Text(&parm.fallbackGameId));
+    args.append("-idkey");
+    args.append(Str_Text(&parm.fallbackGameId));
 
     // We can only convert native files and output to native folders using Savegame Tool.
     try
     {
-        cmd.append("-output");
-        cmd.append(DENG2_APP->rootFolder().locate<Folder>(Str_Text(&parm.outputPath))
+        args.append("-output");
+        args.append(DENG2_APP->rootFolder().locate<Folder>(Str_Text(&parm.outputPath))
                         .feeds().front()->as<DirectoryFeed>().nativePath().expand());
 
         NativeFile &file = DENG2_APP->rootFolder().locate<NativeFile>(Str_Text(&parm.sourcePath));
-        cmd.append(file.nativePath());
+        args.append(file.nativePath());
 
         LOG_RES_NOTE("Starting conversion of \"%s\" using Savegame Tool")
                 << Path(Str_Text(&parm.sourcePath));
-        cmd.execute();
 
-        return true;
+        QProcess sgtool;
+        sgtool.start(bin, args);
+        // Block until conversion is completed.
+        if(sgtool.waitForFinished())
+        {
+            return true;
+        }
     }
     catch(Error const &er)
     {

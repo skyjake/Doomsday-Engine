@@ -870,14 +870,18 @@ public:
     de::NativePath nativeSavePath();
 
     /**
-     * Utility for initiating a legacy savegame conversion.
+     * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
      *
-     * @param sourcePath  Path to the legacy savegame file to be converted.
      * @param gameId      Identity key of the game and corresponding subfolder name within
      *                    save repository to output the converted savegame to. Also used for
      *                    resolving ambiguous savegame formats.
+     * @param sourcePath  If a zero-length string then @em all legacy savegames located for
+     *                    this game will be considered. Otherwise use the path of a single
+     *                    legacy savegame file to schedule a single conversion.
+     *
+     * @return  @c true if one or more conversion tasks were scheduled.
      */
-    bool convertLegacySavegame(de::String const &sourcePath, de::String const &gameId);
+    bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
 
 public: /// @todo Should be private:
     void initCompositeTextures();
