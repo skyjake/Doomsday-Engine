@@ -166,8 +166,11 @@ public:
     bool operator <= (Vector2 const &other) const {
         return *this == other || *this < other;
     }
-    ddouble length() const {
-        return std::sqrt(ddouble(x*x + y*y));
+    inline ddouble length() const {
+        return std::sqrt(lengthSquared());
+    }
+    inline ddouble lengthSquared() const {
+        return ddouble(x*x + y*y);
     }
     void setLength(ddouble len) {
         *this = *this / length() * len;
@@ -700,6 +703,9 @@ typedef Vector4<duint>   Vector4ui; ///< 4-component vector of unsigned integer 
 typedef Vector4<dfloat>  Vector4f;  ///< 4-component vector of floating point values.
 typedef Vector4<ddouble> Vector4d;  ///< 4-component vector of high-precision floating point values.
 ///@}
+
+// Qt hash functions:
+inline quint32 qHash(Vector2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
 
 } // namespace de
 
