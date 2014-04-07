@@ -454,8 +454,11 @@ bool CommandLine::executeAndWait(String *output) const
 
     LOG_DEBUG("Starting process \"%s\"") << at(0);
 
+    if(output) output->clear();
+
     QProcess proc;
     proc.start(at(0), args);
+    if(!proc.waitForStarted()) return false;
     bool result = proc.waitForFinished();
 
     if(output)
