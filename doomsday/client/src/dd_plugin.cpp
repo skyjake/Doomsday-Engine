@@ -37,6 +37,7 @@
 #endif
 
 #include <de/findfile.h>
+#include <QThreadStorage>
 
 #define HOOKMASK(x)         ((x) & 0xffffff)
 
@@ -52,7 +53,13 @@ typedef Library* PluginHandle;
 
 static Library* hInstPlug[MAX_PLUGS]; /// @todo Remove arbitrary MAX_PLUGS.
 static hookreg_t hooks[NUM_HOOK_TYPES];
-static pluginid_t currentPlugin = 0; // none
+
+struct ThreadState
+{
+    pluginid_t currentPlugin;
+    ThreadState() : currentPlugin(0) {}
+};
+static QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
 
 static PluginHandle* findFirstUnusedPluginHandle(void)
 {
@@ -236,7 +243,7 @@ DENG_EXTERN_C int Plug_CheckForHook(int hookType)
 
 void DD_SetActivePluginId(pluginid_t id)
 {
-    currentPlugin = id;
+    pluginState.localData().currentPlugin = id;
 }
 
 int DD_CallHooks(int hookType, int parm, void *data)
@@ -274,7 +281,7 @@ int DD_CallHooks(int hookType, int parm, void *data)
 
 pluginid_t DD_ActivePluginId(void)
 {
-    return currentPlugin;
+    return pluginState.localData().currentPlugin;
 }
 
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
