@@ -165,12 +165,6 @@ DENG_API_TYPEDEF(Base) // v2
      * perform map setup once more.
      */
     void (*SetupMap)(int mode, int flags);
-
-    /**
-     * Returns a pointer to the application's saved session repository.
-     * @todo Somewhat of a kludge...
-     */
-    void *(*SavedSessionRepository)(void);
 }
 DENG_API_T(Base);
 
@@ -187,7 +181,6 @@ DENG_API_T(Base);
 #define DD_IsSharpTick            _api_Base.IsSharpTick
 #define Net_SendPacket            _api_Base.SendPacket
 #define R_SetupMap                _api_Base.SetupMap
-#define DD_SavedSessionRepository _api_Base.SavedSessionRepository
 #endif
 
 #ifdef __DOOMSDAY__

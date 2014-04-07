@@ -1,9 +1,8 @@
-/**
- * @file dehread.cpp
- * DeHackEd patch reader plugin for Doomsday Engine. @ingroup dehread
+/** @file dehread.cpp  DeHackEd patch reader plugin for Doomsday Engine.
+ * @ingroup dehread
  *
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -32,22 +31,24 @@
 
 using namespace de;
 
-static bool processAllPatchLumps; /// @c true= all lumps should be processed.
+// Global handle on the engine's definition databases.
+ded_t *ded;
 
 // This is the original data before it gets replaced by any patches.
 ded_sprid_t  origSpriteNames[NUMSPRITES];
 ded_funcid_t origActionNames[NUMSTATES];
 
-// Global handle on the engine's definition databases.
-ded_t* ded;
-
-static bool recognisePatchLumpByName(lumpnum_t lumpNum)
+static void backupData()
 {
-    AutoStr* lumpName = W_LumpName(lumpNum);
-    if(Str_IsEmpty(lumpName)) return false;
+    for(int i = 0; i < NUMSPRITES && i < ded->count.sprites.num; i++)
+    {
+        qstrncpy(origSpriteNames[i].id, ded->sprites[i].id, DED_SPRITEID_LEN + 1);
+    }
 
-    const char* ext = F_FindFileExtension(Str_Text(lumpName));
-    return (ext && !qstricmp(ext, "deh"));
+    for(int i = 0; i < NUMSTATES && i < ded->count.states.num; i++)
+    {
+        qstrncpy(origActionNames[i], ded->states[i].action, DED_STRINGID_LEN + 1);
+    }
 }
 
 static void readLump(lumpnum_t lumpNum)
@@ -60,7 +61,7 @@ static void readLump(lumpnum_t lumpNum)
     }
 
     size_t len = W_LumpLength(lumpNum);
-    Block deh = Block::fromRawData((const char*)W_CacheLump(lumpNum), len);
+    Block deh  = Block::fromRawData((char const *)W_CacheLump(lumpNum), len);
     /// @attention Results in a deep-copy of the lump data into the Block
     ///            thus the cached lump can be released after this call.
     ///
@@ -75,7 +76,7 @@ static void readLump(lumpnum_t lumpNum)
     readDehPatch(deh, NoInclude | IgnoreEOF);
 }
 
-static void readFile(const String& filePath)
+static void readFile(String const &filePath)
 {
     QFile file(filePath);
     if(!file.open(QFile::ReadOnly | QFile::Text))
@@ -94,26 +95,27 @@ static void readFile(const String& filePath)
     readDehPatch(deh, IgnoreEOF);
 }
 
-static void processPatchLumps()
+static void readPatchLumps()
 {
+    bool const readAll = DENG2_APP->commandLine().check("-alldehs");
+
     for(int i = DD_GetInteger(DD_NUMLUMPS) - 1; i >= 0; i--)
     {
-        if(!recognisePatchLumpByName(i)) continue;
-
-        readLump(i);
-
-        // Are we processing the first patch only?
-        if(!processAllPatchLumps) break;
+        if(String(Str_Text(W_LumpName(i))).fileNameExtension().toLower() == ".deh")
+        {
+            readLump(i);
+            if(!readAll) return;
+        }
     }
 }
 
-static void processPatchFiles()
+static void readPatchFiles()
 {
-    CommandLine& cmdLine = DENG2_APP->commandLine();
+    CommandLine &cmdLine = DENG2_APP->commandLine();
 
     for(int p = 0; p < cmdLine.count(); ++p)
     {
-        const char* arg = *(cmdLine.argv() + p);
+        char const *arg = *(cmdLine.argv() + p);
         if(!cmdLine.matches("-deh", arg)) continue;
 
         while(++p != cmdLine.count() && !cmdLine.isOption(p))
@@ -126,34 +128,22 @@ static void processPatchFiles()
     }
 }
 
-static void backupData()
-{
-    for(int i = 0; i < NUMSPRITES && i < ded->count.sprites.num; i++)
-        qstrncpy(origSpriteNames[i].id, ded->sprites[i].id, DED_SPRITEID_LEN + 1);
-
-    for(int i = 0; i < NUMSTATES && i < ded->count.states.num; i++)
-        qstrncpy(origActionNames[i], ded->states[i].action, DED_STRINGID_LEN + 1);
-}
-
 /**
  * This will be called after the engine has loaded all definitions but before
  * the data they contain has been initialized.
  */
-int DefsHook(int /*hook_type*/, int /*parm*/, void* data)
+int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
 {
     // Grab the DED definition handle supplied by the engine.
-    ded = reinterpret_cast<ded_t*>(data);
-
-    // Are we processing all lump patches?
-    processAllPatchLumps = DENG2_APP->commandLine().check("-alldehs");
+    ded = reinterpret_cast<ded_t *>(data);
 
     backupData();
 
     // Check for DEHACKED lumps.
-    processPatchLumps();
+    readPatchLumps();
 
     // Process all patch files specified with -deh options on the command line.
-    processPatchFiles();
+    readPatchFiles();
 
     return true;
 }
@@ -162,7 +152,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void* data)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-void DP_Initialize(void)
+void DP_Initialize()
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
@@ -171,7 +161,7 @@ void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" const char* deng_LibraryType(void)
+extern "C" char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }

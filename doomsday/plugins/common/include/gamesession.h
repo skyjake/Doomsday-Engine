@@ -20,8 +20,7 @@
 #ifndef LIBCOMMON_GAMESESSION_H
 #define LIBCOMMON_GAMESESSION_H
 
-#include <de/Error>
-#include <de/game/SavedSessionRepository> /// @todo remove me
+#include <de/game/Session>
 #include <de/String>
 #include "doomsday.h"
 #include "gamerules.h"
@@ -30,10 +29,6 @@ namespace common {
 
 /**
  * Implements high level logic for the manipulation and configuration of the logical game session.
- *
- * The game session (singleton) exists at the same conceptual level as the logical game state and
- * the associated action (stack). The primary job of this component is to ensure that the current
- * game state remains valid and to provide a mechanism for saving player progress.
  *
  * An internal backing store is used to record player progress automatically, whenever the current
  * map changes while the session is in progress. This occurs irrespective of the user's savegame
@@ -50,15 +45,8 @@ namespace common {
  *
  * @ingroup libcommon
  */
-class GameSession
+class GameSession : public de::game::Session
 {
-    DENG2_NO_COPY  (GameSession)
-    DENG2_NO_ASSIGN(GameSession)
-
-public:
-    /// Current in-progress state does not match that expected. @ingroup errors
-    DENG2_ERROR(InProgressError);
-
 public:
     GameSession();
     ~GameSession();
@@ -66,20 +54,14 @@ public:
     /// Returns the singleton instance.
     static GameSession &gameSession();
 
-    /**
-     * Determines whether the currently configured game session is in progress.
-     */
-    bool hasBegun() const;
+    bool hasBegun();
+    bool savingPossible();
+    bool loadingPossible();
 
     /**
-     * Determines whether the game state currently allows the session to be saved.
+     * Convenient method of looking up the game identity key from the game session profile.
      */
-    bool savingPossible() const;
-
-    /**
-     * Determines whether the game state currently allows a saved session to be loaded.
-     */
-    bool loadingPossible() const;
+    inline de::String gameId() const { return Session::profile().gameId; }
 
     /**
      * Determines whether saved game progress will be restored when the current map is reloaded,
@@ -129,12 +111,17 @@ public:
      *
      * @return  User description of the session if it @ref hasBegun() or a zero-length string.
      */
-    de::String userDescription() const;
+    de::String userDescription();
 
 public: // Saved session management ----------------------------------------------------------
 
     /**
-     * Save the current game state to a new user saved session.
+     * Compose the absolute path of the @em user saved session folder for the game session.
+     */
+    inline de::String savePath() { return de::String("/home/savegames") / gameId(); }
+
+    /**
+     * Save the current game state to a new @em user saved session.
      *
      * @param saveName         Name of the new saved session.
      * @param userDescription  Textual description of the current game state provided either
@@ -143,14 +130,14 @@ public: // Saved session management --------------------------------------------
     void save(de::String const &saveName, de::String const &userDescription);
 
     /**
-     * Load the game state from the user saved session specified.
+     * Load the game state from the @em user saved session specified.
      *
      * @param saveName  Name of the saved session to be loaded.
      */
     void load(de::String const &saveName);
 
     /**
-     * Makes a copy of the user saved session specified in /home/savegames/<gameId>
+     * Makes a copy of the @em user saved session specified in /home/savegames/<gameId>
      *
      * @param destName    Name of the new/replaced saved session.
      * @param sourceName  Name of the saved session to be copied.
@@ -158,24 +145,18 @@ public: // Saved session management --------------------------------------------
     void copySaved(de::String const &destName, de::String const &sourceName);
 
     /**
-     * Removes the user saved session /home/savegames/<gameId>/<@a saveName>.save
+     * Removes the @em user saved session /home/savegames/<gameId>/<@a saveName>.save
      */
     void removeSaved(de::String const &saveName);
 
     /**
-     * Convenient method of looking up the user description of an existing saved session.
+     * Convenient method of looking up the @em user description of an existing saved session.
      *
      * @param saveName  Name of the saved session to lookup.
      *
      * @return  User description of the named session or a zero-length string if not found.
      */
     de::String savedUserDescription(de::String const &saveName);
-
-    /**
-     * Provides access to the saved session index.
-     * @todo integrate the index into the libdeng2 FS.
-     */
-    de::game::SavedSessionRepository &saveIndex() const;
 
 private:
     DENG2_PRIVATE(d)

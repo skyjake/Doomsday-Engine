@@ -205,7 +205,7 @@ String const File::path() const
     DENG2_GUARD(this);
 
     String thePath = name();
-    for(Folder *i = d->parent; i; i = i->d->parent)
+    for(Folder *i = d->parent; i; i = i->File::d->parent)
     {
         thePath = i->name() / thePath;
     }
@@ -375,6 +375,37 @@ IIStream const &File::operator >> (IByteArray &bytes) const
 {
     DENG2_UNUSED(bytes);
     throw InputError("File::operator >>", "File does not offer an immutable byte stream");
+}
+
+static bool sortByNameAsc(File const *a, File const *b)
+{
+    return a->name().compareWithoutCase(b->name()) < 0;
+}
+
+String File::fileListAsText(QList<File const *> files)
+{
+    qSort(files.begin(), files.end(), sortByNameAsc);
+
+    String txt;
+    foreach(File const *f, files)
+    {
+        // One line per file.
+        if(!txt.isEmpty()) txt += "\n";
+
+        // Folder / Access flags / source flag / has origin feed.
+        String flags = QString("%1%2%3%4%5")
+                .arg(f->is<Folder>()?              'd' : '-')
+                .arg(f->mode().testFlag(Write)?    'w' : 'r')
+                .arg(f->mode().testFlag(Truncate)? 't' : '-')
+                .arg(f->source() != f?             'i' : '-')
+                .arg(f->originFeed()?              'f' : '-');
+
+        txt += flags + QString("%1 %2 %3")
+                .arg(f->size(), 9)
+                .arg(f->status().modifiedAt.asText())
+                .arg(f->name());
+    }
+    return txt;
 }
 
 dsize File::size() const

@@ -65,6 +65,7 @@
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
 #include <de/game/SavedSession>
+#include <de/game/Session>
 #include <de/Log>
 #include <de/Module>
 #include <de/NativeFile>
@@ -339,7 +340,6 @@ DENG2_PIMPL(ResourceSystem)
     SpriteGroups spriteGroups;
 
     NativePath nativeSavePath;
-    game::SavedSessionRepository saveRepo;
 
     Binder binder;
     Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
@@ -1945,23 +1945,10 @@ DENG2_PIMPL(ResourceSystem)
         LOG_AS("ResourceSystem");
         String const gameId = game.identityKey();
 
-        // Attempt to create a new subfolder in the saved session repository for the game.
-        // Once created, any existing saved sessions in this folder will be added automatically.
-
-        // Make the native folder if necessary and populate the folder contents.
-        Folder &saveFolder = App::fileSystem().makeFolder(String("/home/savegames") / gameId);
-
-        // Find any .save packages in this folder and generate sessions for the db.
-        DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder.contents())
-        {
-            if(i->first.fileNameExtension() == ".save")
-            {
-                if(game::SavedSession *session = i->second->maybeAs<game::SavedSession>())
-                {
-                    saveRepo.add(*session);
-                }
-            }
-        }
+        // Make the native savegames folder if it does not yet exist.
+        // Once created, any SavedSessions in this folder will be found and indexed
+        // automatically into the file system.
+        App::fileSystem().makeFolder(String("/home/savegames") / gameId);
 
         // Perhaps there are legacy saved game sessions which need to be converted?
         NativePath const oldSavePath = game.legacySavegamePath();
@@ -1971,10 +1958,10 @@ DENG2_PIMPL(ResourceSystem)
 
             if(namePattern.isValid() && !namePattern.isEmpty())
             {
-                Folder &sourceFolder = App::fileSystem().makeFolder(de::String("/legacySavegames") / gameId, FS::DontInheritFeeds);
-                sourceFolder.attach(new DirectoryFeed(oldSavePath));
-                sourceFolder.populate(Folder::PopulateOnlyThisFolder);
-                sourceFolder.setMode(Folder::ReadOnly);
+                Folder &sourceFolder = App::fileSystem().makeFolderWithFeed(
+                            de::String("/legacySavegames") / gameId,
+                            new DirectoryFeed(oldSavePath),
+                            Folder::PopulateOnlyThisFolder /* no need to go deep */);
 
                 //ArrayValue *pathList = 0;
                 DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
@@ -2363,7 +2350,7 @@ void ResourceSystem::initSpriteTextures()
         String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
         if(!validateSpriteName(decodedFileName))
         {
-            LOG_RES_WARNING("Ignoring invalid sprite name '%s'") << decodedFileName;
+            LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
             continue;
         }
 
@@ -3918,11 +3905,6 @@ void ResourceSystem::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
-game::SavedSessionRepository &ResourceSystem::savedSessionRepository() const
-{
-    return d->saveRepo;
-}
-
 NativePath ResourceSystem::nativeSavePath()
 {
     return d->nativeSavePath;
@@ -3930,7 +3912,6 @@ NativePath ResourceSystem::nativeSavePath()
 
 bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String const &gameId)
 {
-    String const outputName = sourcePath.fileNameWithoutExtension() + ".save";
     String const outputPath = String("/home/savegames") / gameId;
 
     // Attempt the conversion via a plugin (each is tried in turn).
@@ -3956,7 +3937,6 @@ bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String cons
             // Update the /home/savegames/<gameId> folder.
             Folder &saveFolder = App::rootFolder().locate<Folder>(outputPath);
             saveFolder.populate();
-            d->saveRepo.add(saveFolder.locate<game::SavedSession>(outputName));
             return true;
         }
         catch(Folder::NotFoundError const &)

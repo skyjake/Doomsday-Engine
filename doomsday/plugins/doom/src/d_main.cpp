@@ -26,12 +26,10 @@
 #include "gamesession.h"
 #include "m_argv.h"
 #include "p_map.h"
-//#include "p_saveg.h"
 #include "doomv9mapstatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include "saveslots.h"
-//#include <de/game/SavedSessionRepository>
 
 using namespace common;
 

@@ -25,6 +25,7 @@
 #include "con_main.h"
 
 #include <de/charsymbols.h>
+#include <de/game/Session>
 #include <de/SignalAction>
 #include <de/SequentialLayout>
 #include <de/ChildWidgetOrganizer>
@@ -32,14 +33,14 @@
 #include <de/ui/Item>
 
 using namespace de;
+using de::game::Session;
 using de::game::SavedSession;
-using de::game::SavedSessionRepository;
 
 DENG_GUI_PIMPL(SavegameSelectionWidget)
-, DENG2_OBSERVES(App,                    StartupComplete)
-, DENG2_OBSERVES(SavedSessionRepository, AvailabilityUpdate)
-, DENG2_OBSERVES(ButtonWidget,           Press)
-, DENG2_OBSERVES(Loop,                   Iteration) // deferred refresh
+, DENG2_OBSERVES(App,                 StartupComplete)
+, DENG2_OBSERVES(Session::SavedIndex, AvailabilityUpdate)
+, DENG2_OBSERVES(ButtonWidget,        Press)
+, DENG2_OBSERVES(Loop,                Iteration) // deferred refresh
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -121,13 +122,13 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         self.organizer().setWidgetFactory(*this);
 
         App::app().audienceForStartupComplete() += this;
-        ClientApp::resourceSystem().savedSessionRepository().audienceForAvailabilityUpdate() += this;
+        game::Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
     ~Instance()
     {
         App::app().audienceForStartupComplete() -= this;
-        ClientApp::resourceSystem().savedSessionRepository().audienceForAvailabilityUpdate() -= this;
+        game::Session::savedIndex().audienceForAvailabilityUpdate() -= this;
     }
 
     GuiWidget *makeItemWidget(ui::Item const & /*item*/, GuiWidget const *)
@@ -180,16 +181,15 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         }
     }
 
-    void updateItemsFromRepository()
+    void updateItemsFromSavedIndex()
     {
-        SavedSessionRepository const &repository = ClientApp::resourceSystem().savedSessionRepository();
         bool changed = false;
 
         // Remove obsolete entries.
         for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
             String const savePath = self.items().at(idx).data().toString();
-            if(!repository.find(savePath))
+            if(!Session::savedIndex().find(savePath))
             {
                 self.items().remove(idx--);
                 changed = true;
@@ -197,7 +197,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         }
 
         // Add new entries.
-        DENG2_FOR_EACH_CONST(SavedSessionRepository::All, i, repository.all())
+        DENG2_FOR_EACH_CONST(Session::SavedIndex::All, i, Session::savedIndex().all())
         {
             ui::Data::Pos found = self.items().findData(i.key());
             if(found == ui::Data::InvalidPos)
@@ -219,7 +219,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         }
     }
 
-    void repositoryAvailabilityUpdate(SavedSessionRepository const &)
+    void savedIndexAvailabilityUpdate(Session::SavedIndex const &)
     {
         if(!App::inMainThread())
         {
@@ -227,7 +227,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
             deferUpdate();
             return;
         }
-        updateItemsFromRepository();
+        updateItemsFromSavedIndex();
     }
 
     void deferUpdate()
@@ -238,7 +238,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
     void loopIteration()
     {
         Loop::appLoop().audienceForIteration() -= this;
-        updateItemsFromRepository();
+        updateItemsFromSavedIndex();
     }
 };
 
@@ -246,7 +246,7 @@ SavegameSelectionWidget::SavegameSelectionWidget()
     : MenuWidget("savegame-selection"), d(new Instance(this))
 {
     setGridSize(3, ui::Filled, 0, ui::Expand);
-    d->updateItemsFromRepository();
+    d->updateItemsFromSavedIndex();
 }
 
 void SavegameSelectionWidget::setLoadGameWhenSelected(bool enableLoad)

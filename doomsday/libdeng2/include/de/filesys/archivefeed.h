@@ -30,6 +30,12 @@ class Archive;
 /**
  * Produces files and folders that represent the contents of an Archive.
  *
+ * ArchiveFeed gives populated files and folders write access mode if the
+ * source file has write access when the ArchiveFeed is created. Note that
+ * changing the source file's write access should not be done while the archive
+ * is populated in the file system (populated files would retain the Write mode
+ * and flushing the data would cause an exception).
+ *
  * @ingroup fs
  */
 class ArchiveFeed : public Feed

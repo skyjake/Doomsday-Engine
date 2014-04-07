@@ -20,7 +20,7 @@
 
 #include "de/App"
 #include "de/ArrayValue"
-#include "de/game/Game"
+#include "de/game/Session"
 #include "de/Info"
 #include "de/Log"
 #include "de/NumberValue"
@@ -211,12 +211,8 @@ DENG2_PIMPL(SavedSession)
     {
         try
         {
-            // Ensure we have up-to-date info about the package contents.
-            self.populate();
-
-            File const &file = self.locate<File const>("Info");
             Block raw;
-            file >> raw;
+            self.locate<File const>("Info") >> raw;
 
             metadata.parse(String::fromUtf8(raw));
 
@@ -258,6 +254,13 @@ SavedSession::~SavedSession()
     DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
+    Session::savedIndex().remove(path());
+}
+
+void SavedSession::populate(PopulationBehavior behavior)
+{
+    PackageFolder::populate(behavior);
+    Session::savedIndex().add(*this);
 }
 
 void SavedSession::readMetadata()

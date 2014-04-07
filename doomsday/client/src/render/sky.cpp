@@ -241,6 +241,7 @@ DENG2_PIMPL(Sky)
             if(layers[i].isActive())
             {
                 firstActiveLayer = i;
+                break;
             }
         }
     }
@@ -256,6 +257,12 @@ DENG2_PIMPL(Sky)
         Vector3f avgMaterialColor;
         Vector3f bottomCapColor;
         Vector3f topCapColor;
+
+        if(needUpdateFirstActiveLayer)
+        {
+            updateFirstActiveLayer();
+        }
+        if(firstActiveLayer < 0) return;
 
         /**
          * @todo Re-implement me by rendering the sky to a low-quality cubemap
@@ -799,6 +806,7 @@ static void configureSphereDrawState(Sky &sky, int layerIndex, hemispherecap_t s
 static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
 {
     int const firstLayer = sky.firstActiveLayer();
+    DENG2_ASSERT(firstLayer > 0); // 1-based
 
     bool const yflip    = flags.testFlag(LowerHemisphere);
     hemispherecap_t cap = flags.testFlag(LowerHemisphere)? HC_BOTTOM : HC_TOP;

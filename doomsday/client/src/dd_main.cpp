@@ -83,6 +83,7 @@
 
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
+#include <de/game/Session>
 #include <de/NativePath>
 #include <de/Log>
 #include <de/memory.h>
@@ -175,11 +176,6 @@ static NullFileType nullFileType;
 
 /// A symbolic name => file type map.
 static FileTypes fileTypeMap;
-
-// List of session data files (specified via the command line or in a cfg, or
-// found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
-static ddstring_t **sessionResourceFileList;
-static size_t numSessionResourceFileList;
 
 static void registerResourceFileTypes()
 {
@@ -524,12 +520,6 @@ ResourceSystem &App_ResourceSystem()
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
-#undef DD_SavedSessionRepository
-void *DD_SavedSessionRepository()
-{
-    return &App_ResourceSystem().savedSessionRepository();
-}
-
 de::ResourceClass &App_ResourceClass(String className)
 {
     return App_ResourceSystem().resClass(className);
@@ -554,19 +544,6 @@ WorldSystem &App_WorldSystem()
     throw Error("App_WorldSystem", "App not yet initialized");
 }
 
-static void addToPathList(ddstring_t ***list, size_t *listSize, char const *rawPath)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0 && rawPath != 0 && rawPath[0]);
-
-    ddstring_t *newPath = Str_New();
-    Str_Set(newPath, rawPath);
-    F_FixSlashes(newPath, newPath);
-    F_ExpandBasePath(newPath, newPath);
-
-    *list = (ddstring_t **) M_Realloc(*list, sizeof(**list) * ++(*listSize));
-    (*list)[(*listSize)-1] = newPath;
-}
-
 static void parseStartupFilePathsAndAddFiles(char const *pathString)
 {
 #define ATWSEPS                 ",; \t"
@@ -586,20 +563,6 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     M_Free(buffer);
 
 #undef ATWSEPS
-}
-
-static void destroyPathList(ddstring_t ***list, size_t *listSize)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0);
-    if(*list)
-    {
-        for(size_t i = 0; i < *listSize; ++i)
-        {
-            Str_Delete((*list)[i]);
-        }
-        M_Free(*list); *list = 0;
-    }
-    *listSize = 0;
 }
 
 /**
@@ -684,32 +647,6 @@ static int loadFilesFromDataGameAuto()
         }
     }
     return numLoaded;
-}
-
-/**
- * Find and list all game data file paths in the auto directory.
- *
- * @return Number of new files that were added to the list.
- */
-static int listFilesFromDataGameAuto(ddstring_t ***list, size_t *listSize)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0);
-
-    FS1::PathList found;
-    findAllGameDataPaths(found);
-
-    int numFilesAdded = 0;
-    DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-    {
-        // Ignore directories.
-        if(i->attrib & A_SUBDIR) continue;
-
-        QByteArray foundPath = i->path.toUtf8();
-        addToPathList(list, listSize, foundPath.constData());
-
-        numFilesAdded += 1;
-    }
-    return numFilesAdded;
 }
 
 #ifndef WIN32
@@ -840,23 +777,22 @@ static int DD_LoadGameStartupResourcesWorker(void *context)
     return 0;
 }
 
-static int addListFiles(ddstring_t ***list, size_t *listSize, FileType const &ftype)
+static int addListFiles(QStringList const &list, FileType const &ftype)
 {
-    int count = 0;
-    if(!list || !listSize) return 0;
-    for(size_t i = 0; i < *listSize; ++i)
+    int numAdded = 0;
+    foreach(QString const &path, list)
     {
-        if(&ftype != &DD_GuessFileTypeFromFileName(Str_Text((*list)[i])))
+        if(&ftype != &DD_GuessFileTypeFromFileName(path))
         {
             continue;
         }
 
-        if(tryLoadFile(de::Uri(Str_Text((*list)[i]), RC_NULL)))
+        if(tryLoadFile(de::Uri(path, RC_NULL)))
         {
-            count += 1;
+            numAdded += 1;
         }
     }
-    return count;
+    return numAdded;
 }
 
 /**
@@ -1032,14 +968,25 @@ static int DD_LoadAddonResourcesWorker(void *context)
     {
         /**
          * Phase 3: Add real files from the Auto directory.
-         * First ZIPs then WADs (they may contain WAD files).
          */
-        listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
-        if(numSessionResourceFileList > 0)
-        {
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_ZIP"));
+        game::Session::Profile &prof = game::Session::profile();
 
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_WAD"));
+        FS1::PathList found;
+        findAllGameDataPaths(found);
+        DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+        {
+            // Ignore directories.
+            if(i->attrib & A_SUBDIR) continue;
+
+            /// @todo Is expansion of symbolics still necessary here?
+            prof.resourceFiles << NativePath(i->path).expand().withSeparators('/');
+        }
+
+        if(!prof.resourceFiles.isEmpty())
+        {
+            // First ZIPs then WADs (they may contain WAD files).
+            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_ZIP"));
+            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.
@@ -1204,7 +1151,6 @@ dd_bool App_GameLoaded()
 
 void DD_DestroyGames()
 {
-    destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
     App_Games().clear();
     App::app().setGame(App_Games().nullGame());
 }
@@ -1433,6 +1379,9 @@ bool App_ChangeGame(Game &game, bool allowReload)
             DD_SetActivePluginId(0);
         }
 
+        // We do not want to load session resources specified on the command line again.
+        game::Session::profile().resourceFiles.clear();
+
         // The current game is now the special "null-game".
         App::app().setGame(App_Games().nullGame());
 
@@ -1472,7 +1421,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     if(!game.isNull())
     {
-        LOG_MSG("Selecting game '%s'...") << game.identityKey();
+        LOG_MSG("Selecting game '%s'...") << game.id();
     }
     else if(!isReload)
     {
@@ -1490,7 +1439,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            LOG_WARNING("Game plugin '%s' is invalid") << game.identityKey();
+            LOG_WARNING("Game plugin for '%s' is invalid") << game.id();
             LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
                     << int(game.pluginId());
             return false;
@@ -1501,6 +1450,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     // This is now the current game.
     App::app().setGame(game);
+    game::Session::profile().gameId = game.id();
 
 #ifdef __CLIENT__
     ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
@@ -1828,9 +1778,11 @@ dd_bool DD_Init(void)
     {
         if(de::Game *game = DD_AutoselectGame())
         {
-            // An implicit game session has been defined.
+            // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line
-            // to the list for this session.
+            // to the list for the session.
+            game::Session::Profile &prof = game::Session::profile();
+
             for(int p = 0; p < CommandLine_Count(); ++p)
             {
                 if(!CommandLine_IsMatchingAlias("-file", CommandLine_At(p)))
@@ -1840,7 +1792,7 @@ dd_bool DD_Init(void)
 
                 while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    addToPathList(&sessionResourceFileList, &numSessionResourceFileList, CommandLine_PathAt(p));
+                    prof.resourceFiles << NativePath(CommandLine_PathAt(p)).expand().withSeparators('/');
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -1848,9 +1800,6 @@ dd_bool DD_Init(void)
 
             // Begin the game session.
             App_ChangeGame(*game);
-
-            // We do not want to load these resources again on next game change.
-            destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
         }
 #ifdef __SERVER__
         else
@@ -3017,6 +2966,5 @@ DENG_DECLARE_API(Base) =
     DD_GameInfo,
     DD_IsSharpTick,
     Net_SendPacket,
-    R_SetupMap,
-    DD_SavedSessionRepository
+    R_SetupMap
 };

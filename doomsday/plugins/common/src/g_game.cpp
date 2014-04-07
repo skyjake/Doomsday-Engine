@@ -567,10 +567,9 @@ gameaction_t G_GameAction()
     return gameAction;
 }
 
-/// @return  Absolute path to a saved session in /home/savegames
 static inline de::String composeSavedSessionPathForSlot(int slot)
 {
-    return de::String("/home/savegames") / G_IdentityKey() / SAVEGAMENAME + de::String::number(slot) + ".save";
+    return COMMON_GAMESESSION->savePath() / de::String(SAVEGAMENAME"%1.save").arg(slot);
 }
 
 static void initSaveSlots()
@@ -1066,7 +1065,7 @@ static de::game::SavedSession *savedSessionByUserDescription(de::String descript
 {
     if(!description.isEmpty())
     {
-        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(de::String("/home/savegames") / G_IdentityKey());
+        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(COMMON_GAMESESSION->savePath());
         DENG2_FOR_EACH_CONST(de::Folder::Contents, i, saveFolder.contents())
         {
             if(de::game::SavedSession *session = i->second->maybeAs<de::game::SavedSession>())
@@ -1091,7 +1090,7 @@ de::String G_SaveSlotIdFromUserInput(de::String str)
     }
 
     // Perhaps a saved session file name?
-    de::String savePath = de::String("/home/savegames") / G_IdentityKey() / str + ".save";
+    de::String savePath = COMMON_GAMESESSION->savePath() / str + ".save";
     if(SaveSlot *sslot = G_SaveSlots().slot(DENG2_APP->rootFolder().tryLocate<de::game::SavedSession const>(savePath)))
     {
         return sslot->id();
@@ -2578,7 +2577,7 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
 {
     metadata.clear();
 
-    metadata.set("gameIdentityKey", G_IdentityKey());
+    metadata.set("gameIdentityKey", COMMON_GAMESESSION->gameId());
     metadata.set("userDescription", ""); // Applied later.
     metadata.set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
 #if !__JHEXEN__
@@ -2678,17 +2677,6 @@ void G_QuitGame()
 
     Con_Open(false);
     Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
-}
-
-de::String G_IdentityKey()
-{
-    GameInfo gameInfo;
-    if(DD_GameInfo(&gameInfo))
-    {
-        return Str_Text(gameInfo.identityKey);
-    }
-    /// @throw Error GameInfo is unavailable.
-    throw de::Error("G_IdentityKey", "Failed retrieving GameInfo");
 }
 
 uint G_LogicalMapNumber(uint episode, uint map)
@@ -3069,7 +3057,7 @@ char const *G_InFineDebriefing(Uri const *mapUri)
         if(P_MapInfo(mapUri)->hub != P_MapInfo(nextMapUri)->hub)
         {
             Uri_Delete(nextMapUri);
-            return false;
+            return 0;
         }
         Uri_Delete(nextMapUri);
     }
@@ -3146,7 +3134,7 @@ void G_ScreenShot()
  */
 static de::String composeScreenshotFileName()
 {
-    de::String name = G_IdentityKey() + "-";
+    de::String name = COMMON_GAMESESSION->gameId() + "-";
     int const numPos = name.length();
     for(int i = 0; i < 1e6; ++i) // Stop eventually...
     {

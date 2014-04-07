@@ -109,6 +109,23 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
     return *subFolder;
 }
 
+Folder &FileSystem::makeFolderWithFeed(String const &path, Feed *feed,
+                                       Folder::PopulationBehavior populationBehavior,
+                                       FolderCreationBehaviors behavior)
+{
+    makeFolder(path.fileNamePath(), behavior);
+
+    Folder &folder = makeFolder(path, DontInheritFeeds /* we have a specific feed to attach */);
+    folder.clear();
+    folder.clearFeeds();
+    folder.attach(feed);
+    if(behavior & PopulateNewFolder)
+    {
+        folder.populate(populationBehavior);
+    }
+    return folder;
+}
+
 File *FileSystem::interpret(File *sourceData)
 {
     LOG_AS("FS::interpret");
@@ -259,6 +276,30 @@ void FileSystem::deindex(File &file)
 
     removeFromIndex(d->index, file);
     removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
+}
+
+File &FileSystem::copySerialized(String const &sourcePath, String const &destinationPath,
+                                 CopyBehaviors behavior)
+{
+    Block contents;
+    *root().locate<File const>(sourcePath).source() >> contents;
+
+    File *dest = &root().replaceFile(destinationPath);
+    *dest << contents;
+    dest->flush();
+
+    if(behavior & ReinterpretDestination)
+    {
+        // We can now reinterpret and populate the contents of the archive.
+        dest = dest->reinterpret();
+    }
+
+    if(behavior.testFlag(PopulateDestination) && dest->is<Folder>())
+    {
+        dest->as<Folder>().populate();
+    }
+
+    return *dest;
 }
 
 void FileSystem::timeChanged(Clock const &)

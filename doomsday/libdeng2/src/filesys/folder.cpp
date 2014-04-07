@@ -24,9 +24,18 @@
 #include "de/Log"
 #include "de/Guard"
 
-using namespace de;
+namespace de {
 
-Folder::Folder(String const &name) : File(name)
+DENG2_PIMPL_NOREF(Folder)
+{
+    /// A map of file names to file instances.
+    Contents contents;
+
+    /// Feeds provide content for the folder.
+    Feeds feeds;
+};
+
+Folder::Folder(String const &name) : File(name), d(new Instance)
 {
     setStatus(Status::FOLDER);
     
@@ -49,7 +58,7 @@ Folder::~Folder()
     clear();
     
     // Destroy all feeds that remain.
-    for(Feeds::reverse_iterator i = _feeds.rbegin(); i != _feeds.rend(); ++i)
+    for(Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
     {
         delete *i;
     }
@@ -84,23 +93,23 @@ String Folder::describeFeeds() const
 
     String desc;
 
-    if(_feeds.size() == 1)
+    if(d->feeds.size() == 1)
     {
         desc += String("contains %1 file%2 from %3")
-                .arg(_contents.size())
-                .arg(DENG2_PLURAL_S(_contents.size()))
-                .arg(_feeds.front()->description());
+                .arg(d->contents.size())
+                .arg(DENG2_PLURAL_S(d->contents.size()))
+                .arg(d->feeds.front()->description());
     }
-    else if(_feeds.size() > 1)
+    else if(d->feeds.size() > 1)
     {
         desc += String("contains %1 file%2 from %3 feed%4")
-                .arg(_contents.size())
-                .arg(DENG2_PLURAL_S(_contents.size()))
-                .arg(_feeds.size())
-                .arg(DENG2_PLURAL_S(_feeds.size()));
+                .arg(d->contents.size())
+                .arg(DENG2_PLURAL_S(d->contents.size()))
+                .arg(d->feeds.size())
+                .arg(DENG2_PLURAL_S(d->feeds.size()));
 
         int n = 0;
-        DENG2_FOR_EACH_CONST(Feeds, i, _feeds)
+        DENG2_FOR_EACH_CONST(Feeds, i, d->feeds)
         {
             desc += String("; feed #%2 is %3")
                     .arg(n + 1)
@@ -116,15 +125,15 @@ void Folder::clear()
 {
     DENG2_GUARD(this);
 
-    if(_contents.empty()) return;
+    if(d->contents.empty()) return;
     
     // Destroy all the file objects.
-    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
+    for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
         i->second->setParent(0);
         delete i->second;
     }
-    _contents.clear();
+    d->contents.clear();
 }
 
 void Folder::populate(PopulationBehavior behavior)
@@ -134,7 +143,7 @@ void Folder::populate(PopulationBehavior behavior)
     LOG_AS("Folder");
     
     // Prune the existing files first.
-    for(Contents::iterator i = _contents.begin(); i != _contents.end(); )
+    for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); )
     {
         // By default we will NOT prune if there are no feeds attached to the folder.
         // In this case the files were probably created manually, so we shouldn't
@@ -154,7 +163,7 @@ void Folder::populate(PopulationBehavior behavior)
             // There is no designated feed, ask all feeds of this folder.
             // If even one of the feeds thinks that the file is out of date,
             // it will be pruned.
-            for(Feeds::iterator f = _feeds.begin(); f != _feeds.end(); ++f)
+            for(Feeds::iterator f = d->feeds.begin(); f != d->feeds.end(); ++f)
             {
                 if((*f)->prune(*file))
                 {
@@ -168,7 +177,7 @@ void Folder::populate(PopulationBehavior behavior)
         if(mustPrune)
         {
             // It needs to go.
-            _contents.erase(i++);
+            d->contents.erase(i++);
             delete file;
         }
         else
@@ -178,7 +187,7 @@ void Folder::populate(PopulationBehavior behavior)
     }
     
     // Populate with new/updated ones.
-    for(Feeds::reverse_iterator i = _feeds.rbegin(); i != _feeds.rend(); ++i)
+    for(Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
     {
         (*i)->populate(*this);
     }
@@ -186,7 +195,7 @@ void Folder::populate(PopulationBehavior behavior)
     if(behavior == PopulateFullTree)
     {
         // Call populate on subfolders.
-        for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
+        for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
         {
             if(Folder *folder = i->second->maybeAs<Folder>())
             {
@@ -200,7 +209,7 @@ Folder::Contents const &Folder::contents() const
 {
     DENG2_GUARD(this);
 
-    return _contents;
+    return d->contents;
 }
 
 File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
@@ -230,7 +239,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
     }
     
     // The first feed able to create a file will get the honors.
-    for(Feeds::iterator i = _feeds.begin(); i != _feeds.end(); ++i)
+    for(Feeds::iterator i = d->feeds.begin(); i != d->feeds.end(); ++i)
     {
         File *file = (*i)->newFile(newPath);
         if(file)
@@ -299,7 +308,7 @@ bool Folder::has(String const &name) const
         return false;
     }
 
-    return (_contents.find(name.lower()) != _contents.end());
+    return (d->contents.find(name.lower()) != d->contents.end());
 }
 
 File &Folder::add(File *file)
@@ -314,20 +323,30 @@ File &Folder::add(File *file)
         throw DuplicateNameError("Folder::add", "Folder cannot contain two files with the same name: '" +
             file->name() + "'");
     }
-    _contents[file->name().lower()] = file;
+    d->contents[file->name().lower()] = file;
     file->setParent(this);
     return *file;
+}
+
+File *Folder::remove(String const &name)
+{
+    return remove(locate<File>(name));
+}
+
+File *Folder::remove(char const *nameUtf8)
+{
+    return remove(String(nameUtf8));
 }
 
 File *Folder::remove(File &file)
 {
     DENG2_GUARD(this);
 
-    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
+    for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
         if(i->second == &file)
         {
-            _contents.erase(i);
+            d->contents.erase(i);
             break;
         }
     }    
@@ -357,8 +376,8 @@ File *Folder::tryLocateFile(String const &path) const
     if(end == String::npos)
     {
         // No more slashes. What remains is the final component.
-        Contents::const_iterator found = _contents.find(path.lower());
-        if(found != _contents.end())
+        Contents::const_iterator found = d->contents.find(path.lower());
+        if(found != d->contents.end())
         {
             File *file = found->second;
             return file;
@@ -387,8 +406,8 @@ File *Folder::tryLocateFile(String const &path) const
     }
     
     // Do we have a folder for this?
-    Contents::const_iterator found = _contents.find(component.lower());
-    if(found != _contents.end())
+    Contents::const_iterator found = d->contents.find(component.lower());
+    if(found != d->contents.end())
     {
         if(Folder *subFolder = found->second->maybeAs<Folder>())
         {
@@ -407,7 +426,7 @@ void Folder::attach(Feed *feed)
     if(feed)
     {
         DENG2_GUARD(this);
-        _feeds.push_back(feed);
+        d->feeds.push_back(feed);
     }
 }
 
@@ -415,7 +434,7 @@ Feed *Folder::detach(Feed &feed)
 {
     DENG2_GUARD(this);
 
-    _feeds.remove(&feed);
+    d->feeds.remove(&feed);
     return &feed;
 }
 
@@ -423,8 +442,31 @@ void Folder::setPrimaryFeed(Feed &feed)
 {
     DENG2_GUARD(this);
 
-    _feeds.remove(&feed);
-    _feeds.push_front(&feed);
+    d->feeds.remove(&feed);
+    d->feeds.push_front(&feed);
+}
+
+void Folder::clearFeeds()
+{
+    while(!d->feeds.empty())
+    {
+        delete detach(*d->feeds.front());
+    }
+}
+
+Folder::Feeds const &Folder::feeds() const
+{
+    return d->feeds;
+}
+
+String Folder::contentsAsText() const
+{
+    QList<File const *> files;
+    DENG2_FOR_EACH_CONST(Contents, i, contents())
+    {
+        files << i->second;
+    }
+    return File::fileListAsText(files);
 }
 
 Folder::Accessor::Accessor(Folder &owner, Property prop) : _owner(owner), _prop(prop)
@@ -440,7 +482,7 @@ void Folder::Accessor::update() const
     switch(_prop)
     {
     case CONTENT_SIZE:
-        nonConst->setValue(QString::number(_owner._contents.size()));
+        nonConst->setValue(QString::number(_owner.d->contents.size()));
         break;
     }    
 }
@@ -449,3 +491,5 @@ Value *Folder::Accessor::duplicateContent() const
 {
     return new NumberValue(asNumber());
 }
+
+} // namespace de

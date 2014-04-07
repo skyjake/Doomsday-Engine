@@ -144,9 +144,30 @@ public:
      * @param path      Path of the folder. Relative to the root folder.
      * @param behavior  What to do with the new folder: automatically attach feeds and
      *                  maybe also populate it automatically.
+     *
+     * @return  Folder at @a path.
      */
     Folder &makeFolder(String const &path,
                        FolderCreationBehaviors behavior = InheritPrimaryFeedAndPopulate);
+
+    /**
+     * Retrieves a folder in the file system and replaces all of its existing
+     * feeds with the specified feed. The folder gets created if it does not
+     * exist. If it does exist, the folder will be cleared so that any existing
+     * contents won't be orphaned due to the previous feeds going away.
+     *
+     * Any missing parent folders will also be created.
+     *
+     * @param path      Path of the folder. Relative to the root folder.
+     * @param feed      Primary feed for the folder (other feeds removed).
+     * @param behavior  Behavior for creating folders (including missing parents).
+     * @param populationBehavior  How to populate the returned folder (if population requested).
+     *
+     * @return  Folder at @a path.
+     */
+    Folder &makeFolderWithFeed(String const &path, Feed *feed,
+                               Folder::PopulationBehavior populationBehavior = Folder::PopulateFullTree,
+                               FolderCreationBehaviors behavior = InheritPrimaryFeedAndPopulate);
 
     /**
      * Finds all files matching a full or partial path. The search is done
@@ -251,6 +272,26 @@ public:
      */
     void deindex(File &file);
 
+    enum CopyBehavior
+    {
+        PlainFileCopy          = 0,
+        ReinterpretDestination = 0x1,
+        PopulateDestination    = 0x2,
+
+        DefaultCopyBehavior = ReinterpretDestination | PopulateDestination
+    };
+    Q_DECLARE_FLAGS(CopyBehaviors, CopyBehavior)
+
+    /**
+     * Makes a copy of a file by streaming the bytes of the source path to the
+     * destination path.
+     *
+     * @param sourcePath       Source path.
+     * @param destinationPath  Destination path.
+     */
+    File &copySerialized(String const &sourcePath, String const &destinationPath,
+                         CopyBehaviors behavior = DefaultCopyBehavior);
+
     void timeChanged(Clock const &);
 
 private:
@@ -258,6 +299,7 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::FolderCreationBehaviors)
+Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::CopyBehaviors)
 
 // Alias.
 typedef FileSystem FS;

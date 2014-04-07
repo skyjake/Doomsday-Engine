@@ -49,6 +49,7 @@ void DirectoryFeed::populate(Folder &folder)
 {
     if(_mode & AllowWrite)
     {
+        // Automatically enable modifying the Folder.
         folder.setMode(File::Write);
     }
     if(_mode.testFlag(CreateIfMissing) && !exists(_nativePath))

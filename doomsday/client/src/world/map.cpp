@@ -1791,6 +1791,11 @@ void Map::setOldUniqueId(char const *newUniqueId)
     qstrncpy(d->oldUniqueId, newUniqueId, sizeof(d->oldUniqueId));
 }
 
+bool Map::isCustom() const
+{
+    return P_MapIsCustom(uri().asText().toUtf8());
+}
+
 AABoxd const &Map::bounds() const
 {
     return d->bounds;
@@ -3276,7 +3281,7 @@ D_CMD(InspectMap)
             /*<< map.oldUniqueId()*/
             << Con_GetInteger("map-music");
 
-    if(P_MapIsCustom(map.uri().asText().toUtf8().constData()))
+    if(map.isCustom())
     {
         NativePath sourceFile(Str_Text(P_MapSourceFile(map.uri().asText().toUtf8().constData())));
         LOG_SCR_MSG(_E(l) "Source: " _E(.) _E(i) "\"%s\"") << sourceFile.pretty();

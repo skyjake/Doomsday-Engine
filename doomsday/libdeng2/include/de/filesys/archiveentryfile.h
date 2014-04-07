@@ -50,6 +50,20 @@ public:
 
     void clear();
 
+    /**
+     * Flushes the entire archive that this file is part of into its source
+     * file.
+     *
+     * Flushing may be needed when one needs to access the source file
+     * containing the archive while the archive is still present in the tree as
+     * Files and Folders.
+     *
+     * A flush is only done if the archive has been marked as changed. Without
+     * manual flushing this occurs automatically when the root ArchiveFeed
+     * instance is deleted.
+     */
+    void flush();
+
     /// Returns the archive of the file.
     Archive &archive() { return _archive; }
 
@@ -59,6 +73,16 @@ public:
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
+
+    /**
+     * Modifies the content of an archive entry. Changes are made instantly
+     * in the source archive, however nothing is written to the source file
+     * containing the archive until a flush occurs.
+     *
+     * @param at      Offset where to write to.
+     * @param values  Data.
+     * @param count   Length of data.
+     */
     void set(Offset at, Byte const *values, Size count);
 
 private:

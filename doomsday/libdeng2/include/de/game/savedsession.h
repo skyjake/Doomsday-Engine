@@ -31,8 +31,8 @@ namespace game {
 /**
  * Specialized PackageFolder that hosts a serialized game session.
  *
- * Expands upon the services provided by the base class, adding various convenience methods
- * for inspecting the data within.
+ * Expands upon the services provided by the base class, adding various
+ * convenience methods for inspecting the data within.
  *
  * @ingroup game
  */
@@ -108,6 +108,12 @@ public:
     SavedSession(File &sourceArchiveFile, String const &name = "");
 
     virtual ~SavedSession();
+
+    /**
+     * Specialized population behavior which first populates the PackageFolder
+     * before then adding the saved session into the (shared) Session::SavedIndex.
+     */
+    virtual void populate(PopulationBehavior behavior = PopulateFullTree);
 
     /**
      * Re-read the metadata for the saved session from the package and cache it.
