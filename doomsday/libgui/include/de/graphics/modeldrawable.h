@@ -97,7 +97,7 @@ public:
 
     void setAnimationTime(TimeDelta const &time);
 
-    void draw();
+    void draw() const;
 
     /**
      * Dimensions of the default pose, in model space.

@@ -270,6 +270,30 @@ DENG2_PIMPL(ModelDrawable)
         scene = importer.GetScene();
 
         initBones();
+
+        globalInverse = convertMatrix(scene->mRootNode->mTransformation).inverse();
+        maxPoint      = Vector3f(1.0e-9, 1.0e-9, 1.0e-9);
+        minPoint      = Vector3f(1.0e9,  1.0e9,  1.0e9);
+
+        // Determine the total bounding box.
+        for(duint i = 0; i < scene->mNumMeshes; ++i)
+        {
+            aiMesh const &mesh = *scene->mMeshes[i];
+            for(duint i = 0; i < mesh.mNumVertices; ++i)
+            {
+                addToBounds(Vector3f(&mesh.mVertices[i].x));
+            }
+        }
+
+        // Print some information.
+        qDebug() << "total bones:" << boneCount();
+
+        // Animations.
+        qDebug() << "animations:" << scene->mNumAnimations;
+        for(duint i = 0; i < scene->mNumAnimations; ++i)
+        {
+            qDebug() << "  anim #" << i << "name:" << scene->mAnimations[i]->mName.C_Str();
+        }
     }
 
     /// Release all loaded model data.
@@ -296,7 +320,11 @@ DENG2_PIMPL(ModelDrawable)
         // Has a scene been imported successfully?
         if(!scene) return;
 
-        initFromScene();
+        // Materials.
+        initTextures();
+
+        // Initialize all meshes in the scene into a single GL buffer.
+        makeBuffer();
 
         // Ready to go!
         modelAsset.setState(Ready);
@@ -325,39 +353,6 @@ DENG2_PIMPL(ModelDrawable)
             atlas->release(id);
         }
         materialTexIds.clear();
-    }
-
-    void initFromScene()
-    {
-        globalInverse = convertMatrix(scene->mRootNode->mTransformation).inverse();
-        maxPoint      = Vector3f(1.0e-9, 1.0e-9, 1.0e-9);
-        minPoint      = Vector3f(1.0e9,  1.0e9,  1.0e9);
-
-        // Determine the total bounding box.
-        for(duint i = 0; i < scene->mNumMeshes; ++i)
-        {
-            aiMesh const &mesh = *scene->mMeshes[i];
-            for(duint i = 0; i < mesh.mNumVertices; ++i)
-            {
-                addToBounds(Vector3f(&mesh.mVertices[i].x));
-            }
-        }
-
-        // Print some information.
-        qDebug() << "total bones:" << boneCount();
-
-        // Animations.
-        qDebug() << "animations:" << scene->mNumAnimations;
-        for(duint i = 0; i < scene->mNumAnimations; ++i)
-        {
-            qDebug() << "  anim #" << i << "name:" << scene->mAnimations[i]->mName.C_Str();
-        }
-
-        // Materials.
-        initTextures();
-
-        // Initialize all meshes in the scene into a single GL buffer.
-        makeBuffer();
     }
 
     void addToBounds(Vector3f const &point)
@@ -820,9 +815,10 @@ void ModelDrawable::setAnimationTime(TimeDelta const &time)
     d->animTime = time;
 }
 
-void ModelDrawable::draw()
+void ModelDrawable::draw() const
 {
-    glInit();
+    const_cast<ModelDrawable *>(this)->glInit();
+
     if(isReady() && d->program && d->atlas)
     {
         d->draw();
