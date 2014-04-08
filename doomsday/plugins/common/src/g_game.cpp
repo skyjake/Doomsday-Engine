@@ -1860,7 +1860,7 @@ void G_PlayerLeaveMap(int player)
 
 #if __JHEXEN__
     dd_bool newHub = true;
-    if(nextMap != uint(-1))
+    if(nextMap != DDMAXINT)
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
         newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);

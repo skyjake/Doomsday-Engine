@@ -87,7 +87,7 @@ static void initStateConditions(fi_state_t *s)
     if(mapinfo_t *curMapInfo = P_MapInfo(0/*current map*/))
     {
         s->conditions.leave_hub = true;
-        if(nextMap != uint(-1))
+        if(nextMap != DDMAXINT)
         {
             Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
             if(curMapInfo->hub == P_MapInfo(nextMapUri)->hub)
