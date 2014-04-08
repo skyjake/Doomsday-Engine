@@ -1,9 +1,8 @@
-/**
- * @file info.cpp
- * Information look up tables. @ingroup dehread
+/** @file info.cpp  Information look up tables.
+ * @ingroup dehread
  *
- * @author Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +22,7 @@
 #include "dehread.h"
 #include "info.h"
 
-static const FinaleBackgroundMapping finaleBGMappings[] = {
+static FinaleBackgroundMapping const finaleBGMappings[] = {
     { "FLOOR4_8",   "BGFLATE1" }, ///< DOOM end of episode 1
     { "SFLR6_1",    "BGFLATE2" }, ///< DOOM end of episode 2
     { "MFLR8_4",    "BGFLATE3" }, ///< DOOM end of episode 3
@@ -38,7 +37,7 @@ static const FinaleBackgroundMapping finaleBGMappings[] = {
     { "",           ""}
 };
 
-int findFinaleBackgroundMappingForText(const QString& text, const FinaleBackgroundMapping** mapping)
+int findFinaleBackgroundMappingForText(QString const &text, FinaleBackgroundMapping const **mapping)
 {
     if(!text.isEmpty())
     for(int i = 0; !finaleBGMappings[i].text.isEmpty(); ++i)
@@ -130,7 +129,7 @@ static FlagMapping mobjtypeFlagMappings[] = {
     { 0, -1, "" } // terminator
 };
 
-int findMobjTypeFlagMappingByDehLabel(const QString& name, const FlagMapping** mapping)
+int findMobjTypeFlagMappingByDehLabel(QString const &name, FlagMapping const **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -145,7 +144,7 @@ int findMobjTypeFlagMappingByDehLabel(const QString& name, const FlagMapping** m
     return -1; // Not found.
 }
 
-static const QString MusicMap[] = {
+static QString const MusicMap[] = {
     "e1m1",
     "e1m2",
     "e1m3",
@@ -216,7 +215,7 @@ static const QString MusicMap[] = {
     "" // Terminate.
 };
 
-int findMusicLumpNameInMap(const QString& name)
+int findMusicLumpNameInMap(QString const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -228,7 +227,7 @@ int findMusicLumpNameInMap(const QString& name)
     return -1; // Not found.
 }
 
-static const QString SpriteMap[] = {
+static QString const SpriteMap[] = {
     "TROO",
     "SHTG",
     "PUNG",
@@ -370,7 +369,7 @@ static const QString SpriteMap[] = {
     "" // Terminate.
 };
 
-int findSpriteNameInMap(const QString& name)
+int findSpriteNameInMap(QString const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -382,7 +381,7 @@ int findSpriteNameInMap(const QString& name)
     return -1; // Not found.
 }
 
-static const QString SoundMap[] = {
+static QString const SoundMap[] = {
     "None",
     "pistol",
     "shotgn",
@@ -495,7 +494,7 @@ static const QString SoundMap[] = {
     NULL
 };
 
-int findSoundLumpNameInMap(const QString& name)
+int findSoundLumpNameInMap(QString const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -516,7 +515,7 @@ static SoundMapping soundMappings[] = {
     { "",         soundname_t(-1), "" }
 };
 
-int findSoundMappingByDehLabel(const QString& dehLabel, const SoundMapping** mapping)
+int findSoundMappingByDehLabel(QString const &dehLabel, SoundMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !soundMappings[i].dehLabel.isEmpty(); ++i)
@@ -542,7 +541,7 @@ static StateMapping stateMappings[] = {
     { "",             statename_t(-1),  ""        }
 };
 
-int findStateMappingByDehLabel(const QString& dehLabel, const StateMapping** mapping)
+int findStateMappingByDehLabel(QString const &dehLabel, StateMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !stateMappings[i].dehLabel.isEmpty(); ++i)
@@ -565,7 +564,7 @@ static WeaponStateMapping weaponStateMappings[] = {
     { "",           weaponstatename_t(-1),  ""       }
 };
 
-int findWeaponStateMappingByDehLabel(const QString& dehLabel, const WeaponStateMapping** mapping)
+int findWeaponStateMappingByDehLabel(QString const &dehLabel, WeaponStateMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !weaponStateMappings[i].dehLabel.isEmpty(); ++i)
@@ -579,7 +578,7 @@ int findWeaponStateMappingByDehLabel(const QString& dehLabel, const WeaponStateM
     return -1; // Not found.
 }
 
-static const TextMapping TextMap[] = {
+static TextMapping const TextMap[] = {
     /**
      * Disallowed replacements:
      * Mainly UI texts and potentially dangerous format strings.
@@ -868,7 +867,7 @@ static const TextMapping TextMap[] = {
     { "",          "" } // Terminate.
 };
 
-int textMappingForBlob(const QString& origText, const TextMapping** mapping)
+int textMappingForBlob(QString const &origText, TextMapping const **mapping)
 {
     /// @todo Optimize - replace linear search and hash the text blobs.
     if(!origText.isEmpty())
@@ -938,7 +937,7 @@ int stateIndexForActionOffset(int offset)
     return codepConv[offset];
 }
 
-static const ValueMapping valueMappings[] = {
+static ValueMapping const valueMappings[] = {
     { "Initial Health",     "Player|Health" },
     { "Initial Bullets",    "Player|Init Ammo|Clip" },
     { "Max Health",         "Player|Health Limit" },
@@ -958,7 +957,7 @@ static const ValueMapping valueMappings[] = {
     { "", "" }
 };
 
-int findValueMappingForDehLabel(const QString& dehLabel, const ValueMapping** mapping)
+int findValueMappingForDehLabel(QString const &dehLabel, ValueMapping const **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!dehLabel.isEmpty())
