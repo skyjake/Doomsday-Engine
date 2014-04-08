@@ -1860,10 +1860,12 @@ void G_PlayerLeaveMap(int player)
 
 #if __JHEXEN__
     dd_bool newHub = true;
-
-    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-    newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
-    Uri_Delete(nextMapUri); nextMapUri = 0;
+    if(nextMap != uint(-1))
+    {
+        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+        newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
+        Uri_Delete(nextMapUri); nextMapUri = 0;
+    }
 #endif
 
 #if __JHEXEN__

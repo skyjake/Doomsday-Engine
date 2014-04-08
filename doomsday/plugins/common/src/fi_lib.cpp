@@ -84,17 +84,18 @@ static void initStateConditions(fi_state_t *s)
 
 #if __JHEXEN__
     // Leaving the current hub?
+    if(mapinfo_t *curMapInfo = P_MapInfo(0/*current map*/))
     {
-        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-
-        mapinfo_t *curMapInfo = P_MapInfo(0/*current map*/);
-        mapinfo_t *nextMapInfo = P_MapInfo(nextMapUri);
-        if(curMapInfo && nextMapInfo)
+        s->conditions.leave_hub = true;
+        if(nextMap != uint(-1))
         {
-            s->conditions.leave_hub = (curMapInfo->hub != nextMapInfo->hub);
+            Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+            if(curMapInfo->hub == P_MapInfo(nextMapUri)->hub)
+            {
+                s->conditions.leave_hub = false;
+            }
+            Uri_Delete(nextMapUri);
         }
-
-        Uri_Delete(nextMapUri);
     }
     App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #endif
