@@ -103,6 +103,15 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
 
+#ifdef GL_ARB_draw_instanced
+PFNGLDRAWARRAYSINSTANCEDARBPROC                     glDrawArraysInstancedARB;
+PFNGLDRAWELEMENTSINSTANCEDARBPROC                   glDrawElementsInstancedARB;
+#endif
+
+#ifdef GL_ARB_instanced_arrays
+PFNGLVERTEXATTRIBDIVISORARBPROC                     glVertexAttribDivisorARB;
+#endif
+
 #ifdef GL_NV_framebuffer_multisample_coverage
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbufferStorageMultisampleCoverageNV;
 #endif
@@ -197,6 +206,15 @@ void getAllOpenGLEntryPoints()
 
     GET_PROC_EXT(glBlitFramebufferEXT);
     GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
+
+#ifdef GL_ARB_draw_instanced
+    GET_PROC_EXT(glDrawArraysInstancedARB);
+    GET_PROC_EXT(glDrawElementsInstancedARB);
+#endif
+
+#ifdef GL_ARB_instanced_arrays
+    GET_PROC_EXT(glVertexAttribDivisorARB);
+#endif
 
 #ifdef GL_NV_framebuffer_multisample_coverage
     GET_PROC_EXT(glRenderbufferStorageMultisampleCoverageNV);

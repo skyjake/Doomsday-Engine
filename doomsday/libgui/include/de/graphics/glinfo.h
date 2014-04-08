@@ -31,7 +31,9 @@ public:
     /// Extension availability bits.
     struct Extensions
     {
+        duint32 ARB_draw_instanced : 1;
         duint32 ARB_framebuffer_object : 1;
+        duint32 ARB_instanced_arrays : 1;
         duint32 ARB_texture_env_combine : 1;
         duint32 ARB_texture_non_power_of_two : 1;
 

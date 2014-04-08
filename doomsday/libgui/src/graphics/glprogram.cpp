@@ -31,6 +31,9 @@
 
 namespace de {
 
+/// The currently used GLProgram.
+static GLProgram const *currentProgram = 0;
+
 using namespace internal;
 
 DENG2_PIMPL(GLProgram)
@@ -46,6 +49,7 @@ DENG2_PIMPL(GLProgram)
     Uniforms changed;
     UniformList textures;
     bool texturesChanged;
+    int attribLocation[AttribSpec::NUM_SEMANTICS]; ///< Where each attribute is bound.
 
     GLuint name;
     Shaders shaders;
@@ -158,35 +162,43 @@ DENG2_PIMPL(GLProgram)
     {
         alloc();
 
-        // The names of shader attributes are defined here:
+        if(!shaders.isEmpty())
+        {
+            link();
+        }
+
         static struct {
             AttribSpec::Semantic semantic;
             char const *varName;
         }
         const names[] = {
-            { AttribSpec::Position,    "aVertex"      },
-            { AttribSpec::TexCoord0,   "aUV"          },
-            { AttribSpec::TexCoord1,   "aUV2"         },
-            { AttribSpec::TexCoord2,   "aUV3"         },
-            { AttribSpec::TexCoord3,   "aUV4"         },
-            { AttribSpec::TexBounds0,  "aBounds"      },
-            { AttribSpec::Color,       "aColor"       },
-            { AttribSpec::Normal,      "aNormal"      },
-            { AttribSpec::Tangent,     "aTangent"     },
-            { AttribSpec::Bitangent,   "aBitangent"   },
-            { AttribSpec::BoneIDs,     "aBoneIDs"     },
-            { AttribSpec::BoneWeights, "aBoneWeights" },
+            { AttribSpec::Position,       "aVertex"      },
+            { AttribSpec::TexCoord0,      "aUV"          },
+            { AttribSpec::TexCoord1,      "aUV2"         },
+            { AttribSpec::TexCoord2,      "aUV3"         },
+            { AttribSpec::TexCoord3,      "aUV4"         },
+            { AttribSpec::TexBounds0,     "aBounds"      },
+            { AttribSpec::Color,          "aColor"       },
+            { AttribSpec::Normal,         "aNormal"      },
+            { AttribSpec::Tangent,        "aTangent"     },
+            { AttribSpec::Bitangent,      "aBitangent"   },
+            { AttribSpec::BoneIDs,        "aBoneIDs"     },
+            { AttribSpec::BoneWeights,    "aBoneWeights" },
+
+            { AttribSpec::InstanceMatrix, "aInstanceMatrix" }, // x4
+            { AttribSpec::InstanceColor,  "aInstanceColor"  }
         };
 
-        for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
+        // Clear the locations first.
+        for(uint i = 0; i < AttribSpec::NUM_SEMANTICS; ++i)
         {
-            glBindAttribLocation(name, GLuint(names[i].semantic), names[i].varName);
-            LIBGUI_ASSERT_GL_OK();
+            attribLocation[i] = -1; // not in use
         }
 
-        if(!shaders.isEmpty())
+        // Look up where the attributes ended up being linked.
+        for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
         {
-            link();
+            attribLocation[names[i].semantic] = glGetAttribLocation(name, names[i].varName);
         }
     }
 
@@ -266,7 +278,7 @@ DENG2_PIMPL(GLProgram)
 
     void rebuild()
     {
-        qDebug() << "Rebuilding GL program" << name;
+        //qDebug() << "Rebuilding GL program" << name;
 
         if(name)
         {
@@ -402,6 +414,7 @@ void GLProgram::beginUse() const
     DENG2_ASSERT(glIsProgram(d->name));
 
     d->inUse = true;
+    currentProgram = this;
 
     // The program is now ready for use.
     glUseProgram(d->name);
@@ -419,7 +432,13 @@ void GLProgram::endUse() const
     DENG2_ASSERT(d->inUse);
 
     d->inUse = false;
+    currentProgram = 0;
     glUseProgram(0);
+}
+
+GLProgram const *GLProgram::programInUse()
+{
+    return currentProgram;
 }
 
 GLuint GLProgram::glName() const
@@ -436,6 +455,14 @@ int GLProgram::glUniformLocation(char const *uniformName) const
         LOGDEV_GL_WARNING("Could not find uniform '%s'") << uniformName;
     }
     return loc;
+}
+
+int GLProgram::attributeLocation(AttribSpec::Semantic semantic) const
+{
+    DENG2_ASSERT(semantic >= 0);
+    DENG2_ASSERT(semantic < AttribSpec::NUM_SEMANTICS);
+
+    return d->attribLocation[semantic];
 }
 
 } // namespace de

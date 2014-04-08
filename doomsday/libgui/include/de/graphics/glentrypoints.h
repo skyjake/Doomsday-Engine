@@ -126,6 +126,15 @@ LIBGUI_EXTERN_C PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 LIBGUI_EXTERN_C PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
 LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
 
+#ifdef GL_ARB_draw_instanced
+LIBGUI_EXTERN_C PFNGLDRAWARRAYSINSTANCEDARBPROC                     glDrawArraysInstancedARB;
+LIBGUI_EXTERN_C PFNGLDRAWELEMENTSINSTANCEDARBPROC                   glDrawElementsInstancedARB;
+#endif
+
+#ifdef GL_ARB_instanced_arrays
+LIBGUI_EXTERN_C PFNGLVERTEXATTRIBDIVISORARBPROC                     glVertexAttribDivisorARB;
+#endif
+
 #ifdef GL_NV_framebuffer_multisample_coverage
 LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbufferStorageMultisampleCoverageNV;
 #endif

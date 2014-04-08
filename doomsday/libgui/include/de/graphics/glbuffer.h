@@ -49,7 +49,11 @@ namespace internal
             Tangent,
             Bitangent,
             BoneIDs,
-            BoneWeights
+            BoneWeights,
+            InstanceMatrix,     // x4
+            InstanceColor,
+
+            NUM_SEMANTICS
         };
 
         Semantic semantic;
@@ -277,7 +281,33 @@ public:
 
     void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
 
+    /**
+     * Draws the buffer.
+     *
+     * Requires that a GLProgram is in use so that attribute locations can be determined.
+     *
+     * @param first  First vertex to start drawing from.
+     * @param count  Number of vertices to draw.
+     */
     void draw(duint first = 0, dint count = -1) const;
+
+    /**
+     * Draws the buffer with instancing. One instance of the buffer is drawn per
+     * each element in the provided @a instanceAttribs buffer.
+     *
+     * Requires that a GLProgram is in use so that attribute locations can be determined.
+     * Also GL_ARB_instanced_arrays and GL_ARB_draw_instanced must be available.
+     *
+     * @param instanceAttribs  Buffer containing the attributes data for each instance.
+     * @param first            First vertex in this buffer to start drawing from.
+     * @param count            Number of vertices in this buffer to draw in each instance.
+     */
+    void drawInstanced(GLBuffer const &instanceAttribs, duint first = 0, dint count = -1) const;
+
+    /**
+     * Returns the number of vertices in the buffer.
+     */
+    dsize count() const;
 
 protected:
     void setFormat(internal::AttribSpecs const &format);

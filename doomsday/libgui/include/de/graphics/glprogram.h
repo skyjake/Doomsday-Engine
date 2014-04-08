@@ -26,6 +26,7 @@
 #include <de/Observers>
 
 #include "../gui/libgui.h"
+#include "glbuffer.h"
 #include "opengl.h"
 
 namespace de {
@@ -89,13 +90,32 @@ public:
 
     GLProgram &unbind(GLUniform const &uniform);
 
+    /**
+     * Takes this program into use. Only one GLProgram can be in use at a time.
+     */
     void beginUse() const;
 
     void endUse() const;
 
+    /**
+     * Returns the program currently in use.
+     */
+    static GLProgram const *programInUse();
+
     GLuint glName() const;
 
     int glUniformLocation(char const *uniformName) const;
+
+    /**
+     * Determines which attribute location is used for a particular attribute semantic.
+     * These locations are available after the program has been successfully built
+     * (linked).
+     *
+     * @param semantic  Attribute semantic.
+     *
+     * @return Attribute location, or -1 if the semantic is not used in the program.
+     */
+    int attributeLocation(internal::AttribSpec::Semantic semantic) const;
 
 private:
     DENG2_PRIVATE(d)
