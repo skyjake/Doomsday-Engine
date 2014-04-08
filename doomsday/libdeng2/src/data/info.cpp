@@ -38,14 +38,18 @@ DENG2_PIMPL(Info)
 
     struct DefaultIncludeFinder : public IIncludeFinder
     {
-        String findIncludedInfoSource(String const &includeName, Info const &) const
+        String findIncludedInfoSource(String const &includeName, Info const &info,
+                                      String *sourcePath) const
         {
-            return String::fromUtf8(Block(App::rootFolder().locate<File const>(includeName)));
+            String path = info.sourcePath().fileNamePath() / includeName;
+            if(sourcePath) *sourcePath = path;
+            return String::fromUtf8(Block(App::rootFolder().locate<File const>(path)));
         }
     };
 
     QStringList scriptBlockTypes;
     QStringList allowDuplicateBlocksOfType;
+    String sourcePath; ///< May be unknown (empty).
     String content;
     int currentLine;
     int cursor; ///< Index of the next character from the source.
@@ -567,7 +571,13 @@ success:;
         {
             DENG2_ASSERT(finder != 0);
 
-            Info included(finder->findIncludedInfoSource(includeName, self), *finder);
+            String includePath;
+            String content = finder->findIncludedInfoSource(includeName, self, &includePath);
+
+            Info included;
+            included.setFinder(*finder); // use ours
+            included.setSourcePath(includePath);
+            included.parse(content);
 
             // Move the contents of the resulting root block to our root block.
             included.d->rootBlock.moveContents(rootBlock);
@@ -601,6 +611,12 @@ success:;
 
             rootBlock.add(e);
         }
+    }
+
+    void parse(File const &file)
+    {
+        sourcePath = file.path();
+        parse(String::fromUtf8(Block(file)));
     }
 };
 
@@ -695,6 +711,13 @@ Info::Info(String const &source)
     d.reset(inst.take());
 }
 
+Info::Info(File const &file)
+{
+    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
+    inst->parse(file);
+    d.reset(inst.take());
+}
+
 Info::Info(String const &source, IIncludeFinder const &finder)
 {
     QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
@@ -728,6 +751,11 @@ void Info::parse(String const &infoSource)
     d->parse(infoSource);
 }
 
+void Info::parse(File const &file)
+{
+    d->parse(file);
+}
+
 void Info::parseNativeFile(NativePath const &nativePath)
 {
     QFile file(nativePath);
@@ -739,7 +767,18 @@ void Info::parseNativeFile(NativePath const &nativePath)
 
 void Info::clear()
 {
+    d->sourcePath.clear();
     parse("");
+}
+
+void Info::setSourcePath(String const &path)
+{
+    d->sourcePath = path;
+}
+
+String Info::sourcePath() const
+{
+    return d->sourcePath;
 }
 
 Info::BlockElement const &Info::root() const

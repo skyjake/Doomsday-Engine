@@ -31,19 +31,18 @@ static String const KEY_BLOCK_TYPE  = "__type__";
 static String const KEY_INHERIT     = "inherits";
 
 DENG2_PIMPL(ScriptedInfo)
-, public Info::IIncludeFinder
+//, public Info::IIncludeFinder
 {
     typedef Info::Element::Value InfoValue;
 
     Info info;                     ///< Original full parsed contents.
     QScopedPointer<Script> script; ///< Current script being executed.
     Process process;               ///< Execution context.
-    String sourcePath;
     String currentNamespace;
 
     Instance(Public *i) : Base(i)
     {
-        info.setFinder(*this); // finding includes based on sourcePath
+        //info.setFinder(*this); // finding includes based on sourcePath
 
         // No limitation on duplicates for the special block types.
         info.setAllowDuplicateBlocksOfType(
@@ -57,11 +56,13 @@ DENG2_PIMPL(ScriptedInfo)
         script.reset();
     }
 
+    /*
     String findIncludedInfoSource(String const &includeName, Info const &) const
     {
         return String::fromUtf8(Block(App::rootFolder().locate<File const>
-                                      (sourcePath.fileNamePath() / includeName)));
+                                      (info.sourcePath().fileNamePath() / includeName)));
     }
+    */
 
     /**
      * Iterates through the parsed Info contents and processes each element.
@@ -213,7 +214,7 @@ DENG2_PIMPL(ScriptedInfo)
             DENG2_ASSERT(process.state() == Process::Stopped);
 
             script.reset(new Script(block.find("script")->values().first()));
-            script->setPath(sourcePath); // where the source comes from
+            script->setPath(info.sourcePath()); // where the source comes from
             process.run(*script);
             executeWithContext(block.parent());
         }
@@ -326,7 +327,7 @@ DENG2_PIMPL(ScriptedInfo)
     Value *evaluate(String const &source, Info::BlockElement const *context)
     {
         script.reset(new Script(source));
-        script->setPath(sourcePath); // where the source comes from
+        script->setPath(info.sourcePath()); // where the source comes from
         process.run(*script);
         executeWithContext(context);
         return process.context().evaluator().result().duplicate();
@@ -402,8 +403,9 @@ void ScriptedInfo::parse(String const &source)
 
 void ScriptedInfo::parse(File const &file)
 {
-    d->sourcePath = file.path();
-    parse(String::fromUtf8(Block(file)));
+    d->clear();
+    d->info.parse(file);
+    d->processAll();
 }
 
 Value *ScriptedInfo::evaluate(String const &source)

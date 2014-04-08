@@ -27,6 +27,8 @@
 
 namespace de {
 
+class File;
+
 /**
  * Key/value tree. The tree is parsed from the "Snowberry" Info file format.
  *
@@ -256,12 +258,18 @@ public:
 
         /**
          * Finds an Info document.
+         *
          * @param includeName  Name of the Info document as specified in an \@include
          *                     directive.
          * @param from         Info document where the inclusion occurs.
+         * @param sourcePath   Optionally, the path of the Info source is returned
+         *                     here (if the content was read from a file). This can
+         *                     be NULL if the caller doesn't need to know the path.
+         *
          * @return Content of the included document.
          */
-        virtual String findIncludedInfoSource(String const &includeName, Info const &from) const = 0;
+        virtual String findIncludedInfoSource(String const &includeName, Info const &from,
+                                              String *sourcePath) const = 0;
 
         /// The included document could not be found. @ingroup errors
         DENG2_ERROR(NotFoundError);
@@ -291,6 +299,13 @@ public:
      */
     Info(String const &source);
 
+    /**
+     * Parses a file containing Info source.
+     *
+     * @param source  Info source text.
+     */
+    Info(File const &file);
+
     Info(String const &source, IIncludeFinder const &finder);
 
     /**
@@ -311,6 +326,13 @@ public:
     void parse(String const &infoSource);
 
     /**
+     * Parses the Info source read from a file.
+     *
+     * @param file  File containing an Info document.
+     */
+    void parse(File const &file);
+
+    /**
      * Parses the Info contents from a native text file.
      *
      * @param nativePath  Path of a native file containing the Info source.
@@ -318,6 +340,15 @@ public:
     void parseNativeFile(NativePath const &nativePath);
 
     void clear();
+
+    void setSourcePath(String const &path);
+
+    /**
+     * Path of the source, if it has been read from a file.
+     *
+     * @return Source path in the file system.
+     */
+    String sourcePath() const;
 
     BlockElement const &root() const;
 
