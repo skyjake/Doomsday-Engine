@@ -735,7 +735,7 @@ DENG2_PIMPL(ModelDrawable)
 
     // Drawing --------------------------------------------------------------------------
 
-    void draw()
+    void preDraw()
     {
         DENG2_ASSERT(program != 0);
         DENG2_ASSERT(buffer != 0);
@@ -750,9 +750,24 @@ DENG2_PIMPL(ModelDrawable)
 
         program->bind(uBoneMatrices);
         program->beginUse();
+    }
 
+    void draw()
+    {
+        preDraw();
         buffer->draw();
+        postDraw();
+    }
 
+    void drawInstanced(GLBuffer const &attribs)
+    {
+        preDraw();
+        buffer->drawInstanced(attribs);
+        postDraw();
+    }
+
+    void postDraw()
+    {
         program->endUse();
         program->unbind(uBoneMatrices);
     }
@@ -822,6 +837,16 @@ void ModelDrawable::draw() const
     if(isReady() && d->program && d->atlas)
     {
         d->draw();
+    }
+}
+
+void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs) const
+{
+    const_cast<ModelDrawable *>(this)->glInit();
+
+    if(isReady() && d->program && d->atlas)
+    {
+        d->drawInstanced(instanceAttribs);
     }
 }
 

@@ -27,6 +27,8 @@
 
 namespace de {
 
+class GLBuffer;
+
 /**
  * Drawable that is constructed out of a 3D model.
  *
@@ -98,6 +100,8 @@ public:
     void setAnimationTime(TimeDelta const &time);
 
     void draw() const;
+
+    void drawInstanced(GLBuffer const &instanceAttribs) const;
 
     /**
      * Dimensions of the default pose, in model space.
