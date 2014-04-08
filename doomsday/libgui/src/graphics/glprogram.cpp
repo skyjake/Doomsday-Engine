@@ -436,7 +436,7 @@ void GLProgram::endUse() const
     glUseProgram(0);
 }
 
-GLProgram const *GLProgram::programInUse()
+GLProgram const *GLProgram::programInUse() // static
 {
     return currentProgram;
 }
