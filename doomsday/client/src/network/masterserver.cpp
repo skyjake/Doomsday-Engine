@@ -36,6 +36,10 @@
 #include "con_main.h"
 #include "m_misc.h"
 
+#include <de/App>
+
+using namespace de;
+
 // Maximum time allowed time for a master server operation to take (seconds).
 #define RESPONSE_TIMEOUT    15
 
@@ -44,18 +48,14 @@ typedef struct job_s {
     void* data;
 } job_t;
 
-// Master server info. Hardcoded defaults.
-char*   masterAddress = const_cast<char*>("www.dengine.net"); /// @todo refactor cvars
-int     masterPort    = 0; // Defaults to port 80.
-char*   masterPath    = const_cast<char*>("/master.php"); /// @todo refactor cvars
-dd_bool masterAware   = false;
+static String const DEFAULT_API_URL = "www.dengine.net/master.php";
+
+dd_bool masterAware = false; // cvar
 
 static QString masterUrl(const char* suffix = 0)
 {
-    QString u = QString("http://%1:%2%3")
-            .arg(masterAddress)
-            .arg(masterPort? masterPort : 80)
-            .arg(masterPath);
+    String u = App::config().gets("masterServer.apiUrl", DEFAULT_API_URL);
+    if(!u.startsWith("http")) u = "http://" + u;
     if(suffix) u += suffix;
     return u;
 }
