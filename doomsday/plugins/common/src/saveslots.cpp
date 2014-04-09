@@ -331,13 +331,13 @@ SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description
 SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
 {
     // Perhaps a user description of a saved session?
-    if(SaveSlot *sslot = slotBySavedUserDescription(str))
+    if(Slot *sslot = slotBySavedUserDescription(str))
     {
         return sslot;
     }
 
     // Perhaps a saved session file name?
-    if(SaveSlot *sslot = slotBySaveName(str))
+    if(Slot *sslot = slotBySaveName(str))
     {
         return sslot;
     }
@@ -346,26 +346,16 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
     String id = str;
 
     // Translate slot id mnemonics.
-    if(!str.compareWithoutCase("last") || !str.compareWithoutCase("<last>"))
+    if(!id.compareWithoutCase("last") || !id.compareWithoutCase("<last>"))
     {
         id = String::number(Con_GetInteger("game-save-last-slot"));
     }
-    else if(!str.compareWithoutCase("quick") || !str.compareWithoutCase("<quick>"))
+    else if(!id.compareWithoutCase("quick") || !id.compareWithoutCase("<quick>"))
     {
         id = String::number(Con_GetInteger("game-save-quick-slot"));
     }
-    else if(!str.compareWithoutCase("auto") || !str.compareWithoutCase("<auto>"))
-    {
-        id = "auto";
-    }
 
-    if(SaveSlot *sslot = d->slotById(id))
-    {
-        return sslot;
-    }
-
-    // Unknown/not found.
-    return 0;
+    return d->slotById(id);
 }
 
 void SaveSlots::consoleRegister() // static
