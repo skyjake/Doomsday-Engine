@@ -27,8 +27,9 @@ namespace de {
 
 static String const BLOCK_GROUP     = "group";
 static String const BLOCK_NAMESPACE = "namespace";
-static String const KEY_BLOCK_TYPE  = "__type__";
 static String const KEY_INHERIT     = "inherits";
+static String const VAR_BLOCK_TYPE  = "__type__";
+static String const VAR_SOURCE      = "__source__";
 
 DENG2_PIMPL(ScriptedInfo)
 //, public Info::IIncludeFinder
@@ -239,8 +240,12 @@ DENG2_PIMPL(ScriptedInfo)
             else if(!block.name().isEmpty())
             {
                 // Block type placed into a special variable (only with named blocks, though).
-                String varName = variableName(block).concatenateMember(KEY_BLOCK_TYPE);
-                ns.add(varName) = new TextValue(block.blockType());
+                ns.add(variableName(block).concatenateMember(VAR_BLOCK_TYPE)) =
+                        new TextValue(block.blockType());
+
+                // Also store source location in a special variable.
+                ns.add(variableName(block).concatenateMember(VAR_SOURCE)) =
+                        new TextValue(block.sourceLocation());
             }
 
             foreach(Info::Element const *sub, block.contentsInOrder())
@@ -371,8 +376,8 @@ DENG2_PIMPL(ScriptedInfo)
 
     void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
     {
-        if(rec.hasMember(KEY_BLOCK_TYPE) &&
-           !rec[KEY_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
+        if(rec.hasMember(VAR_BLOCK_TYPE) &&
+           !rec[VAR_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
         {
             // Block type matches.
             paths.insert(prefix);
