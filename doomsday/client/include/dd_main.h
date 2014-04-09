@@ -94,17 +94,15 @@ de::LibraryFile const &Plug_FileForPlugin(pluginid_t id);
 int DD_CallHooks(int hook_type, int parm, void* data);
 
 /**
- * Sets the ID of the currently active plugin. Note that plugin hooks are
- * executed in a single-threaded manner; only one can be active at a time.
+ * Sets the ID of the currently active plugin in the current thread.
  *
  * @param id  Plugin id.
  */
 void DD_SetActivePluginId(pluginid_t id);
 
 /**
- * @return Unique identifier of the currently active plugin. Note that plugin
- * hooks are executed in a single-threaded manner; only one is active at a
- * time.
+ * @return Unique identifier of the currently active plugin. The currently
+ * active plugin is tracked separately for each thread.
  */
 pluginid_t DD_ActivePluginId(void);
 

@@ -100,13 +100,13 @@ DENG_GUI_PIMPL(MPSelectionWidget)
                     loadButton().setAction(new JoinAction(sv));
                 }
 
-                loadButton().setText(String(_E(1) "%1 " _E(.)_E(2) "(%5/%6)" _E(.) " "DENG2_CHAR_MDASH" %2"
-                                            _E(D)_E(l) "\n%7 %4")
+                loadButton().setText(String(_E(1) "%1 " _E(.) DENG2_CHAR_MDASH" %2" _E(C) " (%5)" _E(.)
+                                            _E(D)_E(l) "\n%6 %4")
                                .arg(sv.name)
                                .arg(svGame.title())
                                .arg(sv.gameConfig)
                                .arg(sv.numPlayers)
-                               .arg(sv.maxPlayers)
+                               //.arg(sv.maxPlayers)
                                .arg(sv.map));
 
                 // Extra information.
@@ -139,12 +139,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
         ServerWidget *w = new ServerWidget;
-        w->loadButton().audienceForPress() += this;
-        w->rule().setInput(Rule::Height, w->loadButton().rule().height());
-
-        // Automatically close the info popup if the dialog is closed.
-        //QObject::connect(thisPublic, SIGNAL(closed()), w->info, SLOT(close()));
-
+        w->loadButton().audienceForPress() += this;        
         return w;
     }
 
@@ -222,7 +217,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
 MPSelectionWidget::MPSelectionWidget(DiscoveryMode discovery)
     : MenuWidget("mp-selection"), d(new Instance(this))
 {
-    setGridSize(3, ui::Filled, 0, ui::Expand);
+    setGridSize(1, ui::Filled, 0, ui::Expand);
 
     switch(discovery)
     {

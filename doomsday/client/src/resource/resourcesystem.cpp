@@ -61,16 +61,17 @@
 #endif
 
 #include <de/App>
-#include <de/ArrayValue>
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
 #include <de/game/SavedSession>
 #include <de/game/Session>
 #include <de/Log>
+#include <de/Loop>
 #include <de/Module>
-#include <de/NativeFile>
 #include <de/NumberValue>
 #include <de/Reader>
+#include <de/Task>
+#include <de/TaskPool>
 #include <de/Time>
 #ifdef __CLIENT__
 #  include <de/ByteOrder>
@@ -166,19 +167,28 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 #endif // __CLIENT__
 
 /**
- * Native Doomsday Script utility for executing a legacy savegame conversion.
+ * Native Doomsday Script utility for scheduling conversion of a single legacy savegame.
  */
 Value *Function_SavedSession_Convert(Context &, Function::ArgumentValues const &args)
 {
-    String sourcePath = args[0]->asText();
-    String gameId     = args[1]->asText();
-    return new NumberValue(App_ResourceSystem().convertLegacySavegame(sourcePath, gameId));
+    String gameId     = args[0]->asText();
+    String sourcePath = args[1]->asText();
+    return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId, sourcePath));
+}
+
+/**
+ * Native Doomsday Script utility for scheduling conversion of @em all legacy savegames
+ * for the specified gameId.
+ */
+Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues const &args)
+{
+    String gameId = args[0]->asText();
+    return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId));
 }
 
 DENG2_PIMPL(ResourceSystem)
-#ifdef __CLIENT__
-, DENG2_OBSERVES(Games,            Addition)        // Saved session repository population
-#endif
+, DENG2_OBSERVES(Loop,             Iteration)       // post savegame conversion FS population
+, DENG2_OBSERVES(Games,            Addition)        // savegames folder setup
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -396,10 +406,9 @@ DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
         // Setup the SavedSession module.
         binder.init(savedSessionModule)
-                << DENG2_FUNC(SavedSession_Convert, "convert", "savegamePath" << "gameId");
+                << DENG2_FUNC(SavedSession_Convert,    "convert",    "gameId" << "savegamePath")
+                << DENG2_FUNC(SavedSession_ConvertAll, "convertAll", "gameId");
         App::scriptSystem().addNativeModule("SavedSession", savedSessionModule);
-
-        App_Games().audienceForAddition() += this;
 
         // Determine the root directory of the saved session repository.
         if(int arg = App::commandLine().check("-savedir", 1))
@@ -409,17 +418,24 @@ DENG2_PIMPL(ResourceSystem)
             nativeSavePath = App::commandLine().at(arg + 1);
         }
         // Else use the default.
-
-        // Create the user's saved game folder if it doesn't yet exist.
-        App::fileSystem().makeFolder("/home/savegames");
 #endif
+
+        App_Games().audienceForAddition() += this;
+
+        // Create the user saved session folder in the local FS if it doesn't yet exist.
+        // Once created, any SavedSessions in this folder will be found and indexed
+        // automatically into the file system.
+        App::fileSystem().makeFolder("/home/savegames");
+
+        // Create the legacy savegame folder.
+        App::fileSystem().makeFolder("/legacysavegames");
     }
 
     ~Instance()
     {
-#ifdef __CLIENT__
+        convertSavegameTasks.waitForDone();
+
         App_Games().audienceForAddition() -= this;
-#endif
 
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
@@ -456,6 +472,14 @@ DENG2_PIMPL(ResourceSystem)
     inline de::FS1 &fileSystem()
     {
         return App_FileSystem();
+    }
+
+    void gameAdded(Game &game)
+    {
+        // Called from a non-UI thread.
+        LOG_AS("ResourceSystem");
+        // Make the /home/savegames/<gameId> subfolder in the local FS if it does not yet exist.
+        App::fileSystem().makeFolder(String("/home/savegames") / game.id());
     }
 
     void clearMaterialManifests()
@@ -1937,53 +1961,97 @@ DENG2_PIMPL(ResourceSystem)
             }
         }
     }
+#endif // __CLIENT__
 
-
-    void gameAdded(Game &game)
+    /**
+     * Asynchronous task that attempts conversion of a legacy savegame. Each converter
+     * plugin is tried in turn.
+     */
+    class ConvertSavegameTask : public Task
     {
-        // Called from a non-UI thread.
-        LOG_AS("ResourceSystem");
-        String const gameId = game.identityKey();
+        ddhook_savegame_convert_t parm;
 
-        // Make the native savegames folder if it does not yet exist.
-        // Once created, any SavedSessions in this folder will be found and indexed
-        // automatically into the file system.
-        App::fileSystem().makeFolder(String("/home/savegames") / gameId);
-
-        // Perhaps there are legacy saved game sessions which need to be converted?
-        NativePath const oldSavePath = game.legacySavegamePath();
-        if(oldSavePath.exists() && oldSavePath.isReadable())
+    public:
+        ConvertSavegameTask(String const &sourcePath, String const &gameId)
         {
-            QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
+            // Ensure the game is defined (sanity check).
+            /*Game &game = */ App_Games().byIdentityKey(gameId);
 
-            if(namePattern.isValid() && !namePattern.isEmpty())
+            // Ensure the output folder exists if it doesn't already.
+            String const outputPath = String("/home/savegames") / gameId;
+            App::fileSystem().makeFolder(outputPath);
+
+            Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath.toUtf8().constData());
+            Str_Set(Str_InitStd(&parm.outputPath),     outputPath.toUtf8().constData());
+            Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
+        }
+
+        ~ConvertSavegameTask()
+        {
+            Str_Free(&parm.sourcePath);
+            Str_Free(&parm.outputPath);
+            Str_Free(&parm.fallbackGameId);
+        }
+
+        void runTask()
+        {
+            /// @todo fixme: Concurrent active plugins!!
+            DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+        }
+    };
+    TaskPool convertSavegameTasks;
+
+    void loopIteration()
+    {
+        if(convertSavegameTasks.isDone())
+        {
+            LOG_AS("ResourceSystem");
+            Loop::appLoop().audienceForIteration() -= this;
+            try
             {
-                Folder &sourceFolder = App::fileSystem().makeFolderWithFeed(
-                            de::String("/legacySavegames") / gameId,
-                            new DirectoryFeed(oldSavePath),
-                            Folder::PopulateOnlyThisFolder /* no need to go deep */);
-
-                //ArrayValue *pathList = 0;
-                DENG2_FOR_EACH_CONST(Folder::Contents, i, sourceFolder.contents())
-                {
-                    if(namePattern.exactMatch(i->first.fileName()))
-                    {
-                        //if(!pathList) pathList = new ArrayValue;
-                        //(*pathList) << TextValue(i->second->path());
-
-                        self.convertLegacySavegame(i->second->path(), gameId);
-                    }
-                }
-
-                /*if(pathList)
-                {
-                    savedSessionModule.addArray(gameId + ".legacySavegames", pathList);
-                }*/
+                // The newly converted savegame(s) should now be somewhere in /home/savegames
+                App::rootFolder().locate<Folder>("/home/savegames").populate();
             }
+            catch(Folder::NotFoundError const &)
+            {} // Ignore.
         }
     }
 
-#endif // __CLIENT__
+    void beginConvertLegacySavegame(String const &sourcePath, String const &gameId)
+    {
+        LOG_AS("ResourceSystem");
+        LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)") << sourcePath << gameId;
+        Loop::appLoop().audienceForIteration() += this;
+        convertSavegameTasks.start(new ConvertSavegameTask(sourcePath, gameId));
+    }
+
+    void locateLegacySavegames(String const &gameId)
+    {
+        LOG_AS("ResourceSystem");
+        String const legacySavePath = String("/legacysavegames") / gameId;
+        if(Folder *oldSaveFolder = App::rootFolder().tryLocate<Folder>(legacySavePath))
+        {
+            // Add any new legacy savegames which may have appeared in this folder.
+            oldSaveFolder->populate(Folder::PopulateOnlyThisFolder /* no need to go deep */);
+        }
+        else
+        {
+            try
+            {
+                // Make and setup a feed for the /legacysavegames/<gameId> subfolder if the game
+                // might have legacy savegames we may need to convert later.
+                NativePath const oldSavePath = App_Games().byIdentityKey(gameId).legacySavegamePath();
+                if(oldSavePath.exists() && oldSavePath.isReadable())
+                {
+                    App::fileSystem().makeFolderWithFeed(legacySavePath,
+                            new DirectoryFeed(oldSavePath),
+                            Folder::PopulateOnlyThisFolder /* no need to go deep */);
+                }
+            }
+            catch(Games::NotFoundError const &)
+            {} // Ignore this error
+        }
+    }
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
@@ -3910,41 +3978,48 @@ NativePath ResourceSystem::nativeSavePath()
     return d->nativeSavePath;
 }
 
-bool ResourceSystem::convertLegacySavegame(String const &sourcePath, String const &gameId)
+bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &sourcePath)
 {
-    String const outputPath = String("/home/savegames") / gameId;
+    // A converter plugin is required.
+    if(!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
 
-    // Attempt the conversion via a plugin (each is tried in turn).
-    ddhook_savegame_convert_t parm;
-    Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath.toUtf8().constData());
-    Str_Set(Str_InitStd(&parm.outputPath),     outputPath.toUtf8().constData());
-    Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
+    // Populate /legacysavegames/<gameId> with new savegames which may have appeared.
+    d->locateLegacySavegames(gameId);
 
-    // Try to convert the savegame via each plugin in turn.
-    dd_bool conversionAttempted = DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
-
-    Str_Free(&parm.sourcePath);
-    Str_Free(&parm.outputPath);
-    Str_Free(&parm.fallbackGameId);
-
-    if(conversionAttempted)
+    bool didSchedule = false;
+    if(sourcePath.isEmpty())
     {
-        /// @todo kludge: Give the converter a chance to complete.
-        TimeDelta::fromMilliSeconds(1000).sleep();
-
-        try
+        // Process all legacy savegames.
+        if(Folder const *saveFolder = App::rootFolder().tryLocate<Folder>(String("legacysavegames") / gameId))
         {
-            // Update the /home/savegames/<gameId> folder.
-            Folder &saveFolder = App::rootFolder().locate<Folder>(outputPath);
-            saveFolder.populate();
-            return true;
+            /// @todo File name pattern matching should not be done here. This is to prevent
+            /// attempting to convert Hexen's map state side car files separately when this
+            /// is called from Doomsday Script (in bootstrap.de).
+            Game const &game = App_Games().byIdentityKey(gameId);
+            QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
+            if(namePattern.isValid() && !namePattern.isEmpty())
+            {
+                DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder->contents())
+                {
+                    if(namePattern.exactMatch(i->first.fileName()))
+                    {
+                        // Schedule the conversion task.
+                        d->beginConvertLegacySavegame(i->second->path(), gameId);
+                        didSchedule = true;
+                    }
+                }
+            }
         }
-        catch(Folder::NotFoundError const &)
-        {} // Ignore.
+    }
+    // Just the one legacy savegame.
+    else if(App::rootFolder().has(sourcePath))
+    {
+        // Schedule the conversion task.
+        d->beginConvertLegacySavegame(sourcePath, gameId);
+        didSchedule = true;
     }
 
-    // Seemingly no plugin was able to fulfill our request.
-    return false;
+    return didSchedule;
 }
 
 byte precacheMapMaterials = true;

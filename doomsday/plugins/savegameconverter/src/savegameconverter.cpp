@@ -72,7 +72,7 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
 
         LOG_RES_NOTE("Starting conversion of \"%s\" using Savegame Tool")
                 << Path(Str_Text(&parm.sourcePath));
-        cmd.execute();
+        cmd.executeAndWait();
 
         return true;
     }

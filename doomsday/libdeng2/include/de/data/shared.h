@@ -31,6 +31,11 @@ namespace de {
  * You must use the DENG2_SHARED_INSTANCE() macro to define where the static
  * instance pointer is located.
  *
+ * @par Thread-safety
+ *
+ * Shared is not thread safe. The shared object can only be accessed from a
+ * single thread.
+ *
  * @ingroup data
  */
 template <typename Type>

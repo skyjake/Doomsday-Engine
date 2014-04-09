@@ -18,7 +18,6 @@
 
 #include "de/game/session.h"
 #include "de/App"
-#include "de/game/Game"
 #include "de/game/SavedSession"
 #include "de/Log"
 #include "de/Writer"

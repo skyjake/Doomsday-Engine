@@ -6,12 +6,19 @@
 # The window is not yet visible -- no GL operations can be performed.
 # Config has already been loaded from persistent storage.
 
-import Version, App, Config
+import Version, App, Config, SavedSession
 
 def bindDefaultConsoleTildeKey()
     import Input
     Input.bindEvent("global:key-tilde-down+key-shift-up", "taskbar")
     Input.bindEvent("console:key-tilde-down+key-shift-up", "taskbar")
+end
+
+def runLegacySavegameConversion(newGame)
+    if newGame == 'null-game': return
+    # Schedule conversion of all legacy savegames located.
+    # TODO: Improve this logic so that conversion tasks are done only when necessary.
+    SavedSession.convertAll(newGame)
 end
 
 def runPluginLoadHooks(newGame)
@@ -47,6 +54,9 @@ end
 
 # During launch we will perform any necessary maintenance tasks.
 upgradeMaintenance()
+
+# Whenever a game is added, we'll schedule legacy savegame conversion tasks.
+App.audienceForGameAddition += [runLegacySavegameConversion]
 
 # Whenever a game is loaded, we'll run pending hooks.
 App.audienceForGameChange += [runPluginLoadHooks]

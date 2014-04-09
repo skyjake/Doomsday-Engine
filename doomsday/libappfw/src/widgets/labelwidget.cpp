@@ -601,6 +601,16 @@ Vector2ui LabelWidget::textSize() const
     return d->textSize();
 }
 
+Rule const &LabelWidget::contentWidth() const
+{
+    return *d->width;
+}
+
+Rule const &LabelWidget::contentHeight() const
+{
+    return *d->height;
+}
+
 void LabelWidget::setTextGap(DotPath const &styleRuleId)
 {
     d->gapId = styleRuleId;

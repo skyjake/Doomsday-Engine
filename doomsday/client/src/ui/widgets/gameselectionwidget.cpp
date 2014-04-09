@@ -522,7 +522,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         // If the view is too small, we'll want to reduce the number of items in the menu.
         int const maxWidth = style().rules().rule("gameselection.max.width").valuei();
 
-        int const suitable = clamp(1, 3 * width / maxWidth, 3);
+        int const suitable = clamp(1, 4 * width / maxWidth, 3);
         foreach(SubsetWidget *s, subsets)
         {
             s->setColumns(suitable);
@@ -611,7 +611,7 @@ void GameSelectionWidget::operator >> (PersistentState &toState) const
     {
         // Save the fold open/closed state.
         st.set(name() + "." + s->name() + ".open", s->isOpen());
-    }
+    }    
 }
 
 void GameSelectionWidget::operator << (PersistentState const &fromState)

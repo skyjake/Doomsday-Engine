@@ -1,9 +1,8 @@
-/**
- * @file info.cpp
- * Information look up tables. @ingroup dehread
+/** @file info.cpp  Information look up tables.
+ * @ingroup dehread
  *
- * @author Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +22,7 @@
 #include "dehread.h"
 #include "info.h"
 
-static const FinaleBackgroundMapping finaleBGMappings[] = {
+static FinaleBackgroundMapping const finaleBGMappings[] = {
     { "FLOOR4_8",   "BGFLATE1" }, ///< DOOM end of episode 1
     { "SFLR6_1",    "BGFLATE2" }, ///< DOOM end of episode 2
     { "MFLR8_4",    "BGFLATE3" }, ///< DOOM end of episode 3
@@ -38,7 +37,7 @@ static const FinaleBackgroundMapping finaleBGMappings[] = {
     { "",           ""}
 };
 
-int findFinaleBackgroundMappingForText(const QString& text, const FinaleBackgroundMapping** mapping)
+int findFinaleBackgroundMappingForText(QString const &text, FinaleBackgroundMapping const **mapping)
 {
     if(!text.isEmpty())
     for(int i = 0; !finaleBGMappings[i].text.isEmpty(); ++i)
@@ -130,7 +129,7 @@ static FlagMapping mobjtypeFlagMappings[] = {
     { 0, -1, "" } // terminator
 };
 
-int findMobjTypeFlagMappingByDehLabel(const QString& name, const FlagMapping** mapping)
+int findMobjTypeFlagMappingByDehLabel(QString const &name, FlagMapping const **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -145,7 +144,7 @@ int findMobjTypeFlagMappingByDehLabel(const QString& name, const FlagMapping** m
     return -1; // Not found.
 }
 
-static const QString MusicMap[] = {
+static QString const MusicMap[] = {
     "e1m1",
     "e1m2",
     "e1m3",
@@ -216,7 +215,7 @@ static const QString MusicMap[] = {
     "" // Terminate.
 };
 
-int findMusicLumpNameInMap(const QString& name)
+int findMusicLumpNameInMap(QString const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -228,7 +227,7 @@ int findMusicLumpNameInMap(const QString& name)
     return -1; // Not found.
 }
 
-static const QString SpriteMap[] = {
+static QString const SpriteMap[] = {
     "TROO",
     "SHTG",
     "PUNG",
@@ -370,7 +369,7 @@ static const QString SpriteMap[] = {
     "" // Terminate.
 };
 
-int findSpriteNameInMap(const QString& name)
+int findSpriteNameInMap(QString const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -382,7 +381,7 @@ int findSpriteNameInMap(const QString& name)
     return -1; // Not found.
 }
 
-static const QString SoundMap[] = {
+static QString const SoundMap[] = {
     "None",
     "pistol",
     "shotgn",
@@ -495,7 +494,7 @@ static const QString SoundMap[] = {
     NULL
 };
 
-int findSoundLumpNameInMap(const QString& name)
+int findSoundLumpNameInMap(QString const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -516,7 +515,7 @@ static SoundMapping soundMappings[] = {
     { "",         soundname_t(-1), "" }
 };
 
-int findSoundMappingByDehLabel(const QString& dehLabel, const SoundMapping** mapping)
+int findSoundMappingByDehLabel(QString const &dehLabel, SoundMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !soundMappings[i].dehLabel.isEmpty(); ++i)
@@ -542,7 +541,7 @@ static StateMapping stateMappings[] = {
     { "",             statename_t(-1),  ""        }
 };
 
-int findStateMappingByDehLabel(const QString& dehLabel, const StateMapping** mapping)
+int findStateMappingByDehLabel(QString const &dehLabel, StateMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !stateMappings[i].dehLabel.isEmpty(); ++i)
@@ -565,7 +564,7 @@ static WeaponStateMapping weaponStateMappings[] = {
     { "",           weaponstatename_t(-1),  ""       }
 };
 
-int findWeaponStateMappingByDehLabel(const QString& dehLabel, const WeaponStateMapping** mapping)
+int findWeaponStateMappingByDehLabel(QString const &dehLabel, WeaponStateMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !weaponStateMappings[i].dehLabel.isEmpty(); ++i)
@@ -579,7 +578,7 @@ int findWeaponStateMappingByDehLabel(const QString& dehLabel, const WeaponStateM
     return -1; // Not found.
 }
 
-static const TextMapping TextMap[] = {
+static TextMapping const TextMap[] = {
     /**
      * Disallowed replacements:
      * Mainly UI texts and potentially dangerous format strings.
@@ -588,7 +587,7 @@ static const TextMapping TextMap[] = {
     { "",                         "The Ultimate DOOM Startup v%i.%i" },
     { "",                         "DOOM 2: Hell on Earth v%i.%i" },
     { ""/*"D_DEVSTR"*/,           "Development mode ON.\n" },
-    { ""/*"D_CDROM"*/,            "CD-ROM Version: default.cfg from c:\\doomdata\n" },
+    { ""/*"D_CDROM"*/,            "CD-ROM Version: default.cfg from c:\\doomdata" },
     { ""/*"LOADNET"*/,            "you can't do load while in a net game!\n\npress a key." },
     { ""/*"SAVEDEAD"*/,           "you can't save if you aren't playing!\n\npress a key." },
     { ""/*"QSPROMPT"*/,           "quicksave over your game named\n\n'%s'?\n\npress y or n." },
@@ -616,7 +615,125 @@ static const TextMapping TextMap[] = {
     { "",                         "===========================================================================\nATTENTION:  This version of DOOM has been modified.  If you would like to\nget a copy of the original game, call 1-800-IDGAMES or see the readme file.\n        You will not receive technical support for modified games.\n                      press enter to continue\n===========================================================================" },
     { "",                         "===========================================================================\n             This version is NOT SHAREWARE, do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================" },
     { "",                         "===========================================================================\n                            Do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================" },
-
+    { "",                         "I_AllocLow: DOS alloc of %i failed, %i free" },
+    { "",                         "DPMI memory: 0x%x" },
+    { "",                         ", 0x%x allocated for zone" },
+    { "",                         "Insufficient memory!  You need to have at least 3.7 megabytes of total" },
+    { "",                         "free memory available for DOOM to execute.  Reconfigure your CONFIG.SYS" },
+    { "",                         "or AUTOEXEC.BAT to load fewer device drivers or TSR's.  We recommend" },
+    { "",                         "creating a custom boot menu item in your CONFIG.SYS for optimum DOOMing." },
+    { "",                         "Please consult your DOS manual (\"Making more memory available\") for" },
+    { "",                         "information on how to free up more memory for DOOM." },
+    { "",                         "DOOM aborted." },
+    { "",                         "malloc() in I_InitNetwork() failed" },
+    { "",                         "I_NetCmd when not in netgame" },
+    { "",                         "I_StartupTimer()" },
+    { "",                         "Can't register 35 Hz timer w/ DMX library" },
+    { "",                         "Dude.  The ENSONIQ ain't responding." },
+    { "",                         "CODEC p=0x%x, d=%d" },
+    { "",                         "CODEC.  The CODEC ain't responding." },
+    { "",                         "Dude.  The GUS ain't responding." },
+    { "",                         "SB isn't responding at p=0x%x, i=%d, d=%d" },
+    { "",                         "SB_Detect returned p=0x%x,i=%d,d=%d" },
+    { "",                         "Dude.  The Adlib isn't responding." },
+    { "",                         "The MPU-401 isn't reponding @ p=0x%x." },
+    { "",                         "I_StartupSound: Hope you hear a pop." },
+    { "",                         "  Music device #%d & dmxCode=%d" },
+    { "",                         "  Sfx device #%d & dmxCode=%d" },
+    { "",                         "  calling DMX_Init" },
+    { "",                         "  DMX_Init() returned %d" },
+    { "",                         "CyberMan: Wrong mouse driver - no SWIFT support (AX=%04x)." },
+    { "",                         "CyberMan: no SWIFT device connected." },
+    { "",                         "CyberMan: SWIFT device is not a CyberMan! (type=%d)" },
+    { "",                         "CyberMan: CyberMan %d.%02d connected." },
+    { "",                         "Austin Virtual Gaming: Levels will end after 20 minutes" },
+    { "",                         "V_Init: allocate screens." },
+    { "",                         "M_LoadDefaults: Load system defaults." },
+    { "",                         "Z_Init: Init zone memory allocation daemon. " },
+    { "",                         "W_Init: Init WADfiles." },
+    { "",                         "You cannot -file with the shareware version. Register!" },
+    { "",                         "This is not the registered version." },
+    { "",                         "registered version." },
+    { "",                         "shareware version." },
+    { "",                         "commercial version." },
+    { "",                         "M_Init: Init miscellaneous info." },
+    { "",                         "R_Init: Init DOOM refresh daemon -" },
+    { "",                         "P_Init: Init Playloop state." },
+    { "",                         "I_Init: Setting up machine state." },
+    { "",                         "D_CheckNetGame: Checking network game status." },
+    { "",                         "S_Init: Setting up sound." },
+    { "",                         "HU_Init: Setting up heads up display." },
+    { "",                         "ST_Init: Init status bar." },
+    { "",                         "P_Init: Checking cmd-line parameters..." },
+    { "",                         "doom1.wad" },
+    { "",                         "doom2f.wad" },
+    { "",                         "doom2.wad" },
+    { "",                         "doom.wad" },
+    { "",                         "French version" },
+    { "",                         "Game mode indeterminate." },
+    { "",                         "Doomcom buffer invalid!" },
+    { "",                         "c:\\doomdata\\doomsav%c.dsg" },
+    { "",                         "c:\\doomdata\\doomsav%d.dsg" },
+    { "",                         "doomsav%c.dsg" },
+    { "",                         "doomsav%d.dsg" },
+    { "",                         "Savegame buffer overrun" },
+    { "",                         "DOOM00.pcx" },
+    { "",                         "c:/localid/doom1.wad" },
+    { "",                         "f:/doom/data_se/data_se/texture1.lmp" },
+    { "",                         "f:/doom/data_se/data_se/pnames.lmp" },
+    { "",                         "c:/localid/default.cfg" },
+    { "",                         "c:/localid/doom.wad" },
+    { "",                         "f:/doom/data_se/data_se/texture1.lmp" },
+    { "",                         "f:/doom/data_se/data_se/texture2.lmp" },
+    { "",                         "f:/doom/data_se/data_se/pnames.lmp" },
+    { "",                         "c:/localid/doom2.wad" },
+    { "",                         "f:/doom/data_se/cdata/texture1.lmp" },
+    { "",                         "f:/doom/data_se/cdata/pnames.lmp" },
+    { "",                         "c:\\doomdata" },
+    { "",                         "c:/doomdata/default.cfg" },
+    { "",                         "~f:/doom/data_se/cdata/map0%i.wad" },
+    { "",                         "~f:/doom/data_se/cdata/map%i.wad" },
+    { "",                         "~f:/doom/data_se/E%cM%c.wad" },
+    { "",                         "e:/doom/data/texture1.lmp" },
+    { "",                         "e:/doom/data/pnames.lmp" },
+    { "",                         "e:/doom/data/texture2.lmp" },
+    { "",                         "e:/doom/cdata/texture1.lmp" },
+    { "",                         "e:/doom/cdata/pnames.lmp" },
+    { "",                         "~e:/doom/cdata/map0%i.wad" },
+    { "",                         "~e:/doom/cdata/map%i.wad" },
+    { "",                         "~e:/doom/E%cM%c.wad" },
+    { "",                         "_" },
+    { "",                         "timed %i gametics in %i realtics" },
+    { "",                         "Z_CT at g_game.c:%i" },
+    { "",                         "Demo %s recorded" },
+    { "",                         "Demo is from a different game version!" },
+    { "",                         "version %i" },
+    { "",                         "Bad savegame" },
+    { "",                         "consistency failure (%i should be %i)" },
+    { "",                         "External statistics registered." },
+    { "",                         "ExpandTics: strange value %i at maketic %i" },
+    { "",                         "Tried to transmit to another node" },
+    { "",                         "send (%i + %i, R %i) [%i]" },
+    { "",                         "%i" },
+    { "",                         "bad packet length %i" },
+    { "",                         "bad packet checksum" },
+    { "",                         "setup packet" },
+    { "",                         "get %i = (%i + %i, R %i)[%i]" },
+    { "",                         "Killed by network driver" },
+    { "",                         "retransmit from %i" },
+    { "",                         "out of order packet (%i + %i)" },
+    { "",                         "missed tics from %i (%i - %i)" },
+    { "",                         "NetUpdate: netbuffer->numtics > BACKUPTICS" },
+    { "",                         "Network game synchronization aborted." },
+    { "",                         "listening for network start info..." },
+    { "",                         "Different DOOM versions cannot play a net game!" },
+    { "",                         "sending network start info..." },
+    { "",                         "startskill %i  deathmatch: %i  startmap: %i  startepisode: %i" },
+    { "",                         "player %i of %i (%i nodes)" },
+    { "",                         "=======real: %i  avail: %i  game: %i" },
+    { "",                         "TryRunTics: lowtic < gametic" },
+    { "",                         "gametic>lowtic" },
+    { "",                         "Couldn't read file %s" },
 
     // Supported replacements:
     { "E1TEXT", "Once you beat the big badasses and\nclean out the moon base you're supposed\nto win, aren't you? Aren't you? Where's\nyour fat reward and ticket home? What\nthe hell is this? It's not supposed to\nend this way!\n\nIt stinks like rotten meat, but looks\nlike the lost Deimos base.  Looks like\nyou're stuck on The Shores of Hell.\nThe only way out is through.\n\nTo continue the DOOM experience, play\nThe Shores of Hell and its amazing\nsequel, Inferno!\n" },
@@ -868,7 +985,7 @@ static const TextMapping TextMap[] = {
     { "",          "" } // Terminate.
 };
 
-int textMappingForBlob(const QString& origText, const TextMapping** mapping)
+int textMappingForBlob(QString const &origText, TextMapping const **mapping)
 {
     /// @todo Optimize - replace linear search and hash the text blobs.
     if(!origText.isEmpty())
@@ -938,7 +1055,7 @@ int stateIndexForActionOffset(int offset)
     return codepConv[offset];
 }
 
-static const ValueMapping valueMappings[] = {
+static ValueMapping const valueMappings[] = {
     { "Initial Health",     "Player|Health" },
     { "Initial Bullets",    "Player|Init Ammo|Clip" },
     { "Max Health",         "Player|Health Limit" },
@@ -958,7 +1075,7 @@ static const ValueMapping valueMappings[] = {
     { "", "" }
 };
 
-int findValueMappingForDehLabel(const QString& dehLabel, const ValueMapping** mapping)
+int findValueMappingForDehLabel(QString const &dehLabel, ValueMapping const **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!dehLabel.isEmpty())
@@ -1087,56 +1204,25 @@ int originalHeightForMobjType(int type)
 "I_StartupKeyboard\n"
 "I_StartupSound\n"
 "ENDOOM"
-"DPMI memory: 0x%x"
-", 0x%x allocated for zone\n"
-"Insufficient memory!  You need to have at least 3.7 megabytes of total\n"
-"free memory available for DOOM to execute.  Reconfigure your CONFIG.SYS\n"
-"or AUTOEXEC.BAT to load fewer device drivers or TSR's.  We recommend\n"
-"creating a custom boot menu item in your CONFIG.SYS for optimum DOOMing.\n"
-"Please consult your DOS manual (\"Making more memory available\") for\n"
-"information on how to free up more memory for DOOM.\n\n"
-"DOOM aborted.\n"
 "-cdrom"
 "STCDROM"
 "STDISK"
-"I_AllocLow: DOS alloc of %i failed, %i free"
 "-net"
-"malloc() in I_InitNetwork() failed"
-"I_NetCmd when not in netgame"
-"I_StartupTimer()\n"
-"Can't register 35 Hz timer w/ DMX library"
 "d%c%s"
 "-nosound"
 "-nosfx"
 "-nomusic"
 "ENSONIQ\n"
-"Dude.  The ENSONIQ ain't responding.\n"
-"CODEC p=0x%x, d=%d\n"
-"CODEC.  The CODEC ain't responding.\n"
 "GUS\n"
 "GUS1\n"
-"Dude.  The GUS ain't responding.\n"
 "GUS2\n"
 "dmxgusc"
 "dmxgus"
 "cfg p=0x%x, i=%d, d=%d\n"
-"SB isn't responding at p=0x%x, i=%d, d=%d\n"
-"SB_Detect returned p=0x%x,i=%d,d=%d\n"
 "Adlib\n"
-"Dude.  The Adlib isn't responding.\n"
 "genmidi"
 "Midi\n"
 "cfg p=0x%x\n"
-"The MPU-401 isn't reponding @ p=0x%x.\n"
-"I_StartupSound: Hope you hear a pop.\n"
-"  Music device #%d & dmxCode=%d\n"
-"  Sfx device #%d & dmxCode=%d\n"
-"  calling DMX_Init\n"
-"  DMX_Init() returned %d\n"
-"CyberMan: Wrong mouse driver - no SWIFT support (AX=%04x).\n"
-"CyberMan: no SWIFT device connected.\n"
-"CyberMan: SWIFT device is not a CyberMan! (type=%d)\n"
-"CyberMan: CyberMan %d.%02d connected.\n"
 "SLIME16"
 "RROCK14"
 "RROCK07"
@@ -1169,26 +1255,9 @@ int originalHeightForMobjType(int type)
 "demo3"
 "demo4"
 "default.cfg"
-"doom1.wad"
-"doom2f.wad"
-"doom2.wad"
-"doom.wad"
 "-shdev"
-"c:/localid/doom1.wad"
-"f:/doom/data_se/data_se/texture1.lmp"
-"f:/doom/data_se/data_se/pnames.lmp"
-"c:/localid/default.cfg"
 "-regdev"
-"c:/localid/doom.wad"
-"f:/doom/data_se/data_se/texture1.lmp"
-"f:/doom/data_se/data_se/texture2.lmp"
-"f:/doom/data_se/data_se/pnames.lmp"
 "-comdev"
-"c:/localid/doom2.wad"
-"f:/doom/data_se/cdata/texture1.lmp"
-"f:/doom/data_se/cdata/pnames.lmp"
-"French version\n"
-"Game mode indeterminate.\n"
 "rb"
 "\nNo such response file!"
 "Found response file %s!\n"
@@ -1200,16 +1269,10 @@ int originalHeightForMobjType(int type)
 "-devparm"
 "-altdeath"
 "-deathmatch"
-"\nP_Init: Checking cmd-line parameters...\n"
 "-cdrom"
-"c:\\doomdata"
-"c:/doomdata/default.cfg"
 "-turbo"
 "turbo scale: %i%%\n"
 "-wart"
-"~f:/doom/data_se/cdata/map0%i.wad"
-"~f:/doom/data_se/cdata/map%i.wad"
-"~f:/doom/data_se/E%cM%c.wad"
 "Warping to Episode %s, Map %s.\n"
 "-file"
 "-playdemo"
@@ -1223,88 +1286,30 @@ int originalHeightForMobjType(int type)
 "s"
 ".\n"
 "-avg"
-"Austin Virtual Gaming: Levels will end after 20 minutes\n"
 "-warp"
-"V_Init: allocate screens.\n"
-"M_LoadDefaults: Load system defaults.\n"
-"Z_Init: Init zone memory allocation daemon. \n"
-"W_Init: Init WADfiles.\n"
-"\nYou cannot -file with the shareware version. Register!"
-"\nThis is not the registered version."
-"\tregistered version.\n"
-"\tshareware version.\n"
-"\tcommercial version.\n"
-"M_Init: Init miscellaneous info.\n"
-"R_Init: Init DOOM refresh daemon - "
-"\nP_Init: Init Playloop state.\n"
-"I_Init: Setting up machine state.\n"
-"D_CheckNetGame: Checking network game status.\n"
-"S_Init: Setting up sound.\n"
-"HU_Init: Setting up heads up display.\n"
-"ST_Init: Init status bar.\n"
 "-statcopy"
-"External statistics registered.\n"
 "-record"
 "-loadgame"
-"c:\\doomdata\\doomsav%c.dsg"
-"doomsav%c.dsg"
-"ExpandTics: strange value %i at maketic %i"
-"Tried to transmit to another node"
-"send (%i + %i, R %i) [%i] "
-"%i "
-"\n"
-"bad packet length %i\n"
-"bad packet checksum\n"
-"setup packet\n"
-"get %i = (%i + %i, R %i)[%i] "
 "Player 1 left the game"
-"Killed by network driver"
-"retransmit from %i\n"
-"out of order packet (%i + %i)\n"
-"missed tics from %i (%i - %i)\n"
-"NetUpdate: netbuffer->numtics > BACKUPTICS"
-"Network game synchronization aborted."
-"listening for network start info...\n"
-"Different DOOM versions cannot play a net game!"
-"sending network start info...\n"
-"Doomcom buffer invalid!"
-"startskill %i  deathmatch: %i  startmap: %i  startepisode: %i\n"
-"player %i of %i (%i nodes)\n"
-"=======real: %i  avail: %i  game: %i\n"
-"TryRunTics: lowtic < gametic"
-"gametic>lowtic"
 "%s is turbo!"
-"consistency failure (%i should be %i)"
 "NET GAME"
 "Only %i deathmatch spots, 4 required"
 "map31"
-"version %i"
-"Bad savegame"
 "-cdrom"
-"c:\\doomdata\\doomsav%d.dsg"
-"doomsav%d.dsg"
-"Savegame buffer overrun"
 "SKY3"
 "SKY1"
 "SKY2"
 "SKY4"
 ".lmp"
 "-maxdemo"
-"Demo is from a different game version!"
 "-nodraw"
 "-noblit"
-"timed %i gametics in %i realtics"
-"Z_CT at g_game.c:%i"
-"Demo %s recorded"
 "-cdrom"
-"c:\\doomdata\\doomsav%d.dsg"
-"doomsav%d.dsg"
 "M_LOADG"
 "M_LSLEFT"
 "M_LSCNTR"
 "M_LSRGHT"
 "M_SAVEG"
-"_"
 "HELP2"
 "HELP1"
 "HELP"
@@ -1321,7 +1326,6 @@ int originalHeightForMobjType(int type)
 "M_CELL1"
 "M_CELL2"
 "PLAYPAL"
-"Couldn't read file %s"
 "mouse_sensitivity"
 "sfx_volume"
 "music_volume"

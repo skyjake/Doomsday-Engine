@@ -192,9 +192,12 @@ DENG2_PIMPL(ClientWindow)
         gameSelMenu = new GameSelectionWidget;
         gameSelMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
-                .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
-                                                               style.rules().rule("gameselection.max.width")))
+                .setInput(Rule::Width,   root.viewWidth())
                 .setAnchorPoint(Vector2f(.5f, .5f));
+        AutoRef<Rule> pad(OperatorRule::maximum(style.rules().rule("gap"),
+                                                (root.viewWidth() -
+                                                 style.rules().rule("gameselection.max.width")) / 2));
+        gameSelMenu->margins().setLeft(pad).setRight(pad);
         gameSelMenu->filter().useInvertedStyle();
         gameSelMenu->filter().setOpacity(.9f);
         gameSelMenu->filter().rule()

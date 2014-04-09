@@ -247,12 +247,14 @@ mapinfo_t *P_MapInfo(Uri const *mapUri)
 {
     if(!mapUri) mapUri = gameMapUri;
 
-    std::string mapPath(Str_Text(Uri_Compose(mapUri)));
+    AutoStr *mapUriStr = Uri_Compose(mapUri);
+    std::string mapPath(Str_Text(mapUriStr));
     MapInfos::iterator found = mapInfos.find(mapPath);
     if(found != mapInfos.end())
     {
         return &found->second;
     }
+    //App_Log(DE2_DEV_MAP_NOTE, "Unknown MAPINFO definition '%s'", Str_Text(mapUriStr));
     return 0;
 }
 

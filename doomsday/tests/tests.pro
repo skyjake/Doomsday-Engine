@@ -7,6 +7,7 @@ TEMPLATE = subdirs
 
 deng_tests: SUBDIRS += \
     test_archive \
+    test_commandline \
     test_bitfield \
     test_glsandbox \
     test_info \

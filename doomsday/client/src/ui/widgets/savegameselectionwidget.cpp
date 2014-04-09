@@ -135,11 +135,6 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
     {
         SavegameWidget *w = new SavegameWidget;
         w->loadButton().audienceForPress() += this;
-        w->rule().setInput(Rule::Height, w->loadButton().rule().height());
-
-        // Automatically close the info popup if the dialog is closed.
-        //QObject::connect(thisPublic, SIGNAL(closed()), w->info, SLOT(close()));
-
         return w;
     }
 
@@ -245,7 +240,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
 SavegameSelectionWidget::SavegameSelectionWidget()
     : MenuWidget("savegame-selection"), d(new Instance(this))
 {
-    setGridSize(3, ui::Filled, 0, ui::Expand);
+    setGridSize(1, ui::Filled, 0, ui::Expand);
     d->updateItemsFromSavedIndex();
 }
 
