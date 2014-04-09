@@ -22,7 +22,6 @@
 #define LIBCOMMON_SAVESLOTS_H
 
 #include <de/Error>
-#include <de/game/SavedSession>
 #include <de/Path>
 #include <de/String>
 
