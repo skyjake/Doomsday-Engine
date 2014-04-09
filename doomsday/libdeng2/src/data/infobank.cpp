@@ -95,9 +95,22 @@ Time InfoBank::sourceModifiedAt() const
     return d->modTime;
 }
 
-String InfoBank::relativeToPath() const
+String InfoBank::bankRootPath() const
 {
     return d->relativeToPath;
+}
+
+String InfoBank::relativeToPath(Record const &context) const
+{
+    if(context.has("__source__"))
+    {
+        String src = context["__source__"].value<TextValue>();
+        int pos = src.lastIndexOf(':');
+        if(pos < 0) return src;
+        src.truncate(pos);
+        return src.fileNamePath();
+    }
+    return bankRootPath();
 }
 
 Variable const &InfoBank::operator [] (String const &name) const

@@ -206,11 +206,11 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     }
     else if(def.has("path.vertex"))
     {
-        vtx = ShaderSource(relativeToPath() / def["path.vertex"], ShaderSource::FilePath);
+        vtx = ShaderSource(relativeToPath(def) / def["path.vertex"], ShaderSource::FilePath);
     }
     else if(def.has("path"))
     {
-        vtx = ShaderSource(relativeToPath() / def["path"] + ".vsh", ShaderSource::FilePath);
+        vtx = ShaderSource(relativeToPath(def) / def["path"] + ".vsh", ShaderSource::FilePath);
     }
 
     // Fragment shader definition.
@@ -220,11 +220,11 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     }
     else if(def.has("path.fragment"))
     {
-        frag = ShaderSource(relativeToPath() / def["path.fragment"], ShaderSource::FilePath);
+        frag = ShaderSource(relativeToPath(def) / def["path.fragment"], ShaderSource::FilePath);
     }
     else if(def.has("path"))
     {
-        frag = ShaderSource(relativeToPath() / def["path"] + ".fsh", ShaderSource::FilePath);
+        frag = ShaderSource(relativeToPath(def) / def["path"] + ".fsh", ShaderSource::FilePath);
     }
 
     // Additional shaders to append to the main source.
@@ -232,14 +232,14 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     {
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.vertex"].value().as<ArrayValue>().elements())
         {
-            vtx.insertFromFile(relativeToPath() / (*i)->asText());
+            vtx.insertFromFile(relativeToPath(def) / (*i)->asText());
         }
     }
     if(def.has("include.fragment"))
     {
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.fragment"].value().as<ArrayValue>().elements())
         {
-            frag.insertFromFile(relativeToPath() / (*i)->asText());
+            frag.insertFromFile(relativeToPath(def) / (*i)->asText());
         }
     }
 

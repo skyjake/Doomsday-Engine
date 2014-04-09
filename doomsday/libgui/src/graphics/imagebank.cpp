@@ -89,7 +89,7 @@ Image const &ImageBank::image(DotPath const &path) const
 Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Instance::ImageSource(relativeToPath() / def["path"]);
+    return new Instance::ImageSource(relativeToPath(def) / def["path"]);
 }
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)

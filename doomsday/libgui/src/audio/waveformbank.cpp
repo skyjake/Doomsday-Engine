@@ -82,7 +82,7 @@ Waveform const &WaveformBank::waveform(DotPath const &id) const
 Bank::ISource *WaveformBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Instance::Source(relativeToPath() / def["path"]);
+    return new Instance::Source(relativeToPath(def) / def["path"]);
 }
 
 Bank::IData *WaveformBank::loadFromSource(ISource &source)
