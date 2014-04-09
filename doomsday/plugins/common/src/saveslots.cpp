@@ -25,7 +25,6 @@
 #include "gamesession.h"
 #include "hu_menu.h"
 #include <de/App>
-#include <de/game/Session>
 #include <de/Folder>
 #include <de/Observers>
 #include <de/Writer>
@@ -137,7 +136,7 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String savePath, int menuWid
     d->menuWidgetId = menuWidgetId;
 
     // See if a saved session already exists for this slot.
-    setSavedSession(DENG2_APP->rootFolder().tryLocate<SavedSession>(d->savePath));
+    setSavedSession(App::rootFolder().tryLocate<SavedSession>(d->savePath));
 }
 
 SaveSlots::Slot::SessionStatus SaveSlots::Slot::sessionStatus() const
@@ -165,7 +164,7 @@ void SaveSlots::Slot::bindSavePath(String newPath)
     if(d->savePath != newPath)
     {
         d->savePath = newPath;
-        setSavedSession(DENG2_APP->rootFolder().tryLocate<SavedSession>(d->savePath));
+        setSavedSession(App::rootFolder().tryLocate<SavedSession>(d->savePath));
     }
 }
 
@@ -224,7 +223,7 @@ DENG2_PIMPL(SaveSlots)
         DENG2_FOR_EACH(Slots, i, sslots) { delete i->second; }
     }
 
-    SaveSlot *slotById(String id)
+    SaveSlot *slotById(String const &id)
     {
         Slots::const_iterator found = sslots.find(id);
         if(found != sslots.end())
@@ -236,11 +235,20 @@ DENG2_PIMPL(SaveSlots)
 
     SaveSlot *slotBySavePath(String path)
     {
-        DENG2_FOR_EACH(Slots, i, sslots)
+        if(!path.isEmpty())
         {
-            if(!i->second->savePath().compareWithoutCase(path))
+            // Append the .save extension if non exists.
+            if(path.fileNameExtension().isEmpty())
             {
-                return i->second;
+                path += ".save";
+            }
+
+            DENG2_FOR_EACH_CONST(Slots, i, sslots)
+            {
+                if(!i->second->savePath().compareWithoutCase(path))
+                {
+                    return i->second;
+                }
             }
         }
         return 0; // Not found.
@@ -248,7 +256,7 @@ DENG2_PIMPL(SaveSlots)
 
     void savedIndexAvailabilityUpdate(GameSession::SavedIndex const &index)
     {
-        DENG2_FOR_EACH(Slots, i, sslots)
+        DENG2_FOR_EACH_CONST(Slots, i, sslots)
         {
             SaveSlot *sslot = i->second;
             if(!index.find(sslot->savePath()))
@@ -270,7 +278,7 @@ DENG2_PIMPL(SaveSlots)
 SaveSlots::SaveSlots() : d(new Instance(this))
 {}
 
-void SaveSlots::add(String id, bool userWritable, String savePath, int menuWidgetId)
+void SaveSlots::add(String const &id, bool userWritable, String const &savePath, int menuWidgetId)
 {
     // Ensure the slot identifier is unique.
     if(d->slotById(id)) return;
@@ -284,12 +292,12 @@ int SaveSlots::count() const
     return int(d->sslots.size());
 }
 
-bool SaveSlots::has(String value) const
+bool SaveSlots::has(String const &id) const
 {
-    return d->slotById(value) != 0;
+    return d->slotById(id) != 0;
 }
 
-SaveSlots::Slot &SaveSlots::slot(String id) const
+SaveSlots::Slot &SaveSlots::slot(String const &id) const
 {
     if(SaveSlot *sslot = d->slotById(id))
     {
@@ -299,16 +307,21 @@ SaveSlots::Slot &SaveSlots::slot(String id) const
     throw MissingSlotError("SaveSlots::slot", "Invalid slot id '" + id + "'");
 }
 
-SaveSlots::Slot *SaveSlots::slot(SavedSession const *session) const
+SaveSlots::Slot *SaveSlots::slotBySaveName(String const &name) const
 {
-    if(session)
+    return d->slotBySavePath(COMMON_GAMESESSION->savePath() / name);
+}
+
+SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description) const
+{
+    if(!description.isEmpty())
     {
         DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
-            Slot *sslot = i->second;
-            if(sslot->d->session == session)
+            if(!COMMON_GAMESESSION->savedUserDescription(i->second->saveName())
+                                      .compareWithoutCase(description))
             {
-                return sslot;
+                return i->second;
             }
         }
     }

@@ -1061,37 +1061,17 @@ SaveSlots &G_SaveSlots()
     return *sslots;
 }
 
-static de::game::SavedSession *savedSessionByUserDescription(de::String description)
-{
-    if(!description.isEmpty())
-    {
-        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(COMMON_GAMESESSION->savePath());
-        DENG2_FOR_EACH_CONST(de::Folder::Contents, i, saveFolder.contents())
-        {
-            if(de::game::SavedSession *session = i->second->maybeAs<de::game::SavedSession>())
-            {
-                if(!session->metadata().gets("userDescription", "").compareWithoutCase(description))
-                {
-                    return session;
-                }
-            }
-        }
-    }
-    return 0; // Not found.
-}
-
 /// @todo Encapsulate in SaveSlots?
 de::String G_SaveSlotIdFromUserInput(de::String str)
 {
     // Perhaps a user description of a saved session?
-    if(SaveSlot *sslot = G_SaveSlots().slot(savedSessionByUserDescription(str)))
+    if(SaveSlot *sslot = G_SaveSlots().slotBySavedUserDescription(str))
     {
         return sslot->id();
     }
 
     // Perhaps a saved session file name?
-    de::String savePath = COMMON_GAMESESSION->savePath() / str + ".save";
-    if(SaveSlot *sslot = G_SaveSlots().slot(DENG2_APP->rootFolder().tryLocate<de::game::SavedSession const>(savePath)))
+    if(SaveSlot *sslot = G_SaveSlots().slotBySaveName(str))
     {
         return sslot->id();
     }

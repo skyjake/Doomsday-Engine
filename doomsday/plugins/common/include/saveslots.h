@@ -109,7 +109,8 @@ public:
      * @param menuWidgetId    Unique identifier of the game menu widget to associate this slot with.
      *                        Use @c 0 for none.
      */
-    void add(de::String id, bool userWritable, de::String savePath, int menuWidgetId = 0);
+    void add(de::String const &id, bool userWritable, de::String const &savePath,
+             int menuWidgetId = 0);
 
     /**
      * Returns the total number of logical save slots.
@@ -120,12 +121,12 @@ public:
     inline int size() const { return count(); }
 
     /**
-     * Returns @c true iff @a value is interpretable as a logical slot identifier.
+     * Returns @c true iff @a slotId is interpretable as a logical slot identifier.
      */
-    bool has(de::String value) const;
+    bool has(de::String const &slotId) const;
 
     /// @see slot()
-    inline Slot &operator [] (de::String slotId) {
+    inline Slot &operator [] (de::String const &slotId) {
         return slot(slotId);
     }
 
@@ -134,12 +135,18 @@ public:
      *
      * @see has()
      */
-    Slot &slot(de::String slotId) const;
+    Slot &slot(de::String const &slotId) const;
 
     /**
-     * Returns the logical save slot associated with the given saved @a session.
+     * Returns the logical save slot associated with the saved session @a name specified.
      */
-    Slot *slot(de::game::SavedSession const *session) const;
+    Slot *slotBySaveName(de::String const &name) const;
+
+    /**
+     * Returns the logical save slot associated with the @em first saved session with the
+     * user @a description specified.
+     */
+    Slot *slotBySavedUserDescription(de::String const &description) const;
 
     /**
      * Register the console commands and variables of this module.

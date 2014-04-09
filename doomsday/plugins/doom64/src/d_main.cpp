@@ -29,7 +29,6 @@
 #include "gamesession.h"
 #include "m_argv.h"
 #include "p_inventory.h"
-//#include "p_saveg.h"
 #include "p_map.h"
 #include "saveslots.h"
 #include <cstring>
