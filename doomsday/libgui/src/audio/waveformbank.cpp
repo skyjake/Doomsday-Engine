@@ -69,7 +69,6 @@ void WaveformBank::add(DotPath const &id, String const &waveformFilePath)
 void WaveformBank::addFromInfo(File const &file)
 {
     LOG_AS("WaveformBank");
-    //d->relativeToPath = file.path().fileNamePath();
     parse(file);
     addFromInfoBlocks("waveform");
 }
