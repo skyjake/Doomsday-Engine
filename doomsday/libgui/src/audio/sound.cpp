@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Sound)
+DENG2_PIMPL(Sound)
 {
     dfloat volume;
     dfloat pan;
@@ -31,8 +31,9 @@ DENG2_PIMPL_NOREF(Sound)
     dfloat minDistance;
     dfloat spread;
 
-    Instance()
-        : volume(1.f)
+    Instance(Public *i)
+        : Base(i)
+        , volume(1.f)
         , pan(0.f)
         , frequency(1.f)
         , positioning(Stereo)
@@ -40,34 +41,47 @@ DENG2_PIMPL_NOREF(Sound)
         , spread(0)
     {}
 
+    void update()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(Change, i)
+        {
+            i->soundPropertyChanged(self);
+        }
+        self.update();
+    }
+
+    DENG2_PIMPL_AUDIENCE(Play)
+    DENG2_PIMPL_AUDIENCE(Change)
     DENG2_PIMPL_AUDIENCE(Stop)
     DENG2_PIMPL_AUDIENCE(Deletion)
 };
 
+DENG2_AUDIENCE_METHOD(Sound, Play)
+DENG2_AUDIENCE_METHOD(Sound, Change)
 DENG2_AUDIENCE_METHOD(Sound, Stop)
 DENG2_AUDIENCE_METHOD(Sound, Deletion)
 
-Sound::Sound() : d(new Instance)
+Sound::Sound() : d(new Instance(this))
 {}
 
 Sound &Sound::setVolume(dfloat volume)
 {
     d->volume = volume;
-    update();
+    d->update();
     return *this;
 }
 
 Sound &Sound::setPan(dfloat pan)
 {
     d->pan = pan;
-    update();
+    d->update();
     return *this;
 }
 
 Sound &Sound::setFrequency(dfloat factor)
 {
     d->frequency = factor;
-    update();
+    d->update();
     return *this;
 }
 
@@ -75,28 +89,28 @@ Sound &Sound::setPosition(Vector3f const &position, Positioning positioning)
 {
     d->position = position;
     d->positioning = positioning;
-    update();
+    d->update();
     return *this;
 }
 
 Sound &Sound::setVelocity(Vector3f const &velocity)
 {
     d->velocity = velocity;
-    update();
+    d->update();
     return *this;
 }
 
 Sound &Sound::setMinDistance(dfloat minDistance)
 {
     d->minDistance = minDistance;
-    update();
+    d->update();
     return *this;
 }
 
 Sound &Sound::setSpatialSpread(dfloat degrees)
 {
     d->spread = degrees;
-    update();
+    d->update();
     return *this;
 }
 
