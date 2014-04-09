@@ -328,6 +328,46 @@ SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description
     return 0; // Not found.
 }
 
+SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
+{
+    // Perhaps a user description of a saved session?
+    if(SaveSlot *sslot = slotBySavedUserDescription(str))
+    {
+        return sslot;
+    }
+
+    // Perhaps a saved session file name?
+    if(SaveSlot *sslot = slotBySaveName(str))
+    {
+        return sslot;
+    }
+
+    // Perhaps a unique slot identifier?
+    String id = str;
+
+    // Translate slot id mnemonics.
+    if(!str.compareWithoutCase("last") || !str.compareWithoutCase("<last>"))
+    {
+        id = String::number(Con_GetInteger("game-save-last-slot"));
+    }
+    else if(!str.compareWithoutCase("quick") || !str.compareWithoutCase("<quick>"))
+    {
+        id = String::number(Con_GetInteger("game-save-quick-slot"));
+    }
+    else if(!str.compareWithoutCase("auto") || !str.compareWithoutCase("<auto>"))
+    {
+        id = "auto";
+    }
+
+    if(SaveSlot *sslot = d->slotById(id))
+    {
+        return sslot;
+    }
+
+    // Unknown/not found.
+    return 0;
+}
+
 void SaveSlots::consoleRegister() // static
 {
     C_VAR_INT("game-save-last-slot",    &cvarLastSlot,  CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);

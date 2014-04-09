@@ -148,6 +148,22 @@ public:
     Slot *slotBySavedUserDescription(de::String const &description) const;
 
     /**
+     * Parse @a str and determine whether it references a logical save slot.
+     *
+     * @param str  String to be parsed. Parse is divided into three passes.
+     *             Pass 1: Check for a known game-save description which matches this.
+     *                 Search is in logical save slot creation order.
+     *             Pass 2: Check for keyword identifiers.
+     *                 <auto>  = The "auto save" slot.
+     *                 <last>  = The last used slot.
+     *                 <quick> = The currently nominated "quick save" slot.
+     *             Pass 3: Check for a unique save slot identifier.
+     *
+     * @return  The referenced Slot otherwise @c 0.
+     */
+    Slot *slotByUserInput(de::String const &str) const;
+
+    /**
      * Register the console commands and variables of this module.
      *
      * - game-save-last-slot   Last-used slot. Can be @c -1 (not set).

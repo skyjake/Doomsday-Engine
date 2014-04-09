@@ -256,22 +256,6 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata);
 SaveSlots &G_SaveSlots();
 
 /**
- * Parse @a str and determine whether it references a logical game-save slot.
- *
- * @param str  String to be parsed. Parse is divided into three passes.
- *             Pass 1: Check for a known game-save description which matches this.
- *                 Search is in logical save slot creation order.
- *             Pass 2: Check for keyword identifiers.
- *                 <auto>  = The "auto save" slot.
- *                 <last>  = The last used slot.
- *                 <quick> = The currently nominated "quick save" slot.
- *             Pass 3: Check for a unique save slot identifier.
- *
- * @return  The parsed slot id if found; otherwise a zero-length string.
- */
-de::String G_SaveSlotIdFromUserInput(de::String str);
-
-/**
  * Returns the game's GameRuleset.
  */
 GameRuleset &G_Rules();
