@@ -1,7 +1,8 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -50,7 +51,10 @@ public:
     bool isLocked() const;
 
 private:
-    DENG2_PRIVATE(d)
+    mutable QMutex _mutex;
+
+    mutable int _lockCount;
+    mutable QMutex _countMutex;
 };
 
 } // namespace de

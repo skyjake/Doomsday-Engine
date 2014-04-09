@@ -1,7 +1,8 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -22,18 +23,9 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Lockable)
-{
-    mutable QMutex mutex;
-
-    mutable int lockCount;
-    mutable QMutex countMutex;
-
-    Instance() : mutex(QMutex::Recursive), lockCount(0)
-    {}
-};
-
-Lockable::Lockable() : d(new Instance)
+Lockable::Lockable()
+    : _mutex(QMutex::Recursive)
+    , _lockCount(0)
 {}
 
 Lockable::~Lockable()
@@ -46,31 +38,31 @@ Lockable::~Lockable()
 
 void Lockable::lock() const
 {
-    d->countMutex.lock();
-    d->lockCount++;
-    d->countMutex.unlock();
+    _countMutex.lock();
+    _lockCount++;
+    _countMutex.unlock();
 
-    d->mutex.lock();
+    _mutex.lock();
 }
 
 void Lockable::unlock() const
 {
     // Release the lock.
-    d->mutex.unlock();
+    _mutex.unlock();
 
-    d->countMutex.lock();
-    d->lockCount--;
-    d->countMutex.unlock();
+    _countMutex.lock();
+    _lockCount--;
+    _countMutex.unlock();
 
-    DENG2_ASSERT(d->lockCount >= 0);
+    DENG2_ASSERT(_lockCount >= 0);
 }
 
 bool Lockable::isLocked() const
 {
     bool result;
-    d->countMutex.lock();
-    result = (d->lockCount > 0);
-    d->countMutex.unlock();
+    _countMutex.lock();
+    result = (_lockCount > 0);
+    _countMutex.unlock();
     return result;
 }
 
