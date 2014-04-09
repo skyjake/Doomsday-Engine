@@ -21,10 +21,11 @@
 #include "de/ScriptLex"
 #include "de/Log"
 #include "de/LogBuffer"
+#include "de/Zeroed"
 #include "de/App"
 #include <QFile>
 
-using namespace de;
+namespace de {
 
 static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
@@ -261,7 +262,7 @@ DENG2_PIMPL(Info)
 
         DENG2_ASSERT(result != 0);
 
-        result->setLineNumber(elementLine);
+        result->setSourceLocation(sourcePath, elementLine);
         return result;
     }
 
@@ -620,6 +621,73 @@ success:;
     }
 };
 
+//---------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(Info::Element)
+{
+    Type type;
+    String name;
+    Zeroed<BlockElement *> parent;
+    String sourcePath;
+    Zeroed<int> lineNumber;
+};
+
+Info::Element::Element(Type type, String const &name)
+    : d(new Instance)
+{
+    d->type = type;
+    setName(name);
+}
+
+Info::Element::~Element()
+{}
+
+void Info::Element::setParent(BlockElement *parent)
+{
+    d->parent = parent;
+}
+
+Info::BlockElement *Info::Element::parent() const
+{
+    return d->parent;
+}
+
+void Info::Element::setSourceLocation(String const &sourcePath, int line)
+{
+    d->sourcePath = sourcePath;
+    d->lineNumber = line;
+}
+
+String Info::Element::sourcePath() const
+{
+    return d->sourcePath;
+}
+
+int Info::Element::lineNumber() const
+{
+    return d->lineNumber;
+}
+
+String Info::Element::sourceLocation() const
+{
+    return String("%1:%2").arg(d->sourcePath).arg(d->lineNumber);
+}
+
+Info::Element::Type Info::Element::type() const
+{
+    return d->type;
+}
+
+String const &Info::Element::name() const
+{
+    return d->name;
+}
+
+void Info::Element::setName(String const &name)
+{
+    d->name = name;
+}
+
 Info::BlockElement::~BlockElement()
 {
     clear();
@@ -802,3 +870,5 @@ bool Info::findValueForKey(String const &key, String &value) const
     }
     return false;
 }
+
+} // namespace de

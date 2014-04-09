@@ -79,43 +79,39 @@ public:
         typedef QList<Value> ValueList;
 
         /**
-         * @param t  Type of the element.
-         * @param n  Case-independent name of the element.
+         * @param type  Type of the element.
+         * @param name  Case-independent name of the element.
          */
-        Element(Type t = None, String const &n = "")
-            : _type(t), _parent(0), _lineNumber(0) { setName(n); }
-        virtual ~Element() {}
+        Element(Type type = None, String const &name = "");
+        virtual ~Element();
 
-        void setParent(BlockElement *parent) { _parent = parent; }
-        BlockElement *parent() const {
-            return _parent;
-        }
+        void setParent(BlockElement *parent);
+        BlockElement *parent() const;
 
-        void setLineNumber(int line) { _lineNumber = line; }
-        int lineNumber() const { return _lineNumber; }
+        void setSourceLocation(String const &sourcePath, int line);
+        String sourcePath() const;
+        int lineNumber() const;
+        String sourceLocation() const;
 
-        Type type() const { return _type; }
-        bool isKey() const { return _type == Key; }
-        bool isList() const { return _type == List; }
-        bool isBlock() const { return _type == Block; }
-        String const &name() const { return _name; }
+        Type type() const;
+        bool isKey() const { return type() == Key; }
+        bool isList() const { return type() == List; }
+        bool isBlock() const { return type() == Block; }
+        String const &name() const;
 
-        DENG2_AS_IS_METHODS()
-
-        void setName(String const &name) { _name = name; }
+        void setName(String const &name);
 
         /// Convenience for case-insensitively checking if the name matches @a name.
-        bool isName(String const &name) const {
-            return !_name.compareWithoutCase(name);
+        inline bool isName(String const &str) const {
+            return !name().compareWithoutCase(str);
         }
 
         virtual ValueList values() const = 0;
 
+        DENG2_AS_IS_METHODS()
+
     private:
-        Type _type;
-        String _name;
-        BlockElement *_parent;
-        int _lineNumber;
+        DENG2_PRIVATE(d)
     };
 
     /**
