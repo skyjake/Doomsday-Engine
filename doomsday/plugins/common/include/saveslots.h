@@ -1,7 +1,6 @@
-/** @file saveslots.h  Map of logical game save slots.
+/** @file saveslots.h  Map of logical saved game session slots.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,7 +25,7 @@
 #include <de/String>
 
 /**
- * Maps save-game session file names into a finite set of "save slots".
+ * Maps saved game session file names into a finite set of "save slots".
  *
  * @ingroup libcommon
  */
@@ -97,16 +96,19 @@ public:
     };
 
 public:
+    /**
+     * Create a new (empty) set of save slots.
+     */
     SaveSlots();
 
     /**
      * Add a new logical save slot.
      *
-     * @param id              Unique identifier for this slot.
-     * @param userWritable    @c true= allow the user to write to this slot.
-     * @param repositoryPath  Relative path in the repository to bind to this slot.
-     * @param menuWidgetId    Unique identifier of the game menu widget to associate this slot with.
-     *                        Use @c 0 for none.
+     * @param id            Unique identifier for this slot.
+     * @param userWritable  @c true= allow the user to write to this slot.
+     * @param savePath      Relative path in the repository to bind to this slot.
+     * @param menuWidgetId  Unique identifier of the game menu widget to associate this slot with.
+     *                      Use @c 0 for none.
      */
     void add(de::String const &id, bool userWritable, de::String const &savePath,
              int menuWidgetId = 0);
