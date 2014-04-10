@@ -87,6 +87,14 @@ archs = "Architectures:"
 x86_64: archs += intel64
 echo($$archs)
 
+deng_c++11 {
+    echo(C++11 enabled (using libc++).)
+    QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
+    QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-deprecated-register
+    QMAKE_LFLAGS += -stdlib=libc++
+}
+
 # Macros ---------------------------------------------------------------------
 
 defineTest(useFramework) {
