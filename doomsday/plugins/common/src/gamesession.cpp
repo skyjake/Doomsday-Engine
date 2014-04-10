@@ -746,6 +746,9 @@ void GameSession::applyNewRules(GameRuleset const &newRules)
     {
         NetSv_ApplyGameRulesFromConfig();
     }
+
+    // Update game status cvars:
+    Con_SetInteger2("game-skill", d->rules.skill, SVF_WRITE_OVERRIDE);
 }
 
 bool GameSession::progressRestoredOnReload() const
