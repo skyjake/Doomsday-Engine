@@ -256,4 +256,14 @@ void Bloom::consoleRegister()
     C_VAR_INT  ("rend-bloom-complexity", &bloomComplexity, 0, 0, 1);
 }
 
+bool Bloom::isEnabled() // static
+{
+    return bloomEnabled;
+}
+
+float Bloom::intensity()
+{
+    return bloomIntensity;
+}
+
 } // namespace fx

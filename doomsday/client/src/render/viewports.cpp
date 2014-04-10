@@ -30,6 +30,7 @@
 #include "edit_bias.h"
 #include "api_render.h"
 #include "render/vr.h"
+#include "render/fx/bloom.h"
 
 #include "network/net_demo.h"
 #include "filesys/fs_util.h"
@@ -980,7 +981,7 @@ static void clearViewPorts()
 {
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
 
-    if(Con_GetInteger("rend-bloom"))
+    if(fx::Bloom::isEnabled())
     {
         /*
          * Parts of the previous frame might leak in the bloom unless we clear the color

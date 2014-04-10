@@ -127,6 +127,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
 
     ~Instance()
     {
+        Loop::appLoop().audienceForIteration() -= this;
         App::app().audienceForStartupComplete() -= this;
         game::Session::savedIndex().audienceForAvailabilityUpdate() -= this;
     }

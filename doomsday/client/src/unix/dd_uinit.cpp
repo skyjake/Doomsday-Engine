@@ -42,6 +42,8 @@
 #include "filesys/fs_util.h"
 #include "dd_uinit.h"
 
+#include <de/App>
+
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
 #endif
@@ -58,6 +60,9 @@ static int initDGL(void)
 static void determineGlobalPaths(application_t* app)
 {
     assert(app);
+
+    // By default, make sure the working path is the home folder.
+    de::App::setCurrentWorkPath(de::App::app().nativeHomePath());
 
 #ifndef MACOSX
     if(getenv("HOME"))
