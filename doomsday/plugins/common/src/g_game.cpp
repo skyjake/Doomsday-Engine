@@ -196,7 +196,6 @@ static gamestate_t gameState = GS_STARTUP;
 cvartemplate_t gamestatusCVars[] =
 {
     {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0, 0},
-    //{"game-skill", READONLYCVAR, CVT_INT, &gameRules.skill, 0, 0, 0},
     {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0, 0},
     {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0, 0},
 #if !__JHEXEN__
@@ -366,6 +365,8 @@ static dd_bool quitInProgress;
 
 void G_Register()
 {
+    common::GameSession::consoleRegister();
+
     for(int i = 0; gamestatusCVars[i].path[0]; ++i)
     {
         Con_AddVariable(gamestatusCVars + i);
@@ -550,6 +551,9 @@ static void initSaveSlots()
  */
 void G_CommonPreInit()
 {
+    // Clear the game rules for the current session to their default values.
+    COMMON_GAMESESSION->rules() = GameRuleset();
+
     if(!gameMapUri)
     {
         gameMapUri = Uri_New();

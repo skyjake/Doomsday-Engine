@@ -54,6 +54,9 @@ public:
     /// Returns the singleton instance.
     static GameSession &gameSession();
 
+    /// Register the commands and variables of this module.
+    static void consoleRegister();
+
     bool hasBegun();
     bool savingPossible();
     bool loadingPossible();

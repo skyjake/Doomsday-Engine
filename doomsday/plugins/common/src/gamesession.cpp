@@ -1102,4 +1102,13 @@ String GameSession::savedUserDescription(String const &saveName)
     return ""; // Not found.
 }
 
+namespace {
+int gsvRuleSkill;
+}
+
+void GameSession::consoleRegister() //static
+{
+    C_VAR_INT("game-skill", &gsvRuleSkill, CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE, 0, 0);
+}
+
 } // namespace common
