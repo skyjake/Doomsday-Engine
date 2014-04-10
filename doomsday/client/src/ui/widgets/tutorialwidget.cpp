@@ -26,6 +26,7 @@
 #include <de/MessageDialog>
 #include <de/SignalAction>
 #include <de/Untrapper>
+#include <de/PopupMenuWidget>
 
 using namespace de;
 
@@ -38,12 +39,12 @@ DENG_GUI_PIMPL(TutorialWidget)
         TaskBar,
         DEMenu,
         ConfigMenus,
+        RendererAppearance,
         ConsoleKey,
         Finish
     };
 
     Step current;
-    //LabelWidget *darken;
     MessageDialog *dlg;
     LabelWidget *highlight;
     QTimer flashing;
@@ -81,7 +82,7 @@ DENG_GUI_PIMPL(TutorialWidget)
     void startHighlight(GuiWidget const &w)
     {
         highlight->rule().setRect(w.rule());
-        highlight->setOpacity(.2f);
+        highlight->setOpacity(0);
         highlight->show();
         flashing.start();
         flash();
@@ -114,7 +115,33 @@ DENG_GUI_PIMPL(TutorialWidget)
             win.taskBar().closeConfigMenu();
             break;
 
+        case RendererAppearance:
+            win.taskBar().closeConfigMenu();
+            break;
+
         default:
+            break;
+        }
+    }
+
+    /**
+     * Checks if step @a s is valid for the current engine state and if not,
+     * skips to the next valid state.
+     *
+     * @param s  Current step.
+     */
+    void validateStep(Step &s)
+    {
+        forever
+        {
+            if(!App_GameLoaded())
+            {
+                if(s == RendererAppearance)
+                {
+                    s = Step(s + 1);
+                    continue;
+                }
+            }
             break;
         }
     }
@@ -122,6 +149,9 @@ DENG_GUI_PIMPL(TutorialWidget)
     void initStep(Step s)
     {
         deinitStep();
+
+        // Jump to the next valid step, if necessary.
+        validateStep(s);
 
         if(s == Finish)
         {
@@ -198,6 +228,25 @@ DENG_GUI_PIMPL(TutorialWidget)
             startHighlight(*root().guiFind("conf-button"));
             break;
 
+        case RendererAppearance:
+            dlg->title().setText(tr("Appearance"));
+            dlg->message().setText(tr("By default Doomsday applies many visual "
+                                      "embellishments to how the game world appears. These "
+                                      "can be configured individually in the Renderer "
+                                      "Appearance editor, or you can use one of the built-in "
+                                      "default profiles: %1, %2, or %3.")
+                                   .arg(_E(b) "Defaults" _E(.))
+                                   .arg(_E(b) "Vanilla" _E(.))
+                                   .arg(_E(b) "Amplified" _E(.)));
+            win.taskBar().openConfigMenu();
+            win.root().guiFind("conf-menu")->as<PopupMenuWidget>().menu()
+                    .organizer().itemWidget(tr("Renderer"))->as<ButtonWidget>().trigger();
+            dlg->setAnchorAndOpeningDirection(
+                        win.root().guiFind("renderersettings")->find("appearance-label")
+                        ->as<LabelWidget>().rule(), ui::Left);
+            startHighlight(*root().guiFind("profile-picker"));
+            break;
+
         case ConsoleKey: {
             dlg->title().setText(tr("Console"));
             String msg = tr("The console is a \"Quake style\" command line prompt where "
@@ -205,6 +254,8 @@ DENG_GUI_PIMPL(TutorialWidget)
                             "try typing %1 in the console.").arg(_E(b) "help" _E(.));
             if(App_GameLoaded())
             {
+                // Event bindings are currently stored per-game, so we can't set a
+                // binding unless a game is loaded.
                 msg += "\n\nBelow you can see the current keyboard shortcut for accessing the console quickly. "
                         "To change it, click in the box and then press the key or key combination you "
                         "want to assign as the shortcut.";
@@ -225,7 +276,13 @@ DENG_GUI_PIMPL(TutorialWidget)
             break;
         }
 
-        self.root().addOnTop(dlg);
+        GuiRootWidget &root = self.root();
+
+        // Keep the tutorial above any dialogs etc. that might've been opened.
+        root.remove(self);
+        root.addOnTop(&self);
+
+        root.addOnTop(dlg);
         dlg->open();
     }
 };

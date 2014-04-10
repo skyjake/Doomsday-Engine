@@ -53,7 +53,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         ScrollAreaWidget &area = self.area();
 
         area.add(appear = new ProfilePickerWidget(ClientApp::renderSystem().appearanceSettings(),
-                                                  tr("appearance")));
+                                                  tr("appearance"), "profile-picker"));
         appear->setOpeningDirection(ui::Down);
 
         area.add(fov = new CVarSliderWidget("rend-camera-fov"));
@@ -122,6 +122,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     heading().setText(tr("Renderer Settings"));
 
     LabelWidget *appearLabel = LabelWidget::newWithText(tr("Appearance:"), &area());
+    appearLabel->setName("appearance-label"); // for lookup from tutorial
     LabelWidget *fovLabel = LabelWidget::newWithText(tr("Field of View:"), &area());
 
     LabelWidget *precacheLabel = LabelWidget::newWithText(tr("Precaching:"), &area());
