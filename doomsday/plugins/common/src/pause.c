@@ -124,7 +124,7 @@ dd_bool Pause_IsUserPaused(void)
 
 D_CMD(Pause)
 {
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
         return false;
 
     // Toggle pause.

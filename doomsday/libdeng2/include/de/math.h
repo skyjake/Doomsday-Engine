@@ -83,6 +83,9 @@ template <typename Type>
 inline Type squared(Type const &value) { return value * value; }
 
 template <typename Type>
+inline Type cubed(Type const &value) { return value * value * value; }
+
+template <typename Type>
 inline Type round(dfloat const &value) {
     return Type(std::floor(value + 0.5f));
 }

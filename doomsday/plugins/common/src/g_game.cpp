@@ -133,10 +133,8 @@ void G_PlayerReborn(int player);
 
 void G_DoPlayDemo();
 void G_DoMapCompleted();
-void G_DoEndDebriefing();
 void G_DoVictory();
 void G_DoScreenShot();
-void G_DoQuitGame();
 
 void G_StopDemo();
 
@@ -560,11 +558,6 @@ void G_SetGameActionMapCompleted(uint newMap, uint _entryPoint, dd_bool _secretE
 #endif
 
     G_SetGameAction(GA_MAPCOMPLETED);
-}
-
-gameaction_t G_GameAction()
-{
-    return gameAction;
 }
 
 static inline de::String composeSavedSessionPathForSlot(int slot)
@@ -1162,7 +1155,7 @@ int G_UIResponder(event_t *ev)
     if(!Hu_MenuIsActive() && !DD_GetInteger(DD_SHIFT_DOWN))
     {
         // Any key/button down pops up menu if in demos.
-        if((G_GameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
+        if((gameAction == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
            (G_GameState() == GS_INFINE && FI_IsMenuTrigger()))
         {
             Hu_MenuCommand(MCMD_OPEN);
@@ -1438,88 +1431,94 @@ void G_UpdateGSVarsForMap()
     Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
 }
 
-void G_DoQuitGame()
+static sfxenum_t randomQuitSound()
+{
+#if __JDOOM__ || __JDOOM64__
+    if(cfg.menuQuitSound)
+    {
+# if __JDOOM64__
+        static sfxenum_t quitSounds[] = {
+            SFX_VILACT,
+            SFX_GETPOW,
+            SFX_PEPAIN,
+            SFX_SLOP,
+            SFX_SKESWG,
+            SFX_KNTDTH,
+            SFX_BSPACT,
+            SFX_SGTATK
+        };
+        static int numQuitSounds = sizeof(quitSounds) / sizeof(quitSounds[0]);
+# else
+        static sfxenum_t quitSounds[] = {
+            SFX_PLDETH,
+            SFX_DMPAIN,
+            SFX_POPAIN,
+            SFX_SLOP,
+            SFX_TELEPT,
+            SFX_POSIT1,
+            SFX_POSIT3,
+            SFX_SGTATK
+        };
+        static int numQuitSounds = sizeof(quitSounds) / sizeof(quitSounds[0]);
+
+        static sfxenum_t quitSounds2[] = {
+            SFX_VILACT,
+            SFX_GETPOW,
+            SFX_BOSCUB,
+            SFX_SLOP,
+            SFX_SKESWG,
+            SFX_KNTDTH,
+            SFX_BSPACT,
+            SFX_SGTATK
+        };
+        static int numQuitSounds2 = sizeof(quitSounds2) / sizeof(quitSounds2[0]);
+# endif
+        sfxenum_t *sndTable = quitSounds;
+        int sndTableSize    = numQuitSounds;
+
+# if !__JDOOM64__
+        if(gameModeBits & GM_ANY_DOOM2)
+        {
+            sndTable     = quitSounds2;
+            sndTableSize = numQuitSounds2;
+        }
+# endif
+
+        if(sndTable && sndTableSize > 0)
+        {
+            return sndTable[P_Random() & (sndTableSize - 1)];
+        }
+    }
+#endif
+
+    return SFX_NONE;
+}
+
+static void runGameAction()
 {
 #define QUITWAIT_MILLISECONDS 1500
 
     static uint quitTime = 0;
 
-    if(!quitInProgress)
+    // Run the quit countdown?
+    if(quitInProgress)
     {
-        quitInProgress = true;
-        quitTime = Timer_RealMilliseconds();
-
-        Hu_MenuCommand(MCMD_CLOSEFAST);
-
-        if(!IS_NETGAME)
+        if(Timer_RealMilliseconds() > quitTime + QUITWAIT_MILLISECONDS)
         {
-#if __JDOOM__ || __JDOOM64__
-            // Play an exit sound if it is enabled.
-            if(cfg.menuQuitSound)
-            {
-# if __JDOOM64__
-                static int quitsounds[8] = {
-                    SFX_VILACT,
-                    SFX_GETPOW,
-                    SFX_PEPAIN,
-                    SFX_SLOP,
-                    SFX_SKESWG,
-                    SFX_KNTDTH,
-                    SFX_BSPACT,
-                    SFX_SGTATK
-                };
-# else
-                static int quitsounds[8] = {
-                    SFX_PLDETH,
-                    SFX_DMPAIN,
-                    SFX_POPAIN,
-                    SFX_SLOP,
-                    SFX_TELEPT,
-                    SFX_POSIT1,
-                    SFX_POSIT3,
-                    SFX_SGTATK
-                };
-                static int quitsounds2[8] = {
-                    SFX_VILACT,
-                    SFX_GETPOW,
-                    SFX_BOSCUB,
-                    SFX_SLOP,
-                    SFX_SKESWG,
-                    SFX_KNTDTH,
-                    SFX_BSPACT,
-                    SFX_SGTATK
-                };
-
-                if(gameModeBits & GM_ANY_DOOM2)
-                    S_LocalSound(quitsounds2[P_Random() & 7], 0);
-                else
-# endif
-                    S_LocalSound(quitsounds[P_Random() & 7], 0);
-            }
-#endif
-            DD_Executef(true, "activatebcontext deui");
+            Sys_Quit();
         }
-    }
+        else
+        {
+            quitDarkenOpacity = de::cubed((Timer_RealMilliseconds() - quitTime) / (float) QUITWAIT_MILLISECONDS);
+        }
 
-    if(Timer_RealMilliseconds() > quitTime + QUITWAIT_MILLISECONDS)
-    {
-        Sys_Quit();
+        // No further game state changes occur once we have begun to quit.
+        return;
     }
-    else
-    {
-        float t = (Timer_RealMilliseconds() - quitTime) / (float) QUITWAIT_MILLISECONDS;
-        quitDarkenOpacity = t*t*t;
-    }
-
-#undef QUITWAIT_MILLISECONDS
-}
-
-static void runGameAction()
-{
-    gameaction_t currentAction;
 
     // Do things to change the game state.
-    while((currentAction = G_GameAction()) != GA_NONE)
+    gameaction_t currentAction;
+    while((currentAction = gameAction) != GA_NONE)
     {
         BusyMode_FreezeGameForBusyMode();
 
@@ -1574,9 +1573,20 @@ static void runGameAction()
             break;
 
         case GA_QUIT:
-            G_DoQuitGame();
-            // No further game state changes occur once we have begun to quit.
-            return;
+            G_SetGameAction(GA_NONE);
+
+            quitInProgress = true;
+            quitTime       = Timer_RealMilliseconds();
+
+            Hu_MenuCommand(MCMD_CLOSEFAST);
+
+            if(!IS_NETGAME)
+            {
+                // Play an exit sound if it is enabled.
+                S_LocalSound(randomQuitSound(), 0);
+                DD_Executef(true, "activatebcontext deui");
+            }
+            break;
 
         case GA_SCREENSHOT:
             G_SetGameAction(GA_NONE);
@@ -1598,7 +1608,8 @@ static void runGameAction()
             break;
 
         case GA_ENDDEBRIEFING:
-            G_DoEndDebriefing();
+            briefDisabled = true;
+            G_IntermissionDone();
             break;
 
         case GA_VICTORY:
@@ -1608,6 +1619,8 @@ static void runGameAction()
         default: break;
         }
     }
+
+#undef QUITWAIT_MILLISECONDS
 }
 
 static int rebornLoadConfirmed(msgresponse_t response, int, void *)
@@ -2463,12 +2476,6 @@ void G_IntermissionDone()
     }
 
     G_SetGameAction(GA_LEAVEMAP);
-}
-
-void G_DoEndDebriefing()
-{
-    briefDisabled = true;
-    G_IntermissionDone();
 }
 
 de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate)

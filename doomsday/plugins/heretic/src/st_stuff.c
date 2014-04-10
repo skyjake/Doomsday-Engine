@@ -3132,7 +3132,7 @@ D_CMD(ChatOpen)
     int player = CONSOLEPLAYER, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
     {
         return false;
     }
@@ -3164,7 +3164,7 @@ D_CMD(ChatAction)
     const char* cmd = argv[0] + 4;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
     {
         return false;
     }
@@ -3194,7 +3194,7 @@ D_CMD(ChatSendMacro)
     int player = CONSOLEPLAYER, macroId, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
         return false;
 
     if(argc < 2 || argc > 3)
