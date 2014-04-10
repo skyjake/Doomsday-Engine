@@ -311,14 +311,7 @@ DENG2_PIMPL(GameSession)
         // Close open HUDs.
         for(uint i = 0; i < MAXPLAYERS; ++i)
         {
-            player_t *plr = players + i;
-            if(plr->plr->inGame)
-            {
-                ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-                Hu_InventoryOpen(i, false);
-#endif
-            }
+            ST_CloseAll(i, true/*fast*/);
         }
 
         // Delete raw images to conserve texture memory.

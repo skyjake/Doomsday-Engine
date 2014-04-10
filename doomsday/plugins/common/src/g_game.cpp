@@ -131,11 +131,6 @@ D_CMD(OpenSaveMenu);
 
 void G_PlayerReborn(int player);
 
-void G_DoPlayDemo();
-void G_DoMapCompleted();
-void G_DoVictory();
-void G_DoScreenShot();
-
 void G_StopDemo();
 
 /**
@@ -1219,15 +1214,8 @@ dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char co
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        // Clear the message queue for all local players.
-        ST_LogEmpty(i);
-
-        // Close the automap for all local players.
-        ST_AutomapOpen(i, false, true);
-
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(i, false);
-#endif
+        ST_LogEmpty(i);               // Clear the message queue for all local players.
+        ST_CloseAll(i, true/*fast*/); // Close the HUDs left open for all local players.
     }
 
     G_SetGameAction(GA_NONE);
@@ -1347,7 +1335,9 @@ int G_PrivilegedResponder(event_t *ev)
         if(CommandLine_Check("-devparm"))
         {
             if(ev->state == EVS_DOWN)
-                G_ScreenShot();
+            {
+                G_SetGameAction(GA_SCREENSHOT);
+            }
             return true; // All F1 events are eaten.
         }
     }
@@ -1522,16 +1512,17 @@ static void runGameAction()
     {
         BusyMode_FreezeGameForBusyMode();
 
+        // The topmost action will now be processed.
+        G_SetGameAction(GA_NONE);
+
         switch(currentAction)
         {
         case GA_NEWSESSION:
-            G_SetGameAction(GA_NONE);
             COMMON_GAMESESSION->end();
             COMMON_GAMESESSION->begin(*dMapUri, dMapEntrance, dRules);
             break;
 
         case GA_LOADSESSION:
-            G_SetGameAction(GA_NONE);
             COMMON_GAMESESSION->end();
 
             // Attempt to load the saved game session.
@@ -1556,7 +1547,6 @@ static void runGameAction()
             break;
 
         case GA_SAVESESSION:
-            G_SetGameAction(GA_NONE);
             try
             {
                 COMMON_GAMESESSION->save(G_SaveSlots()[gaSaveSessionSlot].saveName(),
@@ -1573,8 +1563,6 @@ static void runGameAction()
             break;
 
         case GA_QUIT:
-            G_SetGameAction(GA_NONE);
-
             quitInProgress = true;
             quitTime       = Timer_RealMilliseconds();
 
@@ -1588,23 +1576,53 @@ static void runGameAction()
             }
             break;
 
-        case GA_SCREENSHOT:
-            G_SetGameAction(GA_NONE);
-            G_DoScreenShot();
-            break;
-
         case GA_LEAVEMAP:
-            G_SetGameAction(GA_NONE);
             COMMON_GAMESESSION->leaveMap();
             break;
 
         case GA_RESTARTMAP:
-            G_SetGameAction(GA_NONE);
             COMMON_GAMESESSION->reloadMap();
             break;
 
         case GA_MAPCOMPLETED:
-            G_DoMapCompleted();
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                ST_CloseAll(i, true/*fast*/); // hide any HUDs left open
+                G_PlayerLeaveMap(i);          // take away cards and stuff
+            }
+
+#if __JHEXEN__
+            SN_StopAllSequences();
+#endif
+
+            if(!IS_DEDICATED)
+            {
+                GL_SetFilter(false);
+            }
+
+            // Go to an intermission?
+            if(G_IntermissionActive())
+            {
+#if __JDOOM__
+                // Has the secret map been completed?
+                if(gameMap == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
+                {
+                    for(int i = 0; i < MAXPLAYERS; ++i)
+                    {
+                        players[i].didSecret = true;
+                    }
+                }
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+                nextMap = G_NextLogicalMapNumber(secretExit);
+#endif
+
+                G_IntermissionBegin();
+            }
+            else
+            {
+                G_IntermissionDone();
+            }
             break;
 
         case GA_ENDDEBRIEFING:
@@ -1612,9 +1630,31 @@ static void runGameAction()
             G_IntermissionDone();
             break;
 
-        case GA_VICTORY:
-            G_SetGameAction(GA_NONE);
-            break;
+        case GA_SCREENSHOT: {
+            // Find an unused screenshot file name.
+            de::String fileName = COMMON_GAMESESSION->gameId() + "-";
+            int const numPos = fileName.length();
+            for(int i = 0; i < 1e6; ++i) // Stop eventually...
+            {
+                fileName += de::String("%1.png").arg(i, 3, 10, QChar('0'));
+                if(!F_FileExists(fileName.toUtf8().constData())) break;
+                fileName.truncate(numPos);
+            }
+
+            if(M_ScreenShot(fileName.toUtf8().constData(), 24))
+            {
+                /// @todo Do not use the console player's message log for this notification.
+                ///       The engine should implement it's own notification UI system for
+                ///       this sort of thing.
+                de::String msg = "Saved screenshot: " + de::NativePath(fileName).pretty();
+                P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toLatin1().constData());
+            }
+            else
+            {
+                LOG_RES_WARNING("Failed taking screenshot \"%s\"")
+                        << de::NativePath(fileName).pretty();
+            }
+            break; }
 
         default: break;
         }
@@ -1812,6 +1852,8 @@ void G_PlayerLeaveMap(int player)
 {
     player_t *p = &players[player];
 
+    if(!p->plr->inGame) return;
+
 #if __JHEXEN__
     dd_bool newHub = true;
     if(nextMap != DDMAXINT)
@@ -1898,21 +1940,25 @@ void G_PlayerLeaveMap(int player)
     }
 #endif
 
-    p->plr->lookDir = 0;
     p->plr->mo->flags &= ~MF_SHADOW; // Cancel invisibility.
-    p->plr->extraLight = 0; // Cancel gun flashes.
+
+    p->plr->lookDir       = 0;
+    p->plr->extraLight    = 0; // Cancel gun flashes.
     p->plr->fixedColorMap = 0; // Cancel IR goggles.
 
     // Clear filter.
     p->plr->flags &= ~DDPF_VIEW_FILTER;
     p->damageCount = 0; // No palette changes.
-    p->bonusCount = 0;
+    p->bonusCount  = 0;
 
 #if __JHEXEN__
     p->poisonCount = 0;
 #endif
 
     ST_LogEmpty(p - players);
+
+    // Update this client's stats.
+    NetSv_SendPlayerState(player, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
 }
 
 /**
@@ -2320,97 +2366,6 @@ static int prepareIntermission(void * /*context*/)
     return 0;
 }
 
-void G_DoMapCompleted()
-{
-    G_SetGameAction(GA_NONE);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(players[i].plr->inGame)
-        {
-            ST_AutomapOpen(i, false, true);
-
-#if __JHERETIC__ || __JHEXEN__
-            Hu_InventoryOpen(i, false);
-#endif
-
-            G_PlayerLeaveMap(i); // take away cards and stuff
-
-            // Update this client's stats.
-            NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
-        }
-    }
-
-    if(!IS_DEDICATED)
-    {
-        GL_SetFilter(false);
-    }
-
-#if __JHEXEN__
-    SN_StopAllSequences();
-#endif
-
-    // Go to an intermission?
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    ddmapinfo_t minfo;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(gameMapUri)), &minfo) &&
-       (minfo.flags & MIF_NO_INTERMISSION))
-    {
-        G_IntermissionDone();
-        return;
-    }
-
-#elif __JHEXEN__
-    if(!gameRules.deathmatch)
-    {
-        G_IntermissionDone();
-        return;
-    }
-#endif
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-# if __JDOOM__
-    if((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)) && gameMap == 8)
-    {
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            players[i].didSecret = true;
-        }
-    }
-# endif
-
-    // Determine the next map.
-    nextMap = G_NextLogicalMapNumber(secretExit);
-#endif
-
-    // Time for an intermission.
-#if __JDOOM64__
-    S_StartMusic("dm2int", true);
-#elif __JDOOM__
-    S_StartMusic((gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
-#elif __JHERETIC__
-    S_StartMusic("intr", true);
-#elif __JHEXEN__
-    S_StartMusic("hub", true);
-#endif
-    S_PauseMusic(true);
-
-    BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, NULL);
-
-#if __JHERETIC__
-    // @todo is this necessary at this time?
-    NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
-#endif
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    NetSv_Intermission(IMF_BEGIN, 0, 0);
-#else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntrance);
-#endif
-
-    S_PauseMusic(false);
-}
-
 #if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData()
 {
@@ -2444,6 +2399,52 @@ void G_PrepareWIData()
     }
 }
 #endif
+
+dd_bool G_IntermissionActive()
+{
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    ddmapinfo_t minfo;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(gameMapUri)), &minfo) &&
+       (minfo.flags & MIF_NO_INTERMISSION))
+    {
+        return false;
+    }
+#elif __JHEXEN__
+    if(!gameRules.deathmatch)
+    {
+        return false;
+    }
+#endif
+    return true;
+}
+
+void G_IntermissionBegin()
+{
+#if __JDOOM64__
+    S_StartMusic("dm2int", true);
+#elif __JDOOM__
+    S_StartMusic((gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
+#elif __JHERETIC__
+    S_StartMusic("intr", true);
+#elif __JHEXEN__
+    S_StartMusic("hub", true);
+#endif
+    S_PauseMusic(true);
+    BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, NULL);
+
+#if __JHERETIC__
+    // @todo is this necessary at this time?
+    NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    NetSv_Intermission(IMF_BEGIN, 0, 0);
+#else /* __JHEXEN__ */
+    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntrance);
+#endif
+
+    S_PauseMusic(false);
+}
 
 void G_IntermissionDone()
 {
@@ -3066,51 +3067,10 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(i, false);
-#endif
+        ST_CloseAll(i, true/*fast*/);
     }
+
     return true;
-}
-
-void G_ScreenShot()
-{
-    G_SetGameAction(GA_SCREENSHOT);
-}
-
-/**
- * Find an unused screenshot file name. Uses the game's identity key as the file name base.
- */
-static de::String composeScreenshotFileName()
-{
-    de::String name = COMMON_GAMESESSION->gameId() + "-";
-    int const numPos = name.length();
-    for(int i = 0; i < 1e6; ++i) // Stop eventually...
-    {
-        name += de::String("%1.png").arg(i, 3, 10, QChar('0'));
-        if(!F_FileExists(name.toUtf8().constData())) break;
-        name.truncate(numPos);
-    }
-    return name;
-}
-
-void G_DoScreenShot()
-{
-    de::String fileName = composeScreenshotFileName();
-    if(M_ScreenShot(fileName.toUtf8().constData(), 24))
-    {
-        /// @todo Do not use the console player's message log for this notification.
-        ///       The engine should implement it's own notification UI system for
-        ///       this sort of thing.
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), "Saved screenshot: %s",
-                                   de::NativePath(fileName).pretty().toLatin1().constData());
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
-        return;
-    }
-
-    App_Log(DE2_RES_ERROR, "Failed to write screenshot \"%s\"",
-            de::NativePath(fileName).pretty().toLatin1().constData());
 }
 
 D_CMD(OpenLoadMenu)
@@ -3565,14 +3525,7 @@ D_CMD(WarpMap)
     /// @todo Still necessary here?
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr     = players + i;
-        ddplayer_t *ddplr = plr->plr;
-        if(!ddplr->inGame) continue;
-
-        ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(i, false);
-#endif
+        ST_CloseAll(i, true/*fast*/);
     }
     Hu_MenuCommand(MCMD_CLOSEFAST);
 

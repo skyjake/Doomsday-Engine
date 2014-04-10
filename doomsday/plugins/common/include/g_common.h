@@ -151,6 +151,22 @@ void G_BeginMap(void);
 void G_PlayerLeaveMap(int player);
 
 /**
+ * Determines whether an intermission should be scheduled (if any) when the players leave the
+ * @em current map.
+ */
+dd_bool G_IntermissionActive(void);
+
+/**
+ * To be called to initiate the intermission.
+ */
+void G_IntermissionBegin(void);
+
+/**
+ * To be called when the intermission ends.
+ */
+void G_IntermissionDone(void);
+
+/**
  * Returns the logical episode number for the identified map.
  *
  * @param mapUri  Unique identifier of the map to lookup.

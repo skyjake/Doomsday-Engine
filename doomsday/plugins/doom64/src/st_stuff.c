@@ -766,6 +766,14 @@ void ST_Shutdown(void)
     }
 }
 
+void ST_CloseAll(int player, dd_bool fast)
+{
+    ST_AutomapOpen(player, false, fast);
+#if __JHERETIC__ || __JHEXEN__
+    Hu_InventoryOpen(player, false);
+#endif
+}
+
 uiwidget_t* ST_UIChatForPlayer(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)

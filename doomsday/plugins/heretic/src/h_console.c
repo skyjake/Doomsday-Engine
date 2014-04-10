@@ -213,7 +213,7 @@ void G_UpdateEyeHeight(void)
 
 D_CMD(ScreenShot)
 {
-    G_ScreenShot();
+    G_SetGameAction(GA_SCREENSHOT);
     return true;
 }
 

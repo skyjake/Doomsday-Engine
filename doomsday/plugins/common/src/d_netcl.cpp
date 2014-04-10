@@ -632,10 +632,7 @@ void NetCl_Intermission(Reader *msg)
         // Close any HUDs left open at the end of the previous map.
         for(uint i = 0; i < MAXPLAYERS; ++i)
         {
-            ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-            Hu_InventoryOpen(i, false);
-#endif
+            ST_CloseAll(i, true/*fast*/);
         }
 
         GL_SetFilter(false);

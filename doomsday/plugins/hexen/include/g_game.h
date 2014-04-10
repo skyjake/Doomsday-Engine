@@ -68,13 +68,9 @@ void *G_GetVariable(int id);
 void G_PlayerReborn(int player);
 void G_DeathMatchSpawnPlayer(int playernum);
 void G_DeferredPlayDemo(char *demo);
-void G_DoPlayDemo(void);
 
 void G_PlayDemo(char *name);
 void G_TimeDemo(char *name);
-void G_IntermissionDone(void);
-void G_ScreenShot(void);
-//void G_DoReborn(int playernum);
 void G_StopDemo(void);
 
 void G_Ticker(timespan_t ticLength);

@@ -75,8 +75,6 @@ void G_StopDemo(void);
 //void G_DoReborn(int playernum);
 void G_PlayerReborn(int player);
 
-void G_IntermissionDone(void);
-
 void G_Ticker(timespan_t ticLength);
 
 /// @return  @c true if the input event @a ev was eaten.
@@ -84,8 +82,6 @@ int G_PrivilegedResponder(event_t *ev);
 
 /// @return  @c true if the input event @a ev was eaten.
 int G_Responder(event_t *ev);
-
-void G_ScreenShot(void);
 
 #ifdef __cplusplus
 } // extern "C"
