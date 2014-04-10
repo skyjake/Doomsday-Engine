@@ -38,6 +38,7 @@ public:
     void draw();
 
     static void consoleRegister();
+    static bool isEnabled();
 
 private:
     DENG2_PRIVATE(d)
