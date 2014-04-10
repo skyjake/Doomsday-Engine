@@ -1,7 +1,6 @@
-/** @file saveslots.h  Map of logical game save slots.
+/** @file saveslots.h  Map of logical saved game session slots.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,12 +21,11 @@
 #define LIBCOMMON_SAVESLOTS_H
 
 #include <de/Error>
-#include <de/game/SavedSession>
 #include <de/Path>
 #include <de/String>
 
 /**
- * Maps save-game session file names into a finite set of "save slots".
+ * Maps saved game session file names into a finite set of "save slots".
  *
  * @ingroup libcommon
  */
@@ -98,18 +96,22 @@ public:
     };
 
 public:
+    /**
+     * Create a new (empty) set of save slots.
+     */
     SaveSlots();
 
     /**
      * Add a new logical save slot.
      *
-     * @param id              Unique identifier for this slot.
-     * @param userWritable    @c true= allow the user to write to this slot.
-     * @param repositoryPath  Relative path in the repository to bind to this slot.
-     * @param menuWidgetId    Unique identifier of the game menu widget to associate this slot with.
-     *                        Use @c 0 for none.
+     * @param id            Unique identifier for this slot.
+     * @param userWritable  @c true= allow the user to write to this slot.
+     * @param savePath      Relative path in the repository to bind to this slot.
+     * @param menuWidgetId  Unique identifier of the game menu widget to associate this slot with.
+     *                      Use @c 0 for none.
      */
-    void add(de::String id, bool userWritable, de::String savePath, int menuWidgetId = 0);
+    void add(de::String const &id, bool userWritable, de::String const &savePath,
+             int menuWidgetId = 0);
 
     /**
      * Returns the total number of logical save slots.
@@ -120,12 +122,12 @@ public:
     inline int size() const { return count(); }
 
     /**
-     * Returns @c true iff @a value is interpretable as a logical slot identifier.
+     * Returns @c true iff @a slotId is interpretable as a logical slot identifier.
      */
-    bool has(de::String value) const;
+    bool has(de::String const &slotId) const;
 
     /// @see slot()
-    inline Slot &operator [] (de::String slotId) {
+    inline Slot &operator [] (de::String const &slotId) {
         return slot(slotId);
     }
 
@@ -134,12 +136,34 @@ public:
      *
      * @see has()
      */
-    Slot &slot(de::String slotId) const;
+    Slot &slot(de::String const &slotId) const;
 
     /**
-     * Returns the logical save slot associated with the given saved @a session.
+     * Returns the logical save slot associated with the saved session @a name specified.
      */
-    Slot *slot(de::game::SavedSession const *session) const;
+    Slot *slotBySaveName(de::String const &name) const;
+
+    /**
+     * Returns the logical save slot associated with the @em first saved session with the
+     * user @a description specified.
+     */
+    Slot *slotBySavedUserDescription(de::String const &description) const;
+
+    /**
+     * Parse @a str and determine whether it references a logical save slot.
+     *
+     * @param str  String to be parsed. Parse is divided into three passes.
+     *             Pass 1: Check for a known game-save description which matches this.
+     *                 Search is in logical save slot creation order.
+     *             Pass 2: Check for keyword identifiers.
+     *                 <auto>  = The "auto save" slot.
+     *                 <last>  = The last used slot.
+     *                 <quick> = The currently nominated "quick save" slot.
+     *             Pass 3: Check for a unique save slot identifier.
+     *
+     * @return  The referenced Slot otherwise @c 0.
+     */
+    Slot *slotByUserInput(de::String const &str) const;
 
     /**
      * Register the console commands and variables of this module.

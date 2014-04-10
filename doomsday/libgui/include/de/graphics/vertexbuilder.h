@@ -33,7 +33,7 @@ struct VertexBuilder
 {
     struct Vertices : public QVector<VertexType> {
         Vertices() {
-            QVector<VertexType>::reserve(128);
+            QVector<VertexType>::reserve(64);
         }
         Vertices &operator += (Vertices const &other) {
             concatenate(other, *this);

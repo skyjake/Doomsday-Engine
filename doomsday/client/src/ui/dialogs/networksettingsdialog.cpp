@@ -20,7 +20,6 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
-#include "ui/widgets/cvarlineeditwidget.h"
 
 #include "clientapp.h"
 #include "de_audio.h"
@@ -28,15 +27,14 @@
 
 #include <de/SignalAction>
 #include <de/GridPopupWidget>
+#include <de/VariableLineEditWidget>
 
 using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(NetworkSettingsDialog)
 {
-    CVarLineEditWidget *masterUrl;
-    CVarLineEditWidget *masterPath;
-    CVarSliderWidget *masterPort;
+    VariableLineEditWidget *masterApi;
     GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
 
@@ -44,11 +42,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(masterUrl  = new CVarLineEditWidget("net-master-address"));
-        area.add(masterPath = new CVarLineEditWidget("net-master-path"));
-        area.add(masterPort = new CVarSliderWidget("net-master-port"));
-
-        masterPort->setMinLabel(tr("80"));
+        area.add(masterApi = new VariableLineEditWidget(App::config()["masterServer.apiUrl"]));
 
         // Developer options.
         self.add(devPopup = new GridPopupWidget);
@@ -76,17 +70,13 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
 
     d->devInfo->setText(tr("Developer Info"));
 
-    LabelWidget *masterUrlLabel  = LabelWidget::newWithText(tr("Master URL:"), &area());
-    LabelWidget *masterPathLabel = LabelWidget::newWithText(tr("Master Path:"), &area());
-    LabelWidget *masterPortLabel = LabelWidget::newWithText(tr("Master Port:"), &area());
+    LabelWidget *masterApiLabel = LabelWidget::newWithText(tr("Master API URL:"), &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *masterUrlLabel  << *d->masterUrl
-           << *masterPathLabel << *d->masterPath
-           << *masterPortLabel << *d->masterPort;
+    layout << *masterApiLabel  << *d->masterApi;
 
     area().setContentSize(layout.width(), layout.height());
 

@@ -29,7 +29,6 @@
 #include "gamesession.h"
 #include "m_argv.h"
 #include "p_inventory.h"
-//#include "p_saveg.h"
 #include "p_map.h"
 #include "saveslots.h"
 #include <cstring>
@@ -360,17 +359,14 @@ void D_PostInit()
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        try
+        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(CommandLine_At(p + 1)))
         {
-            de::String const slotId = G_SaveSlotIdFromUserInput(CommandLine_At(p + 1));
-            if(G_SaveSlots()[slotId].isUserWritable() && G_SetGameActionLoadSession(slotId))
+            if(sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
             {
                 // No further initialization is to be done.
                 return;
             }
         }
-        catch(SaveSlots::MissingSlotError const &)
-        {}
     }
 
     p = CommandLine_Check("-skill");

@@ -306,7 +306,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         }
         else
         {
-            order << saved << multi << available << incomplete;
+            order << multi << available << saved << incomplete;
         }
 
         updateSubsetVisibility();

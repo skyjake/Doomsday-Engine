@@ -1061,65 +1061,6 @@ SaveSlots &G_SaveSlots()
     return *sslots;
 }
 
-static de::game::SavedSession *savedSessionByUserDescription(de::String description)
-{
-    if(!description.isEmpty())
-    {
-        de::Folder &saveFolder = DENG2_APP->rootFolder().locate<de::Folder>(COMMON_GAMESESSION->savePath());
-        DENG2_FOR_EACH_CONST(de::Folder::Contents, i, saveFolder.contents())
-        {
-            if(de::game::SavedSession *session = i->second->maybeAs<de::game::SavedSession>())
-            {
-                if(!session->metadata().gets("userDescription", "").compareWithoutCase(description))
-                {
-                    return session;
-                }
-            }
-        }
-    }
-    return 0; // Not found.
-}
-
-/// @todo Encapsulate in SaveSlots?
-de::String G_SaveSlotIdFromUserInput(de::String str)
-{
-    // Perhaps a user description of a saved session?
-    if(SaveSlot *sslot = G_SaveSlots().slot(savedSessionByUserDescription(str)))
-    {
-        return sslot->id();
-    }
-
-    // Perhaps a saved session file name?
-    de::String savePath = COMMON_GAMESESSION->savePath() / str + ".save";
-    if(SaveSlot *sslot = G_SaveSlots().slot(DENG2_APP->rootFolder().tryLocate<de::game::SavedSession const>(savePath)))
-    {
-        return sslot->id();
-    }
-
-    // Perhaps a mnemonic?
-    if(!str.compareWithoutCase("last") || !str.compareWithoutCase("<last>"))
-    {
-        return de::String::number(Con_GetInteger("game-save-last-slot"));
-    }
-    if(!str.compareWithoutCase("quick") || !str.compareWithoutCase("<quick>"))
-    {
-        return de::String::number(Con_GetInteger("game-save-quick-slot"));
-    }
-    if(!str.compareWithoutCase("auto") || !str.compareWithoutCase("<auto>"))
-    {
-        return "auto";
-    }
-
-    // Perhaps a unique slot identifier?
-    if(G_SaveSlots().has(str))
-    {
-        return str;
-    }
-
-    // Unknown/not found.
-    return "";
-}
-
 void G_CommonPostInit()
 {
     R_InitRefresh();
@@ -3258,30 +3199,26 @@ D_CMD(LoadSession)
         return false;
     }
 
-    de::String const slotId = G_SaveSlotIdFromUserInput(argv[1]);
-    try
+    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
-        SaveSlot &sslot = G_SaveSlots()[slotId];
-        if(sslot.isLoadable())
+        if(sslot->isLoadable())
         {
             // A known used slot identifier.
             if(confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_LOADSESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                return G_SetGameActionLoadSession(sslot.id());
+                return G_SetGameActionLoadSession(sslot->id());
             }
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             // Compose the confirmation message.
-            de::String const &savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+            de::String const &savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, savegameUserDescription.toUtf8().constData());
-            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(sslot.id()));
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(sslot->id()));
             return true;
         }
     }
-    catch(SaveSlots::MissingSlotError const &)
-    {}
 
     if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
     {
@@ -3290,7 +3227,7 @@ D_CMD(LoadSession)
         return true;
     }
 
-    if(!G_SaveSlots().has(slotId))
+    if(!G_SaveSlots().has(argv[1]))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
@@ -3364,11 +3301,9 @@ D_CMD(SaveSession)
         return true;
     }
 
-    de::String const slotId = G_SaveSlotIdFromUserInput(argv[1]);
-    try
+    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
-        SaveSlot &sslot = G_SaveSlots()[slotId];
-        if(sslot.isUserWritable())
+        if(sslot->isUserWritable())
         {
             // A known slot identifier.
             de::String userDescription;
@@ -3377,19 +3312,19 @@ D_CMD(SaveSession)
                 userDescription = argv[2];
             }
 
-            if(sslot.isUnused() || confirmed || !cfg.confirmQuickGameSave)
+            if(sslot->isUnused() || confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                return G_SetGameActionSaveSession(slotId, &userDescription);
+                return G_SetGameActionSaveSession(sslot->id(), &userDescription);
             }
 
             // Compose the confirmation message.
-            userDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+            userDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, userDescription.toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
-            parm->slotId          = slotId;
+            parm->slotId          = sslot->id();
             parm->userDescription = userDescription;
 
             S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
@@ -3397,11 +3332,9 @@ D_CMD(SaveSession)
             return true;
         }
 
-        App_Log(DE2_LOG_ERROR, "Save slot '%s' is non-user-writable",
-                slotId.toLatin1().constData());
+        App_Log(DE2_SCR_ERROR, "Save slot '%s' is non-user-writable",
+                sslot->id().toLatin1().constData());
     }
-    catch(SaveSlots::MissingSlotError const &)
-    {}
 
     if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
     {
@@ -3412,7 +3345,7 @@ D_CMD(SaveSession)
         return true;
     }
 
-    if(!G_SaveSlots().has(slotId))
+    if(!G_SaveSlots().has(argv[1]))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
@@ -3446,33 +3379,33 @@ D_CMD(DeleteSavedSession)
     if(G_QuitInProgress()) return false;
 
     bool const confirmed = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
-    try
+    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
-        SaveSlot &sslot = G_SaveSlots()[G_SaveSlotIdFromUserInput(argv[1])];
-        if(sslot.isUserWritable())
+        if(sslot->isUserWritable())
         {
             // A known slot identifier.
-            if(sslot.isUnused()) return false;
+            if(sslot->isUnused()) return false;
 
             if(confirmed)
             {
-                COMMON_GAMESESSION->removeSaved(sslot.saveName());
+                COMMON_GAMESESSION->removeSaved(sslot->saveName());
             }
             else
             {
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
 
                 // Compose the confirmation message.
-                de::String const savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot.saveName());
+                de::String const savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, savegameUserDescription.toUtf8().constData());
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(sslot.saveName()));
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(sslot->saveName()));
             }
+
             return true;
         }
 
-        App_Log(DE2_LOG_ERROR, "Save slot '%s' is non-user-writable", sslot.id().toLatin1().constData());
+        App_Log(DE2_SCR_ERROR, "Save slot '%s' is non-user-writable", sslot->id().toLatin1().constData());
     }
-    catch(SaveSlots::MissingSlotError const &)
+    else
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from '%s'", argv[1]);
     }
@@ -3485,20 +3418,20 @@ D_CMD(InspectSavedSession)
 {
     DENG2_UNUSED2(src, argc);
 
-    de::String slotId = G_SaveSlotIdFromUserInput(argv[1]);
-    try
+    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
-        SaveSlot const &sslot = G_SaveSlots()[slotId];
-        de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot.savePath());
-        LOG_SCR_MSG("%s") << session.metadata().asStyledText();
-        LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << session.path();
-        return true;
+        if(!sslot->isUnused())
+        {
+            /// @todo GameSession should provide a convenient method of accessing the saved metadata.
+            de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot->savePath());
+            LOG_SCR_MSG("%s") << session.metadata().asStyledText();
+            LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << session.path();
+            return true;
+        }
+
+        LOG_WARNING("Save slot '%s' is not in use") << sslot->id();
     }
-    catch(de::Folder::NotFoundError const &)
-    {
-        LOG_WARNING("Save slot '%s' is not in use") << slotId;
-    }
-    catch(SaveSlots::MissingSlotError const &)
+    else
     {
         LOG_WARNING("Failed to determine save slot from \"%s\"") << argv[1];
     }

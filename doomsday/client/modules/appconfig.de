@@ -72,5 +72,9 @@ def setDefaults(d)
     record d.console
     d.console.snap = True
     d.console.script = False
+    
+    # Master server settings.
+    record d.masterServer
+    d.masterServer.apiUrl = "www.dengine.net/master.php"
 end
 
