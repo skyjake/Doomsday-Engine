@@ -27,6 +27,7 @@
 #include "hu_stuff.h"
 #include "am_map.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "r_common.h"
 #include "d_net.h"
 
@@ -506,7 +507,7 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
 
     if(!stricmp(p->token, "deathmatch"))
     {
-        p->returnVal = (G_Rules().deathmatch != false);
+        p->returnVal = (COMMON_GAMESESSION->rules().deathmatch != false);
         return true;
     }
 

@@ -22,6 +22,7 @@
 #include <cstring>
 
 #include "common.h"
+#include "gamesession.h"
 #include "p_tick.h"
 #include "p_actor.h"
 
@@ -82,8 +83,8 @@ void P_MobjRemove(mobj_t *mo, dd_bool noRespawn)
         if(
 # if __JDOOM__
             // Only respawn items in deathmatch 2 and optionally in coop.
-           !(G_Rules().deathmatch != 2 && (!cfg.coopRespawnItems || !IS_NETGAME ||
-                                           G_Rules().deathmatch)) &&
+           !(COMMON_GAMESESSION->rules().deathmatch != 2 &&
+             (!cfg.coopRespawnItems || !IS_NETGAME || COMMON_GAMESESSION->rules().deathmatch)) &&
 # endif /*#elif __JDOOM64__
            (spot->flags & MTF_RESPAWN) &&
 # endif*/

@@ -24,6 +24,7 @@
 
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "player.h"
 #include "p_map.h"
 #include "p_saveg.h"
@@ -413,7 +414,7 @@ void ACScriptInterpreter::clearDeferredTasks()
 
 void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
 {
-    if(G_Rules().deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         /// @todo Do we really want to disallow deferred ACS tasks in deathmatch?
         /// What is the actual intention here? -ds
@@ -1411,7 +1412,7 @@ ACS_COMMAND(GameType)
     {
         gametype = 0; // singleplayer
     }
-    else if(G_Rules().deathmatch)
+    else if(COMMON_GAMESESSION->rules().deathmatch)
     {
         gametype = 2; // deathmatch
     }
@@ -1426,7 +1427,7 @@ ACS_COMMAND(GameType)
 
 ACS_COMMAND(GameSkill)
 {
-    acs.locals.push((int)G_Rules().skill);
+    acs.locals.push((int)COMMON_GAMESESSION->rules().skill);
     return Continue;
 }
 

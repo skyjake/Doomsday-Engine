@@ -77,41 +77,6 @@ static GameSession session;
 
 #define READONLYCVAR        CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-struct missileinfo_s {
-    mobjtype_t  type;
-    float       speed[2];
-}
-MonsterMissileInfo[] =
-{
-#if __JDOOM__ || __JDOOM64__
-    { MT_BRUISERSHOT, {15, 20} },
-    { MT_HEADSHOT, {10, 20} },
-    { MT_TROOPSHOT, {10, 20} },
-# if __JDOOM64__
-    { MT_BRUISERSHOTRED, {15, 20} },
-    { MT_NTROSHOT, {20, 40} },
-# endif
-#elif __JHERETIC__
-    { MT_IMPBALL, {10, 20} },
-    { MT_MUMMYFX1, {9, 18} },
-    { MT_KNIGHTAXE, {9, 18} },
-    { MT_REDAXE, {9, 18} },
-    { MT_BEASTBALL, {12, 20} },
-    { MT_WIZFX1, {18, 24} },
-    { MT_SNAKEPRO_A, {14, 20} },
-    { MT_SNAKEPRO_B, {14, 20} },
-    { MT_HEADFX1, {13, 20} },
-    { MT_HEADFX3, {10, 18} },
-    { MT_MNTRFX1, {20, 26} },
-    { MT_MNTRFX2, {14, 20} },
-    { MT_SRCRFX1, {20, 28} },
-    { MT_SOR2FX1, {20, 28} },
-#endif
-    { mobjtype_t(-1), {-1, -1} }
-};
-#endif
-
 D_CMD(CycleTextureGamma);
 D_CMD(EndSession);
 D_CMD(HelpScreen);
@@ -149,7 +114,6 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
-GameRuleset gameRules;
 uint gameEpisode;
 
 Uri *gameMapUri;
@@ -232,7 +196,7 @@ static gamestate_t gameState = GS_STARTUP;
 cvartemplate_t gamestatusCVars[] =
 {
     {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0, 0},
-    {"game-skill", READONLYCVAR, CVT_INT, &gameRules.skill, 0, 0, 0},
+    //{"game-skill", READONLYCVAR, CVT_INT, &gameRules.skill, 0, 0, 0},
     {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0, 0},
     {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0, 0},
 #if !__JHEXEN__
@@ -1907,7 +1871,7 @@ void G_PlayerLeaveMap(int player)
     de::zap(p->powers);
 
 #if __JHEXEN__
-    if(!newHub && !gameRules.deathmatch)
+    if(!newHub && !COMMON_GAMESESSION->rules().deathmatch)
     {
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
     }
@@ -1918,7 +1882,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_KEYS;
     de::zap(p->keys);
 #else
-    if(!gameRules.deathmatch && newHub)
+    if(!COMMON_GAMESESSION->rules().deathmatch && newHub)
     {
         p->keys = 0;
     }
@@ -2142,161 +2106,39 @@ void G_QueueBody(mobj_t *mo)
 }
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-static void G_ApplyGameRuleFastMonsters(dd_bool fast)
-{
-    static dd_bool oldFast = false;
-
-    // Only modify when the rule changes state.
-    if(fast == oldFast) return;
-    oldFast = fast;
-
-    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-    {
-        STATES[i].tics = fast? 1 : 2;
-    }
-    for(int i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-    {
-        STATES[i].tics = fast? 4 : 8;
-    }
-    for(int i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-    {
-        STATES[i].tics = fast? 1 : 2;
-    }
-    // Kludge end.
-}
-#endif
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-static void G_ApplyGameRuleFastMissiles(dd_bool fast)
-{
-    static dd_bool oldFast = false;
-
-    // Only modify when the rule changes state.
-    if(fast == oldFast) return;
-    oldFast = fast;
-
-    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(int i = 0; MonsterMissileInfo[i].type != -1; ++i)
-    {
-        MOBJINFO[MonsterMissileInfo[i].type].speed =
-            MonsterMissileInfo[i].speed[fast? 1 : 0];
-    }
-    // Kludge end.
-}
-#endif
-
-/**
- * To be called when a new game begins to effect the game rules. Note that some
- * of the rules may be overridden here (e.g., in a networked game).
- */
-void G_ApplyNewGameRules(GameRuleset const &rules)
-{
-#ifdef DENG2_DEBUG
-    if(COMMON_GAMESESSION->hasBegun())
-    {
-        LOG_WARNING("Applied new rules to a game session in progress!");
-    }
-#endif
-
-    gameRules = rules;
-
-    if(gameRules.skill < SM_NOTHINGS)
-        gameRules.skill = SM_NOTHINGS;
-    if(gameRules.skill > NUM_SKILL_MODES - 1)
-        gameRules.skill = skillmode_t(NUM_SKILL_MODES - 1);
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(!IS_NETGAME)
-    {
-        gameRules.deathmatch      = false;
-        gameRules.respawnMonsters = false;
-
-        gameRules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
-    }
-#endif
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
-#endif
-
-#if __JDOOM__ || __JHERETIC__
-    // Is respawning enabled at all in nightmare skill?
-    if(gameRules.skill == SM_NIGHTMARE)
-    {
-        gameRules.respawnMonsters = cfg.respawnMonstersNightmare;
-    }
-#endif
-
-    // Fast monsters?
-#if __JDOOM__ || __JDOOM64__
-    dd_bool fastMonsters = gameRules.fast;
-# if __JDOOM__
-    if(gameRules.skill == SM_NIGHTMARE)
-    {
-        fastMonsters = true;
-    }
-# endif
-    G_ApplyGameRuleFastMonsters(fastMonsters);
-#endif
-
-    // Fast missiles?
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    dd_bool fastMissiles = gameRules.fast;
-# if !__JDOOM64__
-    if(gameRules.skill == SM_NIGHTMARE)
-    {
-        fastMissiles = true;
-    }
-# endif
-    G_ApplyGameRuleFastMissiles(fastMissiles);
-#endif
-
-    if(IS_DEDICATED)
-    {
-        NetSv_ApplyGameRulesFromConfig();
-    }
-}
-
-GameRuleset &G_Rules()
-{
-    return gameRules;
-}
-
 int G_Ruleset_Skill()
 {
-    return gameRules.skill;
+    return COMMON_GAMESESSION->rules().skill;
 }
 
 #if !__JHEXEN__
 byte G_Ruleset_Fast()
 {
-    return gameRules.fast;
+    return COMMON_GAMESESSION->rules().fast;
 }
 #endif
 
 byte G_Ruleset_Deathmatch()
 {
-    return gameRules.deathmatch;
+    return COMMON_GAMESESSION->rules().deathmatch;
 }
 
 byte G_Ruleset_NoMonsters()
 {
-    return gameRules.noMonsters;
+    return COMMON_GAMESESSION->rules().noMonsters;
 }
 
 #if __JHEXEN__
 byte G_Ruleset_RandomClasses()
 {
-    return gameRules.randomClasses;
+    return COMMON_GAMESESSION->rules().randomClasses;
 }
 #endif
 
 #if !__JHEXEN__
 byte G_Ruleset_RespawnMonsters()
 {
-    return gameRules.respawnMonsters;
+    return COMMON_GAMESESSION->rules().respawnMonsters;
 }
 #endif
 
@@ -2410,7 +2252,7 @@ dd_bool G_IntermissionActive()
         return false;
     }
 #elif __JHEXEN__
-    if(!gameRules.deathmatch)
+    if(!COMMON_GAMESESSION->rules().deathmatch)
     {
         return false;
     }
@@ -2535,7 +2377,7 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
     metadata.set("mapTime",         mapTime);
 #endif
 
-    metadata.add("gameRules",       G_Rules().toRecord()); // Takes ownership.
+    metadata.add("gameRules",       COMMON_GAMESESSION->rules().toRecord()); // Takes ownership.
 
 #if !__JHEXEN__
     de::ArrayValue *array = new de::ArrayValue;
@@ -3055,13 +2897,14 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
     if(IS_NETGAME && IS_CLIENT)
     {
         // Restore normal game state?
-        gameRules.deathmatch = false;
-        gameRules.noMonsters = false;
+        GameRuleset &gameRules = COMMON_GAMESESSION->rules();
+        gameRules.deathmatch      = false;
+        gameRules.noMonsters      = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         gameRules.respawnMonsters = false;
 #endif
 #if __JHEXEN__
-        gameRules.randomClasses = false;
+        gameRules.randomClasses   = false;
 #endif
     }
 
@@ -3539,12 +3382,12 @@ D_CMD(WarpMap)
         nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_SetGameActionNewSession(*newMapUri, 0/*default*/, gameRules);
+        G_SetGameActionNewSession(*newMapUri, 0/*default*/, COMMON_GAMESESSION->rules());
 #endif
     }
     else
     {
-        G_SetGameActionNewSession(*newMapUri, 0/*default*/, gameRules);
+        G_SetGameActionNewSession(*newMapUri, 0/*default*/, COMMON_GAMESESSION->rules());
     }
 
     // If the command source was "us" the game library then it was probably in

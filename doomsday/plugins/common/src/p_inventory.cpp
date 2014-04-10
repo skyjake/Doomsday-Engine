@@ -23,6 +23,7 @@
 #include "p_inventory.h"
 
 #include "g_common.h"
+#include "gamesession.h"
 #include "player.h"
 #include "d_net.h"
 #include "hu_inventory.h"
@@ -181,7 +182,8 @@ static dd_bool giveItem(playerinventory_t *inv, inventoryitemtype_t type)
 
 #if __JHEXEN__
     // Can't carry more than 1 puzzle item in coop netplay.
-    if(count && type >= IIT_FIRSTPUZZITEM && IS_NETGAME && !G_Rules().deathmatch)
+    if(count && type >= IIT_FIRSTPUZZITEM && IS_NETGAME &&
+       !COMMON_GAMESESSION->rules().deathmatch)
     {
         return false;
     }

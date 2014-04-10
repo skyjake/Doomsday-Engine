@@ -315,7 +315,7 @@ void D_PostInit()
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    G_Rules().skill = /*startSkill =*/ SM_MEDIUM;
+    COMMON_GAMESESSION->rules().skill = /*startSkill =*/ SM_MEDIUM;
 
     // Game mode specific settings
     // None.
@@ -326,12 +326,12 @@ void D_PostInit()
         cfg.netDeathmatch = 1;
 
     // Apply these rules.
-    G_Rules().noMonsters      = CommandLine_Check("-nomonsters")? true : false;
-    G_Rules().respawnMonsters = CommandLine_Check("-respawn")? true : false;
-    G_Rules().fast            = CommandLine_Check("-fast")? true : false;
+    COMMON_GAMESESSION->rules().noMonsters      = CommandLine_Check("-nomonsters")? true : false;
+    COMMON_GAMESESSION->rules().respawnMonsters = CommandLine_Check("-respawn")? true : false;
+    COMMON_GAMESESSION->rules().fast            = CommandLine_Check("-fast")? true : false;
 
     int p = CommandLine_Check("-timer");
-    if(p && p < myargc - 1 && G_Rules().deathmatch)
+    if(p && p < myargc - 1 && COMMON_GAMESESSION->rules().deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
         App_Log(DE2_LOG_NOTE, "Maps will end after %d %s", time, time == 1? "minute" : "minutes");
@@ -373,7 +373,7 @@ void D_PostInit()
     if(p && p < myargc - 1)
     {
         int skillNumber = atoi(CommandLine_At(p + 1));
-        G_Rules().skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        COMMON_GAMESESSION->rules().skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
@@ -396,14 +396,14 @@ void D_PostInit()
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
                               F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
-                              G_Rules().skill);
+                              COMMON_GAMESESSION->rules().skill);
     }
 
     // Validate episode and map.
     AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        G_SetGameActionNewSession(*startMapUri, 0/*default*/, G_Rules());
+        G_SetGameActionNewSession(*startMapUri, 0/*default*/, COMMON_GAMESESSION->rules());
     }
     else
     {

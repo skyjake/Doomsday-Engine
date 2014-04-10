@@ -23,9 +23,10 @@
 #include "jheretic.h"
 #include "in_lude.h"
 
-#include "hu_stuff.h"
-#include "d_net.h"
 #include "am_map.h"
+#include "d_net.h"
+#include "gamesession.h"
+#include "hu_stuff.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
 
@@ -268,7 +269,7 @@ void IN_InitStats(void)
     {
         gameType = SINGLE;
     }
-    else if( /*IS_NETGAME && */ !G_Rules().deathmatch)
+    else if( /*IS_NETGAME && */ !COMMON_GAMESESSION->rules().deathmatch)
     {
         gameType = COOPERATIVE;
         memset(killPercent, 0, sizeof(killPercent));

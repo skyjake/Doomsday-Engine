@@ -245,7 +245,6 @@ D_CMD( CCmdExitLevel );
 
 #if __cplusplus
 #include <de/String>
-#include "gamerules.h"
 
 class SaveSlots;
 
@@ -271,17 +270,5 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata);
  */
 SaveSlots &G_SaveSlots();
 
-/**
- * Returns the game's GameRuleset.
- */
-GameRuleset &G_Rules();
-
-/**
- * To be called when a new game begins to effect the game rules. Note that some
- * of the rules may be overridden here (e.g., in a networked game).
- */
-void G_ApplyNewGameRules(GameRuleset const &rules);
-
 #endif // __cplusplus
-
 #endif // LIBCOMMON_GAME_H

@@ -312,7 +312,7 @@ void X_PostInit()
     /* None */
 
     // Defaults for skill, episode and map.
-    G_Rules().skill = /*startSkill =*/ SM_MEDIUM;
+    COMMON_GAMESESSION->rules().skill = /*startSkill =*/ SM_MEDIUM;
 
     // Game mode specific settings.
     /* None */
@@ -320,8 +320,8 @@ void X_PostInit()
     cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
 
     // Apply these rules.
-    G_Rules().noMonsters    = CommandLine_Check("-nomonsters")? true : false;
-    G_Rules().randomClasses = CommandLine_Exists("-randclass")? true : false;
+    COMMON_GAMESESSION->rules().noMonsters    = CommandLine_Check("-nomonsters")? true : false;
+    COMMON_GAMESESSION->rules().randomClasses = CommandLine_Exists("-randclass")? true : false;
 
     // Turbo movement option.
     int p = CommandLine_Check("-turbo");
@@ -371,7 +371,7 @@ void X_PostInit()
     if((p = CommandLine_CheckWith("-skill", 1)) != 0)
     {
         int skillNumber = atoi(CommandLine_At(p + 1));
-        G_Rules().skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        COMMON_GAMESESSION->rules().skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
@@ -419,14 +419,14 @@ void X_PostInit()
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
                               F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
-                              G_Rules().skill);
+                              COMMON_GAMESESSION->rules().skill);
     }
 
     // Validate episode and map.
     AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        G_SetGameActionNewSession(*startMapUri, 0/*default*/, G_Rules());
+        G_SetGameActionNewSession(*startMapUri, 0/*default*/, COMMON_GAMESESSION->rules());
     }
     else
     {

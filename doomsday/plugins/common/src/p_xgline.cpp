@@ -29,9 +29,10 @@
 
 #include "common.h"
 
-#include "dmu_lib.h"
-#include "p_mapsetup.h"
 #include "d_net.h"
+#include "dmu_lib.h"
+#include "gamesession.h"
+#include "p_mapsetup.h"
 #include "p_xgline.h"
 #include "p_xgsec.h"
 #include "p_actor.h"
@@ -2748,17 +2749,17 @@ int XL_LineEvent(int evtype, int linetype, Line* line, int sidenum,
 
     // Check skill level.
     // SM_NOTHINGS will be interpreted as SM_BABY.
-    if(G_Rules().skill < 1)
+    if(COMMON_GAMESESSION->rules().skill < 1)
         i = 1;
-    else if(G_Rules().skill > 3)
+    else if(COMMON_GAMESESSION->rules().skill > 3)
         i = 4;
     else
-        i = 1 << (G_Rules().skill - 1);
+        i = 1 << (COMMON_GAMESESSION->rules().skill - 1);
 
     if(!(info->flags2 & (i << LTF2_SKILL_SHIFT)))
     {
         XG_Dev("  Line %i: ABORTING EVENT due to skill level (%i)",
-               P_ToIndex(line), G_Rules().skill);
+               P_ToIndex(line), COMMON_GAMESESSION->rules().skill);
         return false;
     }
 

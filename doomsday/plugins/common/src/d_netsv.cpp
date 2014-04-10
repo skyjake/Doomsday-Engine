@@ -98,14 +98,16 @@ void NetSv_UpdateGameConfigDescription()
 {
     if(IS_CLIENT) return;
 
-    de::zap(gameConfigString);
-    sprintf(gameConfigString, "skill%i", G_Rules().skill + 1);
+    GameRuleset const &gameRules = COMMON_GAMESESSION->rules();
 
-    if(G_Rules().deathmatch > 1)
+    de::zap(gameConfigString);
+    sprintf(gameConfigString, "skill%i", gameRules.skill + 1);
+
+    if(gameRules.deathmatch > 1)
     {
-        sprintf(gameConfigString, " dm%i", G_Rules().deathmatch);
+        sprintf(gameConfigString, " dm%i", gameRules.deathmatch);
     }
-    else if(G_Rules().deathmatch)
+    else if(gameRules.deathmatch)
     {
         strcat(gameConfigString, " dm");
     }
@@ -114,12 +116,12 @@ void NetSv_UpdateGameConfigDescription()
         strcat(gameConfigString, " coop");
     }
 
-    if(G_Rules().noMonsters)
+    if(gameRules.noMonsters)
     {
         strcat(gameConfigString, " nomonst");
     }
 #if !__JHEXEN__
-    if(G_Rules().respawnMonsters)
+    if(gameRules.respawnMonsters)
     {
         strcat(gameConfigString, " respawn");
     }
@@ -582,7 +584,7 @@ void NetSv_NewPlayerEnters(int plrNum)
     NetSv_ResetPlayerFrags(plrNum);
 
     // Spawn the player into the world.
-    if(G_Rules().deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrNum);
     }
@@ -707,17 +709,17 @@ void NetSv_SendGameState(int flags, int to)
         Writer_WriteByte(writer, gameEpisode);
         Writer_WriteByte(writer, gameMap);
 
-        Writer_WriteByte(writer, (G_Rules().deathmatch & 0x3)
-            | (!G_Rules().noMonsters? 0x4 : 0)
+        Writer_WriteByte(writer, (COMMON_GAMESESSION->rules().deathmatch & 0x3)
+            | (!COMMON_GAMESESSION->rules().noMonsters? 0x4 : 0)
 #if !__JHEXEN__
-            | (G_Rules().respawnMonsters? 0x8 : 0)
+            | (COMMON_GAMESESSION->rules().respawnMonsters? 0x8 : 0)
 #else
             | 0
 #endif
             | (cfg.jumpEnabled? 0x10 : 0));
 
         // Note that SM_NOTHINGS will result in a value of '7'.
-        Writer_WriteByte(writer, G_Rules().skill & 0x7);
+        Writer_WriteByte(writer, COMMON_GAMESESSION->rules().skill & 0x7);
         Writer_WriteFloat(writer, (float)P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
@@ -1141,7 +1143,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
 {
 #if __JDOOM__ || __JDOOM64__
     if(!cfg.killMessages) return;
-    if(!G_Rules().deathmatch) return;
+    if(!COMMON_GAMESESSION->rules().deathmatch) return;
 
     char buf[500];
     buf[0] = 0;

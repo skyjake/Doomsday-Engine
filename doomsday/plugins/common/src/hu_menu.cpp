@@ -32,6 +32,7 @@
 #include "g_controls.h"
 #include "p_savedef.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "r_common.h"
 #include "m_ctrl.h"
 #include "saveslots.h"
@@ -6442,7 +6443,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     cfg.playerClass[CONSOLEPLAYER] = playerclass_t(mnPlrClass);
 #endif
 
-    GameRuleset newRules(G_Rules());
+    GameRuleset newRules(COMMON_GAMESESSION->rules());
     newRules.skill = mnSkillmode;
 
 #if __JHEXEN__

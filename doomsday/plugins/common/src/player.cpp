@@ -25,6 +25,7 @@
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "hu_log.h"
 #if __JHERETIC__ || __JHEXEN__
 #  include "hu_inventory.h"
@@ -294,7 +295,7 @@ void P_ShotAmmo(player_t *player)
 
     int fireMode = 0;
 #if __JHERETIC__
-    if(G_Rules().deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
         fireMode = 0; // In deathmatch always use mode zero.
     else
         fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -366,7 +367,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
 
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
-                if(G_Rules().deathmatch &&
+                if(COMMON_GAMESESSION->rules().deathmatch &&
                    player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
                 {
                     // Not enough ammo of this type. Candidate is NOT good.
@@ -513,7 +514,7 @@ dd_bool P_CheckAmmo(player_t *plr)
     int fireMode = 0;
 #if __JHERETIC__
     // If deathmatch always use firemode two ammo requirements.
-    if(plr->powers[PT_WEAPONLEVEL2] && !G_Rules().deathmatch)
+    if(plr->powers[PT_WEAPONLEVEL2] && !COMMON_GAMESESSION->rules().deathmatch)
     {
         fireMode = 1;
     }

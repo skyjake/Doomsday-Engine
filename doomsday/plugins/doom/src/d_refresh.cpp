@@ -28,6 +28,7 @@
 #include "am_map.h"
 #include "g_common.h"
 #include "g_controls.h"
+#include "gamesession.h"
 #include "r_common.h"
 #include "d_net.h"
 #include "x_hair.h"
@@ -100,7 +101,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (G_Rules().deathmatch? 1.0f : cfg.filterStrength) * (filter+1) / (float)NUMREDPALS;
+        rgba[CA] = (COMMON_GAMESESSION->rules().deathmatch? 1.0f : cfg.filterStrength) * (filter+1) / (float)NUMREDPALS;
         return true;
     }
 

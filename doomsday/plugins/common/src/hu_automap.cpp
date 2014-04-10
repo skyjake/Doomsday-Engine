@@ -30,6 +30,7 @@
 #  include "p_inventory.h"
 #endif
 #include "g_common.h"
+#include "gamesession.h"
 #include "hu_stuff.h"
 
 #include <cmath>
@@ -946,7 +947,7 @@ static void rendPlayerMarkers(uiwidget_t *ob)
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         // Do not show markers for other players in deathmatch.
-        if(G_Rules().deathmatch && i != UIWidget_Player(ob))
+        if(COMMON_GAMESESSION->rules().deathmatch && i != UIWidget_Player(ob))
         {
             continue;
         }

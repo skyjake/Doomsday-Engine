@@ -50,7 +50,8 @@ static String const unsavedDescription = "(Unsaved)";
 
 DENG2_PIMPL(GameSession)
 {
-    bool inProgress; ///< @c true= session is in progress / internal.save exists.
+    GameRuleset rules; ///< current ruleset
+    bool inProgress;   ///< @c true= session is in progress / internal.save exists.
 
     Instance(Public *i) : Base(i), inProgress(false)
     {
@@ -229,10 +230,10 @@ DENG2_PIMPL(GameSession)
         SessionMetadata const &metadata = session.metadata();
 
         // Ensure a complete game ruleset is available.
-        GameRuleset *rules;
+        GameRuleset *newRules;
         try
         {
-            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
         }
         catch(Record::NotFoundError const &)
         {
@@ -244,10 +245,10 @@ DENG2_PIMPL(GameSession)
                     << session.path();
 
             // Use the current rules as our basis.
-            rules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &G_Rules());
+            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules);
         }
-        G_ApplyNewGameRules(*rules);
-        delete rules; rules = 0;
+        self.applyNewRules(*newRules);
+        delete newRules; newRules = 0;
 
 #if __JHEXEN__
         // Deserialize the world ACS state.
@@ -443,7 +444,7 @@ DENG2_PIMPL(GameSession)
             plr->attacker = 0;
             plr->poisoner = 0;
 
-            if(IS_NETGAME || G_Rules().deathmatch)
+            if(IS_NETGAME || rules.deathmatch)
             {
                 // In a network game, force all players to be alive
                 if(plr->playerState == PST_DEAD)
@@ -451,7 +452,7 @@ DENG2_PIMPL(GameSession)
                     plr->playerState = PST_REBORN;
                 }
 
-                if(!G_Rules().deathmatch)
+                if(!rules.deathmatch)
                 {
                     // Cooperative net-play; retain keys and weapons.
                     oldKeys   = plr->keys;
@@ -466,7 +467,7 @@ DENG2_PIMPL(GameSession)
 
             bool wasReborn = (plr->playerState == PST_REBORN);
 
-            if(G_Rules().deathmatch)
+            if(rules.deathmatch)
             {
                 de::zap(plr->frags);
                 ddplr->mo = 0;
@@ -488,7 +489,7 @@ DENG2_PIMPL(GameSession)
                 }
             }
 
-            if(wasReborn && IS_NETGAME && !G_Rules().deathmatch)
+            if(wasReborn && IS_NETGAME && !rules.deathmatch)
             {
                 int bestWeapon = 0;
 
@@ -595,9 +596,161 @@ bool GameSession::savingPossible()
     return true;
 }
 
+GameRuleset &GameSession::rules() const
+{
+    return d->rules;
+}
+
+#if __JDOOM__ || __JDOOM64__
+static void applyGameRuleFastMonsters(dd_bool fast)
+{
+    static dd_bool oldFast = false;
+
+    // Only modify when the rule changes state.
+    if(fast == oldFast) return;
+    oldFast = fast;
+
+    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+    for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+    {
+        STATES[i].tics = fast? 1 : 2;
+    }
+    for(int i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+    {
+        STATES[i].tics = fast? 4 : 8;
+    }
+    for(int i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+    {
+        STATES[i].tics = fast? 1 : 2;
+    }
+    // Kludge end.
+}
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+static void applyGameRuleFastMissiles(dd_bool fast)
+{
+    struct missileinfo_s {
+        mobjtype_t  type;
+        float       speed[2];
+    }
+    MonsterMissileInfo[] =
+    {
+#if __JDOOM__ || __JDOOM64__
+        { MT_BRUISERSHOT, {15, 20} },
+        { MT_HEADSHOT, {10, 20} },
+        { MT_TROOPSHOT, {10, 20} },
+# if __JDOOM64__
+        { MT_BRUISERSHOTRED, {15, 20} },
+        { MT_NTROSHOT, {20, 40} },
+# endif
+#elif __JHERETIC__
+        { MT_IMPBALL, {10, 20} },
+        { MT_MUMMYFX1, {9, 18} },
+        { MT_KNIGHTAXE, {9, 18} },
+        { MT_REDAXE, {9, 18} },
+        { MT_BEASTBALL, {12, 20} },
+        { MT_WIZFX1, {18, 24} },
+        { MT_SNAKEPRO_A, {14, 20} },
+        { MT_SNAKEPRO_B, {14, 20} },
+        { MT_HEADFX1, {13, 20} },
+        { MT_HEADFX3, {10, 18} },
+        { MT_MNTRFX1, {20, 26} },
+        { MT_MNTRFX2, {14, 20} },
+        { MT_SRCRFX1, {20, 28} },
+        { MT_SOR2FX1, {20, 28} },
+#endif
+        { mobjtype_t(-1), {-1, -1} }
+    };
+
+    static dd_bool oldFast = false;
+
+    // Only modify when the rule changes state.
+    if(fast == oldFast) return;
+    oldFast = fast;
+
+    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+    for(int i = 0; MonsterMissileInfo[i].type != -1; ++i)
+    {
+        MOBJINFO[MonsterMissileInfo[i].type].speed =
+            MonsterMissileInfo[i].speed[fast? 1 : 0];
+    }
+    // Kludge end.
+}
+#endif
+
+void GameSession::applyNewRules(GameRuleset const &newRules)
+{
+    LOG_AS("GameSession");
+#ifdef DENG2_DEBUG
+    if(hasBegun())
+    {
+        LOG_WARNING("Applied new rules while in progress!");
+    }
+#endif
+
+    d->rules = newRules;
+
+    if(d->rules.skill < SM_NOTHINGS)
+        d->rules.skill = SM_NOTHINGS;
+    if(d->rules.skill > NUM_SKILL_MODES - 1)
+        d->rules.skill = skillmode_t(NUM_SKILL_MODES - 1);
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    if(!IS_NETGAME)
+    {
+        d->rules.deathmatch      = false;
+        d->rules.respawnMonsters = false;
+
+        d->rules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
+    }
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    d->rules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
+#endif
+
+#if __JDOOM__ || __JHERETIC__
+    // Is respawning enabled at all in nightmare skill?
+    if(d->rules.skill == SM_NIGHTMARE)
+    {
+        d->rules.respawnMonsters = cfg.respawnMonstersNightmare;
+    }
+#endif
+
+    // Fast monsters?
+#if __JDOOM__ || __JDOOM64__
+    dd_bool fastMonsters = d->rules.fast;
+# if __JDOOM__
+    if(d->rules.skill == SM_NIGHTMARE)
+    {
+        fastMonsters = true;
+    }
+# endif
+    applyGameRuleFastMonsters(fastMonsters);
+#endif
+
+    // Fast missiles?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    dd_bool fastMissiles = d->rules.fast;
+# if !__JDOOM64__
+    if(d->rules.skill == SM_NIGHTMARE)
+    {
+        fastMissiles = true;
+    }
+# endif
+    applyGameRuleFastMissiles(fastMissiles);
+#endif
+
+    if(IS_DEDICATED)
+    {
+        NetSv_ApplyGameRulesFromConfig();
+    }
+}
+
 bool GameSession::progressRestoredOnReload() const
 {
-    if(G_Rules().deathmatch) return false; // Never.
+    if(d->rules.deathmatch) return false; // Never.
 #if __JHEXEN__
     return true; // Cannot be disabled.
 #else
@@ -631,7 +784,7 @@ void GameSession::endAndBeginTitle()
     throw Error("GameSession::endAndBeginTitle", "An InFine 'title' script must be defined");
 }
 
-void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules)
+void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &newRules)
 {
     if(hasBegun())
     {
@@ -672,7 +825,7 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
 
     M_ResetRandom();
 
-    G_ApplyNewGameRules(rules);
+    applyNewRules(newRules);
     d->inProgress = true;
     d->setMap(mapUri);
     ::gameMapEntrance = mapEntrance;
@@ -729,7 +882,7 @@ void GameSession::reloadMap()
         // Restart the session entirely.
         briefDisabled = true; // We won't brief again.
         end();
-        begin(*::gameMapUri, ::gameMapEntrance, G_Rules());
+        begin(*::gameMapUri, ::gameMapEntrance, d->rules);
     }
 }
 
@@ -755,13 +908,13 @@ void GameSession::leaveMap()
     d->backupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
-    byte oldRandomClassesRule = G_Rules().randomClasses;
-    G_Rules().randomClasses = false;
+    byte oldRandomClassesRule = d->rules.randomClasses;
+    d->rules.randomClasses = false;
 #endif
 
     // Are we saving progress?
     SavedSession *saved = 0;
-    if(!G_Rules().deathmatch) // Never save in deathmatch.
+    if(!d->rules.deathmatch) // Never save in deathmatch.
     {
         saved = &App::rootFolder().locate<SavedSession>(internalSavePath);
         Folder &mapsFolder = saved->locate<Folder>("maps");
@@ -841,7 +994,7 @@ void GameSession::leaveMap()
     d->restorePlayersInHub(playerBackup, nextMapEntrance);
 
     // Restore the random class rule.
-    G_Rules().randomClasses = oldRandomClassesRule;
+    COMMON_GAMESESSION->rules().randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
     Game_ACScriptInterpreter_RunDeferredTasks(gameMapUri);

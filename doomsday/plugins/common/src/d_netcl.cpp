@@ -58,7 +58,7 @@ void NetCl_UpdateGameState(Reader *msg)
 
     byte configFlags = Reader_ReadByte(msg);
 
-    GameRuleset gsRules(G_Rules()); // Initialize with a copy of the current rules.
+    GameRuleset gsRules(COMMON_GAMESESSION->rules()); // Initialize with a copy of the current rules.
     gsRules.deathmatch      = configFlags & 0x3;
     gsRules.noMonsters      = !(configFlags & 0x4? true : false);
 #if !__JHEXEN__
@@ -111,7 +111,7 @@ void NetCl_UpdateGameState(Reader *msg)
         /// begun and setting the current map and/or entrance is illogical at this point.
         DENG2_ASSERT(Uri_Equality(gsMapUri, gameMapUri));
 
-        G_ApplyNewGameRules(gsRules);
+        COMMON_GAMESESSION->applyNewRules(gsRules);
         //COMMON_GAMESESSION->setMap(*gsMapUri);
         //gameMapEntrance = gsMapEntrance;
     }

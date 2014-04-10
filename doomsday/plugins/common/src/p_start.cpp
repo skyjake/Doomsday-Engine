@@ -35,6 +35,7 @@
 #include "am_map.h"
 #include "p_terraintype.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_switch.h"
@@ -502,7 +503,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
-    if(G_Rules().deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
 #if __JHEXEN__
         p->keys = 2047;
@@ -657,7 +658,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     }
 
     // Spawn at random spot if in death match.
-    if(G_Rules().deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrNum);
         return;
@@ -892,7 +893,7 @@ void P_SpawnPlayers()
     }
 
     // If deathmatch, randomly spawn the active players.
-    if(G_Rules().deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -991,7 +992,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     playerclass_t pClass;
 #if __JHEXEN__
-    if(G_Rules().randomClasses)
+    if(COMMON_GAMESESSION->rules().randomClasses)
     {
         pClass = playerclass_t(P_Random() % 3);
         if(pClass == cfg.playerClass[playerNum]) // Not the same class, please.

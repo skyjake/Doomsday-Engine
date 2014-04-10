@@ -30,6 +30,7 @@
 #include "hu_msg.h"
 #include "hu_inventory.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "am_map.h"
@@ -418,7 +419,7 @@ int scoreInfoCompare(void const *a_, void const *b_)
     if(a->kills > b->kills) return -1;
     if(b->kills > a->kills) return 1;
 
-    if(G_Rules().deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         // In deathmatch, suicides affect your place on the scoreboard.
         if(a->suicides < b->suicides) return -1;
@@ -493,7 +494,7 @@ static int populateScoreInfo(scoreinfo_t* scoreBoard, int maxPlayers, int player
         }
 #endif
 
-        if(G_Rules().deathmatch)
+        if(COMMON_GAMESESSION->rules().deathmatch)
         {
             for(int j = 0; j < maxPlayers; ++j)
             {
@@ -755,7 +756,7 @@ static void drawMapMetaData(float x, float y, float alpha)
     if(!title) title = "Unnamed";
 
     char buf[256];
-    dd_snprintf(buf, 256, "%s - %s", G_Rules().description().toLatin1().constData(), title);
+    dd_snprintf(buf, 256, "%s - %s", COMMON_GAMESESSION->rules().description().toLatin1().constData(), title);
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
     FR_DrawTextXY2(buf, x + BORDER, y - BORDER, ALIGN_BOTTOMLEFT);

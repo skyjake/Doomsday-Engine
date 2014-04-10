@@ -24,13 +24,14 @@
 
 #include "jdoom.h"
 
-#include "d_net.h"
-#include "player.h"
 #include "am_map.h"
-#include "hu_msg.h"
+#include "d_net.h"
 #include "dmu_lib.h"
-#include "p_user.h"
 #include "g_eventsequence.h"
+#include "gamesession.h"
+#include "hu_msg.h"
+#include "p_user.h"
+#include "player.h"
 
 typedef eventsequencehandler_t cheatfunc_t;
 
@@ -145,7 +146,7 @@ CHEAT_FUNC(Reveal)
 
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME && G_Rules().deathmatch) return false;
+    if(IS_NETGAME && COMMON_GAMESESSION->rules().deathmatch) return false;
 
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
@@ -248,7 +249,7 @@ D_CMD(CheatGod)
         {
             NetCl_CheatRequest("god");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -296,7 +297,7 @@ D_CMD(CheatNoClip)
         {
             NetCl_CheatRequest("noclip");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -475,7 +476,7 @@ D_CMD(CheatGive)
         return true;
     }
 
-    if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
+    if((IS_NETGAME && !netSvAllowCheats) || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
         return false;
 
     plr = &players[player];
@@ -667,7 +668,7 @@ D_CMD(CheatMassacre)
         {
             NetCl_CheatRequest("kill");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Rules().skill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
         {
             return false;
         }

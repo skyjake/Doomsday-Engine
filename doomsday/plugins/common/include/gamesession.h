@@ -64,6 +64,20 @@ public:
     inline de::String gameId() const { return Session::profile().gameId; }
 
     /**
+     * Returns the current ruleset for the game session.
+     * @todo Return value should be const. (Need to fix the myriad state management issues...)
+     */
+    GameRuleset /*const*/ &rules() const;
+
+    /**
+     * To be called when a new game begins to effect the game rules. Note that some
+     * of the rules may be overridden here (e.g., in a networked game).
+     *
+     * @todo Prevent this outright if the game session is already in progress!
+     */
+    void applyNewRules(GameRuleset const &rules);
+
+    /**
      * Determines whether saved game progress will be restored when the current map is reloaded,
      * according to the current game state and user configuration.
      */

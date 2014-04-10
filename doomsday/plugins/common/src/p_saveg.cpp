@@ -936,7 +936,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     }
     else if(rules)
     {
-        G_Rules() = *rules;
+        COMMON_GAMESESSION->rules() = *rules;
     }
 
     delete rules; rules = 0;

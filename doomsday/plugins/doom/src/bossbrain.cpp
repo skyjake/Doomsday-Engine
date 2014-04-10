@@ -23,7 +23,7 @@
 
 #include "jdoom.h"
 #include "bossbrain.h"
-
+#include "gamesession.h"
 #include "p_saveg.h"
 
 BossBrain *theBossBrain; // The One boss brain.
@@ -148,7 +148,7 @@ mobj_t *BossBrain::nextTarget()
         return 0;
 
     d->easy ^= 1;
-    if(G_Rules().skill <= SM_EASY && (!d->easy))
+    if(COMMON_GAMESESSION->rules().skill <= SM_EASY && (!d->easy))
         return 0;
 
     mobj_t *targ = d->targets[d->targetOn++];
