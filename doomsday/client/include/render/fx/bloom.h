@@ -39,6 +39,7 @@ public:
 
     static void consoleRegister();
     static bool isEnabled();
+    static float intensity();
 
 private:
     DENG2_PRIVATE(d)

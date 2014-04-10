@@ -19,8 +19,8 @@
 
 #include "de_platform.h"
 #include "render/rend_halo.h"
-
 #include "render/rend_main.h"
+#include "render/fx/bloom.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -234,6 +234,14 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
 
         // Apply the global dimming factor.
         alpha *= .8f * haloBright / 100.0f;
+
+        if(fx::Bloom::isEnabled())
+        {
+            // Bloom will make bright areas even brighter, which means halos
+            // should be dimmer to compensate. Otherwise there will be
+            // oversaturation.
+            alpha *= clamp(0.1f, (1.f - fx::Bloom::intensity() * .8f), 1.f);
+        }
 
         // Secondary flares are a little bolder.
         if(secondary)

@@ -261,4 +261,9 @@ bool Bloom::isEnabled() // static
     return bloomEnabled;
 }
 
+float Bloom::intensity()
+{
+    return bloomIntensity;
+}
+
 } // namespace fx
