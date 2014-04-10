@@ -389,7 +389,7 @@ DENG2_PIMPL(NativeTranslator)
         dbyte episode, map;
         from >> episode >> map;
         if(fallbackGameId.beginsWith("hexen") || fallbackGameId.beginsWith("doom2") ||
-            fallbackGameId.beginsWith("chex") || fallbackGameId.beginsWith("hacx"))
+           /*fallbackGameId.beginsWith("chex") ||*/ fallbackGameId.beginsWith("hacx"))
         {
             episode = 0; // Why is this > 0??
         }
@@ -674,7 +674,7 @@ void NativeTranslator::convert(Path path)
                     *mapStateData += *xlatedData;
                     delete xlatedData;
 
-                    arch.add(Path("maps") / composeMapUriPath(0, i) + "State", *mapStateData);
+                    arch.add(Path("maps") / composeMapUriPath(0, i + 1) + "State", *mapStateData);
                     delete mapStateData;
                 }
             }
