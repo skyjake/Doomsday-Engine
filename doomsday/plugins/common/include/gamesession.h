@@ -49,7 +49,7 @@ class GameSession : public de::game::Session
 {
 public:
     GameSession();
-    ~GameSession();
+    virtual ~GameSession();
 
     /// Returns the singleton instance.
     static GameSession &gameSession();
@@ -68,9 +68,8 @@ public:
 
     /**
      * Returns the current ruleset for the game session.
-     * @todo Return value should be const. (Need to fix the myriad state management issues...)
      */
-    GameRuleset /*const*/ &rules() const;
+    GameRuleset const &rules() const;
 
     /**
      * To be called when a new game begins to effect the game rules. Note that some

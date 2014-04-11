@@ -233,7 +233,7 @@ DENG2_PIMPL(GameSession)
         GameRuleset *newRules;
         try
         {
-            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+            newRules = GameRuleset::fromRecord(metadata.subrecord("ruleset"));
         }
         catch(Record::NotFoundError const &)
         {
@@ -245,7 +245,7 @@ DENG2_PIMPL(GameSession)
                     << session.path();
 
             // Use the current rules as our basis.
-            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules);
+            newRules = GameRuleset::fromRecord(metadata.subrecord("ruleset"), &rules);
         }
         self.applyNewRules(*newRules);
         delete newRules; newRules = 0;
@@ -596,7 +596,7 @@ bool GameSession::savingPossible()
     return true;
 }
 
-GameRuleset &GameSession::rules() const
+GameRuleset const &GameSession::rules() const
 {
     return d->rules;
 }
@@ -997,7 +997,7 @@ void GameSession::leaveMap()
     d->restorePlayersInHub(playerBackup, nextMapEntrance);
 
     // Restore the random class rule.
-    COMMON_GAMESESSION->rules().randomClasses = oldRandomClassesRule;
+    d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
     Game_ACScriptInterpreter_RunDeferredTasks(gameMapUri);

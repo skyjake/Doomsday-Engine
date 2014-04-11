@@ -552,11 +552,8 @@ static void initSaveSlots()
  */
 void G_CommonPreInit()
 {
-    // Clear the game rules for the current session to their default values.
-    COMMON_GAMESESSION->rules() = GameRuleset();
-
-    // Clear the default game rules also.
-    defaultGameRules = GameRuleset();
+    // Apply the default game rules.
+    COMMON_GAMESESSION->applyNewRules(defaultGameRules = GameRuleset());
 
     if(!gameMapUri)
     {
@@ -2905,16 +2902,17 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
 
     if(IS_NETGAME && IS_CLIENT)
     {
-        // Restore normal game state?
-        GameRuleset &gameRules = COMMON_GAMESESSION->rules();
-        gameRules.deathmatch      = false;
-        gameRules.noMonsters      = false;
+        // Restore normal game state.
+        GameRuleset newRules(COMMON_GAMESESSION->rules());
+        newRules.deathmatch      = false;
+        newRules.noMonsters      = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        gameRules.respawnMonsters = false;
+        newRules.respawnMonsters = false;
 #endif
 #if __JHEXEN__
-        gameRules.randomClasses   = false;
+        newRules.randomClasses   = false;
 #endif
+        COMMON_GAMESESSION->applyNewRules(newRules);
     }
 
     for(int i = 0; i < MAXPLAYERS; ++i)

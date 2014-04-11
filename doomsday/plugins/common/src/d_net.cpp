@@ -103,18 +103,17 @@ void NetSv_ApplyGameRulesFromConfig()
 {
     if(IS_CLIENT) return;
 
-    GameRuleset &gameRules = COMMON_GAMESESSION->rules();
-    gameRules.deathmatch = cfg.netDeathmatch;
-    gameRules.noMonsters = cfg.netNoMonsters;
-    cfg.jumpEnabled = cfg.netJumping;
-
+    GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
+    newRules.deathmatch = cfg.netDeathmatch;
+    newRules.noMonsters = cfg.netNoMonsters;
+    /*gameRules.*/cfg.jumpEnabled = cfg.netJumping;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    gameRules.respawnMonsters = cfg.netRespawn;
+    newRules.respawnMonsters = cfg.netRespawn;
 #endif
-
 #if __JHEXEN__
-    gameRules.randomClasses = cfg.netRandomClass;
+    newRules.randomClasses = cfg.netRandomClass;
 #endif
+    COMMON_GAMESESSION->applyNewRules(newRules);
 
     NetSv_UpdateGameConfigDescription();
 }
@@ -149,7 +148,7 @@ int D_NetServerStarted(int before)
 
     Uri *netMapUri = G_ComposeMapUri(netEpisode, netMap);
 
-    GameRuleset netRules = COMMON_GAMESESSION->rules(); // Make a copy of the current rules.
+    GameRuleset netRules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
     netRules.skill = skillmode_t(cfg.netSkill);
 
     COMMON_GAMESESSION->end();
@@ -171,12 +170,14 @@ int D_NetServerClose(int before)
         /// @todo fixme: "normal" is defined by the game rules config which may
         /// be changed from the command line (e.g., -fast, -nomonsters).
         /// In order to "restore normal" this logic is insufficient.
-        GameRuleset &gameRules = COMMON_GAMESESSION->rules();
-        gameRules.deathmatch    = false;
-        gameRules.noMonsters    = false;
+        GameRuleset newRules(COMMON_GAMESESSION->rules());
+        newRules.deathmatch    = false;
+        newRules.noMonsters    = false;
 #if __JHEXEN__
-        gameRules.randomClasses = false;
+        newRules.randomClasses = false;
 #endif
+        COMMON_GAMESESSION->applyNewRules(newRules);
+
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
 
         D_NetClearBuffer();
@@ -205,18 +206,20 @@ int D_NetDisconnect(int before)
 {
     if(before) return true;
 
-    // Restore normal game state.
-    GameRuleset &gameRules = COMMON_GAMESESSION->rules();
-    gameRules.deathmatch    = false;
-    gameRules.noMonsters    = false;
-#if __JHEXEN__
-    gameRules.randomClasses = false;
-#endif
-
     D_NetClearBuffer();
 
     // Start demo.
     COMMON_GAMESESSION->endAndBeginTitle();
+
+    // Restore normal game state.
+    GameRuleset newRules(COMMON_GAMESESSION->rules());
+    newRules.deathmatch    = false;
+    newRules.noMonsters    = false;
+#if __JHEXEN__
+    newRules.randomClasses = false;
+#endif
+    COMMON_GAMESESSION->applyNewRules(newRules);
+
     return true;
 }
 
