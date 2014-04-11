@@ -51,6 +51,7 @@
 #include "ui/inputsystem.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
 #include "updater.h"
@@ -135,6 +136,14 @@ DENG2_PIMPL(ClientApp)
         {
             if(alertMask.shouldRaiseAlert(entry.metadata()))
             {
+                // Don't raise alerts if the console history is open; the
+                // warning/error will be shown there.
+                if(ClientWindow::main().taskBar().isOpen() &&
+                   ClientWindow::main().taskBar().console().isLogOpen())
+                {
+                    return *this;
+                }
+
                 // We don't want to raise alerts about problems in id/Raven WADs,
                 // since these just have to be accepted by the user.
                 if((entry.metadata() & LogEntry::Map) &&
