@@ -138,7 +138,8 @@ DENG2_PIMPL(ClientApp)
             {
                 // Don't raise alerts if the console history is open; the
                 // warning/error will be shown there.
-                if(ClientWindow::main().taskBar().isOpen() &&
+                if(ClientWindow::mainExists() &&
+                   ClientWindow::main().taskBar().isOpen() &&
                    ClientWindow::main().taskBar().console().isLogOpen())
                 {
                     return *this;
