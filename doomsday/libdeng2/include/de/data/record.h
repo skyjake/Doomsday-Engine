@@ -66,6 +66,11 @@ public:
     typedef std::pair<String, String> KeyValue;
     typedef QList<KeyValue> List;
 
+    enum CopyBehavior {
+        AllMembers,
+        IgnoreDoubleUnderscoreMembers
+    };
+
     DENG2_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
 
 public:
@@ -74,9 +79,10 @@ public:
     /**
      * Constructs a copy of another record.
      *
-     * @param other  Record to copy.
+     * @param other     Record to copy.
+     * @param behavior  Which members to copy.
      */
-    Record(Record const &other);
+    Record(Record const &other, CopyBehavior behavior = AllMembers);
 
     virtual ~Record();
 
@@ -84,11 +90,6 @@ public:
      * Deletes all the variables in the record.
      */
     void clear();
-
-    enum CopyBehavior {
-        AllMembers,
-        IgnoreDoubleUnderscoreMembers
-    };
 
     /**
      * Adds a copy of each member of another record into this record. The

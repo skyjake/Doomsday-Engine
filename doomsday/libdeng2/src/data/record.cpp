@@ -179,11 +179,11 @@ DENG2_AUDIENCE_METHOD(Record, Deletion)
 Record::Record() : d(new Instance(*this))
 {}
 
-Record::Record(Record const &other)
+Record::Record(Record const &other, CopyBehavior behavior)
     : ISerializable(), LogEntry::Arg::Base(), Variable::IDeletionObserver(),
       d(new Instance(*this))
 {
-    copyMembersFrom(other);
+    copyMembersFrom(other, behavior);
 }
 
 Record::~Record()
@@ -225,7 +225,8 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
                 DENG2_ASSERT(recVal->record() == original.record());
 
                 // Make a true copy of the subrecord.
-                recVal->setRecord(new Record(*recVal->record()), RecordValue::OwnsRecord);
+                recVal->setRecord(new Record(*recVal->record(), behavior),
+                                  RecordValue::OwnsRecord);
             }
         }
 
