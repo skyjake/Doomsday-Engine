@@ -35,6 +35,7 @@ namespace de {
 
 //#undef PI
 ddouble const PI = 3.1415926535897932384626433832795028841971693993751;
+dfloat const PIf = dfloat(PI);
 ddouble const EPSILON = 1.0e-7;
 dfloat const FLOAT_EPSILON = 1.0e-5f;
 

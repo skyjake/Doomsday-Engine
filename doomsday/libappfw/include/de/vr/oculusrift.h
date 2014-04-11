@@ -45,6 +45,19 @@ public:
 
     void setPredictionLatency(float latency);
 
+    /**
+     * Applies an offset to the yaw angle returned from Oculus Rift. This can be used to
+     * calibrate where the zero angle's physical direction is.
+     *
+     * @param yawRadians  Offset to apply to the yaw angle (radians).
+     */
+    void setYawOffset(float yawRadians);
+
+    /**
+     * Sets a yaw offset that makes the current actual Oculus Rift yaw come out as zero.
+     */
+    void resetYaw();
+
     // Called to allow head orientation to change again.
     void allowUpdate();
 
@@ -55,7 +68,9 @@ public:
      * yaw angles, in radians. If no head tracking is available, the returned values are
      * not valid.
      */
-    Vector3f headOrientation() const;
+    Vector3f headOrientation() const;      
+
+    float yawOffset() const;
 
     /**
      * Returns a model-view matrix that applies the head's orientation.

@@ -144,6 +144,7 @@ DENG2_PIMPL(OculusRift), public Lockable
     float latency;
     float ipd;
     bool headOrientationUpdateIsAllowed;
+    float yawOffset;
 
 #ifdef DENG_HAVE_OCULUS_API
     OculusTracker *oculusTracker;
@@ -160,6 +161,7 @@ DENG2_PIMPL(OculusRift), public Lockable
         , latency(.030f)
         , ipd(.064f)
         , headOrientationUpdateIsAllowed(true)
+        , yawOffset(0)
 #ifdef DENG_HAVE_OCULUS_API
         , oculusTracker(0)
 #endif
@@ -279,6 +281,22 @@ void OculusRift::setPredictionLatency(float latency)
 #endif
 }
 
+void OculusRift::setYawOffset(float yawRadians)
+{
+    d->yawOffset = yawRadians;
+}
+
+void OculusRift::resetYaw()
+{
+#ifdef DENG_HAVE_OCULUS_API
+    DENG2_GUARD(d);
+    if(isReady())
+    {
+        d->yawOffset = -d->oculusTracker->yaw;
+    }
+#endif
+}
+
 float OculusRift::predictionLatency() const
 {
 #ifdef DENG_HAVE_OCULUS_API
@@ -329,10 +347,15 @@ Vector3f OculusRift::headOrientation() const
     {
         result[0] = d->oculusTracker->pitch;
         result[1] = d->oculusTracker->roll;
-        result[2] = d->oculusTracker->yaw;
+        result[2] = wrap(d->oculusTracker->yaw + d->yawOffset, -PIf, PIf);
     }
 #endif
     return result;
+}
+
+float OculusRift::yawOffset() const
+{
+    return d->yawOffset;
 }
 
 Matrix4f OculusRift::headModelViewMatrix() const
