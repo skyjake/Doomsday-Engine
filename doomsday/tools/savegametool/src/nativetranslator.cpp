@@ -24,6 +24,7 @@
 #include <de/ArrayValue>
 #include <de/NativeFile>
 #include <de/NumberValue>
+#include <de/Reader>
 #include <de/Writer>
 #include <de/ZipArchive>
 #include "nativetranslator.h"
@@ -314,7 +315,6 @@ DENG2_PIMPL(NativeTranslator)
 #define SM_NOTHINGS     -1
 #define SM_BABY         0
 #define NUM_SKILL_MODES 5
-#define MAXPLAYERS      16
 
         dint32 oldMagic;
         from >> oldMagic >> saveVersion;
@@ -335,7 +335,7 @@ DENG2_PIMPL(NativeTranslator)
         // Translate gamemode identifiers from older save versions.
         dint32 oldGamemode;
         from >> oldGamemode;
-        metadata.set("gameIdentityKey",     translateGamemode(oldGamemode));
+        metadata.set("gameIdentityKey", translateGamemode(oldGamemode));
 
         // User description. A fixed 24 characters in length in "really old" versions.
         dint32 len = 24;
@@ -346,7 +346,7 @@ DENG2_PIMPL(NativeTranslator)
         dint8 *descBuf = (dint8 *)malloc(len + 1);
         DENG2_ASSERT(descBuf != 0);
         from.read(descBuf, len);
-        metadata.set("userDescription",     String((char *)descBuf, len));
+        metadata.set("userDescription", String((char *)descBuf, len));
         free(descBuf); descBuf = 0;
 
         QScopedPointer<Record> rules(new Record);
@@ -393,7 +393,7 @@ DENG2_PIMPL(NativeTranslator)
         {
             episode = 0; // Why is this > 0??
         }
-        metadata.set("mapUri",              composeMapUriPath(episode, map).asText());
+        metadata.set("mapUri", composeMapUriPath(episode, map).asText());
 
         dbyte deathmatch;
         from >> deathmatch;
@@ -431,23 +431,22 @@ DENG2_PIMPL(NativeTranslator)
 
             dint32 mapTime;
             from >> mapTime;
-            metadata.set("mapTime",         mapTime);
+            metadata.set("mapTime", mapTime);
 
             ArrayValue *array = new de::ArrayValue;
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for(int i = 0; i < 16/*MAXPLAYERS*/; ++i)
             {
                 dbyte playerPresent;
                 from >> playerPresent;
                 *array << NumberValue(playerPresent != 0, NumberValue::Boolean);
             }
-            metadata.set("players",         array);
+            metadata.set("players", array);
         }
 
         dint32 sessionId;
         from >> sessionId;
-        metadata.set("sessionId",           sessionId);
+        metadata.set("sessionId", sessionId);
 
-#undef MAXPLAYERS
 #undef NUM_SKILL_MODES
 #undef SM_BABY
 #undef SM_NOTHINGS
@@ -633,15 +632,14 @@ void NativeTranslator::convert(Path path)
     String saveName = path.lastSegment().toString();
 
     d->openFile(path);
-    String const nativeFilePath = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath().toString();
+    String const nativeFilePath = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();
     LZReader from(d->saveFile());
+
+    ZipArchive arch;
 
     // Read and translate the game session metadata.
     SessionMetadata metadata;
     d->translateMetadata(metadata, from);
-
-    ZipArchive arch;
-    arch.add("Info", composeInfo(metadata, nativeFilePath, d->saveVersion).toUtf8());
 
     if(d->id == Hexen)
     {
@@ -651,35 +649,57 @@ void NativeTranslator::convert(Path path)
 
     if(d->id == Hexen)
     {
+        QScopedPointer<Block> xlatedPlayerData(d->bufferFile());
+        DENG2_ASSERT(!xlatedPlayerData.isNull());
+        d->closeFile();
+
+        // Update the metadata with the present player info (this is not needed by Hexen
+        // but we'll include it for the sake of uniformity).
+        ArrayValue *array = new de::ArrayValue;
+        int const presentPlayersOffset = (d->saveVersion < 4? 0 : 4 + 1 + (8 * 4) + 4);
+        for(int i = 0; i < 8/*MAXPLAYERS*/; ++i)
+        {
+            dbyte playerPresent = xlatedPlayerData->at(presentPlayersOffset + i);
+            *array << NumberValue(playerPresent != 0, NumberValue::Boolean);
+        }
+        metadata.set("players", array);
+
         // Serialized map states are in similarly named "side car" files.
         int const maxHubMaps = 99;
         for(int i = 0; i < maxHubMaps; ++i)
         {
-            // Open the map state file.
-            Path mapStatePath =
-                    path.toString().fileNamePath() / saveName.fileNameWithoutExtension()
-                        + String("%1").arg(i + 1, 2, 10, QChar('0'))
-                        + saveName.fileNameExtension();
-
-            d->closeFile();
             try
             {
-                d->openFile(mapStatePath);
-                // Buffer the file and write it out to a new map state file.
+                d->openFile(path.toString().fileNamePath() / saveName.fileNameWithoutExtension()
+                            + String("%1").arg(i + 1, 2, 10, QChar('0'))
+                            + saveName.fileNameExtension());
+
                 if(Block *xlatedData = d->bufferFile())
                 {
-                    // Append the remaining translated data to header, forming the new serialized
-                    // map state data file.
-                    Block *mapStateData = composeMapStateHeader(d->magic(), d->saveVersion);
-                    *mapStateData += *xlatedData;
-                    delete xlatedData;
+                    String const mapUriPath = composeMapUriPath(0, i + 1);
 
-                    arch.add(Path("maps") / composeMapUriPath(0, i + 1) + "State", *mapStateData);
-                    delete mapStateData;
+                    // If this is the "current" map extract the map time for the metadata.
+                    if(!mapUriPath.compareWithoutCase(metadata.gets("mapUri")))
+                    {
+                        dint32 mapTime;
+                        Reader(*xlatedData, littleEndianByteOrder, 4 + 1) >> mapTime;
+                        metadata.set("mapTime", mapTime);
+                    }
+
+                    // Concatenate the translated data to form the serialized map state file.
+                    QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
+                    DENG2_ASSERT(!mapStateData.isNull());
+                    *mapStateData += *xlatedPlayerData;
+                    *mapStateData += *xlatedData;
+
+                    arch.add(Path("maps") / mapUriPath + "State", *mapStateData);
+
+                    delete xlatedData;
                 }
             }
             catch(FileOpenError const &)
             {} // Ignore this error.
+            d->closeFile();
         }
     }
     else
@@ -690,16 +710,20 @@ void NativeTranslator::convert(Path path)
         {
             // Append the remaining translated data to header, forming the new serialized
             // map state data file.
-            Block *mapStateData = composeMapStateHeader(d->magic(), d->saveVersion);
+            QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
+            DENG2_ASSERT(!mapStateData.isNull());
             *mapStateData += *xlatedData;
-            delete xlatedData;
 
             arch.add(Path("maps") / metadata.gets("mapUri") + "State", *mapStateData);
-            delete mapStateData;
+
+            delete xlatedData;
         }
+
+        d->closeFile();
     }
 
-    d->closeFile();
+    // Write out the Info file with all the metadata.
+    arch.add("Info", composeInfo(metadata, nativeFilePath, d->saveVersion).toUtf8());
 
     File &outFile = outputFolder().replaceFile(saveName.fileNameWithoutExtension() + ".save");
     Writer(outFile) << arch;
