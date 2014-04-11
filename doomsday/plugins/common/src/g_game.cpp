@@ -73,6 +73,8 @@ using namespace common;
 
 static GameSession session;
 
+GameRuleset defaultGameRules;
+
 #define BODYQUEUESIZE       (32)
 
 #define READONLYCVAR        CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE
@@ -144,6 +146,10 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 // Game Action Variables:
+static uint gaNewSessionMapEntrance;
+static Uri *gaNewSessionMapUri; ///< @todo fixme: Never free'd
+static GameRuleset gaNewSessionRules;
+
 static de::String gaSaveSessionSlot;
 static bool gaSaveSessionGenerateDescription = true;
 static de::String gaSaveSessionUserDescription;
@@ -355,11 +361,6 @@ ccmdtemplate_t gameCmds[] = {
     { "", "", 0, 0 }
 };
 
-// Deferred new game arguments:
-static uint dMapEntrance;
-static Uri *dMapUri; ///< @todo fixme: Never free'd
-static GameRuleset dRules;
-
 static gameaction_t gameAction;
 static dd_bool quitInProgress;
 
@@ -414,13 +415,13 @@ void G_SetGameAction(gameaction_t newAction)
 
 void G_SetGameActionNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules)
 {
-    if(!dMapUri)
+    if(!gaNewSessionMapUri)
     {
-        dMapUri = Uri_New();
+        gaNewSessionMapUri = Uri_New();
     }
-    Uri_Copy(dMapUri, &mapUri);
-    dMapEntrance = mapEntrance;
-    dRules       = rules; // make a copy.
+    Uri_Copy(gaNewSessionMapUri, &mapUri);
+    gaNewSessionMapEntrance = mapEntrance;
+    gaNewSessionRules       = rules; // make a copy.
 
     G_SetGameAction(GA_NEWSESSION);
 }
@@ -553,6 +554,9 @@ void G_CommonPreInit()
 {
     // Clear the game rules for the current session to their default values.
     COMMON_GAMESESSION->rules() = GameRuleset();
+
+    // Clear the default game rules also.
+    defaultGameRules = GameRuleset();
 
     if(!gameMapUri)
     {
@@ -1487,7 +1491,8 @@ static void runGameAction()
         {
         case GA_NEWSESSION:
             COMMON_GAMESESSION->end();
-            COMMON_GAMESESSION->begin(*dMapUri, dMapEntrance, dRules);
+            COMMON_GAMESESSION->begin(*gaNewSessionMapUri, gaNewSessionMapEntrance,
+                                      gaNewSessionRules);
             break;
 
         case GA_LOADSESSION:
@@ -3391,7 +3396,7 @@ D_CMD(WarpMap)
     }
     else
     {
-        G_SetGameActionNewSession(*newMapUri, 0/*default*/, COMMON_GAMESESSION->rules());
+        G_SetGameActionNewSession(*newMapUri, 0/*default*/, defaultGameRules);
     }
 
     // If the command source was "us" the game library then it was probably in

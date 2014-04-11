@@ -6443,7 +6443,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     cfg.playerClass[CONSOLEPLAYER] = playerclass_t(mnPlrClass);
 #endif
 
-    GameRuleset newRules(COMMON_GAMESESSION->rules());
+    GameRuleset newRules(defaultGameRules);
     newRules.skill = mnSkillmode;
 
 #if __JHEXEN__

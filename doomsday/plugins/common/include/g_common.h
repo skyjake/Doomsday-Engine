@@ -68,6 +68,8 @@ void G_SetGameAction(gameaction_t action);
 #if __cplusplus
 } // extern "C"
 
+extern GameRuleset defaultGameRules;
+
 /**
  * Schedule a new game session (deferred).
  *
