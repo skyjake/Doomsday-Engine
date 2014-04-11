@@ -75,6 +75,146 @@ DENG2_PIMPL(GameSession)
         Session::removeSaved(internalSavePath);
     }
 
+#if __JDOOM__ || __JDOOM64__
+    void applyRuleFastMonsters(dd_bool fast)
+    {
+        static dd_bool oldFast = false;
+
+        // Only modify when the rule changes state.
+        if(fast == oldFast) return;
+        oldFast = fast;
+
+        /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+        for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+        {
+            STATES[i].tics = fast? 1 : 2;
+        }
+        for(int i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+        {
+            STATES[i].tics = fast? 4 : 8;
+        }
+        for(int i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+        {
+            STATES[i].tics = fast? 1 : 2;
+        }
+        // Kludge end.
+    }
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    void applyRuleFastMissiles(dd_bool fast)
+    {
+        struct missileinfo_s {
+            mobjtype_t  type;
+            float       speed[2];
+        }
+        MonsterMissileInfo[] =
+        {
+#if __JDOOM__ || __JDOOM64__
+            { MT_BRUISERSHOT, {15, 20} },
+            { MT_HEADSHOT, {10, 20} },
+            { MT_TROOPSHOT, {10, 20} },
+# if __JDOOM64__
+            { MT_BRUISERSHOTRED, {15, 20} },
+            { MT_NTROSHOT, {20, 40} },
+# endif
+#elif __JHERETIC__
+            { MT_IMPBALL, {10, 20} },
+            { MT_MUMMYFX1, {9, 18} },
+            { MT_KNIGHTAXE, {9, 18} },
+            { MT_REDAXE, {9, 18} },
+            { MT_BEASTBALL, {12, 20} },
+            { MT_WIZFX1, {18, 24} },
+            { MT_SNAKEPRO_A, {14, 20} },
+            { MT_SNAKEPRO_B, {14, 20} },
+            { MT_HEADFX1, {13, 20} },
+            { MT_HEADFX3, {10, 18} },
+            { MT_MNTRFX1, {20, 26} },
+            { MT_MNTRFX2, {14, 20} },
+            { MT_SRCRFX1, {20, 28} },
+            { MT_SOR2FX1, {20, 28} },
+#endif
+            { mobjtype_t(-1), {-1, -1} }
+        };
+
+        static dd_bool oldFast = false;
+
+        // Only modify when the rule changes state.
+        if(fast == oldFast) return;
+        oldFast = fast;
+
+        /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+        for(int i = 0; MonsterMissileInfo[i].type != -1; ++i)
+        {
+            MOBJINFO[MonsterMissileInfo[i].type].speed =
+                MonsterMissileInfo[i].speed[fast? 1 : 0];
+        }
+        // Kludge end.
+    }
+#endif
+
+    void applyCurrentRules()
+    {
+        if(rules.skill < SM_NOTHINGS)
+            rules.skill = SM_NOTHINGS;
+        if(rules.skill > NUM_SKILL_MODES - 1)
+            rules.skill = skillmode_t(NUM_SKILL_MODES - 1);
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        if(!IS_NETGAME)
+        {
+            rules.deathmatch      = false;
+            rules.respawnMonsters = false;
+
+            rules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
+        }
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        rules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
+#endif
+
+#if __JDOOM__ || __JHERETIC__
+        // Is respawning enabled at all in nightmare skill?
+        if(rules.skill == SM_NIGHTMARE)
+        {
+            rules.respawnMonsters = cfg.respawnMonstersNightmare;
+        }
+#endif
+
+        // Fast monsters?
+#if __JDOOM__ || __JDOOM64__
+        dd_bool fastMonsters = rules.fast;
+# if __JDOOM__
+        if(rules.skill == SM_NIGHTMARE)
+        {
+            fastMonsters = true;
+        }
+# endif
+        applyRuleFastMonsters(fastMonsters);
+#endif
+
+        // Fast missiles?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        dd_bool fastMissiles = rules.fast;
+# if !__JDOOM64__
+        if(rules.skill == SM_NIGHTMARE)
+        {
+            fastMissiles = true;
+        }
+# endif
+        applyRuleFastMissiles(fastMissiles);
+#endif
+
+        if(IS_DEDICATED)
+        {
+            NetSv_ApplyGameRulesFromConfig();
+        }
+
+        // Update game status cvars:
+        Con_SetInteger2("game-skill", rules.skill, SVF_WRITE_OVERRIDE);
+    }
+
     static String composeSaveInfo(SessionMetadata const &metadata)
     {
         String info;
@@ -247,7 +387,8 @@ DENG2_PIMPL(GameSession)
             // Use the current rules as our basis.
             newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules);
         }
-        self.applyNewRules(*newRules);
+        rules = *newRules;
+        applyCurrentRules();
         delete newRules; newRules = 0;
 
 #if __JHEXEN__
@@ -601,154 +742,16 @@ GameRuleset const &GameSession::rules() const
     return d->rules;
 }
 
-#if __JDOOM__ || __JDOOM64__
-static void applyGameRuleFastMonsters(dd_bool fast)
-{
-    static dd_bool oldFast = false;
-
-    // Only modify when the rule changes state.
-    if(fast == oldFast) return;
-    oldFast = fast;
-
-    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-    {
-        STATES[i].tics = fast? 1 : 2;
-    }
-    for(int i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-    {
-        STATES[i].tics = fast? 4 : 8;
-    }
-    for(int i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-    {
-        STATES[i].tics = fast? 1 : 2;
-    }
-    // Kludge end.
-}
-#endif
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-static void applyGameRuleFastMissiles(dd_bool fast)
-{
-    struct missileinfo_s {
-        mobjtype_t  type;
-        float       speed[2];
-    }
-    MonsterMissileInfo[] =
-    {
-#if __JDOOM__ || __JDOOM64__
-        { MT_BRUISERSHOT, {15, 20} },
-        { MT_HEADSHOT, {10, 20} },
-        { MT_TROOPSHOT, {10, 20} },
-# if __JDOOM64__
-        { MT_BRUISERSHOTRED, {15, 20} },
-        { MT_NTROSHOT, {20, 40} },
-# endif
-#elif __JHERETIC__
-        { MT_IMPBALL, {10, 20} },
-        { MT_MUMMYFX1, {9, 18} },
-        { MT_KNIGHTAXE, {9, 18} },
-        { MT_REDAXE, {9, 18} },
-        { MT_BEASTBALL, {12, 20} },
-        { MT_WIZFX1, {18, 24} },
-        { MT_SNAKEPRO_A, {14, 20} },
-        { MT_SNAKEPRO_B, {14, 20} },
-        { MT_HEADFX1, {13, 20} },
-        { MT_HEADFX3, {10, 18} },
-        { MT_MNTRFX1, {20, 26} },
-        { MT_MNTRFX2, {14, 20} },
-        { MT_SRCRFX1, {20, 28} },
-        { MT_SOR2FX1, {20, 28} },
-#endif
-        { mobjtype_t(-1), {-1, -1} }
-    };
-
-    static dd_bool oldFast = false;
-
-    // Only modify when the rule changes state.
-    if(fast == oldFast) return;
-    oldFast = fast;
-
-    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(int i = 0; MonsterMissileInfo[i].type != -1; ++i)
-    {
-        MOBJINFO[MonsterMissileInfo[i].type].speed =
-            MonsterMissileInfo[i].speed[fast? 1 : 0];
-    }
-    // Kludge end.
-}
-#endif
-
 void GameSession::applyNewRules(GameRuleset const &newRules)
 {
     LOG_AS("GameSession");
-#ifdef DENG2_DEBUG
-    if(hasBegun())
-    {
-        LOG_WARNING("Applied new rules while in progress!");
-    }
-#endif
 
     d->rules = newRules;
-
-    if(d->rules.skill < SM_NOTHINGS)
-        d->rules.skill = SM_NOTHINGS;
-    if(d->rules.skill > NUM_SKILL_MODES - 1)
-        d->rules.skill = skillmode_t(NUM_SKILL_MODES - 1);
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(!IS_NETGAME)
+    if(hasBegun())
     {
-        d->rules.deathmatch      = false;
-        d->rules.respawnMonsters = false;
-
-        d->rules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
-    }
-#endif
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    d->rules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
-#endif
-
-#if __JDOOM__ || __JHERETIC__
-    // Is respawning enabled at all in nightmare skill?
-    if(d->rules.skill == SM_NIGHTMARE)
-    {
-        d->rules.respawnMonsters = cfg.respawnMonstersNightmare;
-    }
-#endif
-
-    // Fast monsters?
-#if __JDOOM__ || __JDOOM64__
-    dd_bool fastMonsters = d->rules.fast;
-# if __JDOOM__
-    if(d->rules.skill == SM_NIGHTMARE)
-    {
-        fastMonsters = true;
-    }
-# endif
-    applyGameRuleFastMonsters(fastMonsters);
-#endif
-
-    // Fast missiles?
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    dd_bool fastMissiles = d->rules.fast;
-# if !__JDOOM64__
-    if(d->rules.skill == SM_NIGHTMARE)
-    {
-        fastMissiles = true;
-    }
-# endif
-    applyGameRuleFastMissiles(fastMissiles);
-#endif
-
-    if(IS_DEDICATED)
-    {
-        NetSv_ApplyGameRulesFromConfig();
-    }
-
-    // Update game status cvars:
-    Con_SetInteger2("game-skill", d->rules.skill, SVF_WRITE_OVERRIDE);
+        d->applyCurrentRules();
+        LOGDEV_WARNING("Applied new rules while in progress!");
+    } // Otherwise deferred
 }
 
 bool GameSession::progressRestoredOnReload() const
@@ -828,7 +831,8 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
 
     M_ResetRandom();
 
-    applyNewRules(newRules);
+    d->rules = newRules;
+    d->applyCurrentRules();
     d->inProgress = true;
     d->setMap(mapUri);
     ::gameMapEntrance = mapEntrance;
