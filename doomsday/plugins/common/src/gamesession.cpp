@@ -233,7 +233,7 @@ DENG2_PIMPL(GameSession)
         GameRuleset *newRules;
         try
         {
-            newRules = GameRuleset::fromRecord(metadata.subrecord("ruleset"));
+            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
         }
         catch(Record::NotFoundError const &)
         {
@@ -245,7 +245,7 @@ DENG2_PIMPL(GameSession)
                     << session.path();
 
             // Use the current rules as our basis.
-            newRules = GameRuleset::fromRecord(metadata.subrecord("ruleset"), &rules);
+            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules);
         }
         self.applyNewRules(*newRules);
         delete newRules; newRules = 0;
