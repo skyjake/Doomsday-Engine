@@ -99,10 +99,24 @@ void SavedSession::Metadata::parse(String const &source)
 
 String SavedSession::Metadata::asStyledText() const
 {
+    String currentMapText = String(_E(l)" - Uri: "_E(.)_E(i) "%1" _E(.)).arg(gets("mapUri"));
+    // Is the time in the current map known?
+    if(has("mapTime"))
+    {
+        int time = geti("mapTime") / 35 /*TICRATE*/;
+        int const hours   = time / 3600; time -= hours * 3600;
+        int const minutes = time / 60;   time -= minutes * 60;
+        int const seconds = time;
+        currentMapText += String("\n" _E(l) " - Time: " _E(.)_E(i) "%1:%2:%3" _E(.))
+                             .arg(hours,   2, 10, QChar('0'))
+                             .arg(minutes, 2, 10, QChar('0'))
+                             .arg(seconds, 2, 10, QChar('0'));
+    }
+
     // Try to format the game rules so they look a little prettier.
+    String gameRulesText;
     QStringList rules = gets("gameRules", "None").split("\n", QString::SkipEmptyParts);
     rules.replaceInStrings(QRegExp("^(.*)= (.*)$"), _E(l) "\\1: " _E(.)_E(i) "\\2" _E(.));
-    String gameRulesText;
     for(int i = 0; i < rules.size(); ++i)
     {
         if(i) gameRulesText += "\n";
@@ -111,13 +125,13 @@ String SavedSession::Metadata::asStyledText() const
 
     return String(_E(b) "%1\n" _E(.)
                   _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
-                  _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Session id: "  _E(.)_E(i) "%4\n" _E(.)
+                  _E(l) "Session id: "  _E(.)_E(i) "%3\n" _E(.)
+                  _E(D) "Current map:\n"_E(.) "%4\n"
                   _E(D) "Game rules:\n" _E(.) "%5")
              .arg(gets("userDescription", ""))
              .arg(gets("gameIdentityKey", ""))
-             .arg(gets("mapUri", ""))
              .arg(geti("sessionId", 0))
+             .arg(currentMapText)
              .arg(gameRulesText);
 }
 
