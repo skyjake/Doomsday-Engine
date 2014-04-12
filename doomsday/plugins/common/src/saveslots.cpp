@@ -127,13 +127,17 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     }
 };
 
-SaveSlots::Slot::Slot(String id, bool userWritable, String savePath, int menuWidgetId)
+SaveSlots::Slot::Slot(String id, bool userWritable, String saveName, int menuWidgetId)
     : d(new Instance())
 {
     d->id           = id;
     d->userWritable = userWritable;
-    d->savePath     = savePath;
     d->menuWidgetId = menuWidgetId;
+    d->savePath     = COMMON_GAMESESSION->savePath() / saveName;
+    if(d->savePath.fileNameExtension().isEmpty())
+    {
+        d->savePath += ".save";
+    }
 
     // See if a saved session already exists for this slot.
     setSavedSession(App::rootFolder().tryLocate<SavedSession>(d->savePath));
@@ -159,8 +163,14 @@ String const &SaveSlots::Slot::savePath() const
     return d->savePath;
 }
 
-void SaveSlots::Slot::bindSavePath(String newPath)
+void SaveSlots::Slot::bindSaveName(String newName)
 {
+    String newPath = COMMON_GAMESESSION->savePath() / newName;
+    if(newPath.fileNameExtension().isEmpty())
+    {
+        newPath += ".save";
+    }
+
     if(d->savePath != newPath)
     {
         d->savePath = newPath;
@@ -278,13 +288,13 @@ DENG2_PIMPL(SaveSlots)
 SaveSlots::SaveSlots() : d(new Instance(this))
 {}
 
-void SaveSlots::add(String const &id, bool userWritable, String const &savePath, int menuWidgetId)
+void SaveSlots::add(String const &id, bool userWritable, String const &saveName, int menuWidgetId)
 {
     // Ensure the slot identifier is unique.
     if(d->slotById(id)) return;
 
     // Insert a new save slot.
-    d->sslots.insert(Instance::SlotItem(id, new Slot(id, userWritable, savePath, menuWidgetId)));
+    d->sslots.insert(Instance::SlotItem(id, new Slot(id, userWritable, saveName, menuWidgetId)));
 }
 
 int SaveSlots::count() const

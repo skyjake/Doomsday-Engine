@@ -49,7 +49,7 @@ public:
         };
 
     public:
-        Slot(de::String id, bool userWritable, de::String savePath, int menuWidgetId = 0);
+        Slot(de::String id, bool userWritable, de::String saveName, int menuWidgetId = 0);
 
         /**
          * Returns the logical status of the saved session associated with the logical save slot.
@@ -82,11 +82,11 @@ public:
         inline de::String const saveName() const { return savePath().fileNameWithoutExtension(); }
 
         /**
-         * Change the absolute path of the saved session, bound to the logical save slot.
+         * Change the name of the saved session, bound to the logical save slot.
          *
-         * @param newPath  New absolute path of the saved session to bind to.
+         * @param newName  New of the saved session to bind to.
          */
-        void bindSavePath(de::String newPath);
+        void bindSaveName(de::String newName);
 
     private:
         friend class SaveSlots;
@@ -106,11 +106,11 @@ public:
      *
      * @param id            Unique identifier for this slot.
      * @param userWritable  @c true= allow the user to write to this slot.
-     * @param savePath      Relative path in the repository to bind to this slot.
+     * @param saveName      Name of the saved session to bind to this slot.
      * @param menuWidgetId  Unique identifier of the game menu widget to associate this slot with.
      *                      Use @c 0 for none.
      */
-    void add(de::String const &id, bool userWritable, de::String const &savePath,
+    void add(de::String const &id, bool userWritable, de::String const &saveName,
              int menuWidgetId = 0);
 
     /**

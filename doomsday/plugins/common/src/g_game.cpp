@@ -521,11 +521,6 @@ void G_SetGameActionMapCompleted(uint newMap, uint _entryPoint, dd_bool _secretE
     G_SetGameAction(GA_MAPCOMPLETED);
 }
 
-static inline de::String composeSavedSessionPathForSlot(int slot)
-{
-    return COMMON_GAMESESSION->savePath() / de::String(SAVEGAMENAME"%1.save").arg(slot);
-}
-
 static void initSaveSlots()
 {
     delete sslots;
@@ -540,10 +535,9 @@ static void initSaveSlots()
     };
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
-        sslots->add(de::String::number(i), true, composeSavedSessionPathForSlot(i),
+        sslots->add(de::String::number(i), true, de::String(SAVEGAMENAME"%1").arg(i),
                     gameMenuSaveSlotWidgetIds[i]);
     }
-    sslots->add("auto", false, composeSavedSessionPathForSlot(AUTO_SLOT));
 }
 
 /**
