@@ -92,7 +92,7 @@ DENG2_PIMPL(LocalServerDialog)
         opt->setDisabled(true);
         form->addRow(0, opt);
 
-        form->addRow(0, announce = new QCheckBox(tr("&Public server (visible to all)")));
+        form->addRow(0, announce = new QCheckBox(tr("&Public server: visible to all")));
         announce->setChecked(st.value("LocalServer/announce", false).toBool());
 
         QHBoxLayout *hb = new QHBoxLayout;
