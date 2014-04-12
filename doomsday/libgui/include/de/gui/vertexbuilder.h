@@ -21,6 +21,7 @@
 
 #include <QVector>
 #include <de/Vector>
+#include <de/Matrix>
 #include <de/Rectangle>
 
 namespace de {
@@ -34,6 +35,11 @@ struct VertexBuilder
     struct Vertices : public QVector<VertexType> {
         Vertices() {
             QVector<VertexType>::reserve(64);
+        }
+        void transform(Matrix4f const &matrix) {
+            for(int i = 0; i < QVector<VertexType>::size(); ++i) {
+                (*this)[i].pos = matrix * (*this)[i].pos;
+            }
         }
         Vertices &operator += (Vertices const &other) {
             concatenate(other, *this);
@@ -63,7 +69,8 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Rectanglef const &uv) {
+        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Rectanglef const &uv,
+                           Matrix4f const *matrix = 0) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -71,6 +78,7 @@ struct VertexBuilder
             v.pos = rect.topRight();   v.texCoord = uv.topRight();   quad << v;
             v.pos = rect.bottomLeft(); v.texCoord = uv.bottomLeft(); quad << v;
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
+            if(matrix) quad.transform(*matrix);
             return *this += quad;
         }
         /// Makes a 3D quad with indirect UV coords. The points p1...p4 are specified
