@@ -40,9 +40,8 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
         GameItem(Game const &gameRef,
                  de::String const &label,
-                 //RefArg<de::Action> action,
                  SingleplayerSessionMenuWidget &owner)
-            : ui::ImageItem(ShownAsButton, label/*, action*/)
+            : ui::ImageItem(ShownAsButton, label)
             , SessionItem(owner)
             , game(gameRef)
         {
@@ -154,8 +153,10 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
         w.show(shouldBeShown(item.game));
 
+        bool const isCurrentLoadedGame = (&App_CurrentGame() == &item.game);
+
         // Can be loaded?
-        w.loadButton().enable(item.game.allStartupFilesFound());
+        w.loadButton().enable(item.game.allStartupFilesFound() && !isCurrentLoadedGame);
     }
 
     void updateGameAvailability()
