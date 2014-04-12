@@ -1,4 +1,4 @@
-/** @file savegameselectionwidget.cpp
+/** @file savedsessionmenuwidget.cpp
  *
  * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
@@ -17,18 +17,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/savegameselectionwidget.h"
+#include "ui/widgets/savedsessionmenuwidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/gamesessionwidget.h"
 #include "clientapp.h"
 #include "dd_main.h"
 #include "con_main.h"
 
-#include <de/charsymbols.h>
 #include <de/game/Session>
 #include <de/SignalAction>
 #include <de/SequentialLayout>
-#include <de/ChildWidgetOrganizer>
 #include <de/DocumentPopupWidget>
 #include <de/ui/Item>
 
@@ -36,20 +34,46 @@ using namespace de;
 using de::game::Session;
 using de::game::SavedSession;
 
-DENG_GUI_PIMPL(SavegameSelectionWidget)
+DENG_GUI_PIMPL(SavedSessionMenuWidget)
 , DENG2_OBSERVES(App,                 StartupComplete)
 , DENG2_OBSERVES(Session::SavedIndex, AvailabilityUpdate)
-, DENG2_OBSERVES(ButtonWidget,        Press)
 , DENG2_OBSERVES(Loop,                Iteration) // deferred refresh
-, public ChildWidgetOrganizer::IWidgetFactory
 {
+    /**
+     * Action for loading a saved session.
+     */
+    class LoadAction : public de::Action
+    {
+        String gameId;
+        String cmd;
+
+    public:
+        LoadAction(SavedSession const &session)
+        {
+            gameId = session.metadata().gets("gameIdentityKey");
+            cmd    = "loadgame " + session.name().fileNameWithoutExtension() + " confirm";
+        }
+
+        void trigger()
+        {
+            Action::trigger();
+
+            BusyMode_FreezeGameForBusyMode();
+            ClientWindow::main().taskBar().close();
+
+            App_ChangeGame(App_Games().byIdentityKey(gameId), false /*no reload*/);
+            Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
+        }
+    };
+
     /**
      * Data item with information about a saved game session.
      */
-    class SavegameListItem : public ui::Item
+    class SavegameListItem : public ui::Item, public SessionItem
     {
     public:
-        SavegameListItem(SavedSession const &session)
+        SavegameListItem(SavedSession const &session, SessionMenuWidget &owner)
+            : SessionItem(owner)
         {
             setData(session.path().toLower());
             _session  = &session;
@@ -59,6 +83,16 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         {
             DENG2_ASSERT(_session != 0);
             return *_session;
+        }
+
+        String title() const
+        {
+            return savedSession().metadata().gets("userDescription");
+        }
+
+        String gameIdentityKey() const
+        {
+            return savedSession().metadata().gets("gameIdentityKey");
         }
 
     private:
@@ -73,6 +107,8 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         SavegameWidget()
         {
             loadButton().disable();
+
+            // Show all available information without clipping.
             loadButton().setHeightPolicy(ui::Expand);
         }
 
@@ -82,21 +118,16 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
             {
                 SavedSession const &session = item.savedSession();
 
-                Game const &sGame = App_Games().byIdentityKey(session.metadata().gets("gameIdentityKey", ""));
+                Game const &sGame = App_Games().byIdentityKey(item.gameIdentityKey());
                 if(style().images().has(sGame.logoImageId()))
                 {
                     loadButton().setImage(style().images().image(sGame.logoImageId()));
                 }
 
-                loadButton().enable(sGame.status() == Game::Loaded ||
-                                    sGame.status() == Game::Complete);
-                if(loadButton().isEnabled())
-                {
-                    loadButton().setAction(new LoadAction(session));
-                }
+                loadButton().disable(sGame.status() == Game::Incomplete);
 
                 loadButton().setText(String(_E(b) "%1" _E(.) "\n" _E(l)_E(D) "%2")
-                                         .arg(session.metadata().gets("userDescription"))
+                                         .arg(item.title())
                                          .arg(sGame.identityKey()));
 
                 // Extra information.
@@ -113,14 +144,9 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         }
     };
 
-    bool loadWhenSelected;
-
     Instance(Public *i)
         : Base(i)
-        , loadWhenSelected(true)
     {
-        self.organizer().setWidgetFactory(*this);
-
         App::app().audienceForStartupComplete() += this;
         game::Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
@@ -132,40 +158,6 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         game::Session::savedIndex().audienceForAvailabilityUpdate() -= this;
     }
 
-    GuiWidget *makeItemWidget(ui::Item const & /*item*/, GuiWidget const *)
-    {
-        SavegameWidget *w = new SavegameWidget;
-        w->loadButton().audienceForPress() += this;
-        return w;
-    }
-
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
-    {
-        SavegameWidget &w = widget.as<SavegameWidget>();
-        w.updateFromItem(item.as<SavegameListItem>());
-
-        if(!loadWhenSelected)
-        {
-            // Only send notification.
-            w.loadButton().setAction(0);
-        }
-    }
-
-    void buttonPressed(ButtonWidget &loadButton)
-    {
-        if(SavegameListItem const *it = self.organizer().findItemForWidget(
-                    loadButton.parentWidget()->as<GuiWidget>())->maybeAs<SavegameListItem>())
-        {
-            DENG2_FOR_PUBLIC_AUDIENCE(Selection, i)
-            {
-                i->gameSelected(it->savedSession());
-            }
-        }
-
-        // A load button has been pressed.
-        emit self.gameSelected();
-    }
-
     void appStartupCompleted()
     {
         // Startup resources for all games have been located.
@@ -173,8 +165,10 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
         for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
             ui::Item const &item = self.items().at(idx);
-            updateItemWidget(*self.organizer().itemWidget(item), item);
+            self.updateItemWidget(*self.organizer().itemWidget(item), item);
         }
+
+        emit self.availabilityChanged();
     }
 
     void updateItemsFromSavedIndex()
@@ -202,7 +196,7 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
                 if(session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
                 {
                     // Needs to be added.
-                    self.items().append(new SavegameListItem(session));
+                    self.items().append(new SavegameListItem(session, self));
                     changed = true;
                 }
             }
@@ -238,52 +232,24 @@ DENG_GUI_PIMPL(SavegameSelectionWidget)
     }
 };
 
-SavegameSelectionWidget::SavegameSelectionWidget()
-    : MenuWidget("savegame-selection"), d(new Instance(this))
+SavedSessionMenuWidget::SavedSessionMenuWidget()
+    : SessionMenuWidget("savegame-session-menu"), d(new Instance(this))
 {
-    setGridSize(1, ui::Filled, 0, ui::Expand);
     d->updateItemsFromSavedIndex();
 }
 
-void SavegameSelectionWidget::setLoadGameWhenSelected(bool enableLoad)
+Action *SavedSessionMenuWidget::makeAction(ui::Item const &item)
 {
-    d->loadWhenSelected = enableLoad;
+    return new Instance::LoadAction(item.as<Instance::SavegameListItem>().savedSession());
 }
 
-void SavegameSelectionWidget::setColumns(int numberOfColumns)
+GuiWidget *SavedSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    if(layout().maxGridSize().x != numberOfColumns)
-    {
-        setGridSize(numberOfColumns, ui::Filled, 0, ui::Expand);
-    }
+    return new Instance::SavegameWidget;
 }
 
-SavedSession const &SavegameSelectionWidget::savedSession(ui::DataPos pos) const
+void SavedSessionMenuWidget::updateItemWidget(GuiWidget &widget, ui::Item const &item)
 {
-    DENG2_ASSERT(pos < items().size());
-    return items().at(pos).as<Instance::SavegameListItem>().savedSession();
-}
-
-DENG2_PIMPL_NOREF(SavegameSelectionWidget::LoadAction)
-{
-    String gameId;
-    String cmd;
-};
-
-SavegameSelectionWidget::LoadAction::LoadAction(SavedSession const &session)
-    : d(new Instance)
-{
-    d->gameId = session.metadata().gets("gameIdentityKey");
-    d->cmd = "loadgame " + session.name().fileNameWithoutExtension() + " confirm";
-}
-
-void SavegameSelectionWidget::LoadAction::trigger()
-{
-    Action::trigger();
-
-    BusyMode_FreezeGameForBusyMode();
-    ClientWindow::main().taskBar().close();
-
-    App_ChangeGame(App_Games().byIdentityKey(d->gameId), false /*no reload*/);
-    Con_Execute(CMDS_DDAY, d->cmd.toLatin1(), false, false);
+    Instance::SavegameWidget &w = widget.as<Instance::SavegameWidget>();
+    w.updateFromItem(item.as<Instance::SavegameListItem>());
 }

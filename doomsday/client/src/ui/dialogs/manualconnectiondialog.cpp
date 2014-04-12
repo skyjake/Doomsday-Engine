@@ -17,7 +17,7 @@
  */
 
 #include "ui/dialogs/manualconnectiondialog.h"
-#include "ui/widgets/mpselectionwidget.h"
+#include "ui/widgets/mpsessionmenuwidget.h"
 #include "clientapp.h"
 
 #include <de/SignalAction>
@@ -28,19 +28,20 @@ using namespace de;
 
 DENG2_PIMPL(ManualConnectionDialog)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
-, DENG2_OBSERVES(MPSelectionWidget, Selection)
 {
     String usedAddress;
     FoldPanelWidget *fold;
-    MPSelectionWidget *games;
+    MPSessionMenuWidget *games;
     ProgressWidget *progress;
     bool querying;
     bool joinWhenEnterPressed;
+    bool autoJoin;
 
     Instance(Public *i)
         : Base(i)
         , querying(false)
         , joinWhenEnterPressed(false)
+        , autoJoin(true)
     {
         ClientApp::serverLink().audienceForDiscoveryUpdate += this;
     }
@@ -80,12 +81,6 @@ DENG2_PIMPL(ManualConnectionDialog)
         }
     }
 
-    void gameSelected(serverinfo_t const &info)
-    {
-        self.setAcceptanceAction(new MPSelectionWidget::JoinAction(info));
-        self.accept();
-    }
-
     ButtonWidget &connectButton()
     {
         return self.buttonWidget(tr("Connect"));
@@ -103,10 +98,11 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
 
     // The found games are shown inside a fold panel.
     d->fold  = new FoldPanelWidget;
-    d->games = new MPSelectionWidget(MPSelectionWidget::DirectDiscoveryOnly);
-    d->games->setJoinGameWhenSelected(false);
-    d->games->audienceForSelection += d;
-    d->games->setColumns(1);
+    d->games = new MPSessionMenuWidget(MPSessionMenuWidget::DirectDiscoveryOnly);
+    connect(d->games, SIGNAL(sessionSelected(de::ui::Item const *)),
+            this,     SIGNAL(selected(de::ui::Item const *)));
+    connect(d->games, SIGNAL(sessionSelected(de::ui::Item const *)),
+            this,     SLOT  (serverSelected(de::ui::Item const *)));
     d->games->rule().setInput(Rule::Width, rule().width() - margins().width());
     d->fold->setContent(d->games);
     area().add(d->fold);
@@ -136,6 +132,16 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
     updateLayout();
 }
 
+void ManualConnectionDialog::enableJoinWhenSelected(bool joinWhenSelected)
+{
+    d->autoJoin = joinWhenSelected;
+}
+
+Action *ManualConnectionDialog::makeAction(const ui::Item &item)
+{
+    return d->games->makeAction(item);
+}
+
 void ManualConnectionDialog::operator >> (PersistentState &toState) const
 {
     toState.names().set(name() + ".address", d->usedAddress);
@@ -161,7 +167,8 @@ void ManualConnectionDialog::queryOrConnect()
         // Automatically connect if there is a single choice.
         if(d->joinWhenEnterPressed)
         {  
-            d->gameSelected(d->games->serverInfo(0));
+            emit selected(&d->games->items().at(0));
+            serverSelected(&d->games->items().at(0));
             return;
         }
 
@@ -199,6 +206,15 @@ void ManualConnectionDialog::validate()
     }
 
     d->connectButton().enable(valid);
+}
+
+void ManualConnectionDialog::serverSelected(ui::Item const *item)
+{
+    if(d->autoJoin)
+    {
+        setAcceptanceAction(makeAction(*item));
+    }
+    accept();
 }
 
 void ManualConnectionDialog::finish(int result)

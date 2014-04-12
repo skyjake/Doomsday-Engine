@@ -190,6 +190,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Game selection.
         gameSelMenu = new GameSelectionWidget;
+        gameSelMenu->enableActionOnSelection(true);
         gameSelMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::Width,   root.viewWidth())

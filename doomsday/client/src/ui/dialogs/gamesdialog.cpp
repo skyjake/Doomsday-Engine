@@ -48,7 +48,7 @@ GamesDialog::GamesDialog(Mode mode, String const &name)
     : DialogWidget(name/*, WithHeading*/)
     , d(new Instance(this, mode))
 {
-    connect(d->gameSel, SIGNAL(gameSessionSelected()), this, SLOT(accept()));
+    connect(d->gameSel, SIGNAL(gameSessionSelected(de::ui::Item const *)), this, SLOT(selectSession(de::ui::Item const *)));
 
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(1, 0);
@@ -115,7 +115,22 @@ void GamesDialog::connectManually()
     ManualConnectionDialog *dlg = new ManualConnectionDialog;
     dlg->setAnchorAndOpeningDirection(buttonWidget(Id2)->rule(), ui::Up);
     dlg->setDeleteAfterDismissed(true);
+    dlg->enableJoinWhenSelected(false); // we'll do it ourselves
+    connect(dlg, SIGNAL(selected(de::ui::Item const *)), this, SLOT(sessionSelectedManually(de::ui::Item const *)));
     dlg->exec(root());
+}
+
+void GamesDialog::selectSession(ui::Item const *item)
+{
+    setAcceptanceAction(d->gameSel->makeAction(*item));
+    accept();
+}
+
+void GamesDialog::sessionSelectedManually(ui::Item const *item)
+{
+    ManualConnectionDialog *dlg = (ManualConnectionDialog *) sender();
+    setAcceptanceAction(dlg->makeAction(*item));
+    accept();
 }
 
 void GamesDialog::preparePanelForOpening()

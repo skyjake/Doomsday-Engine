@@ -40,6 +40,8 @@ public:
 public slots:
     void showSettings();
     void connectManually();
+    void selectSession(de::ui::Item const *);
+    void sessionSelectedManually(de::ui::Item const *);
 
 protected:
     void preparePanelForOpening();

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/mpselectionwidget.h"
+#include "ui/widgets/mpsessionmenuwidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/gamesessionwidget.h"
 #include "network/serverlink.h"
@@ -27,16 +27,13 @@
 #include <de/charsymbols.h>
 #include <de/SignalAction>
 #include <de/SequentialLayout>
-#include <de/ChildWidgetOrganizer>
 #include <de/DocumentPopupWidget>
 #include <de/ui/Item>
 
 using namespace de;
 
-DENG_GUI_PIMPL(MPSelectionWidget)
+DENG_GUI_PIMPL(MPSessionMenuWidget)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
-, DENG2_OBSERVES(ButtonWidget, Press)
-, public ChildWidgetOrganizer::IWidgetFactory
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
     static String hostId(serverinfo_t const &sv)  {
@@ -44,15 +41,43 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     }
 
     /**
+     * Action for joining a game on a multiplayer server.
+     */
+    class JoinAction : public de::Action
+    {
+        String gameId;
+        String cmd;
+
+    public:
+        JoinAction(serverinfo_t const &sv)
+        {
+            gameId = sv.gameIdentityKey;
+            cmd    = String("connect %1 %2").arg(sv.address).arg(sv.port);
+        }
+
+        void trigger()
+        {
+            Action::trigger();
+
+            BusyMode_FreezeGameForBusyMode();
+            ClientWindow::main().taskBar().close();
+
+            App_ChangeGame(App_Games().byIdentityKey(gameId), false /*no reload*/);
+            Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
+        }
+    };
+
+    /**
      * Data item with information about a found server.
      */
-    class ServerListItem : public ui::Item
+    class ServerListItem : public ui::Item, public SessionItem
     {
     public:
-        ServerListItem(serverinfo_t const &serverInfo)
+        ServerListItem(serverinfo_t const &serverInfo, SessionMenuWidget &owner)
+            : SessionItem(owner)
         {
             setData(hostId(serverInfo));
-            std::memcpy(&_info, &serverInfo, sizeof(serverInfo));
+            _info = serverInfo;
         }
 
         serverinfo_t const &info() const
@@ -62,8 +87,18 @@ DENG_GUI_PIMPL(MPSelectionWidget)
 
         void setInfo(serverinfo_t const &serverInfo)
         {
-            std::memcpy(&_info, &serverInfo, sizeof(serverInfo));
+            _info = serverInfo;
             notifyChange();
+        }
+
+        String title() const
+        {
+            return _info.name;
+        }
+
+        String gameIdentityKey() const
+        {
+            return _info.gameIdentityKey;
         }
 
     private:
@@ -78,6 +113,8 @@ DENG_GUI_PIMPL(MPSelectionWidget)
         ServerWidget()
         {
             loadButton().disable();
+
+            // Don't clip any of the provided information.
             loadButton().setHeightPolicy(ui::Expand);
         }
 
@@ -94,11 +131,9 @@ DENG_GUI_PIMPL(MPSelectionWidget)
 
                 serverinfo_t const &sv = item.info();
 
-                loadButton().enable(sv.canJoin && sv.version == DOOMSDAY_VERSION);
-                if(loadButton().isEnabled())
-                {
-                    loadButton().setAction(new JoinAction(sv));
-                }
+                loadButton().enable(sv.canJoin &&
+                                    sv.version == DOOMSDAY_VERSION &&
+                                    svGame.allStartupFilesFound());
 
                 loadButton().setText(String(_E(1) "%1 " _E(.) DENG2_CHAR_MDASH" %2" _E(C) " (%5)" _E(.)
                                             _E(D)_E(l) "\n%6 %4")
@@ -120,54 +155,17 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     };
 
     ServerLink::FoundMask mask;
-    bool joinWhenSelected;
 
     Instance(Public *i)
         : Base(i)
         , mask(ServerLink::Any)
-        , joinWhenSelected(true)
     {
-        self.organizer().setWidgetFactory(*this);
         link().audienceForDiscoveryUpdate += this;
     }
 
     ~Instance()
     {
         link().audienceForDiscoveryUpdate -= this;
-    }
-
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
-    {
-        ServerWidget *w = new ServerWidget;
-        w->loadButton().audienceForPress() += this;        
-        return w;
-    }
-
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
-    {
-        ServerWidget &sv = widget.as<ServerWidget>();
-        sv.updateFromItem(item.as<ServerListItem>());
-
-        if(!joinWhenSelected)
-        {
-            // Only send notification.
-            sv.loadButton().setAction(0);
-        }
-    }
-
-    void buttonPressed(ButtonWidget &loadButton)
-    {
-        if(ServerListItem const *it = self.organizer().findItemForWidget(
-                    loadButton.parentWidget()->as<GuiWidget>())->maybeAs<ServerListItem>())
-        {
-            DENG2_FOR_PUBLIC_AUDIENCE(Selection, i)
-            {
-                i->gameSelected(it->info());
-            }
-        }
-
-        // A load button has been pressed.
-        emit self.gameSelected();
     }
 
     void linkDiscoveryUpdate(ServerLink const &link)
@@ -195,7 +193,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
             if(found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
-                self.items().append(new ServerListItem(info));
+                self.items().append(new ServerListItem(info, self));
                 changed = true;
             }
             else
@@ -214,11 +212,9 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     }
 };
 
-MPSelectionWidget::MPSelectionWidget(DiscoveryMode discovery)
-    : MenuWidget("mp-selection"), d(new Instance(this))
+MPSessionMenuWidget::MPSessionMenuWidget(DiscoveryMode discovery)
+    : SessionMenuWidget("mp-session-menu"), d(new Instance(this))
 {
-    setGridSize(1, ui::Filled, 0, ui::Expand);
-
     switch(discovery)
     {
     case DiscoverUsingMaster:
@@ -235,45 +231,18 @@ MPSelectionWidget::MPSelectionWidget(DiscoveryMode discovery)
     }
 }
 
-void MPSelectionWidget::setJoinGameWhenSelected(bool enableJoin)
+Action *MPSessionMenuWidget::makeAction(ui::Item const &item)
 {
-    d->joinWhenSelected = enableJoin;
+    return new Instance::JoinAction(item.as<Instance::ServerListItem>().info());
 }
 
-void MPSelectionWidget::setColumns(int numberOfColumns)
+GuiWidget *MPSessionMenuWidget::makeItemWidget(ui::Item const &item, GuiWidget const *)
 {
-    if(layout().maxGridSize().x != numberOfColumns)
-    {
-        setGridSize(numberOfColumns, ui::Filled, 0, ui::Expand);
-    }
+    return new Instance::ServerWidget;
 }
 
-serverinfo_t const &MPSelectionWidget::serverInfo(ui::DataPos pos) const
+void MPSessionMenuWidget::updateItemWidget(GuiWidget &widget, ui::Item const &item)
 {
-    DENG2_ASSERT(pos < items().size());
-    return items().at(pos).as<Instance::ServerListItem>().info();
-}
-
-DENG2_PIMPL_NOREF(MPSelectionWidget::JoinAction)
-{
-    String gameId;
-    String cmd;
-};
-
-MPSelectionWidget::JoinAction::JoinAction(serverinfo_t const &sv)
-    : d(new Instance)
-{
-    d->gameId = sv.gameIdentityKey;
-    d->cmd = String("connect %1 %2").arg(sv.address).arg(sv.port);
-}
-
-void MPSelectionWidget::JoinAction::trigger()
-{
-    Action::trigger();
-
-    BusyMode_FreezeGameForBusyMode();
-    ClientWindow::main().taskBar().close();
-
-    App_ChangeGame(App_Games().byIdentityKey(d->gameId), false /*no reload*/);
-    Con_Execute(CMDS_DDAY, d->cmd.toLatin1(), false, false);
+    Instance::ServerWidget &sv = widget.as<Instance::ServerWidget>();
+    sv.updateFromItem(item.as<Instance::ServerListItem>());
 }

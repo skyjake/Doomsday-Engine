@@ -35,14 +35,28 @@ class ManualConnectionDialog : public de::InputDialog, public de::IPersistent
 public:
     ManualConnectionDialog(de::String const &name = "manualconnection");
 
+    /**
+     * Enables or disables joining the selected game when the user clicks on a
+     * session. By default, this is enabled.
+     *
+     * @param joinWhenSelected  @c true to allow auto-joining.
+     */
+    void enableJoinWhenSelected(bool joinWhenSelected);
+
+    de::Action *makeAction(de::ui::Item const &item);
+
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;
     void operator << (de::PersistentState const &fromState);
+
+signals:
+    void selected(de::ui::Item const *);
 
 public slots:
     void queryOrConnect();
     void contentChanged();
     void validate();
+    void serverSelected(de::ui::Item const *);
 
 protected:
     void finish(int result);

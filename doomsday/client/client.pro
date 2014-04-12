@@ -401,10 +401,12 @@ DENG_HEADERS += \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/inputbindingwidget.h \
     include/ui/widgets/keygrabberwidget.h \
-    include/ui/widgets/mpselectionwidget.h \
+    include/ui/widgets/mpsessionmenuwidget.h \
     include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
-    include/ui/widgets/savegameselectionwidget.h \
+    include/ui/widgets/savedsessionmenuwidget.h \
+    include/ui/widgets/sessionmenuwidget.h \
+    include/ui/widgets/singleplayersessionmenuwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/tutorialwidget.h \
     include/ui/fi_main.h \
@@ -739,10 +741,12 @@ SOURCES += \
     src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/inputbindingwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
-    src/ui/widgets/mpselectionwidget.cpp \
     src/ui/widgets/multiplayermenuwidget.cpp \
+    src/ui/widgets/mpsessionmenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
-    src/ui/widgets/savegameselectionwidget.cpp \
+    src/ui/widgets/savedsessionmenuwidget.cpp \
+    src/ui/widgets/sessionmenuwidget.cpp \
+    src/ui/widgets/singleplayersessionmenuwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/tutorialwidget.cpp \
     src/ui/zonedebug.cpp \

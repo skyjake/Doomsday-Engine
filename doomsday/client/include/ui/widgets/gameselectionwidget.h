@@ -49,6 +49,16 @@ public:
 
     de::FoldPanelWidget *subsetFold(de::String const &name);
 
+    /**
+     * Enables or disables execution of the session selection action by
+     * pressing the menu items in the widget. By default, this is disabled.
+     *
+     * @param doAction  @c true to allow action execution, @c false to disallow.
+     */
+    void enableActionOnSelection(bool doAction);
+
+    de::Action *makeAction(de::ui::Item const &item) const;
+
     // Events.
     void update();
 
@@ -57,11 +67,11 @@ public:
     void operator << (de::PersistentState const &fromState);
 
 signals:    
-    void gameSessionSelected();
+    void gameSessionSelected(de::ui::Item const *item);
 
 protected slots:
     void updateSubsetLayout();
-    void updateSort();
+    void select(de::ui::Item const *item);
 
 private:
     DENG2_PRIVATE(d)

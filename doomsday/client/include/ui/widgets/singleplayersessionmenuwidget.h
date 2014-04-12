@@ -1,4 +1,4 @@
-/** @file gamesessionwidget.h
+/** @file singleplayersessionmenuwidget.h
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,34 +16,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_GAMESESSIONWIDGET_H
-#define DENG_CLIENT_GAMESESSIONWIDGET_H
+#ifndef DENG_CLIENT_SINGLEPLAYERSESSIONMENUWIDGET_H
+#define DENG_CLIENT_SINGLEPLAYERSESSIONMENUWIDGET_H
 
-#include <de/ButtonWidget>
-#include <de/DocumentWidget>
+#include "sessionmenuwidget.h"
 
-/**
- * Widget for representing an item (game session) in a session menu (see
- * SessionMenuWidget).
- *
- * It has two buttons: one for starting the game and one for configuring it.
- */
-class GameSessionWidget : public de::GuiWidget
+class SingleplayerSessionMenuWidget : public SessionMenuWidget
 {
 public:
-    GameSessionWidget();
+    enum Mode {
+        ShowAvailableGames,
+        ShowGamesWithMissingResources
+    };
 
-    de::ButtonWidget &loadButton();
-    de::ButtonWidget &infoButton();
-    de::DocumentWidget &document();
+    SingleplayerSessionMenuWidget(Mode mode = ShowAvailableGames,
+                                  de::String const &name = "");
 
-    /**
-     * Called immediately before the Info button is pressed.
-     */
-    virtual void updateInfoContent();
+    Mode mode() const;
+
+    de::Action *makeAction(de::ui::Item const &item);
+
+    // Widget factory.
+    GuiWidget *makeItemWidget(de::ui::Item const &, GuiWidget const *);
+    void updateItemWidget(GuiWidget &, de::ui::Item const &);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_GAMESESSIONWIDGET_H
+#endif // DENG_CLIENT_SINGLEPLAYERSESSIONMENUWIDGET_H

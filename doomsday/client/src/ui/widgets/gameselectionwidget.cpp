@@ -19,21 +19,20 @@
 
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/widgets/gamesessionwidget.h"
-#include "ui/widgets/mpselectionwidget.h"
 #include "ui/widgets/gamefilterwidget.h"
-#include "ui/widgets/savegameselectionwidget.h"
+#include "ui/widgets/singleplayersessionmenuwidget.h"
+#include "ui/widgets/mpsessionmenuwidget.h"
+#include "ui/widgets/savedsessionmenuwidget.h"
 #include "CommandAction"
 #include "clientapp.h"
 #include "games.h"
 #include "dd_main.h"
 
-#include <de/ui/ActionItem>
 #include <de/MenuWidget>
 #include <de/SequentialLayout>
 #include <de/FoldPanelWidget>
 #include <de/DocumentPopupWidget>
 #include <de/SignalAction>
-#include <de/FIFO>
 #include <QMap>
 
 #include "CommandAction"
@@ -41,37 +40,8 @@
 using namespace de;
 
 DENG_GUI_PIMPL(GameSelectionWidget)
-, DENG2_OBSERVES(Games, Addition)
-, DENG2_OBSERVES(App, StartupComplete)
 , DENG2_OBSERVES(App, GameChange)
-, public ChildWidgetOrganizer::IWidgetFactory
-{    
-    /// ActionItem with a Game member, for loading a particular game.
-    struct GameItem : public ui::ActionItem {
-        GameItem(Game const &gameRef, de::String const &label, RefArg<de::Action> action,
-                 GameSelectionWidget &owner)
-            : ui::ActionItem(label, action), game(gameRef), widget(owner) {
-            setData(&gameRef);
-        }
-        String sortKey() const {
-            // Sort by identity key.
-            return game.identityKey();
-        }
-        Game const &game;
-        GameSelectionWidget &widget;
-    };
-
-    struct GameWidget : public GameSessionWidget
-    {
-        Game const *game;
-
-        GameWidget() : game(0) {}
-        void updateInfoContent() {
-            DENG2_ASSERT(game != 0);
-            document().setText(game->description());
-        }
-    };
-
+{
     /**
      * Foldable group of games.
      */
@@ -80,14 +50,15 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             , DENG2_OBSERVES(ui::Data, Addition)
     {
         enum Type {
-            NormalGames,
+            AvailableGames,
+            IncompleteGames,
             MultiplayerGames,
             SavedGames
         };
 
         String titleText;
         Type type;
-        MenuWidget *menu;
+        SessionMenuWidget *menu;
         LabelWidget *noGames;
         int numCols;
 
@@ -106,28 +77,31 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
             switch(type)
             {
-            case NormalGames:
-                menu = new MenuWidget;
-                menu->organizer().setWidgetFactory(*owner);
+            case AvailableGames:
+                menu = new SingleplayerSessionMenuWidget(SingleplayerSessionMenuWidget::ShowAvailableGames);
+                break;
+
+            case IncompleteGames:
+                menu = new SingleplayerSessionMenuWidget(SingleplayerSessionMenuWidget::ShowGamesWithMissingResources);
                 break;
 
             case MultiplayerGames:
-                menu = new MPSelectionWidget(MPSelectionWidget::DiscoverUsingMaster);
-                QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
-                QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
+                menu = new MPSessionMenuWidget(MPSessionMenuWidget::DiscoverUsingMaster);
                 break;
 
             case SavedGames:
-                menu = new SavegameSelectionWidget;
-                QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
-                QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
+                menu = new SavedSessionMenuWidget;
                 break;
             }
+
+            QObject::connect(menu,              SIGNAL(sessionSelected(de::ui::Item const *)),
+                             owner->thisPublic, SLOT  (select(de::ui::Item const *)));
+            QObject::connect(menu,              SIGNAL(availabilityChanged()),
+                             owner->thisPublic, SLOT  (updateSubsetLayout()));
 
             menu->items().audienceForAddition() += this;
 
             setContent(menu);
-            menu->enableScrolling(false);
             menu->margins().set("");
             menu->layout().setColumnPadding(owner->style().rules().rule("unit"));
             menu->rule().setInput(Rule::Width,
@@ -137,6 +111,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             setColumns(3);
 
             // This will be shown if there are no games in the subset.
+            // Note that this label is one of the menu's children, too,
+            // in addition to the selectable sessions.
             noGames = LabelWidget::newWithText(_E(b) + tr("No games"), menu);
             noGames->margins()
                     .setTop   (style().rules().rule("gap") * 2)
@@ -163,10 +139,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 cols = 1;
             }
 
-            if(menu->layout().maxGridSize().x != cols)
-            {
-                menu->setGridSize(cols, ui::Filled, 0, ui::Expand);
-            }
+            menu->setColumns(cols);
         }
 
         ui::Data &items()
@@ -182,7 +155,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         String textForTitle(bool whenOpen) const
         {
             if(whenOpen) return titleText;
-            return QString("%1 (%2)").arg(titleText).arg(menu->items().size());
+            return QString("%1 (%2)").arg(titleText).arg(menu->count());
         }
 
         void preparePanelForOpening()
@@ -212,27 +185,27 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         }
     };
 
-    FIFO<Game> pendingGames;
     SequentialLayout superLayout;
-
     GameFilterWidget *filter;
     SubsetWidget *available;
     SubsetWidget *incomplete;
     SubsetWidget *multi;
     SubsetWidget *saved;
     QList<SubsetWidget *> subsets; // not owned
+    bool doAction;
 
     Instance(Public *i)
         : Base(i)
         , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
+        , doAction(false)
     {
         // Menu of available games.
-        self.add(available = new SubsetWidget("available", SubsetWidget::NormalGames,
+        self.add(available = new SubsetWidget("available", SubsetWidget::AvailableGames,
                                               App_GameLoaded()? tr("Switch Game") :
                                                                 tr("Available Games"), this));
 
         // Menu of incomplete games.
-        self.add(incomplete = new SubsetWidget("incomplete", SubsetWidget::NormalGames,
+        self.add(incomplete = new SubsetWidget("incomplete", SubsetWidget::IncompleteGames,
                                                tr("Games with Missing Resources"), this));
 
         // Menu of multiplayer games.
@@ -247,20 +220,17 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         subsets << available << incomplete << multi << saved;
 
         self.add(filter = new GameFilterWidget);
+        foreach(SubsetWidget *sub, subsets) sub->menu->setFilter(filter);
 
         superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
 
         updateSubsetLayout();
 
-        App_Games().audienceForAddition() += this;
-        App::app().audienceForStartupComplete() += this;
         App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
-        App_Games().audienceForAddition() -= this;
-        App::app().audienceForStartupComplete() -= this;
         App::app().audienceForGameChange() -= this;
     }
 
@@ -352,171 +322,6 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         updateSubsetLayout();
     }
 
-    void gameAdded(Game &game)
-    {
-        // Called from a non-UI thread.
-        pendingGames.put(&game);
-    }
-
-    void addExistingGames()
-    {
-        for(int i = 0; i < App_Games().count(); ++i)
-        {
-            gameAdded(App_Games().byIndex(i));
-        }
-    }
-
-    void addPendingGames()
-    {
-        if(pendingGames.isEmpty()) return;
-
-        while(Game *game = pendingGames.take())
-        {
-            if(game->allStartupFilesFound())
-            {
-                ui::Item *item = makeItemForGame(*game);
-                available->items().append(item);
-                available->gameWidget(*item).loadButton().enable();
-            }
-            else
-            {
-                incomplete->items().append(makeItemForGame(*game));
-            }
-        }
-
-        sortGames();
-        updateSubsetLayout();
-    }
-
-    struct LoadGameAction : public CommandAction
-    {
-        GameSelectionWidget &owner;
-
-        LoadGameAction(String const &cmd, GameSelectionWidget &gameSel)
-            : CommandAction(cmd)
-            , owner(gameSel)
-        {}
-
-        void trigger()
-        {
-            emit owner.gameSessionSelected();
-            CommandAction::trigger();
-        }
-    };
-
-    ui::Item *makeItemForGame(Game &game)
-    {
-        String const idKey = game.identityKey();
-
-        String label = String(_E(b) "%1" _E(.) "\n" _E(l)_E(D) "%2")
-                .arg(game.title())
-                .arg(idKey);
-
-        GameItem *item = new GameItem(game, label, new LoadGameAction(String("load ") + idKey, self), self);
-
-        /// @todo The name of the plugin should be accessible via the plugin loader.
-        String plugName;
-        if(idKey.contains("heretic"))
-        {
-            plugName = "libheretic";
-        }
-        else if(idKey.contains("hexen"))
-        {
-            plugName = "libhexen";
-        }
-        else
-        {
-            plugName = "libdoom";
-        }
-        if(style().images().has(game.logoImageId()))
-        {
-            item->setImage(style().images().image(game.logoImageId()));
-        }
-
-        return item;
-    }
-
-    GuiWidget *makeItemWidget(ui::Item const &, GuiWidget const *)
-    {
-        return new GameWidget;
-    }
-
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
-    {
-        GameWidget &w = widget.as<GameWidget>();
-        GameItem const &it = item.as<GameItem>();
-
-        w.game = &it.game;
-
-        w.loadButton().setImage(it.image());
-        w.loadButton().setText(it.label());
-        w.loadButton().setAction(*it.action());
-    }
-
-    void appStartupCompleted()
-    {
-        updateGameAvailability();
-    }
-
-    static bool gameSorter(ui::Item const &a, ui::Item const &b)
-    {
-        GameItem const &x = a.as<GameItem>();
-        GameItem const &y = b.as<GameItem>();
-
-        switch(x.widget.d->filter->sortOrder())
-        {
-        case GameFilterWidget::SortByTitle:
-            return x.label().compareWithoutCase(y.label()) < 0;
-
-        case GameFilterWidget::SortByIdentityKey:
-            return x.sortKey().compareWithoutCase(y.sortKey()) < 0;
-        }
-
-        return false;
-    }
-
-    void sortGames()
-    {
-        available->items().sort(gameSorter);
-        incomplete->items().sort(gameSorter);
-    }
-
-    void updateGameAvailability()
-    {
-        // Available games.
-        for(uint i = 0; i < available->items().size(); ++i)
-        {
-            GameItem const &item = available->items().at(i).as<GameItem>();
-            if(item.game.allStartupFilesFound())
-            {
-                available->gameWidget(item).loadButton().enable();
-            }
-            else
-            {
-                incomplete->items().append(available->items().take(i--));
-                incomplete->gameWidget(item).loadButton().disable();
-            }
-        }
-
-        // Incomplete games.
-        for(uint i = 0; i < incomplete->items().size(); ++i)
-        {
-            GameItem const &item = incomplete->items().at(i).as<GameItem>();
-            if(item.game.allStartupFilesFound())
-            {
-                available->items().append(incomplete->items().take(i--));
-                available->gameWidget(item).loadButton().enable();
-            }
-            else
-            {
-                incomplete->gameWidget(item).loadButton().disable();
-            }
-        }
-
-        sortGames();
-        updateSubsetLayout();
-    }
-
     void updateLayoutForWidth(int width)
     {
         // If the view is too small, we'll want to reduce the number of items in the menu.
@@ -555,10 +360,6 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
     unsetBehavior(ChildVisibilityClipping);
     unsetBehavior(ChildHitClipping);
 
-    // Maybe there are games loaded already.
-    d->addExistingGames();
-
-    connect(d->filter, SIGNAL(sortOrderChanged()), this, SLOT(updateSort()));
     connect(d->filter, SIGNAL(filterChanged()), this, SLOT(updateSubsetLayout()));
 }
 
@@ -590,10 +391,28 @@ FoldPanelWidget *GameSelectionWidget::subsetFold(String const &name)
     return find(name)->maybeAs<FoldPanelWidget>();
 }
 
+void GameSelectionWidget::enableActionOnSelection(bool doAction)
+{
+    d->doAction = doAction;
+}
+
+Action *GameSelectionWidget::makeAction(ui::Item const &item) const
+{
+    // Find the session menu that owns this item.
+    foreach(Instance::SubsetWidget *sub, d->subsets)
+    {
+        ui::DataPos const pos = sub->menu->items().find(item);
+        if(pos != ui::Data::InvalidPos)
+        {
+            return sub->menu->makeAction(item);
+        }
+    }
+    DENG2_ASSERT(!"GameSelectionWidget: Item does not belong in any subset");
+    return 0;
+}
+
 void GameSelectionWidget::update()
 {
-    d->addPendingGames();
-
     ScrollAreaWidget::update();
 
     // Adapt grid layout for the widget width.
@@ -639,7 +458,16 @@ void GameSelectionWidget::updateSubsetLayout()
     d->updateSubsetLayout();
 }
 
-void GameSelectionWidget::updateSort()
+void GameSelectionWidget::select(ui::Item const *item)
 {
-    d->sortGames();
+    if(!item) return;
+
+    emit gameSessionSelected(item);
+
+    // Should we also perform the action?
+    if(d->doAction)
+    {
+        AutoRef<Action> act = makeAction(*item);
+        act->trigger();
+    }
 }
