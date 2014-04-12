@@ -2982,7 +2982,7 @@ static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
     DENG2_ASSERT(slotId != 0);
     if(response == MSG_YES)
     {
-        G_SetGameActionLoadSession(*slotId);
+        DD_Executef(true, "loadgame %s confirm", slotId->toUtf8().constData());
     }
     delete slotId;
     return true;
@@ -3018,8 +3018,8 @@ D_CMD(LoadSession)
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
             // Compose the confirmation message.
-            de::String const &savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, savegameUserDescription.toUtf8().constData());
+            de::String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, existingDescription.toUtf8().constData());
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(sslot->id()));
             return true;
         }
@@ -3071,7 +3071,7 @@ static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
     DENG2_ASSERT(p != 0);
     if(response == MSG_YES)
     {
-        G_SetGameActionSaveSession(p->slotId, &p->userDescription);
+        DD_Executef(true, "savegame %s \"%s\" confirm", p->slotId.toUtf8().constData(), p->userDescription.toUtf8().constData());
     }
     delete p;
     return true;
@@ -3110,7 +3110,6 @@ D_CMD(SaveSession)
     {
         if(sslot->isUserWritable())
         {
-            // A known slot identifier.
             de::String userDescription;
             if(argc >= 3 && stricmp(argv[2], "confirm"))
             {
@@ -3124,15 +3123,16 @@ D_CMD(SaveSession)
                 return G_SetGameActionSaveSession(sslot->id(), &userDescription);
             }
 
+            S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+
             // Compose the confirmation message.
-            userDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, userDescription.toUtf8().constData());
+            de::String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, existingDescription.toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = sslot->id();
             parm->userDescription = userDescription;
 
-            S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveSessionConfirmed, 0, parm);
             return true;
         }
@@ -3171,7 +3171,7 @@ static int deleteSavedSessionConfirmed(msgresponse_t response, int /*userValue*/
     DENG2_ASSERT(saveName != 0);
     if(response == MSG_YES)
     {
-        COMMON_GAMESESSION->removeSaved(*saveName);
+        DD_Executef(true, "deletegamesave %s confirm", saveName->toUtf8().constData());
     }
     delete saveName;
     return true;
@@ -3200,8 +3200,8 @@ D_CMD(DeleteSavedSession)
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
 
                 // Compose the confirmation message.
-                de::String const savegameUserDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, savegameUserDescription.toUtf8().constData());
+                de::String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.toUtf8().constData());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(sslot->saveName()));
             }
 
