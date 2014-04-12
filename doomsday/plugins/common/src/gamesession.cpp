@@ -60,7 +60,7 @@ DENG2_PIMPL(GameSession)
     }
 
     inline String userSavePath(String const &fileName) {
-        return self.savePath() / fileName + ".save";
+        return Session::savePath() / fileName + ".save";
     }
 
     void cleanupInternalSave()

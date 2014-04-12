@@ -1,0 +1,21 @@
+@summary{
+    Print detailed information about a saved game session to the console.
+}
+@description{
+    @usage
+    @ident{inspectsavegame} 
+    @help_arg{path}
+
+    The @help_arg{path} is an absolute path and name of the saved game session to
+    be inspected. User savegames are located in /home/savegames/<@wikiterm{Game identity key}>.
+    If the saved session belongs to the currently loaded game, the path component
+    may be omitted.
+
+    @examples
+
+    Inspect the Hexen savegame "hex1" while the game is loaded:
+    @pre{inspectsavegame Hex1}
+
+    Inspect the Doom savegame "doomsav1" at any time:
+    @pre{inspectsavegame /home/savegames/doom1-ultimate/doomsav1}
+}

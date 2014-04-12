@@ -4542,6 +4542,32 @@ D_CMD(PrintFontStats)
 #  endif // __CLIENT__
 #endif // DENG_DEBUG
 
+D_CMD(InspectSavegame)
+{
+    DENG2_UNUSED2(src, argc);
+    String savePath = argv[1];
+    // Append a .save extension if none exists.
+    if(savePath.fileNameExtension().isEmpty())
+    {
+        savePath += ".save";
+    }
+    // If a game is loaded assume the user is referring to those savegames if not specified.
+    if(savePath.fileNamePath().isEmpty() && App_GameLoaded())
+    {
+        savePath = game::Session::savePath() / savePath;
+    }
+
+    if(game::SavedSession const *saved = App::rootFolder().tryLocate<game::SavedSession>(savePath))
+    {
+        LOG_SCR_MSG("%s") << saved->metadata().asStyledText();
+        LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << saved->path();
+        return true;
+    }
+
+    LOG_WARNING("Failed to locate savegame with \"%s\"") << savePath;
+    return false;
+}
+
 void ResourceSystem::consoleRegister() // static
 {
     C_CMD("listtextures",   "ss",   ListTextures)
@@ -4550,6 +4576,8 @@ void ResourceSystem::consoleRegister() // static
 #ifdef DENG_DEBUG
     C_CMD("texturestats",   NULL,   PrintTextureStats)
 #endif
+
+    C_CMD("inspectsavegame", "s",   InspectSavegame)
 
 #ifdef __CLIENT__
     C_CMD("listfonts",      "ss",   ListFonts)

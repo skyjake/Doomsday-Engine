@@ -172,6 +172,10 @@ desc = Print extended information about the current map to the console.
 desc = Print extended information about a Material to the console.
 inf = Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
 
+[inspectsavegame]
+desc = Print detailed information about a saved game session to the console.
+inf = Params: inspectgamesave (path)\nFor example, 'inspectsavegame /home/savegames/doom1-ultimate/doomsav1'.
+
 [inspecttexture]
 desc = Print extended information about a Texture to the console.
 inf = Params: inspecttexture (uri)\nFor example, 'inspecttexture flats:fwater1'.

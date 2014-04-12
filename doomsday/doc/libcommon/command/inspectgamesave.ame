@@ -1,6 +1,0 @@
-@summary{
-    Print detailed information about a saved game session to the console.
-}
-@description{
-    Params: inspectgamesave (slotId) @cbr For example, 'inspectgamesave 1'.
-}

@@ -133,7 +133,7 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String saveName, int menuWid
     d->id           = id;
     d->userWritable = userWritable;
     d->menuWidgetId = menuWidgetId;
-    d->savePath     = COMMON_GAMESESSION->savePath() / saveName;
+    d->savePath     = GameSession::savePath() / saveName;
     if(d->savePath.fileNameExtension().isEmpty())
     {
         d->savePath += ".save";
@@ -165,7 +165,7 @@ String const &SaveSlots::Slot::savePath() const
 
 void SaveSlots::Slot::bindSaveName(String newName)
 {
-    String newPath = COMMON_GAMESESSION->savePath() / newName;
+    String newPath = GameSession::savePath() / newName;
     if(newPath.fileNameExtension().isEmpty())
     {
         newPath += ".save";
@@ -319,7 +319,7 @@ SaveSlots::Slot &SaveSlots::slot(String const &id) const
 
 SaveSlots::Slot *SaveSlots::slotBySaveName(String const &name) const
 {
-    return d->slotBySavePath(COMMON_GAMESESSION->savePath() / name);
+    return d->slotBySavePath(GameSession::savePath() / name);
 }
 
 SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description) const

@@ -64,6 +64,12 @@ public:
      */
     static Profile &profile();
 
+    /// Convenient method of looking up the game identity key from the game session profile.
+    static inline String gameId()   { return profile().gameId; }
+
+    /// Compose the absolute path of the @em user saved session folder for the game session.
+    static inline String savePath() { return String("/home/savegames") / profile().gameId; }
+
     /**
      * Determines whether the currently configured game session is in progress. Usually this
      * will not be the case during title sequences (for example).

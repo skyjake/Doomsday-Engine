@@ -91,7 +91,6 @@ D_CMD(SaveSession);
 D_CMD(QuickLoadSession);
 D_CMD(QuickSaveSession);
 D_CMD(DeleteSavedSession);
-D_CMD(InspectSavedSession);
 
 D_CMD(OpenLoadMenu);
 D_CMD(OpenSaveMenu);
@@ -346,7 +345,6 @@ ccmdtemplate_t gameCmds[] = {
     { "deletegamesave",  "s",    CCmdDeleteSavedSession, 0 },
     { "endgame",         "",     CCmdEndSession, 0 },
     { "helpscreen",      "",     CCmdHelpScreen, 0 },
-    { "inspectgamesave", "s",    CCmdInspectSavedSession, 0 },
     { "listmaps",        "",     CCmdListMaps, 0 },
     { "loadgame",        "ss",   CCmdLoadSession, 0 },
     { "loadgame",        "s",    CCmdLoadSession, 0 },
@@ -3219,32 +3217,6 @@ D_CMD(DeleteSavedSession)
     else
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from '%s'", argv[1]);
-    }
-
-    // No action means the command failed.
-    return false;
-}
-
-D_CMD(InspectSavedSession)
-{
-    DENG2_UNUSED2(src, argc);
-
-    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
-    {
-        if(!sslot->isUnused())
-        {
-            /// @todo GameSession should provide a convenient method of accessing the saved metadata.
-            de::game::SavedSession const &session = DENG2_APP->rootFolder().locate<de::game::SavedSession>(sslot->savePath());
-            LOG_SCR_MSG("%s") << session.metadata().asStyledText();
-            LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << session.path();
-            return true;
-        }
-
-        LOG_WARNING("Save slot '%s' is not in use") << sslot->id();
-    }
-    else
-    {
-        LOG_WARNING("Failed to determine save slot from \"%s\"") << argv[1];
     }
 
     // No action means the command failed.
