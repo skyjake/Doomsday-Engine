@@ -96,10 +96,11 @@ GamesDialog::GamesDialog(Mode mode, String const &name)
     {
         buttons() << new DialogButtonItem(Action | Id2, tr("Connect Manually..."),
                                           new SignalAction(this, SLOT(connectManually())));
-    }
 
-    buttons() << new DialogButtonItem(Action | Id1, style().images().image("gear"),
-                                      new SignalAction(this, SLOT(showSettings())));
+        // Multiplayer settings.
+        buttons() << new DialogButtonItem(Action | Id1, style().images().image("gear"),
+                                          new SignalAction(this, SLOT(showSettings())));
+    }
 }
 
 void GamesDialog::showSettings()
