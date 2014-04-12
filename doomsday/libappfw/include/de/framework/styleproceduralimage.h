@@ -49,8 +49,6 @@ public:
         setSize(root().atlas().imageRect(_id).size());
     }
 
-    void update() {}
-
     void glInit()
     {
         alloc();

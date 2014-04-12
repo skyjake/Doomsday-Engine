@@ -46,9 +46,10 @@ void ProceduralImage::setColor(Color const &color)
     _color = color;
 }
 
-void ProceduralImage::update()
+bool ProceduralImage::update()
 {
     // optional for derived classes
+    return false;
 }
 
 void ProceduralImage::glInit()

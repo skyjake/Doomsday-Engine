@@ -483,13 +483,13 @@ public Font::RichFormat::IStyle
     void updateGeometry()
     {
         // Update the image on the atlas.
-        if(!image.isNull())
+        if(!image.isNull() && image->update())
         {
-            image->update();
+            self.requestGeometry();
         }
-        if(!overlayImage.isNull())
+        if(!overlayImage.isNull() && overlayImage->update())
         {
-            overlayImage->update();
+            self.requestGeometry();
         }
 
         glText.setLineWrapWidth(availableTextWidth());

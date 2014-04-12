@@ -79,13 +79,15 @@ public:
         setSize(image.size());
     }
 
-    void update()
+    bool update()
     {
         if(_needUpdate)
         {
             alloc();
             _needUpdate = false;
+            return true;
         }
+        return false;
     }
 
     void glInit()

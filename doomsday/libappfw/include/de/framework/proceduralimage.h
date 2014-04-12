@@ -49,7 +49,14 @@ public:
     void setSize(Size const &size);
     void setColor(Color const &color);
 
-    virtual void update();
+    /**
+     * Updates the image.
+     *
+     * @return @c true, if the geometry has changed and it should be remade. Otherwise
+     * @c false if nothing has been changed.
+     */
+    virtual bool update();
+
     virtual void glInit();
     virtual void glDeinit();
     virtual void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) = 0;

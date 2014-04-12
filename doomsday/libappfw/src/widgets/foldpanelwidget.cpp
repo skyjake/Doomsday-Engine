@@ -27,18 +27,53 @@ using namespace ui;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {
+    /**
+     * Indicator that shows whether a fold panel is open or closed.
+     */
     struct FoldImage : public ProceduralImage
     {
         FoldPanelWidget &fold;
-        bool needUpdate;
+        bool needSize;
+        bool animating;
+        Animation angle;
 
-        FoldImage(FoldPanelWidget &owner) : fold(owner), needUpdate(true)
+        FoldImage(FoldPanelWidget &owner)
+            : fold(owner)
+            , needSize(true)
+            , animating(false)
+            , angle(0, Animation::EaseBoth)
         {}
 
-        void update()
+        /// We'll report the status as changed if the image was animating or its
+        /// size was updated.
+        bool update()
         {
-            float h = fold.title().font().height().value();
-            setSize(Vector2f(h, h));
+            bool changed = animating;
+
+            float target = (fold.isOpen()? 0 : 90);
+            if(target != angle.target())
+            {
+                angle.setValue(target, 1);
+                animating = true;
+                changed = true;
+            }
+
+            if(needSize)
+            {
+                needSize = false;
+                changed = true;
+
+                float h = fold.title().font().height().value();
+                setSize(Vector2f(h, h));
+            }
+
+            // Stop animating?
+            if(animating && angle.done())
+            {
+                animating = false;
+            }
+
+            return changed;
         }
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
@@ -47,16 +82,13 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             Atlas &atlas = root.atlas();
             ColorBank::Colorf const &textColor = fold.title().textColorf();
 
+            // Frame.
             verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
                                     atlas.imageRectf(root.roundCorners()));
 
             Rectanglef uv = atlas.imageRectf(root.styleTexture("fold"));
-            if(!fold.isOpen())
-            {
-                // Flip it.
-                uv = Rectanglef(uv.bottomLeft(), uv.topRight());
-            }
-            verts.makeQuad(rect, textColor * Vector4f(1, 1, 1, .5f), uv);
+            Matrix4f const turn = Matrix4f::rotateAround(rect.middle(), angle);
+            verts.makeQuad(rect, textColor * Vector4f(1, 1, 1, .5f), uv, &turn);
         }
     };
 

@@ -51,13 +51,14 @@ DENG2_OBSERVES(ButtonWidget, Press)
             _animating = true;
         }
 
-        void update()
+        bool update()
         {
             if(_animating)
             {
-                _owner.requestGeometry();
                 if(_pos.done()) _animating = false;
+                return true;
             }
+            return false;
         }
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
