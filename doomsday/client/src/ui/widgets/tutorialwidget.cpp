@@ -36,6 +36,7 @@ DENG_GUI_PIMPL(TutorialWidget)
 {
     enum Step {
         Welcome,
+        HomeScreen,
         TaskBar,
         DEMenu,
         ConfigMenus,
@@ -134,15 +135,18 @@ DENG_GUI_PIMPL(TutorialWidget)
     {
         forever
         {
-            if(!App_GameLoaded())
+            bool skip = false;
+            if(!App_GameLoaded()) // in Ring Zero
             {
-                if(s == RendererAppearance)
-                {
-                    s = Step(s + 1);
-                    continue;
-                }
+                if(s == RendererAppearance) skip = true;
             }
-            break;
+            else // A game is loaded.
+            {
+                if(s == HomeScreen) skip = true;
+            }
+            if(!skip) break;
+
+            s = Step(s + 1);
         }
     }
 
@@ -190,6 +194,15 @@ DENG_GUI_PIMPL(TutorialWidget)
             dlg->setOpeningDirection(ui::Down);
             break;
 
+        case HomeScreen:
+            dlg->title().setText(tr("Home Screen"));
+            dlg->message().setText(tr("This is where you end up if no game gets loaded at startup. "
+                                      "Here you can browse all available games "
+                                      "and configure engine settings. You can unload the current game at "
+                                      "any time to get back to the Home Screen."));
+            startHighlight(*root().guiFind("background"));
+            break;
+
         case TaskBar:
             dlg->title().setText(tr("Task Bar"));
             dlg->message().setText(tr("The task bar is where you find all the important functionality: loading "
@@ -212,7 +225,8 @@ DENG_GUI_PIMPL(TutorialWidget)
             dlg->message().setText(tr("Click the DE icon in the bottom right corner to open "
                                       "the application menu. "
                                       "You can check for available updates, switch games, or look for "
-                                      "ongoing multiplayer games."));
+                                      "ongoing multiplayer games. You can also unload the current game "
+                                      "and return to Doomsday's Home Screen."));
             win.taskBar().openMainMenu();
             dlg->setAnchorAndOpeningDirection(root().guiFind("de-menu")->rule(), ui::Left);
             startHighlight(*root().guiFind("de-button"));
@@ -256,9 +270,9 @@ DENG_GUI_PIMPL(TutorialWidget)
             {
                 // Event bindings are currently stored per-game, so we can't set a
                 // binding unless a game is loaded.
-                msg += "\n\nBelow you can see the current keyboard shortcut for accessing the console quickly. "
-                        "To change it, click in the box and then press the key or key combination you "
-                        "want to assign as the shortcut.";
+                msg += tr("\n\nBelow you can see the current keyboard shortcut for accessing the console quickly. "
+                          "To change it, click in the box and then press the key or key combination you "
+                          "want to assign as the shortcut.");
                 InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
                 bind->useInfoStyle();
                 dlg->area().add(bind);
