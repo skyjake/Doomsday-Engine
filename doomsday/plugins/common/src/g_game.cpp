@@ -343,6 +343,7 @@ cvartemplate_t gamestatusCVars[] =
 ccmdtemplate_t gameCmds[] = {
     { "deletegamesave",  "ss",   CCmdDeleteSavedSession, 0 },
     { "deletegamesave",  "s",    CCmdDeleteSavedSession, 0 },
+    { "endgame",         "s",    CCmdEndSession, 0 },
     { "endgame",         "",     CCmdEndSession, 0 },
     { "helpscreen",      "",     CCmdHelpScreen, 0 },
     { "listmaps",        "",     CCmdListMaps, 0 },
@@ -2933,14 +2934,7 @@ static int endSessionConfirmed(msgresponse_t response, int /*userValue*/, void *
 {
     if(response == MSG_YES)
     {
-        if(IS_CLIENT)
-        {
-            DD_Executef(false, "net disconnect");
-        }
-        else
-        {
-            COMMON_GAMESESSION->endAndBeginTitle();
-        }
+        DD_Execute(true, "endgame confirm");
     }
     return true;
 }
@@ -2964,14 +2958,23 @@ D_CMD(EndSession)
         return true;
     }
 
-    if(IS_NETGAME && IS_SERVER)
+    // Is user confirmation required? (Never if this is a network server).
+    bool const confirmed = (argc >= 2 && !stricmp(argv[argc-1], "confirm"));
+    if(confirmed || (IS_NETGAME && IS_SERVER))
     {
-        // Just do it, no questions asked.
-        COMMON_GAMESESSION->endAndBeginTitle();
-        return true;
+        if(IS_NETGAME && IS_CLIENT)
+        {
+            DD_Executef(false, "net disconnect");
+        }
+        else
+        {
+            COMMON_GAMESESSION->endAndBeginTitle();
+        }
     }
-
-    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, endSessionConfirmed, 0, NULL);
+    else
+    {
+        Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, endSessionConfirmed, 0, NULL);
+    }
 
     return true;
 }
