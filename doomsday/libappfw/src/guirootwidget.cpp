@@ -181,6 +181,15 @@ void GuiRootWidget::addOnTop(GuiWidget *widget)
     add(widget);
 }
 
+void GuiRootWidget::moveToTop(GuiWidget &widget)
+{
+    if(widget.parentWidget())
+    {
+        widget.parentWidget()->remove(widget);
+    }
+    addOnTop(&widget);
+}
+
 AtlasTexture &GuiRootWidget::atlas()
 {
     d->initAtlas();

@@ -279,8 +279,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         GuiRootWidget &root = self.root();
 
         // Keep the tutorial above any dialogs etc. that might've been opened.
-        root.remove(self);
-        root.addOnTop(&self);
+        root.moveToTop(self);
 
         root.addOnTop(dlg);
         dlg->open();

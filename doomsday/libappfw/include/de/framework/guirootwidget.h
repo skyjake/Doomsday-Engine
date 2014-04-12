@@ -114,6 +114,13 @@ public:
     virtual void addOnTop(GuiWidget *widget);
 
     /**
+     * Reorders the children of the root widget so that @a widget is added to the top.
+     *
+     * @param widget  Widget to move to the top.
+     */
+    void moveToTop(GuiWidget &widget);
+
+    /**
      * Sends the current mouse position as a mouse event, just like the mouse would've
      * been moved.
      */
