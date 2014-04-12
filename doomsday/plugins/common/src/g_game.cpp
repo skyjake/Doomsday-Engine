@@ -2371,13 +2371,10 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
     metadata.set("gameIdentityKey", COMMON_GAMESESSION->gameId());
     metadata.set("userDescription", ""); // Applied later.
     metadata.set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
-#if !__JHEXEN__
     metadata.set("mapTime",         mapTime);
-#endif
 
     metadata.add("gameRules",       COMMON_GAMESESSION->rules().toRecord()); // Takes ownership.
 
-#if !__JHEXEN__
     de::ArrayValue *array = new de::ArrayValue;
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
@@ -2385,7 +2382,6 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
         *array << de::NumberValue(playerIsPresent, de::NumberValue::Boolean);
     }
     metadata.set("players", array); // Takes ownership.
-#endif
 
     metadata.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
 }
