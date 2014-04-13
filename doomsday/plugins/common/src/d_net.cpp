@@ -25,6 +25,7 @@
 #include "gamesession.h"
 #include "player.h"
 #include "hu_menu.h"
+#include "p_mapsetup.h"
 #include "p_start.h"
 #include "fi_lib.h"
 
@@ -182,21 +183,25 @@ int D_NetConnect(int before)
 
 int D_NetDisconnect(int before)
 {
-    if(before) return true;
+    if(before)
+    {
+        // Free PU_MAP, Zone-allocated storage for the local world state.
+        P_ResetWorldState();
+        return true;
+    }
 
     D_NetClearBuffer();
 
     // Start demo.
     COMMON_GAMESESSION->endAndBeginTitle();
 
-    // Restore normal game state.
-    GameRuleset newRules(COMMON_GAMESESSION->rules());
+    /*GameRuleset newRules(COMMON_GAMESESSION->rules());
     newRules.deathmatch    = false;
     newRules.noMonsters    = false;
 #if __JHEXEN__
     newRules.randomClasses = false;
 #endif
-    COMMON_GAMESESSION->applyNewRules(newRules);
+    COMMON_GAMESESSION->applyNewRules(newRules);*/
 
     return true;
 }

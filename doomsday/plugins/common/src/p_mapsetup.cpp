@@ -46,8 +46,6 @@
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
 
-static void P_ResetWorldState(void);
-
 // Our private map data structures
 xsector_t *xsectors;
 xline_t *xlines;
@@ -706,9 +704,19 @@ void P_SetupMap(Uri const *mapUri)
     // It begins...
     mapSetup = true;
 
+    ::timerGame = 0;
+    if(COMMON_GAMESESSION->rules().deathmatch)
+    {
+        int parm = CommandLine_Check("-timer");
+        if(parm && parm < CommandLine_Count() - 1)
+        {
+            ::timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
+        }
+    }
+
     P_ResetWorldState();
 
-    // Initialize The Logical Sound Manager.
+    // Initialize the logical sound manager.
     S_MapChange();
 
     AutoStr *mapUriStr = Uri_Compose(mapUri);
@@ -1013,10 +1021,7 @@ void P_FinalizeMapChange(Uri const *uri)
 #endif
 }
 
-/**
- * Called during map setup when beginning to load a new map.
- */
-static void P_ResetWorldState()
+void P_ResetWorldState()
 {
 #if __JHEXEN__
     static int firstFragReset = 1;
@@ -1052,16 +1057,6 @@ static void P_ResetWorldState()
 #if !__JHEXEN__
         totalKills = totalItems = totalSecret = 0;
 #endif
-    }
-
-    timerGame = 0;
-    if(COMMON_GAMESESSION->rules().deathmatch)
-    {
-        int parm = CommandLine_Check("-timer");
-        if(parm && parm < CommandLine_Count() - 1)
-        {
-            timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
-        }
     }
 
     for(int i = 0; i < MAXPLAYERS; ++i)
