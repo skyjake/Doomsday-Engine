@@ -270,6 +270,10 @@ def mac_release():
     print 'Signing Doomsday Shell.app...'
     codesign("Doomsday Shell.app")
     
+    print 'Packaging apps as individual ZIPs...'
+    os.system('zip -9 -r -q "../releases/doomsday_osx_%s.zip" "Doomsday Engine.app"' % DOOMSDAY_VERSION_FULL)
+    os.system('zip -9 -r -q "../releases/doomsday_shell_osx_%s.zip" "Doomsday Shell.app"' % DOOMSDAY_VERSION_FULL)
+    
     print 'Creating disk:', target
     os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
     
