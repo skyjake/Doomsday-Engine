@@ -95,19 +95,11 @@ void Cl_CleanUp()
     clientPaused = false;
     handshakeReceived = false;
 
-    if(App_WorldSystem().hasMap())
-    {
-        Cl_ResetFrame();
-        App_WorldSystem().map().clearClMobjs();
-    }
+    // Reset the local world state.
+    App_WorldSystem().reset();
 
-    Cl_InitPlayers();
+    // Discard the translation tables for the server we've just left.
     Cl_ResetTransTables();
-
-    if(App_WorldSystem().hasMap())
-    {
-        App_WorldSystem().map().clearClMovers();
-    }
 
     GL_SetFilter(false);
 }
