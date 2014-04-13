@@ -2945,9 +2945,15 @@ D_CMD(EndSession)
 
     if(G_QuitInProgress()) return true;
 
+    if(IS_NETGAME && IS_SERVER)
+    {
+        App_Log(DE2_NET_ERROR, "Cannot end a networked game session. Stop the server instead");
+        return false;
+    }
+
     if(!COMMON_GAMESESSION->hasBegun())
     {
-        if(IS_NETGAME && IS_SERVER)
+        if(IS_NETGAME && IS_CLIENT)
         {
             App_Log(DE2_NET_ERROR, "%s", ENDNOGAME);
         }
