@@ -494,8 +494,15 @@ void Socket::close()
 {
     if(!d->socket) return;
 
-    // All pending data will be written to the socket before closing.
-    d->socket->disconnectFromHost();
+    if(d->socket->state() == QAbstractSocket::ConnectedState)
+    {
+        // All pending data will be written to the socket before closing.
+        d->socket->disconnectFromHost();
+    }
+    else
+    {
+        d->socket->abort();
+    }
 
     if(d->socket->state() != QAbstractSocket::UnconnectedState)
     {
@@ -637,7 +644,8 @@ void Socket::socketError(QAbstractSocket::SocketError socketError)
         LOG_AS("Socket");
         if(!d->quiet) LOG_NET_WARNING(d->socket->errorString());
 
-        emit disconnected(); //error(socketError);
+        emit error(d->socket->errorString());
+        emit disconnected();
     }
 }
 
