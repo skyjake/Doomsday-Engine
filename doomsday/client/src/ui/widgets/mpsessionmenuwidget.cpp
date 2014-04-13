@@ -33,6 +33,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(MPSessionMenuWidget)
+, DENG2_OBSERVES(App, GameChange)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
@@ -154,6 +155,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         }
     };
 
+    DiscoveryMode mode;
     ServerLink::FoundMask mask;
 
     Instance(Public *i)
@@ -161,11 +163,13 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         , mask(ServerLink::Any)
     {
         link().audienceForDiscoveryUpdate += this;
+        App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
         link().audienceForDiscoveryUpdate -= this;
+        App::app().audienceForGameChange() -= this;
     }
 
     void linkDiscoveryUpdate(ServerLink const &link)
@@ -210,11 +214,23 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             emit self.availabilityChanged();
         }
     }
+
+    void currentGameChanged(game::Game const &newGame)
+    {
+        if(newGame.isNull() && mode == DiscoverUsingMaster)
+        {
+            // If the session menu exists across game changes, it's good to
+            // keep it up to date.
+            link().discoverUsingMaster();
+        }
+    }
 };
 
 MPSessionMenuWidget::MPSessionMenuWidget(DiscoveryMode discovery)
     : SessionMenuWidget("mp-session-menu"), d(new Instance(this))
 {
+    d->mode = discovery;
+
     switch(discovery)
     {
     case DiscoverUsingMaster:
