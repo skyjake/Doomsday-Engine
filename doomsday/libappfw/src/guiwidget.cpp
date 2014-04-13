@@ -321,7 +321,6 @@ DENG2_PIMPL(GuiWidget)
 
     void restoreState()
     {
-        if(!stateSerializationEnabled) return;
         try
         {
             if(IPersistent *po = self.maybeAs<IPersistent>())
@@ -339,7 +338,6 @@ DENG2_PIMPL(GuiWidget)
 
     void saveState()
     {
-        if(!stateSerializationEnabled) return;
         try
         {
             if(IPersistent *po = self.maybeAs<IPersistent>())
@@ -548,6 +546,32 @@ void GuiWidget::enableStateSerialization(bool enabled)
     d->stateSerializationEnabled = enabled;
 }
 
+void GuiWidget::saveState()
+{
+    d->saveState();
+
+    foreach(Widget *child, childWidgets())
+    {
+        if(GuiWidget *widget = child->maybeAs<GuiWidget>())
+        {
+            widget->saveState();
+        }
+    }
+}
+
+void GuiWidget::restoreState()
+{
+    d->restoreState();
+
+    foreach(Widget *child, childWidgets())
+    {
+        if(GuiWidget *widget = child->maybeAs<GuiWidget>())
+        {
+            widget->restoreState();
+        }
+    }
+}
+
 void GuiWidget::initialize()
 {
     if(d->inited) return;
@@ -557,7 +581,10 @@ void GuiWidget::initialize()
         d->inited = true;
         glInit();
 
-        d->restoreState();
+        if(d->stateSerializationEnabled)
+        {
+            d->restoreState();
+        }
     }
     catch(Error const &er)
     {
@@ -572,7 +599,10 @@ void GuiWidget::deinitialize()
 
     try
     {
-        d->saveState();
+        if(d->stateSerializationEnabled)
+        {
+            d->saveState();
+        }
 
         d->inited = false;
         d->deinitBlur();
