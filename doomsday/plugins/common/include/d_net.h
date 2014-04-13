@@ -220,8 +220,6 @@ int D_NetConnect(int before);
 
 int D_NetDisconnect(int before);
 
-void NetSv_ApplyGameRulesFromConfig(void);
-
 long int D_NetPlayerEvent(int plrNumber, int peType, void *data);
 
 /**

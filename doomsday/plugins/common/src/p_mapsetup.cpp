@@ -686,9 +686,22 @@ void P_SetupMap(Uri const *mapUri)
 
     if(IS_DEDICATED)
     {
-        // Whenever the game changes, update the game config from
-        NetSv_ApplyGameRulesFromConfig();
+        // Whenever the map changes, update the game rule config.
+        GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
+        newRules.deathmatch      = cfg.netDeathmatch;
+        newRules.noMonsters      = cfg.netNoMonsters;
+        /*newRules.*/cfg.jumpEnabled = cfg.netJumping;
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        newRules.respawnMonsters = cfg.netRespawn;
+#endif
+#if __JHEXEN__
+        newRules.randomClasses   = cfg.netRandomClass;
+#endif
+        COMMON_GAMESESSION->applyNewRules(newRules);
     }
+
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
     // It begins...
     mapSetup = true;

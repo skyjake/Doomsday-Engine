@@ -160,27 +160,34 @@ DENG2_PIMPL(GameSession)
         if(rules.skill > NUM_SKILL_MODES - 1)
             rules.skill = skillmode_t(NUM_SKILL_MODES - 1);
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         if(!IS_NETGAME)
         {
+#if !__JHEXEN__
             rules.deathmatch      = false;
-            rules.respawnMonsters = false;
+            rules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 
-            rules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
-        }
+            rules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
 #endif
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        rules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
-#endif
-
 #if __JDOOM__ || __JHERETIC__
-        // Is respawning enabled at all in nightmare skill?
-        if(rules.skill == SM_NIGHTMARE)
-        {
-            rules.respawnMonsters = cfg.respawnMonstersNightmare;
-        }
+            // Is respawning enabled at all in nightmare skill?
+            if(rules.skill == SM_NIGHTMARE)
+            {
+                rules.respawnMonsters = cfg.respawnMonstersNightmare;
+            }
 #endif
+        }
+        else if(IS_DEDICATED)
+        {
+#if !__JHEXEN__
+            rules.deathmatch      = cfg.netDeathmatch;
+            rules.respawnMonsters = cfg.netRespawn;
+
+            rules.noMonsters      = cfg.netNoMonsters;
+            /*rules.*/cfg.jumpEnabled = cfg.netJumping;
+#else
+            rules.randomClasses   = cfg.netRandomClass;
+#endif
+        }
 
         // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
@@ -206,10 +213,7 @@ DENG2_PIMPL(GameSession)
         applyRuleFastMissiles(fastMissiles);
 #endif
 
-        if(IS_DEDICATED)
-        {
-            NetSv_ApplyGameRulesFromConfig();
-        }
+        NetSv_UpdateGameConfigDescription();
 
         // Update game status cvars:
         Con_SetInteger2("game-skill", rules.skill, SVF_WRITE_OVERRIDE);
@@ -489,10 +493,6 @@ DENG2_PIMPL(GameSession)
             S_MapMusic(gameMapUri);
             S_PauseMusic(true);
         }
-
-        // If we're the server, let clients know the map will change.
-        NetSv_UpdateGameConfigDescription();
-        NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
         P_SetupMap(gameMapUri);
 

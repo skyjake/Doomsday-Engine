@@ -99,25 +99,6 @@ void D_NetClearBuffer()
     netWriter = 0;
 }
 
-void NetSv_ApplyGameRulesFromConfig()
-{
-    if(IS_CLIENT) return;
-
-    GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
-    newRules.deathmatch = cfg.netDeathmatch;
-    newRules.noMonsters = cfg.netNoMonsters;
-    /*gameRules.*/cfg.jumpEnabled = cfg.netJumping;
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    newRules.respawnMonsters = cfg.netRespawn;
-#endif
-#if __JHEXEN__
-    newRules.randomClasses = cfg.netRandomClass;
-#endif
-    COMMON_GAMESESSION->applyNewRules(newRules);
-
-    NetSv_UpdateGameConfigDescription();
-}
-
 int D_NetServerStarted(int before)
 {
     if(before) return true;
@@ -131,9 +112,6 @@ int D_NetServerStarted(int before)
     cfg.playerClass[0] = PCLASS_PLAYER;
 #endif
     P_ResetPlayerRespawnClasses();
-
-    // Set the game parameters.
-    NetSv_ApplyGameRulesFromConfig();
 
 #if __JDOOM64__
     uint netEpisode = 0;
