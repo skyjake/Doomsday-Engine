@@ -361,6 +361,12 @@ void Cl_GetPackets()
             Cl_Finale(msgReader);
             break;
 
+        case PSV_FRAME2:
+        case PSV_FIRST_FRAME2:
+        case PSV_SOUND:
+            LOGDEV_NET_WARNING("Packet type %i was discarded (client not ready)") << netBuffer.msg.type;
+            break;
+
         default:
             if(netBuffer.msg.type >= PKT_GAME_MARKER)
             {
