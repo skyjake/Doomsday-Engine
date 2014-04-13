@@ -70,7 +70,11 @@ DENG_GUI_PIMPL(TutorialWidget)
 
     void flash()
     {
-        if(highlight->opacity().target() > .5f)
+        if(highlight->opacity().target() == 0)
+        {
+            highlight->setOpacity(.8f, FLASH_SPAN + .1, .1);
+        }
+        else if(highlight->opacity().target() > .5f)
         {
             highlight->setOpacity(.2f, FLASH_SPAN);
         }
