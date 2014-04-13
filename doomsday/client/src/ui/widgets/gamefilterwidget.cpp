@@ -33,8 +33,11 @@ DENG2_PIMPL(GameFilterWidget)
     LabelWidget *sortLabel;
     ChoiceWidget *sortBy;
     DialogContentStylist stylist;
+    FilterMode filterMode;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i)
+        : Base(i)
+        , filterMode(UserChangeable)
     {
         stylist.setContainer(self);
 
@@ -86,12 +89,18 @@ void GameFilterWidget::useInvertedStyle()
     d->sortBy->useInfoStyle();
 }
 
-void GameFilterWidget::setFilter(Filter flt)
+void GameFilterWidget::setFilter(Filter flt, FilterMode mode)
 {
     ui::DataPos pos = d->tabs->items().findData(duint(flt));
     if(pos != ui::Data::InvalidPos)
     {
         d->tabs->setCurrent(pos);
+    }
+    d->filterMode = mode;
+
+    if(d->filterMode == Permanent)
+    {
+        d->tabs->disable();
     }
 }
 
@@ -108,15 +117,19 @@ GameFilterWidget::SortOrder GameFilterWidget::sortOrder() const
 void GameFilterWidget::operator >> (PersistentState &toState) const
 {
     Record &st = toState.names();
-
-    st.set(d->persistId("filter"), dint(filter()));
+    if(d->filterMode != Permanent)
+    {
+        st.set(d->persistId("filter"), dint(filter()));
+    }
     st.set(d->persistId("order"),  dint(sortOrder()));
 }
 
 void GameFilterWidget::operator << (PersistentState const &fromState)
 {
     Record const &st = fromState.names();
-
-    d->tabs->setCurrent   (d->tabs->items()  .findData(int(st[d->persistId("filter")])));
+    if(d->filterMode != Permanent)
+    {
+        d->tabs->setCurrent(d->tabs->items().findData(int(st[d->persistId("filter")])));
+    }
     d->sortBy->setSelected(d->sortBy->items().findData(int(st[d->persistId("order" )])));
 }

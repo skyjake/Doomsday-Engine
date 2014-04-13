@@ -59,16 +59,17 @@ GamesDialog::GamesDialog(Mode mode, String const &name)
         d->gameSel->filter().rule().setInput(Rule::Width, d->gameSel->rule().width());
         layout << d->gameSel->filter();
 
-        d->gameSel->filter().setFilter(GameFilterWidget::AllGames);
+        // Disallow changing the filter.
+        d->gameSel->filter().setFilter(GameFilterWidget::AllGames, GameFilterWidget::Permanent);
     }
     else
     {
-        // Select a suitable view as the user can't change the filter.
+        // Disallow changing the filter.
         d->gameSel->filter().hide();
-        d->gameSel->filter().enableStateSerialization(false);
         d->gameSel->filter().setFilter(d->mode == ShowSingleplayerOnly?
                                            GameFilterWidget::Singleplayer :
-                                           GameFilterWidget::Multiplayer);
+                                           GameFilterWidget::Multiplayer,
+                                       GameFilterWidget::Permanent);
 
         switch(d->mode)
         {

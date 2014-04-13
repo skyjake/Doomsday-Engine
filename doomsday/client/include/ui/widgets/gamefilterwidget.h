@@ -43,6 +43,12 @@ public:
     };
     Q_DECLARE_FLAGS(Filter, FilterFlag)
 
+    enum FilterMode
+    {
+        UserChangeable,
+        Permanent
+    };
+
     enum SortOrder
     {
         SortByTitle,
@@ -53,7 +59,7 @@ public:
     GameFilterWidget(de::String const &name = "gamefilter");
 
     void useInvertedStyle();
-    void setFilter(Filter flt);
+    void setFilter(Filter flt, FilterMode mode = UserChangeable);
 
     Filter filter() const;
     SortOrder sortOrder() const;
