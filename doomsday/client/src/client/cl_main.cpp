@@ -29,6 +29,7 @@
 
 #include "con_main.h"
 
+#include "audio/s_main.h"
 #include "network/net_demo.h"
 
 #include "world/map.h"
@@ -94,6 +95,8 @@ void Cl_CleanUp()
 
     clientPaused = false;
     handshakeReceived = false;
+
+    S_Reset();
 
     // Reset the local world state.
     App_WorldSystem().reset();
