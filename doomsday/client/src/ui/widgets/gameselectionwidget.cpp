@@ -231,6 +231,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
     ~Instance()
     {
+        foreach(SubsetWidget *sub, subsets) sub->menu->setFilter(0);
+
         App::app().audienceForGameChange() -= this;
     }
 

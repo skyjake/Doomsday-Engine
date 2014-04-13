@@ -31,6 +31,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 , DENG2_OBSERVES(Games, Addition)
 , DENG2_OBSERVES(Loop, Iteration) // deferred updates
 , DENG2_OBSERVES(App, StartupComplete)
+, DENG2_OBSERVES(App, GameChange)
 {
     /// ActionItem with a Game member, for loading a particular game.
     struct GameItem : public ui::ImageItem,
@@ -71,6 +72,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForAddition() += this;
+        App::app().audienceForGameChange() += this;
         App::app().audienceForStartupComplete() += this;
     }
 
@@ -79,6 +81,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         Loop::appLoop().audienceForIteration() -= this;
 
         App_Games().audienceForAddition() -= this;
+        App::app().audienceForGameChange() -= this;
         App::app().audienceForStartupComplete() -= this;
     }
 
@@ -110,6 +113,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     {
         Loop::appLoop().audienceForIteration() -= this;
         addPendingGames();
+        updateGameAvailability();
     }
 
     void addPendingGames()
@@ -172,6 +176,11 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     void appStartupCompleted()
     {
         updateGameAvailability();
+    }
+
+    void currentGameChanged(game::Game const &)
+    {
+        Loop::appLoop().audienceForIteration() += this;
     }
 };
 
