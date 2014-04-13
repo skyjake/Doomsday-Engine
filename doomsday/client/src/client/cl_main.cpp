@@ -29,6 +29,7 @@
 
 #include "con_main.h"
 
+#include "audio/s_main.h"
 #include "network/net_demo.h"
 
 #include "world/map.h"
@@ -95,19 +96,13 @@ void Cl_CleanUp()
     clientPaused = false;
     handshakeReceived = false;
 
-    if(App_WorldSystem().hasMap())
-    {
-        Cl_ResetFrame();
-        App_WorldSystem().map().clearClMobjs();
-    }
+    S_Reset();
 
-    Cl_InitPlayers();
+    // Reset the local world state.
+    App_WorldSystem().reset();
+
+    // Discard the translation tables for the server we've just left.
     Cl_ResetTransTables();
-
-    if(App_WorldSystem().hasMap())
-    {
-        App_WorldSystem().map().clearClMovers();
-    }
 
     GL_SetFilter(false);
 }

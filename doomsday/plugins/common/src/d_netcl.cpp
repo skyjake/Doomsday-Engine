@@ -103,6 +103,7 @@ void NetCl_UpdateGameState(Reader *msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
+        COMMON_GAMESESSION->end();
         COMMON_GAMESESSION->begin(*gsMapUri, gameMapEntrance /*gsMapEntrance*/, gsRules);
     }
     else

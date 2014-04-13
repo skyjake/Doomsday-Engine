@@ -261,6 +261,18 @@ public:
      */
     void enableStateSerialization(bool enabled = true);
 
+    /**
+     * Save the state of the widget and all its children (those who support state
+     * serialization).
+     */
+    void saveState();
+
+    /**
+     * Restore the state of the widget and all its children (those who support state
+     * serialization).
+     */
+    void restoreState();
+
     // Events.
     void initialize();
     void deinitialize();

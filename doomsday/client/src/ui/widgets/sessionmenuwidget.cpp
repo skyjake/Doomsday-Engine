@@ -113,7 +113,10 @@ void SessionMenuWidget::setColumns(int numberOfColumns)
 
 void SessionMenuWidget::sort()
 {
-    d->sortSessions();
+    if(d->filter)
+    {
+        d->sortSessions();
+    }
 }
 
 //--------------------------------------------------------------------------------------

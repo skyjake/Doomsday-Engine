@@ -59,7 +59,16 @@ struct ThreadState
     pluginid_t currentPlugin;
     ThreadState() : currentPlugin(0) {}
 };
+
+#ifndef DENG2_QT_4_8_OR_NEWER // Qt 4.7 requires a pointer as the local data type
+#define DENG_LOCAL_DATA_POINTER
+static QThreadStorage<ThreadState *> pluginState; ///< Thread-local plugin state.
+static void initLocalData() {
+    if(!pluginState.hasLocalData()) pluginState.setLocalData(new ThreadState);
+}
+#else
 static QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
+#endif
 
 static PluginHandle* findFirstUnusedPluginHandle(void)
 {
@@ -243,7 +252,22 @@ DENG_EXTERN_C int Plug_CheckForHook(int hookType)
 
 void DD_SetActivePluginId(pluginid_t id)
 {
+#ifdef DENG_LOCAL_DATA_POINTER
+    initLocalData();
+    pluginState.localData()->currentPlugin = id;
+#else
     pluginState.localData().currentPlugin = id;
+#endif
+}
+
+pluginid_t DD_ActivePluginId(void)
+{
+#ifdef DENG_LOCAL_DATA_POINTER
+    initLocalData();
+    return pluginState.localData()->currentPlugin;
+#else
+    return pluginState.localData().currentPlugin;
+#endif
 }
 
 int DD_CallHooks(int hookType, int parm, void *data)
@@ -277,11 +301,6 @@ int DD_CallHooks(int hookType, int parm, void *data)
         ret |= 2;
 
     return ret;
-}
-
-pluginid_t DD_ActivePluginId(void)
-{
-    return pluginState.localData().currentPlugin;
 }
 
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)

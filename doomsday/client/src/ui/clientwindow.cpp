@@ -288,12 +288,16 @@ DENG2_PIMPL(ClientWindow)
             //game->hide();
             background->show();
             gameSelMenu->show();
+
+            gameSelMenu->restoreState();
         }
         else
         {
             //game->show();
             background->hide();
             gameSelMenu->hide();
+
+            gameSelMenu->saveState();
         }
 
         // Check with Style if blurring is allowed.

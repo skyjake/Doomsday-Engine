@@ -47,6 +47,12 @@ void P_FinalizeMapChange(Uri const *uri);
 void P_SetupMap(Uri const *uri);
 
 /**
+ * To be called to reset the local world state (e.g., when leaving a networked game).
+ * Note that @ref P_SetupMap() calls this automatically when the current map changes.
+ */
+void P_ResetWorldState();
+
+/**
  * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
  *                case the author for the @em current map will be returned (if set).
  */
