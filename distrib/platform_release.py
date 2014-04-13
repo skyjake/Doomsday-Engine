@@ -103,11 +103,12 @@ def mac_target_ext():
     return '_32bit.dmg'
 
 
-def output_filename(ext=''):
+def output_filename(ext='', extra=''):
+    if extra != '' and not extra.endswith('_'): extra += '_'
     if DOOMSDAY_RELEASE_TYPE == "Stable":
-        return 'doomsday_' + DOOMSDAY_VERSION_FULL + ext
+        return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + ext
     else:
-        return 'doomsday_' + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
+        return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
 
 
 def mac_able_to_package_snowberry():
@@ -271,8 +272,8 @@ def mac_release():
     codesign("Doomsday Shell.app")
     
     print 'Packaging apps as individual ZIPs...'
-    os.system('zip -9 -r -q "../releases/doomsday_osx_%s.zip" "Doomsday Engine.app"' % DOOMSDAY_VERSION_FULL)
-    os.system('zip -9 -r -q "../releases/doomsday_shell_osx_%s.zip" "Doomsday Shell.app"' % DOOMSDAY_VERSION_FULL)
+    os.system('zip -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', 'osx'))
+    os.system('zip -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_osx'))
     
     print 'Creating disk:', target
     os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
@@ -286,7 +287,10 @@ def mac_release():
     shutil.copy(templateFile, 'imaging.sparseimage')
     remkdir('imaging')
     os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
-    shutil.copy('/Users/jaakko/Desktop/Doomsday.pkg', 'imaging/Doomsday.pkg')
+    try:
+        shutil.copy('/Users/jaakko/Desktop/Doomsday.pkg', 'imaging/Doomsday.pkg')
+    except Exception, ex:
+        print 'No installer available:', ex
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
