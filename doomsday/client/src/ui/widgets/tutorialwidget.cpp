@@ -207,9 +207,9 @@ DENG_GUI_PIMPL(TutorialWidget)
 
             dlg->title().setText(tr("Notifications"));
             dlg->message().setText(tr("The notification area shows the current notifications. "
-                                      "For example, this one here is an example of a warning or error "
+                                      "For example, this one here is an example of a warning or an error "
                                       "that has occurred. You can click on the notification icons to "
-                                      "open more information.\n\nOther possible notifications include the current "
+                                      "get more information.\n\nOther possible notifications include the current "
                                       "FPS, ongoing downloads, and available updates."));
             dlg->setAnchorAndOpeningDirection(exampleAlert->rule(), ui::Down);
             startHighlight(*exampleAlert);
