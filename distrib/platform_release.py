@@ -101,6 +101,12 @@ def mac_target_ext():
     if mac_os_version() == '10.8' or mac_os_version() == '10.9': return '.dmg'
     if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
+    
+    
+def mac_osx_suffix():
+    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return 'osx8'
+    if mac_os_version() == '10.6': return 'osx6'
+    return 'osx'
 
 
 def output_filename(ext='', extra=''):
@@ -272,8 +278,8 @@ def mac_release():
     codesign("Doomsday Shell.app")
     
     print 'Packaging apps as individual ZIPs...'
-    os.system('zip -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', 'osx'))
-    os.system('zip -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_osx'))
+    os.system('zip -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', mac_osx_suffix()))
+    os.system('zip -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_' + mac_osx_suffix()))
     
     print 'Creating disk:', target
     os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
