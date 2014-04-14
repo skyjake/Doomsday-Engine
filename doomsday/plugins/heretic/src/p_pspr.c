@@ -43,6 +43,24 @@
 #define WEAPONBOTTOM        (128)
 #define WEAPONTOP           (32)
 
+static AmmoDef ammoDefs[NUM_AMMO_TYPES] = {
+    /*AT_CRYSTAL*/  { GM_ANY,           "INAMGLD" },
+    /*AT_ARROW*/    { GM_ANY,           "INAMBOW" },
+    /*AT_ORB*/      { GM_ANY,           "INAMBST" },
+    /*AT_RUNE*/     { GM_NOT_SHAREWARE, "INAMRAM" },
+    /*AT_FIREORB*/  { GM_NOT_SHAREWARE, "INAMPNX" },
+    /*AT_MSPHERE*/  { GM_NOT_SHAREWARE, "INAMLOB" }
+};
+
+AmmoDef const *P_AmmoDef(ammotype_t type)
+{
+    if(type >= AT_FIRST && type < AT_FIRST + NUM_AMMO_TYPES)
+    {
+        return &ammoDefs[type];
+    }
+    return 0; // Not found.
+}
+
 /*
     AT_CRYSTAL,
     AT_ARROW,

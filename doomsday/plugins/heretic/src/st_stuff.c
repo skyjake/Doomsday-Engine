@@ -2469,7 +2469,7 @@ void ST_loadGraphics(void)
 
     // Inventory item flash anim.
     {
-    const char invItemFlashAnim[5][9] = {
+    char const invItemFlashAnim[5][9] = {
         {"USEARTIA"},
         {"USEARTIB"},
         {"USEARTIC"},
@@ -2484,20 +2484,15 @@ void ST_loadGraphics(void)
     }
 
     // Ammo icons.
-    {
-    const char ammoPic[NUM_AMMO_TYPES][9] = {
-        {"INAMGLD"},
-        {"INAMBOW"},
-        {"INAMBST"},
-        {"INAMRAM"},
-        {"INAMPNX"},
-        {"INAMLOB"}
-    };
-
+    memset(pAmmoIcons, 0, sizeof(pAmmoIcons));
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        pAmmoIcons[i] = R_DeclarePatch(ammoPic[i]);
-    }
+        AmmoDef const *def = P_AmmoDef((ammotype_t)i);
+        // Available in the current game mode?
+        if(def->gameModeBits & gameModeBits)
+        {
+            pAmmoIcons[i] = R_DeclarePatch(def->hudIcon);
+        }
     }
 
     // Key cards.

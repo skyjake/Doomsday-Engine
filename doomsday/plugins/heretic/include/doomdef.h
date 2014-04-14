@@ -191,7 +191,7 @@ typedef enum {
 #define NUMWEAPLEVELS       2 // Number of weapon power levels.
 
 /**
- * Ammunition types.
+ * Ammunition type identifier.
  */
 typedef enum {
     AT_FIRST,
@@ -205,6 +205,19 @@ typedef enum {
 
     AT_NOAMMO // Takes no ammo, used for staff, gauntlets.
 } ammotype_t;
+
+/**
+ * Ammunition type definition.
+ */
+typedef struct {
+    int gameModeBits;    ///< Game modes the ammo type is available in.
+    char const *hudIcon; ///< Name of the Patch to use in headup displays.
+} AmmoDef;
+
+/**
+ * Returns the AmmoDef for the specified ammunition @a type; otherwise @c 0.
+ */
+AmmoDef const *P_AmmoDef(ammotype_t type);
 
 /**
  * Powers, bestowable upon players only.
