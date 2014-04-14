@@ -38,11 +38,9 @@ Deathmatch in Heretic and Hexen is limited to the "Deathmatch 1" mode.
 
 
 
-@section{ Public online games }
+@section{ Online games }
 
-The @wikiterm{Deng Team} is currently running a public multiplayer server for
-the purpose of developing the network code further. When joining these online
-games, please note the following:
+When joining games on the internet, please note the following:
 
 @list{
 @item The network code in this release has some @link{limitations}{http://dengine.net/multiplayer_issues} that we will work on in future versions.
@@ -58,8 +56,6 @@ Use @ifdef{UNIX}{ @strong{doomsday-shell} or @strong{doomsday-shell-text} }
 @wikiterm{Shell}{Shell} allows you to start, stop, and control Doomsday
 multiplayer servers. Using the Shell, you can connect both to local servers and
 remote servers over the internet.
-
-@notice{It is no longer possible to start a server via the Doomsday Frontend.}
 
 @strong{doomsday-server} runs in a background process and has no UI of its own.
 You must use the Shell to view or manipulate it. Presently you must use the
