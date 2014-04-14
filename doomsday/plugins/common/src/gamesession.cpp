@@ -31,10 +31,17 @@
 #include "p_inventory.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
+#include "p_savedef.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
 #include "p_sound.h"
 #include "p_tick.h"
+#if __JDOOM__
+#  include "doomv9mapstatereader.h"
+#endif
+#if __JHERETIC__
+#  include "hereticv13mapstatereader.h"
+#endif
 
 using namespace de;
 using de::game::SavedSession;
@@ -48,7 +55,7 @@ static String const internalSavePath = "/home/cache/internal.save";
 
 static String const unsavedDescription = "(Unsaved)";
 
-DENG2_PIMPL(GameSession)
+DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 {
     GameRuleset rules; ///< current ruleset
     bool inProgress;   ///< @c true= session is in progress / internal.save exists.
@@ -329,6 +336,48 @@ DENG2_PIMPL(GameSession)
         session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     }
 
+    /**
+     * Constructs a MapStateReader for serialized map state format interpretation.
+     */
+    std::auto_ptr<SavedSession::MapStateReader> makeMapStateReader(
+        SavedSession const &session, String const &mapUriStr)
+    {
+        File const &mapStateFile = session.locateState<File const>(String("maps") / mapUriStr);
+        if(!SV_OpenFileForRead(mapStateFile))
+        {
+            /// @throw Error The serialized map state file could not be opened for read.
+            throw Error("GameSession::makeMapStateReader", "Failed to open \"" + mapStateFile.path() + "\" for read");
+        }
+
+        std::auto_ptr<SavedSession::MapStateReader> p;
+        reader_s *reader = SV_NewReader();
+        int const magic = Reader_ReadInt32(reader);
+        if(magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC) // Native format.
+        {
+            p.reset(new MapStateReader(session));
+        }
+#if __JDOOM__
+        else if(magic == 0x1DEAD600) // DoomV9
+        {
+            p.reset(new DoomV9MapStateReader(session));
+        }
+#endif
+#if __JHERETIC__
+        else if(magic == 0x7D9A1200) // HereticV13
+        {
+            p.reset(new HereticV13MapStateReader(session));
+        }
+#endif
+        SV_CloseFile();
+        if(p.get())
+        {
+            return p;
+        }
+
+        /// @throw Error The format of the serialized map state was not recognized.
+        throw Error("GameSession::makeMapStateReader", "Unrecognized map state format");
+    }
+
     void loadSaved(String const &savePath)
     {
         ::briefDisabled = true;
@@ -416,7 +465,7 @@ DENG2_PIMPL(GameSession)
 #endif
 
         String mapUriStr = Str_Text(Uri_Resolved(::gameMapUri));
-        SV_MapStateReader(session, mapUriStr)->read(mapUriStr);
+        makeMapStateReader(session, mapUriStr)->read(mapUriStr);
     }
 
     void setMap(Uri const &mapUri)
@@ -505,7 +554,7 @@ DENG2_PIMPL(GameSession)
 
             SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
             String const mapUriStr = Str_Text(Uri_Compose(gameMapUri));
-            SV_MapStateReader(saved, mapUriStr)->read(mapUriStr);
+            makeMapStateReader(saved, mapUriStr)->read(mapUriStr);
         }
 
         if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))

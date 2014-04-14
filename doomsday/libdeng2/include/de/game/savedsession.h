@@ -104,6 +104,28 @@ public:
         DENG2_PRIVATE(d)
     };
 
+    /**
+     * Constructs MapStateReaders for serialized map state interpretation.
+     */
+    class IMapStateReaderFactory
+    {
+    public:
+        virtual ~IMapStateReaderFactory() {}
+
+        /**
+         * Called while loading a saved session to acquire a MapStateReader for the
+         * interpretation of a serialized map state format.
+         *
+         * @param session    Saved session to acquire a reader for.
+         * @param mapUriStr  Unique identifier of the map state to be interpreted.
+         *
+         * @return  New MapStateReader appropriate for the serialized map state format
+         * if recognized. Ownership is given to the caller.
+         */
+        virtual std::auto_ptr<MapStateReader> makeMapStateReader(
+                SavedSession const &session, String const &mapUriStr) = 0;
+    };
+
 public:
     SavedSession(File &sourceArchiveFile, String const &name = "");
 

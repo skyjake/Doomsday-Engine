@@ -20,23 +20,12 @@
 
 #ifndef LIBCOMMON_SAVESTATE_H
 #define LIBCOMMON_SAVESTATE_H
-
 #ifdef __cplusplus
 
 #include "common.h"
-#include <de/game/SavedSession>
 
 class MapStateWriter;
-
-/**
- * Determines whether a file package exists for the saved session in the repository and if so,
- * reads the session metadata and then returns a new MapStateReader instance appropriate for
- * deserializing map state data.
- *
- * @return  New reader instance if recognized. Ownership given to the caller.
- */
-std::auto_ptr<de::game::SavedSession::MapStateReader>
-SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr);
+class MapStateReader;
 
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
@@ -100,5 +89,4 @@ void SV_LoadGameClient(uint gameId);
 #endif
 
 #endif // __cplusplus
-
 #endif // LIBCOMMON_SAVESTATE_H

@@ -21,24 +21,13 @@
 #include "common.h"
 #include "p_saveg.h"
 
-#if __JDOOM__
-#  include "doomv9mapstatereader.h"
-#endif
-#if __JHERETIC__
-#  include "hereticv13mapstatereader.h"
-#endif
-
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_tick.h"          // mapTime
-#include "p_savedef.h"
 #include "p_saveio.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
-#include "saveslots.h"
-#include <de/game/Session>
-#include <de/NativePath>
 #include <de/String>
 #include <de/memory.h>
 #include <cstdio>
@@ -48,46 +37,6 @@ int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
 targetplraddress_t *targetPlayerAddrs;
 #endif
-
-std::auto_ptr<de::game::SavedSession::MapStateReader>
-SV_MapStateReader(de::game::SavedSession const &session, de::String mapUriStr)
-{
-    de::File const &mapStateFile = session.locateState<de::File const>(de::String("maps") / mapUriStr);
-    if(!SV_OpenFileForRead(mapStateFile))
-    {
-        /// @throw de::Error The serialized map state file could not be opened for read.
-        throw de::Error("SV_MapStateReader", "Failed to open \"" + mapStateFile.path() + "\" for read");
-    }
-
-    {
-        std::auto_ptr<de::game::SavedSession::MapStateReader> p;
-        Reader *reader = SV_NewReader();
-        int const magic = Reader_ReadInt32(reader);
-        if(magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC) // Native format.
-        {
-            p.reset(new MapStateReader(session));
-        }
-#if __JDOOM__
-        else if(magic == 0x1DEAD600) // DoomV9
-        {
-            p.reset(new DoomV9MapStateReader(session));
-        }
-#endif
-#if __JHERETIC__
-        else if(magic == 0x7D9A1200) // HereticV13
-        {
-            p.reset(new HereticV13MapStateReader(session));
-        }
-#endif
-        SV_CloseFile();
-        if(p.get())
-        {
-            return p;
-        }
-    }
-    /// @throw de::Error The format of the serialized map state was not recognized.
-    throw de::Error("SV_MapStateReader", "Unrecognized map state format");
-}
 
 #if __JHEXEN__
 void SV_InitTargetPlayers()
