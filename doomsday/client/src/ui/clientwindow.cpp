@@ -209,9 +209,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Common notification area.
         notifications = new NotificationWidget;
-        notifications->rule()
-                .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap") - notifications->shift())
-                .setInput(Rule::Right, game->rule().right() - style.rules().rule("gap"));
+        notifications->useDefaultPlacement(game->rule());
         container().add(notifications);
 
         // Alerts notification and popup.

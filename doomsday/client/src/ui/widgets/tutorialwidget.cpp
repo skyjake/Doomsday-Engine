@@ -27,6 +27,7 @@
 #include <de/SignalAction>
 #include <de/Untrapper>
 #include <de/PopupMenuWidget>
+#include <de/NotificationWidget>
 
 using namespace de;
 
@@ -37,6 +38,7 @@ DENG_GUI_PIMPL(TutorialWidget)
     enum Step {
         Welcome,
         HomeScreen,
+        Notifications,
         TaskBar,
         DEMenu,
         ConfigMenus,
@@ -48,6 +50,8 @@ DENG_GUI_PIMPL(TutorialWidget)
     Step current;
     MessageDialog *dlg;
     LabelWidget *highlight;
+    NotificationWidget *notifs; ///< Fake notifications just for an example.
+    LabelWidget *exampleAlert;
     QTimer flashing;
     bool taskBarInitiallyOpen;
     Untrapper untrapper;
@@ -56,9 +60,22 @@ DENG_GUI_PIMPL(TutorialWidget)
         : Base(i)
         , current(Welcome)
         , dlg(0)
+        , notifs(0)
+        , exampleAlert(0)
         , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
         , untrapper(ClientWindow::main())
     {
+        // Create an example alert (lookalike).
+        /// @todo There could be a class for an alert notification widget. -jk
+        exampleAlert = new LabelWidget;
+        exampleAlert->setSizePolicy(ui::Expand, ui::Expand);
+        exampleAlert->setImage(style().images().image("alert"));
+        exampleAlert->setOverrideImageSize(style().fonts().font("default").height().value());
+        exampleAlert->setImageColor(style().colors().colorf("accent"));
+        exampleAlert->hide();
+        self.add(exampleAlert);
+
+        // Highlight rectangle.
         self.add(highlight = new LabelWidget);
         highlight->set(Background(Background::GradientFrame,
                                   style().colors().colorf("accent"), 6));
@@ -68,6 +85,18 @@ DENG_GUI_PIMPL(TutorialWidget)
         flashing.setInterval(FLASH_SPAN.asMilliSeconds());
     }
 
+    void startHighlight(GuiWidget const &w)
+    {
+        highlight->rule().setRect(w.rule());
+        highlight->setOpacity(0);
+        highlight->show();
+        flashing.start();
+        flash();
+    }
+
+    /**
+     * Animates the highlight flash rectangle. Called periodically.
+     */
     void flash()
     {
         if(highlight->opacity().target() == 0)
@@ -84,49 +113,10 @@ DENG_GUI_PIMPL(TutorialWidget)
         }
     }
 
-    void startHighlight(GuiWidget const &w)
-    {
-        highlight->rule().setRect(w.rule());
-        highlight->setOpacity(0);
-        highlight->show();
-        flashing.start();
-        flash();
-    }
-
     void stopHighlight()
     {
         highlight->hide();
         flashing.stop();
-    }
-
-    void deinitStep()
-    {
-        if(dlg)
-        {
-            dlg->close(0);
-            dlg = 0;
-        }
-
-        stopHighlight();
-
-        ClientWindow &win = ClientWindow::main();
-        switch(current)
-        {
-        case DEMenu:
-            win.taskBar().closeMainMenu();
-            break;
-
-        case ConfigMenus:
-            win.taskBar().closeConfigMenu();
-            break;
-
-        case RendererAppearance:
-            win.taskBar().closeConfigMenu();
-            break;
-
-        default:
-            break;
-        }
     }
 
     /**
@@ -207,6 +197,24 @@ DENG_GUI_PIMPL(TutorialWidget)
             startHighlight(*root().guiFind("background"));
             break;
 
+        case Notifications:
+            // Fake notification area that doesn't have any the real currently showed
+            // notifications.
+            notifs = new NotificationWidget("tutorial-notifications");
+            notifs->useDefaultPlacement(ClientWindow::main().game().rule());
+            root().addOnTop(notifs);
+            notifs->showChild(exampleAlert);
+
+            dlg->title().setText(tr("Notifications"));
+            dlg->message().setText(tr("The notification area shows the current notifications. "
+                                      "For example, this one here is an example of a warning or error "
+                                      "that has occurred. You can click on the notification icons to "
+                                      "open more information.\n\nOther possible notifications include the current "
+                                      "FPS, ongoing downloads, and available updates."));
+            dlg->setAnchorAndOpeningDirection(exampleAlert->rule(), ui::Down);
+            startHighlight(*exampleAlert);
+            break;
+
         case TaskBar:
             dlg->title().setText(tr("Task Bar"));
             dlg->message().setText(tr("The task bar is where you find all the important functionality: loading "
@@ -260,8 +268,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             win.root().guiFind("conf-menu")->as<PopupMenuWidget>().menu()
                     .organizer().itemWidget(tr("Renderer"))->as<ButtonWidget>().trigger();
             dlg->setAnchorAndOpeningDirection(
-                        win.root().guiFind("renderersettings")->find("appearance-label")
-                        ->as<LabelWidget>().rule(), ui::Left);
+                        win.root().guiFind("renderersettings")->guiFind("appearance-label")->rule(), ui::Left);
             startHighlight(*root().guiFind("profile-picker"));
             break;
 
@@ -301,6 +308,45 @@ DENG_GUI_PIMPL(TutorialWidget)
 
         root.addOnTop(dlg);
         dlg->open();
+    }
+
+    /**
+     * Cleans up after a tutorial step is done.
+     */
+    void deinitStep()
+    {
+        if(dlg)
+        {
+            dlg->close(0);
+            dlg = 0;
+        }
+
+        stopHighlight();
+
+        ClientWindow &win = ClientWindow::main();
+        switch(current)
+        {
+        case Notifications:
+            notifs->hideChild(*exampleAlert);
+            QTimer::singleShot(500, notifs, SLOT(guiDeleteLater()));
+            notifs = 0;
+            break;
+
+        case DEMenu:
+            win.taskBar().closeMainMenu();
+            break;
+
+        case ConfigMenus:
+            win.taskBar().closeConfigMenu();
+            break;
+
+        case RendererAppearance:
+            win.taskBar().closeConfigMenu();
+            break;
+
+        default:
+            break;
+        }
     }
 };
 
