@@ -27,7 +27,7 @@
 #include <de/SignalAction>
 #include <de/Untrapper>
 #include <de/PopupMenuWidget>
-#include <de/NotificationWidget>
+#include <de/NotificationAreaWidget>
 
 using namespace de;
 
@@ -50,7 +50,7 @@ DENG_GUI_PIMPL(TutorialWidget)
     Step current;
     MessageDialog *dlg;
     LabelWidget *highlight;
-    NotificationWidget *notifs; ///< Fake notifications just for an example.
+    NotificationAreaWidget *notifs; ///< Fake notifications just for an example.
     LabelWidget *exampleAlert;
     QTimer flashing;
     bool taskBarInitiallyOpen;
@@ -200,7 +200,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         case Notifications:
             // Fake notification area that doesn't have any the real currently showed
             // notifications.
-            notifs = new NotificationWidget("tutorial-notifications");
+            notifs = new NotificationAreaWidget("tutorial-notifications");
             notifs->useDefaultPlacement(ClientWindow::main().game().rule());
             root().addOnTop(notifs);
             notifs->showChild(exampleAlert);

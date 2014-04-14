@@ -23,7 +23,7 @@
 
 #include <de/FIFO>
 #include <de/App>
-#include <de/NotificationWidget>
+#include <de/NotificationAreaWidget>
 #include <de/SignalAction>
 #include <de/ui/ListData>
 #include <de/ui/ActionItem>
@@ -110,7 +110,7 @@ DENG_GUI_PIMPL(AlertDialog)
         alerts->organizer().audienceForWidgetUpdate() += this;
     }
 
-    NotificationWidget &notifs()
+    NotificationAreaWidget &notifs()
     {
         return ClientWindow::main().notifications();
     }

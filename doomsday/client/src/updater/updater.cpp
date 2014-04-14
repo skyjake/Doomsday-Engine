@@ -65,7 +65,7 @@
 #include <de/Date>
 #include <de/Log>
 #include <de/SignalAction>
-#include <de/NotificationWidget>
+#include <de/NotificationAreaWidget>
 #include <de/data/json.h>
 
 using namespace de;

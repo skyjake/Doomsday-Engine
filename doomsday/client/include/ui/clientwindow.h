@@ -23,7 +23,7 @@
 
 #include <de/PersistentCanvasWindow>
 #include <de/BaseWindow>
-#include <de/NotificationWidget>
+#include <de/NotificationAreaWidget>
 
 #include "ui/clientrootwidget.h"
 #include "resource/image.h"
@@ -77,7 +77,7 @@ public:
     TaskBarWidget &taskBar();
     de::GuiWidget &taskBarBlur();
     ConsoleWidget &console();
-    de::NotificationWidget &notifications();
+    de::NotificationAreaWidget &notifications();
     GameWidget &game();
     BusyWidget &busy();
     AlertDialog &alerts();

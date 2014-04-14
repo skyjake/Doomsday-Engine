@@ -58,7 +58,7 @@ publicHeaders(root, \
     include/de/LogWidget \
     include/de/MenuWidget \
     include/de/MessageDialog \
-    include/de/NotificationWidget \
+    include/de/NotificationAreaWidget \
     include/de/OculusRift \
     include/de/PanelWidget \
     include/de/PersistentState \
@@ -160,7 +160,7 @@ publicHeaders(widgets, \
     include/de/widgets/lineeditwidget.h \
     include/de/widgets/logwidget.h \
     include/de/widgets/menuwidget.h \
-    include/de/widgets/notificationwidget.h \
+    include/de/widgets/notificationareawidget.h \
     include/de/widgets/panelwidget.h \
     include/de/widgets/popupmenuwidget.h \
     include/de/widgets/popupwidget.h \
@@ -222,7 +222,7 @@ SOURCES += \
     src/widgets/lineeditwidget.cpp \
     src/widgets/logwidget.cpp \
     src/widgets/menuwidget.cpp \
-    src/widgets/notificationwidget.cpp \
+    src/widgets/notificationareawidget.cpp \
     src/widgets/panelwidget.cpp \
     src/widgets/popupmenuwidget.cpp \
     src/widgets/popupwidget.cpp \

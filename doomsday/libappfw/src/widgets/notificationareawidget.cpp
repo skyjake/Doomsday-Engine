@@ -1,4 +1,4 @@
-/** @file notificationwidget.cpp  Notification area.
+/** @file notificationareawidget.cpp  Notification area.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/NotificationWidget"
+#include "de/NotificationAreaWidget"
 #include "de/SequentialLayout"
 
 #include <de/Drawable>
@@ -30,7 +30,7 @@ namespace de {
 
 static TimeDelta const ANIM_SPAN = .5;
 
-DENG_GUI_PIMPL(NotificationWidget)
+DENG_GUI_PIMPL(NotificationAreaWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
 , DENG2_OBSERVES(Widget, ChildRemoval)
 , DENG2_OBSERVES(Widget, Deletion)
@@ -210,7 +210,7 @@ DENG_GUI_PIMPL(NotificationWidget)
     }
 };
 
-NotificationWidget::NotificationWidget(String const &name)
+NotificationAreaWidget::NotificationAreaWidget(String const &name)
     : GuiWidget(name)
     , d(new Instance(this))
 {
@@ -221,18 +221,18 @@ NotificationWidget::NotificationWidget(String const &name)
     hide();
 }
 
-void NotificationWidget::useDefaultPlacement(RuleRectangle const &area)
+void NotificationAreaWidget::useDefaultPlacement(RuleRectangle const &area)
 {
     rule().setInput(Rule::Top,   area.top() + style().rules().rule("gap") - shift())
           .setInput(Rule::Right, area.right() - style().rules().rule("gap"));
 }
 
-Rule const &NotificationWidget::shift()
+Rule const &NotificationAreaWidget::shift()
 {
     return *d->shift;
 }
 
-void NotificationWidget::showChild(GuiWidget *notif)
+void NotificationAreaWidget::showChild(GuiWidget *notif)
 {
     DENG2_ASSERT(notif != 0);
 
@@ -256,7 +256,7 @@ void NotificationWidget::showChild(GuiWidget *notif)
     d->show();
 }
 
-void NotificationWidget::hideChild(GuiWidget &notif)
+void NotificationAreaWidget::hideChild(GuiWidget &notif)
 {
     if(!isChildShown(notif))
     {
@@ -279,12 +279,12 @@ void NotificationWidget::hideChild(GuiWidget &notif)
     }
 }
 
-void NotificationWidget::dismiss()
+void NotificationAreaWidget::dismiss()
 {
     d->performPendingDismiss();
 }
 
-bool NotificationWidget::isChildShown(GuiWidget &notif) const
+bool NotificationAreaWidget::isChildShown(GuiWidget &notif) const
 {
     if(d->pendingDismiss.contains(&notif))
     {
@@ -293,14 +293,14 @@ bool NotificationWidget::isChildShown(GuiWidget &notif) const
     return notif.parentWidget() == this;
 }
 
-void NotificationWidget::viewResized()
+void NotificationAreaWidget::viewResized()
 {
     GuiWidget::viewResized();
 
     d->uMvpMatrix = root().projMatrix2D();
 }
 
-void NotificationWidget::drawContent()
+void NotificationAreaWidget::drawContent()
 {
     d->updateGeometry();
 
@@ -308,12 +308,12 @@ void NotificationWidget::drawContent()
     d->drawable.draw();
 }
 
-void NotificationWidget::glInit()
+void NotificationAreaWidget::glInit()
 {
     d->glInit();
 }
 
-void NotificationWidget::glDeinit()
+void NotificationAreaWidget::glDeinit()
 {
     d->glDeinit();
 }

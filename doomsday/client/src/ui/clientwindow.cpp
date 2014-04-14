@@ -35,7 +35,7 @@
 #include <de/GLFramebuffer>
 #include <de/Drawable>
 #include <de/CompositorWidget>
-#include <de/NotificationWidget>
+#include <de/NotificationAreaWidget>
 #include <de/ProgressWidget>
 #include <de/VRWindowTransform>
 #include <QCloseEvent>
@@ -78,7 +78,7 @@ DENG2_PIMPL(ClientWindow)
     GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
     LabelWidget *taskBarBlur; ///< Blur everything below the task bar.
-    NotificationWidget *notifications;
+    NotificationAreaWidget *notifications;
     AlertDialog *alerts;
     ColorAdjustmentDialog *colorAdjust;
     LabelWidget *background;
@@ -208,7 +208,7 @@ DENG2_PIMPL(ClientWindow)
         container().add(gameSelMenu);
 
         // Common notification area.
-        notifications = new NotificationWidget;
+        notifications = new NotificationAreaWidget;
         notifications->useDefaultPlacement(game->rule());
         container().add(notifications);
 
@@ -715,7 +715,7 @@ ConsoleWidget &ClientWindow::console()
     return d->taskBar->console();
 }
 
-NotificationWidget &ClientWindow::notifications()
+NotificationAreaWidget &ClientWindow::notifications()
 {
     return *d->notifications;
 }

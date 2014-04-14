@@ -1,4 +1,4 @@
-/** @file notificationwidget.h  Notifiction area.
+/** @file notificationareawidget.h  Notification area.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBAPPFW_NOTIFICATIONWIDGET_H
-#define LIBAPPFW_NOTIFICATIONWIDGET_H
+#ifndef LIBAPPFW_NOTIFICATIONAREAWIDGET_H
+#define LIBAPPFW_NOTIFICATIONAREAWIDGET_H
 
 #include "../GuiWidget"
 
@@ -28,19 +28,18 @@ namespace de {
  *
  * Children of the widget are expected to size themselves and allow unrestricted,
  * automatical positioning inside the area. Children can be added and removed
- * dynamically. The notification area is dismissed if there are no visible
- * notifications.
+ * dynamically. The notification area is dismissed if there are no visible notifications.
  *
- * The client window owns an instance of NotificationWidget. Other widgets and
- * subsystems are expected to give ownership of their notifications to the
- * window's NotificationWidget.
+ * The client window owns an instance of NotificationAreaWidget. Other widgets and
+ * subsystems are expected to give ownership of their notifications to the window's
+ * NotificationAreaWidget.
  */
-class LIBAPPFW_PUBLIC NotificationWidget : public GuiWidget
+class LIBAPPFW_PUBLIC NotificationAreaWidget : public GuiWidget
 {
     Q_OBJECT
 
 public:
-    NotificationWidget(String const &name = "");
+    NotificationAreaWidget(String const &name = "");
 
     /**
      * Places the notification widget in the top right corner of @a area.
@@ -52,7 +51,7 @@ public:
     Rule const &shift();
 
     /**
-     * Adds a notification to the notification area. The NotificationWidget
+     * Adds a notification to the notification area. The NotificationAreaWidget
      * takes ownership of @a notif (the latter is made a child).
      *
      * @param notif  Notification widget.
@@ -90,4 +89,4 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_NOTIFICATIONWIDGET_H
+#endif // LIBAPPFW_NOTIFICATIONAREAWIDGET_H
