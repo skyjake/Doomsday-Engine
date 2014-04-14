@@ -85,6 +85,8 @@ class BlurWidget;
  */
 class LIBAPPFW_PUBLIC GuiWidget : public QObject, public Widget
 {
+    Q_OBJECT
+
 public:
     /**
      * Properties of the widget's background's apperance.
@@ -92,7 +94,7 @@ public:
      * geometry of the widget.
      *
      * @todo Refactor: it should be possible to apply any combination of these
-     * in a single widget; use a dynamic array of effects.
+     * in a single widget; use a dynamic array of effects. Base it on ProceduralImage.
      */
     struct Background {
         enum Type {
@@ -203,8 +205,6 @@ public:
      */
     Rectanglef normalizedContentRect() const;
 
-    void guiDeleteLater();
-
     void setFont(DotPath const &id);
     void setTextColor(DotPath const &id);
     void set(Background const &bg);
@@ -219,7 +219,7 @@ public:
      * to its boundaries. The Widget::ContentClipping behavior flag is used for
      * storing this information.
      */
-    bool clipped() const;
+    bool isClipped() const;
 
     Background const &background() const;
 
@@ -333,6 +333,15 @@ public:
     bool geometryRequested() const;
 
     bool isInitialized() const;
+
+    GuiWidget *guiFind(String const &name);
+    GuiWidget const *guiFind(String const &name) const;
+
+public slots:
+    /**
+     * Puts the widget in garbage to be deleted at the next recycling.
+     */
+    void guiDeleteLater();
 
 public:
     /**

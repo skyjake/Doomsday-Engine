@@ -164,7 +164,7 @@ DENG2_PIMPL(GuiWidget)
         }
         if(!wasClipped) return false;
 
-        if(self.clipped())
+        if(self.isClipped())
         {
             int const CULL_SAFETY_WIDTH = 100; // avoid pop-in when scrolling
 
@@ -498,7 +498,7 @@ void GuiWidget::set(Background const &bg)
     requestGeometry();
 }
 
-bool GuiWidget::clipped() const
+bool GuiWidget::isClipped() const
 {
     return behavior().testFlag(ContentClipping);
 }
@@ -647,14 +647,14 @@ void GuiWidget::draw()
 
         d->drawBlurredBackground();
 
-        if(clipped())
+        if(isClipped())
         {
             GLState::push().setNormalizedScissor(normalizedRect());
         }
 
         drawContent();
 
-        if(clipped())
+        if(isClipped())
         {
             GLState::pop();
         }
@@ -811,6 +811,16 @@ bool GuiWidget::geometryRequested() const
 bool GuiWidget::isInitialized() const
 {
     return d->inited;
+}
+
+GuiWidget *GuiWidget::guiFind(String const &name)
+{
+    return find(name)->maybeAs<GuiWidget>();
+}
+
+GuiWidget const *GuiWidget::guiFind(String const &name) const
+{
+    return find(name)->maybeAs<GuiWidget>();
 }
 
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
