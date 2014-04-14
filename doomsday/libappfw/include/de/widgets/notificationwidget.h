@@ -42,6 +42,13 @@ class LIBAPPFW_PUBLIC NotificationWidget : public GuiWidget
 public:
     NotificationWidget(String const &name = "");
 
+    /**
+     * Places the notification widget in the top right corner of @a area.
+     *
+     * @param area  Reference area.
+     */
+    void useDefaultPlacement(RuleRectangle const &area);
+
     Rule const &shift();
 
     /**

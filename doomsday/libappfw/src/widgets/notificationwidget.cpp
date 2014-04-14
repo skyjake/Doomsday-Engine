@@ -30,9 +30,10 @@ namespace de {
 
 static TimeDelta const ANIM_SPAN = .5;
 
-DENG_GUI_PIMPL(NotificationWidget),
-DENG2_OBSERVES(Widget, ChildAddition),
-DENG2_OBSERVES(Widget, ChildRemoval)
+DENG_GUI_PIMPL(NotificationWidget)
+, DENG2_OBSERVES(Widget, ChildAddition)
+, DENG2_OBSERVES(Widget, ChildRemoval)
+, DENG2_OBSERVES(Widget, Deletion)
 {
     ScalarRule *shift;
 
@@ -65,7 +66,33 @@ DENG2_OBSERVES(Widget, ChildRemoval)
 
     ~Instance()
     {
+        // Give current notifications back to their old parents.
+        DENG2_FOR_EACH_CONST(OldParents, i, oldParents)
+        {
+            dismissChild(*i.key());
+            i.value()->audienceForDeletion() -= this;
+        }
+
         releaseRef(shift);
+    }
+
+    void widgetBeingDeleted(Widget &widget)
+    {
+        // Is this one of the old parents?
+        QMutableMapIterator<GuiWidget *, Widget *> iter(oldParents);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value() == &widget)
+            {
+                GuiWidget *notif = iter.key();
+                iter.remove();
+
+                // The old parent is gone, so its notifications should also be deleted.
+                dismissChild(*notif);
+                notif->guiDeleteLater();
+            }
+        }
     }
 
     void updateStyle()
@@ -145,8 +172,10 @@ DENG2_OBSERVES(Widget, ChildRemoval)
 
         if(oldParents.contains(&notif))
         {
-            oldParents[&notif]->add(&notif);
-            oldParents.remove(&notif);
+            Widget *oldParent = oldParents[&notif];
+            oldParent->add(&notif);
+            oldParent->audienceForDeletion() -= this;
+            oldParents.remove(&notif);            
         }
     }
 
@@ -192,6 +221,12 @@ NotificationWidget::NotificationWidget(String const &name)
     hide();
 }
 
+void NotificationWidget::useDefaultPlacement(RuleRectangle const &area)
+{
+    rule().setInput(Rule::Top,   area.top() + style().rules().rule("gap") - shift())
+          .setInput(Rule::Right, area.right() - style().rules().rule("gap"));
+}
+
 Rule const &NotificationWidget::shift()
 {
     return *d->shift;
@@ -213,7 +248,8 @@ void NotificationWidget::showChild(GuiWidget *notif)
     if(notif->parentWidget())
     {
         d->oldParents.insert(notif, notif->parentWidget());
-        /// @todo Should observe if the old parent is destroyed.
+        notif->parentWidget()->audienceForDeletion() += d;
+        notif->parentWidget()->remove(*notif);
     }
     add(notif);
     notif->show();
