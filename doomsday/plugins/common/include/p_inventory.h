@@ -30,6 +30,7 @@
 #define IIF_READY_ALWAYS        0x8 // Item is always "ready" (i.e., usable).
 
 typedef struct {
+    int gameModeBits; // Game modes the item is available in.
     byte flags;
     char niceName[32];
     char action[32];

@@ -1176,11 +1176,11 @@ void P_PlayerThinkSounds(player_t* player)
 #endif
 }
 
-void P_PlayerThinkItems(player_t* player)
+void P_PlayerThinkItems(player_t *player)
 {
 #if __JHERETIC__ || __JHEXEN__
     inventoryitemtype_t i, type = IIT_NONE; // What to use?
-    int                 pnum = player - players;
+    int pnum = player - players;
 
     if(player->brain.useInvItem)
     {
@@ -1190,7 +1190,7 @@ void P_PlayerThinkItems(player_t* player)
     // Inventory item hot keys.
     for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        const def_invitem_t* def = P_GetInvItemDef(i);
+        def_invitem_t const *def = P_GetInvItemDef(i);
 
         if(def->hotKeyCtrlIdent != -1 &&
            P_GetImpulseControlState(pnum, def->hotKeyCtrlIdent))

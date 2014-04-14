@@ -46,53 +46,53 @@ int didUseItem = false;
 
 static def_invitem_t const itemDefs[NUM_INVENTORYITEM_TYPES-1] = {
 #if __JHERETIC__
-    {IIF_USE_PANIC, "TXT_ARTIINVULNERABILITY", "A_Invulnerability", "artiuse", "ARTIINVU", CTL_INVULNERABILITY},
-    {IIF_USE_PANIC, "TXT_ARTIINVISIBILITY", "A_Invisibility", "artiuse", "ARTIINVS", CTL_INVISIBILITY},
-    {IIF_USE_PANIC, "TXT_ARTIHEALTH", "A_Health", "artiuse", "ARTIPTN2", CTL_HEALTH},
-    {IIF_USE_PANIC, "TXT_ARTISUPERHEALTH", "A_SuperHealth", "artiuse", "ARTISPHL", CTL_SUPER_HEALTH},
-    {IIF_USE_PANIC, "TXT_ARTITOMEOFPOWER", "A_TombOfPower", "artiuse", "ARTIPWBK", CTL_TOME_OF_POWER},
-    {IIF_USE_PANIC, "TXT_ARTITORCH", "A_Torch", "artiuse", "ARTITRCH", CTL_TORCH},
-    {IIF_USE_PANIC, "TXT_ARTIFIREBOMB", "A_FireBomb", "artiuse", "ARTIFBMB", CTL_FIREBOMB},
-    {IIF_USE_PANIC, "TXT_ARTIEGG", "A_Egg", "artiuse", "ARTIEGGC", CTL_EGG},
-    {IIF_USE_PANIC, "TXT_ARTIFLY", "A_Wings", "artiuse", "ARTISOAR", CTL_FLY},
-    {IIF_USE_PANIC, "TXT_ARTITELEPORT", "A_Teleport", "artiuse", "ARTIATLP", CTL_TELEPORT},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIINVULNERABILITY", "A_Invulnerability", "artiuse", "ARTIINVU", CTL_INVULNERABILITY},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIINVISIBILITY", "A_Invisibility", "artiuse", "ARTIINVS", CTL_INVISIBILITY},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIHEALTH", "A_Health", "artiuse", "ARTIPTN2", CTL_HEALTH},
+    {GM_NOT_SHAREWARE,  IIF_USE_PANIC, "TXT_ARTISUPERHEALTH", "A_SuperHealth", "artiuse", "ARTISPHL", CTL_SUPER_HEALTH},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTITOMEOFPOWER", "A_TombOfPower", "artiuse", "ARTIPWBK", CTL_TOME_OF_POWER},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTITORCH", "A_Torch", "artiuse", "ARTITRCH", CTL_TORCH},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIFIREBOMB", "A_FireBomb", "artiuse", "ARTIFBMB", CTL_FIREBOMB},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIEGG", "A_Egg", "artiuse", "ARTIEGGC", CTL_EGG},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIFLY", "A_Wings", "artiuse", "ARTISOAR", CTL_FLY},
+    {GM_NOT_SHAREWARE,  IIF_USE_PANIC, "TXT_ARTITELEPORT", "A_Teleport", "artiuse", "ARTIATLP", CTL_TELEPORT},
 #elif __JHEXEN__
-    {IIF_USE_PANIC, "TXT_ARTIINVULNERABILITY", "A_Invulnerability", "ARTIFACT_USE", "ARTIINVU", CTL_INVULNERABILITY},
-    {IIF_USE_PANIC, "TXT_ARTIHEALTH", "A_Health", "ARTIFACT_USE", "ARTIPTN2", CTL_HEALTH},
-    {IIF_USE_PANIC, "TXT_ARTISUPERHEALTH", "A_SuperHealth", "ARTIFACT_USE", "ARTISPHL", CTL_MYSTIC_URN},
-    {IIF_USE_PANIC, "TXT_ARTIHEALINGRADIUS", "A_HealRadius", "ARTIFACT_USE", "ARTIHRAD", -1},
-    {IIF_USE_PANIC, "TXT_ARTISUMMON", "A_SummonTarget", "ARTIFACT_USE", "ARTISUMN", CTL_DARK_SERVANT},
-    {IIF_USE_PANIC, "TXT_ARTITORCH", "A_Torch", "ARTIFACT_USE", "ARTITRCH", CTL_TORCH},
-    {IIF_USE_PANIC, "TXT_ARTIEGG", "A_Egg", "ARTIFACT_USE", "ARTIPORK", CTL_EGG},
-    {IIF_USE_PANIC, "TXT_ARTIFLY", "A_Wings", "ARTIFACT_USE", "ARTISOAR", CTL_FLY},
-    {IIF_USE_PANIC, "TXT_ARTIBLASTRADIUS", "A_BlastRadius", "ARTIFACT_USE", "ARTIBLST", CTL_BLAST_RADIUS},
-    {IIF_USE_PANIC, "TXT_ARTIPOISONBAG", "A_PoisonBag", "ARTIFACT_USE", "ARTIPSBG", CTL_POISONBAG},
-    {IIF_USE_PANIC, "TXT_ARTITELEPORTOTHER", "A_TeleportOther", "ARTIFACT_USE", "ARTITELO", CTL_TELEPORT_OTHER},
-    {IIF_USE_PANIC, "TXT_ARTISPEED", "A_Speed", "ARTIFACT_USE", "ARTISPED", CTL_SPEED_BOOTS},
-    {IIF_USE_PANIC, "TXT_ARTIBOOSTMANA", "A_BoostMana", "ARTIFACT_USE", "ARTIBMAN", CTL_KRATER},
-    {IIF_USE_PANIC, "TXT_ARTIBOOSTARMOR", "A_BoostArmor", "ARTIFACT_USE", "ARTIBRAC", -1},
-    {IIF_USE_PANIC, "TXT_ARTITELEPORT", "A_Teleport", "ARTIFACT_USE", "ARTIATLP", CTL_TELEPORT},
-    {0, "TXT_ARTIPUZZSKULL", "A_PuzzSkull", "PUZZLE_SUCCESS", "ARTISKLL", -1},
-    {0, "TXT_ARTIPUZZGEMBIG", "A_PuzzGemBig", "PUZZLE_SUCCESS", "ARTIBGEM", -1},
-    {0, "TXT_ARTIPUZZGEMRED", "A_PuzzGemRed", "PUZZLE_SUCCESS", "ARTIGEMR", -1},
-    {0, "TXT_ARTIPUZZGEMGREEN1", "A_PuzzGemGreen1", "PUZZLE_SUCCESS", "ARTIGEMG", -1},
-    {0, "TXT_ARTIPUZZGEMGREEN2", "A_PuzzGemGreen2", "PUZZLE_SUCCESS", "ARTIGMG2", -1},
-    {0, "TXT_ARTIPUZZGEMBLUE1", "A_PuzzGemBlue1", "PUZZLE_SUCCESS", "ARTIGEMB", -1},
-    {0, "TXT_ARTIPUZZGEMBLUE2", "A_PuzzGemBlue2", "PUZZLE_SUCCESS", "ARTIGMB2", -1},
-    {0, "TXT_ARTIPUZZBOOK1", "A_PuzzBook1", "PUZZLE_SUCCESS", "ARTIBOK1", -1},
-    {0, "TXT_ARTIPUZZBOOK2", "A_PuzzBook2", "PUZZLE_SUCCESS", "ARTIBOK2", -1},
-    {0, "TXT_ARTIPUZZSKULL2", "A_PuzzSkull2", "PUZZLE_SUCCESS", "ARTISKL2", -1},
-    {0, "TXT_ARTIPUZZFWEAPON", "A_PuzzFWeapon", "PUZZLE_SUCCESS", "ARTIFWEP", -1},
-    {0, "TXT_ARTIPUZZCWEAPON", "A_PuzzCWeapon", "PUZZLE_SUCCESS", "ARTICWEP", -1},
-    {0, "TXT_ARTIPUZZMWEAPON", "A_PuzzMWeapon", "PUZZLE_SUCCESS", "ARTIMWEP", -1},
-    {0, "TXT_ARTIPUZZGEAR1", "A_PuzzGear1", "PUZZLE_SUCCESS", "ARTIGEAR", -1},
-    {0, "TXT_ARTIPUZZGEAR2", "A_PuzzGear2", "PUZZLE_SUCCESS", "ARTIGER2", -1},
-    {0, "TXT_ARTIPUZZGEAR3", "A_PuzzGear3", "PUZZLE_SUCCESS", "ARTIGER3", -1},
-    {0, "TXT_ARTIPUZZGEAR4", "A_PuzzGear4", "PUZZLE_SUCCESS", "ARTIGER4", -1}
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIINVULNERABILITY", "A_Invulnerability", "ARTIFACT_USE", "ARTIINVU", CTL_INVULNERABILITY},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIHEALTH", "A_Health", "ARTIFACT_USE", "ARTIPTN2", CTL_HEALTH},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTISUPERHEALTH", "A_SuperHealth", "ARTIFACT_USE", "ARTISPHL", CTL_MYSTIC_URN},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIHEALINGRADIUS", "A_HealRadius", "ARTIFACT_USE", "ARTIHRAD", -1},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTISUMMON", "A_SummonTarget", "ARTIFACT_USE", "ARTISUMN", CTL_DARK_SERVANT},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTITORCH", "A_Torch", "ARTIFACT_USE", "ARTITRCH", CTL_TORCH},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIEGG", "A_Egg", "ARTIFACT_USE", "ARTIPORK", CTL_EGG},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIFLY", "A_Wings", "ARTIFACT_USE", "ARTISOAR", CTL_FLY},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIBLASTRADIUS", "A_BlastRadius", "ARTIFACT_USE", "ARTIBLST", CTL_BLAST_RADIUS},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIPOISONBAG", "A_PoisonBag", "ARTIFACT_USE", "ARTIPSBG", CTL_POISONBAG},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTITELEPORTOTHER", "A_TeleportOther", "ARTIFACT_USE", "ARTITELO", CTL_TELEPORT_OTHER},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTISPEED", "A_Speed", "ARTIFACT_USE", "ARTISPED", CTL_SPEED_BOOTS},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIBOOSTMANA", "A_BoostMana", "ARTIFACT_USE", "ARTIBMAN", CTL_KRATER},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTIBOOSTARMOR", "A_BoostArmor", "ARTIFACT_USE", "ARTIBRAC", -1},
+    {GM_ANY,            IIF_USE_PANIC, "TXT_ARTITELEPORT", "A_Teleport", "ARTIFACT_USE", "ARTIATLP", CTL_TELEPORT},
+    {GM_ANY,            0, "TXT_ARTIPUZZSKULL", "A_PuzzSkull", "PUZZLE_SUCCESS", "ARTISKLL", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEMBIG", "A_PuzzGemBig", "PUZZLE_SUCCESS", "ARTIBGEM", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEMRED", "A_PuzzGemRed", "PUZZLE_SUCCESS", "ARTIGEMR", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEMGREEN1", "A_PuzzGemGreen1", "PUZZLE_SUCCESS", "ARTIGEMG", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEMGREEN2", "A_PuzzGemGreen2", "PUZZLE_SUCCESS", "ARTIGMG2", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEMBLUE1", "A_PuzzGemBlue1", "PUZZLE_SUCCESS", "ARTIGEMB", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEMBLUE2", "A_PuzzGemBlue2", "PUZZLE_SUCCESS", "ARTIGMB2", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZBOOK1", "A_PuzzBook1", "PUZZLE_SUCCESS", "ARTIBOK1", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZBOOK2", "A_PuzzBook2", "PUZZLE_SUCCESS", "ARTIBOK2", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZSKULL2", "A_PuzzSkull2", "PUZZLE_SUCCESS", "ARTISKL2", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZFWEAPON", "A_PuzzFWeapon", "PUZZLE_SUCCESS", "ARTIFWEP", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZCWEAPON", "A_PuzzCWeapon", "PUZZLE_SUCCESS", "ARTICWEP", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZMWEAPON", "A_PuzzMWeapon", "PUZZLE_SUCCESS", "ARTIMWEP", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEAR1", "A_PuzzGear1", "PUZZLE_SUCCESS", "ARTIGEAR", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEAR2", "A_PuzzGear2", "PUZZLE_SUCCESS", "ARTIGER2", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEAR3", "A_PuzzGear3", "PUZZLE_SUCCESS", "ARTIGER3", -1},
+    {GM_ANY,            0, "TXT_ARTIPUZZGEAR4", "A_PuzzGear4", "PUZZLE_SUCCESS", "ARTIGER4", -1}
 #elif __JDOOM64__
-    {IIF_READY_ALWAYS, "DEMONKEY1", "", "", "", -1},
-    {IIF_READY_ALWAYS, "DEMONKEY2", "", "", "", -1},
-    {IIF_READY_ALWAYS, "DEMONKEY3", "", "", "", -1}
+    {GM_ANY,            IIF_READY_ALWAYS, "DEMONKEY1", "", "", "", -1},
+    {GM_ANY,            IIF_READY_ALWAYS, "DEMONKEY2", "", "", "", -1},
+    {GM_ANY,            IIF_READY_ALWAYS, "DEMONKEY3", "", "", "", -1}
 #endif
 };
 
@@ -179,6 +179,11 @@ static dd_bool useItem(playerinventory_t *inv, inventoryitemtype_t type, dd_bool
 static dd_bool giveItem(playerinventory_t *inv, inventoryitemtype_t type)
 {
     uint count = countItems(inv, type);
+
+    // Do not give items unavailable for the current game mode.
+    def_invitem_t const *def = itemDefForType(type);
+    if(!(def->gameModeBits & gameModeBits))
+        return false;
 
 #if __JHEXEN__
     // Can't carry more than 1 puzzle item in coop netplay.
@@ -293,10 +298,14 @@ void P_InitInventory()
         def_invitem_t const *def = P_GetInvItemDef(type);
         invitem_t *data          = &invItems[i];
 
+        // Skip items unavailable for the current game mode.
+        if(!(def->gameModeBits & gameModeBits))
+            continue;
+
         data->type     = type;
-        data->niceName = textenum_t(Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL));
+        data->niceName = textenum_t(Def_Get(DD_DEF_TEXT, (char *) def->niceName, NULL));
         data->action   = getActionPtr(def->action);
-        data->useSnd   = sfxenum_t(Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL));
+        data->useSnd   = sfxenum_t(Def_Get(DD_DEF_SOUND, (char *) def->useSnd, NULL));
         data->patchId  = R_DeclarePatch(def->patch);
     }
 

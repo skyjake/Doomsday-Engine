@@ -798,7 +798,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     }
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     if(PLAYER_ACTION(pnum, A_PANIC) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_PANIC) = false;    // Use one of each artifact

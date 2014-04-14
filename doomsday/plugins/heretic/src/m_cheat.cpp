@@ -109,28 +109,25 @@ CHEAT_FUNC(InvItem3)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
+    bool didGive = false;
     inventoryitemtype_t type  = inventoryitemtype_t(args[0] - 'a' + 1);
     int count                 = args[1] - '0';
     if(type > IIT_NONE && type < NUM_INVENTORYITEM_TYPES && count > 0 && count < 10)
     {
-        if(gameMode == heretic_shareware && (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
-        {
-            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATITEMSFAIL);
-            return false;
-        }
-
         for(int i = 0; i < count; ++i)
         {
-            P_InventoryGive(player, type, false);
+            if(P_InventoryGive(player, type, false))
+                didGive = true;
         }
-        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
-    }
-    else
-    {
-        // Bad input
-        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATITEMSFAIL);
     }
 
+    if(!didGive)
+    {
+        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATITEMSFAIL);
+        return false;
+    }
+
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -501,13 +498,9 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific item type.
-                    if(!(gameMode == heretic_shareware &&
-                         (idx == IIT_SUPERHEALTH || idx == IIT_TELEPORT)))
+                    for(int j = 0; j < MAXINVITEMCOUNT; ++j)
                     {
-                        for(int j = 0; j < MAXINVITEMCOUNT; ++j)
-                        {
-                            P_InventoryGive(player, inventoryitemtype_t(idx), false);
-                        }
+                        P_InventoryGive(player, inventoryitemtype_t(idx), false);
                     }
                     break;
                 }
@@ -516,10 +509,6 @@ D_CMD(CheatGive)
             // Give all inventory items.
             for(int type = IIT_FIRST; type < NUM_INVENTORYITEM_TYPES; ++type)
             {
-                if(gameMode == heretic_shareware &&
-                   (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
-                    continue;
-
                 for(int i = 0; i < MAXINVITEMCOUNT; ++i)
                 {
                     P_InventoryGive(player, inventoryitemtype_t(type), false);
