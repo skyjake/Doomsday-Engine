@@ -88,27 +88,12 @@ DENG2_PIMPL(LocalServerDialog)
         games->setCurrentIndex(games->findData(st.value("LocalServer/gameMode", "doom1-share")));
         form->addRow(tr("&Game mode:"), games);
 
-        QPushButton *opt = new QPushButton(tr("Game &Options..."));
+        /*QPushButton *opt = new QPushButton(tr("Game &Options..."));
         opt->setDisabled(true);
-        form->addRow(0, opt);
+        form->addRow(0, opt);*/
 
-        form->addRow(0, announce = new QCheckBox(tr("&Public server: visible to all")));
-        announce->setChecked(st.value("LocalServer/announce", false).toBool());
-
-        QHBoxLayout *hb = new QHBoxLayout;
-        password = new QLineEdit;
-        password->setMinimumWidth(90);
-        password->setMaximumWidth(90);
-        password->setText(st.value("LocalServer/password", "").toString());
-
-        passwordMsg = new QLabel;
-        QPalette pal = passwordMsg->palette();
-        pal.setColor(passwordMsg->foregroundRole(), Qt::red);
-        passwordMsg->setPalette(pal);
-        hb->addWidget(password, 0);
-        hb->addWidget(passwordMsg, 1);
-        passwordMsg->hide();
-        form->addRow(tr("Shell password:"), hb);
+        QHBoxLayout *hb;
+        QPalette pal;
 
         hb = new QHBoxLayout;
         port = new QLineEdit;
@@ -138,6 +123,24 @@ DENG2_PIMPL(LocalServerDialog)
         portMsg->hide();
         form->addRow(tr("TCP port:"), hb);
 
+        form->addRow(0, announce = new QCheckBox(tr("&Public server: visible to all")));
+        announce->setChecked(st.value("LocalServer/announce", false).toBool());
+
+        hb = new QHBoxLayout;
+        password = new QLineEdit;
+        password->setMinimumWidth(90);
+        password->setMaximumWidth(90);
+        password->setText(st.value("LocalServer/password", "").toString());
+
+        passwordMsg = new QLabel;
+        pal = passwordMsg->palette();
+        pal.setColor(passwordMsg->foregroundRole(), Qt::red);
+        passwordMsg->setPalette(pal);
+        hb->addWidget(password, 0);
+        hb->addWidget(passwordMsg, 1);
+        passwordMsg->hide();
+        form->addRow(tr("Shell password:"), hb);
+
         QWidget *advancedTab = new QWidget;
         form = new QFormLayout;
         advancedTab->setLayout(form);
@@ -166,7 +169,7 @@ DENG2_PIMPL(LocalServerDialog)
         QPushButton* no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
         QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
-        QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
+        //QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
         yes->setDefault(true);
     }
 
