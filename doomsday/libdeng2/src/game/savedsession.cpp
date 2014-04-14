@@ -34,6 +34,23 @@ namespace game {
 static String const BLOCK_GROUP    = "group";
 static String const BLOCK_GAMERULE = "gamerule";
 
+static Value *makeValueFromInfoValue(Info::Element::Value const &v)
+{
+    String const text = v;
+    if(!text.compareWithoutCase("True"))
+    {
+        return new NumberValue(true, NumberValue::Boolean);
+    }
+    else if(!text.compareWithoutCase("False"))
+    {
+        return new NumberValue(false, NumberValue::Boolean);
+    }
+    else
+    {
+        return new TextValue(text);
+    }
+}
+
 void SavedSession::Metadata::parse(String const &source)
 {
     clear();
@@ -50,7 +67,8 @@ void SavedSession::Metadata::parse(String const &source)
         {
             if(Info::KeyElement const *key = elem->maybeAs<Info::KeyElement>())
             {
-                set(key->name(), key->value());
+                QScopedPointer<Value> v(makeValueFromInfoValue(key->value()));
+                add(key->name()) = v.take();
                 continue;
             }
             if(Info::ListElement const *list = elem->maybeAs<Info::ListElement>())
@@ -58,10 +76,9 @@ void SavedSession::Metadata::parse(String const &source)
                 QScopedPointer<ArrayValue> arr(new ArrayValue);
                 foreach(Info::Element::Value const &v, list->values())
                 {
-                    bool value = !String(v).compareWithoutCase("True");
-                    *arr << new NumberValue(value, NumberValue::Boolean);
+                    *arr << makeValueFromInfoValue(v);
                 }
-                set(list->name(), arr.take());
+                addArray(list->name(), arr.take());
                 continue;
             }
             if(Info::BlockElement const *block = elem->maybeAs<Info::BlockElement>())
@@ -77,7 +94,8 @@ void SavedSession::Metadata::parse(String const &source)
                         Info::BlockElement const &ruleBlock = grpElem->as<Info::BlockElement>();
                         if(ruleBlock.blockType() == BLOCK_GAMERULE)
                         {
-                            rules.set(ruleBlock.name(), ruleBlock.keyValue("value").text);
+                            QScopedPointer<Value> v(makeValueFromInfoValue(ruleBlock.keyValue("value")));
+                            rules.add(ruleBlock.name()) = v.take();
                         }
                     }
                 }
