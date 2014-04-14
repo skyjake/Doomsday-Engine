@@ -52,7 +52,6 @@ extern "C" {
 #endif
 
 // at game start
-void            P_InitPicAnims(void);
 void            P_InitLava(void);
 
 // at map load

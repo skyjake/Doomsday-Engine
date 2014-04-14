@@ -56,11 +56,6 @@ dd_bool P_ActivateLine(Line* ld, mobj_t *mo, int side, int activationType);
 void P_PlayerInSpecialSector(player_t *plr);
 void P_PlayerOnSpecialFloor(player_t *plr);
 
-/**
- * Parse an ANIMDEFS definition for flat/texture animations.
- */
-void P_InitPicAnims(void);
-
 void P_InitLightning(void);
 void P_ForceLightning(void);
 void P_AnimateLightning(void);

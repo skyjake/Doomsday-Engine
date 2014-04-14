@@ -30,7 +30,6 @@
 
 #include "dmu_lib.h"
 #include "g_common.h"
-#include "animdefsparser.h"
 #include "p_inventory.h"
 #include "player.h"
 #include "p_map.h"
@@ -66,11 +65,6 @@ static dd_bool mapHasLightning;
 static int nextLightningFlash;
 static int lightningFlash;
 static float *lightningLightLevels;
-
-void P_InitPicAnims(void)
-{
-    AnimDefsParser(AutoStr_FromText("Lumps:ANIMDEFS"));
-}
 
 void P_InitLava(void)
 {

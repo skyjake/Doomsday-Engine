@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include "animdefs.h"
 #include "hu_chat.h"
 #include "hu_log.h"
 #include "hu_menu.h"

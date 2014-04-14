@@ -70,7 +70,7 @@
 #define LOG_CRITICAL(str)               LOG_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Native code developer audience (general domain)
-#define LOGDEV_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::Dev | level, str)
+#define LOGDEV_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::Dev | (level), str)
 #define LOGDEV_XVERBOSE(str)            LOGDEV_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_TRACE(str)                  LOGDEV_XVERBOSE(str) // backwards comp
 #define LOGDEV_VERBOSE(str)             LOGDEV_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -81,16 +81,16 @@
 #define LOGDEV_ERROR(str)               LOGDEV_AT_LEVEL(de::LogEntry::Error,    str)
 
 // Custom combination of audiences
-#define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::XVerbose, str)
-#define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Verbose,  str)
-#define LOG_MSG_TO(audflags, str)       LOG_AT_LEVEL(audflags | de::LogEntry::Message,  str)
-#define LOG_NOTE_TO(audflags, str)      LOG_AT_LEVEL(audflags | de::LogEntry::Note,     str)
-#define LOG_WARNING_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Warning,  str)
-#define LOG_ERROR_TO(audflags, str)     LOG_AT_LEVEL(audflags | de::LogEntry::Error,    str)
-#define LOG_CRITICAL_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::Critical, str)
+#define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL((audflags) | de::LogEntry::XVerbose, str)
+#define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL((audflags) | de::LogEntry::Verbose,  str)
+#define LOG_MSG_TO(audflags, str)       LOG_AT_LEVEL((audflags) | de::LogEntry::Message,  str)
+#define LOG_NOTE_TO(audflags, str)      LOG_AT_LEVEL((audflags) | de::LogEntry::Note,     str)
+#define LOG_WARNING_TO(audflags, str)   LOG_AT_LEVEL((audflags) | de::LogEntry::Warning,  str)
+#define LOG_ERROR_TO(audflags, str)     LOG_AT_LEVEL((audflags) | de::LogEntry::Error,    str)
+#define LOG_CRITICAL_TO(audflags, str)  LOG_AT_LEVEL((audflags) | de::LogEntry::Critical, str)
 
 // Resource domain
-#define LOG_RES_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Resource | level, str)
+#define LOG_RES_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Resource | (level), str)
 #define LOG_RES_XVERBOSE(str)           LOG_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_RES_VERBOSE(str)            LOG_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_RES_MSG(str)                LOG_RES_AT_LEVEL(de::LogEntry::Message,  str)
@@ -98,7 +98,7 @@
 #define LOG_RES_WARNING(str)            LOG_RES_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_RES_ERROR(str)              LOG_RES_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_RES_CRITICAL(str)           LOG_RES_AT_LEVEL(de::LogEntry::Critical, str)
-#define LOGDEV_RES_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Resource | level, str)
+#define LOGDEV_RES_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Resource | (level), str)
 #define LOGDEV_RES_XVERBOSE(str)        LOGDEV_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOGDEV_RES_VERBOSE(str)         LOGDEV_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOGDEV_RES_MSG(str)             LOGDEV_RES_AT_LEVEL(de::LogEntry::Message,  str)
@@ -108,7 +108,7 @@
 #define LOGDEV_RES_CRITICAL(str)        LOGDEV_RES_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Map domain
-#define LOG_MAP_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Map | level, str)
+#define LOG_MAP_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Map | (level), str)
 #define LOG_MAP_XVERBOSE(str)           LOG_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_MAP_VERBOSE(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_MAP_MSG(str)                LOG_MAP_AT_LEVEL(de::LogEntry::Message,  str)
@@ -116,7 +116,7 @@
 #define LOG_MAP_WARNING(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_MAP_ERROR(str)              LOG_MAP_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_MAP_CRITICAL(str)           LOG_MAP_AT_LEVEL(de::LogEntry::Critical, str)
-#define LOGDEV_MAP_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Map | level, str)
+#define LOGDEV_MAP_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Map | (level), str)
 #define LOGDEV_MAP_XVERBOSE(str)        LOGDEV_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOGDEV_MAP_VERBOSE(str)         LOGDEV_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOGDEV_MAP_MSG(str)             LOGDEV_MAP_AT_LEVEL(de::LogEntry::Message,  str)
@@ -126,7 +126,7 @@
 #define LOGDEV_MAP_CRITICAL(str)        LOGDEV_MAP_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Script domain
-#define LOG_SCR_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Script | level, str)
+#define LOG_SCR_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Script | (level), str)
 #define LOG_SCR_XVERBOSE(str)           LOG_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_SCR_VERBOSE(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_SCR_MSG(str)                LOG_SCR_AT_LEVEL(de::LogEntry::Message,  str)
@@ -134,7 +134,7 @@
 #define LOG_SCR_WARNING(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_SCR_ERROR(str)              LOG_SCR_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_SCR_CRITICAL(str)           LOG_SCR_AT_LEVEL(de::LogEntry::Critical, str)
-#define LOGDEV_SCR_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Script | level, str)
+#define LOGDEV_SCR_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Script | (level), str)
 #define LOGDEV_SCR_XVERBOSE(str)        LOGDEV_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOGDEV_SCR_VERBOSE(str)         LOGDEV_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOGDEV_SCR_MSG(str)             LOGDEV_SCR_AT_LEVEL(de::LogEntry::Message,  str)
@@ -144,7 +144,7 @@
 #define LOGDEV_SCR_CRITICAL(str)        LOGDEV_SCR_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Audio domain
-#define LOG_AUDIO_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Audio | level, str)
+#define LOG_AUDIO_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Audio | (level), str)
 #define LOG_AUDIO_XVERBOSE(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_AUDIO_VERBOSE(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_AUDIO_MSG(str)              LOG_AUDIO_AT_LEVEL(de::LogEntry::Message,  str)
@@ -152,7 +152,7 @@
 #define LOG_AUDIO_WARNING(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_AUDIO_ERROR(str)            LOG_AUDIO_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_AUDIO_CRITICAL(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
-#define LOGDEV_AUDIO_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Audio | level, str)
+#define LOGDEV_AUDIO_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Audio | (level), str)
 #define LOGDEV_AUDIO_XVERBOSE(str)      LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOGDEV_AUDIO_VERBOSE(str)       LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOGDEV_AUDIO_MSG(str)           LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Message,  str)
@@ -162,7 +162,7 @@
 #define LOGDEV_AUDIO_CRITICAL(str)      LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Graphics domain
-#define LOG_GL_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::GL | level, str)
+#define LOG_GL_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::GL | (level), str)
 #define LOG_GL_XVERBOSE(str)            LOG_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_GL_VERBOSE(str)             LOG_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_GL_MSG(str)                 LOG_GL_AT_LEVEL(de::LogEntry::Message,  str)
@@ -170,7 +170,7 @@
 #define LOG_GL_WARNING(str)             LOG_GL_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_GL_ERROR(str)               LOG_GL_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_GL_CRITICAL(str)            LOG_GL_AT_LEVEL(de::LogEntry::Critical, str)
-#define LOGDEV_GL_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::GL | level, str)
+#define LOGDEV_GL_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::GL | (level), str)
 #define LOGDEV_GL_XVERBOSE(str)         LOGDEV_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOGDEV_GL_VERBOSE(str)          LOGDEV_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOGDEV_GL_MSG(str)              LOGDEV_GL_AT_LEVEL(de::LogEntry::Message,  str)
@@ -180,7 +180,7 @@
 #define LOGDEV_GL_CRITICAL(str)         LOGDEV_GL_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Input domain
-#define LOG_INPUT_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Input | level, str)
+#define LOG_INPUT_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Input | (level), str)
 #define LOG_INPUT_XVERBOSE(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_INPUT_VERBOSE(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_INPUT_MSG(str)              LOG_INPUT_AT_LEVEL(de::LogEntry::Message,  str)
@@ -188,7 +188,7 @@
 #define LOG_INPUT_WARNING(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_INPUT_ERROR(str)            LOG_INPUT_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_INPUT_CRITICAL(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
-#define LOGDEV_INPUT_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Input | level, str)
+#define LOGDEV_INPUT_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Input | (level), str)
 #define LOGDEV_INPUT_XVERBOSE(str)      LOGDEV_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOGDEV_INPUT_VERBOSE(str)       LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOGDEV_INPUT_MSG(str)           LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Message,  str)
@@ -198,7 +198,7 @@
 #define LOGDEV_INPUT_CRITICAL(str)      LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Network domain
-#define LOG_NET_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Network | level, str)
+#define LOG_NET_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Network | (level), str)
 #define LOG_NET_XVERBOSE(str)           LOG_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_NET_VERBOSE(str)            LOG_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_NET_MSG(str)                LOG_NET_AT_LEVEL(de::LogEntry::Message,  str)
@@ -206,7 +206,7 @@
 #define LOG_NET_WARNING(str)            LOG_NET_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_NET_ERROR(str)              LOG_NET_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_NET_CRITICAL(str)           LOG_NET_AT_LEVEL(de::LogEntry::Critical, str)
-#define LOGDEV_NET_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Network | level, str)
+#define LOGDEV_NET_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Network | (level), str)
 #define LOGDEV_NET_XVERBOSE(str)        LOGDEV_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOGDEV_NET_VERBOSE(str)         LOGDEV_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOGDEV_NET_MSG(str)             LOGDEV_NET_AT_LEVEL(de::LogEntry::Message,  str)

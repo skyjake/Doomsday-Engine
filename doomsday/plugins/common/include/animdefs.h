@@ -1,8 +1,6 @@
-/** @file animdefsparser.h  Parser for Hexen ANIMDEFS.
+/** @file animdefs.h  ANIMATED and ANIMDEFS -defined texture animation interpreters.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 1999 Activision
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,22 +17,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_ANIMDEFSPARSER_H
-#define LIBHEXEN_ANIMDEFSPARSER_H
-
-#include "doomsday.h"
+#ifndef LIBCOMMON_ANIMDEFS_H
+#define LIBCOMMON_ANIMDEFS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * Attempt to parse the script on the identified @a path as "animation definition" data.
- */
-void AnimDefsParser(Str const *path);
+void P_InitPicAnims(void);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_ANIMDEFSPARSER_H
+#endif // LIBCOMMON_ANIMDEFS_H

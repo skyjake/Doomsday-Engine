@@ -49,9 +49,6 @@
 extern "C" {
 #endif
 
-// at game start
-void            P_InitPicAnims(void);
-
 // at map load
 void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);

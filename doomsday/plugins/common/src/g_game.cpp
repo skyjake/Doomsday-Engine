@@ -24,6 +24,7 @@
 #include "g_common.h"
 
 #include "am_map.h"
+#include "animdefs.h"
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "fi_lib.h"
