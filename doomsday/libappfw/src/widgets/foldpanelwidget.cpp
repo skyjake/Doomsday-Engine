@@ -25,6 +25,8 @@ namespace de {
 
 using namespace ui;
 
+static TimeDelta const INDICATOR_ANIM_SPAN = 0.7;
+
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {
     /**
@@ -53,7 +55,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             float target = (fold.isOpen()? 0 : 90);
             if(target != angle.target())
             {
-                angle.setValue(target, 1);
+                angle.setValue(target, INDICATOR_ANIM_SPAN);
                 animating = true;
                 changed = true;
             }
