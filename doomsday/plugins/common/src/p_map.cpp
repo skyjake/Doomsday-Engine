@@ -3032,7 +3032,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
 
     if(!(mo->flags & MF_NOCLIP))
     {
-        int blockdist = mo->radius - MAXRADIUS;
+        int blockdist = mo->radius + MAXRADIUS;
         AABoxd aaBox(mo->origin[VX] - blockdist, mo->origin[VY] - blockdist,
                      mo->origin[VX] + blockdist, mo->origin[VY] + blockdist);
 
