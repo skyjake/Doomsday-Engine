@@ -757,6 +757,9 @@ desc = 1=Only some objects can hang over tall ledges (enables DOOM bug fix).
 [game-player-wallrun-northonly]
 desc = 1=Players can only wallrun North (disables DOOM bug fix).
 
+[game-save-auto-loadonreborn]
+desc = 1=Load the auto save slot on player reborn. (default: off).
+
 [game-stats-items]
 desc = Current number of items.
 

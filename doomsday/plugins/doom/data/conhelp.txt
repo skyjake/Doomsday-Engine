@@ -754,6 +754,9 @@ desc = 1=Players can only wallrun North (disables DOOM bug fix).
 [game-raiseghosts]
 desc = 1=Archviles raise ghosts from squished corpses (disables DOOM bug fix).
 
+[game-save-auto-loadonreborn]
+desc = 1=Load the auto save slot on player reborn. (default: off).
+
 [game-skullsinwalls]
 desc = 1=Pain Elementals can spawn Lost Souls inside walls (disables DOOM bug fix).
 
