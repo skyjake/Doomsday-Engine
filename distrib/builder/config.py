@@ -37,7 +37,9 @@ if val is not None: TAG_MODIFIER = val
 
 # Determine APT repository path.
 oldCwd = os.getcwd()
-if DISTRIB_DIR: os.chdir(DISTRIB_DIR)
+if DISTRIB_DIR:
+    DISTRIB_DIR = os.path.abspath(DISTRIB_DIR)
+    os.chdir(DISTRIB_DIR)
 import build_version
 build_version.find_version(quiet=True)
 if build_version.DOOMSDAY_RELEASE_TYPE == 'Stable':
