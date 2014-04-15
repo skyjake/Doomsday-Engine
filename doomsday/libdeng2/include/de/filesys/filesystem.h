@@ -288,6 +288,7 @@ public:
      *
      * @param sourcePath       Source path.
      * @param destinationPath  Destination path.
+     * @param behavior         Copy behavior: which members to copy.
      */
     File &copySerialized(String const &sourcePath, String const &destinationPath,
                          CopyBehaviors behavior = DefaultCopyBehavior);

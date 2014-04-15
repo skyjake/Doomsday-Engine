@@ -1,4 +1,4 @@
-/** @file commonproceduralimage.h  Procedural image that uses a common UI texture.
+/** @file styleproceduralimage.h  Procedural image that uses a common UI texture.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_COMMONPROCEDURALIMAGE_H
-#define LIBAPPFW_COMMONPROCEDURALIMAGE_H
+#ifndef LIBAPPFW_STYLEPROCEDURALIMAGE_H
+#define LIBAPPFW_STYLEPROCEDURALIMAGE_H
 
 #include "../ProceduralImage"
 #include "../GuiWidget"
@@ -75,4 +75,4 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_COMMONPROCEDURALIMAGE_H
+#endif // LIBAPPFW_STYLEPROCEDURALIMAGE_H
