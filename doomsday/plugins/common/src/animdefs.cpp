@@ -53,7 +53,7 @@ enum {
  * In Doomsday these are handled via DED definitions.
  * In BOOM they invented the ANIMATED lump for the same purpose.
  *
- * @note This struct is read directly from the lump. So it must be it aligned.
+ * @note This struct is read directly from the lump, so it must be it aligned.
  */
 #pragma pack(1)
 struct TextureAnimDef
@@ -63,14 +63,14 @@ struct TextureAnimDef
     char startname[9];
 
     // Frame duration in tics.
-    // Note that A value of 65536 or greater should be interpreted as a "swirly texture"
+    // Note that a value of 65536 or greater should be interpreted as a "swirly texture"
     // animation and expects a single frame. Not currently supported. (A SMMU extension).
     int speed;
 };
 #pragma pack()
 
-// These arrays are treated as a hardcoded replacements for data that can be loaded
-// from a lump, so we need to use little-endian byte ordering.
+// This array is treated as a hardcoded replacement for data that can be loaded from a
+// lump, so we need to use little-endian byte ordering.
 static TextureAnimDef animsShared[] = {
 #if __JDOOM64__
     { TexturesScheme,   "CFACEC",   "CFACEA",   MACRO_LONG(4) },
@@ -117,7 +117,7 @@ static TextureAnimDef animsShared[] = {
     { TexturesScheme,   "LAVAFL3",  "LAVAFL1",  MACRO_LONG(6) },
     { TexturesScheme,   "WATRWAL3", "WATRWAL1", MACRO_LONG(4) },
 #endif
-    { -1, "\0", "\0" }
+    { -1, "\0", "\0", MACRO_LONG(0) }
 };
 
 static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
@@ -314,7 +314,7 @@ void P_InitPicAnims(void)
          * We'll support this BOOM extension by reading the data and then registering
          * the new animations into Doomsday using the animation groups feature.
          *
-         * Support for this extension should be considered depreciated.
+         * Support for this extension should be considered deprecated.
          * All new features should be added, accessed via DED.
          */
         LOG_RES_VERBOSE("Processing lump %s::ANIMATED")
