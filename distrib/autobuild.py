@@ -368,9 +368,14 @@ def system_command(cmd):
 def generate_apidoc():
     """Run Doxygen to generate all API documentation."""
     git_pull()
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libdeng2'))    
+
+    print >> sys.stderr, "\nSDK docs for Qt Creator..."
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday'))    
+    system_command('doxygen sdk-qch.doxy >/dev/null 2>doxyissues-qch.txt')
+    system_command('wc -l doxyissues-qch.txt')
 
     print >> sys.stderr, "\nPublic API 2.0 docs..."
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libdeng2'))    
     system_command('doxygen api2.doxy >/dev/null 2>../doxyissues-api2.txt')
     system_command('wc -l ../doxyissues-api2.txt')
     
