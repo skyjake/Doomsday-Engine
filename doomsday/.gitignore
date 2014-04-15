@@ -8,3 +8,5 @@ myrelease
 doomsday.kdev4
 *.user
 config_user.pri
+apidoc-qch
+
