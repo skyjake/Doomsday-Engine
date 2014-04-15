@@ -134,7 +134,7 @@ DENG2_PIMPL(Id1Translator)
         dbyte skill;
         from >> skill;
         // Interpret skill levels outside the normal range as "spawn no things".
-        if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
+        if(skill >= NUM_SKILL_MODES)
         {
             skill = SM_NOTHINGS;
         }
