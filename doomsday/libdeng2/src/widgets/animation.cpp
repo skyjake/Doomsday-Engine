@@ -168,7 +168,9 @@ DENG2_PIMPL_NOREF(Animation)
 Animation::Animation(float val, Style s) : d(new Instance(val, s))
 {}
 
-Animation::Animation(Animation const &other) : d(new Instance(*other.d))
+Animation::Animation(Animation const &other)
+    : de::ISerializable()
+    , d(new Instance(*other.d))
 {}
 
 Animation &Animation::operator = (Animation const &other)

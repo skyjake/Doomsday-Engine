@@ -46,7 +46,8 @@ DENG2_PIMPL_NOREF(Variable)
     Instance() : value(0) {}
 
     Instance(Instance const &other)
-        : name (other.name)
+        : de::IPrivate()
+        , name (other.name)
         , value(other.value->duplicate())
         , mode (other.mode)
     {}

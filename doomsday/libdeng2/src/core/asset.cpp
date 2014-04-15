@@ -25,7 +25,7 @@ DENG2_PIMPL_NOREF(Asset)
     State state;
 
     Instance(State s) : state(s) {}
-    Instance(Instance const &other) : state(other.state) {}
+    Instance(Instance const &other) : de::IPrivate(), state(other.state) {}
 
     DENG2_PIMPL_AUDIENCE(StateChange)
     DENG2_PIMPL_AUDIENCE(Deletion)
