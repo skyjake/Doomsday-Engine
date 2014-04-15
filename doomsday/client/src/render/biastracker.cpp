@@ -1,7 +1,7 @@
 /** @file biastracker.cpp Shadow Bias illumination tracker.
  *
- * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -38,8 +38,8 @@ struct Contributor
  * @todo Do not observe source deletion. A better solution would represent any
  * source deletions in BiasDigest.
  */
-DENG2_PIMPL_NOREF(BiasTracker),
-DENG2_OBSERVES(BiasSource, Deletion)
+DENG2_PIMPL_NOREF(BiasTracker)
+, DENG2_OBSERVES(BiasSource, Deletion)
 {
     Contributor contributors[MAX_CONTRIBUTORS];
     byte activeContributors;
@@ -48,18 +48,19 @@ DENG2_OBSERVES(BiasSource, Deletion)
     uint lastSourceDeletion; // Milliseconds.
 
     Instance()
-        : activeContributors(0),
-          changedContributions(0),
-          lastSourceDeletion(0)
+        : activeContributors(0)
+        , changedContributions(0)
+        , lastSourceDeletion(0)
     {
-        zap(contributors);
+        de::zap(contributors);
     }
 
     Instance(Instance const &other)
-        : IPrivate(),
-          activeContributors(other.activeContributors),
-          changedContributions(other.changedContributions),
-          lastSourceDeletion(other.lastSourceDeletion)
+        : de::IPrivate()
+        , BiasSource::IDeletionObserver()
+        , activeContributors  (other.activeContributors)
+        , changedContributions(other.changedContributions)
+        , lastSourceDeletion  (other.lastSourceDeletion)
     {
         std::memcpy(contributors, other.contributors, sizeof(contributors));
     }
