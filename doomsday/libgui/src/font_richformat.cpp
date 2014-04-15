@@ -69,6 +69,8 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
 
     Instance(Instance const &other)
         : de::IPrivate()
+        , de::EscapeParser::IPlainTextObserver()
+        , de::EscapeParser::IEscapeSequenceObserver()
         , style(other.style)
         , ranges(other.ranges)
         , tabs(other.tabs)

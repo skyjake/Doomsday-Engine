@@ -175,7 +175,8 @@ DENG2_PIMPL(Image)
 Image::Image() : d(new Instance(this))
 {}
 
-Image::Image(Image const &other) : d(new Instance(this, *other.d))
+Image::Image(Image const &other)
+    : de::ISerializable(), d(new Instance(this, *other.d))
 {}
 
 Image::Image(QImage const &image) : d(new Instance(this, image))
