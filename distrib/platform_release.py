@@ -278,8 +278,8 @@ def mac_release():
     codesign("Doomsday Shell.app")
     
     print 'Packaging apps as individual ZIPs...'
-    os.system('zip -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', mac_osx_suffix()))
-    os.system('zip -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_' + mac_osx_suffix()))
+    os.system('zip -y -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', mac_osx_suffix()))
+    os.system('zip -y -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_' + mac_osx_suffix()))
     
     print 'Creating disk:', target
     os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
