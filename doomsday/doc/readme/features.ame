@@ -2,10 +2,10 @@
 
 User interface:
 @list/thin{
-@item Overlaid @wikiterm{task bar}
+@item Overlaid @wikiterm{task bar} for easy access to engine features
 @item In-game @wikiterm{command console}
-@item Graphical @wikiterm{control panel}
-@item @wikilink{Game selection screen}{Ringzero_GUI} for runtime @wikiterm{game} changes (e.g., from DOOM to Heretic)
+@item Configuration menus and @wikiterm{Renderer Appearance sidebar} editor
+@item @wikilink{Game selection screen}{Ringzero_GUI} for runtime @wikiterm{game} changes (e.g., from DOOM to Heretic), browsing multiplayer games, and loading saved games
 @item On-the-fly @wikiterm{add-on} resource loading
 @item Flexible input control @wikiterm{bindings} system
 @item Built-in @wikiterm{updater} for easy upgrades
@@ -15,13 +15,13 @@ Graphics:
 @list/thin{
 @item OpenGL based renderer
 @item Dynamic @wikiterm{ambient occlusion} (corner shadowing) for world surfaces
-@item @wikiterm{Dynamic lights} with @wikiterm{halos}, @wikiterm{bloom} and @wikiterm{lens flares}
+@item @wikiterm{Dynamic lights} with @wikiterm{halos} and @wikiterm{lens flares}
 @item Dynamic shadowing effects for world objects
 @item @wikiterm{Particle effects} system
 @item 3D models for world objects (with per-vertex lighting and multiple light sources), @wikiterm{skies}, @wikiterm{skyboxes}, and @wikiterm{particles}
 @item Automatical world surface (light) @wikiterm{decorations}
 @item @wikiterm{Detail texturing}, shine and @wikiterm{glowing} effects for world surfaces
-@item @wikiterm{Fogging} and @wikiterm{vignette} effects
+@item @wikiterm{Fogging}, @wikiterm{bloom}, and @wikiterm{vignette} effects
 @item Environmental mapping effects for 3D models and world surfaces
 @item World @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces) to remove the original games' limitation of 35 FPS
 @item @wikiterm{Smart texture filtering} using a modified hq2x algorithm

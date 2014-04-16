@@ -21,6 +21,11 @@ The @strong{Doomsday.pkg} installer package contains two applications:
     multiplayer servers (introduced in version 1.10)
 }
 
+We also provide the @strong{Doomsday Engine} and @strong{Doomsday Shell} 
+applications as individual downloads that you can drag and drop anywhere you
+like. You can find these in the @link{Build Repository}{http://dengine.net/builds}. However, the automatic updater will
+always download a full installer package.
+
 The first time you start the frontend, a setup wizard will guide you through
 setting up some game profiles.
 
