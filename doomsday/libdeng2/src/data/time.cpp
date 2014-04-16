@@ -452,6 +452,22 @@ void Time::operator << (Reader &from)
 
             from >> d->highPerfElapsed;
         }
+
+        if((flags & HAS_DATETIME) && (flags & HAS_HIGH_PERF))
+        {
+            // If both are present, the high-performance time should be synced
+            // with current high-perf timer.
+            if(d->dateTime < highPerfTimer.startedAt().asDateTime())
+            {
+                // Current high-performance timer was started after this time;
+                // we can't represent the time as high performance delta.
+                d->flags &= ~Instance::HighPerformance;
+            }
+            else
+            {
+                d->highPerfElapsed = highPerfTimer.startedAt().deltaTo(d->dateTime);
+            }
+        }
     }
     else
     {

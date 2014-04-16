@@ -37,6 +37,11 @@ public:
      */
     TimeDelta elapsed() const;
 
+    /**
+     * Returns the time when the timer was started.
+     */
+    Time startedAt() const;
+
 private:
     DENG2_PRIVATE(d)
 };
