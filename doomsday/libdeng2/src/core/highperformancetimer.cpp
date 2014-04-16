@@ -28,11 +28,13 @@ static duint32 const WARP_INTERVAL = 12 * 60 * 60 * 1000;
 
 DENG2_PIMPL_NOREF(HighPerformanceTimer), public Lockable
 {
+    QDateTime origin;
     QTime startedAt;
     duint64 timerOffset; /// Range extension. QTime only provides a 24h range.
 
     Instance() : timerOffset(0)
     {
+        origin = QDateTime::currentDateTime();
         startedAt.start();
     }
 
@@ -60,6 +62,11 @@ HighPerformanceTimer::HighPerformanceTimer() : d(new Instance)
 TimeDelta HighPerformanceTimer::elapsed() const
 {
     return TimeDelta(d->milliSeconds() / 1000.0);
+}
+
+Time HighPerformanceTimer::startedAt() const
+{
+    return d->origin;
 }
 
 } // namespace de
