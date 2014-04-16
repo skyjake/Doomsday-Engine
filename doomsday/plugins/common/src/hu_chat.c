@@ -144,7 +144,7 @@ static void sendMessage(int player, int destination, const char* msg)
     playMessageSentSound();
 }
 
-boolean UIChat_IsActive(uiwidget_t* obj)
+dd_bool UIChat_IsActive(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_CHAT);
     {
@@ -153,12 +153,12 @@ boolean UIChat_IsActive(uiwidget_t* obj)
     }
 }
 
-boolean UIChat_Activate(uiwidget_t* obj, boolean yes)
+dd_bool UIChat_Activate(uiwidget_t* obj, dd_bool yes)
 {
     assert(NULL != obj && obj->type == GUI_CHAT);
     {
     guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
-    boolean oldActive = (chat->flags & UICF_ACTIVE) != 0;
+    dd_bool oldActive = (chat->flags & UICF_ACTIVE) != 0;
     if(chat->flags & UICF_ACTIVE)
     {
         if(!yes)
@@ -201,18 +201,18 @@ void UIChat_SetDestination(uiwidget_t* obj, int destination)
     }
 }
 
-boolean UIChat_SetShiftModifier(uiwidget_t* obj, boolean on)
+dd_bool UIChat_SetShiftModifier(uiwidget_t* obj, dd_bool on)
 {
     assert(NULL != obj && obj->type == GUI_CHAT);
     {
     guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
-    boolean oldShiftDown = chat->buffer.shiftDown;
+    dd_bool oldShiftDown = chat->buffer.shiftDown;
     chat->buffer.shiftDown = on;
     return oldShiftDown != chat->buffer.shiftDown;
     }
 }
 
-boolean UIChat_AppendCharacter(uiwidget_t* obj, char ch)
+dd_bool UIChat_AppendCharacter(uiwidget_t* obj, char ch)
 {
     assert(NULL != obj && obj->type == GUI_CHAT);
     {
@@ -270,7 +270,7 @@ size_t UIChat_TextLength(uiwidget_t* obj)
     }
 }
 
-boolean UIChat_TextIsEmpty(uiwidget_t* obj)
+dd_bool UIChat_TextIsEmpty(uiwidget_t* obj)
 {
     return (0 == UIChat_TextLength(obj));
 }
@@ -281,7 +281,7 @@ const char* UIChat_FindMacro(uiwidget_t* obj, int macroId)
     return cfg.chatMacros[macroId];
 }
 
-boolean UIChat_LoadMacro(uiwidget_t* obj, int macroId)
+dd_bool UIChat_LoadMacro(uiwidget_t* obj, int macroId)
 {
     assert(NULL != obj && obj->type == GUI_CHAT);
     {

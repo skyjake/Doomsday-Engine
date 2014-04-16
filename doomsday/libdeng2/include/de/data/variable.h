@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_VARIABLE_H
@@ -126,14 +126,14 @@ public:
     /**
      * Returns the name of the variable.
      */
-    String const &name() const { return _name; }
+    String const &name() const;
 
     /**
      * Sets the value of the variable.
      *
      * @param v  New value. Variable gets ownership.
      */
-    void set(Value *v);
+    Variable &set(Value *v);
 
     /**
      * Sets the value of the variable.
@@ -147,7 +147,7 @@ public:
      *
      * @param v  New value. Variable takes a copy of this.
      */
-    void set(Value const &v);
+    Variable &set(Value const &v);
 
     /**
      * Returns the value of the variable (non-modifiable).
@@ -159,12 +159,15 @@ public:
      */
     Value &value();
 
+    Value *valuePtr();
+    Value const *valuePtr() const;
+
     /**
      * Returns the value of the variable.
      */
     template <typename Type>
     Type &value() {
-        Type *v = dynamic_cast<Type *>(_value);
+        Type *v = dynamic_cast<Type *>(valuePtr());
         if(!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
@@ -193,7 +196,7 @@ public:
      */
     template <typename Type>
     Type const &value() const {
-        Type const *v = dynamic_cast<Type const *>(_value);
+        Type const *v = dynamic_cast<Type const *>(valuePtr());
         if(!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
@@ -265,7 +268,7 @@ public:
      *
      * @param variable  Variable.
      */
-    DENG2_DEFINE_AUDIENCE(Deletion, void variableBeingDeleted(Variable &variable))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void variableBeingDeleted(Variable &variable))
 
     /**
      * The value of the variable has changed.
@@ -273,16 +276,10 @@ public:
      * @param variable  Variable.
      * @param newValue  New value of the variable.
      */
-    DENG2_DEFINE_AUDIENCE(Change, void variableValueChanged(Variable &variable, Value const &newValue))
+    DENG2_DEFINE_AUDIENCE2(Change, void variableValueChanged(Variable &variable, Value const &newValue))
 
 private:
-    String _name;
-
-    /// Value of the variable.
-    Value *_value;
-
-    /// Mode flags.
-    Flags _mode;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Variable::Flags)

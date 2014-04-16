@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2.7
 # This script builds the distribution packages platform-independently.
 # No parameters needed; config is auto-detected.
 
@@ -101,13 +101,20 @@ def mac_target_ext():
     if mac_os_version() == '10.8' or mac_os_version() == '10.9': return '.dmg'
     if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
+    
+    
+def mac_osx_suffix():
+    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return 'osx8'
+    if mac_os_version() == '10.6': return 'osx6'
+    return 'osx'
 
 
-def output_filename(ext=''):
+def output_filename(ext='', extra=''):
+    if extra != '' and not extra.endswith('_'): extra += '_'
     if DOOMSDAY_RELEASE_TYPE == "Stable":
-        return 'doomsday_' + DOOMSDAY_VERSION_FULL + ext
+        return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + ext
     else:
-        return 'doomsday_' + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
+        return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
 
 
 def mac_able_to_package_snowberry():
@@ -160,7 +167,7 @@ def mac_package_snowberry():
     f = file('VERSION', 'wt')
     f.write(DOOMSDAY_VERSION_FULL)
     f.close()
-    os.system('python buildapp.py py2app')
+    builder.utils.run_python2('buildapp.py py2app')
     
     # Share it.
     duptree('dist/Doomsday Engine.app', 'shared/')
@@ -270,6 +277,10 @@ def mac_release():
     print 'Signing Doomsday Shell.app...'
     codesign("Doomsday Shell.app")
     
+    print 'Packaging apps as individual ZIPs...'
+    os.system('zip -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', mac_osx_suffix()))
+    os.system('zip -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_' + mac_osx_suffix()))
+    
     print 'Creating disk:', target
     os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
     
@@ -282,7 +293,10 @@ def mac_release():
     shutil.copy(templateFile, 'imaging.sparseimage')
     remkdir('imaging')
     os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
-    shutil.copy('/Users/jaakko/Desktop/Doomsday.pkg', 'imaging/Doomsday.pkg')
+    try:
+        shutil.copy('/Users/jaakko/Desktop/Doomsday.pkg', 'imaging/Doomsday.pkg')
+    except Exception, ex:
+        print 'No installer available:', ex
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL

@@ -3,16 +3,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -21,6 +21,7 @@
 
 #include <QVector>
 #include <de/Vector>
+#include <de/Matrix>
 #include <de/Rectangle>
 
 namespace de {
@@ -32,6 +33,14 @@ template <typename VertexType>
 struct VertexBuilder
 {
     struct Vertices : public QVector<VertexType> {
+        Vertices() {
+            QVector<VertexType>::reserve(64);
+        }
+        void transform(Matrix4f const &matrix) {
+            for(int i = 0; i < QVector<VertexType>::size(); ++i) {
+                (*this)[i].pos = matrix * (*this)[i].pos;
+            }
+        }
         Vertices &operator += (Vertices const &other) {
             concatenate(other, *this);
             return *this;
@@ -60,7 +69,8 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Rectanglef const &uv) {
+        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Rectanglef const &uv,
+                           Matrix4f const *matrix = 0) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -68,7 +78,75 @@ struct VertexBuilder
             v.pos = rect.topRight();   v.texCoord = uv.topRight();   quad << v;
             v.pos = rect.bottomLeft(); v.texCoord = uv.bottomLeft(); quad << v;
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
+            if(matrix) quad.transform(*matrix);
             return *this += quad;
+        }
+        /// Makes a 3D quad with indirect UV coords. The points p1...p4 are specified
+        /// with a clockwise winding (use Vertex3Tex2BoundsRgba).
+        Vertices &makeQuadIndirect(Vector3f const &p1, Vector3f const &p2,
+                                   Vector3f const &p3, Vector3f const &p4,
+                                   Vector4f const &color, Rectanglef const &uv,
+                                   Vector4f const &uvBounds, Vector2f const &texSize) {
+            Vertices quad;
+            VertexType v;
+            v.rgba = color;
+            v.texBounds = uvBounds;
+            v.texCoord[1] = texSize;
+            v.pos = p1; v.texCoord[0] = uv.topLeft;      quad << v;
+            v.pos = p2; v.texCoord[0] = uv.topRight();   quad << v;
+            v.pos = p4; v.texCoord[0] = uv.bottomLeft(); quad << v;
+            v.pos = p3; v.texCoord[0] = uv.bottomRight;  quad << v;
+            return *this += quad;
+        }
+        Vertices &makeCubeIndirect(Vector3f const &minPoint,
+                                   Vector3f const &maxPoint,
+                                   Rectanglef const &uv,
+                                   Vector4f const &uvBounds,
+                                   Vector2f const &texSize,
+                                   Vector4f const faceColors[6]) {
+            // Back.
+            makeQuadIndirect(minPoint,
+                             Vector3f(maxPoint.x, minPoint.y, minPoint.z),
+                             Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
+                             Vector3f(minPoint.x, maxPoint.y, minPoint.z),
+                             faceColors[0], uv, uvBounds, texSize);
+
+            // Front.
+            makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
+                             Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
+                             maxPoint,
+                             Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
+                             faceColors[1], uv, uvBounds, texSize);
+
+            // Left.
+            makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
+                             minPoint,
+                             Vector3f(minPoint.x, maxPoint.y, minPoint.z),
+                             Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
+                             faceColors[2], uv, uvBounds, texSize);
+
+            // Right.
+            makeQuadIndirect(Vector3f(maxPoint.x, minPoint.y, minPoint.z),
+                             Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
+                             maxPoint,
+                             Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
+                             faceColors[3], uv, uvBounds, texSize);
+
+            // Floor.
+            makeQuadIndirect(Vector3f(minPoint.x, maxPoint.y, minPoint.z),
+                             Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
+                             maxPoint,
+                             Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
+                             faceColors[4], uv, uvBounds, texSize);
+
+            // Ceiling.
+            makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
+                             Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
+                             Vector3f(maxPoint.x, minPoint.y, minPoint.z),
+                             minPoint,
+                             faceColors[5], uv, uvBounds, texSize);
+
+            return *this;
         }
         Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
                            int divisions, Vector4f const &color, Rectanglef const &uv,
@@ -78,7 +156,7 @@ struct VertexBuilder
             VertexType v;
             v.rgba = color;
             for(int i = 0; i <= divisions; ++i) {
-                float const ang = 2 * PI * i / divisions;
+                float const ang = 2 * PI * (i == divisions? 0 : i) / divisions;
                 Vector2f r(cos(ang), sin(ang));
                 // Outer.
                 v.pos = center + r * outerRadius;

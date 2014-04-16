@@ -87,10 +87,11 @@ void C_DECL A_PotteryExplode(mobj_t* actor)
     if(actor->args[0])
     {
         // Spawn an item.
-        if(!noMonstersParm ||
+        if(!G_Ruleset_NoMonsters() ||
            !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
-        {   // Only spawn monsters if not -nomonsters.
+        {
+            // Only spawn monsters if not -nomonsters.
             P_SpawnMobj(TranslateThingType[actor->args[0]], actor->origin,
                            actor->angle, 0);
         }
@@ -583,7 +584,7 @@ void C_DECL A_CheckThrowBomb(mobj_t* actor)
  *      args[4]     TID of map thing for focus of quake
  */
 
-boolean A_LocalQuake(byte* args, mobj_t* actor)
+dd_bool A_LocalQuake(byte* args, mobj_t* actor)
 {
     mobj_t* focus, *target;
     int lastfound = 0;
@@ -852,7 +853,7 @@ void C_DECL A_SoAExplode(mobj_t* actor)
     if(actor->args[0])
     {
         // Spawn an item.
-        if(!noMonstersParm ||
+        if(!G_Ruleset_NoMonsters() ||
            !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {

@@ -17,11 +17,11 @@
  */
 
 #include "ui/widgets/profilepickerwidget.h"
-#include "ui/widgets/popupmenuwidget.h"
-#include "ui/dialogs/inputdialog.h"
 #include "ui/clientwindow.h"
 
-#include "SignalAction"
+#include <de/SignalAction>
+#include <de/PopupMenuWidget>
+#include <de/InputDialog>
 
 using namespace de;
 using namespace ui;
@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
 
     ~Instance()
     {
-        if(menu) menu->audienceForClose -= this;
+        if(menu) menu->audienceForClose() -= this;
     }
 
     void updateStyle()
@@ -153,7 +153,7 @@ void ProfilePickerWidget::openMenu()
         // The last profile cannot be deleted.
         org.itemWidget(6)->disable();
     }
-    if(root().window().hasSidebar())
+    if(root().window().as<ClientWindow>().hasSidebar())
     {
         // The sidebar is already open, so don't allow editing.
         org.itemWidget(0)->disable();
@@ -161,7 +161,7 @@ void ProfilePickerWidget::openMenu()
 
     d->menu->setDeleteAfterDismissed(true);
     d->menu->setAnchorAndOpeningDirection(d->button->rule(), ui::Down);
-    d->menu->audienceForClose += d;
+    d->menu->audienceForClose() += d;
     d->menu->open();
 }
 

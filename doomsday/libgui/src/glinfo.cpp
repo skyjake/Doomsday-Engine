@@ -4,17 +4,17 @@
  * @authors Copyright (c) 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/GLInfo"
@@ -94,6 +94,12 @@ DENG2_PIMPL_NOREF(GLInfo)
             return true;
 #endif
 
+#ifdef Q_WS_X11
+        // Check GLX specific extensions.
+        if(checkExtensionString(ext, (GLubyte const *) getGLXExtensionsString()))
+            return true;
+#endif
+
         return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
     }
 
@@ -114,12 +120,18 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
 
         ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
+        ext.NV_framebuffer_multisample_coverage
+                                           = query("GL_NV_framebuffer_multisample_coverage");
         ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
         ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
 
 #ifdef WIN32
         ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
         ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
+#endif
+
+#ifdef Q_WS_X11
+        ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
 #endif
 
         // Limits.
@@ -137,7 +149,7 @@ DENG2_PIMPL_NOREF(GLInfo)
             lim.maxTexSize = min(ceilPow2(String(CommandLine_Next()).toInt()),
                                  lim.maxTexSize);
 
-            LOG_INFO("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
+            LOG_GL_NOTE("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
         }
 
         inited = true;

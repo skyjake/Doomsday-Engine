@@ -402,14 +402,14 @@ struct Zip::Instance
                    USHORT(header->compression) != ZFC_DEFLATED)
                 {
                     if(pass != 0) continue;
-                    LOG_WARNING("Zip %s:'%s' uses an unsupported compression algorithm, ignoring.")
+                    LOG_RES_WARNING("Zip %s:'%s' uses an unsupported compression algorithm")
                         << NativePath(self->composePath()).pretty() << NativePath(filePath).pretty();
                 }
 
                 if(USHORT(header->flags) & ZFH_ENCRYPTED)
                 {
                     if(pass != 0) continue;
-                    LOG_WARNING("Zip %s:'%s' is encrypted.\n  Encryption is not supported, ignoring.")
+                    LOG_RES_WARNING("Zip %s:'%s' is encrypted; encryption is not supported")
                         << NativePath(self->composePath()).pretty() << NativePath(filePath).pretty();
                 }
 
@@ -452,7 +452,7 @@ struct Zip::Instance
                         }
                         catch(de::Uri::ResolveError const& er)
                         {
-                            LOG_WARNING(er.asText());
+                            LOG_RES_WARNING(er.asText());
                         }
                     }
                 }
@@ -597,15 +597,10 @@ void Zip::clearCachedLump(int lumpIdx, bool* retCleared)
         {
             d->lumpCache->remove(lumpIdx, retCleared);
         }
-        else
-        {
-            LOG_DEBUG("LumpCache not in use, ignoring.");
-        }
     }
     else
     {
-        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
-        LOG_DEBUG(msg + ", ignoring.");
+        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIdx, lastIndex()));
     }
 }
 
@@ -622,7 +617,7 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     ZipFile& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
-    LOG_TRACE("\"%s:%s\" (%u bytes%s)")
+    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)")
         << de::NativePath(composePath()).pretty()
         << de::NativePath(file.composePath()).pretty()
         << (unsigned long) file.info().size
@@ -649,7 +644,7 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
 void Zip::unlockLump(int lumpIdx)
 {
     LOG_AS("Zip::unlockLump");
-    LOG_TRACE("\"%s:%s\"") << de::NativePath(composePath()).pretty() << lump(lumpIdx).composePath();
+    LOGDEV_RES_XVERBOSE("\"%s:%s\"") << de::NativePath(composePath()).pretty() << lump(lumpIdx).composePath();
 
     if(isValidIndex(lumpIdx))
     {
@@ -657,15 +652,10 @@ void Zip::unlockLump(int lumpIdx)
         {
             d->lumpCache->unlock(lumpIdx);
         }
-        else
-        {
-            LOG_DEBUG("LumpCache not in use, ignoring.");
-        }
     }
     else
     {
-        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
-        LOG_DEBUG(msg + ", ignoring.");
+        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIdx, lastIndex()));
     }
 }
 
@@ -682,7 +672,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_AS("Zip::readLump");
     ZipFile const& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
 
-    LOG_TRACE("\"%s:%s\" (%u bytes%s) [%u +%u]")
+    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]")
         << de::NativePath(composePath()).pretty()
         << de::NativePath(file.composePath()).pretty()
         << (unsigned long) file.size()
@@ -694,7 +684,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     if(tryCache)
     {
         uint8_t const* data = d->lumpCache? d->lumpCache->data(lumpIdx) : 0;
-        LOG_TRACE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
+        LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
             size_t readBytes = MIN_OF(file.size(), length);
@@ -908,7 +898,7 @@ bool Zip::uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize
     if(stream.total_out != outSize)
     {
         inflateEnd(&stream);
-        LOG_WARNING("Failure due to %s (result code %i).")
+        LOG_RES_WARNING("Failure due to %s (result code: %i)")
             << (result == Z_DATA_ERROR ? "corrupt data" : "zlib error")
             << result;
         return false;

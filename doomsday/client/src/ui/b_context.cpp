@@ -304,17 +304,14 @@ void B_ClearContext(bcontext_t* bc)
     B_DestroyControlBindingList(&bc->controlBinds);
 }
 
-void B_ActivateContext(bcontext_t* bc, boolean doActivate)
+void B_ActivateContext(bcontext_t* bc, dd_bool doActivate)
 {
     if(!bc)
         return;
 
-#if !defined(_DEBUG)
-    if(!(bc->flags & BCF_PROTECTED) && verbose >= 1)
-#endif
-    {
-        Con_Message("%s binding context '%s'...", doActivate? "Activating" : "Deactivating", bc->name);
-    }
+    LOG_INPUT_VERBOSE("%s binding context '%s'")
+            << (doActivate? "Activating" : "Deactivating")
+            << bc->name;
 
     bc->flags &= ~BCF_ACTIVE;
     if(doActivate)
@@ -327,7 +324,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
     }
 }
 
-void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
+void B_AcquireKeyboard(bcontext_t* bc, dd_bool doAcquire)
 {
     bc->flags &= ~BCF_ACQUIRE_KEYBOARD;
     if(doAcquire)
@@ -335,7 +332,7 @@ void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
     B_UpdateDeviceStateAssociations();
 }
 
-void B_AcquireAll(bcontext_t* bc, boolean doAcquire)
+void B_AcquireAll(bcontext_t* bc, dd_bool doAcquire)
 {
     bc->flags &= ~BCF_ACQUIRE_ALL;
     if(doAcquire)
@@ -407,11 +404,9 @@ void B_ReorderContext(bcontext_t* bc, int pos)
 
 controlbinding_t* B_NewControlBinding(bcontext_t* bc)
 {
-    int                 i;
-
     controlbinding_t* conBin = (controlbinding_t *) M_Calloc(sizeof(controlbinding_t));
     conBin->bid = B_NewIdentifier();
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         B_InitDeviceBindingList(&conBin->deviceBinds[i]);
     }
@@ -490,7 +485,7 @@ void B_DestroyControlBindingList(controlbinding_t* listRoot)
 /**
  * @return  @c true, if the binding was found and deleted.
  */
-boolean B_DeleteBinding(bcontext_t* bc, int bid)
+dd_bool B_DeleteBinding(bcontext_t* bc, int bid)
 {
     int                 i;
     evbinding_t*        eb = 0;
@@ -703,7 +698,7 @@ int B_BindingsForControl(int localPlayer, const char* controlName,
     return numFound;
 }
 
-boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
+dd_bool B_AreConditionsEqual(int count1, const statecondition_t* conds1,
                              int count2, const statecondition_t* conds2)
 {
     int i, k;
@@ -713,7 +708,7 @@ boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
 
     for(i = 0; i < count1; ++i)
     {
-        boolean found = false;
+        dd_bool found = false;
         for(k = 0; k < count2; ++k)
         {
             if(B_EqualConditions(conds1 + i, conds2 + k))
@@ -727,11 +722,7 @@ boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
     return true;
 }
 
-/**
- * Looks through context @a bc and looks for a binding that matches either
- * @a match1 or @a match2.
- */
-boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
+dd_bool B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
                               dbinding_t* match2, evbinding_t** evResult,
                               dbinding_t** dResult)
 {
@@ -807,13 +798,16 @@ void B_PrintContexts(void)
     int                 i;
     bcontext_t*         bc;
 
-    Con_Printf("%i binding contexts defined:\n", bindContextCount);
+    LOG_INPUT_MSG("%i binding contexts defined:") << bindContextCount;
 
     for(i = 0; i < bindContextCount; ++i)
     {
         bc = bindContexts[i];
-        Con_Printf("[%3i] \"%s\" (%s)\n", i, bc->name,
-                   (bc->flags & BCF_ACTIVE)? "active" : "inactive");
+        LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
+                << i
+                << (bc->flags & BCF_ACTIVE? _E(b) : _E(w))
+                << bc->name
+                << (bc->flags & BCF_ACTIVE? "active" : "inactive");
     }
 }
 
@@ -826,41 +820,40 @@ void B_PrintAllBindings(void)
     dbinding_t*         d;
     AutoStr*            str = AutoStr_NewStd();
 
-    Con_Printf("%i binding contexts defined.\n", bindContextCount);
+    LOG_INPUT_MSG("%i binding contexts defined") << bindContextCount;
 
 #define BIDFORMAT   "[%3i]"
     for(i = 0; i < bindContextCount; ++i)
     {
         bc = bindContexts[i];
 
-        Con_Printf("Context \"%s\" (%s):\n", bc->name,
-                   (bc->flags & BCF_ACTIVE)? "active" : "inactive");
+        LOG_INPUT_MSG(_E(b)"Context \"%s\" (%s):")
+                << bc->name << (bc->flags & BCF_ACTIVE? "active" : "inactive");
 
         // Commands.
         for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++) {}
 
         if(count)
-            Con_Printf("  %i event bindings:\n", count);
+            LOG_INPUT_MSG("  %i event bindings:") << count;
 
         for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
         {
             B_EventBindingToString(e, str);
-            Con_Printf("  " BIDFORMAT " %s : %s\n", e->bid, Str_Text(str),
-                       e->command);
+            LOG_INPUT_MSG("  " BIDFORMAT " %s : " _E(>) "%s")
+                    << e->bid << Str_Text(str) << e->command;
         }
 
         // Controls.
         for(count = 0, c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next, count++) {}
 
         if(count)
-            Con_Printf("  %i control bindings.\n", count);
+            LOG_INPUT_MSG("  %i control bindings") << count;
 
         for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
         {
             const char* controlName = P_PlayerControlById(c->control)->name;
 
-            Con_Printf("  Control \"%s\" " BIDFORMAT ":\n", controlName,
-                       c->bid);
+            LOG_INPUT_MSG(_E(D) "  Control \"%s\" " BIDFORMAT ":") << controlName << c->bid;
 
             for(k = 0; k < DDMAXPLAYERS; ++k)
             {
@@ -870,12 +863,12 @@ void B_PrintAllBindings(void)
                 if(!count)
                     continue;
 
-                Con_Printf("    Local player %i has %i device bindings for \"%s\":\n",
-                           k + 1, count, controlName);
+                LOG_INPUT_MSG("    Local player %i has %i device bindings for \"%s\":")
+                        << k + 1 << count << controlName;
                 for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
                 {
                     B_DeviceBindingToString(d, str);
-                    Con_Printf("    " BIDFORMAT " %s\n", d->bid, Str_Text(str));
+                    LOG_INPUT_MSG("    " BIDFORMAT " %s") << d->bid << Str_Text(str);
                 }
             }
         }

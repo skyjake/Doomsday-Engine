@@ -1,7 +1,7 @@
-/** @file games.cpp Specialized collection for a set of logical Games.
+/** @file games.cpp  Specialized collection for a set of logical Games.
  *
- * @authors Copyright &copy; 2012-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,24 +19,51 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
-#include "filesys/manifest.h"
-#include "resource/zip.h"
-#include <QtAlgorithms>
-#include <de/App>
-
 #include "games.h"
+
+#include "dd_main.h"
+#include "con_main.h"
+#include "con_bar.h"
+
+#include "filesys/fs_main.h"
+#include "filesys/manifest.h"
+
+#include "resource/zip.h"
+
+#include <de/App>
+#include <de/ArrayValue>
+#include <de/DictionaryValue>
+#include <de/Log>
+#include <de/charsymbols.h>
+#include <QtAlgorithms>
 
 namespace de {
 
+/// @todo Belongs in App
 DENG2_PIMPL(Games)
 {
     /// The actual collection.
-    Games::All games;
+    All games;
 
     /// Special "null-game" object for this collection.
     NullGame *nullGame;
+
+    /**
+     * Delegates game addition notifications to scripts.
+     */
+    class GameAdditionScriptAudience : DENG2_OBSERVES(Games, Addition)
+    {
+    public:
+        void gameAdded(Game &game)
+        {
+            ArrayValue args;
+            args << DictionaryValue() << TextValue(game.id());
+            App::scriptSystem().nativeModule("App")["audienceForGameAddition"]
+                    .value<ArrayValue>().callElements(args);
+        }
+    };
+
+    GameAdditionScriptAudience scriptAudienceForGameAddition;
 
     Instance(Public *i) : Base(i), games(), nullGame(0)
     {
@@ -45,6 +72,11 @@ DENG2_PIMPL(Games)
          * object (activated once created).
          */
         nullGame = new NullGame;
+
+        // Extend the native App module with a script audience for observing game addition.
+        App::scriptSystem().nativeModule("App").addArray("audienceForGameAddition");
+
+        audienceForAddition += scriptAudienceForGameAddition;
     }
 
     ~Instance()
@@ -60,7 +92,11 @@ DENG2_PIMPL(Games)
         qDeleteAll(games);
         games.clear();
     }
+
+    DENG2_PIMPL_AUDIENCE(Addition)
 };
+
+DENG2_AUDIENCE_METHOD(Games, Addition)
 
 Games::Games() : d(new Instance(this))
 {}
@@ -75,8 +111,10 @@ int Games::numPlayable() const
     int count = 0;
     foreach(Game *game, d->games)
     {
-        if(!game->allStartupFilesFound()) continue;
-        ++count;
+        if(game->allStartupFilesFound())
+        {
+            count += 1;
+        }
     }
     return count;
 }
@@ -112,19 +150,18 @@ Game &Games::byId(gameid_t gameId) const
     return *d->games[gameId-1];
 }
 
-Game &Games::byIdentityKey(char const *identityKey) const
+Game &Games::byIdentityKey(String identityKey) const
 {
-    if(identityKey && identityKey[0])
+    if(!identityKey.isEmpty())
     {
         foreach(Game *game, d->games)
         {
-            if(!Str_CompareIgnoreCase(game->identityKey(), identityKey))
+            if(!game->identityKey().compareWithoutCase(identityKey))
                 return *game;
         }
     }
     /// @throw NotFoundError  The specified @a identityKey string is not associated with a game in the collection.
-    throw NotFoundError("Games::byIdentityKey",
-                        QString("There is no Game with identity key \"%1\"").arg(identityKey));
+    throw NotFoundError("Games::byIdentityKey", "No game exists with identity key '" + identityKey + "'");
 }
 
 Game &Games::byIndex(int idx) const
@@ -164,7 +201,7 @@ void Games::add(Game &game)
 
     d->games.push_back(&game);
 
-    DENG2_FOR_AUDIENCE(Addition, i)
+    DENG2_FOR_AUDIENCE2(Addition, i)
     {
         i->gameAdded(game);
     }
@@ -186,9 +223,10 @@ void Games::locateStartupResources(Game &game)
     foreach(ResourceManifest *manifest, game.manifests())
     {
         // We are only interested in startup resources at this time.
-        if(!(manifest->fileFlags() & FF_STARTUP)) continue;
-
-        manifest->locateFile();
+        if(manifest->fileFlags() & FF_STARTUP)
+        {
+            manifest->locateFile();
+        }
     }
 
     if(oldCurrentGame != &game)
@@ -202,18 +240,22 @@ void Games::locateStartupResources(Game &game)
     }
 }
 
-static int locateAllResourcesWorker(void *parameters)
+static int locateAllResourcesWorker(void *context)
 {
-    Games *games = (Games *) parameters;
+    Games *games = (Games *) context;
     int n = 0;
     foreach(Game *game, games->all())
     {
-        Con_Message("Locating \"%s\"...", Str_Text(game->title()));
+        LOG_RES_MSG("Locating " _E(b) "\"%s\"" _E(.) "...") << game->title();
 
         games->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / games->count() - 1);
 
-        VERBOSE( Game::print(*game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
+        LOG_RES_VERBOSE(_E(l) "  Game: " _E(.)_E(>) "%s - %s") << game->title() << game->author();
+        LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game->identityKey();
+        Game::printFiles(*game, FF_STARTUP);
+
+        LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game->statusAsText();
         ++n;
     }
     BusyMode_WorkerEnd();
@@ -226,62 +268,68 @@ void Games::locateAllResources()
                                 locateAllResourcesWorker, (void *)this, "Locating game resources...");
 }
 
-} // namespace de
-
 D_CMD(ListGames)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
-    de::Games &games = App_Games();
+    Games &games = App_Games();
     if(!games.count())
     {
-        Con_Printf("No Registered Games.\n");
+        LOG_MSG("No game is currently registered.");
         return true;
     }
 
-    //Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
-    //Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
-
-    LOG_MSG(_E(1) "Registered Games:");
+    LOG_MSG(_E(b) "Registered Games:");
     LOG_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
             << _E(>) _E(D) << _E(B);
 
-    Con_PrintRuler();
+    LOG_MSG(_E(R) "\n");
 
-    de::Games::GameList found;
+    Games::GameList found;
     games.collectAll(found);
     // Sort so we get a nice alphabetical list.
     qSort(found.begin(), found.end());
 
-    de::String list;
+    String list;
 
     int numCompleteGames = 0;
-    DENG2_FOR_EACH_CONST(de::Games::GameList, i, found)
+    DENG2_FOR_EACH_CONST(Games::GameList, i, found)
     {
-        de::Game *game = i->game;
+        Game *game = i->game;
         bool isCurrent = (&App_CurrentGame() == game);
 
         if(!list.isEmpty()) list += "\n";
 
-        list += de::String(_E(0)
-                           _E(Ta) "%1%2 "
-                           _E(Tb) "%3 "
-                           _E(Tc) _E(2) "%4 " _E(i) "(%5)")
+        list += String(_E(0)
+                       _E(Ta) "%1%2 "
+                       _E(Tb) "%3 "
+                       _E(Tc) _E(2) "%4 " _E(i) "(%5)")
                 .arg(isCurrent? _E(B) _E(b) :
                      !game->allStartupFilesFound()? _E(D) : "")
                 .arg(isCurrent? "*" : !game->allStartupFilesFound()? "!" : " ")
-                .arg(Str_Text(game->identityKey()))
-                .arg(Str_Text(game->title()))
-                .arg(Str_Text(game->author()));
+                .arg(game->identityKey())
+                .arg(game->title())
+                .arg(game->author());
 
         if(game->allStartupFilesFound())
+        {
             numCompleteGames++;
+        }
     }
     LOG_MSG("%s") << list;
 
-    Con_PrintRuler();
-    Con_Printf("%i of %i games playable.\n", numCompleteGames, games.count());
-    Con_Printf("Use the 'load' command to load a game. For example: \"load gamename\".\n");
+    LOG_MSG(_E(R) "\n");
+    LOG_MSG("%i of %i games are playable") << numCompleteGames << games.count();
+    LOG_SCR_MSG("Use the " _E(b) "load" _E(.) " command to load a game, for example: \"load gamename\"");
 
     return true;
 }
+
+void Games::consoleRegister() //static
+{
+    C_CMD("listgames", "", ListGames);
+
+    Game::consoleRegister();
+}
+
+} // namespace de

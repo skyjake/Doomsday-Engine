@@ -40,7 +40,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct mixerdata_s {
-    boolean available;
+    dd_bool available;
     MIXERLINE line;
     MIXERLINECONTROLS controls;
     MIXERCONTROL volume;
@@ -58,7 +58,7 @@ typedef struct mixerdata_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean initedOk = false;
+static dd_bool initedOk = false;
 static int verbose = 0;
 
 static int midiAvail = false;
@@ -168,20 +168,15 @@ static void initMixerLine(mixerdata_t* mix, DWORD type)
                          MIXER_GETLINEINFOF_COMPONENTTYPE)) !=
        MMSYSERR_NOERROR)
     {
-        if(verbose)
-            Con_Message("  Error getting line info: Error %i", res);
+        App_Log(DE2_AUDIO_ERROR, "[WinMM] Error getting line info: Error %i", res);
         return;
     }
 
-    if(verbose)
-    {
-        Con_Message("  Destination line idx: %i", mix->line.dwDestination);
-        Con_Message("  Line ID: 0x%x", mix->line.dwLineID);
-        Con_Message("  Channels: %i", mix->line.cChannels);
-        Con_Message("  Controls: %i", mix->line.cControls);
-        Con_Message("  Name: %s (%s)", mix->line.szName,
-                    mix->line.szShortName);
-    }
+    App_Log(DE2_DEV_AUDIO_MSG, "  Destination line idx: %i", mix->line.dwDestination);
+    App_Log(DE2_DEV_AUDIO_MSG, "  Line ID: 0x%x", mix->line.dwLineID);
+    App_Log(DE2_DEV_AUDIO_MSG, "  Channels: %i", mix->line.cChannels);
+    App_Log(DE2_DEV_AUDIO_MSG, "  Controls: %i", mix->line.cControls);
+    App_Log(DE2_AUDIO_MSG, "  Line name: %s (%s)", mix->line.szName, mix->line.szShortName);
 
     mix->controls.cbStruct = sizeof(mix->controls);
     mix->controls.dwLineID = mix->line.dwLineID;
@@ -194,18 +189,14 @@ static void initMixerLine(mixerdata_t* mix, DWORD type)
                              MIXER_GETLINECONTROLSF_ONEBYTYPE)) !=
        MMSYSERR_NOERROR)
     {
-        if(verbose)
-            Con_Message("  Error getting line controls " "(vol): error %i", res);
+        App_Log(DE2_AUDIO_ERROR, "[WinMM] Error getting line controls (vol): error %i", res);
         return;
     }
 
-    if(verbose)
-    {
-        Con_Message("  Volume control ID: 0x%x", mix->volume.dwControlID);
-        Con_Message("  Name: %s (%s)", mix->volume.szName, mix->volume.szShortName);
-        Con_Message("  Min/Max: %i/%i", mix->volume.Bounds.dwMinimum,
-                    mix->volume.Bounds.dwMaximum);
-    }
+    App_Log(DE2_DEV_AUDIO_MSG, "  Volume control ID: 0x%x", mix->volume.dwControlID);
+    App_Log(DE2_AUDIO_MSG, "  Volume name: %s (%s)", mix->volume.szName, mix->volume.szShortName);
+    App_Log(DE2_DEV_AUDIO_MSG, "  Min/Max: %i/%i", mix->volume.Bounds.dwMinimum,
+            mix->volume.Bounds.dwMaximum);
 
     // This mixer line is now available.
     mix->available = true;
@@ -224,35 +215,26 @@ static int initMixer(void)
     if(initMixerOk || CommandLine_Check("-nomixer"))
         return true;
 
-    if(verbose)
-    {
-        // In verbose mode, print a lot of extra information.
-        Con_Message("dsWinMM::initMixer: Number of mixer devices: %i", num);
-    }
+    App_Log(DE2_AUDIO_VERBOSE, "[WinMM] Number of mixer devices: %i", num);
 
     // Open the mixer device.
     res = mixerOpen(&mixer, 0, 0, 0, MIXER_OBJECTF_MIXER);
     if(res != MMSYSERR_NOERROR)
     {
-        if(verbose)
-            Con_Message("  Error opening mixer: Error %i", res);
+        App_Log(DE2_AUDIO_ERROR, "[WinMM] Error opening mixer: Error %i", res);
         return 0;
     }
 
     // Get the device caps.
     mixerGetDevCaps((UINT_PTR) mixer, &mixerCaps, sizeof(mixerCaps));
 
-    Con_Message("dsWinMM::initMixer: %s", mixerCaps.szPname);
-    if(verbose)
-        Con_Message("  Audio line destinations: %i",
-                    mixerCaps.cDestinations);
+    App_Log(DE2_AUDIO_MSG, "[WinMM] %s", mixerCaps.szPname);
+    App_Log(DE2_AUDIO_VERBOSE, "  Audio line destinations: %i", mixerCaps.cDestinations);
 
     // Init CD mixer.
-    if(verbose)
-        Con_Message("Init CD audio line:");
+    App_Log(DE2_AUDIO_VERBOSE, "Init CD audio line:");
     initMixerLine(&mixCD, MIXERLINE_COMPONENTTYPE_SRC_COMPACTDISC);
-    if(verbose)
-        Con_Message("Init synthesizer line:");
+    App_Log(DE2_AUDIO_VERBOSE, "Init synthesizer line:");
     initMixerLine(&mixMidi, MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER);
 
     // We're successful.
@@ -322,8 +304,7 @@ int DM_Music_Init(void)
     if(midiAvail)
         return true; // Already initialized.
 
-    Con_Message("DM_WinMusInit: %i MIDI-Out devices present.",
-                midiOutGetNumDevs());
+    App_Log(DE2_AUDIO_NOTE, "[WinMM] %i MIDI-Out devices present", midiOutGetNumDevs());
 
     MIDIStreamer = new WinMIDIStreamer;
 
@@ -335,7 +316,7 @@ int DM_Music_Init(void)
     MIDIStreamer->volumeShift = CommandLine_Exists("-mdvol") ? 1 : 0;
 
     // Now the MIDI is available.
-    Con_Message("DM_WinMusInit: MIDI initialized.");
+    App_Log(DE2_AUDIO_VERBOSE, "[WinMM] MIDI initialized");
 
     return midiAvail = true;
 }

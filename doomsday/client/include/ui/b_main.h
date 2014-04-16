@@ -41,8 +41,8 @@ extern int symbolicEchoMode;
 void            B_Register(void);
 void            B_Init(void);
 void            B_Shutdown(void);
-boolean         B_Delete(int bid);
-boolean         B_Responder(ddevent_t* ev);
+dd_bool         B_Delete(int bid);
+dd_bool         B_Responder(ddevent_t* ev);
 void            B_WriteToFile(FILE* file);
 
 /**
@@ -57,11 +57,13 @@ struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
 struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
 struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bcontext_s** bContext);
 
+bool B_UnbindCommand(char const *command);
+
 // Utils
 /// @todo: move to b_util.h
 int B_NewIdentifier(void);
 
-const char* B_ShortNameForKey2(int ddKey, boolean forceLowercase);
+const char* B_ShortNameForKey2(int ddKey, dd_bool forceLowercase);
 const char* B_ShortNameForKey(int ddkey);
 
 int B_KeyForShortName(const char* key);

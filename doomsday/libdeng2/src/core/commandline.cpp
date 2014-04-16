@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/CommandLine"
@@ -435,10 +435,36 @@ bool CommandLine::execute() const
     qint64 pid = 0;
     if(!QProcess::startDetached(at(0), args, d->initialDir.path(), &pid))
     {
-        LOG_WARNING("Failed to start \"%s\"") << at(0);
+        LOG_ERROR("Failed to start \"%s\"") << at(0);
         return false;
     }
 
     LOG_DEBUG("Started detached process %i using \"%s\"") << pid << at(0);
     return true;
+}
+
+bool CommandLine::executeAndWait(String *output) const
+{
+    LOG_AS("CommandLine");
+
+    if(count() < 1) return false;
+
+    QStringList args;
+    for(int i = 1; i < count(); ++i) args << at(i);
+
+    LOG_DEBUG("Starting process \"%s\"") << at(0);
+
+    if(output) output->clear();
+
+    QProcess proc;
+    proc.start(at(0), args);
+    if(!proc.waitForStarted()) return false;
+    bool result = proc.waitForFinished();
+
+    if(output)
+    {
+        *output = String::fromUtf8(Block(proc.readAll()));
+    }
+
+    return result;
 }

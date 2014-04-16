@@ -1,4 +1,4 @@
-/** @file grabbable.cpp Grabbable.
+/** @file grabbable.cpp  Grabbable.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *

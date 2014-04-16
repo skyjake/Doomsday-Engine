@@ -135,14 +135,14 @@ DENG_API_TYPEDEF(S)
     /**
      * @return  @c NULL, if the song is found.
      */
-    int (*StartMusic)(char const *musicID, boolean looped);
+    int (*StartMusic)(char const *musicID, dd_bool looped);
 
     /**
      * Start a song based on its number.
      *
      * @return  @c NULL, if the ID exists.
      */
-    int (*StartMusicNum)(int id, boolean looped);
+    int (*StartMusicNum)(int id, dd_bool looped);
 
     /**
      * Stops playing a song.
@@ -152,7 +152,7 @@ DENG_API_TYPEDEF(S)
     /**
      * Change paused state of the current music.
      */
-    void (*PauseMusic)(boolean doPause);
+    void (*PauseMusic)(dd_bool doPause);
 }
 DENG_API_T(S);
 

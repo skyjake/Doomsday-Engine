@@ -29,12 +29,13 @@
 #include "p_tick.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
-#include "p_player.h"
+#include "player.h"
 #include "d_net.h"
 #include "p_map.h"
 #include "am_map.h"
 #include "p_terraintype.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_switch.h"
@@ -79,7 +80,7 @@ static playerstart_t *deathmatchStarts;
  */
 static int playerRespawnAsClass[MAXPLAYERS];
 
-static boolean fuzzySpawnPosition(coord_t *x, coord_t *y, coord_t *z, angle_t *angle,
+static dd_bool fuzzySpawnPosition(coord_t *x, coord_t *y, coord_t *z, angle_t *angle,
     int *spawnFlags)
 {
 #define XOFFSET         (33) // Player radius = 16
@@ -134,7 +135,7 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
     playerRespawnAsClass[plrNum] = pc;
 }
 
-playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
+playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, dd_bool clear)
 {
 #if __JHEXEN__
     playerclass_t pClass = cfg.playerClass[plrNum];
@@ -187,7 +188,8 @@ void P_Update()
     P_InitInventory();
 #endif
 #if __JHEXEN__
-    P_InitMapInfo();
+    MapInfoParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sMAPINFO.txt", sc_ScriptsDir)
+                                : AutoStr_FromText("Lumps:MAPINFO"));
 #endif
     P_InitSwitchList();
     P_InitTerrainTypes();
@@ -246,11 +248,11 @@ void P_Shutdown()
     P_ShutdownTerrainTypes();
     P_FreeWeaponSlots();
 #if __JDOOM__
-    P_BrainShutdown();
+    delete theBossBrain; theBossBrain = 0;
 #endif
 }
 
-void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch,
                          mapspotid_t spot)
 {
     playerstart_t *start;
@@ -261,10 +263,8 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
             Z_Realloc(deathmatchStarts, sizeof(playerstart_t) * ++numPlayerDMStarts, PU_MAP);
         start = &deathmatchStarts[numPlayerDMStarts - 1];
 
-#ifdef _DEBUG
-        Con_Message("P_CreatePlayerStart: DM #%i plrNum=%i entryPoint=%i spot=%i",
+        App_Log(DE2_DEV_MAP_VERBOSE, "P_CreatePlayerStart: DM #%i plrNum=%i entryPoint=%i spot=%i",
                 numPlayerDMStarts - 1, defaultPlrNum, entryPoint, spot);
-#endif
     }
     else
     {
@@ -272,10 +272,8 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
             Z_Realloc(playerStarts, sizeof(playerstart_t) * ++numPlayerStarts, PU_MAP);
         start = &playerStarts[numPlayerStarts - 1];
 
-#ifdef _DEBUG
-        Con_Message("P_CreatePlayerStart: Normal #%i plrNum=%i entryPoint=%i spot=%i",
-                    numPlayerStarts - 1, defaultPlrNum, entryPoint, spot);
-#endif
+        App_Log(DE2_DEV_MAP_VERBOSE, "P_CreatePlayerStart: Normal #%i plrNum=%i entryPoint=%i spot=%i",
+                numPlayerStarts - 1, defaultPlrNum, entryPoint, spot);
     }
 
     start->plrNum     = defaultPlrNum;
@@ -296,7 +294,7 @@ void P_DestroyPlayerStarts()
     numPlayerDMStarts = 0;
 }
 
-playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, boolean deathmatch)
+playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch)
 {
     DENG_UNUSED(entryPoint);
 
@@ -324,7 +322,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, boolean deathma
     {
         playerstart_t const *start = &playerStarts[i];
 
-        if(start->entryPoint == nextMapEntryPoint && start->plrNum - 1 == pnum)
+        if(start->entryPoint == nextMapEntrance && start->plrNum - 1 == pnum)
             return start;
         if(!start->entryPoint && start->plrNum - 1 == pnum)
             def = start;
@@ -337,7 +335,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, boolean deathma
 #endif
 }
 
-uint P_GetNumPlayerStarts(boolean deathmatch)
+uint P_GetNumPlayerStarts(dd_bool deathmatch)
 {
     if(deathmatch)
         return numPlayerDMStarts;
@@ -351,7 +349,7 @@ void P_DealPlayerStarts(uint entryPoint)
 
     if(!numPlayerStarts)
     {
-        Con_Message("Warning: Zero player starts found, players will spawn as cameras.");
+        App_Log(DE2_MAP_WARNING, "No player starts found, players will spawn as cameras");
         return;
     }
 
@@ -381,10 +379,8 @@ void P_DealPlayerStarts(uint entryPoint)
                 // A match!
                 pl->startSpot = k;
                 // Keep looking.
-#ifdef _DEBUG
-                Con_Message(" - playerStart %i matches: spot=%i entryPoint=%i",
-                            k, spotNumber, entryPoint);
-#endif
+                App_Log(DE2_DEV_MAP_XVERBOSE, "PlayerStart %i matches: spot=%i entryPoint=%i",
+                        k, spotNumber, entryPoint);
             }
         }
 
@@ -396,8 +392,7 @@ void P_DealPlayerStarts(uint entryPoint)
         }
     }
 
-#ifdef _DEBUG
-    Con_Message("Player starting spots:");
+    App_Log(DE2_DEV_MAP_MSG, "Player starting spots:");
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *pl = &players[i];
@@ -405,13 +400,12 @@ void P_DealPlayerStarts(uint entryPoint)
         if(!pl->plr->inGame)
             continue;
 
-        Con_Message("- pl%i: color %i, spot %i", i, cfg.playerColor[i], pl->startSpot);
+        App_Log(DE2_DEV_MAP_MSG, "- pl%i: color %i, spot %i", i, cfg.playerColor[i], pl->startSpot);
     }
-#endif
 }
 
 void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord_t z,
-    angle_t angle, int spawnFlags, boolean makeCamera, boolean pickupItems)
+    angle_t angle, int spawnFlags, dd_bool makeCamera, dd_bool pickupItems)
 {
     plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS - 1);
 
@@ -428,11 +422,9 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
 
-#ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] angle:%x floorz:%g mobjid:%i",
-                plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->angle, mo->floorZ,
-                mo->thinker.id);
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "P_SpawnPlayer: Player #%i spawned pos:(%g, %g, %g) angle:%x floorz:%g mobjid:%i",
+            plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->angle, mo->floorZ,
+            mo->thinker.id);
 
     player_t *p = &players[plrNum];
     if(p->playerState == PST_REBORN)
@@ -459,10 +451,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
         mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
     */
 
-#ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawning with color translation %i.",
-                plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
-#endif
+    App_Log(DE2_DEV_MAP_VERBOSE, "Player #%i spawning with color translation %i",
+            plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
@@ -498,7 +488,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        VERBOSE( Con_Message("Player #%i spawned as a camera.", plrNum) )
+        App_Log(DE2_MAP_MSG, "Player #%i spawned as a camera", plrNum);
 
         p->plr->mo->origin[VZ] += (coord_t) cfg.plrViewHeight;
         p->viewHeight = 0;
@@ -513,7 +503,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
-    if(deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
 #if __JHEXEN__
         p->keys = 2047;
@@ -565,13 +555,13 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
 }
 
 static void spawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y,
-    coord_t z, angle_t angle, int spawnFlags, boolean makeCamera, boolean doTeleSpark,
-    boolean doTeleFrag)
+    coord_t z, angle_t angle, int spawnFlags, dd_bool makeCamera, dd_bool doTeleSpark,
+    dd_bool doTeleFrag)
 {
 #if __JDOOM__ || __JDOOM64__
-    boolean queueBody = (plrNum >= 0? true : false);
+    dd_bool queueBody = (plrNum >= 0? true : false);
 #endif
-    boolean pickupItems = true;
+    dd_bool pickupItems = true;
 
     /* $voodoodolls */
     if(plrNum < 0)
@@ -616,9 +606,9 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y,
  */
 void P_SpawnClient(int plrNum)
 {
-#ifdef _DEBUG
-    Con_Message("P_SpawnClient: Spawning client player mobj (for player %i; console player is %i).", plrNum, CONSOLEPLAYER);
-#endif
+    App_Log(DE2_MAP_VERBOSE,
+            "Spawning client player mobj (for player %i; console player is %i)",
+            plrNum, CONSOLEPLAYER);
 
     // The server will fix the player's position and angles soon after.
     spawnPlayer(plrNum, P_ClassForPlayerWhenRespawning(plrNum, true),
@@ -651,7 +641,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
     player_t *p = &players[plrNum];
 
-    Con_Message("P_RebornPlayer: player %i (class %i).", plrNum, pClass);
+    App_Log(DE2_DEV_MAP_MSG, "P_RebornPlayer: player %i (class %i)", plrNum, pClass);
 
     if(p->plr->mo)
     {
@@ -662,14 +652,13 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 
     if(G_GameState() != GS_MAP)
     {
-#ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.", G_GameState());
-#endif
+        App_Log(DE2_DEV_MAP_ERROR,
+                "P_RebornPlayer: Game state is %i, won't spawn", G_GameState());
         return; // Nothing else to do.
     }
 
     // Spawn at random spot if in death match.
-    if(deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrNum);
         return;
@@ -678,7 +667,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     // Save player state?
 #if __JHEXEN__
     int oldKeys = 0, oldPieces = 0;
-    boolean oldWeaponOwned[NUM_WEAPON_TYPES];
+    dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
     if(!IS_CLIENT)
     {
         // Cooperative net-play, retain keys and weapons
@@ -701,10 +690,10 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     coord_t pos[3] = { 0, 0, 0 };
     angle_t angle = 0;
     int spawnFlags = 0;
-    boolean makeCamera = false;
+    dd_bool makeCamera = false;
 
-    uint entryPoint = gameMapEntryPoint;
-    boolean foundSpot = false;
+    uint entryPoint = gameMapEntrance;
+    dd_bool foundSpot = false;
     playerstart_t const *assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
     if(assigned)
@@ -714,7 +703,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         if(P_CheckSpot(spot->origin[VX], spot->origin[VY]))
         {
             // Appropriate player start spot is open.
-            Con_Printf("- spawning at assigned spot\n");
+            App_Log(DE2_DEV_MAP_MSG, "- spawning at assigned spot");
 
             pos[VX]    = spot->origin[VX];
             pos[VY]    = spot->origin[VY];
@@ -729,7 +718,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!foundSpot)
     {
-        Con_Message("- force spawning at %i.", p->startSpot);
+        App_Log(DE2_DEV_MAP_MSG, "- force spawning at %i", p->startSpot);
 
         if(assigned)
         {
@@ -756,14 +745,12 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 #else
     if(!foundSpot)
     {
-#ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Trying other spots for %i.", plrNum);
-#endif
+        App_Log(DE2_DEV_MAP_MSG, "P_RebornPlayer: Trying other spots for %i", plrNum);
 
         // Try to spawn at one of the other player start spots.
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            if(playerstart_t const *start = P_GetPlayerStart(gameMapEntryPoint, i, false))
+            if(playerstart_t const *start = P_GetPlayerStart(gameMapEntrance, i, false))
             {
                 mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -778,14 +765,13 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 
                     foundSpot = true;
 
-#ifdef _DEBUG
-                    Con_Message("P_RebornPlayer: Spot [%f, %f] selected.", spot->origin[VX], spot->origin[VY]);
-#endif
+                    App_Log(DE2_DEV_MAP_MSG, "P_RebornPlayer: Spot (%g, %g) selected",
+                            spot->origin[VX], spot->origin[VY]);
                     break;
                 }
-#ifdef _DEBUG
-                Con_Message("P_RebornPlayer: Spot [%f, %f] is not available.", spot->origin[VX], spot->origin[VY]);
-#endif
+
+                App_Log(DE2_DEV_MAP_VERBOSE, "P_RebornPlayer: Spot (%g, %g) is unavailable",
+                        spot->origin[VX], spot->origin[VY]);
             }
         }
     }
@@ -793,7 +779,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     if(!foundSpot)
     {
         // Player's going to be inside something.
-        if(playerstart_t const *start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false))
+        if(playerstart_t const *start = P_GetPlayerStart(gameMapEntrance, plrNum, false))
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -813,10 +799,8 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     }
 #endif
 
-#ifdef _DEBUG
-    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f) angle:%x.",
-                pos[VX], pos[VY], pos[VZ], angle);
-#endif
+    App_Log(DE2_DEV_MAP_NOTE, "Multiplayer-spawning player at (%f,%f,%f) angle:%x",
+            pos[VX], pos[VY], pos[VZ], angle);
 
     spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
                 spawnFlags, makeCamera, true, true);
@@ -840,11 +824,9 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     GetDefInt("Multiplayer|Reborn|Blue mana",  &p->ammo[AT_BLUEMANA].owned);
     GetDefInt("Multiplayer|Reborn|Green mana", &p->ammo[AT_GREENMANA].owned);
 
-#ifdef _DEBUG
-    Con_Message("P_RebornPlayerInMultiplayer: Giving mana (b:%i g:%i) to player %i; "
-                "also old weapons, with best weapon %i", p->ammo[AT_BLUEMANA].owned,
-                p->ammo[AT_GREENMANA].owned, plrNum, bestWeapon);
-#endif
+    App_Log(DE2_MAP_VERBOSE, "Player %i reborn in multiplayer: giving mana (b:%i g:%i); "
+            "also old weapons, with best weapon %i", plrNum, p->ammo[AT_BLUEMANA].owned,
+            p->ammo[AT_GREENMANA].owned, bestWeapon);
 
     if(bestWeapon)
     {
@@ -854,7 +836,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 #endif
 }
 
-boolean P_CheckSpot(coord_t x, coord_t y)
+dd_bool P_CheckSpot(coord_t x, coord_t y)
 {
 #if __JHEXEN__
 #define DUMMY_TYPE      MT_PLAYER_FIGHTER
@@ -870,7 +852,7 @@ boolean P_CheckSpot(coord_t x, coord_t y)
     dummy->flags &= ~MF_PICKUP;
     //dummy->flags2 &= ~MF2_PASSMOBJ;
 
-    boolean result = P_CheckPosition(dummy, pos);
+    dd_bool result = P_CheckPosition(dummy, pos);
 
     P_MobjRemove(dummy, true);
 
@@ -882,9 +864,8 @@ boolean P_CheckSpot(coord_t x, coord_t y)
 #if __JHERETIC__
 void P_AddMaceSpot(mapspotid_t id)
 {
-#ifdef _DEBUG
-    Con_Message("P_AddMaceSpot: Added mace spot %u", id);
-#endif
+    App_Log(DE2_DEV_MAP_VERBOSE, "P_AddMaceSpot: Added mace spot %u", id);
+
     maceSpots = (mapspotid_t *)Z_Realloc(maceSpots, sizeof(mapspotid_t) * ++maceSpotCount, PU_MAP);
     maceSpots[maceSpotCount-1] = id;
 }
@@ -908,12 +889,11 @@ void P_SpawnPlayers()
             // Spawn the client anywhere.
             P_SpawnClient(i);
         }
-
         return;
     }
 
     // If deathmatch, randomly spawn the active players.
-    if(deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -959,7 +939,7 @@ void P_SpawnPlayers()
             coord_t pos[3];
             angle_t angle;
             int spawnFlags;
-            boolean spawnAsCamera;
+            dd_bool spawnAsCamera;
 
             if(start)
             {
@@ -988,9 +968,7 @@ void P_SpawnPlayers()
                         pos[VX], pos[VY], pos[VZ], angle, spawnFlags,
                         spawnAsCamera, false, true);
 
-#ifdef _DEBUG
-            Con_Message("P_SpawnPlayers: Player %i at %f, %f, %f", i, pos[VX], pos[VY], pos[VZ]);
-#endif
+            App_Log(DE2_DEV_MAP_MSG, "Player %i spawned at (%g, %g, %g)", i, pos[VX], pos[VY], pos[VZ]);
         }
     }
 
@@ -1014,7 +992,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     playerclass_t pClass;
 #if __JHEXEN__
-    if(randomClassParm)
+    if(COMMON_GAMESESSION->rules().randomClasses)
     {
         pClass = playerclass_t(P_Random() % 3);
         if(pClass == cfg.playerClass[playerNum]) // Not the same class, please.
@@ -1158,9 +1136,7 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
     //       custom comparison func for Thinker_Iterate...
     if(mo->type != type) return false;
 
-#ifdef _DEBUG
-    VERBOSE( Con_Message("Checking mo %i...", mo->thinker.id) );
-#endif
+    App_Log(DE2_MAP_XVERBOSE, "Checking mo %i for auto-turning...", mo->thinker.id);
 
     AABoxd aaBox(mo->origin[VX] - 50, mo->origin[VY] - 50,
                  mo->origin[VX] + 50, mo->origin[VY] + 50);
@@ -1176,15 +1152,12 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
     if(parm.line)
     {
         mo->angle = P_GetAnglep(parm.line, DMU_ANGLE) - ANGLE_90;
-#ifdef _DEBUG
-        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i angle=%x", mo->thinker.id, mo->angle) );
-#endif
+        App_Log(DE2_MAP_XVERBOSE, "Turning mobj to nearest line: mo=%i angle=%x",  mo->thinker.id, mo->angle);
     }
     else
     {
-#ifdef _DEBUG
-        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found", mo->thinker.id) );
-#endif
+        App_Log(DE2_DEV_MAP_XVERBOSE, "Turning mobj to nearest line: mo=%i => no nearest line found",
+                mo->thinker.id);
     }
 
     return false;

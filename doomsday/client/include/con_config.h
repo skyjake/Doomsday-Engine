@@ -1,4 +1,4 @@
-/** @file con_config.h Config files.
+/** @file con_config.h  Config file IO.
  * @ingroup console
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,36 +18,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_CONSOLE_CONFIG_H
-#define LIBDENG_CONSOLE_CONFIG_H
+#ifndef DENG_CONSOLE_CONFIG_H
+#define DENG_CONSOLE_CONFIG_H
 
 #include "dd_share.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Flags for Con_ParseCommands2.
+// Flags for Con_ParseCommands:
 #define CPCF_SET_DEFAULT            0x1
 #define CPCF_ALLOW_SAVE_STATE       0x2
 #define CPCF_ALLOW_SAVE_BINDINGS    0x4
 
-boolean Con_ParseCommands(const char* fileName);
-
-boolean Con_ParseCommands2(const char* fileName, int flags);
+bool Con_ParseCommands(char const *fileName, int flags = 0);
 
 /**
  * Saves all bindings, aliases and archiveable console variables.
  * The output file is a collection of console commands.
  */
-void Con_SaveDefaults(void);
-
-boolean Con_WriteState(const char* fileName, const char* bindingsFileName);
+void Con_SaveDefaults();
 
 D_CMD(WriteConsole);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_CONSOLE_CONFIG_H */
+#endif // DENG_CONSOLE_CONFIG_H

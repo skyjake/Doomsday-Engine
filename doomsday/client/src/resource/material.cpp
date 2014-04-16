@@ -973,7 +973,7 @@ D_CMD(InspectMaterial)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownMaterialScheme(search.scheme()))
     {
-        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -985,24 +985,21 @@ D_CMD(InspectMaterial)
             Material &material = manifest.material();
 
             // Print material description:
-            LOG_MSG(material.description());
+            LOG_RES_MSG(material.description());
 
             // Print material synopsis:
-            LOG_MSG(material.synopsis());
+            LOG_RES_MSG(material.synopsis());
 
 #if defined(__CLIENT__) && defined(DENG_DEBUG)
             // Print current animation states?
             if(material.hasAnimatedLayers() || material.hasAnimatedDecorations())
             {
-                LOG_MSG(_E(R));
+                LOG_RES_MSG(_E(R));
 
                 foreach(MaterialAnimation *animation, material.animations())
                 {
-                    Con_Message("Animation Context #%i:"
-                                "\n  Layer  Stage Tics Inter", int(animation->context()));
-
-                    QString indexKey = QString();
-                    Con_Message(indexKey.toUtf8().constData());
+                    LOG_RES_MSG("Animation Context #%i:" _E(m)_E(D)
+                                "\n  Layer  Stage Tics Inter") << animation->context();
 
                     // Print layer state info:
                     int const layerCount = material.layerCount();
@@ -1017,7 +1014,7 @@ D_CMD(InspectMaterial)
                                            .arg(l.stage, -5)
                                            .arg(int(l.tics), -4)
                                            .arg(l.inter, -5);
-                        Con_Message(info.toUtf8().constData());
+                        LOG_RES_MSG(_E(m) + info);
                     }
 
                     // Print detail layer state info:
@@ -1029,7 +1026,7 @@ D_CMD(InspectMaterial)
                                            .arg(l.stage, -5)
                                            .arg(int(l.tics), -4)
                                            .arg(l.inter, -5);
-                        Con_Message(info.toUtf8().constData());
+                        LOG_RES_MSG(_E(m) + info);
                     }
 
                     // Print shine layer state info:
@@ -1041,13 +1038,13 @@ D_CMD(InspectMaterial)
                                            .arg(l.stage, -5)
                                            .arg(int(l.tics), -4)
                                            .arg(l.inter, -5);
-                        Con_Message(info.toUtf8().constData());
+                        LOG_RES_MSG(_E(m) + info);
                     }
 
                     // Print decoration state info:
                     if(material.isDecorated())
                     {
-                        Con_Message("  Decor  Stage Tics Inter");
+                        LOG_RES_MSG(_E(m)_E(D) "  Decor  Stage Tics Inter");
 
                         int const decorationCount = material.decorationCount();
                         for(int i = 0; i < decorationCount; ++i)
@@ -1061,7 +1058,7 @@ D_CMD(InspectMaterial)
                                                .arg(l.stage, -5)
                                                .arg(int(l.tics), -4)
                                                .arg(l.inter, -5);
-                            Con_Message(info.toUtf8().constData());
+                            LOG_RES_MSG(_E(m) + info);
                         }
                     }
                 }
@@ -1075,7 +1072,7 @@ D_CMD(InspectMaterial)
                 int variantIdx = 0;
                 foreach(MaterialVariant *variant, material.variants())
                 {
-                    Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant->spec()));
+                    LOG_RES_MSG("Variant #%i: Spec:%p") << variantIdx << &variant->spec();
                     ++variantIdx;
                 }
             }
@@ -1084,13 +1081,13 @@ D_CMD(InspectMaterial)
         }
         catch(MaterialManifest::MissingMaterialError const &)
         {
-            LOG_MSG("%s.") << manifest.description();
+            LOG_RES_MSG("%s") << manifest.description();
             return true;
         }
     }
     catch(ResourceSystem::MissingManifestError const &er)
     {
-        LOG_WARNING("%s.") << er.asText();
+        LOG_RES_WARNING("%s") << er.asText();
     }
     return false;
 }

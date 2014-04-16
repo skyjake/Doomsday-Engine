@@ -26,7 +26,7 @@
 #include "common.h"
 
 // If true we are in the process of setting up a map.
-DENG_EXTERN_C boolean mapSetup;
+DENG_EXTERN_C dd_bool mapSetup;
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,13 +44,31 @@ void P_FinalizeMapChange(Uri const *uri);
  *
  * @param uri  URI e.g., "E1M1".
  */
-void P_SetupMap(Uri *uri);
+void P_SetupMap(Uri const *uri);
 
-char const *P_GetMapNiceName(void);
+/**
+ * To be called to reset the local world state (e.g., when leaving a networked game).
+ * Note that @ref P_SetupMap() calls this automatically when the current map changes.
+ */
+void P_ResetWorldState();
 
-patchid_t P_FindMapTitlePatch(uint episode, uint map);
+/**
+ * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
+ *                case the author for the @em current map will be returned (if set).
+ */
+char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor);
 
-char const *P_GetMapAuthor(boolean supressGameAuthor);
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+char const *P_MapTitle(Uri const *mapUri);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+patchid_t P_MapTitlePatch(Uri const *mapUri);
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void);

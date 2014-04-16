@@ -43,7 +43,7 @@ extern "C" {
 
 #define MAX_AUDIO_INTERFACES  16 // arbitrary
 
-boolean AudioDriver_Init(void);
+dd_bool AudioDriver_Init(void);
 void AudioDriver_Shutdown(void);
 
 /**
@@ -90,7 +90,7 @@ audiointerface_sfx_generic_t* AudioDriver_SFX(void);
 /**
  * Determines if at least one music interface is available for music playback.
  */
-boolean AudioDriver_Music_Available(void);
+dd_bool AudioDriver_Music_Available(void);
 
 /**
  * Returns the currently active CD playback interface. @c NULL is returned if

@@ -1,4 +1,4 @@
-/** @file polyobj.h World map polyobj.
+/** @file polyobj.h  World map polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,24 +18,21 @@
  * 02110-1301 USA</small>
  */
 
-#include <QSet>
-#include <QVector>
-
-#include <de/vector1.h>
-
 #include "de_base.h"
+#include "world/polyobj.h"
 
-#include "world/p_object.h"
+#include "world/worldsystem.h" // validCount
 #include "world/map.h"
+#include "world/p_object.h"
 #include "BspLeaf"
 
 #ifdef __CLIENT__
 #  include "render/rend_main.h" // useBias
 #endif
 
-#include "render/r_main.h" // validCount
-
-#include "world/polyobj.h"
+#include <de/vector1.h>
+#include <QSet>
+#include <QVector>
 
 using namespace de;
 
@@ -114,7 +111,13 @@ void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void 
     collisionCallback = func;
 }
 
-de::Mesh &Polyobj::mesh() const
+Map &Polyobj::map() const
+{
+    /// @todo Do not assume the CURRENT map.
+    return App_WorldSystem().map();
+}
+
+Mesh &Polyobj::mesh() const
 {
     return *static_cast<de::Mesh *>(_mesh);
 }
@@ -141,8 +144,7 @@ void Polyobj::link()
 {
     if(!_bspLeaf)
     {
-        /// @todo Do not assume polyobj is from the CURRENT map.
-        App_World().map().link(*this);
+        map().link(*this);
 
         // Find the center point of the polyobj.
         Vector2d avg;
@@ -153,7 +155,7 @@ void Polyobj::link()
         avg /= lineCount();
 
         // Given the center point determine in which BSP leaf the polyobj resides.
-        _bspLeaf = &App_World().map().bspLeafAt(avg);
+        _bspLeaf = &map().bspLeafAt(avg);
         _bspLeaf->link(*this);
     }
 }
@@ -272,7 +274,7 @@ struct ptrmobjblockingparams_t
 
 static inline bool mobjCanBlockMovement(mobj_t *mo)
 {
-    DENG_ASSERT(mo != 0);
+    DENG2_ASSERT(mo != 0);
     return (mo->ddFlags & DDMF_SOLID) || (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA));
 }
 

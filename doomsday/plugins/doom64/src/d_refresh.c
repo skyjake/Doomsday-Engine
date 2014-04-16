@@ -108,23 +108,25 @@ void G_RendSpecialFilter(int player, const RectRaw* region)
     DGL_BlendMode(BM_NORMAL);
 }
 
-boolean R_ViewFilterColor(float rgba[4], int filter)
+dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba)
         return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
+    {
+        // Red.
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 9.f;
+        rgba[CA] = (G_Ruleset_Deathmatch()? 1.0f : cfg.filterStrength) * filter / 9.f;
         return true;
     }
 
     if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Gold.
+    {
+        // Gold.
         rgba[CR] = 1;
         rgba[CG] = .8f;
         rgba[CB] = .5f;
@@ -133,7 +135,8 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
     }
 
     if(filter == 13) // RADIATIONPAL
-    {   // Green.
+    {
+        // Green.
         rgba[CR] = 0;
         rgba[CG] = .7f;
         rgba[CB] = 0;
@@ -142,7 +145,9 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
     }
 
     if(filter)
-        Con_Message("R_ViewFilterColor: Real strange filter number: %d.", filter);
+    {
+        App_Log(DE2_GL_WARNING, "Invalid view filter number: %d", filter);
+    }
 
     return false;
 }
@@ -155,12 +160,7 @@ void R_UpdateViewFilter(int player)
     int palette = 0, cnt, bzc;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: R_UpdateViewFilter: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
 
     // Not currently present?
     if(!plr->plr->inGame) return;
@@ -292,7 +292,7 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
 }
 #endif
 
-void D_DrawWindow(const Size2Raw* windowSize)
+void D_DrawWindow(Size2Raw const *windowSize)
 {
     if(G_GameState() == GS_INTERMISSION)
     {
@@ -308,7 +308,7 @@ void D_DrawWindow(const Size2Raw* windowSize)
     }
 }
 
-void D_EndFrame(void)
+void D_EndFrame()
 {
     int i;
 
@@ -316,9 +316,10 @@ void D_EndFrame(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
+        player_t *plr = players + i;
 
-        if(!plr->plr->inGame || !plr->plr->mo) continue;
+        if(!plr->plr->inGame) continue;
+        if(!plr->plr->mo) continue;
 
         // View angles are updated with fractional ticks, so we can just use the current values.
         R_SetViewAngle(i, Player_ViewYawAngle(i));
@@ -330,7 +331,7 @@ void D_EndFrame(void)
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.
  */
-void P_SetDoomsdayFlags(mobj_t* mo)
+void P_SetDoomsdayFlags(mobj_t *mo)
 {
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)

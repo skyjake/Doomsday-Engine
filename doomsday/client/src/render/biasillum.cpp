@@ -288,7 +288,7 @@ Vector3f BiasIllum::evaluate(Vector3d const &point, Vector3f const &normalAtPoin
             if(activeContributors & changedContributions)
             {
                 /// @todo Do not assume the current map.
-                Map &map = App_World().map();
+                Map &map = App_WorldSystem().map();
 
                 /*
                  * Recalculate the contribution for each changed light source.

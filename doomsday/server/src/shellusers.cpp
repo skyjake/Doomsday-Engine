@@ -61,7 +61,7 @@ ShellUsers::~ShellUsers()
 
 void ShellUsers::add(ShellUser *user)
 {
-    LOG_INFO("New shell user from %s") << user->address();
+    LOG_NET_NOTE("New shell user from %s") << user->address();
 
     d->users.insert(user);
     connect(user, SIGNAL(disconnected()), this, SLOT(userDisconnected()));
@@ -74,10 +74,8 @@ int ShellUsers::count() const
     return d->users.size();
 }
 
-void ShellUsers::worldMapChanged(World &world)
+void ShellUsers::worldSystemMapChanged()
 {
-    DENG2_UNUSED(world);
-
     foreach(ShellUser *user, d->users)
     {
         user->sendGameState();
@@ -101,7 +99,7 @@ void ShellUsers::userDisconnected()
     ShellUser *user = static_cast<ShellUser *>(sender());
     d->users.remove(user);
 
-    LOG_INFO("Shell user from %s has disconnected") << user->address();
+    LOG_NET_NOTE("Shell user from %s has disconnected") << user->address();
 
     user->deleteLater();
 }

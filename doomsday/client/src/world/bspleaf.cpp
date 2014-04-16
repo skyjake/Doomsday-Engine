@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "world/bspleaf.h"
 
 #include "Face"
@@ -93,15 +93,15 @@ DENG2_PIMPL(BspLeaf)
     int validCount;
 
     Instance(Public *i)
-        : Base(i),
-          cluster(0),
-          poly(0),
+        : Base(i)
+        , cluster(0)
+        , poly(0)
 #ifdef __CLIENT__
-          fanBase(0),
-          needUpdateFanBase(true),
-          addSpriteCount(0),
+        , fanBase(0)
+        , needUpdateFanBase(true)
+        , addSpriteCount(0)
 #endif
-          validCount(0)
+        , validCount(0)
     {
 #ifdef __CLIENT__
         zap(reverb);
@@ -200,8 +200,8 @@ DENG2_PIMPL(BspLeaf)
      */
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
-        DENG_ASSERT(cluster != 0); // sanity check
-        DENG_ASSERT(group >= 0 && group < cluster->sector().planeCount()); // sanity check
+        DENG2_ASSERT(cluster != 0); // sanity check
+        DENG2_ASSERT(group >= 0 && group < cluster->sector().planeCount()); // sanity check
 
         GeometryGroups::iterator foundAt = geomGroups.find(group);
         if(foundAt != geomGroups.end())
@@ -276,7 +276,8 @@ DENG2_PIMPL(BspLeaf)
 };
 
 BspLeaf::BspLeaf(Sector *sector)
-    : MapElement(DMU_BSPLEAF, sector), d(new Instance(this))
+    : MapElement(DMU_BSPLEAF, sector)
+    , d(new Instance(this))
 {}
 
 bool BspLeaf::hasPoly() const
@@ -323,14 +324,15 @@ void BspLeaf::setPoly(Face *newPoly)
 
 void BspLeaf::assignExtraMesh(Mesh &newMesh)
 {
+    LOG_AS("BspLeaf");
+
     int const sizeBefore = d->extraMeshes.size();
 
     d->extraMeshes.insert(&newMesh);
 
     if(d->extraMeshes.size() != sizeBefore)
     {
-        LOG_AS("BspLeaf");
-        LOG_DEBUG("Assigned extra mesh to leaf [%p].") << de::dintptr(this);
+        LOG_DEBUG("Assigned extra mesh to leaf %p") << this;
 
         // Attribute all faces to "this" BSP leaf.
         foreach(Face *face, newMesh.faces())
@@ -510,7 +512,7 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
 
 void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    DENG_ASSERT(posCoords != 0 && colorCoords != 0);
+    DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
 
     int const planeIndex     = group;
     GeometryGroup *geomGroup = d->geometryGroup(planeIndex);
@@ -566,7 +568,7 @@ bool BspLeaf::updateReverb()
     }
 
     float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
-    std::memset(&envSpaceAccum, 0, sizeof(envSpaceAccum));
+    zap(envSpaceAccum);
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = d->poly->aaBox();

@@ -21,6 +21,7 @@
 #include "de_platform.h"
 #include "render/fx/vignette.h"
 
+#include "clientapp.h"
 #include "con_main.h"
 //#include "de_graphics.h"
 #include "gl/gl_main.h"
@@ -102,6 +103,11 @@ Vignette::Vignette(int console) : ConsoleEffect(console)
 
 void Vignette::draw()
 {
+    if(!ClientApp::worldSystem().hasMap())
+    {
+        return;
+    }
+
     /// @todo Field of view should be console-specific.
 
     Vignette_Render(viewRect(), Rend_FieldOfView());

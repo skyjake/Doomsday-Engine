@@ -55,7 +55,7 @@ DENG_PUBLIC void Size2_Delete(Size2 *size);
 
 DENG_PUBLIC Size2Raw *Size2_Raw(Size2 const *size, Size2Raw *rawSize);
 
-DENG_PUBLIC boolean Size2_IsNull(Size2 const *size);
+DENG_PUBLIC dd_bool Size2_IsNull(Size2 const *size);
 
 DENG_PUBLIC int Size2_Width(Size2 const *size);
 DENG_PUBLIC int Size2_Height(Size2 const *size);
@@ -68,7 +68,7 @@ DENG_PUBLIC void Size2_SetWidthHeight(Size2 *size, int width, int height);
 
 DENG_PUBLIC void Size2_Sum(Size2 *size, Size2 const *other);
 
-DENG_PUBLIC boolean Size2_Equality(Size2 const *point, Size2 const *other);
+DENG_PUBLIC dd_bool Size2_Equality(Size2 const *point, Size2 const *other);
 
 /**
  * Floating-point width and height. Intended as a handy POD structure for easy
@@ -97,7 +97,7 @@ DENG_PUBLIC void Size2f_Delete(Size2f *size);
 
 DENG_PUBLIC Size2Rawf *Size2f_Raw(Size2f const *size, Size2Rawf *rawSize);
 
-DENG_PUBLIC boolean Size2f_IsNull(Size2f const *size);
+DENG_PUBLIC dd_bool Size2f_IsNull(Size2f const *size);
 
 DENG_PUBLIC double Size2f_Width(Size2f const *size);
 DENG_PUBLIC double Size2f_Height(Size2f const *size);
@@ -110,7 +110,7 @@ DENG_PUBLIC void Size2f_SetWidthHeight(Size2f *size, double width, double height
 
 DENG_PUBLIC void Size2f_Sum(Size2f *size, Size2f const *other);
 
-DENG_PUBLIC boolean Size2f_Equality(Size2f const *size, Size2f const *other);
+DENG_PUBLIC dd_bool Size2f_Equality(Size2f const *size, Size2f const *other);
 
 #ifdef __cplusplus
 } // extern "C"

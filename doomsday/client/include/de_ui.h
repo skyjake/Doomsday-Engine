@@ -29,11 +29,9 @@
 
 #ifdef __CLIENT__
 #  include <de/gui/ddkey.h>
-#  include "ui/windowsystem.h"
+#  include "ui/clientwindowsystem.h"
 #  include "ui/clientwindow.h"
 #  include "ui/ui_main.h"
-#  include "ui/ui_panel.h"
-#  include "network/ui_mpi.h"
 #endif
 
 #endif /* LIBDENG_USER_INTERFACE_H */

@@ -170,7 +170,7 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc);
  *
  * @return  Current/updated class for the player.
  */
-playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear);
+playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, dd_bool clear);
 
 /**
  * Given a doomednum, look up the associated mobj type.
@@ -225,17 +225,17 @@ mapspot_t const *P_ChooseRandomMaceSpot(void);
 void P_AddBossSpot(mapspotid_t id);
 #endif
 
-void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch, mapspotid_t spot);
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch, mapspotid_t spot);
 
 void P_DestroyPlayerStarts(void);
 
-uint P_GetNumPlayerStarts(boolean deathmatch);
+uint P_GetNumPlayerStarts(dd_bool deathmatch);
 
 /**
  * @return  The correct start for the player. The start is in the given
  *          group for specified entry point.
  */
-playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, boolean deathmatch);
+playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch);
 
 /**
  * Gives all the players in the game a playerstart.
@@ -248,7 +248,7 @@ void P_DealPlayerStarts(uint entryPoint);
  * structure stays unchanged between maps.
  */
 void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord_t z,
-    angle_t angle, int spawnFlags, boolean makeCamera, boolean pickupItems);
+    angle_t angle, int spawnFlags, dd_bool makeCamera, dd_bool pickupItems);
 
 /**
  * Spawns a player at one of the random death match spots.
@@ -261,7 +261,7 @@ void P_RebornPlayerInMultiplayer(int plrNum);
  * @return  @c false if the player cannot be respawned at the
  *          given location because something is occupying it.
  */
-boolean P_CheckSpot(coord_t x, coord_t y);
+dd_bool P_CheckSpot(coord_t x, coord_t y);
 
 #ifdef __cplusplus
 } // extern "C"

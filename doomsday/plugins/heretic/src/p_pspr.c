@@ -32,7 +32,7 @@
 
 #include "d_net.h"
 #include "g_defs.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_tick.h"
 #include "p_terraintype.h"
@@ -42,6 +42,24 @@
 #define RAISESPEED          (6)
 #define WEAPONBOTTOM        (128)
 #define WEAPONTOP           (32)
+
+static AmmoDef ammoDefs[NUM_AMMO_TYPES] = {
+    /*AT_CRYSTAL*/  { GM_ANY,           "INAMGLD" },
+    /*AT_ARROW*/    { GM_ANY,           "INAMBOW" },
+    /*AT_ORB*/      { GM_ANY,           "INAMBST" },
+    /*AT_RUNE*/     { GM_NOT_SHAREWARE, "INAMRAM" },
+    /*AT_FIREORB*/  { GM_NOT_SHAREWARE, "INAMPNX" },
+    /*AT_MSPHERE*/  { GM_NOT_SHAREWARE, "INAMLOB" }
+};
+
+AmmoDef const *P_AmmoDef(ammotype_t type)
+{
+    if(type >= AT_FIRST && type < AT_FIRST + NUM_AMMO_TYPES)
+    {
+        return &ammoDefs[type];
+    }
+    return 0; // Not found.
+}
 
 /*
     AT_CRYSTAL,
@@ -553,9 +571,7 @@ void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
  */
 void P_BringUpWeapon(struct player_s* player)
 {
-#if _DEBUG
-    const weapontype_t oldPendingWeapon = player->pendingWeapon;
-#endif
+    weapontype_t const oldPendingWeapon = player->pendingWeapon;
 
     weaponmodeinfo_t* wminfo = NULL;
     weapontype_t raiseWeapon;
@@ -582,10 +598,8 @@ void P_BringUpWeapon(struct player_s* player)
 
     wminfo = WEAPON_INFO(raiseWeapon, player->class_, (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
-#if _DEBUG
-    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
-                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
-#endif
+    App_Log(DE2_MAP_XVERBOSE, "P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
+            (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
@@ -598,9 +612,7 @@ void P_FireWeapon(player_t *player)
     statenum_t          attackState;
     int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
-#ifdef _DEBUG
-    Con_Message("P_FireWeapon: player %i", (int)(player - players));
-#endif
+    App_Log(DE2_DEV_MAP_XVERBOSE, "P_FireWeapon: player %i", (int)(player - players));
 
     if(!P_CheckAmmo(player))
         return;
@@ -608,9 +620,8 @@ void P_FireWeapon(player_t *player)
     NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
-#ifdef _DEBUG
-    Con_Message("P_FireWeapon: Setting player %i to attack state.", (int)(player - players));
-#endif
+    App_Log(DE2_DEV_MAP_XVERBOSE, "P_FireWeapon: Setting player %i to attack state",
+            (int)(player - players));
 
     if(player->refire)
         attackState = weaponInfo[player->readyWeapon][player->class_].mode[lvl].states[WSN_ATTACK_HOLD];
@@ -1256,7 +1267,7 @@ void C_DECL A_DeathBallImpact(mobj_t* ball)
     int i;
     mobj_t* target;
     angle_t angle;
-    boolean newAngle;
+    dd_bool newAngle;
 
     if(ball->origin[VZ] <= ball->floorZ && P_HitFloor(ball))
     {
@@ -1911,9 +1922,7 @@ void C_DECL A_Egg(mobj_t* mo)
     if(!mo->player)
         return;
 
-#ifdef _DEBUG
-    Con_Message("A_Egg: Spawning EGGFXs.");
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "A_Egg: Spawning EGGFXs");
 
 #if __JHEXEN__
     P_SpawnPlayerMissile(MT_EGGFX, mo);

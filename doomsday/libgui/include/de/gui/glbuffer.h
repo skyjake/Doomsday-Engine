@@ -3,17 +3,17 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBGUI_GLBUFFER_H
@@ -43,6 +43,7 @@ namespace internal
             TexCoord1,
             TexCoord2,
             TexCoord3,
+            TexBounds0,
             Color,
             Normal,
             Tangent,
@@ -128,6 +129,34 @@ struct LIBGUI_PUBLIC Vertex3TexRgba
     Vector4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(3)
+};
+
+/**
+ * Vertex format with 3D coordinates, one set of texture coordinates with indirect
+ * bounds, and an RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3TexBoundsRgba
+{
+    Vector3f pos;
+    Vector2f texCoord;  ///< mapped using texBounds
+    Vector4f texBounds; ///< UV space: x, y, width, height
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(4)
+};
+
+/**
+ * Vertex format with 3D coordinates, two sets of texture coordinates with indirect
+ * bounds, and an RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3Tex2BoundsRgba
+{
+    Vector3f pos;
+    Vector2f texCoord[2];
+    Vector4f texBounds;    ///< UV space: x, y, width, height
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
 
 /**

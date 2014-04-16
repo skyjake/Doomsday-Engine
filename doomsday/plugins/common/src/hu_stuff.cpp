@@ -21,27 +21,28 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"
+#include "hu_stuff.h"
+
+#include "hu_chat.h"
+#include "hu_log.h"
+#include "hu_menu.h"
+#include "hu_msg.h"
+#include "hu_inventory.h"
+#include "g_common.h"
+#include "gamesession.h"
+#include "p_mapsetup.h"
+#include "p_tick.h"
+#include "am_map.h"
+#include "fi_lib.h"
+#include "r_common.h"
+
 #include <cstdlib>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <map>
-
-#include "common.h"
-
-#include "hu_chat.h"
-#include "hu_log.h"
-#include "hu_menu.h"
-#include "hu_msg.h"
-#include "hu_stuff.h"
-#include "hu_inventory.h"
-#include "g_common.h"
-#include "p_mapsetup.h"
-#include "p_tick.h"
-#include "am_map.h"
-#include "fi_lib.h"
-#include "r_common.h"
 
 /**
  * @defgroup tableColumnFlags  Table Column flags
@@ -93,7 +94,7 @@ typedef struct fogeffectdata_s {
     float           alpha, targetAlpha;
     fogeffectlayer_t layers[2];
     float           joinY;
-    boolean         scrollDir;
+    dd_bool         scrollDir;
 } fogeffectdata_t;
 
 fontid_t fonts[NUM_GAME_FONTS];
@@ -103,7 +104,7 @@ fontid_t fonts[NUM_GAME_FONTS];
 const char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
-boolean shiftdown = false;
+dd_bool shiftdown = false;
 const char shiftXForm[] = {
     0,
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -410,15 +411,15 @@ void HU_DrawText(const char* str, float x, float y, float scale,
 }
 
 /// Predicate for sorting score infos.
-int scoreInfoCompare(const void* a_, const void* b_)
+int scoreInfoCompare(void const *a_, void const *b_)
 {
-    const scoreinfo_t* a = (scoreinfo_t*) a_;
-    const scoreinfo_t* b = (scoreinfo_t*) b_;
+    scoreinfo_t const *a = (scoreinfo_t *) a_;
+    scoreinfo_t const *b = (scoreinfo_t *) b_;
 
     if(a->kills > b->kills) return -1;
     if(b->kills > a->kills) return 1;
 
-    if(deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         // In deathmatch, suicides affect your place on the scoreboard.
         if(a->suicides < b->suicides) return -1;
@@ -493,7 +494,7 @@ static int populateScoreInfo(scoreinfo_t* scoreBoard, int maxPlayers, int player
         }
 #endif
 
-        if(deathmatch)
+        if(COMMON_GAMESESSION->rules().deathmatch)
         {
             for(int j = 0; j < maxPlayers; ++j)
             {
@@ -751,15 +752,11 @@ static void drawMapMetaData(float x, float y, float alpha)
 {
 #define BORDER              2
 
-    static const char* unnamed = "Unnamed";
+    char const *title = P_MapTitle(0/*current map*/);
+    if(!title) title = "Unnamed";
 
-    const char* lname = P_GetMapNiceName();
     char buf[256];
-
-    if(!lname)
-        lname = unnamed;
-
-    dd_snprintf(buf, 256, "map: %s gamemode: %s", lname, P_GetGameModeName());
+    dd_snprintf(buf, 256, "%s - %s", COMMON_GAMESESSION->rules().description().toLatin1().constData(), title);
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
     FR_DrawTextXY2(buf, x + BORDER, y - BORDER, ALIGN_BOTTOMLEFT);
@@ -902,15 +899,15 @@ void Hu_FogEffectTicker(timespan_t ticLength)
         {
             fog->layers[i].texAngle += ((MENUFOGSPEED[i]/4) * ticLength * TICRATE);
             fog->layers[i].posAngle -= (MENUFOGSPEED[!i]    * ticLength * TICRATE);
-            fog->layers[i].texOffset[VX] = 160 + 120 * cos(fog->layers[i].posAngle / 180 * PI);
-            fog->layers[i].texOffset[VY] = 100 + 100 * sin(fog->layers[i].posAngle / 180 * PI);
+            fog->layers[i].texOffset[VX] = 160 + 120 * cos(fog->layers[i].posAngle / 180 * DD_PI);
+            fog->layers[i].texOffset[VY] = 100 + 100 * sin(fog->layers[i].posAngle / 180 * DD_PI);
         }
         else
         {
             fog->layers[i].texAngle += ((MENUFOGSPEED[i]/4)     * ticLength * TICRATE);
             fog->layers[i].posAngle -= ((MENUFOGSPEED[!i]*1.5f) * ticLength * TICRATE);
-            fog->layers[i].texOffset[VX] = 320 + 320 * cos(fog->layers[i].posAngle / 180 * PI);
-            fog->layers[i].texOffset[VY] = 240 + 240 * sin(fog->layers[i].posAngle / 180 * PI);
+            fog->layers[i].texOffset[VX] = 320 + 320 * cos(fog->layers[i].posAngle / 180 * DD_PI);
+            fog->layers[i].texOffset[VY] = 240 + 240 * sin(fog->layers[i].posAngle / 180 * DD_PI);
         }
     }
 
@@ -930,7 +927,7 @@ void Hu_FogEffectTicker(timespan_t ticLength)
 }
 
 void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
-    boolean left, boolean right, boolean caps, float red, float green,
+    dd_bool left, dd_bool right, dd_bool caps, float red, float green,
     float blue, float alpha)
 {
     float length, delta[2], normal[2], unit[2];
@@ -1385,8 +1382,8 @@ static void drawFogEffect(void)
 
 void Hu_Drawer(void)
 {
-    boolean menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
-    boolean pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
+    dd_bool menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
+    dd_bool pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
         return;
@@ -1449,7 +1446,7 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
-boolean Hu_IsStatusBarVisible(int player)
+dd_bool Hu_IsStatusBarVisible(int player)
 {
 #ifdef __JDOOM64__
     DENG_UNUSED(player);
@@ -1467,16 +1464,11 @@ boolean Hu_IsStatusBarVisible(int player)
 }
 
 #if __JDOOM__ || __JDOOM64__
-patchid_t Hu_MapTitlePatchId(void)
-{
-    return P_FindMapTitlePatch(gameEpisode, gameMap);
-}
-
-int Hu_MapTitleFirstLineHeight(void)
+int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
     patchinfo_t patchInfo;
-    if(R_GetPatchInfo(Hu_MapTitlePatchId(), &patchInfo))
+    if(R_GetPatchInfo(P_MapTitlePatch(0/*current map*/), &patchInfo))
     {
         y = patchInfo.geometry.size.height + 2;
     }
@@ -1484,9 +1476,9 @@ int Hu_MapTitleFirstLineHeight(void)
 }
 #endif
 
-boolean Hu_IsMapTitleAuthorVisible(void)
+dd_bool Hu_IsMapTitleAuthorVisible(void)
 {
-    char const *author = P_GetMapAuthor(cfg.hideIWADAuthor);
+    char const *author = P_MapAuthor(0/*current map*/, cfg.hideIWADAuthor);
     return author != 0 && (actualMapTime <= 6 * TICSPERSEC);
 }
 
@@ -1503,22 +1495,12 @@ int Hu_MapTitleHeight(void)
 #endif
 }
 
-void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
+void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    char const *lname = 0, *lauthor = 0;
+    char const *title  = P_MapTitle(0/*current map*/);
+    char const *author = P_MapAuthor(0/*current map*/, cfg.hideIWADAuthor);
+
     float y = 0;
-
-    // Get the strings from Doomsday.
-    lname = P_GetMapNiceName();
-    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
-
-#if __JHEXEN__
-    if(!lname)
-    {
-        // Use stardard map name if DED didn't define it.
-        lname = P_GetMapName(gameMap);
-    }
-#endif
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, alpha);
@@ -1528,50 +1510,48 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    patchid_t patchId = Hu_MapTitlePatchId();
-    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    patchid_t patchId = P_MapTitlePatch(0/*current map*/);
+    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.
     y += Hu_MapTitleFirstLineHeight();
 
 #elif __JHERETIC__ || __JHEXEN__
-    if(lname)
+    if(title)
     {
-        FR_DrawTextXY3(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(title, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
         y += 20;
     }
 #endif
 
     if(mapIdInsteadOfAuthor)
     {
-        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
         FR_SetFont(FID(GF_FONTA));
 #if defined(__JHERETIC__) || defined(__JHEXEN__)
         FR_SetColorAndAlpha(.85f, .85f, .85f, alpha);
 #else
         FR_SetColorAndAlpha(.6f, .6f, .6f, alpha);
 #endif
-        FR_DrawTextXY3(Str_Text(Uri_ToString(mapUri)), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
-        Uri_Delete(mapUri);
+        FR_DrawTextXY3(Str_Text(Uri_ToString(gameMapUri)), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
-    else if(lauthor)
+    else if(author)
     {
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(.5f, .5f, .5f, alpha);
-        FR_DrawTextXY3(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(author, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-boolean Hu_IsMapTitleVisible(void)
+dd_bool Hu_IsMapTitleVisible(void)
 {
     if(!cfg.mapTitle) return false;
 
     return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
 }
 
-static boolean needToRespectStatusBarHeightWhenAutomapOpen(void)
+static dd_bool needToRespectStatusBarHeightWhenAutomapOpen(void)
 {
 #ifndef __JDOOM64__
     return Hu_IsStatusBarVisible(DISPLAYPLAYER);
@@ -1580,7 +1560,7 @@ static boolean needToRespectStatusBarHeightWhenAutomapOpen(void)
     return false;
 }
 
-static boolean needToRespectHudSizeWhenAutomapOpen(void)
+static dd_bool needToRespectHudSizeWhenAutomapOpen(void)
 {
 #ifdef __JDOOM__
     if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER) &&

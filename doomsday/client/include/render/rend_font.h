@@ -54,7 +54,7 @@ void FR_Init(void);
 void FR_Shutdown(void);
 
 /// @return  @c true= Font renderer has been initialized and is available.
-boolean FR_Available(void);
+dd_bool FR_Available(void);
 
 void FR_Ticker(timespan_t ticLength);
 

@@ -3,16 +3,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -21,6 +21,7 @@
 #include "de/GLBuffer"
 #include "de/GLShader"
 #include "de/GLTexture"
+#include "de/GuiApp"
 #include "de/gui/opengl.h"
 #include <de/Block>
 #include <de/Log>
@@ -32,9 +33,10 @@ namespace de {
 
 using namespace internal;
 
-DENG2_PIMPL(GLProgram),
-DENG2_OBSERVES(GLUniform, ValueChange),
-DENG2_OBSERVES(GLUniform, Deletion)
+DENG2_PIMPL(GLProgram)
+, DENG2_OBSERVES(GLUniform, ValueChange)
+, DENG2_OBSERVES(GLUniform, Deletion)
+, DENG2_OBSERVES(GuiApp, GLContextChange)
 {
     typedef QSet<GLUniform const *> Uniforms;
     typedef QList<GLUniform const *> UniformList;
@@ -48,17 +50,33 @@ DENG2_OBSERVES(GLUniform, Deletion)
     GLuint name;
     Shaders shaders;
     bool inUse;
+    bool needRebuild;
 
     Instance(Public *i)
-        : Base(i),
-          texturesChanged(false),
-          name(0),
-          inUse(false)
-    {}
+        : Base(i)
+        , texturesChanged(false)
+        , name(0)
+        , inUse(false)
+        , needRebuild(false)
+    {
+        //DENG2_GUI_APP->audienceForGLContextChange += this;
+    }
 
     ~Instance()
     {
+        //DENG2_GUI_APP->audienceForGLContextChange -= this;
         release();
+    }
+
+    void appGLContextChanged()
+    {
+        /*
+        if(name && !needRebuild)
+        {
+            qDebug() << "rebuild program" << name << "before use";
+            self.rebuildBeforeNextUse();
+        }
+        */
     }
 
     void alloc()
@@ -95,6 +113,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
         DENG2_ASSERT(shader->isReady());
         alloc();
         glAttachShader(name, shader->glName());
+        LIBGUI_ASSERT_GL_OK();
         shaders.insert(holdRef(shader));
     }
 
@@ -121,8 +140,8 @@ DENG2_OBSERVES(GLUniform, Deletion)
     {
         foreach(GLUniform const *u, bound)
         {
-            u->audienceForValueChange -= this;
-            u->audienceForDeletion -= this;
+            u->audienceForValueChange() -= this;
+            u->audienceForDeletion() -= this;
         }
         texturesChanged = false;
         bound.clear();
@@ -145,15 +164,16 @@ DENG2_OBSERVES(GLUniform, Deletion)
             char const *varName;
         }
         const names[] = {
-            { AttribSpec::Position,  "aVertex"    },
-            { AttribSpec::TexCoord0, "aUV"        },
-            { AttribSpec::TexCoord1, "aUV2"       },
-            { AttribSpec::TexCoord2, "aUV3"       },
-            { AttribSpec::TexCoord3, "aUV4"       },
-            { AttribSpec::Color,     "aColor"     },
-            { AttribSpec::Normal,    "aNormal"    },
-            { AttribSpec::Tangent,   "aTangent"   },
-            { AttribSpec::Bitangent, "aBitangent" }
+            { AttribSpec::Position,   "aVertex"    },
+            { AttribSpec::TexCoord0,  "aUV"        },
+            { AttribSpec::TexCoord1,  "aUV2"       },
+            { AttribSpec::TexCoord2,  "aUV3"       },
+            { AttribSpec::TexCoord3,  "aUV4"       },
+            { AttribSpec::TexBounds0, "aBounds"    },
+            { AttribSpec::Color,      "aColor"     },
+            { AttribSpec::Normal,     "aNormal"    },
+            { AttribSpec::Tangent,    "aTangent"   },
+            { AttribSpec::Bitangent,  "aBitangent" }
         };
 
         for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
@@ -242,6 +262,28 @@ DENG2_OBSERVES(GLUniform, Deletion)
         }
     }
 
+    void rebuild()
+    {
+        qDebug() << "Rebuilding GL program" << name;
+
+        if(name)
+        {
+            glDeleteProgram(name);
+            name = 0;
+        }
+
+        alloc();
+
+        foreach(GLShader const *shader, shaders)
+        {
+            glAttachShader(name, shader->glName());
+            LIBGUI_ASSERT_GL_OK();
+        }
+
+        bindVertexAttribs();
+        markAllBoundUniformsChanged();
+    }
+
     void uniformValueChanged(GLUniform &uniform)
     {
         changed.insert(&uniform);
@@ -288,6 +330,16 @@ GLProgram &GLProgram::build(IByteArray const &vertexShaderSource,
                  refless(new GLShader(GLShader::Fragment, fragmentShaderSource)));
 }
 
+void GLProgram::rebuildBeforeNextUse()
+{
+    d->needRebuild = true;
+}
+
+void GLProgram::rebuild()
+{
+    d->rebuild();
+}
+
 GLProgram &GLProgram::operator << (GLUniform const &uniform)
 {
     return bind(uniform);
@@ -300,8 +352,8 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
         d->bound.insert(&uniform);
         d->changed.insert(&uniform);
 
-        uniform.audienceForValueChange += d;
-        uniform.audienceForDeletion += d;
+        uniform.audienceForValueChange() += d;
+        uniform.audienceForDeletion() += d;
 
         if(uniform.type() == GLUniform::Sampler2D)
         {
@@ -319,8 +371,8 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
         d->bound.remove(&uniform);
         d->changed.remove(&uniform);
 
-        uniform.audienceForValueChange -= d.get();
-        uniform.audienceForDeletion -= d.get();
+        uniform.audienceForValueChange() -= d.get();
+        uniform.audienceForDeletion() -= d.get();
 
         if(uniform.type() == GLUniform::Sampler2D)
         {
@@ -333,8 +385,19 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
 
 void GLProgram::beginUse() const
 {
+    LIBGUI_ASSERT_GL_OK();
+    DENG2_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT(QGLContext::currentContext() != 0);
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
+
+    if(d->needRebuild)
+    {
+        d->needRebuild = false;
+        const_cast<GLProgram *>(this)->rebuild();
+    }
+
+    DENG2_ASSERT(glIsProgram(d->name));
 
     d->inUse = true;
 
@@ -368,7 +431,7 @@ int GLProgram::glUniformLocation(char const *uniformName) const
     if(loc < 0)
     {
         LOG_AS("GLProgram");
-        LOG_DEBUG("Could not find uniform '%s'") << uniformName;
+        LOGDEV_GL_WARNING("Could not find uniform '%s'") << uniformName;
     }
     return loc;
 }

@@ -26,7 +26,7 @@
 
 #include "d_net.h"
 #include "g_common.h"
-#include "p_player.h"
+#include "player.h"
 #include "am_map.h"
 #include "hu_msg.h"
 #include "dmu_lib.h"
@@ -95,7 +95,7 @@ CHEAT_FUNC(Init)
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -114,7 +114,7 @@ CHEAT_FUNC(IDKFA)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
     if(plr->morphTics) return false;
@@ -160,7 +160,7 @@ CHEAT_FUNC(Quicken3)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -211,8 +211,8 @@ CHEAT_FUNC(Reveal)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME && deathmatch) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(IS_NETGAME && G_Ruleset_Deathmatch()) return false;
+    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -252,7 +252,7 @@ D_CMD(CheatGod)
         {
             NetCl_CheatRequest("god");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
         {
             return false;
         }
@@ -291,7 +291,7 @@ D_CMD(CheatNoClip)
         {
             NetCl_CheatRequest("noclip");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
         {
             return false;
         }
@@ -427,25 +427,24 @@ D_CMD(CheatGive)
 
     if(G_GameState() != GS_MAP)
     {
-        Con_Printf("Can only \"give\" when in a game!\n");
+        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!");
         return true;
     }
 
     if(argc != 2 && argc != 3)
     {
-        Con_Printf("Usage:\n  give (stuff)\n");
-        Con_Printf("  give (stuff) (plr)\n");
-        Con_Printf("Stuff consists of one or more of (type:id). "
-                   "If no id; give all of type:\n");
-        Con_Printf(" a - ammo\n");
-        Con_Printf(" h - health\n");
-        Con_Printf(" i - items\n");
-        Con_Printf(" k - keys\n");
-        Con_Printf(" p - puzzle\n");
-        Con_Printf(" r - armor\n");
-        Con_Printf(" w - weapons\n");
-        Con_Printf("Example: 'give ikw' gives items, keys and weapons.\n");
-        Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
+        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n  give (stuff) (plr)");
+        App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
+                             "If no id; give all of type:");
+        App_Log(DE2_LOG_SCR, " a - ammo");
+        App_Log(DE2_LOG_SCR, " h - health");
+        App_Log(DE2_LOG_SCR, " i - items");
+        App_Log(DE2_LOG_SCR, " k - keys");
+        App_Log(DE2_LOG_SCR, " p - puzzle");
+        App_Log(DE2_LOG_SCR, " r - armor");
+        App_Log(DE2_LOG_SCR, " w - weapons");
+        App_Log(DE2_LOG_SCR, "Example: 'give ikw' gives items, keys and weapons.");
+        App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.");
         return true;
     }
 
@@ -464,7 +463,7 @@ D_CMD(CheatGive)
         return true;
     }
 
-    if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+    if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
         return false;
 
     plr = &players[player];
@@ -494,8 +493,8 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
                     {
-                        Con_Printf("Unknown ammo #%d (valid range %d-%d).\n",
-                                   (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
+                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)",
+                                (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
                         break;
                     }
 
@@ -540,8 +539,8 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
                     {
-                        Con_Printf("Unknown key #%d (valid range %d-%d).\n",
-                                   (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
+                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)",
+                                (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
                         break;
                     }
 
@@ -581,8 +580,8 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < ARMOR_FIRST || idx >= NUMARMOR)
                     {
-                        Con_Printf("Unknown armor #%d (valid range %d-%d).\n",
-                                   (int)idx, ARMOR_FIRST, NUMARMOR-1);
+                        App_Log(DE2_SCR_ERROR, "Unknown armor #%d (valid range %d-%d)",
+                                (int)idx, ARMOR_FIRST, NUMARMOR-1);
                         break;
                     }
 
@@ -609,8 +608,8 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
                     {
-                        Con_Printf("Unknown weapon #%d (valid range %d-%d).\n",
-                                   (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
+                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)",
+                                (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
                         break;
                     }
 
@@ -625,7 +624,7 @@ D_CMD(CheatGive)
             break;
 
         default: // Unrecognized.
-            Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter", buf[i]);
             break;
         }
     }
@@ -650,7 +649,7 @@ D_CMD(CheatMassacre)
         {
             NetCl_CheatRequest("kill");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
         {
             return false;
         }
@@ -670,36 +669,37 @@ D_CMD(CheatWhere)
     player_t *plr = &players[CONSOLEPLAYER];
     char textBuffer[256];
     Sector *sector;
-    AutoStr *path, *mapPath;
-    Uri *uri, *mapUri;
+    mobj_t *plrMo;
+    Uri *matUri;
 
-    if(G_GameState() != GS_MAP || !plr->plr->mo)
+    if(G_GameState() != GS_MAP)
         return true;
 
-    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    mapPath = Uri_ToString(mapUri);
-    sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
-            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
-            plr->plr->mo->origin[VZ]);
+    plrMo = plr->plr->mo;
+    if(!plrMo) return true;
+
+    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
+                        Str_Text(Uri_ToString(gameMapUri)),
+                        plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
-    Uri_Delete(mapUri);
 
     // Also print some information to the console.
-    Con_Message("%s", textBuffer);
+    App_Log(DE2_MAP_NOTE, "%s", textBuffer);
 
-    sector = Mobj_Sector(plr->plr->mo);
-    uri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
-    path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s", P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
+    sector = Mobj_Sector(plrMo);
 
-    uri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
-    path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s", P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
+    matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
+    App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s",
+                         P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(Uri_ToString(matUri)));
+    Uri_Delete(matUri);
 
-    Con_Message("Player height:%g Player radius:%g",
-                plr->plr->mo->height, plr->plr->mo->radius);
+    matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
+    App_Log(DE2_MAP_MSG, "CeilingZ:%g Material:%s",
+                          P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(Uri_ToString(matUri)));
+    Uri_Delete(matUri);
+
+    App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
+                          plrMo->height, plrMo->radius);
 
     return true;
 }
@@ -712,7 +712,7 @@ D_CMD(CheatMorph)
         {
             NetCl_CheatRequest("pig");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
         {
             return false;
         }
@@ -760,7 +760,7 @@ D_CMD(CheatShadowcaster)
             AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "class %i", (int)newClass);
             NetCl_CheatRequest(Str_Text(cmd));
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
         {
             return false;
         }
@@ -799,7 +799,7 @@ D_CMD(CheatRunScript)
             AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "runscript %i", scriptNum);
             NetCl_CheatRequest(Str_Text(cmd));
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
         {
             return false;
         }
@@ -825,7 +825,8 @@ D_CMD(CheatRunScript)
             if(scriptNum < 1 || scriptNum > 99) return false;
 
             scriptArgs[0] = scriptArgs[1] = scriptArgs[2] = 0;
-            if(P_StartACS(scriptNum, 0, scriptArgs, plr->plr->mo, NULL, 0))
+            if(Game_ACScriptInterpreter_StartScript(scriptNum, 0/*current-map*/,
+                                                    scriptArgs, plr->plr->mo, NULL, 0))
             {
                 AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "Running script %i", scriptNum);
                 P_SetMessage(plr, LMF_NO_HIDE, Str_Text(cmd));

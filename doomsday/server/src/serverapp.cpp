@@ -26,7 +26,7 @@
 #include <de/Log>
 #include <de/Error>
 #include <de/c_wrapper.h>
-#include <de/garbage.h>
+#include <de/Garbage>
 
 #include "serverapp.h"
 #include "dd_main.h"
@@ -53,9 +53,9 @@ static void handleAppTerminate(char const *msg)
 DENG2_PIMPL(ServerApp)
 {
     QScopedPointer<ServerSystem> serverSystem;
-    ResourceSystem resourceSys;
     Games games;
-    World world;
+    QScopedPointer<ResourceSystem> resourceSys;
+    WorldSystem worldSys;
 
     Instance(Public *i)
         : Base(i)
@@ -103,17 +103,18 @@ ServerApp::ServerApp(int &argc, char **argv)
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
-    QCoreApplication::setOrganizationDomain ("dengine.net");
-    QCoreApplication::setOrganizationName   ("Deng Team");
-    QCoreApplication::setApplicationName    ("Doomsday Server");
-    QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
+    setMetadata("Deng Team", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);
+    setUnixHomeFolderName(".doomsday");
 
     setTerminateFunc(handleAppTerminate);
 
     d->serverSystem.reset(new ServerSystem);
     addSystem(*d->serverSystem);
 
-    addSystem(d->resourceSys);
+    d->resourceSys.reset(new ResourceSystem);
+    addSystem(*d->resourceSys);
+
+    addSystem(d->worldSys);
 
     // We must presently set the current game manually (the collection is global).
     setGame(d->games.nullGame());
@@ -171,11 +172,6 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
-bool ServerApp::haveApp()
-{
-    return serverAppSingleton != 0;
-}
-
 ServerApp &ServerApp::app()
 {
     DENG2_ASSERT(serverAppSingleton != 0);
@@ -189,7 +185,7 @@ ServerSystem &ServerApp::serverSystem()
 
 ResourceSystem &ServerApp::resourceSystem()
 {
-    return app().d->resourceSys;
+    return *app().d->resourceSys;
 }
 
 Games &ServerApp::games()
@@ -197,7 +193,7 @@ Games &ServerApp::games()
     return app().d->games;
 }
 
-World &ServerApp::world()
+WorldSystem &ServerApp::worldSystem()
 {
-    return app().d->world;
+    return app().d->worldSys;
 }

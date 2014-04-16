@@ -6,18 +6,17 @@
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include <QDebug>
@@ -32,12 +31,16 @@
 #include <vector>
 #include <de/Log>
 
+namespace de {
+
 typedef std::vector<DisplayMode> DisplayModes;
 
 static int displayDepth;
 static Rotation displayRotation;
 static DisplayModes availableModes;
 static DisplayMode currentMode;
+
+namespace internal {
 
 /**
  * Wrapper for the Xrandr configuration info. The config is kept in memory only
@@ -72,7 +75,7 @@ public:
             }
         }
 
-        Time prevConfTime;
+        ::Time prevConfTime;
         _confTime = XRRConfigTimes(_conf, &prevConfTime);
     }
 
@@ -147,17 +150,23 @@ public:
         }
 
         // Update the current mode.
-        ::currentMode = *mode;
+        de::currentMode = *mode;
         return true;
     }
 
 private:
     XRRScreenConfiguration* _conf;
     XRRScreenSize* _sizes;
-    Time _confTime;
+    ::Time _confTime;
     int _numSizes;
     DisplayModes _modes;
 };
+
+} // namespace internal
+} // namespace de
+
+using namespace de;
+using namespace de::internal;
 
 void DisplayMode_Native_Init(void)
 {
@@ -221,15 +230,15 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 
     if(!dpy || !XF86VidModeQueryExtension(dpy, &event, &error))
     {
-        LOG_MSG("XFree86-VidModeExtension not available.");
+        LOG_GL_WARNING("XFree86-VidModeExtension not available.");
         return;
     }
-    LOG_DEBUG("event# %i error# %i") << event << error;
+    LOGDEV_GL_XVERBOSE("event# %i error# %i") << event << error;
 
     // Ramp size.
     int rampSize = 0;
     XF86VidModeGetGammaRampSize(dpy, screen, &rampSize);
-    LOG_VERBOSE("Gamma ramp size: %i") << rampSize;
+    LOGDEV_GL_VERBOSE("Gamma ramp size: %i") << rampSize;
     if(!rampSize) return;
 
     ushort* xRamp = new ushort[3 * rampSize];

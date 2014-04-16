@@ -1,18 +1,18 @@
 /** @file scriptedinfo.cpp  Info document tree with script context.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -63,7 +63,7 @@ DENG2_PIMPL(ScriptedInfo)
     {
         processBlock(info.root());
 
-        LOG_DEBUG("Processed contents:\n") << process.globals().asText();
+        LOG_SCR_XVERBOSE("Processed contents:\n") << process.globals().asText();
     }
 
     void processElement(Info::Element const *element)
@@ -135,8 +135,8 @@ DENG2_PIMPL(ScriptedInfo)
             ns.add(varName.concatenateMember("__inherit__")) =
                     new TextValue(targetName);
 
-            LOG_DEV_TRACE("setting __inherit__ of %s %s (%p) to %s",
-                          block.blockType() << varName << &block << targetName);
+            LOGDEV_SCR_XVERBOSE_DEBUGONLY("setting __inherit__ of %s %s (%p) to %s",
+                                         block.blockType() << varName << &block << targetName);
 
             DENG2_ASSERT(!varName.isEmpty());
             DENG2_ASSERT(!targetName.isEmpty());
@@ -223,7 +223,7 @@ DENG2_PIMPL(ScriptedInfo)
                     // Reset to the global namespace.
                     currentNamespace = "";
                 }
-                LOG_TRACE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
+                LOG_SCR_XVERBOSE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
             }
             else if(!block.name().isEmpty())
             {

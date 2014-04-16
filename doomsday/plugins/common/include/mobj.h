@@ -1,8 +1,8 @@
-/** @file mobj.h Common Map Object (Mobj) functionality.
+/** @file mobj.h  Common playsim map object (mobj) functionality.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -40,7 +40,7 @@ void Mobj_XYMoveStopping(mobj_t *mobj);
  *
  * @param mobj  Mobj instance.
  */
-boolean Mobj_IsPlayerClMobj(mobj_t *mobj);
+dd_bool Mobj_IsPlayerClMobj(mobj_t *mobj);
 
 /**
  * Determines if a mobj is a player mobj. It could still be a voodoo doll, also.
@@ -49,7 +49,7 @@ boolean Mobj_IsPlayerClMobj(mobj_t *mobj);
  *
  * @return @c true, iff the mobj is a player.
  */
-boolean Mobj_IsPlayer(mobj_t const *mobj);
+dd_bool Mobj_IsPlayer(mobj_t const *mobj);
 
 /**
  * Determines if a mobj is a voodoo doll.
@@ -58,7 +58,7 @@ boolean Mobj_IsPlayer(mobj_t const *mobj);
  *
  * @return @c true, iff the mobj is a voodoo doll.
  */
-boolean Mobj_IsVoodooDoll(mobj_t const *mobj);
+dd_bool Mobj_IsVoodooDoll(mobj_t const *mobj);
 
 /**
  * @param mobj       Mobj instance.
@@ -66,7 +66,7 @@ boolean Mobj_IsVoodooDoll(mobj_t const *mobj);
  *
  * @return  @c true iff a player was targeted.
  */
-boolean Mobj_LookForPlayers(mobj_t *mobj, boolean allAround);
+dd_bool Mobj_LookForPlayers(mobj_t *mobj, dd_bool allAround);
 
 /**
  * @param mobj      Mobj instance.
@@ -74,7 +74,7 @@ boolean Mobj_LookForPlayers(mobj_t *mobj, boolean allAround);
  *
  * @return  @c true, if the mobj is still present.
  */
-boolean P_MobjChangeState(mobj_t *mobj, statenum_t stateNum);
+dd_bool P_MobjChangeState(mobj_t *mobj, statenum_t stateNum);
 
 /**
  * Same as P_MobjChangeState but does not call action functions.
@@ -84,7 +84,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t stateNum);
  *
  * @return  @c true, if the mobj is still present.
  */
-boolean P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum);
+dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum);
 
 #ifdef __cplusplus
 } // extern "C"

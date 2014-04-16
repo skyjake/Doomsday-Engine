@@ -19,20 +19,18 @@
 #ifndef CLIENT_BUSYWIDGET_H
 #define CLIENT_BUSYWIDGET_H
 
-#include "GuiWidget"
-#include "progresswidget.h"
-
+#include <de/ProgressWidget>
 #include <de/GLTexture>
 
 /**
  * Widget that takes care of the UI while busy mode is active.
  */
-class BusyWidget : public GuiWidget
+class BusyWidget : public de::GuiWidget
 {
 public:
     BusyWidget(de::String const &name = "");
 
-    ProgressWidget &progress();
+    de::ProgressWidget &progress();
 
     void renderTransitionFrame();
     void releaseTransitionFrame();

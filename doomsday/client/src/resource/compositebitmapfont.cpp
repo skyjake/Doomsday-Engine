@@ -61,7 +61,7 @@ DENG2_PIMPL(CompositeBitmapFont)
 
     Glyph &glyph(uchar ch)
     {
-        if(ch >= MAX_CHARS) return missingGlyph;
+        //if(ch >= MAX_CHARS) return missingGlyph;
         if(!glyphs[ch].haveSourceImage) return missingGlyph;
         return glyphs[ch];
     }
@@ -122,7 +122,7 @@ patchid_t CompositeBitmapFont::glyphPatch(uchar ch)
 
 void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
 {
-    if(ch >= MAX_CHARS) return;
+    //if(ch >= MAX_CHARS) return;
     d->glyphs[ch].patch = App_ResourceSystem().declarePatch(encodedPatchName);
 
     // We'll need to rebuild the prepared GL resources.
@@ -178,12 +178,12 @@ void CompositeBitmapFont::glInit()
         catch(TextureManifest::MissingTextureError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ", ignoring.");
+            LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
         catch(TextureScheme::NotFoundError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ", ignoring.");
+            LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
     }
 
@@ -227,7 +227,7 @@ CompositeBitmapFont *CompositeBitmapFont::fromDef(FontManifest &manifest,
         }
         catch(de::Uri::ResolveError const &er)
         {
-            LOG_WARNING(er.asText());
+            LOG_RES_WARNING(er.asText());
         }
     }
 
@@ -264,7 +264,7 @@ void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t const &newDef)
         }
         catch(de::Uri::ResolveError const& er)
         {
-            LOG_WARNING(er.asText());
+            LOG_RES_WARNING(er.asText());
         }
     }
 }

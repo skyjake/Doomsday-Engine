@@ -13,6 +13,7 @@
 # CONFIG options for Doomsday:
 # - deng_aptstable              Include the stable apt repository .list
 # - deng_aptunstable            Include the unstable apt repository .list
+# - deng_ccache                 (Unix|Mac) Use ccache when compiling
 # - deng_fluidsynth             Build the FluidSynth sound driver
 # - deng_fmod                   Build the FMOD Ex sound driver
 # - deng_nativesdk              (Mac) Use current OS's SDK for non-distrib use
@@ -26,6 +27,9 @@
 # - deng_notools                Do not build and deploy the tools
 # - deng_openal                 Build the OpenAL sound driver
 # - deng_qtautoselect           (Mac) Select OS X SDK based on Qt version
+# - deng_qtgui                  Use the QtGui module in dep_deng2.pri
+# - deng_qtopengl               Use the QtOpenGL module in dep_deng2.pri
+# - deng_qtwidgets              Use the QtWidgets module in dep_deng2.pri
 # - deng_nopackres              Do not package the Doomsday resources
 # - deng_rangecheck             Parameter range checking/value assertions
 # - deng_snowberry              (Unix) Include Snowberry in installation
@@ -47,67 +51,16 @@ DENG_MAC_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/macx
 DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows
 DENG_MODULES_DIR      = $$PWD/libdeng2/modules
 
+# Macros ---------------------------------------------------------------------
+
+include(macros.pri)
+
 # Versions -------------------------------------------------------------------
 
 # Parse versions from the header files.
-!exists(versions.pri): system(python configure.py)
+!exists(versions.pri): runPython2(configure.py)
 
 include(versions.pri)
-
-# Macros ---------------------------------------------------------------------
-
-defineTest(echo) {
-    deng_verbosebuildconfig {
-        !win32 {
-            message($$1)
-        } else {
-            # We don't want to get the printed messages after everything else,
-            # so print to stdout.
-            system(echo $$1)
-        }
-    }
-}
-
-defineTest(useLibDir) {
-    btype = ""
-    win32 {
-        deng_debug: btype = "/Debug"
-              else: btype = "/Release"
-    }
-    exists($${1}$${btype}) {
-        LIBS += -L$${1}$${btype}
-        export(LIBS)
-        return(true)
-    }
-    return(false)
-}
-
-defineTest(doPostLink) {
-    isEmpty(QMAKE_POST_LINK) {
-        QMAKE_POST_LINK = $$1
-    } else {
-        QMAKE_POST_LINK = $$QMAKE_POST_LINK && $$1
-    }
-    export(QMAKE_POST_LINK)
-}
-
-macx {
-    defineTest(removeQtLibPrefix) {
-        doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 $$2 $$1")
-    }
-    defineTest(fixInstallName) {
-        # 1: binary file
-        # 2: library name
-        # 3: path to Frameworks/
-        removeQtLibPrefix($$1, $$2)
-        doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
-    }
-    defineTest(fixPluginInstallId) {
-        # 1: target name
-        # 2: version
-        doPostLink("install_name_tool -id @executable_path/../DengPlugins/$${1}.bundle/Versions/$$2/$$1 $${1}.bundle/Versions/$$2/$$1")
-    }
-}
 
 # Build Options --------------------------------------------------------------
 
@@ -121,6 +74,12 @@ CONFIG(debug, debug|release) {
     DEFINES += NDEBUG
 }
 
+# SDK build.
+deng_sdk {
+    DEFINES += DENG_SDK_BUILD
+    echo("SDK build.")
+}
+
 # Debugging options.
 deng_fakememoryzone: DEFINES += LIBDENG_FAKE_MEMORY_ZONE
 
@@ -132,7 +91,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 # Check for a 64-bit compiler.
 contains(QMAKE_HOST.arch, x86_64) {
     echo(64-bit architecture detected.)
-    DEFINES += HOST_IS_64BIT
+    DEFINES += DENG_64BIT_HOST
     win32: CONFIG += win64
 }
 
@@ -141,24 +100,32 @@ isStableRelease(): DEFINES += DENG_STABLE
 # Options defined by the user (may not exist).
 exists(config_user.pri): include(config_user.pri)
 
+deng_sdk {
+    # SDK install location.
+    !isEmpty(SDK_PREFIX) {
+        DENG_SDK_DIR        = $$SDK_PREFIX
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
+    }
+    else:!isEmpty(PREFIX) {
+        DENG_SDK_DIR        = $$PREFIX
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/doomsday/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
+    }
+    else {
+        DENG_SDK_DIR        = $$OUT_PWD/..
+        DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/de
+        DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
+    }
+    echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
+    echo(SDK library directory: $$DENG_SDK_LIB_DIR)
+}
+
     win32: include(config_win32.pri)
 else:macx: include(config_macx.pri)
      else: include(config_unix.pri)
 
 # Apply deng_* Configuration -------------------------------------------------
-
-unix:deng_ccache {
-    # ccache can be used to speed up recompilation.
-    *-clang* {
-        QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
-        QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
-        QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
-    }
-    *-gcc*|*-g++* {
-        QMAKE_CC  = ccache $$QMAKE_CC
-        QMAKE_CXX = ccache $$QMAKE_CXX
-    }
-}
 
 deng_nofixedasm {
     DEFINES += DENG_NO_FIXED_ASM
@@ -171,4 +138,17 @@ deng_nosdlmixer|deng_nosdl {
 }
 deng_nosdl {
     DEFINES += DENG_NO_SDL
+}
+
+unix:deng_ccache {
+    # ccache can be used to speed up recompilation.
+    *-clang* {
+        QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
+        QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
+        QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
+    }
+    *-gcc*|*-g++* {
+        QMAKE_CC  = ccache $$QMAKE_CC
+        QMAKE_CXX = ccache $$QMAKE_CXX
+    }
 }

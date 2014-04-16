@@ -36,11 +36,16 @@
 #endif
 
 // Basics.
+#include "doomsday.h"
 #include "tables.h"
 
 #include "p_terraintype.h"
 #include "d_think.h"
 #include "info.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0
 #define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
@@ -218,7 +223,7 @@ typedef struct mobj_s {
     int             intFlags;       // internal flags
     coord_t         dropOffZ;       // $dropoff_fix
     short           gear;           // used in torque simulation
-    boolean         wallRun;        // true = last move was the result of a wallrun
+    dd_bool         wallRun;        // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
@@ -240,6 +245,16 @@ typedef struct mobj_s {
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
     int             spawnFadeTics;
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+
+    /**
+     * Always returns @c false as a thinker will have already been allocated in
+     * the mobj creation process.
+     */
+    int read(MapStateReader *msr);
+#endif
 } mobj_t;
 
 #ifdef __cplusplus

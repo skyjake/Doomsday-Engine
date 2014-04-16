@@ -1,7 +1,7 @@
 /** @file resourcesystem.cpp  Resource subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -53,16 +53,25 @@
 #  include "render/billboard.h" // Rend_SpriteMaterialSpec
 #  include "render/sky.h"
 
-#  include "world/world.h"
+#  include "world/worldsystem.h"
 #  include "world/map.h"
 #  include "world/p_object.h"
 #  include "world/thinkers.h"
 #  include "Surface"
 #endif
 
+#include <de/App>
 #include <de/ByteRefArray>
+#include <de/DirectoryFeed>
+#include <de/game/SavedSession>
+#include <de/game/Session>
 #include <de/Log>
+#include <de/Loop>
+#include <de/Module>
+#include <de/NumberValue>
 #include <de/Reader>
+#include <de/Task>
+#include <de/TaskPool>
 #include <de/Time>
 #ifdef __CLIENT__
 #  include <de/ByteOrder>
@@ -99,7 +108,7 @@ static Texture *deriveTexture(TextureManifest &manifest)
     Texture *tex = manifest.derive();
     if(!tex)
     {
-        LOG_WARNING("Failed to derive a Texture for \"%s\", ignoring.") << manifest.composeUri();
+        LOGDEV_RES_WARNING("Failed to derive a Texture for \"%s\", ignoring") << manifest.composeUri();
     }
     return tex;
 }
@@ -113,7 +122,7 @@ static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
 static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+    dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
 {
     DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
@@ -157,7 +166,29 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 
 #endif // __CLIENT__
 
+/**
+ * Native Doomsday Script utility for scheduling conversion of a single legacy savegame.
+ */
+Value *Function_SavedSession_Convert(Context &, Function::ArgumentValues const &args)
+{
+    String gameId     = args[0]->asText();
+    String sourcePath = args[1]->asText();
+    return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId, sourcePath));
+}
+
+/**
+ * Native Doomsday Script utility for scheduling conversion of @em all legacy savegames
+ * for the specified gameId.
+ */
+Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues const &args)
+{
+    String gameId = args[0]->asText();
+    return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId));
+}
+
 DENG2_PIMPL(ResourceSystem)
+, DENG2_OBSERVES(Loop,             Iteration)       // post savegame conversion FS population
+, DENG2_OBSERVES(Games,            Addition)        // savegames folder setup
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -318,18 +349,24 @@ DENG2_PIMPL(ResourceSystem)
     typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
     SpriteGroups spriteGroups;
 
+    NativePath nativeSavePath;
+
+    Binder binder;
+    Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
+
     Instance(Public *i)
         : Base(i)
-        , defaultColorPalette(0)
-        , materialManifestCount(0)
+        , defaultColorPalette      (0)
+        , materialManifestCount    (0)
         , materialManifestIdMapSize(0)
-        , materialManifestIdMap(0)
+        , materialManifestIdMap    (0)
 #ifdef __CLIENT__
-        , fontManifestCount(0)
-        , fontManifestIdMapSize(0)
-        , fontManifestIdMap(0)
-        , modelRepository(0)
+        , fontManifestCount        (0)
+        , fontManifestIdMapSize    (0)
+        , fontManifestIdMap        (0)
+        , modelRepository          (0)
 #endif
+        , nativeSavePath           (App::app().nativeHomePath() / "savegames") // default
     {
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
@@ -365,10 +402,41 @@ DENG2_PIMPL(ResourceSystem)
         createFontScheme("System");
         createFontScheme("Game");
 #endif
+
+#ifdef __CLIENT__
+        // Setup the SavedSession module.
+        binder.init(savedSessionModule)
+                << DENG2_FUNC(SavedSession_Convert,    "convert",    "gameId" << "savegamePath")
+                << DENG2_FUNC(SavedSession_ConvertAll, "convertAll", "gameId");
+        App::scriptSystem().addNativeModule("SavedSession", savedSessionModule);
+
+        // Determine the root directory of the saved session repository.
+        if(int arg = App::commandLine().check("-savedir", 1))
+        {
+            // Using a custom root save directory.
+            App::commandLine().makeAbsolutePath(arg + 1);
+            nativeSavePath = App::commandLine().at(arg + 1);
+        }
+        // Else use the default.
+#endif
+
+        App_Games().audienceForAddition() += this;
+
+        // Create the user saved session folder in the local FS if it doesn't yet exist.
+        // Once created, any SavedSessions in this folder will be found and indexed
+        // automatically into the file system.
+        App::fileSystem().makeFolder("/home/savegames");
+
+        // Create the legacy savegame folder.
+        App::fileSystem().makeFolder("/legacysavegames");
     }
 
     ~Instance()
     {
+        convertSavegameTasks.waitForDone();
+
+        App_Games().audienceForAddition() -= this;
+
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
 #ifdef __CLIENT__
@@ -404,6 +472,14 @@ DENG2_PIMPL(ResourceSystem)
     inline de::FS1 &fileSystem()
     {
         return App_FileSystem();
+    }
+
+    void gameAdded(Game &game)
+    {
+        // Called from a non-UI thread.
+        LOG_AS("ResourceSystem");
+        // Make the /home/savegames/<gameId> subfolder in the local FS if it does not yet exist.
+        App::fileSystem().makeFolder(String("/home/savegames") / game.id());
     }
 
     void clearMaterialManifests()
@@ -636,8 +712,8 @@ DENG2_PIMPL(ResourceSystem)
 
     TextureVariantSpec *textureSpec(texturevariantusagecontext_t tc, int flags,
         byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-        int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-        boolean noStretch, boolean toAlpha)
+        int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
+        dd_bool noStretch, dd_bool toAlpha)
     {
         static TextureVariantSpec tpl;
         tpl.type = TST_GENERAL;
@@ -874,7 +950,7 @@ DENG2_PIMPL(ResourceSystem)
 
             if(file.size() < 4)
             {
-                LOG_WARNING("File \"%s\" (#%i) does not appear to be valid PNAMES data.")
+                LOG_RES_WARNING("File \"%s\" (#%i) does not appear to be valid PNAMES data")
                     << NativePath(file.composeUri().asText()).pretty() << lumpNum;
                 return;
             }
@@ -892,7 +968,7 @@ DENG2_PIMPL(ResourceSystem)
                 if((unsigned) numNames > (file.size() - 4) / 8)
                 {
                     // The data appears to be truncated.
-                    LOG_WARNING("File \"%s\" (#%i) appears to be truncated (%u bytes, expected %u).")
+                    LOG_RES_WARNING("File \"%s\" (#%i) appears to be truncated (%u bytes, expected %u)")
                         << NativePath(file.composeUri().asText()).pretty() << lumpNum
                         << file.size() << (numNames * 8 + 4);
 
@@ -915,7 +991,7 @@ DENG2_PIMPL(ResourceSystem)
         {
             if(App_GameLoaded())
             {
-                LOG_WARNING(er.asText());
+                LOGDEV_RES_WARNING(er.asText());
             }
         }
     }
@@ -951,7 +1027,7 @@ DENG2_PIMPL(ResourceSystem)
         {
             de::File1 &file = **i;
 
-            LOG_VERBOSE("Processing \"%s:%s\"...")
+            LOG_RES_VERBOSE("Processing \"%s:%s\"...")
                 << NativePath(file.container().composeUri().asText()).pretty()
                 << NativePath(file.composeUri().asText()).pretty();
 
@@ -983,7 +1059,7 @@ DENG2_PIMPL(ResourceSystem)
             origIndexBase += archiveCount;
 
             // Print a summary.
-            LOG_INFO("Loaded %s texture definitions from \"%s:%s\".")
+            LOG_RES_MSG("Loaded %s texture definitions from \"%s:%s\"")
                 << (newDefs.count() == archiveCount? String("all %1").arg(newDefs.count())
                                                    : String("%1 of %1").arg(newDefs.count()).arg(archiveCount))
                 << NativePath(file.container().composeUri().asText()).pretty()
@@ -1109,7 +1185,7 @@ DENG2_PIMPL(ResourceSystem)
             if(offset < 0 || (unsigned) offset < definitionCount * sizeof(offset) ||
                (dsize) offset > reader.source()->size())
             {
-                LOG_WARNING("Invalid offset %i for definition #%i, ignoring.") << offset << i;
+                LOG_RES_WARNING("Ignoring definition #%i: invalid offset %i") << i << offset;
             }
             else
             {
@@ -1202,7 +1278,8 @@ DENG2_PIMPL(ResourceSystem)
             }
             catch(TextureScheme::InvalidPathError const &er)
             {
-                LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+                LOG_RES_WARNING("Failed declaring texture \"%s\": %s")
+                        << uri << er.asText();
             }
 
             delete &def;
@@ -1240,6 +1317,8 @@ DENG2_PIMPL(ResourceSystem)
      */
     ModelDef *getModelDefWithId(String id)
     {
+        if(id.isEmpty()) return 0;
+
         // First try to find an existing modef.
         if(self.hasModelDef(id))
         {
@@ -1352,7 +1431,7 @@ DENG2_PIMPL(ResourceSystem)
             }
             catch(FS1::NotFoundError const&)
             {
-                LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
+                LOG_RES_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\"")
                     << skin.name << i << NativePath(modelFilePath).pretty();
             }
         }
@@ -1373,7 +1452,7 @@ DENG2_PIMPL(ResourceSystem)
                 // We have found one more skin for this model.
                 numFoundSkins = 1;
 
-                LOG_INFO("Assigned fallback skin \"%s\" to index #0 for model \"%s\".")
+                LOG_RES_MSG("Assigned fallback skin \"%s\" to index #0 for model \"%s\"")
                     << NativePath(foundPath).pretty()
                     << NativePath(modelFilePath).pretty();
             }
@@ -1383,7 +1462,7 @@ DENG2_PIMPL(ResourceSystem)
 
         if(!numFoundSkins)
         {
-            LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
+            LOG_RES_WARNING("Model \"%s\" will be rendered without a skin (none found)")
                 << NativePath(modelFilePath).pretty();
         }
     }
@@ -1465,12 +1544,8 @@ DENG2_PIMPL(ResourceSystem)
         int const statenum = Def_GetStateNum(def.state);
 
         // Is this an ID'd model?
-        ModelDef *modef;
-        if(self.hasModelDef(def.id))
-        {
-            modef = &self.modelDef(def.id);
-        }
-        else
+        ModelDef *modef = getModelDefWithId(def.id);
+        if(!modef)
         {
             // No, normal State-model.
             if(statenum < 0) return;
@@ -1539,7 +1614,7 @@ DENG2_PIMPL(ResourceSystem)
                         // Enlarge the vertex buffers in preparation for drawing of this model.
                         if(!Rend_ModelExpandVertexBuffers(mdl->vertexCount()))
                         {
-                            LOG_WARNING("Model \"%s\" contains more than %u max vertices (%i), it will not be rendered.")
+                            LOG_RES_WARNING("Model \"%s\" contains more than %u max vertices (%i), it will not be rendered")
                                 << NativePath(foundPath).pretty()
                                 << uint(RENDER_MAX_MODEL_VERTS) << mdl->vertexCount();
                         }
@@ -1606,7 +1681,7 @@ DENG2_PIMPL(ResourceSystem)
                     }
                     catch(FS1::NotFoundError const&)
                     {
-                        LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                        LOG_RES_WARNING("Failed to locate skin \"%s\" for model \"%s\"")
                             << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
                     }
                 }
@@ -1633,7 +1708,7 @@ DENG2_PIMPL(ResourceSystem)
                     }
                     catch(FS1::NotFoundError const &)
                     {
-                        LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                        LOG_RES_WARNING("Failed to locate skin \"%s\" for model \"%s\"")
                             << skinFilePath << NativePath(modelFilePath).pretty();
                     }
                 }
@@ -1651,7 +1726,7 @@ DENG2_PIMPL(ResourceSystem)
             }
             catch(FS1::NotFoundError const &)
             {
-                LOG_WARNING("Failed to locate \"%s\", ignoring.") << searchPath;
+                LOG_RES_WARNING("Failed to locate \"%s\"") << searchPath;
             }
         }
 
@@ -1886,8 +1961,97 @@ DENG2_PIMPL(ResourceSystem)
             }
         }
     }
-
 #endif // __CLIENT__
+
+    /**
+     * Asynchronous task that attempts conversion of a legacy savegame. Each converter
+     * plugin is tried in turn.
+     */
+    class ConvertSavegameTask : public Task
+    {
+        ddhook_savegame_convert_t parm;
+
+    public:
+        ConvertSavegameTask(String const &sourcePath, String const &gameId)
+        {
+            // Ensure the game is defined (sanity check).
+            /*Game &game = */ App_Games().byIdentityKey(gameId);
+
+            // Ensure the output folder exists if it doesn't already.
+            String const outputPath = String("/home/savegames") / gameId;
+            App::fileSystem().makeFolder(outputPath);
+
+            Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath.toUtf8().constData());
+            Str_Set(Str_InitStd(&parm.outputPath),     outputPath.toUtf8().constData());
+            Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
+        }
+
+        ~ConvertSavegameTask()
+        {
+            Str_Free(&parm.sourcePath);
+            Str_Free(&parm.outputPath);
+            Str_Free(&parm.fallbackGameId);
+        }
+
+        void runTask()
+        {
+            /// @todo fixme: Concurrent active plugins!!
+            DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+        }
+    };
+    TaskPool convertSavegameTasks;
+
+    void loopIteration()
+    {
+        if(convertSavegameTasks.isDone())
+        {
+            LOG_AS("ResourceSystem");
+            Loop::appLoop().audienceForIteration() -= this;
+            try
+            {
+                // The newly converted savegame(s) should now be somewhere in /home/savegames
+                App::rootFolder().locate<Folder>("/home/savegames").populate();
+            }
+            catch(Folder::NotFoundError const &)
+            {} // Ignore.
+        }
+    }
+
+    void beginConvertLegacySavegame(String const &sourcePath, String const &gameId)
+    {
+        LOG_AS("ResourceSystem");
+        LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)") << sourcePath << gameId;
+        Loop::appLoop().audienceForIteration() += this;
+        convertSavegameTasks.start(new ConvertSavegameTask(sourcePath, gameId));
+    }
+
+    void locateLegacySavegames(String const &gameId)
+    {
+        LOG_AS("ResourceSystem");
+        String const legacySavePath = String("/legacysavegames") / gameId;
+        if(Folder *oldSaveFolder = App::rootFolder().tryLocate<Folder>(legacySavePath))
+        {
+            // Add any new legacy savegames which may have appeared in this folder.
+            oldSaveFolder->populate(Folder::PopulateOnlyThisFolder /* no need to go deep */);
+        }
+        else
+        {
+            try
+            {
+                // Make and setup a feed for the /legacysavegames/<gameId> subfolder if the game
+                // might have legacy savegames we may need to convert later.
+                NativePath const oldSavePath = App_Games().byIdentityKey(gameId).legacySavegamePath();
+                if(oldSavePath.exists() && oldSavePath.isReadable())
+                {
+                    App::fileSystem().makeFolderWithFeed(legacySavePath,
+                            new DirectoryFeed(oldSavePath),
+                            Folder::PopulateOnlyThisFolder /* no need to go deep */);
+                }
+            }
+            catch(Games::NotFoundError const &)
+            {} // Ignore this error
+        }
+    }
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
@@ -1998,7 +2162,7 @@ void ResourceSystem::initSystemTextures()
         { "", "" }
     };
 
-    LOG_VERBOSE("Initializing System textures...");
+    LOG_RES_VERBOSE("Initializing System textures...");
 
     for(uint i = 0; !texDefs[i].graphicName.isEmpty(); ++i)
     {
@@ -2069,7 +2233,7 @@ void ResourceSystem::initCompositeTextures()
     Time begunAt;
 
     LOG_AS("ResourceSystem");
-    LOG_VERBOSE("Initializing PatchComposite textures...");
+    LOG_RES_VERBOSE("Initializing PatchComposite textures...");
 
     // Load texture definitions from TEXTURE1/2 lumps.
     CompositeTextures texs = d->loadCompositeTextureDefs();
@@ -2077,7 +2241,7 @@ void ResourceSystem::initCompositeTextures()
 
     DENG_ASSERT(texs.isEmpty());
 
-    LOG_INFO(String("initCompositeTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
 }
 
 void ResourceSystem::initFlatTextures()
@@ -2085,7 +2249,7 @@ void ResourceSystem::initFlatTextures()
     Time begunAt;
 
     LOG_AS("ResourceSystem");
-    LOG_VERBOSE("Initializing Flat textures...");
+    LOG_RES_VERBOSE("Initializing Flat textures...");
 
     LumpIndex const &index = d->fileSystem().nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
@@ -2150,7 +2314,7 @@ void ResourceSystem::initFlatTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("Flats");
 
-    LOG_INFO(String("initFlatTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("Flat textures initialized in %.2f seconds") << begunAt.since();
 }
 
 /// Returns a value in the range [0..Sprite::max_angles] if @a rotCode can be
@@ -2219,7 +2383,7 @@ void ResourceSystem::initSpriteTextures()
     Time begunAt;
 
     LOG_AS("ResourceSystem");
-    LOG_VERBOSE("Initializing Sprite textures...");
+    LOG_RES_VERBOSE("Initializing Sprite textures...");
 
     int uniqueId = 1/*1-based index*/;
 
@@ -2254,7 +2418,7 @@ void ResourceSystem::initSpriteTextures()
         String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
         if(!validateSpriteName(decodedFileName))
         {
-            LOG_WARNING("'%s' is not a valid sprite name, ignoring.") << decodedFileName;
+            LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
             continue;
         }
 
@@ -2283,7 +2447,7 @@ void ResourceSystem::initSpriteTextures()
             }
             catch(IByteArray::OffsetError const &)
             {
-                LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.\n"
+                LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
                             "World dimension and origin offset not set for sprite \"%s\".")
                     << NativePath(file.container().composePath()).pretty()
                     << NativePath(file.composePath()).pretty()
@@ -2300,7 +2464,7 @@ void ResourceSystem::initSpriteTextures()
         }
         catch(TextureScheme::InvalidPathError const &er)
         {
-            LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+            LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
         }
     }
 
@@ -2313,7 +2477,7 @@ void ResourceSystem::initSpriteTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("Sprites");
 
-    LOG_INFO(String("initSpriteTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("Sprite textures initialized in %.2f seconds") << begunAt.since();
 }
 
 Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
@@ -2337,7 +2501,7 @@ Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
 Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourceUri,
     Vector2i const &dimensions)
 {
-    LOG_AS("ResourceSystem::DefineTexture");
+    LOG_AS("ResourceSystem::defineTexture");
 
     if(resourceUri.isEmpty()) return 0;
 
@@ -2355,7 +2519,7 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
     int uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
-        LOG_WARNING("Failed declaring texture manifest in scheme %s (max:%i), ignoring.")
+        LOG_RES_WARNING("Failed declaring texture manifest in scheme %s (max:%i)")
             << schemeName << DDMAXINT;
         return 0;
     }
@@ -2371,7 +2535,7 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
     }
     catch(TextureScheme::InvalidPathError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+        LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
     }
     return 0;
 }
@@ -2381,10 +2545,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     LOG_AS("ResourceSystem::declarePatch");
 
     if(encodedName.isEmpty())
-    {
-        LOG_DEBUG("Invalid 'name' argument, ignoring.");
         return 0;
-    }
 
     de::Uri uri("Patches", Path(encodedName));
 
@@ -2402,7 +2563,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     lumpnum_t lumpNum = d->fileSystem().nameIndex().lastIndexForPath(lumpPath);
     if(lumpNum < 0)
     {
-        LOG_WARNING("Failed to locate lump for \"%s\", ignoring.") << uri;
+        LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
         return 0;
     }
 
@@ -2427,8 +2588,8 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
         }
         catch(IByteArray::OffsetError const &)
         {
-            LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.\n"
-                        "World dimension and origin offset not set for patch \"%s\".")
+            LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
+                            "World dimension and origin offset not set for patch \"%s\".")
                 << NativePath(file.container().composePath()).pretty()
                 << NativePath(file.composePath()).pretty()
                 << uri;
@@ -2451,7 +2612,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     }
     catch(TextureScheme::InvalidPathError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+        LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
     }
     return 0;
 }
@@ -2461,7 +2622,7 @@ rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
     LOG_AS("ResourceSystem::rawTexture");
     if(-1 == lumpNum || lumpNum >= F_LumpCount())
     {
-        LOG_DEBUG("LumpNum #%i out of bounds (%i), returning 0.") << lumpNum << F_LumpCount();
+        LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0") << lumpNum << F_LumpCount();
         return 0;
     }
 
@@ -2478,7 +2639,7 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     LOG_AS("ResourceSystem::rawTexture");
     if(-1 == lumpNum || lumpNum >= F_LumpCount())
     {
-        LOG_DEBUG("LumpNum #%i out of range %s, returning 0.")
+        LOGDEV_RES_WARNING("LumpNum #%i out of range %s, returning 0")
             << lumpNum << Rangeui(0, F_LumpCount()).asText();
         return 0;
     }
@@ -2736,7 +2897,7 @@ void ResourceSystem::releaseAllSystemGLTextures()
     if(novideo) return;
 
     LOG_AS("ResourceSystem");
-    LOG_VERBOSE("Releasing system textures...");
+    LOG_RES_VERBOSE("Releasing system textures...");
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
@@ -2757,7 +2918,7 @@ void ResourceSystem::releaseAllRuntimeGLTextures()
     if(novideo) return;
 
     LOG_AS("ResourceSystem");
-    LOG_VERBOSE("Releasing runtime textures...");
+    LOG_RES_VERBOSE("Releasing runtime textures...");
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
@@ -2817,16 +2978,14 @@ void ResourceSystem::pruneUnusedTextureSpecs()
     numPruned += d->pruneUnusedTextureSpecs(TST_GENERAL);
     numPruned += d->pruneUnusedTextureSpecs(TST_DETAIL);
 
-#ifdef DENG_DEBUG
-    LOG_VERBOSE("Pruned %i unused texture variant %s.")
+    LOGDEV_RES_VERBOSE("Pruned %i unused texture variant %s")
         << numPruned << (numPruned == 1? "specification" : "specifications");
-#endif
 }
 
 TextureVariantSpec const &ResourceSystem::textureSpec(texturevariantusagecontext_t tc,
     int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-    int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-    boolean noStretch, boolean toAlpha)
+    int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
+    dd_bool noStretch, dd_bool toAlpha)
 {
     TextureVariantSpec *tvs =
         d->textureSpec(tc, flags, border, tClass, tMap, wrapS, wrapT, minFilter,
@@ -2990,7 +3149,7 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
                 /// to implement the necessary update logic.
-                LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
+                LOGDEV_RES_XVERBOSE("Font with uri \"%s\" already exists, returning existing")
                     << manifest.composeUri();
 
                 compFont->rebuildFromDef(def);
@@ -3004,37 +3163,36 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
         {
             if(verbose >= 1)
             {
-                LOG_VERBOSE("New font \"%s\"")
+                LOG_RES_VERBOSE("New font \"%s\"")
                     << manifest.composeUri();
             }
             return &manifest.resource();
         }
 
-        LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
+        LOG_RES_WARNING("Failed defining new Font for \"%s\"")
             << NativePath(uri.asText()).pretty();
     }
     catch(UnknownSchemeError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
+        LOG_RES_WARNING("Failed declaring font \"%s\": %s")
+            << NativePath(uri.asText()).pretty() << er.asText();
     }
     catch(FontScheme::InvalidPathError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
+        LOG_RES_WARNING("Failed declaring font \"%s\": %s")
+            << NativePath(uri.asText()).pretty() << er.asText();
     }
 
     return 0;
 }
 
-AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri,
-    String filePath)
+AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePath)
 {
     LOG_AS("ResourceSystem::newFontFromFile");
 
     if(!d->fileSystem().accessFile(de::Uri::fromNativePath(filePath)))
     {
-        LOG_WARNING("Invalid filePath, ignoring.");
+        LOGDEV_RES_WARNING("Ignoring invalid filePath: ") << filePath;
         return 0;
     }
 
@@ -3050,7 +3208,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri,
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
                 /// to implement the necessary update logic.
-                LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
+                LOGDEV_RES_XVERBOSE("Font with uri \"%s\" already exists, returning existing")
                     << manifest.composeUri();
 
                 bmapFont->setFilePath(filePath);
@@ -3064,24 +3222,24 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri,
         {
             if(verbose >= 1)
             {
-                LOG_VERBOSE("New font \"%s\"")
+                LOG_RES_VERBOSE("New font \"%s\"")
                     << manifest.composeUri();
             }
             return &manifest.resource();
         }
 
-        LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
+        LOG_RES_WARNING("Failed defining new Font for \"%s\"")
             << NativePath(uri.asText()).pretty();
     }
     catch(UnknownSchemeError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
+        LOG_RES_WARNING("Failed declaring font \"%s\": %s")
+            << NativePath(uri.asText()).pretty() << er.asText();
     }
     catch(FontScheme::InvalidPathError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
+        LOG_RES_WARNING("Failed declaring font \"%s\": %s")
+            << NativePath(uri.asText()).pretty() << er.asText();
     }
 
     return 0;
@@ -3109,17 +3267,16 @@ Model &ResourceSystem::model(modelid_t id)
         return *model;
     }
     /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::model", QString("Invalid id %1").arg(id));
+    throw MissingResourceError("ResourceSystem::model", "Invalid id " + String::number(id));
 }
 
 bool ResourceSystem::hasModelDef(de::String id) const
 {
     if(!id.isEmpty())
     {
-        char const *idCStr = id.toUtf8().constData();
         foreach(ModelDef const &modef, d->modefs)
         {
-            if(!strcmp(modef.id, idCStr))
+            if(!id.compareWithoutCase(modef.id))
             {
                 return true;
             }
@@ -3135,24 +3292,23 @@ ModelDef &ResourceSystem::modelDef(int index)
         return d->modefs[index];
     }
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index " + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
+    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index #" + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
 }
 
 ModelDef &ResourceSystem::modelDef(String id)
 {
     if(!id.isEmpty())
     {
-        char const *idCStr = id.toUtf8().constData();
         foreach(ModelDef const &modef, d->modefs)
         {
-            if(!strcmp(modef.id, idCStr))
+            if(!id.compareWithoutCase(modef.id))
             {
                 return const_cast<ModelDef &>(modef);
             }
         }
     }
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ResourceSystem::modelDef", QString("Invalid id %1").arg(id));
+    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid id '" + id + "'");
 }
 
 ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
@@ -3201,11 +3357,11 @@ void ResourceSystem::initModels()
 
     if(CommandLine_Check("-nomd2"))
     {
-        LOG_VERBOSE("3D models are disabled.");
+        LOG_RES_NOTE("3D models are disabled");
         return;
     }
 
-    LOG_VERBOSE("Initializing Models...");
+    LOG_RES_VERBOSE("Initializing Models...");
     Time begunAt;
 
     d->clearModelList();
@@ -3292,7 +3448,7 @@ void ResourceSystem::initModels()
         me->selectNext = closest;
     }
 
-    LOG_INFO(String("Model init completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_MSG("Model init completed in %.2f seconds") << begunAt.since();
 }
 
 int ResourceSystem::indexOf(ModelDef const *modelDef)
@@ -3337,7 +3493,7 @@ AnimGroup *ResourceSystem::animGroup(int uniqueId)
     {
         return d->animGroups.at(uniqueId - 1);
     }
-    LOG_DEBUG("Invalid group #%i, returning NULL.") << uniqueId;
+    LOGDEV_RES_WARNING("Invalid group #%i, returning NULL") << uniqueId;
     return 0;
 }
 
@@ -3468,7 +3624,7 @@ void ResourceSystem::initSprites()
     Time begunAt;
 
     LOG_AS("ResourceSystem");
-    LOG_MSG("Building sprites...");
+    LOG_RES_VERBOSE("Building sprites...");
 
     d->clearSprites();
 
@@ -3553,7 +3709,7 @@ void ResourceSystem::initSprites()
     // We're done with the definitions.
     defs.clear();
 
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("Sprites built in %.2f seconds") << begunAt.since();
 }
 
 void ResourceSystem::clearAllColorPalettes()
@@ -3585,7 +3741,7 @@ ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
         return *found.value();
     }
     /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::colorPalette", QString("Invalid id %1").arg(id));
+    throw MissingResourceError("ResourceSystem::colorPalette", "Invalid id " + String::number(id));
 }
 
 String ResourceSystem::colorPaletteName(ColorPalette &palette) const
@@ -3752,7 +3908,7 @@ void ResourceSystem::cacheForCurrentMap()
     // Don't precache when playing a demo (why not? -ds).
     if(playback) return;
 
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     if(precacheMapMaterials)
     {
@@ -3804,7 +3960,7 @@ void ResourceSystem::cacheForCurrentMap()
     }
 
      // Sky models usually have big skins.
-    Sky_Cache();
+    theSky->cacheDrawableAssets();
 
     // Precache model skins?
     if(useModels && precacheSkins)
@@ -3816,6 +3972,55 @@ void ResourceSystem::cacheForCurrentMap()
 }
 
 #endif // __CLIENT__
+
+NativePath ResourceSystem::nativeSavePath()
+{
+    return d->nativeSavePath;
+}
+
+bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &sourcePath)
+{
+    // A converter plugin is required.
+    if(!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
+
+    // Populate /legacysavegames/<gameId> with new savegames which may have appeared.
+    d->locateLegacySavegames(gameId);
+
+    bool didSchedule = false;
+    if(sourcePath.isEmpty())
+    {
+        // Process all legacy savegames.
+        if(Folder const *saveFolder = App::rootFolder().tryLocate<Folder>(String("legacysavegames") / gameId))
+        {
+            /// @todo File name pattern matching should not be done here. This is to prevent
+            /// attempting to convert Hexen's map state side car files separately when this
+            /// is called from Doomsday Script (in bootstrap.de).
+            Game const &game = App_Games().byIdentityKey(gameId);
+            QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
+            if(namePattern.isValid() && !namePattern.isEmpty())
+            {
+                DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder->contents())
+                {
+                    if(namePattern.exactMatch(i->first.fileName()))
+                    {
+                        // Schedule the conversion task.
+                        d->beginConvertLegacySavegame(i->second->path(), gameId);
+                        didSchedule = true;
+                    }
+                }
+            }
+        }
+    }
+    // Just the one legacy savegame.
+    else if(App::rootFolder().has(sourcePath))
+    {
+        // Schedule the conversion task.
+        d->beginConvertLegacySavegame(sourcePath, gameId);
+        didSchedule = true;
+    }
+
+    return didSchedule;
+}
 
 byte precacheMapMaterials = true;
 byte precacheSprites = true;
@@ -4004,7 +4209,7 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
         heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
         heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_MSG(_E(D) "%s:" _E(.)) << heading;
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
     qSort(found.begin(), found.end(), compareManifestPathsAscending<MaterialManifest>);
@@ -4017,7 +4222,7 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
                         .arg(manifest->hasMaterial()? _E(1) : _E(2))
                         .arg(manifest->description(composeUriFlags));
 
-        LOG_MSG("  " _E(>)) << info;
+        LOG_RES_MSG("  " _E(>)) << info;
         idx++;
     }
 
@@ -4033,14 +4238,14 @@ static void printMaterialIndex(de::Uri const &search,
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
         printTotal = printMaterialIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
-        LOG_MSG(_E(R));
+        LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
     else if(App_ResourceSystem().knownMaterialScheme(search.scheme()))
     {
         printTotal = printMaterialIndex2(&App_ResourceSystem().materialScheme(search.scheme()),
                                          search.path(), flags | de::Uri::OmitScheme);
-        LOG_MSG(_E(R));
+        LOG_RES_MSG(_E(R));
     }
     else
     {
@@ -4055,7 +4260,7 @@ static void printMaterialIndex(de::Uri const &search,
             }
         }
     }
-    LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
 
 /**
@@ -4078,7 +4283,7 @@ static int printTextureIndex2(TextureScheme *scheme, Path const &like,
         heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
         heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_MSG(_E(D) "%s:" _E(.)) << heading;
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index key.
     qSort(found.begin(), found.end(), compareManifestPathsAscending<TextureManifest>);
@@ -4088,10 +4293,10 @@ static int printTextureIndex2(TextureScheme *scheme, Path const &like,
     {
         String info = String("%1: %2%3")
                         .arg(idx, numFoundDigits)
-                        .arg(manifest->hasTexture()? _E(1) : _E(2))
+                        .arg(manifest->hasTexture()? _E(0) : _E(2))
                         .arg(manifest->description(composeUriFlags));
 
-        LOG_MSG("  " _E(>)) << info;
+        LOG_RES_MSG("  " _E(>)) << info;
         idx++;
     }
 
@@ -4107,14 +4312,14 @@ static void printTextureIndex(de::Uri const &search,
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
         printTotal = printTextureIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
-        LOG_MSG(_E(R));
+        LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
     else if(App_ResourceSystem().knownTextureScheme(search.scheme()))
     {
         printTotal = printTextureIndex2(&App_ResourceSystem().textureScheme(search.scheme()),
                                         search.path(), flags | de::Uri::OmitScheme);
-        LOG_MSG(_E(R));
+        LOG_RES_MSG(_E(R));
     }
     else
     {
@@ -4124,12 +4329,12 @@ static void printTextureIndex(de::Uri const &search,
             int numPrinted = printTextureIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
-                LOG_MSG(_E(R));
+                LOG_RES_MSG(_E(R));
                 printTotal += numPrinted;
             }
         }
     }
-    LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "texture" : "textures in total");
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s") << printTotal << (printTotal == 1? "texture" : "textures in total");
 }
 
 #ifdef __CLIENT__
@@ -4154,7 +4359,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
         heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
         heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_MSG(_E(D) "%s:" _E(.)) << heading;
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
     qSort(found.begin(), found.end(), compareManifestPathsAscending<FontManifest>);
@@ -4167,7 +4372,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
                         .arg(manifest->hasResource()? _E(1) : _E(2))
                         .arg(manifest->description(composeUriFlags));
 
-        LOG_MSG("  " _E(>)) << info;
+        LOG_RES_MSG("  " _E(>)) << info;
         idx++;
     }
 
@@ -4183,14 +4388,14 @@ static void printFontIndex(de::Uri const &search,
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
         printTotal = printFontIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
-        LOG_MSG(_E(R));
+        LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
     else if(App_ResourceSystem().knownFontScheme(search.scheme()))
     {
         printTotal = printFontIndex2(&App_ResourceSystem().fontScheme(search.scheme()),
                                      search.path(), flags | de::Uri::OmitScheme);
-        LOG_MSG(_E(R));
+        LOG_RES_MSG(_E(R));
     }
     else
     {
@@ -4205,7 +4410,7 @@ static void printFontIndex(de::Uri const &search,
             }
         }
     }
-    LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "font" : "fonts in total");
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "font" : "fonts in total");
 }
 
 #endif // __CLIENT__
@@ -4236,7 +4441,7 @@ D_CMD(ListMaterials)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownMaterialScheme(search.scheme()))
     {
-        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -4253,7 +4458,7 @@ D_CMD(ListTextures)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownTextureScheme(search.scheme()))
     {
-        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -4270,7 +4475,7 @@ D_CMD(ListFonts)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownFontScheme(search.scheme()))
     {
-        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -4284,7 +4489,7 @@ D_CMD(PrintMaterialStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_MSG(_E(1) "Material Statistics:");
+    LOG_MSG(_E(b) "Material Statistics:");
     foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
     {
         MaterialScheme::Index const &index = scheme->index();
@@ -4302,7 +4507,7 @@ D_CMD(PrintTextureStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_MSG(_E(1) "Texture Statistics:");
+    LOG_MSG(_E(b) "Texture Statistics:");
     foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
     {
         TextureScheme::Index const &index = scheme->index();
@@ -4321,7 +4526,7 @@ D_CMD(PrintFontStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_MSG(_E(1) "Font Statistics:");
+    LOG_MSG(_E(b) "Font Statistics:");
     foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
     {
         FontScheme::Index const &index = scheme->index();
@@ -4337,6 +4542,32 @@ D_CMD(PrintFontStats)
 #  endif // __CLIENT__
 #endif // DENG_DEBUG
 
+D_CMD(InspectSavegame)
+{
+    DENG2_UNUSED2(src, argc);
+    String savePath = argv[1];
+    // Append a .save extension if none exists.
+    if(savePath.fileNameExtension().isEmpty())
+    {
+        savePath += ".save";
+    }
+    // If a game is loaded assume the user is referring to those savegames if not specified.
+    if(savePath.fileNamePath().isEmpty() && App_GameLoaded())
+    {
+        savePath = game::Session::savePath() / savePath;
+    }
+
+    if(game::SavedSession const *saved = App::rootFolder().tryLocate<game::SavedSession>(savePath))
+    {
+        LOG_SCR_MSG("%s") << saved->metadata().asStyledText();
+        LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << saved->path();
+        return true;
+    }
+
+    LOG_WARNING("Failed to locate savegame with \"%s\"") << savePath;
+    return false;
+}
+
 void ResourceSystem::consoleRegister() // static
 {
     C_CMD("listtextures",   "ss",   ListTextures)
@@ -4345,6 +4576,8 @@ void ResourceSystem::consoleRegister() // static
 #ifdef DENG_DEBUG
     C_CMD("texturestats",   NULL,   PrintTextureStats)
 #endif
+
+    C_CMD("inspectsavegame", "s",   InspectSavegame)
 
 #ifdef __CLIENT__
     C_CMD("listfonts",      "ss",   ListFonts)

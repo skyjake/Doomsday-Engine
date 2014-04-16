@@ -1,4 +1,4 @@
-/** @file vertex.cpp World map vertex.
+/** @file vertex.cpp  World map vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,55 +18,32 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Vector>
+#include "de_base.h"
+#include "world/vertex.h"
 
 #include "Line"
 #include "world/lineowner.h" /// @todo remove me
 #include "Sector"
 
-#include "world/vertex.h"
+#include <de/Vector>
 
 using namespace de;
 
-DENG2_PIMPL(Vertex)
+DENG2_PIMPL_NOREF(Vertex)
 {
-    /// Position in the map coordinate space.
-    Vector2d origin;
-
-    Instance(Public *i, Vector2d const &origin)
-        : Base(i), origin(origin)
+    Vector2d origin; ///< In map space.
+    Instance(Vector2d const &origin) : origin(origin)
     {}
-
-    void notifyOriginChanged(Vector2d const &oldOrigin, int changedComponents)
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(OriginChange, i)
-        {
-            i->vertexOriginChanged(self, oldOrigin, changedComponents);
-        }
-    }
-
-    void notifyOriginChanged(Vector2d const &oldOrigin)
-    {
-        // Predetermine which axes have changed.
-        int changedAxes = 0;
-        for(int i = 0; i < 2; ++i)
-        {
-            if(!de::fequal(origin[i], oldOrigin[i]))
-                changedAxes |= (1 << i);
-        }
-
-        notifyOriginChanged(oldOrigin, changedAxes);
-    }
 };
 
 Vertex::Vertex(Mesh &mesh, Vector2d const &origin)
-    : MapElement(DMU_VERTEX),
-      MeshElement(mesh),
-      _lineOwners(0),
-      _numLineOwners(0),
-      _onesOwnerCount(0),
-      _twosOwnerCount(0),
-      d(new Instance(this, origin))
+    : MapElement(DMU_VERTEX)
+    , MeshElement(mesh)
+    , _lineOwners(0)
+    , _numLineOwners(0)
+    , _onesOwnerCount(0)
+    , _twosOwnerCount(0)
+    , d(new Instance(origin))
 {}
 
 Vector2d const &Vertex::origin() const
@@ -78,25 +55,11 @@ void Vertex::setOrigin(Vector2d const &newOrigin)
 {
     if(d->origin != newOrigin)
     {
-        Vector2d oldOrigin = d->origin;
-
         d->origin = newOrigin;
-
-        // Notify interested parties of the change.
-        d->notifyOriginChanged(oldOrigin);
-    }
-}
-
-void Vertex::setOriginComponent(int component, coord_t newPosition)
-{
-    if(!de::fequal(d->origin[component], newPosition))
-    {
-        Vector2d oldOrigin = d->origin;
-
-        d->origin[component] = newPosition;
-
-        // Notify interested parties of the change.
-        d->notifyOriginChanged(oldOrigin, (1 << component));
+        DENG2_FOR_AUDIENCE(OriginChange, i)
+        {
+            i->vertexOriginChanged(*this);
+        }
     }
 }
 

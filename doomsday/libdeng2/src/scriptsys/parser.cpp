@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Parser"
@@ -557,7 +557,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     if(flags.testFlag(HasCondition))
     {
         LOG_AS("parseConditionalCompound");
-        LOG_DEV_TRACE("colon at %i", colon);
+        LOGDEV_SCR_XVERBOSE_DEBUGONLY("colon at %i", colon);
 
         TokenRange conditionRange = range.between(1, colon);
         if(conditionRange.empty())
@@ -619,7 +619,7 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
     TokenRange range = fullRange;
 
     LOG_AS("parseExpression");
-    LOG_DEV_TRACE("", range.asText());
+    LOGDEV_SCR_XVERBOSE_DEBUGONLY("%s (flags:%x)", range.asText() << flags);
     
     if(!range.size())
     {
@@ -631,6 +631,21 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
     while(range.firstToken().equals(Token::PARENTHESIS_OPEN) && range.closingBracket(0) == range.size() - 1)
     {
         range = range.shrink(1);
+    }
+
+    // Do we have a record declaration in the expression?
+    if(range.firstToken().type() == Token::KEYWORD &&
+       range.firstToken().equals(ScriptLex::RECORD))
+    {
+        LOGDEV_SCR_XVERBOSE_DEBUGONLY("declaration expression: RECORD %s", range.startingFrom(1).asText());
+
+        if(range.size() == 1)
+        {
+            throw MissingTokenError("Parser::parseDeclarationExpression",
+                                    "Expected identifier to follow " + range.firstToken().asText());
+        }
+        return parseExpression(range.startingFrom(1),
+                               flags | Expression::LocalOnly | Expression::NewSubrecord);
     }
 
     TokenRange leftSide = range.between(0, 0);
@@ -673,7 +688,7 @@ ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
             "Expected brackets for the array expression beginning at " + 
             range.firstToken().asText());
     }    
-    return parseList(range.between(1, range.size() - 1));
+    return parseList(range.shrink(1));
 }
 
 DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
@@ -791,7 +806,16 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
                                              Expression::ByReference : Expression::ByValue);
 
         Expression::Flags rightOpFlags = rightFlags;
-        if(op != MEMBER) rightOpFlags &= ~Expression::ByReference;
+        if(op == MEMBER)
+        {
+            // Don't create new variables for the left side of the member. The only place
+            // where a new variable is created is on the right.
+            leftOpFlags &= ~Expression::NewVariable;
+        }
+        else
+        {
+            rightOpFlags &= ~Expression::ByReference;
+        }
 
         // Binary operation.
         QScopedPointer<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));

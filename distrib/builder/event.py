@@ -218,7 +218,7 @@ class Event:
                 # Join the logs into a single file.
                 combinedName = self.file_path('buildlog-%s-%s.txt' % (package, osIdent))
                 combined = file(combinedName, 'wt')
-                for n in names:
+                for n in sorted(names):
                     combined.write(file(n).read() + "\n\n")
                     # Remove the original log.
                     os.remove(n)

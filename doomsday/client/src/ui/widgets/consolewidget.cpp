@@ -17,29 +17,31 @@
  */
 
 #include "ui/widgets/consolewidget.h"
-#include "GuiRootWidget"
-#include "ui/VariableToggleItem"
 #include "CommandAction"
-#include "SignalAction"
-#include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
-#include "ui/widgets/scriptcommandwidget.h"
-#include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/togglewidget.h"
-#include "ui/widgets/logwidget.h"
+#include "ui/widgets/inputbindingwidget.h"
+#include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
+#include "ui/styledlogsinkformatter.h"
 
 #include <de/App>
 #include <de/ScalarRule>
 #include <de/KeyEvent>
 #include <de/MouseEvent>
+#include <de/ui/VariableToggleItem>
+#include <de/ui/SubwidgetItem>
+#include <de/SignalAction>
+#include <de/ButtonWidget>
+#include <de/ScriptCommandWidget>
+#include <de/PopupMenuWidget>
+#include <de/ToggleWidget>
+#include <de/LogWidget>
+#include <de/PersistentState>
 #include <QCursor>
 
 using namespace de;
 
 static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
-
-static uint const POS_SCRIPT_MODE = 5;
 
 DENG_GUI_PIMPL(ConsoleWidget),
 DENG2_OBSERVES(Variable, Change)
@@ -52,6 +54,7 @@ DENG2_OBSERVES(Variable, Change)
     ScalarRule *horizShift;
     ScalarRule *height;
     ScalarRule *width;
+    StyledLogSinkFormatter formatter;
 
     enum GrabEdge {
         NotGrabbed = 0,
@@ -82,14 +85,14 @@ DENG2_OBSERVES(Variable, Change)
         width      = new ScalarRule(style().rules().rule("console.width").valuei());
         height     = new ScalarRule(0);
 
-        grabWidth  = style().rules().rule("unit").valuei();
+        grabWidth  = style().rules().rule("gap").valuei();
 
-        App::config()["console.script"].audienceForChange += this;
+        App::config()["console.script"].audienceForChange() += this;
     }
 
     ~Instance()
     {
-        App::config()["console.script"].audienceForChange -= this;
+        App::config()["console.script"].audienceForChange() -= this;
 
         releaseRef(horizShift);
         releaseRef(width);
@@ -230,6 +233,27 @@ DENG2_OBSERVES(Variable, Change)
     }
 };
 
+static PopupWidget *consoleShortcutPopup()
+{
+    PopupWidget *pop = new PopupWidget;
+    // The 'padding' widget will provide empty margins around the content.
+    // Popups normally do not provide any margins.
+    GuiWidget *padding = new GuiWidget;
+    padding->margins().set("dialog.gap");
+    InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
+    bind->setSizePolicy(ui::Expand, ui::Expand);
+    padding->add(bind);
+    // Place the binding inside the padding.
+    bind->rule()
+            .setLeftTop(padding->rule().left() + padding->margins().left(),
+                        padding->rule().top()  + padding->margins().top());
+    padding->rule()
+            .setInput(Rule::Width,  bind->rule().width()  + padding->margins().width())
+            .setInput(Rule::Height, bind->rule().height() + padding->margins().height());
+    pop->setContent(padding);
+    return pop;
+}
+
 ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 {
     d->button = new ButtonWidget;
@@ -249,6 +273,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->scriptCmd->setOpacity(.75f);
 
     d->log = new LogWidget("log");
+    d->log->setLogFormatter(d->formatter);
     d->log->rule()
             .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Right,  rule().right())
@@ -277,6 +302,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
             << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"])
+            << new ui::Item(ui::Item::Separator)
+            << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>)
+            << new ui::SubwidgetItem(tr("Shortcut Key"), ui::Right, consoleShortcutPopup)
             << new ui::Item(ui::Item::Separator)
             << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"]);
 
@@ -414,6 +442,22 @@ bool ConsoleWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+void ConsoleWidget::operator >> (PersistentState &toState) const
+{
+    toState.names().set("console.width", d->width->value());
+}
+
+void ConsoleWidget::operator << (PersistentState const &fromState)
+{
+    d->width->set(fromState.names()["console.width"]);
+
+    if(!d->opened)
+    {
+        // Make sure it stays out of the view.
+        d->horizShift->set(-rule().width().valuei() - 1);
+    }
 }
 
 void ConsoleWidget::openLog()

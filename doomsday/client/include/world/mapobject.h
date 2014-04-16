@@ -1,4 +1,4 @@
-/** @file mapobject.h Base class for all world map objects.
+/** @file mapobject.h  Base class for all world map objects.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>

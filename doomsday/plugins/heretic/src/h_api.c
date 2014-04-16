@@ -63,20 +63,25 @@ static __inline gameid_t toGameId(int gamemode)
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
-#define CONFIGDIR       "heretic"
-#define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
+#define CONFIGDIR               "heretic"
+#define STARTUPPK3              PLUGIN_NAMETEXT2 ".pk3"
+#define LEGACYSAVEGAMENAMEEXP   "^(?:HticSav)[0-9]{1,1}(?:.hsg)"
+#define LEGACYSAVEGAMESUBFOLDER "savegame"
 
     GameDef const hereticExtDef = {
         "heretic-ext", CONFIGDIR,
-        "Heretic: Shadow of the Serpent Riders", "Raven Software"
+        "Heretic: Shadow of the Serpent Riders", "Raven Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hereticDef = {
         "heretic", CONFIGDIR,
-        "Heretic Registered", "Raven Software"
+        "Heretic Registered", "Raven Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
     GameDef const hereticShareDef = {
         "heretic-share", CONFIGDIR,
-        "Heretic Shareware", "Raven Software"
+        "Heretic Shareware", "Raven Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
@@ -146,7 +151,7 @@ void G_PreInit(gameid_t gameId)
 /**
  * Called by the engine to initiate a soft-shutdown request.
  */
-boolean G_TryShutdown(void)
+dd_bool G_TryShutdown(void)
 {
     G_QuitGame();
     return true;

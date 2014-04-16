@@ -22,8 +22,10 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
+#include <de/BaseWindow>
+#include <de/NotificationAreaWidget>
 
-#include "GuiRootWidget"
+#include "ui/clientrootwidget.h"
 #include "resource/image.h"
 #include "ui/widgets/gamewidget.h"
 
@@ -46,13 +48,13 @@
 
 class ConsoleWidget;
 class TaskBarWidget;
-class NotificationWidget;
 class BusyWidget;
+class AlertDialog;
 
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
  */
-class ClientWindow : public de::PersistentCanvasWindow,
+class ClientWindow : public de::BaseWindow,
                      DENG2_OBSERVES(de::Canvas, GLInit),
                      DENG2_OBSERVES(de::Canvas, GLResize)
 {
@@ -71,12 +73,14 @@ public:
 public:
     ClientWindow(de::String const &id = "main");
 
-    GuiRootWidget &root();
+    ClientRootWidget &root();
     TaskBarWidget &taskBar();
+    de::GuiWidget &taskBarBlur();
     ConsoleWidget &console();
-    NotificationWidget &notifications();
+    de::NotificationAreaWidget &notifications();
     GameWidget &game();
     BusyWidget &busy();
+    AlertDialog &alerts();
 
     /**
      * Adds a widget to the widget tree so that it will be displayed over
@@ -85,7 +89,7 @@ public:
      * @param widget  Widget to add on top of others. Ownership of the
      *                widget taken by the new parent.
      */
-    void addOnTop(GuiWidget *widget);
+    void addOnTop(de::GuiWidget *widget);
 
     /**
      * Installs a sidebar widget into the window. If there is an existing
@@ -97,7 +101,7 @@ public:
      *                  of the widget.
      * @param sidebar   Widget to install, or @c NULL to remove the sidebar.
      */
-    void setSidebar(SidebarLocation location, GuiWidget *sidebar);
+    void setSidebar(SidebarLocation location, de::GuiWidget *sidebar);
 
     void unsetSidebar(SidebarLocation location) { setSidebar(location, 0); }
 
@@ -119,11 +123,6 @@ public:
      * format remains the same because none of the settings have changed.
      */
     static bool setDefaultGLFormat();
-
-    /**
-     * Request drawing the contents of the window as soon as possible.
-     */
-    void draw();
 
     /**
      * Determines whether the contents of a window should be drawn during the
@@ -159,10 +158,19 @@ public:
     void closeEvent(QCloseEvent *);
     void canvasGLReady(de::Canvas &);
     void canvasGLInit(de::Canvas &);
-    void canvasGLDraw(de::Canvas &);
     void canvasGLResized(de::Canvas &);
 
+    // Implements BaseWindow.
+    de::Vector2f windowContentSize() const;
+    void drawWindowContent();
+    void preDraw();
+    void postDraw();
+    bool handleFallbackEvent(de::Event const &event);
+
     static ClientWindow &main();
+
+protected:
+    bool prepareForDraw();
 
 public slots:
     void toggleFPSCounter();

@@ -24,13 +24,13 @@
 #include "gl/gl_tex.h" // averagealpha_analysis_t, etc...
 #ifdef __CLIENT__
 #  include "render/r_draw.h" // Rend_PatchTextureSpec()
+#  include "render/r_main.h" // texGammaLut
 #endif
-#include "render/r_main.h" // texGammaLut
 
 using namespace de;
 
 #undef Textures_UniqueId2
-DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, boolean quiet)
+DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
 {
     LOG_AS("Textures_UniqueId");
     if(!_uri) return -1;
@@ -45,7 +45,7 @@ DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, boolean quiet)
         // Log but otherwise ignore this error.
         if(!quiet)
         {
-            LOG_WARNING("Unknown texture %s.") << uri;
+            LOG_RES_WARNING("Unknown texture %s") << uri;
         }
     }
     return -1;
@@ -85,7 +85,7 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
     catch(ResourceSystem::MissingManifestError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ". Failed adding texture \"%s\" to group #%i, ignoring.")
+        LOG_RES_WARNING(er.asText() + ". Failed adding texture \"%s\" to group #%i, ignoring.")
             << textureUri << groupId;
     }
 }
@@ -101,7 +101,7 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
     String name(nameCStr);
     if(name.isEmpty())
     {
-        LOG_WARNING("Invalid/zero-length name specified, ignoring.");
+        LOG_RES_WARNING("Invalid/zero-length name specified, ignoring.");
         return 0;
     }
 
@@ -126,7 +126,7 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
     }
     catch(ColorTableReader::FormatError const &er)
     {
-        LOG_WARNING("Error creating/replacing color palette '%s':\n")
+        LOG_RES_WARNING("Error creating/replacing color palette '%s':\n")
             << name << er.asText();
     }
     return 0;
@@ -160,13 +160,13 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
     catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
+        LOG_RES_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
             << paletteId << Str_Text(translationId) << er.asText();
     }
     catch(ColorPalette::InvalidTranslationIdError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
+        LOG_RES_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
             << paletteId << Str_Text(translationId) << er.asText();
     }
 }
@@ -182,7 +182,7 @@ DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
     catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     return 0; // Not found.
 }
@@ -199,14 +199,14 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
     catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     return 0; // Not found.
 }
 
 #undef R_GetColorPaletteRGBubv
 DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t rgb[3],
-    boolean applyTexGamma)
+    dd_bool applyTexGamma)
 {
     LOG_AS("R_GetColorPaletteRGBubv");
 
@@ -235,13 +235,13 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
     catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
 }
 
 #undef R_GetColorPaletteRGBf
 DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3],
-    boolean applyTexGamma)
+    dd_bool applyTexGamma)
 {
     LOG_AS("R_GetColorPaletteRGBf");
 
@@ -275,7 +275,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
     catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
 }
 
@@ -291,7 +291,7 @@ DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
     catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     return AutoStr_NewStd();
 }
@@ -307,7 +307,7 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
     catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     return reinterpret_cast<uri_s *>(new de::Uri());
 }
@@ -319,7 +319,7 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName)
 }
 
 #undef R_GetPatchInfo
-DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
+DENG_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 {
     DENG2_ASSERT(info);
     LOG_AS("R_GetPatchInfo");
@@ -359,12 +359,12 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
     catch(TextureManifest::MissingTextureError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     return false;
 }

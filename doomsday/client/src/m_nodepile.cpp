@@ -88,7 +88,7 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
     linknode_t *end = pile->nodes + pile->count;
     int         i, newcount;
     linknode_t *newlist;
-    boolean     found;
+    dd_bool     found;
 
     pile->pos %= pile->count;
     node = pile->nodes + pile->pos++;

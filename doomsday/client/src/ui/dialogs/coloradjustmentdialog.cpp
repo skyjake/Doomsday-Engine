@@ -18,8 +18,8 @@
 
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/widgets/cvarsliderwidget.h"
-#include "GridLayout"
-#include "SignalAction"
+#include <de/GridLayout>
+#include <de/SignalAction>
 #include "con_main.h"
 
 using namespace de;

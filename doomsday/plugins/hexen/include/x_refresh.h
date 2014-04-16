@@ -43,7 +43,7 @@ void X_DrawWindow(const Size2Raw* windowSize);
 void X_EndFrame(void);
 
 void R_SetAllDoomsdayFlags(void);
-boolean R_ViewFilterColor(float rgba[4], int filter);
+dd_bool R_ViewFilterColor(float rgba[4], int filter);
 void R_UpdateViewFilter(int player);
 
 #ifdef __cplusplus

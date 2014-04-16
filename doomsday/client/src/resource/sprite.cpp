@@ -161,7 +161,7 @@ Lumobj *Sprite::generateLumobj() const
     pointlight_analysis_t const *pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
     if(!pl)
     {
-        LOG_WARNING("Texture \"%s\" has no BrightPointAnalysis")
+        LOGDEV_RES_WARNING("Texture \"%s\" has no BrightPointAnalysis")
             << ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri();
         return 0;
     }

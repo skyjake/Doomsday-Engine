@@ -49,12 +49,9 @@
 #include "con_main.h"
 #include "clientapp.h"
 #include "ui/nativeui.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
-#include "SignalAction"
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/progresswidget.h"
-#include "ui/widgets/notificationwidget.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
 #include "updater/processcheckdialog.h"
@@ -67,6 +64,8 @@
 #include <de/Time>
 #include <de/Date>
 #include <de/Log>
+#include <de/SignalAction>
+#include <de/NotificationAreaWidget>
 #include <de/data/json.h>
 
 using namespace de;
@@ -121,8 +120,14 @@ public:
         useMiniStyle();
         setColor("text");
         setShadowColor(""); // no shadow, please
-        setRotationSpeed(0);
         setSizePolicy(ui::Expand, ui::Expand);
+
+        _icon = new LabelWidget;
+        _icon->setImage(ClientApp::windowSystem().style().images().image("updater"));
+        _icon->setOverrideImageSize(overrideImageSize());
+        _icon->rule().setRect(rule());
+        add(_icon);
+        hideIcon();
 
         // The notification has a hidden button that can be clicked.
         _clickable = new ButtonWidget;
@@ -133,7 +138,18 @@ public:
         add(_clickable);
     }
 
+    void showIcon(DotPath const &path)
+    {
+        _icon->setImageColor(ClientApp::windowSystem().style().colors().colorf(path));
+    }
+
+    void hideIcon()
+    {
+        _icon->setImageColor(Vector4f());
+    }
+
 private:
+    LabelWidget *_icon;
     ButtonWidget *_clickable;
 };
 
@@ -172,7 +188,7 @@ DENG2_OBSERVES(App, StartupComplete)
                 QFile file(p);
                 if(file.exists())
                 {
-                    LOG_INFO("Deleting previously installed package: %s") << p;
+                    LOG_NOTE("Deleting previously installed package: %s") << p;
                     file.remove();
                 }
             }
@@ -201,7 +217,7 @@ DENG2_OBSERVES(App, StartupComplete)
         uri += (st.channel() == UpdaterSettings::Stable? "&stable" : "&unstable");
         uri += "&graph";
 
-        LOG_DEBUG("Check URI: ") << uri;
+        LOG_XVERBOSE("Check URI: ") << uri;
         return uri;
     }
 
@@ -273,21 +289,20 @@ DENG2_OBSERVES(App, StartupComplete)
     {
         status->setRange(Rangei(0, 1));
         status->setProgress(0, 0);
-        status->setImage(ClientApp::windowSystem().style().images().image("updater"));
-        status->setImageColor(ClientApp::windowSystem().style().colors().colorf("text"));
+        status->showIcon("text");
         showNotification(true);
     }
 
     void showUpdateAvailableNotification()
     {
         showCheckingNotification();
-        status->setImageColor(ClientApp::windowSystem().style().colors().colorf("accent"));
+        status->showIcon("accent");
     }
 
     void showDownloadNotification()
     {
         status->setMode(ProgressWidget::Indefinite);
-        status->setImage(Image());
+        status->hideIcon();
         showNotification(true);
     }
 
@@ -334,12 +349,11 @@ DENG2_OBSERVES(App, StartupComplete)
 
         VersionInfo currentVersion;
 
-        LOG_VERBOSE(_E(b) "Received latest version information:\n" _E(.)
-                    " - version: " _E(>) "%s " _E(2) "(installed version is %s)")
-                << latestVersion.asText()
-                << currentVersion.asText();
-        LOG_VERBOSE(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
-        LOG_VERBOSE(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
+        LOG_MSG(_E(b) "Received version information:\n" _E(.)
+                " - installed version: " _E(>) "%s ") << currentVersion.asText();
+        LOG_MSG(" - latest version: " _E(>) "%s") << latestVersion.asText();
+        LOG_MSG(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
+        LOG_MSG(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 
         if(availableDlg)
         {
@@ -353,7 +367,7 @@ DENG2_OBSERVES(App, StartupComplete)
         // Is this newer than what we're running?
         if(gotUpdate)
         {
-            LOG_INFO("Found an update: " _E(b)) << latestVersion.asText();
+            LOG_NOTE("Found an update: " _E(b)) << latestVersion.asText();
 
             if(!alwaysShowNotification)
             {
@@ -370,7 +384,7 @@ DENG2_OBSERVES(App, StartupComplete)
         }
         else
         {
-            LOG_INFO("You are running the latest available " _E(b) "%s" _E(.) " release.")
+            LOG_NOTE("You are running the latest available " _E(b) "%s" _E(.) " release")
                     << (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         }
 
@@ -413,7 +427,7 @@ DENG2_OBSERVES(App, StartupComplete)
         // The notification provides access to the download dialog.
         showDownloadNotification();
 
-        LOG_MSG("Download and install.");
+        LOG_MSG("Download and install update");
 
         download = new DownloadDialog(latestPackageUri, latestPackageUri2);
         download->setAnchorAndOpeningDirection(status->rule(), ui::Down);
@@ -534,7 +548,7 @@ Updater::Updater() : d(new Instance(this))
     connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
 
     // Do a silent auto-update check when starting.
-    App::app().audienceForStartupComplete += d;
+    App::app().audienceForStartupComplete() += d;
 }
 
 void Updater::setupUI()
@@ -597,7 +611,7 @@ void Updater::downloadCompleted(int)
 
 void Updater::downloadFailed(QString message)
 {
-    LOG_INFO("Update cancelled: ") << message;
+    LOG_NOTE("Update cancelled: ") << message;
 }
 
 void Updater::recheck()
@@ -652,7 +666,7 @@ void Updater::printLastUpdated(void)
     String ago = UpdaterSettings().lastCheckAgo();
     if(ago.isEmpty())
     {
-        LOG_MSG("Never checked for updates.");
+        LOG_MSG("Never checked for updates");
     }
     else
     {

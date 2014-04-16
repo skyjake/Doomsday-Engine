@@ -95,7 +95,7 @@ typedef enum doubleclickstate_s {
  * threshold. This is to allow double-clicks also from the numeric controls.
  */
 typedef struct doubleclick_s {
-    boolean triggered;                      // True if double-click has been detected.
+    dd_bool triggered;                      // True if double-click has been detected.
     uint    previousClickTime;              // Previous time an activation occurred.
     doubleclickstate_t lastState;           // State at the previous time the check was made.
     doubleclickstate_t previousClickState;  // Previous click state. When duplicated, triggers
@@ -312,10 +312,11 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         // Compose the name of the symbolic event.
         Str_Append(symbolicName, playerControls[control].name);
 
-        VERBOSE( Con_Message("P_MaintainControlDoubleClicks: Triggered plr %i, ctl %i, "
-                             "state %i - threshold %i (%s)",
-                             playerNum, control, newState, nowTime - db->previousClickTime,
-                             Str_Text(symbolicName)) );
+        LOG_AS("P_MaintainControlDoubleClicks");
+        LOG_INPUT_XVERBOSE("Triggered plr %i, ctl %i, "
+                          "state %i - threshold %i (%s)")
+                << playerNum << control << newState << nowTime - db->previousClickTime
+                << Str_Text(symbolicName);
 
         event.device = 0;
         event.type = E_SYMBOLIC;
@@ -350,6 +351,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
     binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    if(!binds) return false;
 
     // There must be bindings to active input devices.
     bool gotActiveDevices = false;
@@ -453,13 +455,14 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int control)
 {
     playercontrol_t* pc = P_PlayerControlById(control);
 
-    assert(pc);
+    DENG_ASSERT(pc);
+
+    LOG_AS("P_Impulse");
 
     // Check that this is really an impulse control.
     if(pc->type != CTLT_IMPULSE)
     {
-        Con_Message("P_Impulse: Control '%s' is not an impulse control.",
-                    pc->name);
+        LOG_INPUT_WARNING("Control '%s' is not an impulse control") << pc->name;
         return;
     }
 
@@ -522,28 +525,21 @@ D_CMD(ClearControlAccumulation)
  */
 D_CMD(ListPlayerControls)
 {
-    /*
-    uint        i, j;
-    char        buf[MAX_DESCRIPTOR_LENGTH+1];
+    LOG_MSG(_E(b) "Player Controls:");
+    LOG_MSG("%i controls have been defined") << playerControlCount;
 
-    Con_Message("Player Controls:");
-    for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
+    for(int i = 0; i < playerControlCount; ++i)
     {
-        controlclass_t *cClass = &ctlClass[i];
+        playercontrol_t *pc = &playerControls[i];
 
-        if(cClass->count > 0)
-        {
-            Con_Message("%i %s:", cClass->count,
-                        ctlClassNames[i][cClass->count > 1]);
-            for(j = 0; j < cClass->count; ++j)
-            {
-                strncpy(buf, cClass->desc[j].name, sizeof(buf) - 1);
-                strlwr(buf);
-                buf[strlen(cClass->desc[j].name)] = 0;
-                Con_Message("  %s", buf);
-            }
-        }
-    }*/
+        LOG_MSG("ID %i: " _E(>)_E(b) "%s " _E(.) "(%s) "
+                _E(l) "%s%s")
+                << pc->id
+                << pc->name
+                << pc->bindContextName
+                << (pc->isTriggerable? "triggerable " : "")
+                << (pc->type == CTLT_IMPULSE? "impulse" : "numeric");
+    }
     return true;
 }
 
@@ -553,8 +549,8 @@ D_CMD(Impulse)
 
     if(argc < 2 || argc > 3)
     {
-        Con_Printf("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-ordinal)\n",
-                   argv[0], argv[0]);
+        LOG_SCR_NOTE("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-ordinal)")
+                << argv[0] << argv[0];
         return true;
     }
     if(argc == 3)

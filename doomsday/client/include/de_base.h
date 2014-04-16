@@ -31,10 +31,10 @@
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
-#include <de/garbage.h>
 #include <de/reader.h>
 #include <de/writer.h>
 #include <de/c_wrapper.h>
+#include <de/Garbage>
 
 #include "dd_def.h"
 #include "dd_share.h"

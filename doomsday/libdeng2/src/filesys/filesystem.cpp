@@ -1,27 +1,27 @@
 /** @file filesystem.cpp File System.
  *
- * @author Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/FS"
 #include "de/LibraryFile"
 #include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
+#include "de/game/SavedSession"
 #include "de/NativePath"
 #include "de/PackageFolder"
 #include "de/ZipArchive"
@@ -57,7 +57,7 @@ void FileSystem::refresh()
     Time startedAt;
     d->root.populate();
 
-    LOG_DEBUG("Completed in %.2f seconds.") << startedAt.since();
+    LOGDEV_RES_VERBOSE("Completed in %.2f seconds") << startedAt.since();
 
     printIndex();
 }
@@ -88,8 +88,8 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
                 Feed *feed = (*i)->newSubFeed(subFolder->name());
                 if(!feed) continue; // Check next one instead.
 
-                LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
-                              subFolder->name() << (*i)->description());
+                LOGDEV_RES_XVERBOSE_DEBUGONLY("Creating subfeed \"%s\" from %s",
+                                             subFolder->name() << (*i)->description());
 
                 subFolder->attach(feed);
 
@@ -109,6 +109,23 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
     return *subFolder;
 }
 
+Folder &FileSystem::makeFolderWithFeed(String const &path, Feed *feed,
+                                       Folder::PopulationBehavior populationBehavior,
+                                       FolderCreationBehaviors behavior)
+{
+    makeFolder(path.fileNamePath(), behavior);
+
+    Folder &folder = makeFolder(path, DontInheritFeeds /* we have a specific feed to attach */);
+    folder.clear();
+    folder.clearFeeds();
+    folder.attach(feed);
+    if(behavior & PopulateNewFolder)
+    {
+        folder.populate(populationBehavior);
+    }
+    return folder;
+}
+
 File *FileSystem::interpret(File *sourceData)
 {
     LOG_AS("FS::interpret");
@@ -119,7 +136,7 @@ File *FileSystem::interpret(File *sourceData)
     {
         if(LibraryFile::recognize(*sourceData))
         {
-            LOG_VERBOSE("Interpreted ") << sourceData->description() << " as a shared library";
+            LOG_RES_VERBOSE("Interpreted ") << sourceData->description() << " as a shared library";
 
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
@@ -128,10 +145,20 @@ File *FileSystem::interpret(File *sourceData)
         {
             try
             {
-                LOG_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
-
                 // It is a ZIP archive: we will represent it as a folder.
-                std::auto_ptr<PackageFolder> package(new PackageFolder(*sourceData, sourceData->name()));
+                std::auto_ptr<PackageFolder> package;
+
+                if(sourceData->name().fileNameExtension() == ".save")
+                {
+                    /// @todo fixme: Don't assume this is a save package.
+                    LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
+                    package.reset(new game::SavedSession(*sourceData, sourceData->name()));
+                }
+                else
+                {
+                    LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
+                    package.reset(new PackageFolder(*sourceData, sourceData->name()));
+                }
 
                 // Archive opened successfully, give ownership of the source to the folder.
                 package->setSource(sourceData);
@@ -141,21 +168,22 @@ File *FileSystem::interpret(File *sourceData)
             {
                 // Even though it was recognized as an archive, the file
                 // contents may still prove to be corrupted.
-                LOG_WARNING("Archive in %s is invalid") << sourceData->description();
+                LOG_RES_WARNING("Archive in %s is invalid") << sourceData->description();
             }
             catch(IByteArray::OffsetError const &)
             {
-                LOG_WARNING("Archive in %s is truncated") << sourceData->description();
+                LOG_RES_WARNING("Archive in %s is truncated") << sourceData->description();
             }
-            catch(IIStream::InputError const &)
+            catch(IIStream::InputError const &er)
             {
-                LOG_WARNING("%s cannot be read") << sourceData->description();
+                LOG_RES_WARNING("Failed to read %s") << sourceData->description();
+                LOGDEV_RES_WARNING("%s") << er.asText();
             }
         }
     }
     catch(Error const &err)
     {
-        LOG_ERROR("") << err.asText();
+        LOG_RES_ERROR("") << err.asText();
 
         // The error is one we don't know how to handle. We were given
         // responsibility of the source file, so it has to be deleted.
@@ -248,6 +276,30 @@ void FileSystem::deindex(File &file)
 
     removeFromIndex(d->index, file);
     removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
+}
+
+File &FileSystem::copySerialized(String const &sourcePath, String const &destinationPath,
+                                 CopyBehaviors behavior)
+{
+    Block contents;
+    *root().locate<File const>(sourcePath).source() >> contents;
+
+    File *dest = &root().replaceFile(destinationPath);
+    *dest << contents;
+    dest->flush();
+
+    if(behavior & ReinterpretDestination)
+    {
+        // We can now reinterpret and populate the contents of the archive.
+        dest = dest->reinterpret();
+    }
+
+    if(behavior.testFlag(PopulateDestination) && dest->is<Folder>())
+    {
+        dest->as<Folder>().populate();
+    }
+
+    return *dest;
 }
 
 void FileSystem::timeChanged(Clock const &)

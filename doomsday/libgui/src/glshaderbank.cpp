@@ -3,16 +3,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -149,7 +149,7 @@ void GLShaderBank::addFromInfo(File const &file)
 
 GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 {
-    Instance::Data &i = static_cast<Instance::Data &>(data(path));
+    Instance::Data &i = data(path).as<Instance::Data>();
 
     if(type == GLShader::Vertex)
     {
@@ -163,7 +163,7 @@ GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 
 GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 {
-    Instance::Data &i = static_cast<Instance::Data &>(data(path));
+    Instance::Data &i = data(path).as<Instance::Data>();
     program.build(i.vertex, i.fragment);
     return program;
 }
@@ -211,8 +211,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
 
 Bank::IData *GLShaderBank::loadFromSource(ISource &source)
 {
-    Instance::Source &src = static_cast<Instance::Source &>(source);
-
+    Instance::Source &src = source.as<Instance::Source>();
     return new Instance::Data(src.load(GLShader::Vertex),
                               src.load(GLShader::Fragment));
 }

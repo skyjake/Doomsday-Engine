@@ -25,6 +25,7 @@
 #include <locale.h>
 
 #include <de/c_wrapper.h>
+#include <de/App>
 
 #ifdef UNIX
 #  include "library.h"
@@ -40,6 +41,8 @@
 
 #include "filesys/fs_util.h"
 #include "dd_uinit.h"
+
+#include <de/App>
 
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
@@ -58,12 +61,16 @@ static void determineGlobalPaths(application_t* app)
 {
     assert(app);
 
+    // By default, make sure the working path is the home folder.
+    de::App::setCurrentWorkPath(de::App::app().nativeHomePath());
+
 #ifndef MACOSX
     if(getenv("HOME"))
     {
         filename_t homePath;
         directory_t* temp;
-        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.doomsday/runtime/", getenv("HOME"));
+        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/%s/runtime/", getenv("HOME"),
+                    DENG2_APP->unixHomeFolderName().toLatin1().constData());
         temp = Dir_New(homePath);
         Dir_mkpath(Dir_Path(temp));
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
@@ -135,9 +142,9 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
-boolean DD_Unix_Init(void)
+dd_bool DD_Unix_Init(void)
 {
-    boolean failed = true;
+    dd_bool failed = true;
 
     memset(&app, 0, sizeof(app));
 

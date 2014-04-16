@@ -1,18 +1,18 @@
 /** @file escapeparser.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -24,7 +24,13 @@ DENG2_PIMPL_NOREF(EscapeParser)
 {
     String original;
     String plain;
+
+    DENG2_PIMPL_AUDIENCE(PlainText)
+    DENG2_PIMPL_AUDIENCE(EscapeSequence)
 };
+
+DENG2_AUDIENCE_METHOD(EscapeParser, PlainText)
+DENG2_AUDIENCE_METHOD(EscapeParser, EscapeSequence)
 
 EscapeParser::EscapeParser() : d(new Instance)
 {}
@@ -44,7 +50,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             // Empty ranges are ignored.
             if(range.size() > 0)
             {
-                DENG2_FOR_AUDIENCE(PlainText, i)
+                DENG2_FOR_AUDIENCE2(PlainText, i)
                 {
                     i->handlePlainText(range);
                 }
@@ -75,7 +81,7 @@ void EscapeParser::parse(String const &textWithEscapes)
                 break;
             }
 
-            DENG2_FOR_AUDIENCE(EscapeSequence, i)
+            DENG2_FOR_AUDIENCE2(EscapeSequence, i)
             {
                 i->handleEscapeSequence(Rangei(range.end + 1, range.end + escLen));
             }
@@ -89,7 +95,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             range.end = d->original.size();
             if(range.size() > 0)
             {
-                DENG2_FOR_AUDIENCE(PlainText, i)
+                DENG2_FOR_AUDIENCE2(PlainText, i)
                 {
                     i->handlePlainText(range);
                 }

@@ -38,7 +38,7 @@ typedef struct {
     // Base-level.
     void          (*PreInit) (gameid_t gameId);
     void          (*PostInit) (void);
-    boolean       (*TryShutdown) (void);
+    dd_bool       (*TryShutdown) (void);
     void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
     int           (*GetInteger) (int id);
@@ -123,8 +123,8 @@ typedef struct {
     // Miscellaneous.
     void          (*MobjThinker) (void *mobj);
     coord_t       (*MobjFriction) (void* mobj); // Returns a friction factor.
-    boolean       (*MobjCheckPositionXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
-    boolean       (*MobjTryMoveXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
+    dd_bool       (*MobjCheckPositionXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
+    dd_bool       (*MobjTryMoveXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
     void          (*SectorHeightChangeNotification)(int sectorIdx); // Applies necessary checks on objects.
 
     // Main structure sizes.

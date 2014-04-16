@@ -1,4 +1,4 @@
-HEADERS += \
+publicHeaders(root, \
     include/de/Address \
     include/de/Beacon \
     include/de/BlockPacket \
@@ -9,9 +9,10 @@ HEADERS += \
     include/de/Protocol \
     include/de/RecordPacket \
     include/de/Socket \
-    include/de/Transmitter
+    include/de/Transmitter \
+)
 
-HEADERS += \
+publicHeaders(net, \
     include/de/net/address.h \
     include/de/net/beacon.h \
     include/de/net/blockpacket.h \
@@ -22,10 +23,8 @@ HEADERS += \
     include/de/net/protocol.h \
     include/de/net/recordpacket.h \
     include/de/net/socket.h \
-    include/de/net/transmitter.h
-
-# Private headers.
-HEADERS +=
+    include/de/net/transmitter.h \
+)
 
 SOURCES += \
     src/net/address.cpp \

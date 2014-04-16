@@ -1,25 +1,21 @@
-/**\file am_map.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file am_map.h  UI Automap widget.
  *
- *\author Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBCOMMON_AUTOMAP_CONFIG
@@ -165,7 +161,7 @@ typedef struct {
     blendmode_t blendMode;
     float glowStrength, glowSize;
     glowtype_t glow;
-    boolean scaleWithView;
+    dd_bool scaleWithView;
 } automapcfg_lineinfo_t;
 
 typedef struct automapcfg_s {
@@ -178,20 +174,28 @@ typedef struct automapcfg_s {
     automapcfg_lineinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
 } automapcfg_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ST_InitAutomapConfig(void);
 automapcfg_t* ST_AutomapConfig(void);
 
-void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customPal);
+void AM_GetMapColor(float *rgb, float const *uColor, int palidx, dd_bool customPal);
 
-const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name);
+automapcfg_lineinfo_t const *AM_GetInfoForLine(automapcfg_t *mcfg, automapcfg_objectname_t name);
 
-const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special,
-    int flags, const Sector* frontsector, const Sector* backsector, int automapFlags);
+automapcfg_lineinfo_t const *AM_GetInfoForSpecialLine(automapcfg_t *mcfg, int special,
+    int flags, Sector const *frontsector, Sector const *backsector, int automapFlags);
 
-void AM_GetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float* r, float* g, float* b, float* a);
-void AM_SetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);
+void AM_GetColorAndOpacity(automapcfg_t *mcfg, automapcfg_objectname_t name, float *r, float *g, float *b, float *a);
+void AM_SetColorAndOpacity(automapcfg_t *mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);
 
-svgid_t AM_GetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name);
-void AM_SetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name, svgid_t svg);
+svgid_t AM_GetVectorGraphic(automapcfg_t *mcfg, automapcfg_objectname_t name);
+void AM_SetVectorGraphic(automapcfg_t *mcfg, automapcfg_objectname_t name, svgid_t svg);
 
-#endif /* LIBCOMMON_AUTOMAP_CONFIG */
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBCOMMON_AUTOMAP_CONFIG

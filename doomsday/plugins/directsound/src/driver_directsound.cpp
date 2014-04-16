@@ -97,17 +97,16 @@ static void     commitEAXDeferred(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-static boolean initOk = false;
+static dd_bool initOk = false;
 
 static LPDIRECTSOUND8 dsound = NULL;
 static LPDIRECTSOUNDBUFFER primary = NULL;
 static LPDIRECTSOUND3DLISTENER8 dsListener = NULL;
 static LPKSPROPERTYSET propertySet = NULL;
-static boolean ignoreEAXErrors = false;
-static boolean canSetPSF = true;
+static dd_bool ignoreEAXErrors = false;
+static dd_bool canSetPSF = true;
 
 static DWORD failedProps[MAX_FAILED_PROPS];
-static int verbose = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -148,7 +147,7 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
     if(FAILED(hr = buf8->QueryInterface(IID_IDirectSound3DBuffer8,
                                         (LPVOID*) &buf3d)))
     {
-        Con_Message("dsDirectSound::get3DBuffer: Failed to get 3D interface (0x%x).", hr);
+        App_Log(DE2_DEV_AUDIO_WARNING, "[DirectSound] get3DBuffer: Failed to get 3D interface (0x%x)", hr);
         buf3d = NULL;
     }
 
@@ -161,7 +160,7 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
  * @param prop          Property id (constant) to be checked.
  * @return              @c true, if supported.
  */
-static boolean queryEAXSupport(int prop)
+static dd_bool queryEAXSupport(int prop)
 {
 #define EAXSUP          (KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET)
 
@@ -209,18 +208,14 @@ int DS_Init(void)
     HWND                hWnd;
     HRESULT             hr;
     //uint                numHW3DBuffers = 0;
-    boolean             useEAX, eaxAvailable = false,
+    dd_bool             useEAX, eaxAvailable = false,
                         primaryBuffer3D = false, primaryBufferHW = false;
-    boolean             haveInstance = false;
+    dd_bool             haveInstance = false;
 
     if(dsound)
         return true; // Already initialized?
 
-    // Are we in verbose mode?
-    verbose = CommandLine_Exists("-verbose");
-
-    if(verbose)
-        Con_Message("dsDirectSound::DS_Init: Initializing Direct Sound...");
+    App_Log(DE2_AUDIO_VERBOSE, "[DirectSound] Initializing Direct Sound...");
 
     // Can we set the Primary Sound Format?
     canSetPSF = !CommandLine_Exists("-nopsf");
@@ -228,8 +223,8 @@ int DS_Init(void)
 
     if(!(hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE)))
     {
-        Con_Error("dsDirectSound::DS_Init: Cannot initialize DirectSound "
-                  "at this time (main window unavailable).");
+        App_Log(DE2_AUDIO_ERROR, "[DirectSound] Cannot initialize DirectSound: "
+                "main window unavailable");
         return false;
     }
 
@@ -244,8 +239,7 @@ int DS_Init(void)
         }
         else
         {
-            if(verbose)
-                Con_Message("dsDirectSound::DS_Init: EAX couldn't be initialized (0x%x).", hr);
+            App_Log(DE2_AUDIO_VERBOSE, "[DirectSound] EAX could not be initialized (0x%x)", hr);
         }
     }
 
@@ -258,7 +252,7 @@ int DS_Init(void)
         }
         else
         {
-            Con_Message("dsDirectSound::DS_Init: Failed to create the DS8 instance (0x%x).", hr);
+            App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed to create the DS8 instance (0x%x)", hr);
         }
     }
 
@@ -270,7 +264,7 @@ int DS_Init(void)
     // Set cooperative level.
     if((hr = dsound->SetCooperativeLevel(hWnd, DSSCL_PRIORITY)) != DS_OK)
     {
-        Con_Message("dsDirectSound::DS_Init: Failed to set cooperative level (0x%x).", hr);
+        App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed to set cooperative level (0x%x)", hr);
         return false;
     }
 
@@ -278,7 +272,7 @@ int DS_Init(void)
     dsoundCaps.dwSize = sizeof(dsoundCaps);
     if((hr = dsound->GetCaps(&dsoundCaps)) != DS_OK)
     {
-        Con_Message("dsDirectSound::DS_Init: Failed querying device caps (0x%x).", hr);
+        App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed querying device caps (0x%x)", hr);
         return false;
     }
 
@@ -311,7 +305,7 @@ int DS_Init(void)
 
         if((hr = dsound->CreateSoundBuffer(&desc, &primary, NULL)) != DS_OK)
         {
-            Con_Message("dsDirectSound::DS_Init: Failed creating primary (2D) buffer (0x%x).", hr);
+            App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed creating primary (2D) buffer (0x%x)", hr);
             return false;
         }
 
@@ -327,8 +321,7 @@ int DS_Init(void)
             primary->QueryInterface(IID_IDirectSound3DListener,
                                     (LPVOID*) &dsListener)))
         {
-            if(verbose)
-                Con_Message("dsDirectSound::DS_Init: 3D listener not available (0x%x).", hr);
+            App_Log(DE2_DEV_AUDIO_MSG, "[DirectSound] 3D listener not available (0x%x)", hr);
         }
     }
 
@@ -384,7 +377,7 @@ int DS_Init(void)
         if(propertySet)
         {
             size_t              i = 0;
-            boolean             ok = true;
+            dd_bool             ok = true;
 
             while(ok && eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE)
             {
@@ -408,38 +401,36 @@ int DS_Init(void)
         {
             useEAX = false;
 
-            if(verbose)
-                Con_Message("dsDirectSound::DS_Init: Failed retrieving property set.");
+            App_Log(DE2_LOG_DEV | DE2_LOG_AUDIO | DE2_LOG_WARNING,
+                    "dsDirectSound::DS_Init: Failed retrieving property set.");
         }
     }
 
     // Announce capabilites:
-    Con_Printf("DirectSound configuration:\n");
-    Con_Printf("  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
-               (primaryBufferHW? "hardware" : "software"));
-    Con_Printf("  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
-    Con_Printf("  DSP: %s", eaxAvailable? "EAX 2.0" : "None");
+    App_Log(DE2_LOG_AUDIO, "DirectSound configuration:");
+    App_Log(DE2_LOG_AUDIO, "  Primary Buffer: %s (%s)", (primaryBuffer3D? "3D" : "2D"),
+            (primaryBufferHW? "hardware" : "software"));
+    App_Log(DE2_LOG_AUDIO, "  Hardware Buffers: %i", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
+    LogBuffer_Printf(DE2_LOG_AUDIO, "  DSP: %s", eaxAvailable? "EAX 2.0" : "None");
     if(eaxAvailable)
-        Con_Printf(" (%s)", useEAX? "enabled" : "disabled");
-    Con_Printf("\n");
+        LogBuffer_Printf(DE2_LOG_AUDIO, " (%s)", useEAX? "enabled" : "disabled");
+    LogBuffer_Printf(DE2_LOG_AUDIO, "\n");
 
     if(eaxAvailable)
     {
-        size_t              i;
-
-        Con_Printf("  EAX Listner Environment:\n");
-        for(i = 0; eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE; ++i)
+        App_Log(DE2_LOG_AUDIO, "  EAX Listner Environment:");
+        for(size_t i = 0; eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE; ++i)
         {
             const eaxproperty_t* p = &eaxProps[i];
 
-            Con_Message("    %s: %s", p->name,
-                        queryEAXSupport(p->prop)? "Present" : "Not available");
+            App_Log(DE2_LOG_AUDIO, "    %s: %s", p->name,
+                    queryEAXSupport(p->prop)? "Present" : "Not available");
         }
     }
 
     // Success!
-    if(verbose)
-        Con_Message("dsDirectSound::DS_Init: Initialization complete, OK.");
+    App_Log(DE2_LOG_AUDIO | DE2_LOG_VERBOSE | DE2_LOG_DEV,
+                     "dsDirectSound::DS_Init: Initialization complete, OK.");
     return true;
 
 #undef NUMBUFFERS_HW_3D
@@ -547,8 +538,8 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     buf_object8 = createBuffer(&desc);
     if(!buf_object8)
     {
-        Con_Message("dsDirectSound::DS_SFX_CreateBuffer: Failed creating buffer [rate:%i bits:%i].",
-                    rate, bits);
+        App_Log(DE2_AUDIO_WARNING, "[DirectSound] Failed to create buffer (rate:%i bits:%i)",
+                rate, bits);
         return NULL;
     }
 
@@ -558,7 +549,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
         buf_object3d = get3DBuffer(buf_object8);
         if(!buf_object3d)
         {
-            Con_Message("dsDirectSound::DS_SFX_CreateBuffer: Failed to retrieve 3D interface.");
+            App_Log(DE2_AUDIO_WARNING,"[DirectSound] Failed to get a 3D interface for audio buffer");
             buf_object8->Release();
             return NULL;
         }
@@ -703,7 +694,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
 }
 
 /*
-static boolean InRange(uint pos, uint start, uint end)
+static dd_bool InRange(uint pos, uint start, uint end)
 {
     if(end > start)
     {
@@ -791,11 +782,6 @@ void DS_SFX_Refresh(sfxbuffer_t* buf)
 
     if(FAILED(hr))
         return; // Give up.
-
-/*#if _DEBUG
-Con_Message("C%i, B%i, W%i (p%i)", buf->cursor, write_bytes, buf->written, play);
-Con_Message("  (d1=%p b=%i d2=%p b=%i)", data[0], bytes[0], data[1], bytes[1]);
-#endif*/
 
     // Copy in two parts: as much sample data as we've got, and then zeros.
     for(i = 0; i < 2 && data[i]; ++i)
@@ -1021,7 +1007,7 @@ static void setEAXFailed(DWORD prop)
 /**
  * @return              @c true, if the specified property has failed.
  */
-static boolean hasEAXFailed(DWORD prop)
+static dd_bool hasEAXFailed(DWORD prop)
 {
     int                 i;
 
@@ -1035,7 +1021,7 @@ static boolean hasEAXFailed(DWORD prop)
 /**
  * @return              @c true, if an EAX error should be reported.
  */
-static boolean reportEAXError(DWORD prop, HRESULT hr)
+static dd_bool reportEAXError(DWORD prop, HRESULT hr)
 {
     if(ignoreEAXErrors)
         return false;
@@ -1059,8 +1045,8 @@ static void setEAXdw(DWORD prop, int value)
                               0, &value, sizeof(DWORD))))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("setEAXdw (prop:%i value:%i) failed. Result: %x.",
-                        prop, value, hr);
+            App_Log(DE2_DEV_AUDIO_WARNING, "setEAXdw (prop:%i value:%i) failed. Result: %x",
+                    prop, value, hr);
     }
 }
 
@@ -1074,8 +1060,8 @@ static void setEAXf(DWORD prop, float value)
                               0, &value, sizeof(float))))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("setEAXf (prop:%i value:%f) failed. Result: %x.",
-                        prop, value, hr);
+            App_Log(DE2_DEV_AUDIO_WARNING,"setEAXf (prop:%i value:%f) failed. Result: %x",
+                    prop, value, hr);
     }
 }
 
@@ -1094,8 +1080,8 @@ static void mulEAXdw(DWORD prop, float mul)
                               &retBytes)))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("mulEAXdw (prop:%i) get failed. Result: %x.",
-                        prop, hr & 0xffff);
+            App_Log(DE2_DEV_AUDIO_WARNING, "mulEAXdw (prop:%i) get failed. Result: %x",
+                    prop, hr & 0xffff);
     }
 
     setEAXdw(prop, volLinearToLog(pow(10, value / 2000.0f) * mul));
@@ -1116,8 +1102,8 @@ static void mulEAXf(DWORD prop, float mul, float min, float max)
                               &retBytes)))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("mulEAXf (prop:%i) get failed. Result: %x.",
-                        prop, hr & 0xffff);
+            App_Log(DE2_DEV_AUDIO_WARNING,
+                    "mulEAXf (prop:%i) get failed. Result: %x", prop, hr & 0xffff);
     }
 
     value *= mul;
@@ -1265,7 +1251,7 @@ void DS_SFX_Listenerv(int prop, float* values)
     case SFXLP_ORIENTATION:
         if(!dsListener)
             return;
-        listenerOrientation(values[VX] / 180 * PI, values[VY] / 180 * PI);
+        listenerOrientation(values[VX] / 180 * DD_PI, values[VY] / 180 * DD_PI);
         break;
 
     case SFXLP_REVERB:

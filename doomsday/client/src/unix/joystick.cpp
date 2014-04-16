@@ -38,9 +38,9 @@
 int     joydevice = 0;          // Joystick index to use (cvar)
 byte    useJoystickCvar = true; // Joystick input enabled? (cvar)
 
-static boolean joyInited;
+static dd_bool joyInited;
 static byte joyAvailable; // Input enabled from a source?
-static boolean joyButtonWasDown[IJOY_MAXBUTTONS];
+static dd_bool joyButtonWasDown[IJOY_MAXBUTTONS];
 
 #ifndef DENG_NO_SDL
 static SDL_Joystick *joy;
@@ -72,15 +72,14 @@ static void initialize(void)
 
     if(SDL_InitSubSystem(SDL_INIT_JOYSTICK))
     {
-        Con_Message("SDL init failed for joystick: %s", SDL_GetError());
+        LOG_INPUT_ERROR("SDL init failed for joystick: %s") << SDL_GetError();
     }
 
     if((joycount = SDL_NumJoysticks()) > 0)
     {
         if(joydevice > joycount)
         {
-            Con_Message("I_InitJoystick: joydevice = %i, out of range.",
-                        joydevice);
+            LOG_INPUT_WARNING("Using the default joystick instead of joystick #%i") << joydevice;
             joy = SDL_JoystickOpen(0);
         }
         else
@@ -90,35 +89,33 @@ static void initialize(void)
     if(joy)
     {
         // Show some info.
-        Con_Message("I_InitJoystick: %s", SDL_JoystickName(SDL_JoystickIndex(joy)));
+        LOG_INPUT_MSG("Joystick name: %s" ) << SDL_JoystickName(SDL_JoystickIndex(joy));
 
         // We'll handle joystick events manually
         SDL_JoystickEventState(SDL_ENABLE);
 
-        if(verbose)
-        {
-            Con_Message("I_InitJoystick: Joystick reports %i axes, %i buttons, %i hats, "
-                        "and %i trackballs.",
-                        SDL_JoystickNumAxes(joy),
-                        SDL_JoystickNumButtons(joy),
-                        SDL_JoystickNumHats(joy),
-                        SDL_JoystickNumBalls(joy));
-        }
+        LOG_INPUT_VERBOSE("Joystick reports %i axes, %i buttons, %i hats, and %i trackballs")
+                << SDL_JoystickNumAxes(joy)
+                << SDL_JoystickNumButtons(joy)
+                << SDL_JoystickNumHats(joy)
+                << SDL_JoystickNumBalls(joy);
 
         joyAvailable = true;
     }
     else
     {
-        Con_Message("I_InitJoystick: No joysticks found");
+        LOG_INPUT_NOTE("No joysticks found");
         joyAvailable = false;
     }
 }
 #endif
 
-boolean Joystick_Init(void)
+dd_bool Joystick_Init(void)
 {
 #ifndef DENG_NO_SDL
     if(joyInited) return true; // Already initialized.
+
+    LOG_AS("Joystick_Init");
 
     initialize();
     joyInited = true;
@@ -141,7 +138,7 @@ void Joystick_Shutdown(void)
 #endif
 }
 
-boolean Joystick_IsPresent(void)
+dd_bool Joystick_IsPresent(void)
 {
     return joyAvailable;
 }

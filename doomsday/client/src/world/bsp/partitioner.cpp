@@ -32,7 +32,7 @@
 #include "Sector"
 #include "Vertex"
 
-#include "render/r_main.h" /// validCount @todo Remove me
+#include "world/worldsystem.h" /// validCount @todo Remove me
 
 #include "world/bsp/convexsubspace.h"
 #include "world/bsp/edgetip.h"
@@ -52,18 +52,13 @@ namespace de {
 
 using namespace bsp;
 
-typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
-typedef QList<ConvexSubspace>              ConvexSubspaces;
-typedef QHash<Vertex *, EdgeTips>          EdgeTipSetMap;
-typedef QList<LineSegment *>               LineSegments;
-typedef QList<Line *>                      Lines;
-
 DENG2_PIMPL(Partitioner)
 {
     /// Cost factor attributed to splitting a line segment.
     int splitCostFactor;
 
     /// The index-ordered set of map lines we are building BSP data for (not owned).
+    typedef QList<Line *> Lines;
     Lines lines;
 
     /// The mesh from which we'll assign (construct) new geometries(not owned).
@@ -76,12 +71,15 @@ DENG2_PIMPL(Partitioner)
     int numVertexes;
 
     /// Line segments in the plane.
+    typedef QList<LineSegment *> LineSegments;
     LineSegments lineSegments;
 
     /// Convex subspaces in the plane.
+    typedef QList<ConvexSubspace> ConvexSubspaces;
     ConvexSubspaces convexSubspaces;
 
     /// A set of EdgeTips for each unique line segment vertex.
+    typedef QHash<Vertex *, EdgeTips> EdgeTipSetMap;
     EdgeTipSetMap edgeTipSets;
 
     /// Root node of the internal binary tree used to guide the partitioning
@@ -90,17 +88,18 @@ DENG2_PIMPL(Partitioner)
 
     /// Mapping table which relates built BSP map elements to their counterpart
     /// in the internal tree.
+    typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
     BspElementMap treeNodeMap;
 
     /// The "current" binary space half-plane.
     HPlane hplane;
 
     Instance(Public *i, int splitCostFactor)
-      : Base(i),
-        splitCostFactor(splitCostFactor),
-        mesh(0),
-        numNodes(0), numLeafs(0), numSegments(0), numVertexes(0),
-        rootNode(0)
+      : Base(i)
+      , splitCostFactor(splitCostFactor)
+      , mesh(0)
+      , numNodes(0), numLeafs(0), numSegments(0), numVertexes(0)
+      , rootNode(0)
     {}
 
     ~Instance() { clear(); }
@@ -443,7 +442,7 @@ DENG2_PIMPL(Partitioner)
 
         //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d"
         //          " left=%d+%d right=%d+%d cost=%d.%02d")
-        //    << de::dintptr(&lineSeg) << cost.splits << cost.iffy << cost.nearMiss
+        //    << &lineSeg << cost.splits << cost.iffy << cost.nearMiss
         //    << cost.mapLeft << cost.partLeft << cost.mapRight << cost.partRight
         //    << cost.total / 100 << cost.total % 100;
 
@@ -461,7 +460,7 @@ DENG2_PIMPL(Partitioner)
         foreach(LineSegmentSide *seg, partList.segments())
         {
             //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
-            //    << (seg->hasMapLineSide()? "" : "mini-") << de::dintptr(*seg)
+            //    << (seg->hasMapLineSide()? "" : "mini-") << seg
             //    << (seg->sector? seg->sector->indexInMap() : -1)
             //    << seg->fromOrigin().asText()
             //    << seg->toOrigin().asText();
@@ -553,7 +552,7 @@ DENG2_PIMPL(Partitioner)
         /*if(best)
         {
             LOG_DEBUG("best %p score: %d.%02d.")
-                << de::dintptr(best) << bestCost.total / 100 << bestCost.total % 100;
+                << best << bestCost.total / 100 << bestCost.total % 100;
         }*/
 
         return best;
@@ -593,11 +592,11 @@ DENG2_PIMPL(Partitioner)
     LineSegmentSide &splitLineSegment(LineSegmentSide &frontLeft,
         Vector2d const &point, bool updateEdgeTips = true)
     {
-        DENG_ASSERT(point != frontLeft.from().origin() &&
-                    point != frontLeft.to().origin());
+        DENG2_ASSERT(point != frontLeft.from().origin() &&
+                     point != frontLeft.to().origin());
 
         //LOG_DEBUG("Splitting line segment %p at %s.")
-        //    << de::dintptr(&frontLeft) << point.asText();
+        //    << &frontLeft << point.asText();
 
         Vertex *newVert = newVertex(point);
 
@@ -1067,9 +1066,9 @@ DENG2_PIMPL(Partitioner)
             hplane.configure(*partSeg);
 
             /*
-            LOG_TRACE("%s, segment side [%p] %i (segment #%i) %s %s.")
+            LOG_TRACE("%s, segment side %p %i (segment #%i) %s %s.")
                 << hplane.partition().asText()
-                << de::dintptr(partSeg)
+                << partSeg
                 << partSeg->lineSideId()
                 << lineSegments.indexOf(&partSeg->line())
                 << partSeg->from().origin().asText()
@@ -1263,8 +1262,8 @@ DENG2_PIMPL(Partitioner)
 
         if(rootNode) // Built Ok.
         {
-            LOG_DEBUG("Clearing unclaimed %s %p.")
-                << (tree.isLeaf()? "leaf" : "node") << de::dintptr(elm);
+            LOG_DEBUG("Clearing unclaimed %s %p")
+                << (tree.isLeaf()? "leaf" : "node") << elm;
         }
 
         if(tree.isLeaf())
@@ -1307,7 +1306,7 @@ DENG2_PIMPL(Partitioner)
             return found.value();
         }
         LOG_DEBUG("Attempted to locate using an unknown element %p (type: %d).")
-            << de::dintptr(ob) << elemType;
+            << ob << elemType;
         return 0;
     }
 
@@ -1384,7 +1383,7 @@ DENG2_PIMPL(Partitioner)
         {
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
                 << (seg->hasMapSide()? "map" : "part")
-                << de::dintptr(seg)
+                << seg
                 << (seg->hasSector()? seg->sector().indexInMap() : -1)
                 << seg->from().origin().asText() << seg->to().origin().asText();
         }
@@ -1513,8 +1512,8 @@ void Partitioner::take(MapElement *mapElement)
     if(!d->release(mapElement))
     {
         LOG_AS("Partitioner::release");
-        LOG_DEBUG("Attempted to release an unknown/unowned %s %p.")
-            << DMU_Str(mapElement->type()) << de::dintptr(mapElement);
+        LOG_DEBUG("Attempted to release an unknown/unowned %s %p")
+            << DMU_Str(mapElement->type()) << mapElement;
     }
 }
 

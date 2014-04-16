@@ -32,6 +32,7 @@
 
 #include "hu_stuff.h"
 #include "d_net.h"
+#include "p_mapsetup.h"
 #include "p_start.h"
 
 #define NUMMAPS                 (9)
@@ -48,9 +49,9 @@ typedef struct teaminfo_s {
 static teaminfo_t teamInfo[NUMTEAMS];
 
 // Used to accelerate or skip a stage.
-static boolean advanceState;
+static dd_bool advanceState;
 
-static boolean drawYouAreHere = false;
+static dd_bool drawYouAreHere = false;
 
 static int spState, dmState, ngState;
 
@@ -121,19 +122,9 @@ static void drawFinishedTitle(void)
 {
     int x = SCREENWIDTH/2, y = WI_TITLEY;
     uint mapNum = wbs->currentMap;
-    char* mapName = (char*) DD_GetVariable(DD_MAP_NAME);
+    char const *mapTitle = P_MapTitle(0/*current map*/);
     patchid_t patchId;
     patchinfo_t info;
-
-    // Skip the Map #.
-    if(mapName)
-    {
-        char* ptr = strchr(mapName, ':');
-        if(ptr)
-        {
-            mapName = M_SkipWhite(ptr + 1);
-        }
-    }
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -142,7 +133,7 @@ static void drawFinishedTitle(void)
 
     // Draw <MapName>
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapTitle), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.geometry.size.height) / 4;
 
@@ -291,7 +282,7 @@ static void initDeathmatchStats(void)
 static void updateDeathmatchStats(void)
 {
     int i, j;
-    boolean stillTicking;
+    dd_bool stillTicking;
 
     if(advanceState && dmState != 4)
     {
@@ -490,7 +481,7 @@ static void initNetgameStats(void)
 
 static void updateNetgameStats(void)
 {
-    boolean stillTicking;
+    dd_bool stillTicking;
     int i, fsum;
 
     if(advanceState && ngState != 10)
@@ -755,7 +746,7 @@ static void initShowStats(void)
 
 static void tickShowStats(void)
 {
-    if(deathmatch)
+    if(G_Ruleset_Deathmatch())
     {
         updateDeathmatchStats();
         return;
@@ -869,7 +860,7 @@ static void tickShowStats(void)
 
 static void drawStats(void)
 {
-    if(deathmatch)
+    if(G_Ruleset_Deathmatch())
     {
         drawDeathmatchStats();
     }
@@ -1073,7 +1064,7 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
         }
     }
 
-    if(deathmatch)
+    if(G_Ruleset_Deathmatch())
     {
         initDeathmatchStats();
     }

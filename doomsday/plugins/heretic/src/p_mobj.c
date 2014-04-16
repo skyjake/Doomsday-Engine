@@ -30,7 +30,7 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_terraintype.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h"
 
 #include <assert.h>
@@ -134,7 +134,7 @@ int P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta)
  *
  * @return              @c true, if target was tracked else @c false.
  */
-boolean P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
+dd_bool P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
 {
     int dir;
     uint an;
@@ -253,7 +253,7 @@ void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[2], mom[2];
     player_t *player;
-    boolean largeNegative;
+    dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
@@ -454,10 +454,11 @@ void P_MobjMoveZ(mobj_t *mo)
     {
         if(!P_CheckPosition(mo, mo->origin))
         {
-#ifdef _DEBUG
-            Con_Message("Floating thing %i has gotten stuck! onmobj=%i z=%f flz=%f tmfz=%f",
-                        mo->thinker.id, mo->onMobj? mo->onMobj->thinker.id : 0, mo->origin[VZ], mo->floorZ, tmFloorZ);
-#endif
+            App_Log(DE2_DEV_MAP_WARNING, "Floating thing %i has gotten stuck!");
+            App_Log(DE2_DEV_MAP_MSG, "  onmobj=%i z=%f flz=%f tmfz=%f", mo->thinker.id,
+                    mo->onMobj? mo->onMobj->thinker.id : 0, mo->origin[VZ],
+                    mo->floorZ, tmFloorZ);
+
             if(mo->origin[VZ] < tmFloorZ)
             {
                 mo->origin[VZ] = mo->floorZ = tmFloorZ;
@@ -503,7 +504,7 @@ void P_MobjMoveZ(mobj_t *mo)
     // The floor.
     if(mo->origin[VZ] <= mo->floorZ)
     {   // Hit the floor.
-        boolean             movingDown;
+        dd_bool             movingDown;
 
         // Note (id):
         //  somebody left this after the setting mom[MZ] to 0,
@@ -697,7 +698,7 @@ void P_MobjThinker(void *thinkerPtr)
         int i;
         coord_t frac[3];
         coord_t z;
-        boolean changexy;
+        dd_bool changexy;
 
         // Handle movement
         if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
@@ -777,7 +778,7 @@ void P_MobjThinker(void *thinkerPtr)
         // Detect moves into invalid positions.
         /*
 #if _DEBUG
-        boolean beforeOk = P_CheckPosition(mobj, mobj->origin);
+        dd_bool beforeOk = P_CheckPosition(mobj, mobj->origin);
 #endif
         */
 
@@ -903,7 +904,7 @@ void P_MobjThinker(void *thinkerPtr)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnMonsters)
+        if(!G_Ruleset_RespawnMonsters())
             return;
 
         mobj->moveCount++;
@@ -949,7 +950,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
      */
 
     // Not for deathmatch?
-    if(deathmatch && (info->flags & MF_NOTDMATCH))
+    if(G_Ruleset_Deathmatch() && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
@@ -976,8 +977,8 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
         break;
     }
 
-    // Don't spawn any monsters if -noMonstersParm.
-    if(noMonstersParm && (info->flags & MF_COUNTKILL))
+    // Don't spawn any monsters?
+    if(G_Ruleset_NoMonsters() && (info->flags & MF_COUNTKILL))
         return 0;
 
     if(info->flags & MF_SOLID)
@@ -998,7 +999,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
-    if(gameSkill != SM_NIGHTMARE)
+    if(G_Ruleset_Skill() != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;
@@ -1076,16 +1077,12 @@ void P_RepositionMace(mobj_t *mo)
     Sector *sector;
 
     DENG_ASSERT(mo && mo->type == MT_WMACE);
-#if _DEBUG
-    Con_Message("P_RepositionMace: Repositioning mobj [%p], thinkerId:%i.", mo, mo->thinker.id);
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "P_RepositionMace: Repositioning mobj [%p], thinkerId:%i", mo, mo->thinker.id);
 
     mapSpot = P_ChooseRandomMaceSpot();
     if(!mapSpot)
     {
-#if _DEBUG
-        Con_Message("P_RepositionMace: Failed to choose a map spot, aborting...");
-#endif
+        App_Log(DE2_DEV_MAP_WARNING, "P_RepositionMace: Failed to choose a map spot, aborting...");
         return;
     }
 
@@ -1102,10 +1099,8 @@ void P_RepositionMace(mobj_t *mo)
     }
     P_MobjLink(mo);
 
-#if _DEBUG
-    Con_Message("P_RepositionMace: Mobj [%p], thinkerId:%i - now at (%.2f, %.2f, %.2f).",
-                mo, mo->thinker.id, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "P_RepositionMace: Mobj [%p], thinkerId:%i - now at (%.2f, %.2f, %.2f)",
+            mo, mo->thinker.id, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 }
 
 void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)
@@ -1124,7 +1119,7 @@ void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)
 /**
  * @return @c true, if mobj contacted a non-solid floor.
  */
-boolean P_HitFloor(mobj_t* thing)
+dd_bool P_HitFloor(mobj_t* thing)
 {
     mobj_t* mo;
     const terraintype_t* tt;
@@ -1213,7 +1208,7 @@ boolean P_HitFloor(mobj_t* thing)
  * @return  @c true, if the missile is at a valid spawn point,
  *          otherwise; explode it and return @false.
  */
-boolean P_CheckMissileSpawn(mobj_t *mo)
+dd_bool P_CheckMissileSpawn(mobj_t *mo)
 {
     // Move a little forward so an angle can be computed if it immediately
     // explodes
@@ -1242,7 +1237,7 @@ boolean P_CheckMissileSpawn(mobj_t *mo)
     return true;
 }
 
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, boolean checkSpawn)
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, dd_bool checkSpawn)
 {
     coord_t pos[3];
     mobj_t* th = 0;

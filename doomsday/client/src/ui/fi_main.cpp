@@ -59,7 +59,7 @@ typedef struct {
     /// Interpreter for this script.
     finaleinterpreter_t* _interpreter;
     /// Interpreter is active?
-    boolean active;
+    dd_bool active;
 } finale_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,7 +77,7 @@ void                P_DestroyFinale(finale_t* f);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean inited = false;
+static dd_bool inited = false;
 
 /// Scripts.
 static uint finalesSize;
@@ -107,10 +107,23 @@ static finale_t* finalesById(finaleid_t id)
     return 0;
 }
 
+static finale_t *getFinaleById(finaleid_t id)
+{
+    finale_t *f = finalesById(id);
+    if(!f)
+    {
+        LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
+    }
+    return f;
+}
+
 static void stopFinale(finale_t* f)
 {
     if(!f || !f->active)
         return;
+
+    LOGDEV_SCR_VERBOSE("Stopping finaleid %i") << f->id;
+
     f->active = false;
     P_DestroyFinaleInterpreter(f->_interpreter);
 }
@@ -162,60 +175,43 @@ void P_DestroyFinale(finale_t* f)
     }}
 }
 
-boolean FI_ScriptRequestSkip(finaleid_t id)
+dd_bool FI_ScriptRequestSkip(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-        Con_Error("FI_ScriptRequestSkip: Not initialized yet!");
-    f = finalesById(id);
-    if(!f)
-    {
-        Con_Message("FI_ScriptRequestSkip: Unknown finaleid %u.", id);
-        return false;
-    }
+    DENG_ASSERT(inited);
+    LOG_AS("FI_ScriptRequestSkip");
+
+    finale_t* f = getFinaleById(id);
+    if(!f) return false;
     return FinaleInterpreter_Skip(f->_interpreter);
 }
 
 int FI_ScriptFlags(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-        Con_Error("FI_ScriptFlags: Not initialized yet!");
-    f = finalesById(id);
-    if(!f)
-        Con_Error("FI_ScriptFlags: Unknown finaleid %u.", id);
+    DENG_ASSERT(inited);
+    finale_t *f = getFinaleById(id);
+    if(!f) return 0;
     return f->flags;
 }
 
-boolean FI_ScriptIsMenuTrigger(finaleid_t id)
+dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-        Con_Error("FI_ScriptIsMenuTrigger: Not initialized yet!");
-    f = finalesById(id);
-    if(!f)
-        Con_Error("FI_ScriptIsMenuTrigger: Unknown finaleid %u.", id);
+    DENG_ASSERT(inited);
+    finale_t *f = getFinaleById(id);
+    if(!f) return false;
     if(f->active)
     {
-        DEBUG_Message(("IsMenuTrigger: %i\n", FinaleInterpreter_IsMenuTrigger(f->_interpreter)));
+        LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << FinaleInterpreter_IsMenuTrigger(f->_interpreter);
         return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
     }
     return false;
 }
 
-boolean FI_ScriptActive(finaleid_t id)
+dd_bool FI_ScriptActive(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_ScriptActive: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    f = finalesById(id);
-    if(!f)
-        Con_Error("FI_ScriptActive: Unknown finaleid %u.", id);
+    DENG_ASSERT(inited);
+    LOG_AS("FI_ScriptActive");
+    finale_t *f = getFinaleById(id);
+    if(!f) return false;
     return (f->active != 0);
 }
 
@@ -258,19 +254,12 @@ void FI_Shutdown(void)
     inited = false;
 }
 
-boolean FI_ScriptCmdExecuted(finaleid_t id)
+dd_bool FI_ScriptCmdExecuted(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_ScriptCmdExecuted: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    f = finalesById(id);
-    if(!f)
-        Con_Error("FI_ScriptCmdExecuted: Unknown finaleid %u.", id);
+    DENG_ASSERT(inited);
+    LOG_AS("FI_ScriptCmdExecuted");
+    finale_t *f = getFinaleById(id);
+    if(!f) return false;
     return FinaleInterpreter_CommandExecuted(f->_interpreter);
 }
 
@@ -280,25 +269,18 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
     char* tempScript = 0;
     finale_t* f;
 
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_Execute: Not initialized yet!\n");
-#endif
-        return 0;
-    }
+    DENG_ASSERT(inited);
+    LOG_AS("FI_Execute2");
+
     if(!script || !script[0])
     {
-#ifdef _DEBUG
-        Con_Printf("FI_Execute: Warning, attempt to play empty script.\n");
-#endif
+        LOGDEV_SCR_WARNING("Attempted to play an empty script");
         return 0;
     }
     if((flags & FF_LOCAL) && isDedicated)
-    {   // Dedicated servers do not play local Finales.
-#ifdef _DEBUG
-        Con_Printf("FI_Execute: No local finales in dedicated mode.\n");
-#endif
+    {
+        // Dedicated servers do not play local Finales.
+        LOGDEV_SCR_WARNING("No local finales in dedicated mode");
         return 0;
     }
 
@@ -331,9 +313,8 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
     }
 #endif
 
-#ifdef _DEBUG
-    Con_Printf("Finale Begin - id:%u '%.30s'\n", f->id, _script);
-#endif
+    LOGDEV_SCR_MSG("Begin Finale - id:%i '%.30s'") << f->id << _script;
+
     if(tempScript)
     {
         M_Free(tempScript);
@@ -348,20 +329,10 @@ finaleid_t FI_Execute(const char* script, int flags)
 
 void FI_ScriptTerminate(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_ScriptTerminate: Not initialized yet!\n");
-#endif
-        return;
-    }
-    f = finalesById(id);
-    if(!f)
-    {
-        Con_Message("FI_ScriptTerminate: Unknown finale %u.", id);
-        return;
-    }
+    DENG_ASSERT(inited);
+    LOGDEV_SCR_VERBOSE("Terminating finaleid %i") << id;
+    finale_t *f = getFinaleById(id);
+    if(!f) return;
     if(f->active)
     {
         stopFinale(f);
@@ -393,50 +364,35 @@ void FI_Ticker(void)
 
 void FI_ScriptSuspend(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-        Con_Error("FI_ScriptSuspend: Not initialized yet!");
-    f = finalesById(id);
-    if(!f)
-        Con_Error("FI_ScriptSuspend: Unknown finaleid %u.", id);
+    DENG_ASSERT(inited);
+    finale_t *f = getFinaleById(id);
+    if(!f) return;
     f->active = false;
     FinaleInterpreter_Suspend(f->_interpreter);
 }
 
 void FI_ScriptResume(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-        Con_Error("FI_ScriptResume: Not initialized yet!");
-    f = finalesById(id);
-    if(!f)
-        Con_Error("FI_ScriptResume: Unknown finaleid %u.", id);
+    DENG_ASSERT(inited);
+    finale_t *f = getFinaleById(id);
+    if(!f) return;
     f->active = true;
     FinaleInterpreter_Resume(f->_interpreter);
 }
 
-boolean FI_ScriptSuspended(finaleid_t id)
+dd_bool FI_ScriptSuspended(finaleid_t id)
 {
-    finale_t* f;
-    if(!inited)
-        Con_Error("FI_ScriptSuspended: Not initialized yet!");
-    f = finalesById(id);
-    if(!f)
-        Con_Error("FI_ScriptSuspended: Unknown finaleid %u.", id);
+    DENG_ASSERT(inited);
+    finale_t *f = getFinaleById(id);
+    if(!f) return false;
     return FinaleInterpreter_IsSuspended(f->_interpreter);
 }
 
 int FI_ScriptResponder(finaleid_t id, const void* ev)
 {
-    finale_t* f;
-    if(!inited)
-        Con_Error("FI_ScriptResponder: Not initialized yet!");
-    f = finalesById(id);
-    if(!f)
-    {
-        Con_Message("FI_ScriptResponder: Unknown finaleid %u.", id);
-        return false;
-    }
+    DENG_ASSERT(inited);
+    finale_t *f = getFinaleById(id);
+    if(!f) return false;
     if(f->active)
         return FinaleInterpreter_Responder(f->_interpreter, (const ddevent_t*)ev);
     return false;

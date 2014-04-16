@@ -26,27 +26,29 @@
 
 #include "x_player.h"
 
-boolean P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
+DENG_EXTERN_C int TextKeyMessages[];
 
-boolean P_GiveKey(player_t *player, keytype_t keyType);
+dd_bool P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
+
+dd_bool P_GiveKey(player_t *player, keytype_t keyType);
 
 /**
  * @return  @c true if the weapon or its ammo was accepted.
  */
-boolean P_GiveWeapon2(player_t *player, weapontype_t weaponType, playerclass_t matchClass);
-boolean P_GiveWeapon(player_t *player, weapontype_t weaponType/*, playerclass_t matchClass = player->class_*/);
+dd_bool P_GiveWeapon2(player_t *player, weapontype_t weaponType, playerclass_t matchClass);
+dd_bool P_GiveWeapon(player_t *player, weapontype_t weaponType/*, playerclass_t matchClass = player->class_*/);
 
-boolean P_GiveWeaponPiece2(player_t *player, int pieceValue, playerclass_t matchClass);
-boolean P_GiveWeaponPiece(player_t *player, int pieceValue/*, playerclass_t matchClass = player->class_*/);
+dd_bool P_GiveWeaponPiece2(player_t *player, int pieceValue, playerclass_t matchClass);
+dd_bool P_GiveWeaponPiece(player_t *player, int pieceValue/*, playerclass_t matchClass = player->class_*/);
 
-boolean P_GiveArmor(player_t *player, armortype_t armorType);
+dd_bool P_GiveArmor(player_t *player, armortype_t armorType);
 
-boolean P_GiveArmorAlt(player_t *player, armortype_t armorType, int armorPoints);
+dd_bool P_GiveArmorAlt(player_t *player, armortype_t armorType, int armorPoints);
 
-boolean P_GiveHealth(player_t *player, int amount);
+dd_bool P_GiveHealth(player_t *player, int amount);
 
-boolean P_GivePower(player_t *player, powertype_t powerType);
+dd_bool P_GivePower(player_t *player, powertype_t powerType);
 
-boolean P_MorphPlayer(player_t *player);
+dd_bool P_MorphPlayer(player_t *player);
 
 #endif // LIBHEXEN_P_INTER_H

@@ -49,7 +49,7 @@ int DirectInput_Init(void)
                                     IID_IDirectInput8, (LPVOID*)&dInput)) ||
        FAILED(hr = dInput->Initialize(app.hInstance, DIRECTINPUT_VERSION)))
     {
-        Con_Message("DirectInput 8 init failed (0x%x).", hr);
+        LOGDEV_INPUT_ERROR("DirectInput 8 init failed (0x%x)") << hr;
 
         // Try the older version 3 interface instead.
         // I'm not sure if this works correctly.
@@ -57,16 +57,16 @@ int DirectInput_Init(void)
                                         IID_IDirectInput2W, (LPVOID*)&dInput3)) ||
            FAILED(hr = dInput3->Initialize(app.hInstance, 0x0300)))
         {
-            Con_Message("Failed to create DirectInput 3 object (0x%x).", hr);
+            LOGDEV_INPUT_ERROR("Failed to create DirectInput 3 object (0x%x)") << hr;
             return false;
         }
 
-        Con_Message("Using DirectInput 3.");
+        LOG_INPUT_NOTE("Using DirectInput 3 as fallback");
     }
 
     if(!dInput && !dInput3)
     {
-        Con_Message(" DirectInput init failed.");
+        LOG_INPUT_ERROR("DirectInput init failed");
         return false;
     }
 

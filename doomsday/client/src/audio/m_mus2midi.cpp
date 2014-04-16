@@ -113,7 +113,7 @@ static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
     121  ///< Reset all controllers.
 };
 
-static boolean getNextEvent(midi_event_t* ev)
+static dd_bool getNextEvent(midi_event_t* ev)
 {
     int i;
     mus_event_t evDesc;
@@ -194,7 +194,9 @@ static boolean getNextEvent(midi_event_t* ev)
         return false;
 
     default:
-        Con_Error("MUS_SongPlayer: Unknown MUS event %d.\n", evDesc.ev);
+        LOG_RES_WARNING("Invalid MUS format music data");
+        LOGDEV_RES_WARNING("Unknown MUS event %d while converting MUS to MIDI") << evDesc.ev;
+        return false;
     }
 
     // Choose the channel.
@@ -221,7 +223,7 @@ static boolean getNextEvent(midi_event_t* ev)
     return true;
 }
 
-boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
+dd_bool M_Mus2Midi(void* data, size_t length, const char* outFile)
 {
     unsigned char buffer[80];
     int i, trackSizeOffset, trackSize;
@@ -231,6 +233,7 @@ boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
     FILE* file;
 
     DENG_UNUSED(length);
+    LOG_AS("M_Mus2Midi");
 
     if(!outFile || !outFile[0]) return false;
 
@@ -241,7 +244,7 @@ boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
     file = fopen(Str_Text(&nativePath), "wb");
     if(!file)
     {
-        Con_Message("Warning: M_Mus2Midi: Failed opening output file \"%s\".", F_PrettyPath(Str_Text(&nativePath)));
+        LOG_RES_WARNING("Failed opening output file \"%s\"") << F_PrettyPath(Str_Text(&nativePath));
         Str_Free(&nativePath);
         return false;
     }

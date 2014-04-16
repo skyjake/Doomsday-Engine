@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "world/hand.h"
 
 #include "BiasSource" // remove me
@@ -30,12 +30,11 @@ enum PropertyFlag
     Intensity = 0x2
 };
 Q_DECLARE_FLAGS(PropertyFlags, PropertyFlag)
-
 Q_DECLARE_OPERATORS_FOR_FLAGS(PropertyFlags)
 
-DENG2_PIMPL(Hand),
-DENG2_OBSERVES(Grabbable, Deletion),
-DENG2_OBSERVES(Grabbable, OriginChange)
+DENG2_PIMPL(Hand)
+, DENG2_OBSERVES(Grabbable, Deletion)
+, DENG2_OBSERVES(Grabbable, OriginChange)
 {
     /// Origin of the hand in the map coordinate space.
     Vector3d origin;
@@ -54,12 +53,12 @@ DENG2_OBSERVES(Grabbable, OriginChange)
     PropertyFlags applyProps;
 
     Instance(Public *i, Vector3d const &origin)
-        : Base(i),
-          origin(origin),
-          oldOrigin(origin),
-          needUpdateGrabOrigin(false),
-          editIntensity(0),
-          applyProps(0)
+        : Base(i)
+        , origin(origin)
+        , oldOrigin(origin)
+        , needUpdateGrabOrigin(false)
+        , editIntensity(0)
+        , applyProps(0)
     {}
 
     void notifyGrabbed(Grabbable &grabbed)
@@ -238,10 +237,8 @@ Vector3f const &Hand::editColor() const
     return d->editColor;
 }
 
-void Hand::worldFrameEnds(World &world)
+void Hand::worldSystemFrameEnds()
 {
-    DENG2_UNUSED(world);
-
     if(grabbedCount())
     {
         // Do we need to move the grab?

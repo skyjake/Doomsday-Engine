@@ -43,21 +43,23 @@
 
 float quitDarkenOpacity = 0;
 
-boolean R_ViewFilterColor(float rgba[4], int filter)
+dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba) return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
+    {
+        // Red.
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
+        rgba[CA] = (G_Ruleset_Deathmatch()? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
         return true;
     }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Light Yellow.
+    {
+        // Light Yellow.
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = .5f;
@@ -65,7 +67,8 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
         return true;
     }
     else if(filter >= STARTPOISONPALS && filter < STARTPOISONPALS + NUMPOISONPALS)
-    {   // Green.
+    {
+        // Green.
         rgba[CR] = 0;
         rgba[CG] = 1;
         rgba[CB] = 0;
@@ -73,7 +76,8 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
         return true;
     }
     else if(filter >= STARTSCOURGEPAL)
-    {   // Orange.
+    {
+        // Orange.
         rgba[CR] = 1;
         rgba[CG] = .5f;
         rgba[CB] = 0;
@@ -114,12 +118,7 @@ void R_UpdateViewFilter(int player)
     if(IS_DEDICATED && !player) return;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: R_UpdateViewFilter: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
 
     // Not currently present?
     if(!plr->plr->inGame) return;
@@ -181,12 +180,12 @@ void R_UpdateViewFilter(int player)
 void G_RendPlayerView(int player)
 {
     player_t* plr = &players[player];
-    boolean special200 = false;
+    dd_bool special200 = false;
     float pspriteOffsetY;
 
     if(!plr->plr->mo)
     {
-        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!", player);
+        App_Log(DE2_DEV_GL_ERROR, "Rendering view of player %i, who has no mobj!", player);
         return;
     }
 

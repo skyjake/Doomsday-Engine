@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_INFO_H
@@ -30,10 +30,14 @@ namespace de {
 /**
  * Key/value tree. The tree is parsed from the "Snowberry" Info file format.
  *
+ * All element names (key identifiers, block names, etc.) are case insensitive, although
+ * their case is preserved when parsing the tree.
+ *
  * See the Doomsday Wiki for an example of the syntax:
  * http://dengine.net/dew/index.php?title=Info
  *
  * This implementation is based on a C++ port of cfparser.py from Snowberry.
+ * @ingroup data
  *
  * @todo Should use de::Lex internally.
  */
@@ -96,7 +100,12 @@ public:
 
         DENG2_AS_IS_METHODS()
 
-        void setName(String const &name) { _name = name.toLower(); }
+        void setName(String const &name) { _name = name; }
+
+        /// Convenience for case-insensitively checking if the name matches @a name.
+        bool isName(String const &name) const {
+            return !_name.compareWithoutCase(name);
+        }
 
         virtual ValueList values() const = 0;
 
@@ -150,9 +159,9 @@ public:
     };
 
     /**
-     * Contains other Elements, including other block elements. In addition to
-     * a name, each block may have a "block type", which is a case insensitive
-     * identifier.
+     * Contains other Elements, including other block elements. In addition to a name,
+     * each block may have a "block type", which is a lower case identifier (always
+     * forced to lower case).
      */
     class DENG2_PUBLIC BlockElement : public Element {
     public:
@@ -188,7 +197,7 @@ public:
 
         int size() const { return _contents.size(); }
 
-        bool contains(String const &name) { return _contents.contains(name); }
+        bool contains(String const &name) { return _contents.contains(name.toLower()); }
 
         void setBlockType(String const &bType) { _blockType = bType.toLower(); }
 
@@ -225,7 +234,7 @@ public:
     private:
         Info &_info;
         String _blockType;
-        Contents _contents;
+        Contents _contents; // indexed in lower case
         ContentsInOrder _contentsInOrder;
     };
 
@@ -271,12 +280,19 @@ public:
 
     BlockElement const &root() const;
 
+    /**
+     * Finds an element by its path. Info paths use a colon ':' as separator.
+     *
+     * @param path  Path of element (case insensitive).
+     *
+     * @return Element, or @c NULL.
+     */
     Element const *findByPath(String const &path) const;
 
     /**
      * Finds the value of a key.
      *
-     * @param key    Key to find.
+     * @param key    Key to find (case insensitive).
      * @param value  The value is returned here.
      *
      * @return @c true, if the key was found and @a value is valid. If @c

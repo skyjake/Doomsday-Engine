@@ -1,4 +1,4 @@
-/** @file rend_particle.h Particle Effect Rendering.
+/** @file rend_particle.h  Particle effect rendering.
  *
  * @ingroup render
  *
@@ -23,7 +23,26 @@
 #ifndef DENG_CLIENT_RENDER_PARTICLE_H
 #define DENG_CLIENT_RENDER_PARTICLE_H
 
-class Sector;
+#include "world/map.h"
+
+// Maximum number of particle textures (not instances).
+#define MAX_PTC_TEXTURES        300
+
+// Maximum number of particle models (not instances).
+#define MAX_PTC_MODELS          100
+
+enum ParticleType
+{
+    PTC_NONE,
+    PTC_POINT,
+    PTC_LINE,
+    // New types can be added here.
+    PTC_TEXTURE = 100,
+    // ...followed by MAX_PTC_TEXTURES types.
+    PTC_MODEL = 1000
+};
+
+DENG_EXTERN_C byte useParticles;
 
 void Rend_ParticleRegister();
 
@@ -43,22 +62,11 @@ void Rend_ParticleLoadExtraTextures();
 void Rend_ParticleReleaseExtraTextures();
 
 /**
- * Prepare for rendering a new view of the world.
- */
-void Rend_ParticleInitForNewFrame();
-
-/**
- * The given sector is visible. All PGs in it should be rendered.
- * Scans PG links.
- */
-void Rend_ParticleMarkInSectorVisible(Sector *sector);
-
-/**
  * Render all the visible particle generators.
  * We must render all particles ordered back->front, or otherwise
  * particles from one generator will obscure particles from another.
  * This would be especially bad with smoke trails.
  */
-void Rend_RenderParticles();
+void Rend_RenderParticles(de::Map &map);
 
 #endif // DENG_CLIENT_RENDER_PARTICLE_H

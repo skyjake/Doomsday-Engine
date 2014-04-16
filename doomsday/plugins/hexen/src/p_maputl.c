@@ -1,4 +1,4 @@
-/** @file p_maputl.c Movement/collision map utility functions.
+/** @file p_maputl.c  Movement/collision map utility functions.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -21,6 +21,7 @@
 
 #include "jhexen.h"
 #include "dmu_lib.h"
+#include "g_common.h"
 #include "p_map.h"
 
 typedef struct mobjtargetableparams_s {
@@ -40,7 +41,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source)) ||
-                (IS_NETGAME && !deathmatch && mo->player))
+                (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player))
             {
                 return false; // Continue iteration.
             }
@@ -63,7 +64,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source->tracer)) ||
-                (IS_NETGAME && !deathmatch && mo->player))
+                (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player))
             {
                 return false; // Continue iteration.
             }
@@ -83,7 +84,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
            !(mo->flags2 & MF2_DORMANT))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !deathmatch && mo->player))
+               (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player))
             {
                 return false; // Continue iteration.
             }
@@ -109,7 +110,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
            !(mo->flags2 & MF2_DORMANT))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !deathmatch && mo->player) ||
+               (IS_NETGAME && !G_Ruleset_Deathmatch() && mo->player) ||
                mo == params->source->target)
             {
                 return false; // Continue iteration.

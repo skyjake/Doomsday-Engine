@@ -4,25 +4,29 @@
 # - weight: normal bold light
 # - style: normal italic
 
-script { import Version, gui }
+script { 
+    import Version, gui 
+    # Load the Open Sans font contained in this pack.
+    def loadOpenSans()
+        import App, Path
+        fontDir = Path.fileNamePath(__file__) / "fonts"
+        # Sadly, light fonts seem to not work in Qt presently.
+        for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']  #'Light', 'LightItalic'
+            App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
+        end    
+    end
+}
 
 group {
     condition: Version.OS == 'windows'
     
+    script { loadOpenSans() }
+
     font default {
         family: Open Sans
         size: 12pt
         weight: normal
-        style: normal
-    
-        script {
-            # Load the Open Sans font contained in this pack.
-            import App, Path
-            fontDir = Path.fileNamePath(__file__) / "fonts"
-            for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']
-                App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
-            end
-        }
+        style: normal    
     }
     
     font monospace inherits default {
@@ -33,6 +37,27 @@ group {
 
 group {
     condition: Version.OS == 'macx'
+
+    script {
+        # Define mappings for native font styles and weights.
+        import App
+        App.addFontMapping("Helvetica Neue", {
+            ['regular', 25]: 'HelveticaNeue-Light',
+            ['regular', 50]: 'HelveticaNeue',
+            ['regular', 75]: 'HelveticaNeue-Bold',
+            ['italic',  25]: 'HelveticaNeue-LightItalic',
+            ['italic',  50]: 'HelveticaNeue-Italic',
+            ['italic',  75]: 'HelveticaNeue-BoldItalic'
+        })
+        App.addFontMapping("Menlo", {
+            ['regular', 25]: 'Menlo-Regular',
+            ['regular', 50]: 'Menlo-Regular',
+            ['regular', 75]: 'Menlo-Bold',
+            ['italic',  25]: 'Menlo-Italic',
+            ['italic',  50]: 'Menlo-Italic',
+            ['italic',  75]: 'Menlo-BoldItalic'
+        })
+    }
     
     font default {
         family: Helvetica Neue
@@ -72,6 +97,10 @@ font heading inherits title {
     size $: gui.scale(default.size, 1.2)
 }
 
+font small inherits default {
+    size $: gui.scale(__this__.size, 0.75)
+}
+
 group editor {
     font plaintext inherits default {}
     font hint inherits default {
@@ -84,8 +113,7 @@ group separator {
     font empty inherits default {
         size $: gui.scale(__this__.size, 0.5)
     }
-    font label inherits default {
-        size $: gui.scale(__this__.size, 0.75)
+    font label inherits small {
         weight: bold
     }
 }
@@ -96,10 +124,15 @@ group choice {
     }
 }
 
-group slider {
-    font label inherits default {
-        size $: gui.scale(__this__.size, 0.75)
+group tab {
+    font label inherits small {
+        weight: bold
     }
+    font selected inherits tab.label {}
+}
+
+group slider {
+    font label inherits small {}
     font value inherits slider.label {
         weight: bold
     }

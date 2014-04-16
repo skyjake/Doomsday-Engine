@@ -39,7 +39,7 @@ void            Demo_Register(void);
 void            Demo_Init(void);
 void            Demo_Ticker(timespan_t time);
 
-boolean         Demo_BeginRecording(const char* filename, int playernum);
+dd_bool         Demo_BeginRecording(const char* filename, int playernum);
 void            Demo_StopRecording(int playernum);
 void            Demo_PauseRecording(int playernum);
 void            Demo_ResumeRecording(int playernum);
@@ -47,8 +47,8 @@ void            Demo_WritePacket(int playernum);
 void            Demo_BroadcastPacket(void);
 void            Demo_ReadLocalCamera(void); // PKT_DEMOCAM
 
-boolean         Demo_BeginPlayback(const char* filename);
-boolean         Demo_ReadPacket(void);
+dd_bool         Demo_BeginPlayback(const char* filename);
+dd_bool         Demo_ReadPacket(void);
 void            Demo_StopPlayback(void);
 
 #ifdef __cplusplus

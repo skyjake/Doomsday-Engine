@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/c_wrapper.h"
@@ -32,6 +32,63 @@
 #include <stdarg.h>
 
 #define DENG2_COMMANDLINE()     DENG2_APP->commandLine()
+
+static bool checkLogEntryMetadata(unsigned int &metadata)
+{
+    // Automatically apply the generic domain if not specified.
+    if(!(metadata & de::LogEntry::DomainMask))
+    {
+        metadata |= de::LogEntry::Generic;
+    }
+
+    // Validate the level.
+    de::LogEntry::Level logLevel = de::LogEntry::Level(metadata & de::LogEntry::LevelMask);
+    if(logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
+    {
+        metadata &= ~de::LogEntry::LevelMask;
+        metadata |= de::LogEntry::Message;
+    }
+
+    // If this level is not enabled, just ignore.
+    return de::LogBuffer::appBuffer().isEnabled(metadata);
+}
+
+static void logFragmentPrinter(duint32 metadata, char const *fragment)
+{
+    static std::string currentLogLine;
+
+    currentLogLine += fragment;
+
+    std::string::size_type pos;
+    while((pos = currentLogLine.find('\n')) != std::string::npos)
+    {
+        LOG().enter(metadata, currentLogLine.substr(0, pos).c_str());
+        currentLogLine.erase(0, pos + 1);
+    }
+}
+
+void App_Log(unsigned int metadata, char const *format, ...)
+{
+    if(!checkLogEntryMetadata(metadata)) return;
+
+    char buffer[0x2000];
+    va_list args;
+    va_start(args, format);
+    size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
+    va_end(args);
+    DENG2_ASSERT(nc < sizeof(buffer) - 2);
+    if(!nc) return;
+
+    LOG().enter(metadata, buffer);
+
+    // Make sure there's a newline in the end.
+    /*if(buffer[nc - 1] != '\n')
+    {
+        buffer[nc++] = '\n';
+        buffer[nc] = 0;
+    }
+    logFragmentPrinter(metadata, buffer);*/
+}
 
 void App_Timer(unsigned int milliseconds, void (*callback)(void))
 {
@@ -129,44 +186,19 @@ void LogBuffer_EnableStandardOutput(int enable)
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
 }
 
-static void logFragmentPrinter(de::LogEntry::Level level, char const *fragment)
+void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
 {
-    static std::string currentLogLine;
+    if(!checkLogEntryMetadata(metadata)) return;
 
-    currentLogLine += fragment;
-
-    std::string::size_type pos;
-    while((pos = currentLogLine.find('\n')) != std::string::npos)
-    {
-        LOG().enter(level, currentLogLine.substr(0, pos).c_str());
-        currentLogLine.erase(0, pos + 1);
-    }
-}
-
-void LogBuffer_Msg(char const *text)
-{
-    logFragmentPrinter(de::LogEntry::MESSAGE, text);
-}
-
-void LogBuffer_Printf(legacycore_loglevel_t level, char const *format, ...)
-{
-    // Validate the level.
-    de::LogEntry::Level logLevel = de::LogEntry::Level(level);
-    if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
-    {
-        logLevel = de::LogEntry::MESSAGE;
-    }
-
-    // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().isEnabled(logLevel)) return;
-
-    char buffer[2048];
+    char buffer[0x2000];
     va_list args;
     va_start(args, format);
-    vsprintf(buffer, format, args); /// @todo unsafe
+    size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
+    DENG2_ASSERT(nc < sizeof(buffer) - 1);
+    DENG2_UNUSED(nc);
 
-    logFragmentPrinter(logLevel, buffer);
+    logFragmentPrinter(metadata, buffer);
 }
 
 Info *Info_NewFromString(char const *utf8text)

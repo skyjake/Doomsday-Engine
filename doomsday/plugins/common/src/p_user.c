@@ -37,11 +37,11 @@
 #include "fi_lib.h"
 #include "doomsday.h"
 #include "g_common.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h" // for Pause_IsPaused()
 #include "p_view.h"
 #include "d_net.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_user.h"
 #include "g_common.h"
@@ -57,7 +57,7 @@
 
 #define ANG5                (ANG90/18)
 
-boolean onground;
+dd_bool onground;
 
 int maxHealth; // 100
 #if __JDOOM__ || __JDOOM64__
@@ -264,9 +264,9 @@ void P_Thrust(player_t *player, angle_t angle, coord_t move)
  * Returns true if the player is currently standing on ground
  * or on top of another mobj.
  */
-boolean P_IsPlayerOnGround(player_t* player)
+dd_bool P_IsPlayerOnGround(player_t* player)
 {
-    boolean onground = (player->plr->mo->origin[VZ] <= player->plr->mo->floorZ);
+    dd_bool onground = (player->plr->mo->origin[VZ] <= player->plr->mo->floorZ);
 
 #if __JHEXEN__
     if((player->plr->mo->onMobj) && !onground)
@@ -327,13 +327,6 @@ void P_PlayerRemoteMove(player_t *player)
     mobj_t *mo = player->plr->mo;
     coord_t xyz[3];
 
-    /*
-#ifdef _DEBUG
-    Con_Message("P_PlayerRemoteMove: player=%i IS_NETGAME=%i mo=%p smoother=%p IS_CLIENT=%i IS_SERVER=%i CNSPLR=%i",
-                plrNum, IS_NETGAME, mo, smoother, IS_CLIENT, IS_SERVER, CONSOLEPLAYER);
-#endif
-    */
-
     if(!IS_NETGAME || !mo || !smoother)
         return;
 
@@ -375,35 +368,32 @@ void P_PlayerRemoteMove(player_t *player)
                 {
                     // It successfully moved to the right XY coords.
                     mo->origin[VZ] = mo->floorZ;
-#ifdef _DEBUG
-                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)",
-                                         plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
-#endif
+
+                    App_Log(DE2_DEV_MAP_XVERBOSE,
+                            "Player %i: Smooth move to %f, %f, %f (floorz)",
+                            plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
                 }
                 else
                 {
-#ifdef _DEBUG
-                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f",
-                                          plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
-#endif
+                    App_Log(DE2_DEV_MAP_XVERBOSE,
+                            "Player %i: Smooth move to %f, %f, %f",
+                            plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
                 }
             }
 
             if(players[plrNum].plr->flags & DDPF_FIXORIGIN)
             {
                 // The player must have teleported.
-#ifdef _DEBUG
-                Con_Message("P_PlayerRemoteMove: Player %i: Clearing smoother because of FIXPOS.", plrNum);
-#endif
+                App_Log(DE2_DEV_MAP_MSG, "Player %i: Clearing smoother because of FIXPOS", plrNum);
+
                 Smoother_Clear(smoother);
             }
         }
         else
         {
-#ifdef _DEBUG
-            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!",
-                        plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
-#endif
+            App_Log(DE2_DEV_MAP_NOTE,
+                    "P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!",
+                    plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
         }
     }
 }
@@ -698,9 +688,8 @@ void P_PlayerReborn(player_t* player)
 
     if(plrNum == CONSOLEPLAYER)
     {
-#ifdef _DEBUG
-        Con_Message("P_PlayerReborn: Console player reborn, reseting InFine.");
-#endif
+        App_Log(DE2_DEV_SCR_MSG, "Reseting Infine due to console player being reborn");
+
         // Clear the currently playing script, if any.
         FI_StackClear();
     }
@@ -790,7 +779,7 @@ void P_MorphThink(player_t *player)
 # endif
 }
 
-boolean P_UndoPlayerMorph(player_t* player)
+dd_bool P_UndoPlayerMorph(player_t* player)
 {
     mobj_t* fog = 0, *mo = 0, *pmo = 0;
     coord_t pos[3];
@@ -974,7 +963,7 @@ void P_PlayerThinkAttackLunge(player_t *player)
  * @return              @c true, if thinking should be stopped. Otherwise,
  *                      @c false.
  */
-boolean P_PlayerThinkDeath(player_t *player)
+dd_bool P_PlayerThinkDeath(player_t *player)
 {
     if(player->playerState == PST_DEAD)
     {
@@ -1187,11 +1176,11 @@ void P_PlayerThinkSounds(player_t* player)
 #endif
 }
 
-void P_PlayerThinkItems(player_t* player)
+void P_PlayerThinkItems(player_t *player)
 {
 #if __JHERETIC__ || __JHEXEN__
     inventoryitemtype_t i, type = IIT_NONE; // What to use?
-    int                 pnum = player - players;
+    int pnum = player - players;
 
     if(player->brain.useInvItem)
     {
@@ -1201,7 +1190,7 @@ void P_PlayerThinkItems(player_t* player)
     // Inventory item hot keys.
     for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        const def_invitem_t* def = P_GetInvItemDef(i);
+        def_invitem_t const *def = P_GetInvItemDef(i);
 
         if(def->hotKeyCtrlIdent != -1 &&
            P_GetImpulseControlState(pnum, def->hotKeyCtrlIdent))
@@ -1245,8 +1234,8 @@ void P_PlayerThinkWeapons(player_t* player)
 
             if(!player->weapons[newweapon].owned)
             {
-                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!",
-                            (int)(player - players), newweapon);
+                App_Log(DE2_MAP_WARNING, "Player %i tried to change to unowned weapon %i!",
+                        (int)(player - players), newweapon);
                 newweapon = WT_NOCHANGE;
             }
         }
@@ -1298,10 +1287,9 @@ void P_PlayerThinkWeapons(player_t* player)
                 // Send a notification to the server.
                 NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, newweapon);
             }
-#ifdef _DEBUG
-            Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).",
-                        (int)(player - players), newweapon, brain->changeWeapon);
-#endif
+            App_Log(DE2_DEV_MAP_VERBOSE, "Player %i changing weapon to %i (brain thinks %i)",
+                    (int)(player - players), newweapon, brain->changeWeapon);
+
             player->pendingWeapon = newweapon;
             brain->changeWeapon = WT_NOCHANGE;
         }
@@ -1620,6 +1608,12 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return;
 
+    if(IS_CLIENT && playerNum != CONSOLEPLAYER)
+    {
+        // This is only for the local player.
+        return;
+    }
+
     // Turn the head?
     P_PlayerThinkHeadTurning(playerNum, ticLength);
 
@@ -1673,6 +1667,12 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
 
+    if(IS_CLIENT && playerNum != CONSOLEPLAYER)
+    {
+        // This is only for the local player.
+        return;
+    }
+
     // The absolute look pitch overrides CTL_LOOK.
     if(P_IsControlBound(playerNum, CTL_LOOK_PITCH))
     {
@@ -1723,9 +1723,9 @@ void P_PlayerThinkUpdateControls(player_t* player)
     ddplayer_t         *dp = player->plr;
     float               vel, off, offsetSensitivity = 100;
     int                 i;
-    boolean             strafe = false;
+    dd_bool             strafe = false;
     playerbrain_t      *brain = &player->brain;
-    boolean             oldAttack = brain->attack;
+    dd_bool             oldAttack = brain->attack;
 
     if(IS_DEDICATED) return;
 
@@ -1889,14 +1889,14 @@ void P_PlayerThinkAssertions(player_t* player)
         {
             if(!(mo->ddFlags & DDMF_SOLID))
             {
-                Con_Message("P_PlayerThinkAssertions: player %i, mobj should be solid when alive!", plrNum);
+                App_Log(DE2_DEV_MAP_NOTE, "P_PlayerThinkAssertions: player %i, mobj should be solid when alive!", plrNum);
             }
         }
         else if(player->playerState == PST_DEAD)
         {
             if(mo->ddFlags & DDMF_SOLID)
             {
-                Con_Message("P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!", plrNum);
+                App_Log(DE2_DEV_MAP_NOTE, "P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!", plrNum);
             }
         }
     }

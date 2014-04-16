@@ -37,6 +37,7 @@
 #endif
 
 #include <de/findfile.h>
+#include <QThreadStorage>
 
 #define HOOKMASK(x)         ((x) & 0xffffff)
 
@@ -52,7 +53,22 @@ typedef Library* PluginHandle;
 
 static Library* hInstPlug[MAX_PLUGS]; /// @todo Remove arbitrary MAX_PLUGS.
 static hookreg_t hooks[NUM_HOOK_TYPES];
-static pluginid_t currentPlugin = 0; // none
+
+struct ThreadState
+{
+    pluginid_t currentPlugin;
+    ThreadState() : currentPlugin(0) {}
+};
+
+#ifndef DENG2_QT_4_8_OR_NEWER // Qt 4.7 requires a pointer as the local data type
+#define DENG_LOCAL_DATA_POINTER
+static QThreadStorage<ThreadState *> pluginState; ///< Thread-local plugin state.
+static void initLocalData() {
+    if(!pluginState.hasLocalData()) pluginState.setLocalData(new ThreadState);
+}
+#else
+static QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
+#endif
 
 static PluginHandle* findFirstUnusedPluginHandle(void)
 {
@@ -87,7 +103,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     plugin = Library_New(pluginPath);
     if(!plugin)
     {
-        Con_Message("  loadPlugin: Did not load \"%s\" (%s).", pluginPath, Library_LastError());
+        LOG_RES_WARNING("Failed to load \"%s\": %s") << pluginPath << Library_LastError();
         return 0; // Continue iteration.
     }
 
@@ -101,7 +117,8 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
     if(!initializer)
     {
-        DEBUG_Message(("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath));
+        LOG_RES_WARNING("Cannot load plugin \"%s\": no entrypoint called 'DP_Initialize'")
+                << pluginPath;
 
         // Clearly not a Doomsday plugin.
         Library_Delete(plugin);
@@ -113,7 +130,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     plugId = handle - hInstPlug + 1;
     if(!handle)
     {
-        DEBUG_Message(("  loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath));
+        LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded") << pluginPath;
 
         Library_Delete(plugin);
         return 0; // Continue iteration.
@@ -121,7 +138,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
 
     // This seems to be a Doomsday plugin.
     _splitpath(pluginPath, NULL, NULL, name, NULL);
-    Con_Message("  (id:%i) %s", plugId, name);
+    LOGDEV_MSG("Plugin id:%i name:%s") << plugId << name;
 
     *handle = plugin;
 
@@ -132,7 +149,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     return 0; // Continue iteration.
 }
 
-static boolean unloadPlugin(PluginHandle* handle)
+static dd_bool unloadPlugin(PluginHandle* handle)
 {
     assert(handle);
     if(!*handle) return false;
@@ -144,7 +161,7 @@ static boolean unloadPlugin(PluginHandle* handle)
 
 void Plug_LoadAll(void)
 {
-    Con_Message("Initializing plugins...");
+    LOG_RES_VERBOSE("Initializing plugins...");
 
     Library_IterateAvailableLibraries(loadPlugin, 0);
 }
@@ -206,16 +223,6 @@ DENG_EXTERN_C int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
 
-    /*
-    if(currentPlugin)
-    {
-        LogBuffer_Printf(DE2_LOG_WARNING,
-            "Plug_RemoveHook: Failed to remove hook %p of type %i; currently processing a hook.\n",
-            hook, hookType);
-        return false;
-    }
-    */
-
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
         return false;
@@ -245,7 +252,22 @@ DENG_EXTERN_C int Plug_CheckForHook(int hookType)
 
 void DD_SetActivePluginId(pluginid_t id)
 {
-    currentPlugin = id;
+#ifdef DENG_LOCAL_DATA_POINTER
+    initLocalData();
+    pluginState.localData()->currentPlugin = id;
+#else
+    pluginState.localData().currentPlugin = id;
+#endif
+}
+
+pluginid_t DD_ActivePluginId(void)
+{
+#ifdef DENG_LOCAL_DATA_POINTER
+    initLocalData();
+    return pluginState.localData()->currentPlugin;
+#else
+    return pluginState.localData().currentPlugin;
+#endif
 }
 
 int DD_CallHooks(int hookType, int parm, void *data)
@@ -281,11 +303,6 @@ int DD_CallHooks(int hookType, int parm, void *data)
     return ret;
 }
 
-pluginid_t DD_ActivePluginId(void)
-{
-    return currentPlugin;
-}
-
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
 {
     void* addr = 0;
@@ -294,8 +311,8 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     addr = Library_Symbol(hInstPlug[plugIndex], fn);
     if(!addr)
     {
-        Con_Message("DD_FindEntryPoint: Error locating address of \"%s\" (%s).", fn,
-                    Library_LastError());
+        LOGDEV_RES_WARNING("Error getting address of \"%s\": %s")
+                << fn << Library_LastError();
     }
     return addr;
 }
@@ -311,7 +328,7 @@ DENG_EXTERN_C void Plug_Notify(int notification, void* param)
         // If an update has been downloaded and is ready to go, we should
         // re-show the dialog now that the user has saved the game as
         // prompted.
-        DEBUG_Message(("Plug_Notify: Game saved.\n"));
+        LOG_DEBUG("Plug_Notify: Game saved");
         DownloadDialog::showCompletedDownload();
         break;
     }

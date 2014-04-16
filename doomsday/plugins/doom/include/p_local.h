@@ -97,8 +97,8 @@ void        P_SetDoomsdayFlags(mobj_t* mo);
 void        P_HitFloor(mobj_t* mo);
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 
-int         P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
-int         P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
+int         P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, dd_bool stomping);
+int         P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, dd_bool stomping, dd_bool skipNetworkCheck);
 
 void        P_ExplodeMissile(mobj_t* mo);
 

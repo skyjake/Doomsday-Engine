@@ -24,8 +24,8 @@
 #include "p_map.h"
 #include "mobj.h"
 
-static boolean ActivateThing(mobj_t *mobj);
-static boolean DeactivateThing(mobj_t *mobj);
+static dd_bool ActivateThing(mobj_t *mobj);
+static dd_bool DeactivateThing(mobj_t *mobj);
 
 mobjtype_t TranslateThingType[] = {
     MT_MAPSPOT,                 // T_NONE
@@ -139,7 +139,7 @@ mobjtype_t TranslateThingType[] = {
     MT_WRAITHFX2                // T_SPARK_DRIP
 };
 
-boolean EV_ThingProjectile(byte* args, boolean gravity)
+dd_bool EV_ThingProjectile(byte* args, dd_bool gravity)
 {
     uint an;
     int tid, searcher;
@@ -147,13 +147,13 @@ boolean EV_ThingProjectile(byte* args, boolean gravity)
     coord_t speed, vspeed;
     mobjtype_t moType;
     mobj_t* mobj, *newMobj;
-    boolean success;
+    dd_bool success;
 
     success = false;
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(noMonstersParm && (MOBJINFO[moType].flags & MF_COUNTKILL))
+    if(G_Ruleset_NoMonsters() && (MOBJINFO[moType].flags & MF_COUNTKILL))
     {
         // Don't spawn monsters if -nomonsters
         return false;
@@ -191,20 +191,20 @@ boolean EV_ThingProjectile(byte* args, boolean gravity)
     return success;
 }
 
-boolean EV_ThingSpawn(byte* args, boolean fog)
+dd_bool EV_ThingSpawn(byte *args, dd_bool fog)
 {
     int tid, searcher;
     angle_t angle;
-    mobj_t* mobj, *newMobj, *fogMobj;
+    mobj_t *mobj, *newMobj, *fogMobj;
     mobjtype_t moType;
-    boolean success;
+    dd_bool success;
     coord_t z;
 
     success = false;
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(noMonstersParm && (MOBJINFO[moType].flags & MF_COUNTKILL))
+    if(G_Ruleset_NoMonsters() && (MOBJINFO[moType].flags & MF_COUNTKILL))
     {
         // Don't spawn monsters if -nomonsters
         return false;
@@ -245,11 +245,11 @@ boolean EV_ThingSpawn(byte* args, boolean fog)
     return success;
 }
 
-boolean EV_ThingActivate(int tid)
+dd_bool EV_ThingActivate(int tid)
 {
     mobj_t     *mobj;
     int         searcher;
-    boolean     success;
+    dd_bool     success;
 
     success = false;
     searcher = -1;
@@ -263,11 +263,11 @@ boolean EV_ThingActivate(int tid)
     return success;
 }
 
-boolean EV_ThingDeactivate(int tid)
+dd_bool EV_ThingDeactivate(int tid)
 {
     mobj_t      *mobj;
     int         searcher;
-    boolean     success;
+    dd_bool     success;
 
     success = false;
     searcher = -1;
@@ -281,11 +281,11 @@ boolean EV_ThingDeactivate(int tid)
     return success;
 }
 
-boolean EV_ThingRemove(int tid)
+dd_bool EV_ThingRemove(int tid)
 {
     mobj_t      *mobj;
     int         searcher;
-    boolean     success;
+    dd_bool     success;
 
     success = false;
     searcher = -1;
@@ -302,11 +302,11 @@ boolean EV_ThingRemove(int tid)
     return success;
 }
 
-boolean EV_ThingDestroy(int tid)
+dd_bool EV_ThingDestroy(int tid)
 {
     mobj_t      *mobj;
     int         searcher;
-    boolean     success;
+    dd_bool     success;
 
     success = false;
     searcher = -1;
@@ -321,7 +321,7 @@ boolean EV_ThingDestroy(int tid)
     return success;
 }
 
-static boolean ActivateThing(mobj_t *mobj)
+static dd_bool ActivateThing(mobj_t *mobj)
 {
     if(mobj->flags & MF_COUNTKILL)
     {                           // Monster
@@ -409,7 +409,7 @@ static boolean ActivateThing(mobj_t *mobj)
     return true;
 }
 
-static boolean DeactivateThing(mobj_t *mobj)
+static dd_bool DeactivateThing(mobj_t *mobj)
 {
     if(mobj->flags & MF_COUNTKILL)
     {                           // Monster

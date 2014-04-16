@@ -76,22 +76,25 @@ DENG2_OBSERVES(Bank, Load)
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
           uTex      ("uTex",       GLUniform::Sampler2D),
-          atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment | Atlas::BackingStore))
+          atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment |
+                                                          Atlas::BackingStore |
+                                                          Atlas::WrapBordersInBackingStore))
     {
         // Use this as the main window.
         setMain(i);
 
-        self.canvas().audienceForGLInit += this;
-        self.canvas().audienceForGLResize += this;
-        Clock::appClock().audienceForTimeChange += this;
+        self.canvas().audienceForGLInit() += this;
+        self.canvas().audienceForGLResize() += this;
+        Clock::appClock().audienceForTimeChange() += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
         atlas->setTotalSize(Vector2ui(256, 256));
+        atlas->setBorderSize(2);
         atlas->setMagFilter(gl::Nearest);
 
         imageBank.add("rtt.cube", "/data/graphics/testpic.png");
         //imageBank.loadAll();
-        imageBank.audienceForLoad += this;
+        imageBank.audienceForLoad() += this;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -227,7 +230,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void bankLoaded(DotPath const &path)
     {
-        LOG_INFO("Bank item \"%s\" loaded") << path;
+        LOG_RES_NOTE("Bank item \"%s\" loaded") << path;
         if(path == "rtt.cube")
         {
             DENG2_ASSERT_IN_MAIN_THREAD();
@@ -242,7 +245,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void canvasGLResized(Canvas &cv)
     {
-        LOG_DEBUG("GLResized: %i x %i") << cv.width() << cv.height();
+        LOG_GL_VERBOSE("GLResized: %i x %i") << cv.width() << cv.height();
 
         GLState &st = GLState::current();
         //st.setViewport(Rectangleui::fromSize(cv.size()));

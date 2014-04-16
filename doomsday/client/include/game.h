@@ -1,7 +1,7 @@
-/** @file game.h Game mode configuration (metadata, resource files, etc...).
+/** @file game.h  Game mode configuration (metadata, resource files, etc...).
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,25 +21,12 @@
 #ifndef DENG_GAME_H
 #define DENG_GAME_H
 
-#include <QMultiMap>
-
 #include "api_plugin.h"
-#include <de/ddstring.h>
 #include <de/Error>
+#include <de/Path>
+#include <de/String>
 #include <de/game/Game>
-
-/**
- * @defgroup printGameFlags  Print Game Flags
- * @ingroup flags
- */
-///@{
-#define PGF_BANNER                 0x1
-#define PGF_STATUS                 0x2
-#define PGF_LIST_STARTUP_RESOURCES 0x4
-#define PGF_LIST_OTHER_RESOURCES   0x8
-
-#define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
-///@}
+#include <QMultiMap>
 
 struct manifest_s;
 struct gamedef_s;
@@ -50,51 +37,111 @@ class File1;
 class ResourceManifest;
 
 /**
- * Records top-level game configurations registered by the loaded game
- * plugin(s).
+ * Records top-level game configurations registered by the loaded game plugin(s).
  *
  * @ingroup core
  */
 class Game : public de::game::Game
 {
 public:
+    /// Logical game status:
+    enum Status {
+        Loaded,
+        Complete,
+        Incomplete
+    };
+
     typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
 
 public:
     /**
      * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
      * @param configDir     Name of the config directory.
-     * @param title         Default game title.
-     * @param author        Default game author.
+     *
+     * @param legacySavegameNameExp   Regular expression used for matching legacy savegame names.
+     * @param legacySavegameSubfoler  Game-specific subdirectory of /home for legacy savegames.
      */
-    Game(char const *identityKey, char const *configDir,
-         char const *title = "Unnamed", char const *author = "Unknown");
+    Game(String const &identityKey, Path const &configDir,
+         String const &title                   = "Unnamed",
+         String const &author                  = "Unknown",
+         String const &legacySavegameNameExp   = "",
+         String const &legacySavegameSubfolder = "");
 
     virtual ~Game();
 
-    /// @return  Unique plugin identifier attributed to that which registered this.
+    /**
+     * Determines the status of the game.
+     *
+     * @see statusAsText()
+     */
+    Status status() const;
+
+    /**
+     * Returns a textual representation of the current game status.
+     *
+     * @see status()
+     */
+    String const &statusAsText() const;
+
+    /**
+     * Returns information about the game as styled text. Printed by "inspectgame",
+     * for instance.
+     */
+    String description() const;
+
+    /**
+     * Returns the unique identifier of the plugin which registered the game.
+     */
     pluginid_t pluginId() const;
-
-    /// @return  String containing the identity key.
-    ddstring_t const *identityKey() const;
-
-    /// @return  String containing the default title.
-    ddstring_t const *title() const;
-
-    /// @return  String containing the default author.
-    ddstring_t const *author() const;
-
-    /// @return  String containing the name of the main config file.
-    ddstring_t const *mainConfig() const;
-
-    /// @return  String containing the name of the binding config file.
-    ddstring_t const *bindingConfig() const;
 
     /**
      * Change the identfier of the plugin associated with this.
      * @param newId  New identifier.
      */
-    Game &setPluginId(pluginid_t newId);
+    void setPluginId(pluginid_t newId);
+
+    /**
+     * Returns the unique identity key of the game.
+     */
+    de::String const &identityKey() const;
+
+    /**
+     * Returns the title of the game, as text.
+     */
+    de::String const &title() const;
+
+    /**
+     * Returns the author of the game, as text.
+     */
+    de::String const &author() const;
+
+    /**
+     * Returns the name of the main config file for the game.
+     */
+    de::Path const &mainConfig() const;
+
+    /**
+     * Returns the name of the binding config file for the game.
+     */
+    de::Path const &bindingConfig() const;
+
+    /**
+     * Returns the identifier of the Style logo image to represent this game.
+     */
+    de::String logoImageId() const;
+
+    /**
+     * Returns the regular expression used for locating legacy savegame files.
+     */
+    String legacySavegameNameExp() const;
+
+    /**
+     * Determine the absolute path to the legacy savegame folder for the game. If there is
+     * no possibility of a legacy savegame existing (e.g., because the game is newer than
+     * the introduction of the modern, package-based .save format) then a zero length string
+     * is returned.
+     */
+    String legacySavegamePath() const;
 
     /**
      * Add a new manifest to the list of manifests.
@@ -103,7 +150,7 @@ public:
      *
      * @param manifest  Manifest to add.
      */
-    Game &addManifest(ResourceManifest &manifest);
+    void addManifest(ResourceManifest &manifest);
 
     bool allStartupFilesFound() const;
 
@@ -143,23 +190,19 @@ public:
     static void printBanner(Game const &game);
 
     /**
-     * Print the list of resource files for @a Game.
+     * Composes a list of the resource files of the game.
      *
-     * @param game          Game to list the files of.
-     * @param rflags        Only consider files whose @ref fileFlags match
-     *                      this value. If @c <0 the flags are ignored.
-     * @param printStatus   @c true to  include the current availability/load status
-     *                      of each file.
+     * @param rflags      Only consider files whose @ref fileFlags match
+     *                    this value. If @c <0 the flags are ignored.
+     * @param withStatus  @c true to  include the current availability/load status
+     *                    of each file.
      */
+    String filesAsText(int rflags, bool withStatus = true) const;
+
     static void printFiles(Game const &game, int rflags, bool printStatus = true);
 
-    /**
-     * Print extended information about game @a info.
-     *
-     * @param game   Game record to be printed.
-     * @param flags  @ref printGameFlags
-     */
-    static void print(Game const &game, int flags);
+    /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
@@ -180,11 +223,11 @@ public:
 public:
     NullGame();
 
-    Game& addManifest(struct manifest_s& /*record*/) {
+    void addManifest(struct manifest_s & /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 
-    bool isRequiredResource(char const* /*absolutePath*/) {
+    bool isRequiredResource(char const * /*absolutePath*/) {
         return false; // Never.
     }
 

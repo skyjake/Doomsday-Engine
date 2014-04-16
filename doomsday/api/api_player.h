@@ -111,7 +111,7 @@ typedef struct {
 #define LOOKDIR2DEG(x)  ((x) * 85.0f/LOOKDIRMAX)
 
 /// Player lookdir (view pitch) conversion to radians. @ingroup player
-#define LOOKDIR2RAD(x)  (LOOKDIR2DEG(x)/180*PI)
+#define LOOKDIR2RAD(x)  (LOOKDIR2DEG(x)/180*DD_PI)
 
 struct mobj_s;
 struct polyobj_s;

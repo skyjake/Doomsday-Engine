@@ -1,89 +1,58 @@
-/**\file cdaudio.cpp
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Compact Disc-Digital Audio (CD-DA) / "Redbook".
+/** @file cdaudio.cpp  Compact Disc-Digital Audio (CD-DA) / "Redbook" playback.
  *
  * Uses the Windows API MCI interface.
+ *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <math.h>
-#include <stdio.h>
-#include <de/timer.h>
-
 #include "dswinmm.h"
+#include <de/c_wrapper.h>
+#include <de/timer.h>
+#include <cmath>
+#include <cstdio>
 
-// MACROS ------------------------------------------------------------------
-
-#define DEVICEID                "mycd"
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+#define DEVICEID "mycd"
 
 static int cdInited = false;
 
 // Currently playing track info:
 static int cdCurrentTrack = 0;
-static boolean cdLooping;
+static dd_bool cdLooping;
 static double cdStartTime, cdPauseTime, cdTrackLength;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Execute an MCI command string.
  *
- * @return              @c true, if successful.
+ * Returns @c true iff successful.
  */
-static int sendMCICmd(char* returnInfo, int returnLength,
-                      const char *format, ...)
+static int sendMCICmd(char *returnInfo, int returnLength, char const *format, ...)
 {
-    char                buf[300];
-    va_list             args;
-    MCIERROR            error;
+    char buf[300];
+    va_list args;
 
     va_start(args, format);
     dd_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 
-    if((error = mciSendStringA(buf, returnInfo, returnLength, NULL)))
+    if(MCIERROR error = mciSendStringA(buf, returnInfo, returnLength, NULL))
     {
         mciGetErrorStringA(error, buf, 300);
-        Con_Message("DM_WinCD: %s", buf);
-
+        App_Log(DE2_AUDIO_ERROR, "[WinMM] CD playback error: %s", buf);
         return false;
     }
 
@@ -91,24 +60,24 @@ static int sendMCICmd(char* returnInfo, int returnLength,
 }
 
 /**
- * @return              Length of the track in seconds.
+ * @return  Length of the track in seconds.
  */
 static int getTrackLength(int track)
 {
-    char                lenString[80];
-    int                 min, sec;
+    char lenString[80];
 
     if(!sendMCICmd(lenString, 80, "status " DEVICEID " length track %i",
                    track))
         return 0;
 
-    sscanf(lenString, "%i:%i", &min, &sec);
-    return min * 60 + sec;
+    int minutes, seconds;
+    sscanf(lenString, "%i:%i", &minutes, &seconds);
+    return minutes * 60 + seconds;
 }
 
-static int isPlaying(void)
+static int isPlaying()
 {
-    char                lenString[80];
+    char lenString[80];
 
     if(!sendMCICmd(lenString, 80, "status " DEVICEID " mode wait"))
         return false;
@@ -119,39 +88,27 @@ static int isPlaying(void)
     return false;
 }
 
-/**
- * Assign the value of a CDAudio-interface property.
- */
 void DM_CDAudio_Set(int prop, float value)
 {
-    if(!cdInited)
-        return;
+    if(!cdInited) return;
 
     switch(prop)
     {
-    case MUSIP_VOLUME:
-        {
-        int                 val = MINMAX_OF(0, (byte) (value * 255 + .5f), 255);
-
+    case MUSIP_VOLUME: {
         // Straighten the volume curve.
+        int val = MINMAX_OF(0, int(value * 255 + .5f), 255);
         val <<= 8; // Make it a word.
         val = (int) (255.9980469 * sqrt(value));
         mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, val);
-        break;
-        }
+        break; }
 
-    default:
-        break;
+    default: break;
     }
 }
 
-/**
- * Retrieve the value of a CDAudio-interface property.
- */
-int DM_CDAudio_Get(int prop, void* ptr)
+int DM_CDAudio_Get(int prop, void *ptr)
 {
-    if(!cdInited)
-        return false;
+    if(!cdInited) return false;
 
     switch(prop)
     {
@@ -166,20 +123,15 @@ int DM_CDAudio_Get(int prop, void* ptr)
     case MUSIP_PLAYING:
         return (cdInited && isPlaying()? true : false);
 
-    default:
-        break;
+    default: break;
     }
 
     return false;
 }
 
-/**
- * Initialize the CDAudio-interface.
- */
-int DM_CDAudio_Init(void)
+int DM_CDAudio_Init()
 {
-    if(cdInited)
-        return true;
+    if(cdInited) return true;
 
     if(!sendMCICmd(0, 0, "open cdaudio alias " DEVICEID))
         return false;
@@ -195,13 +147,9 @@ int DM_CDAudio_Init(void)
     return cdInited = true;
 }
 
-/**
- * Shutdown the CDAudio-interface, we do nothing whilst offline.
- */
-void DM_CDAudio_Shutdown(void)
+void DM_CDAudio_Shutdown()
 {
-    if(!cdInited)
-        return;
+    if(!cdInited) return;
 
     DM_CDAudio_Stop();
     sendMCICmd(0, 0, "close " DEVICEID);
@@ -209,13 +157,9 @@ void DM_CDAudio_Shutdown(void)
     cdInited = false;
 }
 
-/**
- * Do any necessary update tasks. Called every frame by the engine.
- */
-void DM_CDAudio_Update(void)
+void DM_CDAudio_Update()
 {
-    if(!cdInited)
-        return;
+    if(!cdInited) return;
 
     // Check for looping.
     if(cdCurrentTrack && cdLooping &&
@@ -226,20 +170,14 @@ void DM_CDAudio_Update(void)
     }
 }
 
-/**
- * Begin playback of a specifc audio track, possibly looped.
- */
 int DM_CDAudio_Play(int track, int looped)
 {
-    int len;
-
-    if(!cdInited)
-        return false;
+    if(!cdInited) return false;
 
     // Get the length of the track.
-    cdTrackLength = len = getTrackLength(track);
-    if(!len)
-        return false; // Hmm?!
+    int len = getTrackLength(track);
+    cdTrackLength = len;
+    if(!len) return false; // Hmm?!
 
     // Play it!
     if(!sendMCICmd(0, 0, "play " DEVICEID " from %i to %i", track,
@@ -252,28 +190,24 @@ int DM_CDAudio_Play(int track, int looped)
     return cdCurrentTrack = track;
 }
 
-/**
- * Pauses playback of the currently playing audio track.
- */
 void DM_CDAudio_Pause(int pause)
 {
-    if(!cdInited)
-        return;
+    if(!cdInited) return;
 
     sendMCICmd(0, 0, "%s " DEVICEID, pause ? "pause" : "play");
     if(pause)
+    {
         cdPauseTime = Timer_Seconds();
+    }
     else
+    {
         cdStartTime += Timer_Seconds() - cdPauseTime;
+    }
 }
 
-/**
- * Stops playback of the currently playing audio track.
- */
-void DM_CDAudio_Stop(void)
+void DM_CDAudio_Stop()
 {
-    if(!cdInited || !cdCurrentTrack)
-        return;
+    if(!cdInited || !cdCurrentTrack) return;
 
     cdCurrentTrack = 0;
     sendMCICmd(0, 0, "stop " DEVICEID);

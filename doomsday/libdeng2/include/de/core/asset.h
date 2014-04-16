@@ -1,18 +1,18 @@
 /** @file asset.h  Information about the state of an asset (e.g., resource).
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -35,6 +35,8 @@ namespace de {
  * OpenGL shader may or may not be compiled and ready to be used, but a native
  * file in the FileSystem is always considered available (as it can be read via
  * the native file system at any time).
+ *
+ * @ingroup core
  */
 class DENG2_PUBLIC Asset
 {
@@ -49,15 +51,16 @@ public:
     /**
      * Notified whenever the state of the asset changes.
      */
-    DENG2_DEFINE_AUDIENCE(StateChange, void assetStateChanged(Asset &))
+    DENG2_DEFINE_AUDIENCE2(StateChange, void assetStateChanged(Asset &))
 
     /**
      * Notified when the asset is destroyed.
      */
-    DENG2_DEFINE_AUDIENCE(Deletion, void assetDeleted(Asset &))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void assetDeleted(Asset &))
 
 public:
     Asset(State initialState = NotReady);
+    Asset(Asset const &other);
     virtual ~Asset();
 
     void setState(State s);
@@ -70,7 +73,7 @@ public:
     virtual bool isReady() const;
 
 private:
-    State _state;
+    DENG2_PRIVATE(d)
 };
 
 /**
@@ -80,6 +83,8 @@ private:
  *
  * AssetGroup is derived from Asset so it is possible to group assets
  * together and depend on the groups as a whole.
+ *
+ * @ingroup core
  *
  * @todo Any better name for this class?
  */

@@ -6,22 +6,22 @@
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/UnixInfo"
 #include "de/Info"
+#include "de/App"
 #include <QDir>
 
 namespace de {
@@ -35,14 +35,14 @@ class Infos
 public:
     Infos(String fileName) : etcInfo(0), userInfo(0)
     {
-        String fn = "/etc/doomsday/" + fileName;
+        String fn = String("/etc") / App::app().unixEtcFolderName() / fileName;
         if(QFile::exists(fn))
         {
             etcInfo = new Info;
             etcInfo->parseNativeFile(fn);
         }
 
-        fn = QDir::homePath() + "/.doomsday/" + fileName;
+        fn = String(QDir::homePath()) / App::app().unixHomeFolderName() / fileName;
         if(QFile::exists(fn))
         {
             userInfo = new Info;
@@ -110,7 +110,7 @@ bool UnixInfo::path(String const &key, NativePath &value) const
         String s;
         if(d->paths->find(key, s))
         {
-            value = s;
+            value = NativePath(s).expand();
             return true;
         }
     }

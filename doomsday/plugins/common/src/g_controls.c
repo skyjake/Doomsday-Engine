@@ -50,7 +50,7 @@ typedef struct pcontrolstate_s {
     // Looking around.
     float           targetLookOffset;
     float           lookOffset;
-    boolean         mlookPressed;
+    dd_bool         mlookPressed;
 
     // For accelerative turning:
     float           turnheld;
@@ -73,9 +73,9 @@ typedef enum joyaxis_e {
 D_CMD(DefaultGameBinds);
 
 // Input devices; state controls.
-static int     povangle = -1;          // -1 means centered (really 0 - 7).
-static float   mousex;
-static float   mousey;
+//static int povangle = -1;  ///< @c -1= means centered (really 0 - 7).
+//static float mousex;
+//static float mousey;
 
 // Player control state.
 static pcontrolstate_t controlStates[MAXPLAYERS];
@@ -412,15 +412,7 @@ D_CMD(DefaultGameBinds)
  */
 void G_RegisterBindClasses(void)
 {
-/*
-    uint        i;
-
-    Con_Message("G_PreInit: Registering Bind Classes...");
-
-    for(i = 0; BindClasses[i].name; ++i)
-        DD_AddBindClass(BindClasses + i);
- */
-    // FIXME: Move the game's binding class creation here.
+    /// @todo Move the game's binding class creation here.
 }
 
 /**
@@ -438,7 +430,7 @@ float G_GetLookOffset(int pnum)
 #if 0
 char G_MakeLookDelta(float offset)
 {
-    boolean minus = offset < 0;
+    dd_bool minus = offset < 0;
 
     offset = sqrt(fabs(offset)) * DELTAMUL;
     if(minus)
@@ -617,10 +609,10 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 {
     float elapsedTics = elapsedTime * 35;
 
-    boolean pausestate = Pause_IsPaused();
+    dd_bool pausestate = Pause_IsPaused();
     int     i;
-    boolean strafe = 0;
-    boolean bstrafe = 0;
+    dd_bool strafe = 0;
+    dd_bool bstrafe = 0;
     int     speed = 0;
     int     turnSpeed = 0, fwdMoveSpeed = 0, sideMoveSpeed = 0;
     int     forward = 0;
@@ -806,7 +798,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     }
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     if(PLAYER_ACTION(pnum, A_PANIC) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_PANIC) = false;    // Use one of each artifact

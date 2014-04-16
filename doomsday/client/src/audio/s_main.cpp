@@ -80,7 +80,7 @@ byte sfxOneSoundPerEmitter = false; // Traditional Doomsday behavior: allows sou
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean noRndPitch;
+static dd_bool noRndPitch;
 
 // CODE --------------------------------------------------------------------
 
@@ -111,10 +111,10 @@ void S_Register(void)
 #endif
 }
 
-boolean S_Init(void)
+dd_bool S_Init(void)
 {
 #ifdef __CLIENT__
-    boolean sfxOK, musOK;
+    dd_bool sfxOK, musOK;
 #endif
 
     if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
@@ -127,7 +127,7 @@ boolean S_Init(void)
     // Try to load the audio driver plugin(s).
     if(!AudioDriver_Init())
     {
-        Con_Message("Music and Sound Effects disabled.");
+        LOG_AUDIO_NOTE("Music and sound effects are disabled");
         return false;
     }
 
@@ -136,7 +136,7 @@ boolean S_Init(void)
 
     if(!sfxOK || !musOK)
     {
-        Con_Message("Errors during audio subsystem initialization.");
+        LOG_AUDIO_NOTE("Errors during audio subsystem initialization");
         return false;
     }
 #endif
@@ -264,7 +264,7 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
 /**
  * @return              @c true, if the specified ID is a repeating sound.
  */
-boolean S_IsRepeating(int idFlags)
+dd_bool S_IsRepeating(int idFlags)
 {
     sfxinfo_t*          info;
 
@@ -288,7 +288,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
     sfxinfo_t*          info;
     float               freq = 1;
     int                 result;
-    boolean             isRepeating = false;
+    dd_bool             isRepeating = false;
 
     // A dedicated server never starts any local sounds (only logical sounds in the LSM).
     if(isDedicated || BusyMode_Active())
@@ -298,12 +298,12 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
        volume <= 0)
         return false; // This won't play...
 
-#if _DEBUG
+    LOG_AS("S_LocalSoundAtVolumeFrom");
+
     if(volume > 1)
     {
-        Con_Message("S_LocalSoundAtVolumeFrom: Warning! Too high volume (%f).", volume);
+        LOGDEV_AUDIO_WARNING("Volume is too high (%f > 1)") << volume;
     }
-#endif
 
     // This is the sound we're going to play.
     if((info = S_GetSoundInfo(soundId, &freq, &volume)) == NULL)
@@ -329,9 +329,8 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
     {
         if(sfxAvail)
         {
-            VERBOSE(Con_Message
-                    ("S_LocalSoundAtVolumeFrom: Sound %i " "caching failed.",
-                     soundId));
+            LOG_AUDIO_VERBOSE("S_LocalSoundAtVolumeFrom: Caching of sound %i failed")
+                              << soundId;
         }
         return false;
     }
@@ -523,7 +522,7 @@ int S_IsPlaying(int soundID, mobj_t* emitter)
 }
 
 #undef S_StartMusicNum
-int S_StartMusicNum(int id, boolean looped)
+int S_StartMusicNum(int id, dd_bool looped)
 {
 #ifdef __CLIENT__
 
@@ -533,7 +532,7 @@ int S_StartMusicNum(int id, boolean looped)
     if(id < 0 || id >= defs.count.music.num) return false;
     ded_music_t *def = &defs.music[id];
 
-    VERBOSE( Con_Message("Starting music '%s'...", def->id) )
+    LOG_AUDIO_MSG("Starting music '%s'") << def->id;
 
     return Mus_Start(def, looped);
 
@@ -544,13 +543,13 @@ int S_StartMusicNum(int id, boolean looped)
 }
 
 #undef S_StartMusic
-int S_StartMusic(const char* musicID, boolean looped)
+int S_StartMusic(const char* musicID, dd_bool looped)
 {
     LOG_AS("S_StartMusic");
     int idx = Def_GetMusicNum(musicID);
     if(idx < 0)
     {
-        LOG_WARNING("Song \"%s\" not defined, cannot schedule playback.") << musicID;
+        LOG_AUDIO_WARNING("Song \"%s\" not defined, cannot start playback") << musicID;
         return false;
     }
     return S_StartMusicNum(idx, looped);
@@ -565,7 +564,7 @@ void S_StopMusic(void)
 }
 
 #undef S_PauseMusic
-void S_PauseMusic(boolean paused)
+void S_PauseMusic(dd_bool paused)
 {
 #ifdef __CLIENT__
     Mus_Pause(paused);
@@ -607,16 +606,16 @@ D_CMD(PlaySound)
     DENG2_UNUSED(src);
 
     coord_t fixedPos[3];
-    boolean useFixedPos = false;
+    dd_bool useFixedPos = false;
     float volume = 1;
     int p, id = 0;
 
     if(argc < 2)
     {
-        Con_Printf("Usage: %s (id) (volume) at (x) (y) (z)\n", argv[0]);
-        Con_Printf("(volume) must be in 0..1, but may be omitted.\n");
-        Con_Printf("'at (x) (y) (z)' may also be omitted.\n");
-        Con_Printf("The sound is always played locally.\n");
+        LOG_SCR_NOTE("Usage: %s (id) (volume) at (x) (y) (z)") << argv[0];
+        LOG_SCR_MSG("(volume) must be in 0..1, but may be omitted.");
+        LOG_SCR_MSG("'at (x) (y) (z)' may also be omitted.");
+        LOG_SCR_MSG("The sound is always played locally.");
         return true;
     }
 

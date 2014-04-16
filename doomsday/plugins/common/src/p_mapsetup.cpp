@@ -29,6 +29,7 @@
 #include "am_map.h"
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "r_common.h"
 #include "p_actor.h"
 #include "p_scroll.h"
@@ -45,14 +46,12 @@
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
 
-static void P_ResetWorldState(void);
-
 // Our private map data structures
 xsector_t *xsectors;
 xline_t *xlines;
 
 // If true we are in the process of setting up a map
-boolean mapSetup;
+dd_bool mapSetup;
 
 xline_t *P_ToXLine(Line *line)
 {
@@ -75,7 +74,7 @@ xline_t *P_GetXLine(int idx)
     return &xlines[idx];
 }
 
-void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible)
+void P_SetLineAutomapVisibility(int player, int lineIdx, dd_bool visible)
 {
     Line *line = (Line *)P_ToPtr(DMU_LINE, lineIdx);
     xline_t *xline;
@@ -192,7 +191,7 @@ int applySurfaceColor(void *obj, void *context)
 }
 #endif
 
-static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
+static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
 {
 #if __JHEXEN__
     /// @todo Move to classinfo_t
@@ -208,19 +207,19 @@ static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
         return false;
 
     // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
-    if(deathmatch && (spot->flags & MSF_NOTDM))
+    if(COMMON_GAMESESSION->rules().deathmatch && (spot->flags & MSF_NOTDM))
         return false;
 
     // Don't spawn things flagged for Not Coop if we're coop'in.
-    if(IS_NETGAME && !deathmatch && (spot->flags & MSF_NOTCOOP))
+    if(IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch && (spot->flags & MSF_NOTCOOP))
         return false;
 
     // The special "spawn no things" skill mode means nothing is spawned.
-    if(gameSkill == SM_NOTHINGS)
+    if(COMMON_GAMESESSION->rules().skill == SM_NOTHINGS)
         return false;
 
     // Check for appropriate skill level.
-    if(!(spot->skillModes & (1 << gameSkill)))
+    if(!(spot->skillModes & (1 << COMMON_GAMESESSION->rules().skill)))
         return false;
 
 #if __JHEXEN__
@@ -234,7 +233,7 @@ static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
             return false;
         }
     }
-    else if(!deathmatch)
+    else if(!COMMON_GAMESESSION->rules().deathmatch)
     {
         // Cooperative mode.
 
@@ -256,7 +255,7 @@ static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
 /**
  * Determines if a client is allowed to spawn a thing of type @a doomEdNum.
  */
-static boolean P_IsClientAllowedToSpawn(int doomEdNum)
+static dd_bool P_IsClientAllowedToSpawn(int doomEdNum)
 {
     switch(doomEdNum)
     {
@@ -281,7 +280,7 @@ static boolean P_IsClientAllowedToSpawn(int doomEdNum)
 /**
  * Should we auto-spawn one or more mobjs from the specified map spot?
  */
-static boolean checkMapSpotAutoSpawn(mapspot_t const *spot)
+static dd_bool checkMapSpotAutoSpawn(mapspot_t const *spot)
 {
 #if __JHERETIC__
     // Ambient sound sequence activator?
@@ -478,7 +477,7 @@ static void initMapSpots()
 
     P_DealPlayerStarts(0);
 
-    if(deathmatch)
+    if(COMMON_GAMESESSION->rules().deathmatch)
     {
         uint numDMStarts = P_GetNumPlayerStarts(true);
         uint playerCount = 0;
@@ -491,7 +490,8 @@ static void initMapSpots()
 
         if(numDMStarts < playerCount)
         {
-            Con_Message("P_SetupMap: Player count (%i) exceeds deathmatch spots (%i).", playerCount, numDMStarts);
+            App_Log(DE2_MAP_WARNING, "Not enough deathmatch spots in map (%i players, %i DM spots)",
+                    playerCount, numDMStarts);
         }
     }
 }
@@ -538,9 +538,8 @@ mapspot_t const *P_ChooseRandomMaceSpot()
             continue;
         }
 
-#if _DEBUG
-        Con_Message("P_ChooseRandomMaceSpot: Chosen map spot id:%u.", mapSpotId);
-#endif
+        App_Log(DE2_DEV_MAP_MSG, "P_ChooseRandomMaceSpot: Chosen map spot id:%u.", mapSpotId);
+
         return mapSpot;
     }
 
@@ -578,11 +577,9 @@ static void spawnMapObjects()
                 }
             }
 
-/*#if _DEBUG
-            Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i",
-                    spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
-                    spot->doomedNum, spot->flags);
-#endif*/
+            App_Log(DE2_DEV_MAP_XVERBOSE, "Spawning mobj at (%g, %g, %g) angle:%i ednum:%i flags:%x",
+                    spot->origin[VX], spot->origin[VY], spot->origin[VZ], spot->angle,
+                    spot->doomEdNum, spot->flags);
 
             if(mobj_t *mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags))
             {
@@ -614,8 +611,8 @@ static void spawnMapObjects()
         }
         else
         {
-            Con_Message("Warning: Unknown DoomEdNum %i at [%g, %g, %g].", spot->doomEdNum,
-                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
+            App_Log(DE2_MAP_WARNING, "Unknown DoomEdNum %i at (%g, %g, %g)",
+                    spot->doomEdNum, spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
         }
     }
 
@@ -624,14 +621,12 @@ static void spawnMapObjects()
     if(!IS_CLIENT && maceSpotCount)
     {
         // Sometimes the Firemace doesn't show up if not in deathmatch.
-        if(!(!deathmatch && P_Random() < 64))
+        if(!(!COMMON_GAMESESSION->rules().deathmatch && P_Random() < 64))
         {
             if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
             {
-# if _DEBUG
-                Con_Message("spawnMapObjects: Spawning Firemace at (%.2f, %.2f, %.2f).",
-                            spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
-# endif
+                App_Log(DE2_DEV_MAP_VERBOSE, "spawnMapObjects: Spawning Firemace at (%g, %g, %g)",
+                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
 
                 P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
                                spot->angle, MSF_Z_FLOOR);
@@ -647,30 +642,97 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-void P_SetupMap(Uri *mapUri)
+/// @param mapInfo  Can be @c NULL.
+static void initFog(ddmapinfo_t *ddMapInfo)
 {
-    AutoStr *mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
-    if(!mapUriStr) return;
+    if(IS_DEDICATED) return;
+
+    if(!ddMapInfo || !(ddMapInfo->flags & MIF_FOG))
+    {
+        R_SetupFogDefaults();
+    }
+    else
+    {
+        R_SetupFog(ddMapInfo->fogStart, ddMapInfo->fogEnd, ddMapInfo->fogDensity, ddMapInfo->fogColor);
+    }
+
+#if __JHEXEN__
+    if(mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/))
+    {
+        int fadeTable = mapInfo->fadeTable;
+        if(fadeTable == W_GetLumpNumForName("COLORMAP"))
+        {
+            // We don't want fog in this case.
+            GL_UseFog(false);
+        }
+        else
+        {
+            // Probably fog ... don't use fullbright sprites
+            if(fadeTable == W_GetLumpNumForName("FOGMAP"))
+            {
+                // Tell the renderer to turn on the fog.
+                GL_UseFog(true);
+            }
+        }
+    }
+#endif
+}
+
+void P_SetupMap(Uri const *mapUri)
+{
+    DENG2_ASSERT(mapUri != 0);
 
     if(IS_DEDICATED)
     {
-        // Whenever the game changes, update the game config from
-        NetSv_ApplyGameRulesFromConfig();
+        // Whenever the map changes, update the game rule config.
+        GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
+        newRules.deathmatch      = cfg.netDeathmatch;
+        newRules.noMonsters      = cfg.netNoMonsters;
+        /*newRules.*/cfg.jumpEnabled = cfg.netJumping;
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        newRules.respawnMonsters = cfg.netRespawn;
+#endif
+#if __JHEXEN__
+        newRules.randomClasses   = cfg.netRandomClass;
+#endif
+        COMMON_GAMESESSION->applyNewRules(newRules);
     }
+
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
     // It begins...
     mapSetup = true;
 
+    ::timerGame = 0;
+    if(COMMON_GAMESESSION->rules().deathmatch)
+    {
+        int parm = CommandLine_Check("-timer");
+        if(parm && parm < CommandLine_Count() - 1)
+        {
+            ::timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
+        }
+    }
+
     P_ResetWorldState();
 
-    // Initialize The Logical Sound Manager.
+    // Initialize the logical sound manager.
     S_MapChange();
 
+    AutoStr *mapUriStr = Uri_Compose(mapUri);
     if(!P_MapChange(Str_Text(mapUriStr)))
     {
         AutoStr *path = Uri_ToString(mapUri);
         Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", Str_Text(path));
         exit(1); // Unreachable.
+    }
+
+    // Is MapInfo data available for this map?
+    {
+        AutoStr *mapUriStr = Uri_Compose(mapUri);
+        ddmapinfo_t mapInfo;
+        bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
+        initFog(haveMapInfo? &mapInfo : 0);
     }
 
     // Make sure the game is paused for the requested period.
@@ -869,8 +931,19 @@ void P_FinalizeMapChange(Uri const *uri)
     PO_InitForMap();
 
 #if __JHEXEN__
-    /// @todo Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    /// @todo Should be translated by the map converter.
+    lumpnum_t acsLumpNum = W_CheckLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/;
+    if(acsLumpNum >= 0 && !IS_CLIENT)
+    {
+        ACScriptInterpreter &interp = Game_ACScriptInterpreter();
+
+        interp.loadBytecode(acsLumpNum);
+
+        memset(interp.mapVars, 0, sizeof(interp.mapVars));
+
+        // Start all scripts flagged to begin immediately.
+        interp.startOpenScripts();
+    }
 #endif
 
     HU_UpdatePsprites();
@@ -889,7 +962,7 @@ void P_FinalizeMapChange(Uri const *uri)
 #endif
 
 #if __JHEXEN__
-    P_InitSky(gameMap);
+    P_InitSky(uri);
 #endif
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.
@@ -948,10 +1021,7 @@ void P_FinalizeMapChange(Uri const *uri)
 #endif
 }
 
-/**
- * Called during map setup when beginning to load a new map.
- */
-static void P_ResetWorldState()
+void P_ResetWorldState()
 {
 #if __JHEXEN__
     static int firstFragReset = 1;
@@ -965,7 +1035,8 @@ static void P_ResetWorldState()
 #endif
 
 #if __JDOOM__
-    P_BrainInitForMap();
+    delete theBossBrain;
+    theBossBrain = new BossBrain;
 #endif
 
 #if __JHEXEN__
@@ -988,16 +1059,6 @@ static void P_ResetWorldState()
 #endif
     }
 
-    timerGame = 0;
-    if(deathmatch)
-    {
-        int parm = CommandLine_Check("-timer");
-        if(parm && parm < CommandLine_Count() - 1)
-        {
-            timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
-        }
-    }
-
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *plr = &players[i];
@@ -1011,7 +1072,7 @@ static void P_ResetWorldState()
             plr->playerState = PST_REBORN;
 
 #if __JHEXEN__
-        if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) || firstFragReset == 1)
+        if(!IS_NETGAME || (IS_NETGAME != 0 && COMMON_GAMESESSION->rules().deathmatch != 0) || firstFragReset == 1)
         {
             memset(plr->frags, 0, sizeof(plr->frags));
             firstFragReset = 0;
@@ -1035,67 +1096,112 @@ static void P_ResetWorldState()
 #endif
 }
 
-char const *P_GetMapNiceName()
+char const *P_MapTitle(Uri const *mapUri)
 {
-    char const *lname = (char *) DD_GetVariable(DD_MAP_NAME);
-#if __JHEXEN__
-    // In Hexen we can also look in MAPINFO for the map name.
-    if(!lname)
-        lname = P_GetMapName(gameMap);
-#endif
+    if(!mapUri) mapUri = gameMapUri;
 
-    if(!lname || !lname[0])
-        return NULL;
+    char const *title = 0;
 
-    // Skip the "ExMx" part, if present.
-    if(char const *ptr = strchr(lname, ':'))
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
     {
-        lname = ptr + 1;
-        while(*lname && isspace(*lname))
-            lname++;
+        if(mapInfo.name[0])
+        {
+            // Perhaps the title string is a reference to a Text definition?
+            void *ptr;
+            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
+            {
+                title = (char const *) ptr; // Yes, use the resolved text string.
+            }
+            else
+            {
+                title = mapInfo.name;
+            }
+        }
     }
 
-    return lname;
-}
-
-patchid_t P_FindMapTitlePatch(uint episode, uint map)
-{
-#if __JDOOM__ || __JDOOM64__
-#  if __JDOOM__
-    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
-        map = (episode * 9) + map;
-#  endif
-    DENG_UNUSED(episode);
-    if(map < pMapNamesSize)
-        return pMapNames[map];
-#else
-    DENG_UNUSED(episode);
-    DENG_UNUSED(map);
+#if __JHEXEN__
+    // In Hexen we can also look in MAPINFO for the map title.
+    if(!title)
+    {
+        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
+        {
+            title = mapInfo->title;
+        }
+    }
 #endif
-    return 0;
+
+    if(!title || !title[0])
+        return 0;
+
+    // Skip the "ExMx" part, if present.
+    if(char const *ptr = strchr(title, ':'))
+    {
+        title = ptr + 1;
+        while(*title && isspace(*title))
+        {
+            title++;
+        }
+    }
+
+    return title;
 }
 
-char const *P_GetMapAuthor(boolean supressGameAuthor)
+char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 {
-    char const *author = (char const *) DD_GetVariable(DD_MAP_AUTHOR);
+    if(!mapUri) mapUri = gameMapUri;
+
+    AutoStr *path = Uri_Resolved(mapUri);
+    if(!path || Str_IsEmpty(path))
+        return 0;
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    char const *author = 0;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(path), &mapInfo))
+    {
+        author = mapInfo.author;
+    }
+
     if(!author || !author[0])
         return 0;
 
     // Should we suppress the author?
     /// @todo Do not do this here.
-    Uri *uri = G_ComposeMapUri(gameEpisode, gameMap);
-    AutoStr *path = Uri_Resolved(uri);
-
-    boolean mapIsCustom = P_MapIsCustom(Str_Text(path));
-
-    Uri_Delete(uri);
-
     GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
-    if((mapIsCustom || supressGameAuthor) && !stricmp(gameInfo.author, author))
-        return 0;
+    if(supressGameAuthor || P_MapIsCustom(Str_Text(path)))
+    {
+        if(!Str_CompareIgnoreCase(gameInfo.author, author))
+            return 0;
+    }
 
     return author;
+}
+
+patchid_t P_MapTitlePatch(Uri const *mapUri)
+{
+    if(!mapUri) mapUri = gameMapUri;
+
+#if __JDOOM__ || __JDOOM64__
+    uint map = G_MapNumberFor(mapUri);
+#  if __JDOOM__
+    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
+    {
+        uint episode = G_EpisodeNumberFor(mapUri);
+        map = (episode * 9) + map;
+    }
+#  endif
+    if(map < pMapNamesSize)
+    {
+        return pMapNames[map];
+    }
+#else
+    DENG2_UNUSED(mapUri);
+#endif
+
+    return 0;
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__

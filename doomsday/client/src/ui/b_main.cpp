@@ -164,11 +164,6 @@ void B_Register(void)
  */
 static int globalContextFallback(const ddevent_t* ddev)
 {
-#ifdef __CLIENT__
-    if(UI_Responder(ddev)) return true;     // Eaten.
-#endif
-    //if(Con_Responder(ddev)) return true;    // Eaten.
-
     if(App_GameLoaded())
     {
         event_t ev;
@@ -353,8 +348,8 @@ void B_DeleteMatching(bcontext_t* bc, evbinding_t* eventBinding,
 
         if(bid)
         {
-            Con_Message("B_BindCommand: Deleting binding %i, it has been overridden by "
-                        "binding %i.", bid, eventBinding? eventBinding->bid : deviceBinding->bid);
+            LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
+                    << bid << (eventBinding? eventBinding->bid : deviceBinding->bid);
             B_DeleteBinding(bc, bid);
         }
     }
@@ -394,7 +389,9 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     AutoStr*            str = 0;
     const char*         ptr = 0;
     playercontrol_t*    control = 0;
-    boolean             justCreated = false;
+    dd_bool             justCreated = false;
+
+    LOG_AS("B_BindControl");
 
     // The control description may begin with the local player number.
     str = AutoStr_NewStd();
@@ -404,7 +401,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         localNum = strtoul(Str_Text(str) + 5, NULL, 10) - 1;
         if(localNum < 0 || localNum >= DDMAXPLAYERS)
         {
-            Con_Message("B_BindControl: Local player number %i is invalid.", localNum);
+            LOG_INPUT_WARNING("Local player number %i is invalid") << localNum;
             return NULL;
         }
 
@@ -417,7 +414,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     control = P_PlayerControlByName(Str_Text(str));
     if(!control)
     {
-        Con_Message("B_BindControl: Player control \"%s\" not defined.", Str_Text(str));
+        LOG_INPUT_WARNING("Player control \"%s\" not defined") << Str_Text(str);
         return NULL;
     }
 
@@ -426,8 +423,9 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     {
         bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
     }
-    VERBOSE( Con_Message("B_BindControl: Control '%s' in context '%s' of local player %i to be "
-                         "bound to '%s'.", control->name, bc->name, localNum, device) );
+
+    LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
+            << control->name << bc->name << localNum << device;
 
     if((conBin = B_FindControlBinding(bc, control->id)) == NULL)
     {
@@ -476,7 +474,7 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control,
     return NULL;
 }
 
-boolean B_Delete(int bid)
+dd_bool B_Delete(int bid)
 {
     int                 i;
 
@@ -497,7 +495,7 @@ D_CMD(BindEventToCommand)
 
     if(b)
     {
-        VERBOSE( Con_Printf("Binding %i created.\n", b->bid) );
+        LOG_INPUT_VERBOSE("Binding %i created") <<  b->bid;
     }
 
     return (b != NULL);
@@ -511,7 +509,7 @@ D_CMD(BindControlToDevice)
 
     if(b)
     {
-        VERBOSE( Con_Printf("Binding %i created.\n", b->bid) );
+        LOG_INPUT_VERBOSE("Binding %i created") << b->bid;
     }
 
     return (b != NULL);
@@ -549,7 +547,7 @@ D_CMD(ClearBindings)
 
     for(i = 0; i < B_ContextCount(); ++i)
     {
-        Con_Printf("Clearing binding context '%s'...\n", B_ContextByPos(i)->name);
+        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << B_ContextByPos(i)->name;
         B_ClearContext(B_ContextByPos(i));
     }
 
@@ -562,15 +560,15 @@ D_CMD(DeleteBindingById)
 {
     DENG2_UNUSED2(src, argc);
 
-    int                 bid = strtoul(argv[1], NULL, 10);
+    int bid = strtoul(argv[1], NULL, 10);
 
     if(B_Delete(bid))
     {
-        Con_Printf("Binding %i deleted successfully.\n", bid);
+        LOG_INPUT_MSG("Binding %i deleted") << bid;
     }
     else
     {
-        Con_Printf("Cannot delete binding %i, it was not found.\n", bid);
+        LOG_INPUT_ERROR("Cannot delete binding %i: not found") << bid;
     }
 
     return true;
@@ -590,19 +588,19 @@ D_CMD(ActivateBindingContext)
 {
     DENG2_UNUSED2(src, argc);
 
-    boolean doActivate = !stricmp(argv[0], "activatebcontext");
+    dd_bool doActivate = !stricmp(argv[0], "activatebcontext");
     bcontext_t* bc = B_ContextByName(argv[1]);
 
     if(!bc)
     {
-        Con_Printf("Binding context '%s' does not exist.\n", argv[1]);
+        LOG_INPUT_WARNING("Binding context '%s' does not exist") << argv[1];
         return false;
     }
 
     if(bc->flags & BCF_PROTECTED)
     {
-        Con_Message("Binding Context '%s' is protected. It can not be manually %s.", bc->name,
-                    doActivate? "activated" : "deactivated");
+        LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")
+                << bc->name << (doActivate? "activated" : "deactivated");
         return false;
     }
 
@@ -618,7 +616,7 @@ D_CMD(ActivateBindingContext)
  *
  * @return              @c true, If an action was executed.
  */
-boolean B_Responder(ddevent_t* ev)
+dd_bool B_Responder(ddevent_t* ev)
 {
     if(symbolicEchoMode && ev->type != E_SYMBOLIC)
     {
@@ -645,7 +643,7 @@ boolean B_Responder(ddevent_t* ev)
         echo.type = E_SYMBOLIC;
         echo.symbolic.id = 0;
         echo.symbolic.name = Str_Text(&name);
-        VERBOSE( Con_Message("B_Responder: Symbolic echo: %s", echo.symbolic.name) );
+        LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
         DD_PostEvent(&echo);
         Str_Free(&name);
         return true;
@@ -655,7 +653,7 @@ boolean B_Responder(ddevent_t* ev)
 }
 
 
-const char* B_ShortNameForKey2(int ddKey, boolean forceLowercase)
+const char* B_ShortNameForKey2(int ddKey, dd_bool forceLowercase)
 {
     static char nameBuffer[40];
     uint idx;
@@ -726,4 +724,18 @@ DENG_EXTERN_C int DD_GetKeyCode(const char* key)
 {
     int code = B_KeyForShortName(key);
     return (code ? code : key[0]);
+}
+
+bool B_UnbindCommand(const char *command)
+{
+    dd_bool deleted = false;
+    for(int i = 0; i < B_ContextCount(); ++i)
+    {
+        bcontext_t *bc = B_ContextByPos(i);
+        while(evbinding_t *ev = B_FindCommandBinding(&bc->commandBinds, command, NUM_INPUT_DEVICES))
+        {
+            deleted |= B_DeleteBinding(bc, ev->bid);
+        }
+    }
+    return CPP_BOOL(deleted);
 }

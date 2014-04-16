@@ -23,15 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <memory>
-
-#include <de/vector1.h> // remove me
-#include <de/mathutil.h> // M_InverseAngle
-
-#include <QtAlgorithms>
-
-#include <de/Error>
-#include <de/Log>
+#include "de_platform.h"
+#include "world/bsp/hplane.h"
 
 #include "Line"
 #include "Sector"
@@ -41,7 +34,12 @@
 #include "world/bsp/linesegment.h"
 #include "world/bsp/partitioner.h"
 
-#include "world/bsp/hplane.h"
+#include <de/Error>
+#include <de/Log>
+#include <de/vector1.h> // remove me
+#include <de/mathutil.h> // M_InverseAngle
+#include <QtAlgorithms>
+#include <memory>
 
 namespace de {
 namespace bsp {
@@ -87,7 +85,7 @@ LineSegmentSide *HPlane::Intercept::afterLineSegment() const
 #ifdef DENG_DEBUG
 void HPlane::Intercept::debugPrint() const
 {
-    LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
+    LOGDEV_MAP_MSG("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
         << vertex().indexInMap()
         << vertex().origin().asText()
         << (_before && _before->hasSector()? _before->sector().indexInArchive() : -1)
@@ -210,8 +208,8 @@ void HPlane::configure(LineSegmentSide const &newBaseSeg)
     d->para = -d->partition.origin.x * d->partition.direction.x
             -  d->partition.origin.y * d->partition.direction.y;
 
-    //LOG_DEBUG("line segment %p %s.")
-    //    << de::dintptr(&newBaseSeg) << d->partition.asText();
+    //LOG_DEBUG("line segment %p %s")
+    //    << &newBaseSeg << d->partition.asText();
 }
 
 /**

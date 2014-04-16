@@ -4,18 +4,17 @@
  * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/gui/displaymode.h"
@@ -35,11 +34,15 @@
 #include <de/math.h>
 #include <de/Log>
 
+namespace de {
+
 static bool inited = false;
 static DisplayColorTransfer originalColorTransfer;
-static de::Record *bindings;
+static de::Binder binder;
 
 static float differenceToOriginalHz(float hz);
+
+namespace internal {
 
 struct Mode : public DisplayMode
 {
@@ -138,10 +141,14 @@ struct Mode : public DisplayMode
 
     void debugPrint() const
     {
-        LOG_DEBUG("size: %i x %i x %i, rate: %.1f Hz, ratio: %i:%i")
+        LOG_GL_VERBOSE("size: %i x %i x %i, rate: %.1f Hz, ratio: %i:%i")
                 << width << height << depth << refreshRate << ratioX << ratioY;
     }
 };
+
+} // namespace internal
+
+using namespace internal;
 
 typedef std::set<Mode> Modes; // note: no duplicates
 
@@ -154,7 +161,7 @@ static float differenceToOriginalHz(float hz)
     return qAbs(hz - originalMode.refreshRate);
 }
 
-static de::Value *Binding_DisplayMode_OriginalMode(de::Context &, de::Function::ArgumentValues const &)
+static de::Value *Function_DisplayMode_OriginalMode(de::Context &, de::Function::ArgumentValues const &)
 {
     using de::NumberValue;
     using de::TextValue;
@@ -174,24 +181,9 @@ static de::Value *Binding_DisplayMode_OriginalMode(de::Context &, de::Function::
     return dict;
 }
 
-static void initBindings()
-{
-    de::Function::registerNativeEntryPoint("DisplayMode_OriginalMode", Binding_DisplayMode_OriginalMode);
+} // namespace de
 
-    bindings = new de::Record;
-    bindings->addFunction("originalMode",
-            de::refless(new de::Function("DisplayMode_OriginalMode"))).setReadOnly();
-
-    de::App::scriptSystem().addNativeModule("DisplayMode", *bindings);
-}
-
-static void deinitBindings()
-{
-    delete bindings; // App observes
-    bindings = 0;
-
-    de::Function::unregisterNativeEntryPoint("DisplayMode_OriginalMode");
-}
+using namespace de;
 
 int DisplayMode_Init(void)
 {
@@ -214,16 +206,18 @@ int DisplayMode_Init(void)
         modes.insert(mode);
     }
 
-    LOG_DEBUG("Current mode is:");
+    LOG_GL_VERBOSE("Current mode is:");
     originalMode.debugPrint();
 
-    LOG_DEBUG("All available modes:");
+    LOG_GL_VERBOSE("All available modes:");
     for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
     {
         i->debugPrint();
     }
 
-    initBindings();
+    // Script bindings.
+    binder.initNew() << DENG2_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
+    de::App::scriptSystem().addNativeModule("DisplayMode", binder.module());
 
     inited = true;
     return true;
@@ -233,9 +227,9 @@ void DisplayMode_Shutdown(void)
 {
     if(!inited) return;
 
-    deinitBindings();
+    binder.deinit();
 
-    LOG_INFO("Restoring original display mode due to shutdown.");
+    LOG_GL_NOTE("Restoring original display mode due to shutdown");
 
     // Back to the original mode.
     DisplayMode_Change(&originalMode, false /*release captured*/);
@@ -328,7 +322,8 @@ int DisplayMode_Change(DisplayMode const *mode, int shouldCapture)
 {
     if(Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
-        LOG_DEBUG("DisplayMode: Requested mode is the same as current, ignoring.");
+        LOG_AS("DisplayMode");
+        LOGDEV_GL_XVERBOSE("Requested mode is the same as current, ignoring request");
 
         // Already in this mode.
         return false;

@@ -426,15 +426,10 @@ void Wad::clearCachedLump(int lumpIdx, bool *retCleared)
         {
             d->lumpCache->remove(lumpIdx, retCleared);
         }
-        else
-        {
-            LOG_DEBUG("LumpCache not in use, ignoring.");
-        }
     }
     else
     {
-        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
-        LOG_DEBUG(msg + ", ignoring.");
+        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIdx, lastIndex()));
     }
 }
 
@@ -451,7 +446,7 @@ uint8_t const *Wad::cacheLump(int lumpIdx)
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     WadFile const &file = reinterpret_cast<WadFile &>(lump(lumpIdx));
-    LOG_TRACE("\"%s:%s\" (%u bytes%s)")
+    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)")
         << NativePath(composePath()).pretty()
         << NativePath(file.composePath()).pretty()
         << (unsigned long) file.info().size
@@ -478,7 +473,7 @@ uint8_t const *Wad::cacheLump(int lumpIdx)
 void Wad::unlockLump(int lumpIdx)
 {
     LOG_AS("Wad::unlockLump");
-    LOG_TRACE("\"%s:%s\"") << NativePath(composePath()).pretty() << NativePath(lump(lumpIdx).composePath()).pretty();
+    LOGDEV_RES_XVERBOSE("\"%s:%s\"") << NativePath(composePath()).pretty() << NativePath(lump(lumpIdx).composePath()).pretty();
 
     if(isValidIndex(lumpIdx))
     {
@@ -486,15 +481,10 @@ void Wad::unlockLump(int lumpIdx)
         {
             d->lumpCache->unlock(lumpIdx);
         }
-        else
-        {
-            LOG_DEBUG("LumpCache not in use, ignoring.");
-        }
     }
     else
     {
-        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
-        LOG_DEBUG(msg + ", ignoring.");
+        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIdx, lastIndex()));
     }
 }
 
@@ -511,7 +501,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
     LOG_AS("Wad::readLump");
     WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
 
-    LOG_TRACE("\"%s:%s\" (%u bytes%s) [%u +%u]")
+    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]")
         << NativePath(composePath()).pretty()
         << NativePath(file.composePath()).pretty()
         << (unsigned long) file.size()
@@ -523,7 +513,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
     if(tryCache)
     {
         uint8_t const *data = d->lumpCache? d->lumpCache->data(lumpIdx) : 0;
-        LOG_TRACE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
+        LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
             size_t readBytes = MIN_OF(file.size(), length);

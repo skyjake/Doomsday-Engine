@@ -90,7 +90,7 @@ Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
 
 #ifdef __CLIENT__
 
-void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
+void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -221,7 +221,7 @@ char const *R_NameForBlendMode(blendmode_t mode)
 }
 
 #undef R_ChooseAlignModeAndScaleFactor
-DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
+DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)
 {
     if(SCALEMODE_STRETCH == scaleMode)

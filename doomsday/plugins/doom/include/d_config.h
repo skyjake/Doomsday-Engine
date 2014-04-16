@@ -73,7 +73,7 @@ typedef enum {
 #define CCH_ITEMS_PRCNT     0x10
 #define CCH_SECRETS_PRCNT   0x20
 
-// WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
+// WARNING: Do not use the dd_bool type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 
 typedef struct jdoom_config_s {
@@ -93,7 +93,7 @@ typedef struct jdoom_config_s {
     int             screenBlocks;
     byte            deathLookUp; // look up when killed
     byte            slidingCorpses;
-    byte            fastMonsters;
+    //byte            fastMonsters;
     byte            echoMsg;
     int             hudFog;
 
@@ -105,7 +105,7 @@ typedef struct jdoom_config_s {
     byte            menuShortcutsEnabled;
     byte            menuScaleMode;
     int             menuPatchReplaceMode;
-    byte            menuGameSaveSuggestName;
+    byte            menuGameSaveSuggestDescription;
     byte            menuCursorRotate;
     float           menuTextColors[MENU_COLOR_COUNT][3];
     float           menuTextFlashColor[3];
@@ -117,7 +117,6 @@ typedef struct jdoom_config_s {
 
     byte            confirmQuickGameSave;
     byte            confirmRebornLoad;
-    byte            loadAutoSaveOnReborn;
     byte            loadLastSaveOnReborn;
 
     int             hudPatchReplaceMode;

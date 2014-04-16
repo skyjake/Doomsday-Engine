@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_FUNCTION_H
@@ -120,8 +120,8 @@ public:
     void mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const;
 
     /**
-     * Sets the global namespace of the function. This is the namespace
-     * where the function was initially created.
+     * Sets the global namespace of the function. This is the namespace where the
+     * function was initially created. Once set, it cannot be changed.
      */
     void setGlobals(Record *globals);
 
@@ -209,6 +209,102 @@ protected:
 
 private:
     DENG2_PRIVATE(d)
+};
+
+/**
+ * Utility for storing information about a native function entry point and its
+ * correspondig script function equivalent.
+ *
+ * @ingroup script
+ */
+class DENG2_PUBLIC NativeFunctionSpec
+{
+public:
+    NativeFunctionSpec(Function::NativeEntryPoint entryPoint,
+                       char const *nativeName,
+                       String const &name,
+                       Function::Arguments const &argNames = Function::Arguments())
+        : _entryPoint(entryPoint)
+        , _nativeName(nativeName)
+        , _name(name)
+        , _argNames(argNames)
+    {}
+
+    /**
+     * Makes a new native Function according to the specification.
+     * @return Caller gets ownership (ref 1).
+     */
+    Function *make() const;
+
+    char const *nativeName() const { return _nativeName; }
+    String name() const { return _name; }
+
+private:
+    Function::NativeEntryPoint _entryPoint;
+    char const *_nativeName;
+    String _name;
+    Function::Arguments _argNames;
+};
+
+#define DENG2_FUNC_NOARG(Name, ScriptMemberName) \
+    de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName)
+
+#define DENG2_FUNC(Name, ScriptMemberName, Args) \
+    de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName, de::Function::Arguments() << Args)
+
+/**
+ * Utility that keeps track of which entry points have been bound and unregisters
+ * them when the instance is destroyed. Use as a member in a class that registers
+ * native entry points.
+ *
+ * @ingroup script
+ */
+class DENG2_PUBLIC Binder
+{
+public:
+    /**
+     * @param module  Module to associate with the Binder at construction.
+     *                The module is not owned by the Binder.
+     */
+    Binder(Record *module = 0);
+
+    /**
+     * Automatically deinitializes the Binder before destroying.
+     */
+    ~Binder();
+
+    /**
+     * Initializes the Binder for making new native function bindings to a module.
+     * The module will not be owned by the Binder.
+     *
+     * @param module  Module to bind to.
+     *
+     * @return Reference to this instance.
+     */
+    Binder &init(Record &module);
+
+    /**
+     * Initializes the Binder with a completely new module. The new module is owned
+     * by the Binder and will be deleted when the Binder instance is destroyed.
+     *
+     * @return Reference to this instance.
+     */
+    Binder &initNew();
+
+    /**
+     * Deinitialiazes the bindings. All native entry points registered using the
+     * Binder are automatically unregistered.
+     */
+    void deinit();
+
+    Record &module() const;
+
+    Binder &operator << (NativeFunctionSpec const &spec);
+
+private:
+    Record *_module;
+    bool _isOwned;
+    QSet<String> _boundEntryPoints;
 };
 
 } // namespace de

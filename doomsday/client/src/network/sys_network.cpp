@@ -45,7 +45,7 @@ ServerLink &Net_ServerLink(void)
     return ClientApp::app().serverLink();
 }
 
-boolean N_GetHostInfo(int index, struct serverinfo_s *info)
+dd_bool N_GetHostInfo(int index, struct serverinfo_s *info)
 {
     return Net_ServerLink().foundServerInfo(index, info);
 }
@@ -62,12 +62,11 @@ void N_PrintNetworkStatus(void)
 {
     if(isClient)
     {
-        Con_Message("CLIENT: Connected to server at %s.",
-                    Net_ServerLink().address().asText().toLatin1().constData());
+        LOG_NET_NOTE(_E(b) "CLIENT: " _E(.) "Connected to server at %s") << Net_ServerLink().address();
     }
     else
     {
-        Con_Message("OFFLINE: Single-player mode.");
+        LOG_NET_NOTE(_E(b) "OFFLINE: " _E(.) "Single-player mode");
     }
 
     N_PrintBufferInfo();

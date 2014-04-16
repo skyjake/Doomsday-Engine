@@ -154,9 +154,7 @@ struct FS1::Instance
             FileIds::iterator place = qLowerBound(fileIds.begin(), fileIds.end(), fileId);
             if(place != fileIds.end() && *place == fileId)
             {
-#if _DEBUG
-                LOG_VERBOSE("Released FileId %s - \"%s\"") << *place << fileId.path();
-#endif
+                LOGDEV_RES_XVERBOSE_DEBUGONLY("Released FileId %s - \"%s\"", *place << fileId.path());
                 fileIds.erase(place);
                 return true;
             }
@@ -198,7 +196,7 @@ struct FS1::Instance
         try
         {
             FS1::Scheme& scheme = self.scheme(search.scheme());
-            LOG_TRACE("Using scheme '%s'...") << scheme.name();
+            LOG_RES_XVERBOSE("Using scheme '%s'...") << scheme.name();
 
             // Ensure the scheme's index is up to date.
             scheme.rebuild();
@@ -332,7 +330,7 @@ struct FS1::Instance
         // We must have an absolute path.
         path = App_BasePath() / path;
 
-        LOG_TRACE("Trying \"%s\"...") << NativePath(path).pretty();
+        LOG_RES_XVERBOSE("Trying \"%s\"...") << NativePath(path).pretty();
 
         bool const reqNativeFile = mode.contains('f');
 
@@ -560,7 +558,7 @@ de::File1& FS1::find(de::Uri const& search)
         catch(de::Uri::ResolveError const& er)
         {
             // Log but otherwise ignore unresolved paths.
-            LOG_DEBUG(er.asText());
+            LOGDEV_RES_VERBOSE(er.asText());
         }
     }
 
@@ -608,7 +606,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
         catch(de::Uri::ResolveError const& er)
         {
             // Log but otherwise ignore unresolved paths.
-            LOG_DEBUG(er.asText());
+            LOGDEV_RES_VERBOSE(er.asText());
         }
     }
 
@@ -627,7 +625,7 @@ static void printFileIds(FileIds const& fileIds)
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FileIds, i, fileIds)
     {
-        LOG_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
+        LOGDEV_RES_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
         ++idx;
     }
 }
@@ -645,7 +643,7 @@ static void printFileList(FS1::FileList& list)
         QByteArray path = file.composePath().toUtf8();
         FileId fileId = FileId::fromPath(path.constData());
 
-        LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
+        LOGDEV_RES_MSG(" %c%d: %s - \"%s\" (handle: %p)")
             << (file.hasStartup()? '*' : ' ') << idx
             << fileId << fileId.path() << (void*)&hndl;
         ++idx;
@@ -659,9 +657,9 @@ int FS1::unloadAllNonStartupFiles()
     // List all open files with their identifiers.
     if(verbose)
     {
-        LOG_MSG("Open files at reset:");
+        LOGDEV_RES_MSG("Open files at reset:");
         printFileList(d->openFiles);
-        LOG_MSG("End\n");
+        LOGDEV_RES_MSG("End\n");
     }
 #endif
 
@@ -681,7 +679,7 @@ int FS1::unloadAllNonStartupFiles()
     // Sanity check: look for orphaned identifiers.
     if(!d->fileIds.empty())
     {
-        LOG_MSG("Warning: Orphan FileIds:");
+        LOGDEV_RES_MSG("Orphan FileIds:");
         printFileIds(d->fileIds);
     }
 #endif
@@ -698,10 +696,7 @@ bool FS1::checkFileId(de::Uri const& path)
     FileIds::iterator place = qLowerBound(d->fileIds.begin(), d->fileIds.end(), fileId);
     if(place != d->fileIds.end() && *place == fileId) return false;
 
-#ifdef _DEBUG
-    LOG_AS("FS1::addFileId")
-    LOG_DEBUG("\"%s\" => %s") << fileId.path() << fileId; /* path() is debug-only */
-#endif
+    LOGDEV_RES_XVERBOSE_DEBUGONLY("checkFileId \"%s\" => %s", fileId.path() << fileId); /* path() is debug-only */
 
     d->fileIds.insert(place, fileId);
     return true;
@@ -999,7 +994,7 @@ bool FS1::accessFile(de::Uri const& search)
     catch(de::Uri::ResolveError const& er)
     {
         // Log but otherwise ignore unresolved paths.
-        LOG_DEBUG(er.asText());
+        LOGDEV_RES_VERBOSE(er.asText());
     }
     return false;
 }
@@ -1038,7 +1033,7 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
         ldm->second = lumpName;
     }
 
-    LOG_VERBOSE("Path \"%s\" now mapped to lump \"%s\"") << NativePath(ldm->first).pretty() << ldm->second;
+    LOG_RES_MSG("Path \"%s\" now mapped to lump \"%s\"") << NativePath(ldm->first).pretty() << ldm->second;
 }
 
 void FS1::clearPathLumpMappings()
@@ -1089,7 +1084,7 @@ void FS1::addPathMapping(String source, String destination)
         pm->first = destination;
     }
 
-    LOG_VERBOSE("Path \"%s\" now mapped to \"%s\"")
+    LOG_RES_MSG("Path \"%s\" now mapped to \"%s\"")
         << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
 }
 
@@ -1100,8 +1095,7 @@ void FS1::clearPathMappings()
 
 void FS1::printDirectory(Path path)
 {
-    QByteArray pathUtf8 = NativePath(path).pretty().toUtf8();
-    Con_Message("Directory: %s", pathUtf8.constData());
+    LOG_RES_MSG(_E(b) "Directory: %s") << NativePath(path).pretty();
 
     // We are interested in *everything*.
     path = path / "*";
@@ -1113,8 +1107,7 @@ void FS1::printDirectory(Path path)
 
         DENG2_FOR_EACH_CONST(PathList, i, found)
         {
-            QByteArray foundPath = NativePath(i->path).pretty().toUtf8();
-            Con_Message("  %s", foundPath.constData());
+            LOG_RES_MSG("  %s") << NativePath(i->path).pretty();
         }
     }
 }
@@ -1177,10 +1170,9 @@ D_CMD(DumpLump)
         {
             return F_DumpLump(lumpNum);
         }
-        Con_Printf("No such lump.\n");
+        LOG_RES_ERROR("No such lump");
         return false;
     }
-    Con_Printf("WAD module is not presently initialized.\n");
     return false;
 }
 
@@ -1194,7 +1186,7 @@ D_CMD(ListLumps)
         LumpIndex::print(App_FileSystem().nameIndex());
         return true;
     }
-    Con_Printf("WAD module is not presently initialized.\n");
+
     return false;
 }
 
@@ -1203,7 +1195,7 @@ D_CMD(ListFiles)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    Con_Printf("Loaded Files (in load order):\n");
+    LOG_RES_MSG(_E(b) "Loaded Files " _E(l) "(in load order)" _E(w) ":");
 
     size_t totalFiles = 0, totalPackages = 0;
     if(fileSystem)
@@ -1228,19 +1220,18 @@ D_CMD(ListFiles)
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
             }
 
-            QByteArray path = de::NativePath(file.composePath()).pretty().toUtf8();
-            Con_Printf("\"%s\" (%i %s%s)", path.constData(),
-                       fileCount, fileCount != 1 ? "files" : "file",
-                       (file.hasStartup()? ", startup" : ""));
-            if(0 != crc)
-                Con_Printf(" [%08x]", crc);
-            Con_Printf("\n");
+            LOG_RES_MSG(" %s " _E(2)_E(>) "(%i %s%s)%s")
+                    << de::NativePath(file.composePath()).pretty()
+                    << fileCount << (fileCount != 1 ? "files" : "file")
+                    << (file.hasStartup()? ", startup" : "")
+                    << (crc? QString(" [%1]").arg(crc, 0, 16) : "");
 
             totalFiles += size_t(fileCount);
             ++totalPackages;
         }
     }
-    Con_Printf("Total: %lu files in %lu packages.\n", (unsigned long) totalFiles, (unsigned long)totalPackages);
+    LOG_RES_MSG(_E(b)"Total: " _E(.) "%i files in %i packages")
+            << totalFiles << totalPackages;
     return true;
 }
 
@@ -1305,7 +1296,7 @@ void F_ResetFileIds(void)
     App_FileSystem().resetFileIds();
 }
 
-boolean F_CheckFileId(char const* nativePath)
+dd_bool F_CheckFileId(char const* nativePath)
 {
     return App_FileSystem().checkFileId(de::Uri::fromNativePath(nativePath));
 }
@@ -1339,7 +1330,7 @@ void F_ReleaseFile(struct file1_s* file)
     App_FileSystem().releaseFile(*reinterpret_cast<de::File1*>(file));
 }
 
-struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, boolean allowDuplicate)
+struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, dd_bool allowDuplicate)
 {
     try
     {
@@ -1374,7 +1365,7 @@ struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
     return 0;
 }
 
-boolean F_IsValidLumpNum(lumpnum_t lumpNum)
+dd_bool F_IsValidLumpNum(lumpnum_t lumpNum)
 {
     return App_FileSystem().nameIndex().isValidIndex(lumpNum);
 }
@@ -1441,7 +1432,7 @@ AutoStr* F_ComposePath(struct file1_s const* _file)
     return AutoStr_FromTextStd(path.constData());
 }
 
-void F_SetCustom(struct file1_s* file, boolean yes)
+void F_SetCustom(struct file1_s* file, dd_bool yes)
 {
     if(!file) return;
     reinterpret_cast<de::File1*>(file)->setCustom(CPP_BOOL(yes));
@@ -1548,7 +1539,7 @@ AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum)
     return AutoStr_NewStd();
 }
 
-boolean F_LumpIsCustom(lumpnum_t lumpNum)
+dd_bool F_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {
@@ -1676,16 +1667,17 @@ uint F_LoadedFilesCRC(void)
 // fs_util.cpp
 extern int F_FileExists(char const *path);
 extern uint F_GetLastModified(char const *path);
-extern boolean F_MakePath(char const *path);
+extern dd_bool F_MakePath(char const *path);
 extern void F_FileName(ddstring_t *dst, char const *src);
 extern void F_ExtractFileBase(char *dest, char const *path, size_t len);
 extern const char* F_FindFileExtension(char const *path);
-extern boolean F_TranslatePath(ddstring_t *dst, ddstring_t const *src);
+extern dd_bool F_TranslatePath(ddstring_t *dst, ddstring_t const *src);
 extern const char* F_PrettyPath(char const *path);
 
 // m_misc.c
 DENG_EXTERN_C size_t M_ReadFile(char const *name, char **buffer);
-DENG_EXTERN_C boolean M_WriteFile(char const *name, char const *source, size_t length);
+DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom);
+DENG_EXTERN_C dd_bool M_WriteFile(char const *name, char const *source, size_t length);
 
 DENG_DECLARE_API(F) =
 {
@@ -1701,5 +1693,6 @@ DENG_DECLARE_API(F) =
     F_TranslatePath,
     F_PrettyPath,
     M_ReadFile,
+    M_ReadFileIntoString,
     M_WriteFile
 };

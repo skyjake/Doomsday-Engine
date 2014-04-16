@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 /**
@@ -398,7 +398,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Instanc
         throw ConnectionError("Socket", "Opening the connection to " + address.asText() + " failed: " + msg);
     }
 
-    LOG_MSG("Connection opened to %s") << address.asText();
+    LOG_NET_NOTE("Connection opened to %s") << address.asText();
 
     d->target = address;
 
@@ -412,7 +412,7 @@ void Socket::connect(Address const &address) // non-blocking
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
-    if(!d->quiet) LOG_MSG("Opening connection to %s") << address.asText();
+    if(!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
     d->target = address;
@@ -494,8 +494,15 @@ void Socket::close()
 {
     if(!d->socket) return;
 
-    // All pending data will be written to the socket before closing.
-    d->socket->disconnectFromHost();
+    if(d->socket->state() == QAbstractSocket::ConnectedState)
+    {
+        // All pending data will be written to the socket before closing.
+        d->socket->disconnectFromHost();
+    }
+    else
+    {
+        d->socket->abort();
+    }
 
     if(d->socket->state() != QAbstractSocket::UnconnectedState)
     {
@@ -518,8 +525,8 @@ duint Socket::channel() const
 
 void Socket::setChannel(duint number)
 {
-    DENG2_ASSERT(number < MAX_CHANNELS);
-    d->activeChannel = number;
+    DENG2_ASSERT(number < MAX_CHANNELS);    
+    d->activeChannel = min(number, MAX_CHANNELS - 1);
 }
 
 void Socket::send(IByteArray const &packet)
@@ -567,7 +574,7 @@ void Socket::hostResolved(QHostInfo const &info)
 {
     if(info.error() != QHostInfo::NoError || info.addresses().isEmpty())
     {
-        LOG_WARNING("Could not resolve host: ") << info.errorString();
+        LOG_NET_ERROR("Could not resolve host: ") << info.errorString();
         emit disconnected();
     }
     else
@@ -635,9 +642,10 @@ void Socket::socketError(QAbstractSocket::SocketError socketError)
     if(socketError != QAbstractSocket::SocketTimeoutError)
     {
         LOG_AS("Socket");
-        if(!d->quiet) LOG_WARNING(d->socket->errorString());
+        if(!d->quiet) LOG_NET_WARNING(d->socket->errorString());
 
-        emit disconnected(); //error(socketError);
+        emit error(d->socket->errorString());
+        emit disconnected();
     }
 }
 

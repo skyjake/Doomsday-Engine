@@ -34,9 +34,42 @@
 
 #include "h_player.h"
 
-extern boolean intermission;
-extern int interState;
-extern int interTime;
+DENG_EXTERN_C dd_bool intermission;
+DENG_EXTERN_C int interState;
+DENG_EXTERN_C int interTime;
+
+//
+// INTERMISSION
+// Structure passed e.g. to IN_Init(wb)
+//
+/*typedef struct {
+    dd_bool         inGame; // Whether the player is in game.
+
+    // Player stats, kills, collected items etc.
+    int             kills;
+    int             items;
+    int             secret;
+    int             time;
+    int             frags[MAXPLAYERS];
+    int             score; // Current score on entry, modified on return.
+} wbplayerstruct_t;*/
+
+typedef struct {
+    uint            episode;
+    dd_bool         didSecret; // If true, splash the secret level.
+    uint            currentMap, nextMap; // This and next maps.
+/*    int             maxKills;
+    int             maxItems;
+    int             maxSecret;
+    int             maxFrags;
+    int             parTime;
+    int             pNum; // Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];*/
+} wbstartstruct_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// To be called to register the console commands and variables of this module.
 void WI_Register(void);
@@ -55,5 +88,9 @@ void            IN_CheckForSkip(void);
 void            IN_InitStats(void);
 void            IN_InitDeathmatchStats(void);
 void            IN_InitNetgameStats(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

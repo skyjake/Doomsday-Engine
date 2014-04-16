@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
  
 #ifndef LIBDENG2_CONFIG_H
@@ -30,25 +30,25 @@ namespace de {
 class ArrayValue;
 
 /**
- * Stores the configuration of everything. The application owns a Config.
- * The default configuration is produced by executing the .de scripts
- * in the config directories. The resulting namespace is serialized for
- * storage, and is restored from the serialized version directly before the
- * config scripts are run.
+ * Stores the configuration of everything.
  *
- * The version of the engine is stored in the serialized config namespace.
- * This is for actions needed when upgrading: the config script can check
- * the previous version and apply changes accordingly.
+ * The application owns a Config. The default configuration is produced by executing the
+ * .de scripts in the config directories. The resulting namespace is serialized for
+ * storage, and is restored from the serialized version directly before the config
+ * scripts are run.
  *
- * In practice, Config is a specialized script namespace stored in a Record. It
- * gets written to the application's persistent data store (persist.pack).
+ * The version of the engine is stored in the serialized config namespace. This is for
+ * actions needed when upgrading: the config script can check the previous version and
+ * apply changes accordingly.
+ *
+ * In practice, Config is a specialized script namespace stored in a Record. It gets
+ * written to the application's persistent data store (persist.pack) using a Refuge. The
+ * Config is automatically written persistently before being destroyed.
+ *
+ * @ingroup core
  */
 class DENG2_PUBLIC Config
 {
-public:
-    /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
-    DENG2_ERROR(ValueTypeError);
-
 public:
     /**
      * Constructs a new configuration.
@@ -57,11 +57,6 @@ public:
      */
     Config(Path const &path);
 
-    /**
-     * Destructor. The configuration is automatically saved.
-     */
-    virtual ~Config();
-
     /// Read configuration from files.
     void read();
 
@@ -69,36 +64,40 @@ public:
     void write() const;
 
     /// Returns the value of @a name as a Value.
-    Value &get(String const &name) const;
+    Value const &get(String const &name) const;
 
     /// Returns the value of @a name as an integer.
     dint geti(String const &name) const;
 
+    dint geti(String const &name, dint defaultValue) const;
+
     /// Returns the value of @a name as a boolean.
     bool getb(String const &name) const;
+
+    bool getb(String const &name, bool defaultValue) const;
 
     /// Returns the value of @a name as an unsigned integer.
     duint getui(String const &name) const;
 
+    duint getui(String const &name, duint defaultValue) const;
+
     /// Returns the value of @a name as a double-precision floating point number.
     ddouble getd(String const &name) const;
+
+    ddouble getd(String const &name, ddouble defaultValue) const;
 
     /// Returns the value of @a name as a string.
     String gets(String const &name) const;
 
+    String gets(String const &name, String const &defaultValue) const;
+
     /// Returns the value of @a name as an array value. An exception is thrown
     /// if the variable does not have an array value.
-    ArrayValue &geta(String const &name) const;
+    ArrayValue const &geta(String const &name) const;
 
     template <typename ValueType>
-    ValueType &getAs(String const &name) const {
-        ValueType *v = dynamic_cast<ValueType *>(&get(name));
-        if(!v)
-        {
-            throw ValueTypeError("Config::getAs", String("Cannot cast to expected type (") +
-                                 DENG2_TYPE_NAME(ValueType) + ")");
-        }
-        return *v;
+    ValueType const &getAs(String const &name) const {
+        return names().getAs<ValueType>(name);
     }
 
     /**

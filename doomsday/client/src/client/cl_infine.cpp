@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_infine.cpp  Clientside InFine.
  *
  * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
@@ -17,38 +17,40 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Client-side InFine.
- */
 #include "de_base.h"
+#include "client/cl_infine.h"
+
 #include "de_console.h"
 #include "de_infine.h"
 
-#include "client/cl_infine.h"
 #include "network/net_main.h"
 #include "network/net_msg.h"
 
-static finaleid_t currentFinale = 0;
-static finaleid_t remoteFinale = 0;
+#include <de/memory.h>
 
-finaleid_t Cl_CurrentFinale(void)
+static finaleid_t currentFinale;
+static finaleid_t remoteFinale;
+
+finaleid_t Cl_CurrentFinale()
 {
     return currentFinale;
 }
 
-void Cl_Finale(Reader* msg)
+void Cl_Finale(Reader *msg)
 {
-    int flags = Reader_ReadByte(msg);
-    byte* script = 0;
-    int len;
-    finaleid_t finaleId = Reader_ReadUInt32(msg);
+    LOG_AS("Cl_Finale");
+
+    byte *script = 0;
+
+    int const flags           = Reader_ReadByte(msg);
+    finaleid_t const finaleId = Reader_ReadUInt32(msg);
 
     if(flags & FINF_SCRIPT)
     {
         // Read the script into map-scope memory. It will be freed
         // when the next map is loaded.
-        len = Reader_ReadUInt32(msg);
-        script = (byte *) malloc(len + 1);
+        int len = Reader_ReadUInt32(msg);
+        script = (byte *) M_Malloc(len + 1);
         Reader_Read(msg, script, len);
         script[len] = 0;
     }
@@ -58,9 +60,7 @@ void Cl_Finale(Reader* msg)
         // Start the script.
         currentFinale = FI_Execute((const char*)script, FF_LOCAL);
         remoteFinale = finaleId;
-#ifdef _DEBUG
-        Con_Message("Cl_Finale: Started finale %i (remote id %i).", currentFinale, remoteFinale);
-#endif
+        LOGDEV_NET_MSG("Started finale %i (remote id %i)") << currentFinale << remoteFinale;
     }
 
     /// @todo Wouldn't hurt to make sure that the server is talking about the
@@ -78,10 +78,10 @@ void Cl_Finale(Reader* msg)
         FI_ScriptRequestSkip(currentFinale);
     }
 
-    if(script) free(script);
+    if(script) M_Free(script);
 }
 
-void Cl_RequestFinaleSkip(void)
+void Cl_RequestFinaleSkip()
 {
     // First the flags.
     Msg_Begin(PCL_FINALE_REQUEST);
@@ -89,9 +89,7 @@ void Cl_RequestFinaleSkip(void)
     Writer_WriteUInt16(msgWriter, 1); // skip
     Msg_End();
 
-#ifdef _DEBUG
-    Con_Message("Cl_RequestFinaleSkip: Requesting skip on finale %i.", remoteFinale);
-#endif
+    LOGDEV_NET_MSG("Requesting skip on finale %i") << remoteFinale;
 
     Net_SendBuffer(0, 0);
 }

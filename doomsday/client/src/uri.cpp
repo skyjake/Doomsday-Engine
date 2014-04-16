@@ -110,7 +110,7 @@ DENG2_PIMPL_NOREF(Uri)
                 // Scheme is accepted as is.
                 return;
             }
-            LOG_WARNING("Unknown scheme \"%s\" for path \"%s\", using default instead.") << scheme << strPath;
+            LOG_RES_WARNING("Unknown scheme \"%s\" for path \"%s\", using default scheme instead") << scheme << strPath;
         }
 
         // Attempt to guess the scheme by interpreting the path?
@@ -144,7 +144,7 @@ DENG2_PIMPL_NOREF(Uri)
                 throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'Game' did not resolve (no game loaded)");
             }
 
-            return Str_Text(App_CurrentGame().identityKey());
+            return App_CurrentGame().identityKey();
         }
         else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
         {
@@ -193,7 +193,8 @@ DENG2_PIMPL_NOREF(Uri)
                 expEnd = strPath.indexOf(')', expBegin);
                 if(expEnd < 0)
                 {
-                    LOG_WARNING("Missing closing ')' in expression \"" + strPath + "\", ignoring.");
+                    LOG_RES_WARNING("Ignoring expression \"" + strPath + "\": "
+                                    "missing a closing ')'");
                     expEnd = strPath.length();
                 }
 

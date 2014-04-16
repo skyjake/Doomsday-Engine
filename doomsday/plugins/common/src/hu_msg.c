@@ -29,10 +29,11 @@
 #include "hu_msg.h"
 #include "hu_menu.h"
 #include "hu_stuff.h"
+#include <de/memory.h>
 
 D_CMD(MsgResponse);
 
-static boolean awaitingResponse;
+static dd_bool awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
 static msgresponse_t messageResponse;
 
@@ -230,37 +231,39 @@ int Hu_MsgResponder(event_t* ev)
     return true;
 }
 
-boolean Hu_IsMessageActive(void)
+dd_bool Hu_IsMessageActive(void)
 {
     return messageToPrint;
 }
 
-boolean Hu_IsMessageActiveWithCallback(msgfunc_t callback)
+dd_bool Hu_IsMessageActiveWithCallback(msgfunc_t callback)
 {
     return messageToPrint && msgCallback == callback;
 }
 
-void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
-    int userValue, void* userPointer)
+void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
+    int userValue, void *userPointer)
 {
-    DENG_ASSERT(msg);
+    DENG_ASSERT(msg != 0);
     DENG_ASSERT(!awaitingResponse);
 
     awaitingResponse = true;
-    messageResponse = 0;
-    messageToPrint = 1;
+    messageResponse  = 0;
+    messageToPrint   = 1;
 
-    msgType = type;
-    msgCallback = callback;
-    msgUserValue = userValue;
+    msgType        = type;
+    msgCallback    = callback;
+    msgUserValue   = userValue;
     msgUserPointer = userPointer;
 
     // Take a copy of the message string.
-    msgText = calloc(1, strlen(msg)+1);
+    msgText = M_Calloc(strlen(msg) + 1);
     strncpy(msgText, msg, strlen(msg));
 
     if(msgType == MSG_YESNO)
+    {
         composeYesNoMessage();
+    }
 
     if(!(Get(DD_DEDICATED) || Get(DD_NOVIDEO)))
     {

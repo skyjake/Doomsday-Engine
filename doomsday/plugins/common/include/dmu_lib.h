@@ -165,13 +165,13 @@ void P_BuildLineTagLists(void);
 
 void P_DestroyLineTagLists(void);
 
-iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList);
+iterlist_t *P_GetLineIterListForTag(int tag, dd_bool createNewList);
 
 void P_BuildSectorTagLists(void);
 
 void P_DestroySectorTagLists(void);
 
-iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList);
+iterlist_t *P_GetSectorIterListForTag(int tag, dd_bool createNewList);
 
 void P_BuildAllTagLists(void);
 

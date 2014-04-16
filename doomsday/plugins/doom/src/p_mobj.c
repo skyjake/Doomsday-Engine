@@ -33,7 +33,7 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_terraintype.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h"
 #include "p_local.h"
 #include "dmu_lib.h"
@@ -87,7 +87,7 @@ coord_t P_MobjGetFriction(mobj_t *mo)
     return XS_Friction(Mobj_Sector(mo));
 }
 
-static __inline boolean isInWalkState(player_t *pl)
+static __inline dd_bool isInWalkState(player_t *pl)
 {
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
@@ -116,7 +116,7 @@ void P_MobjMoveXY(mobj_t* mo)
 {
     coord_t pos[3], mom[3];
     player_t* player;
-    boolean largeNegative;
+    dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code.
     if(P_CameraXYMovement(mo))
@@ -313,7 +313,7 @@ void P_MobjMoveZ(mobj_t* mo)
 
     if(targetZ < floorZ)
     {   // Hit the floor (or another mobj).
-        boolean             movingDown;
+        dd_bool             movingDown;
         // Note (id):
         //  somebody left this after the setting momz to 0,
         //  kinda useless there.
@@ -656,7 +656,7 @@ void P_MobjThinker(void *thinkerPtr)
         if(!(mo->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnMonsters)
+        if(!G_Ruleset_RespawnMonsters())
             return;
 
         mo->moveCount++;
@@ -683,14 +683,14 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     info = &MOBJINFO[type];
 
     // Not for deathmatch?
-    if(deathmatch && (info->flags & MF_NOTDMATCH))
+    if(G_Ruleset_Deathmatch() && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
     if(IS_NETGAME)
     {
         // Cooperative weapons?
-        if(cfg.noCoopWeapons && !deathmatch && type >= MT_CLIP &&
+        if(cfg.noCoopWeapons && !G_Ruleset_Deathmatch() && type >= MT_CLIP &&
            type <= MT_SUPERSHOTGUN)
             return NULL;
 
@@ -730,8 +730,8 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
         break;
     }
 
-    // Don't spawn any monsters if -noMonstersParm.
-    if(noMonstersParm && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
+    // Don't spawn any monsters?
+    if(G_Ruleset_NoMonsters() && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
         return NULL;
 
     if(info->flags & MF_SOLID)
@@ -757,7 +757,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     // Let the engine know about solid objects.
     P_SetDoomsdayFlags(mo);
 
-    if(gameSkill != SM_NIGHTMARE)
+    if(G_Ruleset_Skill() != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;
@@ -810,7 +810,9 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     }
 
     if(type == MT_BOSSTARGET)
-        P_BrainAddTarget(mo);
+    {
+        BossBrain_AddTarget(theBossBrain, mo);
+    }
 
     // Copy spawn attributes to the new mobj.
     mo->spawnSpot.origin[VX] = x;
@@ -859,7 +861,7 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle)
  * @return              @c true, if the missile is at a valid location else
  *                      @c false
  */
-boolean P_CheckMissileSpawn(mobj_t* th)
+dd_bool P_CheckMissileSpawn(mobj_t* th)
 {
     th->tics -= P_Random() & 3;
     if(th->tics < 1)
@@ -974,8 +976,9 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
 
     if(source->player)
-    {   // Allow free-aim with the BFG in deathmatch?
-        if(deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
+    {
+        // Allow free-aim with the BFG in deathmatch?
+        if(G_Ruleset_Deathmatch() && cfg.netBFGFreeLook == 0 && type == MT_BFG)
             th->mom[MZ] = 0;
         else
             th->mom[MZ] = th->info->speed * slope;

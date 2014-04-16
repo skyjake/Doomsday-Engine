@@ -10,18 +10,17 @@
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_VECTOR_H
@@ -323,6 +322,11 @@ public:
         z *= scalar;
         return *this;
     }
+    inline Vector3 &operator *= (Vector3 const &other) {
+        Vector2<Type>::operator *= (other);
+        z *= other.z;
+        return *this;
+    }
     inline Vector3 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
@@ -479,6 +483,9 @@ public:
     Vector4<dbyte> toVector4ub() const {
         return Vector4<dbyte>(dbyte(Vector3<Type>::x), dbyte(Vector3<Type>::y), dbyte(Vector3<Type>::z), dbyte(w));
     }
+    Vector4<dfloat> toVector4f() const {
+        return Vector4<dfloat>(dfloat(Vector3<Type>::x), dfloat(Vector3<Type>::y), dfloat(Vector3<Type>::z), dfloat(w));
+    }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 3);
         Type *ptrs[] = { &(this->Vector2<Type>::x),
@@ -530,6 +537,11 @@ public:
     inline Vector4 &operator *= (ddouble scalar) {
         Vector3<Type>::operator *= (scalar);
         w *= scalar;
+        return *this;
+    }
+    inline Vector4 &operator *= (Vector4 const &other) {
+        Vector3<Type>::operator *= (other);
+        w *= other.w;
         return *this;
     }
     Vector4 operator / (ddouble scalar) const {
@@ -623,6 +635,9 @@ public:
     }
     Vector2<Type> xy() const { return *this; }
     Vector2<Type> zw() const { return Vector2<Type>(Vector3<Type>::z, w); }
+    Vector4<Type> zyxw() const {
+        return Vector4<Type>(Vector3<Type>::z, Vector3<Type>::y, Vector3<Type>::x, w);
+    }
 public:
     Type w;
 };

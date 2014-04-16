@@ -1,4 +1,4 @@
-/** @file colorfilterconsoleeffect.cpp
+/** @file colorfilter.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

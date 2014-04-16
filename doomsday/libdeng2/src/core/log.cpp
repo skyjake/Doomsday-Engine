@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Log"
@@ -24,6 +24,7 @@
 #include "de/Guard"
 #include "de/Reader"
 #include "de/Writer"
+#include "de/FIFO"
 #include "logtextstyle.h"
 
 #include <QMap>
@@ -64,59 +65,140 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static std::auto_ptr<internal::Logs> logsPtr;
 
-LogEntry::Arg::Arg(const LogEntry::Arg::Base &arg) : _type(arg.logEntryArgType())
+/// Unused entry arguments are stored here in the pool.
+static FIFO<LogEntry::Arg> argPool;
+
+LogEntry::Arg::Arg() : _type(IntegerArgument)
 {
-    switch(_type)
-    {
-    case INTEGER:
-        _data.intValue = arg.asInt64();
-        break;
-
-    case FLOATING_POINT:
-        _data.floatValue = arg.asDouble();
-        break;
-
-    case STRING: {
-        String s = arg.asText();
-        _data.stringValue = new String(s.data(), s.size());
-        break; }
-    }
-}
-
-LogEntry::Arg::Arg(Arg const &other)
-    : String::IPatternArg(), ISerializable(), _type(other._type)
-{
-    switch(other._type)
-    {
-    case INTEGER:
-        _data.intValue = other._data.intValue;
-        break;
-
-    case FLOATING_POINT:
-        _data.floatValue = other._data.floatValue;
-        break;
-
-    case STRING:
-        _data.stringValue = new String(*other._data.stringValue);
-        break;
-    }
+    _data.intValue = 0;
 }
 
 LogEntry::Arg::~Arg()
 {
-    if(_type == STRING)
+    clear();
+}
+
+void LogEntry::Arg::clear()
+{
+    if(_type == StringArgument)
     {
         delete _data.stringValue;
+        _data.stringValue = 0;
+        _type = IntegerArgument;
     }
+}
+
+void LogEntry::Arg::setValue(dint i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(duint i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(long int i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(long unsigned int i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(duint64 i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = dint64(i);
+}
+
+void LogEntry::Arg::setValue(dint64 i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(ddouble d)
+{
+    clear();
+    _type = FloatingPointArgument;
+    _data.floatValue = d;
+}
+
+void LogEntry::Arg::setValue(void const *p)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = dint64(p);
+}
+
+void LogEntry::Arg::setValue(char const *s)
+{
+    clear();
+    _type = StringArgument;
+    _data.stringValue = new String(s);
+}
+
+void LogEntry::Arg::setValue(String const &s)
+{
+    clear();
+    _type = StringArgument;
+    // Ensure a deep copy of the string is taken.
+    _data.stringValue = new String(s.data(), s.size());
+}
+
+void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
+{
+    switch(arg.logEntryArgType())
+    {
+    case IntegerArgument:
+        setValue(arg.asInt64());
+        break;
+
+    case FloatingPointArgument:
+        setValue(arg.asDouble());
+        break;
+
+    case StringArgument:
+        setValue(arg.asText()); // deep copy
+        break;
+    }
+}
+
+LogEntry::Arg &LogEntry::Arg::operator = (Arg const &other)
+{
+    clear();
+    if(other._type == StringArgument)
+    {
+        setValue(*other._data.stringValue); // deep copy
+    }
+    else
+    {
+        _type = other._type;
+        _data = other._data;
+    }
+    return *this;
 }
 
 ddouble LogEntry::Arg::asNumber() const
 {
-    if(_type == INTEGER)
+    if(_type == IntegerArgument)
     {
         return ddouble(_data.intValue);
     }
-    else if(_type == FLOATING_POINT)
+    else if(_type == FloatingPointArgument)
     {
         return _data.floatValue;
     }
@@ -125,15 +207,15 @@ ddouble LogEntry::Arg::asNumber() const
 
 String LogEntry::Arg::asText() const
 {
-    if(_type == STRING)
+    if(_type == StringArgument)
     {
         return *_data.stringValue;
     }
-    else if(_type == INTEGER)
+    else if(_type == IntegerArgument)
     {
         return String::number(_data.intValue);
     }
-    else if(_type == FLOATING_POINT)
+    else if(_type == FloatingPointArgument)
     {
         return String::number(_data.floatValue);
     }
@@ -146,15 +228,15 @@ void LogEntry::Arg::operator >> (Writer &to) const
 
     switch(_type)
     {
-    case INTEGER:
+    case IntegerArgument:
         to << _data.intValue;
         break;
 
-    case FLOATING_POINT:
+    case FloatingPointArgument:
         to << _data.floatValue;
         break;
 
-    case STRING:
+    case StringArgument:
         to << *_data.stringValue;
         break;
     }
@@ -162,57 +244,74 @@ void LogEntry::Arg::operator >> (Writer &to) const
 
 void LogEntry::Arg::operator << (Reader &from)
 {
-    if(_type == STRING) delete _data.stringValue;
+    if(_type == StringArgument) delete _data.stringValue;
 
     from.readAs<dbyte>(_type);
 
     switch(_type)
     {
-    case INTEGER:
+    case IntegerArgument:
         from >> _data.intValue;
         break;
 
-    case FLOATING_POINT:
+    case FloatingPointArgument:
         from >> _data.floatValue;
         break;
 
-    case STRING:
+    case StringArgument:
         _data.stringValue = new String;
         from >> *_data.stringValue;
         break;
     }
 }
 
-LogEntry::LogEntry() : _level(TRACE), _sectionDepth(0), _disabled(true)
+LogEntry::Arg *LogEntry::Arg::newFromPool()
+{
+    Arg *arg = argPool.take();
+    if(arg) return arg;
+    // Need a new one.
+    return new LogEntry::Arg;
+}
+
+void LogEntry::Arg::returnToPool(Arg *arg)
+{
+    arg->clear();
+    argPool.put(arg);
+}
+
+LogEntry::LogEntry() : _metadata(0), _sectionDepth(0), _disabled(true)
 {}
 
-LogEntry::LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args)
-    : _level(level),
-      _section(section),
-      _sectionDepth(sectionDepth),
-      _format(format),
-      _disabled(false),
-      _args(args)
+LogEntry::LogEntry(duint32 metadata, String const &section, int sectionDepth, String const &format, Args args)
+    : _metadata(metadata)
+    , _section(section)
+    , _sectionDepth(sectionDepth)
+    , _format(format)
+    , _disabled(false)
+    , _args(args)
 {
-    if(!LogBuffer::appBuffer().isEnabled(level))
+    if(!LogBuffer::appBuffer().isEnabled(metadata))
     {
         _disabled = true;
     }
 }
 
 LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
-    : Lockable(), ISerializable(),
-      _when(other._when),
-      _level(other._level),
-      _section(other._section),
-      _sectionDepth(other._sectionDepth),
-      _format(other._format),
-      _defaultFlags(other._defaultFlags | extraFlags),
-      _disabled(other._disabled)
+    : Lockable()
+    , ISerializable()
+    , _when(other._when)
+    , _metadata(other._metadata)
+    , _section(other._section)
+    , _sectionDepth(other._sectionDepth)
+    , _format(other._format)
+    , _defaultFlags(other._defaultFlags | extraFlags)
+    , _disabled(other._disabled)
 {
     DENG2_FOR_EACH_CONST(Args, i, other._args)
     {
-        _args.append(new Arg(**i));
+        Arg *a = Arg::newFromPool();
+        *a = **i;
+        _args.append(a);
     }
 }
 
@@ -220,10 +319,10 @@ LogEntry::~LogEntry()
 {
     DENG2_GUARD(this);
 
-    // The entry has ownership of its args.
+    // Put the arguments back to the shared pool.
     for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
     {
-        delete *i;
+        Arg::returnToPool(*i);
     }
 }
 
@@ -253,15 +352,42 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         // Begin with the timestamp.
         if(flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
     
-        output << _when.asText(Date::BuildNumberAndTime) << " ";
+        output << _when.asText(Date::BuildNumberAndSecondsSinceStart) << " ";
+
+        if(!flags.testFlag(OmitDomain))
+        {
+            QChar dc = (_metadata & Resource? 'R' :
+                        _metadata & Map?      'M' :
+                        _metadata & Script?   'S' :
+                        _metadata & GL?       'G' :
+                        _metadata & Audio?    'A' :
+                        _metadata & Input?    'I' :
+                        _metadata & Network?  'N' : ' ');
+            if(_metadata & Dev)
+            {
+                if(dc != ' ')
+                    dc = dc.toLower();
+                else
+                    dc = '-'; // Generic developer message
+            }
+
+            if(!flags.testFlag(Styled))
+            {
+                output << dc;
+            }
+            else
+            {
+                output << _E(s)_E(F)_E(m) << dc << _E(.) << " ";
+            }
+        }
 
         if(!flags.testFlag(OmitLevel))
         {
             if(!flags.testFlag(Styled))
             {
-                char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
-                    "(...)",
-                    "(deb)",
+                char const *levelNames[] = {
+                    "", // not used
+                    "(vv)",
                     "(v)",
                     "",
                     "(i)",
@@ -269,26 +395,26 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "(ERR)",
                     "(!!!)"
                 };
-                output << qSetPadChar(' ') << qSetFieldWidth(5) << levelNames[_level] <<
-                          qSetFieldWidth(0) << " ";
+                output << qSetPadChar(' ') << qSetFieldWidth(5)
+                       << levelNames[level()] << qSetFieldWidth(0) << " ";
             }
             else
             {
-                char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
-                    "Trace",
-                    "Debug",
+                char const *levelNames[] = {
+                    "", // not used
+                    "XVerbose",
                     "Verbose",
                     "",
-                    "Info",
+                    "Note!",
                     "Warning",
                     "ERROR",
                     "FATAL!"
                 };
                 output << "\t"
-                    << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_SECTION :
-                        _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_SECTION :
-                                                     TEXT_STYLE_SECTION)
-                    << levelNames[_level] << "\t";
+                    << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_SECTION :
+                        level() <= LogEntry::Verbose? TEXT_STYLE_MINOR_SECTION :
+                                                      TEXT_STYLE_SECTION)
+                    << levelNames[level()] << "\t";
             }
         }
     }
@@ -299,9 +425,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         if(flags.testFlag(Styled))
         {
             output << TEXT_MARK_INDENT
-                   << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_SECTION :
-                       _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_SECTION :
-                                                    TEXT_STYLE_SECTION);
+                   << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_SECTION :
+                       level() <= LogEntry::Verbose? TEXT_STYLE_MINOR_SECTION :
+                                                     TEXT_STYLE_SECTION);
         }
 
         // Process the section: shortening and possible abbreviation.
@@ -371,9 +497,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     if(flags.testFlag(Styled))
     {
         output << TEXT_MARK_INDENT
-               << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_MESSAGE :
-                   _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_MESSAGE :
-                                                TEXT_STYLE_MESSAGE);
+               << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_MESSAGE :
+                   level() <= LogEntry::Verbose? TEXT_STYLE_MINOR_MESSAGE :
+                                                 TEXT_STYLE_MESSAGE);
     }
     
     // Message text with the arguments formatted.
@@ -396,7 +522,7 @@ void LogEntry::operator >> (Writer &to) const
     to << _when
        << _section
        << _format
-       << dbyte(_level)
+       << duint32(_metadata)
        << dbyte(_sectionDepth)
        << duint32(_defaultFlags);
 
@@ -411,8 +537,20 @@ void LogEntry::operator << (Reader &from)
     from >> _when
          >> _section
          >> _format;
-    from.readAs<dbyte>(_level)
-        .readAs<dbyte>(_sectionDepth)
+
+    if(from.version() >= DENG2_PROTOCOL_1_14_0_BUILD_1099)
+    {
+        // This version adds context information to the entry.
+        from.readAs<duint32>(_metadata);
+    }
+    else
+    {
+        dbyte oldLevel;
+        from >> oldLevel;
+        _metadata = oldLevel; // lacks audience information
+    }
+
+    from.readAs<dbyte>(_sectionDepth)
         .readAs<duint32>(_defaultFlags)
         .readObjects<Arg>(_args);
 }
@@ -421,15 +559,15 @@ QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg)
 {
     switch(arg.type())
     {
-    case LogEntry::Arg::INTEGER:
+    case LogEntry::Arg::IntegerArgument:
         stream << arg.intValue();
         break;
         
-    case LogEntry::Arg::FLOATING_POINT:
+    case LogEntry::Arg::FloatingPointArgument:
         stream << arg.floatValue();
         break;
         
-    case LogEntry::Arg::STRING:
+    case LogEntry::Arg::StringArgument:
         stream << arg.stringValue();
         break;
     }
@@ -446,48 +584,81 @@ Log::Section::~Section()
     _log.endSection(_name);
 }
 
-Log::Log() : _throwawayEntry(0)
+DENG2_PIMPL_NOREF(Log)
 {
-    _throwawayEntry = new LogEntry; // disabled LogEntry, so doesn't accept arguments
-    _sectionStack.push_back(MAIN_SECTION);
+    typedef QList<char const *> SectionStack;
+    SectionStack sectionStack;
+    LogEntry *throwawayEntry;
+    duint32 currentEntryMedata; ///< Applies to the current entry being staged in the thread.
+
+    Instance()
+        : throwawayEntry(new LogEntry) ///< A disabled LogEntry, so doesn't accept arguments.
+        , currentEntryMedata(0)
+    {
+        sectionStack.push_back(MAIN_SECTION);
+    }
+
+    ~Instance()
+    {
+        delete throwawayEntry;
+    }
+};
+
+Log::Log() : d(new Instance)
+{}
+
+Log::~Log() // virtual
+{}
+
+void Log::setCurrentEntryMetadata(duint32 metadata)
+{
+    d->currentEntryMedata = metadata;
 }
 
-Log::~Log()
+duint32 Log::currentEntryMetadata() const
 {
-    delete _throwawayEntry;
+    return d->currentEntryMedata;
+}
+
+bool Log::isStaging() const
+{
+    return d->currentEntryMedata != 0;
 }
 
 void Log::beginSection(char const *name)
 {
-    _sectionStack.append(name);
+    d->sectionStack.append(name);
 }
 
 void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
 {
-    DENG2_ASSERT(_sectionStack.back() == name);
-    _sectionStack.takeLast();
+    DENG2_ASSERT(d->sectionStack.back() == name);
+    d->sectionStack.takeLast();
 }
 
 LogEntry &Log::enter(String const &format, LogEntry::Args arguments)
 {
-    return enter(LogEntry::MESSAGE, format, arguments);
+    return enter(LogEntry::Message, format, arguments);
 }
 
-LogEntry &Log::enter(LogEntry::Level level, String const &format, LogEntry::Args arguments)
+LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args arguments)
 {
-    if(!LogBuffer::appBuffer().isEnabled(level))
+    // Staging done.
+    d->currentEntryMedata = 0;
+
+    if(!LogBuffer::appBuffer().isEnabled(metadata))
     {
         DENG2_ASSERT(arguments.isEmpty());
 
         // If the level is disabled, no messages are entered into it.
-        return *_throwawayEntry;
+        return *d->throwawayEntry;
     }
     
     // Collect the sections.
     String context;
     String latest;
     int depth = 0;
-    foreach(char const *i, _sectionStack)
+    foreach(char const *i, d->sectionStack)
     {
         if(i == latest)
         {
@@ -504,7 +675,7 @@ LogEntry &Log::enter(LogEntry::Level level, String const &format, LogEntry::Args
     }
 
     // Make a new entry.
-    LogEntry *entry = new LogEntry(level, context, depth, format, arguments);
+    LogEntry *entry = new LogEntry(metadata, context, depth, format, arguments);
     
     // Add it to the application's buffer. The buffer gets ownership.
     LogBuffer::appBuffer().add(entry);
@@ -555,13 +726,32 @@ void Log::disposeThreadLog()
     }
 }
 
-LogEntryStager::LogEntryStager(LogEntry::Level level, String const &format) : _level(level)
+LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
+    : _metadata(metadata)
 {
-    _disabled = !LogBuffer::isAppBufferAvailable() ||
-                !LogBuffer::appBuffer().isEnabled(level);
+    // Automatically set the Generic domain.
+    if(!(_metadata & LogEntry::DomainMask))
+    {
+        _metadata |= LogEntry::Generic;
+    }
+
+    _disabled = !LogBuffer::appBufferExists() ||
+                !LogBuffer::appBuffer().isEnabled(_metadata);
+
     if(!_disabled)
     {
         _format = format;
+
+        LOG().setCurrentEntryMetadata(_metadata);
+    }
+}
+
+LogEntryStager::~LogEntryStager()
+{
+    if(!_disabled)
+    {
+        // Ownership of the args is transferred to the LogEntry.
+        LOG().enter(_metadata, _format, _args);
     }
 }
 

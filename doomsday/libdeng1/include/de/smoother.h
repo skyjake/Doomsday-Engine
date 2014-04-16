@@ -83,7 +83,7 @@ DENG_PUBLIC void Smoother_Clear(Smoother *sm);
  * @param z     Cooordinate.
  * @param onFloor  @c true if the z coordinate should be on the floor plane.
  */
-DENG_PUBLIC void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor);
+DENG_PUBLIC void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, dd_bool onFloor);
 
 /**
  * Defines a new XY input point in the future of the smoother.
@@ -106,7 +106,7 @@ DENG_PUBLIC void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t 
  *
  * @see Smoother_Advance()
  */
-DENG_PUBLIC boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
+DENG_PUBLIC dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
 
 /**
  * Calculates a coordinate for the current point in time.
@@ -120,19 +120,19 @@ DENG_PUBLIC boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
  *
  * @see Smoother_Advance()
  */
-DENG_PUBLIC boolean Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v);
+DENG_PUBLIC dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v);
 
 /**
  * Determines whether the smoother's Z coordinate is currently on the floor plane.
  * @param sm    Smoother instance.
  */
-DENG_PUBLIC boolean Smoother_IsOnFloor(Smoother const *sm);
+DENG_PUBLIC dd_bool Smoother_IsOnFloor(Smoother const *sm);
 
 /**
  * Determines whether the smoother is currently undergoing movement.
  * @param sm    Smoother instance.
  */
-DENG_PUBLIC boolean Smoother_IsMoving(Smoother const *sm);
+DENG_PUBLIC dd_bool Smoother_IsMoving(Smoother const *sm);
 
 /**
  * Advances the smoother @a sm by @a period amount of time.

@@ -1,7 +1,7 @@
-/** @file polyobjs.h Polyobject thinkers and management.
+/** @file polyobjs.h  Polyobject thinkers and management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -20,6 +20,7 @@
  */
 
 #include "common.h"
+#include "polyobjs.h"
 
 #include "dmu_lib.h"
 #include "p_actor.h"
@@ -29,10 +30,8 @@
 #include "g_common.h"
 
 #ifdef __JHEXEN__
-#  include "p_acs.h"
+#  include "acscript.h"
 #endif
-
-#include "polyobjs.h"
 
 #define POBJ_PERPETUAL  0xffffffffu  // -1
 
@@ -57,7 +56,7 @@ static int findMirrorPolyobj(int tag)
 static void notifyPolyobjFinished(int tag)
 {
 #if __JHEXEN__
-    P_ACSPolyobjFinished(tag);
+    Game_ACScriptInterpreter().polyobjFinished(tag);
 #else
     DENG_UNUSED(tag);
 #endif
@@ -139,7 +138,7 @@ void T_RotatePoly(void *polyThinker)
     }
 }
 
-boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
+dd_bool EV_RotatePoly(Line *line, byte *args, int direction, dd_bool overRide)
 {
     DENG_UNUSED(line);
     DENG_ASSERT(args != 0);
@@ -276,7 +275,119 @@ void T_MovePoly(void *polyThinker)
     }
 }
 
-boolean EV_MovePoly(Line *line, byte *args, boolean timesEight, boolean override)
+void polyevent_s::write(MapStateWriter *msw) const
+{
+    Writer *writer = msw->writer();
+
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, polyobj);
+    Writer_WriteInt32(writer, intSpeed);
+    Writer_WriteInt32(writer, dist);
+    Writer_WriteInt32(writer, fangle);
+    Writer_WriteInt32(writer, FLT2FIX(speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(speed[VY]));
+}
+
+int polyevent_s::read(MapStateReader *msr)
+{
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        fangle      = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polyevent_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        fangle      = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+
+    thinker.function = T_RotatePoly;
+
+    return true; // Add this thinker.
+}
+
+void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
+{
+    Writer *writer = msw->writer();
+
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, th->polyobj);
+    Writer_WriteInt32(writer, th->intSpeed);
+    Writer_WriteInt32(writer, th->dist);
+    Writer_WriteInt32(writer, th->fangle);
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VY]));
+}
+
+int SV_ReadMovePoly(polyevent_t *th, MapStateReader *msr)
+{
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        th->polyobj     = Reader_ReadInt32(reader);
+        th->intSpeed    = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadInt32(reader);
+        th->fangle      = Reader_ReadInt32(reader);
+        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polyevent_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        th->polyobj     = Reader_ReadInt32(reader);
+        th->intSpeed    = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadInt32(reader);
+        th->fangle      = Reader_ReadInt32(reader);
+        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+
+    th->thinker.function = T_MovePoly;
+
+    return true; // Add this thinker.
+}
+
+dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override)
 {
     DENG_UNUSED(line);
     DENG_ASSERT(args != 0);
@@ -474,7 +585,79 @@ void T_PolyDoor(void *polyDoorThinker)
     }
 }
 
-boolean EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
+void polydoor_s::write(MapStateWriter *msw) const
+{
+    Writer *writer = msw->writer();
+
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    Writer_WriteByte(writer, type);
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, polyobj);
+    Writer_WriteInt32(writer, intSpeed);
+    Writer_WriteInt32(writer, dist);
+    Writer_WriteInt32(writer, totalDist);
+    Writer_WriteInt32(writer, direction);
+    Writer_WriteInt32(writer, FLT2FIX(speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(speed[VY]));
+    Writer_WriteInt32(writer, tics);
+    Writer_WriteInt32(writer, waitTics);
+    Writer_WriteByte(writer, close);
+}
+
+int polydoor_s::read(MapStateReader *msr)
+{
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        type        = podoortype_t(Reader_ReadByte(reader));
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        totalDist   = Reader_ReadInt32(reader);
+        direction   = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+        tics        = Reader_ReadInt32(reader);
+        waitTics    = Reader_ReadInt32(reader);
+        close       = Reader_ReadByte(reader);
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polydoor_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        totalDist   = Reader_ReadInt32(reader);
+        direction   = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+        tics        = Reader_ReadInt32(reader);
+        waitTics    = Reader_ReadInt32(reader);
+        type        = podoortype_t(Reader_ReadByte(reader));
+        close       = Reader_ReadByte(reader);
+    }
+
+    thinker.function = T_PolyDoor;
+
+    return true; // Add this thinker.
+}
+
+dd_bool EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
 {
     DENG_UNUSED(line);
     DENG_ASSERT(args != 0);
@@ -628,7 +811,7 @@ void PO_InitForMap()
     return; // Disabled -- awaiting line argument translation.
 #endif
 
-    Con_Message("PO_InitForMap: Initializing polyobjects.");
+    App_Log(DE2_DEV_MAP_VERBOSE, "Initializing polyobjects for map...");
 
     // thrustMobj will handle polyobj <-> mobj interaction.
     Polyobj_SetCallback(thrustMobj);
@@ -662,17 +845,47 @@ void PO_InitForMap()
         {
             po->crush = (spot->doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM? 1 : 0);
             Polyobj_MoveXY(po, -po->origin[VX] + spot->origin[VX],
-                                -po->origin[VY] + spot->origin[VY]);
+                               -po->origin[VY] + spot->origin[VY]);
         }
         else
         {
-            Con_Message("Warning: Missing spawn spot for PolyObj #%i, ignoring.", i);
+            App_Log(DE2_MAP_WARNING, "Missing spawn spot for PolyObj #%i", i);
         }
     }
 }
 
-boolean PO_Busy(int tag)
+dd_bool PO_Busy(int tag)
 {
     Polyobj *po = Polyobj_ByTag(tag);
     return (po && po->specialData);
+}
+
+void polyobj_s::write(MapStateWriter *msw) const
+{
+    Writer *writer = msw->writer();
+
+    Writer_WriteByte(writer, 1); // write a version byte (unused).
+
+    Writer_WriteInt32(writer, tag);
+    Writer_WriteInt32(writer, angle);
+    Writer_WriteInt32(writer, FLT2FIX(origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(origin[VY]));
+}
+
+int polyobj_s::read(MapStateReader *msr)
+{
+    Reader *reader = msr->reader();
+
+    angle_t newAngle = angle_t(Reader_ReadInt32(reader));
+    Polyobj_Rotate(this, newAngle);
+    destAngle = newAngle;
+
+    coord_t newOrigin[2];
+    newOrigin[0] = FIX2FLT(Reader_ReadInt32(reader));
+    newOrigin[1] = FIX2FLT(Reader_ReadInt32(reader));
+    Polyobj_MoveXY(this, newOrigin[0] - origin[0], newOrigin[1] - origin[1]);
+
+    /// @todo What about speed? It isn't saved at all?
+
+    return true;
 }

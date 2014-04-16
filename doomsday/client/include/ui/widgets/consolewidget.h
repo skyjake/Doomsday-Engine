@@ -20,11 +20,12 @@
 #define DENG_CLIENT_CONSOLEWIDGET_H
 
 #include <QObject>
+#include <de/GuiWidget>
+#include <de/ButtonWidget>
+#include <de/LogWidget>
+#include <de/IPersistent>
 
-#include "GuiWidget"
-#include "buttonwidget.h"
 #include "consolecommandwidget.h"
-#include "logwidget.h"
 
 /**
  * Console command line and message history.
@@ -34,16 +35,16 @@
  *
  * @ingroup gui
  */
-class ConsoleWidget : public GuiWidget
+class ConsoleWidget : public de::GuiWidget, public de::IPersistent
 {
     Q_OBJECT
 
 public:
     ConsoleWidget();
 
-    ButtonWidget &button();
-    CommandWidget &commandLine();
-    LogWidget &log();
+    de::ButtonWidget &button();
+    de::CommandWidget &commandLine();
+    de::LogWidget &log();
 
     de::Rule const &shift();
 
@@ -62,6 +63,10 @@ public:
     void viewResized();
     void update();
     bool handleEvent(de::Event const &event);
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 signals:
     void commandModeChanged();

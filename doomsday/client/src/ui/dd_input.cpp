@@ -35,7 +35,7 @@
 
 #include "render/vr.h"
 
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include <de/KeyEvent>
 
 // For the debug visuals:
@@ -85,13 +85,13 @@ static void postEventsFromInputDevices(void);
 int     repWait1 = 15, repWait2 = 3;
 //int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
 unsigned int  mouseFreq = 0;
-boolean shiftDown = false, altDown = false;
+dd_bool shiftDown = false, altDown = false;
 
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 //-------------------------------------------------------------------------
 
-static boolean ignoreInput = false;
+static dd_bool ignoreInput = false;
 
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 
@@ -117,7 +117,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 static float oldPOV = IJOY_POV_CENTER;
 
 static char* eventStrings[MAXEVENTS];
-static boolean uiMouseMode = false; // Can mouse data be modified?
+static dd_bool uiMouseMode = false; // Can mouse data be modified?
 
 static byte useSharpInputEvents = true; ///< cvar
 
@@ -373,7 +373,7 @@ void I_DeviceReset(uint ident)
     inputdev_t* dev = &inputDevices[ident];
     int k;
 
-    DEBUG_VERBOSE_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
+    LOG_INPUT_VERBOSE("Reset input device %s") << Str_Text(I_DeviceNameStr(ident));
 
     for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
     {
@@ -500,7 +500,7 @@ inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id)
     return &device->hats[id-1];
 }
 
-boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
+dd_bool I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
 {
     char name[30];
     char const *ptr;
@@ -686,7 +686,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
     a->assoc.flags &= ~IDAF_EXPIRED;
 }
 
-boolean I_ShiftDown(void)
+dd_bool I_ShiftDown(void)
 {
     return shiftDown;
 }
@@ -696,11 +696,10 @@ boolean I_ShiftDown(void)
  */
 void I_TrackInput(ddevent_t *ev)
 {
-    inputdev_t *dev;
-
     if(ev->type == E_FOCUS || ev->type == E_SYMBOLIC)
         return; // Not a tracked device state.
 
+    inputdev_t *dev;
     if((dev = I_GetDevice(ev->device, OnlyActiveInputDevice)) == NULL)
         return;
 
@@ -719,16 +718,12 @@ void I_TrackInput(ddevent_t *ev)
             if(ev->toggle.state == ETOG_DOWN)
             {
                 altDown = true;
-#ifdef WIN32
-                DEBUG_Message(("I_TrackInput: Alt down\n"));
-#endif
+                //qDebug() << "Alt down";
             }
             else if(ev->toggle.state == ETOG_UP)
             {
                 altDown = false;
-#ifdef WIN32
-                DEBUG_Message(("I_TrackInput: Alt up\n"));
-#endif
+                //qDebug() << "Alt up";
             }
         }
     }
@@ -809,7 +804,7 @@ void I_ClearDeviceContextAssociations(void)
     }
 }
 
-boolean I_IsKeyDown(inputdev_t* dev, uint id)
+dd_bool I_IsKeyDown(inputdev_t* dev, uint id)
 {
     if(dev && id < dev->numKeys)
     {
@@ -890,11 +885,11 @@ static void clearQueue(eventqueue_t* q)
     q->head = q->tail;
 }
 
-boolean DD_IgnoreInput(boolean ignore)
+dd_bool DD_IgnoreInput(dd_bool ignore)
 {
-    boolean old = ignoreInput;
+    dd_bool old = ignoreInput;
     ignoreInput = ignore;
-    DEBUG_Message(("DD_IgnoreInput: ignoring=%i\n", ignore));
+    LOG_INPUT_VERBOSE("Ignoring input: %b") << ignore;
     if(!ignore)
     {
         // Clear all the event buffers.
@@ -1123,9 +1118,9 @@ static void updateDeviceAxes(timespan_t ticLength)
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean updateAxes)
+static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, dd_bool updateAxes)
 {
-    const boolean callGameResponders = App_GameLoaded();
+    const dd_bool callGameResponders = App_GameLoaded();
     ddevent_t* ddev;
 
     while((ddev = nextFromQueue(q)))
@@ -1325,7 +1320,8 @@ void DD_ReadKeyboard(void)
         assert(sizeof(ev.toggle.text) == sizeof(ke->text));
         memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
-        DEBUG_VERBOSE2_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
+        LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u]")
+                << ev.toggle.id << ev.toggle.id << ev.toggle.text << strlen(ev.toggle.text);
 
 #if 0
         // Maintain the repeater table.
@@ -1357,7 +1353,7 @@ void DD_ReadKeyboard(void)
 /**
  * Change between normal and UI mousing modes.
  */
-void I_SetUIMouseMode(boolean on)
+void I_SetUIMouseMode(dd_bool on)
 {
     uiMouseMode = on;
 }
@@ -1433,17 +1429,16 @@ void DD_ReadMouse(void)
     }
 
     // Some very verbose output about mouse buttons.
-    if(verbose >= 3)
+    for(i = 0; i < IMB_MAXBUTTONS; ++i)
+    {
+        if(mouse.buttonDowns[i] || mouse.buttonUps[i])
+            break;
+    }
+    if(i < IMB_MAXBUTTONS)
     {
         for(i = 0; i < IMB_MAXBUTTONS; ++i)
         {
-            if(mouse.buttonDowns[i] || mouse.buttonUps[i])
-                break;
-        }
-        if(i < IMB_MAXBUTTONS)
-        {
-            for(i = 0; i < IMB_MAXBUTTONS; ++i)
-                Con_Message("[%02i] %i/%i", i, mouse.buttonDowns[i], mouse.buttonUps[i]);
+            LOGDEV_INPUT_XVERBOSE("[%02i] %i/%i") << i << mouse.buttonDowns[i] << mouse.buttonUps[i];
         }
     }
 
@@ -1457,13 +1452,13 @@ void DD_ReadMouse(void)
             if(mouse.buttonDowns[i]-- > 0)
             {
                 ev.toggle.state = ETOG_DOWN;
-                DEBUG_VERBOSE2_Message(("mb %i down\n", i));
+                LOG_INPUT_XVERBOSE("Mouse button %i down") << i;
                 DD_PostEvent(&ev);
             }
             if(mouse.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
-                DEBUG_VERBOSE2_Message(("mb %i up\n", i));
+                LOG_INPUT_XVERBOSE("Mouse button %i up") << i;
                 DD_PostEvent(&ev);
             }
         }
@@ -1499,13 +1494,13 @@ void DD_ReadJoystick(void)
             {
                 ev.toggle.state = ETOG_DOWN;
                 DD_PostEvent(&ev);
-                DEBUG_VERBOSE2_Message(("Joy button %i down\n", i));
+                LOG_INPUT_XVERBOSE("Joy button %i down") << i;
             }
             if(state.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
                 DD_PostEvent(&ev);
-                DEBUG_VERBOSE2_Message(("Joy button %i up\n", i));
+                LOG_INPUT_XVERBOSE("Joy button %i up") << i;
             }
         }
     }
@@ -1557,11 +1552,12 @@ void DD_ReadHeadTracker(void)
         I_GetDevice(IDEV_HEAD_TRACKER)->flags &= ~ID_ACTIVE;
         return;
     }
+
     I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
 
     // Get the latest values.
-    VR::allowHeadOrientationUpdate();
-    VR::updateHeadOrientation();
+    vrCfg().oculusRift().allowUpdate();
+    vrCfg().oculusRift().update();
 
     ddevent_t ev;
 
@@ -1569,7 +1565,7 @@ void DD_ReadHeadTracker(void)
     ev.type = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
-    Vector3f const pry = VR::getHeadOrientation();
+    Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
     // Yaw (1.0 means 180 degrees).
     ev.axis.id = 0; // Yaw.
@@ -2267,108 +2263,19 @@ void Rend_AllInputDeviceStateVisuals(void)
 
 static void I_PrintAxisConfig(inputdev_t* device, inputdevaxis_t* axis)
 {
-    Con_Printf("%s-%s Config:\n"
-               "  Type: %s\n"
-               //"  Filter: %i\n"
-               "  Dead Zone: %g\n"
-               "  Scale: %g\n"
-               "  Flags: (%s%s)\n",
-               device->name, axis->name,
-               (axis->type == IDAT_STICK? "STICK" : "POINTER"),
-               /*axis->filter,*/
-               axis->deadZone, axis->scale,
-               ((axis->flags & IDA_DISABLED)? "|disabled":""),
-               ((axis->flags & IDA_INVERT)? "|inverted":""));
+    LOG_INPUT_MSG("  " _E(>) "%s-%s Config:\n"
+                  "  Type: %s\n"
+                  //"  Filter: %i\n"
+                  "  Dead Zone: %f\n"
+                  "  Scale: %f\n"
+                  "  Flags: (%s%s)")
+            << device->name << axis->name
+            << (axis->type == IDAT_STICK? "STICK" : "POINTER")
+                  /*axis->filter,*/
+            << axis->deadZone << axis->scale
+            << ((axis->flags & IDA_DISABLED)? "|disabled":"")
+            << ((axis->flags & IDA_INVERT)? "|inverted":"");
 }
-
-#if 0
-D_CMD(AxisPrintConfig)
-{
-    uint deviceID, axisID;
-    inputdev_t* device;
-    inputdevaxis_t* axis;
-
-    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
-    {
-        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-        return false;
-    }
-
-    device = I_GetDevice(deviceID);
-    axis   = I_GetAxisByID(device, axisID);
-    I_PrintAxisConfig(device, axis);
-
-    return true;
-}
-
-D_CMD(AxisChangeOption)
-{
-    uint deviceID, axisID;
-    inputdev_t* device;
-    inputdevaxis_t* axis;
-
-    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
-    {
-        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-        return false;
-    }
-
-    device = I_GetDevice(deviceID);
-    axis   = I_GetAxisByID(device, axisID);
-
-    // Options:
-    if(!stricmp(argv[2], "disable") || !stricmp(argv[2], "off"))
-    {
-        axis->flags |= IDA_DISABLED;
-    }
-    else if(!stricmp(argv[2], "enable") || !stricmp(argv[2], "on"))
-    {
-        axis->flags &= ~IDA_DISABLED;
-    }
-    else if(!stricmp(argv[2], "invert")) // toggle
-    {
-        axis->flags ^= IDA_INVERT;
-    }
-
-    // Unknown option name.
-    return true;
-}
-
-D_CMD(AxisChangeValue)
-{
-    uint deviceID, axisID;
-    inputdevaxis_t* axis;
-    inputdev_t* device;
-
-    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
-    {
-        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-        return false;
-    }
-
-    device = I_GetDevice(deviceID);
-    axis   = I_GetAxisByID(device, axisID);
-    if(axis)
-    {
-        // Values:
-        if(!stricmp(argv[2], "filter"))
-        {
-            axis->filter = strtod(argv[3], 0);
-        }
-        else if(!stricmp(argv[2], "deadzone") || !stricmp(argv[2], "dead zone"))
-        {
-            axis->deadZone = strtod(argv[3], 0);
-        }
-        else if(!stricmp(argv[2], "scale"))
-        {
-            axis->scale = strtod(argv[3], 0);
-        }
-    }
-
-    // Unknown value name?
-    return true;
-}
-#endif
 
 /**
  * Console command to list all of the available input devices+axes.
@@ -2380,18 +2287,18 @@ D_CMD(ListInputDevices)
     inputdev_t* dev;
     uint i, j;
 
-    Con_Printf("Input Devices:\n");
+    LOG_INPUT_MSG(_E(b) "Input Devices:");
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
         dev = &inputDevices[i];
         if(!dev->name || !(dev->flags & ID_ACTIVE))
             continue;
 
-        Con_Printf("%s (%i keys, %i axes)\n", dev->name, dev->numKeys, dev->numAxes);
+        LOG_INPUT_MSG(_E(D) "%s" _E(.) " (%i keys, %i axes)") << dev->name << dev->numKeys << dev->numAxes;
 
         for(j = 0; j < dev->numAxes; ++j)
         {
-            Con_Printf("  Axis #%i: %s\n", j, dev->axes[j].name);
+            LOG_INPUT_MSG("  Axis #%i: %s") << j << dev->axes[j].name;
             I_PrintAxisConfig(dev, &dev->axes[j]);
         }
     }
@@ -2402,9 +2309,9 @@ D_CMD(ReleaseMouse)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(WindowSystem::hasMain())
+    if(WindowSystem::mainExists())
     {
-        WindowSystem::main().canvas().trapMouse(false);
+        ClientWindowSystem::main().canvas().trapMouse(false);
         return true;
     }
     return false;

@@ -3,46 +3,35 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/GLFramebuffer"
+#include "de/GuiApp"
 
 #include <de/Log>
 #include <de/Canvas>
 #include <de/Drawable>
 #include <de/GLInfo>
+#include <de/Property>
 
 namespace de {
 
-struct DefaultSampleCount {
-    int samples;
-
-    DENG2_DEFINE_AUDIENCE(Change, void defaultSampleCountChanged())
-
-    DefaultSampleCount() : samples(1) {}
-    void set(int value) {
-        samples = value;
-        DENG2_FOR_AUDIENCE(Change, i) {
-            i->defaultSampleCountChanged();
-        }
-    }
-};
-
-static DefaultSampleCount defaultSampleCount;
+DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
 
 DENG2_PIMPL(GLFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
+, DENG2_OBSERVES(GuiApp, GLContextChange)
 {
     Image::Format colorFormat;
     Size size;
@@ -65,17 +54,28 @@ DENG2_PIMPL(GLFramebuffer)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uBufTex   ("uTex",       GLUniform::Sampler2D)
     {
-        defaultSampleCount.audienceForChange += this;
+        pDefaultSampleCount.audienceForChange() += this;
+        //DENG2_GUI_APP->audienceForGLContextChange += this;
     }
 
     ~Instance()
     {
-        defaultSampleCount.audienceForChange -= this;
+        pDefaultSampleCount.audienceForChange() -= this;
+        //DENG2_GUI_APP->audienceForGLContextChange -= this;
+    }
+
+    void appGLContextChanged()
+    {
+        /*
+        qDebug() << "rebooting FB" << thisPublic << self.isReady() << target.glName() << target.isReady() << size.asText();
+        self.glDeinit();
+        self.glInit();
+        */
     }
 
     int sampleCount() const
     {
-        if(_samples <= 0) return defaultSampleCount.samples;
+        if(_samples <= 0) return pDefaultSampleCount;
         return _samples;
     }
 
@@ -89,7 +89,7 @@ DENG2_PIMPL(GLFramebuffer)
         return sampleCount() > 1;
     }
 
-    void defaultSampleCountChanged()
+    void valueOfDefaultSampleCountChanged()
     {
         reconfigure();
     }
@@ -136,10 +136,13 @@ DENG2_PIMPL(GLFramebuffer)
     {
         if(!self.isReady() || size == Size()) return;
 
+        LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
+                << size.asText() << sampleCount();
+
         // Configure textures for the framebuffer.
         color.setUndefinedImage(size, colorFormat);
         color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        color.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+        color.setFilter(gl::Nearest, gl::Linear, gl::MipNone);
 
         depthStencil.setDepthStencilContent(size);
         depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
@@ -154,8 +157,8 @@ DENG2_PIMPL(GLFramebuffer)
         {
             // Alternatively try without depth/stencil texture (some renderer features
             // will not be available!).
-            LOG_WARNING("Texture-based framebuffer failed:\n  %s\n"
-                        "Trying fallback without depth/stencil texture")
+            LOG_GL_WARNING("Texture-based framebuffer failed: %s\n"
+                           "Trying fallback without depth/stencil texture")
                     << er.asText();
 
             target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
@@ -177,7 +180,7 @@ DENG2_PIMPL(GLFramebuffer)
             }
             catch(GLTarget::ConfigError const &er)
             {
-                LOG_WARNING("Multisampling not supported:\n  %s") << er.asText();
+                LOG_GL_WARNING("Multisampling not supported: %s") << er.asText();
                 _samples = 1;
                 goto noMultisampling;
             }
@@ -276,11 +279,11 @@ void GLFramebuffer::glInit()
     // Check for some integral OpenGL functionality.
     if(!GLInfo::extensions().ARB_framebuffer_object)
     {
-        LOG_WARNING("Required GL_ARB_framebuffer_object is missing!");
+        LOG_GL_WARNING("Required GL_ARB_framebuffer_object is missing!");
     }
     if(!GLInfo::extensions().EXT_packed_depth_stencil)
     {
-        LOG_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
+        LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
     }
 
     d->alloc();
@@ -355,9 +358,9 @@ bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
     LOG_AS("GLFramebuffer");
 
     int const newCount = max(1, sampleCount);
-    if(defaultSampleCount.samples != newCount)
+    if(pDefaultSampleCount != newCount)
     {
-        defaultSampleCount.set(newCount);
+        pDefaultSampleCount = newCount;
         return true;
     }
     return false;
@@ -365,7 +368,7 @@ bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
 
 int GLFramebuffer::defaultMultisampling()
 {
-    return defaultSampleCount.samples;
+    return pDefaultSampleCount;
 }
 
 } // namespace de

@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/RecordValue"
@@ -36,7 +36,7 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
     if(!_ownership.testFlag(OwnsRecord))
     {
         // If we don't own it, someone may delete the record.
-        _record->audienceForDeletion += this;
+        _record->audienceForDeletion() += this;
     }
 }
 
@@ -44,7 +44,7 @@ RecordValue::RecordValue(Record &record)
     : _record(&record), _ownership(0), _oldOwnership(0)
 {
     // Someone may delete the record.
-    _record->audienceForDeletion += this;
+    _record->audienceForDeletion() += this;
 }
 
 RecordValue::~RecordValue()
@@ -62,7 +62,7 @@ bool RecordValue::usedToHaveOwnership() const
     return _oldOwnership.testFlag(OwnsRecord);
 }
 
-void RecordValue::setRecord(Record *record)
+void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 {
     if(record == _record) return; // Got it already.
 
@@ -72,16 +72,16 @@ void RecordValue::setRecord(Record *record)
     }
     else if(_record)
     {
-        _record->audienceForDeletion -= this;
+        _record->audienceForDeletion() -= this;
     }
 
     _record = record;
-    _ownership = 0;
+    _ownership = ownership;
 
-    if(_record)
+    if(_record && !_ownership.testFlag(OwnsRecord))
     {
         // Since we don't own it, someone may delete the record.
-        _record->audienceForDeletion += this;
+        _record->audienceForDeletion() += this;
     }
 }
 

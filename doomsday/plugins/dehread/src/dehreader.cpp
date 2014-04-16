@@ -1,12 +1,11 @@
-/**
- * @file dehreader.cpp
- * DeHackEd patch reader plugin for Doomsday Engine. @ingroup dehread
+/** @file dehreader.cpp  DeHackEd patch reader plugin for Doomsday Engine.
+ * @ingroup dehread
  *
- * @todo Presently there are a number of unsupported features, they should not
+ * @todo Presently there are a number of unsupported features which should not
  *       be ignored. (Most if not all features should be supported.)
  *
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -44,34 +43,12 @@
 
 using namespace de;
 
-#if 0
-/**
- * Logging is routed through DehReader's special case handler.
- */
-#undef LOG_TRACE
-#undef LOG_DEBUG
-#undef LOG_VERBOSE
-#undef LOG_MSG
-#undef LOG_INFO
-#undef LOG_WARNING
-#undef LOG_ERROR
-#undef LOG_CRITICAL
-#define LOG_TRACE(str)      DehReader::log(de::Log::TRACE, str)
-#define LOG_DEBUG(str)      DehReader::log(de::Log::DEBUG, str)
-#define LOG_VERBOSE(str)    DehReader::log(de::Log::VERBOSE, str)
-#define LOG_MSG(str)        DehReader::log(str)
-#define LOG_INFO(str)       DehReader::log(de::Log::INFO, str)
-#define LOG_WARNING(str)    DehReader::log(de::Log::WARNING, str)
-#define LOG_ERROR(str)      DehReader::log(de::Log::ERROR, str)
-#define LOG_CRITICAL(str)   DehReader::log(de::Log::CRITICAL, str)
-#endif
-
 static int stackDepth;
-static const int maxIncludeDepth = MAX_OF(0, DEHREADER_INCLUDE_DEPTH_MAX);
+static const int maxIncludeDepth = de::max(0, DEHREADER_INCLUDE_DEPTH_MAX);
 
 /// Mask containing only those reader flags which should be passed from the current
 /// parser to any child parsers for file include statements.
-static const DehReaderFlag DehReaderFlagsIncludeMask = IgnoreEOF;
+static DehReaderFlag const DehReaderFlagsIncludeMask = IgnoreEOF;
 
 /**
  * Not exposed outside this source file; use readDehPatch() instead.
@@ -85,7 +62,7 @@ class DehReader
     /// The parser reached the end of the source file. @ingroup errors
     DENG2_ERROR(EndOfFile);
 
-    const Block& patch;
+    Block const &patch;
     int pos;
     int currentLineNumber;
 
@@ -97,12 +74,14 @@ class DehReader
     String line; ///< Current line.
 
 public:
-    DehReader(const Block& _patch, DehReaderFlags _flags = 0)
-        : patch(_patch), pos(0), currentLineNumber(0),
-          flags(_flags),
-          // Initialize as unknown Patch & Doom version.
-          patchVersion(-1), doomVersion(-1),
-          line("")
+    DehReader(Block const &_patch, DehReaderFlags _flags = 0)
+        : patch(_patch)
+        , pos(0)
+        , currentLineNumber(0)
+        , flags(_flags)
+        , patchVersion(-1) // unknown
+        , doomVersion(-1) // unknown
+        , line("")
     {
         stackDepth++;
     }
@@ -113,7 +92,7 @@ public:
     }
 
 #if 0
-    LogEntry& log(Log::LogLevel level, const String& format)
+    LogEntry &log(Log::LogLevel level, String const &format)
     {
         return LOG().enter(level, format);
     }
@@ -123,7 +102,7 @@ public:
      * Doom version numbers in the patch use the orignal game versions,
      * "16" => Doom v1.6, "19" => Doom v1.9, etc...
      */
-    static inline bool normalizeDoomVersion(int& ver)
+    static inline bool normalizeDoomVersion(int &ver)
     {
         switch(ver)
         {
@@ -213,7 +192,7 @@ public:
      * Keep reading lines until we find one that is something other than
      * whitespace or a whole-line comment.
      */
-    const String& skipToNextLine()
+    String const &skipToNextLine()
     {
         forever
         {
@@ -230,19 +209,19 @@ public:
 
     void skipToNextSection()
     {
-        do  skipToNextLine();
+        do skipToNextLine();
         while(lineInCurrentSection());
     }
 
     void logPatchInfo()
     {
         // Log reader settings and patch version information.
-        LOG_INFO("Patch version: %i Doom version: %i\nNoText: %b")
+        LOG_RES_MSG("DeHackEd patch version: %i, Doom version: %i\nNoText: %b")
             << patchVersion << doomVersion << bool(flags & NoText);
 
         if(patchVersion != 6)
         {
-            LOG_WARNING("Unknown patch version. Unexpected results may occur.") << patchVersion;
+            LOG_WARNING("Unknown DeHackEd patch version, unexpected results may occur") << patchVersion;
         }
     }
 
@@ -289,10 +268,10 @@ public:
                     }
                     else if(line.beginsWith("Thing", Qt::CaseInsensitive))
                     {
-                        const String arg = line.substr(5).leftStrip();
-                        int mobjType = 0;
-                        const bool isKnownMobjType = parseMobjType(arg, &mobjType);
-                        const bool ignore = !isKnownMobjType;
+                        String const arg           = line.substr(5).leftStrip();
+                        int mobjType               = 0;
+                        bool const isKnownMobjType = parseMobjType(arg, &mobjType);
+                        bool const ignore          = !isKnownMobjType;
 
                         if(!isKnownMobjType)
                         {
@@ -304,10 +283,10 @@ public:
                     }
                     else if(line.beginsWith("Frame", Qt::CaseInsensitive))
                     {
-                        const String arg = line.substr(5).leftStrip();
-                        int stateNum = 0;
-                        const bool isKnownStateNum = parseStateNum(arg, &stateNum);
-                        const bool ignore = !isKnownStateNum;
+                        String const arg           = line.substr(5).leftStrip();
+                        int stateNum               = 0;
+                        bool const isKnownStateNum = parseStateNum(arg, &stateNum);
+                        bool const ignore          = !isKnownStateNum;
 
                         if(!isKnownStateNum)
                         {
@@ -319,10 +298,10 @@ public:
                     }
                     else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
                     {
-                        const String arg = line.substr(7).leftStrip();
-                        int stateNum = 0;
-                        const bool isKnownStateNum = parseStateNumFromActionOffset(arg, &stateNum);
-                        const bool ignore = !isKnownStateNum;
+                        String const arg           = line.substr(7).leftStrip();
+                        int stateNum               = 0;
+                        bool const isKnownStateNum = parseStateNumFromActionOffset(arg, &stateNum);
+                        bool const ignore          = !isKnownStateNum;
 
                         if(!isKnownStateNum)
                         {
@@ -334,10 +313,10 @@ public:
                     }
                     else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
                     {
-                        const String arg = line.substr(6).leftStrip();
-                        int spriteNum = 0;
-                        const bool isKnownSpriteNum = parseSpriteNum(arg, &spriteNum);
-                        const bool ignore = !isKnownSpriteNum;
+                        String const arg            = line.substr(6).leftStrip();
+                        int spriteNum               = 0;
+                        bool const isKnownSpriteNum = parseSpriteNum(arg, &spriteNum);
+                        bool const ignore           = !isKnownSpriteNum;
 
                         if(!isKnownSpriteNum)
                         {
@@ -349,10 +328,10 @@ public:
                     }
                     else if(line.beginsWith("Ammo", Qt::CaseInsensitive))
                     {
-                        const String arg = line.substr(4).leftStrip();
-                        int ammoNum = 0;
-                        const bool isKnownAmmoNum = parseAmmoNum(arg, &ammoNum);
-                        const bool ignore = !isKnownAmmoNum;
+                        String const arg          = line.substr(4).leftStrip();
+                        int ammoNum               = 0;
+                        bool const isKnownAmmoNum = parseAmmoNum(arg, &ammoNum);
+                        bool const ignore         = !isKnownAmmoNum;
 
                         if(!isKnownAmmoNum)
                         {
@@ -364,10 +343,10 @@ public:
                     }
                     else if(line.beginsWith("Weapon", Qt::CaseInsensitive))
                     {
-                        const String arg = line.substr(6).leftStrip();
-                        int weaponNum = 0;
-                        const bool isKnownWeaponNum = parseWeaponNum(arg, &weaponNum);
-                        const bool ignore = !isKnownWeaponNum;
+                        String const arg            = line.substr(6).leftStrip();
+                        int weaponNum               = 0;
+                        bool const isKnownWeaponNum = parseWeaponNum(arg, &weaponNum);
+                        bool const ignore           = !isKnownWeaponNum;
 
                         if(!isKnownWeaponNum)
                         {
@@ -379,10 +358,10 @@ public:
                     }
                     else if(line.beginsWith("Sound", Qt::CaseInsensitive))
                     {
-                        const String arg = line.substr(5).leftStrip();
-                        int soundNum = 0;
-                        const bool isKnownSoundNum = parseSoundNum(arg, &soundNum);
-                        const bool ignore = !isKnownSoundNum;
+                        String const arg           = line.substr(5).leftStrip();
+                        int soundNum               = 0;
+                        bool const isKnownSoundNum = parseSoundNum(arg, &soundNum);
+                        bool const ignore          = !isKnownSoundNum;
 
                         if(!isKnownSoundNum)
                         {
@@ -399,23 +378,24 @@ public:
                         if(firstArgEnd < 0)
                         {
                             throw SyntaxError(String("Expected old text size on line #%1")
-                                                  .arg(currentLineNumber));
+                                                .arg(currentLineNumber));
                         }
+
                         bool isNumber;
-                        const int oldSize = args.toInt(&isNumber, 10, String::AllowSuffix);
+                        int const oldSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
                             throw SyntaxError(String("Expected old text size but encountered \"%1\" on line #%2")
-                                                  .arg(args.substr(firstArgEnd)).arg(currentLineNumber));
+                                                .arg(args.substr(firstArgEnd)).arg(currentLineNumber));
                         }
 
                         args.remove(0, firstArgEnd + 1);
 
-                        const int newSize = args.toInt(&isNumber, 10, String::AllowSuffix);
+                        int const newSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
                             throw SyntaxError(String("Expected new text size but encountered \"%1\" on line #%2")
-                                                  .arg(args).arg(currentLineNumber));
+                                                .arg(args).arg(currentLineNumber));
                         }
 
                         parseText(oldSize, newSize);
@@ -478,18 +458,18 @@ public:
                                                  .arg(line).arg(currentLineNumber));
                     }
                 }
-                catch(const UnknownSection& er)
+                catch(UnknownSection const &er)
                 {
                     LOG_WARNING("%s. Skipping section...") << er.asText();
                     skipToNextSection();
                 }
             }
         }
-        catch(const EndOfFile& /*er*/)
+        catch(EndOfFile const & /*er*/)
         {} // Ignore.
     }
 
-    void parseAssignmentStatement(const String& line, String& var, String& expr)
+    void parseAssignmentStatement(String const &line, String &var, String &expr)
     {
         // Determine the split (or 'pivot') position.
         int assign = line.indexOf('=');
@@ -497,7 +477,7 @@ public:
         {
             throw SyntaxError("parseAssignmentStatement",
                               String("Expected assignment statement but encountered \"%1\" on line #%2")
-                                  .arg(line).arg(currentLineNumber));
+                                .arg(line).arg(currentLineNumber));
         }
 
         var  = line.substr(0, assign).rightStrip();
@@ -519,76 +499,76 @@ public:
         }
     }
 
-    bool parseAmmoNum(const String& str, int* ammoNum)
+    bool parseAmmoNum(String const &str, int *ammoNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(ammoNum) *ammoNum = result;
         return (result >= 0 && result < 4);
     }
 
-    bool parseMobjType(const String& str, int* mobjType)
+    bool parseMobjType(String const &str, int *mobjType)
     {
         int result = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
         if(mobjType) *mobjType = result;
         return (result >= 0 && result < ded->count.mobjs.num);
     }
 
-    bool parseSoundNum(const String& str, int* soundNum)
+    bool parseSoundNum(String const &str, int *soundNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(soundNum) *soundNum = result;
         return (result >= 0 && result < ded->count.sounds.num);
     }
 
-    bool parseSpriteNum(const String& str, int* spriteNum)
+    bool parseSpriteNum(String const &str, int *spriteNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(spriteNum) *spriteNum = result;
         return (result >= 0 && result < NUMSPRITES);
     }
 
-    bool parseStateNum(const String& str, int* stateNum)
+    bool parseStateNum(String const &str, int *stateNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(stateNum) *stateNum = result;
         return (result >= 0 && result < ded->count.states.num);
     }
 
-    bool parseStateNumFromActionOffset(const String& str, int* stateNum)
+    bool parseStateNumFromActionOffset(String const &str, int *stateNum)
     {
         int result = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
         if(stateNum) *stateNum = result;
         return (result >= 0 && result < ded->count.states.num);
     }
 
-    bool parseWeaponNum(const String& str, int* weaponNum)
+    bool parseWeaponNum(String const &str, int *weaponNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(weaponNum) *weaponNum = result;
         return (result >= 0);
     }
 
-    bool parseMobjTypeState(const QString& token, const StateMapping** state)
+    bool parseMobjTypeState(QString const &token, StateMapping const **state)
     {
         return findStateMappingByDehLabel(token, state) >= 0;
     }
 
-    bool parseMobjTypeFlag(const QString& token, const FlagMapping** flag)
+    bool parseMobjTypeFlag(QString const &token, FlagMapping const **flag)
     {
         return findMobjTypeFlagMappingByDehLabel(token, flag) >= 0;
     }
 
-    bool parseMobjTypeSound(const QString& token, const SoundMapping** sound)
+    bool parseMobjTypeSound(QString const &token, SoundMapping const **sound)
     {
         return findSoundMappingByDehLabel(token, sound) >= 0;
     }
 
-    bool parseWeaponState(const QString& token, const WeaponStateMapping** state)
+    bool parseWeaponState(QString const &token, WeaponStateMapping const **state)
     {
         return findWeaponStateMappingByDehLabel(token, state) >= 0;
     }
 
-    bool parseMiscValue(const QString& token, const ValueMapping** value)
+    bool parseMiscValue(QString const &token, ValueMapping const **value)
     {
         return findValueMappingForDehLabel(token, value) >= 0;
     }
@@ -615,7 +595,8 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
@@ -638,9 +619,9 @@ public:
             }
             else
             {
-                const char* includes = (maxIncludeDepth == 1? "include" : "includes");
+                char const *includes = (maxIncludeDepth == 1? "include" : "includes");
                 LOG_WARNING("Sorry, there can be at most %i nested %s. Directive ignored.")
-                    << maxIncludeDepth << includes;
+                        << maxIncludeDepth << includes;
             }
         }
         else
@@ -655,12 +636,12 @@ public:
 
             if(!arg.isEmpty())
             {
-                const NativePath filePath(arg);
+                NativePath const filePath(arg);
                 QFile file(filePath);
                 if(!file.open(QFile::ReadOnly | QFile::Text))
                 {
                     LOG_AS("parseInclude");
-                    LOG_WARNING("Failed opening \"%s\" for read, aborting...") << filePath;
+                    LOG_RES_WARNING("Failed opening \"%s\" for read, aborting...") << filePath;
                 }
                 else
                 {
@@ -669,13 +650,14 @@ public:
                     deh.append(QChar(0));
                     file.close();
 
-                    LOG_INFO("Including \"%s\"...") << F_PrettyPath(filePath.toUtf8().constData());
+                    LOG_RES_VERBOSE("Including \"%s\"...")
+                            << F_PrettyPath(filePath.toUtf8().constData());
 
                     try
                     {
                         DehReader(deh, includeFlags).parse();
                     }
-                    catch(const Error& er)
+                    catch(Error const &er)
                     {
                         LOG_WARNING(er.asText() + ".");
                     }
@@ -684,7 +666,7 @@ public:
             else
             {
                 LOG_AS("parseInclude");
-                LOG_WARNING("Include directive missing filename, ignoring.");
+                LOG_RES_WARNING("DeHackEd Include directive missing filename");
             }
         }
     }
@@ -717,7 +699,7 @@ public:
      *
      * @return (& 0x1)= flag group #1 changed, (& 0x2)= flag group #2 changed, etc..
      */
-    int parseMobjTypeFlags(const QString& arg, int flagGroups[NUM_MOBJ_FLAGS])
+    int parseMobjTypeFlags(QString const &arg, int flagGroups[NUM_MOBJ_FLAGS])
     {
         DENG2_ASSERT(flagGroups);
 
@@ -729,7 +711,7 @@ public:
         QStringList tokens = arg.split(QRegExp("[,+| ]|\t|\f|\r"), QString::SkipEmptyParts);
         DENG2_FOR_EACH_CONST(QStringList, i, tokens)
         {
-            const String& token = *i;
+            String const &token = *i;
             bool tokenIsNumber;
 
             int flagsValue = token.toInt(&tokenIsNumber, 10, String::AllowSuffix);
@@ -745,7 +727,7 @@ public:
             }
 
             // Flags can also be specified by name (a .bex extension).
-            const FlagMapping* flag;
+            FlagMapping const *flag;
             if(parseMobjTypeFlag(token, &flag))
             {
                 /// @todo fixme - Get the proper bit values from the ded def db.
@@ -762,16 +744,17 @@ public:
                 continue;
             }
 
-            LOG_WARNING("Unknown flag mnemonic '%s' on line #%i, ignoring.") << token << currentLineNumber;
+            LOG_WARNING("Unknown flag mnemonic '%s' on line #%i, ignoring.")
+                    << token << currentLineNumber;
         }
 
         return changedGroups;
     }
 
-    void parseThing(ded_mobj_t* mobj, bool ignore = false)
+    void parseThing(ded_mobj_t *mobj, bool ignore = false)
     {
-        const int mobjType = (mobj - ded->mobjs);
-        bool hadHeight = false, checkHeight = false;
+        int const mobjType = (mobj - ded->mobjs);
+        bool hadHeight     = false, checkHeight = false;
 
         LOG_AS("parseThing");
         for(; lineInCurrentSection(); skipToNextLine())
@@ -781,15 +764,17 @@ public:
 
             if(var.endsWith(" frame", Qt::CaseInsensitive))
             {
-                const StateMapping* mapping;
-                const String dehStateName = var.left(var.size() - 6);
+                StateMapping const *mapping;
+                String const dehStateName = var.left(var.size() - 6);
                 if(!parseMobjTypeState(dehStateName, &mapping))
                 {
-                    if(!ignore) LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.") << dehStateName << currentLineNumber;
+                    if(!ignore)
+                        LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.")
+                                << dehStateName << currentLineNumber;
                 }
                 else
                 {
-                    const int value = expr.toInt(0, 0, String::AllowSuffix);
+                    int const value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
                         if(value < 0 || value >= ded->count.states.num)
@@ -798,30 +783,32 @@ public:
                         }
                         else
                         {
-                            const int stateIdx = value;
-                            const ded_state_t& state = ded->states[stateIdx];
+                            int const stateIdx = value;
+                            ded_state_t const &state = ded->states[stateIdx];
 
                             DENG2_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
                             qstrncpy(mobj->states[mapping->id], state.id, DED_STRINGID_LEN + 1);
 
                             LOG_DEBUG("Type #%i \"%s\" state:%s => \"%s\" (#%i)")
-                                << mobjType << mobj->id << mapping->name
-                                << mobj->states[mapping->id] << stateIdx;
+                                    << mobjType << mobj->id << mapping->name
+                                    << mobj->states[mapping->id] << stateIdx;
                         }
                     }
                 }
             }
             else if(var.endsWith(" sound", Qt::CaseInsensitive))
             {
-                const SoundMapping* mapping;
-                const String dehSoundName = var.left(var.size() - 6);
+                SoundMapping const *mapping;
+                String const dehSoundName = var.left(var.size() - 6);
                 if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
-                    if(!ignore) LOG_WARNING("Unknown sound '%s' on line #%i, ignoring.") << dehSoundName << currentLineNumber;
+                    if(!ignore)
+                        LOG_WARNING("Unknown sound '%s' on line #%i, ignoring.")
+                                << dehSoundName << currentLineNumber;
                 }
                 else
                 {
-                    const int value = expr.toInt(0, 0, String::AllowSuffix);
+                    int const value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
                         if(value < 0 || value >= ded->count.sounds.num)
@@ -830,8 +817,8 @@ public:
                         }
                         else
                         {
-                            const int soundsIdx = value;
-                            void* soundAdr;
+                            int const soundsIdx = value;
+                            void *soundAdr;
                             switch(mapping->id)
                             {
                             case SDN_PAIN:      soundAdr = &mobj->painSound;   break;
@@ -843,12 +830,12 @@ public:
                                 throw Error("DehReader", String("Unknown soundname id %i").arg(mapping->id));
                             }
 
-                            const ded_sound_t& sound = ded->sounds[soundsIdx];
-                            qstrncpy((char*)soundAdr, sound.id, DED_STRINGID_LEN + 1);
+                            ded_sound_t const &sound = ded->sounds[soundsIdx];
+                            qstrncpy((char *)soundAdr, sound.id, DED_STRINGID_LEN + 1);
 
                             LOG_DEBUG("Type #%i \"%s\" sound:%s => \"%s\" (#%i)")
-                                << mobjType << mobj->id << mapping->name
-                                << (char*)soundAdr << soundsIdx;
+                                    << mobjType << mobj->id << mapping->name
+                                    << (char *)soundAdr << soundsIdx;
                         }
                     }
                 }
@@ -866,8 +853,8 @@ public:
 
                         mobj->flags[k] = flags[k];
                         LOG_DEBUG("Type #%i \"%s\" flags:%i => %X (%i)")
-                            << mobjType << mobj->id << k
-                            << mobj->flags[k] << mobj->flags[k];
+                                << mobjType << mobj->id << k
+                                << mobj->flags[k] << mobj->flags[k];
                     }
 
                     // Any special translation necessary?
@@ -911,7 +898,7 @@ public:
             }
             else if(!var.compareWithoutCase("ID #"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->doomEdNum = value;
@@ -920,7 +907,7 @@ public:
             }
             else if(!var.compareWithoutCase("Height"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->height = value / float(0x10000);
@@ -930,7 +917,7 @@ public:
             }
             else if(!var.compareWithoutCase("Hit points"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->spawnHealth = value;
@@ -939,7 +926,7 @@ public:
             }
             else if(!var.compareWithoutCase("Mass"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->mass = value;
@@ -948,7 +935,7 @@ public:
             }
             else if(!var.compareWithoutCase("Missile damage"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->damage = value;
@@ -957,7 +944,7 @@ public:
             }
             else if(!var.compareWithoutCase("Pain chance"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->painChance = value;
@@ -966,7 +953,7 @@ public:
             }
             else if(!var.compareWithoutCase("Reaction time"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->reactionTime = value;
@@ -975,7 +962,7 @@ public:
             }
             else if(!var.compareWithoutCase("Speed"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     /// @todo Is this right??
@@ -985,14 +972,14 @@ public:
             }
             else if(!var.compareWithoutCase("Translucency")) // Eternity
             {
-                //const int value = expr.toInt(0, 10, String::AllowSuffix);
-                //const float opacity = MINMAX_OF(0, value, 65536) / 65536.f;
+                //int const value = expr.toInt(0, 10, String::AllowSuffix);
+                //float const opacity = de::clamp(0, value, 65536) / 65536.f;
                 /// @todo Support this extension.
                 LOG_WARNING("Thing - \"Translucency\" patches are not supported.");
             }
             else if(!var.compareWithoutCase("Width"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->radius = value / float(0x10000);
@@ -1001,7 +988,8 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
 
@@ -1012,9 +1000,9 @@ public:
         }
     }
 
-    void parseFrame(ded_state_t* state, bool ignore = false)
+    void parseFrame(ded_state_t *state, bool ignore = false)
     {
-        const int stateNum = (state - ded->states);
+        int const stateNum = (state - ded->states);
         LOG_AS("parseFrame");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1023,7 +1011,7 @@ public:
 
             if(!var.compareWithoutCase("Duration"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     state->tics = value;
@@ -1032,7 +1020,7 @@ public:
             }
             else if(!var.compareWithoutCase("Next frame"))
             {
-                const int value = expr.toInt(0, 0, String::AllowSuffix);
+                int const value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value >= ded->count.states.num)
@@ -1041,10 +1029,10 @@ public:
                     }
                     else
                     {
-                        const int nextStateIdx = value;
+                        int const nextStateIdx = value;
                         qstrncpy(state->nextState, ded->states[nextStateIdx].id, DED_STRINGID_LEN + 1);
                         LOG_DEBUG("State #%i \"%s\" nextState => \"%s\" (#%i)")
-                            << stateNum << state->id << state->nextState << nextStateIdx;
+                                << stateNum << state->id << state->nextState << nextStateIdx;
                     }
                 }
             }
@@ -1055,7 +1043,7 @@ public:
             }
             else if(!var.compareWithoutCase("Sprite number"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value > ded->count.sprites.num)
@@ -1064,20 +1052,20 @@ public:
                     }
                     else
                     {
-                        const int spriteIdx = value;
-                        const ded_sprid_t& sprite = ded->sprites[spriteIdx];
+                        int const spriteIdx = value;
+                        ded_sprid_t const &sprite = ded->sprites[spriteIdx];
                         qstrncpy(state->sprite.id, sprite.id, DED_SPRITEID_LEN + 1);
                         LOG_DEBUG("State #%i \"%s\" sprite => \"%s\" (#%i)")
-                            << stateNum << state->id << state->sprite.id << spriteIdx;
+                                << stateNum << state->id << state->sprite.id << spriteIdx;
                     }
                 }
             }
             else if(!var.compareWithoutCase("Sprite subnumber"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    const int FF_FULLBRIGHT = 0x8000;
+                    int const FF_FULLBRIGHT = 0x8000;
 
                     // Translate the old fullbright bit.
                     if(value & FF_FULLBRIGHT)   state->flags |=  STF_FULLBRIGHT;
@@ -1089,18 +1077,20 @@ public:
             }
             else if(var.startsWith("Unknown ", Qt::CaseInsensitive))
             {
-                const int miscIdx = var.substr(8).toInt(0, 10, String::AllowSuffix);
-                const int value   = expr.toInt(0, 10, String::AllowSuffix);
+                int const miscIdx = var.substr(8).toInt(0, 10, String::AllowSuffix);
+                int const value   = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                     {
-                        LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.") << var.mid(8) << currentLineNumber;
+                        LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.")
+                                << var.mid(8) << currentLineNumber;
                     }
                     else
                     {
                         state->misc[miscIdx] = value;
-                        LOG_DEBUG("State #%i \"%s\" misc:%i => %i") << stateNum << state->id << miscIdx << value;
+                        LOG_DEBUG("State #%i \"%s\" misc:%i => %i")
+                                << stateNum << state->id << miscIdx << value;
                     }
                 }
             }
@@ -1110,14 +1100,15 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
 
-    void parseSprite(ded_sprid_t* sprite, bool ignore = false)
+    void parseSprite(ded_sprid_t *sprite, bool ignore = false)
     {
-        const int sprNum = sprite - ded->sprites;
+        int const sprNum = sprite - ded->sprites;
         LOG_AS("parseSprite");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1126,7 +1117,7 @@ public:
 
             if(!var.compareWithoutCase("Offset"))
             {
-                const int value = expr.toInt(0, 0, String::AllowSuffix);
+                int const value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     // Calculate offset from beginning of sprite names.
@@ -1135,7 +1126,7 @@ public:
                     {
                         // From DeHackEd source.
                         DENG2_ASSERT(doomVersion >= 0 && doomVersion < 5);
-                        static const int spriteNameTableOffset[] = { 129044, 129044, 129044, 129284, 129380 };
+                        static int const spriteNameTableOffset[] = { 129044, 129044, 129044, 129284, 129380 };
                         offset = (value - spriteNameTableOffset[doomVersion] - 22044) / 8;
                     }
 
@@ -1145,7 +1136,7 @@ public:
                     }
                     else
                     {
-                        const ded_sprid_t& origSprite = origSpriteNames[offset];
+                        ded_sprid_t const &origSprite = origSpriteNames[offset];
                         qstrncpy(sprite->id, origSprite.id, DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sprite #%i id => \"%s\" (#%i)") << sprNum << sprite->id << offset;
                     }
@@ -1153,14 +1144,15 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
 
-    void parseSound(ded_sound_t* sound, bool ignore = false)
+    void parseSound(ded_sound_t *sound, bool ignore = false)
     {
-        const int soundIdx = sound - ded->sounds;
+        int const soundIdx = sound - ded->sounds;
         LOG_AS("parseSound");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1173,20 +1165,22 @@ public:
             }
             else if(!var.compareWithoutCase("Zero/One"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->group = value;
-                    LOG_DEBUG("Sound #%i \"%s\" group => %i") << soundIdx << sound->id << sound->group;
+                    LOG_DEBUG("Sound #%i \"%s\" group => %i")
+                            << soundIdx << sound->id << sound->group;
                 }
             }
             else if(!var.compareWithoutCase("Value"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->priority = value;
-                    LOG_DEBUG("Sound #%i \"%s\" priority => %i") << soundIdx << sound->id << sound->priority;
+                    LOG_DEBUG("Sound #%i \"%s\" priority => %i")
+                            << soundIdx << sound->id << sound->priority;
                 }
             }
             else if(!var.compareWithoutCase("Zero 1")) // sound->link
@@ -1195,20 +1189,22 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 2"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->linkPitch = value;
-                    LOG_DEBUG("Sound #%i \"%s\" linkPitch => %i") << soundIdx << sound->id << sound->linkPitch;
+                    LOG_DEBUG("Sound #%i \"%s\" linkPitch => %i")
+                            << soundIdx << sound->id << sound->linkPitch;
                 }
             }
             else if(!var.compareWithoutCase("Zero 3"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->linkVolume = value;
-                    LOG_DEBUG("Sound #%i \"%s\" linkVolume => %i") << soundIdx << sound->id << sound->linkVolume;
+                    LOG_DEBUG("Sound #%i \"%s\" linkVolume => %i")
+                            << soundIdx << sound->id << sound->linkVolume;
                 }
             }
             else if(!var.compareWithoutCase("Zero 4")) // ??
@@ -1221,10 +1217,10 @@ public:
             }
             else if(!var.compareWithoutCase("Neg. One 2"))
             {
-                const int lumpNum = expr.toInt(0, 0, String::AllowSuffix);
+                int const lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
+                    int const numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {
                         LOG_WARNING("Neg. One 2 #%i out of range, ignoring.") << lumpNum;
@@ -1233,21 +1229,22 @@ public:
                     {
                         qstrncpy(sound->lumpName, Str_Text(W_LumpName(lumpNum)), DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
-                            << soundIdx << sound->id << sound->lumpName;
+                                << soundIdx << sound->id << sound->lumpName;
                     }
                 }
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
 
-    void parseAmmo(const int ammoNum, bool ignore = false)
+    void parseAmmo(int const ammoNum, bool ignore = false)
     {
-        static const char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
-        const char* theAmmo = ammostr[ammoNum];
+        static char const *ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
+        char const *theAmmo = ammostr[ammoNum];
         LOG_AS("parseAmmo");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1256,7 +1253,7 @@ public:
 
             if(!var.compareWithoutCase("Max ammo"))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore) createValueDef(String("Player|Max ammo|%1").arg(theAmmo), QString::number(value));
             }
             else if(!var.compareWithoutCase("Per ammo"))
@@ -1266,12 +1263,13 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
 
-    void parseWeapon(const int weapNum, bool ignore = false)
+    void parseWeapon(int const weapNum, bool ignore = false)
     {
         LOG_AS("parseWeapon");
         for(; lineInCurrentSection(); skipToNextLine())
@@ -1281,12 +1279,15 @@ public:
 
             if(var.endsWith(" frame", Qt::CaseInsensitive))
             {
-                const String dehStateName = var.left(var.size() - 6);
-                const int value = expr.toInt(0, 0, String::AllowSuffix);
-                const WeaponStateMapping* weapon;
+                String const dehStateName = var.left(var.size() - 6);
+                int const value           = expr.toInt(0, 0, String::AllowSuffix);
+
+                WeaponStateMapping const *weapon;
                 if(!parseWeaponState(dehStateName, &weapon))
                 {
-                    if(!ignore) LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.") << dehStateName << currentLineNumber;
+                    if(!ignore)
+                        LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.")
+                                << dehStateName << currentLineNumber;
                 }
                 else
                 {
@@ -1300,7 +1301,7 @@ public:
                         {
                             DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->count.states.num);
 
-                            const ded_state_t& state = ded->states[value];
+                            ded_state_t const &state = ded->states[value];
                             createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
                                            QString::fromUtf8(state.id));
                         }
@@ -1309,13 +1310,14 @@ public:
             }
             else if(!var.compareWithoutCase("Ammo type"))
             {
-                const String ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                String const ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value >= 6)
                     {
-                        LOG_WARNING("Unknown ammotype %i on line #%i, ignoring.") << value << currentLineNumber;
+                        LOG_WARNING("Unknown ammotype %i on line #%i, ignoring.")
+                                << value << currentLineNumber;
                     }
                     else
                     {
@@ -1325,19 +1327,20 @@ public:
             }
             else if(!var.compareWithoutCase("Ammo per shot")) // Eternity
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
 
-    void parsePointer(ded_state_t* state, bool ignore)
+    void parsePointer(ded_state_t *state, bool ignore)
     {
-        const int stateIdx = state - ded->states;
+        int const stateIdx = state - ded->states;
         LOG_AS("parsePointer");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1346,7 +1349,7 @@ public:
 
             if(!var.compareWithoutCase("Codep Frame"))
             {
-                const int actionIdx = expr.toInt(0, 0, String::AllowSuffix);
+                int const actionIdx = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(actionIdx < 0 || actionIdx >= NUMSTATES)
@@ -1355,16 +1358,17 @@ public:
                     }
                     else
                     {
-                        const ded_funcid_t& newAction = origActionNames[actionIdx];
+                        ded_funcid_t const &newAction = origActionNames[actionIdx];
                         qstrncpy(state->action, newAction, DED_STRINGID_LEN + 1);
                         LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
-                            << stateIdx << state->id << state->action;
+                                << stateIdx << state->id << state->action;
                     }
                 }
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
@@ -1377,15 +1381,16 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            const ValueMapping* mapping;
+            ValueMapping const *mapping;
             if(parseMiscValue(var, &mapping))
             {
-                const int value = expr.toInt(0, 10, String::AllowSuffix);
+                int const value = expr.toInt(0, 10, String::AllowSuffix);
                 createValueDef(mapping->valuePath, QString::number(value));
             }
             else
             {
-                LOG_WARNING("Unknown value \"%s\" on line #%i, ignoring.") << var << currentLineNumber;
+                LOG_WARNING("Unknown value \"%s\" on line #%i, ignoring.")
+                        << var << currentLineNumber;
             }
         }
     }
@@ -1403,7 +1408,7 @@ public:
             {
                 if(line.beginsWith("par", Qt::CaseInsensitive))
                 {
-                    const String argStr = line.substr(3).leftStrip();
+                    String const argStr = line.substr(3).leftStrip();
                     if(argStr.isEmpty())
                     {
                         throw SyntaxError("parseParsBex", String("Expected format expression on line #%1")
@@ -1419,8 +1424,16 @@ public:
                      * three arguments and then apply atoi()-like de::String::toIntLeft()
                      * on the last.
                      */
-                    const int maxArgs = 3;
+                    int const maxArgs = 3;
                     QStringList args = splitMax(argStr, ' ', maxArgs);
+
+                    // If the third argument is a comment remove it.
+                    if(args.size() == 3)
+                    {
+                        if(String(args.at(2)).beginsWith('#'))
+                            args.removeAt(2);
+                    }
+
                     if(args.size() < 2)
                     {
                         throw SyntaxError("parseParsBex", String("Invalid format string \"%1\" on line #%2")
@@ -1434,25 +1447,26 @@ public:
                     float parTime = float(String(args.at(arg++)).toInt(0, 10, String::AllowSuffix));
 
                     // Apply.
-                    uri_s* uri    = composeMapUri(episode, map);
-                    AutoStr* path = Uri_ToString(uri);
+                    uri_s *uri    = composeMapUri(episode, map);
+                    AutoStr *path = Uri_ToString(uri);
 
-                    ded_mapinfo_t* def;
+                    ded_mapinfo_t *def;
                     int idx = mapInfoDefForUri(*uri, &def);
                     if(idx >= 0)
                     {
                         def->parTime = parTime;
-                        LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d") << idx << Str_Text(path) << def->parTime;
+                        LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d")
+                                << idx << Str_Text(path) << def->parTime;
                     }
                     else
                     {
                         LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i), ignoring.")
-                            << Str_Text(path) << episode << map;
+                                << Str_Text(path) << episode << map;
                     }
                     Uri_Delete(uri);
                 }
             }
-            catch(const SyntaxError& er)
+            catch(SyntaxError const &er)
             {
                 LOG_WARNING("%s, ignoring.") << er.asText();
             }
@@ -1494,7 +1508,7 @@ public:
                     LOG_WARNING("Failed to locate sound \"%s\" for patching.") << var;
                 }
             }
-            catch(const SyntaxError& er)
+            catch(SyntaxError const &er)
             {
                 LOG_WARNING("%s, ignoring.") << er.asText();
             }
@@ -1524,7 +1538,7 @@ public:
                     LOG_WARNING("Failed to locate music \"%s\" for patching.") << var;
                 }
             }
-            catch(const SyntaxError& er)
+            catch(SyntaxError const &er)
             {
                 LOG_WARNING("%s, ignoring.") << er.asText();
             }
@@ -1550,14 +1564,15 @@ public:
 
             if(var.startsWith("Frame ", Qt::CaseInsensitive))
             {
-                const int stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
+                int const stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
                 if(stateNum < 0 || stateNum >= ded->count.states.num)
                 {
-                    LOG_WARNING("Frame #%d out of range, ignoring. (Create more State defs!)") << stateNum;
+                    LOG_WARNING("Frame #%d out of range, ignoring. (Create more State defs!)")
+                            << stateNum;
                 }
                 else
                 {
-                    ded_state_t& state = ded->states[stateNum];
+                    ded_state_t &state = ded->states[stateNum];
 
                     // Compose the action name.
                     String action = expr.rightStrip();
@@ -1569,7 +1584,8 @@ public:
                     if(!action.compareWithoutCase("A_NULL"))
                     {
                         qstrncpy(state.action, "NULL", DED_STRINGID_LEN+1);
-                        LOG_DEBUG("State #%i \"%s\" action => \"NULL\"") << stateNum << state.id;
+                        LOG_DEBUG("State #%i \"%s\" action => \"NULL\"")
+                                << stateNum << state.id;
                     }
                     else
                     {
@@ -1577,11 +1593,13 @@ public:
                         if(Def_Get(DD_DEF_ACTION, actionUtf8.constData(), 0) >= 0)
                         {
                             qstrncpy(state.action, actionUtf8.constData(), DED_STRINGID_LEN + 1);
-                            LOG_DEBUG("State #%i \"%s\" action => \"%s\"") << stateNum << state.id << state.action;
+                            LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
+                                    << stateNum << state.id << state.action;
                         }
                         else
                         {
-                            LOG_WARNING("Unknown action '%s' on line #%i, ignoring.") << action.mid(2) << currentLineNumber;
+                            LOG_WARNING("Unknown action '%s' on line #%i, ignoring.")
+                                    << action.mid(2) << currentLineNumber;
                         }
                     }
                 }
@@ -1594,7 +1612,7 @@ public:
         }
     }
 
-    void parseText(const int oldSize, const int newSize)
+    void parseText(int const oldSize, int const newSize)
     {
         LOG_AS("parseText");
 
@@ -1615,7 +1633,7 @@ public:
             if(!found)
             {
                 LOG_WARNING("Failed to determine source for:\nText %i %i\n%s")
-                    << oldSize << newSize << oldStr;
+                        << oldSize << newSize << oldStr;
             }
         }
         else
@@ -1632,10 +1650,10 @@ public:
         LOG_WARNING("[Strings] patches not supported.");
     }
 
-    void createValueDef(const QString& path, const QString& value)
+    void createValueDef(QString const &path, QString const &value)
     {
         // An existing value?
-        ded_value_t* def;
+        ded_value_t *def;
         int idx = valueDefForPath(path, &def);
         if(idx < 0)
         {
@@ -1647,14 +1665,14 @@ public:
         }
 
         // Must allocate memory using DD_Realloc.
-        def->text = static_cast<char*>(DD_Realloc(def->text, value.length() + 1));
+        def->text = static_cast<char *>(DD_Realloc(def->text, value.length() + 1));
         Block valueUtf8 = value.toUtf8();
         qstrcpy(def->text, valueUtf8.constData());
 
         LOG_DEBUG("Value #%i \"%s\" => \"%s\"") << idx << path << def->text;
     }
 
-    bool patchSpriteNames(const String& origName, const String& newName)
+    bool patchSpriteNames(String const &origName, String const &newName)
     {
         // Is this a sprite name?
         if(origName.length() != 4) return false;
@@ -1676,7 +1694,7 @@ public:
             return false;
         }
 
-        ded_sprid_t& def = ded->sprites[spriteIdx];
+        ded_sprid_t &def = ded->sprites[spriteIdx];
         Block newNameUtf8 = newName.toUtf8();
         qstrncpy(def.id, newNameUtf8.constData(), DED_SPRITEID_LEN + 1);
 
@@ -1685,15 +1703,15 @@ public:
 #endif
     }
 
-    bool patchFinaleBackgroundNames(const String& origName, const String& newName)
+    bool patchFinaleBackgroundNames(String const &origName, String const &newName)
     {
-        const FinaleBackgroundMapping* mapping;
+        FinaleBackgroundMapping const *mapping;
         if(findFinaleBackgroundMappingForText(origName, &mapping) < 0) return false;
         createValueDef(mapping->mnemonic, newName);
         return true;
     }
 
-    bool patchMusicLumpNames(const String& origName, const String& newName)
+    bool patchMusicLumpNames(String const &origName, String const &newName)
     {
         // Only music lump names in the original name map can be patched.
         /// @todo Why the restriction?
@@ -1706,19 +1724,19 @@ public:
         int numPatched = 0;
         for(int i = 0; i < ded->count.music.num; ++i)
         {
-            ded_music_t& music = ded->music[i];
+            ded_music_t &music = ded->music[i];
             if(qstricmp(music.lumpName, origNamePrefUtf8.constData())) continue;
 
             qstrncpy(music.lumpName, newNamePrefUtf8.constData(), 9);
             numPatched++;
 
             LOG_DEBUG("Music #%i \"%s\" lumpName => \"%s\"")
-                << i << music.id << music.lumpName;
+                    << i << music.id << music.lumpName;
         }
         return (numPatched > 0);
     }
 
-    bool patchSoundLumpNames(const String& origName, const String& newName)
+    bool patchSoundLumpNames(String const &origName, String const &newName)
     {
         // Only sound lump names in the original name map can be patched.
         /// @todo Why the restriction?
@@ -1731,21 +1749,21 @@ public:
         int numPatched = 0;
         for(int i = 0; i < ded->count.sounds.num; ++i)
         {
-            ded_sound_t& sound = ded->sounds[i];
+            ded_sound_t &sound = ded->sounds[i];
             if(qstricmp(sound.lumpName, origNamePrefUtf8.constData())) continue;
 
             qstrncpy(sound.lumpName, newNamePrefUtf8.constData(), 9);
             numPatched++;
 
             LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
-                << i << sound.id << sound.lumpName;
+                    << i << sound.id << sound.lumpName;
         }
         return (numPatched > 0);
     }
 
-    bool patchText(const String& origStr, const String& newStr)
+    bool patchText(String const &origStr, String const &newStr)
     {
-        const TextMapping* textMapping;
+        TextMapping const *textMapping;
 
         // Which text are we replacing?
         if(textMappingForBlob(origStr, &textMapping) < 0) return false;
@@ -1765,18 +1783,18 @@ public:
         Def_Set(DD_DEF_TEXT, textIdx, 0, newStrUtf8.constData());
 
         LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
-            << textIdx << textMapping->name << newStrUtf8.constData();
+                << textIdx << textMapping->name << newStrUtf8.constData();
         return true;
     }
 };
 
-void readDehPatch(const Block& patch, DehReaderFlags flags)
+void readDehPatch(Block const &patch, DehReaderFlags flags)
 {
     try
     {
         DehReader(patch, flags).parse();
     }
-    catch(const Error& er)
+    catch(Error const &er)
     {
         LOG_WARNING(er.asText() + ".");
     }

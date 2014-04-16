@@ -52,9 +52,9 @@ PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
 PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
 #endif
 
-static boolean doneEarlyInit = false;
-static boolean inited = false;
-static boolean firstTimeInit = true;
+static dd_bool doneEarlyInit = false;
+static dd_bool inited = false;
+static dd_bool firstTimeInit = true;
 
 static void initialize(void)
 {
@@ -120,7 +120,7 @@ static void initialize(void)
 #endif
 }
 
-#define TABBED(A, B)  _E(Ta) "  " A " " _E(Tb) << B << "\n"
+#define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
 
 de::String Sys_GLDescription()
 {
@@ -178,12 +178,12 @@ de::String Sys_GLDescription()
 
 static void printGLUInfo(void)
 {
-    LOG_MSG("%s") << Sys_GLDescription();
+    LOG_GL_MSG("%s") << Sys_GLDescription();
 
     Sys_GLPrintExtensions();
 }
 
-boolean Sys_GLPreInit(void)
+dd_bool Sys_GLPreInit(void)
 {
     if(novideo) return true;
     if(doneEarlyInit) return true; // Already been here??
@@ -207,9 +207,11 @@ boolean Sys_GLPreInit(void)
     return true;
 }
 
-boolean Sys_GLInitialize(void)
+dd_bool Sys_GLInitialize(void)
 {
     if(novideo) return true;
+
+    LOG_AS("Sys_GLInitialize");
 
     assert(doneEarlyInit);
 
@@ -224,8 +226,8 @@ boolean Sys_GLInitialize(void)
         double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
         {
-            Con_Message("Sys_GLInitialize: Failed to determine OpenGL version.");
-            Con_Message("  OpenGL version: %s", glGetString(GL_VERSION));
+            LOG_GL_WARNING("Failed to determine OpenGL version; driver reports: %s")
+                    << glGetString(GL_VERSION);
         }
         else if(version < 2.0)
         {
@@ -239,8 +241,8 @@ boolean Sys_GLInitialize(void)
             }
             else
             {
-                Con_Message("Warning: Sys_GLInitialize: OpenGL implementation may be too old (2.0+ required).");
-                Con_Message("  OpenGL version: %s", glGetString(GL_VERSION));
+                LOG_GL_WARNING("OpenGL implementation may be too old (2.0+ required, "
+                               "but driver reports %s)") << glGetString(GL_VERSION);
             }
         }
 
@@ -400,33 +402,41 @@ static void printExtensions(QStringList extensions)
             }
         }
 
-        LOG_MSG("%s") << str;
+        LOG_GL_MSG("%s") << str;
     }
 }
 
 void Sys_GLPrintExtensions(void)
 {
-    LOG_MSG(_E(b) "OpenGL Extensions:");
+    LOG_GL_MSG(_E(b) "OpenGL Extensions:");
     printExtensions(QString((char const *) glGetString(GL_EXTENSIONS)).split(" ", QString::SkipEmptyParts));
 
 #if WIN32
     // List the WGL extensions too.
     if(wglGetExtensionsStringARB)
     {
-        Con_Message("  Extensions (WGL):");
+        LOG_GL_MSG("  Extensions (WGL):");
         printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
     }
 #endif
+
+#ifdef Q_WS_X11
+    // List GLX extensions.
+    LOG_GL_MSG("  Extensions (GLX):");
+    printExtensions(QString(getGLXExtensionsString()).split(" ", QString::SkipEmptyParts));
+#endif
 }
 
-boolean Sys_GLCheckError()
+dd_bool Sys_GLCheckError()
 {
 #ifdef DENG_DEBUG
     if(!novideo)
     {
         GLenum error = glGetError();
         if(error != GL_NO_ERROR)
-            Con_Message("OpenGL error: 0x%x", error);
+        {
+            LOGDEV_GL_ERROR("OpenGL error: 0x%x") << error;
+        }
     }
 #endif
     return false;

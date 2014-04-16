@@ -4,18 +4,17 @@
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBGUI_CANVASWINDOW_H
@@ -56,6 +55,8 @@ class LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
 
 public:
     typedef Vector2ui Size;
+
+    DENG2_AS_IS_METHODS()
 
 public:
     CanvasWindow();
@@ -141,9 +142,9 @@ public:
     /**
      * Grabs the contents of the window and saves it into a native image file.
      *
-     * @param fileName  Name of the file to save. May include a file extension
-     *                  that indicates which format to use (e.g, "screenshot.jpg").
-     *                  If omitted, defaults to PNG.
+     * @param path  Name of the file to save. May include a file extension
+     *              that indicates which format to use (e.g, "screenshot.jpg").
+     *              If omitted, defaults to PNG.
      *
      * @return @c true if successful, otherwise @c false.
      */
@@ -170,8 +171,13 @@ public:
      */
     void *nativeHandle() const;
 
+    bool isRecreationInProgress() const;
+
+protected slots:
+    void finishCanvasRecreation();
+
 public:
-    static bool hasMain();
+    static bool mainExists();
     static CanvasWindow &main();
     static void setMain(CanvasWindow *window);
 

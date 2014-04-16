@@ -1,4 +1,4 @@
-/** @file sector.h World map sector.
+/** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,15 +21,6 @@
 #ifndef DENG_WORLD_SECTOR_H
 #define DENG_WORLD_SECTOR_H
 
-#include <QList>
-
-#include <de/aabox.h>
-
-#include <de/libdeng2.h>
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
-
 #include "dd_share.h" // AudioEnvironmentFactors
 
 #include "HEdge"
@@ -41,6 +32,13 @@
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
 #endif
+
+#include <de/libdeng2.h>
+#include <de/Error>
+#include <de/Observers>
+#include <de/Vector>
+#include <de/aabox.h>
+#include <QList>
 
 class BspLeaf;
 class Surface;
@@ -60,18 +58,11 @@ public:
     /// Required/referenced plane is missing. @ingroup errors
     DENG2_ERROR(MissingPlaneError);
 
-    /*
-     * Notified whenever a light level change occurs.
-     */
-    DENG2_DEFINE_AUDIENCE(LightLevelChange,
-        void sectorLightLevelChanged(Sector &sector, float oldLightLevel))
+    /// Notified whenever a light level change occurs.
+    DENG2_DEFINE_AUDIENCE(LightLevelChange, void sectorLightLevelChanged(Sector &sector))
 
-    /*
-     * Notified whenever a light color change occurs.
-     */
-    DENG2_DEFINE_AUDIENCE(LightColorChange,
-        void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
-                                     int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
+    /// Notified whenever a light color change occurs.
+    DENG2_DEFINE_AUDIENCE(LightColorChange, void sectorLightColorChanged(Sector &sector))
 
     /**
      * Adjacent BSP leafs in the sector (i.e., those which share one or more
@@ -83,9 +74,7 @@ public:
     class Cluster
     {
     public:
-        /*
-         * Notified when the cluster is about to be deleted.
-         */
+        /// Notified when the cluster is about to be deleted.
         DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(Cluster const &cluster))
 
         typedef QList<BspLeaf *> BspLeafs;
@@ -453,47 +442,9 @@ public:
      * Returns the ambient light color in the sector. The LightColorChange
      * audience is notified whenever the light color changes.
      *
-     * @see setLightColor(), lightColorComponent(), lightRed(), lightGreen(), lightBlue()
+     * @see setLightColor()
      */
     de::Vector3f const &lightColor() const;
-
-    /**
-     * Returns the strength of the specified @a component of the ambient light
-     * color in the sector. The LightColorChange audience is notified whenever
-     * the light color changes.
-     *
-     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
-     *
-     * @see lightColor(), lightRed(), lightGreen(), lightBlue()
-     */
-    inline float lightColorComponent(int component) const { return lightColor()[component]; }
-
-    /**
-     * Returns the strength of the @em red component of the ambient light
-     * color in the sector. The LightColorChange audience is notified whenever
-     * the light color changes.
-     *
-     * @see lightColorComponent(), lightGreen(), lightBlue()
-     */
-    inline float lightRed() const   { return lightColorComponent(0); }
-
-    /**
-     * Returns the strength of the @em green component of the ambient light
-     * color in the sector. The LightColorChange audience is notified whenever
-     * the light color changes.
-     *
-     * @see lightColorComponent(), lightRed(), lightBlue()
-     */
-    inline float lightGreen() const { return lightColorComponent(1); }
-
-    /**
-     * Returns the strength of the @em blue component of the ambient light
-     * color in the sector. The LightColorChange audience is notified whenever
-     * the light color changes.
-     *
-     * @see lightColorComponent(), lightRed(), lightGreen()
-     */
-    inline float lightBlue() const  { return lightColorComponent(2); }
 
     /**
      * Change the ambient light color in the sector. The LightColorChange
@@ -501,54 +452,9 @@ public:
      *
      * @param newLightColor  New ambient light color.
      *
-     * @see lightColor(), setLightColorComponent(), setLightRed(), setLightGreen(), setLightBlue()
+     * @see lightColor()
      */
     void setLightColor(de::Vector3f const &newLightColor);
-
-    /**
-     * Change the strength of the specified @a component of the ambient light
-     * color in the sector. The LightColorChange audience is notified whenever
-     * the light color changes.
-     *
-     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
-     * @param newStrength  New strength factor for the color component.
-     *
-     * @see setLightColor(), setLightRed(), setLightGreen(), setLightBlue()
-     */
-    void setLightColorComponent(int component, float newStrength);
-
-    /**
-     * Change the strength of the red component of the ambient light color in
-     * the sector. The LightColorChange audience is notified whenever the light
-     * color changes.
-     *
-     * @param newStrength  New red strength for the ambient light color.
-     *
-     * @see setLightColorComponent(), setLightGreen(), setLightBlue()
-     */
-    inline void setLightRed(float newStrength)  { setLightColorComponent(0, newStrength); }
-
-    /**
-     * Change the strength of the green component of the ambient light color in
-     * the sector. The LightColorChange audience is notified whenever the light
-     * color changes.
-     *
-     * @param newStrength  New green strength for the ambient light color.
-     *
-     * @see setLightColorComponent(), setLightRed(), setLightBlue()
-     */
-    inline void setLightGreen(float newStrength) { setLightColorComponent(1, newStrength); }
-
-    /**
-     * Change the strength of the blue component of the ambient light color in
-     * the sector. The LightColorChange audience is notified whenever the light
-     * color changes.
-     *
-     * @param newStrength  New blue strength for the ambient light color.
-     *
-     * @see setLightColorComponent(), setLightRed(), setLightGreen()
-     */
-    inline void setLightBlue(float newStrength)  { setLightColorComponent(2, newStrength); }
 
     /**
      * Returns the first mobj in the linked list of mobjs "in" the sector.
@@ -646,9 +552,9 @@ public:
      * the @em boundary of the cluster and is not an "internal" edge.
      */
     SectorClusterCirculator(de::HEdge *hedge = 0)
-        : _hedge(hedge),
-          _current(hedge),
-          _cluster(hedge? getCluster(*hedge) : 0)
+        : _hedge(hedge)
+        , _current(hedge)
+        , _cluster(hedge? getCluster(*hedge) : 0)
     {}
 
     /**

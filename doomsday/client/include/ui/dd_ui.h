@@ -79,7 +79,7 @@ struct fi_page_s;
     struct { \
         char looping:1; /* Animation will loop. */ \
     } flags; \
-    boolean         animComplete; /* Animation finished (or repeated). */ \
+    dd_bool         animComplete; /* Animation finished (or repeated). */ \
     fi_objectid_t   id; /* Unique id of the object. */ \
     fi_objectname_t name; /* Nice name. */ \
     animatorvector3_t pos; \
@@ -171,16 +171,16 @@ struct fi_object_s *FIPage_AddObject(fi_page_t *page, struct fi_object_s *obj);
 struct fi_object_s *FIPage_RemoveObject(fi_page_t *page, struct fi_object_s *obj);
 
 /// Is the UI object present on the page?
-boolean FIPage_HasObject(fi_page_t *page, struct fi_object_s *obj);
+dd_bool FIPage_HasObject(fi_page_t *page, struct fi_object_s *obj);
 
 /// Current background Material.
 Material *FIPage_BackgroundMaterial(fi_page_t *page);
 
 /// Sets the 'is-visible' state.
-void FIPage_MakeVisible(fi_page_t *page, boolean yes);
+void FIPage_MakeVisible(fi_page_t *page, dd_bool yes);
 
 /// Sets the 'is-paused' state.
-void FIPage_Pause(fi_page_t *page, boolean yes);
+void FIPage_Pause(fi_page_t *page, dd_bool yes);
 
 /// Sets the background Material.
 void FIPage_SetBackgroundMaterial(fi_page_t *page, Material *mat);
@@ -265,7 +265,7 @@ typedef struct fidata_pic_s {
 
 void FIData_PicThink(struct fi_object_s *pic);
 void FIData_PicDraw(struct fi_object_s *pic, float const offset[3]);
-uint FIData_PicAppendFrame(struct fi_object_s *pic, fi_pic_type_t type, int tics, void *texRef, short sound, boolean flagFlipH);
+uint FIData_PicAppendFrame(struct fi_object_s *pic, fi_pic_type_t type, int tics, void *texRef, short sound, dd_bool flagFlipH);
 void FIData_PicClearAnimation(struct fi_object_s *pic);
 
 /**

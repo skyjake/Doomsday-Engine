@@ -1,4 +1,4 @@
-/** @file linesighttest.h World map line of sight testing.
+/** @file linesighttest.h  World map line of sight testing.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,10 +21,9 @@
 #ifndef DENG_WORLD_LINE_SIGHT_TEST_H
 #define DENG_WORLD_LINE_SIGHT_TEST_H
 
+#include "MapElement"
 #include <de/libdeng2.h>
 #include <de/Vector>
-
-#include "MapElement"
 
 namespace de {
 

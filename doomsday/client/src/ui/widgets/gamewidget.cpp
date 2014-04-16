@@ -25,7 +25,7 @@
 #include "ui/ui2_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "dd_def.h"
 #include "dd_main.h"
@@ -74,16 +74,16 @@ DENG2_PIMPL(GameWidget)
         if(App_GameLoaded())
         {
             // Notify the world that a new render frame has begun.
-            App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+            App_WorldSystem().beginFrame(CPP_BOOL(R_NextViewer()));
 
-            R_RenderViewPorts(ui::Player3DViewLayer);
-            R_RenderViewPorts(ui::ViewBorderLayer);
+            R_RenderViewPorts(Player3DViewLayer);
+            R_RenderViewPorts(ViewBorderLayer);
 
             // End any open DGL sequence.
             DGL_End();
 
             // Notify the world that we've finished rendering the frame.
-            App_World().endFrame();
+            App_WorldSystem().endFrame();
         }
 
         // End any open DGL sequence.
@@ -93,20 +93,16 @@ DENG2_PIMPL(GameWidget)
     void updateSize()
     {
         LOG_AS("GameWidget");
-        LOG_TRACE("View resized to ") << self.rule().recti().size().asText();
+        LOG_GL_XVERBOSE("View resized to ") << self.rule().recti().size().asText();
 
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if(UI_IsActive() || !App_GameLoaded())
+        if(!App_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);
         }
         UI_LoadFonts();
-        if(UI_IsActive())
-        {
-            UI_UpdatePageLayout();
-        }
     }
 };
 
@@ -157,7 +153,7 @@ void GameWidget::update()
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     // Request update of window contents.
-    root().window().draw();
+    root().as<ClientRootWidget>().window().draw();
 
     // After the first frame, start timedemo.
     //DD_CheckTimeDemo();
@@ -194,9 +190,11 @@ bool GameWidget::handleEvent(Event const &event)
      * submit as Latin1.
      */
 
+    ClientWindow &window = root().window().as<ClientWindow>();
+
     if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped())
     {
-        if(!root().window().hasSidebar())
+        if(!window.hasSidebar())
         {
             // If the mouse is not trapped, we will just eat button clicks which
             // will prevent them from reaching the legacy input system.
@@ -209,8 +207,8 @@ bool GameWidget::handleEvent(Event const &event)
         {
         case MouseClickFinished:
             // Click completed on the widget, trap the mouse.
-            root().window().canvas().trapMouse();
-            root().window().taskBar().close();
+            window.canvas().trapMouse();
+            window.taskBar().close();
             root().setFocus(0); // Allow input to reach here.
             break;
 

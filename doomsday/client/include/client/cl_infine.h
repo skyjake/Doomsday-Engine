@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_infine.h  Clientside InFine.
  *
  * @authors Copyright © 2010 Daniel Swanson <danij@dengine.net>
  *
@@ -16,33 +16,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Client-side InFine.
- */
-
 #ifndef DENG_CLIENT_INFINE
 #define DENG_CLIENT_INFINE
 
+#include "api_infine.h"
 #include <de/reader.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-finaleid_t Cl_CurrentFinale(void);
+finaleid_t Cl_CurrentFinale();
 
 /**
  * This is where clients start their InFine sequences.
  */
-void Cl_Finale(Reader* msg);
+void Cl_Finale(Reader *msg);
 
 /**
  * Client sends a request to skip the finale.
  */
-void Cl_RequestFinaleSkip(void);
+void Cl_RequestFinaleSkip();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* DENG_CLIENT_INFINE */
+#endif // DENG_CLIENT_INFINE

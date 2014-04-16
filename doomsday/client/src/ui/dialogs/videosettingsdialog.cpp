@@ -17,18 +17,18 @@
  */
 
 #include "ui/dialogs/videosettingsdialog.h"
-#include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/cvartogglewidget.h"
-#include "ui/widgets/choicewidget.h"
 #include "ui/widgets/taskbarwidget.h"
-#include "SequentialLayout"
-#include "GridLayout"
-#include "CommandAction"
-#include "SignalAction"
 #include "ui/clientwindow.h"
+#include "CommandAction"
 #include "con_main.h"
 #include "clientapp.h"
 
+#include <de/VariableToggleWidget>
+#include <de/ChoiceWidget>
+#include <de/SequentialLayout>
+#include <de/GridLayout>
+#include <de/SignalAction>
 #include <de/DisplayMode>
 #include <QPoint>
 
@@ -70,12 +70,12 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 #ifdef USE_COLOR_DEPTH_CHOICE
         area.add(depths       = new ChoiceWidget);
 #endif
-        win.audienceForAttributeChange += this;
+        win.audienceForAttributeChange() += this;
     }
 
     ~Instance()
     {
-        win.audienceForAttributeChange -= this;
+        win.audienceForAttributeChange() -= this;
     }
 
     /**
@@ -180,6 +180,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->depths->items()
             << new ChoiceItem(tr("32-bit"), 32)
+            << new ChoiceItem(tr("24-bit"), 24)
             << new ChoiceItem(tr("16-bit"), 16);
 #endif
 

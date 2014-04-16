@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2.7
 # coding=utf-8
 #
 # Script for performing automated build events.
@@ -64,9 +64,12 @@ def todays_platform_release():
     os.chdir(builder.config.DISTRIB_DIR)
     oldFiles = DirState('releases', subdirs=False)
     
-    print 'platform_release.py...'
-    os.system("python platform_release.py > %s 2> %s" % \
-        ('buildlog.txt', 'builderrors.txt'))
+    try:
+        print 'platform_release.py...'
+        run_python2("platform_release.py > %s 2> %s" % \
+            ('buildlog.txt', 'builderrors.txt'))
+    except Exception, x:
+        print 'Error during platform_release:', x
             
     for n in DirState('releases', subdirs=False).list_new_files(oldFiles):
         # Copy any new files.
@@ -82,8 +85,13 @@ def todays_platform_release():
                                      '/main/binary-%s' % arch, n))
                                  
     # Also the build logs.
-    remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
-    remote_copy('builderrors.txt', ev.file_path('doomsday-err-%s.txt' % sys_id()))
+    if sys.platform[:3] != 'win':
+        system_command('./logcleanup.py buildlog.txt builderrors.txt > buildsummary.txt')
+        remote_copy('buildsummary.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
+    else:        
+        remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
+        remote_copy('builderrors.txt', ev.file_path('doomsday-err-%s.txt' % sys_id()))
+
     if 'linux' in sys_id():
         remote_copy('dsfmod/fmod-out-%s.txt' % sys_id(), ev.file_path('fmod-out-%s.txt' % sys_id()))
         remote_copy('dsfmod/fmod-err-%s.txt' % sys_id(), ev.file_path('fmod-err-%s.txt' % sys_id()))
@@ -360,9 +368,14 @@ def system_command(cmd):
 def generate_apidoc():
     """Run Doxygen to generate all API documentation."""
     git_pull()
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libdeng2'))    
+
+    print >> sys.stderr, "\nSDK docs for Qt Creator..."
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday'))    
+    system_command('doxygen sdk-qch.doxy >/dev/null 2>doxyissues-qch.txt')
+    system_command('wc -l doxyissues-qch.txt')
 
     print >> sys.stderr, "\nPublic API 2.0 docs..."
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libdeng2'))    
     system_command('doxygen api2.doxy >/dev/null 2>../doxyissues-api2.txt')
     system_command('wc -l ../doxyissues-api2.txt')
     

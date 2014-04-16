@@ -3,16 +3,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -143,6 +143,7 @@ public:
     void fill(Color const &color);
     void fill(Rectanglei const &rect, Color const &color);
     void draw(Image const &image, Vector2i const &topLeft);
+    void drawPartial(Image const &image, Rectanglei const &part, Vector2i const &topLeft);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -153,6 +154,18 @@ public:
     static GLPixelFormat glFormat(QImage::Format qtImageFormat);
 
     static Image solidColor(Color const &color, Size const &size);
+
+    /**
+     * Loads an image from a block of data. The format of the image is autodetected.
+     * In addition to image formats supported by Qt, this can load 8-bit paletted PCX
+     * (ZSoft Paintbrush) images.
+     *
+     * @param data  Block of data containing image data.
+     */
+    static Image fromData(IByteArray const &data);
+
+    /// @copydoc fromData()
+    static Image fromData(Block const &data);
 
 private:
     DENG2_PRIVATE(d)

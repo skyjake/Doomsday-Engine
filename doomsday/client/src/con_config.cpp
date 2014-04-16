@@ -1,5 +1,4 @@
-/** @file con_config.cpp Config files.
- * @ingroup console
+/** @file con_config.cpp  Config file IO.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,82 +17,101 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <ctype.h>
+#include "de_base.h"
+#include "con_config.h"
 
-#include "de_platform.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_misc.h"
-#include "de_filesys.h"
-
+#include "con_main.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_help.h"
+#include "m_misc.h"
+
 #include "Games"
 
-static filename_t cfgFile;
-static int flagsAllow = 0;
+#include "api_filesys.h"
+#include "filesys/fs_main.h"
+#include "filesys/fs_util.h"
 
-static void writeHeaderComment(FILE* file)
+#ifdef __CLIENT__
+#  include "ui/b_main.h"
+#endif
+
+#include <de/Log>
+#include <de/Path>
+#include <cctype>
+
+using namespace de;
+
+static filename_t cfgFile;
+static int flagsAllow;
+
+static void writeHeaderComment(FILE *file)
 {
     if(!App_GameLoaded())
+    {
         fprintf(file, "# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
+    }
     else
+    {
         fprintf(file, "# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
-                (char*) gx.GetVariable(DD_PLUGIN_NAME),
-                (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+                (char *) gx.GetVariable(DD_PLUGIN_NAME),
+                (char *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+    }
 
     fprintf(file, "# This configuration file is generated automatically. Each line is a\n");
     fprintf(file, "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
     fprintf(file, "# for your own startup commands.\n\n");
 }
 
-static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
+static int writeVariableToFileWorker(knownword_t const *word, void *context)
 {
-    FILE* file = (FILE*)paramaters;
-    cvar_t* var = (cvar_t*)word->data;
-    AutoStr* path;
-    assert(file && var);
+    FILE *file = (FILE *)context;
+    DENG_ASSERT(file != 0);
 
+    cvar_t *var = (cvar_t *)word->data;
+    DENG2_ASSERT(var != 0);
+
+    // Don't archive this cvar?
     if(var->flags & CVF_NO_ARCHIVE)
-        return 0; // Continue iteration.
+        return 0;
 
-    path = CVar_ComposePath(var);
+    AutoStr const *path = CVar_ComposePath(var);
+
     // First print the comment (help text).
-    { const char* str;
-    if(NULL != (str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION)))
+    if(char const *str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION))
+    {
         M_WriteCommented(file, str);
     }
 
     fprintf(file, "%s ", Str_Text(path));
     if(var->flags & CVF_PROTECTED)
         fprintf(file, "force ");
+
     switch(var->type)
     {
-    case CVT_BYTE:
-        fprintf(file, "%d", *(byte*) var->ptr);
-        break;
-    case CVT_INT:
-        fprintf(file, "%d", *(int*) var->ptr);
-        break;
-    case CVT_FLOAT:
-        fprintf(file, "%s", M_TrimmedFloat(*(float*) var->ptr));
-        break;
+    case CVT_BYTE:  fprintf(file, "%d", *(byte *) var->ptr); break;
+    case CVT_INT:   fprintf(file, "%d", *(int *) var->ptr); break;
+    case CVT_FLOAT: fprintf(file, "%s", M_TrimmedFloat(*(float *) var->ptr)); break;
+
     case CVT_CHARPTR:
         fprintf(file, "\"");
         if(CV_CHARPTR(var))
+        {
             M_WriteTextEsc(file, CV_CHARPTR(var));
+        }
         fprintf(file, "\"");
         break;
+
     case CVT_URIPTR:
         fprintf(file, "\"");
         if(CV_URIPTR(var))
         {
-            AutoStr* valPath = Uri_Compose(CV_URIPTR(var));
+            AutoStr *valPath = Uri_Compose(CV_URIPTR(var));
             fprintf(file, "%s", Str_Text(valPath));
         }
         fprintf(file, "\"");
         break;
+
     default: break;
     }
     fprintf(file, "\n\n");
@@ -101,55 +119,49 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     return 0; // Continue iteration.
 }
 
-static __inline void writeVariablesToFile(FILE* file)
+static void writeVariablesToFile(FILE *file)
 {
     Con_IterateKnownWords(0, WT_CVAR, writeVariableToFileWorker, file);
 }
 
-static int writeAliasToFileWorker(const knownword_t* word, void* paramaters)
+static int writeAliasToFileWorker(knownword_t const *word, void *context)
 {
-    FILE* file = (FILE*) paramaters;
-    calias_t* cal = (calias_t*) word->data;
-    assert(file && cal);
+    FILE *file = (FILE *) context;
+    DENG2_ASSERT(file != 0);
+
+    calias_t *cal = (calias_t *) word->data;
+    DENG2_ASSERT(cal != 0);
 
     fprintf(file, "alias \"");
     M_WriteTextEsc(file, cal->name);
     fprintf(file, "\" \"");
     M_WriteTextEsc(file, cal->command);
     fprintf(file, "\"\n");
+
     return 0; // Continue iteration.
 }
 
-static __inline void writeAliasesToFile(FILE* file)
+static void writeAliasesToFile(FILE *file)
 {
     Con_IterateKnownWords(0, WT_CALIAS, writeAliasToFileWorker, file);
 }
 
-static boolean writeConsoleState(const char* fileName)
+static bool writeConsoleState(Path const &filePath)
 {
-    ddstring_t nativePath, fileDir;
-    FILE* file;
-    if(!fileName || !fileName[0]) return false;
-
-    VERBOSE(Con_Message("Writing state to \"%s\"...", fileName));
-
-    Str_Init(&nativePath);
-    Str_Set(&nativePath, fileName);
-    F_ToNativeSlashes(&nativePath, &nativePath);
+    if(filePath.isEmpty()) return false;
 
     // Ensure the destination directory exists.
-    Str_Init(&fileDir);
-    F_FileDir(&fileDir, &nativePath);
-    if(Str_Length(&fileDir))
+    String fileDir = filePath.toString().fileNamePath();
+    if(!fileDir.isEmpty())
     {
-        F_MakePath(Str_Text(&fileDir));
+        F_MakePath(fileDir.toUtf8().constData());
     }
-    Str_Free(&fileDir);
 
-    file = fopen(Str_Text(&nativePath), "wt");
-    Str_Free(&nativePath);
-    if(file)
+    if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
     {
+        LOG_SCR_VERBOSE("Writing state to \"%s\"...")
+                << NativePath(filePath).pretty();
+
         writeHeaderComment(file);
         fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
         writeVariablesToFile(file);
@@ -159,59 +171,65 @@ static boolean writeConsoleState(const char* fileName)
         fclose(file);
         return true;
     }
-    Con_Message("Warning:writeConsoleState: Failed opening \"%s\" for writing.", F_PrettyPath(fileName));
+
+    LOG_SCR_WARNING("Failed opening \"%s\" for writing")
+            << NativePath(filePath).pretty();
+
     return false;
 }
 
 #ifdef __CLIENT__
-static boolean writeBindingsState(const char* fileName)
+static bool writeBindingsState(Path const &filePath)
 {
-    ddstring_t nativePath, fileDir;
-    FILE* file;
-    if(!fileName || !fileName[0]) return false;
-
-    VERBOSE(Con_Message("Writing bindings to \"%s\"...", fileName));
-
-    Str_Init(&nativePath);
-    Str_Set(&nativePath, fileName);
-    F_ToNativeSlashes(&nativePath, &nativePath);
+    if(filePath.isEmpty()) return false;
 
     // Ensure the destination directory exists.
-    Str_Init(&fileDir);
-    F_FileDir(&fileDir, &nativePath);
-    if(Str_Length(&fileDir))
+    String fileDir = filePath.toString().fileNamePath();
+    if(!fileDir.isEmpty())
     {
-        F_MakePath(Str_Text(&fileDir));
+        F_MakePath(fileDir.toUtf8().constData());
     }
-    Str_Free(&fileDir);
 
-    file = fopen(Str_Text(&nativePath), "wt");
-    Str_Free(&nativePath);
-    if(file)
+    if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
     {
+        LOG_SCR_VERBOSE("Writing bindings to \"%s\"...")
+                << NativePath(filePath).pretty();
+
         writeHeaderComment(file);
         B_WriteToFile(file);
         fclose(file);
         return true;
     }
-    Con_Message("Warning:writeBindingsState: Failed opening \"%s\" for writing.", F_PrettyPath(fileName));
+
+    LOG_SCR_WARNING("Failed opening \"%s\" for writing")
+            << NativePath(filePath).pretty();
+
     return false;
 }
 #endif // __CLIENT__
 
-boolean Con_ParseCommands(const char* fileName)
+static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
 {
-    return Con_ParseCommands2(fileName, 0);
+    if(!filePath.isEmpty() && (flagsAllow & CPCF_ALLOW_SAVE_STATE))
+    {
+        writeConsoleState(filePath);
+    }
+#ifdef __CLIENT__
+    if(!bindingsFileName.isEmpty() && (flagsAllow & CPCF_ALLOW_SAVE_BINDINGS))
+    {
+        // Bindings go into a separate file.
+        writeBindingsState(bindingsFileName);
+    }
+#endif
+    return true;
 }
 
-boolean Con_ParseCommands2(const char* fileName, int flags)
+bool Con_ParseCommands(char const *fileName, int flags)
 {
-    FileHandle* file;
-    char buff[512];
-    boolean setdefault = (flags & CPCF_SET_DEFAULT) != 0;
+    bool const setDefault = (flags & CPCF_SET_DEFAULT) != 0;
 
     // Is this supposed to be the default?
-    if(setdefault)
+    if(setDefault)
     {
         strncpy(cfgFile, fileName, FILENAME_T_MAXLEN);
         cfgFile[FILENAME_T_LASTINDEX] = '\0';
@@ -221,25 +239,29 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
     flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
     // Open the file.
-    file = F_Open(fileName, "rt");
+    filehandle_s *file = F_Open(fileName, "rt");
     if(!file)
     {
-        VERBOSE(Con_Message("Could not open: \"%s\"", fileName));
+        LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
         return false;
     }
 
-    VERBOSE(Con_Message("Con_ParseCommands: %s (def:%i)", F_PrettyPath(fileName), setdefault));
+    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)") << F_PrettyPath(fileName) << setDefault;
 
     // This file is filled with console commands.
     // Each line is a command.
+    char buff[512];
     for(int line = 1; ;)
     {
         M_ReadLine(buff, 512, file);
         if(buff[0] && !M_IsComment(buff))
         {
             // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
-                Con_Message("%s(%d): error executing command\n \"%s\"", F_PrettyPath(fileName), line, buff);
+            if(!Con_Execute(CMDS_CONFIG, buff, setDefault, false))
+            {
+                LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
+                        << F_PrettyPath(fileName) << line << buff;
+            }
         }
 
         if(FileHandle_AtEnd(file)) break;
@@ -252,36 +274,17 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
     return true;
 }
 
-/**
- * Writes the state of the console (variables, bindings, aliases) into
- * the given file, overwriting the previous contents.
- */
-boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
-{
-    if(fileName && (flagsAllow & CPCF_ALLOW_SAVE_STATE))
-    {
-        writeConsoleState(fileName);
-    }
-#ifdef __CLIENT__
-    if(bindingsFileName && (flagsAllow & CPCF_ALLOW_SAVE_BINDINGS))
-    {
-        // Bindings go into a separate file.
-        writeBindingsState(bindingsFileName);
-    }
-#endif
-    return true;
-}
-
 void Con_SaveDefaults()
 {
-    Con_WriteState(cfgFile, (!isDedicated && App_GameLoaded()?
-                                 Str_Text(App_CurrentGame().bindingConfig()) : 0));
+    writeState(cfgFile, (!isDedicated && App_GameLoaded()?
+                             App_CurrentGame().bindingConfig() : ""));
 }
 
 D_CMD(WriteConsole)
 {
     DENG2_UNUSED2(src, argc);
+    Path filePath = Path(NativePath(argv[1]).expand().withSeparators('/'));
 
-    Con_Message("Writing to \"%s\"...", argv[1]);
-    return !Con_WriteState(argv[1], NULL);
+    LOG_SCR_MSG("Writing to \"%s\"...") << filePath;
+    return !writeState(filePath);
 }

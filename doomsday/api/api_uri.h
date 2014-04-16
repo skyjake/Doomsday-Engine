@@ -84,6 +84,8 @@ DENG_API_TYPEDEF(Uri) // v1
      */
     Uri* (*New)(void);
 
+    Uri* (*NewWithPath3)(char const *defaultScheme, char const *path);
+
     /**
      * Constructs a Uri instance from @a path. The uri should be destroyed with
      * Uri_Delete() once it is no longer needed.
@@ -92,9 +94,9 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c FC_NULL,
      *      look for an appropriate default scheme for this class of resource.
      */
-    Uri* (*NewWithPath2)(char const* path, resourceclassid_t defaultResourceClass);
+    Uri* (*NewWithPath2)(char const *path, resourceclassid_t defaultResourceClass);
 
-    Uri* (*NewWithPath)(char const* path);
+    Uri* (*NewWithPath)(char const *path);
 
     /**
      * Constructs a Uri instance by duplicating @a other. The uri should be destroyed
@@ -117,7 +119,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * Returns true if the path component of the URI is empty; otherwise false.
      * @param uri  Uri instance.
      */
-    boolean (*IsEmpty)(Uri const* uri);
+    dd_bool (*IsEmpty)(Uri const* uri);
 
     /**
      * Clears the uri, returning it to an empty state.
@@ -220,7 +222,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param uri  Uri instance.
      * @param other  Other uri instance.
      */
-    boolean (*Equality)(Uri const* uri, Uri const* other);
+    dd_bool (*Equality)(Uri const* uri, Uri const* other);
 
     /**
      * Serialize @a uri using @a writer.
@@ -259,6 +261,7 @@ DENG_API_TYPEDEF(Uri) // v1
 // Macros for accessing exported functions.
 #ifndef DENG_NO_API_MACROS_URI
 #define Uri_New                     _api_Uri.New
+#define Uri_NewWithPath3            _api_Uri.NewWithPath3
 #define Uri_NewWithPath2            _api_Uri.NewWithPath2
 #define Uri_NewWithPath             _api_Uri.NewWithPath
 #define Uri_Dup                     _api_Uri.Dup

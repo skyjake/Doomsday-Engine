@@ -46,6 +46,7 @@
 #  include "render/lightgrid.h"
 #  include "render/blockmapvisual.h"
 #  include "edit_bias.h"
+#  include "ui/widgets/taskbarwidget.h"
 #endif
 
 #ifdef __SERVER__
@@ -59,6 +60,7 @@
 
 #include <de/Value>
 #include <de/Version>
+#include <de/charsymbols.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -123,7 +125,7 @@ int     isClient; // true if this computer is a client
 // Gotframe is true if a frame packet has been received.
 int     gotFrame = false;
 
-boolean firstNetUpdate = true;
+dd_bool firstNetUpdate = true;
 
 byte    monitorMsgQueue = false;
 byte    netShowLatencies = false;
@@ -134,7 +136,7 @@ float   netConnectTimeout = 10;
 float   netSimulatedLatencySeconds = 0;
 
 // Local packets are stored into this buffer.
-boolean reboundPacket;
+dd_bool reboundPacket;
 netbuffer_t reboundStore;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -154,9 +156,9 @@ void Net_Register(void)
     C_VAR_FLOAT("net-dev-latency", &netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
 #endif
     //C_VAR_BYTE("net-nosleep", &netDontSleep, 0, 0, 1);
-    C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
-    C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
-    C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
+    //C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
+    //C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
+    //C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
     C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
 
 #ifdef __CLIENT__
@@ -282,7 +284,7 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 /**
  * @return @c false, if there are no packets waiting.
  */
-boolean Net_GetPacket(void)
+dd_bool Net_GetPacket(void)
 {
     if(reboundPacket) // Local packets rebound.
     {
@@ -332,13 +334,12 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
 {
     size_t nameLen;
 
-    assert(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
+    DENG_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
     nameLen = strlen(clients[srcPlrNum].name);
 
-#ifdef _DEBUG
-    Con_Message("Net_SendPlayerInfo: src=%i dest=%i name=%s",
-                srcPlrNum, destPlrNum, clients[srcPlrNum].name);
-#endif
+    LOG_AS("Net_SendPlayerInfo");
+    LOGDEV_NET_VERBOSE("src=%i dest=%i name=%s")
+            << srcPlrNum << destPlrNum << clients[srcPlrNum].name;
 
     Msg_Begin(PKT_PLAYER_INFO);
     Writer_WriteByte(msgWriter, srcPlrNum);
@@ -386,7 +387,9 @@ void Net_ShowChatMessage(int plrNum, const char* message)
 {
     const char* fromName = (plrNum > 0? clients[plrNum].name : "[sysop]");
     const char* sep      = (plrNum > 0? ":"                  : "");
-    Con_FPrintf(!plrNum? SV_CONSOLE_PRINT_FLAGS : CPF_GREEN, "%s%s %s\n", fromName, sep, message);
+    LOG_NOTE("%s%s%s %s")
+            << (!plrNum? _E(1) : _E(D))
+            << fromName << sep << message;
 }
 
 /**
@@ -409,7 +412,7 @@ void Net_ResetTimer(void)
 /**
  * @return @c true, if the specified player is a real, local player.
  */
-boolean Net_IsLocalPlayer(int plrNum)
+dd_bool Net_IsLocalPlayer(int plrNum)
 {
     player_t *plr = &ddPlayers[plrNum];
 
@@ -457,13 +460,6 @@ static void Net_DoUpdate(void)
      * any prediction errors can be fixed. Client movement is almost
      * entirely local.
      */
-#ifdef _DEBUG
-    if(netGame && verbose >= 2)
-    {
-        Con_Message("Net_DoUpdate: coordTimer=%i cl:%i shmo:%p", coordTimer,
-                    isClient, ddPlayers[consolePlayer].shared.mo);
-    }
-#endif
 
     coordTimer -= newTics;
     if(isClient && coordTimer <= 0 &&
@@ -568,9 +564,9 @@ void Net_InitGame(void)
     clients[0].lastTransmit = -1;
 }
 
-void Net_StopGame(void)
+void Net_StopGame()
 {
-    int     i;
+    LOG_AS("Net_StopGame");
 
 #ifdef __SERVER__
     if(isServer)
@@ -585,9 +581,8 @@ void Net_StopGame(void)
 #endif
 
 #ifdef __CLIENT__
-# ifdef _DEBUG
-    Con_Message("Net_StopGame: Sending PCL_GOODBYE.");
-# endif
+    LOGDEV_NET_MSG("Sending PCL_GOODBYE");
+
     // We are a connected client.
     Msg_Begin(PCL_GOODBYE);
     Msg_End();
@@ -611,10 +606,10 @@ void Net_StopGame(void)
 #endif
 
     // All remote players are forgotten.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
-        client_t           *cl = &clients[i];
+        player_t *plr = &ddPlayers[i];
+        client_t *cl = &clients[i];
 
         plr->shared.inGame = false;
         cl->ready = cl->connected = false;
@@ -635,9 +630,8 @@ void Net_StopGame(void)
             ddPlayers[consolePlayer].shared.lookDir;
     }
 
-#ifdef _DEBUG
-    Con_Message("Net_StopGame: Reseting console & view player to zero.");
-#endif
+    LOGDEV_NET_NOTE("Reseting console and view players to zero");
+
     consolePlayer = displayPlayer = 0;
     ddPlayers[0].shared.inGame = true;
     clients[0].ready = true;
@@ -671,7 +665,7 @@ int Net_TimeDelta(byte now, byte then)
 
 #ifdef __CLIENT__
 /// @return  @c true iff a demo is currently being recorded.
-static boolean recordingDemo(void)
+static dd_bool recordingDemo(void)
 {
     int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -775,16 +769,13 @@ void Net_Ticker(timespan_t time)
             {
                 if(Sv_IsFrameTarget(i))
                 {
-                    Con_Message("%i(rdy%i): avg=%05ims thres=%05ims "
-                                "bwr=%05i maxfs=%05lub unakd=%05i", i,
-                                clients[i].ready, 0, 0,
-                                clients[i].bandwidthRating,
-                                /*clients[i].bwrAdjustTime,*/
-                                (unsigned long) Sv_GetMaxFrameSize(i),
-                                Sv_CountUnackedDeltas(i));
+                    LOGDEV_NET_MSG("%i(rdy%i): avg=%05ims thres=%05ims "
+                                   "bwr=%05i maxfs=%05ib unakd=%05i")
+                            << i << clients[i].ready << 0 << 0
+                            << clients[i].bandwidthRating
+                            << Sv_GetMaxFrameSize(i)
+                            << Sv_CountUnackedDeltas(i);
                 }
-                /*if(ddPlayers[i].inGame)
-                    Con_Message("%i: cmds=%i", i, clients[i].numTics);*/
             }
         }
     }
@@ -813,39 +804,67 @@ void Net_Ticker(timespan_t time)
     }
 }
 
+de::String ServerInfo_AsStyledText(serverinfo_t const *sv)
+{
+#define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
+    return de::String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
+                      TABBED("Joinable:", "%5")
+                      TABBED("Players:", "%3 / %4%13")
+                      TABBED("Game:", "%9\n%10\n%12 %11")
+                      TABBED("PWADs:", "%14")
+                      TABBED("Address:", "%6:%7")
+                      TABBED("Ping:", "%8 ms (approx)"))
+            .arg(sv->name)
+            .arg(sv->description)
+            .arg(sv->numPlayers)
+            .arg(sv->maxPlayers)
+            .arg(sv->canJoin? "Yes" : "No") // 5
+            .arg(sv->address)
+            .arg(sv->port)
+            .arg(sv->ping)
+            .arg(sv->plugin)
+            .arg(sv->gameIdentityKey) // 10
+            .arg(sv->gameConfig)
+            .arg(sv->map)
+            .arg(!de::String(sv->clientNames).isEmpty()? de::String(_E(2) " (%1)" _E(.)).arg(sv->clientNames) : "")
+            .arg(de::String(sv->pwads).isEmpty()? de::String(DENG2_CHAR_MDASH) : de::String(sv->pwads)); // 14
+#undef TABBED
+}
+
 /**
  * Prints server/host information into the console. The header line is
  * printed if 'info' is NULL.
  */
-void Net_PrintServerInfo(int index, serverinfo_t *info)
+void ServerInfo_Print(serverinfo_t const *info, int index)
 {
+    /// @todo Update table for de::Log. -jk
+    ///
     if(!info)
     {
-        Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n",
-                   "Name:");
+        LOG_NET_MSG(_E(m)"    %-20s P/M  L Ver:  Game:            Location:") << "Name:";
     }
     else
     {
-        Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", index,
-                   info->name, info->numPlayers, info->maxPlayers,
-                   info->canJoin ? ' ' : '*', info->version, info->plugin,
-                   info->address, info->port);
-        Con_Printf("    %s p:%ims %-40s\n", info->map, info->ping, info->description);
-        Con_Printf("    %s (crc:%x) %s\n", info->gameIdentityKey, info->loadedFilesCRC, info->gameConfig);
+        LOG_NET_MSG(_E(m)"%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i")
+                << index << info->name << info->numPlayers << info->maxPlayers
+                << (info->canJoin? ' ' : '*') << info->version << info->plugin
+                << info->address << info->port;
+        LOG_NET_MSG("    %s p:%ims %-40s") << info->map << info->ping << info->description;
+        LOG_NET_MSG("    %s (CRC:%x) %s") << info->gameIdentityKey << info->loadedFilesCRC << info->gameConfig;
 
         // Optional: PWADs in use.
         if(info->pwads[0])
-            Con_Printf("    PWADs: %s\n", info->pwads);
+            LOG_NET_MSG("    PWADs: %s") << info->pwads;
 
         // Optional: names of players.
         if(info->clientNames[0])
-            Con_Printf("    Players: %s\n", info->clientNames);
+            LOG_NET_MSG("    Players: %s") << info->clientNames;
 
         // Optional: data values.
         if(info->data[0] || info->data[1] || info->data[2])
         {
-            Con_Printf("    Data: (%08x, %08x, %08x)\n", info->data[0],
-                       info->data[1], info->data[2]);
+            LOG_NET_MSG("    Data: (%08x, %08x, %08x)") << info->data[0]
+                    << info->data[1] << info->data[2];
         }
     }
 }
@@ -881,12 +900,14 @@ D_CMD(Chat)
 
     if(argc == 1)
     {
-        Con_Printf("Usage: %s %s(text)\n", argv[0],
-                   !mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
-        Con_Printf("Chat messages are max. 80 characters long.\n");
-        Con_Printf("Use quotes to get around arg processing.\n");
+        LOG_SCR_NOTE("Usage: %s %s(text)") << argv[0]
+                << (!mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
+        LOG_SCR_MSG("Chat messages are max 80 characters long. Use quotes to get around "
+                    "arg processing.");
         return true;
     }
+
+    LOG_AS("chat (Cmd)");
 
     // Chatting is only possible when connected.
     if(!netGame)
@@ -918,7 +939,7 @@ D_CMD(Chat)
 
     case 2: // chatTo
         {
-        boolean     found = false;
+        dd_bool     found = false;
 
         for(i = 0; i < DDMAXPLAYERS && !found; ++i)
         {
@@ -932,7 +953,7 @@ D_CMD(Chat)
         }
 
     default:
-        Con_Error("CCMD_Chat: Invalid value, mode = %i.", mode);
+        LOG_SCR_ERROR("Invalid value, mode = %i") << mode;
         break;
     }
 
@@ -971,28 +992,30 @@ D_CMD(Kick)
 
     int     num;
 
+    LOG_AS("kick (Cmd)")
+
     if(!netGame)
     {
-        Con_Printf("This is not a netGame.\n");
+        LOG_SCR_ERROR("This is not a network game");
         return false;
     }
 
     if(!isServer)
     {
-        Con_Printf("This command is for the server only.\n");
+        LOG_SCR_ERROR("Only allowed on the server");
         return false;
     }
 
     num = atoi(argv[1]);
     if(num < 1 || num >= DDMAXPLAYERS)
     {
-        Con_Printf("Invalid client number.\n");
+        LOG_NET_ERROR("Invalid client number");
         return false;
     }
 
     if(netRemoteUser == num)
     {
-        Con_Printf("Can't kick the client who's logged in.\n");
+        LOG_NET_ERROR("Can't kick the client who's logged in");
         return false;
     }
 
@@ -1062,13 +1085,15 @@ D_CMD(MakeCamera)
     // Create a new local player.
     int cp;
 
+    LOG_AS("makecam (Cmd)");
+
     cp = atoi(argv[1]);
     if(cp < 0 || cp >= DDMAXPLAYERS)
         return false;
 
     if(clients[cp].connected)
     {
-        Con_Printf("Client %i already connected.\n", cp);
+        LOG_ERROR("Client %i already connected") << cp;
         return false;
     }
 
@@ -1109,33 +1134,10 @@ D_CMD(SetConsole)
     return true;
 }
 
-#if 0
-void Net_FinishConnection(int nodeId, const byte* data, int size)
-{
-    serverinfo_t info;
-
-    Con_Message("Net_FinishConnection: Got reply with %i bytes.", size);
-
-    // Parse the response for server info.
-    N_ClientHandleResponseToInfoQuery(nodeId, data, size);
-
-    if(N_GetHostInfo(0, &info))
-    {
-        // Found something!
-        //Net_PrintServerInfo(0, NULL);
-        //Net_PrintServerInfo(0, &info);
-        Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
-    }
-    else
-    {
-        Con_Message("Net_FinishConnection: Failed to retrieve server info.");
-    }
-}
-#endif
-
 int Net_StartConnection(const char* address, int port)
 {
-    Con_Message("Net_StartConnection: Connecting to %s (port %i)...", address, port);
+    LOG_AS("Net_StartConnection");
+    LOG_NET_MSG("Connecting to %s (port %i)...") << address << port;
 
     // Start searching at the specified location.
     Net_ServerLink().connectDomain(de::String("%1:%2").arg(address).arg(port), 7 /*timeout*/);
@@ -1155,15 +1157,15 @@ D_CMD(Connect)
 
     if(argc < 2 || argc > 3)
     {
-        Con_Printf("Usage: %s (ip-address) [port]\n", argv[0]);
-        Con_Printf("A TCP/IP connection is created to the given server.\n");
-        Con_Printf("If a port is not specified port zero will be used.\n");
+        LOG_SCR_NOTE("Usage: %s (ip-address) [port]") << argv[0];
+        LOG_SCR_MSG("A TCP/IP connection is created to the given server. If a port is not "
+                    "specified port zero will be used.");
         return true;
     }
 
     if(netGame)
     {
-        Con_Printf("Already connected.\n");
+        LOG_NET_ERROR("Already connected");
         return false;
     }
 
@@ -1191,26 +1193,26 @@ D_CMD(Net)
 {
     DENG2_UNUSED(src);
 
-    boolean success = true;
+    dd_bool success = true;
 
     if(argc == 1) // No args?
     {
-        Con_Printf("Usage: %s (cmd/args)\n", argv[0]);
-        Con_Printf("Commands:\n");
-        Con_Printf("  init\n");
-        Con_Printf("  shutdown\n");
-        Con_Printf("  info\n");
-        Con_Printf("  request\n");
+        LOG_SCR_NOTE("Usage: %s (cmd/args)") << argv[0];
+        LOG_SCR_MSG("Commands:");
+        LOG_SCR_MSG("  init");
+        LOG_SCR_MSG("  shutdown");
+        LOG_SCR_MSG("  info");
+        LOG_SCR_MSG("  request");
 #ifdef __CLIENT__
-        Con_Printf("  setup client\n");
-        Con_Printf("  search (address) [port]   (local or targeted query)\n");
-        Con_Printf("  servers   (asks the master server)\n");
-        Con_Printf("  connect (idx)\n");
-        Con_Printf("  mconnect (m-idx)\n");
-        Con_Printf("  disconnect\n");
+        LOG_SCR_MSG("  setup client");
+        LOG_SCR_MSG("  search (address) [port]   (local or targeted query)");
+        LOG_SCR_MSG("  servers   (asks the master server)");
+        LOG_SCR_MSG("  connect (idx)");
+        LOG_SCR_MSG("  mconnect (m-idx)");
+        LOG_SCR_MSG("  disconnect");
 #endif
 #ifdef __SERVER__
-        Con_Printf("  announce\n");
+        LOG_SCR_MSG("  announce");
 #endif
         return true;
     }
@@ -1234,32 +1236,32 @@ D_CMD(Net)
         else if(!stricmp(argv[1], "info"))
         {
             N_PrintNetworkStatus();
-            Con_Message("Network game: %s", netGame ? "yes" : "no");
-            Con_Message("This is console %i (local player %i).", consolePlayer, P_ConsoleToLocal(consolePlayer));
+            LOG_NET_MSG("Network game: %b") << netGame;
+            LOG_NET_MSG("This is console %i (local player %i)") << consolePlayer << P_ConsoleToLocal(consolePlayer);
         }
 #ifdef __CLIENT__
         else if(!stricmp(argv[1], "disconnect"))
         {
             if(!netGame)
             {
-                Con_Message("This client is not connected to a server.");
+                LOG_NET_ERROR("This client is not connected to a server");
                 return false;
             }
 
             if(!isClient)
             {
-                Con_Message("This is not a client.");
+                LOG_NET_ERROR("This is not a client");
                 return false;
             }
 
             Net_ServerLink().disconnect();
 
-            Con_Message("Disconnected.");
+            LOG_NET_NOTE("Disconnected");
         }
 #endif
         else
         {
-            Con_Message("Bad arguments.");
+            LOG_SCR_ERROR("Invalid arguments");
             return false; // Bad args.
         }
     }
@@ -1275,7 +1277,7 @@ D_CMD(Net)
         {
             if(netGame)
             {
-                Con_Message("Already connected.");
+                LOG_NET_ERROR("Already connected");
                 return false;
             }
 
@@ -1283,7 +1285,7 @@ D_CMD(Net)
             serverinfo_t info;
             if(Net_ServerLink().foundServerInfo(index, &info))
             {
-                Net_PrintServerInfo(index, &info);
+                ServerInfo_Print(&info, index);
                 Net_ServerLink().connectDomain(de::String("%1:%2").arg(info.address).arg(info.port), 5);
             }
         }
@@ -1303,8 +1305,16 @@ D_CMD(Net)
         else if(!stricmp(argv[1], "setup"))
         {
             // Start network setup.
-            DD_NetSetup(!stricmp(argv[2], "server"));
-            CmdReturnValue = true;
+            if(!stricmp(argv[2], "client"))
+            {
+                CmdReturnValue = true;
+                ClientWindow::main().taskBar().close();
+                ClientWindow::main().taskBar().showMultiplayer();
+            }
+            else
+                return false;
+            //DD_NetSetup(!stricmp(argv[2], "server"));
+            //CmdReturnValue = true;
         }
 #endif
     }
@@ -1327,7 +1337,7 @@ D_CMD(Net)
  * Extracts the label and value from a string.  'max' is the maximum
  * allowed length of a token, including terminating \0.
  */
-static boolean tokenize(char const *line, char *label, char *value, int max)
+static dd_bool tokenize(char const *line, char *label, char *value, int max)
 {
     const char *src = line;
     const char *colon = strchr(src, ':');
@@ -1348,9 +1358,9 @@ static boolean tokenize(char const *line, char *label, char *value, int max)
     return true;
 }
 
-void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info)
+void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec)
 {
-    memset(info, 0, sizeof(*info));
+    de::zapPtr(info);
 
     info->port           = (int)  rec["port"].value().asNumber();
     info->version        = (int)  rec["ver" ].value().asNumber();
@@ -1375,7 +1385,7 @@ void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info)
 #undef COPY_STR
 }
 
-boolean Net_StringToServerInfo(const char *valuePair, serverinfo_t *info)
+dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
 {
     char label[SVINFO_TOKEN_LEN], value[SVINFO_TOKEN_LEN];
 

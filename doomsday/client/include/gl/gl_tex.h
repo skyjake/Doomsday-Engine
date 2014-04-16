@@ -54,7 +54,7 @@ typedef struct averagealpha_analysis_s {
  * @param hasAlpha  If @c true, @a pixels is assumed to contain luminance plus alpha data
  *                  (totaling 2 * @a width * @a height bytes).
  */
-void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha);
+void AmplifyLuma(uint8_t* pixels, int width, int height, dd_bool hasAlpha);
 
 /**
  * Take the input buffer and convert to color keyed. A new buffer may be
@@ -155,7 +155,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param color     Determined average color written here.
  */
 void FindAverageColorIdx(uint8_t const *pixels, int width, int height,
-    ColorPalette const &palette, boolean hasAlpha, ColorRawf *color);
+    ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -178,7 +178,7 @@ void FindAverageLineColor(uint8_t const *pixels, int width, int height,
  * @param color     Determined average color written here.
  */
 void FindAverageLineColorIdx(uint8_t const *pixels, int width, int height,
-    int line, ColorPalette const &palette, boolean hasAlpha, ColorRawf *color);
+    int line, ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -258,10 +258,10 @@ void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
  */
 void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float fade);
 
-boolean GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
-    boolean gammaCorrect, uint8_t const *in, int informat, int width, int height);
+dd_bool GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
+    dd_bool gammaCorrect, uint8_t const *in, int informat, int width, int height);
 
-boolean GL_QuantizeImageToPalette(uint8_t *out, int outformat,
+dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat,
     ColorPalette const *palette, uint8_t const *in, int informat, int width, int height);
 
 /**

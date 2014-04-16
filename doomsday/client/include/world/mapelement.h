@@ -1,4 +1,4 @@
-/** @file mapelement.h Base class for all world map elements.
+/** @file mapelement.h  Base class for all world map elements.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -20,10 +20,9 @@
 #ifndef DENG_WORLD_MAPELEMENT_H
 #define DENG_WORLD_MAPELEMENT_H
 
-#include <de/Error>
-
 #include "dd_share.h"
 #include "world/dmuargs.h"
+#include <de/Error>
 
 namespace de {
 

@@ -39,7 +39,7 @@
 #define EVBUFSIZE       64
 #define KEYBUFSIZE      32
 
-static boolean initOk;
+static dd_bool initOk;
 static byte useMouse; // Input enabled from mouse?
 static mouseinterface_t* iMouse; ///< Current mouse interface.
 
@@ -81,14 +81,16 @@ static void Mouse_Init(void)
     if(CommandLine_Check("-nomouse") || novideo)
         return;
 
-    assert(iMouse);
+    LOG_AS("Mouse_Init");
+
+    DENG_ASSERT(iMouse);
     iMouse->init();
 
     // Init was successful.
     useMouse = true;
 }
 
-boolean I_Init(void)
+dd_bool I_Init(void)
 {
     if(initOk)
         return true; // Already initialized.
@@ -163,7 +165,7 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
     return i;
 }
 
-boolean Mouse_IsPresent(void)
+dd_bool Mouse_IsPresent(void)
 {
     //if(!initOk) I_Init();
     return useMouse;
@@ -185,7 +187,7 @@ void Mouse_GetState(mousestate_t *state)
     }
 }
 
-void Mouse_Trap(boolean enabled)
+void Mouse_Trap(dd_bool enabled)
 {
     if(useMouse)
     {

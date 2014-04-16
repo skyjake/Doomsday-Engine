@@ -52,7 +52,7 @@ typedef struct {
 
 extern application_t app;
 
-boolean DD_Win32_Init(void);
+dd_bool DD_Win32_Init(void);
 void DD_Shutdown(void);
 
 const char* DD_Win32_GetLastErrorMessage(void);

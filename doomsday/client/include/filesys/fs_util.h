@@ -42,25 +42,25 @@ void F_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
  * Converts directory slashes to our internal '/'.
  * @return  @c true iff the path was modified.
  */
-boolean F_FixSlashes(ddstring_t* dst, const ddstring_t* src);
+dd_bool F_FixSlashes(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Appends a slash at the end of @a pathStr if there isn't one.
  * @return @c true if a slash was appended, @c false otherwise.
  */
-boolean F_AppendMissingSlash(ddstring_t* pathStr);
+dd_bool F_AppendMissingSlash(ddstring_t* pathStr);
 
 /**
  * Appends a slash at the end of @a path if there isn't one.
  * @return @c true if a slash was appended, @c false otherwise.
  */
-boolean F_AppendMissingSlashCString(char* path, size_t maxLen);
+dd_bool F_AppendMissingSlashCString(char* path, size_t maxLen);
 
 /**
  * Converts directory slashes to tha used by the host file system.
  * @return  @c true iff the path was modified.
  */
-boolean F_ToNativeSlashes(ddstring_t* dst, const ddstring_t* src);
+dd_bool F_ToNativeSlashes(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Convert the symbolic path into a real path.
@@ -72,12 +72,12 @@ void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src);
  * @return  @c true, if the given path is absolute (starts with \ or / or the
  *          second character is a ':' (drive).
  */
-boolean F_IsAbsolute(const ddstring_t* path);
+dd_bool F_IsAbsolute(const ddstring_t* path);
 
 /**
  * @return  @c true iff the path can be made into a relative path.
  */
-boolean F_IsRelativeToBase(const char* path, const char* base);
+dd_bool F_IsRelativeToBase(const char* path, const char* base);
 
 /**
  * Attempt to remove the base path if found at the beginning of the path.
@@ -88,8 +88,8 @@ boolean F_IsRelativeToBase(const char* path, const char* base);
  *
  * @return  @c true iff the base path was found and removed.
  */
-boolean F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
-boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
+dd_bool F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
+dd_bool F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
 
 /**
  * Attempt to prepend the base path. If @a src is already absolute do nothing.
@@ -100,8 +100,8 @@ boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstri
  *
  * @return  @c true iff the path was prepended.
  */
-boolean F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
-boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
+dd_bool F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
+dd_bool F_PrependBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
 
 /**
  * Attempt to prepend the current work path. If @a src is already absolute do nothing.
@@ -111,7 +111,7 @@ boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstr
  *
  * @return  @c true iff the path was prepended.
  */
-boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src);
+dd_bool F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Expands relative path directives like '>'.
@@ -127,9 +127,9 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src);
  *
  * @return  @c true iff the path was expanded.
  */
-boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
+dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
 
-boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
+dd_bool F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Write the data associated with the specified lump index to @a fileName.
@@ -138,14 +138,14 @@ boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
  *
  * @return  @c true iff successful.
  */
-boolean F_DumpLump(lumpnum_t lumpNum/*, fileName = 0*/);
+dd_bool F_DumpLump(lumpnum_t lumpNum/*, fileName = 0*/);
 
 /**
  * @copydoc F_DumpLump
  * @param fileName          If not @c NULL write the associated data to this path.
  *                          Can be @c NULL in which case the fileName will be chosen automatically.
  */
-boolean F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
+dd_bool F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
 
 /**
  * Write data into a file.
@@ -156,7 +156,7 @@ boolean F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
  *
  * @return @c true if successful, otherwise @c false.
  */
-boolean F_Dump(void const* data, size_t size, char const* path);
+dd_bool F_Dump(void const* data, size_t size, char const* path);
 
 #ifdef __cplusplus
 } // extern "C"

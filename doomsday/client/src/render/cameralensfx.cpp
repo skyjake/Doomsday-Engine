@@ -45,6 +45,7 @@
 #include "render/fx/lensflares.h"
 #include "render/fx/postprocessing.h"
 #include "render/fx/vignette.h"
+#include "render/fx/bloom.h"
 #include "con_main.h"
 
 #include "ui/clientwindow.h"
@@ -78,7 +79,7 @@ struct ConsoleEffectStack
 static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
 #define IDX_LENS_FLARES         2
-#define IDX_POST_PROCESSING     3
+#define IDX_POST_PROCESSING     4
 
 D_CMD(PostFx)
 {
@@ -88,7 +89,7 @@ D_CMD(PostFx)
 
     if(console < 0 || console >= DDMAXPLAYERS)
     {
-        LOG_WARNING("Invalid console %i") << console;
+        LOG_SCR_WARNING("Invalid console %i") << console;
         return false;
     }
 
@@ -122,10 +123,12 @@ void LensFx_Init()
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         ConsoleEffectStack &stack = fxConsole[i];
-        stack.effects.append(new fx::ColorFilter(i));
-        stack.effects.append(new fx::Vignette(i));
-        stack.effects.append(new fx::LensFlares(i));
-        stack.effects.append(new fx::PostProcessing(i)); // IDX_POST_PROCESSING
+        stack.effects
+                << new fx::Bloom(i)
+                << new fx::Vignette(i)
+                << new fx::LensFlares(i)        // IDX_LENS_FLARES
+                << new fx::ColorFilter(i)
+                << new fx::PostProcessing(i);   // IDX_POST_PROCESSING
     }
 }
 

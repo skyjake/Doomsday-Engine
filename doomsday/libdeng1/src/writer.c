@@ -44,14 +44,14 @@ struct writer_s
     byte *data;             // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
-    boolean isDynamic;      // The buffer will be reallocated when needed.
+    dd_bool isDynamic;      // The buffer will be reallocated when needed.
     size_t maxDynamicSize;  // Zero for unlimited.
 
-    boolean useCustomFuncs; // Validity checks are skipped (callbacks' responsibility).
+    dd_bool useCustomFuncs; // Validity checks are skipped (callbacks' responsibility).
     writerfuncs_t func;     // Callbacks for write operations.
 };
 
-static boolean Writer_Check(Writer const *writer, size_t len)
+static dd_bool Writer_Check(Writer const *writer, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One extra byte for the check code.
@@ -89,8 +89,8 @@ static boolean Writer_Check(Writer const *writer, size_t len)
             if((int)writer->pos <= (int)writer->size - (int)len)
                 return true;
         }
-        LogBuffer_Printf(DE2_LOG_ERROR,
-            "Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",
+        App_Log(DE2_LOG_ERROR,
+            "Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.",
                 (unsigned long) writer->pos,
                 (unsigned long) len,
                 (unsigned long) writer->size,
@@ -142,6 +142,7 @@ Writer *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
 
 void Writer_Delete(Writer *writer)
 {
+    if(!writer) return;
     if(writer->isDynamic)
     {
         // The buffer was allocated by us.
@@ -324,10 +325,11 @@ void Writer_Write(Writer *writer, void const *buffer, size_t len)
 
 void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
 {
+    DENG_ASSERT(!(v & 0x8000));
     if(v & 0x8000)
     {
-        LogBuffer_Printf(DE2_LOG_ERROR,
-            "Writer_WritePackedUInt16: Cannot write %i (%x).\n", v, v);
+        App_Log(DE2_LOG_ERROR,
+            "Writer_WritePackedUInt16: Cannot write %i (%x).", v, v);
         return;
     }
 

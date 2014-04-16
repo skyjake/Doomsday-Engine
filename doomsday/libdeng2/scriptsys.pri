@@ -1,4 +1,4 @@
-HEADERS += \
+publicHeaders(root, \
     include/de/ArrayExpression \
     include/de/AssignStatement \
     include/de/BuiltInExpression \
@@ -34,9 +34,10 @@ HEADERS += \
     include/de/TokenBuffer \
     include/de/TokenRange \
     include/de/TryStatement \
-    include/de/WhileStatement
+    include/de/WhileStatement \
+)
 
-HEADERS += \
+publicHeaders(scriptsys, \
     include/de/scriptsys/arrayexpression.h \
     include/de/scriptsys/assignstatement.h \
     include/de/scriptsys/builtinexpression.h \
@@ -72,7 +73,8 @@ HEADERS += \
     include/de/scriptsys/tokenbuffer.h \
     include/de/scriptsys/tokenrange.h \
     include/de/scriptsys/trystatement.h \
-    include/de/scriptsys/whilestatement.h
+    include/de/scriptsys/whilestatement.h \
+)
 
 SOURCES += \
     src/scriptsys/arrayexpression.cpp \

@@ -3,18 +3,17 @@
  * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Canvas"
@@ -87,17 +86,22 @@ DENG2_PIMPL(Canvas)
 #endif
     }
 
+    ~Instance()
+    {
+        glDeinit();
+    }
+
     void grabMouse()
     {
         if(!self.isVisible()/* || mouseDisabled*/) return;
 
-        LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
-
         if(!mouseGrabbed)
         {
+            LOG_INPUT_VERBOSE("Grabbing mouse") << mouseGrabbed;
+
             mouseGrabbed = true;
 
-            DENG2_FOR_PUBLIC_AUDIENCE(MouseStateChange, i)
+            DENG2_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
             {
                 i->mouseStateChanged(Trapped);
             }
@@ -108,14 +112,14 @@ DENG2_PIMPL(Canvas)
     {
         if(!self.isVisible()/* || mouseDisabled*/) return;
 
-        LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
-
         if(mouseGrabbed)
         {
+            LOG_INPUT_VERBOSE("Ungrabbing mouse") << mouseGrabbed;
+
             // Tell the mouse driver that the mouse is untrapped.
             mouseGrabbed = false;
 
-            DENG2_FOR_PUBLIC_AUDIENCE(MouseStateChange, i)
+            DENG2_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
             {
                 i->mouseStateChanged(Untrapped);
             }
@@ -167,7 +171,7 @@ DENG2_PIMPL(Canvas)
         }
 #endif
 
-        DENG2_FOR_PUBLIC_AUDIENCE(KeyEvent, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
         {
             i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
                                  ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
@@ -211,14 +215,26 @@ DENG2_PIMPL(Canvas)
         /// @todo Double buffering is not really needed in manual FB mode.
         framebuf.swapBuffers(self, mode);
     }
+
+    DENG2_PIMPL_AUDIENCE(GLReady)
+    DENG2_PIMPL_AUDIENCE(GLInit)
+    DENG2_PIMPL_AUDIENCE(GLResize)
+    DENG2_PIMPL_AUDIENCE(GLDraw)
+    DENG2_PIMPL_AUDIENCE(FocusChange)
 };
+
+DENG2_AUDIENCE_METHOD(Canvas, GLReady)
+DENG2_AUDIENCE_METHOD(Canvas, GLInit)
+DENG2_AUDIENCE_METHOD(Canvas, GLResize)
+DENG2_AUDIENCE_METHOD(Canvas, GLDraw)
+DENG2_AUDIENCE_METHOD(Canvas, FocusChange)
 
 Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     : QGLWidget(parent, shared), d(new Instance(this, parent))
 {
     LOG_AS("Canvas");
-    LOG_DEBUG("swap interval: ") << format().swapInterval();
-    LOG_DEBUG("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
+    LOGDEV_GL_VERBOSE("swap interval: ") << format().swapInterval();
+    LOGDEV_GL_VERBOSE("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -295,16 +311,16 @@ bool Canvas::isGLReady() const
 
 void Canvas::copyAudiencesFrom(Canvas const &other)
 {
-    audienceForGLReady          = other.audienceForGLReady;
-    audienceForGLInit           = other.audienceForGLInit;
-    audienceForGLResize         = other.audienceForGLResize;
-    audienceForGLDraw           = other.audienceForGLDraw;
-    audienceForFocusChange      = other.audienceForFocusChange;
+    d->audienceForGLReady         = other.d->audienceForGLReady;
+    d->audienceForGLInit          = other.d->audienceForGLInit;
+    d->audienceForGLResize        = other.d->audienceForGLResize;
+    d->audienceForGLDraw          = other.d->audienceForGLDraw;
+    d->audienceForFocusChange     = other.d->audienceForFocusChange;
 
-    audienceForKeyEvent         = other.audienceForKeyEvent;
+    audienceForKeyEvent()         = other.audienceForKeyEvent();
 
-    audienceForMouseStateChange = other.audienceForMouseStateChange;
-    audienceForMouseEvent       = other.audienceForMouseEvent;
+    audienceForMouseStateChange() = other.audienceForMouseStateChange();
+    audienceForMouseEvent()       = other.audienceForMouseEvent();
 }
 
 GLTarget &Canvas::renderTarget() const
@@ -325,14 +341,14 @@ void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
-    LOG_DEBUG("Notifying GL init (during paint)");
+    LOGDEV_GL_NOTE("Notifying GL init (during paint)");
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
 #endif
     GLInfo::glInit();
 
-    DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
+    DENG2_FOR_AUDIENCE2(GLInit, i) i->canvasGLInit(*this);
 }
 
 void Canvas::resizeGL(int w, int h)
@@ -343,6 +359,8 @@ void Canvas::resizeGL(int w, int h)
     if(d->currentSize != d->pendingSize)
     {
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+        LOGDEV_GL_MSG("Canvas %p triggered size to %ix%i from %s")
+                << this << w << h << d->currentSize.asText();
         d->resizeTimer.start(100);
 #else
         updateSize();
@@ -352,10 +370,15 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::updateSize()
 {
-    d->currentSize = d->pendingSize;
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+    LOGDEV_GL_MSG("Canvas %p resizing now") << this;
+#endif
+
+    makeCurrent();
+    d->currentSize = d->pendingSize; 
     d->reconfigureFramebuffer();
 
-    DENG2_FOR_AUDIENCE(GLResize, i) i->canvasGLResized(*this);
+    DENG2_FOR_AUDIENCE2(GLResize, i) i->canvasGLResized(*this);
 }
 
 void Canvas::showEvent(QShowEvent* ev)
@@ -369,7 +392,7 @@ void Canvas::showEvent(QShowEvent* ev)
     // actually appears on screen.
     if(isVisible() && !d->readyNotified)
     {
-        LOG_DEBUG("Received first show event, scheduling GL ready notification");
+        LOGDEV_GL_XVERBOSE("Received first show event, scheduling GL ready notification");
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
         makeCurrent();
@@ -386,57 +409,71 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    d->framebuf.glInit();
+    d->glInit();
     d->reconfigureFramebuffer();
 
     // Print some information.
     QGLFormat const fmt = format();
     if(fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
-        LOG_INFO("OpenGL 3.3 supported");
+        LOG_GL_NOTE("OpenGL 3.3 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
-        LOG_INFO("OpenGL 3.2 supported");
+        LOG_GL_NOTE("OpenGL 3.2 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_1)))
-        LOG_INFO("OpenGL 3.1 supported");
+        LOG_GL_NOTE("OpenGL 3.1 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_0)))
-        LOG_INFO("OpenGL 3.0 supported");
+        LOG_GL_NOTE("OpenGL 3.0 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_1)))
-        LOG_INFO("OpenGL 2.1 supported");
+        LOG_GL_NOTE("OpenGL 2.1 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
-        LOG_INFO("OpenGL 2.0 supported");
+        LOG_GL_NOTE("OpenGL 2.0 supported");
     else
-        LOG_WARNING("OpenGL 2.0 is not supported!");
+        LOG_GL_WARNING("OpenGL 2.0 is not supported!");
 
-    LOG_DEBUG("Notifying GL ready");
-    DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
+    LOGDEV_GL_XVERBOSE("Notifying GL ready");
+    DENG2_FOR_AUDIENCE2(GLReady, i) i->canvasGLReady(*this);
 
     // This Canvas instance might have been destroyed now.
 }
 
 void Canvas::paintGL()
 {
+    if(!d->parent || d->parent->isRecreationInProgress()) return;
+
+/*#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+    if(d->resizeTimer.isActive())
+    {
+        d->resizeTimer.stop();
+        updateSize();
+    }
+#endif*/
+
+    LIBGUI_ASSERT_GL_OK();
+
     // Make sure any changes to the state stack become effective.
     GLState::current().apply();
 
-    DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
+    DENG2_FOR_AUDIENCE2(GLDraw, i) i->canvasGLDraw(*this);
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void Canvas::focusInEvent(QFocusEvent*)
 {
     LOG_AS("Canvas");
-    LOG_INFO("Gained focus.");
+    LOG_INPUT_VERBOSE("Gained focus");
 
-    DENG2_FOR_AUDIENCE(FocusChange, i) i->canvasFocusChanged(*this, true);
+    DENG2_FOR_AUDIENCE2(FocusChange, i) i->canvasFocusChanged(*this, true);
 }
 
 void Canvas::focusOutEvent(QFocusEvent*)
 {
     LOG_AS("Canvas");
-    LOG_INFO("Lost focus.");
+    LOG_INPUT_VERBOSE("Lost focus");
 
     // Automatically ungrab the mouse if focus is lost.
     d->ungrabMouse();
 
-    DENG2_FOR_AUDIENCE(FocusChange, i) i->canvasFocusChanged(*this, false);
+    DENG2_FOR_AUDIENCE2(FocusChange, i) i->canvasFocusChanged(*this, false);
 }
 
 void Canvas::keyPressEvent(QKeyEvent *ev)
@@ -476,7 +513,7 @@ void Canvas::mousePressEvent(QMouseEvent *ev)
 
     ev->accept();
 
-    DENG2_FOR_AUDIENCE(MouseEvent, i)
+    DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed,
                                  Vector2i(ev->pos().x(), ev->pos().y())));
@@ -493,7 +530,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 
     ev->accept();
 
-    DENG2_FOR_AUDIENCE(MouseEvent, i)
+    DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
                                  Vector2i(ev->pos().x(), ev->pos().y())));
@@ -507,7 +544,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *ev)
     // Absolute events are only emitted when the mouse is untrapped.
     if(!d->mouseGrabbed)
     {
-        DENG2_FOR_AUDIENCE(MouseEvent, i)
+        DENG2_FOR_AUDIENCE2(MouseEvent, i)
         {
             i->mouseEvent(MouseEvent(MouseEvent::Absolute,
                                      Vector2i(ev->pos().x(), ev->pos().y())));
@@ -528,7 +565,7 @@ void Canvas::wheelEvent(QWheelEvent *ev)
     int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
     int dir = (ev->delta() < 0? -1 : 1);
 
-    DENG2_FOR_AUDIENCE(MouseEvent, i)
+    DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(MouseEvent::FineAngle,
                                  axis == 0? Vector2i(ev->delta(), 0) :
@@ -540,7 +577,7 @@ void Canvas::wheelEvent(QWheelEvent *ev)
     {
         d->wheelDir[axis] = dir;
 
-        DENG2_FOR_AUDIENCE(MouseEvent, i)
+        DENG2_FOR_AUDIENCE2(MouseEvent, i)
         {
             i->mouseEvent(MouseEvent(MouseEvent::Step,
                                      axis == 0? Vector2i(dir, 0) :

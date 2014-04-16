@@ -100,8 +100,8 @@ private:
 ServerSystem &App_ServerSystem();
 
 void    Server_Register(); // old-fashioned cvars
-boolean N_ServerOpen(void);
-boolean N_ServerClose(void);
+dd_bool N_ServerOpen(void);
+dd_bool N_ServerClose(void);
 void    N_PrintNetworkStatus(void);
 
 extern int nptIPPort; // cvar

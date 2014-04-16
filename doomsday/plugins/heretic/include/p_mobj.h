@@ -34,9 +34,14 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "doomsday.h"
 #include "p_terraintype.h"
 #include "h_think.h"
 #include "info.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0
 #define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
@@ -196,7 +201,7 @@ typedef struct mobj_s {
     int             intFlags;       // $dropoff_fix: internal flags
     coord_t         dropOffZ;       // $dropoff_fix
     short           gear;           // used in torque simulation
-    boolean         wallRun;        // true = last move was the result of a wallrun
+    dd_bool         wallRun;        // true = last move was the result of a wallrun
 
     // no matter what (even if shot)
     struct player_s *player;        // only valid if type == MT_PLAYER
@@ -217,6 +222,16 @@ typedef struct mobj_s {
 
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+
+    /**
+     * Always returns @c false as a thinker will have already been allocated in
+     * the mobj creation process.
+     */
+    int read(MapStateReader *msr);
+#endif
 } mobj_t;
 
 #ifdef __cplusplus
@@ -241,7 +256,7 @@ void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t *originator);
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest, boolean checkSpawn);
+mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest, dd_bool checkSpawn);
 
 /**
  * Tries to aim at a nearby monster if 'source' is a player. Else aim is

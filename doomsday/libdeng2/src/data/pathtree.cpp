@@ -1,21 +1,20 @@
 /** @file pathtree.cpp Tree of Path/data pairs.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Error"
@@ -324,10 +323,22 @@ PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags fla
     return *found;
 }
 
+PathTree::Node const *PathTree::tryFind(Path const &path, ComparisonFlags flags) const
+{
+    DENG2_GUARD(this);
+    return d->find(path, flags);
+}
+
 PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
 {
     Node const &node = const_cast<PathTree const *>(this)->find(path, flags);
     return const_cast<Node &>(node);
+}
+
+PathTree::Node *PathTree::tryFind(Path const &path, ComparisonFlags flags)
+{
+    DENG2_GUARD(this);
+    return d->find(path, flags);
 }
 
 String const &PathTree::segmentName(SegmentId segmentId) const
@@ -458,7 +469,7 @@ int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path
 #ifdef DENG2_DEBUG
 void PathTree::debugPrint(QChar separator) const
 {
-    LOG_INFO("PathTree [%p]:") << de::dintptr(this);
+    LOGDEV_MSG("PathTree [%p]:") << de::dintptr(this);
     FoundPaths found;
     if(findAllPaths(found, 0, separator))
     {
@@ -466,10 +477,10 @@ void PathTree::debugPrint(QChar separator) const
 
         DENG2_FOR_EACH_CONST(FoundPaths, i, found)
         {
-            LOG_INFO("  %s") << *i;
+            LOGDEV_MSG("  %s") << *i;
         }
     }
-    LOG_INFO("  %i unique %s in the tree.") << found.count() << (found.count() == 1? "path" : "paths");
+    LOGDEV_MSG("  %i unique %s in the tree.") << found.count() << (found.count() == 1? "path" : "paths");
 }
 
 #if 0

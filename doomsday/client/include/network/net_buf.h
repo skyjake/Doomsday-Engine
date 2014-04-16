@@ -66,7 +66,7 @@ typedef struct netbuffer_s {
  * Globally accessible data.
  */
 extern netbuffer_t netBuffer;
-extern boolean  allowSending;
+extern dd_bool  allowSending;
 
 /**
  * Constructs a new reader. The reader will use the engine's netBuffer
@@ -82,7 +82,7 @@ void            N_Init(void);
 void            N_Shutdown(void);
 void            N_ClearMessages(void);
 void            N_SendPacket(int flags);
-boolean         N_GetPacket(void);
+dd_bool         N_GetPacket(void);
 int             N_IdentifyPlayer(nodeid_t id);
 void            N_PrintBufferInfo(void);
 void            N_PrintTransmissionStats(void);

@@ -50,9 +50,9 @@ extern char* netPassword; // Remote login password.
 void            Sv_Shutdown(void);
 void            Sv_StartNetGame(void);
 void            Sv_StopNetGame(void);
-boolean         Sv_PlayerArrives(nodeid_t nodeID, char const *name);
+dd_bool         Sv_PlayerArrives(nodeid_t nodeID, char const *name);
 void            Sv_PlayerLeaves(nodeid_t nodeID);
-void            Sv_Handshake(int playernum, boolean newplayer);
+void            Sv_Handshake(int playernum, dd_bool newplayer);
 void            Sv_GetPackets(void);
 
 /**
@@ -73,8 +73,8 @@ size_t          Sv_InfoToString(serverinfo_t* info, ddstring_t* msg);
 de::Record *    Sv_InfoToRecord(serverinfo_t *info);
 int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
-boolean         Sv_CheckBandwidth(int playerNumber);
-boolean         Sv_CanTrustClientPos(int plrNum);
+dd_bool         Sv_CheckBandwidth(int playerNumber);
+dd_bool         Sv_CanTrustClientPos(int plrNum);
 
 /**
  * Returns a unique id for material @a mat that can be passed on to clients.

@@ -1,47 +1,66 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_mapinfo.h  Hexen MAPINFO parsing.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_mapinfo.h: MAPINFO definitions.
- */
-
-#ifndef __P_MAPINFO_H__
-#define __P_MAPINFO_H__
+#ifndef JHEXEN_DEF_MAPINFO_H
+#define JHEXEN_DEF_MAPINFO_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "doomsday.h"
+
+typedef struct mapinfo_s {
+    uint         map; ///< Logical map number.
+    int          hub;
+    uint         warpTrans;
+    uint         nextMap;
+    int          cdTrack;
+    char         title[32];
+    materialid_t sky1Material;
+    materialid_t sky2Material;
+    float        sky1ScrollDelta;
+    float        sky2ScrollDelta;
+    dd_bool      doubleSky;
+    dd_bool      lightning;
+    int          fadeTable;
+    char         songLump[10];
+} mapinfo_t;
+
 #if __cplusplus
 extern "C" {
 #endif
 
-void            P_InitMapInfo(void);
-void            P_InitMapMusicInfo(void);
+/**
+ * Populate the MapInfo database by parsing the MAPINFO lump.
+ */
+void MapInfoParser(Str const *path);
 
-int             P_GetMapCluster(uint map);
+/**
+ * @param mapUri  Identifier of the map to lookup info for. Can be @c 0 in which
+ *                case the info for the @em current map will be returned (if set).
+ *
+ * @return  MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
+ */
+mapinfo_t *P_MapInfo(Uri const *mapUri);
 
 #define P_INVALID_LOGICAL_MAP   0xffffffff
 
@@ -66,28 +85,8 @@ uint P_TranslateMapIfExists(uint map);
  */
 uint P_TranslateMap(uint map);
 
-int             P_GetMapCDTrack(uint map);
-uint            P_GetMapWarpTrans(uint map);
-uint            P_GetMapNextMap(uint map);
-materialid_t    P_GetMapSky1Material(uint map);
-materialid_t    P_GetMapSky2Material(uint map);
-char*           P_GetMapName(uint map);
-float           P_GetMapSky1ScrollDelta(uint map);
-float           P_GetMapSky2ScrollDelta(uint map);
-boolean         P_GetMapDoubleSky(uint map);
-boolean         P_GetMapLightning(uint map);
-int             P_GetMapFadeTable(uint map);
-char*           P_GetMapSongLump(uint map);
-void            P_PutMapSongLump(uint map, char* lumpName);
-int             P_GetCDStartTrack(void);
-int             P_GetCDEnd1Track(void);
-int             P_GetCDEnd2Track(void);
-int             P_GetCDEnd3Track(void);
-int             P_GetCDIntermissionTrack(void);
-int             P_GetCDTitleTrack(void);
-
 #if __cplusplus
 } // extern "C"
 #endif
 
-#endif
+#endif // JHEXEN_DEF_MAPINFO_H

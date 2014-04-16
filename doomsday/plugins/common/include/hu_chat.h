@@ -51,7 +51,7 @@ void UIChat_LoadMacros(void);
 typedef struct {
     char text[UICHAT_INPUTBUFFER_MAXLENGTH+1];
     int length; /// Current length of text.
-    boolean shiftDown;
+    dd_bool shiftDown;
 } guidata_chat_inputbuffer_t;
 
 /**
@@ -94,9 +94,9 @@ void UIChat_UpdateGeometry(uiwidget_t* obj);
  *
  * @return  @c true if the active state changed.
  */
-boolean UIChat_Activate(uiwidget_t* obj, boolean yes);
+dd_bool UIChat_Activate(uiwidget_t* obj, dd_bool yes);
 
-boolean UIChat_IsActive(uiwidget_t* obj);
+dd_bool UIChat_IsActive(uiwidget_t* obj);
 
 /// @return  Current chat destination number.
 int UIChat_Destination(uiwidget_t* obj);
@@ -105,9 +105,9 @@ int UIChat_Destination(uiwidget_t* obj);
 void UIChat_SetDestination(uiwidget_t* obj, int destination);
 
 /// @return  @c true if the shift modifier state changed.
-boolean UIChat_SetShiftModifier(uiwidget_t* obj, boolean on);
+dd_bool UIChat_SetShiftModifier(uiwidget_t* obj, dd_bool on);
 
-boolean UIChat_AppendCharacter(uiwidget_t* obj, char ch);
+dd_bool UIChat_AppendCharacter(uiwidget_t* obj, char ch);
 
 void UIChat_DeleteLastCharacter(uiwidget_t* obj);
 
@@ -121,14 +121,14 @@ const char* UIChat_Text(uiwidget_t* obj);
 size_t UIChat_TextLength(uiwidget_t* obj);
 
 /// @return  @c true= Current input buffer is empty.
-boolean UIChat_TextIsEmpty(uiwidget_t* obj);
+dd_bool UIChat_TextIsEmpty(uiwidget_t* obj);
 
 /**
  * Given a macro identifier load the associated macro replacing the current contents
  * of the input buffer.
  * @return  @c true= success.
  */
-boolean UIChat_LoadMacro(uiwidget_t* obj, int macroId);
+dd_bool UIChat_LoadMacro(uiwidget_t* obj, int macroId);
 
 /**
  * Given a macro identifier lookup the associated macro string.

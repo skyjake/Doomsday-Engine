@@ -102,7 +102,7 @@ typedef struct trigger_s {
  * @return              @c true, if the trigger has accumulated enough time
  *                      to fill the trigger's time threshold.
  */
-boolean M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
+dd_bool M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
 
 /**
  * Checks if the trigger will trigger after @a advanceTime seconds.
@@ -114,7 +114,7 @@ boolean M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
  * @return @c true, if the trigger will accumulate enough time after @a advanceTime
  *         to fill the trigger's time threshold.
  */
-boolean M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
+dd_bool M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
 #ifdef __cplusplus
 } // extern "C"

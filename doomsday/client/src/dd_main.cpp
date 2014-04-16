@@ -34,6 +34,7 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
+#  include "updater.h"
 #  include <de/DisplayMode>
 #endif
 
@@ -48,7 +49,6 @@
 #include "de_audio.h"
 
 #include "edit_bias.h"
-#include "updater.h"
 
 #include "gl/svg.h"
 #ifdef __CLIENT__
@@ -56,10 +56,10 @@
 #  include "gl/gl_texmanager.h"
 #endif
 
-#include "render/r_main.h" // R_Init, R_ResetViewer
 #ifdef __CLIENT__
 #  include "render/cameralensfx.h"
 #  include "render/r_draw.h" // R_InitViewWindow
+#  include "render/r_main.h" // R_Init, R_ResetViewer
 #  include "render/rend_font.h"
 #  include "render/rend_main.h"
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
@@ -71,22 +71,29 @@
 #ifdef __CLIENT__
 #  include "Contact"
 #endif
-#include "world/world.h"
+#include "world/worldsystem.h"
 
-#include "ui/ui_main.h"
+#ifdef __CLIENT__
+#  include "ui/ui_main.h"
+#  include "ui/widgets/taskbarwidget.h"
+#endif
 #include "ui/ui2_main.h"
 #include "ui/fi_main.h"
 #include "ui/p_control.h"
-#ifdef __CLIENT__
-#  include "ui/widgets/taskbarwidget.h"
-#endif
 
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
+#include <de/game/Session>
 #include <de/NativePath>
 #include <de/Log>
 #include <de/memory.h>
 #include <QStringList>
+#ifdef WIN32
+#  include <QSettings>
+#endif
+#ifdef MACOSX
+#  include <QDir>
+#endif
 #ifdef UNIX
 #  include <ctype.h>
 #endif
@@ -98,14 +105,17 @@ class ZipFileType : public de::NativeFileType
 {
 public:
     ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
-    {}
+    {
+        addKnownExtension(".pk3");
+        addKnownExtension(".zip");
+    }
 
     de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Zip::recognise(hndl))
         {
             LOG_AS("ZipFileType");
-            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            LOG_RES_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\"");
             return new Zip(hndl, path, info);
         }
         return 0;
@@ -116,14 +126,16 @@ class WadFileType : public de::NativeFileType
 {
 public:
     WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
-    {}
+    {
+        addKnownExtension(".wad");
+    }
 
     de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Wad::recognise(hndl))
         {
             LOG_AS("WadFileType");
-            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            LOG_RES_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\"");
             return new Wad(hndl, path, info);
         }
         return 0;
@@ -165,11 +177,6 @@ static NullFileType nullFileType;
 /// A symbolic name => file type map.
 static FileTypes fileTypeMap;
 
-// List of session data files (specified via the command line or in a cfg, or
-// found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
-static ddstring_t **sessionResourceFileList;
-static size_t numSessionResourceFileList;
-
 static void registerResourceFileTypes()
 {
     FileType *ftype;
@@ -180,13 +187,10 @@ static void registerResourceFileTypes()
     ResourceClass& packageClass = App_ResourceClass("RC_PACKAGE");
 
     ftype = new ZipFileType();
-    ftype->addKnownExtension(".pk3");
-    ftype->addKnownExtension(".zip");
     packageClass.addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     ftype = new WadFileType();
-    ftype->addKnownExtension(".wad");
     packageClass.addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
@@ -320,6 +324,28 @@ FileTypes const &DD_FileTypes()
     return fileTypeMap;
 }
 
+static NativePath steamBasePath()
+{
+#ifdef WIN32
+    // The path to Steam can be queried from the registry.
+    {
+    QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+    String path = st.value("SteamPath").toString();
+    if(!path.isEmpty()) return path;
+    }
+
+    {
+    QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+    String path = st.value("InstallPath").toString();
+    if(!path.isEmpty()) return path;
+    }
+#elif MACOSX
+    return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
+#endif
+    /// @todo Where are steam apps located on Ubuntu?
+    return "";
+}
+
 static void createPackagesScheme()
 {
     FS1::Scheme &scheme = App_FileSystem().createScheme("Packages");
@@ -338,16 +364,44 @@ static void createPackagesScheme()
     {
         NativePath path = de::App::app().commandLine().startupPath() / fn;
         scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-        LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
+        LOG_RES_NOTE("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
+
+    // Add paths to games bought with/using Steam.
+    if(!CommandLine_Check("-nosteamapps"))
+    {
+        NativePath steamBase = steamBasePath();
+        if(!steamBase.isEmpty())
+        {
+            NativePath steamPath = steamBase / "SteamApps/common/";
+            LOG_RES_NOTE("Using SteamApps path: %s") << steamPath.pretty();
+
+            static String const appDirs[] =
+            {
+                "doom 2/base",
+                "final doom/base",
+                "heretic shadow of the serpent riders/base",
+                "hexen/base",
+                "hexen deathkings of the dark citadel/base",
+                "ultimate doom/base",
+                "DOOM 3 BFG Edition/base/wads",
+                ""
+            };
+            for(int i = 0; !appDirs[i].isEmpty(); ++i)
+            {
+                scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(steamPath / appDirs[i]),
+                                                SearchPath::NoDescend));
+            }
+        }
+    }
 
     // Add the path from the DOOMWADDIR environment variable.
     if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         NativePath path = App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
         scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-        LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
+        LOG_RES_NOTE("Using DOOMWADDIR: %s") << path.pretty();
     }
 
     // Add any paths from the DOOMWADPATH environment variable.
@@ -364,7 +418,7 @@ static void createPackagesScheme()
         {
             NativePath path = App::app().commandLine().startupPath() / allPaths[i];
             scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-            LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
+            LOG_RES_NOTE("Using DOOMWADPATH: %s") << path.pretty();
         }
 
 #undef SEP_CHAR
@@ -454,19 +508,15 @@ void DD_CreateFileSystemSchemes()
 
 ResourceSystem &App_ResourceSystem()
 {
+    if(App::appExists())
+    {
 #ifdef __CLIENT__
-    if(ClientApp::haveApp())
-    {
         return ClientApp::resourceSystem();
-    }
 #endif
-
 #ifdef __SERVER__
-    if(ServerApp::haveApp())
-    {
         return ServerApp::resourceSystem();
-    }
 #endif
+    }
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
@@ -480,17 +530,18 @@ de::ResourceClass &App_ResourceClass(resourceclassid_t classId)
     return App_ResourceSystem().resClass(classId);
 }
 
-static void addToPathList(ddstring_t ***list, size_t *listSize, char const *rawPath)
+WorldSystem &App_WorldSystem()
 {
-    DENG2_ASSERT(list != 0 && listSize != 0 && rawPath != 0 && rawPath[0]);
-
-    ddstring_t *newPath = Str_New();
-    Str_Set(newPath, rawPath);
-    F_FixSlashes(newPath, newPath);
-    F_ExpandBasePath(newPath, newPath);
-
-    *list = (ddstring_t **) M_Realloc(*list, sizeof(**list) * ++(*listSize));
-    (*list)[(*listSize)-1] = newPath;
+    if(App::appExists())
+    {
+#ifdef __CLIENT__
+        return ClientApp::worldSystem();
+#endif
+#ifdef __SERVER__
+        return ServerApp::worldSystem();
+#endif
+    }
+    throw Error("App_WorldSystem", "App not yet initialized");
 }
 
 static void parseStartupFilePathsAndAddFiles(char const *pathString)
@@ -512,20 +563,6 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     M_Free(buffer);
 
 #undef ATWSEPS
-}
-
-static void destroyPathList(ddstring_t ***list, size_t *listSize)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0);
-    if(*list)
-    {
-        for(size_t i = 0; i < *listSize; ++i)
-        {
-            Str_Delete((*list)[i]);
-        }
-        M_Free(*list); *list = 0;
-    }
-    *listSize = 0;
 }
 
 /**
@@ -612,37 +649,11 @@ static int loadFilesFromDataGameAuto()
     return numLoaded;
 }
 
-/**
- * Find and list all game data file paths in the auto directory.
- *
- * @return Number of new files that were added to the list.
- */
-static int listFilesFromDataGameAuto(ddstring_t ***list, size_t *listSize)
-{
-    DENG2_ASSERT(list != 0 && listSize != 0);
-
-    FS1::PathList found;
-    findAllGameDataPaths(found);
-
-    int numFilesAdded = 0;
-    DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-    {
-        // Ignore directories.
-        if(i->attrib & A_SUBDIR) continue;
-
-        QByteArray foundPath = i->path.toUtf8();
-        addToPathList(list, listSize, foundPath.constData());
-
-        numFilesAdded += 1;
-    }
-    return numFilesAdded;
-}
-
 #ifndef WIN32
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
+dd_bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 {
     if(pluginId != 0)
     {
@@ -680,7 +691,7 @@ static void loadResource(ResourceManifest &manifest)
         // Print the 'CRC' number of IWADs, so they can be identified.
         if(Wad *wad = dynamic_cast<Wad*>(file))
         {
-            Con_Message("  IWAD identification: %08x", wad->calculateCRC());
+            LOG_RES_MSG("IWAD identification: %08x") << wad->calculateCRC();
         }
     }
 }
@@ -688,7 +699,7 @@ static void loadResource(ResourceManifest &manifest)
 struct ddgamechange_params_t
 {
     /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
-    boolean initiatedBusyMode;
+    dd_bool initiatedBusyMode;
 };
 
 static int DD_BeginGameChangeWorker(void *context)
@@ -741,7 +752,7 @@ static int DD_LoadGameStartupResourcesWorker(void *context)
     int const numPackages = gameManifests.count(RC_PACKAGE);
     if(numPackages)
     {
-        LOG_MSG("Loading game resources") << (verbose >= 1? ":" : "...");
+        LOG_RES_MSG("Loading game resources") << (verbose >= 1? ":" : "...");
 
         int packageIdx = 0;
         for(GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
@@ -766,23 +777,22 @@ static int DD_LoadGameStartupResourcesWorker(void *context)
     return 0;
 }
 
-static int addListFiles(ddstring_t ***list, size_t *listSize, FileType const &ftype)
+static int addListFiles(QStringList const &list, FileType const &ftype)
 {
-    int count = 0;
-    if(!list || !listSize) return 0;
-    for(size_t i = 0; i < *listSize; ++i)
+    int numAdded = 0;
+    foreach(QString const &path, list)
     {
-        if(&ftype != &DD_GuessFileTypeFromFileName(Str_Text((*list)[i])))
+        if(&ftype != &DD_GuessFileTypeFromFileName(path))
         {
             continue;
         }
 
-        if(tryLoadFile(de::Uri(Str_Text((*list)[i]), RC_NULL)))
+        if(tryLoadFile(de::Uri(path, RC_NULL)))
         {
-            count += 1;
+            numAdded += 1;
         }
     }
-    return count;
+    return numAdded;
 }
 
 /**
@@ -958,14 +968,25 @@ static int DD_LoadAddonResourcesWorker(void *context)
     {
         /**
          * Phase 3: Add real files from the Auto directory.
-         * First ZIPs then WADs (they may contain WAD files).
          */
-        listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
-        if(numSessionResourceFileList > 0)
-        {
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_ZIP"));
+        game::Session::Profile &prof = game::Session::profile();
 
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_WAD"));
+        FS1::PathList found;
+        findAllGameDataPaths(found);
+        DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+        {
+            // Ignore directories.
+            if(i->attrib & A_SUBDIR) continue;
+
+            /// @todo Is expansion of symbolics still necessary here?
+            prof.resourceFiles << NativePath(i->path).expand().withSeparators('/');
+        }
+
+        if(!prof.resourceFiles.isEmpty())
+        {
+            // First ZIPs then WADs (they may contain WAD files).
+            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_ZIP"));
+            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.
@@ -996,12 +1017,14 @@ static int DD_ActivateGameWorker(void *context)
 {
     ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
+    ResourceSystem &resSys = App_ResourceSystem();
+
     // Texture resources are located now, prior to initializing the game.
-    App_ResourceSystem().initCompositeTextures();
-    App_ResourceSystem().initFlatTextures();
-    App_ResourceSystem().initSpriteTextures();
-    App_ResourceSystem().textureScheme("Lightmaps").clear();
-    App_ResourceSystem().textureScheme("Flaremaps").clear();
+    resSys.initCompositeTextures();
+    resSys.initFlatTextures();
+    resSys.initSpriteTextures();
+    resSys.textureScheme("Lightmaps").clear();
+    resSys.textureScheme("Flaremaps").clear();
 
     if(parms.initiatedBusyMode)
     {
@@ -1023,36 +1046,31 @@ static int DD_ActivateGameWorker(void *context)
         Con_SetProgress(100);
     }
 
-    // Parse the game's main config file.
-    // If a custom top-level config is specified; let it override.
-    ddstring_t const *configFileName = 0;
-    ddstring_t tmp;
-    if(CommandLine_CheckWith("-config", 1))
-    {
-        Str_Init(&tmp); Str_Set(&tmp, CommandLine_Next());
-        F_FixSlashes(&tmp, &tmp);
-        configFileName = &tmp;
-    }
-    else
-    {
-        configFileName = App_CurrentGame().mainConfig();
-    }
-
-    LOG_MSG("Parsing primary config \"%s\"...") << F_PrettyPath(Str_Text(configFileName));
-    Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
-    if(configFileName == &tmp)
-        Str_Free(&tmp);
-
-#ifdef __CLIENT__
     if(App_GameLoaded())
     {
+        // Parse the game's main config file.
+        // If a custom top-level config is specified; let it override.
+        Path configFile;
+        if(CommandLine_CheckWith("-config", 1))
+        {
+            configFile = NativePath(CommandLine_NextAsPath()).withSeparators('/');
+        }
+        else
+        {
+            configFile = App_CurrentGame().mainConfig();
+        }
+
+        LOG_SCR_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
+        Con_ParseCommands(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
+
+#ifdef __CLIENT__
         // Apply default control bindings for this game.
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(App_CurrentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
-    }
+        Con_ParseCommands(App_CurrentGame().bindingConfig().toUtf8().constData(), CPCF_ALLOW_SAVE_BINDINGS);
 #endif
+    }
 
     if(parms.initiatedBusyMode)
     {
@@ -1066,9 +1084,9 @@ static int DD_ActivateGameWorker(void *context)
         Con_SetProgress(130);
     }
 
-    App_ResourceSystem().initSprites(); // Fully initialize sprites.
+    resSys.initSprites(); // Fully initialize sprites.
 #ifdef __CLIENT__
-    App_ResourceSystem().initModels();
+    resSys.initModels();
 #endif
 
     Def_PostInit();
@@ -1112,57 +1130,44 @@ static int DD_ActivateGameWorker(void *context)
 
 de::Games &App_Games()
 {
+    if(App::appExists())
+    {
 #ifdef __CLIENT__
-    if(ClientApp::haveApp())
-    {
         return ClientApp::games();
-    }
 #endif
-
 #ifdef __SERVER__
-    if(ServerApp::haveApp())
-    {
         return ServerApp::games();
-    }
 #endif
+    }
     throw Error("App_Games", "App not yet initialized");
 }
 
-boolean App_GameLoaded()
+dd_bool App_GameLoaded()
 {
-#ifdef __CLIENT__
-    if(!ClientApp::haveApp()) return false;
-#endif
-#ifdef __SERVER__
-    if(!ServerApp::haveApp()) return false;
-#endif
+    if(!App::appExists()) return false;
+
     return !App_CurrentGame().isNull();
 }
 
 void DD_DestroyGames()
 {
-    destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
     App_Games().clear();
     App::app().setGame(App_Games().nullGame());
 }
 
 static void populateGameInfo(GameInfo &info, de::Game &game)
 {
-    info.identityKey = Str_Text(game.identityKey());
-    info.title       = Str_Text(game.title());
-    info.author      = Str_Text(game.author());
+    info.identityKey = AutoStr_FromTextStd(game.identityKey().toUtf8().constData());
+    info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
+    info.author      = AutoStr_FromTextStd(game.author().toUtf8().constData());
 }
 
 /// @note Part of the Doomsday public API.
 #undef DD_GameInfo
-boolean DD_GameInfo(GameInfo *info)
+dd_bool DD_GameInfo(GameInfo *info)
 {
     LOG_AS("DD_GameInfo");
-    if(!info)
-    {
-        LOG_WARNING("Received invalid info (=NULL), ignoring.");
-        return false;
-    }
+    if(!info) return false;
 
     zapPtr(info);
 
@@ -1172,7 +1177,7 @@ boolean DD_GameInfo(GameInfo *info)
         return true;
     }
 
-    LOG_WARNING("No game currently loaded, returning false.");
+    LOGDEV_WARNING("No game currently loaded");
     return false;
 }
 
@@ -1213,17 +1218,13 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
 gameid_t DD_DefineGame(GameDef const *def)
 {
     LOG_AS("DD_DefineGame");
-    if(!def)
-    {
-        LOG_WARNING("Received invalid GameDef (=NULL), ignoring.");
-        return 0; // Invalid id.
-    }
+    if(!def) return 0; // Invalid id.
 
     // Game mode identity keys must be unique. Ensure that is the case.
     try
     {
         /*Game &game =*/ App_Games().byIdentityKey(def->identityKey);
-        LOG_WARNING("Failed adding game \"%s\", identity key '%s' already in use, ignoring.")
+        LOGDEV_WARNING("Ignored new game \"%s\", identity key '%s' already in use")
                 << def->defaultTitle << def->identityKey;
         return 0; // Invalid id.
     }
@@ -1249,7 +1250,7 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     catch(Games::NotFoundError const &)
     {
         LOG_AS("DD_GameIdForKey");
-        LOG_WARNING("Game \"%s\" is not defined, returning 0.") << identityKey;
+        LOGDEV_WARNING("Game \"%s\" is not defined, returning 0.") << identityKey;
     }
     return 0; // Invalid id.
 }
@@ -1262,7 +1263,7 @@ de::Game &App_CurrentGame()
 bool App_ChangeGame(Game &game, bool allowReload)
 {
 #ifdef __CLIENT__
-    DENG_ASSERT(ClientWindow::hasMain());
+    DENG_ASSERT(ClientWindow::mainExists());
 #endif
 
     //LOG_AS("App_ChangeGame");
@@ -1276,8 +1277,8 @@ bool App_ChangeGame(Game &game, bool allowReload)
         {
             if(App_GameLoaded())
             {
-                LOG_MSG("%s (%s) - already loaded.")
-                        << Str_Text(game.title()) << Str_Text(game.identityKey());
+                LOG_NOTE("%s (%s) is already loaded")
+                        << game.title() << game.identityKey();
             }
             return true;
         }
@@ -1286,7 +1287,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     // The current game will be gone very soon.
-    DENG2_FOR_EACH_OBSERVER(App::GameUnloadAudience, i, App::app().audienceForGameUnload)
+    DENG2_FOR_EACH_OBSERVER(App::GameUnloadAudience, i, App::app().audienceForGameUnload())
     {
         i->aboutToUnloadGame(App::game());
     }
@@ -1354,7 +1355,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         B_InitialContextActivations();
 #endif
         // Reset the world back to it's initial state (unload the map, reset players, etc...).
-        App_World().reset();
+        App_WorldSystem().reset();
 
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
@@ -1372,11 +1373,14 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
         { // Tell the plugin it is being unloaded.
             void *unloader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
-            LOG_DEBUG("Calling DP_Unload (%p)") << de::dintptr(unloader);
+            LOGDEV_MSG("Calling DP_Unload %p") << unloader;
             DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
         }
+
+        // We do not want to load session resources specified on the command line again.
+        game::Session::profile().resourceFiles.clear();
 
         // The current game is now the special "null-game".
         App::app().setGame(App_Games().nullGame());
@@ -1417,11 +1421,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     if(!game.isNull())
     {
-        LOG_VERBOSE("Selecting game '%s'...") << Str_Text(game.identityKey());
+        LOG_MSG("Selecting game '%s'...") << game.id();
     }
     else if(!isReload)
     {
-        LOG_VERBOSE("Unloaded game.");
+        LOG_MSG("Unloaded game");
     }
 
     Library_ReleaseGames();
@@ -1435,7 +1439,8 @@ bool App_ChangeGame(Game &game, bool allowReload)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            LOG_WARNING("Failed exchanging entrypoints with plugin %i, aborting...")
+            LOG_WARNING("Game plugin for '%s' is invalid") << game.id();
+            LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
                     << int(game.pluginId());
             return false;
         }
@@ -1445,6 +1450,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     // This is now the current game.
     App::app().setGame(game);
+    game::Session::profile().gameId = game.id();
 
 #ifdef __CLIENT__
     ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
@@ -1485,7 +1491,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
             void *loader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
-            LOG_DEBUG("Calling DP_Load (%p)") << de::dintptr(loader);
+            LOGDEV_MSG("Calling DP_Load %p") << loader;
             DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);
@@ -1541,7 +1547,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #endif
 
     // Game change is complete.
-    DENG2_FOR_EACH_OBSERVER(App::GameChangeAudience, i, App::app().audienceForGameChange)
+    DENG2_FOR_EACH_OBSERVER(App::GameChangeAudience, i, App::app().audienceForGameChange())
     {
         i->currentGameChanged(App::game());
     }
@@ -1549,18 +1555,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     return true;
 }
 
-World &App_World()
-{
-#ifdef __CLIENT__
-    return ClientApp::world();
-#endif
-
-#ifdef __SERVER__
-    return ServerApp::world();
-#endif
-}
-
-boolean DD_IsShuttingDown()
+dd_bool DD_IsShuttingDown()
 {
     return Sys_IsShuttingDown();
 }
@@ -1577,7 +1572,7 @@ static void DD_AutoLoad()
     int numNewFiles;
     while((numNewFiles = loadFilesFromDataGameAuto()) > 0)
     {
-        LOG_VERBOSE("Autoload round completed with %i new files.") << numNewFiles;
+        LOG_RES_VERBOSE("Autoload round completed with %i new files") << numNewFiles;
     }
 }
 
@@ -1641,7 +1636,7 @@ int DD_EarlyInit()
  */
 void DD_FinishInitializationAfterWindowReady()
 {
-    LOG_DEBUG("Window is ready, finishing initialization");
+    LOGDEV_MSG("Window is ready, finishing initialization");
 
 #ifdef __CLIENT__
 # ifdef WIN32
@@ -1666,7 +1661,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
 
     /// @todo This notification should be done from the app.
-    DENG2_FOR_EACH_OBSERVER(App::StartupCompleteAudience, i, App::app().audienceForStartupComplete)
+    DENG2_FOR_EACH_OBSERVER(App::StartupCompleteAudience, i, App::app().audienceForStartupComplete())
     {
         i->appStartupCompleted();
     }
@@ -1678,7 +1673,7 @@ void DD_FinishInitializationAfterWindowReady()
  *
  * @return  @c true on success, @c false if an error occurred.
  */
-boolean DD_Init(void)
+dd_bool DD_Init(void)
 {
 #ifdef _DEBUG
     // Type size check.
@@ -1762,7 +1757,7 @@ boolean DD_Init(void)
             directory_t *dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
-            LOG_DEBUG("User supplied IWAD path: \"%s\"") << Dir_Path(dir);
+            LOG_RES_NOTE("User-supplied IWAD path: \"%s\"") << Dir_Path(dir);
 
             scheme.addSearchPath(SearchPath(uri, SearchPath::NoDescend));
 
@@ -1783,9 +1778,11 @@ boolean DD_Init(void)
     {
         if(de::Game *game = DD_AutoselectGame())
         {
-            // An implicit game session has been defined.
+            // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line
-            // to the list for this session.
+            // to the list for the session.
+            game::Session::Profile &prof = game::Session::profile();
+
             for(int p = 0; p < CommandLine_Count(); ++p)
             {
                 if(!CommandLine_IsMatchingAlias("-file", CommandLine_At(p)))
@@ -1795,7 +1792,7 @@ boolean DD_Init(void)
 
                 while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    addToPathList(&sessionResourceFileList, &numSessionResourceFileList, CommandLine_PathAt(p));
+                    prof.resourceFiles << NativePath(CommandLine_PathAt(p)).expand().withSeparators('/');
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -1803,9 +1800,6 @@ boolean DD_Init(void)
 
             // Begin the game session.
             App_ChangeGame(*game);
-
-            // We do not want to load these resources again on next game change.
-            destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
         }
 #ifdef __SERVER__
         else
@@ -1836,7 +1830,7 @@ boolean DD_Init(void)
         }
         else
         {
-            LOG_WARNING("Cannot dump unknown lump \"%s\", ignoring.") << name;
+            LOG_RES_WARNING("Cannot dump unknown lump \"%s\"") << name;
         }
     }
 
@@ -1848,12 +1842,16 @@ boolean DD_Init(void)
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
     // provided a game was loaded during startup.
-    Con_ParseCommands("autoexec.cfg");
+    char const *autoexecConfig = "autoexec.cfg";
+    if(F_FileExists(autoexecConfig))
+    {
+        Con_ParseCommands(autoexecConfig);
+    }
 
     // Read additional config files that should be processed post engine init.
     if(CommandLine_CheckWith("-parse", 1))
     {
-        LOG_MSG("Parsing additional (pre-init) config files:");
+        LOG_AS("-parse");
         Time begunAt;
         forever
         {
@@ -1863,10 +1861,10 @@ boolean DD_Init(void)
                 break;
             }
 
-            LOG_MSG("  Processing \"%s\"...") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        LOG_INFO(String("  Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
     }
 
     // A console command on the command line?
@@ -1942,16 +1940,10 @@ boolean DD_Init(void)
         // Lets play a nice title animation.
         DD_StartTitle();
 
-        // We'll open the console and print a list of the known games too.
-        //Con_Execute(CMDS_DDAY, "conopen", true, false);
         if(!CommandLine_Exists("-noautoselect"))
         {
-            LOG_INFO("Automatic game selection failed");
+            LOG_NOTE("Game could not be selected automatically");
         }
-        /// @todo Whether or not to list the games depends on whether the app
-        /// has a graphical interface. The graphical client will display the
-        /// GameSelection widget where as the server will not.
-        //Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
     return true;
@@ -1972,7 +1964,7 @@ static int DD_StartupWorker(void * /*context*/)
     // Was the change to userdir OK?
     if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
     {
-        LOG_WARNING("User directory not found (check -userdir).");
+        LOG_WARNING("User directory not found (check -userdir)");
     }
 
     initPathMappings();
@@ -1991,17 +1983,17 @@ static int DD_StartupWorker(void * /*context*/)
     if(CommandLine_CheckWith("-cparse", 1))
     {
         Time begunAt;
+        LOG_AS("-cparse")
 
-        LOG_MSG("Parsing additional (pre-init) config files:");
         forever
         {
             char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
 
-            LOG_MSG("  Processing \"%s\"...") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        LOG_INFO(String("  Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
     }
 
     /*
@@ -2024,7 +2016,11 @@ static int DD_StartupWorker(void * /*context*/)
     Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
-    Con_ParseCommands("startup.cfg");
+    char const *startupConfig = "startup.cfg";
+    if(F_FileExists(startupConfig))
+    {
+        Con_ParseCommands(startupConfig);
+    }
     Con_SetProgress(90);
 
     R_BuildTexGammaLut();
@@ -2044,10 +2040,10 @@ static int DD_StartupWorker(void * /*context*/)
     Demo_Init();
 #endif
 
-    LOG_MSG("Initializing InFine subsystem...");
+    LOG_RES_VERBOSE("Initializing InFine subsystem...");
     FI_Init();
 
-    LOG_MSG("Initializing UI subsystem...");
+    LOG_VERBOSE("Initializing UI subsystem...");
     UI_Init();
     Con_SetProgress(190);
 
@@ -2084,7 +2080,7 @@ static int DD_DummyWorker(void * /*context*/)
 
 void DD_CheckTimeDemo()
 {
-    static boolean checked = false;
+    static dd_bool checked = false;
 
     if(!checked)
     {
@@ -2131,7 +2127,7 @@ static int DD_UpdateEngineStateWorker(void *context)
 
     Def_PostInit();
 
-    App_World().update();
+    App_WorldSystem().update();
 
 #ifdef __CLIENT__
     // Recalculate the light range mod matrix.
@@ -2188,7 +2184,7 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    boolean hadFog = usingFog;
+    dd_bool hadFog = usingFog;
 
     GL_TotalReset();
     GL_TotalRestore(); // Bring GL back online.
@@ -2260,7 +2256,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #endif
     {0, 0},
     {0, 0}, //{&mouseInverseY, &mouseInverseY},
+#ifdef __CLIENT__
     {&levelFullBright, &levelFullBright},
+#else
+    {0, 0},
+#endif
     {&CmdReturnValue, 0},
 #ifdef __CLIENT__
     {&gameReady, &gameReady},
@@ -2281,10 +2281,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #ifdef __CLIENT__
     {&clientPaused, &clientPaused},
+    {&weaponOffsetScaleY, &weaponOffsetScaleY},
 #else
     {0, 0},
+    {0, 0},
 #endif
-    {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&gameDataFormat, &gameDataFormat},
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
@@ -2324,16 +2325,16 @@ int DD_GetInteger(int ddvalue)
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
 
     case DD_USING_HEAD_TRACKING:
-        return VR::mode() == VR::MODE_OCULUS_RIFT && VR::hasHeadOrientation();
+        return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
 #endif
 
     case DD_NUMLUMPS:
         return F_LumpCount();
 
     case DD_MAP_MUSIC:
-        if(App_World().hasMap())
+        if(App_WorldSystem().hasMap())
         {
-            de::Uri mapUri = App_World().map().uri();
+            de::Uri mapUri = App_WorldSystem().map().uri();
             if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))
             {
                 return Def_GetMusicNum(mapInfo->music);
@@ -2388,54 +2389,33 @@ void *DD_GetVariable(int ddvalue)
         return &gx;
 
     case DD_POLYOBJ_COUNT:
-        value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
+        value = App_WorldSystem().hasMap()? App_WorldSystem().map().polyobjCount() : 0;
         return &value;
 
-    case DD_MAP_NAME:
-        if(App_World().hasMap())
-        {
-            de::Uri mapUri = App_World().map().uri();
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-            if(mapInfo && mapInfo->name[0])
-            {
-                int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
-                if(id != -1)
-                {
-                    return defs.text[id].text;
-                }
-                return mapInfo->name;
-            }
-        }
-        return NULL;
-
-    case DD_MAP_AUTHOR:
-        if(App_World().hasMap())
-        {
-            de::Uri mapUri = App_World().map().uri();
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-            if(mapInfo && mapInfo->author[0])
-            {
-                return mapInfo->author;
-            }
-        }
-        return NULL;
-
     case DD_MAP_MIN_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().minX : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().minX : 0;
         return &valueD;
 
     case DD_MAP_MIN_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().minY : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().minY : 0;
         return &valueD;
 
     case DD_MAP_MAX_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxX : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().maxX : 0;
         return &valueD;
 
     case DD_MAP_MAX_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxY : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().maxY : 0;
         return &valueD;
 
+    /*case DD_CPLAYER_THRUST_MUL:
+        return &cplrThrustMul;*/
+
+    case DD_GRAVITY:
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().gravity() : 0;
+        return &valueD;
+
+#ifdef __CLIENT__
     case DD_PSPRITE_OFFSET_X:
         return &pspOffset[VX];
 
@@ -2445,14 +2425,6 @@ void *DD_GetVariable(int ddvalue)
     case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
         return &pspLightLevelMultiplier;
 
-    /*case DD_CPLAYER_THRUST_MUL:
-        return &cplrThrustMul;*/
-
-    case DD_GRAVITY:
-        valueD = App_World().hasMap()? App_World().map().gravity() : 0;
-        return &valueD;
-
-#ifdef __CLIENT__
     case DD_TORCH_RED:
         return &torchColor.x;
 
@@ -2510,10 +2482,11 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            if(App_World().hasMap())
-                App_World().map().setGravity(*(coord_t*) parm);
+            if(App_WorldSystem().hasMap())
+                App_WorldSystem().map().setGravity(*(coord_t*) parm);
             return;
 
+#ifdef __CLIENT__
         case DD_PSPRITE_OFFSET_X:
             pspOffset[VX] = *(float *) parm;
             return;
@@ -2526,7 +2499,6 @@ void DD_SetVariable(int ddvalue, void *parm)
             pspLightLevelMultiplier = *(float *) parm;
             return;
 
-#ifdef __CLIENT__
         case DD_TORCH_RED:
             torchColor.x = de::clamp(0.f, *((float*) parm), 1.f);
             return;
@@ -2673,7 +2645,7 @@ D_CMD(Load)
             LOG_WARNING("Failed to locate all required startup resources:");
             Game::printFiles(game, FF_STARTUP);
             LOG_MSG("%s (%s) cannot be loaded.")
-                    << Str_Text(game.title()) << Str_Text(game.identityKey());
+                    << game.title() << game.identityKey();
             return true;
         }
 
@@ -2734,7 +2706,7 @@ static de::File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
         if(App_FileSystem().accessFile(search))
         {
             // Must already be loaded.
-            LOG_INFO("\"%s\" already loaded.") << NativePath(search.asText()).pretty();
+            LOG_RES_XVERBOSE("\"%s\" already loaded") << NativePath(search.asText()).pretty();
         }
     }
     return 0;
@@ -2751,13 +2723,13 @@ static bool tryUnloadFile(de::Uri const &search)
         // Do not attempt to unload a resource required by the current game.
         if(App_CurrentGame().isRequiredFile(file))
         {
-            LOG_MSG("\"%s\" is required by the current game."
-                    " Required game files cannot be unloaded in isolation.")
+            LOG_RES_NOTE("\"%s\" is required by the current game."
+                         " Required game files cannot be unloaded in isolation.")
                     << nativePath.pretty();
             return false;
         }
 
-        LOG_VERBOSE("Unloading \"%s\"...") << nativePath.pretty();
+        LOG_RES_VERBOSE("Unloading \"%s\"...") << nativePath.pretty();
 
         App_FileSystem().deindex(file);
         delete &file;
@@ -2811,7 +2783,7 @@ D_CMD(Unload)
                 return App_ChangeGame(App_Games().nullGame());
             }
 
-            LOG_MSG("%s is not currently loaded.") << Str_Text(game.identityKey());
+            LOG_MSG("%s is not currently loaded.") << game.identityKey();
             return true;
         }
         catch(Games::NotFoundError const &)
@@ -2917,6 +2889,7 @@ static void consoleRegister()
     DD_RegisterLoop();
     F_Register();
     Con_Register();
+    Games::consoleRegister();
     DH_Register();
     S_Register();
 #ifdef __CLIENT__
@@ -2932,12 +2905,12 @@ static void consoleRegister()
 #endif
     ResourceSystem::consoleRegister();
     Net_Register();
-    World::consoleRegister();
+    WorldSystem::consoleRegister();
     FI_Register();
 }
 
 // dd_loop.c
-DENG_EXTERN_C boolean DD_IsSharpTick(void);
+DENG_EXTERN_C dd_bool DD_IsSharpTick(void);
 
 // net_main.c
 DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length);
@@ -2947,11 +2920,11 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 {
     DENG2_UNUSED2(mode, flags);
 
-    if(!App_World().hasMap()) return; // Huh?
+    if(!App_WorldSystem().hasMap()) return; // Huh?
 
     // Perform map setup again. Its possible that after loading we now
     // have more HOMs to fix, etc..
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
 #ifdef __CLIENT__
     map.initSkyFix();

@@ -1,18 +1,18 @@
 # The Doomsday Engine Project -- libdeng2
 #
-# Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at 
+# your option) any later version.
 # 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUTANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public 
+# License for more details.
 # 
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #----------------------------------------------------------------------------
@@ -45,18 +45,24 @@ def setDefaults(d = None)
     record d.log
 
     # Log message levels.
-    const d.log.TRACE    = 0
-    const d.log.DEBUG    = 1
-    const d.log.VERBOSE  = 2
-    const d.log.MESSAGE  = 3
-    const d.log.INFO     = 4
-    const d.log.WARNING  = 5
-    const d.log.ERROR    = 6
-    const d.log.CRITICAL = 7
-
     d.log.file       = '/home/doomsday.out'
-    d.log.level      = d.log.MESSAGE
     d.log.bufferSize = 1000
+
+    # Default log filtering.
+    def initFilter(flt, level, dev)
+        flt.minLevel = level
+        flt.allowDev = dev
+    end
+    import Log
+    record d.log.filter
+    initFilter(record d.log.filter.generic,  Log.MESSAGE, False)
+    initFilter(record d.log.filter.resource, Log.MESSAGE, False)
+    initFilter(record d.log.filter.map,      Log.MESSAGE, False)
+    initFilter(record d.log.filter.script,   Log.MESSAGE, False)
+    initFilter(record d.log.filter.gl,       Log.MESSAGE, False)
+    initFilter(record d.log.filter.audio,    Log.MESSAGE, False)
+    initFilter(record d.log.filter.input,    Log.MESSAGE, False)
+    initFilter(record d.log.filter.network,  Log.MESSAGE, False)
 
     try
         # Get the application's default configuration, if we can.
@@ -89,15 +95,40 @@ end
 
 updateWithDefaults()
 
+#
+# -=- UPGRADING -=-
+#
 # Check the previous version and decide what to do.
 if '__oldversion__' in locals()
-    # Check for a new build.
+    # Check for a new build.    
     if __version__[3] > __oldversion__[3]
         print 'Detected new build:', __oldversion__[3], '=>', __version__[3]
         
-        # Get rid of some old stuff.
+        # Cleanup: get rid of some old stuff.
         try
             if __version__[3] >= 826: del window.main.normalRect
+        catch: pass
+        try
+            if __version__[3] >= 1101
+                del log.level
+                # Log constants were moved to the Log module.
+                del log.TRACE
+                del log.DEBUG
+                del log.VERBOSE
+                del log.MESSAGE
+                del log.INFO
+                del log.WARNING
+                del log.ERROR
+                del log.CRITICAL
+                # Updater constants also moved to their own module.
+                del updater.DAILY
+                del updater.BIWEEKLY
+                del updater.WEEKLY
+                del updater.MONTHLY
+                del updater.AT_STARTUP
+                del updater.CHANNEL_STABLE                
+                del updater.CHANNEL_UNSTABLE
+            end
         catch: pass
     end
     

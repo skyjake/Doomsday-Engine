@@ -23,6 +23,14 @@
 #define LIBDENG_THINKER_H
 
 #include "api_base.h"
+#include <de/reader.h>
+#include <de/writer.h>
+
+#ifdef __DOOMSDAY__
+namespace de {
+class Map;
+}
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,9 +53,9 @@ typedef void (*thinkfunc_t) (void *);
  */
 typedef struct thinker_s {
     struct thinker_s *prev, *next;
-    thinkfunc_t     function;
-    boolean         inStasis;
-    thid_t          id; ///< Only used for mobjs (zero is not an ID).
+    thinkfunc_t function;
+    dd_bool inStasis;
+    thid_t id; ///< Only used for mobjs (zero is not an ID).
 } thinker_t;
 
 DENG_API_TYPEDEF(Thinker)
@@ -56,8 +64,8 @@ DENG_API_TYPEDEF(Thinker)
 
     void (*Init)(void);
     void (*Run)(void);
-    void (*Add)(thinker_t* th);
-    void (*Remove)(thinker_t* th);
+    void (*Add)(thinker_t *th);
+    void (*Remove)(thinker_t *th);
 
     /**
      * Change the 'in stasis' state of a thinker (stop it from thinking).
@@ -65,9 +73,9 @@ DENG_API_TYPEDEF(Thinker)
      * @param th  The thinker to change.
      * @param on  @c true, put into stasis.
      */
-    void (*SetStasis)(thinker_t *th, boolean on);
+    void (*SetStasis)(thinker_t *th, dd_bool on);
 
-    int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t*, void*), void* context);
+    int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context);
 }
 DENG_API_T(Thinker);
 
@@ -82,8 +90,6 @@ DENG_API_T(Thinker);
 
 #ifdef __DOOMSDAY__
 DENG_USING_API(Thinker);
-// Not part of the public API.
-boolean Thinker_IsMobjFunc(thinkfunc_t func);
 #endif
 
 ///@}

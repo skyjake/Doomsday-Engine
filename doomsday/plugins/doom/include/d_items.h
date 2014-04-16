@@ -51,7 +51,7 @@ typedef struct {
 
     int             ammoType[NUM_AMMO_TYPES]; // required ammo types.
     int             perShot[NUM_AMMO_TYPES]; // Ammo used per shot of each type.
-    boolean         autoFire; // (True)= fire when raised if fire held.
+    dd_bool         autoFire; // (True)= fire when raised if fire held.
     int             states[NUM_WEAPON_STATE_NAMES];
     int             raiseSound; // Sound played when weapon is raised.
     int             readySound; // Sound played WHILE weapon is readyied
@@ -63,10 +63,18 @@ typedef struct {
     weaponmodeinfo_t mode[NUMWEAPLEVELS];
 } weaponinfo_t;
 
-extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
+DENG_EXTERN_C weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
-void            P_InitAmmoInfo(void);
-void            P_InitWeaponInfo(void);
-void            P_InitPlayerValues(struct player_s *p);
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+void P_InitAmmoInfo(void);
+void P_InitWeaponInfo(void);
+void P_InitPlayerValues(struct player_s *p);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // __D_ITEMS__

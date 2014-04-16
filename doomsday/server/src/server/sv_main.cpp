@@ -71,7 +71,7 @@ void Sv_GetInfo(serverinfo_t *info)
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
     dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
-    strncpy(info->gameIdentityKey, Str_Text(App_CurrentGame().identityKey()), sizeof(info->gameIdentityKey) - 1);
+    strncpy(info->gameIdentityKey, App_CurrentGame().identityKey().toUtf8().constData(), sizeof(info->gameIdentityKey) - 1);
     strncpy(info->gameConfig, (char const *) gx.GetVariable(DD_GAME_CONFIG), sizeof(info->gameConfig) - 1);
     strncpy(info->name, serverName, sizeof(info->name) - 1);
     strncpy(info->description, serverInfo, sizeof(info->description) - 1);
@@ -87,7 +87,7 @@ void Sv_GetInfo(serverinfo_t *info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    QByteArray mapPath = App_World().map().uri().resolved().toUtf8();
+    QByteArray mapPath = App_WorldSystem().map().uri().resolved().toUtf8();
     qstrncpy(info->map, mapPath.constData(), sizeof(info->map) - 1);
 
     // These are largely unused at the moment... Mainly intended for
@@ -182,7 +182,7 @@ int Sv_Latency(byte cmdtime)
  */
 /* $unifiedangles */
 /*
-void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
+void Sv_FixLocalAngles(dd_bool clearFixAnglesFlag)
 {
     ddplayer_t *pl;
     int         i;
@@ -219,10 +219,10 @@ void Sv_HandlePlayerInfoFromClient(client_t* sender)
     char oldName[PLAYERNAMELEN];
     size_t len;
 
-    assert(netBuffer.player == (sender - clients));
-#ifdef _DEBUG
-    Con_Message("Sv_HandlePlayerInfoFromClient: from=%i, console=%i", netBuffer.player, console);
-#endif
+    LOG_AS("Sv_HandlePlayerInfoFromClient");
+
+    DENG_ASSERT(netBuffer.player == (sender - clients));
+    LOG_NET_VERBOSE("from=%i, console=%i") << netBuffer.player << console;
     console = netBuffer.player;
 
     strcpy(oldName, sender->name);
@@ -231,7 +231,8 @@ void Sv_HandlePlayerInfoFromClient(client_t* sender)
     len = MIN_OF(PLAYERNAMELEN - 1, len); // there is a maximum size
     Reader_Read(msgReader, sender->name, len);
     sender->name[len] = 0;
-    Con_FPrintf(CPF_TRANSMIT | SV_CONSOLE_PRINT_FLAGS, "%s renamed to %s.\n", oldName, sender->name);
+
+    LOG_NET_NOTE("Player %s renamed to %s") << oldName << sender->name;
 
     // Relay to others.
     Net_SendPlayerInfo(console, DDSP_ALL_PLAYERS);
@@ -253,14 +254,15 @@ void Sv_HandlePacket(void)
     char                buf[17];
     size_t              len;
 
+    LOG_AS("Sv_HandlePacket");
+
     switch(netBuffer.msg.type)
     {
     case PCL_HELLO:
     case PCL_HELLO2:
         // Get the ID of the client.
         id = Reader_ReadUInt32(msgReader);
-        Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n",
-                   from, id);
+        LOG_NET_XVERBOSE("Hello from client %i (%08X)") << from << id;
 
         // Check for duplicate IDs.
         if(!ddpl->inGame && !sender->handshake)
@@ -271,9 +273,8 @@ void Sv_HandlePacket(void)
                 if(clients[i].connected && clients[i].id == id)
                 {
                     // Send a message to everybody.
-                    Con_FPrintf(CPF_TRANSMIT | SV_CONSOLE_PRINT_FLAGS,
-                                "New client connection refused: Duplicate ID "
-                                "(%08x). From=%i, i=%i\n", id, from, i);
+                    LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
+                    LOGDEV_NET_WARNING("ID conflict from=%i, i=%i") << from << i;
                     N_TerminateClient(from);
                     break;
                 }
@@ -290,9 +291,9 @@ void Sv_HandlePacket(void)
         {
             // Check the game mode (max 16 chars).
             Reader_Read(msgReader, buf, 16);
-            if(strnicmp(buf, Str_Text(App_CurrentGame().identityKey()), 16))
+            if(strnicmp(buf, App_CurrentGame().identityKey().toUtf8().constData(), 16))
             {
-                Con_Printf("  Bad Game ID: %-.16s\n", buf);
+                LOG_NET_ERROR("Client's game ID is incompatible: %-.16s") << buf;
                 N_TerminateClient(from);
                 break;
             }
@@ -327,10 +328,7 @@ void Sv_HandlePacket(void)
     case PKT_OK:
         // The client says it's ready to receive frames.
         sender->ready = true;
-#ifdef _DEBUG
-Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
-           "(%08X).\n", from, sender->id);
-#endif
+        LOG_NET_VERBOSE("OK (\"ready!\") from client %i (%08X)") << from << sender->id;
         if(sender->handshake)
         {
             // The handshake is complete. The client has acknowledged it
@@ -376,9 +374,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
     case PCL_FINALE_REQUEST: {
         finaleid_t fid = Reader_ReadUInt32(msgReader);
         uint16_t params = Reader_ReadUInt16(msgReader);
-#ifdef _DEBUG
-        Con_Message("PCL_FINALE_REQUEST: fid=%i params=%i", fid, params);
-#endif
+        LOGDEV_NET_MSG("PCL_FINALE_REQUEST: fid=%i params=%i") << fid << params;
         if(params == 1)
         {
             // Skip.
@@ -391,8 +387,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         break;
 
     default:
-        Con_Error("Sv_HandlePacket: Invalid value, netBuffer.msg.type = %i.",
-                  (int) netBuffer.msg.type);
+        LOGDEV_NET_ERROR("Invalid value: netBuffer.msg.type = %i") << netBuffer.msg.type;
         break;
     }
 }
@@ -412,6 +407,9 @@ void Sv_Login(void)
                     "Sv_Login: A client is already logged in.\n");
         return;
     }
+
+    LOG_AS("Sv_Login");
+
     // Check the password.
     passLen = Reader_ReadByte(msgReader);
     de::zap(password);
@@ -425,8 +423,7 @@ void Sv_Login(void)
 
     // OK!
     netRemoteUser = netBuffer.player;
-    Con_Message("Sv_Login: %s (client %i) logged in.",
-                clients[netRemoteUser].name, netRemoteUser);
+    LOG_NET_NOTE("%s (client %i) logged in" ) << clients[netRemoteUser].name << netRemoteUser;
     // Send a confirmation packet to the client.
     Msg_Begin(PKT_LOGIN);
     Writer_WriteByte(msgWriter, true);        // Yes, you're logged in.
@@ -443,14 +440,17 @@ void Sv_ExecuteCommand(void)
     int flags;
     byte cmdSource;
     unsigned short len;
-    boolean silent;
+    dd_bool silent;
     char *cmd = 0;
+
+    LOG_AS("Sv_ExecuteCommand");
 
     if(!netRemoteUser)
     {
-        Con_Message("Sv_ExecuteCommand: Cmd received but no one's logged in!");
+        LOGDEV_NET_ERROR("Command received but no one's logged in!");
         return;
     }
+
     // The command packet is very simple.
     len = Reader_ReadUInt16(msgReader);
     silent = (len & 0x8000) != 0;
@@ -470,7 +470,7 @@ void Sv_ExecuteCommand(void)
         break;
 
     default:
-        Con_Error("Sv_ExecuteCommand: Not a command packet!\n");
+        DENG_ASSERT(!"Sv_ExecuteCommand: Not a command packet!");
         return;
     }
 
@@ -514,8 +514,8 @@ void Sv_GetPackets(void)
             {
                 sender = &clients[netconsole];
                 sender->shakePing = Timer_RealMilliseconds() - sender->shakePing;
-                Con_Printf("Cl%i handshake ping: %i ms\n", netconsole,
-                           sender->shakePing);
+                LOG_NET_MSG("Client %i ping at handshake: %i ms")
+                        << netconsole << sender->shakePing;
             }
             break;
 
@@ -527,16 +527,11 @@ void Sv_GetPackets(void)
             acked->angles = Reader_ReadInt32(msgReader);
             acked->origin = Reader_ReadInt32(msgReader);
             acked->mom = Reader_ReadInt32(msgReader);
-#ifdef _DEBUG
-            Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).",
-                        netBuffer.player,
-                        acked->angles,
-                        ddpl->fixCounter.angles,
-                        acked->origin,
-                        ddpl->fixCounter.origin,
-                        acked->mom,
+
+            LOGDEV_NET_XVERBOSE_DEBUGONLY("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i)",
+                        netBuffer.player << acked->angles << ddpl->fixCounter.angles <<
+                        acked->origin << ddpl->fixCounter.origin << acked->mom <<
                         ddpl->fixCounter.mom);
-#endif
             break; }
 
         case PKT_PING:
@@ -578,10 +573,10 @@ void Sv_GetPackets(void)
  * Assign a new console to the player. Returns true if successful.
  * Called by N_Update().
  */
-boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
+dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
 {
     LOG_AS("Sv_PlayerArrives");
-    LOG_INFO("'%s' has arrived.") << name;
+    LOG_NET_NOTE("'%s' has arrived") << name;
 
     // We need to find the new player a client entry.
     for(int i = 1; i < DDMAXPLAYERS; ++i)
@@ -612,7 +607,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
             Sv_InitPoolForClient(i);
             Smoother_Clear(cl->smoother);
 
-            LOG_VERBOSE("'%s' assigned to console %i (node:%u)") << cl->name << i << nodeID;
+            LOG_NET_MSG("'%s' assigned to console %i (node:%u)") << cl->name << i << nodeID;
 
             // In order to get in the game, the client must first
             // shake hands. It'll request this by sending a Hello packet.
@@ -631,11 +626,13 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
     int                 plrNum = N_IdentifyPlayer(nodeID);
-    boolean             wasInGame;
+    dd_bool             wasInGame;
     player_t           *plr;
     client_t           *cl;
 
     if(plrNum == -1) return; // Bogus?
+
+    LOG_AS("Sv_PlayerLeaves");
 
     // Log off automatically.
     if(netRemoteUser == plrNum)
@@ -644,9 +641,8 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     cl = &clients[plrNum];
     plr = &ddPlayers[plrNum];
 
-    // Print a little something in the console.
-    Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left, was connected for %f seconds.",
-                cl->name, plrNum, Timer_RealSeconds() - cl->enterTime);
+    LOG_NET_NOTE("'%s' (console %i) has left, was connected for %.1f seconds")
+            << cl->name << plrNum << (Timer_RealSeconds() - cl->enterTime);
 
     wasInGame = plr->shared.inGame;
     plr->shared.inGame = false;
@@ -679,15 +675,14 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 /**
  * The player will be sent the introductory handshake packets.
  */
-void Sv_Handshake(int plrNum, boolean newPlayer)
+void Sv_Handshake(int plrNum, dd_bool newPlayer)
 {
     StringArray* ar;
     int i;
     uint playersInGame = 0;
 
-#ifdef _DEBUG
-    Con_Message("Sv_Handshake: Shaking hands with player %i.", plrNum);
-#endif
+    LOG_AS("Sv_Handshake");
+    LOG_NET_VERBOSE("Shaking hands with player %i (newPlayer:%b)") << plrNum << newPlayer;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
         if(clients[i].connected)
@@ -796,10 +791,9 @@ void Sv_StartNetGame(void)
 
     // Prepare the material dictionary we'll be using with clients.
     materialDict = MaterialArchive_New(false);
-#ifdef _DEBUG
-    Con_Message("Sv_StartNetGame: Prepared material dictionary with %i materials.",
-                MaterialArchive_Count(materialDict));
-#endif
+
+    LOGDEV_NET_XVERBOSE("Prepared material dictionary with %i materials")
+            << MaterialArchive_Count(materialDict);
 
     if(!isDedicated)
     {
@@ -873,6 +867,8 @@ void Sv_SendPlayerFixes(int plrNum)
         return;
     }
 
+    LOG_AS("Sv_SendPlayerFixes");
+
     // Start writing a player fix message.
     Msg_Begin(PSV_PLAYER_FIX);
 
@@ -887,9 +883,7 @@ void Sv_SendPlayerFixes(int plrNum)
     Writer_WriteUInt32(msgWriter, fixes);
     Writer_WriteUInt16(msgWriter, ddpl->mo->thinker.id);
 
-#ifdef _DEBUG
-    Con_Message("Sv_SendPlayerFixes: Fixing mobj %i...", ddpl->mo->thinker.id);
-#endif
+    LOGDEV_NET_MSG("Fixing mobj %i of player %i") << ddpl->mo->thinker.id << plrNum;
 
     // Increment counters.
     if(ddpl->flags & DDPF_FIXANGLES)
@@ -898,10 +892,8 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteUInt32(msgWriter, ddpl->mo->angle);
         Writer_WriteFloat(msgWriter, ddpl->lookDir);
 
-#ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%x lookdir=%f",
-                    ddpl->fixCounter.angles, ddpl->mo->angle, ddpl->lookDir);
-#endif
+        LOGDEV_NET_MSG("Sent angles (%i): angle=%x lookdir=%.2f")
+                << ddpl->fixCounter.angles << ddpl->mo->angle << ddpl->lookDir;
     }
 
     if(ddpl->flags & DDPF_FIXORIGIN)
@@ -911,11 +903,8 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->origin[VY]);
         Writer_WriteFloat(msgWriter, ddpl->mo->origin[VZ]);
 
-#ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f",
-                    ddpl->fixCounter.origin,
-                    ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
-#endif
+        LOGDEV_NET_MSG("Sent position (%i): %s")
+                << ddpl->fixCounter.origin << Vector3d(ddpl->mo->origin).asText();
     }
 
     if(ddpl->flags & DDPF_FIXMOM)
@@ -925,11 +914,8 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MY]);
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MZ]);
 
-#ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f",
-                    ddpl->fixCounter.mom,
-                    ddpl->mo->mom[MX], ddpl->mo->mom[MY], ddpl->mo->mom[MZ]);
-#endif
+        LOGDEV_NET_MSG("Sent momentum (%i): %s")
+                << ddpl->fixCounter.mom << Vector3d(ddpl->mo->mom).asText();
     }
 
     Msg_End();
@@ -938,9 +924,8 @@ void Sv_SendPlayerFixes(int plrNum)
     Net_SendBuffer(DDSP_ALL_PLAYERS, 0);
 
     ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM);
-#ifdef _DEBUG
-    Con_Message("Sv_SendPlayerFixes: Cleared FIX flags of player %i.", plrNum);
-#endif
+
+    LOGDEV_NET_VERBOSE("Cleared FIX flags of player %i") << plrNum;
 
     // Clear the smoother for this client.
     if(clients[plrNum].smoother)
@@ -1034,7 +1019,7 @@ int Sv_GetNumConnected(void)
  * an arbitrary amount of data to clients with no regard to the available
  * bandwidth.
  */
-boolean Sv_CheckBandwidth(int /*playerNumber*/)
+dd_bool Sv_CheckBandwidth(int /*playerNumber*/)
 {
     return true;
     /*
@@ -1092,7 +1077,7 @@ void Sv_ClientCoords(int plrNum)
     float               clientPos[3];
     angle_t             clientAngle;
     float               clientLookDir;
-    boolean             onFloor = false;
+    dd_bool             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !ddpl->inGame || (ddpl->flags & DDPF_DEAD))
@@ -1124,32 +1109,29 @@ void Sv_ClientCoords(int plrNum)
 
     if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
     {
-#ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting angles for player %i: %x, %f", plrNum, clientAngle, clientLookDir) );
-#endif
+        LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting angles for player %i: %x, %f",
+                                     plrNum << clientAngle << clientLookDir);
+
         mo->angle = clientAngle;
         ddpl->lookDir = clientLookDir;
     }
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f", plrNum,
-                          clientPos[VX], clientPos[VY], clientPos[VZ]) );
-#endif
+    LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Received coords for player %i: %f, %f, %f",
+                                 plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
     if(Sv_CanTrustClientPos(plrNum))
     {
-#ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f", plrNum,
-                              clientPos[VX], clientPos[VY], clientPos[VZ]) );
-#endif
+        LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f",
+                                     plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
+
         Smoother_AddPos(clients[plrNum].smoother, clientGameTime,
                         clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
     }
 }
 
-boolean Sv_CanTrustClientPos(int plrNum)
+dd_bool Sv_CanTrustClientPos(int plrNum)
 {
     player_t* plr = &ddPlayers[plrNum];
     ddplayer_t* ddpl = &plr->shared;

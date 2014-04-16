@@ -114,7 +114,7 @@ DENG_HEADERS += \
     $$SRC/include/EntityDatabase \
     $$SRC/include/Game \
     $$SRC/include/Games \
-    $$SRC/include/Interceptor \
+    $$SRC/include/Interceptor
 
 # Private headers.
 DENG_HEADERS += \
@@ -194,7 +194,6 @@ DENG_HEADERS += \
     $$SRC/include/network/net_msg.h \
     $$SRC/include/partition.h \
     $$SRC/include/r_util.h \
-    $$SRC/include/render/r_main.h \
     $$SRC/include/resource/animgroup.h \
     $$SRC/include/resource/colorpalette.h \
     $$SRC/include/resource/compositetexture.h \
@@ -256,7 +255,7 @@ DENG_HEADERS += \
     $$SRC/include/world/surface.h \
     $$SRC/include/world/thinkers.h \
     $$SRC/include/world/vertex.h \
-    $$SRC/include/world/world.h \
+    $$SRC/include/world/worldsystem.h \
 
 INCLUDEPATH += \
     include \
@@ -360,7 +359,6 @@ SOURCES += \
     $$SRC/src/network/net_msg.cpp \
     $$SRC/src/network/net_ping.cpp \
     $$SRC/src/r_util.cpp \
-    $$SRC/src/render/r_main.cpp \
     $$SRC/src/resource/animgroup.cpp \
     $$SRC/src/resource/api_material.cpp \
     $$SRC/src/resource/api_resource.cpp \
@@ -422,7 +420,7 @@ SOURCES += \
     $$SRC/src/world/surface.cpp \
     $$SRC/src/world/thinkers.cpp \
     $$SRC/src/world/vertex.cpp \
-    $$SRC/src/world/world.cpp
+    $$SRC/src/world/worldsystem.cpp
 
 OTHER_FILES += \
     data/cphelp.txt \

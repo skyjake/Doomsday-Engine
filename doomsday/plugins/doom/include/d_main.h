@@ -1,25 +1,21 @@
-/**\file d_main.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_main.h  Doom-specific game initialization
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBJDOOM_MAIN_H
@@ -31,40 +27,51 @@
 
 #include "doomdef.h"
 
+DENG_EXTERN_C int verbose;
+
+DENG_EXTERN_C float turboMul; // Multiplier for turbo.
+
+DENG_EXTERN_C gamemode_t gameMode;
+DENG_EXTERN_C int gameModeBits;
+
+DENG_EXTERN_C char const *borderGraphics[];
+
+DENG_EXTERN_C float defFontRGB[];
+DENG_EXTERN_C float defFontRGB2[];
+DENG_EXTERN_C float defFontRGB3[];
+
+DENG_EXTERN_C dd_bool monsterInfight;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int verbose;
-
-extern boolean noMonstersParm; // checkparm of -nomonsters
-extern boolean respawnParm; // checkparm of -respawn
-extern boolean turboParm; // checkparm of -turbo
-//extern boolean randomClassParm; // checkparm of -randclass
-extern boolean devParm; // checkparm of -devparm
-extern boolean fastParm; // checkparm of -fast
-
-extern float turboMul; // Multiplier for turbo.
-
-extern gamemode_t gameMode;
-extern int gameModeBits;
-
-extern char* borderGraphics[];
-
-extern float defFontRGB[];
-extern float defFontRGB2[];
-extern float defFontRGB3[];
-
-extern boolean monsterInfight;
-
+/**
+ * Pre Game Initialization routine.
+ * All game-specific actions that should take place at this time go here.
+ */
 void D_PreInit(void);
+
+/**
+ * Post Game Initialization routine.
+ * All game-specific actions that should take place at this time go here.
+ */
 void D_PostInit(void);
+
 void D_Shutdown(void);
+
+/**
+ * Get a 32-bit integer value.
+ */
 int D_GetInteger(int id);
-void* D_GetVariable(int id);
+
+/**
+ * Get a pointer to the value of a named variable/constant.
+ */
+void *D_GetVariable(int id);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBJDOOM_MAIN_H */
+#endif // LIBJDOOM_MAIN_H

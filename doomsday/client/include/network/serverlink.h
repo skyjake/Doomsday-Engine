@@ -37,6 +37,9 @@ class ServerLink : public de::shell::AbstractLink
 public:
     DENG2_DEFINE_AUDIENCE(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
 
+    DENG2_DEFINE_AUDIENCE(Join,  void networkGameJoined())
+    DENG2_DEFINE_AUDIENCE(Leave, void networkGameLeft())
+
 public:
     ServerLink();
 
@@ -58,15 +61,46 @@ public:
      */
     void discover(de::String const &domain);
 
+    /**
+     * Asks the master server for information about currently running servers.
+     */
+    void discoverUsingMaster();
+
     bool isDiscovering() const;
 
-    int foundServerCount() const;
+    enum FoundMaskFlag
+    {
+        Direct = 0x1,
+        LocalNetwork = 0x2,
+        MasterServer = 0x4,
 
-    QList<de::Address> foundServers() const;
+        Any = Direct | LocalNetwork | MasterServer
+    };
+    Q_DECLARE_FLAGS(FoundMask, FoundMaskFlag)
 
-    bool foundServerInfo(de::Address const &host, serverinfo_t *info) const;
+    /**
+     * @param mask  Defines the sources that are enabled when querying for found servers.
+     */
+    int foundServerCount(FoundMask mask = Any) const;
 
-    bool foundServerInfo(int index, serverinfo_t *info) const;
+    /**
+     * @param mask  Defines the sources that are enabled when querying for found servers.
+     */
+    QList<de::Address> foundServers(FoundMask mask = Any) const;
+
+    bool isFound(de::Address const &host, FoundMask mask = Any) const;
+
+    /**
+     * @param mask  Defines the sources that are enabled when querying for found servers.
+     */
+    bool foundServerInfo(de::Address const &host, serverinfo_t *info,
+                         FoundMask mask = Any) const;
+
+    /**
+     * @param mask  Defines the sources that are enabled when querying for found servers.
+     */
+    bool foundServerInfo(int index, serverinfo_t *info,
+                         FoundMask mask = Any) const;
 
 signals:
     void serversDiscovered();
@@ -85,5 +119,7 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(ServerLink::FoundMask)
 
 #endif // CLIENT_LINK_H

@@ -1,6 +1,7 @@
-# The Doomsday Engine Project
-# Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
+# The Doomsday Engine Project -- Doomsday 2 Core Library
+# License: LGPL 3
+# Copyright (c) 2011-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
 TARGET = deng2
@@ -67,8 +68,7 @@ include(network.pri)
 include(scriptsys.pri)
 include(widgets.pri)
 
-# Convenience headers.
-HEADERS += \
+publicHeaders(root, \
     include/de/App \
     include/de/Asset \
     include/de/Clock \
@@ -78,11 +78,13 @@ HEADERS += \
     include/de/Error \
     include/de/Event \
     include/de/FileLogSink \
+    include/de/Garbage \
     include/de/HighPerformanceTimer \
     include/de/Id \
     include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
+    include/de/LogFilter \
     include/de/LogSink \
     include/de/Loop \
     include/de/Matrix \
@@ -95,13 +97,16 @@ HEADERS += \
     include/de/TextStreamLogSink \
     include/de/UnixInfo \
     include/de/Vector \
-    include/de/Version
-
-HEADERS += \
+    include/de/Version \
+    \
     include/de/c_wrapper.h \
+    include/de/charsymbols.h \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
+)
+
+publicHeaders(core, \
     include/de/core/app.h \
     include/de/core/asset.h \
     include/de/core/clock.h \
@@ -110,11 +115,13 @@ HEADERS += \
     include/de/core/debuglogsink.h \
     include/de/core/event.h \
     include/de/core/filelogsink.h \
+    include/de/core/garbage.h \
     include/de/core/highperformancetimer.h \
     include/de/core/id.h \
     include/de/core/library.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h \
+    include/de/core/logfilter.h \
     include/de/core/logsink.h \
     include/de/core/loop.h \
     include/de/core/matrix.h \
@@ -127,7 +134,8 @@ HEADERS += \
     include/de/core/textstreamlogsink.h \
     include/de/core/unixinfo.h \
     include/de/core/vector.h \
-    include/de/core/version.h
+    include/de/core/version.h \
+)
 
 # Private headers.
 HEADERS += \
@@ -147,11 +155,13 @@ SOURCES += \
     src/core/config.cpp \
     src/core/debuglogsink.cpp \
     src/core/filelogsink.cpp \
+    src/core/garbage.cpp \
     src/core/highperformancetimer.cpp \
     src/core/id.cpp \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
+    src/core/logfilter.cpp \
     src/core/logsink.cpp \
     src/core/loop.cpp \
     src/core/memorylogsink.cpp \
@@ -161,10 +171,13 @@ SOURCES += \
     src/core/textstreamlogsink.cpp \
     src/core/unixinfo.cpp
 
-OTHER_FILES += \
+scripts.files = \
     modules/Config.de \
-    modules/gui.de \
+    modules/Log.de \
     modules/recutil.de
+
+OTHER_FILES += \
+    $$scripts.files
 
 # Installation ---------------------------------------------------------------
 
@@ -186,4 +199,10 @@ macx {
 !macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+
+deng_sdk {
+    INSTALLS *= target scripts
+    target.path = $$DENG_SDK_LIB_DIR
+    scripts.path = $$DENG_SDK_DIR/modules
 }

@@ -63,7 +63,7 @@ void Msg_Begin(int type)
     Writer_WriteByte(msgWriter, type);
 }
 
-boolean Msg_BeingWritten(void)
+dd_bool Msg_BeingWritten(void)
 {
     return msgWriter != NULL;
 }

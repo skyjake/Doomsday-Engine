@@ -35,7 +35,7 @@
 #include "jdoom64.h"
 
 #include "g_defs.h"
-#include "p_player.h"
+#include "player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -175,9 +175,6 @@ static const char* ammoTypeNames[NUM_AMMO_TYPES] =
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Initialize ammo info.
- */
 void P_InitAmmoInfo(void)
 {
     uint                i;
@@ -195,9 +192,6 @@ void P_InitAmmoInfo(void)
     }
 }
 
-/**
- * Initialize weapon info.
- */
 void P_InitWeaponInfo(void)
 {
 #define WPINF               "Weapon Info|"

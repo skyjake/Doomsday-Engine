@@ -7,21 +7,19 @@
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/PersistentCanvasWindow"
@@ -52,15 +50,17 @@ static QRect desktopRect()
 
 static QRect centeredQRect(Vector2ui const &size)
 {
-    QSize screenSize = desktopRect().size();
+    Vector2ui const screenSize(desktopRect().size().width(),
+                               desktopRect().size().height());
+    Vector2ui const clamped = size.min(screenSize);
 
-    LOG_TRACE("centeredGeometry: Current desktop rect %i x %i")
-            << screenSize.width() << screenSize.height();
+    LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i")
+            << screenSize.x << screenSize.y;
 
     return QRect(desktopRect().topLeft() +
-                 QPoint((screenSize.width()  - size.x) / 2,
-                        (screenSize.height() - size.y) / 2),
-                 QSize(size.x, size.y));
+                 QPoint((screenSize.x - clamped.x) / 2,
+                        (screenSize.y - clamped.y) / 2),
+                 QSize(clamped.x, clamped.y));
 }
 
 static Rectanglei centeredRect(Vector2ui const &size)
@@ -73,7 +73,7 @@ static void notifyAboutModeChange()
 {
     /// @todo This should be done using an observer.
 
-    LOG_MSG("Display mode has changed.");
+    LOG_GL_NOTE("Display mode has changed");
     DENG2_GUI_APP->notifyDisplayModeChanged();
 }
 
@@ -156,16 +156,16 @@ DENG2_PIMPL(PersistentCanvasWindow)
                 flags |= f;
 
                 if(f & Maximized)
-                    LOG_DEBUG("Setting State::Maximized");
+                    LOGDEV_GL_VERBOSE("Setting State::Maximized");
             }
             else
             {
                 flags &= ~f;
 
                 if(f & Centered)
-                    LOG_DEBUG("Clearing State::Centered");
+                    LOGDEV_GL_VERBOSE("Clearing State::Centered");
                 if(f & Maximized)
-                    LOG_DEBUG("Clearing State::Maximized");
+                    LOGDEV_GL_VERBOSE("Clearing State::Maximized");
             }
         }
 
@@ -203,7 +203,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             Config &config = App::config();
 
             // The default state of the window is determined by these values.
-            ArrayValue &rect = config.geta(configName("rect"));
+            ArrayValue const &rect = config.geta(configName("rect"));
             if(rect.size() >= 4)
             {
                 windowRect = Rectanglei(rect.at(0).asNumber(),
@@ -212,7 +212,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
                                         rect.at(3).asNumber());
             }
 
-            ArrayValue &fs = config.geta(configName("fullSize"));
+            ArrayValue const &fs = config.geta(configName("fullSize"));
             if(fs.size() >= 2)
             {
                 fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());
@@ -469,7 +469,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         // Keep a global pointer to the main window.
         if(id == MAIN_WINDOW_ID)
         {
-            DENG2_ASSERT(!hasMain());
+            DENG2_ASSERT(!mainExists());
             setMain(thisPublic);
         }
 
@@ -522,7 +522,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
             default:
                 // Unknown attribute.
-                LOG_WARNING("Unknown attribute %i, aborting...") << attribs[i];
+                LOGDEV_GL_WARNING("Unknown attribute %i, aborting...") << attribs[i];
                 return false;
             }
         }
@@ -550,7 +550,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         State mod = state;     
         mod.applyAttributes(attribs);
 
-        LOG_DEBUG("windowRect:%s fullSize:%s depth:%i flags:%x")
+        LOGDEV_GL_MSG("windowRect:%s fullSize:%s depth:%i flags:%x")
                 << mod.windowRect.asText()
                 << mod.fullSize.asText()
                 << mod.colorDepthBits
@@ -563,7 +563,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         }
         else
         {
-            LOG_VERBOSE("New window attributes are the same as before");
+            LOGDEV_GL_VERBOSE("New window attributes are the same as before");
         }
     }
 
@@ -593,7 +593,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         // Change display mode, if necessary.
         if(!DisplayMode_IsEqual(DisplayMode_Current(), newMode))
         {
-            LOG_INFO("Changing display mode to %i x %i x %i (%.1f Hz)")
+            LOG_GL_NOTE("Changing display mode to %i x %i x %i (%.1f Hz)")
                     << newMode->width << newMode->height << newMode->depth << newMode->refreshRate;
 
             modeChanged = DisplayMode_Change(newMode, newState.shouldCaptureScreen());
@@ -690,40 +690,41 @@ DENG2_PIMPL(PersistentCanvasWindow)
                 switch(next.type)
                 {
                 case Task::ShowNormal:
-                    LOG_DEBUG("Showing window as normal");
+                    LOG_GL_VERBOSE("Showing window as normal");
                     self.showNormal();
                     break;
 
                 case Task::ShowMaximized:
-                    LOG_DEBUG("Showing window as maximized");
+                    LOG_GL_VERBOSE("Showing window as maximized");
                     self.showMaximized();
                     break;
 
                 case Task::ShowFullscreen:
-                    LOG_DEBUG("Showing window as fullscreen");
+                    LOG_GL_VERBOSE("Showing window as fullscreen");
                     self.showFullScreen();
                     break;
 
                 case Task::SetGeometry:
                     if(state.isCentered())
                     {
-                        LOG_DEBUG("Centering window with size ") << next.rect.size().asText();
+                        LOG_GL_VERBOSE("Centering window with size ") << next.rect.size().asText();
                         next.rect = centeredRect(next.rect.size());
                     }
-                    LOG_DEBUG("Setting window geometry to ") << next.rect.asText();
+                    LOG_GL_VERBOSE("Setting window geometry to ") << next.rect.asText();
                     self.setGeometry(next.rect.left(),  next.rect.top(),
                                      next.rect.width(), next.rect.height());
                     state.windowRect = next.rect;
                     break;
 
                 case Task::NotifyModeChange:
-                    LOG_DEBUG("Display mode change notification");
+                    LOGDEV_GL_VERBOSE("Display mode change notification");
                     notifyAboutModeChange();
                     break;
 
                 case Task::MacRaiseOverShield:
 #ifdef MACOSX
                     // Pull the window again over the shield after the mode change.
+                    LOGDEV_GL_VERBOSE("Raising window over shield");
                     DisplayMode_Native_Raise(self.nativeHandle());
 #endif
                     break;
@@ -738,7 +739,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         }
 
         // The queue is now empty; all modifications to state have been applied.
-        DENG2_FOR_PUBLIC_AUDIENCE(AttributeChange, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
         {
             i->windowAttributesChanged(self);
         }
@@ -762,7 +763,11 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         return st;
     }
+
+    DENG2_PIMPL_AUDIENCE(AttributeChange)
 };
+
+DENG2_AUDIENCE_METHOD(PersistentCanvasWindow, AttributeChange)
 
 PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     : d(new Instance(this, id))
@@ -877,8 +882,8 @@ String PersistentCanvasWindow::configName(String const &key) const
 
 PersistentCanvasWindow &PersistentCanvasWindow::main()
 {
-    DENG2_ASSERT(hasMain() != 0);
-    if(!hasMain())
+    DENG2_ASSERT(mainExists());
+    if(!mainExists())
     {
         throw InvalidIdError("PersistentCanvasWindow::main",
                              "No window found with id \"" + MAIN_WINDOW_ID + "\"");
@@ -897,7 +902,7 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
             d->state.setFlag(Instance::State::Centered, false);
 
             // Notify.
-            DENG2_FOR_AUDIENCE(AttributeChange, i)
+            DENG2_FOR_AUDIENCE2(AttributeChange, i)
             {
                 i->windowAttributesChanged(*this);
             }
@@ -912,7 +917,7 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
 
 void PersistentCanvasWindow::resizeEvent(QResizeEvent *ev)
 {
-    LOG_DEBUG("Window resized: maximized:%b old:%ix%i new:%ix%i")
+    LOGDEV_GL_XVERBOSE("Window resized: maximized:%b old:%ix%i new:%ix%i")
             << isMaximized() << ev->oldSize().width() << ev->oldSize().height()
             << ev->size().width() << ev->size().height();
 

@@ -161,12 +161,20 @@ desc = Execute a command if the condition is true.
 [inc]
 desc = Add 1 to a cvar.
 
+[inspectgame]
+desc = Print detailed information about a registered game to the console.
+inf = Params: inspectgame (identityKey)\nFor example, 'inspectgame doom1-ultimate'.
+
 [inspectmap]
 desc = Print extended information about the current map to the console.
 
 [inspectmaterial]
 desc = Print extended information about a Material to the console.
 inf = Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
+
+[inspectsavegame]
+desc = Print detailed information about a saved game session to the console.
+inf = USAGE:\ninspectsavegame (path)\nThe (path) is an absolute path and name of the saved game session to be inspected. User savegames are located in /home/savegames/< "Game identity key" in wiki >. If the saved session belongs to the currently loaded game, the path component may be omitted.\nEXAMPLES:\nInspect the Hexen savegame "hex1" while the game is loaded:inspectsavegame Hex1\nInspect the Doom savegame "doomsav1" at any time:inspectsavegame /home/savegames/doom1-ultimate/doomsav1
 
 [inspecttexture]
 desc = Print extended information about a Texture to the console.
@@ -369,6 +377,9 @@ desc = Toggle between fullscreen and windowed modes.
 [togglemaximized]
 desc = Toggle between maximized and normal window modes.
 
+[tutorial]
+desc = Show a tutorial that introduces Doomsday's UI.
+
 [uicolor]
 desc = Change Doomsday user interface colors.
 inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 1 1 1'.\nPossible objects are:\ntext, shadow, bglight, bgmed, bgdark,\nborhigh, bormed, borlow, help
@@ -495,15 +506,6 @@ desc = TCP/IP address for searching servers.
 [net-ip-port]
 desc = TCP port to use for control connections.
 
-[net-master-address]
-desc = Master server IP address / name.
-
-[net-master-path]
-desc = Master server path name.
-
-[net-master-port]
-desc = Master server TCP/IP port.
-
 [net-name]
 desc = Your name in multiplayer games.
 
@@ -545,6 +547,21 @@ desc = Sector lightlevel that is biased completely to zero.
 
 [rend-bias]
 desc = 1=Enable the experimental shadow bias test setup.
+
+[rend-bloom-complexity]
+desc = 0=One-pass bloom (faster). 1=Two-pass bloom (more realistic).
+
+[rend-bloom-dispersion]
+desc = Determines how much the bloom filter spreads out color values when blurring (1.0=normal).
+
+[rend-bloom-intensity]
+desc = Output intensity for the bloom filter.
+
+[rend-bloom-threshold]
+desc = Input threshold for bloom: pixels darker than this will not be affected by bloom (range: 0...1).
+
+[rend-bloom]
+desc = 1=Enable the bloom filter for frame post-processing. Bloom makes bright areas of the frame glow more intensely.
 
 [rend-camera-fov]
 desc = Field of view.

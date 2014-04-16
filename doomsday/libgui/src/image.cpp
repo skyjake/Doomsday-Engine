@@ -3,23 +3,25 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Image"
 #include "de/gui/opengl.h"
 #include <de/Reader>
 #include <de/Writer>
+#include <de/Block>
+#include <de/FixedByteArray>
 
 #include <QDataStream>
 #include <QPainter>
@@ -27,6 +29,116 @@
 namespace de {
 
 #define IMAGE_ASSERT_EDITABLE(d) DENG2_ASSERT(d->format == UseQImageFormat)
+
+namespace internal {
+
+static dbyte const PCX_MAGIC        = 0x0a;
+static dbyte const PCX_RLE_ENCODING = 1;
+static dsize const PCX_HEADER_SIZE  = 128;
+
+struct PCXHeader : public IReadable
+{
+    dbyte magic;
+    dbyte version;
+    dbyte encoding;
+    dbyte bitsPerPixel;
+    duint16 xMin, yMin;
+    duint16 xMax, yMax;
+    duint16 hRes, vRes;
+    dbyte colorPlanes;
+    duint16 bytesPerLine;
+    duint16 paletteType;
+
+    void operator << (Reader &from)
+    {
+        from >> magic
+             >> version
+             >> encoding
+             >> bitsPerPixel
+             >> xMin
+             >> yMin
+             >> xMax
+             >> yMax
+             >> hRes
+             >> vRes;
+
+        from.seek(48);  // skip EGA palette
+        from.seek(1);   // skip reserved field
+
+        from >> colorPlanes
+             >> bytesPerLine
+             >> paletteType;
+    }
+};
+
+static bool isPCXFormat(Block const &data)
+{
+    try
+    {
+        PCXHeader header;
+        Reader(data) >> header;
+
+        // Only paletted format supported.
+        return (header.magic == PCX_MAGIC &&
+                header.version == 5 /* latest */ &&
+                header.encoding == PCX_RLE_ENCODING &&
+                header.bitsPerPixel == 8);
+    }
+    catch(Error const &)
+    {
+        return false;
+    }
+}
+
+/**
+ * Loads a PCX image into a QImage using an RGB888 buffer. The PCX palette is used
+ * to map color indices to RGB values.
+ *
+ * @param data  Source data containing a PCX image.
+ *
+ * @return QImage using the RGB888 (24-bit) format.
+ */
+static QImage loadPCX(Block const &data)
+{
+    PCXHeader header;
+    Reader reader(data);
+    reader >> header;
+
+    Image::Size const size(header.xMax + 1, header.yMax + 1);
+
+    QImage image(size.x, size.y, QImage::Format_RGB888);
+    DENG2_ASSERT(image.depth() == 24);
+
+    dbyte const *palette = data.data() + data.size() - 768;
+    dbyte const *pos = data.data() + PCX_HEADER_SIZE;
+    dbyte *dst = image.bits();
+
+    for(duint y = 0; y < size.y; ++y, dst += size.x * 3)
+    {
+        for(duint x = 0; x < size.x; )
+        {
+            dbyte value = *pos++;
+
+            // RLE inflation.
+            int runLength = 1;
+            if((value & 0xc0) == 0xc0)
+            {
+                runLength = value & 0x3f;
+                value = *pos++;
+            }
+            while(runLength-- > 0)
+            {
+                // Get the RGB triplets from the palette.
+                std::memcpy(&dst[3 * x++], &palette[3 * value], 3);
+            }
+        }
+    }
+
+    return image;
+}
+
+} // namespace internal
+using namespace internal;
 
 DENG2_PIMPL(Image)
 {
@@ -57,13 +169,14 @@ DENG2_PIMPL(Image)
 
     Instance(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
         : Base(i), format(imgFormat), size(imgSize), refPixels(imgRefPixels)
-    {}
+    {}   
 };
 
 Image::Image() : d(new Instance(this))
 {}
 
-Image::Image(Image const &other) : d(new Instance(this, *other.d))
+Image::Image(Image const &other)
+    : de::ISerializable(), d(new Instance(this, *other.d))
 {}
 
 Image::Image(QImage const &image) : d(new Instance(this, image))
@@ -329,6 +442,17 @@ void Image::draw(Image const &image, Vector2i const &topLeft)
     painter.drawImage(QPoint(topLeft.x, topLeft.y), image.d->image);
 }
 
+void Image::drawPartial(Image const &image, Rectanglei const &part, Vector2i const &topLeft)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+    IMAGE_ASSERT_EDITABLE(image.d);
+
+    QPainter painter(&d->image);
+    painter.drawImage(QPoint(topLeft.x, topLeft.y),
+                      image.d->image,
+                      QRect(part.left(), part.top(), part.width(), part.height()));
+}
+
 void Image::operator >> (Writer &to) const
 {
     to << duint8(d->format);
@@ -454,6 +578,23 @@ Image Image::solidColor(Color const &color, Size const &size)
     QImage img(QSize(size.x, size.y), QImage::Format_ARGB32);
     img.fill(QColor(color.x, color.y, color.z, color.w).rgba());
     return img;
+}
+
+Image Image::fromData(IByteArray const &data)
+{
+    return fromData(Block(data));
+}
+
+Image Image::fromData(Block const &data)
+{
+    if(isPCXFormat(data))
+    {
+        // Qt does not support PCX images (too old school?).
+        return loadPCX(data);
+    }
+    /// @todo Could check when alpha channel isn't needed and return an RGB888
+    /// image instead. -jk
+    return QImage::fromData(data).convertToFormat(QImage::Format_ARGB32);
 }
 
 } // namespace de

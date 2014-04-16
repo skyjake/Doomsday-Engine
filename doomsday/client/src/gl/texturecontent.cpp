@@ -372,7 +372,7 @@ void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
 
             // Announce the normalization.
             de::Uri uri = textureManifest.composeUri();
-            LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
+            LOG_GL_VERBOSE("Normalized detail texture \"%s\" (balance: %f, high amp: %f, low amp: %f)")
                 << uri << baMul << hiMul << loMul;
         }
 
@@ -408,9 +408,9 @@ void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
  * @param allowCompression  @c true == use compression if available.
  * @return  The chosen texture format.
  */
-static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression)
+static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression)
 {
-    boolean compress = (allowCompression && GL_state.features.texCompression);
+    dd_bool compress = (allowCompression && GL_state.features.texCompression);
 
     switch(format)
     {
@@ -457,7 +457,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression
  *
  * @return  @c true iff successful.
  */
-static boolean uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
+static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     int width,  int height, int genMipmaps)
 {
     const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
@@ -584,7 +584,7 @@ static boolean uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
  *
  * @return  @c true iff successful.
  */
-static boolean uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
     int width, int height, float grayFactor)
 {
     int i, w, h, numpels = width * height, numLevels, pixelSize;

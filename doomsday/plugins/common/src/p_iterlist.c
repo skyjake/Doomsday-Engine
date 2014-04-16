@@ -68,7 +68,7 @@ int IterList_Size(iterlist_t* list)
     return list->elementsCount;
 }
 
-boolean IterList_Empty(iterlist_t* list)
+dd_bool IterList_Empty(iterlist_t* list)
 {
     return IterList_Size(list) == 0;
 }

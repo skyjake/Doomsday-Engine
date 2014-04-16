@@ -38,7 +38,7 @@ mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
     return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean spawnFog)
+dd_bool P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, dd_bool spawnFog)
 {
     coord_t oldpos[3], aboveFloor, fogDelta;
     angle_t oldAngle;
@@ -196,9 +196,9 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-boolean EV_Teleport(Line* line, int side, mobj_t* mo, boolean spawnFog)
+dd_bool EV_Teleport(Line *line, int side, mobj_t *mo, dd_bool spawnFog)
 {
-    mobj_t* dest;
+    mobj_t *dest;
 
     // Clients cannot teleport on their own.
     if(IS_CLIENT) return 0;
@@ -218,14 +218,14 @@ boolean EV_Teleport(Line* line, int side, mobj_t* mo, boolean spawnFog)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void P_ArtiTele(player_t* player)
+void P_ArtiTele(player_t *player)
 {
-    const playerstart_t* start;
+    playerstart_t const *start;
 
     // Get a random deathmatch start.
-    if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
+    if((start = P_GetPlayerStart(0, G_Ruleset_Deathmatch()? -1 : 0, G_Ruleset_Deathmatch())))
     {
-        const mapspot_t* spot = &mapSpots[start->spot];
+        mapspot_t const *spot = &mapSpots[start->spot];
         P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
 
 #if __JHEXEN__

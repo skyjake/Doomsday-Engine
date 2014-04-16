@@ -5,33 +5,34 @@
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/CanvasWindow"
+#include "de/GuiApp"
 
 #include <QApplication>
 #include <QGLFormat>
 #include <QMoveEvent>
 #include <QThread>
+#include <QTimer>
 
-#include <de/App>
 #include <de/Config>
 #include <de/Record>
 #include <de/NumberValue>
 #include <de/Log>
 #include <de/RootWidget>
+#include <de/GLState>
 #include <de/c_wrapper.h>
 
 namespace de {
@@ -89,7 +90,7 @@ DENG2_PIMPL(CanvasWindow)
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
-        LOG_DEBUG("About to replace Canvas %p with %p")
+        LOGDEV_GL_MSG("About to replace Canvas %p with %p")
                 << de::dintptr(canvas) << de::dintptr(recreated);
 
         // Copy the audiences of the old canvas.
@@ -102,14 +103,21 @@ DENG2_PIMPL(CanvasWindow)
 
         // Set up the basic GL state for the new canvas.
         canvas->makeCurrent();
+        LIBGUI_ASSERT_GL_OK();
 
-        DENG2_FOR_EACH_OBSERVER(Canvas::GLInitAudience, i, canvas->audienceForGLInit)
+        DENG2_FOR_EACH_OBSERVER(Canvas::GLInitAudience, i, canvas->audienceForGLInit())
         {
             i->canvasGLInit(*canvas);
         }
 
-        //canvas->doneCurrent();
+        DENG2_GUI_APP->notifyGLContextChanged();
+
+#ifdef Q_WS_X11
+        canvas->update();
+#else
         canvas->updateGL();
+#endif
+        LIBGUI_ASSERT_GL_OK();
 
         // Reacquire the focus.
         canvas->setFocus();
@@ -119,9 +127,9 @@ DENG2_PIMPL(CanvasWindow)
         }
 
         // Restore the old focus change audience.
-        canvas->audienceForFocusChange = canvasFocusAudience;
+        canvas->audienceForFocusChange() = canvasFocusAudience;
 
-        LOG_DEBUG("Canvas replaced with %p") << de::dintptr(canvas);
+        LOGDEV_GL_MSG("Canvas replaced with %p") << de::dintptr(canvas);
     }
 };
 
@@ -131,8 +139,8 @@ CanvasWindow::CanvasWindow()
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas(this)); // takes ownership
 
-    d->canvas->audienceForGLReady += this;
-    d->canvas->audienceForGLDraw += this;
+    d->canvas->audienceForGLReady() += this;
+    d->canvas->audienceForGLDraw() += this;
 
     // All input goes to the canvas.
     d->canvas->setFocus();
@@ -152,27 +160,40 @@ void CanvasWindow::recreateCanvas()
 {
     DENG2_ASSERT_IN_MAIN_THREAD();
 
+    GLState::considerNativeStateUndefined();
+
     d->ready = false;
 
     // Steal the focus change audience temporarily so no spurious focus
     // notifications are sent.
-    d->canvasFocusAudience = canvas().audienceForFocusChange;
-    canvas().audienceForFocusChange.clear();
+    d->canvasFocusAudience = canvas().audienceForFocusChange();
+    canvas().audienceForFocusChange().clear();
 
     // We'll re-trap the mouse after the new canvas is ready.
     d->mouseWasTrapped = canvas().isMouseTrapped();
     canvas().trapMouse(false);
     canvas().setParent(0);
+    canvas().hide();
 
     // Create the replacement Canvas. Once it's created and visible, we'll
     // finish the switch-over.
     d->recreated = new Canvas(this, d->canvas);
-    d->recreated->audienceForGLReady += this;
+    d->recreated->audienceForGLReady() += this;
 
-    d->recreated->setGeometry(d->canvas->geometry());
+    //d->recreated->setGeometry(d->canvas->geometry());
     d->recreated->show();
+    d->recreated->update();
 
-    LOG_DEBUG("Canvas recreated, old one still exists.");
+    LIBGUI_ASSERT_GL_OK();
+
+    LOGDEV_GL_MSG("Canvas recreated, old one still exists");
+    qDebug() << "old Canvas" << &canvas();
+    qDebug() << "new Canvas" << d->recreated;
+}
+
+bool CanvasWindow::isRecreationInProgress() const
+{
+    return d->recreated != 0;
 }
 
 Canvas &CanvasWindow::canvas() const
@@ -206,7 +227,7 @@ void CanvasWindow::hideEvent(QHideEvent *ev)
 
     QMainWindow::hideEvent(ev);
 
-    LOG_DEBUG("Hide event (hidden:%b)") << isHidden();
+    LOG_GL_VERBOSE("Hide event (hidden:%b)") << isHidden();
 }
 
 void CanvasWindow::canvasGLReady(Canvas &canvas)
@@ -215,7 +236,13 @@ void CanvasWindow::canvasGLReady(Canvas &canvas)
 
     if(d->recreated == &canvas)
     {
+#ifndef Q_WS_X11
         d->finishCanvasRecreation();
+#else
+        // Need to defer the finalization.
+        qDebug() << "defer recreation";
+        QTimer::singleShot(100, this, SLOT(finishCanvasRecreation()));
+#endif
     }
 }
 
@@ -267,7 +294,12 @@ void *CanvasWindow::nativeHandle() const
     return reinterpret_cast<void *>(winId());
 }
 
-bool CanvasWindow::hasMain()
+void CanvasWindow::finishCanvasRecreation()
+{
+    d->finishCanvasRecreation();
+}
+
+bool CanvasWindow::mainExists()
 {
     return mainWindow != 0;
 }
@@ -282,5 +314,7 @@ void CanvasWindow::setMain(CanvasWindow *window)
 {
     mainWindow = window;
 }
+
+
 
 } // namespace de

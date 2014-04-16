@@ -29,7 +29,7 @@
 
 using namespace de;
 
-static inline boolean isRealMobj(const mobj_t* base)
+static inline dd_bool isRealMobj(const mobj_t* base)
 {
     return base && base->thinker.id != 0;
 }
@@ -48,7 +48,7 @@ static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
     if(!*base || isRealMobj(*base)) return;
 
     /// @todo fixme: Do not assume the current map.
-    App_World().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter*>(*base),
+    App_WorldSystem().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter*>(*base),
                                            sector, poly, plane, surface);
 
 #ifdef DENG_DEBUG
@@ -98,7 +98,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume, int toP
         }
     }
 
-    LOG_TRACE("Sv_SoundAtVolume: id: #%i volume: %f targets: %x")
+    LOGDEV_NET_XVERBOSE("Sv_SoundAtVolume: id: #%i volume: %f targets: %x")
             << soundID << volume << targetPlayers;
 
     Sv_NewSoundDelta(soundID, origin, sector, poly, plane, surface, volume,
@@ -115,7 +115,7 @@ void Sv_StopSound(int soundId, mobj_t *origin)
     Surface *surface;
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
-    LOG_TRACE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p plane: %p surface: %p")
+    LOGDEV_NET_XVERBOSE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p plane: %p surface: %p")
             << soundId << (origin? origin->thinker.id : 0)
             << origin << sector << poly << plane << surface;
 

@@ -27,7 +27,7 @@
 DENG_EXTERN_C float frameTimePos;      // 0...1: fractional part for sharp game tics
 DENG_EXTERN_C int rFrameCount;
 DENG_EXTERN_C timespan_t sysTime, gameTime, demoTime;
-DENG_EXTERN_C boolean tickFrame;
+DENG_EXTERN_C dd_bool tickFrame;
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,7 +71,7 @@ void DD_ResetTimer(void);
 /**
  * Determines whether frame time is advancing.
  */
-boolean DD_IsFrameTimeAdvancing(void);
+dd_bool DD_IsFrameTimeAdvancing(void);
 
 /**
  * Returns the real time in seconds when the latest iteration of runTics() was

@@ -61,7 +61,7 @@ extern "C" {
 /**
  * Determines if the memory zone is available for allocations.
  */
-DENG_PUBLIC boolean Z_IsInited(void);
+DENG_PUBLIC dd_bool Z_IsInited(void);
 
 /**
  * You can pass a NULL user if the tag is < PU_PURGELEVEL.
@@ -125,7 +125,7 @@ DENG_PUBLIC int Z_GetTag(void *ptr);
  * @return @c true, if @a ptr points to a valid allocated memory block
  * inside the zone.
  */
-DENG_PUBLIC boolean Z_Contains(void *ptr);
+DENG_PUBLIC dd_bool Z_Contains(void *ptr);
 
 /**
  * Copies @a text into a buffer allocated from the zone.
@@ -177,6 +177,14 @@ DENG_PUBLIC void *ZBlockSet_Allocate(zblockset_t *set);
     Z_ChangeTag2(p, t); }
 
 DENG_PUBLIC void Z_PrintStatus(void);
+
+/**
+ * Puts a region of memory allocated with Z_Malloc() or malloc() up for garbage
+ * collection.
+ *
+ * @param ptr  Allocated memory (not previously trashed).
+ */
+DENG_PUBLIC void Garbage_Trash(void *ptr);
 
 ///@}
 

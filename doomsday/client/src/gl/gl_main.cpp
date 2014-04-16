@@ -39,7 +39,7 @@
 #include "world/p_object.h"
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "resource/hq2x.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
@@ -50,6 +50,7 @@
 #include <de/DisplayMode>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <de/App>
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -68,23 +69,23 @@ using namespace de;
 void GL_SetGamma();
 
 extern int maxnumnodes;
-extern boolean fillOutlines;
+extern dd_bool fillOutlines;
 
 int     defResX = 640, defResY = 480, defBPP = 32;
 int     defFullscreen = true;
 
 int     numTexUnits = 1;
-boolean envModAdd; // TexEnv: modulate and add is available.
+dd_bool envModAdd; // TexEnv: modulate and add is available.
 int     test3dfx = 0;
 int     r_detail = true; // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
 float   glNearClip, glFarClip;
 
-static boolean initGLOk = false;
-static boolean initFullGLOk = false;
+static dd_bool initGLOk = false;
+static dd_bool initFullGLOk = false;
 
-static boolean gamma_support = false;
+static dd_bool gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 
 static int fogModeDefault = 0;
@@ -96,23 +97,26 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    if(novideo || !WindowSystem::hasMain()) return;
-    WindowSystem::main().updateCanvasFormat();
+    if(novideo || !WindowSystem::mainExists()) return;
+    ClientWindow::main().updateCanvasFormat();
 }
 
 static void videoVsyncChanged()
 {
-    if(novideo || !WindowSystem::hasMain()) return;
+    if(novideo || !WindowSystem::mainExists()) return;
 
-#if defined(WIN32) || defined(MACOSX)
-    GL_SetVSync(Con_GetByte("vid-vsync") != 0);
+#ifdef WIN32
+    ClientWindow::main().updateCanvasFormat();
 #else
-    WindowSystem::main().updateCanvasFormat();
+    GL_SetVSync(Con_GetByte("vid-vsync") != 0);
 #endif
 }
 
 void GL_Register()
 {
+    // Update values from saved Config.
+    fsaaEnabled = App::config().getb("window.fsaa", true);
+
     // Cvars
     C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
@@ -153,12 +157,12 @@ void GL_Register()
     C_CMD      ("centerwindow",     "",     CenterWindow);
 }
 
-boolean GL_IsInited()
+dd_bool GL_IsInited()
 {
     return initGLOk;
 }
 
-boolean GL_IsFullyInited()
+dd_bool GL_IsFullyInited()
 {
     return initFullGLOk;
 }
@@ -191,8 +195,7 @@ void GL_DoUpdate()
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    ClientWindow::main().swapBuffers(
-                VR::modeNeedsStereoGLFormat(VR::mode())? gl::SwapStereoBuffers : gl::SwapMonoBuffer);
+    ClientWindow::main().swapBuffers();
 
     // We will arrive here always at the same time in relation to the displayed
     // frame: it is a good time to update the mouse state.
@@ -288,25 +291,25 @@ void GL_SetGamma()
 
 static void printConfiguration()
 {
-    LOG_VERBOSE(_E(b) "Render configuration:");
+    LOG_GL_VERBOSE(_E(b) "Render configuration:");
 
-    LOG_VERBOSE("  Multisampling: %b") << GL_state.features.multisample;
+    LOG_GL_VERBOSE("  Multisampling: %b") << GL_state.features.multisample;
     if(GL_state.features.multisample)
     {
-        LOG_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
+        LOG_GL_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
     }
-    LOG_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
-    LOG_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
-    LOG_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
-    LOG_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
+    LOG_GL_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    LOG_GL_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
+    LOG_GL_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
+    LOG_GL_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
 }
 
-boolean GL_EarlyInit()
+dd_bool GL_EarlyInit()
 {
     if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
-    LOG_INFO("Initializing Render subsystem...");
+    LOG_GL_VERBOSE("Initializing Render subsystem...");
 
     gamma_support = !CommandLine_Check("-noramp");
 
@@ -324,13 +327,13 @@ boolean GL_EarlyInit()
     // Check the maximum texture size.
     if(GLInfo::limits().maxTexSize == 256)
     {
-        LOG_WARNING("Using restricted texture w/h ratio (1:8)");
+        LOG_GL_WARNING("Using restricted texture w/h ratio (1:8)");
         ratioLimit = 8;
     }
     if(CommandLine_Check("-outlines"))
     {
         fillOutlines = false;
-        LOG_INFO("Textures have outlines");
+        LOG_GL_NOTE("Textures have outlines");
     }
 
     renderTextures = !CommandLine_Exists("-notex");
@@ -339,6 +342,8 @@ boolean GL_EarlyInit()
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
+
+    GL_SetVSync(true); // will be overridden from vid-vsync
 
     initGLOk = true;
     return true;
@@ -377,7 +382,7 @@ void GL_ShutdownRefresh()
 
 void GL_Shutdown()
 {
-    if(!initGLOk || !ClientWindow::hasMain())
+    if(!initGLOk || !ClientWindow::mainExists())
         return; // Not yet initialized fully.
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -400,7 +405,6 @@ void GL_Shutdown()
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();
-    Sky_Shutdown();
     LensFx_Shutdown();
     Rend_Reset();
 
@@ -452,7 +456,7 @@ void GL_Init2DState()
     glFogfv(GL_FOG_COLOR, fogColor);
 }
 
-void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t const *viewData)
+void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -560,42 +564,10 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
 
 Matrix4f GL_GetProjectionMatrix()
 {
-    // We're assuming pixels are squares.
-    float aspect = viewpw / (float) viewph;
-
-    if (VR::mode() == VR::MODE_OCULUS_RIFT)
-    {
-        aspect = VR::riftState.aspect();
-        // A little trigonometry to apply aspect ratio to angles
-        float x = tan(0.5 * de::degreeToRadian(Rend_FieldOfView()));
-        yfov = de::radianToDegree(2.0 * atan2(x/aspect, 1.0f));
-    }
-    else
-    {
-        yfov = Rend_FieldOfView() / aspect;
-    }
-
-    float fH = tan(0.5 * de::degreeToRadian(yfov)) * glNearClip;
-    float fW = fH*aspect;
-    /*
-     * Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
-     * Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
-     *  - AFS preserves identical near and far clipping planes in both views
-     *  - AFS shows items at/near infinity better
-     *  - AFS conforms to what stereo 3D photographers call "ortho stereo"
-     * Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only
-     * applies the viewpoint shift.
-     */
-    float frustumShift = 0;
-    if (VR::applyFrustumShift)
-    {
-        frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
-    }
-
-    return Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
-                             -fH, fH,
-                             glNearClip, glFarClip) *
-           Matrix4f::translate(Vector3f(-VR::eyeShift, 0, 0)) *
+    float const fov = Rend_FieldOfView();
+    Vector2f const size(viewpw, viewph);
+    yfov = vrCfg().verticalFieldOfView(fov, size);
+    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip) *
            Matrix4f::scale(Vector3f(1, 1, -1));
 }
 
@@ -672,17 +644,21 @@ void GL_TotalRestore()
 
     /// @todo fixme: Should this use the default MapInfo def if none found? -ds
     ded_mapinfo_t *mapInfo = 0;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        de::Uri mapUri = App_World().map().uri();
+        de::Uri mapUri = App_WorldSystem().map().uri();
         mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
     }
 
     // Restore map's fog settings.
     if(!mapInfo || !(mapInfo->flags & MIF_FOG))
+    {
         R_SetupFogDefaults();
+    }
     else
+    {
         R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
+    }
 
 #if _DEBUG
     Z_CheckHeap();
@@ -791,7 +767,7 @@ int GL_NumMipmapLevels(int width, int height)
     return numLevels;
 }
 
-boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
+dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool isMipMapped,
     int *optWidth, int *optHeight)
 {
     DENG_ASSERT(optWidth && optHeight);
@@ -909,7 +885,8 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
     gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
     if(uploadMethod == gl::Immediate)
     {
-        LOG_DEBUG("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
+        LOGDEV_GL_XVERBOSE("Uploading texture (%i:%ix%i) while not busy! "
+                           "Should have been precached in busy mode?")
                 << content.name << content.width << content.height;
     }
 
@@ -1227,7 +1204,7 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
 
     int region[4];
     FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
-    boolean zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
+    dd_bool zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
     if(zeroAreaRegion) return;
 
     /*
@@ -1267,7 +1244,7 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
         for(x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count. Why? -ds
-            boolean const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
+            dd_bool const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
                                                 pixelSize == 4?    src[3] < 255 : false);
 
             if(pixelIsTransparent) continue;
@@ -1388,7 +1365,7 @@ D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1411,7 +1388,7 @@ D_CMD(SetFullRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1429,7 +1406,7 @@ D_CMD(SetWinRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1448,7 +1425,7 @@ D_CMD(ToggleFullscreen)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1464,7 +1441,7 @@ D_CMD(ToggleMaximized)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1480,7 +1457,7 @@ D_CMD(ToggleCentered)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1496,7 +1473,7 @@ D_CMD(CenterWindow)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1512,7 +1489,7 @@ D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1528,7 +1505,7 @@ D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1557,7 +1534,7 @@ D_CMD(DisplayModeInfo)
                 .arg(win->isCentered()       ? "yes" : "no")
                 .arg(win->isMaximized()      ? "yes" : "no");
 
-    Con_Message(str.toUtf8().constData());
+    LOG_GL_MSG("%s") << str;
     return true;
 }
 
@@ -1565,19 +1542,21 @@ D_CMD(ListDisplayModes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Con_Message("There are %i display modes available:", DisplayMode_Count());
+    LOG_GL_MSG("There are %i display modes available:") << DisplayMode_Count();
     for(int i = 0; i < DisplayMode_Count(); ++i)
     {
         DisplayMode const *mode = DisplayMode_ByIndex(i);
         if(mode->refreshRate > 0)
         {
-            Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)", mode->width, mode->height,
-                        mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+            LOG_GL_MSG("  %i x %i x %i " _E(>) "(%i:%i, refresh: %.1f Hz)")
+                    << mode->width << mode->height << mode->depth
+                    << mode->ratioX << mode->ratioY << mode->refreshRate;
         }
         else
         {
-            Con_Message("  %i x %i x %i (%i:%i)", mode->width, mode->height,
-                        mode->depth, mode->ratioX, mode->ratioY);
+            LOG_GL_MSG("  %i x %i x %i (%i:%i)")
+                    << mode->width << mode->height << mode->depth
+                    << mode->ratioX << mode->ratioY;
         }
     }
     return true;
@@ -1588,7 +1567,7 @@ D_CMD(UpdateGammaRamp)
     DENG2_UNUSED3(src, argc, argv);
 
     GL_SetGamma();
-    Con_Message("Gamma ramp set.");
+    LOG_GL_VERBOSE("Gamma ramp set");
     return true;
 }
 
@@ -1598,24 +1577,24 @@ D_CMD(Fog)
 
     if(argc == 1)
     {
-        Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
-        Con_Printf("Commands: on, off, mode, color, start, end, density.\n");
-        Con_Printf("Modes: linear, exp, exp2.\n");
-        Con_Printf("Color is given as RGB (0-255).\n");
-        Con_Printf("Start and end are for linear fog, density for exponential.\n");
+        LOG_SCR_NOTE("Usage: %s (cmd) (args)") << argv[0];
+        LOG_SCR_MSG("Commands: on, off, mode, color, start, end, density");
+        LOG_SCR_MSG("Modes: linear, exp, exp2");
+        LOG_SCR_MSG("Color is given as RGB (0-255)");
+        LOG_SCR_MSG("Start and end are for linear fog, density for exponential fog.");
         return true;
     }
 
     if(!stricmp(argv[1], "on"))
     {
         GL_UseFog(true);
-        Con_Printf("Fog is now active.\n");
+        LOG_GL_VERBOSE("Fog is now active");
         return true;
     }
     if(!stricmp(argv[1], "off"))
     {
         GL_UseFog(false);
-        Con_Printf("Fog is now disabled.\n");
+        LOG_GL_VERBOSE("Fog is now disabled");
         return true;
     }
     if(!stricmp(argv[1], "color") && argc == 5)
@@ -1627,25 +1606,25 @@ D_CMD(Fog)
         fogColor[3] = 1;
 
         glFogfv(GL_FOG_COLOR, fogColor);
-        Con_Printf("Fog color set.\n");
+        LOG_GL_VERBOSE("Fog color set");
         return true;
     }
     if(!stricmp(argv[1], "start") && argc == 3)
     {
         glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog start distance set.\n");
+        LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
         glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog end distance set.\n");
+        LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }
     if(!stricmp(argv[1], "density") && argc == 3)
     {
         glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog density set.\n");
+        LOG_GL_VERBOSE("Fog density set");
         return true;
     }
     if(!stricmp(argv[1], "mode") && argc == 3)
@@ -1653,19 +1632,19 @@ D_CMD(Fog)
         if(!stricmp(argv[2], "linear"))
         {
             glFogi(GL_FOG_MODE, GL_LINEAR);
-            Con_Printf("Fog mode set to linear.\n");
+            LOG_GL_VERBOSE("Fog mode set to linear");
             return true;
         }
         if(!stricmp(argv[2], "exp"))
         {
             glFogi(GL_FOG_MODE, GL_EXP);
-            Con_Printf("Fog mode set to exp.\n");
+            LOG_GL_VERBOSE("Fog mode set to exp");
             return true;
         }
         if(!stricmp(argv[2], "exp2"))
         {
             glFogi(GL_FOG_MODE, GL_EXP2);
-            Con_Printf("Fog mode set to exp2.\n");
+            LOG_GL_VERBOSE("Fog mode set to exp2");
             return true;
         }
     }

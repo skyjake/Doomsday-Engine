@@ -3,17 +3,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/shell/LocalServer"
@@ -26,11 +26,14 @@
 namespace de {
 namespace shell {
 
+static String const ERROR_LOG_NAME = "doomsday-errors.out";
+
 DENG2_PIMPL_NOREF(LocalServer)
 {
     Link *link;
     duint16 port;
     String name;
+    NativePath userDir;
 
     Instance() : link(0), port(0) {}
 };
@@ -44,18 +47,23 @@ void LocalServer::setName(String const &name)
     d->name.replace("\"", "\\\""); // for use on command line
 }
 
-void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions,
+void LocalServer::start(duint16 port,
+                        String const &gameMode,
+                        QStringList additionalOptions,
                         NativePath const &runtimePath)
 {
     d->port = port;
 
-    NativePath userDir = runtimePath;
+    d->userDir = runtimePath;
 
-    if(userDir.isEmpty())
+    if(d->userDir.isEmpty())
     {
         // Default runtime location.
-        userDir = DoomsdayInfo::defaultServerRuntimeFolder();
+        d->userDir = DoomsdayInfo::defaultServerRuntimeFolder();
     }
+
+    // Get rid of a previous error log in this location.
+    QDir(d->userDir).remove(ERROR_LOG_NAME);
 
     DENG2_ASSERT(d->link == 0);
 
@@ -122,7 +130,9 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
 #endif
 
     cmd.append("-userdir");
-    cmd.append(userDir);
+    cmd.append(d->userDir);
+    cmd.append("-errors");
+    cmd.append(ERROR_LOG_NAME);
     cmd.append("-game");
     cmd.append(gameMode);
     cmd.append("-cmd");
@@ -136,7 +146,7 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
 
     foreach(String opt, additionalOptions) cmd.append(opt);
 
-    LOG_INFO("Starting local server with port %i using game mode '%s'")
+    LOG_NET_NOTE("Starting local server with port %i using game mode '%s'")
             << port << gameMode;
 
     cmd.execute();
@@ -150,6 +160,11 @@ void LocalServer::stop()
 Link *LocalServer::openLink()
 {
     return new Link(String("localhost:%1").arg(d->port), 30);
+}
+
+NativePath LocalServer::errorLogPath() const
+{
+    return d->userDir / ERROR_LOG_NAME;
 }
 
 } // namespace shell

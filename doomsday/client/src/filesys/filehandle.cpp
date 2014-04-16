@@ -134,10 +134,10 @@ FileHandle* FileHandleBuilder::fromLump(File1& lump, bool dontBuffer)
     {
         hndl->d->size = lump.size();
         hndl->d->pos = hndl->d->data = (uint8_t*) M_Malloc(hndl->d->size);
-        if(!hndl->d->data) Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.", (unsigned long) hndl->d->size);
 
-        LOG_DEV_TRACE("[%p] Buffering \"%s:%s\"...",
-            dintptr(hndl) << NativePath(lump.container().composePath()).pretty() << NativePath(lump.composePath()).pretty());
+        LOGDEV_RES_XVERBOSE_DEBUGONLY("[%p] Buffering \"%s:%s\"...", dintptr(hndl)
+                                     << NativePath(lump.container().composePath()).pretty()
+                                     << NativePath(lump.composePath()).pretty());
 
         lump.read((uint8_t*)hndl->d->data, 0, lump.size());
     }
@@ -434,7 +434,7 @@ void FileHandle_Close(struct filehandle_s* hndl)
     self->close();
 }
 
-boolean FileHandle_IsValid(struct filehandle_s const* hndl)
+dd_bool FileHandle_IsValid(struct filehandle_s const* hndl)
 {
     SELF_CONST(hndl);
     return self->isValid();
@@ -464,7 +464,7 @@ unsigned char FileHandle_GetC(struct filehandle_s* hndl)
     return self->getC();
 }
 
-boolean FileHandle_AtEnd(struct filehandle_s* hndl)
+dd_bool FileHandle_AtEnd(struct filehandle_s* hndl)
 {
     SELF(hndl);
     return self->atEnd();

@@ -1,7 +1,7 @@
-/** @file games.h Specialized collection for a set of logical Games.
+/** @file games.h  Specialized collection for a set of logical Games.
  *
- * @authors Copyright &copy; 2012-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -48,30 +48,23 @@ public:
     {
         Game *game;
 
-        GameListItem(Game *_game = 0) : game(_game)
+        GameListItem(Game *game = 0) : game(game)
         {}
 
         /// @return  @c true= this game's title is lexically less than that of @a other.
-        bool operator < (GameListItem const &other) const
-        {
-            return Str_CompareIgnoreCase(game->title(), Str_Text(other.game->title())) < 0;
+        bool operator < (GameListItem const &other) const {
+            return game->title().compareWithoutCase(other.game->title()) < 0;
         }
     };
-    typedef QList<GameListItem> GameList;
 
-    /// Game instances.
+    typedef QList<GameListItem> GameList;
     typedef QList<Game *> All;
 
-    /**
-     * Notified when a new game is added.
-     */
-    DENG2_DEFINE_AUDIENCE(Addition, void gameAdded(Game &game))
+    /// Notified when a new game is added.
+    DENG2_DEFINE_AUDIENCE2(Addition, void gameAdded(Game &game))
 
 public:
     Games();
-
-    /// Register the console commands, variables, etc..., of this module.
-    static void consoleRegister();
 
     /// @return  The special "null" Game instance.
     Game &nullGame() const;
@@ -93,7 +86,7 @@ public:
      *
      * @throws NotFoundError if no game is associated with @a identityKey.
      */
-    Game &byIdentityKey(char const *identityKey) const;
+    Game &byIdentityKey(String identityKey) const;
 
     /**
      * @return  Game associated with @a gameId.
@@ -148,20 +141,14 @@ public:
      */
     void locateStartupResources(Game &game);
 
+public:
+    /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
+
 private:
     DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-D_CMD(ListGames);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_GAMES_H */
+#endif // LIBDENG_GAMES_H

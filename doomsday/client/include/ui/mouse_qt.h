@@ -16,7 +16,7 @@ extern mouseinterface_t qtMouse;
  * @param button  Which button.
  * @param isDown  Is the button pressed or released.
  */
-void Mouse_Qt_SubmitButton(int button, boolean isDown);
+void Mouse_Qt_SubmitButton(int button, dd_bool isDown);
 
 /**
  * Submits a new motion event for preprocessing.

@@ -120,7 +120,7 @@ memblock_t *Z_GetBlock(void *ptr);
 struct memzone_private_s {
     void (*lock)(void);
     void (*unlock)(void);
-    boolean (*isVolumeTooFull)(memvolume_t *);
+    dd_bool (*isVolumeTooFull)(memvolume_t *);
     int volumeCount;
     memvolume_t *volumeRoot;
 };

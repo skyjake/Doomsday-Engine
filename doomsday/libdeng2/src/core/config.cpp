@@ -1,25 +1,26 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
  
 #include "de/Config"
 #include "de/App"
 #include "de/Archive"
+#include "de/Refuge"
 #include "de/Log"
 #include "de/Folder"
 #include "de/ArrayValue"
@@ -36,8 +37,8 @@ DENG2_PIMPL_NOREF(Config)
     /// Configuration file name.
     Path configPath;
 
-    /// Path where the configuration is written (inside persist.pack).
-    Path persistentPath;
+    /// Saved configuration data (inside persist.pack).
+    Refuge refuge;
 
     /// The configuration namespace.
     Process config;
@@ -46,8 +47,9 @@ DENG2_PIMPL_NOREF(Config)
     Version oldVersion;
 
     Instance(Path const &path)
-        : configPath(path),
-          persistentPath("modules/Config")
+        : configPath(path)
+        , refuge("modules/Config")
+        , config(&refuge.names())
     {}
 
     void setOldVersion(Value const &old)
@@ -68,19 +70,6 @@ DENG2_PIMPL_NOREF(Config)
 Config::Config(Path const &path) : d(new Instance(path))
 {}
 
-Config::~Config()
-{
-    LOG_AS("~Config");
-    try
-    {
-        write();
-    }
-    catch(Error const &err)
-    {
-        LOG_ERROR("") << err.asText();
-    }
-}
-
 void Config::read()
 {
     LOG_AS("Config::read");
@@ -99,39 +88,51 @@ void Config::read()
     try
     {
         // If we already have a saved copy of the config, read it.
-        Archive const &persist = App::persistentData();
-        Reader(persist.entryBlock(d->persistentPath)).withHeader() >> names();
+        d->refuge.read();
 
         LOG_DEBUG("Found serialized Config:\n") << names();
         
         // If the saved config is from a different version, rerun the script.
-        Value const &oldVersion = names()["__version__"].value();
-        d->setOldVersion(oldVersion);
-        if(oldVersion.compare(*version))
+        if(names().has("__version__"))
         {
-            // Version mismatch: store the old version in a separate variable.
-            d->config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
+            Value const &oldVersion = names()["__version__"].value();
+            d->setOldVersion(oldVersion);
+            if(oldVersion.compare(*version))
+            {
+                // Version mismatch: store the old version in a separate variable.
+                d->config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
                                                  Variable::AllowArray | Variable::ReadOnly));
-            shouldRunScript = true;
+                shouldRunScript = true;
+            }
+            else
+            {
+                // Versions match.
+                LOG_MSG("") << d->refuge.path() << " matches version " << version->asText();
+            }
         }
         else
         {
-            // Versions match.
-            LOG_MSG("") << d->persistentPath << " matches version " << version->asText();
+            // Don't know what version this is, run script to be sure.
+            shouldRunScript = true;
         }
 
         // Also check the timestamp of written config vs. the config script.
         // If script is newer, it should be rerun.
-        if(scriptFile.status().modifiedAt > persist.entryStatus(d->persistentPath).modifiedAt)
+        if(scriptFile.status().modifiedAt > d->refuge.lastWrittenAt())
         {
-            LOG_MSG("%s is newer than %s, rerunning the script.")
-                    << d->configPath << d->persistentPath;
+            LOG_MSG("%s is newer than %s, rerunning the script")
+                    << d->configPath << d->refuge.path();
             shouldRunScript = true;
         }
     }
     catch(Archive::NotFoundError const &)
     {
         // It is missing from persist.pack if the config hasn't been written yet.
+        shouldRunScript = true;
+    }
+    catch(IByteArray::OffsetError const &)
+    {
+        // Empty or missing serialization?
         shouldRunScript = true;
     }
     catch(Error const &error)
@@ -157,7 +158,7 @@ void Config::read()
 
 void Config::write() const
 {
-    Writer(App::persistentData().entryBlock(d->persistentPath)).withHeader() << names();
+    d->refuge.write();
 }
 
 Record &Config::names()
@@ -185,113 +186,94 @@ Version Config::upgradedFromVersion() const
     return d->oldVersion;
 }
 
-Value &Config::get(String const &name) const
+Value const &Config::get(String const &name) const
 {
-    return d->config.globals()[name].value();
+    return names().get(name);
 }
 
 dint Config::geti(String const &name) const
 {
-    return dint(get(name).asNumber());
+    return names().geti(name);
+}
+
+dint Config::geti(String const &name, dint defaultValue) const
+{
+    return names().geti(name, defaultValue);
 }
 
 bool Config::getb(String const &name) const
 {
-    return get(name).isTrue();
+    return names().getb(name);
+}
+
+bool Config::getb(String const &name, bool defaultValue) const
+{
+    return names().getb(name, defaultValue);
 }
 
 duint Config::getui(String const &name) const
 {
-    return duint(get(name).asNumber());
+    return names().getui(name);
+}
+
+duint Config::getui(String const &name, duint defaultValue) const
+{
+    return names().getui(name, defaultValue);
 }
 
 ddouble Config::getd(String const &name) const
 {
-    return get(name).asNumber();
+    return names().getd(name);
+}
+
+ddouble Config::getd(String const &name, ddouble defaultValue) const
+{
+    return names().getd(name, defaultValue);
 }
 
 String Config::gets(String const &name) const
 {
-    return get(name).asText();
+    return names().gets(name);
 }
 
-ArrayValue &Config::geta(String const &name) const
+String Config::gets(String const &name, String const &defaultValue) const
 {
-    return getAs<ArrayValue>(name);
+    return names().gets(name, defaultValue);
+}
+
+ArrayValue const &Config::geta(String const &name) const
+{
+    return names().getAs<ArrayValue>(name);
 }
 
 Variable &Config::set(String const &name, bool value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = new NumberValue(value);
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addBoolean(name, value);
-    }
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, Value::Number const &value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = new NumberValue(value);
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addBoolean(name, value);
-    }
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, dint value)
 {
-    return set(name, Value::Number(value));
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, duint value)
 {
-    return set(name, Value::Number(value));
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, ArrayValue *value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = value;
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addArray(name, value);
-    }
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, Value::Text const &value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = new TextValue(value);
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addText(name, value);
-    }
+    return names().set(name, value);
 }
 
 } // namespace de

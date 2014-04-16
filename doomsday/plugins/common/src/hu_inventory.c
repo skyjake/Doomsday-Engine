@@ -529,7 +529,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 #undef BORDER
 }
 
-static void inventoryMove(hud_inventory_t* inv, int dir, boolean canWrap)
+static void inventoryMove(hud_inventory_t* inv, int dir, dd_bool canWrap)
 {
     // Maximum visible slots for the variable cursor.
     uint maxVisSlots;
@@ -606,7 +606,7 @@ static void inventoryMove(hud_inventory_t* inv, int dir, boolean canWrap)
     }
 }
 
-void Hu_InventoryOpen(int player, boolean show)
+void Hu_InventoryOpen(int player, dd_bool show)
 {
     hud_inventory_t* inv;
     player_t* plr;
@@ -634,7 +634,7 @@ void Hu_InventoryOpen(int player, boolean show)
     }
 }
 
-boolean Hu_InventoryIsOpen(int player)
+dd_bool Hu_InventoryIsOpen(int player)
 {
     hud_inventory_t* inv;
 
@@ -660,7 +660,7 @@ void Hu_InventoryMarkDirty(int player)
     hudInventories[player].flags |= HIF_IS_DIRTY;
 }
 
-boolean Hu_InventorySelect(int player, inventoryitemtype_t type)
+dd_bool Hu_InventorySelect(int player, inventoryitemtype_t type)
 {
     assert(type == IIT_NONE ||
            (type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES));
@@ -687,7 +687,7 @@ boolean Hu_InventorySelect(int player, inventoryitemtype_t type)
     return false;
 }
 
-boolean Hu_InventoryMove(int player, int dir, boolean canWrap, boolean silent)
+dd_bool Hu_InventoryMove(int player, int dir, dd_bool canWrap, dd_bool silent)
 {
     player_t*           plr;
     hud_inventory_t*    inv;

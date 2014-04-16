@@ -31,7 +31,7 @@
 #include "dd_types.h"
 #include "resource/resourcesystem.h"
 #include "Games"
-#include "world/world.h"
+#include "world/worldsystem.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "filesys/sys_direc.h"
@@ -42,20 +42,6 @@
 #include <QMap>
 #include <de/String>
 #include "resourceclass.h"
-
-// Verbose messages.
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
-
-#ifdef _DEBUG
-#  define DEBUG_Message(code)           {Con_Message code;}
-#  define DEBUG_VERBOSE_Message(code)   {if(verbose >= 1) {Con_Message code;}}
-#  define DEBUG_VERBOSE2_Message(code)  {if(verbose >= 2) {Con_Message code;}}
-#else
-#  define DEBUG_Message(code)
-#  define DEBUG_VERBOSE_Message(code)
-#  define DEBUG_VERBOSE2_Message(code)
-#endif
 
 struct game_s;
 
@@ -79,10 +65,10 @@ extern int gameDataFormat;
 
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);
-boolean DD_Init(void);
+dd_bool DD_Init(void);
 
 /// @return  @c true if shutdown is in progress.
-boolean DD_IsShuttingDown(void);
+dd_bool DD_IsShuttingDown(void);
 
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
@@ -108,21 +94,19 @@ de::LibraryFile const &Plug_FileForPlugin(pluginid_t id);
 int DD_CallHooks(int hook_type, int parm, void* data);
 
 /**
- * Sets the ID of the currently active plugin. Note that plugin hooks are
- * executed in a single-threaded manner; only one can be active at a time.
+ * Sets the ID of the currently active plugin in the current thread.
  *
  * @param id  Plugin id.
  */
 void DD_SetActivePluginId(pluginid_t id);
 
 /**
- * @return Unique identifier of the currently active plugin. Note that plugin
- * hooks are executed in a single-threaded manner; only one is active at a
- * time.
+ * @return Unique identifier of the currently active plugin. The currently
+ * active plugin is tracked separately for each thread.
  */
 pluginid_t DD_ActivePluginId(void);
 
-boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
+dd_bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
 
 /**
  * Locate the address of the named, exported procedure in the plugin.
@@ -160,6 +144,9 @@ de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 /// @return  The application's global ResourceSystem.
 ResourceSystem &App_ResourceSystem();
 
+/// @return  The application's global WorldSystem.
+de::WorldSystem &App_WorldSystem();
+
 /**
  * Convenient method of returning a resource class from the application's global
  * resource system.
@@ -173,7 +160,7 @@ de::ResourceClass &App_ResourceClass(de::String className);
 de::ResourceClass &App_ResourceClass(resourceclassid_t classId);
 
 /// @return  @c true iff there is presently a game loaded.
-boolean App_GameLoaded();
+dd_bool App_GameLoaded();
 
 /// @return  The current game from the application's global collection.
 de::Game &App_CurrentGame();
@@ -185,9 +172,6 @@ bool App_ChangeGame(de::Game &game, bool allowReload = false);
 
 /// @return  The application's global Games (collection).
 de::Games &App_Games();
-
-/// @return  The application's global World.
-de::World &App_World();
 
 fontschemeid_t DD_ParseFontSchemeName(char const *str);
 

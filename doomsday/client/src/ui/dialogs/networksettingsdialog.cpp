@@ -21,27 +21,45 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 
+#include "clientapp.h"
 #include "de_audio.h"
 #include "con_main.h"
-#include "SignalAction"
+
+#include <de/SignalAction>
+#include <de/GridPopupWidget>
+#include <de/VariableLineEditWidget>
 
 using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(NetworkSettingsDialog)
 {
+    VariableLineEditWidget *masterApi;
+    GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
 
     Instance(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(devInfo = new CVarToggleWidget("net-dev"));
+        area.add(masterApi = new VariableLineEditWidget(App::config()["masterServer.apiUrl"]));
+
+        // Developer options.
+        self.add(devPopup = new GridPopupWidget);
+        devPopup->layout().setGridSize(1, 0);
+        *devPopup << (devInfo = new CVarToggleWidget("net-dev"));
+        devPopup->commit();
     }
 
     void fetch()
     {
-        devInfo->updateFromCVar();
+        foreach(Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
+        {
+            if(ICVarWidget *cv = w->maybeAs<ICVarWidget>())
+            {
+                cv->updateFromCVar();
+            }
+        }
     }
 };
 
@@ -52,25 +70,36 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
 
     d->devInfo->setText(tr("Developer Info"));
 
+    LabelWidget *masterApiLabel = LabelWidget::newWithText(tr("Master API URL:"), &area());
+
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
-    layout.setGridSize(1, 0);
-    //layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *d->devInfo;
+    layout.setGridSize(2, 0);
+    layout.setColumnAlignment(0, ui::AlignRight);
+    layout << *masterApiLabel  << *d->masterApi;
 
     area().setContentSize(layout.width(), layout.height());
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(Default | Accept, tr("Close"))
+            << new DialogButtonItem(Action, tr("Reset to Defaults"),
+                                    new SignalAction(this, SLOT(resetToDefaults())))
+            << new DialogButtonItem(Action | Id1, style().images().image("gauge"),
+                                    new SignalAction(this, SLOT(showDeveloperPopup())));
+
+    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
 
     d->fetch();
 }
 
 void NetworkSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("net-dev", 0);
+    ClientApp::networkSettings().resetToDefaults();
 
     d->fetch();
+}
+
+void NetworkSettingsDialog::showDeveloperPopup()
+{
+    d->devPopup->open();
 }

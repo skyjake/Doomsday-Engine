@@ -6,18 +6,17 @@
  * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifdef WIN32
@@ -341,7 +340,7 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
 #endif
 
     // Not supported!
-    LOG_DEBUG("Not translated: Qt key %i (%x), virtualKey %i, scancode %i")
+    LOGDEV_INPUT_WARNING("Ignored unknown key: Qt key %i (%x), virtualKey %i, scancode %i")
             << qtKey << qtKey << nativeVirtualKey << nativeScanCode;
 
     return 0;
@@ -429,6 +428,12 @@ KeyEvent::State KeyEvent::state() const
     case KeyRepeat: return Repeat;
     default:        return Released;
     }
+}
+
+bool KeyEvent::isModifier() const
+{
+    return _qtKey == Qt::Key_Shift || _qtKey == Qt::Key_Control ||
+           _qtKey == Qt::Key_Alt   || _qtKey == Qt::Key_Meta;
 }
 
 } // namespace de

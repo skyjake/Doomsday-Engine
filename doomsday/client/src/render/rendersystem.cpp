@@ -89,7 +89,6 @@ DENG2_PIMPL(RenderSystem)
 {
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
-    GLShaderBank shaderBank;
     ImageBank images;
     Store buffer;
     DrawLists drawLists;
@@ -158,6 +157,11 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::FloatCVar, "rend-glow-scale", 3)
                 .define(SReg::IntCVar,   "rend-glow-wall", 1)
 
+                .define(SReg::IntCVar,   "rend-bloom", 1)
+                .define(SReg::FloatCVar, "rend-bloom-intensity", .65f)
+                .define(SReg::FloatCVar, "rend-bloom-threshold", .35f)
+                .define(SReg::FloatCVar, "rend-bloom-dispersion", 1)
+
                 .define(SReg::IntCVar,   "rend-fakeradio", 1)
                 .define(SReg::FloatCVar, "rend-fakeradio-darkness", 1.2f)
                 .define(SReg::IntCVar,   "rend-shadow", 1)
@@ -214,7 +218,7 @@ DENG2_PIMPL(RenderSystem)
         DENG2_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
-            shaderBank.addFromInfo(**i);
+            ClientApp::shaders().addFromInfo(**i);
         }
     }
 
@@ -234,7 +238,7 @@ RenderSystem::RenderSystem() : d(new Instance(this))
 
 GLShaderBank &RenderSystem::shaders()
 {
-    return d->shaderBank;
+    return BaseGuiApp::shaders();
 }
 
 ImageBank &RenderSystem::images()

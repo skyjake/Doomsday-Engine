@@ -118,7 +118,7 @@ typedef double          timespan_t;
 typedef double  coord_t;
 
 typedef int     ddboolean_t;
-#define boolean ddboolean_t
+#define dd_bool ddboolean_t // for convenience
 
 // Angles.
 #define ANGLE_45            0x20000000

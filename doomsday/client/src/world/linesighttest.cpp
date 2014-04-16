@@ -1,4 +1,4 @@
-/** @file linesighttest.cpp World map line of sight testing.
+/** @file linesighttest.cpp  World map line of sight testing.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,42 +18,32 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
-#include <de/aabox.h>
-#include <de/fixedpoint.h>
-#include <de/vector1.h> /// @todo remove me
+#include "de_base.h"
+#include "world/linesighttest.h"
 
 #include "Face"
 
+#include "world/worldsystem.h" /// For validCount, @todo Remove me.
 #include "BspLeaf"
 #include "BspNode"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
 
-#include "render/r_main.h" /// For validCount, @todo Remove me.
-
-#include "world/linesighttest.h"
+#include <de/aabox.h>
+#include <de/fixedpoint.h>
+#include <de/vector1.h> /// @todo remove me
+#include <cmath>
 
 using namespace de;
 
 DENG2_PIMPL(LineSightTest)
 {
-    /// LS_* flags @ref lineSightFlags
-    dint flags;
-
-    /// Ray origin.
-    Vector3d from;
-
-    /// Ray target.
-    Vector3d to;
-
-    /// Slope to bottom of target.
-    dfloat bottomSlope;
-
-    /// Slope to top of target.
-    dfloat topSlope;
+    dint flags;         ///< LS_* flags @ref lineSightFlags
+    Vector3d from;      ///< Ray origin.
+    Vector3d to;        ///< Ray target.
+    dfloat bottomSlope; ///< Slope to bottom of target.
+    dfloat topSlope;    ///< Slope to top of target.
 
     /// The ray to be traced.
     struct Ray
@@ -79,13 +69,13 @@ DENG2_PIMPL(LineSightTest)
 
     Instance(Public *i, Vector3d const &from, Vector3d const to,
              dfloat bottomSlope, dfloat topSlope, dint flags)
-        : Base(i),
-          flags(flags),
-          from(from),
-          to(to),
-          bottomSlope(bottomSlope),
-          topSlope(topSlope),
-          ray(from, to)
+        : Base(i)
+        , flags(flags)
+        , from(from)
+        , to(to)
+        , bottomSlope(bottomSlope)
+        , topSlope(topSlope)
+        , ray(from, to)
     {}
 
     /**
@@ -284,7 +274,7 @@ DENG2_PIMPL(LineSightTest)
      */
     bool crossBspNode(MapElement const *bspElement)
     {
-        DENG_ASSERT(bspElement != 0);
+        DENG2_ASSERT(bspElement != 0);
 
         while(bspElement->type() != DMU_BSPLEAF)
         {
@@ -315,7 +305,7 @@ DENG2_PIMPL(LineSightTest)
 };
 
 LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to,
-                             dfloat bottomSlope, dfloat topSlope, dint flags)
+    dfloat bottomSlope, dfloat topSlope, dint flags)
     : d(new Instance(this, from, to, bottomSlope, topSlope, flags))
 {}
 

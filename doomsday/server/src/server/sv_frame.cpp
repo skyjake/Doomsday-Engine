@@ -114,6 +114,8 @@ void Sv_TransmitFrame(void)
     }
     lastTransmitTic = SECONDS_TO_TICKS(gameTime);
 
+    LOG_AS("Sv_TransmitFrame");
+
     // Generate new deltas for the frame.
     Sv_GenerateFrameDeltas();
 
@@ -145,9 +147,6 @@ void Sv_TransmitFrame(void)
 
         if(clients[i].ready) // && clients[i].updateCount > 0)
         {
-/*#ifdef _DEBUG
-            Con_Message("Sv_TransmitFrame: Sending at tic %i to plr %i", lastTransmitTic, i);
-#endif*/
             // A frame will be sent to this client. If the client
             // doesn't send ticcmds, the updatecount will eventually
             // decrease back to zero.
@@ -155,13 +154,11 @@ void Sv_TransmitFrame(void)
 
             Sv_SendFrame(i);
         }
-#ifdef _DEBUG
         else
         {
-            Con_Message("Sv_TransmitFrame: NOT sending at tic %i to plr %i (ready:%i)", lastTransmitTic, i,
-                        clients[i].ready);
+            LOG_NET_XVERBOSE("NOT sending at tic %i to plr %i (ready:%b)")
+                    << lastTransmitTic << i << clients[i].ready;
         }
-#endif
     }
 }
 
@@ -178,8 +175,7 @@ if(totalFrameCount > 0)
     // Byte probabilities.
     for(i = 0; i < 256; ++i)
     {
-        Con_Printf("Byte %02x: %f\n", i,
-                   byteCounts[i] / (float) totalFrameCount);
+        LOGDEV_NET_NOTE("Byte %02x: %f") << i << (byteCounts[i] / (float) totalFrameCount);
     }
 }
 #endif
@@ -257,16 +253,8 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
     */
 
-#ifdef _DEBUG
-    if(df & MDFC_NULL)
-    {
-        Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n");
-    }
-    if((df & 0xffff) == 0)
-    {
-        Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n", delta->delta.id, df);
-    }
-#endif
+    DENG_ASSERT(!(df & MDFC_NULL));     // don't write NULL deltas
+    DENG_ASSERT((df & 0xffff) != 0);    // don't write empty deltas
 
     // First the mobj ID number and flags.
     Writer_WriteUInt16(msgWriter, delta->delta.id);
@@ -411,9 +399,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
     if(df & PDF_FILTER)
     {
         Writer_WriteUInt32(msgWriter, d->filter);
-#ifdef _DEBUG
-        Con_Message("Sv_WritePlayerDelta: Plr %i, filter %08x", delta->delta.id, d->filter);
-#endif
+        LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_WritePlayerDelta: Plr %i, filter %08x", delta->delta.id << d->filter);
     }
     if(df & PDF_PSPRITES)       // Only set if there's something to write.
     {
@@ -515,10 +501,8 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
     }
     if(df & SDF_CEILING_HEIGHT)
     {
-#ifdef _DEBUG
-        VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
-                    delta->delta.id, d->planes[PLN_CEILING].height) );
-#endif
+        LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f",
+                                     delta->delta.id << d->planes[PLN_CEILING].height);
 
         Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
     }
@@ -927,16 +911,7 @@ void Sv_SendFrame(int plrNum)
 
         // Successfully written, increment counter.
         deltaCount++;
-/*
-#ifdef _DEBUG
-if(delta->state == DELTA_UNACKED)
-{
-    Con_Printf("Resend: %i, type%i[%x], set%i, rsid%i\n",
-               delta->id, delta->type, delta->flags,
-               delta->set, delta->resend);
-}
-#endif
-*/
+
         // Update the sent delta's state.
         if(delta->state == DELTA_NEW)
         {

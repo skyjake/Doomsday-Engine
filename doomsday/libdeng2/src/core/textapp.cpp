@@ -3,17 +3,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/TextApp"
@@ -29,7 +29,7 @@ DENG2_PIMPL(TextApp)
 
     Instance(Public *i) : Base(i)
     {
-        loop.audienceForIteration += self;
+        loop.audienceForIteration() += self;
 
         // In text-based apps, we can limit the loop frequency.
         loop.setRate(35);
@@ -41,6 +41,18 @@ TextApp::TextApp(int &argc, char **argv)
       App(applicationFilePath(), arguments()),
       d(new Instance(this))
 {}
+
+void TextApp::setMetadata(String const &orgName, String const &orgDomain,
+                          String const &appName, String const &appVersion)
+{
+    setName(appName);
+
+    // Qt metadata.
+    setOrganizationName  (orgName);
+    setOrganizationDomain(orgDomain);
+    setApplicationName   (appName);
+    setApplicationVersion(appVersion);
+}
 
 bool TextApp::notify(QObject *receiver, QEvent *event)
 {
@@ -61,12 +73,12 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
 
 int TextApp::execLoop()
 {
-    LOG_MSG("Starting TextApp event loop...");
+    LOGDEV_NOTE("Starting TextApp event loop...");
 
     d->loop.start();
     int code = QCoreApplication::exec();
 
-    LOG_MSG("TextApp event loop exited with code %i") << code;
+    LOGDEV_NOTE("TextApp event loop exited with code %i") << code;
     return code;
 }
 
@@ -83,7 +95,7 @@ Loop &TextApp::loop()
 
 NativePath TextApp::appDataPath() const
 {
-    return NativePath(QDir::homePath()) / ".doomsday";
+    return NativePath(QDir::homePath()) / unixHomeFolderName();
 }
 
 void TextApp::loopIteration()

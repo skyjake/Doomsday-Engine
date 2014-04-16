@@ -1,13 +1,14 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 
+# This plugin uses the full libdeng2 C++ API.
+CONFIG += dengplugin_libdeng2_full
+
 include(../config_plugin.pri)
 include(../../dep_glib.pri)
 
 TEMPLATE = lib
 TARGET   = audio_fluidsynth
-
-CONFIG -= qt
 
 # Define this to get debug messages.
 deng_debug: DEFINES += DENG_DSFLUIDSYNTH_DEBUG
@@ -66,7 +67,7 @@ DEFINES += FLUIDSYNTH_NOT_A_DLL WITH_FLOAT \
 *-clang* {
     QMAKE_CFLAGS += -fomit-frame-pointer -finline-functions -fdiagnostics-show-option
     QMAKE_CFLAGS_WARN_ON -= -Wall -W
-    QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations -Wno-parentheses
+    QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations -Wno-parentheses -Wno-unused-value
 }
 
 macx {
@@ -91,10 +92,10 @@ INCLUDEPATH += \
     $${FS_DIR}/src/sfloader \
     $${FS_DIR}/src/bindings
 
-fsh.files = $${FS_DIR}include/fluidsynth.h
+fsh.files = $${FS_DIR}/include/fluidsynth.h
 
 headers.files = \
-    $${FS_DIR}include/fluidsynth/audio.h \
+    $${FS_DIR}/include/fluidsynth/audio.h \
     $${FS_DIR}/include/fluidsynth/event.h \
     $${FS_DIR}/include/fluidsynth/gen.h \
     $${FS_DIR}/include/fluidsynth/log.h \

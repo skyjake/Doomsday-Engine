@@ -20,12 +20,12 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
     catch(MaterialManifest::MissingMaterialError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     catch(ResourceSystem::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
     catch(ResourceSystem::MissingManifestError const &)
     {} // Ignore this error.

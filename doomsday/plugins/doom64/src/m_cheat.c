@@ -42,7 +42,7 @@
 
 #include "d_net.h"
 #include "g_common.h"
-#include "p_player.h"
+#include "player.h"
 #include "am_map.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
@@ -74,7 +74,7 @@ void Cht_GiveAmmoFunc(player_t* plr);
 void Cht_GiveKeysFunc(player_t* plr);
 void Cht_NoClipFunc(player_t* plr);
 void Cht_GiveArmorFunc(player_t* plr);
-boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
+dd_bool Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -86,7 +86,7 @@ boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
 
 // CODE --------------------------------------------------------------------
 
-static boolean cheatsEnabled(void)
+static dd_bool cheatsEnabled(void)
 {
     return !IS_NETGAME;
 }
@@ -153,7 +153,7 @@ void Cht_NoClipFunc(player_t* plr)
     P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
 }
 
-boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
+dd_bool Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
 {
     static const char args[] = { 'v', 's', 'i', 'r', 'a', 'l' };
     size_t i, numArgs = sizeof(args) / sizeof(args[0]);
@@ -185,35 +185,39 @@ void printDebugInfo(player_t *plr)
 {
     char textBuffer[256];
     Sector *sector;
-    AutoStr *path, *mapPath;
-    Uri *uri, *mapUri;
+    mobj_t *plrMo;
+    Uri *matUri;
 
-    if(G_GameState() != GS_MAP || !plr->plr->mo)
+    DENG_ASSERT(plr != 0);
+
+    if(G_GameState() != GS_MAP)
         return;
 
-    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    mapPath = Uri_ToString(mapUri);
+    plrMo = plr->plr->mo;
+    if(!plrMo) return;
+
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
-            plr->plr->mo->origin[VZ]);
+                        Str_Text(Uri_ToString(gameMapUri)),
+                        plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
-    Uri_Delete(mapUri);
 
     // Also print some information to the console.
-    Con_Message("%s", textBuffer);
+    App_Log(DE2_MAP_NOTE, "%s", textBuffer);
 
-    sector = Mobj_Sector(plr->plr->mo);
-    uri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
-    path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s", P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
+    sector = Mobj_Sector(plrMo);
 
-    uri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
-    path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s", P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
+    matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
+    App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s",
+                         P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(Uri_ToString(matUri)));
+    Uri_Delete(matUri);
 
-    Con_Message("Player height:%g Player radius:%g", plr->plr->mo->height, plr->plr->mo->radius);
+    matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
+    App_Log(DE2_MAP_MSG, "CeilingZ:%g Material:%s",
+                          P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(Uri_ToString(matUri)));
+    Uri_Delete(matUri);
+
+    App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
+                          plrMo->height, plrMo->radius);
 }
 
 /**
@@ -407,25 +411,24 @@ D_CMD(CheatGive)
 
     if(argc != 2 && argc != 3)
     {
-        Con_Printf("Usage:\n  give (stuff)\n");
-        Con_Printf("  give (stuff) (plr)\n");
-        Con_Printf("Stuff consists of one or more of (type:id). "
-                   "If no id; give all of type:\n");
-        Con_Printf(" a - ammo\n");
-        Con_Printf(" b - berserk\n");
-        Con_Printf(" f - the power of flight\n");
-        Con_Printf(" g - light amplification visor\n");
-        Con_Printf(" h - health\n");
-        Con_Printf(" i - invulnerability\n");
-        Con_Printf(" k - key cards/skulls\n");
-        Con_Printf(" m - computer area map\n");
-        Con_Printf(" p - backpack full of ammo\n");
-        Con_Printf(" r - armor\n");
-        Con_Printf(" s - radiation shielding suit\n");
-        Con_Printf(" v - invisibility\n");
-        Con_Printf(" w - weapons\n");
-        Con_Printf("Example: 'give arw' corresponds the cheat IDFA.\n");
-        Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
+        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n  give (stuff) (plr)\n");
+        App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
+                             "If no id; give all of type:");
+        App_Log(DE2_LOG_SCR, " a - ammo");
+        App_Log(DE2_LOG_SCR, " b - berserk");
+        App_Log(DE2_LOG_SCR, " f - the power of flight");
+        App_Log(DE2_LOG_SCR, " g - light amplification visor");
+        App_Log(DE2_LOG_SCR, " h - health");
+        App_Log(DE2_LOG_SCR, " i - invulnerability");
+        App_Log(DE2_LOG_SCR, " k - key cards/skulls");
+        App_Log(DE2_LOG_SCR, " m - computer area map");
+        App_Log(DE2_LOG_SCR, " p - backpack full of ammo");
+        App_Log(DE2_LOG_SCR, " r - armor");
+        App_Log(DE2_LOG_SCR, " s - radiation shielding suit");
+        App_Log(DE2_LOG_SCR, " v - invisibility");
+        App_Log(DE2_LOG_SCR, " w - weapons");
+        App_Log(DE2_LOG_SCR, "Example: 'give arw' corresponds the cheat IDFA.");
+        App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.");
         return true;
     }
 
@@ -438,7 +441,7 @@ D_CMD(CheatGive)
 
     if(G_GameState() != GS_MAP)
     {
-        Con_Printf("Can only \"give\" when in a game!\n");
+        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!");
         return true;
     }
 
@@ -465,8 +468,8 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
                     {
-                        Con_Printf("Unknown ammo #%d (valid range %d-%d).\n",
-                                   (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
+                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)",
+                                (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
                         break;
                     }
 
@@ -521,8 +524,8 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
                     {
-                        Con_Printf("Unknown key #%d (valid range %d-%d).\n",
-                                   (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
+                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)",
+                                (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
                         break;
                     }
 
@@ -575,8 +578,8 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
                     {
-                        Con_Printf("Unknown weapon #%d (valid range %d-%d).\n",
-                                   (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
+                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)",
+                                (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
                         break;
                     }
 
@@ -591,7 +594,7 @@ D_CMD(CheatGive)
             break;
 
         default: // Unrecognized.
-            Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter", buf[i]);
             break;
         }
     }
@@ -601,7 +604,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    Con_Printf("%i monsters killed.\n", P_Massacre());
+    App_Log(DE2_LOG_MAP, "%i monsters killed", P_Massacre());
     return true;
 }
 
@@ -622,10 +625,10 @@ D_CMD(CheatLeaveMap)
     if(G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_OOF, NULL);
-        Con_Printf("Can only exit a map when in a game!\n");
+        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Can only exit a map when in a game!");
         return true;
     }
 
-    G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+    G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
     return true;
 }

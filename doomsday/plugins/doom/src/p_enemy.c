@@ -36,12 +36,11 @@
 #include "p_mapspec.h"
 #include "p_door.h"
 #include "p_floor.h"
+#include "p_saveg.h"
 
 #define FATSPREAD               (ANG90/8)
 #define SKULLSPEED              (20)
 #define TRACEANGLE              (0xc000000)
-
-braindata_t brain; // Global state of boss brain.
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309)
@@ -69,7 +68,7 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
     P_RecursiveSound(target, Mobj_Sector(emitter), 0);
 }
 
-static boolean checkMeleeRange(mobj_t *actor)
+static dd_bool checkMeleeRange(mobj_t *actor)
 {
     mobj_t *pl;
     coord_t dist, range;
@@ -99,7 +98,7 @@ static boolean checkMeleeRange(mobj_t *actor)
     return true;
 }
 
-static boolean checkMissileRange(mobj_t* actor)
+static dd_bool checkMissileRange(mobj_t* actor)
 {
     coord_t dist;
 
@@ -158,11 +157,11 @@ static boolean checkMissileRange(mobj_t* actor)
  *
  * @return              @c false, if the move is blocked.
  */
-static boolean moveMobj(mobj_t *actor, boolean dropoff)
+static dd_bool moveMobj(mobj_t *actor, dd_bool dropoff)
 {
     coord_t pos[3], step[3];
     Line *ld;
-    boolean good;
+    dd_bool good;
 
     if(actor->moveDir == DI_NODIR)
         return false;
@@ -250,7 +249,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
  * If move is either clear or blocked only by a door, returns TRUE and sets...
  * If a door is in the way, an OpenDoor call is made to start it opening.
  */
-static boolean tryMoveMobj(mobj_t *actor)
+static dd_bool tryMoveMobj(mobj_t *actor)
 {
     // $dropoff_fix
     if(!moveMobj(actor, false))
@@ -393,7 +392,7 @@ static int PIT_AvoidDropoff(Line *line, void *context)
  *
  * @return  @c true iff the direction was changed to avoid a drop off.
  */
-static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
+static dd_bool shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 {
     pit_avoiddropoff_params_t parm;
 
@@ -427,7 +426,7 @@ static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 static void newChaseDir(mobj_t *mobj)
 {
     vec2d_t chaseDir;
-    boolean avoiding;
+    dd_bool avoiding;
 
     DENG_ASSERT(mobj != 0);
 
@@ -526,7 +525,7 @@ static int countMobjs(countmobjworker_params_t *parm)
  * Determines whether there are no more mobj thinkers in the map which meet the
  * criteria specified with @a parm.
  */
-static boolean noMobjRemains(countmobjworker_params_t *parm)
+static dd_bool noMobjRemains(countmobjworker_params_t *parm)
 {
     DENG_ASSERT(parm != 0);
     parm->count = -1; // Stop when first is found.
@@ -675,7 +674,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE && !fastParm)
+        if(G_Ruleset_Skill() != SM_NIGHTMARE && !G_Ruleset_Fast())
         {
             newChaseDir(actor);
         }
@@ -698,7 +697,8 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill != SM_NIGHTMARE && !fastParm && actor->moveCount))
+        if(!(G_Ruleset_Skill() != SM_NIGHTMARE &&
+             !G_Ruleset_Fast() && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1061,7 +1061,7 @@ typedef struct {
 int PIT_VileCheck(mobj_t *corpse, void *context)
 {
     pit_vilecheckparams_t *parm = (pit_vilecheckparams_t*)context;
-    boolean raisePointOpen;
+    dd_bool raisePointOpen;
     coord_t maxDist;
 
     // Not actually a monster corpse?
@@ -1696,7 +1696,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_SetGameActionMapCompleted(G_CurrentLogicalMapNumber(), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1727,49 +1727,6 @@ void C_DECL A_BabyMetal(mobj_t *mo)
 {
     S_StartSound(SFX_BSPWLK, mo);
     A_Chase(mo);
-}
-
-void P_BrainInitForMap(void)
-{
-    brain.easy = 0; // Always init easy to 0.
-    // Calling shutdown rather than clear allows us to free up memory.
-    P_BrainShutdown();
-}
-
-void P_BrainClearTargets(void)
-{
-    brain.numTargets = 0;
-    brain.targetOn = 0;
-}
-
-void P_BrainShutdown(void)
-{
-    if(brain.targets)
-        Z_Free(brain.targets);
-    brain.targets = 0;
-    brain.numTargets = 0;
-    brain.maxTargets = -1;
-    brain.targetOn = 0;
-}
-
-void P_BrainAddTarget(mobj_t* mo)
-{
-    if(brain.numTargets >= brain.maxTargets)
-    {
-        // Do we need to alloc more targets?
-        if(brain.numTargets == brain.maxTargets)
-        {
-            brain.maxTargets *= 2;
-            brain.targets = Z_Realloc(brain.targets, brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC);
-        }
-        else
-        {
-            brain.maxTargets = 32;
-            brain.targets = Z_Malloc(brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC, NULL);
-        }
-    }
-
-    brain.targets[brain.numTargets++] = mo;
 }
 
 void C_DECL A_BrainAwake(mobj_t *mo)
@@ -1833,26 +1790,17 @@ void C_DECL A_BrainExplode(mobj_t *mo)
 
 void C_DECL A_BrainDie(mobj_t* mo)
 {
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_SetGameActionMapCompleted(G_CurrentLogicalMapNumber(), 0, false);
 }
 
 void C_DECL A_BrainSpit(mobj_t* mo)
 {
-    mobj_t* targ;
-    mobj_t* newmobj;
+    mobj_t *targ = BossBrain_NextTarget(theBossBrain);
+    mobj_t *newmobj;
 
-    if(!brain.numTargets)
-        return; // Ignore if no targets.
+    if(!targ) return;
 
-    brain.easy ^= 1;
-    if(gameSkill <= SM_EASY && (!brain.easy))
-        return;
-
-    // Shoot a cube at current target.
-    targ = brain.targets[brain.targetOn++];
-    brain.targetOn %= brain.numTargets;
-
-    // Spawn brain missile.
+    // Shoot a cube at this target.
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);
     if(newmobj)
     {

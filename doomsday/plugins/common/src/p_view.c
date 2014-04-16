@@ -43,7 +43,7 @@
 #  include "jstrife.h"
 #endif
 
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h"
 #include "p_actor.h"
 
@@ -75,8 +75,8 @@
 void P_CalcHeight(player_t* plr)
 {
     int plrNum = plr - players;
-    boolean airborne;
-    boolean morphed = false;
+    dd_bool airborne;
+    dd_bool morphed = false;
     ddplayer_t* ddplr = plr->plr;
     mobj_t* pmo = ddplr->mo;
     coord_t target, step;
@@ -91,9 +91,6 @@ void P_CalcHeight(player_t* plr)
     // When flying, don't bob the view.
     if((pmo->flags2 & MF2_FLY) && pmo->origin[VZ] > pmo->floorZ)
     {
-/*#ifdef _DEBUG
-        Con_Message("Flying! z=%f flz=%f", pmo->origin[VZ], pmo->floorZ);
-#endif*/
         plr->bob = 1.0f / 2;
     }
 

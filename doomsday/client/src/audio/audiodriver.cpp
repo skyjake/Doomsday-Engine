@@ -148,9 +148,11 @@ static AutoStr* findAudioPluginPath(const char* name)
     return 0;
 }
 
-static boolean loadAudioDriver(driver_t* driver, const char* name)
+static dd_bool loadAudioDriver(driver_t* driver, const char* name)
 {
-    boolean ok = false;
+    LOG_AS("loadAudioDriver");
+
+    dd_bool ok = false;
 
     if(name && name[0])
     {
@@ -164,7 +166,7 @@ static boolean loadAudioDriver(driver_t* driver, const char* name)
         }
         else
         {
-            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.", name);
+            LOG_AUDIO_WARNING("Loading of \"%s\" failed") << name;
         }
     }
     return ok;
@@ -183,8 +185,9 @@ static const char* getDriverName(audiodriverid_t id)
     };
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
         return audioDriverNames[id];
-    Con_Error("S_GetDriverName: Unknown driver id %i.\n", id);
-    return 0; // Unreachable.
+
+    DENG2_ASSERT(!"S_GetDriverName: Unknown driver id");
+    return ""; // Unreachable.
 }
 
 static audiodriverid_t identifierToDriverId(const char* name)
@@ -193,11 +196,11 @@ static audiodriverid_t identifierToDriverId(const char* name)
     {
         if(!stricmp(name, driverIdentifier[i])) return (audiodriverid_t) i;
     }
-    Con_Message("'%s' is not a valid audio driver name.", name);
+    LOG_AUDIO_ERROR("'%s' is not a valid audio driver name") << name;
     return AUDIOD_INVALID;
 }
 
-static boolean isDriverInited(audiodriverid_t id)
+static dd_bool isDriverInited(audiodriverid_t id)
 {
     if(!VALID_AUDIODRIVER_IDENTIFIER(id)) return false;
     return drivers[id].interface.Init != 0;
@@ -208,15 +211,11 @@ static boolean isDriverInited(audiodriverid_t id)
  *
  * @return  @c true iff successful.
  */
-static boolean initDriver(audiodriverid_t id)
+static dd_bool initDriver(audiodriverid_t id)
 {
     driver_t* d = &drivers[id];
 
-    if(!VALID_AUDIODRIVER_IDENTIFIER(id))
-    {
-        Con_Error("initDriver: Unknown audio driver id %i.\n", id);
-        return false;
-    }
+    DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(id));
 
     assert(!isDriverInited(id));
     memset(d, 0, sizeof(*d));
@@ -263,8 +262,8 @@ static boolean initDriver(audiodriverid_t id)
         break;
 #endif
     default:
-        Con_Error("initDriver: Unknown audio driver id %i.\n", id);
-        return false; // Unreachable.
+        DENG2_ASSERT(!"initDriver: Unknown audio driver id");
+        return false;
     }
 
     // All loaded drivers are automatically initialized so they are ready for use.
@@ -313,7 +312,7 @@ static audiodriverid_t initDriverIfNeeded(const char* identifier)
     {
         initDriver(drvId);
     }
-    assert(VALID_AUDIODRIVER_IDENTIFIER(drvId));
+    DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(drvId));
     return drvId;
 }
 
@@ -375,7 +374,8 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].sfx.gen.Init)
             {
-                Con_Error("Audio driver '%s' does not provide an SFX interface.\n", getDriverName(drvId));
+                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide an SFX interface")
+                                .arg(getDriverName(drvId)));
             }
             appendInterface(&pos, AUDIO_ISFX, &drivers[drvId].sfx);
             continue;
@@ -387,7 +387,8 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].music.gen.Init)
             {
-                Con_Error("Audio driver '%s' does not provide a Music interface.\n", getDriverName(drvId));
+                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide a Music interface")
+                                .arg(getDriverName(drvId)));
             }
             appendInterface(&pos, AUDIO_IMUSIC, &drivers[drvId].music);
             continue;
@@ -399,7 +400,8 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].cd.gen.Init)
             {
-                Con_Error("Audio driver '%s' does not provide a CD interface.\n", getDriverName(drvId));
+                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide a CD interface")
+                                .arg(getDriverName(drvId)));
             }
             appendInterface(&pos, AUDIO_ICD, &drivers[drvId].cd);
             continue;
@@ -418,7 +420,7 @@ de::String AudioDriver_InterfaceDescription()
     de::String str;
     QTextStream os(&str);
 
-    os << _E(b) "Audio configuration" _E(2) " (by decreasing priority):\n" _E(.)_E(.);
+    os << _E(b) "Audio configuration:\n" _E(.);
 
     for(int i = MAX_AUDIO_INTERFACES - 1; i >= 0; --i)
     {
@@ -439,11 +441,11 @@ de::String AudioDriver_InterfaceDescription()
 
 void AudioDriver_PrintInterfaces(void)
 {
-    LOG_MSG("%s") << AudioDriver_InterfaceDescription();
+    LOG_AUDIO_MSG("%s") << AudioDriver_InterfaceDescription();
 }
 
 /*
-static boolean initInterface(audiointerface_base_t* interface)
+static dd_bool initInterface(audiointerface_base_t* interface)
 {
     if(!interface) return true;
     if(interface->Init)
@@ -454,10 +456,10 @@ static boolean initInterface(audiointerface_base_t* interface)
 }
 */
 
-boolean AudioDriver_Init(void)
+dd_bool AudioDriver_Init(void)
 {
     audiodriverid_t defaultDriverId;
-    boolean ok = false;
+    dd_bool ok = false;
 
     memset(activeInterfaces, 0, sizeof(activeInterfaces));
 
@@ -467,7 +469,7 @@ boolean AudioDriver_Init(void)
     ok = initDriver(defaultDriverId);
     if(!ok)
     {
-        Con_Message("Warning: Failed initializing audio driver \"%s\"", getDriverName(defaultDriverId));
+        LOG_AUDIO_WARNING("Failed initializing audio driver \"%s\"") << getDriverName(defaultDriverId);
     }
 
     // Fallback option for the default driver.
@@ -560,7 +562,7 @@ audiointerface_sfx_generic_t* AudioDriver_SFX(void)
     return (audiointerface_sfx_generic_t*) ifs[0];
 }
 
-boolean AudioDriver_Music_Available(void)
+dd_bool AudioDriver_Music_Available(void)
 {
     return AudioDriver_FindInterfaces(AUDIO_IMUSIC, NULL) > 0;
 }

@@ -291,13 +291,13 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     glEnd();
 }
 
-boolean GL_FilterIsVisible()
+dd_bool GL_FilterIsVisible()
 {
     return (drawFilter && filterColor.w > 0);
 }
 
 #undef GL_SetFilter
-DENG_EXTERN_C void GL_SetFilter(boolean enabled)
+DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
 {
     drawFilter = CPP_BOOL(enabled);
 }
@@ -315,7 +315,7 @@ DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
         filterColor = newColorClamped;
 
         LOG_AS("GL_SetFilterColor");
-        LOG_DEBUG("Now ") << filterColor.asText();
+        LOGDEV_GL_XVERBOSE("%s") << filterColor.asText();
     }
 }
 
@@ -369,13 +369,8 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t*
 #undef GL_BeginBorderedProjection
 DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
-    if(!bp)
-    {
-#if _DEBUG
-        Con_Message("Warning: GL_BeginBorderedProjection: Invalid 'bp' argument, ignoring.");
-#endif
-        return;
-    }
+    DENG_ASSERT(bp != 0);
+    if(!bp) return;
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
@@ -439,13 +434,8 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 #undef GL_EndBorderedProjection
 DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
-    if(!bp)
-    {
-#if _DEBUG
-        Con_Message("Warning: GL_EndBorderedProjection: Invalid 'bp' argument, ignoring.");
-#endif
-        return;
-    }
+    DENG_ASSERT(bp != 0);
+    if(!bp) return;
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 

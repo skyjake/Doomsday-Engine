@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_H
@@ -147,6 +147,22 @@
 #  define DENG2_DEBUG_ONLY(x)
 #endif
 
+#ifdef DENG2_USE_QT
+#  ifdef UNIX
+#    include <execinfo.h>
+/**
+ * @macro DENG2_PRINT_BACKTRACE
+ * Debug utility for dumping the current backtrace using qDebug.
+ */
+#    define DENG2_PRINT_BACKTRACE() { \
+    void *callstack[128]; \
+    int i, frames = backtrace(callstack, 128); \
+    char** strs = backtrace_symbols(callstack, frames); \
+    for(i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
+    free(strs); }
+#  endif
+#endif
+
 /**
  * Macro for determining the name of a type (using RTTI).
  */
@@ -171,6 +187,8 @@
  * Macro for hiding the warning about four unused parameters.
  */
 #define DENG2_UNUSED4(a, b, c, d) (void)a, (void)b, (void)c, (void)d
+
+#define DENG2_PLURAL_S(Count) ((Count) != 1? "s" : "")
 
 /**
  * Forms an escape sequence string literal. Escape sequences begin
@@ -449,7 +467,9 @@ enum ProtocolVersion {
     DENG2_PROTOCOL_1_10_0 = 0,
     DENG2_PROTOCOL_1_11_0_BUILD_926 = 1, // Time serilization changed
     DENG2_PROTOCOL_1_11_0 = 1,
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_11_0
+    DENG2_PROTOCOL_1_14_0_BUILD_1099 = 2, // LogEntry serialization changed
+    DENG2_PROTOCOL_1_14_0 = 2,
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_14_0
 };
 
 //@{

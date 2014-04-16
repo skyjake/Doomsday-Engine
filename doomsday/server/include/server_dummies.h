@@ -60,8 +60,6 @@ DENG_EXTERN_C void Rend_ConsoleToggleFullscreen();
 DENG_EXTERN_C void Rend_ConsoleMove(int y);
 DENG_EXTERN_C void Rend_ConsoleCursorResetBlink();
 
-DENG_EXTERN_C void Sky_Ticker();
-
 DENG_EXTERN_C void Cl_InitPlayers(void);
 
 DENG_EXTERN_C void UI_Init();

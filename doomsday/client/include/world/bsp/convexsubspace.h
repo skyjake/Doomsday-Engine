@@ -56,8 +56,8 @@ struct OrderedSegment
 #ifdef DENG_DEBUG
     void debugPrint() const
     {
-        LOG_INFO("[%p] Angle: %1.6f %s -> Angle: %1.6f %s")
-            << de::dintptr(this)
+        LOGDEV_MAP_MSG("%p Angle: %1.6f %s -> Angle: %1.6f %s")
+            << this
             << fromAngle
             << (segment? segment->from().origin().asText() : "(null)")
             << toAngle

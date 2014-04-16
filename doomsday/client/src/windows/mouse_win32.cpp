@@ -29,7 +29,7 @@
 #include <de/c_wrapper.h>
 
 static LPDIRECTINPUTDEVICE8 didMouse;
-static boolean mouseTrapped;
+static dd_bool mouseTrapped;
 static DIMOUSESTATE2 mstate; ///< Polled state.
 
 static int Mouse_Win32_Init()
@@ -52,8 +52,8 @@ static int Mouse_Win32_Init()
 
     if(FAILED(hr))
     {
-        Con_Message("Mouse_Init: Failed to create device (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_ERROR("Failed to create device (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
         return false;
     }
 
@@ -61,8 +61,8 @@ static int Mouse_Win32_Init()
     hr = didMouse->SetDataFormat(&c_dfDIMouse2);
     if(FAILED(hr))
     {
-        Con_Message("Mouse_Init: Failed to set data format (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_ERROR("Failed to set data format (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
         goto kill_mouse;
     }
 
@@ -70,8 +70,8 @@ static int Mouse_Win32_Init()
     hr = didMouse->SetCooperativeLevel(hWnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
     if(FAILED(hr))
     {
-        Con_Message("Mouse_Init: Failed to set co-op level (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_ERROR("Failed to set co-op level (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
         goto kill_mouse;
     }
 
@@ -208,7 +208,7 @@ static void Mouse_Win32_GetState(mousestate_t* state)
     oldZ = (int) mstate.lZ;
 }
 
-static void Mouse_Win32_Trap(boolean enabled)
+static void Mouse_Win32_Trap(dd_bool enabled)
 {
     LOG_AS("Mouse_Win32");
     DENG_ASSERT(didMouse);
@@ -216,12 +216,12 @@ static void Mouse_Win32_Trap(boolean enabled)
     mouseTrapped = (enabled != 0);
     if(enabled)
     {
-        LOG_DEBUG("Acquiring the mouse");
+        LOG_INPUT_VERBOSE("Acquiring the mouse");
         didMouse->Acquire();
     }
     else
     {
-        LOG_DEBUG("Unacquiring the mouse");
+        LOG_INPUT_VERBOSE("Unacquiring the mouse");
         didMouse->Unacquire();
     }
 }

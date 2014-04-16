@@ -4,17 +4,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Widget"
@@ -60,7 +60,17 @@ DENG2_PIMPL(Widget)
         }
         index.clear();
     }
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(ParentChange)
+    DENG2_PIMPL_AUDIENCE(ChildAddition)
+    DENG2_PIMPL_AUDIENCE(ChildRemoval)
 };
+
+DENG2_AUDIENCE_METHOD(Widget, Deletion)
+DENG2_AUDIENCE_METHOD(Widget, ParentChange)
+DENG2_AUDIENCE_METHOD(Widget, ChildAddition)
+DENG2_AUDIENCE_METHOD(Widget, ChildRemoval)
 
 Widget::Widget(String const &name) : d(new Instance(this, name))
 {}
@@ -72,7 +82,7 @@ Widget::~Widget()
         root().setFocus(0);
     }
 
-    audienceForParentChange.clear();
+    audienceForParentChange().clear();
 
     // Remove from parent automatically.
     if(d->parent)
@@ -81,7 +91,7 @@ Widget::~Widget()
     }
 
     // Notify everyone else.
-    DENG2_FOR_AUDIENCE(Deletion, i) i->widgetBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->widgetBeingDeleted(*this);
 }
 
 Id Widget::id() const
@@ -134,22 +144,24 @@ DotPath Widget::path() const
 bool Widget::hasRoot() const
 {
     Widget const *w = this;
-    while(w)
+    // Root widgets do not have a parent.
+    while(w->parent())
     {
-        if(dynamic_cast<RootWidget const *>(w)) return true;
         w = w->parent();
     }
-    return false;
+    return w->is<RootWidget>();
 }
 
 RootWidget &Widget::root() const
 {
     Widget const *w = this;
-    while(w)
+    while(w->parent())
     {
-        RootWidget const *rw = dynamic_cast<RootWidget const *>(w);
-        if(rw) return *const_cast<RootWidget *>(rw);
         w = w->parent();
+    }
+    if(w->is<RootWidget>())
+    {
+        return const_cast<RootWidget &>(w->as<RootWidget>());
     }
     throw NotFoundError("Widget::root", "No root widget found");
 }
@@ -272,11 +284,11 @@ Widget &Widget::add(Widget *child)
     }
 
     // Notify.
-    DENG2_FOR_AUDIENCE(ChildAddition, i)
+    DENG2_FOR_AUDIENCE2(ChildAddition, i)
     {
         i->widgetChildAdded(*child);
     }
-    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange)
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
     {
         i->widgetParentChanged(*child, 0, this);
     }
@@ -309,11 +321,11 @@ Widget *Widget::remove(Widget &child)
     }
 
     // Notify.
-    DENG2_FOR_AUDIENCE(ChildRemoval, i)
+    DENG2_FOR_AUDIENCE2(ChildRemoval, i)
     {
         i->widgetChildRemoved(child);
     }
-    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange)
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange())
     {
         i->widgetParentChanged(child, this, 0);
     }

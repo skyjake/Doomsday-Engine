@@ -17,12 +17,6 @@
  */
 
 #include "ui/dialogs/aboutdialog.h"
-#include "SequentialLayout"
-#include "SignalAction"
-#include "ui/widgets/labelwidget.h"
-#include "ui/widgets/popupwidget.h"
-#include "ui/widgets/documentwidget.h"
-#include "ui/style.h"
 #include "gl/sys_opengl.h"
 #include "audio/audiodriver.h"
 #include "clientapp.h"
@@ -31,30 +25,29 @@
 #include "dd_def.h"
 
 #include <de/Version>
+#include <de/SequentialLayout>
+#include <de/SignalAction>
+#include <de/LabelWidget>
+#include <de/DocumentPopupWidget>
+#include <de/Style>
 
 using namespace de;
 
 DENG2_PIMPL(AboutDialog)
 {
-    PopupWidget *glPopup;
-    PopupWidget *audioPopup;
+    DocumentPopupWidget *glPopup;
+    DocumentPopupWidget *audioPopup;
 
     Instance(Public *i) : Base(i)
     {
         // Popup with GL info.
-        glPopup = new PopupWidget;
-        glPopup->useInfoStyle();
-        DocumentWidget *doc = new DocumentWidget;
-        doc->setText(Sys_GLDescription());
-        glPopup->setContent(doc);
+        glPopup = new DocumentPopupWidget;
+        glPopup->document().setText(Sys_GLDescription());
         self.add(glPopup);
 
         // Popup with audio info.
-        audioPopup = new PopupWidget;
-        audioPopup->useInfoStyle();
-        doc = new DocumentWidget;
-        doc->setText(AudioDriver_InterfaceDescription());
-        audioPopup->setContent(doc);
+        audioPopup = new DocumentPopupWidget;
+        audioPopup->document().setText(AudioDriver_InterfaceDescription());
         self.add(audioPopup);
     }
 };
@@ -82,7 +75,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     title->setSizePolicy(ui::Fixed, ui::Expand);
 
     LabelWidget *info = new LabelWidget;
-    String txt = String("%1 (%2-%8)%3\n\n" _E(b) "%4 %5 #%6" _E(.) "\n%7")
+    String txt = String(_E(b) "%4 %5 #%6" _E(.) "\n%7\n\n%1 (%2-%8)%3")
             .arg(ver2.operatingSystem() == "windows"? tr("Windows") :
                  ver2.operatingSystem() == "macx"? tr("Mac OS X") : tr("Unix"))
             .arg(ver2.cpuBits())
@@ -111,21 +104,11 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(this, SLOT(showGLInfo())))
-            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(this, SLOT(showAudioInfo())))
+            << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(d->glPopup, SLOT(open())))
+            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(d->audioPopup, SLOT(open())))
             << new DialogButtonItem(DialogWidget::Action, tr("Homepage..."), new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
 
     // The popups are anchored to their button.
     d->glPopup->setAnchorAndOpeningDirection(buttonWidget(tr("GL")).rule(), ui::Up);
     d->audioPopup->setAnchorAndOpeningDirection(buttonWidget(tr("Audio")).rule(), ui::Up);
-}
-
-void AboutDialog::showGLInfo()
-{
-    d->glPopup->open();
-}
-
-void AboutDialog::showAudioInfo()
-{
-    d->audioPopup->open();
 }

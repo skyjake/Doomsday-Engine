@@ -34,16 +34,16 @@ typedef struct {
     GETGAMEAPI GetGameAPI;
 
     /// @c true = We are using a custom user dir specified on the command line.
-    boolean usingUserDir;
+    dd_bool usingUserDir;
 #ifndef MACOSX
     /// @c true = We are using the user dir defined in the HOME environment.
-    boolean usingHomeDir;
+    dd_bool usingHomeDir;
 #endif
 } application_t;
 
 extern application_t app;
 
-boolean DD_Unix_Init(void);
+dd_bool DD_Unix_Init(void);
 void DD_Shutdown(void);
 
 #ifdef __cplusplus

@@ -93,6 +93,11 @@ public:
     inline uint height() const { return dimensions().y; }
 
     /**
+     * Returns @c true iff the blockmap is of zero-area.
+     */
+    inline bool isNull() const { return (width() * height()) == 0; }
+
+    /**
      * Returns the size of a cell (width and height) in map space units.
      */
     uint cellSize() const;

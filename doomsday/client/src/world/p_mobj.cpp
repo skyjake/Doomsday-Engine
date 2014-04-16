@@ -1,4 +1,4 @@
-/** @file p_mobj.cpp World map objects.
+/** @file p_mobj.cpp  World map objects.
  *
  * Various routines for moving mobjs, collision and Z checking.
  *
@@ -21,11 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
-#include <de/Error>
-
 #include "de_base.h"
+#include "world/p_object.h"
+
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -35,7 +33,10 @@
 #include "de_audio.h"
 
 #include "def_main.h"
-#include "render/r_main.h" // validCount
+
+#include "world/worldsystem.h" // validCount
+#include "world/thinkers.h"
+#include "BspLeaf"
 
 #ifdef __CLIENT__
 #  include "Lumobj"
@@ -47,8 +48,8 @@
 #  include "gl/gl_tex.h"
 #endif
 
-#include "world/thinkers.h"
-#include "BspLeaf"
+#include <de/Error>
+#include <cmath>
 
 using namespace de;
 
@@ -112,7 +113,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     mo->ddFlags = ddflags;
     mo->lumIdx = -1;
     mo->thinker.function = function;
-    App_World().map().thinkers().add(mo->thinker);
+    Mobj_Map(*mo).thinkers().add(mo->thinker);
 
     return mo;
 }
@@ -129,7 +130,8 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 #ifdef _DEBUG
     if(mo->ddFlags & DDMF_MISSILE)
     {
-        VERBOSE2( Con_Message("Mobj_Destroy: Destroying missile %i.", mo->thinker.id) );
+        LOG_AS("Mobj_Destroy");
+        LOG_MAP_XVERBOSE("Destroying missile %i") << mo->thinker.id;
     }
 #endif
 
@@ -138,7 +140,7 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 
     S_StopSound(0, mo);
 
-    App_World().map().thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
+    Mobj_Map(*mo).thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
 }
 
 /**
@@ -152,7 +154,7 @@ void P_MobjRecycle(mobj_t* mo)
     unusedMobjs = mo;
 }
 
-boolean Mobj_IsSectorLinked(mobj_t *mo)
+dd_bool Mobj_IsSectorLinked(mobj_t *mo)
 {
     return mo != 0 && mo->_bspLeaf != 0 && mo->sPrev != 0;
 }
@@ -180,10 +182,10 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
     // Check for a ptcgen trigger.
     for(ded_ptcgen_t *pg = statePtcGens[statenum]; pg; pg = pg->stateNext)
     {
-        if(!(pg->flags & PGF_SPAWN_ONLY) || spawning)
+        if(!(pg->flags & Generator::SpawnOnly) || spawning)
         {
             // We are allowed to spawn the generator.
-            P_SpawnMobjParticleGen(pg, mobj);
+            Mobj_SpawnParticleGen(mobj, pg);
         }
     }
 #endif
@@ -205,7 +207,7 @@ Vector3d Mobj_Center(mobj_t &mobj)
     return Vector3d(mobj.origin[0], mobj.origin[1], mobj.origin[2] + mobj.height / 2);
 }
 
-boolean Mobj_SetOrigin(struct mobj_s *mo, coord_t x, coord_t y, coord_t z)
+dd_bool Mobj_SetOrigin(struct mobj_s *mo, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)
     {
@@ -255,6 +257,11 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
 #endif
 }
 
+de::Map &Mobj_Map(mobj_t const &mobj)
+{
+    return Thinker_Map(mobj.thinker);
+}
+
 bool Mobj_IsLinked(mobj_t const &mobj)
 {
     return mobj._bspLeaf != 0;
@@ -292,9 +299,95 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
     return Mobj_BspLeafAtOrigin(*mobj).sectorPtr();
 }
 
+void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
+{
+#ifdef __CLIENT__
+    DENG2_ASSERT(def != 0 && source != 0);
+
+    //if(!useParticles) return;
+
+    Generator *gen = Mobj_Map(*source).newGenerator();
+    if(!gen) return;
+
+    /*LOG_INFO("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)")
+        << def->state << (def - defs.ptcgens) << defs.states[source->state-states].id
+        << defs.mobjs[source->type].id << source;*/
+
+    // Initialize the particle generator.
+    gen->count = def->particles;
+    // Size of source sector might determine count.
+    if(def->flags & Generator::ScaledRate)
+    {
+        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sector().roughArea() / (128 * 128);
+    }
+    else
+    {
+        gen->spawnRateMultiplier = 1;
+    }
+
+    gen->configureFromDef(def);
+    gen->source = source;
+    gen->srcid = source->thinker.id;
+
+    // Is there a need to pre-simulate?
+    gen->presimulate(def->preSim);
+#else
+    DENG2_UNUSED2(source, def);
+#endif
+}
+
+#undef Mobj_SpawnDamageParticleGen
+DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+{
+#ifdef __CLIENT__
+    if(!mo || !inflictor || amount <= 0) return;
+
+    // Are particles allowed?
+    //if(!useParticles) return;
+
+    ded_ptcgen_t const *def = Def_GetDamageGenerator(mo->type);
+    if(def)
+    {
+        Generator *gen = Mobj_Map(*mo).newGenerator();
+        if(!gen) return; // No more generators.
+
+        gen->count = def->particles;
+        gen->configureFromDef(def);
+        gen->setUntriggered();
+
+        gen->spawnRateMultiplier = de::max(amount, 1);
+
+        // Calculate appropriate center coordinates.
+        gen->originAtSpawn[VX] += FLT2FIX(mo->origin[VX]);
+        gen->originAtSpawn[VY] += FLT2FIX(mo->origin[VY]);
+        gen->originAtSpawn[VZ] += FLT2FIX(mo->origin[VZ] + mo->height / 2);
+
+        // Calculate launch vector.
+        vec3f_t vecDelta;
+        V3f_Set(vecDelta, inflictor->origin[VX] - mo->origin[VX],
+                inflictor->origin[VY] - mo->origin[VY],
+                (inflictor->origin[VZ] - inflictor->height / 2) - (mo->origin[VZ] + mo->height / 2));
+
+        vec3f_t vector;
+        V3f_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
+        V3f_Sum(vector, vector, vecDelta);
+        V3f_Normalize(vector);
+
+        gen->vector[VX] = FLT2FIX(vector[VX]);
+        gen->vector[VY] = FLT2FIX(vector[VY]);
+        gen->vector[VZ] = FLT2FIX(vector[VZ]);
+
+        // Is there a need to pre-simulate?
+        gen->presimulate(def->preSim);
+    }
+#else
+    DENG2_UNUSED3(mo, inflictor, amount);
+#endif
+}
+
 #ifdef __CLIENT__
 
-boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
+dd_bool Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
     if(!mo || !Mobj_HasCluster(*mo))
         return false;
@@ -529,7 +622,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
             offset = M_CycleIntoRange(MOBJ_TO_ID(&mo), duration);
         }
 
-        interp = M_CycleIntoRange(App_World().time() / duration + offset, 1);
+        interp = M_CycleIntoRange(App_WorldSystem().time() / duration + offset, 1);
         worldTime = true;
     }
     else
@@ -686,7 +779,7 @@ coord_t Mobj_BobOffset(mobj_t *mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(mo) + App_World().time() / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(mo) + App_WorldSystem().time() / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }
@@ -764,68 +857,58 @@ D_CMD(InspectMobj)
 {
     DENG2_UNUSED(src);
 
-    mobj_t* mo = 0;
-    thid_t id = 0;
-    char const *moType = "Mobj";
-#ifdef __CLIENT__
-    clmoinfo_t* info = 0;
-#endif
-
     if(argc != 2)
     {
-        Con_Printf("Usage: %s (mobj-id)\n", argv[0]);
+        LOG_SCR_NOTE("Usage: %s (mobj-id)") << argv[0];
         return true;
     }
 
     // Get the ID.
-    id = strtol(argv[1], NULL, 10);
+    thid_t id = strtol(argv[1], NULL, 10);
 
     // Find the mobj.
-    mo = App_World().map().thinkers().mobjById(id);
+    mobj_t *mo = App_WorldSystem().map().thinkers().mobjById(id);
     if(!mo)
     {
-        Con_Printf("Mobj with id %i not found.\n", id);
+        LOG_MAP_ERROR("Mobj with id %i not found") << id;
         return false;
     }
 
+    char const *moType = "Mobj";
 #ifdef __CLIENT__
-    info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
     if(info) moType = "CLMOBJ";
 #endif
 
-    Con_Printf("%s %i [%p] State:%s (%i)\n", moType, id, mo, Def_GetStateName(mo->state), (int)(mo->state - states));
-    Con_Printf("Type:%s (%i) Info:[%p]", Def_GetMobjName(mo->type), mo->type, mo->info);
-    if(mo->info)
-    {
-        Con_Printf(" (%i)\n", (int)(mo->info - mobjInfo));
-    }
-    else
-    {
-        Con_Printf("\n");
-    }
-    Con_Printf("Tics:%i ddFlags:%08x\n", mo->tics, mo->ddFlags);
+    LOG_MAP_MSG("%s %i [%p] State:%s (%i)")
+            << moType << id << mo << Def_GetStateName(mo->state) << (int)(mo->state - states);
+    LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
+            << Def_GetMobjName(mo->type) << mo->type << mo->info
+            << (mo->info? QString(" (%1)").arg(mo->info - mobjInfo) : "");
+    LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mo->tics << mo->ddFlags;
 #ifdef __CLIENT__
     if(info)
     {
-        Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Timer_RealMilliseconds(), info->flags);
+        LOG_MAP_MSG("Cltime:%i (now:%i) Flags:%04x") << info->time << Timer_RealMilliseconds() << info->flags;
     }
 #endif
-    Con_Printf("Flags:%08x Flags2:%08x Flags3:%08x\n", mo->flags, mo->flags2, mo->flags3);
-    Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);
-    Con_Printf("Angle:%x Pos:(%f,%f,%f) Mom:(%f,%f,%f)\n",
-               mo->angle,
-               mo->origin[0], mo->origin[1], mo->origin[2],
-               mo->mom[0], mo->mom[1], mo->mom[2]);
-    Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
+    LOG_MAP_MSG("Flags:%08x Flags2:%08x Flags3:%08x") << mo->flags << mo->flags2 << mo->flags3;
+    LOG_MAP_MSG("Height:%f Radius:%f") << mo->height << mo->radius;
+    LOG_MAP_MSG("Angle:%x Pos:%s Mom:%s")
+            << mo->angle
+            << Vector3d(mo->origin).asText()
+            << Vector3d(mo->mom).asText();
+    LOG_MAP_MSG("FloorZ:%f CeilingZ:%f") << mo->floorZ << mo->ceilingZ;
     if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
     {
-        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n",
-                   cluster->sector().indexInMap(),
-                   cluster->floor().height(), cluster->ceiling().height());
+        LOG_MAP_MSG("Sector:%i (FloorZ:%f CeilingZ:%f)")
+                << cluster->sector().indexInMap()
+                << cluster->floor().height()
+                << cluster->ceiling().height();
     }
     if(mo->onMobj)
     {
-        Con_Printf("onMobj:%i\n", mo->onMobj->thinker.id);
+        LOG_MAP_MSG("onMobj:%i") << mo->onMobj->thinker.id;
     }
 
     return true;

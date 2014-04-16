@@ -181,7 +181,7 @@ DENG2_PIMPL(ColorPalette)
         : Base(i)
         , need18To8Update(false) // No color table yet.
     {
-        LOG_VERBOSE("New color palette %s") << id;
+        LOG_RES_VERBOSE("New color palette %s") << id;
     }
 
     Translation *translation(String id)

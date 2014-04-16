@@ -26,10 +26,14 @@ echo "Copying shared libraries..."
 $CP $BUILDDIR/../libdeng2/libdeng2*dylib      $APPDIR/Frameworks
 $CP $BUILDDIR/../libdeng1/libdeng1*dylib      $APPDIR/Frameworks
 $CP $BUILDDIR/../libgui/libdeng_gui*dylib     $APPDIR/Frameworks
+$CP $BUILDDIR/../libappfw/libdeng_appfw*dylib $APPDIR/Frameworks
 $CP $BUILDDIR/../libshell/libdeng_shell*dylib $APPDIR/Frameworks
 
 echo "Copying server..."
 $CP server/doomsday-server $APPDIR/Resources
+
+echo "Copying savegametool..."
+$CP tools/savegametool/savegametool $APPDIR/Resources
 
 echo "Copying shell-text..."
 $CP tools/shell/shell-text/doomsday-shell-text $APPDIR/Resources
@@ -38,14 +42,15 @@ echo "Copying bundles from plugins..."
 PLUGDIR=$APPDIR/DengPlugins
 rm -rf $PLUGDIR
 mkdir -p $PLUGDIR
-$CP plugins/dehread/dehread.bundle                 $PLUGDIR/
-$CP plugins/wadmapconverter/wadmapconverter.bundle $PLUGDIR/
-$CP plugins/doom/doom.bundle                       $PLUGDIR/
-$CP plugins/heretic/heretic.bundle                 $PLUGDIR/
-$CP plugins/hexen/hexen.bundle                     $PLUGDIR/
-$CP plugins/doom64/doom64.bundle                   $PLUGDIR/
-$CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
-$CP plugins/example/example.bundle                 $PLUGDIR/
+$CP plugins/dehread/dehread.bundle                     $PLUGDIR/
+$CP plugins/savegameconverter/savegameconverter.bundle $PLUGDIR/
+$CP plugins/wadmapconverter/wadmapconverter.bundle     $PLUGDIR/
+$CP plugins/doom/doom.bundle                           $PLUGDIR/
+$CP plugins/heretic/heretic.bundle                     $PLUGDIR/
+$CP plugins/hexen/hexen.bundle                         $PLUGDIR/
+$CP plugins/doom64/doom64.bundle                       $PLUGDIR/
+$CP plugins/fmod/audio_fmod.bundle                     $PLUGDIR/
+$CP plugins/example/example.bundle                     $PLUGDIR/
 
 # Tools
 #$CP tools/wadtool/wadtool $APPDIR/Resources
@@ -105,12 +110,15 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     	@executable_path/../Frameworks/libintl.8.dylib $DSFS
 fi
 
-if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/4" ]; then
-	echo "Fixing Qt 4 frameworks..."
-	ln -fs Versions/4/QtCore    $APPDIR/Frameworks/QtCore.framework/QtCore
-	ln -fs Versions/4/QtGui     $APPDIR/Frameworks/QtGui.framework/QtGui
-	ln -fs Versions/4/QtNetwork $APPDIR/Frameworks/QtNetwork.framework/QtNetwork
-	ln -fs Versions/4/QtOpenGL  $APPDIR/Frameworks/QtOpenGL.framework/QtOpenGL
+qtVer=`qmake -query QT_VERSION`
+QT_MAJOR=${qtVer:0:1}
+
+if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/$QT_MAJOR" ]; then
+	echo "Fixing Qt $QT_MAJOR frameworks..."
+	ln -fs Versions/$QT_MAJOR/QtCore    $APPDIR/Frameworks/QtCore.framework/QtCore
+	ln -fs Versions/$QT_MAJOR/QtGui     $APPDIR/Frameworks/QtGui.framework/QtGui
+	ln -fs Versions/$QT_MAJOR/QtNetwork $APPDIR/Frameworks/QtNetwork.framework/QtNetwork
+	ln -fs Versions/$QT_MAJOR/QtOpenGL  $APPDIR/Frameworks/QtOpenGL.framework/QtOpenGL
 fi
 
 echo "Bundling Doomsday Shell.app..."
@@ -123,11 +131,11 @@ mkdir -p "$APPDIR/Frameworks"
 $CP libdeng2/libdeng2*dylib      "$APPDIR/Frameworks"
 $CP libshell/libdeng_shell*dylib "$APPDIR/Frameworks"
 
-if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/4" ]; then
-	echo "Fixing Qt 4 frameworks..."
-	ln -fs Versions/4/QtCore    "$APPDIR/Frameworks/QtCore.framework/QtCore"
-	ln -fs Versions/4/QtGui     "$APPDIR/Frameworks/QtGui.framework/QtGui"
-	ln -fs Versions/4/QtNetwork "$APPDIR/Frameworks/QtNetwork.framework/QtNetwork"
+if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/$QT_MAJOR" ]; then
+	echo "Fixing Qt $QT_MAJOR frameworks..."
+	ln -fs Versions/$QT_MAJOR/QtCore    "$APPDIR/Frameworks/QtCore.framework/QtCore"
+	ln -fs Versions/$QT_MAJOR/QtGui     "$APPDIR/Frameworks/QtGui.framework/QtGui"
+	ln -fs Versions/$QT_MAJOR/QtNetwork "$APPDIR/Frameworks/QtNetwork.framework/QtNetwork"
 fi
 
 echo "Bundling done."

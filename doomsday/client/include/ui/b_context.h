@@ -59,9 +59,9 @@ extern "C" {
 void            B_UpdateDeviceStateAssociations(void);
 bcontext_t*     B_NewContext(const char* name);
 void            B_DestroyAllContexts(void);
-void            B_ActivateContext(bcontext_t* bc, boolean doActivate);
-void            B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire);
-void            B_AcquireAll(bcontext_t* bc, boolean doAcquire);
+void            B_ActivateContext(bcontext_t* bc, dd_bool doActivate);
+void            B_AcquireKeyboard(bcontext_t* bc, dd_bool doAcquire);
+void            B_AcquireAll(bcontext_t* bc, dd_bool doAcquire);
 void            B_SetContextFallbackForDDEvents(const char* name, int (*ddResponderFunc)(const ddevent_t*));
 bcontext_t*     B_ContextByPos(int pos);
 bcontext_t*     B_ContextByName(const char* name);
@@ -75,7 +75,7 @@ controlbinding_t* B_GetControlBinding(bcontext_t* bc, int control);
 void            B_DestroyControlBinding(controlbinding_t* conBin);
 void            B_InitControlBindingList(controlbinding_t* listRoot);
 void            B_DestroyControlBindingList(controlbinding_t* listRoot);
-boolean         B_DeleteBinding(bcontext_t* bc, int bid);
+dd_bool         B_DeleteBinding(bcontext_t* bc, int bid);
 
 /**
  * Finds the action bound to a given event, iterating through all enabled
@@ -98,8 +98,13 @@ de::Action *B_ActionForEvent(ddevent_t const *event);
  */
 de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event, bool respectHigherAssociatedContexts);
 
-boolean         B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbinding_t* match2,
-                                      evbinding_t** evResult, dbinding_t** dResult);
+/**
+ * Looks through context @a bc and looks for a binding that matches either
+ * @a match1 or @a match2.
+ */
+dd_bool B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbinding_t* match2,
+                              evbinding_t** evResult, dbinding_t** dResult);
+
 void            B_PrintContexts(void);
 void            B_PrintAllBindings(void);
 void            B_WriteContextToFile(const bcontext_t* bc, FILE* file);

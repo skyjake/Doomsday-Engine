@@ -17,19 +17,84 @@
  */
 
 #include "ui/styledlogsinkformatter.h"
+#include <de/Variable>
+#include <de/Value>
+#include <de/App>
 
 using namespace de;
 
+static char const *VAR_METADATA = "log.showMetadata";
+
+DENG2_PIMPL(StyledLogSinkFormatter)
+, DENG2_OBSERVES(Variable, Change)
+{
+    LogEntry::Flags format;
+    bool observe;
+    bool omitSectionIfNonDev;
+    bool showMetadata;
+
+    Instance(Public *i, bool observeVars)
+        : Base(i)
+        , observe(observeVars)
+        , omitSectionIfNonDev(true)
+        , showMetadata(false)
+    {
+        if(observe)
+        {
+            showMetadata = App::config().getb(VAR_METADATA);
+            App::config()[VAR_METADATA].audienceForChange() += this;
+        }
+    }
+
+    ~Instance()
+    {
+        if(observe)
+        {
+            App::config()[VAR_METADATA].audienceForChange() -= this;
+        }
+    }
+
+    void variableValueChanged(Variable &, Value const &newValue)
+    {
+        showMetadata = newValue.isTrue();
+    }
+};
+
+StyledLogSinkFormatter::StyledLogSinkFormatter()
+    : d(new Instance(this, true /*observe*/))
+{
+    d->format = LogEntry::Styled | LogEntry::OmitLevel;
+}
+
+StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlags)
+    : d(new Instance(this, false /*don't observe*/))
+{
+    d->format = formatFlags;
+}
+
 LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 {
-    LogEntry::Flags flags = LogEntry::Styled | LogEntry::OmitLevel;
+    LogEntry::Flags form = d->format;
 
-#ifndef _DEBUG
-    // No metadata in release builds.
-    flags |= LogEntry::Simple;
-#endif
+    if(!d->showMetadata)
+    {
+        form |= LogEntry::Simple | LogEntry::OmitDomain;
+    }
+
+    if(d->omitSectionIfNonDev && !(entry.context() & LogEntry::Dev))
+    {
+        // The sections refer to names of native code functions, etc.
+        // These are relevant only to developers. Non-dev messages must be
+        // clear enough to understand without the sections.
+        form |= LogEntry::OmitSection;
+    }
 
     // This will form a single long line. The line wrapper will
     // then determine how to wrap it onto the available width.
-    return Lines() << entry.asText(flags);
+    return Lines() << entry.asText(form);
+}
+
+void StyledLogSinkFormatter::setOmitSectionIfNonDev(bool omit)
+{
+    d->omitSectionIfNonDev = omit;
 }

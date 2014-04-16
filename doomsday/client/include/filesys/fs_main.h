@@ -604,7 +604,7 @@ void F_AddLumpDirectoryMapping(char const *lumpName, char const *nativeDestinati
 
 void F_ResetFileIds(void);
 
-boolean F_CheckFileId(char const *nativePath);
+dd_bool F_CheckFileId(char const *nativePath);
 
 int F_LumpCount(void);
 
@@ -612,19 +612,19 @@ void F_Index(struct file1_s *file);
 
 void F_Deindex(struct file1_s *file);
 
-FileHandle *F_Open3(char const *nativePath, char const *mode, size_t baseOffset, boolean allowDuplicate);
+FileHandle *F_Open3(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate);
 FileHandle *F_Open2(char const *nativePath, char const *mode, size_t baseOffset/*, allowDuplicate = true */);
 FileHandle *F_Open(char const *nativePath, char const *mode/*, baseOffset = 0 */);
 
 FileHandle *F_OpenLump(lumpnum_t lumpNum);
 
-boolean F_IsValidLumpNum(lumpnum_t lumpNum);
+dd_bool F_IsValidLumpNum(lumpnum_t lumpNum);
 
 lumpnum_t F_LumpNumForName(char const *name);
 
 AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum);
 
-boolean F_LumpIsCustom(lumpnum_t lumpNum);
+dd_bool F_LumpIsCustom(lumpnum_t lumpNum);
 
 AutoStr *F_LumpName(lumpnum_t lumpNum);
 
@@ -639,7 +639,7 @@ void F_Delete(struct filehandle_s *file);
 
 AutoStr *F_ComposePath(struct file1_s const *file);
 
-void F_SetCustom(struct file1_s *file, boolean yes);
+void F_SetCustom(struct file1_s *file, dd_bool yes);
 
 AutoStr *F_ComposeLumpPath2(struct file1_s *file, int lumpIdx, char delimiter);
 AutoStr *F_ComposeLumpPath(struct file1_s *file, int lumpIdx/*, delimiter ='/' */);

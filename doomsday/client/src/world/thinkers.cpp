@@ -19,14 +19,8 @@
 
 #define DENG_NO_API_MACROS_THINKER
 
-#include <QList>
-#include <QtAlgorithms>
-
-#include <de/memoryzone.h>
-
 #include "de_base.h"
-#include "world/map.h"
-#include "world/p_object.h"
+#include "world/thinkers.h"
 
 #ifdef __CLIENT__
 #  include "client/cl_mobj.h"
@@ -37,11 +31,22 @@
 #  include "server/sv_pool.h"
 #endif
 
-#include "world/thinkers.h"
+#include "world/map.h"
+#include "world/p_object.h"
 
-boolean Thinker_IsMobjFunc(thinkfunc_t func)
+#include <de/memoryzone.h>
+#include <QList>
+#include <QtAlgorithms>
+
+dd_bool Thinker_IsMobjFunc(thinkfunc_t func)
 {
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
+}
+
+de::Map &Thinker_Map(thinker_t const & /*th*/)
+{
+    /// @todo Do not assume the current map.
+    return App_WorldSystem().map();
 }
 
 namespace de {
@@ -79,6 +84,26 @@ struct ThinkerList
         th.next = &sentinel;
         th.prev = sentinel.prev;
         sentinel.prev = &th;
+    }
+
+    int count(int *numInStasis) const
+    {
+        int num = 0;
+        thinker_t *th = sentinel.next;
+        while(th != &sentinel && th)
+        {
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
+            DENG_ASSERT(th->next != 0);
+            DENG_ASSERT(th->prev != 0);
+#endif
+            num += 1;
+            if(numInStasis && th->inStasis)
+            {
+                (*numInStasis) += 1;
+            }
+            th = th->next;
+        }
+        return num;
     }
 
     int iterate(int (*callback) (thinker_t *, void *), void *parameters = 0)
@@ -332,16 +357,28 @@ int Thinkers::iterate(thinkfunc_t func, byte flags,
     return result;
 }
 
+int Thinkers::count(int *numInStasis) const
+{
+    int total = 0;
+    if(isInited())
+    {
+        for(int i = 0; i < d->lists.count(); ++i)
+        {
+            ThinkerList *list = d->lists[i];
+            total += list->count(numInStasis);
+        }
+    }
+    return total;
+}
+
 void unlinkThinkerFromList(thinker_t *th)
 {
     th->next->prev = th->prev;
     th->prev->next = th->next;
 }
 
-static int runThinker(thinker_t *th, void *context)
+static int runThinker(thinker_t *th, void * /*context*/)
 {
-    DENG_UNUSED(context);
-
     // Thinker cannot think when in stasis.
     if(!th->inStasis)
     {
@@ -362,7 +399,7 @@ static int runThinker(thinker_t *th, void *context)
                 else
                 {
                     // Delete the client mobj.
-                    ClMobj_Destroy(mo);
+                    Mobj_Map(*mo).deleteClMobj(mo);
                 }
 #else
                 P_MobjRecycle(mo);
@@ -394,44 +431,42 @@ using namespace de;
 DENG_EXTERN_C struct mobj_s *Mobj_ById(int id)
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_World().hasMap()) return 0;
-    return App_World().map().thinkers().mobjById(id);
+    if(!App_WorldSystem().hasMap()) return 0;
+    return App_WorldSystem().map().thinkers().mobjById(id);
 }
 
 #undef Thinker_Init
 void Thinker_Init()
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_World().hasMap()) return;
-    App_World().map().thinkers().initLists(0x1); // Init the public thinker lists.
+    if(!App_WorldSystem().hasMap()) return;
+    App_WorldSystem().map().thinkers().initLists(0x1); // Init the public thinker lists.
 }
 
 #undef Thinker_Run
 void Thinker_Run()
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_World().hasMap()) return;
-    App_World().map().thinkers().iterate(NULL, 0x1 | 0x2, runThinker);
+    if(!App_WorldSystem().hasMap()) return;
+    App_WorldSystem().map().thinkers().iterate(NULL, 0x1 | 0x2, runThinker);
 }
 
 #undef Thinker_Add
 void Thinker_Add(thinker_t *th)
 {
-    /// @todo fixme: Do not assume the current map.
-    if(!th || !App_World().hasMap()) return;
-    App_World().map().thinkers().add(*th);
+    if(!th) return;
+    Thinker_Map(*th).thinkers().add(*th);
 }
 
 #undef Thinker_Remove
 void Thinker_Remove(thinker_t *th)
 {
-    /// @todo fixme: Do not assume the current map.
-    if(!th || !App_World().hasMap()) return;
-    App_World().map().thinkers().remove(*th);
+    if(!th) return;
+    Thinker_Map(*th).thinkers().remove(*th);
 }
 
 #undef Thinker_SetStasis
-void Thinker_SetStasis(thinker_t *th, boolean on)
+void Thinker_SetStasis(thinker_t *th, dd_bool on)
 {
     if(th)
     {
@@ -442,8 +477,8 @@ void Thinker_SetStasis(thinker_t *th, boolean on)
 #undef Thinker_Iterate
 int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context)
 {
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().thinkers().iterate(func, 0x1, callback, context);
+    if(!App_WorldSystem().hasMap()) return false; // Continue iteration.
+    return App_WorldSystem().map().thinkers().iterate(func, 0x1, callback, context);
 }
 
 DENG_DECLARE_API(Thinker) =

@@ -39,7 +39,7 @@ enum RPolyDataType
 
 struct RPolyData
 {
-    boolean inUse;
+    dd_bool inUse;
     RPolyDataType type;
     uint num;
     void* data;
@@ -55,15 +55,15 @@ void R_PrintRendPoolInfo()
 {
     if(!rendInfoRPolys) return;
 
-    Con_Printf("RP Count: %-4i\n", numrendpolys);
+    LOGDEV_GL_MSG("RP Count: %-4i") << numrendpolys;
 
     for(uint i = 0; i < numrendpolys; ++i)
     {
         RPolyData* rp = rendPolys[i];
 
-        Con_Printf("RP: %-4u %c (vtxs=%u t=%c)\n", i,
-                   (rp->inUse? 'Y':'N'), rp->num,
-                   (rp->type == RPT_VERT? 'v' : rp->type == RPT_COLOR?'c' : 't'));
+        LOGDEV_GL_VERBOSE(_E(m) "RP: %-4u %c (vtxs=%i t=%c)")
+                << i << (rp->inUse? 'Y':'N') << rp->num
+                << (rp->type == RPT_VERT? 'v' : rp->type == RPT_COLOR? 'c' : 't');
     }
 }
 
@@ -85,7 +85,7 @@ void R_InitRendPolyPools()
 Vector3f *R_AllocRendVertices(uint num)
 {
     uint idx;
-    boolean found = false;
+    dd_bool found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
@@ -147,7 +147,7 @@ Vector3f *R_AllocRendVertices(uint num)
 Vector4f *R_AllocRendColors(uint num)
 {
     uint idx;
-    boolean found = false;
+    dd_bool found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
@@ -209,7 +209,7 @@ Vector4f *R_AllocRendColors(uint num)
 Vector2f *R_AllocRendTexCoords(uint num)
 {
     uint idx;
-    boolean found = false;
+    dd_bool found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
@@ -282,7 +282,7 @@ void R_FreeRendVertices(Vector3f *rvertices)
         }
     }
 
-    DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
+    LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
 void R_FreeRendColors(Vector4f *rcolors)
@@ -298,7 +298,7 @@ void R_FreeRendColors(Vector4f *rcolors)
         }
     }
 
-    DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
+    LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
 void R_FreeRendTexCoords(Vector2f *rtexcoords)
@@ -314,7 +314,7 @@ void R_FreeRendTexCoords(Vector2f *rtexcoords)
         }
     }
 
-    DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
+    LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
 void R_DivVerts(Vector3f *dst, Vector3f const *src,

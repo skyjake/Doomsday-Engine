@@ -19,8 +19,8 @@
 
 #include "de_platform.h"
 #include "render/rend_halo.h"
-
 #include "render/rend_main.h"
+#include "render/fx/bloom.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -235,6 +235,14 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
         // Apply the global dimming factor.
         alpha *= .8f * haloBright / 100.0f;
 
+        if(fx::Bloom::isEnabled())
+        {
+            // Bloom will make bright areas even brighter, which means halos
+            // should be dimmer to compensate. Otherwise there will be
+            // oversaturation.
+            alpha *= clamp(0.1f, (1.f - fx::Bloom::intensity() * .8f), 1.f);
+        }
+
         // Secondary flares are a little bolder.
         if(secondary)
         {
@@ -361,9 +369,9 @@ D_CMD(FlareConfig)
         {
             for(i = 0; i < NUM_FLARES; ++i)
             {
-                Con_Message("%i: pos:%f s:%.2f a:%.2f tex:%i", i,
-                            flares[i].offset, flares[i].size, flares[i].alpha,
-                            flares[i].texture);
+                LOG_MSG("%i: pos:%f s:%.2f a:%.2f tex:%i")
+                        << i << flares[i].offset << flares[i].size << flares[i].alpha
+                        << flares[i].texture;
             }
         }
     }
@@ -393,9 +401,9 @@ D_CMD(FlareConfig)
     }
     else
     {
-        Con_Printf("Usage:\n");
-        Con_Printf("  %s list\n", argv[0]);
-        Con_Printf("  %s (num) pos/size/alpha/tex (val)\n", argv[0]);
+        LOG_SCR_NOTE("Usage:\n"
+                     "  %s list\n"
+                     "  %s (num) pos/size/alpha/tex (val)") << argv[0] << argv[0];
     }
 
     return true;

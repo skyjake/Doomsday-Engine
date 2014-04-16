@@ -39,15 +39,15 @@
 typedef enum {
     GA_NONE,
     GA_RESTARTMAP,
-    GA_NEWGAME,
-    GA_LOADGAME,
-    GA_SAVEGAME,
+    GA_NEWSESSION,
+    GA_LOADSESSION,
+    GA_SAVESESSION,
     GA_MAPCOMPLETED,
     GA_ENDDEBRIEFING,
     GA_VICTORY,
     GA_LEAVEMAP,
     GA_SCREENSHOT,
-    GA_QUIT,
+    GA_QUIT
 } gameaction_t;
 
 /*

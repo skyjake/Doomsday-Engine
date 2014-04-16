@@ -19,6 +19,8 @@ group logo {
     }
 }
 
+image alert    { path = "graphics/alert.png" }
+image fold     { path = "graphics/fold.png" }
 image gauge    { path = "graphics/gauge.png" }
 image gear     { path = "graphics/gear.png" }
 image display  { path = "graphics/display.png" }

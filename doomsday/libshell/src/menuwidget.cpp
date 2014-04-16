@@ -1,19 +1,19 @@
-/** @file menuwidget.cpp  Menu with shortcuts.
+/** @file libshell/src/menuwidget.cpp  Menu with shortcuts.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/shell/MenuWidget"
@@ -42,8 +42,23 @@ DENG2_PIMPL(MenuWidget)
         String shortcutLabel;
         bool separatorAfter;
 
-        Item() : action(0), separatorAfter(false)
-        {}
+        Item() : action(0), separatorAfter(false) {}
+
+        Item(Item const &other)
+            : action(holdRef(other.action))
+            , shortcutLabel(other.shortcutLabel)
+            , separatorAfter(other.separatorAfter) {}
+
+        ~Item() {
+            releaseRef(action);
+        }
+
+        Item &operator = (Item const &other) {
+            changeRef(action, other.action);
+            shortcutLabel = other.shortcutLabel;
+            separatorAfter = other.separatorAfter;
+            return *this;
+        }
     };
 
     QList<Item> items;
@@ -74,7 +89,6 @@ DENG2_PIMPL(MenuWidget)
         foreach(Item i, items)
         {
             self.removeAction(*i.action);
-            delete i.action;
         }
         items.clear();
         updateSize();
@@ -103,7 +117,6 @@ DENG2_PIMPL(MenuWidget)
     void removeItem(int pos)
     {
         self.removeAction(*items[pos].action);
-        delete items[pos].action;
         items.removeAt(pos);
         updateSize();
     }
@@ -135,10 +148,10 @@ int MenuWidget::itemCount() const
     return d->items.size();
 }
 
-void MenuWidget::appendItem(Action *action, String const &shortcutLabel)
+void MenuWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
 {
     Instance::Item item;
-    item.action = action;
+    item.action = action.holdRef();
     item.shortcutLabel = shortcutLabel;
     d->items.append(item);
     d->updateSize();
@@ -156,10 +169,10 @@ void MenuWidget::appendSeparator()
     redraw();
 }
 
-void MenuWidget::insertItem(int pos, Action *action, String const &shortcutLabel)
+void MenuWidget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
 {
     Instance::Item item;
-    item.action = action;
+    item.action = action.holdRef();
     item.shortcutLabel = shortcutLabel;
     d->items.insert(pos, item);
     d->updateSize();

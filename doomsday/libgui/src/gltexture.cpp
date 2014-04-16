@@ -3,20 +3,21 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/GLTexture"
+#include "de/GLInfo"
 #include "de/gui/opengl.h"
 
 namespace de {
@@ -46,16 +47,20 @@ DENG2_PIMPL(GLTexture)
     Filter magFilter;
     MipFilter mipFilter;
     Wraps wrap;
+    dfloat maxAnisotropy;
+    dfloat maxLevel;
     TextureFlags flags;
 
     Instance(Public *i)
-        : Base(i),
-          format(Image::Unknown),
-          name(0),
-          texTarget(GL_TEXTURE_2D),
-          minFilter(Linear), magFilter(Linear), mipFilter(MipNone),
-          wrap(Wraps(Repeat, Repeat)),
-          flags(ParamsChanged)
+        : Base(i)
+        , format(Image::Unknown)
+        , name(0)
+        , texTarget(GL_TEXTURE_2D)
+        , minFilter(Linear), magFilter(Linear), mipFilter(MipNone)
+        , wrap(Wraps(Repeat, Repeat))
+        , maxAnisotropy(1.0f)
+        , maxLevel(1000.f)
+        , flags(ParamsChanged)
     {}
 
     ~Instance()
@@ -156,11 +161,17 @@ DENG2_PIMPL(GLTexture)
      * calling.
      */
     void glUpdateParamsOfBoundTexture()
-    {
+    {        
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
         glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
         glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
+        glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
+
+        if(GLInfo::extensions().EXT_texture_filter_anisotropic)
+        {
+            glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+        }
 
         LIBGUI_ASSERT_GL_OK();
 
@@ -242,6 +253,18 @@ void GLTexture::setWrapT(Wrapping mode)
     d->flags |= ParamsChanged;
 }
 
+void GLTexture::setMaxAnisotropy(dfloat maxAnisotropy)
+{
+    d->maxAnisotropy = maxAnisotropy;
+    d->flags |= ParamsChanged;
+}
+
+void GLTexture::setMaxLevel(dfloat maxLevel)
+{
+    d->maxLevel = maxLevel;
+    d->flags |= ParamsChanged;
+}
+
 Filter GLTexture::minFilter() const
 {
     return d->minFilter;
@@ -270,6 +293,16 @@ Wrapping GLTexture::wrapT() const
 GLTexture::Wraps GLTexture::wrap() const
 {
     return d->wrap;
+}
+
+dfloat GLTexture::maxAnisotropy() const
+{
+    return d->maxAnisotropy;
+}
+
+dfloat GLTexture::maxLevel() const
+{
+    return d->maxLevel;
 }
 
 bool GLTexture::isCubeMap() const

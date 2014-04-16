@@ -20,23 +20,23 @@
 #ifndef CLIENTAPP_H
 #define CLIENTAPP_H
 
-#include <de/GuiApp>
-#include <de/GLShaderBank>
+#include <de/BaseGuiApp>
+
 #include "settingsregister.h"
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "render/rendersystem.h"
 #include "resource/resourcesystem.h"
 #include "WidgetActions"
 #include "updater.h"
 #include "Games"
-#include "world/world.h"
+#include "world/worldsystem.h"
 
 /**
  * The client application.
  */
-class ClientApp : public de::GuiApp
+class ClientApp : public de::BaseGuiApp
 {
     Q_OBJECT
 
@@ -53,19 +53,28 @@ public:
     void preFrame();
     void postFrame();
 
+    /**
+     * Reports a new alert to the user.
+     *
+     * @param msg    Message to show. May contain style escapes.
+     * @param level  Importance of the message.
+     */
+    static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
+
 public:
-    static bool haveApp();
     static ClientApp &app();
     static Updater &updater();
+    static SettingsRegister &logSettings();
+    static SettingsRegister &networkSettings();
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
     static ServerLink &serverLink();
     static InputSystem &inputSystem();
-    static WindowSystem &windowSystem();
+    static ClientWindowSystem &windowSystem();
     static RenderSystem &renderSystem();
     static ResourceSystem &resourceSystem();
     static WidgetActions &widgetActions();
     static de::Games &games();
-    static de::World &world();
+    static de::WorldSystem &worldSystem();
 
 public slots:
     void openHomepageInBrowser();

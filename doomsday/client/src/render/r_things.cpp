@@ -24,7 +24,7 @@
 #include "render/r_things.h"
 
 #include "de_render.h"
-#include "dd_main.h" // App_World()
+#include "dd_main.h" // App_WorldSystem()
 #include "dd_loop.h" // frameTimePos
 #include "def_main.h" // states
 
@@ -224,8 +224,8 @@ void R_ProjectSprite(mobj_t *mo)
     catch(Sprite::MissingViewAngleError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ". Projecting sprite '%i' frame '%i', ignoring.")
-            << mo->sprite << mo->frame;
+        LOG_GL_WARNING("Projecting sprite '%i' frame '%i': %s")
+            << mo->sprite << mo->frame << er.asText();
     }
 
     if(!mat) return;
@@ -321,7 +321,7 @@ void R_ProjectSprite(mobj_t *mo)
         }
         else if(mf->testSubFlag(0, MFF_SPIN))
         {
-            yaw = modelSpinSpeed * 70 * App_World().time() + MOBJ_TO_ID(mo) % 360;
+            yaw = modelSpinSpeed * 70 * App_WorldSystem().time() + MOBJ_TO_ID(mo) % 360;
         }
         else if(mf->testSubFlag(0, MFF_MOVEMENT_YAW))
         {
@@ -445,7 +445,7 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Do we need to project a flare source too?
-    if(mo->lumIdx != Lumobj::NoIndex)
+    if(mo->lumIdx != Lumobj::NoIndex && haloMode > 0)
     {
         /// @todo mark this light source visible for LensFx
         try
@@ -467,6 +467,7 @@ void R_ProjectSprite(mobj_t *mo)
             DENG2_ASSERT(pl != 0);
 
             Lumobj const *lum = cluster.sector().map().lumobj(mo->lumIdx);
+            DENG_ASSERT(lum != 0);
 
             vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 
@@ -518,8 +519,8 @@ void R_ProjectSprite(mobj_t *mo)
         catch(Sprite::MissingViewAngleError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ". Projecting flare source for sprite '%i' frame '%i', ignoring.")
-                << mo->sprite << mo->frame;
+            LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")
+                << mo->sprite << mo->frame << er.asText();
         }
     }
 }

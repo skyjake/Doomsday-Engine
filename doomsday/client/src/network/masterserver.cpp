@@ -36,6 +36,10 @@
 #include "con_main.h"
 #include "m_misc.h"
 
+#include <de/App>
+
+using namespace de;
+
 // Maximum time allowed time for a master server operation to take (seconds).
 #define RESPONSE_TIMEOUT    15
 
@@ -44,18 +48,14 @@ typedef struct job_s {
     void* data;
 } job_t;
 
-// Master server info. Hardcoded defaults.
-char*   masterAddress = const_cast<char*>("www.dengine.net"); /// @todo refactor cvars
-int     masterPort    = 0; // Defaults to port 80.
-char*   masterPath    = const_cast<char*>("/master.php"); /// @todo refactor cvars
-boolean masterAware   = false;
+static String const DEFAULT_API_URL = "www.dengine.net/master.php";
+
+dd_bool masterAware = false; // cvar
 
 static QString masterUrl(const char* suffix = 0)
 {
-    QString u = QString("http://%1:%2%3")
-            .arg(masterAddress)
-            .arg(masterPort? masterPort : 80)
-            .arg(masterPath);
+    String u = App::config().gets("masterServer.apiUrl", DEFAULT_API_URL);
+    if(!u.startsWith("http")) u = "http://" + u;
     if(suffix) u += suffix;
     return u;
 }
@@ -141,12 +141,12 @@ void MasterWorker::nextJob()
         ddstring_t* msg = Str_NewStd();
         Sv_InfoToString((serverinfo_t*)job.data, msg);
 
-        LOG_DEBUG("POST request ") << req.url().toString();
+        LOGDEV_NET_VERBOSE("POST request ") << req.url().toString();
         foreach(const QByteArray& hdr, req.rawHeaderList())
         {
-            LOG_DEBUG("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
-        LOG_DEBUG("Request contents:\n%s") << Str_Text(msg);
+        LOGDEV_NET_VERBOSE("Request contents:\n%s") << Str_Text(msg);
 
         d->network->post(req, QString(Str_Text(msg)).toUtf8());
         Str_Delete(msg);
@@ -154,10 +154,10 @@ void MasterWorker::nextJob()
     else
 #endif
     {
-        LOG_DEBUG("GET request ") << req.url().toString();
+        LOGDEV_NET_VERBOSE("GET request ") << req.url().toString();
         foreach(const QByteArray& hdr, req.rawHeaderList())
         {
-            LOG_DEBUG("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
 
         d->network->get(req);
@@ -176,7 +176,7 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
 
     if(reply->error() == QNetworkReply::NoError)
     {
-        LOG_VERBOSE("Got reply.");
+        LOG_NET_XVERBOSE("Got reply");
 
         if(d->currentAction == REQUEST_SERVERS)
         {
@@ -185,8 +185,7 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
     }
     else
     {
-        LOG_WARNING(reply->errorString());
-        /// @todo Log the error.
+        LOG_NET_WARNING(reply->errorString());
     }
 
     // Continue with the next job.
@@ -238,11 +237,11 @@ bool MasterWorker::parseResponse(const QByteArray& response)
 
         if(info)
         {
-            Net_StringToServerInfo(Str_Text(&line), info);
+            ServerInfo_FromString(info, Str_Text(&line));
         }
     }
 
-    LOG_MSG("Received %i servers.") << serverCount();
+    LOG_NET_MSG("Received %i servers from master") << serverCount();
 
     Str_Free(&line);
     Str_Free(&msg);
@@ -265,20 +264,22 @@ void N_MasterShutdown(void)
     worker = 0;
 }
 
-void N_MasterAnnounceServer(boolean isOpen)
+void N_MasterAnnounceServer(dd_bool isOpen)
 {
 #ifdef __SERVER__
     // Must be a server.
     if(isClient) return;
 
+    LOG_AS("N_MasterAnnounceServer");
+
     if(isOpen && !strlen(netPassword))
     {
-        Con_Message("Cannot announce server as public: no shell password set!\n"
-                    "You must set one with the 'server-password' cvar.");
+        LOG_NET_WARNING("Cannot announce server as public: no shell password set! "
+                        "You must set one with the 'server-password' cvar.");
         return;
     }
 
-    DEBUG_Message(("N_MasterAnnounceServer: Announcing as open=%i.\n", isOpen));
+    LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
 
     // This will be freed by the worker after the request has been made.
     serverinfo_t *info = (serverinfo_t*) M_Calloc(sizeof(*info));

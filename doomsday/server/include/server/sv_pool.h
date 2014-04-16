@@ -224,7 +224,7 @@ typedef struct ownerinfo_s {
  */
 typedef struct pool_s {
     // True if the first frame has not yet been sent.
-    boolean         isFirst;
+    dd_bool         isFirst;
 
     // The number of the console this pool belongs to. (i.e. player number)
     uint            owner;
@@ -260,7 +260,7 @@ void            Sv_InitPoolForClient(uint clientNumber);
 void            Sv_MobjRemoved(thid_t id);
 void            Sv_PlayerRemoved(uint clientNumber);
 void            Sv_GenerateFrameDeltas(void);
-boolean         Sv_IsFrameTarget(uint clientNumber);
+dd_bool         Sv_IsFrameTarget(uint clientNumber);
 uint            Sv_GetTimeStamp(void);
 pool_t*         Sv_GetPool(uint clientNumber);
 void            Sv_RatePool(pool_t* pool);
@@ -289,7 +289,7 @@ uint            Sv_CountUnackedDeltas(uint clientNumber);
  */
 void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
     Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
-    float volume, boolean isRepeating, int clientsMask);
+    float volume, dd_bool isRepeating, int clientsMask);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -41,7 +41,7 @@
 
 #include "con_main.h"
 #include "dd_def.h"
-#include "dd_main.h" // App_World()
+#include "dd_main.h" // App_WorldSystem()
 
 #include <de/Log>
 #include <de/binangle.h>
@@ -175,7 +175,7 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices)
 #ifdef DENG_DEBUG
         if(!announcedVertexBufferMaxBreach)
         {
-            LOG_WARNING("Attempted to expand to %u vertices (max %u), ignoring.")
+            LOGDEV_GL_WARNING("Attempted to expand to %u vertices (max %u)")
                 << numVertices << RENDER_MAX_MODEL_VERTS;
             announcedVertexBufferMaxBreach = true;
         }
@@ -634,7 +634,7 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
         }
         else
         {
-            offset = SECONDS_TO_TICKS(App_World().time()) / mf.skinTics;
+            offset = SECONDS_TO_TICKS(App_WorldSystem().time()) / mf.skinTics;
         }
 
         skin += offset % smf.skinRange;

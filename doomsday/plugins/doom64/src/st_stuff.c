@@ -41,7 +41,7 @@
 #include "p_mapsetup.h"
 #include "p_tick.h" // for Pause_IsPaused
 #include "p_inventory.h"
-#include "p_player.h"
+#include "player.h"
 #include "am_map.h"
 #include "r_common.h"
 
@@ -62,12 +62,12 @@ enum {
 };
 
 typedef struct {
-    boolean inited;
-    boolean stopped;
+    dd_bool inited;
+    dd_bool stopped;
     int hideTics;
     float hideAmount;
     float alpha; // Fullscreen hud alpha value.
-    boolean statusbarActive; // Whether the HUD is on.
+    dd_bool statusbarActive; // Whether the HUD is on.
     int automapCheatLevel; /// \todo Belongs in player state?
 
     int widgetGroupIds[NUM_UIWIDGET_GROUPS];
@@ -75,7 +75,7 @@ typedef struct {
     int chatWidgetId;
     int logWidgetId;
 
-    boolean firstTime;  // ST_Start() has just been called.
+    dd_bool firstTime;  // ST_Start() has just been called.
     int currentFragsCount; // Number of frags so far in deathmatch.
 
     // Other:
@@ -144,17 +144,11 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: ST_HUDUnHide: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
+
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
     {
-#if _DEBUG
-        Con_Message("Warning: ST_HUDUnHide: Invalid event type %i, ignoring.", (int) ev);
-#endif
+        DENG_ASSERT(!"ST_HUDUnHide: Invalid event type");
         return;
     }
 
@@ -199,7 +193,7 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    const boolean isSharpTic = DD_IsSharpTick();
+    const dd_bool isSharpTic = DD_IsSharpTick();
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -268,7 +262,7 @@ static void drawWidgets(hudstate_t* hud)
 {
 #define MAXDIGITS           ST_FRAGSWIDTH
 
-    if(deathmatch)
+    if(G_Ruleset_Deathmatch())
     {
         char buf[20];
         if(hud->currentFragsCount == 1994)
@@ -303,7 +297,7 @@ void ST_doRefresh(int player)
 }
 
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-    float scale, float alpha, boolean flip, int* drawnWidth, int* drawnHeight)
+    float scale, float alpha, dd_bool flip, int* drawnWidth, int* drawnHeight)
 {
     spriteinfo_t info;
 
@@ -355,30 +349,28 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
 void ST_doFullscreenStuff(int player)
 {
-    static const int    ammo_sprite[NUM_AMMO_TYPES] = {
+    static int const ammo_sprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
         SPR_RCKT
     };
 
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
-    char                buf[20];
-    int                 w, h, pos = 0, oldPos = 0, spr,i;
-    int                 h_width = 320 / cfg.hudScale;
-    int                 h_height = 200 / cfg.hudScale;
-    float               textalpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
-    float               iconalpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
+    hudstate_t *hud = &hudStates[player];
+    player_t *plr = &players[player];
+    char buf[20];
+    int w, h, pos = 0, oldPos = 0, spr,i;
+    int h_width = 320 / cfg.hudScale;
+    int h_height = 200 / cfg.hudScale;
+    float textalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
+    float iconalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
     textalpha = MINMAX_OF(0.f, textalpha, 1.f);
     iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
 
     FR_LoadDefaultAttrib();
 
-    if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
+    if(IS_NETGAME && G_Ruleset_Deathmatch() && cfg.hudShown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - HUDBORDERY;
@@ -529,65 +521,6 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
-#if 0
-void MapName_Drawer(uiwidget_t* obj, int x, int y)
-{
-    assert(obj && obj->type == GUI_MAPNAME);
-    {
-    const float scale = .75f;
-    const float textAlpha = uiRendState->pageAlpha;
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_GetMapNiceName());
-
-    if(!text && 0 == patch) return;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
-    DGL_Scalef(scale, scale, 1);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, textAlpha);
-    FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
-    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-    }
-}
-
-void MapName_UpdateGeometry(uiwidget_t* obj)
-{
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_GetMapNiceName());
-    const float scale = .75f;
-    patchinfo_t info;
-    assert(obj && obj->type == GUI_MAPNAME);
-
-    Rect_SetWidthHeight(obj->geometry, 0, 0);
-
-    if(!text && 0 == patch) return;
-
-    if(text)
-    {
-        Size2Raw textSize;
-        FR_SetFont(obj->font);
-        FR_TextSize(&textSize, text);
-        textSize.width  *= scale;
-        textSize.height *= scale;
-        Rect_SetWidthHeight(obj->geometry, textSize.width, textSize.height);
-        return;
-    }
-
-    R_GetPatchInfo(patch, &info);
-    Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * scale,
-                                       info.geometry.size.height * scale);
-}
-#endif
-
 typedef struct {
     guiwidgettype_t type;
     int group;
@@ -616,13 +549,8 @@ void ST_Drawer(int player)
 {
     hudstate_t* hud;
 
-    if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: ST_Drawer: Invalid player #%i, ignoring.", player);
-#endif
-        return;
-    }
+    if(player < 0 || player >= MAXPLAYERS) return;
+
     if(!players[player].plr->inGame) return;
 
     R_UpdateViewFilter(player);
@@ -697,7 +625,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(gameSkill == SM_BABY && cfg.automapBabyKeys)
+    if(G_Ruleset_Skill() == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
@@ -838,6 +766,14 @@ void ST_Shutdown(void)
     }
 }
 
+void ST_CloseAll(int player, dd_bool fast)
+{
+    ST_AutomapOpen(player, false, fast);
+#if __JHERETIC__ || __JHEXEN__
+    Hu_InventoryOpen(player, false);
+#endif
+}
+
 uiwidget_t* ST_UIChatForPlayer(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
@@ -881,7 +817,7 @@ int ST_ChatResponder(int player, event_t* ev)
     return false;
 }
 
-boolean ST_ChatIsActive(int player)
+dd_bool ST_ChatIsActive(int player)
 {
     uiwidget_t* obj = ST_UIChatForPlayer(player);
     if(NULL != obj)
@@ -944,21 +880,21 @@ void ST_LogUpdateAlignment(void)
 #endif
 }
 
-void ST_AutomapOpen(int player, boolean yes, boolean fast)
+void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
     UIAutomap_Open(obj, yes, fast);
 }
 
-boolean ST_AutomapIsActive(int player)
+dd_bool ST_AutomapIsActive(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
     return UIAutomap_Active(obj);
 }
 
-boolean ST_AutomapObscures2(int player, const RectRaw* region)
+dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -989,7 +925,7 @@ boolean ST_AutomapObscures2(int player, const RectRaw* region)
     return false;
 }
 
-boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
+dd_bool ST_AutomapObscures(int player, int x, int y, int width, int height)
 {
     RectRaw rect;
     rect.origin.x = x;
@@ -1027,7 +963,7 @@ int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
     return newPoint;
 }
 
-boolean ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z)
+dd_bool ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -1040,7 +976,7 @@ void ST_ToggleAutomapMaxZoom(int player)
     if(!obj) return;
     if(UIAutomap_SetZoomMax(obj, !UIAutomap_ZoomMax(obj)))
     {
-        Con_Printf("Maximum zoom %s in automap.\n", UIAutomap_ZoomMax(obj)? "ON":"OFF");
+        App_Log(0, "Maximum zoom %s in automap", UIAutomap_ZoomMax(obj)? "ON":"OFF");
     }
 }
 
@@ -1051,7 +987,7 @@ float ST_AutomapOpacity(int player)
     return UIAutomap_Opacity(obj);
 }
 
-void ST_SetAutomapCameraRotation(int player, boolean on)
+void ST_SetAutomapCameraRotation(int player, dd_bool on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
@@ -1084,14 +1020,14 @@ void ST_SetAutomapCheatLevel(int player, int level)
     setAutomapCheatLevel(obj, level);
 }
 
-void ST_RevealAutomap(int player, boolean on)
+void ST_RevealAutomap(int player, dd_bool on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
     UIAutomap_SetReveal(obj, on);
 }
 
-boolean ST_AutomapHasReveal(int player)
+dd_bool ST_AutomapHasReveal(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -1127,7 +1063,7 @@ D_CMD(ChatOpen)
     int player = CONSOLEPLAYER, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
     {
         return false;
     }
@@ -1143,7 +1079,7 @@ D_CMD(ChatOpen)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i, valid range: [0..%i).", destination, NUMTEAMS);
+            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
             return false;
         }
     }
@@ -1158,7 +1094,7 @@ D_CMD(ChatAction)
     const char* cmd = argv[0] + 4;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
     {
         return false;
     }
@@ -1188,14 +1124,14 @@ D_CMD(ChatSendMacro)
     int player = CONSOLEPLAYER, macroId, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
         return false;
 
     if(argc < 2 || argc > 3)
     {
-        Con_Message("Usage: %s (team) (macro number)", argv[0]);
-        Con_Message("Send a chat macro to other player(s).\n"
-                    "If (team) is omitted, the message will be sent to all players.");
+        App_Log(DE2_SCR_NOTE, "Usage: %s (team) (macro number)", argv[0]);
+        App_Log(DE2_SCR_MSG, "Send a chat macro to other player(s). "
+                "If (team) is omitted, the message will be sent to all players.");
         return true;
     }
 
@@ -1210,7 +1146,7 @@ D_CMD(ChatSendMacro)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i, valid range: [0..%i).", destination, NUMTEAMS);
+            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
             return false;
         }
     }
@@ -1218,7 +1154,7 @@ D_CMD(ChatSendMacro)
     macroId = UIChat_ParseMacroId(argc == 3? argv[2] : argv[1]);
     if(-1 == macroId)
     {
-        Con_Message("Invalid macro id.");
+        App_Log(DE2_SCR_ERROR, "Invalid macro id");
         return false;
     }
 

@@ -1,4 +1,4 @@
-/** @file hand.h Hand (metaphor) for the manipulation of "grabbables".
+/** @file hand.h  Hand (metaphor) for the manipulation of "grabbables".
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -20,14 +20,12 @@
 #ifndef DENG_WORLD_HAND_H
 #define DENG_WORLD_HAND_H
 
-#include <QList>
+#include "Grabbable"
+#include "world/worldsystem.h"
 
 #include <de/Observers>
 #include <de/Vector>
-
-#include "world/world.h"
-
-#include "Grabbable"
+#include <QList>
 
 namespace de {
 namespace internal {
@@ -48,20 +46,16 @@ namespace internal {
  *
  * @ingroup world
  */
-class Hand : DENG2_OBSERVES(de::World, FrameEnd)
+class Hand : DENG2_OBSERVES(de::WorldSystem, FrameEnd)
 {
     DENG2_NO_COPY  (Hand)
     DENG2_NO_ASSIGN(Hand)
 
 public:
-    /*
-     * Notified when a grabbable is grabbed.
-     */
+    /// Notified whenever a grabbable is grabbed.
     DENG2_DEFINE_AUDIENCE(Grabbed, void handGrabbed(Hand &hand, Grabbable &grabbable))
 
-    /*
-     * Notified when a grabbable is ungrabbed.
-     */
+    /// Notified whenever a grabbable is ungrabbed.
     DENG2_DEFINE_AUDIENCE(Ungrabbed, void handUngrabbed(Hand &hand, Grabbable &grabbable))
 
     typedef QList<Grabbable *> Grab;
@@ -169,8 +163,8 @@ public:
 
 #ifdef __CLIENT__
 protected:
-    /// Observes World FrameEnd
-    void worldFrameEnds(de::World &world);
+    /// Observes WorldSystem FrameEnd
+    void worldSystemFrameEnds();
 #endif
 
 private:

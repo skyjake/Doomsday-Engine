@@ -1,4 +1,4 @@
-/** @file d_net.h Common code related to net games.
+/** @file d_net.h  Common code related to net games.
  *
  * Connecting to/from a netgame server. Netgame events (player and world) and
  * netgame commands.
@@ -32,8 +32,6 @@
 #define NETBUFFER_MAXMESSAGE 255
 
 #ifdef __JHEXEN__
-#define PLR_COLOR(pl, x)    (((unsigned)(x)) > 7? (pl) % 8 : (x))
-#elif __JSTRIFE__
 #define PLR_COLOR(pl, x)    (((unsigned)(x)) > 7? (pl) % 8 : (x))
 #else
 #define PLR_COLOR(pl, x)    (((unsigned)(x)) > 3? (pl) % 4 : (x))
@@ -193,33 +191,71 @@ DENG_EXTERN_C float netJumpPower;
 extern "C" {
 #endif
 
-Writer*         D_NetWrite(void);
-Reader*         D_NetRead(const byte* buffer, size_t len);
-void            D_NetClearBuffer(void);
+Writer *D_NetWrite(void);
+
+Reader *D_NetRead(byte const *buffer, size_t len);
+
+void D_NetClearBuffer(void);
 
 // Networking.
-int             D_NetServerOpen(int before);
-int             D_NetServerClose(int before);
-int             D_NetServerStarted(int before);
-int             D_NetConnect(int before);
-int             D_NetDisconnect(int before);
-void            NetSv_ApplyGameRulesFromConfig(void);
-long int        D_NetPlayerEvent(int plrNumber, int peType, void *data);
-boolean         D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                                int damage);
-int             D_NetWorldEvent(int type, int tic, void *data);
-void            D_HandlePacket(int fromplayer, int type, void *data,
-                               size_t length);
-void*           D_NetWriteCommands(int numCommands, void* data);
-void*           D_NetReadCommands(size_t pktLength, void* data);
+int D_NetServerOpen(int before);
+
+/**
+ * Called when a network server closes.
+ *
+ * Duties include:
+ * Restoring global state variables
+ */
+int D_NetServerClose(int before);
+
+/**
+ * Called when the network server starts.
+ *
+ * Duties include:
+ * Updating global state variables and initializing all players' settings
+ */
+int D_NetServerStarted(int before);
+
+int D_NetConnect(int before);
+
+int D_NetDisconnect(int before);
+
+long int D_NetPlayerEvent(int plrNumber, int peType, void *data);
+
+/**
+ * Issues a damage request when a client is trying to damage another player's mobj.
+ *
+ * @return  @c true = no further processing of the damage should be done else, process the
+ * damage as normally.
+ */
+dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage);
+
+int D_NetWorldEvent(int type, int tic, void *data);
+
+void D_HandlePacket(int fromplayer, int type, void *data, size_t length);
+
+void *D_NetWriteCommands(int numCommands, void *data);
+
+void *D_NetReadCommands(size_t pktLength, void *data);
 
 /**
  * Register the console commands and variables of the common netcode.
  */
 void D_NetConsoleRegistration(void);
 
-void            D_NetMessage(int player, const char *msg);
-void            D_NetMessageNoSound(int player, const char *msg);
+/**
+ * Show message on screen and play chat sound.
+ *
+ * @param msg  Ptr to the message to print.
+ */
+void D_NetMessage(int player, char const *msg);
+
+/**
+ * Show message on screen.
+ *
+ * @param msg
+ */
+void D_NetMessageNoSound(int player, char const *msg);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -228,4 +264,4 @@ void            D_NetMessageNoSound(int player, const char *msg);
 #include "d_netsv.h"
 #include "d_netcl.h"
 
-#endif /* LIBCOMMON_NETWORK_DEF_H */
+#endif // LIBCOMMON_NETWORK_DEF_H

@@ -1,35 +1,33 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_lights.h  Handle Sector base lighting effects.
  *
- *\author Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_lights.h: Handle Sector base lighting effects.
- */
-
-#ifndef __P_LIGHTS_H__
-#define __P_LIGHTS_H__
+#ifndef LIBDOOM_PLAY_LIGHTS_H
+#define LIBDOOM_PLAY_LIGHTS_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
+#endif
+
+#include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
 #endif
 
 #define GLOWSPEED               (8)
@@ -37,64 +35,84 @@
 #define FASTDARK                (15)
 #define SLOWDARK                (35)
 
-typedef struct {
-    thinker_t       thinker;
-    Sector*         sector;
-    int             count;
-    float           maxLight;
-    float           minLight;
+typedef struct fireflicker_s {
+    thinker_t thinker;
+    Sector *sector;
+    int count;
+    float maxLight;
+    float minLight;
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } fireflicker_t;
 
-typedef struct {
-    thinker_t       thinker;
-    Sector*         sector;
-    int             count;
-    float           maxLight;
-    float           minLight;
-    int             maxTime;
-    int             minTime;
+typedef struct lightflash_s {
+    thinker_t thinker;
+    Sector *sector;
+    int count;
+    float maxLight;
+    float minLight;
+    int maxTime;
+    int minTime;
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } lightflash_t;
 
-typedef struct {
-    thinker_t       thinker;
-    Sector*         sector;
-    int             count;
-    float           minLight;
-    float           maxLight;
-    int             darkTime;
-    int             brightTime;
+typedef struct strobe_s {
+    thinker_t thinker;
+    Sector *sector;
+    int count;
+    float minLight;
+    float maxLight;
+    int darkTime;
+    int brightTime;
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } strobe_t;
 
-typedef struct {
-    thinker_t       thinker;
-    Sector*         sector;
-    float           minLight;
-    float           maxLight;
-    int             direction;
+typedef struct glow_s {
+    thinker_t thinker;
+    Sector *sector;
+    float minLight;
+    float maxLight;
+    int direction;
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } glow_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void            T_FireFlicker(void *flickPtr);
-void            P_SpawnFireFlicker(Sector* sector);
+void T_FireFlicker(void *flickPtr);
+void P_SpawnFireFlicker(Sector *sector);
 
-void            T_LightFlash(lightflash_t* flash);
-void            P_SpawnLightFlash(Sector* sector);
+void T_LightFlash(lightflash_t *flash);
+void P_SpawnLightFlash(Sector *sector);
 
-void            T_StrobeFlash(strobe_t* flash);
-void            P_SpawnStrobeFlash(Sector* sector, int fastOrSlow,
-                                   int inSync);
-void            T_Glow(glow_t* g);
-void            P_SpawnGlowingLight(Sector* sector);
+void T_StrobeFlash(strobe_t *flash);
+void P_SpawnStrobeFlash(Sector *sector, int fastOrSlow, int inSync);
 
-void            EV_StartLightStrobing(Line* line);
-void            EV_TurnTagLightsOff(Line* line);
-void            EV_LightTurnOn(Line* line, float bright);
+void T_Glow(glow_t* g);
+void P_SpawnGlowingLight(Sector *sector);
+
+void EV_StartLightStrobing(Line *line);
+void EV_TurnTagLightsOff(Line *line);
+void EV_LightTurnOn(Line *line, float bright);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif
+#endif // LIBDOOM_PLAY_LIGHTS_H

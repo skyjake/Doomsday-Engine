@@ -137,7 +137,7 @@ void Sfx_DestroyLogical(logicsound_t * node)
  * 'world class' sound is started, regardless of whether it's actually
  * started on the local system.
  */
-void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
+void Sfx_StartLogical(int id, mobj_t *origin, dd_bool isRepeating)
 {
     logicsound_t *node;
     uint length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
@@ -228,11 +228,6 @@ void Sfx_PurgeLogical(void)
         for(it = logicHash[i].first; it; it = next)
         {
             next = it->next;
-            /*#ifdef _DEBUG
-               Con_Printf("LS:%i orig=%i(%p) %s\n",
-               it->id, it->origin? it->origin->thinker.id : 0,
-               it->origin, it->isRepeating? "[repeat]" : "");
-               #endif */
             if(!it->isRepeating && it->endTime < nowTime)
             {
                 // This has stopped.
@@ -248,7 +243,7 @@ void Sfx_PurgeLogical(void)
  *
  * id=0: true if any sounds are playing using the specified origin
  */
-boolean Sfx_IsPlaying(int id, mobj_t *origin)
+dd_bool Sfx_IsPlaying(int id, mobj_t *origin)
 {
     uint    nowTime = Timer_RealMilliseconds();
     logicsound_t *it;

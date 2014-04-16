@@ -62,13 +62,13 @@ static StringPool *materialDict;
  * material dictionary.
  *
  * @param internId    Unique id associated with the reference.
- * @param parameters  If a uint pointer operate in "count" mode (total written
+ * @param context     If a uint pointer operate in "count" mode (total written
  *                    here). Else operate in "print" mode.
  * @return Always @c 0 (for use as an iterator).
  */
-static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
+static int printMissingMaterialWorker(StringPool::Id internId, void *context)
 {
-    int *count = (int *)parameters;
+    int *count = (int *)context;
 
     // A valid id?
     if(materialDict->string(internId))
@@ -87,10 +87,11 @@ static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
                 // Print mode.
                 int const refCount = materialDict->userValue(internId);
                 String const &materialUri = materialDict->string(internId);
-                LOG_MSG(" %4i x \"%s\"") << refCount << materialUri;
+                LOG_RES_WARNING("Found %4i x unknown material \"%s\"") << refCount << materialUri;
             }
         }
     }
+
     return 0; // Continue iteration.
 }
 
@@ -111,17 +112,10 @@ static void clearMaterialDict()
  */
 static void printMissingMaterialsInDict()
 {
-    // Initialized?
-    if(!materialDict) return;
-
-    // Count missing materials.
-    int numMissing = 0;
-    materialDict->iterate(printMissingMaterialWorker, &numMissing);
-    if(!numMissing) return;
-
-    LOG_WARNING("Found %i unknown %s:") << numMissing << (numMissing == 1? "material":"materials");
-    // List the missing materials.
-    materialDict->iterate(printMissingMaterialWorker, 0);
+    if(materialDict)
+    {
+        materialDict->iterate(printMissingMaterialWorker);
+    }
 }
 
 /**
@@ -206,7 +200,7 @@ Map *MPE_TakeMap()
 }
 
 #undef MPE_Begin
-boolean MPE_Begin(uri_s const *mapUri)
+dd_bool MPE_Begin(uri_s const *mapUri)
 {
     if(!editMapInited)
     {
@@ -218,7 +212,7 @@ boolean MPE_Begin(uri_s const *mapUri)
 }
 
 #undef MPE_End
-boolean MPE_End()
+dd_bool MPE_End()
 {
     if(!editMapInited)
         return false;
@@ -243,7 +237,7 @@ int MPE_VertexCreate(coord_t x, coord_t y, int archiveIndex)
 }
 
 #undef MPE_VertexCreatev
-boolean MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, int *retIndices)
+dd_bool MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, int *retIndices)
 {
     ERROR_IF_NOT_INITIALIZED();
 
@@ -401,7 +395,7 @@ int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType
 }
 
 #undef MPE_GameObjProperty
-boolean MPE_GameObjProperty(char const *entityName, int elementIndex,
+dd_bool MPE_GameObjProperty(char const *entityName, int elementIndex,
     char const *propertyName, valuetype_t valueType, void *valueAdr)
 {
     LOG_AS("MPE_GameObjProperty");
@@ -443,10 +437,10 @@ boolean MPE_GameObjProperty(char const *entityName, int elementIndex,
 
 // p_data.cpp
 #undef P_RegisterMapObj
-DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, char const *name);
+DENG_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name);
 
 #undef P_RegisterMapObjProperty
-DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId, char const *propertyName, valuetype_t type);
+DENG_EXTERN_C dd_bool P_RegisterMapObjProperty(int entityId, int propertyId, char const *propertyName, valuetype_t type);
 
 DENG_DECLARE_API(MPE) =
 {

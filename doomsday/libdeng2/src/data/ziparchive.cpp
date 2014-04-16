@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/ZipArchive"
@@ -564,7 +564,7 @@ void ZipArchive::operator >> (Writer &to) const
     }
 
     CentralEnd summary;
-    summary.diskEntryCount = summary.totalEntryCount = index().size();
+    summary.diskEntryCount = summary.totalEntryCount = index().leafNodes().size();
 
     // This is where the central directory begins.
     summary.offset = writer.offset();
@@ -606,12 +606,21 @@ void ZipArchive::operator >> (Writer &to) const
     to.seek(writer.offset());
 }
 
+static bool recognizeZipExtension(String const &ext)
+{
+    return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
+            ext == ".box" || ext == ".pk3" || ext == ".zip");
+}
+
 bool ZipArchive::recognize(File const &file)
 {
     // For now, just check the name.
-    String ext = file.name().fileNameExtension().lower();
-    return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
-            ext == ".box" || ext == ".pk3" || ext == ".zip");
+    return recognizeZipExtension(file.name().fileNameExtension().lower());
+}
+
+bool ZipArchive::recognize(NativePath const &path)
+{
+    return recognizeZipExtension(path.toString().fileNameExtension().lower());
 }
 
 void ZipArchive::ZipEntry::update()

@@ -87,12 +87,12 @@ DENG2_PIMPL(PostProcessing)
         try
         {
             self.shaders().build(frame.program(), "fx.post." + name);
-            LOG_VERBOSE("Post-processing shader \"fx.post.%s\"") << name;
+            LOG_GL_MSG("Post-processing shader \"fx.post.%s\"") << name;
             return true;
         }
         catch(Error const &er)
         {
-            LOG_WARNING("Failed to set shader to \"fx.post.%s\":\n%s")
+            LOG_GL_WARNING("Failed to set shader to \"fx.post.%s\":\n%s")
                     << name << er.asText();
         }
         return false;
@@ -127,7 +127,7 @@ DENG2_PIMPL(PostProcessing)
 
     void glDeinit()
     {
-        LOG_DEBUG("Releasing GL resources");
+        LOGDEV_GL_XVERBOSE("Releasing GL resources");
         framebuf.glDeinit();
     }
 
@@ -154,7 +154,7 @@ DENG2_PIMPL(PostProcessing)
                 }
             }
             fade.setValue(entry.fade, entry.span);
-            LOG_DEBUG("%s %s") << entry.shaderName << fade.asText();
+            LOGDEV_GL_VERBOSE("Shader '%s' fade:%s") << entry.shaderName << fade.asText();
         }
     }
 

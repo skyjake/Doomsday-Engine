@@ -37,7 +37,7 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_terraintype.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h"
 #include "p_actor.h"
 #include "p_start.h"
@@ -116,7 +116,7 @@ void P_MobjMoveXY(mobj_t* mo)
 {
     coord_t pos[3], mom[3];
     player_t* player;
-    boolean largeNegative;
+    dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
@@ -381,7 +381,7 @@ void P_MobjMoveZ(mobj_t *mo)
     // The floor.
     if(mo->origin[VZ] <= mo->floorZ)
     {   // Hit the floor.
-        boolean             movingDown;
+        dd_bool             movingDown;
 
         // Note (id):
         //  somebody left this after the setting momz to 0,
@@ -686,7 +686,7 @@ void P_MobjThinker(void *mobjThinkerPtr)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnMonsters)
+        if(!G_Ruleset_RespawnMonsters())
             return;
 
         mobj->moveCount++;
@@ -704,17 +704,17 @@ void P_MobjThinker(void *mobjThinkerPtr)
     }
 }
 
-mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle,
+mobj_t *P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle,
     int spawnFlags)
 {
-    mobjinfo_t* info;
+    mobjinfo_t *info;
     int ddflags = 0;
     coord_t space;
-    mobj_t* mo;
+    mobj_t *mo;
 
     if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
     {
-        Con_Message("Warning: P_SpawnMobj: Attempt to spawn unknown mobj type %i, ignoring.", type);
+        App_Log(DE2_MAP_ERROR, "Attempt to spawn unknown mobj type %i", type);
         return NULL;
     }
 
@@ -725,14 +725,14 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
         return NULL;
 
     // Not for deathmatch?
-    if(deathmatch && (info->flags & MF_NOTDMATCH))
+    if(G_Ruleset_Deathmatch() && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
     if(IS_NETGAME)
     {
         // Cooperative weapons?
-        if(cfg.noCoopWeapons && !deathmatch && type >= MT_CLIP &&
+        if(cfg.noCoopWeapons && !G_Ruleset_Deathmatch() && type >= MT_CLIP &&
            type <= MT_SUPERSHOTGUN)
             return NULL;
 
@@ -751,8 +751,8 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
             return NULL;
     }
 
-    // Don't spawn any monsters if -noMonstersParm.
-    if(noMonstersParm && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
+    // Don't spawn any monsters?
+    if(G_Ruleset_NoMonsters() && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
         return NULL;
 
     if(info->flags & MF_SOLID)
@@ -881,7 +881,7 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle)
  * @return              @c true, if the missile is at a valid location else
  *                      @c false
  */
-boolean P_CheckMissileSpawn(mobj_t* mo)
+dd_bool P_CheckMissileSpawn(mobj_t* mo)
 {
     mo->tics -= P_Random() & 3;
     if(mo->tics < 1)

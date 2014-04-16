@@ -42,7 +42,7 @@ void X_Register(void)
     C_VAR_FLOAT("view-cross-a", &cfg.xhairColor[3], 0, 0, 1);
 }
 
-static boolean currentColor(player_t* player, float color[3])
+static dd_bool currentColor(player_t* player, float color[3])
 {
     if(!player || !color) return false;
 

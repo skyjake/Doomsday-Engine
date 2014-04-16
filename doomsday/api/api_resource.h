@@ -41,7 +41,7 @@ DENG_API_TYPEDEF(R)
      * @param info  Extend info will be written here if found.
      * @return  @c true: Extended info for this patch was found.
      */
-    boolean (*GetPatchInfo)(patchid_t id, patchinfo_t *info);
+    dd_bool (*GetPatchInfo)(patchid_t id, patchinfo_t *info);
 
     /// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
     Uri* (*ComposePatchUri)(patchid_t id);
@@ -117,7 +117,7 @@ DENG_API_TYPEDEF(R)
      * @param rgb  Final color will be written back here.
      * @param applyTexGamma  @c true: the texture gamma ramp should be applied.
      */
-    void (*GetColorPaletteRGBf)(colorpaletteid_t id, int colorIdx, float rgb[3], boolean applyTexGamma);
+    void (*GetColorPaletteRGBf)(colorpaletteid_t id, int colorIdx, float rgb[3], dd_bool applyTexGamma);
 
     /**
      * Given a color palette index, calculate the equivalent RGB color.
@@ -127,10 +127,10 @@ DENG_API_TYPEDEF(R)
      * @param rgb  Final color will be written back here.
      * @param applyTexGamma  @c true= the texture gamma ramp should be applied.
      */
-    void (*GetColorPaletteRGBubv)(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
+    void (*GetColorPaletteRGBubv)(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], dd_bool applyTexGamma);
 
     int (*TextureUniqueId)(Uri const *uri); /*quiet=false*/
-    int (*TextureUniqueId2)(Uri const *uri, boolean quiet);
+    int (*TextureUniqueId2)(Uri const *uri, dd_bool quiet);
 }
 DENG_API_T(R);
 

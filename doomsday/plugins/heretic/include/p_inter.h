@@ -25,7 +25,7 @@
 #endif
 
 #include "doomdef.h"
-#include "p_player.h"
+#include "player.h"
 
 DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
 DENG_EXTERN_C int clipAmmo[NUM_AMMO_TYPES];
@@ -37,7 +37,7 @@ extern "C" {
 /**
  * @return  @c true if power accepted.
  */
-boolean P_GivePower(player_t *player, powertype_t powerType);
+dd_bool P_GivePower(player_t *player, powertype_t powerType);
 
 /**
  * @param player     Player to relieve of the power.
@@ -45,7 +45,7 @@ boolean P_GivePower(player_t *player, powertype_t powerType);
  *
  * @return  @c true iff the power was taken.
  */
-boolean P_TakePower(player_t *player, powertype_t powerType);
+dd_bool P_TakePower(player_t *player, powertype_t powerType);
 
 /**
  * @param player     Player to toggle a power for.
@@ -53,7 +53,7 @@ boolean P_TakePower(player_t *player, powertype_t powerType);
  *
  * @return  @c true iff the power was toggled.
  */
-boolean P_TogglePower(player_t *player, powertype_t powerType);
+dd_bool P_TogglePower(player_t *player, powertype_t powerType);
 
 /**
  * Give key(s) to the specified player. If a key is successfully given a short
@@ -66,7 +66,7 @@ boolean P_TogglePower(player_t *player, powertype_t powerType);
  *
  * @return  @c true iff at least one new key was given (not already owned).
  */
-boolean P_GiveKey(player_t *player, keytype_t keyType);
+dd_bool P_GiveKey(player_t *player, keytype_t keyType);
 
 /**
  * Give ammo(s) to the specified player. If a ammo is successfully given the
@@ -88,7 +88,7 @@ boolean P_GiveKey(player_t *player, keytype_t keyType);
  *
  * @return  @c true iff at least one new round was given (not already owned).
  */
-boolean P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
+dd_bool P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
 
 /**
  * @param player    Player to receive the health.
@@ -96,7 +96,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
  *
  * @return  @c true iff at least some of the health was given.
  */
-boolean P_GiveHealth(player_t *player, int amount);
+dd_bool P_GiveHealth(player_t *player, int amount);
 
 /**
  * @param player    Player to receive the backpack.
@@ -106,19 +106,19 @@ void P_GiveBackpack(player_t *player);
 /**
  * @return  @c true if the weapon or its ammo was accepted.
  */
-boolean P_GiveWeapon(player_t *player, weapontype_t weaponType);
+dd_bool P_GiveWeapon(player_t *player, weapontype_t weaponType);
 
 /**
  * @return  @c true iff the armor was given.
  */
-boolean P_GiveArmor(player_t *player, int armorType, int armorPoints);
+dd_bool P_GiveArmor(player_t *player, int armorType, int armorPoints);
 
 void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
 
 /**
  * @return  @c true, if the player is morphed.
  */
-boolean P_MorphPlayer(player_t *player);
+dd_bool P_MorphPlayer(player_t *player);
 
 /**
  * Damages both enemies and players.
@@ -131,8 +131,8 @@ boolean P_MorphPlayer(player_t *player);
  *
  * @return  Actual amount of damage done.
  */
-int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP, boolean stomping, boolean skipNetworkCheck);
-int P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP, boolean stomping/*, boolean skipNetworkCheck = false*/);
+int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP, dd_bool stomping, dd_bool skipNetworkCheck);
+int P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP, dd_bool stomping/*, dd_bool skipNetworkCheck = false*/);
 
 #ifdef __cplusplus
 } // extern "C"

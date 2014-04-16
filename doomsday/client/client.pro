@@ -33,10 +33,10 @@ win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
+include(../dep_deng1.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
-include(../dep_deng1.pri)
-include(../dep_rift.pri)
+include(../dep_appfw.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -111,7 +111,6 @@ DENG_API_HEADERS = \
 # Convenience headers.
 DENG_CONVENIENCE_HEADERS += \
     include/AbstractFont \
-    include/AtlasProceduralImage \
     include/BiasDigest \
     include/BiasIllum \
     include/BiasSource \
@@ -122,25 +121,19 @@ DENG_CONVENIENCE_HEADERS += \
     include/BspNode \
     include/CommandAction \
     include/CompositeBitmapFont \
-    include/ChildWidgetOrganizer \
     include/Contact \
     include/ContactSpreader \
     include/Decoration \
-    include/DialogContentStylist \
     include/DrawList \
     include/DrawLists \
     include/EntityDatabase \
     include/Face \
-    include/FontLineWrapping \
     include/FontManifest \
     include/FontScheme \
     include/Game \
     include/Games \
-    include/GLTextComposer \
+    include/Generator \
     include/Grabbable \
-    include/GridLayout \
-    include/GuiRootWidget \
-    include/GuiWidget \
     include/Hand \
     include/HEdge \
     include/HueCircle \
@@ -164,29 +157,17 @@ DENG_CONVENIENCE_HEADERS += \
     include/ModelDef \
     include/Plane \
     include/Polyobj \
-    include/ProceduralImage \
     include/Sector \
-    include/SequentialLayout \
     include/SettingsRegister \
-    include/SignalAction \
     include/SkyFixEdge \
     include/Sprite \
     include/Surface \
     include/SurfaceDecorator \
-    include/TextDrawable \
     include/Texture \
     include/TextureManifest \
     include/TextureScheme \
     include/TextureVariantSpec \
-    include/TriangleStripBuilder \    
-    include/ui/Data \
-    include/ui/Item \
-    include/ui/ListData \
-    include/ui/Margins \
-    include/ui/Stylist \
-    include/ui/SubmenuItem \
-    include/ui/SubwidgetItem \
-    include/ui/VariableToggleItem \
+    include/TriangleStripBuilder \
     include/Vertex \
     include/WallEdge \
     include/WallSpec \
@@ -195,6 +176,7 @@ DENG_CONVENIENCE_HEADERS += \
 # Private headers.
 DENG_HEADERS += \
     $$DENG_CONVENIENCE_HEADERS \
+    include/alertmask.h \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \
@@ -215,6 +197,9 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
+    include/client/clmobjhash.h \
+    include/client/clplanemover.h \
+    include/client/clpolymover.h \
     include/clientapp.h \
     include/color.h \
     include/con_bar.h \
@@ -288,7 +273,6 @@ DENG_HEADERS += \
     include/network/protocol.h \
     include/network/serverlink.h \
     include/network/sys_network.h \
-    include/network/ui_mpi.h \
     include/partition.h \
     include/r_util.h \
     include/render/biasdigest.h \
@@ -303,6 +287,7 @@ DENG_HEADERS += \
     include/render/decoration.h \
     include/render/drawlist.h \
     include/render/drawlists.h \
+    include/render/fx/bloom.h \
     include/render/fx/colorfilter.h \
     include/render/fx/lensflares.h \
     include/render/fx/postprocessing.h \
@@ -381,97 +366,60 @@ DENG_HEADERS += \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
+    include/ui/clientrootwidget.h \
     include/ui/clientwindow.h \
+    include/ui/clientwindowsystem.h \
+    include/ui/commandaction.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/dialogs/aboutdialog.h \
+    include/ui/dialogs/alertdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
     include/ui/dialogs/coloradjustmentdialog.h \
-    include/ui/dialogs/inputdialog.h \
+    include/ui/dialogs/gamesdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
-    include/ui/dialogs/messagedialog.h \
+    include/ui/dialogs/logsettingsdialog.h \
+    include/ui/dialogs/manualconnectiondialog.h \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
+    include/ui/widgetactions.h \
+    include/ui/widgets/busywidget.h \
+    include/ui/widgets/consolecommandwidget.h \
+    include/ui/widgets/consolewidget.h \
+    include/ui/widgets/cvarchoicewidget.h \
+    include/ui/widgets/cvarlineeditwidget.h \
+    include/ui/widgets/cvarsliderwidget.h \
+    include/ui/widgets/cvartogglewidget.h \
+    include/ui/widgets/gamefilterwidget.h \
+    include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/gamesessionwidget.h \
+    include/ui/widgets/gameuiwidget.h \
+    include/ui/widgets/gamewidget.h \
+    include/ui/widgets/icvarwidget.h \
+    include/ui/widgets/inputbindingwidget.h \
+    include/ui/widgets/keygrabberwidget.h \
+    include/ui/widgets/mpsessionmenuwidget.h \
+    include/ui/widgets/multiplayermenuwidget.h \
+    include/ui/widgets/profilepickerwidget.h \
+    include/ui/widgets/savedsessionmenuwidget.h \
+    include/ui/widgets/sessionmenuwidget.h \
+    include/ui/widgets/singleplayersessionmenuwidget.h \
+    include/ui/widgets/taskbarwidget.h \
+    include/ui/widgets/tutorialwidget.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
-    include/ui/framework/actionitem.h \
-    include/ui/framework/atlasproceduralimage.h \
-    include/ui/framework/commandaction.h \
-    include/ui/framework/childwidgetorganizer.h \
-    include/ui/framework/data.h \
-    include/ui/framework/dialogcontentstylist.h \
-    include/ui/framework/fontlinewrapping.h \
-    include/ui/framework/gltextcomposer.h \
-    include/ui/framework/gridlayout.h \
-    include/ui/framework/guirootwidget.h \
-    include/ui/framework/guiwidget.h \
-    include/ui/framework/guiwidgetprivate.h \
-    include/ui/framework/item.h \
-    include/ui/framework/listdata.h \
-    include/ui/framework/margins.h \
-    include/ui/framework/proceduralimage.h \
-    include/ui/framework/sequentiallayout.h \
-    include/ui/framework/signalaction.h \
-    include/ui/framework/stylist.h \
-    include/ui/framework/submenuitem.h \
-    include/ui/framework/subwidgetitem.h \
-    include/ui/framework/textdrawable.h \
-    include/ui/framework/variabletoggleitem.h \
-    include/ui/framework/widgetactions.h \
     include/ui/inputsystem.h \
     include/ui/joystick.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
     include/ui/p_control.h \
-    include/ui/style.h \
     include/ui/styledlogsinkformatter.h \
     include/ui/sys_input.h \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
-    include/ui/ui_panel.h \
-    include/ui/uidefs.h \
-    include/ui/vrwindowtransform.h \
-    include/ui/widgets/blurwidget.h \
-    include/ui/widgets/busywidget.h \
-    include/ui/widgets/buttonwidget.h \
-    include/ui/widgets/choicewidget.h \
-    include/ui/widgets/commandwidget.h \
-    include/ui/widgets/compositorwidget.h \
-    include/ui/widgets/consolecommandwidget.h \
-    include/ui/widgets/consolewidget.h \
-    include/ui/widgets/cvarchoicewidget.h \
-    include/ui/widgets/cvarsliderwidget.h \
-    include/ui/widgets/cvartogglewidget.h \
-    include/ui/widgets/dialogwidget.h \
-    include/ui/widgets/documentwidget.h \
-    include/ui/widgets/foldpanelwidget.h \
-    include/ui/widgets/gameselectionwidget.h \
-    include/ui/widgets/gamewidget.h \
-    include/ui/widgets/gameuiwidget.h \
-    include/ui/widgets/gridpopupwidget.h \
-    include/ui/widgets/icvarwidget.h \
-    include/ui/widgets/keygrabberwidget.h \
-    include/ui/widgets/labelwidget.h \
-    include/ui/widgets/lineeditwidget.h \
-    include/ui/widgets/logwidget.h \
-    include/ui/widgets/menuwidget.h \
-    include/ui/widgets/notificationwidget.h \
-    include/ui/widgets/panelwidget.h \
-    include/ui/widgets/popupmenuwidget.h \
-    include/ui/widgets/popupwidget.h \
-    include/ui/widgets/profilepickerwidget.h \
-    include/ui/widgets/progresswidget.h \
-    include/ui/widgets/scriptcommandwidget.h \
-    include/ui/widgets/scrollareawidget.h \
-    include/ui/widgets/sliderwidget.h \
-    include/ui/widgets/taskbarwidget.h \
-    include/ui/widgets/togglewidget.h \
-    include/ui/widgets/variabletogglewidget.h \
-    include/ui/windowsystem.h \
-    include/ui/windowtransform.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/updater/downloaddialog.h \
@@ -497,7 +445,7 @@ DENG_HEADERS += \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
-    include/world/generators.h \
+    include/world/generator.h \
     include/world/grabbable.h \
     include/world/hand.h \
     include/world/huecircle.h \
@@ -511,7 +459,6 @@ DENG_HEADERS += \
     include/world/mapobject.h \
     include/world/maputil.h \
     include/world/p_object.h \
-    include/world/p_particle.h \
     include/world/p_players.h \
     include/world/p_ticker.h \
     include/world/plane.h \
@@ -522,7 +469,7 @@ DENG_HEADERS += \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
-    include/world/world.h
+    include/world/worldsystem.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
@@ -577,6 +524,7 @@ else:unix {
 
 # Platform-independent sources.
 SOURCES += \
+    src/alertmask.cpp \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.cpp \
@@ -597,6 +545,9 @@ SOURCES += \
     src/client/cl_player.cpp \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
+    src/client/clmobjhash.cpp \
+    src/client/clplanemover.cpp \
+    src/client/clpolymover.cpp \
     src/clientapp.cpp \
     src/color.cpp \
     src/con_bar.cpp \
@@ -656,7 +607,6 @@ SOURCES += \
     src/network/net_ping.cpp \
     src/network/serverlink.cpp \
     src/network/sys_network.cpp \
-    src/network/ui_mpi.cpp \
     src/r_util.cpp \
     src/render/api_render.cpp \
     src/render/biasdigest.cpp \
@@ -671,6 +621,7 @@ SOURCES += \
     src/render/decoration.cpp \
     src/render/drawlist.cpp \
     src/render/drawlists.cpp \
+    src/render/fx/bloom.cpp \
     src/render/fx/colorfilter.cpp \
     src/render/fx/lensflares.cpp \
     src/render/fx/postprocessing.cpp \
@@ -747,14 +698,19 @@ SOURCES += \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
+    src/ui/clientrootwidget.cpp \
     src/ui/clientwindow.cpp \
+    src/ui/clientwindowsystem.cpp \
+    src/ui/commandaction.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
+    src/ui/dialogs/alertdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
     src/ui/dialogs/coloradjustmentdialog.cpp \
-    src/ui/dialogs/inputdialog.cpp \
+    src/ui/dialogs/gamesdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
-    src/ui/dialogs/messagedialog.cpp \
+    src/ui/dialogs/logsettingsdialog.cpp \
+    src/ui/dialogs/manualconnectiondialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/dialogs/vrsettingsdialog.cpp \
@@ -762,71 +718,37 @@ SOURCES += \
     src/ui/editors/rendererappearanceeditor.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
-    src/ui/framework/commandaction.cpp \
-    src/ui/framework/childwidgetorganizer.cpp \
-    src/ui/framework/data.cpp \
-    src/ui/framework/dialogcontentstylist.cpp \
-    src/ui/framework/fontlinewrapping.cpp \
-    src/ui/framework/gltextcomposer.cpp \
-    src/ui/framework/gridlayout.cpp \
-    src/ui/framework/guirootwidget.cpp \
-    src/ui/framework/guiwidget.cpp \
-    src/ui/framework/item.cpp \
-    src/ui/framework/listdata.cpp \
-    src/ui/framework/margins.cpp \
-    src/ui/framework/proceduralimage.cpp \
-    src/ui/framework/sequentiallayout.cpp \
-    src/ui/framework/signalaction.cpp \
-    src/ui/framework/textdrawable.cpp \
-    src/ui/framework/widgetactions.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
-    src/ui/style.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
-    src/ui/ui_panel.cpp \
-    src/ui/vrwindowtransform.cpp \
-    src/ui/widgets/blurwidget.cpp \
+    src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
-    src/ui/widgets/buttonwidget.cpp \
-    src/ui/widgets/choicewidget.cpp \
-    src/ui/widgets/commandwidget.cpp \
-    src/ui/widgets/compositorwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \
+    src/ui/widgets/cvarlineeditwidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
-    src/ui/widgets/dialogwidget.cpp \
-    src/ui/widgets/documentwidget.cpp \
-    src/ui/widgets/foldpanelwidget.cpp \
+    src/ui/widgets/gamefilterwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/gamesessionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
-    src/ui/widgets/gridpopupwidget.cpp \
+    src/ui/widgets/inputbindingwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
-    src/ui/widgets/labelwidget.cpp \
-    src/ui/widgets/lineeditwidget.cpp \
-    src/ui/widgets/logwidget.cpp \
-    src/ui/widgets/menuwidget.cpp \
-    src/ui/widgets/notificationwidget.cpp \
-    src/ui/widgets/panelwidget.cpp \
-    src/ui/widgets/popupmenuwidget.cpp \
-    src/ui/widgets/popupwidget.cpp \
+    src/ui/widgets/multiplayermenuwidget.cpp \
+    src/ui/widgets/mpsessionmenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
-    src/ui/widgets/progresswidget.cpp \
-    src/ui/widgets/scriptcommandwidget.cpp \
-    src/ui/widgets/scrollareawidget.cpp \
-    src/ui/widgets/sliderwidget.cpp \
+    src/ui/widgets/savedsessionmenuwidget.cpp \
+    src/ui/widgets/sessionmenuwidget.cpp \
+    src/ui/widgets/singleplayersessionmenuwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
-    src/ui/widgets/togglewidget.cpp \
-    src/ui/widgets/variabletogglewidget.cpp \
-    src/ui/windowsystem.cpp \
-    src/ui/windowtransform.cpp \
+    src/ui/widgets/tutorialwidget.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \
@@ -850,7 +772,7 @@ SOURCES += \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \
-    src/world/generators.cpp \
+    src/world/generator.cpp \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
     src/world/huecircle.cpp \
@@ -863,7 +785,6 @@ SOURCES += \
     src/world/mapobject.cpp \
     src/world/maputil.cpp \
     src/world/p_mobj.cpp \
-    src/world/p_particle.cpp \
     src/world/p_players.cpp \
     src/world/p_ticker.cpp \
     src/world/plane.cpp \
@@ -875,7 +796,7 @@ SOURCES += \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \
-    src/world/world.cpp
+    src/world/worldsystem.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h
@@ -884,7 +805,8 @@ SOURCES += \
 
 DOOMSDAY_SCRIPTS += \
     modules/appconfig.de \
-    modules/bootstrap.de
+    modules/bootstrap.de \
+    modules/Updater.de
 
 OTHER_FILES += \
     $$DOOMSDAY_SCRIPTS \
@@ -901,8 +823,9 @@ data.files = $$OUT_PWD/../doomsday.pk3
 mod.files = \
     $$DOOMSDAY_SCRIPTS \
     $$DENG_MODULES_DIR/Config.de \
-    $$DENG_MODULES_DIR/gui.de \
-    $$DENG_MODULES_DIR/recutil.de
+    $$DENG_MODULES_DIR/Log.de \
+    $$DENG_MODULES_DIR/recutil.de \
+    $$DENG_MODULES_DIR/../../libgui/modules/gui.de
 
 # These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \

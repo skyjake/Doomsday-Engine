@@ -42,7 +42,7 @@
 typedef struct pos_s {
     coord_t xyz[3];
     float time;
-    boolean onFloor;    // Special Z handling: should be on the floor.
+    dd_bool onFloor;    // Special Z handling: should be on the floor.
 } pos_t;
 
 /** Points from the future. */
@@ -89,7 +89,7 @@ void Smoother_Debug(Smoother const *sm)
             << sm->past.time << sm->now.time << sm->points[0].time << sm->at;
 }
 
-static boolean Smoother_IsValid(Smoother const *sm)
+static dd_bool Smoother_IsValid(Smoother const *sm)
 {
     DENG_ASSERT(sm);
     if(sm->past.time == 0 || sm->now.time == 0)
@@ -116,7 +116,7 @@ void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t y)
     Smoother_AddPos(sm, time, x, y, 0, false);
 }
 
-void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor)
+void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, dd_bool onFloor)
 {
     pos_t *last;
     DENG_ASSERT(sm);
@@ -185,7 +185,7 @@ replaceLastPoint:
     }
 }
 
-boolean Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v)
+dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v)
 {
     coord_t xyz[3];
 
@@ -198,7 +198,7 @@ boolean Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v
     return true;
 }
 
-boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
+dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
 {
     const pos_t *past;
     const pos_t *now;
@@ -210,12 +210,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
     now = &sm->now;
 
     if(!Smoother_IsValid(sm))
-    {
-/*#ifdef _DEBUG
-        Con_Message("Smoother_Evaluate: sm=%p not valid!", sm);
-#endif*/
         return false;
-    }
 
     if(sm->at < past->time)
     {
@@ -223,11 +218,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VX] = past->xyz[VX];
         xyz[VY] = past->xyz[VY];
         xyz[VZ] = past->xyz[VZ];
-/*#if _DEBUG
-        Con_Message("Smoother_Evaluate: falling behind");
-        ((Smoother *)sm)->prevEval[0] = xyz[0];
-        ((Smoother *)sm)->prevEval[1] = xyz[1];
-#endif*/
+        LOGDEV_XVERBOSE("Smoother %p falling behind") << sm;
         return true;
     }
     //DENG_ASSERT(sm->at <= now->time);
@@ -237,11 +228,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VX] = now->xyz[VX];
         xyz[VY] = now->xyz[VY];
         xyz[VZ] = now->xyz[VZ];
-/*#if _DEBUG
-        Con_Message("Smoother_Evaluate: stalling");
-        ((Smoother *)sm)->prevEval[0] = xyz[0];
-        ((Smoother *)sm)->prevEval[1] = xyz[1];
-#endif*/
+        LOGDEV_XVERBOSE("Smoother %p stalling") << sm;
         return true;
     }
 
@@ -260,7 +247,8 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         if(dt > 0)
         {
             float diff[2] = { xyz[0] - sm->prevEval[0], xyz[1] - sm->prevEval[1] };
-            Con_Message("Smoother_Evaluate: [%05.3f] diff = %+06.3f  %+06.3f", dt, diff[0]/dt, diff[1]/dt);
+            LOGDEV_MSG("Smoother_Evaluate: [%05.3f] diff = %06.3f  %06.3f")
+                << dt << diff[0]/dt << diff[1]/dt;
             ((Smoother *)sm)->prevEval[0] = xyz[0];
             ((Smoother *)sm)->prevEval[1] = xyz[1];
         }
@@ -270,7 +258,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
     return true;
 }
 
-boolean Smoother_IsOnFloor(Smoother const *sm)
+dd_bool Smoother_IsOnFloor(Smoother const *sm)
 {
     DENG_ASSERT(sm);
 
@@ -281,7 +269,7 @@ boolean Smoother_IsOnFloor(Smoother const *sm)
     return (past->onFloor && now->onFloor);
 }
 
-boolean Smoother_IsMoving(Smoother const *sm)
+dd_bool Smoother_IsMoving(Smoother const *sm)
 {
     DENG_ASSERT(sm);
 

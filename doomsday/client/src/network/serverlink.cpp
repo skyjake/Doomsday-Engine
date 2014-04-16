@@ -18,14 +18,18 @@
 
 #include "de_platform.h"
 #include "network/serverlink.h"
-
+#include "network/masterserver.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_demo.h"
+#include "network/net_event.h"
 #include "network/protocol.h"
 #include "client/cl_def.h"
 #include "dd_def.h"
+
+#include <QTimer>
 #include <de/memory.h>
+#include <de/GuiApp>
 #include <de/Socket>
 #include <de/Message>
 #include <de/ByteRefArray>
@@ -45,19 +49,25 @@ enum LinkState
 };
 
 DENG2_PIMPL(ServerLink)
+, DENG2_OBSERVES(Loop, Iteration)
 {
     shell::ServerFinder finder; ///< Finding local servers.
     LinkState state;
+    bool fetching;
     typedef QMap<Address, serverinfo_t> Servers;
     Servers discovered;
+    Servers fromMaster;
 
     Instance(Public *i)
-        : Base(i),
-          state(None)
+        : Base(i)
+        , state(None)
+        , fetching(false)
     {}
 
     ~Instance()
-    {}
+    {
+        Loop::appLoop().audienceForIteration() -= this;
+    }
 
     void notifyDiscoveryUpdate()
     {
@@ -96,14 +106,14 @@ DENG2_PIMPL(ServerLink)
             do
             {
                 ch = Str_GetLine(line, ch);
-                Net_StringToServerInfo(Str_Text(line), &svInfo);
+                ServerInfo_FromString(&svInfo, Str_Text(line));
             }
             while(*ch);
 
             Str_Delete(line);
             Str_Delete(response);
 
-            LOG_DEBUG("Discovered server at ") << svAddress;
+            LOG_NET_VERBOSE("Discovered server at ") << svAddress;
 
             // Update with the correct address.
             strncpy(svInfo.address, svAddress.host().toString().toLatin1(),
@@ -112,18 +122,18 @@ DENG2_PIMPL(ServerLink)
             discovered.insert(svAddress, svInfo);
 
             // Show the information in the console.
-            LOG_INFO("%i server%s been found")
+            LOG_NET_NOTE("%i server%s been found")
                     << discovered.size()
                     << (discovered.size() != 1 ? "s have" : " has");
 
-            Net_PrintServerInfo(0, NULL);
-            Net_PrintServerInfo(0, &svInfo);
+            ServerInfo_Print(NULL, 0);
+            ServerInfo_Print(&svInfo, 0);
 
             notifyDiscoveryUpdate();
         }
         else
         {
-            LOG_WARNING("Reply from %s was invalid") << svAddress;
+            LOG_NET_WARNING("Reply from %s was invalid") << svAddress;
         }
 
         return false;
@@ -137,7 +147,8 @@ DENG2_PIMPL(ServerLink)
     {
         if(reply.size() < 5 || reply != "Enter")
         {
-            LOG_WARNING("Server refused connection (received %i bytes instead of \"Enter\")")
+            LOG_NET_WARNING("Server refused connection");
+            LOGDEV_NET_WARNING("Received %i bytes instead of \"Enter\")")
                     << reply.size();
             self.disconnect();
             return false;
@@ -156,6 +167,8 @@ DENG2_PIMPL(ServerLink)
         // Call game's NetConnect.
         gx.NetConnect(false);
 
+        DENG2_FOR_PUBLIC_AUDIENCE(Join, i) i->networkGameJoined();
+
         // G'day mate!  The client is responsible for beginning the
         // handshake.
         Cl_SendHello();
@@ -163,21 +176,70 @@ DENG2_PIMPL(ServerLink)
         return true;
     }
 
-    Servers allFound() const
+    void fetchFromMaster()
     {
-        Servers all = discovered;
+        if(fetching) return;
 
-        // Append the ones from the server finder.
-        foreach(Address sv, finder.foundServers())
+        fetching = true;
+        N_MAPost(MAC_REQUEST);
+        N_MAPost(MAC_WAIT);
+        Loop::appLoop().audienceForIteration() += this;
+    }
+
+    void loopIteration()
+    {
+        DENG2_ASSERT(fetching);
+
+        if(N_MADone())
         {
-            serverinfo_t info;
-            Net_RecordToServerInfo(finder.messageFromServer(sv), &info);
+            fetching = false;
+            Loop::appLoop().audienceForIteration() -= this;
 
-            // Update the address in the info, which is missing because this
-            // information didn't come from the master.
-            strncpy(info.address, sv.host().toString().toLatin1(), sizeof(info.address) - 1);
+            fromMaster.clear();
+            int const count = N_MasterGet(0, 0);
+            for(int i = 0; i < count; i++)
+            {
+                serverinfo_t info;
+                N_MasterGet(i, &info);
+                fromMaster.insert(Address::parse(info.address, info.port), info);
+            }
 
-            all.insert(sv, info);
+            notifyDiscoveryUpdate();
+        }
+    }
+
+    Servers allFound(FoundMask const &mask) const
+    {
+        Servers all;
+
+        if(mask.testFlag(Direct))
+        {
+            all = discovered;
+        }
+
+        if(mask.testFlag(MasterServer))
+        {
+            // Append from master (if available).
+            DENG2_FOR_EACH_CONST(Servers, i, fromMaster)
+            {
+                all.insert(i.key(), i.value());
+            }
+        }
+
+        if(mask.testFlag(LocalNetwork))
+        {
+            // Append the ones from the server finder.
+            foreach(Address const &sv, finder.foundServers())
+            {
+                serverinfo_t info;
+                ServerInfo_FromRecord(&info, finder.messageFromServer(sv));
+
+                // Update the address in the info, which is missing because this
+                // information didn't come from the master.
+                strncpy(info.address, sv.host().toString().toLatin1(), sizeof(info.address) - 1);
+
+                all.insert(sv, info);
+            }
         }
 
         return all;
@@ -218,7 +280,7 @@ void ServerLink::linkDisconnected()
     LOG_AS("ServerLink");
     if(d->state != None)
     {
-        LOG_INFO("Connection to server was disconnected");
+        LOG_NET_NOTE("Connection to server was disconnected");
 
         // Update our state and notify the game.
         disconnect();
@@ -239,7 +301,9 @@ void ServerLink::disconnect()
         if(gx.NetDisconnect)
             gx.NetDisconnect(true);
 
-        LOG_INFO("Link to server %s disconnected") << address();
+        DENG2_FOR_AUDIENCE(Leave, i) i->networkGameLeft();
+
+        LOG_NET_NOTE("Link to server %s disconnected") << address();
 
         AbstractLink::disconnect();
 
@@ -253,7 +317,7 @@ void ServerLink::disconnect()
     {
         d->state = None;
 
-        LOG_INFO("Connection attempts aborted");
+        LOG_NET_NOTE("Connection attempts aborted");
         AbstractLink::disconnect();
     }
 }
@@ -266,33 +330,44 @@ void ServerLink::discover(String const &domain)
     d->state = Discovering;
 }
 
+void ServerLink::discoverUsingMaster()
+{
+    d->fetchFromMaster();
+}
+
 bool ServerLink::isDiscovering() const
 {
-    return (d->state == Discovering || d->state == WaitingForInfoResponse);
+    return (d->state == Discovering || d->state == WaitingForInfoResponse ||
+            d->fetching);
 }
 
-int ServerLink::foundServerCount() const
+int ServerLink::foundServerCount(FoundMask mask) const
 {
-    return d->allFound().size();
+    return d->allFound(mask).size();
 }
 
-QList<Address> ServerLink::foundServers() const
+QList<Address> ServerLink::foundServers(FoundMask mask) const
 {
-    return d->allFound().keys();
+    return d->allFound(mask).keys();
 }
 
-bool ServerLink::foundServerInfo(int index, serverinfo_t *info) const
+bool ServerLink::isFound(Address const &host, FoundMask mask) const
 {
-    Instance::Servers all = d->allFound();
+    return d->allFound(mask).contains(host);
+}
+
+bool ServerLink::foundServerInfo(int index, serverinfo_t *info, FoundMask mask) const
+{
+    Instance::Servers all = d->allFound(mask);
     QList<Address> listed = all.keys();
     if(index < 0 || index >= listed.size()) return false;
     memcpy(info, &all[listed[index]], sizeof(*info));
     return true;
 }
 
-bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info) const
+bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info, FoundMask mask) const
 {
-    Instance::Servers all = d->allFound();
+    Instance::Servers all = d->allFound(mask);
     if(!all.contains(host)) return false;
     memcpy(info, &all[host], sizeof(*info));
     return true;
@@ -315,6 +390,7 @@ void ServerLink::initiateCommunications()
     else if(d->state == Joining)
     {
         Demo_StopPlayback();
+        BusyMode_FreezeGameForBusyMode();
 
         // Tell the Game that a connection is about to happen.
         // The counterpart (false) call will occur after joining is successfully done.

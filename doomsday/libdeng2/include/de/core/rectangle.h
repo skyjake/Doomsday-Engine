@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_RECTANGLE_H
@@ -115,9 +115,12 @@ public:
     RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
         return RectangleType(topLeft + tl, bottomRight + br);
     }
+    Rectangle<Vector2i, Vector2ui> toRectanglei() const {
+        return Rectangle<Vector2i, Vector2ui>(topLeft.toVector2i(), bottomRight.toVector2i());
+    }
     Rectangle<Vector2ui, Vector2ui> toRectangleui() const {
-        Vector2ui tl(duint(de::max(0, topLeft.x)),     duint(de::max(0, topLeft.y)));
-        Vector2ui br(duint(de::max(0, bottomRight.x)), duint(de::max(0, bottomRight.y)));
+        Vector2ui tl(duint(de::max(Type(0), topLeft.x)),     duint(de::max(Type(0), topLeft.y)));
+        Vector2ui br(duint(de::max(Type(0), bottomRight.x)), duint(de::max(Type(0), bottomRight.y)));
         return Rectangle<Vector2ui, Vector2ui>(tl, br);
     }
     bool contains(Corner const &point) const {
@@ -141,14 +144,19 @@ public:
         bottomRight = bottomRight.max(other.bottomRight);
         return *this;
     }
+    inline bool overlaps(RectangleType const &other) const {
+        return !(other.topLeft.x >= bottomRight.x ||
+                 other.topLeft.y >= bottomRight.y ||
+                 other.bottomRight.x <= topLeft.x ||
+                 other.bottomRight.y <= topLeft.y);
+    }
     RectangleType operator & (RectangleType const &other) const {
-        if(other.topLeft.x >= bottomRight.x ||
-           other.topLeft.y >= bottomRight.y ||
-           other.bottomRight.x <= topLeft.x ||
-           other.bottomRight.y <= topLeft.y) return RectangleType(); // disconnected
-
+        if(!overlaps(other)) return RectangleType(); // disconnected
         return RectangleType(topLeft.max(other.topLeft),
                              bottomRight.min(other.bottomRight));
+    }
+    RectangleType &operator &= (RectangleType const &other) {
+        return (*this = *this & other);
     }
     String asText() const {
         return "[" + topLeft.asText() + "->" + bottomRight.asText() +
@@ -178,6 +186,9 @@ public:
     }
     Corner middle() const {
         return Corner((topLeft.x + bottomRight.x)/2.0, (topLeft.y + bottomRight.y)/2.0);
+    }
+    Vector4<Type> xywh() const {
+        return Vector4<Type>(topLeft.x, topLeft.y, Type(width()), Type(height()));
     }
 
 public:

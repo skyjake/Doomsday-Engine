@@ -102,7 +102,7 @@ struct LumpIndex::Instance
 
         flags &= ~LIF_NEED_REBUILD_HASH;
 
-        LOG_DEBUG("Rebuilt hashMap for LumpIndex %p.") << self;
+        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << self;
     }
 
     /**
@@ -431,21 +431,22 @@ void LumpIndex::print(LumpIndex const& index)
     int const numRecords = index.size();
     int const numIndexDigits = MAX_OF(3, M_NumDigits(numRecords));
 
-    Con_Printf("LumpIndex %p (%i records):\n", &index, numRecords);
+    LOG_RES_MSG("LumpIndex %p (%i records):") << &index << numRecords;
 
     int idx = 0;
     DENG2_FOR_EACH_CONST(Lumps, i, index.lumps())
     {
         File1 const& lump = **i;
-        QByteArray containerPath = de::NativePath(lump.container().composePath()).pretty().toUtf8();
-        QByteArray lumpPath = de::NativePath(lump.composePath()).pretty().toUtf8();
-        Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
-                   containerPath.constData(),
-                   lumpPath.constData(),
-                   (unsigned long) lump.info().size,
-                   (lump.info().isCompressed()? " compressed" : ""));
+        String containerPath = NativePath(lump.container().composePath()).pretty();
+        String lumpPath = NativePath(lump.composePath()).pretty();
+        LOG_RES_MSG(QString("%1 - \"%2:%3\" (size: %4 bytes%5)")
+                    .arg(idx++, numIndexDigits, 10, QChar('0'))
+                    .arg(containerPath)
+                    .arg(lumpPath)
+                    .arg(lump.info().size)
+                    .arg(lump.info().isCompressed()? " compressed" : ""));
     }
-    Con_Printf("---End of lumps---\n");
+    LOG_RES_MSG("---End of lumps---");
 }
 
 } // namespace de

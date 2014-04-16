@@ -41,18 +41,15 @@ DENG2_PIMPL(GameUIWidget)
     {
         if(App_GameLoaded())
         {
-            R_RenderViewPorts(ui::HUDLayer);
+            R_RenderViewPorts(HUDLayer);
 
-            if(!(UI_IsActive() && UI_Alpha() >= 1.0))
+            UI2_Drawer();
+
+            // Draw any full window game graphics.
+            if(gx.DrawWindow)
             {
-                UI2_Drawer();
-
-                // Draw any full window game graphics.
-                if(gx.DrawWindow)
-                {
-                    Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-                    gx.DrawWindow(&dimensions);
-                }
+                Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
+                gx.DrawWindow(&dimensions);
             }
         }
 
@@ -62,18 +59,12 @@ DENG2_PIMPL(GameUIWidget)
         /*
          * Draw debug information.
          */
-        if(App_World().hasMap() && App_World().map().hasLightGrid())
+        if(App_WorldSystem().hasMap() && App_WorldSystem().map().hasLightGrid())
         {
-            App_World().map().lightGrid().drawDebugVisual();
+            App_WorldSystem().map().lightGrid().drawDebugVisual();
         }
         Net_Drawer();
         S_Drawer();
-
-        if(UI_IsActive())
-        {
-            // Draw user interface.
-            UI_Drawer();
-        }
 
         DGL_End();
     }

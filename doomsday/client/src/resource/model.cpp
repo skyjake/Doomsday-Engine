@@ -669,7 +669,7 @@ Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
                 rtypeGuess = &rtype;
                 if(Model *mdl = rtype.loadFunc(hndl, aspectScale))
                 {
-                    LOG_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model.");
+                    LOG_RES_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model");
                     return mdl;
                 }
                 break;
@@ -687,7 +687,7 @@ Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
 
         if(Model *mdl = rtype.loadFunc(hndl, aspectScale))
         {
-            LOG_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model.");
+            LOG_RES_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model");
             return mdl;
         }
     }

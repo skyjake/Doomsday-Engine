@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_world.h  Clientside world management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,58 +17,44 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * cl_world.h: Clientside World Management
- */
+#ifndef DENG_CLIENT_WORLD_MAP_H
+#define DENG_CLIENT_WORLD_MAP_H
 
-#ifndef __DOOMSDAY_CLIENT_WORLD_H__
-#define __DOOMSDAY_CLIENT_WORLD_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Clears the arrays that track active plane and polyobj mover thinkers.
- */
-void Cl_WorldInit(void);
-
-/**
- * Removes all the active movers.
- */
-void Cl_WorldReset(void);
+void Cl_InitTransTables();
+void Cl_ResetTransTables();
 
 /**
  * Handles the PSV_MATERIAL_ARCHIVE packet sent by the server. The list of
  * materials is stored until the client disconnects.
  */
-void Cl_ReadServerMaterials(void);
+void Cl_ReadServerMaterials();
 
 /**
  * Handles the PSV_MOBJ_TYPE_ID_LIST packet sent by the server.
  */
-void Cl_ReadServerMobjTypeIDs(void);
+void Cl_ReadServerMobjTypeIDs();
 
 /**
  * Handles the PSV_MOBJ_STATE_ID_LIST packet sent by the server.
  */
-void Cl_ReadServerMobjStateIDs(void);
+void Cl_ReadServerMobjStateIDs();
 
 int Cl_LocalMobjType(int serverMobjType);
 int Cl_LocalMobjState(int serverMobjState);
 
-void Cl_SetPolyMover(uint number, int move, int rotate);
+/**
+ * Reads a sector delta from the PSV_FRAME2 message buffer and applies it to the world.
+ */
+void Cl_ReadSectorDelta(int deltaType);
 
-void Cl_ReadSectorDelta2(int deltaType, boolean skip);
-void Cl_ReadSideDelta2(int deltaType, boolean skip);
-void Cl_ReadPolyDelta2(boolean skip);
+/**
+ * Reads a side delta from the message buffer and applies it to the world.
+ */
+void Cl_ReadSideDelta(int deltaType);
 
-int Cl_ReadSectorDelta(void); // obsolete
-int Cl_ReadSideDelta(void); // obsolete
-int Cl_ReadPolyDelta(void); // obsolete
+/**
+ * Reads a poly delta from the message buffer and applies it to the world.
+ */
+void Cl_ReadPolyDelta();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif
+#endif // DENG_CLIENT_WORLD_MAP_H

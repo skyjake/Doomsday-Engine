@@ -1,4 +1,4 @@
-/** @file m_misc.cpp
+/** @file m_misc.cpp  Miscellanous utility routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,11 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Miscellanous Routines.
- */
-
-// HEADER FILES ------------------------------------------------------------
+#define DENG_NO_API_MACROS_FILESYS
 
 #include "de_platform.h"
 
@@ -45,10 +41,6 @@
 #  define O_BINARY 0
 #endif
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -59,10 +51,13 @@
 
 #include "lzss.h"
 
+#include <de/str.h>
+#include <cstdlib>
+#include <cctype>
+#include <cmath>
+
 #undef M_WriteFile
 #undef M_ReadFile
-
-// MACROS ------------------------------------------------------------------
 
 #define SLOPERANGE      2048
 #define SLOPEBITS       11
@@ -74,31 +69,15 @@
 #define write _write
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static size_t FileReader(char const* name, char** buffer);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
 extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void M_ReadLine(char* buffer, size_t len, FileHandle* file)
 {
     size_t p;
     char ch;
-    boolean isDone;
+    dd_bool isDone;
 
     memset(buffer, 0, len);
     p = 0;
@@ -262,7 +241,7 @@ int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const l
 #undef NORMALIZE
 }
 
-DENG_EXTERN_C boolean M_WriteFile(const char* name, const char* source, size_t length)
+DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t length)
 {
     int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     size_t count;
@@ -284,12 +263,56 @@ DENG_EXTERN_C size_t M_ReadFile(const char* name, char** buffer)
     return FileReader(name, buffer);
 }
 
+DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
+{
+    if(isCustom) *isCustom = false;
+
+    if(Str_StartsWith(path, "Lumps:"))
+    {
+        lumpnum_t lumpNum = W_CheckLumpNumForName(Str_Text(path) + 6);
+        if(lumpNum < 0) return 0;
+
+        if(isCustom) *isCustom = W_LumpIsCustom(lumpNum);
+
+        // Ignore zero-length lumps.
+        size_t lumpLen = W_LumpLength(lumpNum);
+        if(!lumpLen) return 0;
+
+        // Ensure the resulting string is terminated.
+        AutoStr *string = Str_PartAppend(AutoStr_New(), (char *)W_CacheLump(lumpNum), 0, lumpLen);
+        W_UnlockLump(lumpNum);
+
+        if(Str_IsEmpty(string))
+            return 0;
+
+        return string;
+    }
+
+    char *readBuf = 0;
+    if(size_t bytesRead = M_ReadFile(Str_Text(path), &readBuf))
+    {
+        // Ensure the resulting string is terminated.
+        AutoStr *string = Str_PartAppend(AutoStr_New(), readBuf, 0, int(bytesRead));
+        Z_Free(readBuf);
+
+        // Ignore zero-length files.
+        if(Str_IsEmpty(string))
+            return 0;
+
+        return string;
+    }
+
+    return 0;
+}
+
 static size_t FileReader(const char* name, char** buffer)
 {
     struct stat fileinfo;
     char* buf = NULL;
     size_t length = 0;
     int handle;
+
+    LOG_AS("FileReader");
 
     // First try with LZSS.
     LZFILE *file = lzOpen((char*) name, "rp");
@@ -308,9 +331,7 @@ static size_t FileReader(const char* name, char** buffer)
 
             // Allocate more memory.
             newBuf = (char*) Z_Malloc(length + bytesRead, PU_APPSTATIC, 0);
-            if(NULL == newBuf)
-                Con_Error("FileReader: realloc failed.");
-            if(NULL != buf)
+            if(buf != NULL)
             {
                 memcpy(newBuf, buf, length);
                 Z_Free(buf);
@@ -332,15 +353,14 @@ static size_t FileReader(const char* name, char** buffer)
     handle = open(name, O_RDONLY | O_BINARY, 0666);
     if(handle == -1)
     {
-#if _DEBUG
-        Con_Message("Warning:FileReader: Failed opening \"%s\" for reading.", name);
-#endif
+        LOG_RES_WARNING("Failed opening \"%s\" for reading") << name;
         return length;
     }
 
     if(-1 == fstat(handle, &fileinfo))
     {
-        Con_Error("FileReader: Couldn't read file %s\n", name);
+        LOG_RES_ERROR("Couldn't read file \"%s\"") << name;
+        return 0;
     }
 
     length = fileinfo.st_size;
@@ -351,18 +371,14 @@ static size_t FileReader(const char* name, char** buffer)
     }
 
     buf = (char *) Z_Malloc(length, PU_APPSTATIC, 0);
-    if(buf == NULL)
-    {
-        Con_Error("FileReader: Failed on allocation of %lu bytes for file \"%s\".\n",
-                  (unsigned long) length, name);
-    }
+    DENG_ASSERT(buf != 0);
 
-    { size_t bytesRead = read(handle, buf, length);
+    size_t bytesRead = read(handle, buf, length);
     close(handle);
     if(bytesRead < length)
     {
-        Con_Error("FileReader: Couldn't read file \"%s\".\n", name);
-    }}
+        LOG_RES_ERROR("Couldn't read file \"%s\"") << name;
+    }
     *buffer = buf;
 
     return length;
@@ -387,19 +403,15 @@ void M_WriteCommented(FILE *file, const char* text)
  */
 void M_WriteTextEsc(FILE* file, const char* text)
 {
-    if(!file || !text)
-    {
-        Con_Error("Attempted M_WriteTextEsc with invalid reference (%s==0).", !file? "file":"text");
-        return; // Unreachable.
-    }
+    DENG_ASSERT(file && text);
 
-    { size_t i;
+    size_t i;
     for(i = 0; i < strlen(text) && text[i]; ++i)
     {
         if(text[i] == '"' || text[i] == '\\')
             fprintf(file, "\\");
         fprintf(file, "%c", text[i]);
-    }}
+    }
 }
 
 DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
@@ -463,7 +475,7 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
     }
 }
 
-boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
+dd_bool M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
     timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
@@ -480,7 +492,7 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
     return false;
 }
 
-boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
+dd_bool M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
     timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);

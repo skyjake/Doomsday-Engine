@@ -37,40 +37,40 @@
 
 #ifdef __CLIENT__
 #include "clientapp.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/widgets/busywidget.h"
 
 static void BusyMode_Exit(void);
 
 static QEventLoop* eventLoop;
-static volatile boolean busyDoneCopy;
+static volatile dd_bool busyDoneCopy;
 static timespan_t busyTime;
-static boolean busyWillAnimateTransition;
-static boolean busyWasIgnoringInput;
+static dd_bool busyWillAnimateTransition;
+static dd_bool busyWasIgnoringInput;
 
 #endif // __CLIENT__
 
-static boolean busyModeAllowed = true; ///< Can we enter busy mode?
-static boolean busyInited;
-static volatile boolean busyDone;
+static dd_bool busyModeAllowed = true; ///< Can we enter busy mode?
+static dd_bool busyInited;
+static volatile dd_bool busyDone;
 
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
 static BusyTask* busyTask; // Current task.
 static thread_t busyThread;
 static timespan_t accumulatedBusyTime; // Never cleared.
-static boolean busyTaskEndedWithError;
+static dd_bool busyTaskEndedWithError;
 static char busyError[256];
 
 #ifdef __CLIENT__
-static boolean animatedTransitionActive(int busyMode)
+static dd_bool animatedTransitionActive(int busyMode)
 {
     return (!novideo && !isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
             rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
 }
 #endif
 
-boolean BusyMode_Active(void)
+dd_bool BusyMode_Active(void)
 {
     return busyInited;
 }
@@ -81,9 +81,9 @@ timespan_t BusyMode_ElapsedTime(void)
     return accumulatedBusyTime;
 }
 
-boolean BusyMode_IsWorkerThread(uint threadId)
+dd_bool BusyMode_IsWorkerThread(uint threadId)
 {
-    boolean result;
+    dd_bool result;
     if(!BusyMode_Active() || !busyThread) return false;
 
     /// @todo Is locking necessary?
@@ -93,7 +93,7 @@ boolean BusyMode_IsWorkerThread(uint threadId)
     return result;
 }
 
-boolean BusyMode_InWorkerThread(void)
+dd_bool BusyMode_InWorkerThread(void)
 {
     return BusyMode_IsWorkerThread(Sys_CurrentThreadId());
 }
@@ -147,11 +147,11 @@ static void beginTask(BusyTask* task)
     Sys_Unlock(busy_Mutex);
     busyInited = true;
 
-    ProgressWidget &prog = ClientWindow::main().busy().progress();
+    de::ProgressWidget &prog = ClientWindow::main().busy().progress();
     prog.show();
     prog.setText(task->name);
-    prog.setMode(task->mode & BUSYF_ACTIVITY? ProgressWidget::Indefinite :
-                                              ProgressWidget::Ranged);
+    prog.setMode(task->mode & BUSYF_ACTIVITY? de::ProgressWidget::Indefinite :
+                                              de::ProgressWidget::Ranged);
 
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
@@ -169,10 +169,7 @@ static void endTask(BusyTask* task)
     DENG_ASSERT(task);
     DENG_ASSERT_IN_MAIN_THREAD();
 
-    if(verbose)
-    {
-        Con_Message("Con_Busy: Was busy for %.2lf seconds.", busyTime);
-    }
+    LOG_VERBOSE("Busy mode lasted %.2f seconds") << busyTime;
 
     if(busyTaskEndedWithError)
     {
@@ -233,13 +230,13 @@ static int runTask(BusyTask* task)
 }
 
 #ifdef __CLIENT__
-boolean BusyMode_IsTransitionAnimated(void)
+dd_bool BusyMode_IsTransitionAnimated(void)
 {
     return busyWillAnimateTransition;
 }
 #endif
 
-void BusyMode_SetAllowed(boolean allow)
+void BusyMode_SetAllowed(dd_bool allow)
 {
     busyModeAllowed = allow;
 }
@@ -248,7 +245,7 @@ void BusyMode_FreezeGameForBusyMode(void)
 {    
 #ifdef __CLIENT__
     // This is only possible from the main thread.
-    if(ClientWindow::hasMain() && busyModeAllowed && de::App::inMainThread())
+    if(ClientWindow::mainExists() && busyModeAllowed && de::App::inMainThread())
     {
         ClientWindow::main().busy().renderTransitionFrame();
     }
@@ -279,7 +276,7 @@ static void preBusySetup(int initialMode)
     ClientApp::app().loop().setRate(60);   
 
     // Switch the window to busy mode UI.
-    WindowSystem::main().setMode(ClientWindow::Busy);
+    ClientWindowSystem::main().setMode(ClientWindow::Busy);
 
 #else
     DENG_UNUSED(initialMode);
@@ -299,7 +296,7 @@ static void postBusyCleanup()
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
-    WindowSystem::main().setMode(ClientWindow::Normal);
+    ClientWindowSystem::main().setMode(ClientWindow::Normal);
 
     if(!Con_TransitionInProgress())
     {
@@ -467,7 +464,7 @@ void BusyMode_Loop(void)
 {
     if(!busyTask || !BusyMode_Active()) return;
 
-    boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
+    dd_bool canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
 
     // Post and discard all input events.
@@ -476,7 +473,7 @@ void BusyMode_Loop(void)
 
     if(canUpload)
     {
-        WindowSystem::main().glActivate();
+        ClientWindowSystem::main().glActivate();
 
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
@@ -499,7 +496,7 @@ void BusyMode_Loop(void)
        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
-        WindowSystem::main().draw();
+        ClientWindowSystem::main().draw();
         return;
     }
 

@@ -39,7 +39,8 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 
     bool generateBMap = (createBMap == 2);
 
-    LOG_TRACE("Processing BLOCKMAP...");
+    LOG_AS("LoadBlockmap");
+    LOGDEV_MAP_VERBOSE("Processing BLOCKMAP...");
 
     // Do we have a lump to process?
     if(lumpInfo->lump == -1 || lumpInfo->length == 0)
@@ -53,7 +54,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
         // was missing).
         if(lumpInfo->lump != -1)
         {
-            LOG_INFO("Generating new blockmap data...");
+            LOG_MAP_MSG("Generating new blockmap data...");
         }
         return true;
     }
@@ -67,7 +68,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     long* lineListOffsets, i, n, numBlocks, blockIdx;
     short* blockmapLump;
 
-    LOG_INFO("Converting blockmap...");
+    LOG_MAP_VERBOSE("Converting blockmap...");
 
     startTime = Timer_RealMilliseconds();
 
@@ -176,7 +177,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     map->blockMap = blockmap;
 
     // How much time did we spend?
-    LOG_INFO("  Completed in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
 
     return true;
 

@@ -21,6 +21,10 @@
 
 #include "directinput.h"
 
+#ifndef __CLIENT__
+#  error "joystick_win32.cpp is only the client"
+#endif
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -59,7 +63,7 @@ static BOOL CALLBACK enumJoysticks(LPCDIDEVICEINSTANCE lpddi, void* ref)
     return DIENUM_CONTINUE;
 }
 
-boolean Joystick_Init()
+dd_bool Joystick_Init()
 {
     int joyProp[] = {
         DIJOFS_X, DIJOFS_Y, DIJOFS_Z,
@@ -70,19 +74,25 @@ boolean Joystick_Init()
         "X", "Y", "Z", "RX", "RY", "RZ", "Slider 1", "Slider 2"
     };
 
-    if(isDedicated || CommandLine_Check("-nojoy")) return false;
+    LOG_AS("Joystick_Init");
+
+    if(CommandLine_Check("-nojoy"))
+    {
+        LOG_INPUT_NOTE("Joystick disabled with the '-nojoy' option");
+        return false;
+    }
 
     HWND hWnd = (HWND) ClientWindow::main().nativeHandle();
     if(!hWnd)
     {
-        Con_Error("Joystick_Init: Main window not available, cannot continue.");
+        LOGDEV_INPUT_ERROR("Main window not available");
         return false;
     }
 
     LPDIRECTINPUT8 dInput = DirectInput_IVersion8();
     if(!dInput)
     {
-        Con_Message("Joystick_Init: DirectInput version 8 interface not available, cannot continue.");
+        LOG_INPUT_ERROR("DirectInput version 8 interface not available");
         return false;
     }
 
@@ -102,19 +112,20 @@ boolean Joystick_Init()
         if(!firstJoystick.dwSize)
             return false; // Not found.
 
-        Con_Message("Joystick_Init: joydevice = %i, out of range.", joyDevice);
+        LOGDEV_INPUT_WARNING("joydevice = %i, out of range") << joyDevice;
+
         // Use the first joystick that was found.
         memcpy(&ddi, &firstJoystick, sizeof(ddi));
     }
 
     // Show some info.
-    Con_Message("Joystick_Init: %s", ddi.tszProductName);
+    LOG_INPUT_MSG("Joystick name: %s") << ddi.tszProductName; /// @todo unicode? -jk
 
     // Create the joystick device.
     HRESULT hr = dInput->CreateDevice(ddi.guidInstance, &didJoy, 0);
     if(FAILED(hr))
     {
-        Con_Message("Joystick_Init: Failed to create device (0x%x).", hr);
+        LOGDEV_INPUT_ERROR("Failed to create device (0x%x)") << hr;
         return false;
     }
 
@@ -122,7 +133,7 @@ boolean Joystick_Init()
     hr = didJoy->SetDataFormat(&c_dfDIJoystick);
     if(FAILED(hr))
     {
-        Con_Message("Joystick_Init: Failed to set data format (0x%x).", hr);
+        LOGDEV_INPUT_ERROR("Failed to set data format (0x%x)") << hr;
         goto kill_joy;
     }
 
@@ -130,8 +141,8 @@ boolean Joystick_Init()
     hr = didJoy->SetCooperativeLevel(hWnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
     if(FAILED(hr))
     {
-        Con_Message("Joystick_Init: Failed to set co-op level (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_ERROR("Failed to set co-op level (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
         goto kill_joy;
     }
 
@@ -141,9 +152,8 @@ boolean Joystick_Init()
         hr = didJoy->SetProperty(DIPROP_RANGE, DIPropRange(DIPH_BYOFFSET, joyProp[i], IJOY_AXISMIN, IJOY_AXISMAX));
         if(FAILED(hr))
         {
-            if(verbose)
-                Con_Message("Joystick_Init: Failed to set axis '%s' range (0x%x: %s).",
-                            axisName[i], hr, DirectInput_ErrorMsg(hr));
+            LOGDEV_INPUT_VERBOSE("Failed to set axis '%s' range (0x%x: %s)")
+                    << axisName[i] << hr << DirectInput_ErrorMsg(hr);
         }
     }
 
@@ -151,16 +161,16 @@ boolean Joystick_Init()
     hr = didJoy->SetProperty(DIPROP_DEADZONE, DIPropDWord(DIPH_DEVICE));
     if(FAILED(hr))
     {
-        Con_Message("Joystick_Init: Failed to set dead zone (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_WARNING("Failed to set dead zone (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
     }
 
     // Set absolute mode.
     hr = didJoy->SetProperty(DIPROP_AXISMODE, DIPropDWord(DIPH_DEVICE, 0, DIPROPAXISMODE_ABS));
     if(FAILED(hr))
     {
-        Con_Message("Joystick_Init: Failed to set absolute axis mode (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_WARNING("Failed to set absolute axis mode (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
     }
 
     // Acquire it.
@@ -179,7 +189,7 @@ void Joystick_Shutdown(void)
     DirectInput_KillDevice(&didJoy);
 }
 
-boolean Joystick_IsPresent(void)
+dd_bool Joystick_IsPresent(void)
 {
     return (didJoy != 0);
 }

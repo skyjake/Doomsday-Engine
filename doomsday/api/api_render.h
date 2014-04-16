@@ -74,7 +74,7 @@ DENG_API_TYPEDEF(Rend)
     int (*ViewWindowOrigin)(int player, Point2Raw* origin);
     int (*ViewWindowSize)(int player, Size2Raw* size);
 
-    void (*SetViewWindowGeometry)(int player, const RectRaw* geometry, boolean interpolate);
+    void (*SetViewWindowGeometry)(int player, const RectRaw* geometry, dd_bool interpolate);
 
     void (*SetBorderGfx)(const Uri* const* paths);
 
@@ -107,7 +107,7 @@ DENG_API_TYPEDEF(Rend)
      *
      * @return  @c true if aligning to the horizontal axis else the vertical.
      */
-    boolean (*ChooseAlignModeAndScaleFactor)(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
+    dd_bool (*ChooseAlignModeAndScaleFactor)(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
 
     /**
      * Choose a scale mode by comparing the dimensions of the two, two-dimensional
@@ -131,7 +131,7 @@ DENG_API_TYPEDEF(Rend)
     /**
      * @todo fixme: Wrong domain -- Sprite is a (logical) resource.
      */
-    boolean (*GetSpriteInfo)(int sprite, int frame, spriteinfo_t* sprinfo);
+    dd_bool (*GetSpriteInfo)(int sprite, int frame, spriteinfo_t* sprinfo);
 
     /**
      * Alternative interface for manipulating Sky (layer) properties by name/id.

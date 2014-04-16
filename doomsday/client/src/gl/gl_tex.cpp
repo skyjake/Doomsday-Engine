@@ -17,28 +17,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_platform.h"
+#include "gl/gl_tex.h"
+
+#include "con_main.h"
+
+#include "color.h"
+#include "render/r_main.h"
+
+#include "resource/resourcesystem.h"
+#include "resource/colorpalette.h"
+
+#include <de/memory.h>
+#include <de/memoryzone.h>
+#include <de/vector1.h>
 #include <cstdlib>
 #include <cmath>
 #include <cctype>
 
-#include <de/vector1.h>
-
-#include "de_platform.h"
-#include "de_base.h"
-#include "de_console.h"
-#include "color.h"
-#include "render/r_main.h"
-
-#include "gl/gl_tex.h"
-
-static uint8_t* scratchBuffer = NULL;
-static size_t scratchBufferSize = 0;
+static uint8_t *scratchBuffer;
+static size_t scratchBufferSize;
 
 /**
  * Provides a persistent scratch buffer for use by texture manipulation
  * routines e.g. scaleLine().
  */
-static uint8_t* GetScratchBuffer(size_t size)
+static uint8_t *GetScratchBuffer(size_t size)
 {
     // Need to enlarge?
     if(size > scratchBufferSize)
@@ -751,8 +755,8 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     }
 }
 
-boolean GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
-    boolean applyTexGamma, uint8_t const *in, int informat, int width, int height)
+dd_bool GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
+    dd_bool applyTexGamma, uint8_t const *in, int informat, int width, int height)
 {
     DENG2_ASSERT(in && out && palette);
 
@@ -769,23 +773,23 @@ boolean GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palet
         {
             de::Vector3ub palColor = palette->color(*in);
 
-            out[CR] = palColor.x;
-            out[CG] = palColor.y;
-            out[CB] = palColor.z;
+            out[0] = palColor.x;
+            out[1] = palColor.y;
+            out[2] = palColor.z;
 
             if(applyTexGamma)
             {
-                out[CR] = texGammaLut[out[CR]];
-                out[CG] = texGammaLut[out[CG]];
-                out[CB] = texGammaLut[out[CB]];
+                out[0] = texGammaLut[out[0]];
+                out[1] = texGammaLut[out[1]];
+                out[2] = texGammaLut[out[2]];
             }
 
             if(outformat == 4)
             {
                 if(informat == 2)
-                    out[CA] = in[numPels * inSize];
+                    out[3] = in[numPels * inSize];
                 else
-                    out[CA] = 0;
+                    out[3] = 0;
             }
 
             in  += inSize;
@@ -796,7 +800,7 @@ boolean GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palet
     return false;
 }
 
-boolean GL_QuantizeImageToPalette(uint8_t *out, int outformat, ColorPalette const *palette,
+dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, ColorPalette const *palette,
     uint8_t const *in, int informat, int width, int height)
 {
     DENG2_ASSERT(out != 0 && in != 0 && palette != 0);
@@ -870,7 +874,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, ColorPalette const &palette,
 }
 
 void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
-    ColorPalette const &palette, boolean hasAlpha, ColorRawf *color)
+    ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);
 
@@ -901,9 +905,9 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
         if(!hasAlpha || alphaStart[i])
         {
             de::Vector3ub palColor = palette[start[i]];
-            avg[CR] += palColor.x;
-            avg[CG] += palColor.y;
-            avg[CB] += palColor.z;
+            avg[0] += palColor.x;
+            avg[1] += palColor.y;
+            avg[2] += palColor.z;
             ++count;
         }
     }
@@ -911,9 +915,9 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
     // All transparent? Sorry...
     if(!count) return;
 
-    V3f_Set(color->rgb, avg[CR] / count * reciprocal255,
-                        avg[CG] / count * reciprocal255,
-                        avg[CB] / count * reciprocal255);
+    V3f_Set(color->rgb, avg[0] / count * reciprocal255,
+                        avg[1] / count * reciprocal255,
+                        avg[2] / count * reciprocal255);
 }
 
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
@@ -942,14 +946,14 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
     src = pixels + pixelSize * width * line;
     for(i = 0; i < width; ++i, src += pixelSize)
     {
-        avg[CR] += src[CR];
-        avg[CG] += src[CG];
-        avg[CB] += src[CB];
+        avg[0] += src[0];
+        avg[1] += src[1];
+        avg[2] += src[2];
     }
 
-    V3f_Set(color->rgb, avg[CR] / width * reciprocal255,
-                        avg[CG] / width * reciprocal255,
-                        avg[CB] / width * reciprocal255);
+    V3f_Set(color->rgb, avg[0] / width * reciprocal255,
+                        avg[1] / width * reciprocal255,
+                        avg[2] / width * reciprocal255);
 }
 
 void FindAverageColor(const uint8_t* pixels, int width, int height,
@@ -978,18 +982,18 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
     src = pixels;
     for(i = 0; i < numpels; ++i, src += pixelSize)
     {
-        avg[CR] += src[CR];
-        avg[CG] += src[CG];
-        avg[CB] += src[CB];
+        avg[0] += src[0];
+        avg[1] += src[1];
+        avg[2] += src[2];
     }
 
-    V3f_Set(color->rgb, avg[CR] / numpels * reciprocal255,
-                        avg[CG] / numpels * reciprocal255,
-                        avg[CB] / numpels * reciprocal255);
+    V3f_Set(color->rgb, avg[0] / numpels * reciprocal255,
+                        avg[1] / numpels * reciprocal255,
+                        avg[2] / numpels * reciprocal255);
 }
 
 void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const &palette,
-    boolean hasAlpha, ColorRawf *color)
+    dd_bool hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);
 
@@ -1010,9 +1014,9 @@ void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const &
         if(!hasAlpha || alphaStart[i])
         {
             de::Vector3ub palColor = palette[data[i]];
-            avg[CR] += palColor.x;
-            avg[CG] += palColor.y;
-            avg[CB] += palColor.z;
+            avg[0] += palColor.x;
+            avg[1] += palColor.y;
+            avg[2] += palColor.z;
             ++count;
         }
     }
@@ -1020,9 +1024,9 @@ void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const &
     // All transparent? Sorry...
     if(0 == count) return;
 
-    V3f_Set(color->rgb, avg[CR] / count * reciprocal255,
-                        avg[CG] / count * reciprocal255,
-                        avg[CB] / count * reciprocal255);
+    V3f_Set(color->rgb, avg[0] / count * reciprocal255,
+                        avg[1] / count * reciprocal255,
+                        avg[2] / count * reciprocal255);
 }
 
 void FindAverageAlpha(const uint8_t* pixels, int width, int height,
@@ -1064,7 +1068,7 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
     src = pixels;
     for(i = 0; i < numPels; ++i, src += 4)
     {
-        const uint8_t val = src[CA];
+        const uint8_t val = src[3];
         avg += val;
         if(val < 255) alphaCount++;
     }
@@ -1362,14 +1366,14 @@ void Desaturate(uint8_t* pixels, int width, int height, int comps)
     numpels = width * height;
     for(i = 0, pix = pixels; i < numpels; ++i, pix += comps)
     {
-        int min = MIN_OF(pix[CR], MIN_OF(pix[CG], pix[CB]));
-        int max = MAX_OF(pix[CR], MAX_OF(pix[CG], pix[CB]));
-        pix[CR] = pix[CG] = pix[CB] = (min + max) / 2;
+        int min = MIN_OF(pix[0], MIN_OF(pix[1], pix[2]));
+        int max = MAX_OF(pix[0], MAX_OF(pix[1], pix[2]));
+        pix[0] = pix[1] = pix[2] = (min + max) / 2;
     }
     }
 }
 
-void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha)
+void AmplifyLuma(uint8_t* pixels, int width, int height, dd_bool hasAlpha)
 {
     assert(pixels);
     {
@@ -1512,8 +1516,8 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
 static inline bool isKeyedColor(uint8_t *color)
 {
     DENG2_ASSERT(color);
-    return color[CB] == 0xff && ((color[CR] == 0xff && color[CG] == 0) ||
-                                 (color[CR] == 0 && color[CG] == 0xff));
+    return color[2] == 0xff && ((color[0] == 0xff && color[1] == 0) ||
+                                 (color[0] == 0 && color[1] == 0xff));
 }
 
 /**
@@ -1556,7 +1560,7 @@ uint8_t *ApplyColorKeying(uint8_t *buf, int width, int height, int pixelSize)
             }
 
             std::memcpy(out, in, 3); // The color itself.
-            out[CA] = 255; // Opaque.
+            out[3] = 255; // Opaque.
         }
         return ckdest;
     }

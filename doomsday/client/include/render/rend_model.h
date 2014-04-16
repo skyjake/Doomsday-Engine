@@ -36,7 +36,7 @@ struct drawmodelparams_t
 // Animation, frame interpolation.
     ModelDef *mf, *nextMF;
     float           inter;
-    boolean         alwaysInterpolate;
+    dd_bool         alwaysInterpolate;
     int             id; // For a unique skin offset.
     int             selector;
 
@@ -49,8 +49,8 @@ struct drawmodelparams_t
 
     float           extraScale;
 
-    boolean         viewAlign;
-    boolean         mirror; // If true the model will be mirrored about its Z axis (in model space).
+    dd_bool         viewAlign;
+    dd_bool         mirror; // If true the model will be mirrored about its Z axis (in model space).
 
 // Appearance
     int             flags; // Mobj flags.
@@ -63,8 +63,8 @@ struct drawmodelparams_t
     // Shiney texture mapping:
     float           shineYawOffset;
     float           shinePitchOffset;
-    boolean         shineTranslateWithViewerPos;
-    boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
+    dd_bool         shineTranslateWithViewerPos;
+    dd_bool         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
 };
 
 DENG_EXTERN_C byte useModels;

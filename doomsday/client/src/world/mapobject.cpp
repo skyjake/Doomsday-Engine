@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "world/mapobject.h"
 
 #include "world/map.h"
@@ -33,10 +33,10 @@ DENG2_PIMPL_NOREF(MapObject)
     BspLeaf *bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
 
     Instance(Vector3d const &origin)
-        : map(0),
-          indexInMap(NoIndex),
-          origin(origin),
-          bspLeaf(0)
+        : map(0)
+        , indexInMap(NoIndex)
+        , origin(origin)
+        , bspLeaf(0)
     {}
 };
 

@@ -1,4 +1,4 @@
-/** @file game.cpp Game mode configuration (metadata, resource files, etc...).
+/** @file game.cpp  Game mode configuration (metadata, resource files, etc...).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,88 +19,65 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
-#include "filesys/manifest.h"
-#include <de/Error>
-#include <de/Log>
-#include <QtAlgorithms>
-
 #include "game.h"
+
+#include "con_main.h"
+#include "filesys/manifest.h"
+
+#include <de/App>
+#include <de/Error>
+#include <de/game/SavedSession>
+#include <de/Log>
+#include <de/charsymbols.h>
+#include <QtAlgorithms>
 
 namespace de {
 
 DENG2_PIMPL(Game)
 {
-    /// Unique identifier of the plugin which registered this game.
-    pluginid_t pluginId;
+    pluginid_t pluginId; ///< Unique identifier of the registering plugin.
+    Manifests manifests; ///< Required resource files (e.g., doomu.wad).
+    String identityKey;  ///< Unique game mode identifier (e.g., "doom1-ultimate").
 
-    /// Records for required game files (e.g., doomu.wad).
-    Game::Manifests manifests;
+    String title;        ///< Formatted default title, suitable for printing (e.g., "The Ultimate DOOM").
+    String author;       ///< Formatted default author suitable for printing (e.g., "id Software").
 
-    /// Unique identifier string (e.g., "doom1-ultimate").
-    ddstring_t identityKey;
+    Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
+    Path bindingConfig;  ///< Control binding file name (set automatically).
 
-    /// Formatted default title suitable for printing (e.g., "The Ultimate DOOM").
-    ddstring_t title;
+    String legacySavegameNameExp;
+    String legacySavegameSubfolder;
 
-    /// Formatted default author suitable for printing (e.g., "id Software").
-    ddstring_t author;
-
-    /// Name of the main config file (e.g., "configs/doom/game.cfg").
-    ddstring_t mainConfig;
-
-    /// Name of the file used for control bindings, set automatically at creation time.
-    ddstring_t bindingConfig;
-
-    Instance(Public &a, char const *_identityKey, char const *configDir)
-        : Base(a), pluginId(0), manifests()
-    {
-        Str_Set(Str_InitStd(&identityKey), _identityKey);
-        //DENG_ASSERT(!Str_IsEmpty(&identityKey));
-
-        Str_InitStd(&title);
-        Str_InitStd(&author);
-
-        Str_Appendf(Str_InitStd(&mainConfig), "configs/%s", configDir);
-        Str_Strip(&mainConfig);
-        F_FixSlashes(&mainConfig, &mainConfig);
-        F_AppendMissingSlash(&mainConfig);
-        Str_Append(&mainConfig, "game.cfg");
-
-        Str_Appendf(Str_InitStd(&bindingConfig), "configs/%s", configDir);
-        Str_Strip(&bindingConfig);
-        F_FixSlashes(&bindingConfig, &bindingConfig);
-        F_AppendMissingSlash(&bindingConfig);
-        Str_Append(&bindingConfig, "player/bindings.cfg");
-    }
+    Instance(Public &a, String const &identityKey, Path const &configDir,
+             String const &title, String const &author)
+        : Base(a)
+        , pluginId     (0) // Not yet assigned.
+        , identityKey  (identityKey)
+        , title        (title)
+        , author       (author)
+        , mainConfig   (Path("configs") / configDir / "game.cfg")
+        , bindingConfig(Path("configs") / configDir / "player/bindings.cfg")
+    {}
 
     ~Instance()
     {
         qDeleteAll(manifests);
-        manifests.clear();
-
-        Str_Free(&identityKey);
-        Str_Free(&mainConfig);
-        Str_Free(&bindingConfig);
-        Str_Free(&title);
-        Str_Free(&author);
     }
 };
 
-Game::Game(char const *identityKey, char const *configDir,
-           char const *title, char const *author)
-    : game::Game(identityKey),
-      d(new Instance(*this, identityKey, configDir))
+Game::Game(String const &identityKey, Path const &configDir, String const &title, String const &author,
+    String const &legacySavegameNameExp_, String const &legacySavegameSubfolder)
+    : game::Game(identityKey)
+    , d(new Instance(*this, identityKey, configDir, title, author))
 {
-    if(title)  Str_Set(&d->title, title);
-    if(author) Str_Set(&d->author, author);
+    d->legacySavegameNameExp   = legacySavegameNameExp_;
+    d->legacySavegameSubfolder = legacySavegameSubfolder;
 }
 
 Game::~Game()
 {}
 
-Game &Game::addManifest(ResourceManifest &manifest)
+void Game::addManifest(ResourceManifest &manifest)
 {
     // Ensure we don't add duplicates.
     Manifests::const_iterator found = d->manifests.find(manifest.resourceClass(), &manifest);
@@ -108,7 +85,6 @@ Game &Game::addManifest(ResourceManifest &manifest)
     {
         d->manifests.insert(manifest.resourceClass(), &manifest);
     }
-    return *this;
 }
 
 bool Game::allStartupFilesFound() const
@@ -123,10 +99,44 @@ bool Game::allStartupFilesFound() const
     return true;
 }
 
-Game &Game::setPluginId(pluginid_t newId)
+Game::Status Game::status() const
 {
-    d->pluginId = newId;
-    return *this;
+    if(App_GameLoaded() && &App_CurrentGame() == this)
+    {
+        return Loaded;
+    }
+    if(allStartupFilesFound())
+    {
+        return Complete;
+    }
+    return Incomplete;
+}
+
+String const &Game::statusAsText() const
+{
+    static String const statusTexts[] = {
+        "Loaded",
+        "Playable",
+        "Not playable (incomplete resources)",
+    };
+    return statusTexts[int(status())];
+}
+
+String Game::description() const
+{
+    return String(_E(b) "%1 - %2\n" _E(.)
+                  _E(l) "IdentityKey: " _E(.)_E(i) "%3 " _E(.)
+                  _E(l) "PluginId: "    _E(.)_E(i) "%4\n" _E(.)
+                  _E(D) "Startup resources:\n" _E(.) "%5\n"
+                  _E(D) "Other resources:\n" _E(.) "%6\n"
+                  _E(D) "Status: " _E(.) "%7")
+            .arg(title())
+            .arg(author())
+            .arg(identityKey())
+            .arg(int(pluginId()))
+            .arg(filesAsText(FF_STARTUP))
+            .arg(filesAsText(0, false))
+            .arg(statusAsText());
 }
 
 pluginid_t Game::pluginId() const
@@ -134,29 +144,83 @@ pluginid_t Game::pluginId() const
     return d->pluginId;
 }
 
-ddstring_t const *Game::identityKey() const
+void Game::setPluginId(pluginid_t newId)
 {
-    return &d->identityKey;
+    d->pluginId = newId;
 }
 
-ddstring_t const *Game::mainConfig() const
+String const &Game::identityKey() const
 {
-    return &d->mainConfig;
+    return d->identityKey;
 }
 
-ddstring_t const *Game::bindingConfig() const
+String Game::logoImageId() const
 {
-    return &d->bindingConfig;
+    String idKey = identityKey();
+
+    /// @todo The name of the plugin should be accessible via the plugin loader.
+    String plugName;
+    if(idKey.contains("heretic"))
+    {
+        plugName = "libheretic";
+    }
+    else if(idKey.contains("hexen"))
+    {
+        plugName = "libhexen";
+    }
+    else
+    {
+        plugName = "libdoom";
+    }
+
+    return "logo.game." + plugName;
 }
 
-ddstring_t const *Game::title() const
+String Game::legacySavegameNameExp() const
 {
-    return &d->title;
+    return d->legacySavegameNameExp;
 }
 
-ddstring_t const *Game::author() const
+String Game::legacySavegamePath() const
 {
-    return &d->author;
+    NativePath nativeSavePath = App_ResourceSystem().nativeSavePath();
+
+    if(nativeSavePath.isEmpty()) return "";
+    if(isNull()) return "";
+
+    if(App::commandLine().has("-savedir"))
+    {
+        // A custom path. The savegames are in the root of this folder.
+        return nativeSavePath;
+    }
+
+    // The default save path. The savegames are in a game-specific folder.
+    if(!d->legacySavegameSubfolder.isEmpty())
+    {
+        return App::app().nativeHomePath() / d->legacySavegameSubfolder / identityKey();
+    }
+
+    return "";
+}
+
+Path const &Game::mainConfig() const
+{
+    return d->mainConfig;
+}
+
+Path const &Game::bindingConfig() const
+{
+    return d->bindingConfig;
+}
+
+String const &Game::title() const
+{
+    return d->title;
+}
+
+String const &Game::author() const
+{
+    return d->author;
 }
 
 Game::Manifests const &Game::manifests() const
@@ -193,84 +257,130 @@ bool Game::isRequiredFile(File1 &file)
 
 Game *Game::fromDef(GameDef const &def)
 {
-    return new Game(def.identityKey, def.configDir, def.defaultTitle, def.defaultAuthor);
+    return new Game(def.identityKey, NativePath(def.configDir).expand().withSeparators('/'),
+                    def.defaultTitle, def.defaultAuthor, def.legacySavegameNameExp,
+                    def.legacySavegameSubfolder);
 }
 
 void Game::printBanner(Game const &game)
 {
-    Con_PrintRuler();
-    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(game.title()));
-    Con_PrintRuler();
+    LOG_MSG(_E(R) "\n");
+    LOG_MSG(_E(1)) << game.title();
+    LOG_MSG(_E(R) "\n");
 }
 
-void Game::printFiles(Game const &game, int rflags, bool printStatus)
+String Game::filesAsText(int rflags, bool withStatus) const
 {
-    int numPrinted = 0;
+    String text;
 
     // Group output by resource class.
-    Manifests const &manifests = game.manifests();
+    Manifests const &manifs = manifests();
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourceclassid_t const classId = resourceclassid_t(i);
-        for(Manifests::const_iterator i = manifests.find(classId);
-            i != manifests.end() && i.key() == classId; ++i)
+        for(Manifests::const_iterator i = manifs.find(classId);
+            i != manifs.end() && i.key() == classId; ++i)
         {
             ResourceManifest &manifest = **i;
             if(rflags >= 0 && (rflags & manifest.fileFlags()))
             {
-                ResourceManifest::consolePrint(manifest, printStatus);
-                numPrinted += 1;
+                bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
+
+                if(!text.isEmpty()) text += "\n" _E(0);
+
+                if(withStatus)
+                {
+                    text += (resourceFound? " - " : _E(1) " ! " _E(.));
+                }
+
+                // Format the resource name list.
+                text += String(_E(>) "%1%2")
+                        .arg(!resourceFound? _E(D) : "")
+                        .arg(manifest.names().join(_E(l) " or " _E(.)));
+
+                if(withStatus)
+                {
+                    text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
+                    if(resourceFound)
+                    {
+                        text += String(_E(C) "\"%1\"" _E(.)).arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
+                    }
+                    text += _E(<);
+                }
+
+                text += _E(<);
             }
         }
     }
 
-    if(numPrinted == 0)
-    {
-        Con_Printf(" None\n");
-    }
+    if(text.isEmpty()) return " none";
+
+    return text;
 }
 
-void Game::print(Game const &game, int flags)
+void Game::printFiles(Game const &game, int rflags, bool printStatus)
 {
-    if(game.isNull())
-        flags &= ~PGF_BANNER;
-
-#ifdef DENG_DEBUG
-    Con_Printf("pluginid:%i\n", int(game.pluginId()));
-#endif
-
-    if(flags & PGF_BANNER)
-        printBanner(game);
-
-    if(!(flags & PGF_BANNER))
-        Con_Printf("Game: %s - ", Str_Text(game.title()));
-    else
-        Con_Printf("Author: ");
-    Con_Printf("%s\n", Str_Text(game.author()));
-    Con_Printf("IdentityKey: %s\n", Str_Text(game.identityKey()));
-
-    if(flags & PGF_LIST_STARTUP_RESOURCES)
-    {
-        Con_Printf("Startup resources:\n");
-        printFiles(game, FF_STARTUP, (flags & PGF_STATUS) != 0);
-    }
-
-    if(flags & PGF_LIST_OTHER_RESOURCES)
-    {
-        Con_Printf("Other resources:\n");
-        Con_Printf("   ");
-        printFiles(game, 0, /*(flags & PGF_STATUS) != 0*/false);
-    }
-
-    if(flags & PGF_STATUS)
-        Con_Printf("Status: %s\n",
-                   &App_CurrentGame() == &game? "Loaded" :
-                   game.allStartupFilesFound()? "Complete/Playable" :
-                                                "Incomplete/Not playable");
+    LOG_RES_MSG("") << game.filesAsText(rflags, printStatus);
 }
 
-NullGame::NullGame()
-    : Game("" /*null*/, "doomsday", "null-game", "null-game")
+D_CMD(InspectGame)
+{
+    DENG2_UNUSED(src);
+
+    Game *game = 0;
+    if(argc < 2)
+    {
+        // No game identity key was specified - assume the current game.
+        if(!App_GameLoaded())
+        {
+            LOG_WARNING("No game is currently loaded.\nPlease specify the identity-key of the game to inspect.");
+            return false;
+        }
+        game = &App_CurrentGame();
+    }
+    else
+    {
+        String idKey = argv[1];
+        try
+        {
+            game = &App_Games().byIdentityKey(idKey);
+        }
+        catch(Games::NotFoundError const &)
+        {
+            LOG_WARNING("Unknown game '%s'") << idKey;
+            return false;
+        }
+    }
+
+    DENG2_ASSERT(!game->isNull());
+
+    LOG_MSG("") << game->description();
+
+/*
+    LOG_MSG(_E(b) "%s - %s") << game->title() << game->author();
+    LOG_MSG(_E(l) "IdentityKey: " _E(.) _E(i) "%s " _E(.)
+            _E(l) "PluginId: "    _E(.) _E(i) "%s")
+        << game->identityKey() << int(game->pluginId());
+
+    LOG_MSG(_E(D) "Startup resources:");
+    Game::printFiles(*game, FF_STARTUP);
+
+    LOG_MSG(_E(D) "Other resources:");
+    Game::printFiles(*game, 0, false);
+
+    LOG_MSG(_E(D) "Status: " _E(.) _E(b)) << game->statusAsText();
+    */
+
+    return true;
+}
+
+void Game::consoleRegister() //static
+{
+    C_CMD("inspectgame", "", InspectGame);
+    C_CMD("inspectgame", "s", InspectGame);
+}
+
+NullGame::NullGame() : Game("" /*null*/, "doomsday", "null-game", "null-game")
 {}
 
 } // namespace de

@@ -33,7 +33,12 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "doomsday.h"
 #include "p_terraintype.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0
 #define WALKSTOP_THRESHOLD  (0.062484741) // FIX2FLT(0x1000-1)
@@ -206,6 +211,16 @@ typedef struct mobj_s {
 
     // Used by lightning zap
     struct mobj_s*  lastEnemy;
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+
+    /**
+     * Always returns @c false as a thinker will have already been allocated in
+     * the mobj creation process.
+     */
+    int read(MapStateReader *msr);
+#endif
 } mobj_t;
 
 #ifdef __cplusplus

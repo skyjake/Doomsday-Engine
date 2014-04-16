@@ -37,7 +37,7 @@
 #include <de/ByteRefArray>
 #include <de/ListenSocket>
 #include <de/TextApp>
-#include <de/garbage.h>
+#include <de/Garbage>
 #include <de/c_wrapper.h>
 
 using namespace de;
@@ -83,7 +83,7 @@ DENG2_PIMPL(ServerSystem)
     {
         // Note: re-initialization is allowed, so we don't check for inited now.
 
-        LOG_INFO("Server listening on TCP port ") << port;
+        LOG_NET_NOTE("Server listening on TCP port %i") << port;
 
         deinit();
 
@@ -96,7 +96,7 @@ DENG2_PIMPL(ServerSystem)
         // Update the beacon with the new port.
         beacon.start(port);
 
-        App_World().audienceForMapChange += shellUsers;
+        App_WorldSystem().audienceForMapChange += shellUsers;
 
         inited = true;
         return true;
@@ -117,9 +117,9 @@ DENG2_PIMPL(ServerSystem)
         if(!inited) return;
         inited = false;
 
-        if(ServerApp::haveApp())
+        if(ServerApp::appExists())
         {
-            App_World().audienceForMapChange -= shellUsers;
+            App_WorldSystem().audienceForMapChange -= shellUsers;
         }
 
         beacon.stop();
@@ -144,7 +144,7 @@ DENG2_PIMPL(ServerSystem)
             lastBeaconUpdateAt = clock.time();
 
             // Update the status message in the server's presence beacon.
-            if(serverSock && App_World().hasMap())
+            if(serverSock && App_WorldSystem().hasMap())
             {
                 serverinfo_t info;
                 Sv_GetInfo(&info);
@@ -179,11 +179,11 @@ DENG2_PIMPL(ServerSystem)
 
         if(serverSock)
         {
-            Con_Message("SERVER: Listening on TCP port %i.", serverSock->port());
+            LOG_NOTE("SERVER: Listening on TCP port %i") << serverSock->port();
         }
         else
         {
-            Con_Message("SERVER: No server socket open.");
+            LOG_NOTE("SERVER: No server socket open");
         }
 
         first = true;
@@ -198,35 +198,35 @@ DENG2_PIMPL(ServerSystem)
                 RemoteUser *user = users[cl->nodeID];
                 if(first)
                 {
-                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:");
+                    LOG_MSG(_E(m) "P# Name:      Nd Jo Hs Rd Gm Age:");
                     first = false;
                 }
-                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec",
-                            i, cl->name, cl->nodeID,
-                            user->isJoined()? '*' : ' ',
-                            cl->handshake? '*' : ' ',
-                            cl->ready? '*' : ' ',
-                            plr->shared.inGame? '*' : ' ',
-                            Timer_RealSeconds() - cl->enterTime);
+                LOG_MSG(_E(m) "%2i %-10s %2i %c  %c  %c  %c  %f sec")
+                        << i << cl->name << cl->nodeID
+                        << (user->isJoined()? '*' : ' ')
+                        << (cl->handshake? '*' : ' ')
+                        << (cl->ready? '*' : ' ')
+                        << (plr->shared.inGame? '*' : ' ')
+                        << (Timer_RealSeconds() - cl->enterTime);
             }
         }
         if(first)
         {
-            Con_Message("No clients connected.");
+            LOG_MSG("No clients connected");
         }
 
         if(shellUsers.count())
         {
-            Con_Message("%i shell user%s.",
-                        shellUsers.count(),
-                        shellUsers.count() == 1? "" : "s");
+            LOG_MSG("%i shell user%s")
+                    << shellUsers.count()
+                    << (shellUsers.count() == 1? "" : "s");
         }
 
         N_PrintBufferInfo();
 
-        Con_Message("Configuration:");
-        Con_Message("  Port for hosting games (net-ip-port): %i", Con_GetInteger("net-ip-port"));
-        Con_Message("  Shell password (server-password): \"%s\"", netPassword);
+        LOG_MSG(_E(b) "Configuration:");
+        LOG_MSG("  Port for hosting games (net-ip-port): %i") << Con_GetInteger("net-ip-port");
+        LOG_MSG("  Shell password (server-password): \"%s\"") << netPassword;
     }
 };
 
@@ -277,7 +277,7 @@ void ServerSystem::convertToShellUser(RemoteUser *user)
 
     Socket *socket = user->takeSocket();
 
-    LOG_DEBUG("Remote user %s converted to shell user") << user->id();
+    LOGDEV_NET_VERBOSE("Remote user %s converted to shell user") << user->id();
     user->deleteLater();
 
     d->shellUsers.add(new ShellUser(socket));
@@ -333,11 +333,11 @@ void ServerSystem::userDestroyed()
     RemoteUser *u = static_cast<RemoteUser *>(sender());
 
     LOG_AS("ServerSystem");
-    LOG_VERBOSE("Removing user %s") << u->id();
+    LOGDEV_NET_VERBOSE("Removing user %s") << u->id();
 
     d->users.remove(u->id());
 
-    LOG_DEBUG("%i remote users and %i shell users remain")
+    LOG_NET_VERBOSE("%i remote users and %i shell users remain")
             << d->users.size() << d->shellUsers.count();
 }
 
@@ -362,7 +362,7 @@ void Server_Register(void)
 #endif
 }
 
-boolean N_ServerOpen(void)
+dd_bool N_ServerOpen(void)
 {
     App_ServerSystem().start(Server_ListenPort());
 
@@ -387,7 +387,7 @@ boolean N_ServerOpen(void)
     return true;
 }
 
-boolean N_ServerClose(void)
+dd_bool N_ServerClose(void)
 {
     if(!App_ServerSystem().isListening()) return true;
 

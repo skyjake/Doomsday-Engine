@@ -53,33 +53,33 @@ void Monitor_Add(const uint8_t* bytes, size_t size)
 
 static void Monitor_Print(void)
 {
-    int i, k;
-
     if(!monitoredBytes)
     {
-        Con_Message("Nothing has been sent yet.");
+        LOGDEV_NET_MSG("Nothing has been sent yet");
         return;
     }
-    Con_Message("%u bytes sent (%i packets).", monitoredBytes, monitoredPackets);
-
+    LOGDEV_NET_MSG("%i bytes sent (%i packets)") << monitoredBytes << monitoredPackets;
+    int i, k;
     for(i = 0, k = 0; i < 256; ++i)
     {
-        if(!k) Con_Printf("    ");
+        // LogBuffer_Printf uses manual newlines.
 
-        Con_Printf("%10.10lf", (double)(monitor[i]) / (double)monitoredBytes);
+        if(!k) LogBuffer_Printf(DE2_LOG_DEV, "    ");
+
+        LogBuffer_Printf(DE2_LOG_DEV, "%10.10f", (double)(monitor[i]) / (double)monitoredBytes);
 
         // Break lines.
         if(++k == 4)
         {
             k = 0;
-            Con_Printf(",\n");
+            LogBuffer_Printf(DE2_LOG_DEV, ",\n");
         }
         else
         {
-            Con_Printf(", ");
+            LogBuffer_Printf(DE2_LOG_DEV, ", ");
         }
     }
-    if(k) Con_Printf("\n");
+    if(k) LogBuffer_Printf(DE2_LOG_DEV, "\n");
 }
 
 D_CMD(NetFreqs)
@@ -88,7 +88,7 @@ D_CMD(NetFreqs)
 
     if(argc == 1) // No args?
     {
-        Con_Printf("Usage:\n  %s start (maxsize)\n  %s stop\n  %s print/show\n", argv[0], argv[0], argv[0]);
+        LOG_SCR_NOTE("Usage:\n  %s start (maxsize)\n  %s stop\n  %s print/show") << argv[0] << argv[0] << argv[0];
         return true;
     }
     if(argc == 3 && !strcmp(argv[1], "start"))

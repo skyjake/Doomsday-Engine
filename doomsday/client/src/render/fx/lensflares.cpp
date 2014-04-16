@@ -84,7 +84,7 @@ struct FlareData
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        LOG_DEBUG("Releasing shared data");
+        LOGDEV_GL_XVERBOSE("Releasing shared data");
     }
 
     static Image const &flareImage(String const &name)

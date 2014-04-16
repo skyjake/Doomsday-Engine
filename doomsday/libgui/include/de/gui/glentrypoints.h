@@ -3,17 +3,17 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBGUI_GLENTRYPOINTS_H
@@ -100,6 +100,8 @@ LIBGUI_EXTERN_C PFNGLGETSHADERSOURCEPROC          glGetShaderSource;
 LIBGUI_EXTERN_C PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
 
 LIBGUI_EXTERN_C PFNGLISBUFFERPROC                 glIsBuffer;
+LIBGUI_EXTERN_C PFNGLISFRAMEBUFFERPROC            glIsFramebuffer;
+LIBGUI_EXTERN_C PFNGLISPROGRAMPROC                glIsProgram;
 
 LIBGUI_EXTERN_C PFNGLLINKPROGRAMPROC              glLinkProgram;
 
@@ -120,10 +122,20 @@ LIBGUI_EXTERN_C PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
-LIBGUI_EXTERN_C PFNGLBLITFRAMEBUFFEREXTPROC                 glBlitFramebufferEXT;
-LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC  glRenderbufferStorageMultisampleEXT;
+LIBGUI_EXTERN_C PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
+LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
+
+#ifdef GL_NV_framebuffer_multisample_coverage
+LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbufferStorageMultisampleCoverageNV;
+#endif
 
 void getAllOpenGLEntryPoints();
+
+#ifdef Q_WS_X11
+LIBGUI_PUBLIC char const *getGLXExtensionsString();
+LIBGUI_PUBLIC void setXSwapInterval(int interval);
+void getGLXEntryPoints();
+#endif
 
 #endif // LIBGUI_USE_GLENTRYPOINTS
 

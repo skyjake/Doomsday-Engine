@@ -55,7 +55,6 @@ else:deng_macx7_64bit {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
     QMAKE_CFLAGS += -mmacosx-version-min=10.6
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.6
-    INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11/include $$INCLUDEPATH
 }
 else:deng_macx6_32bit_64bit {
     echo(Using Mac OS 10.6 SDK.)
@@ -64,7 +63,6 @@ else:deng_macx6_32bit_64bit {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
     QMAKE_CFLAGS += -mmacosx-version-min=10.5
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.5
-    INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11/include $$INCLUDEPATH
 }
 else:deng_nativesdk {
     echo(Using native SDK.)

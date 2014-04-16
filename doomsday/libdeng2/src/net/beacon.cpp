@@ -3,17 +3,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Beacon"
@@ -171,7 +171,7 @@ void Beacon::readIncoming()
         d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
                                 block.size(), &from, &port);
 
-        LOG_TRACE("Received %i bytes from %s port %i") << block.size() << from.toString() << port;
+        LOG_NET_XVERBOSE("Received %i bytes from %s port %i") << block.size() << from.toString() << port;
 
         if(block == discoveryMessage)
         {
@@ -239,7 +239,7 @@ void Beacon::continueDiscovery()
 
     Block block(discoveryMessage);
 
-    LOG_TRACE("Broadcasting %i bytes") << block.size();
+    LOG_NET_XVERBOSE("Broadcasting %i bytes") << block.size();
 
     // Send a new broadcast to the whole listening range of the beacons.
     for(duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)

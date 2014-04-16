@@ -19,21 +19,17 @@
 #ifndef DENG_CLIENT_ABOUTDIALOG_H
 #define DENG_CLIENT_ABOUTDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog that shows information about the client.
  */
-class AboutDialog : public DialogWidget
+class AboutDialog : public de::DialogWidget
 {
     Q_OBJECT
 
 public:
     AboutDialog();
-
-protected slots:
-    void showGLInfo();
-    void showAudioInfo();
 
 private:
     DENG2_PRIVATE(d)

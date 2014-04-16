@@ -94,7 +94,7 @@ typedef struct apifunc_s {
     } param;
 } apifunc_t;
 
-static boolean inited = false;
+static dd_bool inited = false;
 static mutex_t deferredMutex;
 static DGLuint reservedTextureNames[NUM_RESERVED_TEXTURENAMES];
 static volatile int reservedCount = 0;
@@ -213,7 +213,7 @@ static void processTask(deferredtask_t *task)
         break;
 
     case DTT_SET_VSYNC:
-        GL_SetVSync(*(boolean*)task->data);
+        GL_SetVSync(*(dd_bool*)task->data);
         break;
 
     case DTT_FUNC_PTR_E:
@@ -356,8 +356,9 @@ DGLuint GL_GetReservedTextureName(void)
 {
     DGLuint name;
 
-    if(!inited)
-        Con_Error("GL_GetReservedTextureName: Deferred GL task system not initialized.");
+    LOG_AS("GL_GetReservedTextureName");
+
+    DENG_ASSERT(inited);
 
     Sys_Lock(deferredMutex);
 
@@ -367,7 +368,7 @@ DGLuint GL_GetReservedTextureName(void)
         while(reservedCount == 0)
         {
             // Wait for someone to refill the names buffer.
-            Con_Message("GL_GetReservedTextureName: Sleeping until new names available.");
+            LOGDEV_GL_MSG("Sleeping until new names available");
             Sys_Sleep(5);
         }
         Sys_Lock(deferredMutex);
@@ -458,7 +459,7 @@ void GL_DeferTextureUpload(struct texturecontent_s const *content)
     enqueueTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
 }
 
-void GL_DeferSetVSync(boolean enableVSync)
+void GL_DeferSetVSync(dd_bool enableVSync)
 {
     enqueueTask(DTT_SET_VSYNC, M_MemDup(&enableVSync, sizeof(enableVSync)));
 }

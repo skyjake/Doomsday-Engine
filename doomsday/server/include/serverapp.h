@@ -24,7 +24,7 @@
 #include "serversystem.h"
 #include "resource/resourcesystem.h"
 #include "Games"
-#include "world/world.h"
+#include "world/worldsystem.h"
 
 /**
  * The server application.
@@ -42,12 +42,11 @@ public:
     void initialize();
 
 public:
-    static bool haveApp();
     static ServerApp &app();
     static ServerSystem &serverSystem();
     static ResourceSystem &resourceSystem();
     static de::Games &games();
-    static de::World &world();
+    static de::WorldSystem &worldSystem();
 
 private:
     DENG2_PRIVATE(d)

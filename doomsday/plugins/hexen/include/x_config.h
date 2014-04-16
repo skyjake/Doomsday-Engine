@@ -61,7 +61,7 @@ typedef enum {
 // This struct should be cleaned up. Currently some of the data isn't
 // even used any more.
 
-// WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
+// WARNING: Do not use the dd_bool type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 
 typedef struct {
@@ -69,7 +69,7 @@ typedef struct {
     float           lookSpeed;
     float           turnSpeed;
     int             quakeFly;
-    byte            fastMonsters;
+    //byte            fastMonsters;
     int             useJLook;
     int             screenBlocks;
     int             setBlocks;
@@ -174,7 +174,7 @@ typedef struct {
     byte            menuShortcutsEnabled;
     byte            menuScaleMode;
     int             menuPatchReplaceMode;
-    byte            menuGameSaveSuggestName;
+    byte            menuGameSaveSuggestDescription;
     byte            menuCursorRotate;
     float           menuTextColors[MENU_COLOR_COUNT][3];
     float           menuTextFlashColor[3];

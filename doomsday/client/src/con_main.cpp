@@ -1,4 +1,4 @@
-/**\file con_main.cpp
+/**\file con_main.cpp  Console subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,21 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Console Subsystem
- *
- * Should be completely redesigned.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_CONSOLE
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <math.h>
-#include <ctype.h>
 
 #include "de_platform.h"
 
@@ -55,17 +41,24 @@
 
 #include "Game"
 #include <de/LogBuffer>
+#include <de/charsymbols.h>
 
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
 #  include "clientapp.h"
-#  include "ui/windowsystem.h"
+#  include "ui/clientwindowsystem.h"
 #  include "ui/clientwindow.h"
 #  include "ui/widgets/consolewidget.h"
 #  include "ui/widgets/taskbarwidget.h"
 #  include "ui/busyvisual.h"
 #  include "updater/downloaddialog.h"
 #endif
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <cmath>
+#include <cctype>
 
 using namespace de;
 
@@ -74,7 +67,7 @@ using namespace de;
 // Length of the print buffer. Used in conPrintf and in Console_Message.
 // If console messages are longer than this, an error will occur.
 // Needed because we can't sizeof a malloc'd block.
-#define PRBUFF_SIZE 655365
+#define PRBUFF_SIZE 0x2000
 
 // Operators for the "if" command.
 enum {
@@ -96,11 +89,11 @@ enum {
         : src == CMDS_SCRIPT? "an action command" : "???")
 
 typedef struct execbuff_s {
-    boolean used;               // Is this in use?
+    dd_bool used;               // Is this in use?
     timespan_t when;            // System time when to execute the command.
     byte    source;             // Where the command came from
                                 // (console input, a cfg file etc..)
-    boolean isNetCmd;           // Command was sent over the net to us.
+    dd_bool isNetCmd;           // Command was sent over the net to us.
     char    subCmd[1024];       // A single command w/args.
 } execbuff_t;
 
@@ -110,9 +103,9 @@ D_CMD(Alias);
 D_CMD(Clear);
 D_CMD(Echo);
 #ifdef __CLIENT__
-D_CMD(Font);
 D_CMD(OpenClose);
 D_CMD(TaskBar);
+D_CMD(Tutorial);
 #endif
 D_CMD(Help);
 D_CMD(If);
@@ -126,56 +119,23 @@ D_CMD(InspectMobj);
 D_CMD(DebugCrash);
 D_CMD(DebugError);
 
-static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd);
-static void Con_SplitIntoSubCommands(const char *command,
+void CVar_PrintReadOnlyWarning(cvar_t const *var); // in con_data.cpp
+
+static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd);
+static void Con_SplitIntoSubCommands(char const *command,
                                      timespan_t markerOffset, byte src,
-                                     boolean isNetCmd);
+                                     dd_bool isNetCmd);
 
 static void Con_ClearExecBuffer(void);
 
 int     CmdReturnValue = 0;
-
 byte    ConsoleSilent = false;
+char    *prbuff = NULL; // Print buffer, used by conPrintf.
 
-//int     conCompMode = 0;        // Completion mode.
-byte    conSilentCVars = 1;
-byte    consoleDump = true;
-//int     consoleActiveKey = '`'; // Tilde.
-//byte    consoleSnapBackOnPrint = false;
-
-char* prbuff = NULL; // Print buffer, used by conPrintf.
-
-//static CBuffer* histBuf = NULL; // The console history buffer (log).
-//static uint bLineOff; // How many lines from the last in the histBuf?
-
-//static char** oldCmds = NULL; // The old commands buffer.
-//static uint oldCmdsSize = 0, oldCmdsMax = 0;
-//static uint ocPos; // How many cmds from the last in the oldCmds buffer.
-
-static boolean ConsoleInited;   // Has Con_Init() been called?
-
-//static boolean ConsoleActive;   // Is the console active?
-//static timespan_t ConsoleTime;  // How many seconds has the console been open?
-
-//static char cmdLine[CMDLINE_SIZE+1]; // The command line.
-//static uint cmdCursor;          // Position of the cursor on the command line.
-//static boolean cmdInsMode;      // Are we in insert input mode.
-//static boolean conInputLock;    // While locked, most user input is disabled.
-
-static execbuff_t* exBuff;
-static int exBuffSize;
-static execbuff_t* curExec;
-
-// The console font.
-//static fontid_t consoleFont;
-//static int consoleFontTracking;
-//static float consoleFontLeading;
-//static float consoleFontScale[2];
-
-//static void (*consolePrintFilter) (char* text); // Maybe alters text.
-
-//static uint complPos; // Where is the completion cursor?
-//static uint lastCompletion; // The last completed known word match (1-based index).
+static dd_bool      ConsoleInited;   // Has Con_Init() been called?
+static execbuff_t * exBuff;
+static int          exBuffSize;
+static execbuff_t * curExec;
 
 void Con_Register(void)
 {
@@ -188,14 +148,12 @@ void Con_Register(void)
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD("taskbar",        "",     TaskBar);
+    C_CMD("tutorial",       "",     Tutorial);
 #endif
     C_CMD("dec",            NULL,   IncDec);
     C_CMD("echo",           "s*",   Echo);
     C_CMD("print",          "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
-/*#ifdef __CLIENT__
-    C_CMD("font",           NULL,   Font);
-#endif*/
     C_CMD("help",           "",     Help);
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   IncDec);
@@ -217,19 +175,6 @@ void Con_Register(void)
     C_CMD("fatalerror",     NULL,   DebugError);
 #endif
 
-    /*
-    // Console
-    C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);
-    C_VAR_BYTE("con-dump", &consoleDump, 0, 0, 1);
-    C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255);
-    C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
-    C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
-    */
-
-    // Games
-    C_CMD("listgames",      "",     ListGames);
-
-    // File
     C_VAR_CHARPTR("file-startup", &startupFiles, 0, 0, 0);
 
     Con_DataRegister();
@@ -239,39 +184,6 @@ void Con_Register(void)
     Con_TransitionRegister();
 #endif
 }
-
-#if 0
-void Con_ResizeHistoryBuffer(void)
-{
-    int maxLength = 70;
-
-    if(!ConsoleInited)
-    {
-        Con_Error("Con_ResizeHistoryBuffer: Console is not yet initialised.");
-        exit(1); // Unreachable.
-    }
-
-#ifdef __CLIENT__
-    if(!novideo && !isDedicated)
-    {
-        float cw;
-
-        FR_SetFont(consoleFont);
-        FR_LoadDefaultAttrib();
-        FR_SetTracking(consoleFontTracking);
-        FR_SetLeading(consoleFontLeading);
-
-        cw = (FR_TextWidth("AA") * consoleFontScale[0]) / 2;
-        if(0 != cw)
-        {
-            maxLength = MIN_OF(DENG_WINDOW->width() / cw - 2, 250);
-        }
-    }
-#endif
-
-    CBuffer_SetMaxLineLength(Con_HistoryBuffer(), maxLength);
-}
-#endif
 
 static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 {
@@ -384,62 +296,14 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 #undef IS_ESC_CHAR
 }
 
-#if 0
-static void clearCommandHistory(void)
+dd_bool Con_Init(void)
 {
-    if(!oldCmds) return;
+    if(ConsoleInited) return true;
 
-    { uint i;
-    for(i = 0; i < oldCmdsSize; ++i)
-    {
-        free(oldCmds[i]);
-    }}
-    free(oldCmds), oldCmds = NULL;
-    oldCmdsSize = 0, oldCmdsMax = 0;
-}
-#endif
-
-boolean Con_Init(void)
-{
-    if(ConsoleInited)
-    {
-#if _DEBUG
-        Con_Error("Con_Init: Console already initialized!");
-#endif
-        return true;
-    }
-
-    Con_Message("Initializing the console...");
+    LOG_SCR_VERBOSE("Initializing the console...");
 
     exBuff = NULL;
     exBuffSize = 0;
-
-#if 0
-    histBuf = CBuffer_New(512, 70, 0);
-    bLineOff = 0;
-
-    oldCmds = NULL;
-    oldCmdsSize = 0, oldCmdsMax = 0;
-    ocPos = 0; // No commands yet.
-
-    complPos = 0;
-    lastCompletion = 0;
-
-    cmdCursor = 0;
-
-    consoleFont = 0;
-    consoleFontTracking = 0;
-    consoleFontLeading = 1.f;
-    consoleFontScale[0] = 1.f;
-    consoleFontScale[1] = 1.f;
-
-    consolePrintFilter = 0;
-
-    ConsoleTime = 0;
-    ConsoleActive = false;
-
-    //Rend_ConsoleInit();
-#endif
 
     ConsoleInited = true;
 
@@ -450,7 +314,7 @@ void Con_Shutdown(void)
 {
     if(!ConsoleInited) return;
 
-    Con_Message("Shutting down the console...");
+    LOG_SCR_VERBOSE("Shutting down the console...");
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
@@ -460,143 +324,8 @@ void Con_Shutdown(void)
         M_Free(prbuff); prbuff = 0;
     }
 
-#if 0
-    if(histBuf)
-    {
-        CBuffer_Delete(histBuf); histBuf = 0;
-    }
-
-    clearCommandHistory();
-#endif
-
     ConsoleInited = false;
 }
-
-#if 0
-boolean Con_IsActive(void)
-{
-    return ConsoleActive;
-}
-
-boolean Con_IsLocked(void)
-{
-    return conInputLock;
-}
-
-boolean Con_InputMode(void)
-{
-    return cmdInsMode;
-}
-
-char* Con_CommandLine(void)
-{
-    return cmdLine;
-}
-
-CBuffer* Con_HistoryBuffer(void)
-{
-    return histBuf;
-}
-
-uint Con_HistoryOffset(void)
-{
-    return bLineOff;
-}
-
-uint Con_CommandLineCursorPosition(void)
-{
-    return cmdCursor;
-}
-
-fontid_t Con_Font(void)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_Font: Console is not yet initialised.");
-    return consoleFont;
-}
-
-void Con_SetFont(fontid_t font)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_SetFont: Console is not yet initialised.");
-    if(consoleFont == font) return;
-    consoleFont = font;
-    Con_ResizeHistoryBuffer();
-    Rend_ConsoleResize(true/*force*/);
-}
-
-con_textfilter_t Con_PrintFilter(void)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_PrintFilter: Console is not yet initialised.");
-    return consolePrintFilter;
-}
-#endif
-
-void Con_SetPrintFilter(con_textfilter_t /*printFilter*/)
-{
-    /*
-    if(!ConsoleInited)
-        Con_Error("Con_SetPrintFilter: Console is not yet initialised.");
-    consolePrintFilter = printFilter;
-    */
-}
-
-#if 0
-void Con_FontScale(float* scaleX, float* scaleY)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_FontScale: Console is not yet initialised.");
-    if(scaleX)
-        *scaleX = consoleFontScale[0];
-    if(scaleY)
-        *scaleY = consoleFontScale[1];
-}
-
-void Con_SetFontScale(float scaleX, float scaleY)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_SetFont: Console is not yet initialised.");
-    if(scaleX > 0.0001f)
-        consoleFontScale[0] = MAX_OF(.5f, scaleX);
-    if(scaleY > 0.0001f)
-        consoleFontScale[1] = MAX_OF(.5f, scaleY);
-    Con_ResizeHistoryBuffer();
-    Rend_ConsoleResize(true/*force*/);
-}
-
-float Con_FontLeading(void)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_FontLeading: Console is not yet initialised.");
-    return consoleFontLeading;
-}
-
-void Con_SetFontLeading(float value)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_SetFontLeading: Console is not yet initialised.");
-    consoleFontLeading = MAX_OF(.1f, value);
-    Con_ResizeHistoryBuffer();
-    Rend_ConsoleResize(true/*force*/);
-}
-
-int Con_FontTracking(void)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_FontTracking: Console is not yet initialised.");
-    return consoleFontTracking;
-}
-
-void Con_SetFontTracking(int value)
-{
-    if(!ConsoleInited)
-        Con_Error("Con_SetFontTracking: Console is not yet initialised.");
-    consoleFontTracking = MAX_OF(0, value);
-    Con_ResizeHistoryBuffer();
-    Rend_ConsoleResize(true/*force*/);
-}
-#endif
 
 #ifdef __CLIENT__
 /**
@@ -607,9 +336,10 @@ static void Con_Send(const char *command, byte src, int silent)
 {
     ushort len = (ushort) strlen(command);
 
+    LOG_AS("Con_Send");
     if(len >= 0x8000)
     {
-        Con_Message("Con_Send: Command is too long, length=%i.", len);
+        LOGDEV_NET_ERROR("Command is too long, length=%i") << len;
         return;
     }
 
@@ -625,7 +355,7 @@ static void Con_Send(const char *command, byte src, int silent)
 #endif // __CLIENT__
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
-                         byte source, boolean isNetCmd)
+                         byte source, dd_bool isNetCmd)
 {
     execbuff_t *ptr = NULL;
     int     i;
@@ -663,11 +393,11 @@ static void Con_ClearExecBuffer(void)
  *
  * @return          @c false, if an executed command fails.
  */
-static boolean Con_CheckExecBuffer(void)
+static dd_bool Con_CheckExecBuffer(void)
 {
 #define BUFFSIZE 256
-    boolean allDone;
-    boolean ret = true;
+    dd_bool allDone;
+    dd_bool ret = true;
     int     i, count = 0;
     char    storage[BUFFSIZE];
 
@@ -695,8 +425,9 @@ static boolean Con_CheckExecBuffer(void)
         }
 
         if(count++ > 100)
-        {
-            Con_Message("Console execution buffer overflow! Everything canceled.");
+        {            
+            DENG_ASSERT(!"Execution buffer overflow");
+            LOG_SCR_ERROR("Console execution buffer overflow! Everything canceled!");
             Con_ClearExecBuffer();
             break;
         }
@@ -782,7 +513,7 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
 /**
  * The command is executed forthwith!!
  */
-static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
+static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
 {
     cmdargs_t   args;
     ccmd_t   *ccmd;
@@ -820,20 +551,20 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     if(ccmd != NULL)
     {
         // Found a match. Are we allowed to execute?
-        boolean canExecute = true;
+        dd_bool canExecute = true;
 
         // Trying to issue a command requiring a loaded game?
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
         if((ccmd->flags & CMDF_NO_NULLGAME) && !App_GameLoaded())
         {
-            Con_Printf("Execution of command '%s' not possible with no game loaded.\n", ccmd->name);
+            LOG_SCR_ERROR("Execution of command '%s' is only allowed when a game is loaded") << ccmd->name;
             return true;
         }
 
         // A dedicated server, trying to execute a ccmd not available to us?
         if(isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
         {
-            Con_Printf("Execution of command '%s' not possible in dedicated mode.\n", ccmd->name);
+            LOG_SCR_ERROR("Execution of command '%s' not possible in dedicated mode") << ccmd->name;
             return true;
         }
 
@@ -843,9 +574,8 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             // Is the command permitted for use by clients?
             if(ccmd->flags & CMDF_CLIENT)
             {
-                Con_Printf("Execution of command '%s' blocked (client attempted invocation).\n"
-                           "This command is not permitted for use by clients\n", ccmd->name);
-                // \todo Tell the client!
+                LOG_NET_ERROR("Execution of command '%s' blocked (client attempted invocation);"
+                              "this command is not permitted for use by clients") << ccmd->name;
                 return true;
             }
 
@@ -868,9 +598,8 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             case CMDS_PROFILE:
             case CMDS_CMDLINE:
             case CMDS_SCRIPT:
-                Con_Printf("Execution of command '%s' blocked (client attempted invocation via %s).\n"
-                           "This method is not permitted by clients.\n", ccmd->name, CMDTYPESTR(src));
-                // \todo Tell the client!
+                LOG_NET_ERROR("Execution of command '%s' blocked (client attempted invocation via %s); "
+                              "this method is not permitted by clients") << ccmd->name << CMDTYPESTR(src);
                 return true;
 
             default:
@@ -931,7 +660,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 
         if(!canExecute)
         {
-            Con_Printf("Error: '%s' cannot be executed via %s.\n", ccmd->name, CMDTYPESTR(src));
+            LOG_SCR_ERROR("'%s' cannot be executed via %s") << ccmd->name << CMDTYPESTR(src);
             return true;
         }
 
@@ -946,7 +675,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             int result;
             if((result = ccmd->execFunc(src, args.argc, args.argv)) == false)
             {
-                Con_Printf("Error: '%s' failed.\n", args.argv[0]);
+                LOG_SCR_ERROR("'%s' failed") << args.argv[0];
             }
             return result;
         }
@@ -957,7 +686,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     cvar = Con_FindVariable(args.argv[0]);
     if(cvar != NULL)
     {
-        boolean out_of_range = false, setting = false, hasCallback;
+        dd_bool outOfRange = false, setting = false, hasCallback;
 
         /**
          * \note Change notification callback execution may invoke
@@ -970,20 +699,19 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
            (args.argc == 3 && !stricmp(args.argv[1], "force")))
         {
             char* argptr = args.argv[args.argc - 1];
-            boolean forced = args.argc == 3;
+            dd_bool forced = args.argc == 3;
 
             setting = true;
             if(cvar->flags & CVF_READ_ONLY)
             {
-                AutoStr* name = CVar_ComposePath(cvar);
-                Con_Printf("%s is read-only. It can't be changed (not even with force)\n", Str_Text(name));
+                CVar_PrintReadOnlyWarning(cvar);
             }
             else if((cvar->flags & CVF_PROTECTED) && !forced)
             {
                 AutoStr* name = CVar_ComposePath(cvar);
-                Con_Printf("%s is protected. You shouldn't change its value.\n"
-                           "Use the command: '%s force %s' to modify it anyway.\n",
-                           Str_Text(name), Str_Text(name), argptr);
+                LOG_SCR_NOTE("%s is protected; you shouldn't change its value -- "
+                             "use the command: " _E(b) "'%s force %s'" _E(.) " to modify it anyway")
+                        << Str_Text(name) << Str_Text(name) << argptr;
             }
             else
             {
@@ -994,7 +722,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     if(!forced &&
                        ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
                         (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
-                        out_of_range = true;
+                        outOfRange = true;
                     else
                         CVar_SetInteger(cvar, val);
                     break;
@@ -1004,7 +732,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     if(!forced &&
                        ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
                         (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
-                        out_of_range = true;
+                        outOfRange = true;
                     else
                         CVar_SetInteger(cvar, val);
                     break;
@@ -1014,7 +742,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     if(!forced &&
                        ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
                         (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
-                        out_of_range = true;
+                        outOfRange = true;
                     else
                         CVar_SetFloat(cvar, val);
                     break;
@@ -1032,25 +760,25 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             }
         }
 
-        if(out_of_range)
+        if(outOfRange)
         {
             AutoStr* name = CVar_ComposePath(cvar);
             if(!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
             {
                 char temp[20];
                 strcpy(temp, M_TrimmedFloat(cvar->min));
-                Con_Printf("Error: %s <= %s <= %s\n", temp, Str_Text(name), M_TrimmedFloat(cvar->max));
+                LOG_SCR_ERROR("%s <= %s <= %s") << temp << Str_Text(name) << M_TrimmedFloat(cvar->max);
             }
             else if(cvar->flags & CVF_NO_MAX)
             {
-                Con_Printf("Error: %s >= %s\n", Str_Text(name), M_TrimmedFloat(cvar->min));
+                LOG_SCR_ERROR("%s >= %s") << Str_Text(name) << M_TrimmedFloat(cvar->min);
             }
             else
             {
-                Con_Printf("Error: %s <= %s\n", Str_Text(name), M_TrimmedFloat(cvar->max));
+                LOG_SCR_ERROR("%s <= %s") << Str_Text(name) << M_TrimmedFloat(cvar->max);
             }
         }
-        else if(!setting || !conSilentCVars) // Show the value.
+        else if(!setting) // Show the value.
         {
             if(setting && hasCallback)
             {
@@ -1059,7 +787,8 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             }
 
             if(cvar)
-            {   // It still exists.
+            {
+                // It still exists.
                 Con_PrintCVar(cvar, "");
             }
         }
@@ -1085,12 +814,12 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     // What *is* that?
     if(Con_FindCommand(args.argv[0]))
     {
-        LOG_WARNING("%s: command arguments invalid") << args.argv[0];
+        LOG_SCR_WARNING("%s: command arguments invalid") << args.argv[0];
         Con_Executef(CMDS_DDAY, false, "help %s", args.argv[0]);
     }
     else
     {
-        LOG_MSG("%s: unknown identifier") << args.argv[0];
+        LOG_SCR_MSG("%s: unknown identifier") << args.argv[0];
     }
     return false;
 }
@@ -1101,7 +830,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
  */
 static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
-                                     boolean isNetCmd)
+                                     dd_bool isNetCmd)
 {
 #define BUFFSIZE        2048
 
@@ -1158,197 +887,6 @@ static void Con_SplitIntoSubCommands(const char *command,
 
 #undef BUFFSIZE
 }
-
-#if 0
-//#ifdef __CLIENT__
-/**
- * Ambiguous string check. 'amb' is cut at the first character that
- * differs when compared to 'str' (case ignored).
- */
-static void stramb(char *amb, const char *str)
-{
-    while(*str && tolower((unsigned) *amb) == tolower((unsigned) *str))
-    {
-        amb++;
-        str++;
-    }
-    *amb = 0;
-}
-
-/**
- * Look at the last word and try to complete it. If there are several
- * possibilities, print them.
- *
- * @return          Number of possible completions.
- */
-static int completeWord(int mode)
-{
-    static char lastWord[100];
-
-    int cp = (int) strlen(cmdLine) - 1;
-    char word[100], *wordBegin;
-    char unambiguous[256];
-    const knownword_t* completeWord = NULL;
-    const knownword_t** matches = NULL;
-    uint numMatches = 0;
-
-    if(mode == 1)
-        cp = (int)complPos - 1;
-    if(cp < 0)
-        return 0;
-
-    memset(unambiguous, 0, sizeof(unambiguous));
-
-    // Skip over any whitespace behind the cursor.
-    while(cp > 0 && cmdLine[cp] == ' ')
-        cp--;
-
-    // Rewind the word pointer until space or a semicolon is found.
-    while(cp > 0 &&
-          cmdLine[cp - 1] != ' ' &&
-          cmdLine[cp - 1] != ';' &&
-          cmdLine[cp - 1] != '"')
-        cp--;
-
-    // Now cp is at the beginning of the word that needs completing.
-    strcpy(word, wordBegin = cmdLine + cp);
-
-    if(mode == 1)
-        word[complPos - cp] = 0; // Only check a partial word.
-
-    if(strlen(word) != 0)
-    {
-        matches = Con_CollectKnownWordsMatchingWord(word, WT_ANY, &numMatches);
-    }
-
-    // If this a new word; reset the matches iterator.
-    if(stricmp(word, lastWord))
-    {
-        lastCompletion = 0;
-        memcpy(lastWord, word, sizeof(lastWord));
-    }
-
-    if(!numMatches)
-        return 0;
-
-    // At this point we have at least one completion for the word.
-    if(mode == 1)
-    {
-        // Completion Mode 1: Cycle through the possible completions.
-        uint idx;
-
-        /// @note lastCompletion uses a 1-based index.
-        if(lastCompletion == 0 /* first completion attempt? */||
-           lastCompletion >= numMatches /* reached the end? */)
-            idx = 1;
-        else
-            idx = lastCompletion + 1;
-        lastCompletion = idx;
-
-        completeWord = matches[idx-1];
-    }
-    else
-    {
-        // Completion Mode 2: Print the possible completions
-        boolean printCompletions = (numMatches > 1? true : false);
-        const knownword_t** match;
-        boolean updated = false;
-
-        if(printCompletions)
-            Con_Printf("Completions:\n");
-
-        for(match = matches; *match; ++match)
-        {
-            const char* foundWord;
-
-            switch((*match)->type)
-            {
-            case WT_CVAR: {
-                cvar_t* cvar = (cvar_t*)(*match)->data;
-                AutoStr* foundName = CVar_ComposePath(cvar);
-                foundWord = Str_Text(foundName);
-                if(printCompletions)
-                    Con_PrintCVar(cvar, "  ");
-                break;
-              }
-            case WT_CCMD: {
-                ccmd_t* ccmd = (ccmd_t*)(*match)->data;
-                foundWord = ccmd->name;
-                if(printCompletions)
-                    Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s\n", foundWord);
-                break;
-              }
-            case WT_CALIAS: {
-                calias_t* calias = (calias_t*)(*match)->data;
-                foundWord = calias->name;
-                if(printCompletions)
-                    Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s == %s\n", foundWord, calias->command);
-                break;
-              }
-            case WT_GAME: {
-                Game *game = (Game *)(*match)->data;
-                foundWord = Str_Text(game->identityKey());
-                if(printCompletions)
-                    Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", foundWord);
-                break;
-              }
-            default:
-                Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
-                exit(1); // Unreachable.
-            }
-
-            if(!unambiguous[0])
-                strcpy(unambiguous, foundWord);
-            else
-                stramb(unambiguous, foundWord);
-
-            if(!updated)
-            {
-                completeWord = *match;
-                updated = true;
-            }
-        }
-    }
-
-    // Was a single match found?
-    if(numMatches == 1 || (mode == 1 && numMatches > 1))
-    {
-        const char* str;
-
-        switch(completeWord->type)
-        {
-        case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
-        case WT_CCMD:     str = ((ccmd_t*)completeWord->data)->name; break;
-        case WT_CVAR: {
-            AutoStr* foundName = CVar_ComposePath((cvar_t*)completeWord->data);
-            str = Str_Text(foundName);
-            break; }
-        case WT_GAME: str = Str_Text(reinterpret_cast<Game *>(completeWord->data)->identityKey()); break;
-        default:
-            Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
-            exit(1); // Unreachable.
-        }
-
-        if(wordBegin - cmdLine + strlen(str) < CMDLINE_SIZE)
-        {
-            strcpy(wordBegin, str);
-            cmdCursor = (uint) strlen(cmdLine);
-        }
-    }
-    else if(numMatches > 1)
-    {
-        // More than one match; only complete the unambiguous part.
-        if(wordBegin - cmdLine + strlen(unambiguous) < CMDLINE_SIZE)
-        {
-            strcpy(wordBegin, unambiguous);
-            cmdCursor = (uint) strlen(cmdLine);
-        }
-    }
-
-    free((void*)matches);
-    return numMatches;
-}
-#endif // __CLIENT__
 
 struct AnnotationWork
 {
@@ -1422,7 +960,7 @@ int DD_Execute(int silent, const char* command)
     return Con_Execute(CMDS_GAME, command, silent, false);
 }
 
-int Con_Execute(byte src, const char *command, int silent, boolean netCmd)
+int Con_Execute(byte src, const char *command, int silent, dd_bool netCmd)
 {
     int             ret;
 
@@ -1463,77 +1001,6 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
-#if 0
-//#ifdef __CLIENT__
-static const char* getCommandFromHistory(uint idx)
-{
-    if(idx < oldCmdsSize) return oldCmds[idx];
-    return NULL;
-}
-
-static void expandCommandHistory(void)
-{
-    if(!oldCmds || oldCmdsSize > oldCmdsMax)
-    {
-        if(!oldCmdsMax)
-            oldCmdsMax = 16;
-        else
-            oldCmdsMax *= 2;
-
-        oldCmds = (char**)realloc(oldCmds, oldCmdsMax * sizeof *oldCmds);
-        if(!oldCmds) Con_Error("expandCommandHistory: Failed on (re)allocation of %lu bytes.", (unsigned long) (oldCmdsMax * sizeof *oldCmds));
-    }
-}
-
-static void addCommandToHistory(const char* cmd)
-{
-    char** oldCmdAdr;
-    size_t cmdLength;
-
-    if(!cmd) return;
-
-    cmdLength = strlen(cmd);
-
-    ++oldCmdsSize;
-    expandCommandHistory();
-    oldCmdAdr = &oldCmds[oldCmdsSize-1];
-    *oldCmdAdr = (char*)malloc(cmdLength+1);
-    if(!*oldCmdAdr) Con_Error("addCommandToHistory: Failed on allocation of %lu bytes for new command.", (unsigned long) cmdLength);
-
-    memcpy(*oldCmdAdr, cmd, cmdLength);
-    (*oldCmdAdr)[cmdLength] = '\0';
-}
-
-static void processCmd(byte src)
-{
-    DD_ClearKeyRepeaters();
-
-    // Add the command line to the oldCmds buffer.
-    if(strlen(cmdLine) > 0)
-    {
-        addCommandToHistory(cmdLine);
-        ocPos = oldCmdsSize;
-    }
-
-    Con_Execute(src, cmdLine, false, false);
-}
-
-static void updateCmdLine(void)
-{
-    if(ocPos >= oldCmdsSize)
-    {
-        memset(cmdLine, 0, sizeof(cmdLine));
-    }
-    else
-    {
-        strncpy(cmdLine, getCommandFromHistory(ocPos), CMDLINE_SIZE);
-    }
-
-    cmdCursor = complPos = (uint) strlen(cmdLine);
-}
-#endif
-//#endif // __CLIENT__
-
 void Con_Open(int yes)
 {
 #ifdef __CLIENT__
@@ -1551,429 +1018,25 @@ void Con_Open(int yes)
 
 #ifdef __SERVER__
     DENG_UNUSED(yes);
-#endif
-
-    /*
-    if(isDedicated)
-        yes = true;
-
-    Rend_ConsoleOpen(yes);
-    if(yes)
-    {
-        ConsoleActive = true;
-        ConsoleTime = 0;
-        bLineOff = 0;
-        memset(cmdLine, 0, sizeof(cmdLine));
-        cmdCursor = 0;
-    }
-    else
-    {
-        complPos = 0;
-        lastCompletion = 0;
-        ocPos = oldCmdsSize;
-        ConsoleActive = false;
-    }
-
-#ifdef __CLIENT__
-    B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), yes);
-#endif*/
+#endif  
 }
 
-#if 0
-void Con_Resize(void)
-{
-    if(!ConsoleInited) return;
-    Con_ResizeHistoryBuffer();
-    Rend_ConsoleResize(true/*force*/);
-}
-
-#ifdef __CLIENT__
-static void insertOnCommandLine(byte ch)
-{
-    size_t len = strlen(cmdLine);
-
-    // If not in insert mode, push the rest of the command-line forward.
-    if(!cmdInsMode)
-    {
-        assert(len <= CMDLINE_SIZE);
-        if(len == CMDLINE_SIZE)
-            return; // Can't place character.
-
-        if(cmdCursor < len)
-        {
-            memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor, CMDLINE_SIZE - cmdCursor);
-
-            // The last char is always zero, though.
-            cmdLine[CMDLINE_SIZE] = 0;
-        }
-    }
-
-    cmdLine[cmdCursor] = ch;
-    if(cmdCursor < CMDLINE_SIZE)
-    {
-        ++cmdCursor;
-        // Do we need to replace the terminator?
-        if(cmdCursor == len + 1)
-            cmdLine[cmdCursor] = 0;
-    }
-    complPos = cmdCursor;
-}
-#endif
-
-boolean Con_Responder(const ddevent_t* ev)
-{
-#ifdef __CLIENT__
-    // The console is only interested in keyboard toggle events.
-    if(!IS_KEY_TOGGLE(ev))
-        return false;
-
-    if(App_GameLoaded())
-    {
-        // Special console key: Shift-Escape opens the Control Panel.
-        if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(ev, DDKEY_ESCAPE))
-        {
-            Con_Execute(CMDS_DDAY, "panel", true, false);
-            return true;
-        }
-
-        if(!ConsoleActive)
-        {
-            // We are only interested in the activation key (without Shift).
-            if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey) && !shiftDown)
-            {
-                Con_Open(true);
-                return true;
-            }
-            return false;
-        }
-    }
-    else if(!ConsoleActive)
-    {
-        // Any key will open the console.
-        if(!App_GameLoaded() && IS_TOGGLE_DOWN(ev))
-        {
-            Con_Open(true);
-            return true;
-        }
-        return false;
-    }
-
-    // All keyups are eaten by the console.
-    if(IS_TOGGLE_UP(ev))
-    {
-        if(!shiftDown && conInputLock)
-            conInputLock = false; // Release the lock.
-        return true;
-    }
-
-    // We only want keydown events.
-    if(!IS_KEY_PRESS(ev))
-        return false;
-
-    // In this case the console is active and operational.
-    // Check the shutdown key.
-    if(!conInputLock)
-    {
-        if(ev->toggle.id == consoleActiveKey)
-        {
-            if(altDown) // Alt-Tilde to fullscreen and halfscreen.
-            {
-                Rend_ConsoleToggleFullscreen();
-                return true;
-            }
-            if(!shiftDown)
-            {
-                Con_Open(false);
-                return true;
-            }
-        }
-        else
-        {
-            switch(ev->toggle.id)
-            {
-            case DDKEY_ESCAPE:
-                // Hitting Escape in the console closes it.
-                Con_Open(false);
-                return false; // Let the menu know about this.
-
-            case DDKEY_PGUP:
-                if(shiftDown)
-                {
-                    Rend_ConsoleMove(-3);
-                    return true;
-                }
-                break;
-
-            case DDKEY_PGDN:
-                if(shiftDown)
-                {
-                    Rend_ConsoleMove(3);
-                    return true;
-                }
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
-
-    switch(ev->toggle.id)
-    {
-    case DDKEY_UPARROW:
-        if(conInputLock)
-            break;
-
-        if(ocPos != 0)
-            ocPos--;
-        // Update the command line.
-        updateCmdLine();
-        return true;
-
-    case DDKEY_DOWNARROW:
-        if(conInputLock)
-            break;
-
-        if(ocPos < oldCmdsSize)
-            ocPos++;
-
-        updateCmdLine();
-        return true;
-
-    case DDKEY_PGUP: {
-        uint num;
-
-        if(conInputLock)
-            break;
-
-        num = CBuffer_NumLines(histBuf);
-        if(num > 0)
-        {
-            bLineOff = MIN_OF(bLineOff + 3, num - 1);
-        }
-        return true;
-      }
-    case DDKEY_PGDN:
-        if(conInputLock)
-            break;
-
-        bLineOff = MAX_OF((int)bLineOff - 3, 0);
-        return true;
-
-    case DDKEY_END:
-        if(conInputLock)
-            break;
-        bLineOff = 0;
-        return true;
-
-    case DDKEY_HOME:
-        if(conInputLock)
-            break;
-        bLineOff = CBuffer_NumLines(histBuf);
-        if(bLineOff != 0)
-            bLineOff--;
-        return true;
-
-    case DDKEY_RETURN:
-    case DDKEY_ENTER:
-        if(conInputLock)
-            break;
-
-        // Return to the bottom.
-        bLineOff = 0;
-
-        // Print the command line with yellow text.
-        Con_FPrintf(CPF_YELLOW, ">%s\n", cmdLine);
-        // Process the command line.
-        processCmd(CMDS_CONSOLE);
-        // Clear it.
-        memset(cmdLine, 0, sizeof(cmdLine));
-        cmdCursor = 0;
-        complPos = 0;
-        Rend_ConsoleCursorResetBlink();
-        return true;
-
-    case DDKEY_INS:
-        if(conInputLock)
-            break;
-
-        cmdInsMode = !cmdInsMode; // Toggle text insert mode.
-        return true;
-
-    case DDKEY_DEL:
-        if(conInputLock)
-            break;
-
-        if(cmdLine[cmdCursor] != 0)
-        {
-            memmove(cmdLine + cmdCursor, cmdLine + cmdCursor + 1,
-                    CMDLINE_SIZE - cmdCursor + 1);
-            complPos = cmdCursor;
-            Rend_ConsoleCursorResetBlink();
-        }
-        return true;
-
-    case DDKEY_BACKSPACE:
-        if(conInputLock)
-            break;
-
-        if(cmdCursor > 0)
-        {
-            memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor, CMDLINE_SIZE + 1 - cmdCursor);
-            cmdCursor--;
-            complPos = cmdCursor;
-            Rend_ConsoleCursorResetBlink();
-        }
-        return true;
-
-    case DDKEY_TAB:
-        if(cmdLine[0] != 0)
-        {
-            int mode;
-
-            if(shiftDown) // one time toggle of completion mode.
-            {
-                mode = (conCompMode == 0)? 1 : 0;
-                conInputLock = true; // prevent most user input.
-            }
-            else
-            {
-                mode = conCompMode;
-            }
-
-            // Attempt to complete the word.
-            completeWord(mode);
-            if(0 == mode)
-                bLineOff = 0;
-            Rend_ConsoleCursorResetBlink();
-        }
-        return true;
-
-    case DDKEY_LEFTARROW:
-        if(conInputLock)
-            break;
-
-        if(cmdCursor > 0)
-        {
-            if(shiftDown)
-                cmdCursor = 0;
-            else
-                cmdCursor--;
-        }
-        complPos = cmdCursor;
-        Rend_ConsoleCursorResetBlink();
-        break;
-
-    case DDKEY_RIGHTARROW:
-        if(conInputLock)
-            break;
-
-        if(cmdCursor < CMDLINE_SIZE)
-        {
-            if(cmdLine[cmdCursor] == 0)
-            {
-                if(oldCmdsSize != 0 && ocPos > 0)
-                {
-                    const char* oldCmd = getCommandFromHistory(ocPos - 1);
-                    size_t oldCmdLength = (oldCmd? strlen(oldCmd) : 0);
-                    if(oldCmd && cmdCursor < oldCmdLength)
-                    {
-                        cmdLine[cmdCursor] = oldCmd[cmdCursor];
-                        cmdCursor++;
-                    }
-                }
-            }
-            else
-            {
-                if(shiftDown)
-                    cmdCursor = (uint) strlen(cmdLine);
-                else
-                    cmdCursor++;
-            }
-        }
-
-        complPos = cmdCursor;
-        Rend_ConsoleCursorResetBlink();
-        break;
-
-    case DDKEY_F5:
-        if(conInputLock)
-            break;
-
-        Con_Execute(CMDS_DDAY, "clear", true, false);
-        break;
-
-    default: { // Check for a character.
-        int i;
-
-        if(conInputLock)
-            break;
-
-        if(ev->toggle.id == 'c' && altDown) // Alt+C: clear the current cmdline
-        {
-            /// @todo  Make this a binding?
-            memset(cmdLine, 0, sizeof(cmdLine));
-            cmdCursor = 0;
-            complPos = 0;
-            Rend_ConsoleCursorResetBlink();
-            return true;
-        }
-
-        if(ev->toggle.text[0])
-        {
-            // Insert any text specified in the event.
-            for(i = 0; ev->toggle.text[i]; ++i)
-            {
-                insertOnCommandLine(ev->toggle.text[i]);
-            }
-
-            Rend_ConsoleCursorResetBlink();
-        }
-        return true;
-
-#if 0 // old mapping
-        ch = ev->toggle.id;
-        ch = DD_ModKey(ch);
-        if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
-            return true;
-#endif
-    }}
-#else
-    DENG_UNUSED(ev);
-#endif // __CLIENT__
-    // The console is very hungry for keys...
-    return true;
-}
-#endif
-
-void Con_PrintRuler(void)
-{
-    /*
-    if(!ConsoleInited || ConsoleSilent)
-        return;
-
-    CBuffer_Write(histBuf, CBLF_RULER, NULL);
-
-    if(consoleDump)
-    {
-    */
-
-    LogBuffer_Msg(_E(R) "\n");
-
-    //}
-}
-
+/*
 /// @param flags  @ref consolePrintFlags
 static void conPrintf(int flags, const char* format, va_list args)
 {
+    DENG_UNUSED(flags);
+
 #ifdef __SERVER__
     const char* text = 0;
 #endif
 
     if(format && format[0])
     {
-        if(prbuff == NULL)
+        if(!prbuff)
+        {
             prbuff = (char *) M_Malloc(PRBUFF_SIZE);
+        }
 
         // Format the message to prbuff.
         dd_vsnprintf(prbuff, PRBUFF_SIZE, format, args);
@@ -1982,10 +1045,7 @@ static void conPrintf(int flags, const char* format, va_list args)
         text = prbuff;
 #endif
 
-        if(consoleDump)
-        {
-            LogBuffer_Msg(prbuff);
-        }
+        LOG_MSG("") << prbuff;
     }
 
 #ifdef __SERVER__
@@ -1998,142 +1058,14 @@ static void conPrintf(int flags, const char* format, va_list args)
             Sv_SendText(netRemoteUser, flags | SV_CONSOLE_PRINT_FLAGS, text);
     }
 #endif
-
-    /*
-    if(!isDedicated && !novideo)
-    {
-        int cblFlags = 0;
-
-        // Translate print flags:
-        if(flags & CPF_BLACK)   cblFlags |= CBLF_BLACK;
-        if(flags & CPF_BLUE)    cblFlags |= CBLF_BLUE;
-        if(flags & CPF_GREEN)   cblFlags |= CBLF_GREEN;
-        if(flags & CPF_CYAN)    cblFlags |= CBLF_CYAN;
-        if(flags & CPF_RED)     cblFlags |= CBLF_RED;
-        if(flags & CPF_MAGENTA) cblFlags |= CBLF_MAGENTA;
-        if(flags & CPF_YELLOW)  cblFlags |= CBLF_YELLOW;
-        if(flags & CPF_WHITE)   cblFlags |= CBLF_WHITE;
-        if(flags & CPF_LIGHT)   cblFlags |= CBLF_LIGHT;
-        if(flags & CPF_CENTER)  cblFlags |= CBLF_CENTER;
-
-        CBuffer_Write(histBuf, cblFlags, text);
-
-        if(consoleSnapBackOnPrint)
-        {
-            // Now that something new has been printed, it will be shown.
-            bLineOff = 0;
-        }
-    }*/
 }
-
-void Con_Printf(const char* format, ...)
-{
-    va_list args;
-    if(!ConsoleInited || ConsoleSilent)
-        return;
-    if(!format || !format[0])
-        return;
-    va_start(args, format);
-    conPrintf(CPF_WHITE, format, args);
-    va_end(args);
-}
-
-void Con_FPrintf(int flags, const char* format, ...)
-{
-    if(!ConsoleInited || ConsoleSilent)
-        return;
-
-    if(!format || !format[0])
-        return;
-
-    {va_list args;
-    va_start(args, format);
-    conPrintf(flags, format, args);
-    va_end(args);}
-}
-
-static void printListPath(const ddstring_t* path, int flags, int index)
-{
-    assert(path);
-    if(flags & PPF_TRANSFORM_PATH_PRINTINDEX)
-        Con_Printf("%i: ", index);
-    Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(path)) : Str_Text(path));
-}
-
-void Con_PrintPathList4(const char* pathList, char delimiter, const char* separator, int flags)
-{
-    assert(pathList && pathList[0]);
-    {
-    const char* p = pathList;
-    ddstring_t path;
-    int n = 0;
-    Str_Init(&path);
-    while((p = Str_CopyDelim2(&path, p, delimiter, CDF_OMIT_DELIMITER)))
-    {
-        printListPath(&path, flags, n++);
-        if(separator && !(flags & PPF_MULTILINE) && p && p[0])
-            Con_Printf("%s", separator);
-        if(flags & PPF_MULTILINE)
-            Con_Printf("\n");
-    }
-    if(Str_Length(&path) != 0)
-    {
-        printListPath(&path, flags, n++);
-        if(flags & PPF_MULTILINE)
-            Con_Printf("\n");
-    }
-    Str_Free(&path);
-    }
-}
-
-void Con_PrintPathList3(const char* pathList, char delimiter, const char* separator)
-{
-    Con_PrintPathList4(pathList, delimiter, separator, DEFAULT_PRINTPATHFLAGS);
-}
-
-void Con_PrintPathList2(const char* pathList, char delimiter)
-{
-    Con_PrintPathList3(pathList, delimiter, " ");
-}
-
-void Con_PrintPathList(const char* pathList)
-{
-    Con_PrintPathList2(pathList, ';');
-}
-
-#undef Con_Message
-void Con_Message(char const *message, ...)
-{
-    if(!message[0]) return;
-
-    va_list argptr;
-    char *buffer = (char *) M_Malloc(PRBUFF_SIZE);
-    va_start(argptr, message);
-    dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
-    va_end(argptr);
-
-    // Ensure the message has a terminating new line character.
-    int messageLen = qstrlen(buffer);
-    if(messageLen && buffer[messageLen - 1] != '\n')
-        std::strcat(buffer, "\n");
-
-    // These messages are always dumped. If consoleDump is set,
-    // Con_Printf() will dump the message for us.
-    if(!consoleDump)
-    {
-        //printf("%s", buffer);
-        LogBuffer_Msg(buffer);
-    }
-
-    // Also print in the console.
-    Con_Printf("%s", buffer);
-
-    M_Free(buffer);
-}
+*/
 
 void Con_Error(char const *error, ...)
 {
-    static boolean errorInProgress = false;
+    LogBuffer_Flush();
+
+    static dd_bool errorInProgress = false;
 
     //int i, numBufLines;
     char buff[2048], err[256];
@@ -2172,26 +1104,11 @@ void Con_Error(char const *error, ...)
     va_start(argptr, error);
     dd_vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
-    //fprintf(outFile, "%s\n", err);
-    LogBuffer_Msg(err);
-    LogBuffer_Msg("\n");
+
+    LOG_CRITICAL("") << err;
+    LogBuffer_Flush();
 
     strcpy(buff, "");
-    /*
-    if(histBuf != NULL)
-    {
-        // Flush anything still in the write buffer.
-        CBuffer_Flush(histBuf);
-        numBufLines = CBuffer_NumLines(histBuf);
-        for(i = 5; i > 1; i--)
-        {
-            const cbline_t* cbl = CBuffer_GetLine(histBuf, numBufLines - i);
-            if(!cbl || !cbl->text) continue;
-            strcat(buff, cbl->text);
-            strcat(buff, "\n");
-        }
-    }
-    */
     strcat(buff, "\n");
     strcat(buff, err);
 
@@ -2253,7 +1170,7 @@ void Con_AbnormalShutdown(char const *message)
 static void Con_Alias(char *aName, char *command)
 {
     calias_t *cal = Con_FindAlias(aName);
-    boolean remove = false;
+    dd_bool remove = false;
 
     // Will we remove this alias?
     if(command == NULL)
@@ -2306,51 +1223,27 @@ D_CMD(Help)
 #endif
 */
 
-    /// @todo These belong in libgui (e.g., ddkey.h).
-#ifdef MACOSX
-#  define CONTROL_KEY   "\u2318"
-#  define SHIFT_KEY     "\u21e7"
-#  define UP_ARROW      "\u2191"
-#  define DOWN_ARROW    "\u2193"
-#  define UP_DOWN_ARROW UP_ARROW " / " DOWN_ARROW
-#elif UNIX
-#  define CONTROL_KEY   "Ctrl-"
-#  define SHIFT_KEY     "\u21e7"
-#  define UP_ARROW      "\u2191"
-#  define DOWN_ARROW    "\u2193"
-#  define UP_DOWN_ARROW UP_ARROW " / " DOWN_ARROW
-#else
-#  define CONTROL_KEY   "Ctrl-"
-#  define SHIFT_KEY     "Shift-"
-#  define UP_ARROW      "Up Arrow"
-#  define DOWN_ARROW    "Down Arrow"
-#  define UP_DOWN_ARROW "Up/Down Arrow"
-#endif
-
-    //Con_PrintRuler();
-
-    LOG_MSG(_E(1) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
+    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
 
 #define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
 
 #ifdef __CLIENT__
-    LOG_MSG(_E(D) "Keys:" _E(.))
-            << TABBED(SHIFT_KEY "Esc", "Open the taskbar and console")
+    LOG_SCR_MSG(_E(D) "Keys:" _E(.))
+            << TABBED(DENG2_CHAR_SHIFT_KEY "Esc", "Open the taskbar and console")
+            << TABBED("Tab", "Autocomplete the word at the cursor")
+            << TABBED(DENG2_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
             << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
-            << TABBED(SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
-            << TABBED("F5", "Clear the console message history")
+            << TABBED(DENG2_CHAR_SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
             << TABBED("Home", "Move the cursor to the start of the command line")
             << TABBED("End", "Move the cursor to the end of the command line")
-            << TABBED("Tab", "Attempt autocompletion of the last word on the input line")
-            << TABBED(UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
-            << TABBED(CONTROL_KEY "K", "Clear everything on the line right of the cursor position");
+            << TABBED(DENG2_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position")
+            << TABBED("F5", "Clear the console message history");
 #endif
-    LOG_MSG(_E(D) "Getting started:");
-    LOG_MSG("  " _E(>) "Enter " _E(b) "help (what)" _E(.) " for information about " _E(l) "(what)");
-    LOG_MSG("  " _E(>) "Enter " _E(b) "listcmds" _E(.) " to list available commands");
-    LOG_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list installed games and their status");
-    LOG_MSG("  " _E(>) "Enter " _E(b) "listvars" _E(.) " to list available variables");
-    //Con_PrintRuler();
+    LOG_SCR_MSG(_E(D) "Getting started:");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "help (what)" _E(.) " for information about " _E(l) "(what)");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listcmds" _E(.) " to list available commands");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list installed games and their status");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listvars" _E(.) " to list available variables");
 
 #undef TABBED
 
@@ -2360,10 +1253,6 @@ D_CMD(Help)
 D_CMD(Clear)
 {
     DENG2_UNUSED3(src, argc, argv);
-
-    /*
-    CBuffer_Clear(histBuf);
-    bLineOff = 0;*/
 
 #ifdef __CLIENT__
     ClientWindow::main().console().clearLog();
@@ -2375,11 +1264,7 @@ D_CMD(Version)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    //Con_Printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
-    //Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
-    //Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
-
-    LOG_MSG(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
+    LOG_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
     LOG_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
             "\n" _E(l) "Project: " _E(.) _E(i) DENGPROJECT_HOMEURL);
 
@@ -2398,7 +1283,7 @@ D_CMD(Quit)
 #ifdef __CLIENT__
     if(DownloadDialog::isDownloadInProgress())
     {
-        Con_Message("Cannot quit while downloading update.");
+        LOG_WARNING("Cannot quit while downloading an update");
         ClientWindow::main().taskBar().openAndPauseGame();
         DownloadDialog::currentDownload().open();
         return false;
@@ -2429,16 +1314,17 @@ D_CMD(Alias)
 
     if(argc != 3 && argc != 2)
     {
-        Con_Printf("Usage: %s (alias) (cmd)\n", argv[0]);
-        Con_Printf("Example: alias bigfont \"font size 3\".\n");
-        Con_Printf("Use %%1-%%9 to pass the alias arguments to the command.\n");
+        LOG_SCR_NOTE("Usage: %s (alias) (cmd)") << argv[0];
+        LOG_SCR_MSG("Example: alias bigfont \"font size 3\"");
+        LOG_SCR_MSG("Use %%1-%%9 to pass the alias arguments to the command.");
         return true;
     }
 
     Con_Alias(argv[1], argc == 3 ? argv[2] : NULL);
     if(argc != 3)
-        Con_Printf("Alias '%s' deleted.\n", argv[1]);
-
+    {
+        LOG_SCR_MSG("Alias '%s' deleted") << argv[1];
+    }
     return true;
 }
 
@@ -2450,7 +1336,7 @@ D_CMD(Parse)
 
     for(i = 1; i < argc; ++i)
     {
-        Con_Printf("Parsing %s.\n", argv[i]);
+        LOG_SCR_MSG("Parsing \"%s\"") << argv[i];
         Con_ParseCommands(argv[i]);
     }
     return true;
@@ -2495,15 +1381,12 @@ D_CMD(Echo)
 
     for(i = 1; i < argc; ++i)
     {
-        Con_Printf("%s\n", argv[i]);
-#if _DEBUG
-        printf("%s\n", argv[i]);
-#endif
+        LOG_MSG("%s") << argv[i];
     }
     return true;
 }
 
-static boolean cvarAddSub(const char* name, float delta, boolean force)
+static dd_bool cvarAddSub(const char* name, float delta, dd_bool force)
 {
     cvar_t* cvar = Con_FindVariable(name);
     float val;
@@ -2511,13 +1394,13 @@ static boolean cvarAddSub(const char* name, float delta, boolean force)
     if(!cvar)
     {
         if(name && name[0])
-            Con_Printf("%s is not a known (cvar) name.\n", name);
+            LOG_SCR_ERROR("%s is not a known cvar") << name;
         return false;
     }
 
     if(cvar->flags & CVF_READ_ONLY)
     {
-        Con_Printf("%s (cvar) is read-only. It can not be changed (not even with force).\n", name);
+        CVar_PrintReadOnlyWarning(cvar);
         return false;
     }
 
@@ -2540,13 +1423,13 @@ D_CMD(AddSub)
 {
     DENG2_UNUSED(src);
 
-    boolean             force = false;
+    dd_bool             force = false;
     float               delta = 0;
 
     if(argc <= 2)
     {
-        Con_Printf("Usage: %s (cvar) (val) (force)\n", argv[0]);
-        Con_Printf("Use force to make cvars go off limits.\n");
+        LOG_SCR_NOTE("Usage: %s (cvar) (val) (force)") << argv[0];
+        LOG_SCR_MSG("Use force to make cvars go off limits.");
         return true;
     }
     if(argc >= 4)
@@ -2568,14 +1451,14 @@ D_CMD(IncDec)
 {
     DENG2_UNUSED(src);
 
-    boolean force = false;
+    dd_bool force = false;
     cvar_t* cvar;
     float val;
 
     if(argc == 1)
     {
-        Con_Printf("Usage: %s (cvar) (force)\n", argv[0]);
-        Con_Printf("Use force to make cvars go off limits.\n");
+        LOG_SCR_NOTE("Usage: %s (cvar) (force)") << argv[0];
+        LOG_SCR_MSG("Use force to make cvars go off limits.");
         return true;
     }
     if(argc >= 3)
@@ -2588,7 +1471,7 @@ D_CMD(IncDec)
 
     if(cvar->flags & CVF_READ_ONLY)
     {
-        Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force)\n", argv[1]);
+        LOG_SCR_ERROR("%s (cvar) is read-only, it cannot be changed (even with force)") << argv[1];
         return false;
     }
 
@@ -2638,14 +1521,13 @@ D_CMD(If)
     };
     uint        i, oper;
     cvar_t     *var;
-    boolean     isTrue = false;
+    dd_bool     isTrue = false;
 
     if(argc != 5 && argc != 6)
     {
-        Con_Printf("Usage: %s (cvar) (operator) (value) (cmd) (else-cmd)\n",
-                   argv[0]);
-        Con_Printf("Operator must be one of: not, =, >, <, >=, <=.\n");
-        Con_Printf("The (else-cmd) can be omitted.\n");
+        LOG_SCR_NOTE("Usage: %s (cvar) (operator) (value) (cmd) (else-cmd)") << argv[0];
+        LOG_SCR_MSG("Operator must be one of: not, =, >, <, >=, <=");
+        LOG_SCR_MSG("The (else-cmd) can be omitted.");
         return true;
     }
 
@@ -2706,8 +1588,8 @@ D_CMD(If)
         }
         break;
     default:
-        Con_Error("CCmdIf: Invalid cvar type %i.", (int)var->type);
-        exit(1); // Unreachable.
+        DENG_ASSERT(!"CCmdIf: Invalid cvar type");
+        return false;
     }
 
     // Should the command be executed?
@@ -2764,114 +1646,12 @@ D_CMD(TaskBar)
     return true;
 }
 
-#if 0
-D_CMD(Font)
+D_CMD(Tutorial)
 {
-    DENG2_UNUSED(src);
-
-    if(argc == 1 || argc > 3)
-    {
-        int listCount, i;
-        ddstring_t** list;
-
-        Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
-        Con_Printf("Commands: default, leading, name, size, tracking, xsize, ysize.\n");
-        Con_Printf("Names: ");
-        list = AppFonts().collectNames(&listCount);
-        for(i = 0; i < listCount-1; ++i)
-        {
-            Con_Printf("%s, ", Str_Text(list[i]));
-            Str_Delete(list[i]);
-        }
-        Con_Printf("%s.\n", Str_Text(list[i]));
-        Str_Delete(list[i]);
-        free(list);
-        Con_Printf("Size 1.0 is normal.\n");
-        return true;
-    }
-
-    if(!stricmp(argv[1], "default"))
-    {
-        de::Uri uri(R_ChooseFixedFont(), RC_NULL);
-        fontid_t newFont = App_Fonts().resolveUri(uri);
-        if(newFont)
-        {
-            Con_SetFont(newFont);
-            Con_SetFontScale(1, 1);
-            Con_SetFontLeading(1);
-            Con_SetFontTracking(0);
-        }
-        return true;
-    }
-
-    if(!stricmp(argv[1], "name") && argc == 3)
-    {
-        de::Uri uri(String(argv[2]), RC_NULL);
-        fontid_t newFont = App_Fonts().resolveUri(uri, true/*quiet please*/);
-        if(newFont)
-        {
-            de::Uri uri = App_Fonts().composeUri(newFont);
-            Con_SetFont(newFont);
-            if(!uri.scheme().compareWithoutCase("Game"))
-            {
-                Con_SetFontScale(1.5f, 2);
-                Con_SetFontLeading(1.25f);
-                Con_SetFontTracking(1);
-            }
-            return true;
-        }
-        Con_Printf("Unknown font '%s'\n", argv[2]);
-        return true;
-    }
-
-    if(argc == 3)
-    {
-        if(!stricmp(argv[1], "leading"))
-        {
-            Con_SetFontLeading(strtod(argv[2], NULL));
-        }
-        else if(!stricmp(argv[1], "tracking"))
-        {
-            Con_SetFontTracking(strtod(argv[2], NULL));
-        }
-        else
-        {
-            int axes = 0;
-
-            if(!stricmp(argv[1], "size"))       axes |= 0x1|0x2;
-            else if(!stricmp(argv[1], "xsize")) axes |= 0x1;
-            else if(!stricmp(argv[1], "ysize")) axes |= 0x2;
-
-            if(axes != 0)
-            {
-                float newScale[2] = { 1, 1 };
-                if(axes == 0x1 || axes == (0x1|0x2))
-                {
-                    newScale[0] = strtod(argv[2], NULL);
-                    if(newScale[0] <= 0)
-                        newScale[0] = 1;
-                }
-                if(axes == 0x2)
-                {
-                    newScale[1] = strtod(argv[2], NULL);
-                    if(newScale[1] <= 0)
-                        newScale[1] = 1;
-                }
-                else if(axes == (0x1|0x2))
-                {
-                    newScale[1] = newScale[0];
-                }
-
-                Con_SetFontScale(newScale[0], newScale[1]);
-            }
-        }
-
-        return true;
-    }
-
-    return false;
+    DENG2_UNUSED3(src, argc, argv);
+    ClientWindow::main().taskBar().showTutorial();
+    return true;
 }
-#endif
 
 #endif // __CLIENT__
 
@@ -2890,7 +1670,7 @@ D_CMD(DebugError)
 {
     DENG2_UNUSED3(src, argv, argc);
 
-    Con_Error("Fatal error.\n");
+    Con_Error("Fatal error!\n");
     return true;
 }
 
@@ -2924,14 +1704,7 @@ DENG_DECLARE_API(Con) =
     Con_SetUri2,
     Con_SetUri,
 
-    Con_Message,
-
-    Con_Printf,
-    Con_FPrintf,
-    Con_PrintRuler,
     Con_Error,
-
-    Con_SetPrintFilter,
 
     DD_Execute,
     DD_Executef,

@@ -1,6 +1,5 @@
-/**
- * @file d_netcl.h
- * Common code related to netgames (client-side). @ingroup client
+/** @file d_netcl.h  Common code related to netgames (client-side).
+ * @ingroup client
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -20,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __D_NETCL_H__
-#define __D_NETCL_H__
+#ifndef LIBCOMMON_D_NETCL_H
+#define LIBCOMMON_D_NETCL_H
 
 #include "d_net.h"
 
@@ -29,32 +28,56 @@
 extern "C" {
 #endif
 
-void            NetCl_UpdateGameState(Reader* msg);
-void            NetCl_PlayerSpawnPosition(Reader* msg);
-void            NetCl_UpdateTotalCounts(Reader *msg);
-void            NetCl_UpdatePlayerState(Reader* msg, int plrNum);
-void            NetCl_UpdatePlayerState2(Reader* msg, int plrNum);
-void            NetCl_UpdatePSpriteState(Reader* msg);
-void            NetCl_UpdateJumpPower(Reader* msg);
-void            NetCl_Intermission(Reader* msg);
-void            NetCl_LocalMobjState(Reader* msg);
-/*
-void            NetCl_Finale(int packetType, Reader* msg); // moved to engine
-*/
-void            NetCl_UpdatePlayerInfo(Reader* msg);
-void            NetCl_SaveGame(Reader* msg);
-void            NetCl_LoadGame(Reader* msg);
-void            NetCl_Paused(Reader* msg);
-void            NetCl_MobjImpulse(Reader* msg);
+void NetCl_UpdateGameState(Reader *msg);
 
-void            NetCl_SendPlayerInfo(void);
-void            NetCl_PlayerActionRequest(player_t* player, int actionType, int actionParam);
-void            NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage);
-void            NetCl_CheatRequest(const char* command);
-void            NetCl_FloorHitRequest(player_t* player);
+void NetCl_PlayerSpawnPosition(Reader *msg);
+
+void NetCl_UpdateTotalCounts(Reader *msg);
+
+void NetCl_UpdatePlayerState(Reader *msg, int plrNum);
+
+void NetCl_UpdatePlayerState2(Reader *msg, int plrNum);
+
+void NetCl_UpdatePSpriteState(Reader *msg);
+
+/**
+ * Set the jump power used in client mode.
+ */
+void NetCl_UpdateJumpPower(Reader *msg);
+
+void NetCl_Intermission(Reader *msg);
+
+void NetCl_LocalMobjState(Reader *msg);
+
+/**
+ * Clients have other players' info, but it's only "FYI"; they don't really need it.
+ */
+void NetCl_UpdatePlayerInfo(Reader *msg);
+
+void NetCl_SaveGame(Reader *msg);
+
+void NetCl_LoadGame(Reader *msg);
+
+void NetCl_Paused(Reader *msg);
+
+void NetCl_MobjImpulse(Reader *msg);
+
+void NetCl_SendPlayerInfo(void);
+
+void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam);
+
+void NetCl_DamageRequest(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage);
+
+/**
+ * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing netgame cheating,
+ * the cheat will be executed on the server.
+ */
+void NetCl_CheatRequest(char const *command);
+
+void NetCl_FloorHitRequest(player_t *player);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif
+#endif // LIBCOMMON_D_NETCL_H

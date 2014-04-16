@@ -18,13 +18,11 @@
 
 #include "de_platform.h"
 #include "ui/widgets/busywidget.h"
-#include "ui/widgets/progresswidget.h"
 #include "ui/busyvisual.h"
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
 #include "gl/gl_main.h"
 #include "render/r_main.h"
-#include "GuiRootWidget"
 #include "busymode.h"
 #include "sys_system.h"
 #include "con_main.h"
@@ -32,6 +30,8 @@
 #include <de/concurrency.h>
 #include <de/Drawable>
 #include <de/GLFramebuffer>
+#include <de/GuiRootWidget>
+#include <de/ProgressWidget>
 
 using namespace de;
 
@@ -172,7 +172,7 @@ void BusyWidget::renderTransitionFrame()
     if(d->haveTransitionFrame() && d->frameDrawnAt.since() < TRANSITION_FRAME_VALID_DURATION)
     {
         // We already have a valid frame, no need to render again.
-        LOG_DEBUG("Skipping rendering of transition frame (got one already)");
+        LOGDEV_GL_VERBOSE("Skipping rendering of transition frame (got one already)");
         return;
     }
 
@@ -187,7 +187,7 @@ void BusyWidget::renderTransitionFrame()
 
     Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
 
-    LOG_DEBUG("Rendering transition frame, size ") << grabRect.size().asText();
+    LOGDEV_GL_VERBOSE("Rendering transition frame, size ") << grabRect.size().asText();
 
     /*
     if(BusyMode_IsTransitionAnimated())
@@ -214,7 +214,7 @@ void BusyWidget::renderTransitionFrame()
     //d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
     //d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
 
-    root().window().drawGameContent();
+    root().window().as<ClientWindow>().drawGameContent();
 
     GLState::pop().apply();
 
@@ -225,7 +225,7 @@ void BusyWidget::releaseTransitionFrame()
 {
     if(d->haveTransitionFrame())
     {
-        LOG_DEBUG("Releasing transition frame");
+        LOGDEV_GL_VERBOSE("Releasing transition frame");
         d->transitionFrame.glDeinit();
     }
 }

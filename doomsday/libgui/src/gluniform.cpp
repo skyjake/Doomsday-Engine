@@ -3,16 +3,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -71,7 +71,7 @@ DENG2_PIMPL(GLUniform)
 
     ~Instance()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->uniformDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self);
 
         switch(type)
         {
@@ -90,7 +90,7 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case Sampler2D:
-            if(value.tex) value.tex->audienceForDeletion -= this;
+            if(value.tex) value.tex->audienceForDeletion() -= this;
             break;
 
         default:
@@ -141,7 +141,7 @@ DENG2_PIMPL(GLUniform)
 
     void markAsChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(ValueChange, i)
+        DENG2_FOR_PUBLIC_AUDIENCE2(ValueChange, i)
         {
             i->uniformValueChanged(self);
         }
@@ -158,7 +158,13 @@ DENG2_PIMPL(GLUniform)
             }
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(ValueChange)
 };
+
+DENG2_AUDIENCE_METHOD(GLUniform, Deletion)
+DENG2_AUDIENCE_METHOD(GLUniform, ValueChange)
 
 GLUniform::GLUniform(char const *nameInShader, Type uniformType)
     : d(new Instance(this, QLatin1String(nameInShader), uniformType))
@@ -280,12 +286,12 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
     if(d->value.tex != texture)
     {
         // We will observe the texture this uniform refers to.
-        if(d->value.tex) d->value.tex->audienceForDeletion -= d;
+        if(d->value.tex) d->value.tex->audienceForDeletion() -= d;
 
         d->value.tex = texture;
         d->markAsChanged();
 
-        if(d->value.tex) d->value.tex->audienceForDeletion += d;
+        if(d->value.tex) d->value.tex->audienceForDeletion() += d;
     }
     return *this;
 }
@@ -393,7 +399,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
     {
         // Uniform not in the program.
         LOG_AS("applyInProgram");
-        LOG_DEBUG("'%s' not in the program") << d->name.constData();
+        LOGDEV_GL_WARNING("'%s' not in the program") << d->name.constData();
         return;
     }
 

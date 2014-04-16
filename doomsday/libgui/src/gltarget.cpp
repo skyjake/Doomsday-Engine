@@ -6,16 +6,16 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -161,15 +161,15 @@ DENG2_OBSERVES(Asset, Deletion)
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-        LOG_DEBUG("Creating FBO %i") << fbo;
+        LOG_GL_XVERBOSE("Creating FBO %i") << fbo;
     }
 
     void attachTexture(GLTexture &tex, GLenum attachment, int level = 0)
     {
         DENG2_ASSERT(tex.isReady());
 
-        LOG_TRACE("glTex %i (level %i) => FBO %i attachment %i (0x%x)")
-                << tex.glName() << level << fbo << attachmentToId(attachment) << attachment;
+        LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i")
+                << fbo << tex.glName() << level << attachmentToId(attachment);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
         LIBGUI_ASSERT_GL_OK();
@@ -186,12 +186,25 @@ DENG2_OBSERVES(Asset, Deletion)
 
         if(sampleCount > 1)
         {
-            LOG_DEBUG("FBO %i: renderbuffer %ix%i is multisampled with %i samples => attachment %i")
-                    << fbo << size.x << size.y << sampleCount
-                    << attachmentToId(attachment);
+#ifdef GL_NV_framebuffer_multisample_coverage
+            if(GLInfo::extensions().NV_framebuffer_multisample_coverage)
+            {
+                LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i CSAA samples => attachment %i")
+                        << fbo << size.x << size.y << sampleCount
+                        << attachmentToId(attachment);
 
-            DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
-            glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+                glRenderbufferStorageMultisampleCoverageNV(GL_RENDERBUFFER, 8, sampleCount, type, size.x, size.y);
+            }
+            else
+#endif
+            {
+                LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i samples => attachment %i")
+                        << fbo << size.x << size.y << sampleCount
+                        << attachmentToId(attachment);
+
+                DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
+                glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+            }
         }
         else
         {
@@ -238,14 +251,14 @@ DENG2_OBSERVES(Asset, Deletion)
         if(flags.testFlag(Color) && !textureAttachment.testFlag(Color))
         {
             /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
-            LOG_DEBUG("FBO %i: color renderbuffer %s") << fbo << size.asText();
+            LOG_GL_VERBOSE("FBO %i: color renderbuffer %s") << fbo << size.asText();
             attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
 
         if(flags.testFlag(DepthStencil) && (!texture || textureAttachment == Color))
         {
             // We can use a combined depth/stencil buffer.
-            LOG_DEBUG("FBO %i: depth+stencil renderbuffer %s") << fbo << size.asText();
+            LOG_GL_VERBOSE("FBO %i: depth+stencil renderbuffer %s") << fbo << size.asText();
             attachRenderbuffer(DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
         }
         else
@@ -253,12 +266,12 @@ DENG2_OBSERVES(Asset, Deletion)
             // Separate depth and stencil, then.
             if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
             {
-                LOG_DEBUG("FBO %i: depth renderbuffer %s") << fbo << size.asText();
+                LOG_GL_VERBOSE("FBO %i: depth renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
             }
             if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
-                LOG_DEBUG("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
+                LOG_GL_VERBOSE("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
             }
         }
@@ -335,7 +348,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
         if(status != GL_FRAMEBUFFER_COMPLETE)
         {
-            self.setState(NotReady);
+            releaseAndReset();
 
             throw ConfigError("GLTarget::validate",
                 status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT? "Incomplete attachments" :
@@ -363,7 +376,7 @@ DENG2_OBSERVES(Asset, Deletion)
 #ifdef _DEBUG
         if(!flags.testFlag(Changed))
         {
-            qDebug() << "GLTarget: " << fbo << "being updated from proxy without Changed flag (!)";
+            //qDebug() << "GLTarget: " << fbo << "being updated from proxy without Changed flag (!)";
         }
 #endif
 
@@ -491,6 +504,7 @@ void GLTarget::configure(Flags const &attachment, GLTexture &texture, Flags cons
 
 void GLTarget::glBind() const
 {
+    LIBGUI_ASSERT_GL_OK();
     DENG2_ASSERT(isReady());
     if(!isReady()) return;
 
@@ -501,16 +515,18 @@ void GLTarget::glBind() const
     }
     else
     {
+        DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
+
         //qDebug() << "GLTarget: binding FBO" << d->fbo;
         glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
                               GL_DRAW_FRAMEBUFFER_EXT : GL_FRAMEBUFFER, d->fbo);
+        LIBGUI_ASSERT_GL_OK();
     }
 }
 
 void GLTarget::glRelease() const
 {
-    glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
-                          GL_DRAW_FRAMEBUFFER_EXT : GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // both read and write FBOs
 
     d->updateFromProxy();
 }

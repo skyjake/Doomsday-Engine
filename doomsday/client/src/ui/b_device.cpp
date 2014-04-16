@@ -66,8 +66,10 @@ void B_DestroyDeviceBindingList(dbinding_t* listRoot)
     }
 }
 
-boolean B_ParseDevice(dbinding_t* cb, const char* desc)
+dd_bool B_ParseDevice(dbinding_t* cb, const char* desc)
 {
+    LOG_AS("B_ParseEvent");
+
     AutoStr* str = AutoStr_NewStd();
     ddeventtype_t type;
 
@@ -134,7 +136,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         }
         else
         {
-            Con_Message("B_ParseEvent: Unrecognized \"%s\".", desc);
+            LOG_INPUT_WARNING("Unrecognized \"%s\"") << desc;
             return false;
         }
     }
@@ -142,7 +144,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
     return true;
 }
 
-boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
+dd_bool B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
 {
     AutoStr* str = AutoStr_NewStd();
 
@@ -241,19 +243,19 @@ void B_DestroyDeviceBinding(dbinding_t* cb)
 }
 
 void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset,
-                                 bcontext_t* controlClass, boolean allowTriggered)
+                                 bcontext_t* controlClass, dd_bool allowTriggered)
 {
     dbinding_t* cb;
     int         i;
-    boolean     skip;
+    dd_bool     skip;
     inputdev_t* dev;
     inputdevaxis_t* axis;
     float       devicePos;
     float       deviceOffset;
     uint        deviceTime;
     uint        nowTime = Timer_RealMilliseconds();
-    boolean     conflicted[NUM_CBD_TYPES] = { false, false, false };
-    boolean     appliedState[NUM_CBD_TYPES] = { false, false, false };
+    dd_bool     conflicted[NUM_CBD_TYPES] = { false, false, false };
+    dd_bool     appliedState[NUM_CBD_TYPES] = { false, false, false };
 
     *pos = 0;
     *relativeOffset = 0;

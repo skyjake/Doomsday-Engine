@@ -81,7 +81,7 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
     P_RecursiveSound(target, Mobj_Sector(emitter), 0);
 }
 
-boolean P_CheckMeleeRange(mobj_t* actor)
+dd_bool P_CheckMeleeRange(mobj_t* actor)
 {
     mobj_t* pl;
     coord_t dist, range;
@@ -111,7 +111,7 @@ boolean P_CheckMeleeRange(mobj_t* actor)
     return true;
 }
 
-boolean P_CheckMissileRange(mobj_t* actor)
+dd_bool P_CheckMissileRange(mobj_t* actor)
 {
     coord_t dist;
 
@@ -151,11 +151,11 @@ boolean P_CheckMissileRange(mobj_t* actor)
  *
  * @return                  @c false, if the move is blocked.
  */
-boolean P_Move(mobj_t *actor, boolean dropoff)
+dd_bool P_Move(mobj_t *actor, dd_bool dropoff)
 {
     coord_t pos[2], step[2];
     Line *ld;
-    boolean good;
+    dd_bool good;
 
     if(actor->moveDir == DI_NODIR)
         return false;
@@ -254,7 +254,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
  * If move is either clear or blocked only by a door, returns TRUE and sets...
  * If a door is in the way, an OpenDoor call is made to start it opening.
  */
-static boolean tryMoveMobj(mobj_t *actor)
+static dd_bool tryMoveMobj(mobj_t *actor)
 {
     // $dropoff_fix
     if(!P_Move(actor, false))
@@ -397,7 +397,7 @@ static int PIT_AvoidDropoff(Line *line, void *context)
  *
  * @return  @c true iff the direction was changed to avoid a drop off.
  */
-static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
+static dd_bool shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 {
     pit_avoiddropoff_params_t parm;
 
@@ -431,7 +431,7 @@ static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 static void newChaseDir(mobj_t *mobj)
 {
     vec2d_t chaseDir;
-    boolean avoiding;
+    dd_bool avoiding;
 
     DENG_ASSERT(mobj != 0);
 
@@ -461,7 +461,7 @@ typedef struct {
     coord_t             maxDistance;
     int                 minHealth;
     int                 compFlags;
-    boolean             checkLOS;
+    dd_bool             checkLOS;
     byte                randomSkip;
 } findmobjparams_t;
 
@@ -506,7 +506,7 @@ static int findMobj(thinker_t* th, void* context)
     return true; // Stop iteration.
 }
 
-boolean P_LookForMonsters(mobj_t* mo)
+dd_bool P_LookForMonsters(mobj_t* mo)
 {
     findmobjparams_t    params;
 
@@ -539,7 +539,7 @@ boolean P_LookForMonsters(mobj_t* mo)
  * If allaround is false, only look 180 degrees in front
  * returns true if a player is targeted
  */
-boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
+dd_bool P_LookForPlayers(mobj_t* actor, dd_bool allAround)
 {
     // If in single player and player is dead, look for monsters.
     if(!IS_NETGAME && players[0].health <= 0)
@@ -614,7 +614,8 @@ void C_DECL A_Chase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameSkill == SM_NIGHTMARE || cfg.fastMonsters)
+    if(G_Ruleset_Skill() == SM_NIGHTMARE ||
+       G_Ruleset_Fast())
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
@@ -653,7 +654,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE)
+        if(G_Ruleset_Skill() != SM_NIGHTMARE)
         {
             newChaseDir(actor);
         }
@@ -674,7 +675,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill != SM_NIGHTMARE && actor->moveCount))
+        if(!(G_Ruleset_Skill() != SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
@@ -906,7 +907,7 @@ void C_DECL A_ImpXDeath2(mobj_t* actor)
 /**
  * @return          @c true, if the chicken morphs.
  */
-boolean P_UpdateChicken(mobj_t* actor, int tics)
+dd_bool P_UpdateChicken(mobj_t* actor, int tics)
 {
     mobj_t* fog;
     coord_t pos[3];
@@ -1489,7 +1490,7 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
     else
     {
         mobj_t* mo;
-        boolean fixFloorFire = (!cfg.fixFloorFire && actor->floorClip > 0);
+        dd_bool fixFloorFire = (!cfg.fixFloorFire && actor->floorClip > 0);
 
         /**
          * Original Heretic bug:

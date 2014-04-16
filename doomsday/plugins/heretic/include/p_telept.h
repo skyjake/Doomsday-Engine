@@ -34,7 +34,7 @@
 
 #define TELEFOGHEIGHTF      (32)
 
-boolean         EV_Teleport(Line* line, int side, mobj_t* thing, boolean spawnFog);
+dd_bool         EV_Teleport(Line* line, int side, mobj_t* thing, dd_bool spawnFog);
 void            P_ArtiTele(player_t* player);
 
 #endif

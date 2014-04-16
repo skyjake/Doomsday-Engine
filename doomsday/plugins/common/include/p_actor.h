@@ -34,7 +34,7 @@ extern "C" {
  *                      the current gamemode).
  *                      Generally this should be @c false.
  */
-void P_MobjRemove(mobj_t *mo, boolean noRespawn);
+void P_MobjRemove(mobj_t *mo, dd_bool noRespawn);
 
 void P_RemoveAllPlayerMobjs(void);
 
@@ -78,19 +78,19 @@ void P_MobjClearSRVO(mobj_t *mo);
  */
 void P_MobjAngleSRVOTicker(mobj_t *mo);
 
-boolean P_MobjIsCamera(mobj_t const *mo);
+dd_bool P_MobjIsCamera(mobj_t const *mo);
 
 /**
  * Returns @c true iff @a mobj is currently "crunchable", i.e., it can be turned
  * into a pile of giblets if it no longer fits in the opening between floor and
  * ceiling planes.
  */
-boolean Mobj_IsCrunchable(mobj_t *mobj);
+dd_bool Mobj_IsCrunchable(mobj_t *mobj);
 
 /**
  * Returns @c true iff @a mobj is a dropped item.
  */
-boolean Mobj_IsDroppedItem(mobj_t *mobj);
+dd_bool Mobj_IsDroppedItem(mobj_t *mobj);
 
 /**
  * Returns the terraintype_t of the floor plane at the mobj's origin.

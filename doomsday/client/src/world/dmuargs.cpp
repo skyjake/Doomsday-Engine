@@ -131,7 +131,7 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
     }
     else if(dstValueType == DDVT_BOOL)
     {
-        boolean *d = (boolean *)dst;
+        dd_bool *d = (dd_bool *)dst;
 
         switch(valueType)
         {
@@ -382,7 +382,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if(srcValueType == DDVT_BOOL)
     {
-        boolean const *s = (boolean const *)src;
+        dd_bool const *s = (dd_bool const *)src;
 
         switch(valueType)
         {

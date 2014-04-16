@@ -54,7 +54,6 @@
 #include "Hand"
 #include "Surface"
 #include "world/map.h"
-#include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "Contact"
@@ -73,6 +72,7 @@
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/vissprite.h"
+#include "render/fx/bloom.h"
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
 #include "render/vr.h"
@@ -112,7 +112,7 @@ D_CMD(TexReset);
 
 int useBias; // Shadow Bias enabled? cvar
 
-boolean usingFog; // Is the fog in use?
+dd_bool usingFog; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
@@ -154,15 +154,15 @@ int filterUI   = 1;
 int texQuality = TEXQ_BEST;
 
 int ratioLimit = 0; // Zero if none.
-boolean fillOutlines = true;
+dd_bool fillOutlines = true;
 int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
 int filterSprites = true;
 int texMagMode = 1; // Linear.
 int texAniso = -1; // Use best.
 
-boolean noHighResTex = false;
-boolean noHighResPatches = false;
-boolean highResWithPWAD = false;
+dd_bool noHighResTex = false;
+dd_bool noHighResPatches = false;
+dd_bool highResWithPWAD = false;
 byte loadExtAlways = false; // Always check for extres (cvar)
 
 float texGamma = 0;
@@ -268,9 +268,9 @@ static bool firstBspLeaf; // No range checking for the first one.
 
 static void markLightGridForFullUpdate()
 {
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
         if(map.hasLightGrid())
             map.lightGrid().markAllForUpdate();
     }
@@ -284,22 +284,24 @@ static int unlinkMobjLumobjWorker(thinker_t *th, void *)
 
 static void unlinkMobjLumobjs()
 {
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
         map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
                                unlinkMobjLumobjWorker);
     }
 }
 
-static void fieldOfViewChanged() {
-    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
-        if (Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
+static void fieldOfViewChanged()
+{
+    if(vrCfg().mode() == VRConfig::OculusRift)
+    {
+        if(Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
             Con_SetFloat("rend-vr-rift-fovx", fieldOfView);
     }
     else
     {
-        if (Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
+        if(Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
             Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
     }
 }
@@ -323,7 +325,7 @@ static void texGammaChanged()
 {
     R_BuildTexGammaLut();
     GL_TexReset();
-    //LOG_MSG("Gamma correction set to %f.") << texGamma;
+    LOG_GL_MSG("Texture gamma correction set to %f") << texGamma;
 }
 
 static void mipmappingChanged()
@@ -419,15 +421,17 @@ void Rend_Register()
     LightDecoration::consoleRegister();
     LightGrid::consoleRegister();
     Lumobj::consoleRegister();
-    Sky_Register();
+    Sky::consoleRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
+    Generator::consoleRegister();
     Rend_RadioRegister();
     Rend_SpriteRegister();
     LensFx_Register();
+    fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
-    VR::consoleRegister();
+    VR_ConsoleRegister();
 }
 
 static void reportWallSectionDrawn(Line &line)
@@ -450,7 +454,6 @@ static void reportWallSectionDrawn(Line &line)
 void Rend_Init()
 {
     C_Init();
-    Sky_Init();
 }
 
 void Rend_Shutdown()
@@ -462,9 +465,9 @@ void Rend_Shutdown()
 void Rend_Reset()
 {
     R_ClearViewData();
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        App_World().map().removeAllLumobjs();
+        App_WorldSystem().map().removeAllLumobjs();
     }
     if(dlBBox)
     {
@@ -485,7 +488,7 @@ bool Rend_IsMTexDetails()
 
 float Rend_FieldOfView()
 {
-    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    if(vrCfg().mode() == VRConfig::OculusRift)
     {
         // fieldOfView = VR::riftFovX(); // Update for culling
         // return VR::riftFovX();
@@ -511,103 +514,31 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 
     if(useAngles)
     {
-        //bool scheduledLate = false;
-
         float yaw   = vang;
         float pitch = vpitch;
         float roll  = 0;
 
-        /*
-        static float storedPitch, storedRoll, storedYaw;
-        */
+        /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player
+        /// model.
 
         /*
-        if(VR::viewPositionHeld())
+         * Pitch and yaw can be taken directly from the head tracker, as the game is aware of
+         * these values and is syncing with them independently (however, game has more
+         * latency).
+         */
+        if((vrCfg().mode() == VRConfig::OculusRift) && vrCfg().oculusRift().isReady())
         {
-            roll  = storedRoll;
-            pitch = storedPitch;
-            yaw   = storedYaw;
-        }
-        else*/
+            Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
-        {
-            /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player
-            /// model.
+            // Use angles directly from the Rift for best response.
+            roll  = -radianToDegree(pry[1]);
+            pitch =  radianToDegree(pry[0]);
 
-            /*
-             * Pitch and yaw can be taken directly from the head tracker, as the game is aware of
-             * these values and is syncing with them independently (however, game has more
-             * latency).
-             */
-            if((VR::mode() == VR::MODE_OCULUS_RIFT) && VR::hasHeadOrientation())
-            {
-                Vector3f const pry = VR::getHeadOrientation();
-
-                // Use angles directly from the Rift for best response.
-                roll  = -radianToDegree(pry[1]);
-                pitch =  radianToDegree(pry[0]);
-
-#if 0
-
-                static float previousRiftYaw = 0;
-                static float previousVang2 = 0;
-
-                // Desired view angle without interpolation?
-                float vang2 = viewData->latest.angle / (float) ANGLE_MAX *360 - 90;
-
-                // Late-scheduled update
-                scheduledLate = true;
-                roll = -radianToDegree(pry[1]);
-                pitch = radianToDegree(pry[0]);
-
-                // Yaw might have a contribution from mouse/keyboard.
-                // So only late schedule if it seems to be head tracking only.
-                yaw = vang2; // default no late schedule
-                float currentRiftYaw = radianToDegree(pry[2]);
-                float dRiftYaw = currentRiftYaw - previousRiftYaw;
-                while (dRiftYaw > 180) dRiftYaw -= 360;
-                while (dRiftYaw < -180) dRiftYaw += 360;
-                float dVang = vang2 - previousVang2;
-                while (dVang > 180) dVang -= 360;
-                while (dVang < -180) dVang += 360;
-                if (abs(dVang) < 2.0 * abs(dRiftYaw)) // Mostly head motion
-                {
-                    yaw = storedYaw + dRiftYaw;
-                    float dy = vang2 - yaw;
-                    while (dy > 180) dy -= 360;
-                    while (dy < -180) dy += 360;
-                    yaw += 0.05 * dy; // ease slowly toward target angle
-                }
-                else
-                {
-                    yaw = vang2; // No interpolation if not from head tracker
-                }
-
-                previousRiftYaw = currentRiftYaw;
-                previousVang2 = vang2;
-#endif
-            }
-
-            /*
-            if(!scheduledLate)
-            {
-                // Vanilla angle update
-                roll  = 0;
-                pitch = vpitch;
-                yaw   = vang;
-            }*/
         }
 
         modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
                     Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
-
-        /*
-        // Keep these for possible use in later frames.
-        storedRoll  = roll;
-        storedPitch = pitch;
-        storedYaw   = yaw;
-        */
     }
 
     return (modelView *
@@ -709,14 +640,14 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
 {
     if(rendSkyLight > .001f && cluster.hasSkyMaskedPlane())
     {
-        ColorRawf const *ambientColor = Sky_AmbientColor();
+        Vector3f const &ambientColor = theSky->ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
+           !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
         {
-            skyLightColor = Vector3f(ambientColor->rgb);
+            skyLightColor = ambientColor;
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
@@ -727,7 +658,7 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
 
             // When the sky light color changes we must update the light grid.
             markLightGridForFullUpdate();
-            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
+            oldSkyAmbientColor = ambientColor;
         }
 
         oldRendSkyLight = rendSkyLight;
@@ -754,14 +685,14 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
 {
     if(rendSkyLight > .001f && sectorHasSkyMaskedPlane(sector))
     {
-        ColorRawf const *ambientColor = Sky_AmbientColor();
+        Vector3f const &ambientColor = theSky->ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
+           !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
         {
-            skyLightColor = Vector3f(ambientColor->rgb);
+            skyLightColor = ambientColor;
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
@@ -772,7 +703,7 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
 
             // When the sky light color changes we must update the light grid.
             markLightGridForFullUpdate();
-            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
+            oldSkyAmbientColor = ambientColor;
         }
 
         oldRendSkyLight = rendSkyLight;
@@ -2908,6 +2839,12 @@ static void projectLeafSprites()
     leaf->setLastSpriteProjectFrame(R_FrameCount());
 }
 
+static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
+{
+    R_ViewerGeneratorMarkVisible(*generator);
+    return 0; // Continue iteration.
+}
+
 /**
  * @pre Assumes the leaf is at least partially visible.
  */
@@ -2943,8 +2880,11 @@ static void drawCurrentLeaf()
         clipLeafLumobjsBySight();
     }
 
-    // Mark particle generators in the sector visible.
-    Rend_ParticleMarkInSectorVisible(leaf->sectorPtr());
+    // Mark generators in the sector visible.
+    if(useParticles)
+    {
+        leaf->map().generatorListIterator(leaf->sector().indexInMap(), generatorMarkVisibleWorker);
+    }
 
     /*
      * Sprites for this BSP leaf have to be drawn.
@@ -2989,7 +2929,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     while(bspElement->type() != DMU_BSPLEAF)
     {
         // Descend deeper into the nodes.
-        BspNode const &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->as<BspNode>();
 
         // Decide which side the view point is on.
         int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
@@ -3530,7 +3470,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    Sky_Render();
+    theSky->draw();
 
     if(!devRendSkyAlways)
     {
@@ -3651,7 +3591,7 @@ static void drawMasked()
  * dynamic lights. Details take precedence (they always cover entire primitives
  * and usually *all* of the surfaces in a scene).
  */
-static void drawAllLists()
+static void drawAllLists(Map &map)
 {
     DENG_ASSERT(!Sys_GLCheckError());
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -3852,7 +3792,7 @@ static void drawAllLists()
     drawMasked();
 
     // Draw particles.
-    Rend_RenderParticles();
+    Rend_RenderParticles(map);
 
     if(usingFog)
     {
@@ -3884,9 +3824,6 @@ void Rend_RenderMap(Map &map)
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
 
-        // Clear particle generator visibilty info.
-        Rend_ParticleInitForNewFrame();
-
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
         eyeOrigin = viewData->current.origin;
 
@@ -3915,7 +3852,7 @@ void Rend_RenderMap(Map &map)
         // Draw the world!
         traverseBspAndDrawLeafs(&map.bspRoot());
     }
-    drawAllLists();
+    drawAllLists(map);
 
     // Draw various debugging displays:
     drawAllSurfaceTangentVectors(map);
@@ -4003,7 +3940,7 @@ static String labelForSource(BiasSource *s)
 {
     if(!s || !editShowIndices) return String();
     /// @todo Don't assume the current map.
-    return String::number(App_World().map().toIndex(*s));
+    return String::number(App_WorldSystem().map().toIndex(*s));
 }
 
 static void drawSource(BiasSource *s)
@@ -4081,7 +4018,7 @@ static void drawBiasEditingVisuals(Map &map)
     }
 
     coord_t handDistance;
-    Hand &hand = App_World().hand(&handDistance);
+    Hand &hand = App_WorldSystem().hand(&handDistance);
 
     // Grabbed sources blink yellow.
     Vector4f grabbedColor;
@@ -4156,13 +4093,13 @@ void Rend_UpdateLightModMatrix()
 
     zap(lightModRange);
 
-    if(!App_World().hasMap())
+    if(!App_WorldSystem().hasMap())
     {
         rAmbient = 0;
         return;
     }
 
-    int mapAmbient = App_World().map().ambientLightLevel();
+    int mapAmbient = App_WorldSystem().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
     {
         rAmbient = mapAmbient;
@@ -4818,24 +4755,19 @@ static void drawSoundEmitters(Map &map)
     }
 }
 
-// Currently active Generators collection.
-static Generators *gens;
-
-static String labelForGenerator(ptcgen_t const *gen)
+static String labelForGenerator(Generator const *gen)
 {
-    DENG_ASSERT(gen != 0);
-    return String("%1").arg(gens->generatorId(gen));
+    DENG2_ASSERT(gen != 0);
+    return String("%1").arg(gen->id());
 }
 
-static int drawGenerator(ptcgen_t *gen, void *context)
+static int drawGenerator(Generator *gen, void * /*context*/)
 {
-    DENG2_UNUSED(context);
-
 #define MAX_GENERATOR_DIST  2048
 
-    if(gen->source || (gen->flags & PGF_UNTRIGGERED))
+    if(gen->source || gen->isUntriggered())
     {
-        Vector3d const origin   = Generator_Origin(*gen);
+        Vector3d const origin   = gen->origin();
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_GENERATOR_DIST)
         {
@@ -4856,9 +4788,7 @@ static int drawGenerator(ptcgen_t *gen, void *context)
 static void drawGenerators(Map &map)
 {
     if(!devDrawGenerators) return;
-
-    gens = &map.generators();
-    gens->iterate(drawGenerator);
+    map.generatorIterator(drawGenerator);
 }
 
 static void drawPoint(Vector3d const &origin, float opacity)
@@ -5259,7 +5189,7 @@ D_CMD(MipMap)
     int newMipMode = String(argv[1]).toInt();
     if(newMipMode < 0 || newMipMode > 5)
     {
-        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0..5).", newMipMode);
+        LOG_SCR_ERROR("Invalid mipmapping mode %i; the valid range is 0...5") << newMipMode;
         return false;
     }
 

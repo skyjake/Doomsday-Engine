@@ -61,7 +61,7 @@ using namespace de;
 #define TOP                     (1)
 
 typedef struct edge_s {
-    boolean done;
+    dd_bool done;
     Line *line;
     Sector *sector;
     float length;
@@ -1399,9 +1399,9 @@ void Rend_DrawShadowOffsetVerts()
     static const float red[4] = { 1.f, .2f, .2f, 1.f};
     static const float yellow[4] = {.7f, .7f, .2f, 1.f};
 
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();

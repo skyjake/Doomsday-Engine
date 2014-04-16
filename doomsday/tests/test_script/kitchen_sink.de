@@ -449,13 +449,20 @@ end
 # ---------------------------------------------------------------------------
 sections.begin('RECORDS')
 
-sections.subsection('Creating a record.')
+sections.subsection('Creating a record with a statement.')
 record myrec
 print len(myrec)
 print "Alternative way using Record()."
 del myrec
 myrec = Record()
 print len(myrec)
+
+sections.subsection('Creating a record using an expression.')
+del myrec
+(record myrec).expressionCreated = True
+myrec.(record subexp).alsoExpCreated = True
+print myrec
+del myrec.subexp
 
 sections.subsection('Creating variables into a record.')
 myrec.newMember = 100

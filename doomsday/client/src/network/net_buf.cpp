@@ -34,7 +34,7 @@
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
 
-boolean allowSending;
+dd_bool allowSending;
 netbuffer_t netBuffer;
 
 // The message queue: list of incoming messages waiting for processing.
@@ -94,7 +94,7 @@ void N_Shutdown(void)
  *
  * @return          @c true, if successful.
  */
-boolean N_LockQueue(boolean doAcquire)
+dd_bool N_LockQueue(dd_bool doAcquire)
 {
     if(doAcquire)
         Sys_Lock(msgMutex);
@@ -290,7 +290,7 @@ void N_SendPacket(int flags)
     }
     catch(de::Error const &er)
     {
-        LOG_WARNING("N_SendPacket failed: ") << er.asText();
+        LOGDEV_NET_WARNING("N_SendPacket failed: ") << er.asText();
     }
 }
 
@@ -343,7 +343,7 @@ netmessage_t *N_GetNextMessage(void)
  *
  * @return          @c true, if a message successfull.
  */
-boolean N_GetPacket(void)
+dd_bool N_GetPacket(void)
 {
     netmessage_t *msg;
 
@@ -356,11 +356,6 @@ boolean N_GetPacket(void)
     netBuffer.player = -1;
     netBuffer.length = 0;
 
-    /*{extern byte monitorMsgQueue;
-    if(monitorMsgQueue)
-        Con_Message("N_GetPacket: %i messages queued.", msgCount);
-    }*/
-
     if((msg = N_GetNextMessage()) == NULL)
     {
         // No messages at this time.
@@ -368,11 +363,6 @@ boolean N_GetPacket(void)
     }
 
     // There was a packet!
-/*
-#if _DEBUG
-   Con_Message("N_GetPacket: from=%x, len=%i", msg->sender, msg->size);
-#endif
-*/
     netBuffer.player = msg->player;
     netBuffer.length = msg->size - netBuffer.headerLength;
 
@@ -382,9 +372,8 @@ boolean N_GetPacket(void)
     }
     else
     {
-#ifdef _DEBUG
-        Con_Error("N_GetPacket: Received a packet of size %lu.\n", msg->size);
-#endif
+        LOG_NET_ERROR("Received an oversized packet with %i bytes") << msg->size;
+
         N_ReleaseMessage(msg);
         return false;
     }
@@ -419,12 +408,12 @@ void N_PrintTransmissionStats(void)
 {
     if(numOutBytes == 0)
     {
-        Con_Message("Transmission efficiency: Nothing has been sent yet.");
+        LOG_NET_MSG("Transmission efficiency: Nothing has been sent yet");
     }
     else
     {
-        Con_Message("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i "
-                    "bytes)", 100 - (100.0f * numSentBytes) / numOutBytes,
-                    (int)numOutBytes, (int)numSentBytes);
+        LOG_NET_MSG("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i "
+                    "bytes)") << (100 - (100.0f * numSentBytes) / numOutBytes)
+                                 << numOutBytes << numSentBytes;
     }
 }

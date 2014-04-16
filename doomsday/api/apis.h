@@ -59,7 +59,8 @@
  */
 enum {
     DE_API_BASE_v1              = 0,       // 1.10
-    DE_API_BASE                 = DE_API_BASE_v1,
+    DE_API_BASE_v2              = 1,       // 1.14
+    DE_API_BASE                 = DE_API_BASE_v2,
 
     DE_API_BINDING_v1           = 100,     // 1.10
     DE_API_BINDING              = DE_API_BINDING_v1,
@@ -72,13 +73,15 @@ enum {
     DE_API_CLIENT               = DE_API_CLIENT_v1,
 
     DE_API_CONSOLE_v1           = 400,     // 1.10
-    DE_API_CONSOLE              = DE_API_CONSOLE_v1,
+    DE_API_CONSOLE_v2           = 401,     // 1.14
+    DE_API_CONSOLE              = DE_API_CONSOLE_v2,
 
     DE_API_DEFINITIONS_v1       = 500,     // 1.10
     DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v1,
 
     DE_API_FILE_SYSTEM_v1       = 600,     // 1.10
-    DE_API_FILE_SYSTEM          = DE_API_FILE_SYSTEM_v1,
+    DE_API_FILE_SYSTEM_v2       = 601,     // 1.14
+    DE_API_FILE_SYSTEM          = DE_API_FILE_SYSTEM_v2,
 
     DE_API_FONT_RENDER_v1       = 700,     // 1.10
     DE_API_FONT_RENDER          = DE_API_FONT_RENDER_v1,
@@ -135,10 +138,12 @@ enum {
     DE_API_THINKER              = DE_API_THINKER_v1,
 
     DE_API_URI_v1               = 2300,    // 1.10
-    DE_API_URI                  = DE_API_URI_v1,
+    DE_API_URI_v2               = 2301,    // 1.14
+    DE_API_URI                  = DE_API_URI_v2,
 
     DE_API_WAD_v1               = 2400,    // 1.10
-    DE_API_WAD                  = DE_API_WAD_v1
+    DE_API_WAD_v2               = 2401,    // 1.14
+    DE_API_WAD                  = DE_API_WAD_v2
 };
 
 /**

@@ -97,6 +97,14 @@ static void readUri(Uri* uri, Reader* reader, de::String defaultScheme = "")
     Uri_SetPath  (uri, Str_Text(&path  ));
 }
 
+#undef Uri_NewWithPath3
+Uri* Uri_NewWithPath3(char const *defaultScheme, char const *path)
+{
+    de::Uri *uri = new de::Uri(defaultScheme);
+    uri->setUri(path, RC_NULL);
+    return reinterpret_cast<Uri *>(uri);
+}
+
 #undef Uri_NewWithPath2
 Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass)
 {
@@ -155,7 +163,7 @@ Uri* Uri_Copy(Uri* uri, Uri const* other)
 }
 
 #undef Uri_Equality
-boolean Uri_Equality(Uri const* uri, Uri const* other)
+dd_bool Uri_Equality(Uri const* uri, Uri const* other)
 {
     SELF_CONST(uri);
     DENG_ASSERT(other);
@@ -163,7 +171,7 @@ boolean Uri_Equality(Uri const* uri, Uri const* other)
 }
 
 #undef Uri_IsEmpty
-boolean Uri_IsEmpty(Uri const* uri)
+dd_bool Uri_IsEmpty(Uri const* uri)
 {
     SELF_CONST(uri);
     return self->isEmpty();
@@ -179,7 +187,7 @@ AutoStr* Uri_Resolved(Uri const* uri)
     }
     catch(de::Uri::ResolveError const& er)
     {
-        LOG_WARNING(er.asText());
+        LOG_RES_WARNING(er.asText());
     }
     return AutoStr_NewStd();
 }
@@ -286,6 +294,7 @@ DENG_DECLARE_API(Uri) =
 {
     { DE_API_URI },
     Uri_New,
+    Uri_NewWithPath3,
     Uri_NewWithPath2,
     Uri_NewWithPath,
     Uri_Dup,

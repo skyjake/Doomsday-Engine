@@ -1,4 +1,4 @@
-/** @file map.cpp World map.
+/** @file map.cpp  World map.
  *
  * @todo This file has grown far too large. It should be split up through the
  * introduction of new abstractions / collections.
@@ -21,15 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <QBitArray>
-#include <QVarLengthArray>
-
-#include <de/aabox.h>
-#include <de/vector1.h>
-
-#include <de/Rectangle>
-
 #include "de_base.h"
+#include "world/map.h"
+
 #include "de_console.h" // Con_GetInteger
 #include "de_defs.h"
 #include "m_nodepile.h"
@@ -44,12 +38,13 @@
 #include "Surface"
 #include "Vertex"
 
+#include "world/worldsystem.h" // ddMapSetup, validCount
+
 #include "world/bsp/partitioner.h"
 
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/entitydatabase.h"
-#include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #ifdef __CLIENT__
@@ -57,9 +52,11 @@
 #  include "ContactSpreader"
 #endif
 #include "world/thinkers.h"
-#include "world/world.h" // ddMapSetup
 
-#include "render/r_main.h" // validCount
+#ifdef __CLIENT__
+#  include "api_sound.h"
+#endif
+
 #ifdef __CLIENT__
 #  include "BiasDigest"
 #  include "LightDecoration"
@@ -68,12 +65,24 @@
 #  include "WallEdge"
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
+#  include "render/rend_particle.h"
 #  include "render/sky.h"
 #endif
 
-#include "world/map.h"
+#include <de/Rectangle>
+#include <de/aabox.h>
+#include <de/vector1.h>
+#include <QBitArray>
+#include <QVarLengthArray>
 
 static int bspSplitFactor = 7; // cvar
+
+#ifdef __CLIENT__
+/// Milliseconds it takes for Unpredictable and Hidden mobjs to be
+/// removed from the hash. Under normal circumstances, the special
+/// status should be removed fairly quickly.
+#define CLMOBJ_TIMEOUT  4000
+#endif
 
 namespace de {
 
@@ -180,7 +189,74 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces;
 
+    /**
+     * All (particle) generators.
+     */
+    struct Generators
+    {
+        struct ListNode
+        {
+            ListNode *next;
+            Generator *gen;
+        };
+
+        Generator *activeGens[MAX_GENERATORS];
+
+        // We can link 64 generators each into four lists each before running out of links.
+        static int const LINKSTORE_SIZE = 4 * MAX_GENERATORS;
+        ListNode *linkStore;
+        uint linkStoreCursor;
+
+        uint listsSize;
+        // Array of list heads containing links from linkStore to generators in activeGens.
+        ListNode **lists;
+
+        Generators()
+            : linkStore(0)
+            , linkStoreCursor(0)
+            , listsSize(0)
+            , lists(0)
+        {}
+
+        ~Generators()
+        {
+            Z_Free(lists);
+            Z_Free(linkStore);
+        }
+
+        /**
+         * Resize the collection.
+         *
+         * @param listCount  Number of lists the collection must support.
+         */
+        void resize(uint listCount)
+        {
+            if(!linkStore)
+            {
+                linkStore = (ListNode *) Z_Malloc(sizeof(*linkStore) * LINKSTORE_SIZE, PU_MAP, 0);
+                linkStoreCursor = 0;
+                zap(activeGens);
+            }
+
+            listsSize = listCount;
+            lists = (ListNode **) Z_Realloc(lists, sizeof(ListNode*) * listsSize, PU_MAP);
+        }
+
+        /**
+         * Returns an unused link from the linkStore.
+         */
+        ListNode *newLink()
+        {
+            if(linkStoreCursor < (unsigned)LINKSTORE_SIZE)
+            {
+                return &linkStore[linkStoreCursor++];
+            }
+            LOG_MAP_WARNING("Exhausted generator link storage");
+            return 0;
+        }
+    };
     QScopedPointer<Generators> generators;
+
     QScopedPointer<LightGrid> lightGrid;
 
     /// Shadow Bias data.
@@ -200,17 +276,25 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
+
+    ClMobjHash clMobjHash;
+
+    typedef QList<ClPlaneMover *> ClPlaneMovers;
+    ClPlaneMovers clPlaneMovers;
+
+    typedef QList<ClPolyMover *> ClPolyMovers;
+    ClPolyMovers clPolyMovers;
 #endif
 
     Instance(Public *i, Uri const &uri)
-        : Base            (i),
-          editingEnabled  (true),
-          uri             (uri),
-          bspRoot         (0),
-          lineLinks       (0)
+        : Base            (i)
+        , editingEnabled  (true)
+        , uri             (uri)
+        , bspRoot         (0)
+        , lineLinks       (0)
 #ifdef __CLIENT__
-         ,skyFloorHeight  (DDMAXFLOAT),
-          skyCeilingHeight(DDMINFLOAT)
+        , skyFloorHeight  (DDMAXFLOAT)
+        , skyCeilingHeight(DDMINFLOAT)
 #endif
     {
         zap(oldUniqueId);
@@ -239,11 +323,28 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
         qDeleteAll(lines);
 
+#ifdef __CLIENT__
+        while(!clPlaneMovers.isEmpty())
+        {
+            Z_Free(clPlaneMovers.takeFirst());
+        }
+
+        while(!clPolyMovers.isEmpty())
+        {
+            Z_Free(clPolyMovers.takeFirst());
+        }
+#endif
+
         /// @todo fixme: Free all memory we have ownership of.
         // Client only data:
-        // mobjHash/activePlanes/activePolyobjs
+        // mobjHash/
         // End client only data.
         // mobjNodes/lineNodes/lineLinks
+    }
+
+    inline WorldSystem &worldSys()
+    {
+        return App_WorldSystem();
     }
 
     /**
@@ -471,9 +572,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             if(!leaf.hasParent())
             {
-                LOG_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                    << de::dintptr(&leaf)
-                    << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
+                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
+                    << &leaf << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
 
                 // Attribute this leaf directly to the map.
                 leaf.setMap(thisPublic);
@@ -495,10 +595,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
                 if(discontinuities)
                 {
-                    LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                 "is not contiguous (%i gaps/overlaps).\n%s")
-                        << de::dintptr(&leaf)
-                        << leaf.poly().center().asText()
+                        << &leaf << leaf.poly().center().asText()
                         << (leaf.hasParent()? leaf.parent().as<Sector>().indexInArchive() : -1)
                         << discontinuities
                         << leaf.poly().description();
@@ -535,7 +634,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // It begins...
         Time begunAt;
 
-        LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
+        LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...")
             << uri << bspSplitFactor;
 
         // First we'll scan for so-called "one-way window" constructs and mark
@@ -565,8 +664,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             // Build a BSP!
             BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
 
-            LOG_INFO("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes."
-                     "\nTree balance is %d:%d.")
+            LOG_MAP_VERBOSE("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes. "
+                            "Tree balance is %d:%d.")
                     << partitioner.numNodes()    << partitioner.numLeafs()
                     << partitioner.numSegments() << partitioner.numVertexes()
                     << (rootNode->isLeaf()? 0 : rootNode->right().height())
@@ -634,11 +733,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
         catch(Error const &er)
         {
-            LOG_WARNING("%s.") << er.asText();
+            LOG_MAP_WARNING("%s.") << er.asText();
         }
 
         // How much time did we spend?
-        LOG_INFO(String("BSP built in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOGDEV_MAP_VERBOSE("BSP built in %.2f seconds") << begunAt.since();
 
         return bspRoot != 0;
     }
@@ -667,7 +766,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new LineBlockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                     bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("Line blockmap dimensions:")
+        LOG_MAP_VERBOSE("Line blockmap dimensions:")
             << lineBlockmap->dimensions().asText();
 
         // Populate the blockmap.
@@ -687,7 +786,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("Mobj blockmap dimensions:")
+        LOG_MAP_VERBOSE("Mobj blockmap dimensions:")
             << mobjBlockmap->dimensions().asText();
     }
 
@@ -808,7 +907,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("Polyobj blockmap dimensions:")
+        LOG_MAP_VERBOSE("Polyobj blockmap dimensions:")
             << polyobjBlockmap->dimensions().asText();
     }
 
@@ -825,7 +924,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("BSP leaf blockmap dimensions:")
+        LOG_MAP_VERBOSE("BSP leaf blockmap dimensions:")
             << bspLeafBlockmap->dimensions().asText();
 
         // Populate the blockmap.
@@ -1124,16 +1223,293 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
+    /**
+     * Perform lazy initialization of the generator collection.
+     */
+    Generators &getGenerators()
+    {
+        // Time to initialize a new collection?
+        if(generators.isNull())
+        {
+            generators.reset(new Generators);
+            generators->resize(sectors.count());
+        }
+        return *generators;
+    }
+
+    /**
+     * Lookup the next available generator id.
+     *
+     * @todo Optimize: Cache this result.
+     * @todo Optimize: We could maintain an age-sorted list of generators.
+     *
+     * @return  The next available id else @c 0 iff there are no unused ids.
+     */
+    Generator::Id findIdForNewGenerator()
+    {
+        Generators &gens = getGenerators();
+
+        // Prefer allocating a new generator if we've a spare id.
+        Generator::Id id = 0;
+        for(; id < MAX_GENERATORS; ++id)
+        {
+            if(!gens.activeGens[id]) break;
+        }
+        if(id < MAX_GENERATORS) return id + 1;
+
+        // See if there is an active, non-static generator we can supplant.
+        Generator *oldest = 0;
+        for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+        {
+            Generator *gen = gens.activeGens[i];
+            if(!gen || gen->isStatic()) continue;
+
+            if(!oldest || gen->age() > oldest->age())
+            {
+                oldest = gen;
+            }
+        }
+
+        return (oldest? oldest->id() + 1 /*1-based index*/ : 0);
+    }
+
+    void spawnMapParticleGens()
+    {
+        //if(!useParticles) return;
+
+        ded_ptcgen_t *def = defs.ptcGens;
+        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        {
+            if(!def->map) continue;
+
+            if(!Uri_Equality(def->map, reinterpret_cast<uri_s *>(&uri)))
+                continue;
+
+            // Are we still spawning using this generator?
+            if(def->spawnAge > 0 && worldSys().time() > def->spawnAge)
+                continue;
+
+            Generator *gen = self.newGenerator();
+            if(!gen) return; // No more generators.
+
+            // Initialize the particle generator.
+            gen->count = def->particles;
+            gen->spawnRateMultiplier = 1;
+
+            gen->configureFromDef(def);
+            gen->setUntriggered();
+
+            // Is there a need to pre-simulate?
+            gen->presimulate(def->preSim);
+        }
+    }
+
+    /**
+     * Spawns all type-triggered particle generators, regardless of whether
+     * the type of mobj exists in the map or not (mobjs might be dynamically
+     * created).
+     */
+    void spawnTypeParticleGens()
+    {
+        //if(!useParticles) return;
+
+        ded_ptcgen_t *def = defs.ptcGens;
+        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        {
+            if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0)
+                continue;
+
+            Generator *gen = self.newGenerator();
+            if(!gen) return; // No more generators.
+
+            // Initialize the particle generator.
+            gen->count = def->particles;
+            gen->spawnRateMultiplier = 1;
+
+            gen->configureFromDef(def);
+            gen->type = def->typeNum;
+            gen->type2 = def->type2Num;
+
+            // Is there a need to pre-simulate?
+            gen->presimulate(def->preSim);
+        }
+    }
+
+    int findDefForGenerator(Generator *gen)
+    {
+        DENG2_ASSERT(gen != 0);
+
+        // Search for a suitable definition.
+        ded_ptcgen_t *def = defs.ptcGens;
+        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        {
+            // A type generator?
+            if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
+            {
+                return i+1; // Stop iteration.
+            }
+            if(def->typeNum >= 0 &&
+               (gen->type == def->typeNum || gen->type2 == def->type2Num))
+            {
+                return i+1; // Stop iteration.
+            }
+
+            // A damage generator?
+            if(gen->source && gen->source->type == def->damageNum)
+            {
+                return i+1; // Stop iteration.
+            }
+
+            // A flat generator?
+            if(gen->plane && def->material)
+            {
+                try
+                {
+                    Material *defMat = &App_ResourceSystem().material(*reinterpret_cast<de::Uri const *>(def->material));
+
+                    Material *mat = gen->plane->surface().materialPtr();
+                    if(def->flags & Generator::SpawnFloor)
+                        mat = gen->plane->sector().floorSurface().materialPtr();
+                    if(def->flags & Generator::SpawnCeiling)
+                        mat = gen->plane->sector().ceilingSurface().materialPtr();
+
+                    // Is this suitable?
+                    if(mat == defMat)
+                    {
+                        return i + 1; // 1-based index.
+                    }
+
+#if 0 /// @todo $revise-texture-animation
+                    if(def->flags & PGF_GROUP)
+                    {
+                        // Generator triggered by all materials in the animation.
+                        if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
+                           &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
+                        {
+                            // Both are in this animation! This def will do.
+                            return i + 1; // 1-based index.
+                        }
+                    }
+#endif
+                }
+                catch(MaterialManifest::MissingMaterialError const &)
+                {} // Ignore this error.
+                catch(ResourceSystem::MissingManifestError const &)
+                {} // Ignore this error.
+            }
+
+            // A state generator?
+            if(gen->source && def->state[0] &&
+               gen->source->state - states == Def_GetStateNum(def->state))
+            {
+                return i + 1; // 1-based index.
+            }
+        }
+
+        return 0; // Not found.
+    }
+
+    /**
+     * Update existing generators in the map following an engine reset.
+     */
+    void updateParticleGens()
+    {
+        Generators &gens = getGenerators();
+        for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+        {
+            // Only consider active generators.
+            Generator *gen = gens.activeGens[i];
+            if(!gen) continue;
+
+            // Map generators cannot be updated (we have no means to reliably
+            // identify them), so destroy them.
+            if(gen->isUntriggered())
+            {
+                Generator_Delete(gen);
+                continue; // Continue iteration.
+            }
+
+            if(int defIndex = findDefForGenerator(gen))
+            {
+                // Update the generator using the new definition.
+                ded_ptcgen_t *def = defs.ptcGens + (defIndex-1);
+                gen->def = def;
+            }
+            else
+            {
+                // Nothing else we can do, destroy it.
+                Generator_Delete(gen);
+            }
+        }
+
+        // Re-spawn map generators.
+        spawnMapParticleGens();
+    }
+
+    /**
+     * Link all generated particles into the map so that they will be drawn.
+     *
+     * @todo Overkill?
+     */
+    void linkAllParticles()
+    {
+        //LOG_AS("Map::linkAllParticles");
+
+        Generators &gens = getGenerators();
+
+        // Empty all generator lists.
+        std::memset(gens.lists, 0, sizeof(*gens.lists) * gens.listsSize);
+        gens.linkStoreCursor = 0;
+
+        if(useParticles)
+        {
+            for(Generator::Id id = 0; id < MAX_GENERATORS; ++id)
+            {
+                // Only consider active generators.
+                Generator *gen = gens.activeGens[id];
+                if(!gen) continue;
+
+                ParticleInfo const *pInfo = gen->particleInfo();
+                for(int i = 0; i < gen->count; ++i, pInfo++)
+                {
+                    if(pInfo->stage < 0 || !pInfo->bspLeaf)
+                        continue;
+
+                    int listIndex = pInfo->bspLeaf->sector().indexInMap();
+                    DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
+
+                    // Must check that it isn't already there...
+                    bool found = false;
+                    for(Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+                    {
+                        if(it->gen == gen)
+                        {
+                            // Warning message disabled as these are occuring so thick and fast
+                            // that logging is pointless (and negatively affecting performance).
+                            //LOGDEV_MAP_VERBOSE("Attempted repeat link of generator %p to list %u.")
+                            //        << gen << listIndex;
+                            found = true; // No, no...
+                        }
+                    }
+
+                    if(found) continue;
+
+                    // We need a new link.
+                    if(Generators::ListNode *link = gens.newLink())
+                    {
+                        link->gen  = gen;
+                        link->next = gens.lists[listIndex];
+                        gens.lists[listIndex] = link;
+                    }
+                }
+            }
+        }
+    }
 #endif // __CLIENT__
 };
 
 Map::Map(Uri const &uri) : d(new Instance(this, uri))
 {
-#ifdef __CLIENT__
-    zap(clMobjHash);
-    zap(clActivePlanes);
-    zap(clActivePolyobjs);
-#endif
     _globalGravity = 0;
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
@@ -1142,6 +1518,11 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
 Mesh const &Map::mesh() const
 {
     return d->mesh;
+}
+
+bool Map::hasBspRoot() const
+{
+    return d->bspRoot != 0;
 }
 
 MapElement &Map::bspRoot() const
@@ -1220,7 +1601,7 @@ void Map::initBias()
         addBiasSource(BiasSource::fromDef(*def));
     }
 
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 void Map::unlinkInMaterialLists(Surface *surface)
@@ -1292,6 +1673,107 @@ void Map::spreadAllContacts(AABoxd const &region)
                       region.maxX + Lumobj::radiusMax(), region.maxY + Lumobj::radiusMax()));
 }
 
+void Map::initGenerators()
+{
+    LOG_AS("Map::initGenerators");
+    Time begunAt;
+    d->spawnTypeParticleGens();
+    d->spawnMapParticleGens();
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+}
+
+void Map::spawnPlaneParticleGens()
+{
+    //if(!useParticles) return;
+
+    foreach(Sector *sector, d->sectors)
+    {
+        Plane &floor = sector->floor();
+        floor.spawnParticleGen(Def_GetGenerator(floor.surface().composeMaterialUri()));
+
+        Plane &ceiling = sector->ceiling();
+        ceiling.spawnParticleGen(Def_GetGenerator(ceiling.surface().composeMaterialUri()));
+    }
+}
+
+void Map::clearClMobjs()
+{
+    d->clMobjHash.clear();
+}
+
+mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
+{
+    LOG_AS("Map::clMobjFor");
+
+    if(mobj_t *clmo = d->clMobjHash.find(id))
+    {
+        return clmo;
+    }
+
+    if(!canCreate) return 0;
+
+    // Create a new client mobj.
+    // Allocate enough memory for all the data.
+    void *data       = Z_Malloc(sizeof(ClMobjInfo) + MOBJ_SIZE, PU_MAP, 0);
+    ClMobjInfo *info = new (data) ClMobjInfo;
+    DENG2_UNUSED(info);
+    mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(ClMobjInfo));
+
+    std::memset(mo, 0, MOBJ_SIZE);
+    mo->ddFlags = DDMF_REMOTE;
+
+    d->clMobjHash.insert(mo, id);
+    d->thinkers->setMobjId(id); // Mark this ID as used.
+
+    // Client mobjs are full-fludged game mobjs as well.
+    mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
+    d->thinkers->add(reinterpret_cast<thinker_t &>(*mo));
+
+    return mo;
+}
+
+void Map::deleteClMobj(mobj_t *mo)
+{
+    LOG_AS("Map::deleteClMobj");
+
+    if(!mo) return;
+
+    LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
+
+#ifdef DENG_DEBUG
+    d->clMobjHash.assertValid();
+#endif
+
+    CL_ASSERT_CLMOBJ(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
+
+    // Stop any sounds originating from this mobj.
+    S_StopSound(0, mo);
+
+    // The ID is free once again.
+    d->thinkers->setMobjId(mo->thinker.id, false);
+    d->clMobjHash.remove(mo);
+    ClMobj_Unlink(mo); // from block/sector
+
+    info->~ClMobjInfo();
+    // This will free the entire mobj + info.
+    Z_Free(info);
+
+#ifdef DENG_DEBUG
+    d->clMobjHash.assertValid();
+#endif
+}
+
+int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
+{
+    return d->clMobjHash.iterate(callback, context);
+}
+
+ClMobjHash const &Map::clMobjHash() const
+{
+    return d->clMobjHash;
+}
+
 #endif // __CLIENT__
 
 Uri const &Map::uri() const
@@ -1309,6 +1791,11 @@ void Map::setOldUniqueId(char const *newUniqueId)
     qstrncpy(d->oldUniqueId, newUniqueId, sizeof(d->oldUniqueId));
 }
 
+bool Map::isCustom() const
+{
+    return P_MapIsCustom(uri().asText().toUtf8());
+}
+
 AABoxd const &Map::bounds() const
 {
     return d->bounds;
@@ -1321,7 +1808,11 @@ coord_t Map::gravity() const
 
 void Map::setGravity(coord_t newGravity)
 {
-    _effectiveGravity = newGravity;
+    if(!de::fequal(_effectiveGravity, newGravity))
+    {
+        _effectiveGravity = newGravity;
+        LOG_MAP_VERBOSE("Effective gravity for %s now %.1f") << d->uri.asText() << _effectiveGravity;
+    }
 }
 
 Thinkers &Map::thinkers() const
@@ -1435,10 +1926,9 @@ EntityDatabase &Map::entityDatabase() const
 
 void Map::initNodePiles()
 {
-    Time begunAt;
+    LOG_AS("Map");
 
-    LOG_AS("Map::initNodePiles");
-    LOG_TRACE("Initializing...");
+    Time begunAt;
 
     // Initialize node piles and line rings.
     NP_Init(&d->mobjNodes, 256);  // Allocate a small pile.
@@ -1454,7 +1944,7 @@ void Map::initNodePiles()
     }
 
     // How much time did we spend?
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOGDEV_MAP_MSG("Initialized node piles in %.2f seconds") << begunAt.since();
 }
 
 Blockmap const &Map::mobjBlockmap() const
@@ -2017,7 +2507,7 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->as<BspNode>();
 
         int side = bspNode.partition().pointOnSide(point) < 0;
 
@@ -2040,7 +2530,7 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->as<BspNode>();
         Partition const &partition = bspNode.partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
@@ -2168,7 +2658,7 @@ void Map::initSkyFix()
         }
     }
 
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds.") << begunAt.since();
 }
 
 coord_t Map::skyFix(bool ceiling) const
@@ -2182,14 +2672,86 @@ void Map::setSkyFix(bool ceiling, coord_t newHeight)
     else        d->skyFloorHeight   = newHeight;
 }
 
-Generators &Map::generators()
+Generator *Map::newGenerator()
 {
-    // Time to initialize a new collection?
-    if(d->generators.isNull())
+    Generator::Id id = d->findIdForNewGenerator();
+    if(!id) return 0; // Failed; too many generators?
+
+    Instance::Generators &gens = d->getGenerators();
+
+    // If there is already a generator with that id - remove it.
+    if(id > 0 && id <= MAX_GENERATORS)
     {
-        d->generators.reset(new Generators(sectorCount()));
+        Generator_Delete(gens.activeGens[id - 1]);
     }
-    return *d->generators;
+
+    /// @todo Linear allocation when in-game is not good...
+    Generator *gen = (Generator *) Z_Calloc(sizeof(Generator), PU_MAP, 0);
+
+    gen->setId(id);
+
+    // Link the thinker to the list of (private) thinkers.
+    gen->thinker.function = (thinkfunc_t) Generator_Thinker;
+    d->thinkers->add(gen->thinker, false /*not public*/);
+
+    // Link the generator into the collection.
+    gens.activeGens[id - 1] = gen;
+
+    return gen;
+}
+
+int Map::generatorCount() const
+{
+    if(d->generators.isNull()) return 0;
+    int count = 0;
+    Instance::Generators &gens = d->getGenerators();
+    for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+    {
+        if(gens.activeGens[i])
+        {
+            count += 1;
+        }
+    }
+    return count;
+}
+
+void Map::unlink(Generator &generator)
+{
+    Instance::Generators &gens = d->getGenerators();
+    for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+    {
+        if(gens.activeGens[i] == &generator)
+        {
+            gens.activeGens[i] = 0;
+            break;
+        }
+    }
+}
+
+int Map::generatorIterator(int (*callback) (Generator *, void *), void *context)
+{
+    Instance::Generators &gens = d->getGenerators();
+    for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+    {
+        // Only consider active generators.
+        if(!gens.activeGens[i]) continue;
+
+        if(int result = callback(gens.activeGens[i], context))
+            return result;
+    }
+    return 0; // Continue iteration.
+}
+
+int Map::generatorListIterator(uint listIndex, int (*callback) (Generator *, void *),
+    void *context)
+{
+    Instance::Generators &gens = d->getGenerators();
+    for(Instance::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+    {
+        if(int result = callback(it->gen, context))
+            return result;
+    }
+    return 0; // Continue iteration.
 }
 
 Lumobj &Map::addLumobj(Lumobj const &lumobj)
@@ -2308,6 +2870,8 @@ uint Map::biasLastChangeOnFrame() const
 void Map::update()
 {
 #ifdef __CLIENT__
+    d->updateParticleGens(); // Defs might've changed.
+
     // Update all surfaces.
     foreach(Sector *sector, d->sectors)
     foreach(Plane *plane, sector->planes())
@@ -2372,14 +2936,14 @@ void Map::update()
         skyDef = Def_GetSky(mapInfo->skyID);
         if(!skyDef) skyDef = &mapInfo->sky;
     }
-    Sky_Configure(skyDef);
+    theSky->configure(skyDef);
 #endif
 }
 
 #ifdef __CLIENT__
-void Map::worldFrameBegins(World &world, bool resetNextViewer)
+void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
-    DENG2_ASSERT(&world.map() == this); // Sanity check.
+    DENG2_ASSERT(&d->worldSys().map() == this); // Sanity check.
 
     // Interpolate the map ready for drawing view(s) of it.
     d->lerpTrackedPlanes(resetNextViewer);
@@ -2432,41 +2996,346 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 
         d->generateMobjContacts();
 
-        // Link all active particle generators into the world.
-        P_CreatePtcGenLinks();
-
+        d->linkAllParticles();
         d->linkAllContacts();
     }
 }
 
+/// @return  @c false= Continue iteration.
+static int expireClMobjsWorker(mobj_t *mo, void *context)
+{
+    uint const nowTime = *static_cast<uint *>(context);
+
+    // Already deleted?
+    if(mo->thinker.function == (thinkfunc_t)-1)
+        return 0;
+
+    // Don't expire player mobjs.
+    if(mo->dPlayer) return 0;
+
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    DENG2_ASSERT(info != 0);
+
+    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
+    {
+        // Has this mobj timed out?
+        if(nowTime - info->time > CLMOBJ_TIMEOUT)
+        {
+            LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
+                    << mo->thinker.id
+                    << info->time << nowTime
+                    << Def_GetStateName(mo->state)
+                    << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
+                    << (info->flags & CLMF_HIDDEN?        'H' : '_')
+                    << (info->flags & CLMF_NULLED?        '0' : '_');
+
+            // Too long. The server will probably never send anything
+            // for this mobj, so get rid of it. (Both unpredictable
+            // and hidden mobjs are not visible or bl/seclinked.)
+            Mobj_Destroy(mo);
+        }
+    }
+
+    return 0;
+}
+
+void Map::expireClMobjs()
+{
+    uint nowTime = Timer_RealMilliseconds();
+    d->clMobjHash.iterate(expireClMobjsWorker, &nowTime);
+}
+
+void Map::clearClMovers()
+{
+    while(!d->clPlaneMovers.isEmpty())
+    {
+        ClPlaneMover *mover = d->clPlaneMovers.takeFirst();
+        thinkers().remove(mover->thinker);
+        Z_Free(mover);
+    }
+
+    while(!d->clPolyMovers.isEmpty())
+    {
+        ClPolyMover *mover = d->clPolyMovers.takeFirst();
+        thinkers().remove(mover->thinker);
+        Z_Free(mover);
+    }
+}
+
+ClPlaneMover *Map::clPlaneMoverFor(Plane &plane)
+{
+    /// @todo optimize: O(n) lookup.
+    foreach(ClPlaneMover *mover, d->clPlaneMovers)
+    {
+        if(mover->plane == &plane)
+            return mover;
+    }
+    return 0; // Not found.
+}
+
+ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
+{
+    LOG_AS("Map::newClPlaneMover");
+
+    // Ignore planes not currently attributed to the map.
+    if(&plane.map() != this)
+    {
+        qDebug() << "Ignoring alien plane" << de::dintptr(&plane) << "in Map::newClPlane";
+        return 0;
+    }
+
+    LOG_MAP_XVERBOSE("Sector #%i, plane:%i, dest:%f, speed:%f")
+            << plane.sector().indexInMap() << plane.indexInSector()
+            << dest << speed;
+
+    // Remove any existing movers for the same plane.
+    for(int i = 0; i < d->clPlaneMovers.count(); ++i)
+    {
+        ClPlaneMover *mover = d->clPlaneMovers[i];
+        if(mover->plane == &plane)
+        {
+            LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
+                    << mover << plane.sector().indexInMap()
+                    << plane.indexInSector();
+
+            deleteClPlaneMover(mover);
+        }
+    }
+
+    // Add a new mover.
+    ClPlaneMover *mov = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, 0);
+    d->clPlaneMovers.append(mov);
+
+    mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
+    mov->plane       = &plane;
+    mov->destination = dest;
+    mov->speed       = speed;
+
+    // Set the right sign for speed.
+    if(mov->destination < P_GetDoublep(&plane, DMU_HEIGHT))
+    {
+        mov->speed = -mov->speed;
+    }
+
+    // Update speed and target height.
+    P_SetDoublep(&plane, DMU_TARGET_HEIGHT, dest);
+    P_SetFloatp(&plane, DMU_SPEED, speed);
+
+    thinkers().add(mov->thinker, false /*not public*/);
+
+    // Immediate move?
+    if(de::fequal(speed, 0))
+    {
+        // This will remove the thinker immediately if the move is ok.
+        ClPlaneMover_Thinker(mov);
+    }
+
+    LOGDEV_MAP_XVERBOSE("New mover %p") << mov;
+    return mov;
+}
+
+void Map::deleteClPlaneMover(ClPlaneMover *mover)
+{
+    LOG_AS("Map::deleteClPlaneMover");
+
+    if(!mover) return;
+
+    LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
+            << mover << mover->plane->sector().indexInMap();
+    thinkers().remove(mover->thinker);
+    d->clPlaneMovers.removeOne(mover);
+}
+
+ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
+{
+    LOG_AS("Map::clPolyMoverFor");
+
+    /// @todo optimize: O(n) lookup.
+    foreach(ClPolyMover *mover, d->clPolyMovers)
+    {
+        if(mover->polyobj == &polyobj)
+            return mover;
+    }
+
+    if(!canCreate) return 0; // Not found.
+
+    // Create a new mover.
+    ClPolyMover *mover = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, 0);
+
+    d->clPolyMovers.append(mover);
+
+    mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
+    mover->polyobj = &polyobj;
+
+    thinkers().add(mover->thinker, false /*not public*/);
+
+    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
+            << mover << polyobj.indexInMap();
+    return mover;
+}
+
+void Map::deleteClPolyMover(ClPolyMover *mover)
+{
+    LOG_AS("Map::deleteClPolyMover");
+
+    if(!mover) return;
+
+    LOG_MAP_XVERBOSE("Removing mover %p") << mover;
+    thinkers().remove(mover->thinker);
+    d->clPolyMovers.removeOne(mover);
+}
+
 #endif // __CLIENT__
+
+String Map::elementSummaryAsStyledText() const
+{
+#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+
+    String str;
+    QTextStream os(&str);
+
+    if(lineCount())    os << TABBED(lineCount(),    "Lines");
+    //if(sideCount())    os << TABBED(sideCount(),    "Sides");
+    if(sectorCount())  os << TABBED(sectorCount(),  "Sectors");
+    if(vertexCount())  os << TABBED(vertexCount(),  "Vertexes");
+    if(polyobjCount()) os << TABBED(polyobjCount(), "Polyobjs");
+
+    return str.rightStrip();
+
+#undef TABBED
+}
+
+String Map::objectSummaryAsStyledText() const
+{
+#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+
+    int thCountInStasis = 0;
+    int thCount = thinkers().count(&thCountInStasis);
+
+    String str;
+    QTextStream os(&str);
+
+    if(thCount)           os << TABBED(thCount,            String("Thinkers (%1 in stasis)").arg(thCountInStasis));
+#ifdef __CLIENT__
+    if(biasSourceCount()) os << TABBED(biasSourceCount(),  "Bias Sources");
+    if(generatorCount())  os << TABBED(generatorCount(),   "Generators");
+    if(lumobjCount())     os << TABBED(lumobjCount(),      "Lumobjs");
+#endif
+
+    return str.rightStrip();
+
+#undef TABBED
+}
+
+static int bspTreeHeight(MapElement const &bspElem)
+{
+    if(bspElem.is<BspNode>())
+    {
+        return bspElem.as<BspNode>().height();
+    }
+    return 0;
+}
+
+static String bspTreeSummary(Map const &map)
+{
+    if(map.hasBspRoot())
+    {
+        String desc = String("%1 leafs, %2 nodes")
+                          .arg(map.bspLeafCount())
+                          .arg(map.bspNodeCount());
+        if(map.bspRoot().is<BspNode>())
+        {
+            BspNode const &bspRootNode = map.bspRoot().as<BspNode>();
+            desc += String(" (balance is %1:%2)")
+                        .arg(bspRootNode.hasRight()? bspTreeHeight(bspRootNode.right()) : 0)
+                        .arg(bspRootNode.hasLeft() ? bspTreeHeight(bspRootNode.left ()) : 0);
+        }
+        return desc;
+    }
+    return "";
+}
 
 D_CMD(InspectMap)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!App_World().hasMap())
+    LOG_AS("inspectmap (Cmd)");
+
+    if(!App_WorldSystem().hasMap())
     {
-        LOG_WARNING("No map is currently loaded.");
+        LOG_SCR_WARNING("No map is currently loaded");
         return false;
     }
 
-    // Print summary information about the current map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
-#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+    LOG_SCR_NOTE(_E(b) "%s - %s")
+            << Con_GetString("map-name")
+            << Con_GetString("map-author");
+    LOG_SCR_MSG("\n");
 
-    LOG_MSG(_E(b) "Current map elements:");
-    String str;
-    QTextStream os(&str);
-    os << TABBED(map.vertexCount(),  "Vertexes");
-    os << TABBED(map.lineCount(),    "Lines");
-    os << TABBED(map.polyobjCount(), "Polyobjs");
-    os << TABBED(map.sectorCount(),  "Sectors");
-    os << TABBED(map.bspNodeCount(), "BSP Nodes");
-    os << TABBED(map.bspLeafCount(), "BSP Leafs");
+    LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
+              /*" " _E(l) "OldUid: " _E(.) _E(i) "%s" _E(.)*/
+                    _E(l) "Music: "  _E(.) _E(i) "%i")
+            << map.uri().asText()
+            /*<< map.oldUniqueId()*/
+            << Con_GetInteger("map-music");
 
-    LOG_INFO("%s") << str.rightStrip();
+    if(map.isCustom())
+    {
+        NativePath sourceFile(Str_Text(P_MapSourceFile(map.uri().asText().toUtf8().constData())));
+        LOG_SCR_MSG(_E(l) "Source: " _E(.) _E(i) "\"%s\"") << sourceFile.pretty();
+    }
+
+    LOG_SCR_MSG("\n");
+
+    if(map.isEditable())
+    {
+        LOG_MSG(_E(D) "Editing " _E(b) "Enabled");
+    }
+
+    LOG_SCR_MSG(_E(D) "Elements:");
+    LOG_SCR_MSG("%s") << map.elementSummaryAsStyledText();
+
+    if(map.thinkers().isInited())
+    {
+        LOG_SCR_MSG(_E(D) "Objects:");
+        LOG_SCR_MSG("%s") << map.objectSummaryAsStyledText();
+    }
+
+    LOG_SCR_MSG(_E(R) "\n");
+
+    Vector2d geometryDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
+    LOG_SCR_MSG(_E(l) "Geometry dimensions: " _E(.) _E(i)) << geometryDimensions.asText();
+
+    if(map.hasBspRoot())
+    {
+        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << bspTreeSummary(map);
+    }
+
+    if(!map.bspLeafBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "BSP leaf blockmap: " _E(.) _E(i)) << map.bspLeafBlockmap().dimensions().asText();
+    }
+    if(!map.lineBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "Line blockmap: "     _E(.) _E(i)) << map.lineBlockmap().dimensions().asText();
+    }
+    if(!map.mobjBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "Mobj blockmap: "     _E(.) _E(i)) << map.mobjBlockmap().dimensions().asText();
+    }
+    if(!map.polyobjBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "Polyobj blockmap: "  _E(.) _E(i)) << map.polyobjBlockmap().dimensions().asText();
+    }
+
+#ifdef __CLIENT__
+    if(map.hasLightGrid())
+    {
+        LOG_SCR_MSG(_E(l) "LightGrid: " _E(.) _E(i)) << map.lightGrid().dimensions().asText();
+    }
+#endif
 
     return true;
 
@@ -2719,7 +3588,7 @@ void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editab
         last->_angle = last->angle() - firstAngle;
 
 /*#ifdef DENG2_DEBUG
-        LOG_VERBOSE("Vertex #%i: line owners #%i")
+        LOG_MAP_VERBOSE("Vertex #%i: line owners #%i")
             << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
 
         LineOwner const *base = v->firstLineOwner();
@@ -2727,7 +3596,7 @@ void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editab
         uint idx = 0;
         do
         {
-            LOG_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
+            LOG_MAP_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
                 << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
                 << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
 
@@ -2882,7 +3751,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
             line->updateAABox();
         }
 
-        LOG_INFO("Pruned %d vertexes (%d equivalents, %d unused).")
+        LOGDEV_MAP_NOTE("Pruned %d vertexes (%d equivalents, %d unused).")
             << prunedCount << (prunedCount - numUnused) << numUnused;
     }
 }
@@ -2894,8 +3763,8 @@ bool Map::endEditing()
     d->editingEnabled = false;
 
     LOG_AS("Map");
-    LOG_VERBOSE("Editing ended.");
-    LOG_DEBUG("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
+    LOG_MAP_VERBOSE("Editing ended.");
+    LOGDEV_MAP_VERBOSE("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
         << d->mesh.vertexCount()        << d->editable.lines.count()
         << d->editable.polyobjs.count() << d->editable.sectors.count();
 
@@ -2965,7 +3834,7 @@ bool Map::endEditing()
 
     // Determine the map bounds.
     d->updateBounds();
-    LOG_INFO("Geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
+    LOG_MAP_VERBOSE("Geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
 
     // Build a line blockmap.
     d->initLineBlockmap();

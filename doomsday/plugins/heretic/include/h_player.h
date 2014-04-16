@@ -85,8 +85,8 @@ typedef struct player_s {
 
     // Power ups. invinc and invis are tic counters.
     int             powers[NUM_POWER_TYPES];
-    boolean         keys[NUM_KEY_TYPES];
-    boolean         backpack;
+    dd_bool         keys[NUM_KEY_TYPES];
+    dd_bool         backpack;
 
     int             frags[MAXPLAYERS];
 
@@ -94,7 +94,7 @@ typedef struct player_s {
     weapontype_t    pendingWeapon; // Is wp_nochange if not changing.
 
     struct playerweapon_s {
-        boolean         owned;
+        dd_bool         owned;
     } weapons[NUM_WEAPON_TYPES];
     struct playerammo_s {
         int             owned;
@@ -130,12 +130,12 @@ typedef struct player_s {
     pspdef_t        pSprites[NUMPSPRITES];
 
     // True if secret level has been done.
-    boolean         didSecret;
+    dd_bool         didSecret;
 
     int             jumpTics; // The player can jump if this counter is zero.
     int             airCounter;
     int             rebornWait; // The player can be reborn if this counter is zero.
-    boolean         centering; // The player's view pitch is centering back to zero.
+    dd_bool         centering; // The player's view pitch is centering back to zero.
     int             update, startSpot;
 
     float           viewOffset[3]; // Relative to position of the player mobj.
@@ -159,34 +159,11 @@ typedef struct player_s {
     int             chickenPeck; // chicken peck countdown.
     mobj_t*         rain1; // Active rain maker 1.
     mobj_t*         rain2; // Active rain maker 2.
+
+#ifdef __cplusplus
+    void write(Writer *writer, struct playerheader_s &plrHdr) const;
+    void read(Reader *reader, struct playerheader_s &plrHdr);
+#endif
 } player_t;
 
-//
-// INTERMISSION
-// Structure passed e.g. to IN_Init(wb)
-//
-/*typedef struct {
-    boolean         inGame; // Whether the player is in game.
-
-    // Player stats, kills, collected items etc.
-    int             kills;
-    int             items;
-    int             secret;
-    int             time;
-    int             frags[MAXPLAYERS];
-    int             score; // Current score on entry, modified on return.
-} wbplayerstruct_t;*/
-
-typedef struct {
-    uint            episode;
-    boolean         didSecret; // If true, splash the secret level.
-    uint            currentMap, nextMap; // This and next maps.
-/*    int             maxKills;
-    int             maxItems;
-    int             maxSecret;
-    int             maxFrags;
-    int             parTime;
-    int             pNum; // Index of this player in game.
-    wbplayerstruct_t plyr[MAXPLAYERS];*/
-} wbstartstruct_t;
 #endif

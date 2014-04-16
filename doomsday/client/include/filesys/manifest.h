@@ -1,7 +1,7 @@
-/** @file manifest.h Logical Resource Manifest
+/** @file manifest.h  Manifest for a logical resource.
  *
- * @author Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright Â© 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MANIFEST_H
-#define LIBDENG_RESOURCE_MANIFEST_H
+#ifndef DENG_RESOURCE_MANIFEST_H
+#define DENG_RESOURCE_MANIFEST_H
 
+#include "api_uri.h"
 #include <de/String>
 #include <QStringList>
-#include "api_uri.h"
 
 namespace de {
 
@@ -49,22 +49,40 @@ public:
     /// @return Flags for this file.
     int fileFlags() const;
 
-    /// @return List of "identity keys" used to identify the file.
+    /**
+     * Returns a list of "identity keys" used to identify the resource.
+     */
     QStringList const &identityKeys() const;
 
-    /// @return List of names for the associated file.
+    /**
+     * Add a new file segment identity key to the list for this manifest.
+     *
+     * @param newIdentityKey  New identity key (e.g., a lump/file name).
+     */
+    void addIdentityKey(String newIdentityKey);
+
+    /**
+     * Returns a list of known-names for the associated resource.
+     */
     QStringList const &names() const;
+
+    /**
+     * Add a new file name to the list of names for this manifest.
+     *
+     * @param newName  New name for this file. Newer names have precedence.
+     */
+    void addName(String newName);
 
     /**
      * Attempt to locate this file by systematically resolving and then
      * checking each search path.
      */
-    ResourceManifest &locateFile();
+    void locateFile();
 
     /**
      * "Forget" the currently located file if one has been found.
      */
-    ResourceManifest &forgetFile();
+    void forgetFile();
 
     /**
      * Attempt to resolve a path to (and maybe locate) this file.
@@ -77,35 +95,10 @@ public:
      */
     String const &resolvedPath(bool tryLocate = true);
 
-    /**
-     * Add a new file segment identity key to the list for this manifest.
-     *
-     * @param newIdentityKey    New identity key (e.g., a lump/file name).
-     * @param didAdd            If not @c =0, the outcome will be written here.
-     */
-    ResourceManifest &addIdentityKey(String newIdentityKey, bool *didAdd = 0);
-
-    /**
-     * Add a new file name to the list of names for this manifest.
-     *
-     * @param newName       New name for this file. Newer names have precedence.
-     * @param didAdd        If not @c =0, the outcome will be written here.
-     */
-    ResourceManifest &addName(String newName, bool *didAdd = 0);
-
-    /**
-     * Print information about a file to the console.
-     *
-     * @param manifest      Manifest for the file.
-     * @param showStatus    @c true = print loaded/located status for the
-     *                      associated file.
-     */
-    static void consolePrint(ResourceManifest &manifest, bool showStatus = true);
-
 private:
     DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_MANIFEST_H */
+#endif // DENG_RESOURCE_MANIFEST_H

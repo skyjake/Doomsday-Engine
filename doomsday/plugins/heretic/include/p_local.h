@@ -113,23 +113,19 @@ void            P_DropWeapon(player_t* player);
 void            P_ActivateMorphWeapon(player_t* player);
 void            P_PostMorphWeapon(player_t* player, weapontype_t weapon);
 void            P_UpdateBeak(player_t* player, pspdef_t* psp);
-void            P_FireWeapon(player_t* player);
 
-boolean         P_UndoPlayerMorph(player_t* player);
+dd_bool         P_UndoPlayerMorph(player_t* player);
 
 void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 void        P_WindThrust(mobj_t* mo);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
-boolean     P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax);
+dd_bool     P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax);
 void        P_MobjThinker(void *mo);
 void        P_RipperBlood(mobj_t* mo);
-boolean     P_HitFloor(mobj_t* thing);
-boolean     P_CheckMissileSpawn(mobj_t* missile);
+dd_bool     P_HitFloor(mobj_t* thing);
+dd_bool     P_CheckMissileSpawn(mobj_t* missile);
 void        P_MobjMoveZ(mobj_t* mo);
 void        P_ExplodeMissile(mobj_t* mo);
-
-const char*     P_GetMapName(uint episode, uint map);
-const char*     P_GetShortMapName(uint episode, uint map);
 
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);

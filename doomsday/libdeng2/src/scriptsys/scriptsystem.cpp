@@ -1,18 +1,18 @@
 /** @file scriptsystem.cpp  Subsystem for scripts.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -29,20 +29,15 @@
 
 namespace de {
 
-Value *Binding_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
+Value *Function_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
 {
-    // We must have one argument.
-    if(args.size() != 1)
-    {
-        throw Function::WrongArgumentsError("Binding_Path_FileNamePath",
-                                            "Expected one argument");
-    }
-
     return new TextValue(args.at(0)->asText().fileNamePath());
 }
 
 DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 {
+    Binder binder;
+
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules; // not owned
@@ -78,13 +73,10 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         }
 
         // Setup the Path module.
-        {
-            Function::registerNativeEntryPoint("Path_FileNamePath", Binding_Path_FileNamePath);
+        binder.init(pathModule)
+                << DENG2_FUNC(Path_FileNamePath, "fileNamePath", "path");
 
-            Record &mod = pathModule;
-            mod.addFunction("fileNamePath", refless(new Function("Path_FileNamePath", Function::Arguments() << "path"))).setReadOnly();
-            addNativeModule("Path", mod);
-        }
+        addNativeModule("Path", pathModule);
     }
 
     ~Instance()
@@ -93,16 +85,14 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
         DENG2_FOR_EACH(NativeModules, i, nativeModules)
         {
-            i.value()->audienceForDeletion -= this;
+            i.value()->audienceForDeletion() -= this;
         }
-
-        Function::unregisterNativeEntryPoint("Path_FileNamePath");
     }
 
     void addNativeModule(String const &name, Record &module)
     {
         nativeModules.insert(name, &module); // not owned
-        module.audienceForDeletion += this;
+        module.audienceForDeletion() += this;
     }
 
     void recordBeingDeleted(Record &record)
@@ -184,7 +174,8 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
             }
             matching.sort(sortFilesByModifiedAt);
             found = matching.back();
-            LOG_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size()) << " candidates (latest modified).";
+            LOG_SCR_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size())
+                                      << " candidates (latest modified)";
         }
         else
         {

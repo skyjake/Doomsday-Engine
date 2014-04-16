@@ -1,10 +1,8 @@
-/** @file def_main.cpp
+/** @file def_main.cpp  Definitions Subsystem.
  *
- * Definitions Subsystem.
- *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,13 +19,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <string.h>
-#include <ctype.h>
-
-#include <de/NativePath>
-#include <QTextStream>
+#define DENG_NO_API_MACROS_DEFINITIONS
 
 #include "de_base.h"
+#include "def_main.h"
+
 #include "de_system.h"
 #include "de_platform.h"
 #include "de_console.h"
@@ -38,13 +34,20 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
-#include "world/p_particle.h"
+#include "Generator"
+#ifdef __CLIENT__
+#  include "render/rend_particle.h"
+#endif
 
-#define DENG_NO_API_MACROS_DEFINITIONS
 #include "api_def.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
+
+#include <de/NativePath>
+#include <QTextStream>
+#include <cctype>
+#include <cstring>
 
 using namespace de;
 
@@ -59,7 +62,7 @@ typedef struct {
 void Def_ReadProcessDED(const char* filename);
 
 ded_t defs; // The main definitions database.
-boolean firstDED;
+dd_bool firstDED;
 
 sprname_t* sprNames; // Sprite name list.
 ded_count_t countSprNames;
@@ -85,7 +88,7 @@ ded_count_t countStateLights;
 ded_ptcgen_t** statePtcGens; // A pointer for each State.
 ded_count_t countStatePtcGens;
 
-static boolean defsInited = false;
+static dd_bool defsInited = false;
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
@@ -287,6 +290,21 @@ int Def_GetSoundNumForName(const char* name)
         if(!stricmp(defs.sounds[i].name, name))
             return i;
 
+    return 0;
+}
+
+ded_music_t* Def_GetMusic(char const *id)
+{
+    if(id && id[0] && defs.count.music.num)
+    {
+        for(int i = 0; i < defs.count.music.num; ++i)
+        {
+            if(!stricmp(defs.music[i].id, id))
+            {
+                return &defs.music[i];
+            }
+        }
+    }
     return 0;
 }
 
@@ -591,12 +609,7 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
 
 ded_flag_t *Def_GetFlag(char const *flag)
 {
-    if(!flag || !flag[0])
-    {
-        DEBUG_Message(("Attempted Def_GetFlagValue with %s flag argument.\n",
-                       flag? "zero-length" : "<null>"));
-        return 0;
-    }
+    if(!flag || !flag[0]) return 0;
 
     for(int i = defs.count.flags.num - 1; i >= 0; i--)
     {
@@ -643,7 +656,7 @@ int Def_EvalFlags2(char const *ptr)
         }
         else
         {
-            LOG_WARNING("Flag '%s' is not defined (or used out of context).") << flagName;
+            LOG_RES_WARNING("Flag '%s' is not defined (or used out of context)") << flagName;
         }
     }
     return value;
@@ -724,7 +737,7 @@ void Def_ReadProcessDED(char const* path)
     de::Uri path_ = de::Uri(path, RC_NULL);
     if(!App_FileSystem().accessFile(path_))
     {
-        LOG_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
+        LOG_RES_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -732,7 +745,7 @@ void Def_ReadProcessDED(char const* path)
     if(!App_FileSystem().checkFileId(path_))
     {
         // Already handled.
-        LOG_DEBUG("\"%s\" has already been read.") << NativePath(path_.asText()).pretty();
+        LOG_RES_XVERBOSE("\"%s\" has already been read") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -779,7 +792,7 @@ static void Def_ReadLumpDefs()
 
     if(verbose && numProcessedLumps > 0)
     {
-        LOG_INFO("Processed %i %s.")
+        LOG_RES_NOTE("Processed %i %s")
             << numProcessedLumps << (numProcessedLumps != 1 ? "lumps" : "lump");
     }
 }
@@ -832,7 +845,7 @@ static void readDefinitionFile(String path)
     if(path.isEmpty()) return;
 
     QByteArray pathUtf8 = path.toUtf8();
-    LOG_VERBOSE("  Processing '%s'...") << F_PrettyPath(pathUtf8.constData());
+    LOG_RES_VERBOSE("Reading \"%s\"") << F_PrettyPath(pathUtf8.constData());
     Def_ReadProcessDED(pathUtf8);
 }
 
@@ -921,7 +934,7 @@ static void readAllDefinitions()
      */
     Def_ReadLumpDefs();
 
-    LOG_INFO(String("readAllDefinitions: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();
 }
 
 static AnimGroup const *findAnimGroupForTexture(TextureManifest &textureManifest)
@@ -983,12 +996,10 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
         mat->height = tex.height();
         mat->flags = (tex.isFlagged(Texture::NoDraw)? Material::NoDraw : 0);
     }
-#if _DEBUG
     else
     {
-        LOG_DEBUG("Texture \"%s\" not yet defined, resultant Material will inherit dimensions.") << texUri;
+        LOGDEV_RES_MSG("Texture \"%s\" not yet defined, resultant Material will inherit dimensions") << texUri;
     }
-#endif
 
     // The first stage is implicit.
     int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
@@ -1378,10 +1389,11 @@ static void interpretMaterialDef(ded_material_t const &def)
                 catch(ResourceSystem::MissingManifestError const &er)
                 {
                     // Log but otherwise ignore this error.
-                    LOG_WARNING(er.asText() + ". Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i), ignoring.")
+                    LOG_RES_WARNING("Ignoring unknown texture \"%s\" in Material \"%s\" (layer %i stage %i): %s")
                         << *reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)
                         << *reinterpret_cast<de::Uri *>(def.uri)
-                        << 0 << 0;
+                        << 0 << 0
+                        << er.asText();
                 }
             }
         }
@@ -1407,13 +1419,13 @@ static void interpretMaterialDef(ded_material_t const &def)
     }
     catch(ResourceSystem::UnknownSchemeError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring material \"%s\", ignoring.")
-            << *reinterpret_cast<de::Uri *>(def.uri);
+        LOG_RES_WARNING("Failed to declare material \"%s\": %s")
+            << *reinterpret_cast<de::Uri *>(def.uri) << er.asText();
     }
     catch(MaterialScheme::InvalidPathError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring material \"%s\", ignoring.")
-            << *reinterpret_cast<de::Uri *>(def.uri);
+        LOG_RES_WARNING("Failed to declare material \"%s\": %s")
+            << *reinterpret_cast<de::Uri *>(def.uri) << er.asText();
     }
 }
 
@@ -1440,6 +1452,8 @@ static void clearFontDefinitionLinks()
 
 void Def_Read()
 {
+    LOG_AS("Def_Read");
+
     if(defsInited)
     {
         // We've already initialized the definitions once.
@@ -1465,7 +1479,7 @@ void Def_Read()
     generateMaterialDefs();
 
     // Read all definitions files and lumps.
-    Con_Message("Parsing definition files%s", verbose >= 1? ":" : "...");
+    LOG_RES_MSG("Parsing definition files...");
     readAllDefinitions();
 
     // Any definition hooks?
@@ -1643,7 +1657,7 @@ void Def_Read()
             // It's probably a bias light definition, then?
             if(!defs.lights[i].uniqueMapID[0])
             {
-                Con_Message("Warning: Def_Read: Undefined state '%s' in Light definition.", defs.lights[i].state);
+                LOG_RES_WARNING("Undefined state '%s' in Light definition") << defs.lights[i].state;
             }
             continue;
         }
@@ -1769,7 +1783,7 @@ void Def_Read()
             continue; // Not state triggered, then...
 
         // Link the definition to the state.
-        if(pg->flags & PGF_STATE_CHAIN)
+        if(pg->flags & Generator::StateChain)
         {
             // Add to the chain.
             pg->stateNext = statePtcGens[st];
@@ -1805,7 +1819,7 @@ void Def_Read()
     }
 
     // Log a summary of the definition database.
-    LOG_MSG(_E(b) "Definitions:");
+    LOG_RES_MSG(_E(b) "Definitions:");
     de::String str;
     QTextStream os(&str);
     os << defCountMsg(defs.count.groups.num, "animation groups");
@@ -1838,7 +1852,7 @@ void Def_Read()
     os << defCountMsg(defs.count.textureEnv.num, "texture environments");
     os << defCountMsg(countMobjInfo.num, "things");
 
-    LOG_MSG("%s") << str.rightStrip();
+    LOG_RES_MSG("%s") << str.rightStrip();
 
     defsInited = true;
 }
@@ -1881,9 +1895,9 @@ static void initMaterialGroup(ded_group_t &def)
         catch(ResourceSystem::MissingManifestError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ". Unknown material \"%s\" in group def %i, ignoring.")
+            LOG_RES_WARNING("Unknown material \"%s\" in group def %i: %s")
                 << *reinterpret_cast<de::Uri *>(gm->material)
-                << i;
+                << i << er.asText();
         }
     }
 }
@@ -1968,7 +1982,7 @@ void Def_PostInit()
  * Can we reach 'snew' if we start searching from 'sold'?
  * Take a maximum of 16 steps.
  */
-boolean Def_SameStateSequence(state_t* snew, state_t* sold)
+dd_bool Def_SameStateSequence(state_t* snew, state_t* sold)
 {
     int it, target = snew - states, start = sold - states;
     int count = 0;
@@ -2215,6 +2229,13 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_MUSIC:
         return Def_GetMusicNum(id);
 
+    case DD_DEF_MUSIC_CDTRACK:
+        if(ded_music_t *music = Def_GetMusic(id))
+        {
+            return music->cdTrack;
+        }
+        return false;
+
     case DD_DEF_MAP_INFO: {
         ddmapinfo_t *mout;
         struct uri_s *mapUri = Uri_NewWithPath2(id, RC_NULL);
@@ -2358,22 +2379,27 @@ int Def_Set(int type, int index, int value, const void* ptr)
     ded_music_t* musdef = 0;
     int i;
 
+    LOG_AS("Def_Set");
+
     switch(type)
     {
     case DD_DEF_TEXT:
         if(index < 0 || index >= defs.count.text.num)
-            Con_Error("Def_Set: Text index %i is invalid.\n", index);
-
+        {
+            DENG_ASSERT(!"Def_Set: Text index is invalid");
+            return false;
+        }
         defs.text[index].text = (char*) M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
         strcpy(defs.text[index].text, (char const*) ptr);
         break;
 
     case DD_DEF_STATE: {
         ded_state_t* stateDef;
-
         if(index < 0 || index >= defs.count.states.num)
-            Con_Error("Def_Set: State index %i is invalid.\n", index);
-
+        {
+            DENG_ASSERT(!"Def_Set: State index is invalid");
+            return false;
+        }
         stateDef = &defs.states[index];
         switch(value)
         {
@@ -2382,7 +2408,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
             if(sprite < 0 || sprite >= defs.count.sprites.num)
             {
-                Con_Message("Warning: Def_Set: Unknown sprite index %i.", sprite);
+                LOGDEV_RES_WARNING("Unknown sprite index %i") << sprite;
                 break;
             }
 
@@ -2399,7 +2425,10 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
     case DD_DEF_SOUND:
         if(index < 0 || index >= countSounds.num)
-            Con_Error("Warning: Def_Set: Sound index %i is invalid.\n", index);
+        {
+            DENG_ASSERT(!"Sound index is invalid");
+            return false;
+        }
 
         switch(value)
         {
@@ -2411,8 +2440,8 @@ int Def_Set(int type, int index, int value, const void* ptr)
                 sounds[index].lumpNum = App_FileSystem().lumpNumForName(sounds[index].lumpName);
                 if(sounds[index].lumpNum < 0)
                 {
-                    Con_Message("Warning: Def_Set: Unknown sound lump name \"%s\", sound (#%i) will be inaudible.",
-                                sounds[index].lumpName, index);
+                    LOG_RES_WARNING("Unknown sound lump name \"%s\"; sound #%i will be inaudible")
+                            << sounds[index].lumpName << index;
                 }
             }
             else
@@ -2438,7 +2467,10 @@ int Def_Set(int type, int index, int value, const void* ptr)
             musdef = defs.music + index;
         }
         else
-            Con_Error("Def_Set: Music index %i is invalid.\n", index);
+        {
+            DENG_ASSERT(!"Def_Set: Music index is invalid");
+            return false;
+        }
 
         // Which key to set?
         switch(value)
@@ -2525,17 +2557,17 @@ D_CMD(ListMobjs)
 
     if(defs.count.mobjs.num <= 0)
     {
-        Con_Message("There are currently no mobjtypes defined/loaded.");
+        LOG_RES_MSG("No mobjtypes defined/loaded");
         return true;
     }
 
-    Con_Printf("Registered Mobjs (ID | Name):\n");
+    LOG_RES_MSG(_E(b) "Registered Mobjs (ID | Name):");
     for(int i = 0; i < defs.count.mobjs.num; ++i)
     {
         if(defs.mobjs[i].name[0])
-            Con_Printf(" %s | %s\n", defs.mobjs[i].id, defs.mobjs[i].name);
+            LOG_RES_MSG(" %s | %s") << defs.mobjs[i].id << defs.mobjs[i].name;
         else
-            Con_Printf(" %s | (Unnamed)\n", defs.mobjs[i].id);
+            LOG_RES_MSG(" %s | " _E(l) "(Unnamed)") << defs.mobjs[i].id;
     }
 
     return true;

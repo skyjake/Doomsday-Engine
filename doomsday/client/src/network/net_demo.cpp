@@ -53,9 +53,9 @@ typedef struct {
 #pragma pack()
 
 typedef struct {
-    boolean         first;
+    dd_bool         first;
     int             begintime;
-    boolean         canwrite; /// @c false until Handshake packet.
+    dd_bool         canwrite; /// @c false until Handshake packet.
     int             cameratimer;
     int             pausetime;
     float           fov;
@@ -89,7 +89,7 @@ int viewangleDelta = 0;
 float lookdirDelta = 0;
 float posDelta[3];
 float demoFrameZ, demoZ;
-boolean demoOnGround;
+dd_bool demoOnGround;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -119,7 +119,7 @@ void Demo_Init(void)
  * Open a demo file and begin recording.
  * Returns false if the recording can't be begun.
  */
-boolean Demo_BeginRecording(const char* fileName, int plrNum)
+dd_bool Demo_BeginRecording(const char* fileName, int plrNum)
 {
     DENG_UNUSED(fileName);
     DENG_UNUSED(plrNum);
@@ -307,7 +307,7 @@ void Demo_BroadcastPacket(void)
         Demo_WritePacket(i);
 }
 
-boolean Demo_BeginPlayback(const char* fileName)
+dd_bool Demo_BeginPlayback(const char* fileName)
 {
     ddstring_t buf;
 
@@ -338,7 +338,7 @@ boolean Demo_BeginPlayback(const char* fileName)
     playdemo = lzOpen(Str_Text(&buf), "rp");
     Str_Free(&buf);
     if(!playdemo)
-        return false; // Failed to open the file.
+        return false;
 
     // OK, let's begin the demo.
     playback = true;
@@ -368,9 +368,9 @@ void Demo_StopPlayback(void)
     if(!playback)
         return;
 
-    Con_Message("Demo was %.2f seconds (%i tics) long.",
-                (DEMOTIC - demoStartTic) / (float) TICSPERSEC,
-                DEMOTIC - demoStartTic);
+    LOG_MSG("Demo was %.2f seconds (%i tics) long.")
+            << ((DEMOTIC - demoStartTic) / (float) TICSPERSEC)
+            << (DEMOTIC - demoStartTic);
 
     playback = false;
     lzClose(playdemo);
@@ -385,8 +385,8 @@ void Demo_StopPlayback(void)
         if(!diff)
             diff = 1;
         // Print summary and exit.
-        Con_Message("Timedemo results: %i game tics in %.1f seconds", r_framecounter, diff);
-        Con_Message("%f FPS", r_framecounter / diff);
+        LOG_MSG("Timedemo results: %i game tics in %.1f seconds", r_framecounter, diff);
+        LOG_MSG("%f FPS", r_framecounter / diff);
         Sys_Quit();
     }
     */
@@ -396,7 +396,7 @@ void Demo_StopPlayback(void)
         Sys_Quit();
 }
 
-boolean Demo_ReadPacket(void)
+dd_bool Demo_ReadPacket(void)
 {
     static byte     ptime;
     int             nowtime = DEMOTIC;
@@ -434,11 +434,6 @@ boolean Demo_ReadPacket(void)
     lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
     //netBuffer.cursor = netBuffer.msg.data;
 
-/*#if _DEBUG
-Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
-           hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type);
-#endif*/
-
     // Read the next packet time.
     ptime = lzGetC(playdemo);
 
@@ -455,7 +450,7 @@ void Demo_WriteLocalCamera(int plrNum)
     mobj_t* mo = ddpl->mo;
     fixed_t x, y, z;
     byte flags;
-    boolean incfov = false; //(writeInfo[plrNum].fov != fieldOfView);
+    dd_bool incfov = false; //(writeInfo[plrNum].fov != fieldOfView);
     const viewdata_t* viewData = R_ViewData(plrNum);
 
     if(!mo)
@@ -636,7 +631,7 @@ D_CMD(PlayDemo)
 {
     DENG2_UNUSED2(src, argc);
 
-    Con_Printf("Playing demo \"%s\"...\n", argv[1]);
+    LOG_MSG("Playing demo \"%s\"...") << argv[1];
     return Demo_BeginPlayback(argv[1]);
 }
 
@@ -648,28 +643,27 @@ D_CMD(RecordDemo)
 
     if(argc == 3 && isClient)
     {
-        Con_Printf("Clients can only record the consolePlayer.\n");
+        LOG_ERROR("Clients can only record the consolePlayer");
         return true;
     }
 
     if(isClient && argc != 2)
     {
-        Con_Printf("Usage: %s (fileName)\n", argv[0]);
+        LOG_SCR_NOTE("Usage: %s (fileName)") << argv[0];
         return true;
     }
 
     if(isServer && (argc < 2 || argc > 3))
     {
-        Con_Printf("Usage: %s (fileName) (plnum)\n", argv[0]);
-        Con_Printf("(plnum) is the player which will be recorded.\n");
+        LOG_SCR_NOTE("Usage: %s (fileName) (plnum)") << argv[0];
+        LOG_SCR_MSG("(plnum) is the player which will be recorded.");
         return true;
     }
 
     if(argc == 3)
         plnum = atoi(argv[2]);
 
-    Con_Printf("Recording demo of player %i to \"%s\".\n", plnum, argv[1]);
-
+    LOG_MSG("Recording demo of player %i to \"%s\"") << plnum << argv[1];
     return Demo_BeginRecording(argv[1], plnum);
 }
 
@@ -684,18 +678,18 @@ D_CMD(PauseDemo)
 
     if(!clients[plnum].recording)
     {
-        Con_Printf("Not recording for player %i.\n", plnum);
+        LOG_ERROR("Not recording for player %i") << plnum;
         return false;
     }
     if(clients[plnum].recordPaused)
     {
         Demo_ResumeRecording(plnum);
-        Con_Printf("Demo recording of player %i resumed.\n", plnum);
+        LOG_MSG("Demo recording of player %i resumed") << plnum;
     }
     else
     {
         Demo_PauseRecording(plnum);
-        Con_Printf("Demo recording of player %i paused.\n", plnum);
+        LOG_MSG("Demo recording of player %i paused") << plnum;
     }
     return true;
 }
@@ -708,7 +702,7 @@ D_CMD(StopDemo)
 
     if(argc > 2)
     {
-        Con_Printf("Usage: stopdemo (plrnum)\n");
+        LOG_SCR_NOTE("Usage: stopdemo (plrnum)");
         return true;
     }
     if(argc == 2)
@@ -717,8 +711,8 @@ D_CMD(StopDemo)
     if(!playback && !clients[plnum].recording)
         return true;
 
-    Con_Printf("Demo %s of player %i stopped.\n",
-               clients[plnum].recording ? "recording" : "playback", plnum);
+    LOG_MSG("Demo %s of player %i stopped.")
+            << (clients[plnum].recording ? "recording" : "playback") << plnum;
 
     if(playback)
     {   // Aborted.

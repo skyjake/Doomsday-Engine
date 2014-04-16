@@ -32,99 +32,54 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "gamerules.h"
 #include "p_mobj.h"
 #include "x_player.h"
+
+DENG_EXTERN_C player_t players[MAXPLAYERS];
+
+DENG_EXTERN_C uint nextMap;
+DENG_EXTERN_C uint nextMapEntrance;
+DENG_EXTERN_C dd_bool paused;
+DENG_EXTERN_C dd_bool precache;
+DENG_EXTERN_C dd_bool customPal;
+DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int gaSaveGameSaveSlot;
-extern int gaLoadGameSaveSlot;
+void G_CommonShutdown(void);
 
-extern player_t players[MAXPLAYERS];
+void R_InitRefresh(void);
+void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap);
+void Mobj_UpdateTranslationClassAndMap(mobj_t *mo);
 
-extern boolean gameInProgress;
-extern uint gameEpisode;
-extern uint gameMap;
-extern uint gameMapEntryPoint;
-extern skillmode_t gameSkill;
+void G_PrintMapList(void);
 
-extern boolean deathmatch;
-extern boolean paused;
-extern boolean precache;
-extern boolean customPal;
+void G_QuitGame(void);
 
-extern skillmode_t dSkill;
+void G_CommonPreInit(void);
+void G_CommonPostInit(void);
 
-extern uint nextMap;
-extern uint nextMapEntryPoint;
-extern boolean briefDisabled;
+int G_GetInteger(int id);
+void *G_GetVariable(int id);
 
-extern int gsvMapMusic;
+void G_PlayerReborn(int player);
+void G_DeathMatchSpawnPlayer(int playernum);
+void G_DeferredPlayDemo(char *demo);
 
-void            G_CommonShutdown(void);
+void G_PlayDemo(char *name);
+void G_TimeDemo(char *name);
+void G_StopDemo(void);
 
-void            R_InitRefresh(void);
-void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap);
-void            Mobj_UpdateTranslationClassAndMap(mobj_t* mo);
-
-void            G_PrintMapList(void);
-
-int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
-int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
-
-void            G_QuitGame(void);
-
-/// @return  @c true = loading is presently possible.
-boolean G_IsLoadGamePossible(void);
-
-/**
- * To be called to schedule a load game-save action.
- * @param slot  Logical identifier of the save slot to use.
- * @return  @c true iff @a saveSlot is in use and loading is presently possible.
- */
-boolean G_LoadGame(int slot);
-
-/// @return  @c true = saving is presently possible.
-boolean G_IsSaveGamePossible(void);
-
-/**
- * To be called to schedule a save game-save action.
- * @param slot  Logical identifier of the save slot to use.
- * @param name  New name for the game-save. Can be @c NULL in which case
- *      the name will not change if the slot has already been used.
- *      If an empty string a new name will be generated automatically.
- * @return  @c true iff @a saveSlot is valid and saving is presently possible.
- */
-boolean G_SaveGame2(int slot, const char* name);
-boolean G_SaveGame(int slot);
-
-void            G_CommonPreInit(void);
-void            G_CommonPostInit(void);
-
-int             G_GetInteger(int id);
-void*           G_GetVariable(int id);
-
-void            G_PlayerReborn(int player);
-void            G_DeathMatchSpawnPlayer(int playernum);
-void            G_DeferredPlayDemo(char* demo);
-void            G_DoPlayDemo(void);
-
-void            G_PlayDemo(char* name);
-void            G_TimeDemo(char* name);
-void            G_IntermissionDone(void);
-void            G_ScreenShot(void);
-void            G_DoReborn(int playernum);
-void            G_StopDemo(void);
-
-void            G_Ticker(timespan_t ticLength);
+void G_Ticker(timespan_t ticLength);
 
 /// @return  @c true if the input event @a ev was eaten.
-int G_PrivilegedResponder(event_t* ev);
+int G_PrivilegedResponder(event_t *ev);
 
 /// @return  @c true if the input event @a ev was eaten.
-int G_Responder(event_t* ev);
+int G_Responder(event_t *ev);
 
 #ifdef __cplusplus
 } // extern "C"

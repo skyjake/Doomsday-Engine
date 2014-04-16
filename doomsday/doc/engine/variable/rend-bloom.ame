@@ -1,0 +1,4 @@
+@summary{
+    1=Enable the bloom filter for frame post-processing. Bloom makes bright 
+    areas of the frame glow more intensely.
+}

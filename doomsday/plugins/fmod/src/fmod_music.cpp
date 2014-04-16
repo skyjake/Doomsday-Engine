@@ -89,7 +89,7 @@ static void releaseSong()
     {
         if(needReleaseSong)
         {
-            DSFMOD_TRACE("releaseSong: Song " << song << " will be released.")
+            DSFMOD_TRACE("releaseSong: Song " << song << " will be released.");
             song->release();
         }
         else

@@ -77,6 +77,7 @@ Source: "bin\doomsday-server.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; C
 Source: "bin\doomsday-shell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\audio_*.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\dehread.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\savegameconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\wadmapconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\doom.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libdoom
 Source: "bin\plugins\heretic.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libheretic
@@ -84,6 +85,7 @@ Source: "bin\plugins\hexen.dll"; DestDir: "{app}\bin\plugins"; Flags: ignorevers
 
 ; Tools
 Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
+Source: "bin\savegametool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
 Source: "bin\texc.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
 Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
 
@@ -93,6 +95,7 @@ Source: "bin\deng1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components:
 Source: "bin\deng2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_shell.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_appfw.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
@@ -132,7 +135,9 @@ Source: "modules\appconfig.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\bootstrap.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\Config.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\gui.de"; DestDir: "{app}\modules"; Components: Engine
+Source: "modules\Log.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\recutil.de"; DestDir: "{app}\modules"; Components: Engine
+Source: "modules\Updater.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
 Source: "data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine

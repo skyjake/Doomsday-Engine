@@ -1,18 +1,18 @@
 /** @file bank.cpp  Abstract data bank with multi-tiered caching.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -111,6 +111,7 @@ private:
 
 } // namespace internal
 
+
 DENG2_PIMPL(Bank),
 DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via main Loop
 {
@@ -144,7 +145,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
             if(data.get())
             {
-                LOG_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
+                LOG_RES_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
                         << path('.') << data->sizeInMemory();
                 data->aboutToUnload();
                 data.reset();
@@ -193,7 +194,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             // us. This may take an unspecified amount of time.
             QScopedPointer<IData> loaded(bank->loadFromSource(*source));
 
-            LOG_TRACE("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
+            LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
 
             if(loaded.data())
             {
@@ -225,14 +226,14 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.take());
-                    LOG_TRACE("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
+                    LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
                     return; // Done!
                 }
                 // We cannot use this.
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Failed to deserialize \"%s\":\n") << path('.') << er.asText();
+                LOG_RES_WARNING("Failed to deserialize \"%s\":\n") << path('.') << er.asText();
             }
 
             // Fallback option.
@@ -304,7 +305,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                 // Externally we use dotted paths.
                 Path const itemPath = path('.');
 
-                LOG_TRACE("Item \"%s\" moved to %s cache")
+                LOGDEV_RES_XVERBOSE("Item \"%s\" moved to %s cache")
                         << itemPath << Cache::formatAsText(toCache.format());
 
                 bank->d->notify(Notification(itemPath, toCache));
@@ -462,7 +463,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
+                LOG_RES_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
             }
             // Ensure a blocking load completes.
             item().post();
@@ -474,12 +475,12 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             {
                 DENG2_ASSERT(_bank.d->serialCache != 0);
 
-                LOG_DEBUG("Serializing \"%s\"") << _path;
+                LOG_RES_XVERBOSE("Serializing \"%s\"") << _path;
                 item().changeCache(*_bank.d->serialCache);
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Failed to serialize \"%s\" to hot storage:\n")
+                LOG_RES_WARNING("Failed to serialize \"%s\" to hot storage:\n")
                         << _path << er.asText();
             }
         }
@@ -488,12 +489,12 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         {
             try
             {
-                LOG_DEBUG("Unloading \"%s\"") << _path;
+                LOGDEV_RES_XVERBOSE("Unloading \"%s\"") << _path;
                 item().changeCache(_bank.d->sourceCache);
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Error when unloading \"%s\":\n")
+                LOG_RES_WARNING("Error when unloading \"%s\":\n")
                         << _path << er.asText();
             }
         }
@@ -545,7 +546,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration -= this;
+        Loop::appLoop().audienceForIteration() -= this;
         destroySerialCache();
     }
 
@@ -637,7 +638,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
                 if(item.isValidSerialTime(hotTime))
                 {
-                    LOG_VERBOSE("Found valid serialized copy of \"%s\"") << item.path('.');
+                    LOGDEV_RES_MSG("Found valid serialized copy of \"%s\"") << item.path('.');
 
                     item.serial = array;
                     best = serialCache;
@@ -669,13 +670,13 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         notifications.put(new Notification(notif));
         if(isThreaded())
         {
-            Loop::appLoop().audienceForIteration += this;
+            Loop::appLoop().audienceForIteration() += this;
         }
     }
 
     void loopIteration()
     {
-        Loop::appLoop().audienceForIteration -= this;
+        Loop::appLoop().audienceForIteration() -= this;
         performNotifications();
     }
 
@@ -695,14 +696,14 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         switch(nt.kind)
         {
         case Notification::Loaded:
-            DENG2_FOR_PUBLIC_AUDIENCE(Load, i)
+            DENG2_FOR_PUBLIC_AUDIENCE2(Load, i)
             {
                 i->bankLoaded(nt.path);
             }
             break;
 
         case Notification::CacheChanged:
-            DENG2_FOR_PUBLIC_AUDIENCE(CacheLevel, i)
+            DENG2_FOR_PUBLIC_AUDIENCE2(CacheLevel, i)
             {
                 DENG2_ASSERT(nt.cache != 0);
 
@@ -714,7 +715,13 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             break;
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Load)
+    DENG2_PIMPL_AUDIENCE(CacheLevel)
 };
+
+DENG2_AUDIENCE_METHOD(Bank, Load)
+DENG2_AUDIENCE_METHOD(Bank, CacheLevel)
 
 Bank::Bank(Flags const &flags, String const &hotStorageLocation)
     : d(new Instance(this, flags))
@@ -808,7 +815,7 @@ dint Bank::allItems(Names &names) const
     d->items.findAllPaths(paths, PathTree::NoBranch);
     DENG2_FOR_EACH(PathTree::FoundPaths, i, paths)
     {
-        names.insert(*i);
+        names.insert(Path(*i).withSeparators('.'));
     }
     return dint(names.size());
 }
@@ -854,7 +861,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.reset();
     item.unlock();
 
-    LOG_TRACE("Loading \"%s\"...") << path;
+    LOG_RES_XVERBOSE("Loading \"%s\"...") << path;
 
     Time requestedAt;
     d->load(path, Immediately);
@@ -863,11 +870,11 @@ Bank::IData &Bank::data(DotPath const &path) const
     TimeDelta const waitTime = requestedAt.since();
     if(waitTime > 0.0)
     {
-        LOG_DEBUG("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
+        LOG_RES_VERBOSE("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
     }
     else
     {
-        LOG_DEBUG("\"%s\" loaded") << path;
+        LOG_RES_VERBOSE("\"%s\" loaded") << path;
     }
 
     item.lock();

@@ -43,7 +43,7 @@
 
 #include "am_map.h"
 #include "p_actor.h"
-#include "p_player.h"
+#include "player.h"
 #include "g_common.h"
 #include "g_controls.h"
 #include "x_hair.h"
@@ -85,7 +85,7 @@ void R_PrecachePSprites(void)
 }
 
 /// @return  @c true= maximized view window is in effect.
-static boolean maximizedViewWindow(int player)
+static dd_bool maximizedViewWindow(int player)
 {
     player_t* plr = players + player;
     if(player < 0 || player >= MAXPLAYERS)
@@ -121,7 +121,7 @@ void R_StatusBarSize(int player, Size2Raw *statusBarSize)
 }
 
 static void resizeViewWindow(int player, const RectRaw* newGeometry,
-    const RectRaw* oldGeometry, boolean interpolate)
+    const RectRaw* oldGeometry, dd_bool interpolate)
 {
     RectRaw window;
     assert(newGeometry);
@@ -175,9 +175,9 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
 
 void R_ResizeViewWindow(int flags)
 {
-    static boolean oldMaximized;
+    static dd_bool oldMaximized;
     int i, delta, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
-    boolean maximized;
+    dd_bool maximized;
     RectRaw port;
 
     if(IS_DEDICATED) return;
@@ -313,7 +313,7 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
     {
     case GS_MAP: {
         player_t* plr = players + player;
-        boolean isAutomapObscuring = ST_AutomapObscures2(player, windowGeometry);
+        dd_bool isAutomapObscuring = ST_AutomapObscures2(player, windowGeometry);
 
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             return;

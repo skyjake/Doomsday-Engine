@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_MATH_H
@@ -33,7 +33,7 @@
 
 namespace de {
 
-#undef PI
+//#undef PI
 ddouble const PI = 3.1415926535897932384626433832795028841971693993751;
 ddouble const EPSILON = 1.0e-7;
 dfloat const FLOAT_EPSILON = 1.0e-5f;
@@ -83,10 +83,14 @@ template <typename Type>
 inline Type squared(Type const &value) { return value * value; }
 
 template <typename Type>
+inline Type cubed(Type const &value) { return value * value * value; }
+
+template <typename Type>
 inline Type round(dfloat const &value) {
     return Type(std::floor(value + 0.5f));
 }
 
+inline dint   roundi(dfloat const &value) { return round<int>(value);   }
 inline dfloat roundf(dfloat const &value) { return round<float>(value); }
 
 template <typename Type>
@@ -108,6 +112,11 @@ inline dint32 ceil(dfloat const &value) {
 
 inline dint64 ceil(ddouble const &value) {
     return dint64(std::ceil(value));
+}
+
+template <typename Type>
+inline Type fract(Type const &value) {
+    return value - std::floor(value);
 }
 
 /// Compare two single-precision floating-point values for equality,

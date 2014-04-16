@@ -50,7 +50,7 @@ class Material;
 #define MINTEXHEIGHT            8
 
 DENG_EXTERN_C int numTexUnits;
-DENG_EXTERN_C boolean  envModAdd;
+DENG_EXTERN_C dd_bool  envModAdd;
 DENG_EXTERN_C int defResX, defResY, defBPP, defFullscreen;
 DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
 DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
@@ -84,7 +84,7 @@ void GL_Register();
  * cannot yet be initialized, such as the texture management, so any rendering
  * occuring before GL_Init() must be done with manually prepared textures.
  */
-boolean GL_EarlyInit();
+dd_bool GL_EarlyInit();
 
 /**
  * Finishes GL initialization. This can be called once the virtual file
@@ -102,13 +102,13 @@ void GL_Shutdown();
  * Returns @c true iff the graphics library is currently initialized
  * for basic drawing (using the OpenGL API directly).
  */
-boolean GL_IsInited();
+dd_bool GL_IsInited();
 
 /**
  * Determines if the renderer is fully initialized (texture manager, deferring,
  * etc).
  */
-boolean GL_IsFullyInited();
+dd_bool GL_IsFullyInited();
 
 /**
  * GL is reset back to the state it was right after initialization.
@@ -126,7 +126,7 @@ void GL_TotalRestore();
  */
 void GL_Init2DState();
 
-void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t const *viewData);
+void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData);
 
 void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
 
@@ -186,7 +186,7 @@ void GL_ModulateTexture(int mode);
  *
  * @param on  @c true to enable vsync, @c false to disable.
  */
-void GL_SetVSync(boolean on);
+void GL_SetVSync(dd_bool on);
 
 /**
  * Enables or disables multisampling when FSAA is available (vid-fsaa 1). You
@@ -196,11 +196,11 @@ void GL_SetVSync(boolean on);
  *
  * @param on  @c true to enable multisampling, @c false to disable.
  */
-void GL_SetMultisample(boolean on);
+void GL_SetMultisample(dd_bool on);
 
 //void GL_BlendOp(int op);
 
-boolean GL_NewList(DGLuint list, int mode);
+dd_bool GL_NewList(DGLuint list, int mode);
 
 DGLuint GL_EndList();
 
@@ -266,7 +266,7 @@ int GL_NumMipmapLevels(int width, int height);
  * @param isMipMapped  If @c true, we will require mipmaps (this has an effect
  *     on the optimal size).
  */
-boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
+dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool isMipMapped,
     int *optWidth, int *optHeight);
 
 /**
@@ -313,6 +313,8 @@ uint8_t *GL_SmartFilter(int method, uint8_t const *src, int width, int height,
 void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
     colorpaletteid_t paletteId, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
+
+void DGL_AssertNotInPrimitive(void);
 
 // Console commands.
 D_CMD(UpdateGammaRamp);

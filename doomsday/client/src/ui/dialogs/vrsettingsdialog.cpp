@@ -23,7 +23,8 @@
 
 #include "render/vr.h"
 #include "con_main.h"
-#include "SignalAction"
+
+#include <de/SignalAction>
 
 using namespace de;
 using namespace ui;
@@ -35,6 +36,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *dominantEye;
     CVarSliderWidget *humanHeight;
     CVarSliderWidget *ipd;
+    CVarSliderWidget *riftSamples;
     CVarSliderWidget *riftPredictionLatency;
     ButtonWidget *riftSetup;
     ButtonWidget *desktopSetup;
@@ -48,26 +50,27 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(mode = new CVarChoiceWidget("rend-vr-mode"));
         mode->items()
-                << new ChoiceItem("Mono", VR::MODE_MONO)
-                << new ChoiceItem("Anaglyph (green/magenta)", VR::MODE_GREEN_MAGENTA)
-                << new ChoiceItem("Anaglyph (red/cyan)", VR::MODE_RED_CYAN)
-                << new ChoiceItem("Left eye only", VR::MODE_LEFT)
-                << new ChoiceItem("Right eye only", VR::MODE_RIGHT)
-                << new ChoiceItem("Top/bottom", VR::MODE_TOP_BOTTOM)
-                << new ChoiceItem("Side-by-side", VR::MODE_SIDE_BY_SIDE)
-                << new ChoiceItem("Parallel", VR::MODE_PARALLEL)
-                << new ChoiceItem("Cross-eye", VR::MODE_CROSSEYE)
-                << new ChoiceItem("Oculus Rift", VR::MODE_OCULUS_RIFT)
-                << new ChoiceItem("Hardware stereo", VR::MODE_QUAD_BUFFERED);
+                << new ChoiceItem(tr("No stereo"),                VRConfig::Mono)
+                << new ChoiceItem(tr("Anaglyph (green/magenta)"), VRConfig::GreenMagenta)
+                << new ChoiceItem(tr("Anaglyph (red/cyan)"),      VRConfig::RedCyan)
+                << new ChoiceItem(tr("Left eye only"),            VRConfig::LeftOnly)
+                << new ChoiceItem(tr("Right eye only"),           VRConfig::RightOnly)
+                << new ChoiceItem(tr("Top/bottom"),               VRConfig::TopBottom)
+                << new ChoiceItem(tr("Side-by-side"),             VRConfig::SideBySide)
+                << new ChoiceItem(tr("Parallel"),                 VRConfig::Parallel)
+                << new ChoiceItem(tr("Cross-eye"),                VRConfig::CrossEye)
+                << new ChoiceItem(tr("Oculus Rift"),              VRConfig::OculusRift)
+                << new ChoiceItem(tr("Hardware stereo"),          VRConfig::QuadBuffered);
 
         area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
         area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));
         area.add(humanHeight = new CVarSliderWidget("rend-vr-player-height"));
+        area.add(riftSamples = new CVarSliderWidget("rend-vr-rift-samples"));
 
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
 
-        if(VR::hasHeadOrientation())
+        if(vrCfg().oculusRift().isReady())
         {
             area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
             riftPredictionLatency->setDisplayFactor(1000);
@@ -99,7 +102,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 {
     heading().setText(tr("3D & VR Settings"));
 
-    LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Mode:"), &area());
+    LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Stereo Mode:"), &area());
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
     LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
     LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
@@ -115,17 +118,19 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *dominantLabel << *d->dominantEye
            << Const(0)       << *d->swapEyes;
 
-    if(VR::hasHeadOrientation())
+    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
+    LabelWidget *sampleLabel = LabelWidget::newWithText(tr("Multisampling:"), &area());
+    ovrLabel->margins().setTop("gap");
+    sampleLabel->setTextLineAlignment(ui::AlignRight);
+
+    layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
+    layout.append(*ovrLabel, 2) << *sampleLabel << *d->riftSamples;
+
+    if(vrCfg().oculusRift().isReady())
     {
-        LabelWidget *ovrLabel     = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
         LabelWidget *latencyLabel = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
         LabelWidget *utilLabel    = LabelWidget::newWithText(tr("Utilities:"), &area());
 
-        ovrLabel->margins().setTop("gap");
-
-        layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
-
-        layout.append(*ovrLabel, 2);
         layout << *latencyLabel << *d->riftPredictionLatency
                << *utilLabel    << *d->riftSetup
                << Const(0)      << *d->desktopSetup;
@@ -143,12 +148,13 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 
 void VRSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("rend-vr-mode",          VR::MODE_MONO);
+    Con_SetInteger("rend-vr-mode",          VRConfig::Mono);
     Con_SetInteger("rend-vr-swap-eyes",     0);
     Con_SetFloat  ("rend-vr-dominant-eye",  0);
     Con_SetFloat  ("rend-vr-player-height", 1.75f);
     Con_SetFloat  ("rend-vr-ipd",           0.064f);
     Con_SetFloat  ("rend-vr-rift-latency",  0.030f);
+    Con_SetInteger("rend-vr-rift-samples",  2);
 
     d->fetch();
 }
@@ -161,7 +167,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
 
     /// @todo This would be a good use case for cvar overriding. -jk
 
-    Con_SetInteger("rend-vr-mode", VR::MODE_OCULUS_RIFT);
+    Con_SetInteger("rend-vr-mode", VRConfig::OculusRift);
     Con_SetInteger("vid-fsaa", 0);
     Con_SetFloat  ("vid-gamma", 1.176f);
     Con_SetFloat  ("vid-contrast", 1.186f);
@@ -175,7 +181,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
 
 void VRSettingsDialog::autoConfigForDesktop()
 {
-    Con_SetInteger("rend-vr-mode", VR::MODE_MONO);
+    Con_SetInteger("rend-vr-mode", VRConfig::Mono);
     Con_SetFloat  ("vid-gamma", 1);
     Con_SetFloat  ("vid-contrast", 1);
     Con_SetFloat  ("vid-bright", 0);

@@ -3,17 +3,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/shell/TextWidget"
@@ -36,7 +36,19 @@ DENG2_PIMPL_NOREF(TextWidget)
     ~Instance()
     {
         delete rule;
-        foreach(Action *act, actions) delete act;
+        foreach(Action *act, actions) releaseRef(act);
+    }
+
+    void removeAction(Action &action)
+    {
+        for(int i = actions.size() - 1; i >= 0; --i)
+        {
+            if(actions.at(i) == &action)
+            {
+                releaseRef(actions[i]);
+                actions.removeAt(i);
+            }
+        }
     }
 
     /**
@@ -123,14 +135,14 @@ Vector2i TextWidget::cursorPosition() const
                     rule().top().valuei());
 }
 
-void TextWidget::addAction(Action *action)
+void TextWidget::addAction(RefArg<Action> action)
 {
-    d->actions.append(action);
+    d->actions.append(action.holdRef());
 }
 
 void TextWidget::removeAction(Action &action)
 {
-    d->actions.removeAll(&action);
+    d->removeAction(action);
 }
 
 bool TextWidget::handleEvent(Event const &event)

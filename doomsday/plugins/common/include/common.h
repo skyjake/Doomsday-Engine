@@ -25,6 +25,10 @@
 #include <de/mathutil.h>
 #include <de/timer.h>
 
+#ifdef UNIX
+#  include <strings.h>
+#endif
+
 #define WEAPONBOTTOM            (128)   // from p_pspr.c
 
 #define IS_NETWORK_SERVER       (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))
@@ -40,8 +44,20 @@
 #  include "jhexen.h"
 #endif
 
+#include "gamerules.h"
 #include "pause.h"
 
+DENG_EXTERN_C dd_bool sc_FileScripts;
+DENG_EXTERN_C char const *sc_ScriptsDir;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int Common_GetInteger(int id);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_GAME_INCLUDES

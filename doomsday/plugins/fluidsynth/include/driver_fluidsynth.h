@@ -31,6 +31,7 @@
 #include <cassert>
 #include <iostream>
 #include <fluidsynth.h>
+#include <de/Log>
 #include "api_console.h"
 #include "api_audiod_sfx.h"
 
@@ -49,11 +50,7 @@ audiointerface_sfx_generic_t* DMFluid_Sfx();
 
 #define MAX_SYNTH_GAIN      0.4
 
-#ifdef DENG_DSFLUIDSYNTH_DEBUG
-#  define DSFLUIDSYNTH_TRACE(args)  std::cerr << "[dsFluidSynth] " << args << std::endl;
-#else
-#  define DSFLUIDSYNTH_TRACE(args)
-#endif
+#define DSFLUIDSYNTH_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FluidSynth] ") << args
 
 #include "fluidsynth_music.h"
 

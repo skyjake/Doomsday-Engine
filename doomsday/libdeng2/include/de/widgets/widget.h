@@ -5,17 +5,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_WIDGET_H
@@ -73,6 +73,9 @@ public:
         /// No events will be dispatched to the children of the widget.
         DisableEventDispatchToChildren = 0x80,
 
+        /// Children of the widget should be clipped when drawing.
+        ChildVisibilityClipping = 0x100,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
@@ -82,22 +85,22 @@ public:
     /**
      * Notified when the widget is about to be deleted.
      */
-    DENG2_DEFINE_AUDIENCE(Deletion, void widgetBeingDeleted(Widget &widget))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void widgetBeingDeleted(Widget &widget))
 
     /**
      * Notified when the widget's parent changes.
      */
-    DENG2_DEFINE_AUDIENCE(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
+    DENG2_DEFINE_AUDIENCE2(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
 
     /**
      * Notified when a child is added to the widget.
      */
-    DENG2_DEFINE_AUDIENCE(ChildAddition, void widgetChildAdded(Widget &child))
+    DENG2_DEFINE_AUDIENCE2(ChildAddition, void widgetChildAdded(Widget &child))
 
     /**
      * Notified after a child has been removed from the widget.
      */
-    DENG2_DEFINE_AUDIENCE(ChildRemoval, void widgetChildRemoved(Widget &child))
+    DENG2_DEFINE_AUDIENCE2(ChildRemoval, void widgetChildRemoved(Widget &child))
 
 public:
     Widget(String const &name = "");

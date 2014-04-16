@@ -120,7 +120,7 @@ using namespace de;
 typedef struct dedsource_s {
     const char*     buffer;
     const char*     pos;
-    boolean         atEnd;
+    dd_bool         atEnd;
     int             lineNumber;
     const char*     fileName;
     int             version; // v6 does not require semicolons.
@@ -198,7 +198,7 @@ static int FUngetC(int ch)
 static void SkipComment(void)
 {
     int                 ch = FGetC();
-    boolean             seq = false;
+    dd_bool             seq = false;
 
     if(ch == '\n')
         return; // Comment ends right away.
@@ -571,7 +571,7 @@ static int ReadBlendmode(blendmode_t *dest)
     }
     else
     {
-        LOG_WARNING("Unknown BlendMode '%s' in \"%s\" on line #%i, ignoring (blendmode not changed).")
+        LOG_RES_WARNING("Unknown BlendMode '%s' in \"%s\" on line #%i")
             << flag << (source ? source->fileName : "?") << (source ? source->lineNumber : 0);
     }
 
@@ -579,7 +579,7 @@ static int ReadBlendmode(blendmode_t *dest)
 }
 
 /**
- * @return              @c true, if successful.
+ * @return @c true, if successful.
  */
 static int ReadLabel(char* label)
 {
@@ -679,9 +679,9 @@ static void DED_CloseReader(void)
  *                      or a game mode.
  * @return              @c true if the condition passes.
  */
-static boolean DED_CheckCondition(const char* cond, boolean expected)
+static dd_bool DED_CheckCondition(char const *cond, dd_bool expected)
 {
-    boolean value = false;
+    dd_bool value = false;
 
     if(cond[0] == '-')
     {
@@ -691,7 +691,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
     else if(isalnum(cond[0]) && App_GameLoaded())
     {
         // A game mode.
-        value = !stricmp(cond, Str_Text(App_CurrentGame().identityKey()));
+        value = !String(cond).compareWithoutCase(App_CurrentGame().identityKey());
     }
 
     return value == expected;
@@ -753,7 +753,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("SkipIf"))
         {
-            boolean expected = true;
+            dd_bool expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -782,7 +782,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("IncludeIf")) // An optional include.
         {
-            boolean expected = true;
+            dd_bool expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -861,7 +861,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
         {
-            boolean bModify = false;
+            dd_bool bModify = false;
             ded_mobj_t* mo, dummyMo;
 
             ReadToken();
@@ -881,8 +881,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 idx = Def_GetMobjNum(otherMobjId);
                 if(idx < 0)
                 {
-                    VERBOSE( Con_Message("Warning: Unknown Mobj %s in %s on line #%i, will be ignored.",
-                                         otherMobjId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+                    LOG_RES_WARNING("Ignoring unknown Mobj %s in %s on line #%i")
+                            << otherMobjId << (source? source->fileName : "?")
+                            << (source? source->lineNumber : 0);
 
                     // We'll read into a dummy definition.
                     memset(&dummyMo, 0, sizeof(dummyMo));
@@ -960,7 +961,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("State"))
         {
-            boolean bModify = false;
+            dd_bool bModify = false;
             ded_state_t* st, dummyState;
 
             ReadToken();
@@ -980,8 +981,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 idx = Def_GetStateNum(otherStateId);
                 if(idx < 0)
                 {
-                    VERBOSE( Con_Message("Warning: Unknown State %s in %s on line #%i, will be ignored.",
-                                         otherStateId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+                    LOG_RES_WARNING("Ignoring unknown State %s in %s on line #%i")
+                            << otherStateId << (source? source->fileName : "?")
+                            << (source? source->lineNumber : 0);
 
                     // We'll read into a dummy definition.
                     memset(&dummyState, 0, sizeof(dummyState));
@@ -1161,11 +1163,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 mat = Def_GetMaterial(Str_Text(otherMatPath));
                 if(!mat)
                 {
-                    VERBOSE(
-                        AutoStr* path = Uri_ToString(otherMat);
-                        Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.",
-                                    Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
-                        )
+                    LOG_RES_WARNING("Ignoring unknown Material %s in %s on line #%i")
+                            << Str_Text(Uri_ToString(otherMat))
+                            << (source? source->fileName : "?")
+                            << (source? source->lineNumber : 0);
 
                     // We'll read into a dummy definition.
                     idx = -1;
@@ -2581,6 +2582,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {
                         xgclassparm_t const& iParm = xgClassLinks[l->lineClass].iparm[i];
 
+                        if(!iParm.name || !iParm.name[0]) continue;
                         if(!ISLABEL(iParm.name)) continue;
 
                         if(iParm.flagPrefix && iParm.flagPrefix[0])

@@ -85,7 +85,7 @@ typedef struct player_s {
     weapontype_t    readyWeapon;
     weapontype_t    pendingWeapon; // wp_nochange if not changing.
     struct playerweapon_s {
-        boolean         owned;
+        dd_bool         owned;
     } weapons[NUM_WEAPON_TYPES];
     struct playerammo_s {
         int             owned;
@@ -108,7 +108,7 @@ typedef struct player_s {
     int             jumpTics; // Delay the next jump for a moment.
     int             airCounter;
     int             rebornWait; // The player can be reborn if this counter is zero.
-    boolean         centering;
+    dd_bool         centering;
     unsigned int    worldTimer; // Total time the player's been playing.
     int             update;
     int             startSpot;
@@ -123,6 +123,11 @@ typedef struct player_s {
     // Target view to a mobj (NULL=disabled).
     mobj_t*         viewLock; // $democam
     int             lockFull;
+
+#ifdef __cplusplus
+    void write(Writer *writer, struct playerheader_s &plrHdr) const;
+    void read(Reader *reader, struct playerheader_s &plrHdr);
+#endif
 } player_t;
 
 #endif

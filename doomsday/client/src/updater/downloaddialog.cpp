@@ -23,19 +23,18 @@
 #include "de_platform.h"
 #include "updater/downloaddialog.h"
 #include "updater/updatersettings.h"
-#include "ui/widgets/progresswidget.h"
 #include "ui/widgets/taskbarwidget.h"
-#include "SignalAction"
 #include "ui/clientwindow.h"
 #include "dd_version.h"
 #include "network/net_main.h"
 
+#include <de/ProgressWidget>
+#include <de/SignalAction>
+#include <de/Log>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDir>
 #include <QUrl>
-
-#include <de/Log>
 
 #ifdef WIN32
 #  undef open
@@ -43,7 +42,7 @@
 
 using namespace de;
 
-static DownloadDialog* downloadInProgress;
+static DownloadDialog *downloadInProgress;
 
 DENG2_PIMPL(DownloadDialog)
 {
@@ -121,7 +120,7 @@ DENG2_PIMPL(DownloadDialog)
         QObject::connect(reply, SIGNAL(metaDataChanged()), thisPublic, SLOT(replyMetaDataChanged()));
         QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), thisPublic, SLOT(progress(qint64,qint64)));
 
-        LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
+        LOG_NOTE("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
 
         // Global state "flag".
         downloadInProgress = thisPublic;
@@ -192,7 +191,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
 
     if(reply->error() != QNetworkReply::NoError)
     {
-        LOG_WARNING("Failure: ") << reply->errorString();
+        LOG_WARNING("Failed: ") << reply->errorString();
 
         d->state = Instance::Error;
         d->errorMessage = reply->errorString();
@@ -205,7 +204,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
 
     if(!d->redirected.isEmpty())
     {
-        LOG_INFO("Redirected to: %s") << d->redirected;
+        LOG_NOTE("Redirected to: %s") << d->redirected;
         d->uri = QUrl(d->redirected);
         d->redirected.clear();
         d->startDownload();
@@ -222,7 +221,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
         int start = html.indexOf("<meta http-equiv=\"refresh\"", 0, Qt::CaseInsensitive);
         if(start < 0)
         {
-            LOG_WARNING("Failed, received an HTML page.");
+            LOG_WARNING("Received an HTML page instead of a binary file");
 
             // Do we have a fallback option?
             if(!d->uri2.isEmpty() && d->uri2 != d->uri)
@@ -249,7 +248,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
         // This is what we should actually be downloading.
         d->uri = QUrl::fromEncoded(equivRefresh.toLatin1());
 
-        LOG_INFO("Redirected to: %s") << d->uri.toString();
+        LOG_NOTE("Redirected to: %s") << d->uri.toString();
 
         d->startDownload();
         return;
@@ -279,12 +278,12 @@ void DownloadDialog::finished(QNetworkReply *reply)
     // Make sure the finished download is noticed by the user.
     showCompletedDownload();
 
-    LOG_DEBUG("Request finished.");
+    LOG_DEBUG("Request finished");
 }
 
 void DownloadDialog::cancel()
 {
-    LOG_INFO("Download cancelled via user request");
+    LOG_NOTE("Download cancelled due to user request");
 
     d->state = Instance::Error;
     d->progress->setRotationSpeed(0);
@@ -336,7 +335,7 @@ void DownloadDialog::replyMetaDataChanged()
     }
     else
     {
-        LOG_DEBUG("Receiving content of type '%s'.") << contentType;
+        LOG_DEBUG("Receiving content of type '%s'") << contentType;
         d->state = Instance::Downloading;
     }
 }

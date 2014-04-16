@@ -1,22 +1,21 @@
-/** @file displaymode_win32.cpp Win32 implementation of the DisplayMode native functionality.
+/** @file displaymode_windows.cpp  Windows implementation of the DisplayMode native functionality.
  * @ingroup gl
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include <QDebug>
@@ -116,6 +115,8 @@ int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
 
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
+    if(!de::CanvasWindow::mainExists()) return;
+
     HWND hWnd = (HWND) de::CanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 

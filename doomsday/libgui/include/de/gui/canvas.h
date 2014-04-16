@@ -3,18 +3,17 @@
  * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBGUI_CANVAS_H
@@ -58,29 +57,29 @@ public:
      * screen. Note that the notification comes straight from the event loop
      * (timer signal) instead of during a paint event.
      */
-    DENG2_DEFINE_AUDIENCE(GLReady, void canvasGLReady(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLReady, void canvasGLReady(Canvas &))
 
     /**
      * Notified when the canvas's GL state needs to be initialized. This is
      * called immediately before drawing the contents of the canvas for the
      * first time (during a paint event).
      */
-    DENG2_DEFINE_AUDIENCE(GLInit, void canvasGLInit(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLInit, void canvasGLInit(Canvas &))
 
     /**
      * Notified when a canvas's size has changed.
      */
-    DENG2_DEFINE_AUDIENCE(GLResize, void canvasGLResized(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLResize, void canvasGLResized(Canvas &))
 
     /**
      * Notified when drawing of the canvas contents has been requested.
      */
-    DENG2_DEFINE_AUDIENCE(GLDraw, void canvasGLDraw(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLDraw, void canvasGLDraw(Canvas &))
 
     /**
      * Notified when the canvas gains or loses input focus.
      */
-    DENG2_DEFINE_AUDIENCE(FocusChange, void canvasFocusChanged(Canvas &, bool hasFocus))
+    DENG2_DEFINE_AUDIENCE2(FocusChange, void canvasFocusChanged(Canvas &, bool hasFocus))
 
 public:
     explicit Canvas(CanvasWindow *parent, QGLWidget* shared = 0);

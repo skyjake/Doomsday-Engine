@@ -17,35 +17,38 @@
  */
 
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/labelwidget.h"
-#include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
-#include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/blurwidget.h"
+#include "ui/widgets/multiplayermenuwidget.h"
+#include "ui/widgets/tutorialwidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
+#include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
+#include "ui/dialogs/gamesdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/SubwidgetItem"
-#include "GuiRootWidget"
-#include "SequentialLayout"
+#include "ui/clientrootwidget.h"
+#include "clientapp.h"
 #include "CommandAction"
-#include "SignalAction"
 #include "client/cl_def.h" // clientPaused
 
 #include "ui/ui_main.h"
 #include "con_main.h"
 
-#include <de/App>
 #include <de/KeyEvent>
 #include <de/Drawable>
 #include <de/GLBuffer>
 #include <de/ScalarRule>
+#include <de/SignalAction>
+#include <de/ui/SubwidgetItem>
+#include <de/SequentialLayout>
+#include <de/ButtonWidget>
+#include <de/PopupMenuWidget>
+#include <de/BlurWidget>
 
 #include "versioninfo.h"
 #include "dd_main.h"
@@ -58,8 +61,11 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
-    POS_UNLOAD            = 0,
-    POS_GAME_SEPARATOR    = 1,
+    POS_GAMES             = 0,
+    POS_UNLOAD            = 1,
+    POS_GAMES_SEPARATOR   = 2,
+    POS_MULTIPLAYER       = 3,
+    POS_CONNECT           = 4,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -72,6 +78,8 @@ enum MenuItemPositions
 
 DENG_GUI_PIMPL(TaskBarWidget)
 , DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(ServerLink, Join)
+, DENG2_OBSERVES(ServerLink, Leave)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -87,9 +95,11 @@ DENG_GUI_PIMPL(TaskBarWidget)
     ConsoleWidget *console;
     ButtonWidget *logo;
     ButtonWidget *conf;
+    ButtonWidget *multi;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *configMenu;
+    MultiplayerMenuWidget *multiMenu;
 
     ScalarRule *vertShift;
     bool mouseWasTrappedWhenOpening;
@@ -103,31 +113,37 @@ DENG_GUI_PIMPL(TaskBarWidget)
     Matrix4f projMatrix;
 
     Instance(Public *i)
-        : Base(i),
-          layoutMode(NormalLayout),
-          opened(true),
-          logo(0),
-          conf(0),
-          status(0),
-          mainMenu(0),
-          configMenu(0),
-          mouseWasTrappedWhenOpening(false),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4)
+        : Base(i)
+        , layoutMode(NormalLayout)
+        , opened(true)
+        , logo(0)
+        , conf(0)
+        , status(0)
+        , mainMenu(0)
+        , configMenu(0)
+        , multiMenu(0)
+        , mouseWasTrappedWhenOpening(false)
+        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uColor    ("uColor",     GLUniform::Vec4)
     {
         uColor = Vector4f(1, 1, 1, 1);
         self.set(Background(style().colors().colorf("background")));
 
         vertShift = new ScalarRule(0);
 
-        App::app().audienceForGameChange += this;
+        App::app().audienceForGameChange() += this;
+        ClientApp::serverLink().audienceForJoin += this;
+        ClientApp::serverLink().audienceForLeave += this;
 
         updateStyle();
     }
 
     ~Instance()
     {
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForGameChange() -= this;
+        ClientApp::serverLink().audienceForJoin -= this;
+        ClientApp::serverLink().audienceForLeave -= this;
+
         releaseRef(vertShift);
     }
 
@@ -243,28 +259,52 @@ DENG_GUI_PIMPL(TaskBarWidget)
         return *menu->menu().organizer().itemWidget(pos);
     }
 
+    void showOrHideMenuItems()
+    {
+        de::Game &game = App_CurrentGame();
+
+        itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
+        itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
+        itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
+        itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
+        itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
+
+        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
+        itemWidget(configMenu, POS_VR_SETTINGS)      .show(!game.isNull());
+        itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
+        itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
+        itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
+
+        if(self.hasRoot())
+        {
+            configMenu->menu().updateLayout();
+            mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
+        }
+    }
+
     void currentGameChanged(game::Game const &newGame)
     {
         updateStatus();
+        showOrHideMenuItems();
+    }
 
-        itemWidget(mainMenu, POS_UNLOAD).show(!newGame.isNull());
-        itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!newGame.isNull());
+    void networkGameJoined()
+    {
+        multi->show();
+        self.updateCommandLineLayout();
+    }
 
-        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
-        itemWidget(configMenu, POS_VR_SETTINGS).show(!newGame.isNull());
-        itemWidget(configMenu, POS_CONFIG_SEPARATOR).show(!newGame.isNull());
-        itemWidget(configMenu, POS_AUDIO_SETTINGS).show(!newGame.isNull());
-        itemWidget(configMenu, POS_INPUT_SETTINGS).show(!newGame.isNull());
-
-        configMenu->menu().updateLayout();
-        mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
+    void networkGameLeft()
+    {
+        multi->hide();
+        self.updateCommandLineLayout();
     }
 
     void updateStatus()
     {
         if(App_GameLoaded())
         {
-            status->setText(Str_Text(App_CurrentGame().identityKey()));
+            status->setText(App_CurrentGame().identityKey());
         }
         else
         {
@@ -272,9 +312,6 @@ DENG_GUI_PIMPL(TaskBarWidget)
         }
     }
 };
-
-template <typename ClassName>
-PopupWidget *makePopup() { return new ClassName; }
 
 PopupWidget *makeUpdaterSettings() {
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
@@ -308,7 +345,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Height, rule().height());
 
     // DE logo.
-    d->logo = new ButtonWidget;
+    d->logo = new ButtonWidget("de-button");
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -317,44 +354,50 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->logo->setWidthPolicy(ui::Expand);
     d->logo->setTextAlignment(AlignLeft);
-    d->logo->rule()
-            .setInput(Rule::Height, rule().height())
-            .setInput(Rule::Right,  rule().right())
-            .setInput(Rule::Bottom, rule().bottom());
+    d->logo->rule().setInput(Rule::Height, rule().height());
     add(d->logo);
 
     // Settings.
-    ButtonWidget *conf = new ButtonWidget;
+    ButtonWidget *conf = new ButtonWidget("conf-button");
     d->conf = conf;
     conf->setImage(style().images().image("gear"));
     conf->setSizePolicy(ui::Expand, ui::Filled);
-    conf->rule()
-            .setInput(Rule::Height, rule().height())
-            .setInput(Rule::Right,  d->logo->rule().left())
-            .setInput(Rule::Bottom, rule().bottom());
+    conf->rule().setInput(Rule::Height, rule().height());
     add(conf);
 
     // Currently loaded game.
     d->status = new LabelWidget;
     d->status->set(bg);
     d->status->setWidthPolicy(ui::Expand);
-    d->status->rule()
-            .setInput(Rule::Height, rule().height())
-            .setInput(Rule::Bottom, rule().bottom())
-            .setInput(Rule::Right,  conf->rule().left());
+    d->status->rule().setInput(Rule::Height, rule().height());
     add(d->status);        
 
     d->updateStatus();
+
+    // Multiplayer.
+    d->multi = new ButtonWidget;
+    d->multi->hide(); // hidden when not connected
+    d->multi->setAction(new SignalAction(this, SLOT(openMultiplayerMenu())));
+    d->multi->setImage(style().images().image("network"));
+    d->multi->setTextAlignment(ui::AlignRight);
+    d->multi->setText(tr("MP"));
+    d->multi->setSizePolicy(ui::Expand, ui::Filled);
+    d->multi->rule().setInput(Rule::Height, rule().height());
+    add(d->multi);
 
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
 
     // Settings menu.
-    d->configMenu = new PopupMenuWidget("conf-menu");
+    add(d->configMenu = new PopupMenuWidget("conf-menu"));
     d->configMenu->setAnchorAndOpeningDirection(conf->rule(), ui::Up);
 
+    // Multiplayer menu.
+    add(d->multiMenu = new MultiplayerMenuWidget);
+    d->multiMenu->setAnchorAndOpeningDirection(d->multi->rule(), ui::Up);
+
     // The DE menu.
-    d->mainMenu = new PopupMenuWidget("de-menu");
+    add(d->mainMenu = new PopupMenuWidget("de-menu"));
     d->mainMenu->setAnchorAndOpeningDirection(d->logo->rule(), ui::Up);
 
     // Game unloading confirmation submenu.
@@ -379,24 +422,19 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
     d->mainMenu->items()
-            << unloadMenu // hidden with null-game
-            << new ui::Item(ui::Item::Separator) // hidden with null-game
+            << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
+            << unloadMenu                           // hidden with null-game
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
+            << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
+            << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
-    add(d->configMenu);
-    add(d->mainMenu);
-
-    d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
-    d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
-
-    d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
-    d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
-    d->itemWidget(d->configMenu, POS_CONFIG_SEPARATOR).hide();
-    d->itemWidget(d->configMenu, POS_AUDIO_SETTINGS).hide();
-    d->itemWidget(d->configMenu, POS_INPUT_SETTINGS).hide();
+    d->showOrHideMenuItems();
 
     conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
@@ -465,9 +503,10 @@ void TaskBarWidget::drawContent()
 bool TaskBarWidget::handleEvent(Event const &event)
 {
     Canvas &canvas = root().window().canvas();
+    ClientWindow &window = root().window().as<ClientWindow>();
 
     if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
-       !root().window().hasSidebar())
+       !window.hasSidebar())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -487,7 +526,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 canvas.trapMouse();
             }
 
-            root().window().taskBar().close();
+            window.taskBar().close();
             return true;
         }
     }
@@ -499,6 +538,12 @@ bool TaskBarWidget::handleEvent(Event const &event)
         {
             return true;
         }
+    }
+
+    // Don't let modifier keys fall through to the game.
+    if(isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
+    {
+        return true;
     }
 
     if(event.type() == Event::KeyPress)
@@ -522,13 +567,13 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 close();
                 return true;
             }
-            else if(!UI_IsActive()) /// @todo Play nice with legacy engine UI (which is deprecated).
+            else
             {
                 // Task bar is closed, so let's open it.
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
                 {
-                    if(!root().window().hasSidebar())
+                    if(!window.hasSidebar())
                     {
                         // Automatically focus the command line, unless an editor is open.
                         root().setFocus(&d->console->commandLine());
@@ -611,7 +656,7 @@ void TaskBarWidget::close()
         emit closed();
 
         // Retrap the mouse if it was trapped when opening.
-        if(hasRoot() && App_GameLoaded() && !root().window().hasSidebar())
+        if(hasRoot() && App_GameLoaded() && !root().window().as<ClientWindow>().hasSidebar())
         {
             Canvas &canvas = root().window().canvas();
             if(d->mouseWasTrappedWhenOpening)
@@ -644,6 +689,11 @@ void TaskBarWidget::closeMainMenu()
     d->mainMenu->close();
 }
 
+void TaskBarWidget::openMultiplayerMenu()
+{
+    d->multiMenu->open();
+}
+
 void TaskBarWidget::unloadGame()
 {
     Con_Execute(CMDS_DDAY, "unload", false, false);
@@ -667,20 +717,66 @@ void TaskBarWidget::showUpdaterSettings()
     dlg->open();
 }
 
-void TaskBarWidget::updateCommandLineLayout()
+void TaskBarWidget::switchGame()
 {
-    RuleRectangle &cmdRule = d->console->commandLine().rule();
+    GamesDialog *games = new GamesDialog(GamesDialog::ShowSingleplayerOnly);
+    games->setDeleteAfterDismissed(true);
+    games->exec(root());
+}
 
-    // The command line extends all the way to the status indicator.
-    cmdRule.setInput(Rule::Left,   d->console->button().rule().right())
-           .setInput(Rule::Bottom, rule().bottom());
-
-    if(!d->status->behavior().testFlag(Hidden))
+void TaskBarWidget::showMultiplayer()
+{
+    GamesDialog *games = new GamesDialog(GamesDialog::ShowMultiplayerOnly);
+    games->setDeleteAfterDismissed(true);
+    if(isOpen())
     {
-        cmdRule.setInput(Rule::Right, d->status->rule().left());
+        games->exec(root());
     }
     else
     {
-        cmdRule.setInput(Rule::Right, d->conf->rule().left());
+        root().addOnTop(games);
+        games->open();
     }
+}
+
+void TaskBarWidget::connectToServerManually()
+{
+    ManualConnectionDialog *dlg = new ManualConnectionDialog;
+    dlg->setDeleteAfterDismissed(true);
+    dlg->exec(root());
+}
+
+void TaskBarWidget::showTutorial()
+{
+    if(BusyMode_Active()) return;
+
+    // The widget will dispose of itself when finished.
+    TutorialWidget *tutorial = new TutorialWidget;
+    root().addOnTop(tutorial);
+    tutorial->rule().setRect(root().viewRule());
+    tutorial->start();
+}
+
+void TaskBarWidget::updateCommandLineLayout()
+{
+    SequentialLayout layout(rule().right(), rule().top(), ui::Left);
+    layout << *d->logo << *d->conf;
+
+    if(!d->multi->behavior().testFlag(Hidden))
+    {
+        layout << *d->multi;
+    }
+    if(!d->status->behavior().testFlag(Hidden))
+    {
+        layout << *d->status;
+    }
+
+    // The command line extends the rest of the way.
+    RuleRectangle &cmdRule = d->console->commandLine().rule();
+    cmdRule.setInput(Rule::Left,   d->console->button().rule().right())
+           .setInput(Rule::Bottom, rule().bottom())
+           .setInput(Rule::Right,  layout.widgets().last()->as<GuiWidget>().rule().left());
+
+    // Just use a plain background for this editor.
+    d->console->commandLine().set(Background(style().colors().colorf("background")));
 }

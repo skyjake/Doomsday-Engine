@@ -71,9 +71,12 @@ group font {
         }
     }
     
-    # Identifiers are all case insensitive.
-    Font "Title" inherits font.default {
-        Size: 24pt
-        Weight $: if __this__.weight == "normal": "bold"; else: "normal"
+    # Identifiers retain case in script namespaces (and are case
+    # sensitive), however group types are forced lower case (FoNt==font).
+    FoNt "Title" inherits font.Default {
+        SIZE: 24pt
+        weight $: if __this__.weight == "normal": "bold"; else: "normal"
     }
 }
+
+script { print "Title font:\n", font.Title }

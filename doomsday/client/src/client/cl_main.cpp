@@ -1,4 +1,4 @@
-/** @file cl_main.cpp Network Client
+/** @file cl_main.cpp  Network client.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,47 +17,50 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
 #include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_network.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-#include "de_play.h"
+#include "client/cl_def.h"
+
+#include "api_client.h"
+#include "client/cl_frame.h"
+#include "client/cl_infine.h"
+#include "client/cl_player.h"
+#include "client/cl_sound.h"
+#include "client/cl_world.h"
+
+#include "con_main.h"
+
+#include "audio/s_main.h"
+#include "network/net_demo.h"
 
 #include "world/map.h"
-#include "render/r_main.h"
+#include "world/p_players.h"
+
+#include <de/timer.h>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 using namespace de;
 
-extern int gotFrame;
-
 ident_t clientID;
-boolean handshakeReceived = false;
-int gameReady = false;
+bool handshakeReceived;
+int gameReady;
 int serverTime;
-boolean netLoggedIn = false; // Logged in to the server.
-int clientPaused = false; // Set by the server.
+bool netLoggedIn; // Logged in to the server.
+int clientPaused; // Set by the server.
 
-void Cl_InitID(void)
+void Cl_InitID()
 {
-    int                 i;
-    FILE*               file;
-
-    if((i = CommandLine_CheckWith("-id", 1)) != 0)
+    if(int i = CommandLine_CheckWith("-id", 1))
     {
         clientID = strtoul(CommandLine_At(i + 1), 0, 0);
-        Con_Message("Cl_InitID: Using custom id 0x%08x.", clientID);
+        LOG_NET_NOTE("Using custom client ID: 0x%08x") << clientID;
         return;
     }
 
     // Read the client ID number file.
     srand(time(NULL));
-    if((file = fopen("client.id", "rb")) != NULL)
+    if(FILE *file = fopen("client.id", "rb"))
     {
         if(fread(&clientID, sizeof(clientID), 1, file))
         {
@@ -67,59 +70,56 @@ void Cl_InitID(void)
         }
         fclose(file);
     }
+
     // Ah-ha, we need to generate a new ID.
     clientID = (ident_t)
         ULONG(Timer_RealMilliseconds() * rand() + (rand() & 0xfff) +
               ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24));
+
     // Write it to the file.
-    if((file = fopen("client.id", "wb")) != NULL)
+    if(FILE *file = fopen("client.id", "wb"))
     {
         fwrite(&clientID, sizeof(clientID), 1, file);
         fclose(file);
     }
 }
 
-int Cl_GameReady(void)
+int Cl_GameReady()
 {
     return (handshakeReceived && gameReady);
 }
 
 void Cl_CleanUp()
 {
-    Con_Printf("Cl_CleanUp.\n");
+    LOG_NET_MSG("Cleaning up client state");
 
     clientPaused = false;
     handshakeReceived = false;
 
-    if(App_World().hasMap())
-    {
-        Cl_ResetFrame();
-        App_World().map().destroyClMobjs();
-    }
+    //S_Reset();
+    S_MapChange();
 
-    Cl_InitPlayers();
-    Cl_WorldReset();
+    // Reset the local world state.
+    App_WorldSystem().reset();
+
+    // Discard the translation tables for the server we've just left.
+    Cl_ResetTransTables();
+
     GL_SetFilter(false);
 }
 
-/**
- * Sends a hello packet.
- * PCL_HELLO2 includes the Game ID (16 chars).
- */
-void Cl_SendHello(void)
+void Cl_SendHello()
 {
-    char buf[256];
+    LOG_AS("Cl_SendHello");
 
     Msg_Begin(PCL_HELLO2);
     Writer_WriteUInt32(msgWriter, clientID);
 
     // The game mode is included in the hello packet.
-    memset(buf, 0, sizeof(buf));
-    strncpy(buf, Str_Text(App_CurrentGame().identityKey()), sizeof(buf) - 1);
+    char buf[256]; zap(buf);
+    strncpy(buf, App_CurrentGame().identityKey().toUtf8().constData(), sizeof(buf) - 1);
 
-#ifdef _DEBUG
-    Con_Message("Cl_SendHello: game mode = %s", buf);
-#endif
+    LOGDEV_NET_VERBOSE("game mode = %s") << buf;
 
     Writer_Write(msgWriter, buf, 16);
     Msg_End();
@@ -127,13 +127,14 @@ void Cl_SendHello(void)
     Net_SendBuffer(0, 0);
 }
 
-void Cl_AnswerHandshake(void)
+void Cl_AnswerHandshake()
 {
-    byte remoteVersion = Reader_ReadByte(msgReader);
-    byte myConsole = Reader_ReadByte(msgReader);
-    uint playersInGame = Reader_ReadUInt32(msgReader);
+    LOG_AS("Cl_AnswerHandshake");
+
+    byte remoteVersion   = Reader_ReadByte(msgReader);
+    byte myConsole       = Reader_ReadByte(msgReader);
+    uint playersInGame   = Reader_ReadUInt32(msgReader);
     float remoteGameTime = Reader_ReadFloat(msgReader);
-    int i;
 
     // Immediately send an acknowledgement. This lets the server evaluate
     // an approximate ping time.
@@ -144,8 +145,8 @@ void Cl_AnswerHandshake(void)
     // Check the version number.
     if(remoteVersion != SV_VERSION)
     {
-        Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)",
-                    SV_VERSION, remoteVersion);
+        LOG_NET_ERROR("Version conflict! (you:%i, server:%i)")
+                << SV_VERSION << remoteVersion;
         Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
         Con_Open(true);
@@ -154,7 +155,7 @@ void Cl_AnswerHandshake(void)
 
     // Update time and player ingame status.
     gameTime = remoteGameTime;
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         /// @todo With multiple local players, must clear only the appropriate flags.
         ddPlayers[i].shared.flags &= ~DDPF_LOCAL;
@@ -185,10 +186,10 @@ void Cl_AnswerHandshake(void)
     gameReady = false;
     Cl_InitFrame();
 
-    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%f.",
-                myConsole, remoteGameTime);
+    LOGDEV_NET_MSG("Answering handshake: myConsole:%i, remoteGameTime:%.2f")
+            << myConsole << remoteGameTime;
 
-    /**
+    /*
      * Tell the game that we have arrived. The map will be changed when the
      * game's handshake arrives (handled in the game).
      */
@@ -196,7 +197,7 @@ void Cl_AnswerHandshake(void)
 
     // Prepare the client-side data.
     Cl_InitPlayers();
-    Cl_WorldInit();
+    Cl_InitTransTables();
 
     // Get ready for ticking.
     DD_ResetTimer();
@@ -204,28 +205,24 @@ void Cl_AnswerHandshake(void)
     Con_Executef(CMDS_DDAY, true, "setcon %i", consolePlayer);
 }
 
-void Cl_HandlePlayerInfo(void)
+void Cl_HandlePlayerInfo()
 {
-    player_t* plr;
-    boolean present;
     byte console = Reader_ReadByte(msgReader);
-    size_t len = Reader_ReadUInt16(msgReader);
-    char name[PLAYERNAMELEN];
 
+    size_t len = Reader_ReadUInt16(msgReader);
     len = MIN_OF(PLAYERNAMELEN - 1, len);
-    memset(name, 0, sizeof(name));
+
+    char name[PLAYERNAMELEN]; zap(name);
     Reader_Read(msgReader, name, len);
 
-#ifdef _DEBUG
-    Con_Message("Cl_HandlePlayerInfo: console:%i name:%s", console, name);
-#endif
+    LOG_NET_VERBOSE("Player %i named \"%s\"") << console << name;
 
     // Is the console number valid?
     if(console >= DDMAXPLAYERS)
         return;
 
-    plr = &ddPlayers[console];
-    present = plr->shared.inGame;
+    player_t *plr = &ddPlayers[console];
+    bool present = plr->shared.inGame;
     plr->shared.inGame = true;
 
     strcpy(clients[console].name, name);
@@ -241,16 +238,12 @@ void Cl_HandlePlayerInfo(void)
 
 void Cl_PlayerLeaves(int plrNum)
 {
-    Con_Printf("Cl_PlayerLeaves: player %i has left.\n", plrNum);
+    LOG_NET_NOTE("Player %i has left the game") << plrNum;
     ddPlayers[plrNum].shared.inGame = false;
     gx.NetPlayerEvent(plrNum, DDPE_EXIT, 0);
 }
 
-/**
- * Client's packet handler.
- * Handles all the events the server sends.
- */
-void Cl_GetPackets(void)
+void Cl_GetPackets()
 {
     // All messages come from the server.
     while(Net_GetPacket())
@@ -261,27 +254,20 @@ void Cl_GetPackets(void)
         // a game is in progress.
         if(Cl_GameReady())
         {
-            boolean handled = true;
-
             switch(netBuffer.msg.type)
             {
             case PSV_FIRST_FRAME2:
             case PSV_FRAME2:
                 Cl_Frame2Received(netBuffer.msg.type);
-                break;
+                Msg_EndRead();
+                continue; // Get the next packet.
 
             case PSV_SOUND:
                 Cl_Sound();
-                break;
-
-            default:
-                handled = false;
-            }
-
-            if(handled)
-            {
                 Msg_EndRead();
                 continue; // Get the next packet.
+
+            default: break;
             }
         }
 
@@ -305,7 +291,7 @@ void Cl_GetPackets(void)
             // The server updates our time. Latency has been taken into
             // account, so...
             gameTime = Reader_ReadFloat(msgReader);
-            Con_Printf("PSV_SYNC: gameTime=%.3f\n", gameTime);
+            LOGDEV_NET_VERBOSE("PSV_SYNC: gameTime=%.3f") << gameTime;
             DD_ResetTimer();
             break;
 
@@ -333,11 +319,10 @@ void Cl_GetPackets(void)
             Cl_PlayerLeaves(Reader_ReadByte(msgReader));
             break;
 
-        case PKT_CHAT:
-        {
+        case PKT_CHAT: {
             int msgfrom = Reader_ReadByte(msgReader);
             int mask = Reader_ReadUInt32(msgReader);
-            DENG_UNUSED(mask);
+            DENG2_UNUSED(mask);
             size_t len = Reader_ReadUInt16(msgReader);
             char *msg = (char *) M_Malloc(len + 1);
             Reader_Read(msgReader, msg, len);
@@ -345,34 +330,37 @@ void Cl_GetPackets(void)
             Net_ShowChatMessage(msgfrom, msg);
             gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
             M_Free(msg);
-            break;
-        }
+            break; }
 
         case PSV_SERVER_CLOSE:  // We should quit?
             netLoggedIn = false;
             Con_Execute(CMDS_DDAY, "net disconnect", true, false);
             break;
 
-        case PSV_CONSOLE_TEXT:
-        {
+        case PSV_CONSOLE_TEXT: {
             uint32_t conFlags = Reader_ReadUInt32(msgReader);
             uint16_t textLen = Reader_ReadUInt16(msgReader);
             char *text = (char *) M_Malloc(textLen + 1);
             Reader_Read(msgReader, text, textLen);
             text[textLen] = 0;
-            Con_FPrintf(conFlags, "%s", text);
+            DENG_UNUSED(conFlags);
+            LOG_NOTE("%s") << text;
             M_Free(text);
-            break;
-        }
+            break; }
 
         case PKT_LOGIN:
-            // Server responds to our login request. Let's see if we
-            // were successful.
-            netLoggedIn = Reader_ReadByte(msgReader);
+            // Server responds to our login request. Let's see if we were successful.
+            netLoggedIn = CPP_BOOL(Reader_ReadByte(msgReader));
             break;
 
         case PSV_FINALE:
             Cl_Finale(msgReader);
+            break;
+
+        case PSV_FRAME2:
+        case PSV_FIRST_FRAME2:
+        case PSV_SOUND:
+            LOGDEV_NET_WARNING("Packet type %i was discarded (client not ready)") << netBuffer.msg.type;
             break;
 
         default:
@@ -383,9 +371,7 @@ void Cl_GetPackets(void)
             }
             else
             {
-#ifdef _DEBUG
-                Con_Message("Cl_GetPackets: Packet (type %i) was discarded!", netBuffer.msg.type);
-#endif
+                LOG_NET_WARNING("Packet was discarded (unknown type %i)") << netBuffer.msg.type;
             }
         }
 
@@ -393,57 +379,52 @@ void Cl_GetPackets(void)
     }
 }
 
+#ifdef DENG_DEBUG
+
 /**
- * Check the state of the client on engineside. This is a debugging utility
- * and only gets called when _DEBUG is defined.
+ * Check the state of the client on engineside. A debugging utility.
  */
-void Cl_Assertions(int plrNum)
+static void assertPlayerIsValid(int plrNum)
 {
-    player_t           *plr;
-    mobj_t             *clmo, *mo;
-    clplayerstate_t    *s;
+    LOG_AS("Client.assertPlayerIsValid");
 
     if(!isClient || !Cl_GameReady() || clientPaused) return;
     if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
 
-    plr = &ddPlayers[plrNum];
-    s = ClPlayer_State(plrNum);
+    player_t *plr = &ddPlayers[plrNum];
+    clplayerstate_t *s = ClPlayer_State(plrNum);
 
     // Must have a mobj!
     if(!s->clMobjId || !plr->shared.mo)
         return;
 
-    clmo = ClMobj_Find(s->clMobjId);
+    mobj_t *clmo = ClMobj_Find(s->clMobjId);
     if(!clmo)
     {
-        Con_Message("Cl_Assertions: client %i does not have a clmobj yet [%i].", plrNum, s->clMobjId);
+        LOGDEV_NET_NOTE("Player %i does not have a clmobj yet [%i]") << plrNum << s->clMobjId;
         return;
     }
-    mo = plr->shared.mo;
+    mobj_t *mo = plr->shared.mo;
 
     /*
-    Con_Message("Assert: client %i, clmo %i (flags 0x%x)",
-                plrNum, clmo->thinker.id, clmo->ddFlags);
-                */
+    ("Assert: client %i, clmo %i (flags 0x%x)", plrNum, clmo->thinker.id, clmo->ddFlags);
+    */
 
     // Make sure the flags are correctly set for a client.
     if(mo->ddFlags & DDMF_REMOTE)
     {
-        Con_Message("Cl_Assertions: client %i, mobj should not be remote!", plrNum);
+        LOGDEV_NET_NOTE("Player %i's mobj should not be remote") << plrNum;
     }
     if(clmo->ddFlags & DDMF_SOLID)
     {
-        Con_Message("Cl_Assertions: client %i, clmobj should not be solid (when player is alive)!", plrNum);
+        LOGDEV_NET_NOTE("Player %i's clmobj should not be solid (when player is alive)") << plrNum;
     }
 }
 
-/**
- * Client-side game ticker.
- */
+#endif // DENG_DEBUG
+
 void Cl_Ticker(timespan_t ticLength)
 {
-    int i;
-
     if(!isClient || !Cl_GameReady() || clientPaused)
         return;
 
@@ -453,7 +434,7 @@ void Cl_Ticker(timespan_t ticLength)
     // the changes from the server) to match the changes. The game ticker
     // has already been run when Cl_Ticker() is called, so let's update the
     // player's clmobj to its updated state.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(!ddPlayers[i].shared.inGame) continue;
 
@@ -475,14 +456,14 @@ void Cl_Ticker(timespan_t ticLength)
         ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdateOrigin(i);
 
-#ifdef _DEBUG
-        Cl_Assertions(i);
+#ifdef DENG_DEBUG
+        assertPlayerIsValid(i);
 #endif
     }
 
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        App_World().map().expireClMobjs();
+        App_WorldSystem().map().expireClMobjs();
     }
 }
 

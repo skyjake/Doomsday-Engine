@@ -1,4 +1,4 @@
-/** @file tab_tables.c Precalculated trigonometric functions.
+/** @file tab_tables.c  Precalculated trigonometric functions.
  *
  * Tables sourced from tables.c in the Doom GPL release.
  *
@@ -18,6 +18,8 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+
+#include <de/types.h> // FINEANGLES
 
 int finetangent[4096] =
 {
@@ -1820,7 +1822,7 @@ int finesine[10240] =
     65534,65535,65535,65535,65535,65535,65535,65535
 };
 
-
+fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
 int tantoangle[2049] =
 {

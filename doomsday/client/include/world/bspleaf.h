@@ -1,4 +1,4 @@
-/** @file bspleaf.h World map BSP leaf.
+/** @file bspleaf.h  World map BSP leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,11 +21,6 @@
 #ifndef DENG_WORLD_BSPLEAF_H
 #define DENG_WORLD_BSPLEAF_H
 
-#include <QSet>
-
-#include <de/Error>
-#include <de/Vector>
-
 #include "MapElement"
 #include "Line"
 #include "Sector"
@@ -35,6 +30,10 @@
 #ifdef __CLIENT__
 #  include "BiasSurface"
 #endif
+
+#include <de/Error>
+#include <de/Vector>
+#include <QSet>
 
 struct polyobj_s;
 #ifdef __CLIENT__

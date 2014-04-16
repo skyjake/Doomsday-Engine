@@ -1,4 +1,4 @@
-/** @file surface.h World map surface.
+/** @file surface.h  World map surface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,19 +21,18 @@
 #ifndef DENG_WORLD_SURFACE_H
 #define DENG_WORLD_SURFACE_H
 
-#ifdef __CLIENT__
-#  include <QList>
-#endif
+#include "Material"
+
+#include "MapElement"
+#include "uri.hh"
 
 #include <de/Error>
 #include <de/Matrix>
 #include <de/Observers>
 #include <de/Vector>
-
-#include "Material"
-
-#include "MapElement"
-#include "uri.hh"
+#ifdef __CLIENT__
+#  include <QList>
+#endif
 
 class BspLeaf;
 class Decoration;
@@ -53,33 +52,20 @@ public:
     /// Required material is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
 
-    /*
-     * Notified when the @em sharp material origin changes.
-     */
-    DENG2_DEFINE_AUDIENCE(MaterialOriginChange,
-        void materialOriginChanged(Surface &surface, de::Vector2f oldMaterialOrigin,
-                                   int changedAxes /*bit-field (0x1=X, 0x2=Y)*/))
-    /*
-     * Notified when the normal vector changes.
-     */
-    DENG2_DEFINE_AUDIENCE(NormalChange,
-        void normalChanged(Surface &surface, de::Vector3f oldNormal,
-                           int changedAxes /*bit-field (0x1=X, 0x2=Y, 0x4=Z)*/))
-    /*
-     * Notified when the opacity changes.
-     */
-    DENG2_DEFINE_AUDIENCE(OpacityChange,
-        void opacityChanged(Surface &surface, float oldOpacity))
+    /// Notified when the @em sharp material origin changes.
+    DENG2_DEFINE_AUDIENCE(MaterialOriginChange, void surfaceMaterialOriginChanged(Surface &surface))
 
-    /*
-     * Notified when the tint color changes.
-     */
-    DENG2_DEFINE_AUDIENCE(TintColorChange,
-        void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,
-                              int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
+    /// Notified whenever the normal vector changes.
+    DENG2_DEFINE_AUDIENCE(NormalChange, void surfaceNormalChanged(Surface &surface))
 
-    // Constants:
-    static int const MAX_SMOOTH_MATERIAL_MOVE = 8; ///< Maximum speed for a smoothed material offset.
+    /// Notified whenever the opacity changes.
+    DENG2_DEFINE_AUDIENCE(OpacityChange, void surfaceOpacityChanged(Surface &surface))
+
+    /// Notified whenever the tint color changes.
+    DENG2_DEFINE_AUDIENCE(TintColorChange, void surfaceTintColorChanged(Surface &sector))
+
+    /// Maximum speed for a smoothed material offset.
+    static int const MAX_SMOOTH_MATERIAL_MOVE = 8;
 
 #ifdef __CLIENT__
     typedef QList<Decoration *> Decorations;
@@ -225,44 +211,6 @@ public:
     Surface &setMaterialOrigin(de::Vector2f const &newOrigin);
 
     /**
-     * Change the specified @a component of the material origin for the surface.
-     * The MaterialOriginChange audience is notified whenever the material origin
-     * changes.
-     *
-     * @param component    Index of the component axis (0=X, 1=Y).
-     * @param newPosition  New position for the origin component axis.
-     *
-     * @see setMaterialorigin(), setMaterialOriginX(), setMaterialOriginY()
-     */
-    Surface &setMaterialOriginComponent(int component, float newPosition);
-
-    /**
-     * Change the position of the X axis component of the material origin for the
-     * surface. The MaterialOriginChange audience is notified whenever the material
-     * origin changes.
-     *
-     * @param newPosition  New X axis position for the material origin.
-     *
-     * @see setMaterialOriginComponent(), setMaterialOriginY()
-     */
-    inline Surface &setMaterialOriginX(float newPosition) {
-        return setMaterialOriginComponent(0, newPosition);
-    }
-
-    /**
-     * Change the position of the Y axis component of the material origin for the
-     * surface. The MaterialOriginChange audience is notified whenever the material
-     * origin changes.
-     *
-     * @param newPosition  New Y axis position for the material origin.
-     *
-     * @see setMaterialOriginComponent(), setMaterialOriginX()
-     */
-    inline Surface &setMaterialOriginY(float newPosition) {
-        return setMaterialOriginComponent(1, newPosition);
-    }
-
-    /**
      * Compose a URI for the surface's material. If no material is bound then a
      * default (i.e., empty) URI is returned.
      *
@@ -292,43 +240,9 @@ public:
      * Returns the tint color of the surface. The TintColorChange audience is notified
      * whenever the tint color changes.
      *
-     * @see setTintColor(), tintColorComponent(), tintRed(), tintGreen(), tintBlue()
+     * @see setTintColor()
      */
     de::Vector3f const &tintColor() const;
-
-    /**
-     * Returns the strength of the specified @a component of the tint color for the
-     * surface. The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
-     *
-     * @see tintColor(), tintRed(), tintGreen(), tintBlue()
-     */
-    inline float tintColorComponent(int component) const { return tintColor()[component]; }
-
-    /**
-     * Returns the strength of the @em red component of the tint color for the surface
-     * The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @see tintColorComponent(), tintGreen(), tintBlue()
-     */
-    inline float tintRed() const   { return tintColorComponent(0); }
-
-    /**
-     * Returns the strength of the @em green component of the tint color for the
-     * surface. The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @see tintColorComponent(), tintRed(), tintBlue()
-     */
-    inline float tintGreen() const { return tintColorComponent(1); }
-
-    /**
-     * Returns the strength of the @em blue component of the tint color for the
-     * surface. The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @see tintColorComponent(), tintRed(), tintGreen()
-     */
-    inline float tintBlue() const  { return tintColorComponent(2); }
 
     /**
      * Change the tint color for the surface. The TintColorChange audience is notified
@@ -336,56 +250,9 @@ public:
      *
      * @param newTintColor  New tint color.
      *
-     * @see tintColor(), setTintColorComponent(), setTintRed(), setTintGreen(), setTintBlue()
+     * @see tintColor()
      */
     Surface &setTintColor(de::Vector3f const &newTintColor);
-
-    /**
-     * Change the strength of the specified @a component of the tint color for the
-     * surface. The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
-     * @param newStrength  New strength factor for the color component.
-     *
-     * @see setTintColor(), setTintRed(), setTintGreen(), setTintBlue()
-     */
-    Surface &setTintColorComponent(int component, float newStrength);
-
-    /**
-     * Change the strength of the red component of the tint color for the surface.
-     * The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @param newStrength  New red strength for the tint color.
-     *
-     * @see setTintColorComponent(), setTintGreen(), setTintBlue()
-     */
-    inline Surface &setTintRed(float newStrength) {
-        return setTintColorComponent(0, newStrength);
-    }
-
-    /**
-     * Change the strength of the green component of the tint color for the surface.
-     * The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @param newStrength  New green strength for the tint color.
-     *
-     * @see setTintColorComponent(), setTintRed(), setTintBlue()
-     */
-    inline Surface &setTintGreen(float newStrength) {
-        return setTintColorComponent(1, newStrength);
-    }
-
-    /**
-     * Change the strength of the blue component of the tint color for the surface.
-     * The TintColorChange audience is notified whenever the tint color changes.
-     *
-     * @param newStrength  New blue strength for the tint color.
-     *
-     * @see setTintColorComponent(), setTintRed(), setTintGreen()
-     */
-    inline Surface &setTintBlue(float newStrength) {
-        return setTintColorComponent(2, newStrength);
-    }
 
     /**
      * Returns the blendmode for the surface.
@@ -415,7 +282,7 @@ public:
      *
      * @see setMaterialOrigin(), smoothMaterialOrigin()
      */
-    de::Vector2f const &materialOriginSmoothedDelta() const;
+    de::Vector2f const &materialOriginSmoothedAsDelta() const;
 
     /**
      * Perform smoothed material origin interpolation.

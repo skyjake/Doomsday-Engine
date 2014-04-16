@@ -29,6 +29,7 @@
 #include <de/rect.h>
 
 class BspLeaf;
+struct Generator;
 class Lumobj;
 
 struct viewport_t
@@ -88,16 +89,14 @@ struct viewdata_t
     float windowInter;
 };
 
-namespace ui {
-    enum ViewPortLayer {
-        Player3DViewLayer,
-        ViewBorderLayer,
-        HUDLayer
-    };
-}
+enum ViewPortLayer {
+    Player3DViewLayer,
+    ViewBorderLayer,
+    HUDLayer
+};
 
 DENG_EXTERN_C int      rendInfoTris;
-DENG_EXTERN_C boolean  firstFrameAfterLoad;
+DENG_EXTERN_C dd_bool  firstFrameAfterLoad;
 
 /**
  * Register console variables.
@@ -111,7 +110,7 @@ void R_ResetFrameCount();
 /**
  * Render all view ports in the viewport grid.
  */
-void R_RenderViewPorts(ui::ViewPortLayer layer);
+void R_RenderViewPorts(ViewPortLayer layer);
 
 /**
  * Render a blank view for the specified player.
@@ -165,6 +164,20 @@ bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf);
  * @see R_ViewerBspLeafIsVisible()
  */
 void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes = true);
+
+/**
+ * Returns @c true iff the (particle) generator is marked as visible for the current frame.
+ *
+ * @see R_ViewerGeneratorMarkVisible()
+ */
+bool R_ViewerGeneratorIsVisible(Generator const &generator);
+
+/**
+ * Mark the (particle) generator as visible for the current frame.
+ *
+ * @see R_ViewerGeneratorIsVisible()
+ */
+void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes = true);
 
 /// @return  Distance in map space units between the lumobj and viewer.
 double R_ViewerLumobjDistance(int idx);

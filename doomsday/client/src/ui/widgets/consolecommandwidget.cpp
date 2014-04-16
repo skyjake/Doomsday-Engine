@@ -32,14 +32,14 @@ DENG2_OBSERVES(App, GameChange)
 {
     Instance(Public *i) : Base(i)
     {
-        App::app().audienceForStartupComplete += this;
-        App::app().audienceForGameChange += this;
+        App::app().audienceForStartupComplete() += this;
+        App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForStartupComplete -= this;
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForStartupComplete() -= this;
+        App::app().audienceForGameChange() -= this;
     }
 
     void appStartupCompleted()
@@ -89,7 +89,7 @@ bool ConsoleCommandWidget::isAcceptedAsCommand(String const &)
 
 void ConsoleCommandWidget::executeCommand(String const &text)
 {
-    LOG_INFO(_E(1) "> ") << text;
+    LOG_SCR_NOTE(_E(1) "> ") << text;
 
     // Execute the command right away.
     Con_Execute(CMDS_CONSOLE, text.toUtf8(), false, false);

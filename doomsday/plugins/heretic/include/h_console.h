@@ -33,6 +33,14 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void G_ConsoleRegistration(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBHERETIC_CONSOLE_H */

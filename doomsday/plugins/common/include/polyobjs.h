@@ -1,4 +1,4 @@
-/** @file polyobjs.h Polyobject thinkers and management.
+/** @file polyobjs.h  Polyobject thinkers and management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -23,6 +23,10 @@
 #define LIBCOMMON_PLAYSIM_POLYOBJS_H
 
 #include "common.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 typedef enum {
     PODOOR_NONE,
@@ -30,27 +34,45 @@ typedef enum {
     PODOOR_SWING
 } podoortype_t;
 
-typedef struct {
-    thinker_t       thinker;
-    int             polyobj; // tag
-    int             intSpeed;
-    unsigned int    dist;
-    int             fangle;
-    coord_t         speed[2]; // for sliding doors
+/**
+ * @note Used with both @ref T_RotatePoly() and @ref T_MovePoly()
+ */
+typedef struct polyevent_s {
+    thinker_t thinker;
+    int polyobj; // tag
+    int intSpeed;
+    unsigned int dist;
+    int fangle;
+    coord_t speed[2]; // for sliding doors
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } polyevent_t;
 
-typedef struct {
-    thinker_t       thinker;
-    int             polyobj; // tag
-    int             intSpeed;
-    int             dist;
-    int             totalDist;
-    int             direction;
-    float           speed[2];
-    int             tics;
-    int             waitTics;
-    podoortype_t    type;
-    boolean         close;
+#ifdef __cplusplus
+void SV_WriteMovePoly(polyevent_t const *movepoly, MapStateWriter *msw);
+int SV_ReadMovePoly(polyevent_t *movepoly, MapStateReader *msr);
+#endif
+
+typedef struct polydoor_s {
+    thinker_t thinker;
+    int polyobj; // tag
+    int intSpeed;
+    int dist;
+    int totalDist;
+    int direction;
+    float speed[2];
+    int tics;
+    int waitTics;
+    podoortype_t type;
+    dd_bool close;
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } polydoor_t;
 
 typedef struct polyobj_s {
@@ -59,6 +81,11 @@ typedef struct polyobj_s {
 
 // Game-specific data:
     void *specialData; ///< A thinker (if moving).
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } Polyobj;
 
 enum
@@ -77,21 +104,21 @@ extern "C" {
  */
 void PO_InitForMap(void);
 
-boolean PO_Busy(int tag);
+dd_bool PO_Busy(int tag);
 
-boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float startY);
+dd_bool PO_FindAndCreatePolyobj(int tag, dd_bool crush, float startX, float startY);
 
 void T_PolyDoor(void *pd);
 
 void T_RotatePoly(void *pe);
 
-boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean override);
+dd_bool EV_RotatePoly(Line *line, byte *args, int direction, dd_bool override);
 
 void T_MovePoly(void *pe);
 
-boolean EV_MovePoly(Line *line, byte *args, boolean timesEight, boolean override);
+dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override);
 
-boolean EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type);
+dd_bool EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type);
 
 #ifdef __cplusplus
 } // extern "C"

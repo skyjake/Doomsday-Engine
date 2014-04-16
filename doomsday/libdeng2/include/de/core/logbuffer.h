@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_LOGBUFFER_H
@@ -48,6 +48,26 @@ class DENG2_PUBLIC LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(F
 
 public:
     typedef QList<LogEntry const *> Entries;
+
+    /**
+     * Interface for objects that filter log entries.
+     */
+    class IFilter
+    {
+    public:
+        virtual ~IFilter() {}
+
+        /**
+         * Determines if a log entry should be allowed into the log buffer
+         * if it has a particular set of metadata. Note that this method
+         * will be called from several threads, so it needs to be thread-safe.
+         *
+         * @param metadata  Entry metadata.
+         *
+         * @return @c true, to allow entering into the buffer.
+         */
+        virtual bool isLogEntryAllowed(duint32 metadata) const = 0;
+    };
 
 public:
     /**
@@ -96,18 +116,23 @@ public:
     void latestEntries(Entries &entries, int count = 0) const;
 
     /**
-     * Enables log entries at or over a level. When a level is disabled, the
-     * entries will not be added to the log entry buffer.
+     * Sets the filter that determines if a log entry will be permitted into
+     * the buffer.
+     *
+     * @param entryFilter  Filter object. @c NULL to use the default filter.
      */
-    void enable(LogEntry::Level overLevel = LogEntry::MESSAGE);
+    void setEntryFilter(IFilter const *entryFilter);
 
     /**
-     * Disables the log.
-     * @see enable()
+     * Checks if a log entry will be enabled if it has a particular set of
+     * context metadata bits.
+     *
+     * @param entryMetadata  Metadata of an entry.
+     *
+     * @return @c true, if the entry should be added to the buffer. @c false,
+     * if the entry should be ignored.
      */
-    void disable() { enable(LogEntry::MAX_LOG_LEVELS); }
-
-    bool isEnabled(LogEntry::Level overLevel = LogEntry::MESSAGE) const;
+    bool isEnabled(duint32 entryMetadata = LogEntry::Message) const;
 
     /**
      * Enables or disables standard output of log messages. When enabled,
@@ -126,11 +151,25 @@ public:
     void enableFlushing(bool yes = true);
 
     /**
+     * Sets the interval for autoflushing. Also automatically enables flushing.
+     *
+     * @param interval  Interval for autoflushing.
+     */
+    void setAutoFlushInterval(TimeDelta const &interval);
+
+    enum OutputChangeBehavior {
+        FlushFirstToOldOutputs,
+        DontFlush
+    };
+
+    /**
      * Sets the path of the file used for writing log entries to.
      *
-     * @param path  Path of the file.
+     * @param path      Path of the file.
+     * @param behavior  What to do with existing unflushed entries.
      */
-    void setOutputFile(String const &path);
+    void setOutputFile(String const &path,
+                       OutputChangeBehavior behavior = FlushFirstToOldOutputs);
 
     /**
      * Returns the path of the file used for log output.
@@ -168,7 +207,7 @@ public:
 
     static LogBuffer &appBuffer();
 
-    static bool isAppBufferAvailable();
+    static bool appBufferExists();
 
 public slots:
     /**

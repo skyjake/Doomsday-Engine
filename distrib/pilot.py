@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2.7
 # coding=utf-8
 #
 # The Doomsday Build Pilot
@@ -35,6 +35,7 @@ import pickle
 import struct
 import time
 import SocketServer
+import builder.utils
 
 def homeDir():
     """Determines the path of the pilot home directory."""
@@ -414,8 +415,7 @@ def handleCompletedTasks():
     
     
 def autobuild(cmd):
-    cmdLine = "python %s %s" % (os.path.join(pilotcfg.DISTRIB_DIR,
-                                             'autobuild.py'), cmd)
+    cmdLine = "%s %s" % (os.path.join(pilotcfg.DISTRIB_DIR, 'autobuild.py'), cmd)
     cmdLine += " --distrib %s" % pilotcfg.DISTRIB_DIR
     if 'EVENTS_DIR' in dir(pilotcfg):
         cmdLine += " --events %s" % pilotcfg.EVENTS_DIR
@@ -424,7 +424,7 @@ def autobuild(cmd):
 
     cmdLine += " --branch %s" % currentBranch()
 
-    systemCommand(cmdLine)
+    builder.utils.run_python2(cmdLine)
     return True
         
     

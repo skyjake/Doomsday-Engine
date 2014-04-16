@@ -27,9 +27,25 @@
 #include "doomsday.h"
 #include "gl_drawpatch.h"
 
-#ifdef __cplusplus
-extern "C" {
+DENG_EXTERN_C patchid_t *pMapNames; // Name graphics of each map.
+DENG_EXTERN_C uint pMapNamesSize;
+
+#if __JHERETIC__ || __JHEXEN__
+DENG_EXTERN_C patchid_t pInvItemBox;
+DENG_EXTERN_C patchid_t pInvSelectBox;
+DENG_EXTERN_C patchid_t pInvPageLeft[2];
+DENG_EXTERN_C patchid_t pInvPageRight[2];
 #endif
+
+#if __JDOOM__ || __JDOOM64__
+// Quit messages.
+#define NUM_QUITMESSAGES    22
+DENG_EXTERN_C char const *endmsg[NUM_QUITMESSAGES + 1];
+#endif
+
+DENG_EXTERN_C dd_bool shiftdown;
+DENG_EXTERN_C char const shiftXForm[];
+DENG_EXTERN_C patchid_t borderPatches[8];
 
 // The fonts.
 typedef enum {
@@ -50,6 +66,9 @@ typedef enum {
     NUM_GAME_FONTS
 } gamefontid_t;
 
+DENG_EXTERN_C fontid_t fonts[NUM_GAME_FONTS];
+#define FID(idx) (fonts[idx])
+
 // Vector graphics.
 enum {
     VG_FIRST = 1,
@@ -67,29 +86,9 @@ enum {
     NUM_VECTOR_GRAPHICS
 }; /* svgid_t*/
 
-#define FID(idx) (fonts[idx])
-
-extern fontid_t fonts[NUM_GAME_FONTS];
-
-extern patchid_t* pMapNames; // Name graphics of each map.
-extern uint pMapNamesSize;
-
-#if __JHERETIC__ || __JHEXEN__
-extern patchid_t pInvItemBox;
-extern patchid_t pInvSelectBox;
-extern patchid_t pInvPageLeft[2];
-extern patchid_t pInvPageRight[2];
+#ifdef __cplusplus
+extern "C" {
 #endif
-
-#if __JDOOM__ || __JDOOM64__
-// Quit messages.
-#define NUM_QUITMESSAGES    22
-extern const char* endmsg[NUM_QUITMESSAGES + 1];
-#endif
-
-extern boolean shiftdown;
-extern const char shiftXForm[];
-extern patchid_t borderPatches[8];
 
 void Hu_LoadData(void);
 void Hu_Drawer(void);
@@ -98,9 +97,9 @@ void HU_WakeWidgets(int player);
 void Hu_UnloadData(void);
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry);
-void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor);
-boolean Hu_IsMapTitleVisible(void);
-boolean Hu_IsStatusBarVisible(int player);
+void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor);
+dd_bool Hu_IsMapTitleVisible(void);
+dd_bool Hu_IsStatusBarVisible(int player);
 
 void Hu_FogEffectTicker(timespan_t time);
 void Hu_FogEffectSetAlphaTarget(float alpha);
@@ -190,7 +189,7 @@ void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y);
  * Misc specialised elements:
  */
 
-void M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
+void M_DrawGlowBar(const float a[2], const float b[2], float thickness, dd_bool left, dd_bool right, dd_bool caps, float red, float green, float blue, float alpha);
 
 #ifdef __cplusplus
 } // extern "C"

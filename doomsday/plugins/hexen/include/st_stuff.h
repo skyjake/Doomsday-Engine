@@ -62,12 +62,14 @@ void ST_Drawer(int player);
 void ST_Start(int player);
 void ST_Stop(int player);
 
+void ST_CloseAll(int player, dd_bool fast);
+
 uiwidget_t* ST_UIChatForPlayer(int player);
 uiwidget_t* ST_UILogForPlayer(int player);
 uiwidget_t* ST_UIAutomapForPlayer(int player);
 
-boolean ST_ChatIsActive(int player);
-boolean ST_StatusBarIsActive(int player);
+dd_bool ST_ChatIsActive(int player);
+dd_bool ST_StatusBarIsActive(int player);
 
 /**
  * Post a message to the specified player's log.
@@ -100,9 +102,9 @@ void ST_LogPostVisibilityChangeNotification(void);
 /**
  * Start the automap.
  */
-void ST_AutomapOpen(int player, boolean yes, boolean fast);
+void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast);
 
-boolean ST_AutomapIsActive(int player);
+dd_bool ST_AutomapIsActive(int player);
 
 void ST_ToggleAutomapPanMode(int player);
 void ST_ToggleAutomapMaxZoom(int player);
@@ -118,21 +120,21 @@ float ST_AutomapOpacity(int player);
  *
  * @return  @true= there is no point even partially visible.
  */
-boolean ST_AutomapObscures2(int player, const RectRaw* region);
-boolean ST_AutomapObscures(int player, int x, int y, int width, int height);
+dd_bool ST_AutomapObscures2(int player, const RectRaw* region);
+dd_bool ST_AutomapObscures(int player, int x, int y, int width, int height);
 
 int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z);
 void ST_AutomapClearPoints(int player);
-boolean ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z);
+dd_bool ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z);
 
-void ST_SetAutomapCameraRotation(int player, boolean on);
+void ST_SetAutomapCameraRotation(int player, dd_bool on);
 
 int ST_AutomapCheatLevel(int player);
 void ST_SetAutomapCheatLevel(int player, int level);
 void ST_CycleAutomapCheatLevel(int player);
 
-void ST_RevealAutomap(int player, boolean on);
-boolean ST_AutomapHasReveal(int player);
+void ST_RevealAutomap(int player, dd_bool on);
+dd_bool ST_AutomapHasReveal(int player);
 
 void ST_RebuildAutomap(int player);
 

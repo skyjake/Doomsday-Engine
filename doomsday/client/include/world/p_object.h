@@ -25,6 +25,8 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
+#include "api_map.h"
+#include "def_data.h"
 #ifdef __CLIENT__
 #  include "ModelDef"
 #  include "Sprite"
@@ -67,6 +69,15 @@ mobj_t *P_MobjCreate(thinkfunc_t function, de::Vector3d const &origin, angle_t a
 void P_MobjRecycle(mobj_t *mobj);
 
 /**
+ * Returns the map in which the mobj exists. Note that a mobj may exist in a map
+ * while not being @em linked into data structures such as the blockmap and sectors.
+ * To determine whether the mobj is linked, call @ref Mobj_IsLinked().
+ *
+ * @see Thinker_Map()
+ */
+de::Map &Mobj_Map(mobj_t const &mobj);
+
+/**
  * Returns @c true iff the mobj has been linked into the map. The only time this
  * is not true is if @ref Mobj_SetOrigin() has not yet been called.
  *
@@ -94,7 +105,7 @@ de::Vector3d Mobj_Center(mobj_t &mobj);
  *
  * @note Internal to the engine.
  */
-boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
+dd_bool Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 
 /**
  * Returns the map BSP leaf at the origin of the mobj. Note that the mobj must
@@ -134,6 +145,12 @@ SectorCluster &Mobj_Cluster(mobj_t const &mobj);
  */
 SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj);
 
+/**
+ * Creates a new mobj-triggered particle generator based on the given
+ * definition. The generator is added to the list of active ptcgens.
+ */
+void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def);
+
 #ifdef __CLIENT__
 
 /**
@@ -142,7 +159,7 @@ SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj);
  * used to determine whether this origin should be adjusted with respect to
  * smoothed plane movement.
  */
-boolean Mobj_OriginBehindVisPlane(mobj_t *mobj);
+dd_bool Mobj_OriginBehindVisPlane(mobj_t *mobj);
 
 /**
  * To be called when lumobjs are disabled to perform necessary bookkeeping.
@@ -187,7 +204,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mobj, ModelDef **nextModef = 0,
 
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
 
-boolean Mobj_IsSectorLinked(mobj_t *mobj);
+dd_bool Mobj_IsSectorLinked(mobj_t *mobj);
 
 /**
  * @return  The current floatbob offset for the mobj, if the mobj is flagged

@@ -22,11 +22,11 @@
 #include "updater/updatersettingsdialog.h"
 #include "updater/updatersettings.h"
 #include "clientapp.h"
-#include "ui/widgets/labelwidget.h"
-#include "ui/widgets/choicewidget.h"
-#include "ui/widgets/variabletogglewidget.h"
-#include "GridLayout"
-#include "SignalAction"
+#include <de/LabelWidget>
+#include <de/ChoiceWidget>
+#include <de/VariableToggleWidget>
+#include <de/GridLayout>
+#include <de/SignalAction>
 #include <de/Log>
 #include <QDesktopServices>
 
@@ -112,7 +112,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         fetch();
 
-        autoCheck->audienceForToggle += this;
+        autoCheck->audienceForToggle() += this;
 
         // Place the widgets into a grid.
         GridLayout layout(area.contentRule().left(), area.contentRule().top());

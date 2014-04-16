@@ -95,7 +95,7 @@ DENG_PUBLIC size_t Reader_Size(Reader const *reader);
  * Determines whether the reader is in the end of buffer, i.e., there is nothing
  * more to read.
  */
-DENG_PUBLIC boolean Reader_AtEnd(Reader const *reader);
+DENG_PUBLIC dd_bool Reader_AtEnd(Reader const *reader);
 
 /**
  * Sets the position of the reading cursor in the buffer.

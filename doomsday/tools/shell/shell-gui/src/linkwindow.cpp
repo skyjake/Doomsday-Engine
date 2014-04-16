@@ -23,10 +23,12 @@
 #include "guishellapp.h"
 #include "consolepage.h"
 #include "preferences.h"
+#include "errorlogdialog.h"
 #include <de/LogBuffer>
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
 #include <de/shell/Link>
+#include <QFile>
 #include <QToolBar>
 #include <QMenuBar>
 #include <QInputDialog>
@@ -62,6 +64,7 @@ DENG2_PIMPL(LinkWindow)
 {
     LogBuffer logBuffer;
     Link *link;
+    NativePath errorLog;
     QToolBar *tools;
     QToolButton *statusButton;
     QToolButton *consoleButton;
@@ -74,7 +77,7 @@ DENG2_PIMPL(LinkWindow)
     QAction *stopAction;
 #ifdef MENU_IN_LINK_WINDOW
     QAction *disconnectAction;
-#endif
+#endif      
 
     Instance(Public &i)
         : Base(i),
@@ -90,9 +93,7 @@ DENG2_PIMPL(LinkWindow)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
-#ifdef _DEBUG
-        logBuffer.enable(LogEntry::DEBUG);
-#endif
+        logBuffer.setAutoFlushInterval(0.1);
     }
 
     ~Instance()
@@ -148,6 +149,29 @@ DENG2_PIMPL(LinkWindow)
         status->linkDisconnected();
         updateCurrentHost();
         updateStyle();
+
+        // Perhaps show the error log?
+        if(!errorLog.isEmpty())
+        {
+            showErrorLog();
+        }
+    }
+
+    void showErrorLog()
+    {
+        QFile logFile(errorLog);
+        if(!logFile.open(QFile::ReadOnly))
+        {
+            return;
+        }
+        QString text = QString::fromUtf8(logFile.readAll());
+        logFile.close();
+
+        // Show a message box.
+        ErrorLogDialog dlg;
+        dlg.setLogContent(text);
+        dlg.setMessage(tr("Starting of the local server failed. This may explain why:"));
+        dlg.exec();
     }
 
     QToolButton *addToolButton(QString const &label, QIcon const &icon)
@@ -260,6 +284,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->tools->setFloatable(false);
 
     d->statusButton = d->addToolButton(tr("Status"), QIcon(":/images/toolbar_status.png"));
+    d->statusButton->setShortcut(QKeySequence(tr("Ctrl+1")));
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
     d->statusButton->setChecked(true);
 
@@ -277,6 +302,7 @@ LinkWindow::LinkWindow(QWidget *parent)
 #endif
 
     d->consoleButton = d->addToolButton(tr("Console"), QIcon(":/images/toolbar_console.png"));
+    d->consoleButton->setShortcut(QKeySequence(tr("Ctrl+2")));
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));
 
     // Initial state for the window.
@@ -338,7 +364,7 @@ void LinkWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void LinkWindow::openConnection(Link *link, String name)
+void LinkWindow::openConnection(Link *link, NativePath const &errorLogPath, String name)
 {
     closeConnection();
 
@@ -346,6 +372,7 @@ void LinkWindow::openConnection(Link *link, String name)
     d->console->log().clear();
 
     d->link = link;
+    d->errorLog = errorLogPath;
 
     connect(d->link, SIGNAL(addressResolved()), this, SLOT(addressResolved()));
     connect(d->link, SIGNAL(connected()), this, SLOT(connected()));
@@ -366,7 +393,7 @@ void LinkWindow::openConnection(QString address)
     qDebug() << "Opening connection to" << address;
 
     // Keep trying to connect to 30 seconds.
-    openConnection(new Link(address, 30), address);
+    openConnection(new Link(address, 30), "", address);
 }
 
 void LinkWindow::closeConnection()
@@ -482,8 +509,8 @@ void LinkWindow::sendCommandToServer(de::String command)
     if(d->link)
     {
         // Echo the command locally.
-        LogEntry *e = new LogEntry(LogEntry::INFO, "", 0, ">",
-                                   LogEntry::Args() << new LogEntry::Arg(command));
+        LogEntry *e = new LogEntry(LogEntry::Generic | LogEntry::Note, "", 0, ">",
+                                   LogEntry::Args() << LogEntry::Arg::newFromPool(command));
         d->logBuffer.add(e);
 
         QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
@@ -500,6 +527,9 @@ void LinkWindow::addressResolved()
 
 void LinkWindow::connected()
 {
+    // Once successfully connected, we don't want to show error log any more.
+    d->errorLog = "";
+
     d->console->root().setOverlaidMessage("");
     d->status->linkConnected(d->link);
     statusBar()->clearMessage();

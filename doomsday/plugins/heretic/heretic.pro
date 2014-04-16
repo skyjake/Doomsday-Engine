@@ -34,7 +34,6 @@ HEADERS += \
     include/doomdata.h \
     include/doomdef.h \
     include/dstrings.h \
-    include/g_ctrl.h \
     include/g_game.h \
     include/h_api.h \
     include/h_config.h \
@@ -47,6 +46,7 @@ HEADERS += \
     include/h_stat.h \
     include/h_think.h \
     include/h_type.h \
+    include/hereticv13mapstatereader.h \
     include/in_lude.h \
     include/info.h \
     include/jheretic.h \
@@ -58,7 +58,6 @@ HEADERS += \
     include/p_local.h \
     include/p_maputl.h \
     include/p_mobj.h \
-    include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
     include/p_spec.h \
@@ -73,20 +72,19 @@ HEADERS += \
 
 SOURCES += \
     src/acfnlink.c \
-    src/g_ctrl.c \
     src/h_api.c \
     src/h_console.c \
-    src/h_main.c \
-    src/h_refresh.c \
-    src/in_lude.c \
-    src/m_cheat.c \
+    src/h_main.cpp \
+    src/h_refresh.cpp \
+    src/hereticv13mapstatereader.cpp \
+    src/in_lude.cpp \
+    src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
-    src/p_lights.c \
+    src/p_lights.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
-    src/p_oldsvg.c \
     src/p_pspr.c \
     src/p_setup.c \
     src/p_spec.c \

@@ -43,7 +43,7 @@
 #include "g_common.h"
 #include "p_inventory.h"
 #include "p_mapsetup.h"
-#include "p_player.h"
+#include "player.h"
 #include "hu_automap.h"
 #include "hu_chat.h"
 #include "hu_lib.h"
@@ -126,13 +126,13 @@ enum {
 };
 
 typedef struct {
-    boolean inited;
-    boolean stopped;
+    dd_bool inited;
+    dd_bool stopped;
     int hideTics;
     float hideAmount;
     float alpha; // Fullscreen hud alpha value.
     float showBar; // Slide statusbar amount 1.0 is fully open.
-    boolean statusbarActive; // Whether the statusbar is active.
+    dd_bool statusbarActive; // Whether the statusbar is active.
     int automapCheatLevel; /// \todo Belongs in player state?
     int readyItemFlashCounter;
 
@@ -808,7 +808,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
             {
                 GL_DrawPatchXY(pStatBar, ORIGINX+38, ORIGINY);
 
-                if(deathmatch)
+                if(G_Ruleset_Deathmatch())
                 {
                     GL_DrawPatchXY(pKills, ORIGINX+38, ORIGINY);
                 }
@@ -910,16 +910,16 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
                 patchinfo_t pStatBarInfo;
                 if(R_GetPatchInfo(pStatBar, &pStatBarInfo))
                 {
-                    x = ORIGINX + (deathmatch ? 68 : 38);
+                    x = ORIGINX + (G_Ruleset_Deathmatch() ? 68 : 38);
                     y = ORIGINY;
-                    w = deathmatch?214:244;
+                    w = G_Ruleset_Deathmatch()?214:244;
                     h = 31;
                     DGL_SetPatch(pStatBar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-                    DGL_DrawCutRectf2Tiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, deathmatch?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
+                    DGL_DrawCutRectf2Tiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, G_Ruleset_Deathmatch()?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
                 }
 
                 GL_DrawPatchXY(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
-                if(deathmatch)
+                if(G_Ruleset_Deathmatch())
                     GL_DrawPatchXY(pKills, ORIGINX+38, ORIGINY);
             }
             else
@@ -1229,7 +1229,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
-    if(!deathmatch || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(!G_Ruleset_Deathmatch() || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -1267,7 +1267,7 @@ void SBarFrags_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(!deathmatch || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(!G_Ruleset_Deathmatch() || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -1305,7 +1305,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
-    if(deathmatch || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(G_Ruleset_Deathmatch() || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(hlth->value == 1994) return;
@@ -1343,7 +1343,7 @@ void SBarHealth_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(deathmatch || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(G_Ruleset_Deathmatch() || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(hlth->value == 1994) return;
@@ -2057,17 +2057,11 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: ST_HUDUnHide: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
+
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
     {
-#if _DEBUG
-        Con_Message("Warning: ST_HUDUnHide: Invalid event type %i, ignoring.", (int) ev);
-#endif
+        DENG_ASSERT(!"ST_HUDUnHide: Invalid event type");
         return;
     }
 
@@ -2350,7 +2344,7 @@ void Frags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
-    if(!deathmatch) return;
+    if(!G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -2386,7 +2380,7 @@ void Frags_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(!deathmatch) return;
+    if(!G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -2667,50 +2661,6 @@ void WorldTimer_UpdateGeometry(uiwidget_t* obj)
 #undef ORIGINX
 }
 
-#if 0
-void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
-{
-    const float scale = .75f;
-    const float textAlpha = uiRendState->pageAlpha;
-    const char* text = P_GetMapNiceName();
-    assert(obj->type == GUI_MAPNAME);
-
-    if(!text) return;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    if(offset) DGL_Translatef(offset->x, offset->y, 0);
-    DGL_Scalef(scale, scale, 1);
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(obj->font);
-    FR_SetTracking(0);
-    FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], textAlpha);
-    FR_DrawTextXY(text, 0, 0);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-void MapName_UpdateGeometry(uiwidget_t* obj)
-{
-    const char* text = P_GetMapNiceName();
-    const float scale = .75f;
-    Size2Raw textSize;
-    assert(obj->type == GUI_MAPNAME);
-
-    Rect_SetWidthHeight(obj->geometry, 0, 0);
-
-    if(!text) return;
-
-    FR_SetFont(obj->font);
-    FR_SetTracking(0);
-    FR_TextSize(&textSize, text);
-    Rect_SetWidthHeight(obj->geometry, textSize.width * scale, textSize.height * scale);
-}
-#endif
-
 void ST_loadGraphics(void)
 {
     char namebuf[9];
@@ -2923,7 +2873,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(gameSkill == SM_BABY && cfg.automapBabyKeys)
+    if(gameRules.skill == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
@@ -3071,7 +3021,6 @@ typedef struct {
         { GUI_GREENMANAICON, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarGreenManaIcon_UpdateGeometry, SBarGreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->sbarGreenmanaicon },
         { GUI_GREENMANA,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_SMALLIN,   SBarGreenMana_UpdateGeometry, SBarGreenMana_Drawer, GreenMana_Ticker, &hud->sbarGreenmana },
         { GUI_GREENMANAVIAL, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarGreenManaVial_UpdateGeometry, SBarGreenManaVial_Drawer, GreenManaVial_Ticker, &hud->sbarGreenmanavial },
-        //{ GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTA,     MapName_UpdateGeometry, MapName_Drawer },
         { GUI_BLUEMANAICON, ALIGN_TOPLEFT,    UWG_TOPLEFT,      0,            BlueManaIcon_UpdateGeometry, BlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->bluemanaicon },
         { GUI_BLUEMANA,     ALIGN_TOPLEFT,    UWG_TOPLEFT,      GF_STATUS,    BlueMana_UpdateGeometry, BlueMana_Drawer, BlueMana_Ticker, &hud->bluemana },
         { GUI_GREENMANAICON, ALIGN_TOPLEFT,   UWG_TOPLEFT2,     0,            GreenManaIcon_UpdateGeometry, GreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->greenmanaicon },
@@ -3157,6 +3106,14 @@ void ST_Shutdown(void)
     }
 }
 
+void ST_CloseAll(int player, dd_bool fast)
+{
+    ST_AutomapOpen(player, false, fast);
+#if __JHERETIC__ || __JHEXEN__
+    Hu_InventoryOpen(player, false);
+#endif
+}
+
 uiwidget_t* ST_UIChatForPlayer(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
@@ -3197,7 +3154,7 @@ int ST_ChatResponder(int player, event_t* ev)
     return UIChat_Responder(obj, ev);
 }
 
-boolean ST_ChatIsActive(int player)
+dd_bool ST_ChatIsActive(int player)
 {
     uiwidget_t* obj = ST_UIChatForPlayer(player);
     if(!obj) return false;
@@ -3254,21 +3211,21 @@ void ST_LogUpdateAlignment(void)
     }
 }
 
-void ST_AutomapOpen(int player, boolean yes, boolean fast)
+void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
     UIAutomap_Open(obj, yes, fast);
 }
 
-boolean ST_AutomapIsActive(int player)
+dd_bool ST_AutomapIsActive(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
     return UIAutomap_Active(obj);
 }
 
-boolean ST_AutomapObscures2(int player, const RectRaw* region)
+dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -3299,7 +3256,7 @@ boolean ST_AutomapObscures2(int player, const RectRaw* region)
     return false;
 }
 
-boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
+dd_bool ST_AutomapObscures(int player, int x, int y, int width, int height)
 {
     RectRaw rect;
     rect.origin.x = x;
@@ -3338,7 +3295,7 @@ int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
     return newPoint;
 }
 
-boolean ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z)
+dd_bool ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -3351,7 +3308,7 @@ void ST_ToggleAutomapMaxZoom(int player)
     if(!obj) return;
     if(UIAutomap_SetZoomMax(obj, !UIAutomap_ZoomMax(obj)))
     {
-        Con_Printf("Maximum zoom %s in automap.\n", UIAutomap_ZoomMax(obj)? "ON":"OFF");
+        App_Log(0, "Maximum zoom %s in automap", UIAutomap_ZoomMax(obj)? "ON":"OFF");
     }
 }
 
@@ -3362,7 +3319,7 @@ float ST_AutomapOpacity(int player)
     return UIAutomap_Opacity(obj);
 }
 
-void ST_SetAutomapCameraRotation(int player, boolean on)
+void ST_SetAutomapCameraRotation(int player, dd_bool on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
@@ -3395,14 +3352,14 @@ void ST_SetAutomapCheatLevel(int player, int level)
     setAutomapCheatLevel(obj, level);
 }
 
-void ST_RevealAutomap(int player, boolean on)
+void ST_RevealAutomap(int player, dd_bool on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
     UIAutomap_SetReveal(obj, on);
 }
 
-boolean ST_AutomapHasReveal(int player)
+dd_bool ST_AutomapHasReveal(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -3450,7 +3407,7 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    const boolean isSharpTic = DD_IsSharpTick();
+    const dd_bool isSharpTic = DD_IsSharpTick();
     int i;
 
     if(isSharpTic)
@@ -3672,12 +3629,8 @@ void ST_Drawer(int player)
     hudstate_t* hud;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: ST_Drawer: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
+
     if(!players[player].plr->inGame) return;
 
     R_UpdateViewFilter(player);
@@ -3688,7 +3641,7 @@ void ST_Drawer(int player)
     drawUIWidgetsForPlayer(players + player);
 }
 
-boolean ST_StatusBarIsActive(int player)
+dd_bool ST_StatusBarIsActive(int player)
 {
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
@@ -3723,7 +3676,7 @@ D_CMD(ChatOpen)
     int player = CONSOLEPLAYER, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
     {
         return false;
     }
@@ -3739,7 +3692,7 @@ D_CMD(ChatOpen)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i, valid range: [0..%i).", destination, NUMTEAMS);
+            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
             return false;
         }
     }
@@ -3754,7 +3707,7 @@ D_CMD(ChatAction)
     const char* cmd = argv[0] + 4;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
     {
         return false;
     }
@@ -3784,14 +3737,14 @@ D_CMD(ChatSendMacro)
     int player = CONSOLEPLAYER, macroId, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
+    if(G_QuitInProgress())
         return false;
 
     if(argc < 2 || argc > 3)
     {
-        Con_Message("Usage: %s (team) (macro number)", argv[0]);
-        Con_Message("Send a chat macro to other player(s).\n"
-                    "If (team) is omitted, the message will be sent to all players.");
+        App_Log(DE2_SCR_NOTE, "Usage: %s (team) (macro number)", argv[0]);
+        App_Log(DE2_SCR_MSG, "Send a chat macro to other player(s). "
+                "If (team) is omitted, the message will be sent to all players.");
         return true;
     }
 
@@ -3806,7 +3759,7 @@ D_CMD(ChatSendMacro)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i, valid range: [0..%i).", destination, NUMTEAMS);
+            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
             return false;
         }
     }
@@ -3814,7 +3767,7 @@ D_CMD(ChatSendMacro)
     macroId = UIChat_ParseMacroId(argc == 3? argv[2] : argv[1]);
     if(-1 == macroId)
     {
-        Con_Message("Invalid macro id.");
+        App_Log(DE2_SCR_ERROR, "Invalid macro id");
         return false;
     }
 

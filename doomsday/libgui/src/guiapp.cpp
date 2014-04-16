@@ -3,17 +3,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/GuiApp"
@@ -34,15 +34,31 @@ DENG2_PIMPL(GuiApp)
 
     Instance(Public *i) : Base(i)
     {
-        loop.audienceForIteration += self;
+        loop.audienceForIteration() += self;
     }
+
+    DENG2_PIMPL_AUDIENCE(GLContextChange)
 };
+
+DENG2_AUDIENCE_METHOD(GuiApp, GLContextChange)
 
 GuiApp::GuiApp(int &argc, char **argv)
     : QApplication(argc, argv),
       App(applicationFilePath(), arguments()),
       d(new Instance(this))
 {}
+
+void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
+                         String const &appName, String const &appVersion)
+{
+    setName(appName);
+
+    // Qt metadata.
+    setOrganizationName  (orgName);
+    setOrganizationDomain(orgDomain);
+    setApplicationName   (appName);
+    setApplicationVersion(appVersion);
+}
 
 bool GuiApp::notify(QObject *receiver, QEvent *event)
 {
@@ -66,20 +82,26 @@ void GuiApp::notifyDisplayModeChanged()
     emit displayModeChanged();
 }
 
+void GuiApp::notifyGLContextChanged()
+{
+    qDebug() << "notifying GL context change" << audienceForGLContextChange().size();
+    DENG2_FOR_AUDIENCE2(GLContextChange, i) i->appGLContextChanged();
+}
+
 int GuiApp::execLoop()
 {
-    LOG_MSG("Starting GuiApp event loop...");
+    LOGDEV_NOTE("Starting GuiApp event loop...");
 
     d->loop.start();
     int code = QApplication::exec();
 
-    LOG_MSG("GuiApp event loop exited with code %i") << code;
+    LOGDEV_NOTE("GuiApp event loop exited with code %i") << code;
     return code;
 }
 
 void GuiApp::stopLoop(int code)
 {
-    LOG_MSG("Stopping GuiApp event loop");
+    LOGDEV_MSG("Stopping GuiApp event loop");
 
     d->loop.stop();
     return QApplication::exit(code);
@@ -92,8 +114,6 @@ Loop &GuiApp::loop()
 
 void GuiApp::loopIteration()
 {
-    //LOG_DEBUG("GuiApp loopIteration @ ") << Time().asText();
-
     // Update the clock time. de::App listens to this clock and will inform
     // subsystems in the order they've been added.
     Clock::appClock().setTime(Time::currentHighPerformanceTime());

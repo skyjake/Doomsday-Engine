@@ -213,7 +213,7 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
-boolean DD_Win32_Init(void)
+dd_bool DD_Win32_Init(void)
 {
     BOOL failed = TRUE;
 
@@ -250,7 +250,7 @@ boolean DD_Win32_Init(void)
     {
         // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.  A bit of a hack...
         SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
-        Con_Message("Windows system keys disabled.");
+        LOG_INPUT_NOTE("Windows system keys disabled");
     }
 #endif
 

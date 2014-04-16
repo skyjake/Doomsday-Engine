@@ -100,8 +100,8 @@ typedef struct finaleinterpreter_s {
     struct fi_page_s* _pages[2];
 
     /// Set to true after first command is executed.
-    boolean _cmdExecuted;
-    boolean _skipping, _lastSkipped, _gotoSkip, _gotoEnd, _skipNext;
+    dd_bool _cmdExecuted;
+    dd_bool _skipping, _lastSkipped, _gotoSkip, _gotoEnd, _skipNext;
 
     /// Level of DO-skipping.
     int _doLevel;
@@ -118,7 +118,7 @@ typedef struct finaleinterpreter_s {
 finaleinterpreter_t* P_CreateFinaleInterpreter(void);
 void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi);
 
-boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
+dd_bool FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
 int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev);
 
 void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script);
@@ -126,13 +126,13 @@ void FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);
 void FinaleInterpreter_Suspend(finaleinterpreter_t* fi);
 void FinaleInterpreter_Resume(finaleinterpreter_t* fi);
 
-boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi);
-boolean FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi);
-boolean FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi);
-boolean FinaleInterpreter_CanSkip(finaleinterpreter_t* fi);
-void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes);
+dd_bool FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi);
+dd_bool FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi);
+dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi);
+dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t* fi);
+void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, dd_bool yes);
 
-boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker);
-boolean FinaleInterpreter_Skip(finaleinterpreter_t* fi);
+dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker);
+dd_bool FinaleInterpreter_Skip(finaleinterpreter_t* fi);
 
 #endif /* LIBDENG_FINALEINTERPRETER_H */

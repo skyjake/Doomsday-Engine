@@ -3,17 +3,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBGUI_GUIAPP_H
@@ -45,7 +45,16 @@ class LIBGUI_PUBLIC GuiApp : public QApplication, public App,
     Q_OBJECT
 
 public:
+    /**
+     * Notified when a Canvas is recreated.
+     */
+    DENG2_DEFINE_AUDIENCE2(GLContextChange, void appGLContextChanged())
+
+public:
     GuiApp(int &argc, char **argv);
+
+    void setMetadata(String const &orgName, String const &orgDomain,
+                     String const &appName, String const &appVersion);
 
     bool notify(QObject *receiver, QEvent *event);
 
@@ -57,6 +66,8 @@ public:
      * not via this public interface where anybody can call it.
      */
     void notifyDisplayModeChanged();
+
+    void notifyGLContextChanged();
 
     int execLoop();
     void stopLoop(int code);

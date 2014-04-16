@@ -34,11 +34,11 @@ DENG2_PIMPL_NOREF(MapElement)
     int indexInArchive;
 
     Instance(int type, MapElement *parent)
-        : type(type),
-          parent(parent),
-          map(0),
-          indexInMap(NoIndex),
-          indexInArchive(NoIndex)
+        : type(type)
+        , parent(parent)
+        , map(0)
+        , indexInMap(NoIndex)
+        , indexInArchive(NoIndex)
     {}
 };
 

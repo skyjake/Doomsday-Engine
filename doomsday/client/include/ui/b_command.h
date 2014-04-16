@@ -52,6 +52,8 @@ evbinding_t* B_NewCommandBinding(evbinding_t* listRoot, const char* desc, const 
 void         B_DestroyCommandBinding(evbinding_t* eb);
 void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
 
+evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device);
+
 /**
  * Checks if the event matches the binding's conditions, and if so, returns an
  * action with the bound command.

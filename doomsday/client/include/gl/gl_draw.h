@@ -63,7 +63,7 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
     int txoff, int tyoff, double cx, double cy, double cw, double ch);
 
 // Filters:
-boolean GL_FilterIsVisible(void);
+dd_bool GL_FilterIsVisible(void);
 void GL_DrawFilter(void);
 
 #ifdef __cplusplus

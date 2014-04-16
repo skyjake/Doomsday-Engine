@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_ARCHIVEENTRYFILE_H
@@ -50,6 +50,20 @@ public:
 
     void clear();
 
+    /**
+     * Flushes the entire archive that this file is part of into its source
+     * file.
+     *
+     * Flushing may be needed when one needs to access the source file
+     * containing the archive while the archive is still present in the tree as
+     * Files and Folders.
+     *
+     * A flush is only done if the archive has been marked as changed. Without
+     * manual flushing this occurs automatically when the root ArchiveFeed
+     * instance is deleted.
+     */
+    void flush();
+
     /// Returns the archive of the file.
     Archive &archive() { return _archive; }
 
@@ -59,6 +73,16 @@ public:
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
+
+    /**
+     * Modifies the content of an archive entry. Changes are made instantly
+     * in the source archive, however nothing is written to the source file
+     * containing the archive until a flush occurs.
+     *
+     * @param at      Offset where to write to.
+     * @param values  Data.
+     * @param count   Length of data.
+     */
     void set(Offset at, Byte const *values, Size count);
 
 private:

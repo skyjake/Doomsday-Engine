@@ -5,8 +5,8 @@ that will be addressed in the future.
 
 @deflist{
 
-@item{SourceForge Bug Tracker} The official place to report new bugs and
-browse the existing reports.
+@item{Bugs and Features} The official place to report new bugs, submit feature 
+requests and browse the existing reports is the @link{Deng Team's own Issue Tracker}{http://tracker.skyjake.fi/}.
 
 @item{Multiplayer Issues} There is a to-do list of known @link{multiplayer
 issues and needed enhancements}{http://dengine.net/multiplayer_issues}

@@ -40,7 +40,7 @@
 #include "world/dmuargs.h"
 #include "world/entitydatabase.h"
 #include "world/maputil.h"
-#include "world/world.h"
+#include "world/worldsystem.h"
 #include "BspLeaf"
 #include "Interceptor"
 
@@ -252,7 +252,7 @@ void *P_AllocDummy(int type, void *extraData)
 }
 
 #undef P_IsDummy
-boolean P_IsDummy(void const *dummy)
+dd_bool P_IsDummy(void const *dummy)
 {
     return dummyType(dummy) != DMU_NONE;
 }
@@ -323,18 +323,18 @@ void *P_ToPtr(int type, int index)
     switch(type)
     {
     case DMU_VERTEX:
-        return App_World().map().vertexes().at(index);
+        return App_WorldSystem().map().vertexes().at(index);
 
     case DMU_LINE:
-        return App_World().map().lines().at(index);
+        return App_WorldSystem().map().lines().at(index);
 
     case DMU_SIDE:
-        return App_World().map().sideByIndex(index);
+        return App_WorldSystem().map().sideByIndex(index);
 
     case DMU_SECTOR:
-        if(index < 0 || index >= App_World().map().sectors().size())
+        if(index < 0 || index >= App_WorldSystem().map().sectors().size())
             return 0;
-        return App_World().map().sectors().at(index);
+        return App_WorldSystem().map().sectors().at(index);
 
     case DMU_PLANE: {
         /// @todo Throw exception.
@@ -343,10 +343,10 @@ void *P_ToPtr(int type, int index)
         return 0; /* Unreachable. */ }
 
     case DMU_BSPLEAF:
-        return App_World().map().bspLeafs().at(index);
+        return App_WorldSystem().map().bspLeafs().at(index);
 
     case DMU_BSPNODE:
-        return App_World().map().bspNodes().at(index);
+        return App_WorldSystem().map().bspNodes().at(index);
 
     case DMU_MATERIAL:
         /// @note @a index is 1-based.
@@ -367,12 +367,12 @@ int P_Count(int type)
 {
     switch(type)
     {
-    case DMU_VERTEX:    return App_World().hasMap()? App_World().map().vertexCount()  : 0;
-    case DMU_LINE:      return App_World().hasMap()? App_World().map().lineCount()    : 0;
-    case DMU_SIDE:      return App_World().hasMap()? App_World().map().sideCount()    : 0;
-    case DMU_BSPNODE:   return App_World().hasMap()? App_World().map().bspNodeCount() : 0;
-    case DMU_BSPLEAF:   return App_World().hasMap()? App_World().map().bspLeafCount() : 0;
-    case DMU_SECTOR:    return App_World().hasMap()? App_World().map().sectorCount()  : 0;
+    case DMU_VERTEX:    return App_WorldSystem().hasMap()? App_WorldSystem().map().vertexCount()  : 0;
+    case DMU_LINE:      return App_WorldSystem().hasMap()? App_WorldSystem().map().lineCount()    : 0;
+    case DMU_SIDE:      return App_WorldSystem().hasMap()? App_WorldSystem().map().sideCount()    : 0;
+    case DMU_BSPNODE:   return App_WorldSystem().hasMap()? App_WorldSystem().map().bspNodeCount() : 0;
+    case DMU_BSPLEAF:   return App_WorldSystem().hasMap()? App_WorldSystem().map().bspLeafCount() : 0;
+    case DMU_SECTOR:    return App_WorldSystem().hasMap()? App_WorldSystem().map().sectorCount()  : 0;
 
     case DMU_MATERIAL:  return (int)App_ResourceSystem().materialCount();
 
@@ -465,34 +465,34 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
     switch(type)
     {
     case DMU_VERTEX:
-        if(index >= 0 && index < App_World().map().vertexCount())
-            return callback(App_World().map().vertexes().at(index), context);
+        if(index >= 0 && index < App_WorldSystem().map().vertexCount())
+            return callback(App_WorldSystem().map().vertexes().at(index), context);
         break;
 
     case DMU_LINE:
-        if(index >= 0 && index < App_World().map().lineCount())
-            return callback(App_World().map().lines().at(index), context);
+        if(index >= 0 && index < App_WorldSystem().map().lineCount())
+            return callback(App_WorldSystem().map().lines().at(index), context);
         break;
 
     case DMU_SIDE: {
-        LineSide *side = App_World().map().sideByIndex(index);
+        LineSide *side = App_WorldSystem().map().sideByIndex(index);
         if(side)
             return callback(side, context);
         break; }
 
     case DMU_BSPNODE:
-        if(index >= 0 && index < App_World().map().bspNodeCount())
-            return callback(App_World().map().bspNodes().at(index), context);
+        if(index >= 0 && index < App_WorldSystem().map().bspNodeCount())
+            return callback(App_WorldSystem().map().bspNodes().at(index), context);
         break;
 
     case DMU_BSPLEAF:
-        if(index >= 0 && index < App_World().map().bspLeafCount())
-            return callback(App_World().map().bspLeafs().at(index), context);
+        if(index >= 0 && index < App_WorldSystem().map().bspLeafCount())
+            return callback(App_WorldSystem().map().bspLeafs().at(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index >= 0 && index < App_World().map().sectorCount())
-            return callback(App_World().map().sectors().at(index), context);
+        if(index >= 0 && index < App_WorldSystem().map().sectorCount())
+            return callback(App_WorldSystem().map().sectors().at(index), context);
         break;
 
     case DMU_PLANE: {
@@ -780,7 +780,7 @@ static int setPropertyWorker(void *elPtr, void *context)
 }
 
 #undef P_SetBool
-void P_SetBool(int type, int index, uint prop, boolean param)
+void P_SetBool(int type, int index, uint prop, dd_bool param)
 {
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
@@ -854,7 +854,7 @@ void P_SetPtr(int type, int index, uint prop, void *param)
 }
 
 #undef P_SetBoolv
-void P_SetBoolv(int type, int index, uint prop, boolean *params)
+void P_SetBoolv(int type, int index, uint prop, dd_bool *params)
 {
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
@@ -928,7 +928,7 @@ void P_SetPtrv(int type, int index, uint prop, void *params)
 /* pointer-based write functions */
 
 #undef P_SetBoolp
-void P_SetBoolp(void *ptr, uint prop, boolean param)
+void P_SetBoolp(void *ptr, uint prop, dd_bool param)
 {
     DmuArgs args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
@@ -1002,7 +1002,7 @@ void P_SetPtrp(void *ptr, uint prop, void *param)
 }
 
 #undef P_SetBoolpv
-void P_SetBoolpv(void *ptr, uint prop, boolean *params)
+void P_SetBoolpv(void *ptr, uint prop, dd_bool *params)
 {
     DmuArgs args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
@@ -1082,9 +1082,9 @@ static int getPropertyWorker(void *elPtr, void *context)
 /* index-based read functions */
 
 #undef P_GetBool
-boolean P_GetBool(int type, int index, uint prop)
+dd_bool P_GetBool(int type, int index, uint prop)
 {
-    boolean returnValue = false;
+    dd_bool returnValue = false;
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = &returnValue;
@@ -1170,7 +1170,7 @@ void *P_GetPtr(int type, int index, uint prop)
 }
 
 #undef P_GetBoolv
-void P_GetBoolv(int type, int index, uint prop, boolean *params)
+void P_GetBoolv(int type, int index, uint prop, dd_bool *params)
 {
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
@@ -1244,9 +1244,9 @@ void P_GetPtrv(int type, int index, uint prop, void *params)
 /* pointer-based read functions */
 
 #undef P_GetBoolp
-boolean P_GetBoolp(void *ptr, uint prop)
+dd_bool P_GetBoolp(void *ptr, uint prop)
 {
-    boolean returnValue = false;
+    dd_bool returnValue = false;
 
     if(ptr)
     {
@@ -1372,7 +1372,7 @@ void *P_GetPtrp(void *ptr, uint prop)
 }
 
 #undef P_GetBoolpv
-void P_GetBoolpv(void *ptr, uint prop, boolean *params)
+void P_GetBoolpv(void *ptr, uint prop, dd_bool *params)
 {
     if(ptr)
     {
@@ -1468,18 +1468,18 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 }
 
 #undef P_MapExists
-DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
+DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
     return (lumpNum >= 0);
 }
 
 #undef P_MapIsCustom
-DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
+DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
@@ -1487,13 +1487,13 @@ DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
     if(lumpNum < 0) return AutoStr_NewStd();
     return W_LumpSourceFile(lumpNum);
 }
 
 #undef P_MapChange
-DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
+DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
@@ -1519,14 +1519,14 @@ DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
         }
     }
 
-    return (boolean) App_World().changeMap(de::Uri(uriCString, RC_NULL));
+    return (dd_bool) App_WorldSystem().changeMap(de::Uri(uriCString, RC_NULL));
 }
 
 #undef P_CountMapObjs
 DENG_EXTERN_C uint P_CountMapObjs(int entityId)
 {
-    if(!App_World().hasMap()) return 0;
-    EntityDatabase &entities = App_World().map().entityDatabase();
+    if(!App_WorldSystem().hasMap()) return 0;
+    EntityDatabase &entities = App_WorldSystem().map().entityDatabase();
     return entities.entityCount(P_MapEntityDef(entityId));
 }
 
@@ -1541,8 +1541,8 @@ DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId
 #undef Mobj_Link
 DENG_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 {
-    if(!mobj || !App_World().hasMap()) return; // Huh?
-    App_World().map().link(*mobj, flags);
+    if(!mobj || !App_WorldSystem().hasMap()) return; // Huh?
+    App_WorldSystem().map().link(*mobj, flags);
 }
 
 #undef Mobj_Unlink
@@ -1583,49 +1583,49 @@ DENG_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (
 #undef Sector_AtPoint_FixedPrecision
 DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 {
-    if(!App_World().hasMap()) return 0;
-    return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
+    if(!App_WorldSystem().hasMap()) return 0;
+    return App_WorldSystem().map().bspLeafAt_FixedPrecision(point).sectorPtr();
 }
 
 #undef Mobj_BoxIterator
 DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *context)
 {
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().mobjBoxIterator(*box, callback, context);
+    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
+    return App_WorldSystem().map().mobjBoxIterator(*box, callback, context);
 }
 
 #undef Polyobj_BoxIterator
 DENG_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *context)
 {
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().polyobjBoxIterator(*box, callback, context);
+    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
+    return App_WorldSystem().map().polyobjBoxIterator(*box, callback, context);
 }
 
 #undef Line_BoxIterator
 DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
     int (*callback) (Line *, void *), void *context)
 {
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().lineBoxIterator(*box, flags, callback, context);
+    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
+    return App_WorldSystem().map().lineBoxIterator(*box, flags, callback, context);
 }
 
 #undef BspLeaf_BoxIterator
 DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box,
     int (*callback) (BspLeaf *, void *), void *context)
 {
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().bspLeafBoxIterator(*box, callback, context);
+    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
+    return App_WorldSystem().map().bspLeafBoxIterator(*box, callback, context);
 }
 
 #undef P_PathTraverse2
 DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *context)
 {
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
         return Interceptor(callback, from, to, flags, context).trace(map);
     }
     return false; // Continue iteration.
@@ -1635,21 +1635,21 @@ DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
 DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     traverser_t callback, void *context)
 {
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
         return Interceptor(callback, from, to, PTF_ALL, context).trace(map);
     }
     return false; // Continue iteration.
 }
 
 #undef P_CheckLineSight
-DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
+DENG_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
         return LineSightTest(from, to, bottomSlope, topSlope, flags).trace(map.bspRoot());
     }
     return false; // Continue iteration.
@@ -1677,7 +1677,7 @@ DENG_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
 }
 
 #undef Interceptor_AdjustOpening
-DENG_EXTERN_C boolean Interceptor_AdjustOpening(Interceptor *trace, Line *line)
+DENG_EXTERN_C dd_bool Interceptor_AdjustOpening(Interceptor *trace, Line *line)
 {
     if(!trace) return false;
     return trace->adjustOpening(line);
@@ -1696,14 +1696,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum);
 DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
 DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
 DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj);
-
-#undef Mobj_SpawnDamageParticleGen
-DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mobj, mobj_t *inflictor, int amount)
-{
-#ifdef __CLIENT__
-    P_SpawnMapDamageParticleGen(mobj, inflictor, amount);
-#endif
-}
+DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mobj, mobj_t *inflictor, int amount);
 
 // p_think.c
 DENG_EXTERN_C struct mobj_s* Mobj_ById(int id);
@@ -1731,33 +1724,33 @@ DENG_EXTERN_C void Polyobj_Link(Polyobj *po)
 #undef Polyobj_ById
 DENG_EXTERN_C Polyobj *Polyobj_ById(int index)
 {
-    if(!App_World().hasMap()) return 0;
-    return App_World().map().polyobjs().at(index);
+    if(!App_WorldSystem().hasMap()) return 0;
+    return App_WorldSystem().map().polyobjs().at(index);
 }
 
 #undef Polyobj_ByTag
 DENG_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 {
-    if(!App_World().hasMap()) return 0;
-    return App_World().map().polyobjByTag(tag);
+    if(!App_WorldSystem().hasMap()) return 0;
+    return App_WorldSystem().map().polyobjByTag(tag);
 }
 
 #undef Polyobj_Move
-DENG_EXTERN_C boolean Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
+DENG_EXTERN_C dd_bool Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
 {
     if(!po) return false;
     return po->move(xy);
 }
 
 #undef Polyobj_MoveXY
-DENG_EXTERN_C boolean Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
+DENG_EXTERN_C dd_bool Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
 {
     if(!po) return false;
     return po->move(x, y);
 }
 
 #undef Polyobj_Rotate
-DENG_EXTERN_C boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
+DENG_EXTERN_C dd_bool Polyobj_Rotate(Polyobj *po, angle_t angle)
 {
     if(!po) return false;
     return po->rotate(angle);

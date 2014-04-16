@@ -199,7 +199,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
 
         if(pnamesIndex < 0 || pnamesIndex >= patchNames.count())
         {
-            LOG_WARNING("Invalid PNAMES index %i in composite texture \"%s\", ignoring.")
+            LOG_RES_WARNING("Invalid PNAMES index %i in composite texture \"%s\", ignoring.")
                 << pnamesIndex << pctex->d->name;
         }
         else
@@ -231,8 +231,8 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
                     }
                     catch(IByteArray::OffsetError const &)
                     {
-                        LOG_WARNING("Component image \"%s\" (#%i) does not appear to be a valid Patch. "
-                                    "It may be missing from composite texture \"%s\".")
+                        LOG_RES_WARNING("Component image \"%s\" (#%i) does not appear to be a valid Patch. "
+                                        "It may be missing from composite texture \"%s\".")
                             << patchNames[pnamesIndex].percentEncodedNameRef() << i
                             << pctex->d->name;
                     }
@@ -241,7 +241,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
             }
             else
             {
-                LOG_WARNING("Missing component image \"%s\" (#%i) in composite texture \"%s\", ignoring.")
+                LOG_RES_WARNING("Missing component image \"%s\" (#%i) in composite texture \"%s\", ignoring.")
                     << patchNames[pnamesIndex].percentEncodedNameRef() << i
                     << pctex->d->name;
             }
@@ -261,7 +261,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
 
     if(!foundComponentCount)
     {
-        LOG_WARNING("Zero valid component images in composite texture %s, ignoring.")
+        LOG_RES_WARNING("Zero valid component images in composite texture %s, ignoring.")
             << pctex->d->name;
     }
 

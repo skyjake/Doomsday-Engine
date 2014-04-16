@@ -364,13 +364,11 @@ void DMFluid_SetSoundFont(const char* fileName)
     sfontId = fluid_synth_sfload(DMFluid_Synth(), fileName, true);
     if(sfontId >= 0)
     {
-        LogBuffer_Printf(DE2_LOG_VERBOSE,
-            "FluidSynth: Loaded SF2 soundfont \"%s\" with id:%i\n", fileName, sfontId);
+        App_Log(DE2_LOG_VERBOSE, "FluidSynth: Loaded SF2 soundfont \"%s\" with id:%i", fileName, sfontId);
     }
     else
     {
-        LogBuffer_Printf(DE2_LOG_VERBOSE,
-            "FluidSynth: Failed to load soundfont \"%s\" (not SF2 or not found)\n", fileName);
+        App_Log(DE2_LOG_VERBOSE, "FluidSynth: Failed to load soundfont \"%s\" (not SF2 or not found)", fileName);
     }
 }
 
@@ -463,15 +461,13 @@ int DM_Music_PlayFile(const char *filename, int looped)
     if(!fluid_is_midifile(filename))
     {
         // It doesn't look like MIDI.
-        LogBuffer_Printf(DE2_LOG_VERBOSE,
-            "FluidSynth: Cannot play \"%s\": not a MIDI file.\n", filename);
+        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\": not a MIDI file", filename);
         return false;
     }
 
     if(sfontId < 0)
     {
-        LogBuffer_Printf(DE2_LOG_VERBOSE,
-            "FluidSynth: Cannot play \"%s\" without an SF2 soundfont.\n", filename);
+        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\" without an SF2 soundfont", filename);
         return false;
     }
 

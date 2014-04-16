@@ -94,7 +94,7 @@ void ShellUser::sendInitialUpdate()
 void ShellUser::sendGameState()
 {
     de::Game &game = App_CurrentGame();
-    String mode = (App_GameLoaded()? Str_Text(game.identityKey()) : "");
+    String mode = (App_GameLoaded()? game.identityKey() : "");
 
     /**
      * @todo The server is not the right place to compose a packet about
@@ -117,16 +117,15 @@ void ShellUser::sendGameState()
     // Check the map's information.
     String mapId;
     String mapTitle;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
 
         mapId = map.uri().resolvedRef();
 
-        /// @todo DD_GetVariable() is not an appropriate place to ask for this --
+        /// @todo A cvar is not an appropriate place to ask for this --
         /// should be moved to the Map class.
-        char const *name = reinterpret_cast<char const *>(DD_GetVariable(DD_MAP_NAME));
-        if(name) mapTitle = name;
+        mapTitle = Con_GetString("map-name");
     }
 
     QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
@@ -135,11 +134,11 @@ void ShellUser::sendGameState()
 
 void ShellUser::sendMapOutline()
 {
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
     QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    foreach(Line *line, App_World().map().lines())
+    foreach(Line *line, App_WorldSystem().map().lines())
     {
         packet->addLine(Vector2i(line->fromOrigin().x, line->fromOrigin().y),
                         Vector2i(line->toOrigin().x, line->toOrigin().y),
@@ -152,7 +151,7 @@ void ShellUser::sendMapOutline()
 
 void ShellUser::sendPlayerInfo()
 {
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
     QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
 
@@ -202,7 +201,7 @@ void ShellUser::handleIncomingPackets()
         }
         catch(Error const &er)
         {
-            LOG_WARNING("Error while processing packet from %s:\n%s") << packet->from() << er.asText();
+            LOG_NET_WARNING("Error while processing packet from %s: %s") << packet->from() << er.asText();
         }
     }
 }

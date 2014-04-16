@@ -131,7 +131,7 @@ cvartemplate_t gameCVars[] = {
 
 // Player
     // Player data
-    {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 3},
+    {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 4},
     {"player-eyeheight", 0, CVT_INT, &cfg.plrViewHeight, 41, 54, G_UpdateEyeHeight},
 
     // Movment
@@ -183,7 +183,7 @@ cvartemplate_t gameCVars[] = {
     {"game-zombiescanexit",                0, CVT_BYTE, &cfg.zombiesCanExit, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &fastParm, 0, 1},
+    //{"game-fastmonsters", 0, CVT_BYTE, &fastParm, 0, 1},
 
 // Gameplay
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0},
@@ -248,6 +248,6 @@ void G_UpdateEyeHeight(void)
 
 D_CMD(ScreenShot)
 {
-    G_ScreenShot();
+    G_SetGameAction(GA_SCREENSHOT);
     return true;
 }

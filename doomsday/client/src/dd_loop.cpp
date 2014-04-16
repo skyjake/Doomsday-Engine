@@ -67,15 +67,15 @@ byte processSharpEventsAfterTickers = true;
 timespan_t sysTime, gameTime, demoTime;
 //timespan_t frameStartTime;
 
-boolean stopTime = false; // If true the time counters won't be incremented
-boolean tickUI = false; // If true the UI will be tick'd
-boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
+//dd_bool stopTime = false; // If true the time counters won't be incremented
+//dd_bool tickUI = false; // If true the UI will be tick'd
+dd_bool tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
 
 static int gameLoopExitCode = 0;
 
 static double lastRunTicsTime;
-static boolean firstTic = true;
-static boolean tickIsSharp = false;
+static dd_bool firstTic = true;
+static dd_bool tickIsSharp = false;
 
 #define NUM_FRAMETIME_DELTAS    200
 static int timeDeltas[NUM_FRAMETIME_DELTAS];
@@ -111,12 +111,12 @@ float DD_GetFrameRate()
 }
 
 #undef DD_IsSharpTick
-DENG_EXTERN_C boolean DD_IsSharpTick(void)
+DENG_EXTERN_C dd_bool DD_IsSharpTick(void)
 {
     return tickIsSharp;
 }
 
-boolean DD_IsFrameTimeAdvancing(void)
+dd_bool DD_IsFrameTimeAdvancing(void)
 {
     if(BusyMode_Active()) return false;
     return tickFrame || netGame;
@@ -206,8 +206,12 @@ static void baseTicker(timespan_t time)
                 coord_t actualMom[2] = { mo->origin[0] - prevPos[0], mo->origin[1] - prevPos[1] };
                 coord_t actualSpeed = V2d_Length(actualMom);
 
-                Con_Message("%i,%f,%f,%f,%f", SECONDS_TO_TICKS(sysTime + time),
-                            ddPlayers[0].shared.forwardMove, speed, actualSpeed, speed - prevSpeed);
+                LOG_NOTE("%i,%f,%f,%f,%f")
+                        << SECONDS_TO_TICKS(sysTime + time)
+                        << ddPlayers[0].shared.forwardMove
+                        << speed
+                        << actualSpeed
+                        << speed - prevSpeed;
 
                 V3d_Copy(prevPos, mo->origin);
                 prevSpeed = speed;
@@ -227,11 +231,12 @@ static void baseTicker(timespan_t time)
     // Console is always ticking.
     Con_Ticker(time);
 
+    /*
     // User interface ticks.
     if(tickUI)
     {
         UI_Ticker(time);
-    }
+    }*/
 
     // Plugins tick always.
     DD_CallHooks(HOOK_TICKER, 0, &time);
@@ -249,33 +254,30 @@ static void advanceTime(timespan_t delta)
 
     sysTime += delta;
 
-    if(!stopTime || netGame)
+    oldGameTic = SECONDS_TO_TICKS(gameTime);
+
+    // The difference between gametic and demotic is that demotic
+    // is not altered at any point. Gametic changes at handshakes.
+    gameTime += delta;
+    demoTime += delta;
+
+    if(DD_IsSharpTick())
     {
-        oldGameTic = SECONDS_TO_TICKS(gameTime);
-
-        // The difference between gametic and demotic is that demotic
-        // is not altered at any point. Gametic changes at handshakes.
-        gameTime += delta;
-        demoTime += delta;
-
-        if(DD_IsSharpTick())
+        // When a new sharp tick begins, we want that the 35 Hz tick
+        // calculated from gameTime also changes. If this is not the
+        // case, we will adjust gameTime slightly so that it syncs again.
+        if(oldGameTic == SECONDS_TO_TICKS(gameTime))
         {
-            // When a new sharp tick begins, we want that the 35 Hz tick
-            // calculated from gameTime also changes. If this is not the
-            // case, we will adjust gameTime slightly so that it syncs again.
-            if(oldGameTic == SECONDS_TO_TICKS(gameTime))
-            {
-                DEBUG_VERBOSE2_Message(("DD_AdvanceTime: Syncing gameTime with sharp ticks (tic=%i pos=%f)\n",
-                                        oldGameTic, frameTimePos));
+            LOGDEV_XVERBOSE("Syncing gameTime with sharp ticks (tic=%i pos=%f)")
+                    << oldGameTic << frameTimePos;
 
-                // Realign.
-                gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;
-            }
+            // Realign.
+            gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;
         }
-
-        // World time always advances unless a local game is paused on client-side.
-        App_World().advanceTime(delta);
     }
+
+    // World time always advances unless a local game is paused on client-side.
+    App_WorldSystem().advanceTime(delta);
 }
 
 void DD_ResetTimer(void)
@@ -307,10 +309,9 @@ static void timeDeltaStatistics(int deltaMs)
             }
             average /= NUM_FRAMETIME_DELTAS;
             variance /= NUM_FRAMETIME_DELTAS;
-            Con_Message("Time deltas [%i frames]: min=%-6i max=%-6i avg=%-11.7f late=%5.1f%% var=%12.10f",
-                        NUM_FRAMETIME_DELTAS, minDelta, maxDelta, average,
-                        lateCount/(float)NUM_FRAMETIME_DELTAS*100,
-                        variance);
+            LOGDEV_MSG("Time deltas [%i frames]: min=%-6i max=%-6i avg=%-11.7f late=%5.1f%% var=%12.10f")
+                    << NUM_FRAMETIME_DELTAS << minDelta << maxDelta << average
+                    << lateCount/(float)NUM_FRAMETIME_DELTAS*100 << variance;
         }
     }
 }

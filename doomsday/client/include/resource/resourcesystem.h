@@ -1,6 +1,6 @@
 /** @file resourcesystem.h  Resource subsystem.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -712,8 +712,8 @@ public:
      */
     TextureVariantSpec const &textureSpec(texturevariantusagecontext_t tc,
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-        int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-        boolean noStretch, boolean toAlpha);
+        int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
+        dd_bool noStretch, dd_bool toAlpha);
 
     /**
      * Prepare a TextureVariantSpecification according to usage context. If the
@@ -863,6 +863,25 @@ public:
     void purgeCacheQueue();
 
 #endif // __CLIENT__
+
+    /**
+     * Returns the native path of the root of the saved session repository
+     */
+    de::NativePath nativeSavePath();
+
+    /**
+     * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
+     *
+     * @param gameId      Identity key of the game and corresponding subfolder name within
+     *                    save repository to output the converted savegame to. Also used for
+     *                    resolving ambiguous savegame formats.
+     * @param sourcePath  If a zero-length string then @em all legacy savegames located for
+     *                    this game will be considered. Otherwise use the path of a single
+     *                    legacy savegame file to schedule a single conversion.
+     *
+     * @return  @c true if one or more conversion tasks were scheduled.
+     */
+    bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
 
 public: /// @todo Should be private:
     void initCompositeTextures();

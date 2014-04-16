@@ -27,14 +27,17 @@
 #ifndef LIBDENG_UPDATER_H
 #define LIBDENG_UPDATER_H
 
+#ifndef __CLIENT__
+#  error "updater.h is only for the client"
+#endif
+
 #include "dd_types.h"
 
 #include <de/libdeng2.h>
 #include <de/App>
 #include <QObject>
 #include <QNetworkReply>
-
-class ProgressWidget;
+#include <de/ProgressWidget>
 
 /**
  * Automatic updater. Communicates with dengine.net and coordinates the
@@ -61,7 +64,7 @@ public:
 
     void setupUI();
 
-    ProgressWidget &progress();
+    de::ProgressWidget &progress();
 
 public slots:
     void gotReply(QNetworkReply *);

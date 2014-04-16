@@ -3,17 +3,17 @@
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_ANIMATION_H
@@ -120,6 +120,18 @@ public:
     void shift(float valueDelta);
 
     /**
+     * Pauses the animation, if it is currently ongoing. resume() can then be called
+     * later to continue at a later point in time, with the end point appropriately
+     * postponed into the future.
+     */
+    void pause();
+
+    /**
+     * Resumes a previously paused animation.
+     */
+    void resume();
+
+    /**
      * Complete the ongoing transition immediately.
      */
     void finish();
@@ -159,7 +171,7 @@ public:
      */
     static void setClock(Clock const *clock);
 
-    static Time currentTime();
+    static Time const &currentTime();
 
     static Animation range(Style style, float from, float to, TimeDelta span, TimeDelta delay = 0);
 

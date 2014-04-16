@@ -102,6 +102,7 @@ int             Def_GetActionNum(char const *id);
 spritenum_t     Def_GetSpriteNum(char const *name);
 
 int             Def_GetModelNum(const char* id);
+ded_music_t*    Def_GetMusic(char const *id);
 int             Def_GetMusicNum(const char* id);
 int             Def_GetSoundNum(const char* id);
 ded_flag_t*     Def_GetFlag(const char* id);
@@ -144,7 +145,7 @@ int Def_Get(int type, const char* id, void* out);
  */
 int Def_Set(int type, int index, int value, const void* ptr);
 
-boolean Def_SameStateSequence(state_t* snew, state_t* sold);
+dd_bool Def_SameStateSequence(state_t* snew, state_t* sold);
 
 /**
  * Compiles a list of all the defined mobj types. Indices in this list

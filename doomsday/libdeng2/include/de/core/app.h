@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_APP_H
@@ -25,6 +25,7 @@
 #include "../CommandLine"
 #include "../NativePath"
 #include "../LogBuffer"
+#include "../LogFilter"
 #include "../System"
 #include "../FileSystem"
 #include "../ScriptSystem"
@@ -60,25 +61,29 @@ class DENG2_PUBLIC App : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
     enum SubsystemInitFlag {
-        DefaultSubsystems   = 0x0,
-        DisablePlugins      = 0x1
+        DefaultSubsystems     = 0x0,
+        DisablePlugins        = 0x1,
+        DisablePersistentData = 0x2
     };
     Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
+
+    /// Throws if attempting to access persistent data when it has been disabled at init.
+    DENG2_ERROR(PersistentDataNotAvailable);
 
     /**
      * Notified when application startup has been fully completed.
      */
-    DENG2_DEFINE_AUDIENCE(StartupComplete, void appStartupCompleted())
+    DENG2_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
 
     /**
      * Notified before the current game is unloaded.
      */
-    DENG2_DEFINE_AUDIENCE(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
+    DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
 
     /**
      * Notified after the current game has been changed.
      */
-    DENG2_DEFINE_AUDIENCE(GameChange, void currentGameChanged(game::Game const &newGame))
+    DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(game::Game const &newGame))
 
 public:
     /**
@@ -95,6 +100,51 @@ public:
     virtual ~App();
 
     /**
+     * Defines metadata about the application.
+     *
+     * @param appName     Name of the application, as presented to humans.
+     * @param appVersion  Version of the application.
+     * @param orgName     Name of the author/organization.
+     * @param orgDomain   Network domain of the author/organization.
+     */
+    virtual void setMetadata(String const &orgName, String const &orgDomain,
+                             String const &appName, String const &appVersion) = 0;
+
+    /**
+     * Sets the path of the configuration script that will be automatically run if needed
+     * during application launch. The script governs the contents of the special
+     * persistent Config module. @see Config
+     *
+     * This method must be called before initSubsystems().
+     *
+     * @param path  Location of the @em Config.de script file. The default path of the
+     *              script is "/modules/Config.de".
+     */
+    void setConfigScript(Path const &path);
+
+    /**
+     * Sets the name of the application. Derived classes should call this from their
+     * implementation of setMetadata().
+     *
+     * @param appName  Application name. Defaults to "Doomsday Engine".
+     */
+    void setName(String const &appName);
+
+    /**
+     * Sets the Unix-style home folder name. For instance, ".doomsday" could be used.
+     *
+     * @param name  Name of the (usually hidden) user-specific home data folder.
+     */
+    void setUnixHomeFolderName(String const &name);
+
+    String unixHomeFolderName() const;
+
+    /**
+     * Returns the home folder name without the possible dot in the beginning.
+     */
+    String unixEtcFolderName() const;
+
+    /**
      * Sets a callback to be called when an uncaught exception occurs.
      */
     void setTerminateFunc(void (*func)(char const *msg));
@@ -107,7 +157,7 @@ public:
      *
      * @param flags  How to/which subsystems to initialize.
      */
-    void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+    virtual void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
     /**
      * Adds a system to the application. The order of systems is preserved; the
@@ -127,7 +177,14 @@ public:
      */
     void removeSystem(System &system);
 
+    /**
+     * Determines if an instance of App currently exists.
+     */
+    static bool appExists();
+
     static App &app();
+
+    static LogFilter &logFilter();
 
     /**
      * Returns the command line used to start the application.
@@ -176,6 +233,8 @@ public:
      * @return Persistent data archive.
      */
     static Archive &persistentData();
+
+    static bool hasPersistentData();
 
     /**
      * Returns the application's current native working directory.

@@ -30,6 +30,7 @@
 #include "edit_bias.h"
 #include "api_render.h"
 #include "render/vr.h"
+#include "render/fx/bloom.h"
 
 #include "network/net_demo.h"
 #include "filesys/fs_util.h"
@@ -54,7 +55,7 @@ float devCameraMovementStartTimeRealSecs = 0;
 
 D_CMD(ViewGrid);
 
-boolean firstFrameAfterLoad;
+dd_bool firstFrameAfterLoad;
 
 static int loadInStartupMode = false;
 static int rendCameraSmooth = true; // Smoothed by default.
@@ -70,6 +71,8 @@ static coord_t *luminousDist;
 static byte *luminousClipped;
 static uint *luminousOrder;
 static QBitArray bspLeafsVisible;
+
+static QBitArray generatorsVisible(Map::MAX_GENERATORS);
 
 static viewdata_t viewDataOfConsole[DDMAXPLAYERS]; // Indexed by console number.
 
@@ -203,7 +206,7 @@ DENG_EXTERN_C int R_ViewWindowSize(int player, Size2Raw *size)
  * refresh only.
  */
 #undef R_SetViewWindowGeometry
-DENG_EXTERN_C void R_SetViewWindowGeometry(int player, RectRaw const *geometry, boolean interpolate)
+DENG_EXTERN_C void R_SetViewWindowGeometry(int player, RectRaw const *geometry, dd_bool interpolate)
 {
     int p = P_ConsoleToLocal(player);
     if(p < 0) return;
@@ -506,9 +509,9 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    if(ClientApp::world().hasMap())
+    if(ClientApp::worldSystem().hasMap())
     {
-        Map &map = ClientApp::world().map();
+        Map &map = ClientApp::worldSystem().map();
         map.updateTrackedPlanes();
         map.updateScrollingSurfaces();
     }
@@ -574,15 +577,15 @@ void R_UpdateViewer(int consoleNum)
             OldAngle *old = &oldAngle[viewPlayer - ddPlayers];
             float yaw = (double)smoothView.angle() / ANGLE_MAX * 360;
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
-                        "Rdx=%-10.3f Rdy=%-10.3f",
-                        SECONDS_TO_TICKS(gameTime),
-                        frameTimePos,
-                        sysTime - old->time,
-                        yaw - old->yaw,
-                        smoothView.pitch - old->pitch,
-                        (yaw - old->yaw) / (sysTime - old->time),
-                        (smoothView.pitch - old->pitch) / (sysTime - old->time));
+            LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
+                       "Rdx=%-10.3f Rdy=%-10.3f")
+                    << SECONDS_TO_TICKS(gameTime)
+                    << frameTimePos
+                    << sysTime - old->time
+                    << yaw - old->yaw
+                    << smoothView.pitch - old->pitch
+                    << (yaw - old->yaw) / (sysTime - old->time)
+                    << (smoothView.pitch - old->pitch) / (sysTime - old->time);
 
             old->yaw   = yaw;
             old->pitch = smoothView.pitch;
@@ -600,16 +603,15 @@ void R_UpdateViewer(int consoleNum)
             static OldPos oldPos[DDMAXPLAYERS];
             OldPos *old = &oldPos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f",
-                        //"Rdx=%-10.3f Rdy=%-10.3f\n",
-                        SECONDS_TO_TICKS(gameTime),
-                        frameTimePos,
-                        sysTime - old->time,
-                        smoothView.origin.x - old->pos.x,
-                        smoothView.origin.y - old->pos.y,
-                        smoothView.origin.z - old->pos.z,
-                        (smoothView.origin.x - old->pos.x) / (sysTime - old->time),
-                        (smoothView.origin.y - old->pos.y) / (sysTime - old->time));
+            LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f")
+                    << SECONDS_TO_TICKS(gameTime)
+                    << frameTimePos
+                    << sysTime - old->time
+                    << smoothView.origin.x - old->pos.x
+                    << smoothView.origin.y - old->pos.y
+                    << smoothView.origin.z - old->pos.z
+                    << (smoothView.origin.x - old->pos.x) / (sysTime - old->time)
+                    << (smoothView.origin.y - old->pos.y) / (sysTime - old->time);
 
             old->pos  = smoothView.origin;
             old->time = sysTime;
@@ -656,7 +658,7 @@ void R_SetupFrame(player_t *player)
 
     if(showFrameTimePos)
     {
-        Con_Printf("frametime = %f\n", frameTimePos);
+        LOGDEV_VERBOSE("frametime = %f") << frameTimePos;
     }
 
     // Handle extralight (used to light up the world momentarily (used for
@@ -741,7 +743,7 @@ void R_SetupPlayerSprites()
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
     // Determine if we should be drawing all the psprites full bright?
-    boolean isFullBright = (levelFullBright != 0);
+    dd_bool isFullBright = (levelFullBright != 0);
     if(!isFullBright)
     {
         ddpsprite_t *psp = ddpl->pSprites;
@@ -867,9 +869,11 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     // Setup for rendering the frame.
     R_SetupFrame(player);
 
+    vrCfg().setEyeHeightInMapUnits(Con_GetInteger("player-eyeheight"));
+
     // Latest possible time to check the real head angles. After this we'll be
     // using the provided values.
-    VR::updateHeadOrientation();
+    vrCfg().oculusRift().update();
 
     R_SetupPlayerSprites();
 
@@ -890,9 +894,9 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
 
-    if(ClientApp::world().hasMap())
+    if(ClientApp::worldSystem().hasMap())
     {
-        Rend_RenderMap(ClientApp::world().map());
+        Rend_RenderMap(ClientApp::worldSystem().map());
     }
 
     // Orthogonal projection to the view window.
@@ -933,20 +937,6 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         player->shared.mo->ddFlags = oldFlags;
     }
 
-    // Should we be counting triangles?
-    /*if(rendInfoTris)
-    {
-        // This count includes all triangles drawn since R_SetupFrame.
-        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
-        modelTriCount = 0;
-        polyCounter = 0;
-    }*/
-
-    /*if(rendInfoLums)
-    {
-        Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
-    }*/
-
     R_PrintRendPoolInfo();
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
@@ -960,8 +950,8 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         float time = sysTime - devCameraMovementStartTime;
         float elapsed = time - prevTime;
 
-        Con_Message("%f,%f,%f,%f,%f", Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs,
-                    time, elapsed, speed/elapsed, speed/elapsed - prevSpeed);
+        LOGDEV_MSG("%f,%f,%f,%f,%f") << Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs
+                                     << time << elapsed << speed/elapsed << speed/elapsed - prevSpeed;
 
         V3f_Copy(prevPos, vd->current.pos);
         prevSpeed = speed/elapsed;
@@ -990,6 +980,17 @@ static void restoreDefaultGLState()
 static void clearViewPorts()
 {
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
+
+    if(fx::Bloom::isEnabled())
+    {
+        /*
+         * Parts of the previous frame might leak in the bloom unless we clear the color
+         * buffer. Not doing this would result in very bright HOMs in map holes and game
+         * UI elements glowing in the frame (UI elements are normally on a separate layer
+         * and should not affect bloom).
+         */
+        bits |= GL_COLOR_BUFFER_BIT;
+    }
 
     if(!devRendSkyMode)
         bits |= GL_STENCIL_BUFFER_BIT;
@@ -1022,12 +1023,12 @@ static void clearViewPorts()
     glClear(bits);
 }
 
-void R_RenderViewPorts(ui::ViewPortLayer layer)
+void R_RenderViewPorts(ViewPortLayer layer)
 {
     int oldDisplay = displayPlayer;
 
     // First clear the viewport.
-    if(layer == ui::Player3DViewLayer)
+    if(layer == Player3DViewLayer)
     {
         clearViewPorts();
     }
@@ -1044,7 +1045,7 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
 
             if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_ORIGIN))
             {
-                if(layer == ui::Player3DViewLayer)
+                if(layer == Player3DViewLayer)
                 {
                     R_RenderBlankView();
                 }
@@ -1069,18 +1070,18 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
 
             switch(layer)
             {
-            case ui::Player3DViewLayer:
+            case Player3DViewLayer:
                 R_UpdateViewer(vp->console);
                 LensFx_BeginFrame(vp->console);
                 gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
                 LensFx_EndFrame();
                 break;
 
-            case ui::ViewBorderLayer:
+            case ViewBorderLayer:
                 R_RenderPlayerViewBorder();
                 break;
 
-            case ui::HUDLayer:
+            case HUDLayer:
                 gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 1/*layer #1*/);
                 break;
             }
@@ -1092,7 +1093,7 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
         }
     }
 
-    if(layer == ui::Player3DViewLayer)
+    if(layer == Player3DViewLayer)
     {
         // Increment the internal frame count. This does not
         // affect the window's FPS counter.
@@ -1127,10 +1128,20 @@ void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
     bspLeafsVisible.setBit(bspLeaf.indexInMap(), yes);
 }
 
+bool R_ViewerGeneratorIsVisible(Generator const &generator)
+{
+    return generatorsVisible.testBit(generator.id());
+}
+
+void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
+{
+    generatorsVisible.setBit(generator.id(), yes);
+}
+
 double R_ViewerLumobjDistance(int idx)
 {
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
     {
         return luminousDist[idx];
     }
@@ -1143,7 +1154,7 @@ bool R_ViewerLumobjIsClipped(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
     {
         return CPP_BOOL(luminousClipped[idx]);
     }
@@ -1156,7 +1167,7 @@ bool R_ViewerLumobjIsHidden(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
     {
         return luminousClipped[idx] == 2;
     }
@@ -1181,10 +1192,13 @@ void R_BeginFrame()
      */
     Rend_ProjectorReset();
 
-    Map &map = ClientApp::world().map();
+    Map &map = ClientApp::worldSystem().map();
 
     bspLeafsVisible.resize(map.bspLeafCount());
     bspLeafsVisible.fill(false);
+
+    // Clear all generator visibility flags.
+    generatorsVisible.fill(false);
 
     int numLuminous = map.lumobjCount();
     if(!(numLuminous > 0)) return;
@@ -1322,7 +1336,7 @@ angle_t viewer_t::angle() const
     {
         // Apply the actual, current yaw offset. The game has omitted the "body yaw"
         // portion from the value already.
-        a += (fixed_t)(radianToDegree(VR::getHeadOrientation()[2]) / 180 * ANGLE_180);
+        a += (fixed_t)(radianToDegree(vrCfg().oculusRift().headOrientation()[2]) / 180 * ANGLE_180);
     }
     return a;
 }

@@ -28,7 +28,21 @@
 class StyledLogSinkFormatter : public de::LogSink::IFormatter
 {
 public:
+    StyledLogSinkFormatter();
+    StyledLogSinkFormatter(de::LogEntry::Flags const &formatFlags);
+
     Lines logEntryToTextLines(de::LogEntry const &entry);
+
+    /**
+     * Omits the log entry section information if the entry is marked as
+     * a non-developer entry. The default is @c true.
+     *
+     * @param omit  Omit section.
+     */
+    void setOmitSectionIfNonDev(bool omit);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_STYLEDLOGSINKFORMATTER_H

@@ -1,40 +1,57 @@
 /** @file asset.cpp  Information about the state of an asset (e.g., resource).
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Asset"
 
 namespace de {
 
-Asset::Asset(State initialState) : _state(initialState)
+DENG2_PIMPL_NOREF(Asset)
+{
+    State state;
+
+    Instance(State s) : state(s) {}
+    Instance(Instance const &other) : de::IPrivate(), state(other.state) {}
+
+    DENG2_PIMPL_AUDIENCE(StateChange)
+    DENG2_PIMPL_AUDIENCE(Deletion)
+};
+
+DENG2_AUDIENCE_METHOD(Asset, StateChange)
+DENG2_AUDIENCE_METHOD(Asset, Deletion)
+
+Asset::Asset(State initialState) : d(new Instance(initialState))
+{}
+
+Asset::Asset(Asset const &other) : d(new Instance(*other.d))
 {}
 
 Asset::~Asset()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->assetDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->assetDeleted(*this);
 }
 
 void Asset::setState(State s)
 {
-    State old = _state;
-    _state = s;
-    if(old != _state)
+    State old = d->state;
+    d->state = s;
+    if(old != d->state)
     {
-        DENG2_FOR_AUDIENCE(StateChange, i) i->assetStateChanged(*this);
+        DENG2_FOR_AUDIENCE2(StateChange, i) i->assetStateChanged(*this);
     }
 }
 
@@ -45,12 +62,12 @@ void Asset::setState(bool assetReady)
 
 Asset::State Asset::state() const
 {
-    return _state;
+    return d->state;
 }
 
 bool Asset::isReady() const
 {
-    return _state == Ready;
+    return d->state == Ready;
 }
 
 //----------------------------------------------------------------------------
@@ -95,7 +112,7 @@ AssetGroup::AssetGroup() : d(new Instance)
 AssetGroup::~AssetGroup()
 {
     // We are about to be deleted.
-    audienceForStateChange.clear();
+    audienceForStateChange().clear();
 
     clear();
 }
@@ -109,8 +126,8 @@ void AssetGroup::clear()
 {
     DENG2_FOR_EACH(Members, i, d->deps)
     {
-        i->first->audienceForDeletion -= this;
-        i->first->audienceForStateChange -= this;
+        i->first->audienceForDeletion() -= this;
+        i->first->audienceForStateChange() -= this;
     }
 
     d->deps.clear();
@@ -120,15 +137,15 @@ void AssetGroup::clear()
 void AssetGroup::insert(Asset const &asset, Policy policy)
 {
     d->deps[&asset] = policy;
-    asset.audienceForDeletion += this;
-    asset.audienceForStateChange += this;
+    asset.audienceForDeletion() += this;
+    asset.audienceForStateChange() += this;
     d->update(*this);
 }
 
 void AssetGroup::remove(Asset const &asset)
 {
-    asset.audienceForDeletion -= this;
-    asset.audienceForStateChange -= this;
+    asset.audienceForDeletion() -= this;
+    asset.audienceForStateChange() -= this;
     d->deps.erase(&asset);
     d->update(*this);
 }

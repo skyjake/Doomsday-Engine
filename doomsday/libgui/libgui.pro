@@ -1,9 +1,9 @@
-# The Doomsday Engine Project: GUI extension for libdeng2
+# The Doomsday Engine Project -- GUI Extension for libdeng2
 # Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
-# This program is distributed under the GNU General Public License
-# version 2 (or, at your option, any later version). Please visit
-# http://www.gnu.org/licenses/gpl.html for details.
+# This program is distributed under the GNU Lesser General Public License
+# version 3 (or, at your option, any later version). Please visit
+# http://www.gnu.org/licenses/lgpl.html for details.
 
 include(../config.pri)
 
@@ -45,7 +45,7 @@ else:unix {
 }
 
 # Public headers.
-HEADERS += \
+publicHeaders(root, \
     include/de/Atlas \
     include/de/AtlasTexture \
     include/de/Canvas \
@@ -74,10 +74,14 @@ HEADERS += \
     include/de/KeyEventSource \
     include/de/MouseEvent \
     include/de/MouseEventSource \
+    include/de/NativeFont \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
+    include/de/TextureBank \
     include/de/VertexBuilder \
-    \
+)
+
+publicHeaders(gui, \
     include/de/gui/atlas.h \
     include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
@@ -110,10 +114,13 @@ HEADERS += \
     include/de/gui/libgui.h \
     include/de/gui/mouseevent.h \
     include/de/gui/mouseeventsource.h \
+    include/de/gui/nativefont.h \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
     include/de/gui/rowatlasallocator.h \
-    include/de/gui/vertexbuilder.h
+    include/de/gui/texturebank.h \
+    include/de/gui/vertexbuilder.h \
+)
 
 # Sources and private headers.
 SOURCES +=  \
@@ -125,9 +132,11 @@ SOURCES +=  \
     src/displaymode.cpp \
     src/drawable.cpp \
     src/font.cpp \
+    src/font_richformat.cpp \
     src/fontbank.cpp \
     src/glbuffer.cpp \
     src/glentrypoints.cpp \
+    src/glentrypoints_x11.cpp \
     src/glframebuffer.cpp \
     src/glinfo.cpp \
     src/glprogram.cpp \
@@ -143,9 +152,19 @@ SOURCES +=  \
     src/imagebank.cpp \
     src/kdtreeatlasallocator.cpp \
     src/keyevent.cpp \
+    src/keyeventsource.cpp \
     src/mouseevent.cpp \
+    src/mouseeventsource.cpp \
+    src/nativefont.cpp \
+    src/qtnativefont.cpp \
+    src/qtnativefont.h \
     src/persistentcanvaswindow.cpp \
-    src/rowatlasallocator.cpp
+    src/rowatlasallocator.cpp \
+    src/texturebank.cpp
+
+macx:!deng_macx6_32bit_64bit: SOURCES += \
+    src/coretextnativefont_macx.h \
+    src/coretextnativefont_macx.cpp
 
 # DisplayMode
 !deng_nodisplaymode {
@@ -158,6 +177,12 @@ else {
 }
 
 unix:!macx: SOURCES += src/imKStoUCS_x11.c
+
+scripts.files = \
+    modules/gui.de
+
+OTHER_FILES += \
+    $$scripts.files
 
 # Installation ---------------------------------------------------------------
 
@@ -173,4 +198,10 @@ macx {
 else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+
+deng_sdk {
+    INSTALLS *= target scripts
+    target.path = $$DENG_SDK_LIB_DIR
+    scripts.path = $$DENG_SDK_DIR/modules
 }

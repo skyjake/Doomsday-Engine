@@ -32,12 +32,12 @@
 #include "p_mapsetup.h"
 #include "hu_stuff.h"
 #include "am_map.h"
-#include "p_player.h"
+#include "player.h"
 #include "hu_automap.h"
 
 static void registerSpecialLine(automapcfg_t* mcfg, int reqAutomapFlags, int reqSpecial,
     int reqSided, int reqNotFlagged, float r, float g, float b, float a, blendmode_t blendmode,
-    glowtype_t glowType, float glowStrength, float glowSize, boolean scaleGlowWithView);
+    glowtype_t glowType, float glowStrength, float glowSize, dd_bool scaleGlowWithView);
 
 static automapcfg_t automapCFG;
 
@@ -46,7 +46,7 @@ automapcfg_t* ST_AutomapConfig(void)
     return &automapCFG;
 }
 
-void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customPal)
+void AM_GetMapColor(float* rgb, const float* uColor, int palidx, dd_bool customPal)
 {
     if((!customPal && !cfg.automapCustomColors) ||
        (customPal && cfg.automapCustomColors != 2))
@@ -255,7 +255,7 @@ static void initAutomapConfig(automapcfg_t* mcfg)
 
 void ST_InitAutomapConfig(void)
 {
-    VERBOSE2( Con_Message("Initializing automap...") )
+    App_Log(DE2_LOG_XVERBOSE, "Initializing automap...");
     initAutomapConfig(&automapCFG);
 }
 
@@ -445,7 +445,7 @@ void AM_SetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name,
 }
 
 void AM_SetGlow(automapcfg_t* mcfg, automapcfg_objectname_t name, glowtype_t type, float size,
-    float alpha, boolean canScale)
+    float alpha, dd_bool canScale)
 {
     assert(NULL != mcfg);
     {
@@ -546,7 +546,7 @@ static automapcfg_lineinfo_t* findLineInfo(automapcfg_t* mcfg, int reqAutomapFla
 
 static void registerSpecialLine(automapcfg_t* mcfg, int reqAutomapFlags, int reqSpecial,
     int reqSided, int reqNotFlagged, float r, float g, float b, float a, blendmode_t blendmode,
-    glowtype_t glowType, float glowStrength, float glowSize, boolean scaleGlowWithView)
+    glowtype_t glowType, float glowStrength, float glowSize, dd_bool scaleGlowWithView)
 {
     DENG_ASSERT(mcfg);
 {
@@ -578,7 +578,7 @@ static void registerSpecialLine(automapcfg_t* mcfg, int reqAutomapFlags, int req
 
 void AM_RegisterSpecialLine(automapcfg_t* mcfg, int reqMapFlags, int reqSpecial,
     int reqSided, int reqNotFlagged, float r, float g, float b, float a, blendmode_t blendmode,
-    glowtype_t glowType, float glowStrength, float glowSize, boolean scaleGlowWithView)
+    glowtype_t glowType, float glowStrength, float glowSize, dd_bool scaleGlowWithView)
 {
     if(reqSpecial < 0)
         Con_Error("AM_RegisterSpecialLine: special requirement '%i' negative.", reqSpecial);

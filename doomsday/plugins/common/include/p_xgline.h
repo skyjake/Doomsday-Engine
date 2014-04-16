@@ -30,7 +30,12 @@
 #ifndef __XG_LINETYPE_H__
 #define __XG_LINETYPE_H__
 
+#include "doomsday.h"
 #include "xgclass.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 // Line events.
 #define XLE_CHAIN           0x001
@@ -313,8 +318,8 @@ typedef struct {
 // State data for each line.
 typedef struct {
     linetype_t      info; // Type definition.
-    boolean         active;
-    boolean         disabled; // If true, skip all processing.
+    dd_bool         active;
+    dd_bool         disabled; // If true, skip all processing.
     int             timer;
     int             tickerTimer;
     void*           activator;
@@ -325,57 +330,79 @@ typedef struct {
 } xgline_t;
 
 // The XG line Classes
-extern struct xgclass_s xgClasses[];
+DENG_EXTERN_C struct xgclass_s xgClasses[];
 
 // Used as the activator if there is no real activator.
-extern struct mobj_s dummyThing;
+DENG_EXTERN_C struct mobj_s dummyThing;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // Register the XG classnames for XGdev
-void            XG_Register(void);
+void XG_Register(void);
 
 // Initialize extended lines for the map.
-void            XL_Init(void);
+void XL_Init(void);
+
 // Called when reseting engine state.
-void            XL_Update(void);
+void XL_Update(void);
 
-void            XL_Thinker(void *xlThinkerPtr);
+void XL_Thinker(void *xlThinkerPtr);
 
-void            XL_SetLineType(Line* line, int id);
+/**
+ * Looks for line type definition and sets the line type if one is found.
+ */
+void XL_SetLineType(Line *line, int id);
 
-linetype_t*     XL_GetType(int id);
-int             XL_LineEvent(int evType, int lineType, Line* line,
-                             int sideNum, void* data);
-void            XL_ActivateLine(boolean activating, linetype_t* info,
-                                Line* line, int sideNum,
-                                struct mobj_s* data, int evType);
-int             XL_TraverseLines(Line* line, int reftype, int ref,
-                                 void* context, void* context2, struct mobj_s* activator,
-                                 int (C_DECL *func)());
-int             XL_TraversePlanes(Line* line, int reftype, int ref,
-                                  void* context, void* context2, boolean travSectors,
-                                  struct mobj_s* activator,
-                                  int (C_DECL *func)());
+linetype_t *XL_GetType(int id);
+
+int XL_LineEvent(int evType, int lineType, Line *line, int sideNum, void *data);
+
+void XL_ActivateLine(dd_bool activating, linetype_t *info, Line *line, int sideNum,
+    struct mobj_s *activator, int evType);
+
+/// Function pointer to an XG plane traversal function.
+typedef int (*LineTraverserFunc)(Line *line, dd_bool ceiling/*unused*/, void *context, void *context2, mobj_t *activator);
+
+/**
+ * Executes the specified function on all lines that match the reference
+ * 'rtype'.
+ *
+ * @return  @c false if 'func' returns @c false, otherwise
+ *          @c true. Stops checking when false is returned.
+ */
+int XL_TraverseLines(Line *line, int reftype, int ref, void *context, void *context2,
+    struct mobj_s *activator, int (C_DECL *func)());
+
+/// Function pointer to an XG plane traversal function.
+typedef int (*PlaneTraverserFunc)(Sector *sector, dd_bool ceiling, void *context, void *context2, mobj_t *activator);
+
+/**
+ * Executes the specified function on all planes that match the reference
+ * (reftype).
+ *
+ * @return  @c true iff all callbacks return @c true.
+ */
+int XL_TraversePlanes(Line *line, int reftype, int ref, void *context, void *context2,
+    dd_bool travSectors, struct mobj_s *activator, int (C_DECL *func)());
 
 // Return false if the event was processed.
-int             XL_CrossLine(Line* line, int sideNum,
-                             struct mobj_s* thing);
-int             XL_UseLine(Line* line, int sideNum,
-                           struct mobj_s* thing);
-int             XL_ShootLine(Line* line, int sideNum,
-                             struct mobj_s* thing);
-int             XL_HitLine(Line* line, int sideNum,
-                           struct mobj_s* thing);
+int XL_CrossLine(Line *line, int sideNum, struct mobj_s *thing);
 
-int             XG_RandomInt(int min, int max);
+int XL_UseLine(Line *line, int sideNum, struct mobj_s *thing);
 
-void            SV_WriteXGLine(Line* li);
-void            SV_ReadXGLine(Line* li);
+int XL_ShootLine(Line *line, int sideNum, struct mobj_s *thing);
+
+int XL_HitLine(Line *line, int sideNum, struct mobj_s *thing);
+
+int XG_RandomInt(int min, int max);
 
 #ifdef __cplusplus
+void SV_WriteXGLine(Line *li, MapStateWriter *msw);
+
+void SV_ReadXGLine(Line *li, MapStateReader *msr);
+
 } // extern "C"
 #endif
 

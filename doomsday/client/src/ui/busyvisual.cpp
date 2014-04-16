@@ -72,7 +72,7 @@ int rTransition = (int) TS_CROSSFADE; ///< cvar Default transition style.
 int rTransitionTics = 28; ///< cvar Default transition duration (in tics).
 
 typedef struct {
-    boolean inProgress; /// @c true= a transition is presently being animated.
+    dd_bool inProgress; /// @c true= a transition is presently being animated.
     transitionstyle_t style; /// Style of transition (cross-fade, wipe, etc...).
     uint startTime; /// Time at the moment the transition began (in 35hz tics).
     uint tics; /// Time duration of the animation.
@@ -107,7 +107,7 @@ void Con_TransitionBegin(void)
     transition.position = 0;
 }
 
-boolean Con_TransitionInProgress(void)
+dd_bool Con_TransitionInProgress(void)
 {
     return transition.inProgress;
 }
@@ -178,6 +178,7 @@ void Con_DrawTransition(void)
     GLuint const texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
 
     GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glDisable(GL_ALPHA_TEST);
     glEnable(GL_TEXTURE_2D);
 

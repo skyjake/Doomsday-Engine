@@ -22,12 +22,12 @@
  */
 
 #include "de/concurrency.h"
-#include "de/garbage.h"
 #include <QMutex>
 #include <QCoreApplication>
 #include <QDebug>
 #include <de/Time>
 #include <de/Log>
+#include <de/Garbage>
 #include <assert.h>
 
 static uint mainThreadId = 0; ///< ID of the main thread.
@@ -117,7 +117,7 @@ void Sys_MarkAsMainThread(void)
     mainThreadId = Sys_CurrentThreadId();
 }
 
-boolean Sys_InMainThread(void)
+dd_bool Sys_InMainThread(void)
 {
     return mainThreadId == Sys_CurrentThreadId();
 }

@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Time"
@@ -154,14 +154,14 @@ DENG2_PIMPL_NOREF(Time)
 
     bool isLessThan(Instance const &other) const
     {
+        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        {
+            return highPerfElapsed < other.highPerfElapsed;
+        }
         if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
         {
             // Full date and time comparison.
             return dateTime < other.dateTime;
-        }
-        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
-        {
-            return highPerfElapsed < other.highPerfElapsed;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
@@ -173,13 +173,13 @@ DENG2_PIMPL_NOREF(Time)
 
     bool isEqualTo(Instance const &other) const
     {
-        if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
-        {
-            return dateTime == other.dateTime;
-        }
         if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
         {
             return highPerfElapsed == other.highPerfElapsed;
+        }
+        if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
+        {
+            return dateTime == other.dateTime;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
@@ -203,13 +203,13 @@ DENG2_PIMPL_NOREF(Time)
 
     Delta delta(Instance const &earlier) const
     {
-        if(flags.testFlag(DateTime) && earlier.flags.testFlag(DateTime))
-        {
-            return earlier.dateTime.msecsTo(dateTime) / 1000.0;
-        }
         if(flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
         {
             return highPerfElapsed - earlier.highPerfElapsed;
+        }
+        if(flags.testFlag(DateTime) && earlier.flags.testFlag(DateTime))
+        {
+            return earlier.dateTime.msecsTo(dateTime) / 1000.0;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
@@ -305,6 +305,24 @@ String Time::asText(Format format) const
         else if(format == FriendlyFormat)
         {
             return d->dateTime.toString(Qt::TextDate);
+        }
+        else if(format == BuildNumberAndSecondsSinceStart)
+        {
+            DENG2_ASSERT(d->flags & Instance::HighPerformance);
+
+            TimeDelta const elapsed = d->highPerfElapsed;
+            int hours = elapsed.asHours();
+            double sec = elapsed - hours * 3600.0;
+            if(hours > 0)
+            {
+                return QString("#%1 %2h%3")
+                        .arg(asBuildNumber(), -4)
+                        .arg(hours)
+                        .arg(sec, 7, 'f', 3, '0');
+            }
+            return QString("#%1 %2")
+                    .arg(asBuildNumber(), -4)
+                    .arg(sec, 7, 'f', 3, '0');
         }
         else
         {

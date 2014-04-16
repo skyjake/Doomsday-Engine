@@ -65,7 +65,7 @@ de::Vector3d R_ClosestPointOnPlane(de::Vector3f const &planeNormal,
 
 #ifdef __CLIENT__
 
-void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
+void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2]);
 
 void R_ProjectViewRelativeLine2D(de::Vector2d const center, bool alignToViewPlane,

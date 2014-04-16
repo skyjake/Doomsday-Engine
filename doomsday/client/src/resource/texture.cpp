@@ -110,8 +110,8 @@ void Texture::setUserDataPointer(void *newUserData)
     if(d->userData && newUserData)
     {
         LOG_AS("Texture::setUserDataPointer");
-        LOG_DEBUG("User data already present for \"%s\" [%p], will be replaced.")
-            << d->manifest.composeUri() << de::dintptr(this);
+        LOGDEV_RES_MSG("User data already present for \"%s\" %p, will be replaced")
+            << d->manifest.composeUri() << this;
     }
     d->userData = newUserData;
 }
@@ -243,9 +243,9 @@ void Texture::clearVariants()
             String textualVariantSpec = variant->spec().asText();
 
             LOG_AS("Texture::clearVariants")
-            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
+            LOGDEV_RES_WARNING("GLName (%i) still set for a variant of \"%s\" %p. Perhaps it wasn't released?")
                 << variant->glName() << d->manifest.composeUri()
-                << de::dintptr(this) << textualVariantSpec;
+                << this << textualVariantSpec;
         }
 #endif
 
@@ -294,7 +294,7 @@ void Texture::setAnalysisDataPointer(AnalysisId analysisId, void *newData)
 #if _DEBUG
         if(newData)
         {
-            LOG_DEBUG("Image analysis (id:%i) already present for \"%s\", (will replace).")
+            LOGDEV_RES_VERBOSE("Image analysis (id:%i) already present for \"%s\", will be replaed")
                 << int(analysisId) << d->manifest.composeUri();
         }
 #endif
@@ -338,7 +338,7 @@ D_CMD(InspectTexture)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownTextureScheme(search.scheme()))
     {
-        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -353,9 +353,9 @@ D_CMD(InspectTexture)
             variantCountText = de::String(" (x%1)").arg(texture.variantCount());
 #endif
 
-            LOG_MSG("Texture " _E(1) "%s" _E(.) "%s"
-                    "\n" _E(l) "Dimensions: " _E(.) _E(i) "%s" _E(.)
-                     " " _E(l) "Source: "     _E(.) _E(i) "%s")
+            LOG_RES_MSG("Texture " _E(b) "%s" _E(.) "%s"
+                        "\n" _E(l) "Dimensions: " _E(.) _E(i) "%s" _E(.)
+                        " " _E(l) "Source: "     _E(.) _E(i) "%s")
                 << manifest.composeUri()
                 << variantCountText
                 << (texture.width() == 0 &&
@@ -367,7 +367,7 @@ D_CMD(InspectTexture)
             if(texture.variantCount())
             {
                 // Print variant specs.
-                LOG_MSG(_E(R));
+                LOG_RES_MSG(_E(R));
 
                 int variantIdx = 0;
                 foreach(TextureVariant *variant, texture.variants())
@@ -377,13 +377,13 @@ D_CMD(InspectTexture)
 
                     String textualVariantSpec = variant->spec().asText();
 
-                    LOG_MSG(_E(D) "Variant #%i:" _E(.)
+                    LOG_RES_MSG(_E(D) "Variant #%i:" _E(.)
                             " " _E(l) "Source: " _E(.) _E(i) "%s" _E(.)
                             " " _E(l) "Masked: " _E(.) _E(i) "%s" _E(.)
                             " " _E(l) "GLName: " _E(.) _E(i) "%i" _E(.)
                             " " _E(l) "Coords: " _E(.) _E(i) "%s" _E(.)
                             _E(R)
-                            "\n" _E(1) "Specification:" _E(.) "%s")
+                            "\n" _E(b) "Specification:" _E(.) "%s")
                         << variantIdx
                         << variant->sourceDescription()
                         << (variant->isMasked()? "yes":"no")
@@ -398,13 +398,13 @@ D_CMD(InspectTexture)
         }
         else
         {
-            LOG_MSG("%s") << manifest.description();
+            LOG_RES_MSG("%s") << manifest.description();
         }
         return true;
     }
     catch(ResourceSystem::MissingManifestError const &er)
     {
-        LOG_WARNING("%s.") << er.asText();
+        LOG_RES_WARNING("%s.") << er.asText();
     }
     return false;
 }

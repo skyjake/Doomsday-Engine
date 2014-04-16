@@ -67,7 +67,9 @@ int G_RegisterGames(int hookType, int param, void* data)
 #define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
 
     GameDef const doom64Def = {
-        "doom64", CONFIGDIR, "Doom 64", "Midway Software"
+        "doom64", CONFIGDIR,
+        "Doom 64", "Midway Software",
+        "", ""
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
@@ -122,7 +124,7 @@ void G_PreInit(gameid_t gameId)
 /**
  * Called by the engine to initiate a soft-shutdown request.
  */
-boolean G_TryShutdown(void)
+dd_bool G_TryShutdown(void)
 {
     G_QuitGame();
     return true;

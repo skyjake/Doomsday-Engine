@@ -71,7 +71,7 @@ struct variantspecification_t
     int flags; /// @ref textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
     int wrapS, wrapT;
-    boolean mipmapped, gammaCorrection, noStretch, toAlpha;
+    dd_bool mipmapped, gammaCorrection, noStretch, toAlpha;
 
     /**
      * Minification filter modes. Specified using either a logical

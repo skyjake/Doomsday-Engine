@@ -220,7 +220,7 @@ typedef struct {
     scalemode_t scaleMode;
     int width, height;
     int availWidth, availHeight;
-    boolean alignHorizontal; /// @c false: align vertically instead.
+    dd_bool alignHorizontal; /// @c false: align vertically instead.
     float scaleFactor;
 } dgl_borderedprojectionstate_t;
 
@@ -233,12 +233,12 @@ DENG_API_TYPEDEF(GL)
     void (*PushState)(void);
     void (*PopState)(void);
 
-    boolean (*GetIntegerv)(int name, int* vec);
+    dd_bool (*GetIntegerv)(int name, int* vec);
     int (*GetInteger)(int name);
-    boolean (*SetInteger)(int name, int value);
-    boolean (*GetFloatv)(int name, float* vec);
+    dd_bool (*SetInteger)(int name, int value);
+    dd_bool (*GetFloatv)(int name, float* vec);
     float (*GetFloat)(int name);
-    boolean (*SetFloat)(int name, float value);
+    dd_bool (*SetFloat)(int name, float value);
 
     void (*Ortho)(float left, float top, float right, float bottom, float znear, float zfar);
 
@@ -265,7 +265,7 @@ DENG_API_TYPEDEF(GL)
 
     void (*Begin)(dglprimtype_t type);
     void (*End)(void);
-    boolean (*NewList)(DGLuint list, int mode);
+    dd_bool (*NewList)(DGLuint list, int mode);
     DGLuint (*EndList)(void);
     void (*CallList)(DGLuint list);
     void (*DeleteLists)(DGLuint list, int range);
@@ -332,7 +332,7 @@ DENG_API_TYPEDEF(GL)
     void (*DeleteTextures)(int num, const DGLuint* names);
 
     void (*UseFog)(int yes);
-    void (*SetFilter)(boolean enable);
+    void (*SetFilter)(dd_bool enable);
     void (*SetFilterColor)(float r, float g, float b, float a);
     void (*ConfigureBorderedProjection2)(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
     void (*ConfigureBorderedProjection)(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);

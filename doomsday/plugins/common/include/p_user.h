@@ -27,7 +27,7 @@
 
 #define PLAYER_REBORN_TICS      (1*TICSPERSEC)
 
-DENG_EXTERN_C boolean onground;
+DENG_EXTERN_C dd_bool onground;
 
 DENG_EXTERN_C int maxHealth;
 
@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 void            P_Thrust(player_t *player, angle_t angle, coord_t move);
-boolean         P_IsPlayerOnGround(player_t *player);
+dd_bool         P_IsPlayerOnGround(player_t *player);
 void            P_CheckPlayerJump(player_t *player);
 void            P_MovePlayer(player_t *player);
 void            P_PlayerReborn(player_t *player);
@@ -56,7 +56,7 @@ void            P_PlayerThink(player_t *player, timespan_t ticLength);
 void            P_PlayerThinkState(player_t *player);
 void            P_PlayerThinkCheat(player_t *player);
 void            P_PlayerThinkAttackLunge(player_t *player);
-boolean         P_PlayerThinkDeath(player_t *player);
+dd_bool         P_PlayerThinkDeath(player_t *player);
 void            P_PlayerThinkMorph(player_t *player);
 void            P_PlayerThinkMove(player_t *player);
 void            P_PlayerThinkFly(player_t *player);
@@ -78,7 +78,7 @@ void            P_PlayerThinkUpdateControls(player_t *player);
 
 #if __JHERETIC__ || __JHEXEN__
 void            P_MorphThink(player_t *player);
-boolean         P_UndoPlayerMorph(player_t *player);
+dd_bool         P_UndoPlayerMorph(player_t *player);
 #endif
 
 #ifdef __cplusplus

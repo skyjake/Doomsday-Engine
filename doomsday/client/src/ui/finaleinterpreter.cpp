@@ -407,7 +407,7 @@ static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
     return 0;
 }
 
-static __inline boolean objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
+static __inline dd_bool objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
 {
     return objectIndexInNamespace(names, obj) != 0;
 }
@@ -580,7 +580,7 @@ static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const comma
     for(op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
     {
         const char charCode = *opRover;
-        boolean opHasDefaultValue, haveValue;
+        dd_bool opHasDefaultValue, haveValue;
 
         op->type = operandTypeForCharCode(charCode);
         opHasDefaultValue = (opRover < cmd->operands + (strlen(cmd->operands) - 2) && opRover[1] == '(');
@@ -675,7 +675,7 @@ static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const comma
     return operands;
 }
 
-static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
+static dd_bool skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
 {
     if((fi->_skipNext && !cmd->flags.when_condition_skipping) ||
        ((fi->_skipping || fi->_gotoSkip) && !cmd->flags.when_skipping))
@@ -695,10 +695,10 @@ static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
 /**
  * Execute one (the next) command, advance script cursor.
  */
-static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString,
+static dd_bool executeCommand(finaleinterpreter_t* fi, const char* commandString,
     int directive)
 {
-    boolean didSkip = false;
+    dd_bool didSkip = false;
 
     // Semicolon terminates DO-blocks.
     if(!strcmp(commandString, ";"))
@@ -722,7 +722,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     {const command_t* cmd;
     if((cmd = findCommand(commandString)))
     {
-        boolean requiredOperands;
+        dd_bool requiredOperands;
         fi_operand_t* ops = NULL;
         int numOps = 0;
 
@@ -780,7 +780,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     return !didSkip;
 }
 
-static boolean executeNextCommand(finaleinterpreter_t* fi)
+static dd_bool executeNextCommand(finaleinterpreter_t* fi)
 {
     const char* token;
     if((token = nextToken(fi)))
@@ -927,7 +927,7 @@ static void destroyEventHandler(finaleinterpreter_t* fi, fi_handler_t* h)
  *          a) Existing handler associated with unique @a code.
  *          b) New object with unique @a code.
  */
-static boolean getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
+static dd_bool getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
 {
     // First, try to find an existing handler.
     if(findEventHandler(fi, ev))
@@ -940,9 +940,8 @@ static boolean getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, con
 
 static void stopScript(finaleinterpreter_t* fi)
 {
-#ifdef _DEBUG
-    Con_Printf("Finale End - id:%i '%.30s'\n", fi->_id, fi->_scriptBegin);
-#endif
+    LOGDEV_SCR_MSG("Finale End - id:%i '%.30s'") << fi->_id << fi->_scriptBegin;
+
     fi->flags.stopped = true;
 
 #ifdef __SERVER__
@@ -1131,7 +1130,7 @@ void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
     FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
 }
 
-boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
 {
     assert(fi);
     if(fi->flags.paused || fi->flags.can_skip)
@@ -1143,31 +1142,31 @@ boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
     return (fi->flags.show_menu != 0);
 }
 
-boolean FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi)
 {
     assert(fi);
     return (fi->flags.suspended != 0);
 }
 
-void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes)
+void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, dd_bool yes)
 {
     assert(fi);
     fi->flags.can_skip = yes;
 }
 
-boolean FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
 {
     assert(fi);
     return (fi->flags.can_skip != 0);
 }
 
-boolean FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
 {
     assert(fi);
     return fi->_cmdExecuted;
 }
 
-static boolean runTic(finaleinterpreter_t* fi)
+static dd_bool runTic(finaleinterpreter_t* fi)
 {
     ddhook_finale_script_ticker_paramaters_t params;
     memset(&params, 0, sizeof(params));
@@ -1177,7 +1176,7 @@ static boolean runTic(finaleinterpreter_t* fi)
     return params.runTick;
 }
 
-boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
 {
     assert(fi);
 
@@ -1223,7 +1222,7 @@ boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
     return (fi->_gotoEnd || (last && fi->flags.can_skip));}
 }
 
-boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker)
+dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker)
 {
     assert(fi && marker);
 
@@ -1246,7 +1245,7 @@ boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* mark
     return true;
 }
 
-boolean FinaleInterpreter_Skip(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_Skip(finaleinterpreter_t* fi)
 {
     assert(fi);
 
@@ -1281,7 +1280,8 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     assert(fi);
 
-    DEBUG_VERBOSE2_Message(("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type));
+    LOG_AS("FinaleInterpreter_Responder");
+    LOG_SCR_XVERBOSE("fi %i, ev %i") << fi->_id << ev->type;
 
     if(fi->flags.suspended)
         return false;
@@ -1485,7 +1485,9 @@ DEFFC(UnsetKey)
 DEFFC(If)
 {
     const char* token = OP_CSTRING(0);
-    boolean val = false;
+    dd_bool val = false;
+
+    LOG_AS("FIC_If");
 
     // Built-in conditions.
     if(!stricmp(token, "netgame"))
@@ -1495,7 +1497,7 @@ DEFFC(If)
     else if(!strnicmp(token, "mode:", 5))
     {
         if(App_GameLoaded())
-            val = !stricmp(token + 5, Str_Text(App_CurrentGame().identityKey()));
+            val = !de::String(token + 5).compareWithoutCase(App_CurrentGame().identityKey());
         else
             val = 0;
     }
@@ -1509,16 +1511,16 @@ DEFFC(If)
         if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi->_id, (void*) &p))
         {
             val = p.returnVal;
-            LOG_DEBUG("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
         }
         else
         {
-            LOG_DEBUG("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
         }
     }
     else
     {
-        Con_Message("FIC_If: Unknown condition '%s'.", token);
+        LOG_SCR_WARNING("Unknown condition '%s'") << token;
     }
 
     // Skip the next command if the value is false.
@@ -1561,6 +1563,7 @@ DEFFC(Image)
     lumpnum_t lumpNum = F_LumpNumForName(name);
     rawtex_t* rawTex;
 
+    LOG_AS("FIC_Image");
     FIData_PicClearAnimation(obj);
 
     rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
@@ -1569,7 +1572,8 @@ DEFFC(Image)
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
-    Con_Message("FIC_Image: Warning, missing lump '%s'.", name);
+
+    LOG_SCR_WARNING("Missing lump '%s'") << name;
 }
 
 DEFFC(ImageAt)
@@ -1581,6 +1585,7 @@ DEFFC(ImageAt)
     lumpnum_t lumpNum = F_LumpNumForName(name);
     rawtex_t* rawTex;
 
+    LOG_AS("FIC_ImageAt");
     AnimatorVector3_Init(obj->pos, x, y, 0);
     FIData_PicClearAnimation(obj);
 
@@ -1590,7 +1595,8 @@ DEFFC(ImageAt)
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
-    Con_Message("FIC_ImageAt: Warning, missing lump '%s'.", name);
+
+    LOG_SCR_WARNING("Missing lump '%s'") << name;
 }
 
 #ifdef __CLIENT__
@@ -1621,6 +1627,8 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
 
 DEFFC(XImage)
 {
+    LOG_AS("FIC_XImage");
+
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
 #ifdef __CLIENT__
     char const *fileName = OP_CSTRING(1);
@@ -1636,7 +1644,7 @@ DEFFC(XImage)
     }
     else
     {
-        Con_Message("FIC_XImage: Warning, missing graphic '%s'.", fileName);
+        LOG_SCR_WARNING("Missing graphic '%s'") << fileName;
     }
 #endif // __CLIENT__
 }
@@ -1647,6 +1655,7 @@ DEFFC(Patch)
     char const *encodedName = OP_CSTRING(3);
     patchid_t patchId;
 
+    LOG_AS("FIC_Patch");
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     FIData_PicClearAnimation(obj);
 
@@ -1657,7 +1666,7 @@ DEFFC(Patch)
     }
     else
     {
-        Con_Message("FIC_Patch: Warning, missing Patch '%s'.", encodedName);
+        LOG_SCR_WARNING("Missing Patch '%s'") << encodedName;
     }
 }
 
@@ -1668,10 +1677,11 @@ DEFFC(SetPatch)
     fidata_pic_frame_t *f;
     patchid_t patchId;
 
+    LOG_AS("FIC_SetPatch");
     patchId = R_DeclarePatch(encodedName);
     if(patchId == 0)
     {
-        Con_Message("FIC_SetPatch: Warning, missing Patch '%s'.", encodedName);
+        LOG_SCR_WARNING("Missing Patch '%s'") << encodedName;
         return;
     }
 
@@ -1704,10 +1714,11 @@ DEFFC(Anim)
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     patchid_t patchId;
 
+    LOG_AS("FIC_Anim");
     patchId = R_DeclarePatch(encodedName);
     if(patchId == 0)
     {
-        Con_Message("FIC_Anim: Warning, Patch '%s' not found.", encodedName);
+        LOG_SCR_WARNING("Patch '%s' not found") << encodedName;
         return;
     }
 
@@ -1722,13 +1733,14 @@ DEFFC(AnimImage)
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     lumpnum_t lumpNum = F_LumpNumForName(encodedName);
     rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
+    LOG_AS("FIC_AnimImage");
     if(rawTex)
     {
         FIData_PicAppendFrame(obj, PFT_RAW, tics, &rawTex->lumpNum, 0, false);
         ((fidata_pic_t *)obj)->animComplete = false;
         return;
     }
-    Con_Message("FIC_AnimImage: Warning, lump '%s' not found.", encodedName);
+    LOG_SCR_WARNING("Lump '%s' not found") << encodedName;
 }
 
 DEFFC(Repeat)
@@ -1811,7 +1823,6 @@ DEFFC(ObjectRGB)
     rgb[CB] = OP_FLOAT(3);
     switch(obj->type)
     {
-    default: Con_Error("FinaleInterpreter::FIC_ObjectRGB: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
         FIData_TextSetColor(obj, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break;
@@ -1822,8 +1833,10 @@ DEFFC(ObjectRGB)
         AnimatorVector3_Set(p->otherColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        break; }
+    default:
+        DENG_ASSERT(!"FIC_ObjectRGB: Unknown object type");
         break;
-      }
     }
 }
 
@@ -1836,7 +1849,6 @@ DEFFC(ObjectAlpha)
     alpha = OP_FLOAT(1);
     switch(obj->type)
     {
-    default: Con_Error("FinaleInterpreter::FIC_ObjectAlpha: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
         FIData_TextSetAlpha(obj, alpha, fi->_inTime);
         break;
@@ -1844,8 +1856,10 @@ DEFFC(ObjectAlpha)
         fidata_pic_t* p = (fidata_pic_t*)obj;
         Animator_Set(&p->color[3], alpha, fi->_inTime);
         Animator_Set(&p->otherColor[3], alpha, fi->_inTime);
+        break; }
+    default:
+        DENG_ASSERT(!"FIC_ObjectAlpha: Unknown object type");
         break;
-      }
     }
 }
 
@@ -2091,9 +2105,7 @@ DEFFC(TextFromLump)
         size_t bufSize = 2 * lumpSize + 1, i;
         char* str, *out;
 
-        str = (char*) calloc(1, bufSize);
-        if(!str)
-            Con_Error("FinaleInterpreter::FIC_TextFromLump: Failed on allocation of %lu bytes for text formatting translation buffer.", (unsigned long) bufSize);
+        str = (char*) M_Calloc(bufSize);
 
         for(i = 0, out = str; i < lumpSize; ++i)
         {
@@ -2156,6 +2168,7 @@ DEFFC(PredefinedColor)
 DEFFC(PredefinedFont)
 {
 #ifdef __CLIENT__
+    LOG_AS("FIC_PredefinedFont");
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
@@ -2165,9 +2178,8 @@ DEFFC(PredefinedFont)
         return;
     }
 
-    { AutoStr* fontPath = Uri_ToString(OP_URI(1));
-    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.", Str_Text(fontPath));
-    }
+    AutoStr *fontPath = Uri_ToString(OP_URI(1));
+    LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
 #endif
 }
 
@@ -2235,6 +2247,7 @@ DEFFC(TextLineHeight)
 DEFFC(Font)
 {
 #ifdef __CLIENT__
+    LOG_AS("FIC_Font");
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
@@ -2243,9 +2256,8 @@ DEFFC(Font)
         return;
     }
 
-    { AutoStr* fontPath = Uri_ToString(OP_URI(1));
-    Con_Message("FIC_Font: Warning, unknown font '%s'.", Str_Text(fontPath));
-    }
+    AutoStr* fontPath = Uri_ToString(OP_URI(1));
+    LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
 #endif
 }
 
@@ -2287,14 +2299,18 @@ DEFFC(TextScale)
 
 DEFFC(PlayDemo)
 {
+    /// @todo Demos are not supported at the moment. -jk
+#if 0
     // While playing a demo we suspend command interpretation.
     FinaleInterpreter_Suspend(fi);
 
     // Start the demo.
     if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", OP_CSTRING(0)))
-    {   // Demo playback failed. Here we go again...
+    {
+        // Demo playback failed. Here we go again...
         FinaleInterpreter_Resume(fi);
     }
+#endif
 }
 
 DEFFC(Command)

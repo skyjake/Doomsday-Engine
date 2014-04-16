@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Animation"
@@ -24,9 +24,12 @@
 #include "de/Block"
 #include "de/DictionaryValue"
 #include "de/DirectoryFeed"
+#include "de/FileLogSink"
 #include "de/Log"
 #include "de/LogBuffer"
+#include "de/LogFilter"
 #include "de/Module"
+#include "de/NativeFile"
 #include "de/NumberValue"
 #include "de/PackageFolder"
 #include "de/Record"
@@ -49,12 +52,17 @@ DENG2_PIMPL(App)
 {
     QThread *mainThread;
 
+    /// Name of the application (metadata for humans).
+    String appName;
+
     CommandLine cmdLine;
 
+    LogFilter logFilter;
     LogBuffer logBuffer;
 
     /// Path of the application executable.
     NativePath appPath;
+    String unixHomeFolder;
 
     NativePath cachedBasePath;
     NativePath cachedPluginBinaryPath;
@@ -67,6 +75,7 @@ DENG2_PIMPL(App)
     QList<System *> systems;
 
     FileSystem fs;
+    QScopedPointer<NativeFile> basePackFile;
     ScriptSystem scriptSys;
     Record appModule;
 
@@ -74,14 +83,18 @@ DENG2_PIMPL(App)
     /// The archive is owned by the file system.
     Archive *persistentData;
 
-    UnixInfo unixInfo;
+    QScopedPointer<UnixInfo> unixInfo;
 
     /// The configuration.
+    Path configPath;
     Config *config;
 
     game::Game *currentGame;
 
     void (*terminateFunc)(char const *);
+
+    /// Optional sink for warnings and errors (set with "-errors").
+    QScopedPointer<FileLogSink> errorSink;
 
     /**
      * Delegates game change notifications to scripts.
@@ -101,11 +114,20 @@ DENG2_PIMPL(App)
     GameChangeScriptAudience scriptAudienceForGameChange;
 
     Instance(Public *a, QStringList args)
-        : Base(a), cmdLine(args), persistentData(0), config(0),
-          currentGame(0), terminateFunc(0)
+        : Base(a)
+        , appName("Doomsday Engine")
+        , cmdLine(args)
+        , unixHomeFolder(".doomsday")
+        , persistentData(0)
+        , configPath("/modules/Config.de")
+        , config(0)
+        , currentGame(0)
+        , terminateFunc(0)
     {
         singletonApp = a;
         mainThread = QThread::currentThread();
+
+        logBuffer.setEntryFilter(&logFilter);
 
         Clock::setAppClock(&clock);
         Animation::setClock(&clock);
@@ -118,14 +140,28 @@ DENG2_PIMPL(App)
         appModule.addArray("audienceForGameChange"); // game change observers
         scriptSys.addNativeModule("App", appModule);
 
-        self.audienceForGameChange += scriptAudienceForGameChange;
+        audienceForGameChange += scriptAudienceForGameChange;
     }
 
     ~Instance()
     {
-        clock.audienceForTimeChange -= self;
+        if(!errorSink.isNull())
+        {
+            logBuffer.removeSink(*errorSink);
+        }
 
-        delete config;
+        clock.audienceForTimeChange() -= self;
+
+        if(config)
+        {
+            // Update the log filter in the persistent configuration.
+            Record *filter = new Record;
+            logFilter.write(*filter);
+            config->names().add("log.filter", filter);
+
+            delete config;
+        }
+
         Clock::setAppClock(0);
     }
 
@@ -136,21 +172,34 @@ DENG2_PIMPL(App)
         // Initialize the built-in folders. This hooks up the default native
         // directories into the appropriate places in the file system.
         // All of these are in read-only mode.
+
+        if(ZipArchive::recognize(self.nativeBasePath()))
+        {
+            // As a special case, if the base path points to a resource pack,
+            // use the contents of the pack as the root of the file system.
+            // The pack itself does not appear in the file system.
+            basePackFile.reset(new NativeFile(self.nativeBasePath().fileName(), self.nativeBasePath()));
+            basePackFile->setStatus(DirectoryFeed::fileStatus(self.nativeBasePath()));
+            fs.root().attach(new ArchiveFeed(*basePackFile));
+        }
+        else
+        {
 #ifdef MACOSX
-        NativePath appDir = appPath.fileNamePath();
-        binFolder.attach(new DirectoryFeed(appDir));
-        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+            NativePath appDir = appPath.fileNamePath();
+            binFolder.attach(new DirectoryFeed(appDir));
+            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 
 #elif WIN32
-        NativePath appDir = appPath.fileNamePath();
-        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
+            NativePath appDir = appPath.fileNamePath();
+            fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
 
 #else // UNIX
-        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 #endif
+        }
 
         if(allowPlugins)
         {
@@ -158,17 +207,87 @@ DENG2_PIMPL(App)
         }
 
         // User's home folder.
-        fs.makeFolder("/home").attach(new DirectoryFeed(self.nativeHomePath(),
-            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+        fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
+                DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
         // Populate the file system.
         fs.refresh();
     }
+
+    void setLogLevelAccordingToOptions()
+    {
+        // Override the log message level.
+        if(cmdLine.has("-loglevel") || cmdLine.has("-verbose") || cmdLine.has("-v") ||
+           cmdLine.has("-vv") || cmdLine.has("-vvv"))
+        {
+            LogEntry::Level level = LogEntry::Message;
+            try
+            {
+                int pos;
+                if((pos = cmdLine.check("-loglevel", 1)) > 0)
+                {
+                    level = LogEntry::textToLevel(cmdLine.at(pos + 1));
+                }
+            }
+            catch(Error const &er)
+            {
+                qWarning("%s", er.asText().toLatin1().constData());
+            }
+
+            // Aliases have not been defined at this point, so check all variants.
+            level = LogEntry::Level(level
+                                    - cmdLine.has("-verbose")
+                                    - cmdLine.has("-v")
+                                    - cmdLine.has("-vv") * 2
+                                    - cmdLine.has("-vvv") * 3);
+
+            if(level < LogEntry::XVerbose)
+            {
+                // Even more verbosity requested, so enable dev messages, too.
+                logFilter.setAllowDev(LogEntry::AllDomains, true);
+                level = LogEntry::XVerbose;
+            }
+
+            logFilter.setMinLevel(LogEntry::AllDomains, level);            
+        }
+
+        // Enable developer messages across the board?
+        if(cmdLine.has("-devlog"))
+        {
+            logFilter.setAllowDev(LogEntry::AllDomains, true);
+        }
+        if(cmdLine.has("-nodevlog"))
+        {
+            logFilter.setAllowDev(LogEntry::AllDomains, false);
+        }
+    }
+
+    void checkForErrorDumpFile()
+    {
+        int pos = cmdLine.check("-errors", 1);
+        if(pos > 0)
+        {
+            File &errors = self.rootFolder().replaceFile(Path("/home") / cmdLine.at(pos + 1));
+            errorSink.reset(new FileLogSink(errors));
+            errorSink->setMode(LogSink::OnlyWarningEntries);
+            logBuffer.addSink(*errorSink);
+        }
+    }
+
+    DENG2_PIMPL_AUDIENCE(StartupComplete)
+    DENG2_PIMPL_AUDIENCE(GameUnload)
+    DENG2_PIMPL_AUDIENCE(GameChange)
 };
+
+DENG2_AUDIENCE_METHOD(App, StartupComplete)
+DENG2_AUDIENCE_METHOD(App, GameUnload)
+DENG2_AUDIENCE_METHOD(App, GameChange)
 
 App::App(NativePath const &appFilePath, QStringList args)
     : d(new Instance(this, args))
 {
+    d->unixInfo.reset(new UnixInfo);
+
     // Global time source for animations.
     Animation::setClock(&d->clock);
 
@@ -179,35 +298,13 @@ App::App(NativePath const &appFilePath, QStringList args)
     // be flushed (Config.log.file).
     d->logBuffer.enableFlushing(false);
 
-    // Set the log message level.
-#ifdef DENG2_DEBUG
-    LogEntry::Level level = LogEntry::DEBUG;
-#else
-    LogEntry::Level level = LogEntry::MESSAGE;
-#endif
-    try
-    {
-        int pos;
-        if((pos = d->cmdLine.check("-loglevel", 1)) > 0)
-        {
-            level = LogEntry::textToLevel(d->cmdLine.at(pos + 1));
-        }
-    }
-    catch(Error const &er)
-    {
-        qWarning("%s", er.asText().toLatin1().constData());
-    }
-    // Aliases have not been defined at this point.
-    level = de::max(LogEntry::TRACE,
-                    LogEntry::Level(level
-                                    - d->cmdLine.has("-verbose")
-                                    - d->cmdLine.has("-v")));
-    d->logBuffer.enable(level);
+    // The log filter will be read from Config, but until that time we can use
+    // the options from the command line.
+    d->setLogLevelAccordingToOptions();
 
     d->appPath = appFilePath;
 
-    LOG_INFO("Application path: ") << d->appPath;
-    LOG_INFO("Enabled log entry level: ") << LogEntry::levelToText(level);
+    LOG_NOTE("Application path: ") << d->appPath;
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
@@ -226,6 +323,38 @@ App::~App()
     d.reset();
 
     singletonApp = 0;
+}
+
+void App::setConfigScript(Path const &path)
+{
+    d->configPath = path;
+}
+
+void App::setName(String const &appName)
+{
+    d->appName = appName;
+}
+
+void App::setUnixHomeFolderName(String const &name)
+{
+    d->unixHomeFolder = name;
+
+    // Reload Unix config files.
+    d->unixInfo.reset(new UnixInfo);
+}
+
+String App::unixHomeFolderName() const
+{
+    return d->unixHomeFolder;
+}
+
+String App::unixEtcFolderName() const
+{
+    if(d->unixHomeFolder.startsWith("."))
+    {
+        return d->unixHomeFolder.mid(1);
+    }
+    return d->unixHomeFolder;
 }
 
 void App::setTerminateFunc(void (*func)(char const *))
@@ -277,6 +406,11 @@ void App::setGame(game::Game &game)
 
 bool App::inMainThread()
 {
+    if(!App::appExists())
+    {
+        // No app even created yet, must be main thread.
+        return true;
+    }
     return DENG2_APP->d->mainThread == QThread::currentThread();
 }
 
@@ -294,7 +428,7 @@ NativePath App::nativePluginBinaryPath()
     path = DENG_LIBRARY_DIR;
 # endif
     // Also check the system config files.
-    d->unixInfo.path("libdir", path);
+    d->unixInfo->path("libdir", path);
 #endif
     return (d->cachedPluginBinaryPath = path);
 }
@@ -312,22 +446,30 @@ NativePath App::nativeHomePath()
 
 #ifdef MACOSX
     NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
+    nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
 #elif WIN32
     NativePath nativeHome = appDataPath();
     nativeHome = nativeHome / "runtime";
 #else // UNIX
     NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / ".doomsday/runtime";
+    nativeHome = nativeHome / d->unixHomeFolder / "runtime";
 #endif
     return (d->cachedHomePath = nativeHome);
 }
 
 Archive &App::persistentData()
 {
-    DENG2_ASSERT(DENG2_APP->d->persistentData != 0);
+    Archive *persist = DENG2_APP->d->persistentData;
+    if(!persist)
+    {
+        throw PersistentDataNotAvailable("App::persistentData", "Persistent data is disabled");
+    }
+    return *persist;
+}
 
-    return *DENG2_APP->d->persistentData;
+bool App::hasPersistentData()
+{
+    return DENG2_APP->d->persistentData != 0;
 }
 
 NativePath App::currentWorkPath()
@@ -361,7 +503,7 @@ NativePath App::nativeBasePath()
     path = DENG_BASE_DIR;
 # endif
     // Also check the system config files.
-    d->unixInfo.path("basedir", path);
+    d->unixInfo->path("basedir", path);
 #endif
     return (d->cachedBasePath = path);
 }
@@ -372,20 +514,23 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     d->initFileSystem(allowPlugins);
 
-    if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
+    if(!flags.testFlag(DisablePersistentData))
     {
-        // Recreate the persistent state data package.
-        ZipArchive arch;
-        arch.add("Info", String("# Package for Doomsday's persistent state.\n").toUtf8());
-        Writer(homeFolder().replaceFile("persist.pack")) << arch;
+        if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
+        {
+            // Recreate the persistent state data package.
+            ZipArchive arch;
+            arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
+            Writer(homeFolder().replaceFile("persist.pack")) << arch;
 
-        homeFolder().populate(Folder::PopulateOnlyThisFolder);
-    }            
+            homeFolder().populate(Folder::PopulateOnlyThisFolder);
+        }
 
-    d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
+        d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
+    }
 
     // The configuration.
-    d->config = new Config("/modules/Config.de");
+    d->config = new Config(d->configPath);
     d->scriptSys.addNativeModule("Config", d->config->names());
 
     d->config->read();
@@ -425,12 +570,23 @@ void App::initSubsystems(SubsystemInitFlags flags)
         LOG_WARNING("Failed to set log output file:\n" + er.asText());
     }
 
-    // The level of enabled messages.
-    /**
-     * @todo We are presently controlling the log levels depending on build
-     * configuration, so ignore what the config says.
-     */
-    //logBuf.enable(Log::LogLevel(conf->getui("log.level")));
+    // Check if a separate error output file is requested.
+    d->checkForErrorDumpFile();
+
+    try
+    {
+        // The level of enabled messages.
+        d->logFilter.read(d->config->names().subrecord("log.filter"));
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to apply log filter:\n" + er.asText());
+    }
+
+    // Command line options may override the saved config.
+    d->setLogLevelAccordingToOptions();
+
+    LOGDEV_NOTE("Developer log entries enabled");
 
     // We can start flushing now when the destination is known.
     logBuf.enableFlushing(true);
@@ -447,7 +603,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->clock.setTime(Time::currentHighPerformanceTime());
 
     // Now we can start observing progress of time.
-    d->clock.audienceForTimeChange += this;
+    d->clock.audienceForTimeChange() += this;
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }
@@ -463,9 +619,20 @@ void App::removeSystem(System &system)
     d->systems.removeAll(&system);
 }
 
+bool App::appExists()
+{
+    return singletonApp != 0;
+}
+
 App &App::app()
 {
+    DENG2_ASSERT(appExists());
     return *singletonApp;
+}
+
+LogFilter &App::logFilter()
+{
+    return DENG2_APP->d->logFilter;
 }
 
 CommandLine &App::commandLine()
@@ -513,7 +680,7 @@ Config &App::config()
 
 UnixInfo &App::unixInfo()
 {
-    return DENG2_APP->d->unixInfo;
+    return *DENG2_APP->d->unixInfo;
 }
 
 } // namespace de

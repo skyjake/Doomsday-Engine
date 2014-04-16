@@ -27,9 +27,17 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Register event sequence callbacks for all cheats.
  */
 void G_RegisterCheats(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBHEXEN_M_CHEAT_H

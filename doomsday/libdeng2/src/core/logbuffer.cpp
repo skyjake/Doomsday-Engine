@@ -1,24 +1,25 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/LogBuffer"
 #include "de/LogSink"
+#include "de/SimpleLogFilter"
 #include "de/FileLogSink"
 #include "de/DebugLogSink"
 #include "de/TextStreamLogSink"
@@ -44,7 +45,8 @@ DENG2_PIMPL_NOREF(LogBuffer)
     typedef QList<LogEntry *> EntryList;
     typedef QSet<LogSink *> Sinks;
 
-    dint enabledOverLevel;
+    SimpleLogFilter defaultFilter;
+    IFilter const *entryFilter;
     dint maxEntryCount;
     bool useStandardOutput;
     bool flushingEnabled;
@@ -64,21 +66,22 @@ DENG2_PIMPL_NOREF(LogBuffer)
     Sinks sinks;
 
     Instance(duint maxEntryCount)
-        : enabledOverLevel(LogEntry::MESSAGE),
-          maxEntryCount(maxEntryCount),
-          useStandardOutput(true),
-          flushingEnabled(true),
-          outputFile(0),
-          fileLogSink(0),
+        : entryFilter(&defaultFilter)
+        , maxEntryCount(maxEntryCount)
+        , useStandardOutput(true)
+        , flushingEnabled(true)
+        , outputFile(0)
+        , fileLogSink(0)
 #ifndef WIN32
-          outSink(new QTextStream(stdout)),
-          errSink(new QTextStream(stderr)),
+        , outSink(new QTextStream(stdout))
+        , errSink(new QTextStream(stderr))
 #else
           // Windows GUI apps don't have stdout/stderr.
-          outSink(QtDebugMsg),
-          errSink(QtWarningMsg),
+        , outSink(QtDebugMsg)
+        , errSink(QtWarningMsg)
 #endif
-          autoFlushTimer(0)
+        , lastFlushedAt(Time::invalidTime())
+        , autoFlushTimer(0)
     {
         // Standard output enabled by default.
         outSink.setMode(LogSink::OnlyNormalEntries);
@@ -92,6 +95,23 @@ DENG2_PIMPL_NOREF(LogBuffer)
     {
         if(autoFlushTimer) autoFlushTimer->stop();
         delete fileLogSink;
+    }
+
+    void enableAutoFlush(bool yes)
+    {
+        DENG2_ASSERT(qApp);
+        if(yes)
+        {
+            if(!autoFlushTimer->isActive())
+            {
+                // Every now and then the buffer will be flushed.
+                autoFlushTimer->start(FLUSH_INTERVAL.asMilliSeconds());
+            }
+        }
+        else
+        {
+            autoFlushTimer->stop();
+        }
     }
 
     void disposeFileLogSink()
@@ -158,6 +178,25 @@ void LogBuffer::latestEntries(Entries &entries, int count) const
     }
 }
 
+void LogBuffer::setEntryFilter(IFilter const *entryFilter)
+{
+    if(entryFilter)
+    {
+        d->entryFilter = entryFilter;
+    }
+    else
+    {
+        d->entryFilter = &d->defaultFilter;
+    }
+}
+
+bool LogBuffer::isEnabled(duint32 entryMetadata) const
+{
+    DENG2_ASSERT(d->entryFilter != 0);
+    DENG2_ASSERT(entryMetadata & LogEntry::DomainMask); // must have a domain
+    return d->entryFilter->isLogEntryAllowed(entryMetadata);
+}
+
 void LogBuffer::setMaxEntryCount(duint maxEntryCount)
 {
     d->maxEntryCount = maxEntryCount;
@@ -169,30 +208,13 @@ void LogBuffer::add(LogEntry *entry)
 
     // We will not flush the new entry as it likely has not yet been given
     // all its arguments.
-    if(d->lastFlushedAt.since() > FLUSH_INTERVAL)
+    if(d->lastFlushedAt.isValid() && d->lastFlushedAt.since() > FLUSH_INTERVAL)
     {
         flush();
     }
 
     d->entries.push_back(entry);
     d->toBeFlushed.push_back(entry);
-
-    // Should we start autoflush?
-    if(!d->autoFlushTimer->isActive() && qApp)
-    {
-        // Every now and then the buffer will be flushed.
-        d->autoFlushTimer->start(FLUSH_INTERVAL * 1000);
-    }
-}
-
-void LogBuffer::enable(LogEntry::Level overLevel)
-{
-    d->enabledOverLevel = overLevel;
-}
-
-bool LogBuffer::isEnabled(LogEntry::Level overLevel) const
-{
-    return d->enabledOverLevel <= overLevel;
 }
 
 void LogBuffer::enableStandardOutput(bool yes)
@@ -208,26 +230,37 @@ void LogBuffer::enableStandardOutput(bool yes)
 void LogBuffer::enableFlushing(bool yes)
 {
     d->flushingEnabled = yes;
+    d->enableAutoFlush(true);
 }
 
-void LogBuffer::setOutputFile(String const &path)
+void LogBuffer::setAutoFlushInterval(TimeDelta const &interval)
+{
+    enableFlushing();
+
+    d->autoFlushTimer->setInterval(interval.asMilliSeconds());
+}
+
+void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
 {
     DENG2_GUARD(this);
 
-    flush();
+    if(behavior == FlushFirstToOldOutputs)
+    {
+        flush();
+    }
+
     d->disposeFileLogSink();
 
     if(d->outputFile)
     {
-        d->outputFile->audienceForDeletion -= this;
+        d->outputFile->audienceForDeletion() -= this;
         d->outputFile = 0;
     }
 
     if(!path.isEmpty())
     {
         d->outputFile = &App::rootFolder().replaceFile(path);
-        d->outputFile->setMode(File::Write);
-        d->outputFile->audienceForDeletion += this;
+        d->outputFile->audienceForDeletion() += this;
 
         // Add a sink for the file.
         d->fileLogSink = new FileLogSink(*d->outputFile);
@@ -262,26 +295,24 @@ void LogBuffer::flush()
 
     if(!d->toBeFlushed.isEmpty())
     {
-        try
+        DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
         {
-            DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
+            DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
+            foreach(LogSink *sink, d->sinks)
             {
-                DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
-
-                foreach(LogSink *sink, d->sinks)
+                if(sink->willAccept(**i))
                 {
-                    if(sink->willAccept(**i))
+                    try
                     {
                         *sink << **i;
                     }
+                    catch(Error const &error)
+                    {
+                        *sink << String("Exception during log flush:\n") +
+                                        error.what() + "\n(the entry format is: '" +
+                                        (*i)->format() + "')";
+                    }
                 }
-            }
-        }
-        catch(Error const &error)
-        {
-            foreach(LogSink *sink, d->sinks)
-            {
-                *sink << "Exception during log flush:\n" << error.what();
             }
         }
 
@@ -323,7 +354,7 @@ LogBuffer &LogBuffer::appBuffer()
     return *_appBuffer;
 }
 
-bool LogBuffer::isAppBufferAvailable()
+bool LogBuffer::appBufferExists()
 {
     return _appBuffer != 0;
 }

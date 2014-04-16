@@ -53,6 +53,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <de/Garbage>
 #include "de/memory.h"
 #include "de/concurrency.h"
 #include "de/c_wrapper.h"
@@ -163,15 +164,15 @@ static memvolume_t *createVolume(size_t volumeSize)
 
     unlockZone();
 
-    LogBuffer_Printf(DE2_LOG_MESSAGE,
-            "Created a new %.1f MB memory volume.\n", vol->size / 1024.0 / 1024.0);
+    App_Log(DE2_LOG_MESSAGE,
+            "Created a new %.1f MB memory volume.", vol->size / 1024.0 / 1024.0);
 
     Z_CheckHeap();
 
     return vol;
 }
 
-boolean Z_IsInited(void)
+dd_bool Z_IsInited(void)
 {
     return zoneMutex != 0;
 }
@@ -189,6 +190,9 @@ void Z_Shutdown(void)
 {
     int             numVolumes = 0;
     size_t          totalMemory = 0;
+
+    // Get rid of possible zone-allocated memory in the garbage.
+    Garbage_RecycleAllWithDestructor(Z_Free);
 
     // Destroy all the memory volumes.
     while(volumeRoot)
@@ -208,8 +212,8 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    LogBuffer_Printf(DE2_LOG_INFO,
-            "Z_Shutdown: Used %i volumes, total %u bytes.\n", numVolumes, totalMemory);
+    App_Log(DE2_LOG_NOTE,
+            "Z_Shutdown: Used %i volumes, total %u bytes.", numVolumes, totalMemory);
 
     Sys_DestroyMutex(zoneMutex);
     zoneMutex = 0;
@@ -259,8 +263,8 @@ static void freeBlock(void *ptr, memblock_t **tracked)
     {
         unlockZone();
         DENG_ASSERT(block->id == LIBDENG_ZONEID);
-        LogBuffer_Printf(DE2_LOG_WARNING,
-                "Attempted to free pointer without ZONEID.\n");
+        App_Log(DE2_LOG_WARNING,
+                "Attempted to free pointer without ZONEID.");
         return;
     }
 
@@ -347,12 +351,12 @@ void Z_Free(void *ptr)
     freeBlock(ptr, 0);
 }
 
-static __inline boolean isFreeBlock(memblock_t *block)
+static __inline dd_bool isFreeBlock(memblock_t *block)
 {
     return !block->user;
 }
 
-static __inline boolean isRootBlock(memvolume_t *vol, memblock_t *block)
+static __inline dd_bool isRootBlock(memvolume_t *vol, memblock_t *block)
 {
     return block == &vol->zone->blockList;
 }
@@ -389,7 +393,7 @@ static __inline memblock_t *rewindRover(memvolume_t *vol, memblock_t *rover, int
     return base;
 }
 
-static boolean isVolumeTooFull(memvolume_t *vol)
+static dd_bool isVolumeTooFull(memvolume_t *vol)
 {
     return vol->allocatedBytes > vol->size * .95f;
 }
@@ -445,7 +449,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
     if(tag < PU_APPSTATIC || tag > PU_PURGELEVEL)
     {
-        LogBuffer_Printf(DE2_LOG_WARNING, "Z_Malloc: Invalid purgelevel %i, cannot allocate memory.\n", tag);
+        App_Log(DE2_LOG_WARNING, "Z_Malloc: Invalid purgelevel %i, cannot allocate memory.", tag);
         return NULL;
     }
     if(!size)
@@ -467,7 +471,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
-        boolean gotoNextVolume = false;
+        dd_bool gotoNextVolume = false;
 
         if(volume == NULL)
         {
@@ -558,8 +562,8 @@ void *Z_Malloc(size_t size, int tag, void *user)
             {
                 // Scanned all the way through, no suitable space found.
                 gotoNextVolume = true;
-                LogBuffer_Printf(DE2_LOG_DEBUG,
-                        "Z_Malloc: gave up on volume after %i checks\n", numChecked);
+                App_Log(DE2_LOG_DEBUG,
+                        "Z_Malloc: gave up on volume after %i checks", numChecked);
                 break;
             }
         }
@@ -676,8 +680,8 @@ void Z_FreeTags(int lowTag, int highTag)
     memvolume_t *volume;
     memblock_t *block, *next;
 
-    LogBuffer_Printf(DE2_LOG_DEBUG,
-            "MemoryZone: Free'ing all blocks in tag range:[%i, %i)\n",
+    App_Log(DE2_LOG_DEBUG,
+            "MemoryZone: Freeing all blocks in tag range:[%i, %i)",
             lowTag, highTag+1);
 
     for(volume = volumeRoot; volume; volume = volume->next)
@@ -709,9 +713,9 @@ void Z_CheckHeap(void)
 {
     memvolume_t *volume;
     memblock_t *block;
-    boolean     isDone;
+    dd_bool     isDone;
 
-    LogBuffer_Printf(DE2_LOG_TRACE, "Z_CheckHeap\n");
+    App_Log(DE2_LOG_TRACE, "Z_CheckHeap");
 
     lockZone();
 
@@ -722,8 +726,8 @@ void Z_CheckHeap(void)
         // Validate the counter.
         if(allocatedMemoryInVolume(volume) != volume->allocatedBytes)
         {
-            LogBuffer_Printf(DE2_LOG_CRITICAL,
-                "Z_CheckHeap: allocated bytes counter is off (counter:%u != actual:%u)\n",
+            App_Log(DE2_LOG_CRITICAL,
+                "Z_CheckHeap: allocated bytes counter is off (counter:%u != actual:%u)",
                 volume->allocatedBytes, allocatedMemoryInVolume(volume));
             App_FatalError("Z_CheckHeap: zone book-keeping is wrong");
         }
@@ -736,8 +740,8 @@ void Z_CheckHeap(void)
         }
         if(total != volume->size - sizeof(memzone_t))
         {
-            LogBuffer_Printf(DE2_LOG_CRITICAL,
-                    "Z_CheckHeap: invalid total size of blocks (%u != %u)\n",
+            App_Log(DE2_LOG_CRITICAL,
+                    "Z_CheckHeap: invalid total size of blocks (%u != %u)",
                     total, volume->size - sizeof(memzone_t));
             App_FatalError("Z_CheckHeap: zone book-keeping is wrong");
         }
@@ -746,8 +750,8 @@ void Z_CheckHeap(void)
         block = volume->zone->blockList.prev;
         if((byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
         {
-            LogBuffer_Printf(DE2_LOG_CRITICAL,
-                    "Z_CheckHeap: last block does not cover the end (%u != %u)\n",
+            App_Log(DE2_LOG_CRITICAL,
+                    "Z_CheckHeap: last block does not cover the end (%u != %u)",
                      (byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size,
                      volume->size - sizeof(memzone_t));
             App_FatalError("Z_CheckHeap: zone is corrupted");
@@ -820,8 +824,8 @@ void Z_ChangeTag2(void *ptr, int tag)
 
         if(tag >= PU_PURGELEVEL && PTR2INT(block->user) < 0x100)
         {
-            LogBuffer_Printf(DE2_LOG_ERROR,
-                "Z_ChangeTag: An owner is required for purgable blocks.\n");
+            App_Log(DE2_LOG_ERROR,
+                "Z_ChangeTag: An owner is required for purgable blocks.");
         }
         else
         {
@@ -866,7 +870,7 @@ int Z_GetTag(void *ptr)
     return block->tag;
 }
 
-boolean Z_Contains(void *ptr)
+dd_bool Z_Contains(void *ptr)
 {
     memvolume_t *volume;
     memblock_t *block = Z_GetBlock(ptr);
@@ -1038,9 +1042,14 @@ void Z_PrintStatus(void)
     size_t allocated = Z_AllocatedMemory();
     size_t wasted = Z_FreeMemory();
 
-    LogBuffer_Printf(DE2_LOG_DEBUG,
-            "Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)\n",
+    App_Log(DE2_LOG_DEBUG,
+            "Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)",
             Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)allocated/(float)(allocated+wasted)*100.f);
+}
+
+void Garbage_Trash(void *ptr)
+{
+    Garbage_TrashInstance(ptr, Z_Contains(ptr)? Z_Free : free);
 }
 
 /**
@@ -1060,8 +1069,8 @@ static void addBlockToSet(zblockset_t *set)
     set->_blockCount++;
     set->_blocks = Z_Recalloc(set->_blocks, sizeof(zblockset_block_t) * set->_blockCount, set->_tag);
 
-    LogBuffer_Printf(DE2_LOG_DEBUG,
-            "addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u (total=%u)\n",
+    App_Log(DE2_LOG_DEBUG,
+            "addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u (total=%u)",
              set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock,
             (uint)(set->_blockCount * set->_elementSize * set->_elementsPerBlock));
 

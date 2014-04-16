@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Function"
@@ -96,7 +96,7 @@ Function::~Function()
     if(d->globals)
     {
         // Stop observing the namespace.
-        d->globals->audienceForDeletion.remove(this);
+        d->globals->audienceForDeletion() -= this;
     }
 }
 
@@ -225,16 +225,20 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
 void Function::setGlobals(Record *globals)
 {
     LOG_AS("Function::setGlobals");
+    DENG2_ASSERT(globals != 0);
     
     if(!d->globals)
     {
         d->globals = globals;
-        d->globals->audienceForDeletion.add(this);
+        d->globals->audienceForDeletion() += this;
     }
+    /*
     else if(d->globals != globals)
     {
-        LOG_WARNING("Function was offered a different namespace.");
-    }
+        LOGDEV_SCR_WARNING("Function was offered a different namespace");
+        LOGDEV_SCR_VERBOSE("Function %p's namespace is:\n%s\nOffered namespace is:\n%s")
+                << this << d->globals->asText() << globals->asText();
+    }*/
 }
 
 Record *Function::globals() const
@@ -352,6 +356,67 @@ Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
                                      QString("Native entry point '%1' is not available").arg(name));
     }
     return found.value();
+}
+
+//----------------------------------------------------------------------------
+
+Function *NativeFunctionSpec::make() const
+{
+    Function::registerNativeEntryPoint(_nativeName, _entryPoint);
+    return new Function(_nativeName, _argNames);
+}
+
+Binder::Binder(Record *module) : _module(module), _isOwned(false)
+{}
+
+Binder::~Binder()
+{
+    deinit();
+}
+
+Binder &Binder::init(Record &module)
+{
+    _module = &module;
+    return *this;
+}
+
+Binder &Binder::initNew()
+{
+    DENG2_ASSERT(!_isOwned);
+    _isOwned = true;
+    _module = new Record;
+    return *this;
+}
+
+void Binder::deinit()
+{
+    if(_isOwned)
+    {
+        delete _module;
+        _module = 0;
+        _isOwned = false;
+    }
+    foreach(String const &name, _boundEntryPoints)
+    {
+        Function::unregisterNativeEntryPoint(name);
+    }
+    _boundEntryPoints.clear();
+}
+
+Record &Binder::module() const
+{
+    DENG2_ASSERT(_module != 0);
+    return *_module;
+}
+
+Binder &Binder::operator << (NativeFunctionSpec const &spec)
+{
+    if(_module)
+    {
+        _boundEntryPoints.insert(spec.nativeName());
+        *_module << spec;
+    }
+    return *this;
 }
 
 } // namespace de

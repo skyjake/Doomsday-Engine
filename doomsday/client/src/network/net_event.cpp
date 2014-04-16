@@ -62,7 +62,7 @@ void N_MAPost(masteraction_t act)
 /**
  * Get a master action command from the queue.
  */
-boolean N_MAGet(masteraction_t *act)
+dd_bool N_MAGet(masteraction_t *act)
 {
     // Empty queue?
     if(mqHead == mqTail)
@@ -93,7 +93,7 @@ void N_MAClear(void)
 /**
  * @return              @c true, if the master action command queue is empty.
  */
-boolean N_MADone(void)
+dd_bool N_MADone(void)
 {
     return (mqHead == mqTail);
 }
@@ -116,7 +116,7 @@ void N_NEPost(netevent_t * nev)
  * @return              @c true if there are net events waiting to be
  *                      processed.
  */
-boolean N_NEPending(void)
+dd_bool N_NEPending(void)
 {
     return neqHead != neqTail;
 }
@@ -126,7 +126,7 @@ boolean N_NEPending(void)
  *
  * @return              @c true, if an event was returned.
  */
-boolean N_NEGet(netevent_t *nev)
+dd_bool N_NEGet(netevent_t *nev)
 {
     // Empty queue?
     if(!N_NEPending())
@@ -151,7 +151,7 @@ void N_NETicker(timespan_t time)
 
         // Update master every 2 minutes.
         if(masterAware && App_ServerSystem().isListening() &&
-           App_World().hasMap() && masterHeartbeat < 0)
+           App_WorldSystem().hasMap() && masterHeartbeat < 0)
         {
             masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);
@@ -180,20 +180,20 @@ void N_NETicker(timespan_t time)
             break;
 
         case MAC_LIST:
-            Net_PrintServerInfo(0, NULL);
+            ServerInfo_Print(NULL, 0);
             num = i = N_MasterGet(0, 0);
             while(--i >= 0)
             {
                 serverinfo_t info;
                 N_MasterGet(i, &info);
-                Net_PrintServerInfo(i, &info);
+                ServerInfo_Print(&info, i);
             }
-            Con_Printf("%i server%s found.\n", num, num != 1 ? "s were" : " was");
+            LOG_NET_VERBOSE("%i server%s found") << num << (num != 1 ? "s were" : " was");
             N_MARemove();
             break;
 
         default:
-            Con_Error("N_NETicker: Invalid value, act = %i.", (int) act);
+            DENG_ASSERT(!"N_NETicker: Invalid value for 'act'");
             break;
         }
     }
@@ -229,7 +229,7 @@ void N_Update(void)
             break;
 
         default:
-            Con_Error("N_Update: Invalid value, nevent.type = %i.", (int) nevent.type);
+            DENG_ASSERT(!"N_Update: Invalid value");
             break;
         }
     }
@@ -246,8 +246,8 @@ void N_TerminateClient(int console)
     if(!clients[console].connected)
         return;
 
-    Con_Message("N_TerminateClient: '%s' from console %i.",
-                clients[console].name, console);
+    LOG_NET_NOTE("Terminating connection to console %i (player '%s')")
+            << console << clients[console].name;
 
     App_ServerSystem().terminateNode(clients[console].nodeID);
 

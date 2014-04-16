@@ -21,17 +21,17 @@
 
 #include <QObject>
 #include <de/Action>
+#include <de/GuiWidget>
+#include <de/ButtonWidget>
 
-#include "GuiWidget"
 #include "consolewidget.h"
-#include "buttonwidget.h"
 
 /**
  * Task bar that acts as the primary UI element of the client's UI.
  *
  * @ingroup gui
  */
-class TaskBarWidget : public GuiWidget
+class TaskBarWidget : public de::GuiWidget
 {
     Q_OBJECT
 
@@ -39,8 +39,8 @@ public:
     TaskBarWidget();
 
     ConsoleWidget &console();
-    CommandWidget &commandLine();
-    ButtonWidget &logoButton();
+    de::CommandWidget &commandLine();
+    de::ButtonWidget &logoButton();
 
     bool isOpen() const;
     de::Rule const &shift();
@@ -59,9 +59,14 @@ public slots:
     void closeConfigMenu();
     void openMainMenu();
     void closeMainMenu();
+    void openMultiplayerMenu();
     void unloadGame();
     void showAbout();
     void showUpdaterSettings();
+    void switchGame();
+    void showMultiplayer();
+    void connectToServerManually();
+    void showTutorial();
 
 protected slots:
     void updateCommandLineLayout();

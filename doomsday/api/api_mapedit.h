@@ -55,23 +55,23 @@ DENG_API_TYPEDEF(MPE)
      * Called by the game to register the map object types it wishes us to make
      * public via the MPE interface.
      */
-    boolean         (*RegisterMapObj)(int identifier, char const *name);
+    dd_bool         (*RegisterMapObj)(int identifier, char const *name);
 
     /**
      * Called by the game to add a new property to a previously registered
      * map object type definition.
      */
-    boolean         (*RegisterMapObjProperty)(int identifier, int propIdentifier, char const *propName, valuetype_t type);
+    dd_bool         (*RegisterMapObjProperty)(int identifier, int propIdentifier, char const *propName, valuetype_t type);
 
     /**
      * To be called to begin the map building process.
      */
-    boolean         (*Begin)(Uri const *mapUri);
+    dd_bool         (*Begin)(Uri const *mapUri);
 
     /**
      * To be called to end the map building process.
      */
-    boolean         (*End)(void);
+    dd_bool         (*End)(void);
 
     /**
      * Create a new vertex in currently loaded editable map.
@@ -98,7 +98,7 @@ DENG_API_TYPEDEF(MPE)
      *                        vertexes will be written back here.
      * @return  @c =true iff all vertexes were created successfully.
      */
-    boolean         (*VertexCreatev)(int num, coord_t const *values, int *archiveIndices, int *indices);
+    dd_bool         (*VertexCreatev)(int num, coord_t const *values, int *archiveIndices, int *indices);
 
     /**
      * Create a new line in the editable map.
@@ -120,7 +120,7 @@ DENG_API_TYPEDEF(MPE)
     int             (*SectorCreate)(float lightlevel, float red, float green, float blue, int archiveIndex);
     int             (*PlaneCreate)(int sector, coord_t height, ddstring_t const *materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
     int             (*PolyobjCreate)(int const *lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
-    boolean         (*GameObjProperty)(char const *objName, int idx, char const *propName, valuetype_t type, void *data);
+    dd_bool         (*GameObjProperty)(char const *objName, int idx, char const *propName, valuetype_t type, void *data);
 }
 DENG_API_T(MPE);
 

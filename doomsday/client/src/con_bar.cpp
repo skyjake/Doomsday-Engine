@@ -27,7 +27,7 @@
 
 #include "ui/clientwindow.h"
 #include "ui/widgets/busywidget.h"
-#include "ui/widgets/progresswidget.h"
+#include <de/ProgressWidget>
 
 using namespace de;
 
@@ -48,7 +48,7 @@ static mutex_t progressMutex;
 //static tval_t target, last;
 
 /*
-static void lockProgress(boolean lock)
+static void lockProgress(dd_bool lock)
 {
     if(lock)
     {
@@ -114,11 +114,11 @@ static int currentProgress(void)
     }
 }*/
 
-boolean Con_IsProgressAnimationCompleted(void)
+dd_bool Con_IsProgressAnimationCompleted(void)
 {
     return !progress().isAnimating();
 
-/*    boolean done;
+/*    dd_bool done;
 
     lockProgress(true);
     done = (Timer_RealSeconds() >= target.time);

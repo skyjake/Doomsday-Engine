@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2.7
 # This Python script will create a set of PK3 files that contain the files
 # that Doomsday needs at runtime. The PK3 files are organized using the 
 # traditional data/ and defs/ structure.

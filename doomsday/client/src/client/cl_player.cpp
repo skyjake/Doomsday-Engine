@@ -1,4 +1,4 @@
-/** @file cl_player.cpp Clientside Player Management.
+/** @file cl_player.cpp  Clientside player management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,16 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/Vector>
-
 #include "de_base.h"
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
+#include "client/cl_player.h"
 
-#include "def_main.h"
+#include "api_client.h"
 
+#include "network/net_main.h"
+#include "network/protocol.h"
+
+#include "world/map.h"
+#include "world/p_players.h"
 #include "BspLeaf"
+
+#include <de/Vector>
 
 using namespace de;
 
@@ -45,50 +48,25 @@ static float pspY;
 // Console player demo momentum (used to smooth out abrupt momentum changes).
 static float cpMom[3][LOCALCAM_WRITE_TICS];
 
-/**
- * Clears the player state table.
- */
-void Cl_InitPlayers(void)
+void Cl_InitPlayers()
 {
     //fixTics = 0;
     pspY = 0;
-    memset(&clPlayerStates, 0, sizeof(clPlayerStates));
-    //memset(fixPos, 0, sizeof(fixPos));
-    memset(cpMom, 0, sizeof(cpMom));
+    de::zap(clPlayerStates);
+    //de::zap(fixPos);
+    de::zap(cpMom);
 }
 
 clplayerstate_t *ClPlayer_State(int plrNum)
 {
-    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     return &clPlayerStates[plrNum];
 }
 
-/**
- * Thrust (with a multiplier).
- */
-void Cl_ThrustMul(mobj_t *mo, angle_t angle, float move, float thmul)
-{
-    // Make a fine angle.
-    angle >>= ANGLETOFINESHIFT;
-    move *= thmul;
-    mo->mom[MX] += move * FIX2FLT(fineCosine[angle]);
-    mo->mom[MY] += move * FIX2FLT(finesine[angle]);
-}
-
-void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
-{
-    Cl_ThrustMul(mo, angle, move, 1);
-}
-
-/**
- * @param plrNum  Player number.
- *
- * @return  The engineside client mobj of a player, representing a remote mobj on the server.
- */
 #undef ClPlayer_ClMobj
-DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum)
+DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 {
-    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
 }
 
@@ -112,7 +90,7 @@ void ClPlayer_UpdateOrigin(int plrNum)
 
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
-    memcpy(remoteClientMobj->origin, localMobj->origin, sizeof(localMobj->origin));
+    std::memcpy(remoteClientMobj->origin, localMobj->origin, sizeof(localMobj->origin));
     Mobj_Link(remoteClientMobj, 0); // Update bspLeaf pointer.
     remoteClientMobj->floorZ = localMobj->floorZ;
     remoteClientMobj->ceilingZ = localMobj->ceilingZ;
@@ -123,12 +101,14 @@ void ClPlayer_UpdateOrigin(int plrNum)
 
 void ClPlayer_ApplyPendingFixes(int plrNum)
 {
+    LOG_AS("ClPlayer_ApplyPendingFixes");
+
     clplayerstate_t *state = ClPlayer_State(plrNum);
-    player_t        *plr = &ddPlayers[plrNum];
-    mobj_t          *clmo = ClPlayer_ClMobj(plrNum);
-    ddplayer_t      *ddpl = &plr->shared;
-    mobj_t          *mo = ddpl->mo;
-    boolean          sendAck = false;
+    player_t *plr = &ddPlayers[plrNum];
+    mobj_t *clmo = ClPlayer_ClMobj(plrNum);
+    ddplayer_t *ddpl = &plr->shared;
+    mobj_t *mo = ddpl->mo;
+    bool sendAck = false;
 
     // If either mobj is missing, the fix cannot be applied yet.
     if(!mo || !clmo) return;
@@ -136,7 +116,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     if(clmo->thinker.id != state->pendingFixTargetClMobjId)
         return;
 
-    assert(clmo->thinker.id == state->clMobjId);
+    DENG_ASSERT(clmo->thinker.id == state->clMobjId);
 
     if(state->pendingFixes & DDPF_FIXANGLES)
     {
@@ -144,10 +124,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->fixAcked.angles = ddpl->fixCounter.angles;
         sendAck = true;
 
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying angle %x to mobj %p and clmo %i...",
-                    state->pendingAngleFix, mo, clmo->thinker.id);
-#endif
+        LOGDEV_NET_MSG("Applying angle %x to mobj %p and clmo %i")
+                << state->pendingAngleFix << mo << clmo->thinker.id;
+
         clmo->angle = mo->angle = state->pendingAngleFix;
         ddpl->lookDir = state->pendingLookDirFix;
     }
@@ -158,11 +137,10 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->fixAcked.origin = ddpl->fixCounter.origin;
         sendAck = true;
 
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...",
-                    state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ],
-                    mo, clmo->thinker.id);
-#endif
+        LOGDEV_NET_MSG("Applying pos %s to mobj %p and clmo %i")
+                << Vector3d(state->pendingOriginFix).asText()
+                << mo << clmo->thinker.id;
+
         Mobj_SetOrigin(mo, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
         mo->reactionTime = 18;
 
@@ -179,11 +157,10 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->fixAcked.mom = ddpl->fixCounter.mom;
         sendAck = true;
 
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying mom (%f, %f, %f) to mobj %p and clmo %i...",
-                    state->pendingMomFix[VX], state->pendingMomFix[VY], state->pendingMomFix[VZ],
-                    mo, clmo->thinker.id);
-#endif
+        LOGDEV_NET_MSG("Applying mom %s to mobj %p and clmo %i")
+                << Vector3d(state->pendingMomFix).asText()
+                << mo << clmo->thinker.id;
+
         mo->mom[MX] = clmo->mom[VX] = state->pendingMomFix[VX];
         mo->mom[MY] = clmo->mom[VY] = state->pendingMomFix[VY];
         mo->mom[MZ] = clmo->mom[VZ] = state->pendingMomFix[VZ];
@@ -202,24 +179,22 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     }
 }
 
-void ClPlayer_HandleFix(void)
+void ClPlayer_HandleFix()
 {
-    int plrNum = 0;
-    int fixes = 0;
-    player_t* plr;
-    ddplayer_t* ddpl;
-    clplayerstate_t* state;
+    LOG_AS("Cl_HandlePlayerFix");
 
     // Target player.
-    plrNum = Reader_ReadByte(msgReader);
-    plr = &ddPlayers[plrNum];
-    ddpl = &plr->shared;
-    state = ClPlayer_State(plrNum);
+    int plrNum = Reader_ReadByte(msgReader);
+    player_t *plr = &ddPlayers[plrNum];
+    ddplayer_t *ddpl = &plr->shared;
+    clplayerstate_t *state = ClPlayer_State(plrNum);
 
     // What to fix?
-    fixes = Reader_ReadUInt32(msgReader);
+    int fixes = Reader_ReadUInt32(msgReader);
 
     state->pendingFixTargetClMobjId = Reader_ReadUInt16(msgReader);
+
+    LOGDEV_NET_MSG("Fixing player %i") << plrNum;
 
     if(fixes & 1) // fix angles?
     {
@@ -228,10 +203,8 @@ void ClPlayer_HandleFix(void)
         state->pendingLookDirFix = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXANGLES;
 
-#ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix angles %i. Angle=%x, lookdir=%f", plrNum,
-                    ddpl->fixAcked.angles, state->pendingAngleFix, state->pendingLookDirFix);
-#endif
+        LOGDEV_NET_VERBOSE("Pending fix angles %i: angle=%x, lookdir=%f")
+                << ddpl->fixAcked.angles << state->pendingAngleFix << state->pendingLookDirFix;
     }
 
     if(fixes & 2) // fix pos?
@@ -242,10 +215,8 @@ void ClPlayer_HandleFix(void)
         state->pendingOriginFix[VZ] = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXORIGIN;
 
-#ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix pos %i. Pos=%f, %f, %f", plrNum,
-                    ddpl->fixAcked.origin, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
-#endif
+        LOGDEV_NET_VERBOSE("Pending fix pos %i: %s")
+                << ddpl->fixAcked.origin << Vector3d(state->pendingOriginFix).asText();
     }
 
     if(fixes & 4) // fix momentum?
@@ -255,12 +226,15 @@ void ClPlayer_HandleFix(void)
         state->pendingMomFix[VY] = Reader_ReadFloat(msgReader);
         state->pendingMomFix[VZ] = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXMOM;
+
+        LOGDEV_NET_VERBOSE("Pending fix momentum %i: %s")
+                << ddpl->fixAcked.mom << Vector3d(state->pendingMomFix).asText();
     }
 
     ClPlayer_ApplyPendingFixes(plrNum);
 }
 
-void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
+void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
 {
     player_t *plr = &ddPlayers[consolePlayer];
     ddplayer_t *ddpl = &plr->shared;
@@ -290,7 +264,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
         Mobj_Link(mo, MLF_SECTOR | MLF_BLOCKMAP);
     }
 
-    mo->_bspLeaf = &App_World().map().bspLeafAt_FixedPrecision(Mobj_Origin(*mo));
+    mo->_bspLeaf = &Mobj_Map(*mo).bspLeafAt_FixedPrecision(Mobj_Origin(*mo));
     mo->floorZ   = Mobj_Sector(mo)->floor().height();
     mo->ceilingZ = Mobj_Sector(mo)->ceiling().height();
 
@@ -306,20 +280,15 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
     ClPlayer_UpdateOrigin(consolePlayer);
 }
 
-/**
- * Reads a single PSV_FRAME2 player delta from the message buffer and
- * applies it to the player in question.
- */
-void ClPlayer_ReadDelta2(boolean skip)
+void ClPlayer_ReadDelta()
 {
-    static player_t     dummyPlayer;
-    static clplayerstate_t dummyClState;
+    LOG_AS("ClPlayer_ReadDelta2");
 
-    int                 df = 0, psdf, i, idx;
-    clplayerstate_t    *s;
-    ddplayer_t         *ddpl;
-    ddpsprite_t        *psp;
-    unsigned short num, newId;
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_WorldSystem().map();
+
+    int df = 0;
+    ushort num;
 
     // The first byte consists of a player number and some flags.
     num = Reader_ReadByte(msgReader);
@@ -327,47 +296,36 @@ void ClPlayer_ReadDelta2(boolean skip)
     df |= Reader_ReadByte(msgReader); // Second byte is just flags.
     num &= 0xf; // Clear the upper bits of the number.
 
-    if(!skip)
-    {
-        s = &clPlayerStates[num];
-        ddpl = &ddPlayers[num].shared;
-    }
-    else
-    {
-        // We're skipping, read the data into dummies.
-        s = &dummyClState;
-        ddpl = &dummyPlayer.shared;
-    }
+    clplayerstate_t *s = &clPlayerStates[num];
+    ddplayer_t *ddpl = &ddPlayers[num].shared;
 
     if(df & PDF_MOBJ)
     {
-        mobj_t *old = ClMobj_Find(s->clMobjId);
-
-        newId = Reader_ReadUInt16(msgReader);
+        mobj_t *old  = map.clMobjFor(s->clMobjId);
+        ushort newId = Reader_ReadUInt16(msgReader);
 
         // Make sure the 'new' mobj is different than the old one;
         // there will be linking problems otherwise.
-        if(!skip && newId != s->clMobjId)
+        if(newId != s->clMobjId)
         {
             // We are now changing the player's mobj.
-            mobj_t* clmo = 0;
+            mobj_t *clmo = 0;
             //clmoinfo_t* info = 0;
-            boolean justCreated = false;
+            bool justCreated = false;
 
             s->clMobjId = newId;
 
             // Find the new mobj.
-            clmo = ClMobj_Find(s->clMobjId);
+            clmo = map.clMobjFor(s->clMobjId);
             //info = ClMobj_GetInfo(clmo);
             if(!clmo)
             {
-#ifdef _DEBUG
-                Con_Message("ClPlayer_ReadDelta2: Player %i's new clmobj is %i, but we don't know it yet.",
-                            num, newId);
-#endif
+                LOGDEV_NET_NOTE("Player %i's new clmobj is %i, but we haven't received it yet")
+                        << num << newId;
+
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
-                clmo = ClMobj_Create(s->clMobjId);
+                clmo = map.clMobjFor(s->clMobjId, true/*create*/);
                 //info = ClMobj_GetInfo(clmo);
                 /*
                 if(num == consolePlayer)
@@ -397,63 +355,56 @@ void ClPlayer_ReadDelta2(boolean skip)
             // The update will be made when the mobj data is received.
             if(!justCreated) // && num != consolePlayer)
             {
-#ifdef _DEBUG
-                Con_Message("ClPlayer_ReadDelta2: Copying clmo %i state to real player %i mobj %p.",
-                            newId, num, ddpl->mo);
-#endif
+                LOGDEV_NET_XVERBOSE("Copying clmo %i state to real player %i mobj %p")
+                        << newId << num << ddpl->mo;
+
                 Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff, true);
             }
-            /*
-            else if(ddpl->mo)
-            {
-                // Update the new client mobj's information from the real
-                // mobj, which is already known.
-#if _DEBUG
-                Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.", num);
-                Con_Message("  x=%g y=%g z=%g", ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
-#endif
-                clmo->pos[VX] = ddpl->mo->origin[VX];
-                clmo->pos[VY] = ddpl->mo->origin[VY];
-                clmo->pos[VZ] = ddpl->mo->origin[VZ];
-                clmo->angle = ddpl->mo->angle;
-                if(!skip)
-                    ClPlayer_UpdateOrigin(num);
-            }
-            */
 
-#if _DEBUG
-            Con_Message("ClPlr_RdD2: Pl%i: mobj=%i old=%p", num, s->clMobjId, old);
-            Con_Message("  x=%g y=%g z=%g fz=%g cz=%g", clmo->origin[VX],
-                        clmo->origin[VY], clmo->origin[VZ], clmo->floorZ, clmo->ceilingZ);
-            Con_Message("ClPlr_RdD2: pl=%i => moid=%i", (skip? -1 : num), s->clMobjId);
-#endif
+            LOGDEV_NET_VERBOSE("Player %i: mobj=%i old=%p x=%.1f y=%.1f z=%.1f Fz=%.1f Cz=%.1f")
+                    << num << s->clMobjId << old
+                    << clmo->origin[VX] << clmo->origin[VY] << clmo->origin[VZ]
+                    << clmo->floorZ << clmo->ceilingZ;
+            LOGDEV_NET_VERBOSE("Player %i using mobj id %i") << num << s->clMobjId;
         }
     }
 
     if(df & PDF_FORWARDMOVE)
+    {
         s->forwardMove = (char) Reader_ReadByte(msgReader) * 2048;
+    }
+
     if(df & PDF_SIDEMOVE)
+    {
         s->sideMove = (char) Reader_ReadByte(msgReader) * 2048;
+    }
+
     if(df & PDF_ANGLE)
     {
         //s->angle = Reader_ReadByte(msgReader) << 24;
         DENG_UNUSED(Reader_ReadByte(msgReader));
     }
+
     if(df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Reader_ReadByte(msgReader) << 24) / 16;
     }
+
     if(df & PDF_FRICTION)
+    {
         s->friction = Reader_ReadByte(msgReader) << 8;
+    }
+
     if(df & PDF_EXTRALIGHT)
     {
-        i = Reader_ReadByte(msgReader);
-        ddpl->fixedColorMap = i & 7;
-        ddpl->extraLight = i & 0xf8;
+        int val = Reader_ReadByte(msgReader);
+        ddpl->fixedColorMap = val & 7;
+        ddpl->extraLight    = val & 0xf8;
     }
+
     if(df & PDF_FILTER)
     {
-        unsigned int filter = Reader_ReadUInt32(msgReader);
+        uint filter = Reader_ReadUInt32(msgReader);
 
         ddpl->filterColor[CR] = (filter & 0xff) / 255.f;
         ddpl->filterColor[CG] = ((filter >> 8) & 0xff) / 255.f;
@@ -468,26 +419,25 @@ void ClPlayer_ReadDelta2(boolean skip)
         {
             ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
         }
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ReadDelta2: Filter color set remotely to (%f,%f,%f,%f)",
-                    ddpl->filterColor[CR],
-                    ddpl->filterColor[CG],
-                    ddpl->filterColor[CB],
-                    ddpl->filterColor[CA]);
-#endif
+        LOG_NET_XVERBOSE("View filter color set remotely to %s")
+                << Vector4f(ddpl->filterColor).asText();
     }
+
     if(df & PDF_PSPRITES)
     {
-        for(i = 0; i < 2; ++i)
+        for(int i = 0; i < 2; ++i)
         {
             // First the flags.
-            psdf = Reader_ReadByte(msgReader);
-            psp = ddpl->pSprites + i;
+            int psdf = Reader_ReadByte(msgReader);
+            ddpsprite_t *psp = ddpl->pSprites + i;
+
             if(psdf & PSDF_STATEPTR)
             {
-                idx = Reader_ReadPackedUInt16(msgReader);
+                int idx = Reader_ReadPackedUInt16(msgReader);
                 if(!idx)
+                {
                     psp->statePtr = 0;
+                }
                 else if(idx < countStates.num)
                 {
                     psp->statePtr = states + (idx - 1);
@@ -496,11 +446,20 @@ void ClPlayer_ReadDelta2(boolean skip)
             }
 
             /*if(psdf & PSDF_LIGHT)
-                psp->light = Reader_ReadByte(msgReader) / 255.0f;*/
+            {
+                psp->light = Reader_ReadByte(msgReader) / 255.0f;
+            }*/
+
             if(psdf & PSDF_ALPHA)
+            {
                 psp->alpha = Reader_ReadByte(msgReader) / 255.0f;
+            }
+
             if(psdf & PSDF_STATE)
+            {
                 psp->state = Reader_ReadByte(msgReader);
+            }
+
             if(psdf & PSDF_OFFSET)
             {
                 psp->offset[VX] = (char) Reader_ReadByte(msgReader) * 2;
@@ -510,23 +469,14 @@ void ClPlayer_ReadDelta2(boolean skip)
     }
 }
 
-/**
- * @return  The gameside local mobj of a player.
- */
 mobj_t *ClPlayer_LocalGameMobj(int plrNum)
 {
     return ddPlayers[plrNum].shared.mo;
 }
 
-/**
- * Used by the client plane mover.
- *
- * @return              @c true, if the player is free to move according to
- *                      floorz and ceilingz.
- */
-boolean ClPlayer_IsFreeToMove(int plrNum)
+bool ClPlayer_IsFreeToMove(int plrNum)
 {
-    mobj_t* mo = ClPlayer_LocalGameMobj(plrNum);
+    mobj_t *mo = ClPlayer_LocalGameMobj(plrNum);
     if(!mo) return false;
 
     return (mo->origin[VZ] >= mo->floorZ &&

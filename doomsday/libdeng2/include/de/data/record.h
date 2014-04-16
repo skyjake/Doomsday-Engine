@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_RECORD_H
@@ -34,6 +34,7 @@ namespace de {
 
 class ArrayValue;
 class Function;
+class NativeFunctionSpec;
 
 /**
  * A set of variables. A record may have any number of subrecords. Note
@@ -57,12 +58,20 @@ public:
     /// All variables and subrecords in the record must have a name. @ingroup errors
     DENG2_ERROR(UnnamedError);
 
+    /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
+    DENG2_ERROR(ValueTypeError);
+
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
     typedef QList<KeyValue> List;
 
-    DENG2_DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record &record))
+    enum CopyBehavior {
+        AllMembers,
+        IgnoreDoubleUnderscoreMembers
+    };
+
+    DENG2_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
 
 public:
     Record();
@@ -70,9 +79,10 @@ public:
     /**
      * Constructs a copy of another record.
      *
-     * @param other  Record to copy.
+     * @param other     Record to copy.
+     * @param behavior  Which members to copy.
      */
-    Record(Record const &other);
+    Record(Record const &other, CopyBehavior behavior = AllMembers);
 
     virtual ~Record();
 
@@ -80,11 +90,6 @@ public:
      * Deletes all the variables in the record.
      */
     void clear();
-
-    enum CopyBehavior {
-        AllMembers,
-        IgnoreDoubleUnderscoreMembers
-    };
 
     /**
      * Adds a copy of each member of another record into this record. The
@@ -136,7 +141,8 @@ public:
     Variable *remove(Variable &variable);
 
     /**
-     * Adds a new variable to the record with a NoneValue.
+     * Adds a new variable to the record with a NoneValue. If there is an existing
+     * variable with the given name, the old variable is deleted first.
      *
      * @param variableName  Name of the variable.
      *
@@ -146,7 +152,7 @@ public:
 
     /**
      * Adds a number variable to the record. The variable is set up to only accept
-     * number values.
+     * number values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param number  Value of the variable.
@@ -156,8 +162,9 @@ public:
     Variable &addNumber(String const &variableName, Value::Number const &number);
 
     /**
-     * Adds a number variable to the record with a Boolean semantic hint.
-     * The variable is set up to only accept number values.
+     * Adds a number variable to the record with a Boolean semantic hint. The variable is
+     * set up to only accept number values. An existing variable with the same name is
+     * deleted first.
      *
      * @param variableName  Name of the variable.
      * @param booleanValue  Value of the variable (@c true or @c false).
@@ -168,7 +175,7 @@ public:
 
     /**
      * Adds a text variable to the record. The variable is set up to only accept
-     * text values.
+     * text values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param text  Value of the variable.
@@ -181,7 +188,7 @@ public:
 
     /**
      * Adds an array variable to the record. The variable is set up to only accept
-     * array values.
+     * array values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param array         Value for the new variable (ownership taken). If not
@@ -193,7 +200,7 @@ public:
 
     /**
      * Adds a dictionary variable to the record. The variable is set up to only accept
-     * dictionary values.
+     * dictionary values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      *
@@ -203,7 +210,7 @@ public:
 
     /**
      * Adds a block variable to the record. The variable is set up to only accept
-     * block values.
+     * block values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      *
@@ -213,7 +220,7 @@ public:
 
     /**
      * Adds a function variable to the record. The variable is set up to only
-     * accept function values.
+     * accept function values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param func          Function. The variable's value will hold a
@@ -225,8 +232,9 @@ public:
     Variable &addFunction(String const &variableName, Function *func);
 
     /**
-     * Adds a new subrecord to the record. Adds a variable named @a name
-     * and gives ownership of @a subrecord to it.
+     * Adds a new subrecord to the record. Adds a variable named @a name and gives
+     * ownership of @a subrecord to it. An existing subrecord with the same name is
+     * deleted first.
      *
      * @param name  Name to use for the subrecord. This must be a valid variable name.
      * @param subrecord  Record to add. This record gets ownership
@@ -237,8 +245,9 @@ public:
     Record &add(String const &name, Record *subrecord);
 
     /**
-     * Adds a new empty subrecord to the record. Adds a variable named @a
-     * name and creates a new record owned by it.
+     * Adds a new empty subrecord to the record. Adds a variable named @a name and
+     * creates a new record owned by it. An existing subrecord with the same name is
+     * deleted first.
      *
      * @param name  Name to use for the subrecord. This must be a valid variable name.
      *
@@ -254,6 +263,64 @@ public:
      * @return  Caller gets ownership of the removed record.
      */
     Record *remove(String const &name);
+
+    // Convenient value getters:
+    Value const &get(String const &name) const;
+    dint geti(String const &name) const;
+    dint geti(String const &name, dint defaultValue) const;
+    bool getb(String const &name) const;
+    bool getb(String const &name, bool defaultValue) const;
+    duint getui(String const &name) const;
+    duint getui(String const &name, duint defaultValue) const;
+    ddouble getd(String const &name) const;
+    ddouble getd(String const &name, ddouble defaultValue) const;
+    String gets(String const &name) const;
+    String gets(String const &name, String const &defaultValue) const;
+    ArrayValue const &geta(String const &name) const;
+
+    template <typename ValueType>
+    ValueType const &getAs(String const &name) const {
+        ValueType const *v = get(name).maybeAs<ValueType>();
+        if(!v)
+        {
+            throw ValueTypeError("Record::getAs", String("Cannot cast to expected type (") +
+                                 DENG2_TYPE_NAME(ValueType) + ")");
+        }
+        return *v;
+    }
+
+    /**
+     * Sets the value of a variable, creating the variable if needed.
+     *
+     * @param name   Name of the variable. May contain subrecords using the dot notation.
+     * @param value  Value for the variable.
+     *
+     * @return Variable whose value was set.
+     */
+    Variable &set(String const &name, bool value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, char const *value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, Value::Text const &value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, Value::Number const &value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, dint32 value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, duint32 value);
+
+    /**
+     * Sets the value of a variable, creating the variable if it doesn't exist.
+     *
+     * @param name   Name of the variable. May contain subrecords using the dot notation.
+     * @param value  Array to use as the value of the variable. Ownership taken.
+     */
+    Variable &set(String const &name, ArrayValue *value);
 
     /**
      * Looks up a variable in the record. Variables in subrecords can be accessed
@@ -337,12 +404,21 @@ public:
      */
     Function const *function(String const &name) const;
 
+    /**
+     * Adds a new native function to the record according to the specification.
+     *
+     * @param spec  Native function specification.
+     *
+     * @return  Reference to this record.
+     */
+    Record &operator << (NativeFunctionSpec const &spec);
+
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
     String asText() const { return asText("", 0); }
 
     // Observes Variable deletion.

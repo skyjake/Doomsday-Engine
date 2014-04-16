@@ -39,7 +39,7 @@
 #include "am_map.h"
 #include "d_net.h"
 #include "dmu_lib.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_user.h"
 #include "p_tick.h"
@@ -78,7 +78,7 @@ int clipAmmo[NUM_AMMO_TYPES] = { 10, 4, 20, 1 };
  *
  * @return              @c false, if the ammo can't be picked up at all.
  */
-boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
+dd_bool P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 {
     if(ammo == AT_NOAMMO)
         return false;
@@ -94,7 +94,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     else
         num = clipAmmo[ammo] / 2;
 
-    if(gameSkill == SM_BABY)
+    if(G_Ruleset_Skill() == SM_BABY)
     {
         // Give double ammo in trainer mode.
         num <<= 1;
@@ -119,14 +119,14 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 /**
  * The weapon name may have a MF_DROPPED flag ored in.
  */
-boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
+dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
 {
-    ammotype_t          i;
-    boolean             gaveAmmo = false;
-    boolean             gaveWeapon;
-    int                 numClips;
+    ammotype_t i;
+    dd_bool gaveAmmo = false;
+    dd_bool gaveWeapon;
+    int numClips;
 
-    if(IS_NETGAME && (deathmatch != 2) && !dropped)
+    if(IS_NETGAME && (G_Ruleset_Deathmatch() != 2) && !dropped)
     {
         // leave placed weapons forever on net games
         if(player->weapons[weapon].owned)
@@ -142,7 +142,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
             if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
-            if(deathmatch)
+            if(G_Ruleset_Deathmatch())
                 numClips = 5;
             else
                 numClips = 2;
@@ -152,7 +152,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         }
 
         // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
+        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, G_Ruleset_Deathmatch() == 1);
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
@@ -202,7 +202,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 /**
  * Returns false if the body isn't needed at all
  */
-boolean P_GiveBody(player_t *player, int num)
+dd_bool P_GiveBody(player_t *player, int num)
 {
     if(player->health >= maxHealth)
         return false;
@@ -223,7 +223,7 @@ boolean P_GiveBody(player_t *player, int num)
 /**
  * @return              @c true, iff the armor was given.
  */
-boolean P_GiveArmor(player_t* plr, int type, int points)
+dd_bool P_GiveArmor(player_t* plr, int type, int points)
 {
     if(plr->armorPoints >= points)
         return false; // Don't pick up.
@@ -253,7 +253,7 @@ void P_GiveKey(player_t* player, keytype_t card)
 /**
  * d64tc
  */
-boolean P_GiveItem(player_t* player, inventoryitemtype_t item)
+dd_bool P_GiveItem(player_t* player, inventoryitemtype_t item)
 {
     if(!P_InventoryGive(player - players, item, false))
         return false;
@@ -286,7 +286,7 @@ void P_GiveBackpack(player_t* player)
     P_SetMessage(player, 0, GOTBACKPACK);
 }
 
-boolean P_GivePower(player_t* player, int power)
+dd_bool P_GivePower(player_t* player, int power)
 {
     player->update |= PSF_POWERS;
 
@@ -342,7 +342,7 @@ boolean P_GivePower(player_t* player, int power)
     return true;
 }
 
-boolean P_TakePower(player_t* player, int power)
+dd_bool P_TakePower(player_t* player, int power)
 {
     mobj_t*             plrmo = player->plr->mo;
 
@@ -475,7 +475,7 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
  *
  * @return              @c true iff the item should be destroyed.
  */
-static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
+static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 {
     if(!plr)
         return false;
@@ -877,8 +877,8 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
     else
     {
-        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
-                    (int) special->type);
+        App_Log(DE2_MAP_WARNING, "P_TouchSpecialMobj: Unknown gettable thing %i",
+                (int) special->type);
     }
 
     if(special->flags & MF_COUNTITEM)
@@ -891,7 +891,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     player->bonusCount += BONUSADD;
 }
 
-void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
+void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
 {
     mobjtype_t          item;
     mobj_t*             mo;
@@ -1006,7 +1006,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 }
 
 int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-    int damageP, boolean stomping)
+    int damageP, dd_bool stomping)
 {
     return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
 }
@@ -1024,7 +1024,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  * @return              Actual amount of damage done.
  */
 int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-    int damageP, boolean stomping, boolean skipNetworkCheck)
+    int damageP, dd_bool stomping, dd_bool skipNetworkCheck)
 {
 // Follow a player exlusively for 3 seconds.
 #define BASETHRESHOLD           (100)
@@ -1066,7 +1066,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+            if(IS_NETGAME && !G_Ruleset_Deathmatch() && cfg.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
@@ -1083,7 +1083,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     }
 
     player = target->player;
-    if(player && gameSkill == SM_BABY)
+    if(player && G_Ruleset_Skill() == SM_BABY)
         damage >>= 1; // take half damage in trainer mode
 
     // jd64 >

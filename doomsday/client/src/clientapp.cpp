@@ -27,13 +27,18 @@
 #include <stdlib.h>
 
 #include <de/Log>
+#include <de/LogSink>
 #include <de/DisplayMode>
+#include <de/NativeFont>
 #include <de/Error>
 #include <de/ByteArrayFile>
+#include <de/ArrayValue>
+#include <de/DictionaryValue>
 #include <de/c_wrapper.h>
-#include <de/garbage.h>
+#include <de/Garbage>
 
 #include "clientapp.h"
+#include "alertmask.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
@@ -44,8 +49,11 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "ui/inputsystem.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/widgets/taskbarwidget.h"
+#include "ui/dialogs/alertdialog.h"
+#include "ui/styledlogsinkformatter.h"
 #include "updater.h"
 
 #if WIN32
@@ -67,12 +75,12 @@ static void continueInitWithEventLoopRunning()
 {
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    WindowSystem::main().show();
+    ClientWindowSystem::main().show();
 
     ClientApp::updater().setupUI();
 }
 
-Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
+static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const &)
 {
     if(App_CurrentGame().isNull())
     {
@@ -84,54 +92,86 @@ Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
     return new TextValue(name);
 }
 
-Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
+static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
 {
-    LOG_AS("ClientApp");
-
-    // We must have one argument.
-    if(args.size() != 1)
-    {
-        throw Function::WrongArgumentsError("Binding_App_LoadFont",
-                                            "Expected one argument");
-    }
-
-    try
-    {
-        // Try to load the specific font.
-        Block data(App::fileSystem().root().locate<File const>(args.at(0)->asText()));
-        int id;
-        id = QFontDatabase::addApplicationFontFromData(data);
-        if(id < 0)
-        {
-            LOG_WARNING("Failed to load font:");
-        }
-        else
-        {
-            LOG_VERBOSE("Loaded font: %s") << args.at(0)->asText();
-            //qDebug() << args.at(0)->asText();
-            //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
-        }
-    }
-    catch(Error const &er)
-    {
-        LOG_WARNING("Failed to load font:\n") << er.asText();
-    }
+    Sys_Quit();
     return 0;
 }
 
 DENG2_PIMPL(ClientApp)
 {    
+    Binder binder;
     QScopedPointer<Updater> updater;
     SettingsRegister audioSettings;
+    SettingsRegister networkSettings;
+    SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     QScopedPointer<WidgetActions> widgetActions;
     RenderSystem *renderSys;
     ResourceSystem *resourceSys;
-    WindowSystem *winSys;
+    ClientWindowSystem *winSys;
     ServerLink *svLink;
     Games games;
-    World world;
+    WorldSystem *worldSys;
+
+    /**
+     * Log entry sink that passes warning messages to the main window's alert
+     * notification dialog.
+     */
+    struct LogWarningAlarm : public LogSink
+    {
+        AlertMask alertMask;
+        StyledLogSinkFormatter formatter;
+
+        LogWarningAlarm()
+            : LogSink(formatter)
+            , formatter(LogEntry::Styled | LogEntry::OmitLevel | LogEntry::Simple)
+        {
+            //formatter.setOmitSectionIfNonDev(false); // always show section
+            setMode(OnlyWarningEntries);
+        }
+
+        LogSink &operator << (LogEntry const &entry)
+        {
+            if(alertMask.shouldRaiseAlert(entry.metadata()))
+            {
+                // Don't raise alerts if the console history is open; the
+                // warning/error will be shown there.
+                if(ClientWindow::mainExists() &&
+                   ClientWindow::main().taskBar().isOpen() &&
+                   ClientWindow::main().taskBar().console().isLogOpen())
+                {
+                    return *this;
+                }
+
+                // We don't want to raise alerts about problems in id/Raven WADs,
+                // since these just have to be accepted by the user.
+                if((entry.metadata() & LogEntry::Map) &&
+                   ClientApp::worldSystem().hasMap() &&
+                   !ClientApp::worldSystem().map().isCustom())
+                {
+                    return *this;
+                }
+
+                foreach(String msg, formatter.logEntryToTextLines(entry))
+                {
+                    ClientApp::alert(msg, entry.level());
+                }
+            }
+            return *this;
+        }
+
+        LogSink &operator << (String const &plainText)
+        {
+            ClientApp::alert(plainText);
+            return *this;
+        }
+
+        void flush() {} // not buffered
+    };
+
+    LogWarningAlarm logAlarm;
 
     Instance(Public *i)
         : Base(i)
@@ -141,40 +181,28 @@ DENG2_PIMPL(ClientApp)
         , resourceSys(0)
         , winSys(0)
         , svLink(0)
+        , worldSys(0)
     {
         clientAppSingleton = thisPublic;
+
+        LogBuffer::appBuffer().addSink(logAlarm);
     }
 
     ~Instance()
     {
+        LogBuffer::appBuffer().removeSink(logAlarm);
+
         Sys_Shutdown();
         DD_Shutdown();
 
-        delete svLink;
+        delete worldSys;
         delete winSys;
+        delete svLink;
         delete renderSys;
         delete resourceSys;
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
-
-        deinitScriptBindings();
-    }
-
-    void initScriptBindings()
-    {
-        Function::registerNativeEntryPoint("App_GamePlugin", Binding_App_GamePlugin);
-        Function::registerNativeEntryPoint("App_LoadFont", Binding_App_LoadFont);
-
-        Record &appModule = self.scriptSystem().nativeModule("App");
-        appModule.addFunction("gamePlugin", refless(new Function("App_GamePlugin"))).setReadOnly();
-        appModule.addFunction("loadFont",   refless(new Function("App_LoadFont", Function::Arguments() << "fileName"))).setReadOnly();
-    }
-
-    void deinitScriptBindings()
-    {
-        Function::unregisterNativeEntryPoint("App_GamePlugin");
-        Function::unregisterNativeEntryPoint("App_LoadFont");
     }
 
     /**
@@ -193,9 +221,25 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        typedef SettingsRegister SReg;
+        typedef SettingsRegister SReg; // convenience
+
+        // Log filter and alert settings.
+        for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
+        {
+            String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
+            logSettings
+                    .define(SReg::ConfigVariable, String("log.filter.%1.minLevel").arg(name))
+                    .define(SReg::ConfigVariable, String("log.filter.%1.allowDev").arg(name))
+                    .define(SReg::ConfigVariable, String("alert.%1").arg(name));
+        }
 
         /// @todo These belong in their respective subsystems.
+
+        networkSettings
+                .define(SReg::StringCVar, "net-master-address", "www.dengine.net")
+                .define(SReg::StringCVar, "net-master-path",    "/master.php")
+                .define(SReg::IntCVar,    "net-master-port",    0)
+                .define(SReg::IntCVar,    "net-dev",            0);
 
         audioSettings
                 .define(SReg::IntCVar,   "sound-volume",        255)
@@ -235,28 +279,25 @@ DENG2_PIMPL(ClientApp)
 };
 
 ClientApp::ClientApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Instance(this))
+    : BaseGuiApp(argc, argv), d(new Instance(this))
 {
     novideo = false;
-
-    // Override the system locale (affects number/time formatting).
-    QLocale::setDefault(QLocale("en_US.UTF-8"));
 
     // Use the host system's proxy configuration.
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
-    QCoreApplication::setOrganizationDomain ("dengine.net");
-    QCoreApplication::setOrganizationName   ("Deng Team");
-    QCoreApplication::setApplicationName    ("Doomsday Engine");
-    QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
+    setMetadata("Deng Team", "dengine.net", "Doomsday Engine", DOOMSDAY_VERSION_BASE);
+    setUnixHomeFolderName(".doomsday");
 
     setTerminateFunc(handleLegacyCoreTerminate);
 
     // We must presently set the current game manually (the collection is global).
     setGame(d->games.nullGame());
 
-    d->initScriptBindings();
+    d->binder.init(scriptSystem().nativeModule("App"))
+            << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
+            << DENG2_FUNC_NOARG (App_Quit,       "quit");
 }
 
 void ClientApp::initialize()
@@ -285,6 +326,9 @@ void ClientApp::initialize()
 
     initSubsystems(); // loads Config
 
+    // Set up the log alerts (observes Config variables).
+    d->logAlarm.alertMask.init();
+
     // Create the user's configurations and settings folder, if it doesn't exist.
     fileSystem().makeFolder("/home/configs");
 
@@ -308,7 +352,8 @@ void ClientApp::initialize()
     addSystem(*d->renderSys);
 
     // Create the window system.
-    d->winSys = new WindowSystem;
+    d->winSys = new ClientWindowSystem;
+    WindowSystem::setAppWindowSystem(*d->winSys);
     addSystem(*d->winSys);
 
     // Check for updates automatically.
@@ -328,6 +373,10 @@ void ClientApp::initialize()
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
     d->widgetActions.reset(new WidgetActions);
+
+    // Create the world system.
+    d->worldSys = new WorldSystem;
+    addSystem(*d->worldSys);
 
     // Finally, run the bootstrap script.
     scriptSystem().importModule("bootstrap");
@@ -358,13 +407,25 @@ void ClientApp::postFrame()
 
     S_EndFrame();
 
+    // This is a good time to recycle unneeded memory allocations, as we're just
+    // finished and shown a frame and there might be free time before we have to
+    // begin drawing the next frame.
     Garbage_Recycle();
-    loop().resume();
 }
 
-bool ClientApp::haveApp()
+void ClientApp::alert(String const &msg, LogEntry::Level level)
 {
-    return clientAppSingleton != 0;
+    if(ClientWindow::mainExists())
+    {
+        ClientWindow::main().alerts()
+                .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
+                               level == LogEntry::Warning? AlertDialog::Normal :
+                                                           AlertDialog::Minor);
+    }
+    /**
+     * @todo If there is no window, the alert could be stored until the window becomes
+     * available. -jk
+     */
 }
 
 ClientApp &ClientApp::app()
@@ -377,6 +438,16 @@ Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
+}
+
+SettingsRegister &ClientApp::logSettings()
+{
+    return app().d->logSettings;
+}
+
+SettingsRegister &ClientApp::networkSettings()
+{
+    return app().d->networkSettings;
 }
 
 SettingsRegister &ClientApp::audioSettings()
@@ -412,7 +483,7 @@ ResourceSystem &ClientApp::resourceSystem()
     return *a.d->resourceSys;
 }
 
-WindowSystem &ClientApp::windowSystem()
+ClientWindowSystem &ClientApp::windowSystem()
 {
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);
@@ -429,9 +500,11 @@ Games &ClientApp::games()
     return app().d->games;
 }
 
-World &ClientApp::world()
+WorldSystem &ClientApp::worldSystem()
 {
-    return app().d->world;
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(a.d->worldSys != 0);
+    return *a.d->worldSys;
 }
 
 void ClientApp::openHomepageInBrowser()

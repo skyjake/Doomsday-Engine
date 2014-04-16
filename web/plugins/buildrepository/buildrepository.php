@@ -29,13 +29,13 @@ require_once(DIR_CLASSES.'/outputcache.class.php');
  * @ingroup builds
  */
 ///@{
-define('PID_ANY',                0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
+define('PID_ANY',                0); ///< (Enumeration). Ordinal value affects sort order and must be unique.
 define('PID_WIN_X86',            1);
-define('PID_MAC10_4_X86_PPC',    2);
+define('PID_MAC10_8_X86_64',     2);
 define('PID_MAC10_6_X86_X86_64', 3);
-define('PID_MAC10_8_X86_64',     4);
-define('PID_LINUX_X86',          5);
-define('PID_LINUX_X86_64',       6);
+define('PID_MAC10_4_X86_PPC',    4);
+define('PID_LINUX_X86_64',       5);
+define('PID_LINUX_X86',          6);
 define('PID_SOURCE',             7);
 ///@}
 
@@ -73,11 +73,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private static $platforms = array(
         PID_WIN_X86            => array('id'=>PID_WIN_X86,            'name'=>'win-x86',            'nicename'=>'Windows'),
-        PID_MAC10_4_X86_PPC    => array('id'=>PID_MAC10_4_X86_PPC,    'name'=>'mac10_4-x86-ppc',    'nicename'=>'OS X 10.4+'),
-        PID_MAC10_6_X86_X86_64 => array('id'=>PID_MAC10_6_X86_X86_64, 'name'=>'mac10_6-x86-x86_64', 'nicename'=>'OS X 10.6+'),
         PID_MAC10_8_X86_64     => array('id'=>PID_MAC10_8_X86_64,     'name'=>'mac10_8-x86_64',     'nicename'=>'OS X 10.8+'),
-        PID_LINUX_X86          => array('id'=>PID_LINUX_X86,          'name'=>'linux-x86',          'nicename'=>'Ubuntu (32bit)'),
-        PID_LINUX_X86_64       => array('id'=>PID_LINUX_X86_64,       'name'=>'linux-x86_64',       'nicename'=>'Ubuntu (64bit)'),
+        PID_MAC10_6_X86_X86_64 => array('id'=>PID_MAC10_6_X86_X86_64, 'name'=>'mac10_6-x86-x86_64', 'nicename'=>'OS X 10.6+'),
+        PID_MAC10_4_X86_PPC    => array('id'=>PID_MAC10_4_X86_PPC,    'name'=>'mac10_4-x86-ppc',    'nicename'=>'OS X 10.4+'),
+        PID_LINUX_X86_64       => array('id'=>PID_LINUX_X86_64,       'name'=>'linux-x86_64',       'nicename'=>'Ubuntu 12.04 (64bit)'),
+        PID_LINUX_X86          => array('id'=>PID_LINUX_X86,          'name'=>'linux-x86',          'nicename'=>'Ubuntu 12.04 (32bit)'),
         PID_SOURCE             => array('id'=>PID_SOURCE,             'name'=>'source',             'nicename'=>'Source code')
     );
     private static $unknownPlatform = array(
@@ -202,8 +202,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     public static function packageSorter($packA, $packB)
     {
-        // Primarily by platform id.
-        if($packA->platformId() !== $packB->platformId()) return $packA->platformId() - $packB->platformId();
+        // Primarily by platform id (ordinal value).
+        if($packA->platformId() !== $packB->platformId())
+        {
+            return $packA->platformId() - $packB->platformId();
+        }
 
         // Secondarily by package type.
         if($packA === $packB) return 0;

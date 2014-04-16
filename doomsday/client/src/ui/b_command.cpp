@@ -67,8 +67,10 @@ static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
 /**
  * Parse the main part of the event descriptor, with no conditions included.
  */
-boolean B_ParseEvent(evbinding_t* eb, const char* desc)
+dd_bool B_ParseEvent(evbinding_t* eb, const char* desc)
 {
+    LOG_AS("B_ParseEvent");
+
     AutoStr* str = AutoStr_NewStd();
 
     // First, we expect to encounter a device name.
@@ -167,14 +169,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     }
     else
     {
-        Con_Message("B_ParseEvent: Device \"%s\" unknown.", Str_Text(str));
+        LOG_INPUT_WARNING("Unknown device \"%s\"") << Str_Text(str);
         return false;
     }
 
     // Anything left that wasn't used?
     if(desc)
     {
-        Con_Message("B_ParseEvent: Unrecognized \"%s\".", desc);
+        LOG_INPUT_WARNING("Unrecognized \"%s\"") << desc;
         return false;
     }
 
@@ -191,7 +193,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
  *
  * @return  @c true, if successful; otherwise @c false.
  */
-boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
+dd_bool B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
 {
     AutoStr* str = AutoStr_NewStd();
 
@@ -511,4 +513,17 @@ void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
         Str_Append(str, " + ");
         B_AppendConditionToString(&eb->conds[i], str);
     }
+}
+
+evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device)
+{
+    for(evbinding_t *i = listRoot->next; i != listRoot; i = i->next)
+    {
+        if(!qstricmp(i->command, command) &&
+           (device >= NUM_INPUT_DEVICES || i->device == device))
+        {
+            return i;
+        }
+    }
+    return 0;
 }

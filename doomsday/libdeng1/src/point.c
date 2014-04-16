@@ -57,7 +57,7 @@ void Point2_Delete(Point2 *p)
     M_Free(p);
 }
 
-boolean Point2_IsNull(Point2 const *p)
+dd_bool Point2_IsNull(Point2 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0;
@@ -142,7 +142,7 @@ void Point2_Sum(Point2 *p, Point2 const *other)
     p->raw.y += Point2_Y(other);
 }
 
-boolean Point2_Equality(Point2 const *p, Point2 const *other)
+dd_bool Point2_Equality(Point2 const *p, Point2 const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point2_X(other) && p->raw.y == Point2_Y(other));
@@ -173,7 +173,7 @@ void Point2f_Delete(Point2f *p)
     M_Free(p);
 }
 
-boolean Point2f_IsNull(Point2f const *p)
+dd_bool Point2f_IsNull(Point2f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0;
@@ -258,7 +258,7 @@ void Point2f_Sum(Point2f *p, Point2f const *other)
     p->raw.y += Point2f_Y(other);
 }
 
-boolean Point2f_Equality(Point2f const *p, Point2f const *other)
+dd_bool Point2f_Equality(Point2f const *p, Point2f const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point2f_X(other) && p->raw.y == Point2f_Y(other));
@@ -299,7 +299,7 @@ void Point3_Delete(Point3 *p)
     M_Free(p);
 }
 
-boolean Point3_IsNull(Point3 const *p)
+dd_bool Point3_IsNull(Point3 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0 && p->raw.z == 0;
@@ -397,7 +397,7 @@ void Point3_Sum(Point3 *p, Point3 const *other)
     p->raw.z += Point3_Z(other);
 }
 
-boolean Point3_Equality(Point3 const *p, Point3 const *other)
+dd_bool Point3_Equality(Point3 const *p, Point3 const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point3_X(other) &&
@@ -430,7 +430,7 @@ void Point3f_Delete(Point3f *p)
     M_Free(p);
 }
 
-boolean Point3f_IsNull(Point3f const *p)
+dd_bool Point3f_IsNull(Point3f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0 && p->raw.z == 0;
@@ -528,7 +528,7 @@ void Point3f_Sum(Point3f *p, Point3f const *other)
     p->raw.z += Point3f_Z(other);
 }
 
-boolean Point3f_Equality(Point3f const *p, Point3f const *other)
+dd_bool Point3f_Equality(Point3f const *p, Point3f const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point3f_X(other) &&

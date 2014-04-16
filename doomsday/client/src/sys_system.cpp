@@ -53,7 +53,7 @@
 
 int novideo;                // if true, stay in text mode for debugging
 
-static boolean appShutdown = false; ///< Set to true when we should exit (normally).
+static dd_bool appShutdown = false; ///< Set to true when we should exit (normally).
 
 #ifdef DENG_CATCH_SIGNALS
 /**
@@ -79,13 +79,11 @@ static void C_DECL handler(int s)
  */
 void Sys_Init(void)
 {
-    uint startTime;
+    de::Time begunAt;
 
-    Con_Message("Setting up platform state...");
+    LOG_VERBOSE("Setting up platform state...");
 
-    startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
-
-    VERBOSE( Con_Message("Initializing Audio subsystem...") )
+    LOG_AUDIO_VERBOSE("Initializing Audio subsystem...");
     S_Init();
 
 #ifdef DENG_CATCH_SIGNALS
@@ -104,13 +102,13 @@ void Sys_Init(void)
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    VERBOSE( Con_Message("Initializing Network subsystem...") )
+    LOG_NET_VERBOSE("Initializing Network subsystem...");
     N_Init();
 
-    VERBOSE2( Con_Message("Sys_Init: Completed in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+    LOGDEV_VERBOSE("Sys_Init completed in %.2f seconds") << begunAt.since();
 }
 
-boolean Sys_IsShuttingDown(void)
+dd_bool Sys_IsShuttingDown(void)
 {
     return appShutdown;
 }
@@ -241,7 +239,7 @@ void Sys_BlockUntilRealTime(uint realTimeMs)
     }
 }
 
-void Sys_ShowCursor(boolean show)
+void Sys_ShowCursor(dd_bool show)
 {
 #ifdef WIN32
     ShowCursor(show);

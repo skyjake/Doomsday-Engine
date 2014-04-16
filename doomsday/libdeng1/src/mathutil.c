@@ -1856,7 +1856,7 @@ double M_DirectionToAngleXY(double dx, double dy)
     if(dx == 0)
         return (dy > 0? 90.0 : 270.0);
 
-    angle = atan2((double) dy, (double) dx) * 180.0 / PI_D;
+    angle = atan2((double) dy, (double) dx) * 180.0 / DD_PI_D;
 
     if(angle < 0)
         angle += 360.0;
@@ -1943,7 +1943,7 @@ double M_TriangleArea(double const v1[], double const v2[], double const v3[])
  */
 void M_RotateVector(float vec[3], float degYaw, float degPitch)
 {
-    float radYaw = degYaw / 180 * PI, radPitch = degPitch / 180 * PI;
+    float radYaw = degYaw / 180 * DD_PI, radPitch = degPitch / 180 * DD_PI;
     float Cos, Sin, res[3];
 
     // Yaw.

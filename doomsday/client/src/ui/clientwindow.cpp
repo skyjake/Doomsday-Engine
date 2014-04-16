@@ -25,45 +25,45 @@
  */
 
 #include "ui/clientwindow.h"
+#include "ui/clientrootwidget.h"
 #include "clientapp.h"
+#include <QGLFormat>
 #include <de/DisplayMode>
 #include <de/NumberValue>
 #include <de/ConstantRule>
-#include <QGLFormat>
 #include <de/GLState>
 #include <de/GLFramebuffer>
 #include <de/Drawable>
+#include <de/CompositorWidget>
+#include <de/NotificationAreaWidget>
+#include <de/ProgressWidget>
+#include <de/VRWindowTransform>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/widgets/compositorwidget.h"
 #include "ui/widgets/gamewidget.h"
 #include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
-#include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
-#include "ui/widgets/progresswidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
+#include "ui/dialogs/alertdialog.h"
 #include "CommandAction"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
 #include "con_main.h"
-#include "ui/vrwindowtransform.h"
 #include "render/vr.h"
 
 using namespace de;
 
-DENG2_PIMPL(ClientWindow),
-DENG2_OBSERVES(KeyEventSource,   KeyEvent),
-DENG2_OBSERVES(MouseEventSource, MouseStateChange),
-DENG2_OBSERVES(MouseEventSource, MouseEvent),
-DENG2_OBSERVES(Canvas,           FocusChange),
-DENG2_OBSERVES(App,              GameChange),
-DENG2_OBSERVES(App,              StartupComplete)
+DENG2_PIMPL(ClientWindow)
+, DENG2_OBSERVES(MouseEventSource, MouseStateChange)
+, DENG2_OBSERVES(Canvas, FocusChange)
+, DENG2_OBSERVES(App,    GameChange)
+, DENG2_OBSERVES(App,    StartupComplete)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -72,12 +72,14 @@ DENG2_OBSERVES(App,              StartupComplete)
     Mode mode;
 
     /// Root of the nomal UI widgets of this window.
-    GuiRootWidget root;
+    ClientRootWidget root;
     CompositorWidget *compositor;
     GameWidget *game;
     GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
-    NotificationWidget *notifications;
+    LabelWidget *taskBarBlur; ///< Blur everything below the task bar.
+    NotificationAreaWidget *notifications;
+    AlertDialog *alerts;
     ColorAdjustmentDialog *colorAdjust;
     LabelWidget *background;
     GameSelectionWidget *gameSelMenu;
@@ -106,7 +108,9 @@ DENG2_OBSERVES(App,              StartupComplete)
         , game(0)
         , gameUI(0)
         , taskBar(0)
+        , taskBarBlur(0)
         , notifications(0)
+        , alerts(0)
         , colorAdjust(0)
         , background(0)
         , gameSelMenu(0)
@@ -119,26 +123,25 @@ DENG2_OBSERVES(App,              StartupComplete)
         , oldFps(0)
         , contentXf(*i)
     {
+        self.setTransform(contentXf);
+
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
 
-        App::app().audienceForGameChange += this;
-        App::app().audienceForStartupComplete += this;
+        App::app().audienceForGameChange() += this;
+        App::app().audienceForStartupComplete() += this;
 
         // Listen to input.
-        self.canvas().audienceForKeyEvent += this;
-        self.canvas().audienceForMouseStateChange += this;
-        self.canvas().audienceForMouseEvent += this;
+        self.canvas().audienceForMouseStateChange() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForGameChange -= this;
-        App::app().audienceForStartupComplete -= this;
+        App::app().audienceForGameChange() -= this;
+        App::app().audienceForStartupComplete() -= this;
 
-        self.canvas().audienceForFocusChange -= this;
-        self.canvas().audienceForMouseStateChange -= this;
-        self.canvas().audienceForKeyEvent -= this;
+        self.canvas().audienceForFocusChange() -= this;
+        self.canvas().audienceForMouseStateChange() -= this;
 
         releaseRef(cursorX);
         releaseRef(cursorY);
@@ -187,25 +190,43 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         // Game selection.
         gameSelMenu = new GameSelectionWidget;
+        gameSelMenu->enableActionOnSelection(true);
         gameSelMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
-                .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
-                .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
-                                                               style.rules().rule("gameselection.max.width")))
+                .setInput(Rule::Width,   root.viewWidth())
                 .setAnchorPoint(Vector2f(.5f, .5f));
+        AutoRef<Rule> pad(OperatorRule::maximum(style.rules().rule("gap"),
+                                                (root.viewWidth() -
+                                                 style.rules().rule("gameselection.max.width")) / 2));
+        gameSelMenu->margins().setLeft(pad).setRight(pad);
+        gameSelMenu->filter().useInvertedStyle();
+        gameSelMenu->filter().setOpacity(.9f);
+        gameSelMenu->filter().rule()
+                .setInput(Rule::Left,  gameSelMenu->rule().left() + gameSelMenu->margins().left())
+                .setInput(Rule::Width, gameSelMenu->rule().width() - gameSelMenu->margins().width())
+                .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap"));
         container().add(gameSelMenu);
 
         // Common notification area.
-        notifications = new NotificationWidget;
-        notifications->rule()
-                .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
-                .setInput(Rule::Right, game->rule().right() - style.rules().rule("gap"));
+        notifications = new NotificationAreaWidget;
+        notifications->useDefaultPlacement(game->rule());
         container().add(notifications);
+
+        // Alerts notification and popup.
+        alerts = new AlertDialog;
+        root.add(alerts);
 
         // FPS counter for the notification area.
         fpsCounter = new LabelWidget;
         fpsCounter->setSizePolicy(ui::Expand, ui::Expand);
         fpsCounter->setAlignment(ui::AlignRight);
+
+        // Everything behind the task bar can be blurred with this widget.
+        taskBarBlur = new LabelWidget("taskbar-blur");
+        taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
+        taskBarBlur->rule().setRect(root.viewRule());
+        taskBarBlur->hide(); // must be explicitly shown if needed
+        container().add(taskBarBlur);
 
         // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
@@ -216,9 +237,11 @@ DENG2_OBSERVES(App,              StartupComplete)
         container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
-        gameSelMenu->rule().setInput(Rule::Height,
-                                     OperatorRule::minimum(root.viewHeight(),
-                                                           (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
+        AutoRef<Rule> availHeight = taskBar->rule().top() - gameSelMenu->filter().rule().height();
+        gameSelMenu->rule()
+                .setInput(Rule::AnchorY, gameSelMenu->filter().rule().height() + availHeight / 2)
+                .setInput(Rule::Height,  OperatorRule::minimum(availHeight,
+                        gameSelMenu->contentRule().height() + gameSelMenu->margins().height()));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
@@ -246,6 +269,14 @@ DENG2_OBSERVES(App,              StartupComplete)
         // Allow the background image to show.
         background->setImageColor(Vector4f(1, 1, 1, 1));
         taskBar->show();
+
+        // Show the tutorial if it hasn't been automatically shown yet.
+        if(!App::config().getb("tutorial.shown", false))
+        {
+            App::config().set("tutorial.shown", true);
+            LOG_NOTE("Starting tutorial (not shown before)");
+            QTimer::singleShot(500, taskBar, SLOT(showTutorial()));
+        }
     }
 
     void currentGameChanged(game::Game const &newGame)
@@ -255,7 +286,8 @@ DENG2_OBSERVES(App,              StartupComplete)
             //game->hide();
             background->show();
             gameSelMenu->show();
-            taskBar->console().enableBlur();
+
+            gameSelMenu->restoreState();
         }
         else
         {
@@ -263,10 +295,11 @@ DENG2_OBSERVES(App,              StartupComplete)
             background->hide();
             gameSelMenu->hide();
 
-            // For the time being, blurring is not compatible with the
-            // legacy OpenGL rendering.
-            taskBar->console().enableBlur(false);
+            gameSelMenu->saveState();
         }
+
+        // Check with Style if blurring is allowed.
+        taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
     }
 
     void setMode(Mode const &newMode)
@@ -305,6 +338,11 @@ DENG2_OBSERVES(App,              StartupComplete)
         mode = newMode;
     }
 
+    /**
+     * Completes the initialization of the main window. This is called only after the
+     * window is created and visible, so that OpenGL operations and actions on the native
+     * window can be performed without restrictions.
+     */
     void finishMainWindowInit()
     {
 #ifdef MACOSX
@@ -327,7 +365,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         }
         */
 
-        self.canvas().audienceForFocusChange += this;
+        self.canvas().audienceForFocusChange() += this;
 
 #ifdef WIN32
         if(self.isFullScreen())
@@ -345,60 +383,46 @@ DENG2_OBSERVES(App,              StartupComplete)
         contentXf.glInit();
     }
 
-    void keyEvent(KeyEvent const &ev)
-    {
-        /// @todo Input drivers should observe the notification instead, input
-        /// subsystem passes it to window system. -jk
-
-        // Pass the event onto the window system.
-        ClientApp::windowSystem().processEvent(ev);
-    }
-
     void mouseStateChanged(MouseEventSource::State state)
     {
         Mouse_Trap(state == MouseEventSource::Trapped);
     }
 
-    void mouseEvent(MouseEvent const &event)
+    /**
+     * Handles an event that BaseWindow (and thus WindowSystem) didn't have use for.
+     *
+     * @param event  Event to handle.
+     */
+    bool handleFallbackEvent(Event const &ev)
     {
-        MouseEvent ev = event;
-
-        // Translate mouse coordinates for direct interaction.
-        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+        if(MouseEvent const *mouse = ev.maybeAs<MouseEvent>())
         {
-            ev.setPos(contentXf.windowToLogicalCoords(event.pos()).toVector2i());
+            // Fall back to legacy handling.
+            switch(ev.type())
+            {
+            case Event::MouseButton:
+                Mouse_Qt_SubmitButton(
+                            mouse->button() == MouseEvent::Left?     IMB_LEFT :
+                            mouse->button() == MouseEvent::Middle?   IMB_MIDDLE :
+                            mouse->button() == MouseEvent::Right?    IMB_RIGHT :
+                            mouse->button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                            mouse->button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                            mouse->state() == MouseEvent::Pressed);
+                return true;
+
+            case Event::MouseMotion:
+                Mouse_Qt_SubmitMotion(IMA_POINTER, mouse->pos().x, mouse->pos().y);
+                return true;
+
+            case Event::MouseWheel:
+                Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->pos().x, mouse->pos().y);
+                return true;
+
+            default:
+                break;
+            }
         }
-
-        if(ClientApp::windowSystem().processEvent(ev))
-        {
-            // Eaten by the window system.
-            return;
-        }
-
-        // Fall back to legacy handling.
-        switch(ev.type())
-        {
-        case Event::MouseButton:
-            Mouse_Qt_SubmitButton(
-                        ev.button() == MouseEvent::Left?     IMB_LEFT :
-                        ev.button() == MouseEvent::Middle?   IMB_MIDDLE :
-                        ev.button() == MouseEvent::Right?    IMB_RIGHT :
-                        ev.button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                        ev.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                        ev.state() == MouseEvent::Pressed);
-            break;
-
-        case Event::MouseMotion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, ev.pos().x, ev.pos().y);
-            break;
-
-        case Event::MouseWheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, ev.pos().x, ev.pos().y);
-            break;
-
-        default:
-            break;
-        }
+        return false;
     }
 
     void canvasFocusChanged(Canvas &canvas, bool hasFocus)
@@ -539,6 +563,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         container().remove(*gameSelMenu);
         if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
+        container().remove(*taskBarBlur);
         container().remove(*taskBar);
         container().remove(*cursor);
 
@@ -556,7 +581,7 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         if(enable && !compositor)
         {
-            LOG_MSG("Offscreen UI composition enabled");
+            LOG_GL_VERBOSE("Offscreen UI composition enabled");
 
             compositor = new CompositorWidget;
             compositor->rule().setRect(root.viewRule());
@@ -571,7 +596,7 @@ DENG2_OBSERVES(App,              StartupComplete)
             compositor->guiDeleteLater();
             compositor = 0;
 
-            LOG_MSG("Offscreen UI composition disabled");
+            LOG_GL_VERBOSE("Offscreen UI composition disabled");
         }
 
         container().add(gameUI);
@@ -585,6 +610,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         container().add(gameSelMenu);
         if(sidebar) container().add(sidebar);
         container().add(notifications);
+        container().add(taskBarBlur);
         container().add(taskBar);
 
         // Also the other widgets.
@@ -608,7 +634,7 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         if(!compositor) return;
 
-        if(VR::mode() == VR::MODE_OCULUS_RIFT)
+        if(vrCfg().mode() == VRConfig::OculusRift)
         {
             compositor->setCompositeProjection(Matrix4f::ortho(-1.1f, 2.2f, -1.1f, 2.2f));
         }
@@ -622,7 +648,7 @@ DENG2_OBSERVES(App,              StartupComplete)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.canvas().isMouseTrapped() && VR::mode() == VR::MODE_OCULUS_RIFT);
+        cursor->show(!self.canvas().isMouseTrapped() && vrCfg().mode() == VRConfig::OculusRift);
 
         if(cursor->isVisible())
         {
@@ -648,10 +674,11 @@ DENG2_OBSERVES(App,              StartupComplete)
 };
 
 ClientWindow::ClientWindow(String const &id)
-    : PersistentCanvasWindow(id), d(new Instance(this))
+    : BaseWindow(id)
+    , d(new Instance(this))
 {
-    canvas().audienceForGLResize += this;
-    canvas().audienceForGLInit += this;
+    canvas().audienceForGLResize() += this;
+    canvas().audienceForGLInit() += this;
 
 #ifdef WIN32
     // Set an icon for the window.
@@ -663,7 +690,12 @@ ClientWindow::ClientWindow(String const &id)
     d->setupUI();
 }
 
-GuiRootWidget &ClientWindow::root()
+Vector2f ClientWindow::windowContentSize() const
+{
+    return Vector2f(d->root.viewWidth().value(), d->root.viewHeight().value());
+}
+
+ClientRootWidget &ClientWindow::root()
 {
     return d->root;
 }
@@ -673,12 +705,17 @@ TaskBarWidget &ClientWindow::taskBar()
     return *d->taskBar;
 }
 
+GuiWidget &ClientWindow::taskBarBlur()
+{
+    return *d->taskBarBlur;
+}
+
 ConsoleWidget &ClientWindow::console()
 {
     return d->taskBar->console();
 }
 
-NotificationWidget &ClientWindow::notifications()
+NotificationAreaWidget &ClientWindow::notifications()
 {
     return *d->notifications;
 }
@@ -691,6 +728,11 @@ GameWidget &ClientWindow::game()
 BusyWidget &ClientWindow::busy()
 {
     return *d->busy;
+}
+
+AlertDialog &ClientWindow::alerts()
+{
+    return *d->alerts;
 }
 
 bool ClientWindow::isFPSCounterVisible() const
@@ -707,7 +749,7 @@ void ClientWindow::setMode(Mode const &mode)
 
 void ClientWindow::closeEvent(QCloseEvent *ev)
 {
-    LOG_DEBUG("Window is about to close, executing 'quit'.");
+    LOG_DEBUG("Window is about to close, executing 'quit'");
 
     /// @todo autosave and quit?
     Con_Execute(CMDS_DDAY, "quit", true, false);
@@ -721,14 +763,14 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 {
     // Update the capability flags.
     GL_state.features.multisample = canvas.format().sampleBuffers();
-    LOG_DEBUG("GL feature: Multisampling: %b") << GL_state.features.multisample;
+    LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
-    PersistentCanvasWindow::canvasGLReady(canvas);
-
-    if(VR::modeNeedsStereoGLFormat(VR::mode()) && !canvas.format().stereo())
+    if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
     {
-        LOG_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
+        LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
     }
+
+    BaseWindow::canvasGLReady(canvas);
 
     // Now that the Canvas is ready for drawing we can enable the GameWidget.
     d->game->enable();
@@ -752,9 +794,10 @@ void ClientWindow::canvasGLInit(Canvas &)
     GL_Init2DState();
 }
 
-void ClientWindow::canvasGLDraw(Canvas &canvas)
+void ClientWindow::preDraw()
 {
-    // All of this occurs during the Canvas paintGL event.
+    // NOTE: This occurs during the Canvas paintGL event.
+    BaseWindow::preDraw();
 
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
@@ -769,8 +812,17 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         d->updateRootSize();
     }
     d->updateCompositor();
+}
 
-    d->contentXf.drawTransformed();
+void ClientWindow::drawWindowContent()
+{
+    root().draw();
+    LIBGUI_ASSERT_GL_OK();
+}
+
+void ClientWindow::postDraw()
+{
+    // NOTE: This occurs during the Canvas paintGL event.
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.
@@ -778,8 +830,9 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
 
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
-    PersistentCanvasWindow::canvasGLDraw(canvas);
     d->updateFpsNotification(frameRate());
+
+    BaseWindow::postDraw();
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)
@@ -800,29 +853,31 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     // Configure the GL settings for all subsequently created canvases.
     QGLFormat fmt;
+    fmt.setProfile(QGLFormat::CompatibilityProfile);
+    fmt.setVersion(2, 1);
     fmt.setDepth(false); // depth and stencil handled in GLFramebuffer
     fmt.setStencil(false);
     //fmt.setDepthBufferSize(16);
     //fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
-    if(VR::modeNeedsStereoGLFormat(VR::mode()))
+    if(vrCfg().needsStereoGLFormat())
     {
         // Only use a stereo format for modes that require it.
-        LOG_MSG("Using a stereoscopic format");
+        LOG_GL_MSG("Using a stereoscopic frame buffer format");
         fmt.setStereo(true);
     }
 
+#ifdef WIN32
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
-        fmt.setSwapInterval(0); // vsync off
-        LOG_DEBUG("vsync off");
+        fmt.setSwapInterval(0);
     }
     else
     {
         fmt.setSwapInterval(1);
-        LOG_DEBUG("vsync on");
     }
+#endif
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.
@@ -830,54 +885,45 @@ bool ClientWindow::setDefaultGLFormat() // static
     bool configured = de::App::config().getb("window.fsaa");
     if(CommandLine_Exists("-nofsaa") || !configured)
     {
-        LOG_DEBUG("multisampling off");
+        LOG_GL_VERBOSE("Multisampling off");
     }
     else
     {
         sampleCount = 4; // four samples is fine?
-        LOG_DEBUG("multisampling on (%i samples)") << sampleCount;
+        LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
     }
     GLFramebuffer::setDefaultMultisampling(sampleCount);
 
     if(fmt != QGLFormat::defaultFormat())
     {
-        LOG_DEBUG("Applying new format...");
+        LOG_GL_VERBOSE("Applying new format...");
         QGLFormat::setDefaultFormat(fmt);
         return true;
     }
     else
     {
-        LOG_DEBUG("New format is the same as before.");
+        LOG_GL_XVERBOSE("New format is the same as before");
         return false;
     }
 }
 
-void ClientWindow::draw()
+bool ClientWindow::prepareForDraw()
 {
-    // Don't run the main loop until after the paint event has been dealt with.
-    ClientApp::app().loop().pause();
+    if(!BaseWindow::prepareForDraw())
+    {
+        return false;
+    }
 
     // Offscreen composition is only needed in Oculus Rift mode.
-    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
+    d->enableCompositor(vrCfg().mode() == VRConfig::OculusRift);
 
     if(d->performDeferredTasks() == Instance::AbortFrame)
     {
         // Shouldn't draw right now.
-        return;
+        return false;
     }
 
-    if(shouldRepaintManually())
-    {
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        // Perform the drawing manually right away.
-        canvas().updateGL();
-    }
-    else
-    {
-        // Request update at the earliest convenience.
-        canvas().update();
-    }
+    return true; // Go ahead.
 }
 
 bool ClientWindow::shouldRepaintManually() const
@@ -902,7 +948,7 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     img.pixels = (uint8_t *) malloc(grabbed.byteCount());
     std::memcpy(img.pixels, grabbed.constBits(), grabbed.byteCount());
 
-    LOG_DEBUG("Canvas: grabbed %i x %i, byteCount:%i depth:%i format:%i")
+    LOGDEV_GL_MSG("Grabbed Canvas contents %i x %i, byteCount:%i depth:%i format:%i")
             << grabbed.width() << grabbed.height()
             << grabbed.byteCount() << grabbed.depth() << grabbed.format();
 
@@ -935,15 +981,8 @@ void ClientWindow::updateRootSize()
 
 ClientWindow &ClientWindow::main()
 {
-    return static_cast<ClientWindow &>(PersistentCanvasWindow::main());
+    return static_cast<ClientWindow &>(BaseWindow::main());
 }
-
-#if defined(UNIX) && !defined(MACOSX)
-void GL_AssertContextActive()
-{
-    DENG_ASSERT(QGLContext::currentContext() != 0);
-}
-#endif
 
 void ClientWindow::toggleFPSCounter()
 {
@@ -976,3 +1015,15 @@ bool ClientWindow::hasSidebar(SidebarLocation location) const
 
     return d->sidebar != 0;
 }
+
+bool ClientWindow::handleFallbackEvent(Event const &event)
+{
+    return d->handleFallbackEvent(event);
+}
+
+#if defined(UNIX) && !defined(MACOSX)
+void GL_AssertContextActive()
+{
+    DENG_ASSERT(QGLContext::currentContext() != 0);
+}
+#endif

@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/Record"
@@ -161,8 +161,8 @@ DENG2_PIMPL(Record)
                 duint32 oldTargetId = value->record()->d->oldUniqueId;
                 if(refMap.contains(oldTargetId))
                 {
-                    LOG_DEV_TRACE("RecordValue %p restored to reference record %i (%p)",
-                                  value << oldTargetId << refMap[oldTargetId]);
+                    LOG_TRACE_DEBUGONLY("RecordValue %p restored to reference record %i (%p)",
+                                        value << oldTargetId << refMap[oldTargetId]);
 
                     // Relink the value to its target.
                     value->setRecord(refMap[oldTargetId]);
@@ -170,21 +170,25 @@ DENG2_PIMPL(Record)
             }
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
 };
+
+DENG2_AUDIENCE_METHOD(Record, Deletion)
 
 Record::Record() : d(new Instance(*this))
 {}
 
-Record::Record(Record const &other)
+Record::Record(Record const &other, CopyBehavior behavior)
     : ISerializable(), LogEntry::Arg::Base(), Variable::IDeletionObserver(),
       d(new Instance(*this))
 {
-    copyMembersFrom(other);
+    copyMembersFrom(other, behavior);
 }
 
 Record::~Record()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->recordBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
     clear();
 }
 
@@ -194,7 +198,7 @@ void Record::clear()
     {
         DENG2_FOR_EACH(Members, i, d->members)
         {
-            i.value()->audienceForDeletion -= this;
+            i.value()->audienceForDeletion() -= this;
             delete i.value();
         }
         d->members.clear();
@@ -209,7 +213,24 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
            i.key().startsWith("__")) continue;
 
         Variable *var = new Variable(*i.value());
-        var->audienceForDeletion += this;
+
+        // Ownerships of copied subrecords should be retained in the copy.
+        if(RecordValue *recVal = var->value().maybeAs<RecordValue>())
+        {
+            DENG2_ASSERT(!recVal->hasOwnership()); // RecordValue duplication behavior
+
+            RecordValue const &original = i.value()->value().as<RecordValue>();
+            if(original.hasOwnership())
+            {
+                DENG2_ASSERT(recVal->record() == original.record());
+
+                // Make a true copy of the subrecord.
+                recVal->setRecord(new Record(*recVal->record(), behavior),
+                                  RecordValue::OwnsRecord);
+            }
+        }
+
+        var->audienceForDeletion() += this;
         d->members[i.key()] = var;
     }
 }
@@ -254,14 +275,14 @@ Variable &Record::add(Variable *variable)
         // Delete the previous variable with this name.
         delete d->members[variable->name()];
     }
-    var->audienceForDeletion += this;
+    var->audienceForDeletion() += this;
     d->members[variable->name()] = var.release();
     return *variable;
 }
 
 Variable *Record::remove(Variable &variable)
 {
-    variable.audienceForDeletion -= this;
+    variable.audienceForDeletion() -= this;
     d->members.remove(variable.name());
     return &variable;
 }
@@ -356,7 +377,127 @@ Record *Record::remove(String const &name)
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
-    
+
+Value const &Record::get(String const &name) const
+{
+    return (*this)[name].value();
+}
+
+dint Record::geti(String const &name) const
+{
+    return dint(get(name).asNumber());
+}
+
+dint Record::geti(String const &name, dint defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return geti(name);
+}
+
+bool Record::getb(String const &name) const
+{
+    return get(name).isTrue();
+}
+
+bool Record::getb(String const &name, bool defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return getb(name);
+}
+
+duint Record::getui(String const &name) const
+{
+    return duint(get(name).asNumber());
+}
+
+duint Record::getui(String const &name, duint defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return getui(name);
+}
+
+ddouble Record::getd(String const &name) const
+{
+    return get(name).asNumber();
+}
+
+ddouble Record::getd(String const &name, ddouble defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return getd(name);
+}
+
+String Record::gets(String const &name) const
+{
+    return get(name).asText();
+}
+
+String Record::gets(String const &name, String const &defaultValue) const
+{
+    if(!hasMember(name)) return defaultValue;
+    return gets(name);
+}
+
+ArrayValue const &Record::geta(String const &name) const
+{
+    return getAs<ArrayValue>(name);
+}
+
+Variable &Record::set(String const &name, bool value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(NumberValue(value));
+    }
+    return addBoolean(name, value);
+}
+
+Variable &Record::set(String const &name, char const *value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(TextValue(value));
+    }
+    return addText(name, value);
+}
+
+Variable &Record::set(String const &name, Value::Text const &value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(TextValue(value));
+    }
+    return addText(name, value);
+}
+
+Variable &Record::set(String const &name, Value::Number const &value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(NumberValue(value));
+    }
+    return addNumber(name, value);
+}
+
+Variable &Record::set(String const &name, dint32 value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, duint32 value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, ArrayValue *value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(value);
+    }
+    return addArray(name, value);
+}
+
 Variable &Record::operator [] (String const &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
@@ -519,7 +660,7 @@ void Record::operator << (Reader &from)
     // Observe all members for deletion.
     DENG2_FOR_EACH(Members, i, d->members)
     {
-        i.value()->audienceForDeletion += this;
+        i.value()->audienceForDeletion() += this;
     }
 }
 
@@ -527,10 +668,16 @@ void Record::variableBeingDeleted(Variable &variable)
 {
     DENG2_ASSERT(d->findMemberByPath(variable.name()) != 0);
 
-    LOG_DEV_TRACE("Variable %p deleted, removing from Record %p", &variable << this);
+    LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << this);
 
     // Remove from our index.
     d->members.remove(variable.name());
+}
+
+Record &Record::operator << (NativeFunctionSpec const &spec)
+{
+    addFunction(spec.name(), refless(spec.make())).setReadOnly();
+    return *this;
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)

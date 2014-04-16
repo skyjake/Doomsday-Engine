@@ -27,12 +27,13 @@
 
 #include "d_net.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 #include "p_tick.h"
 #include "p_actor.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_mapsetup.h"
 
 #include "p_map.h"
@@ -42,13 +43,13 @@
  */
 static AABoxd tmBox;
 static mobj_t *tmThing;
-boolean tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
+dd_bool tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
 coord_t tmFloorZ;
 coord_t tmCeilingZ;
 #if __JHEXEN__
 static Material *tmFloorMaterial;
 #endif
-boolean tmFellDown; // $dropoff_fix
+dd_bool tmFellDown; // $dropoff_fix
 static coord_t tm[3];
 static coord_t tmDropoffZ;
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -94,7 +95,7 @@ coord_t P_GetGravity()
  * Checks the reject matrix to find out if the two sectors are visible
  * from each other.
  */
-static boolean checkReject(Sector *sec1, Sector *sec2)
+static dd_bool checkReject(Sector *sec1, Sector *sec2)
 {
     if(rejectMatrix)
     {
@@ -114,7 +115,7 @@ static boolean checkReject(Sector *sec1, Sector *sec2)
     return true;
 }
 
-boolean P_CheckSight(mobj_t const *beholder, mobj_t const *target)
+dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target)
 {
     if(!beholder || !target) return false;
 
@@ -183,7 +184,7 @@ static int PIT_StompThing(mobj_t *mo, void *context)
     return false; // Continue iteration.
 }
 
-boolean P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, boolean alwaysStomp)
+dd_bool P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, dd_bool alwaysStomp)
 {
     if(!mobj) return false;
 
@@ -257,15 +258,15 @@ static int PIT_CrossLine(Line *line, void *context)
              parm.crossAABox.minY > aaBox->maxY))
         {
             // Line blocks trajectory?
-            return    Line_PointOnSide(line, parm.crossMobj->origin) < 0
-                   != Line_PointOnSide(line, parm.destination)       < 0;
+            return    (Line_PointOnSide(line, parm.crossMobj->origin) < 0)
+                   != (Line_PointOnSide(line, parm.destination)       < 0);
         }
     }
 
     return false; // Continue iteration.
 }
 
-boolean P_CheckSides(mobj_t *mobj, coord_t x, coord_t y)
+dd_bool P_CheckSides(mobj_t *mobj, coord_t x, coord_t y)
 {
     /*
      * Check to see if the trajectory crosses a blocking map line.
@@ -355,7 +356,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
 
 #if !__JHEXEN__
     // Player only.
-    boolean overlap = false;
+    dd_bool overlap = false;
     if(tmThing->player && !FEQUAL(tm[VZ], DDMAXFLOAT) &&
        (cfg.moveCheckZ || (tmThing->flags2 & MF2_PASSMOBJ)))
     {
@@ -450,7 +451,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
-                if(IS_NETGAME && !deathmatch && thing->player)
+                if(IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch && thing->player)
                 {
                     return false; // don't attack other co-op players
                 }
@@ -828,7 +829,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
     }
 
     // @fixme Kludge: Always treat blood as a solid.
-    boolean solid;
+    dd_bool solid;
     if(tmThing->type == MT_BLOOD)
     {
         solid = true;
@@ -1070,7 +1071,7 @@ static int PIT_CheckLine(Line *ld, void * /*context*/)
     return false; // Continue iteration.
 }
 
-boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
+dd_bool P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 {
 #if !__JHEXEN__
     thing->onMobj  = 0;
@@ -1136,17 +1137,14 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
             return false;
         }
 
-#if _DEBUG
-        VERBOSE2(
-            if(thing->onMobj)
-            {
-                Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]", thing->onMobj,
-                            thing->onMobj->thinker.id,
-                            (thing->onMobj->flags & MF_SOLID)!=0,
-                            thing, thing->thinker.id);
-            }
-        );
-#endif
+        if(thing->onMobj)
+        {
+            App_Log(DE2_DEV_MAP_XVERBOSE,
+                    "thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]", thing->onMobj,
+                    thing->onMobj->thinker.id,
+                    (thing->onMobj->flags & MF_SOLID) != 0,
+                    thing, thing->thinker.id);
+        }
     }
 
 #if __JHEXEN__
@@ -1164,17 +1162,17 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     return !Line_BoxIterator(&tmBox, LIF_ALL, PIT_CheckLine, 0);
 }
 
-boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3])
+dd_bool P_CheckPosition(mobj_t *thing, coord_t const pos[3])
 {
     return P_CheckPositionXYZ(thing, pos[VX], pos[VY], pos[VZ]);
 }
 
-boolean P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y)
+dd_bool P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y)
 {
     return P_CheckPositionXYZ(thing, x, y, DDMAXFLOAT);
 }
 
-boolean Mobj_IsRemotePlayer(mobj_t *mo)
+dd_bool Mobj_IsRemotePlayer(mobj_t *mo)
 {
     return (mo && ((IS_DEDICATED && mo->dPlayer) ||
                    (IS_CLIENT && mo->player && mo->player - players != CONSOLEPLAYER)));
@@ -1206,12 +1204,12 @@ static void checkMissileImpact(mobj_t &mobj)
  * MF_TELEPORT is set. $dropoff_fix
  */
 #if __JHEXEN__
-static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y)
+static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y)
 #else
-static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
+static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff)
 #endif
 {
-    boolean const isRemotePlayer = Mobj_IsRemotePlayer(thing);
+    dd_bool const isRemotePlayer = Mobj_IsRemotePlayer(thing);
 
     // $dropoff_fix: tmFellDown.
     tmFloatOk  = false;
@@ -1267,7 +1265,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
         }
 #else
         // Possibly allow escape if otherwise stuck.
-        boolean ret = (tmUnstuck &&
+        dd_bool ret = (tmUnstuck &&
             !(tmCeilingLine && untouched(tmCeilingLine, tmThing)) &&
             !(tmFloorLine   && untouched(tmFloorLine, tmThing)));
 
@@ -1480,15 +1478,15 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
                         P_ActivateLine(line, thing, oldSide, SPAC_PCROSS);
                     }
 #else
-#ifdef _DEBUG
+
                     if(!IS_CLIENT && thing->player)
                     {
-                        Con_Message("P_TryMove2: Mobj %i crossing line %i from %f,%f to %f,%f",
-                                    thing->thinker.id, P_ToIndex(line),
-                                    oldPos[VX], oldPos[VY],
-                                    thing->origin[VX], thing->origin[VY]);
+                        App_Log(DE2_DEV_MAP_VERBOSE, "P_TryMove2: Mobj %i crossing line %i from %f,%f to %f,%f",
+                                thing->thinker.id, P_ToIndex(line),
+                                oldPos[VX], oldPos[VY],
+                                thing->origin[VX], thing->origin[VY]);
                     }
-#endif
+
                     P_ActivateLine(line, thing, oldSide, SPAC_CROSS);
 #endif
                 }
@@ -1523,16 +1521,16 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 }
 
 #if __JHEXEN__
-boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y)
+dd_bool P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y)
 #else
-boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, boolean dropoff, boolean slide)
+dd_bool P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff, dd_bool slide)
 #endif
 {
 #if __JHEXEN__
     return P_TryMove2(thing, x, y);
 #else
     // $dropoff_fix
-    boolean res = P_TryMove2(thing, x, y, dropoff);
+    dd_bool res = P_TryMove2(thing, x, y, dropoff);
 
     if(!res && tmHitLine)
     {
@@ -1551,7 +1549,7 @@ boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, boolean dropoff, boolea
 #endif
 }
 
-boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
+dd_bool P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
 {
     coord_t const oldZ = thing->origin[VZ];
 
@@ -1688,6 +1686,9 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
     if(icpt->type == ICPT_LINE)
     {
         bool lineWasHit = false;
+#ifdef __JHEXEN__
+        DENG_UNUSED(lineWasHit);
+#endif
 
         Line *line = icpt->line;
         xline_t *xline = P_ToXLine(line);
@@ -2034,7 +2035,7 @@ static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
-    if(th->player && IS_NETGAME && !deathmatch)
+    if(th->player && IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)
     {
         return false; // Don't aim at fellow co-op players.
     }
@@ -2295,7 +2296,7 @@ static int PIT_RadiusAttack(mobj_t *thing, void *context)
 }
 
 #if __JHEXEN__
-void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance, boolean afflictSource)
+void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance, dd_bool afflictSource)
 #else
 void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance)
 #endif
@@ -2385,9 +2386,8 @@ void P_UseLines(player_t *player)
 
     if(IS_CLIENT)
     {
-#ifdef _DEBUG
-        Con_Message("P_UseLines: Sending a use request for player %i.", int(player - players));
-#endif
+        App_Log(DE2_DEV_NET_VERBOSE, "P_UseLines: Sending a use request for player %i", int(player - players));
+
         NetCl_PlayerActionRequest(player, GPA_USE, 0);
         return;
     }
@@ -2500,9 +2500,8 @@ void P_SlideMove(mobj_t *mo)
 {
     if(!mo) return; // Huh?
 
-#ifdef _DEBUG
-    vec2d_t oldOrigin; V2d_Copy(oldOrigin, mo->origin);
-#endif
+    vec2d_t oldOrigin;
+    V2d_Copy(oldOrigin, mo->origin);
 
     vec2d_t leadPos  = { 0, 0 };
     vec2d_t trailPos = { 0, 0 };
@@ -2605,13 +2604,11 @@ void P_SlideMove(mobj_t *mo)
                              mo->origin[VY] + tmMove[MY], true, true));
 #endif
 
-#ifdef _DEBUG
     // Didn't move?
     if(mo->player && mo->origin[VX] == oldOrigin[VX] && mo->origin[VY] == oldOrigin[VY])
     {
-        Con_Message("P_SlideMove: Mobj pos stays the same.");
+        App_Log(DE2_DEV_MAP_MSG, "P_SlideMove: Mobj %i pos stays the same", mo->thinker.id);
     }
-#endif
 }
 
 /**
@@ -2774,7 +2771,7 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
     return false;
 }
 
-boolean P_ChangeSector(Sector *sector, int crush)
+dd_bool P_ChangeSector(Sector *sector, int crush)
 {
     pit_changesector_params_t parm;
     parm.noFit       = false;
@@ -2796,7 +2793,7 @@ void P_HandleSectorHeightChange(int sectorIdx)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-boolean P_TestMobjLocation(mobj_t *mo)
+dd_bool P_TestMobjLocation(mobj_t *mo)
 {
     int const oldFlags = mo->flags;
 
@@ -3035,7 +3032,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
 
     if(!(mo->flags & MF_NOCLIP))
     {
-        int blockdist = mo->radius - MAXRADIUS;
+        int blockdist = mo->radius + MAXRADIUS;
         AABoxd aaBox(mo->origin[VX] - blockdist, mo->origin[VY] - blockdist,
                      mo->origin[VX] + blockdist, mo->origin[VY] + blockdist);
 
@@ -3199,7 +3196,8 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return true; // Item type doesn't match.
         }
 
-        P_StartACS(xline->arg2, 0, &xline->arg3, parm.useMobj, icpt->line, 0);
+        Game_ACScriptInterpreter_StartScript(xline->arg2, 0/*current-map*/, &xline->arg3,
+                                             parm.useMobj, icpt->line, 0);
         xline->special = 0;
 
         parm.activated = true;
@@ -3218,7 +3216,8 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return false; // Item type doesn't match...
         }
 
-        P_StartACS(icpt->mobj->args[1], 0, &icpt->mobj->args[2], parm.useMobj, NULL, 0);
+        Game_ACScriptInterpreter_StartScript(icpt->mobj->args[1], 0/*current-map*/,
+                                             &icpt->mobj->args[2], parm.useMobj, NULL, 0);
         icpt->mobj->special = 0;
 
         parm.activated = true;
@@ -3231,7 +3230,7 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
     }
 }
 
-boolean P_UsePuzzleItem(player_t *player, int itemType)
+dd_bool P_UsePuzzleItem(player_t *player, int itemType)
 {
     DENG_ASSERT(player != 0);
 
@@ -3257,3 +3256,71 @@ boolean P_UsePuzzleItem(player_t *player, int itemType)
     return parm.activated;
 }
 #endif
+
+#ifdef __JHEXEN__
+struct countmobjoftypeparams_t
+{
+    mobjtype_t type;
+    int count;
+};
+
+static int countMobjOfType(thinker_t *th, void *context)
+{
+    countmobjoftypeparams_t *params = (countmobjoftypeparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
+
+    // Does the type match?
+    if(mo->type != params->type)
+        return false; // Continue iteration.
+
+    // Minimum health requirement?
+    if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
+        return false; // Continue iteration.
+
+    params->count++;
+
+    return false; // Continue iteration.
+}
+
+int P_MobjCount(int type, int tid)
+{
+    if(!type && !tid) return 0;
+
+    mobjtype_t moType = TranslateThingType[type];
+
+    if(tid)
+    {
+        // Count mobjs by TID.
+        int count = 0;
+        mobj_t *mo;
+        int searcher = -1;
+
+        while((mo = P_FindMobjFromTID(tid, &searcher)))
+        {
+            if(type == 0)
+            {
+                // Just count TIDs.
+                count++;
+            }
+            else if(moType == mo->type)
+            {
+                // Don't count dead monsters.
+                if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
+                {
+                    continue;
+                }
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // Count mobjs by type only.
+    countmobjoftypeparams_t params;
+    params.type  = moType;
+    params.count = 0;
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+
+    return params.count;
+}
+#endif // __JHEXEN__

@@ -188,7 +188,7 @@ void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
     // Is this suitable?
     if(0 != img.paletteId || (img.pixelSize < 3 && (img.flags & IMGF_IS_MASKED)))
     {
-        LOG_WARNING("Attempt to convert paletted/masked image. I don't know this format!");
+        LOG_RES_WARNING("Unknown paletted/masked image format");
         return;
     }
 
@@ -247,7 +247,7 @@ bool Image_HasAlpha(image_t const &img)
 
     if(0 != img.paletteId || (img.flags & IMGF_IS_MASKED))
     {
-        LOG_WARNING("Attempt to determine alpha for paletted/masked image. I don't know this format!");
+        LOG_RES_WARNING("Unknown paletted/masked image format");
         return false;
     }
 
@@ -285,7 +285,7 @@ uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
     // Still not interpreted?
     if(!img.pixels)
     {
-        LOG_DEBUG("\"%s\" unrecognized, trying fallback loader...")
+        LOG_RES_XVERBOSE("\"%s\" unrecognized, trying fallback loader...")
             << NativePath(filePath).pretty();
         return 0; // Not a recognised format. It may still be loadable, however.
     }
@@ -311,7 +311,7 @@ uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
         img.flags |= IMGF_IS_MASKED;
     }
 
-    LOG_VERBOSE("\"%s\" (%s)")
+    LOG_RES_VERBOSE("Loaded image from file \"%s\", size %s")
             << NativePath(filePath).pretty() << img.size.asText();
 
     return img.pixels;
@@ -325,6 +325,8 @@ uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
 bool Image_LoadFromFileWithFormat(image_t &img, char const *format, de::FileHandle &hndl)
 {
 #ifdef __CLIENT__
+    LOG_AS("Image_LoadFromFileWithFormat");
+
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
 
@@ -362,7 +364,7 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, de::FileHand
     img.size      = Vector2ui(image.width(), image.height());
     img.pixelSize = image.depth() / 8;
 
-    LOG_TRACE("Image_Load: size:%s depth:%i alpha:%b bytes:%i")
+    LOGDEV_RES_VERBOSE("size:%s depth:%i alpha:%b bytes:%i")
             << img.size.asText() << img.pixelSize
             << image.hasAlphaChannel() << image.byteCount();
 
@@ -460,7 +462,7 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
     return None;
 }
 
-static boolean palettedIsMasked(uint8_t const *pixels, int width, int height)
+static dd_bool palettedIsMasked(uint8_t const *pixels, int width, int height)
 {
     DENG2_ASSERT(pixels != 0);
     // Jump to the start of the alpha data.
@@ -566,7 +568,7 @@ static String toTranslationId(int tclass, int tmap)
     if(!tclass && !tmap) return String();
 
     int trans = de::max(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
-    LOG_DEBUG("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
+    LOGDEV_RES_XVERBOSE("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
     return String::number(trans);
 
 #undef NUM_TRANSLATION_MAPS_PER_CLASS
@@ -630,7 +632,7 @@ static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
         }
         catch(IByteArray::OffsetError const &)
         {
-            LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.")
+            LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch")
                 << NativePath(file.container().composePath()).pretty()
                 << NativePath(file.composePath()).pretty();
         }

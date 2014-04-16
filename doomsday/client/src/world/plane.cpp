@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "world/plane.h"
 
 #include "dd_loop.h" // frameTimePos
 #include "world/map.h"
-#include "world/world.h" /// ddMapSetup
+#include "world/worldsystem.h" /// ddMapSetup
 #include "Surface"
 #include "Sector"
 #include <de/Log>
@@ -46,15 +46,15 @@ DENG2_PIMPL(Plane)
 #endif
 
     Instance(Public *i, coord_t height)
-        : Base(i),
-          indexInSector(-1),
-          height(height),
-          targetHeight(height),
-          speed(0),
-          surface(dynamic_cast<MapElement &>(*i))
+        : Base(i)
+        , indexInSector(-1)
+        , height(height)
+        , targetHeight(height)
+        , speed(0)
+        , surface(dynamic_cast<MapElement &>(*i))
 #ifdef __CLIENT__
-         ,heightSmoothed(height),
-          heightSmoothedDelta(0)
+        , heightSmoothed(height)
+        , heightSmoothedDelta(0)
 #endif
     {
 #ifdef __CLIENT__
@@ -73,20 +73,20 @@ DENG2_PIMPL(Plane)
 #endif
     }
 
-    void notifyHeightChanged(coord_t oldHeight)
+    void notifyHeightChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(HeightChange, i)
         {
-            i->planeHeightChanged(self, oldHeight);
+            i->planeHeightChanged(self);
         }
     }
 
 #ifdef __CLIENT__
-    void notifySmoothedHeightChanged(coord_t oldHeight)
+    void notifySmoothedHeightChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(HeightSmoothedChange, i)
         {
-            i->planeHeightSmoothedChanged(self, oldHeight);
+            i->planeHeightSmoothedChanged(self);
         }
     }
 #endif
@@ -97,7 +97,6 @@ DENG2_PIMPL(Plane)
         if(de::fequal(newHeight, height))
             return;
 
-        coord_t oldHeight = height;
         height = newHeight;
 
         if(!ddMapSetup)
@@ -114,8 +113,7 @@ DENG2_PIMPL(Plane)
 #endif
         }
 
-        // Notify interested parties of the change.
-        notifyHeightChanged(oldHeight);
+        notifyHeightChanged();
 
 #ifdef __CLIENT__
         if(!ddMapSetup)
@@ -125,10 +123,40 @@ DENG2_PIMPL(Plane)
         }
 #endif
     }
+
+#ifdef __CLIENT__
+    struct findgeneratorworker_params_t
+    {
+        Plane *plane;
+        Generator *found;
+    };
+
+    static int findGeneratorWorker(Generator *gen, void *context)
+    {
+        findgeneratorworker_params_t *p = (findgeneratorworker_params_t *)context;
+        if(gen->plane == p->plane)
+        {
+            p->found = gen;
+            return true; // Stop iteration.
+        }
+        return false; // Continue iteration.
+    }
+
+    /// @todo Cache this result.
+    Generator *findGenerator()
+    {
+        findgeneratorworker_params_t parm;
+        parm.plane = thisPublic;
+        parm.found = 0;
+        self.map().generatorIterator(findGeneratorWorker, &parm);
+        return parm.found;
+    }
+#endif
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
-    : MapElement(DMU_PLANE, &sector), d(new Instance(this, height))
+    : MapElement(DMU_PLANE, &sector)
+    , d(new Instance(this, height))
 {
     setNormal(normal);
 }
@@ -233,9 +261,8 @@ void Plane::lerpSmoothedHeight()
     coord_t newHeightSmoothed = d->height + d->heightSmoothedDelta;
     if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
-        coord_t oldHeightSmoothed = d->heightSmoothed;
         d->heightSmoothed = newHeightSmoothed;
-        d->notifySmoothedHeightChanged(oldHeightSmoothed);
+        d->notifySmoothedHeightChanged();
     }
 }
 
@@ -247,9 +274,8 @@ void Plane::resetSmoothedHeight()
     coord_t newHeightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
     if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
-        coord_t oldHeightSmoothed = d->heightSmoothed;
         d->heightSmoothed = newHeightSmoothed;
-        d->notifySmoothedHeightChanged(oldHeightSmoothed);
+        d->notifySmoothedHeightChanged();
     }
 }
 
@@ -268,6 +294,68 @@ void Plane::updateHeightTracking()
     }
 }
 
+bool Plane::hasGenerator() const
+{
+    return d->findGenerator() != 0;
+}
+
+Generator &Plane::generator() const
+{
+    if(Generator *gen = d->findGenerator())
+    {
+        return *gen;
+    }
+    /// @throw MissingGeneratorError No generator is attached.
+    throw MissingGeneratorError("Plane::generator", "No generator is attached");
+}
+
+void Plane::spawnParticleGen(ded_ptcgen_t const *def)
+{
+    //if(!useParticles) return;
+
+    if(!def) return;
+
+    // Plane we spawn relative to may not be this one.
+    int relPlane = indexInSector();
+    if(def->flags & Generator::SpawnCeiling)
+        relPlane = Sector::Ceiling;
+    if(def->flags & Generator::SpawnFloor)
+        relPlane = Sector::Floor;
+
+    if(relPlane != indexInSector())
+    {
+        sector().plane(relPlane).spawnParticleGen(def);
+        return;
+    }
+
+    // Only planes in sectors with volume on the world X/Y axis can support generators.
+    if(!sector().sideCount()) return;
+
+    // Only one generator per plane.
+    if(hasGenerator()) return;
+
+    // Are we out of generators?
+    Generator *gen = map().newGenerator();
+    if(!gen) return;
+
+    gen->count = def->particles;
+    // Size of source sector might determine count.
+    if(def->flags & Generator::Density)
+    {
+        gen->spawnRateMultiplier = sector().roughArea() / (128 * 128);
+    }
+    else
+    {
+        gen->spawnRateMultiplier = 1;
+    }
+
+    // Initialize the particle generator.
+    gen->configureFromDef(def);
+    gen->plane = this;
+
+    // Is there a need to pre-simulate?
+    gen->presimulate(def->preSim);
+}
 #endif // __CLIENT__
 
 int Plane::property(DmuArgs &args) const

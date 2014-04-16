@@ -99,7 +99,7 @@ void Dir_Delete(directory_t* dir)
     M_Free(dir);
 }
 
-boolean Dir_IsEqual(directory_t* a, directory_t* b)
+dd_bool Dir_IsEqual(directory_t* a, directory_t* b)
 {
     if(a == b) return true;
 #if defined(WIN32)
@@ -322,7 +322,7 @@ int Dir_IsAbsolutePath(const char* path)
     return false;
 }
 
-boolean Dir_mkpath(const char* path)
+dd_bool Dir_mkpath(const char* path)
 {
 #if !defined(WIN32) && !defined(UNIX)
 #  error Dir_mkpath has no implementation for this platform.
@@ -406,15 +406,15 @@ void Dir_FixSeparators(char* path, size_t len)
     }
 }
 
-boolean Dir_SetCurrent(const char* path)
+dd_bool Dir_SetCurrent(const char* path)
 {
     LOG_AS("Dir");
 
-    boolean success = false;
+    dd_bool success = false;
     if(path && path[0])
     {
         success = !_chdir(path);
     }
-    LOG_VERBOSE("Changing current directory to \"%s\" %s") << path << (success? "succeeded" : "failed");
+    LOG_RES_VERBOSE("Changing current directory to \"%s\" %s") << path << (success? "succeeded" : "failed");
     return success;
 }

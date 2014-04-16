@@ -128,7 +128,6 @@ cvartemplate_t gameCVars[] = {
     {"player-weapon-order5", 0, CVT_INT, &cfg.weaponOrder[5], 0, NUM_WEAPON_TYPES},
     {"player-weapon-order6", 0, CVT_INT, &cfg.weaponOrder[6], 0, NUM_WEAPON_TYPES},
     {"player-weapon-order7", 0, CVT_INT, &cfg.weaponOrder[7], 0, NUM_WEAPON_TYPES},
-    {"player-weapon-order8", 0, CVT_INT, &cfg.weaponOrder[8], 0, NUM_WEAPON_TYPES},
 
     {"player-weapon-nextmode", 0, CVT_BYTE, &cfg.weaponNextMode, 0, 1},
     {"player-weapon-cycle-sequential", 0, CVT_BYTE, &cfg.weaponCycleSequential, 0, 1},
@@ -149,7 +148,7 @@ cvartemplate_t gameCVars[] = {
     {"server-game-plane-fixmaterialscroll", 0, CVT_BYTE, &cfg.fixPlaneScrollMaterialsEastOnly, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
+    //{"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
 
 // Gameplay
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0},
@@ -214,7 +213,7 @@ void G_UpdateEyeHeight(void)
 
 D_CMD(ScreenShot)
 {
-    G_ScreenShot();
+    G_SetGameAction(GA_SCREENSHOT);
     return true;
 }
 

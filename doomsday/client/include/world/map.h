@@ -1,4 +1,4 @@
-/** @file map.h World map.
+/** @file map.h  World map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,26 +21,29 @@
 #ifndef DENG_WORLD_MAP_H
 #define DENG_WORLD_MAP_H
 
-#include <QList>
-#include <QSet>
-
-#include <de/Observers>
-#include <de/Vector>
-
 #include "Mesh"
 
 #include "Line"
 #include "Polyobj"
 
 #ifdef __CLIENT__
-#  include "world/world.h"
-#  include "p_particle.h"
+#  include "client/clmobjhash.h"
+#  include "client/clplanemover.h"
+#  include "client/clpolymover.h"
+
+#  include "world/worldsystem.h"
+#  include "Generator"
 
 #  include "BiasSource"
 #  include "Lumobj"
 #endif
 
 #include "uri.hh"
+
+#include <de/Observers>
+#include <de/Vector>
+#include <QList>
+#include <QSet>
 
 class BspLeaf;
 class BspNode;
@@ -51,35 +54,7 @@ class Vertex;
 
 #ifdef __CLIENT__
 class BiasTracker;
-
-struct clmoinfo_s;
-
-/**
- * The client mobjs are stored into a hash for quickly locating a ClMobj by its identifier.
- */
-#define CLIENT_MOBJ_HASH_SIZE       (256)
-
-/**
- * @ingroup world
- */
-typedef struct cmhash_s {
-    struct clmoinfo_s *first, *last;
-} cmhash_t;
-
-#define CLIENT_MAX_MOVERS           1024 // Definitely enough!
-
-/**
- * @ingroup world
- */
-typedef enum {
-    CPT_FLOOR,
-    CPT_CEILING
-} clplanetype_t;
-
-struct clplane_s;
-struct clpolyobj_s;
-
-#endif // __CLIENT__
+#endif
 
 class LineBlockmap;
 
@@ -88,7 +63,6 @@ namespace de {
 class Blockmap;
 class EntityDatabase;
 #ifdef __CLIENT__
-class Generators;
 class LightGrid;
 #endif
 class Thinkers;
@@ -100,7 +74,7 @@ class Thinkers;
  */
 class Map
 #ifdef __CLIENT__
-: DENG2_OBSERVES(World, FrameBegin)
+: DENG2_OBSERVES(WorldSystem, FrameBegin)
 #endif
 {
     DENG2_NO_COPY  (Map)
@@ -127,20 +101,14 @@ public:
     DENG2_ERROR(FullError);
 #endif
 
-    /*
-     * Notified when the map is about to be deleted.
-     */
+    /// Notified when the map is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void mapBeingDeleted(Map const &map))
 
-    /*
-     * Notified when a one-way window construct is first found.
-     */
+    /// Notified when a one-way window construct is first found.
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
         void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
-    /*
-     * Notified when an unclosed sector is first found.
-     */
+    /// Notified when an unclosed sector is first found.
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
@@ -149,6 +117,9 @@ public:
      */
 #ifdef __CLIENT__
     static int const MAX_BIAS_SOURCES = 8 * 32; // Hard limit due to change tracking.
+
+    /// Maximum number of generators per map.
+    static int const MAX_GENERATORS = 512;
 #endif
 
     /*
@@ -171,13 +142,6 @@ public:
 #endif
 
 public: /// @todo make private:
-#ifdef __CLIENT__
-    cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
-
-    struct clplane_s *clActivePlanes[CLIENT_MAX_MOVERS];
-    struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
-#endif
-
     coord_t _globalGravity; // The defined gravity for this map.
     coord_t _effectiveGravity; // The effective gravity for this map.
 
@@ -228,6 +192,14 @@ public:
      * @param newUniqueId  New identifier to attribute.
      */
     void setOldUniqueId(char const *newUniqueId);
+
+    /**
+     * Determines if the map is from a container that has been flagged as a
+     * Custom resource.
+     *
+     * @see P_MapIsCustom()
+     */
+    bool isCustom() const;
 
     /**
      * Returns the points which describe the boundary of the map coordinate
@@ -370,6 +342,11 @@ public:
      * Provides access to the BSP leaf blockmap.
      */
     Blockmap const &bspLeafBlockmap() const;
+
+    /**
+     * Returns @c true iff a BSP tree is available for the map.
+     */
+    bool hasBspRoot() const;
 
     /**
      * Returns the root element for the map's BSP tree.
@@ -548,12 +525,41 @@ public:
     }
 
     /**
-     * Retrieve a pointer to the Generators collection for the map. If no collection
-     * has yet been constructed a new empty collection will be initialized.
-     *
-     * @return  Generators collection for the map.
+     * Attempt to spawn a new (particle) generator for the map. If no free identifier
+     * is available then @c 0 is returned.
      */
-    Generators &generators();
+    Generator *newGenerator();
+
+    void unlink(Generator &generator);
+
+    /**
+     * Iterate over all generators in the map making a callback for each. Iteration
+     * ends when all generators have been processed or a callback returns non-zero.
+     *
+     * @param callback  Callback to make for each iteration.
+     * @param context   User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int generatorIterator(int (*callback) (Generator *, void *), void *context = 0);
+
+    /**
+     * Iterate over all generators in the map which are present in the identified
+     * list making a callback for each. Iteration ends when all targeted generators
+     * have been processed or a callback returns non-zero.
+     *
+     * @param listIndex  Index of the list to traverse.
+     * @param callback   Callback to make for each iteration.
+     * @param context    User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int generatorListIterator(uint listIndex, int (*callback) (Generator *, void *), void *context = 0);
+
+    /**
+     * Returns the total number of @em active generators in the map.
+     */
+    int generatorCount() const;
 
     /**
      * Add a new lumobj to the map (a copy is made).
@@ -658,68 +664,33 @@ public:
      */
     int toIndex(BiasSource const &source) const;
 
-    /// @todo Should be private?
-    void initClMobjs();
-
-    /**
-     * To be called when the client is shut down.
-     * @todo Should be private?
-     */
-    void destroyClMobjs();
-
     /**
      * Deletes hidden, unpredictable or nulled mobjs for which we have not received
      * updates in a while.
      */
     void expireClMobjs();
 
-    /**
-     * Reset the client status. To be called when the map changes.
-     */
-    void reinitClMobjs();
-
-    /**
-     * Iterate the client mobj hash, exec the callback on each. Abort if callback
-     * returns non-zero.
-     *
-     * @param callback  Function to callback for each client mobj.
-     * @param context   Data pointer passed to the callback.
-     *
-     * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
-     */
-    int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context);
-
-    void initClMovers();
-
-    void resetClMovers();
+    void clearClMovers();
 
     /**
      * Allocate a new client-side plane mover.
      *
      * @return  The new mover or @c NULL if arguments are invalid.
      */
-    struct clplane_s *newClPlane(int sectorIdx, clplanetype_t type, coord_t dest, float speed);
+    ClPlaneMover *newClPlaneMover(Plane &plane, coord_t dest, float speed);
 
-    void deleteClPlane(struct clplane_s *mover);
+    void deleteClPlaneMover(ClPlaneMover *mover);
 
-    int clPlaneIndex(struct clplane_s *mover);
-
-    struct clplane_s *clPlaneBySectorIndex(int index, clplanetype_t type);
-
-    bool isValidClPlane(int i);
+    ClPlaneMover *clPlaneMoverFor(Plane &plane);
 
     /**
-     * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
+     * Find/create a ClPolyMover for @a polyobj.
+     *
+     * @param canCreate  @c true= create a new one if not found.
      */
-    struct clpolyobj_s *newClPolyobj(int polyobjIndex);
+    ClPolyMover *clPolyMoverFor(Polyobj &polyobj, bool canCreate = false);
 
-    void deleteClPolyobj(struct clpolyobj_s *mover);
-
-    int clPolyobjIndex(struct clpolyobj_s *mover);
-
-    struct clpolyobj_s *clPolyobjByPolyobjIndex(int index);
-
-    bool isValidClPolyobj(int i);
+    void deleteClPolyMover(ClPolyMover *mover);
 
     /**
      * Link the given @a surface in all material lists and surface sets which
@@ -789,8 +760,8 @@ public:
     void spreadAllContacts(AABoxd const &region);
 
 protected:
-    /// Observes World FrameBegin
-    void worldFrameBegins(World &world, bool resetNextViewer);
+    /// Observes WorldSystem FrameBegin
+    void worldSystemFrameBegins(bool resetNextViewer);
 
 #endif // __CLIENT__
 
@@ -833,7 +804,82 @@ public: /// @todo Make private:
      * Initialize the map object => BSP leaf "contact" blockmaps.
      */
     void initContactBlockmaps();
+
+    /**
+     * Spawn all generators for the map which should be initialized automatically
+     * during map setup.
+     */
+    void initGenerators();
+
+    /**
+     * Attempt to spawn all flat-triggered particle generators for the map.
+     * To be called after map setup is completed.
+     *
+     * @note Cannot presently be done in @ref initGenerators() as this is called
+     *       during initial Map load and before any saved game has been loaded.
+     */
+    void spawnPlaneParticleGens();
+
+    /**
+     * Destroys all clientside clmobjs in the map. To be called when a network
+     * game ends.
+     */
+    void clearClMobjs();
+
+    /**
+     * Find/create a client mobj with the unique identifier @a id.
+     *
+     * Memory layout of a client mobj:
+     * - client mobj magic1 (4 bytes)
+     * - engineside clmobj info
+     * - client mobj magic2 (4 bytes)
+     * - gameside mobj (mobjSize bytes) <- this is returned from the function
+     *
+     * To check whether a given mobj_t is a clmobj_t, just check the presence of
+     * the client mobj magic number (by calling Cl_IsClientMobj()).
+     * The clmoinfo_s can then be accessed with ClMobj_GetInfo().
+     *
+     * @param id  Identifier of the client mobj. Every client mobj has a unique
+     *            identifier.
+     *
+     * @return  Pointer to the gameside mobj.
+     */
+    mobj_t *clMobjFor(thid_t id, bool canCreate = false) const;
+
+    /**
+     * Destroys the client mobj. Before this is called, the client mobj should be
+     * unlinked from the thinker list by calling @ref thinkers().remove()
+     */
+    void deleteClMobj(mobj_t *mo);
+
+    /**
+     * Iterate all client mobjs, making a callback for each. Iteration ends if a
+     * callback returns a non-zero value.
+     *
+     * @param callback  Function to callback for each client mobj.
+     * @param context   Data pointer passed to the callback.
+     *
+     * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
+     */
+    int clMobjIterator(int (*callback) (mobj_t *, void *), void *context = 0);
+
+    /**
+     * Provides readonly access to the client mobj hash.
+     */
+    ClMobjHash const &clMobjHash() const;
 #endif // __CLIENT__
+
+    /**
+     * Returns a rich formatted, textual summary of the map's elements, suitable
+     * for logging.
+     */
+    de::String elementSummaryAsStyledText() const;
+
+    /**
+     * Returns a rich formatted, textual summary of the map's objects, suitable
+     * for logging.
+     */
+    de::String objectSummaryAsStyledText() const;
 
 public:
     /*

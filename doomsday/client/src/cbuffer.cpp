@@ -53,7 +53,7 @@ struct cbuffer_s {
 
     cbnode_t** index; /// Indexed list of line nodes.
     uint indexSize;
-    boolean indexGood; // If the index needs updating.
+    dd_bool indexGood; // If the index needs updating.
 
     char* writebuf; // write buffer.
     uint wbc; // write buffer cursor.
@@ -64,7 +64,7 @@ static void insertNodeAtEnd(CBuffer* cb, cbnode_t* newnode);
 static void removeNode(CBuffer* cb, cbnode_t* node);
 static void moveNodeForReuse(CBuffer* cb, cbnode_t* node);
 
-static void lock(CBuffer* cb, boolean yes)
+static void lock(CBuffer* cb, dd_bool yes)
 {
     assert(cb);
     if(yes)
@@ -234,7 +234,7 @@ CBuffer* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags)
     return cb;
 }
 
-static void clearText(CBuffer* cb, boolean recycle)
+static void clearText(CBuffer* cb, dd_bool recycle)
 {
     cbnode_t* n, *np;
     assert(cb);

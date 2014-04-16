@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_FOLDER_H
@@ -33,12 +33,16 @@ class Feed;
 /**
  * A folder contains a set of files. It is used for building a tree of files
  * in the file system (de::FS). This is the base class for all types of folders.
+ * @ingroup fs
  *
  * The first Feed attached to a Folder is the primary feed.
  *
- * @see Feed
+ * @par Deriving from Folder
  *
- * @ingroup fs
+ * See the requirements that apply to deriving from File; the same apply for Folder,
+ * as it is itself derived from File.
+ *
+ * @see Feed
  */
 class DENG2_PUBLIC Folder : public File
 {
@@ -97,16 +101,26 @@ public:
     virtual ~Folder();
 
     String describe() const;
+    
+    String describeFeeds() const;
 
     /**
-     * Populates the folder with a set of File instances. Each feed
-     * attached to the folder will contribute. Every populated file will
-     * also be added to the file system's main index.
+     * Populates the folder with a set of File instances. Each feed attached to
+     * the folder will contribute File instances constructed based on the
+     * feeds' source data. Every populated file will also be added to the file
+     * system's main index.
      *
      * Repopulation is nondestructive as long as the source data has not
-     * changed. Population may be performed more than once during the
-     * lifetime of the folder, for example when it's necessary to
-     * synchronize it with the contents of a native hard drive directory.
+     * changed. Population may be performed more than once during the lifetime
+     * of the folder, for example when it's necessary to synchronize it with
+     * the contents of a native hard drive directory.
+     *
+     * This should never be called "just in case"; only populate when you know
+     * that the source data has changed and the file tree corresponding that
+     * data needs to be updated to reflect the changes. Operations done using
+     * File and Folder instances automatically keep the tree up to date even
+     * when they apply changes to the source data, so population should not be
+     * performed in that case.
      *
      * @param behavior  Behavior of the population operation, see
      *                  Folder::PopulationBehavior.
@@ -119,14 +133,17 @@ public:
     Contents const &contents() const;
 
     /**
-     * Destroys the contents of the folder. All contained file objects are deleted.
+     * Empties the contents of the folder: all contained file instances are
+     * deleted. Attached feeds are not notified, which means the source data
+     * they translate into the folder remains untouched.
      */
     void clear();
 
     /**
      * Creates a new file in the folder. The feeds attached to the folder will
-     * decide what kind of file is actually created. The new file is added to
-     * the file system's index.
+     * decide what kind of file is actually created, and perform the
+     * construction of the new File instance. The new file is added to the file
+     * system's index.
      *
      * @param name      Name or path of the new file, relative to this folder.
      * @param behavior  How to treat existing files.
@@ -140,12 +157,15 @@ public:
      * same name. Same as calling <code>newFile(name, true)</code>.
      *
      * @param name  Name or path of the new file, relative to this folder.
+     *
+     * @return  The created file (write mode enabled).
      */
     File &replaceFile(String const &name);
 
     /**
      * Removes a file from a folder. The file will be deleted. If it has an
-     * origin feed, the feed will be asked to remove the file as well.
+     * origin feed, the feed will be asked to remove the file as well, which
+     * means it will be removed in the source data as well as the file tree.
      *
      * @param name  Name or path of file to remove, relative to this folder.
      */
@@ -191,6 +211,8 @@ public:
      * the caller.
      */
     File *remove(String const &name);
+
+    File *remove(char const *nameUtf8);
 
     template <typename Type>
     Type *remove(Type *fileObject) {
@@ -270,17 +292,21 @@ public:
     void setPrimaryFeed(Feed &feed);
 
     /**
+     * Detaches all feeds and deletes the Feed instances. Existing files in the
+     * folder are unaffected.
+     */
+    void clearFeeds();
+
+    /**
      * Provides access to the list of Feeds for this folder. The feeds are responsible
      * for creating File and Folder instances in the folder.
      */
-    Feeds const &feeds() const { return _feeds; }
+    Feeds const &feeds() const;
+
+    String contentsAsText() const;
 
 private:
-    /// A map of file names to file instances.
-    Contents _contents;
-
-    /// Feeds provide content for the folder.
-    Feeds _feeds;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

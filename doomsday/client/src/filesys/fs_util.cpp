@@ -117,7 +117,7 @@ uint F_GetLastModified(const char* path)
 #endif
 }
 
-boolean F_MakePath(const char* path)
+dd_bool F_MakePath(const char* path)
 {
 #if !defined(WIN32) && !defined(UNIX)
 #  error F_MakePath has no implementation for this platform.
@@ -125,7 +125,7 @@ boolean F_MakePath(const char* path)
 
     ddstring_t full, buf;
     char* ptr, *endptr;
-    boolean result;
+    dd_bool result;
 
     // Convert all backslashes to normal slashes.
     Str_Init(&full); Str_Set(&full, path);
@@ -168,9 +168,9 @@ boolean F_MakePath(const char* path)
     return result;
 }
 
-boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
+dd_bool F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 {
-    boolean result = false;
+    dd_bool result = false;
     assert(dstStr && srcStr);
 
     if(!Str_IsEmpty(srcStr))
@@ -204,7 +204,7 @@ boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
     return result;
 }
 
-boolean F_AppendMissingSlash(ddstring_t* pathStr)
+dd_bool F_AppendMissingSlash(ddstring_t* pathStr)
 {
     if(Str_RAt(pathStr, 0) != '/')
     {
@@ -214,7 +214,7 @@ boolean F_AppendMissingSlash(ddstring_t* pathStr)
     return false;
 }
 
-boolean F_AppendMissingSlashCString(char* path, size_t maxLen)
+dd_bool F_AppendMissingSlashCString(char* path, size_t maxLen)
 {
     if(path[strlen(path) - 1] != '/')
     {
@@ -224,9 +224,9 @@ boolean F_AppendMissingSlashCString(char* path, size_t maxLen)
     return false;
 }
 
-boolean F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
+dd_bool F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 {
-    boolean result = false;
+    dd_bool result = false;
     assert(dstStr && srcStr);
 
     if(!Str_IsEmpty(srcStr))
@@ -324,7 +324,7 @@ void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
     // Src path is base-relative?
     if(Str_At(src, 0) == '/')
     {
-        boolean mustCopy = (dst == src);
+        dd_bool mustCopy = (dst == src);
         if(mustCopy)
         {
             ddstring_t buf;
@@ -351,19 +351,19 @@ void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
     Str_Appendf(dst, "%s%s", ddRuntimePath, Str_Text(src));
 }
 
-boolean F_IsRelativeToBase(const char* path, const char* base)
+dd_bool F_IsRelativeToBase(const char* path, const char* base)
 {
     assert(path && base);
     return !strnicmp(path, base, strlen(base));
 }
 
-boolean F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* absPath, const ddstring_t* basePath)
+dd_bool F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* absPath, const ddstring_t* basePath)
 {
     assert(dst && absPath && basePath);
 
     if(F_IsRelativeToBase(Str_Text(absPath), Str_Text(basePath)))
     {
-        boolean mustCopy = (dst == absPath);
+        dd_bool mustCopy = (dst == absPath);
         if(mustCopy)
         {
             ddstring_t buf;
@@ -387,14 +387,14 @@ boolean F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* absPath, const ddst
     return false;
 }
 
-boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
+dd_bool F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
 {
     ddstring_t base;
     Str_InitStatic(&base, ddBasePath);
     return F_RemoveBasePath2(dst, absPath, &base);
 }
 
-boolean F_IsAbsolute(const ddstring_t* str)
+dd_bool F_IsAbsolute(const ddstring_t* str)
 {
     if(!str)
         return false;
@@ -408,7 +408,7 @@ boolean F_IsAbsolute(const ddstring_t* str)
     return false;
 }
 
-boolean F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base)
+dd_bool F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base)
 {
     assert(dst && src && base);
 
@@ -427,14 +427,14 @@ boolean F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstrin
     return false; // Not done.
 }
 
-boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
+dd_bool F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
 {
     ddstring_t base;
     Str_InitStatic(&base, ddBasePath);
     return F_PrependBasePath2(dst, src, &base);
 }
 
-boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
+dd_bool F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
 {
     assert(dst && src);
 
@@ -454,7 +454,7 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
     return false; // Not done.
 }
 
-boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src)
+dd_bool F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src)
 {
     if(F_ExpandBasePath(dst, src)) return true;
     // src is equal to dst
@@ -463,12 +463,12 @@ boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src)
     return false; // Not done.
 }
 
-boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
+dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 {
     assert(dst && src);
     if(Str_At(src, 0) == '>' || Str_At(src, 0) == '}')
     {
-        boolean mustCopy = (dst == src);
+        dd_bool mustCopy = (dst == src);
         if(mustCopy)
         {
             ddstring_t buf;
@@ -507,7 +507,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
         }
 
         // Parse the user's home directory (from passwd).
-        { boolean result = false;
+        { dd_bool result = false;
         ddstring_t userName;
         const char* p = Str_Text(src)+2;
 
@@ -549,14 +549,14 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 }
 
 /// @note Part of the Doomsday public API
-boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src)
+dd_bool F_TranslatePath(ddstring_t* dst, const ddstring_t* src)
 {
     F_ExpandBasePath(dst, src); // Will copy src to dst if not equal.
     return F_ToNativeSlashes(dst, dst);
 }
 
 /// @return  @c true if @a path begins with a known directive.
-static boolean pathHasDirective(const char* path)
+static dd_bool pathHasDirective(const char* path)
 {
     if(NULL != path && path[0])
     {
@@ -660,7 +660,7 @@ bool F_MatchFileName(de::String const &string, de::String const &pattern)
     return st->isNull();
 }
 
-boolean F_Dump(void const* data, size_t size, char const* path)
+dd_bool F_Dump(void const* data, size_t size, char const* path)
 {
     DENG_ASSERT(data);
     DENG_ASSERT(path);
@@ -674,8 +674,8 @@ boolean F_Dump(void const* data, size_t size, char const* path)
     FILE* outFile = fopen(Str_Text(nativePath), "wb");
     if(!outFile)
     {
-        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.",
-                    F_PrettyPath(Str_Text(nativePath)), strerror(errno));
+        LOG_RES_WARNING("Failed to open \"%s\" for writing: %s")
+                << F_PrettyPath(Str_Text(nativePath)) << strerror(errno);
         return false;
     }
 
@@ -691,11 +691,11 @@ static bool dumpLump(de::File1& lump, String path)
     bool dumpedOk = F_Dump(lump.cache(), lump.info().size, dumpPathUtf8.constData());
     lump.unlock();
     if(!dumpedOk) return false;
-    LOG_VERBOSE("%s dumped to \"%s\"") << lump.name() << NativePath(dumpPath).pretty();
+    LOG_RES_VERBOSE("%s dumped to \"%s\"") << lump.name() << NativePath(dumpPath).pretty();
     return true;
 }
 
-boolean F_DumpLump2(lumpnum_t lumpNum, char const* _path)
+dd_bool F_DumpLump2(lumpnum_t lumpNum, char const* _path)
 {
     try
     {
@@ -708,7 +708,7 @@ boolean F_DumpLump2(lumpnum_t lumpNum, char const* _path)
     return false;
 }
 
-boolean F_DumpLump(lumpnum_t lumpNum)
+dd_bool F_DumpLump(lumpnum_t lumpNum)
 {
     return F_DumpLump2(lumpNum, 0);
 }

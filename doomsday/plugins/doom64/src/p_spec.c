@@ -36,8 +36,6 @@
  * or shooting special lines, or by timed thinkers.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <string.h>
 
@@ -47,7 +45,7 @@
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h"
 #include "p_ceiling.h"
 #include "p_door.h"
@@ -57,187 +55,10 @@
 #include "p_switch.h"
 #include "d_net.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// Animating textures and planes
-
-// In Doomsday these are handled via DED definitions.
-// In BOOM they invented the ANIMATED lump for the same purpose.
-
-// This struct is directly read from the lump.
-// So its important we keep it aligned.
-#pragma pack(1)
-typedef struct animdef_s {
-    /* Do NOT change these members in any way */
-    signed char istexture;  //  if false, it is a flat (instead of bool)
-    char        endname[9];
-    char        startname[9];
-    int         speed;
-} animdef_t;
-#pragma pack()
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing);
 static void P_ShootSpecialLine(mobj_t *thing, Line *line);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// These arrays are treated as a hardcoded replacements for data that can be
-// loaded from a lump, so we need to use little-endian byte ordering.
-static animdef_t animsShared[] = {
-    {1, "CFACEC",   "CFACEA",   MACRO_LONG(4)},
-    {1, "SMONAD",   "SMONAA",   MACRO_LONG(8)},
-    {1, "SMONBD",   "SMONBA",   MACRO_LONG(2)},
-    {1, "SMONCD",   "SMONCA",   MACRO_LONG(8)},
-    {1, "SMONDD",   "SMONDA",   MACRO_LONG(4)},
-    {1, "SMONED",   "SMONEA",   MACRO_LONG(8)},
-    {1, "SPORTI",   "SPORTA",   MACRO_LONG(4)},
-    {1, "C307B",    "C307",     MACRO_LONG(8)},
-    {-1, "\0",      "\0"}
-};
-
-// CODE --------------------------------------------------------------------
-
-/**
- * From PrBoom:
- * Load the table of animation definitions, checking for existence of
- * the start and end of each frame. If the start doesn't exist the sequence
- * is skipped, if the last doesn't exist, BOOM exits.
- *
- * Wall/Flat animation sequences, defined by name of first and last frame,
- * The full animation sequence is given using all lumps between the start
- * and end entry, in the order found in the WAD file.
- *
- * This routine modified to read its data from a predefined lump or
- * PWAD lump called ANIMATED rather than a static table in this module to
- * allow wad designers to insert or modify animation sequences.
- *
- * Lump format is an array of byte packed animdef_t structures, terminated
- * by a structure with istexture == -1. The lump can be generated from a
- * text source file using SWANTBLS.EXE, distributed with the BOOM utils.
- * The standard list of switches and animations is contained in the example
- * source text file DEFSWANI.DAT also in the BOOM util distribution.
- */
-static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
-{
-    boolean lastIsTexture = false; // Shut up compiler!
-    ddstring_t framePath, startPath, endPath;
-    Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
-    Uri* startUri = Uri_New();
-    Uri* endUri = Uri_New();
-    int i;
-
-    Str_Init(&framePath);
-    Str_Init(&startPath);
-    Str_Init(&endPath);
-
-    // Read structures until -1 is found
-    for(i = 0; animDefs[i].istexture != -1 ; ++i)
-    {
-        boolean isTexture = animDefs[i].istexture != 0;
-        int groupNum, ticsPerFrame, numFrames;
-        int startFrame, endFrame, n;
-
-        if(i == 0 || isTexture != lastIsTexture)
-        {
-            Uri_SetScheme(startUri, isTexture? "Textures" : "Flats");
-            Uri_SetScheme(endUri, isTexture? "Textures" : "Flats");
-            lastIsTexture = isTexture;
-        }
-
-        Str_PercentEncode(Str_StripRight(Str_Set(&startPath, animDefs[i].startname)));
-        Uri_SetPath(startUri, Str_Text(&startPath));
-
-        Str_PercentEncode(Str_StripRight(Str_Set(&endPath, animDefs[i].endname)));
-        Uri_SetPath(endUri, Str_Text(&endPath));
-
-        startFrame = Textures_UniqueId2(startUri, !isCustom);
-        endFrame   = Textures_UniqueId2(endUri, !isCustom);
-        if(-1 == startFrame || -1 == endFrame) continue;
-
-        numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
-        if(numFrames < 2)
-        {
-            Con_Message("Warning: loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.",
-                        animDefs[i].startname, animDefs[i].endname, i);
-            continue;
-        }
-
-        /**
-         * A valid animation.
-         *
-         * Doomsday's group animation needs to know the texture/flat
-         * numbers of ALL frames in the animation group so we'll
-         * have to step through the directory adding frames as we
-         * go. (DOOM only required the start/end texture/flat
-         * numbers and would animate all textures/flats inbetween).
-         */
-        ticsPerFrame = LONG(animDefs[i].speed);
-
-        if(verbose > (isCustom? 1 : 2))
-        {
-            AutoStr* from = Uri_ToString(startUri);
-            AutoStr* to = Uri_ToString(endUri);
-            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i", i, Str_Text(from), Str_Text(to), ticsPerFrame);
-        }
-
-        // Find an animation group for this.
-        groupNum = R_CreateAnimGroup(AGF_SMOOTH);
-
-        // Add all frames to the group.
-        for(n = startFrame; n <= endFrame; ++n)
-        {
-            Str_Clear(&framePath);
-            Str_Appendf(&framePath, "%s:%i", isTexture? "Textures" : "Flats", n);
-            Uri_SetPath(frameUrn, Str_Text(&framePath));
-
-            R_AddAnimGroupFrame(groupNum, frameUrn, ticsPerFrame, 0);
-        }
-    }
-
-    Str_Free(&endPath);
-    Str_Free(&startPath);
-    Str_Free(&framePath);
-    Uri_Delete(endUri);
-    Uri_Delete(startUri);
-    Uri_Delete(frameUrn);
-}
-
-void P_InitPicAnims(void)
-{
-    { lumpnum_t lumpNum;
-    if((lumpNum = W_CheckLumpNumForName2("ANIMATED", true)) > 0)
-    {
-        /**
-         * We'll support this BOOM extension by reading the data and then
-         * registering the new animations into Doomsday using the animation
-         * groups feature.
-         *
-         * Support for this extension should be considered depreciated.
-         * All new features should be added, accessed via DED.
-         */
-        VERBOSE( Con_Message("Processing lump %s::ANIMATED...", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
-        loadAnimDefs((animdef_t*)W_CacheLump(lumpNum), true);
-        W_UnlockLump(lumpNum);
-        return;
-    }}
-
-    VERBOSE( Con_Message("Registering default texture animations...") );
-    loadAnimDefs(animsShared, false);
-}
-
-boolean P_ActivateLine(Line *ld, mobj_t *mo, int side, int actType)
+dd_bool P_ActivateLine(Line *ld, mobj_t *mo, int side, int actType)
 {
     if(IS_CLIENT)
     {
@@ -282,7 +103,7 @@ static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
     // Triggers that other things can activate
     if(!thing->player)
     {
-        boolean ok = false;
+        dd_bool ok = false;
 
         // Things that should NOT trigger specials...
         switch(thing->type)
@@ -528,7 +349,7 @@ static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
 
     case 52:
         // EXIT!
-        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
         break;
 
     case 53:
@@ -611,7 +432,7 @@ static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
 
     case 124:
         // Secret EXIT
-        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, true), 0, true);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
         break;
 
     case 125:
@@ -1046,7 +867,7 @@ void P_SpawnAllSpecialThinkers(void)
     P_SpawnLineSpecialThinkers();
 }
 
-boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
+dd_bool P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
 {
     xline_t*            xline = P_ToXLine(line);
 
@@ -1148,7 +969,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
 
         P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_SWTCHX, false, 0);
         xline->special = 0;
-        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
         break;
 
     case 14:
@@ -1264,7 +1085,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
 
         P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
-        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, true), 0, true);
+        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
         break;
 
     case 55:

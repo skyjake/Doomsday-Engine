@@ -1,22 +1,20 @@
 /** @file directoryfeed.cpp Directory Feed.
- * @ingroup fs
  *
- * @author Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/DirectoryFeed"
@@ -39,13 +37,19 @@ DirectoryFeed::~DirectoryFeed()
 
 String DirectoryFeed::description() const
 {
-    return "native directory \"" + _nativePath.pretty() + "\"";
+    return "directory \"" + _nativePath.pretty() + "\"";
+}
+
+NativePath const &DirectoryFeed::nativePath() const
+{
+    return _nativePath;
 }
 
 void DirectoryFeed::populate(Folder &folder)
 {
     if(_mode & AllowWrite)
     {
+        // Automatically enable modifying the Folder.
         folder.setMode(File::Write);
     }
     if(_mode.testFlag(CreateIfMissing) && !exists(_nativePath))
@@ -130,15 +134,14 @@ bool DirectoryFeed::prune(File &file) const
     /// Rules for pruning:
     /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard
     ///   drive version (size, time of last modification).
-    NativeFile *nativeFile = dynamic_cast<NativeFile *>(file.source());
-    if(nativeFile)
+    if(NativeFile *nativeFile = file.maybeAs<NativeFile>())
     {
         try
         {
             if(fileStatus(nativeFile->nativePath()) != nativeFile->status())
             {
                 // It's not up to date.
-                LOG_VERBOSE("%s: status has changed, pruning!") << nativeFile->nativePath();
+                LOG_RES_MSG("Pruning \"%s\": status has changed") << nativeFile->nativePath();
                 return true;
             }
         }
@@ -151,15 +154,14 @@ bool DirectoryFeed::prune(File &file) const
 
     /// - A Folder will be pruned if the corresponding directory does not exist (providing
     ///   a DirectoryFeed is the sole feed in the folder).
-    Folder *subFolder = dynamic_cast<Folder *>(&file);
-    if(subFolder)
+    if(Folder *subFolder = file.maybeAs<Folder>())
     {
         if(subFolder->feeds().size() == 1)
         {
-            DirectoryFeed *dirFeed = dynamic_cast<DirectoryFeed *>(subFolder->feeds().front());
+            DirectoryFeed *dirFeed = subFolder->feeds().front()->maybeAs<DirectoryFeed>();
             if(dirFeed && !exists(dirFeed->_nativePath))
             {
-                LOG_VERBOSE("%s: no longer exists, pruning!") << _nativePath;
+                LOG_RES_NOTE("Pruning \"%s\": no longer exists") << _nativePath;
                 return true;
             }
         }

@@ -18,19 +18,20 @@
 
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/dialogs/renderersettingsdialog.h"
-#include "ui/widgets/buttonwidget.h"
-#include "ui/widgets/scrollareawidget.h"
-#include "ui/widgets/foldpanelwidget.h"
 #include "ui/widgets/profilepickerwidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/clientwindow.h"
-#include "DialogContentStylist"
-#include "SequentialLayout"
-#include "SignalAction"
 #include "clientapp.h"
 #include "con_main.h"
+
+#include <de/ButtonWidget>
+#include <de/ScrollAreaWidget>
+#include <de/FoldPanelWidget>
+#include <de/DialogContentStylist>
+#include <de/SequentialLayout>
+#include <de/SignalAction>
 
 using namespace de;
 using namespace ui;
@@ -78,28 +79,22 @@ DENG2_OBSERVES(App, GameChange)
     class Group : public FoldPanelWidget
     {
         /// Action for reseting the group's settings to defaults.
-        struct ResetAction : public Action
-        {
+        struct ResetAction : public Action {
             Group *group;
-
             ResetAction(Group *groupToReset) : group(groupToReset) {}
-            Action *duplicate() const { return new ResetAction(group); }
-
-            void trigger()
-            {
+            void trigger() {
                 Action::trigger();
                 group->resetToDefaults();
             }
         };
 
     public:
-        Group(RendererAppearanceEditor::Instance *inst, String const &titleText)
-            : d(inst), _firstColumnWidth(0)
+        Group(RendererAppearanceEditor::Instance *inst, String const &name, String const &titleText)
+            : FoldPanelWidget(name), d(inst), _firstColumnWidth(0)
         {
             _group = new GuiWidget;
             setContent(_group);
-            title().setText(titleText);
-            title().setTextColor("accent");
+            makeTitle(titleText);
 
             // Set up a context menu for right-clicking.
             title().addEventHandler(new RightClickHandler(d));
@@ -116,12 +111,10 @@ DENG2_OBSERVES(App, GameChange)
             _resetButton->setText(tr("Reset"));
             _resetButton->setAction(new ResetAction(this));
             _resetButton->rule()
-                    .setInput(Rule::Right, d->container->contentRule().right())
-                    .setInput(Rule::Top, title().rule().top());
+                    .setInput(Rule::Right,   d->container->contentRule().right())
+                    .setInput(Rule::AnchorY, title().rule().top() + title().rule().height() / 2)
+                    .setAnchorPoint(Vector2f(0, .5f));
             _resetButton->disable();
-
-            // Extend the title all the way to the button.
-            title().hitRule().setInput(Rule::Right, _resetButton->rule().left());
 
             d->container->add(&title());
             d->container->add(_resetButton);
@@ -197,6 +190,9 @@ DENG2_OBSERVES(App, GameChange)
         {
             _group->rule().setSize(_layout.width(), _layout.height());
 
+            // Extend the title all the way to the button.
+            title().rule().setInput(Rule::Right, _resetButton->rule().left());
+
             // Calculate the maximum rule for the first column items.
             for(int i = 0; i < _layout.gridSize().y; ++i)
             {
@@ -269,7 +265,7 @@ DENG2_OBSERVES(App, GameChange)
           firstColumnWidth(new IndirectRule)
     {
         // The editor will close automatically when going to Ring Zero.
-        App::app().audienceForGameChange += this;
+        App::app().audienceForGameChange() += this;
 
         settings.audienceForProfileChange += this;
 
@@ -285,7 +281,7 @@ DENG2_OBSERVES(App, GameChange)
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
 
         // Sky settings.
-        skyGroup = new Group(this, tr("Sky"));
+        skyGroup = new Group(this, "sky", tr("Sky"));
 
         skyGroup->addLabel(tr("Sky Sphere Radius:"));
         skyGroup->addSlider("rend-sky-distance", Ranged(0, 8000), 10, 0);
@@ -293,7 +289,7 @@ DENG2_OBSERVES(App, GameChange)
         skyGroup->commit();
 
         // Shadow settings.
-        shadowGroup = new Group(this, tr("Shadows"));
+        shadowGroup = new Group(this, "shadow", tr("Shadows"));
 
         shadowGroup->addSpace();
         shadowGroup->addToggle("rend-fakeradio", tr("Ambient Occlusion"));
@@ -316,7 +312,7 @@ DENG2_OBSERVES(App, GameChange)
         shadowGroup->commit();
 
         // Dynamic light settings.
-        lightGroup = new Group(this, tr("Point Lighting"));
+        lightGroup = new Group(this, "plight", tr("Point Lighting"));
 
         lightGroup->addSpace();
         lightGroup->addToggle("rend-light", tr("Dynamic Lights"));
@@ -348,7 +344,7 @@ DENG2_OBSERVES(App, GameChange)
         lightGroup->commit();
 
         // Volume lighting group.
-        volLightGroup = new Group(this, tr("Volume Lighting"));
+        volLightGroup = new Group(this, "vlight", tr("Volume Lighting"));
 
         volLightGroup->addSpace();
         volLightGroup->addToggle("rend-light-sky-auto", tr("Apply Sky Color"));
@@ -374,7 +370,7 @@ DENG2_OBSERVES(App, GameChange)
         volLightGroup->commit();
 
         // Glow settings.
-        glowGroup = new Group(this, tr("Surface Glow"));
+        glowGroup = new Group(this, "glow", tr("Surface Glow"));
 
         glowGroup->addLabel(tr("Material Glow:"));
         glowGroup->addSlider("rend-glow");
@@ -391,7 +387,19 @@ DENG2_OBSERVES(App, GameChange)
         glowGroup->commit();
 
         // Camera lens settings.
-        haloGroup = new Group(this, tr("Camera Lens"));
+        haloGroup = new Group(this, "lens", tr("Camera Lens"));
+
+        haloGroup->addSpace();
+        haloGroup->addToggle("rend-bloom", tr("Bloom"));
+
+        haloGroup->addLabel(tr("Bloom Threshold:"));
+        haloGroup->addSlider("rend-bloom-threshold");
+
+        haloGroup->addLabel(tr("Bloom Intensity:"));
+        haloGroup->addSlider("rend-bloom-intensity");
+
+        haloGroup->addLabel(tr("Bloom Dispersion:"));
+        haloGroup->addSlider("rend-bloom-dispersion");
 
         haloGroup->addSpace();
         haloGroup->addToggle("rend-vignette", tr("Vignetting"));
@@ -435,7 +443,7 @@ DENG2_OBSERVES(App, GameChange)
         haloGroup->commit();
 
         // Material settings.
-        matGroup = new Group(this, tr("Materials"));
+        matGroup = new Group(this, "material", tr("Materials"));
 
         matGroup->addSpace();
         matGroup->addToggle("rend-tex-shiny", tr("Shiny Surfaces"));
@@ -488,7 +496,7 @@ DENG2_OBSERVES(App, GameChange)
         matGroup->commit();
 
         // Model settings.
-        modelGroup = new Group(this, tr("3D Models"));
+        modelGroup = new Group(this, "model", tr("3D Models"));
 
         modelGroup->addSpace();
         modelGroup->addToggle("rend-model", tr("3D Models"));
@@ -511,7 +519,7 @@ DENG2_OBSERVES(App, GameChange)
         modelGroup->commit();
 
         // Sprite settings.
-        spriteGroup = new Group(this, tr("Sprites"));
+        spriteGroup = new Group(this, "sprite", tr("Sprites"));
 
         spriteGroup->addSpace();
         spriteGroup->addToggle("rend-sprite-blend", tr("Additive Blending"));
@@ -535,7 +543,7 @@ DENG2_OBSERVES(App, GameChange)
         spriteGroup->commit();
 
         // Object settings.
-        objectGroup = new Group(this, tr("Objects"));
+        objectGroup = new Group(this, "object", tr("Objects"));
 
         objectGroup->addLabel(tr("Smooth Movement:"));
         objectGroup->addChoice("rend-mobj-smooth-move")->items()
@@ -549,7 +557,7 @@ DENG2_OBSERVES(App, GameChange)
         objectGroup->commit();
 
         // Particle settings.
-        partGroup = new Group(this, tr("Particle Effects"));
+        partGroup = new Group(this, "ptcfx", tr("Particle Effects"));
 
         partGroup->addSpace();
         partGroup->addToggle("rend-particle", tr("Particle Effects"));
@@ -574,7 +582,7 @@ DENG2_OBSERVES(App, GameChange)
 
     ~Instance()
     {
-        App::app().audienceForGameChange -= this;
+        App::app().audienceForGameChange() -= this;
         settings.audienceForProfileChange -= this;
         releaseRef(firstColumnWidth);
     }
@@ -644,6 +652,44 @@ DENG2_OBSERVES(App, GameChange)
             }
         }
     }
+
+    void saveFoldState(PersistentState &toState)
+    {
+        foreach(Widget *child, container->childWidgets())
+        {
+            if(Group *g = child->maybeAs<Group>())
+            {
+                toState.names().set(self.name() + "." + g->name() + ".open", g->isOpen());
+            }
+        }
+    }
+
+    void restoreFoldState(PersistentState const &fromState)
+    {
+        bool gotState = false;
+
+        foreach(Widget *child, container->childWidgets())
+        {
+            if(Group *g = child->maybeAs<Group>())
+            {
+                String const var = self.name() + "." + g->name() + ".open";
+                if(fromState.names().has(var))
+                {
+                    gotState = true;
+                    if(fromState.names().getb(var))
+                        g->open();
+                    else
+                        g->close(0);
+                }
+            }
+        }
+
+        if(!gotState)
+        {
+            // Could be the first time.
+            lightGroup->open();
+        }
+    }
 };
 
 RendererAppearanceEditor::RendererAppearanceEditor()
@@ -706,9 +752,6 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     // Install the editor.
     ClientWindow::main().setSidebar(ClientWindow::RightEdge, this);
-
-    // Open the first group.
-    d->lightGroup->open();
 }
 
 void RendererAppearanceEditor::foldAll()
@@ -719,6 +762,16 @@ void RendererAppearanceEditor::foldAll()
 void RendererAppearanceEditor::unfoldAll()
 {
     d->foldAll(false);
+}
+
+void RendererAppearanceEditor::operator >> (PersistentState &toState) const
+{
+    d->saveFoldState(toState);
+}
+
+void RendererAppearanceEditor::operator << (PersistentState const &fromState)
+{
+    d->restoreFoldState(fromState);
 }
 
 void RendererAppearanceEditor::preparePanelForOpening()

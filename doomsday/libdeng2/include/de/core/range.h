@@ -1,18 +1,18 @@
 /** @file range.h  Linear range.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small> 
  */
 
@@ -23,12 +23,16 @@
 #include "../math.h"
 
 #include <QString>
+#include <QList>
+#include <QStringList>
 
 namespace de {
 
 /**
  * Linear value range. The start point is inclusive while the end point is
  * exclusive. The end point should be larger in value than the start point.
+ *
+ * @ingroup math
  */
 template <typename Type>
 struct Range
@@ -92,6 +96,43 @@ struct Range
     }
     QString asText() const {
         return QString("[%1...%2)").arg(start).arg(end);
+    }
+
+    typedef QList< Range<Type> > ContiguousRanges;
+
+    /**
+     * Finds a sequence of contiguous ranges in the input values. Only use with integer types.
+     *
+     * @param values  List of input values. Must be sorted in ascending order.
+     *
+     * @return List of contiguous ranges. As usual, range starts are inclusive and range ends are
+     * exclusive.
+     */
+    static ContiguousRanges findContiguousRanges(QList<Type> const &values) {
+        ContiguousRanges cont;
+        if(values.isEmpty()) return cont;
+        cont.append(Range<Type>(values.first(), values.first() + 1));
+        for(int i = 1; i < values.size(); ++i) {
+            Range<Type> &last = cont.last();
+            if(values.at(i) == last.end) {
+                last.end = values.at(i) + 1;
+            }
+            else {
+                cont.append(Range<Type>(values.at(i), values.at(i) + 1));
+            }
+        }
+        return cont;
+    }
+    static QString contiguousRangesAsText(QList<Type> const &values,
+                                          QString const &separator = ", ") {
+        QStringList msg;
+        foreach(Range<Type> const &range, findContiguousRanges(values)) {
+            if(range.size() == 1)
+                msg << QString::number(range.start);
+            else
+                msg << QString("%1-%2").arg(range.start).arg(range.end - 1);
+        }
+        return msg.join(separator);
     }
 };
 

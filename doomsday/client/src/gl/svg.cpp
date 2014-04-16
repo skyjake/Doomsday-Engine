@@ -62,7 +62,7 @@ struct svg_s {
     SvgLinePoint* points;
 };
 
-boolean SvgLine_IsLoop(const SvgLine* line)
+dd_bool SvgLine_IsLoop(const SvgLine* line)
 {
     assert(line);
     return line->head && line->head->prev != NULL;
@@ -177,7 +177,7 @@ void Svg_Draw(Svg* svg)
     draw(svg);
 }
 
-boolean Svg_Prepare(Svg* svg)
+dd_bool Svg_Prepare(Svg* svg)
 {
     assert(svg);
     if(!novideo && !isDedicated)
@@ -207,7 +207,7 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     uint finalLineCount, finalPointCount;
     const def_svgline_t* slIt;
     const Point2Rawf* spIt;
-    boolean lineIsLoop;
+    dd_bool lineIsLoop;
     SvgLinePoint* dpIt, *prev;
     SvgLine* dlIt;
     uint i, j;

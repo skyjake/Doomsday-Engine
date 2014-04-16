@@ -129,7 +129,7 @@ DENG_PUBLIC uint32_t Sys_ThreadId(thread_t handle);
 
 DENG_PUBLIC uint32_t Sys_CurrentThreadId(void);
 
-DENG_PUBLIC boolean Sys_InMainThread(void);
+DENG_PUBLIC dd_bool Sys_InMainThread(void);
 
 DENG_PUBLIC mutex_t Sys_CreateMutex(char const *name);
 

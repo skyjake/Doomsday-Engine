@@ -54,6 +54,8 @@
 #include "api_audiod_sfx.h"
 #include "doomsday.h"
 
+#include <de/c_wrapper.h>
+
 DENG_DECLARE_API(Con);
 
 #define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
@@ -100,8 +102,8 @@ struct _GUID DSPROPSETID_EAX20_BufferProperties = {
 };
 #endif
 
-static boolean initOk = false;
-static boolean hasEAX = false;
+static dd_bool initOk = false;
+static dd_bool hasEAX = false;
 static float unitsPerMeter = 1;
 static float headYaw, headPitch; // In radians.
 static ALCdevice* device = 0;
@@ -150,7 +152,7 @@ int DS_Init(void)
     device = alcOpenDevice(NULL);
     if(!device)
     {
-        Con_Message("OpenAL init failed (default playback device).");
+        App_Log(DE2_AUDIO_ERROR, "OpenAL init failed (using default playback device)");
         return false;
     }
 
@@ -368,7 +370,7 @@ static void setPan(ALuint source, float pan)
 {
     float pos[3];
 
-    vectors((float) (headYaw - pan * PI / 2), headPitch, pos, 0);
+    vectors((float) (headYaw - pan * DD_PI / 2), headPitch, pos, 0);
     alSourcefv(source, AL_POSITION, pos);
 }
 
@@ -478,8 +480,8 @@ void DS_SFX_Listenerv(int prop, float* values)
         break;
 
     case SFXLP_ORIENTATION:
-        vectors(headYaw = (float) (values[VX] / 180 * PI),
-                headPitch = (float) (values[VY] / 180 * PI),
+        vectors(headYaw = (float) (values[VX] / 180 * DD_PI),
+                headPitch = (float) (values[VY] / 180 * DD_PI),
                 ori, ori + 3);
         alListenerfv(AL_ORIENTATION, ori);
         break;

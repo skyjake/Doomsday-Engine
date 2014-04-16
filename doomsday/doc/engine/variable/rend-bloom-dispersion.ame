@@ -1,0 +1,4 @@
+@summary{
+    Determines how much the bloom filter spreads out color values when blurring
+    (1.0=normal).
+}

@@ -1,4 +1,4 @@
-HEADERS += \
+publicHeaders(root, \
     include/de/AccessorValue \
     include/de/Archive \
     include/de/ArrayValue \
@@ -32,11 +32,14 @@ HEADERS += \
     include/de/LittleEndianByteOrder \
     include/de/NoneValue \
     include/de/NumberValue \
+    include/de/Observers \
     include/de/Path \
     include/de/PathTree \
+    include/de/Property \
     include/de/Reader \
     include/de/Record \
     include/de/RecordValue \
+    include/de/Refuge \
     include/de/RefValue \
     include/de/Shared \
     include/de/String \
@@ -49,9 +52,10 @@ HEADERS += \
     include/de/WaitableFIFO \
     include/de/Writer \
     include/de/Zeroed \
-    include/de/ZipArchive
+    include/de/ZipArchive \
+)
 
-HEADERS += \
+publicHeaders(data, \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \
@@ -86,9 +90,11 @@ HEADERS += \
     include/de/data/observers.h \
     include/de/data/path.h \
     include/de/data/pathtree.h \
+    include/de/data/property.h \
     include/de/data/reader.h \
     include/de/data/record.h \
     include/de/data/recordvalue.h \
+    include/de/data/refuge.h \
     include/de/data/refvalue.h \
     include/de/data/shared.h \
     include/de/data/string.h \
@@ -101,7 +107,8 @@ HEADERS += \
     include/de/data/waitablefifo.h \
     include/de/data/writer.h \
     include/de/data/zeroed.h \
-    include/de/data/ziparchive.h
+    include/de/data/ziparchive.h \
+)
 
 SOURCES += \
     src/data/accessorvalue.cpp \
@@ -110,6 +117,7 @@ SOURCES += \
     src/data/bank.cpp \
     src/data/binarytree_wrapper.cpp \
     src/data/bitfield.cpp \
+    src/data/bitfield_elements.cpp \
     src/data/block.cpp \
     src/data/blockvalue.cpp \
     src/data/byteorder.cpp \
@@ -132,6 +140,7 @@ SOURCES += \
     src/data/reader.cpp \
     src/data/record.cpp \
     src/data/recordvalue.cpp \
+    src/data/refuge.cpp \
     src/data/refvalue.cpp \
     src/data/string.cpp \
     src/data/stringpool.cpp \

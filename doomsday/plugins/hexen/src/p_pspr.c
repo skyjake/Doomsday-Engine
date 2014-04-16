@@ -26,7 +26,7 @@
 #include "common.h"
 #include "r_common.h"
 
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "mobj.h"
 #include "p_inventory.h"
@@ -379,9 +379,7 @@ void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
  */
 void P_BringUpWeapon(player_t* player)
 {
-#if _DEBUG
-    const weapontype_t oldPendingWeapon = player->pendingWeapon;
-#endif
+    weapontype_t const oldPendingWeapon = player->pendingWeapon;
 
     weaponmodeinfo_t* wminfo = NULL;
     weapontype_t raiseWeapon;
@@ -409,10 +407,8 @@ void P_BringUpWeapon(player_t* player)
 
     wminfo = WEAPON_INFO(raiseWeapon, player->class_, 0);
 
-#if _DEBUG
-    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
-                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
-#endif
+    App_Log(DE2_MAP_XVERBOSE, "P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
+            (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
@@ -1569,8 +1565,9 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
         pmo->target = mo->target;
         pmo->args[0] = 10; // Initial turn value.
         pmo->args[1] = 0; // Initial look angle.
-        if(deathmatch)
-        {   // Ghosts last slightly less longer in DeathMatch.
+        if(G_Ruleset_Deathmatch())
+        {
+            // Ghosts last slightly less longer in DeathMatch.
             pmo->health = 85;
         }
 
@@ -1877,7 +1874,7 @@ void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
     int         i, damage;
     angle_t     angle;
     mobj_t     *pmo, *mo;
-    boolean     conedone = false;
+    dd_bool     conedone = false;
 
     if(IS_CLIENT) return;
 

@@ -218,8 +218,8 @@ static mndata_bindings_t controlConfig[] =
     { "Help Screen", "shortcut", 0, "helpscreen" },
 #endif
     { "End Game", "shortcut", 0, "endgame" },
-    { "Save Game", "shortcut", 0, "savegame" },
-    { "Load Game", "shortcut", 0, "loadgame" },
+    { "Save Game", "shortcut", 0, "menu savegame" },
+    { "Load Game", "shortcut", 0, "menu loadgame" },
     { "Quick Save", "shortcut", 0, "quicksave" },
     { "Quick Load", "shortcut", 0, "quickload" },
     { "Sound Options", "shortcut", 0, "menu soundoptions" },
@@ -243,7 +243,7 @@ static mndata_bindings_t controlConfig[] =
     { "Cancel", "message", 0, "messagecancel" },
 };
 
-static void deleteBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void* data)
+static void deleteBinding(bindingitertype_t type, int bid, const char* name, dd_bool isInverse, void* data)
 {
     DD_Executef(true, "delbind %i", bid);
 }
@@ -271,7 +271,7 @@ void Hu_MenuInitControlsPage(void)
     mndata_text_t* texts;
     mn_page_t* page;
 
-    VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.") )
+    App_Log(DE2_DEV_VERBOSE, "Hu_MenuInitControlsPage: Creating controls items");
 
     textCount = 0;
     bindingsCount = 0;
@@ -382,7 +382,7 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
 }
 
 static void drawBinding(bindingitertype_t type, int bid, const char* name,
-    boolean isInverse, void *data)
+    dd_bool isInverse, void *data)
 {
 #define BIND_GAP                (2)
 
@@ -452,12 +452,12 @@ static const char* findInString(const char* str, const char* token, int n)
 }
 
 static void iterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* data,
-    void (*callback)(bindingitertype_t type, int bid, const char* ev, boolean isInverse, void *data))
+    void (*callback)(bindingitertype_t type, int bid, const char* ev, dd_bool isInverse, void *data))
 {
     const char* ptr = strchr(bindings, ':');
     const char* begin, *end, *end2, *k, *bindingStart, *bindingEnd;
     char buf[80], *b;
-    boolean isInverse;
+    dd_bool isInverse;
     int bid;
     assert(binds);
 
@@ -719,7 +719,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
             if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
                !strcmp(symbol + 5, "key-delete-down"))
             {
-                Con_Message("The Delete key in the Menu context is reserved for deleting bindings.");
+                App_Log(DE2_INPUT_ERROR, "The Delete key in the Menu context is reserved for deleting bindings");
                 return false;
             }
         }
@@ -750,8 +750,8 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
         else if(binds->controlName)
         {
             // Have to exclude the state part.
-            boolean inv = (binds->flags & CCF_INVERSE) != 0;
-            boolean isStaged = (binds->flags & CCF_STAGED) != 0;
+            dd_bool inv = (binds->flags & CCF_INVERSE) != 0;
+            dd_bool isStaged = (binds->flags & CCF_STAGED) != 0;
             const char* end = strchr(symbol + 5, '-');
             char temp3[256];
             char extra[256];
@@ -795,7 +795,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
             sprintf(cmd, "bindcontrol {%s} {%s%s}", binds->controlName, temp3, extra);
         }
 
-        VERBOSE( Con_Message("MNBindings_PrivilegedResponder: %s", cmd) );
+        App_Log(DE2_DEV_INPUT_MSG, "MNBindings_PrivilegedResponder: %s", cmd);
         DD_Execute(true, cmd);
 
         // We've finished the grab.

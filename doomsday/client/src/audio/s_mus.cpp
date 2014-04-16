@@ -45,8 +45,8 @@ static void Mus_UpdateSoundFont(void);
 static int     musPreference = MUSP_EXT;
 static char*   soundFontPath = (char*) "";
 
-static boolean musAvail = false;
-static boolean musicPaused = false;
+static dd_bool musAvail = false;
+static dd_bool musicPaused = false;
 static int     currentSong = -1;
 
 static int getInterfaces(audiointerface_music_generic_t** ifs)
@@ -72,7 +72,7 @@ void Mus_Register(void)
  *
  * @return  @c true, if no errors occur.
  */
-boolean Mus_Init(void)
+dd_bool Mus_Init(void)
 {
     audiointerface_music_generic_t* iMusic[MAX_AUDIO_INTERFACES];
     int i, count;
@@ -82,11 +82,11 @@ boolean Mus_Init(void)
 
     if(isDedicated || CommandLine_Exists("-nomusic"))
     {
-        Con_Message("Music disabled.");
+        LOG_AUDIO_NOTE("Music disabled");
         return true;
     }
 
-    VERBOSE( Con_Message("Initializing Music subsystem...") );
+    LOG_AUDIO_VERBOSE("Initializing Music subsystem...");
 
     // Let's see which interfaces are available for music playback.
     count = getInterfaces(iMusic);
@@ -103,8 +103,8 @@ boolean Mus_Init(void)
     {
         if(!iMusic[i]->Init())
         {
-            Con_Message("Warning: Failed to initialize %s for music playback.",
-                        Str_Text(AudioDriver_InterfaceName(iMusic[i])));
+            LOG_AUDIO_WARNING("Failed to initialize %s for music playback")
+                    << Str_Text(AudioDriver_InterfaceName(iMusic[i]));
         }
     }
 
@@ -171,7 +171,7 @@ void Mus_SetVolume(float vol)
 /**
  * Pauses or resumes the music.
  */
-void Mus_Pause(boolean doPause)
+void Mus_Pause(dd_bool doPause)
 {
     audiointerface_music_generic_t* iMusic[MAX_AUDIO_INTERFACES];
     int i, count;
@@ -206,7 +206,7 @@ void Mus_Stop(void)
 /**
  * @return: @c true, if the specified lump contains a MUS song.
  */
-boolean Mus_IsMUSLump(lumpnum_t lumpNum)
+dd_bool Mus_IsMUSLump(lumpnum_t lumpNum)
 {
     char buf[4];
     int lumpIdx;
@@ -244,7 +244,7 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
             return true;
         }
 
-        LOG_WARNING("Music file \"%s\" not found (id '%s').")
+        LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
             << *reinterpret_cast<de::Uri *>(def->path) << def->id;
     }
 
@@ -294,7 +294,7 @@ int Mus_GetCD(ded_music_t *def)
  * @return 1, if music was started. 0, if attempted to start but failed.
  *         -1, if it was MUS data and @a canPlayMUS says we can't play it.
  */
-int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
+int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS)
 {
     if(!AudioDriver_Music_Available() || lump < 0) return 0;
 
@@ -318,18 +318,11 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         // expected.
 
         lumpLength = F_LumpLength(lump);
-        buf = (uint8_t*) malloc(lumpLength);
-        if(!buf)
-        {
-            Con_Message("Warning: Mus_Start: Failed on allocation of %lu bytes for "
-                        "temporary MUS to MIDI conversion buffer.", (unsigned long) lumpLength);
-            return 0;
-        }
-
+        buf = (uint8_t*) M_Malloc(lumpLength);
         file = F_FindFileForLumpNum2(lump, &lumpIdx);
         F_ReadLumpSection(file, lumpIdx, buf, 0, lumpLength);
         M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
-        free(buf);
+        M_Free(buf);
 
         return AudioDriver_Music_PlayNativeFile(Str_Text(srcFile), looped);
     }
@@ -346,7 +339,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
  *
  * @return              Non-zero if the song is successfully played.
  */
-int Mus_Start(ded_music_t* def, boolean looped)
+int Mus_Start(ded_music_t* def, dd_bool looped)
 {
     int i, order[3], songID;
     ddstring_t path;
@@ -355,7 +348,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
     songID = def - defs.music;
 
-    DEBUG_Message(("Mus_Start: Starting ID:%i looped:%i, currentSong ID:%i\n", songID, looped, currentSong));
+    LOG_AS("Mus_Start");
+    LOG_AUDIO_VERBOSE("Starting ID:%i looped:%i, currentSong ID:%i") << songID << looped << currentSong;
 
     if(songID == currentSong && AudioDriver_Music_IsPlaying())
     {
@@ -395,7 +389,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
     // Try to start the song.
     for(i = 0; i < 3; ++i)
     {
-        boolean canPlayMUS = true;
+        dd_bool canPlayMUS = true;
 
         switch(order[i])
         {
@@ -410,8 +404,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
             Str_Init(&path);
             if(Mus_GetExt(def, &path))
             {
-                VERBOSE( Con_Message("Attempting to play song '%s' (file \"%s\").",
-                                     def->id, F_PrettyPath(Str_Text(&path))) )
+                LOG_AUDIO_VERBOSE("Attempting to play song '%s' (file \"%s\")")
+                        << def->id << F_PrettyPath(Str_Text(&path));
 
                 // Its an external file.
                 return AudioDriver_Music_PlayFile(Str_Text(&path), looped);
@@ -436,7 +430,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
             break;
 
         default:
-            Con_Error("Mus_Start: Invalid value order[i] = %i.", order[i]);
+            DENG_ASSERT(!"Mus_Start: Invalid value for order[i]");
             break;
         }
     }
@@ -468,26 +462,28 @@ D_CMD(PlayMusic)
 {
     DENG2_UNUSED(src);
 
+    LOG_AS("playmusic (Cmd)");
+
     if(!musAvail)
     {
-        Con_Printf("The Music module is not available.\n");
+        LOGDEV_SCR_ERROR("Music subsystem is not available");
         return false;
     }
 
     switch(argc)
     {
     default:
-        Con_Printf("Usage:\n  %s (music-def)\n", argv[0]);
-        Con_Printf("  %s lump (lumpname)\n", argv[0]);
-        Con_Printf("  %s file (filename)\n", argv[0]);
-        Con_Printf("  %s cd (track)\n", argv[0]);
+        LOG_SCR_NOTE("Usage:\n  %s (music-def)") << argv[0];
+        LOG_SCR_MSG("  %s lump (lumpname)") << argv[0];
+        LOG_SCR_MSG("  %s file (filename)") << argv[0];
+        LOG_SCR_MSG("  %s cd (track)") << argv[0];
         break;
 
     case 2: {
         int musIdx = Def_GetMusicNum(argv[1]);
         if(musIdx < 0)
         {
-            Con_Printf("Music '%s' not defined.\n", argv[1]);
+            LOG_RES_WARNING("Music '%s' not defined") << argv[1];
             return false;
         }
 
@@ -514,7 +510,7 @@ D_CMD(PlayMusic)
             {
                 if(!AudioDriver_CD())
                 {
-                    Con_Printf("No CD audio interface available.\n");
+                    LOG_AUDIO_WARNING("No CD audio interface available");
                     return false;
                 }
 

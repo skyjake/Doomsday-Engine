@@ -1,20 +1,20 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #ifndef LIBDENG2_FILESYSTEM_H
@@ -144,9 +144,30 @@ public:
      * @param path      Path of the folder. Relative to the root folder.
      * @param behavior  What to do with the new folder: automatically attach feeds and
      *                  maybe also populate it automatically.
+     *
+     * @return  Folder at @a path.
      */
     Folder &makeFolder(String const &path,
                        FolderCreationBehaviors behavior = InheritPrimaryFeedAndPopulate);
+
+    /**
+     * Retrieves a folder in the file system and replaces all of its existing
+     * feeds with the specified feed. The folder gets created if it does not
+     * exist. If it does exist, the folder will be cleared so that any existing
+     * contents won't be orphaned due to the previous feeds going away.
+     *
+     * Any missing parent folders will also be created.
+     *
+     * @param path      Path of the folder. Relative to the root folder.
+     * @param feed      Primary feed for the folder (other feeds removed).
+     * @param behavior  Behavior for creating folders (including missing parents).
+     * @param populationBehavior  How to populate the returned folder (if population requested).
+     *
+     * @return  Folder at @a path.
+     */
+    Folder &makeFolderWithFeed(String const &path, Feed *feed,
+                               Folder::PopulationBehavior populationBehavior = Folder::PopulateFullTree,
+                               FolderCreationBehaviors behavior = InheritPrimaryFeedAndPopulate);
 
     /**
      * Finds all files matching a full or partial path. The search is done
@@ -225,14 +246,14 @@ public:
     /**
      * Retrieves the index of files of a particular type.
      *
-     * @param typeIdentifier  Type identifier to look for. Use the TYPE_NAME() macro.
+     * @param typeIdentifier  Type identifier to look for. Use the DENG2_TYPE_NAME() macro.
      *
      * @return A subset of the main index containing only the entries of
      * the given type.
      *
      * For example, to look up the index for NativeFile instances:
      * @code
-     * FS::Index &nativeFileIndex = App::fileSystem().indexFor(TYPE_NAME(NativeFile));
+     * FS::Index &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
      * @endcode
      */
     Index const &indexFor(String const &typeIdentifier) const;
@@ -251,6 +272,27 @@ public:
      */
     void deindex(File &file);
 
+    enum CopyBehavior
+    {
+        PlainFileCopy          = 0,
+        ReinterpretDestination = 0x1,
+        PopulateDestination    = 0x2,
+
+        DefaultCopyBehavior = ReinterpretDestination | PopulateDestination
+    };
+    Q_DECLARE_FLAGS(CopyBehaviors, CopyBehavior)
+
+    /**
+     * Makes a copy of a file by streaming the bytes of the source path to the
+     * destination path.
+     *
+     * @param sourcePath       Source path.
+     * @param destinationPath  Destination path.
+     * @param behavior         Copy behavior: which members to copy.
+     */
+    File &copySerialized(String const &sourcePath, String const &destinationPath,
+                         CopyBehaviors behavior = DefaultCopyBehavior);
+
     void timeChanged(Clock const &);
 
 private:
@@ -258,6 +300,7 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::FolderCreationBehaviors)
+Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::CopyBehaviors)
 
 // Alias.
 typedef FileSystem FS;

@@ -31,7 +31,7 @@
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "p_inventory.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
@@ -49,7 +49,7 @@
 #define SKYCHANGE_SPECIAL       200
 
 static void P_LightningFlash(void);
-static boolean CheckedLockedDoor(mobj_t* mo, byte lock);
+static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock);
 
 mobj_t lavaInflictor;
 
@@ -59,12 +59,12 @@ float sky1ColumnOffset;
 float sky2ColumnOffset;
 float sky1ScrollDelta;
 float sky2ScrollDelta;
-boolean doubleSky;
+dd_bool doubleSky;
 
-static boolean mapHasLightning;
+static dd_bool mapHasLightning;
 static int nextLightningFlash;
 static int lightningFlash;
-static float* lightningLightLevels;
+static float *lightningLightLevels;
 
 void P_InitLava(void)
 {
@@ -74,21 +74,25 @@ void P_InitLava(void)
     lavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-void P_InitSky(uint map)
+void P_InitSky(Uri const *mapUri)
 {
-    int                 ival;
-    float               fval;
+    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+    if(mapInfo)
+    {
+        sky1Material     = mapInfo->sky1Material;
+        sky2Material     = mapInfo->sky2Material;
+        sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
+        sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
+        doubleSky        = mapInfo->doubleSky;
+    }
 
-    sky1Material = P_GetMapSky1Material(map);
-    sky2Material = P_GetMapSky2Material(map);
-    sky1ScrollDelta = P_GetMapSky1ScrollDelta(map);
-    sky2ScrollDelta = P_GetMapSky2ScrollDelta(map);
-    sky1ColumnOffset = 0;
-    sky2ColumnOffset = 0;
-    doubleSky = P_GetMapDoubleSky(map);
+    sky1ColumnOffset = sky2ColumnOffset = 0;
 
     if(!IS_DEDICATED)
     {
+        int ival;
+        float fval;
+
         // First disable all sky layers.
         R_SkyParams(DD_SKY, DD_DISABLE, NULL);
 
@@ -136,9 +140,9 @@ void P_AnimateSky(void)
     }
 }
 
-boolean EV_SectorSoundChange(byte* args)
+dd_bool EV_SectorSoundChange(byte* args)
 {
-    boolean             rtn = false;
+    dd_bool             rtn = false;
     Sector*             sec = NULL;
     iterlist_t*         list;
 
@@ -160,7 +164,7 @@ boolean EV_SectorSoundChange(byte* args)
     return rtn;
 }
 
-static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
+static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
 {
     extern int  TextKeyMessages[11];
     char        LockedBuffer[80];
@@ -184,7 +188,7 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
+dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
 {
     inventoryitemtype_t  type;
 
@@ -200,16 +204,58 @@ boolean EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
-                             int side, mobj_t* mo)
+static Uri *mapUriFromLogicalNumber(int number)
 {
-    boolean             success;
+    if(!number) return 0; // current map.
+    return G_ComposeMapUri(gameEpisode, number - 1);
+}
 
-#ifdef _DEBUG
-    Con_Message("P_ExecuteLineSpecial: special=%i mo=%i", special, mo? mo->thinker.id : 0);
-#endif
+dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
+{
+    byte newArgs[5];
+    int i, lock;
+    dd_bool success;
+    Uri *mapUri;
 
-    success = false;
+    DENG_ASSERT(args != 0);
+
+    if(!mo->player)
+    {
+        return false;
+    }
+
+    lock = args[4];
+    if(lock)
+    {
+        if(!(mo->player->keys & (1 << (lock - 1))))
+        {
+            char LockedBuffer[80];
+            sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
+            P_SetMessage(mo->player, 0, LockedBuffer);
+            S_StartSound(SFX_DOOR_LOCKED, mo);
+            return false;
+        }
+    }
+
+    for(i = 0; i < 4; ++i)
+    {
+        newArgs[i] = args[i];
+    }
+    newArgs[4] = 0;
+
+    mapUri = mapUriFromLogicalNumber(newArgs[1]);
+    success = Game_ACScriptInterpreter_StartScript(newArgs[0], mapUri, &newArgs[2], mo, line, side);
+    Uri_Delete(mapUri);
+
+    return success;
+}
+
+dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
+{
+    dd_bool success = false;
+
+    App_Log(DE2_MAP_VERBOSE, "Executing line special %i, mobj:%i", special, mo? mo->thinker.id : 0);
+
     switch(special)
     {
     case 1: // Poly Start Line
@@ -450,7 +496,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
             // Players must be alive to teleport
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
-                G_LeaveMap((args[0]!= 0? args[0]-1 : 0), args[1], false);
+                G_SetGameActionMapCompleted((args[0]!= 0? args[0]-1 : 0), args[1], false);
                 success = true;
             }
         }
@@ -463,31 +509,37 @@ boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 success = true;
-                if(deathmatch)
+                if(G_Ruleset_Deathmatch())
                 {
                     // Winning in deathmatch just goes back to map 1
-                    G_LeaveMap(0, 0, false);
+                    G_SetGameActionMapCompleted(0, 0, false);
                 }
                 else
                 {
                     // Passing DDMAXINT, DDMAXINT to G_LeaveMap() starts the Finale
-                    G_LeaveMap(DDMAXINT, DDMAXINT, false);
+                    G_SetGameActionMapCompleted(DDMAXINT, DDMAXINT, false);
                 }
             }
         }
         break;
 
-    case 80: // ACS_Execute
-        success = P_StartACS(args[0], args[1], &args[2], mo, line, side);
-        break;
+    case 80: /* ACS_Execute */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_StartScript(args[0], mapUri, &args[2], mo, line, side);
+        Uri_Delete(mapUri);
+        break; }
 
-    case 81: // ACS_Suspend
-        success = P_SuspendACS(args[0], args[1]);
-        break;
+    case 81: /* ACS_Suspend */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_SuspendScript(args[0], mapUri);
+        Uri_Delete(mapUri);
+        break; }
 
-    case 82: // ACS_Terminate
-        success = P_TerminateACS(args[0], args[1]);
-        break;
+    case 82: /* ACS_Terminate */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_TerminateScript(args[0], mapUri);
+        Uri_Delete(mapUri);
+        break; }
 
     case 83: // ACS_LockedExecute
         success = P_StartLockedACS(line, args, mo, side);
@@ -610,11 +662,11 @@ boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
     return success;
 }
 
-boolean P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
+dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
 {
     int             lineActivation;
-    boolean         repeat;
-    boolean         buttonSuccess;
+    dd_bool         repeat;
+    dd_bool         buttonSuccess;
     xline_t        *xline = P_ToXLine(line);
 
     if(IS_CLIENT)
@@ -824,7 +876,25 @@ void P_SpawnAllSpecialThinkers(void)
     P_SpawnLineSpecialThinkers();
 }
 
-static boolean isLightningSector(Sector* sec)
+dd_bool P_SectorTagIsBusy(int tag)
+{
+    /// @note The sector tag lists cannot be used here as an iteration at a higher
+    /// level may already be in progress.
+    int i;
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector *sec     = (Sector *) P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
+
+        if(xsec->tag == tag && xsec->specialData)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static dd_bool isLightningSector(Sector* sec)
 {
     xsector_t*              xsec = P_ToXSector(sec);
 
@@ -847,7 +917,7 @@ static void P_LightningFlash(void)
 {
     int i;
     float *tempLight;
-    boolean foundSec;
+    dd_bool foundSec;
     float flashLight;
 
     if(lightningFlash)
@@ -996,8 +1066,9 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
+    mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
 
-    if(!P_GetMapLightning(gameMap))
+    if(!mapInfo || !mapInfo->lightning)
     {
         mapHasLightning = false;
         lightningFlash = 0;

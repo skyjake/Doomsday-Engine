@@ -45,7 +45,7 @@
 #include "common.h"
 
 #include "d_net.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_tick.h"
 #include "p_inventory.h"
@@ -137,9 +137,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
  */
 void P_BringUpWeapon(player_t* player)
 {
-#if _DEBUG
-    const weapontype_t oldPendingWeapon = player->pendingWeapon;
-#endif
+    weapontype_t const oldPendingWeapon = player->pendingWeapon;
 
     weaponmodeinfo_t* wminfo = NULL;
     weapontype_t raiseWeapon;
@@ -166,10 +164,8 @@ void P_BringUpWeapon(player_t* player)
 
     wminfo = WEAPON_INFO(raiseWeapon, player->class_, 0);
 
-#if _DEBUG
-    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
-                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
-#endif
+    App_Log(DE2_MAP_XVERBOSE, "P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
+            (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
@@ -632,7 +628,7 @@ void P_BulletSlope(mobj_t *mo)
     }
 }
 
-void P_GunShot(mobj_t *mo, boolean accurate)
+void P_GunShot(mobj_t *mo, dd_bool accurate)
 {
     angle_t angle;
     int damage;

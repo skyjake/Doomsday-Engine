@@ -1,21 +1,20 @@
 /** @file pathtreenode.cpp PathTree::Node implementation.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
 #include "de/PathTree"
@@ -129,24 +128,26 @@ Path::hash_type PathTree::Node::hash() const
     return tree().segmentHash(d->segmentId);
 }
 
-/// @todo This logic should be encapsulated in de::Path or de::Path::Segment; use QChar.
-static int matchName(char const *string, char const *pattern)
+/// @todo This logic should be encapsulated in de::Path or de::Path::Segment.
+static int matchName(QChar const *string,  dsize stringSize,
+                     QChar const *pattern, dsize patternSize)
 {
-    char const *in = string, *st = pattern;
+    QChar const *in    = string;
+    QChar const *inEnd = string + stringSize;
+    QChar const *st    = pattern;
 
-    while(*in)
+    while(in < inEnd)
     {
-        if(*st == '*')
+        if(*st == QChar('*'))
         {
             st++;
             continue;
         }
 
-        if(*st != '?' && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
+        if(*st != QChar('?') && (st->toLower() != in->toLower()))
         {
             // A mismatch. Hmm. Go back to a previous '*'.
-            while(st >= pattern && *st != '*')
-            { st--; }
+            while(st >= pattern && *st != QChar('*')) { st--; }
 
             // No match?
             if(st < pattern) return false;
@@ -160,11 +161,10 @@ static int matchName(char const *string, char const *pattern)
     }
 
     // Skip remaining asterisks.
-    while(*st == '*')
-    { st++; }
+    while(*st == QChar('*')) { st++; }
 
     // Match is good if the end of the pattern was reached.
-    return *st == 0;
+    return st == (pattern + patternSize);
 }
 
 int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
@@ -183,7 +183,7 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
         PathTree::Node const *node = this;
         for(int i = 0; i < pathNodeCount; ++i)
         {
-            bool const snameIsWild = !snode->toString().compare("*");
+            bool const snameIsWild = !snode->toStringRef().compare("*");
             if(!snameIsWild)
             {
                 // If the hashes don't match it can't possibly be this.
@@ -193,11 +193,8 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
                 }
 
                 // Compare the names.
-                /// @todo Optimize: conversion to string is unnecessary.
-                QByteArray name  = node->name().toUtf8();
-                QByteArray sname = snode->toString().toUtf8();
-
-                if(!matchName(name.constData(), sname.constData()))
+                if(!matchName(node->name().constData(), node->name().size(),
+                              snode->toStringRef().constData(), snode->toStringRef().size()))
                 {
                     return 1;
                 }
@@ -329,7 +326,7 @@ Path PathTree::Node::path(QChar sep) const
 
 #ifdef LIBDENG_STACK_MONITOR
     LOG_AS("pathConstructor");
-    LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
+    LOG_DEV_NOTE("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
     return Path(args.composedPath, sep);
