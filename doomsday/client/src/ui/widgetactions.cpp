@@ -74,3 +74,10 @@ bool WidgetActions::tryEvent(ddevent_t const *ev)
     }
     return false;
 }
+
+void WidgetActions::trackInput(Event const &event)
+{
+    ddevent_t ddev;
+    DD_ConvertEvent(event, &ddev);
+    I_TrackInput(&ddev);
+}

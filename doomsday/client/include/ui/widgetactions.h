@@ -62,6 +62,17 @@ public:
 
     bool tryEvent(ddevent_t const *ev);
 
+    /**
+     * Updates virtual input device state.
+     *
+     * Normally this is called automatically at the appropriate time, however if a widget
+     * eats an event before it is passed to the bindings system, it might still wish to
+     * call this to ensure subsequent bindings are correctly evaluated.
+     *
+     * @param event  Input event.
+     */
+    void trackInput(de::Event const &event);
+
 private:
     DENG2_PRIVATE(d)
 };
