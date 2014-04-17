@@ -64,6 +64,18 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
     d->updateLexicon();
 }
 
+void ConsoleCommandWidget::focusGained()
+{
+    CommandWidget::focusGained();
+    ClientApp::widgetActions().activateContext("console");
+}
+
+void ConsoleCommandWidget::focusLost()
+{
+    CommandWidget::focusLost();
+    ClientApp::widgetActions().deactivateContext("console");
+}
+
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
     if(isDisabled()) return false;
