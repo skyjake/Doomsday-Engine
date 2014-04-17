@@ -81,3 +81,11 @@ void WidgetActions::trackInput(Event const &event)
     DD_ConvertEvent(event, &ddev);
     I_TrackInput(&ddev);
 }
+
+void WidgetActions::activateContext(String const &context, bool yes)
+{
+    if(bcontext_t *bc = B_ContextByName(context.toLatin1()))
+    {
+        B_ActivateContext(bc, yes);
+    }
+}
