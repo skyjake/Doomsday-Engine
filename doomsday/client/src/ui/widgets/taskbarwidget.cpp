@@ -543,6 +543,8 @@ bool TaskBarWidget::handleEvent(Event const &event)
     // Don't let modifier keys fall through to the game.
     if(isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
     {
+        // However, let the bindings system know about the modifier state.
+        ClientApp::widgetActions().trackInput(event);
         return true;
     }
 
