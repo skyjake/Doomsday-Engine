@@ -701,7 +701,7 @@ span.paddle_left_select, span.paddle_right_select {
 }
 
 #framepanel_top, #panorama {
-    height: 160px;
+    height: 150px;
 }
 
 #framepanel_bottom {
@@ -738,7 +738,7 @@ span.paddle_left_select, span.paddle_right_select {
 #latestversion a:hover { color: #FFCB0F; }
 
 @media only screen and (min-width: 767px) {
-#framepanel_top, #panorama { height: 280px; }
+#framepanel_top, #panorama { height: 270px; }
 #framepanel_bottom { margin-top: 270px; }
 #pageheading, #latestversion { margin-top: -7.5em; }
 #pageheading h1, #latestversion h1 { font-size: 2.5em; }
