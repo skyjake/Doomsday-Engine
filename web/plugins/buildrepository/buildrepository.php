@@ -1,9 +1,8 @@
 <?php
 /**
- * @file buildrepository.php
- * Build Repository.
+ * @file buildrepository.php  Build Repository.
  *
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -403,6 +402,166 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
          * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
+
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.13'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.13.2/deng-inst-1.13.2.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.13.2');
+        $pack->setReleaseDate(strtotime('January 14, 2014'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.13'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.13.2/deng-inst-1.13.2.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.13.2');
+        $pack->setReleaseDate(strtotime('January 14, 2014'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.13'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.13.2/deng-inst-1.13.2_64bit.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.13.2');
+        $pack->setReleaseDate(strtotime('January 14, 2014'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.13'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.13.2/deng-inst-1.13.2_i386.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.13.2');
+        $pack->setReleaseDate(strtotime('January 14, 2014'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.13'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.13.2/deng-inst-1.13.2_amd64.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.13.2');
+        $pack->setReleaseDate(strtotime('January 14, 2014'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.12'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.12.2/deng-inst-1.12.2.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.12.2');
+        $pack->setReleaseDate(strtotime('November 2, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.12'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.12.2/deng-inst-1.12.2.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.12.2');
+        $pack->setReleaseDate(strtotime('November 2, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.12'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.12.2/deng-inst-1.12.2_64bit.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.12.2');
+        $pack->setReleaseDate(strtotime('November 2, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.12'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.12.2/deng-inst-1.12.2_i386.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.12.2');
+        $pack->setReleaseDate(strtotime('November 2, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.12'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.12.2/deng-inst-1.12.2_amd64.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.12.2');
+        $pack->setReleaseDate(strtotime('November 2, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.11'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.11.2/deng-inst-1.11.2.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.11.2');
+        $pack->setReleaseDate(strtotime('August 29, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.11'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.11.2/deng-inst-1.11.2.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.11.2');
+        $pack->setReleaseDate(strtotime('August 29, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.11'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.11.2/deng-inst-1.11.2_64bit.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.11.2');
+        $pack->setReleaseDate(strtotime('August 29, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.11'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.11.2/deng-inst-1.11.2_i386.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.11.2');
+        $pack->setReleaseDate(strtotime('August 29, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.11'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.11.2/deng-inst-1.11.2_amd64.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.11.2');
+        $pack->setReleaseDate(strtotime('August 29, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.10.4/deng-inst-1.10.4.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.10.4');
+        $pack->setReleaseDate(strtotime('July 28, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.10.4/deng-inst-1.10.4.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.10.4');
+        $pack->setReleaseDate(strtotime('July 28, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.10.4/deng-inst-1.10.4_64bit.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.10.4');
+        $pack->setReleaseDate(strtotime('July 28, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.10.4/deng-inst-1.10.4_i386.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.10.4');
+        $pack->setReleaseDate(strtotime('July 28, 2013'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.10.4/deng-inst-1.10.4_amd64.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.10.4');
+        $pack->setReleaseDate(strtotime('July 28, 2013'));
+        $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.9.10'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1.exe/download',
