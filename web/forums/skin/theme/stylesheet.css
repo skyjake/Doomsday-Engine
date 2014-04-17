@@ -48,7 +48,7 @@ ul.linklist li {
 ul.linklist li.rightside, p.rightside {
     float: right;
     margin-right: 0;
-    margin-left: 5px;
+    /*margin-left: 5px;*/
     text-align: right;
 }
 
@@ -77,7 +77,7 @@ ul.navlinks {
 .rightside {
     float: right;
     margin-left: 5px;
-    margin-right: -5px;
+    /*margin-right: -5px;*/
     text-align: right;
 }
 
@@ -555,7 +555,7 @@ ul.topiclist dd.searchextra {
 
 .post header .profile-icons {
     position: relative;
-    top: -15px;/*-1em; /*equal to post font size*/
+    top: -1.2em; /*block padding*/
     right: -1.3em;
     margin: 0;
 }
@@ -569,7 +569,7 @@ ul.topiclist dd.searchextra {
 
 .post header h1 {
     font-size: 10pt;
-    margin-top: 15px;
+    /*margin-top: 15px;*/
     margin-right: 0;
 }
 

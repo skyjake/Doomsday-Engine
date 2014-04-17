@@ -4,7 +4,7 @@
     <meta charset="{S_CONTENT_ENCODING}" />
     <meta http-equiv="cleartype" content="on">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, target-densityDpi=device-dpi">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="David Gardner" />
     <meta name="keywords" content="Doomsday,Doomsday Engine,Deng,Doom,Heretic,Hexen,jDoom,jHeretic,jHexen,sourceport,first person shooter,fps," />
     <meta name="description" content="Home of the Doomsday Engine, a modern engine for playing classic 2.5d first person shooters DOOM, Heretic and Hexen." />
@@ -118,6 +118,10 @@
     <div id="page-header" class="block" role="navigation">
         <section><h1><a href="{U_INDEX}" accesskey="h">{L_INDEX}</a><!-- BEGIN navlinks --><span class="separator">&#47;</span><a href="{navlinks.U_VIEW_FORUM}">{navlinks.FORUM_NAME}</a><!-- END navlinks --></h1></section>
 
+<!-- IF $SHOW_CURRENT_TIME -->
+        <!-- IF S_USER_LOGGED_IN --><div class="rightside">{LAST_VISIT_DATE}</div><!-- ENDIF --><div class="leftside">{CURRENT_TIME}</div>
+<!-- ENDIF -->
+
         <ul class="linklist rightside">
             <li><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>
             <!-- IF not S_IS_BOT -->
@@ -126,23 +130,18 @@
                 <!-- IF U_ACP --><li><a href="{U_ACP}">{L_ACP}</a></li><!-- ENDIF -->
             <!-- ENDIF -->
         </ul>
-
         <!-- IF not S_IS_BOT -->
         <ul class="linklist leftside">
             <!-- IF S_USER_LOGGED_IN -->
             <li>
-                <a href="{U_PROFILE}" title="{L_PROFILE}" accesskey="e">{L_PROFILE}</a>
+                <a href="{U_PROFILE}" title="{L_PROFILE}" accesskey="e">{S_USER_NAME}</a>
                 <!-- IF S_DISPLAY_PM --> (<a href="{U_PRIVATEMSGS}">{PRIVATE_MESSAGE_INFO}</a>)<!-- ENDIF -->
             </li>
-            <!-- IF S_DISPLAY_SEARCH --><li><a href="{U_SEARCH_SELF}">{L_SEARCH_SELF}</a></li><!-- ENDIF -->
             <!-- IF U_RESTORE_PERMISSIONS --><li><a href="{U_RESTORE_PERMISSIONS}">{L_RESTORE_PERMISSIONS}</a></li><!-- ENDIF -->
             <!-- ENDIF -->
             <li><a href="{U_LOGIN_LOGOUT}" title="{L_LOGIN_LOGOUT}" accesskey="x">{L_LOGIN_LOGOUT}</a></li>
         </ul>
         <!-- ENDIF -->
-<!-- IF $SHOW_CURRENT_TIME -->
-        <span>{CURRENT_TIME}</span><!-- IF S_USER_LOGGED_IN --><span class="rightside">{LAST_VISIT_DATE}</span><!-- ENDIF -->
-<!-- ENDIF -->
     </div>
 
     <!-- IF S_BOARD_DISABLED and S_USER_LOGGED_IN and (U_MCP or U_ACP) -->
