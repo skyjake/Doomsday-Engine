@@ -124,7 +124,7 @@ class Event:
 
     def extract_version_from_filename(self, name):
         if '_osx' in name:
-            pos = name.find('_osx') + 6
+            pos = name.find('_osx') + 4
         else:
             pos = 0
         pos = name.find('_', pos)
