@@ -123,10 +123,10 @@ void DD_ConsoleInit()
     LOG_NOTE("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
 
     // Print the used command line.
-    LOG_VERBOSE("Command line " _E(l) "(%i strings):") << CommandLine_Count();
+    LOG_MSG("Command line options:");
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
-        LOG_VERBOSE("  %i: " _E(>) "%s") << p << CommandLine_At(p);
+        LOG_MSG("  %i: " _E(>) "%s") << p << CommandLine_At(p);
     }
 }
 
