@@ -134,9 +134,9 @@
             <li class="header">
                 <dl class="icon">
                     <dt></dt>
+                    <dd class="lastpost"><span>{L_LAST_POST}</span></dd>
                     <dd class="posts">{L_REPLIES}</dd>
                     <dd class="views">{L_VIEWS}</dd>
-                    <dd class="lastpost"><span>{L_LAST_POST}</span></dd>
                 </dl>
             </li>
         </ul>
@@ -152,9 +152,9 @@
                     <!-- IF topicrow.PAGINATION --><strong class="pagination"><span>{topicrow.PAGINATION}</span></strong><!-- ENDIF -->
                     {topicrow.FIRST_POST_TIME} {L_POST_BY_AUTHOR} {topicrow.TOPIC_AUTHOR_FULL}
                 </dt>
+                <dd class="lastpost"><span><dfn>{L_LAST_POST}</dfn><!-- IF not S_IS_BOT --><a href="{topicrow.U_LAST_POST}">{LAST_POST_IMG}</a> <!-- ENDIF -->{topicrow.LAST_POST_TIME}<br />{L_POST_BY_AUTHOR} {topicrow.LAST_POST_AUTHOR_FULL}</span>
                 <dd class="posts">{topicrow.REPLIES} <dfn>{L_REPLIES}</dfn></dd>
                 <dd class="views">{topicrow.VIEWS} <dfn>{L_VIEWS}</dfn></dd>
-                <dd class="lastpost"><span><dfn>{L_LAST_POST}</dfn><!-- IF not S_IS_BOT --><a href="{topicrow.U_LAST_POST}">{LAST_POST_IMG}</a> <!-- ENDIF -->{topicrow.LAST_POST_TIME}<br />{L_POST_BY_AUTHOR} {topicrow.LAST_POST_AUTHOR_FULL}</span>
                 </dd>
             </dl>
         </li>

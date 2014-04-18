@@ -3,6 +3,11 @@
 
 .clearfix { height: 1%; overflow: hidden; }
 
+ul, ol {
+    -webkit-margin-before: 0;
+    -webkit-margin-after: 0;
+}
+
 body {
     background: #282D2B url(panoramarotator) no-repeat fixed;
     background-position: center 100%;
@@ -168,9 +173,13 @@ hr.dashed {
 .collapsible:nth-child(n+1) { clear: left; }
 }
 
+/*.block.nobackground {
+    margin-top: .6em;
+}*/
+
 .block {
-    padding: 1.2em;
-    margin: 1.2em .6em 0 .6em;
+    padding: 22px;/*1.2em;*/
+    margin: 0 .6em 1.2em .6em;
     height: 1%; overflow: hidden;
 }
 
@@ -224,7 +233,7 @@ hr.dashed {
 .block {
     background-color: rgba(0, 0, 0, 0.7);
     box-shadow: 1px 2px 3px 0px rgba(20, 20, 20, 0.4);
-    box-shadow: 0 0 28px -8px rgb(110, 110, 110);/**/
+    box-shadow: 0 0 24px -8px rgb(110, 110, 110);/**/
 }
 
 .rules {
@@ -252,6 +261,8 @@ hr.dashed {
     background:none;
     box-shadow:none;
     padding: 0;
+    margin-bottom: 0.6em;
+    margin-top: -.6em;
 }
 
 .rules h1, .rules h2, .rules h3, .rules h4, .rules h5, .rules h6 { color:#FFD9BB; }
@@ -300,33 +311,50 @@ table.table1 tbody td {
     border-color: #333;
     border-style: solid;
     border-width: 2px;
+    border-radius: 4px;
 }
 
 ul.topiclist dd {
-    margin: 0;
+    margin: 0 .2em;
 }
 
 ul.topiclist {
     list-style-type: none;
-    margin: -6px;
     padding: 0;
+    /*margin-bottom:0;
+    margin-top:0;*/
+}
+
+.block ul.topiclist {
+    margin: -22px;/*-18px -22px -18px -22px;*/
     font-size: .8em;
 }
 
 ul.topiclist li {
     display: block;
-    margin: 6px;
+}
+
+.block ul.topiclist li {
+    margin: 3px;/*3px 6px;*/
+    padding: .8em;/*.6em;*/
 }
 
 ul.topiclist li.header {
     border-width: 0;
+    /*margin-bottom: 15px;*/
+    color: white;
+    margin-right: .6em;
+    font-size: 1.4em;
+    font-weight: 300;
+    text-shadow: 0px 1px 1px #666;
+    white-space: nowrap;
 }
 
 ul.topiclist li:not(.header):hover,
 table.directory tbody tr:hover,
 table.table1 tbody tr:hover,
 table.table1 tbody tr.hover {
-    border-color: #535353;
+    border-color: #666;
 }
 
 ul.topiclist dl {
@@ -335,12 +363,13 @@ ul.topiclist dl {
 
 ul.topiclist dt, ul.topiclist dd {
     display: block;
-    float: left;
-    padding: 5px;
+    float: right;
+    /*padding: 0px 5px;*/
 }
 
 ul.topiclist dt {
-    width: 48%;
+    float: left;
+    width: 42%;/*36%;*/
 }
 
 ul.topiclist dfn {
