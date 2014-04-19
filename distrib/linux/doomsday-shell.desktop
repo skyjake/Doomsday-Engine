@@ -8,4 +8,3 @@ Terminal=false
 Type=Application
 Icon=BASE_DIR/icons/shell.png
 
-Name[en_US]=doomsday-shell.desktop
