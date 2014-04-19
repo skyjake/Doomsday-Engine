@@ -455,48 +455,6 @@ dl.imagelist dt {
     margin-right: 5px;
 }
 
-/*li.header dt, li.header dd {
-    margin: 0px 0px 5px 0px;
-    padding: 5px 5px 0px 5px;
-}*/
-
-/*li.header dt {
-    font-weight: bold;
-}*/
-
-li.header dl.icon {
-    min-height: 0;
-}
-
-/* Forum list column styles */
-dl.icon {
-    min-height: 35px;
-    background-position: 7px 50%; /* Position of folder icon */
-    background-repeat: no-repeat;
-}
-
-dl.icon dt {
-    padding-left: 45px; /* Space for folder icon */
-}
-
-dd.posts, dd.topics, dd.views {
-    width: 12%;
-    text-align: center;
-}
-
-dd.posts, dd.topics, dd.views {
-    width: 10%;
-}
-
-dd.lastpost {
-    width: 19%;
-}
-
-ul.topiclist dd.searchby span, ul.topiclist dd.info span,
-ul.topiclist dd.time span, dd.redirect span, dd.moderation span {
-    display: block;
-    padding-left: 5px;
-}
 
 dd.time {
     width: auto;
@@ -536,7 +494,7 @@ dd.searchby {
     line-height: 1em;
 }
 
-ul.topiclist dd.searchextra {
+.topiclist dd.searchextra {
     margin-left: 5px;
     padding: 0.2em 0;
     font-size: 1.1em;
@@ -545,13 +503,6 @@ ul.topiclist dd.searchextra {
     clear: both;
     width: 98%;
     overflow: hidden;
-}
-
-/* Container for post/reply buttons and pagination */
-.topic-actions {
-    margin-bottom: 3px;
-    height: 1em;
-    min-height: 1em;
 }
 
 .post header h1 span.postauthor {

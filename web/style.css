@@ -1,11 +1,37 @@
 
 @import url(http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,700,300);
 
+
+/* normalize */
+p, h1, h2, h3, h4, h5, h6, h7, h8, h9 { margin-top: 0; }
+dl, ol, ul { padding: 0; margin: 0; }
+
+/* fixes */
 .clearfix { height: 1%; overflow: hidden; }
 
-ul, ol {
-    -webkit-margin-before: 0;
-    -webkit-margin-after: 0;
+/* responsive content inclusion */
+.inlcnt     { display: none; }
+span.inlcnt { padding: 0.4ex; }
+@media handheld, only screen and (max-width: 480px) { .inlcnt { display:initial; } }
+
+/* responsive content exclusion */
+@media handheld, only screen and (max-width: 480px) { .exlcnt { display:none; } }
+
+/**
+ * Responsive list with dynamic column expansion
+ */
+.reslist > li { vertical-align: top; /* clear fix */ height: 1%; overflow: hidden; }
+.reslist dt,
+.reslist dd   { float: left; }
+/* responsive column expansion */
+@media handheld, only screen and (max-width: 480px) {
+  .reslist dl > dt.expcol,
+  .reslist dl > dd.expcol { width:100%; }
+}
+/* responsive column exclusion */
+@media handheld, only screen and (max-width: 480px) {
+  .reslist dl > dt.exlcol,
+  .reslist dl > dd.exlcol { width:auto; margin-left: 0; }
 }
 
 body {
@@ -35,7 +61,7 @@ body { margin: 1.2em; }
 
 h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0;
-    margin-top: 0;/*.6em;*/
+    margin-top: 0;
     font-weight: normal;
     font-variant: normal;
     font-weight: 300;
@@ -173,12 +199,8 @@ hr.dashed {
 .collapsible:nth-child(n+1) { clear: left; }
 }
 
-/*.block.nobackground {
-    margin-top: .6em;
-}*/
-
 .block {
-    padding: 22px;/*1.2em;*/
+    padding: 22px;
     margin: 0 .6em 1.2em .6em;
     height: 1%; overflow: hidden;
 }
@@ -223,9 +245,6 @@ hr.dashed {
 
 #menu {
     background-color: rgba(0, 0, 0, 0.8);
-    /*position: relative;
-    width: 200%;
-    left: -50%;/**/
 }
 
 #menu a:focus { outline-color: white; }
@@ -233,7 +252,7 @@ hr.dashed {
 .block {
     background-color: rgba(0, 0, 0, 0.7);
     box-shadow: 1px 2px 3px 0px rgba(20, 20, 20, 0.4);
-    box-shadow: 0 0 24px -8px rgb(110, 110, 110);/**/
+    box-shadow: 0 0 24px -8px rgb(110, 110, 110);
 }
 
 .rules {
@@ -252,10 +271,8 @@ hr.dashed {
 .block a:hover { color: #FFCB0F; }
 
 .major_issue { background-color:#ff4444; /* red */ }
-
 .minor_issue { background-color:#ffee00; /* yellow */ }
-
-.no_issue { background-color:#00ee00; /* green */ }
+.no_issue    { background-color:#00ee00; /* green */ }
 
 .nobackground {
     background:none;
@@ -306,7 +323,7 @@ table.directory td {
 
 table.directory tbody tr,
 dl.codebox,
-ul.topiclist li,
+.topiclist li,
 table.table1 tbody td {
     border-color: #333;
     border-style: solid;
@@ -314,70 +331,47 @@ table.table1 tbody td {
     border-radius: 4px;
 }
 
-ul.topiclist dd {
-    margin: 0 .2em;
-}
+.topiclist    { font-size: .8em; }
+.topiclist li { padding: 11px 22px; margin: 2px; }
 
-ul.topiclist {
-    list-style-type: none;
-    padding: 0;
-    /*margin-bottom:0;
-    margin-top:0;*/
-}
-
-.block ul.topiclist {
-    margin: -22px;/*-18px -22px -18px -22px;*/
-    font-size: .8em;
-}
-
-ul.topiclist li {
-    display: block;
-}
-
-.block ul.topiclist li {
-    margin: 3px;/*3px 6px;*/
-    padding: .8em;/*.6em;*/
-}
-
-ul.topiclist li.header {
+.topiclist li.header {
     border-width: 0;
-    /*margin-bottom: 15px;*/
     color: white;
-    margin-right: .6em;
     font-size: 1.4em;
     font-weight: 300;
     text-shadow: 0px 1px 1px #666;
     white-space: nowrap;
 }
 
-ul.topiclist li:not(.header):hover,
+.block.topiclist { padding: 0; }
+
+.topiclist li:not(.header):hover,
 table.directory tbody tr:hover,
 table.table1 tbody tr:hover,
 table.table1 tbody tr.hover {
     border-color: #666;
 }
 
-ul.topiclist dl {
-    position: relative;
-}
+/* ---- */
 
-ul.topiclist dt, ul.topiclist dd {
-    display: block;
-    float: right;
-    /*padding: 0px 5px;*/
-}
+.topiclist { list-style-type: none; }
 
-ul.topiclist dt {
-    float: left;
-    width: 42%;/*36%;*/
-}
+.forumrow .main     { width: 44%; }
 
-ul.topiclist dfn {
-    /* Labels for post/view counts */
-    display: none;
-}
+.forumrow dd        { margin-left: 20px; }
+.forumrow .posts,
+.forumrow .topics,
+.forumrow .views    { width: 8%; text-align: center; }
+.forumrow .lastpost { width: 24%; }
 
-ul.topiclist li.row dt a.subforum {
+.forumrow .icon {
+    min-height: 35px;
+    background-position: 7px 50%; /* Position of folder icon */
+    background-repeat: no-repeat;
+}
+.forumrow .icon dt { /*padding-left: 45px; /*folder icon spacing*/ }
+
+.forumrow a.subforum {
     background-image: none;
     background-position: 0 50%;
     background-repeat: no-repeat;
@@ -385,6 +379,8 @@ ul.topiclist li.row dt a.subforum {
     white-space: nowrap;
     padding: 0 0 0 12px;
 }
+
+/* ---- */
 
 table.table1 {
     border-collapse:collapse;

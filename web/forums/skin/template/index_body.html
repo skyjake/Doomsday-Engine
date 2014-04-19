@@ -1,40 +1,44 @@
 <!-- DEFINE $SHOW_CURRENT_TIME = 1 -->
 <!-- INCLUDE overall_header.html -->
-<div class="block">
+
 <!-- IF S_DISPLAY_SEARCH or (S_USER_LOGGED_IN and not S_IS_BOT) -->
-<ul class="linklist rightside">
-    <!-- IF not S_IS_BOT and U_MARK_FORUMS --><li class="rightside"><a href="{U_MARK_FORUMS}" accesskey="m">{L_MARK_FORUMS_READ}</a></li><!-- ENDIF -->
-</ul>
-<ul class="linklist leftside">
-    <!-- IF S_DISPLAY_SEARCH -->
+<div class="block" role="navigation">
+    <ul class="linklist rightside">
+  <!-- IF not S_IS_BOT and U_MARK_FORUMS --><li class="rightside"><a href="{U_MARK_FORUMS}" accesskey="m">{L_MARK_FORUMS_READ}</a></li><!-- ENDIF -->
+    </ul>
+    <ul class="linklist leftside">
+  <!-- IF S_DISPLAY_SEARCH -->
         <!-- IF S_USER_LOGGED_IN and not S_IS_BOT --><li><a href="{U_SEARCH_SELF}">{L_SEARCH_SELF}</a></li><!-- ENDIF -->
         <!-- IF S_USER_LOGGED_IN --><li><a href="{U_SEARCH_NEW}">{L_SEARCH_NEW}</a></li><!-- ENDIF -->
         <!-- IF S_LOAD_UNREADS --><li><a href="{U_SEARCH_UNREAD}">{L_SEARCH_UNREAD}</a></li><!-- ENDIF -->
         <li><a href="{U_SEARCH_UNANSWERED}">{L_SEARCH_UNANSWERED}</a></li>
         <li><a href="{U_SEARCH_ACTIVE_TOPICS}">{L_SEARCH_ACTIVE_TOPICS}</a></li>
-    <!-- ENDIF -->
-</ul>
-<!-- ENDIF -->
+  <!-- ENDIF -->
+    </ul>
 </div>
+<!-- ENDIF -->
 
+<main>
+<section>
 <!-- INCLUDE forumlist_body.html -->
+</section>
 
 <!-- IF not S_USER_LOGGED_IN and not S_IS_BOT -->
-    <form method="post" action="{S_LOGIN_ACTION}" class="headerspace">
-    <div class="block">
-        <section>
-            <h1><a href="{U_LOGIN_LOGOUT}">{L_LOGIN_LOGOUT}</a><!-- IF S_REGISTER_ENABLED --> or <a href="{U_REGISTER}">{L_REGISTER}</a><!-- ENDIF --></h1>
-        <fieldset class="quick-login">
-            <label for="username">{L_USERNAME}</label>&nbsp;<input type="text" name="username" id="username" size="10" class="inputbox" title="{L_USERNAME}" />
-            <label for="password">{L_PASSWORD}</label>&nbsp;<input type="password" name="password" id="password" size="10" class="inputbox" title="{L_PASSWORD}" />
-            <!-- IF S_AUTOLOGIN_ENABLED -->
-                <label for="autologin">{L_LOG_ME_IN} <input type="checkbox" name="autologin" id="autologin" /></label>
-            <!-- ENDIF -->
-            <input type="submit" name="login" value="{L_LOGIN}" />
-            {S_LOGIN_REDIRECT}
-        </fieldset>
-    </form>
-    </section></div>
+<form method="post" action="{S_LOGIN_ACTION}" class="headerspace">
+<div class="block">
+    <section>
+        <h1><a href="{U_LOGIN_LOGOUT}">{L_LOGIN_LOGOUT}</a><!-- IF S_REGISTER_ENABLED --> or <a href="{U_REGISTER}">{L_REGISTER}</a><!-- ENDIF --></h1>
+    <fieldset class="quick-login">
+        <label for="username">{L_USERNAME}</label>&nbsp;<input type="text" name="username" id="username" size="10" class="inputbox" title="{L_USERNAME}" />
+        <label for="password">{L_PASSWORD}</label>&nbsp;<input type="password" name="password" id="password" size="10" class="inputbox" title="{L_PASSWORD}" />
+        <!-- IF S_AUTOLOGIN_ENABLED -->
+            <label for="autologin">{L_LOG_ME_IN} <input type="checkbox" name="autologin" id="autologin" /></label>
+        <!-- ENDIF -->
+        <input type="submit" name="login" value="{L_LOGIN}" />
+        {S_LOGIN_REDIRECT}
+    </fieldset>
+</section></div>
+</form>
 <!-- ENDIF -->
 
 <div class="block">
@@ -59,5 +63,6 @@
     </section>
 <!-- ENDIF -->
 </div>
+</main>
 
 <!-- INCLUDE overall_footer.html -->
