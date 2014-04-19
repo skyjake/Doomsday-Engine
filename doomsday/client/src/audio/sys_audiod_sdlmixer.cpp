@@ -205,8 +205,8 @@ int DS_SDLMixerInit(void)
     // Announce capabilites.
     LOG_AUDIO_VERBOSE("SDLMixer configuration:");
     LOG_AUDIO_VERBOSE("  " _E(>) "Output: %s\n"
-                      "Format: %#x (%#x)\n"
-                      "Frequency: %iHz (%iHz)"
+                      "Format: %x (%x)\n"
+                      "Frequency: %iHz (%iHz)\n"
                       "Initial Channels: %i")
             << (channels > 1? "stereo" : "mono")
             << format << (uint16_t) AUDIO_S16LSB
