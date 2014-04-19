@@ -5,7 +5,7 @@
 CONFIG += dengplugin_libdeng2_full
 
 include(../config_plugin.pri)
-include(../../dep_glib.pri)
+deng_embedfluidsynth: include(../../dep_glib.pri)
 
 TEMPLATE = lib
 TARGET   = audio_fluidsynth
