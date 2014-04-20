@@ -454,7 +454,7 @@ dd_bool DGL_GetIntegerv(int name, int *v)
 #undef DGL_GetInteger
 int DGL_GetInteger(int name)
 {
-    int values[10];
+    int values[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     DGL_GetIntegerv(name, values);
     return values[0];
 }

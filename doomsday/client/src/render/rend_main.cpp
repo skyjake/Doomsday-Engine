@@ -980,6 +980,8 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
 
 static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
 {
+    DENG_ASSERT(tc);
+
     // Determine distance to viewer.
     float distToEye = Vector2f(vOrigin.x - point.x, vOrigin.z - point.y)
                           .normalize().length();

@@ -229,7 +229,7 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
 {
     LOG_AS("Mus_GetExt");
 
-    if(!musAvail || !AudioDriver_Music_Available()) return false;
+    if(!musAvail || !AudioDriver_Music_Available() || !def) return false;
 
     if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
     {

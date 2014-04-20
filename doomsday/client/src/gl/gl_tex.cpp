@@ -312,6 +312,7 @@ static void* packImage(int components, const float* tempOut, GLint typeOut,
         break;
       }
     default:
+        DENG_ASSERT(!"packImage: Unknown output type");
         return 0;
     }
 

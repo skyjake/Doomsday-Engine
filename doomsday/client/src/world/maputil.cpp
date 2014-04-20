@@ -263,6 +263,8 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
+    DENG_ASSERT(sector);
+
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
     Line *other = &cown->line();
 
