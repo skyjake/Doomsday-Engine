@@ -131,14 +131,14 @@ public:
     /**
      * Sets the value of the variable.
      *
-     * @param v  New value. Variable gets ownership.
+     * @param v  New value. Variable gets ownership. Cannot be NULL.
      */
     Variable &set(Value *v);
 
     /**
      * Sets the value of the variable.
      *
-     * @param v  New value. Variable gets ownership.
+     * @param v  New value. Variable gets ownership. Cannot be NULL.
      */
     Variable &operator = (Value *v);
 

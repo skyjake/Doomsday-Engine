@@ -326,7 +326,6 @@ File *File::reinterpret()
 {
     Folder *folder  = parent();
     File *original  = source();
-    File *result    = this;
     bool deleteThis = false;
 
     if(original != this)
@@ -342,7 +341,7 @@ File *File::reinterpret()
     }
 
     original->flush();
-    result = fileSystem().interpret(original);
+    File *result = fileSystem().interpret(original);
 
     // The interpreter should use whatever origin feed the file was previously using.
     result->setOriginFeed(d->originFeed);

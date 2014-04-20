@@ -210,7 +210,7 @@ DENG2_PIMPL(RuleRectangle)
         {
             outputRules[deltaOutput]->setSource(*outputRules[maxOutput] - *outputRules[minOutput]);
 
-            deltaDefined = true;
+            //deltaDefined = true;
         }
     }
 };

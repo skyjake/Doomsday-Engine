@@ -56,23 +56,22 @@ void BuiltInExpression::push(Evaluator &evaluator, Record *) const
 Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 {
     std::auto_ptr<Value> value(evaluator.popResult());
-    ArrayValue *args = dynamic_cast<ArrayValue *>(value.get());
-    DENG2_ASSERT(args != NULL); // must be an array
+    ArrayValue const &args = value.get()->as<ArrayValue>();
     
     switch(_type)
     {
     case LENGTH:
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for LENGTH");
         }
-        return new NumberValue(args->at(1).size());
+        return new NumberValue(args.at(1).size());
         
     case DICTIONARY_KEYS:
     case DICTIONARY_VALUES:
     {
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
@@ -80,7 +79,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                        "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
         }
         
-        DictionaryValue const *dict = dynamic_cast<DictionaryValue const *>(&args->at(1));
+        DictionaryValue const *dict = dynamic_cast<DictionaryValue const *>(&args.at(1));
         if(!dict)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -105,14 +104,14 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     case RECORD_MEMBERS:    
     case RECORD_SUBRECORDS:
     {
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
                 String(_type == RECORD_MEMBERS? "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
         }
         
-        RecordValue const *rec = dynamic_cast<RecordValue const *>(&args->at(1));
+        RecordValue const *rec = dynamic_cast<RecordValue const *>(&args.at(1));
         if(!rec)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -140,15 +139,15 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case AS_RECORD:
     {
-        if(args->size() == 1)
+        if(args.size() == 1)
         {
             // No arguments: produce an owned, empty Record.
             return new RecordValue(new Record, RecordValue::OwnsRecord);
         }
-        if(args->size() == 2)
+        if(args.size() == 2)
         {
             // One argument: make an owned copy of a referenced record.
-            RecordValue const *rec = dynamic_cast<RecordValue const *>(&args->at(1));
+            RecordValue const *rec = dynamic_cast<RecordValue const *>(&args.at(1));
             if(!rec)
             {
                 throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -161,34 +160,34 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     }
     
     case AS_NUMBER:
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for AS_NUMBER");
         }
-        return new NumberValue(args->at(1).asNumber());
+        return new NumberValue(args.at(1).asNumber());
 
     case AS_TEXT:
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for AS_TEXT");
         }
-        return new TextValue(args->at(1).asText());
+        return new TextValue(args.at(1).asText());
 
     case AS_TIME:
-        if(args->size() == 1)
+        if(args.size() == 1)
         {
             // Current time.
             return new TimeValue;
         }
-        if(args->size() == 2)
+        if(args.size() == 2)
         {
-            Time t = Time::fromText(args->at(1).asText());
+            Time t = Time::fromText(args.at(1).asText());
             if(!t.isValid())
             {
                 // Maybe just a date?
-                t = Time::fromText(args->at(1).asText(), Time::ISODateOnly);
+                t = Time::fromText(args.at(1).asText(), Time::ISODateOnly);
             }
             return new TimeValue(t);
         }
@@ -197,17 +196,17 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case TIME_DELTA:
     {
-        if(args->size() != 3)
+        if(args.size() != 3)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly two arguments for TIME_DELTA");
         }
-        TimeValue const *fromTime = dynamic_cast<TimeValue const *>(&args->at(1));
+        TimeValue const *fromTime = dynamic_cast<TimeValue const *>(&args.at(1));
         if(!fromTime)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 1 of TIME_DELTA must be a time");
         }
-        TimeValue const *toTime = dynamic_cast<TimeValue const *>(&args->at(2));
+        TimeValue const *toTime = dynamic_cast<TimeValue const *>(&args.at(2));
         if(!toTime)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 2 of TIME_DELTA must be a time");
@@ -217,7 +216,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case LOCAL_NAMESPACE:
     {
-        if(args->size() != 1)
+        if(args.size() != 1)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "No arguments expected for LOCAL_NAMESPACE");
@@ -227,24 +226,24 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     
     case SERIALIZE:
     {
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for SERIALIZE");
         }
         std::auto_ptr<BlockValue> data(new BlockValue);
-        Writer(*data.get()) << args->at(1);
+        Writer(*data.get()) << args.at(1);
         return data.release();
     }
     
     case DESERIALIZE:
     {
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for DESERIALIZE");
         }
-        BlockValue const *block = dynamic_cast<BlockValue const *>(&args->at(1));
+        BlockValue const *block = dynamic_cast<BlockValue const *>(&args.at(1));
         if(block)
         {
             Reader reader(*block);
@@ -252,7 +251,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
         /*
         // Alternatively allow deserializing from a text value.
-        TextValue const *text = dynamic_cast<TextValue const *>(&args->at(1));
+        TextValue const *text = dynamic_cast<TextValue const *>(&args.at(1));
         if(text)
         {
             return Value::constructFrom(Reader(Block(text->asText().toUtf8())));
@@ -263,16 +262,16 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     }
         
     case FLOOR:
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for FLOOR");
         }
-        return new NumberValue(std::floor(args->at(1).asNumber()));
+        return new NumberValue(std::floor(args.at(1).asNumber()));
 
     case EVALUATE:
     {
-        if(args->size() != 2)
+        if(args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for EVALUATE");
@@ -280,7 +279,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         // Set up a subprocess in the local namespace.
         Process subProcess(evaluator.localNamespace());
         // Parse the argument as a script.
-        Script subScript(args->at(1).asText());
+        Script subScript(args.at(1).asText());
         subProcess.run(subScript);
         subProcess.execute();
         // A copy of the result value is returned.
