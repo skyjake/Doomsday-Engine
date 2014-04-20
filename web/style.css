@@ -22,16 +22,25 @@ span.inlcnt { padding: 0.4ex; }
  */
 .reslist > li { vertical-align: top; /* clear fix */ height: 1%; overflow: hidden; }
 .reslist dt,
-.reslist dd   { float: left; }
+.reslist dd   { float: right; margin: 0; }
+.reslist dt   { margin-left: .2em; margin-right: .2em; }
 /* responsive column expansion */
 @media handheld, only screen and (max-width: 480px) {
-  .reslist dl > dt.expcol,
-  .reslist dl > dd.expcol { width:100%; }
+  .reslist .expcol { width:100%; }
 }
 /* responsive column exclusion */
 @media handheld, only screen and (max-width: 480px) {
   .reslist dl > dt.exlcol,
   .reslist dl > dd.exlcol { width:auto; margin-left: 0; }
+}
+
+.topiclist > li > h1,
+.topiclist > li > dl,
+.topiclist > li > article header,
+.topiclist > li > article dl {
+width: 50%;
+display: inline-block;
+float: left;
 }
 
 body {
@@ -225,8 +234,6 @@ hr.dashed {
 /* metadata */
 .block article header p {
     font-style: italic;
-    margin-top: 0;
-    margin-bottom: 1.2em;
 }
 
 /* related links bar */
@@ -331,7 +338,7 @@ table.table1 tbody td {
     border-radius: 4px;
 }
 
-.topiclist    { font-size: .8em; }
+.topiclist    { font-size: .75em; }
 .topiclist li { padding: 11px 22px; margin: 2px; }
 
 .topiclist li.header {
@@ -356,13 +363,13 @@ table.table1 tbody tr.hover {
 
 .topiclist { list-style-type: none; }
 
-.forumrow .main     { width: 44%; }
+/*.forumrow .main     { width: 44%; }*/
 
-.forumrow dd        { margin-left: 20px; }
+/*.forumrow dd        { margin-left: 20px; }*/
 .forumrow .posts,
 .forumrow .topics,
-.forumrow .views    { width: 8%; text-align: center; }
-.forumrow .lastpost { width: 24%; }
+.forumrow .views    { width: 25%; text-align: center; }
+.forumrow .lastpost { width: 49%; }
 
 .forumrow .icon {
     min-height: 35px;

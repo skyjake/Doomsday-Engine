@@ -37,7 +37,7 @@ ul.linklist {
 }
 
 ul.linklist li {
-    display: block;
+    display: inline-block;
     list-style-type: none;
     width: auto;
 }
