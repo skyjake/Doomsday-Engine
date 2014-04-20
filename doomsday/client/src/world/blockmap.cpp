@@ -272,8 +272,10 @@ DENG2_PIMPL(Blockmap)
         return uint((y - bounds.minY) / cellSize);
     }
 
-    void clipCell(Cell &cell, bool &didClip)
+    /// @return @c true, if clipped; otherwise @c false.
+    bool clipCell(Cell &cell) const
     {
+        bool didClip = false;
         if(cell.x > dimensions.x)
         {
             cell.x = dimensions.x;
@@ -284,6 +286,7 @@ DENG2_PIMPL(Blockmap)
             cell.y = dimensions.y;
             didClip = true;
         }
+        return didClip;
     }
 
     /**
@@ -296,9 +299,8 @@ DENG2_PIMPL(Blockmap)
      */
     bool clipBlock(CellBlock &block)
     {
-        bool didClipMin, didClipMax;
-        clipCell(block.min, didClipMin);
-        clipCell(block.max, didClipMax);
+        bool const didClipMin = clipCell(block.min);
+        bool const didClipMax = clipCell(block.max);
         return didClipMin | didClipMax;
     }
 
