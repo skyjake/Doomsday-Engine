@@ -119,6 +119,8 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Export variable into a higher namespace?
     if(flags().testFlag(Export))
     {
+        DENG2_ASSERT(!flags().testFlag(ThrowawayIfInScope));
+
         if(!variable)
         {
             throw NotFoundError("NameExpression::evaluate",

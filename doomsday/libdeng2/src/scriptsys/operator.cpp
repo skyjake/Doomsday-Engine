@@ -20,9 +20,9 @@
 #include "de/Operator"
 #include "de/String"
 
-using namespace de;
+namespace de {
 
-String de::operatorToText(Operator op)
+String operatorToText(Operator op)
 {
     switch(op)
     {
@@ -85,7 +85,7 @@ String de::operatorToText(Operator op)
     }        
 }
 
-bool de::leftOperandByReference(Operator op)
+bool leftOperandByReference(Operator op)
 {
     switch(op)
     {
@@ -100,3 +100,15 @@ bool de::leftOperandByReference(Operator op)
         return false;
     }
 }
+
+bool isUnary(Operator op)
+{
+    return (op == PLUS || op == MINUS || op == NOT);
+}
+
+bool isBinary(Operator op)
+{
+    return (op != NOT);
+}
+
+} // namespace de

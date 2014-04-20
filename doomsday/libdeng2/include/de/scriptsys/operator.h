@@ -67,6 +67,10 @@ String operatorToText(Operator op);
 
 bool leftOperandByReference(Operator op);
 
+bool isUnary(Operator op);
+
+bool isBinary(Operator op);
+
 } // namespace de
 
 #endif /* LIBDENG2_OPERATOR_H */

@@ -38,7 +38,7 @@ OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOpe
 OperatorExpression::OperatorExpression(Operator op, Expression *operand)
     : _op(op), _leftOperand(0), _rightOperand(operand)
 {
-    if(op != PLUS && op != MINUS && op != NOT)
+    if(!isUnary(op))
     {
         throw NonUnaryError("OperatorExpression::OperatorExpression",
             "Unary " + operatorToText(op) + " not defined");
@@ -48,7 +48,7 @@ OperatorExpression::OperatorExpression(Operator op, Expression *operand)
 OperatorExpression::OperatorExpression(Operator op, Expression *leftOperand, Expression *rightOperand)
     : _op(op), _leftOperand(leftOperand), _rightOperand(rightOperand)
 {
-    if(op == NOT)
+    if(!isBinary(op))
     {
         throw NonBinaryError("OperatorExpression::OperatorExpression",
             "Binary " + operatorToText(op) + " not defined");
@@ -90,6 +90,7 @@ Value *OperatorExpression::newBooleanValue(bool isTrue)
 
 void OperatorExpression::verifyAssignable(Value *value)
 {
+    DENG2_ASSERT(value != 0);
     if(!dynamic_cast<RefValue *>(value))
     {
         throw NotAssignableError("OperatorExpression::verifyAssignable",
@@ -103,6 +104,10 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     Value *rightValue = (_op == MEMBER? 0 : evaluator.popResult());
     Value *leftValue = (_leftOperand? evaluator.popResult() : 0);
     Value *result = (leftValue? leftValue : rightValue);
+
+    DENG2_ASSERT(_op == MEMBER ||
+                 (!isUnary(_op) && leftValue && rightValue) ||
+                 ( isUnary(_op) && rightValue));
 
     try
     {
@@ -236,8 +241,8 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
         }
 
-        case SLICE:
-            result = performSlice(leftValue, rightValue);
+        case SLICE:            
+            result = performSlice(*leftValue, *rightValue);
             break;
 
         case MEMBER: 
@@ -363,20 +368,20 @@ namespace internal {
     };
 }
 
-Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) const
+Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) const
 {
     using internal::SliceTarget;
     using internal::TextSliceTarget;
     using internal::ArraySliceTarget;
 
-    DENG2_ASSERT(rightValue->size() >= 2);
+    DENG2_ASSERT(rightValue.size() >= 2);
 
-    ArrayValue const *args = dynamic_cast<ArrayValue *>(rightValue);
+    ArrayValue const *args = dynamic_cast<ArrayValue *>(&rightValue);
     DENG2_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
     std::auto_ptr<SliceTarget> slice;
-    if(dynamic_cast<TextValue *>(leftValue))
+    if(dynamic_cast<TextValue *>(&leftValue))
     {
         slice.reset(new TextSliceTarget);
     }
@@ -397,7 +402,7 @@ Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) con
         }
     }
 
-    dint leftSize = leftValue->size();
+    dint leftSize = leftValue.size();
     dint begin = 0;
     dint end = leftSize;
     bool unspecifiedStart = false;
@@ -452,7 +457,7 @@ Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) con
 
     for(dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)
     {
-        slice->append(*leftValue, i);
+        slice->append(leftValue, i);
     }
 
     return slice->take();

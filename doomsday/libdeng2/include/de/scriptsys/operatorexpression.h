@@ -94,7 +94,7 @@ public:
 
 private:
     /// Performs the slice operation (Python semantics).
-    Value *performSlice(Value *leftValue, Value *rightValue) const;
+    Value *performSlice(Value &leftValue, Value &rightValue) const;
 
     /// Used to create return values of boolean operations.
     static Value *newBooleanValue(bool isTrue);
