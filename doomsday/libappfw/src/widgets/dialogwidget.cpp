@@ -453,9 +453,9 @@ ButtonWidget &DialogWidget::buttonWidget(de::String const &label) const
     if(w) return w->as<ButtonWidget>();
 
     w = d->extraButtons->organizer().itemWidget(label);
-    DENG2_ASSERT(w != 0);
+    if(w) return w->as<ButtonWidget>();
 
-    return w->as<ButtonWidget>();
+    throw UndefinedLabel("DialogWidget::buttonWidget", "Undefined label \"" + label + "\"");
 }
 
 ButtonWidget *DialogWidget::buttonWidget(int roleId) const

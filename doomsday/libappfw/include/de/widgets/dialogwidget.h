@@ -130,6 +130,9 @@ public:
         RoleFlags _role;
     };
 
+    /// Asked for a label that does not exist in the dialog. @ingroup errors
+    DENG2_ERROR(UndefinedLabel);
+
 public:
     DialogWidget(String const &name = "", Flags const &flags = DefaultFlags);
 
