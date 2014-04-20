@@ -330,6 +330,7 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
     CTLineDraw(d->line, gc);
 
     CGColorRelease(fgColor);
+    CGContextRelease(gc);
 
     return backbuffer;
 }
