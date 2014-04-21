@@ -9,8 +9,8 @@
         <h1><!-- IF forumrow.S_IS_CAT --><a href="{forumrow.U_VIEWFORUM}">{forumrow.FORUM_NAME}</a><!-- ELSE -->Subforums<!-- ENDIF --></h1>
         <dl class="forumrow">
             <dd class="exlcnt lastpost"><span>{L_LAST_POST}</span></dd>
-            <dd class="exlcnt topics"  >{L_TOPICS}</dd>
             <dd class="exlcnt posts"   >{L_POSTS}</dd>
+            <dd class="exlcnt topics"  >{L_TOPICS}</dd>
         </dl>
     </li>
 </ul>
@@ -42,10 +42,10 @@
       <!-- IF forumrow.LAST_POST_TIME --><!-- IF not S_IS_BOT --><a href="{forumrow.U_LAST_POST}">{LAST_POST_IMG}</a> <span class="inlcnt">{L_LAST_POST}</span> <!-- ENDIF --><time datetime="{forumrow.LAST_POST_TIMEISO861}">{forumrow.LAST_POST_TIME}</time> {L_POST_BY_AUTHOR} {forumrow.LAST_POSTER_FULL}<!-- ELSE -->{L_NO_POSTS}<!-- ENDIF -->
                         </span>
                     </dd>
-                    <dt class="inlcnt" style="clear:both">topics.</dt>
-                    <dd class="exlcol topics"  >{forumrow.TOPICS}</dd>
-                    <dt class="inlcnt">posts,</dt>
+                    <dt class="inlcnt" style="clear:both">posts.</dt>
                     <dd class="exlcol posts"   >{forumrow.POSTS}</dd>
+                    <dt class="inlcnt">topics,</dt>
+                    <dd class="exlcol topics"  >{forumrow.TOPICS}</dd>
     <!-- ENDIF -->
                 </dl>
             </article>

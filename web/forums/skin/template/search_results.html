@@ -50,8 +50,8 @@
     <!-- IF IGNORED_WORDS --> <p>{L_IGNORED_TERMS}: <strong>{IGNORED_WORDS}</strong></p><!-- ENDIF -->
             <dl class="forumrow icon">
                 <dd class="exlcnt lastpost"><span>{L_LAST_POST}</span></dd>
-                <dd class="exlcnt views"   >{L_VIEWS}</dd>
                 <dd class="exlcnt posts"   >{L_REPLIES}</dd>
+                <dd class="exlcnt views"   >{L_VIEWS}</dd>
             </dl>
         </li>
     </ul>
@@ -80,10 +80,10 @@
             <dl class="expcol forumrow icon">
                 <dt></dt>
                 <dd class="exlcol lastpost"><!-- IF not S_IS_BOT --><a href="{searchresults.U_LAST_POST}">{LAST_POST_IMG}</a> <span class="inlcnt">{L_LAST_POST}</span> <!-- ENDIF --><time datetime="{searchresults.LAST_POST_TIMEISO861}">{searchresults.LAST_POST_TIME}</time> {L_POST_BY_AUTHOR} {searchresults.LAST_POST_AUTHOR_FULL}
-                <dt class="inlcnt" style="clear:both">views.</dt>
-                <dd class="exlcol views">{searchresults.TOPIC_VIEWS}</dd>
-                <dt class="inlcnt">replies,</dt>
+                <dt class="inlcnt" style="clear:both">replies.</dt>
                 <dd class="exlcol posts">{searchresults.TOPIC_REPLIES}</dd>
+                <dt class="inlcnt">views,</dt>
+                <dd class="exlcol views">{searchresults.TOPIC_VIEWS}</dd>
                 </dd>
             </dl>
             </article>
