@@ -5,9 +5,9 @@
 
   <!-- IF forumrow.S_IS_CAT or forumrow.S_FIRST_ROW or forumrow.S_NO_CAT  -->
 <ul class="block nobackground topiclist reslist">
-    <li class="header">
+    <li class="forumrow header">
         <h1><!-- IF forumrow.S_IS_CAT --><a href="{forumrow.U_VIEWFORUM}">{forumrow.FORUM_NAME}</a><!-- ELSE -->Subforums<!-- ENDIF --></h1>
-        <dl class="forumrow">
+        <dl>
             <dd class="exlcnt lastpost"><span>{L_LAST_POST}</span></dd>
             <dd class="exlcnt posts"   >{L_POSTS}</dd>
             <dd class="exlcnt topics"  >{L_TOPICS}</dd>
@@ -18,7 +18,7 @@
   <!-- ENDIF -->
 
   <!-- IF not forumrow.S_IS_CAT -->
-        <li id="forum_{forumrow.FORUM_NAME}">
+        <li id="forum_{forumrow.FORUM_NAME}" class="forumrow">
             <article>
                 <header class="expcol" title="{forumrow.FORUM_FOLDER_IMG_ALT}">
     <!-- IF S_ENABLE_FEEDS and forumrow.S_FEED_ENABLED --><!-- <a class="feed-icon-forum" title="{L_FEED} - {forumrow.FORUM_NAME}" href="{U_FEED}?f={forumrow.FORUM_ID}"><img src="{T_THEME_PATH}/images/feed.gif" alt="{L_FEED} - {forumrow.FORUM_NAME}" /></a> --><!-- ENDIF -->
@@ -30,9 +30,9 @@
     <!-- IF 0 -->
                 <dl class="forumrow icon" style="background-image: url({forumrow.FORUM_FOLDER_IMG_SRC}); background-repeat: no-repeat; background-position-x: 2px;">
     <!-- ENDIF -->
-                <dl class="expcol forumrow icon">
+                <dl class="expcol icon">
     <!-- IF forumrow.CLICKS -->
-                    <dt class="inlcnt">{L_REDIRECTS}</dt>
+                    <dt>{L_REDIRECTS}</dt>
                     <dd class="exlcol redirect">{forumrow.CLICKS}</dd>
     <!-- ELSEIF not forumrow.S_IS_LINK -->
                     <dt></dt>
@@ -42,9 +42,9 @@
       <!-- IF forumrow.LAST_POST_TIME --><!-- IF not S_IS_BOT --><a href="{forumrow.U_LAST_POST}">{LAST_POST_IMG}</a> <span class="inlcnt">{L_LAST_POST}</span> <!-- ENDIF --><time datetime="{forumrow.LAST_POST_TIMEISO861}">{forumrow.LAST_POST_TIME}</time> {L_POST_BY_AUTHOR} {forumrow.LAST_POSTER_FULL}<!-- ELSE -->{L_NO_POSTS}<!-- ENDIF -->
                         </span>
                     </dd>
-                    <dt class="inlcnt" style="clear:both">posts.</dt>
+                    <dt style="clear:both">posts.</dt>
                     <dd class="exlcol posts"   >{forumrow.POSTS}</dd>
-                    <dt class="inlcnt">topics,</dt>
+                    <dt>topics,</dt>
                     <dd class="exlcol topics"  >{forumrow.TOPICS}</dd>
     <!-- ENDIF -->
                 </dl>

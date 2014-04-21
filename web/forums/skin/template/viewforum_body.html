@@ -129,9 +129,9 @@
 
     <!-- IF topicrow.S_FIRST_ROW or not topicrow.S_TOPIC_TYPE_SWITCH -->
         <ul class="block nobackground topiclist reslist <!-- IF topicrow.S_TOPIC_TYPE_SWITCH and (topicrow.S_POST_ANNOUNCE or topicrow.S_POST_GLOBAL) --> announcement<!-- ENDIF -->">
-            <li class="header">
+            <li class="forumrow header">
                 <h1><!-- IF S_DISPLAY_ACTIVE -->{L_ACTIVE_TOPICS}<!-- ELSEIF topicrow.S_TOPIC_TYPE_SWITCH and (topicrow.S_POST_ANNOUNCE or topicrow.S_POST_GLOBAL) -->{L_ANNOUNCEMENTS}<!-- ELSE --><!-- IF TOTAL_TOPICS -->{TOTAL_TOPICS}<!-- ELSE -->{L_TOPICS}<!-- ENDIF --><!-- ENDIF --></h1>
-                <dl class="forumrow icon">
+                <dl class="icon">
                     <dd class="exlcnt lastpost"><span>{L_LAST_POST}</span></dd>
                     <dd class="exlcnt posts"   >{L_REPLIES}</dd>
                     <dd class="exlcnt views"   >{L_VIEWS}</dd>
@@ -141,7 +141,7 @@
         <ol class="block topiclist reslist topics">
     <!-- ENDIF -->
 
-        <li class="<!-- IF topicrow.S_POST_GLOBAL --> global-announce<!-- ENDIF --><!-- IF topicrow.S_POST_ANNOUNCE --> announce<!-- ENDIF --><!-- IF topicrow.S_POST_STICKY --> sticky<!-- ENDIF --><!-- IF topicrow.S_TOPIC_REPORTED --> reported<!-- ENDIF -->">
+        <li class="forumrow<!-- IF topicrow.S_POST_GLOBAL --> global-announce<!-- ENDIF --><!-- IF topicrow.S_POST_ANNOUNCE --> announce<!-- ENDIF --><!-- IF topicrow.S_POST_STICKY --> sticky<!-- ENDIF --><!-- IF topicrow.S_TOPIC_REPORTED --> reported<!-- ENDIF -->">
             <article>
                 <header class="expcol" <!-- IF topicrow.TOPIC_ICON_IMG and S_TOPIC_ICONS --> style="background-image: url({T_ICONS_PATH}{topicrow.TOPIC_ICON_IMG}); background-repeat: no-repeat;"<!-- ENDIF --> title="{topicrow.TOPIC_FOLDER_IMG_ALT}">
     <!-- IF topicrow.PAGINATION --><strong class="pagination"><span>{topicrow.PAGINATION}</span></strong><!-- ENDIF -->
@@ -156,12 +156,12 @@
     <!-- IF 0 -->
             <dl class="forumrow icon" style="background-image: url({topicrow.TOPIC_FOLDER_IMG_SRC}); background-repeat: no-repeat;">
     <!-- ENDIF -->
-            <dl class="expcol forumrow icon">
+            <dl class="expcol icon">
                 <dt></dt>
                 <dd class="exlcol lastpost"><!-- IF not S_IS_BOT --><a href="{topicrow.U_LAST_POST}">{LAST_POST_IMG}</a> <span class="inlcnt">{L_LAST_POST}</span> <!-- ENDIF --><time datetime="{topicrow.LAST_POST_TIMEISO861}">{topicrow.LAST_POST_TIME}</time> {L_POST_BY_AUTHOR} {topicrow.LAST_POST_AUTHOR_FULL}</span>
-                <dt class="inlcnt" style="clear:both">replies.</dt>
+                <dt style="clear:both">replies.</dt>
                 <dd class="exlcol posts"   >{topicrow.REPLIES}</dd>
-                <dt class="inlcnt">views,</dt>
+                <dt>views,</dt>
                 <dd class="exlcol views"   >{topicrow.VIEWS}</dd>
                 </dd>
             </dl>

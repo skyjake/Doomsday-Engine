@@ -23,10 +23,11 @@ span.inlcnt { padding: 0.4ex; }
 .reslist > li { vertical-align: top; /* clear fix */ height: 1%; overflow: hidden; }
 .reslist dt,
 .reslist dd   { float: right; margin: 0; }
-.reslist dt   { margin-left: .2em; margin-right: .2em; }
+.reslist dt   { margin-left: .2em; margin-right: .2em; display:none; }
 /* responsive column expansion */
 @media handheld, only screen and (max-width: 480px) {
   .reslist .expcol { width:100%; }
+  .reslist dt { display:initial; }
 }
 /* responsive column exclusion */
 @media handheld, only screen and (max-width: 480px) {
@@ -95,7 +96,7 @@ label { cursor:help; }
     display: none;
 }
 
-code br, .topiclist br, .post br, .content br {
+code br, /*.topiclist br,*/ .post br, .content br {
     display:inline;
     margin:0;
 }
@@ -338,16 +339,17 @@ table.table1 tbody td {
     border-radius: 4px;
 }
 
-.topiclist    { font-size: .75em; }
 .topiclist li { padding: 11px 22px; margin: 2px; }
 
 .topiclist li.header {
     border-width: 0;
     color: white;
-    font-size: 1.4em;
+    font-size: 1.2em;
     font-weight: 300;
     text-shadow: 0px 1px 1px #666;
     white-space: nowrap;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .block.topiclist { padding: 0; }
@@ -363,9 +365,7 @@ table.table1 tbody tr.hover {
 
 .topiclist { list-style-type: none; }
 
-/*.forumrow .main     { width: 44%; }*/
-
-/*.forumrow dd        { margin-left: 20px; }*/
+.forumrow           { font-size: .75em; }
 .forumrow .posts,
 .forumrow .topics,
 .forumrow .views    { width: 25%; text-align: center; }
