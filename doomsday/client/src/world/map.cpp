@@ -1270,7 +1270,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             }
         }
 
-        return (oldest? oldest->id() + 1 /*1-based index*/ : 0);
+        return (oldest? oldest->id() : 0);
     }
 
     void spawnMapParticleGens()
@@ -2658,7 +2658,7 @@ void Map::initSkyFix()
         }
     }
 
-    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds.") << begunAt.since();
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 coord_t Map::skyFix(bool ceiling) const
@@ -2674,7 +2674,7 @@ void Map::setSkyFix(bool ceiling, coord_t newHeight)
 
 Generator *Map::newGenerator()
 {
-    Generator::Id id = d->findIdForNewGenerator();
+    Generator::Id id = d->findIdForNewGenerator(); // 1-based
     if(!id) return 0; // Failed; too many generators?
 
     Instance::Generators &gens = d->getGenerators();
