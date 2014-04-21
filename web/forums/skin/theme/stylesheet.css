@@ -220,7 +220,7 @@ dl.details dd {
     height: 1%; /* IE tweak (holly hack) */
     width: auto;
     text-align: right;
-    margin-top: 5px;
+    /*margin-top: 5px;*/
     float: right;
     font-size: 8pt;
     font-family: Verdana, Arial, Helvetica, sans-serif;
