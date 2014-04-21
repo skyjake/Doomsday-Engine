@@ -457,7 +457,7 @@ DENG2_OBSERVES(App, GameChange)
     /**
      * Serializes all the profiles:
      * - Config.(persistentName).profile stores the name of the current profile
-     * - /home/configs/(persistentName).pack contains all the existing profile
+     * - /home/configs/(persistentName).dei contains all the existing profile
      *   values, with one file per profile
      *
      * @param gameBeingUnloaded  Current game.
