@@ -303,9 +303,9 @@ class FrontController
 <html dir="ltr" lang="en-GB">
 <head>
     <title><?=$siteTitle?></title>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8" /><?php/*
     <meta http-equiv="cleartype" content="on">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">*/?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="<?=$this->siteAuthor()?>" />
     <meta name="keywords" content="<?php { $keywords = $this->defaultPageKeywords(); foreach($keywords as $keyword) echo $keyword.','; } ?>" />
