@@ -1629,7 +1629,7 @@ DENG2_PIMPL(ResourceSystem)
                 if(sub->frame < 0) sub->frame = 0;
                 sub->frameRange = de::max(1, subdef->frameRange); // Frame range must always be greater than zero.
 
-                sub->alpha      = byte(255 - subdef->alpha * 255);
+                sub->alpha      = byte(de::clamp(0, int(255 - subdef->alpha * 255), 255));
                 sub->blendMode  = subdef->blendMode;
 
                 // Submodel-specific flags cancel out model-scope flags!

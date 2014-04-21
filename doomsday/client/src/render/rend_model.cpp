@@ -667,10 +667,13 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         return;
 
     float alpha = parm.ambientColor[CA];
+
     // Is the submodel-defined alpha multiplier in effect?
-    if(!(parm.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
+    // With df_brightshadow2, the alpha multiplier will be applied anyway.
+    if(smf.testFlag(MFF_BRIGHTSHADOW2) ||
+       !(parm.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
-        alpha *= smf.alpha * reciprocal255;
+        alpha *= smf.alpha / 255.f;
     }
 
     // Would this be visible?
