@@ -103,6 +103,7 @@ Generator::Id Generator::id() const
 
 void Generator::setId(Id newId)
 {
+    DENG_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
     _id = newId;
 }
 

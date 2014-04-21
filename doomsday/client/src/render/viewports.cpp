@@ -1130,12 +1130,12 @@ void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
 
 bool R_ViewerGeneratorIsVisible(Generator const &generator)
 {
-    return generatorsVisible.testBit(generator.id());
+    return generatorsVisible.testBit(generator.id() - 1 /* id is 1-based index */);
 }
 
 void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
 {
-    generatorsVisible.setBit(generator.id(), yes);
+    generatorsVisible.setBit(generator.id() - 1 /* id is 1-based index */, yes);
 }
 
 double R_ViewerLumobjDistance(int idx)
