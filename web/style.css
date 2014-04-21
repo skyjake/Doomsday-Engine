@@ -228,10 +228,6 @@ hr.dashed {
     margin-top: 0;
 }
 
-.block article header {
-    margin-bottom: .8em;
-}
-
 /* metadata */
 .block article header p {
     font-style: italic;
@@ -344,7 +340,7 @@ table.table1 tbody td {
 .topiclist li.header {
     border-width: 0;
     color: white;
-    font-size: 1.2em;
+    font-size: 1em;
     font-weight: 300;
     text-shadow: 0px 1px 1px #666;
     white-space: nowrap;
