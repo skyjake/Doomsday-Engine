@@ -363,7 +363,6 @@ static void stackClear(dd_bool ignoreSuspendedScripts)
             // Pop all the states.
             while((s = stackTop()))
             {
-
                 FI_ScriptTerminate(s->finaleId);
             }
         }

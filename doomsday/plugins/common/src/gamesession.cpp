@@ -860,6 +860,9 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
 
+    // Ignore a game action possibly set by script stop hooks; this is a completely new session.
+    G_SetGameAction(GA_NONE);
+
     if(!IS_CLIENT)
     {
         for(uint i = 0; i < MAXPLAYERS; ++i)
