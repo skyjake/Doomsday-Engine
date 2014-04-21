@@ -263,7 +263,7 @@ void Plane::lerpSmoothedHeight()
     {
         d->heightSmoothed = newHeightSmoothed;
         d->notifySmoothedHeightChanged();
-        d->surface._needDecorationUpdate = true;
+        d->surface.markAsNeedingDecorationUpdate();
     }
 }
 
@@ -279,7 +279,7 @@ void Plane::resetSmoothedHeight()
         d->notifySmoothedHeightChanged();
     }
 
-    d->surface._needDecorationUpdate = true;
+    d->surface.markAsNeedingDecorationUpdate();
 }
 
 void Plane::updateHeightTracking()
@@ -287,7 +287,7 @@ void Plane::updateHeightTracking()
     d->oldHeight[0] = d->oldHeight[1];
     d->oldHeight[1] = d->height;
 
-    d->surface._needDecorationUpdate = true;
+    d->surface.markAsNeedingDecorationUpdate();
 
     if(!de::fequal(d->oldHeight[0], d->oldHeight[1]))
     {
@@ -295,8 +295,6 @@ void Plane::updateHeightTracking()
         {
             // Too fast: make an instantaneous jump.
             d->oldHeight[0] = d->oldHeight[1];
-
-            d->surface._needDecorationUpdate = true;
         }
     }
 }
