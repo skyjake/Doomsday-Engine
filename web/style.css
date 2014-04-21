@@ -27,7 +27,7 @@ span.inlcnt { padding: 0.4ex; }
 /* responsive column expansion */
 @media handheld, only screen and (max-width: 480px) {
   .reslist .expcol { width:100%; }
-  .reslist dt { display:initial; }
+  .reslist dt { display:block; }
 }
 /* responsive column exclusion */
 @media handheld, only screen and (max-width: 480px) {
