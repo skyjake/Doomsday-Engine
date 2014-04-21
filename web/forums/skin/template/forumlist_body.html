@@ -39,7 +39,7 @@
                     <dd class="exlcol lastpost">
                         <span>
       <!-- IF forumrow.U_UNAPPROVED_TOPICS --><a href="{forumrow.U_UNAPPROVED_TOPICS}">{UNAPPROVED_IMG}</a><!-- ENDIF -->
-      <!-- IF forumrow.LAST_POST_TIME --><!-- IF not S_IS_BOT --><a href="{forumrow.U_LAST_POST}">{LAST_POST_IMG}</a> <span class="inlcnt">{L_LAST_POST}</span> <!-- ENDIF --><time datetime="{forumrow.LAST_POST_TIMEISO861}">{forumrow.LAST_POST_TIME}</time> {L_POST_BY_AUTHOR} {forumrow.LAST_POSTER_FULL}<!-- ELSE -->{L_NO_POSTS}<!-- ENDIF -->
+      <!-- IF forumrow.LAST_POST_TIME --><!-- IF not S_IS_BOT --><a href="{forumrow.U_LAST_POST}" title="{L_VIEW_LATEST_POST}">{LAST_POST_IMG} <span class="inlcnt">{L_LAST_POST}</span></a> <!-- ENDIF --><time datetime="{forumrow.LAST_POST_TIMEISO861}">{forumrow.LAST_POST_TIME}</time> {L_POST_BY_AUTHOR} {forumrow.LAST_POSTER_FULL}<!-- ELSE -->{L_NO_POSTS}<!-- ENDIF -->
                         </span>
                     </dd>
                     <dt style="clear:both">posts.</dt>
