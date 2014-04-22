@@ -1,7 +1,7 @@
 /** @file map.h  World map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,6 +25,7 @@
 
 #include "Line"
 #include "Polyobj"
+#include "Sector"
 
 #ifdef __CLIENT__
 #  include "client/clmobjhash.h"
@@ -43,12 +44,12 @@
 #include <de/Observers>
 #include <de/Vector>
 #include <QList>
+#include <QMultiMap>
 #include <QSet>
 
 class BspLeaf;
 class BspNode;
 class Plane;
-class Sector;
 class Surface;
 class Vertex;
 
@@ -132,6 +133,8 @@ public:
 
     typedef QList<BspNode *> BspNodes;
     typedef QList<BspLeaf *> BspLeafs;
+
+    typedef QMultiMap<Sector *, SectorCluster *> SectorClusters;
 
 #ifdef __CLIENT__
     typedef QSet<Plane *>    PlaneSet;
@@ -268,19 +271,29 @@ public:
      */
     BspLeafs const &bspLeafs() const;
 
-    inline int vertexCount() const  { return vertexes().count(); }
+    inline int vertexCount() const        { return vertexes().count(); }
 
-    inline int lineCount() const    { return lines().count(); }
+    inline int lineCount() const          { return lines().count(); }
 
-    inline int sideCount() const    { return lines().count() * 2; }
+    inline int sideCount() const          { return lines().count() * 2; }
 
-    inline int polyobjCount() const { return polyobjs().count(); }
+    inline int polyobjCount() const       { return polyobjs().count(); }
 
-    inline int sectorCount() const  { return sectors().count(); }
+    inline int sectorCount() const        { return sectors().count(); }
 
-    inline int bspNodeCount() const { return bspNodes().count(); }
+    inline int bspNodeCount() const       { return bspNodes().count(); }
 
-    inline int bspLeafCount() const { return bspLeafs().count(); }
+    inline int bspLeafCount() const       { return bspLeafs().count(); }
+
+    /**
+     * Provides access to the SectorCluster map for efficient traversal.
+     */
+    SectorClusters const &sectorClusters() const;
+
+    /**
+     * Returns the total number of SectorClusters in the map.
+     */
+    inline int sectorClusterCount() const { return sectorClusters().count(); }
 
     /**
      * Helper function which returns the relevant side index given a @a lineIndex

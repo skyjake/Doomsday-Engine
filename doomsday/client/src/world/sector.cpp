@@ -1,7 +1,7 @@
 /** @file sector.h World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,9 +21,6 @@
 #include "de_platform.h"
 #include "world/sector.h"
 
-#include "Face"
-
-#include "BspLeaf"
 #include "Line"
 #include "Plane"
 #include "Surface"
@@ -32,7 +29,6 @@
 
 #include <de/Log>
 #include <de/vector1.h>
-#include <QList>
 #include <QtAlgorithms>
 
 using namespace de;
@@ -41,12 +37,11 @@ DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
     AABoxd aaBox;         ///< Bounding box for the whole sector (all clusters).
-    bool needAABoxUpdate; ///< @c true= marked for update.
+    bool needAABoxUpdate;
 
     SoundEmitter emitter; ///< Head of the sound emitter chain.
 
     Planes planes;        ///< All owned planes.
-    Clusters clusters;    ///< All owned BSP leaf clusters.
     Sides sides;          ///< All referencing line sides (not owned).
     mobj_t *mobjList;     ///< All mobjs "in" the sector (not owned).
 
@@ -57,20 +52,22 @@ DENG2_PIMPL(Sector)
 
 #ifdef __CLIENT__
     coord_t roughArea;    ///< Approximated. @c <0 means an update is needed.
+    bool needRoughAreaUpdate;
 
     /// Ambient lighting data for the bias lighting model.
     LightGridData lightGridData;
 #endif
 
     Instance(Public *i)
-        : Base(i)
-        , needAABoxUpdate(false) // No BSP leafs thus no geometry.
-        , mobjList(0)
-        , lightLevel(0)
-        , lightColor(Vector3f(0, 0, 0))
-        , validCount(0)
+        : Base               (i)
+        , needAABoxUpdate    (true)
+        , mobjList           (0)
+        , lightLevel         (0)
+        , lightColor         (Vector3f(0, 0, 0))
+        , validCount         (0)
 #ifdef __CLIENT__
-        , roughArea(-1) // needs updating
+        , roughArea          (0)
+        , needRoughAreaUpdate(true)
 #endif
     {
         zap(emitter);
@@ -82,7 +79,6 @@ DENG2_PIMPL(Sector)
     ~Instance()
     {
         qDeleteAll(planes);
-        qDeleteAll(clusters);
     }
 
     void notifyLightLevelChanged()
@@ -105,14 +101,19 @@ DENG2_PIMPL(Sector)
      * Update the axis-aligned bounding box in the map coordinate space to
      * encompass the geometry of all BSP leaf clusters of the sector.
      */
-    void updateAABox()
+    void updateAABoxIfNeeded()
     {
+        if(!needAABoxUpdate) return;
         needAABoxUpdate = false;
 
         aaBox.clear();
         bool haveGeometry = false;
-        foreach(Cluster *cluster, clusters)
+
+        Map::SectorClusters const &clusterMap = self.map().sectorClusters();
+        Map::SectorClusters::const_iterator i = clusterMap.constFind(thisPublic);
+        while(i != clusterMap.end() && i.key() == thisPublic)
         {
+            Cluster *cluster = *i;
             if(haveGeometry)
             {
                 V2d_UniteBox(aaBox.arvec2, cluster->aaBox().arvec2);
@@ -122,6 +123,7 @@ DENG2_PIMPL(Sector)
                 aaBox = cluster->aaBox();
                 haveGeometry = true;
             }
+            ++i;
         }
 
         // The XY origin of our sound emitter can now be updated as the center
@@ -136,6 +138,23 @@ DENG2_PIMPL(Sector)
             emitter.origin[VX] = emitter.origin[VY] = 0;
         }
     }
+
+#ifdef __CLIENT__
+    void updateRoughAreaIfNeeded()
+    {
+        if(!needRoughAreaUpdate) return;
+        needRoughAreaUpdate = false;
+
+        roughArea = 0;
+        Map::SectorClusters const &clusterMap = self.map().sectorClusters();
+        Map::SectorClusters::const_iterator i = clusterMap.constFind(thisPublic);
+        while(i != clusterMap.end() && i.key() == thisPublic)
+        {
+            roughArea += (*i)->roughArea();
+            ++i;
+        }
+    }
+#endif // __CLIENT__
 
     /**
      * To be called to update sound emitter origins for all dependent surfaces.
@@ -166,17 +185,6 @@ DENG2_PIMPL(Sector)
 
         updateDependentSurfaceSoundEmitterOrigins();
     }
-
-#ifdef __CLIENT__
-    void updateRoughArea()
-    {
-        roughArea = 0;
-        foreach(Cluster *cluster, clusters)
-        {
-            roughArea += cluster->roughArea();
-        }
-    }
-#endif // __CLIENT__
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
@@ -261,12 +269,8 @@ void Sector::link(mobj_t *mobj)
 
 SoundEmitter &Sector::soundEmitter()
 {
-    // The origin is determined by the axis-aligned bounding box, so perform
-    // any scheduled update now.
-    if(d->needAABoxUpdate)
-    {
-        d->updateAABox();
-    }
+    // Emitter origin depends on the axis-aligned bounding box.
+    d->updateAABoxIfNeeded();
     return d->emitter;
 }
 
@@ -367,98 +371,6 @@ Sector::Planes const &Sector::planes() const
     return d->planes;
 }
 
-Sector::Clusters const &Sector::clusters() const
-{
-    return d->clusters;
-}
-
-void Sector::buildClusters()
-{
-    d->clusters.clear();
-
-    // We'll need to recalculate the axis-aligned bounding box.
-    d->needAABoxUpdate = true;
-#ifdef __CLIENT__
-    // ...and the rough area approximation.
-    d->roughArea = -1;
-#endif
-
-    typedef QList<BspLeaf *> BspLeafs;
-    typedef QList<BspLeafs> BspLeafSets;
-    BspLeafSets bspLeafSets;
-
-    /*
-     * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
-     * starting with a set per BSP leaf and then keep merging these sets until
-     * no more shared edges are found.
-     */
-    foreach(BspLeaf *bspLeaf, map().bspLeafs())
-    {
-        if(&bspLeaf->parent().as<Sector>() != this)
-            continue;
-
-        // BSP leaf with no geometry are excluded.
-        if(!bspLeaf->hasPoly())
-            continue;
-
-        bspLeafSets.append(BspLeafs());
-        bspLeafSets.last().append(bspLeaf);
-    }
-
-    if(bspLeafSets.isEmpty()) return;
-
-    // Merge sets whose BSP leafs share a common edge.
-    while(bspLeafSets.count() > 1)
-    {
-        bool didMerge = false;
-        for(int i = 0; i < bspLeafSets.count(); ++i)
-        for(int k = 0; k < bspLeafSets.count(); ++k)
-        {
-            if(i == k) continue;
-
-            foreach(BspLeaf *leaf, bspLeafSets[i])
-            {
-                HEdge *baseHEdge = leaf->poly().hedge();
-                HEdge *hedge = baseHEdge;
-                do
-                {
-                    if(hedge->twin().hasFace())
-                    {
-                        BspLeaf &otherLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-                        if(&otherLeaf.parent() == this &&
-                           bspLeafSets[k].contains(&otherLeaf))
-                        {
-                            // Merge k into i.
-                            bspLeafSets[i].append(bspLeafSets[k]);
-                            bspLeafSets.removeAt(k);
-
-                            // Compare the next pair.
-                            if(i >= k) i -= 1;
-                            k -= 1;
-
-                            // We'll need to repeat in any case.
-                            didMerge = true;
-                            break;
-                        }
-                    }
-                } while((hedge = &hedge->next()) != baseHEdge);
-
-                if(didMerge) break;
-            }
-        }
-
-        if(!didMerge) break;
-    }
-    // Clustering complete.
-
-    // Build clusters.
-    foreach(BspLeafs const &bspLeafSet, bspLeafSets)
-    {
-        // BSP leaf ownership is not given to the cluster.
-        d->clusters.append(new Cluster(bspLeafSet));
-    }
-}
-
 static void linkSoundEmitter(SoundEmitter &root, SoundEmitter &newEmitter)
 {
     // The sector's base is always root of the chain, so link the other after it.
@@ -505,21 +417,13 @@ void Sector::chainSoundEmitters()
 
 AABoxd const &Sector::aaBox() const
 {
-    // Perform any scheduled update now.
-    if(d->needAABoxUpdate)
-    {
-        d->updateAABox();
-    }
+    d->updateAABoxIfNeeded();
     return d->aaBox;
 }
 
 coord_t Sector::roughArea() const
 {
-    // Perform any scheduled update now.
-    if(d->roughArea < 0)
-    {
-        d->updateRoughArea();
-    }
+    d->updateRoughAreaIfNeeded();
     return d->roughArea;
 }
 
