@@ -46,6 +46,7 @@
 #include "audio/s_main.h"
 
 #include <de/App>
+#include <de/Loop>
 
 #if defined(WIN32) && !defined(_DEBUG)
 #  define DENG_CATCH_SIGNALS
@@ -139,6 +140,9 @@ void Sys_Shutdown(void)
 
 static int showCriticalMessage(const char* msg)
 {
+    // This is going to be the end, I'm afraid.
+    de::Loop::appLoop().stop();
+
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
     return 0;
 
