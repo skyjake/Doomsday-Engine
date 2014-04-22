@@ -414,6 +414,10 @@ dd_bool P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matc
         gaveWeapons |= (int)giveOneWeapon(plr, weaponType, matchClass) << (int)weaponType;
     }
 
+    // Leave placed weapons forever on net games.
+    if(IS_NETGAME && !G_Ruleset_Deathmatch())
+        return false;
+
     return gaveWeapons != 0;
 }
 

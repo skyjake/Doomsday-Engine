@@ -576,6 +576,10 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
         }
     }
 
+    // Leave placed weapons forever on net games.
+    if(IS_NETGAME && !G_Ruleset_Deathmatch())
+        return false;
+
     return pickedWeapon;
 }
 
