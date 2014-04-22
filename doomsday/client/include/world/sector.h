@@ -68,8 +68,6 @@ public:
      * Adjacent BSP leafs in the sector (i.e., those which share one or more
      * common edge) are grouped into a "cluster". Clusters are never empty and
      * will always contain at least one BSP leaf.
-     *
-     * Call Sector::buildClusters to rebuild the cluster set for the sector.
      */
     class Cluster
     {
@@ -558,16 +556,16 @@ public:
      *
      * @param direction  Relative direction of the desired neighbor.
      */
-    de::HEdge const &neighbor(de::ClockDirection direction) {
+    de::HEdge &neighbor(de::ClockDirection direction) {
         _current = &getNeighbor(*_current, direction, _cluster);
         return *_current;
     }
 
     /// Returns the next half-edge (clockwise) and advances the circulator.
-    inline de::HEdge const &next() { return neighbor(de::Clockwise); }
+    inline de::HEdge &next() { return neighbor(de::Clockwise); }
 
     /// Returns the previous half-edge (anticlockwise) and advances the circulator.
-    inline de::HEdge const &previous() { return neighbor(de::Anticlockwise); }
+    inline de::HEdge &previous() { return neighbor(de::Anticlockwise); }
 
     /// Advance to the next half-edge (clockwise).
     inline SectorClusterCirculator &operator ++ () {
@@ -598,7 +596,7 @@ public:
     }
 
     /// Returns the current half-edge of a non-empty sequence.
-    de::HEdge const &operator * () const {
+    de::HEdge &operator * () const {
         if(!_current)
         {
             /// @throw NullError Attempted to dereference a "null" circulator.
@@ -609,17 +607,17 @@ public:
 
     /// Returns a pointer to the current half-edge (might be @c NULL, meaning the
     /// circulator references an empty sequence).
-    de::HEdge const *operator -> () const { return _current; }
+    de::HEdge *operator -> () { return _current; }
 
 private:
     static SectorCluster *getCluster(de::HEdge const &hedge);
 
-    static de::HEdge const &getNeighbor(de::HEdge const &hedge, de::ClockDirection direction,
-                                        SectorCluster const *cluster = 0);
+    static de::HEdge &getNeighbor(de::HEdge const &hedge, de::ClockDirection direction,
+                                  SectorCluster const *cluster = 0);
 
-    de::HEdge const *_hedge;
-    de::HEdge const *_current;
-    SectorCluster const *_cluster;
+    de::HEdge *_hedge;
+    de::HEdge *_current;
+    SectorCluster *_cluster;
 };
 
 #endif // DENG_WORLD_SECTOR_H
