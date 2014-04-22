@@ -89,7 +89,12 @@ static byte scaleMode = SCALEMODE_SMART_STRETCH;
 
 void FI_Register(void)
 {
-    C_VAR_BYTE("rend-finale-stretch",  &scaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_BYTE("rend-finale-stretch", &scaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+}
+
+scalemode_t FI_ScaleMode()
+{
+    return scalemode_t(scaleMode);
 }
 
 static finale_t* finalesById(finaleid_t id)
