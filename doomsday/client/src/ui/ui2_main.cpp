@@ -36,8 +36,8 @@
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
-
 #  include "gl/gl_texmanager.h"
+#  include "ui/clientwindow.h"
 #endif
 
 using namespace de;
@@ -326,6 +326,11 @@ void UI_Shutdown(void)
     pages = 0; numPages = 0;
 
     inited = false;
+}
+
+int UI_PageCount()
+{
+    return numPages;
 }
 
 void UI2_Ticker(timespan_t ticLength)
@@ -833,9 +838,28 @@ static void setupModelParamsForFIObject(rendmodelparams_t *params,
 }
 #endif
 
+#ifdef __CLIENT__
+
+static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
+{
+    GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,
+                                   SCREENWIDTH, SCREENHEIGHT,
+                                   DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
+                                   FI_ScaleMode());
+}
+
+bool FI_IsStretchedToView()
+{
+    dgl_borderedprojectionstate_t bp;
+    setupProjectionForFinale(&bp);
+    return (bp.scaleMode == SCALEMODE_STRETCH);
+}
+
 void UI2_Drawer(void)
 {
-    //borderedprojectionstate_t borderedProjection;
+    if(!numPages) return;
+
+    dgl_borderedprojectionstate_t bp;
     //dd_bool bordered;
 
     LOG_AS("UI2_Drawer");
@@ -845,7 +869,9 @@ void UI2_Drawer(void)
         return;
     }
 
-    /// @todo need to refactor.
+    setupProjectionForFinale(&bp);
+    GL_BeginBorderedProjection(&bp);
+
     /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
     if(bordered)
     {
@@ -860,9 +886,12 @@ void UI2_Drawer(void)
         page->drawer(page);
     }
 
+    GL_EndBorderedProjection(&bp);
+
     //if(bordered)
     //    GL_EndBorderedProjection(&borderedProjection);
 }
+#endif
 
 void FIData_PicThink(fi_object_t *obj)
 {

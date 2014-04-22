@@ -442,7 +442,7 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLState::pop();
+    GLState::pop().apply();
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

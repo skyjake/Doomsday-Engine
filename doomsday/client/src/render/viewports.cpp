@@ -981,7 +981,7 @@ static void clearViewPorts()
 {
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
 
-    if(fx::Bloom::isEnabled())
+    if(fx::Bloom::isEnabled() || (UI_PageCount() > 0 && !FI_IsStretchedToView()))
     {
         /*
          * Parts of the previous frame might leak in the bloom unless we clear the color

@@ -40,6 +40,14 @@ void UI_Shutdown(void);
 void UI2_Ticker(timespan_t ticLength);
 void UI2_Drawer(void);
 
+int UI_PageCount();
+
+/**
+ * Determines if the currently running InFine script is drawn stretched over the
+ * entire view.
+ */
+bool FI_IsStretchedToView();
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

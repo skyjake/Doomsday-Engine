@@ -36,6 +36,8 @@ void FI_Shutdown(void);
 
 void FI_Ticker(void);
 
+scalemode_t FI_ScaleMode();
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
