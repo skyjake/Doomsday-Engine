@@ -1,7 +1,7 @@
 /** @file rend_main.cpp World Map Renderer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -4619,8 +4619,7 @@ static void drawAllSurfaceTangentVectors(Map &map)
 
     glDisable(GL_CULL_FACE);
 
-    foreach(Sector *sector, map.sectors())
-    foreach(SectorCluster *cluster, sector->clusters())
+    foreach(SectorCluster *cluster, map.sectorClusters())
     {
         drawSurfaceTangentVectors(cluster);
     }
@@ -5050,8 +5049,7 @@ static void drawSectors(Map &map)
 
     // Draw per-cluster sector labels:
 
-    foreach(Sector *sector, map.sectors())
-    foreach(SectorCluster *cluster, sector->clusters())
+    foreach(SectorCluster *cluster, map.sectorClusters())
     {
         Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
         ddouble const distToEye = (eyeOrigin - origin).length();

@@ -4,7 +4,7 @@
  * introduction of new abstractions / collections.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -126,6 +126,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     MapElement *bspRoot;
     BspNodes bspNodes;
     BspLeafs bspLeafs;
+
+    SectorClusters clusters;
 
     /// Map entities and element properties (things, line specials, etc...).
     EntityDatabase entityDatabase;
@@ -313,6 +315,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         lightGrid.reset();
 #endif
 
+        qDeleteAll(clusters);
         qDeleteAll(sectors);
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
@@ -740,6 +743,91 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         LOGDEV_MAP_VERBOSE("BSP built in %.2f seconds") << begunAt.since();
 
         return bspRoot != 0;
+    }
+
+    /**
+     * (Re)Build BSP leaf clusters for the sector.
+     */
+    void buildClusters(Sector &sector)
+    {
+        SectorClusters::iterator it = clusters.find(&sector);
+        while(it != clusters.end() && it.key() == &sector) { delete *it; }
+        clusters.remove(&sector);
+
+        typedef QList<BspLeaf *> BspLeafs;
+        typedef QList<BspLeafs> BspLeafSets;
+        BspLeafSets bspLeafSets;
+
+        /*
+         * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
+         * starting with a set per BSP leaf and then keep merging these sets until
+         * no more shared edges are found.
+         */
+        foreach(BspLeaf *bspLeaf, bspLeafs)
+        {
+            if(&bspLeaf->parent().as<Sector>() != &sector)
+                continue;
+
+            // BSP leaf with no geometry are excluded.
+            if(!bspLeaf->hasPoly())
+                continue;
+
+            bspLeafSets.append(BspLeafs());
+            bspLeafSets.last().append(bspLeaf);
+        }
+
+        if(bspLeafSets.isEmpty()) return;
+
+        // Merge sets whose BSP leafs share a common edge.
+        while(bspLeafSets.count() > 1)
+        {
+            bool didMerge = false;
+            for(int i = 0; i < bspLeafSets.count(); ++i)
+            for(int k = 0; k < bspLeafSets.count(); ++k)
+            {
+                if(i == k) continue;
+
+                foreach(BspLeaf *leaf, bspLeafSets[i])
+                {
+                    HEdge *baseHEdge = leaf->poly().hedge();
+                    HEdge *hedge = baseHEdge;
+                    do
+                    {
+                        if(hedge->twin().hasFace())
+                        {
+                            BspLeaf &otherLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
+                            if(&otherLeaf.parent() == &sector &&
+                               bspLeafSets[k].contains(&otherLeaf))
+                            {
+                                // Merge k into i.
+                                bspLeafSets[i].append(bspLeafSets[k]);
+                                bspLeafSets.removeAt(k);
+
+                                // Compare the next pair.
+                                if(i >= k) i -= 1;
+                                k -= 1;
+
+                                // We'll need to repeat in any case.
+                                didMerge = true;
+                                break;
+                            }
+                        }
+                    } while((hedge = &hedge->next()) != baseHEdge);
+
+                    if(didMerge) break;
+                }
+            }
+
+            if(!didMerge) break;
+        }
+        // Clustering complete.
+
+        // Build clusters.
+        foreach(BspLeafs const &bspLeafSet, bspLeafSets)
+        {
+            // BSP leaf ownership is not given to the cluster.
+            clusters.insert(&sector, new SectorCluster(bspLeafSet));
+        }
     }
 
     /// @return  @c true= @a mobj was unlinked successfully.
@@ -1543,6 +1631,11 @@ Map::BspNodes const &Map::bspNodes() const
 Map::BspLeafs const &Map::bspLeafs() const
 {
     return d->bspLeafs;
+}
+
+Map::SectorClusters const &Map::sectorClusters() const
+{
+    return d->clusters;
 }
 
 #ifdef __CLIENT__
@@ -3858,7 +3951,7 @@ bool Map::endEditing()
     // Finish sectors.
     foreach(Sector *sector, d->sectors)
     {
-        sector->buildClusters();
+        d->buildClusters(*sector);
         sector->buildSides();
         sector->chainSoundEmitters();
     }

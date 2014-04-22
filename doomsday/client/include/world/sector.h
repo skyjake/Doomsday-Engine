@@ -1,7 +1,7 @@
 /** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -278,7 +278,6 @@ public:
     /*
      * Linked-element lists:
      */
-    typedef QList<Cluster *>  Clusters;
     typedef QList<Plane *>    Planes;
     typedef QList<LineSide *> Sides;
 
@@ -383,22 +382,6 @@ public:
      * Order: Original @em line index, ascending.
      */
     void buildSides();
-
-    /**
-     * Provides access to the list of BSP leaf clusters for the sector, for
-     * efficient traversal.
-     */
-    Clusters const &clusters() const;
-
-    /**
-     * Returns the total number of BSP leaf clusters for the sector.
-     */
-    inline int clusterCount() const { return clusters().count(); }
-
-    /**
-     * (Re)Build BSP leaf clusters for the sector.
-     */
-    void buildClusters();
 
     /**
      * Returns the primary sound emitter for the sector. Other emitters in the
