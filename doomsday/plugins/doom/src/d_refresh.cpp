@@ -50,7 +50,7 @@ void G_InitSpecialFilter()
     }
 }
 
-void G_UpdateSpecialFilter(int player)
+void G_UpdateSpecialFilterWithTimeDelta(int player, float delta)
 {
     // In HacX a simple blue shift is used instead.
     if(gameMode == doom2_hacx) return;
@@ -63,7 +63,7 @@ void G_UpdateSpecialFilter(int player)
         // Clear the filter.
         if(appliedFilter[player] > 0)
         {
-            DD_Executef(true, "postfx %i opacity 1; postfx %i none 0.3", player, player);
+            DD_Executef(true, "postfx %i opacity 1; postfx %i none %f", player, player, delta);
             appliedFilter[player] = -1;
         }
         return;
@@ -72,13 +72,13 @@ void G_UpdateSpecialFilter(int player)
     float str = 1; // Full inversion.
     if(filter < 4 * 32 && !(filter & 8))
     {
-        str = 0; //.7f;
+        str = 0;
     }
 
     // Activate the filter.
     if(appliedFilter[player] < 0)
     {
-        DD_Executef(true, "postfx %i monochrome.inverted 0.3", player);
+        DD_Executef(true, "postfx %i monochrome.inverted %f", player, delta);
     }
 
     // Update filter opacity.
@@ -88,6 +88,11 @@ void G_UpdateSpecialFilter(int player)
     }
 
     appliedFilter[player] = str;
+}
+
+void G_UpdateSpecialFilter(int player)
+{
+    G_UpdateSpecialFilterWithTimeDelta(player, .3f);
 }
 
 dd_bool R_ViewFilterColor(float rgba[4], int filter)

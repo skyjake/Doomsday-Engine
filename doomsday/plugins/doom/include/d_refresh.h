@@ -42,6 +42,8 @@ void G_InitSpecialFilter(void);
  */
 void G_UpdateSpecialFilter(int player);
 
+void G_UpdateSpecialFilterWithTimeDelta(int player, float delta);
+
 void D_DrawWindow(Size2Raw const *windowSize);
 
 void D_EndFrame(void);
