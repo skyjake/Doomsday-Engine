@@ -1,6 +1,6 @@
-/** @file render/skyfixedge.cpp Sky Fix Edge Geometry.
+/** @file skyfixedge.cpp  Sky Fix Edge Geometry.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,6 +24,7 @@
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
+#include "SectorCluster"
 #include "Surface"
 
 #include "world/map.h"

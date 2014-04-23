@@ -1,7 +1,7 @@
-/** @file projector.cpp Texture coordinate projector and projection lists.
+/** @file projector.cpp  Texture coordinate projector and projection lists.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,13 +25,13 @@
 
 #include "gl/gl_texmanager.h" // GL_PrepareLSTexture()
 
+#include "world/p_object.h"
 #include "BspLeaf"
 #include "Surface"
-#include "world/p_object.h"
+#include "SectorCluster"
+
 #include "Contact"
-
 #include "r_util.h"
-
 #include <de/memoryzone.h>
 
 using namespace de;

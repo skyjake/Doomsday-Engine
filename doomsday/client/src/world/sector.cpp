@@ -1,4 +1,4 @@
-/** @file sector.h World map sector.
+/** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -21,11 +21,12 @@
 #include "de_platform.h"
 #include "world/sector.h"
 
-#include "Line"
-#include "Plane"
-#include "Surface"
 #include "world/map.h"
 #include "world/p_object.h"
+#include "Line"
+#include "Plane"
+#include "SectorCluster"
+#include "Surface"
 
 #include <de/Log>
 #include <de/vector1.h>
@@ -113,7 +114,7 @@ DENG2_PIMPL(Sector)
         Map::SectorClusters::const_iterator i = clusterMap.constFind(thisPublic);
         while(i != clusterMap.end() && i.key() == thisPublic)
         {
-            Cluster *cluster = *i;
+            SectorCluster *cluster = *i;
             if(haveGeometry)
             {
                 V2d_UniteBox(aaBox.arvec2, cluster->aaBox().arvec2);

@@ -1,7 +1,9 @@
-/** @file s_main.cpp
+/** @file s_main.cpp  Sound Subsystem.
+ *
+ * Interface to the Sfx and Mus modules. High-level (and exported) sound control.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -18,15 +20,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Sound Subsystem.
- *
- * Interface to the Sfx and Mus modules.
- * High-level (and exported) sound control.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_SOUND
 
 #include "de_base.h"
@@ -41,26 +34,13 @@
 #include "audio/sys_audio.h"
 #include "world/p_players.h"
 #include "BspLeaf"
-
-// MACROS ------------------------------------------------------------------
+#include "Sector"
 
 BEGIN_PROF_TIMERS()
   PROF_SOUND_STARTFRAME
 END_PROF_TIMERS()
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(PlaySound);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 audiodriver_t* audioDriver = NULL;
 
@@ -78,11 +58,7 @@ int sfxRate = 11025;
 
 byte sfxOneSoundPerEmitter = false; // Traditional Doomsday behavior: allows sounds to overlap.
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static dd_bool noRndPitch;
-
-// CODE --------------------------------------------------------------------
 
 #ifdef __CLIENT__
 static void S_ReverbVolumeChanged(void)

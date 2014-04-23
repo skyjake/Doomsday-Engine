@@ -1,7 +1,7 @@
 /** @file surfacedecorator.cpp  World surface decorator.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -24,6 +24,7 @@
 
 #include "world/map.h"
 #include "BspLeaf"
+#include "Sector"
 #include "Surface"
 
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()

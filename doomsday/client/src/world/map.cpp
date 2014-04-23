@@ -35,6 +35,7 @@
 #include "Line"
 #include "Polyobj"
 #include "Sector"
+#include "SectorCluster"
 #include "Surface"
 #include "Vertex"
 

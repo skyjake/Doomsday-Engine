@@ -19,7 +19,7 @@
  */
 
 #include "de_platform.h"
-#include "world/sector.h"
+#include "world/sectorcluster.h"
 
 #include "Face"
 
@@ -69,10 +69,10 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
     return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
 }
 
-DENG2_PIMPL(Sector::Cluster),
-DENG2_OBSERVES(Sector::Cluster, Deletion),
-DENG2_OBSERVES(Plane, Deletion),
-DENG2_OBSERVES(Plane, HeightChange)
+DENG2_PIMPL(SectorCluster)
+, DENG2_OBSERVES(SectorCluster, Deletion)
+, DENG2_OBSERVES(Plane, Deletion)
+, DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(Plane, HeightSmoothedChange)
 #endif
@@ -82,8 +82,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     BspLeafs bspLeafs;
     QScopedPointer<AABoxd> aaBox;
 
-    Cluster *mappedVisFloor;
-    Cluster *mappedVisCeiling;
+    SectorCluster *mappedVisFloor;
+    SectorCluster *mappedVisCeiling;
 
     struct BoundaryInfo
     {
@@ -101,14 +101,14 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
-    bool needReverbUpdate; ///< @c true= marked for update.
+    bool needReverbUpdate;
 #endif
 
     Instance(Public *i)
-        : Base(i)
-        , needClassify(true)
-        , flags(0)
-        , mappedVisFloor(0)
+        : Base            (i)
+        , needClassify    (true)
+        , flags           (0)
+        , mappedVisFloor  (0)
         , mappedVisCeiling(0)
 #ifdef __CLIENT__
         , needReverbUpdate(true)
@@ -142,7 +142,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         return mappedVisFloor == 0 || mappedVisCeiling == 0;
     }
 
-    Cluster **mappedClusterAdr(int planeIdx)
+    SectorCluster **mappedClusterAdr(int planeIdx)
     {
         if(planeIdx == Sector::Floor)   return &mappedVisFloor;
         if(planeIdx == Sector::Ceiling) return &mappedVisCeiling;
@@ -151,7 +151,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     inline Plane *mappedPlane(int planeIdx)
     {
-        Cluster **clusterAdr = mappedClusterAdr(planeIdx);
+        SectorCluster **clusterAdr = mappedClusterAdr(planeIdx);
         if(clusterAdr && *clusterAdr)
         {
             return &(*clusterAdr)->plane(planeIdx);
@@ -159,7 +159,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         return 0;
     }
 
-    void observeCluster(Cluster *cluster, bool yes = true)
+    void observeCluster(SectorCluster *cluster, bool yes = true)
     {
         if(!cluster || cluster == thisPublic)
             return;
@@ -177,7 +177,7 @@ DENG2_OBSERVES(Plane, HeightChange)
             plane->audienceForDeletion += this;
             if(observeHeight)
             {
-                plane->audienceForHeightChange += this;
+                plane->audienceForHeightChange         += this;
 #ifdef __CLIENT__
                 plane->audienceForHeightSmoothedChange += this;
 #endif
@@ -185,17 +185,17 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
         else
         {
-            plane->audienceForDeletion -= this;
-            plane->audienceForHeightChange -= this;
+            plane->audienceForDeletion             -= this;
+            plane->audienceForHeightChange         -= this;
 #ifdef __CLIENT__
             plane->audienceForHeightSmoothedChange -= this;
 #endif
         }
     }
 
-    void map(int planeIdx, Cluster *newCluster, bool permanent = false)
+    void map(int planeIdx, SectorCluster *newCluster, bool permanent = false)
     {
-        Cluster **clusterAdr = mappedClusterAdr(planeIdx);
+        SectorCluster **clusterAdr = mappedClusterAdr(planeIdx);
         if(!clusterAdr || *clusterAdr == newCluster)
             return;
 
@@ -222,7 +222,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(classification() & NeverMapped)
             return;
 
-        Cluster **clusterAdr = mappedClusterAdr(planeIdx);
+        SectorCluster **clusterAdr = mappedClusterAdr(planeIdx);
         if(!clusterAdr || *clusterAdr == thisPublic)
             return;
 
@@ -267,7 +267,7 @@ DENG2_OBSERVES(Plane, HeightChange)
                     }
 
                     BspLeaf const &backLeaf    = hedge->twin().face().mapElementAs<BspLeaf>();
-                    Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
+                    SectorCluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
 
                     // Cluster internal edges are not considered.
                     if(backCluster == thisPublic)
@@ -327,7 +327,7 @@ DENG2_OBSERVES(Plane, HeightChange)
     {
         if(!boundaryInfo.isNull()) return;
 
-        QMap<Cluster *, HEdge *> extClusterMap;
+        QMap<SectorCluster *, HEdge *> extClusterMap;
         foreach(BspLeaf *leaf, bspLeafs)
         {
             HEdge *base = leaf->poly().hedge();
@@ -359,11 +359,11 @@ DENG2_OBSERVES(Plane, HeightChange)
         QRectF boundingRect = qrectFromAABox(self.aaBox());
 
         // First try to quickly decide by comparing cluster bounding boxes.
-        QMutableMapIterator<Cluster *, HEdge *> iter(extClusterMap);
+        QMutableMapIterator<SectorCluster *, HEdge *> iter(extClusterMap);
         while(iter.hasNext())
         {
             iter.next();
-            Cluster &extCluster = iter.value()->twin().face().mapElementAs<BspLeaf>().cluster();
+            SectorCluster &extCluster = iter.value()->twin().face().mapElementAs<BspLeaf>().cluster();
             if(!boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
             {
                 boundaryInfo->uniqueOuterEdges.append(iter.value());
@@ -434,7 +434,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
             foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
             {
-                Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+                SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
                 if(!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                     continue;
@@ -459,7 +459,7 @@ DENG2_OBSERVES(Plane, HeightChange)
                 // will be selected from the boundary).
                 foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
                 {
-                    Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+                    SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
                     if(!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                         continue;
@@ -505,7 +505,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         // Map "this" cluster to the first outer cluster found.
         foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
         {
-            Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+            SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
             if(doFloor && !floorIsMapped())
             {
@@ -538,7 +538,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         // a "ripple effect" that will remap any deeply nested dependents).
         foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
         {
-            Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+            SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
             if(extCluster.d->classification() & NeverMapped)
                 continue;
@@ -609,8 +609,8 @@ DENG2_OBSERVES(Plane, HeightChange)
 
 #endif // __CLIENT__
 
-    /// Observes Sector::Cluster Deletion.
-    void sectorClusterBeingDeleted(Cluster const &cluster)
+    /// Observes SectorCluster Deletion.
+    void sectorClusterBeingDeleted(SectorCluster const &cluster)
     {
         if(  mappedVisFloor == &cluster) clearMapping(Sector::Floor);
         if(mappedVisCeiling == &cluster) clearMapping(Sector::Ceiling);
@@ -798,7 +798,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 #endif // __CLIENT__
 };
 
-Sector::Cluster::Cluster(BspLeafs const &bspLeafs) : d(new Instance(this))
+SectorCluster::SectorCluster(BspLeafs const &bspLeafs) : d(new Instance(this))
 {
     d->bspLeafs.append(bspLeafs);
     foreach(BspLeaf *bspLeaf, bspLeafs)
@@ -808,48 +808,48 @@ Sector::Cluster::Cluster(BspLeafs const &bspLeafs) : d(new Instance(this))
     }
 }
 
-bool Sector::Cluster::isInternalEdge(HEdge *hedge) // static
+bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 {
     if(!hedge) return false;
     if(!hedge->hasFace() || !hedge->twin().hasFace()) return false;
     if(!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_BSPLEAF) return false;
     if(!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_BSPLEAF) return false;
 
-    Cluster *frontCluster = hedge->face().mapElementAs<BspLeaf>().clusterPtr();
+    SectorCluster *frontCluster = hedge->face().mapElementAs<BspLeaf>().clusterPtr();
     if(!frontCluster) return false;
     return frontCluster == hedge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
 }
 
-Sector const &Sector::Cluster::sector() const
+Sector const &SectorCluster::sector() const
 {
     return const_cast<BspLeaf const *>(d->bspLeafs.first())->parent().as<Sector>();
 }
 
-Sector &Sector::Cluster::sector()
+Sector &SectorCluster::sector()
 {
     return d->bspLeafs.first()->parent().as<Sector>();
 }
 
-Plane const &Sector::Cluster::plane(int planeIndex) const
+Plane const &SectorCluster::plane(int planeIndex) const
 {
     // Physical planes are never mapped.
     return sector().plane(planeIndex);
 }
 
-Plane &Sector::Cluster::plane(int planeIndex)
+Plane &SectorCluster::plane(int planeIndex)
 {
     // Physical planes are never mapped.
     return sector().plane(planeIndex);
 }
 
-Plane &Sector::Cluster::visPlane(int planeIndex)
+Plane &SectorCluster::visPlane(int planeIndex)
 {
-    return const_cast<Plane &>(const_cast<Sector::Cluster const *>(this)->visPlane(planeIndex));
+    return const_cast<Plane &>(const_cast<SectorCluster const *>(this)->visPlane(planeIndex));
 }
 
-Plane const &Sector::Cluster::visPlane(int planeIndex) const
+Plane const &SectorCluster::visPlane(int planeIndex) const
 {
-    if(planeIndex >= Floor && planeIndex <= Ceiling)
+    if(planeIndex >= Sector::Floor && planeIndex <= Sector::Ceiling)
     {
         // Time to remap the planes?
         if(d->needRemapVisPlanes())
@@ -858,7 +858,7 @@ Plane const &Sector::Cluster::visPlane(int planeIndex) const
         }
 
         /// @todo Cache this result.
-        Cluster const *mappedCluster = (planeIndex == Ceiling? d->mappedVisCeiling : d->mappedVisFloor);
+        SectorCluster const *mappedCluster = (planeIndex == Sector::Ceiling? d->mappedVisCeiling : d->mappedVisFloor);
         if(mappedCluster && mappedCluster != this)
         {
             return mappedCluster->visPlane(planeIndex);
@@ -868,7 +868,7 @@ Plane const &Sector::Cluster::visPlane(int planeIndex) const
     return sector().plane(planeIndex);
 }
 
-AABoxd const &Sector::Cluster::aaBox() const
+AABoxd const &SectorCluster::aaBox() const
 {
     // If the cluster is comprised of a single BSP leaf we can use the bounding
     // box of the leaf's geometry directly.
@@ -898,14 +898,14 @@ AABoxd const &Sector::Cluster::aaBox() const
     return *d->aaBox;
 }
 
-Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
+SectorCluster::BspLeafs const &SectorCluster::bspLeafs() const
 {
     return d->bspLeafs;
 }
 
 #ifdef __CLIENT__
 
-bool Sector::Cluster::hasWorldVolume(bool useSmoothedHeights) const
+bool SectorCluster::hasWorldVolume(bool useSmoothedHeights) const
 {
     if(useSmoothedHeights)
     {
@@ -917,18 +917,18 @@ bool Sector::Cluster::hasWorldVolume(bool useSmoothedHeights) const
     }
 }
 
-coord_t Sector::Cluster::roughArea() const
+coord_t SectorCluster::roughArea() const
 {
     AABoxd const &bounds = aaBox();
     return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
 }
 
-void Sector::Cluster::markReverbDirty(bool yes)
+void SectorCluster::markReverbDirty(bool yes)
 {
     d->needReverbUpdate = yes;
 }
 
-AudioEnvironmentFactors const &Sector::Cluster::reverb() const
+AudioEnvironmentFactors const &SectorCluster::reverb() const
 {
     // Perform any scheduled update now.
     if(d->needReverbUpdate)
@@ -938,13 +938,13 @@ AudioEnvironmentFactors const &Sector::Cluster::reverb() const
     return d->reverb;
 }
 
-void Sector::Cluster::markVisPlanesDirty()
+void SectorCluster::markVisPlanesDirty()
 {
     d->maybeInvalidateMapping(Sector::Floor);
     d->maybeInvalidateMapping(Sector::Ceiling);
 }
 
-bool Sector::Cluster::hasSkyMaskedPlane() const
+bool SectorCluster::hasSkyMaskedPlane() const
 {
     for(int i = 0; i < sector().planeCount(); ++i)
     {

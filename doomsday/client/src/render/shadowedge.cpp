@@ -1,7 +1,7 @@
-/** @file render/shadowedge.cpp FakeRadio Shadow Edge Geometry
+/** @file shadowedge.cpp  FakeRadio Shadow Edge Geometry
  *
- * @authors Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,6 +27,7 @@
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
+#include "SectorCluster"
 #include "Surface"
 
 #include "world/lineowner.h"

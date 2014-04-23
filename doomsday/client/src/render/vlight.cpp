@@ -1,8 +1,8 @@
-/** @file vlight.cpp Vector lights
+/** @file vlight.cpp  Vector lights
  * @ingroup render
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,9 +25,11 @@
 #include "de_graphics.h"
 #include "de_render.h"
 
-#include "BspLeaf"
-#include "Surface"
 #include "world/map.h"
+#include "BspLeaf"
+#include "SectorCluster"
+#include "Surface"
+
 #include "Contact"
 #include <de/concurrency.h>
 #include <de/mathutil.h> // M_ApproxDistance

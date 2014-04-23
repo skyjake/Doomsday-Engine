@@ -5,7 +5,7 @@
  * @todo Much of this should be refactored and merged into the App classes.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -70,6 +70,7 @@
 #include "world/p_players.h"
 #ifdef __CLIENT__
 #  include "Contact"
+#  include "Sector"
 #endif
 #include "world/worldsystem.h"
 

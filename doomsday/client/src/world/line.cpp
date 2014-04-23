@@ -1,7 +1,7 @@
 /** @file line.cpp  World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,6 +29,7 @@
 
 #include "BspLeaf"
 #include "Sector"
+#include "SectorCluster"
 #include "Surface"
 #include "Vertex"
 #include "world/maputil.h"
