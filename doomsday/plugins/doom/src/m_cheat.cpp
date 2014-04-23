@@ -443,19 +443,22 @@ D_CMD(CheatGive)
         App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n  give (stuff) (plr)");
         App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
                              "If no id; give all of type:");
-        App_Log(DE2_LOG_SCR, " a - ammo");
-        App_Log(DE2_LOG_SCR, " b - berserk");
-        App_Log(DE2_LOG_SCR, " f - the power of flight");
-        App_Log(DE2_LOG_SCR, " g - light amplification visor");
-        App_Log(DE2_LOG_SCR, " h - health");
-        App_Log(DE2_LOG_SCR, " i - invulnerability");
-        App_Log(DE2_LOG_SCR, " k - key cards/skulls");
-        App_Log(DE2_LOG_SCR, " m - computer area map");
-        App_Log(DE2_LOG_SCR, " p - backpack full of ammo");
-        App_Log(DE2_LOG_SCR, " r - armor");
-        App_Log(DE2_LOG_SCR, " s - radiation shielding suit");
-        App_Log(DE2_LOG_SCR, " v - invisibility");
-        App_Log(DE2_LOG_SCR, " w - weapons");
+#define TABBED(A, B)    DE2_ESC(Ta) " " A DE2_ESC(Tb) " - " B
+        App_Log(DE2_LOG_SCR,
+                TABBED("a", "ammo") "\n"
+                TABBED("b", "berserk") "\n"
+                TABBED("f", "the power of flight") "\n"
+                TABBED("g", "light amplification visor") "\n"
+                TABBED("h", "health") "\n"
+                TABBED("i", "invulnerability") "\n"
+                TABBED("k", "key cards/skulls") "\n"
+                TABBED("m", "computer area map") "\n"
+                TABBED("p", "backpack full of ammo") "\n"
+                TABBED("r", "armor") "\n"
+                TABBED("s", "radiation shielding suit") "\n"
+                TABBED("v", "invisibility") "\n"
+                TABBED("w", "weapons"));
+#undef TABBED
         App_Log(DE2_LOG_SCR, "Example: 'give arw' corresponds the cheat IDFA.");
         App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.");
         return true;
