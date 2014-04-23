@@ -1870,6 +1870,10 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_POWERS;
     de::zap(p->powers);
 
+#if __JDOOM__
+    G_UpdateSpecialFilterWithTimeDelta(player, 0 /* instantly */);
+#endif
+
 #if __JHEXEN__
     if(!newHub && !COMMON_GAMESESSION->rules().deathmatch)
     {
