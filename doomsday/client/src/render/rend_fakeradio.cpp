@@ -1,7 +1,7 @@
-/** @file rend_fakeradio.cpp Faked Radiosity Lighting.
+/** @file rend_fakeradio.cpp  Faked Radiosity Lighting.
  *
- * @authors Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -43,6 +43,7 @@
 #include "world/maputil.h"
 #include "world/lineowner.h"
 #include "BspLeaf"
+#include "SectorCluster"
 
 #include "WallEdge"
 #include "render/rendpoly.h"

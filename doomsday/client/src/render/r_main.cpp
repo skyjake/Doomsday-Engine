@@ -1,7 +1,7 @@
 /** @file r_main.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -34,6 +34,7 @@
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "SectorCluster"
 
 #include <de/GLState>
 #include <de/vector1.h>

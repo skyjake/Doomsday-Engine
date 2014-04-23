@@ -1,4 +1,4 @@
-/** @file rend_main.cpp World Map Renderer.
+/** @file rend_main.cpp  World Map Renderer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -49,16 +49,17 @@
 
 #include "Face"
 
-#include "BspLeaf"
-#include "BspNode"
-#include "Hand"
-#include "Surface"
 #include "world/map.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
-#include "Contact"
 #include "world/p_players.h"
 #include "world/thinkers.h"
+#include "BspLeaf"
+#include "BspNode"
+#include "Contact"
+#include "Hand"
+#include "SectorCluster"
+#include "Surface"
 
 #include "BiasIllum"
 #include "BiasSurface"

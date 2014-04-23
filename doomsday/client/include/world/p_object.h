@@ -1,7 +1,7 @@
-/** @file p_object.h World map objects.
+/** @file p_object.h  World map objects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -31,12 +31,12 @@
 #  include "ModelDef"
 #  include "Sprite"
 #endif
-#include "Sector"
 #include <de/Vector>
 #include <de/aabox.h>
 
 class BspLeaf;
 class Plane;
+class SectorCluster;
 
 // This macro can be used to calculate a mobj-specific 'random' number.
 #define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )

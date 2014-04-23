@@ -1,6 +1,6 @@
-/** @file render/walledge.cpp Wall Edge Geometry.
+/** @file walledge.cpp Wall Edge Geometry.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,6 +29,7 @@
 #include "world/lineowner.h"
 #include "world/p_players.h"
 #include "world/maputil.h"
+#include "SectorCluster"
 
 #include "render/rend_main.h" // devRendSkyMode, remove me
 #include <QtAlgorithms>

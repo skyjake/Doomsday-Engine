@@ -1,7 +1,7 @@
 /** @file rend_particle.cpp  Particle effect rendering.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,11 +30,12 @@
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 
+#include "world/map.h"
+#include "world/p_players.h"
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
-#include "world/map.h"
-#include "world/p_players.h"
+#include "SectorCluster"
 
 #include "resource/image.h"
 

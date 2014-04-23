@@ -25,7 +25,6 @@
 
 #include "Line"
 #include "Polyobj"
-#include "Sector"
 
 #ifdef __CLIENT__
 #  include "client/clmobjhash.h"
@@ -50,6 +49,8 @@
 class BspLeaf;
 class BspNode;
 class Plane;
+class Sector;
+class SectorCluster;
 class Surface;
 class Vertex;
 
@@ -124,7 +125,7 @@ public:
 #endif
 
     /*
-     * Linked-element lists/sets:
+     * Linked-element lists:
      */
     typedef Mesh::Vertexes   Vertexes;
     typedef QList<Line *>    Lines;

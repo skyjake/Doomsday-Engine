@@ -1,7 +1,7 @@
-/** @file biasillum.cpp Shadow Bias map point illumination.
+/** @file biasillum.cpp  Shadow Bias map point illumination.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,6 +25,7 @@
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"
+#include "SectorCluster"
 #include "Surface"
 
 #include "BiasTracker"

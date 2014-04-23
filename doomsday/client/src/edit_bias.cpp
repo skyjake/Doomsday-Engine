@@ -1,7 +1,7 @@
-/** @file edit_bias.cpp Shadow Bias editor UI.
+/** @file edit_bias.cpp  Shadow Bias editor UI.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -19,7 +19,6 @@
  */
 
 #ifdef __CLIENT__
-
 #include <de/Log>
 
 #include "de_base.h"
@@ -27,10 +26,11 @@
 #include "de_filesys.h"
 #include "de_ui.h"
 
-#include "Hand"
-#include "HueCircle"
 #include "world/map.h"
 #include "world/p_players.h" // viewPlayer
+#include "Hand"
+#include "HueCircle"
+#include "Sector"
 
 #include "render/viewports.h"
 #include "render/rend_main.h" // gameDrawHUD/vOrigin, remove me

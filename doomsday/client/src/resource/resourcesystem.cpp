@@ -57,6 +57,7 @@
 #  include "world/map.h"
 #  include "world/p_object.h"
 #  include "world/thinkers.h"
+#  include "Sector"
 #  include "Surface"
 #endif
 

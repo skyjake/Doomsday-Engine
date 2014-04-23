@@ -1,7 +1,7 @@
-/** @file render/rend_main.h Core of the rendering subsystem.
+/** @file rend_main.h Core of the rendering subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,11 +26,13 @@
 
 #include "dd_types.h"
 #include "def_main.h"
-#include "Sector"
 #include "MaterialVariantSpec"
 #include "WallEdge"
 #include <de/Vector>
 #include <de/Matrix>
+
+class Sector;
+class SectorCluster;
 
 namespace de {
 class Map;

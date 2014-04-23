@@ -158,6 +158,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/Plane \
     include/Polyobj \
     include/Sector \
+    include/SectorCluster \
     include/SettingsRegister \
     include/SkyFixEdge \
     include/Sprite \
@@ -466,6 +467,7 @@ DENG_HEADERS += \
     include/world/propertyvalue.h \
     include/world/reject.h \
     include/world/sector.h \
+    include/world/sectorcluster.h \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
