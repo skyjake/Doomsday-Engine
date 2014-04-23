@@ -323,8 +323,10 @@ DENG2_OBSERVES(Plane, HeightChange)
         return flags;
     }
 
-    void initBoundaryInfo()
+    void initBoundaryInfoIfNeeded()
     {
+        if(!boundaryInfo.isNull()) return;
+
         QMap<Cluster *, HEdge *> extClusterMap;
         foreach(BspLeaf *leaf, bspLeafs)
         {
@@ -335,7 +337,8 @@ DENG2_OBSERVES(Plane, HeightChange)
                 if(!hedge->hasMapElement())
                     continue;
 
-                DENG2_ASSERT(hedge->twin().hasFace()); // Sanity check.
+                if(!hedge->twin().hasFace())
+                    continue;
 
                 BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
                 if(!backLeaf.hasCluster())
@@ -427,11 +430,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         {
             // Should we permanently map planes to another cluster?
 
-            // Is it time to initialize the boundary info?
-            if(boundaryInfo.isNull())
-            {
-                initBoundaryInfo();
-            }
+            initBoundaryInfoIfNeeded();
 
             foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
             {
@@ -480,7 +479,6 @@ DENG2_OBSERVES(Plane, HeightChange)
                 }
 
                 // Permanent mappings won't be remapped.
-                boundaryInfo.reset();
                 return;
             }
         }
@@ -502,11 +500,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(!doFloor && !doCeiling)
             return;
 
-        // Is it time to initialize the boundary info?
-        if(boundaryInfo.isNull())
-        {
-            initBoundaryInfo();
-        }
+        initBoundaryInfoIfNeeded();
 
         // Map "this" cluster to the first outer cluster found.
         foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
@@ -565,6 +559,25 @@ DENG2_OBSERVES(Plane, HeightChange)
 
 #ifdef __CLIENT__
 
+    void markAllSurfacesForDecorationUpdate(Line &line)
+    {
+        LineSide &front = line.front();
+        DENG2_ASSERT(front.hasSections());
+        {
+            front.middle().markAsNeedingDecorationUpdate();
+            front.bottom().markAsNeedingDecorationUpdate();
+            front.   top().markAsNeedingDecorationUpdate();
+        }
+
+        LineSide &back = line.back();
+        if(back.hasSections())
+        {
+            back.middle().markAsNeedingDecorationUpdate();
+            back.bottom().markAsNeedingDecorationUpdate();
+            back   .top().markAsNeedingDecorationUpdate();
+        }
+    }
+
     /**
      * To be called when the height changes to update the plotted decoration
      * origins for surfaces whose material offset is dependant upon this.
@@ -573,22 +586,24 @@ DENG2_OBSERVES(Plane, HeightChange)
     {
         if(ddMapSetup) return;
 
-        foreach(LineSide *side, self.sector().sides())
-        {
-            if(side->hasSections())
-            {
-                side->middle().markAsNeedingDecorationUpdate();
-                side->bottom().markAsNeedingDecorationUpdate();
-                side   ->top().markAsNeedingDecorationUpdate();
-            }
+        initBoundaryInfoIfNeeded();
 
-            if(side->back().hasSections())
+        // Mark surfaces of the outer edge loop.
+        HEdge *base = boundaryInfo->uniqueOuterEdges.first();
+        SectorClusterCirculator it(base);
+        do
+        {
+            markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+        } while(&it.next() != base);
+
+        // Mark surfaces of the inner edge loop(s).
+        foreach(HEdge *base, boundaryInfo->uniqueInnerEdges)
+        {
+            SectorClusterCirculator it(base);
+            do
             {
-                LineSide &back = side->back();
-                back.middle().markAsNeedingDecorationUpdate();
-                back.bottom().markAsNeedingDecorationUpdate();
-                back   .top().markAsNeedingDecorationUpdate();
-            }
+                markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+            } while(&it.next() != base);
         }
     }
 
@@ -951,10 +966,10 @@ SectorCluster *SectorClusterCirculator::getCluster(HEdge const &hedge) // static
     return hedge.face().mapElementAs<BspLeaf>().clusterPtr();
 }
 
-HEdge const &SectorClusterCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,
+HEdge &SectorClusterCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,
     SectorCluster const *cluster) // static
 {
-    HEdge const *neighbor = &hedge.neighbor(direction);
+    HEdge *neighbor = &hedge.neighbor(direction);
     // Skip over interior edges.
     if(cluster)
     {
