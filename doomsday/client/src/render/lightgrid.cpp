@@ -1,7 +1,7 @@
-/** @file render/lightgrid.cpp Light Grid (Large-Scale FakeRadio).
+/** @file lightgrid.cpp  Light Grid (Large-Scale FakeRadio).
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -18,27 +18,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_base.h"
+#include "render/lightgrid.h"
+
 #include <de/memory.h>
 #include <de/memoryzone.h>
-
 #include <QFlags>
 #include <QVector>
-
 #include <de/math.h>
 #include <de/Log>
 
 #include "de_console.h"
 
-#include "BspLeaf"
-#include "Sector"
-#include "Surface"
+#include "render/rend_main.h"
+
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h" // viewPlayer
-
-#include "render/rend_main.h"
-
-#include "render/lightgrid.h"
+#include "BspLeaf"
+#include "Sector"
+#include "SectorCluster"
+#include "Surface"
 
 using namespace de;
 
@@ -60,13 +60,13 @@ void LightGrid::consoleRegister() // static
 }
 
 /**
- * Determines the Z-axis bias scale factor for the given @a sector.
+ * Determines the Z-axis bias scale factor for the given sector @a cluster.
  */
-static int biasForSector(Sector const &sector)
+static int biasForSectorCluster(SectorCluster const &cluster)
 {
-    int const height = int(sector.ceiling().height() - sector.floor().height());
-    bool hasSkyFloor = sector.floorSurface().hasSkyMaskedMaterial();
-    bool hasSkyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
+    int const height = int(cluster.visCeiling().height() - cluster.visFloor().height());
+    bool hasSkyFloor = cluster.visFloor().surface().hasSkyMaskedMaterial();
+    bool hasSkyCeil  = cluster.visCeiling().surface().hasSkyMaskedMaterial();
 
     if(hasSkyFloor && !hasSkyCeil)
     {
@@ -102,16 +102,16 @@ public:
     /**
      * Construct a new light block.
      *
-     * @param sector  Sector which is the primary light contributor for
-     *                the block. Can be @c 0 (to create a "null-block").
+     * @param sectorCluster  Sector cluster which is the primary light contributor
+     * for the block. Can be @c 0 (to create a "null-block").
      */
-    LightBlock(Sector *sector = 0);
+    LightBlock(SectorCluster *sectorCluster = 0);
 
     /**
      * Returns the @em primary sector attributed to the light block
      * (contributing sectors are not linked).
      */
-    Sector &sector() const;
+    SectorCluster &sectorCluster() const;
 
     /**
      * Returns a copy of the flags of the light block.
@@ -152,35 +152,32 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(LightBlock::Flags)
 
 DENG2_PIMPL_NOREF(LightBlock)
 {
-    /// Primary sector attributed to this block.
-    Sector *sector;
-
-    /// State flags.
-    Flags flags;
+    SectorCluster *cluster; ///< Primary sector cluster attributed to this block.
+    Flags flags;            ///< State flags.
 
     /// Positive bias means that the light is shining in the floor of the sector.
     char bias;
 
-    /// Color of the light:
+    /// Color of the light.
     Vector3f color;
 
     /// Used instead of @var color if the lighting in this block has changed
     /// and a full grid update is needed.
     Vector3f oldColor;
 
-    Instance(Sector *sector)
-        : sector(sector), bias(0)
+    Instance() : cluster(0), bias(0)
     {}
 };
 
-LightBlock::LightBlock(Sector *sector)
-    : d(new Instance(sector))
-{}
-
-Sector &LightBlock::sector() const
+LightBlock::LightBlock(SectorCluster *cluster) : d(new Instance())
 {
-    DENG_ASSERT(d->sector != 0);
-    return *d->sector;
+    d->cluster = cluster;
+}
+
+SectorCluster &LightBlock::sectorCluster() const
+{
+    DENG2_ASSERT(d->cluster != 0);
+    return *d->cluster;
 }
 
 LightBlock::Flags LightBlock::flags() const
@@ -190,14 +187,14 @@ LightBlock::Flags LightBlock::flags() const
 
 void LightBlock::setFlags(LightBlock::Flags flagsToChange, FlagOp operation)
 {
-    if(!d->sector) return;
+    if(!d->cluster) return;
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 Vector3f LightBlock::evaluate(/*coord_t height*/) const
 {
-    // If not attributed to a sector, the color is always black.
-    if(!d->sector) return Vector3f(0, 0, 0);
+    // Blocks with no attributed sector are always black.
+    if(!d->cluster) return Vector3f(0, 0, 0);
 
     /**
      * Biased light dimming disabled because this does not work well enough.
@@ -215,12 +212,12 @@ Vector3f LightBlock::evaluate(/*coord_t height*/) const
     if(_bias < 0)
     {
         // Calculate Z difference to the ceiling.
-        dz = d->sector->ceiling().height() - height;
+        dz = d->cluster->visCeiling().height() - height;
     }
     else if(_bias > 0)
     {
         // Calculate Z difference to the floor.
-        dz = height - d->sector->floor().height();
+        dz = height - d->cluster->visFloor().height();
     }
     dz -= 50;
     if(dz < 0)
@@ -245,7 +242,7 @@ Vector3f LightBlock::evaluate(/*coord_t height*/) const
 
 void LightBlock::markChanged(bool isContributor)
 {
-    if(!d->sector) return;
+    if(!d->cluster) return;
 
     if(isContributor)
     {
@@ -270,7 +267,7 @@ void LightBlock::markChanged(bool isContributor)
 
 void LightBlock::applySector(Vector3f const &color, float level, int bias, float factor)
 {
-    if(!d->sector) return;
+    if(!d->cluster) return;
 
     // Apply a bias to the light level.
     level -= (0.95f - level);
@@ -342,9 +339,9 @@ static inline bool isNullBlock(LightBlock const &block) {
     return &block == &nullBlock;
 }
 
-DENG2_PIMPL(LightGrid),
-DENG2_OBSERVES(Sector, LightColorChange),
-DENG2_OBSERVES(Sector, LightLevelChange)
+DENG2_PIMPL(LightGrid)
+, DENG2_OBSERVES(Sector, LightColorChange)
+, DENG2_OBSERVES(Sector, LightLevelChange)
 {
     /// Map for which we provide an ambient lighting grid.
     Map &map;
@@ -365,9 +362,9 @@ DENG2_OBSERVES(Sector, LightLevelChange)
     bool needUpdate;
 
     Instance(Public *i, Map &map)
-        : Base(i),
-          map(map),
-          needUpdate(false)
+        : Base(i)
+        , map(map)
+        , needUpdate(false)
     {}
 
     ~Instance()
@@ -375,7 +372,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         foreach(LightBlock *block, grid)
         {
             if(!block) continue;
-            Sector &sector = block->sector();
+            Sector &sector = block->sectorCluster().sector();
             sector.audienceForLightLevelChange -= this;
             sector.audienceForLightColorChange -= this;
         }
@@ -409,7 +406,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
      */
     LightBlock &lightBlock(Index idx)
     {
-        DENG_ASSERT(idx >= 0 && idx < grid.size());
+        DENG2_ASSERT(idx >= 0 && idx < grid.size());
         LightBlock *block = grid[idx];
         if(block) return *block;
         return nullBlock;
@@ -441,7 +438,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         static int const MSFACTORS = 7;
         static int multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
 
-        de::Time begunAt;
+        Time begunAt;
 
         LOG_AS("LightGrid::initialize");
 
@@ -485,7 +482,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
          */
 
         // Allocate memory for all the sample results.
-        Sector **ssamples = (Sector **) M_Malloc(sizeof(Sector *) * ((dimensions.x * dimensions.y) * numSamples));
+        SectorCluster **ssamples = (SectorCluster **) M_Malloc(sizeof(*ssamples) * ((dimensions.x * dimensions.y) * numSamples));
 
         // Determine the size^2 of the samplePoint array plus its center.
         int size = 0, center = 0;
@@ -531,7 +528,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
 
         Vector2d samplePoint;
 
-        // Acquire the sectors at ALL the sample points.
+        // Acquire the sector clusters at ALL the sample points.
         for(int y = 0; y < dimensions.y; ++y)
         for(int x = 0; x < dimensions.x; ++x)
         {
@@ -551,7 +548,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
 
                 BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
                 if(bspLeaf.polyContains(samplePoint))
-                    ssamples[idx] = bspLeaf.sectorPtr();
+                    ssamples[idx] = bspLeaf.clusterPtr();
                 else
                     ssamples[idx] = 0;
 
@@ -600,7 +597,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
 
                         BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
                         if(bspLeaf.polyContains(samplePoint))
-                            ssamples[idx] = bspLeaf.sectorPtr();
+                            ssamples[idx] = bspLeaf.clusterPtr();
                         else
                             ssamples[idx] = 0;
                     }
@@ -618,7 +615,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         uint *contributorBitfield = (uint *) M_Calloc(bitfieldSize);
 
         // Allocate memory used for the collection of the sample results.
-        Sector **blkSampleSectors = (Sector **) M_Malloc(sizeof(Sector *) * numSamples);
+        SectorCluster **blkSampleClusters = (SectorCluster **) M_Malloc(sizeof(SectorCluster *) * numSamples);
 
         /*
          * Initialize the light block grid.
@@ -630,25 +627,27 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         for(int x = 0; x < dimensions.x; ++x)
         {
             /**
-             * Pick the sector at each of the sample points.
-             * @todo We don't actually need the blkSampleSectors array
-             * anymore. Now that ssamples stores the results consecutively
-             * a simple index into ssamples would suffice.
-             * However if the optimization to save memory is implemented as
-             * described in the comments above we WOULD still require it.
-             * Therefore, for now I'm making use of it to clarify the code.
+             * Pick the sector cluster at each of the sample points.
+             *
+             * @todo We don't actually need the blkSampleClusters array anymore.
+             * Now that ssamples stores the results consecutively a simple index
+             * into ssamples would suffice. However if the optimization to save
+             * memory is implemented as described in the comments above we WOULD
+             * still require it.
+             *
+             * For now we'll make use of it to clarify the code.
              */
             Index idx = toIndex(x, y) * numSamples;
             for(int i = 0; i < numSamples; ++i)
             {
-                blkSampleSectors[i] = ssamples[i + idx];
+                blkSampleClusters[i] = ssamples[i + idx];
             }
 
-            Sector *sector = 0;
+            SectorCluster *cluster = 0;
 
             if(numSamples == 1)
             {
-                sector = blkSampleSectors[center];
+                cluster = blkSampleClusters[center];
             }
             else
             {
@@ -658,11 +657,11 @@ DENG2_OBSERVES(Sector, LightLevelChange)
 
                 for(int i = 0; i < numSamples; ++i)
                 {
-                    if(!blkSampleSectors[i]) continue;
+                    if(!blkSampleClusters[i]) continue;
 
                     for(int k = 0; k < numSamples; ++k)
                     {
-                        if(blkSampleSectors[k] == blkSampleSectors[i] && blkSampleSectors[k])
+                        if(blkSampleClusters[k] == blkSampleClusters[i] && blkSampleClusters[k])
                         {
                             sampleResults[k]++;
                             if(sampleResults[k] > best)
@@ -675,25 +674,25 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                 {
                     // Favour the center sample if its a draw.
                     if(sampleResults[best] == sampleResults[center] &&
-                       blkSampleSectors[center])
-                        sector = blkSampleSectors[center];
+                       blkSampleClusters[center])
+                        cluster = blkSampleClusters[center];
                     else
-                        sector = blkSampleSectors[best];
+                        cluster = blkSampleClusters[best];
                 }
             }
 
-            if(!sector)
+            if(!cluster)
                 continue;
 
             // Insert a new light block in the grid.
-            grid[toIndex(x, y)] = new LightBlock(sector);
+            grid[toIndex(x, y)] = new LightBlock(cluster);
 
             // There is now one more block.
             numBlocks++;
 
             // We want notification when the sector light properties change.
-            sector->audienceForLightLevelChange += this;
-            sector->audienceForLightColorChange += this;
+            cluster->sector().audienceForLightLevelChange += this;
+            cluster->sector().audienceForLightColorChange += this;
         }
 
         LOGDEV_GL_MSG("%i light blocks (%u bytes)")
@@ -702,76 +701,71 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         // We're done with sector samples completely.
         M_Free(ssamples);
         // We're done with the sample results arrays.
-        M_Free(blkSampleSectors);
+        M_Free(blkSampleClusters);
 
         delete[] sampleResults;
 
-        // Find the blocks of all sectors.
-        foreach(Sector *sector, map.sectors())
+        // Find the blocks of all sector clusters.
+        foreach(SectorCluster *cluster, map.sectorClusters())
         {
             int count = 0, changedCount = 0;
 
-            if(sector->sideCount())
-            {
-                // Clear the bitfields.
-                std::memset(indexBitfield, 0, bitfieldSize);
-                std::memset(contributorBitfield, 0, bitfieldSize);
+            // Clear the bitfields.
+            std::memset(indexBitfield, 0, bitfieldSize);
+            std::memset(contributorBitfield, 0, bitfieldSize);
 
-                for(int y = 0; y < dimensions.y; ++y)
-                for(int x = 0; x < dimensions.x; ++x)
+            for(int y = 0; y < dimensions.y; ++y)
+            for(int x = 0; x < dimensions.x; ++x)
+            {
+                LightBlock &block = lightBlock(x, y);
+                if(isNullBlock(block) || &block.sectorCluster() != cluster)
+                    continue;
+
+                /// @todo Determine min/max a/b before going into the loop.
+                for(int b = -2; b <= 2; ++b)
                 {
-                    LightBlock &block = lightBlock(x, y);
-                    if(isNullBlock(block) || &block.sector() != sector)
+                    if(y + b < 0 || y + b >= dimensions.y)
                         continue;
 
-                    /// @todo Determine min/max a/b before going into the loop.
-                    for(int b = -2; b <= 2; ++b)
+                    for(int a = -2; a <= 2; ++a)
                     {
-                        if(y + b < 0 || y + b >= dimensions.y)
+                        if(x + a < 0 || x + a >= dimensions.x)
                             continue;
 
-                        for(int a = -2; a <= 2; ++a)
-                        {
-                            if(x + a < 0 || x + a >= dimensions.x)
-                                continue;
-
-                            addIndexBit(Ref(x + a, y + b), dimensions.x,
-                                        indexBitfield, &changedCount);
-                        }
+                        addIndexBit(Ref(x + a, y + b), dimensions.x,
+                                    indexBitfield, &changedCount);
                     }
                 }
+            }
 
-                // Determine contributor blocks. Contributors are the blocks that are
-                // close enough to contribute light to affected blocks.
-                for(int y = 0; y < dimensions.y; ++y)
-                for(int x = 0; x < dimensions.x; ++x)
+            // Determine contributor blocks. Contributors are the blocks that are
+            // close enough to contribute light to affected blocks.
+            for(int y = 0; y < dimensions.y; ++y)
+            for(int x = 0; x < dimensions.x; ++x)
+            {
+                if(!hasIndexBit(Ref(x, y), dimensions.x, indexBitfield))
+                    continue;
+
+                // Add the contributor blocks.
+                for(int b = -2; b <= 2; ++b)
                 {
-                    if(!hasIndexBit(Ref(x, y), dimensions.x, indexBitfield))
+                    if(y + b < 0 || y + b >= dimensions.y)
                         continue;
 
-                    // Add the contributor blocks.
-                    for(int b = -2; b <= 2; ++b)
+                    for(int a = -2; a <= 2; ++a)
                     {
-                        if(y + b < 0 || y + b >= dimensions.y)
+                        if(x + a < 0 || x + a >= dimensions.x)
                             continue;
 
-                        for(int a = -2; a <= 2; ++a)
+                        if(!hasIndexBit(Ref(x + a, y + b), dimensions.x, indexBitfield))
                         {
-                            if(x + a < 0 || x + a >= dimensions.x)
-                                continue;
-
-                            if(!hasIndexBit(Ref(x + a, y + b), dimensions.x, indexBitfield))
-                            {
-                                addIndexBit(Ref(x + a, y + b), dimensions.x, contributorBitfield, &count);
-                            }
+                            addIndexBit(Ref(x + a, y + b), dimensions.x, contributorBitfield, &count);
                         }
                     }
                 }
             }
 
-            // LOG_DEBUG("  Sector %i: %i / %i") << map.sectorIndex(s) << changedCount << count;
-
-            Sector::LightGridData &lgData = sector->lightGridData();
+            SectorCluster::LightGridData &lgData = cluster->lightGridData();
             lgData.changedBlockCount = changedCount;
             lgData.blockCount = changedCount + count;
 
@@ -789,8 +783,8 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                         lgData.blocks[b++] = x;
                 }
 
-                DENG_ASSERT(a == changedCount);
-                //DENG_ASSERT(b == blockCount);
+                DENG2_ASSERT(a == changedCount);
+                //DENG2_ASSERT(b == blockCount);
             }
         }
 
@@ -808,26 +802,34 @@ DENG2_OBSERVES(Sector, LightLevelChange)
      */
     void sectorChanged(Sector &sector)
     {
+        DENG2_ASSERT(&sector.map() == &map); // sanity check.
+
         // Do not update if not enabled.
         /// @todo We could dynamically join/leave the relevant audiences.
         if(!lgEnabled) return;
 
-        Sector::LightGridData &lgData = sector.lightGridData();
-        if(!lgData.changedBlockCount && !lgData.blockCount)
-            return;
-
-        // Mark changed blocks and contributors.
-        for(uint i = 0; i < lgData.changedBlockCount; ++i)
+        Map::SectorClusters const &clusterMap = map.sectorClusters();
+        Map::SectorClusters::const_iterator it = clusterMap.constFind(&sector);
+        while(it != clusterMap.end() && it.key() == &sector)
         {
-            lightBlock(lgData.blocks[i]).markChanged();
-        }
+            SectorCluster::LightGridData &lgData = (*it)->lightGridData();
+            if(lgData.changedBlockCount || lgData.blockCount)
+            {
+                // Mark changed blocks and contributors.
+                for(uint i = 0; i < lgData.changedBlockCount; ++i)
+                {
+                    lightBlock(lgData.blocks[i]).markChanged();
+                }
 
-        for(uint i = 0; i < lgData.blockCount; ++i)
-        {
-            lightBlock(lgData.blocks[i]).markChanged(true /* is-contributor */);
-        }
+                for(uint i = 0; i < lgData.blockCount; ++i)
+                {
+                    lightBlock(lgData.blocks[i]).markChanged(true /* is-contributor */);
+                }
 
-        needUpdate = true;
+                needUpdate = true;
+            }
+            ++it;
+        }
     }
 
     /// Observes Sector LightLevelChange.
@@ -922,11 +924,10 @@ void LightGrid::update()
             continue;
 
         // Determine the ambient light properties of the sector at this block.
-        /// @todo fixme: Should work with sector clusters instead.
-        Sector &sector        = block.sector();
-        Vector3f const &color = Rend_SectorLightColor(sector);
-        float const level     = sector.lightLevel();
-        int const bias        = biasForSector(sector);
+        SectorCluster &cluster = block.sectorCluster();
+        Vector3f const &color  = Rend_SectorLightColor(cluster);
+        float const level      = cluster.sector().lightLevel();
+        int const bias         = biasForSectorCluster(cluster);
 
         /// @todo Calculate min/max for a and b.
         for(int a = -2; a <= 2; ++a)

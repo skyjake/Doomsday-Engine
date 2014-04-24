@@ -54,9 +54,6 @@ DENG2_PIMPL(Sector)
 #ifdef __CLIENT__
     coord_t roughArea;    ///< Approximated. @c <0 means an update is needed.
     bool needRoughAreaUpdate;
-
-    /// Ambient lighting data for the bias lighting model.
-    LightGridData lightGridData;
 #endif
 
     Instance(Public *i)
@@ -72,9 +69,6 @@ DENG2_PIMPL(Sector)
 #endif
     {
         zap(emitter);
-#ifdef __CLIENT__
-        zap(lightGridData);
-#endif
     }
 
     ~Instance()
@@ -426,11 +420,6 @@ coord_t Sector::roughArea() const
 {
     d->updateRoughAreaIfNeeded();
     return d->roughArea;
-}
-
-Sector::LightGridData &Sector::lightGridData()
-{
-    return d->lightGridData;
 }
 
 #endif // __CLIENT__

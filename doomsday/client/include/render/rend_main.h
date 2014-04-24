@@ -202,12 +202,6 @@ void Rend_DrawLightModMatrix();
 de::Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster);
 
 /**
- * @copydoc Rend_SectorLightColor()
- * @deprecated Caller should work at cluster level.
- */
-de::Vector3f const &Rend_SectorLightColor(Sector const &sector);
-
-/**
  * Blend the given light value with the luminous object's color, applying any
  * applicable global modifiers and returns the result.
  *

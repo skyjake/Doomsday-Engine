@@ -29,10 +29,6 @@
 #include "Line"
 #include "Plane"
 
-#ifdef __CLIENT__
-#  include "render/lightgrid.h"
-#endif
-
 #include <de/libdeng2.h>
 #include <de/Error>
 #include <de/Observers>
@@ -63,25 +59,6 @@ public:
 
     /// Notified whenever a light color change occurs.
     DENG2_DEFINE_AUDIENCE(LightColorChange, void sectorLightColorChanged(Sector &sector))
-
-#ifdef __CLIENT__
-    /**
-     * LightGrid data values for "smoothed sector lighting".
-     *
-     * @todo Encapsulate in LightGrid itself?
-     */
-    struct LightGridData
-    {
-        /// Number of blocks attributed to the sector.
-        uint blockCount;
-
-        /// Number of attributed blocks to mark changed.
-        uint changedBlockCount;
-
-        /// Block indices.
-        de::LightGrid::Index *blocks;
-    };
-#endif
 
     /*
      * Linked-element lists:
@@ -299,12 +276,6 @@ public:
      * @todo Refactor away (still used by the particle system).
      */
     coord_t roughArea() const;
-
-    /**
-     * Returns the LightGrid data values (for smoothed ambient lighting) for
-     * the sector.
-     */
-    LightGridData &lightGridData();
 
 #endif // __CLIENT__
 

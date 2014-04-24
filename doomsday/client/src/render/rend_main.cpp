@@ -681,8 +681,8 @@ static bool sectorHasSkyMaskedPlane(Sector const &sector)
     return false;
 }
 
-/// @todo refactor away.
-Vector3f const &Rend_SectorLightColor(Sector const &sector)
+/// @deprecated Caller should work at cluster level.
+static Vector3f const &Rend_SectorLightColor(Sector const &sector)
 {
     if(rendSkyLight > .001f && sectorHasSkyMaskedPlane(sector))
     {

@@ -51,7 +51,8 @@ public:
 
 public:
     /**
-     * Construct and initialize a new LightGrid for the specifed map.
+     * Construct and initialize a new LightGrid for the specifed map. SectorClusters
+     * must be built for this.
      *
      * @note Initialization may take some time depending on the complexity of the map
      * (world dimensions, number of sectors) and should therefore be done "off-line".

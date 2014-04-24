@@ -29,6 +29,10 @@
 #include "Plane"
 #include "Sector"
 
+#ifdef __CLIENT__
+#  include "render/lightgrid.h"
+#endif
+
 #include <de/Observers>
 #include <de/Vector>
 #include <de/aabox.h>
@@ -50,6 +54,25 @@ public:
     DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
 
     typedef QList<BspLeaf *> BspLeafs;
+
+#ifdef __CLIENT__
+    /**
+     * LightGrid data values for "smoothed sector lighting".
+     *
+     * @todo Encapsulate in LightGrid itself?
+     */
+    struct LightGridData
+    {
+        /// Number of blocks attributed to the sector.
+        uint blockCount;
+
+        /// Number of attributed blocks to mark changed.
+        uint changedBlockCount;
+
+        /// Block indices.
+        de::LightGrid::Index *blocks;
+    };
+#endif
 
 public:
     /**
@@ -221,6 +244,12 @@ public:
      * this time (@ref markReverbDirty()).
      */
     AudioEnvironmentFactors const &reverb() const;
+
+    /**
+     * Returns the LightGrid data values (for smoothed ambient lighting) for
+     * the sector cluster.
+     */
+    LightGridData &lightGridData();
 
 #endif // __CLIENT__
 

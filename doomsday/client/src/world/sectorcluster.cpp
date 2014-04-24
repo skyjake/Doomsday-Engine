@@ -102,6 +102,9 @@ DENG2_PIMPL(SectorCluster)
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
     bool needReverbUpdate;
+
+    /// Ambient lighting data for the bias lighting model.
+    LightGridData lightGridData;
 #endif
 
     Instance(Public *i)
@@ -116,6 +119,7 @@ DENG2_PIMPL(SectorCluster)
     {
 #ifdef __CLIENT__
         zap(reverb);
+        zap(lightGridData);
 #endif
     }
 
@@ -936,6 +940,11 @@ AudioEnvironmentFactors const &SectorCluster::reverb() const
         d->updateReverb();
     }
     return d->reverb;
+}
+
+SectorCluster::LightGridData &SectorCluster::lightGridData()
+{
+    return d->lightGridData;
 }
 
 void SectorCluster::markVisPlanesDirty()
