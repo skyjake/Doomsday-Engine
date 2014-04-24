@@ -6,8 +6,10 @@
 p, h1, h2, h3, h4, h5, h6, h7, h8, h9 { margin-top: 0; }
 dl, ol, ul { padding: 0; margin: 0; }
 
+p { clear: both; }
+
 /* fixes */
-.clearfix { height: 1%; overflow: hidden; }
+.clearfix  { height: 1%; overflow: hidden; }
 
 /* responsive content inclusion */
 .inlcnt     { display: none; }
@@ -17,6 +19,8 @@ span.inlcnt { padding: 0.4ex; }
 /* responsive content exclusion */
 @media handheld, only screen and (max-width: 480px) { .exlcnt { display:none; } }
 
+.forumrow .expcol { width: 50%; }
+
 /**
  * Responsive list with dynamic column expansion
  */
@@ -25,6 +29,7 @@ span.inlcnt { padding: 0.4ex; }
 .reslist dd   { float: right; margin: 0; }
 .reslist dt   { margin-left: .2em; margin-right: .2em; display:none; }
 /* responsive column expansion */
+.reslist .expcol { display: inline-block; float: left; }
 @media handheld, only screen and (max-width: 480px) {
   .reslist .expcol { width:100%; }
   .reslist dt { display:block; }
@@ -35,21 +40,10 @@ span.inlcnt { padding: 0.4ex; }
   .reslist dl > dd.exlcol { width:auto; margin-left: 0; }
 }
 
-.topiclist > li > h1,
-.topiclist > li > dl,
-.topiclist > li > article header,
-.topiclist > li > article dl {
-width: 50%;
-display: inline-block;
-float: left;
-}
-
 body {
     background: #282D2B url(panoramarotator) no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
-
-    color: #A7A29C;
 
     font-family: "Open Sans",sans-serif !important;
     font-size: 100%;
@@ -64,6 +58,8 @@ body {
     margin: 0;
     vertical-align: baseline;
 }
+
+body, a p { color: #A7A29C; }
 
 @media only screen and (min-width: 476px) {
 body { margin: 1.2em; }
@@ -84,7 +80,7 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
     color: #F0F0F0;
 }
 
-label { cursor:help; }
+/*label { cursor:help; }*/
 
 /* ------- begin old forum normalization ------- */
 
@@ -325,9 +321,9 @@ table.directory td {
     font-size: small;
 }
 
-table.directory tbody tr,
+.topiclist > li,
 dl.codebox,
-.topiclist li,
+table.directory tbody tr,
 table.table1 tbody td {
     border-color: #333;
     border-style: solid;
@@ -335,7 +331,7 @@ table.table1 tbody td {
     border-radius: 4px;
 }
 
-.topiclist li { padding: 11px 22px; margin: 2px; }
+.topiclist > li { padding: 11px 22px 11px 16px; margin: 2px; }
 
 .topiclist li.header {
     border-width: 0;
@@ -367,21 +363,20 @@ table.table1 tbody tr.hover {
 .forumrow .views    { width: 25%; text-align: center; }
 .forumrow .lastpost { width: 49%; }
 
-.forumrow .icon {
-    min-height: 35px;
-    background-position: 7px 50%; /* Position of folder icon */
+.forumitem header > a {
+    background-image: url("forums/styles/Deng/imageset/forum_read.png");
     background-repeat: no-repeat;
+    background-position-y: 50%;
+    padding-left: 48px; /* padding - margin + image_width */
+    display: block;
+    height: 100%;
 }
-.forumrow .icon dt { /*padding-left: 45px; /*folder icon spacing*/ }
 
-.forumrow a.subforum {
-    background-image: none;
-    background-position: 0 50%;
-    background-repeat: no-repeat;
-    position: relative;
-    white-space: nowrap;
-    padding: 0 0 0 12px;
-}
+.forumitem.unread header > a        { background-image: url("forums/styles/Deng/imageset/forum_unread.png"); }
+.forumitem.locked header > a        { background-image: url("forums/styles/Deng/imageset/forum_read_locked.png"); }
+.forumitem.locked.unread header > a { background-image: url("forums/styles/Deng/imageset/forum_unread_locked.png"); }
+
+.forumitem .subforums { margin-left: 48px; }
 
 /* ---- */
 
@@ -679,8 +674,8 @@ ol.jumplist li {
 }
 
 #menu li.logo a {
-    padding-top: 48px;
-    padding-bottom: 33px;
+    padding-top: 28px;
+    padding-bottom: 28px;
     padding-left: 68px;
     outline: 0 none;
 }

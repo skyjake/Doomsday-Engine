@@ -116,34 +116,36 @@
                 <div id="contentbox2">
 <!-- dengine.net window chrome BREAK -->
 
-<div id="top" accesskey="t">
+<main id="top" accesskey="t">
     <div id="page-header" class="block" role="navigation">
-        <section><h1><a href="{U_INDEX}" accesskey="h">{L_INDEX}</a><!-- BEGIN navlinks --><span class="separator">&#47;</span><a href="{navlinks.U_VIEW_FORUM}">{navlinks.FORUM_NAME}</a><!-- END navlinks --></h1></section>
+        <h2><a href="{U_INDEX}" accesskey="h">{L_INDEX}</a><!-- BEGIN navlinks --><span class="separator">&#47;</span><a href="{navlinks.U_VIEW_FORUM}">{navlinks.FORUM_NAME}</a><!-- END navlinks --></h2>
 
 <!-- IF $SHOW_CURRENT_TIME -->
-        <!-- IF S_USER_LOGGED_IN --><div class="rightside">{LAST_VISIT_DATE}</div><!-- ENDIF --><div class="leftside">{CURRENT_TIME}</div>
+        <div class="leftside">{CURRENT_TIME}</div>
+  <!-- IF S_USER_LOGGED_IN --><div class="rightside">{LAST_VISIT_DATE}</div><!-- ENDIF -->
 <!-- ENDIF -->
 
-        <ul class="linklist rightside">
-            <li><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>
-            <!-- IF not S_IS_BOT -->
-                <!-- IF S_DISPLAY_MEMBERLIST --><li><a href="{U_MEMBERLIST}" title="{L_MEMBERLIST_EXPLAIN}">{L_MEMBERLIST}</a></li><!-- ENDIF -->
-                <!-- IF not S_USER_LOGGED_IN and S_REGISTER_ENABLED and not (S_SHOW_COPPA or S_REGISTRATION) --><li><a href="{U_REGISTER}">{L_REGISTER}</a></li><!-- ENDIF -->
-                <!-- IF U_ACP --><li><a href="{U_ACP}">{L_ACP}</a></li><!-- ENDIF -->
-            <!-- ENDIF -->
-        </ul>
-        <!-- IF not S_IS_BOT -->
+<!-- IF not S_IS_BOT -->
         <ul class="linklist leftside">
-            <!-- IF S_USER_LOGGED_IN -->
+  <!-- IF S_USER_LOGGED_IN -->
             <li>
                 <a href="{U_PROFILE}" title="{L_PROFILE}" accesskey="e">{S_USER_NAME}</a>
-                <!-- IF S_DISPLAY_PM --> (<a href="{U_PRIVATEMSGS}">{PRIVATE_MESSAGE_INFO}</a>)<!-- ENDIF -->
+    <!-- IF S_DISPLAY_PM --> (<a href="{U_PRIVATEMSGS}">{PRIVATE_MESSAGE_INFO}</a>)<!-- ENDIF -->
             </li>
-            <!-- IF U_RESTORE_PERMISSIONS --><li><a href="{U_RESTORE_PERMISSIONS}">{L_RESTORE_PERMISSIONS}</a></li><!-- ENDIF -->
-            <!-- ENDIF -->
+    <!-- IF U_RESTORE_PERMISSIONS --><li><a href="{U_RESTORE_PERMISSIONS}">{L_RESTORE_PERMISSIONS}</a></li><!-- ENDIF -->
+  <!-- ENDIF -->
             <li><a href="{U_LOGIN_LOGOUT}" title="{L_LOGIN_LOGOUT}" accesskey="x">{L_LOGIN_LOGOUT}</a></li>
         </ul>
-        <!-- ENDIF -->
+<!-- ENDIF -->
+        <ul class="linklist rightside">
+<!-- IF not S_IS_BOT -->
+  <!-- IF not S_USER_LOGGED_IN and S_REGISTER_ENABLED and not (S_SHOW_COPPA or S_REGISTRATION) --><li><a href="{U_REGISTER}">{L_REGISTER}</a></li><!-- ENDIF -->
+  <!-- IF U_TEAM --><li><a href="{U_TEAM}">{L_THE_TEAM}</a></li><!-- ENDIF -->
+  <!-- IF S_DISPLAY_MEMBERLIST --><li><a href="{U_MEMBERLIST}" title="{L_MEMBERLIST_EXPLAIN}">{L_MEMBERLIST}</a></li><!-- ENDIF -->
+<!-- ENDIF -->
+            <li><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>
+<!-- IF U_ACP and not S_IS_BOT --><li><a href="{U_ACP}">{L_ACP}</a></li><!-- ENDIF -->
+        </ul>
     </div>
 
     <!-- IF S_BOARD_DISABLED and S_USER_LOGGED_IN and (U_MCP or U_ACP) -->

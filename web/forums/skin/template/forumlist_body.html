@@ -1,36 +1,41 @@
 <!-- BEGIN forumrow -->
   <!-- IF (forumrow.S_IS_CAT and not forumrow.S_FIRST_ROW) or forumrow.S_NO_CAT  -->
-</ol>
+    </ol>
+</section>
   <!-- ENDIF -->
 
   <!-- IF forumrow.S_IS_CAT or forumrow.S_FIRST_ROW or forumrow.S_NO_CAT  -->
-<ul class="block nobackground topiclist reslist">
-    <li class="forumrow header">
-        <h1><!-- IF forumrow.S_IS_CAT --><a href="{forumrow.U_VIEWFORUM}">{forumrow.FORUM_NAME}</a><!-- ELSE -->Subforums<!-- ENDIF --></h1>
-        <dl><dt></dt>
-            <dd class="exlcnt lastpost"><span>{L_LAST_POST}</span></dd>
-            <dd class="exlcnt posts"   >{L_POSTS}</dd>
-            <dd class="exlcnt topics"  >{L_TOPICS}</dd>
-        </dl>
-    </li>
-</ul>
-<ol class="block topiclist reslist">
+<section>
+    <ul class="block nobackground topiclist reslist">
+        <li class="forumrow header">
+            <h3 class="expcol"><!-- IF forumrow.S_IS_CAT --><a href="{forumrow.U_VIEWFORUM}">{forumrow.FORUM_NAME}</a><!-- ELSE -->Subforums<!-- ENDIF --></h3>
+            <dl class="expcol"><dt></dt>
+                <dd class="exlcnt lastpost"><span>{L_LAST_POST}</span></dd>
+                <dd class="exlcnt posts"   >{L_POSTS}</dd>
+                <dd class="exlcnt topics"  >{L_TOPICS}</dd>
+            </dl>
+        </li>
+    </ul>
+    <ol class="block topiclist reslist">
   <!-- ENDIF -->
 
   <!-- IF not forumrow.S_IS_CAT -->
         <li id="forum_{forumrow.FORUM_NAME}" class="forumrow">
-            <article>
+            <article class="forumitem<!-- IF forumrow.S_LOCKED_FORUM --> locked<!-- ENDIF --><!-- IF forumrow.S_UNREAD_FORUM > 0 --> unread<!-- ENDIF -->">
                 <header class="expcol" title="{forumrow.FORUM_FOLDER_IMG_ALT}">
     <!-- IF S_ENABLE_FEEDS and forumrow.S_FEED_ENABLED --><!-- <a class="feed-icon-forum" title="{L_FEED} - {forumrow.FORUM_NAME}" href="{U_FEED}?f={forumrow.FORUM_ID}"><img src="{T_THEME_PATH}/images/feed.gif" alt="{L_FEED} - {forumrow.FORUM_NAME}" /></a> --><!-- ENDIF -->
     <!-- IF forumrow.FORUM_IMAGE --><span class="forum-image">{forumrow.FORUM_IMAGE}</span><!-- ENDIF -->
-                    <h2><a href="{forumrow.U_VIEWFORUM}" class="forumtitle">{forumrow.FORUM_NAME}</a></h2><p>{forumrow.FORUM_DESC}</p>
+                    <a href="{forumrow.U_VIEWFORUM}"><h4>{forumrow.FORUM_NAME}</h4><p>{forumrow.FORUM_DESC}</p></a>
     <!-- IF forumrow.MODERATORS --><br />{forumrow.L_MODERATOR_STR}: {forumrow.MODERATORS}<!-- ENDIF -->
-    <!-- IF forumrow.SUBFORUMS and forumrow.S_LIST_SUBFORUMS --><em>{forumrow.L_SUBFORUM_STR}</em> {forumrow.SUBFORUMS}<!-- ENDIF -->
-                </header>
-    <!-- IF 0 -->
-                <dl class="forumrow icon" style="background-image: url({forumrow.FORUM_FOLDER_IMG_SRC}); background-repeat: no-repeat; background-position-x: 2px;">
+    <!-- IF forumrow.SUBFORUMS and forumrow.S_LIST_SUBFORUMS -->
+                    <ul class="subforums linklist leftside">
+      <!-- BEGIN subforum -->
+                    <li><a href="{forumrow.subforum.U_SUBFORUM}" title="{forumrow.subforum.S_UNREAD}">{forumrow.subforum.SUBFORUM_NAME}</a></li>
+      <!-- END subforum -->
+                    </ul>
     <!-- ENDIF -->
-                <dl class="expcol icon">
+                </header>
+                <dl class="expcol">
     <!-- IF forumrow.CLICKS -->
                     <dt>{L_REDIRECTS}</dt>
                     <dd class="exlcol redirect">{forumrow.CLICKS}</dd>
@@ -43,9 +48,9 @@
                         </span>
                     </dd>
                     <dt style="clear:both">posts.</dt>
-                    <dd class="exlcol posts"   >{forumrow.POSTS}</dd>
+                    <dd class="exlcol posts"   ><strong>{forumrow.POSTS}</strong></dd>
                     <dt>topics,</dt>
-                    <dd class="exlcol topics"  >{forumrow.TOPICS}</dd>
+                    <dd class="exlcol topics"  ><strong>{forumrow.TOPICS}</strong></dd>
     <!-- ENDIF -->
                 </dl>
             </article>
@@ -53,7 +58,8 @@
   <!-- ENDIF -->
 
   <!-- IF forumrow.S_LAST_ROW -->
-</ol>
+    </ol>
+</section>
   <!-- ENDIF -->
 
 <!-- BEGINELSE -->

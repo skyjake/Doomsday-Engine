@@ -1,14 +1,13 @@
     <div id="forum-footer" class="block nobackground">
-        <section>
+        <div style="font-size:small">
             <ul class="linklist rightside">
-                <li><!-- IF U_TEAM --><a href="{U_TEAM}">{L_THE_TEAM}</a> &bull; <!-- ENDIF --><!-- IF not S_IS_BOT --><a href="{U_DELETE_COOKIES}">{L_DELETE_COOKIES}</a> &bull; <!-- ENDIF -->{S_TIMEZONE}</li>
-                <li>Powered by <a href="http://www.phpbb.com/">phpBB</a>&reg; Forum Software
-            <!-- IF TRANSLATION_INFO --><br />{TRANSLATION_INFO}<!-- ENDIF -->
-            <!-- IF DEBUG_OUTPUT --><br />{DEBUG_OUTPUT}<!-- ENDIF --></li>
+                <li>{S_TIMEZONE}</li>
+<!-- IF not S_IS_BOT --><li><a href="{U_DELETE_COOKIES}">{L_DELETE_COOKIES}</a></li><!-- ENDIF -->
+                <li>Powered by <a href="http://www.phpbb.com/">phpBB</a>&reg; Forum Software<!-- IF TRANSLATION_INFO --><br />{TRANSLATION_INFO}<!-- ENDIF --><!-- IF DEBUG_OUTPUT --><br />{DEBUG_OUTPUT}<!-- ENDIF --></li>
             </ul>
-        </section>
+        </div>
     </div>
-</div>
+</main>
 
 <div id="bottom" accesskey="z" style="height:1px">
     <!-- IF not S_IS_BOT -->{RUN_CRON_TASK}<!-- ENDIF -->
