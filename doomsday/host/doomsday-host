@@ -49,7 +49,17 @@ def getText(nodelist):
 
 def getContent(node):
     return str(getText(node.childNodes))
-    
+
+
+def getConfigValue(cfg, name, defaultValue=None):
+    try:
+        v = getContent(cfg.getElementsByTagName(name)[0])
+        #print name + ':', v
+        return v
+    except Exception, x:
+        if defaultValue is None: raise x
+    return defaultValue
+
 
 def parseRebuildTimes(rebuilds):
     times = []
@@ -104,10 +114,14 @@ def parseConfig(fn):
         parseRebuildTimes(cfg.getElementsByTagName('rebuildTimes')[0])
         
     doomsdayBinary = getContent(cfg.getElementsByTagName('doomsday')[0])
-    mainLogFileName = getContent(cfg.getElementsByTagName('logFile')[0])
-    branch = getContent(cfg.getElementsByTagName('branch')[0])
-    buildDir = getContent(cfg.getElementsByTagName('buildDir')[0])
-    qmakeCommand = getContent(cfg.getElementsByTagName('qmakeCommand')[0])
+    try:
+        # Specifying a log file is optional.
+        mainLogFileName = getConfigValue(cfg, 'logFile')
+    except:
+        pass
+    branch = getConfigValue(cfg, 'branch', 'master')
+    buildDir = getConfigValue(cfg, 'buildDir', '')
+    qmakeCommand = getConfigValue(cfg, 'qmakeCommand', '')
     
     servers = \
         parseServers(cfg.getElementsByTagName('servers')[0].
@@ -320,37 +334,43 @@ def endInstance():
 def main():
     startInstance()
     
-    cfg = parseConfig(homeFile('.doomsdayhostrc'))
+    try:
+        cfg = parseConfig(homeFile('.doomsdayhostrc'))
 
-    # Is there a saved state?
-    stateFn = homeFile('.doomsdayhoststate.bin')
-    if os.path.exists(stateFn):
-        state = pickle.load(file(stateFn, 'rb'))
-    else:
-        state = State()
+        # Is there a saved state?
+        stateFn = homeFile('.doomsdayhoststate.bin')
+        if os.path.exists(stateFn):
+            state = pickle.load(file(stateFn, 'rb'))
+        else:
+            state = State()
 
-    # Kill instances that no longer have a configuration.
-    state.killObsolete()
+        # Kill instances that no longer have a configuration.
+        state.killObsolete()
 
-    # Is it time to rebuild from source?
-    if state.isTimeForRebuild():
-        state.killAll()
-        if rebuildAndInstall():
-            # Success! Update the timestamp.
+        # Is it time to rebuild from source?
+        if state.isTimeForRebuild():
+            state.killAll()
+            if rebuildAndInstall():
+                # Success! Update the timestamp.
+                state.updateTime()
+        else:
             state.updateTime()
-    else:
-        state.updateTime()
     
-    # Are all the servers up and running?
-    for sv in servers:
-        if not state.isRunning(sv):
-            state.start(sv)
+        # Are all the servers up and running?
+        for sv in servers:
+            if not state.isRunning(sv):
+                state.start(sv)
         
-    # Save the state.
-    pickle.dump(state, file(stateFn, 'wb')) 
+        # Save the state.
+        pickle.dump(state, file(stateFn, 'wb')) 
 
-    # Archive old log files.
-    logCleanup()
+        # Archive old log files.
+        logCleanup()
+
+    except Exception, x:
+        print x
+        #import traceback
+        #traceback.print_exc()
     
     # We're done.
     endInstance()
