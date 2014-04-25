@@ -48,31 +48,15 @@ class BspLeaf;
  * @ingroup world
  */
 class SectorCluster
+#ifdef __CLIENT__
+  : public de::LightGrid::IBlockLightSource
+#endif
 {
 public:
     /// Notified when the cluster is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
 
     typedef QList<BspLeaf *> BspLeafs;
-
-#ifdef __CLIENT__
-    /**
-     * LightGrid data values for "smoothed sector lighting".
-     *
-     * @todo Encapsulate in LightGrid itself?
-     */
-    struct LightGridData
-    {
-        /// Number of blocks attributed to the sector.
-        uint blockCount;
-
-        /// Number of attributed blocks to mark changed.
-        uint changedBlockCount;
-
-        /// Block indices.
-        de::LightGrid::Index *blocks;
-    };
-#endif
 
 public:
     /**
@@ -83,6 +67,7 @@ public:
      * @param bspLeafs  Set of BSP leafs comprising the resulting cluster.
      */
     SectorCluster(BspLeafs const &bspLeafs);
+    virtual ~SectorCluster();
 
     /**
      * Determines whether the specified @a hedge is an "internal" edge:
@@ -246,10 +231,35 @@ public:
     AudioEnvironmentFactors const &reverb() const;
 
     /**
-     * Returns the LightGrid data values (for smoothed ambient lighting) for
-     * the sector cluster.
+     * Returns the unique identifier of the light source.
      */
-    LightGridData &lightGridData();
+    LightId lightSourceId() const;
+
+    /**
+     * Returns the final ambient light color for the source (which, may be affected
+     * by the sky light color if one or more Plane Surfaces in the cluster are using
+     * a sky-masked Material).
+     */
+    de::Vector3f lightSourceColorf() const;
+
+    /**
+     * Returns the final ambient light intensity for the source.
+     * @see lightSourceColorf()
+     */
+    de::dfloat lightSourceIntensity(de::Vector3d const &viewPoint = de::Vector3d(0, 0, 0)) const;
+
+    /**
+     * Returns the final ambient light color and intensity for the source.
+     * @see lightSourceColorf()
+     */
+    inline de::Vector4f lightSourceColorfIntensity() {
+        return de::Vector4f(lightSourceColorf(), lightSourceIntensity());
+    }
+
+    /**
+     * Returns the Z-axis bias scale factor for the light grid, block light source.
+     */
+    int blockLightSourceZBias();
 
 #endif // __CLIENT__
 

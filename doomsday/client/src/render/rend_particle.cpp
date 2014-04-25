@@ -433,27 +433,34 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
 
         if(useBias && map.hasLightGrid())
         {
-            Vector3f tmp = map.lightGrid().evaluate(parm.origin);
-            V3f_Set(parm.ambientColor, tmp.x, tmp.y, tmp.z);
+            Vector4f color = map.lightGrid().evaluate(parm.origin);
+            // Apply light range compression.
+            for(int i = 0; i < 3; ++i)
+            {
+                color[i] += Rend_LightAdaptationDelta(color[i]);
+            }
+            V3f_Set(parm.ambientColor, color.x, color.y, color.z);
         }
         else
         {
-            SectorCluster &cluster = pinfo->bspLeaf->cluster();
-            float lightLevel = cluster.sector().lightLevel();
-            Vector3f const &secColor = Rend_SectorLightColor(cluster);
+            Vector4f const color = pinfo->bspLeaf->cluster().lightSourceColorfIntensity();
+
+            float lightLevel = color.w;
 
             // Apply distance attenuation.
             lightLevel = Rend_AttenuateLightLevel(parm.distance, lightLevel);
 
             // Add extra light.
-            lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+            lightLevel += Rend_ExtraLightDelta();
 
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
             Rend_ApplyLightAdaptation(lightLevel);
 
-            // Determine the final ambientColor in affect.
+            // Determine the final ambientColor.
             for(int i = 0; i < 3; ++i)
             {
-                parm.ambientColor[i] = lightLevel * secColor[i];
+                parm.ambientColor[i] = lightLevel * color[i];
             }
         }
 
@@ -614,7 +621,7 @@ static void renderParticles(int rtype, bool withBlend)
             // attenuation or range compression).
             if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
             {
-                float const lightLevel = cluster->sector().lightLevel();
+                float const lightLevel = cluster->lightSourceIntensity();
                 color *= Vector4f(lightLevel, lightLevel, lightLevel, 1);
             }
         }

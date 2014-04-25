@@ -1315,8 +1315,8 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
 
     if(bspLeaf.shadowLines().isEmpty()) return;
 
-    SectorCluster const &cluster = bspLeaf.cluster();
-    float sectorlight = cluster.sector().lightLevel();
+    SectorCluster &cluster = bspLeaf.cluster();
+    float sectorlight = cluster.lightSourceIntensity();
 
     // Determine the shadow properties.
     /// @todo Make cvars out of constants.

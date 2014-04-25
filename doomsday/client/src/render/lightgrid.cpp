@@ -21,706 +21,332 @@
 #include "de_base.h"
 #include "render/lightgrid.h"
 
-#include <de/memory.h>
-#include <de/memoryzone.h>
 #include <QFlags>
+#include <QSet>
 #include <QVector>
 #include <de/math.h>
 #include <de/Log>
 
-#include "de_console.h"
+#include "con_main.h"
 
-#include "render/rend_main.h"
+// Cvars:
+static int lgEnabled   = false;
+static int lgBlockSize = 31;
 
-#include "world/map.h"
-#include "world/p_object.h"
-#include "world/p_players.h" // viewPlayer
-#include "BspLeaf"
-#include "Sector"
-#include "SectorCluster"
-#include "Surface"
+namespace de {
 
-using namespace de;
-
-static int   lgEnabled   = false;
-
-static int   lgShowDebug = false;
-static float lgDebugSize = 1.5f;
-
-static int   lgBlockSize = 31;
-static int   lgMXSample  = 1; ///< 5 samples per block
-
-void LightGrid::consoleRegister() // static
+namespace internal
 {
-    C_VAR_INT   ("rend-bias-grid",              &lgEnabled,     0,              0, 1);
-    C_VAR_INT   ("rend-bias-grid-debug",        &lgShowDebug,   CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_FLOAT ("rend-bias-grid-debug-size",   &lgDebugSize,   0,              .1f, 100);
-    C_VAR_INT   ("rend-bias-grid-blocksize",    &lgBlockSize,   0,              8, 1024);
-    C_VAR_INT   ("rend-bias-grid-multisample",  &lgMXSample,    0,              0, 7);
-}
-
-/**
- * Determines the Z-axis bias scale factor for the given sector @a cluster.
- */
-static int biasForSectorCluster(SectorCluster const &cluster)
-{
-    int const height = int(cluster.visCeiling().height() - cluster.visFloor().height());
-    bool hasSkyFloor = cluster.visFloor().surface().hasSkyMaskedMaterial();
-    bool hasSkyCeil  = cluster.visCeiling().surface().hasSkyMaskedMaterial();
-
-    if(hasSkyFloor && !hasSkyCeil)
+    enum LightBlockFlag
     {
-        return -height / 6;
-    }
-    if(!hasSkyFloor && hasSkyCeil)
-    {
-        return height / 6;
-    }
-    if(height > 100)
-    {
-        return (height - 100) / 2;
-    }
-    return 0;
-}
-
-class LightBlock
-{
-public:
-    enum Flag
-    {
-        /// Grid block sector light has changed.
-        Changed     = 0x1,
-
-        /// Contributes light to some other block.
-        Contributor = 0x2,
+        Changed     = 0x1,  ///< Primary contribution has changed.
+        Contributor = 0x2,  ///< Secondary contribution has changed.
 
         AllFlags = Changed | Contributor
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
-
-public:
-    /**
-     * Construct a new light block.
-     *
-     * @param sectorCluster  Sector cluster which is the primary light contributor
-     * for the block. Can be @c 0 (to create a "null-block").
-     */
-    LightBlock(SectorCluster *sectorCluster = 0);
+    Q_DECLARE_FLAGS(LightBlockFlags, LightBlockFlag)
 
     /**
-     * Returns the @em primary sector attributed to the light block
-     * (contributing sectors are not linked).
+     * Determines if the bit in @a bitfield (assumed 32-bit) is set for the given
+     * grid reference @a gref.
      */
-    SectorCluster &sectorCluster() const;
-
-    /**
-     * Returns a copy of the flags of the light block.
-     */
-    Flags flags() const;
-
-    /**
-     * Change the flags of the light block.
-     *
-     * @param flagsToChange  Flags to change the value of.
-     * @param operation      Logical operation to perform on the flags.
-     */
-    void setFlags(Flags flagsToChange, FlagOp operation = SetFlags);
-
-    /**
-     * Evaluate the ambient color for the light block.
-     */
-    Vector3f evaluate(/*coord_t height*/) const;
-
-    void markChanged(bool isContributor = false);
-
-    /**
-     * Apply the sector's lighting to the block.
-     */
-    void applySector(Vector3f const &color, float level, int bias, float factor);
-
-    /**
-     * Provides immutable access to the "raw" color (i.e., non-biased) for the
-     * block. Primarily intended for debugging.
-     */
-    Vector3f const &rawColorRef() const;
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(LightBlock::Flags)
-
-DENG2_PIMPL_NOREF(LightBlock)
-{
-    SectorCluster *cluster; ///< Primary sector cluster attributed to this block.
-    Flags flags;            ///< State flags.
-
-    /// Positive bias means that the light is shining in the floor of the sector.
-    char bias;
-
-    /// Color of the light.
-    Vector3f color;
-
-    /// Used instead of @var color if the lighting in this block has changed
-    /// and a full grid update is needed.
-    Vector3f oldColor;
-
-    Instance() : cluster(0), bias(0)
-    {}
-};
-
-LightBlock::LightBlock(SectorCluster *cluster) : d(new Instance())
-{
-    d->cluster = cluster;
-}
-
-SectorCluster &LightBlock::sectorCluster() const
-{
-    DENG2_ASSERT(d->cluster != 0);
-    return *d->cluster;
-}
-
-LightBlock::Flags LightBlock::flags() const
-{
-    return d->flags;
-}
-
-void LightBlock::setFlags(LightBlock::Flags flagsToChange, FlagOp operation)
-{
-    if(!d->cluster) return;
-    applyFlagOperation(d->flags, flagsToChange, operation);
-}
-
-Vector3f LightBlock::evaluate(/*coord_t height*/) const
-{
-    // Blocks with no attributed sector are always black.
-    if(!d->cluster) return Vector3f(0, 0, 0);
-
-    /**
-     * Biased light dimming disabled because this does not work well enough.
-     * The problem is that two points on a given surface may be determined to
-     * be in different blocks and as the height is taken from the block linked
-     * sector this results in very uneven lighting.
-     *
-     * Biasing is a good idea but the plane heights must come from the sector
-     * at the exact X|Y coordinates of the sample point, not the "quantized"
-     * references in the light grid. -ds
-     */
-
-    /*
-    coord_t dz = 0;
-    if(_bias < 0)
+    static bool hasIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield)
     {
-        // Calculate Z difference to the ceiling.
-        dz = d->cluster->visCeiling().height() - height;
-    }
-    else if(_bias > 0)
-    {
-        // Calculate Z difference to the floor.
-        dz = height - d->cluster->visFloor().height();
-    }
-    dz -= 50;
-    if(dz < 0)
-        dz = 0;*/
-
-    // If we are awaiting an updated value use the old color.
-    Vector3f color = d->flags.testFlag(Changed)? d->oldColor : d->color;
-
-    // Biased ambient light causes a dimming on the Z axis.
-    /*if(dz && _bias)
-    {
-        float dimming = 1 - (dz * (float) de::abs(d->bias)) / 35000.0f;
-        if(dimming < .5f)
-            dimming = .5f;
-
-        color *= dimming;
-    }
-    */
-
-    return color;
-}
-
-void LightBlock::markChanged(bool isContributor)
-{
-    if(!d->cluster) return;
-
-    if(isContributor)
-    {
-        // Changes by contributor sectors are simply flagged until an update.
-        d->flags |= Contributor;
-        return;
+        uint const index = gref.x + gref.y * gridWidth;
+        return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
     }
 
-    // The color will be recalculated.
-    d->flags |= Changed;
-    d->flags |= Contributor;
-
-    if(!(d->flags & Changed))
+    /**
+     * Sets the bit in a bitfield (assumed 32-bit) for the given grid reference @a gref.
+     * @param count  If set, will be incremented when a zero bit is changed to one.
+     */
+    static void addIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield, int *count)
     {
-        // Remember the color in case we receive any queries before the update.
-        d->oldColor = d->color;
-    }
-
-    // Init to black in preparation for the update.
-    d->color = Vector3f(0, 0, 0);
-}
-
-void LightBlock::applySector(Vector3f const &color, float level, int bias, float factor)
-{
-    if(!d->cluster) return;
-
-    // Apply a bias to the light level.
-    level -= (0.95f - level);
-    if(level < 0)
-        level = 0;
-
-    level *= factor;
-
-    if(level <= 0)
-        return;
-
-    for(int i = 0; i < 3; ++i)
-    {
-        float c = de::clamp(0.f, color[i] * level, 1.f);
-
-        if(d->color[i] + c > 1)
+        uint const index = gref.x + gref.y * gridWidth;
+        // Are we counting when bits are set?
+        if(count && !hasIndexBit(LightGrid::Ref(index, 0), gridWidth, bitfield))
         {
-            d->color[i] = 1;
+            (*count)++;
         }
-        else
-        {
-            d->color[i] += c;
-        }
+        bitfield[index >> 5] |= (1 << (index & 0x1f));
     }
-
-    // Influenced by the source bias.
-    d->bias = de::clamp(-0x80, int(d->bias * (1 - factor) + bias * factor), 0x7f);
 }
 
-Vector3f const &LightBlock::rawColorRef() const
-{
-    return d->color;
-}
+Q_DECLARE_OPERATORS_FOR_FLAGS(internal::LightBlockFlags)
 
-/**
- * Determines if the index for the specified map point is in the bitfield.
- */
-static bool hasIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield)
-{
-    uint index = gref.x + gref.y * gridWidth;
+using namespace internal;
 
-    // Assume 32-bit uint.
-    return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
-}
-
-/**
- * Sets the index for the specified map point in the bitfield.
- * Count is incremented when a zero bit is changed to one.
- */
-static void addIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield, int *count)
-{
-    uint index = gref.x + gref.y * gridWidth;
-
-    // Assume 32-bit uint.
-    if(!hasIndexBit(LightGrid::Ref(index, 0), gridWidth, bitfield))
-    {
-        (*count)++;
-    }
-    bitfield[index >> 5] |= (1 << (index & 0x1f));
-}
-
-typedef QVector<LightBlock *> Blocks;
-
-/// The special null-block.
-static LightBlock nullBlock;
-
-/// Returns @c true iff @a block is the special "null-block".
-static inline bool isNullBlock(LightBlock const &block) {
-    return &block == &nullBlock;
-}
+static Vector4f const black;
 
 DENG2_PIMPL(LightGrid)
-, DENG2_OBSERVES(Sector, LightColorChange)
-, DENG2_OBSERVES(Sector, LightLevelChange)
 {
-    /// Map for which we provide an ambient lighting grid.
-    Map &map;
+    Vector2d origin;     ///< Grid origin in map space.
+    int blockSize;       ///< In map coordinate space units.
+    Vector2i dimensions; ///< Grid dimensions in blocks.
 
-    /// Origin of the grid in the map coordinate space.
-    Vector2d origin;
+    /**
+     * Grid coverage data for a light source.
+     */
+    struct LightCoverage
+    {
+        int primaryBlockCount;
+        QVector<Index> blocks;
+        LightCoverage() : primaryBlockCount(0) {}
+    };
+    typedef QMap<IBlockLightSource *, LightCoverage> Coverages;
+    Coverages coverage;
+    bool needUpdateCoverage;
 
-    /// Size of a block (box axes) in map coordinate space units.
-    int blockSize;
+    /**
+     * Grid illumination point.
+     *
+     * Light contributions come from sources of one of two logical types:
+     *
+     * - @em Primary contributors are the main light source and are linked to the
+     *   block directly so that their contribution to neighbors can be tracked.
+     *
+     * - @em Secondary contributors are additional light sources which contribute
+     *   to neighbor blocks. Secondary contributors are not linked to the block as
+     *   their contributions can be inferred from primarys at update time.
+     */
+    struct LightBlock
+    {
+        LightBlockFlags flags;     ///< Internal state flags.
+        char bias;                 ///< If positive the source is shining up from floor.
+        IBlockLightSource *source; ///< Primary illumination source (if any).
+        Vector3f color;            ///< Accumulated light color (from all sources).
+        Vector3f oldColor;         ///< Used if the color has changed and an update is pending.
 
-    /// Dimensions of the grid in blocks.
-    Ref dimensions;
+        /**
+         * Construct a new light block using the source specified as the @em primary
+         * illumination source for the block.
+         *
+         * @param primarySource  Primary illumation. Use @c 0 to create a "null-block".
+         */
+        LightBlock(IBlockLightSource *primarySource = 0)
+            : bias(0), source(primarySource)
+        {}
 
-    /// The grid of LightBlocks.
-    Blocks grid;
+        /**
+         * Change the flags of the light block.
+         *
+         * @param flagsToChange  Flags to change the value of.
+         * @param operation      Logical operation to perform on the flags.
+         */
+        void setFlags(LightBlockFlags flagsToChange, FlagOp operation = SetFlags)
+        {
+            if(!source) return;
+            applyFlagOperation(flags, flagsToChange, operation);
+        }
 
-    /// Set to @c true when a full update is needed.
+        /**
+         * Evaluate the ambient color for the light block.
+         * @note Blocks with no primary illumination source are always black.
+         */
+        Vector4f evaluate(/*coord_t height*/) const
+        {
+            if(!source) return black;
+
+            /**
+             * Biased light dimming disabled because this does not work well enough.
+             * The problem is that two points on a given surface may be determined to
+             * be in different blocks and as the height is taken from the block linked
+             * sector this results in very uneven lighting.
+             *
+             * Biasing is a good idea but the plane heights must come from the sector
+             * at the exact X|Y coordinates of the sample point, not the "quantized"
+             * references in the light grid. -ds
+             */
+
+            /*
+            coord_t dz = 0;
+            if(_bias < 0)
+            {
+                // Calculate Z difference to the ceiling.
+                dz = source->visCeiling().height() - height;
+            }
+            else if(_bias > 0)
+            {
+                // Calculate Z difference to the floor.
+                dz = height - source->visFloor().height();
+            }
+            dz -= 50;
+            if(dz < 0)
+                dz = 0;*/
+
+            // If we are awaiting an updated value use the old color.
+            Vector4f colorDimmed = flags.testFlag(Changed)? oldColor : color;
+
+            // Biased ambient light causes a dimming on the Z axis.
+            /*if(dz && _bias)
+            {
+                float dimming = 1 - (dz * (float) de::abs(d->bias)) / 35000.0f;
+                if(dimming < .5f)
+                    dimming = .5f;
+
+                colorDimmed *= dimming;
+            }
+            */
+
+            // Set the luminance factor.
+            colorDimmed.w = (colorDimmed.x + colorDimmed.y + colorDimmed.z) / 3;
+
+            return colorDimmed;
+        }
+
+        bool markChanged(bool isContributor = false)
+        {
+            if(!source) return false;
+
+            if(isContributor)
+            {
+                // Changes by contributor sectors are simply flagged until an update.
+                flags |= Contributor;
+                return true;
+            }
+
+            // The color will be recalculated.
+
+            if(!(flags & Changed))
+            {
+                // Remember the color in case we receive any queries before the update.
+                oldColor = color;
+            }
+
+            flags |= Changed;
+            flags |= Contributor;
+
+            // Init to black in preparation for the update.
+            color = Vector3f(0, 0, 0);
+            return true;
+        }
+
+        /**
+         * Apply an illumination to the block.
+         */
+        void applyLightingChanges(Vector4f const &contrib, int sourceBias, float factor)
+        {
+            if(!source) return;
+
+            // Apply a bias to the light level.
+            float level = contrib.w;
+            level -= (0.95f - level);
+            if(level < 0)
+                level = 0;
+
+            level *= factor;
+
+            if(level <= 0)
+                return;
+
+            for(int i = 0; i < 3; ++i)
+            {
+                float c = de::clamp(0.f, contrib[i] * level, 1.f);
+
+                if(color[i] + c > 1)
+                {
+                    color[i] = 1;
+                }
+                else
+                {
+                    color[i] += c;
+                }
+            }
+
+            // Influenced by the source bias.
+            bias = de::clamp(-0x80, int(bias * (1 - factor) + sourceBias * factor), 0x7f);
+        }
+    };
+
+    /// The One "null" block takes the place of empty blocks in the grid.
+    LightBlock nullBlock;
+
+    /// The grid of LightBlocks. All unused point at @var nullBlock.
+    typedef QVector<LightBlock *> Blocks;
+    Blocks blocks;
     bool needUpdate;
 
-    Instance(Public *i, Map &map)
+    int numBlocks; ///< Total number of non-null blocks.
+
+    Instance(Public *i)
         : Base(i)
-        , map(map)
+        , blockSize(0)
+        , needUpdateCoverage(false)
         , needUpdate(false)
+        , numBlocks(0)
     {}
 
     ~Instance()
     {
-        foreach(LightBlock *block, grid)
-        {
-            if(!block) continue;
-            Sector &sector = block->sectorCluster().sector();
-            sector.audienceForLightLevelChange -= this;
-            sector.audienceForLightColorChange -= this;
-        }
-
-        qDeleteAll(grid);
+        clearBlocks();
     }
 
-    /**
-     * Convert a light grid reference to a grid index.
-     */
-    inline Index toIndex(int x, int y) { return y * dimensions.x + x; }
+    inline LightBlock &block(Index index)     { return *blocks[index]; }
+    inline LightBlock &block(Ref const &gref) { return block(self.toIndex(gref)); }
 
-    /// @copydoc toIndex()
-    inline Index toIndex(Ref const &gref) { return toIndex(gref.x, gref.y); }
-
-    /**
-     * Convert a point in the map coordinate space to a light grid reference.
-     */
-    Ref toRef(Vector3d const &point)
+    void clearBlocks()
     {
-        int x = de::round<int>((point.x - origin.x) / blockSize);
-        int y = de::round<int>((point.y - origin.y) / blockSize);
+        for(int i = 0; i < blocks.count(); ++i)
+        {
+            if(blocks[i] != &nullBlock)
+            {
+                delete blocks[i];
+                blocks[i] = &nullBlock;
+            }
+        }
 
-        return Ref(de::clamp(1, x, dimensions.x - 2),
-                   de::clamp(1, y, dimensions.y - 2));
+        // A grid of null blocks needs no coverage data or future updates.
+        coverage.clear();
+        needUpdate = needUpdateCoverage = false;
     }
 
-    /**
-     * Retrieve the block at the specified light grid index. If no block exists
-     * at this index the special "null-block" is returned.
-     */
-    LightBlock &lightBlock(Index idx)
+    void resizeAndClearBlocks(Vector2i const &newDimensions)
     {
-        DENG2_ASSERT(idx >= 0 && idx < grid.size());
-        LightBlock *block = grid[idx];
-        if(block) return *block;
-        return nullBlock;
+        dimensions = newDimensions;
+        blocks.resize(dimensions.x * dimensions.y);
+        clearBlocks();
     }
 
-    /**
-     * Retrieve the block at the specified light grid reference.
-     */
-    LightBlock &lightBlock(Ref const &gref) { return lightBlock(toIndex(gref)); }
-
-    /// @copydoc lightBlock()
-    inline LightBlock &lightBlock(int x, int y) { return lightBlock(Ref(x, y)); }
-
-    /**
-     * Same as @ref lightBlock except @a point is in the map coordinate space.
-     */
-    inline LightBlock &lightBlock(Vector3d const &point)
+    // Find the affected and contributed blocks of all light sources.
+    void updateCoverageIfNeeded()
     {
-        return lightBlock(toRef(point));
-    }
-
-    /**
-     * Fully (re)-initialize the light grid.
-     */
-    void initialize()
-    {
-        // Diagonal in maze arrangement of natural numbers.
-        // Up to 65 samples per-block(!)
-        static int const MSFACTORS = 7;
-        static int multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
-
-        Time begunAt;
-
-        LOG_AS("LightGrid::initialize");
-
-        // Determine the origin of the grid in the map coordinate space.
-        origin = Vector2d(map.bounds().min);
-
-        // Once initialized the blocksize cannot be changed (requires a full grid
-        // update) so remember this value.
-        blockSize = lgBlockSize;
-
-        // Determine the dimensions of the grid (in blocks)
-        Vector2d mapDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
-        dimensions = Vector2i(de::round<int>(mapDimensions.x / blockSize) + 1,
-                              de::round<int>(mapDimensions.y / blockSize) + 1);
-
-        // Determine how many sector samples per block.
-        int numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
-
-        // Allocate memory for sample points data.
-        Vector2d *samplePoints = new Vector2d[numSamples];
-        int *sampleResults     = new int[numSamples];
-
-        /**
-         * It would be possible to only allocate memory for the unique
-         * sample results. And then select the appropriate sample in the loop
-         * for initializing the grid instead of copying the previous results in
-         * the loop for acquiring the sample points.
-         *
-         * Calculate with the equation (number of unique sample points):
-         *
-         * ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
-         *     (size % 2 == 0? numBlocks : 0)
-         * OR
-         *
-         * We don't actually need to store the ENTIRE sample points array. It
-         * would be sufficent to only store the results from the start of the
-         * previous row to current col index. This would save a bit of memory.
-         *
-         * However until lightgrid init is finalized it would be rather silly
-         * to optimize this much further.
-         */
-
-        // Allocate memory for all the sample results.
-        SectorCluster **ssamples = (SectorCluster **) M_Malloc(sizeof(*ssamples) * ((dimensions.x * dimensions.y) * numSamples));
-
-        // Determine the size^2 of the samplePoint array plus its center.
-        int size = 0, center = 0;
-        if(numSamples > 1)
-        {
-            float f = sqrt(float(numSamples));
-
-            if(std::ceil(f) != std::floor(f))
-            {
-                size = sqrt(float(numSamples - 1));
-                center = 0;
-            }
-            else
-            {
-                size = (int) f;
-                center = size+1;
-            }
-        }
-
-        // Construct the sample point offset array.
-        // This way we can use addition only during calculation of:
-        // (dimensions.y * dimensions.x) * numSamples
-        if(center == 0)
-        {
-            // Zero is the center so do that first.
-            samplePoints[0] = Vector2d(blockSize / 2, blockSize / 2);
-        }
-
-        if(numSamples > 1)
-        {
-            coord_t bSize = (coord_t) blockSize / (size - 1);
-
-            // Is there an offset?
-            int n = (center == 0? 1 : 0);
-
-            for(int y = 0; y < size; ++y)
-            for(int x = 0; x < size; ++x, ++n)
-            {
-                samplePoints[n] =
-                    Vector2d(de::round<double>(x * bSize), de::round<double>(y * bSize));
-            }
-        }
-
-        Vector2d samplePoint;
-
-        // Acquire the sector clusters at ALL the sample points.
-        for(int y = 0; y < dimensions.y; ++y)
-        for(int x = 0; x < dimensions.x; ++x)
-        {
-            Index const blk = toIndex(x, y);
-
-            Vector2d off(x * blockSize, y * blockSize);
-
-            int n = 0;
-            if(center == 0)
-            {
-                // Center point is not considered with the term 'size'.
-                // Sample this point and place at index 0 (at the start
-                // of the samples for this block).
-                int idx = blk * (numSamples);
-
-                samplePoint = origin + off + samplePoints[0];
-
-                BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
-                if(bspLeaf.polyContains(samplePoint))
-                    ssamples[idx] = bspLeaf.clusterPtr();
-                else
-                    ssamples[idx] = 0;
-
-                n++; // Offset the index in the samplePoints array bellow.
-            }
-
-            int count = blk * size;
-            for(int b = 0; b < size; ++b)
-            {
-                int i = (b + count) * size;
-
-                for(int a = 0; a < size; ++a, ++n)
-                {
-                    int idx = a + i + (center == 0? blk + 1 : 0);
-
-                    if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
-                    {
-                        // We have already sampled this point.
-                        // Get the previous result.
-                        Ref prev(x, y);
-                        Ref prevB(a, b);
-                        int prevIdx;
-
-                        if(x > 0 && a == 0)
-                        {
-                            prevB.x = size -1;
-                            prev.x--;
-                        }
-                        if(y > 0 && b == 0)
-                        {
-                            prevB.y = size -1;
-                            prev.y--;
-                        }
-
-                        prevIdx = prevB.x + (prevB.y + toIndex(prev) * size) * size;
-
-                        if(center == 0)
-                            prevIdx += toIndex(prev) + 1;
-
-                        ssamples[idx] = ssamples[prevIdx];
-                    }
-                    else
-                    {
-                        // We haven't sampled this point yet.
-                        samplePoint = origin + off + samplePoints[n];
-
-                        BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
-                        if(bspLeaf.polyContains(samplePoint))
-                            ssamples[idx] = bspLeaf.clusterPtr();
-                        else
-                            ssamples[idx] = 0;
-                    }
-                }
-            }
-        }
-
-        // We're done with the samplePoints block.
-        delete[] samplePoints; samplePoints = 0;
+        if(!needUpdateCoverage) return;
+        needUpdateCoverage = false;
 
         // Bitfields for marking affected blocks. Make sure each bit is in a word.
-        size_t bitfieldSize = 4 * (31 + dimensions.x * dimensions.y) / 32;
+        size_t const bitfieldSize = 4 * (31 + dimensions.x * dimensions.y) / 32;
+        uint *primaryBitfield     = (uint *) M_Calloc(bitfieldSize);
+        uint *contribBitfield     = (uint *) M_Calloc(bitfieldSize);
 
-        uint *indexBitfield       = (uint *) M_Calloc(bitfieldSize);
-        uint *contributorBitfield = (uint *) M_Calloc(bitfieldSize);
-
-        // Allocate memory used for the collection of the sample results.
-        SectorCluster **blkSampleClusters = (SectorCluster **) M_Malloc(sizeof(SectorCluster *) * numSamples);
-
-        /*
-         * Initialize the light block grid.
-         */
-        grid.fill(NULL, dimensions.x * dimensions.y);
-        int numBlocks = 0;
-
-        for(int y = 0; y < dimensions.y; ++y)
-        for(int x = 0; x < dimensions.x; ++x)
+        // Reset the coverage data for all primary light sources.
+        coverage.clear();
+        foreach(LightBlock *block, blocks)
         {
-            /**
-             * Pick the sector cluster at each of the sample points.
-             *
-             * @todo We don't actually need the blkSampleClusters array anymore.
-             * Now that ssamples stores the results consecutively a simple index
-             * into ssamples would suffice. However if the optimization to save
-             * memory is implemented as described in the comments above we WOULD
-             * still require it.
-             *
-             * For now we'll make use of it to clarify the code.
-             */
-            Index idx = toIndex(x, y) * numSamples;
-            for(int i = 0; i < numSamples; ++i)
+            if(block->source && !coverage.contains(block->source))
             {
-                blkSampleClusters[i] = ssamples[i + idx];
+                coverage.insert(block->source, LightCoverage());
             }
-
-            SectorCluster *cluster = 0;
-
-            if(numSamples == 1)
-            {
-                cluster = blkSampleClusters[center];
-            }
-            else
-            {
-                // Pick the sector which had the most hits.
-                int best = -1;
-                std::memset(sampleResults, 0, sizeof(int) * numSamples);
-
-                for(int i = 0; i < numSamples; ++i)
-                {
-                    if(!blkSampleClusters[i]) continue;
-
-                    for(int k = 0; k < numSamples; ++k)
-                    {
-                        if(blkSampleClusters[k] == blkSampleClusters[i] && blkSampleClusters[k])
-                        {
-                            sampleResults[k]++;
-                            if(sampleResults[k] > best)
-                                best = i;
-                        }
-                    }
-                }
-
-                if(best != -1)
-                {
-                    // Favour the center sample if its a draw.
-                    if(sampleResults[best] == sampleResults[center] &&
-                       blkSampleClusters[center])
-                        cluster = blkSampleClusters[center];
-                    else
-                        cluster = blkSampleClusters[best];
-                }
-            }
-
-            if(!cluster)
-                continue;
-
-            // Insert a new light block in the grid.
-            grid[toIndex(x, y)] = new LightBlock(cluster);
-
-            // There is now one more block.
-            numBlocks++;
-
-            // We want notification when the sector light properties change.
-            cluster->sector().audienceForLightLevelChange += this;
-            cluster->sector().audienceForLightColorChange += this;
         }
 
-        LOGDEV_GL_MSG("%i light blocks (%u bytes)")
-            << numBlocks << (sizeof(LightBlock) * numBlocks);
-
-        // We're done with sector samples completely.
-        M_Free(ssamples);
-        // We're done with the sample results arrays.
-        M_Free(blkSampleClusters);
-
-        delete[] sampleResults;
-
-        // Find the blocks of all sector clusters.
-        foreach(SectorCluster *cluster, map.sectorClusters())
+        for(Coverages::iterator it = coverage.begin(); it != coverage.end(); ++it)
         {
-            int count = 0, changedCount = 0;
+            IBlockLightSource *source = it.key();
+            LightCoverage &covered    = it.value();
 
-            // Clear the bitfields.
-            std::memset(indexBitfield, 0, bitfieldSize);
-            std::memset(contributorBitfield, 0, bitfieldSize);
+            // Determine blocks for which this is the primary source.
+            int primaryCount = 0;
+            std::memset(primaryBitfield, 0, bitfieldSize);
 
             for(int y = 0; y < dimensions.y; ++y)
             for(int x = 0; x < dimensions.x; ++x)
             {
-                LightBlock &block = lightBlock(x, y);
-                if(isNullBlock(block) || &block.sectorCluster() != cluster)
+                // Does this block have a different primary source?
+                if(source != block(Ref(x, y)).source)
+                {
                     continue;
+                }
 
+                /// Primary sources affect near neighbors due to smoothing.
                 /// @todo Determine min/max a/b before going into the loop.
                 for(int b = -2; b <= 2; ++b)
                 {
@@ -732,18 +358,19 @@ DENG2_PIMPL(LightGrid)
                         if(x + a < 0 || x + a >= dimensions.x)
                             continue;
 
-                        addIndexBit(Ref(x + a, y + b), dimensions.x,
-                                    indexBitfield, &changedCount);
+                        addIndexBit(Ref(x + a, y + b), dimensions.x, primaryBitfield, &primaryCount);
                     }
                 }
             }
 
-            // Determine contributor blocks. Contributors are the blocks that are
-            // close enough to contribute light to affected blocks.
+            // Determine blocks for which this is the secondary contributor.
+            int contribCount = 0;
+            std::memset(contribBitfield, 0, bitfieldSize);
+
             for(int y = 0; y < dimensions.y; ++y)
             for(int x = 0; x < dimensions.x; ++x)
             {
-                if(!hasIndexBit(Ref(x, y), dimensions.x, indexBitfield))
+                if(!hasIndexBit(Ref(x, y), dimensions.x, primaryBitfield))
                     continue;
 
                 // Add the contributor blocks.
@@ -757,148 +384,98 @@ DENG2_PIMPL(LightGrid)
                         if(x + a < 0 || x + a >= dimensions.x)
                             continue;
 
-                        if(!hasIndexBit(Ref(x + a, y + b), dimensions.x, indexBitfield))
+                        if(!hasIndexBit(Ref(x + a, y + b), dimensions.x, primaryBitfield))
                         {
-                            addIndexBit(Ref(x + a, y + b), dimensions.x, contributorBitfield, &count);
+                            addIndexBit(Ref(x + a, y + b), dimensions.x, contribBitfield, &contribCount);
                         }
                     }
                 }
             }
 
-            SectorCluster::LightGridData &lgData = cluster->lightGridData();
-            lgData.changedBlockCount = changedCount;
-            lgData.blockCount = changedCount + count;
+            // Remember grid coverage for this illumination source.
+            int const blockCount = primaryCount + contribCount;
+            covered.primaryBlockCount = primaryCount;
+            covered.blocks.resize(blockCount);
 
-            if(lgData.blockCount > 0)
+            if(blockCount > 0)
             {
-                lgData.blocks = (LightGrid::Index *)
-                    Z_Malloc(sizeof(*lgData.blocks) * lgData.blockCount, PU_MAPSTATIC, 0);
-
-                int a = 0, b = changedCount;
+                int a = 0, b = primaryCount;
                 for(int x = 0; x < dimensions.x * dimensions.y; ++x)
                 {
-                    if(hasIndexBit(Ref(x, 0), dimensions.x, indexBitfield))
-                        lgData.blocks[a++] = x;
-                    else if(hasIndexBit(Ref(x, 0), dimensions.x, contributorBitfield))
-                        lgData.blocks[b++] = x;
+                    if(hasIndexBit(Ref(x, 0), dimensions.x, primaryBitfield))
+                    {
+                        covered.blocks[a++] = x;
+                    }
+                    else if(hasIndexBit(Ref(x, 0), dimensions.x, contribBitfield))
+                    {
+                        covered.blocks[b++] = x;
+                    }
                 }
 
-                DENG2_ASSERT(a == changedCount);
-                //DENG2_ASSERT(b == blockCount);
+                DENG2_ASSERT(a == primaryCount); // sanity check
             }
         }
 
-        M_Free(indexBitfield);
-        M_Free(contributorBitfield);
+        M_Free(primaryBitfield);
+        M_Free(contribBitfield);
 
-        self.markAllForUpdate();
-
-        // How much time did we spend?
-        LOGDEV_GL_MSG("Completed in %.2f seconds") << begunAt.since();
-    }
-
-    /**
-     * To be called when the ambient lighting properties in the sector change.
-     */
-    void sectorChanged(Sector &sector)
-    {
-        DENG2_ASSERT(&sector.map() == &map); // sanity check.
-
-        // Do not update if not enabled.
-        /// @todo We could dynamically join/leave the relevant audiences.
-        if(!lgEnabled) return;
-
-        Map::SectorClusters const &clusterMap = map.sectorClusters();
-        Map::SectorClusters::const_iterator it = clusterMap.constFind(&sector);
-        while(it != clusterMap.end() && it.key() == &sector)
-        {
-            SectorCluster::LightGridData &lgData = (*it)->lightGridData();
-            if(lgData.changedBlockCount || lgData.blockCount)
-            {
-                // Mark changed blocks and contributors.
-                for(uint i = 0; i < lgData.changedBlockCount; ++i)
-                {
-                    lightBlock(lgData.blocks[i]).markChanged();
-                }
-
-                for(uint i = 0; i < lgData.blockCount; ++i)
-                {
-                    lightBlock(lgData.blocks[i]).markChanged(true /* is-contributor */);
-                }
-
-                needUpdate = true;
-            }
-            ++it;
-        }
-    }
-
-    /// Observes Sector LightLevelChange.
-    void sectorLightLevelChanged(Sector &sector)
-    {
-        sectorChanged(sector);
-    }
-
-    /// Observes Sector LightColorChange.
-    void sectorLightColorChanged(Sector &sector)
-    {
-        sectorChanged(sector);
+        // A full update is needed after this.
+        self.scheduleFullUpdate();
     }
 };
 
-LightGrid::LightGrid(Map &map)
-    : d(new Instance(this, map))
+LightGrid::LightGrid(Vector2d const &origin, Vector2d const &dimensions)
+    : d(new Instance(this))
 {
-    d->initialize();
+    resizeAndClear(origin, dimensions);
 }
 
-Vector2i const &LightGrid::dimensions() const
+void LightGrid::resizeAndClear(Vector2d const &newOrigin, Vector2d const &newDimensions)
 {
-    return d->dimensions;
+    d->origin    = newOrigin;
+    d->blockSize = lgBlockSize;
+
+    // Determine the dimensions of the grid (in blocks)
+    Vector2d const blockDimensions = newDimensions / d->blockSize;
+
+    // (Re)-initialize an empty light grid.
+    d->resizeAndClearBlocks(Vector2i(de::round<int>(blockDimensions.x) + 1,
+                                     de::round<int>(blockDimensions.y) + 1));
 }
 
-coord_t LightGrid::blockSize() const
+Vector4f LightGrid::evaluate(Vector3d const &point)
 {
-    return d->blockSize;
+    // If not enabled there is no lighting to evaluate; return black.
+    if(!lgEnabled) return black;
+    return d->block(toRef(point)).evaluate();
 }
 
-Vector3f LightGrid::evaluate(Vector3d const &point)
+void LightGrid::scheduleFullUpdate()
 {
-    // If not enabled the color is black.
-    if(!lgEnabled) return Vector3f(0, 0, 0);
+    if(d->blocks.isEmpty()) return;
 
-    LightBlock &block = d->lightBlock(point);
-    Vector3f color = block.evaluate();
+    d->updateCoverageIfNeeded();
 
-    // Apply light range compression.
-    for(int i = 0; i < 3; ++i)
+    // Mark all non-null blocks.
+    foreach(Instance::LightBlock *block, d->blocks)
     {
-        color[i] += Rend_LightAdaptationDelta(color[i]);
+        block->markChanged();
+        block->markChanged(true);
     }
-
-    return color;
+    d->needUpdate = true;
 }
 
-float LightGrid::evaluateLightLevel(Vector3d const &point)
-{
-    Vector3f color = evaluate(point);
-    /// @todo Do not do this at evaluation time; store into another grid.
-    return (color.x + color.y + color.z) / 3;
-}
-
-void LightGrid::markAllForUpdate()
+void LightGrid::updateIfNeeded()
 {
     // Updates are unnecessary if not enabled.
     if(!lgEnabled) return;
 
-    // Mark all blocks and contributors.
-    foreach(Sector *sector, d->map.sectors())
-    {
-        d->sectorChanged(*sector);
-    }
-}
+    d->updateCoverageIfNeeded();
 
-void LightGrid::update()
-{
+    // Any work to do?
+    if(!d->needUpdate) return;
+    d->needUpdate = false;
+
     static float const factors[5 * 5] =
     {
         .1f,  .2f, .25f, .2f, .1f,
@@ -908,26 +485,19 @@ void LightGrid::update()
         .1f,  .2f, .25f, .2f, .1f
     };
 
-    // Updates are unnecessary if not enabled.
-    if(!lgEnabled) return;
-
-    // Any work to do?
-    if(!d->needUpdate) return;
-
     for(int y = 0; y < d->dimensions.y; ++y)
     for(int x = 0; x < d->dimensions.x; ++x)
     {
-        LightBlock &block = d->lightBlock(x, y);
+        Instance::LightBlock &blockAtRef = d->block(Ref(x, y));
 
         // No contribution?
-        if(!block.flags().testFlag(LightBlock::Contributor))
+        if(!blockAtRef.flags.testFlag(Contributor))
             continue;
 
-        // Determine the ambient light properties of the sector at this block.
-        SectorCluster &cluster = block.sectorCluster();
-        Vector3f const &color  = Rend_SectorLightColor(cluster);
-        float const level      = cluster.sector().lightLevel();
-        int const bias         = biasForSectorCluster(cluster);
+        // Determine the ambient light properties of this block.
+        IBlockLightSource &source = *blockAtRef.source;
+        Vector4f const color      = Vector4f(source.lightSourceColorf(), source.lightSourceIntensity(Vector3d(0, 0, 0)));
+        int const bias            = source.blockLightSourceZBias();
 
         /// @todo Calculate min/max for a and b.
         for(int a = -2; a <= 2; ++a)
@@ -937,87 +507,128 @@ void LightGrid::update()
                x + a > d->dimensions.x - 1 || y + b > d->dimensions.y - 1)
                 continue;
 
-            LightBlock &other = d->lightBlock(x + a, y + b);
-
-            if(!other.flags().testFlag(LightBlock::Changed))
+            Instance::LightBlock &other = d->block(Ref(x + a, y + b));
+            if(!other.flags.testFlag(Changed))
                 continue;
 
-            other.applySector(color, level, bias, factors[(b + 2) * 5 + a + 2] / 8);
+            other.applyLightingChanges(color, bias, factors[(b + 2) * 5 + a + 2] / 8);
         }
     }
 
-    // Clear all changed and contribution flags.
-    foreach(LightBlock *block, d->grid)
+    // Clear all changed and contribution flags for all non-null blocks.
+    foreach(Instance::LightBlock *block, d->blocks)
     {
-        if(!block) continue;
-        block->setFlags(LightBlock::AllFlags, UnsetFlags);
+        block->setFlags(AllFlags, UnsetFlags);
     }
-
-    d->needUpdate = false;
 }
 
-#include "de_graphics.h"
-#include "de_render.h"
-#include "gl/sys_opengl.h"
-
-void LightGrid::drawDebugVisual()
+void LightGrid::setPrimarySource(Index index, IBlockLightSource *newSource)
 {
-    static Vector3f const red(1, 0, 0);
-    static int blink = 0;
+    Instance::LightBlock *block = &d->block(index);
 
-    // Disabled?
-    if(!lgShowDebug) return;
+    if(newSource == block->source)
+        return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Determine the grid reference of the view player.
-    Ref viewGRef;
-    if(viewPlayer)
+    if(newSource && !block->source)
     {
-        blink++;
-        viewGRef = d->toRef(viewPlayer->shared.mo->origin);
+        // Replace the "null block" with a new light block.
+        d->blocks[index] = block = new Instance::LightBlock(newSource);
+        d->numBlocks++;
+    }
+    else if(!newSource && block->source)
+    {
+        // Replace the existing light block with the "null block".
+        delete block;
+        d->blocks[index] = block = &d->nullBlock;
+        d->numBlocks--;
     }
 
-    // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    block->source = newSource;
 
-    for(int y = 0; y < d->dimensions.y; ++y)
-    {
-        glBegin(GL_QUADS);
-        for(int x = 0; x < d->dimensions.x; ++x)
-        {
-            Ref gref(x, d->dimensions.y - 1 - y);
-            bool const isViewGRef = (viewPlayer && viewGRef == gref);
-
-            Vector3f const *color;
-            if(isViewGRef && (blink & 16))
-            {
-                color = &red;
-            }
-            else
-            {
-                LightBlock &block = d->lightBlock(gref);
-                if(isNullBlock(block))
-                    continue;
-
-                color = &block.rawColorRef();
-            }
-
-            glColor3f(color->x, color->y, color->z);
-
-            glVertex2f(x * lgDebugSize, y * lgDebugSize);
-            glVertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);
-            glVertex2f(x * lgDebugSize + lgDebugSize,
-                       y * lgDebugSize + lgDebugSize);
-            glVertex2f(x * lgDebugSize, y * lgDebugSize + lgDebugSize);
-        }
-        glEnd();
-    }
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    // A full update is needed.
+    d->needUpdate = d->needUpdateCoverage = true;
 }
+
+LightGrid::IBlockLightSource *LightGrid::primarySource(Index index) const
+{
+    return d->block(index).source;
+}
+
+void LightGrid::primarySourceLightChanged(IBlockLightSource *changed)
+{
+    // Updates are unnecessary if not enabled.
+    if(!lgEnabled) return;
+
+    if(!changed) return;
+
+    d->updateCoverageIfNeeded();
+
+    Instance::Coverages::iterator &covered = d->coverage.find(changed);
+    if(covered == d->coverage.end()) return;
+
+    if(covered->blocks.count())
+    {
+        // Mark primary and contributed blocks.
+        for(int i = 0; i < covered->primaryBlockCount; ++i)
+        {
+            if(d->block(covered->blocks[i]).markChanged())
+            {
+                d->needUpdate = true;
+            }
+        }
+        for(int i = 0; i < covered->blocks.count(); ++i)
+        {
+            if(d->block(covered->blocks[i]).markChanged(true /*is contributor*/))
+            {
+                d->needUpdate = true;
+            }
+        }
+    }
+}
+
+LightGrid::Ref LightGrid::toRef(Vector3d const &point)
+{
+    int x = de::round<int>((point.x - d->origin.x) / d->blockSize);
+    int y = de::round<int>((point.y - d->origin.y) / d->blockSize);
+
+    return Ref(de::clamp(1, x, dimensions().x - 2),
+               de::clamp(1, y, dimensions().y - 2));
+}
+
+int LightGrid::blockSize() const
+{
+    return d->blockSize;
+}
+
+Vector2d const &LightGrid::origin() const
+{
+    return d->origin;
+}
+
+Vector2i const &LightGrid::dimensions() const
+{
+    return d->dimensions;
+}
+
+int LightGrid::numBlocks() const
+{
+    return d->numBlocks;
+}
+
+size_t LightGrid::blockStorageSize() const
+{
+    return sizeof(Instance::LightBlock) * d->numBlocks;
+}
+
+Vector3f const &LightGrid::rawColorRef(Index index) const
+{
+    return d->block(index).color;
+}
+
+void LightGrid::consoleRegister() // static
+{
+    C_VAR_INT("rend-bias-grid",             &lgEnabled,     0,  0, 1);
+    C_VAR_INT("rend-bias-grid-blocksize",   &lgBlockSize,   0,  8, 1024);
+}
+
+} // namespace de

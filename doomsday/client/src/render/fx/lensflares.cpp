@@ -214,14 +214,14 @@ DENG2_PIMPL(LensFlares)
      */
     struct PVLight
     {
-        ILightSource const *light;
+        IPointLightSource const *light;
         int seenFrame; // R_FrameCount()
 
         PVLight() : light(0), seenFrame(0)
         {}
     };
 
-    typedef QHash<ILightSource::LightId, PVLight *> PVSet;
+    typedef QHash<IPointLightSource::LightId, PVLight *> PVSet;
     PVSet pvs;
 
     Vector3f eyeFront;
@@ -284,7 +284,7 @@ DENG2_PIMPL(LensFlares)
         pvs.clear();
     }
 
-    void addToPvs(ILightSource const *light)
+    void addToPvs(IPointLightSource const *light)
     {
         PVSet::iterator found = pvs.find(light->lightSourceId());
         if(found == pvs.end())
@@ -453,7 +453,7 @@ void LensFlares::clearLights()
     d->clearPvs();
 }
 
-void LensFlares::markLightPotentiallyVisibleForCurrentFrame(ILightSource const *lightSource)
+void LensFlares::markLightPotentiallyVisibleForCurrentFrame(IPointLightSource const *lightSource)
 {
     d->addToPvs(lightSource);
 }

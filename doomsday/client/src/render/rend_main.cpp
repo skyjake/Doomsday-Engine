@@ -232,23 +232,26 @@ DGLuint dlBBox;
  * Debug/Development cvars:
  */
 
-byte devMobjVLights;    ///< @c 1= Draw mobj vertex lighting vector.
-int devMobjBBox;        ///< @c 1= Draw mobj bounding boxes.
-int devPolyobjBBox;     ///< @c 1= Draw polyobj bounding boxes.
+byte devMobjVLights;            ///< @c 1= Draw mobj vertex lighting vector.
+int devMobjBBox;                ///< @c 1= Draw mobj bounding boxes.
+int devPolyobjBBox;             ///< @c 1= Draw polyobj bounding boxes.
 
-byte devVertexIndices;  ///< @c 1= Draw vertex indices.
-byte devVertexBars;     ///< @c 1= Draw vertex position bars.
+byte devVertexIndices;          ///< @c 1= Draw vertex indices.
+byte devVertexBars;             ///< @c 1= Draw vertex position bars.
 
-byte devDrawGenerators; ///< @c 1= Draw active generators.
-byte devSoundEmitters;  ///< @c 1= Draw sound emitters.
-byte devSurfaceVectors; ///< @c 1= Draw tangent space vectors for surfaces.
-byte devNoTexFix;       ///< @c 1= Draw "missing" rather than fix materials.
+byte devDrawGenerators;         ///< @c 1= Draw active generators.
+byte devSoundEmitters;          ///< @c 1= Draw sound emitters.
+byte devSurfaceVectors;         ///< @c 1= Draw tangent space vectors for surfaces.
+byte devNoTexFix;               ///< @c 1= Draw "missing" rather than fix materials.
 
-byte devSectorIndices;  ///< @c 1= Draw sector indicies.
-byte devThinkerIds;     ///< @c 1= Draw (mobj) thinker indicies.
+byte devSectorIndices;          ///< @c 1= Draw sector indicies.
+byte devThinkerIds;             ///< @c 1= Draw (mobj) thinker indicies.
 
-byte rendInfoLums;      ///< @c 1= Print lumobj debug info to the console.
-byte devDrawLums;       ///< @c 1= Draw lumobjs origins.
+byte rendInfoLums;              ///< @c 1= Print lumobj debug info to the console.
+byte devDrawLums;               ///< @c 1= Draw lumobjs origins.
+
+byte devLightGrid;              ///< @c 1= Draw lightgrid debug visual.
+float devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
 
 static void drawMobjBoundingBoxes(Map &map);
 static void drawSoundEmitters(Map &map);
@@ -267,13 +270,13 @@ static Vector3f currentSectorLightColor;
 static float currentSectorLightLevel;
 static bool firstBspLeaf; // No range checking for the first one.
 
-static void markLightGridForFullUpdate()
+static void scheduleFullLightGridUpdate()
 {
     if(App_WorldSystem().hasMap())
     {
         Map &map = App_WorldSystem().map();
         if(map.hasLightGrid())
-            map.lightGrid().markAllForUpdate();
+            map.lightGrid().scheduleFullUpdate();
     }
 }
 
@@ -361,8 +364,8 @@ void Rend_Register()
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
     C_VAR_INT   ("rend-light-multitex",             &useMultiTexLights,             0, 0, 1);
     C_VAR_INT   ("rend-light-num",                  &rendMaxLumobjs,                CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, markLightGridForFullUpdate);
-    C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, markLightGridForFullUpdate);
+    C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, scheduleFullLightGridUpdate);
+    C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, scheduleFullLightGridUpdate);
     C_VAR_FLOAT ("rend-light-wall-angle",           &rendLightWallAngle,            CVF_NO_MAX, 0, 0);
     C_VAR_BYTE  ("rend-light-wall-angle-smooth",    &rendLightWallAngleSmooth,      0, 0, 1);
 
@@ -390,6 +393,8 @@ void Rend_Register()
     C_VAR_INT2  ("rend-tex-quality",                &texQuality,                    0, 0, 8, texQualityChanged);
     C_VAR_INT   ("rend-tex-shiny",                  &useShinySurfaces,              0, 0, 1);
 
+    C_VAR_BYTE  ("rend-bias-grid-debug",            &devLightGrid,                  CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT ("rend-bias-grid-debug-size",       &devLightGridSize,              0,              .1f, 100);
     C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
     C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE, 0, 1);
@@ -403,7 +408,7 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-sector-show-indices",    &devSectorIndices,              CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT   ("rend-dev-sky",                    &devRendSkyMode,                CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundEmitters,               CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundEmitters,              CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE  ("rend-dev-thinker-ids",            &devThinkerIds,                 CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
@@ -637,9 +642,14 @@ static Vector3f skyLightColor;
 static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
 static float oldRendSkyLight = -1;
 
-Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
+bool Rend_SkyLightIsEnabled()
 {
-    if(rendSkyLight > .001f && cluster.hasSkyMaskedPlane())
+    return rendSkyLight > .001f;
+}
+
+Vector3f Rend_SkyLightColor()
+{
+    if(Rend_SkyLightIsEnabled())
     {
         Vector3f const &ambientColor = theSky->ambientColor();
 
@@ -658,7 +668,7 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
             }
 
             // When the sky light color changes we must update the light grid.
-            markLightGridForFullUpdate();
+            scheduleFullLightGridUpdate();
             oldSkyAmbientColor = ambientColor;
         }
 
@@ -666,49 +676,20 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
         return skyLightColor;
     }
 
-    // A non-skylight sector (i.e., everything else!)
-    // Return the sector's ambient light color.
-    return cluster.sector().lightColor();
+    return Vector3f(1, 1, 1);
 }
 
-static bool sectorHasSkyMaskedPlane(Sector const &sector)
+/**
+ * Determine the effective ambient light color for the given @a sector. Usually
+ * one would obtain this info from SectorCluster, however in some situations the
+ * correct light color is *not* that of the cluster (e.g., where map hacks use
+ * mapped planes to reference another sector).
+ */
+static Vector3f Rend_AmbientLightColor(Sector const &sector)
 {
-    foreach(Plane *plane, sector.planes())
+    if(Rend_SkyLightIsEnabled() && sector.hasSkyMaskedPlane())
     {
-        if(plane->surface().hasSkyMaskedMaterial())
-            return true;
-    }
-    return false;
-}
-
-/// @deprecated Caller should work at cluster level.
-static Vector3f const &Rend_SectorLightColor(Sector const &sector)
-{
-    if(rendSkyLight > .001f && sectorHasSkyMaskedPlane(sector))
-    {
-        Vector3f const &ambientColor = theSky->ambientColor();
-
-        if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
-        {
-            skyLightColor = ambientColor;
-            R_AmplifyColor(skyLightColor);
-
-            // Apply the intensity factor cvar.
-            for(int i = 0; i < 3; ++i)
-            {
-                skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
-            }
-
-            // When the sky light color changes we must update the light grid.
-            markLightGridForFullUpdate();
-            oldSkyAmbientColor = ambientColor;
-        }
-
-        oldRendSkyLight = rendSkyLight;
-        return skyLightColor;
+        return Rend_SkyLightColor();
     }
 
     // A non-skylight sector (i.e., everything else!)
@@ -778,7 +759,6 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
 
     Rend_ApplyLightAdaptation(lightLevel);
 
-    // Mix with the surface color.
     for(int i = 0; i < 3; ++i)
     {
         color[i] = lightLevel * ambientColor[i];
@@ -1181,25 +1161,35 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 if(leaf->map().hasLightGrid())
                 {
                     Vector3f const *posIt = posCoords;
-                    Vector4f *colorIt = colorCoords;
+                    Vector4f *colorIt     = colorCoords;
                     for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
                     {
                         *colorIt = leaf->map().lightGrid().evaluate(*posIt);
                     }
                 }
 
-                // Apply shadow bias contributions.
+                // Apply bias light source contributions.
                 p.bsuf->lightBiasPoly(p.geomGroup, posCoords, colorCoords);
 
+                // Apply surface glow.
                 if(p.glowing > 0)
                 {
-                    static const Vector3f saturated(1, 1, 1);
-                    float const glow = p.glowing;
+                    Vector4f const glow(p.glowing, p.glowing, p.glowing, 0);
                     Vector4f *colorIt = colorCoords;
                     for(uint i = 0; i < numVertices; ++i, colorIt++)
                     {
-                        *colorIt = (Vector3f(*colorIt) + Vector3f(glow, glow, glow))
-                                   .min(saturated); // clamp
+                        *colorIt += glow;
+                    }
+                }
+
+                // Apply light range compression and clamp.
+                Vector3f const *posIt = posCoords;
+                Vector4f *colorIt     = colorCoords;
+                for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
+                {
+                    for(int i = 0; i < 3; ++i)
+                    {
+                        (*colorIt)[i] = de::clamp(0.f, (*colorIt)[i] + Rend_LightAdaptationDelta((*colorIt)[i]), 1.f);
                     }
                 }
             }
@@ -1277,7 +1267,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             }
         }
 
-        // Apply uniform alpha.
+        // Apply uniform alpha (overwritting luminance factors).
         Vector4f *colorIt = colorCoords;
         for(uint i = 0; i < numVertices; ++i, colorIt++)
         {
@@ -1938,7 +1928,7 @@ static void writeWallSection(HEdge &hedge, int section,
     if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = Rend_SectorLightColor(side.sector());
+        currentSectorLightColor = Rend_AmbientLightColor(side.sector());
         currentSectorLightLevel = side.sector().lightLevel();
     }
 
@@ -1983,8 +1973,9 @@ static void writeWallSection(HEdge &hedge, int section,
     if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
     {
         // Undo temporary draw state changes.
-        currentSectorLightColor = Rend_SectorLightColor(leaf->cluster());
-        currentSectorLightLevel = leaf->sector().lightLevel();
+        Vector4f const color = leaf->cluster().lightSourceColorfIntensity();
+        currentSectorLightColor = color.toVector3f();
+        currentSectorLightLevel = color.w;
     }
 
     R_FreeRendVertices(posCoords);
@@ -2170,7 +2161,7 @@ static void writeLeafPlane(Plane &plane)
     if(&plane.sector() != leaf->sectorPtr())
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = Rend_SectorLightColor(plane.sector());
+        currentSectorLightColor = Rend_AmbientLightColor(plane.sector());
         currentSectorLightLevel = plane.sector().lightLevel();
     }
 
@@ -2185,8 +2176,9 @@ static void writeLeafPlane(Plane &plane)
     if(&plane.sector() != leaf->sectorPtr())
     {
         // Undo temporary draw state changes.
-        currentSectorLightColor = Rend_SectorLightColor(leaf->cluster());
-        currentSectorLightLevel = leaf->sector().lightLevel();
+        Vector4f const color = leaf->cluster().lightSourceColorfIntensity();
+        currentSectorLightColor = color.toVector3f();
+        currentSectorLightLevel = color.w;
     }
 
     R_FreeRendVertices(posCoords);
@@ -2913,15 +2905,16 @@ static void drawCurrentLeaf()
  */
 static void makeCurrent(BspLeaf &bspLeaf)
 {
-    bool sectorChanged = (!currentBspLeaf || currentBspLeaf->sectorPtr() != bspLeaf.sectorPtr());
+    bool clusterChanged = (!currentBspLeaf || currentBspLeaf->clusterPtr() != bspLeaf.clusterPtr());
 
     currentBspLeaf = &bspLeaf;
 
     // Update draw state.
-    if(sectorChanged)
+    if(clusterChanged)
     {
-        currentSectorLightColor = Rend_SectorLightColor(bspLeaf.cluster());
-        currentSectorLightLevel = bspLeaf.sector().lightLevel();
+        Vector4f const color = bspLeaf.cluster().lightSourceColorfIntensity();
+        currentSectorLightColor = color.toVector3f();
+        currentSectorLightLevel = color.w;
     }
 }
 
@@ -4620,7 +4613,7 @@ static void drawAllSurfaceTangentVectors(Map &map)
 
     glDisable(GL_CULL_FACE);
 
-    foreach(SectorCluster *cluster, map.sectorClusters())
+    foreach(SectorCluster *cluster, map.clusters())
     {
         drawSurfaceTangentVectors(cluster);
     }
@@ -5050,7 +5043,7 @@ static void drawSectors(Map &map)
 
     // Draw per-cluster sector labels:
 
-    foreach(SectorCluster *cluster, map.sectorClusters())
+    foreach(SectorCluster *cluster, map.clusters())
     {
         Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
         ddouble const distToEye = (eyeOrigin - origin).length();
@@ -5102,6 +5095,66 @@ static void drawThinkers(Map &map)
 {
     if(!devThinkerIds) return;
     map.thinkers().iterate(NULL, 0x1 | 0x2, drawThinkersWorker);
+}
+
+void Rend_LightGridVisual(LightGrid &lg)
+{
+    static Vector3f const red(1, 0, 0);
+    static int blink = 0;
+
+    // Disabled?
+    if(!devLightGrid) return;
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Determine the grid reference of the view player.
+    LightGrid::Index viewerGridIndex;
+    if(viewPlayer)
+    {
+        blink++;
+        viewerGridIndex = lg.toIndex(lg.toRef(viewPlayer->shared.mo->origin));
+    }
+
+    // Go into screen projection mode.
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+
+    for(int y = 0; y < lg.dimensions().y; ++y)
+    {
+        glBegin(GL_QUADS);
+        for(int x = 0; x < lg.dimensions().x; ++x)
+        {
+            LightGrid::Index gridIndex = lg.toIndex(x, lg.dimensions().y - 1 - y);
+            bool const isViewerIndex   = (viewPlayer && viewerGridIndex == gridIndex);
+
+            Vector3f const *color = 0;
+            if(isViewerIndex && (blink & 16))
+            {
+                color = &red;
+            }
+            else if(lg.primarySource(gridIndex))
+            {
+                color = &lg.rawColorRef(gridIndex);
+            }
+
+            if(!color) continue;
+
+            glColor3f(color->x, color->y, color->z);
+
+            glVertex2f(x * devLightGridSize, y * devLightGridSize);
+            glVertex2f(x * devLightGridSize + devLightGridSize, y * devLightGridSize);
+            glVertex2f(x * devLightGridSize + devLightGridSize,
+                       y * devLightGridSize + devLightGridSize);
+            glVertex2f(x * devLightGridSize, y * devLightGridSize + devLightGridSize);
+        }
+        glEnd();
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT)

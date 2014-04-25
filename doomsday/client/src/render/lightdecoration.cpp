@@ -1,7 +1,7 @@
 /** @file lightdecoration.cpp World surface light decoration.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -27,6 +27,7 @@
 
 #include "world/map.h"
 #include "BspLeaf"
+#include "SectorCluster"
 #include "Surface"
 
 #include "render/lightdecoration.h"
@@ -76,8 +77,11 @@ Lumobj *LightDecoration::generateLumobj() const
     if(source().color == Vector3f(0, 0, 0))
         return 0;
 
+    SectorCluster *cluster = bspLeafAtOrigin().clusterPtr();
+    if(!cluster) return 0;
+
     // Does it pass the ambient light limitation?
-    float lightLevel = bspLeafAtOrigin().sector().lightLevel();
+    float lightLevel = cluster->lightSourceIntensity();
     Rend_ApplyLightAdaptation(lightLevel);
 
     float intensity = checkLightLevel(lightLevel,

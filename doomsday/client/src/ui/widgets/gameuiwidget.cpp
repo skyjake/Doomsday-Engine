@@ -1,6 +1,7 @@
 /** @file gameuiwidget.cpp  Widget for legacy game UI elements.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -61,7 +62,7 @@ DENG2_PIMPL(GameUIWidget)
          */
         if(App_WorldSystem().hasMap() && App_WorldSystem().map().hasLightGrid())
         {
-            App_WorldSystem().map().lightGrid().drawDebugVisual();
+            Rend_LightGridVisual(App_WorldSystem().map().lightGrid());
         }
         Net_Drawer();
         S_Drawer();

@@ -1,4 +1,4 @@
-/** @file ilightsource.h  Interface for a light source.
+/** @file ilightsource.h  Interface for a point light source.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -34,8 +34,6 @@
 class ILightSource
 {
 public:
-    typedef de::Vector3d Origin;
-
     /**
      * Unique identifier of the source. This can be used to uniquely identify a
      * source of light across multiple frames.
@@ -53,17 +51,6 @@ public:
     virtual LightId lightSourceId() const = 0;
 
     /**
-     * Returns the position of the light source, in map units.
-     */
-    virtual Origin lightSourceOrigin() const = 0;
-
-    /**
-     * Returns the radius of the emitter itself, in map units. A radius of
-     * zero would mean that the light emitter is an infinitely small point.
-     */
-    virtual de::dfloat lightSourceRadius() const = 0;
-
-    /**
      * Returns the color of the emitted light. The intensity of the light must
      * not be factored into the color values, but is instead returned separately
      * by lightSourceIntensity().
@@ -73,10 +60,36 @@ public:
     /**
      * Returns the intensity of the light.
      *
-     * @param viewPoint  World point from where the light is being observed.
-     *                   Intensity may vary based on direction.
+     * @param viewPoint  World point from where the light is being observed if
+     *                   the intensity may vary depending on the relative direction
+     *                   and/or position of the viewer.
      */
     virtual de::dfloat lightSourceIntensity(de::Vector3d const &viewPoint) const = 0;
+};
+
+/**
+ * Interface for a point light source.
+ *
+ * @ingroup render
+ */
+class IPointLightSource : public ILightSource
+{
+public:
+    typedef de::Vector3d Origin;
+
+public:
+    virtual ~IPointLightSource() {}
+
+    /**
+     * Returns the position of the light source, in map units.
+     */
+    virtual Origin lightSourceOrigin() const = 0;
+
+    /**
+     * Returns the radius of the emitter itself, in map units. A radius of
+     * zero would mean that the light emitter is an infinitely small point.
+     */
+    virtual de::dfloat lightSourceRadius() const = 0;
 };
 
 #endif // DENG_CLIENT_ILIGHTSOURCE_H

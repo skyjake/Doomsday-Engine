@@ -36,6 +36,7 @@ class SectorCluster;
 
 namespace de {
 class Map;
+class LightGrid;
 }
 
 // Multiplicative blending for dynamic lights?
@@ -197,9 +198,19 @@ void Rend_UpdateLightModMatrix();
 void Rend_DrawLightModMatrix();
 
 /**
- * Sector light color may be affected by the sky light color.
+ * Draws the light grid debug visual.
  */
-de::Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster);
+void Rend_LightGridVisual(de::LightGrid &lg);
+
+/**
+ * Determines whether the sky light color tinting is enabled.
+ */
+bool Rend_SkyLightIsEnabled();
+
+/**
+ * Returns the effective sky light color.
+ */
+de::Vector3f Rend_SkyLightColor();
 
 /**
  * Blend the given light value with the luminous object's color, applying any

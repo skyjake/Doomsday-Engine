@@ -212,6 +212,14 @@ public:
      */
     AABoxd const &bounds() const;
 
+    inline Vector2d origin() const {
+        return Vector2d(bounds().min);
+    }
+
+    inline Vector2d dimensions() const {
+        return Vector2d(bounds().max) - Vector2d(bounds().min);
+    }
+
     /**
      * Returns the currently effective gravity multiplier for the map.
      */
@@ -289,12 +297,12 @@ public:
     /**
      * Provides access to the SectorCluster map for efficient traversal.
      */
-    SectorClusters const &sectorClusters() const;
+    SectorClusters const &clusters() const;
 
     /**
      * Returns the total number of SectorClusters in the map.
      */
-    inline int sectorClusterCount() const { return sectorClusters().count(); }
+    inline int clusterCount() const { return clusters().count(); }
 
     /**
      * Helper function which returns the relevant side index given a @a lineIndex
@@ -388,6 +396,17 @@ public:
      * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
      */
     BspLeaf &bspLeafAt_FixedPrecision(Vector2d const &point) const;
+
+    /**
+     * Determine the SectorCluster which contains @a point and which is on the
+     * back side of the BS partition that lies in front of @a point.
+     *
+     * @param point  Map space coordinates to determine the BSP leaf for.
+     *
+     * @return  SectorCluster containing the specified point if any or @c 0 if
+     * the clusters have not yet been built.
+     */
+    SectorCluster *clusterAt(Vector2d const &point) const;
 
     /**
      * Links a mobj into both a block and a BSP leaf based on it's (x,y).
@@ -762,9 +781,16 @@ public:
     LightGrid &lightGrid();
 
     /**
-     * Initialize the ambient lighting grid (smoothed sector lighting).
-     * If the grid has already been initialized calling this will perform
-     * a full update.
+     * (Re)-initialize the light grid used for smoothed sector lighting.
+     *
+     * If the grid has not yet been initialized block light sources are determined
+     * at this time (SectorClusters must be built for this).
+     *
+     * If the grid has already been initialized calling this will perform a full update.
+     *
+     * @note Initialization may take some time depending on the complexity of the
+     * map (physial dimensions, number of sectors) and should therefore be done
+     * "off-line".
      */
     void initLightGrid();
 

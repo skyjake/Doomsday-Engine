@@ -25,8 +25,8 @@
 #include "world/p_object.h"
 #include "Line"
 #include "Plane"
-#include "SectorCluster"
 #include "Surface"
+#include "SectorCluster"
 
 #include <de/Log>
 #include <de/vector1.h>
@@ -68,7 +68,7 @@ DENG2_PIMPL(Sector)
         , needRoughAreaUpdate(true)
 #endif
     {
-        zap(emitter);
+        de::zap(emitter);
     }
 
     ~Instance()
@@ -104,7 +104,7 @@ DENG2_PIMPL(Sector)
         aaBox.clear();
         bool haveGeometry = false;
 
-        Map::SectorClusters const &clusterMap = self.map().sectorClusters();
+        Map::SectorClusters const &clusterMap = self.map().clusters();
         Map::SectorClusters::const_iterator i = clusterMap.constFind(thisPublic);
         while(i != clusterMap.end() && i.key() == thisPublic)
         {
@@ -141,7 +141,7 @@ DENG2_PIMPL(Sector)
         needRoughAreaUpdate = false;
 
         roughArea = 0;
-        Map::SectorClusters const &clusterMap = self.map().sectorClusters();
+        Map::SectorClusters const &clusterMap = self.map().clusters();
         Map::SectorClusters::const_iterator i = clusterMap.constFind(thisPublic);
         while(i != clusterMap.end() && i.key() == thisPublic)
         {
@@ -297,6 +297,16 @@ Plane const &Sector::plane(int planeIndex) const
     }
     /// @throw MissingPlaneError The referenced plane does not exist.
     throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
+}
+
+bool Sector::hasSkyMaskedPlane() const
+{
+    foreach(Plane *plane, d->planes)
+    {
+        if(plane->surface().hasSkyMaskedMaterial())
+            return true;
+    }
+    return false;
 }
 
 Sector::Sides const &Sector::sides() const

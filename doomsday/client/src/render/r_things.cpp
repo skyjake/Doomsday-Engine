@@ -50,7 +50,7 @@ using namespace de;
 static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
     coord_t distToEye, bool fullbright, Vector4f &ambientColor, uint *vLightListIdx)
 {
-    DENG_ASSERT(bspLeafAtOrigin != 0);
+    DENG2_ASSERT(bspLeafAtOrigin != 0);
 
     if(fullbright)
     {
@@ -62,14 +62,19 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
         if(useBias && bspLeafAtOrigin->map().hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            ambientColor = bspLeafAtOrigin->map().lightGrid().evaluate(origin);
+            Vector4f color = bspLeafAtOrigin->map().lightGrid().evaluate(origin);
+            // Apply light range compression.
+            for(int i = 0; i < 3; ++i)
+            {
+                color[i] += Rend_LightAdaptationDelta(color[i]);
+            }
+            ambientColor = color;
         }
         else
         {
-            SectorCluster const &cluster = bspLeafAtOrigin->cluster();
-            Vector3f const &secColor = Rend_SectorLightColor(cluster);
+            Vector4f const color = bspLeafAtOrigin->cluster().lightSourceColorfIntensity();
 
-            float lightLevel = cluster.sector().lightLevel();
+            float lightLevel = color.w;
             /* if(spr->type == VSPR_DECORATION)
             {
                 // Wall decorations receive an additional light delta.
@@ -85,7 +90,7 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final color.
-            ambientColor = secColor * lightLevel;
+            ambientColor = color * lightLevel;
         }
 
         Rend_ApplyTorchLight(ambientColor, distToEye);
@@ -416,6 +421,7 @@ void R_ProjectSprite(mobj_t *mo)
         evaluateLighting(origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance, fullbright,
                          ambientColor, &vLightListIdx);
 
+        // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;
 
         VisSprite_SetupSprite(vis->data.sprite, origin, vis->distance, visOff,
@@ -433,6 +439,7 @@ void R_ProjectSprite(mobj_t *mo)
         evaluateLighting(vis->origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance,
                          fullbright, ambientColor, &vLightListIdx);
 
+        // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;
 
         VisSprite_SetupModel(vis->data.model, vis->origin, vis->distance,

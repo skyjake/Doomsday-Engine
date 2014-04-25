@@ -1,7 +1,7 @@
 /** @file sectorcluster.cpp  World map sector cluster.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -71,10 +71,12 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
 
 DENG2_PIMPL(SectorCluster)
 , DENG2_OBSERVES(SectorCluster, Deletion)
-, DENG2_OBSERVES(Plane, Deletion)
-, DENG2_OBSERVES(Plane, HeightChange)
+, DENG2_OBSERVES(Plane,  Deletion)
+, DENG2_OBSERVES(Plane,  HeightChange)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(Plane, HeightSmoothedChange)
+, DENG2_OBSERVES(Plane,  HeightSmoothedChange)
+, DENG2_OBSERVES(Sector, LightColorChange)
+, DENG2_OBSERVES(Sector, LightLevelChange)
 #endif
 {
     bool needClassify; ///< @c true= (Re)classification is necessary.
@@ -102,9 +104,6 @@ DENG2_PIMPL(SectorCluster)
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
     bool needReverbUpdate;
-
-    /// Ambient lighting data for the bias lighting model.
-    LightGridData lightGridData;
 #endif
 
     Instance(Public *i)
@@ -118,13 +117,17 @@ DENG2_PIMPL(SectorCluster)
 #endif
     {
 #ifdef __CLIENT__
-        zap(reverb);
-        zap(lightGridData);
+        de::zap(reverb);
 #endif
     }
 
     ~Instance()
     {
+#ifdef __CLIENT__
+        self.sector().audienceForLightLevelChange -= this;
+        self.sector().audienceForLightColorChange -= this;
+#endif
+
         clearMapping(Sector::Floor);
         clearMapping(Sector::Ceiling);
 
@@ -799,10 +802,22 @@ DENG2_PIMPL(SectorCluster)
             reverb[SRD_VOLUME] = 1;
     }
 
+    /// Observes Sector LightLevelChange.
+    void sectorLightLevelChanged(Sector &sector)
+    {
+        sector.map().lightGrid().primarySourceLightChanged(thisPublic);
+    }
+
+    /// Observes Sector LightColorChange.
+    void sectorLightColorChanged(Sector &sector)
+    {
+        sector.map().lightGrid().primarySourceLightChanged(thisPublic);
+    }
 #endif // __CLIENT__
 };
 
-SectorCluster::SectorCluster(BspLeafs const &bspLeafs) : d(new Instance(this))
+SectorCluster::SectorCluster(BspLeafs const &bspLeafs)
+    : d(new Instance(this))
 {
     d->bspLeafs.append(bspLeafs);
     foreach(BspLeaf *bspLeaf, bspLeafs)
@@ -810,7 +825,16 @@ SectorCluster::SectorCluster(BspLeafs const &bspLeafs) : d(new Instance(this))
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(this);
     }
+
+#ifdef __CLIENT__
+    // Observe changes to sector lighting properties.
+    sector().audienceForLightLevelChange += d;
+    sector().audienceForLightColorChange += d;
+#endif
 }
+
+SectorCluster::~SectorCluster()
+{}
 
 bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 {
@@ -942,11 +966,6 @@ AudioEnvironmentFactors const &SectorCluster::reverb() const
     return d->reverb;
 }
 
-SectorCluster::LightGridData &SectorCluster::lightGridData()
-{
-    return d->lightGridData;
-}
-
 void SectorCluster::markVisPlanesDirty()
 {
     d->maybeInvalidateMapping(Sector::Floor);
@@ -961,6 +980,50 @@ bool SectorCluster::hasSkyMaskedPlane() const
             return true;
     }
     return false;
+}
+
+SectorCluster::LightId SectorCluster::lightSourceId() const
+{
+    /// @todo Need unique cluster ids.
+    return LightId(sector().indexInMap());
+}
+
+Vector3f SectorCluster::lightSourceColorf() const
+{
+    if(Rend_SkyLightIsEnabled() && hasSkyMaskedPlane())
+    {
+        return Rend_SkyLightColor();
+    }
+
+    // A non-skylight sector (i.e., everything else!)
+    // Return the sector's ambient light color.
+    return sector().lightColor();
+}
+
+float SectorCluster::lightSourceIntensity(Vector3d const &/*viewPoint*/) const
+{
+    return sector().lightLevel();
+}
+
+int SectorCluster::blockLightSourceZBias()
+{
+    int const height = int(visCeiling().height() - visFloor().height());
+    bool hasSkyFloor = visFloor().surface().hasSkyMaskedMaterial();
+    bool hasSkyCeil  = visCeiling().surface().hasSkyMaskedMaterial();
+
+    if(hasSkyFloor && !hasSkyCeil)
+    {
+        return -height / 6;
+    }
+    if(!hasSkyFloor && hasSkyCeil)
+    {
+        return height / 6;
+    }
+    if(height > 100)
+    {
+        return (height - 100) / 2;
+    }
+    return 0;
 }
 
 #endif // __CLIENT__

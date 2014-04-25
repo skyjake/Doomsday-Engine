@@ -79,6 +79,8 @@
 static int bspSplitFactor = 7; // cvar
 
 #ifdef __CLIENT__
+static int lgMXSample  = 1; ///< 5 samples per block. Cvar.
+
 /// Milliseconds it takes for Unpredictable and Hidden mobjs to be
 /// removed from the hash. Under normal circumstances, the special
 /// status should be removed fairly quickly.
@@ -310,10 +312,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 #ifdef __CLIENT__
         self.removeAllLumobjs();
         self.removeAllBiasSources();
-
-        // The light grid observes changes to sector lighting and so
-        // must be destroyed first.
-        lightGrid.reset();
 #endif
 
         qDeleteAll(clusters);
@@ -1634,7 +1632,7 @@ Map::BspLeafs const &Map::bspLeafs() const
     return d->bspLeafs;
 }
 
-Map::SectorClusters const &Map::sectorClusters() const
+Map::SectorClusters const &Map::clusters() const
 {
     return d->clusters;
 }
@@ -1662,13 +1660,231 @@ void Map::initLightGrid()
     if(!Con_GetInteger("rend-bias-grid"))
         return;
 
+    // Diagonal in maze arrangement of natural numbers.
+    // Up to 65 samples per-block(!)
+    static int const MSFACTORS = 7;
+    static int multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
+
     // Time to initialize the LightGrid?
-    if(d->lightGrid.isNull())
+    if(!d->lightGrid.isNull())
     {
-        d->lightGrid.reset(new LightGrid(*this));
+        d->lightGrid->updateIfNeeded();
+        return;
     }
-    // Perform a full update right away.
-    d->lightGrid->update();
+
+    Time begunAt;
+    d->lightGrid.reset(new LightGrid(origin(), dimensions()));
+
+    LightGrid &lg = *d->lightGrid;
+
+    // Determine how many sector cluster samples we'll make per block and
+    // allocate the tempoary storage.
+    int const numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
+    QVector<Vector2d> samplePoints(numSamples);
+    QVector<int>      sampleHits(numSamples);
+
+    /**
+     * It would be possible to only allocate memory for the unique
+     * sample results. And then select the appropriate sample in the loop
+     * for initializing the grid instead of copying the previous results in
+     * the loop for acquiring the sample points.
+     *
+     * Calculate with the equation (number of unique sample points):
+     *
+     * ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
+     *     (size % 2 == 0? numBlocks : 0)
+     * OR
+     *
+     * We don't actually need to store the ENTIRE ssample array. It would be
+     * sufficent to only store the results from the start of the previous row
+     * to current col index. This would save a bit of memory.
+     *
+     * However until lightgrid init is finalized it would be rather silly to
+     * optimize this much further.
+     */
+
+    // Allocate memory for all the sample results.
+    QVector<SectorCluster *> ssamples((lg.dimensions().x * lg.dimensions().y) * numSamples);
+
+    // Determine the size^2 of the samplePoint array plus its center.
+    int size = 0, center = 0;
+    if(numSamples > 1)
+    {
+        float f = sqrt(float(numSamples));
+
+        if(std::ceil(f) != std::floor(f))
+        {
+            size = sqrt(float(numSamples - 1));
+            center = 0;
+        }
+        else
+        {
+            size = (int) f;
+            center = size+1;
+        }
+    }
+
+    // Construct the sample point offset array.
+    // This way we can use addition only during calculation of:
+    // (dimensions.y * dimensions.x) * numSamples
+    if(center == 0)
+    {
+        // Zero is the center so do that first.
+        samplePoints[0] = Vector2d(lg.blockSize() / 2, lg.blockSize() / 2);
+    }
+
+    if(numSamples > 1)
+    {
+        double bSize = double(lg.blockSize()) / (size - 1);
+
+        // Is there an offset?
+        int idx = (center == 0? 1 : 0);
+
+        for(int y = 0; y < size; ++y)
+        for(int x = 0; x < size; ++x, ++idx)
+        {
+            samplePoints[idx] = Vector2d(de::round<double>(x * bSize),
+                                         de::round<double>(y * bSize));
+        }
+    }
+
+    // Acquire the sector clusters at ALL the sample points.
+    for(int y = 0; y < lg.dimensions().y; ++y)
+    for(int x = 0; x < lg.dimensions().x; ++x)
+    {
+        LightGrid::Index const blk = lg.toIndex(x, y);
+        Vector2d const off(x * lg.blockSize(), y * lg.blockSize());
+
+        int sampleOffset = 0;
+        if(center == 0)
+        {
+            // Center point is not considered with the term 'size'.
+            // Sample this point and place at index 0 (at the start of the
+            // samples for this block).
+            ssamples[blk * numSamples] = clusterAt(lg.origin() + off + samplePoints[0]);
+            sampleOffset++;
+        }
+
+        int count = blk * size;
+        for(int b = 0; b < size; ++b)
+        {
+            int i = (b + count) * size;
+
+            for(int a = 0; a < size; ++a, ++sampleOffset)
+            {
+                int idx = a + i + (center == 0? blk + 1 : 0);
+
+                if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
+                {
+                    // We have already sampled this point.
+                    // Get the previous result.
+                    LightGrid::Ref prev(x, y);
+                    LightGrid::Ref prevB(a, b);
+                    int prevIdx;
+
+                    if(x > 0 && a == 0)
+                    {
+                        prevB.x = size -1;
+                        prev.x--;
+                    }
+                    if(y > 0 && b == 0)
+                    {
+                        prevB.y = size -1;
+                        prev.y--;
+                    }
+
+                    prevIdx = prevB.x + (prevB.y + lg.toIndex(prev) * size) * size;
+                    if(center == 0)
+                        prevIdx += lg.toIndex(prev) + 1;
+
+                    ssamples[idx] = ssamples[prevIdx];
+                }
+                else
+                {
+                    // We haven't sampled this point yet.
+                    ssamples[idx] = clusterAt(lg.origin() + off + samplePoints[sampleOffset]);
+                }
+            }
+        }
+    }
+
+    // Allocate memory used for the collection of the sample results.
+    QVector<SectorCluster *> blkSampleClusters(numSamples);
+
+    for(int y = 0; y < lg.dimensions().y; ++y)
+    for(int x = 0; x < lg.dimensions().x; ++x)
+    {
+        /**
+         * Pick the sector cluster at each of the sample points.
+         *
+         * @todo We don't actually need the blkSampleClusters array anymore.
+         * Now that ssamples stores the results consecutively a simple index
+         * into ssamples would suffice. However if the optimization to save
+         * memory is implemented as described in the comments above we WOULD
+         * still require it.
+         *
+         * For now we'll make use of it to clarify the code.
+         */
+        int const sampleOffset = lg.toIndex(x, y) * numSamples;
+        for(int i = 0; i < numSamples; ++i)
+        {
+            blkSampleClusters[i] = ssamples[i + sampleOffset];
+        }
+
+        SectorCluster *cluster = 0;
+        if(numSamples == 1)
+        {
+            cluster = blkSampleClusters[center];
+        }
+        else
+        {
+            // Pick the sector which had the most hits.
+            int best = -1;
+            sampleHits.fill(0);
+
+            for(int i = 0; i < numSamples; ++i)
+            {
+                if(!blkSampleClusters[i]) continue;
+
+                for(int k = 0; k < numSamples; ++k)
+                {
+                    if(blkSampleClusters[k] == blkSampleClusters[i] && blkSampleClusters[k])
+                    {
+                        sampleHits[k]++;
+                        if(sampleHits[k] > best)
+                        {
+                            best = i;
+                        }
+                    }
+                }
+            }
+
+            if(best != -1)
+            {
+                // Favour the center sample if its a draw.
+                if(sampleHits[best] == sampleHits[center] &&
+                   blkSampleClusters[center])
+                {
+                    cluster = blkSampleClusters[center];
+                }
+                else
+                {
+                    cluster = blkSampleClusters[best];
+                }
+            }
+        }
+
+        if(cluster)
+        {
+            lg.setPrimarySource(lg.toIndex(x, y), cluster);
+        }
+    }
+
+    LOGDEV_GL_MSG("%i light blocks (%u bytes)")
+            << lg.numBlocks() << lg.blockStorageSize();
+
+    // How much time did we spend?
+    LOGDEV_GL_MSG("LightGrid init completed in %.2f seconds") << begunAt.since();
 }
 
 void Map::initBias()
@@ -2639,6 +2855,16 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     return bspElement->as<BspLeaf>();
 }
 
+SectorCluster *Map::clusterAt(Vector2d const &point) const
+{
+    BspLeaf &bspLeaf = bspLeafAt(point);
+    if(bspLeaf.polyContains(point))
+    {
+        return bspLeaf.clusterPtr();
+    }
+    return 0;
+}
+
 #ifdef __CLIENT__
 
 void Map::updateScrollingSurfaces()
@@ -3439,7 +3665,10 @@ D_CMD(InspectMap)
 void Map::consoleRegister() // static
 {
     Mobj_ConsoleRegister();
-    C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("bsp-factor",                 &bspSplitFactor, CVF_NO_MAX, 0, 0);
+#ifdef __CLIENT__
+    C_VAR_INT("rend-bias-grid-multisample", &lgMXSample,     0, 0, 7);
+#endif
 
     C_CMD("inspectmap", "", InspectMap);
 }

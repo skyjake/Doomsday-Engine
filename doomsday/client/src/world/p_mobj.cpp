@@ -529,26 +529,27 @@ float Mobj_ShadowStrength(mobj_t *mo)
 
     // Is this mobj in a valid state for shadow casting?
     if(!mo->state) return 0;
-    if(!Mobj_IsLinked(*mo)) return 0;
+    if(!Mobj_HasCluster(*mo)) return 0;
 
     // Should this mobj even have a shadow?
     if((mo->state->flags & STF_FULLBRIGHT) ||
        (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
         return 0;
 
-    Map &map = Mobj_BspLeafAtOrigin(*mo).map();
+    SectorCluster &cluster = Mobj_Cluster(*mo);
 
     // Sample the ambient light level at the mobj's position.
+    Map &map = cluster.sector().map();
     if(useBias && map.hasLightGrid())
     {
         // Evaluate in the light grid.
-        ambientLightLevel = map.lightGrid().evaluateLightLevel(mo->origin);
+        ambientLightLevel = map.lightGrid().evaluateIntensity(mo->origin);
     }
     else
     {
-        ambientLightLevel = Mobj_BspLeafAtOrigin(*mo).sector().lightLevel();
-        Rend_ApplyLightAdaptation(ambientLightLevel);
+        ambientLightLevel = cluster.lightSourceIntensity();
     }
+    Rend_ApplyLightAdaptation(ambientLightLevel);
 
     // Sprites have their own shadow strength factor.
     if(!useModels || !Mobj_ModelDef(*mo))

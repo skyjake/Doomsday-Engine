@@ -21,24 +21,20 @@
 #ifndef DENG_WORLD_SECTOR_H
 #define DENG_WORLD_SECTOR_H
 
-#include "dd_share.h" // AudioEnvironmentFactors
-
-#include "HEdge"
+#include <QList>
+#ifdef __CLIENT__
+#  include <de/aabox.h>
+#endif
+#include <de/Error>
+#include <de/Observers>
+#include <de/Vector>
 
 #include "MapElement"
 #include "Line"
 #include "Plane"
 
-#include <de/libdeng2.h>
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
-#include <de/aabox.h>
-#include <QList>
-
-class BspLeaf;
-class Surface;
 struct mobj_s;
+class Surface;
 
 /**
  * World map sector.
@@ -86,6 +82,8 @@ public:
 
     /// @copydoc plane()
     Plane const &plane(int planeIndex) const;
+
+    bool hasSkyMaskedPlane() const;
 
     /**
      * Returns the floor plane of the sector.

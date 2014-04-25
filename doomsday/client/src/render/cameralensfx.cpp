@@ -192,7 +192,7 @@ void LensFx_EndFrame()
     }
 }
 
-void LensFx_MarkLightVisibleInFrame(ILightSource const &lightSource)
+void LensFx_MarkLightVisibleInFrame(IPointLightSource const &lightSource)
 {
     ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
 

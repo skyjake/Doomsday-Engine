@@ -107,27 +107,35 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         if(useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector3f tmp = map.lightGrid().evaluate(spr->origin);
-            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
+            Vector4f color = map.lightGrid().evaluate(spr->origin);
+
+            // Apply light range compression.
+            for(int i = 0; i < 3; ++i)
+            {
+                color[i] += Rend_LightAdaptationDelta(color[i]);
+            }
+
+            V3f_Set(params->ambientColor, color.x, color.y, color.z);
         }
         else
         {
-            SectorCluster &cluster = spr->data.sprite.bspLeaf->cluster();
-            Vector3f const &secColor = Rend_SectorLightColor(cluster);
+            Vector4f const color = spr->data.sprite.bspLeaf->cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
-            float lightLevel = cluster.sector().lightLevel();
+            float lightLevel = color.w;
 
             // Add extra light plus bonus.
             lightLevel += Rend_ExtraLightDelta();
             lightLevel *= pspLightLevelMultiplier;
 
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
             Rend_ApplyLightAdaptation(lightLevel);
 
-            // Determine the final ambientColor in affect.
+            // Determine the final ambientColor.
             for(int i = 0; i < 3; ++i)
             {
-                params->ambientColor[i] = lightLevel * secColor[i];
+                params->ambientColor[i] = lightLevel * color[i];
             }
         }
 
@@ -227,18 +235,20 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
 
         if(useBias && map.hasLightGrid())
         {
-            Vector3f tmp = map.lightGrid().evaluate(params->origin);
-            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
+            Vector4f color = map.lightGrid().evaluate(params->origin);
+            // Apply light range compression.
+            for(int i = 0; i < 3; ++i)
+            {
+                color[i] += Rend_LightAdaptationDelta(color[i]);
+            }
+            V3f_Set(params->ambientColor, color.x, color.y, color.z);
         }
         else
         {
-            SectorCluster &cluster = spr->data.model.bspLeaf->cluster();
-            Vector3f const &secColor = Rend_SectorLightColor(cluster);
-
-            // Diminished light (with compression).
-            float lightLevel = cluster.sector().lightLevel();
+            Vector4f const color = spr->data.model.bspLeaf->cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
+            float lightLevel = color.w;
 
             // Add extra light.
             lightLevel += Rend_ExtraLightDelta();
@@ -247,10 +257,10 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
             // the global lighting function.
             Rend_ApplyLightAdaptation(lightLevel);
 
-            // Determine the final ambientColor in effect.
+            // Determine the final ambientColor.
             for(int i = 0; i < 3; ++i)
             {
-                params->ambientColor[i] = lightLevel * secColor[i];
+                params->ambientColor[i] = lightLevel * color[i];
             }
         }
 

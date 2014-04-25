@@ -30,7 +30,6 @@
 #include "world/p_players.h" // viewPlayer
 #include "Hand"
 #include "HueCircle"
-#include "Sector"
 
 #include "render/viewports.h"
 #include "render/rend_main.h" // gameDrawHUD/vOrigin, remove me
@@ -478,6 +477,7 @@ D_CMD(BLEditor)
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "SectorCluster"
 
 #include "render/rend_font.h"
 
@@ -573,27 +573,27 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
 static void drawLightGauge(Vector2i const &origin, int height = 255)
 {
     static float minLevel = 0, maxLevel = 0;
-    static Sector *lastSector = 0;
+    static SectorCluster *lastCluster = 0;
 
     Hand &hand = App_WorldSystem().hand();
     Map &map = App_WorldSystem().map();
 
-    BiasSource *src;
+    BiasSource *source;
     if(!hand.isEmpty())
-        src = &hand.grabbed().first()->as<BiasSource>();
+        source = &hand.grabbed().first()->as<BiasSource>();
     else
-        src = map.biasSourceNear(hand.origin());
+        source = map.biasSourceNear(hand.origin());
 
-    if(Sector *sector = src->bspLeafAtOrigin().sectorPtr())
+    if(SectorCluster *cluster = source->bspLeafAtOrigin().clusterPtr())
     {
-        if(lastSector != sector)
+        if(lastCluster != cluster)
         {
-            minLevel = maxLevel = sector->lightLevel();
-            lastSector = sector;
+            minLevel = maxLevel = cluster->lightSourceIntensity();
+            lastCluster = cluster;
         }
     }
 
-    float const lightLevel = lastSector->lightLevel();
+    float const lightLevel = lastCluster? lastCluster->lightSourceIntensity() : 0;
     if(lightLevel < minLevel)
         minLevel = lightLevel;
     if(lightLevel > maxLevel)
@@ -630,7 +630,7 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
 
     // Current min/max bias sector level.
     float minLight, maxLight;
-    src->lightLevels(minLight, maxLight);
+    source->lightLevels(minLight, maxLight);
     if(minLight > 0 || maxLight > 0)
     {
         glColor3f(1, 0, 0);
