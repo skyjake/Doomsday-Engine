@@ -71,6 +71,11 @@ ddouble TimeDelta::asDays() const
     return asHours() / 24;
 }
 
+Time::Delta Time::Delta::sinceStartOfProcess()
+{
+    return highPerfTimer.elapsed();
+}
+
 void TimeDelta::sleep() const
 {
     if(_seconds < 60)

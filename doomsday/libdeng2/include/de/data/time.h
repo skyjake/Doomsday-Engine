@@ -110,6 +110,12 @@ public:
         }
 
         /**
+         * Determines the amount of time passed since the beginning of the native
+         * process (i.e., since creation of the high performance timer).
+         */
+        static Delta sinceStartOfProcess();
+
+        /**
          * Blocks the thread.
          */
         void sleep() const;
