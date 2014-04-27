@@ -104,9 +104,9 @@ def mac_target_ext():
     
     
 def mac_osx_suffix():
-    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return 'osx8'
-    if mac_os_version() == '10.6': return 'osx6'
-    return 'osx'
+    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return 'macx8'
+    if mac_os_version() == '10.6': return 'macx6'
+    return 'macx'
 
 
 def output_filename(ext='', extra=''):
@@ -277,9 +277,24 @@ def mac_release():
     print 'Signing Doomsday Shell.app...'
     codesign("Doomsday Shell.app")
     
-    print 'Packaging apps as individual ZIPs...'
-    os.system('zip -y -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', mac_osx_suffix()))
-    os.system('zip -y -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_' + mac_osx_suffix()))
+    print 'Packaging apps onto a disk image...'
+    templateFile = 'appdisk.sparseimage'
+    os.system('bunzip2 -k -c %s > %s' % (os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage.bz2'),
+                                         templateFile))
+    remkdir('imaging')
+    os.system('hdiutil attach %s -noautoopen -quiet -mountpoint imaging' % templateFile)
+    
+    shutil.copy('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
+    shutil.copy('Doomsday Shell.app',  'imaging/Doomsday Shell.app')
+    shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
+
+    volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
+    os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
+    
+    os.system('hdiutil detach -queit imaging')
+    os.system('hdiutil convert %s -format UDZO -imagekey zlib-level=9 -o "%s"' % (
+            templateFile, output_filename('_apps-' + mac_osx_suffix() + '.dmg')))
+    remove(templateFile)
     
     print 'Creating disk:', target
     os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
