@@ -28,7 +28,7 @@
 #include "ui/fi_main.h"
 
 #ifdef __CLIENT__
-#  include <de/gui/ddkey.h>
+#  include <de/input/ddkey.h>
 #  include "ui/clientwindowsystem.h"
 #  include "ui/clientwindow.h"
 #  include "ui/ui_main.h"

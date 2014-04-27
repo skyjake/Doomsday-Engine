@@ -64,6 +64,12 @@
  * - @ref render
  */
 
+#ifdef __cplusplus
+#  define DENG2_EXTERN_C extern "C"
+#else
+#  define DENG2_EXTERN_C extern
+#endif
+
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
 #  include <typeinfo>
@@ -135,7 +141,7 @@
 
 #ifndef NDEBUG
 #  define DENG2_DEBUG
-   extern "C" DENG2_PUBLIC void LogBuffer_Flush(void);
+   DENG2_EXTERN_C DENG2_PUBLIC void LogBuffer_Flush(void);
 #  ifdef DENG2_USE_QT
 #    define DENG2_ASSERT(x) {if(!(x)) {LogBuffer_Flush(); Q_ASSERT(x);}}
 #  else

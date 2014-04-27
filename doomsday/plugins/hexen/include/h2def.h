@@ -39,7 +39,7 @@
 
 #include <de/c_wrapper.h>
 #include <de/fixedpoint.h>
-#include <de/gui/ddkey.h>
+#include <de/input/ddkey.h>
 #include "doomsday.h"
 #include "version.h"
 #include "info.h"
