@@ -82,6 +82,7 @@ publicHeaders(root, \
     include/de/WindowTransform \
     include/de/VariableChoiceWidget \
     include/de/VariableLineEditWidget \
+    include/de/VariableSliderWidget \
     include/de/VariableToggleWidget \
     include/de/VRConfig \
     \
@@ -172,6 +173,7 @@ publicHeaders(widgets, \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
     include/de/widgets/variablelineeditwidget.h \
+    include/de/widgets/variablesliderwidget.h \
     include/de/widgets/variabletogglewidget.h \
 )
 
@@ -234,6 +236,7 @@ SOURCES += \
     src/widgets/togglewidget.cpp \
     src/widgets/variablechoicewidget.cpp \
     src/widgets/variablelineeditwidget.cpp \
+    src/widgets/variablesliderwidget.cpp \
     src/widgets/variabletogglewidget.cpp \
     src/windowsystem.cpp \
     src/windowtransform.cpp

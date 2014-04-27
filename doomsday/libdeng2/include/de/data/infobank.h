@@ -57,6 +57,20 @@ public:
     void addFromInfoBlocks(String const &blockType);
 
     Time sourceModifiedAt() const;
+    String bankRootPath() const;
+
+    /**
+     * Determines what relatives paths should be relative to, given a specific context.
+     * This should be used when resolving paths in ScriptedInfo records.
+     *
+     * In practice, checks if the context has a "__source__" specified; if not, returns
+     * the root path of the bank.
+     *
+     * @param context  Namespace to use as context.
+     *
+     * @return Path that relative paths should be resolved with.
+     */
+    String relativeToPath(Record const &context) const;
 
 protected:
     virtual ISource *newSourceFromInfo(String const &id) = 0;

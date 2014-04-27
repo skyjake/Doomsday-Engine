@@ -17,17 +17,20 @@ SOURCES += \
 deployTest($$TARGET)
 
 gfx.files = testpic.png
+models.files = $$files(models/*)
 
 macx {
     linkBinaryToBundledLibdeng2($${TARGET}.app/Contents/MacOS/$${TARGET})
     linkBinaryToBundledLibdengGui($${TARGET}.app/Contents/MacOS/$${TARGET})
 
     gfx.path = Contents/Resources/graphics
-    QMAKE_BUNDLE_DATA += gfx
+    models.path = Contents/Resources/models
+    QMAKE_BUNDLE_DATA += gfx models
 }
 else {
     gfx.path = $$DENG_DATA_DIR/graphics
-    INSTALLS += gfx
+    models.path = $$DENG_DATA_DIR/models
+    INSTALLS += gfx models
 }
 
 HEADERS += \

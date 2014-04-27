@@ -27,6 +27,8 @@
 
 namespace de {
 
+class File;
+
 /**
  * Key/value tree. The tree is parsed from the "Snowberry" Info file format.
  *
@@ -77,43 +79,39 @@ public:
         typedef QList<Value> ValueList;
 
         /**
-         * @param t  Type of the element.
-         * @param n  Case-independent name of the element.
+         * @param type  Type of the element.
+         * @param name  Case-independent name of the element.
          */
-        Element(Type t = None, String const &n = "")
-            : _type(t), _parent(0), _lineNumber(0) { setName(n); }
-        virtual ~Element() {}
+        Element(Type type = None, String const &name = "");
+        virtual ~Element();
 
-        void setParent(BlockElement *parent) { _parent = parent; }
-        BlockElement *parent() const {
-            return _parent;
-        }
+        void setParent(BlockElement *parent);
+        BlockElement *parent() const;
 
-        void setLineNumber(int line) { _lineNumber = line; }
-        int lineNumber() const { return _lineNumber; }
+        void setSourceLocation(String const &sourcePath, int line);
+        String sourcePath() const;
+        int lineNumber() const;
+        String sourceLocation() const;
 
-        Type type() const { return _type; }
-        bool isKey() const { return _type == Key; }
-        bool isList() const { return _type == List; }
-        bool isBlock() const { return _type == Block; }
-        String const &name() const { return _name; }
+        Type type() const;
+        bool isKey() const { return type() == Key; }
+        bool isList() const { return type() == List; }
+        bool isBlock() const { return type() == Block; }
+        String const &name() const;
 
-        DENG2_AS_IS_METHODS()
-
-        void setName(String const &name) { _name = name; }
+        void setName(String const &name);
 
         /// Convenience for case-insensitively checking if the name matches @a name.
-        bool isName(String const &name) const {
-            return !_name.compareWithoutCase(name);
+        inline bool isName(String const &str) const {
+            return !name().compareWithoutCase(str);
         }
 
         virtual ValueList values() const = 0;
 
+        DENG2_AS_IS_METHODS()
+
     private:
-        Type _type;
-        String _name;
-        BlockElement *_parent;
-        int _lineNumber;
+        DENG2_PRIVATE(d)
     };
 
     /**
@@ -231,11 +229,46 @@ public:
          */
         Element *findByPath(String const &path) const;
 
+        /**
+         * Moves all elements in this block to the destination block. This block
+         * will be empty afterwards.
+         *
+         * @param destination  Block.
+         */
+        void moveContents(BlockElement &destination);
+
     private:
         Info &_info;
         String _blockType;
         Contents _contents; // indexed in lower case
         ContentsInOrder _contentsInOrder;
+    };
+
+    /**
+     * Interface for objects that provide included document content. @ingroup data
+     */
+    class DENG2_PUBLIC IIncludeFinder
+    {
+    public:
+        virtual ~IIncludeFinder() {}
+
+        /**
+         * Finds an Info document.
+         *
+         * @param includeName  Name of the Info document as specified in an \@include
+         *                     directive.
+         * @param from         Info document where the inclusion occurs.
+         * @param sourcePath   Optionally, the path of the Info source is returned
+         *                     here (if the content was read from a file). This can
+         *                     be NULL if the caller doesn't need to know the path.
+         *
+         * @return Content of the included document.
+         */
+        virtual String findIncludedInfoSource(String const &includeName, Info const &from,
+                                              String *sourcePath) const = 0;
+
+        /// The included document could not be found. @ingroup errors
+        DENG2_ERROR(NotFoundError);
     };
 
 public:
@@ -246,11 +279,30 @@ public:
     Info();
 
     /**
+     * Sets the finder for included documents. By default, attempts to locate Info files
+     * by treating the name of the included file as an absolute path.
+     *
+     * @param finder  Include finder object. Info does not take ownership.
+     */
+    void setFinder(IIncludeFinder const &finder);
+
+    void useDefaultFinder();
+
+    /**
      * Parses a string of text as Info source.
      *
      * @param source  Info source text.
      */
     Info(String const &source);
+
+    /**
+     * Parses a file containing Info source.
+     *
+     * @param source  Info source text.
+     */
+    Info(File const &file);
+
+    Info(String const &source, IIncludeFinder const &finder);
 
     /**
      * Sets all the block types whose content is parsed using a script parser.
@@ -270,6 +322,13 @@ public:
     void parse(String const &infoSource);
 
     /**
+     * Parses the Info source read from a file.
+     *
+     * @param file  File containing an Info document.
+     */
+    void parse(File const &file);
+
+    /**
      * Parses the Info contents from a native text file.
      *
      * @param nativePath  Path of a native file containing the Info source.
@@ -277,6 +336,15 @@ public:
     void parseNativeFile(NativePath const &nativePath);
 
     void clear();
+
+    void setSourcePath(String const &path);
+
+    /**
+     * Path of the source, if it has been read from a file.
+     *
+     * @return Source path in the file system.
+     */
+    String sourcePath() const;
 
     BlockElement const &root() const;
 

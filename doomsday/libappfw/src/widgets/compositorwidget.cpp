@@ -117,7 +117,7 @@ GLTexture &CompositorWidget::composite() const
     return d->buffers.first()->texture;
 }
 
-void CompositorWidget::setCompositeProjection(const Matrix4f &projMatrix)
+void CompositorWidget::setCompositeProjection(Matrix4f const &projMatrix)
 {
     d->uMvpMatrix = projMatrix;
 }
@@ -139,6 +139,7 @@ void CompositorWidget::preDrawChildren()
     //qDebug() << "entering compositor" << d->nextBufIndex;
 
     Instance::Buffer *buf = d->beginBufferUse();
+    DENG2_ASSERT(!buf->offscreen.isNull());
 
     GLState::push()
             .setTarget(*buf->offscreen)

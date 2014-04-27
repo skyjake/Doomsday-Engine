@@ -135,10 +135,11 @@
 
 #ifndef NDEBUG
 #  define DENG2_DEBUG
+   extern "C" DENG2_PUBLIC void LogBuffer_Flush(void);
 #  ifdef DENG2_USE_QT
-#    define DENG2_ASSERT(x) Q_ASSERT(x)
+#    define DENG2_ASSERT(x) {if(!(x)) {LogBuffer_Flush(); Q_ASSERT(x);}}
 #  else
-#    define DENG2_ASSERT(x) assert(x)
+#    define DENG2_ASSERT(x) {if(!(x)) {LogBuffer_Flush(); assert(x);}}
 #  endif
 #  define DENG2_DEBUG_ONLY(x) x
 #else

@@ -19,6 +19,7 @@
 #include "de/InfoBank"
 #include "de/ScriptedInfo"
 #include "de/File"
+#include "de/App"
 
 namespace de {
 
@@ -26,6 +27,7 @@ DENG2_PIMPL_NOREF(InfoBank)
 {
     ScriptedInfo info;
     Time modTime;
+    String relativeToPath;
 };
 
 InfoBank::InfoBank(Bank::Flags const &flags, String const &hotStorageLocation)
@@ -36,6 +38,7 @@ void InfoBank::parse(String const &source)
 {
     try
     {
+        d->relativeToPath = "";
         d->modTime = Time();
         d->info.parse(source);
     }
@@ -49,6 +52,7 @@ void InfoBank::parse(File const &file)
 {
     try
     {
+        d->relativeToPath = file.path().fileNamePath();
         d->modTime = file.status().modifiedAt;
         d->info.parse(file);
     }
@@ -89,6 +93,24 @@ void InfoBank::addFromInfoBlocks(String const &blockType)
 Time InfoBank::sourceModifiedAt() const
 {
     return d->modTime;
+}
+
+String InfoBank::bankRootPath() const
+{
+    return d->relativeToPath;
+}
+
+String InfoBank::relativeToPath(Record const &context) const
+{
+    if(context.has("__source__"))
+    {
+        String src = context["__source__"].value<TextValue>();
+        int pos = src.lastIndexOf(':');
+        if(pos < 0) return src;
+        src.truncate(pos);
+        return src.fileNamePath();
+    }
+    return bankRootPath();
 }
 
 Variable const &InfoBank::operator [] (String const &name) const

@@ -382,8 +382,8 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateRangeLabels()
     {
-        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor) : minLabel);
-        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor)   : maxLabel);
+        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor, 'g', precision) : minLabel);
+        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor, 'g', precision)   : maxLabel);
     }
 
     void startGrab(MouseEvent const &ev)
@@ -492,6 +492,7 @@ void SliderWidget::setPrecision(int precisionDecimals)
 {
     d->precision = precisionDecimals;
     d->updateValueLabel();
+    d->updateRangeLabels();
 }
 
 void SliderWidget::setValue(ddouble value)

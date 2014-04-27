@@ -173,7 +173,10 @@ int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlia
 
 void LogBuffer_Flush(void)
 {
-    de::LogBuffer::appBuffer().flush();
+    if(de::LogBuffer::appBufferExists())
+    {
+        de::LogBuffer::appBuffer().flush();
+    }
 }
 
 void LogBuffer_Clear(void)

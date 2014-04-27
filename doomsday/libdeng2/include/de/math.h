@@ -35,6 +35,7 @@ namespace de {
 
 //#undef PI
 ddouble const PI = 3.1415926535897932384626433832795028841971693993751;
+dfloat const PIf = dfloat(PI);
 ddouble const EPSILON = 1.0e-7;
 dfloat const FLOAT_EPSILON = 1.0e-5f;
 
@@ -52,10 +53,21 @@ inline duint abs(duint const &a) {
     return a;
 }
 
+template <typename Type>
+inline Type sign(Type const &a) {
+    if(a < 0) return Type(-1); else return Type(1);
+}
+
 /// Minimum of two values.
 template <typename Type>
 inline Type const &min(Type const &a, Type const &b) {
     return (a < b? a : b);
+}
+
+/// Minimum of three values.
+template <typename Type>
+inline Type const &min(Type const &a, Type const &b, Type const &c) {
+    return min(a, min(b, c));
 }
 
 /// Maximum of two values.
@@ -64,10 +76,22 @@ inline Type const &max(Type const &a, Type const &b) {
     return (a > b? a : b);
 }
 
+/// Maximum of three values.
+template <typename Type>
+inline Type const &max(Type const &a, Type const &b, Type const &c) {
+    return max(a, max(b, c));
+}
+
 /// Clamp value within range.
 template <typename Type>
 inline Type clamp(Type const &low, Type const &value, Type const &high) {
     return min(max(value, low), high);
+}
+
+/// Clamp value within @a lowHighLimit and @a -lowHighLimit.
+template <typename Type>
+inline Type clamp(Type const &value, Type const &lowHighLimit) {
+    return clamp(-lowHighLimit, value, lowHighLimit);
 }
 
 /// Wrap value within range [low, high).
@@ -176,8 +200,8 @@ IntType ceilPow2(IntType const &num) {
  * @param pos    Normalized interpolation point [0..1].
  */
 template <typename Type>
-inline Type lerp(Type start, Type end, float pos) {
-    return end * pos + (start * (1 - pos));
+inline Type lerp(Type const &start, Type const &end, float pos) {
+    return end * pos + (start * (1.f - pos));
 }
 
 } // namespace de

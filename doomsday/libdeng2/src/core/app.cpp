@@ -264,10 +264,9 @@ DENG2_PIMPL(App)
 
     void checkForErrorDumpFile()
     {
-        int pos = cmdLine.check("-errors", 1);
-        if(pos > 0)
+        if(CommandLine::ArgWithParams arg = cmdLine.check("-errors", 1))
         {
-            File &errors = self.rootFolder().replaceFile(Path("/home") / cmdLine.at(pos + 1));
+            File &errors = self.rootFolder().replaceFile(Path("/home") / arg.params.at(0));
             errorSink.reset(new FileLogSink(errors));
             errorSink->setMode(LogSink::OnlyWarningEntries);
             logBuffer.addSink(*errorSink);
@@ -554,10 +553,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
     try
     {
         // The -out option can be used to override the configured output file.
-        int pos = 0;
-        if((pos = commandLine().check("-out", 1)) > 0)
+        if(CommandLine::ArgWithParams outArg = commandLine().check("-out", 1))
         {
-            logBuf.setOutputFile(String("/home") / commandLine().at(pos + 1));
+            logBuf.setOutputFile(String("/home") / outArg.params.at(0));
         }
         else
         {

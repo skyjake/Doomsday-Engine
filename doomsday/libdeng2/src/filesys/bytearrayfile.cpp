@@ -21,6 +21,11 @@
 
 namespace de {
 
+dsize ByteArrayFile::size() const
+{
+    return File::size();
+}
+
 IOStream &ByteArrayFile::operator << (IByteArray const &bytes)
 {
     // Append the bytes to the end of the file.

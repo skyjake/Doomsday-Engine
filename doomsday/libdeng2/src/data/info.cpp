@@ -21,21 +21,36 @@
 #include "de/ScriptLex"
 #include "de/Log"
 #include "de/LogBuffer"
+#include "de/Zeroed"
+#include "de/App"
 #include <QFile>
 
-using namespace de;
+namespace de {
 
 static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
 static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
+static QString const INCLUDE_TOKEN = "@include";
 
 DENG2_PIMPL(Info)
 {
     DENG2_ERROR(OutOfElements);
     DENG2_ERROR(EndOfFile);
 
+    struct DefaultIncludeFinder : public IIncludeFinder
+    {
+        String findIncludedInfoSource(String const &includeName, Info const &info,
+                                      String *sourcePath) const
+        {
+            String path = info.sourcePath().fileNamePath() / includeName;
+            if(sourcePath) *sourcePath = path;
+            return String::fromUtf8(Block(App::rootFolder().locate<File const>(path)));
+        }
+    };
+
     QStringList scriptBlockTypes;
     QStringList allowDuplicateBlocksOfType;
+    String sourcePath; ///< May be unknown (empty).
     String content;
     int currentLine;
     int cursor; ///< Index of the next character from the source.
@@ -43,13 +58,18 @@ DENG2_PIMPL(Info)
     int tokenStartOffset;
     String currentToken;
     BlockElement rootBlock;
+    DefaultIncludeFinder defaultFinder;
+    IIncludeFinder const *finder;
 
     typedef Info::Element::Value InfoValue;
 
     Instance(Public *i)
-        : Base(i),
-          currentLine(0), cursor(0), tokenStartOffset(0),
-          rootBlock("", "", *i)
+        : Base(i)
+        , currentLine(0)
+        , cursor(0)
+        , tokenStartOffset(0)
+        , rootBlock("", "", *i)
+        , finder(&defaultFinder)
     {
         scriptBlockTypes << "script";
     }
@@ -242,7 +262,7 @@ DENG2_PIMPL(Info)
 
         DENG2_ASSERT(result != 0);
 
-        result->setLineNumber(elementLine);
+        result->setSourceLocation(sourcePath, elementLine);
         return result;
     }
 
@@ -546,6 +566,32 @@ success:;
         return block.take();
     }
 
+    void includeFrom(String const &includeName)
+    {
+        try
+        {
+            DENG2_ASSERT(finder != 0);
+
+            String includePath;
+            String content = finder->findIncludedInfoSource(includeName, self, &includePath);
+
+            Info included;
+            included.setFinder(*finder); // use ours
+            included.setSourcePath(includePath);
+            included.parse(content);
+
+            // Move the contents of the resulting root block to our root block.
+            included.d->rootBlock.moveContents(rootBlock);
+        }
+        catch(Error const &er)
+        {
+            throw IIncludeFinder::NotFoundError("Info::includeFrom",
+                    QString("Cannot include '%1': %2")
+                    .arg(includeName)
+                    .arg(er.asText()));
+        }
+    }
+
     void parse(String const &source)
     {
         init(source);
@@ -553,10 +599,94 @@ success:;
         {
             Element *e = parseElement();
             if(!e) break;
+
+            // If this is an include directive, try to acquire the inclusion and parse it
+            // instead. Inclusions are only possible at the root level.
+            if(e->isList() && e->name() == INCLUDE_TOKEN)
+            {
+                foreach(Element::Value const &val, e->as<ListElement>().values())
+                {
+                    includeFrom(val);
+                }
+            }
+
             rootBlock.add(e);
         }
     }
+
+    void parse(File const &file)
+    {
+        sourcePath = file.path();
+        parse(String::fromUtf8(Block(file)));
+    }
 };
+
+//---------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(Info::Element)
+{
+    Type type;
+    String name;
+    Zeroed<BlockElement *> parent;
+    String sourcePath;
+    Zeroed<int> lineNumber;
+};
+
+Info::Element::Element(Type type, String const &name)
+    : d(new Instance)
+{
+    d->type = type;
+    setName(name);
+}
+
+Info::Element::~Element()
+{}
+
+void Info::Element::setParent(BlockElement *parent)
+{
+    d->parent = parent;
+}
+
+Info::BlockElement *Info::Element::parent() const
+{
+    return d->parent;
+}
+
+void Info::Element::setSourceLocation(String const &sourcePath, int line)
+{
+    d->sourcePath = sourcePath;
+    d->lineNumber = line;
+}
+
+String Info::Element::sourcePath() const
+{
+    return d->sourcePath;
+}
+
+int Info::Element::lineNumber() const
+{
+    return d->lineNumber;
+}
+
+String Info::Element::sourceLocation() const
+{
+    return String("%1:%2").arg(d->sourcePath).arg(d->lineNumber);
+}
+
+Info::Element::Type Info::Element::type() const
+{
+    return d->type;
+}
+
+String const &Info::Element::name() const
+{
+    return d->name;
+}
+
+void Info::Element::setName(String const &name)
+{
+    d->name = name;
+}
 
 Info::BlockElement::~BlockElement()
 {
@@ -576,24 +706,6 @@ void Info::BlockElement::clear()
 void Info::BlockElement::add(Info::Element *elem)
 {
     DENG2_ASSERT(elem != 0);
-
-	/*
-
-	/// @todo This check is at the wrong level. Conditions may be applied
-	/// to resolve duplicates. Check when processing...
-
-    // Check for duplicate identifiers in this block.
-    if(elem->name() && _contents.contains(elem->name()))
-    {
-        if(!elem->isBlock() || !info().d->allowDuplicateBlocksOfType.contains(
-                    elem->as<BlockElement>().blockType()))
-        {
-            LOG_AS("Info::BlockElement");
-            LOG_WARNING("Block '%s' already has an element named '%s'")
-                    << name() << elem->name();
-        }
-    }
-	*/
 
     elem->setParent(this);
     _contentsInOrder.append(elem); // owned
@@ -645,6 +757,18 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     return e;
 }
 
+void Info::BlockElement::moveContents(BlockElement &destination)
+{
+    foreach(Element *e, _contentsInOrder)
+    {
+        destination.add(e);
+    }
+    _contentsInOrder.clear();
+    _contents.clear();
+}
+
+//---------------------------------------------------------------------------------------
+
 Info::Info() : d(new Instance(this))
 {}
 
@@ -653,6 +777,31 @@ Info::Info(String const &source)
     QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
     inst->parse(source);
     d.reset(inst.take());
+}
+
+Info::Info(File const &file)
+{
+    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
+    inst->parse(file);
+    d.reset(inst.take());
+}
+
+Info::Info(String const &source, IIncludeFinder const &finder)
+{
+    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
+    inst->finder = &finder;
+    inst->parse(source);
+    d.reset(inst.take());
+}
+
+void Info::setFinder(IIncludeFinder const &finder)
+{
+    d->finder = &finder;
+}
+
+void Info::useDefaultFinder()
+{
+    d->finder = &d->defaultFinder;
 }
 
 void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
@@ -670,6 +819,11 @@ void Info::parse(String const &infoSource)
     d->parse(infoSource);
 }
 
+void Info::parse(File const &file)
+{
+    d->parse(file);
+}
+
 void Info::parseNativeFile(NativePath const &nativePath)
 {
     QFile file(nativePath);
@@ -681,7 +835,18 @@ void Info::parseNativeFile(NativePath const &nativePath)
 
 void Info::clear()
 {
+    d->sourcePath.clear();
     parse("");
+}
+
+void Info::setSourcePath(String const &path)
+{
+    d->sourcePath = path;
+}
+
+String Info::sourcePath() const
+{
+    return d->sourcePath;
 }
 
 Info::BlockElement const &Info::root() const
@@ -705,3 +870,5 @@ bool Info::findValueForKey(String const &key, String &value) const
     }
     return false;
 }
+
+} // namespace de

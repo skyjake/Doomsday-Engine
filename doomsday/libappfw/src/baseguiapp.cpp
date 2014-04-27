@@ -86,6 +86,7 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
     Binder binder;
     QScopedPointer<PersistentState> uiState;
     GLShaderBank shaders;
+    WaveformBank waveforms;
     VRConfig vr;
 };
 
@@ -120,6 +121,11 @@ PersistentState &BaseGuiApp::persistentUIState()
 GLShaderBank &BaseGuiApp::shaders()
 {
     return app().d->shaders;
+}
+
+WaveformBank &BaseGuiApp::waveforms()
+{
+    return app().d->waveforms;
 }
 
 VRConfig &BaseGuiApp::vr()

@@ -265,6 +265,12 @@ public:
     IByteArray::Offset offset() const;
 
     /**
+     * Returns the number of bytes still available for reading.
+     * @return Byte count.
+     */
+    IByteArray::Size remainingSize() const;
+
+    /**
      * Move to a specific position in the source data.
      *
      * @param offset  Offset to move to.

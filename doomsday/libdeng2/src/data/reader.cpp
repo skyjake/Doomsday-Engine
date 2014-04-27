@@ -183,16 +183,21 @@ DENG2_PIMPL_NOREF(Reader)
 
     bool atEnd()
     {
+        return remaining() == 0;
+    }
+
+    IByteArray::Size remaining()
+    {
         if(source)
         {
-            return offset == source->size();
+            return source->size() - offset;
         }
         if(stream || constStream)
         {
             update();
-            return incoming.size() > 0;
+            return incoming.size();
         }
-        return true;
+        return 0;
     }
 };
 
@@ -421,6 +426,11 @@ bool Reader::atEnd() const
 IByteArray::Offset Reader::offset() const
 {
     return d->offset;
+}
+
+IByteArray::Size Reader::remainingSize() const
+{
+    return d->remaining();
 }
 
 void Reader::setOffset(IByteArray::Offset offset)
