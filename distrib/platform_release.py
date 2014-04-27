@@ -284,15 +284,16 @@ def mac_release():
     remkdir('imaging')
     os.system('hdiutil attach %s -noautoopen -quiet -mountpoint imaging' % templateFile)
     
-    shutil.copy('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
-    shutil.copy('Doomsday Shell.app',  'imaging/Doomsday Shell.app')
+    remove('imaging/Doomsday.pkg') # included in bzipped image
+    duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
+    duptree('Doomsday Shell.app',  'imaging/Doomsday Shell.app')
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
     
-    os.system('hdiutil detach -queit imaging')
-    os.system('hdiutil convert %s -format UDZO -imagekey zlib-level=9 -o "%s"' % (
+    os.system('hdiutil detach -quiet imaging')
+    os.system('hdiutil convert %s -format UDZO -imagekey zlib-level=9 -o "../releases/%s"' % (
             templateFile, output_filename('_apps-' + mac_osx_suffix() + '.dmg')))
     remove(templateFile)
     
