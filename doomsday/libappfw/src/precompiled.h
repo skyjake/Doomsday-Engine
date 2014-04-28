@@ -1,4 +1,4 @@
-/** @file precompiled.h  Precompiled headers for libdeng2.
+/** @file precompiled.h  Precompiled headers for libappfw.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -52,5 +52,18 @@
 #include <QTimer>
 #include <QVarLengthArray>
 #include <QVector>
+
+// libdeng2:
+#include <de/App>
+#include <de/Error>
+#include <de/Log>
+#include <de/NativePath>
+#include <de/Observers>
+#include <de/PathTree>
+#include <de/Reader>
+#include <de/Rectangle>
+#include <de/String>
+#include <de/Vector>
+#include <de/Writer>
 
 #endif

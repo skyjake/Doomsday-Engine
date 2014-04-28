@@ -70,6 +70,8 @@ else {
 
 # Source Files ---------------------------------------------------------------
 
+PRECOMPILED_HEADER = include/precompiled.h
+
 DENG_API_HEADERS = \
     $$DENG_API_DIR/apis.h \
     $$DENG_API_DIR/api_audiod.h \
@@ -478,6 +480,7 @@ INCLUDEPATH += \
     $$DENG_API_DIR
 
 HEADERS += \
+    include/precompiled.h \
     $$DENG_API_HEADERS \
     $$DENG_HEADERS
 

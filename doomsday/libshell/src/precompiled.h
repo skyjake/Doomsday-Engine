@@ -1,4 +1,4 @@
-/** @file precompiled.h  Precompiled headers for libdeng2.
+/** @file precompiled.h  Precompiled headers for libshell.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

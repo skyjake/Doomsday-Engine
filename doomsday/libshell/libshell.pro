@@ -22,6 +22,8 @@ DEFINES += __LIBSHELL__
 
 INCLUDEPATH += include
 
+PRECOMPILED_HEADER = src/precompiled.h
+
 # Public headers.
 publicHeaders(shell, \
     include/de/shell/AbstractLineEditor \

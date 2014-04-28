@@ -1,4 +1,4 @@
-/** @file precompiled.h  Precompiled headers for libdeng2.
+/** @file precompiled.h  Precompiled headers for libgui.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -15,6 +15,11 @@
  * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+
+#ifdef WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
 
 #ifdef __cplusplus
 
@@ -35,13 +40,21 @@
 
 // Qt:
 #include <QtCore/qglobal.h>
+#include <QApplication>
+#include <QColor>
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QDebug>
 #include <QFlags>
+#include <QFont>
+#include <QFontMetrics>
 #include <QList>
+#include <QImage>
 #include <QMap>
 #include <QMutex>
+#include <QPainter>
+#include <QPoint>
+#include <QRect>
 #include <QScopedPointer>
 #include <QSet>
 #include <QString>

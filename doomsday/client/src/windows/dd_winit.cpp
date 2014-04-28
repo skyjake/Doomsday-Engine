@@ -19,7 +19,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_DCOM
-#define STRICT
+//#define STRICT
 
 #ifdef __CLIENT__
 #  include <de/DisplayMode>

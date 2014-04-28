@@ -71,6 +71,11 @@ else {
 # Prefix for source files (shared for now):
 SRC = ../client
 
+PRECOMPILED_HEADER = include/precompiled.h
+
+HEADERS += include/precompiled.h \
+    include/precompiled.h
+
 DENG_API_HEADERS = \
     $$DENG_API_DIR/apis.h \
     $$DENG_API_DIR/api_audiod.h \

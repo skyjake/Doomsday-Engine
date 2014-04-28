@@ -1,4 +1,4 @@
-/** @file precompiled.h  Precompiled headers for libdeng2.
+/** @file precompiled.h  Precompiled headers for Doomsday Server.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,6 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include <stdio.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#ifdef WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
+
 #ifdef __cplusplus
 
 // C++ standard library:
@@ -31,16 +42,21 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 // Qt:
 #include <QtCore/qglobal.h>
+#include <QtAlgorithms>
+#include <QBitArray>
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QDebug>
 #include <QFlags>
 #include <QList>
 #include <QMap>
+#include <QMultiMap>
+#include <QMutableMapIterator>
 #include <QMutex>
 #include <QScopedPointer>
 #include <QSet>
@@ -52,5 +68,19 @@
 #include <QTimer>
 #include <QVarLengthArray>
 #include <QVector>
+
+// Doomsday SDK:
+#include <de/App>
+#include <de/Error>
+#include <de/Log>
+#include <de/memory.h>
+#include <de/NativePath>
+#include <de/Observers>
+#include <de/PathTree>
+#include <de/Reader>
+#include <de/Rectangle>
+#include <de/String>
+#include <de/Vector>
+#include <de/Writer>
 
 #endif

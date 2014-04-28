@@ -45,6 +45,10 @@ else:unix {
     }
 }
 
+PRECOMPILED_HEADER = src/precompiled.h
+
+HEADERS += src/precompiled.h
+
 # Public headers.
 publicHeaders(root, \
     include/de/Atlas \

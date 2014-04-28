@@ -27,6 +27,10 @@ win32 {
     TARGET_EXT = .dll
 }
 
+PRECOMPILED_HEADER = src/precompiled.h
+
+HEADERS += src/precompiled.h
+
 # Public headers.
 publicHeaders(root, \
     include/de/AtlasProceduralImage \
