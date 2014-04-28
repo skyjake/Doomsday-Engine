@@ -37,7 +37,7 @@ class GLBuffer;
  *
  * @ingroup gl
  */
-class ModelDrawable : public AssetGroup
+class LIBGUI_PUBLIC ModelDrawable : public AssetGroup
 {
 public:
     /// An error occurred during the loading of the model data. @ingroup errors

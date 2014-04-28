@@ -4,11 +4,25 @@ aiIncDir = ""
 aiLibs   = ""
 
 !isEmpty(ASSIMP_DIR) {
-    aiIncDir = $$ASSIMP_DIR/include
-    aiLibs   = -L$$ASSIMP_DIR/lib -lassimp
-    *-g*|*-clang* {
-        # Inform the dynamic linker about a custom location.
-        QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib
+    !win32 {
+        aiIncDir = $$ASSIMP_DIR/include
+        aiLibs   = -L$$ASSIMP_DIR/lib -lassimp
+        *-g*|*-clang* {
+            # Inform the dynamic linker about a custom location.
+            QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib
+        }
+    }
+    else {
+        # On Windows we assume that cmake has been run in the root of
+        # the assimp source tree.
+        aiIncDir = $$ASSIMP_DIR/include
+        deng_debug: aiLibs = -L$$ASSIMP_DIR/lib/debug -lassimpd
+              else: aiLibs = -L$$ASSIMP_DIR/lib/release -lassimp
+
+        INSTALLS += assimplib
+        assimplib.path = $$DENG_BIN_DIR
+        deng_debug: assimplib.files = $$ASSIMP_DIR/bin/debug/assimpd.dll
+              else: assimplib.files = $$ASSIMP_DIR/bin/release/assimp.dll
     }
 }
 else:!macx:!win32 {
