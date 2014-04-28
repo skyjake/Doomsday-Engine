@@ -101,6 +101,7 @@ Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtOpenGL4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\imageformats\qjpeg4.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+Source: "bin\assimp.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\OpenAL32.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
