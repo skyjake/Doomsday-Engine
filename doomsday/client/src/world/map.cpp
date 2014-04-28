@@ -1277,9 +1277,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
          * Apply changes to all surfaces:
          */
         bias.lastChangeOnFrame = R_FrameCount();
-        foreach(BspLeaf *bspLeaf, bspLeafs)
+        foreach(SectorCluster *cluster, clusters)
         {
-            bspLeaf->applyBiasDigest(allChanges);
+            cluster->applyBiasDigest(allChanges);
         }
     }
 

@@ -90,8 +90,8 @@ public:
      * @param point  3D point.
      *
      * @return  Evaluated color at the specified point.
-     * - [x, y, z] = RGB color with premultiplied luminance factor
-     * - [w]       = luminance factor (i.e., light level)
+     * - [x, y, z] = RGB color with premultiplied light intensity factor
+     * - [w]       = light intensity factor (i.e., light level)
      */
     Vector4f evaluate(Vector3d const &point);
 

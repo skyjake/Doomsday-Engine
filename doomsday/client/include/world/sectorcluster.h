@@ -39,6 +39,9 @@
 #include <QList>
 
 class BspLeaf;
+#ifdef __CLIENT__
+class BiasDigest;
+#endif
 
 /**
  * Adjacent BSP leafs in the sector (i.e., those which share one or more
@@ -229,6 +232,13 @@ public:
      * this time (@ref markReverbDirty()).
      */
     AudioEnvironmentFactors const &reverb() const;
+
+    /**
+     * Apply bias lighting changes to @em all surfaces within the cluster.
+     *
+     * @param changes  Digest of lighting changes to be applied.
+     */
+    void applyBiasDigest(BiasDigest &changes);
 
     /**
      * Returns the unique identifier of the light source.

@@ -121,7 +121,7 @@ DENG2_PIMPL(LightGrid)
          * Construct a new light block using the source specified as the @em primary
          * illumination source for the block.
          *
-         * @param primarySource  Primary illumation. Use @c 0 to create a "null-block".
+         * @param primarySource  Primary illumination. Use @c 0 to create a "null-block".
          */
         LightBlock(IBlockLightSource *primarySource = 0)
             : bias(0), source(primarySource)

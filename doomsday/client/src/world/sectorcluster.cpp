@@ -982,6 +982,40 @@ bool SectorCluster::hasSkyMaskedPlane() const
     return false;
 }
 
+static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
+{
+    if(!hedge || !hedge->hasMapElement())
+        return;
+    hedge->mapElementAs<LineSideSegment>().applyBiasDigest(changes);
+}
+
+void SectorCluster::applyBiasDigest(BiasDigest &changes)
+{
+    foreach(BspLeaf *bspLeaf, d->bspLeafs)
+    {
+        bspLeaf->applyBiasDigest(changes);
+
+        HEdge *base = bspLeaf->poly().hedge();
+        HEdge *hedge = base;
+        do
+        {
+            applyBiasDigestToWallSections(hedge, changes);
+        } while((hedge = &hedge->next()) != base);
+
+        foreach(Mesh *mesh, bspLeaf->extraMeshes())
+        foreach(HEdge *hedge, mesh->hedges())
+        {
+            applyBiasDigestToWallSections(hedge, changes);
+        }
+
+        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
+        foreach(HEdge *hedge, polyobj->mesh().hedges())
+        {
+            applyBiasDigestToWallSections(hedge, changes);
+        }
+    }
+}
+
 SectorCluster::LightId SectorCluster::lightSourceId() const
 {
     /// @todo Need unique cluster ids.

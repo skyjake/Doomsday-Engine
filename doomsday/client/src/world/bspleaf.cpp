@@ -474,13 +474,6 @@ void BspLeaf::updateBiasAfterGeometryMove(int group)
     }
 }
 
-static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
-{
-    if(!hedge || !hedge->hasMapElement())
-        return;
-    hedge->mapElementAs<LineSideSegment>().applyBiasDigest(changes);
-}
-
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
 {
     if(!hasPoly()) return;
@@ -489,25 +482,6 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
         it != d->geomGroups.end(); ++it)
     {
         it.value().biasTracker.applyChanges(changes);
-    }
-
-    HEdge *base = poly().hedge();
-    HEdge *hedge = base;
-    do
-    {
-        applyBiasDigestToWallSections(hedge, changes);
-    } while((hedge = &hedge->next()) != base);
-
-    foreach(Mesh *mesh, extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
-    {
-        applyBiasDigestToWallSections(hedge, changes);
-    }
-
-    foreach(Polyobj *polyobj, d->polyobjs)
-    foreach(HEdge *hedge, polyobj->mesh().hedges())
-    {
-        applyBiasDigestToWallSections(hedge, changes);
     }
 }
 
