@@ -554,7 +554,7 @@ LightGrid::IBlockLightSource *LightGrid::primarySource(Index index) const
     return d->block(index).source;
 }
 
-void LightGrid::primarySourceLightChanged(IBlockLightSource *changed)
+void LightGrid::blockLightSourceChanged(IBlockLightSource *changed)
 {
     // Updates are unnecessary if not enabled.
     if(!lgEnabled) return;

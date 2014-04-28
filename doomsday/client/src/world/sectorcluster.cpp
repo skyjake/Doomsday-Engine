@@ -805,13 +805,13 @@ DENG2_PIMPL(SectorCluster)
     /// Observes Sector LightLevelChange.
     void sectorLightLevelChanged(Sector &sector)
     {
-        sector.map().lightGrid().primarySourceLightChanged(thisPublic);
+        sector.map().lightGrid().blockLightSourceChanged(thisPublic);
     }
 
     /// Observes Sector LightColorChange.
     void sectorLightColorChanged(Sector &sector)
     {
-        sector.map().lightGrid().primarySourceLightChanged(thisPublic);
+        sector.map().lightGrid().blockLightSourceChanged(thisPublic);
     }
 #endif // __CLIENT__
 };

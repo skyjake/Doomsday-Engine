@@ -73,9 +73,10 @@ public:
     LightGrid(Vector2d const &origin, Vector2d const &dimensions);
 
     /**
-     * To be called when physical dimensions of the grid or the logical block size
-     * changes to resize the light grid. Note that resizing inherently means clearing
-     * of primary illumination sources, so they'll need to be initialized again.
+     * To be called when the physical dimensions of the grid or the logical block
+     * size changes to resize the light grid. Note that resizing inherently means
+     * clearing of primary illumination sources, so they'll need to be initialized
+     * again.
      *
      * @param newOrigin      Origin of the grid in map space.
      * @param newDimensions  Dimensions of the grid in map space units.
@@ -139,7 +140,7 @@ public:
      * IBlockLightSources are obliged to call this whenever the attributes of the
      * the light source have changed to schedule any necessary grid updates.
      */
-    void primarySourceLightChanged(IBlockLightSource *changedSource);
+    void blockLightSourceChanged(IBlockLightSource *changedSource);
 
     /**
      * Register the console comands and variables of this module.
