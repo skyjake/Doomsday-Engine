@@ -16,6 +16,26 @@ For compilation instructions and other details, see the documentation wiki: http
 
 **libshell** has functionality related to connecting to and controlling Doomsday servers remotely.
 
+## External Dependencies
+
+### Qt
+
+The minimum required version of Qt is 4.7. See [Supported platforms](http://dengine.net/dew/index.php?title=Supported_platforms) in the wiki for details about which version is being used on which platform.
+
+### Open Asset Import Library
+
+libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/lib_html/index.html) to read 3D model and animation files.
+
+1. Clone https://github.com/skyjake/assimp.
+2. Check out the "deng-patches" branch.
+3. Run [cmake](http://cmake.org) to generate appropriate project files (e.g., Visual Studio on Windows).
+4. Compile the generated project.
+5. Add `ASSIMP_DIR` to your *config_user.pri*.
+
+### FMOD Ex
+
+The optional FMOD audio plugin requires the [FMOD Ex Programmer's API](http://fmod.org/).
+
 ## Branches
 
 The following branches are currently active in the repository.
