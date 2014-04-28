@@ -41,19 +41,20 @@ class Event:
         self.packages = ['doomsday', 'doomsday_app', 'doomsday_shell_app', 'fmod']
         
         self.packageName = {'doomsday':           'Doomsday',
+                            'doomsday_apps':      'OS X Apps',
                             'doomsday_app':       'Doomsday Engine.app',
                             'doomsday_shell_app': 'Doomsday Shell.app',
                             'fmod':               'FMOD Ex Audio Plugin'}
         
         if self.num >= 816: # Added Mac OS X 10.8.
-            # Platforms:  Name                            File ext       sys_id()
-            self.oses = [('Windows (x86)',                '.exe',        'win32-32bit'),
-                         ('Mac OS X 10.8+ (x86_64)',      '.dmg',        'macx8-64bit'),
-                         ('Mac OS X 10.6+ (x86_64/i386)', 'mac10_6.dmg', 'darwin-64bit'),
-                         ('Mac OS X 10.4+ (ppc/i386)',    '32bit.dmg',   'darwin-32bit'),
-                         ('Ubuntu (x86_64)',              'amd64.deb',   'linux2-64bit'),
-                         ('Ubuntu (x86)',                 'i386.deb',    'linux2-32bit'),
-                         ('Source',                       '.tar.gz',      'source')]
+            # Platforms:  Name                              File ext          sys_id()
+            self.oses = [('Windows (x86)',                 '.exe',           'win32-32bit'),
+                         ('OS X 10.8+ (x86_64)',           ('.dmg', 'macx8.dmg'), 'macx8-64bit'),
+                         ('OS X 10.6+ (x86_64/i386)',      ('mac10_6.dmg', 'macx6.dmg'), 'darwin-64bit'),
+                         ('OS X 10.4+ (ppc/i386)',         '32bit.dmg',      'darwin-32bit'),
+                         ('Ubuntu (x86_64)',               'amd64.deb',      'linux2-64bit'),
+                         ('Ubuntu (x86)',                  'i386.deb',       'linux2-32bit'),
+                         ('Source',                        '.tar.gz',        'source')]
 
             if self.has_version() and utils.version_cmp(self.version_base(), '1.11') >= 0:
                 del self.oses[3] # no more OS X 10.4
@@ -93,6 +94,7 @@ class Event:
             return 'distribution'
 
     def package_from_filename(self, name):
+        if 'apps-macx' in name: return 'doomsday_apps'
         if name.endswith('.zip'):
             if 'doomsday_osx' in name:
                 return 'doomsday_app'
@@ -105,11 +107,16 @@ class Event:
     
     def os_from_filename(self, name):
         found = None
-        for n, ext, ident in self.oses:
-            if name.endswith(ext) or ident in name:
-                found = (n, ext, ident)
-            if n.startswith('Mac OS X 10.') and name.endswith('.zip'):
-                osx = '_osx' + n[12] + '_'
+        for n, osExt, ident in self.oses:
+            if type(osExt) == 'tuple':
+                exts = osExt
+            else:
+                exts = [osExt]
+            for ext in exts:
+                if name.endswith(ext) or ident in name:
+                    found = (n, ext, ident)
+            if n.startswith('OS X 10.') and name.endswith('.zip'):
+                osx = '_osx' + n[8] + '_'
                 if osx in name:
                     found = (n, ext, ident)
         return found
