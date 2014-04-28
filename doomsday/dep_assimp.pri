@@ -3,13 +3,31 @@ aiOpts   = ""
 aiIncDir = ""
 aiLibs   = ""
 
+deng_extassimp {
+    ASSIMP_DIR = $$PWD/external/assimp
+}
+
 !isEmpty(ASSIMP_DIR) {
     !win32 {
         aiIncDir = $$ASSIMP_DIR/include
         aiLibs   = -L$$ASSIMP_DIR/lib -lassimp
-        *-g*|*-clang* {
-            # Inform the dynamic linker about a custom location.
-            QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib
+
+        deng_extassimp {
+            *-g*|*-clang* {
+                # Inform the dynamic linker about a custom location.
+                QMAKE_LFLAGS += -Wl,-rpath,$$DENG_PLUGIN_LIB_DIR
+            }
+
+            # Install the custom-build external Assimp.
+            INSTALLS += assimplib
+            assimplib.files = $$ASSIMP_DIR/lib/libassimp.so.3
+            assimplib.path  = $$DENG_PLUGIN_LIB_DIR
+        }
+        else {
+            *-g*|*-clang* {
+                # Inform the dynamic linker about a custom location.
+                QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib
+            }
         }
     }
     else {

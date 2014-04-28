@@ -14,6 +14,7 @@
 # - deng_aptstable              Include the stable apt repository .list
 # - deng_aptunstable            Include the unstable apt repository .list
 # - deng_ccache                 (Unix|Mac) Use ccache when compiling
+# - deng_extassimp              (Unix) Get assimp from external/assimp/
 # - deng_fluidsynth             Build the FluidSynth sound driver
 # - deng_fmod                   Build the FMOD Ex sound driver
 # - deng_nativesdk              (Mac) Use current OS's SDK for non-distrib use
