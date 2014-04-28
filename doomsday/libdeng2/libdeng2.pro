@@ -58,6 +58,8 @@ win32-msvc* {
 
 INCLUDEPATH += include
 
+PRECOMPILED_HEADER = src/precompiled.h
+
 # Source Files ---------------------------------------------------------------
 
 include(concurrency.pri)
