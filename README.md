@@ -1,8 +1,8 @@
-# The Doomsday Engine Project Repository
+# Doomsday Engine
 
-This is the source code for Doomsday Engine: a portable, enhanced source port of id Software's Doom I/II and Raven Software's Heretic and Hexen. The sources are under the GNU General Public license (see doomsday/engine/doc/LICENSE).
+This is the source code for Doomsday Engine: a portable, enhanced source port of id Software's Doom I/II and Raven Software's Heretic and Hexen. The sources are under the GNU General Public license (see doomsday/gpl-3.0.txt), with the exception of the Doomsday 2 libraries that are under the GNU Lesser General Public License (see doomsday/lgpl-3.0.txt).
 
-For compilation instructions and other details, see the documentation wiki: http://dengine.net/dew/
+For [compilation instructions](http://dengine.net/dew/index.php?title=Compilation) and other details, see the documentation wiki: http://dengine.net/dew/
 
 ## Libraries
 
@@ -24,13 +24,17 @@ The minimum required version of Qt is 4.7. See [Supported platforms](http://deng
 
 ### Open Asset Import Library
 
-libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/lib_html/index.html) to read 3D model and animation files.
+libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/lib_html/index.html) for reading 3D model and animation files.
 
 1. Clone https://github.com/skyjake/assimp.
 2. Check out the "deng-patches" branch.
 3. Run [cmake](http://cmake.org) to generate appropriate project files (e.g., Visual Studio on Windows).
 4. Compile the generated project.
 5. Add `ASSIMP_DIR` to your *config_user.pri*.
+
+### SDL
+
+[SDL 1.2](http://libsdl.org) is needed for game controller input (e.g., joysticks and gamepads). Additionally, SDL_mixer can be used for audio output (not required).
 
 ### FMOD Ex
 
