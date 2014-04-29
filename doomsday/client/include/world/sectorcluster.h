@@ -234,13 +234,6 @@ public:
     AudioEnvironmentFactors const &reverb() const;
 
     /**
-     * Apply bias lighting changes to @em all surfaces within the cluster.
-     *
-     * @param changes  Digest of lighting changes to be applied.
-     */
-    void applyBiasDigest(BiasDigest &changes);
-
-    /**
      * Returns the unique identifier of the light source.
      */
     LightId lightSourceId() const;
@@ -271,7 +264,39 @@ public:
      */
     int blockLightSourceZBias();
 
+    /**
+     * Apply bias lighting changes to @em all geometry Shards within the cluster.
+     *
+     * @param changes  Digest of lighting changes to be applied.
+     */
+    void applyBiasDigest(BiasDigest &changes);
+
+    /**
+     * Perform bias lighting for the supplied Shard geometry.
+     *
+     * @param mapElement   MapElement for the geometry to be lit.
+     * @param geomId       MapElement-unique geometry id.
+     * @param posCoords    World coordinates for each vertex.
+     * @param colorCoords  Final lighting values will be written here.
+     */
+    void applyBiasLightSources(de::MapElement &mapElement, int geomId,
+                               de::Vector3f const *posCoords, de::Vector4f *colorCoords);
+
+    /**
+     * Schedule a lighting update to a geometry Shard following a move of some
+     * other element of dependent geometry.
+     *
+     * @param mapElement  MapElement for the geometry to be updated.
+     * @param geomId      MapElement-unique geometry id.
+     */
+    void updateBiasAfterGeometryMove(de::MapElement &mapElement, int geomId);
+
 #endif // __CLIENT__
+
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

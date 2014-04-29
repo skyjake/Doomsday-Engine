@@ -21,6 +21,7 @@
 #include "de_platform.h"
 #include "world/sectorcluster.h"
 
+#include "con_main.h"
 #include "Face"
 
 #include "BspLeaf"
@@ -33,6 +34,8 @@
 
 #ifdef __CLIENT__
 #  include "render/rend_main.h" // useBias
+#  include "BiasIllum"
+#  include "BiasTracker"
 #endif
 
 #include <de/vector1.h>
@@ -44,8 +47,8 @@
 
 namespace de {
 
-namespace internal {
-
+namespace internal
+{
     /// Classification flags:
     enum ClusterFlag
     {
@@ -58,16 +61,35 @@ namespace internal {
 
     Q_DECLARE_FLAGS(ClusterFlags, ClusterFlag)
     Q_DECLARE_OPERATORS_FOR_FLAGS(ClusterFlags)
+
+    static QRectF qrectFromAABox(AABoxd const &aaBox)
+    {
+        return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
+    }
 }
 }
 
 using namespace de;
 using namespace de::internal;
 
-static QRectF qrectFromAABox(AABoxd const &aaBox)
+#ifdef __CLIENT__
+static int devUpdateBiasContributors = true; //cvar
+#endif
+
+#ifdef __CLIENT__
+/**
+ * A fragment of 3D map geometry.
+ */
+struct Shard
 {
-    return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
-}
+    struct BiasData {
+        uint lastUpdateFrame;
+        typedef QList<BiasIllum> BiasIllums;
+        BiasIllums illums;
+        BiasTracker tracker;
+    } bias;
+};
+#endif
 
 DENG2_PIMPL(SectorCluster)
 , DENG2_OBSERVES(SectorCluster, Deletion)
@@ -97,6 +119,11 @@ DENG2_PIMPL(SectorCluster)
     QScopedPointer<BoundaryInfo> boundaryInfo;
 
 #ifdef __CLIENT__
+    /// @todo Avoid two-stage lookup.
+    typedef QMap<int, Shard> Shards;
+    typedef QMap<MapElement *, Shards> GeometryGroups;
+    GeometryGroups geomGroups;
+
     /// BSP leafs in the neighborhood effecting environmental audio characteristics.
     typedef QSet<BspLeaf *> ReverbBspLeafs;
     ReverbBspLeafs reverbBspLeafs;
@@ -629,6 +656,19 @@ DENG2_PIMPL(SectorCluster)
         clearMapping(plane.indexInSector());
     }
 
+#ifdef __CLIENT__
+    void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
+    {
+        if(!hedge) return;
+        if(!hedge->hasMapElement()) return;
+
+        MapElement *mapElement = &hedge->mapElement();
+        self.updateBiasAfterGeometryMove(*mapElement, LineSide::Middle);
+        self.updateBiasAfterGeometryMove(*mapElement, LineSide::Bottom);
+        self.updateBiasAfterGeometryMove(*mapElement, LineSide::Top);
+    }
+#endif
+
     /// Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane)
     {
@@ -661,7 +701,20 @@ DENG2_PIMPL(SectorCluster)
             // Inform bias surfaces of changed geometry.
             foreach(BspLeaf *bspLeaf, bspLeafs)
             {
-                bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
+                self.updateBiasAfterGeometryMove(*bspLeaf, plane.indexInSector());
+
+                HEdge *base = bspLeaf->poly().hedge();
+                HEdge *hedge = base;
+                do
+                {
+                    updateBiasForWallSectionsAfterGeometryMove(hedge);
+                } while((hedge = &hedge->next()) != base);
+
+                foreach(Mesh *mesh, bspLeaf->extraMeshes())
+                foreach(HEdge *hedge, mesh->hedges())
+                {
+                    updateBiasForWallSectionsAfterGeometryMove(hedge);
+                }
             }
         }
 
@@ -674,14 +727,174 @@ DENG2_PIMPL(SectorCluster)
 
 #ifdef __CLIENT__
 
-    /// Observes Plane HeightSmoothedChange.
-    void planeHeightSmoothedChanged(Plane &plane)
+    // Determine the number of bias illumination points needed for this geometry.
+    // Presently we define a 1:1 mapping geometry vertices.
+    static int countIlluminationPoints(MapElement &mapElement, int group)
     {
-        markDependantSurfacesForDecorationUpdate();
+        switch(mapElement.type())
+        {
+        case DMU_BSPLEAF: {
+            BspLeaf &bspLeaf = mapElement.as<BspLeaf>();
+            DENG2_ASSERT(group >= 0 && group < bspLeaf.sector().planeCount()); // sanity check
+            return bspLeaf.numFanVertices(); }
 
-        // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
+        case DMU_SEGMENT:
+            DENG2_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check
+            return 4;
+
+        default: DENG2_ASSERT(!"SectorCluster::countIlluminationPoints: Unsupported MapElement type");
+        }
+        return 0;
     }
+
+    /**
+     * Find the geometry Shard for a MapElement by the element-unique @a group
+     * identifier.
+     *
+     * @param geomId    Geometry identifier.
+     * @param canAlloc  @c true= to allocate if no data exists. Note that the
+     *                  number of vertices in the fan geometry must be known
+     *                  at this time.
+     */
+    Shard *shard(MapElement &mapElement, int geomId, bool canAlloc = true)
+    {
+        GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
+        if(foundGroup != geomGroups.end())
+        {
+            Shards &shards = *foundGroup;
+            Shards::iterator found = shards.find(geomId);
+            if(found != shards.end())
+            {
+                return &*found;
+            }
+        }
+
+        if(!canAlloc) return 0;
+
+        if(foundGroup == geomGroups.end())
+        {
+            foundGroup = geomGroups.insert(&mapElement, Shards());
+        }
+
+        Shard &newShard = *foundGroup->insert(geomId, Shard());
+
+        int const neededIllumCount = countIlluminationPoints(mapElement, geomId);
+        newShard.bias.illums.reserve(neededIllumCount);
+        for(int i = 0; i < neededIllumCount; ++i)
+        {
+            newShard.bias.illums.append(BiasIllum(&newShard.bias.tracker));
+        }
+
+        return &newShard;
+    }
+
+    /**
+     * @todo This could be enhanced so that only the lights on the right
+     * side of the surface are taken into consideration.
+     */
+    void updateBiasContributors(Shard &shard, BspLeaf &bspLeaf, int geomId)
+    {
+        Map &map = bspLeaf.map();
+
+        // If the data is already up to date, nothing needs to be done.
+        uint lastChangeFrame = map.biasLastChangeOnFrame();
+        if(shard.bias.lastUpdateFrame == lastChangeFrame)
+            return;
+
+        shard.bias.lastUpdateFrame = lastChangeFrame;
+
+        shard.bias.tracker.clearContributors();
+
+        Plane const &plane     = self.visPlane(geomId);
+        Surface const &surface = plane.surface();
+
+        Vector3d surfacePoint(bspLeaf.poly().center(), plane.heightSmoothed());
+
+        foreach(BiasSource *source, map.biasSources())
+        {
+            // If the source is too weak we will ignore it completely.
+            if(source->intensity() <= 0)
+                continue;
+
+            Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
+            coord_t distance = 0;
+
+            // Calculate minimum 2D distance to the BSP leaf.
+            /// @todo This is probably too accurate an estimate.
+            HEdge *baseNode = bspLeaf.poly().hedge();
+            HEdge *node = baseNode;
+            do
+            {
+                coord_t len = (Vector2d(source->origin()) - node->origin()).length();
+                if(node == baseNode || len < distance)
+                    distance = len;
+            } while((node = &node->next()) != baseNode);
+
+            if(sourceToSurface.dot(surface.normal()) < 0)
+                continue;
+
+            shard.bias.tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+        }
+    }
+
+    /**
+     * @todo This could be enhanced so that only the lights on the right
+     * side of the surface are taken into consideration.
+     */
+    void updateBiasContributors(Shard &shard, LineSideSegment const &seg, int /*geomId*/)
+    {
+        Map &map = seg.map();
+
+        // If the data is already up to date, nothing needs to be done.
+        uint lastChangeFrame = map.biasLastChangeOnFrame();
+        if(shard.bias.lastUpdateFrame == lastChangeFrame)
+            return;
+
+        shard.bias.lastUpdateFrame = lastChangeFrame;
+
+        shard.bias.tracker.clearContributors();
+
+        Surface const &surface = seg.lineSide().middle();
+        Vector2d const &from   = seg.hedge().origin();
+        Vector2d const &to     = seg.hedge().twin().origin();
+        Vector2d const center  = (from + to) / 2;
+
+        foreach(BiasSource *source, map.biasSources())
+        {
+            // If the source is too weak we will ignore it completely.
+            if(source->intensity() <= 0)
+                continue;
+
+            Vector3d sourceToSurface = (source->origin() - center).normalize();
+
+            // Calculate minimum 2D distance to the segment.
+            coord_t distance = 0;
+            for(int k = 0; k < 2; ++k)
+            {
+                coord_t len = (Vector2d(source->origin()) - (!k? from : to)).length();
+                if(k == 0 || len < distance)
+                    distance = len;
+            }
+
+            if(sourceToSurface.dot(surface.normal()) < 0)
+                continue;
+
+            shard.bias.tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+        }
+    }
+
+    /*
+    void applyBiasDigestToGeometryGroups(MapElement &mapElement, BiasDigest &changes)
+    {
+        GeometryGroups::iterator found = geomGroups.find(&mapElement);
+        if(found != geomGroups.end())
+        {
+            DENG2_FOR_EACH(Shards, shard, *found)
+            {
+                shard->bias.tracker.applyChanges(changes);
+            }
+        }
+    }*/
 
     void addReverbBspLeaf(BspLeaf *bspLeaf)
     {
@@ -800,6 +1013,15 @@ DENG2_PIMPL(SectorCluster)
 
         if(reverb[SRD_VOLUME] > 1)
             reverb[SRD_VOLUME] = 1;
+    }
+
+    /// Observes Plane HeightSmoothedChange.
+    void planeHeightSmoothedChanged(Plane &plane)
+    {
+        markDependantSurfacesForDecorationUpdate();
+
+        // We may need to update one or both mapped planes.
+        maybeInvalidateMapping(plane.indexInSector());
     }
 
     /// Observes Sector LightLevelChange.
@@ -982,40 +1204,6 @@ bool SectorCluster::hasSkyMaskedPlane() const
     return false;
 }
 
-static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
-{
-    if(!hedge || !hedge->hasMapElement())
-        return;
-    hedge->mapElementAs<LineSideSegment>().applyBiasDigest(changes);
-}
-
-void SectorCluster::applyBiasDigest(BiasDigest &changes)
-{
-    foreach(BspLeaf *bspLeaf, d->bspLeafs)
-    {
-        bspLeaf->applyBiasDigest(changes);
-
-        HEdge *base = bspLeaf->poly().hedge();
-        HEdge *hedge = base;
-        do
-        {
-            applyBiasDigestToWallSections(hedge, changes);
-        } while((hedge = &hedge->next()) != base);
-
-        foreach(Mesh *mesh, bspLeaf->extraMeshes())
-        foreach(HEdge *hedge, mesh->hedges())
-        {
-            applyBiasDigestToWallSections(hedge, changes);
-        }
-
-        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
-        foreach(HEdge *hedge, polyobj->mesh().hedges())
-        {
-            applyBiasDigestToWallSections(hedge, changes);
-        }
-    }
-}
-
 SectorCluster::LightId SectorCluster::lightSourceId() const
 {
     /// @todo Need unique cluster ids.
@@ -1060,7 +1248,117 @@ int SectorCluster::blockLightSourceZBias()
     return 0;
 }
 
+void SectorCluster::applyBiasDigest(BiasDigest &changes)
+{
+    DENG2_FOR_EACH(Instance::GeometryGroups, geomGroup, d->geomGroups)
+    DENG2_FOR_EACH(Instance::Shards, shard, *geomGroup)
+    {
+        shard->bias.tracker.applyChanges(changes);
+    }
+
+    /*foreach(BspLeaf *bspLeaf, d->bspLeafs)
+    {
+        d->applyBiasDigestToGeometryGroups(*bspLeaf, changes);
+
+        HEdge *base = bspLeaf->poly().hedge();
+        HEdge *hedge = base;
+        do
+        {
+            if(hedge->hasMapElement())
+            {
+                d->applyBiasDigestToGeometryGroups(hedge->mapElement(), changes);
+            }
+        } while((hedge = &hedge->next()) != base);
+
+        foreach(Mesh *mesh, bspLeaf->extraMeshes())
+        foreach(HEdge *hedge, mesh->hedges())
+        {
+            if(hedge->hasMapElement())
+            {
+                d->applyBiasDigestToGeometryGroups(hedge->mapElement(), changes);
+            }
+        }
+
+        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
+        foreach(HEdge *hedge, polyobj->mesh().hedges())
+        {
+            if(hedge->hasMapElement())
+            {
+                d->applyBiasDigestToGeometryGroups(hedge->mapElement(), changes);
+            }
+        }
+    }*/
+}
+
+void SectorCluster::applyBiasLightSources(MapElement &mapElement, int geomId,
+    Vector3f const *posCoords, Vector4f *colorCoords)
+{
+    DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
+
+    Map &map            = mapElement.map();
+    uint const biasTime = map.biasCurrentTime();
+
+    Shard *shard = d->shard(mapElement, geomId);
+    DENG2_ASSERT(shard != 0);
+
+    Surface const *surface = 0;
+    switch(mapElement.type())
+    {
+    case DMU_BSPLEAF: {
+        BspLeaf &bspLeaf = mapElement.as<BspLeaf>();
+
+        // Should we update?
+        if(devUpdateBiasContributors)
+        {
+            d->updateBiasContributors(*shard, bspLeaf, geomId);
+        }
+
+        surface = &visPlane(geomId).surface();
+        break; }
+
+    case DMU_SEGMENT: {
+        LineSideSegment &seg = mapElement.as<LineSideSegment>();
+
+        // Should we update?
+        if(devUpdateBiasContributors)
+        {
+            d->updateBiasContributors(*shard, seg, geomId);
+        }
+
+        surface = &seg.lineSide().surface(geomId);
+        break; }
+
+    default: break;
+    }
+
+    Vector3f const *posIt = posCoords;
+    Vector4f *colorIt     = colorCoords;
+    for(int i = 0; i < shard->bias.illums.count(); ++i, posIt++, colorIt++)
+    {
+        *colorIt += shard->bias.illums[i].evaluate(*posIt, surface->normal(), biasTime);
+    }
+
+    // Any changes from contributors will have now been applied.
+    shard->bias.tracker.markIllumUpdateCompleted();
+}
+
+void SectorCluster::updateBiasAfterGeometryMove(MapElement &mapElement, int geomId)
+{
+    if(Shard *shard = d->shard(mapElement, geomId, false /*don't allocate*/))
+    {
+        shard->bias.tracker.updateAllContributors();
+    }
+}
+
 #endif // __CLIENT__
+
+void SectorCluster::consoleRegister() // static
+{
+#ifdef __CLIENT__
+    // Development variables.
+    C_VAR_INT("rend-dev-bias-affected", &devUpdateBiasContributors, CVF_NO_ARCHIVE, 0, 1);
+#endif
+}
 
 // SectorClusterCirculator -----------------------------------------------------
 

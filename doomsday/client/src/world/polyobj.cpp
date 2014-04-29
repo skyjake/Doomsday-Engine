@@ -25,6 +25,9 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
+#ifdef __CLIENT__
+#  include "SectorCluster"
+#endif
 
 #ifdef __CLIENT__
 #  include "render/rend_main.h" // useBias
@@ -54,8 +57,9 @@ static void notifyGeometryChanged(Polyobj &po)
             if(!hedge->hasMapElement())
                 continue;
 
-            hedge->mapElementAs<LineSideSegment>().
-                    updateBiasAfterGeometryMove(LineSide::Middle);
+            /// @note If polyobjs are allowed to move between sector clusters
+            /// then we'll need to revise the bias illumination storage specially.
+            po.bspLeaf().cluster().updateBiasAfterGeometryMove(hedge->mapElement(), LineSide::Middle);
         }
     }
 #else // !__CLIENT__

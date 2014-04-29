@@ -62,7 +62,6 @@
 #include "Surface"
 
 #include "BiasIllum"
-#include "BiasSurface"
 #include "HueCircleVisual"
 #include "LightDecoration"
 #include "Lumobj"
@@ -423,7 +422,6 @@ void Rend_Register()
     C_CMD_FLAGS ("texreset",    "s",    TexReset, CMDF_NO_DEDICATED);
 
     BiasIllum::consoleRegister();
-    BiasSurface::consoleRegister();
     LightDecoration::consoleRegister();
     LightGrid::consoleRegister();
     Lumobj::consoleRegister();
@@ -1001,7 +999,7 @@ struct rendworldpoly_params_t
     uint            shadowListIdx; // List of shadows that affect this poly.
     float           glowing;
     bool            forceOpaque;
-    BiasSurface    *bsuf;
+    MapElement     *mapElement;
     int             geomGroup;
 
     bool            isWall;
@@ -1169,7 +1167,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
 
                 // Apply bias light source contributions.
-                p.bsuf->lightBiasPoly(p.geomGroup, posCoords, colorCoords);
+                leaf->cluster().applyBiasLightSources(*p.mapElement, p.geomGroup, posCoords, colorCoords);
 
                 // Apply surface glow.
                 if(p.glowing > 0)
@@ -1861,7 +1859,7 @@ static void writeWallSection(HEdge &hedge, int section,
     Vector3d bottomRight    = rightEdge.bottom().origin();
 
     parm.skyMasked           = skyMasked;
-    parm.bsuf                = &segment;
+    parm.mapElement          = &segment;
     parm.geomGroup           = wallSpec.section;
     parm.topLeft             = &topLeft;
     parm.bottomRight         = &bottomRight;
@@ -2088,7 +2086,7 @@ static void writeLeafPlane(Plane &plane)
 
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.bsuf                = leaf;
+    parm.mapElement          = leaf;
     parm.geomGroup           = plane.indexInSector();
     parm.topLeft             = &topLeft;
     parm.bottomRight         = &bottomRight;

@@ -27,10 +27,6 @@
 #include "Polyobj"
 #include "Vertex"
 
-#ifdef __CLIENT__
-#  include "BiasSurface"
-#endif
-
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
@@ -121,9 +117,6 @@ public:
          * Side geometry segment on the XY plane.
          */
         class Segment : public de::MapElement
-#ifdef __CLIENT__
-          , public BiasSurface
-#endif
         {
             DENG2_NO_COPY  (Segment)
             DENG2_NO_ASSIGN(Segment)
@@ -193,28 +186,6 @@ public:
              * Mark the current segment as "front facing".
              */
             void setFrontFacing(bool yes = true);
-
-            /**
-             * Perform bias lighting for the supplied geometry.
-             *
-             * @important It is assumed there are least @em four elements!
-             *
-             * @param group        Geometry group identifier.
-             * @param posCoords    World coordinates for each vertex.
-             * @param colorCoords  Final lighting values will be written here.
-             */
-            void lightBiasPoly(int group, de::Vector3f const *posCoords,
-                               de::Vector4f *colorCoords);
-
-            void updateBiasAfterGeometryMove(int group);
-
-            /**
-             * Apply bias lighting changes to @em all map element geometries
-             * for the segment.
-             *
-             * @param changes  Digest of lighting changes to be applied.
-             */
-            void applyBiasDigest(BiasDigest &changes);
 
 #endif // __CLIENT__
 

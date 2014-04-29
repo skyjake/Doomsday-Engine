@@ -36,11 +36,6 @@
 
 #ifdef __CLIENT__
 #  include "world/map.h"
-
-#  include "BiasDigest"
-#  include "BiasIllum"
-#  include "BiasSource"
-#  include "BiasTracker"
 #endif
 #include <QMap>
 #include <QtAlgorithms>
@@ -51,20 +46,6 @@
 #endif
 
 using namespace de;
-
-#ifdef __CLIENT__
-struct GeometryGroup
-{
-    typedef QList<BiasIllum> BiasIllums;
-
-    uint biasLastUpdateFrame;
-    BiasIllums biasIllums;
-    BiasTracker biasTracker;
-};
-
-/// Geometry group identifier => group data.
-typedef QMap<int, GeometryGroup> GeometryGroups;
-#endif
 
 DENG2_PIMPL_NOREF(Line::Side::Segment)
 {
@@ -78,8 +59,6 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
     /// Accurate length of the segment.
     coord_t length;
 
-    /// Bias lighting data for each geometry group (i.e., each Line::Side section).
-    GeometryGroups geomGroups;
     bool frontFacing;
 #endif
 
@@ -91,85 +70,6 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
         , frontFacing(false)
 #endif
     {}
-
-#ifdef __CLIENT__
-    /**
-     * Retrieve geometry data by it's associated unique @a group identifier.
-     *
-     * @param group     Geometry group identifier.
-     * @param canAlloc  @c true= to allocate if no data exists.
-     */
-    GeometryGroup *geometryGroup(int group, bool canAlloc = true)
-    {
-        DENG2_ASSERT(group >= 0 && group < 3); // sanity check
-
-        GeometryGroups::iterator foundAt = geomGroups.find(group);
-        if(foundAt != geomGroups.end())
-        {
-            return &*foundAt;
-        }
-
-        if(!canAlloc) return 0;
-
-        // Number of bias illumination points for this geometry. Presently we
-        // define a 1:1 mapping to strip geometry vertices.
-        int const numBiasIllums = 4;
-
-        GeometryGroup &newGeomGroup = *geomGroups.insert(group, GeometryGroup());
-        newGeomGroup.biasIllums.reserve(numBiasIllums);
-        for(int i = 0; i < numBiasIllums; ++i)
-        {
-            newGeomGroup.biasIllums.append(BiasIllum(&newGeomGroup.biasTracker));
-        }
-
-        return &newGeomGroup;
-    }
-
-    /**
-     * @todo This could be enhanced so that only the lights on the right
-     * side of the surface are taken into consideration.
-     */
-    void updateBiasContributors(Line::Side const &lineSide,
-        GeometryGroup &geomGroup, int /*sectionIndex*/)
-    {
-        // If the data is already up to date, nothing needs to be done.
-        uint lastChangeFrame = lineSide.map().biasLastChangeOnFrame();
-        if(geomGroup.biasLastUpdateFrame == lastChangeFrame)
-            return;
-
-        geomGroup.biasLastUpdateFrame = lastChangeFrame;
-
-        geomGroup.biasTracker.clearContributors();
-
-        Surface const &surface = lineSide.middle();
-        Vector2d const &from   = hedge->origin();
-        Vector2d const &to     = hedge->twin().origin();
-        Vector2d const center  = (from + to) / 2;
-
-        foreach(BiasSource *source, lineSide.map().biasSources())
-        {
-            // If the source is too weak we will ignore it completely.
-            if(source->intensity() <= 0)
-                continue;
-
-            Vector3d sourceToSurface = (source->origin() - center).normalize();
-
-            // Calculate minimum 2D distance to the segment.
-            coord_t distance = 0;
-            for(int k = 0; k < 2; ++k)
-            {
-                coord_t len = (Vector2d(source->origin()) - (!k? from : to)).length();
-                if(k == 0 || len < distance)
-                    distance = len;
-            }
-
-            if(sourceToSurface.dot(surface.normal()) < 0)
-                continue;
-
-            geomGroup.biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-        }
-    }
-#endif
 };
 
 Line::Side::Segment::Segment(Line::Side &lineSide, HEdge &hedge)
@@ -213,52 +113,6 @@ bool Line::Side::Segment::isFrontFacing() const
 void Line::Side::Segment::setFrontFacing(bool yes)
 {
     d->frontFacing = yes;
-}
-
-void Line::Side::Segment::updateBiasAfterGeometryMove(int group)
-{
-    if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
-    {
-        geomGroup->biasTracker.updateAllContributors();
-    }
-}
-
-void Line::Side::Segment::applyBiasDigest(BiasDigest &changes)
-{
-    for(GeometryGroups::iterator it = d->geomGroups.begin();
-        it != d->geomGroups.end(); ++it)
-    {
-        it.value().biasTracker.applyChanges(changes);
-    }
-}
-
-void Line::Side::Segment::lightBiasPoly(int group, Vector3f const *posCoords,
-    Vector4f *colorCoords)
-{
-    DENG_ASSERT(posCoords != 0 && colorCoords != 0);
-
-    Line::Side const &side   = lineSide();
-    int const sectionIndex   = group;
-    GeometryGroup *geomGroup = d->geometryGroup(sectionIndex);
-
-    // Should we update?
-    if(devUpdateBiasContributors)
-    {
-        d->updateBiasContributors(side, *geomGroup, sectionIndex);
-    }
-
-    Surface const &surface = side.surface(sectionIndex);
-    uint const biasTime = map().biasCurrentTime();
-
-    Vector3f const *posIt = posCoords;
-    Vector4f *colorIt     = colorCoords;
-    for(int i = 0; i < geomGroup->biasIllums.count(); ++i, posIt++, colorIt++)
-    {
-        *colorIt += geomGroup->biasIllums[i].evaluate(*posIt, surface.normal(), biasTime);
-    }
-
-    // Any changes from contributors will have now been applied.
-    geomGroup->biasTracker.markIllumUpdateCompleted();
 }
 
 #endif // __CLIENT__

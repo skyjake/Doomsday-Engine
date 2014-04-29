@@ -27,10 +27,6 @@
 
 #include "Mesh"
 
-#ifdef __CLIENT__
-#  include "BiasSurface"
-#endif
-
 #include <de/Error>
 #include <de/Vector>
 #include <QSet>
@@ -38,7 +34,6 @@
 class SectorCluster;
 struct polyobj_s;
 #ifdef __CLIENT__
-class BiasDigest;
 class Lumobj;
 #endif
 
@@ -60,9 +55,6 @@ class Lumobj;
  * @ingroup world
  */
 class BspLeaf : public de::MapElement
-#ifdef __CLIENT__
-, public BiasSurface
-#endif
 {
     DENG2_NO_COPY  (BspLeaf)
     DENG2_NO_ASSIGN(BspLeaf)
@@ -272,28 +264,6 @@ public:
      * @see fanBase()
      */
     int numFanVertices() const;
-
-    /**
-     * Perform bias lighting for the supplied geometry.
-     *
-     * @important It is assumed there are least @ref numFanVertices() elements!
-     *
-     * @param group        Geometry group identifier.
-     * @param posCoords    World coordinates for each vertex.
-     * @param colorCoords  Final lighting values will be written here.
-     */
-    void lightBiasPoly(int group, de::Vector3f const *posCoords,
-                       de::Vector4f *colorCoords);
-
-    void updateBiasAfterGeometryMove(int group);
-
-    /**
-     * Apply bias lighting changes to @em all map element geometries at this
-     * leaf of the BSP.
-     *
-     * @param changes  Digest of lighting changes to be applied.
-     */
-    void applyBiasDigest(BiasDigest &changes);
 
     /**
      * Recalculate the environmental audio characteristics (reverb) of the BSP leaf.

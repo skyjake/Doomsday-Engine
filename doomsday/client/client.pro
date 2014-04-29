@@ -116,7 +116,6 @@ DENG_CONVENIENCE_HEADERS += \
     include/BiasDigest \
     include/BiasIllum \
     include/BiasSource \
-    include/BiasSurface \
     include/BiasTracker \
     include/BitmapFont \
     include/BspLeaf \
@@ -281,7 +280,6 @@ DENG_HEADERS += \
     include/render/biasdigest.h \
     include/render/biasillum.h \
     include/render/biassource.h \
-    include/render/biassurface.h \
     include/render/biastracker.h \
     include/render/billboard.h \
     include/render/blockmapvisual.h \
@@ -617,7 +615,6 @@ SOURCES += \
     src/render/biasdigest.cpp \
     src/render/biasillum.cpp \
     src/render/biassource.cpp \
-    src/render/biassurface.cpp \
     src/render/biastracker.cpp \
     src/render/billboard.cpp \
     src/render/blockmapvisual.cpp \

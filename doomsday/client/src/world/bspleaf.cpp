@@ -31,13 +31,6 @@
 #include "SectorCluster"
 #include "Surface"
 
-#ifdef __CLIENT__
-#  include "BiasDigest"
-#  include "BiasIllum"
-#  include "BiasSource"
-#  include "BiasTracker"
-#endif
-
 #include <de/Log>
 #include <QMap>
 #include <QtAlgorithms>
@@ -51,20 +44,6 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
     Vector2d b = v3 - v1;
     return (a.x * b.y - b.x * a.y) / 2;
 }
-
-#ifdef __CLIENT__
-struct GeometryGroup
-{
-    typedef QList<BiasIllum> BiasIllums;
-
-    uint biasLastUpdateFrame;
-    BiasIllums biasIllums;
-    BiasTracker biasTracker;
-};
-
-/// Geometry group identifier => group data.
-typedef QMap<int, GeometryGroup> GeometryGroups;
-#endif
 
 DENG2_PIMPL(BspLeaf)
 {
@@ -84,7 +63,6 @@ DENG2_PIMPL(BspLeaf)
     bool needUpdateFanBase;         ///< @c true= need to rechoose a fan base half-edge.
     int addSpriteCount;             ///< Frame number of last R_AddSprites.
 
-    GeometryGroups geomGroups;
     Lumobjs lumobjs;                ///< Linked lumobjs (not owned).
     ShadowLines shadowLines;        ///< Linked map lines for fake radio shadowing.
     AudioEnvironmentFactors reverb; ///< Cached characteristics.
@@ -190,89 +168,6 @@ DENG2_PIMPL(BspLeaf)
 
 #undef MIN_TRIANGLE_EPSILON
     }
-
-    /**
-     * Retrieve geometry data by it's associated unique @a group identifier.
-     *
-     * @param group     Geometry group identifier.
-     * @param canAlloc  @c true= to allocate if no data exists. Note that the
-     *                  number of vertices in the fan geometry must be known
-     *                  at this time.
-     */
-    GeometryGroup *geometryGroup(int group, bool canAlloc = true)
-    {
-        DENG2_ASSERT(cluster != 0); // sanity check
-        DENG2_ASSERT(group >= 0 && group < cluster->sector().planeCount()); // sanity check
-
-        GeometryGroups::iterator foundAt = geomGroups.find(group);
-        if(foundAt != geomGroups.end())
-        {
-            return &*foundAt;
-        }
-
-        if(!canAlloc) return 0;
-
-        // Number of bias illumination points for this geometry. Presently we
-        // define a 1:1 mapping to fan geometry vertices.
-        int numBiasIllums = self.numFanVertices();
-
-        GeometryGroup &newGeomGroup = *geomGroups.insert(group, GeometryGroup());
-        newGeomGroup.biasIllums.reserve(numBiasIllums);
-        for(int i = 0; i < numBiasIllums; ++i)
-        {
-            newGeomGroup.biasIllums.append(BiasIllum(&newGeomGroup.biasTracker));
-        }
-
-        return &newGeomGroup;
-    }
-
-    /**
-     * @todo This could be enhanced so that only the lights on the right
-     * side of the surface are taken into consideration.
-     */
-    void updateBiasContributors(GeometryGroup &geomGroup, int planeIndex)
-    {
-        // If the data is already up to date, nothing needs to be done.
-        uint lastChangeFrame = self.map().biasLastChangeOnFrame();
-        if(geomGroup.biasLastUpdateFrame == lastChangeFrame)
-            return;
-
-        geomGroup.biasLastUpdateFrame = lastChangeFrame;
-
-        geomGroup.biasTracker.clearContributors();
-
-        Plane const &plane     = cluster->visPlane(planeIndex);
-        Surface const &surface = plane.surface();
-
-        Vector3d surfacePoint(poly->center(), plane.heightSmoothed());
-
-        foreach(BiasSource *source, self.map().biasSources())
-        {
-            // If the source is too weak we will ignore it completely.
-            if(source->intensity() <= 0)
-                continue;
-
-            Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
-            coord_t distance = 0;
-
-            // Calculate minimum 2D distance to the BSP leaf.
-            /// @todo This is probably too accurate an estimate.
-            HEdge *baseNode = poly->hedge();
-            HEdge *node = baseNode;
-            do
-            {
-                coord_t len = (Vector2d(source->origin()) - node->origin()).length();
-                if(node == baseNode || len < distance)
-                    distance = len;
-            } while((node = &node->next()) != baseNode);
-
-            if(sourceToSurface.dot(surface.normal()) < 0)
-                continue;
-
-            geomGroup.biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-        }
-    }
-
 #endif // __CLIENT__
 };
 
@@ -438,78 +333,6 @@ int BspLeaf::numFanVertices() const
     // Are we to use one of the half-edge vertexes as the fan base?
     if(!d->poly) return 0;
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
-}
-
-static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
-{
-    if(!hedge || !hedge->hasMapElement())
-        return;
-
-    LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
-    seg.updateBiasAfterGeometryMove(LineSide::Middle);
-    seg.updateBiasAfterGeometryMove(LineSide::Bottom);
-    seg.updateBiasAfterGeometryMove(LineSide::Top);
-}
-
-void BspLeaf::updateBiasAfterGeometryMove(int group)
-{
-    if(!hasPoly()) return;
-
-    if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
-    {
-        geomGroup->biasTracker.updateAllContributors();
-    }
-
-    HEdge *base = poly().hedge();
-    HEdge *hedge = base;
-    do
-    {
-        updateBiasForWallSectionsAfterGeometryMove(hedge);
-    } while((hedge = &hedge->next()) != base);
-
-    foreach(Mesh *mesh, extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
-    {
-        updateBiasForWallSectionsAfterGeometryMove(hedge);
-    }
-}
-
-void BspLeaf::applyBiasDigest(BiasDigest &changes)
-{
-    if(!hasPoly()) return;
-
-    for(GeometryGroups::iterator it = d->geomGroups.begin();
-        it != d->geomGroups.end(); ++it)
-    {
-        it.value().biasTracker.applyChanges(changes);
-    }
-}
-
-void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colorCoords)
-{
-    DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
-
-    int const planeIndex     = group;
-    GeometryGroup *geomGroup = d->geometryGroup(planeIndex);
-
-    // Should we update?
-    if(devUpdateBiasContributors)
-    {
-        d->updateBiasContributors(*geomGroup, planeIndex);
-    }
-
-    Surface const &surface = cluster().visPlane(planeIndex).surface();
-    uint const biasTime = map().biasCurrentTime();
-
-    Vector3f const *posIt = posCoords;
-    Vector4f *colorIt     = colorCoords;
-    for(int i = 0; i < geomGroup->biasIllums.count(); ++i, posIt++, colorIt++)
-    {
-        *colorIt += geomGroup->biasIllums[i].evaluate(*posIt, surface.normal(), biasTime);
-    }
-
-    // Any changes from contributors will have now been applied.
-    geomGroup->biasTracker.markIllumUpdateCompleted();
 }
 
 static void accumReverbForWallSections(HEdge const *hedge,
