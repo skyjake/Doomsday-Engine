@@ -563,8 +563,8 @@ void LightGrid::blockLightSourceChanged(IBlockLightSource *changed)
 
     d->updateCoverageIfNeeded();
 
-    Instance::Coverages::iterator &covered = d->coverage.find(changed);
-    if(covered == d->coverage.end()) return;
+    Instance::Coverages::const_iterator covered = d->coverage.constFind(changed);
+    if(covered == d->coverage.constEnd()) return;
 
     if(covered->blocks.count())
     {
