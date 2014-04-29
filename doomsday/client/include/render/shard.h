@@ -22,30 +22,20 @@
 #include <QList>
 #include <de/Matrix>
 #include <de/Vector>
-#include "BiasTracker"
 
 class BiasDigest;
-class BiasIllum;
+class BiasSource;
 
 /**
  * 3D map geometry fragment.
  */
 class Shard
 {
-public: /// @todo make private:
-    struct BiasData {
-        uint lastUpdateFrame;
-        typedef QList<BiasIllum *> BiasIllums;
-        BiasIllums illums;
-        BiasTracker tracker;
-    } bias;
-
 public:
     /**
      * @param numBiasIllums  Number of bias illumination points for the geometry.
      */
     Shard(int numBiasIllums);
-    ~Shard();
 
     /**
      * Perform bias lighting for the supplied vertex geometry.
@@ -77,6 +67,15 @@ public:
      * Schedule a bias lighting update for the Shard following a move.
      */
     void updateBiasAfterMove();
+
+    uint lastBiasUpdateFrame();
+    void setLastBiasUpdateFrame(uint updateFrame);
+    void clearBiasContributors();
+    void addBiasContributor(BiasSource *source, float intensity);
+    void markBiasIllumUpdateCompleted();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_RENDER_SHARD_H

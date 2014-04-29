@@ -783,12 +783,12 @@ DENG2_PIMPL(SectorCluster)
 
         // If the data is already up to date, nothing needs to be done.
         uint lastChangeFrame = map.biasLastChangeOnFrame();
-        if(shard.bias.lastUpdateFrame == lastChangeFrame)
+        if(shard.lastBiasUpdateFrame() == lastChangeFrame)
             return;
 
-        shard.bias.lastUpdateFrame = lastChangeFrame;
+        shard.setLastBiasUpdateFrame(lastChangeFrame);
 
-        shard.bias.tracker.clearContributors();
+        shard.clearBiasContributors();
 
         Plane const &plane     = self.visPlane(geomId);
         Surface const &surface = plane.surface();
@@ -818,7 +818,7 @@ DENG2_PIMPL(SectorCluster)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            shard.bias.tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            shard.addBiasContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
     }
 
@@ -832,12 +832,12 @@ DENG2_PIMPL(SectorCluster)
 
         // If the data is already up to date, nothing needs to be done.
         uint lastChangeFrame = map.biasLastChangeOnFrame();
-        if(shard.bias.lastUpdateFrame == lastChangeFrame)
+        if(shard.lastBiasUpdateFrame() == lastChangeFrame)
             return;
 
-        shard.bias.lastUpdateFrame = lastChangeFrame;
+        shard.setLastBiasUpdateFrame(lastChangeFrame);
 
-        shard.bias.tracker.clearContributors();
+        shard.clearBiasContributors();
 
         Surface const &surface = seg.lineSide().middle();
         Vector2d const &from   = seg.hedge().origin();
@@ -864,7 +864,7 @@ DENG2_PIMPL(SectorCluster)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            shard.bias.tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            shard.addBiasContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
     }
 
@@ -1302,7 +1302,7 @@ void SectorCluster::applyBiasLightSources(MapElement &mapElement, int geomId,
                                 surface->map().biasCurrentTime());
 
     // Any changes from contributors will have now been applied.
-    shard->bias.tracker.markIllumUpdateCompleted();
+    shard->markBiasIllumUpdateCompleted();
 }
 
 void SectorCluster::updateBiasAfterGeometryMove(MapElement &mapElement, int geomId)

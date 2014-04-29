@@ -20,24 +20,31 @@
 #include <QtAlgorithms>
 #include "BiasDigest"
 #include "BiasIllum"
+#include "BiasTracker"
 
 using namespace de;
 
-Shard::Shard(int numBiasIllums)
+DENG2_PIMPL_NOREF(Shard)
+{
+    BiasTracker biasTracker;
+    typedef QList<BiasIllum *> BiasIllums;
+    BiasIllums biasIllums;
+    uint biasLastUpdateFrame;
+
+    Instance() : biasLastUpdateFrame(0) {}
+    ~Instance() { qDeleteAll(biasIllums); }
+};
+
+Shard::Shard(int numBiasIllums) : d(new Instance)
 {
     if(numBiasIllums)
     {
-        bias.illums.reserve(numBiasIllums);
+        d->biasIllums.reserve(numBiasIllums);
         for(int i = 0; i < numBiasIllums; ++i)
         {
-            bias.illums << new BiasIllum(&bias.tracker);
+            d->biasIllums << new BiasIllum(&d->biasTracker);
         }
     }
-}
-
-Shard::~Shard()
-{
-    qDeleteAll(bias.illums);
 }
 
 void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
@@ -49,18 +56,43 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
 
     Vector3f const *posIt = posCoords;
     Vector4f *colorIt     = colorCoords;
-    for(int i = 0; i < bias.illums.count(); ++i, posIt++, colorIt++)
+    for(int i = 0; i < d->biasIllums.count(); ++i, posIt++, colorIt++)
     {
-        *colorIt += bias.illums[i]->evaluate(*posIt, sufNormal, biasTime);
+        *colorIt += d->biasIllums[i]->evaluate(*posIt, sufNormal, biasTime);
     }
 }
 
 void Shard::applyBiasDigest(BiasDigest &changes)
 {
-    bias.tracker.applyChanges(changes);
+    d->biasTracker.applyChanges(changes);
 }
 
 void Shard::updateBiasAfterMove()
 {
-    bias.tracker.updateAllContributors();
+    d->biasTracker.updateAllContributors();
+}
+
+uint Shard::lastBiasUpdateFrame()
+{
+    return d->biasLastUpdateFrame;
+}
+
+void Shard::setLastBiasUpdateFrame(uint updateFrame)
+{
+    d->biasLastUpdateFrame = updateFrame;
+}
+
+void Shard::clearBiasContributors()
+{
+    d->biasTracker.clearContributors();
+}
+
+void Shard::addBiasContributor(BiasSource *source, float intensity)
+{
+    d->biasTracker.addContributor(source, intensity);
+}
+
+void Shard::markBiasIllumUpdateCompleted()
+{
+    d->biasTracker.markIllumUpdateCompleted();
 }
