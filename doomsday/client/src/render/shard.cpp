@@ -36,6 +36,8 @@ Shard::Shard(int numBiasIllums)
 void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
     Matrix3f const &tangentMatrix, uint biasTime)
 {
+    DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
+
     Vector3f const sufNormal = tangentMatrix.column(2);
 
     Vector3f const *posIt = posCoords;

@@ -48,9 +48,6 @@ public:
      */
     BiasTracker();
 
-    BiasTracker(BiasTracker const &other);
-    BiasTracker &operator = (BiasTracker const &other);
-
     /**
      * Remove all light contributors. Existing contributions are put into a
      * "latent" state, so that if they are added again the contribution is then

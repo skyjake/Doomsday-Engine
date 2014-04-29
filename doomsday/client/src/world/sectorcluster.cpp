@@ -720,7 +720,7 @@ DENG2_PIMPL(SectorCluster)
 #ifdef __CLIENT__
 
     // Determine the number of bias illumination points needed for this geometry.
-    // Presently we define a 1:1 mapping geometry vertices.
+    // Presently we define a 1:1 mapping to geometry vertices.
     static int countIlluminationPoints(MapElement &mapElement, int group)
     {
         switch(mapElement.type())
@@ -867,19 +867,6 @@ DENG2_PIMPL(SectorCluster)
             shard.bias.tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
     }
-
-    /*
-    void applyBiasDigestToGeometryGroups(MapElement &mapElement, BiasDigest &changes)
-    {
-        GeometryGroups::iterator found = geomGroups.find(&mapElement);
-        if(found != geomGroups.end())
-        {
-            DENG2_FOR_EACH(Shards, shard, *found)
-            {
-                shard->bias.tracker.applyChanges(changes);
-            }
-        }
-    }*/
 
     void addReverbBspLeaf(BspLeaf *bspLeaf)
     {
