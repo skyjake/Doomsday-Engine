@@ -22,37 +22,24 @@
 /**
  * @page mainFlow Engine Control Flow
  *
- * The main Qt application instance is ClientApp, based on de::GuiApp, a
- * slightly modified version of the normal QApplication: it catches stray
- * exceptions and forces a clean shutdown of the application.
+ * The main Qt application instance is ClientApp, based on de::GuiApp, a slightly
+ * modified version of the normal QApplication: it catches stray exceptions and forces a
+ * clean shutdown of the application.
  *
- * LegacyCore is a thin wrapper around de::App that manages the event loop in a
- * way that is compatible with the legacy C implementation. The LegacyCore
- * instance is created in ClientApp and is globally available.
+ * The application's event loop is started as soon as the main window has been created
+ * (but not shown yet). After the window appears with a fully functional OpenGL drawing
+ * surface, the rest of the engine initialization is completed. This is done via a
+ * callback in the Canvas class that gets called when the window actually appears on
+ * screen (with empty contents).
  *
- * The application's event loop is started as soon as the main window has been
- * created (but not shown yet). After the window appears with a fully
- * functional OpenGL drawing surface, the rest of the engine initialization is
- * completed. This is done via a callback in the Canvas class that gets called
- * when the window actually appears on screen (with empty contents).
+ * The application's refresh loop is controlled by de::Loop. Before each frame, clock
+ * time advances and de::Loop's iteration audience is notified. This is observed by
+ * de::WindowSystem, which updates all widgets. When the GameWidget is updated, it runs
+ * game tics and requests a redraw of the window contents.
  *
- * While the event loop is running, it periodically calls the loop callback
- * function that has been set via LegacyCore. Initially it is used for showing
- * the main window while the loop is already running
- * (continueInitWithEventLoopRunning()) after which it switches to the engine's
- * main loop callback (DD_GameLoopCallback()).
- *
- * During startup the engine goes through a series of busy mode tasks. While a
- * busy task is running, the event loop started in LegacyCore is blocked.
- * However, BusyTask starts another loop that continues to handle events
- * received by the application, including making calls to the loop callback
- * function. Busy mode uses its own loop callback function that monitors the
- * progress of the busy worker and keeps updating the busy mode progress
- * indicator on screen. After busy mode ends, the main loop callback is
- * restored.
- *
- * The rate at which the main loop calls the loop callback can be configured
- * via LegacyCore.
+ * During startup the engine goes through a series of busy mode tasks. While a busy task
+ * is running, the application's primary event loop is blocked. However, BusyTask starts
+ * another loop that continues handling events received by the application.
  */
 
 #include "clientapp.h"
