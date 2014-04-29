@@ -36,6 +36,7 @@
 #  include "render/rend_main.h" // useBias
 #  include "BiasIllum"
 #  include "BiasTracker"
+#  include "Shard"
 #endif
 
 #include <de/vector1.h>
@@ -76,21 +77,6 @@ using namespace de::internal;
 static int devUpdateBiasContributors = true; //cvar
 #endif
 
-#ifdef __CLIENT__
-/**
- * A fragment of 3D map geometry.
- */
-struct Shard
-{
-    struct BiasData {
-        uint lastUpdateFrame;
-        typedef QList<BiasIllum> BiasIllums;
-        BiasIllums illums;
-        BiasTracker tracker;
-    } bias;
-};
-#endif
-
 DENG2_PIMPL(SectorCluster)
 , DENG2_OBSERVES(SectorCluster, Deletion)
 , DENG2_OBSERVES(Plane,  Deletion)
@@ -120,7 +106,7 @@ DENG2_PIMPL(SectorCluster)
 
 #ifdef __CLIENT__
     /// @todo Avoid two-stage lookup.
-    typedef QMap<int, Shard> Shards;
+    typedef QMap<int, Shard *> Shards;
     typedef QMap<MapElement *, Shards> GeometryGroups;
     GeometryGroups geomGroups;
 
@@ -153,6 +139,12 @@ DENG2_PIMPL(SectorCluster)
 #ifdef __CLIENT__
         self.sector().audienceForLightLevelChange -= this;
         self.sector().audienceForLightColorChange -= this;
+
+        DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
+        {
+            Shards &shards = *geomGroup;
+            qDeleteAll(shards);
+        }
 #endif
 
         clearMapping(Sector::Floor);
@@ -765,7 +757,7 @@ DENG2_PIMPL(SectorCluster)
             Shards::iterator found = shards.find(geomId);
             if(found != shards.end())
             {
-                return &*found;
+                return *found;
             }
         }
 
@@ -776,16 +768,9 @@ DENG2_PIMPL(SectorCluster)
             foundGroup = geomGroups.insert(&mapElement, Shards());
         }
 
-        Shard &newShard = *foundGroup->insert(geomId, Shard());
-
-        int const neededIllumCount = countIlluminationPoints(mapElement, geomId);
-        newShard.bias.illums.reserve(neededIllumCount);
-        for(int i = 0; i < neededIllumCount; ++i)
-        {
-            newShard.bias.illums.append(BiasIllum(&newShard.bias.tracker));
-        }
-
-        return &newShard;
+        Shard *newShard = new Shard(countIlluminationPoints(mapElement, geomId));
+        foundGroup->insert(geomId, newShard);
+        return newShard;
     }
 
     /**
@@ -1251,9 +1236,9 @@ int SectorCluster::blockLightSourceZBias()
 void SectorCluster::applyBiasDigest(BiasDigest &changes)
 {
     DENG2_FOR_EACH(Instance::GeometryGroups, geomGroup, d->geomGroups)
-    DENG2_FOR_EACH(Instance::Shards, shard, *geomGroup)
+    DENG2_FOR_EACH(Instance::Shards, i, *geomGroup)
     {
-        shard->bias.tracker.applyChanges(changes);
+        (*i)->applyBiasDigest(changes);
     }
 
     /*foreach(BspLeaf *bspLeaf, d->bspLeafs)
@@ -1295,9 +1280,6 @@ void SectorCluster::applyBiasLightSources(MapElement &mapElement, int geomId,
 {
     DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
 
-    Map &map            = mapElement.map();
-    uint const biasTime = map.biasCurrentTime();
-
     Shard *shard = d->shard(mapElement, geomId);
     DENG2_ASSERT(shard != 0);
 
@@ -1306,37 +1288,31 @@ void SectorCluster::applyBiasLightSources(MapElement &mapElement, int geomId,
     {
     case DMU_BSPLEAF: {
         BspLeaf &bspLeaf = mapElement.as<BspLeaf>();
+        surface = &visPlane(geomId).surface();
 
         // Should we update?
         if(devUpdateBiasContributors)
         {
             d->updateBiasContributors(*shard, bspLeaf, geomId);
         }
-
-        surface = &visPlane(geomId).surface();
         break; }
 
     case DMU_SEGMENT: {
         LineSideSegment &seg = mapElement.as<LineSideSegment>();
+        surface = &seg.lineSide().surface(geomId);
 
         // Should we update?
         if(devUpdateBiasContributors)
         {
             d->updateBiasContributors(*shard, seg, geomId);
         }
-
-        surface = &seg.lineSide().surface(geomId);
         break; }
 
     default: break;
     }
 
-    Vector3f const *posIt = posCoords;
-    Vector4f *colorIt     = colorCoords;
-    for(int i = 0; i < shard->bias.illums.count(); ++i, posIt++, colorIt++)
-    {
-        *colorIt += shard->bias.illums[i].evaluate(*posIt, surface->normal(), biasTime);
-    }
+    shard->lightWithBiasSources(posCoords, colorCoords, surface->tangentMatrix(),
+                                surface->map().biasCurrentTime());
 
     // Any changes from contributors will have now been applied.
     shard->bias.tracker.markIllumUpdateCompleted();
@@ -1346,7 +1322,7 @@ void SectorCluster::updateBiasAfterGeometryMove(MapElement &mapElement, int geom
 {
     if(Shard *shard = d->shard(mapElement, geomId, false /*don't allocate*/))
     {
-        shard->bias.tracker.updateAllContributors();
+        shard->updateBiasAfterMove();
     }
 }
 
