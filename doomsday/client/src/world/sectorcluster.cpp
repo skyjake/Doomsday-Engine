@@ -768,7 +768,9 @@ DENG2_PIMPL(SectorCluster)
             foundGroup = geomGroups.insert(&mapElement, Shards());
         }
 
-        Shard *newShard = new Shard(countIlluminationPoints(mapElement, geomId));
+        Shard *newShard = new Shard(mapElement, geomId,
+                                    countIlluminationPoints(mapElement, geomId),
+                                    thisPublic);
         foundGroup->insert(geomId, newShard);
         return newShard;
     }

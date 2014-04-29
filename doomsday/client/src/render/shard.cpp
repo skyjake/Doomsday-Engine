@@ -21,22 +21,39 @@
 #include "BiasDigest"
 #include "BiasIllum"
 #include "BiasTracker"
+#include "SectorCluster"
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(Shard)
 {
+    MapElement &mapElement;
+    int geomId;
+
+    SectorCluster *owner;
+
     BiasTracker biasTracker;
     typedef QList<BiasIllum *> BiasIllums;
     BiasIllums biasIllums;
     uint biasLastUpdateFrame;
 
-    Instance() : biasLastUpdateFrame(0) {}
-    ~Instance() { qDeleteAll(biasIllums); }
+    Instance(MapElement &mapElement, int geomId)
+        : mapElement         (mapElement)
+        , geomId             (geomId)
+        , owner              (0)
+        , biasLastUpdateFrame(0)
+    {}
+
+    ~Instance()
+    {
+        qDeleteAll(biasIllums);
+    }
 };
 
-Shard::Shard(int numBiasIllums) : d(new Instance)
+Shard::Shard(MapElement &mapElement, int geomId, int numBiasIllums, SectorCluster *owner)
+    : d(new Instance(mapElement, geomId))
 {
+    setCluster(owner);
     if(numBiasIllums)
     {
         d->biasIllums.reserve(numBiasIllums);
@@ -45,6 +62,11 @@ Shard::Shard(int numBiasIllums) : d(new Instance)
             d->biasIllums << new BiasIllum(&d->biasTracker);
         }
     }
+}
+
+void Shard::setCluster(SectorCluster *newOwner)
+{
+    d->owner = newOwner;
 }
 
 void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,

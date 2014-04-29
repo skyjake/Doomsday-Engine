@@ -22,20 +22,39 @@
 #include <QList>
 #include <de/Matrix>
 #include <de/Vector>
+#include "MapElement"
 
 class BiasDigest;
 class BiasSource;
+class SectorCluster;
 
 /**
  * 3D map geometry fragment.
+ *
+ * Shards are produced and (perhaps owned) by SectorClusters when the map geometry
+ * is split into drawable geometry fragments. Shard ownership may be transferred
+ * however a shard should never outlive the MapElement for which it was produced.
+ *
+ * @todo Shard should not need to know the MapElement it was produced for.
  */
 class Shard
 {
 public:
     /**
+     * Construct a new Shard of 3D map geometry.
+     *
+     * @param mapElement     MapElement for which this is geometry fragment.
+     * @param geomId         MapElement-unique geometry id number.
      * @param numBiasIllums  Number of bias illumination points for the geometry.
+     * @param owner          SectorCluster which owns the shard (if any).
      */
-    Shard(int numBiasIllums);
+    Shard(de::MapElement &mapElement, int geomId, int numBiasIllums,
+          SectorCluster *owner = 0);
+
+    /**
+     * Change SectorCluster which owns the shard to @a newOwner.
+     */
+    void setCluster(SectorCluster *newOwner);
 
     /**
      * Perform bias lighting for the supplied vertex geometry.
@@ -57,14 +76,14 @@ public:
                               de::Matrix3f const &tangentMatrix, uint biasTime);
 
     /**
-     * Apply bias lighting changes to the Shard.
+     * Apply bias lighting changes to the shard.
      *
      * @param changes  Digest of lighting changes to be applied.
      */
     void applyBiasDigest(BiasDigest &changes);
 
     /**
-     * Schedule a bias lighting update for the Shard following a move.
+     * Schedule a bias lighting update for the shard following a move.
      */
     void updateBiasAfterMove();
 
