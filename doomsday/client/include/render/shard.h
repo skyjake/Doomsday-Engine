@@ -31,7 +31,7 @@ class SectorCluster;
 /**
  * 3D map geometry fragment.
  *
- * Shards are produced and (perhaps owned) by SectorClusters when the map geometry
+ * Shards are produced (and perhaps owned) by SectorClusters when the map geometry
  * is split into drawable geometry fragments. Shard ownership may be transferred
  * however a shard should never outlive the MapElement for which it was produced.
  *
@@ -43,7 +43,7 @@ public:
     /**
      * Construct a new Shard of 3D map geometry.
      *
-     * @param mapElement     MapElement for which this is geometry fragment.
+     * @param mapElement     MapElement for which this is a geometry fragment.
      * @param geomId         MapElement-unique geometry id number.
      * @param numBiasIllums  Number of bias illumination points for the geometry.
      * @param owner          SectorCluster which owns the shard (if any).
