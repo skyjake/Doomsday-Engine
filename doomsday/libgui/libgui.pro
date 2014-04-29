@@ -220,9 +220,10 @@ macx {
 
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_gui.1.dylib libdeng_gui.1.dylib")
 
-    # Update the library included in the main app bundle.
-    doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
-    doPostLink("cp -fRp libdeng_gui*dylib ../client/Doomsday.app/Contents/Frameworks")
+    # Prepare Assimp for deployment.
+    doPostLink("cp -fRp $$ASSIMP_DIR/lib/libassimp*dylib .")
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libassimp.3.dylib libassimp.3.dylib")
+    linkBinaryToBundledAssimp(libdeng_gui.1.dylib, ..)
 }
 else {
     INSTALLS += target
