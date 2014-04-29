@@ -56,8 +56,12 @@ class Event:
                          ('Ubuntu (x86)',                  'i386.deb',       'linux2-32bit'),
                          ('Source',                        '.tar.gz',        'source')]
 
-            if self.has_version() and utils.version_cmp(self.version_base(), '1.11') >= 0:
-                del self.oses[3] # no more OS X 10.4
+            # Remove obsolete OS X versions:
+            if self.has_version():
+                if utils.version_cmp(self.version_base(), '1.11') >= 0:
+                    del self.oses[3] # no more OS X 10.4
+                if utils.version_cmp(self.version_base(), '1.15') >= 0:
+                    del self.oses[2] # no more OS X 10.6
                 
         elif self.num >= 778: # Mac distribution naming was changed.
             # Platforms:  Name                            File ext     sys_id()
