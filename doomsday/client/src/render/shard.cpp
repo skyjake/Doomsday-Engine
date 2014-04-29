@@ -17,7 +17,9 @@
  */
 
 #include "render/shard.h"
+#include <QtAlgorithms>
 #include "BiasDigest"
+#include "BiasIllum"
 
 using namespace de;
 
@@ -28,9 +30,14 @@ Shard::Shard(int numBiasIllums)
         bias.illums.reserve(numBiasIllums);
         for(int i = 0; i < numBiasIllums; ++i)
         {
-            bias.illums.append(BiasIllum(&bias.tracker));
+            bias.illums << new BiasIllum(&bias.tracker);
         }
     }
+}
+
+Shard::~Shard()
+{
+    qDeleteAll(bias.illums);
 }
 
 void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
@@ -44,7 +51,7 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
     Vector4f *colorIt     = colorCoords;
     for(int i = 0; i < bias.illums.count(); ++i, posIt++, colorIt++)
     {
-        *colorIt += bias.illums[i].evaluate(*posIt, sufNormal, biasTime);
+        *colorIt += bias.illums[i]->evaluate(*posIt, sufNormal, biasTime);
     }
 }
 

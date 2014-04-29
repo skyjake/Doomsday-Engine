@@ -17,10 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QScopedPointer>
-
 #include "de_base.h"
-#include "de_console.h"
+#include "render/biasillum.h"
+#include "con_main.h"
+
+#include <QScopedPointer>
 
 #include "world/map.h"
 #include "world/linesighttest.h"
@@ -30,20 +31,10 @@
 
 #include "BiasTracker"
 
-#include "render/biasillum.h"
-
 using namespace de;
 
 static int lightSpeed        = 130;  //cvar
 static int devUseSightCheck  = true; //cvar
-
-void BiasIllum::consoleRegister() // static
-{
-    C_VAR_INT("rend-bias-lightspeed",   &lightSpeed,        0, 0, 5000);
-
-    // Development variables.
-    C_VAR_INT("rend-dev-bias-sight",    &devUseSightCheck,  CVF_NO_ARCHIVE, 0, 1);
-}
 
 DENG2_PIMPL_NOREF(BiasIllum)
 {
@@ -62,19 +53,8 @@ DENG2_PIMPL_NOREF(BiasIllum)
      */
     Vector3f casted[MAX_CONTRIBUTORS];
 
-    Instance(BiasTracker *tracker) : tracker(tracker)
+    Instance() : tracker(0)
     {}
-
-    Instance(Instance const &other)
-        : IPrivate(), tracker(other.tracker), color(other.color)
-    {
-        if(!other.lerpInfo.isNull())
-        {
-            lerpInfo.reset(new InterpolateInfo());
-            lerpInfo->dest       = other.lerpInfo->dest;
-            lerpInfo->updateTime = other.lerpInfo->updateTime;
-        }
-    }
 
     /**
      * Returns a previous light contribution by unique contributor @a index.
@@ -243,16 +223,9 @@ DENG2_PIMPL_NOREF(BiasIllum)
 
 float const BiasIllum::MIN_INTENSITY = .005f;
 
-BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Instance(tracker))
-{}
-
-BiasIllum::BiasIllum(BiasIllum const &other) : d(new Instance(*other.d))
-{}
-
-BiasIllum &BiasIllum::operator = (BiasIllum const &other)
+BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Instance())
 {
-    d.reset(new Instance(*other.d));
-    return *this;
+    setTracker(tracker);
 }
 
 bool BiasIllum::hasTracker() const
@@ -311,4 +284,12 @@ Vector3f BiasIllum::evaluate(Vector3d const &point, Vector3f const &normalAtPoin
 
     // Factor in the current color (and perform interpolation if needed).
     return d->lerp(biasTime);
+}
+
+void BiasIllum::consoleRegister() // static
+{
+    C_VAR_INT("rend-bias-lightspeed",   &lightSpeed,        0, 0, 5000);
+
+    // Development variables.
+    C_VAR_INT("rend-dev-bias-sight",    &devUseSightCheck,  CVF_NO_ARCHIVE, 0, 1);
 }

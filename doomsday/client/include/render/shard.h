@@ -22,10 +22,10 @@
 #include <QList>
 #include <de/Matrix>
 #include <de/Vector>
-#include "BiasIllum"
 #include "BiasTracker"
 
 class BiasDigest;
+class BiasIllum;
 
 /**
  * 3D map geometry fragment.
@@ -35,7 +35,7 @@ class Shard
 public: /// @todo make private:
     struct BiasData {
         uint lastUpdateFrame;
-        typedef QList<BiasIllum> BiasIllums;
+        typedef QList<BiasIllum *> BiasIllums;
         BiasIllums illums;
         BiasTracker tracker;
     } bias;
@@ -45,6 +45,7 @@ public:
      * @param numBiasIllums  Number of bias illumination points for the geometry.
      */
     Shard(int numBiasIllums);
+    ~Shard();
 
     /**
      * Perform bias lighting for the supplied vertex geometry.
@@ -59,7 +60,8 @@ public:
      *                       before calling (perhaps zeroed).
      *
      * @param tangentMatrix  Tangent space matrix for the surface geometry.
-     * @param biasTime       Time in milliseconds when the current render frame began.
+     * @param biasTime       Time in milliseconds of the last bias frame update,
+     *                       used for interpolation.
      */
     void lightWithBiasSources(de::Vector3f const *posCoords, de::Vector4f *colorCoords,
                               de::Matrix3f const &tangentMatrix, uint biasTime);

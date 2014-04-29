@@ -1,7 +1,7 @@
-/** @file biasillum.h Shadow Bias map point illumination.
+/** @file biasillum.h  Shadow Bias map point illumination.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RENDER_SHADOWBIAS_ILLUMINATION_H
-#define DENG_RENDER_SHADOWBIAS_ILLUMINATION_H
+#ifndef DENG_CLIENT_RENDER_BIASILLUM_H
+#define DENG_CLIENT_RENDER_BIASILLUM_H
 
 #include <de/Error>
 #include <de/Vector>
@@ -52,14 +52,6 @@ public:
      *                 Note that @ref assignTracker() can be used later.
      */
     explicit BiasIllum(BiasTracker *tracker = 0);
-
-    BiasIllum(BiasIllum const &other);
-    BiasIllum &operator = (BiasIllum const &other);
-
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
 
     /**
      * (Re-)Evaluate lighting for the map point. Any queued changes to lighting
@@ -104,8 +96,13 @@ public:
      */
     void setTracker(BiasTracker *newTracker);
 
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
+
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_RENDER_SHADOWBIAS_ILLUMINATION_H
+#endif // DENG_CLIENT_RENDER_BIASILLUM_H
