@@ -4,7 +4,7 @@ builddir:
 	mkdir -p builddir
 
 builddir/Makefile: builddir
-	cd doomsday/external/assimp && cmake -G "Unix Makefiles" && make
+	cd doomsday/external/assimp && cmake -G "Unix Makefiles" && make -j2
 	cd builddir && qmake-qt4 PREFIX=/usr CONFIG+=deng_fluidsynth CONFIG+=deng_extassimp CONFIG+=release DENG_BUILD=`../build_number.py --print` ../../doomsday/$(APPNAME).pro
 
 build: build-arch build-indep
