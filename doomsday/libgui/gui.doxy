@@ -2,7 +2,7 @@
 @INCLUDE = ../doomsday.doxy
 
 PROJECT_NAME            = "libgui"
-PROJECT_NUMBER          = 1.14.1
+PROJECT_NUMBER          = 1.14.2
 PROJECT_BRIEF           = "GUI extension for libdeng2"
 OUTPUT_DIRECTORY        = ../apidoc/gui/
 
