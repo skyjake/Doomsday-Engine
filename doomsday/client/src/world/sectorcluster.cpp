@@ -1,7 +1,7 @@
 /** @file sectorcluster.cpp  World map sector cluster.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -44,8 +44,8 @@
 
 namespace de {
 
-namespace internal {
-
+namespace internal
+{
     /// Classification flags:
     enum ClusterFlag
     {
@@ -115,12 +115,15 @@ DENG2_PIMPL(SectorCluster)
 #endif
     {
 #ifdef __CLIENT__
-        zap(reverb);
+        de::zap(reverb);
 #endif
     }
 
     ~Instance()
     {
+        observePlane(&self.sector().floor(), false);
+        observePlane(&self.sector().ceiling(), false);
+
         clearMapping(Sector::Floor);
         clearMapping(Sector::Ceiling);
 
@@ -199,13 +202,19 @@ DENG2_PIMPL(SectorCluster)
         if(!clusterAdr || *clusterAdr == newCluster)
             return;
 
+        if(*clusterAdr != thisPublic)
+        {
+            observePlane(mappedPlane(planeIdx), false);
+        }
         observeCluster(*clusterAdr, false);
-        observePlane(mappedPlane(planeIdx), false);
 
         *clusterAdr = newCluster;
 
         observeCluster(*clusterAdr);
-        observePlane(mappedPlane(planeIdx), true, !permanent);
+        if(*clusterAdr != thisPublic)
+        {
+            observePlane(mappedPlane(planeIdx), true, !permanent);
+        }
     }
 
     void clearMapping(int planeIdx)
@@ -593,7 +602,10 @@ DENG2_PIMPL(SectorCluster)
         SectorClusterCirculator it(base);
         do
         {
-            markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+            if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+            {
+                markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+            }
         } while(&it.next() != base);
 
         // Mark surfaces of the inner edge loop(s).
@@ -602,7 +614,10 @@ DENG2_PIMPL(SectorCluster)
             SectorClusterCirculator it(base);
             do
             {
-                markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+                if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+                }
             } while(&it.next() != base);
         }
     }
@@ -625,41 +640,44 @@ DENG2_PIMPL(SectorCluster)
     /// Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane)
     {
-        // Check if there are any camera players in this sector. If their height
-        // is now above the ceiling/below the floor they are now in the void.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        if(&plane == mappedPlane(plane.indexInSector()))
         {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
-
-            if(!ddpl->inGame || !ddpl->mo)
-                continue;
-            if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
-                continue;
-
-            if((ddpl->flags & DDPF_CAMERA) &&
-               (ddpl->mo->origin[VZ] > self.visCeiling().height() - 4 ||
-                ddpl->mo->origin[VZ] < self.visFloor().height()))
+            // Check if there are any camera players in this sector. If their height
+            // is now above the ceiling/below the floor they are now in the void.
+            for(int i = 0; i < DDMAXPLAYERS; ++i)
             {
-                ddpl->inVoid = true;
+                player_t *plr = &ddPlayers[i];
+                ddplayer_t *ddpl = &plr->shared;
+
+                if(!ddpl->inGame || !ddpl->mo)
+                    continue;
+                if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
+                    continue;
+
+                if((ddpl->flags & DDPF_CAMERA) &&
+                   (ddpl->mo->origin[VZ] > self.visCeiling().height() - 4 ||
+                    ddpl->mo->origin[VZ] < self.visFloor().height()))
+                {
+                    ddpl->inVoid = true;
+                }
             }
-        }
 
 #ifdef __CLIENT__
-        // We'll need to recalculate environmental audio characteristics.
-        needReverbUpdate = true;
+            // We'll need to recalculate environmental audio characteristics.
+            needReverbUpdate = true;
 
-        if(!ddMapSetup && useBias)
-        {
-            // Inform bias surfaces of changed geometry.
-            foreach(BspLeaf *bspLeaf, bspLeafs)
+            if(!ddMapSetup && useBias)
             {
-                bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
+                // Inform bias surfaces of changed geometry.
+                 foreach(BspLeaf *bspLeaf, bspLeafs)
+                 {
+                     bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
+                 }
             }
-        }
 
-        markDependantSurfacesForDecorationUpdate();
+            markDependantSurfacesForDecorationUpdate();
 #endif // __CLIENT__
+        }
 
         // We may need to update one or both mapped planes.
         maybeInvalidateMapping(plane.indexInSector());
@@ -806,6 +824,10 @@ SectorCluster::SectorCluster(BspLeafs const &bspLeafs) : d(new Instance(this))
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(this);
     }
+
+    // Observe changes to plane heights in "this" sector.
+    d->observePlane(&sector().floor());
+    d->observePlane(&sector().ceiling());
 }
 
 bool SectorCluster::isInternalEdge(HEdge *hedge) // static
