@@ -407,10 +407,12 @@ static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
     return 0;
 }
 
+#if 0
 static __inline dd_bool objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
 {
     return objectIndexInNamespace(names, obj) != 0;
 }
+#endif
 
 /**
  * @note Does not check if the object already exists in this scope.
