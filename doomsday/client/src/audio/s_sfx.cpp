@@ -502,9 +502,9 @@ void Sfx_ListenerUpdate()
         AudioDriver_SFX()->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector cluster changed?
-        if(listenerCluster != &Mobj_Cluster(*listener))
+        if(listenerCluster != Mobj_ClusterPtr(*listener))
         {
-            listenerCluster = &Mobj_Cluster(*listener);
+            listenerCluster = Mobj_ClusterPtr(*listener);
 
             // It may be necessary to recalculate the reverb properties...
             AudioEnvironmentFactors const &envFactors = listenerCluster->reverb();
