@@ -117,7 +117,7 @@ void SavedSession::Metadata::parse(String const &source)
 
 String SavedSession::Metadata::asStyledText() const
 {
-    String currentMapText = String(_E(l)" - Uri: "_E(.)_E(i) "%1" _E(.)).arg(gets("mapUri"));
+    String currentMapText = String(_E(l)" - Uri: " _E(.)_E(i) "%1" _E(.)).arg(gets("mapUri"));
     // Is the time in the current map known?
     if(has("mapTime"))
     {
@@ -144,7 +144,7 @@ String SavedSession::Metadata::asStyledText() const
     return String(_E(b) "%1\n" _E(.)
                   _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
                   _E(l) "Session id: "  _E(.)_E(i) "%3\n" _E(.)
-                  _E(D) "Current map:\n"_E(.) "%4\n"
+                  _E(D) "Current map:\n" _E(.) "%4\n"
                   _E(D) "Game rules:\n" _E(.) "%5")
              .arg(gets("userDescription", ""))
              .arg(gets("gameIdentityKey", ""))

@@ -1324,7 +1324,7 @@ void Hu_MenuInitSkillPage()
 #else
     Point2Raw const origin(48, 63);
 #endif
-    int skillButtonFlags[NUM_SKILL_MODES] = {
+    uint skillButtonFlags[NUM_SKILL_MODES] = {
         MNF_ID0,
         MNF_ID1,
         MNF_ID2 | MNF_DEFAULT,
@@ -1921,7 +1921,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 #else
     Point2Raw const origin(70, 30);
 #endif
-    int const saveSlotObjectIds[NUMSAVESLOTS] = {
+    uint const saveSlotObjectIds[NUMSAVESLOTS] = {
         MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
 #if !__JHEXEN__
         MNF_ID6, MNF_ID7
