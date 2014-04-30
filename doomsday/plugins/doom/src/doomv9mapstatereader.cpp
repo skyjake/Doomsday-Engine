@@ -619,6 +619,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
+#if 0
 static bool SV_OpenFile_Dm_v19(Path path)
 {
     DENG_ASSERT(saveBuffer == 0);
@@ -636,6 +637,7 @@ static void SV_CloseFile_Dm_v19()
     Z_Free(saveBuffer);
     saveBuffer = savePtr = 0;
 }
+#endif
 
 DENG2_PIMPL(DoomV9MapStateReader)
 {

@@ -640,6 +640,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
+#if 0
 static bool SV_OpenFile_Hr_v13(Path filePath)
 {
     DENG_ASSERT(saveBuffer == 0);
@@ -657,6 +658,7 @@ static void SV_CloseFile_Hr_v13()
     Z_Free(saveBuffer);
     saveBuffer = savePtr = 0;
 }
+#endif
 
 DENG2_PIMPL(HereticV13MapStateReader)
 {
