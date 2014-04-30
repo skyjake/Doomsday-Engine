@@ -136,6 +136,9 @@ DENG2_PIMPL(SectorCluster)
 
     ~Instance()
     {
+        observePlane(&self.sector().floor(), false);
+        observePlane(&self.sector().ceiling(), false);
+
 #ifdef __CLIENT__
         self.sector().audienceForLightLevelChange -= this;
         self.sector().audienceForLightColorChange -= this;
@@ -225,13 +228,19 @@ DENG2_PIMPL(SectorCluster)
         if(!clusterAdr || *clusterAdr == newCluster)
             return;
 
+        if(*clusterAdr != thisPublic)
+        {
+            observePlane(mappedPlane(planeIdx), false);
+        }
         observeCluster(*clusterAdr, false);
-        observePlane(mappedPlane(planeIdx), false);
 
         *clusterAdr = newCluster;
 
         observeCluster(*clusterAdr);
-        observePlane(mappedPlane(planeIdx), true, !permanent);
+        if(*clusterAdr != thisPublic)
+        {
+            observePlane(mappedPlane(planeIdx), true, !permanent);
+        }
     }
 
     void clearMapping(int planeIdx)
@@ -619,7 +628,10 @@ DENG2_PIMPL(SectorCluster)
         SectorClusterCirculator it(base);
         do
         {
-            markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+            if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+            {
+                markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+            }
         } while(&it.next() != base);
 
         // Mark surfaces of the inner edge loop(s).
@@ -628,7 +640,10 @@ DENG2_PIMPL(SectorCluster)
             SectorClusterCirculator it(base);
             do
             {
-                markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+                if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+                }
             } while(&it.next() != base);
         }
     }
@@ -664,54 +679,57 @@ DENG2_PIMPL(SectorCluster)
     /// Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane)
     {
-        // Check if there are any camera players in this sector. If their height
-        // is now above the ceiling/below the floor they are now in the void.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        if(&plane == mappedPlane(plane.indexInSector()))
         {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
-
-            if(!ddpl->inGame || !ddpl->mo)
-                continue;
-            if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
-                continue;
-
-            if((ddpl->flags & DDPF_CAMERA) &&
-               (ddpl->mo->origin[VZ] > self.visCeiling().height() - 4 ||
-                ddpl->mo->origin[VZ] < self.visFloor().height()))
+            // Check if there are any camera players in this sector. If their height
+            // is now above the ceiling/below the floor they are now in the void.
+            for(int i = 0; i < DDMAXPLAYERS; ++i)
             {
-                ddpl->inVoid = true;
-            }
-        }
+                player_t *plr = &ddPlayers[i];
+                ddplayer_t *ddpl = &plr->shared;
 
-#ifdef __CLIENT__
-        // We'll need to recalculate environmental audio characteristics.
-        needReverbUpdate = true;
+                if(!ddpl->inGame || !ddpl->mo)
+                    continue;
+                if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
+                    continue;
 
-        if(!ddMapSetup && useBias)
-        {
-            // Inform bias surfaces of changed geometry.
-            foreach(BspLeaf *bspLeaf, bspLeafs)
-            {
-                self.updateBiasAfterGeometryMove(*bspLeaf, plane.indexInSector());
-
-                HEdge *base = bspLeaf->poly().hedge();
-                HEdge *hedge = base;
-                do
+                if((ddpl->flags & DDPF_CAMERA) &&
+                   (ddpl->mo->origin[VZ] > self.visCeiling().height() - 4 ||
+                    ddpl->mo->origin[VZ] < self.visFloor().height()))
                 {
-                    updateBiasForWallSectionsAfterGeometryMove(hedge);
-                } while((hedge = &hedge->next()) != base);
-
-                foreach(Mesh *mesh, bspLeaf->extraMeshes())
-                foreach(HEdge *hedge, mesh->hedges())
-                {
-                    updateBiasForWallSectionsAfterGeometryMove(hedge);
+                    ddpl->inVoid = true;
                 }
             }
-        }
 
-        markDependantSurfacesForDecorationUpdate();
+#ifdef __CLIENT__
+            // We'll need to recalculate environmental audio characteristics.
+            needReverbUpdate = true;
+
+            if(!ddMapSetup && useBias)
+            {
+                // Inform bias surfaces of changed geometry.
+                foreach(BspLeaf *bspLeaf, bspLeafs)
+                {
+                    self.updateBiasAfterGeometryMove(*bspLeaf, plane.indexInSector());
+
+                    HEdge *base = bspLeaf->poly().hedge();
+                    HEdge *hedge = base;
+                    do
+                    {
+                        updateBiasForWallSectionsAfterGeometryMove(hedge);
+                    } while((hedge = &hedge->next()) != base);
+
+                    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+                    foreach(HEdge *hedge, mesh->hedges())
+                    {
+                        updateBiasForWallSectionsAfterGeometryMove(hedge);
+                    }
+                }
+            }
+
+            markDependantSurfacesForDecorationUpdate();
 #endif // __CLIENT__
+        }
 
         // We may need to update one or both mapped planes.
         maybeInvalidateMapping(plane.indexInSector());
@@ -1001,13 +1019,21 @@ DENG2_PIMPL(SectorCluster)
     /// Observes Sector LightLevelChange.
     void sectorLightLevelChanged(Sector &sector)
     {
-        sector.map().lightGrid().blockLightSourceChanged(thisPublic);
+        DENG2_ASSERT(&sector == &self.sector());
+        if(sector.map().hasLightGrid())
+        {
+            sector.map().lightGrid().blockLightSourceChanged(thisPublic);
+        }
     }
 
     /// Observes Sector LightColorChange.
     void sectorLightColorChanged(Sector &sector)
     {
-        sector.map().lightGrid().blockLightSourceChanged(thisPublic);
+        DENG2_ASSERT(&sector == &self.sector());
+        if(sector.map().hasLightGrid())
+        {
+            sector.map().lightGrid().blockLightSourceChanged(thisPublic);
+        }
     }
 #endif // __CLIENT__
 };
@@ -1021,6 +1047,10 @@ SectorCluster::SectorCluster(BspLeafs const &bspLeafs)
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(this);
     }
+
+    // Observe changes to plane heights in "this" sector.
+    d->observePlane(&sector().floor());
+    d->observePlane(&sector().ceiling());
 
 #ifdef __CLIENT__
     // Observe changes to sector lighting properties.
