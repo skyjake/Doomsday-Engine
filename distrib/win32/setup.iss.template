@@ -140,10 +140,6 @@ Source: "modules\Log.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\recutil.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\Updater.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
-Source: "data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\doomsday.ico"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\fonts\console11.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\console14.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
