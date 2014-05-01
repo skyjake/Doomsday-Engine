@@ -103,6 +103,16 @@ DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);
 
 inline uint qHash(Id const &id) { return id; }
 
+/**
+ * Utility for declaring identifiers that are initially uninitialized.
+ */
+class DENG2_PUBLIC NoneId : public Id
+{
+public:
+    NoneId() : Id(None) {}
+    NoneId(Id const &other) : Id(other) {}
+};
+
 } // namespace de
 
 #endif // LIBDENG2_ID_H
