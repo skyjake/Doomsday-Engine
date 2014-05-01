@@ -147,11 +147,6 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             return menu->items();
         }
 
-        GameWidget &gameWidget(ui::Item const &item)
-        {
-            return menu->itemWidget<GameWidget>(item);
-        }
-
         String textForTitle(bool whenOpen) const
         {
             if(whenOpen) return titleText;
