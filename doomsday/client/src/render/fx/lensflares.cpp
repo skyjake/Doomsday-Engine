@@ -34,7 +34,7 @@
 #include <QHash>
 #include <cmath>
 
-//#define FX_TEST_LIGHT
+//#define FX_TEST_LIGHT // draw a test light (positioned for Doom E1M1)
 
 using namespace de;
 

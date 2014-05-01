@@ -1,0 +1,10 @@
+# Lens Flare Images
+
+group fx.lensflares {
+    image burst    { path = "graphics/h-burst.png"  }
+    image circle   { path = "graphics/circle.png"   }
+    image exponent { path = "graphics/exponent.png" }
+    image halo     { path = "graphics/halo.png"     }
+    image ring     { path = "graphics/ring.png"     }
+    image star     { path = "graphics/star.png"     }
+}
