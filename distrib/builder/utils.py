@@ -14,6 +14,11 @@ def remkdir(n):
         print n, 'exists, clearing it...'
         shutil.rmtree(n, True)
     os.mkdir(n)
+    
+    
+def deltree(n):
+    if os.path.exists(n):
+        shutil.rmtree(n, True)
 
 
 def omit_path(path, omitted):

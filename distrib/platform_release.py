@@ -233,10 +233,9 @@ def mac_release():
 
     print 'Copying release binaries into the launcher bundle.'
     duptree(os.path.join(MAC_WORK_DIR, 'client/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
-    for f in glob.glob(os.path.join(MAC_WORK_DIR, 'client/*.bundle')):
-        # Exclude jDoom64.
-        if not 'jDoom64' in f:
-            duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
+    # Remove plugins unsuitable for general distribution.
+    for omit in ['doom64', 'example']:
+        builder.utils.deltree('Doomsday Engine.app/Contents/Doomsday.app/Contents/DengPlugins/%s.bundle' % omit)
     duptree(os.path.join(MAC_WORK_DIR, 'tools/shell/shell-gui/Doomsday Shell.app'), 'Doomsday Shell.app')
 
     print 'Correcting permissions...'
