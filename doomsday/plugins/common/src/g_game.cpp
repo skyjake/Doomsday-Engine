@@ -527,7 +527,7 @@ static void initSaveSlots()
     sslots = new SaveSlots;
 
     // Setup the logical save slot bindings.
-    int const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
+    uint const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
         MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
 #if !__JHEXEN__
         MNF_ID6, MNF_ID7

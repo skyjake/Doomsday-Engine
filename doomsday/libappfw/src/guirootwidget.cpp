@@ -111,6 +111,8 @@ DENG2_PIMPL(GuiRootWidget)
 
     ~Instance()
     {
+        GuiWidget::recycleTrashedWidgets();
+
         // Tell all widgets to release their resource allocations. The base
         // class destructor will destroy all widgets, but this class governs
         // shared GL resources, so we'll ask the widgets to do this now.
