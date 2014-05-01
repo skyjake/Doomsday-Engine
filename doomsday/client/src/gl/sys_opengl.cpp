@@ -368,6 +368,8 @@ static de::String omitGLPrefix(de::String str)
 
 static void printExtensions(QStringList extensions)
 {
+    qSort(extensions);
+
     // Find all the prefixes.
     QSet<QString> prefixes;
     foreach(QString ext, extensions)
