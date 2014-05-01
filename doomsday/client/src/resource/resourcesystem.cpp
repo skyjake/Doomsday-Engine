@@ -2153,13 +2153,9 @@ void ResourceSystem::initSystemTextures()
         { "missing",    "missing" },
         { "bbox",       "bbox" },
         { "gray",       "gray" },
-        { "mouse",      "ui/mouse" },
         { "boxcorner",  "ui/boxcorner" },
         { "boxfill",    "ui/boxfill" },
         { "boxshade",   "ui/boxshade" },
-        { "hint",       "ui/hint" },
-        { "logo",       "ui/logo" },
-        { "background", "ui/background" },
         { "", "" }
     };
 

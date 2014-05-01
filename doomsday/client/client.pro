@@ -847,12 +847,6 @@ startupfonts.files = \
     data/fonts/normallight18.dfn \
     data/fonts/normallight24.dfn
 
-startupgfx.files = \
-    data/graphics/background.pcx \
-    data/graphics/loading1.png \
-    data/graphics/loading2.png \
-    data/graphics/logo.png
-
 macx {
     res.path = Contents/Resources
     res.files = \
@@ -862,9 +856,8 @@ macx {
     data.path         = $${res.path}
     mod.path          = $${res.path}/modules
     startupfonts.path = $${res.path}/data/fonts
-    startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += mod res data startupfonts startupgfx
+    QMAKE_BUNDLE_DATA += mod res data startupfonts
 
     QMAKE_INFO_PLIST = res/macx/Info.plist
 
@@ -903,11 +896,10 @@ macx {
 
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupgfx startupfonts mod
+    INSTALLS += target data startupfonts mod
 
     target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
-    startupgfx.path   = $$DENG_DATA_DIR/graphics
     startupfonts.path = $$DENG_DATA_DIR/fonts
     mod.path          = $$DENG_BASE_DIR/modules
 
