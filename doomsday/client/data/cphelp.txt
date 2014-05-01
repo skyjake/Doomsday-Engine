@@ -131,10 +131,6 @@ inf = SEE ALSO:\n- 'listdisplaymodes'\n- 'setres'\n- 'setfullres'\n- 'setwinres'
 desc = Dump a data lump currently loaded in memory.
 inf = Params: dump (name)\nFor example, 'dump PLAYPAL'.
 
-[dumpkeymap]
-desc = Write the current keymap to a file.
-inf = Params: dumpkeymap (file)\nFor example, 'dumpkeymap finnish.dkm'.
-
 [echo]
 desc = Echo the parameters on separate lines.
 inf = Params: echo (text) ...\nFor example, 'echo "hello world"'
@@ -179,10 +175,6 @@ inf = USAGE:\ninspectsavegame (path)\nThe (path) is an absolute path and name of
 [inspecttexture]
 desc = Print extended information about a Texture to the console.
 inf = Params: inspecttexture (uri)\nFor example, 'inspecttexture flats:fwater1'.
-
-[keymap]
-desc = Load a DKM keymap file.
-inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
 
 [kick]
 desc = Kick client out of the game (server only).
