@@ -228,8 +228,8 @@ DENG2_PIMPL(RenderSystem)
      */
     void loadImages()
     {
-        Folder const &renderPack = App::fileSystem().find<Folder>("renderer.pack");
-        images.addFromInfo(renderPack.locate<File>("images.dei"));
+        //Folder const &renderPack = App::fileSystem().find<Folder>("renderer.pack");
+        //images.addFromInfo(renderPack.locate<File>("images.dei"));
     }
 };
 

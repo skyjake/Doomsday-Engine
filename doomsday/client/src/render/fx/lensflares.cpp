@@ -45,6 +45,7 @@ namespace fx {
  */
 struct FlareData
 {
+    ImageBank images;
     AtlasTexture atlas;
     enum FlareId {
         Burst,
@@ -69,6 +70,9 @@ struct FlareData
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+        Folder const &pack = App::fileSystem().find<Folder>("lensflares.pack");
+        images.addFromInfo(pack.locate<File>("images.dei"));
+
         atlas.setAllocator(new KdTreeAtlasAllocator);
 
         flare[Exponent] = atlas.alloc(flareImage("exponent"));
@@ -87,9 +91,9 @@ struct FlareData
         LOGDEV_GL_XVERBOSE("Releasing shared data");
     }
 
-    static Image const &flareImage(String const &name)
+    Image const &flareImage(String const &name)
     {
-        return ClientApp::renderSystem().images().image("fx.lensflares." + name);
+        return images.image("fx.lensflares." + name);
     }
 
     Rectanglef uvRect(FlareId id) const
@@ -119,7 +123,7 @@ struct FlareData
 };
 
 #ifdef FX_TEST_LIGHT
-struct TestLight : public ILightSource
+struct TestLight : public IPointLightSource
 {
 public:
     float radius;

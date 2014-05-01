@@ -84,6 +84,12 @@ p.add_files(
     [ ('client/data/renderer.pack', '') ] )
 p.create('renderer.pack')
 
+# lensflares.pack
+p = Pack()
+p.add_files(
+    [ ('client/data/lensflares.pack', '') ] )
+p.create('lensflares.pack')
+
 # libdoom.pk3
 p = Pack()
 p.add_files(
