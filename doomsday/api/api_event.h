@@ -73,7 +73,6 @@ DENG_API_TYPEDEF(B)
     int  (*BindingsForCommand)(const char* cmd, char* buf, size_t bufSize);
     int  (*BindingsForControl)(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
 
-    void (*ClearKeyRepeaters)(void);
     int  (*GetKeyCode)(const char* name);
 }
 DENG_API_T(B);
@@ -82,7 +81,6 @@ DENG_API_T(B);
 #define B_SetContextFallback    _api_B.SetContextFallback
 #define B_BindingsForCommand    _api_B.BindingsForCommand
 #define B_BindingsForControl    _api_B.BindingsForControl
-#define DD_ClearKeyRepeaters    _api_B.ClearKeyRepeaters
 #define DD_GetKeyCode           _api_B.GetKeyCode
 #endif
 

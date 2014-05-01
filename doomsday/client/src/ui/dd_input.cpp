@@ -74,8 +74,6 @@ D_CMD(AxisPrintConfig);
 D_CMD(AxisChangeOption);
 D_CMD(AxisChangeValue);
 #endif
-D_CMD(DumpKeyMap);
-D_CMD(KeyMap);
 D_CMD(ListInputDevices);
 D_CMD(ReleaseMouse);
 
@@ -83,7 +81,6 @@ static void postEventsFromInputDevices(void);
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
-//int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
 unsigned int  mouseFreq = 0;
 dd_bool shiftDown = false, altDown = false;
 
@@ -112,8 +109,6 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 /* 120 */   'X', 'Y', 'Z', 0, 0, 0, 0, 0
 };
 
-//static repeater_t keyReps[MAX_DOWNKEYS];
-
 static float oldPOV = IJOY_POV_CENTER;
 
 static char* eventStrings[MAXEVENTS];
@@ -132,8 +127,6 @@ static byte devRendJoyState = false; ///< cvar
 void DD_RegisterInput(void)
 {
     // Cvars
-    //C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
-    //C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
     C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
 
 #if _DEBUG
@@ -143,10 +136,6 @@ void DD_RegisterInput(void)
 #endif
 
     // Ccmds
-#if 0
-    C_CMD("dumpkeymap", "s", DumpKeyMap);
-    C_CMD("keymap", "s", KeyMap);
-#endif
     C_CMD("listinputdevices", "", ListInputDevices);
 
     C_CMD("releasemouse", "", ReleaseMouse);
@@ -404,7 +393,6 @@ void I_DeviceReset(uint ident)
     if(ident == IDEV_KEYBOARD)
     {
         altDown = shiftDown = false;
-        DD_ClearKeyRepeaters();
     }
 }
 
@@ -895,7 +883,6 @@ dd_bool DD_IgnoreInput(dd_bool ignore)
         // Clear all the event buffers.
         postEventsFromInputDevices();
         DD_ClearEvents();
-        DD_ClearKeyRepeaters();
     }
     return old;
 }
@@ -1239,42 +1226,6 @@ byte DD_ModKey(byte key)
 }
 
 /**
- * Clears the repeaters array.
- */
-#undef DD_ClearKeyRepeaters
-DENG_EXTERN_C void DD_ClearKeyRepeaters(void)
-{
-    //memset(keyReps, 0, sizeof(keyReps));
-}
-
-void DD_ClearKeyRepeaterForKey(int ddkey, int native)
-{
-    /*
-    int k;
-
-    // Clear any repeaters with this key.
-    for(k = 0; k < MAX_DOWNKEYS; ++k)
-    {
-        // Check the native code first, if provided.
-        if(native >= 0)
-        {
-            if(native != keyReps[k].native)
-                continue;
-        }
-        else
-        {
-            if(keyReps[k].key != ddkey) continue;
-        }
-
-        // Clear this.
-        keyReps[k].native = -1;
-        keyReps[k].key = 0;
-        memset(keyReps[k].text, 0, sizeof(keyReps[k].text));
-    }
-    */
-}
-
-/**
  * Checks the current keyboard state, generates input events
  * based on pressed/held keys and posts them.
  */
@@ -1322,28 +1273,6 @@ void DD_ReadKeyboard(void)
 
         LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u]")
                 << ev.toggle.id << ev.toggle.id << ev.toggle.text << strlen(ev.toggle.text);
-
-#if 0
-        // Maintain the repeater table.
-        if(ev.toggle.state == ETOG_DOWN)
-        {
-            // Find an empty repeater.
-            for(k = 0; k < MAX_DOWNKEYS; ++k)
-                if(!keyReps[k].key)
-                {
-                    keyReps[k].key = ev.toggle.id;
-                    keyReps[k].native = ke->native;
-                    memcpy(keyReps[k].text, ev.toggle.text, sizeof(ev.toggle.text));
-                    keyReps[k].timer = sysTime;
-                    keyReps[k].count = 0;
-                    break;
-                }
-        }
-        else if(ev.toggle.state == ETOG_UP)
-        {
-            DD_ClearKeyRepeaterForKey(ev.toggle.id, ke->native);
-        }
-#endif
 
         // Post the event.
         DD_PostEvent(&ev);

@@ -191,7 +191,6 @@ typedef struct inputdev_s {
 } inputdev_t;
 
 extern int      repWait1, repWait2;
-extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
 extern dd_bool  shiftDown, altDown;
 
 void        DD_RegisterInput(void);
@@ -207,7 +206,6 @@ void        DD_PostEvent(ddevent_t *ev);
 void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
-void        DD_ClearKeyRepeaterForKey(int ddkey, int native);
 byte        DD_ModKey(byte key);
 
 bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
