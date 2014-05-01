@@ -1,7 +1,6 @@
 # GL Shaders for Lens Flares
 
-shader fx.lensflares 
-{
+shader fx.lensflares {
     # The vertex shader is rather lengthy, so it is in its separate file.
     path.vertex = "shaders/lensflares.vsh"
 

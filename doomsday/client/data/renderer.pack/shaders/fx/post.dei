@@ -1,0 +1,64 @@
+group fx {
+    # Post-processing shaders need to have uFadeInOut (0..1) for
+    # fading the effect in/out.
+    group post {
+        shader monochrome {
+            vertex = "
+                uniform highp mat4 uMvpMatrix;
+                attribute highp vec4 aVertex;
+                attribute highp vec2 aUV;
+                varying highp vec2 vUV;
+        
+                void main(void) {
+                    gl_Position = uMvpMatrix * aVertex;
+                    vUV = aUV;
+                }"
+            fragment = "
+                uniform sampler2D uTex;
+                uniform highp float uFadeInOut;                
+                varying highp vec2 vUV;
+
+                void main(void) {
+                    highp vec4 original = texture2D(uTex, vUV);
+                    highp float intens = 
+                        (0.2125 * original.r) + 
+                        (0.7154 * original.g) + 
+                        (0.0721 * original.b);
+                    gl_FragColor = vec4(vec3(intens), 1.0);
+                    if(uFadeInOut < 1.0) {
+                        gl_FragColor = mix(original, gl_FragColor, uFadeInOut);
+                    }
+                }"        
+        }
+        
+        shader monochrome.inverted {
+            vertex = "
+                uniform highp mat4 uMvpMatrix;
+                attribute highp vec4 aVertex;
+                attribute highp vec2 aUV;
+                varying highp vec2 vUV;
+        
+                void main(void) {
+                    gl_Position = uMvpMatrix * aVertex;
+                    vUV = aUV;
+                }"
+            fragment = "
+                uniform sampler2D uTex;
+                uniform highp float uFadeInOut;                
+                varying highp vec2 vUV;
+
+                void main(void) {
+                    highp vec4 original = texture2D(uTex, vUV);
+                    highp float intens = 
+                        (0.2125 * original.r) + 
+                        (0.7154 * original.g) + 
+                        (0.0721 * original.b);
+                        
+                    gl_FragColor = vec4(vec3(1.0 - intens), 1.0);
+                    if(uFadeInOut < 1.0) {
+                        gl_FragColor = mix(original, gl_FragColor, uFadeInOut);
+                    }
+                }"        
+        }        
+    }
+}
