@@ -22,7 +22,7 @@
 
 #include "dd_main.h" // isDedicated
 #include "filesys/fs_main.h"
-#include "gl/gl_texmanager.h" // GL_NewTextureWithParams
+#include "gl/gl_main.h" // GL_NewTextureWithParams
 #include "sys_system.h" // novideo
 #include "FontManifest"
 #include "uri.hh"
@@ -362,7 +362,7 @@ void BitmapFont::setFilePath(String newFilePath)
     }
 }
 
-GLuint BitmapFont::textureGLName() const
+uint BitmapFont::textureGLName() const
 {
     return d->texGLName;
 }

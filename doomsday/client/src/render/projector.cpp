@@ -19,7 +19,7 @@
 
 #include "clientapp.h"
 #include "render/projector.h"
-
+#include "render/viewports.h"
 #include "render/r_main.h"
 #include "render/rend_main.h"
 

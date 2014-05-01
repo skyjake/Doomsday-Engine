@@ -46,7 +46,7 @@
 
 #if defined(UNIX) && defined(MACOSX)
 #  define GL_GLEXT_PROTOTYPES
-#  include <OpenGL/gl.h>
+#  include <de/graphics/opengl.h>
 #  include <OpenGL/glext.h>
 #  include <OpenGL/OpenGL.h>
 #  define GL_CALL

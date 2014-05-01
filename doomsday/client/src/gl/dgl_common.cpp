@@ -24,6 +24,9 @@
 #include <cstdlib>
 #include <cmath>
 
+#include <de/GLState>
+#include <de/GLInfo>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -34,9 +37,6 @@
 #include "gl/sys_opengl.h"
 #include "api_gl.h"
 #include "gl/gl_texmanager.h"
-
-#include <de/GLState>
-#include <de/GLInfo>
 
 using namespace de;
 

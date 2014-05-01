@@ -26,6 +26,7 @@
 #include "def_data.h"
 #include "client/cl_def.h"
 
+#include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 
 #include "MaterialSnapshot"
@@ -351,8 +352,6 @@ DENG2_PIMPL(Sky)
         }
     }
 
-#ifdef __CLIENT__
-
     void drawModels()
     {
         DENG_ASSERT_IN_MAIN_THREAD();
@@ -408,8 +407,6 @@ DENG2_PIMPL(Sky)
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
     }
-
-#endif // __CLIENT__
 
     /// Observes Layer MaterialChange
     void skyLayerMaterialChanged(Layer &layer)
@@ -622,8 +619,6 @@ void Sky::runTick()
         }
     }
 }
-
-#ifdef __CLIENT__
 
 // Look up the precalculated vertex.
 static inline Vector3f &skyVertex(int r, int c)
@@ -973,8 +968,6 @@ void Sky::draw()
 
     if(usingFog) glDisable(GL_FOG);
 }
-
-#endif // __CLIENT__
 
 static Sky sky;
 Sky *theSky = &sky;

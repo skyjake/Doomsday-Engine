@@ -27,6 +27,7 @@
 
 #include "filesys/fs_main.h"
 
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 
@@ -40,6 +41,7 @@
 #include "resource/image.h"
 
 #include "render/r_main.h"
+#include "render/viewports.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vlight.h"

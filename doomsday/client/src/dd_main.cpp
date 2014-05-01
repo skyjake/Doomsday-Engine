@@ -54,9 +54,7 @@
 #ifdef __CLIENT__
 #  include "gl/gl_defer.h"
 #  include "gl/gl_texmanager.h"
-#endif
-
-#ifdef __CLIENT__
+#  include "gl/gl_main.h"
 #  include "render/cameralensfx.h"
 #  include "render/r_draw.h" // R_InitViewWindow
 #  include "render/r_main.h" // R_Init, R_ResetViewer

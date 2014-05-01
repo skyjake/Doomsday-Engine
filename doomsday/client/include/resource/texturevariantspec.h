@@ -25,7 +25,7 @@
 #endif
 
 #include "dd_types.h"
-#include "gl/sys_opengl.h"
+//#include "gl/sys_opengl.h"
 #include <de/String>
 
 typedef enum {
@@ -111,8 +111,8 @@ struct variantspecification_t
     /// Color palette translation.
     int tClass, tMap;
 
-    GLint glMinFilter() const;
-    GLint glMagFilter() const;
+    int glMinFilter() const;
+    int glMagFilter() const;
     int logicalAnisoLevel() const;
 
     variantspecification_t();

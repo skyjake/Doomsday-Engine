@@ -93,7 +93,7 @@ bool variantspecification_t::operator == (variantspecification_t const &other) c
     return 1; // Equal.
 }
 
-GLint variantspecification_t::glMinFilter() const
+int variantspecification_t::glMinFilter() const
 {
     if(minFilter >= 0) // Constant logical value.
     {
@@ -103,7 +103,7 @@ GLint variantspecification_t::glMinFilter() const
     return mipmapped? glmode[mipmapping] : GL_LINEAR;
 }
 
-GLint variantspecification_t::glMagFilter() const
+int variantspecification_t::glMagFilter() const
 {
     if(magFilter >= 0) // Constant logical value.
     {
