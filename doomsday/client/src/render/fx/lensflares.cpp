@@ -62,25 +62,33 @@ struct FlareData
         BottomRight,
         BottomLeft
     };
-    Id flare[MAX_FLARES];
+    NoneId flare[MAX_FLARES];
 
     FlareData()
         : atlas(Atlas::BackingStore, Atlas::Size(1024, 1024))
     {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        try
+        {
+            DENG_ASSERT_IN_MAIN_THREAD();
+            DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        Folder const &pack = App::fileSystem().find<Folder>("lensflares.pack");
-        images.addFromInfo(pack.locate<File>("images.dei"));
+            Folder const &pack = App::fileSystem().find<Folder>("lensflares.pack");
+            images.addFromInfo(pack.locate<File>("images.dei"));
 
-        atlas.setAllocator(new KdTreeAtlasAllocator);
+            atlas.setAllocator(new KdTreeAtlasAllocator);
 
-        flare[Exponent] = atlas.alloc(flareImage("exponent"));
-        flare[Star]     = atlas.alloc(flareImage("star"));
-        flare[Halo]     = atlas.alloc(flareImage("halo"));
-        flare[Circle]   = atlas.alloc(flareImage("circle"));
-        flare[Ring]     = atlas.alloc(flareImage("ring"));
-        flare[Burst]    = atlas.alloc(flareImage("burst"));
+            flare[Exponent] = atlas.alloc(flareImage("exponent"));
+            flare[Star]     = atlas.alloc(flareImage("star"));
+            flare[Halo]     = atlas.alloc(flareImage("halo"));
+            flare[Circle]   = atlas.alloc(flareImage("circle"));
+            flare[Ring]     = atlas.alloc(flareImage("ring"));
+            flare[Burst]    = atlas.alloc(flareImage("burst"));
+        }
+        catch(Error const &er)
+        {
+            LOG_GL_ERROR("Failed to initialize shared lens flare resources: %s")
+                    << er.asText();
+        }
     }
 
     ~FlareData()
