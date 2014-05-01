@@ -19,6 +19,10 @@
 #ifndef LIBGUI_SYSTEM_OPENGL_H
 #define LIBGUI_SYSTEM_OPENGL_H
 
+#ifdef glDeleteTextures
+#  error "glDeleteTextures defined as a macro! (would be undefined by Qt)"
+#endif
+
 #ifdef MACOSX
 #  include <OpenGL/gl.h>
 #else
