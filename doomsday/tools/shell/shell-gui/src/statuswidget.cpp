@@ -17,7 +17,7 @@
  */
 
 #include "statuswidget.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/String>
 #include <de/shell/DoomsdayInfo>
 #include <QPainter>

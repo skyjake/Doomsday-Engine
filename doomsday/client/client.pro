@@ -32,7 +32,7 @@ include(../dep_lzss.pri)
 win32 {
     include(../dep_directx.pri)
 }
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 include(../dep_legacy.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
@@ -877,7 +877,7 @@ macx {
     }
 
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
-    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
+    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_core.2.dylib, ..)
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_legacy.1.dylib, ..)
     linkBinaryToBundledLibdengShell(Doomsday.app/Contents/MacOS/Doomsday)
 

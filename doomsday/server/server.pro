@@ -26,7 +26,7 @@ CONFIG -= app_bundle
 
 include(../dep_zlib.pri)
 include(../dep_lzss.pri)
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 include(../dep_legacy.pri)
 include(../dep_shell.pri)
 
@@ -453,7 +453,7 @@ macx {
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
-    linkBinaryToBundledLibdeng2($$TARGET)
+    linkBinaryToBundledLibcore($$TARGET)
     linkBinaryToBundledLibdengShell($$TARGET)
 }
 

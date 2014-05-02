@@ -1,7 +1,7 @@
 include(../config.pri)
 
  # Use the full API for all plugins.
-CONFIG += dengplugin_libdeng2_full
+CONFIG += dengplugin_libcore_full
 
 deng_noclient {
     CONFIG += libgui_headers_only
@@ -18,11 +18,11 @@ win32 {
 
 INCLUDEPATH += $$DENG_API_DIR
 
-!dengplugin_libdeng2_full {
-    # The libdeng2 C wrapper can be used from all plugins.
+!dengplugin_libcore_full {
+    # The libcore C wrapper can be used from all plugins.
     DEFINES += DENG_NO_QT DENG2_C_API_ONLY
-    include(../dep_deng2_cwrapper.pri)
+    include(../dep_core_cwrapper.pri)
 }
-else: include(../dep_deng2.pri)
+else: include(../dep_core.pri)
 
 include(../dep_legacy.pri)

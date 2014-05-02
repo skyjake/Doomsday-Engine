@@ -21,7 +21,7 @@
 
 #include "../gui/libgui.h"
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 namespace de {
 

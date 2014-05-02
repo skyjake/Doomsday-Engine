@@ -22,7 +22,7 @@
 #define DENG_WORLD_LINE_SIGHT_TEST_H
 
 #include "MapElement"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Vector>
 
 namespace de {

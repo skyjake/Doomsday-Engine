@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_ILIGHTSOURCE_H
 #define DENG_CLIENT_ILIGHTSOURCE_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Vector>
 
 /**

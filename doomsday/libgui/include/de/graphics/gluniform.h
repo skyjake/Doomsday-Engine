@@ -19,7 +19,7 @@
 #ifndef LIBGUI_GLUNIFORM_H
 #define LIBGUI_GLUNIFORM_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Vector>
 #include <de/Matrix>
 #include <de/Observers>

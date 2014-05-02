@@ -14,7 +14,7 @@ VERSION = $$DENG_VERSION
 
 # External Dependencies ------------------------------------------------------
 
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 
 win32 {
     LIBS += -lwinmm
@@ -126,7 +126,7 @@ else:unix {
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng_legacy)
+    linkDylibToBundledLibcore(libdeng_legacy)
 
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_legacy.1.dylib libdeng_legacy.1.dylib")
 

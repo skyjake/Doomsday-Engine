@@ -11,7 +11,7 @@ TEMPLATE = subdirs
 CONFIG += ordered
 SUBDIRS = \
     build \
-    libdeng2 \
+    libcore \
     libshell
 
 !deng_noclient|macx {

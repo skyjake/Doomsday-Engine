@@ -211,7 +211,7 @@ byte        DD_ModKey(byte key);
 bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
 
 /**
- * Converts a libdeng2 Event into an old-fashioned ddevent_t.
+ * Converts a libcore Event into an old-fashioned ddevent_t.
  *
  * @param event    Event instance.
  * @param ddEvent  ddevent_t instance.

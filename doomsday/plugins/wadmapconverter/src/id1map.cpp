@@ -22,7 +22,7 @@
 #include "id1map_datatypes.h"
 #include "id1map_load.h"
 #include "id1map_util.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Error>
 #include <de/Log>
 #include <de/Time>

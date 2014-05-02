@@ -19,7 +19,7 @@
  */
 
 #include "de/gui/displaymode_native.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 void DisplayMode_Native_Init(void)
 {

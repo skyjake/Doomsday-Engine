@@ -94,7 +94,7 @@ win32 {
 
 macx {
     fixPluginInstallId($$TARGET, 1)
-    linkToBundledLibdeng2($$TARGET)
+    linkToBundledLibcore($$TARGET)
     linkToBundledLiblegacy($$TARGET)
 }
 

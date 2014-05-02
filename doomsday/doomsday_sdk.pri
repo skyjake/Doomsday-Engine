@@ -26,7 +26,7 @@ win32: LIBS += -L$$DENG_SDK_DIR/lib
  else: QMAKE_LFLAGS = -L$$DENG_SDK_DIR/lib $$QMAKE_LFLAGS
 
 # The core library is always required.
-LIBS += -ldeng2
+LIBS += -ldeng_core
 
 contains(DENG_CONFIG, appfw): DENG_CONFIG *= gui shell
 
@@ -124,7 +124,7 @@ defineTest(dengDeploy) {
     INSTALLS += target basepack denglibs
     basepack.files = $$3
 
-    denglibs.files = $$dengSdkLib(deng2)
+    denglibs.files = $$dengSdkLib(deng_core)
     contains(DENG_CONFIG, gui):   denglibs.files += $$dengSdkLib(deng_gui)
     contains(DENG_CONFIG, appfw): denglibs.files += $$dengSdkLib(deng_appfw)
     contains(DENG_CONFIG, shell): denglibs.files += $$dengSdkLib(deng_shell)

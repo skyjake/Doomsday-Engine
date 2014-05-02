@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_GUIWIDGETPRIVATE_H
 #define LIBAPPFW_GUIWIDGETPRIVATE_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include "../GuiRootWidget"
 
 namespace de {

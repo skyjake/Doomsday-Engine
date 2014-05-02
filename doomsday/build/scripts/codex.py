@@ -229,7 +229,7 @@ relatedTags = [
     ['Test*', 'GLSandbox'],
     ['Docs', 'Documentation', 'Codex', 'Readme', 'Doxygen', 'Amethyst'],
     ['Homepage', 'Add-on Repository', 'Build Repository', 'CSS', 'RSS', 'DEW', 'Forums'],
-    ['libdeng2', 'App', 'Config', 'Log', 'LogBuffer', 'Widgets', 'Garbage', 'Garbages'],
+    ['libdeng2', 'libcore', 'App', 'Config', 'Log', 'LogBuffer', 'Widgets', 'Garbage', 'Garbages'],
     ['libgui', 'DisplayMode', 'GL', 'OpenGL', 'GL*', 'Atlas*', 'Image', '*Bank', 'Font'],
     ['libdeng', 'libdeng1', 'liblegacy', 'Str'],
     ['libshell', 'Shell', 'AbstractLineEditor', 'Link'],    

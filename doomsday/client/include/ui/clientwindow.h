@@ -52,7 +52,7 @@ class BusyWidget;
 class AlertDialog;
 
 /**
- * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
+ * Top-level window that contains UI widgets. @ingroup gui
  */
 class ClientWindow : public de::BaseWindow,
                      DENG2_OBSERVES(de::Canvas, GLInit),

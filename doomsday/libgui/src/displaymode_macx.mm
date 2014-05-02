@@ -24,7 +24,7 @@
 #include <AppKit/AppKit.h>
 #include <vector>
 
-//#include "de/libdeng2.h"
+//#include "de/libcore.h"
 #include "de/gui/displaymode_native.h"
 
 /// Returns -1 on error.

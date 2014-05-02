@@ -6,8 +6,8 @@ PROJECT_NUMBER          = 1.15
 PROJECT_BRIEF           = "Core engine library and supporting libraries"
 OUTPUT_DIRECTORY        = apidoc/sdk/
 
-INPUT                   = libdeng2/include libgui/include libappfw/include libshell/include \
-			  libdeng2/src     libgui/src     libappfw/src     libshell/src 
+INPUT                   = libcore/include libgui/include libappfw/include libshell/include \
+                          libcore/src     libgui/src     libappfw/src     libshell/src 
 FILE_PATTERNS           = *
 EXCLUDE_PATTERNS        = .DS_Store
 PREDEFINED              = __cplusplus __DENG2__ __LIBGUI__ __LIBSHELL__ __LIBAPPFW__ \

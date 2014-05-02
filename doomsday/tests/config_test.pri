@@ -2,7 +2,7 @@
 CONFIG += deng_testapp
 
 include(../config.pri)
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 
 mod.files = \
     $$DENG_MODULES_DIR/Config.de \
@@ -21,7 +21,7 @@ macx {
         doPostLink("ln -sf \"$$OUT_PWD/../../client/Doomsday.app/Contents/Resources/qt.conf\" \"$$contDir/Resources/qt.conf\"")
 
         # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
-        fixInstallName($${1}.app/Contents/MacOS/$${1}, libdeng2.2.dylib, ..)
+        fixInstallName($${1}.app/Contents/MacOS/$${1}, libdeng_core.2.dylib, ..)
 
         QMAKE_BUNDLE_DATA += mod
         export(QMAKE_BUNDLE_DATA)

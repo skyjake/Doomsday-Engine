@@ -53,7 +53,7 @@
 #include <QVarLengthArray>
 #include <QVector>
 
-// libdeng2:
+// libcore:
 #include <de/App>
 #include <de/Error>
 #include <de/Log>

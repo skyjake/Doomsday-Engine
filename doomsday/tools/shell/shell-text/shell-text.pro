@@ -17,7 +17,7 @@ CONFIG -= app_bundle
 
 DEFINES += SHELL_VERSION=\\\"$$VERSION\\\"
 
-include(../../../dep_deng2.pri)
+include(../../../dep_core.pri)
 include(../../../dep_shell.pri)
 include(../../../dep_curses.pri)
 
@@ -48,7 +48,7 @@ SOURCES += \
 # Installation --------------------------------------------------------------
 
 macx {
-    linkBinaryToBundledLibdeng2($$TARGET)
+    linkBinaryToBundledLibcore($$TARGET)
     linkBinaryToBundledLibdengShell($$TARGET)
 }
 else {

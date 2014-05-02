@@ -27,7 +27,7 @@
 #include <QBitArray>
 
 #include <de/vector1.h>
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/GLState>
 
 #include "de_base.h"

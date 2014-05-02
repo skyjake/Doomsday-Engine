@@ -11,7 +11,7 @@ TEMPLATE = lib
 TARGET   = deng_shell
 VERSION  = 0.1.0
 
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 
 win32 {
     # Keep the version number out of the file name.
@@ -107,7 +107,7 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng_shell)
+    linkDylibToBundledLibcore(libdeng_shell)
 
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_shell.0.dylib libdeng_shell.0.dylib")
 

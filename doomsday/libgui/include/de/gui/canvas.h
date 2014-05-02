@@ -20,7 +20,7 @@
 #define LIBGUI_CANVAS_H
 
 #include <de/Observers>
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Vector>
 #include <QGLWidget>
 

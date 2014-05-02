@@ -26,7 +26,7 @@
 
 #include "gl/sys_opengl.h"
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <QSet>

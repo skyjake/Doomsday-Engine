@@ -21,7 +21,7 @@ DEFINES += SHELL_VERSION=\\\"$$VERSION\\\"
 
 CONFIG += deng_qtgui
 
-include(../../../dep_deng2.pri)
+include(../../../dep_core.pri)
 include(../../../dep_shell.pri)
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets

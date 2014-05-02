@@ -22,7 +22,7 @@
 
 #include "id1map_load.h"
 #include "id1map_datatypes.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 size_t ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type)
 {

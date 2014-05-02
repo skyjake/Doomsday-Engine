@@ -19,7 +19,7 @@
 #include "localserverdialog.h"
 #include "folderselection.h"
 #include "guishellapp.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Socket>
 #include <de/shell/DoomsdayInfo>
 #include <QVBoxLayout>

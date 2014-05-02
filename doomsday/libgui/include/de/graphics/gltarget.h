@@ -21,7 +21,7 @@
 
 #include <QImage>
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Asset>
 #include <de/Error>
 #include <de/Vector>

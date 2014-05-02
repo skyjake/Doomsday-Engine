@@ -21,7 +21,7 @@
 
 #include <QSet>
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Asset>
 #include <de/String>
 

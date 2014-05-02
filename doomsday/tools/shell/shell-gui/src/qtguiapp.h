@@ -20,7 +20,7 @@
 #define QTGUIAPP_H
 
 #include <QApplication>
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 class QtGuiApp : public QApplication
 {

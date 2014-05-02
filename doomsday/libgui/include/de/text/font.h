@@ -19,7 +19,7 @@
 #ifndef LIBGUI_FONT_H
 #define LIBGUI_FONT_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Rule>
 #include <de/Rectangle>
 #include <de/String>

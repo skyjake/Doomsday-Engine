@@ -53,7 +53,7 @@ def fileRegOff(fn, pattern, startAtPos=0):
     return found.start()
     
 
-for proj in ['libdeng2\deng2.vcxproj', 'tools\shell\shell-gui\Doomsday-Shell.vcxproj']:
+for proj in ['libcore\core.vcxproj', 'tools\shell\shell-gui\Doomsday-Shell.vcxproj']:
     fileRegex(proj, 
               r'=\\&quot;([A-Za-z0-9_\-\. ]+)\\&quot;', 
               r'=&quot;\1&quot;')

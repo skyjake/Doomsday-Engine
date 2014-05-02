@@ -13,7 +13,7 @@
  *
  * @see writer.h, Writer
  *
- * @todo  This should be converted into a C wrapper for the libdeng2 de::Reader.
+ * @todo  This should be converted into a C wrapper for de::Reader.
  *
  * @authors Copyright &copy; 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

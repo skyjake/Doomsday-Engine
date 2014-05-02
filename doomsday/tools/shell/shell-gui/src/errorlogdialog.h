@@ -2,7 +2,7 @@
 #define ERRORLOGDIALOG_H
 
 #include <QDialog>
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 class ErrorLogDialog : public QDialog
 {

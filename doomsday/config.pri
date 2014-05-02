@@ -28,9 +28,9 @@
 # - deng_notools                Do not build and deploy the tools
 # - deng_openal                 Build the OpenAL sound driver
 # - deng_qtautoselect           (Mac) Select OS X SDK based on Qt version
-# - deng_qtgui                  Use the QtGui module in dep_deng2.pri
-# - deng_qtopengl               Use the QtOpenGL module in dep_deng2.pri
-# - deng_qtwidgets              Use the QtWidgets module in dep_deng2.pri
+# - deng_qtgui                  Use the QtGui module in dep_core.pri
+# - deng_qtopengl               Use the QtOpenGL module in dep_core.pri
+# - deng_qtwidgets              Use the QtWidgets module in dep_core.pri
 # - deng_nopackres              Do not package the Doomsday resources
 # - deng_rangecheck             Parameter range checking/value assertions
 # - deng_snowberry              (Unix) Include Snowberry in installation
@@ -50,7 +50,7 @@ DENG_INCLUDE_DIR      = $$PWD/client/include
 DENG_UNIX_INCLUDE_DIR = $$DENG_INCLUDE_DIR/unix
 DENG_MAC_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/macx
 DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows
-DENG_MODULES_DIR      = $$PWD/libdeng2/modules
+DENG_MODULES_DIR      = $$PWD/libcore/modules
 
 # Macros ---------------------------------------------------------------------
 
