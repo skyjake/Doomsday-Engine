@@ -1,4 +1,4 @@
-/** @file
+/** @file logical.h  Logical Sound Manager.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -18,25 +18,28 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * s_logic.h: The Logical Sound Manager
- */
+#ifndef LIBDOOMSDAY_AUDIO_LOGICAL_H
+#define LIBDOOMSDAY_AUDIO_LOGICAL_H
 
-#ifndef __DOOMSDAY_SOUND_LOGICAL_H__
-#define __DOOMSDAY_SOUND_LOGICAL_H__
+#include "../libdoomsday.h"
+#include "../world/mobj.h"
+#include <de/types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void            Sfx_InitLogical(void);
-void            Sfx_PurgeLogical(void);
-void            Sfx_StartLogical(int id, mobj_t *origin, dd_bool isRepeating);
-int             Sfx_StopLogical(int id, mobj_t *origin);
-dd_bool         Sfx_IsPlaying(int id, mobj_t *origin);
+LIBDOOMSDAY_PUBLIC void Sfx_InitLogical(void);
+LIBDOOMSDAY_PUBLIC void Sfx_PurgeLogical(void);
+LIBDOOMSDAY_PUBLIC void Sfx_StartLogical(int id, mobj_t *origin, dd_bool isRepeating);
+LIBDOOMSDAY_PUBLIC int Sfx_StopLogical(int id, mobj_t *origin);
+LIBDOOMSDAY_PUBLIC dd_bool Sfx_IsPlaying(int id, mobj_t *origin);
+
+LIBDOOMSDAY_PUBLIC void Sfx_Logical_SetOneSoundPerEmitter(dd_bool enabled);
+LIBDOOMSDAY_PUBLIC void Sfx_Logical_SetSampleLengthCallback(uint (*callback)(int));
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif
+#endif // LIBDOOMSDAY_AUDIO_LOGICAL_H

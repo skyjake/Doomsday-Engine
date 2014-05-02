@@ -29,6 +29,7 @@ include(../dep_lzss.pri)
 include(../dep_core.pri)
 include(../dep_legacy.pri)
 include(../dep_shell.pri)
+include(../dep_doomsday.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -73,7 +74,7 @@ SRC = ../client
 
 PRECOMPILED_HEADER = include/precompiled.h
 
-HEADERS += include/precompiled.h \
+HEADERS += \
     include/precompiled.h
 
 DENG_API_HEADERS = \
@@ -137,9 +138,7 @@ DENG_HEADERS += \
     include/server/sv_sound.h \
     $$SRC/include/audio/s_cache.h \
     $$SRC/include/audio/s_environ.h \
-    $$SRC/include/audio/s_logic.h \
     $$SRC/include/audio/s_main.h \
-    $$SRC/include/audio/s_wav.h \
     $$SRC/include/busymode.h \
     $$SRC/include/cbuffer.h \
     $$SRC/include/color.h \
@@ -169,7 +168,6 @@ DENG_HEADERS += \
     $$SRC/include/de_ui.h \
     $$SRC/include/def_data.h \
     $$SRC/include/def_main.h \
-    $$SRC/include/dualstring.h \
     $$SRC/include/edit_map.h \
     $$SRC/include/face.h \
     $$SRC/include/filehandle.h \
@@ -318,9 +316,7 @@ SOURCES += \
     src/server/sv_sound.cpp \
     $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.cpp \
-    $$SRC/src/audio/s_logic.cpp \
     $$SRC/src/audio/s_main.cpp \
-    $$SRC/src/audio/s_wav.cpp \
     $$SRC/src/busymode.cpp \
     $$SRC/src/cbuffer.cpp \
     $$SRC/src/color.cpp \
@@ -337,7 +333,6 @@ SOURCES += \
     $$SRC/src/def_data.cpp \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
-    $$SRC/src/dualstring.cpp \
     $$SRC/src/face.cpp \
     $$SRC/src/filesys/file.cpp \
     $$SRC/src/filesys/filehandle.cpp \
@@ -454,7 +449,7 @@ macx {
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
     linkBinaryToBundledLibcore($$TARGET)
-    linkBinaryToBundledLibdengShell($$TARGET)
+    linkBinaryToBundledLibshell($$TARGET)
 }
 
 # Installation ---------------------------------------------------------------

@@ -31,7 +31,7 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
-#include "dualstring.h"
+#include <doomsday/dualstring.h>
 #include "Game"
 
 namespace de {

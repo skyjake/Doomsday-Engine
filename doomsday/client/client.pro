@@ -37,6 +37,7 @@ include(../dep_legacy.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_appfw.pri)
+include(../dep_doomsday.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -185,11 +186,9 @@ DENG_HEADERS += \
     include/audio/m_mus2midi.h \
     include/audio/s_cache.h \
     include/audio/s_environ.h \
-    include/audio/s_logic.h \
     include/audio/s_main.h \
     include/audio/s_mus.h \
     include/audio/s_sfx.h \
-    include/audio/s_wav.h \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
     include/busymode.h \
@@ -231,7 +230,6 @@ DENG_HEADERS += \
     include/de_ui.h \
     include/def_data.h \
     include/def_main.h \
-    include/dualstring.h \
     include/edit_bias.h \
     include/edit_map.h \
     include/face.h \
@@ -536,11 +534,9 @@ SOURCES += \
     src/audio/m_mus2midi.cpp \
     src/audio/s_cache.cpp \
     src/audio/s_environ.cpp \
-    src/audio/s_logic.cpp \
     src/audio/s_main.cpp \
     src/audio/s_mus.cpp \
     src/audio/s_sfx.cpp \
-    src/audio/s_wav.cpp \
     src/audio/sys_audiod_dummy.cpp \
     src/busymode.cpp \
     src/client/cl_frame.cpp \
@@ -568,7 +564,6 @@ SOURCES += \
     src/def_data.cpp \
     src/def_main.cpp \
     src/def_read.cpp \
-    src/dualstring.cpp \
     src/edit_bias.cpp \
     src/face.cpp \
     src/filesys/file.cpp \
@@ -879,7 +874,7 @@ macx {
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_core.2.dylib, ..)
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_legacy.1.dylib, ..)
-    linkBinaryToBundledLibdengShell(Doomsday.app/Contents/MacOS/Doomsday)
+    linkBinaryToBundledLibshell(Doomsday.app/Contents/MacOS/Doomsday)
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")

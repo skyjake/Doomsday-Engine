@@ -1,8 +1,10 @@
 /** @file s_wav.cpp WAV loader.
  * @ingroup audio
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @todo This is obsolete code! Use libgui's Waveform instead.
+ *
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,16 +21,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_filesys.h"
+#include "doomsday/audio/s_wav.h"
 
-#include "audio/s_wav.h"
-#include "dd_main.h"
-#include "m_misc.h"
-
+#include <de/Log>
 #include <de/memoryzone.h>
+#include "dd_share.h"
 
 #ifdef __GNUC__
 /*
@@ -184,40 +181,5 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
         }
     }
 
-    return sampledata;
-}
-
-void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
-{
-    FileHandle* file = F_Open(filename, "rb");
-    void* sampledata;
-    uint8_t* data;
-    size_t size;
-
-    if(!file) return NULL;
-
-    // Read in the whole thing.
-    size = FileHandle_Length(file);
-
-    LOG_AS("WAV_Load");
-    LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
-            << F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file))))
-            << size
-            << FileHandle_Tell(file);
-
-    data = (uint8_t*) M_Malloc(size);
-
-    FileHandle_Read(file, data, size);
-    F_Delete(file);
-    file = 0;
-
-    // Parse the RIFF data.
-    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
-    if(!sampledata)
-    {
-        LOG_RES_WARNING("Failed to load \"%s\"") << filename;
-    }
-
-    M_Free(data);
     return sampledata;
 }

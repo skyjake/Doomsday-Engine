@@ -1,7 +1,7 @@
-/** @file
+/** @file mobj.h  Base for world map objects.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,24 +17,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * de_audio.h: Audio Subsystem
- */
+#ifndef LIBDOOMSDAY_MOBJ_H
+#define LIBDOOMSDAY_MOBJ_H
 
-#ifndef __DOOMSDAY_AUDIO__
-#define __DOOMSDAY_AUDIO__
+#include "dd_share.h"
 
-#ifdef __CLIENT__
-#  include "audio/audiodriver.h"
-#  include "audio/audiodriver_music.h"
-#  include "audio/s_sfx.h"
-#  include "audio/s_mus.h"
-#endif
+// This macro can be used to calculate a mobj-specific 'random' number.
+#define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
 
-#include "audio/s_main.h"
-#include "audio/s_cache.h"
-#include "audio/s_environ.h"
-#include <doomsday/audio/s_wav.h>
-#include <doomsday/audio/logical.h>
+// We'll use the base mobj template directly as our mobj.
+typedef struct mobj_s {
+    DD_BASE_MOBJ_ELEMENTS()
+} mobj_t;
 
-#endif
+#endif // LIBDOOMSDAY_MOBJ_H

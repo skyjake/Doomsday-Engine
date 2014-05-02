@@ -1,6 +1,5 @@
 /**
- * @file s_wav.h
- * WAV loader. @ingroup audio
+ * @file s_wav.h  WAV loader. @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,8 +19,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SOUND_WAVE_FILE_H
-#define LIBDENG_SOUND_WAVE_FILE_H
+#ifndef LIBDOOMSDAY_AUDIO_WAV_H
+#define LIBDOOMSDAY_AUDIO_WAV_H
+
+#include "../libdoomsday.h"
+#include <de/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,23 +33,7 @@ extern "C" {
  * Verifies that the data in the buffer @a data looks like WAV.
  * @return @c true, if the "RIFF" and "WAVE" strings are found.
  */
-int WAV_CheckFormat(const char* data);
-
-/**
- * Loads a WAV sample from a file. All parameters must be passed, no NULLs are
- * allowed.
- *
- * @note The WAV file must contain a mono sound: only one channel.
- *
- * @param filename    File path of the WAV file.
- * @param bits        Bits per sample is written here.
- * @param rate        Sample rate is written here.
- * @param samples     Number of samples is written here.
- *
- * @return Buffer that contains the wave data. The caller must free the sample
- * data using Z_Free() when it's no longer needed.
- */
-void* WAV_Load(const char* filename, int* bits, int* rate, int* samples);
+LIBDOOMSDAY_PUBLIC int WAV_CheckFormat(const char* data);
 
 /**
  * Loads a WAV sample from a memory buffer. All parameters must be passed, no
@@ -64,10 +50,10 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples);
  * @return Buffer that contains the wave data. The caller must free the sample
  * data using Z_Free() when it's no longer needed.
  */
-void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, int* samples);
+LIBDOOMSDAY_PUBLIC void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, int* samples);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG_SOUND_WAVE_FILE_H
+#endif // LIBDOOMSDAY_AUDIO_WAV_H

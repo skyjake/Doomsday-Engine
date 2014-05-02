@@ -1,4 +1,4 @@
-/**\file s_logic.cpp
+/**\file logical.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,22 +27,14 @@
  * (Done via S_MapChange()).
  */
 
-// HEADER FILES ------------------------------------------------------------
-
-#include "de_base.h"
-#include "de_console.h"
-#include "de_audio.h"
-
+#include "doomsday/audio/logical.h"
 #include <de/timer.h>
-
-// MACROS ------------------------------------------------------------------
+#include <de/memoryzone.h>
 
 // The logical sounds hash table uses sound IDs as keys.
 #define LOGIC_HASH_SIZE     64
 
 #define PURGE_INTERVAL      2000    // 2 seconds
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct logicsound_s {
     struct logicsound_s *next, *prev;
@@ -56,21 +48,19 @@ typedef struct logichash_s {
     logicsound_t *first, *last;
 } logichash_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static logichash_t logicHash[LOGIC_HASH_SIZE];
+static dd_bool logicalOneSoundPerEmitter;
+static uint (*logicalSoundLengthCallback)(int);
 
-// CODE --------------------------------------------------------------------
+void Sfx_Logical_SetOneSoundPerEmitter(dd_bool enabled)
+{
+    logicalOneSoundPerEmitter = enabled;
+}
+
+void Sfx_Logical_SetSampleLengthCallback(uint (*callback)(int))
+{
+    logicalSoundLengthCallback = callback;
+}
 
 /*
  * Initialize the Logical Sound Manager for a new map.
@@ -139,8 +129,10 @@ void Sfx_DestroyLogical(logicsound_t * node)
  */
 void Sfx_StartLogical(int id, mobj_t *origin, dd_bool isRepeating)
 {
+    DENG_ASSERT(logicalSoundLengthCallback != 0);
+
     logicsound_t *node;
-    uint length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
+    uint length = (isRepeating ? 1 : logicalSoundLengthCallback(id));
 
     if(!length)
     {
@@ -148,7 +140,7 @@ void Sfx_StartLogical(int id, mobj_t *origin, dd_bool isRepeating)
         return;
     }
 
-    if(origin && sfxOneSoundPerEmitter)
+    if(origin && logicalOneSoundPerEmitter)
     {
         // Stop all previous sounds from this origin (only one per origin).
         Sfx_StopLogical(0, origin);

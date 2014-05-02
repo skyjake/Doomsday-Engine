@@ -20,9 +20,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "dualstring.h"
+#include "doomsday/dualstring.h"
 
-namespace de {
+using namespace de;
 
 DualString::DualString()
 {
@@ -102,5 +102,3 @@ const char* DualString::utf8CStr()
 {
     return Str_Text(toStrUtf8());
 }
-
-} // namespace de

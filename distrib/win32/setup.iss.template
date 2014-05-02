@@ -93,6 +93,7 @@ Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Component
 
 ; Libraries
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
+Source: "bin\doomsday.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_appfw.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_core.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine

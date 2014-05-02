@@ -20,13 +20,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DUALSTRING_CPP
-#define LIBDENG_DUALSTRING_CPP
+#ifndef LIBDOOMSDAY_DUALSTRING_H
+#define LIBDOOMSDAY_DUALSTRING_H
 
+#ifdef __cplusplus
+
+#include "libdoomsday.h"
 #include <de/String>
 #include <de/str.h>
-
-namespace de {
 
 /**
  * Maintains a secondary, read-only C-style string (Str instance) side-by-side
@@ -41,7 +42,7 @@ namespace de {
  *
  * This class should only be used to support legacy code.
  */
-class DualString : public String
+class LIBDOOMSDAY_PUBLIC DualString : public de::String
 {
 public:
     DualString();
@@ -68,19 +69,19 @@ public:
      * Returns a read-only pointer to the string's secondary side (ASCII
      * encoding). @return Str instance.
      */
-    const ::Str* toStrAscii() const;
+    const Str* toStrAscii() const;
 
     /**
      * Returns a read-only pointer to the string's secondary side (UTF-8
      * encoding). @return Str instance.
      */
-    const ::Str* toStrUtf8() const;
+    const Str* toStrUtf8() const;
 
     /**
      * Returns a modifiable Str (UTF-8). After making changes, you have to call
      * update() to copy the new contents to the de::String side.
      */
-    ::Str* toStr();
+    Str* toStr();
 
     /**
      * Copies the contents of the Str side, assumed to be in UTF-8 encoding, to
@@ -107,9 +108,9 @@ public:
     const char* utf8CStr();
 
 private:
-    ::Str* _str;
+    Str* _str;
 };
 
-}
+#endif // __cplusplus
 
-#endif // LIBDENG_DUALSTRING_CPP
+#endif // LIBDOOMSDAY_DUALSTRING_H

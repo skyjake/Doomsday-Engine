@@ -23,7 +23,7 @@
 #include "api_uri.h"
 
 #include "uri.hh"
-#include "dualstring.h"
+#include <doomsday/dualstring.h>
 #include <de/writer.h>
 #include <de/reader.h>
 
@@ -50,9 +50,9 @@ static void writeUri(const Uri* uri, Writer* writer, int omitComponents = 0)
     }
     else
     {
-        Str_Write(de::DualString(self->scheme()).toStrUtf8(), writer);
+        Str_Write(DualString(self->scheme()).toStrUtf8(), writer);
     }
-    Str_Write(de::DualString(self->path()).toStrUtf8(), writer);
+    Str_Write(DualString(self->path()).toStrUtf8(), writer);
 }
 
 #undef Uri_Clear

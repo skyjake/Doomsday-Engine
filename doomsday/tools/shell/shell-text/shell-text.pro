@@ -49,7 +49,7 @@ SOURCES += \
 
 macx {
     linkBinaryToBundledLibcore($$TARGET)
-    linkBinaryToBundledLibdengShell($$TARGET)
+    linkBinaryToBundledLibshell($$TARGET)
 }
 else {
     INSTALLS += target

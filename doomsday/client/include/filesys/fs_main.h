@@ -34,6 +34,7 @@
 
 #include "file.h"
 #include "filehandle.h"
+#include "filehandlebuilder.h"
 
 #ifdef __cplusplus
 

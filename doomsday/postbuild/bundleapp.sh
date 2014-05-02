@@ -29,6 +29,7 @@ $CP $BUILDDIR/../libgui/libdeng_gui*dylib       $APPDIR/Frameworks
 $CP $BUILDDIR/../libgui/libassimp*dylib         $APPDIR/Frameworks
 $CP $BUILDDIR/../libappfw/libdeng_appfw*dylib   $APPDIR/Frameworks
 $CP $BUILDDIR/../libshell/libdeng_shell*dylib   $APPDIR/Frameworks
+$CP $BUILDDIR/../libdoomsday/libdoomsday*dylib  $APPDIR/Frameworks
 
 echo "Copying server..."
 $CP server/doomsday-server $APPDIR/Resources
