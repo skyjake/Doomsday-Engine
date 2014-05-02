@@ -94,14 +94,14 @@ DENG2_PIMPL(SectorCluster)
     SectorCluster *mappedVisFloor;
     SectorCluster *mappedVisCeiling;
 
-    struct BoundaryInfo
+    struct BoundaryData
     {
         /// Lists of unique exterior clusters which share a boundary edge with
         /// "this" cluster (i.e., one edge per cluster).
         QList<HEdge *> uniqueInnerEdges; /// not owned.
         QList<HEdge *> uniqueOuterEdges; /// not owned.
     };
-    QScopedPointer<BoundaryInfo> boundaryInfo;
+    QScopedPointer<BoundaryData> boundaryData;
 
 #ifdef __CLIENT__
     /// @todo Avoid two-stage lookup.
@@ -357,9 +357,9 @@ DENG2_PIMPL(SectorCluster)
         return flags;
     }
 
-    void initBoundaryInfoIfNeeded()
+    void initBoundaryDataIfNeeded()
     {
-        if(!boundaryInfo.isNull()) return;
+        if(!boundaryData.isNull()) return;
 
         QMap<SectorCluster *, HEdge *> extClusterMap;
         foreach(BspLeaf *leaf, bspLeafs)
@@ -386,7 +386,7 @@ DENG2_PIMPL(SectorCluster)
             } while((hedge = &hedge->next()) != base);
         }
 
-        boundaryInfo.reset(new BoundaryInfo);
+        boundaryData.reset(new BoundaryData);
         if(extClusterMap.isEmpty())
             return;
 
@@ -400,7 +400,7 @@ DENG2_PIMPL(SectorCluster)
             SectorCluster &extCluster = iter.value()->twin().face().mapElementAs<BspLeaf>().cluster();
             if(!boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
             {
-                boundaryInfo->uniqueOuterEdges.append(iter.value());
+                boundaryData->uniqueOuterEdges.append(iter.value());
                 iter.remove();
             }
         }
@@ -440,11 +440,11 @@ DENG2_PIMPL(SectorCluster)
             QRectF const &boundary = boundaries[i];
             if(&boundary == largest || boundary == *largest)
             {
-                boundaryInfo->uniqueOuterEdges.append(hedge);
+                boundaryData->uniqueOuterEdges.append(hedge);
             }
             else
             {
-                boundaryInfo->uniqueInnerEdges.append(hedge);
+                boundaryData->uniqueInnerEdges.append(hedge);
             }
         }
     }
@@ -464,9 +464,9 @@ DENG2_PIMPL(SectorCluster)
         {
             // Should we permanently map planes to another cluster?
 
-            initBoundaryInfoIfNeeded();
+            initBoundaryDataIfNeeded();
 
-            foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
+            foreach(HEdge *hedge, boundaryData->uniqueOuterEdges)
             {
                 SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
@@ -491,7 +491,7 @@ DENG2_PIMPL(SectorCluster)
                 // Remove the mapping from all inner clusters to this, forcing
                 // their re-evaluation (however next time a different cluster
                 // will be selected from the boundary).
-                foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
+                foreach(HEdge *hedge, boundaryData->uniqueInnerEdges)
                 {
                     SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
@@ -534,10 +534,10 @@ DENG2_PIMPL(SectorCluster)
         if(!doFloor && !doCeiling)
             return;
 
-        initBoundaryInfoIfNeeded();
+        initBoundaryDataIfNeeded();
 
         // Map "this" cluster to the first outer cluster found.
-        foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
+        foreach(HEdge *hedge, boundaryData->uniqueOuterEdges)
         {
             SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
@@ -570,7 +570,7 @@ DENG2_PIMPL(SectorCluster)
         // Clear mappings for all inner clusters to force re-evaluation (which
         // may in turn lead to their inner clusters being re-evaluated, producing
         // a "ripple effect" that will remap any deeply nested dependents).
-        foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
+        foreach(HEdge *hedge, boundaryData->uniqueInnerEdges)
         {
             SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
@@ -620,13 +620,13 @@ DENG2_PIMPL(SectorCluster)
     {
         if(ddMapSetup) return;
 
-        initBoundaryInfoIfNeeded();
+        initBoundaryDataIfNeeded();
 
         // Mark surfaces of the outer edge loop.
         /// @todo What about the special case of a cluster with no outer neighbors? -ds
-        if(!boundaryInfo->uniqueOuterEdges.isEmpty())
+        if(!boundaryData->uniqueOuterEdges.isEmpty())
         {
-            HEdge *base = boundaryInfo->uniqueOuterEdges.first();
+            HEdge *base = boundaryData->uniqueOuterEdges.first();
             SectorClusterCirculator it(base);
             do
             {
@@ -638,7 +638,7 @@ DENG2_PIMPL(SectorCluster)
         }
 
         // Mark surfaces of the inner edge loop(s).
-        foreach(HEdge *base, boundaryInfo->uniqueInnerEdges)
+        foreach(HEdge *base, boundaryData->uniqueInnerEdges)
         {
             SectorClusterCirculator it(base);
             do
