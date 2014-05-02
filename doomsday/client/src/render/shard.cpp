@@ -17,42 +17,50 @@
  */
 
 #include "render/shard.h"
-#include <QList>
+#include <QVector>
 #include <QtAlgorithms>
-#include "BiasDigest"
+#include "con_main.h"
 #include "BiasIllum"
 #include "BiasTracker"
 #include "SectorCluster"
 
 using namespace de;
 
+static int devUpdateBiasContributors = true; //cvar
+
 DENG2_PIMPL_NOREF(Shard)
 {
-    MapElement &mapElement;
-    int geomId;
-
     SectorCluster *owner;
-
-    BiasTracker biasTracker;
-    typedef QList<BiasIllum *> BiasIllums;
+    typedef QVector<BiasIllum *> BiasIllums;
     BiasIllums biasIllums;
+    BiasTracker biasTracker;
     uint biasLastUpdateFrame;
 
-    Instance(MapElement &mapElement, int geomId)
-        : mapElement         (mapElement)
-        , geomId             (geomId)
-        , owner              (0)
-        , biasLastUpdateFrame(0)
-    {}
+    Instance() : owner(0), biasLastUpdateFrame(0) {}
+    ~Instance() { qDeleteAll(biasIllums); }
 
-    ~Instance()
+    /**
+     * Determines whether it is time to update bias lighting contributors.
+     */
+    bool needBiasContributorUpdate()
     {
-        qDeleteAll(biasIllums);
+        // Are updates disabled?
+        if(!devUpdateBiasContributors) return false;
+
+        // Unowned shards cannot be updated.
+        if(!owner) return false;
+
+        // If the data is already up to date, nothing needs to be done.
+        uint lastChangeFrame = owner->biasLastChangeOnFrame();
+        if(biasLastUpdateFrame == lastChangeFrame) return false;
+
+        // Mark the data as having been updated (it will be soon).
+        biasLastUpdateFrame = lastChangeFrame;
+        return true;
     }
 };
 
-Shard::Shard(MapElement &mapElement, int geomId, int numBiasIllums, SectorCluster *owner)
-    : d(new Instance(mapElement, geomId))
+Shard::Shard(int numBiasIllums, SectorCluster *owner) : d(new Instance)
 {
     setCluster(owner);
     if(numBiasIllums)
@@ -65,29 +73,50 @@ Shard::Shard(MapElement &mapElement, int geomId, int numBiasIllums, SectorCluste
     }
 }
 
+void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
+    Matrix3f const &tangentMatrix, uint biasTime)
+{
+    DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
+    Vector3f const sufNormal = tangentMatrix.column(2);
+
+    if(d->biasIllums.isEmpty()) return;
+
+    // Is it time to update bias contributors?
+    bool biasUpdated = false;
+    if(d->needBiasContributorUpdate())
+    {
+        // Perhaps our owner has updated lighting contributions for us?
+        biasUpdated = d->owner->updateBiasContributors(this);
+    }
+
+    // Light the given geometry.
+    Vector3f const *posIt    = posCoords;
+    Vector4f *colorIt        = colorCoords;
+    for(int i = 0; i < d->biasIllums.count(); ++i, posIt++, colorIt++)
+    {
+        *colorIt += d->biasIllums[i]->evaluate(*posIt, sufNormal, biasTime);
+    }
+
+    if(biasUpdated)
+    {
+        // Any changes from contributors will have now been applied.
+        d->biasTracker.markIllumUpdateCompleted();
+    }
+}
+
+SectorCluster *Shard::cluster() const
+{
+    return d->owner;
+}
+
 void Shard::setCluster(SectorCluster *newOwner)
 {
     d->owner = newOwner;
 }
 
-void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
-    Matrix3f const &tangentMatrix, uint biasTime)
+BiasTracker &Shard::biasTracker() const
 {
-    DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
-
-    Vector3f const sufNormal = tangentMatrix.column(2);
-
-    Vector3f const *posIt = posCoords;
-    Vector4f *colorIt     = colorCoords;
-    for(int i = 0; i < d->biasIllums.count(); ++i, posIt++, colorIt++)
-    {
-        *colorIt += d->biasIllums[i]->evaluate(*posIt, sufNormal, biasTime);
-    }
-}
-
-void Shard::applyBiasDigest(BiasDigest &changes)
-{
-    d->biasTracker.applyChanges(changes);
+    return d->biasTracker;
 }
 
 void Shard::updateBiasAfterMove()
@@ -95,27 +124,10 @@ void Shard::updateBiasAfterMove()
     d->biasTracker.updateAllContributors();
 }
 
-uint Shard::lastBiasUpdateFrame()
+void Shard::consoleRegister() // static
 {
-    return d->biasLastUpdateFrame;
-}
-
-void Shard::setLastBiasUpdateFrame(uint updateFrame)
-{
-    d->biasLastUpdateFrame = updateFrame;
-}
-
-void Shard::clearBiasContributors()
-{
-    d->biasTracker.clearContributors();
-}
-
-void Shard::addBiasContributor(BiasSource *source, float intensity)
-{
-    d->biasTracker.addContributor(source, intensity);
-}
-
-void Shard::markBiasIllumUpdateCompleted()
-{
-    d->biasTracker.markIllumUpdateCompleted();
+#ifdef __CLIENT__
+    // Development variables.
+    C_VAR_INT("rend-dev-bias-affected", &devUpdateBiasContributors, CVF_NO_ARCHIVE, 0, 1);
+#endif
 }

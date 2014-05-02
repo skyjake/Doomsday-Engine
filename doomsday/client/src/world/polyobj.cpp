@@ -27,6 +27,7 @@
 #include "BspLeaf"
 #ifdef __CLIENT__
 #  include "SectorCluster"
+#  include "Shard"
 #endif
 
 #ifdef __CLIENT__
@@ -59,7 +60,10 @@ static void notifyGeometryChanged(Polyobj &po)
 
             /// @note If polyobjs are allowed to move between sector clusters
             /// then we'll need to revise the bias illumination storage specially.
-            po.bspLeaf().cluster().updateBiasAfterGeometryMove(hedge->mapElement(), LineSide::Middle);
+            if(Shard *shard = po.bspLeaf().cluster().findShard(hedge->mapElement(), LineSide::Middle))
+            {
+                shard->updateBiasAfterMove();
+            }
         }
     }
 #else // !__CLIENT__

@@ -3665,7 +3665,6 @@ D_CMD(InspectMap)
 void Map::consoleRegister() // static
 {
     Mobj_ConsoleRegister();
-    SectorCluster::consoleRegister();
 
     C_VAR_INT("bsp-factor",                 &bspSplitFactor, CVF_NO_MAX, 0, 0);
 #ifdef __CLIENT__
