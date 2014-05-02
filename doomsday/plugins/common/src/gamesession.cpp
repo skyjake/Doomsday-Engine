@@ -174,6 +174,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
             // We can now reinterpret and populate the contents of the archive.
             saved = &save.reinterpret()->as<SavedSession>();
+            saved->populate();
         }
 
         // Save the current game state to the .save package.
