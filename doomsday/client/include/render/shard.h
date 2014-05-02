@@ -21,10 +21,8 @@
 
 #include <de/Matrix>
 #include <de/Vector>
-#include "MapElement"
 
-class BiasDigest;
-class BiasSource;
+class BiasTracker;
 class SectorCluster;
 
 /**
@@ -33,8 +31,6 @@ class SectorCluster;
  * Shards are produced (and perhaps owned) by SectorClusters when the map geometry
  * is split into drawable geometry fragments. Shard ownership may be transferred
  * however a shard should never outlive the MapElement for which it was produced.
- *
- * @todo Shard should not need to know the MapElement it was produced for.
  */
 class Shard
 {
@@ -42,18 +38,10 @@ public:
     /**
      * Construct a new Shard of 3D map geometry.
      *
-     * @param mapElement     MapElement for which this is a geometry fragment.
-     * @param geomId         MapElement-unique geometry id number.
      * @param numBiasIllums  Number of bias illumination points for the geometry.
      * @param owner          SectorCluster which owns the shard (if any).
      */
-    Shard(de::MapElement &mapElement, int geomId, int numBiasIllums,
-          SectorCluster *owner = 0);
-
-    /**
-     * Change SectorCluster which owns the shard to @a newOwner.
-     */
-    void setCluster(SectorCluster *newOwner);
+    Shard(int numBiasIllums, SectorCluster *owner = 0);
 
     /**
      * Perform bias lighting for the supplied vertex geometry.
@@ -75,22 +63,29 @@ public:
                               de::Matrix3f const &tangentMatrix, uint biasTime);
 
     /**
-     * Apply bias lighting changes to the shard.
-     *
-     * @param changes  Digest of lighting changes to be applied.
+     * Returns a pointer to the SectorCluster which owns the shard (if any).
      */
-    void applyBiasDigest(BiasDigest &changes);
+    SectorCluster *cluster() const;
 
     /**
-     * Schedule a bias lighting update for the shard following a move.
+     * Change SectorCluster which owns the shard to @a newOwner.
+     */
+    void setCluster(SectorCluster *newOwner);
+
+    /**
+     * Returns the BiasTracker for the shard.
+     */
+    BiasTracker &biasTracker() const;
+
+    /**
+     * Schedule a bias lighting update for the Shard following a move/transform.
      */
     void updateBiasAfterMove();
 
-    uint lastBiasUpdateFrame();
-    void setLastBiasUpdateFrame(uint updateFrame);
-    void clearBiasContributors();
-    void addBiasContributor(BiasSource *source, float intensity);
-    void markBiasIllumUpdateCompleted();
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

@@ -54,6 +54,7 @@
 #include "HueCircleVisual"
 #include "LightDecoration"
 #include "Lumobj"
+#include "Shard"
 #include "SkyFixEdge"
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
@@ -434,6 +435,7 @@ void Rend_Register()
     fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
+    Shard::consoleRegister();
     VR_ConsoleRegister();
 }
 
@@ -1031,6 +1033,7 @@ struct rendworldpoly_params_t
     float           surfaceLightLevelDL;
     float           surfaceLightLevelDR;
     Vector3f const *surfaceColor;
+    Matrix3f const *surfaceTangentMatrix;
 
     uint            lightListIdx; // List of lights that affect this poly.
     uint            shadowListIdx; // List of shadows that affect this poly.
@@ -1192,6 +1195,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             // Non-uniform color.
             if(useBias)
             {
+                Shard &shard = leaf->cluster().shard(*p.mapElement, p.geomGroup);
+
                 // Apply the ambient light term from the grid (if available).
                 if(leaf->map().hasLightGrid())
                 {
@@ -1204,7 +1209,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
 
                 // Apply bias light source contributions.
-                leaf->cluster().applyBiasLightSources(*p.mapElement, p.geomGroup, posCoords, colorCoords);
+                shard.lightWithBiasSources(posCoords, colorCoords, *p.surfaceTangentMatrix,
+                                           leaf->map().biasCurrentTime());
 
                 // Apply surface glow.
                 if(p.glowing > 0)
@@ -1891,17 +1897,18 @@ static void writeWallSection(HEdge &hedge, int section,
 
     rendworldpoly_params_t parm; zap(parm);
 
-    Vector3f materialOrigin = leftEdge.materialOrigin();
-    Vector3d topLeft        = leftEdge.top().origin();
-    Vector3d bottomRight    = rightEdge.bottom().origin();
+    Vector3f materialOrigin   = leftEdge.materialOrigin();
+    Vector3d topLeft          = leftEdge.top().origin();
+    Vector3d bottomRight      = rightEdge.bottom().origin();
 
-    parm.skyMasked           = skyMasked;
-    parm.mapElement          = &segment;
-    parm.geomGroup           = wallSpec.section;
-    parm.topLeft             = &topLeft;
-    parm.bottomRight         = &bottomRight;
-    parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
-    parm.alpha               = parm.forceOpaque? 1 : opacity;
+    parm.skyMasked            = skyMasked;
+    parm.mapElement           = &segment;
+    parm.geomGroup            = wallSpec.section;
+    parm.topLeft              = &topLeft;
+    parm.bottomRight          = &bottomRight;
+    parm.forceOpaque          = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
+    parm.alpha                = parm.forceOpaque? 1 : opacity;
+    parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
     // Calculate the light level deltas for this wall section?
     if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
@@ -2123,14 +2130,15 @@ static void writeLeafPlane(Plane &plane)
 
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.mapElement          = leaf;
-    parm.geomGroup           = plane.indexInSector();
-    parm.topLeft             = &topLeft;
-    parm.bottomRight         = &bottomRight;
-    parm.materialOrigin      = &materialOrigin;
-    parm.materialScale       = &materialScale;
-    parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
-    parm.surfaceColor        = &surface.tintColor();
+    parm.mapElement           = leaf;
+    parm.geomGroup            = plane.indexInSector();
+    parm.topLeft              = &topLeft;
+    parm.bottomRight          = &bottomRight;
+    parm.materialOrigin       = &materialOrigin;
+    parm.materialScale        = &materialScale;
+    parm.surfaceLightLevelDL  = parm.surfaceLightLevelDR = 0;
+    parm.surfaceColor         = &surface.tintColor();
+    parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
     if(material->isSkyMasked())
     {

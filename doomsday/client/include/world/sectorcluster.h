@@ -41,6 +41,7 @@
 class BspLeaf;
 #ifdef __CLIENT__
 class BiasDigest;
+class Shard;
 #endif
 
 /**
@@ -265,6 +266,28 @@ public:
     int blockLightSourceZBias();
 
     /**
+     * Returns the geometry Shard for the specified @a mapElement and geometry
+     * group identifier @a geomId; otherwise @c 0.
+     */
+    Shard *findShard(de::MapElement &mapElement, int geomId);
+
+    /**
+     * Generate/locate the geometry Shard for the specified @a mapElement and
+     * geometry group identifier @a geomId.
+     */
+    Shard &shard(de::MapElement &mapElement, int geomId);
+
+    /**
+     * Shards owned by the SectorCluster should call this periodically to update
+     * their bias lighting contributions.
+     *
+     * @param shard  Shard to be updated (owned by the SectorCluster).
+     *
+     * @return  @c true if one or more BiasIllum contributors was updated.
+     */
+    bool updateBiasContributors(Shard *shard);
+
+    /**
      * Apply bias lighting changes to @em all geometry Shards within the cluster.
      *
      * @param changes  Digest of lighting changes to be applied.
@@ -272,31 +295,14 @@ public:
     void applyBiasDigest(BiasDigest &changes);
 
     /**
-     * Perform bias lighting for the supplied Shard geometry.
+     * Convenient method of determining the frameCount of the current bias render
+     * frame. Used for tracking changes to bias sources/surfaces.
      *
-     * @param mapElement   MapElement for the geometry to be lit.
-     * @param geomId       MapElement-unique geometry id.
-     * @param posCoords    World coordinates for each vertex.
-     * @param colorCoords  Final lighting values will be written here.
+     * @see Map::biasLastChangeOnFrame()
      */
-    void applyBiasLightSources(de::MapElement &mapElement, int geomId,
-                               de::Vector3f const *posCoords, de::Vector4f *colorCoords);
-
-    /**
-     * Schedule a lighting update to a geometry Shard following a move of some
-     * other element of dependent geometry.
-     *
-     * @param mapElement  MapElement for the geometry to be updated.
-     * @param geomId      MapElement-unique geometry id.
-     */
-    void updateBiasAfterGeometryMove(de::MapElement &mapElement, int geomId);
+    uint biasLastChangeOnFrame() const;
 
 #endif // __CLIENT__
-
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
