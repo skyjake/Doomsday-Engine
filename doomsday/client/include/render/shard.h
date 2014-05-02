@@ -19,7 +19,6 @@
 #ifndef DENG_CLIENT_RENDER_SHARD_H
 #define DENG_CLIENT_RENDER_SHARD_H
 
-#include <QList>
 #include <de/Matrix>
 #include <de/Vector>
 #include "MapElement"
