@@ -66,9 +66,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <de/App>
-#include <de/ArrayValue>
 #include <de/NativePath>
-#include <de/NumberValue>
 
 using namespace common;
 
@@ -2368,28 +2366,6 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
                          .arg(seconds, 2, 10, QChar('0'));
 
     return description;
-}
-
-void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
-{
-    metadata.clear();
-
-    metadata.set("gameIdentityKey", COMMON_GAMESESSION->gameId());
-    metadata.set("userDescription", "(Unsaved)");
-    metadata.set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
-    metadata.set("mapTime",         mapTime);
-
-    metadata.add("gameRules",       COMMON_GAMESESSION->rules().toRecord()); // Takes ownership.
-
-    de::ArrayValue *array = new de::ArrayValue;
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
-        *array << de::NumberValue(playerIsPresent, de::NumberValue::Boolean);
-    }
-    metadata.set("players", array); // Takes ownership.
-
-    metadata.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
 }
 
 /// @todo Get this from MAPINFO

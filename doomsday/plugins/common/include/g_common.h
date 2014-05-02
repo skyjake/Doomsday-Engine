@@ -261,13 +261,6 @@ class SaveSlots;
 de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
 
 /**
- * Configures @a metadata according to the current game session configuration.
- *
- * @param metadata  Current session metadata is written here.
- */
-void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata);
-
-/**
  * Returns the game's SaveSlots.
  */
 SaveSlots &G_SaveSlots();
