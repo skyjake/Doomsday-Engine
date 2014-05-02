@@ -15,7 +15,7 @@ LIBS += -ldeng_shell
 
 macx {
     defineTest(linkBinaryToBundledLibdengShell) {
-        fixInstallName($${1}, libdeng_shell.0.dylib, ..)
+        fixInstallName($${1}, libdeng_shell.1.dylib, ..)
     }
     defineTest(linkToBundledLibdengShell) {
         linkBinaryToBundledLibdengShell($${1}.bundle/$$1)

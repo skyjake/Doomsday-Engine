@@ -9,7 +9,7 @@ include(../config.pri)
 
 TEMPLATE = lib
 TARGET   = deng_shell
-VERSION  = 0.1.0
+VERSION  = $$DENG_VERSION
 
 include(../dep_core.pri)
 
@@ -109,7 +109,7 @@ SOURCES += \
 macx {
     linkDylibToBundledLibcore(libdeng_shell)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_shell.0.dylib libdeng_shell.0.dylib")
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_shell.1.dylib libdeng_shell.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
