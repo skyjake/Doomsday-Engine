@@ -60,7 +60,7 @@ class Event:
             if self.has_version():
                 if utils.version_cmp(self.version_base(), '1.11') >= 0:
                     del self.oses[3] # no more OS X 10.4
-                if utils.version_cmp(self.version_base(), '1.15') >= 0:
+                if self.num >= 1212 and utils.version_cmp(self.version_base(), '1.15') >= 0:
                     del self.oses[2] # no more OS X 10.6
                 
         elif self.num >= 778: # Mac distribution naming was changed.
@@ -110,7 +110,7 @@ class Event:
             return 'doomsday'        
     
     def os_from_filename(self, name):
-        found = None
+        found = None        
         for n, osExt, ident in self.oses:
             if type(osExt) == 'tuple':
                 exts = osExt
