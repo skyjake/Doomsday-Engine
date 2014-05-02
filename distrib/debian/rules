@@ -20,7 +20,7 @@ build-indep: build-stamp
 build-stamp: builddir/Makefile
 	dh_testdir
 	# Add here commands to compile the package.
-	cd builddir && LD_LIBRARY_PATH=`pwd`/../$(ASSIMP_DIR)/lib $(MAKE)
+	cd builddir && $(MAKE)
 	touch $@
 
 clean:
