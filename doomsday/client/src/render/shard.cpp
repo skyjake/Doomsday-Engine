@@ -17,6 +17,7 @@
  */
 
 #include "render/shard.h"
+#include <QList>
 #include <QtAlgorithms>
 #include "BiasDigest"
 #include "BiasIllum"
