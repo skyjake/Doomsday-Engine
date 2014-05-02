@@ -371,7 +371,7 @@ def linux_release():
 
     # Check that the changelog exists.
     if not os.path.exists('debian/changelog'):
-        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION, DOOMSDAY_BUILD))
+        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_BUILD))
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
