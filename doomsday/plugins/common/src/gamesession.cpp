@@ -87,8 +87,6 @@ static GameSession *singleton;
 
 static String const internalSavePath = "/home/cache/internal.save";
 
-static String const unsavedDescription = "(Unsaved)";
-
 DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 {
     GameRuleset rules; ///< current ruleset
@@ -834,7 +832,6 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
 
     SessionMetadata metadata;
     G_ApplyCurrentSessionMetadata(metadata);
-    metadata.set("userDescription", unsavedDescription);
 
     ZipArchive arch;
     arch.add("Info", composeSaveInfo(metadata).toUtf8());
@@ -999,7 +996,6 @@ void GameSession::leaveMap()
         G_ApplyCurrentSessionMetadata(metadata);
         /// @todo Use the existing sessionId?
         //metadata.set("sessionId", savedSession->metadata().geti("sessionId"));
-        metadata.set("userDescription", unsavedDescription);
         saved->replaceFile("Info") << composeSaveInfo(metadata).toUtf8();
 
 #if __JHEXEN__
@@ -1062,7 +1058,7 @@ void GameSession::save(String const &saveName, String const &userDescription)
         NetSv_SaveGame(metadata.geti("sessionId"));
 
         // Serialize the game state to a new saved session. We'll compile a ZIP
-        // format achive that will be written to a file.
+        // format archive that will be written to a file.
         ZipArchive arch;
         arch.add("Info", composeSaveInfo(metadata).toUtf8());
 

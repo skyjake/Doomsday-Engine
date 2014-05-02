@@ -2375,7 +2375,7 @@ void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata)
     metadata.clear();
 
     metadata.set("gameIdentityKey", COMMON_GAMESESSION->gameId());
-    metadata.set("userDescription", ""); // Applied later.
+    metadata.set("userDescription", "(Unsaved)");
     metadata.set("mapUri",          Str_Text(Uri_Compose(gameMapUri)));
     metadata.set("mapTime",         mapTime);
 
