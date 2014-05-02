@@ -22,7 +22,7 @@
 #ifndef LIBDENG_BAMS_MATH_H
 #define LIBDENG_BAMS_MATH_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 #include <de/types.h>
 
 #ifdef __cplusplus

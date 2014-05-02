@@ -23,7 +23,7 @@
 #ifndef LIBDENG_SYSTEM_MEMORY_H
 #define LIBDENG_SYSTEM_MEMORY_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 #include <string.h> // memcpy
 
 #ifdef __cplusplus

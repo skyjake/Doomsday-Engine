@@ -22,7 +22,7 @@
 #ifndef DENG_RENDER_RENDPOLY_H
 #define DENG_RENDER_RENDPOLY_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 #include <de/Vector>
 
 DENG_EXTERN_C byte rendInfoRPolys;

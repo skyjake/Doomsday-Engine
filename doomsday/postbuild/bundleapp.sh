@@ -23,12 +23,12 @@ echo "Clearing existing bundles..."
 rm -rf $BUILDDIR/*.bundle
 
 echo "Copying shared libraries..."
-$CP $BUILDDIR/../libdeng2/libdeng2*dylib      $APPDIR/Frameworks
-$CP $BUILDDIR/../libdeng1/libdeng1*dylib      $APPDIR/Frameworks
-$CP $BUILDDIR/../libgui/libdeng_gui*dylib     $APPDIR/Frameworks
-$CP $BUILDDIR/../libgui/libassimp*dylib       $APPDIR/Frameworks
-$CP $BUILDDIR/../libappfw/libdeng_appfw*dylib $APPDIR/Frameworks
-$CP $BUILDDIR/../libshell/libdeng_shell*dylib $APPDIR/Frameworks
+$CP $BUILDDIR/../libdeng2/libdeng2*dylib        $APPDIR/Frameworks
+$CP $BUILDDIR/../liblegacy/libdeng_legacy*dylib $APPDIR/Frameworks
+$CP $BUILDDIR/../libgui/libdeng_gui*dylib       $APPDIR/Frameworks
+$CP $BUILDDIR/../libgui/libassimp*dylib         $APPDIR/Frameworks
+$CP $BUILDDIR/../libappfw/libdeng_appfw*dylib   $APPDIR/Frameworks
+$CP $BUILDDIR/../libshell/libdeng_shell*dylib   $APPDIR/Frameworks
 
 echo "Copying server..."
 $CP server/doomsday-server $APPDIR/Resources

@@ -1,6 +1,6 @@
-/** @file libdeng1.h Common definitions for libdeng1.
+/** @file liblegacy.h  Common definitions for legacy support.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG1_H
-#define LIBDENG1_H
+#ifndef LIBLEGACY_H
+#define LIBLEGACY_H
 
 #if defined(__cplusplus) && !defined(DENG_NO_QT)
 #  define DENG_USE_QT
@@ -135,15 +135,14 @@ extern "C" {
 #endif
 
 /**
- * Initializes the libdeng1 library. This must be the first function called
- * before any other libdeng1 functions.
+ * Initializes the library. This must be the first function called before any other
+ * functions in the library.
  */
 DENG_PUBLIC void Libdeng_Init(void);
 
 /**
- * Shuts down the libdeng1 library. Frees any internal resources allocated by
- * the library's subsystems. Must be called when the library is no longer
- * needed.
+ * Shuts down the library. Frees any internal resources allocated by the library's
+ * subsystems. Must be called when the library is no longer needed.
  */
 DENG_PUBLIC void Libdeng_Shutdown(void);
 
@@ -157,4 +156,4 @@ DENG_PUBLIC void Libdeng_BadAlloc(void);
 } // extern "C"
 #endif
 
-#endif // LIBDENG1_H
+#endif // LIBLEGACY_H

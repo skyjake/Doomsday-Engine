@@ -1,9 +1,10 @@
-# The Doomsday Engine Project
+# The Doomsday Engine Project -- Legacy and C Language Support
+# License: GPL 2+
 # Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 # Copyright (c) 2013 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
-TARGET = deng1
+TARGET = deng_legacy
 
 # Build Configuration --------------------------------------------------------
 
@@ -67,7 +68,7 @@ HEADERS += \
     include/de/ddstring.h \
     include/de/findfile.h \
     include/de/fixedpoint.h \
-    include/de/libdeng1.h \
+    include/de/liblegacy.h \
     include/de/kdtree.h \
     include/de/mathutil.h \
     include/de/memory.h \
@@ -95,7 +96,7 @@ SOURCES += \
     src/binangle.c \
     src/concurrency.cpp \
     src/fixedpoint.c \
-    src/libdeng.c \
+    src/liblegacy.c \
     src/kdtree.c \
     src/mathutil.c \
     src/memory.c \
@@ -125,19 +126,15 @@ else:unix {
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng1)
+    linkDylibToBundledLibdeng2(libdeng_legacy)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng1.1.dylib libdeng1.1.dylib")
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_legacy.1.dylib libdeng_legacy.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
-    doPostLink("cp -fRp libdeng1*dylib ../client/Doomsday.app/Contents/Frameworks")
+    doPostLink("cp -fRp libdeng_legacy*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
 else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
-
-#win32 {
-#    RC_FILE = res/windows/deng.rc
-#}

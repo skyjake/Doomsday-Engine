@@ -7,7 +7,7 @@
 
 include(../../config.pri)
 include(../../dep_deng2.pri)
-include(../../dep_deng1.pri)
+include(../../dep_legacy.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = app
@@ -34,7 +34,7 @@ SOURCES += \
 
 macx {
     linkBinaryToBundledLibdeng2($$TARGET)
-    linkBinaryToBundledLibdeng1($$TARGET)
+    linkBinaryToBundledLiblegacy($$TARGET)
 }
 else {
     INSTALLS += target

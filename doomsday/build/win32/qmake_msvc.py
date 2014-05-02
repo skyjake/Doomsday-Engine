@@ -59,7 +59,7 @@ for proj in ['libdeng2\deng2.vcxproj', 'tools\shell\shell-gui\Doomsday-Shell.vcx
               r'=&quot;\1&quot;')
     
 copyScript = 'python &quot;%s\\\\build\win32\copy_to_products.py' % rootPath + '&quot; &quot;' + solPath + '&quot;'
-rcDirs = '&quot;' + rootPath + '\\\\api&quot;;&quot;' + rootPath + '\\\\libdeng1\include' + '&quot;'
+rcDirs = '&quot;' + rootPath + '\\\\api&quot;;&quot;' + rootPath + '\\\\liblegacy\include' + '&quot;'
 
 def find_projs(path):
     found = []

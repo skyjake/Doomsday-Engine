@@ -20,7 +20,7 @@
 #ifndef LIBDENG_STACK_H
 #define LIBDENG_STACK_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 
 #ifdef __cplusplus
 extern "C" {

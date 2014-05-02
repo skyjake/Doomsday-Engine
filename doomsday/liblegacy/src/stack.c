@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/libdeng1.h"
+#include "de/liblegacy.h"
 #include "de/memory.h"
 #include "de/stack.h"
 #include <de/c_wrapper.h>

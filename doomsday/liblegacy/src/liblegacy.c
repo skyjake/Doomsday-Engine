@@ -1,5 +1,5 @@
 /**
- * @file libdeng.c
+ * @file liblegacy.c
  * Main interface.
  *
  * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/libdeng1.h"
+#include "de/liblegacy.h"
 #include "de/binangle.h"
 #include "de/concurrency.h"
 #include "de/timer.h"

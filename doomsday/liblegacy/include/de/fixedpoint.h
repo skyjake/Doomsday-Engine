@@ -24,7 +24,7 @@
 #ifndef LIBDENG_FIXED_POINT_MATH_H
 #define LIBDENG_FIXED_POINT_MATH_H
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 
 #define FRACBITS        16
 #define FRACUNIT        (1 << FRACBITS)

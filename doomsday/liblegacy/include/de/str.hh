@@ -22,7 +22,7 @@
 #ifndef LIBDENG_DDSTRING_CPP_WRAPPER_HH
 #define LIBDENG_DDSTRING_CPP_WRAPPER_HH
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 #include "str.h"
 
 namespace de {

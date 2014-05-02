@@ -22,7 +22,7 @@
 #ifndef LIBDENG_DATA_SIZE_H
 #define LIBDENG_DATA_SIZE_H
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 
 #ifdef __cplusplus
 extern "C" {

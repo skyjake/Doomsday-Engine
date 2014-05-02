@@ -33,7 +33,7 @@
  * @ingroup base
  */
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 
 #ifdef __cplusplus
 extern "C" {

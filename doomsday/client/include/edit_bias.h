@@ -22,7 +22,7 @@
 
 #ifdef __CLIENT__
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 
 class HueCircle;
 

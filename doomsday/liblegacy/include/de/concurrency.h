@@ -24,7 +24,7 @@
 #ifndef LIBDENG_SYSTEM_CONCURRENCY_H
 #define LIBDENG_SYSTEM_CONCURRENCY_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 
 typedef void *thread_t;
 typedef int (*systhreadfunc_t) (void *parm);

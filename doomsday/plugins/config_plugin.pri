@@ -25,4 +25,4 @@ INCLUDEPATH += $$DENG_API_DIR
 }
 else: include(../dep_deng2.pri)
 
-include(../dep_deng1.pri)
+include(../dep_legacy.pri)

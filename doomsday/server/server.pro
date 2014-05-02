@@ -27,7 +27,7 @@ CONFIG -= app_bundle
 include(../dep_zlib.pri)
 include(../dep_lzss.pri)
 include(../dep_deng2.pri)
-include(../dep_deng1.pri)
+include(../dep_legacy.pri)
 include(../dep_shell.pri)
 
 # Definitions ----------------------------------------------------------------

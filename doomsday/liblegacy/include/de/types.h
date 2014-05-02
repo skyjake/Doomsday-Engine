@@ -25,7 +25,7 @@
 // This header is ignored if read by Microsoft RC.
 #ifndef RC_INVOKED
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 
 enum {
     VX = 0,

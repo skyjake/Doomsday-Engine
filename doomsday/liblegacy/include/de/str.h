@@ -42,7 +42,7 @@
 #ifndef LIBDENG_API_STRING_H
 #define LIBDENG_API_STRING_H
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 #include "types.h"
 #include "reader.h"
 #include "writer.h"

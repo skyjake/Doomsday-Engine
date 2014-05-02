@@ -30,14 +30,13 @@
 namespace de {
 
 /**
- * Version information about libdeng2. The version numbers are defined in
- * libdeng2.pro.
+ * Version information about libdeng2. The version numbers are defined in libdeng2.pro.
  *
- * @note For the time being, this is separate from the libdeng1/engine version
- * number. libdeng2 versioning starts from 2.0.0. When the project as a whole
- * switches to major version 2, libdeng2 version will be synced with the rest
- * of the project. Also note that unlike libdeng1, there is only ever three
- * components in the version (or four, counting the build number).
+ * @note For the time being, this is separate from the project version number. libdeng2
+ * versioning starts from 2.0.0. When the project as a whole switches to major version 2,
+ * libdeng2 version will be synced with the rest of the project. Also note that unlike in
+ * the past, there is only ever three components in the version (or four, counting the
+ * build number).
  *
  * @ingroup core
  */

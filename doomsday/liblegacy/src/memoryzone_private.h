@@ -31,7 +31,7 @@
 #ifndef LIBDENG_MEMORY_ZONE_PRIVATE_H
 #define LIBDENG_MEMORY_ZONE_PRIVATE_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 #include <de/memoryzone.h> // public API
 
 #ifdef __cplusplus

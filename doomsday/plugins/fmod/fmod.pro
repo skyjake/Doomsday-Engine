@@ -53,5 +53,5 @@ else {
 
 macx {
     linkToBundledLibdeng2(audio_fmod)
-    linkToBundledLibdeng1(audio_fmod)
+    linkToBundledLiblegacy(audio_fmod)
 }

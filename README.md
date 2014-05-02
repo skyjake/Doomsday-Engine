@@ -8,7 +8,7 @@ For [compilation instructions](http://dengine.net/dew/index.php?title=Compilatio
 
 **libdeng2** is the core of Doomsday 2. It is a C++ class framework containing functionality such as the file system, plugin loading, Doomsday Script, network communications, and generic data structures. Almost everything relies or will rely on this core library.
 
-**libdeng1** is a collection of C language routines extracted from the old Doomsday 1 code base. Its purpose is to (eventually) act as a C wrapper for libdeng2. (Game plugins are mostly in C.)
+**liblegacy** is a collection of C language routines extracted from the old Doomsday 1 code base. Its purpose is to (eventually) act as a C wrapper for libdeng2. (Game plugins are mostly in C.)
 
 **libgui** builds on libdeng2 to add low-level GUI capabilities such as OpenGL graphics, fonts, images, and input devices.
 

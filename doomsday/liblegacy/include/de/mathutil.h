@@ -21,7 +21,7 @@
 #ifndef LIBDENG_MATHUTIL_H
 #define LIBDENG_MATHUTIL_H
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 
 #ifdef __cplusplus
 extern "C" {

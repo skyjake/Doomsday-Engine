@@ -21,7 +21,7 @@
 #define DOOMSDAY_APIS_H
 
 #ifndef RC_INVOKED
-#  include <de/libdeng1.h>
+#  include <de/liblegacy.h>
 #  include <string.h>
 #endif
 

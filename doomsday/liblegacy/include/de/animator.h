@@ -26,7 +26,7 @@
 #ifndef LIBDENG_ANIMATOR_H
 #define LIBDENG_ANIMATOR_H
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 
 /// @addtogroup math
 ///@{

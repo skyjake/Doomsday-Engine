@@ -35,7 +35,7 @@
 #ifndef LIBDENG_READER_H
 #define LIBDENG_READER_H
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 #include "types.h"
 
 #ifdef __cplusplus

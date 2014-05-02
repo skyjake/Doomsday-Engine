@@ -23,7 +23,7 @@
 #ifndef LIBDENG_MEMORY_BLOCKSET_H
 #define LIBDENG_MEMORY_BLOCKSET_H
 
-#include "libdeng1.h"
+#include "liblegacy.h"
 
 #ifdef __cplusplus
 extern "C" {

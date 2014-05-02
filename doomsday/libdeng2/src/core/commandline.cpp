@@ -288,7 +288,7 @@ void CommandLine::makeAbsolutePath(duint pos)
         QFileInfo info(dir.path());
         if(info.isDir())
         {
-            // Append a slash so libdeng1 will treat it as a directory.
+            // Append a slash so FS1 will treat it as a directory.
             d->arguments[pos] += '/';
         }
 
