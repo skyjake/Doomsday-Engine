@@ -3217,6 +3217,16 @@ D_CMD(HelpWhat)
     return true;
 }
 
+#ifdef __CLIENT__
+D_CMD(Clear)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow::main().console().clearLog();
+    return true;
+}
+#endif
+
 static void consoleRegister()
 {
     C_VAR_CHARPTR("file-startup", &startupFiles, 0, 0, 0);
@@ -3245,6 +3255,7 @@ static void consoleRegister()
     S_Register();
 
 #ifdef __CLIENT__
+    C_CMD("clear",           "", Clear);
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);

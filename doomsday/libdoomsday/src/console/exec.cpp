@@ -87,7 +87,6 @@ typedef struct execbuff_s {
 D_CMD(AddSub);
 D_CMD(IncDec);
 D_CMD(Alias);
-D_CMD(Clear);
 D_CMD(Echo);
 D_CMD(Help);
 D_CMD(If);
@@ -119,7 +118,6 @@ void Con_Register(void)
     C_CMD("add",            NULL,   AddSub);
     C_CMD("after",          "is",   Wait);
     C_CMD("alias",          NULL,   Alias);
-    C_CMD("clear",          "",     Clear);
     C_CMD("dec",            NULL,   IncDec);
     C_CMD("echo",           "s*",   Echo);
     C_CMD("print",          "s*",   Echo);
@@ -919,16 +917,6 @@ static void makeAlias(char *aName, char *command)
 
     // We need to create a new alias.
     Con_AddAlias(aName, command);
-}
-
-D_CMD(Clear)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-#ifdef __CLIENT__
-    ClientWindow::main().console().clearLog();
-#endif
-    return true;
 }
 
 D_CMD(Alias)
