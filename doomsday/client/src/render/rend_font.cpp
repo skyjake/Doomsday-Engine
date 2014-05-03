@@ -110,7 +110,7 @@ static int typeInTime;
 static void errorIfNotInited(const char* callerName)
 {
     if(inited) return;
-    Con_Error("%s: font renderer module is not presently initialized.", callerName);
+    App_Error("%s: font renderer module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
 }
@@ -207,7 +207,7 @@ void FR_PushAttrib(void)
     errorIfNotInited("FR_PushAttrib");
     if(fr.attribStackDepth+1 == FR_MAX_ATTRIB_STACK_DEPTH)
     {
-        Con_Error("FR_PushAttrib: STACK_OVERFLOW.");
+        App_Error("FR_PushAttrib: STACK_OVERFLOW.");
         exit(1); // Unreachable.
     }
     memcpy(fr.attribStack + fr.attribStackDepth + 1, fr.attribStack + fr.attribStackDepth, sizeof(fr.attribStack[0]));
@@ -220,7 +220,7 @@ void FR_PopAttrib(void)
     errorIfNotInited("FR_PopAttrib");
     if(fr.attribStackDepth == 0)
     {
-        Con_Error("FR_PopAttrib: STACK_UNDERFLOW.");
+        App_Error("FR_PopAttrib: STACK_UNDERFLOW.");
         exit(1); // Unreachable.
     }
     --fr.attribStackDepth;
@@ -479,7 +479,7 @@ static int textFragmentWidth(char const *fragment)
 
     if(fr.fontNum == 0)
     {
-        Con_Error("textFragmentHeight: Cannot determine height without a current font.");
+        App_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
     }
 
@@ -504,7 +504,7 @@ static int textFragmentHeight(char const *fragment)
 
     if(fr.fontNum == 0)
     {
-        Con_Error("textFragmentHeight: Cannot determine height without a current font.");
+        App_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
     }
 
@@ -1097,7 +1097,7 @@ static char* enlargeTextBuffer(size_t lengthMinusTerminator)
         largeTextBufferSize = lengthMinusTerminator;
         largeTextBuffer = (char*)realloc(largeTextBuffer, largeTextBufferSize+1);
         if(largeTextBuffer == NULL)
-            Con_Error("FR_EnlargeTextBuffer: Failed on reallocation of %lu bytes.",
+            App_Error("FR_EnlargeTextBuffer: Failed on reallocation of %lu bytes.",
                 (unsigned long)(lengthMinusTerminator+1));
     }
     return largeTextBuffer;

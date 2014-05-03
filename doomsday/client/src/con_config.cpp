@@ -20,17 +20,19 @@
 #include "de_base.h"
 #include "con_config.h"
 
-#include "con_main.h"
 #include "dd_main.h"
 #include "dd_def.h"
-#include "dd_help.h"
 #include "m_misc.h"
 
 #include "Games"
 
-#include "api_filesys.h"
-#include "filesys/fs_main.h"
-#include "filesys/fs_util.h"
+#include <doomsday/help.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+#include <doomsday/console/alias.h>
+#include <doomsday/console/knownword.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
 
 #ifdef __CLIENT__
 #  include "ui/b_main.h"
@@ -106,8 +108,7 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
         fprintf(file, "\"");
         if(CV_URIPTR(var))
         {
-            AutoStr *valPath = Uri_Compose(CV_URIPTR(var));
-            fprintf(file, "%s", Str_Text(valPath));
+            fprintf(file, "%s", CV_URIPTR(var)->compose().toUtf8().constData());
         }
         fprintf(file, "\"");
         break;
@@ -238,40 +239,9 @@ bool Con_ParseCommands(char const *fileName, int flags)
     // Update the allowed operations.
     flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
-    // Open the file.
-    filehandle_s *file = F_Open(fileName, "rt");
-    if(!file)
-    {
-        LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
-        return false;
-    }
-
     LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)") << F_PrettyPath(fileName) << setDefault;
 
-    // This file is filled with console commands.
-    // Each line is a command.
-    char buff[512];
-    for(int line = 1; ;)
-    {
-        M_ReadLine(buff, 512, file);
-        if(buff[0] && !M_IsComment(buff))
-        {
-            // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, buff, setDefault, false))
-            {
-                LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
-                        << F_PrettyPath(fileName) << line << buff;
-            }
-        }
-
-        if(FileHandle_AtEnd(file)) break;
-
-        line++;
-    }
-
-    F_Delete(file);
-
-    return true;
+    return Con_Parse(fileName, setDefault /* => silently */);
 }
 
 void Con_SaveDefaults()

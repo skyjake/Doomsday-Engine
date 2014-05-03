@@ -243,4 +243,9 @@ bool NativePath::setWorkPath(const NativePath &cwd)
     return false;
 }
 
+QChar NativePath::separator()
+{
+    return DIR_SEPARATOR;
+}
+
 } // namespace de

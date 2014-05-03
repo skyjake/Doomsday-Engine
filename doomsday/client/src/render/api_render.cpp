@@ -23,9 +23,9 @@
 #include "api_render.h"
 
 #include "dd_main.h" // App_ResourceSystem
-#include "con_main.h"
 #include "def_main.h"
 #include "sys_system.h" // novideo
+#include "gl/sys_opengl.h"
 
 #include "render/r_main.h"
 #include "render/billboard.h" // Rend_SpriteMaterialSpec
@@ -37,6 +37,7 @@
 #  include "MaterialVariantSpec"
 #endif
 #include <de/Log>
+#include <doomsday/console/exec.h>
 
 // m_misc.c
 DENG_EXTERN_C int M_ScreenShot(const char* name, int bits);

@@ -35,9 +35,6 @@ void Con_SetProgress(int progress)
 void GL_Shutdown()
 {}
 
-void FR_Init(void)
-{}
-
 void R_RenderPlayerView(int num)
 {
     DENG_UNUSED(num);

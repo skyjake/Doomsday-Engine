@@ -24,7 +24,7 @@
 #include "de_ui.h"
 #include "de_render.h"
 #include "audio/s_main.h"
-
+#include "network/net_main.h"
 #include "gl/gl_main.h"
 #include "edit_bias.h"
 #include "ui/busyvisual.h"

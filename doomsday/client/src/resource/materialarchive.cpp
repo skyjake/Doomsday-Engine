@@ -20,7 +20,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "uri.hh"
+#include <doomsday/uri.h>
 #include <de/StringPool>
 
 #include "resource/materialarchive.h"

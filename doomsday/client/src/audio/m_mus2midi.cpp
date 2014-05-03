@@ -19,14 +19,13 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
+#include "audio/m_mus2midi.h"
+
+#include <doomsday/filesys/fs_util.h>
+#include <de/Log>
 #include <stdio.h>
 #include <string.h>
-
-#include "de_platform.h"
-#include "con_main.h"
-#include "api_filesys.h"
-#include "filesys/fs_util.h"
-#include "audio/m_mus2midi.h"
 
 // MUS event types.
 enum {

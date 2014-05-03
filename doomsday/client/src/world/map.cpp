@@ -39,10 +39,8 @@
 #include "Surface"
 #include "Vertex"
 
-#include "world/worldsystem.h" // ddMapSetup, validCount
-
 #include "world/bsp/partitioner.h"
-
+#include "world/worldsystem.h" // ddMapSetup, validCount
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/entitydatabase.h"
@@ -73,6 +71,7 @@
 #include <de/Rectangle>
 #include <de/aabox.h>
 #include <de/vector1.h>
+#include <de/timer.h>
 #include <QBitArray>
 #include <QVarLengthArray>
 

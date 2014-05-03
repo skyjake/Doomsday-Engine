@@ -157,6 +157,11 @@ public:
      * @return  @c true iff successfully changed the current working path.
      */
     static bool setWorkPath(NativePath const &cwd);
+
+    /**
+     * Returns the native path separator character.
+     */
+    static QChar separator();
 };
 
 } // namespace de

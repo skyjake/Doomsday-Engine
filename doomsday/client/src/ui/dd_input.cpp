@@ -1081,7 +1081,7 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 
         default:
 #if _DEBUG
-            Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
+            App_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 #endif
             return false;
         }
@@ -1749,7 +1749,7 @@ static void drawControlGroup(inputdev_t* device, const inputdev_layout_controlgr
             Rend_RenderHatStateVisual(device, ctrl->id, &origin, &ctrlGeom);
             break;
         default:
-            Con_Error("drawControlGroup: Unknown inputdev_controltype %i.", (int)ctrl->type);
+            App_Error("drawControlGroup: Unknown inputdev_controltype %i.", (int)ctrl->type);
             exit(1); // Unreachable.
         }
 

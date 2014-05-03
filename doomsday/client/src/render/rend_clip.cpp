@@ -257,7 +257,7 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 
 #ifdef DENG_DEBUG
         if(ci == ci->next)
-            Con_Error("C_AddRange: loop1 %p linked to itself: %x => %x\n", ci, ci->start, ci->end);
+            App_Error("C_AddRange: loop1 %p linked to itself: %x => %x\n", ci, ci->start, ci->end);
 #endif
     }
 
@@ -998,7 +998,7 @@ static void C_OrangeRanger(int mark)
         if(orange->prev && orange->prev->start > orange->start)
         {
             C_OcclusionLister();
-            Con_Error("C_OrangeRanger(%i): Orange order has failed.\n", mark);
+            App_Error("C_OrangeRanger(%i): Orange order has failed.\n", mark);
         }
     }
 }
@@ -1022,24 +1022,24 @@ void C_Ranger()
         if(ci == clipHead)
         {
             if(ci->prev != 0)
-                Con_Error("Cliphead->prev != 0.\n");
+                App_Error("Cliphead->prev != 0.\n");
         }
 
         // Confirm that the links to prev and next are OK.
         if(ci->prev)
         {
             if(ci->prev->next != ci)
-                Con_Error("Prev->next != this\n");
+                App_Error("Prev->next != this\n");
         }
         else if(ci != clipHead)
         {
-            Con_Error("prev == null, this isn't clipHead.\n");
+            App_Error("prev == null, this isn't clipHead.\n");
         }
 
         if(ci->next)
         {
             if(ci->next->prev != ci)
-                Con_Error("Next->prev != this\n");
+                App_Error("Next->prev != this\n");
         }
     }
 }

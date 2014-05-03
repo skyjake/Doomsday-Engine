@@ -22,7 +22,7 @@
 #define DENG_NO_API_MACROS_URI // functions defined here
 #include "api_uri.h"
 
-#include "uri.hh"
+#include <doomsday/uri.h>
 #include <doomsday/dualstring.h>
 #include <de/writer.h>
 #include <de/reader.h>

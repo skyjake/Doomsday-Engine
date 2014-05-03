@@ -751,7 +751,7 @@ void Def_ReadProcessDED(char const* path)
 
     if(!DED_Read(&defs, path))
     {
-        Con_Error("Def_ReadProcessDED: %s\n", dedReadError);
+        App_Error("Def_ReadProcessDED: %s\n", dedReadError);
     }
 }
 
@@ -786,7 +786,7 @@ static void Def_ReadLumpDefs()
         if(!DED_ReadLump(&defs, i))
         {
             QByteArray path = NativePath(lump.container().composePath()).pretty().toUtf8();
-            Con_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
+            App_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
         }
     }
 
@@ -878,7 +878,7 @@ static void readAllDefinitions()
             if(path.isEmpty())
             {
                 QByteArray names = record.names().join(";").toUtf8();
-                Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", names.constData());
+                App_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", names.constData());
             }
 
             readDefinitionFile(path);

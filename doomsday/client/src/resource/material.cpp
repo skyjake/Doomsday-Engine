@@ -21,17 +21,14 @@
 #include "resource/material.h"
 
 #include "dd_main.h"
-#include "con_main.h"
 #include "def_main.h"
-
 #include "r_util.h" // R_NameForBlendMode
-
 #include "audio/s_environ.h"
-
 #include "world/map.h"
 
 #include <QtAlgorithms>
 #include <de/math.h>
+#include <doomsday/console/cmd.h>
 
 using namespace de;
 

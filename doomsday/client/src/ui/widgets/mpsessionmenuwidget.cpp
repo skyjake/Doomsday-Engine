@@ -21,9 +21,10 @@
 #include "ui/widgets/gamesessionwidget.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
+#include "ui/clientwindow.h"
 #include "dd_main.h"
-#include "con_main.h"
 
+#include <doomsday/console/exec.h>
 #include <de/charsymbols.h>
 #include <de/SignalAction>
 #include <de/SequentialLayout>

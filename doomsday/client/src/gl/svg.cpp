@@ -216,7 +216,7 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     if(!lines || lineCount == 0) return NULL;
 
     svg = (Svg*)malloc(sizeof(*svg));
-    if(!svg) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new Svg.", (unsigned long) sizeof(*svg));
+    if(!svg) App_Error("Svg::FromDef: Failed on allocation of %lu bytes for new Svg.", (unsigned long) sizeof(*svg));
 
     svg->id = uniqueId;
     svg->dlist = 0;
@@ -248,12 +248,12 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     // Allocate the final point set.
     svg->numPoints = finalPointCount;
     svg->points = (SvgLinePoint*)malloc(sizeof(*svg->points) * svg->numPoints);
-    if(!svg->points) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLinePoint set.", (unsigned long) (sizeof(*svg->points) * finalPointCount));
+    if(!svg->points) App_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLinePoint set.", (unsigned long) (sizeof(*svg->points) * finalPointCount));
 
     // Allocate the final line set.
     svg->lineCount = finalLineCount;
     svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * finalLineCount);
-    if(!svg->lines) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine set.", (unsigned long) (sizeof(*svg->lines) * finalLineCount));
+    if(!svg->lines) App_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine set.", (unsigned long) (sizeof(*svg->lines) * finalLineCount));
 
     // Setup the lines.
     slIt = lines;

@@ -24,7 +24,6 @@
 #include <de/memory.h>
 
 #include "de_filesys.h"
-#include "con_main.h"
 #include "audio/audiodriver_music.h"
 
 #define BUFFERED_MUSIC_FILE      "dd-buffered-song"

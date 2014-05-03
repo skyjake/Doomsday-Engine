@@ -31,6 +31,8 @@
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <de/timer.h>
+#include <de/concurrency.h>
 #include <de/vector1.h>
 #include <cstring> // memcpy, memmove
 
@@ -217,7 +219,7 @@ static void objectsEmpty(fi_object_collection_t *c)
             case FI_PIC:    P_DestroyPic((fidata_pic_t *)obj);   break;
             case FI_TEXT:   P_DestroyText((fidata_text_t *)obj); break;
             default:
-                Con_Error("InFine: Unknown object type %i in objectsEmpty.", int(obj->type));
+                App_Error("InFine: Unknown object type %i in objectsEmpty.", int(obj->type));
             }
         }
         Z_Free(c->vector);
@@ -271,7 +273,7 @@ static fidata_pic_frame_t *createPicFrame(fi_pic_type_t type, int tics, void *te
     case PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef);  break;
     case PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);    break;
     default:
-        Con_Error("createPicFrame: unknown frame type %i.", int(type));
+        App_Error("createPicFrame: unknown frame type %i.", int(type));
     }
     f->sound = sound;
     return f;
@@ -454,7 +456,7 @@ fi_page_t *FI_NewPage(fi_page_t *prevPage)
 
 void FI_DeletePage(fi_page_t *p)
 {
-    if(!p) Con_Error("FI_DeletePage: Invalid page.");
+    if(!p) App_Error("FI_DeletePage: Invalid page.");
 
     pageClear(p);
     pagesRemove(p);
@@ -568,7 +570,7 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
 void FIPage_Drawer(fi_page_t *p)
 {
 #ifdef __CLIENT__
-    if(!p) Con_Error("FIPage_Drawer: Invalid page.");
+    if(!p) App_Error("FIPage_Drawer: Invalid page.");
 
     if(p->flags.hidden) return;
 
@@ -648,19 +650,19 @@ void FIPage_Drawer(fi_page_t *p)
 
 void FIPage_MakeVisible(fi_page_t *p, dd_bool yes)
 {
-    if(!p) Con_Error("FIPage_MakeVisible: Invalid page.");
+    if(!p) App_Error("FIPage_MakeVisible: Invalid page.");
     p->flags.hidden = !yes;
 }
 
 void FIPage_Pause(fi_page_t *p, dd_bool yes)
 {
-    if(!p) Con_Error("FIPage_Pause: Invalid page.");
+    if(!p) App_Error("FIPage_Pause: Invalid page.");
     p->flags.paused = yes;
 }
 
 void FIPage_Ticker(fi_page_t *p, timespan_t /*ticLength*/)
 {
-    if(!p) Con_Error("FIPage_Ticker: Invalid page.");
+    if(!p) App_Error("FIPage_Ticker: Invalid page.");
 
     if(!DD_IsSharpTick()) return;
 
@@ -681,13 +683,13 @@ void FIPage_Ticker(fi_page_t *p, timespan_t /*ticLength*/)
 
 dd_bool FIPage_HasObject(fi_page_t *p, fi_object_t *obj)
 {
-    if(!p) Con_Error("FIPage_HasObject: Invalid page.");
+    if(!p) App_Error("FIPage_HasObject: Invalid page.");
     return objectsIsPresent(&p->_objects, obj);
 }
 
 fi_object_t *FIPage_AddObject(fi_page_t *p, fi_object_t *obj)
 {
-    if(!p) Con_Error("FIPage_AddObject: Invalid page.");
+    if(!p) App_Error("FIPage_AddObject: Invalid page.");
     if(obj && !objectsIsPresent(&p->_objects, obj))
     {
         FIObject_SetPage(obj, p);
@@ -698,7 +700,7 @@ fi_object_t *FIPage_AddObject(fi_page_t *p, fi_object_t *obj)
 
 fi_object_t *FIPage_RemoveObject(fi_page_t *p, fi_object_t *obj)
 {
-    if(!p) Con_Error("FIPage_RemoveObject: Invalid page.");
+    if(!p) App_Error("FIPage_RemoveObject: Invalid page.");
     if(obj && objectsIsPresent(&p->_objects, obj))
     {
         FIObject_SetPage(obj, NULL);
@@ -709,95 +711,95 @@ fi_object_t *FIPage_RemoveObject(fi_page_t *p, fi_object_t *obj)
 
 Material *FIPage_BackgroundMaterial(fi_page_t *p)
 {
-    if(!p) Con_Error("FIPage_BackgroundMaterial: Invalid page.");
+    if(!p) App_Error("FIPage_BackgroundMaterial: Invalid page.");
     return p->_bg.material;
 }
 
 void FIPage_SetBackgroundMaterial(fi_page_t *p, Material *mat)
 {
-    if(!p) Con_Error("FIPage_SetBackgroundMaterial: Invalid page.");
+    if(!p) App_Error("FIPage_SetBackgroundMaterial: Invalid page.");
     p->_bg.material = mat;
 }
 
 void FIPage_SetBackgroundTopColor(fi_page_t *p, float red, float green, float blue, int steps)
 {
-    if(!p) Con_Error("FIPage_SetBackgroundTopColor: Invalid page.");
+    if(!p) App_Error("FIPage_SetBackgroundTopColor: Invalid page.");
     AnimatorVector3_Set(p->_bg.topColor, red, green, blue, steps);
 }
 
 void FIPage_SetBackgroundTopColorAndAlpha(fi_page_t *p, float red, float green, float blue, float alpha, int steps)
 {
-    if(!p) Con_Error("FIPage_SetBackgroundTopColorAndAlpha: Invalid page.");
+    if(!p) App_Error("FIPage_SetBackgroundTopColorAndAlpha: Invalid page.");
     AnimatorVector4_Set(p->_bg.topColor, red, green, blue, alpha, steps);
 }
 
 void FIPage_SetBackgroundBottomColor(fi_page_t *p, float red, float green, float blue, int steps)
 {
-    if(!p) Con_Error("FIPage_SetBackgroundBottomColor: Invalid page.");
+    if(!p) App_Error("FIPage_SetBackgroundBottomColor: Invalid page.");
     AnimatorVector3_Set(p->_bg.bottomColor, red, green, blue, steps);
 }
 
 void FIPage_SetBackgroundBottomColorAndAlpha(fi_page_t *p, float red, float green, float blue, float alpha, int steps)
 {
-    if(!p) Con_Error("FIPage_SetBackgroundBottomColorAndAlpha: Invalid page.");
+    if(!p) App_Error("FIPage_SetBackgroundBottomColorAndAlpha: Invalid page.");
     AnimatorVector4_Set(p->_bg.bottomColor, red, green, blue, alpha, steps);
 }
 
 void FIPage_SetOffsetX(fi_page_t *p, float x, int steps)
 {
-    if(!p) Con_Error("FIPage_SetOffsetX: Invalid page.");
+    if(!p) App_Error("FIPage_SetOffsetX: Invalid page.");
     Animator_Set(&p->_offset[VX], x, steps);
 }
 
 void FIPage_SetOffsetY(fi_page_t *p, float y, int steps)
 {
-    if(!p) Con_Error("FIPage_SetOffsetY: Invalid page.");
+    if(!p) App_Error("FIPage_SetOffsetY: Invalid page.");
     Animator_Set(&p->_offset[VY], y, steps);
 }
 
 void FIPage_SetOffsetZ(fi_page_t *p, float y, int steps)
 {
-    if(!p) Con_Error("FIPage_SetOffsetY: Invalid page.");
+    if(!p) App_Error("FIPage_SetOffsetY: Invalid page.");
     Animator_Set(&p->_offset[VZ], y, steps);
 }
 
 void FIPage_SetOffsetXYZ(fi_page_t *p, float x, float y, float z, int steps)
 {
-    if(!p) Con_Error("FIPage_SetOffsetXYZ: Invalid page.");
+    if(!p) App_Error("FIPage_SetOffsetXYZ: Invalid page.");
     AnimatorVector3_Set(p->_offset, x, y, z, steps);
 }
 
 void FIPage_SetFilterColorAndAlpha(fi_page_t *p, float red, float green, float blue, float alpha, int steps)
 {
-    if(!p) Con_Error("FIPage_SetFilterColorAndAlpha: Invalid page.");
+    if(!p) App_Error("FIPage_SetFilterColorAndAlpha: Invalid page.");
     AnimatorVector4_Set(p->_filter, red, green, blue, alpha, steps);
 }
 
 void FIPage_SetPredefinedColor(fi_page_t *p, uint idx, float red, float green, float blue, int steps)
 {
-    if(!p) Con_Error("FIPage_SetPredefinedColor: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_SetPredefinedColor: Invalid color id %u.", idx);
+    if(!p) App_Error("FIPage_SetPredefinedColor: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) App_Error("FIPage_SetPredefinedColor: Invalid color id %u.", idx);
     AnimatorVector3_Set(p->_preColor[idx], red, green, blue, steps);
 }
 
 animatorvector3_t const *FIPage_PredefinedColor(fi_page_t *p, uint idx)
 {
-    if(!p) Con_Error("FIPage_PredefinedColor: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_PredefinedColor: Invalid color id %u.", idx);
+    if(!p) App_Error("FIPage_PredefinedColor: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) App_Error("FIPage_PredefinedColor: Invalid color id %u.", idx);
     return (animatorvector3_t const *) &p->_preColor[idx];
 }
 
 void FIPage_SetPredefinedFont(fi_page_t *p, uint idx, fontid_t fontNum)
 {
-    if(!p) Con_Error("FIPage_SetPredefinedFont: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_SetPredefinedFont: Invalid font id %u.", idx);
+    if(!p) App_Error("FIPage_SetPredefinedFont: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) App_Error("FIPage_SetPredefinedFont: Invalid font id %u.", idx);
     p->_preFont[idx] = fontNum;
 }
 
 fontid_t FIPage_PredefinedFont(fi_page_t *p, uint idx)
 {
-    if(!p) Con_Error("FIPage_PredefinedFont: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_PredefinedFont: Invalid font id %u.", idx);
+    if(!p) App_Error("FIPage_PredefinedFont: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) App_Error("FIPage_PredefinedFont: Invalid font id %u.", idx);
     return p->_preFont[idx];
 }
 
@@ -1114,7 +1116,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             break; }
 
         default:
-            Con_Error("drawPicFrame: Invalid FI_PIC frame type %i.", int(f->type));
+            App_Error("drawPicFrame: Invalid FI_PIC frame type %i.", int(f->type));
         }
     }
 
@@ -1217,7 +1219,7 @@ void FIData_PicDraw(fi_object_t *obj, const float offset[3])
 {
 #ifdef __CLIENT__
     fidata_pic_t *p = (fidata_pic_t *)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicDraw: Not a FI_PIC.");
+    if(!obj || obj->type != FI_PIC) App_Error("FIData_PicDraw: Not a FI_PIC.");
 
     // Fully transparent pics will not be drawn.
     if(!(p->color[CA].value > 0)) return;
@@ -1241,7 +1243,7 @@ uint FIData_PicAppendFrame(fi_object_t *obj, fi_pic_type_t type, int tics, void 
     dd_bool flagFlipH)
 {
     fidata_pic_t * p = (fidata_pic_t *)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicAppendFrame: Not a FI_PIC.");
+    if(!obj || obj->type != FI_PIC) App_Error("FIData_PicAppendFrame: Not a FI_PIC.");
     picAddFrame(p, createPicFrame(type, tics, texRef, sound, flagFlipH));
     return p->numFrames-1;
 }
@@ -1249,7 +1251,7 @@ uint FIData_PicAppendFrame(fi_object_t *obj, fi_pic_type_t type, int tics, void 
 void FIData_PicClearAnimation(fi_object_t *obj)
 {
     fidata_pic_t *p = (fidata_pic_t *)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicClearAnimation: Not a FI_PIC.");
+    if(!obj || obj->type != FI_PIC) App_Error("FIData_PicClearAnimation: Not a FI_PIC.");
     if(p->frames)
     {
         for(uint i = 0; i < p->numFrames; ++i)
@@ -1268,7 +1270,7 @@ void FIData_PicClearAnimation(fi_object_t *obj)
 void FIData_TextAccelerate(fi_object_t *obj)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSkipCursorToEnd: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSkipCursorToEnd: Not a FI_TEXT.");
 
     // Fill in the rest very quickly.
     t->wait = -10;
@@ -1277,7 +1279,7 @@ void FIData_TextAccelerate(fi_object_t *obj)
 void FIData_TextThink(fi_object_t *obj)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextThink: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextThink: Not a FI_TEXT.");
 
     // Call parent thinker.
     FIObject_Think(obj);
@@ -1346,7 +1348,7 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 {
 #ifdef __CLIENT__
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextDraw: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextDraw: Not a FI_TEXT.");
 
     if(!t->text) return;
 
@@ -1456,7 +1458,7 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 size_t FIData_TextLength(fi_object_t *obj)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextLength: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextLength: Not a FI_TEXT.");
 
     size_t cnt = 0;
     if(t->text)
@@ -1489,7 +1491,7 @@ size_t FIData_TextLength(fi_object_t *obj)
 void FIData_TextCopy(fi_object_t *obj, char const *str)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextCopy: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextCopy: Not a FI_TEXT.");
 
     if(t->text)
     {
@@ -1507,7 +1509,7 @@ void FIData_TextCopy(fi_object_t *obj, char const *str)
 void FIData_TextSetFont(fi_object_t *obj, fontid_t fontNum)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetFont: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetFont: Not a FI_TEXT.");
     if(fontNum != 0)
         t->fontNum = fontNum;
 }
@@ -1515,7 +1517,7 @@ void FIData_TextSetFont(fi_object_t *obj, fontid_t fontNum)
 void FIData_TextSetColor(struct fi_object_s *obj, float red, float green, float blue, int steps)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetColor: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetColor: Not a FI_TEXT.");
     AnimatorVector3_Set(*((animatorvector3_t*)t->color), red, green, blue, steps);
     t->pageColor = 0;
 }
@@ -1523,7 +1525,7 @@ void FIData_TextSetColor(struct fi_object_s *obj, float red, float green, float 
 void FIData_TextSetAlpha(struct fi_object_s *obj, float alpha, int steps)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetAlpha: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetAlpha: Not a FI_TEXT.");
     Animator_Set(&t->color[CA], alpha, steps);
 }
 
@@ -1531,7 +1533,7 @@ void FIData_TextSetColorAndAlpha(struct fi_object_s *obj, float red, float green
     float alpha, int steps)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetColorAndAlpha: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetColorAndAlpha: Not a FI_TEXT.");
     AnimatorVector4_Set(t->color, red, green, blue, alpha, steps);
     t->pageColor = 0;
 }
@@ -1539,7 +1541,7 @@ void FIData_TextSetColorAndAlpha(struct fi_object_s *obj, float red, float green
 void FIData_TextSetPreColor(fi_object_t *obj, uint id)
 {
     fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetPreColor: Not a FI_TEXT.");
-    if(id >= FIPAGE_NUM_PREDEFINED_COLORS) Con_Error("FIData_TextSetPreColor: Invalid color id %u.", id);
+    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetPreColor: Not a FI_TEXT.");
+    if(id >= FIPAGE_NUM_PREDEFINED_COLORS) App_Error("FIData_TextSetPreColor: Invalid color id %u.", id);
     t->pageColor = id;
 }

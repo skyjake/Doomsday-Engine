@@ -23,6 +23,7 @@
 #include <de/memory.h>
 
 #include "de_platform.h"
+#include "dd_main.h"
 #include "dd_types.h"
 #include "dd_share.h"
 #include "de_console.h"
@@ -286,7 +287,7 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
     // +----+----+----+
 
     if(0 == (dst = (uint8_t *) M_Malloc(BPP * 2 * width * height * 2)))
-        Con_Error("GL_SmartFilterHQ2x: Failed on allocation of %lu bytes for "
+        App_Error("GL_SmartFilterHQ2x: Failed on allocation of %lu bytes for "
                   "output buffer.", (unsigned long) (BPP * 2 * width * height * 2));
 
     pOut = dst;
@@ -1983,7 +1984,7 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
                     break;
               }
             default:
-                Con_Error("GL_SmartFilterHQ2x: Invalid pattern %i.", pattern);
+                App_Error("GL_SmartFilterHQ2x: Invalid pattern %i.", pattern);
                 break;
             }
             pOut += 2 * BPP;

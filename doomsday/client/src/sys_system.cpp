@@ -64,7 +64,7 @@ static void C_DECL handler(int s)
 {
     signal(s, SIG_IGN);  // Ignore future instances of this signal.
 
-    Con_Error(s==SIGSEGV ? "Segmentation Violation\n" :
+    App_Error(s==SIGSEGV ? "Segmentation Violation\n" :
               s==SIGINT  ? "Interrupted by User\n" :
               s==SIGILL  ? "Illegal Instruction\n" :
               s==SIGFPE  ? "Floating Point Exception\n" :
@@ -269,7 +269,6 @@ void Sys_HideMouse(void)
 /**
  * Called when Doomsday should quit (will be deferred until convenient).
  */
-#undef Sys_Quit
 DENG_EXTERN_C void Sys_Quit(void)
 {
     if(BusyMode_Active())

@@ -46,10 +46,10 @@
 #include "render/fx/postprocessing.h"
 #include "render/fx/vignette.h"
 #include "render/fx/bloom.h"
-#include "con_main.h"
 
 #include "ui/clientwindow.h"
 
+#include <doomsday/console/cmd.h>
 #include <de/libcore.h>
 #include <de/Rectangle>
 #include <de/Drawable>

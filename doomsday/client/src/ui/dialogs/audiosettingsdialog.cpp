@@ -23,7 +23,6 @@
 
 #include "clientapp.h"
 #include "de_audio.h"
-#include "con_main.h"
 
 #include <de/SignalAction>
 #include <de/GridPopupWidget>

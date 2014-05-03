@@ -21,7 +21,7 @@
 #ifndef DENG_RESOURCE_SUBSYSTEM_H
 #define DENG_RESOURCE_SUBSYSTEM_H
 
-#include "resourceclass.h"
+#include <doomsday/resource/resourceclass.h>
 
 #include "resource/abstractfont.h"
 #include "resource/compositetexture.h"
@@ -36,8 +36,8 @@
 #ifdef __cplusplus
 #  include "resource/patch.h"
 #  include "resource/texturemanifest.h"
-#  include "resource/wad.h"
-#  include "resource/zip.h"
+#  include <doomsday/filesys/wad.h>
+#  include <doomsday/filesys/zip.h>
 #endif
 
 #include "api_resource.h"

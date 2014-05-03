@@ -21,9 +21,7 @@
 #include "de_platform.h"
 #include "world/sectorcluster.h"
 
-#include "con_main.h"
 #include "Face"
-
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
@@ -39,6 +37,7 @@
 #  include "Shard"
 #endif
 
+#include <doomsday/console/var.h>
 #include <de/vector1.h>
 #include <QRect>
 #include <QMap>

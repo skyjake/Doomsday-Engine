@@ -25,27 +25,23 @@
  */
 
 #include "clientapp.h"
-#include "render/rend_model.h"
+#include "dd_def.h"
+#include "dd_main.h" // App_WorldSystem()
 
+#include "render/rend_model.h"
 #include "render/rend_main.h"
 #include "render/vlight.h"
-
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-
-#include "network/net_main.h" // gametic
-
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 
-#include "con_main.h"
-#include "dd_def.h"
-#include "dd_main.h" // App_WorldSystem()
-
+#include <doomsday/console/var.h>
 #include <de/Log>
 #include <de/binangle.h>
 #include <de/memory.h>
+#include <de/concurrency.h>
 #include <cstdlib>
 #include <cmath>
 #include <cstring>

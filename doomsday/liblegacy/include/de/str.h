@@ -48,6 +48,8 @@
 #include "writer.h"
 #include <stdarg.h>
 
+#define DENG_LAST_CHAR(strNullTerminated)  (strNullTerminated[strlen(strNullTerminated) - 1])
+
 #ifdef __cplusplus
 extern "C" {
 #endif

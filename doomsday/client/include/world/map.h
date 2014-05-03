@@ -38,7 +38,7 @@
 #  include "Lumobj"
 #endif
 
-#include "uri.hh"
+#include <doomsday/uri.h>
 
 #include <de/Observers>
 #include <de/Vector>

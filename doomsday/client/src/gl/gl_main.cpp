@@ -355,7 +355,7 @@ void GL_Init()
 
     if(!initGLOk)
     {
-        Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
+        App_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
     }
 
     // Set the gamma in accordance with vid-gamma, vid-bright and vid-contrast.
@@ -557,7 +557,7 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
         break;
 
     default:
-        Con_Error("GL_Restore2DState: Invalid value, step = %i.", step);
+        App_Error("GL_Restore2DState: Invalid value, step = %i.", step);
         break;
     }
 }
@@ -1132,7 +1132,7 @@ uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat
 
     if(width <= 0 || height <= 0)
     {
-        Con_Error("GL_ConvertBuffer: Attempt to convert zero-sized image.");
+        App_Error("GL_ConvertBuffer: Attempt to convert zero-sized image.");
         exit(1); // Unreachable.
     }
 

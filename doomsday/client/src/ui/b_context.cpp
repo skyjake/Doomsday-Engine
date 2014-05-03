@@ -112,7 +112,7 @@ void B_UpdateDeviceStateAssociations(void)
                 break;
 
             default:
-                Con_Error("B_UpdateDeviceStateAssociations: Invalid value, "
+                App_Error("B_UpdateDeviceStateAssociations: Invalid value, "
                           "eb->type = %i.", (int) eb->type);
                 break;
             }
@@ -148,7 +148,7 @@ void B_UpdateDeviceStateAssociations(void)
                         break;
 
                     default:
-                        Con_Error("B_UpdateDeviceStateAssociations: Invalid value, "
+                        App_Error("B_UpdateDeviceStateAssociations: Invalid value, "
                                   "db->type = %i.", (int) db->type);
                         break;
                     }

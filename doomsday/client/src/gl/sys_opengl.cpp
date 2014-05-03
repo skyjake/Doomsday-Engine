@@ -24,9 +24,11 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
+#include "sys_system.h"
 #include "gl/sys_opengl.h"
 
 #include <de/libcore.h>
+#include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <QSet>

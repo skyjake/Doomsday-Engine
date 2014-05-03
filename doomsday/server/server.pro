@@ -140,13 +140,10 @@ DENG_HEADERS += \
     $$SRC/include/audio/s_environ.h \
     $$SRC/include/audio/s_main.h \
     $$SRC/include/busymode.h \
-    $$SRC/include/cbuffer.h \
     $$SRC/include/color.h \
     $$SRC/include/con_config.h \
-    $$SRC/include/con_main.h \
     $$SRC/include/dd_def.h \
     $$SRC/include/games.h \
-    $$SRC/include/dd_help.h \
     $$SRC/include/dd_loop.h \
     $$SRC/include/dd_main.h \
     $$SRC/include/dd_pinit.h \
@@ -170,17 +167,6 @@ DENG_HEADERS += \
     $$SRC/include/def_main.h \
     $$SRC/include/edit_map.h \
     $$SRC/include/face.h \
-    $$SRC/include/filehandle.h \
-    $$SRC/include/filesys/file.h \
-    $$SRC/include/filesys/filehandlebuilder.h \
-    $$SRC/include/filesys/fileinfo.h \
-    $$SRC/include/filesys/fs_main.h \
-    $$SRC/include/filesys/fs_util.h \
-    $$SRC/include/filesys/lumpindex.h \
-    $$SRC/include/filesys/manifest.h \
-    $$SRC/include/filesys/searchpath.h \
-    $$SRC/include/filesys/sys_direc.h \
-    $$SRC/include/filetype.h \
     $$SRC/include/game.h \
     $$SRC/include/hedge.h \
     $$SRC/include/library.h \
@@ -201,7 +187,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/colorpalette.h \
     $$SRC/include/resource/compositetexture.h \
     $$SRC/include/resource/image.h \
-    $$SRC/include/resource/lumpcache.h \
+    $$SRC/include/resource/manifest.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
     $$SRC/include/resource/materialmanifest.h \
@@ -214,9 +200,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/texture.h \
     $$SRC/include/resource/texturemanifest.h \
     $$SRC/include/resource/texturescheme.h \
-    $$SRC/include/resource/wad.h \
-    $$SRC/include/resource/zip.h \
-    $$SRC/include/resourceclass.h \
     $$SRC/include/sys_system.h \
     $$SRC/include/tab_anorms.h \
     $$SRC/include/ui/busyvisual.h \
@@ -225,7 +208,6 @@ DENG_HEADERS += \
     $$SRC/include/ui/finaleinterpreter.h \
     $$SRC/include/ui/p_control.h \
     $$SRC/include/ui/ui2_main.h \
-    $$SRC/include/uri.hh \
     $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
     $$SRC/include/world/bsp/bsptreenode.h \
@@ -314,17 +296,15 @@ SOURCES += \
     src/server/sv_missile.cpp \
     src/server/sv_pool.cpp \
     src/server/sv_sound.cpp \
+    $$SRC/src/api_console.cpp \
+    $$SRC/src/api_filesys.cpp \
     $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.cpp \
     $$SRC/src/audio/s_main.cpp \
     $$SRC/src/busymode.cpp \
-    $$SRC/src/cbuffer.cpp \
     $$SRC/src/color.cpp \
     $$SRC/src/con_config.cpp \
-    $$SRC/src/con_data.cpp \
-    $$SRC/src/con_main.cpp \
     $$SRC/src/games.cpp \
-    $$SRC/src/dd_help.cpp \
     $$SRC/src/dd_loop.cpp \
     $$SRC/src/dd_main.cpp \
     $$SRC/src/dd_pinit.cpp \
@@ -334,16 +314,6 @@ SOURCES += \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
     $$SRC/src/face.cpp \
-    $$SRC/src/filesys/file.cpp \
-    $$SRC/src/filesys/filehandle.cpp \
-    $$SRC/src/filesys/fileid.cpp \
-    $$SRC/src/filesys/fs_main.cpp \
-    $$SRC/src/filesys/fs_scheme.cpp \
-    $$SRC/src/filesys/fs_util.cpp \
-    $$SRC/src/filesys/lumpindex.cpp \
-    $$SRC/src/filesys/manifest.cpp \
-    $$SRC/src/filesys/searchpath.cpp \
-    $$SRC/src/filesys/sys_direc.cpp \
     $$SRC/src/game.cpp \
     $$SRC/src/hedge.cpp \
     $$SRC/src/library.cpp \
@@ -366,6 +336,7 @@ SOURCES += \
     $$SRC/src/resource/compositetexture.cpp \
     $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
+    $$SRC/src/resource/manifest.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
     $$SRC/src/resource/materialmanifest.cpp \
@@ -379,15 +350,12 @@ SOURCES += \
     $$SRC/src/resource/texturemanifest.cpp \
     $$SRC/src/resource/texturescheme.cpp \
     $$SRC/src/resource/tga.cpp \
-    $$SRC/src/resource/wad.cpp \
-    $$SRC/src/resource/zip.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
     $$SRC/src/ui/fi_main.cpp \
     $$SRC/src/ui/finaleinterpreter.cpp \
     $$SRC/src/ui/p_control.cpp \
     $$SRC/src/ui/ui2_main.cpp \
-    $$SRC/src/uri.cpp \
     $$SRC/src/world/api_map.cpp \
     $$SRC/src/world/api_mapedit.cpp \
     $$SRC/src/world/blockmap.cpp \

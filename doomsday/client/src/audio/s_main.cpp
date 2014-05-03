@@ -31,12 +31,13 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-#include "filesys/fs_main.h"
-#include "api_filesys.h"
 #include "audio/sys_audio.h"
 #include "world/p_players.h"
 #include "BspLeaf"
 #include "Sector"
+
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
 
 BEGIN_PROF_TIMERS()
   PROF_SOUND_STARTFRAME

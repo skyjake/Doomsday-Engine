@@ -19,8 +19,10 @@
 
 #include "de_console.h"
 #include "render/vr.h"
+#include "ui/clientwindow.h"
 
 #include <de/BaseGuiApp>
+#include <de/timer.h>
 
 using namespace de;
 

@@ -3,6 +3,7 @@
  * @ingroup core
  *
  * @todo Much of this should be refactored and merged into the App classes.
+ * @todo The rest should be split into smaller, perhaps domain-specific files.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -30,28 +31,38 @@
 #  include <objbase.h>
 #endif
 
-#include <de/App>
-
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#  include "updater.h"
-#  include <de/DisplayMode>
 #endif
-
 #ifdef __SERVER__
 #  include "serverapp.h"
 #endif
 
+#include "dd_main.h"
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_filesys.h"
 #include "de_network.h"
 #include "de_audio.h"
-
+#include "dd_loop.h"
+#include "dd_def.h"
+#include "library.h"
+#include "busymode.h"
+#include "sys_system.h"
 #include "edit_bias.h"
-
 #include "gl/svg.h"
+#include "world/entitydef.h"
+#include "world/p_players.h"
+#include "world/worldsystem.h"
+#include "world/map.h"
+#include "ui/ui2_main.h"
+#include "ui/fi_main.h"
+#include "ui/p_control.h"
+#include "ui/progress.h"
+#include "ui/nativeui.h"
+
 #ifdef __CLIENT__
+#  include <de/DisplayMode>
 #  include "gl/gl_defer.h"
 #  include "gl/gl_texmanager.h"
 #  include "gl/gl_main.h"
@@ -62,30 +73,29 @@
 #  include "render/rend_main.h"
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
 #  include "render/vr.h"
-#endif
-
-#include "world/entitydef.h"
-#include "world/p_players.h"
-#ifdef __CLIENT__
 #  include "Contact"
 #  include "Sector"
-#endif
-#include "world/worldsystem.h"
-
-#ifdef __CLIENT__
 #  include "ui/ui_main.h"
+#  include "ui/sys_input.h"
 #  include "ui/widgets/taskbarwidget.h"
+#  include "ui/busyvisual.h"
+#  include "updater.h"
+#  include "updater/downloaddialog.h"
 #endif
-#include "ui/ui2_main.h"
-#include "ui/fi_main.h"
-#include "ui/p_control.h"
 
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
 #include <de/game/Session>
 #include <de/NativePath>
 #include <de/Log>
+#include <de/charsymbols.h>
+#include <de/timer.h>
 #include <de/memory.h>
+#include <de/memoryzone.h>
+#include <de/concurrency.h>
+#include <doomsday/paths.h>
+#include <doomsday/help.h>
+#include <doomsday/console/alias.h>
 #include <QStringList>
 #ifdef WIN32
 #  include <QSettings>
@@ -156,9 +166,6 @@ static void DD_AutoLoad();
  */
 static de::File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
 
-filename_t ddBasePath = ""; // Doomsday root directory is at...?
-filename_t ddRuntimePath, ddBinPath;
-
 int isDedicated;
 
 int verbose; // For debug messages (-verbose).
@@ -171,11 +178,6 @@ finaleid_t titleFinale;
 
 int gameDataFormat; // Use a game-specifc data format where applicable.
 
-static NullFileType nullFileType;
-
-/// A symbolic name => file type map.
-static FileTypes fileTypeMap;
-
 static void registerResourceFileTypes()
 {
     FileType *ftype;
@@ -183,27 +185,28 @@ static void registerResourceFileTypes()
     /*
      * Packages types:
      */
-    ResourceClass& packageClass = App_ResourceClass("RC_PACKAGE");
+    ResourceClass &packageClass = App_ResourceClass("RC_PACKAGE");
 
     ftype = new ZipFileType();
-    packageClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    packageClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new WadFileType();
-    packageClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    packageClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_LMP", RC_PACKAGE); ///< Treat lumps as packages so they are mapped to $App.DataPath.
     ftype->addKnownExtension(".lmp");
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    DD_AddFileType(*ftype);
+    /// @todo ftype leaks. -jk
 
     /*
      * Definition fileTypes:
      */
     ftype = new FileType("FT_DED", RC_DEFINITION);
     ftype->addKnownExtension(".ded");
-    App_ResourceClass("RC_DEFINITION").addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    App_ResourceClass("RC_DEFINITION").addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     /*
      * Graphic fileTypes:
@@ -212,23 +215,23 @@ static void registerResourceFileTypes()
 
     ftype = new FileType("FT_PNG", RC_GRAPHIC);
     ftype->addKnownExtension(".png");
-    graphicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    graphicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_TGA", RC_GRAPHIC);
     ftype->addKnownExtension(".tga");
-    graphicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    graphicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_JPG", RC_GRAPHIC);
     ftype->addKnownExtension(".jpg");
-    graphicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    graphicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_PCX", RC_GRAPHIC);
     ftype->addKnownExtension(".pcx");
-    graphicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    graphicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     /*
      * Model fileTypes:
@@ -237,21 +240,21 @@ static void registerResourceFileTypes()
 
     ftype = new FileType("FT_DMD", RC_MODEL);
     ftype->addKnownExtension(".dmd");
-    modelClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    modelClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_MD2", RC_MODEL);
     ftype->addKnownExtension(".md2");
-    modelClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    modelClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     /*
      * Sound fileTypes:
      */
     ftype = new FileType("FT_WAV", RC_SOUND);
     ftype->addKnownExtension(".wav");
-    App_ResourceClass("RC_SOUND").addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    App_ResourceClass("RC_SOUND").addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     /*
      * Music fileTypes:
@@ -260,67 +263,39 @@ static void registerResourceFileTypes()
 
     ftype = new FileType("FT_OGG", RC_MUSIC);
     ftype->addKnownExtension(".ogg");
-    musicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    musicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_MP3", RC_MUSIC);
     ftype->addKnownExtension(".mp3");
-    musicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    musicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_MOD", RC_MUSIC);
     ftype->addKnownExtension(".mod");
-    musicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    musicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     ftype = new FileType("FT_MID", RC_MUSIC);
     ftype->addKnownExtension(".mid");
-    musicClass.addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    musicClass.addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     /*
      * Font fileTypes:
      */
     ftype = new FileType("FT_DFN", RC_FONT);
     ftype->addKnownExtension(".dfn");
-    App_ResourceClass("RC_FONT").addFileType(*ftype);
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
+    App_ResourceClass("RC_FONT").addFileType(ftype);
+    DD_AddFileType(*ftype);
 
     /*
      * Misc fileTypes:
      */
     ftype = new FileType("FT_DEH", RC_PACKAGE); ///< Treat DeHackEd patches as packages so they are mapped to $App.DataPath.
     ftype->addKnownExtension(".deh");
-    fileTypeMap.insert(ftype->name().toLower(), ftype);
-}
-
-FileType &DD_FileTypeByName(String name)
-{
-    if(!name.isEmpty())
-    {
-        FileTypes::iterator found = fileTypeMap.find(name.toLower());
-        if(found != fileTypeMap.end()) return **found;
-    }
-    return nullFileType; // Not found.
-}
-
-FileType &DD_GuessFileTypeFromFileName(String path)
-{
-    if(!path.isEmpty())
-    {
-        DENG2_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
-        {
-            FileType &ftype = **i;
-            if(ftype.fileNameIsKnown(path))
-                return ftype;
-        }
-    }
-    return nullFileType;
-}
-
-FileTypes const &DD_FileTypes()
-{
-    return fileTypeMap;
+    DD_AddFileType(*ftype);
+    /// @todo ftype leaks. -jk
 }
 
 static NativePath steamBasePath()
@@ -505,6 +480,109 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
+void App_Error(char const *error, ...)
+{
+    LogBuffer_Flush();
+
+    static dd_bool errorInProgress = false;
+
+    //int i, numBufLines;
+    char buff[2048], err[256];
+    va_list argptr;
+
+#ifdef __CLIENT__
+    ClientWindow::main().canvas().trapMouse(false);
+#endif
+
+    // Already in an error?
+    if(/*!ConsoleInited || */errorInProgress)
+    {
+#ifdef __CLIENT__
+        DisplayMode_Shutdown();
+#endif
+
+        va_start(argptr, error);
+        dd_vsnprintf(buff, sizeof(buff), error, argptr);
+        va_end(argptr);
+
+        if(!BusyMode_InWorkerThread())
+        {
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
+        }
+
+        // Exit immediately, lest we go into an infinite loop.
+        exit(1);
+    }
+
+    // We've experienced a fatal error; program will be shut down.
+    errorInProgress = true;
+
+    // Get back to the directory we started from.
+    Dir_SetCurrent(DD_RuntimePath());
+
+    va_start(argptr, error);
+    dd_vsnprintf(err, sizeof(err), error, argptr);
+    va_end(argptr);
+
+    LOG_CRITICAL("") << err;
+    LogBuffer_Flush();
+
+    strcpy(buff, "");
+    strcat(buff, "\n");
+    strcat(buff, err);
+
+    if(BusyMode_Active())
+    {
+        BusyMode_WorkerError(buff);
+        if(BusyMode_InWorkerThread())
+        {
+            // We should not continue to execute the worker any more.
+            for(;;) Thread_Sleep(10000);
+        }
+    }
+    else
+    {
+        App_AbnormalShutdown(buff);
+    }
+}
+
+void App_AbnormalShutdown(char const *message)
+{
+    // This is a crash landing, better be safe than sorry.
+    BusyMode_SetAllowed(false);
+
+    Sys_Shutdown();
+
+#ifdef __CLIENT__
+    DisplayMode_Shutdown();
+    DENG2_GUI_APP->loop().pause();
+
+    // This is an abnormal shutdown, we cannot continue drawing any of the
+    // windows. (Alternatively could hide/disable drawing of the windows.) Note
+    // that the app's event loop is running normally while we show the native
+    // message box below -- if the app windows are not hidden/closed, they might
+    // receive draw events.
+    ClientApp::windowSystem().closeAll();
+#endif
+
+    if(message) // Only show if a message given.
+    {
+        // Make sure all the buffered stuff goes into the file.
+        LogBuffer_Flush();
+
+        /// @todo Get the actual output filename (might be a custom one).
+        Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
+                                          "See Details for complete message log contents.",
+                                          de::LogBuffer::appBuffer().outputFile().toUtf8());
+    }
+
+    //Sys_Shutdown();
+    DD_Shutdown();
+
+    // Get outta here.
+    exit(1);
+}
+
 ResourceSystem &App_ResourceSystem()
 {
     if(App::appExists())
@@ -519,12 +597,12 @@ ResourceSystem &App_ResourceSystem()
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
-de::ResourceClass &App_ResourceClass(String className)
+ResourceClass &App_ResourceClass(String className)
 {
     return App_ResourceSystem().resClass(className);
 }
 
-de::ResourceClass &App_ResourceClass(resourceclassid_t classId)
+ResourceClass &App_ResourceClass(resourceclassid_t classId)
 {
     return App_ResourceSystem().resClass(classId);
 }
@@ -563,6 +641,77 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
 
 #undef ATWSEPS
 }
+
+#undef Con_Open
+void Con_Open(int yes)
+{
+#ifdef __CLIENT__
+    if(yes)
+    {
+        ClientWindow &win = ClientWindow::main();
+        win.taskBar().open();
+        win.root().setFocus(&win.console().commandLine());
+    }
+    else
+    {
+        ClientWindow::main().console().closeLog();
+    }
+#endif
+
+#ifdef __SERVER__
+    DENG_UNUSED(yes);
+#endif
+}
+
+#ifdef __CLIENT__
+
+/**
+ * Console command to open/close the console prompt.
+ */
+D_CMD(OpenClose)
+{
+    DENG2_UNUSED2(src, argc);
+
+    if(!stricmp(argv[0], "conopen"))
+    {
+        Con_Open(true);
+    }
+    else if(!stricmp(argv[0], "conclose"))
+    {
+        Con_Open(false);
+    }
+    else
+    {
+        Con_Open(!ClientWindow::main().console().isLogOpen());
+    }
+    return true;
+}
+
+D_CMD(TaskBar)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow &win = ClientWindow::main();
+    if(!win.taskBar().isOpen() || !win.console().commandLine().hasFocus())
+    {
+        win.taskBar().open();
+        win.console().focusOnCommandLine();
+    }
+    else
+    {
+        win.taskBar().close();
+    }
+    return true;
+}
+
+D_CMD(Tutorial)
+{
+    DENG2_UNUSED3(src, argc, argv);
+    ClientWindow::main().taskBar().showTutorial();
+    return true;
+}
+
+#endif // __CLIENT__
 
 /**
  * Begin the Doomsday title animation sequence.
@@ -1185,10 +1334,10 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     char const *names, void *params)
 {
     if(!VALID_RESOURCECLASSID(classId))
-        Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
+        App_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
 
     if(!names || !names[0])
-        Con_Error("DD_AddGameResource: Invalid name argument.");
+        App_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
     Game &game = App_Games().byId(gameId);
@@ -1644,7 +1793,7 @@ void DD_FinishInitializationAfterWindowReady()
 # endif
     if(!Sys_GLInitialize())
     {
-        Con_Error("Error initializing OpenGL.\n");
+        App_Error("Error initializing OpenGL.\n");
     }
     else
     {
@@ -1709,13 +1858,14 @@ dd_bool DD_Init(void)
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
+    ResourceClass::setResourceClassCallback(App_ResourceClass);
     registerResourceFileTypes();
     F_Init();
     DD_CreateFileSystemSchemes();
 
+#ifdef __CLIENT__
     FR_Init();
 
-#ifdef __CLIENT__
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
 #endif
@@ -1807,7 +1957,7 @@ dd_bool DD_Init(void)
             // connections can only be made after a game is loaded and the
             // server mode started.
             /// @todo Allow shell connections in ringzero mode, too.
-            Con_Error("No playable games available.");
+            App_Error("No playable games available.");
         }
 #endif
     }
@@ -2260,7 +2410,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #else
     {0, 0},
 #endif
-    {&CmdReturnValue, 0},
+    {0, 0}, // &CmdReturnValue
 #ifdef __CLIENT__
     {&gameReady, &gameReady},
 #else
@@ -2518,6 +2668,23 @@ void DD_SetVariable(int ddvalue, void *parm)
         default:
             break;
         }
+    }
+}
+
+void DD_ReadGameHelp()
+{
+    LOG_AS("DD_ReadGameHelp");
+    try
+    {
+        if(App_GameLoaded())
+        {
+            de::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
+            Help_ReadStrings(App::fileSystem().find(uri.resolved()));
+        }
+    }
+    catch(Error const &er)
+    {
+        LOG_RES_WARNING("") << er.asText();
     }
 }
 
@@ -2876,13 +3043,198 @@ D_CMD(ShowUpdateSettings)
 
 #endif // __CLIENT__
 
+D_CMD(Version)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
+    LOG_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
+            "\n" _E(l) "Project: " _E(.) _E(i) DENGPROJECT_HOMEURL);
+
+    // Print the version info of the current game if loaded.
+    if(App_GameLoaded())
+    {
+        LOG_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
+    }
+    return true;
+}
+
+D_CMD(Quit)
+{
+    DENG2_UNUSED2(src, argc);
+
+#ifdef __CLIENT__
+    if(DownloadDialog::isDownloadInProgress())
+    {
+        LOG_WARNING("Cannot quit while downloading an update");
+        ClientWindow::main().taskBar().openAndPauseGame();
+        DownloadDialog::currentDownload().open();
+        return false;
+    }
+#endif
+
+    if(argv[0][4] == '!' || isDedicated || !App_GameLoaded() ||
+       gx.TryShutdown == 0)
+    {
+        // No questions asked.
+        Sys_Quit();
+        return true; // Never reached.
+    }
+
+#ifdef __CLIENT__
+    // Dismiss the taskbar if it happens to be open, we are expecting
+    // the game to handle this from now on.
+    ClientWindow::main().taskBar().close();
+#endif
+
+    // Defer this decision to the loaded game.
+    return gx.TryShutdown();
+}
+
+#ifdef _DEBUG
+D_CMD(DebugError)
+{
+    DENG2_UNUSED3(src, argv, argc);
+
+    App_Error("Fatal error!\n");
+    return true;
+}
+#endif
+
+D_CMD(Help)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    /*
+#ifdef __CLIENT__
+    char actKeyName[40];
+    strcpy(actKeyName, B_ShortNameForKey(consoleActiveKey));
+    actKeyName[0] = toupper(actKeyName[0]);
+#endif
+*/
+
+    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
+
+#define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
+
+#ifdef __CLIENT__
+    LOG_SCR_MSG(_E(D) "Keys:" _E(.))
+            << TABBED(DENG2_CHAR_SHIFT_KEY "Esc", "Open the taskbar and console")
+            << TABBED("Tab", "Autocomplete the word at the cursor")
+            << TABBED(DENG2_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
+            << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
+            << TABBED(DENG2_CHAR_SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
+            << TABBED("Home", "Move the cursor to the start of the command line")
+            << TABBED("End", "Move the cursor to the end of the command line")
+            << TABBED(DENG2_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position")
+            << TABBED("F5", "Clear the console message history");
+#endif
+    LOG_SCR_MSG(_E(D) "Getting started:");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "help (what)" _E(.) " for information about " _E(l) "(what)");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listcmds" _E(.) " to list available commands");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list installed games and their status");
+    LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listvars" _E(.) " to list available variables");
+
+#undef TABBED
+
+    return true;
+}
+
+static void printHelpAbout(char const *query)
+{
+    // Try the console commands first.
+    if(ccmd_t *ccmd = Con_FindCommand(query))
+    {
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " (Command)") << ccmd->name;
+
+        HelpId help = DH_Find(ccmd->name);
+        if(char const *description = DH_GetString(help, HST_DESCRIPTION))
+        {
+            LOG_SCR_MSG("") << description;
+        }
+
+        Con_PrintCommandUsage(ccmd); // For all overloaded variants.
+
+        // Any extra info?
+        if(char const *info = DH_GetString(help, HST_INFO))
+        {
+            LOG_SCR_MSG("  " _E(>) _E(l)) << info;
+        }
+        return;
+    }
+
+    if(cvar_t *var = Con_FindVariable(query))
+    {
+        AutoStr *path = CVar_ComposePath(var);
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " (Variable)") << Str_Text(path);
+
+        HelpId help = DH_Find(Str_Text(path));
+        if(char const *description = DH_GetString(help, HST_DESCRIPTION))
+        {
+            LOG_SCR_MSG("") << description;
+        }
+        return;
+    }
+
+    if(calias_t *calias = Con_FindAlias(query))
+    {
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " alias of:\n")
+                << calias->name << calias->command;
+        return;
+    }
+
+    // Perhaps a game?
+    try
+    {
+        Game &game = App_Games().byIdentityKey(query);
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " (IdentityKey)") << game.identityKey();
+
+        LOG_SCR_MSG("Unique identifier of the " _E(b) "%s" _E(.) " game mode.") << game.title();
+        LOG_SCR_MSG("An 'IdentityKey' is used when referencing a game unambiguously from the console and on the command line.");
+        LOG_SCR_MSG(_E(D) "Related commands:");
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "inspectgame %s" _E(.) " for information and status of this game") << game.identityKey();
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list all installed games and their status");
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.identityKey() << game.title();
+        return;
+    }
+    catch(Games::NotFoundError const &)
+    {} // Ignore this error.
+
+    LOG_SCR_NOTE("There is no help about '%s'") << query;
+}
+
+D_CMD(HelpWhat)
+{
+    DENG2_UNUSED2(argc, src);
+
+    if(!String(argv[1]).compareWithoutCase("(what)"))
+    {
+        LOG_SCR_MSG("You've got to be kidding!");
+        return true;
+    }
+
+    printHelpAbout(argv[1]);
+    return true;
+}
+
 static void consoleRegister()
 {
-#ifdef __CLIENT__
-    C_CMD("update",          "", CheckForUpdates);
-    C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
-    C_CMD("updatesettings",  "", ShowUpdateSettings);
-    C_CMD("lastupdated",     "", LastUpdated);
+    C_VAR_CHARPTR("file-startup", &startupFiles, 0, 0, 0);
+
+    C_CMD("help",           "",     Help);
+    C_CMD("help",           "s",    HelpWhat);
+    C_CMD("version",        "",     Version);
+    C_CMD("quit",           "",     Quit);
+    C_CMD("quit!",          "",     Quit);
+    C_CMD("load",           "s*",   Load);
+    C_CMD("reset",          "",     Reset);
+    C_CMD("reload",         "",     ReloadGame);
+    C_CMD("unload",         "*",    Unload);
+    C_CMD("listmobjtypes",  "",     ListMobjs);
+    C_CMD("write",          "s",    WriteConsole);
+
+#ifdef _DEBUG
+    C_CMD("fatalerror",     NULL,   DebugError);
 #endif
 
     DD_RegisterLoop();
@@ -2891,7 +3243,22 @@ static void consoleRegister()
     Games::consoleRegister();
     DH_Register();
     S_Register();
+
 #ifdef __CLIENT__
+    C_CMD("update",          "", CheckForUpdates);
+    C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
+    C_CMD("updatesettings",  "", ShowUpdateSettings);
+    C_CMD("lastupdated",     "", LastUpdated);
+
+    C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
+    C_CMD      ("taskbar",        "",     TaskBar);
+    C_CMD      ("tutorial",       "",     Tutorial);
+
+    /// @todo Move to UI module.
+    Con_TransitionRegister();
+
     B_Register(); // for control bindings
     DD_RegisterInput();
     SBE_Register(); // for bias editor
@@ -2902,6 +3269,7 @@ static void consoleRegister()
     P_ControlRegister();
     I_Register();
 #endif
+
     ResourceSystem::consoleRegister();
     Net_Register();
     WorldSystem::consoleRegister();
