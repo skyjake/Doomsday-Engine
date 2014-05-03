@@ -634,15 +634,19 @@ DENG2_PIMPL(SectorCluster)
         initBoundaryDataIfNeeded();
 
         // Mark surfaces of the outer edge loop.
-        HEdge *base = boundaryData->uniqueOuterEdges.first();
-        SectorClusterCirculator it(base);
-        do
+        /// @todo What about the special case of a cluster with no outer neighbors? -ds
+        if(!boundaryData->uniqueOuterEdges.isEmpty())
         {
-            if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+            HEdge *base = boundaryData->uniqueOuterEdges.first();
+            SectorClusterCirculator it(base);
+            do
             {
-                markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
-            }
-        } while(&it.next() != base);
+                if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+                }
+            } while(&it.next() != base);
+        }
 
         // Mark surfaces of the inner edge loop(s).
         foreach(HEdge *base, boundaryData->uniqueInnerEdges)
