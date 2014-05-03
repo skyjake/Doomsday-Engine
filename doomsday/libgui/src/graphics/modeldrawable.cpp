@@ -272,8 +272,8 @@ DENG2_PIMPL(ModelDrawable)
         initBones();
 
         globalInverse = convertMatrix(scene->mRootNode->mTransformation).inverse();
-        maxPoint      = Vector3f(1.0e-9, 1.0e-9, 1.0e-9);
-        minPoint      = Vector3f(1.0e9,  1.0e9,  1.0e9);
+        maxPoint      = Vector3f(1.0e-9f, 1.0e-9f, 1.0e-9f);
+        minPoint      = Vector3f(1.0e9f,  1.0e9f,  1.0e9f);
 
         // Determine the total bounding box.
         for(duint i = 0; i < scene->mNumMeshes; ++i)
