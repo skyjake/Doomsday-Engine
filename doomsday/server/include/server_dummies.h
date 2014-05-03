@@ -4,7 +4,7 @@
  * Empty dummy functions that replace certain client-only functionality on
  * engine-side. Ideally none of these would be needed; each one represents a
  * client-only function call that should not be done in common/shared code.
- * (There should be no shared code outside libdeng1/2.)
+ * (There should be no shared code outside libcore/liblegacy.)
  *
  * @todo Add a @c libdeng_gui for UI/graphics code. Many of these belong there
  * instead of being exported out of the client executable for game plugins'
@@ -29,7 +29,7 @@
 #ifndef SERVER_DUMMIES_H
 #define SERVER_DUMMIES_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 
 #include "def_data.h"
 #include "world/map.h"

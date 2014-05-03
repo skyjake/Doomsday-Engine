@@ -19,7 +19,7 @@
 #ifndef LIBGUI_GLSHADER_H
 #define LIBGUI_GLSHADER_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Error>
 #include <de/Counted>
 #include <de/Asset>

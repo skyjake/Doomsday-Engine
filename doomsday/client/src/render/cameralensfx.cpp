@@ -50,7 +50,7 @@
 
 #include "ui/clientwindow.h"
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Rectangle>
 #include <de/Drawable>
 #include <de/GLTarget>

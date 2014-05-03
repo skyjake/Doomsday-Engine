@@ -3,7 +3,7 @@
 
 PROJECT_NAME            = "libgui"
 PROJECT_NUMBER          = 1.15.0
-PROJECT_BRIEF           = "GUI extension for libdeng2"
+PROJECT_BRIEF           = "Graphics, Audio and Input Library"
 OUTPUT_DIRECTORY        = ../apidoc/gui/
 
 INPUT                   = include src

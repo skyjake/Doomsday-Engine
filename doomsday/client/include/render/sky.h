@@ -22,7 +22,7 @@
 #define DENG_CLIENT_RENDER_SKY_H
 
 #include "Material"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>

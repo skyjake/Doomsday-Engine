@@ -27,7 +27,7 @@
 #define DENG_DEFINITION_FILE_H
 
 #include <vector>
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Vector>
 
 #include "def_share.h"

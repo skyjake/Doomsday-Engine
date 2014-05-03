@@ -19,7 +19,7 @@
 #ifndef CLIENT_WIDGETACTIONS_H
 #define CLIENT_WIDGETACTIONS_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Action>
 #include <de/Event>
 #include <de/GuiWidget>

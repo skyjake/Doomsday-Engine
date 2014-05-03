@@ -30,7 +30,7 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(audio_openal)
-    linkToBundledLibdeng1(audio_openal)
+    linkToBundledLibcore(audio_openal)
+    linkToBundledLiblegacy(audio_openal)
 }
 

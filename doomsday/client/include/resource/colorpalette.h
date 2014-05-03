@@ -20,7 +20,7 @@
 #ifndef DENG_RESOURCE_COLORPALETTE_H
 #define DENG_RESOURCE_COLORPALETTE_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Error>
 #include <de/Id>
 #include <de/Observers>

@@ -1,4 +1,4 @@
-# The Doomsday Engine Project -- GUI Extension for libdeng2
+# The Doomsday Engine Project -- Graphics, Audio and Input Library
 # Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is distributed under the GNU Lesser General Public License
@@ -13,7 +13,7 @@ VERSION  = $$DENG_VERSION
 
 CONFIG += deng_qtgui deng_qtopengl
 
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 include(../dep_opengl.pri)
 include(../dep_assimp.pri)
 
@@ -216,7 +216,7 @@ OTHER_FILES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng_gui)
+    linkDylibToBundledLibcore(libdeng_gui)
 
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_gui.1.dylib libdeng_gui.1.dylib")
 

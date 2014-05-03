@@ -371,7 +371,7 @@ def linux_release():
 
     # Check that the changelog exists.
     if not os.path.exists('debian/changelog'):
-        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION, DOOMSDAY_BUILD))
+        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_BUILD))
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
@@ -379,7 +379,7 @@ def linux_release():
     # Build dsFMOD separately.
     os.chdir('dsfmod')
     logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])
-    if os.system('LD_LIBRARY_PATH=`pwd`/../builddir/libdeng2:`pwd`/../builddir/libdeng dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
+    if os.system('LD_LIBRARY_PATH=`pwd`/../builddir/libcore:`pwd`/../builddir/liblegacy dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
         raise Exception("Failure to build dsFMOD from source.")
     shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
     shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    

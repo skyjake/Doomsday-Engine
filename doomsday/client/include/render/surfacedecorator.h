@@ -20,7 +20,7 @@
 #ifndef DENG_CLIENT_RENDER_SURFACEDECORATOR_H
 #define DENG_CLIENT_RENDER_SURFACEDECORATOR_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 class Surface;
 

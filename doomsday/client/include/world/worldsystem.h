@@ -31,7 +31,7 @@
 #define DENG_WORLDSYSTEM_H
 
 #include "uri.hh"
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/System>

@@ -2,8 +2,8 @@
 # Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: GPLv2 + exception to link against FMOD Ex
 
-# This plugin uses the full libdeng2 C++ API.
-CONFIG += dengplugin_libdeng2_full
+# This plugin uses the full libcore C++ API.
+CONFIG += dengplugin_libcore_full
 
 include(../config_plugin.pri)
 include(../../dep_fmod.pri)
@@ -52,6 +52,6 @@ else {
 }
 
 macx {
-    linkToBundledLibdeng2(audio_fmod)
-    linkToBundledLibdeng1(audio_fmod)
+    linkToBundledLibcore(audio_fmod)
+    linkToBundledLiblegacy(audio_fmod)
 }

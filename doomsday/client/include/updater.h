@@ -33,7 +33,7 @@
 
 #include "dd_types.h"
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/App>
 #include <QObject>
 #include <QNetworkReply>

@@ -17,7 +17,7 @@
  */
 
 #include "guishellapp.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 #ifdef Q_OS_MACX
 #  include <QFont>

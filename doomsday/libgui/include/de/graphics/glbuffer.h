@@ -21,7 +21,7 @@
 
 #include <QVector>
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Vector>
 #include <de/Asset>
 #include <utility>

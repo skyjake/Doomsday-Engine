@@ -2,8 +2,8 @@
 # Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 # Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
 
-# This plugin uses the full libdeng2 C++ API.
-CONFIG += dengplugin_libdeng2_full
+# This plugin uses the full libcore C++ API.
+CONFIG += dengplugin_libcore_full
 
 include(../config_plugin.pri)
 
@@ -42,6 +42,6 @@ win32 {
 
 macx {
     fixPluginInstallId($$TARGET, 2)
-    linkToBundledLibdeng2($$TARGET)
-    linkToBundledLibdeng1($$TARGET)
+    linkToBundledLibcore($$TARGET)
+    linkToBundledLiblegacy($$TARGET)
 }

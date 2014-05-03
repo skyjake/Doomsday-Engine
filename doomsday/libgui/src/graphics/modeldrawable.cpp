@@ -96,7 +96,7 @@ private:
     size_t _pos;
 };
 
-/// Adapter between libdeng2 FS and Assimp.
+/// Adapter between FS2 and Assimp.
 struct ImpIOSystem : public Assimp::IOSystem
 {
     ImpIOSystem() {}
@@ -235,7 +235,7 @@ DENG2_PIMPL(ModelDrawable)
         , program(0)
         , uBoneMatrices("uBoneMatrices", GLUniform::Mat4Array, MAX_BONES)
     {
-        // Use libdeng2 for file access.
+        // Use FS2 for file access.
         importer.SetIOHandler(new ImpIOSystem);
 
         // Get most kinds of log output.
@@ -272,8 +272,8 @@ DENG2_PIMPL(ModelDrawable)
         initBones();
 
         globalInverse = convertMatrix(scene->mRootNode->mTransformation).inverse();
-        maxPoint      = Vector3f(1.0e-9, 1.0e-9, 1.0e-9);
-        minPoint      = Vector3f(1.0e9,  1.0e9,  1.0e9);
+        maxPoint      = Vector3f(1.0e-9f, 1.0e-9f, 1.0e-9f);
+        minPoint      = Vector3f(1.0e9f,  1.0e9f,  1.0e9f);
 
         // Determine the total bounding box.
         for(duint i = 0; i < scene->mNumMeshes; ++i)

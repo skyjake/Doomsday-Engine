@@ -21,7 +21,7 @@
  */
 
 #include "id1map_util.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 using namespace de;
 

@@ -39,7 +39,7 @@ struct font_s;
 #define DENG_INTERNAL_DATA_ACCESS
 #include <doomsday.h>
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/types.h>
 
 DENG_EXTERN_C void DP_Initialize(void);

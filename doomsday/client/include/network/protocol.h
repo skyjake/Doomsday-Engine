@@ -23,7 +23,7 @@
 
 /**
  * Server protocol version number.
- * @deprecated Will be replaced with the libdeng2 serialization protocol version.
+ * @deprecated Will be replaced with the libcore serialization protocol version.
  */
 #define SV_VERSION          23
 

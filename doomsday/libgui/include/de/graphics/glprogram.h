@@ -19,7 +19,7 @@
 #ifndef LIBGUI_GLPROGRAM_H
 #define LIBGUI_GLPROGRAM_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/IByteArray>
 #include <de/Error>
 #include <de/Asset>

@@ -23,7 +23,7 @@
 #ifndef LIBGUI_GLSTATE_H
 #define LIBGUI_GLSTATE_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Rectangle>
 #include <utility>
 

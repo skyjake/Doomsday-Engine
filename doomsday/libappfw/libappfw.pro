@@ -1,4 +1,4 @@
-# The Doomsday Engine Project -- GUI application framework for libdeng2
+# The Doomsday Engine Project -- GUI Application Framework
 # Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is distributed under the GNU Lesser General Public License
@@ -13,7 +13,7 @@ VERSION  = $$DENG_VERSION
 
 CONFIG += deng_qtgui deng_qtopengl
 
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_opengl.pri)
@@ -248,7 +248,7 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng_appfw)
+    linkDylibToBundledLibcore(libdeng_appfw)
 
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_appfw.1.dylib libdeng_appfw.1.dylib")
 

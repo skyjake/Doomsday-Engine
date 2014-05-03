@@ -46,42 +46,6 @@ using namespace de;
 
 #define SYMBOL_DEFAULT_DOWNLOAD "${DEFAULT}"
 
-#if 0
-void UpdaterSettings::initialize()
-{
-    Config &config = App::config();
-
-    if(!config.names().has(SUBREC_NAME))
-    {
-        /**
-         * @todo These defaults can be moved to Config.de when libdeng2 has
-         * knowledge of the release type.
-         */
-
-        // Looks like we don't have existing values stored. Let's set up a
-        // Record with the defaults.
-        Record *s = new Record;
-
-        s->addNumber(VAR_FREQUENCY, Weekly);
-        s->addNumber(VAR_CHANNEL, QString(DOOMSDAY_RELEASE_TYPE) == "Stable"? Stable : Unstable);
-        s->addTime(VAR_LAST_CHECKED, Time::invalidTime());
-
-        bool checkByDefault = false;
-#if defined(UNIX) && !defined(MACOSX)
-        // On Unix platforms don't do automatic checks by default.
-        checkByDefault = true;
-#endif
-        s->addBoolean(VAR_ONLY_MANUAL, checkByDefault);
-
-        s->addBoolean(VAR_DELETE, true);
-        s->addText(VAR_DELETE_PATH, "");
-        s->addText(VAR_DOWNLOAD_PATH, SYMBOL_DEFAULT_DOWNLOAD);
-
-        config.names().add(SUBREC_NAME, s);
-    }
-}
-#endif
-
 UpdaterSettings::UpdaterSettings()
 {}
 

@@ -320,7 +320,7 @@ void ClientApp::initialize()
 
     d->svLink = new ServerLink;
 
-    // Config needs DisplayMode, so let's initialize it before the libdeng2
+    // Config needs DisplayMode, so let's initialize it before the libcore
     // subsystems and Config.
     DisplayMode_Init();
 

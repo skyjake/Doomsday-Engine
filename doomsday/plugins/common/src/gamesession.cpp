@@ -21,9 +21,11 @@
 #include "gamesession.h"
 
 #include <de/App>
-#include <de/game/SavedSession>
+#include <de/ArrayValue>
+#include <de/NumberValue>
 #include <de/Time>
 #include <de/ZipArchive>
+#include <de/game/SavedSession>
 #include "d_netsv.h"
 #include "g_common.h"
 #include "hu_inventory.h"
@@ -49,11 +51,43 @@ using de::game::SessionMetadata;
 
 namespace common {
 
+namespace internal
+{
+    static String composeSaveInfo(SessionMetadata const &metadata)
+    {
+        String info;
+        QTextStream os(&info);
+        os.setCodec("UTF-8");
+
+        // Write header and misc info.
+        Time now;
+        os <<   "# Doomsday Engine saved game session package.\n#"
+           << "\n# Generator: GameSession (libcommon)"
+           << "\n# Generation Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate);
+
+        // Write metadata.
+        os << "\n\n" + metadata.asTextWithInfoSyntax() + "\n";
+
+        return info;
+    }
+
+    static Block serializeCurrentMapState(bool excludePlayers = false)
+    {
+        Block data;
+        SV_OpenFileForWrite(data);
+        writer_s *writer = SV_NewWriter();
+        MapStateWriter().write(writer, excludePlayers);
+        Writer_Delete(writer);
+        SV_CloseFile();
+        return data;
+    }
+}
+
+using namespace internal;
+
 static GameSession *singleton;
 
 static String const internalSavePath = "/home/cache/internal.save";
-
-static String const unsavedDescription = "(Unsaved)";
 
 DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 {
@@ -80,6 +114,86 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         /// @todo It may be possible to recover this session if it was written successfully
         /// before the fatal error occurred.
         Session::removeSaved(internalSavePath);
+    }
+
+    /**
+     * Returns SessionMetadata for the game configuration in progress.
+     */
+    SessionMetadata metadata()
+    {
+        DENG2_ASSERT(inProgress);
+
+        SessionMetadata meta;
+
+        meta.set("gameIdentityKey", Session::gameId());
+        meta.set("userDescription", "(Unsaved)");
+        meta.set("mapUri",          Str_Text(Uri_Compose(::gameMapUri)));
+        meta.set("mapTime",         ::mapTime);
+
+        meta.add("gameRules",       self.rules().toRecord()); // Takes ownership.
+
+        ArrayValue *array = new ArrayValue;
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
+            *array << NumberValue(playerIsPresent, NumberValue::Boolean);
+        }
+        meta.set("players", array); // Takes ownership.
+
+        meta.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
+
+        return meta;
+    }
+
+    /**
+     * Update/create a new SavedSession at the specified @a path from the current
+     * game state.
+     */
+    SavedSession &updateSavedSession(String const &path, SessionMetadata const &metadata)
+    {
+        DENG2_ASSERT(inProgress);
+
+        LOG_AS("GameSession");
+        LOG_RES_VERBOSE("Serializing to \"%s\"...") << path;
+
+        // Does the .save already exist?
+        SavedSession *saved = App::rootFolder().tryLocate<SavedSession>(path);
+        if(saved)
+        {
+            DENG2_ASSERT(saved->mode().testFlag(File::Write));
+            saved->replaceFile("Info") << composeSaveInfo(metadata).toUtf8();
+        }
+        else
+        {
+            // Create an empty package containing only the metadata.
+            File &save = App::rootFolder().replaceFile(path);
+            ZipArchive arch;
+            arch.add("Info", composeSaveInfo(metadata).toUtf8());
+            de::Writer(save) << arch;
+            save.flush();
+
+            // We can now reinterpret and populate the contents of the archive.
+            saved = &save.reinterpret()->as<SavedSession>();
+            saved->populate();
+        }
+
+        // Save the current game state to the .save package.
+#if __JHEXEN__
+        de::Writer(saved->replaceFile("ACScriptState")).withHeader()
+                << Game_ACScriptInterpreter().serializeWorldState();
+#endif
+
+        Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
+        DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
+
+        mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State")
+                << serializeCurrentMapState();
+
+        saved->flush();
+        saved->populate();
+        saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+
+        return *saved;
     }
 
 #if __JDOOM__ || __JDOOM64__
@@ -226,116 +340,6 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Con_SetInteger2("game-skill", rules.skill, SVF_WRITE_OVERRIDE);
     }
 
-    static String composeSaveInfo(SessionMetadata const &metadata)
-    {
-        String info;
-        QTextStream os(&info);
-        os.setCodec("UTF-8");
-
-        // Write header and misc info.
-        Time now;
-        os <<   "# Doomsday Engine saved game session package.\n#"
-           << "\n# Generator: GameSession (libcommon)"
-           << "\n# Generation Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate);
-
-        // Write metadata.
-        os << "\n\n" + metadata.asTextWithInfoSyntax() + "\n";
-
-        return info;
-    }
-
-    Block serializeCurrentMapState()
-    {
-        Block data;
-        SV_OpenFileForWrite(data);
-        writer_s *writer = SV_NewWriter();
-        MapStateWriter().write(writer);
-        Writer_Delete(writer);
-        SV_CloseFile();
-        return data;
-    }
-
-    struct saveworker_params_t
-    {
-        Instance *inst;
-        String userDescription;
-        String savePath;
-    };
-
-    /**
-     * Serialize game state to a new .save package in the repository.
-     *
-     * @return  Non-zero iff the game state was saved successfully.
-     */
-    static int saveWorker(void *context)
-    {
-        saveworker_params_t const &p = *static_cast<saveworker_params_t *>(context);
-
-        bool didSave = false;
-        try
-        {
-            LOG_AS("GameSession");
-            LOG_RES_VERBOSE("Serializing to \"%s\"...") << internalSavePath;
-
-            SessionMetadata metadata;
-            G_ApplyCurrentSessionMetadata(metadata);
-
-            // Apply the given user description.
-            if(!p.userDescription.isEmpty())
-            {
-                metadata.set("userDescription", p.userDescription);
-            }
-            else // We'll generate a suitable description automatically.
-            {
-                metadata.set("userDescription", G_DefaultSavedSessionUserDescription(p.savePath.fileNameWithoutExtension()));
-            }
-
-            // In networked games the server tells the clients to save also.
-            NetSv_SaveGame(metadata.geti("sessionId"));
-
-            // Serialize the game state to a new saved session. We'll compile a ZIP
-            // format achive that will be written to a file.
-            ZipArchive arch;
-            arch.add("Info", composeSaveInfo(metadata).toUtf8());
-
-#if __JHEXEN__
-            de::Writer(arch.entryBlock("ACScriptState")).withHeader()
-                    << Game_ACScriptInterpreter().serializeWorldState();
-#endif
-
-            arch.add(String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State",
-                     p.inst->serializeCurrentMapState());
-
-            writeArchivedSession(internalSavePath, arch, metadata);
-
-            // Copy the internal saved session to the destination slot.
-            Session::copySaved(p.savePath, internalSavePath);
-
-            didSave = true;
-        }
-        catch(Error const &er)
-        {
-            LOG_RES_WARNING("Error saving game session to '%s':\n")
-                    << p.savePath << er.asText();
-        }
-
-        BusyMode_WorkerEnd();
-        return didSave;
-    }
-
-    static void writeArchivedSession(String const &path, Archive const &arch, SessionMetadata const &metadata)
-    {
-        File &save = App::rootFolder().replaceFile(path);
-        de::Writer(save) << arch; // serialize
-        save.flush();
-        LOG_RES_XVERBOSE("Wrote ") << save.description();
-
-        // We can now reinterpret and populate the contents of the archive.
-        SavedSession &session = save.reinterpret()->as<SavedSession>();
-        session.populate(); // prepare for access
-        session.cacheMetadata(metadata); // Avoid immediately reopening the .save package.
-    }
-
     /**
      * Constructs a MapStateReader for serialized map state format interpretation.
      */
@@ -419,8 +423,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         /*
          * SavedSession deserialization begins.
          */
-        SavedSession const &session     = App::rootFolder().locate<SavedSession>(internalSavePath);
-        SessionMetadata const &metadata = session.metadata();
+        SavedSession const &saved     = App::rootFolder().locate<SavedSession>(internalSavePath);
+        SessionMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
         GameRuleset *newRules;
@@ -435,7 +439,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             // Therefore we must assume the user has correctly configured the session accordingly.
             LOG_WARNING("Using current game rules as basis for loading savegame \"%s\"."
                         " (The original save format omits this information).")
-                    << session.path();
+                    << saved.path();
 
             // Use the current rules as our basis.
             newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules);
@@ -446,7 +450,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
 #if __JHEXEN__
         // Deserialize the world ACS state.
-        if(File const *state = session.tryLocateStateFile("ACScript"))
+        if(File const *state = saved.tryLocateStateFile("ACScript"))
         {
             Game_ACScriptInterpreter().readWorldState(de::Reader(*state).withHeader());
         }
@@ -465,7 +469,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 #endif
 
         String mapUriStr = Str_Text(Uri_Resolved(::gameMapUri));
-        makeMapStateReader(session, mapUriStr)->read(mapUriStr);
+        makeMapStateReader(saved, mapUriStr)->read(mapUriStr);
     }
 
     void setMap(Uri const &mapUri)
@@ -891,26 +895,8 @@ void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &
 
     d->reloadMap();
 
-    // Serialize the game state to the internal saved session.
-    LOG_AS("GameSession");
-    LOG_RES_VERBOSE("Serializing to \"%s\"...") << internalSavePath;
-
-    SessionMetadata metadata;
-    G_ApplyCurrentSessionMetadata(metadata);
-    metadata.set("userDescription", unsavedDescription);
-
-    ZipArchive arch;
-    arch.add("Info", Instance::composeSaveInfo(metadata).toUtf8());
-
-#if __JHEXEN__
-    de::Writer(arch.entryBlock("ACScriptState")).withHeader()
-            << Game_ACScriptInterpreter().serializeWorldState();
-#endif
-
-    arch.add(String("maps") / Str_Text(Uri_Compose(gameMapUri)) + "State",
-             d->serializeCurrentMapState());
-
-    d->writeArchivedSession(internalSavePath, arch, metadata);
+    // Create the internal .save session package.
+    d->updateSavedSession(internalSavePath, d->metadata());
 }
 
 void GameSession::reloadMap()
@@ -997,13 +983,8 @@ void GameSession::leaveMap()
         else
         {
             File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
-            Block mapStateData;
-            SV_OpenFileForWrite(mapStateData);
-            writer_s *writer = SV_NewWriter();
-            MapStateWriter().write(writer, true /*exclude players*/);
-            outFile << mapStateData; // we'll flush whole package soon
-            Writer_Delete(writer);
-            SV_CloseFile();
+            outFile << serializeCurrentMapState(true /*exclude players*/);
+            // We'll flush whole package soon.
         }
 #endif
         // Ensure changes are written to disk right away (otherwise would stay
@@ -1063,12 +1044,11 @@ void GameSession::leaveMap()
     {
         DENG2_ASSERT(saved->mode().testFlag(File::Write));
 
-        SessionMetadata metadata;
-        G_ApplyCurrentSessionMetadata(metadata);
+        SessionMetadata metadata = d->metadata();
+
         /// @todo Use the existing sessionId?
-        //metadata.set("sessionId", savedSession->metadata().geti("sessionId"));
-        metadata.set("userDescription", unsavedDescription);
-        saved->replaceFile("Info") << Instance::composeSaveInfo(metadata).toUtf8();
+        //metadata.set("sessionId", saved->metadata().geti("sessionId"));
+        saved->replaceFile("Info") << composeSaveInfo(metadata).toUtf8();
 
 #if __JHEXEN__
         // Save the world-state of the ACScript interpreter.
@@ -1081,13 +1061,7 @@ void GameSession::leaveMap()
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
         File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
-        Block mapStateData;
-        SV_OpenFileForWrite(mapStateData);
-        writer_s *writer = SV_NewWriter();
-        MapStateWriter().write(writer);
-        outFile << mapStateData; // we'll flush the whole package soon
-        Writer_Delete(writer);
-        SV_CloseFile();
+        outFile << serializeCurrentMapState();
 
         // Write all changes to the package.
         saved->flush();
@@ -1102,6 +1076,17 @@ String GameSession::userDescription()
     return App::rootFolder().locate<SavedSession>(internalSavePath).metadata().gets("userDescription", "");
 }
 
+static String chooseSaveDescription(String const &savePath, String const &userDescription)
+{
+    // Use the user description given.
+    if(!userDescription.isEmpty())
+    {
+        return userDescription;
+    }
+    // We'll generate a suitable description automatically.
+    return G_DefaultSavedSessionUserDescription(savePath.fileNameWithoutExtension());
+}
+
 void GameSession::save(String const &saveName, String const &userDescription)
 {
     if(!hasBegun())
@@ -1113,21 +1098,32 @@ void GameSession::save(String const &saveName, String const &userDescription)
     String const savePath = d->userSavePath(saveName);
     LOG_MSG("Saving game to \"%s\"...") << savePath;
 
-    Instance::saveworker_params_t parm;
-    parm.inst            = d;
-    parm.userDescription = userDescription;
-    parm.savePath        = savePath;
-
-    bool didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                                Instance::saveWorker, &parm, "Saving game...") != 0);
-    if(didSave)
+    try
     {
+        // Compose the session metadata.
+        SessionMetadata metadata = d->metadata();
+        metadata.set("userDescription", chooseSaveDescription(savePath, userDescription));
+
+        // Update the existing internal .save package.
+        d->updateSavedSession(internalSavePath, metadata);
+
+        // In networked games the server tells the clients to save also.
+        NetSv_SaveGame(metadata.geti("sessionId"));
+
+        // Copy the internal saved session to the destination slot.
+        Session::copySaved(savePath, internalSavePath);
+
         P_SetMessage(&players[CONSOLEPLAYER], 0, TXT_GAMESAVED);
 
         // Notify the engine that the game was saved.
-        /// @todo After the engine has the primary responsibility of saving the game, this
-        /// notification is unnecessary.
+        /// @todo After the engine has the primary responsibility of saving the game,
+        /// this notification is unnecessary.
         Plug_Notify(DD_NOTIFY_GAME_SAVED, NULL);
+    }
+    catch(Error const &er)
+    {
+        LOG_RES_WARNING("Error saving game session to '%s':\n")
+                << savePath << er.asText();
     }
 }
 

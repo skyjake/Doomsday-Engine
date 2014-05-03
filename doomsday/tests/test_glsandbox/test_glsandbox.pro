@@ -20,7 +20,7 @@ gfx.files = testpic.png
 models.files = $$files(models/*)
 
 macx {
-    linkBinaryToBundledLibdeng2($${TARGET}.app/Contents/MacOS/$${TARGET})
+    linkBinaryToBundledLibcore($${TARGET}.app/Contents/MacOS/$${TARGET})
     linkBinaryToBundledLibdengGui($${TARGET}.app/Contents/MacOS/$${TARGET})
 
     gfx.path = Contents/Resources/graphics

@@ -20,7 +20,7 @@
 #ifndef DENG_CLIENT_LIGHTGRID_H
 #define DENG_CLIENT_LIGHTGRID_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Error>
 #include <de/Vector>
 #include "render/ilightsource.h"
