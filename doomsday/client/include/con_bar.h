@@ -45,11 +45,6 @@ void Con_InitProgress2(int maxProgress, float start, float end);
  */
 void Con_SetProgress(int progress);
 
-/**
- * Calculate the progress at the current time.
- */
-//float Con_GetProgress(void);
-
 dd_bool Con_IsProgressAnimationCompleted(void);
 
 #ifdef __cplusplus

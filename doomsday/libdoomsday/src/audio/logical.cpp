@@ -17,7 +17,7 @@
  */
 
 /**
- * s_logic.c: The Logical Sound Manager
+ * @par The Logical Sound Manager
  *
  * The Logical Sound Manager. Tracks all currently playing sounds
  * in the world, regardless of whether Sfx is available or if the
@@ -25,6 +25,9 @@
  *
  * Uses PU_MAP, so this has to be inited for every map.
  * (Done via S_MapChange()).
+ *
+ * @todo This should be part of an audio system base class that can be used
+ * both by the client and the server. -jk
  */
 
 #include "doomsday/audio/logical.h"
