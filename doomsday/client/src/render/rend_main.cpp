@@ -2852,7 +2852,7 @@ static void projectSubspaceSprites()
     if(curSubspace->lastSpriteProjectFrame() == R_FrameCount())
         return; // Already added.
 
-    R_BspLeafMobjContactIterator(curSubspace->bspLeaf(), projectSpriteWorker);
+    R_SubspaceMobjContactIterator(*curSubspace, projectSpriteWorker);
 
     curSubspace->setLastSpriteProjectFrame(R_FrameCount());
 }

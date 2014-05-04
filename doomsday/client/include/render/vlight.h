@@ -1,7 +1,7 @@
-/** @file vlight.h Vector light sources and source lists.
+/** @file vlight.h  Vector light sources and source lists.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,7 +26,7 @@
 
 #include "world/map.h"
 
-class BspLeaf;
+class ConvexSubspace;
 
 /**
  * Vector light source.
@@ -58,7 +58,7 @@ struct collectaffectinglights_params_t
 {
     de::Vector3d origin;
     de::Vector3f ambientColor;
-    BspLeaf *bspLeaf;
+    ConvexSubspace *subspace;
     bool starkLight; ///< World light has a more pronounced effect.
 };
 

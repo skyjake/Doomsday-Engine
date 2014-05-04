@@ -143,7 +143,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
-        lparams.bspLeaf      = spr->data.sprite.bspLeaf;
+        lparams.subspace     = spr->data.sprite.bspLeaf->subspacePtr();
         lparams.ambientColor = Vector3f(params->ambientColor);
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -272,7 +272,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
-        lparams.bspLeaf      = spr->data.model.bspLeaf;
+        lparams.subspace     = spr->data.model.bspLeaf->subspacePtr();
         lparams.ambientColor = Vector3f(vis.light.ambientColor);
         lparams.starkLight   = true;
 
