@@ -238,7 +238,7 @@ DENG2_PIMPL(LineSightTest)
         ConvexSubspace const &subspace = bspLeaf.subspace();
 
         // Check polyobj lines.
-        foreach(Polyobj *po, bspLeaf.polyobjs())
+        foreach(Polyobj *po, subspace.polyobjs())
         foreach(Line *line, po->lines())
         {
             if(!crossLine(line->front()))

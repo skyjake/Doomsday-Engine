@@ -2560,22 +2560,22 @@ static void writeAllWallSections(HEdge *hedge)
 
 static void writeLeafWallSections()
 {
-    BspLeaf *leaf = currentBspLeaf;
+    ConvexSubspace &subspace = currentBspLeaf->subspace();
 
-    HEdge *base = leaf->subspace().poly().hedge();
+    HEdge *base = subspace.poly().hedge();
     HEdge *hedge = base;
     do
     {
         writeAllWallSections(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->subspace().extraMeshes())
+    foreach(Mesh *mesh, subspace.extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         writeAllWallSections(hedge);
     }
 
-    foreach(Polyobj *po, leaf->polyobjs())
+    foreach(Polyobj *po, subspace.polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         writeAllWallSections(hedge);
@@ -2610,22 +2610,22 @@ static void markFrontFacingWalls(HEdge *hedge)
 
 static void markLeafFrontFacingWalls()
 {
-    BspLeaf *leaf = currentBspLeaf;
+    ConvexSubspace &subspace = currentBspLeaf->subspace();
 
-    HEdge *base = leaf->subspace().poly().hedge();
+    HEdge *base = subspace.poly().hedge();
     HEdge *hedge = base;
     do
     {
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->subspace().extraMeshes())
+    foreach(Mesh *mesh, subspace.extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         markFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, leaf->polyobjs())
+    foreach(Polyobj *po, subspace.polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         markFrontFacingWalls(hedge);
@@ -2766,22 +2766,22 @@ static void clipFrontFacingWalls(HEdge *hedge)
 
 static void clipLeafFrontFacingWalls()
 {
-    BspLeaf *leaf = currentBspLeaf;
+    ConvexSubspace &subspace = currentBspLeaf->subspace();
 
-    HEdge *base = leaf->subspace().poly().hedge();
+    HEdge *base = subspace.poly().hedge();
     HEdge *hedge = base;
     do
     {
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->subspace().extraMeshes())
+    foreach(Mesh *mesh, subspace.extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         clipFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, leaf->polyobjs())
+    foreach(Polyobj *po, subspace.polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         clipFrontFacingWalls(hedge);
@@ -2855,6 +2855,7 @@ static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
 static void drawCurrentLeaf()
 {
     BspLeaf *leaf = currentBspLeaf;
+    ConvexSubspace &subspace = leaf->subspace();
 
     // Mark the leaf as visible for this frame.
     R_ViewerBspLeafMarkVisible(*leaf);
@@ -2862,7 +2863,7 @@ static void drawCurrentLeaf()
     markLeafFrontFacingWalls();
 
     // Perform contact spreading for this map region.
-    leaf->map().spreadAllContacts(leaf->poly().aaBox());
+    leaf->map().spreadAllContacts(subspace.poly().aaBox());
 
     Rend_RadioBspLeafEdges(*leaf);
 
@@ -2878,7 +2879,7 @@ static void drawCurrentLeaf()
 
     clipLeafFrontFacingWalls();
 
-    if(leaf->polyobjCount())
+    if(subspace.polyobjCount())
     {
         // Polyobjs don't obstruct - clip lights with another algorithm.
         clipLeafLumobjsBySight();
@@ -4572,20 +4573,21 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
 
     foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
     {
-        HEdge const *base  = bspLeaf->subspace().poly().hedge();
+        ConvexSubspace &subspace = bspLeaf->subspace();
+        HEdge const *base  = subspace.poly().hedge();
         HEdge const *hedge = base;
         do
         {
             drawTangentVectorsForWallSections(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        foreach(Mesh *mesh, bspLeaf->subspace().extraMeshes())
+        foreach(Mesh *mesh, subspace.extraMeshes())
         foreach(HEdge *hedge, mesh->hedges())
         {
             drawTangentVectorsForWallSections(hedge);
         }
 
-        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
+        foreach(Polyobj *polyobj, subspace.polyobjs())
         foreach(HEdge *hedge, polyobj->mesh().hedges())
         {
             drawTangentVectorsForWallSections(hedge);
@@ -4930,13 +4932,16 @@ static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
 {
     drawVertexVisual_params_t &parms = *static_cast<drawVertexVisual_params_t *>(context);
 
-    if(!bspLeaf->hasCluster())
+    if(!bspLeaf->hasSubspace())
         return false; // Continue iteration.
 
-    ddouble min = bspLeaf->cluster().  visFloor().heightSmoothed();
-    ddouble max = bspLeaf->cluster().visCeiling().heightSmoothed();
+    ConvexSubspace &subspace = bspLeaf->subspace();
+    SectorCluster &cluster   = subspace.cluster();
 
-    HEdge *base  = bspLeaf->subspace().poly().hedge();
+    ddouble min = cluster.  visFloor().heightSmoothed();
+    ddouble max = cluster.visCeiling().heightSmoothed();
+
+    HEdge *base  = subspace.poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -4948,14 +4953,14 @@ static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
 
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, bspLeaf->subspace().extraMeshes())
+    foreach(Mesh *mesh, subspace.extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         drawVertexVisual(hedge->vertex(), min, max, parms);
         drawVertexVisual(hedge->twin().vertex(), min, max, parms);
     }
 
-    foreach(Polyobj *polyobj, bspLeaf->polyobjs())
+    foreach(Polyobj *polyobj, subspace.polyobjs())
     foreach(Line *line, polyobj->lines())
     {
         drawVertexVisual(line->from(), min, max, parms);
