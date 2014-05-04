@@ -4571,23 +4571,22 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
 {
     if(!cluster) return;
 
-    foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
+    foreach(ConvexSubspace *subspace, cluster->subspaces())
     {
-        ConvexSubspace &subspace = bspLeaf->subspace();
-        HEdge const *base  = subspace.poly().hedge();
+        HEdge const *base  = subspace->poly().hedge();
         HEdge const *hedge = base;
         do
         {
             drawTangentVectorsForWallSections(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        foreach(Mesh *mesh, subspace.extraMeshes())
+        foreach(Mesh *mesh, subspace->extraMeshes())
         foreach(HEdge *hedge, mesh->hedges())
         {
             drawTangentVectorsForWallSections(hedge);
         }
 
-        foreach(Polyobj *polyobj, subspace.polyobjs())
+        foreach(Polyobj *polyobj, subspace->polyobjs())
         foreach(HEdge *hedge, polyobj->mesh().hedges())
         {
             drawTangentVectorsForWallSections(hedge);
@@ -4610,8 +4609,7 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
             height = plane.heightSmoothed();
         }
 
-        drawTangentVectorsForSurface(plane.surface(),
-                                     Vector3d(cluster->center(), height));
+        drawTangentVectorsForSurface(plane.surface(), Vector3d(cluster->center(), height));
     }
 }
 
