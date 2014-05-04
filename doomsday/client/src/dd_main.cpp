@@ -713,6 +713,7 @@ D_CMD(Tutorial)
 
 #endif // __CLIENT__
 
+#if 0
 /**
  * Begin the Doomsday title animation sequence.
  */
@@ -746,6 +747,7 @@ void DD_StartTitle()
     Str_Free(&setupCmds);
 #endif
 }
+#endif
 
 /**
  * Find all game data file paths in the auto directory with the extensions
@@ -1664,11 +1666,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
         {
             Game::printBanner(App_CurrentGame());
         }
-        else
+        /*else
         {
             // Lets play a nice title animation.
             DD_StartTitle();
-        }
+        }*/
     }
 
     DENG_ASSERT(DD_ActivePluginId() == 0);
@@ -2086,8 +2088,10 @@ dd_bool DD_Init(void)
 
         Def_PostInit();
 
+#if 0
         // Lets play a nice title animation.
         DD_StartTitle();
+#endif
 
         if(!CommandLine_Exists("-noautoselect"))
         {
