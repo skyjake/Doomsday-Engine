@@ -88,7 +88,7 @@ static int drawLineWorker(void *linePtr, void * /*context*/)
 
 static void drawBspLeaf(BspLeaf const &bspLeaf)
 {
-    if(!bspLeaf.hasPoly())
+    if(!bspLeaf.hasSubspace())
         return;
 
     float const scale = de::max(bmapDebugSize, 1.f);
@@ -153,9 +153,9 @@ static void drawBspLeaf(BspLeaf const &bspLeaf)
 static int drawBspLeafWorker(void *bspLeafPtr, void * /*context*/)
 {
     BspLeaf &bspLeaf = *static_cast<BspLeaf *>(bspLeafPtr);
-    if(bspLeaf.validCount() != validCount)
+    if(bspLeaf.hasSubspace() && bspLeaf.subspace().validCount() != validCount)
     {
-        bspLeaf.setValidCount(validCount);
+        bspLeaf.subspace().setValidCount(validCount);
         drawBspLeaf(bspLeaf);
     }
     return false; // Continue iteration.

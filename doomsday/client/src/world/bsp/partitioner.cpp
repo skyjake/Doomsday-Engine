@@ -34,7 +34,7 @@
 
 #include "world/worldsystem.h" /// validCount @todo Remove me
 
-#include "world/bsp/convexsubspace.h"
+#include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/edgetip.h"
 #include "world/bsp/hplane.h"
 #include "world/bsp/linesegment.h"
@@ -75,7 +75,7 @@ DENG2_PIMPL(Partitioner)
     LineSegments lineSegments;
 
     /// Convex subspaces in the plane.
-    typedef QList<ConvexSubspace> ConvexSubspaces;
+    typedef QList<ConvexSubspaceProxy> ConvexSubspaces;
     ConvexSubspaces convexSubspaces;
 
     /// A set of EdgeTips for each unique line segment vertex.
@@ -617,7 +617,7 @@ DENG2_PIMPL(Partitioner)
         LineSegmentSide &backRight = frontLeft.back();
         LineSegmentSide &backLeft  = frontRight.back();
 
-        if(ConvexSubspace *convexSet = frontLeft.convexSubspace())
+        if(ConvexSubspaceProxy *convexSet = frontLeft.convexSubspace())
         {
             *convexSet << frontRight;
             frontRight.setConvexSubspace(convexSet);
@@ -627,7 +627,7 @@ DENG2_PIMPL(Partitioner)
         frontRight.setLeft(&frontLeft);
 
         // Handle the twin.
-        if(ConvexSubspace *convexSet = backRight.convexSubspace())
+        if(ConvexSubspaceProxy *convexSet = backRight.convexSubspace())
         {
             *convexSet << backLeft;
             backLeft.setConvexSubspace(convexSet);
@@ -1117,8 +1117,8 @@ DENG2_PIMPL(Partitioner)
             SuperBlock::Segments segments = bmap.collateAllSegments();
             bmap.clear(); // Should be empty.
 
-            convexSubspaces.append(ConvexSubspace());
-            ConvexSubspace &convexSet = convexSubspaces.last();
+            convexSubspaces.append(ConvexSubspaceProxy());
+            ConvexSubspaceProxy &convexSet = convexSubspaces.last();
 
             convexSet.addSegments(segments);
 
@@ -1157,7 +1157,7 @@ DENG2_PIMPL(Partitioner)
      */
     void splitOverlappingLineSegments()
     {
-        foreach(ConvexSubspace const &subspace, convexSubspaces)
+        foreach(ConvexSubspaceProxy const &subspace, convexSubspaces)
         {
             /*
              * The subspace provides a specially ordered list of the segments to
@@ -1213,7 +1213,7 @@ DENG2_PIMPL(Partitioner)
 
     void buildLeafGeometries()
     {
-        foreach(ConvexSubspace const &subspace, convexSubspaces)
+        foreach(ConvexSubspaceProxy const &subspace, convexSubspaces)
         {
             /// @todo Move BSP leaf construction here.
             BspLeaf &bspLeaf = *subspace.bspLeaf();
@@ -1236,7 +1236,7 @@ DENG2_PIMPL(Partitioner)
          * Finalize the built geometry by adding a twin half-edge for any
          * which don't yet have one.
          */
-        foreach(ConvexSubspace const &convexSet, convexSubspaces)
+        foreach(ConvexSubspaceProxy const &convexSet, convexSubspaces)
         foreach(OrderedSegment const &oseg, convexSet.segments())
         {
             LineSegmentSide *seg = oseg.segment;

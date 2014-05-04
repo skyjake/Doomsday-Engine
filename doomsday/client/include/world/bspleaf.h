@@ -21,21 +21,16 @@
 #ifndef DENG_WORLD_BSPLEAF_H
 #define DENG_WORLD_BSPLEAF_H
 
+#include <QSet>
+#include <de/Error>
+#include <de/Vector>
 #include "MapElement"
+#include "ConvexSubspace"
 #include "Line"
 #include "Sector"
 
-#include "Mesh"
-
-#include <de/Error>
-#include <de/Vector>
-#include <QSet>
-
 class SectorCluster;
 struct polyobj_s;
-#ifdef __CLIENT__
-class Lumobj;
-#endif
 
 /**
  * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
@@ -60,30 +55,11 @@ class BspLeaf : public de::MapElement
     DENG2_NO_ASSIGN(BspLeaf)
 
 public:
-    /// Required sector cluster attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingClusterError);
+    /// Required subspace is missing. @ingroup errors
+    DENG2_ERROR(MissingSubspaceError);
 
-    /// An invalid polygon was specified @ingroup errors
-    DENG2_ERROR(InvalidPolyError);
-
-    /// Required polygon geometry is missing. @ingroup errors
-    DENG2_ERROR(MissingPolyError);
-
-    /*
-     * Linked-element lists/sets:
-     */
-    typedef QSet<de::Mesh *>  Meshes;
+    /// Linked-element lists/sets:
     typedef QSet<polyobj_s *> Polyobjs;
-
-#ifdef __CLIENT__
-    typedef QSet<Lumobj *>    Lumobjs;
-    typedef QSet<LineSide *>  ShadowLines;
-#endif
-
-#ifdef __CLIENT__
-    // Final audio environment characteristics.
-    typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
-#endif
 
 public:
     /**
@@ -112,95 +88,31 @@ public:
     inline Sector const *sectorPtr() const { return hasParent()? &sector() : 0; }
 
     /**
-     * Determines whether a convex face geometry (a polygon) is attributed.
+     * Determines whether a subspace geometry is attributed to the BSP leaf.
      *
-     * @see poly(), setPoly()
+     * @see subspace(), setSubspace()
      */
-    bool hasPoly() const;
+    bool hasSubspace() const;
 
     /**
-     * Provides access to the attributed convex face geometry (a polygon).
+     * Returns the ConvexSubspace attributed to the BSP leaf.
      *
-     * @see hasPoly(), setPoly()
+     * @see hasSubspace()
      */
-    de::Face const &poly() const;
+    ConvexSubspace &subspace() const;
+
+    inline ConvexSubspace *subspacePtr() const { return hasSubspace()? &subspace() : 0; }
 
     /**
-     * Change the convex face geometry attributed to the BSP leaf. Before the
-     * geometry is accepted it is first conformance tested to ensure that it
-     * represents a valid, simple convex polygon.
+     * Change the subspace geometry attributed to the BSP leaf.
      *
-     * @param polygon  New polygon to attribute to the BSP leaf. Ownership is
-     *                 unaffected. Can be @c 0 (to clear the attribution).
+     * @param newSubspace New subspace to attribute to the BSP leaf. Ownership
+     *                    of the subspace is given to BspLeaf. Use @c 0 to clear
+     *                    the attribution (and destroy the old subspace).
      *
-     * @see hasPoly(), poly()
+     * @see hasSubspace(), subspace()
      */
-    void setPoly(de::Face *polygon);
-
-    /**
-     * Determines whether the specified @a point in the map coordinate space
-     * lies inside the polygon geometry of the BSP leaf on the XY plane. If no
-     * face is attributed with @ref setPoly() @c false is returned.
-     *
-     * @param point  Map space coordinate to test.
-     *
-     * @return  @c true iff the point lies inside the BSP leaf's geometry.
-     *
-     * @see http://www.alienryderflex.com/polygon/
-     */
-    bool polyContains(de::Vector2d const &point) const;
-
-    /**
-     * Assign an additional mesh geometry to the BSP leaf. Such @em extra
-     * meshes are used to represent geometry which would otherwise result in
-     * a non-manifold mesh if incorporated in the primary mesh for the map.
-     *
-     * @param mesh  New mesh to be assigned to the BSP leaf. Ownership of the
-     *              mesh is given to the BspLeaf.
-     */
-    void assignExtraMesh(de::Mesh &mesh);
-
-    /**
-     * Provides access to the set of 'extra' mesh geometries for the BSP leaf.
-     *
-     * @see assignExtraMesh()
-     */
-    Meshes const &extraMeshes() const;
-
-    /**
-     * Returns @c true iff a sector cluster is attributed to the BSP leaf. The
-     * only time a leaf might not be attributed to a sector is if the geometry
-     * was @em orphaned by the partitioning algorithm (a bug).
-     */
-    bool hasCluster() const;
-
-    /**
-     * Change the sector cluster attributed to the BSP leaf.
-     *
-     * @param newCluster New sector cluster to attribute to the BSP leaf.
-     *                   Ownership is unaffected. Can be @c 0 (to clear the
-     *                   attribution).
-     *
-     * @see hasCluster(), cluster()
-     */
-    void setCluster(SectorCluster *newCluster);
-
-    /**
-     * Returns the sector cluster attributed to the BSP leaf.
-     *
-     * @see hasCluster()
-     */
-    SectorCluster &cluster() const;
-
-    /**
-     * Convenient method returning a pointer to the sector cluster attributed to
-     * the BSP leaf. If not attributed then @c 0 is returned.
-     *
-     * @see hasCluster(), cluster()
-     */
-    inline SectorCluster *clusterPtr() const {
-        return hasCluster()? &cluster() : 0;
-    }
+    void setSubspace(ConvexSubspace *newSubspace);
 
     /**
      * Remove the given @a polyobj from the set of those linked to the BSP leaf.
@@ -227,121 +139,19 @@ public:
      */
     inline int polyobjCount() { return polyobjs().count(); }
 
-    /**
-     * Returns the vector described by the offset from the map coordinate space
-     * origin to the top most, left most point of the geometry of the BSP leaf.
-     *
-     * @see aaBox()
-     */
-    de::Vector2d const &worldGridOffset() const;
+public: /// Convenience accessors @todo remove ---------------------------------
 
-    /**
-     * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
-     * algorithms for marking leafs as processed/visited.
-     *
-     * @todo Refactor away.
-     */
-    int validCount() const;
+    inline bool hasPoly() const              { return hasSubspace(); }
+    inline de::Face const &poly() const      { return subspace().poly(); }
+    inline SectorCluster &cluster() const    { return subspace().cluster(); }
 
-    /// @todo Refactor away.
-    void setValidCount(int newValidCount);
+    inline bool hasCluster() const           {
+        return hasSubspace() && subspace().hasCluster();
+    }
 
-#ifdef __CLIENT__
-
-    /**
-     * Returns a pointer to the face geometry half-edge which has been chosen
-     * for use as the base for a triangle fan GL primitive. May return @c 0 if
-     * no suitable base was determined.
-     */
-    de::HEdge *fanBase() const;
-
-    /**
-     * Returns the number of vertices needed for a triangle fan GL primitive.
-     *
-     * @note When first called after a face geometry is assigned a new 'base'
-     * half-edge for the triangle fan primitive will be determined.
-     *
-     * @see fanBase()
-     */
-    int numFanVertices() const;
-
-    /**
-     * Recalculate the environmental audio characteristics (reverb) of the BSP leaf.
-     */
-    bool updateReverb();
-
-    /**
-     * Provides access to the final environmental audio characteristics (reverb)
-     * of the BSP leaf, for efficient accumulation.
-     */
-    AudioEnvironmentFactors const &reverb() const;
-
-    /**
-     * Clear all lumobj links for the BSP leaf.
-     */
-    void unlinkAllLumobjs();
-
-    /**
-     * Unlink the specified @a lumobj in the BSP leaf. If the lumobj is not
-     * linked then nothing will happen.
-     *
-     * @param lumobj  Lumobj to unlink.
-     *
-     * @see link()
-     */
-    void unlink(Lumobj &lumobj);
-
-    /**
-     * Link the specified @a lumobj in the BSP leaf. If the lumobj is already
-     * linked then nothing will happen.
-     *
-     * @param lumobj  Lumobj to link.
-     *
-     * @see lumobjs(), unlink()
-     */
-    void link(Lumobj &lumobj);
-
-    /**
-     * Provides access to the set of lumobjs linked to the BSP leaf.
-     *
-     * @see linkLumobj(), clearLumobjs()
-     */
-    Lumobjs const &lumobjs() const;
-
-    /**
-     * Clear the list of fake radio shadow line sides for the BSP leaf.
-     */
-    void clearShadowLines();
-
-    /**
-     * Add the specified line @a side to the set of fake radio shadow lines for
-     * the BSP leaf. If the line is already present in this set then nothing
-     * will happen.
-     *
-     * @param side  Map line side to add to the set.
-     */
-    void addShadowLine(LineSide &side);
-
-    /**
-     * Provides access to the set of fake radio shadow lines for the BSP leaf.
-     */
-    ShadowLines const &shadowLines() const;
-
-    /**
-     * Returns the frame number of the last time mobj sprite projection was
-     * performed for the BSP leaf.
-     */
-    int lastSpriteProjectFrame() const;
-
-    /**
-     * Change the frame number of the last time mobj sprite projection was
-     * performed for the BSP leaf.
-     *
-     * @param newFrame  New frame number.
-     */
-    void setLastSpriteProjectFrame(int newFrame);
-
-#endif // __CLIENT__
+    inline SectorCluster *clusterPtr() const {
+        return hasSubspace()? subspace().clusterPtr() : 0;
+    }
 
 private:
     DENG2_PRIVATE(d)

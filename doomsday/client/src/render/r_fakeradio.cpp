@@ -195,9 +195,9 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
 {
     LineSide &side = *static_cast<LineSide *>(context);
-    if(bspLeaf->sectorPtr() == side.sectorPtr())
+    if(bspLeaf->hasSubspace() && bspLeaf->sectorPtr() == side.sectorPtr())
     {
-        bspLeaf->addShadowLine(side);
+        bspLeaf->subspace().addShadowLine(side);
     }
     return false; // Continue iteration.
 }

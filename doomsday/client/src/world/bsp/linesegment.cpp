@@ -29,7 +29,7 @@
 
 #include <de/Observers>
 
-#include "world/bsp/convexsubspace.h"
+#include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/superblockmap.h"
 
 #include "world/bsp/linesegment.h"
@@ -63,7 +63,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     SuperBlock *bmapBlock;
 
     /// Convex subspace which "this" segment is attributed; otherwise @c 0.
-    ConvexSubspace *convexSubspace;
+    ConvexSubspaceProxy *convexSubspace;
 
     /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
     Sector *sector;
@@ -160,12 +160,12 @@ void LineSegment::Side::setHEdge(HEdge *newHEdge)
     d->hedge = newHEdge;
 }
 
-ConvexSubspace *LineSegment::Side::convexSubspace() const
+ConvexSubspaceProxy *LineSegment::Side::convexSubspace() const
 {
     return d->convexSubspace;
 }
 
-void LineSegment::Side::setConvexSubspace(ConvexSubspace *newConvexSubspace)
+void LineSegment::Side::setConvexSubspace(ConvexSubspaceProxy *newConvexSubspace)
 {
     d->convexSubspace = newConvexSubspace;
 }

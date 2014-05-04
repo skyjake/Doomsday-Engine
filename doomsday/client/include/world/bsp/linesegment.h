@@ -39,7 +39,7 @@
 namespace de {
 namespace bsp {
 
-class ConvexSubspace;
+class ConvexSubspaceProxy;
 class SuperBlock;
 
 /**
@@ -440,10 +440,10 @@ public:
         void setHEdge(HEdge *newHEdge);
 
         /**
-         * Returns a pointer to the ConvexSubspace to which "this" side of the
+         * Returns a pointer to the ConvexSubspaceProxy to which "this" side of the
          * line segment is attributed. May return @c 0 if not yet attributed.
          */
-        ConvexSubspace *convexSubspace() const;
+        ConvexSubspaceProxy *convexSubspace() const;
 
         /**
          * Change the convex subspace to which "this" side of the line segment
@@ -452,7 +452,7 @@ public:
          * @param newConvexSubspace  ConvexSubspace to attribute. Can be @c 0
          *                           (to clear the attribution).
          */
-        void setConvexSubspace(ConvexSubspace *newConvexSubspace);
+        void setConvexSubspace(ConvexSubspaceProxy *newConvexSubspace);
 
         /**
          * To be called to update precalculated vectors, distances, etc...

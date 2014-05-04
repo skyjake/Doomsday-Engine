@@ -452,7 +452,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
-    if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
+    if(!Mobj_BspLeafAtOrigin(*mo).subspace().contains(mo->origin))
     {
         return;
     }

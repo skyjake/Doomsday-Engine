@@ -123,7 +123,7 @@ private:
         R_ContactList(bspLeaf, contact.type()).link(&contact);
 
         // Spread to neighboring BSP leafs.
-        bspLeaf.setValidCount(++validCount);
+        bspLeaf.subspace().setValidCount(++validCount);
 
         _spread.contact      = &contact;
         _spread.contactAABox = contact.objectAABox();
@@ -150,7 +150,8 @@ private:
         SectorCluster &backCluster = backLeaf.cluster();
 
         // Which way does the spread go?
-        if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
+        if(!(leaf.subspace().validCount() == validCount &&
+             backLeaf.subspace().validCount() != validCount))
         {
             return; // Not eligible for spreading.
         }
@@ -234,7 +235,7 @@ private:
         }
 
         // During the next step this contact will spread from the back leaf.
-        backLeaf.setValidCount(validCount);
+        backLeaf.subspace().setValidCount(validCount);
 
         R_ContactList(backLeaf, _spread.contact->type()).link(_spread.contact);
 

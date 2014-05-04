@@ -458,7 +458,7 @@ int Generator::newParticle()
             bspLeaf = 0;
         }
 
-        if(!bspLeaf || !bspLeaf->hasPoly())
+        if(!bspLeaf || !bspLeaf->hasSubspace())
         {
             pinfo->stage = -1;
             return -1;
@@ -513,7 +513,7 @@ int Generator::newParticle()
         pinfo->bspLeaf = &map().bspLeafAt(ptOrigin);
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
-        if(!pinfo->bspLeaf->hasPoly())
+        if(!pinfo->bspLeaf->hasSubspace())
         {
             pinfo->stage = -1;
             return -1;
@@ -1018,7 +1018,7 @@ void Generator::moveParticle(int index)
         pinfo->bspLeaf = &map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
-        if(!pinfo->bspLeaf->hasPoly())
+        if(!pinfo->bspLeaf->hasSubspace())
         {
             // Kill the particle.
             pinfo->stage = -1;

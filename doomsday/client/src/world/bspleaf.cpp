@@ -20,252 +20,55 @@
 
 #include "de_base.h"
 #include "world/bspleaf.h"
-
-#include "Face"
-
 #ifdef __CLIENT__
 #  include "world/map.h"
 #endif
+#include "Face"
 #include "Polyobj"
 #include "Sector"
-#include "SectorCluster"
-#include "Surface"
-
-#include <de/Log>
-#include <QMap>
-#include <QtAlgorithms>
 
 using namespace de;
 
-/// Compute the area of a triangle defined by three 2D point vectors.
-ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
+DENG2_PIMPL_NOREF(BspLeaf)
 {
-    Vector2d a = v2 - v1;
-    Vector2d b = v3 - v1;
-    return (a.x * b.y - b.x * a.y) / 2;
-}
-
-DENG2_PIMPL(BspLeaf)
-{
-    SectorCluster *cluster;         ///< Attributed cluster (if any, not owned).
-
-    Face *poly;                     ///< Convex polygon geometry (if any, not owned).
-    Meshes extraMeshes;             ///< Additional meshes (owned).
-    Polyobjs polyobjs;              ///< Linked polyobjs (if any, not owned).
-
-    /// Offset to align the top left of materials in the built geometry to the
-    /// map coordinate space grid.
-    Vector2d worldGridOffset;
-
-#ifdef __CLIENT__
-    HEdge *fanBase;                 ///< Trifan base Half-edge (otherwise the center point is used).
-
-    bool needUpdateFanBase;         ///< @c true= need to rechoose a fan base half-edge.
-    int addSpriteCount;             ///< Frame number of last R_AddSprites.
-
-    Lumobjs lumobjs;                ///< Linked lumobjs (not owned).
-    ShadowLines shadowLines;        ///< Linked map lines for fake radio shadowing.
-    AudioEnvironmentFactors reverb; ///< Cached characteristics.
-#endif // __CLIENT__
-
-    /// Used by legacy algorithms to prevent repeated processing.
-    int validCount;
-
-    Instance(Public *i)
-        : Base(i)
-        , cluster(0)
-        , poly(0)
-#ifdef __CLIENT__
-        , fanBase(0)
-        , needUpdateFanBase(true)
-        , addSpriteCount(0)
-#endif
-        , validCount(0)
-    {
-#ifdef __CLIENT__
-        zap(reverb);
-#endif
-    }
-
-    ~Instance()
-    {
-        qDeleteAll(extraMeshes);
-    }
-
-#ifdef __CLIENT__
-
-    /**
-     * Determine the half-edge whose vertex is suitable for use as the center point
-     * of a trifan primitive.
-     *
-     * Note that we do not want any overlapping or zero-area (degenerate) triangles.
-     *
-     * @par Algorithm
-     * <pre>For each vertex
-     *    For each triangle
-     *        if area is not greater than minimum bound, move to next vertex
-     *    Vertex is suitable
-     * </pre>
-     *
-     * If a vertex exists which results in no zero-area triangles it is suitable for
-     * use as the center of our trifan. If a suitable vertex is not found then the
-     * center of BSP leaf should be selected instead (it will always be valid as
-     * BSP leafs are convex).
-     */
-    void chooseFanBase()
-    {
-#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
-
-        HEdge *firstNode = poly->hedge();
-
-        fanBase = firstNode;
-
-        if(poly->hedgeCount() > 3)
-        {
-            // Splines with higher vertex counts demand checking.
-            Vertex const *base, *a, *b;
-
-            // Search for a good base.
-            do
-            {
-                HEdge *other = firstNode;
-
-                base = &fanBase->vertex();
-                do
-                {
-                    // Test this triangle?
-                    if(!(fanBase != firstNode && (other == fanBase || other == &fanBase->prev())))
-                    {
-                        a = &other->vertex();
-                        b = &other->next().vertex();
-
-                        if(de::abs(triangleArea(base->origin(), a->origin(), b->origin())) <= MIN_TRIANGLE_EPSILON)
-                        {
-                            // No good. We'll move on to the next vertex.
-                            base = 0;
-                        }
-                    }
-
-                    // On to the next triangle.
-                } while(base && (other = &other->next()) != firstNode);
-
-                if(!base)
-                {
-                    // No good. Select the next vertex and start over.
-                    fanBase = &fanBase->next();
-                }
-            } while(!base && fanBase != firstNode);
-
-            // Did we find something suitable?
-            if(!base) // No.
-            {
-                fanBase = 0;
-            }
-        }
-        //else Implicitly suitable (or completely degenerate...).
-
-        needUpdateFanBase = false;
-
-#undef MIN_TRIANGLE_EPSILON
-    }
-#endif // __CLIENT__
+    QScopedPointer<ConvexSubspace> subspace;
+    Polyobjs polyobjs; ///< Linked polyobjs (if any, not owned).
 };
 
 BspLeaf::BspLeaf(Sector *sector)
-    : MapElement(DMU_BSPLEAF, sector)
-    , d(new Instance(this))
+    : MapElement(DMU_BSPLEAF, sector), d(new Instance)
 {}
 
-bool BspLeaf::hasPoly() const
+bool BspLeaf::hasSubspace() const
 {
-    return d->poly != 0;
+    return !d->subspace.isNull();
 }
 
-Face const &BspLeaf::poly() const
+ConvexSubspace &BspLeaf::subspace() const
 {
-    if(d->poly)
+    if(hasSubspace())
     {
-        return *d->poly;
+        return *d->subspace;
     }
-    /// @throw MissingPolyError Attempted with no polygon assigned.
-    throw MissingPolyError("BspLeaf::poly", "No polygon is assigned");
+    /// @throw MissingSubspaceError Attempted with no subspace attributed.
+    throw MissingSubspaceError("BspLeaf::subspace", "No subspace is attributed");
 }
 
-void BspLeaf::setPoly(Face *newPoly)
+void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
 {
-    if(d->poly == newPoly) return;
+    if(d->subspace.data() == newSubspace) return;
 
-    if(newPoly && !newPoly->isConvex())
+    if(!d->subspace.isNull())
     {
-        /// @throw InvalidPolyError Attempted to attribute a non-convex polygon.
-        throw InvalidPolyError("BspLeaf::setPoly", "Non-convex polygons cannot be assigned");
+        d->subspace->poly().setMapElement(0);
     }
 
-    d->poly = newPoly;
+    d->subspace.reset(newSubspace);
 
-    if(newPoly)
+    if(!d->subspace.isNull())
     {
-        // Attribute the new face geometry to "this" BSP leaf.
-        newPoly->setMapElement(this);
-
-        // Update the world grid offset.
-        d->worldGridOffset = Vector2d(fmod(newPoly->aaBox().minX, 64),
-                                      fmod(newPoly->aaBox().maxY, 64));
+        d->subspace->poly().setMapElement(this);
     }
-    else
-    {
-        d->worldGridOffset = Vector2d(0, 0);
-    }
-}
-
-void BspLeaf::assignExtraMesh(Mesh &newMesh)
-{
-    LOG_AS("BspLeaf");
-
-    int const sizeBefore = d->extraMeshes.size();
-
-    d->extraMeshes.insert(&newMesh);
-
-    if(d->extraMeshes.size() != sizeBefore)
-    {
-        LOG_DEBUG("Assigned extra mesh to leaf %p") << this;
-
-        // Attribute all faces to "this" BSP leaf.
-        foreach(Face *face, newMesh.faces())
-        {
-            face->setMapElement(this);
-        }
-    }
-}
-
-BspLeaf::Meshes const &BspLeaf::extraMeshes() const
-{
-    return d->extraMeshes;
-}
-
-Vector2d const &BspLeaf::worldGridOffset() const
-{
-    return d->worldGridOffset;
-}
-
-bool BspLeaf::hasCluster() const
-{
-    return d->cluster != 0;
-}
-
-SectorCluster &BspLeaf::cluster() const
-{
-    if(d->cluster)
-    {
-        return *d->cluster;
-    }
-    /// @throw MissingClusterError Attempted with no sector cluster attributed.
-    throw MissingClusterError("BspLeaf::cluster", "No sector cluster is attributed");
-}
-
-void BspLeaf::setCluster(SectorCluster *newCluster)
-{
-    d->cluster = newCluster;
 }
 
 void BspLeaf::link(Polyobj const &polyobj)
@@ -284,195 +87,3 @@ BspLeaf::Polyobjs const &BspLeaf::polyobjs() const
 {
     return d->polyobjs;
 }
-
-int BspLeaf::validCount() const
-{
-    return d->validCount;
-}
-
-void BspLeaf::setValidCount(int newValidCount)
-{
-    d->validCount = newValidCount;
-}
-
-bool BspLeaf::polyContains(Vector2d const &point) const
-{
-    if(!hasPoly()) return false; // Obviously not.
-
-    HEdge const *hedge = poly().hedge();
-    do
-    {
-        Vertex const &va = hedge->vertex();
-        Vertex const &vb = hedge->next().vertex();
-
-        if(((va.origin().y - point.y) * (vb.origin().x - va.origin().x) -
-            (va.origin().x - point.x) * (vb.origin().y - va.origin().y)) < 0)
-        {
-            // Outside the BSP leaf's edges.
-            return false;
-        }
-
-    } while((hedge = &hedge->next()) != poly().hedge());
-
-    return true;
-}
-
-#ifdef __CLIENT__
-
-HEdge *BspLeaf::fanBase() const
-{
-    if(d->needUpdateFanBase)
-    {
-        d->chooseFanBase();
-    }
-    return d->fanBase;
-}
-
-int BspLeaf::numFanVertices() const
-{
-    // Are we to use one of the half-edge vertexes as the fan base?
-    if(!d->poly) return 0;
-    return d->poly->hedgeCount() + (fanBase()? 0 : 2);
-}
-
-static void accumReverbForWallSections(HEdge const *hedge,
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], float &total)
-{
-    // Edges with no map line segment implicitly have no surfaces.
-    if(!hedge || !hedge->hasMapElement())
-        return;
-
-    LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
-    if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
-        return;
-
-    Material &material = seg.lineSide().middle().material();
-    AudioEnvironmentId env = material.audioEnvironment();
-    if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
-        env = AE_WOOD; // Assume it's wood if unknown.
-
-    total += seg.length();
-
-    envSpaceAccum[env] += seg.length();
-}
-
-bool BspLeaf::updateReverb()
-{
-    if(!hasCluster())
-    {
-        d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
-            d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
-    zap(envSpaceAccum);
-
-    // Space is the rough volume of the BSP leaf (bounding box).
-    AABoxd const &aaBox = d->poly->aaBox();
-    d->reverb[SRD_SPACE] = int(cluster().ceiling().height() - cluster().floor().height())
-                         * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
-
-    // The other reverb properties can be found out by taking a look at the
-    // materials of all surfaces in the BSP leaf.
-    float total  = 0;
-    HEdge *base  = d->poly->hedge();
-    HEdge *hedge = base;
-    do
-    {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
-    } while((hedge = &hedge->next()) != base);
-
-    foreach(Mesh *mesh, d->extraMeshes)
-    foreach(HEdge *hedge, mesh->hedges())
-    {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
-    }
-
-    if(!total)
-    {
-        // Huh?
-        d->reverb[SRD_VOLUME] = d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    // Average the results.
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
-    {
-        envSpaceAccum[i] /= total;
-    }
-
-    // Accumulate and clamp the final characteristics
-    int accum[NUM_REVERB_DATA]; zap(accum);
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
-    {
-        AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
-        // Volume.
-        accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
-
-        // Decay time.
-        accum[SRD_DECAY]   += envSpaceAccum[i] * envInfo.decayMul;
-
-        // High frequency damping.
-        accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
-    }
-    d->reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
-    d->reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
-    d->reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
-
-    return true;
-}
-
-BspLeaf::AudioEnvironmentFactors const &BspLeaf::reverb() const
-{
-    return d->reverb;
-}
-
-void BspLeaf::clearShadowLines()
-{
-    d->shadowLines.clear();
-}
-
-void BspLeaf::addShadowLine(LineSide &side)
-{
-    if(!hasPoly()) return;
-    d->shadowLines.insert(&side);
-}
-
-BspLeaf::ShadowLines const &BspLeaf::shadowLines() const
-{
-    return d->shadowLines;
-}
-
-void BspLeaf::unlinkAllLumobjs()
-{
-    d->lumobjs.clear();
-}
-
-void BspLeaf::unlink(Lumobj &lumobj)
-{
-    d->lumobjs.remove(&lumobj);
-}
-
-void BspLeaf::link(Lumobj &lumobj)
-{
-    if(!hasPoly()) return;
-    d->lumobjs.insert(&lumobj);
-}
-
-BspLeaf::Lumobjs const &BspLeaf::lumobjs() const
-{
-    return d->lumobjs;
-}
-
-int BspLeaf::lastSpriteProjectFrame() const
-{
-    return d->addSpriteCount;
-}
-
-void BspLeaf::setLastSpriteProjectFrame(int newFrameCount)
-{
-    d->addSpriteCount = newFrameCount;
-}
-
-#endif // __CLIENT__

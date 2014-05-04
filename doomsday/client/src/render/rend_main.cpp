@@ -2008,10 +2008,10 @@ static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
 {
     DENG2_ASSERT(verts != 0);
 
-    BspLeaf const *leaf = currentBspLeaf;
-    Face const &face    = leaf->poly();
+    ConvexSubspace const &subspace = currentBspLeaf->subspace();
+    Face const &face = subspace.poly();
 
-    HEdge *fanBase  = leaf->fanBase();
+    HEdge *fanBase  = subspace.fanBase();
     uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
@@ -2044,7 +2044,7 @@ static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
 static void writeLeafPlane(Plane &plane)
 {
     BspLeaf *leaf          = currentBspLeaf;
-    Face const &poly       = leaf->poly();
+    Face const &poly       = leaf->subspace().poly();
     Surface const &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
@@ -2069,7 +2069,7 @@ static void writeLeafPlane(Plane &plane)
 
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
-    Vector2f materialOrigin = leaf->worldGridOffset() // Align to the worldwide grid.
+    Vector2f materialOrigin = leaf->subspace().worldGridOffset() // Align to the worldwide grid.
                             + surface.materialOriginSmoothed();
 
     // Add the Y offset to orient the Y flipped material.
@@ -2562,14 +2562,14 @@ static void writeLeafWallSections()
 {
     BspLeaf *leaf = currentBspLeaf;
 
-    HEdge *base = leaf->poly().hedge();
+    HEdge *base = leaf->subspace().poly().hedge();
     HEdge *hedge = base;
     do
     {
         writeAllWallSections(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->extraMeshes())
+    foreach(Mesh *mesh, leaf->subspace().extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         writeAllWallSections(hedge);
@@ -2612,14 +2612,14 @@ static void markLeafFrontFacingWalls()
 {
     BspLeaf *leaf = currentBspLeaf;
 
-    HEdge *base = leaf->poly().hedge();
+    HEdge *base = leaf->subspace().poly().hedge();
     HEdge *hedge = base;
     do
     {
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->extraMeshes())
+    foreach(Mesh *mesh, leaf->subspace().extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         markFrontFacingWalls(hedge);
@@ -2724,8 +2724,9 @@ static void occludeLeaf(bool frontFacing)
 static void clipLeafLumobjs()
 {
     BspLeaf *leaf = currentBspLeaf;
+    DENG2_ASSERT(leaf->hasSubspace());
 
-    foreach(Lumobj *lum, leaf->lumobjs())
+    foreach(Lumobj *lum, leaf->subspace().lumobjs())
     {
         R_ViewerClipLumobj(lum);
     }
@@ -2739,8 +2740,9 @@ static void clipLeafLumobjs()
 static void clipLeafLumobjsBySight()
 {
     BspLeaf *leaf = currentBspLeaf;
+    DENG2_ASSERT(leaf->hasSubspace());
 
-    foreach(Lumobj *lum, leaf->lumobjs())
+    foreach(Lumobj *lum, leaf->subspace().lumobjs())
     {
         R_ViewerClipLumobjBySight(lum, leaf);
     }
@@ -2766,14 +2768,14 @@ static void clipLeafFrontFacingWalls()
 {
     BspLeaf *leaf = currentBspLeaf;
 
-    HEdge *base = leaf->poly().hedge();
+    HEdge *base = leaf->subspace().poly().hedge();
     HEdge *hedge = base;
     do
     {
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->extraMeshes())
+    foreach(Mesh *mesh, leaf->subspace().extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         clipFrontFacingWalls(hedge);
@@ -2830,14 +2832,15 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
 static void projectLeafSprites()
 {
     BspLeaf *leaf = currentBspLeaf;
+    ConvexSubspace &subspace = leaf->subspace();
 
     // Do not use validCount because other parts of the renderer may change it.
-    if(leaf->lastSpriteProjectFrame() == R_FrameCount())
+    if(subspace.lastSpriteProjectFrame() == R_FrameCount())
         return; // Already added.
 
     R_BspLeafMobjContactIterator(*leaf, projectSpriteWorker);
 
-    leaf->setLastSpriteProjectFrame(R_FrameCount());
+    subspace.setLastSpriteProjectFrame(R_FrameCount());
 }
 
 static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
@@ -4569,14 +4572,14 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
 
     foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
     {
-        HEdge const *base  = bspLeaf->poly().hedge();
+        HEdge const *base  = bspLeaf->subspace().poly().hedge();
         HEdge const *hedge = base;
         do
         {
             drawTangentVectorsForWallSections(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        foreach(Mesh *mesh, bspLeaf->extraMeshes())
+        foreach(Mesh *mesh, bspLeaf->subspace().extraMeshes())
         foreach(HEdge *hedge, mesh->hedges())
         {
             drawTangentVectorsForWallSections(hedge);
@@ -4933,7 +4936,7 @@ static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
     ddouble min = bspLeaf->cluster().  visFloor().heightSmoothed();
     ddouble max = bspLeaf->cluster().visCeiling().heightSmoothed();
 
-    HEdge *base  = bspLeaf->poly().hedge();
+    HEdge *base  = bspLeaf->subspace().poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -4945,7 +4948,7 @@ static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
 
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(Mesh *mesh, bspLeaf->subspace().extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         drawVertexVisual(hedge->vertex(), min, max, parms);

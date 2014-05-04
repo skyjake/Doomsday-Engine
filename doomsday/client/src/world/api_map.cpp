@@ -396,16 +396,16 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
         case DMU_LINE:
             foreach(LineSide *side, sector.sides())
             {
-                int result = callback(&side->line(), context);
-                if(result) return result;
+                if(int result = callback(&side->line(), context))
+                    return result;
             }
             return false; // Continue iteration
 
         case DMU_PLANE:
             foreach(Plane *plane, sector.planes())
             {
-                int result = callback(plane, context);
-                if(result) return result;
+                if(int result = callback(plane, context))
+                    return result;
             }
             return false; // Continue iteration
 
@@ -414,36 +414,35 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
         }}
 
     case DMU_BSPLEAF:
+        /// Note: this iteration method is only needed by the games' automap.
         switch(prop)
         {
         case DMU_LINE: {
             BspLeaf &bspLeaf = elem->as<BspLeaf>();
 
-            /// @todo cleanup: BspLeaf could provide a list of LineSide.
-            if(bspLeaf.hasPoly())
+            if(bspLeaf.hasSubspace())
             {
-                HEdge *base = bspLeaf.poly().hedge();
+                ConvexSubspace &subspace = bspLeaf.subspace();
+                HEdge *base  = subspace.poly().hedge();
                 HEdge *hedge = base;
                 do
                 {
                     if(hedge->hasMapElement())
                     {
-                        int result = callback(&hedge->mapElement().
-                                              as<LineSideSegment>().line(), context);
-                        if(result) return result;
+                        if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
+                            return result;
                     }
                 } while((hedge = &hedge->next()) != base);
 
-                foreach(Mesh *mesh, bspLeaf.extraMeshes())
+                foreach(Mesh *mesh, subspace.extraMeshes())
                 foreach(HEdge *hedge, mesh->hedges())
                 {
                     // Is this on the back of a one-sided line?
                     if(!hedge->hasMapElement())
                         continue;
 
-                    int result = callback(&hedge->mapElement().
-                                          as<LineSideSegment>().line(), context);
-                    if(result) return result;
+                    if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
+                        return result;
                 }
             }
             return false; /* Continue iteration */ }
