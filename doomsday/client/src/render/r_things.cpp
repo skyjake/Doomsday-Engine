@@ -99,7 +99,7 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
         parm.origin[VX]      = origin.x;
         parm.origin[VY]      = origin.y;
         parm.origin[VZ]      = origin.z;
-        parm.bspLeaf         = bspLeafAtOrigin;
+        parm.subspace        = bspLeafAtOrigin->subspacePtr();
         parm.ambientColor[0] = ambientColor.x;
         parm.ambientColor[1] = ambientColor.y;
         parm.ambientColor[2] = ambientColor.z;

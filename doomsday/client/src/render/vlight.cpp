@@ -249,24 +249,24 @@ static int lightWithLumobjsWorker(Lumobj &lum, void *context)
 }
 
 /**
- * Interpret vlights from lumobjs near the @a origin which contact the specfified
- * @a bspleaf and add them to the identified list.
+ * Interpret vlights from lumobjs near the @a origin which contact the specified
+ * @a subspace and add them to the identified list.
  */
-static void lightWithLumobjs(Vector3d const &origin, BspLeaf &bspLeaf, uint listIdx)
+static void lightWithLumobjs(Vector3d const &origin, ConvexSubspace &subspace, uint listIdx)
 {
     lightwithlumobjs_params_t parms; zap(parms);
     parms.origin  = origin;
     parms.listIdx = listIdx;
-    R_BspLeafLumobjContactIterator(bspLeaf, lightWithLumobjsWorker, &parms);
+    R_SubspaceLumobjContactIterator(subspace, lightWithLumobjsWorker, &parms);
 }
 
 /**
  * Interpret vlights from glowing planes at the @a origin in the specfified
- * @a bspleaf and add them to the identified list.
+ * @a subspace and add them to the identified list.
  */
-static void lightWithPlaneGlows(Vector3d const &origin, BspLeaf &bspLeaf, uint listIdx)
+static void lightWithPlaneGlows(Vector3d const &origin, ConvexSubspace &subspace, uint listIdx)
 {
-    SectorCluster &cluster = bspLeaf.cluster();
+    SectorCluster &cluster = subspace.cluster();
     for(int i = 0; i < cluster.sector().planeCount(); ++i)
     {
         Plane &plane     = cluster.visPlane(i);
@@ -322,11 +322,11 @@ uint R_CollectAffectingLights(collectaffectinglights_params_t const *p)
     lightWithWorldLight(p->ambientColor, p->starkLight, listIdx);
 
     // Add extra light by interpreting nearby sources.
-    if(p->bspLeaf && p->bspLeaf->hasCluster())
+    if(p->subspace)
     {
-        lightWithLumobjs(p->origin, *p->bspLeaf, listIdx);
+        lightWithLumobjs(p->origin, *p->subspace, listIdx);
 
-        lightWithPlaneGlows(p->origin, *p->bspLeaf, listIdx);
+        lightWithPlaneGlows(p->origin, *p->subspace, listIdx);
     }
 
     return listIdx + 1;

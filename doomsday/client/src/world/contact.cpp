@@ -146,9 +146,9 @@ ContactList::Node *ContactList::newNode(void *object) // static
 // Separate contact lists for each BSP leaf and contact type.
 static ContactList *bspLeafContactLists;
 
-ContactList &R_ContactList(BspLeaf &bspLeaf, ContactType type)
+ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type)
 {
-    return bspLeafContactLists[bspLeaf.indexInMap() * ContactTypeCount + int( type )];
+    return bspLeafContactLists[subspace.bspLeaf().indexInMap() * ContactTypeCount + int( type )];
 }
 
 static Contact *contacts;
@@ -245,10 +245,10 @@ int R_ContactIterator(int (*callback) (Contact &, void *), void *context)
     return false; // Continue iteration.
 }
 
-int R_BspLeafMobjContactIterator(BspLeaf &bspLeaf,
+int R_SubspaceMobjContactIterator(ConvexSubspace &subspace,
     int (*callback)(mobj_s &, void *), void *context)
 {
-    ContactList &list = R_ContactList(bspLeaf, ContactMobj);
+    ContactList &list = R_ContactList(subspace, ContactMobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<mobj_t *>(node->obj), context))
@@ -257,10 +257,10 @@ int R_BspLeafMobjContactIterator(BspLeaf &bspLeaf,
     return false; // Continue iteration.
 }
 
-int R_BspLeafLumobjContactIterator(BspLeaf &bspLeaf,
+int R_SubspaceLumobjContactIterator(ConvexSubspace &subspace,
     int (*callback)(Lumobj &, void *), void *context)
 {
-    ContactList &list = R_ContactList(bspLeaf, ContactLumobj);
+    ContactList &list = R_ContactList(subspace, ContactLumobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<Lumobj *>(node->obj), context))

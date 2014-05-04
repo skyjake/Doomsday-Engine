@@ -314,7 +314,7 @@ void Rend_ProjectLumobjs(ConvexSubspace *subspace, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_BspLeafLumobjContactIterator(subspace->bspLeaf(), projectLumobjWorker, &parm);
+    R_SubspaceLumobjContactIterator(*subspace, projectLumobjWorker, &parm);
 }
 
 /**
@@ -513,7 +513,7 @@ void Rend_ProjectMobjShadows(ConvexSubspace *subspace, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_BspLeafMobjContactIterator(subspace->bspLeaf(), projectMobjShadowWorker, &parm);
+    R_SubspaceMobjContactIterator(*subspace, projectMobjShadowWorker, &parm);
 }
 
 int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection const *, void *),

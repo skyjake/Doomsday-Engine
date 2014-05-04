@@ -472,7 +472,7 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(parm.origin);
-        lparams.bspLeaf      = &map.bspLeafAt(lparams.origin);
+        lparams.subspace     = map.bspLeafAt(lparams.origin).subspacePtr();
         lparams.ambientColor = Vector3f(parm.ambientColor);
 
         parm.vLightListIdx = R_CollectAffectingLights(&lparams);
