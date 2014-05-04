@@ -72,84 +72,87 @@ public:
     static ConvexSubspace *newFromConvexPoly(de::Face &poly);
 
     /**
-     * Provides access to the attributed convex face geometry (a polygon).
+     * Returns the BspLeaf to which the subspace is assigned.
+     */
+    BspLeaf &bspLeaf() const;
+
+    /**
+     * Provides access to the attributed convex geometry (a polygon).
      */
     de::Face &poly() const;
 
     /**
      * Determines whether the specified @a point in the map coordinate space
-     * lies inside the polygon geometry of the BSP leaf on the XY plane. If no
-     * face is attributed with @ref setPoly() @c false is returned.
+     * lies inside the convex polygon geometry of the subspace on the XY plane.
      *
-     * @param point  Map space coordinate to test.
+     * @param point  Map space point to test.
      *
-     * @return  @c true iff the point lies inside the BSP leaf's geometry.
+     * @return  @c true iff the point lies inside the subspace geometry.
      *
      * @see http://www.alienryderflex.com/polygon/
      */
     bool contains(de::Vector2d const &point) const;
 
     /**
-     * Assign an additional mesh geometry to the BSP leaf. Such @em extra
-     * meshes are used to represent geometry which would otherwise result in
-     * a non-manifold mesh if incorporated in the primary mesh for the map.
+     * Assign an additional mesh geometry to the subspace. Such @em extra meshes
+     * are used to represent geometry which would otherwise result in a
+     * non-manifold mesh if incorporated in the primary mesh for the map.
      *
-     * @param mesh  New mesh to be assigned to the BSP leaf. Ownership of the
-     *              mesh is given to the BspLeaf.
+     * @param mesh  New mesh to be assigned to the subspace. Ownership of the
+     *              mesh is given to ConvexSubspace.
      */
     void assignExtraMesh(de::Mesh &mesh);
 
     /**
-     * Provides access to the set of 'extra' mesh geometries for the BSP leaf.
+     * Provides access to the set of 'extra' mesh geometries for the subspace.
      *
      * @see assignExtraMesh()
      */
     Meshes const &extraMeshes() const;
 
     /**
-     * Remove the given @a polyobj from the set of those linked to the BSP leaf.
+     * Remove the given @a polyobj from the set of those linked to the subspace.
      *
      * @return  @c true= @a polyobj was linked and subsequently removed.
      */
     bool unlink(polyobj_s const &polyobj);
 
     /**
-     * Add the given @a polyobj to the set of those linked to the BSP leaf.
+     * Add the given @a polyobj to the set of those linked to the subspace.
      * Ownership is unaffected. If the polyobj is already linked in this set
      * then nothing will happen.
      */
     void link(struct polyobj_s const &polyobj);
 
     /**
-     * Provides access to the set of polyobjs linked to the BSP leaf.
+     * Provides access to the set of polyobjs linked to the subspace.
      */
     Polyobjs const &polyobjs() const;
 
     /**
      * Convenient method of returning the total number of polyobjs linked to the
-     * BSP leaf.
+     * subspace.
      */
     inline int polyobjCount() { return polyobjs().count(); }
 
     /**
      * Returns the vector described by the offset from the map coordinate space
-     * origin to the top most, left most point of the geometry of the BSP leaf.
+     * origin to the top most, left most point of the geometry of the subspace.
      *
      * @see aaBox()
      */
     de::Vector2d const &worldGridOffset() const;
 
     /**
-     * Returns @c true iff a sector cluster is attributed to the BSP leaf. The
-     * only time a leaf might not be attributed to a sector is if the geometry
-     * was @em orphaned by the partitioning algorithm (a bug).
+     * Returns @c true iff a SectorCluster is attributed to the subspace. The
+     * only time a cluster might not be attributed is during initial map setup.
      */
     bool hasCluster() const;
 
     /**
-     * Change the sector cluster attributed to the BSP leaf.
+     * Change the sector cluster attributed to the subspace.
      *
-     * @param newCluster New sector cluster to attribute to the BSP leaf.
+     * @param newCluster New sector cluster to attribute to the subspace.
      *                   Ownership is unaffected. Can be @c 0 (to clear the
      *                   attribution).
      *
@@ -158,15 +161,15 @@ public:
     void setCluster(SectorCluster *newCluster);
 
     /**
-     * Returns the sector cluster attributed to the BSP leaf.
+     * Returns the SectorCluster attributed to the subspace.
      *
      * @see hasCluster()
      */
     SectorCluster &cluster() const;
 
     /**
-     * Convenient method returning a pointer to the sector cluster attributed to
-     * the BSP leaf. If not attributed then @c 0 is returned.
+     * Convenient method returning a pointer to the SectorCluster attributed to
+     * the subspace. If not attributed then @c 0 is returned.
      *
      * @see hasCluster(), cluster()
      */
@@ -175,8 +178,8 @@ public:
     }
 
     /**
-     * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
-     * algorithms for marking leafs as processed/visited.
+     * Returns the @em validCount of the subspace. Used by some legacy iteration
+     * algorithms for marking subspaces as processed/visited.
      *
      * @todo Refactor away.
      */
@@ -187,13 +190,13 @@ public:
 
 #ifdef __CLIENT__
     /**
-     * Clear the list of fake radio shadow line sides for the BSP leaf.
+     * Clear the list of fake radio shadow line sides for the subspace.
      */
     void clearShadowLines();
 
     /**
      * Add the specified line @a side to the set of fake radio shadow lines for
-     * the BSP leaf. If the line is already present in this set then nothing
+     * the subspace. If the line is already present in this set then nothing
      * will happen.
      *
      * @param side  Map line side to add to the set.
@@ -201,17 +204,17 @@ public:
     void addShadowLine(LineSide &side);
 
     /**
-     * Provides access to the set of fake radio shadow lines for the BSP leaf.
+     * Provides access to the set of fake radio shadow lines for the subspace.
      */
     ShadowLines const &shadowLines() const;
 
     /**
-     * Clear all lumobj links for the BSP leaf.
+     * Clear all lumobj links for the subspace.
      */
     void unlinkAllLumobjs();
 
     /**
-     * Unlink the specified @a lumobj in the BSP leaf. If the lumobj is not
+     * Unlink the specified @a lumobj in the subspace. If the lumobj is not
      * linked then nothing will happen.
      *
      * @param lumobj  Lumobj to unlink.
@@ -221,7 +224,7 @@ public:
     void unlink(Lumobj &lumobj);
 
     /**
-     * Link the specified @a lumobj in the BSP leaf. If the lumobj is already
+     * Link the specified @a lumobj in the subspace. If the lumobj is already
      * linked then nothing will happen.
      *
      * @param lumobj  Lumobj to link.
@@ -231,7 +234,7 @@ public:
     void link(Lumobj &lumobj);
 
     /**
-     * Provides access to the set of lumobjs linked to the BSP leaf.
+     * Provides access to the set of lumobjs linked to the subspace.
      *
      * @see linkLumobj(), clearLumobjs()
      */
@@ -239,13 +242,13 @@ public:
 
     /**
      * Returns the frame number of the last time mobj sprite projection was
-     * performed for the BSP leaf.
+     * performed for the subspace.
      */
     int lastSpriteProjectFrame() const;
 
     /**
      * Change the frame number of the last time mobj sprite projection was
-     * performed for the BSP leaf.
+     * performed for the subspace.
      *
      * @param newFrame  New frame number.
      */
@@ -269,13 +272,13 @@ public:
     int numFanVertices() const;
 
     /**
-     * Recalculate the environmental audio characteristics (reverb) of the BSP leaf.
+     * Recalculate the environmental audio characteristics (reverb) of the subspace.
      */
     bool updateReverb();
 
     /**
      * Provides access to the final environmental audio characteristics (reverb)
-     * of the BSP leaf, for efficient accumulation.
+     * of the subspace, for efficient accumulation.
      */
     AudioEnvironmentFactors const &reverb() const;
 

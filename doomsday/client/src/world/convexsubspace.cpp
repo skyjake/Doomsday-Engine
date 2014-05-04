@@ -20,6 +20,7 @@
 
 #include "de_base.h"
 #include "world/convexsubspace.h"
+#include "Bspleaf"
 #include "Face"
 #include "Polyobj"
 #include "SectorCluster"
@@ -173,6 +174,11 @@ ConvexSubspace *ConvexSubspace::newFromConvexPoly(de::Face &poly) // static
         throw InvalidPolyError("ConvexSubspace::newFromConvexPoly", "Source is non-convex");
     }
     return new ConvexSubspace(poly);
+}
+
+BspLeaf &ConvexSubspace::bspLeaf() const
+{
+    return poly().mapElementAs<BspLeaf>();
 }
 
 Face &ConvexSubspace::poly() const

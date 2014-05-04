@@ -153,18 +153,18 @@ void R_BeginFrame();
 void R_NewSharpWorld();
 
 /**
- * Returns @c true iff the BSP leaf is marked as visible for the current frame.
+ * Returns @c true iff the subspace is marked as visible for the current frame.
  *
- * @see R_ViewerBspLeafMarkVisible()
+ * @see R_ViewerSubspaceMarkVisible()
  */
-bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf);
+bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace);
 
 /**
- * Mark the BSP leaf as visible for the current frame.
+ * Mark the subspace as visible for the current frame.
  *
- * @see R_ViewerBspLeafIsVisible()
+ * @see R_ViewerSubspaceIsVisible()
  */
-void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes = true);
+void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes = true);
 
 /**
  * Returns @c true iff the (particle) generator is marked as visible for the current frame.

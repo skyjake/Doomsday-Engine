@@ -1117,14 +1117,16 @@ void R_ClearViewData()
     M_Free(luminousOrder); luminousOrder = 0;
 }
 
-bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf)
+bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace)
 {
+    BspLeaf const &bspLeaf = subspace.bspLeaf();
     DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
     return bspLeafsVisible.testBit(bspLeaf.indexInMap());
 }
 
-void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
+void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes)
 {
+    BspLeaf const &bspLeaf = subspace.bspLeaf();
     DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
     bspLeafsVisible.setBit(bspLeaf.indexInMap(), yes);
 }
@@ -1287,10 +1289,9 @@ void R_ViewerClipLumobj(Lumobj *lum)
     }
 }
 
-void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
+void R_ViewerClipLumobjBySight(Lumobj *lum, ConvexSubspace *subspace)
 {
-    if(!lum || !bspLeaf) return;
-    if(!bspLeaf->hasSubspace()) return;
+    if(!lum || !subspace) return;
 
     // Already clipped?
     int lumIdx = lum->indexInMap();
@@ -1301,7 +1302,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
     // between the viewpoint and the lumobj.
     Vector3d const eye = vOrigin.xzy();
 
-    foreach(Polyobj *po, bspLeaf->subspace().polyobjs())
+    foreach(Polyobj *po, subspace->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         // Is this on the back of a one-sided line?

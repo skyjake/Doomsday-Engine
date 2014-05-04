@@ -291,12 +291,12 @@ static int projectLumobjWorker(Lumobj &lum, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_ProjectLumobjs(BspLeaf *bspLeaf, Vector3d const &topLeft,
+void Rend_ProjectLumobjs(ConvexSubspace *subspace, Vector3d const &topLeft,
     Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
     float blendFactor, Lumobj::LightmapSemantic lightmap, bool sortByLuminance,
     uint &listIdx)
 {
-    DENG_ASSERT(bspLeaf != 0);
+    if(!subspace) return;
 
     if(blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
         return;
@@ -314,7 +314,7 @@ void Rend_ProjectLumobjs(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_BspLeafLumobjContactIterator(*bspLeaf, projectLumobjWorker, &parm);
+    R_BspLeafLumobjContactIterator(subspace->bspLeaf(), projectLumobjWorker, &parm);
 }
 
 /**
@@ -364,15 +364,12 @@ static void projectGlow(Surface &surface, Vector3d const &origin,
     newList(parm.listIdx, (parm.flags & PLF_SORT_LUMINOSITY_DESC) != 0) << texp;
 }
 
-void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
+void Rend_ProjectPlaneGlows(ConvexSubspace *subspace, Vector3d const &topLeft,
     Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
     float blendFactor, bool sortByLuminance, uint &listIdx)
 {
-    DENG_ASSERT(bspLeaf != 0 && bspLeaf->hasCluster());
-    SectorCluster &cluster = bspLeaf->cluster();
-
-    if(bottomRight.z >= topLeft.z)
-        return;
+    if(!subspace) return;
+    if(bottomRight.z >= topLeft.z) return;
 
     if(blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
         return;
@@ -387,6 +384,7 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
+    SectorCluster &cluster = subspace->cluster();
     for(int i = 0; i < cluster.visPlaneCount(); ++i)
     {
         Plane &plane = cluster.visPlane(i);
@@ -497,11 +495,11 @@ static int projectMobjShadowWorker(mobj_t &mobj, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, Vector3d const &topLeft,
+void Rend_ProjectMobjShadows(ConvexSubspace *subspace, Vector3d const &topLeft,
     Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
     float blendFactor, uint &listIdx)
 {
-    DENG_ASSERT(bspLeaf != 0);
+    if(!subspace) return;
 
     if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
         return;
@@ -515,7 +513,7 @@ void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_BspLeafMobjContactIterator(*bspLeaf, projectMobjShadowWorker, &parm);
+    R_BspLeafMobjContactIterator(subspace->bspLeaf(), projectMobjShadowWorker, &parm);
 }
 
 int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection const *, void *),

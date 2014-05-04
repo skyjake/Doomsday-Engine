@@ -734,7 +734,7 @@ DENG2_PIMPL(SectorCluster)
                 // Inform bias surfaces of changed geometry.
                 foreach(ConvexSubspace *subspace, subspaces)
                 {
-                    BspLeaf &bspLeaf = subspace->poly().mapElement().as<BspLeaf>();
+                    BspLeaf &bspLeaf = subspace->bspLeaf();
                     if(Shard *shard = self.findShard(bspLeaf, plane.indexInSector()))
                     {
                         shard->updateBiasAfterMove();

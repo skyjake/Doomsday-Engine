@@ -281,11 +281,13 @@ static int populateSortBuffer(Generator *gen, void *context)
     ParticleInfo const *pinfo = gen->particleInfo();
     for(int p = 0; p < gen->count; ++p, pinfo++)
     {
-        if(pinfo->stage < 0 || !pinfo->bspLeaf)
-            continue;
+        if(pinfo->stage < 0) continue;
+
+        ConvexSubspace *subspace = pinfo->bspLeaf? pinfo->bspLeaf->subspacePtr() : 0;
+        if(!subspace) continue;
 
         // Is the BSP leaf at the particle's origin visible?
-        if(!R_ViewerBspLeafIsVisible(*pinfo->bspLeaf))
+        if(!R_ViewerSubspaceIsVisible(*subspace))
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.

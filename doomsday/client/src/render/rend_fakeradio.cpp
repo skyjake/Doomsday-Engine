@@ -1305,17 +1305,17 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
 }
 
 /**
- * @attention Do not use the global radio state in here, as @a bspLeaf can be
- * part of any sector, not the one chosen for wall rendering.
+ * @attention Do not use the global radio state in here, as @a subspace can be
+ * part of any Sector, not the one chosen for wall rendering.
  */
-void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
+void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
 {
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    if(bspLeaf.subspace().shadowLines().isEmpty()) return;
+    if(subspace.shadowLines().isEmpty()) return;
 
-    SectorCluster &cluster = bspLeaf.cluster();
+    SectorCluster &cluster = subspace.cluster();
     float sectorlight = cluster.lightSourceIntensity();
 
     // Determine the shadow properties.
@@ -1326,11 +1326,11 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f const eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - bspLeaf.poly().center());
+    Vector3f const eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - subspace.poly().center());
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    ConvexSubspace::ShadowLines const &shadowLines = bspLeaf.subspace().shadowLines();
+    ConvexSubspace::ShadowLines const &shadowLines = subspace.shadowLines();
     foreach(LineSide *side, shadowLines)
     {
         // Already rendered during the current frame? We only want to
