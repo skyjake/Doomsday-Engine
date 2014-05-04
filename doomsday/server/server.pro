@@ -212,7 +212,7 @@ DENG_HEADERS += \
     $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
     $$SRC/include/world/bsp/bsptreenode.h \
-    $$SRC/include/world/bsp/convexsubspace.h \
+    $$SRC/include/world/bsp/convexsubspaceproxy.h \
     $$SRC/include/world/bsp/edgetip.h \
     $$SRC/include/world/bsp/hplane.h \
     $$SRC/include/world/bsp/linesegment.h \
@@ -221,6 +221,7 @@ DENG_HEADERS += \
     $$SRC/include/world/bsp/superblockmap.h \
     $$SRC/include/world/bspleaf.h \
     $$SRC/include/world/bspnode.h \
+    $$SRC/include/world/convexsubspace.h \
     $$SRC/include/world/entitydatabase.h \
     $$SRC/include/world/entitydef.h \
     $$SRC/include/world/interceptor.h \
@@ -363,13 +364,14 @@ SOURCES += \
     $$SRC/src/world/api_map.cpp \
     $$SRC/src/world/api_mapedit.cpp \
     $$SRC/src/world/blockmap.cpp \
-    $$SRC/src/world/bsp/convexsubspace.cpp \
+    $$SRC/src/world/bsp/convexsubspaceproxy.cpp \
     $$SRC/src/world/bsp/hplane.cpp \
     $$SRC/src/world/bsp/linesegment.cpp \
     $$SRC/src/world/bsp/partitioner.cpp \
     $$SRC/src/world/bsp/superblockmap.cpp \
     $$SRC/src/world/bspleaf.cpp \
     $$SRC/src/world/bspnode.cpp \
+    $$SRC/src/world/convexsubspace.cpp \
     $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/entitydef.cpp \
