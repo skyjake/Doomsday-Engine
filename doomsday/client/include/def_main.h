@@ -23,7 +23,6 @@
 #ifndef LIBDENG_DEFINITIONS_MAIN_H
 #define LIBDENG_DEFINITIONS_MAIN_H
 
-#include "def_data.h"
 #include "Material"
 #include <de/stringarray.h>
 
@@ -83,7 +82,6 @@ void            Def_Destroy(void);
  * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
  */
 void            Def_Read(void);
-void            Def_ReadProcessDED(const char* fileName);
 
 int             Def_GetMobjNum(const char* id);
 int             Def_GetMobjNumForName(const char* name);
@@ -131,7 +129,6 @@ extern "C" {
 
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
-int             Def_EvalFlags2(char const *string);
 int             Def_EvalFlags(char *string);
 
 /**

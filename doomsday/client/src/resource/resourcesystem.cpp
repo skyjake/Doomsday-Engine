@@ -1671,10 +1671,10 @@ DENG2_PIMPL(ResourceSystem)
                     sub->blendMode = BM_SUBTRACT;
                 }
 
-                if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
+                if(subdef->skinFilename && !subdef->skinFilename->isEmpty())
                 {
                     // A specific file name has been given for the skin.
-                    String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->skinFilename).path();
+                    String const &skinFilePath  = subdef->skinFilename->path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
@@ -1699,9 +1699,9 @@ DENG2_PIMPL(ResourceSystem)
                 // Offset within the model.
                 sub->offset = subdef->offset;
 
-                if(subdef->shinySkin && !Uri_IsEmpty(subdef->shinySkin))
+                if(subdef->shinySkin && !subdef->shinySkin->isEmpty())
                 {
-                    String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
+                    String const &skinFilePath  = subdef->shinySkin->path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {

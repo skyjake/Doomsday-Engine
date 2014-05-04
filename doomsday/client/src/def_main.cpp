@@ -42,6 +42,8 @@
 #include "api_def.h"
 #include "xgclass.h"
 
+#include <doomsday/defs/dedfile.h>
+#include <doomsday/defs/dedparser.h>
 #include <de/NativePath>
 #include <QTextStream>
 #include <cctype>
@@ -56,8 +58,6 @@ typedef struct {
     char* name; // Name of the routine.
     void (*func)(); // Pointer to the function.
 } actionlink_t;
-
-void Def_ReadProcessDED(const char* filename);
 
 ded_t defs; // The main definitions database.
 dd_bool firstDED;
@@ -189,16 +189,7 @@ spritenum_t Def_GetSpriteNum(char const *name)
 
 int Def_GetMobjNum(const char* id)
 {
-    int i;
-
-    if(!id || !id[0])
-        return -1;
-
-    for(i = 0; i < defs.count.mobjs.num; ++i)
-        if(!stricmp(defs.mobjs[i].id, id))
-            return i;
-
-    return -1;
+    return defs.getMobjNum(id);
 }
 
 int Def_GetMobjNumForName(const char* name)
@@ -231,19 +222,9 @@ state_t *Def_GetState(int num)
     return 0; // Not found.
 }
 
-int Def_GetStateNum(const char* id)
+int Def_GetStateNum(char const *id)
 {
-    int idx = -1;
-    if(id && id[0] && defs.count.states.num)
-    {
-        int i = 0;
-        do
-        {
-            if(!stricmp(defs.states[i].id, id))
-                idx = i;
-        } while(idx == -1 && ++i < defs.count.states.num);
-    }
-    return idx;
+    return defs.getStateNum(id);
 }
 
 int Def_GetModelNum(const char* id)
@@ -406,51 +387,6 @@ ded_sky_t* Def_GetSky(char const* id)
     return NULL;
 }
 
-static ded_material_t* findMaterialDef(de::Uri const& uri)
-{
-    for(int i = defs.count.materials.num - 1; i >= 0; i--)
-    {
-        ded_material_t* def = &defs.materials[i];
-        if(!def->uri || uri != reinterpret_cast<de::Uri&>(*def->uri)) continue;
-        return def;
-    }
-    return NULL;
-}
-
-ded_material_t* Def_GetMaterial(char const* uriCString)
-{
-    ded_material_t* def = NULL;
-    if(uriCString && uriCString[0])
-    {
-        de::Uri uri = de::Uri(uriCString, RC_NULL);
-
-        if(uri.scheme().isEmpty())
-        {
-            // Caller doesn't care which scheme - use a priority search order.
-            de::Uri temp = de::Uri(uri);
-
-            temp.setScheme("Sprites");
-            def = findMaterialDef(temp);
-            if(!def)
-            {
-                temp.setScheme("Textures");
-                def = findMaterialDef(temp);
-            }
-            if(!def)
-            {
-                temp.setScheme("Flats");
-                def = findMaterialDef(temp);
-            }
-        }
-
-        if(!def)
-        {
-            def = findMaterialDef(uri);
-        }
-    }
-    return def;
-}
-
 static ded_compositefont_t* findCompositeFontDef(de::Uri const& uri)
 {
     for(int i = defs.count.compositeFonts.num - 1; i >= 0; i--)
@@ -500,7 +436,7 @@ ded_decor_t *Def_GetDecoration(uri_s const *uri, /*bool hasExternal,*/ bool isCu
     int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        if(def->material && Uri_Equality(def->material, uri))
+        if(def->material && Uri_Equality((uri_s *)def->material, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedDecoration(def, /*hasExternal,*/ isCustom))
@@ -519,7 +455,7 @@ ded_reflection_t *Def_GetReflection(uri_s const *uri, /* bool hasExternal,*/ boo
     int i;
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        if(def->material && Uri_Equality(def->material, uri))
+        if(def->material && Uri_Equality((uri_s *)def->material, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedReflection(def, /*hasExternal,*/ isCustom))
@@ -538,14 +474,14 @@ ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, /*bool hasExternal,*/ bo
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        if(def->material1 && Uri_Equality(def->material1, uri))
+        if(def->material1 && Uri_Equality((uri_s *)def->material1, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
                 return def;
         }
 
-        if(def->material2 && Uri_Equality(def->material2, uri))
+        if(def->material2 && Uri_Equality((uri_s *)def->material2, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
@@ -608,19 +544,6 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
     return 0;
 }
 
-ded_flag_t *Def_GetFlag(char const *flag)
-{
-    if(!flag || !flag[0]) return 0;
-
-    for(int i = defs.count.flags.num - 1; i >= 0; i--)
-    {
-        if(!stricmp(defs.flags[i].id, flag))
-            return defs.flags + i;
-    }
-
-    return 0;
-}
-
 /**
  * Attempts to retrieve a flag by its prefix and value.
  * Returns a ptr to the text string of the first flag it
@@ -637,36 +560,10 @@ const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
     return NULL;
 }
 
-int Def_EvalFlags2(char const *ptr)
-{
-    LOG_AS("Def_EvalFlags");
-
-    int value = 0;
-
-    while(*ptr)
-    {
-        ptr = M_SkipWhite(const_cast<char *>(ptr));
-
-        int flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
-        String flagName(ptr, flagNameLength);
-        ptr += flagNameLength;
-
-        if(ded_flag_t *flag = Def_GetFlag(flagName.toUtf8().constData()))
-        {
-            value |= flag->value;
-        }
-        else
-        {
-            LOG_RES_WARNING("Flag '%s' is not defined (or used out of context)") << flagName;
-        }
-    }
-    return value;
-}
-
 #undef Def_EvalFlags
 int Def_EvalFlags(char *ptr)
 {
-    return Def_EvalFlags2(const_cast<char const *>(ptr));
+    return defs.evalFlags2(const_cast<char const *>(ptr));
 }
 
 int Def_GetTextNumForName(const char* name)
@@ -820,7 +717,7 @@ static void readDefinitionFile(String path)
 
     QByteArray pathUtf8 = path.toUtf8();
     LOG_RES_VERBOSE("Reading \"%s\"") << F_PrettyPath(pathUtf8.constData());
-    Def_ReadProcessDED(pathUtf8);
+    Def_ReadProcessDED(&defs, pathUtf8);
 }
 
 static void readAllDefinitions()
@@ -961,7 +858,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
     int matIdx = DED_AddMaterial(&defs, 0);
     ded_material_t *mat = &defs.materials[matIdx];
     mat->autoGenerated = true;
-    mat->uri = reinterpret_cast<uri_s *>(new de::Uri(DD_MaterialSchemeNameForTextureScheme(texUri.scheme()), texUri.path()));
+    mat->uri = new de::Uri(DD_MaterialSchemeNameForTextureScheme(texUri.scheme()), texUri.path());
 
     if(manifest.hasTexture())
     {
@@ -979,7 +876,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
     int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
     ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
     DENG_ASSERT(st != 0);
-    st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
+    st->texture = new de::Uri(texUri);
 
     // Is there an animation for this?
     AnimGroup const *anim = findAnimGroupForTexture(manifest);
@@ -1017,7 +914,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
 
             int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
             ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
-            st->texture = reinterpret_cast<uri_s *>(new de::Uri(frameManifest.composeUrn()));
+            st->texture = new de::Uri(frameManifest.composeUrn());
             st->tics = animFrame->tics() + animFrame->randomTics();
             if(animFrame->randomTics())
             {
@@ -1585,8 +1482,8 @@ void Def_Read()
         ded_detailtexture_t *dtl = &defs.details[i];
 
         // Ignore definitions which do not specify a material.
-        if((!dtl->material1 || Uri_IsEmpty(dtl->material1)) &&
-           (!dtl->material2 || Uri_IsEmpty(dtl->material2))) continue;
+        if((!dtl->material1 || dtl->material1->isEmpty()) &&
+           (!dtl->material2 || dtl->material2->isEmpty())) continue;
 
         if(!dtl->stage.texture) continue;
 
@@ -1601,7 +1498,7 @@ void Def_Read()
         ded_reflection_t *ref = &defs.reflections[i];
 
         // Ignore definitions which do not specify a material.
-        if(!ref->material || Uri_IsEmpty(ref->material)) continue;
+        if(!ref->material || ref->material->isEmpty()) continue;
 
         if(ref->stage.texture)
         {
@@ -1665,7 +1562,7 @@ void Def_Read()
         Str_Init(&si->external);
         if(snd->ext)
         {
-            Str_Set(&si->external, Str_Text(Uri_Path(snd->ext)));
+            Str_Set(&si->external, snd->ext->pathCStr());
         }
     }
 
@@ -1684,13 +1581,13 @@ void Def_Read()
         if(mus->path)
         {
             if(earliest->path)
-                Uri_Copy(earliest->path, mus->path);
+                *earliest->path = *mus->path;
             else
-                earliest->path = Uri_Dup(mus->path);
+                earliest->path = new de::Uri(*mus->path);
         }
         else if(earliest->path)
         {
-            Uri_Delete(earliest->path);
+            delete earliest->path;
             earliest->path = 0;
         }
     }
@@ -2277,8 +2174,8 @@ int Def_Get(int type, const char* id, void* out)
 
             if(fin)
             {
-                fin->before = defs.finales[i].before;
-                fin->after  = defs.finales[i].after;
+                fin->before = (uri_s *)defs.finales[i].before;
+                fin->after  = (uri_s *)defs.finales[i].after;
                 fin->script = defs.finales[i].script;
             }
             return true;
@@ -2287,40 +2184,40 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_FINALE_BEFORE: {
         finalescript_t *fin = (finalescript_t *) out;
-        struct uri_s *uri = Uri_NewWithPath2(id, RC_NULL);
+        de::Uri *uri = new de::Uri(id, RC_NULL);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
-            if(!defs.finales[i].before || !Uri_Equality(defs.finales[i].before, uri)) continue;
+            if(!defs.finales[i].before || *defs.finales[i].before != *uri) continue;
 
             if(fin)
             {
-                fin->before = defs.finales[i].before;
-                fin->after  = defs.finales[i].after;
+                fin->before = (uri_s *)defs.finales[i].before;
+                fin->after  = (uri_s *)defs.finales[i].after;
                 fin->script = defs.finales[i].script;
             }
-            Uri_Delete(uri);
+            delete uri;
             return true;
         }
-        Uri_Delete(uri);
+        delete uri;
         return false; }
 
     case DD_DEF_FINALE_AFTER: {
         finalescript_t *fin = (finalescript_t *) out;
-        struct uri_s *uri = Uri_NewWithPath2(id, RC_NULL);
+        de::Uri *uri = new de::Uri(id, RC_NULL);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
-            if(!defs.finales[i].after || !Uri_Equality(defs.finales[i].after, uri)) continue;
+            if(!defs.finales[i].after || *defs.finales[i].after != *uri) continue;
 
             if(fin)
             {
-                fin->before = defs.finales[i].before;
-                fin->after  = defs.finales[i].after;
+                fin->before = (uri_s *)defs.finales[i].before;
+                fin->after  = (uri_s *)defs.finales[i].after;
                 fin->script = defs.finales[i].script;
             }
-            Uri_Delete(uri);
+            delete uri;
             return true;
         }
-        Uri_Delete(uri);
+        delete uri;
         return false; }
 
     case DD_DEF_LINE_TYPE: {

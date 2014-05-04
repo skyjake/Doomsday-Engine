@@ -6,6 +6,7 @@
 CONFIG += dengplugin_libcore_full
 
 include(../config_plugin.pri)
+include(../../dep_doomsday.pri)
 
 TEMPLATE = lib
 TARGET   = dehread
@@ -42,6 +43,7 @@ win32 {
 
 macx {
     fixPluginInstallId($$TARGET, 2)
-    linkToBundledLibcore($$TARGET)
-    linkToBundledLiblegacy($$TARGET)
+    linkToBundledLibcore    ($$TARGET)
+    linkToBundledLiblegacy  ($$TARGET)
+    linkToBundledLibdoomsday($$TARGET)
 }

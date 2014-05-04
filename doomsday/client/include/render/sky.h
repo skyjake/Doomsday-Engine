@@ -26,7 +26,7 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
-#include <doomsday/defs/database.h>
+#include <doomsday/defs/ded.h>
 #include <QFlags>
 
 #define MAX_SKY_LAYERS                   ( 2 )

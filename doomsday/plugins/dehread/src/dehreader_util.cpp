@@ -54,7 +54,7 @@ int mapInfoDefForUri(const Uri& uri, ded_mapinfo_t** def)
     for(int i = ded->count.mapInfo.num - 1; i >= 0; i--)
     {
         ded_mapinfo_t& info = ded->mapInfo[i];
-        if(info.uri && Uri_Equality(info.uri, &uri))
+        if(info.uri && Uri_Equality((uri_s *)info.uri, &uri))
         {
             if(def) *def = &info;
             return i;

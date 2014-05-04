@@ -1368,7 +1368,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         {
             if(!def->map) continue;
 
-            if(!Uri_Equality(def->map, reinterpret_cast<uri_s *>(&uri)))
+            if(*def->map != uri)
                 continue;
 
             // Are we still spawning using this generator?

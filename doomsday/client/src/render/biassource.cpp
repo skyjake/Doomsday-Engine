@@ -18,7 +18,6 @@
  */
 
 #include "de_base.h"
-#include "def_data.h"
 
 #include "world/worldsystem.h"
 #include "world/map.h"

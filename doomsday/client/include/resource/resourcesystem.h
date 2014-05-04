@@ -19,7 +19,7 @@
 #ifndef DENG_RESOURCESYSTEM_H
 #define DENG_RESOURCESYSTEM_H
 
-#include "def_data.h"
+#include <doomsday/defs/ded.h>
 #include <doomsday/resource/resourceclass.h>
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"

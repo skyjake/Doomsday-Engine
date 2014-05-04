@@ -1,4 +1,4 @@
-/** @file defs/parser.h  DED v1 parser. @ingroup defs
+/** @file defs/dedparser.h  DED v1 parser. @ingroup defs
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -22,7 +22,7 @@
 #define LIBDOOMSDAY_DED_V1_PARSER_H
 
 #include "../libdoomsday.h"
-#include "database.h"
+#include "ded.h"
 
 /**
  * @return  @c true, if the file was successfully loaded.
@@ -32,5 +32,7 @@ LIBDOOMSDAY_PUBLIC int DED_Read(ded_t* ded, const char* path);
 LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
 
 LIBDOOMSDAY_PUBLIC void DED_SetXGClassLinks(struct xgclass_s *links);
+
+void DED_Include(ded_t *ded, const char* fileName, const char* parentDirectory);
 
 #endif // LIBDOOMSDAY_DED_V1_PARSER_H

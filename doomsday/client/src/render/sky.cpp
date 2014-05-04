@@ -22,7 +22,6 @@
 #include "render/sky.h"
 
 #include "clientapp.h"
-#include "def_data.h"
 #include "client/cl_def.h"
 
 #include "gl/gl_main.h"

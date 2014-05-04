@@ -22,7 +22,6 @@
 #define DENG_RESOURCE_MATERIAL_H
 
 #include "MapElement"
-#include "def_data.h"
 #include "audio/s_environ.h"
 #include "world/dmuargs.h"
 #ifdef __CLIENT__
@@ -30,6 +29,7 @@
 #endif
 #include "Texture"
 #include <doomsday/uri.h>
+#include <doomsday/defs/ded.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>

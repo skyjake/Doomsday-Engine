@@ -1,7 +1,7 @@
-/** @file
+/** @file defs/dedfile.h  Definition files. @ingroup defs
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,21 +13,17 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * de_defs.h: Definitions Subsystem
- */
+#ifndef LIBDOOMSDAY_DEFS_DED_H
+#define LIBDOOMSDAY_DEFS_DED_H
 
-#ifndef __DOOMSDAY_DEFINITIONS_H__
-#define __DOOMSDAY_DEFINITIONS_H__
+#include "../libdoomsday.h"
+#include "ded.h"
 
-#include "def_share.h"
-#include "def_main.h"
-#include <doomsday/defs/ded.h>
-#include <doomsday/defs/dedfile.h>
-#include <doomsday/defs/dedparser.h>
+LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, char const* path);
 
-#endif
+#endif // LIBDOOMSDAY_DEFS_DED_H

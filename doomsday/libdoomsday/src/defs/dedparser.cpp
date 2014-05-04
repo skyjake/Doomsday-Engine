@@ -1,4 +1,4 @@
-/** @file defs/parser.cpp
+/** @file defs/dedparser.cpp
  *
  * Doomsday Engine Definition File Reader.
  *
@@ -35,8 +35,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/defs/parser.h"
-#include "doomsday/defs/database.h"
+#define DENG_NO_API_MACROS_URI
+#include "doomsday/defs/dedparser.h"
+#include "doomsday/defs/ded.h"
+#include "doomsday/defs/dedfile.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/uri.h"
@@ -103,9 +105,9 @@ using namespace de;
 #define READUINT(X) if(!ReadInt(&X, true)) { FAILURE }
 #define READFLT(X)  if(!ReadFloat(&X)) { FAILURE }
 #define READNBYTEVEC(X,N) if(!ReadNByteVector(X, N)) { FAILURE }
-#define READFLAGS(X,P) if(!ReadFlags(&X, P)) { FAILURE }
-#define READBLENDMODE(X) if(!ReadBlendmode(&X)) { FAILURE }
-#define READSTRING(S,I) if(!ReadString(S,sizeof(S))) { I = strtol(token,0,0); }
+#define READFLAGS(X,P) if(!ReadFlags(ded, &X, P)) { FAILURE }
+#define READBLENDMODE(X) if(!ReadBlendmode(ded, &X)) { FAILURE }
+#define READSTRING(S,I) if(!ReadString(S, sizeof(S))) { I = strtol(token,0,0); }
 
 #define RV_BYTE(lab, X) if(ISLABEL(lab)) { READBYTE(X); } else
 #define RV_INT(lab, X)  if(ISLABEL(lab)) { READINT(X); } else
@@ -396,7 +398,7 @@ static int ReadAnyString(char **dest)
     return true;
 }
 
-static int ReadUri(uri_s **dest_, char const *defaultScheme)
+static int ReadUri(de::Uri **dest_, char const *defaultScheme)
 {
     String buffer;
 
@@ -407,11 +409,11 @@ static int ReadUri(uri_s **dest_, char const *defaultScheme)
     buffer = Path::normalizeString(buffer);
 
     if(!*dest_)
-        *dest_ = reinterpret_cast<uri_s *>(new de::Uri(buffer, RC_NULL));
+        *dest_ = new de::Uri(buffer, RC_NULL);
     else
-        reinterpret_cast<de::Uri *>(*dest_)->setUri(buffer, RC_NULL);
+        (*dest_)->setUri(buffer, RC_NULL);
 
-    de::Uri *dest = reinterpret_cast<de::Uri *>(*dest_);
+    de::Uri *dest = *dest_;
 
     if(defaultScheme && defaultScheme[0] && dest->scheme().isEmpty())
         dest->setScheme(defaultScheme);
@@ -483,7 +485,7 @@ static int ReadFloat(float* dest)
     return true;
 }
 
-static int ReadFlags(int *dest, char const *prefix)
+static int ReadFlags(ded_t *ded, int *dest, char const *prefix)
 {
     // By default, no flags are set.
     *dest = 0;
@@ -512,7 +514,7 @@ static int ReadFlags(int *dest, char const *prefix)
 
         if(!flag.isEmpty())
         {
-            *dest = Def_EvalFlags2(flag.toUtf8().constData());
+            *dest = ded->evalFlags2(flag.toUtf8().constData());
         }
         else
         {
@@ -538,7 +540,7 @@ static int ReadFlags(int *dest, char const *prefix)
 
         if(!flag.isEmpty())
         {
-            *dest |= Def_EvalFlags2(flag.toUtf8().constData());
+            *dest |= ded->evalFlags2(flag.toUtf8().constData());
         }
 
         if(!ReadToken())
@@ -554,7 +556,7 @@ static int ReadFlags(int *dest, char const *prefix)
     return true;
 }
 
-static int ReadBlendmode(blendmode_t *dest)
+static int ReadBlendmode(ded_t *ded, blendmode_t *dest)
 {
     LOG_AS("ReadBlendmode");
 
@@ -568,7 +570,7 @@ static int ReadBlendmode(blendmode_t *dest)
         // The old format.
         if(!ReadString(flag)) return false;
 
-        bm = blendmode_t(Def_EvalFlags2(flag.toUtf8().constData()));
+        bm = blendmode_t(ded->evalFlags2(flag.toUtf8().constData()));
     }
     else
     {
@@ -577,7 +579,7 @@ static int ReadBlendmode(blendmode_t *dest)
 
         flag = String("bm_") + String(token);
 
-        bm = blendmode_t(Def_EvalFlags2(flag.toUtf8().constData()));
+        bm = blendmode_t(ded->evalFlags2(flag.toUtf8().constData()));
     }
 
     if(bm != BM_NORMAL)
@@ -630,25 +632,6 @@ static int ReadLabel(char* label)
     }
 
     return true;
-}
-
-static void DED_Include(const char* fileName, const char* parentDirectory)
-{
-    ddstring_t tmp;
-
-    Str_Init(&tmp); Str_Set(&tmp, fileName);
-    F_FixSlashes(&tmp, &tmp);
-    F_ExpandBasePath(&tmp, &tmp);
-    if(!F_IsAbsolute(&tmp))
-    {
-        Str_Prepend(&tmp, parentDirectory);
-    }
-
-    Def_ReadProcessDED(Str_Text(&tmp));
-    Str_Free(&tmp);
-
-    // Reset state for continuing.
-    strncpy(token, "", MAX_TOKEN_LEN);
 }
 
 static void DED_InitReader(const char* buffer, const char* fileName)
@@ -791,7 +774,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             READSTR(tmp);
             CHECKSC;
 
-            DED_Include(tmp, Str_Text(&sourceFileDir));
+            DED_Include(ded, tmp, Str_Text(&sourceFileDir));
             strcpy(label, "");
         }
 
@@ -811,7 +794,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 READSTR(tmp);
                 CHECKSC;
 
-                DED_Include(tmp, Str_Text(&sourceFileDir));
+                DED_Include(ded, tmp, Str_Text(&sourceFileDir));
                 strcpy(label, "");
             }
             else
@@ -893,7 +876,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 READSTR(otherMobjId);
                 ReadToken();
 
-                idx = Def_GetMobjNum(otherMobjId);
+                idx = ded->getMobjNum(otherMobjId);
                 if(idx < 0)
                 {
                     LOG_RES_WARNING("Ignoring unknown Mobj %s in %s on line #%i")
@@ -993,7 +976,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 READSTR(otherStateId);
                 ReadToken();
 
-                idx = Def_GetStateNum(otherStateId);
+                idx = ded->getStateNum(otherStateId);
                 if(idx < 0)
                 {
                     LOG_RES_WARNING("Ignoring unknown State %s in %s on line #%i")
@@ -1105,10 +1088,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 const ded_light_t* prevLight = ded->lights + prevLightDefIdx;
 
                 memcpy(lig, prevLight, sizeof(*lig));
-                if(lig->up)     lig->up     = Uri_Dup(lig->up);
-                if(lig->down)   lig->down   = Uri_Dup(lig->down);
-                if(lig->sides)  lig->sides  = Uri_Dup(lig->sides);
-                if(lig->flare)  lig->flare  = Uri_Dup(lig->flare);
+                if(lig->up)     lig->up     = new de::Uri(*lig->up);
+                if(lig->down)   lig->down   = new de::Uri(*lig->down);
+                if(lig->sides)  lig->sides  = new de::Uri(*lig->sides);
+                if(lig->flare)  lig->flare  = new de::Uri(*lig->flare);
             }
 
             FINDBEGIN;
@@ -1168,18 +1151,17 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             }
             else if(!bCopyNext)
             {
-                uri_s *otherMat = 0;
-                AutoStr *otherMatPath;
+                de::Uri *otherMat = 0;
 
                 READURI(&otherMat, NULL);
                 ReadToken();
 
-                otherMatPath = Uri_Compose(otherMat);
-                mat = Def_GetMaterial(Str_Text(otherMatPath));
+                mat = ded->getMaterial(otherMat->compose().toLatin1());
+
                 if(!mat)
                 {
                     LOG_RES_WARNING("Ignoring unknown Material %s in %s on line #%i")
-                            << Str_Text(Uri_ToString(otherMat))
+                            << otherMat->asText()
                             << (source? source->fileName : "?")
                             << (source? source->lineNumber : 0);
 
@@ -1193,7 +1175,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     idx = mat - ded->materials;
                     bModify = true;
                 }
-                Uri_Delete(otherMat);
+                delete otherMat;
             }
             else
             {
@@ -1206,16 +1188,16 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
                 ded_material_t const *prevMaterial = ded->materials + prevMaterialDefIdx;
-                uri_s *uri = mat->uri;
+                de::Uri *uri = mat->uri;
 
                 std::memcpy(mat, prevMaterial, sizeof(*mat));
                 mat->uri = uri;
                 if(prevMaterial->uri)
                 {
                     if(mat->uri)
-                        Uri_Copy(mat->uri, prevMaterial->uri);
+                        *mat->uri = *prevMaterial->uri;
                     else
-                        mat->uri = Uri_Dup(prevMaterial->uri);
+                        mat->uri = new de::Uri(*prevMaterial->uri);
                 }
 
                 // Duplicate the layers.
@@ -1230,7 +1212,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     for(int k = 0; k < l->stageCount.num; ++k)
                     {
                         if(l->stages[k].texture)
-                            mat->layers[i].stages[k].texture = Uri_Dup(l->stages[k].texture);
+                            mat->layers[i].stages[k].texture = new de::Uri(*l->stages[k].texture);
                     }
                 }
 
@@ -1246,10 +1228,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     for(int k = 0; k < dl->stageCount.num; ++k)
                     {
                         ded_decorlight_stage_t *stage = &mat->decorations[i].stages[k];
-                        if(stage->flare)   stage->flare = Uri_Dup(stage->flare);
-                        if(stage->up)      stage->up    = Uri_Dup(stage->up);
-                        if(stage->down)    stage->down  = Uri_Dup(stage->down);
-                        if(stage->sides)   stage->sides = Uri_Dup(stage->sides);
+                        if(stage->flare)   stage->flare = new de::Uri(*stage->flare);
+                        if(stage->up)      stage->up    = new de::Uri(*stage->up);
+                        if(stage->down)    stage->down  = new de::Uri(*stage->down);
+                        if(stage->sides)   stage->sides = new de::Uri(*stage->sides);
                     }
                 }
             }
@@ -1301,7 +1283,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                                         &st     = mat->layers[layer].stages[layerStage];
 
                                     if(prevSt.texture)
-                                        st.texture = Uri_Dup(prevSt.texture);
+                                        st.texture = new de::Uri(*prevSt.texture);
                                     st.tics                 = prevSt.tics;
                                     st.variance             = prevSt.variance;
                                     st.glowStrength         = prevSt.glowStrength;
@@ -1434,13 +1416,13 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     for(uint i = 0; i < mdl->subCount(); ++i)
                     {
                         if(mdl->sub(i).filename)
-                            mdl->sub(i).filename = Uri_Dup(mdl->sub(i).filename);
+                            mdl->sub(i).filename = new de::Uri(*mdl->sub(i).filename);
 
                         if(mdl->sub(i).skinFilename)
-                            mdl->sub(i).skinFilename = Uri_Dup(mdl->sub(i).skinFilename);
+                            mdl->sub(i).skinFilename = new de::Uri(*mdl->sub(i).skinFilename);
 
                         if(mdl->sub(i).shinySkin)
-                            mdl->sub(i).shinySkin = Uri_Dup(mdl->sub(i).shinySkin);
+                            mdl->sub(i).shinySkin = new de::Uri(*mdl->sub(i).shinySkin);
                     }
                 }
             }
@@ -1523,21 +1505,21 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 for(uint i = 0; i < mdl->subCount(); ++i)
                 {
-                    if(mdl->sub(i).filename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub(i).filename), "-"))
+                    if(mdl->sub(i).filename && !Str_CompareIgnoreCase(mdl->sub(i).filename->pathStr(), "-"))
                     {
-                        Uri_Delete(mdl->sub(i).filename);
+                        delete mdl->sub(i).filename;
                         mdl->sub(i).filename = NULL;
                     }
 
-                    if(mdl->sub(i).skinFilename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub(i).skinFilename), "-"))
+                    if(mdl->sub(i).skinFilename && !Str_CompareIgnoreCase(mdl->sub(i).skinFilename->pathStr(), "-"))
                     {
-                        Uri_Delete(mdl->sub(i).skinFilename);
+                        delete mdl->sub(i).skinFilename;
                         mdl->sub(i).skinFilename = NULL;
                     }
 
-                    if(mdl->sub(i).shinySkin && !Str_CompareIgnoreCase(Uri_Path(mdl->sub(i).shinySkin), "-"))
+                    if(mdl->sub(i).shinySkin && !Str_CompareIgnoreCase(mdl->sub(i).shinySkin->pathStr(), "-"))
                     {
-                        Uri_Delete(mdl->sub(i).shinySkin);
+                        delete mdl->sub(i).shinySkin;
                         mdl->sub(i).shinySkin = NULL;
                     }
 
@@ -1618,7 +1600,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 for(i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
                     if(sky->layers[i].material)
-                        sky->layers[i].material = Uri_Dup(sky->layers[i].material);
+                        sky->layers[i].material = new de::Uri(*sky->layers[i].material);
                 }
                 for(i = 0; i < NUM_SKY_MODELS; ++i)
                 {
@@ -1698,7 +1680,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             if(prevMapInfoDefIdx >= 0 && bCopyNext)
             {
                 const ded_mapinfo_t* prevMapInfo = ded->mapInfo + prevMapInfoDefIdx;
-                uri_s* uri = mi->uri;
+                de::Uri *uri = mi->uri;
                 int i;
 
                 memcpy(mi, prevMapInfo, sizeof(*mi));
@@ -1706,16 +1688,16 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(prevMapInfo->uri)
                 {
                     if(mi->uri)
-                        Uri_Copy(mi->uri, prevMapInfo->uri);
+                        *mi->uri = *prevMapInfo->uri;
                     else
-                        mi->uri = Uri_Dup(prevMapInfo->uri);
+                        mi->uri = new de::Uri(*prevMapInfo->uri);
                 }
 
                 mi->execute = sdup(mi->execute);
                 for(i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
                     if(mi->sky.layers[i].material)
-                        mi->sky.layers[i].material = Uri_Dup(mi->sky.layers[i].material);
+                        mi->sky.layers[i].material = new de::Uri(*mi->sky.layers[i].material);
                 }
                 for(i = 0; i < NUM_SKY_MODELS; ++i)
                 {
@@ -1842,7 +1824,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 FINDBEGIN;
                 for(;;)
                 {
-                    uri_s** mn;
+                    de::Uri **mn;
 
                     READLABEL;
                     RV_STR("ID", tenv->id)
@@ -1851,7 +1833,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         // A new material path.
                         ddstring_t schemeName; Str_Init(&schemeName);
                         Str_Set(&schemeName, ISLABEL("Material")? "" : ISLABEL("Texture")? "Textures" : "Flats");
-                        mn = (uri_s**) DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
+                        mn = (de::Uri **) DED_NewEntry((void **)&tenv->materials, &tenv->count, sizeof(*mn));
                         FINDBEGIN;
                         for(;;)
                         {
@@ -2029,9 +2011,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 std::memcpy(dtl, prevDetail, sizeof(*dtl));
 
-                if(dtl->material1) dtl->material1  = Uri_Dup(dtl->material1);
-                if(dtl->material2) dtl->material2  = Uri_Dup(dtl->material2);
-                if(dtl->stage.texture) dtl->stage.texture = Uri_Dup(dtl->stage.texture);
+                if(dtl->material1) dtl->material1  = new de::Uri(*dtl->material1);
+                if(dtl->material2) dtl->material2  = new de::Uri(*dtl->material2);
+                if(dtl->stage.texture) dtl->stage.texture = new de::Uri(*dtl->stage.texture);
             }
 
             FINDBEGIN;
@@ -2083,9 +2065,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(ref, prevRef, sizeof(*ref));
 
-                if(ref->material) ref->material = Uri_Dup(ref->material);
-                if(ref->stage.texture) ref->stage.texture = Uri_Dup(ref->stage.texture);
-                if(ref->stage.maskTexture) ref->stage.maskTexture = Uri_Dup(ref->stage.maskTexture);
+                if(ref->material) ref->material = new de::Uri(*ref->material);
+                if(ref->stage.texture) ref->stage.texture = new de::Uri(*ref->stage.texture);
+                if(ref->stage.maskTexture) ref->stage.maskTexture = new de::Uri(*ref->stage.maskTexture);
             }
 
             FINDBEGIN;
@@ -2133,8 +2115,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(gen, prevGen, sizeof(*gen));
 
-                if(gen->map) gen->map = Uri_Dup(gen->map);
-                if(gen->material) gen->material = Uri_Dup(gen->material);
+                if(gen->map) gen->map = new de::Uri(*gen->map);
+                if(gen->material) gen->material = new de::Uri(*gen->material);
 
                 // Duplicate the stages array.
                 if(gen->stages)
@@ -2288,15 +2270,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 ded_decor_t const *prevDecor = ded->decorations + prevDecorDefIdx;
 
                 std::memcpy(decor, prevDecor, sizeof(*decor));
-                if(decor->material) decor->material = Uri_Dup(decor->material);
+                if(decor->material) decor->material = new de::Uri(*decor->material);
 
                 for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
                 {
                     ded_decoration_t *dl = &decor->lights[i];
-                    if(dl->stage.flare)   dl->stage.flare = Uri_Dup(dl->stage.flare);
-                    if(dl->stage.up)      dl->stage.up    = Uri_Dup(dl->stage.up);
-                    if(dl->stage.down)    dl->stage.down  = Uri_Dup(dl->stage.down);
-                    if(dl->stage.sides)   dl->stage.sides = Uri_Dup(dl->stage.sides);
+                    if(dl->stage.flare)   dl->stage.flare = new de::Uri(*dl->stage.flare);
+                    if(dl->stage.up)      dl->stage.up    = new de::Uri(*dl->stage.up);
+                    if(dl->stage.down)    dl->stage.down  = new de::Uri(*dl->stage.down);
+                    if(dl->stage.sides)   dl->stage.sides = new de::Uri(*dl->stage.sides);
                 }
             }
 
@@ -2471,8 +2453,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(l, prevLineType, sizeof(*l));
 
-                if(l->actMaterial)   l->actMaterial   = Uri_Dup(l->actMaterial);
-                if(l->deactMaterial) l->deactMaterial = Uri_Dup(l->deactMaterial);
+                if(l->actMaterial)   l->actMaterial   = new de::Uri(*l->actMaterial);
+                if(l->deactMaterial) l->deactMaterial = new de::Uri(*l->deactMaterial);
             }
 
             FINDBEGIN;
@@ -2796,4 +2778,23 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
     }
     SetError("Bad lump number.");
     return false;
+}
+
+void DED_Include(ded_t *ded, const char* fileName, const char* parentDirectory)
+{
+    ddstring_t tmp;
+
+    Str_Init(&tmp); Str_Set(&tmp, fileName);
+    F_FixSlashes(&tmp, &tmp);
+    F_ExpandBasePath(&tmp, &tmp);
+    if(!F_IsAbsolute(&tmp))
+    {
+        Str_Prepend(&tmp, parentDirectory);
+    }
+
+    Def_ReadProcessDED(ded, Str_Text(&tmp));
+    Str_Free(&tmp);
+
+    // Reset state for continuing.
+    strncpy(token, "", MAX_TOKEN_LEN);
 }

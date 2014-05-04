@@ -50,7 +50,7 @@ AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
     return envInfo[1 + int(id)];
 }
 
-AudioEnvironmentId S_AudioEnvironmentId(uri_s const *uri)
+AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri)
 {
     if(uri)
     {
@@ -59,8 +59,8 @@ AudioEnvironmentId S_AudioEnvironmentId(uri_s const *uri)
         {
             for(int k = 0; k < env->count.num; ++k)
             {
-                uri_s *ref = env->materials[k];
-                if(!ref || !Uri_Equality(ref, uri)) continue;
+                de::Uri *ref = env->materials[k];
+                if(!ref || *ref != *uri) continue;
 
                 // Is this a known environment?
                 for(int m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)

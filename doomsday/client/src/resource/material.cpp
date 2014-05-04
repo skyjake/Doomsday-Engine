@@ -227,7 +227,7 @@ Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight
     Texture *flareTexture = 0;
     int sysFlareIdx = def.sysFlareIdx;
 
-    if(def.flare && !Uri_IsEmpty(def.flare))
+    if(def.flare && !def.flare->isEmpty())
     {
         de::Uri const *resourceUri = reinterpret_cast<de::Uri *>(def.flare);
 

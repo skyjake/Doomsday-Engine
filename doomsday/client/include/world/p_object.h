@@ -26,7 +26,6 @@
 #endif
 
 #include "api_map.h"
-#include "def_data.h"
 #ifdef __CLIENT__
 #  include "ModelDef"
 #  include "Sprite"
@@ -34,6 +33,7 @@
 #include <de/Vector>
 #include <de/aabox.h>
 #include <doomsday/world/mobj.h>
+#include <doomsday/defs/ded.h>
 
 class BspLeaf;
 class Plane;
