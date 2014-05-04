@@ -40,6 +40,8 @@ using namespace de;
 static QList<knownword_t> knownWords;
 static dd_bool knownWordsNeedUpdate;
 
+static void (*appWordsCallback)();
+
 void Con_ClearKnownWords(void)
 {
     knownWords.clear();
@@ -176,17 +178,10 @@ static void updateKnownWords(void)
     // Add aliases?
     Con_AddKnownWordsForAliases();
 
-    /// @todo Add a callback for app-specific known words. -jk
-
-#if 0 // we don't have access to the games list!
-    // Add games?
-    foreach(Game *game, App_Games().all())
+    if(appWordsCallback)
     {
-        knownWords[knownWordIdx].type = WT_GAME;
-        knownWords[knownWordIdx].data = game;
-        ++knownWordIdx;
+        appWordsCallback();
     }
-#endif
 
     // Sort it so we get nice alphabetical word completions.
     qSort(knownWords.begin(), knownWords.end(), compareKnownWordByName);
@@ -421,4 +416,9 @@ shell::Lexicon Con_Lexicon()
     Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
     lexi.setAdditionalWordChars("-_.");
     return lexi;
+}
+
+void Con_SetApplicationKnownWordCallback(void (*callback)())
+{
+    appWordsCallback = callback;
 }

@@ -49,6 +49,14 @@ void Con_UpdateKnownWords();
 
 void Con_ClearKnownWords();
 
+/**
+ * Sets a callback that is called whenever the set of known words needs updating.
+ * The callback should add all the known words using Con_AddKnownWord.
+ *
+ * @param callback  Known word addition callback.
+ */
+LIBDOOMSDAY_PUBLIC void Con_SetApplicationKnownWordCallback(void (*callback)());
+
 LIBDOOMSDAY_PUBLIC void Con_AddKnownWord(knownwordtype_t type, void *ptr);
 
 /**
