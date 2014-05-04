@@ -17,7 +17,7 @@ macx {
         # Quite a hack: directly use the client's Frameworks folder.
         doPostLink("rm -rf $$fwDir")
         doPostLink("ln -s \"$$OUT_PWD/../../client/Doomsday.app/Contents/Frameworks\" $$fwDir")
-        doPostLink("ln -sf \"$$OUT_PWD/../../client/Doomsday.app/Contents/PlugIns\" \"$$contDir/PlugIns\"")
+        doPostLink("ln -sf \"$$OUT_PWD/../../client/Doomsday.app/Contents/PlugIns\" \"$$contDir/\"")
         doPostLink("ln -sf \"$$OUT_PWD/../../client/Doomsday.app/Contents/Resources/qt.conf\" \"$$contDir/Resources/qt.conf\"")
 
         # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
