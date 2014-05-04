@@ -733,19 +733,21 @@ DENG2_PIMPL(SectorCluster)
                 // Inform bias surfaces of changed geometry.
                 foreach(BspLeaf *bspLeaf, bspLeafs)
                 {
+                    ConvexSubspace &subspace = bspLeaf->subspace();
+
                     if(Shard *shard = self.findShard(*bspLeaf, plane.indexInSector()))
                     {
                         shard->updateBiasAfterMove();
                     }
 
-                    HEdge *base = bspLeaf->poly().hedge();
+                    HEdge *base = subspace.poly().hedge();
                     HEdge *hedge = base;
                     do
                     {
                         updateBiasForWallSectionsAfterGeometryMove(hedge);
                     } while((hedge = &hedge->next()) != base);
 
-                    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+                    foreach(Mesh *mesh, subspace.extraMeshes())
                     foreach(HEdge *hedge, mesh->hedges())
                     {
                         updateBiasForWallSectionsAfterGeometryMove(hedge);
@@ -864,15 +866,16 @@ DENG2_PIMPL(SectorCluster)
 
         foreach(BspLeaf *bspLeaf, reverbBspLeafs)
         {
-            if(bspLeaf->updateReverb())
+            ConvexSubspace &subspace = bspLeaf->subspace();
+            if(subspace.updateReverb())
             {
-                BspLeaf::AudioEnvironmentFactors const &leafReverb = bspLeaf->reverb();
+                ConvexSubspace::AudioEnvironmentFactors const &subReverb = subspace.reverb();
 
-                reverb[SRD_SPACE]   += leafReverb[SRD_SPACE];
+                reverb[SRD_SPACE]   += subReverb[SRD_SPACE];
 
-                reverb[SRD_VOLUME]  += leafReverb[SRD_VOLUME]  / 255.0f * leafReverb[SRD_SPACE];
-                reverb[SRD_DECAY]   += leafReverb[SRD_DECAY]   / 255.0f * leafReverb[SRD_SPACE];
-                reverb[SRD_DAMPING] += leafReverb[SRD_DAMPING] / 255.0f * leafReverb[SRD_SPACE];
+                reverb[SRD_VOLUME]  += subReverb[SRD_VOLUME]  / 255.0f * subReverb[SRD_SPACE];
+                reverb[SRD_DECAY]   += subReverb[SRD_DECAY]   / 255.0f * subReverb[SRD_SPACE];
+                reverb[SRD_DAMPING] += subReverb[SRD_DAMPING] / 255.0f * subReverb[SRD_SPACE];
             }
         }
 
@@ -965,7 +968,7 @@ SectorCluster::SectorCluster(BspLeafs const &bspLeafs)
     foreach(BspLeaf *bspLeaf, bspLeafs)
     {
         // Attribute the BSP leaf to the cluster.
-        bspLeaf->setCluster(this);
+        bspLeaf->subspace().setCluster(this);
     }
 
     // Observe changes to plane heights in "this" sector.
@@ -1191,7 +1194,7 @@ static int countIlluminationPoints(MapElement &mapElement, int group)
     case DMU_BSPLEAF: {
         BspLeaf &bspLeaf = mapElement.as<BspLeaf>();
         DENG2_ASSERT(group >= 0 && group < bspLeaf.sector().planeCount()); // sanity check
-        return bspLeaf.numFanVertices(); }
+        return bspLeaf.subspace().numFanVertices(); }
 
     case DMU_SEGMENT:
         DENG2_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check

@@ -1,6 +1,6 @@
-/** @file world/bsp/convexsubspace.cpp  BSP Builder Convex Subspace.
+/** @file convexsubspaceproxy.cpp  BSP builder convex subspace proxy.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,7 +18,7 @@
  */
 
 #include "de_platform.h"
-#include "world/bsp/convexsubspace.h"
+#include "world/bsp/convexsubspaceproxy.h"
 
 #include "Face"
 #include "HEdge"
@@ -34,6 +34,7 @@
 #include <de/Log>
 #include <QHash>
 #include <QSet>
+#include <QVarLengthArray>
 #include <QtAlgorithms>
 
 /// Smallest difference between two angles before being considered equal (in degrees).
@@ -186,7 +187,7 @@ struct Continuity
 #endif
 };
 
-DENG2_PIMPL_NOREF(ConvexSubspace)
+DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
 {
     typedef QSet<LineSegmentSide *> Segments;
 
@@ -208,11 +209,11 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     {}
 
     Instance(Instance const &other)
-        : de::IPrivate(),
-          segments                  (other.segments),
-          orderedSegments           (other.orderedSegments),
-          needRebuildOrderedSegments(other.needRebuildOrderedSegments),
-          bspLeaf                   (other.bspLeaf)
+        : de::IPrivate()
+        , segments                  (other.segments)
+        , orderedSegments           (other.orderedSegments)
+        , needRebuildOrderedSegments(other.needRebuildOrderedSegments)
+        , bspLeaf                   (other.bspLeaf)
     {}
 
     /**
@@ -318,27 +319,27 @@ private:
     Instance &operator = (Instance const &); // no assignment
 };
 
-ConvexSubspace::ConvexSubspace()
+ConvexSubspaceProxy::ConvexSubspaceProxy()
     : d(new Instance())
 {}
 
-ConvexSubspace::ConvexSubspace(QList<LineSegmentSide *> const &segments)
+ConvexSubspaceProxy::ConvexSubspaceProxy(QList<LineSegmentSide *> const &segments)
     : d(new Instance())
 {
     addSegments(segments);
 }
 
-ConvexSubspace::ConvexSubspace(ConvexSubspace const &other)
+ConvexSubspaceProxy::ConvexSubspaceProxy(ConvexSubspaceProxy const &other)
     : d(new Instance(*other.d))
 {}
 
-ConvexSubspace &ConvexSubspace::operator = (ConvexSubspace const &other)
+ConvexSubspaceProxy &ConvexSubspaceProxy::operator = (ConvexSubspaceProxy const &other)
 {
     d.reset(new Instance(*other.d));
     return *this;
 }
 
-void ConvexSubspace::addSegments(QList<LineSegmentSide *> const &newSegments)
+void ConvexSubspaceProxy::addSegments(QList<LineSegmentSide *> const &newSegments)
 {
     int sizeBefore = d->segments.size();
 
@@ -354,13 +355,13 @@ void ConvexSubspace::addSegments(QList<LineSegmentSide *> const &newSegments)
     int numSegmentsAdded = d->segments.size() - sizeBefore;
     if(numSegmentsAdded < newSegments.size())
     {
-        LOG_DEBUG("ConvexSubspace pruned %i duplicate segments")
+        LOG_DEBUG("ConvexSubspaceProxy pruned %i duplicate segments")
             << (newSegments.size() - numSegmentsAdded);
     }
 #endif
 }
 
-void ConvexSubspace::addOneSegment(LineSegmentSide const &newSegment)
+void ConvexSubspaceProxy::addOneSegment(LineSegmentSide const &newSegment)
 {
     int sizeBefore = d->segments.size();
 
@@ -373,17 +374,17 @@ void ConvexSubspace::addOneSegment(LineSegmentSide const &newSegment)
     }
     else
     {
-        LOG_DEBUG("ConvexSubspace pruned one duplicate segment");
+        LOG_DEBUG("ConvexSubspaceProxy pruned one duplicate segment");
     }
 }
 
-void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
+void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 {
-    LOG_AS("ConvexSubspace::buildGeometry");
+    LOG_AS("ConvexSubspaceProxy::buildGeometry");
 
     // Sanity check.
     if(segmentCount() >= 3 && !d->haveMapLineSegment())
-        throw Error("ConvexSubspace::buildGeometry", "No map line segment");
+        throw Error("ConvexSubspaceProxy::buildGeometry", "No map line segment");
 
     if(d->needRebuildOrderedSegments)
     {
@@ -413,6 +414,8 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         Continuity *conty = found.value();
         conty->addOneSegment(oseg);
     }
+
+    QVarLengthArray<Mesh *, 2> extraMeshes;
 
     int extraMeshSegments = 0;
     for(int i = 0; i < continuities.count(); ++i)
@@ -500,8 +503,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 face->updateAABox();
                 face->updateCenter();
 
-                // Assign the mesh to the BSP leaf (takes ownership).
-                leaf.assignExtraMesh(*extraMesh);
+                extraMeshes.append(extraMesh);
             }
         }
     }
@@ -596,17 +598,28 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         face->updateAABox();
         face->updateCenter();
 
-        // Assign the mesh to the BSP leaf (takes ownership).
-        leaf.setPoly(face);
+        // Assign a new convex subspace to the BSP leaf (takes ownership).
+        leaf.setSubspace(ConvexSubspace::newFromConvexPoly(*face));
+
+        // Assign any extra meshes to the subspace (takes ownership).
+        for(int i = 0; i < extraMeshes.count(); ++i)
+        {
+            leaf.subspace().assignExtraMesh(*extraMeshes.at(i));
+        }
     }
+    /*else
+    {
+        // Dump the unneeded extra meshes.
+        qDeleteAll(extraMeshes);
+    }*/
 }
 
-int ConvexSubspace::segmentCount() const
+int ConvexSubspaceProxy::segmentCount() const
 {
     return d->segments.count();
 }
 
-OrderedSegments const &ConvexSubspace::segments() const
+OrderedSegments const &ConvexSubspaceProxy::segments() const
 {
     if(d->needRebuildOrderedSegments)
     {
@@ -615,12 +628,12 @@ OrderedSegments const &ConvexSubspace::segments() const
     return d->orderedSegments;
 }
 
-BspLeaf *ConvexSubspace::bspLeaf() const
+BspLeaf *ConvexSubspaceProxy::bspLeaf() const
 {
     return d->bspLeaf;
 }
 
-void ConvexSubspace::setBspLeaf(BspLeaf *newBspLeaf)
+void ConvexSubspaceProxy::setBspLeaf(BspLeaf *newBspLeaf)
 {
     d->bspLeaf = newBspLeaf;
 }

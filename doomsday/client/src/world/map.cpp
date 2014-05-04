@@ -565,14 +565,14 @@ DENG2_PIMPL(Map)
             if(!leaf.hasParent())
             {
                 LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                    << &leaf << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
+                    << &leaf << (leaf.hasSubspace()? leaf.poly().hedgeCount() : 0);
 
                 // Attribute this leaf directly to the map.
                 leaf.setMap(thisPublic);
             }
 
 #ifdef DENG_DEBUG
-            if(leaf.hasPoly())
+            if(leaf.hasSubspace())
             {
                 // See if we received a partial geometry...
                 int discontinuities = 0;
@@ -758,7 +758,7 @@ DENG2_PIMPL(Map)
                 continue;
 
             // BSP leaf with no geometry are excluded.
-            if(!bspLeaf->hasPoly())
+            if(!bspLeaf->hasSubspace())
                 continue;
 
             bspLeafSets.append(BspLeafs());
@@ -2368,12 +2368,13 @@ struct blockmapcellbspleafsiterator_params_t
 static int blockmapCellBspLeafsIterator(void *object, void *context)
 {
     BspLeaf *bspLeaf = static_cast<BspLeaf *>(object);
+    DENG2_ASSERT(bspLeaf->hasSubspace()); // sanity check
     blockmapcellbspleafsiterator_params_t &parm = *static_cast<blockmapcellbspleafsiterator_params_t *>(context);
 
-    if(bspLeaf->validCount() != parm.localValidCount)
+    if(bspLeaf->subspace().validCount() != parm.localValidCount)
     {
         // This BspLeaf has now been processed for the current iteration.
-        bspLeaf->setValidCount(parm.localValidCount);
+        bspLeaf->subspace().setValidCount(parm.localValidCount);
 
         // Check the bounds.
         AABoxd const &leafAABox = bspLeaf->poly().aaBox();
@@ -2610,19 +2611,21 @@ void Map::link(mobj_t &mo, int flags)
     {
         mo.dPlayer->inVoid = true;
 
-        if(!Mobj_BspLeafAtOrigin(mo).polyContains(Mobj_Origin(mo)))
-            return;
-
-        SectorCluster &cluster = Mobj_Cluster(mo);
-#ifdef __CLIENT__
-        if(mo.origin[VZ] <  cluster.visCeiling().heightSmoothed() + 4 &&
-           mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
-#else
-        if(mo.origin[VZ] <  cluster.ceiling().height() + 4 &&
-           mo.origin[VZ] >= cluster.floor().height())
-#endif
+        if(SectorCluster *cluster = Mobj_ClusterPtr(mo))
         {
-            mo.dPlayer->inVoid = false;
+            if(Mobj_BspLeafAtOrigin(mo).subspace().contains(Mobj_Origin(mo)))
+            {
+#ifdef __CLIENT__
+                if(mo.origin[VZ] <  cluster->visCeiling().heightSmoothed() + 4 &&
+                   mo.origin[VZ] >= cluster->visFloor().heightSmoothed())
+#else
+                if(mo.origin[VZ] <  cluster->ceiling().height() + 4 &&
+                   mo.origin[VZ] >= cluster->floor().height())
+#endif
+                {
+                    mo.dPlayer->inVoid = false;
+                }
+            }
         }
     }
 }
@@ -2836,7 +2839,7 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 SectorCluster *Map::clusterAt(Vector2d const &point) const
 {
     BspLeaf &bspLeaf = bspLeafAt(point);
-    if(bspLeaf.polyContains(point))
+    if(bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
     {
         return bspLeaf.clusterPtr();
     }
@@ -3059,8 +3062,8 @@ Lumobj &Map::addLumobj(Lumobj const &lumobj)
 
     lum.setMap(this);
     lum.setIndexInMap(d->lumobjs.count() - 1);
-
-    lum.bspLeafAtOrigin().link(lum);
+    DENG2_ASSERT(lum.bspLeafAtOrigin().hasPoly());
+    lum.bspLeafAtOrigin().subspace().link(lum);
     R_AddContact(lum); // For spreading purposes.
 
     return lum;
@@ -3078,7 +3081,10 @@ void Map::removeAllLumobjs()
 {
     foreach(BspLeaf *leaf, d->bspLeafs)
     {
-        leaf->unlinkAllLumobjs();
+        if(leaf->hasPoly())
+        {
+            leaf->subspace().unlinkAllLumobjs();
+        }
     }
     qDeleteAll(d->lumobjs);
     d->lumobjs.clear();

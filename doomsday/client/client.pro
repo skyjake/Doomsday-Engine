@@ -125,6 +125,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/CompositeBitmapFont \
     include/Contact \
     include/ContactSpreader \
+    include/ConvexSubspace \
     include/Decoration \
     include/DrawList \
     include/DrawLists \
@@ -421,7 +422,7 @@ DENG_HEADERS += \
     include/versioninfo.h \
     include/world/blockmap.h \
     include/world/bsp/bsptreenode.h \
-    include/world/bsp/convexsubspace.h \
+    include/world/bsp/convexsubspaceproxy.h \
     include/world/bsp/edgetip.h \
     include/world/bsp/hplane.h \
     include/world/bsp/linesegment.h \
@@ -433,6 +434,7 @@ DENG_HEADERS += \
     include/world/clientmobjthinkerdata.h \
     include/world/contact.h \
     include/world/contactspreader.h \
+    include/world/convexsubspace.h \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
@@ -742,7 +744,7 @@ SOURCES += \
     src/world/api_map.cpp \
     src/world/api_mapedit.cpp \
     src/world/blockmap.cpp \
-    src/world/bsp/convexsubspace.cpp \
+    src/world/bsp/convexsubspaceproxy.cpp \
     src/world/bsp/hplane.cpp \
     src/world/bsp/linesegment.cpp \
     src/world/bsp/partitioner.cpp \
@@ -752,6 +754,7 @@ SOURCES += \
     src/world/clientmobjthinkerdata.cpp \
     src/world/contact.cpp \
     src/world/contactspreader.cpp \
+    src/world/convexsubspace.cpp \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \

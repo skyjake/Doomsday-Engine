@@ -1307,7 +1307,7 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    if(bspLeaf.shadowLines().isEmpty()) return;
+    if(bspLeaf.subspace().shadowLines().isEmpty()) return;
 
     SectorCluster &cluster = bspLeaf.cluster();
     float sectorlight = cluster.lightSourceIntensity();
@@ -1324,7 +1324,7 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    BspLeaf::ShadowLines const &shadowLines = bspLeaf.shadowLines();
+    ConvexSubspace::ShadowLines const &shadowLines = bspLeaf.subspace().shadowLines();
     foreach(LineSide *side, shadowLines)
     {
         // Already rendered during the current frame? We only want to

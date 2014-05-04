@@ -132,13 +132,15 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
                     Vector3d patternOffset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
 
                     Vector3d decorOrigin = origin + delta * patternOffset;
+
+                    BspLeaf &bspLeaf = suf.map().bspLeafAt(decorOrigin);
+                    if(!bspLeaf.hasSubspace()) continue;
+                    if(!bspLeaf.subspace().contains(decorOrigin)) continue;
+
                     if(containingSector)
                     {
                         // The point must be inside the correct sector.
-                        BspLeaf &bspLeaf = suf.map().bspLeafAt(decorOrigin);
-                        if(bspLeaf.sectorPtr() != containingSector
-                           || !bspLeaf.polyContains(decorOrigin))
-                            continue;
+                        if(bspLeaf.sectorPtr() != containingSector) continue;
                     }
 
                     suf.addDecoration(new LightDecoration(matDecor, decorOrigin));
