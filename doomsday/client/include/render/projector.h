@@ -31,7 +31,7 @@
 
 #include "world/map.h"
 
-class BspLeaf;
+class ConvexSubspace;
 
 /**
  * Stores data for a texture surface projection.
@@ -67,23 +67,23 @@ void Rend_ProjectorReset();
  * coordinates (in texture space) then store into a new list of projections.
  *
  * @pre The coordinates of the given quad must be contained wholly within
- * the BSP leaf specified. This is due to an optimization within the lumobj
- * management which separates them according to their position in the BSP.
+ * the subspoce specified. This is due to an optimization within the lumobj
+ * management which separates them by subspace.
  *
- * @param bspLeaf        BspLeaf within which the quad wholly resides.
- * @param topLeft        Top left coordinates of the surface being projected to.
- * @param bottomRight    Bottom right coordinates of the surface being projected to.
- * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
- * @param blendFactor    Multiplied with projection alpha.
- * @param lightmap       Semantic identifier of the lightmap to use.
+ * @param subspace         ConvexSubspace within which the quad wholly resides.
+ * @param topLeft          Top left coordinates of the surface being projected to.
+ * @param bottomRight      Bottom right coordinates of the surface being projected to.
+ * @param tangentMatrix    Normalized tangent space matrix of the surface being projected to.
+ * @param blendFactor      Multiplied with projection alpha.
+ * @param lightmap         Semantic identifier of the lightmap to use.
  * @param sortByLuminance  @c true= Sort the projections by luminosity.
  *
  * Return values:
- * @param listIdx        If projected to, the identifier of the resultant list
- *                       (1-based) is written here. If a projection list already
- *                       exists it will be reused.
+ * @param listIdx          If projected to, the identifier of the resultant list
+ *                         (1-based) is written here. If a projection list already
+ *                         exists it will be reused.
  */
-void Rend_ProjectLumobjs(BspLeaf *bspLeaf, de::Vector3d const &topLeft,
+void Rend_ProjectLumobjs(ConvexSubspace *subspace, de::Vector3d const &topLeft,
     de::Vector3d const &bottomRight, de::Matrix3f const &tangentMatrix,
     float blendFactor, Lumobj::LightmapSemantic lightmap, bool sortByLuminance,
     uint &listIdx);
@@ -93,22 +93,22 @@ void Rend_ProjectLumobjs(BspLeaf *bspLeaf, de::Vector3d const &topLeft,
  * coordinates (in texture space) then store into a new list of projections.
  *
  * @pre The coordinates of the given quad must be contained wholly within
- * the BSP leaf specified. This is due to an optimization within the lumobj
- * management which separates them according to their position in the BSP.
+ * the subspace specified. This is due to an optimization within the lumobj
+ * management which separates them by subspace.
  *
- * @param bspLeaf        BspLeaf within which the quad wholly resides.
- * @param topLeft        Top left coordinates of the surface being projected to.
- * @param bottomRight    Bottom right coordinates of the surface being projected to.
- * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
- * @param blendFactor    Multiplied with projection alpha.
+ * @param subspace         ConvexSubspace within which the quad wholly resides.
+ * @param topLeft          Top left coordinates of the surface being projected to.
+ * @param bottomRight      Bottom right coordinates of the surface being projected to.
+ * @param tangentMatrix    Normalized tangent space matrix of the surface being projected to.
+ * @param blendFactor      Multiplied with projection alpha.
  * @param sortByLuminance  @c true= Sort the projections by luminosity.
  *
  * Return values:
- * @param listIdx        If projected to, the identifier of the resultant list
- *                       (1-based) is written here. If a projection list already
- *                       exists it will be reused.
+ * @param listIdx          If projected to, the identifier of the resultant list
+ *                         (1-based) is written here. If a projection list already
+ *                         exists it will be reused.
  */
-void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, de::Vector3d const &topLeft,
+void Rend_ProjectPlaneGlows(ConvexSubspace *subspace, de::Vector3d const &topLeft,
     de::Vector3d const &bottomRight, de::Matrix3f const &tangentMatrix,
     float blendFactor, bool sortByLuminance, uint &listIdx);
 
@@ -117,10 +117,10 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, de::Vector3d const &topLeft,
  * coordinates (in texture space) then store into a new list of projections.
  *
  * @pre The coordinates of the given quad must be contained wholly within
- * the BSP leaf specified. This is due to an optimization within the mobj
- * management which separates them according to their position in the BSP.
+ * the subspace specified. This is due to an optimization within the mobj
+ * management which separates them by subspace.
  *
- * @param bspLeaf        BspLeaf within which the quad wholly resides.
+ * @param subspace       ConvexSubspace within which the quad wholly resides.
  * @param topLeft        Top left coordinates of the surface being projected to.
  * @param bottomRight    Bottom right coordinates of the surface being projected to.
  * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
@@ -131,7 +131,7 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, de::Vector3d const &topLeft,
  *                       (1-based) is written here. If a projection list already
  *                       exists it will be reused.
  */
-void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, de::Vector3d const &topLeft,
+void Rend_ProjectMobjShadows(ConvexSubspace *subspace, de::Vector3d const &topLeft,
     de::Vector3d const &bottomRight, de::Matrix3f const &tangentMatrix,
     float blendFactor, uint &listIdx);
 

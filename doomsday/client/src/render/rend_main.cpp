@@ -1727,8 +1727,6 @@ static void projectDynamics(Surface const &surface, float glowStrength,
     bool noLights, bool noShadows, bool sortLights,
     uint &lightListIdx, uint &shadowListIdx)
 {
-    BspLeaf *leaf = curSubspace;
-
     if(glowStrength >= 1 || levelFullBright)
         return;
 
@@ -1739,16 +1737,17 @@ static void projectDynamics(Surface const &surface, float glowStrength,
 
         if(useDynLights)
         {
-            Rend_ProjectLumobjs(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                blendFactor, lightmapForSurface(surface), sortLights,
+            Rend_ProjectLumobjs(curSubspace, topLeft, bottomRight,
+                                surface.tangentMatrix(), blendFactor,
+                                lightmapForSurface(surface), sortLights,
                                 lightListIdx);
         }
 
         if(useGlowOnWalls && surface.parent().type() == DMU_SIDE)
         {
-            Rend_ProjectPlaneGlows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                   blendFactor, sortLights,
-                                   lightListIdx);
+            Rend_ProjectPlaneGlows(curSubspace, topLeft, bottomRight,
+                                   surface.tangentMatrix(), blendFactor,
+                                   sortLights, lightListIdx);
         }
     }
 
@@ -1758,8 +1757,9 @@ static void projectDynamics(Surface const &surface, float glowStrength,
         // Glow inversely diminishes shadow strength.
         float const blendFactor = 1 - glowStrength;
 
-        Rend_ProjectMobjShadows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                blendFactor, shadowListIdx);
+        Rend_ProjectMobjShadows(curSubspace, topLeft, bottomRight,
+                                surface.tangentMatrix(), blendFactor,
+                                shadowListIdx);
     }
 }
 
@@ -2128,7 +2128,7 @@ static void writeSubspacePlane(Plane &plane)
 
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.mapElement           = &curSubspace->poly().mapElementAs<BspLeaf>();
+    parm.mapElement           = &curSubspace->bspLeaf();
     parm.geomGroup            = plane.indexInSector();
     parm.topLeft              = &topLeft;
     parm.bottomRight          = &bottomRight;
@@ -2852,8 +2852,7 @@ static void projectSubspaceSprites()
     if(curSubspace->lastSpriteProjectFrame() == R_FrameCount())
         return; // Already added.
 
-    BspLeaf &bspLeaf = curSubspace->poly().mapElementAs<BspLeaf>();
-    R_BspLeafMobjContactIterator(bspLeaf, projectSpriteWorker);
+    R_BspLeafMobjContactIterator(curSubspace->bspLeaf(), projectSpriteWorker);
 
     curSubspace->setLastSpriteProjectFrame(R_FrameCount());
 }
@@ -2869,18 +2868,17 @@ static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
  */
 static void drawCurrentSubspace()
 {
-    Sector &sector   = curSubspace->cluster().sector();
-    BspLeaf &bspLeaf = curSubspace->poly().mapElementAs<BspLeaf>();
+    Sector &sector = curSubspace->cluster().sector();
 
     // Mark the leaf as visible for this frame.
-    R_ViewerBspLeafMarkVisible(bspLeaf);
+    R_ViewerSubspaceMarkVisible(*curSubspace);
 
     markSubspaceFrontFacingWalls();
 
     // Perform contact spreading for this map region.
     sector.map().spreadAllContacts(curSubspace->poly().aaBox());
 
-    Rend_RadioBspLeafEdges(bspLeaf);
+    Rend_RadioSubspaceEdges(*curSubspace);
 
     /*
      * Before clip testing lumobjs (for halos), range-occlude the back facing edges.
@@ -2946,7 +2944,7 @@ static void makeCurrent(ConvexSubspace &subspace)
 
 static void traverseBspAndDrawSubspaces(MapElement *bspElement)
 {
-    DENG_ASSERT(bspElement != 0);
+    DENG2_ASSERT(bspElement != 0);
 
     while(bspElement->type() != DMU_BSPLEAF)
     {
@@ -2968,26 +2966,30 @@ static void traverseBspAndDrawSubspaces(MapElement *bspElement)
         // ...and back space.
         bspElement = bspNode.childPtr(eyeSide ^ 1);
     }
-
     // We've arrived at a leaf.
-    BspLeaf &bspLeaf = bspElement->as<BspLeaf>();
 
-    // Skip null leafs (those with zero volume). Neighbors handle adding the
-    // angle clipper ranges.
-    if(!bspLeaf.hasCluster() || !bspLeaf.cluster().hasWorldVolume())
-        return;
+    // Only leafs with a convex subspace geometry have drawable geometries.
+    if(ConvexSubspace *subspace = bspElement->as<BspLeaf>().subspacePtr())
+    {
+        DENG2_ASSERT(subspace->hasCluster());
 
-    // Is this leaf visible?
-    if(!firstSubspace && !C_IsPolyVisible(bspLeaf.poly()))
-        return;
+        // Skip zero-volume subspaces.
+        // (Neighbors handle the angle clipper ranges.)
+        if(!subspace->cluster().hasWorldVolume())
+            return;
 
-    // This is now the current subspace.
-    makeCurrent(bspLeaf.subspace());
+        // Is this subspace visible?
+        if(!firstSubspace && !C_IsPolyVisible(subspace->poly()))
+            return;
 
-    drawCurrentSubspace();
+        // This is now the current subspace.
+        makeCurrent(*subspace);
 
-    // This is no longer the first subspace.
-    firstSubspace = false;
+        drawCurrentSubspace();
+
+        // This is no longer the first subspace.
+        firstSubspace = false;
+    }
 }
 
 /**
@@ -3869,10 +3871,10 @@ void Rend_RenderMap(Map &map)
         viewsidex = -viewData->viewSin;
         viewsidey = viewData->viewCos;
 
-        // We don't want BSP clip checking for the first BSP leaf.
+        // We don't want BSP clip checking for the first subspace.
         firstSubspace = true;
 
-        // No current BSP leaf as of yet.
+        // No current subspace as of yet.
         curSubspace = 0;
 
         // Draw the world!
@@ -4384,10 +4386,14 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
 
     // We don't want the console player.
     if(mo == ddPlayers[consolePlayer].shared.mo)
-        return false; // Continue iteration.
+        return false;
+
     // Is it vissible?
-    if(!Mobj_IsLinked(*mo) || !R_ViewerBspLeafIsVisible(Mobj_BspLeafAtOrigin(*mo)))
-        return false; // Continue iteration.
+    if(!Mobj_IsLinked(*mo))
+        return false;
+    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(*mo);
+    if(!bspLeaf.hasSubspace() || !R_ViewerSubspaceIsVisible(bspLeaf.subspace()))
+        return false;
 
     ddouble const distToEye = (eyeOrigin - Mobj_Origin(*mo)).length();
     float alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
@@ -4404,7 +4410,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
     Rend_DrawArrow(mo->origin, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
                    (mo->ddFlags & DDMF_MISSILE)? yellow :
                    (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
-    return false; // Continue iteration.
+    return false;
 }
 
 /**
