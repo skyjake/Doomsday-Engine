@@ -23,6 +23,7 @@
 
 #include "Face"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "Line"
 #include "Plane"
 #include "Surface"
@@ -85,7 +86,7 @@ DENG2_PIMPL(SectorCluster)
 {
     bool needClassify; ///< @c true= (Re)classification is necessary.
     ClusterFlags flags;
-    BspLeafs bspLeafs;
+    Subspaces subspaces;
     QScopedPointer<AABoxd> aaBox;
 
     SectorCluster *mappedVisFloor;
@@ -120,9 +121,9 @@ DENG2_PIMPL(SectorCluster)
     typedef QHash<Shard *, GeometryData *> ShardGeometryMap;
     ShardGeometryMap shardGeomMap;
 
-    /// BSP leafs in the neighborhood effecting environmental audio characteristics.
-    typedef QSet<BspLeaf *> ReverbBspLeafs;
-    ReverbBspLeafs reverbBspLeafs;
+    /// Subspaces in the neighborhood effecting environmental audio characteristics.
+    typedef QSet<ConvexSubspace *> ReverbSubspaces;
+    ReverbSubspaces reverbSubspaces;
 
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
@@ -292,9 +293,9 @@ DENG2_PIMPL(SectorCluster)
 
             flags &= ~(NeverMapped|PartSelfRef);
             flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
-            foreach(BspLeaf const *leaf, bspLeafs)
+            foreach(ConvexSubspace const *subspace, subspaces)
             {
-                HEdge const *base  = leaf->poly().hedge();
+                HEdge const *base  = subspace->poly().hedge();
                 HEdge const *hedge = base;
                 do
                 {
@@ -373,9 +374,9 @@ DENG2_PIMPL(SectorCluster)
         if(!boundaryData.isNull()) return;
 
         QMap<SectorCluster *, HEdge *> extClusterMap;
-        foreach(BspLeaf *leaf, bspLeafs)
+        foreach(ConvexSubspace *subspace, subspaces)
         {
-            HEdge *base = leaf->poly().hedge();
+            HEdge *base = subspace->poly().hedge();
             HEdge *hedge = base;
             do
             {
@@ -731,23 +732,22 @@ DENG2_PIMPL(SectorCluster)
             if(!ddMapSetup && useBias)
             {
                 // Inform bias surfaces of changed geometry.
-                foreach(BspLeaf *bspLeaf, bspLeafs)
+                foreach(ConvexSubspace *subspace, subspaces)
                 {
-                    ConvexSubspace &subspace = bspLeaf->subspace();
-
-                    if(Shard *shard = self.findShard(*bspLeaf, plane.indexInSector()))
+                    BspLeaf &bspLeaf = subspace->poly().mapElement().as<BspLeaf>();
+                    if(Shard *shard = self.findShard(bspLeaf, plane.indexInSector()))
                     {
                         shard->updateBiasAfterMove();
                     }
 
-                    HEdge *base = subspace.poly().hedge();
+                    HEdge *base = subspace->poly().hedge();
                     HEdge *hedge = base;
                     do
                     {
                         updateBiasForWallSectionsAfterGeometryMove(hedge);
                     } while((hedge = &hedge->next()) != base);
 
-                    foreach(Mesh *mesh, subspace.extraMeshes())
+                    foreach(Mesh *mesh, subspace->extraMeshes())
                     foreach(HEdge *hedge, mesh->hedges())
                     {
                         updateBiasForWallSectionsAfterGeometryMove(hedge);
@@ -810,29 +810,29 @@ DENG2_PIMPL(SectorCluster)
         return 0;
     }
 
-    void addReverbBspLeaf(BspLeaf *bspLeaf)
+    void addReverbSubspace(ConvexSubspace *subspace)
     {
-        if(!bspLeaf) return;
-        reverbBspLeafs.insert(bspLeaf);
+        if(!subspace) return;
+        reverbSubspaces.insert(subspace);
     }
 
-    static int addReverbBspLeafWorker(BspLeaf *bspLeaf, void *context)
+    static int addReverbSubspaceWorker(BspLeaf *bspLeaf, void *context)
     {
-        static_cast<Instance *>(context)->addReverbBspLeaf(bspLeaf);
+        static_cast<Instance *>(context)->addReverbSubspace(bspLeaf->subspacePtr());
         return false; // Continue iteration.
     }
 
     /**
      * Perform environmental audio (reverb) initialization.
      *
-     * Determines the BSP leafs which contribute to the environmental audio
-     * characteristics. Given that BSP leafs do not change shape (on the XY plane,
+     * Determines the subspaces which contribute to the environmental audio
+     * characteristics. Given that subspaces do not change shape (on the XY plane,
      * that is), they do not move and are not created/destroyed once the map has
      * been loaded; this step can be pre-processed.
      *
      * @pre The Map's BSP leaf blockmap must be ready for use.
      */
-    void findReverbBspLeafs()
+    void findReverbSubspaces()
     {
         AABoxd affectionBounds = self.aaBox();
         affectionBounds.minX -= 128;
@@ -842,7 +842,7 @@ DENG2_PIMPL(SectorCluster)
 
         // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
         // with the affection bounds to the reverb set.
-        self.sector().map().bspLeafBoxIterator(affectionBounds, addReverbBspLeafWorker, this);
+        self.sector().map().bspLeafBoxIterator(affectionBounds, addReverbSubspaceWorker, this);
     }
 
     /**
@@ -851,25 +851,24 @@ DENG2_PIMPL(SectorCluster)
     void updateReverb()
     {
         // Need to initialize?
-        if(reverbBspLeafs.isEmpty())
+        if(reverbSubspaces.isEmpty())
         {
-            findReverbBspLeafs();
+            findReverbSubspaces();
         }
 
         needReverbUpdate = false;
 
         uint spaceVolume = int((self.visCeiling().height() - self.visFloor().height())
-                               * self.roughArea());
+                         * self.roughArea());
 
         reverb[SRD_SPACE] = reverb[SRD_VOLUME] =
             reverb[SRD_DECAY] = reverb[SRD_DAMPING] = 0;
 
-        foreach(BspLeaf *bspLeaf, reverbBspLeafs)
+        foreach(ConvexSubspace *subspace, reverbSubspaces)
         {
-            ConvexSubspace &subspace = bspLeaf->subspace();
-            if(subspace.updateReverb())
+            if(subspace->updateReverb())
             {
-                ConvexSubspace::AudioEnvironmentFactors const &subReverb = subspace.reverb();
+                ConvexSubspace::AudioEnvironmentFactors const &subReverb = subspace->reverb();
 
                 reverb[SRD_SPACE]   += subReverb[SRD_SPACE];
 
@@ -961,14 +960,14 @@ DENG2_PIMPL(SectorCluster)
 #endif // __CLIENT__
 };
 
-SectorCluster::SectorCluster(BspLeafs const &bspLeafs)
+SectorCluster::SectorCluster(Subspaces const &subspaces)
     : d(new Instance(this))
 {
-    d->bspLeafs.append(bspLeafs);
-    foreach(BspLeaf *bspLeaf, bspLeafs)
+    d->subspaces.append(subspaces);
+    foreach(ConvexSubspace *subspace, subspaces)
     {
-        // Attribute the BSP leaf to the cluster.
-        bspLeaf->subspace().setCluster(this);
+        // Attribute the subspace to the cluster.
+        subspace->setCluster(this);
     }
 
     // Observe changes to plane heights in "this" sector.
@@ -999,12 +998,12 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 
 Sector const &SectorCluster::sector() const
 {
-    return const_cast<BspLeaf const *>(d->bspLeafs.first())->parent().as<Sector>();
+    return const_cast<ConvexSubspace const *>(d->subspaces.first())->poly().mapElementAs<BspLeaf>().parent().as<Sector>();
 }
 
 Sector &SectorCluster::sector()
 {
-    return d->bspLeafs.first()->parent().as<Sector>();
+    return d->subspaces.first()->poly().mapElementAs<BspLeaf>().parent().as<Sector>();
 }
 
 Plane const &SectorCluster::plane(int planeIndex) const
@@ -1047,20 +1046,20 @@ Plane const &SectorCluster::visPlane(int planeIndex) const
 
 AABoxd const &SectorCluster::aaBox() const
 {
-    // If the cluster is comprised of a single BSP leaf we can use the bounding
-    // box of the leaf's geometry directly.
-    if(d->bspLeafs.count() == 1)
+    // If the cluster is comprised of a single subspace we can use the bounding
+    // box of the subspace geometry directly.
+    if(d->subspaces.count() == 1)
     {
-        return d->bspLeafs.first()->poly().aaBox();
+        return d->subspaces.first()->poly().aaBox();
     }
 
     // Time to determine bounds?
     if(d->aaBox.isNull())
     {
-        // Unite the geometry bounding boxes of all BSP leafs in the cluster.
-        foreach(BspLeaf const *leaf, d->bspLeafs)
+        // Unite the geometry bounding boxes of all subspaces in the cluster.
+        foreach(ConvexSubspace const *subspace, d->subspaces)
         {
-            AABoxd const &leafAABox = leaf->poly().aaBox();
+            AABoxd const &leafAABox = subspace->poly().aaBox();
             if(!d->aaBox.isNull())
             {
                 V2d_UniteBox((*d->aaBox).arvec2, leafAABox.arvec2);
@@ -1075,9 +1074,9 @@ AABoxd const &SectorCluster::aaBox() const
     return *d->aaBox;
 }
 
-SectorCluster::BspLeafs const &SectorCluster::bspLeafs() const
+SectorCluster::Subspaces const &SectorCluster::subspaces() const
 {
-    return d->bspLeafs;
+    return d->subspaces;
 }
 
 #ifdef __CLIENT__

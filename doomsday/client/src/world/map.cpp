@@ -735,7 +735,7 @@ DENG2_PIMPL(Map)
     }
 
     /**
-     * (Re)Build BSP leaf clusters for the sector.
+     * (Re)Build subspace clusters for the sector.
      */
     void buildClusters(Sector &sector)
     {
@@ -743,9 +743,9 @@ DENG2_PIMPL(Map)
         while(it != clusters.end() && it.key() == &sector) { delete *it; }
         clusters.remove(&sector);
 
-        typedef QList<BspLeaf *> BspLeafs;
-        typedef QList<BspLeafs> BspLeafSets;
-        BspLeafSets bspLeafSets;
+        typedef QList<ConvexSubspace *> Subspaces;
+        typedef QList<Subspaces> SubspaceSets;
+        SubspaceSets subspaceSets;
 
         /*
          * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
@@ -761,24 +761,24 @@ DENG2_PIMPL(Map)
             if(!bspLeaf->hasSubspace())
                 continue;
 
-            bspLeafSets.append(BspLeafs());
-            bspLeafSets.last().append(bspLeaf);
+            subspaceSets.append(Subspaces());
+            subspaceSets.last().append(bspLeaf->subspacePtr());
         }
 
-        if(bspLeafSets.isEmpty()) return;
+        if(subspaceSets.isEmpty()) return;
 
-        // Merge sets whose BSP leafs share a common edge.
-        while(bspLeafSets.count() > 1)
+        // Merge sets whose subspaces share a common edge.
+        while(subspaceSets.count() > 1)
         {
             bool didMerge = false;
-            for(int i = 0; i < bspLeafSets.count(); ++i)
-            for(int k = 0; k < bspLeafSets.count(); ++k)
+            for(int i = 0; i < subspaceSets.count(); ++i)
+            for(int k = 0; k < subspaceSets.count(); ++k)
             {
                 if(i == k) continue;
 
-                foreach(BspLeaf *leaf, bspLeafSets[i])
+                foreach(ConvexSubspace *subspace, subspaceSets[i])
                 {
-                    HEdge *baseHEdge = leaf->poly().hedge();
+                    HEdge *baseHEdge = subspace->poly().hedge();
                     HEdge *hedge = baseHEdge;
                     do
                     {
@@ -786,11 +786,11 @@ DENG2_PIMPL(Map)
                         {
                             BspLeaf &otherLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
                             if(&otherLeaf.parent() == &sector &&
-                               bspLeafSets[k].contains(&otherLeaf))
+                               subspaceSets[k].contains(otherLeaf.subspacePtr()))
                             {
                                 // Merge k into i.
-                                bspLeafSets[i].append(bspLeafSets[k]);
-                                bspLeafSets.removeAt(k);
+                                subspaceSets[i].append(subspaceSets[k]);
+                                subspaceSets.removeAt(k);
 
                                 // Compare the next pair.
                                 if(i >= k) i -= 1;
@@ -812,10 +812,10 @@ DENG2_PIMPL(Map)
         // Clustering complete.
 
         // Build clusters.
-        foreach(BspLeafs const &bspLeafSet, bspLeafSets)
+        foreach(Subspaces const &subspaceSet, subspaceSets)
         {
-            // BSP leaf ownership is not given to the cluster.
-            clusters.insert(&sector, new SectorCluster(bspLeafSet));
+            // Subspace ownership is not given to the cluster.
+            clusters.insert(&sector, new SectorCluster(subspaceSet));
         }
     }
 
