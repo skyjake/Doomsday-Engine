@@ -21,6 +21,7 @@
 #include "de_base.h"
 #include "world/convexsubspace.h"
 #include "Face"
+#include "Polyobj"
 #include "SectorCluster"
 #include "Surface"
 #include <de/Log>
@@ -44,6 +45,7 @@ DENG2_PIMPL(ConvexSubspace)
 {
     Face &poly;               ///< Convex polygon geometry (not owned).
     Meshes extraMeshes;       ///< Additional meshes (owned).
+    Polyobjs polyobjs;        ///< Linked polyobjs (if any, not owned).
     SectorCluster *cluster;   ///< Attributed cluster (if any, not owned).
     int validCount;           ///< Used to prevent repeated processing.
     Vector2d worldGridOffset; ///< For aligning the materials to the map space grid.
@@ -221,6 +223,23 @@ void ConvexSubspace::assignExtraMesh(Mesh &newMesh)
 ConvexSubspace::Meshes const &ConvexSubspace::extraMeshes() const
 {
     return d->extraMeshes;
+}
+
+void ConvexSubspace::link(Polyobj const &polyobj)
+{
+    d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
+}
+
+bool ConvexSubspace::unlink(polyobj_s const &polyobj)
+{
+    int sizeBefore = d->polyobjs.size();
+    d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
+    return d->polyobjs.size() != sizeBefore;
+}
+
+ConvexSubspace::Polyobjs const &ConvexSubspace::polyobjs() const
+{
+    return d->polyobjs;
 }
 
 Vector2d const &ConvexSubspace::worldGridOffset() const

@@ -32,6 +32,7 @@
 #include "Sector"
 
 class SectorCluster;
+struct polyobj_s;
 #ifdef __CLIENT__
 class Lumobj;
 #endif
@@ -48,11 +49,13 @@ public:
     /// Required sector cluster attribution is missing. @ingroup errors
     DENG2_ERROR(MissingClusterError);
 
-    typedef QSet<de::Mesh *> Meshes;
+    /// Linked-element lists/sets:
+    typedef QSet<de::Mesh *>  Meshes;
+    typedef QSet<polyobj_s *> Polyobjs;
 
 #ifdef __CLIENT__
-    typedef QSet<Lumobj *>   Lumobjs;
-    typedef QSet<LineSide *> ShadowLines;
+    typedef QSet<Lumobj *>    Lumobjs;
+    typedef QSet<LineSide *>  ShadowLines;
 
     // Final audio environment characteristics.
     typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
@@ -102,6 +105,31 @@ public:
      * @see assignExtraMesh()
      */
     Meshes const &extraMeshes() const;
+
+    /**
+     * Remove the given @a polyobj from the set of those linked to the BSP leaf.
+     *
+     * @return  @c true= @a polyobj was linked and subsequently removed.
+     */
+    bool unlink(polyobj_s const &polyobj);
+
+    /**
+     * Add the given @a polyobj to the set of those linked to the BSP leaf.
+     * Ownership is unaffected. If the polyobj is already linked in this set
+     * then nothing will happen.
+     */
+    void link(struct polyobj_s const &polyobj);
+
+    /**
+     * Provides access to the set of polyobjs linked to the BSP leaf.
+     */
+    Polyobjs const &polyobjs() const;
+
+    /**
+     * Convenient method of returning the total number of polyobjs linked to the
+     * BSP leaf.
+     */
+    inline int polyobjCount() { return polyobjs().count(); }
 
     /**
      * Returns the vector described by the offset from the map coordinate space

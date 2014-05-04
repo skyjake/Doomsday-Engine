@@ -1315,6 +1315,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
 void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
 {
     if(!lum || !bspLeaf) return;
+    if(!bspLeaf->hasSubspace()) return;
 
     // Already clipped?
     int lumIdx = lum->indexInMap();
@@ -1325,7 +1326,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
     // between the viewpoint and the lumobj.
     Vector3d const eye = Rend_EyeOrigin().xzy();
 
-    foreach(Polyobj *po, bspLeaf->polyobjs())
+    foreach(Polyobj *po, bspLeaf->subspace().polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         // Is this on the back of a one-sided line?

@@ -24,7 +24,6 @@
 #  include "world/map.h"
 #endif
 #include "Face"
-#include "Polyobj"
 #include "Sector"
 
 using namespace de;
@@ -32,7 +31,6 @@ using namespace de;
 DENG2_PIMPL_NOREF(BspLeaf)
 {
     QScopedPointer<ConvexSubspace> subspace;
-    Polyobjs polyobjs; ///< Linked polyobjs (if any, not owned).
 };
 
 BspLeaf::BspLeaf(Sector *sector)
@@ -69,21 +67,4 @@ void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
     {
         d->subspace->poly().setMapElement(this);
     }
-}
-
-void BspLeaf::link(Polyobj const &polyobj)
-{
-    d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
-}
-
-bool BspLeaf::unlink(polyobj_s const &polyobj)
-{
-    int sizeBefore = d->polyobjs.size();
-    d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
-    return d->polyobjs.size() != sizeBefore;
-}
-
-BspLeaf::Polyobjs const &BspLeaf::polyobjs() const
-{
-    return d->polyobjs;
 }

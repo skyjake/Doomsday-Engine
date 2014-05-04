@@ -21,16 +21,12 @@
 #ifndef DENG_WORLD_BSPLEAF_H
 #define DENG_WORLD_BSPLEAF_H
 
-#include <QSet>
 #include <de/Error>
-#include <de/Vector>
 #include "MapElement"
 #include "ConvexSubspace"
-#include "Line"
 #include "Sector"
 
 class SectorCluster;
-struct polyobj_s;
 
 /**
  * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
@@ -57,9 +53,6 @@ class BspLeaf : public de::MapElement
 public:
     /// Required subspace is missing. @ingroup errors
     DENG2_ERROR(MissingSubspaceError);
-
-    /// Linked-element lists/sets:
-    typedef QSet<polyobj_s *> Polyobjs;
 
 public:
     /**
@@ -113,31 +106,6 @@ public:
      * @see hasSubspace(), subspace()
      */
     void setSubspace(ConvexSubspace *newSubspace);
-
-    /**
-     * Remove the given @a polyobj from the set of those linked to the BSP leaf.
-     *
-     * @return  @c true= @a polyobj was linked and subsequently removed.
-     */
-    bool unlink(polyobj_s const &polyobj);
-
-    /**
-     * Add the given @a polyobj to the set of those linked to the BSP leaf.
-     * Ownership is unaffected. If the polyobj is already linked in this set
-     * then nothing will happen.
-     */
-    void link(struct polyobj_s const &polyobj);
-
-    /**
-     * Provides access to the set of polyobjs linked to the BSP leaf.
-     */
-    Polyobjs const &polyobjs() const;
-
-    /**
-     * Convenient method of returning the total number of polyobjs linked to the
-     * BSP leaf.
-     */
-    inline int polyobjCount() { return polyobjs().count(); }
 
 public: /// Convenience accessors @todo remove ---------------------------------
 

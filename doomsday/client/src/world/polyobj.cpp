@@ -144,7 +144,10 @@ void Polyobj::unlink()
     {
         Map &map = _bspLeaf->map();
 
-        _bspLeaf->unlink(*this);
+        if(_bspLeaf->hasSubspace())
+        {
+            _bspLeaf->subspace().unlink(*this);
+        }
         _bspLeaf = 0;
 
         map.unlink(*this);
@@ -167,7 +170,10 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &map().bspLeafAt(avg);
-        _bspLeaf->link(*this);
+        if(_bspLeaf->hasSubspace())
+        {
+            _bspLeaf->subspace().link(*this);
+        }
     }
 }
 
