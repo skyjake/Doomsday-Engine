@@ -47,10 +47,6 @@
 
 #define INTEGER64 __int64
 
-#define DIR_SEP_CHAR    '\\'
-#define DIR_SEP_STR     "\\"
-#define DIR_WRONG_SEP_CHAR  '/'
-
 #define stricmp _stricmp
 #define strnicmp _strnicmp
 //#define open _open
@@ -108,10 +104,6 @@ typedef unsigned int DWORD;
 #define _chdrive(x)
 #define _getcwd         getcwd
 #define _chdir          chdir
-
-#define DIR_SEP_CHAR        '/'
-#define DIR_SEP_STR         "/"
-#define DIR_WRONG_SEP_CHAR  '\\'
 
 #endif                          // UNIX
 

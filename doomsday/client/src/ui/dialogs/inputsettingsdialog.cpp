@@ -21,7 +21,7 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/keygrabberwidget.h"
 #include "clientapp.h"
-#include "con_main.h"
+#include "api_console.h"
 
 #include <de/VariableToggleWidget>
 #include <de/GridPopupWidget>

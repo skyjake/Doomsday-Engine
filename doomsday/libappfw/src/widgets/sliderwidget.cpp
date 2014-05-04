@@ -382,8 +382,8 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateRangeLabels()
     {
-        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor, 'g', precision) : minLabel);
-        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor, 'g', precision)   : maxLabel);
+        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor, 'f', precision) : minLabel);
+        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor, 'f', precision)   : maxLabel);
     }
 
     void startGrab(MouseEvent const &ev)

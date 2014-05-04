@@ -91,6 +91,22 @@ mobj_t *S_GetListenerMobj(void);
 
 void S_Drawer(void);
 
+/**
+ * Loads a WAV sample from a file. All parameters must be passed, no NULLs are
+ * allowed.
+ *
+ * @note The WAV file must contain a mono sound: only one channel.
+ *
+ * @param filename    File path of the WAV file.
+ * @param bits        Bits per sample is written here.
+ * @param rate        Sample rate is written here.
+ * @param samples     Number of samples is written here.
+ *
+ * @return Buffer that contains the wave data. The caller must free the sample
+ * data using Z_Free() when it's no longer needed.
+ */
+void* WAV_Load(const char* filename, int* bits, int* rate, int* samples);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

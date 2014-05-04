@@ -81,7 +81,7 @@ void Sv_MRAdd(pool_t *pool, const mobjdelta_t *delta)
 #ifdef _DEBUG
 if(!(delta->mo.ddFlags & DDMF_MISSILE))
 {
-    Con_Error("Sv_MRAdd: Not a missile.\n");
+    App_Error("Sv_MRAdd: Not a missile.\n");
 }
 #endif
 
@@ -152,7 +152,7 @@ int Sv_MRCheck(pool_t *pool, const mobjdelta_t *mobj)
 #ifdef _DEBUG
 if(!(mobj->mo.ddFlags & DDMF_MISSILE))
 {
-    Con_Error("Sv_MRCheck: Not a missile.\n");
+    App_Error("Sv_MRCheck: Not a missile.\n");
 }
 #endif
 

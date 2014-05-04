@@ -24,7 +24,6 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/clientwindow.h"
 #include "clientapp.h"
-#include "con_main.h"
 
 #include <de/ButtonWidget>
 #include <de/ScrollAreaWidget>

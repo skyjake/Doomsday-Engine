@@ -36,6 +36,9 @@ extern int novideo;
 void Sys_Init(void);
 void Sys_Shutdown(void);
 
+#undef Sys_Quit
+void Sys_Quit(void);
+
 /// @return  @c true if shutdown is in progress.
 dd_bool Sys_IsShuttingDown(void);
 

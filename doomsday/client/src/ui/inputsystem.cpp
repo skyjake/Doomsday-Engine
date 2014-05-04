@@ -22,7 +22,6 @@
 #include "ui/dd_input.h"
 #include "ui/sys_input.h"
 #include "ui/b_main.h"
-#include "con_main.h"
 
 #include <de/Record>
 #include <de/NumberValue>

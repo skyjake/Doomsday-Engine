@@ -23,25 +23,19 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#  include "con_bar.h"
+#  include "ui/progress.h"
 #  include "sys_system.h" // novideo
 #endif
 
-#include "con_main.h"
 #include "def_main.h"
+#include "dd_main.h"
+#include "dd_def.h"
 
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
-#endif
-
-#include "api_filesys.h"
-#include "filesys/fs_main.h"
-#include "filesys/lumpindex.h"
-
-#ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
 #  include "render/rend_model.h"
@@ -60,6 +54,11 @@
 #  include "Sector"
 #  include "Surface"
 #endif
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/filesys/lumpindex.h>
 
 #include <de/App>
 #include <de/ByteRefArray>
@@ -80,6 +79,7 @@
 #  include <de/StringPool>
 #endif
 #include <de/stack.h> /// @todo remove me
+#include <de/memory.h>
 #include <QHash>
 #include <QVector>
 #include <QtAlgorithms>
@@ -204,7 +204,7 @@ DENG2_PIMPL(ResourceSystem)
 , DENG2_OBSERVES(ColorPalette,     ColorTableChange)
 #endif
 {
-    typedef QList<de::ResourceClass *> ResourceClasses;
+    typedef QList<ResourceClass *> ResourceClasses;
     ResourceClasses resClasses;
     NullResourceClass nullResourceClass;
 
@@ -369,6 +369,8 @@ DENG2_PIMPL(ResourceSystem)
 #endif
         , nativeSavePath           (App::app().nativeHomePath() / "savegames") // default
     {
+        de::Uri::setResolverFunc(ResourceSystem::resolveSymbol);
+
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
         resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
@@ -2056,7 +2058,9 @@ DENG2_PIMPL(ResourceSystem)
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
-{}
+{
+
+}
 
 void ResourceSystem::timeChanged(Clock const &)
 {
@@ -4594,4 +4598,42 @@ void ResourceSystem::consoleRegister() // static
 
     Texture::consoleRegister();
     Material::consoleRegister();
+}
+
+String ResourceSystem::resolveSymbol(String const &symbol) // static
+{
+    if(!symbol.compare("App.DataPath", Qt::CaseInsensitive))
+    {
+        return "data";
+    }
+    else if(!symbol.compare("App.DefsPath", Qt::CaseInsensitive))
+    {
+        return "defs";
+    }
+    else if(!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
+    {
+        if(!App_GameLoaded())
+        {
+            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw de::Uri::ResolveSymbolError("ResourceSystem::resolveSymbol",
+                    "Symbol 'Game' did not resolve (no game loaded)");
+        }
+        return App_CurrentGame().identityKey();
+    }
+    else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
+    {
+        if(!App_GameLoaded() || !gx.GetVariable)
+        {
+            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw de::Uri::ResolveSymbolError("ResourceSystem::resolveSymbol",
+                    "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
+        }
+        return String((char *)gx.GetVariable(DD_PLUGIN_NAME));
+    }
+    else
+    {
+        /// @throw UnknownSymbolError  An unknown symbol was encountered.
+        throw de::Uri::UnknownSymbolError("ResourceSystem::resolveSymbol",
+                                          "Symbol '" + symbol + "' is unknown");
+    }
 }

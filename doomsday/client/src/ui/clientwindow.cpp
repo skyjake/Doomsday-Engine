@@ -28,6 +28,7 @@
 #include "ui/clientrootwidget.h"
 #include "clientapp.h"
 #include <QGLFormat>
+#include <QCloseEvent>
 #include <de/DisplayMode>
 #include <de/NumberValue>
 #include <de/ConstantRule>
@@ -38,7 +39,9 @@
 #include <de/NotificationAreaWidget>
 #include <de/ProgressWidget>
 #include <de/VRWindowTransform>
-#include <QCloseEvent>
+#include <de/concurrency.h>
+#include <doomsday/console/exec.h>
+#include "api_console.h"
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
@@ -52,9 +55,7 @@
 #include "ui/dialogs/alertdialog.h"
 #include "CommandAction"
 #include "ui/mouse_qt.h"
-
 #include "dd_main.h"
-#include "con_main.h"
 #include "render/vr.h"
 
 using namespace de;

@@ -23,8 +23,8 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/widgets/profilepickerwidget.h"
-#include "con_main.h"
 #include "clientapp.h"
+#include "ui/clientwindow.h"
 
 #include <de/GridPopupWidget>
 #include <de/GridLayout>

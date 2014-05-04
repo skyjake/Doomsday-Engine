@@ -14,10 +14,13 @@ INCLUDEPATH += $$PWD/$$shellDir/include
 LIBS += -ldeng_shell
 
 macx {
-    defineTest(linkBinaryToBundledLibdengShell) {
+    defineTest(linkBinaryToBundledLibshell) {
         fixInstallName($${1}, libdeng_shell.1.dylib, ..)
     }
-    defineTest(linkToBundledLibdengShell) {
-        linkBinaryToBundledLibdengShell($${1}.bundle/$$1)
+    defineTest(linkToBundledLibshell) {
+        linkBinaryToBundledLibshell($${1}.bundle/$$1)
+    }
+    defineTest(linkDylibToBundledLibshell) {
+        linkBinaryToBundledLibshell($${1}.dylib)
     }
 }

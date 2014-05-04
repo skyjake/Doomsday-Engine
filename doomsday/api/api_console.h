@@ -37,6 +37,7 @@ DENG_API_TYPEDEF(Con)
     void (*AddCommandList)(ccmdtemplate_t const* cmdList);
     void (*AddVariableList)(cvartemplate_t const* varList);
 
+    /// @return  Type of the variable associated with @a path if found else @c CVT_NULL
     cvartype_t (*GetVariableType)(char const* name);
 
     byte (*GetByte)(char const* name);
@@ -45,7 +46,19 @@ DENG_API_TYPEDEF(Con)
     char const* (*GetString)(char const* name);
     Uri const* (*GetUri)(char const* name);
 
+    /**
+     * @copydoc CVar_SetInteger()
+     * @param svflags  @ref setVariableFlags
+     */
     void (*SetInteger2)(char const* name, int value, int svflags);
+
+    /**
+     * Changes the value of an integer variable.
+     * @note Also used with @c CVT_BYTE.
+     *
+     * @param var    Variable.
+     * @param value  New integer value for the variable.
+     */
     void (*SetInteger)(char const* name, int value);
 
     void (*SetFloat2)(char const* name, float value, int svflags);

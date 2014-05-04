@@ -34,22 +34,19 @@
 #include "world/worldsystem.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
-#include "filesys/sys_direc.h"
+#include <doomsday/filesys/sys_direc.h>
 #include <de/c_wrapper.h>
 #include <de/LibraryFile>
 
 #include <QList>
 #include <QMap>
 #include <de/String>
-#include "resourceclass.h"
+#include <doomsday/resource/resourceclass.h>
 
 struct game_s;
 
 extern int verbose;
 //extern FILE* outFile; // Output file for console messages.
-
-extern filename_t ddBasePath;
-extern filename_t ddRuntimePath, ddBinPath;
 
 extern char* startupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
 
@@ -66,6 +63,21 @@ extern int gameDataFormat;
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);
 dd_bool DD_Init(void);
+
+/**
+ * Print an error message and quit.
+ */
+void App_Error(char const *error, ...);
+
+void App_AbnormalShutdown(char const *error);
+
+#undef Con_Open
+
+/**
+ * Attempt to change the 'open' state of the console.
+ * @note In dedicated mode the console cannot be closed.
+ */
+void Con_Open(int yes);
 
 /// @return  @c true if shutdown is in progress.
 dd_bool DD_IsShuttingDown(void);
@@ -113,31 +125,6 @@ dd_bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
  */
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn);
 
-namespace de
-{
-    /// Map of symbolic file type names to file types.
-    typedef QMap<String, FileType*> FileTypes;
-}
-
-/**
- * Lookup a FileType by symbolic name.
- *
- * @param name  Symbolic name of the type.
- * @return  FileType associated with @a name. May return a null-object.
- */
-de::FileType &DD_FileTypeByName(de::String name);
-
-/**
- * Attempts to determine which "type" should be attributed to a resource, solely
- * by examining the name (e.g., a file name/path).
- *
- * @return  Type determined for this resource. May return a null-object.
- */
-de::FileType &DD_GuessFileTypeFromFileName(de::String name);
-
-/// Returns the registered file types for efficient traversal.
-de::FileTypes const& DD_FileTypes();
-
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
@@ -151,13 +138,13 @@ de::WorldSystem &App_WorldSystem();
  * Convenient method of returning a resource class from the application's global
  * resource system.
  */
-de::ResourceClass &App_ResourceClass(de::String className);
+ResourceClass &App_ResourceClass(de::String className);
 
 /**
  * Convenient method of returning a resource class from the application's global
  * resource system.
  */
-de::ResourceClass &App_ResourceClass(resourceclassid_t classId);
+ResourceClass &App_ResourceClass(resourceclassid_t classId);
 
 /// @return  @c true iff there is presently a game loaded.
 dd_bool App_GameLoaded();
@@ -184,6 +171,11 @@ const char* value_Str(int val);
  * Frees the info structures for all registered games.
  */
 void DD_DestroyGames(void);
+
+/**
+ * Attempts to read help strings from the game-specific help file.
+ */
+void DD_ReadGameHelp(void);
 
 D_CMD(Load);
 D_CMD(Unload);

@@ -22,13 +22,12 @@
 #include "games.h"
 
 #include "dd_main.h"
-#include "con_main.h"
-#include "con_bar.h"
+#include <doomsday/console/cmd.h>
+#include "ui/progress.h"
 
-#include "filesys/fs_main.h"
-#include "filesys/manifest.h"
-
-#include "resource/zip.h"
+#include <doomsday/filesys/fs_main.h>
+//#include <doomsday/filesys/zip.h>
+#include "resource/manifest.h"
 
 #include <de/App>
 #include <de/ArrayValue>

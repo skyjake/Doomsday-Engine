@@ -18,8 +18,8 @@
 
 #include "render/fx/bloom.h"
 #include "clientapp.h"
-#include "con_main.h"
 
+#include <doomsday/console/var.h>
 #include <de/Drawable>
 #include <de/WindowTransform>
 

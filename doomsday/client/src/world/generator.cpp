@@ -23,7 +23,6 @@
 #include "world/generator.h"
 
 #include "clientapp.h"
-#include "con_main.h"
 #include "dd_def.h"
 #include "Face"
 
@@ -38,6 +37,7 @@
 
 #include "api_sound.h"
 
+#include <doomsday/console/var.h>
 #include <de/String>
 #include <de/Time>
 #include <de/fixedpoint.h>

@@ -70,7 +70,7 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
 
     if(size > DDMAXINT)
     {
-        Con_Error("Protocol_Send: Trying to send an oversized data buffer.\n"
+        App_Error("Protocol_Send: Trying to send an oversized data buffer.\n"
                   "  Attempted size is %u bytes.\n", (unsigned long) size);
     }
 

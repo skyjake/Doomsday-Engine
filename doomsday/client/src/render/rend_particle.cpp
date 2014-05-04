@@ -19,13 +19,11 @@
  */
 
 #include "de_base.h"
+#include "sys_system.h"
 #include "render/rend_particle.h"
 
 #include "clientapp.h"
-#include "con_main.h"
 #include "r_util.h"
-
-#include "filesys/fs_main.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -47,6 +45,9 @@
 #include "render/vlight.h"
 
 #include <de/vector1.h>
+#include <de/concurrency.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/console/var.h>
 #include <cstdlib>
 
 using namespace de;

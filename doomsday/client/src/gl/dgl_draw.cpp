@@ -19,15 +19,16 @@
 
 #define DENG_NO_API_MACROS_GL
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
-
+#include "sys_system.h"
 #include "gl/sys_opengl.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <de/concurrency.h>
 
 using namespace de;
 
@@ -45,7 +46,7 @@ dd_bool GL_NewList(DGLuint list, int mode)
     // We enter a New/End list section.
 #ifdef _DEBUG
 if(inList)
-    Con_Error("GL_NewList: Already in list");
+    App_Error("GL_NewList: Already in list");
 Sys_GLCheckError();
 #endif
 
@@ -54,7 +55,7 @@ Sys_GLCheckError();
         if(glIsList(list))
         {
 #if _DEBUG
-Con_Error("GL_NewList: List %u already in use.", (unsigned int) list);
+App_Error("GL_NewList: List %u already in use.", (unsigned int) list);
 #endif
             return false;
         }
@@ -284,7 +285,7 @@ DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 
 #ifdef _DEBUG
     if(inPrim)
-        Con_Error("OpenGL: already inPrim");
+        App_Error("OpenGL: already inPrim");
     inPrim = true;
     Sys_GLCheckError();
 #endif

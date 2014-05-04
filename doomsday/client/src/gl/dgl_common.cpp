@@ -21,9 +21,6 @@
 
 #define DENG_NO_API_MACROS_GL
 
-#include <cstdlib>
-#include <cmath>
-
 #include <de/GLState>
 #include <de/GLInfo>
 
@@ -37,6 +34,10 @@
 #include "gl/sys_opengl.h"
 #include "api_gl.h"
 #include "gl/gl_texmanager.h"
+
+#include <cstdlib>
+#include <cmath>
+#include <de/concurrency.h>
 
 using namespace de;
 
@@ -719,7 +720,7 @@ void DGL_PushMatrix(void)
 
 #if _DEBUG
 if(glGetError() == GL_STACK_OVERFLOW)
-    Con_Error("DG_PushMatrix: Stack overflow.\n");
+    App_Error("DG_PushMatrix: Stack overflow.\n");
 #endif
 }
 
@@ -738,7 +739,7 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
 
     case DGL_REPEAT:        return gl::Repeat;
     default:
-        Con_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
+        App_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
         exit(1); // Unreachable.
     }
 }
@@ -799,7 +800,7 @@ void DGL_PopMatrix(void)
 
 #if _DEBUG
 if(glGetError() == GL_STACK_UNDERFLOW)
-    Con_Error("DG_PopMatrix: Stack underflow.\n");
+    App_Error("DG_PopMatrix: Stack underflow.\n");
 #endif
 }
 

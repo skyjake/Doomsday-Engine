@@ -22,7 +22,6 @@
 #include "render/sky.h"
 
 #include "clientapp.h"
-#include "con_main.h"
 #include "def_data.h"
 #include "client/cl_def.h"
 
@@ -36,7 +35,11 @@
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 
+#include <doomsday/console/var.h>
+#include <doomsday/console/exec.h>
 #include <de/Log>
+#include <de/timer.h>
+#include <de/concurrency.h>
 #include <cmath>
 
 using namespace de;

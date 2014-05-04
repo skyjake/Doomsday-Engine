@@ -43,7 +43,6 @@
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "de_audio.h"
-#include "con_main.h"
 #include "sys_system.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
@@ -62,13 +61,15 @@
 #  include "dd_uinit.h"
 #endif
 
+#include <de/timer.h>
+
 using namespace de;
 
 static ClientApp *clientAppSingleton = 0;
 
 static void handleLegacyCoreTerminate(char const *msg)
 {
-    Con_Error("Application terminated due to exception:\n%s\n", msg);
+    App_Error("Application terminated due to exception:\n%s\n", msg);
 }
 
 static void continueInitWithEventLoopRunning()

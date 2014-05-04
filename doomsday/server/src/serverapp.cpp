@@ -32,7 +32,6 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
-#include "con_main.h"
 #include "sys_system.h"
 
 #if WIN32

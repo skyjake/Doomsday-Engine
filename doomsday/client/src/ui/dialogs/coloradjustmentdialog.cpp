@@ -20,7 +20,7 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include <de/GridLayout>
 #include <de/SignalAction>
-#include "con_main.h"
+#include "api_console.h"
 
 using namespace de;
 using namespace ui;

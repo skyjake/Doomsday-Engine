@@ -17,10 +17,11 @@
  */
 
 #include "ui/widgets/consolecommandwidget.h"
-#include "con_main.h"
 #include "dd_main.h"
 #include "clientapp.h"
 
+#include <doomsday/console/knownword.h>
+#include <doomsday/console/exec.h>
 #include <de/KeyEvent>
 #include <de/App>
 

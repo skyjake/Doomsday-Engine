@@ -25,7 +25,9 @@
 #include <de/LogBuffer>
 
 #include "de_base.h"
-#include "con_main.h"
+#include <doomsday/console/exec.h>
+#include <doomsday/console/knownword.h>
+#include "api_console.h"
 #include "games.h"
 #include "Game"
 #include "network/net_main.h"

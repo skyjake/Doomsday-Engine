@@ -13,12 +13,11 @@ SUBDIRS = \
     liblegacy \
     libshell
 
-!deng_noclient|macx {
-    SUBDIRS += \
-        libgui \
-        libappfw \
-        client
-}
+!deng_noclient|macx: SUBDIRS += libgui libappfw
+
+SUBDIRS += libdoomsday
+
+!deng_noclient|macx: SUBDIRS += client
 
 SUBDIRS += \
     server \

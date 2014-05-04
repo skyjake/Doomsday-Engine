@@ -681,7 +681,7 @@ void Sv_WriteDeltaHeader(byte type, const delta_t* delta)
 #ifdef _DEBUG
 if(type >= NUM_DELTA_TYPES)
 {
-    Con_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
+    App_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
 }
 #endif
 
@@ -786,7 +786,7 @@ void Sv_WriteDelta(const delta_t* delta)
            break; */
 
     default:
-        Con_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
+        App_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
     }
 
 #ifdef _NETDEBUG

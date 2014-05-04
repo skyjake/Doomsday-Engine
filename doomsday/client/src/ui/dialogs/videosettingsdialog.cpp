@@ -21,7 +21,6 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/clientwindow.h"
 #include "CommandAction"
-#include "con_main.h"
 #include "clientapp.h"
 
 #include <de/VariableToggleWidget>

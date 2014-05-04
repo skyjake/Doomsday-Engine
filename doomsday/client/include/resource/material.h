@@ -29,7 +29,7 @@
 #  include "MaterialContext"
 #endif
 #include "Texture"
-#include "uri.hh"
+#include <doomsday/uri.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>

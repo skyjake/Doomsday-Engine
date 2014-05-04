@@ -36,6 +36,9 @@
 #include "BspLeaf"
 #include "Sector"
 
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
+
 BEGIN_PROF_TIMERS()
   PROF_SOUND_STARTFRAME
 END_PROF_TIMERS()
@@ -93,6 +96,8 @@ dd_bool S_Init(void)
     dd_bool sfxOK, musOK;
 #endif
 
+    Sfx_Logical_SetSampleLengthCallback(Sfx_GetSoundLength);
+
     if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
         return true;
 
@@ -134,7 +139,7 @@ void S_Shutdown(void)
 #undef S_MapChange
 void S_MapChange(void)
 {
-    // Stop everything in the LSM.
+    // Stop everything in the LSM.    
     Sfx_InitLogical();
 
 #ifdef __CLIENT__
@@ -186,6 +191,7 @@ BEGIN_PROF( PROF_SOUND_STARTFRAME );
 #endif
 
     // Remove stopped sounds from the LSM.
+    Sfx_Logical_SetOneSoundPerEmitter(sfxOneSoundPerEmitter);
     Sfx_PurgeLogical();
 
 END_PROF( PROF_SOUND_STARTFRAME );
@@ -572,6 +578,41 @@ void S_Drawer(void)
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 #endif // __CLIENT__
+}
+
+void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
+{
+    FileHandle* file = F_Open(filename, "rb");
+    void* sampledata;
+    uint8_t* data;
+    size_t size;
+
+    if(!file) return NULL;
+
+    // Read in the whole thing.
+    size = FileHandle_Length(file);
+
+    LOG_AS("WAV_Load");
+    LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
+            << F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file))))
+            << size
+            << FileHandle_Tell(file);
+
+    data = (uint8_t*) M_Malloc(size);
+
+    FileHandle_Read(file, data, size);
+    F_Delete(file);
+    file = 0;
+
+    // Parse the RIFF data.
+    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
+    if(!sampledata)
+    {
+        LOG_RES_WARNING("Failed to load \"%s\"") << filename;
+    }
+
+    M_Free(data);
+    return sampledata;
 }
 
 /**

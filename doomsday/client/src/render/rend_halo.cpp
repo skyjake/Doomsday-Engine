@@ -18,18 +18,17 @@
  */
 
 #include "de_platform.h"
+#include "dd_main.h"
 #include "render/rend_halo.h"
 #include "render/rend_main.h"
 #include "render/fx/bloom.h"
-
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-
-#include "con_main.h"
-#include "dd_main.h"
-
 #include "world/p_players.h"
 
+#include <de/concurrency.h>
+#include <doomsday/console/var.h>
+#include <doomsday/console/cmd.h>
 #include <cmath>
 
 #define NUM_FLARES          5

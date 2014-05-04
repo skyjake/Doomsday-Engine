@@ -73,28 +73,6 @@ static size_t FileReader(char const* name, char** buffer);
 
 extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 
-void M_ReadLine(char* buffer, size_t len, FileHandle* file)
-{
-    size_t p;
-    char ch;
-    dd_bool isDone;
-
-    memset(buffer, 0, len);
-    p = 0;
-    isDone = false;
-    while(p < len - 1 && !isDone)    // Make the last null stay there.
-    {
-        ch = FileHandle_GetC(file);
-        if(ch != '\r')
-        {
-            if(FileHandle_AtEnd(file) || ch == '\n')
-                isDone = true;
-            else
-                buffer[p++] = ch;
-        }
-    }
-}
-
 int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const lineDirection[])
 {
     int a, b;

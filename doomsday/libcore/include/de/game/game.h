@@ -58,6 +58,8 @@ public:
     String id() const;
     String variantOf() const;
 
+    virtual String title() const = 0;
+
     DENG2_AS_IS_METHODS()
 
 private:

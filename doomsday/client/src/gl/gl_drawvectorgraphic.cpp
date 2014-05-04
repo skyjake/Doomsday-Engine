@@ -18,14 +18,14 @@
 
 #define DENG_NO_API_MACROS_SVG
 
+#include "de_platform.h"
+#include "dd_share.h"
+#include "gl/svg.h"
+
 #include <string.h>
 #include <assert.h>
 #include <de/memory.h>
-
-#include "de_platform.h"
-#include "dd_share.h"
-#include "con_main.h"
-#include "gl/svg.h"
+#include <de/Log>
 
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)

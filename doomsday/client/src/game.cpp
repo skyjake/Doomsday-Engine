@@ -21,8 +21,8 @@
 #include "de_base.h"
 #include "game.h"
 
-#include "con_main.h"
-#include "filesys/manifest.h"
+#include <doomsday/console/cmd.h>
+#include "resource/manifest.h"
 
 #include <de/App>
 #include <de/Error>
@@ -213,7 +213,7 @@ Path const &Game::bindingConfig() const
     return d->bindingConfig;
 }
 
-String const &Game::title() const
+String Game::title() const
 {
     return d->title;
 }

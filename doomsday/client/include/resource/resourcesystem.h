@@ -20,7 +20,7 @@
 #define DENG_RESOURCESYSTEM_H
 
 #include "def_data.h"
-#include "resourceclass.h"
+#include <doomsday/resource/resourceclass.h>
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
 #ifdef __CLIENT__
@@ -38,9 +38,9 @@
 #include "Texture"
 #include "TextureScheme"
 #include "resource/rawtexture.h"
-#include "resource/wad.h"
-#include "resource/zip.h"
-#include "uri.hh"
+#include <doomsday/filesys/wad.h>
+#include <doomsday/filesys/zip.h>
+#include <doomsday/uri.h>
 #include <de/Error>
 #include <de/String>
 #include <de/System>
@@ -139,13 +139,13 @@ public:
     /**
      * Lookup a ResourceClass by symbolic @a name.
      */
-    de::ResourceClass &resClass(de::String name);
+    ResourceClass &resClass(de::String name);
 
     /**
      * Lookup a ResourceClass by @a id.
      * @todo Refactor away.
      */
-    de::ResourceClass &resClass(resourceclassid_t id);
+    ResourceClass &resClass(resourceclassid_t id);
 
     void clearAllResources();
     void clearAllRuntimeResources();
@@ -903,6 +903,8 @@ public:
      * Register the console commands, variables, etc..., of this module.
      */
     static void consoleRegister();
+
+    static de::String resolveSymbol(de::String const &symbol);
 
 private:
     DENG2_PRIVATE(d)

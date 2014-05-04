@@ -25,7 +25,6 @@
 #include "render/r_main.h"
 #include "busymode.h"
 #include "sys_system.h"
-#include "con_main.h"
 
 #include <de/concurrency.h>
 #include <de/Drawable>

@@ -20,9 +20,9 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
-
 #include "render/vr.h"
-#include "con_main.h"
+#include "api_console.h"
+#include <doomsday/console/exec.h>
 
 #include <de/SignalAction>
 

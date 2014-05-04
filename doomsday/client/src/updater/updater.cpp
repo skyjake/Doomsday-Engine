@@ -46,7 +46,6 @@
 #include "dd_def.h"
 #include "dd_types.h"
 #include "dd_main.h"
-#include "con_main.h"
 #include "clientapp.h"
 #include "ui/nativeui.h"
 #include "ui/clientwindowsystem.h"
@@ -67,6 +66,7 @@
 #include <de/SignalAction>
 #include <de/NotificationAreaWidget>
 #include <de/data/json.h>
+#include <doomsday/console/exec.h>
 
 using namespace de;
 

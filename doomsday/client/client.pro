@@ -37,6 +37,7 @@ include(../dep_legacy.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_appfw.pri)
+include(../dep_doomsday.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -185,11 +186,9 @@ DENG_HEADERS += \
     include/audio/m_mus2midi.h \
     include/audio/s_cache.h \
     include/audio/s_environ.h \
-    include/audio/s_logic.h \
     include/audio/s_main.h \
     include/audio/s_mus.h \
     include/audio/s_sfx.h \
-    include/audio/s_wav.h \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
     include/busymode.h \
@@ -205,11 +204,8 @@ DENG_HEADERS += \
     include/client/clpolymover.h \
     include/clientapp.h \
     include/color.h \
-    include/con_bar.h \
     include/con_config.h \
-    include/con_main.h \
     include/dd_def.h \
-    include/dd_help.h \
     include/dd_loop.h \
     include/dd_main.h \
     include/dd_pinit.h \
@@ -231,21 +227,9 @@ DENG_HEADERS += \
     include/de_ui.h \
     include/def_data.h \
     include/def_main.h \
-    include/dualstring.h \
     include/edit_bias.h \
     include/edit_map.h \
     include/face.h \
-    include/filehandle.h \
-    include/filesys/file.h \
-    include/filesys/filehandlebuilder.h \
-    include/filesys/fileinfo.h \
-    include/filesys/fs_main.h \
-    include/filesys/fs_util.h \
-    include/filesys/lumpindex.h \
-    include/filesys/manifest.h \
-    include/filesys/searchpath.h \
-    include/filesys/sys_direc.h \
-    include/filetype.h \
     include/game.h \
     include/games.h \
     include/gl/gl_defer.h \
@@ -337,7 +321,7 @@ DENG_HEADERS += \
     include/resource/fontscheme.h \
     include/resource/hq2x.h \
     include/resource/image.h \
-    include/resource/lumpcache.h \
+    include/resource/manifest.h \
     include/resource/material.h \
     include/resource/materialarchive.h \
     include/resource/materialmanifest.h \
@@ -357,9 +341,6 @@ DENG_HEADERS += \
     include/resource/texturescheme.h \
     include/resource/texturevariantspec.h \
     include/resource/tga.h \
-    include/resource/wad.h \
-    include/resource/zip.h \
-    include/resourceclass.h \
     include/settingsregister.h \
     include/sys_system.h \
     include/tab_anorms.h \
@@ -388,6 +369,7 @@ DENG_HEADERS += \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
+    include/ui/progress.h \
     include/ui/widgetactions.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/consolecommandwidget.h \
@@ -430,7 +412,6 @@ DENG_HEADERS += \
     include/updater/updateavailabledialog.h \
     include/updater/updatersettings.h \
     include/updater/updatersettingsdialog.h \
-    include/uri.hh \
     include/versioninfo.h \
     include/world/blockmap.h \
     include/world/bsp/bsptreenode.h \
@@ -530,17 +511,17 @@ else:unix {
 # Platform-independent sources.
 SOURCES += \
     src/alertmask.cpp \
+    src/api_console.cpp \
+    src/api_filesys.cpp \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.cpp \
     src/audio/m_mus2midi.cpp \
     src/audio/s_cache.cpp \
     src/audio/s_environ.cpp \
-    src/audio/s_logic.cpp \
     src/audio/s_main.cpp \
     src/audio/s_mus.cpp \
     src/audio/s_sfx.cpp \
-    src/audio/s_wav.cpp \
     src/audio/sys_audiod_dummy.cpp \
     src/busymode.cpp \
     src/client/cl_frame.cpp \
@@ -555,11 +536,7 @@ SOURCES += \
     src/client/clpolymover.cpp \
     src/clientapp.cpp \
     src/color.cpp \
-    src/con_bar.cpp \
     src/con_config.cpp \
-    src/con_data.cpp \
-    src/con_main.cpp \
-    src/dd_help.cpp \
     src/dd_loop.cpp \
     src/dd_main.cpp \
     src/dd_pinit.cpp \
@@ -568,19 +545,8 @@ SOURCES += \
     src/def_data.cpp \
     src/def_main.cpp \
     src/def_read.cpp \
-    src/dualstring.cpp \
     src/edit_bias.cpp \
     src/face.cpp \
-    src/filesys/file.cpp \
-    src/filesys/filehandle.cpp \
-    src/filesys/fileid.cpp \
-    src/filesys/fs_main.cpp \
-    src/filesys/fs_scheme.cpp \
-    src/filesys/fs_util.cpp \
-    src/filesys/lumpindex.cpp \
-    src/filesys/manifest.cpp \
-    src/filesys/searchpath.cpp \
-    src/filesys/sys_direc.cpp \
     src/game.cpp \
     src/games.cpp \
     src/gl/dgl_common.cpp \
@@ -674,6 +640,7 @@ SOURCES += \
     src/resource/fontscheme.cpp \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
+    src/resource/manifest.cpp \
     src/resource/material.cpp \
     src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \
@@ -692,8 +659,6 @@ SOURCES += \
     src/resource/texturescheme.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.cpp \
-    src/resource/wad.cpp \
-    src/resource/zip.cpp \
     src/settingsregister.cpp \
     src/sys_system.cpp \
     src/tab_tables.c \
@@ -727,6 +692,7 @@ SOURCES += \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
+    src/ui/progress.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
@@ -761,7 +727,6 @@ SOURCES += \
     src/updater/updater.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp \
     src/world/api_map.cpp \
     src/world/api_mapedit.cpp \
     src/world/blockmap.cpp \
@@ -879,7 +844,7 @@ macx {
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_core.2.dylib, ..)
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_legacy.1.dylib, ..)
-    linkBinaryToBundledLibdengShell(Doomsday.app/Contents/MacOS/Doomsday)
+    linkBinaryToBundledLibshell(Doomsday.app/Contents/MacOS/Doomsday)
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
