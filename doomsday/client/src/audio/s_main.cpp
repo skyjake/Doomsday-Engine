@@ -580,41 +580,6 @@ void S_Drawer(void)
 #endif // __CLIENT__
 }
 
-void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
-{
-    FileHandle* file = F_Open(filename, "rb");
-    void* sampledata;
-    uint8_t* data;
-    size_t size;
-
-    if(!file) return NULL;
-
-    // Read in the whole thing.
-    size = FileHandle_Length(file);
-
-    LOG_AS("WAV_Load");
-    LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
-            << F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file))))
-            << size
-            << FileHandle_Tell(file);
-
-    data = (uint8_t*) M_Malloc(size);
-
-    FileHandle_Read(file, data, size);
-    F_Delete(file);
-    file = 0;
-
-    // Parse the RIFF data.
-    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
-    if(!sampledata)
-    {
-        LOG_RES_WARNING("Failed to load \"%s\"") << filename;
-    }
-
-    M_Free(data);
-    return sampledata;
-}
-
 /**
  * Console command for playing a (local) sound effect.
  */

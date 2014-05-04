@@ -59,7 +59,6 @@ DEFINES += __DENG__ __DOOMSDAY__ __LIBDOOMSDAY__
 # Public headers
 HEADERS += \
     include/doomsday/audio/logical.h \
-    include/doomsday/audio/s_wav.h \
     include/doomsday/console/alias.h \
     include/doomsday/console/cmd.h \
     include/doomsday/console/exec.h \
@@ -83,13 +82,13 @@ HEADERS += \
     include/doomsday/help.h \
     include/doomsday/paths.h \
     include/doomsday/resource/resourceclass.h \
+    include/doomsday/resource/wav.h \
     include/doomsday/uri.h \
     include/doomsday/world/mobj.h
 
 # Sources and private headers
 SOURCES += \
     src/audio/logical.cpp \
-    src/audio/s_wav.cpp \
     src/console/alias.cpp \
     src/console/cmd.cpp \
     src/console/exec.cpp \
@@ -110,8 +109,9 @@ SOURCES += \
     src/filesys/zip.cpp \
     src/help.cpp \
     src/paths.cpp \
-    src/uri.cpp \
-    src/resource/resourceclass.cpp
+    src/resource/resourceclass.cpp \
+    src/resource/wav.cpp \
+    src/uri.cpp
 
 # Installation ---------------------------------------------------------------
 

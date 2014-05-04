@@ -34,7 +34,7 @@
 #include "audio/s_main.h"
 #include "audio/s_cache.h"
 #include "audio/s_environ.h"
-#include <doomsday/audio/s_wav.h>
+#include <doomsday/resource/wav.h>
 #include <doomsday/audio/logical.h>
 
 #endif
