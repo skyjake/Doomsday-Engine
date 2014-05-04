@@ -265,10 +265,10 @@ static void drawVertexes(Map &map);
 
 // Draw state:
 static Vector3d eyeOrigin; // Viewer origin.
-static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
-static Vector3f currentSectorLightColor;
-static float currentSectorLightLevel;
-static bool firstBspLeaf; // No range checking for the first one.
+static ConvexSubspace *curSubspace; // Subspace currently being drawn.
+static Vector3f curSectorLightColor;
+static float curSectorLightLevel;
+static bool firstSubspace; // No range checking for the first one.
 
 static void scheduleFullLightGridUpdate()
 {
@@ -1018,7 +1018,7 @@ struct rendworldpoly_params_t
 static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    SectorCluster &cluster = curSubspace->cluster();
 
     DENG_ASSERT(posCoords != 0);
 
@@ -1146,7 +1146,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         if(levelFullBright || !(p.glowing < 1))
         {
             // Uniform color. Apply to all vertices.
-            float ll = de::clamp(0.f, currentSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
+            float ll = de::clamp(0.f, curSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
             Vector4f *colorIt = colorCoords;
             for(uint i = 0; i < numVertices; ++i, colorIt++)
             {
@@ -1158,22 +1158,23 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             // Non-uniform color.
             if(useBias)
             {
-                Shard &shard = leaf->cluster().shard(*p.mapElement, p.geomGroup);
+                Map &map     = cluster.sector().map();
+                Shard &shard = cluster.shard(*p.mapElement, p.geomGroup);
 
                 // Apply the ambient light term from the grid (if available).
-                if(leaf->map().hasLightGrid())
+                if(map.hasLightGrid())
                 {
                     Vector3f const *posIt = posCoords;
                     Vector4f *colorIt     = colorCoords;
                     for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
                     {
-                        *colorIt = leaf->map().lightGrid().evaluate(*posIt);
+                        *colorIt = map.lightGrid().evaluate(*posIt);
                     }
                 }
 
                 // Apply bias light source contributions.
                 shard.lightWithBiasSources(posCoords, colorCoords, *p.surfaceTangentMatrix,
-                                           leaf->map().biasCurrentTime());
+                                           map.biasCurrentTime());
 
                 // Apply surface glow.
                 if(p.glowing > 0)
@@ -1199,14 +1200,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             }
             else
             {
-                float llL = de::clamp(0.f, currentSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
-                float llR = de::clamp(0.f, currentSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
+                float llL = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
+                float llR = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p.surfaceColor->x < 1 || p.surfaceColor->y < 1 || p.surfaceColor->z < 1)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor = (*p.surfaceColor) * currentSectorLightColor;
+                    Vector3f vColor = (*p.surfaceColor) * curSectorLightColor;
 
                     if(p.isWall && llL != llR)
                     {
@@ -1225,14 +1226,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                     // Use sector light+color only.
                     if(p.isWall && llL != llR)
                     {
-                        lightVertex(colorCoords[0], posCoords[0], llL, currentSectorLightColor);
-                        lightVertex(colorCoords[1], posCoords[1], llL, currentSectorLightColor);
-                        lightVertex(colorCoords[2], posCoords[2], llR, currentSectorLightColor);
-                        lightVertex(colorCoords[3], posCoords[3], llR, currentSectorLightColor);
+                        lightVertex(colorCoords[0], posCoords[0], llL, curSectorLightColor);
+                        lightVertex(colorCoords[1], posCoords[1], llL, curSectorLightColor);
+                        lightVertex(colorCoords[2], posCoords[2], llR, curSectorLightColor);
+                        lightVertex(colorCoords[3], posCoords[3], llR, curSectorLightColor);
                     }
                     else
                     {
-                        lightVertices(numVertices, colorCoords, posCoords, llL, currentSectorLightColor);
+                        lightVertices(numVertices, colorCoords, posCoords, llL, curSectorLightColor);
                     }
                 }
 
@@ -1240,7 +1241,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 if(p.isWall && p.wall.surfaceColor2)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor = (*p.wall.surfaceColor2) * currentSectorLightColor;
+                    Vector3f vColor = (*p.wall.surfaceColor2) * curSectorLightColor;
 
                     lightVertex(colorCoords[0], posCoords[0], llL, vColor);
                     lightVertex(colorCoords[2], posCoords[2], llR, vColor);
@@ -1689,7 +1690,7 @@ static void projectDynamics(Surface const &surface, float glowStrength,
     bool noLights, bool noShadows, bool sortLights,
     uint &lightListIdx, uint &shadowListIdx)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    BspLeaf *leaf = curSubspace;
 
     if(glowStrength >= 1 || levelFullBright)
         return;
@@ -1808,7 +1809,7 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
 static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    SectorCluster &cluster = curSubspace->cluster();
 
     LineSideSegment &segment = hedge.mapElementAs<LineSideSegment>();
     DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
@@ -1930,11 +1931,11 @@ static void writeWallSection(HEdge &hedge, int section,
      * Geometry write/drawing begins.
      */
 
-    if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
+    if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = Rend_AmbientLightColor(side.sector());
-        currentSectorLightLevel = side.sector().lightLevel();
+        curSectorLightColor = Rend_AmbientLightColor(side.sector());
+        curSectorLightLevel = side.sector().lightLevel();
     }
 
     // Allocate position coordinates.
@@ -1962,25 +1963,25 @@ static void writeWallSection(HEdge &hedge, int section,
     {
         // Render FakeRadio for this section?
         if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
-           !(parm.glowing > 0) && currentSectorLightLevel > 0)
+           !(parm.glowing > 0) && curSectorLightLevel > 0)
         {
             Rend_RadioUpdateForLineSide(side);
 
             // Determine the shadow properties.
             /// @todo Make cvars out of constants.
-            float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
-            float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
+            float shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
+            float shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
 
             Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
         }
     }
 
-    if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
+    if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
     {
         // Undo temporary draw state changes.
-        Vector4f const color = leaf->cluster().lightSourceColorfIntensity();
-        currentSectorLightColor = color.toVector3f();
-        currentSectorLightLevel = color.w;
+        Vector4f const color = cluster.lightSourceColorfIntensity();
+        curSectorLightColor = color.toVector3f();
+        curSectorLightLevel = color.w;
     }
 
     R_FreeRendVertices(posCoords);
@@ -1991,7 +1992,7 @@ static void writeWallSection(HEdge &hedge, int section,
 }
 
 /**
- * Prepare a trifan geometry according to the edges of the current BSP leaf.
+ * Prepare a trifan geometry according to the edges of the current subspace.
  * If a fan base HEdge has been chosen it will be used as the center of the
  * trifan, else the mid point of this leaf will be used instead.
  *
@@ -2003,28 +2004,26 @@ static void writeWallSection(HEdge &hedge, int section,
  *
  * @return  Number of built vertices.
  */
-static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
+static uint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height,
     Vector3f **verts)
 {
     DENG2_ASSERT(verts != 0);
 
-    ConvexSubspace const &subspace = currentBspLeaf->subspace();
-    Face const &face = subspace.poly();
-
-    HEdge *fanBase  = subspace.fanBase();
-    uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
+    Face const &poly      = curSubspace->poly();
+    HEdge *fanBase        = curSubspace->fanBase();
+    uint const totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
 
     uint n = 0;
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.center(), height);
+        (*verts)[n] = Vector3f(poly.center(), height);
         n++;
     }
 
     // Add the vertices for each hedge.
-    HEdge *baseNode = fanBase? fanBase : face.hedge();
+    HEdge *baseNode = fanBase? fanBase : poly.hedge();
     HEdge *node = baseNode;
     do
     {
@@ -2035,16 +2034,15 @@ static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.hedge()->origin(), height);
+        (*verts)[n] = Vector3f(poly.hedge()->origin(), height);
     }
 
     return totalVerts;
 }
 
-static void writeLeafPlane(Plane &plane)
+static void writeSubspacePlane(Plane &plane)
 {
-    BspLeaf *leaf          = currentBspLeaf;
-    Face const &poly       = leaf->subspace().poly();
+    Face const &poly       = curSubspace->poly();
     Surface const &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
@@ -2069,7 +2067,7 @@ static void writeLeafPlane(Plane &plane)
 
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
-    Vector2f materialOrigin = leaf->subspace().worldGridOffset() // Align to the worldwide grid.
+    Vector2f materialOrigin = curSubspace->worldGridOffset() // Align to the worldwide grid.
                             + surface.materialOriginSmoothed();
 
     // Add the Y offset to orient the Y flipped material.
@@ -2093,7 +2091,7 @@ static void writeLeafPlane(Plane &plane)
 
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.mapElement           = leaf;
+    parm.mapElement           = &curSubspace->poly().mapElementAs<BspLeaf>();
     parm.geomGroup            = plane.indexInSector();
     parm.topLeft              = &topLeft;
     parm.bottomRight          = &bottomRight;
@@ -2164,27 +2162,27 @@ static void writeLeafPlane(Plane &plane)
      * Geometry write/drawing begins.
      */
 
-    if(&plane.sector() != leaf->sectorPtr())
+    if(&plane.sector() != &curSubspace->cluster().sector())
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = Rend_AmbientLightColor(plane.sector());
-        currentSectorLightLevel = plane.sector().lightLevel();
+        curSectorLightColor = Rend_AmbientLightColor(plane.sector());
+        curSectorLightLevel = plane.sector().lightLevel();
     }
 
     // Allocate position coordinates.
     Vector3f *posCoords;
-    uint vertCount = buildLeafPlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
-                                            plane.heightSmoothed(), &posCoords);
+    uint vertCount = buildSubspacePlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
+                                                plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
     renderWorldPoly(posCoords, vertCount, parm, ms);
 
-    if(&plane.sector() != leaf->sectorPtr())
+    if(&plane.sector() != &curSubspace->cluster().sector())
     {
         // Undo temporary draw state changes.
-        Vector4f const color = leaf->cluster().lightSourceColorfIntensity();
-        currentSectorLightColor = color.toVector3f();
-        currentSectorLightLevel = color.w;
+        Vector4f const color = curSubspace->cluster().lightSourceColorfIntensity();
+        curSectorLightColor = color.toVector3f();
+        curSectorLightLevel = color.w;
     }
 
     R_FreeRendVertices(posCoords);
@@ -2235,10 +2233,8 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
 }
 
-static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
+static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
-    BspLeaf *leaf = currentBspLeaf;
-
     // Determine strip generation behavior.
     ClockDirection const direction   = Clockwise;
     bool const buildTexCoords        = CPP_BOOL(devRendSkyMode);
@@ -2259,7 +2255,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
     int relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
-    HEdge *base  = leaf->poly().hedge();
+    HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
     forever
     {
@@ -2369,33 +2365,33 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
  * @ingroup flags
  */
 ///@{
-#define SKYCAP_LOWER                0x1
-#define SKYCAP_UPPER                0x2
+#define SKYCAP_LOWER 0x1
+#define SKYCAP_UPPER 0x2
 ///@}
 
 static coord_t skyPlaneZ(int skyCap)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    SectorCluster &cluster = curSubspace->cluster();
 
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
     {
-        return leaf->map().skyFix(relPlane == Sector::Ceiling);
+        return cluster.sector().map().skyFix(relPlane == Sector::Ceiling);
     }
 
-    return leaf->cluster().visPlane(relPlane).heightSmoothed();
+    return cluster.visPlane(relPlane).heightSmoothed();
 }
 
 /// @param skyCap  @ref skyCapFlags.
-static void writeLeafSkyMaskCap(int skyCap)
+static void writeSubspaceSkyMaskCap(int skyCap)
 {
     // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
     if(devRendSkyMode) return;
     if(!skyCap) return;
 
     Vector3f *posCoords;
-    uint vertCount = buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                                            skyPlaneZ(skyCap), &posCoords);
+    uint vertCount = buildSubspacePlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                                                skyPlaneZ(skyCap), &posCoords);
 
     ClientApp::renderSystem().drawLists()
               .find(DrawListSpec(SkyMaskGeom))
@@ -2408,10 +2404,9 @@ static void writeLeafSkyMaskCap(int skyCap)
 }
 
 /// @param skyCap  @ref skyCapFlags
-static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
+static void writeSubspaceSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
+    SectorCluster &cluster = curSubspace->cluster();
 
     // Any work to do?
     // Sky caps are only necessary in sectors with sky-masked planes.
@@ -2431,15 +2426,15 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     // Lower?
     if(skyCap & SKYCAP_LOWER)
     {
-        writeLeafSkyMaskStrips(SkyFixEdge::Lower);
-        writeLeafSkyMaskCap(SKYCAP_LOWER);
+        writeSubspaceSkyMaskStrips(SkyFixEdge::Lower);
+        writeSubspaceSkyMaskCap(SKYCAP_LOWER);
     }
 
     // Upper?
     if(skyCap & SKYCAP_UPPER)
     {
-        writeLeafSkyMaskStrips(SkyFixEdge::Upper);
-        writeLeafSkyMaskCap(SKYCAP_UPPER);
+        writeSubspaceSkyMaskStrips(SkyFixEdge::Upper);
+        writeSubspaceSkyMaskCap(SKYCAP_UPPER);
     }
 }
 
@@ -2558,34 +2553,31 @@ static void writeAllWallSections(HEdge *hedge)
     }
 }
 
-static void writeLeafWallSections()
+static void writeSubspaceWallSections()
 {
-    ConvexSubspace &subspace = currentBspLeaf->subspace();
-
-    HEdge *base = subspace.poly().hedge();
+    HEdge *base = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         writeAllWallSections(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, subspace.extraMeshes())
+    foreach(Mesh *mesh, curSubspace->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         writeAllWallSections(hedge);
     }
 
-    foreach(Polyobj *po, subspace.polyobjs())
+    foreach(Polyobj *po, curSubspace->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         writeAllWallSections(hedge);
     }
 }
 
-static void writeLeafPlanes()
+static void writeSubspacePlanes()
 {
-    BspLeaf *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
+    SectorCluster &cluster = curSubspace->cluster();
 
     for(int i = 0; i < cluster.visPlaneCount(); ++i)
     {
@@ -2596,7 +2588,7 @@ static void writeLeafPlanes()
         if((eyeOrigin - pointOnPlane).dot(plane.surface().normal()) < 0)
             continue;
 
-        writeLeafPlane(plane);
+        writeSubspacePlane(plane);
     }
 }
 
@@ -2608,24 +2600,22 @@ static void markFrontFacingWalls(HEdge *hedge)
     seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
 
-static void markLeafFrontFacingWalls()
+static void markSubspaceFrontFacingWalls()
 {
-    ConvexSubspace &subspace = currentBspLeaf->subspace();
-
-    HEdge *base = subspace.poly().hedge();
+    HEdge *base = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, subspace.extraMeshes())
+    foreach(Mesh *mesh, curSubspace->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         markFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, subspace.polyobjs())
+    foreach(Polyobj *po, curSubspace->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         markFrontFacingWalls(hedge);
@@ -2641,17 +2631,16 @@ static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &b
 }
 
 /**
- * Add angle clipper occlusion ranges for the edges of the current leaf.
+ * Add angle clipper occlusion ranges for the edges of the current subspace.
  */
-static void occludeLeaf(bool frontFacing)
+static void occludeSubspace(bool frontFacing)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
+    SectorCluster &cluster = curSubspace->cluster();
 
     if(devNoCulling) return;
     if(P_IsInVoid(viewPlayer)) return;
 
-    HEdge *base = leaf->poly().hedge();
+    HEdge *base = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -2721,30 +2710,24 @@ static void occludeLeaf(bool frontFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
-static void clipLeafLumobjs()
+static void clipSubspaceLumobjs()
 {
-    BspLeaf *leaf = currentBspLeaf;
-    DENG2_ASSERT(leaf->hasSubspace());
-
-    foreach(Lumobj *lum, leaf->subspace().lumobjs())
+    foreach(Lumobj *lum, curSubspace->lumobjs())
     {
         R_ViewerClipLumobj(lum);
     }
 }
 
 /**
- * In the situation where a BSP leaf contains both lumobjs and a polyobj, lumobjs
- * must be clipped more carefully. Here we check if the line of sight intersects any
- * of the polyobj half-edges facing the viewer.
+ * In the situation where a subspace contains both lumobjs and a polyobj, lumobjs
+ * must be clipped more carefully. Here we check if the line of sight intersects
+ * any of the polyobj half-edges facing the viewer.
  */
-static void clipLeafLumobjsBySight()
+static void clipSubspaceLumobjsBySight()
 {
-    BspLeaf *leaf = currentBspLeaf;
-    DENG2_ASSERT(leaf->hasSubspace());
-
-    foreach(Lumobj *lum, leaf->subspace().lumobjs())
+    foreach(Lumobj *lum, curSubspace->lumobjs())
     {
-        R_ViewerClipLumobjBySight(lum, leaf);
+        R_ViewerClipLumobjBySight(lum, curSubspace);
     }
 }
 
@@ -2764,24 +2747,22 @@ static void clipFrontFacingWalls(HEdge *hedge)
     }
 }
 
-static void clipLeafFrontFacingWalls()
+static void clipSubspaceFrontFacingWalls()
 {
-    ConvexSubspace &subspace = currentBspLeaf->subspace();
-
-    HEdge *base = subspace.poly().hedge();
+    HEdge *base = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, subspace.extraMeshes())
+    foreach(Mesh *mesh, curSubspace->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         clipFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, subspace.polyobjs())
+    foreach(Polyobj *po, curSubspace->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         clipFrontFacingWalls(hedge);
@@ -2790,8 +2771,7 @@ static void clipLeafFrontFacingWalls()
 
 static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
 {
-    BspLeaf const *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
+    SectorCluster &cluster = curSubspace->cluster();
 
     if(mo.addFrameCount != R_FrameCount())
     {
@@ -2829,18 +2809,16 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
     return false; // Continue iteration.
 }
 
-static void projectLeafSprites()
+static void projectSubspaceSprites()
 {
-    BspLeaf *leaf = currentBspLeaf;
-    ConvexSubspace &subspace = leaf->subspace();
-
     // Do not use validCount because other parts of the renderer may change it.
-    if(subspace.lastSpriteProjectFrame() == R_FrameCount())
+    if(curSubspace->lastSpriteProjectFrame() == R_FrameCount())
         return; // Already added.
 
-    R_BspLeafMobjContactIterator(*leaf, projectSpriteWorker);
+    BspLeaf &bspLeaf = curSubspace->poly().mapElementAs<BspLeaf>();
+    R_BspLeafMobjContactIterator(bspLeaf, projectSpriteWorker);
 
-    subspace.setLastSpriteProjectFrame(R_FrameCount());
+    curSubspace->setLastSpriteProjectFrame(R_FrameCount());
 }
 
 static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
@@ -2850,22 +2828,22 @@ static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
 }
 
 /**
- * @pre Assumes the leaf is at least partially visible.
+ * @pre Assumes the subspace is at least partially visible.
  */
-static void drawCurrentLeaf()
+static void drawCurrentSubspace()
 {
-    BspLeaf *leaf = currentBspLeaf;
-    ConvexSubspace &subspace = leaf->subspace();
+    Sector &sector   = curSubspace->cluster().sector();
+    BspLeaf &bspLeaf = curSubspace->poly().mapElementAs<BspLeaf>();
 
     // Mark the leaf as visible for this frame.
-    R_ViewerBspLeafMarkVisible(*leaf);
+    R_ViewerBspLeafMarkVisible(bspLeaf);
 
-    markLeafFrontFacingWalls();
+    markSubspaceFrontFacingWalls();
 
     // Perform contact spreading for this map region.
-    leaf->map().spreadAllContacts(subspace.poly().aaBox());
+    sector.map().spreadAllContacts(curSubspace->poly().aaBox());
 
-    Rend_RadioBspLeafEdges(*leaf);
+    Rend_RadioBspLeafEdges(bspLeaf);
 
     /*
      * Before clip testing lumobjs (for halos), range-occlude the back facing edges.
@@ -2873,62 +2851,63 @@ static void drawCurrentLeaf()
      * sections so that opening occlusions cut out unnecessary oranges.
      */
 
-    occludeLeaf(false /* back facing */);
-    clipLeafLumobjs();
-    occludeLeaf(true /* front facing */);
+    occludeSubspace(false /* back facing */);
+    clipSubspaceLumobjs();
+    occludeSubspace(true /* front facing */);
 
-    clipLeafFrontFacingWalls();
+    clipSubspaceFrontFacingWalls();
 
-    if(subspace.polyobjCount())
+    if(curSubspace->polyobjCount())
     {
         // Polyobjs don't obstruct - clip lights with another algorithm.
-        clipLeafLumobjsBySight();
+        clipSubspaceLumobjsBySight();
     }
 
     // Mark generators in the sector visible.
     if(useParticles)
     {
-        leaf->map().generatorListIterator(leaf->sector().indexInMap(), generatorMarkVisibleWorker);
+        sector.map().generatorListIterator(sector.indexInMap(), generatorMarkVisibleWorker);
     }
 
     /*
-     * Sprites for this BSP leaf have to be drawn.
+     * Sprites for this subspace have to be drawn.
      *
-     * Must be done BEFORE the segments of this BspLeaf are added to the clipper.
-     * Otherwise the sprites would get clipped by them, and that wouldn't be right.
+     * Must be done BEFORE the wall segments of this subspace are added to the
+     * clipper. Otherwise the sprites would get clipped by them, and that wouldn't
+     * be right.
      *
      * Must be done AFTER the lumobjs have been clipped as this affects the projection
      * of halos.
      */
-    projectLeafSprites();
+    projectSubspaceSprites();
 
-    writeLeafSkyMask();
-    writeLeafWallSections();
-    writeLeafPlanes();
+    writeSubspaceSkyMask();
+    writeSubspaceWallSections();
+    writeSubspacePlanes();
 }
 
 /**
- * Change the current BspLeaf (updating any relevant draw state properties
+ * Change the current subspace (updating any relevant draw state properties
  * accordingly).
  *
- * @param bspLeaf  The new BSP leaf to make current.
+ * @param subspace  The new subspace to make current.
  */
-static void makeCurrent(BspLeaf &bspLeaf)
+static void makeCurrent(ConvexSubspace &subspace)
 {
-    bool clusterChanged = (!currentBspLeaf || currentBspLeaf->clusterPtr() != bspLeaf.clusterPtr());
+    bool clusterChanged = (!curSubspace || curSubspace->clusterPtr() != subspace.clusterPtr());
 
-    currentBspLeaf = &bspLeaf;
+    curSubspace = &subspace;
 
     // Update draw state.
     if(clusterChanged)
     {
-        Vector4f const color = bspLeaf.cluster().lightSourceColorfIntensity();
-        currentSectorLightColor = color.toVector3f();
-        currentSectorLightLevel = color.w;
+        Vector4f const color = subspace.cluster().lightSourceColorfIntensity();
+        curSectorLightColor = color.toVector3f();
+        curSectorLightLevel = color.w;
     }
 }
 
-static void traverseBspAndDrawLeafs(MapElement *bspElement)
+static void traverseBspAndDrawSubspaces(MapElement *bspElement)
 {
     DENG_ASSERT(bspElement != 0);
 
@@ -2941,12 +2920,12 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
-        traverseBspAndDrawLeafs(bspNode.childPtr(eyeSide));
+        traverseBspAndDrawSubspaces(bspNode.childPtr(eyeSide));
 
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
         // been fully covered by geometry.
-        if(!firstBspLeaf && C_IsFull())
+        if(!firstSubspace && C_IsFull())
             return;
 
         // ...and back space.
@@ -2962,16 +2941,16 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         return;
 
     // Is this leaf visible?
-    if(!firstBspLeaf && !C_IsPolyVisible(bspLeaf.poly()))
+    if(!firstSubspace && !C_IsPolyVisible(bspLeaf.poly()))
         return;
 
-    // This is now the current leaf.
-    makeCurrent(bspLeaf);
+    // This is now the current subspace.
+    makeCurrent(bspLeaf.subspace());
 
-    drawCurrentLeaf();
+    drawCurrentSubspace();
 
-    // This is no longer the first leaf.
-    firstBspLeaf = false;
+    // This is no longer the first subspace.
+    firstSubspace = false;
 }
 
 /**
@@ -3850,13 +3829,13 @@ void Rend_RenderMap(Map &map)
         viewsidey = viewData->viewCos;
 
         // We don't want BSP clip checking for the first BSP leaf.
-        firstBspLeaf = true;
+        firstSubspace = true;
 
         // No current BSP leaf as of yet.
-        currentBspLeaf = 0;
+        curSubspace = 0;
 
         // Draw the world!
-        traverseBspAndDrawLeafs(&map.bspRoot());
+        traverseBspAndDrawSubspaces(&map.bspRoot());
     }
     drawAllLists(map);
 

@@ -29,6 +29,7 @@
 #include <de/rect.h>
 
 class BspLeaf;
+class ConvexSubspace;
 struct Generator;
 class Lumobj;
 
@@ -196,7 +197,7 @@ bool R_ViewerLumobjIsHidden(int idx);
  */
 void R_ViewerClipLumobj(Lumobj *lum);
 
-void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf);
+void R_ViewerClipLumobjBySight(Lumobj *lum, ConvexSubspace *subspace);
 
 /**
  * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and
