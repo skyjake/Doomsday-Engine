@@ -20,6 +20,7 @@
 #ifndef LIBDOOMSDAY_CONSOLE_KNOWNWORD_H
 #define LIBDOOMSDAY_CONSOLE_KNOWNWORD_H
 
+#include "../libdoomsday.h"
 #include "dd_share.h"
 #include "dd_types.h"
 #include <de/game/Game>
@@ -48,7 +49,7 @@ void Con_UpdateKnownWords();
 
 void Con_ClearKnownWords();
 
-void Con_AddKnownWord(knownwordtype_t type, void *ptr);
+LIBDOOMSDAY_PUBLIC void Con_AddKnownWord(knownwordtype_t type, void *ptr);
 
 /**
  * Iterate over words in the known-word dictionary, making a callback for each.
@@ -63,7 +64,7 @@ void Con_AddKnownWord(knownwordtype_t type, void *ptr);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Con_IterateKnownWords(char const *pattern, knownwordtype_t type,
+LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(char const *pattern, knownwordtype_t type,
     int (*callback)(knownword_t const *word, void *parameters), void *parameters);
 
 enum KnownWordMatchMode {
@@ -71,7 +72,7 @@ enum KnownWordMatchMode {
     KnownWordStartsWith  // case insensitive
 };
 
-int Con_IterateKnownWords(KnownWordMatchMode matchMode, char const *pattern,
+LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(KnownWordMatchMode matchMode, char const *pattern,
     knownwordtype_t type, int (*callback)(knownword_t const *word, void *parameters),
     void *parameters);
 
@@ -88,16 +89,16 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode, char const *pattern,
  * @return  A NULL-terminated array of pointers to all the known words which
  *          match the search criteria.
  */
-knownword_t const **Con_CollectKnownWordsMatchingWord(char const *word,
+LIBDOOMSDAY_PUBLIC knownword_t const **Con_CollectKnownWordsMatchingWord(char const *word,
     knownwordtype_t type, uint *count);
 
-AutoStr *Con_KnownWordToString(knownword_t const *word);
+LIBDOOMSDAY_PUBLIC AutoStr *Con_KnownWordToString(knownword_t const *word);
 
-de::String Con_AnnotatedConsoleTerms(QStringList terms);
+LIBDOOMSDAY_PUBLIC de::String Con_AnnotatedConsoleTerms(QStringList terms);
 
 /**
  * Collects all the known words of the console into a Lexicon.
  */
-de::shell::Lexicon Con_Lexicon();
+LIBDOOMSDAY_PUBLIC de::shell::Lexicon Con_Lexicon();
 
 #endif // LIBDOOMSDAY_CONSOLE_KNOWNWORD_H

@@ -19,6 +19,7 @@
 #ifndef LIBDOOMSDAY_CONSOLE_ALIAS_H
 #define LIBDOOMSDAY_CONSOLE_ALIAS_H
 
+#include "../libdoomsday.h"
 #include <de/String>
 
 typedef struct calias_s {
@@ -33,15 +34,15 @@ void Con_InitAliases();
 void Con_ClearAliases();
 void Con_AddKnownWordsForAliases();
 
-calias_t *Con_AddAlias(char const *name, char const *command);
+LIBDOOMSDAY_PUBLIC calias_t *Con_AddAlias(char const *name, char const *command);
 
 /**
  * @return  @c 0 if the specified alias can't be found.
  */
-calias_t *Con_FindAlias(char const *name);
+LIBDOOMSDAY_PUBLIC calias_t *Con_FindAlias(char const *name);
 
-void Con_DeleteAlias(calias_t *cal);
+LIBDOOMSDAY_PUBLIC void Con_DeleteAlias(calias_t *cal);
 
-de::String Con_AliasAsStyledText(calias_t *alias);
+LIBDOOMSDAY_PUBLIC de::String Con_AliasAsStyledText(calias_t *alias);
 
 #endif // LIBDOOMSDAY_CONSOLE_ALIAS_H

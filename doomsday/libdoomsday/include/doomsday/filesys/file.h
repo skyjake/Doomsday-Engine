@@ -28,6 +28,7 @@
 
 #ifdef __cplusplus
 
+#include "../libdoomsday.h"
 #include "filehandle.h"
 #include "fileinfo.h"
 #include "../uri.h"
@@ -47,7 +48,7 @@ class LumpIndex;
  *
  * @ingroup fs
  */
-class File1
+class LIBDOOMSDAY_PUBLIC File1
 {
 public:
     /// Categorization flags.

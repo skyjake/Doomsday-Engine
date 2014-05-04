@@ -21,6 +21,7 @@
 #ifndef LIBDOOMSDAY_HELP_H
 #define LIBDOOMSDAY_HELP_H
 
+#include "libdoomsday.h"
 #include <de/File>
 
 typedef void const *HelpId;
@@ -35,21 +36,21 @@ enum
     NUM_HELPSTRING_TYPES
 };
 
-void DH_Register(void);
+LIBDOOMSDAY_PUBLIC void DH_Register(void);
 
 /**
  * Initializes the help string database. After which, attempts to read the
  * engine's own help string file.
  */
-void DD_InitHelp(void);
+LIBDOOMSDAY_PUBLIC void DD_InitHelp(void);
 
 /**
  * Shuts down the help string database. Frees all storage and destroys
  * database itself.
  */
-void DD_ShutdownHelp(void);
+LIBDOOMSDAY_PUBLIC void DD_ShutdownHelp(void);
 
-void Help_ReadStrings(de::File const &file);
+LIBDOOMSDAY_PUBLIC void Help_ReadStrings(de::File const &file);
 
 /**
  * Finds a node matching the ID. Use DH_GetString to read strings from it.
@@ -58,7 +59,7 @@ void Help_ReadStrings(de::File const &file);
  *
  * @return Pointer to help data, if matched; otherwise @c NULL.
  */
-HelpId DH_Find(char const *id);
+LIBDOOMSDAY_PUBLIC HelpId DH_Find(char const *id);
 
 /**
  * Return a string from within the helpnode. Strings are stored internally
@@ -72,6 +73,6 @@ HelpId DH_Find(char const *id);
  * database has not beeen initialized yet. The returned string is actually from
  * an AutoStr; it will only be valid until the next garbage recycling.
  */
-char const *DH_GetString(HelpId found, int type);
+LIBDOOMSDAY_PUBLIC char const *DH_GetString(HelpId found, int type);
 
 #endif /* LIBDOOMSDAY_HELP_H */

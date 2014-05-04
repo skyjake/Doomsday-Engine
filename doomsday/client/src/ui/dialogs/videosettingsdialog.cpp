@@ -23,6 +23,7 @@
 #include "CommandAction"
 #include "clientapp.h"
 
+#include <doomsday/console/exec.h>
 #include <de/VariableToggleWidget>
 #include <de/ChoiceWidget>
 #include <de/SequentialLayout>

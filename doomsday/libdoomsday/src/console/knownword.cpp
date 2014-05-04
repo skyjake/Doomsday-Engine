@@ -30,6 +30,7 @@
 #include <de/memory.h>
 #include <de/game/Game>
 #include <de/c_wrapper.h>
+#include <de/strutil.h>
 #include <QList>
 
 using namespace de;
@@ -228,7 +229,7 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
             AutoStr* textString = textForKnownWord(word);
             if(matchMode == KnownWordStartsWith)
             {
-                if(strnicmp(Str_Text(textString), pattern, patternLength))
+                if(qstrnicmp(Str_Text(textString), pattern, patternLength))
                     continue; // Didn't match.
             }
             else if(matchMode == KnownWordExactMatch)
@@ -289,7 +290,6 @@ knownword_t const** Con_CollectKnownWordsMatchingWord(char const* word,
 
     return 0; // No matches.
 }
-
 
 static int aproposPrinter(knownword_t const *word, void *matching)
 {

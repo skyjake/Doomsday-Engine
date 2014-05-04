@@ -28,6 +28,7 @@
 #ifndef LIBDENG_FILEID_H
 #define LIBDENG_FILEID_H
 
+#include "../libdoomsday.h"
 #include <QByteArray>
 #include <de/Log>
 #include <de/String>
@@ -37,7 +38,7 @@ namespace de {
 /**
  * File identifier (an MD5 hash).
  */
-class FileId : public LogEntry::Arg::Base
+class LIBDOOMSDAY_PUBLIC FileId : public LogEntry::Arg::Base
 {
 public:
     typedef QByteArray Md5Hash;

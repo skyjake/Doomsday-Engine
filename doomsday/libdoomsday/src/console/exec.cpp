@@ -634,7 +634,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
         hasCallback = (cvar->notifyChanged != 0);
 
         if(args.argc == 2 ||
-           (args.argc == 3 && !stricmp(args.argv[1], "force")))
+           (args.argc == 3 && !qstricmp(args.argv[1], "force")))
         {
             char* argptr = args.argv[args.argc - 1];
             dd_bool forced = args.argc == 3;
@@ -1045,11 +1045,11 @@ D_CMD(AddSub)
     }
     if(argc >= 4)
     {
-        force = !stricmp(argv[3], "force");
+        force = !qstricmp(argv[3], "force");
     }
 
     delta = strtod(argv[2], NULL);
-    if(!stricmp(argv[0], "sub"))
+    if(!qstricmp(argv[0], "sub"))
         delta = -delta;
 
     return cvarAddSub(argv[1], delta, force);
@@ -1074,7 +1074,7 @@ D_CMD(IncDec)
     }
     if(argc >= 3)
     {
-        force = !stricmp(argv[2], "force");
+        force = !qstricmp(argv[2], "force");
     }
     cvar = Con_FindVariable(argv[1]);
     if(!cvar)
@@ -1087,7 +1087,7 @@ D_CMD(IncDec)
     }
 
     val = CVar_Float(cvar);
-    val += !stricmp(argv[0], "inc")? 1 : -1;
+    val += !qstricmp(argv[0], "inc")? 1 : -1;
 
     if(!force)
     {
@@ -1151,7 +1151,7 @@ D_CMD(If)
 
     // Which operator?
     for(i = 0; operators[i].opstr; ++i)
-        if(!stricmp(operators[i].opstr, argv[2]))
+        if(!qstricmp(operators[i].opstr, argv[2]))
         {
             oper = operators[i].op;
             break;
@@ -1191,7 +1191,7 @@ D_CMD(If)
         }
     case CVT_CHARPTR:
         {
-        int comp = stricmp(CV_CHARPTR(var), argv[3]);
+        int comp = qstricmp(CV_CHARPTR(var), argv[3]);
 
         isTrue = (oper == IF_EQUAL     ? comp == 0 :
                   oper == IF_NOT_EQUAL ? comp != 0 :

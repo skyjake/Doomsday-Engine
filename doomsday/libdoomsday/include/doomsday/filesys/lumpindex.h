@@ -32,6 +32,7 @@
 
 #ifdef __cplusplus
 
+#include "../libdoomsday.h"
 #include "file.h"
 #include "fileinfo.h"
 
@@ -52,7 +53,7 @@ namespace de {
 
 /// @}
 
-class LumpIndex
+class LIBDOOMSDAY_PUBLIC LumpIndex
 {
 public:
     /// No file(s) found. @ingroup errors

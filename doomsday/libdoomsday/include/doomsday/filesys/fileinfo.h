@@ -30,8 +30,8 @@
 
 #ifdef __cplusplus
 
+#include "../libdoomsday.h"
 #include <algorithm>
-
 #include <de/types.h>
 
 namespace de {
@@ -42,7 +42,7 @@ class File1;
  * FileInfo record.
  * @ingroup fs
  */
-struct FileInfo
+struct LIBDOOMSDAY_PUBLIC FileInfo
 {
     uint lastModified; /// Unix timestamp.
     int lumpIdx; /// Relative index of this lump in the owning package else zero.

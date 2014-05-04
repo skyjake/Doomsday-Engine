@@ -25,6 +25,7 @@
 
 #ifdef __cplusplus
 
+#include "../libdoomsday.h"
 #include <algorithm> // std::swap
 #include "dd_types.h"
 #include "../uri.h"
@@ -46,7 +47,7 @@ namespace de {
  *
  * @ingroup fs
  */
-class SearchPath : public Uri
+class LIBDOOMSDAY_PUBLIC SearchPath : public Uri
 {
 public:
     /// @defgroup searchPathFlags Search Path Flags

@@ -57,6 +57,13 @@ DENG_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list
  */
 DENG_PUBLIC int dd_snprintf(char *str, size_t size, char const *format, ...);
 
+#ifdef WIN32
+/**
+ * Windows implementation for the Unix strcasestr() function.
+ */
+DENG_PUBLIC char const *strcasestr(char const *text, char const *sub);
+#endif
+
 #ifdef UNIX
 // Some routines not available on the *nix platform.
 DENG_PUBLIC char *strupr(char *string);

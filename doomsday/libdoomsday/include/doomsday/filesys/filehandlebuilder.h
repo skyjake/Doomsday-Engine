@@ -25,13 +25,14 @@
 #ifndef LIBDENG_FILESYS_FILEHANDLEBUILDER_H
 #define LIBDENG_FILESYS_FILEHANDLEBUILDER_H
 
+#include "../libdoomsday.h"
 #include "fs_main.h"
 
 #ifdef __cplusplus
 
 namespace de {
 
-class FileHandleBuilder
+class LIBDOOMSDAY_PUBLIC FileHandleBuilder
 {
 public:
     static void init();

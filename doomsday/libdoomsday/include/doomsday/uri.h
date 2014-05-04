@@ -24,6 +24,7 @@
 
 #ifdef __cplusplus
 
+#include "libdoomsday.h"
 #include "api_resourceclass.h"
 
 /// Schemes must be at least this many characters.
@@ -47,7 +48,7 @@ namespace de {
  * Universal resource identifiers (URIs) are a way to identify specific
  * entities in a hierarchy.
  */
-class Uri : public LogEntry::Arg::Base
+class LIBDOOMSDAY_PUBLIC Uri : public LogEntry::Arg::Base
 {
 public:
     /// Base class for resolve-related errors. @ingroup errors

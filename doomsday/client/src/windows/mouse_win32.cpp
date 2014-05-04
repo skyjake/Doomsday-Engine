@@ -25,7 +25,6 @@
 #include "ui/sys_input.h"
 #include "ui/clientwindow.h"
 #include "sys_system.h"
-#include "con_main.h"
 #include <de/c_wrapper.h>
 
 static LPDIRECTINPUTDEVICE8 didMouse;

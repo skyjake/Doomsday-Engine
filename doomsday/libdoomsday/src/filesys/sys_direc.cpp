@@ -21,8 +21,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
 #if defined(WIN32)
 #  include <direct.h>
+#  include <io.h>
+#  define strdup _strdup
+#  define mkdir  _mkdir
+#  define access _access
 #endif
 
 #if defined(UNIX)
@@ -34,19 +42,11 @@
 #  include <pwd.h>
 #endif
 
-#include <de/App>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include <de/findfile.h>
 #include <de/memory.h>
+#include <de/App>
 #include <de/Log>
 
-/*#include "de_platform.h"
-#include "de_system.h"
-#include "dd_main.h"
-#include "dd_def.h"
-#include "m_misc.h"*/
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/paths.h"
 

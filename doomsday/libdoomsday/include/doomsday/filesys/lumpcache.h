@@ -24,13 +24,14 @@
 #ifndef LIBDENG_FILESYS_LUMPCACHE_H
 #define LIBDENG_FILESYS_LUMPCACHE_H
 
+#include "../libdoomsday.h"
 #include <vector>
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
-class LumpCache
+class LIBDOOMSDAY_PUBLIC LumpCache
 {
 private:
     class CacheRecord

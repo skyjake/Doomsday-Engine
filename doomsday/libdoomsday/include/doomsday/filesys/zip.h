@@ -23,6 +23,7 @@
 #ifndef LIBDENG_RESOURCE_ZIP_H
 #define LIBDENG_RESOURCE_ZIP_H
 
+#include "../libdoomsday.h"
 #include "file.h"
 #include "fileinfo.h"
 #include <de/PathTree>
@@ -39,7 +40,7 @@ class FileHandle;
  *
  * @see file.h, File1
  */
-class Zip : public File1
+class LIBDOOMSDAY_PUBLIC Zip : public File1
 {
 public:
     /// Base class for format-related errors. @ingroup errors

@@ -45,16 +45,16 @@ void Con_DataRegister();
 extern "C" {
 #endif
 
-void Con_Register();
+LIBDOOMSDAY_PUBLIC void Con_Register();
 
-dd_bool Con_Init();
-void Con_Shutdown();
+LIBDOOMSDAY_PUBLIC dd_bool Con_Init();
+LIBDOOMSDAY_PUBLIC void Con_InitDatabases();
+LIBDOOMSDAY_PUBLIC void Con_ClearDatabases();
+LIBDOOMSDAY_PUBLIC void Con_Shutdown();
 
-void Con_InitDatabases();
-void Con_ClearDatabases();
 void Con_ShutdownDatabases();
 
-void Con_Ticker(timespan_t time);
+LIBDOOMSDAY_PUBLIC void Con_Ticker(timespan_t time);
 
 /**
  * Attempt to execute a console command.
@@ -66,10 +66,10 @@ void Con_Ticker(timespan_t time);
  *
  * @return  Non-zero if successful else @c 0.
  */
-int Con_Execute(byte src, char const *command, int silent, dd_bool netCmd);
-int Con_Executef(byte src, int silent, char const *command, ...) PRINTF_F(3,4);
+LIBDOOMSDAY_PUBLIC int Con_Execute(byte src, char const *command, int silent, dd_bool netCmd);
+LIBDOOMSDAY_PUBLIC int Con_Executef(byte src, int silent, char const *command, ...) PRINTF_F(3,4);
 
-dd_bool Con_Parse(char const *fileName, dd_bool silently);
+LIBDOOMSDAY_PUBLIC dd_bool Con_Parse(char const *fileName, dd_bool silently);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -77,7 +77,7 @@ dd_bool Con_Parse(char const *fileName, dd_bool silently);
 
 #ifdef __cplusplus
 
-de::String Con_GameAsStyledText(de::game::Game const *game);
+LIBDOOMSDAY_PUBLIC de::String Con_GameAsStyledText(de::game::Game const *game);
 
 #endif // __cplusplus
 

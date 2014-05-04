@@ -77,7 +77,7 @@ static void determineGlobalPaths(application_t* app)
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingHomeDir)
         {
-            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+            DD_SetRuntimePath(Dir_Path(temp));
         }
         Dir_Delete(temp);
     }

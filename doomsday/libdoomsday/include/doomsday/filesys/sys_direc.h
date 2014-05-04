@@ -24,6 +24,7 @@
 #ifndef LIBDENG_DIREC_H
 #define LIBDENG_DIREC_H
 
+#include "../libdoomsday.h"
 #include "dd_types.h"
 
 #ifdef WIN32
@@ -48,36 +49,36 @@ typedef struct directory_s {
 } directory_t;
 
 /// Construct using the specified path.
-directory_t* Dir_New(const char* path);
+LIBDOOMSDAY_PUBLIC directory_t* Dir_New(const char* path);
 
 /// Construct using the current working directory path.
-directory_t* Dir_NewFromCWD(void);
+LIBDOOMSDAY_PUBLIC directory_t* Dir_NewFromCWD(void);
 
 /**
  * Construct by extracting the path from @a path.
  * \note if not absolute then it will be interpeted as relative to the current
  * working directory path.
  */
-directory_t* Dir_FromText(const char* path);
+LIBDOOMSDAY_PUBLIC directory_t* Dir_FromText(const char* path);
 
-void Dir_Delete(directory_t* dir);
+LIBDOOMSDAY_PUBLIC void Dir_Delete(directory_t* dir);
 
 /**
  * @return  @c true if the directories @a a and @a b are considered equal
  *      (i.e., their paths match exactly).
  */
-dd_bool Dir_IsEqual(directory_t* dir, directory_t* other);
+LIBDOOMSDAY_PUBLIC dd_bool Dir_IsEqual(directory_t* dir, directory_t* other);
 
 /**
  * @return  "Raw" version of the present path.
  */
-const char* Dir_Path(directory_t* dir);
+LIBDOOMSDAY_PUBLIC const char* Dir_Path(directory_t* dir);
 
 /**
  * Change the path to that specified in @a path.
  * \note Path directives (such as '}' and '~' on Unix) are automatically expanded.
  */
-void Dir_SetPath(directory_t* dir, const char* path);
+LIBDOOMSDAY_PUBLIC void Dir_SetPath(directory_t* dir, const char* path);
 
 /// Class-Static Members:
 
@@ -85,33 +86,33 @@ void Dir_SetPath(directory_t* dir, const char* path);
  * Clean up given path. Whitespace is trimmed. Path separators are converted
  * into their system-specific form. On Unix '~' expansion is applied.
  */
-void Dir_CleanPath(char* path, size_t len);
-void Dir_CleanPathStr(ddstring_t* str);
+LIBDOOMSDAY_PUBLIC void Dir_CleanPath(char* path, size_t len);
+LIBDOOMSDAY_PUBLIC void Dir_CleanPathStr(ddstring_t* str);
 
 /**
  * @return  Absolute path to the current working directory for the default drive.
  *      Always ends with a '/'. Path must be released with M_Free()
  *      @c NULL if we are out of memory.
  */
-char* Dir_CurrentPath(void);
+LIBDOOMSDAY_PUBLIC char* Dir_CurrentPath(void);
 
 /**
  * Extract just the file name including any extension from @a path.
  */
-void Dir_FileName(char* name, const char* path, size_t len);
+LIBDOOMSDAY_PUBLIC void Dir_FileName(char* name, const char* path, size_t len);
 
 /**
  * Convert directory separators in @a path to their system-specifc form.
  */
-void Dir_ToNativeSeparators(char* path, size_t len);
+LIBDOOMSDAY_PUBLIC void Dir_ToNativeSeparators(char* path, size_t len);
 
 /**
  * Convert directory separators in @a path to our internal '/' form.
  */
-void Dir_FixSeparators(char* path, size_t len);
+LIBDOOMSDAY_PUBLIC void Dir_FixSeparators(char* path, size_t len);
 
 /// @return  @c true if @a path is absolute.
-int Dir_IsAbsolutePath(const char* path);
+LIBDOOMSDAY_PUBLIC int Dir_IsAbsolutePath(const char* path);
 
 /**
  * Convert a path into an absolute path. If @a path is relative it is considered
@@ -120,19 +121,19 @@ int Dir_IsAbsolutePath(const char* path);
  * @param path  Path to be translated.
  * @param len  Length of the buffer used for @a path (in bytes).
  */
-void Dir_MakeAbsolutePath(char* path, size_t len);
+LIBDOOMSDAY_PUBLIC void Dir_MakeAbsolutePath(char* path, size_t len);
 
 /**
  * Check that the given directory exists. If it doesn't, create it.
  * @return  @c true if successful.
  */
-dd_bool Dir_mkpath(const char* path);
+LIBDOOMSDAY_PUBLIC dd_bool Dir_mkpath(const char* path);
 
 /**
  * Attempt to change the current working directory to the path defined.
  * @return  @c true if the change was successful.
  */
-dd_bool Dir_SetCurrent(const char* path);
+LIBDOOMSDAY_PUBLIC dd_bool Dir_SetCurrent(const char* path);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -125,7 +125,7 @@ namespace de
      *
      * @ingroup core
      */
-    class NullFileType : public FileType
+    class LIBDOOMSDAY_PUBLIC NullFileType : public FileType
     {
     public:
         NullFileType() : FileType("FT_NONE",  RC_UNKNOWN)
@@ -140,7 +140,7 @@ namespace de
     /**
      * Base class for all native-file types.
      */
-    class NativeFileType : public FileType
+    class LIBDOOMSDAY_PUBLIC NativeFileType : public FileType
     {
     public:
         NativeFileType(String name, resourceclassid_t rclassId)

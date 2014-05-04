@@ -26,6 +26,7 @@
 #ifndef LIBDENG_FILESYS_FILEHANDLE_H
 #define LIBDENG_FILESYS_FILEHANDLE_H
 
+#include "../libdoomsday.h"
 #include <de/types.h>
 
 /// Seek methods
@@ -47,7 +48,7 @@ class FileHandleBuilder;
 /**
  * Reference/handle to a unique file in the engine's virtual file system.
  */
-class FileHandle
+class LIBDOOMSDAY_PUBLIC FileHandle
 {
 public:
     ~FileHandle();
@@ -129,27 +130,27 @@ extern "C" {
 struct filehandle_s; // The filehandle instance (opaque).
 typedef struct filehandle_s FileHandle;
 
-void FileHandle_Delete(FileHandle* hndl);
+LIBDOOMSDAY_PUBLIC void FileHandle_Delete(FileHandle* hndl);
 
-void FileHandle_Close(FileHandle* hndl);
+LIBDOOMSDAY_PUBLIC void FileHandle_Close(FileHandle* hndl);
 
-dd_bool FileHandle_IsValid(FileHandle const* hndl);
+LIBDOOMSDAY_PUBLIC dd_bool FileHandle_IsValid(FileHandle const* hndl);
 
-size_t FileHandle_Length(FileHandle* hndl);
+LIBDOOMSDAY_PUBLIC size_t FileHandle_Length(FileHandle* hndl);
 
-size_t FileHandle_BaseOffset(FileHandle const* hndl);
+LIBDOOMSDAY_PUBLIC size_t FileHandle_BaseOffset(FileHandle const* hndl);
 
-size_t FileHandle_Read(FileHandle* hndl, uint8_t* buffer, size_t count);
+LIBDOOMSDAY_PUBLIC size_t FileHandle_Read(FileHandle* hndl, uint8_t* buffer, size_t count);
 
-unsigned char FileHandle_GetC(FileHandle* hndl);
+LIBDOOMSDAY_PUBLIC unsigned char FileHandle_GetC(FileHandle* hndl);
 
-dd_bool FileHandle_AtEnd(FileHandle* hndl);
+LIBDOOMSDAY_PUBLIC dd_bool FileHandle_AtEnd(FileHandle* hndl);
 
-size_t FileHandle_Tell(FileHandle* hndl);
+LIBDOOMSDAY_PUBLIC size_t FileHandle_Tell(FileHandle* hndl);
 
-size_t FileHandle_Seek(FileHandle* hndl, size_t offset, SeekMethod whence);
+LIBDOOMSDAY_PUBLIC size_t FileHandle_Seek(FileHandle* hndl, size_t offset, SeekMethod whence);
 
-void FileHandle_Rewind(FileHandle* hndl);
+LIBDOOMSDAY_PUBLIC void FileHandle_Rewind(FileHandle* hndl);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -23,6 +23,7 @@
 #ifndef LIBDENG_RESOURCE_WAD_H
 #define LIBDENG_RESOURCE_WAD_H
 
+#include "../libdoomsday.h"
 #include "file.h"
 #include "fileinfo.h"
 #include <de/PathTree>
@@ -35,7 +36,7 @@ namespace de {
  *
  * @see file.h, File1
  */
-class Wad : public File1
+class LIBDOOMSDAY_PUBLIC Wad : public File1
 {
 public:
     /// Base class for format-related errors. @ingroup errors
