@@ -1,7 +1,9 @@
-/** @file def_data.h
+/** @file database.h  Engine Definition Files.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @todo Needs to be redesigned.
+ *
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,14 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Engine Definition Files
- *
- * @todo Needs to be redesigned.
- */
-
-#ifndef DENG_DEFINITION_FILE_H
-#define DENG_DEFINITION_FILE_H
+#ifndef LIBDOOMSDAY_DEFINITION_DATABASE_H
+#define LIBDOOMSDAY_DEFINITION_DATABASE_H
 
 #include <vector>
 #include <de/libcore.h>
@@ -317,6 +313,10 @@ typedef struct ded_skymodel_s {
 
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
+
+#define DEFAULT_SKY_HEIGHT               ( .666667f )
+#define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
+#define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 
 typedef struct ded_sky_s {
     ded_stringid_t  id;
@@ -774,13 +774,6 @@ extern "C" {
 void            DED_Init(ded_t* ded);
 void            DED_Clear(ded_t* ded);
 
-/**
- * @return  @c true, if the file was successfully loaded.
- */
-int DED_Read(ded_t* ded, const char* path);
-
-int             DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
-
 int             DED_AddFlag(ded_t* ded, char const* name, char const* text, int value);
 int             DED_AddMobj(ded_t* ded, char const* idStr);
 int             DED_AddState(ded_t* ded, char const* id);
@@ -852,6 +845,4 @@ void            DED_ZCount(ded_count_t* c);
 } // extern "C"
 #endif
 
-DENG_EXTERN_C char dedReadError[];
-
-#endif // DENG_DEFINITION_FILE_H
+#endif // LIBDOOMSDAY_DEFINITION_DATABASE_H

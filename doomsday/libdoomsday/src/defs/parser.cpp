@@ -1,4 +1,4 @@
-/** @file def_read.cpp
+/** @file defs/parser.cpp
  *
  * Doomsday Engine Definition File Reader.
  *
@@ -35,23 +35,31 @@
  * 02110-1301 USA</small>
  */
 
+#include "doomsday/defs/parser.h"
+#include "doomsday/defs/database.h"
+#include "doomsday/filesys/fs_main.h"
+#include "doomsday/filesys/fs_util.h"
+#include "doomsday/uri.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+/*
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_misc.h"
-#include "de_defs.h"
+#include "de_defs.h"*/
+#include "xgclass.h"
 
-// XGClass.h is actually a part of the engine.
-#include "../../../plugins/common/include/xgclass.h"
-
+#include <de/App>
 #include <de/NativePath>
+#include <de/game/Game>
 #include <de/memory.h>
+#include <de/vector1.h>
 
 using namespace de;
 
@@ -128,6 +136,8 @@ typedef struct dedsource_s {
 
 char dedReadError[512];
 
+static struct xgclass_s* xgClassLinks;
+
 static dedsource_t sourceStack[MAX_RECUR_DEPTH];
 static dedsource_t* source; // Points to the current source.
 
@@ -155,6 +165,11 @@ static void SetError2(char const* str, char const* more)
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
             str, more);
+}
+
+void DED_SetXGClassLinks(struct xgclass_s *links)
+{
+    xgClassLinks = links;
 }
 
 /**
@@ -640,7 +655,7 @@ static void DED_InitReader(const char* buffer, const char* fileName)
 {
     if(source && source - sourceStack >= MAX_RECUR_DEPTH)
     {
-        App_Error("DED_InitReader: Include recursion is too deep.\n");
+        App_FatalError("DED_InitReader: Include recursion is too deep.\n");
     }
 
     if(!source)
@@ -688,10 +703,10 @@ static dd_bool DED_CheckCondition(char const *cond, dd_bool expected)
         // A command line option.
         value = (CommandLine_Check(token) != 0);
     }
-    else if(isalnum(cond[0]) && App_GameLoaded())
+    else if(isalnum(cond[0]) && !App::game().isNull())
     {
         // A game mode.
-        value = !String(cond).compareWithoutCase(App_CurrentGame().identityKey());
+        value = !String(cond).compareWithoutCase(App::game().id());
     }
 
     return value == expected;
@@ -813,7 +828,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             CHECKSC;
 
             de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
-            FS1::Scheme& scheme = App_FileSystem().scheme(App_ResourceClass("RC_MODEL").defaultScheme());
+            FS1::Scheme& scheme = App_FileSystem().scheme(ResourceClass::classForId(RC_MODEL).defaultScheme());
             scheme.addSearchPath(reinterpret_cast<de::Uri const&>(newSearchPath), FS1::ExtraPaths);
         }
 

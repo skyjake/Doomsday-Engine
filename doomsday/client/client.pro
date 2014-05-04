@@ -109,7 +109,8 @@ DENG_API_HEADERS = \
     $$DENG_API_DIR/dd_version.h \
     $$DENG_API_DIR/def_share.h \
     $$DENG_API_DIR/dengproject.h \
-    $$DENG_API_DIR/doomsday.h
+    $$DENG_API_DIR/doomsday.h \
+    $$DENG_API_DIR/xgclass.h
 
 # Convenience headers.
 DENG_CONVENIENCE_HEADERS += \

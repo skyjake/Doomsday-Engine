@@ -40,9 +40,7 @@
 #endif
 
 #include "api_def.h"
-
-// XGClass.h is actually a part of the engine.
-#include "../../../plugins/common/include/xgclass.h"
+#include "xgclass.h"
 
 #include <de/NativePath>
 #include <QTextStream>
@@ -111,6 +109,9 @@ int Def_GetGameClasses(void)
         memset(&nullXgClassLinks, 0, sizeof(nullXgClassLinks));
         xgClassLinks = &nullXgClassLinks;
     }
+
+    DED_SetXGClassLinks(xgClassLinks);
+
     return 1;
 }
 
@@ -726,33 +727,6 @@ static void Def_InitTextDef(ddtext_t* txt, char const* str)
 
     // Adjust buffer to fix exactly.
     txt->text = (char*) M_Realloc(txt->text, strlen(txt->text) + 1);
-}
-
-void Def_ReadProcessDED(char const* path)
-{
-    LOG_AS("Def_ReadProcessDED");
-
-    if(!path || !path[0]) return;
-
-    de::Uri path_ = de::Uri(path, RC_NULL);
-    if(!App_FileSystem().accessFile(path_))
-    {
-        LOG_RES_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
-        return;
-    }
-
-    // We use the File Ids to prevent loading the same files multiple times.
-    if(!App_FileSystem().checkFileId(path_))
-    {
-        // Already handled.
-        LOG_RES_XVERBOSE("\"%s\" has already been read") << NativePath(path_.asText()).pretty();
-        return;
-    }
-
-    if(!DED_Read(&defs, path))
-    {
-        App_Error("Def_ReadProcessDED: %s\n", dedReadError);
-    }
 }
 
 /**

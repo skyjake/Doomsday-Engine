@@ -71,8 +71,7 @@ HEADERS += \
     $$common_inc/saveslots.h \
     $$common_inc/thingarchive.h \
     $$common_inc/thinkerinfo.h \
-    $$common_inc/x_hair.h \
-    $$common_inc/xgclass.h
+    $$common_inc/x_hair.h
 
 SOURCES += \
     $$common_src/am_map.c \
