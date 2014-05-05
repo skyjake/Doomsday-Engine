@@ -816,9 +816,9 @@ DENG2_PIMPL(SectorCluster)
         reverbSubspaces.insert(subspace);
     }
 
-    static int addReverbSubspaceWorker(BspLeaf *bspLeaf, void *context)
+    static int addReverbSubspaceWorker(ConvexSubspace *subspace, void *context)
     {
-        static_cast<Instance *>(context)->addReverbSubspace(bspLeaf->subspacePtr());
+        static_cast<Instance *>(context)->addReverbSubspace(subspace);
         return false; // Continue iteration.
     }
 
@@ -840,9 +840,9 @@ DENG2_PIMPL(SectorCluster)
         affectionBounds.maxX += 128;
         affectionBounds.maxY += 128;
 
-        // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
+        // Link all convex subspaces whose axis-aligned bounding box intersects
         // with the affection bounds to the reverb set.
-        self.sector().map().bspLeafBoxIterator(affectionBounds, addReverbSubspaceWorker, this);
+        self.sector().map().subspaceBoxIterator(affectionBounds, addReverbSubspaceWorker, this);
     }
 
     /**

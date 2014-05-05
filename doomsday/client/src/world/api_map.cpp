@@ -1610,12 +1610,29 @@ DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
     return App_WorldSystem().map().lineBoxIterator(*box, flags, callback, context);
 }
 
+struct subspaceblockmapbspleaftraverser_params_t
+{
+    int (*callback) (BspLeaf *, void *);
+    void *context;
+};
+
+static int subspaceBlockmapBspLeafTraverser(ConvexSubspace *subspace, void *context)
+{
+    subspaceblockmapbspleaftraverser_params_t &p = *static_cast<subspaceblockmapbspleaftraverser_params_t *>(context);
+    return p.callback(&subspace->bspLeaf(), p.context);
+}
+
+/// @note Used only for drawing the games' automap.
 #undef BspLeaf_BoxIterator
 DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box,
     int (*callback) (BspLeaf *, void *), void *context)
 {
     if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
-    return App_WorldSystem().map().bspLeafBoxIterator(*box, callback, context);
+
+    subspaceblockmapbspleaftraverser_params_t parm; de::zap(parm);
+    parm.callback = callback;
+    parm.context  = context;
+    return App_WorldSystem().map().subspaceBoxIterator(*box, subspaceBlockmapBspLeafTraverser, &parm);
 }
 
 #undef P_PathTraverse2

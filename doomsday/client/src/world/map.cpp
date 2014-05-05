@@ -139,7 +139,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     QScopedPointer<Blockmap> mobjBlockmap;
     QScopedPointer<Blockmap> polyobjBlockmap;
     QScopedPointer<LineBlockmap> lineBlockmap;
-    QScopedPointer<Blockmap> bspLeafBlockmap;
+    QScopedPointer<Blockmap> subspaceBlockmap;
 
 #ifdef __CLIENT__
     struct ContactBlockmap : public Blockmap
@@ -999,28 +999,27 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Construct an initial (empty) BSP leaf blockmap.
+     * Construct an initial (empty) convex subspace blockmap.
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initBspLeafBlockmap(ddouble margin = 8)
+    void initSubspaceBlockmap(ddouble margin = 8)
     {
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        bspLeafBlockmap.reset(
+        subspaceBlockmap.reset(
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_MAP_VERBOSE("BSP leaf blockmap dimensions:")
-            << bspLeafBlockmap->dimensions().asText();
+        LOG_MAP_VERBOSE("Convex subspace blockmap dimensions:")
+            << subspaceBlockmap->dimensions().asText();
 
         // Populate the blockmap.
         foreach(BspLeaf *bspLeaf, bspLeafs)
         {
-            // BspLeafs without a sector cluster don't get in.
-            if(bspLeaf->hasCluster())
+            if(ConvexSubspace *subspace = bspLeaf->subspacePtr())
             {
-                bspLeafBlockmap->link(bspLeaf->poly().aaBox(), bspLeaf);
+                subspaceBlockmap->link(subspace->poly().aaBox(), subspace);
             }
         }
     }
@@ -2287,14 +2286,14 @@ LineBlockmap const &Map::lineBlockmap() const
     throw MissingBlockmapError("Map::lineBlockmap", "Line blockmap is not initialized");
 }
 
-Blockmap const &Map::bspLeafBlockmap() const
+Blockmap const &Map::subspaceBlockmap() const
 {
-    if(!d->bspLeafBlockmap.isNull())
+    if(!d->subspaceBlockmap.isNull())
     {
-        return *d->bspLeafBlockmap;
+        return *d->subspaceBlockmap;
     }
-    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::bspLeafBlockmap", "BSP leaf blockmap is not initialized");
+    /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
 }
 
 struct blockmapcellmobjsiterator_params_t
@@ -2379,27 +2378,26 @@ static int blockmapCellLinesIterator(void *mapElement, void *context)
     return false; // Continue iteration.
 }
 
-struct blockmapcellbspleafsiterator_params_t
+struct blockmapcellsubspacesiterator_params_t
 {
     AABoxd const *box;
     int localValidCount;
-    int (*callback) (BspLeaf *, void *);
+    int (*callback) (ConvexSubspace *, void *);
     void *context;
 };
 
-static int blockmapCellBspLeafsIterator(void *object, void *context)
+static int blockmapCellSubspacesIterator(void *object, void *context)
 {
-    BspLeaf *bspLeaf = static_cast<BspLeaf *>(object);
-    DENG2_ASSERT(bspLeaf->hasSubspace()); // sanity check
-    blockmapcellbspleafsiterator_params_t &parm = *static_cast<blockmapcellbspleafsiterator_params_t *>(context);
+    ConvexSubspace *subspace = static_cast<ConvexSubspace *>(object);
+    blockmapcellsubspacesiterator_params_t &parm = *static_cast<blockmapcellsubspacesiterator_params_t *>(context);
 
-    if(bspLeaf->subspace().validCount() != parm.localValidCount)
+    if(subspace->validCount() != parm.localValidCount)
     {
-        // This BspLeaf has now been processed for the current iteration.
-        bspLeaf->subspace().setValidCount(parm.localValidCount);
+        // This subspace has now been processed for the current iteration.
+        subspace->setValidCount(parm.localValidCount);
 
         // Check the bounds.
-        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
+        AABoxd const &leafAABox = subspace->poly().aaBox();
         if(parm.box)
         {
             if(leafAABox.maxX < parm.box->minX ||
@@ -2412,32 +2410,32 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
         }
 
         // Action the callback.
-        if(int result = parm.callback(bspLeaf, parm.context))
+        if(int result = parm.callback(subspace, parm.context))
             return result; // Stop iteration.
     }
 
     return false; // Continue iteration.
 }
 
-int Map::bspLeafBoxIterator(AABoxd const &box, int (*callback) (BspLeaf *, void *),
-                            void *context) const
+int Map::subspaceBoxIterator(AABoxd const &box, int (*callback) (ConvexSubspace *, void *),
+    void *context) const
 {
-    if(!d->bspLeafBlockmap.isNull())
+    if(!d->subspaceBlockmap.isNull())
     {
         static int localValidCount = 0;
         // This is only used here.
         localValidCount++;
 
-        blockmapcellbspleafsiterator_params_t parm; zap(parm);
+        blockmapcellsubspacesiterator_params_t parm; zap(parm);
         parm.localValidCount = localValidCount;
         parm.callback        = callback;
         parm.context         = context;
         parm.box             = &box;
 
-        return d->bspLeafBlockmap->iterate(box, blockmapCellBspLeafsIterator, &parm);
+        return d->subspaceBlockmap->iterate(box, blockmapCellSubspacesIterator, &parm);
     }
-    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::bspLeafBoxIterator", "BSP leaf blockmap is not initialized");
+    /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::subspaceBoxIterator", "Convex subspace blockmap is not initialized");
 }
 
 int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
@@ -3639,9 +3637,9 @@ D_CMD(InspectMap)
         LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << bspTreeSummary(map);
     }
 
-    if(!map.bspLeafBlockmap().isNull())
+    if(!map.subspaceBlockmap().isNull())
     {
-        LOG_SCR_MSG(_E(l) "BSP leaf blockmap: " _E(.) _E(i)) << map.bspLeafBlockmap().dimensions().asText();
+        LOG_SCR_MSG(_E(l) "Subspace blockmap: " _E(.) _E(i)) << map.subspaceBlockmap().dimensions().asText();
     }
     if(!map.lineBlockmap().isNull())
     {
@@ -4200,8 +4198,8 @@ bool Map::endEditing()
         plane->updateSoundEmitterOrigin();
     }
 
-    // We can now initialize the BSP leaf blockmap.
-    d->initBspLeafBlockmap();
+    // We can now initialize the convex subspace blockmap.
+    d->initSubspaceBlockmap();
 
     // Prepare the thinker lists.
     d->thinkers.reset(new Thinkers);
