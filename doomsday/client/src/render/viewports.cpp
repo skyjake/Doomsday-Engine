@@ -40,6 +40,7 @@
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
 
@@ -739,7 +740,7 @@ void R_SetupPlayerSprites()
         return;
     mobj_t *mo = ddpl->mo;
 
-    if(!Mobj_HasCluster(*mo))
+    if(!Mobj_HasSubspace(*mo))
         return;
     SectorCluster &cluster = Mobj_Cluster(*mo);
 

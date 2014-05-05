@@ -123,7 +123,7 @@ dd_bool P_IsInVoid(player_t *player)
             return true;
         mobj_t *mo = ddpl->mo;
 
-        if(!Mobj_HasCluster(*mo))
+        if(!Mobj_HasSubspace(*mo))
             return true;
         SectorCluster &cluster = Mobj_Cluster(*mo);
 

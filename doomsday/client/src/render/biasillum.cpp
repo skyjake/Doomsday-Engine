@@ -26,6 +26,7 @@
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
 
@@ -146,18 +147,19 @@ DENG2_PIMPL_NOREF(BiasIllum)
         Vector3f &casted = contribution(index);
 
         /// @todo LineSightTest should (optionally) perform this test.
-        SectorCluster *cluster = source.bspLeafAtOrigin().clusterPtr();
-        if(!cluster)
+        ConvexSubspace *subspace = source.bspLeafAtOrigin().subspacePtr();
+        if(!subspace)
         {
             // This affecting source does not contribute any light.
             casted = Vector3f();
             return;
         }
 
-        if((!cluster->visFloor().surface().hasSkyMaskedMaterial() &&
-                source.origin().z < cluster->visFloor().heightSmoothed()) ||
-           (!cluster->visCeiling().surface().hasSkyMaskedMaterial() &&
-                source.origin().z > cluster->visCeiling().heightSmoothed()))
+        SectorCluster &cluster = subspace->cluster();
+        if((!cluster.visFloor().surface().hasSkyMaskedMaterial() &&
+                source.origin().z < cluster.visFloor().heightSmoothed()) ||
+           (!cluster.visCeiling().surface().hasSkyMaskedMaterial() &&
+                source.origin().z > cluster.visCeiling().heightSmoothed()))
         {
             casted = Vector3f();
             return;

@@ -25,6 +25,7 @@
 #include "Mesh"
 
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "Line"
 #include "Sector"
 #include "world/bsp/linesegment.h"

@@ -38,6 +38,9 @@ class Lumobj;
 #endif
 
 /**
+ * On client side a convex subspace also provides / links to various geometry
+ * data assets and properties used to visualize the subspace.
+ *
  * @ingroup world
  */
 class ConvexSubspace : public de::MapElement

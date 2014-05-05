@@ -32,6 +32,7 @@
 
 #include "BspLeaf"
 #include "BspNode"
+#include "ConvexSubspace"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
@@ -575,7 +576,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             if(!leaf.hasParent())
             {
                 LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                    << &leaf << (leaf.hasSubspace()? leaf.poly().hedgeCount() : 0);
+                    << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
 
                 // Attribute this leaf directly to the map.
                 leaf.setMap(thisPublic);
@@ -585,24 +586,25 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             if(leaf.hasSubspace())
             {
                 // See if we received a partial geometry...
+                ConvexSubspace const &subspace = leaf.subspace();
                 int discontinuities = 0;
-                HEdge *hedge = leaf.poly().hedge();
+                HEdge *hedge = subspace.poly().hedge();
                 do
                 {
                     if(hedge->next().origin() != hedge->twin().origin())
                     {
                         discontinuities++;
                     }
-                } while((hedge = &hedge->next()) != leaf.poly().hedge());
+                } while((hedge = &hedge->next()) != subspace.poly().hedge());
 
                 if(discontinuities)
                 {
                     LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                 "is not contiguous (%i gaps/overlaps).\n%s")
-                        << &leaf << leaf.poly().center().asText()
+                        << &leaf << subspace.poly().center().asText()
                         << (leaf.hasParent()? leaf.parent().as<Sector>().indexInArchive() : -1)
                         << discontinuities
-                        << leaf.poly().description();
+                        << subspace.poly().description();
                 }
             }
 #endif
@@ -796,7 +798,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                            hedge->twin().face().hasMapElement())
                         {
                             ConvexSubspace &otherSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
-                            if(&otherSubspace.bspLeaf().sector() == &sector &&
+                            if(otherSubspace.bspLeaf().sectorPtr() == &sector &&
                                subspaceSets[k].contains(&otherSubspace))
                             {
                                 // Merge k into i.
@@ -1562,7 +1564,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                     if(pInfo->stage < 0 || !pInfo->bspLeaf)
                         continue;
 
-                    int listIndex = pInfo->bspLeaf->sector().indexInMap();
+                    int listIndex = pInfo->bspLeaf->sectorPtr()->indexInMap();
                     DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
 
                     // Must check that it isn't already there...
@@ -2470,7 +2472,7 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
     QVarLengthArray<Sector *, 16> linkStore;
 
     // Always process the mobj's own sector first.
-    Sector &ownSec = Mobj_BspLeafAtOrigin(*mo).sector();
+    Sector &ownSec = *Mobj_BspLeafAtOrigin(*mo).sectorPtr();
     linkStore.append(&ownSec);
     ownSec.setValidCount(validCount);
 
@@ -2608,7 +2610,7 @@ void Map::link(mobj_t &mo, int flags)
     if(flags & MLF_SECTOR)
     {
         d->unlinkMobjFromSectors(mo);
-        bspLeafAtOrigin.sector().link(&mo);
+        bspLeafAtOrigin.sectorPtr()->link(&mo);
     }
     mo._bspLeaf = &bspLeafAtOrigin;
 
@@ -2862,7 +2864,7 @@ SectorCluster *Map::clusterAt(Vector2d const &point) const
     BspLeaf &bspLeaf = bspLeafAt(point);
     if(bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
     {
-        return bspLeaf.clusterPtr();
+        return bspLeaf.subspace().clusterPtr();
     }
     return 0;
 }
@@ -3083,7 +3085,7 @@ Lumobj &Map::addLumobj(Lumobj const &lumobj)
 
     lum.setMap(this);
     lum.setIndexInMap(d->lumobjs.count() - 1);
-    DENG2_ASSERT(lum.bspLeafAtOrigin().hasPoly());
+    DENG2_ASSERT(lum.bspLeafAtOrigin().hasSubspace());
     lum.bspLeafAtOrigin().subspace().link(lum);
     R_AddContact(lum); // For spreading purposes.
 
@@ -3102,7 +3104,7 @@ void Map::removeAllLumobjs()
 {
     foreach(BspLeaf *leaf, d->bspLeafs)
     {
-        if(leaf->hasPoly())
+        if(leaf->hasSubspace())
         {
             leaf->subspace().unlinkAllLumobjs();
         }

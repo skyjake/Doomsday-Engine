@@ -180,7 +180,7 @@ void R_ProjectSprite(mobj_t *mo)
     // ...hidden?
     if((mo->ddFlags & DDMF_DONTDRAW)) return;
     // ...not linked into the map?
-    if(!Mobj_HasCluster(*mo)) return;
+    if(!Mobj_HasSubspace(*mo)) return;
     // ...in an invalid state?
     if(!mo->state || mo->state == states) return;
     // ...no sprite frame is defined?

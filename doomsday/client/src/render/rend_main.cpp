@@ -57,6 +57,7 @@
 #include "BspLeaf"
 #include "BspNode"
 #include "Contact"
+#include "ConvexSubspace"
 #include "Hand"
 #include "SectorCluster"
 #include "Surface"
