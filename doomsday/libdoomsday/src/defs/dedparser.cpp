@@ -76,15 +76,15 @@ using namespace de;
 #define ISTOKEN(X)  (!stricmp(token, X))
 
 #define READSTR(X)  if(!ReadString(X, sizeof(X))) { \
-                    SetError("Syntax error in string value."); \
+                    DED_SetError("Syntax error in string value."); \
                     retVal = false; goto ded_end_read; }
 
 
 #define READURI(X, SHM) if(!ReadUri(X, SHM)) { \
-    SetError("Syntax error parsing resource path."); \
+    DED_SetError("Syntax error parsing resource path."); \
     retVal = false; goto ded_end_read; }
 
-#define MISSING_SC_ERROR    SetError("Missing semicolon."); \
+#define MISSING_SC_ERROR    DED_SetError("Missing semicolon."); \
                             retVal = false; goto ded_end_read;
 
 #define CHECKSC     if(source->version <= 5) { ReadToken(); if(!ISTOKEN(";")) { MISSING_SC_ERROR; } }
@@ -155,7 +155,7 @@ static char* sdup(char const* str)
     return newstr;
 }
 
-static void SetError(char const* str)
+void DED_SetError(char const *str)
 {
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
@@ -445,7 +445,7 @@ static int ReadByte(unsigned char* dest)
     ReadToken();
     if(ISTOKEN(";"))
     {
-        SetError("Missing integer value.");
+        DED_SetError("Missing integer value.");
         return false;
     }
 
@@ -461,7 +461,7 @@ static int ReadInt(int* dest, int unsign)
     ReadToken();
     if(ISTOKEN(";"))
     {
-        SetError("Missing integer value.");
+        DED_SetError("Missing integer value.");
         return false;
     }
 
@@ -477,7 +477,7 @@ static int ReadFloat(float* dest)
     ReadToken();
     if(ISTOKEN(";"))
     {
-        SetError("Missing float value.");
+        DED_SetError("Missing float value.");
         return false;
     }
 
@@ -493,7 +493,7 @@ static int ReadFlags(ded_t *ded, int *dest, char const *prefix)
     ReadToken();
     if(ISTOKEN(";"))
     {
-        SetError("Missing flags value.");
+        DED_SetError("Missing flags value.");
         return false;
     }
     if(ISTOKEN("0"))
@@ -606,7 +606,7 @@ static int ReadLabel(char* label)
         ReadToken();
         if(source->atEnd)
         {
-            SetError("Unexpected end of file.");
+            DED_SetError("Unexpected end of file.");
             return false;
         }
         if(ISTOKEN("}")) // End block.
@@ -618,7 +618,7 @@ static int ReadLabel(char* label)
         {
             if(source->version <= 5)
             {
-                SetError("Label without value.");
+                DED_SetError("Label without value.");
                 return false;
             }
             continue; // Semicolons are optional in v6.
@@ -702,7 +702,7 @@ static dd_bool DED_CheckCondition(char const *cond, dd_bool expected)
  * @param buffer        The data to be read, must be null-terminated.
  * @param _sourceFile   Just FYI.
  */
-static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
+int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 {
     char                dummy[128], label[128], tmp[256];
     int                 dummyInt, idx, retVal = true;
@@ -895,7 +895,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             }
             else
             {
-                SetError("Cannot both Copy(Previous) and Modify.");
+                DED_SetError("Cannot both Copy(Previous) and Modify.");
                 retVal = false;
                 goto ded_end_read;
             }
@@ -995,7 +995,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             }
             else
             {
-                SetError("Cannot both Copy(Previous) and Modify.");
+                DED_SetError("Cannot both Copy(Previous) and Modify.");
                 retVal = false;
                 goto ded_end_read;
             }
@@ -1179,7 +1179,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             }
             else
             {
-                SetError("Cannot both Copy(Previous) and Modify.");
+                DED_SetError("Cannot both Copy(Previous) and Modify.");
                 retVal = false;
                 goto ded_end_read;
             }
@@ -1257,7 +1257,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                     if(layer >= DED_MAX_MATERIAL_LAYERS)
                     {
-                        SetError("Too many Material layers.");
+                        DED_SetError("Too many Material layers.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1320,7 +1320,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                     if(light == DED_MAX_MATERIAL_DECORATIONS)
                     {
-                        SetError("Too many lights in material.");
+                        DED_SetError("Too many lights in material.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1640,7 +1640,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     ded_skymodel_t *sm = &sky->models[sub];
                     if(sub == NUM_SKY_MODELS)
                     {   // Too many!
-                        SetError("Too many Sky models.");
+                        DED_SetError("Too many Sky models.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1751,7 +1751,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     ded_skymodel_t *sm = &mi->sky.models[sub];
                     if(sub == NUM_SKY_MODELS)
                     {   // Too many!
-                        SetError("Too many Sky models.");
+                        DED_SetError("Too many Sky models.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1801,7 +1801,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     }
                     else
                     {
-                        SetError("Syntax error in Text value.");
+                        DED_SetError("Syntax error in Text value.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1875,7 +1875,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         int ascii = atoi(label);
                         if(ascii < 0 || ascii > 255)
                         {
-                            SetError("Invalid ascii code.");
+                            DED_SetError("Invalid ascii code.");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1919,7 +1919,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 READLABEL_NOBREAK;
                 if(strchr(label, '|'))
                 {
-                    SetError("Value labels can not include '|' characters (ASCII 124).");
+                    DED_SetError("Value labels can not include '|' characters (ASCII 124).");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1946,7 +1946,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     }
                     else
                     {
-                        SetError("Syntax error in Value string.");
+                        DED_SetError("Syntax error in Value string.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1989,7 +1989,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 else
                 {
                     // Only the above characters are allowed.
-                    SetError("Illegal token.");
+                    DED_SetError("Illegal token.");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -2304,7 +2304,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     if(sub == DED_DECOR_NUM_LIGHTS)
                     {
-                        SetError("Too many lights in decoration.");
+                        DED_SetError("Too many lights in decoration.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -2712,73 +2712,6 @@ ded_end_read:
     return retVal;
 }
 /* *INDENT-ON* */
-
-int DED_Read(ded_t* ded, const char* path)
-{
-    ddstring_t transPath;
-    size_t bufferedDefSize;
-    char* bufferedDef;
-    filehandle_s* file;
-    int result;
-
-    // Compose the (possibly-translated) path.
-    Str_InitStd(&transPath);
-    Str_Set(&transPath, path);
-    F_FixSlashes(&transPath, &transPath);
-    F_ExpandBasePath(&transPath, &transPath);
-
-    // Attempt to open a definition file on this path.
-    file = F_Open(Str_Text(&transPath), "rb");
-    if(!file)
-    {
-        SetError("File could not be opened for reading.");
-        Str_Free(&transPath);
-        return false;
-    }
-
-    // We will buffer a local copy of the file. How large a buffer do we need?
-    FileHandle_Seek(file, 0, SeekEnd);
-    bufferedDefSize = FileHandle_Tell(file);
-    FileHandle_Rewind(file);
-    bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
-    if(NULL == bufferedDef)
-    {
-        SetError("Out of memory while trying to buffer file for reading.");
-        Str_Free(&transPath);
-        return false;
-    }
-
-    // Copy the file into the local buffer and parse definitions.
-    FileHandle_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
-    F_Delete(file);
-    result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
-
-    // Done. Release temporary storage and return the result.
-    free(bufferedDef);
-    Str_Free(&transPath);
-    return result;
-}
-
-/**
- * Reads definitions from the given lump.
- */
-int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
-{
-    int lumpIdx;
-    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    if(file)
-    {
-        if(F_LumpLength(lumpNum) != 0)
-        {
-            uint8_t const* lumpPtr = F_CacheLump(file, lumpIdx);
-            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(F_ComposePath(file)));
-            F_UnlockLump(file, lumpIdx);
-        }
-        return true;
-    }
-    SetError("Bad lump number.");
-    return false;
-}
 
 void DED_Include(ded_t *ded, const char* fileName, const char* parentDirectory)
 {

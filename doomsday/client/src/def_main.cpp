@@ -110,6 +110,7 @@ int Def_GetGameClasses(void)
         xgClassLinks = &nullXgClassLinks;
     }
 
+    // Let the parser know of the XG classes.
     DED_SetXGClassLinks(xgClassLinks);
 
     return 1;
@@ -279,10 +280,7 @@ ded_value_t* Def_GetValueById(char const* id)
 ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
 {
     if(!_uri) return 0;
-    de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
-
-    if(uri.scheme().compareWithoutCase("Values")) return 0;
-    return Def_GetValueById(uri.pathCStr());
+    return defs.getValueByUri(*reinterpret_cast<de::Uri const *>(_uri));
 }
 
 ded_mapinfo_t* Def_GetMapInfo(struct uri_s const *_uri)
@@ -417,20 +415,9 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
     return 0;
 }
 
-/**
- * Attempts to retrieve a flag by its prefix and value.
- * Returns a ptr to the text string of the first flag it
- * finds that matches the criteria, else NULL.
- */
 const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
 {
-    int i;
-    for(i = defs.count.flags.num - 1; i >= 0; i--)
-    {
-        if(strnicmp(defs.flags[i].id, prefix, strlen(prefix)) == 0 && defs.flags[i].value == val)
-            return defs.flags[i].text;
-    }
-    return NULL;
+    return defs.getFlagTextByPrefixVal(prefix, val);
 }
 
 #undef Def_EvalFlags
@@ -441,17 +428,7 @@ int Def_EvalFlags(char *ptr)
 
 int Def_GetTextNumForName(const char* name)
 {
-    int idx = -1;
-    if(name && name[0] && defs.count.text.num)
-    {
-        int i = 0;
-        do
-        {
-            if(!stricmp(defs.text[i].id, name))
-                idx = i;
-        } while(idx == -1 && ++i < defs.count.text.num);
-    }
-    return idx;
+    return defs.getTextNumForName(name);
 }
 
 /**

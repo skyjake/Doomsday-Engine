@@ -26,4 +26,14 @@
 
 LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, char const* path);
 
+/**
+ * Reads definitions from the given lump.
+ */
+LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
+
+/**
+ * @return  @c true, if the file was successfully loaded.
+ */
+int DED_Read(ded_t* ded, const char* path);
+
 #endif // LIBDOOMSDAY_DEFS_DED_H

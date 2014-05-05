@@ -54,3 +54,67 @@ void Def_ReadProcessDED(ded_t *defs, char const* path)
         App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
     }
 }
+
+int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
+{
+    int lumpIdx;
+    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    if(file)
+    {
+        if(F_LumpLength(lumpNum) != 0)
+        {
+            uint8_t const* lumpPtr = F_CacheLump(file, lumpIdx);
+            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(F_ComposePath(file)));
+            F_UnlockLump(file, lumpIdx);
+        }
+        return true;
+    }
+    DED_SetError("Bad lump number.");
+    return false;
+}
+
+int DED_Read(ded_t* ded, const char* path)
+{
+    ddstring_t transPath;
+    size_t bufferedDefSize;
+    char* bufferedDef;
+    filehandle_s* file;
+    int result;
+
+    // Compose the (possibly-translated) path.
+    Str_InitStd(&transPath);
+    Str_Set(&transPath, path);
+    F_FixSlashes(&transPath, &transPath);
+    F_ExpandBasePath(&transPath, &transPath);
+
+    // Attempt to open a definition file on this path.
+    file = F_Open(Str_Text(&transPath), "rb");
+    if(!file)
+    {
+        DED_SetError("File could not be opened for reading.");
+        Str_Free(&transPath);
+        return false;
+    }
+
+    // We will buffer a local copy of the file. How large a buffer do we need?
+    FileHandle_Seek(file, 0, SeekEnd);
+    bufferedDefSize = FileHandle_Tell(file);
+    FileHandle_Rewind(file);
+    bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
+    if(NULL == bufferedDef)
+    {
+        DED_SetError("Out of memory while trying to buffer file for reading.");
+        Str_Free(&transPath);
+        return false;
+    }
+
+    // Copy the file into the local buffer and parse definitions.
+    FileHandle_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
+    F_Delete(file);
+    result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
+
+    // Done. Release temporary storage and return the result.
+    free(bufferedDef);
+    Str_Free(&transPath);
+    return result;
+}

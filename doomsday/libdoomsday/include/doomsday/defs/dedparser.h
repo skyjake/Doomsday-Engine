@@ -24,15 +24,14 @@
 #include "../libdoomsday.h"
 #include "ded.h"
 
-/**
- * @return  @c true, if the file was successfully loaded.
- */
-LIBDOOMSDAY_PUBLIC int DED_Read(ded_t* ded, const char* path);
-
 LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
 
 LIBDOOMSDAY_PUBLIC void DED_SetXGClassLinks(struct xgclass_s *links);
 
+int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile);
+
 void DED_Include(ded_t *ded, const char* fileName, const char* parentDirectory);
+
+void DED_SetError(char const *str);
 
 #endif // LIBDOOMSDAY_DED_V1_PARSER_H

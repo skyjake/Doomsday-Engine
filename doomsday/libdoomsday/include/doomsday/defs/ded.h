@@ -677,7 +677,6 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
     ded_material_t* materials;
 
     // Models.
-    //ded_model_t*    models;
     typedef std::vector<ded_model_t> Models;
     Models models;
 
@@ -763,7 +762,11 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
 
     ded_flag_t *getFlag(char const *flag) const;
 
+    const char* getFlagTextByPrefixVal(const char* prefix, int val) const;
+
     int evalFlags2(char const *ptr) const;
+
+    int getTextNumForName(const char* name) const;
 
     ded_material_t *findMaterialDef(de::Uri const &uri) const;
 
@@ -793,6 +796,8 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
     int getMusicNum(const char* id) const;
 
     ded_value_t* getValueById(char const* id) const;
+
+    ded_value_t* getValueByUri(de::Uri const &uri) const;
 
     ded_mapinfo_t *getMapInfo(de::Uri const *uri) const;
 

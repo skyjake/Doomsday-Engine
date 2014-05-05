@@ -992,6 +992,16 @@ ded_flag_t *ded_s::getFlag(char const *flag) const
     return 0;
 }
 
+const char* ded_s::getFlagTextByPrefixVal(const char* prefix, int val) const
+{
+    for(int i = count.flags.num - 1; i >= 0; i--)
+    {
+        if(!qstrnicmp(flags[i].id, prefix, strlen(prefix)) && flags[i].value == val)
+            return flags[i].text;
+    }
+    return 0;
+}
+
 int ded_s::evalFlags2(char const *ptr) const
 {
     LOG_AS("Def_EvalFlags");
@@ -1095,6 +1105,12 @@ ded_value_t* ded_s::getValueById(char const* id) const
     return 0;
 }
 
+ded_value_t* ded_s::getValueByUri(de::Uri const &uri) const
+{
+    if(uri.scheme().compareWithoutCase("Values")) return 0;
+    return getValueById(uri.pathCStr());
+}
+
 ded_mapinfo_t *ded_s::getMapInfo(de::Uri const *uri) const
 {
     if(!uri) return 0;
@@ -1157,4 +1173,19 @@ ded_compositefont_t* ded_s::getCompositeFont(char const* uriCString) const
         }
     }
     return def;
+}
+
+int ded_s::getTextNumForName(const char* name) const
+{
+    int idx = -1;
+    if(name && name[0] && count.text.num)
+    {
+        int i = 0;
+        do
+        {
+            if(!qstricmp(text[i].id, name))
+                idx = i;
+        } while(idx == -1 && ++i < count.text.num);
+    }
+    return idx;
 }
