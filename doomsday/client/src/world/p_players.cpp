@@ -23,10 +23,8 @@
 #include "de_play.h"
 #include "de_network.h"
 
-#include "BspLeaf"
-#include "SectorCluster"
-
 #include "world/map.h"
+#include "SectorCluster"
 
 using namespace de;
 

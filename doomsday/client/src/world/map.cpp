@@ -792,11 +792,12 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                     HEdge *hedge = baseHEdge;
                     do
                     {
-                        if(hedge->twin().hasFace())
+                        if(hedge->twin().hasFace() &&
+                           hedge->twin().face().hasMapElement())
                         {
-                            BspLeaf &otherLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-                            if(&otherLeaf.parent() == &sector &&
-                               subspaceSets[k].contains(otherLeaf.subspacePtr()))
+                            ConvexSubspace &otherSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+                            if(&otherSubspace.bspLeaf().sector() == &sector &&
+                               subspaceSets[k].contains(&otherSubspace))
                             {
                                 // Merge k into i.
                                 subspaceSets[i].append(subspaceSets[k]);

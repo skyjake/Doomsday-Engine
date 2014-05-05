@@ -110,8 +110,8 @@ struct ContactSpreader
 
 private:
     /**
-     * Link the contact in all BspLeafs which touch the linked object (tests are
-     * done with bounding boxes and the BSP leaf spread test).
+     * Link the contact in all non-degenerate subspaces which touch the linked
+     * object (tests are done with subspace bounding boxes and the spread test).
      *
      * @param contact  Contact to be spread.
      */
@@ -136,18 +136,14 @@ private:
 
         if(!hedge) return;
 
-        BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
-        ConvexSubspace &subspace = leaf.subspace();
+        ConvexSubspace &subspace = hedge->face().mapElementAs<ConvexSubspace>();
         SectorCluster &cluster   = subspace.cluster();
 
         // There must be a back BSP leaf to spread to.
-        if(!hedge->hasTwin()) return;
-        if(!hedge->twin().hasFace()) return;
+        if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
+            return;
 
-        BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-        if(!backLeaf.hasSubspace()) return;
-
-        ConvexSubspace &backSubspace = backLeaf.subspace();
+        ConvexSubspace &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
         SectorCluster &backCluster   = backSubspace.cluster();
 
         // Which way does the spread go?

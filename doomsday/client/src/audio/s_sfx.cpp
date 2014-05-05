@@ -28,7 +28,6 @@
 #include "de_misc.h"
 #include "de_render.h"
 
-#include "BspLeaf"
 #include "Sector"
 #include "SectorCluster"
 

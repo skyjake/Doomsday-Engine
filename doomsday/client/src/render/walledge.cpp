@@ -21,6 +21,7 @@
 #include "render/walledge.h"
 
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "Sector"
 #include "Surface"
 
@@ -140,8 +141,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
         bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
         SectorCluster const *cluster =
-            (line.definesPolyobj()? &line.polyobj().bspLeaf()
-                                  : &wallHEdge->face().mapElementAs<BspLeaf>())->clusterPtr();
+            (line.definesPolyobj()? &line.polyobj().bspLeaf().subspace()
+                                  : &wallHEdge->face().mapElementAs<ConvexSubspace>())->clusterPtr();
 
         if(seg.lineSide().considerOneSided() ||
            // Mapping errors may result in a line segment missing a back face.
@@ -168,7 +169,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
             // Two sided.
             SectorCluster const *backCluster =
                 line.definesPolyobj()? cluster
-                                     : wallHEdge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
+                                     : wallHEdge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
 
             Plane const *ffloor = &cluster->visFloor();
             Plane const *fceil  = &cluster->visCeiling();
@@ -503,12 +504,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
         HEdge const *hedge = wallHEdge;
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
-            // Stop if there is no back cluster.
-            BspLeaf const *backLeaf = hedge->hasFace()? &hedge->face().mapElementAs<BspLeaf>() : 0;
-            if(!backLeaf || !backLeaf->hasCluster())
+            // Stop if there is no back subspace.
+            ConvexSubspace const *backSubspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : 0;
+            if(!backSubspace)
                 break;
 
-            SectorCluster const &cluster = backLeaf->cluster();
+            SectorCluster const &cluster = backSubspace->cluster();
             if(cluster.hasWorldVolume())
             {
                 for(int i = 0; i < cluster.visPlaneCount(); ++i)

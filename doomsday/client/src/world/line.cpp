@@ -27,7 +27,7 @@
 #include "Face"
 #include "HEdge"
 
-#include "BspLeaf"
+#include "ConvexSubspace"
 #include "Sector"
 #include "SectorCluster"
 #include "Surface"
@@ -250,7 +250,7 @@ bool Line::Side::considerOneSided() const
         if(!hedge || !hedge->twin().hasFace())
             return true;
 
-        if(!hedge->twin().face().mapElementAs<BspLeaf>().hasCluster())
+        if(!hedge->twin().face().mapElementAs<ConvexSubspace>().hasCluster())
             return true;
     }
 
@@ -644,14 +644,11 @@ static void addMissingMaterial(LineSide &side, int section)
     // We'll need to recalculate reverb.
     if(HEdge *hedge = side.leftHEdge())
     {
-        if(hedge->hasFace())
+        if(hedge->hasFace() && hedge->face().hasMapElement())
         {
-            BspLeaf &bspLeaf = hedge->face().mapElementAs<BspLeaf>();
-            if(bspLeaf.hasCluster())
-            {
-                bspLeaf.cluster().markReverbDirty();
-                bspLeaf.cluster().markVisPlanesDirty();
-            }
+            SectorCluster &cluster = hedge->face().mapElementAs<ConvexSubspace>().cluster();
+            cluster.markReverbDirty();
+            cluster.markVisPlanesDirty();
         }
     }
 

@@ -33,7 +33,6 @@
 
 #include "audio/sys_audio.h"
 #include "world/p_players.h"
-#include "BspLeaf"
 #include "Sector"
 
 BEGIN_PROF_TIMERS()
