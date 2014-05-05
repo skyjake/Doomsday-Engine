@@ -625,7 +625,7 @@ typedef struct ded_compositefont_s {
 // index numbers are important. The Game DLL must be recompiled with the
 // new constants if the order of the array items changes.
 
-struct ded_s {
+struct LIBDOOMSDAY_PUBLIC ded_s {
     int             version; // DED version number.
     ded_flags_t     modelFlags; // Default values for models.
     float           modelScale;
@@ -763,15 +763,44 @@ struct ded_s {
 
     ded_flag_t *getFlag(char const *flag) const;
 
+    int evalFlags2(char const *ptr) const;
+
     ded_material_t *findMaterialDef(de::Uri const &uri) const;
 
     ded_material_t *getMaterial(char const *uriCString) const;
 
     int getMobjNum(char const *id) const;
 
+    int getMobjNumForName(char const *name) const;
+
+    char const *getMobjName(int num) const;
+
     int getStateNum(char const *id) const;
 
-    int evalFlags2(char const *ptr) const;
+    int getModelNum(char const *id) const;
+
+    int getSoundNum(char const *id) const;
+
+    /**
+     * Looks up a sound using @a name key.
+     * @param name  Sound name.
+     * @return If the name is not found, returns the NULL sound index (zero).
+     */
+    int getSoundNumForName(const char* name) const;
+
+    ded_music_t *getMusic(char const *id) const;
+
+    int getMusicNum(const char* id) const;
+
+    ded_value_t* getValueById(char const* id) const;
+
+    ded_mapinfo_t *getMapInfo(de::Uri const *uri) const;
+
+    ded_sky_t* getSky(char const* id) const;
+
+    ded_compositefont_t* findCompositeFontDef(de::Uri const& uri) const;
+
+    ded_compositefont_t* getCompositeFont(char const* uriCString) const;
 };
 
 typedef ded_s ded_t;

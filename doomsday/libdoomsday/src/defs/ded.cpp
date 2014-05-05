@@ -944,6 +944,27 @@ int ded_s::getMobjNum(char const *id) const
     return -1;
 }
 
+int ded_s::getMobjNumForName(const char *name) const
+{
+    int                 i;
+
+    if(!name || !name[0])
+        return -1;
+
+    for(i = count.mobjs.num -1; i >= 0; --i)
+        if(!qstricmp(mobjs[i].name, name))
+            return i;
+
+    return -1;
+}
+
+char const *ded_s::getMobjName(int num) const
+{
+    if(num < 0) return "(<0)";
+    if(num >= count.mobjs.num) return "(>mobjtypes)";
+    return mobjs[num].id;
+}
+
 int ded_s::getStateNum(char const *id) const
 {
     int idx = -1;
@@ -995,4 +1016,145 @@ int ded_s::evalFlags2(char const *ptr) const
         }
     }
     return value;
+}
+
+int ded_s::getModelNum(const char *id) const
+{
+    int idx = -1;
+    if(id && id[0] && !models.empty())
+    {
+        int i = 0;
+        do {
+            if(!qstricmp(models[i].id, id)) idx = i;
+        } while(idx == -1 && ++i < (int)models.size());
+    }
+    return idx;
+}
+
+int ded_s::getSoundNum(const char *id) const
+{
+    int idx = -1;
+    if(id && id[0] && count.sounds.num)
+    {
+        int i = 0;
+        do {
+            if(!qstricmp(sounds[i].id, id)) idx = i;
+        } while(idx == -1 && ++i < count.sounds.num);
+    }
+    return idx;
+}
+
+int ded_s::getSoundNumForName(const char *name) const
+{
+    if(!name || !name[0])
+        return -1;
+
+    for(int i = 0; i < count.sounds.num; ++i)
+        if(!qstricmp(sounds[i].name, name))
+            return i;
+
+    return 0;
+}
+
+ded_music_t *ded_s::getMusic(char const *id) const
+{
+    if(id && id[0] && count.music.num)
+    {
+        for(int i = 0; i < count.music.num; ++i)
+        {
+            if(!qstricmp(music[i].id, id))
+                return &music[i];
+        }
+    }
+    return 0;
+}
+
+int ded_s::getMusicNum(const char* id) const
+{
+    int idx = -1;
+    if(id && id[0] && count.music.num)
+    {
+        int i = 0;
+        do {
+            if(!qstricmp(music[i].id, id)) idx = i;
+        } while(idx == -1 && ++i < count.music.num);
+    }
+    return idx;
+}
+
+ded_value_t* ded_s::getValueById(char const* id) const
+{
+    if(!id || !id[0]) return NULL;
+
+    // Read backwards to allow patching.
+    for(int i = count.values.num - 1; i >= 0; i--)
+    {
+        if(!qstricmp(values[i].id, id))
+            return values + i;
+    }
+    return 0;
+}
+
+ded_mapinfo_t *ded_s::getMapInfo(de::Uri const *uri) const
+{
+    if(!uri) return 0;
+
+    for(int i = count.mapInfo.num - 1; i >= 0; i--)
+    {
+        if(mapInfo[i].uri && *uri == *mapInfo[i].uri)
+            return mapInfo + i;
+    }
+    return 0;
+}
+
+ded_sky_t* ded_s::getSky(char const* id) const
+{
+    if(!id || !id[0]) return NULL;
+
+    for(int i = count.skies.num - 1; i >= 0; i--)
+    {
+        if(!qstricmp(skies[i].id, id))
+            return skies + i;
+    }
+    return 0;
+}
+
+ded_compositefont_t* ded_s::findCompositeFontDef(de::Uri const& uri) const
+{
+    for(int i = count.compositeFonts.num - 1; i >= 0; i--)
+    {
+        ded_compositefont_t* def = &compositeFonts[i];
+        if(!def->uri || uri != *def->uri) continue;
+        return def;
+    }
+    return 0;
+}
+
+ded_compositefont_t* ded_s::getCompositeFont(char const* uriCString) const
+{
+    ded_compositefont_t* def = NULL;
+    if(uriCString && uriCString[0])
+    {
+        de::Uri uri(uriCString, RC_NULL);
+
+        if(uri.scheme().isEmpty())
+        {
+            // Caller doesn't care which scheme - use a priority search order.
+            de::Uri temp(uri);
+
+            temp.setScheme("Game");
+            def = findCompositeFontDef(temp);
+            if(!def)
+            {
+                temp.setScheme("System");
+                def = findCompositeFontDef(temp);
+            }
+        }
+
+        if(!def)
+        {
+            def = findCompositeFontDef(uri);
+        }
+    }
+    return def;
 }

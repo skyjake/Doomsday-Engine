@@ -194,23 +194,12 @@ int Def_GetMobjNum(const char* id)
 
 int Def_GetMobjNumForName(const char* name)
 {
-    int                 i;
-
-    if(!name || !name[0])
-        return -1;
-
-    for(i = defs.count.mobjs.num -1; i >= 0; --i)
-        if(!stricmp(defs.mobjs[i].name, name))
-            return i;
-
-    return -1;
+    return defs.getMobjNumForName(name);
 }
 
 const char* Def_GetMobjName(int num)
 {
-    if(num < 0) return "(<0)";
-    if(num >= defs.count.mobjs.num) return "(>mobjtypes)";
-    return defs.mobjs[num].id;
+    return defs.getMobjName(num);
 }
 
 state_t *Def_GetState(int num)
@@ -229,80 +218,22 @@ int Def_GetStateNum(char const *id)
 
 int Def_GetModelNum(const char* id)
 {
-    int idx = -1;
-    if(id && id[0] && !defs.models.empty())
-    {
-        int i = 0;
-        do
-        {
-            if(!stricmp(defs.models[i].id, id))
-                idx = i;
-        } while(idx == -1 && ++i < (int)defs.models.size());
-    }
-    return idx;
+    return defs.getModelNum(id);
 }
 
 int Def_GetSoundNum(const char* id)
 {
-    int idx = -1;
-    if(id && id[0] && defs.count.sounds.num)
-    {
-        int i = 0;
-        do
-        {
-            if(!stricmp(defs.sounds[i].id, id))
-                idx = i;
-        } while(idx == -1 && ++i < defs.count.sounds.num);
-    }
-    return idx;
-}
-
-/**
- * Looks up a sound using the Name key. If the name is not found, returns
- * the NULL sound index (zero).
- */
-int Def_GetSoundNumForName(const char* name)
-{
-    int                 i;
-
-    if(!name || !name[0])
-        return -1;
-
-    for(i = 0; i < defs.count.sounds.num; ++i)
-        if(!stricmp(defs.sounds[i].name, name))
-            return i;
-
-    return 0;
+    return defs.getSoundNum(id);
 }
 
 ded_music_t* Def_GetMusic(char const *id)
 {
-    if(id && id[0] && defs.count.music.num)
-    {
-        for(int i = 0; i < defs.count.music.num; ++i)
-        {
-            if(!stricmp(defs.music[i].id, id))
-            {
-                return &defs.music[i];
-            }
-        }
-    }
-    return 0;
+    return defs.getMusic(id);
 }
 
 int Def_GetMusicNum(const char* id)
 {
-    int idx = -1;
-    if(id && id[0] && defs.count.music.num)
-    {
-        int i = 0;
-        do
-        {
-            if(!stricmp(defs.music[i].id, id))
-                idx = i;
-        } while(idx == -1 && ++i < defs.count.music.num);
-    }
-    return idx;
+    return defs.getMusicNum(id);
 }
 
 acfnptr_t Def_GetActionPtr(const char* name)
@@ -342,15 +273,7 @@ int Def_GetActionNum(const char* name)
 
 ded_value_t* Def_GetValueById(char const* id)
 {
-    if(!id || !id[0]) return NULL;
-
-    // Read backwards to allow patching.
-    for(int i = defs.count.values.num - 1; i >= 0; i--)
-    {
-        if(!stricmp(defs.values[i].id, id))
-            return defs.values + i;
-    }
-    return 0;
+    return defs.getValueById(id);
 }
 
 ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
@@ -364,67 +287,17 @@ ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
 
 ded_mapinfo_t* Def_GetMapInfo(struct uri_s const *_uri)
 {
-    if(!_uri) return 0;
-    de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
-
-    for(int i = defs.count.mapInfo.num - 1; i >= 0; i--)
-    {
-        if(defs.mapInfo[i].uri && uri == reinterpret_cast<de::Uri const&>(*defs.mapInfo[i].uri))
-            return defs.mapInfo + i;
-    }
-    return 0;
+    return defs.getMapInfo(reinterpret_cast<de::Uri const *>(_uri));
 }
 
 ded_sky_t* Def_GetSky(char const* id)
 {
-    if(!id || !id[0]) return NULL;
-
-    for(int i = defs.count.skies.num - 1; i >= 0; i--)
-    {
-        if(!stricmp(defs.skies[i].id, id))
-            return defs.skies + i;
-    }
-    return NULL;
+    return defs.getSky(id);
 }
 
-static ded_compositefont_t* findCompositeFontDef(de::Uri const& uri)
+ded_compositefont_t* Def_GetCompositeFont(const char* uri)
 {
-    for(int i = defs.count.compositeFonts.num - 1; i >= 0; i--)
-    {
-        ded_compositefont_t* def = &defs.compositeFonts[i];
-        if(!def->uri || uri != reinterpret_cast<de::Uri&>(*def->uri)) continue;
-        return def;
-    }
-    return NULL;
-}
-
-ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
-{
-    ded_compositefont_t* def = NULL;
-    if(uriCString && uriCString[0])
-    {
-        de::Uri uri = de::Uri(uriCString, RC_NULL);
-
-        if(uri.scheme().isEmpty())
-        {
-            // Caller doesn't care which scheme - use a priority search order.
-            de::Uri temp = de::Uri(uri);
-
-            temp.setScheme("Game");
-            def = findCompositeFontDef(temp);
-            if(!def)
-            {
-                temp.setScheme("System");
-                def = findCompositeFontDef(temp);
-            }
-        }
-
-        if(!def)
-        {
-            def = findCompositeFontDef(uri);
-        }
-    }
-    return def;
+    return defs.getCompositeFont(uri);
 }
 
 /// @todo $revise-texture-animation
@@ -2088,7 +1961,7 @@ int Def_Get(int type, const char* id, void* out)
         return Def_GetSoundNum(id);
 
     case DD_DEF_SOUND_BY_NAME:
-        return Def_GetSoundNumForName(id);
+        return defs.getSoundNumForName(id);
 
     case DD_DEF_SOUND_LUMPNAME:
         i = *((long*) id);
