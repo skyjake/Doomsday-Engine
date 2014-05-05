@@ -156,36 +156,6 @@ static cvar_t* addVariable(cvartemplate_t const& tpl)
     return newVar;
 }
 
-typedef struct {
-    uint count;
-    cvartype_t type;
-    dd_bool hidden;
-    dd_bool ignoreHidden;
-} countvariableparams_t;
-
-static int countVariable(CVarDirectory::Node& node, void* parameters)
-{
-    DENG_ASSERT(parameters);
-
-    countvariableparams_t* p = (countvariableparams_t*) parameters;
-    cvar_t* var = reinterpret_cast<cvar_t*>( node.userPointer() );
-
-    if(!(p->ignoreHidden && (var->flags & CVF_HIDE)))
-    {
-        if(!VALID_CVARTYPE(p->type) && !p->hidden)
-        {
-            if(!p->ignoreHidden || !(var->flags & CVF_HIDE))
-                ++(p->count);
-        }
-        else if((p->hidden && (var->flags & CVF_HIDE)) ||
-                (VALID_CVARTYPE(p->type) && p->type == CVar_Type(var)))
-        {
-            ++(p->count);
-        }
-    }
-    return 0; // Continue iteration.
-}
-
 String CVar_TypeAsText(cvar_t const *var)
 {
     // Human-readable type name.
@@ -645,6 +615,36 @@ void Con_AddKnownWordsForVariables()
 }
 
 #ifdef DENG_DEBUG
+typedef struct {
+    uint count;
+    cvartype_t type;
+    dd_bool hidden;
+    dd_bool ignoreHidden;
+} countvariableparams_t;
+
+static int countVariable(CVarDirectory::Node& node, void* parameters)
+{
+    DENG_ASSERT(parameters);
+
+    countvariableparams_t* p = (countvariableparams_t*) parameters;
+    cvar_t* var = reinterpret_cast<cvar_t*>( node.userPointer() );
+
+    if(!(p->ignoreHidden && (var->flags & CVF_HIDE)))
+    {
+        if(!VALID_CVARTYPE(p->type) && !p->hidden)
+        {
+            if(!p->ignoreHidden || !(var->flags & CVF_HIDE))
+                ++(p->count);
+        }
+        else if((p->hidden && (var->flags & CVF_HIDE)) ||
+                (VALID_CVARTYPE(p->type) && p->type == CVar_Type(var)))
+        {
+            ++(p->count);
+        }
+    }
+    return 0; // Continue iteration.
+}
+
 D_CMD(PrintVarStats)
 {
     DENG2_UNUSED3(src, argc, argv);
