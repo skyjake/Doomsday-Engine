@@ -1,7 +1,7 @@
 /** @file viewports.h  Player viewports and related low-level rendering.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,7 +28,6 @@
 #include <de/Matrix>
 #include <de/rect.h>
 
-class BspLeaf;
 class ConvexSubspace;
 struct Generator;
 class Lumobj;
