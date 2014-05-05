@@ -40,7 +40,7 @@ class Lumobj;
 /**
  * @ingroup world
  */
-class ConvexSubspace
+class ConvexSubspace : public de::MapElement
 {
 public:
     /// An invalid polygon was specified. @ingroup errors
@@ -69,12 +69,14 @@ public:
      *
      * @param poly  Polygon to construct from. Ownership is unaffected.
      */
-    static ConvexSubspace *newFromConvexPoly(de::Face &poly);
+    static ConvexSubspace *newFromConvexPoly(de::Face &poly, BspLeaf *bspLeaf = 0);
 
     /**
      * Returns the BspLeaf to which the subspace is assigned.
      */
     BspLeaf &bspLeaf() const;
+
+    void setBspLeaf(BspLeaf *newBspLeaf);
 
     /**
      * Provides access to the attributed convex geometry (a polygon).
@@ -285,7 +287,7 @@ public:
 #endif // __CLIENT__
 
 private:
-    ConvexSubspace(de::Face &convexPolygon);
+    ConvexSubspace(de::Face &convexPolygon, BspLeaf *bspLeaf = 0);
 
     DENG2_PRIVATE(d)
 };

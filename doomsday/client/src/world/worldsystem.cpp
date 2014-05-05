@@ -33,7 +33,6 @@
 #include "edit_map.h"
 #include "network/net_main.h"
 
-#include "BspLeaf"
 #include "Plane"
 #include "Sector"
 #include "SectorCluster"

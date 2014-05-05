@@ -30,7 +30,7 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Face"
-#include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 #include "WallEdge"
 #include "world/map.h"
@@ -1098,12 +1098,12 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     LineSide &side = leftEdge.mapLineSide();
     HEdge const *hedge = side.leftHEdge();
-    SectorCluster const *cluster = &hedge->face().mapElementAs<BspLeaf>().cluster();
+    SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
     SectorCluster const *backCluster = 0;
 
     if(leftEdge.spec().section != LineSide::Middle && hedge->twin().hasFace())
     {
-        backCluster = hedge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
+        backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
     }
 
     bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
@@ -1273,15 +1273,16 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
 
     // Missing, glowing or sky-masked materials are exempted.
     Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlow()) return;
+    if(material.isSkyMasked() || material.hasGlow())
+        return;
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!leftHEdge->hasFace()) return;
+    if(!leftHEdge->hasFace() || !leftHEdge->face().hasMapElement())
+        return;
 
-    BspLeaf const &frontLeaf = leftHEdge->face().mapElementAs<BspLeaf>();
-    if(!frontLeaf.hasCluster() || !frontLeaf.cluster().hasWorldVolume())
+    if(!leftHEdge->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
         return;
 
     static ShadowEdge leftEdge; // this function is called often; keep these around

@@ -58,13 +58,13 @@ void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
 
     if(!d->subspace.isNull())
     {
-        d->subspace->poly().setMapElement(0);
+        d->subspace->setBspLeaf(0);
     }
 
     d->subspace.reset(newSubspace);
 
     if(!d->subspace.isNull())
     {
-        d->subspace->poly().setMapElement(this);
+        d->subspace->setBspLeaf(this);
     }
 }

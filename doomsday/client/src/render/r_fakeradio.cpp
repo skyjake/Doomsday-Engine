@@ -30,7 +30,6 @@
 
 #include "world/lineowner.h"
 #include "world/map.h"
-#include "BspLeaf"
 #include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
@@ -256,7 +255,7 @@ void Rend_RadioInitForMap(Map &map)
             point = vtx1.origin() + vo1.extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, point.x, point.y);
 
-            // Link the shadowing line to all the BspLeafs whose axis-aligned
+            // Link the shadowing line to all the subspaces whose axis-aligned
             // bounding box intersects 'bounds'.
             map.subspaceBoxIterator(bounds, linkShadowLineToSubspaceWorker, &side);
         }

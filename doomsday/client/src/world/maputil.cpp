@@ -27,7 +27,6 @@
 
 #ifdef __CLIENT__
 
-#include "BspLeaf"
 #include "Surface"
 #include "world/lineowner.h"
 

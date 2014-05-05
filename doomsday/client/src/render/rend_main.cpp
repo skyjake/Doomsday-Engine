@@ -2128,7 +2128,7 @@ static void writeSubspacePlane(Plane &plane)
 
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.mapElement           = &curSubspace->bspLeaf();
+    parm.mapElement           = curSubspace;
     parm.geomGroup            = plane.indexInSector();
     parm.topLeft              = &topLeft;
     parm.bottomRight          = &bottomRight;
@@ -2300,7 +2300,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge->face().mapElementAs<BspLeaf>()
+            skyMaterial = hedge->face().mapElementAs<ConvexSubspace>()
                               .cluster().visPlane(relPlane).surface().materialPtr();
         }
 
@@ -2493,8 +2493,8 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    SectorCluster const &cluster     = hedge.face().mapElementAs<BspLeaf>().cluster();
-    SectorCluster const &backCluster = hedge.twin().face().mapElementAs<BspLeaf>().cluster();
+    SectorCluster const &cluster     = hedge.face().mapElementAs<ConvexSubspace>().cluster();
+    SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
 
     coord_t const ffloor   = cluster.visFloor().heightSmoothed();
     coord_t const fceil    = cluster.visCeiling().heightSmoothed();
@@ -2696,13 +2696,10 @@ static void occludeSubspace(bool frontFacing)
             continue;
 
         // Occlusions should only happen where two sectors meet.
-        if(!hedge->hasTwin() || !hedge->twin().hasFace())
+        if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             continue;
 
-        BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-        if(!backLeaf.hasCluster())
-            continue;
-        SectorCluster &backCluster = backLeaf.cluster();
+        SectorCluster &backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
@@ -4539,8 +4536,8 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
     if(lineSide.considerOneSided())
     {
         SectorCluster &cluster =
-            (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->face().mapElementAs<BspLeaf>()).cluster();
+            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
+                                  : hedge->face().mapElementAs<ConvexSubspace>()).cluster();
 
         coord_t const bottom = cluster.  visFloor().heightSmoothed();
         coord_t const top    = cluster.visCeiling().heightSmoothed();
@@ -4551,11 +4548,11 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
     else
     {
         SectorCluster &cluster =
-            (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->face().mapElementAs<BspLeaf>()).cluster();
+            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
+                                  : hedge->face().mapElementAs<ConvexSubspace>()).cluster();
         SectorCluster &backCluster =
-            (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->twin().face().mapElementAs<BspLeaf>()).cluster();
+            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
+                                  : hedge->twin().face().mapElementAs<ConvexSubspace>()).cluster();
 
         if(lineSide.middle().hasMaterial())
         {
@@ -4927,8 +4924,7 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
     if(!base->hasFace() || !base->face().hasMapElement())
         return;
 
-    BspLeaf &bspLeaf = base->face().mapElementAs<BspLeaf>();
-    if(!bspLeaf.hasCluster())
+    if(!base->face().mapElementAs<ConvexSubspace>().hasCluster())
         return;
 
     // Process neighbors?
@@ -4938,16 +4934,15 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
         HEdge *hedge = base;
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
-            // Stop if there is no back cluster.
-            BspLeaf *backLeaf = hedge->hasFace()? &hedge->face().mapElementAs<BspLeaf>() : 0;
-            if(!backLeaf || !backLeaf->hasCluster())
-                break;
+            // Stop if there is no back subspace.
+            ConvexSubspace *subspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : 0;
+            if(!subspace) break;
 
-            if(backLeaf->cluster().visFloor().heightSmoothed() < min)
-                min = backLeaf->cluster().visFloor().heightSmoothed();
+            if(subspace->cluster().visFloor().heightSmoothed() < min)
+                min = subspace->cluster().visFloor().heightSmoothed();
 
-            if(backLeaf->cluster().visCeiling().heightSmoothed() > max)
-                max = backLeaf->cluster().visCeiling().heightSmoothed();
+            if(subspace->cluster().visCeiling().heightSmoothed() > max)
+                max = subspace->cluster().visCeiling().heightSmoothed();
         }
     }
 }

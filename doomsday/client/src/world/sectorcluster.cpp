@@ -312,11 +312,12 @@ DENG2_PIMPL(SectorCluster)
                         return flags;
                     }
 
-                    BspLeaf const &backLeaf    = hedge->twin().face().mapElementAs<BspLeaf>();
-                    SectorCluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
+                    if(!hedge->twin().face().hasMapElement())
+                        continue;
 
+                    ConvexSubspace const &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
                     // Cluster internal edges are not considered.
-                    if(backCluster == thisPublic)
+                    if(&backSubspace.cluster() == thisPublic)
                         continue;
 
                     LineSide const &frontSide = hedge->mapElementAs<LineSideSegment>().lineSide();
@@ -351,13 +352,14 @@ DENG2_PIMPL(SectorCluster)
                         flags &= ~AllMissingTop;
                     }
 
-                    if(backCluster->floor().height() < self.sector().floor().height() &&
+                    SectorCluster const &backCluster = backSubspace.cluster();
+                    if(backCluster.floor().height() < self.sector().floor().height() &&
                        backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if(backCluster->ceiling().height() > self.sector().ceiling().height() &&
+                    if(backCluster.ceiling().height() > self.sector().ceiling().height() &&
                        backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
@@ -383,17 +385,14 @@ DENG2_PIMPL(SectorCluster)
                 if(!hedge->hasMapElement())
                     continue;
 
-                if(!hedge->twin().hasFace())
+                if(!hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
                     continue;
 
-                BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-                if(!backLeaf.hasCluster())
+                SectorCluster &backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
+                if(&backCluster == thisPublic)
                     continue;
 
-                if(&backLeaf.cluster() == thisPublic)
-                    continue;
-
-                extClusterMap.insert(&backLeaf.cluster(), hedge);
+                extClusterMap.insert(&backCluster, hedge);
 
             } while((hedge = &hedge->next()) != base);
         }
@@ -409,7 +408,7 @@ DENG2_PIMPL(SectorCluster)
         while(iter.hasNext())
         {
             iter.next();
-            SectorCluster &extCluster = iter.value()->twin().face().mapElementAs<BspLeaf>().cluster();
+            SectorCluster &extCluster = iter.value()->twin().face().mapElementAs<ConvexSubspace>().cluster();
             if(!boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
             {
                 boundaryData->uniqueOuterEdges.append(iter.value());
@@ -480,7 +479,7 @@ DENG2_PIMPL(SectorCluster)
 
             foreach(HEdge *hedge, boundaryData->uniqueOuterEdges)
             {
-                SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+                SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
 
                 if(!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                     continue;
@@ -505,7 +504,7 @@ DENG2_PIMPL(SectorCluster)
                 // will be selected from the boundary).
                 foreach(HEdge *hedge, boundaryData->uniqueInnerEdges)
                 {
-                    SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+                    SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
 
                     if(!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                         continue;
@@ -551,7 +550,7 @@ DENG2_PIMPL(SectorCluster)
         // Map "this" cluster to the first outer cluster found.
         foreach(HEdge *hedge, boundaryData->uniqueOuterEdges)
         {
-            SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+            SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
 
             if(doFloor && !floorIsMapped())
             {
@@ -584,7 +583,7 @@ DENG2_PIMPL(SectorCluster)
         // a "ripple effect" that will remap any deeply nested dependents).
         foreach(HEdge *hedge, boundaryData->uniqueInnerEdges)
         {
-            SectorCluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
+            SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
 
             if(extCluster.d->classification() & NeverMapped)
                 continue;
@@ -734,8 +733,7 @@ DENG2_PIMPL(SectorCluster)
                 // Inform bias surfaces of changed geometry.
                 foreach(ConvexSubspace *subspace, subspaces)
                 {
-                    BspLeaf &bspLeaf = subspace->bspLeaf();
-                    if(Shard *shard = self.findShard(bspLeaf, plane.indexInSector()))
+                    if(Shard *shard = self.findShard(*subspace, plane.indexInSector()))
                     {
                         shard->updateBiasAfterMove();
                     }
@@ -991,19 +989,19 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
     if(!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_BSPLEAF) return false;
     if(!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_BSPLEAF) return false;
 
-    SectorCluster *frontCluster = hedge->face().mapElementAs<BspLeaf>().clusterPtr();
+    SectorCluster *frontCluster = hedge->face().mapElementAs<ConvexSubspace>().clusterPtr();
     if(!frontCluster) return false;
-    return frontCluster == hedge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
+    return frontCluster == hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
 }
 
 Sector const &SectorCluster::sector() const
 {
-    return const_cast<ConvexSubspace const *>(d->subspaces.first())->poly().mapElementAs<BspLeaf>().parent().as<Sector>();
+    return const_cast<ConvexSubspace const *>(d->subspaces.first())->bspLeaf().parent().as<Sector>();
 }
 
 Sector &SectorCluster::sector()
 {
-    return d->subspaces.first()->poly().mapElementAs<BspLeaf>().parent().as<Sector>();
+    return d->subspaces.first()->bspLeaf().parent().as<Sector>();
 }
 
 Plane const &SectorCluster::plane(int planeIndex) const
@@ -1190,10 +1188,10 @@ static int countIlluminationPoints(MapElement &mapElement, int group)
 {
     switch(mapElement.type())
     {
-    case DMU_BSPLEAF: {
-        BspLeaf &bspLeaf = mapElement.as<BspLeaf>();
-        DENG2_ASSERT(group >= 0 && group < bspLeaf.sector().planeCount()); // sanity check
-        return bspLeaf.subspace().numFanVertices(); }
+    case DMU_SUBSPACE: {
+        ConvexSubspace &subspace = mapElement.as<ConvexSubspace>();
+        DENG2_ASSERT(group >= 0 && group < subspace.cluster().sector().planeCount()); // sanity check
+        return subspace.numFanVertices(); }
 
     case DMU_SEGMENT:
         DENG2_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check
@@ -1239,12 +1237,12 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
 
         switch(gdata->mapElement->type())
         {
-        case DMU_BSPLEAF: {
-            BspLeaf &bspLeaf       = gdata->mapElement->as<BspLeaf>();
-            Plane const &plane     = visPlane(gdata->geomId);
-            Surface const &surface = plane.surface();
+        case DMU_SUBSPACE: {
+            ConvexSubspace &subspace = gdata->mapElement->as<ConvexSubspace>();
+            Plane const &plane       = visPlane(gdata->geomId);
+            Surface const &surface   = plane.surface();
 
-            Vector3d surfacePoint(bspLeaf.poly().center(), plane.heightSmoothed());
+            Vector3d surfacePoint(subspace.poly().center(), plane.heightSmoothed());
 
             foreach(BiasSource *source, sources)
             {
@@ -1255,9 +1253,9 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
                 Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
                 coord_t distance = 0;
 
-                // Calculate minimum 2D distance to the BSP leaf.
+                // Calculate minimum 2D distance to the subspace.
                 /// @todo This is probably too accurate an estimate.
-                HEdge *baseNode = bspLeaf.poly().hedge();
+                HEdge *baseNode = subspace.poly().hedge();
                 HEdge *node = baseNode;
                 do
                 {
@@ -1327,7 +1325,7 @@ SectorCluster *SectorClusterCirculator::getCluster(HEdge const &hedge) // static
     if(!hedge.hasFace()) return 0;
     if(!hedge.face().hasMapElement()) return 0;
     if(hedge.face().mapElement().type() != DMU_BSPLEAF) return 0;
-    return hedge.face().mapElementAs<BspLeaf>().clusterPtr();
+    return hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
 }
 
 HEdge &SectorClusterCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,

@@ -50,6 +50,7 @@ DENG2_PIMPL(ConvexSubspace)
     SectorCluster *cluster;   ///< Attributed cluster (if any, not owned).
     int validCount;           ///< Used to prevent repeated processing.
     Vector2d worldGridOffset; ///< For aligning the materials to the map space grid.
+    BspLeaf *bspLeaf;
 
 #ifdef __CLIENT__
     int addSpriteCount;             ///< Frame number of last R_AddSprites.
@@ -66,6 +67,7 @@ DENG2_PIMPL(ConvexSubspace)
         , poly             (poly)
         , cluster          (0)
         , validCount       (0)
+        , bspLeaf          (0)
 #ifdef __CLIENT__
         , addSpriteCount   (0)
         , fanBase          (0)
@@ -158,27 +160,37 @@ DENG2_PIMPL(ConvexSubspace)
 #endif // __CLIENT__
 };
 
-ConvexSubspace::ConvexSubspace(Face &convexPolygon)
-    : d(new Instance(this, convexPolygon))
+ConvexSubspace::ConvexSubspace(Face &convexPolygon, BspLeaf *bspLeaf)
+    : MapElement(DMU_SUBSPACE)
+    , d(new Instance(this, convexPolygon))
 {
     // Determine the world grid offset.
     d->worldGridOffset = Vector2d(fmod(d->poly.aaBox().minX, 64),
                                   fmod(d->poly.aaBox().maxY, 64));
+
+    d->poly.setMapElement(this);
+    setBspLeaf(bspLeaf);
 }
 
-ConvexSubspace *ConvexSubspace::newFromConvexPoly(de::Face &poly) // static
+ConvexSubspace *ConvexSubspace::newFromConvexPoly(de::Face &poly, BspLeaf *bspLeaf) // static
 {
     if(!poly.isConvex())
     {
         /// @throw InvalidPolyError Attempted to attribute a non-convex polygon.
         throw InvalidPolyError("ConvexSubspace::newFromConvexPoly", "Source is non-convex");
     }
-    return new ConvexSubspace(poly);
+    return new ConvexSubspace(poly, bspLeaf);
 }
 
 BspLeaf &ConvexSubspace::bspLeaf() const
 {
-    return poly().mapElementAs<BspLeaf>();
+    DENG2_ASSERT(d->bspLeaf != 0);
+    return *d->bspLeaf;
+}
+
+void ConvexSubspace::setBspLeaf(BspLeaf *newBspLeaf)
+{
+    d->bspLeaf = newBspLeaf;
 }
 
 Face &ConvexSubspace::poly() const
@@ -218,10 +230,10 @@ void ConvexSubspace::assignExtraMesh(Mesh &newMesh)
     {
         LOG_DEBUG("Assigned extra mesh to subspace %p") << this;
 
-        // Attribute all faces to the BSP leaf.
+        // Attribute all faces to "this" subspace.
         foreach(Face *face, newMesh.faces())
         {
-            face->setMapElement(&d->poly.mapElement());
+            face->setMapElement(this);
         }
     }
 }
