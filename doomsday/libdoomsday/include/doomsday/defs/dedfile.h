@@ -32,8 +32,19 @@ LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, char const* path);
 LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
 
 /**
+ * Reads definitions from the given buffer.
+ * The definition is being loaded from @a _sourcefile (DED or WAD).
+ *
+ * @param buffer        The data to be read, must be null-terminated.
+ * @param _sourceFile   Just FYI.
+ */
+int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile);
+
+/**
  * @return  @c true, if the file was successfully loaded.
  */
 int DED_Read(ded_t* ded, const char* path);
+
+void DED_SetError(char const *str);
 
 #endif // LIBDOOMSDAY_DEFS_DED_H

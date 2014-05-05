@@ -26,7 +26,12 @@
 
 using namespace de;
 
-extern char dedReadError[512]; // in defs/parser.cpp
+char dedReadError[512];
+
+void DED_SetError(char const *str)
+{
+    strncpy(dedReadError, str, sizeof(dedReadError));
+}
 
 void Def_ReadProcessDED(ded_t *defs, char const* path)
 {
@@ -117,4 +122,9 @@ int DED_Read(ded_t* ded, const char* path)
     free(bufferedDef);
     Str_Free(&transPath);
     return result;
+}
+
+int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
+{
+    return DEDParser(ded).parse(buffer, _sourceFile);
 }

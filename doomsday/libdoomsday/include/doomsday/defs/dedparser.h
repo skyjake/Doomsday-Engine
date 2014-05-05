@@ -21,17 +21,25 @@
 #ifndef LIBDOOMSDAY_DED_V1_PARSER_H
 #define LIBDOOMSDAY_DED_V1_PARSER_H
 
+#include <de/libcore.h>
 #include "../libdoomsday.h"
 #include "ded.h"
 
-LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
-
 LIBDOOMSDAY_PUBLIC void DED_SetXGClassLinks(struct xgclass_s *links);
 
-int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile);
+/**
+ * Parser of DED v1 definitions.
+ * @ingroup data
+ */
+class LIBDOOMSDAY_PUBLIC DEDParser
+{
+public:
+    DEDParser(ded_t *ded);
 
-void DED_Include(ded_t *ded, const char* fileName, const char* parentDirectory);
+    int parse(char const *buffer, char const *sourceFile);
 
-void DED_SetError(char const *str);
+private:
+    DENG2_PRIVATE(d)
+};
 
 #endif // LIBDOOMSDAY_DED_V1_PARSER_H
