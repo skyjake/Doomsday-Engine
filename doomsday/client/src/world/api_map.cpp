@@ -43,6 +43,7 @@
 #include "world/maputil.h"
 #include "world/worldsystem.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "Interceptor"
 
 #ifdef __CLIENT__

@@ -26,6 +26,7 @@
 #include "world/worldsystem.h" /// For validCount, @todo Remove me.
 #include "BspLeaf"
 #include "BspNode"
+#include "ConvexSubspace"
 #include "Line"
 #include "Polyobj"
 #include "Sector"

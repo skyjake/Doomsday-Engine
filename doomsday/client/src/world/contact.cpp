@@ -23,6 +23,7 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include <de/Error>
 #include <de/memoryzone.h>
 
@@ -219,7 +220,7 @@ void R_ClearContactLists(Map &map)
 void R_AddContact(mobj_t &mobj)
 {
     // BspLeafs with no geometry cannot be contacted (zero world volume).
-    if(Mobj_BspLeafAtOrigin(mobj).hasCluster())
+    if(Mobj_BspLeafAtOrigin(mobj).hasSubspace())
     {
         newContact(&mobj, ContactMobj);
     }
@@ -228,7 +229,7 @@ void R_AddContact(mobj_t &mobj)
 void R_AddContact(Lumobj &lum)
 {
     // BspLeafs with no geometry cannot be contacted (zero world volume).
-    if(lum.bspLeafAtOrigin().hasCluster())
+    if(lum.bspLeafAtOrigin().hasSubspace())
     {
         newContact(&lum, ContactLumobj);
     }

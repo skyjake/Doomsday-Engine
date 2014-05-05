@@ -1,7 +1,6 @@
-/** @file bspleaf.cpp  World map BSP leaf.
+/** @file bspleaf.cpp  World map BSP leaf half-space.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +22,7 @@
 #ifdef __CLIENT__
 #  include "world/map.h"
 #endif
-#include "Face"
+#include "ConvexSubspace"
 #include "Sector"
 
 using namespace de;
@@ -67,4 +66,14 @@ void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
     {
         d->subspace->setBspLeaf(this);
     }
+}
+
+Sector *BspLeaf::sectorPtr()
+{
+    return hasParent()? &parent().as<Sector>() : 0;
+}
+
+Sector const *BspLeaf::sectorPtr() const
+{
+    return hasParent()? &parent().as<Sector>() : 0;
 }

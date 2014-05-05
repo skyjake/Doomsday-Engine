@@ -25,6 +25,7 @@
 
 #include "BspLeaf"
 #include "Contact"
+#include "ConvexSubspace"
 #include "Sector"
 #include "SectorCluster"
 #include "Surface"

@@ -32,6 +32,7 @@
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "Line"
 #include "Plane"
 #include "SectorCluster"
@@ -451,7 +452,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
         }
         else
         {
-            Vector4f const color = pinfo->bspLeaf->cluster().lightSourceColorfIntensity();
+            Vector4f const color = pinfo->bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             float lightLevel = color.w;
 
@@ -627,9 +628,9 @@ static void renderParticles(int rtype, bool withBlend)
         {
             // This is a simplified version of sectorlight (no distance
             // attenuation or range compression).
-            if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
+            if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
             {
-                float const lightLevel = cluster->lightSourceIntensity();
+                float const lightLevel = subspace->cluster().lightSourceIntensity();
                 color *= Vector4f(lightLevel, lightLevel, lightLevel, 1);
             }
         }
@@ -663,10 +664,11 @@ static void renderParticles(int rtype, bool withBlend)
         bool nearWall = (pinfo->contact && !pinfo->mov[VX] && !pinfo->mov[VY]);
 
         bool nearPlane = false;
-        if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
+        if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
         {
-            if(FLT2FIX(cluster->  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[VZ] ||
-               FLT2FIX(cluster->visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[VZ])
+            SectorCluster &cluster = subspace->cluster();
+            if(FLT2FIX(cluster.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[VZ] ||
+               FLT2FIX(cluster.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[VZ])
             {
                 nearPlane = true;
             }

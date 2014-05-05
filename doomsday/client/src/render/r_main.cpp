@@ -34,6 +34,7 @@
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 
 #include <de/GLState>
@@ -119,7 +120,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         }
         else
         {
-            Vector4f const color = spr->data.sprite.bspLeaf->cluster().lightSourceColorfIntensity();
+            Vector4f const color = spr->data.sprite.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             float lightLevel = color.w;
@@ -249,7 +250,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
         }
         else
         {
-            Vector4f const color = spr->data.model.bspLeaf->cluster().lightSourceColorfIntensity();
+            Vector4f const color = spr->data.model.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             float lightLevel = color.w;

@@ -122,20 +122,20 @@ dd_bool Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj);
 
 /**
- * Returns @c true iff the sector cluster at the mobj's origin is known (i.e.,
- * it has been linked into the map by calling @ref Mobj_SetOrigin() and the BSP
- * leaf at the origin has a convex geometry (not degenerate)).
+ * Returns @c true iff the BSP leaf at the mobj's origin is known (i.e.,
+ * it has been linked into the map by calling @ref Mobj_SetOrigin() and has a
+ * convex geometry).
  *
  * @param mobj  Mobj instance.
  */
-bool Mobj_HasCluster(mobj_t const &mobj);
+bool Mobj_HasSubspace(mobj_t const &mobj);
 
 /**
  * Returns the sector cluster in which the mobj currently resides.
  *
  * @param mobj  Mobj instance.
  *
- * @see Mobj_HasCluster()
+ * @see Mobj_HasSubspace()
  */
 SectorCluster &Mobj_Cluster(mobj_t const &mobj);
 
