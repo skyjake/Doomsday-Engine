@@ -1,7 +1,7 @@
-/** @file r_fakeradio.cpp Faked Radiosity Lighting.
+/** @file r_fakeradio.cpp  Faked Radiosity Lighting.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,6 +31,8 @@
 #include "world/lineowner.h"
 #include "world/map.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
+#include "SectorCluster"
 #include "Surface"
 #include "Vertex"
 
@@ -194,10 +196,11 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 
 static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
 {
+    ConvexSubspace *subspace = bspLeaf->subspacePtr();
     LineSide &side = *static_cast<LineSide *>(context);
-    if(bspLeaf->hasSubspace() && bspLeaf->sectorPtr() == side.sectorPtr())
+    if(side.sectorPtr() == &subspace->cluster().sector())
     {
-        bspLeaf->subspace().addShadowLine(side);
+        subspace->addShadowLine(side);
     }
     return false; // Continue iteration.
 }
@@ -222,11 +225,11 @@ void Rend_RadioInitForMap(Map &map)
      * 1. Use the BSP leaf blockmap to look for all the blocks that are
      *    within the line's shadow bounding box.
      *
-     * 2. Check the BspLeafs whose sector is the same as the line.
+     * 2. Check the ConvexSubspaces whose sector is the same as the line.
      *
-     * 3. If any of the shadow points are in the BSP leaf, or any of the
-     *    shadow edges cross one of the BSP leaf's edges (not parallel),
-     *    link the line to the BspLeaf.
+     * 3. If any of the shadow points are in the subspace, or any of the
+     *    shadow edges cross one of the subspace's edges (not parallel),
+     *    link the line to the ConvexSubspace.
      */
     foreach(Line *line, map.lines())
     {

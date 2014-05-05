@@ -136,7 +136,7 @@ void R_AddContact(Lumobj &lumobj);
 int R_ContactIterator(int (*callback) (Contact &, void *), void *context = 0);
 
 /**
- * Returns the contact list for the specified BSP @a leaf and contact @a type.
+ * Returns the contact list for the specified @a subspace and contact @a type.
  */
 ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type);
 

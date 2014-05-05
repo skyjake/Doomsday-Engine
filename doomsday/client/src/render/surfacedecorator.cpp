@@ -1,6 +1,6 @@
 /** @file surfacedecorator.cpp  World surface decorator.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -24,7 +24,9 @@
 
 #include "world/map.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "Sector"
+#include "SectorCluster"
 #include "Surface"
 
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()
@@ -131,16 +133,17 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
                     float const offT = t / sufDimensions.y;
                     Vector3d patternOffset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
 
-                    Vector3d decorOrigin = origin + delta * patternOffset;
+                    Vector3d decorOrigin     = origin + delta * patternOffset;
+                    ConvexSubspace *subspace = suf.map().bspLeafAt(decorOrigin).subspacePtr();
 
-                    BspLeaf &bspLeaf = suf.map().bspLeafAt(decorOrigin);
-                    if(!bspLeaf.hasSubspace()) continue;
-                    if(!bspLeaf.subspace().contains(decorOrigin)) continue;
+                    if(!subspace) continue;
+                    if(!subspace->contains(decorOrigin)) continue;
 
                     if(containingSector)
                     {
-                        // The point must be inside the correct sector.
-                        if(bspLeaf.sectorPtr() != containingSector) continue;
+                        // The point must be in the correct sector.
+                        if(containingSector != &subspace->cluster().sector())
+                            continue;
                     }
 
                     suf.addDecoration(new LightDecoration(matDecor, decorOrigin));

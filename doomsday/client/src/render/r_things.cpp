@@ -1,6 +1,6 @@
 /** @file r_things.cpp  Map Object => Vissprite Projection.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 1993-1996 by id Software, Inc.
@@ -41,17 +41,16 @@
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 
 #include <de/vector1.h>
 
 using namespace de;
 
-static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
+static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
     coord_t distToEye, bool fullbright, Vector4f &ambientColor, uint *vLightListIdx)
 {
-    DENG2_ASSERT(bspLeafAtOrigin != 0);
-
     if(fullbright)
     {
         ambientColor = Vector3f(1, 1, 1);
@@ -59,10 +58,13 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
     }
     else
     {
-        if(useBias && bspLeafAtOrigin->map().hasLightGrid())
+        SectorCluster &cluster = subspaceAtOrigin.cluster();
+        Map &map = cluster.sector().map();
+
+        if(useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector4f color = bspLeafAtOrigin->map().lightGrid().evaluate(origin);
+            Vector4f color = map.lightGrid().evaluate(origin);
             // Apply light range compression.
             for(int i = 0; i < 3; ++i)
             {
@@ -72,7 +74,7 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
         }
         else
         {
-            Vector4f const color = bspLeafAtOrigin->cluster().lightSourceColorfIntensity();
+            Vector4f const color = cluster.lightSourceColorfIntensity();
 
             float lightLevel = color.w;
             /* if(spr->type == VSPR_DECORATION)
@@ -99,7 +101,7 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
         parm.origin[VX]      = origin.x;
         parm.origin[VY]      = origin.y;
         parm.origin[VZ]      = origin.z;
-        parm.subspace        = bspLeafAtOrigin->subspacePtr();
+        parm.subspace        = &subspaceAtOrigin;
         parm.ambientColor[0] = ambientColor.x;
         parm.ambientColor[1] = ambientColor.y;
         parm.ambientColor[2] = ambientColor.z;
@@ -188,7 +190,8 @@ void R_ProjectSprite(mobj_t *mo)
     float const alpha = Mobj_Alpha(mo);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
-    SectorCluster &cluster = Mobj_Cluster(*mo);
+    ConvexSubspace &subspace = Mobj_BspLeafAtOrigin(*mo).subspace();
+    SectorCluster &cluster   = subspace.cluster();
     if(!cluster.hasWorldVolume()) return;
 
     // Determine distance to object.
@@ -418,7 +421,7 @@ void R_ProjectSprite(mobj_t *mo)
         Vector3d const origin(vis->origin.x, vis->origin.y, gzt - ms.height() / 2.0f);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance, fullbright,
+        evaluateLighting(origin, subspace, vis->distance, fullbright,
                          ambientColor, &vLightListIdx);
 
         // Apply uniform alpha (overwritting intensity factor).
@@ -436,7 +439,7 @@ void R_ProjectSprite(mobj_t *mo)
     {
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(vis->origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance,
+        evaluateLighting(vis->origin, subspace, vis->distance,
                          fullbright, ambientColor, &vLightListIdx);
 
         // Apply uniform alpha (overwritting intensity factor).

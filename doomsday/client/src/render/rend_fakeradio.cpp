@@ -1,6 +1,6 @@
 /** @file rend_fakeradio.cpp  Faked Radiosity Lighting.
  *
- * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -1313,7 +1313,8 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    if(subspace.shadowLines().isEmpty()) return;
+    ConvexSubspace::ShadowLines const &shadowLines = subspace.shadowLines();
+    if(shadowLines.isEmpty()) return;
 
     SectorCluster &cluster = subspace.cluster();
     float sectorlight = cluster.lightSourceIntensity();
@@ -1328,9 +1329,8 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
 
     Vector3f const eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - subspace.poly().center());
 
-    // We need to check all the shadow lines linked to this BspLeaf for
+    // We need to check all the shadow lines linked to this subspace for
     // the purpose of fakeradio shadowing.
-    ConvexSubspace::ShadowLines const &shadowLines = subspace.shadowLines();
     foreach(LineSide *side, shadowLines)
     {
         // Already rendered during the current frame? We only want to
