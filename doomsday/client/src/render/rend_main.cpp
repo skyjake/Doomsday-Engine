@@ -4952,20 +4952,16 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
     }
 }
 
-static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
+static int drawSubspaceVertexWorker(ConvexSubspace *subspace, void *context)
 {
     drawVertexVisual_params_t &parms = *static_cast<drawVertexVisual_params_t *>(context);
 
-    if(!bspLeaf->hasSubspace())
-        return false; // Continue iteration.
-
-    ConvexSubspace &subspace = bspLeaf->subspace();
-    SectorCluster &cluster   = subspace.cluster();
+    SectorCluster &cluster = subspace->cluster();
 
     ddouble min = cluster.  visFloor().heightSmoothed();
     ddouble max = cluster.visCeiling().heightSmoothed();
 
-    HEdge *base  = subspace.poly().hedge();
+    HEdge *base  = subspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -4977,14 +4973,14 @@ static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
 
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, subspace.extraMeshes())
+    foreach(Mesh *mesh, subspace->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         drawVertexVisual(hedge->vertex(), min, max, parms);
         drawVertexVisual(hedge->twin().vertex(), min, max, parms);
     }
 
-    foreach(Polyobj *polyobj, subspace.polyobjs())
+    foreach(Polyobj *polyobj, subspace->polyobjs())
     foreach(Line *line, polyobj->lines())
     {
         drawVertexVisual(line->from(), min, max, parms);
@@ -5024,7 +5020,7 @@ static void drawVertexes(Map &map)
 
         parms.drawBar = true;
         parms.drawLabel = parms.drawOrigin = false;
-        map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
+        map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
 
         glEnable(GL_DEPTH_TEST);
     }
@@ -5040,7 +5036,7 @@ static void drawVertexes(Map &map)
     parms.drawnVerts->fill(false); // Process all again.
     parms.drawOrigin = true;
     parms.drawBar = parms.drawLabel = false;
-    map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
+    map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -5049,7 +5045,7 @@ static void drawVertexes(Map &map)
         parms.drawnVerts->fill(false); // Process all again.
         parms.drawLabel = true;
         parms.drawBar = parms.drawOrigin = false;
-        map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
+        map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
     }
 
     // Restore previous state.

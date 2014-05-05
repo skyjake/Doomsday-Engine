@@ -50,6 +50,7 @@
 class MapDef;
 class BspLeaf;
 class BspNode;
+class ConvexSubspace;
 class Plane;
 class Sector;
 class SectorCluster;
@@ -337,9 +338,9 @@ public:
     Blockmap const &polyobjBlockmap() const;
 
     /**
-     * Provides access to the BSP leaf blockmap.
+     * Provides access to the convex subspace blockmap.
      */
-    Blockmap const &bspLeafBlockmap() const;
+    Blockmap const &subspaceBlockmap() const;
 
     /**
      * Returns @c true iff a BSP tree is available for the map.
@@ -475,8 +476,8 @@ public:
         return linePathIterator(from, to, LIF_ALL, callback, context);
     }
 
-    int bspLeafBoxIterator(AABoxd const &box,
-        int (*callback) (BspLeaf *bspLeaf, void *context), void *context = 0) const;
+    int subspaceBoxIterator(AABoxd const &box,
+        int (*callback) (ConvexSubspace *subspace, void *context), void *context = 0) const;
 
     /**
      * @note validCount should be incremented before calling this to begin a

@@ -194,9 +194,8 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
     } while(own != base);
 }
 
-static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
+static int linkShadowLineToSubspaceWorker(ConvexSubspace *subspace, void *context)
 {
-    ConvexSubspace *subspace = bspLeaf->subspacePtr();
     LineSide &side = *static_cast<LineSide *>(context);
     if(side.sectorPtr() == &subspace->cluster().sector())
     {
@@ -259,7 +258,7 @@ void Rend_RadioInitForMap(Map &map)
 
             // Link the shadowing line to all the BspLeafs whose axis-aligned
             // bounding box intersects 'bounds'.
-            map.bspLeafBoxIterator(bounds, linkShadowLineToBspLeafWorker, &side);
+            map.subspaceBoxIterator(bounds, linkShadowLineToSubspaceWorker, &side);
         }
     }
 
