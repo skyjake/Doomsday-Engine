@@ -2903,7 +2903,7 @@ static void makeCurrent(ConvexSubspace &subspace)
     }
 }
 
-static void traverseBspAndDrawSubspaces(BspTree *bspTree)
+static void traverseBspTreeAndDrawSubspaces(BspTree *bspTree)
 {
     DENG2_ASSERT(bspTree != 0);
 
@@ -2916,7 +2916,7 @@ static void traverseBspAndDrawSubspaces(BspTree *bspTree)
         int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
-        traverseBspAndDrawSubspaces(bspTree->childPtr(BspTree::ChildId(eyeSide)));
+        traverseBspTreeAndDrawSubspaces(bspTree->childPtr(BspTree::ChildId(eyeSide)));
 
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
@@ -3835,7 +3835,7 @@ void Rend_RenderMap(Map &map)
         curSubspace = 0;
 
         // Draw the world!
-        traverseBspAndDrawSubspaces(&map.bspRoot());
+        traverseBspTreeAndDrawSubspaces(&map.bspRoot());
     }
     drawAllLists(map);
 

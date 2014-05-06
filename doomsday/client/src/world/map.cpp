@@ -107,8 +107,8 @@ struct EditableElements
     void clearAll();
 };
 
-DENG2_PIMPL(Map),
-DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
+DENG2_PIMPL(Map)
+, DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 {
     bool editingEnabled;
     EditableElements editable;
@@ -584,7 +584,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         {
             DENG2_ASSERT(tree.userData() != 0);
             BspLeaf &leaf = tree.userData()->as<BspLeaf>();
-            leaf.setIndexInMap(bsp.leafCount++);
+            bsp.leafCount++;
 
             if(!leaf.sectorPtr())
             {
@@ -627,8 +627,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // Else; a node.
 
         DENG2_ASSERT(tree.userData() != 0);
-        BspNode &node = tree.userData()->as<BspNode>();
-        node.setIndexInMap(bsp.nodeCount++);
+        bsp.nodeCount++;
     }
 
     /**
