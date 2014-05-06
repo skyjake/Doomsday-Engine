@@ -986,8 +986,8 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 {
     if(!hedge) return false;
     if(!hedge->hasFace() || !hedge->twin().hasFace()) return false;
-    if(!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_BSPLEAF) return false;
-    if(!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_BSPLEAF) return false;
+    if(!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_SUBSPACE) return false;
+    if(!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_SUBSPACE) return false;
 
     SectorCluster *frontCluster = hedge->face().mapElementAs<ConvexSubspace>().clusterPtr();
     if(!frontCluster) return false;
@@ -1324,7 +1324,7 @@ SectorCluster *SectorClusterCirculator::getCluster(HEdge const &hedge) // static
 {
     if(!hedge.hasFace()) return 0;
     if(!hedge.face().hasMapElement()) return 0;
-    if(hedge.face().mapElement().type() != DMU_BSPLEAF) return 0;
+    if(hedge.face().mapElement().type() != DMU_SUBSPACE) return 0;
     return hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
 }
 

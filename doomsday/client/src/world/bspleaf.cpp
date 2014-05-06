@@ -29,16 +29,18 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(BspLeaf)
 {
-    QScopedPointer<ConvexSubspace> subspace;
+    ConvexSubspace *subspace;
 };
 
 BspLeaf::BspLeaf(Sector *sector)
     : MapElement(DMU_BSPLEAF, sector), d(new Instance)
-{}
+{
+    d->subspace = 0;
+}
 
 bool BspLeaf::hasSubspace() const
 {
-    return !d->subspace.isNull();
+    return d->subspace != 0;
 }
 
 ConvexSubspace &BspLeaf::subspace() const
@@ -53,16 +55,16 @@ ConvexSubspace &BspLeaf::subspace() const
 
 void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
 {
-    if(d->subspace.data() == newSubspace) return;
+    if(d->subspace == newSubspace) return;
 
-    if(!d->subspace.isNull())
+    if(hasSubspace())
     {
         d->subspace->setBspLeaf(0);
     }
 
-    d->subspace.reset(newSubspace);
+    d->subspace = newSubspace;
 
-    if(!d->subspace.isNull())
+    if(hasSubspace())
     {
         d->subspace->setBspLeaf(this);
     }

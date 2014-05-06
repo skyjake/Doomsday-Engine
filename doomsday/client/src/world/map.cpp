@@ -128,9 +128,14 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     /// BSP data structure:
     MapElement *bspRoot;
+
+    /// BSP element lists (@todo no longer needed):
+    typedef QList<BspNode *> BspNodes;
     BspNodes bspNodes;
+    typedef QList<BspLeaf *> BspLeafs;
     BspLeafs bspLeafs;
 
+    Subspaces subspaces;
     SectorClusters clusters;
 
     /// Map entities and element properties (things, line specials, etc...).
@@ -316,6 +321,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 #endif
 
         qDeleteAll(clusters);
+        qDeleteAll(subspaces);
         qDeleteAll(sectors);
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
@@ -582,11 +588,14 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 leaf.setMap(thisPublic);
             }
 
-#ifdef DENG_DEBUG
             if(leaf.hasSubspace())
             {
-                // See if we received a partial geometry...
-                ConvexSubspace const &subspace = leaf.subspace();
+                // Add this subspace to the LUT.
+                ConvexSubspace &subspace = leaf.subspace();
+                subspace.setIndexInMap(subspaces.count());
+                subspaces.append(&subspace);
+
+#ifdef DENG_DEBUG // See if we received a partial geometry...
                 int discontinuities = 0;
                 HEdge *hedge = subspace.poly().hedge();
                 do
@@ -606,8 +615,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                         << discontinuities
                         << subspace.poly().description();
                 }
-            }
 #endif
+            }
 
             return;
         }
@@ -632,6 +641,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     bool buildBsp()
     {
         DENG2_ASSERT(bspRoot == 0);
+        DENG2_ASSERT(subspaces.isEmpty());
         DENG2_ASSERT(bspLeafs.isEmpty());
         DENG2_ASSERT(bspNodes.isEmpty());
 
@@ -691,6 +701,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 #ifdef DENG2_QT_4_7_OR_NEWER
             bspNodes.reserve(partitioner.numNodes());
             bspLeafs.reserve(partitioner.numLeafs());
+
+            /// @todo Determine the actual number of subspaces needed.
+            subspaces.reserve(partitioner.numLeafs());
 #endif
 
             // Iterative pre-order traversal of the map element tree.
@@ -760,21 +773,17 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         SubspaceSets subspaceSets;
 
         /*
-         * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
-         * starting with a set per BSP leaf and then keep merging these sets until
+         * Separate the subspaces into edge-adjacency clusters. We'll do this by
+         * starting with a set per subspace and then keep merging these sets until
          * no more shared edges are found.
          */
-        foreach(BspLeaf *bspLeaf, bspLeafs)
+        foreach(ConvexSubspace *subspace, subspaces)
         {
-            if(&bspLeaf->parent().as<Sector>() != &sector)
-                continue;
-
-            // BSP leaf with no geometry are excluded.
-            if(!bspLeaf->hasSubspace())
-                continue;
-
-            subspaceSets.append(Subspaces());
-            subspaceSets.last().append(bspLeaf->subspacePtr());
+            if(subspace->bspLeaf().sectorPtr() == &sector)
+            {
+                subspaceSets.append(Subspaces());
+                subspaceSets.last().append(subspace);
+            }
         }
 
         if(subspaceSets.isEmpty()) return;
@@ -1018,12 +1027,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             << subspaceBlockmap->dimensions().asText();
 
         // Populate the blockmap.
-        foreach(BspLeaf *bspLeaf, bspLeafs)
+        foreach(ConvexSubspace *subspace, subspaces)
         {
-            if(ConvexSubspace *subspace = bspLeaf->subspacePtr())
-            {
-                subspaceBlockmap->link(subspace->poly().aaBox(), subspace);
-            }
+            subspaceBlockmap->link(subspace->poly().aaBox(), subspace);
         }
     }
 
@@ -1624,14 +1630,19 @@ MapElement &Map::bspRoot() const
     throw MissingBspError("Map::bspRoot", "No BSP data available");
 }
 
-Map::BspNodes const &Map::bspNodes() const
+int Map::bspNodeCount() const
 {
-    return d->bspNodes;
+    return d->bspNodes.count();
 }
 
-Map::BspLeafs const &Map::bspLeafs() const
+int Map::bspLeafCount() const
 {
-    return d->bspLeafs;
+    return d->bspLeafs.count();
+}
+
+Map::Subspaces const &Map::subspaces() const
+{
+    return d->subspaces;
 }
 
 Map::SectorClusters const &Map::clusters() const
@@ -3102,12 +3113,9 @@ void Map::removeLumobj(int which)
 
 void Map::removeAllLumobjs()
 {
-    foreach(BspLeaf *leaf, d->bspLeafs)
+    foreach(ConvexSubspace *subspace, d->subspaces)
     {
-        if(leaf->hasSubspace())
-        {
-            leaf->subspace().unlinkAllLumobjs();
-        }
+        subspace->unlinkAllLumobjs();
     }
     qDeleteAll(d->lumobjs);
     d->lumobjs.clear();

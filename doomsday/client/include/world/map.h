@@ -47,7 +47,6 @@
 #include <QSet>
 
 class BspLeaf;
-class BspNode;
 class ConvexSubspace;
 class Plane;
 class Sector;
@@ -133,9 +132,7 @@ public:
     typedef QList<Polyobj *> Polyobjs;
     typedef QList<Sector *>  Sectors;
 
-    typedef QList<BspNode *> BspNodes;
-    typedef QList<BspLeaf *> BspLeafs;
-
+    typedef QList<ConvexSubspace *> Subspaces;
     typedef QMultiMap<Sector *, SectorCluster *> SectorClusters;
 
 #ifdef __CLIENT__
@@ -271,16 +268,6 @@ public:
      */
     Sectors const &sectors() const;
 
-    /**
-     * Provides access to the list of BSP nodes for efficient traversal.
-     */
-    BspNodes const &bspNodes() const;
-
-    /**
-     * Provides access to the list of BSP leafs for efficient traversal.
-     */
-    BspLeafs const &bspLeafs() const;
-
     inline int vertexCount() const        { return vertexes().count(); }
 
     inline int lineCount() const          { return lines().count(); }
@@ -291,9 +278,18 @@ public:
 
     inline int sectorCount() const        { return sectors().count(); }
 
-    inline int bspNodeCount() const       { return bspNodes().count(); }
+    inline int bspNodeCount() const;
+    inline int bspLeafCount() const;
 
-    inline int bspLeafCount() const       { return bspLeafs().count(); }
+    /**
+     * Provides access to the subspace list for efficient traversal.
+     */
+    Subspaces const &subspaces() const;
+
+    /**
+     * Returns the total number of subspaces in the map.
+     */
+    inline int subspaceCount() const { return subspaces().count(); }
 
     /**
      * Provides access to the SectorCluster map for efficient traversal.

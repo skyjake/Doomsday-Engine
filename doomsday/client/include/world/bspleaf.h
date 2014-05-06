@@ -30,7 +30,7 @@ class Sector;
  * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
  * defines a half-space of the parent space (a node, or the whole map space).
  *
- * A leaf may be assigned a two dimensioned ConvexSubspace geometry.
+ * A leaf may be attributed to a two-dimensioned ConvexSubspace geometry.
  *
  * Each leaf is attributed to a @ref Sector in the map regardless of whether a
  * convex geometry exists at the leaf.
@@ -53,21 +53,21 @@ public:
     BspLeaf(Sector *sector = 0);
 
     /**
-     * Determines whether a subspace geometry is assigned to the BSP leaf half-space.
+     * Determines whether a subspace geometry is attributed to the BSP leaf half-space.
      *
      * @see subspace(), setSubspace()
      */
     bool hasSubspace() const;
 
     /**
-     * Returns the subspace assigned to the BSP leaf half-space.
+     * Returns the subspace attributed to the BSP leaf half-space.
      *
      * @see hasSubspace()
      */
     ConvexSubspace &subspace() const;
 
     /**
-     * Convenient method returning a pointer to the ConvexSubspace assigned to
+     * Convenient method returning a pointer to the ConvexSubspace attributed to
      * the BSP leaf half-space; otherwise @c 0 if no subspace is assigned.
      *
      * @see subspace(), hasSubspace()
@@ -75,11 +75,10 @@ public:
     inline ConvexSubspace *subspacePtr() const { return hasSubspace()? &subspace() : 0; }
 
     /**
-     * Change the subspace geometry assigned to the BSP leaf.
+     * Change the subspace geometry attributed to the BSP leaf.
      *
      * @param newSubspace New subspace to attribute to the BSP leaf. Ownership
-     *                    of the subspace is given to BspLeaf. Use @c 0 to clear
-     *                    the attribution (and destroy the old subspace).
+     *                    is unaffected. Use @c 0 to clear the attribution.
      *
      * @see hasSubspace(), subspace()
      */

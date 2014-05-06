@@ -338,14 +338,14 @@ enum {
     DMU_SEGMENT,
     DMU_LINE,
     DMU_SIDE,
-    DMU_BSPNODE,
-    DMU_BSPLEAF,
+    DMU_BSPNODE, // engine-internal
+    DMU_BSPLEAF, // engine-internal
     DMU_SECTOR,
     DMU_PLANE,
     DMU_SURFACE,
     DMU_MATERIAL,
     DMU_SUBSPACE,
-    DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
+    DMU_LAST_ELEMENT_TYPE_ID = DMU_SUBSPACE,
 
     /*
      * Selection methods:
