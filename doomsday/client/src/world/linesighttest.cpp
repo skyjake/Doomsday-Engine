@@ -275,11 +275,11 @@ DENG2_PIMPL(LineSightTest)
     /**
      * @return  @c true if the ray passes @a bspElement; otherwise @c false.
      */
-    bool crossBspNode(MapElement const *bspElement)
+    bool crossBspNode(BspElement const *bspElement)
     {
         DENG2_ASSERT(bspElement != 0);
 
-        while(bspElement->type() != DMU_BSPLEAF)
+        while(bspElement->type() != BspElement::Leaf)
         {
             BspNode const &bspNode = bspElement->as<BspNode>();
 
@@ -312,7 +312,7 @@ LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to,
     : d(new Instance(this, from, to, bottomSlope, topSlope, flags))
 {}
 
-bool LineSightTest::trace(MapElement const &bspRoot)
+bool LineSightTest::trace(BspElement const &bspRoot)
 {
     validCount++;
 

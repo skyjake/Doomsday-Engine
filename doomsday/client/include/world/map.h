@@ -23,6 +23,7 @@
 
 #include "Mesh"
 
+#include "BspNode"
 #include "Line"
 #include "Polyobj"
 
@@ -346,7 +347,7 @@ public:
     /**
      * Returns the root element for the map's BSP tree.
      */
-    MapElement &bspRoot() const;
+    BspElement &bspRoot() const;
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies

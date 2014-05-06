@@ -128,7 +128,7 @@ DENG2_PIMPL(Map)
     Polyobjs polyobjs;
 
     /// BSP data structure:
-    MapElement *bspRoot;
+    BspElement *bspRoot;
 
     /// BSP element lists (@todo no longer needed):
     typedef QList<BspNode *> BspNodes;
@@ -601,7 +601,7 @@ DENG2_PIMPL(Map)
                     LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                 "is not contiguous (%i gaps/overlaps).\n%s")
                         << &leaf << subspace.poly().center().asText()
-                        << (leaf.hasParent()? leaf.parent().as<Sector>().indexInArchive() : -1)
+                        << (leaf.hasParent()? leaf.sectorPtr()->indexInArchive() : -1)
                         << discontinuities
                         << subspace.poly().description();
                 }
@@ -1628,7 +1628,7 @@ bool Map::hasBspRoot() const
     return d->bspRoot != 0;
 }
 
-MapElement &Map::bspRoot() const
+BspElement &Map::bspRoot() const
 {
     if(d->bspRoot)
     {
@@ -2807,8 +2807,8 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
         /// @throw MissingBspError  No BSP data is available.
         throw MissingBspError("Map::bspLeafAt", "No BSP data available");
 
-    MapElement *bspElement = d->bspRoot;
-    while(bspElement->type() != DMU_BSPLEAF)
+    BspElement *bspElement = d->bspRoot;
+    while(bspElement->type() != BspElement::Leaf)
     {
         BspNode &bspNode = bspElement->as<BspNode>();
 
@@ -2830,8 +2830,8 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
-    MapElement *bspElement = d->bspRoot;
-    while(bspElement->type() != DMU_BSPLEAF)
+    BspElement *bspElement = d->bspRoot;
+    while(bspElement->type() != BspElement::Leaf)
     {
         BspNode &bspNode = bspElement->as<BspNode>();
         Partition const &partition = bspNode.partition();

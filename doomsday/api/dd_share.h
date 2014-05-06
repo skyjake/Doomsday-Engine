@@ -337,8 +337,6 @@ enum {
     DMU_SEGMENT,
     DMU_LINE,
     DMU_SIDE,
-    DMU_BSPNODE, // engine-internal
-    DMU_BSPLEAF, // engine-internal
     DMU_SECTOR,
     DMU_PLANE,
     DMU_SURFACE,

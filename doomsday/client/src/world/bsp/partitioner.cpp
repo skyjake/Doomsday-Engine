@@ -989,8 +989,8 @@ DENG2_PIMPL(Partitioner)
      * @return  The newly created BspNode.
      */
     BspNode *newBspNode(Partition const &partition, AABoxd const &rightBounds,
-        AABoxd const &leftBounds, MapElement *rightChild = 0,
-        MapElement *leftChild = 0)
+        AABoxd const &leftBounds, BspElement *rightChild = 0,
+        BspElement *leftChild = 0)
     {
         BspNode *node = new BspNode(partition);
 
@@ -1011,10 +1011,10 @@ DENG2_PIMPL(Partitioner)
         return node;
     }
 
-    BspTreeNode *newTreeNode(MapElement *mapBspElement,
+    BspTreeNode *newTreeNode(BspElement *bspElement,
         BspTreeNode *rightChild = 0, BspTreeNode *leftChild = 0)
     {
-        BspTreeNode *subtree = new BspTreeNode(mapBspElement);
+        BspTreeNode *subtree = new BspTreeNode(bspElement);
 
         if(rightChild)
         {
@@ -1027,7 +1027,7 @@ DENG2_PIMPL(Partitioner)
             leftChild->setParent(subtree);
         }
 
-        treeNodeMap.insert(mapBspElement, subtree);
+        treeNodeMap.insert(bspElement, subtree);
         return subtree;
     }
 
@@ -1055,7 +1055,7 @@ DENG2_PIMPL(Partitioner)
     {
         LOG_AS("Partitioner::divideSpace");
 
-        MapElement *bspElement = 0; ///< Built BSP map element at this node.
+        BspElement *bspElement = 0; ///< Built BSP map element at this node.
         BspTreeNode *rightTree = 0, *leftTree = 0;
 
         // Pick a line segment to use as the next partition plane.
@@ -1257,7 +1257,7 @@ DENG2_PIMPL(Partitioner)
     {
         LOG_AS("Partitioner::clearBspElement");
 
-        MapElement *elm = tree.userData();
+        BspElement *elm = tree.userData();
         if(!elm) return;
 
         if(rootNode) // Built Ok.
@@ -1268,13 +1268,13 @@ DENG2_PIMPL(Partitioner)
 
         if(tree.isLeaf())
         {
-            DENG2_ASSERT(elm->type() == DMU_BSPLEAF);
+            DENG2_ASSERT(elm->type() == BspElement::Leaf);
             // There is now one less BspLeaf.
             numLeafs -= 1;
         }
         else
         {
-            DENG2_ASSERT(elm->type() == DMU_BSPNODE);
+            DENG2_ASSERT(elm->type() == BspElement::Node);
             // There is now one less BspNode.
             numNodes -= 1;
         }
@@ -1294,12 +1294,12 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    BspTreeNode *treeNodeForBspElement(MapElement *ob)
+    BspTreeNode *treeNodeForBspElement(BspElement *ob)
     {
         LOG_AS("Partitioner::treeNodeForBspElement");
 
         int const elemType = ob->type();
-        if(elemType == DMU_BSPLEAF || elemType == DMU_BSPNODE)
+        if(elemType == BspElement::Leaf || elemType == BspElement::Node)
         {
             BspElementMap::const_iterator found = treeNodeMap.find(ob);
             if(found == treeNodeMap.end()) return 0;
@@ -1327,12 +1327,12 @@ DENG2_PIMPL(Partitioner)
         return vtx;
     }
 
-    bool release(MapElement *elm)
+    bool release(BspElement *elm)
     {
         switch(elm->type())
         {
-        case DMU_BSPLEAF:
-        case DMU_BSPNODE: {
+        case BspElement::Leaf:
+        case BspElement::Node: {
             BspTreeNode *treeNode = treeNodeForBspElement(elm);
             if(treeNode)
             {
@@ -1507,14 +1507,9 @@ int Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-void Partitioner::take(MapElement *mapElement)
+void Partitioner::take(BspElement *bspElement)
 {
-    if(!d->release(mapElement))
-    {
-        LOG_AS("Partitioner::release");
-        LOG_DEBUG("Attempted to release an unknown/unowned %s %p")
-            << DMU_Str(mapElement->type()) << mapElement;
-    }
+    d->release(bspElement);
 }
 
 } // namespace de

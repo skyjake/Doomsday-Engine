@@ -2940,11 +2940,11 @@ static void makeCurrent(ConvexSubspace &subspace)
     }
 }
 
-static void traverseBspAndDrawSubspaces(MapElement *bspElement)
+static void traverseBspAndDrawSubspaces(BspElement *bspElement)
 {
     DENG2_ASSERT(bspElement != 0);
 
-    while(bspElement->type() != DMU_BSPLEAF)
+    while(bspElement->type() != BspElement::Leaf)
     {
         // Descend deeper into the nodes.
         BspNode &bspNode = bspElement->as<BspNode>();

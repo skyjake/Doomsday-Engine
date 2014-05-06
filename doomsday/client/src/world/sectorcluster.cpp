@@ -996,12 +996,12 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 
 Sector const &SectorCluster::sector() const
 {
-    return const_cast<ConvexSubspace const *>(d->subspaces.first())->bspLeaf().parent().as<Sector>();
+    return *const_cast<ConvexSubspace const *>(d->subspaces.first())->bspLeaf().sectorPtr();
 }
 
 Sector &SectorCluster::sector()
 {
-    return d->subspaces.first()->bspLeaf().parent().as<Sector>();
+    return *d->subspaces.first()->bspLeaf().sectorPtr();
 }
 
 Plane const &SectorCluster::plane(int planeIndex) const

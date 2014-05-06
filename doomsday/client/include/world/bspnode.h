@@ -1,7 +1,7 @@
 /** @file bspnode.h  World map BSP node.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,6 +26,20 @@
 #include <de/Error>
 #include <de/aabox.h>
 
+class BspElement : public de::MapElement
+{
+public:
+    enum {
+        Node,
+        Leaf
+    };
+
+    BspElement(int t = Node, de::MapElement *parent = 0);
+    virtual ~BspElement() {}
+
+    DENG2_AS_IS_METHODS()
+};
+
 /**
  * Represents a node in the map's binary space partition (BSP) tree. Each node
  * defines a partition line which divides the subspace in two, a left child and
@@ -40,7 +54,7 @@
  *
  * @ingroup world
  */
-class BspNode : public de::MapElement
+class BspNode : public BspElement
 {
     DENG2_NO_COPY  (BspNode)
     DENG2_NO_ASSIGN(BspNode)
@@ -96,14 +110,14 @@ public:
      *
      * @see hasChild()
      */
-    de::MapElement &child(int left);
-    de::MapElement const &child(int left) const;
+    BspElement &child(int left);
+    BspElement const &child(int left) const;
 
-    inline de::MapElement &right() { return child(Right); }
-    inline de::MapElement const &right() const { return child(Right); }
+    inline BspElement &right() { return child(Right); }
+    inline BspElement const &right() const { return child(Right); }
 
-    inline de::MapElement &left() { return child(Left); }
-    inline de::MapElement const &left() const { return child(Left); }
+    inline BspElement &left() { return child(Left); }
+    inline BspElement const &left() const { return child(Left); }
 
     /**
      * Returns a pointer to the specified child of the BSP node, which may be
@@ -113,18 +127,18 @@ public:
      *
      * @see hasChild()
      */
-    inline de::MapElement *childPtr(int left) {
+    inline BspElement *childPtr(int left) {
         return hasChild(left)? &child(left) : 0;
     }
-    inline de::MapElement const *childPtr(int left) const {
+    inline BspElement const *childPtr(int left) const {
         return hasChild(left)? &child(left) : 0;
     }
 
-    void setChild(int left, de::MapElement *newChild);
+    void setChild(int left, BspElement *newChild);
 
-    inline void setRight(de::MapElement *newChild) { setChild(Right, newChild); }
+    inline void setRight(BspElement *newChild) { setChild(Right, newChild); }
 
-    inline void setLeft(de::MapElement *newChild) { setChild(Left, newChild); }
+    inline void setLeft(BspElement *newChild) { setChild(Left, newChild); }
 
     /**
      * Returns the axis-aligned bounding box for the specified child, which,
