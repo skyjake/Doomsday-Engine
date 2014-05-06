@@ -19,18 +19,16 @@
 
 #include "de_base.h"
 #include "render/biasillum.h"
-#include "con_main.h"
-
-#include <QScopedPointer>
-
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
-
 #include "BiasTracker"
+
+#include <QScopedPointer>
+#include <doomsday/console/var.h>
 
 using namespace de;
 

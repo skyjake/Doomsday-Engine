@@ -57,6 +57,22 @@ int dd_snprintf(char *str, size_t size, char const *format, ...)
     return result;
 }
 
+#ifdef WIN32
+const char* strcasestr(const char *text, const char *sub)
+{
+    int textLen = strlen(text);
+    int subLen = strlen(sub);
+    int i;
+
+    for(i = 0; i <= textLen - subLen; ++i)
+    {
+        const char* start = text + i;
+        if(!_strnicmp(start, sub, subLen)) return start;
+    }
+    return 0;
+}
+#endif
+
 #ifdef UNIX
 char* strupr(char* string)
 {

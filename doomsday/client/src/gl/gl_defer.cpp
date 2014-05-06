@@ -109,7 +109,7 @@ static deferredtask_t* allocTask(deferredtask_type_t type, void* data)
     dt = (deferredtask_t*) malloc(sizeof(*dt));
     if(!dt)
     {
-        Con_Error("allocDeferredTask: Failed on allocation of %lu bytes.",
+        App_Error("allocDeferredTask: Failed on allocation of %lu bytes.",
                   (unsigned long) sizeof(*dt));
         return 0; // Unreachable.
     }
@@ -124,7 +124,7 @@ static void enqueueTask(deferredtask_type_t type, void* data)
     deferredtask_t* d;
 
     if(!inited)
-        Con_Error("enqueueTask: Deferred GL task system not initialized.");
+        App_Error("enqueueTask: Deferred GL task system not initialized.");
 
     d = allocTask(type, data);
     Sys_Lock(deferredMutex);
@@ -237,7 +237,7 @@ static void processTask(deferredtask_t *task)
         break;
 
     default:
-        Con_Error("Unknown deferred GL task type %i.", (int) task->type);
+        App_Error("Unknown deferred GL task type %i.", (int) task->type);
         break;
     }
 }

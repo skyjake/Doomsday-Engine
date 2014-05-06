@@ -43,13 +43,13 @@
 #include "api_plugin.h"
 #include "dd_main.h"
 #include "dd_loop.h"
-#include "dd_help.h"
 #include "library.h"
 #include "busymode.h"
 #include "ui/dd_input.h"
 #include "ui/nativeui.h"
 #include "ui/zonedebug.h"
-#include "uri.hh"
+#include <doomsday/uri.h>
+#include <doomsday/help.h>
 
 #ifdef __SERVER__
 // Many subsystems do not exist on the server. This is a temporary measure

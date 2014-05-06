@@ -23,7 +23,6 @@
 
 #include "de_render.h"
 #include "de_graphics.h"
-#include "con_main.h"
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
@@ -32,6 +31,8 @@
 
 #include "world/p_players.h" // viewPlayer, ddPlayers
 #include <de/vector1.h>
+#include <de/concurrency.h>
+#include <doomsday/console/var.h>
 
 using namespace de;
 

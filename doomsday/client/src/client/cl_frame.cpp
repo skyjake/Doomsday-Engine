@@ -32,6 +32,7 @@
 #include "client/cl_sound.h"
 #include "client/cl_world.h"
 #include "network/net_main.h"
+#include "network/net_buf.h"
 #include "network/net_msg.h"
 
 // MACROS ------------------------------------------------------------------

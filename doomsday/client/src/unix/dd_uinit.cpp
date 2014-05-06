@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <locale.h>
 
+#include <doomsday/paths.h>
 #include <de/c_wrapper.h>
 #include <de/App>
 
@@ -39,7 +40,7 @@
 #include "de_network.h"
 #include "de_misc.h"
 
-#include "filesys/fs_util.h"
+#include <doomsday/filesys/fs_util.h>
 #include "dd_uinit.h"
 
 #include <de/App>
@@ -76,7 +77,7 @@ static void determineGlobalPaths(application_t* app)
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingHomeDir)
         {
-            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+            DD_SetRuntimePath(Dir_Path(temp));
         }
         Dir_Delete(temp);
     }
@@ -97,7 +98,7 @@ static void determineGlobalPaths(application_t* app)
         app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingUserDir)
         {
-            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+            DD_SetRuntimePath(Dir_Path(temp));
 #ifndef MACOSX
             app->usingHomeDir = false;
 #endif
@@ -113,7 +114,7 @@ static void determineGlobalPaths(application_t* app)
     {
         // The current working directory is the runtime dir.
         directory_t* temp = Dir_NewFromCWD();
-        strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        DD_SetRuntimePath(Dir_Path(temp));
         Dir_Delete(temp);
     }
 
@@ -124,22 +125,22 @@ static void determineGlobalPaths(application_t* app)
      */
     if(CommandLine_CheckWith("-basedir", 1))
     {
-        strncpy(ddBasePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
+        DD_SetBasePath(CommandLine_NextAsPath());
     }
     else
     {
 #ifdef MACOSX
-        strncpy(ddBasePath, "./", FILENAME_T_MAXLEN);
+        DD_SetBasePath("./");
 #else
-        strncpy(ddBasePath, DENG_BASE_DIR, FILENAME_T_MAXLEN);
+        DD_SetBasePath(DENG_BASE_DIR);
 #endif
         // Also check the system config files.
-        UnixInfo_GetConfigValue("paths", "basedir", ddBasePath, FILENAME_T_MAXLEN);
+        filename_t pathFromUnixInfo;
+        if(UnixInfo_GetConfigValue("paths", "basedir", pathFromUnixInfo, FILENAME_T_MAXLEN))
+        {
+            DD_SetBasePath(pathFromUnixInfo);
+        }
     }
-    Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
-    // Ensure it ends with a directory separator.
-    F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
 dd_bool DD_Unix_Init(void)

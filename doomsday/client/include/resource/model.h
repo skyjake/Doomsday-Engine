@@ -20,7 +20,7 @@
 #ifndef DENG_RESOURCE_MODEL_H
 #define DENG_RESOURCE_MODEL_H
 
-#include "filehandle.h"
+#include <doomsday/filesys/filehandle.h>
 #include "Texture"
 #include <de/Error>
 #include <de/String>

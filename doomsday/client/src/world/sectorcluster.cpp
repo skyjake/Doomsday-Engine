@@ -22,7 +22,6 @@
 #include "world/sectorcluster.h"
 
 #include "Face"
-
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Line"
@@ -39,6 +38,7 @@
 #  include "Shard"
 #endif
 
+#include <doomsday/console/var.h>
 #include <de/vector1.h>
 #include <QtAlgorithms>
 #include <QHash>

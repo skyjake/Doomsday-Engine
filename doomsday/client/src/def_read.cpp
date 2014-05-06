@@ -640,7 +640,7 @@ static void DED_InitReader(const char* buffer, const char* fileName)
 {
     if(source && source - sourceStack >= MAX_RECUR_DEPTH)
     {
-        Con_Error("DED_InitReader: Include recursion is too deep.\n");
+        App_Error("DED_InitReader: Include recursion is too deep.\n");
     }
 
     if(!source)

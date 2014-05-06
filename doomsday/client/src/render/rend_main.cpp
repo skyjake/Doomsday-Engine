@@ -19,15 +19,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
-
-#include <QtAlgorithms>
-#include <QBitArray>
-
-#include <de/vector1.h>
-#include <de/libcore.h>
 #include <de/GLState>
 
 #include "de_base.h"
@@ -37,7 +28,7 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 #include "clientapp.h"
-
+#include "sys_system.h"
 #include "ui/editors/rendererappearanceeditor.h"
 
 #include "edit_bias.h" /// @todo remove me
@@ -46,9 +37,7 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
-
 #include "Face"
-
 #include "world/map.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
@@ -61,7 +50,6 @@
 #include "Hand"
 #include "SectorCluster"
 #include "Surface"
-
 #include "BiasIllum"
 #include "HueCircleVisual"
 #include "LightDecoration"
@@ -71,6 +59,7 @@
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
+#include "render/rend_main.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/vissprite.h"
@@ -78,11 +67,19 @@
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
 #include "render/vr.h"
-
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
-#include "render/rend_main.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+#include <QtAlgorithms>
+#include <QBitArray>
+
+#include <de/vector1.h>
+#include <de/libcore.h>
+#include <de/concurrency.h>
+#include <de/timer.h>
 
 using namespace de;
 

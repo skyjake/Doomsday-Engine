@@ -33,19 +33,11 @@
 #endif
 #include <de/Vector>
 #include <de/aabox.h>
+#include <doomsday/world/mobj.h>
 
 class BspLeaf;
 class Plane;
 class SectorCluster;
-
-// This macro can be used to calculate a mobj-specific 'random' number.
-#define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
-
-// We'll use the base mobj template directly as our mobj.
-typedef struct mobj_s
-{
-    DD_BASE_MOBJ_ELEMENTS()
-} mobj_t;
 
 #define MOBJ_SIZE               gx.mobjSize
 

@@ -26,8 +26,7 @@
 #include <QVector>
 #include <de/math.h>
 #include <de/Log>
-
-#include "con_main.h"
+#include <doomsday/console/var.h>
 
 // Cvars:
 static int lgEnabled   = false;

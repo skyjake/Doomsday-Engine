@@ -21,7 +21,7 @@
 #define DENG_RESOURCE_TEXTURESCHEME_H
 
 #include "TextureManifest"
-#include "uri.hh"
+#include <doomsday/uri.h>
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/Error>

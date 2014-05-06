@@ -114,7 +114,7 @@ static AbstractFont *loadSystemFont(char const *name)
     AbstractFont *font = App_ResourceSystem().newFontFromFile(uri, Str_Text(&resourcePath));
     if(!font)
     {
-        Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
+        App_Error("loadSystemFont: Failed loading font \"%s\".", name);
         exit(1); // Unreachable.
     }
 

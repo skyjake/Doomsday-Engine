@@ -32,10 +32,13 @@
 #include "ui/busyvisual.h"
 
 #include <de/c_wrapper.h>
+#include <de/concurrency.h>
 #include <de/Log>
 #include <QEventLoop>
+#include <de/timer.h>
 
 #ifdef __CLIENT__
+#include "sys_system.h"
 #include "clientapp.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/widgets/busywidget.h"
@@ -134,7 +137,7 @@ static void beginTask(BusyTask* task)
     }
     if(busyInited)
     {
-        Con_Error("Con_Busy: Already busy.\n");
+        App_Error("Con_Busy: Already busy.\n");
     }
 
     BusyVisual_PrepareResources();
@@ -173,7 +176,7 @@ static void endTask(BusyTask* task)
 
     if(busyTaskEndedWithError)
     {
-        Con_AbnormalShutdown(busyError);
+        App_AbnormalShutdown(busyError);
     }
 
     if(busyWillAnimateTransition)
@@ -343,7 +346,7 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
 
     if(BusyMode_Active())
     {
-        Con_Error("BusyMode: Internal error, already busy...");
+        App_Error("BusyMode: Internal error, already busy...");
         exit(1); // Unreachable.
     }
 

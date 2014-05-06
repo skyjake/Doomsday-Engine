@@ -83,7 +83,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     coord_t radius, coord_t height, int ddflags)
 {
     if(!function)
-        Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
+        App_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
 
 #ifdef _DEBUG
     if(isClient)
@@ -172,7 +172,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
 
 #ifdef DENG_DEBUG
     if(statenum < 0 || statenum >= defs.count.states.num)
-        Con_Error("Mobj_SetState: statenum %i out of bounds.\n", statenum);
+        App_Error("Mobj_SetState: statenum %i out of bounds.\n", statenum);
 #endif
 
     mobj->state  = states + statenum;
@@ -849,13 +849,6 @@ AABoxd Mobj_AABox(mobj_t const &mobj)
                   origin.x + radius, origin.y + radius);
 }
 
-void Mobj_ConsoleRegister()
-{
-#ifdef __CLIENT__
-    C_VAR_BYTE("rend-mobj-light-auto", &mobjAutoLights, 0, 0, 1);
-#endif
-}
-
 D_CMD(InspectMobj)
 {
     DENG2_UNUSED(src);
@@ -915,4 +908,13 @@ D_CMD(InspectMobj)
     }
 
     return true;
+}
+
+void Mobj_ConsoleRegister()
+{
+    C_CMD("inspectmobj",    "i",    InspectMobj);
+
+#ifdef __CLIENT__
+    C_VAR_BYTE("rend-mobj-light-auto", &mobjAutoLights, 0, 0, 1);
+#endif
 }

@@ -28,22 +28,20 @@
 #include "de_resource.h"
 #include "clientapp.h"
 #include "dd_main.h" // App_ResourceSystem()
-#include "con_main.h"
-#include "con_bar.h"
 #include "def_main.h"
-
+#include "sys_system.h"
+#include "ui/progress.h"
 #include "gl/gl_main.h" // DENG_ASSERT_GL_CONTEXT_ACTIVE
 #include "gl/texturecontent.h"
-
 #include "render/r_main.h" // R_BuildTexGammaLut
 #include "render/rend_halo.h" // haloRealistic
 #include "render/rend_main.h" // misc global vars
 #include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures()
-
 #include "resource/hq2x.h"
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <de/concurrency.h>
 #include <QList>
 #include <QMutableListIterator>
 #include <cstring>

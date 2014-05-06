@@ -22,7 +22,7 @@
 #define DENG_RESOURCE_FONTMANIFEST_H
 
 #include "AbstractFont"
-#include "uri.hh"
+#include <doomsday/uri.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>

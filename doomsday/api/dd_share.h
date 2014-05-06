@@ -143,7 +143,7 @@ enum {
     DD_UNUSED1,
     DD_MOUSE_INVERSE_Y,
     DD_FULLBRIGHT, ///< Render everything fullbright?
-    DD_CCMD_RETURN,
+    DD_CCMD_RETURN_obsolete,
     DD_GAME_READY,
     DD_DEDICATED,
     DD_NOVIDEO,

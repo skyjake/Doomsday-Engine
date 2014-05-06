@@ -19,8 +19,6 @@
  */
 
 #ifdef __CLIENT__
-#include <de/Log>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
@@ -31,11 +29,12 @@
 #include "ConvexSubspace"
 #include "Hand"
 #include "HueCircle"
-
 #include "render/viewports.h"
 #include "render/rend_main.h" // gameDrawHUD/vOrigin, remove me
-
 #include "edit_bias.h"
+
+#include <de/Log>
+#include <de/concurrency.h>
 
 using namespace de;
 

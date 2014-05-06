@@ -108,7 +108,7 @@ public:
     /**
      * Returns the title of the game, as text.
      */
-    de::String const &title() const;
+    de::String title() const;
 
     /**
      * Returns the author of the game, as text.

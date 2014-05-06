@@ -20,14 +20,13 @@
 
 #include "de_platform.h"
 #include "resource/texture.h"
-
 #include "dd_main.h" // App_ResourceSystem()
-#include "con_main.h"
 
 #include "resource/resourcesystem.h"
 #include "resource/compositetexture.h"
 #include "TextureManifest"
 
+#include <doomsday/console/cmd.h>
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>

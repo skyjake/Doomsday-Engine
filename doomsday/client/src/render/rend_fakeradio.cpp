@@ -18,12 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-
-#include <QBitArray>
-
-#include <de/Vector>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
@@ -31,25 +25,25 @@
 #include "de_misc.h"
 #include "de_play.h"
 #include "clientapp.h"
-
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-
 #include "Face"
-
+#include "ConvexSubspace"
+#include "SectorCluster"
+#include "WallEdge"
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/lineowner.h"
-#include "ConvexSubspace"
-#include "SectorCluster"
-
-#include "WallEdge"
 #include "render/rendpoly.h"
 #include "render/shadowedge.h"
-
 #include "render/rend_fakeradio.h"
+
+#include <de/concurrency.h>
+#include <de/Vector>
+#include <QBitArray>
+#include <cstring>
 
 using namespace de;
 

@@ -23,4 +23,7 @@ macx {
     defineTest(linkToBundledLiblegacy) {
         fixInstallName($${1}.bundle/$$1, libdeng_legacy.1.dylib, ..)
     }
+    defineTest(linkDylibToBundledLiblegacy) {
+        fixInstallName($${1}.dylib, libdeng_legacy.1.dylib, ..)
+    }
 }

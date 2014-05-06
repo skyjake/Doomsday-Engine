@@ -21,8 +21,8 @@
 
 #include "de_platform.h"
 #include "de_console.h"
+#include "dd_main.h"
 #include "de_misc.h"
-
 #include "ui/b_main.h"
 #include "ui/b_util.h"
 #include "ui/b_context.h"
@@ -528,7 +528,7 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
         break;
 
     default:
-        Con_Error("B_AppendDeviceDescToString: Invalid value, type = %i.",
+        App_Error("B_AppendDeviceDescToString: Invalid value, type = %i.",
                   (int) type);
         break;
     }

@@ -115,10 +115,20 @@ void DD_InitCommandLine()
     CommandLine_Alias("-verbose", "-v");
 }
 
+static void App_AddKnownWords()
+{
+    // Add games as known words.
+    foreach(Game *game, App_Games().all())
+    {
+        Con_AddKnownWord(WT_GAME, game);
+    }
+}
+
 void DD_ConsoleInit()
 {
     // Get the console online ASAP.
     Con_Init();
+    Con_SetApplicationKnownWordCallback(App_AddKnownWords);
 
     LOG_NOTE("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
 

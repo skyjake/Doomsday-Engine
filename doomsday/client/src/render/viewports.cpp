@@ -25,16 +25,13 @@
 #include "de_resource.h"
 #include "de_ui.h"
 #include "de_misc.h"
-
 #include "clientapp.h"
 #include "edit_bias.h"
 #include "api_render.h"
+
 #include "render/vr.h"
 #include "render/fx/bloom.h"
-
 #include "network/net_demo.h"
-#include "filesys/fs_util.h"
-
 #include "world/linesighttest.h"
 #include "world/thinkers.h"
 #include "world/p_object.h"
@@ -43,8 +40,9 @@
 #include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
-
 #include "Contact"
+
+#include <doomsday/filesys/fs_util.h>
 #include <de/GLState>
 #include <QBitArray>
 

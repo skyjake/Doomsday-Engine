@@ -95,9 +95,17 @@ void App_Timer(unsigned int milliseconds, void (*callback)(void))
     de::Loop::timer(de::TimeDelta::fromMilliSeconds(milliseconds), callback);
 }
 
-void App_FatalError(char const *msg)
+void App_FatalError(char const *msgFormat, ...)
 {
-    DENG2_APP->handleUncaughtException(msg);
+    char buffer[4096];
+    de::zap(buffer);
+
+    va_list args;
+    va_start(args, msgFormat);
+    qvsnprintf(buffer, sizeof(buffer) - 1, msgFormat, args);
+    va_end(args);
+
+    DENG2_APP->handleUncaughtException(buffer);
 }
 
 void CommandLine_Alias(char const *longname, char const *shortname)

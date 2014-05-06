@@ -90,4 +90,7 @@
 #include <de/Vector>
 #include <de/Writer>
 
+// libdoomsday:
+// unfortunately, the API macros conflict with precompiling
+
 #endif

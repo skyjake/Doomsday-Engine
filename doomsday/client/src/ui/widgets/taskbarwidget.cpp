@@ -35,9 +35,11 @@
 #include "clientapp.h"
 #include "CommandAction"
 #include "client/cl_def.h" // clientPaused
-
 #include "ui/ui_main.h"
-#include "con_main.h"
+#include "versioninfo.h"
+#include "dd_main.h"
+
+#include <doomsday/console/exec.h>
 
 #include <de/KeyEvent>
 #include <de/Drawable>
@@ -49,9 +51,6 @@
 #include <de/ButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/BlurWidget>
-
-#include "versioninfo.h"
-#include "dd_main.h"
 
 using namespace de;
 using namespace ui;

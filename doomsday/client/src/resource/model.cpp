@@ -22,9 +22,9 @@
 #include "de_platform.h"
 #include "resource/model.h"
 
-#include "filesys/file.h"
 #include "Texture"
 #include "TextureManifest"
+#include <doomsday/filesys/file.h>
 #include <de/Range>
 #include <de/memory.h>
 #include <QtAlgorithms>

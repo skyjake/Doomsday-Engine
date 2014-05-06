@@ -37,6 +37,7 @@
 #endif
 
 #include <de/findfile.h>
+#include <de/strutil.h>
 #include <QThreadStorage>
 
 #define HOOKMASK(x)         ((x) & 0xffffff)

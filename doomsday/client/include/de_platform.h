@@ -47,10 +47,6 @@
 
 #define INTEGER64 __int64
 
-#define DIR_SEP_CHAR    '\\'
-#define DIR_SEP_STR     "\\"
-#define DIR_WRONG_SEP_CHAR  '/'
-
 #define stricmp _stricmp
 #define strnicmp _strnicmp
 //#define open _open
@@ -63,16 +59,6 @@
 #define strupr _strupr
 #define strdup _strdup
 #define spawnlp _spawnlp
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-const char* strcasestr(const char* text, const char* sub);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif                          // WIN32
 
@@ -108,10 +94,6 @@ typedef unsigned int DWORD;
 #define _chdrive(x)
 #define _getcwd         getcwd
 #define _chdir          chdir
-
-#define DIR_SEP_CHAR        '/'
-#define DIR_SEP_STR         "/"
-#define DIR_WRONG_SEP_CHAR  '\\'
 
 #endif                          // UNIX
 

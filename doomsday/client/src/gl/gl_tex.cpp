@@ -19,14 +19,13 @@
 
 #include "de_platform.h"
 #include "gl/gl_tex.h"
-
-#include "con_main.h"
+#include "dd_main.h"
 
 #include "color.h"
 #include "render/r_main.h"
-
 #include "resource/resourcesystem.h"
 #include "resource/colorpalette.h"
+#include "gl/sys_opengl.h"
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
@@ -153,7 +152,7 @@ uint8_t* GL_ScaleBuffer(const uint8_t* in, int width, int height, int comps,
     buffer = GetScratchBuffer(comps * outWidth * height);
 
     if(0 == (out = (uint8_t*) malloc(comps * outWidth * outHeight)))
-        Con_Error("GL_ScaleBuffer: Failed on allocation of %lu bytes for "
+        App_Error("GL_ScaleBuffer: Failed on allocation of %lu bytes for "
             "output buffer.", (unsigned long) (comps * outWidth * outHeight));
 
     // First scale horizontally, to outWidth, into the temporary buffer.
@@ -190,7 +189,7 @@ static void* packImage(int components, const float* tempOut, GLint typeOut,
     void* dataOut;
 
     if(NULL == (dataOut = malloc(bpp * widthOut * heightOut)))
-        Con_Error("scaleImage: Failed on allocation of %lu bytes for output "
+        App_Error("scaleImage: Failed on allocation of %lu bytes for output "
                   "buffer.", (unsigned long) (bpp * widthOut * heightOut));
 
     if(packRowLength > 0)
@@ -397,13 +396,13 @@ void* GL_ScaleBufferEx(const void* dataIn, int widthIn, int heightIn, int bpp,
 
     // Allocate storage for intermediate images.
     if(NULL == (tempIn = (float*) malloc(widthIn * heightIn * bpp * sizeof(float))))
-        Con_Error("scaleImage: Failed on allocation of %lu bytes for in buffer.",
+        App_Error("scaleImage: Failed on allocation of %lu bytes for in buffer.",
                   (unsigned long) (widthIn * heightIn * bpp * sizeof(float)));
 
     if(NULL == (tempOut = (float*) malloc(widthOut * heightOut * bpp * sizeof(float))))
     {
         free(tempIn);
-        Con_Error("scaleImage: Failed on allocation of %lu bytes for out buffer.",
+        App_Error("scaleImage: Failed on allocation of %lu bytes for out buffer.",
                   (unsigned long) (widthOut * heightOut * bpp * sizeof(float)));
     }
 
@@ -653,7 +652,7 @@ uint8_t* GL_ScaleBufferNearest(const uint8_t* in, int width, int height, int com
     ratioY = (int)(height << 16) / outHeight + 1;
 
     if(NULL == (out = (uint8_t *) M_Malloc(comps * outWidth * outHeight)))
-        Con_Error("GL_ScaleBufferNearest: Failed on allocation of %lu bytes for "
+        App_Error("GL_ScaleBufferNearest: Failed on allocation of %lu bytes for "
                   "output buffer.", (unsigned long) (comps * outWidth * outHeight));
 
     outP = out;
@@ -688,7 +687,7 @@ void GL_DownMipmap32(uint8_t* in, int width, int height, int comps)
     if(width == 1 && height == 1)
     {
 #if _DEBUG
-        Con_Error("GL_DownMipmap32: Can't be called for a 1x1 image.\n");
+        App_Error("GL_DownMipmap32: Can't be called for a 1x1 image.\n");
 #endif
         return;
     }
@@ -728,7 +727,7 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     if(width == 1 && height == 1)
     {
 #if _DEBUG
-        Con_Error("GL_DownMipmap8: Can't be called for a 1x1 image.\n");
+        App_Error("GL_DownMipmap8: Can't be called for a 1x1 image.\n");
 #endif
         return;
     }
@@ -891,7 +890,7 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
     if(line >= h)
     {
 #if _DEBUG
-        Con_Error("FindAverageLineColorIdx: Attempted to average outside valid area (height=%i line=%i).", h, line);
+        App_Error("FindAverageLineColorIdx: Attempted to average outside valid area (height=%i line=%i).", h, line);
 #endif
         V3f_Set(color->rgb, 0, 0, 0);
         return;
@@ -938,7 +937,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
     if(line >= height)
     {
 #if _DEBUG
-        Con_Error("FindAverageLineColor: Attempted to average outside valid area (height=%i line=%i).", height, line);
+        App_Error("FindAverageLineColor: Attempted to average outside valid area (height=%i line=%i).", height, line);
 #endif
         V3f_Set(color->rgb, 0, 0, 0);
         return;
@@ -973,7 +972,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
     if(pixelSize != 3 && pixelSize != 4)
     {
 #if _DEBUG
-        Con_Error("FindAverageColor: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
+        App_Error("FindAverageColor: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
 #endif
         V3f_Set(color->rgb, 0, 0, 0);
         return;
@@ -1049,7 +1048,7 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
     if(pixelSize != 3 && pixelSize != 4)
     {
 #if _DEBUG
-        Con_Error("FindAverageAlpha: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
+        App_Error("FindAverageAlpha: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
 #endif
         // Assume opaque.
         *alpha = 1;
@@ -1125,7 +1124,7 @@ void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
     if(width <= 0 || height <= 0)
     {
 #if _DEBUG
-        Con_Error("FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
+        App_Error("FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
 #endif
         retRegion[0] = retRegion[1] = retRegion[2] = retRegion[3] = 0;
         return;
@@ -1436,7 +1435,7 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int comps)
     if(comps != 3 && comps != 4)
     {
 #if _DEBUG
-        Con_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
+        App_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
 #endif
         return;
     }
@@ -1477,7 +1476,7 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
     if(comps != 3 && comps != 4)
     {
 #if _DEBUG
-        Con_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
+        App_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
 #endif
         return;
     }

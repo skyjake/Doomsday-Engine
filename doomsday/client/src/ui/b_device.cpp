@@ -21,7 +21,7 @@
 
 #include "de_console.h"
 #include "de_misc.h"
-
+#include "dd_main.h"
 #include "ui/b_main.h"
 #include "ui/b_device.h"
 #include "ui/b_context.h"
@@ -349,7 +349,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             break;
 
         default:
-            Con_Error("B_EvaluateDeviceBindingList: Invalid value, cb->type = %i.", cb->type);
+            App_Error("B_EvaluateDeviceBindingList: Invalid value, cb->type = %i.", cb->type);
             break;
         }
 

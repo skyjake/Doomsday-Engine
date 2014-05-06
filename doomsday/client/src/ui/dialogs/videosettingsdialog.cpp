@@ -21,9 +21,9 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/clientwindow.h"
 #include "CommandAction"
-#include "con_main.h"
 #include "clientapp.h"
 
+#include <doomsday/console/exec.h>
 #include <de/VariableToggleWidget>
 #include <de/ChoiceWidget>
 #include <de/SequentialLayout>

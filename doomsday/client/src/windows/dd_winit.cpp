@@ -43,9 +43,10 @@
 #include "de_network.h"
 #include "de_misc.h"
 #include "de_ui.h"
-
-#include "filesys/fs_util.h"
 #include "dd_winit.h"
+
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/paths.h>
 
 application_t app;
 
@@ -149,7 +150,7 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(path, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(path);
     temp = Dir_FromText(path);
-    strncpy(ddBinPath, Str_Text(temp), FILENAME_T_MAXLEN);
+    DD_SetBinPath(Str_Text(temp));
     Dir_Delete(temp);
     }
 #else
@@ -164,7 +165,7 @@ static void determineGlobalPaths(application_t* app)
         GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
         temp = Dir_FromText(path);
 #endif
-        strncpy(ddBinPath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        DD_SetBinPath(Dir_Path(temp));
         Dir_Delete(temp);
     }
 #endif
@@ -184,7 +185,7 @@ static void determineGlobalPaths(application_t* app)
         app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingUserDir)
         {
-            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+            DD_SetRuntimePath(Dir_Path(temp));
         }
         Dir_Delete(temp);
     }
@@ -194,23 +195,21 @@ static void determineGlobalPaths(application_t* app)
         // The current working directory is the runtime dir.
         directory_t* temp = Dir_NewFromCWD();
         Dir_SetCurrent(Dir_Path(temp));
-        strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        DD_SetRuntimePath(Dir_Path(temp));
         Dir_Delete(temp);
     }
 
     if(CommandLine_CheckWith("-basedir", 1))
     {
-        strncpy(ddBasePath, CommandLine_Next(), FILENAME_T_MAXLEN);
+        DD_SetBasePath(CommandLine_Next());
     }
     else
     {
         // The standard base directory is one level up from the bin dir.
-        dd_snprintf(ddBasePath, FILENAME_T_MAXLEN, "%s../", ddBinPath);
+        filename_t base;
+        dd_snprintf(base, FILENAME_T_MAXLEN, "%s../", DD_BinPath());
+        DD_SetBasePath(base);
     }
-    Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
-    // Ensure it ends with a directory separator.
-    F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
 dd_bool DD_Win32_Init(void)
@@ -277,21 +276,4 @@ void DD_Shutdown()
 #ifdef __CLIENT__
     DisplayMode_Shutdown();
 #endif
-}
-
-/**
- * Windows implementation for the Unix strcasestr() function.
- */
-const char* strcasestr(const char *text, const char *sub)
-{
-    int textLen = strlen(text);
-    int subLen = strlen(sub);
-    int i;
-
-    for(i = 0; i <= textLen - subLen; ++i)
-    {
-        const char* start = text + i;
-        if(!strnicmp(start, sub, subLen)) return start;
-    }
-    return 0;
 }

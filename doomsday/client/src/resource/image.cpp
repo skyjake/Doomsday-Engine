@@ -18,30 +18,28 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-
 #include "de_platform.h"
+
+#include "resource/image.h"
 #include "de_console.h"
 #include "de_filesys.h"
+#include "dd_main.h"
 #include "m_misc.h"
+
 #ifdef __CLIENT__
 #  include "resource/compositetexture.h"
 #  include "resource/patch.h"
 #  include "resource/pcx.h"
 #  include "resource/tga.h"
-
 #  include "gl/gl_tex.h"
-
 #  include "render/rend_main.h" // misc global vars awaiting new home
-#endif
-#include <de/Log>
-#ifdef __CLIENT__
 #  include <de/NativePath>
 #  include <QByteArray>
 #  include <QImage>
 #endif
 
-#include "resource/image.h"
+#include <de/Log>
+#include <de/memory.h>
 
 #ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits

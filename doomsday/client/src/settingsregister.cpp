@@ -17,13 +17,11 @@
  */
 
 #include "de_platform.h"
-#include "con_main.h"
 #include "settingsregister.h"
-
-#include <QMap>
-#include <QList>
+#include "api_console.h"
 
 #include <de/App>
+#include <de/game/Game>
 #include <de/Script>
 #include <de/Process>
 #include <de/RecordValue>
@@ -31,6 +29,8 @@
 #include <de/ZipArchive>
 #include <de/Info>
 
+#include <QMap>
+#include <QList>
 #include <QTextStream>
 
 using namespace de;

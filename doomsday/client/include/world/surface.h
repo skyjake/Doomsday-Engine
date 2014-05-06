@@ -24,7 +24,7 @@
 #include "Material"
 
 #include "MapElement"
-#include "uri.hh"
+#include <doomsday/uri.h>
 
 #include <de/Error>
 #include <de/Matrix>

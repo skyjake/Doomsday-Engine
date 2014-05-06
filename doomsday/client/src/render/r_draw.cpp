@@ -19,20 +19,19 @@
  */
 
 #include "clientapp.h"
+#include "sys_system.h"
+#include "render/r_main.h"
 #include "render/r_draw.h"
-
-#include "con_main.h"
-
 #include "gl/gl_draw.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
-
-#include "render/r_main.h"
 
 #include "api_resource.h"
 #include "MaterialSnapshot"
 
 #include "world/p_players.h" // displayPlayer
+
+#include <de/concurrency.h>
 
 using namespace de;
 

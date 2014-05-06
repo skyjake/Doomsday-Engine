@@ -24,16 +24,17 @@
 #define LIBDENG_FILESYS_H
 
 #include "dd_types.h"
-#include "resourceclass.h"
-#include "filehandle.h"
-#include "filetype.h"
 
-#include "filesys/filehandlebuilder.h"
-#include "filesys/fs_main.h"
-#include "filesys/fs_util.h"
-#include "filesys/lumpindex.h"
-#include "filesys/manifest.h"
-#include "filesys/sys_direc.h"
+#include <doomsday/resource/resourceclass.h>
+#include "resource/manifest.h"
+
+#include <doomsday/filesys/filehandle.h>
+#include <doomsday/filesys/filetype.h>
+#include <doomsday/filesys/filehandlebuilder.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/filesys/lumpindex.h>
+#include <doomsday/filesys/sys_direc.h>
 
 #include "api_filesys.h"
 

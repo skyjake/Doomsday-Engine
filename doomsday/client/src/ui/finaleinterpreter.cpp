@@ -36,6 +36,7 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 #include "dd_main.h"
+#include "dd_def.h"
 #include "Game"
 
 #include "api_material.h"
@@ -341,7 +342,7 @@ static __inline fi_operand_type_t operandTypeForCharCode(char code)
     case 'o': return FVT_OBJECT;
     case 'u': return FVT_URI;
     default:
-        Con_Error("Error: operandTypeForCharCode: Unknown char-code %c", code);
+        App_Error("Error: operandTypeForCharCode: Unknown char-code %c", code);
         exit(1); // Unreachable.
     }
 }
@@ -595,7 +596,7 @@ static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const comma
             if(operands) free(operands);
             if(count) *count = 0;
 
-            Con_Error("prepareCommandOperands: Too few operands for command '%s'.\n", cmd->token);
+            App_Error("prepareCommandOperands: Too few operands for command '%s'.\n", cmd->token);
             return 0; // Unreachable.
         }
 
@@ -731,7 +732,7 @@ static dd_bool executeCommand(finaleinterpreter_t* fi, const char* commandString
         // Is this command supported for this directive?
         if(directive != 0 && cmd->excludeDirectives != 0 &&
            (cmd->excludeDirectives & directive) == 0)
-            Con_Error("executeCommand: Command \"%s\" is not supported for directive %i.",
+            App_Error("executeCommand: Command \"%s\" is not supported for directive %i.",
                       cmd->token, directive);
 
         // Check that there are enough operands.
@@ -872,7 +873,7 @@ static fi_handler_t* findEventHandler(finaleinterpreter_t* fi, const ddevent_t* 
                 continue;
             break;
         default:
-            Con_Error("Internal error: Invalid event template (type=%i) in finale event handler.", (int) h->ev.type);
+            App_Error("Internal error: Invalid event template (type=%i) in finale event handler.", (int) h->ev.type);
         }
         return h;
     }
@@ -1070,7 +1071,7 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
                 if(!stricmp(fi->_token, "}"))
                     goto end_read;
                 if(!executeCommand(fi, fi->_token, FID_ONLOAD))
-                    Con_Error("FinaleInterpreter::LoadScript: Unknown error"
+                    App_Error("FinaleInterpreter::LoadScript: Unknown error"
                               "occured executing directive \"OnLoad\".");
             }
             findEnd(fi);

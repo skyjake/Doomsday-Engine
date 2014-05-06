@@ -21,7 +21,6 @@
 #include "render/viewports.h"
 #include "render/rend_main.h"
 #include "gl/gl_main.h"
-#include "con_main.h"
 #include "clientapp.h"
 
 #include <de/concurrency.h>

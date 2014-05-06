@@ -24,8 +24,10 @@
 #include "de_defs.h"
 #include "de_play.h"
 #include "de_filesys.h"
-#include "con_main.h"
-#include "con_bar.h"
+#include "dd_main.h"
+#include "dd_def.h"
+#include "dd_loop.h"
+#include "ui/progress.h"
 
 #include "audio/s_main.h"
 #include "edit_map.h"
@@ -59,10 +61,14 @@
 
 #include "world/thinkers.h"
 
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <doomsday/console/exec.h>
 #include <de/Error>
 #include <de/Log>
 #include <de/Time>
 #include <de/memoryzone.h>
+#include <de/timer.h>
 #include <QMap>
 #include <QtAlgorithms>
 #include <map>

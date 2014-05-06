@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/cvarchoicewidget.h"
-#include "con_main.h"
+#include <doomsday/console/var.h>
 
 using namespace de;
 using namespace ui;

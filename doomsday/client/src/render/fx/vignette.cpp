@@ -22,12 +22,11 @@
 #include "render/fx/vignette.h"
 
 #include "clientapp.h"
-#include "con_main.h"
-//#include "de_graphics.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "render/rend_main.h"
 #include <de/vector1.h>
+#include <doomsday/console/var.h>
 #include <cmath>
 
 using namespace de;

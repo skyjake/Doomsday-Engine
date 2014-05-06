@@ -21,7 +21,7 @@
 #define DENG_RESOURCE_MATERIALMANIFEST_H
 
 #include "Material"
-#include "uri.hh"
+#include <doomsday/uri.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>

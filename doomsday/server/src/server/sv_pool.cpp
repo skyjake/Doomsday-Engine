@@ -33,8 +33,9 @@
 
 #include "audio/s_main.h"
 #include "world/thinkers.h"
-
 #include "server/sv_pool.h"
+
+#include <de/timer.h>
 
 using namespace de;
 
@@ -1132,7 +1133,7 @@ void* Sv_CopyDelta(void* deltaPtr)
 
     if(size == 0)
     {
-        Con_Error("Sv_CopyDelta: Unknown delta type %i.\n", delta->type);
+        App_Error("Sv_CopyDelta: Unknown delta type %i.\n", delta->type);
     }
 
     newDelta = Z_Malloc(size, PU_MAP, 0);
@@ -1156,7 +1157,7 @@ void Sv_SubtractDelta(void* deltaPtr1, const void* deltaPtr2)
 #ifdef _DEBUG
     if(!Sv_IsSameDelta(delta, sub))
     {
-        Con_Error("Sv_SubtractDelta: Not the same!\n");
+        App_Error("Sv_SubtractDelta: Not the same!\n");
     }
 #endif
 
@@ -1405,7 +1406,7 @@ void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
     }
     else
     {
-        Con_Error("Sv_ApplyDeltaData: Unknown delta type %i.\n", src->type);
+        App_Error("Sv_ApplyDeltaData: Unknown delta type %i.\n", src->type);
     }
 }
 
@@ -1423,11 +1424,11 @@ dd_bool Sv_MergeDelta(void* destDelta, const void* srcDelta)
 #ifdef _DEBUG
     if(!Sv_IsSameDelta(src, dest))
     {
-        Con_Error("Sv_MergeDelta: Not the same!\n");
+        App_Error("Sv_MergeDelta: Not the same!\n");
     }
     if(dest->state != DELTA_NEW)
     {
-        Con_Error("Sv_MergeDelta: Dest is not NEW.\n");
+        App_Error("Sv_MergeDelta: Dest is not NEW.\n");
     }
 #endif
 
@@ -2786,7 +2787,7 @@ void Sv_RatePool(pool_t* pool)
 #ifdef _DEBUG
     if(!plr->shared.mo)
     {
-        Con_Error("Sv_RatePool: Player %i has no mobj.\n", pool->owner);
+        App_Error("Sv_RatePool: Player %i has no mobj.\n", pool->owner);
     }
 #endif
 

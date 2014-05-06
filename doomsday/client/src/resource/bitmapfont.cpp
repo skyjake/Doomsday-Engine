@@ -19,16 +19,15 @@
 
 #include "de_platform.h"
 #include "resource/bitmapfont.h"
-
 #include "dd_main.h" // isDedicated
-#include "filesys/fs_main.h"
 #include "gl/gl_main.h" // GL_NewTextureWithParams
 #include "sys_system.h" // novideo
 #include "FontManifest"
-#include "uri.hh"
+#include <doomsday/uri.h>
 #include <de/Log>
 #include <de/mathutil.h> // M_CeilPow2()
 #include <de/memory.h>
+#include <doomsday/filesys/fs_main.h>
 
 using namespace de;
 

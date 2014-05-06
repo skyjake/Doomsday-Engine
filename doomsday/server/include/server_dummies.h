@@ -50,8 +50,6 @@ DENG_EXTERN_C void R_InitSvgs(void);
 DENG_EXTERN_C void R_ShutdownSvgs(void);
 DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
-DENG_EXTERN_C void FR_Init(void);
-
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
 DENG_EXTERN_C void Rend_ConsoleInit();
 DENG_EXTERN_C void Rend_ConsoleResize(int force);
@@ -64,7 +62,6 @@ DENG_EXTERN_C void Cl_InitPlayers(void);
 
 DENG_EXTERN_C void UI_Init();
 DENG_EXTERN_C void UI_Ticker(timespan_t t);
-DENG_EXTERN_C void UI2_Ticker(timespan_t t);
 DENG_EXTERN_C void UI_Shutdown();
 
 #endif // SERVER_DUMMIES_H

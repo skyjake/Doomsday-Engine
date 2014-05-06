@@ -184,10 +184,11 @@ void Net_Register(void)
     C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
 #ifdef __CLIENT__
     C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
+    /// @todo Must reimplement using libshell. -jk
+    //C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
 #endif
 #ifdef __SERVER__
-    C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
+    //C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
 #endif
     C_CMD_FLAGS("net", NULL, Net, CMDF_NO_NULLGAME);
@@ -1307,14 +1308,10 @@ D_CMD(Net)
             // Start network setup.
             if(!stricmp(argv[2], "client"))
             {
-                CmdReturnValue = true;
                 ClientWindow::main().taskBar().close();
                 ClientWindow::main().taskBar().showMultiplayer();
             }
-            else
-                return false;
-            //DD_NetSetup(!stricmp(argv[2], "server"));
-            //CmdReturnValue = true;
+            else return false;
         }
 #endif
     }

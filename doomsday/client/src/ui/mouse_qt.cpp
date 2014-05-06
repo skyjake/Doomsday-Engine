@@ -22,7 +22,6 @@
  */
 
 #include "de_base.h"
-#include "con_main.h"
 #include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
