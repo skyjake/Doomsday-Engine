@@ -1,4 +1,4 @@
-/** @file world/bsp/bsptreenode.h World BSP Tree Node.
+/** @file bsptreenode.h  World map BSP tree.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,17 +17,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_BSPTREENODE_H
-#define DENG_WORLD_BSP_BSPTREENODE_H
+#ifndef DENG_WORLD_MAP_BSPTREE_H
+#define DENG_WORLD_MAP_BSPTREE_H
 
 #include <de/BinaryTree>
-#include "MapElement"
+#include "BspNode"
 
 /**
  * Nodes in BspBuilder's internal tree are modelled with this type.
  *
  * @ingroup bsp
  */
-typedef de::BinaryTree<de::MapElement *> BspTreeNode;
+typedef de::BinaryTree<BspElement *> BspTreeNode;
 
-#endif // DENG_WORLD_BSP_BSPTREENODE_H
+#endif // DENG_WORLD_MAP_BSPTREE_H

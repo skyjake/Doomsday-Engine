@@ -26,14 +26,18 @@
 
 using namespace de;
 
+BspElement::BspElement(int t, MapElement *parent)
+    : MapElement(t, parent)
+{}
+
 DENG2_PIMPL_NOREF(BspNode)
 {
     /// Space partition (half-plane).
     Partition partition;
 
     /// Right and left child elements for each half space.
-    MapElement *rightChild;
-    MapElement *leftChild;
+    BspElement *rightChild;
+    BspElement *leftChild;
 
     /// Right and left bounding boxes for each half space.
     AABoxd rightAABox;
@@ -45,7 +49,7 @@ DENG2_PIMPL_NOREF(BspNode)
         , leftChild(0)
     {}
 
-    inline MapElement **childAdr(int left) {
+    inline BspElement **childAdr(int left) {
         return left? &leftChild : &rightChild;
     }
 
@@ -55,7 +59,7 @@ DENG2_PIMPL_NOREF(BspNode)
 };
 
 BspNode::BspNode(Partition const &partition)
-    : MapElement(DMU_BSPNODE)
+    : BspElement(Node)
     , d(new Instance(partition))
 {
     setRightAABox(0);
@@ -71,10 +75,10 @@ size_t BspNode::height() const
 {
     DENG2_ASSERT(hasLeft() || hasRight());
     size_t rHeight = 0;
-    if(hasRight() && right().type() == DMU_BSPNODE)
+    if(hasRight() && right().type() == Node)
         rHeight = right().as<BspNode>().height();
     size_t lHeight = 0;
-    if(hasLeft() && left().type() == DMU_BSPNODE)
+    if(hasLeft() && left().type() == Node)
         lHeight = left().as<BspNode>().height();
     return (rHeight> lHeight? rHeight : lHeight) + 1;
 }
@@ -84,9 +88,9 @@ bool BspNode::hasChild(int left) const
     return *d->childAdr(left) != 0;
 }
 
-MapElement &BspNode::child(int left)
+BspElement &BspNode::child(int left)
 {
-    if(MapElement *childElm = *d->childAdr(left))
+    if(BspElement *childElm = *d->childAdr(left))
     {
         return *childElm;
     }
@@ -94,12 +98,12 @@ MapElement &BspNode::child(int left)
     throw MissingChildError("BspNode::child", QString("No %1 child is configured").arg(left? "left" : "right"));
 }
 
-MapElement const &BspNode::child(int left) const
+BspElement const &BspNode::child(int left) const
 {
-    return const_cast<MapElement &>(const_cast<BspNode *>(this)->child(left));
+    return const_cast<BspElement &>(const_cast<BspNode *>(this)->child(left));
 }
 
-void BspNode::setChild(int left, MapElement *newChild)
+void BspNode::setChild(int left, BspElement *newChild)
 {
     if(!newChild || newChild != this)
     {

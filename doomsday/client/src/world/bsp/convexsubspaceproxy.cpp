@@ -516,7 +516,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 /*#ifdef DENG_DEBUG
     LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
         << d->findCenter().asText()
-        << (leaf.hasParent()? leaf.parent().as<Sector>()->indexInArchive() : -1)
+        << (leaf.hasParent()? leaf.sectorPtr()->indexInArchive() : -1)
         << continuities.count();
 
     foreach(Continuity const &conty, continuities)
@@ -549,7 +549,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
-                DENG_UNUSED(seg);
+                DENG2_UNUSED(seg);
 #endif
             }
 

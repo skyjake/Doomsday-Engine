@@ -143,11 +143,11 @@ public:
     int numVertexes();
 
     /**
-     * Relinquish ownership of the specified map data element to the caller.
+     * Relinquish ownership of the specified BSP data element to the caller.
      *
-     * @param mapElement  Map data element to relinquish ownership of.
+     * @param bspElement  BSP data element to relinquish ownership of.
      */
-    void take(MapElement *mapElement);
+    void take(BspElement *bspElement);
 
 private:
     DENG2_PRIVATE(d)

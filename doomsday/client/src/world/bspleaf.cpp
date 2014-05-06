@@ -28,7 +28,7 @@
 using namespace de;
 
 BspLeaf::BspLeaf(Sector *sector)
-    : MapElement(DMU_BSPLEAF, sector)
+    : BspElement(Leaf, sector)
     , _subspace(0)
 {}
 

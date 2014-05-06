@@ -1,6 +1,6 @@
 /** @file biasillum.cpp  Shadow Bias map point illumination.
  *
- * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -139,7 +139,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param bspRoot        Root BSP element for the map.
      */
     void updateContribution(int index, Vector3d const &point,
-        Vector3f const &normalAtPoint, MapElement &bspRoot)
+        Vector3f const &normalAtPoint, BspElement &bspRoot)
     {
         DENG_ASSERT(tracker != 0);
 
