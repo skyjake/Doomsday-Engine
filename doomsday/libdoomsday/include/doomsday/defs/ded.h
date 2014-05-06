@@ -100,7 +100,6 @@ typedef struct {
 
 typedef struct {
     ded_stringid_t  id;
-    ded_string_t    text;
     int             value;
 } ded_flag_t;
 
@@ -762,8 +761,6 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
 
     ded_flag_t *getFlag(char const *flag) const;
 
-    const char* getFlagTextByPrefixVal(const char* prefix, int val) const;
-
     int evalFlags2(char const *ptr) const;
 
     int getTextNumForName(const char* name) const;
@@ -818,7 +815,7 @@ extern "C" {
 void            DED_Init(ded_t* ded);
 void            DED_Clear(ded_t* ded);
 
-int             DED_AddFlag(ded_t* ded, char const* name, char const* text, int value);
+int             DED_AddFlag(ded_t* ded, char const* name, int value);
 int             DED_AddMobj(ded_t* ded, char const* idStr);
 int             DED_AddState(ded_t* ded, char const* id);
 int             DED_AddSprite(ded_t* ded, char const* name);

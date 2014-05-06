@@ -415,11 +415,6 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
     return 0;
 }
 
-const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
-{
-    return defs.getFlagTextByPrefixVal(prefix, val);
-}
-
 #undef Def_EvalFlags
 int Def_EvalFlags(char *ptr)
 {

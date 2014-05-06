@@ -452,12 +452,11 @@ void DED_RemoveMobj(ded_t* ded, int index)
     DED_DelEntry(index, (void**) &ded->mobjs, &ded->count.mobjs, sizeof(ded_mobj_t));
 }
 
-int DED_AddFlag(ded_t* ded, char const* name, char const* text, int value)
+int DED_AddFlag(ded_t* ded, char const* name, int value)
 {
     ded_flag_t* fl = (ded_flag_t *) DED_NewEntry((void**) &ded->flags, &ded->count.flags, sizeof(ded_flag_t));
 
     strcpy(fl->id, name);
-    strcpy(fl->text, text);
     fl->value = value;
     return fl - ded->flags;
 }
@@ -989,16 +988,6 @@ ded_flag_t *ded_s::getFlag(char const *flag) const
             return flags + i;
     }
 
-    return 0;
-}
-
-const char* ded_s::getFlagTextByPrefixVal(const char* prefix, int val) const
-{
-    for(int i = count.flags.num - 1; i >= 0; i--)
-    {
-        if(!qstrnicmp(flags[i].id, prefix, strlen(prefix)) && flags[i].value == val)
-            return flags[i].text;
-    }
     return 0;
 }
 

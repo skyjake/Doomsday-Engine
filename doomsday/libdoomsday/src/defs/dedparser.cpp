@@ -824,14 +824,13 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Flag"))
             {
                 // A new flag.
-                idx = DED_AddFlag(ded, "", "", 0);
+                idx = DED_AddFlag(ded, "", 0);
                 FINDBEGIN;
                 for(;;)
                 {
                     READLABEL;
                     RV_STR("ID", ded->flags[idx].id)
                     RV_UINT("Value", ded->flags[idx].value)
-                    RV_STR("Info", ded->flags[idx].text)
                     RV_END
                     CHECKSC;
                 }
