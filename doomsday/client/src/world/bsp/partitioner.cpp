@@ -84,11 +84,11 @@ DENG2_PIMPL(Partitioner)
 
     /// Root node of the internal binary tree used to guide the partitioning
     /// process and around which the built BSP map elements are constructed.
-    BspElement *rootNode;
+    BspTree *rootNode;
 
     /// Mapping table which relates built BSP map elements to their counterpart
     /// in the internal tree.
-    typedef QHash<MapElement *, BspElement *> BspElementMap;
+    typedef QHash<BspElement *, BspTree *> BspElementMap;
     BspElementMap treeNodeMap;
 
     /// The "current" binary space half-plane.
@@ -989,8 +989,8 @@ DENG2_PIMPL(Partitioner)
      * @return  The newly created BspNode.
      */
     BspNode *newBspNode(Partition const &partition, AABoxd const &rightBounds,
-        AABoxd const &leftBounds, MapElement *rightChild = 0,
-        MapElement *leftChild = 0)
+        AABoxd const &leftBounds, BspElement *rightChild = 0,
+        BspElement *leftChild = 0)
     {
         BspNode *node = new BspNode(partition);
 
@@ -1011,10 +1011,10 @@ DENG2_PIMPL(Partitioner)
         return node;
     }
 
-    BspElement *newTreeNode(MapElement *bspElement,
-        BspElement *rightChild = 0, BspElement *leftChild = 0)
+    BspTree *newTreeNode(BspElement *bspElement,
+        BspTree *rightChild = 0, BspTree *leftChild = 0)
     {
-        BspElement *subtree = new BspElement(bspElement);
+        BspTree *subtree = new BspTree(bspElement);
 
         if(rightChild)
         {
@@ -1051,12 +1051,12 @@ DENG2_PIMPL(Partitioner)
      *
      * @return  Newly created subtree; otherwise @c 0 (degenerate).
      */
-    BspElement *divideSpace(SuperBlock &bmap)
+    BspTree *divideSpace(SuperBlock &bmap)
     {
         LOG_AS("Partitioner::divideSpace");
 
-        MapElement *bspElement = 0; ///< Built BSP map element at this node.
-        BspElement *rightTree = 0, *leftTree = 0;
+        BspElement *bspElement = 0; ///< Built BSP map element at this node.
+        BspTree *rightTree = 0, *leftTree = 0;
 
         // Pick a line segment to use as the next partition plane.
         LineSegmentSide *partSeg = chooseNextPartition(bmap);
@@ -1253,11 +1253,11 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    void clearBspElement(BspElement &tree)
+    void clearBspElement(BspTree &tree)
     {
         LOG_AS("Partitioner::clearBspElement");
 
-        MapElement *elm = tree.userData();
+        BspElement *elm = tree.userData();
         if(!elm) return;
 
         if(rootNode) // Built Ok.
@@ -1288,13 +1288,13 @@ DENG2_PIMPL(Partitioner)
 
     void clearAllBspElements()
     {
-        foreach(BspElement *node, treeNodeMap)
+        foreach(BspTree *node, treeNodeMap)
         {
             clearBspElement(*node);
         }
     }
 
-    BspElement *treeNodeForBspElement(MapElement *ob)
+    BspTree *treeNodeForBspElement(BspElement *ob)
     {
         LOG_AS("Partitioner::treeNodeForBspElement");
         BspElementMap::const_iterator found = treeNodeMap.find(ob);
@@ -1321,7 +1321,7 @@ DENG2_PIMPL(Partitioner)
 
     bool release(MapElement *elm)
     {
-        if(BspElement *treeNode = treeNodeForBspElement(elm))
+        if(BspTree *treeNode = treeNodeForBspElement(elm))
         {
             BspElementMap::iterator found = treeNodeMap.find(elm);
             DENG2_ASSERT(found != treeNodeMap.end());
@@ -1420,7 +1420,7 @@ bool lineIndexLessThan(Line const *a, Line const *b)
  * 3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
  *    the Nodes tree and continue up to the root (last Node).
  */
-BspElement *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
+BspTree *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
 {
     d->clear();
 
@@ -1465,7 +1465,7 @@ BspElement *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
     return d->rootNode;
 }
 
-BspElement *Partitioner::root() const
+BspTree *Partitioner::root() const
 {
     return d->rootNode;
 }

@@ -139,7 +139,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param bspRoot        Root BSP element for the map.
      */
     void updateContribution(int index, Vector3d const &point,
-        Vector3f const &normalAtPoint, BspElement &bspRoot)
+        Vector3f const &normalAtPoint, BspTree &bspRoot)
     {
         DENG_ASSERT(tracker != 0);
 

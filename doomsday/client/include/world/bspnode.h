@@ -26,6 +26,13 @@
 #include <de/Error>
 #include <de/aabox.h>
 
+class BspElement
+{
+public:
+    virtual ~BspElement() {}
+    DENG2_AS_IS_METHODS()
+};
+
 /**
  * Represents a node in the map's binary space partition (BSP) tree. Each node
  * defines a partition line which divides the subspace in two, a left child and
@@ -40,7 +47,7 @@
  *
  * @ingroup world
  */
-class BspNode : public de::MapElement
+class BspNode : public BspElement
 {
     DENG2_NO_COPY  (BspNode)
     DENG2_NO_ASSIGN(BspNode)

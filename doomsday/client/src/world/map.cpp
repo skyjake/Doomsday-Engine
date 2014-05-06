@@ -127,7 +127,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     Polyobjs polyobjs;
 
     /// BSP data structure:
-    BspElement *bspRoot;
+    BspTree *bspRoot;
 
     /// BSP element lists (@todo no longer needed):
     typedef QList<BspNode *> BspNodes;
@@ -566,7 +566,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
-    void collateBspElements(bsp::Partitioner &partitioner, BspElement &tree)
+    void collateBspElements(bsp::Partitioner &partitioner, BspTree &tree)
     {
         if(tree.isLeaf())
         {
@@ -676,7 +676,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             partitioner.audienceForUnclosedSectorFound += this;
 
             // Build a BSP!
-            BspElement *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
+            BspTree *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
 
             LOG_MAP_VERBOSE("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes. "
                             "Tree balance is %d:%d.")
@@ -707,8 +707,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 #endif
 
             // Iterative pre-order traversal of the map element tree.
-            BspElement *cur = rootNode;
-            BspElement *prev = 0;
+            BspTree *cur = rootNode;
+            BspTree *prev = 0;
             while(cur)
             {
                 while(cur)
@@ -1620,7 +1620,7 @@ bool Map::hasBspRoot() const
     return d->bspRoot != 0;
 }
 
-BspElement &Map::bspRoot() const
+BspTree &Map::bspRoot() const
 {
     if(d->bspRoot)
     {
@@ -2829,19 +2829,19 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
         /// @throw MissingBspError  No BSP data is available.
         throw MissingBspError("Map::bspLeafAt", "No BSP data available");
 
-    BspElement *bspElement = d->bspRoot;
-    while(!bspElement->isLeaf())
+    BspTree *bspTree = d->bspRoot;
+    while(!bspTree->isLeaf())
     {
-        BspNode &bspNode = bspElement->userData()->as<BspNode>();
+        BspNode &bspNode = bspTree->userData()->as<BspNode>();
 
         int side = bspNode.partition().pointOnSide(point) < 0;
 
         // Decend to the child subspace on "this" side.
-        bspElement = bspElement->childPtr(BspElement::ChildId(side));
+        bspTree = bspTree->childPtr(BspTree::ChildId(side));
     }
 
     // We've arrived at a leaf.
-    return bspElement->userData()->as<BspLeaf>();
+    return bspTree->userData()->as<BspLeaf>();
 }
 
 BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
@@ -2852,10 +2852,10 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
-    BspElement *bspElement = d->bspRoot;
-    while(!bspElement->isLeaf())
+    BspTree *bspTree = d->bspRoot;
+    while(!bspTree->isLeaf())
     {
-        BspNode &bspNode = bspElement->userData()->as<BspNode>();
+        BspNode &bspNode = bspTree->userData()->as<BspNode>();
         Partition const &partition = bspNode.partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
@@ -2863,11 +2863,11 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
         int side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
 
         // Decend to the child subspace on "this" side.
-        bspElement = bspElement->childPtr(BspElement::ChildId(side));
+        bspTree = bspTree->childPtr(BspTree::ChildId(side));
     }
 
     // We've arrived at a leaf.
-    return bspElement->userData()->as<BspLeaf>();
+    return bspTree->userData()->as<BspLeaf>();
 }
 
 SectorCluster *Map::clusterAt(Vector2d const &point) const
