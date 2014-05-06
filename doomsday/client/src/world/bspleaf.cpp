@@ -27,7 +27,7 @@
 
 using namespace de;
 
-BspLeaf::BspLeaf() : _subspace(0)
+BspLeaf::BspLeaf(Sector *sector) : _sector(sector), _subspace(0)
 {}
 
 bool BspLeaf::hasSubspace() const
@@ -64,10 +64,15 @@ void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
 
 Sector *BspLeaf::sectorPtr()
 {
-    return hasParent()? &parent().as<Sector>() : 0;
+    return _sector;
 }
 
 Sector const *BspLeaf::sectorPtr() const
 {
-    return hasParent()? &parent().as<Sector>() : 0;
+    return _sector;
+}
+
+void BspLeaf::setSector(Sector *newSector)
+{
+    _sector = newSector;
 }

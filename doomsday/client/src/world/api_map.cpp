@@ -1536,21 +1536,21 @@ DENG_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 {
     if(!mobj || !Mobj_IsLinked(*mobj)) return;
-    Mobj_BspLeafAtOrigin(*mobj).map().unlink(*mobj);
+    Mobj_Map(*mobj).unlink(*mobj);
 }
 
 #undef Mobj_TouchedLinesIterator
 DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *context)
 {
     if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_BspLeafAtOrigin(*mo).map().mobjTouchedLineIterator(mo, callback, context);
+    return Mobj_Map(*mo).mobjTouchedLineIterator(mo, callback, context);
 }
 
 #undef Mobj_TouchedSectorsIterator
 DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *context)
 {
     if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_BspLeafAtOrigin(*mo).map().mobjTouchedSectorIterator(mo, callback, context);
+    return Mobj_Map(*mo).mobjTouchedSectorIterator(mo, callback, context);
 }
 
 #undef Line_TouchingMobjsIterator

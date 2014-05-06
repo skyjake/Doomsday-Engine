@@ -51,7 +51,7 @@ public:
      * Construct a new BSP leaf and optionally attribute it to @a sector.
      * Ownership is unaffected.
      */
-    BspLeaf();//Sector *sector = 0);
+    BspLeaf(Sector *sector = 0);
 
     /**
      * Determines whether a subspace geometry is attributed to the BSP leaf half-space.
@@ -99,7 +99,10 @@ public:
     /// @copydoc sectorPtr()
     Sector const *sectorPtr() const;
 
+    void setSector(Sector *newSector);
+
 private:
+    Sector *_sector;
     ConvexSubspace *_subspace;
 };
 

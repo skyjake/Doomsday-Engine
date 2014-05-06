@@ -145,9 +145,9 @@ public:
     /**
      * Relinquish ownership of the specified BSP data element to the caller.
      *
-     * @param mapElement  BSP data element to relinquish ownership of.
+     * @param bspElement  BSP data element to relinquish ownership of.
      */
-    void take(MapElement *mapElement);
+    void take(BspElement *bspElement);
 
 private:
     DENG2_PRIVATE(d)

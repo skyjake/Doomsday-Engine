@@ -511,12 +511,12 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
     // Determine which sector to attribute the BSP leaf to.
     qSort(continuities.begin(), continuities.end());
-    leaf.setParent(continuities.first().sector);
+    leaf.setSector(continuities.first().sector);
 
 /*#ifdef DENG_DEBUG
     LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
         << d->findCenter().asText()
-        << (leaf.hasParent()? leaf.sectorPtr()->indexInArchive() : -1)
+        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
         << continuities.count();
 
     foreach(Continuity const &conty, continuities)
