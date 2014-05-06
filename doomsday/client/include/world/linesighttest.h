@@ -23,8 +23,7 @@
 
 #include <de/libcore.h>
 #include <de/Vector>
-
-class BspElement;
+#include "world/map.h"
 
 namespace de {
 

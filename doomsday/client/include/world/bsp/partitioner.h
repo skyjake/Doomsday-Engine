@@ -27,7 +27,7 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "world/bsp/bsptreenode.h" /// @todo remove me
+#include "world/map.h"
 
 class Line;
 class Sector;
@@ -96,7 +96,7 @@ public:
      * @return  Root tree node of the resultant BSP otherwise @c 0 if no usable
      *          tree data was produced.
      */
-    BspTreeNode *buildBsp(LineSet const &lines, Mesh &mesh);
+    BspElement *buildBsp(LineSet const &lines, Mesh &mesh);
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
@@ -105,7 +105,7 @@ public:
      * The only time upon which @c 0 is returned is if called prior to calling
      * build()
      */
-    BspTreeNode *root() const;
+    BspElement *root() const;
 
     /**
      * Retrieve the number of Segments owned by the partitioner. When the build
@@ -145,9 +145,9 @@ public:
     /**
      * Relinquish ownership of the specified BSP data element to the caller.
      *
-     * @param bspElement  BSP data element to relinquish ownership of.
+     * @param mapElement  BSP data element to relinquish ownership of.
      */
-    void take(BspElement *bspElement);
+    void take(MapElement *mapElement);
 
 private:
     DENG2_PRIVATE(d)

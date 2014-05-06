@@ -2944,16 +2944,16 @@ static void traverseBspAndDrawSubspaces(BspElement *bspElement)
 {
     DENG2_ASSERT(bspElement != 0);
 
-    while(bspElement->type() != BspElement::Leaf)
+    while(!bspElement->isLeaf())
     {
         // Descend deeper into the nodes.
-        BspNode &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->userData()->as<BspNode>();
 
         // Decide which side the view point is on.
         int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
-        traverseBspAndDrawSubspaces(bspNode.childPtr(eyeSide));
+        traverseBspAndDrawSubspaces(bspElement->childPtr(BspElement::ChildId(eyeSide)));
 
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
@@ -2962,12 +2962,12 @@ static void traverseBspAndDrawSubspaces(BspElement *bspElement)
             return;
 
         // ...and back space.
-        bspElement = bspNode.childPtr(eyeSide ^ 1);
+        bspElement = bspElement->childPtr(BspElement::ChildId(eyeSide ^ 1));
     }
     // We've arrived at a leaf.
 
     // Only leafs with a convex subspace geometry have drawable geometries.
-    if(ConvexSubspace *subspace = bspElement->as<BspLeaf>().subspacePtr())
+    if(ConvexSubspace *subspace = bspElement->userData()->as<BspLeaf>().subspacePtr())
     {
         DENG2_ASSERT(subspace->hasCluster());
 

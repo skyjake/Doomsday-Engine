@@ -556,7 +556,7 @@ DENG2_PIMPL(Map)
         }
     }
 
-    void collateBspElements(bsp::Partitioner &partitioner, BspTreeNode &tree)
+    void collateBspElements(bsp::Partitioner &partitioner, BspElement &tree)
     {
         if(tree.isLeaf())
         {
@@ -666,7 +666,7 @@ DENG2_PIMPL(Map)
             partitioner.audienceForUnclosedSectorFound += this;
 
             // Build a BSP!
-            BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
+            BspElement *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
 
             LOG_MAP_VERBOSE("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes. "
                             "Tree balance is %d:%d.")
@@ -686,7 +686,7 @@ DENG2_PIMPL(Map)
             /*
              * Take ownership of all the built map data elements.
              */
-            bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
+            bspRoot = rootNode; // We'll formally take ownership shortly...
 
 #ifdef DENG2_QT_4_7_OR_NEWER
             bspNodes.reserve(partitioner.numNodes());
@@ -697,8 +697,8 @@ DENG2_PIMPL(Map)
 #endif
 
             // Iterative pre-order traversal of the map element tree.
-            BspTreeNode *cur = rootNode;
-            BspTreeNode *prev = 0;
+            BspElement *cur = rootNode;
+            BspElement *prev = 0;
             while(cur)
             {
                 while(cur)
@@ -2808,18 +2808,18 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
         throw MissingBspError("Map::bspLeafAt", "No BSP data available");
 
     BspElement *bspElement = d->bspRoot;
-    while(bspElement->type() != BspElement::Leaf)
+    while(!bspElement->isLeaf())
     {
-        BspNode &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->userData()->as<BspNode>();
 
         int side = bspNode.partition().pointOnSide(point) < 0;
 
         // Descend to the child subspace on "this" side.
-        bspElement = bspNode.childPtr(side);
+        bspElement = bspElement->childPtr(BspElement::ChildId(side));
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return bspElement->userData()->as<BspLeaf>();
 }
 
 BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
@@ -2831,9 +2831,9 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
     BspElement *bspElement = d->bspRoot;
-    while(bspElement->type() != BspElement::Leaf)
+    while(!bspElement->isLeaf())
     {
-        BspNode &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->userData()->as<BspNode>();
         Partition const &partition = bspNode.partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
@@ -2841,11 +2841,11 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
         int side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
 
         // Decend to the child subspace on "this" side.
-        bspElement = bspNode.childPtr(side);
+        bspElement = bspElement->childPtr(BspElement::ChildId(side));
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return bspElement->userData()->as<BspLeaf>();
 }
 
 SectorCluster *Map::clusterAt(Vector2d const &point) const
@@ -3407,15 +3407,6 @@ String Map::objectSummaryAsStyledText() const
 #undef TABBED
 }
 
-static int bspTreeHeight(MapElement const &bspElem)
-{
-    if(bspElem.is<BspNode>())
-    {
-        return bspElem.as<BspNode>().height();
-    }
-    return 0;
-}
-
 static String bspTreeSummary(Map const &map)
 {
     if(map.hasBspRoot())
@@ -3423,12 +3414,11 @@ static String bspTreeSummary(Map const &map)
         String desc = String("%1 leafs, %2 nodes")
                           .arg(map.bspLeafCount())
                           .arg(map.bspNodeCount());
-        if(map.bspRoot().is<BspNode>())
+        if(!map.bspRoot().isLeaf())
         {
-            BspNode const &bspRootNode = map.bspRoot().as<BspNode>();
             desc += String(" (balance is %1:%2)")
-                        .arg(bspRootNode.hasRight()? bspTreeHeight(bspRootNode.right()) : 0)
-                        .arg(bspRootNode.hasLeft() ? bspTreeHeight(bspRootNode.left ()) : 0);
+                        .arg(map.bspRoot().hasRight()? map.bspRoot().right().height() : 0)
+                        .arg(map.bspRoot().hasLeft() ? map.bspRoot().left ().height() : 0);
         }
         return desc;
     }
