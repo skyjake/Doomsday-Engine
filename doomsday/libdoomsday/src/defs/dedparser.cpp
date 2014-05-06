@@ -823,6 +823,7 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Flag"))
             {
+                char dummyStr[2];
                 // A new flag.
                 idx = DED_AddFlag(ded, "", 0);
                 FINDBEGIN;
@@ -831,6 +832,7 @@ DENG2_PIMPL(DEDParser)
                     READLABEL;
                     RV_STR("ID", ded->flags[idx].id)
                     RV_UINT("Value", ded->flags[idx].value)
+                    RV_STR("Info", dummyStr) // ignored
                     RV_END
                     CHECKSC;
                 }
