@@ -40,7 +40,8 @@ DENG2_PIMPL_NOREF(BspNode)
 };
 
 BspNode::BspNode(Partition const &partition)
-    : d(new Instance(partition))
+    : BspElement()
+    , d(new Instance(partition))
 {
     setRightAABox(0);
     setLeftAABox(0);
