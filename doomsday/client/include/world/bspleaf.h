@@ -99,7 +99,7 @@ public:
     Sector const *sectorPtr() const;
 
 private:
-    DENG2_PRIVATE(d)
+    ConvexSubspace *_subspace;
 };
 
 #endif // DENG_WORLD_BSPLEAF_H

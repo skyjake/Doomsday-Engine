@@ -27,27 +27,21 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(BspLeaf)
-{
-    ConvexSubspace *subspace;
-};
-
 BspLeaf::BspLeaf(Sector *sector)
-    : MapElement(DMU_BSPLEAF, sector), d(new Instance)
-{
-    d->subspace = 0;
-}
+    : MapElement(DMU_BSPLEAF, sector)
+    , _subspace(0)
+{}
 
 bool BspLeaf::hasSubspace() const
 {
-    return d->subspace != 0;
+    return _subspace != 0;
 }
 
 ConvexSubspace &BspLeaf::subspace() const
 {
     if(hasSubspace())
     {
-        return *d->subspace;
+        return *_subspace;
     }
     /// @throw MissingSubspaceError Attempted with no subspace attributed.
     throw MissingSubspaceError("BspLeaf::subspace", "No subspace is attributed");
@@ -55,18 +49,18 @@ ConvexSubspace &BspLeaf::subspace() const
 
 void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
 {
-    if(d->subspace == newSubspace) return;
+    if(_subspace == newSubspace) return;
 
     if(hasSubspace())
     {
-        d->subspace->setBspLeaf(0);
+        _subspace->setBspLeaf(0);
     }
 
-    d->subspace = newSubspace;
+    _subspace = newSubspace;
 
     if(hasSubspace())
     {
-        d->subspace->setBspLeaf(this);
+        _subspace->setBspLeaf(this);
     }
 }
 
