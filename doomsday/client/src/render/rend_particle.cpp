@@ -434,7 +434,7 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
     }
     else
     {
-        Map &map = pinfo->bspLeaf->map();
+        Map &map = pinfo->bspLeaf->subspace().cluster().sector().map();
 
         if(useBias && map.hasLightGrid())
         {

@@ -140,15 +140,13 @@ void Polyobj::unlink()
 {
     if(_bspLeaf)
     {
-        Map &map = _bspLeaf->map();
-
         if(_bspLeaf->hasSubspace())
         {
             _bspLeaf->subspace().unlink(*this);
         }
         _bspLeaf = 0;
 
-        map.unlink(*this);
+        map().unlink(*this);
     }
 }
 

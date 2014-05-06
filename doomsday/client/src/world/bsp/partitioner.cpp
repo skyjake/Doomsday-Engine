@@ -1319,7 +1319,7 @@ DENG2_PIMPL(Partitioner)
         return vtx;
     }
 
-    bool release(MapElement *elm)
+    bool release(BspElement *elm)
     {
         if(BspTree *treeNode = treeNodeForBspElement(elm))
         {
@@ -1490,7 +1490,7 @@ int Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-void Partitioner::take(MapElement *mapElement)
+void Partitioner::take(BspElement *bspElement)
 {
     //d->release(mapElement);
 }

@@ -29,8 +29,34 @@
 class BspElement
 {
 public:
+    /// Special identifier used to mark an invalid index.
+    enum { NoIndex = -1 };
+
+    BspElement() : _indexInMap(NoIndex) {}
     virtual ~BspElement() {}
     DENG2_AS_IS_METHODS()
+
+    /**
+     * Returns the "in-map" index attributed to the BSP element.
+     */
+    int indexInMap() const
+    {
+        return _indexInMap;
+    }
+
+    /**
+     * Change the "in-map" index attributed to the BSP element.
+     *
+     * @param newIndex  New index to attribute to the BSP element. @c NoIndex
+     *                  clears the attribution (not a valid index).
+     */
+    void setIndexInMap(int newIndex = NoIndex)
+    {
+        _indexInMap = newIndex;
+    }
+
+private:
+    int _indexInMap;
 };
 
 /**

@@ -579,13 +579,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             leaf.setIndexInMap(bspLeafs.count());
             bspLeafs.append(&leaf);
 
-            if(!leaf.hasParent())
+            if(!leaf.sectorPtr())
             {
                 LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
                     << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
 
                 // Attribute this leaf directly to the map.
-                leaf.setMap(thisPublic);
+                //leaf.setMap(thisPublic);
             }
 
             if(leaf.hasSubspace())
@@ -611,7 +611,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                     LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                 "is not contiguous (%i gaps/overlaps).\n%s")
                         << &leaf << subspace.poly().center().asText()
-                        << (leaf.hasParent()? leaf.sectorPtr()->indexInArchive() : -1)
+                        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
                         << discontinuities
                         << subspace.poly().description();
                 }
@@ -628,7 +628,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         partitioner.take(&node);
 
         // Add this BspNode to the LUT.
-        node.setMap(thisPublic);
+        //node.setMap(thisPublic);
         node.setIndexInMap(bspNodes.count());
         bspNodes.append(&node);
     }
