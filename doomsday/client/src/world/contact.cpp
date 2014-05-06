@@ -145,11 +145,11 @@ ContactList::Node *ContactList::newNode(void *object) // static
 }
 
 // Separate contact lists for each BSP leaf and contact type.
-static ContactList *bspLeafContactLists;
+static ContactList *subspaceContactLists;
 
 ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type)
 {
-    return bspLeafContactLists[subspace.bspLeaf().indexInMap() * ContactTypeCount + int( type )];
+    return subspaceContactLists[subspace.indexInMap() * ContactTypeCount + int( type )];
 }
 
 static Contact *contacts;
@@ -187,17 +187,17 @@ static Contact *newContact(void *object, ContactType type)
 void R_InitContactLists(Map &map)
 {
     // Initialize object => BspLeaf contact lists.
-    bspLeafContactLists = (ContactList *)
-        Z_Calloc(map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists),
+    subspaceContactLists = (ContactList *)
+        Z_Calloc(map.subspaceCount() * ContactTypeCount * sizeof(*subspaceContactLists),
                  PU_MAPSTATIC, 0);
 }
 
 void R_DestroyContactLists()
 {
-    if(bspLeafContactLists)
+    if(subspaceContactLists)
     {
-        Z_Free(bspLeafContactLists);
-        bspLeafContactLists = 0;
+        Z_Free(subspaceContactLists);
+        subspaceContactLists = 0;
     }
 }
 
@@ -210,10 +210,10 @@ void R_ClearContactLists(Map &map)
     // Start reusing nodes from the first one in the list.
     ContactList::reset();
 
-    if(bspLeafContactLists)
+    if(subspaceContactLists)
     {
-        std::memset(bspLeafContactLists, 0,
-                    map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists));
+        std::memset(subspaceContactLists, 0,
+                    map.subspaceCount() * ContactTypeCount * sizeof(*subspaceContactLists));
     }
 }
 
