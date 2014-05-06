@@ -273,15 +273,15 @@ DENG2_PIMPL(LineSightTest)
     }
 
     /**
-     * @return  @c true if the ray passes @a bspElement; otherwise @c false.
+     * @return  @c true if the ray passes @a bspTree; otherwise @c false.
      */
-    bool crossBspNode(BspElement const *bspElement)
+    bool crossBspNode(BspTree const *bspTree)
     {
-        DENG2_ASSERT(bspElement != 0);
+        DENG2_ASSERT(bspTree != 0);
 
-        while(!bspElement->isLeaf())
+        while(!bspTree->isLeaf())
         {
-            BspNode const &bspNode = bspElement->userData()->as<BspNode>();
+            BspNode const &bspNode = bspTree->userData()->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
@@ -290,20 +290,20 @@ DENG2_PIMPL(LineSightTest)
             if(fromSide != toSide)
             {
                 // Yes.
-                if(!crossBspNode(bspElement->childPtr(BspElement::ChildId(fromSide))))
+                if(!crossBspNode(bspTree->childPtr(BspTree::ChildId(fromSide))))
                     return false; // Cross the From side.
 
-                bspElement = bspElement->childPtr(BspElement::ChildId(fromSide ^ 1)); // Cross the To side.
+                bspTree = bspTree->childPtr(BspTree::ChildId(fromSide ^ 1)); // Cross the To side.
             }
             else
             {
                 // No - descend!
-                bspElement = bspElement->childPtr(BspElement::ChildId(fromSide));
+                bspTree = bspTree->childPtr(BspTree::ChildId(fromSide));
             }
         }
 
         // We've arrived at a leaf.
-        return crossBspLeaf(bspElement->userData()->as<BspLeaf>());
+        return crossBspLeaf(bspTree->userData()->as<BspLeaf>());
     }
 };
 
@@ -312,7 +312,7 @@ LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to,
     : d(new Instance(this, from, to, bottomSlope, topSlope, flags))
 {}
 
-bool LineSightTest::trace(BspElement const &bspRoot)
+bool LineSightTest::trace(BspTree const &bspRoot)
 {
     validCount++;
 

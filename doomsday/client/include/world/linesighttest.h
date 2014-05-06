@@ -65,7 +65,7 @@ public:
      * @return  @c true iff an uninterrupted path exists between the preconfigured
      *          Start and End points of the trace line.
      */
-    bool trace(BspElement const &bspRoot);
+    bool trace(BspTree const &bspRoot);
 
 private:
     DENG2_PRIVATE(d)

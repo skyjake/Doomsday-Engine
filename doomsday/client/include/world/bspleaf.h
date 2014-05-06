@@ -40,7 +40,7 @@ class Sector;
  *
  * @ingroup world
  */
-class BspLeaf : public de::MapElement
+class BspLeaf : public BspElement
 {
 public:
     /// Required subspace is missing. @ingroup errors

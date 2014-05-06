@@ -96,7 +96,7 @@ public:
      * @return  Root tree node of the resultant BSP otherwise @c 0 if no usable
      *          tree data was produced.
      */
-    BspElement *buildBsp(LineSet const &lines, Mesh &mesh);
+    BspTree *buildBsp(LineSet const &lines, Mesh &mesh);
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
@@ -105,7 +105,7 @@ public:
      * The only time upon which @c 0 is returned is if called prior to calling
      * build()
      */
-    BspElement *root() const;
+    BspTree *root() const;
 
     /**
      * Retrieve the number of Segments owned by the partitioner. When the build

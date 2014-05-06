@@ -66,12 +66,7 @@ class LineBlockmap;
 #include <de/BinaryTree>
 #include "BspNode"
 
-/**
- * Nodes in BspBuilder's internal tree are modelled with this type.
- *
- * @ingroup bsp
- */
-typedef de::BinaryTree<de::MapElement *> BspElement;
+typedef de::BinaryTree<BspElement *> BspTree;
 
 namespace de {
 
@@ -357,7 +352,7 @@ public:
     /**
      * Returns the root element for the map's BSP tree.
      */
-    BspElement &bspRoot() const;
+    BspTree &bspRoot() const;
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies
