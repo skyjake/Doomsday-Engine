@@ -574,7 +574,7 @@ DENG2_PIMPL(Map)
         {
             DENG2_ASSERT(tree.userData() != 0);
             BspLeaf &leaf = tree.userData()->as<BspLeaf>();
-            leaf.setIndexInMap(bsp.leafCount++);
+            bsp.leafCount++;
 
             if(!leaf.sectorPtr())
             {
@@ -617,8 +617,7 @@ DENG2_PIMPL(Map)
         // Else; a node.
 
         DENG2_ASSERT(tree.userData() != 0);
-        BspNode &node = tree.userData()->as<BspNode>();
-        node.setIndexInMap(bsp.nodeCount++);
+        bsp.nodeCount++;
     }
 
     /**

@@ -71,7 +71,7 @@ static viewport_t *currentViewport;
 static coord_t *luminousDist;
 static byte *luminousClipped;
 static uint *luminousOrder;
-static QBitArray bspLeafsVisible;
+static QBitArray subspacesVisible;
 
 static QBitArray generatorsVisible(Map::MAX_GENERATORS);
 
@@ -1145,16 +1145,14 @@ void R_ClearViewData()
 
 bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace)
 {
-    BspLeaf const &bspLeaf = subspace.bspLeaf();
-    DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
-    return bspLeafsVisible.testBit(bspLeaf.indexInMap());
+    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    return subspacesVisible.testBit(subspace.indexInMap());
 }
 
 void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes)
 {
-    BspLeaf const &bspLeaf = subspace.bspLeaf();
-    DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
-    bspLeafsVisible.setBit(bspLeaf.indexInMap(), yes);
+    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    subspacesVisible.setBit(subspace.indexInMap(), yes);
 }
 
 bool R_ViewerGeneratorIsVisible(Generator const &generator)
@@ -1223,8 +1221,8 @@ void R_BeginFrame()
 
     Map &map = ClientApp::worldSystem().map();
 
-    bspLeafsVisible.resize(map.bspLeafCount());
-    bspLeafsVisible.fill(false);
+    subspacesVisible.resize(map.subspaceCount());
+    subspacesVisible.fill(false);
 
     // Clear all generator visibility flags.
     generatorsVisible.fill(false);
