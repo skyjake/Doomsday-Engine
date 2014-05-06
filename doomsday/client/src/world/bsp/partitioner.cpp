@@ -84,11 +84,11 @@ DENG2_PIMPL(Partitioner)
 
     /// Root node of the internal binary tree used to guide the partitioning
     /// process and around which the built BSP map elements are constructed.
-    BspTreeNode *rootNode;
+    BspElement *rootNode;
 
     /// Mapping table which relates built BSP map elements to their counterpart
     /// in the internal tree.
-    typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
+    typedef QHash<MapElement *, BspElement *> BspElementMap;
     BspElementMap treeNodeMap;
 
     /// The "current" binary space half-plane.
@@ -110,10 +110,10 @@ DENG2_PIMPL(Partitioner)
         {
             // If ownership of the all built BSP map elements has been claimed
             // this should be a no-op.
-            clearAllBspElements();
+            //clearAllBspElements();
 
             // Destroy the internal binary tree.
-            delete rootNode; rootNode = 0;
+            //delete rootNode; rootNode = 0;
         }
 
         lines.clear();
@@ -989,19 +989,19 @@ DENG2_PIMPL(Partitioner)
      * @return  The newly created BspNode.
      */
     BspNode *newBspNode(Partition const &partition, AABoxd const &rightBounds,
-        AABoxd const &leftBounds, BspElement *rightChild = 0,
-        BspElement *leftChild = 0)
+        AABoxd const &leftBounds, MapElement *rightChild = 0,
+        MapElement *leftChild = 0)
     {
         BspNode *node = new BspNode(partition);
 
-        if(rightChild)
+        /*if(rightChild)
         {
             node->setRight(rightChild);
         }
         if(leftChild)
         {
             node->setLeft(leftChild);
-        }
+        }*/
 
         node->setRightAABox(&rightBounds);
         node->setLeftAABox(&leftBounds);
@@ -1011,10 +1011,10 @@ DENG2_PIMPL(Partitioner)
         return node;
     }
 
-    BspTreeNode *newTreeNode(BspElement *bspElement,
-        BspTreeNode *rightChild = 0, BspTreeNode *leftChild = 0)
+    BspElement *newTreeNode(MapElement *bspElement,
+        BspElement *rightChild = 0, BspElement *leftChild = 0)
     {
-        BspTreeNode *subtree = new BspTreeNode(bspElement);
+        BspElement *subtree = new BspElement(bspElement);
 
         if(rightChild)
         {
@@ -1051,12 +1051,12 @@ DENG2_PIMPL(Partitioner)
      *
      * @return  Newly created subtree; otherwise @c 0 (degenerate).
      */
-    BspTreeNode *divideSpace(SuperBlock &bmap)
+    BspElement *divideSpace(SuperBlock &bmap)
     {
         LOG_AS("Partitioner::divideSpace");
 
-        BspElement *bspElement = 0; ///< Built BSP map element at this node.
-        BspTreeNode *rightTree = 0, *leftTree = 0;
+        MapElement *bspElement = 0; ///< Built BSP map element at this node.
+        BspElement *rightTree = 0, *leftTree = 0;
 
         // Pick a line segment to use as the next partition plane.
         LineSegmentSide *partSeg = chooseNextPartition(bmap);
@@ -1253,11 +1253,11 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    void clearBspElement(BspTreeNode &tree)
+    void clearBspElement(BspElement &tree)
     {
         LOG_AS("Partitioner::clearBspElement");
 
-        BspElement *elm = tree.userData();
+        MapElement *elm = tree.userData();
         if(!elm) return;
 
         if(rootNode) // Built Ok.
@@ -1268,13 +1268,13 @@ DENG2_PIMPL(Partitioner)
 
         if(tree.isLeaf())
         {
-            DENG2_ASSERT(elm->type() == BspElement::Leaf);
+            //DENG2_ASSERT(elm->isLeaf());
             // There is now one less BspLeaf.
             numLeafs -= 1;
         }
         else
         {
-            DENG2_ASSERT(elm->type() == BspElement::Node);
+            //DENG2_ASSERT(!elm->isLeaf());
             // There is now one less BspNode.
             numNodes -= 1;
         }
@@ -1288,26 +1288,18 @@ DENG2_PIMPL(Partitioner)
 
     void clearAllBspElements()
     {
-        foreach(BspTreeNode *node, treeNodeMap)
+        foreach(BspElement *node, treeNodeMap)
         {
             clearBspElement(*node);
         }
     }
 
-    BspTreeNode *treeNodeForBspElement(BspElement *ob)
+    BspElement *treeNodeForBspElement(MapElement *ob)
     {
         LOG_AS("Partitioner::treeNodeForBspElement");
-
-        int const elemType = ob->type();
-        if(elemType == BspElement::Leaf || elemType == BspElement::Node)
-        {
-            BspElementMap::const_iterator found = treeNodeMap.find(ob);
-            if(found == treeNodeMap.end()) return 0;
-            return found.value();
-        }
-        LOG_DEBUG("Attempted to locate using an unknown element %p (type: %d).")
-            << ob << elemType;
-        return 0;
+        BspElementMap::const_iterator found = treeNodeMap.find(ob);
+        if(found == treeNodeMap.end()) return 0;
+        return found.value();
     }
 
     /**
@@ -1327,35 +1319,26 @@ DENG2_PIMPL(Partitioner)
         return vtx;
     }
 
-    bool release(BspElement *elm)
+    bool release(MapElement *elm)
     {
-        switch(elm->type())
+        if(BspElement *treeNode = treeNodeForBspElement(elm))
         {
-        case BspElement::Leaf:
-        case BspElement::Node: {
-            BspTreeNode *treeNode = treeNodeForBspElement(elm);
-            if(treeNode)
+            BspElementMap::iterator found = treeNodeMap.find(elm);
+            DENG2_ASSERT(found != treeNodeMap.end());
+            treeNodeMap.erase(found);
+
+            treeNode->setUserData(0);
+            if(treeNode->isLeaf())
             {
-                BspElementMap::iterator found = treeNodeMap.find(elm);
-                DENG2_ASSERT(found != treeNodeMap.end());
-                treeNodeMap.erase(found);
-
-                treeNode->setUserData(0);
-                if(treeNode->isLeaf())
-                {
-                    // There is now one fewer BspLeaf.
-                    numLeafs -= 1;
-                }
-                else
-                {
-                    // There is now one fewer BspNode.
-                    numNodes -= 1;
-                }
-                return true;
+                // There is now one fewer BspLeaf.
+                numLeafs -= 1;
             }
-            break; }
-
-        default: break;
+            else
+            {
+                // There is now one fewer BspNode.
+                numNodes -= 1;
+            }
+            return true;
         }
 
         // This object is not owned by us.
@@ -1437,7 +1420,7 @@ bool lineIndexLessThan(Line const *a, Line const *b)
  * 3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
  *    the Nodes tree and continue up to the root (last Node).
  */
-BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
+BspElement *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
 {
     d->clear();
 
@@ -1482,7 +1465,7 @@ BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
     return d->rootNode;
 }
 
-BspTreeNode *Partitioner::root() const
+BspElement *Partitioner::root() const
 {
     return d->rootNode;
 }
@@ -1507,9 +1490,9 @@ int Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-void Partitioner::take(BspElement *bspElement)
+void Partitioner::take(MapElement *mapElement)
 {
-    d->release(bspElement);
+    //d->release(mapElement);
 }
 
 } // namespace de

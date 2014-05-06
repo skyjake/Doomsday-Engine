@@ -20,14 +20,14 @@
 #ifndef DENG_WORLD_MAP_BSPTREE_H
 #define DENG_WORLD_MAP_BSPTREE_H
 
-#include <de/BinaryTree>
-#include "BspNode"
+//#include <de/BinaryTree>
+//#include "MapElement"
 
 /**
  * Nodes in BspBuilder's internal tree are modelled with this type.
  *
  * @ingroup bsp
  */
-typedef de::BinaryTree<BspElement *> BspTreeNode;
+//typedef de::BinaryTree<de::MapElement *> BspElement;
 
 #endif // DENG_WORLD_MAP_BSPTREE_H

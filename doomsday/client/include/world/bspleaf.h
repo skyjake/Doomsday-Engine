@@ -40,7 +40,7 @@ class Sector;
  *
  * @ingroup world
  */
-class BspLeaf : public BspElement
+class BspLeaf : public de::MapElement
 {
 public:
     /// Required subspace is missing. @ingroup errors
@@ -51,7 +51,7 @@ public:
      * Construct a new BSP leaf and optionally attribute it to @a sector.
      * Ownership is unaffected.
      */
-    BspLeaf(Sector *sector = 0);
+    BspLeaf();//Sector *sector = 0);
 
     /**
      * Determines whether a subspace geometry is attributed to the BSP leaf half-space.

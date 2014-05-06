@@ -27,9 +27,7 @@
 
 using namespace de;
 
-BspLeaf::BspLeaf(Sector *sector)
-    : BspElement(Leaf, sector)
-    , _subspace(0)
+BspLeaf::BspLeaf() : _subspace(0)
 {}
 
 bool BspLeaf::hasSubspace() const

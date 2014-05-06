@@ -279,9 +279,9 @@ DENG2_PIMPL(LineSightTest)
     {
         DENG2_ASSERT(bspElement != 0);
 
-        while(bspElement->type() != BspElement::Leaf)
+        while(!bspElement->isLeaf())
         {
-            BspNode const &bspNode = bspElement->as<BspNode>();
+            BspNode const &bspNode = bspElement->userData()->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
@@ -290,20 +290,20 @@ DENG2_PIMPL(LineSightTest)
             if(fromSide != toSide)
             {
                 // Yes.
-                if(!crossBspNode(bspNode.childPtr(fromSide)))
+                if(!crossBspNode(bspElement->childPtr(BspElement::ChildId(fromSide))))
                     return false; // Cross the From side.
 
-                bspElement = bspNode.childPtr(fromSide ^ 1); // Cross the To side.
+                bspElement = bspElement->childPtr(BspElement::ChildId(fromSide ^ 1)); // Cross the To side.
             }
             else
             {
                 // No - descend!
-                bspElement = bspNode.childPtr(fromSide);
+                bspElement = bspElement->childPtr(BspElement::ChildId(fromSide));
             }
         }
 
         // We've arrived at a leaf.
-        return crossBspLeaf(bspElement->as<BspLeaf>());
+        return crossBspLeaf(bspElement->userData()->as<BspLeaf>());
     }
 };
 

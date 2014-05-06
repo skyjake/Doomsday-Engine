@@ -61,6 +61,16 @@ class BiasTracker;
 
 class LineBlockmap;
 
+#include <de/BinaryTree>
+#include "BspNode"
+
+/**
+ * Nodes in BspBuilder's internal tree are modelled with this type.
+ *
+ * @ingroup bsp
+ */
+typedef de::BinaryTree<de::MapElement *> BspElement;
+
 namespace de {
 
 class Blockmap;
