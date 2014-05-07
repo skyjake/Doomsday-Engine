@@ -42,93 +42,72 @@ namespace de {
 class KdTree
 {
 public:
-    class Node
-    {
-    public:
-        enum ChildId { Right, Left };
+    virtual ~KdTree() {}
+};
 
-    public:
-        virtual ~Node();
+class KdTreeNode
+{
+public:
+    enum ChildId { Right, Left };
 
-        /**
-         * Retrieve the axis-aligned bounding box of the block in the blockmap.
-         * Not to be confused with the bounds defined by the line segment geometry
-         * which is determined by @ref findSegmentBounds().
-         *
-         * @return  Axis-aligned bounding box of the block.
-         */
-        AABox const &bounds() const;
-
-        Node &clear();
-
-        /**
-         * Returns true if the logical dimensions of the node are small enough
-         * to be considered a "leaf".
-         *
-         * Nodes in a SuperBlockmap are only subdivided until they reach an
-         * (x:256, y:256) lower bound on their dimensions.
-         */
-        bool isLeaf() const {
-            AABox const &aaBox = bounds();
-            Vector2i dimensions = Vector2i(aaBox.max) - Vector2i(aaBox.min);
-            return (dimensions.x <= 256 && dimensions.y <= 256);
-        }
-
-        /**
-         * Returns a pointer to the parent node; otherwise @c 0.
-         * @see hasParent()
-         */
-        Node *parent() const;
-
-        /**
-         * Returns the child of this node @a which has the specified identifier.
-         * A child must be present (determined with @ref hasChild()), attempting
-         * to call this with no child results is an error.
-         *
-         * @param which  Child node identifier.
-         * @return  Child Node.
-         */
-        Node *child(ChildId which) const;
-
-        /// Returns the right child node. @see child()
-        inline Node *right() const { return child(Right); }
-
-        /// Returns the left child node. @see child()
-        inline Node *left()  const { return child(Left); }
-
-        /**
-         * KdTree creates instances of Node so it needs to use the special private
-         * constructor that takes an existing superblock object reference as a
-         * parameter.
-         */
-        //friend struct KdTree::Instance;
-
-    //private:
-        /**
-         * Node objects must be constructed within the context of an owning
-         * KdTree. Instantiation outside of this context is not permitted.
-         * @ref KdTree
-         */
-        Node(KdTree &kdtree);
-        //Node(Node &parentPtr, ChildId childId, bool splitVertical);
-
-        KdTree &_owner;
-        kdtreenode_s *_tree;
-    };
+public:
+    virtual ~KdTreeNode();
 
     /**
-     * @param bounds  Bounding for the logical coordinate space.
+     * Retrieve the axis-aligned bounding box of the block in the blockmap.
+     * Not to be confused with the bounds defined by the line segment geometry
+     * which is determined by @ref findSegmentBounds().
+     *
+     * @return  Axis-aligned bounding box of the block.
      */
-    KdTree(AABox const &bounds);
-    ~KdTree();
+    AABox const &bounds() const;
 
-    Node &rootNode();
+    KdTreeNode &clear();
 
-    virtual void clear();
+    /**
+     * Returns true if the logical dimensions of the node are small enough
+     * to be considered a "leaf".
+     *
+     * Nodes in a SuperBlockmap are only subdivided until they reach an
+     * (x:256, y:256) lower bound on their dimensions.
+     */
+    bool isLeaf() const {
+        AABox const &aaBox = bounds();
+        Vector2i dimensions = Vector2i(aaBox.max) - Vector2i(aaBox.min);
+        return (dimensions.x <= 256 && dimensions.y <= 256);
+    }
 
-private:
-    /// The KdTree of Nodes.
-    kdtree_s *_nodes;
+    /**
+     * Returns a pointer to the parent node; otherwise @c 0.
+     * @see hasParent()
+     */
+    KdTreeNode *parent() const;
+
+    /**
+     * Returns the child of this node @a which has the specified identifier.
+     * A child must be present (determined with @ref hasChild()), attempting
+     * to call this with no child results is an error.
+     *
+     * @param which  Child node identifier.
+     * @return  Child Node.
+     */
+    KdTreeNode *child(ChildId which) const;
+
+    /// Returns the right child node. @see child()
+    inline KdTreeNode *right() const { return child(Right); }
+
+    /// Returns the left child node. @see child()
+    inline KdTreeNode *left()  const { return child(Left); }
+
+    /**
+     * Node objects must be constructed within the context of an owning
+     * KdTree. Instantiation outside of this context is not permitted.
+     * @ref KdTree
+     */
+    KdTreeNode(KdTree &kdtree);
+
+    KdTree &_owner;
+    kdtreenode_s *_tree;
 };
 
 namespace bsp {
@@ -145,7 +124,7 @@ public:
      * Division of a block always occurs horizontally:
      *     e.g., 512x512 -> 256x512 -> 256x256.
      */
-    class Block : public KdTree::Node
+    class Block : public KdTreeNode
     {
     public:
         typedef QList<LineSegmentSide *> Segments;
