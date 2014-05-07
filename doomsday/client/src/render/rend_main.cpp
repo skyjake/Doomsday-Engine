@@ -2900,7 +2900,7 @@ static void makeCurrent(ConvexSubspace &subspace)
     }
 }
 
-static void traverseBspTreeAndDrawSubspaces(BspTree *bspTree)
+static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
 {
     DENG2_ASSERT(bspTree != 0);
 

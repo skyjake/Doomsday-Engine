@@ -41,6 +41,7 @@
 
 #include <doomsday/uri.h>
 
+#include <de/BinaryTree>
 #include <de/Observers>
 #include <de/Vector>
 #include <QList>
@@ -60,11 +61,6 @@ class BiasTracker;
 #endif
 
 class LineBlockmap;
-
-#include <de/BinaryTree>
-#include "BspNode"
-
-typedef de::BinaryTree<BspElement *> BspTree;
 
 namespace de {
 
@@ -148,6 +144,8 @@ public:
     typedef QList<BiasSource *> BiasSources;
     typedef QList<Lumobj *>  Lumobjs;
 #endif
+
+    typedef de::BinaryTree<BspElement *> BspTree;
 
 public: /// @todo make private:
     coord_t _globalGravity; // The defined gravity for this map.
@@ -284,9 +282,6 @@ public:
 
     inline int sectorCount() const        { return sectors().count(); }
 
-    inline int bspNodeCount() const;
-    inline int bspLeafCount() const;
-
     /**
      * Provides access to the subspace list for efficient traversal.
      */
@@ -376,7 +371,7 @@ public:
     /**
      * Returns the root element for the map's BSP tree.
      */
-    BspTree &bspRoot() const;
+    BspTree const &bspRoot() const;
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies
