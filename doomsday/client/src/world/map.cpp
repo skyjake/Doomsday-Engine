@@ -1582,19 +1582,19 @@ Mesh const &Map::mesh() const
     return d->mesh;
 }
 
-bool Map::hasBspRoot() const
+bool Map::hasBspTree() const
 {
     return d->bsp.tree != 0;
 }
 
-BspTree const &Map::bspRoot() const
+Map::BspTree const &Map::bspTree() const
 {
     if(d->bsp.tree)
     {
         return *d->bsp.tree;
     }
-    /// @throw MissingBspError  No BSP data is available.
-    throw MissingBspError("Map::bspRoot", "No BSP data available");
+    /// @throw MissingBspTreeError  Attempted with no BSP tree available.
+    throw MissingBspTreeError("Map::bspTree", "No BSP tree is available");
 }
 
 Map::Subspaces const &Map::subspaces() const
@@ -2783,8 +2783,8 @@ int Map::linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
 BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 {
     if(!d->bsp.tree)
-        /// @throw MissingBspError  No BSP data is available.
-        throw MissingBspError("Map::bspLeafAt", "No BSP data available");
+        /// @throw MissingBspTreeError  No BSP data is available.
+        throw MissingBspTreeError("Map::bspLeafAt", "No BSP data available");
 
     BspTree const *bspTree = d->bsp.tree;
     while(!bspTree->isLeaf())
@@ -2804,8 +2804,8 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 {
     if(!d->bsp.tree)
-        /// @throw MissingBspError  No BSP data is available.
-        throw MissingBspError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
+        /// @throw MissingBspTreeError  No BSP data is available.
+        throw MissingBspTreeError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
 
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
@@ -3572,9 +3572,9 @@ D_CMD(InspectMap)
     Vector2d geometryDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
     LOG_SCR_MSG(_E(l) "Geometry dimensions: " _E(.) _E(i)) << geometryDimensions.asText();
 
-    if(map.hasBspRoot())
+    if(map.hasBspTree())
     {
-        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << map.bspRoot().summary();
+        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << map.bspTree().summary();
     }
 
     if(!map.subspaceBlockmap().isNull())

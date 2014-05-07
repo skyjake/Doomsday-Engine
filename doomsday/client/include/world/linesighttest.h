@@ -43,6 +43,9 @@ namespace de {
 class LineSightTest
 {
 public:
+    typedef Map::BspTree BspTree;
+
+public:
     /**
      * Constructs a new line (of) sight test.
      *

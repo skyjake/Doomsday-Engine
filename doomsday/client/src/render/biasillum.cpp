@@ -137,7 +137,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param bspRoot        Root BSP element for the map.
      */
     void updateContribution(int index, Vector3d const &point,
-        Vector3f const &normalAtPoint, BspTree const &bspRoot)
+        Vector3f const &normalAtPoint, Map::BspTree const &bspRoot)
     {
         DENG_ASSERT(tracker != 0);
 
@@ -272,7 +272,7 @@ Vector3f BiasIllum::evaluate(Vector3d const &point, Vector3f const &normalAtPoin
                 {
                     if(activeContributors & changedContributions & (1 << i))
                     {
-                        d->updateContribution(i, point, normalAtPoint, map.bspRoot());
+                        d->updateContribution(i, point, normalAtPoint, map.bspTree());
                     }
                 }
             }

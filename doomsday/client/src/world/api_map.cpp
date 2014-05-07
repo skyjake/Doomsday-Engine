@@ -1632,7 +1632,7 @@ DENG_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, c
     if(App_WorldSystem().hasMap())
     {
         Map &map = App_WorldSystem().map();
-        return LineSightTest(from, to, bottomSlope, topSlope, flags).trace(map.bspRoot());
+        return LineSightTest(from, to, bottomSlope, topSlope, flags).trace(map.bspTree());
     }
     return false; // Continue iteration.
 }
