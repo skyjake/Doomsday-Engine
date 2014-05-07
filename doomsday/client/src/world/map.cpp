@@ -137,7 +137,6 @@ DENG2_PIMPL(Map)
             if(!tree) return;
             tree->traversePostOrder(clearUserDataWorker);
             delete tree; tree = 0;
-
         }
 
     private:
@@ -634,7 +633,7 @@ DENG2_PIMPL(Map)
 
 #ifdef DENG2_QT_4_7_OR_NEWER
             /// @todo Determine the actual number of subspaces needed.
-            subspaces.reserve(partitioner.numLeafs());
+            subspaces.reserve(bsp.tree->leafCount());
 #endif
 
             // Iterative pre-order traversal of the map element tree.
