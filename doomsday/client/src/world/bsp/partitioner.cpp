@@ -1,4 +1,4 @@
-/** @file partitioner.cpp  World map binary space partitioner.
+/** @file partitioner.cpp  World map, binary space partitioner.
  *
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -25,7 +25,6 @@
 #include "de_platform.h"
 #include "world/bsp/partitioner.h"
 
-#include "world/map.h"
 #include "BspLeaf"
 #include "BspNode"
 #include "Line"
@@ -52,82 +51,100 @@ namespace de {
 
 using namespace bsp;
 
+typedef QList<Line *>              Lines;
+typedef QList<LineSegment *>       LineSegments;
+typedef QList<ConvexSubspaceProxy> SubspaceProxys;
+typedef QHash<Vertex *, EdgeTips>  EdgeTipSetMap;
+
 DENG2_PIMPL(Partitioner)
 {
-    /// Cost factor attributed to splitting a line segment.
-    int splitCostFactor;
+    int splitCostFactor;        ///< Cost of splitting a line segment.
 
-    /// The index-ordered set of map lines we are building BSP data for (not owned).
-    typedef QList<Line *> Lines;
-    Lines lines;
+    Lines lines;                ///< Set of map lines to build from (in index order, unowned).
+    Mesh *mesh;                 ///< Provider of map geometries (cf. Factory).
 
-    /// The mesh from which we'll assign (construct) new geometries(not owned).
-    Mesh *mesh;
+    int segmentCount;           ///< Running total of segments built.
+    int vertexCount;            ///< Running total of vertexes built.
 
-    /// Running totals of constructed BSP elements.
-    int numSegments;
-    int numVertexes;
+    LineSegments lineSegments;  ///< Line segments in the plane.
+    SubspaceProxys subspaces;   ///< Proxy subspaces in the plane.
+    EdgeTipSetMap edgeTipSets;  ///< One set for each vertex.
 
-    /// Line segments in the plane.
-    typedef QList<LineSegment *> LineSegments;
-    LineSegments lineSegments;
+    BspTree *bspRoot;           ///< The BSP tree under construction.
+    HPlane hplane;              ///< Current space half-plane (partitioner state).
 
-    /// Convex subspaces in the plane.
-    typedef QList<ConvexSubspaceProxy> ConvexSubspaces;
-    ConvexSubspaces convexSubspaces;
-
-    /// A set of EdgeTips for each unique line segment vertex.
-    typedef QHash<Vertex *, EdgeTips> EdgeTipSetMap;
-    EdgeTipSetMap edgeTipSets;
-
-    /// Root node of the internal binary tree used to guide the partitioning
-    /// process and around which the built BSP map elements are constructed.
-    BspTree *bspRoot;
-
-    /// The "current" binary space half-plane.
-    HPlane hplane;
-
-    Instance(Public *i, int splitCostFactor)
-      : Base(i)
-      , splitCostFactor(splitCostFactor)
-      , mesh           (0)
-      , numSegments    (0)
-      , numVertexes    (0)
-      , bspRoot        (0)
+    Instance(Public *i)
+        : Base(i)
+        , splitCostFactor(7)
+        , mesh           (0)
+        , segmentCount   (0)
+        , vertexCount    (0)
+        , bspRoot        (0)
     {}
 
     ~Instance() { clear(); }
 
+    static int clearBspElementWorker(BspTree &subtree, void *)
+    {
+        delete subtree.userData();
+        subtree.setUserData(0);
+        return false; // Continue iteration.
+    }
+
+    void clearBspTree()
+    {
+        if(!bspRoot) return;
+        bspRoot->traversePostOrder(clearBspElementWorker);
+        delete bspRoot; bspRoot = 0;
+    }
+
     void clear()
     {
-        if(bspRoot)
-        {
-            //clearAllBspElements();
-            //delete bspRoot; bspRoot = 0;
-        }
+        //clearBspTree();
 
         lines.clear();
         mesh = 0;
         qDeleteAll(lineSegments);
         lineSegments.clear();
-        convexSubspaces.clear();
+        subspaces.clear();
         edgeTipSets.clear();
         hplane.clearIntercepts();
 
-        numSegments = numVertexes = 0;
+        segmentCount = vertexCount = 0;
     }
 
     /**
-     * Returns the associated EdgeTips set for the given @a vertex.
+     * Returns a newly allocated Vertex at the given map space @a origin from the
+     * map geometry mesh (ownership is @em not given to the caller).
      */
-    EdgeTips &edgeTipSet(Vertex const &vertex)
+    Vertex *makeVertex(Vector2d const &origin)
     {
-        EdgeTipSetMap::iterator found = edgeTipSets.find(const_cast<Vertex *>(&vertex));
-        if(found == edgeTipSets.end())
-        {
-            found = edgeTipSets.insert(const_cast<Vertex *>(&vertex), EdgeTips());
-        }
-        return found.value();
+        Vertex *vtx = mesh->newVertex(origin);
+        vertexCount += 1; // We built another one.
+        return vtx;
+    }
+
+    /**
+     * @return The new line segment (front is from @a start to @a end).
+     */
+    LineSegment &buildLineSegmentBetweenVertexes(Vertex &start, Vertex &end,
+        Sector *frontSec, Sector *backSec, LineSide *frontSide,
+        Line *partitionLine = 0)
+    {
+        LineSegment *lineSeg = new LineSegment(start, end);
+        lineSegments << lineSeg;
+
+        LineSegmentSide &front = lineSeg->front();
+        front.setMapSide(frontSide);
+        front.setPartitionMapLine(partitionLine);
+        front.setSector(frontSec);
+
+        LineSegmentSide &back = lineSeg->back();
+        back.setMapSide(frontSide? &frontSide->back() : 0);
+        back.setPartitionMapLine(partitionLine);
+        back.setSector(backSec);
+
+        return *lineSeg;
     }
 
     inline void linkSegmentInSuperBlockmap(SuperBlock &block, LineSegmentSide &lineSeg)
@@ -137,15 +154,27 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Create all initial line segments and add them to @a blockmap.
+     * Returns the EdgeTips set associated with @a vertex.
+     */
+    EdgeTips &edgeTipSet(Vertex const &vertex)
+    {
+        EdgeTipSetMap::iterator found = edgeTipSets.find(const_cast<Vertex *>(&vertex));
+        if(found == edgeTipSets.end())
+        {
+            // Time to construct a new set.
+            found = edgeTipSets.insert(const_cast<Vertex *>(&vertex), EdgeTips());
+        }
+        return found.value();
+    }
+
+    /**
+     * Create all initial line segments and add them to @a blockmap. We can be
+     * certain there are no zero-length lines as these are screened earlier.
      */
     void createInitialLineSegments(SuperBlock &blockmap)
     {
         foreach(Line *line, lines)
         {
-            //if(line.hasZeroLength()) Screened at a higher level.
-            //    continue;
-
             Sector *frontSec = line->frontSectorPtr();
             Sector *backSec  = line->backSectorPtr();
 
@@ -369,15 +398,13 @@ DENG2_PIMPL(Partitioner)
         // Handle sub-blocks recursively.
         if(block.right())
         {
-            bool unsuitable = !evalPartitionCostForSuperBlock(*block.right(), best, bestCost,
-                                                              seg, cost);
+            bool unsuitable = !evalPartitionCostForSuperBlock(*block.right(), best, bestCost, seg, cost);
             if(unsuitable) return false;
         }
 
         if(block.left())
         {
-            bool unsuitable = !evalPartitionCostForSuperBlock(*block.left(), best, bestCost,
-                                                              seg, cost);
+            bool unsuitable = !evalPartitionCostForSuperBlock(*block.left(), best, bestCost, seg, cost);
             if(unsuitable) return false;
         }
 
@@ -427,7 +454,9 @@ DENG2_PIMPL(Partitioner)
         // Another little twist, here we show a slight preference for partition
         // lines that lie either purely horizontally or purely vertically.
         if(lineSeg.slopeType() != ST_HORIZONTAL && lineSeg.slopeType() != ST_VERTICAL)
+        {
             cost.total += 25;
+        }
 
         //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d"
         //          " left=%d+%d right=%d+%d cost=%d.%02d")
@@ -460,7 +489,8 @@ DENG2_PIMPL(Partitioner)
             if(seg->hasMapSide())
             {
                 // Can we skip this line segment?
-                if(seg->mapLine().validCount() == validCount) continue; // Yes.
+                if(seg->mapLine().validCount() == validCount)
+                    continue; // Yes.
 
                 seg->mapLine().setValidCount(validCount);
             }
@@ -548,29 +578,6 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * @return The new line segment (front is from @a start to @a end).
-     */
-    LineSegment &buildLineSegmentBetweenVertexes(Vertex &start, Vertex &end,
-        Sector *frontSec, Sector *backSec, LineSide *frontSide,
-        Line *partitionLine = 0)
-    {
-        lineSegments.append(new LineSegment(start, end));
-        LineSegment &lineSeg = *lineSegments.back();
-
-        LineSegmentSide &front = lineSeg.front();
-        front.setMapSide(frontSide);
-        front.setPartitionMapLine(partitionLine);
-        front.setSector(frontSec);
-
-        LineSegmentSide &back = lineSeg.back();
-        back.setMapSide(frontSide? &frontSide->back() : 0);
-        back.setPartitionMapLine(partitionLine);
-        back.setSector(backSec);
-
-        return lineSeg;
-    }
-
-    /**
      * Splits the given line segment at the point (x,y). The new line segment
      * is returned. The old line segment is shortened (the original start vertex
      * is unchanged), the new line segment becomes the cut-off tail (keeping
@@ -587,7 +594,7 @@ DENG2_PIMPL(Partitioner)
         //LOG_DEBUG("Splitting line segment %p at %s.")
         //    << &frontLeft << point.asText();
 
-        Vertex *newVert = newVertex(point);
+        Vertex *newVert = makeVertex(point);
 
         LineSegment &oldSeg = frontLeft.line();
         LineSegment &newSeg =
@@ -627,9 +634,7 @@ DENG2_PIMPL(Partitioner)
 
         if(updateEdgeTips)
         {
-            /**
-             * @todo Optimize: Avoid clearing tips by implementing update logic.
-             */
+            /// @todo Optimize: Avoid clearing tips by implementing update logic.
             edgeTipSet(oldSeg.from()).clearByLineSegment(oldSeg);
             edgeTipSet(oldSeg.to()  ).clearByLineSegment(oldSeg);
 
@@ -648,8 +653,7 @@ DENG2_PIMPL(Partitioner)
     /**
      * Find the intersection point between a line segment and the current
      * partition plane. Takes advantage of some common situations like
-     * horizontal and vertical lines to choose a 'nicer' intersection
-     * point.
+     * horizontal and vertical lines to choose a 'nicer' intersection point.
      */
     Vector2d intersectPartition(LineSegmentSide const &seg, coord_t fromDist,
                                 coord_t toDist) const
@@ -852,7 +856,7 @@ DENG2_PIMPL(Partitioner)
     void addPartitionLineSegments(SuperBlock &rights, SuperBlock &lefts)
     {
         LOG_TRACE("Building line segments along partition %s")
-            << hplane.partition().asText();
+                << hplane.partition().asText();
 
         // First, fix any near-distance issues with the intercepts.
         hplane.sortAndMergeIntercepts();
@@ -943,7 +947,7 @@ DENG2_PIMPL(Partitioner)
                 }
             }
 
-            DENG_ASSERT(sector != 0);
+            DENG2_ASSERT(sector != 0);
 
             LineSegment &newSeg =
                 buildLineSegmentBetweenVertexes(fromVertex, toVertex,
@@ -964,45 +968,6 @@ DENG2_PIMPL(Partitioner)
                 << sector->indexInArchive();
             */
         }
-    }
-
-    /**
-     * Create a new BspNode element.
-     *
-     * @param partition    Half-plane partition line. A copy is made.
-     * @param rightBounds  Bounding box around all geometry in the @em right subspace.
-     * @param leftBounds   Bounding box around all geometry in the @em right subspace.
-     *
-     * @return  The newly created BspNode.
-     */
-    BspNode *newBspNode(Partition const &partition, AABoxd const &rightBounds,
-        AABoxd const &leftBounds)
-    {
-        BspNode *node = new BspNode(partition);
-
-        node->setRightAABox(&rightBounds);
-        node->setLeftAABox(&leftBounds);
-
-        return node;
-    }
-
-    BspTree *newTreeNode(BspElement *bspElement,
-        BspTree *rightChild = 0, BspTree *leftChild = 0)
-    {
-        BspTree *subtree = new BspTree(bspElement);
-
-        if(rightChild)
-        {
-            subtree->setRight(rightChild);
-            rightChild->setParent(subtree);
-        }
-        if(leftChild)
-        {
-            subtree->setLeft(leftChild);
-            leftChild->setParent(subtree);
-        }
-
-        return subtree;
     }
 
     /**
@@ -1033,8 +998,7 @@ DENG2_PIMPL(Partitioner)
         BspTree *rightTree = 0, *leftTree = 0;
 
         // Pick a line segment to use as the next partition plane.
-        LineSegmentSide *partSeg = chooseNextPartition(bmap);
-        if(partSeg)
+        if(LineSegmentSide *partSeg = chooseNextPartition(bmap))
         {
             // Reconfigure the half-plane for the next round of partitioning.
             hplane.configure(*partSeg);
@@ -1081,8 +1045,8 @@ DENG2_PIMPL(Partitioner)
             if(!rightTree || !leftTree)
                 return rightTree? rightTree : leftTree;
 
-            // Construct a new BSP node and link up the child elements.
-            bspElement = newBspNode(partition, rightBounds, leftBounds);
+            // Make a new BSP node.
+            bspElement = new BspNode(partition, rightBounds, leftBounds);
         }
         else
         {
@@ -1090,8 +1054,8 @@ DENG2_PIMPL(Partitioner)
             SuperBlock::Segments segments = bmap.collateAllSegments();
             bmap.clear(); // Should be empty.
 
-            convexSubspaces.append(ConvexSubspaceProxy());
-            ConvexSubspaceProxy &convexSet = convexSubspaces.last();
+            subspaces.append(ConvexSubspaceProxy());
+            ConvexSubspaceProxy &convexSet = subspaces.last();
 
             convexSet.addSegments(segments);
 
@@ -1104,7 +1068,7 @@ DENG2_PIMPL(Partitioner)
                 seg->setBMapBlock(0);
             }
 
-            // Produce a BSP leaf.
+            // Make a new BSP leaf.
             /// @todo Defer until necessary.
             BspLeaf *leaf = new BspLeaf;
 
@@ -1114,7 +1078,12 @@ DENG2_PIMPL(Partitioner)
             bspElement = leaf;
         }
 
-        return newTreeNode(bspElement, rightTree, leftTree);
+        // Make a new BSP subtree and link up the children.
+        BspTree *subtree = new BspTree(bspElement, 0/*no parent*/, rightTree, leftTree);
+        if(rightTree) rightTree->setParent(subtree);
+        if(leftTree)  leftTree->setParent(subtree);
+
+        return subtree;
     }
 
     /**
@@ -1127,7 +1096,7 @@ DENG2_PIMPL(Partitioner)
      */
     void splitOverlappingLineSegments()
     {
-        foreach(ConvexSubspaceProxy const &subspace, convexSubspaces)
+        foreach(ConvexSubspaceProxy const &subspace, subspaces)
         {
             /*
              * The subspace provides a specially ordered list of the segments to
@@ -1183,9 +1152,9 @@ DENG2_PIMPL(Partitioner)
 
     void buildLeafGeometries()
     {
-        foreach(ConvexSubspaceProxy const &subspace, convexSubspaces)
+        foreach(ConvexSubspaceProxy const &subspace, subspaces)
         {
-            /// @todo Move BSP leaf construction here.
+            /// @todo Move BSP leaf construction here?
             BspLeaf &bspLeaf = *subspace.bspLeaf();
 
             subspace.buildGeometry(bspLeaf, *mesh);
@@ -1196,8 +1165,8 @@ DENG2_PIMPL(Partitioner)
             {
                 if(oseg.segment->hasHEdge())
                 {
-                    // There is now one more half-edge.
-                    numSegments += 1;
+                    // There is now one more line segment.
+                    segmentCount += 1;
                 }
             }
         }
@@ -1206,7 +1175,7 @@ DENG2_PIMPL(Partitioner)
          * Finalize the built geometry by adding a twin half-edge for any
          * which don't yet have one.
          */
-        foreach(ConvexSubspaceProxy const &convexSet, convexSubspaces)
+        foreach(ConvexSubspaceProxy const &convexSet, subspaces)
         foreach(OrderedSegment const &oseg, convexSet.segments())
         {
             LineSegmentSide *seg = oseg.segment;
@@ -1214,52 +1183,13 @@ DENG2_PIMPL(Partitioner)
             if(seg->hasHEdge() && !seg->back().hasHEdge())
             {
                 HEdge *hedge = &seg->hedge();
-                DENG_ASSERT(!hedge->hasTwin());
+                DENG2_ASSERT(!hedge->hasTwin());
 
                 // Allocate the twin from the same mesh.
                 hedge->setTwin(hedge->mesh().newHEdge(seg->back().from()));
                 hedge->twin().setTwin(hedge);
             }
         }
-    }
-
-    static int clearBspElementWorker(BspTree &subtree, void *)
-    {
-        if(BspElement *elm = subtree.userData())
-        {
-            LOG_AS("Partitioner::clearBspElement");
-            LOG_DEBUG("Clearing unclaimed %s %p")
-                << (subtree.isLeaf()? "leaf" : "node") << elm;
-
-            delete elm;
-            subtree.setUserData(0);
-        }
-        return false; // Continue iteration.
-    }
-
-    void clearAllBspElements()
-    {
-        if(bspRoot)
-        {
-            bspRoot->traversePostOrder(clearBspElementWorker);
-        }
-    }
-
-    /**
-     * Allocate another Vertex.
-     *
-     * @param origin  Origin of the vertex in the map coordinate space.
-     *
-     * @return  Newly created Vertex.
-     */
-    Vertex *newVertex(Vector2d const &origin)
-    {
-        Vertex *vtx = mesh->newVertex(origin);
-
-        // There is now one more Vertex.
-        numVertexes += 1;
-
-        return vtx;
     }
 
     /**
@@ -1291,8 +1221,11 @@ DENG2_PIMPL(Partitioner)
 #endif
 };
 
-Partitioner::Partitioner(int splitCostFactor) : d(new Instance(this, splitCostFactor))
-{}
+Partitioner::Partitioner(int splitCostFactor)
+    : d(new Instance(this))
+{
+    setSplitCostFactor(splitCostFactor);
+}
 
 void Partitioner::setSplitCostFactor(int newFactor)
 {
@@ -1321,23 +1254,12 @@ static AABox blockmapBounds(AABoxd const &mapBounds)
     return blockBounds;
 }
 
-bool lineIndexLessThan(Line const *a, Line const *b)
+static bool lineIndexLessThan(Line const *a, Line const *b)
 {
      return a->indexInMap() < b->indexInMap();
 }
 
-/**
- * Algorithm (description courtesy of Raphael Quinet):
- *
- * 1. Create one Seg for each Side: pick each Line in turn.  If it
- *    has a "first" Side, then create a normal Seg.  If it has a
- *    "second" Side, then create a flipped Seg.
- * 2. Call CreateNodes with the current list of Segs.  The list of Segs is
- *    the only argument to CreateNodes.
- * 3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
- *    the Nodes tree and continue up to the root (last Node).
- */
-Partitioner::BspTree *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
+Partitioner::BspTree *Partitioner::makeBspTree(LineSet const &lines, Mesh &mesh)
 {
     d->clear();
 
@@ -1387,14 +1309,14 @@ Partitioner::BspTree *Partitioner::root() const
     return d->bspRoot;
 }
 
-int Partitioner::numSegments()
+int Partitioner::segmentCount()
 {
-    return d->numSegments;
+    return d->segmentCount;
 }
 
-int Partitioner::numVertexes()
+int Partitioner::vertexCount()
 {
-    return d->numVertexes;
+    return d->vertexCount;
 }
 
 } // namespace de
