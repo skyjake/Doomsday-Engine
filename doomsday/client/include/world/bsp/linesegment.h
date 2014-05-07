@@ -40,7 +40,7 @@ namespace de {
 namespace bsp {
 
 class ConvexSubspaceProxy;
-class SuperBlock;
+//class SuperBlock;
 
 /**
  * LineRelationship delineates the possible logical relationships between two
@@ -281,7 +281,7 @@ public:
          * Returns the superblock that contains "this" side of the line segment;
          * otherwise @c 0 if not contained.
          */
-        SuperBlock *bmapBlockPtr() const;
+        /*SuperBlock*/ void *bmapBlockPtr() const;
 
         /**
          * Change the blockmap block to which "this" side of the line segment is
@@ -289,7 +289,7 @@ public:
          *
          * @param newBMapBlock  New blockmap block. Can be @c 0.
          */
-        void setBMapBlock(SuperBlock *newBMapBlock);
+        void setBMapBlock(/*SuperBlock*/ void *newBMapBlock);
 
         /**
          * Returns @c true iff a map sector is attributed to "this" side of the

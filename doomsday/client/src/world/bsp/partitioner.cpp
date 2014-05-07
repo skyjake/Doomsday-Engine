@@ -754,7 +754,7 @@ DENG2_PIMPL(Partitioner)
 
             // Ensure the new back left segment is inserted into the same block as
             // the old back right segment.
-            SuperBlock *backLeftBlock = seg.back().bmapBlockPtr();
+            SuperBlock *backLeftBlock = (SuperBlock *)seg.back().bmapBlockPtr();
             if(backLeftBlock)
             {
                 linkSegmentInSuperBlockmap(*backLeftBlock, newFrontRight.back());
