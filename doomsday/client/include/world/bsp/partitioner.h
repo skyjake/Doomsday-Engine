@@ -1,6 +1,6 @@
-/** @file partitioner.h World map binary space partitioner.
+/** @file partitioner.h  World map binary space partitioner.
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -119,36 +119,9 @@ public:
     int numSegments();
 
     /**
-     * Retrieve the number of BspLeafs owned by the partitioner. When the
-     * build completes this number will be the total number of BspLeafs that
-     * were produced during that process. Note that as BspLeaf ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspLeafs owned by the Partitioner.
-     */
-    int numLeafs();
-
-    /**
-     * Retrieve the number of BspNodes owned by the partitioner. When the
-     * build completes this number will be the total number of BspNodes that
-     * were produced during that process. Note that as BspNode ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspNodes owned by the partitioner.
-     */
-    int numNodes();
-
-    /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
     int numVertexes();
-
-    /**
-     * Relinquish ownership of the specified BSP data element to the caller.
-     *
-     * @param bspElement  BSP data element to relinquish ownership of.
-     */
-    void take(BspElement *bspElement);
 
 private:
     DENG2_PRIVATE(d)
