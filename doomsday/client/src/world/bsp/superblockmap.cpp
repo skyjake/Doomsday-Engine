@@ -28,35 +28,11 @@
 
 namespace de {
 
-KdTreeNode::KdTreeNode(KdTree &tree) : _owner(tree), _tree (0)
-{}
+KdTreeNode::KdTreeNode() : _tree(0) {}
 
 KdTreeNode::~KdTreeNode()
 {
-    clear();
     KdTreeNode_Delete(_tree);
-}
-
-KdTreeNode &KdTreeNode::clear()
-{
-    if(_tree)
-    {
-        // Recursively handle sub-blocks.
-        for(uint num = 0; num < 2; ++num)
-        {
-            if(kdtreenode_s *child = KdTreeNode_Child(_tree, num))
-            {
-                delete KdTreeNode_UserData(child);
-                KdTreeNode_SetUserData(child, 0);
-            }
-        }
-    }
-    return *this;
-}
-
-AABox const &KdTreeNode::bounds() const
-{
-    return *KdTreeNode_Bounds(_tree);
 }
 
 KdTreeNode *KdTreeNode::parent() const
@@ -84,11 +60,19 @@ using namespace de::bsp;
 
 DENG2_PIMPL_NOREF(SuperBlockmap::Block)
 {
+    SuperBlockmap &owner;
+    AABox bounds;
+
     Segments segments; ///< Line segments contained by the block.
     int mapNum;        ///< Running total of map-line segments at this node.
     int partNum;       ///< Running total of partition-line segments at this node.
 
-    Instance() : mapNum(0), partNum(0) {}
+    Instance(SuperBlockmap &owner, AABox const &bounds)
+        : owner  (owner)
+        , bounds (bounds)
+        , mapNum (0)
+        , partNum(0)
+    {}
 
     inline void linkSegment(LineSegmentSide &seg) {
         segments.prepend(&seg);
@@ -105,10 +89,37 @@ DENG2_PIMPL_NOREF(SuperBlockmap::Block)
     }
 };
 
-SuperBlockmap::Block::Block(SuperBlockmap &bmap)
-    : KdTreeNode(bmap)
-    , d(new Instance)
+SuperBlockmap::Block::Block(SuperBlockmap &owner, AABox const &bounds)
+    : KdTreeNode()
+    , d(new Instance(owner, bounds))
 {}
+
+SuperBlockmap::Block::~Block()
+{
+    clear();
+}
+
+AABox const &SuperBlockmap::Block::bounds() const
+{
+    return d->bounds;
+}
+
+SuperBlockmap::Block &SuperBlockmap::Block::clear()
+{
+    if(_tree)
+    {
+        // Recursively handle sub-blocks.
+        for(uint num = 0; num < 2; ++num)
+        {
+            if(kdtreenode_s *child = KdTreeNode_Child(_tree, num))
+            {
+                delete KdTreeNode_UserData(child);
+                KdTreeNode_SetUserData(child, 0);
+            }
+        }
+    }
+    return *this;
+}
 
 SuperBlockmap::Block::Segments SuperBlockmap::Block::collateAllSegments()
 {
@@ -183,7 +194,9 @@ SuperBlockmap::Block &SuperBlockmap::Block::push(LineSegmentSide &seg)
         // Update line segment counts.
         sb->d->incrementSegmentCount(seg);
 
-        if(sb->isLeaf())
+        // Determine whether further subdivision is necessary.
+        Vector2i dimensions(Vector2i(sb->bounds().max) - Vector2i(sb->bounds().min));
+        if(dimensions.x <= 256 && dimensions.y <= 256)
         {
             // No further subdivision possible.
             sb->d->linkSegment(seg);
@@ -221,11 +234,10 @@ SuperBlockmap::Block &SuperBlockmap::Block::push(LineSegmentSide &seg)
         // if it doesn't already exist, and loop back to add the seg.
         if(!sb->child(p1))
         {
-            Block *child = new Block(*sb);
             //child->_tree = KdTreeNode_AddChild(sb->_tree, 0.5, int(splitVertical), p1 == Left, child);
             // Note that the tree retains a pointer to the block; no leak.
 
-            AABox const *aaBox = KdTreeNode_Bounds(sb->_tree);
+            AABox const *aaBox = &static_cast<Block *>(KdTreeNode_UserData(sb->_tree))->bounds();
             AABox sub;
 
             double distance = 0.5;
@@ -258,9 +270,9 @@ SuperBlockmap::Block &SuperBlockmap::Block::push(LineSegmentSide &seg)
                 KdTreeNode_SetParent(subtree, sb->_tree);
             }
 
-            KdTreeNode_SetUserData(subtree, child);
-
+            Block *child = new Block(d->owner, sub);
             child->_tree = subtree;
+            KdTreeNode_SetUserData(subtree, child);
         }
 
         sb = sb->child(p1);
@@ -280,34 +292,35 @@ LineSegmentSide *SuperBlockmap::Block::pop()
     return seg;
 }
 
-DENG2_PIMPL_NOREF(SuperBlockmap), public de::KdTree
+DENG2_PIMPL(SuperBlockmap)//, public de::KdTree
 {
     /// Tree of KdTreeNode.
     kdtree_s *_nodes;
 
     /// @param bounds  Bounding for the logical coordinate space.
-    Instance(AABox const &bounds)
-        : _nodes(KdTree_New(&bounds))
+    Instance(Public *i, AABox const &bounds)
+        : Base(i)
+        , _nodes(KdTree_New(&bounds))
     {
         // Attach the root node.
-        KdTreeNode *block = new KdTreeNode(*this);
+        SuperBlock *block = new SuperBlock(*thisPublic, bounds);
         block->_tree = KdTreeNode_SetUserData(KdTree_Root(_nodes), block);
     }
 
     ~Instance()
     {
-        rootNode().clear();
+        rootBlock().clear();
         KdTree_Delete(_nodes);
     }
 
-    KdTreeNode &rootNode()
+    SuperBlock &rootBlock()
     {
-        return *static_cast<KdTreeNode *>(KdTreeNode_UserData(KdTree_Root(_nodes)));
+        return *static_cast<SuperBlock *>(KdTreeNode_UserData(KdTree_Root(_nodes)));
     }
 
     void clear()
     {
-        rootNode().clear();
+        rootBlock().clear();
     }
 
     /**
@@ -357,12 +370,12 @@ DENG2_PIMPL_NOREF(SuperBlockmap), public de::KdTree
 };
 
 SuperBlockmap::SuperBlockmap(AABox const &bounds)
-    : d(new Instance(bounds))
+    : d(new Instance(this, bounds))
 {}
 
 SuperBlockmap::operator SuperBlockmap::Block &()
 {
-    return static_cast<Block &>(d->rootNode());
+    return static_cast<Block &>(d->rootBlock());
 }
 
 AABoxd SuperBlockmap::findSegmentBounds()
@@ -370,8 +383,8 @@ AABoxd SuperBlockmap::findSegmentBounds()
     bool initialized = false;
     AABoxd bounds;
 
-    // Iterative pre-order traversal of SuperBlock.
-    Block *cur = &d->rootNode();
+    // Iterative pre-order traversal.
+    Block *cur = &d->rootBlock();
     Block *prev = 0;
     while(cur)
     {

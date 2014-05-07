@@ -39,11 +39,11 @@ struct kdtreenode_s;
 
 namespace de {
 
-class KdTree
+/*class KdTree
 {
 public:
     virtual ~KdTree() {}
-};
+};*/
 
 class KdTreeNode
 {
@@ -51,31 +51,8 @@ public:
     enum ChildId { Right, Left };
 
 public:
+    KdTreeNode();
     virtual ~KdTreeNode();
-
-    /**
-     * Retrieve the axis-aligned bounding box of the block in the blockmap.
-     * Not to be confused with the bounds defined by the line segment geometry
-     * which is determined by @ref findSegmentBounds().
-     *
-     * @return  Axis-aligned bounding box of the block.
-     */
-    AABox const &bounds() const;
-
-    KdTreeNode &clear();
-
-    /**
-     * Returns true if the logical dimensions of the node are small enough
-     * to be considered a "leaf".
-     *
-     * Nodes in a SuperBlockmap are only subdivided until they reach an
-     * (x:256, y:256) lower bound on their dimensions.
-     */
-    bool isLeaf() const {
-        AABox const &aaBox = bounds();
-        Vector2i dimensions = Vector2i(aaBox.max) - Vector2i(aaBox.min);
-        return (dimensions.x <= 256 && dimensions.y <= 256);
-    }
 
     /**
      * Returns a pointer to the parent node; otherwise @c 0.
@@ -99,14 +76,6 @@ public:
     /// Returns the left child node. @see child()
     inline KdTreeNode *left()  const { return child(Left); }
 
-    /**
-     * Node objects must be constructed within the context of an owning
-     * KdTree. Instantiation outside of this context is not permitted.
-     * @ref KdTree
-     */
-    KdTreeNode(KdTree &kdtree);
-
-    KdTree &_owner;
     kdtreenode_s *_tree;
 };
 
@@ -131,6 +100,17 @@ public:
 
     public:
         virtual ~Block();
+
+        /**
+         * Retrieve the axis-aligned bounding box of the block in the blockmap.
+         * Not to be confused with the bounds defined by the line segment geometry
+         * which is determined by @ref findSegmentBounds().
+         *
+         * @return  Axis-aligned bounding box of the block.
+         */
+        AABox const &bounds() const;
+
+        Block &clear();
 
         /**
          * Push (link) the given line segment onto the FIFO list of segments linked
@@ -177,13 +157,13 @@ public:
          */
         Segments collateAllSegments();
 
-    private:
+    //private:
         /**
          * Block objects must be constructed within the context of an owning
          * SuperBlockmap. Instantiation outside of this context is not permitted.
          * @ref SuperBlockmap
          */
-        Block(SuperBlockmap &bmap);
+        Block(SuperBlockmap &owner, AABox const &bounds);
 
         /**
          * Attach a new Block instance as a child of this.
