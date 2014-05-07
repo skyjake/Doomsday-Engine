@@ -28,23 +28,23 @@
 
 namespace de {
 
-KdTree::Node::Node(KdTree &tree) : _owner(tree), _tree (0)
+KdTreeNode::KdTreeNode(KdTree &tree) : _owner(tree), _tree (0)
 {}
 
-KdTree::Node::~Node()
+KdTreeNode::~KdTreeNode()
 {
     clear();
     KdTreeNode_Delete(_tree);
 }
 
-KdTree::Node &KdTree::Node::clear()
+KdTreeNode &KdTreeNode::clear()
 {
     if(_tree)
     {
         // Recursively handle sub-blocks.
         for(uint num = 0; num < 2; ++num)
         {
-            if(KdTreeNode *child = KdTreeNode_Child(_tree, num))
+            if(kdtreenode_s *child = KdTreeNode_Child(_tree, num))
             {
                 delete KdTreeNode_UserData(child);
                 KdTreeNode_SetUserData(child, 0);
@@ -54,47 +54,23 @@ KdTree::Node &KdTree::Node::clear()
     return *this;
 }
 
-AABox const &KdTree::Node::bounds() const
+AABox const &KdTreeNode::bounds() const
 {
     return *KdTreeNode_Bounds(_tree);
 }
 
-KdTree::Node *KdTree::Node::parent() const
+KdTreeNode *KdTreeNode::parent() const
 {
-    KdTreeNode *pNode = KdTreeNode_Parent(_tree);
+    kdtreenode_s *pNode = KdTreeNode_Parent(_tree);
     if(!pNode) return 0;
-    return static_cast<Node *>(KdTreeNode_UserData(pNode));
+    return static_cast<KdTreeNode *>(KdTreeNode_UserData(pNode));
 }
 
-KdTree::Node *KdTree::Node::child(ChildId childId) const
+KdTreeNode *KdTreeNode::child(ChildId childId) const
 {
-    KdTreeNode *subtree = KdTreeNode_Child(_tree, childId == Left);
+    kdtreenode_s *subtree = KdTreeNode_Child(_tree, childId == Left);
     if(!subtree) return 0;
-    return static_cast<Node *>(KdTreeNode_UserData(subtree));
-}
-
-KdTree::KdTree(AABox const &bounds)
-    : _nodes(KdTree_New(&bounds))
-{
-    // Attach the root node.
-    Node *block = new Node(*this);
-    block->_tree = KdTreeNode_SetUserData(KdTree_Root(_nodes), block);
-}
-
-KdTree::~KdTree()
-{
-    rootNode().clear();
-    KdTree_Delete(_nodes);
-}
-
-void KdTree::clear()
-{
-    rootNode().clear();
-}
-
-KdTree::Node &KdTree::rootNode()
-{
-    return *static_cast<Node *>(KdTreeNode_UserData(KdTree_Root(_nodes)));
+    return static_cast<KdTreeNode *>(KdTreeNode_UserData(subtree));
 }
 
 } // namespace de
@@ -130,12 +106,12 @@ DENG2_PIMPL_NOREF(SuperBlockmap::Block)
 };
 
 SuperBlockmap::Block::Block(SuperBlockmap &bmap)
-    : KdTree::Node(bmap)
+    : KdTreeNode(bmap)
     , d(new Instance)
 {}
 
 SuperBlockmap::Block::Block(Block &parent, ChildId childId, bool splitVertical)
-    : KdTree::Node(parent)
+    : KdTreeNode(parent)
     , d(new Instance)
 {
     _tree = KdTreeNode_AddChild(parent._tree, 0.5, int(splitVertical), childId == Left, this);
@@ -275,8 +251,33 @@ LineSegmentSide *SuperBlockmap::Block::pop()
 
 DENG2_PIMPL_NOREF(SuperBlockmap), public de::KdTree
 {
-    Instance(AABox const &bounds) : KdTree(bounds)
-    {}
+    /// Tree of KdTreeNode.
+    kdtree_s *_nodes;
+
+    /// @param bounds  Bounding for the logical coordinate space.
+    Instance(AABox const &bounds)
+        : _nodes(KdTree_New(&bounds))
+    {
+        // Attach the root node.
+        KdTreeNode *block = new KdTreeNode(*this);
+        block->_tree = KdTreeNode_SetUserData(KdTree_Root(_nodes), block);
+    }
+
+    ~Instance()
+    {
+        rootNode().clear();
+        KdTree_Delete(_nodes);
+    }
+
+    KdTreeNode &rootNode()
+    {
+        return *static_cast<KdTreeNode *>(KdTreeNode_UserData(KdTree_Root(_nodes)));
+    }
+
+    void clear()
+    {
+        rootNode().clear();
+    }
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all line
