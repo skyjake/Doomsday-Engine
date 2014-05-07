@@ -27,24 +27,20 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(BspNode)
 {
-    /// Space partition (half-plane).
-    Partition partition;
+    Partition partition;  ///< Half-plane space partition.
+    AABoxd rightBounds;   ///< Right half-space bounds.
+    AABoxd leftBounds;    ///< Left half-space bounds.
 
-    /// Right and left bounding boxes for each half space.
-    AABoxd rightAABox;
-    AABoxd leftAABox;
-
-    Instance(Partition const &partition) : partition(partition) {}
-
-    inline AABoxd &aaBox(int left) { return left? leftAABox : rightAABox; }
+    inline AABoxd &bounds(int left) { return left? leftBounds : rightBounds; }
 };
 
-BspNode::BspNode(Partition const &partition)
+BspNode::BspNode(Partition const &partition, AABoxd const &rightBounds, AABoxd const &leftBounds)
     : BspElement()
-    , d(new Instance(partition))
+    , d(new Instance)
 {
-    setRightAABox(0);
-    setLeftAABox(0);
+    d->partition   = partition;
+    d->rightBounds = rightBounds;
+    d->leftBounds  = leftBounds;
 }
 
 Partition const &BspNode::partition() const
@@ -52,19 +48,19 @@ Partition const &BspNode::partition() const
     return d->partition;
 }
 
-AABoxd const &BspNode::childAABox(int left) const
+AABoxd const &BspNode::childAABox(int which) const
 {
-    return d->aaBox(left);
+    return d->bounds(which);
 }
 
-void BspNode::setChildAABox(int left, AABoxd const *newAABox)
+void BspNode::setChildAABox(int which, AABoxd const *newBounds)
 {
-    if(newAABox)
+    if(newBounds)
     {
-        d->aaBox(left) = *newAABox;
+        d->bounds(which) = *newBounds;
     }
     else
     {
-        d->aaBox(left).clear();
+        d->bounds(which).clear();
     }
 }

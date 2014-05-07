@@ -571,7 +571,7 @@ DENG2_PIMPL(Map)
      *
      * @pre Map line bounds have been determined and a line blockmap constructed.
      */
-    bool buildBsp()
+    bool buildBspTree()
     {
         DENG2_ASSERT(bsp.tree == 0);
         DENG2_ASSERT(subspaces.isEmpty());
@@ -591,13 +591,13 @@ DENG2_PIMPL(Map)
         int nextVertexOrd = mesh.vertexCount();
 
         // Determine the set of lines for which we will build a BSP.
-        QSet<Line *> linesToBuildBspFor = QSet<Line *>::fromList(lines);
+        QSet<Line *> linesToBuildFor = QSet<Line *>::fromList(lines);
 
         // Polyobj lines should be excluded.
         foreach(Polyobj *po, polyobjs)
         foreach(Line *line, po->lines())
         {
-            linesToBuildBspFor.remove(line);
+            linesToBuildFor.remove(line);
         }
 
         try
@@ -607,12 +607,13 @@ DENG2_PIMPL(Map)
             partitioner.audienceForUnclosedSectorFound += this;
 
             // Build a new BSP tree.
-            bsp.tree = partitioner.buildBsp(linesToBuildBspFor, mesh);
+            bsp.tree = partitioner.makeBspTree(linesToBuildFor, mesh);
             DENG2_ASSERT(bsp.tree != 0);
 
-            LOG_MAP_VERBOSE("BSP built: %s. With %d Segments and %d Vertexes. ")
+            LOG_MAP_VERBOSE("BSP built: %s. With %d Segments and %d Vertexes.")
                     << bsp.tree->summary()
-                    << partitioner.numSegments() << partitioner.numVertexes();
+                    << partitioner.segmentCount()
+                    << partitioner.vertexCount();
 
             // Attribute an index to any new vertexes.
             for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
@@ -3952,8 +3953,8 @@ bool Map::endEditing()
     // Build a line blockmap.
     d->initLineBlockmap();
 
-    // Build a BSP.
-    if(!d->buildBsp())
+    // Build a new BspTree.
+    if(!d->buildBspTree())
         return false;
 
     // The mobj and polyobj blockmaps are maintained dynamically.

@@ -58,12 +58,16 @@ public:
 
 public:
     /**
-     * Construct a new BSP node.
+     * Construct a new BSP node, making a copy of all arguments.
      *
-     * @param partition  Partition line in the map coordinate space which divides
-     *                   the space into two 'child' subspaces.
+     * @param partition    Half-plane partition which splits the parent space
+     *                     into two 'child' half-spaces.
+     * @param rightBounds  Axis-aligned bounding box for the right half-space.
+     * @param leftBounds   Axis-aligned bounding box for the left half-space.
      */
-    BspNode(de::Partition const &partition = de::Partition());
+    BspNode(de::Partition const &partition = de::Partition(),
+            AABoxd const &rightBound       = AABoxd(),
+            AABoxd const &leftBounds       = AABoxd());
 
     /**
      * Returns the space partition line at the node.

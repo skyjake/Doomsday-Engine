@@ -83,7 +83,7 @@ public:
     void setSplitCostFactor(int newFactor);
 
     /**
-     * Build a new BSP for the given geometry.
+     * Build a new BspTree for the given geometry.
      *
      * @param lines  Set of lines to construct a BSP for. A copy of the set is
      *               made however the caller must ensure that line data remains
@@ -94,17 +94,16 @@ public:
      *               ensure that the mesh remains accessible until the build
      *               process has completed (ownership is unaffected).
      *
-     * @return  Root tree node of the resultant BSP otherwise @c 0 if no usable
+     * @return  Root tree node of the resultant BSP; otherwise @c 0 if no usable
      *          tree data was produced.
      */
-    BspTree *buildBsp(LineSet const &lines, Mesh &mesh);
+    BspTree *makeBspTree(LineSet const &lines, Mesh &mesh);
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
      * Even if construction fails this will return a valid node.
      *
-     * The only time upon which @c 0 is returned is if called prior to calling
-     * build()
+     * The only time upon which @c 0 is returned is when called before @ref build()
      */
     BspTree *root() const;
 
@@ -116,12 +115,12 @@ public:
      *
      * @return  Current number of Segments owned by the partitioner.
      */
-    int numSegments();
+    int segmentCount();
 
     /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
-    int numVertexes();
+    int vertexCount();
 
 private:
     DENG2_PRIVATE(d)
