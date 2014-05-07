@@ -1,4 +1,4 @@
-/** @file world/bsp/superblockmap.h World BSP SuperBlockmap.
+/** @file superblockmap.h  World BSP SuperBlockmap.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -38,33 +38,17 @@
 struct kdtreenode_s;
 
 namespace de {
-namespace bsp {
 
-/**
- * Design is effectively that of a 2-dimensional kd-tree.
- *
- * @ingroup bsp
- */
-class SuperBlockmap
+class KdTree
 {
 public:
-    /**
-     * RIGHT - has the lower coordinates.
-     * LEFT  - has the higher coordinates.
-     * Division of a block always occurs horizontally:
-     *     e.g., 512x512 -> 256x512 -> 256x256.
-     */
     class Node
     {
     public:
-        typedef QList<LineSegmentSide *> Segments;
-
-        /// A Block may be subdivided with two child subblocks which are
-        /// uniquely identifiable by these associated ids.
         enum ChildId { Right, Left };
 
     public:
-        ~Node();
+        virtual ~Node();
 
         /**
          * Retrieve the axis-aligned bounding box of the block in the blockmap.
@@ -77,25 +61,12 @@ public:
 
         Node &clear();
 
-        inline void linkSegment(LineSegmentSide &seg) {
-            _segments.prepend(&seg);
-        }
-
-        inline void incrementSegmentCount(LineSegmentSide const &seg) {
-            if(seg.hasMapSide()) _mapNum++;
-            else                 _partNum++;
-        }
-
-        inline void decrementSegmentCount(LineSegmentSide const &seg) {
-            if(seg.hasMapSide()) _mapNum--;
-            else                 _partNum--;
-        }
-
         /**
-         * Returns true if the block's dimensions are small enough that it should
-         * be considered a "leaf". Blocks in a SuperBlockmap are only subdivided
-         * until they reach an (x:256, y:256) lower bound on their dimensions. At
-         * which point they are considered as a "leaf".
+         * Returns true if the logical dimensions of the node are small enough
+         * to be considered a "leaf".
+         *
+         * Nodes in a SuperBlockmap are only subdivided until they reach an
+         * (x:256, y:256) lower bound on their dimensions.
          */
         bool isLeaf() const {
             AABox const &aaBox = bounds();
@@ -104,33 +75,101 @@ public:
         }
 
         /**
-         * Returns a pointer to the parent block; otherwise @c 0.
-         *
+         * Returns a pointer to the parent node; otherwise @c 0.
          * @see hasParent()
          */
         Node *parent() const;
 
         /**
-         * Retrieve a child of this subblock. Callers must first determine if a
-         * child is present using SuperBlock::hasChild() (or similar), attempting
-         * to call this with no child present results in fatal error.
+         * Returns the child of this node @a which has the specified identifier.
+         * A child must be present (determined with @ref hasChild()), attempting
+         * to call this with no child results is an error.
          *
-         * @param childId  Subblock identifier.
-         * @return  Selected subblock.
+         * @param which  Child node identifier.
+         * @return  Child Node.
          */
-        Node *child(ChildId childId) const;
+        Node *child(ChildId which) const;
 
-        /**
-         * Returns the right subblock.
-         * @see SuperBlock::child()
-         */
+        /// Returns the right child node. @see child()
         inline Node *right() const { return child(Right); }
 
-        /**
-         * Returns the left subblock.
-         * @see SuperBlock::childPtr()
-         */
+        /// Returns the left child node. @see child()
         inline Node *left()  const { return child(Left); }
+
+        /**
+         * KdTree creates instances of Node so it needs to use the special private
+         * constructor that takes an existing superblock object reference as a
+         * parameter.
+         */
+        //friend struct KdTree::Instance;
+
+    //private:
+        /**
+         * Node objects must be constructed within the context of an owning
+         * KdTree. Instantiation outside of this context is not permitted.
+         * @ref KdTree
+         */
+        Node(KdTree &kdtree);
+        //Node(Node &parentPtr, ChildId childId, bool splitVertical);
+
+        KdTree &_owner;
+        kdtreenode_s *_tree;
+    };
+
+    /**
+     * @param bounds  Bounding for the logical coordinate space.
+     */
+    KdTree(AABox const &bounds);
+    ~KdTree();
+
+    Node &rootNode();
+
+    virtual void clear();
+
+private:
+    /// The KdTree of Nodes.
+    kdtree_s *_nodes;
+};
+
+namespace bsp {
+
+/**
+ * @ingroup bsp
+ */
+class SuperBlockmap
+{
+public:
+    /**
+     * RIGHT - has the lower coordinates.
+     * LEFT  - has the higher coordinates.
+     * Division of a block always occurs horizontally:
+     *     e.g., 512x512 -> 256x512 -> 256x256.
+     */
+    class Block : public KdTree::Node
+    {
+    public:
+        typedef QList<LineSegmentSide *> Segments;
+
+    public:
+        virtual ~Block();
+
+        /**
+         * Push (link) the given line segment onto the FIFO list of segments linked
+         * to this superblock.
+         *
+         * @param segment  Line segment to add.
+         *
+         * @return  SuperBlock that @a segment was linked to.
+         */
+        Block &push(LineSegmentSide &segment);
+
+        /**
+         * Pop (unlink) the next line segment from the FIFO list of segments linked
+         * to this superblock.
+         *
+         * @return  Previous top-most line segment; otherwise @c 0 (empty).
+         */
+        LineSegmentSide *pop();
 
         /**
          * Retrieve the total number of line segments in this and all child blocks.
@@ -148,22 +187,10 @@ public:
         inline int totalSegmentCount() const { return segmentCount(true, true);  }
 
         /**
-         * Push (link) the given line segment onto the FIFO list of segments linked
-         * to this superblock.
-         *
-         * @param segment  Line segment to add.
-         *
-         * @return  SuperBlock that @a segment was linked to.
+         * Provides access to the list of line segments in the block, for efficient
+         * traversal.
          */
-        Node &push(LineSegmentSide &segment);
-
-        /**
-         * Pop (unlink) the next line segment from the FIFO list of segments linked
-         * to this superblock.
-         *
-         * @return  Previous top-most line segment; otherwise @c 0 (empty).
-         */
-        LineSegmentSide *pop();
+        Segments const &segments() const;
 
         /**
          * Collate (unlink) all line segments from "this" and all child blocks
@@ -171,44 +198,28 @@ public:
          */
         Segments collateAllSegments();
 
+    private:
         /**
-         * Provides access to the list of line segments in the block, for efficient
-         * traversal.
-         */
-        Segments const &segments() const;
-
-        /**
-         * SuperBlockmap creates instances of SuperBlock so it needs to use the
-         * special private constructor that takes an existing superblock object
-         * reference as a parameter.
-         */
-        //friend struct SuperBlockmap::Instance;
-
-    //private:
-        /**
-         * SuperBlock objects must be constructed within the context of an owning
+         * Block objects must be constructed within the context of an owning
          * SuperBlockmap. Instantiation outside of this context is not permitted.
          * @ref SuperBlockmap
          */
-        Node(SuperBlockmap &blockmap);
-        Node(Node &parentPtr, ChildId childId, bool splitVertical);
+        Block(SuperBlockmap &bmap);
+        Block(Block &parentPtr, ChildId childId, bool splitVertical);
 
         /**
-         * Attach a new SuperBlock instance as a child of this.
+         * Attach a new Block instance as a child of this.
          * @param childId  Unique identifier of the child.
-         * @param splitVertical  @c true= Subdivide this block on the y axis rather
-         *                       than the x axis.
+         * @param splitVertical  @c true= Subdivide this block on the y axis and
+         *                       not the x axis.
          */
-        Node *addChild(ChildId childId, bool splitVertical);
+        /*Block *addChild(ChildId childId, bool splitVertical);
 
-        inline Node *addRight(bool splitVertical) { return addChild(Right, splitVertical); }
-        inline Node *addLeft(bool splitVertical)  { return addChild(Left,  splitVertical); }
+        inline Block *addRight(bool splitVertical) { return addChild(Right, splitVertical); }
+        inline Block *addLeft(bool splitVertical)  { return addChild(Left,  splitVertical); }*/
 
-        SuperBlockmap &_owner;
-        kdtreenode_s *_tree;    ///< KdTree node in the owning SuperBlockmap.
-        Segments _segments;     ///< Line segments contained by the block.
-        int _mapNum;            ///< Running total of line segments in "this" block.
-        int _partNum;           ///< Running total of line segments in child blocks.
+    private:
+        DENG2_PRIVATE(d)
     };
 
 public:
@@ -217,7 +228,14 @@ public:
      */
     SuperBlockmap(AABox const &bounds);
 
-    operator Node &();
+    /// Automatic translation from SuperBlockmap to the root Block.
+    operator Block &();
+
+    /**
+     * Empty the SuperBlockmap unlinking the line segments and clearing all
+     * blocks.
+     */
+    void clear();
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all line
@@ -228,19 +246,11 @@ public:
      */
     AABoxd findSegmentBounds();
 
-    /**
-     * Empty the SuperBlockmap unlinking the line segments and clearing all
-     * blocks.
-     */
-    void clear();
-
-    //friend class Node;
-
 private:
     DENG2_PRIVATE(d)
 };
 
-typedef SuperBlockmap::Node SuperBlock;
+typedef SuperBlockmap::Block SuperBlock;
 
 } // namespace bsp
 } // namespace de

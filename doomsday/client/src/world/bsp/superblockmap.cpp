@@ -1,4 +1,4 @@
-/** @file world/bsp/superblockmap.cpp BSP Builder Super Blockmap.
+/** @file superblockmap.cpp  BSP Builder Super Blockmap.
  *
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -24,36 +24,20 @@
 #include <de/kdtree.h>
 #include <de/vector1.h>
 
-#include "world/bsp/linesegment.h"
-
 #include "world/bsp/superblockmap.h"
 
-using namespace de;
-using namespace de::bsp;
+namespace de {
 
-SuperBlockmap::Node::Node(SuperBlockmap &blockmap)
-    : _owner(blockmap)
-    , _tree (0)
-    , _mapNum(0)
-    , _partNum(0)
+KdTree::Node::Node(KdTree &tree) : _owner(tree), _tree (0)
 {}
 
-SuperBlockmap::Node::Node(Node &parent, ChildId childId, bool splitVertical)
-    : _owner  (parent._owner)
-    , _tree   (0)
-    , _mapNum (0)
-    , _partNum(0)
-{
-    _tree = KdTreeNode_AddChild(parent._tree, 0.5, int(splitVertical), childId == Left, this);
-}
-
-SuperBlockmap::Node::~Node()
+KdTree::Node::~Node()
 {
     clear();
     KdTreeNode_Delete(_tree);
 }
 
-SuperBlockmap::Node &SuperBlockmap::Node::clear()
+KdTree::Node &KdTree::Node::clear()
 {
     if(_tree)
     {
@@ -70,31 +54,94 @@ SuperBlockmap::Node &SuperBlockmap::Node::clear()
     return *this;
 }
 
-AABox const &SuperBlockmap::Node::bounds() const
+AABox const &KdTree::Node::bounds() const
 {
     return *KdTreeNode_Bounds(_tree);
 }
 
-SuperBlockmap::Node *SuperBlockmap::Node::parent() const
+KdTree::Node *KdTree::Node::parent() const
 {
     KdTreeNode *pNode = KdTreeNode_Parent(_tree);
     if(!pNode) return 0;
     return static_cast<Node *>(KdTreeNode_UserData(pNode));
 }
 
-SuperBlockmap::Node *SuperBlockmap::Node::child(ChildId childId) const
+KdTree::Node *KdTree::Node::child(ChildId childId) const
 {
     KdTreeNode *subtree = KdTreeNode_Child(_tree, childId == Left);
     if(!subtree) return 0;
     return static_cast<Node *>(KdTreeNode_UserData(subtree));
 }
 
-SuperBlockmap::Node *SuperBlockmap::Node::addChild(ChildId childId, bool splitVertical)
+KdTree::KdTree(AABox const &bounds)
+    : _nodes(KdTree_New(&bounds))
 {
-    return new Node(*this, childId, splitVertical);
+    // Attach the root node.
+    Node *block = new Node(*this);
+    block->_tree = KdTreeNode_SetUserData(KdTree_Root(_nodes), block);
 }
 
-SuperBlockmap::Node::Segments SuperBlockmap::Node::collateAllSegments()
+KdTree::~KdTree()
+{
+    rootNode().clear();
+    KdTree_Delete(_nodes);
+}
+
+void KdTree::clear()
+{
+    rootNode().clear();
+}
+
+KdTree::Node &KdTree::rootNode()
+{
+    return *static_cast<Node *>(KdTreeNode_UserData(KdTree_Root(_nodes)));
+}
+
+} // namespace de
+
+/// ----------------------------------------------------------------------------
+
+#include "world/bsp/linesegment.h"
+
+using namespace de;
+using namespace de::bsp;
+
+DENG2_PIMPL_NOREF(SuperBlockmap::Block)
+{
+    Segments segments; ///< Line segments contained by the block.
+    int mapNum;        ///< Running total of map-line segments at this node.
+    int partNum;       ///< Running total of partition-line segments at this node.
+
+    Instance() : mapNum(0), partNum(0) {}
+
+    inline void linkSegment(LineSegmentSide &seg) {
+        segments.prepend(&seg);
+    }
+
+    inline void incrementSegmentCount(LineSegmentSide const &seg) {
+        if(seg.hasMapSide()) mapNum++;
+        else                 partNum++;
+    }
+
+    inline void decrementSegmentCount(LineSegmentSide const &seg) {
+        if(seg.hasMapSide()) mapNum--;
+        else                 partNum--;
+    }
+};
+
+SuperBlockmap::Block::Block(SuperBlockmap &bmap)
+    : KdTree::Node(bmap)
+    , d(new Instance)
+{}
+
+SuperBlockmap::Block::Block(Block &parent, ChildId childId, bool splitVertical)
+    : KdTree::Node(parent)
+    , d(new Instance)
+{
+    _tree = KdTreeNode_AddChild(parent._tree, 0.5, int(splitVertical), childId == Left, this);
+}
+
+SuperBlockmap::Block::Segments SuperBlockmap::Block::collateAllSegments()
 {
     Segments segments;
 
@@ -103,8 +150,8 @@ SuperBlockmap::Node::Segments SuperBlockmap::Node::collateAllSegments()
 #endif
 
     // Iterative pre-order traversal of SuperBlock.
-    Node *cur = this;
-    Node *prev = 0;
+    Block *cur = this;
+    Block *prev = 0;
     while(cur)
     {
         while(cur)
@@ -146,31 +193,31 @@ SuperBlockmap::Node::Segments SuperBlockmap::Node::collateAllSegments()
     return segments;
 }
 
-SuperBlockmap::Node::Segments const &SuperBlockmap::Node::segments() const
+SuperBlockmap::Block::Segments const &SuperBlockmap::Block::segments() const
 {
-    return _segments;
+    return d->segments;
 }
 
-int SuperBlockmap::Node::segmentCount(bool addMap, bool addPart) const
+int SuperBlockmap::Block::segmentCount(bool addMap, bool addPart) const
 {
     int total = 0;
-    if(addMap)  total += _mapNum;
-    if(addPart) total += _partNum;
+    if(addMap)  total += d->mapNum;
+    if(addPart) total += d->partNum;
     return total;
 }
 
-SuperBlockmap::Node &SuperBlockmap::Node::push(LineSegmentSide &seg)
+SuperBlockmap::Block &SuperBlockmap::Block::push(LineSegmentSide &seg)
 {
-    Node *sb = this;
+    Block *sb = this;
     forever
     {
         // Update line segment counts.
-        sb->incrementSegmentCount(seg);
+        sb->d->incrementSegmentCount(seg);
 
         if(sb->isLeaf())
         {
             // No further subdivision possible.
-            sb->linkSegment(seg);
+            sb->d->linkSegment(seg);
             break;
         }
 
@@ -197,7 +244,7 @@ SuperBlockmap::Node &SuperBlockmap::Node::push(LineSegmentSide &seg)
         if(p1 != p2)
         {
             // Line crosses midpoint; link it in and return.
-            sb->linkSegment(seg);
+            sb->d->linkSegment(seg);
             break;
         }
 
@@ -205,7 +252,8 @@ SuperBlockmap::Node &SuperBlockmap::Node::push(LineSegmentSide &seg)
         // if it doesn't already exist, and loop back to add the seg.
         if(!sb->child(p1))
         {
-            sb->addChild(p1, splitVertical);
+            new Block(*sb, p1, splitVertical);
+            // Note that the tree retains a pointer to the block; no leak.
         }
 
         sb = sb->child(p1);
@@ -213,47 +261,22 @@ SuperBlockmap::Node &SuperBlockmap::Node::push(LineSegmentSide &seg)
     return *sb;
 }
 
-LineSegmentSide *SuperBlockmap::Node::pop()
+LineSegmentSide *SuperBlockmap::Block::pop()
 {
-    if(_segments.isEmpty())
-        return 0;
+    if(d->segments.isEmpty()) return 0;
 
-    LineSegmentSide *seg = _segments.takeFirst();
+    LineSegmentSide *seg = d->segments.takeFirst();
 
     // Update line segment counts.
-    decrementSegmentCount(*seg);
+    d->decrementSegmentCount(*seg);
 
     return seg;
 }
 
-DENG2_PIMPL(SuperBlockmap)
+DENG2_PIMPL_NOREF(SuperBlockmap), public de::KdTree
 {
-    /// The KdTree of Nodes.
-    KdTree *nodes;
-
-    Instance(Public *i, AABox const &bounds)
-        : Base(i)
-        , nodes(KdTree_New(&bounds))
-    {
-        // Attach the root node.
-        SuperBlock *block = new SuperBlock(self);
-        block->_tree = KdTreeNode_SetUserData(KdTree_Root(nodes), block);
-    }
-
-    ~Instance()
-    {
-        clear();
-        KdTree_Delete(nodes);
-    }
-
-    inline Node &rootNode() {
-        return *static_cast<Node *>(KdTreeNode_UserData(KdTree_Root(nodes)));
-    }
-
-    void clear()
-    {
-        rootNode().clear();
-    }
+    Instance(AABox const &bounds) : KdTree(bounds)
+    {}
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all line
@@ -302,17 +325,12 @@ DENG2_PIMPL(SuperBlockmap)
 };
 
 SuperBlockmap::SuperBlockmap(AABox const &bounds)
-    : d(new Instance(this, bounds))
+    : d(new Instance(bounds))
 {}
 
-SuperBlockmap::operator Node &()
+SuperBlockmap::operator SuperBlockmap::Block &()
 {
-    return d->rootNode();
-}
-
-void SuperBlockmap::clear()
-{
-    d->clear();
+    return static_cast<Block &>(d->rootNode());
 }
 
 AABoxd SuperBlockmap::findSegmentBounds()
@@ -321,8 +339,8 @@ AABoxd SuperBlockmap::findSegmentBounds()
     AABoxd bounds;
 
     // Iterative pre-order traversal of SuperBlock.
-    Node *cur = &d->rootNode();
-    Node *prev = 0;
+    Block *cur = &d->rootNode();
+    Block *prev = 0;
     while(cur)
     {
         while(cur)
