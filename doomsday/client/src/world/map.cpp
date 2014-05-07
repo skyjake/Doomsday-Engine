@@ -129,10 +129,9 @@ DENG2_PIMPL(Map)
     struct Bsp
     {
         BspTree *tree; ///< Owns the BspElements.
-        int nodeCount;
-        int leafCount;
 
-        Bsp() : tree(0), nodeCount(0), leafCount(0) {}
+
+        Bsp() : tree(0) {}
         ~Bsp() { clear(); }
 
         void clear()
@@ -140,7 +139,7 @@ DENG2_PIMPL(Map)
             if(!tree) return;
             tree->traversePostOrder(clearUserDataWorker);
             delete tree; tree = 0;
-            nodeCount = leafCount = 0;
+
         }
 
     private:
@@ -568,58 +567,6 @@ DENG2_PIMPL(Map)
         }
     }
 
-    void collateBspElements(BspTree &tree)
-    {
-        if(tree.isLeaf())
-        {
-            DENG2_ASSERT(tree.userData() != 0);
-            BspLeaf &leaf = tree.userData()->as<BspLeaf>();
-            bsp.leafCount++;
-
-            if(!leaf.sectorPtr())
-            {
-                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                    << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
-            }
-
-            if(leaf.hasSubspace())
-            {
-                // Add this subspace to the LUT.
-                ConvexSubspace &subspace = leaf.subspace();
-                subspace.setIndexInMap(subspaces.count());
-                subspaces.append(&subspace);
-
-#ifdef DENG_DEBUG // See if we received a partial geometry...
-                int discontinuities = 0;
-                HEdge *hedge = subspace.poly().hedge();
-                do
-                {
-                    if(hedge->next().origin() != hedge->twin().origin())
-                    {
-                        discontinuities++;
-                    }
-                } while((hedge = &hedge->next()) != subspace.poly().hedge());
-
-                if(discontinuities)
-                {
-                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
-                                "is not contiguous (%i gaps/overlaps).\n%s")
-                        << &leaf << subspace.poly().center().asText()
-                        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
-                        << discontinuities
-                        << subspace.poly().description();
-                }
-#endif
-            }
-
-            return;
-        }
-        // Else; a node.
-
-        DENG2_ASSERT(tree.userData() != 0);
-        bsp.nodeCount++;
-    }
-
     /**
      * Build a new BSP tree.
      *
@@ -660,15 +607,13 @@ DENG2_PIMPL(Map)
             bsp::Partitioner partitioner(bspSplitFactor);
             partitioner.audienceForUnclosedSectorFound += this;
 
-            // Build a BSP!
-            BspTree *newBspTree = partitioner.buildBsp(linesToBuildBspFor, mesh);
+            // Build a new BSP tree.
+            bsp.tree = partitioner.buildBsp(linesToBuildBspFor, mesh);
+            DENG2_ASSERT(bsp.tree != 0);
 
-            LOG_MAP_VERBOSE("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes. "
-                            "Tree balance is %d:%d.")
-                    << partitioner.numNodes()    << partitioner.numLeafs()
-                    << partitioner.numSegments() << partitioner.numVertexes()
-                    << (newBspTree->isLeaf()? 0 : newBspTree->right().height())
-                    << (newBspTree->isLeaf()? 0 : newBspTree->left().height());
+            LOG_MAP_VERBOSE("BSP built: %s. With %d Segments and %d Vertexes. ")
+                    << bsp.tree->summary()
+                    << partitioner.numSegments() << partitioner.numVertexes();
 
             // Attribute an index to any new vertexes.
             for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
@@ -678,28 +623,59 @@ DENG2_PIMPL(Map)
                 vtx->setIndexInMap(i);
             }
 
-            /*
-             * Take ownership of all the built map data elements.
-             */
-            bsp.tree = newBspTree;
-
 #ifdef DENG2_QT_4_7_OR_NEWER
             /// @todo Determine the actual number of subspaces needed.
             subspaces.reserve(partitioner.numLeafs());
 #endif
 
             // Iterative pre-order traversal of the map element tree.
-            BspTree *cur = newBspTree;
-            BspTree *prev = 0;
+            BspTree const *cur = bsp.tree;
+            BspTree const *prev = 0;
             while(cur)
             {
                 while(cur)
                 {
                     if(cur->userData())
                     {
-                        // Acquire ownership of and collate all map data elements
-                        // at this node of the tree.
-                        collateBspElements(*cur);
+                        if(cur->isLeaf())
+                        {
+                            BspLeaf &leaf = cur->userData()->as<BspLeaf>();
+                            if(!leaf.sectorPtr())
+                            {
+                                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
+                                    << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
+                            }
+
+                            if(leaf.hasSubspace())
+                            {
+                                // Add this subspace to the LUT.
+                                ConvexSubspace &subspace = leaf.subspace();
+                                subspace.setIndexInMap(subspaces.count());
+                                subspaces.append(&subspace);
+
+#ifdef DENG_DEBUG // See if we received a partial geometry...
+                                int discontinuities = 0;
+                                HEdge *hedge = subspace.poly().hedge();
+                                do
+                                {
+                                    if(hedge->next().origin() != hedge->twin().origin())
+                                    {
+                                        discontinuities++;
+                                    }
+                                } while((hedge = &hedge->next()) != subspace.poly().hedge());
+
+                                if(discontinuities)
+                                {
+                                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                                                "is not contiguous (%i gaps/overlaps).\n%s")
+                                        << &leaf << subspace.poly().center().asText()
+                                        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
+                                        << discontinuities
+                                        << subspace.poly().description();
+                                }
+#endif
+                            }
+                        }
                     }
 
                     if(prev == cur->parentPtr())
@@ -1620,7 +1596,7 @@ bool Map::hasBspRoot() const
     return d->bsp.tree != 0;
 }
 
-BspTree &Map::bspRoot() const
+BspTree const &Map::bspRoot() const
 {
     if(d->bsp.tree)
     {
@@ -1628,16 +1604,6 @@ BspTree &Map::bspRoot() const
     }
     /// @throw MissingBspError  No BSP data is available.
     throw MissingBspError("Map::bspRoot", "No BSP data available");
-}
-
-int Map::bspNodeCount() const
-{
-    return d->bsp.nodeCount;
-}
-
-int Map::bspLeafCount() const
-{
-    return d->bsp.leafCount;
 }
 
 Map::Subspaces const &Map::subspaces() const
@@ -2799,7 +2765,7 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
         /// @throw MissingBspError  No BSP data is available.
         throw MissingBspError("Map::bspLeafAt", "No BSP data available");
 
-    BspTree *bspTree = d->bsp.tree;
+    BspTree const *bspTree = d->bsp.tree;
     while(!bspTree->isLeaf())
     {
         BspNode &bspNode = bspTree->userData()->as<BspNode>();
@@ -2822,7 +2788,7 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
-    BspTree *bspTree = d->bsp.tree;
+    BspTree const *bspTree = d->bsp.tree;
     while(!bspTree->isLeaf())
     {
         BspNode &bspNode = bspTree->userData()->as<BspNode>();
@@ -3399,24 +3365,6 @@ String Map::objectSummaryAsStyledText() const
 #undef TABBED
 }
 
-static String bspTreeSummary(Map const &map)
-{
-    if(map.hasBspRoot())
-    {
-        String desc = String("%1 leafs, %2 nodes")
-                          .arg(map.bspLeafCount())
-                          .arg(map.bspNodeCount());
-        if(!map.bspRoot().isLeaf())
-        {
-            desc += String(" (balance is %1:%2)")
-                        .arg(map.bspRoot().hasRight()? map.bspRoot().right().height() : 0)
-                        .arg(map.bspRoot().hasLeft() ? map.bspRoot().left ().height() : 0);
-        }
-        return desc;
-    }
-    return "";
-}
-
 D_CMD(InspectMap)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -3472,7 +3420,7 @@ D_CMD(InspectMap)
 
     if(map.hasBspRoot())
     {
-        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << bspTreeSummary(map);
+        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << map.bspRoot().summary();
     }
 
     if(!map.subspaceBlockmap().isNull())
