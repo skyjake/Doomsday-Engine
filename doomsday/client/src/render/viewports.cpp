@@ -1306,7 +1306,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
         Vector3d const eye = Rend_EyeOrigin().xzy();
 
         if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
-                .trace(lum->map().bspRoot()))
+                .trace(lum->map().bspTree()))
         {
             luminousClipped[lumIdx] = 0; // Will have a halo.
         }

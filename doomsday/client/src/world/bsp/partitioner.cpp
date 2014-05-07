@@ -1420,7 +1420,7 @@ bool lineIndexLessThan(Line const *a, Line const *b)
  * 3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
  *    the Nodes tree and continue up to the root (last Node).
  */
-BspTree *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
+Partitioner::BspTree *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
 {
     d->clear();
 
@@ -1465,7 +1465,7 @@ BspTree *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
     return d->rootNode;
 }
 
-BspTree *Partitioner::root() const
+Partitioner::BspTree *Partitioner::root() const
 {
     return d->rootNode;
 }

@@ -64,6 +64,7 @@ public:
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
+    typedef Map::BspTree BspTree;
     typedef QSet<Line *> LineSet;
 
 public:

@@ -52,6 +52,7 @@
 class MapDef;
 class BspLeaf;
 class ConvexSubspace;
+class LineBlockmap;
 class Plane;
 class Sector;
 class SectorCluster;
@@ -61,8 +62,6 @@ class Vertex;
 #ifdef __CLIENT__
 class BiasTracker;
 #endif
-
-class LineBlockmap;
 
 namespace de {
 
@@ -94,7 +93,7 @@ public:
     DENG2_ERROR(MissingBlockmapError);
 
     /// Required BSP data is missing. @ingroup errors
-    DENG2_ERROR(MissingBspError);
+    DENG2_ERROR(MissingBspTreeError);
 
     /// Required thinker lists are missing. @ingroup errors
     DENG2_ERROR(MissingThinkersError);
@@ -342,12 +341,12 @@ public:
     /**
      * Returns @c true iff a BSP tree is available for the map.
      */
-    bool hasBspRoot() const;
+    bool hasBspTree() const;
 
     /**
-     * Returns the root element for the map's BSP tree.
+     * Provides access to map's BSP tree, for efficient traversal.
      */
-    BspTree const &bspRoot() const;
+    BspTree const &bspTree() const;
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies
