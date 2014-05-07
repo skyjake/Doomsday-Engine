@@ -221,14 +221,14 @@ void LineSegment::Side::setNeighbor(int edge, LineSegment::Side *newNeighbor)
     *d->neighborAdr(edge) = newNeighbor;
 }
 
-SuperBlock *LineSegment::Side::bmapBlockPtr() const
+/*SuperBlock*/ void *LineSegment::Side::bmapBlockPtr() const
 {
     return d->bmapBlock;
 }
 
-void LineSegment::Side::setBMapBlock(SuperBlock *newBMapBlock)
+void LineSegment::Side::setBMapBlock(/*SuperBlock*/ void *newBMapBlock)
 {
-    d->bmapBlock = newBMapBlock;
+    d->bmapBlock = (SuperBlock *)newBMapBlock;
 }
 
 bool LineSegment::Side::hasSector() const
