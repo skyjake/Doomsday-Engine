@@ -110,19 +110,12 @@ SuperBlockmap::Block::Block(SuperBlockmap &bmap)
     , d(new Instance)
 {}
 
-SuperBlockmap::Block::Block(Block &parent, ChildId childId, bool splitVertical)
-    : KdTreeNode(parent)
-    , d(new Instance)
-{
-    _tree = KdTreeNode_AddChild(parent._tree, 0.5, int(splitVertical), childId == Left, this);
-}
-
 SuperBlockmap::Block::Segments SuperBlockmap::Block::collateAllSegments()
 {
-    Segments segments;
+    Segments allSegs;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-    segments.reserve(totalSegmentCount());
+    allSegs.reserve(totalSegmentCount());
 #endif
 
     // Iterative pre-order traversal of SuperBlock.
@@ -135,7 +128,7 @@ SuperBlockmap::Block::Segments SuperBlockmap::Block::collateAllSegments()
             LineSegmentSide *seg;
             while((seg = cur->pop()))
             {
-                segments << seg;
+                allSegs << seg;
             }
 
             if(prev == cur->parent())
@@ -166,7 +159,7 @@ SuperBlockmap::Block::Segments SuperBlockmap::Block::collateAllSegments()
         }
     }
 
-    return segments;
+    return allSegs;
 }
 
 SuperBlockmap::Block::Segments const &SuperBlockmap::Block::segments() const
@@ -228,8 +221,46 @@ SuperBlockmap::Block &SuperBlockmap::Block::push(LineSegmentSide &seg)
         // if it doesn't already exist, and loop back to add the seg.
         if(!sb->child(p1))
         {
-            new Block(*sb, p1, splitVertical);
+            Block *child = new Block(*sb);
+            //child->_tree = KdTreeNode_AddChild(sb->_tree, 0.5, int(splitVertical), p1 == Left, child);
             // Note that the tree retains a pointer to the block; no leak.
+
+            AABox const *aaBox = KdTreeNode_Bounds(sb->_tree);
+            AABox sub;
+
+            double distance = 0.5;
+            int left = (p1 == Left);
+            if(!int(splitVertical))
+            {
+                int division = (int) (aaBox->minX + 0.5 + distance * (aaBox->maxX - aaBox->minX));
+
+                sub.minX = (left? division : aaBox->minX);
+                sub.minY = aaBox->minY;
+
+                sub.maxX = (left? aaBox->maxX : division);
+                sub.maxY = aaBox->maxY;
+            }
+            else
+            {
+                int division = (int) (aaBox->minY + 0.5 + distance * (aaBox->maxY - aaBox->minY));
+
+                sub.minX = aaBox->minX;
+                sub.minY = (left? division : aaBox->minY);
+
+                sub.maxX = aaBox->maxX;
+                sub.maxY = (left? aaBox->maxY : division);
+            }
+
+            ::KdTreeNode *subtree = KdTreeNode_Child(sb->_tree, left);
+            if(!subtree)
+            {
+                subtree = KdTreeNode_SetChild(sb->_tree, left) = KdTreeNode_New(KdTreeNode_KdTree(sb->_tree), &sub);
+                KdTreeNode_SetParent(subtree, sb->_tree);
+            }
+
+            KdTreeNode_SetUserData(subtree, child);
+
+            child->_tree = subtree;
         }
 
         sb = sb->child(p1);

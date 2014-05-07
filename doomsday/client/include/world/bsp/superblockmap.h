@@ -184,7 +184,6 @@ public:
          * @ref SuperBlockmap
          */
         Block(SuperBlockmap &bmap);
-        Block(Block &parentPtr, ChildId childId, bool splitVertical);
 
         /**
          * Attach a new Block instance as a child of this.
