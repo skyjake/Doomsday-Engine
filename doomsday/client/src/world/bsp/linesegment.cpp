@@ -60,7 +60,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
 
     /// The superblock that contains "this" segment, or @c 0 if the segment is
     /// no longer in any superblock (e.g., attributed to a convex subspace).
-    SuperBlock *bmapBlock;
+    SuperBlockmapNode *bmapBlock;
 
     /// Convex subspace which "this" segment is attributed; otherwise @c 0.
     ConvexSubspaceProxy *convexSubspace;
@@ -79,20 +79,20 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     HEdge *hedge;
 
     Instance(LineSegment &line)
-        : line(&line),
-          mapSide(0),
-          partitionMapLine(0),
-          rightNeighbor(0),
-          leftNeighbor(0),
-          bmapBlock(0),
-          convexSubspace(0),
-          sector(0),
-          pLength(0),
-          pAngle(0),
-          pPara(0),
-          pPerp(0),
-          pSlopeType(ST_VERTICAL),
-          hedge(0)
+        : line(&line)
+        , mapSide(0)
+        , partitionMapLine(0)
+        , rightNeighbor(0)
+        , leftNeighbor(0)
+        , bmapBlock(0)
+        , convexSubspace(0)
+        , sector(0)
+        , pLength(0)
+        , pAngle(0)
+        , pPara(0)
+        , pPerp(0)
+        , pSlopeType(ST_VERTICAL)
+        , hedge(0)
     {}
 
     inline LineSegment::Side **neighborAdr(int edge) {
@@ -221,14 +221,14 @@ void LineSegment::Side::setNeighbor(int edge, LineSegment::Side *newNeighbor)
     *d->neighborAdr(edge) = newNeighbor;
 }
 
-/*SuperBlock*/ void *LineSegment::Side::bmapBlockPtr() const
+/*SuperBlockmapNode*/ void *LineSegment::Side::bmapBlockPtr() const
 {
     return d->bmapBlock;
 }
 
-void LineSegment::Side::setBMapBlock(/*SuperBlock*/ void *newBMapBlock)
+void LineSegment::Side::setBMapBlock(/*SuperBlockmapNode*/ void *newBMapBlock)
 {
-    d->bmapBlock = (SuperBlock *)newBMapBlock;
+    d->bmapBlock = (SuperBlockmapNode *)newBMapBlock;
 }
 
 bool LineSegment::Side::hasSector() const
