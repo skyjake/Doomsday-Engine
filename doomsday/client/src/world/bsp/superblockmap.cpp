@@ -21,51 +21,21 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/kdtree.h>
-#include <de/vector1.h>
-
 #include "world/bsp/superblockmap.h"
-
-namespace de {
-
-KdTreeNode::KdTreeNode() : _tree(0) {}
-
-KdTreeNode::~KdTreeNode()
-{
-    KdTreeNode_Delete(_tree);
-}
-
-KdTreeNode *KdTreeNode::parent() const
-{
-    kdtreenode_s *pNode = KdTreeNode_Parent(_tree);
-    if(!pNode) return 0;
-    return static_cast<KdTreeNode *>(KdTreeNode_UserData(pNode));
-}
-
-KdTreeNode *KdTreeNode::child(ChildId childId) const
-{
-    kdtreenode_s *subtree = KdTreeNode_Child(_tree, childId == Left);
-    if(!subtree) return 0;
-    return static_cast<KdTreeNode *>(KdTreeNode_UserData(subtree));
-}
-
-} // namespace de
-
-/// ----------------------------------------------------------------------------
-
-#include "world/bsp/linesegment.h"
+#include <de/vector1.h>
+#include <de/Log>
 
 using namespace de;
 using namespace de::bsp;
 
-DENG2_PIMPL_NOREF(SuperBlockmap::Block)
+DENG2_PIMPL_NOREF(SuperBlockmap::NodeData)
 {
     SuperBlockmap &owner;
     AABox bounds;
 
-    Segments segments; ///< Line segments contained by the block.
-    int mapNum;        ///< Running total of map-line segments at this node.
-    int partNum;       ///< Running total of partition-line segments at this node.
+    Segments segments;    ///< Line segments contained by the node (not owned).
+    int mapNum;           ///< Running total of map-line segments at/under this node.
+    int partNum;          ///< Running total of partition-line segments at/under this node.
 
     Instance(SuperBlockmap &owner, AABox const &bounds)
         : owner  (owner)
@@ -74,54 +44,37 @@ DENG2_PIMPL_NOREF(SuperBlockmap::Block)
         , partNum(0)
     {}
 
-    inline void linkSegment(LineSegmentSide &seg) {
+    inline void link(LineSegmentSide &seg) {
         segments.prepend(&seg);
     }
 
-    inline void incrementSegmentCount(LineSegmentSide const &seg) {
+    inline void addRef(LineSegmentSide const &seg) {
         if(seg.hasMapSide()) mapNum++;
         else                 partNum++;
     }
 
-    inline void decrementSegmentCount(LineSegmentSide const &seg) {
+    inline void decRef(LineSegmentSide const &seg) {
         if(seg.hasMapSide()) mapNum--;
         else                 partNum--;
     }
 };
 
-SuperBlockmap::Block::Block(SuperBlockmap &owner, AABox const &bounds)
-    : KdTreeNode()
+SuperBlockmap::NodeData::NodeData(SuperBlockmap &owner, AABox const &bounds)
+    : _node(0)
     , d(new Instance(owner, bounds))
 {}
 
-SuperBlockmap::Block::~Block()
-{
-    clear();
-}
-
-AABox const &SuperBlockmap::Block::bounds() const
+AABox const &SuperBlockmap::NodeData::bounds() const
 {
     return d->bounds;
 }
 
-SuperBlockmap::Block &SuperBlockmap::Block::clear()
+void SuperBlockmap::NodeData::clearSegments()
 {
-    if(_tree)
-    {
-        // Recursively handle sub-blocks.
-        for(uint num = 0; num < 2; ++num)
-        {
-            if(kdtreenode_s *child = KdTreeNode_Child(_tree, num))
-            {
-                delete KdTreeNode_UserData(child);
-                KdTreeNode_SetUserData(child, 0);
-            }
-        }
-    }
-    return *this;
+    d->segments.clear();
 }
 
-SuperBlockmap::Block::Segments SuperBlockmap::Block::collateAllSegments()
+SuperBlockmap::NodeData::Segments SuperBlockmap::NodeData::collateAllSegments()
 {
     Segments allSegs;
 
@@ -129,56 +82,56 @@ SuperBlockmap::Block::Segments SuperBlockmap::Block::collateAllSegments()
     allSegs.reserve(totalSegmentCount());
 #endif
 
-    // Iterative pre-order traversal of SuperBlock.
-    Block *cur = this;
-    Block *prev = 0;
+    // Iterative pre-order traversal.
+    Node *cur = _node;
+    Node *prev = 0;
     while(cur)
     {
         while(cur)
         {
             LineSegmentSide *seg;
-            while((seg = cur->pop()))
+            while((seg = cur->userData()->pop()))
             {
                 allSegs << seg;
             }
 
-            if(prev == cur->parent())
+            if(prev == cur->parentPtr())
             {
                 // Descending - right first, then left.
                 prev = cur;
-                if(cur->right()) cur = cur->right();
-                else             cur = cur->left();
+                if(cur->hasRight()) cur = cur->rightPtr();
+                else                cur = cur->leftPtr();
             }
-            else if(prev == cur->right())
+            else if(prev == cur->rightPtr())
             {
                 // Last moved up the right branch - descend the left.
                 prev = cur;
-                cur = cur->left();
+                cur = cur->leftPtr();
             }
-            else if(prev == cur->left())
+            else if(prev == cur->leftPtr())
             {
                 // Last moved up the left branch - continue upward.
                 prev = cur;
-                cur = cur->parent();
+                cur = cur->parentPtr();
             }
         }
 
         if(prev)
         {
             // No left child - back up.
-            cur = prev->parent();
+            cur = prev->parentPtr();
         }
     }
 
     return allSegs;
 }
 
-SuperBlockmap::Block::Segments const &SuperBlockmap::Block::segments() const
+SuperBlockmap::NodeData::Segments const &SuperBlockmap::NodeData::segments() const
 {
     return d->segments;
 }
 
-int SuperBlockmap::Block::segmentCount(bool addMap, bool addPart) const
+int SuperBlockmap::NodeData::segmentCount(bool addMap, bool addPart) const
 {
     int total = 0;
     if(addMap)  total += d->mapNum;
@@ -186,141 +139,125 @@ int SuperBlockmap::Block::segmentCount(bool addMap, bool addPart) const
     return total;
 }
 
-SuperBlockmap::Block &SuperBlockmap::Block::push(LineSegmentSide &seg)
+SuperBlockmap::Node &SuperBlockmap::NodeData::push(LineSegmentSide &seg)
 {
-    Block *sb = this;
+    Node *sb = _node;
     forever
     {
-        // Update line segment counts.
-        sb->d->incrementSegmentCount(seg);
+        NodeData &ndata = *sb->userData();
+        AABox const &nodeBounds = ndata.bounds();
 
-        // Determine whether further subdivision is necessary.
-        Vector2i dimensions(Vector2i(sb->bounds().max) - Vector2i(sb->bounds().min));
+        // Update line segment counts.
+        ndata.d->addRef(seg);
+
+        // Determine whether further subdivision is necessary/possible.
+        Vector2i dimensions(Vector2i(nodeBounds.max) - Vector2i(nodeBounds.min));
         if(dimensions.x <= 256 && dimensions.y <= 256)
         {
-            // No further subdivision possible.
-            sb->d->linkSegment(seg);
+            ndata.d->link(seg);
             break;
         }
 
-        ChildId p1, p2;
+        // On which axis are we splitting?
         bool splitVertical;
-        if(sb->bounds().maxX - sb->bounds().minX >=
-           sb->bounds().maxY - sb->bounds().minY)
+        Node::ChildId fromSide, toSide;
+        if(nodeBounds.maxX - nodeBounds.minX >= nodeBounds.maxY - nodeBounds.minY)
         {
-            // Wider than tall.
-            int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = seg.from().origin().x >= midPoint? Left : Right;
-            p2 =   seg.to().origin().x >= midPoint? Left : Right;
             splitVertical = false;
+
+            int midX = (nodeBounds.minX + nodeBounds.maxX) / 2;
+            fromSide = Node::ChildId(seg.from().origin().x >= midX);
+            toSide   = Node::ChildId(seg.to  ().origin().x >= midX);
         }
         else
         {
-            // Taller than wide.
-            int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = seg.from().origin().y >= midPoint? Left : Right;
-            p2 =   seg.to().origin().y >= midPoint? Left : Right;
             splitVertical = true;
+
+            int midY = (nodeBounds.minY + nodeBounds.maxY) / 2;
+            fromSide = Node::ChildId(seg.from().origin().y >= midY);
+            toSide   = Node::ChildId(seg.to  ().origin().y >= midY);
         }
 
-        if(p1 != p2)
+        if(fromSide != toSide)
         {
             // Line crosses midpoint; link it in and return.
-            sb->d->linkSegment(seg);
+            ndata.d->link(seg);
             break;
         }
 
         // The segments lies in one half of this block. Create the sub-block
         // if it doesn't already exist, and loop back to add the seg.
-        if(!sb->child(p1))
+        if(!sb->hasChild(fromSide))
         {
-            //child->_tree = KdTreeNode_AddChild(sb->_tree, 0.5, int(splitVertical), p1 == Left, child);
-            // Note that the tree retains a pointer to the block; no leak.
+            bool const toLeft = (fromSide == Left);
 
-            AABox const *aaBox = &static_cast<Block *>(KdTreeNode_UserData(sb->_tree))->bounds();
-            AABox sub;
-
-            double distance = 0.5;
-            int left = (p1 == Left);
-            if(!int(splitVertical))
+            AABox subBounds;
+            if(splitVertical)
             {
-                int division = (int) (aaBox->minX + 0.5 + distance * (aaBox->maxX - aaBox->minX));
+                int division = nodeBounds.minY + 0.5 + (nodeBounds.maxY - nodeBounds.minY) / 2;
 
-                sub.minX = (left? division : aaBox->minX);
-                sub.minY = aaBox->minY;
+                subBounds.minX = nodeBounds.minX;
+                subBounds.minY = (toLeft? division : nodeBounds.minY);
 
-                sub.maxX = (left? aaBox->maxX : division);
-                sub.maxY = aaBox->maxY;
+                subBounds.maxX = nodeBounds.maxX;
+                subBounds.maxY = (toLeft? nodeBounds.maxY : division);
             }
             else
             {
-                int division = (int) (aaBox->minY + 0.5 + distance * (aaBox->maxY - aaBox->minY));
+                int division = nodeBounds.minX + 0.5 + (nodeBounds.maxX - nodeBounds.minX) / 2;
 
-                sub.minX = aaBox->minX;
-                sub.minY = (left? division : aaBox->minY);
+                subBounds.minX = (toLeft? division : nodeBounds.minX);
+                subBounds.minY = nodeBounds.minY;
 
-                sub.maxX = aaBox->maxX;
-                sub.maxY = (left? aaBox->maxY : division);
+                subBounds.maxX = (toLeft? nodeBounds.maxX : division);
+                subBounds.maxY = nodeBounds.maxY;
             }
 
-            ::KdTreeNode *subtree = KdTreeNode_Child(sb->_tree, left);
-            if(!subtree)
-            {
-                subtree = KdTreeNode_SetChild(sb->_tree, left) = KdTreeNode_New(KdTreeNode_KdTree(sb->_tree), &sub);
-                KdTreeNode_SetParent(subtree, sb->_tree);
-            }
-
-            Block *child = new Block(d->owner, sub);
-            child->_tree = subtree;
-            KdTreeNode_SetUserData(subtree, child);
+            NodeData *subData = new NodeData(ndata.d->owner, subBounds);
+            subData->_node = &sb->setChild(fromSide, new Node(subData, sb));
         }
 
-        sb = sb->child(p1);
+        sb = sb->childPtr(fromSide);
     }
+
     return *sb;
 }
 
-LineSegmentSide *SuperBlockmap::Block::pop()
+LineSegmentSide *SuperBlockmap::NodeData::pop()
 {
-    if(d->segments.isEmpty()) return 0;
-
-    LineSegmentSide *seg = d->segments.takeFirst();
-
-    // Update line segment counts.
-    d->decrementSegmentCount(*seg);
-
-    return seg;
+    if(!d->segments.isEmpty())
+    {
+        LineSegmentSide *seg = d->segments.takeFirst();
+        d->decRef(*seg);
+        return seg;
+    }
+    return 0;
 }
 
-DENG2_PIMPL(SuperBlockmap)//, public de::KdTree
+DENG2_PIMPL(SuperBlockmap)
 {
-    /// Tree of KdTreeNode.
-    kdtree_s *_nodes;
+    Node rootNode;
 
-    /// @param bounds  Bounding for the logical coordinate space.
-    Instance(Public *i, AABox const &bounds)
-        : Base(i)
-        , _nodes(KdTree_New(&bounds))
+    Instance(Public *i, AABox const &bounds) : Base(i)
     {
-        // Attach the root node.
-        SuperBlock *block = new SuperBlock(*thisPublic, bounds);
-        block->_tree = KdTreeNode_SetUserData(KdTree_Root(_nodes), block);
+        // Attach the root Node.
+        NodeData *ndata = new NodeData(*thisPublic, bounds);
+        rootNode.setUserData(ndata);
+        ndata->_node = &rootNode;
     }
 
-    ~Instance()
-    {
-        rootBlock().clear();
-        KdTree_Delete(_nodes);
-    }
+    ~Instance() { clear(); }
 
-    SuperBlock &rootBlock()
+    static int clearUserDataWorker(Node &subtree, void *)
     {
-        return *static_cast<SuperBlock *>(KdTreeNode_UserData(KdTree_Root(_nodes)));
+        delete subtree.userData();
+        return 0;
     }
 
     void clear()
     {
-        rootBlock().clear();
+        rootNode.traversePostOrder(clearUserDataWorker);
+        rootNode.clear();
     }
 
     /**
@@ -332,16 +269,15 @@ DENG2_PIMPL(SuperBlockmap)//, public de::KdTree
      *
      * @todo Optimize: Cache this result.
      */
-    void findBlockSegmentBoundsWorker(SuperBlock &block, AABoxd &retBounds,
-                                      bool *initialized)
+    void findSegmentBounds(NodeData &data, AABoxd &retBounds, bool *initialized)
     {
         DENG2_ASSERT(initialized);
-        if(block.segmentCount(true, true))
+        if(data.segmentCount(true, true))
         {
             AABoxd bounds;
             bool first = false;
 
-            foreach(LineSegmentSide *seg, block.segments())
+            foreach(LineSegmentSide *seg, data.segments())
             {
                 AABoxd segBounds = seg->aaBox();
                 if(first)
@@ -373,9 +309,9 @@ SuperBlockmap::SuperBlockmap(AABox const &bounds)
     : d(new Instance(this, bounds))
 {}
 
-SuperBlockmap::operator SuperBlockmap::Block &()
+SuperBlockmap::operator SuperBlockmap::Node /*const*/ &()
 {
-    return static_cast<Block &>(d->rootBlock());
+    return d->rootNode;
 }
 
 AABoxd SuperBlockmap::findSegmentBounds()
@@ -384,39 +320,39 @@ AABoxd SuperBlockmap::findSegmentBounds()
     AABoxd bounds;
 
     // Iterative pre-order traversal.
-    Block *cur = &d->rootBlock();
-    Block *prev = 0;
+    Node *cur = &d->rootNode;
+    Node *prev = 0;
     while(cur)
     {
         while(cur)
         {
-            d->findBlockSegmentBoundsWorker(*cur, bounds, &initialized);
+            d->findSegmentBounds(*cur->userData(), bounds, &initialized);
 
-            if(prev == cur->parent())
+            if(prev == cur->parentPtr())
             {
                 // Descending - right first, then left.
                 prev = cur;
-                if(cur->right()) cur = cur->right();
-                else             cur = cur->left();
+                if(cur->hasRight()) cur = cur->rightPtr();
+                else                cur = cur->leftPtr();
             }
-            else if(prev == cur->right())
+            else if(prev == cur->rightPtr())
             {
                 // Last moved up the right branch - descend the left.
                 prev = cur;
-                cur = cur->left();
+                cur = cur->leftPtr();
             }
-            else if(prev == cur->left())
+            else if(prev == cur->leftPtr())
             {
                 // Last moved up the left branch - continue upward.
                 prev = cur;
-                cur = cur->parent();
+                cur = cur->parentPtr();
             }
         }
 
         if(prev)
         {
             // No left child - back up.
-            cur = prev->parent();
+            cur = prev->parentPtr();
         }
     }
 

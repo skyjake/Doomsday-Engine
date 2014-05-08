@@ -27,58 +27,12 @@
 #define DENG_WORLD_BSP_SUPERBLOCKMAP_H
 
 #include <QList>
-
 #include <de/aabox.h>
-
-#include <de/Log>
+#include <de/BinaryTree>
 #include <de/Vector>
-
 #include "world/bsp/linesegment.h"
 
-struct kdtreenode_s;
-
 namespace de {
-
-/*class KdTree
-{
-public:
-    virtual ~KdTree() {}
-};*/
-
-class KdTreeNode
-{
-public:
-    enum ChildId { Right, Left };
-
-public:
-    KdTreeNode();
-    virtual ~KdTreeNode();
-
-    /**
-     * Returns a pointer to the parent node; otherwise @c 0.
-     * @see hasParent()
-     */
-    KdTreeNode *parent() const;
-
-    /**
-     * Returns the child of this node @a which has the specified identifier.
-     * A child must be present (determined with @ref hasChild()), attempting
-     * to call this with no child results is an error.
-     *
-     * @param which  Child node identifier.
-     * @return  Child Node.
-     */
-    KdTreeNode *child(ChildId which) const;
-
-    /// Returns the right child node. @see child()
-    inline KdTreeNode *right() const { return child(Right); }
-
-    /// Returns the left child node. @see child()
-    inline KdTreeNode *left()  const { return child(Left); }
-
-    kdtreenode_s *_tree;
-};
-
 namespace bsp {
 
 /**
@@ -87,20 +41,21 @@ namespace bsp {
 class SuperBlockmap
 {
 public:
+    class NodeData;
+    typedef de::BinaryTree<NodeData *> Node;
+
     /**
      * RIGHT - has the lower coordinates.
      * LEFT  - has the higher coordinates.
      * Division of a block always occurs horizontally:
      *     e.g., 512x512 -> 256x512 -> 256x256.
      */
-    class Block : public KdTreeNode
+    class NodeData
     {
     public:
         typedef QList<LineSegmentSide *> Segments;
 
     public:
-        virtual ~Block();
-
         /**
          * Retrieve the axis-aligned bounding box of the block in the blockmap.
          * Not to be confused with the bounds defined by the line segment geometry
@@ -110,7 +65,7 @@ public:
          */
         AABox const &bounds() const;
 
-        Block &clear();
+        void clearSegments();
 
         /**
          * Push (link) the given line segment onto the FIFO list of segments linked
@@ -118,9 +73,9 @@ public:
          *
          * @param segment  Line segment to add.
          *
-         * @return  SuperBlock that @a segment was linked to.
+         * @return  KdTreeBlockmap that @a segment was linked to.
          */
-        Block &push(LineSegmentSide &segment);
+        Node &push(LineSegmentSide &segment);
 
         /**
          * Pop (unlink) the next line segment from the FIFO list of segments linked
@@ -163,18 +118,9 @@ public:
          * SuperBlockmap. Instantiation outside of this context is not permitted.
          * @ref SuperBlockmap
          */
-        Block(SuperBlockmap &owner, AABox const &bounds);
+        NodeData(SuperBlockmap &owner, AABox const &bounds);
 
-        /**
-         * Attach a new Block instance as a child of this.
-         * @param childId  Unique identifier of the child.
-         * @param splitVertical  @c true= Subdivide this block on the y axis and
-         *                       not the x axis.
-         */
-        /*Block *addChild(ChildId childId, bool splitVertical);
-
-        inline Block *addRight(bool splitVertical) { return addChild(Right, splitVertical); }
-        inline Block *addLeft(bool splitVertical)  { return addChild(Left,  splitVertical); }*/
+        Node *_node;
 
     private:
         DENG2_PRIVATE(d)
@@ -186,12 +132,11 @@ public:
      */
     SuperBlockmap(AABox const &bounds);
 
-    /// Automatic translation from SuperBlockmap to the root Block.
-    operator Block &();
+    /// Automatic translation from SuperBlockmap to the tree root.
+    operator Node /*const*/ &();
 
     /**
-     * Empty the SuperBlockmap unlinking the line segments and clearing all
-     * blocks.
+     * Empty the SuperBlockmap unlinking the line segments and clearing all blocks.
      */
     void clear();
 
@@ -208,7 +153,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-typedef SuperBlockmap::Block SuperBlock;
+typedef SuperBlockmap::Node SuperBlockmapNode;
 
 } // namespace bsp
 } // namespace de
