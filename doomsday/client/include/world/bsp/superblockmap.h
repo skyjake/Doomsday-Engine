@@ -43,12 +43,10 @@ class SuperBlockmap
 public:
     class NodeData;
     typedef de::BinaryTree<NodeData *> Node;
+    typedef QList<LineSegmentSide *>   Segments;
 
     class NodeData
     {
-    public:
-        typedef QList<LineSegmentSide *> Segments;
-
     public:
         /**
          * Retrieve the axis-aligned bounding box of the block in the blockmap.
@@ -76,12 +74,6 @@ public:
          * @return  Previous top-most line segment; otherwise @c 0 (empty).
          */
         LineSegmentSide *pop();
-
-        /**
-         * Collate (unlink) all line segments from "this" and all child blocks
-         * to a new segment list.
-         */
-        Segments collectAllSegments();
 
         /**
          * Determine the axis-aligned bounding box which contains all segments

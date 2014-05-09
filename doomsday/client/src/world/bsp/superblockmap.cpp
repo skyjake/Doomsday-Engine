@@ -161,58 +161,6 @@ LineSegmentSide *SuperBlockmap::NodeData::pop()
     return 0;
 }
 
-SuperBlockmap::NodeData::Segments SuperBlockmap::NodeData::collectAllSegments()
-{
-    Segments allSegs;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    allSegs.reserve(totalSegmentCount());
-#endif
-
-    // Iterative pre-order traversal.
-    Node *cur = _node;
-    Node *prev = 0;
-    while(cur)
-    {
-        while(cur)
-        {
-            LineSegmentSide *seg;
-            while((seg = cur->userData()->pop()))
-            {
-                allSegs << seg;
-            }
-
-            if(prev == cur->parentPtr())
-            {
-                // Descending - right first, then left.
-                prev = cur;
-                if(cur->hasRight()) cur = cur->rightPtr();
-                else                cur = cur->leftPtr();
-            }
-            else if(prev == cur->rightPtr())
-            {
-                // Last moved up the right branch - descend the left.
-                prev = cur;
-                cur = cur->leftPtr();
-            }
-            else if(prev == cur->leftPtr())
-            {
-                // Last moved up the left branch - continue upward.
-                prev = cur;
-                cur = cur->parentPtr();
-            }
-        }
-
-        if(prev)
-        {
-            // No left child - back up.
-            cur = prev->parentPtr();
-        }
-    }
-
-    return allSegs;
-}
-
 /// @todo Optimize: Cache this result.
 AABoxd SuperBlockmap::NodeData::segmentBounds() const
 {
@@ -244,7 +192,7 @@ int SuperBlockmap::NodeData::segmentCount(bool addMap, bool addPart) const
     return total;
 }
 
-SuperBlockmap::NodeData::Segments const &SuperBlockmap::NodeData::segments() const
+SuperBlockmap::Segments const &SuperBlockmap::NodeData::segments() const
 {
     return d->segments;
 }
