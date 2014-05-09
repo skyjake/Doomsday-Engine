@@ -28,18 +28,16 @@
 using namespace de;
 using namespace de::bsp;
 
-DENG2_PIMPL_NOREF(SuperBlockmap::NodeData)
+DENG2_PIMPL_NOREF(SuperBlockmapNodeData)
 {
-    SuperBlockmap &owner;  ///< SuperBlockmap owner of the node.
-    AABox bounds;          ///< Bounds of the coordinate subspace at the node.
+    AABox bounds;      ///< Bounds of the coordinate subspace at the node.
 
-    Segments segments;     ///< Line segments contained by the node (not owned).
-    int mapNum;            ///< Running total of map-line segments at/under this node.
-    int partNum;           ///< Running total of partition-line segments at/under this node.
+    Segments segments; ///< Line segments contained by the node (not owned).
+    int mapNum;        ///< Running total of map-line segments at/under this node.
+    int partNum;       ///< Running total of partition-line segments at/under this node.
 
-    Instance(SuperBlockmap &owner, AABox const &bounds)
-        : owner  (owner)
-        , bounds (bounds)
+    Instance(AABox const &bounds)
+        : bounds (bounds)
         , mapNum (0)
         , partNum(0)
     {}
@@ -59,12 +57,12 @@ DENG2_PIMPL_NOREF(SuperBlockmap::NodeData)
     }
 };
 
-SuperBlockmap::NodeData::NodeData(SuperBlockmap &owner, AABox const &bounds)
+SuperBlockmapNodeData::SuperBlockmapNodeData(AABox const &bounds)
     : _node(0)
-    , d(new Instance(owner, bounds))
+    , d(new Instance(bounds))
 {}
 
-AABox const &SuperBlockmap::NodeData::bounds() const
+AABox const &SuperBlockmapNodeData::bounds() const
 {
     return d->bounds;
 }
@@ -74,13 +72,13 @@ AABox const &SuperBlockmap::NodeData::bounds() const
  * tree as necessary, however new nodes are created only when they need to be
  * populated (i.e., a split does not generate two nodes at the same time).
  */
-SuperBlockmap::Node &SuperBlockmap::NodeData::push(LineSegmentSide &seg)
+SuperBlockmapNode &SuperBlockmapNodeData::push(LineSegmentSide &seg)
 {
     // Traverse the node tree beginning at "this" node.
-    Node *sb = _node;
+    SuperBlockmapNode *sb = _node;
     forever
     {
-        NodeData &ndata     = *sb->userData();
+        SuperBlockmapNodeData &ndata = *sb->userData();
         AABox const &bounds = ndata.bounds();
 
         // The segment "touches" this node; increment the ref counters.
@@ -98,8 +96,8 @@ SuperBlockmap::Node &SuperBlockmap::NodeData::push(LineSegmentSide &seg)
         // Determine whether the node should be split and on which axis.
         int const splitAxis    = (dimensions.x < dimensions.y); // x=0, y=1
         int const midOnAxis    = (bounds.min[splitAxis] + bounds.max[splitAxis]) / 2;
-        Node::ChildId fromSide = Node::ChildId(seg.from().origin()[splitAxis] >= midOnAxis);
-        Node::ChildId toSide   = Node::ChildId(seg.to  ().origin()[splitAxis] >= midOnAxis);
+        SuperBlockmapNode::ChildId fromSide = SuperBlockmapNode::ChildId(seg.from().origin()[splitAxis] >= midOnAxis);
+        SuperBlockmapNode::ChildId toSide   = SuperBlockmapNode::ChildId(seg.to  ().origin()[splitAxis] >= midOnAxis);
 
         // Does the segment lie entirely within one half of this node?
         if(fromSide != toSide)
@@ -112,7 +110,7 @@ SuperBlockmap::Node &SuperBlockmap::NodeData::push(LineSegmentSide &seg)
         // Do we need to create the child node?
         if(!sb->hasChild(fromSide))
         {
-            bool const toLeft = (fromSide == Node::Left);
+            bool const toLeft = (fromSide == SuperBlockmapNode::Left);
 
             AABox childBounds;
             if(splitAxis)
@@ -139,8 +137,8 @@ SuperBlockmap::Node &SuperBlockmap::NodeData::push(LineSegmentSide &seg)
             }
 
             // Add a new child node and link it to its parent.
-            NodeData *childData = new NodeData(ndata.d->owner, childBounds);
-            childData->_node = &sb->setChild(fromSide, new Node(childData, sb));
+            SuperBlockmapNodeData *childData = new SuperBlockmapNodeData(childBounds);
+            childData->_node = &sb->setChild(fromSide, new SuperBlockmapNode(childData, sb));
         }
 
         // Descend to the child node.
@@ -150,7 +148,7 @@ SuperBlockmap::Node &SuperBlockmap::NodeData::push(LineSegmentSide &seg)
     return *sb;
 }
 
-LineSegmentSide *SuperBlockmap::NodeData::pop()
+LineSegmentSide *SuperBlockmapNodeData::pop()
 {
     if(!d->segments.isEmpty())
     {
@@ -161,7 +159,7 @@ LineSegmentSide *SuperBlockmap::NodeData::pop()
     return 0;
 }
 
-int SuperBlockmap::NodeData::segmentCount(bool addMap, bool addPart) const
+int SuperBlockmapNodeData::segmentCount(bool addMap, bool addPart) const
 {
     int total = 0;
     if(addMap)  total += d->mapNum;
@@ -169,43 +167,7 @@ int SuperBlockmap::NodeData::segmentCount(bool addMap, bool addPart) const
     return total;
 }
 
-SuperBlockmap::Segments const &SuperBlockmap::NodeData::segments() const
+SuperBlockmapNodeData::Segments const &SuperBlockmapNodeData::segments() const
 {
     return d->segments;
-}
-
-DENG2_PIMPL(SuperBlockmap)
-{
-    Node rootNode;
-
-    Instance(Public *i, AABox const &bounds) : Base(i)
-    {
-        // Attach the root Node.
-        NodeData *ndata = new NodeData(*thisPublic, bounds);
-        rootNode.setUserData(ndata);
-        ndata->_node = &rootNode;
-    }
-
-    ~Instance() { clear(); }
-
-    static int clearUserDataWorker(Node &subtree, void *)
-    {
-        delete subtree.userData();
-        return 0;
-    }
-
-    void clear()
-    {
-        rootNode.traversePostOrder(clearUserDataWorker);
-        rootNode.clear();
-    }
-};
-
-SuperBlockmap::SuperBlockmap(AABox const &bounds)
-    : d(new Instance(this, bounds))
-{}
-
-SuperBlockmap::operator SuperBlockmap::Node /*const*/ &()
-{
-    return d->rootNode;
 }
