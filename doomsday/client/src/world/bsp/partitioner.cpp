@@ -162,24 +162,23 @@ DENG2_PIMPL(Partitioner)
     /**
      * @return The new line segment (front is from @a start to @a end).
      */
-    LineSegment &buildLineSegmentBetweenVertexes(Vertex &start, Vertex &end,
-        Sector *frontSec, Sector *backSec, LineSide *frontSide,
-        Line *partitionLine = 0)
+    LineSegment *makeLineSegment(Vertex &start, Vertex &end, Sector *frontSec,
+        Sector *backSec, LineSide *frontSide, Line *partitionLine = 0)
     {
-        LineSegment *lineSeg = new LineSegment(start, end);
-        lineSegments << lineSeg;
+        LineSegment *newSeg = new LineSegment(start, end);
+        lineSegments << newSeg;
 
-        LineSegmentSide &front = lineSeg->front();
+        LineSegmentSide &front = newSeg->front();
         front.setMapSide(frontSide);
         front.setPartitionMapLine(partitionLine);
         front.setSector(frontSec);
 
-        LineSegmentSide &back = lineSeg->back();
+        LineSegmentSide &back = newSeg->back();
         back.setMapSide(frontSide? &frontSide->back() : 0);
         back.setPartitionMapLine(partitionLine);
         back.setSector(backSec);
 
-        return *lineSeg;
+        return newSeg;
     }
 
     inline void linkSegmentInSuperBlockmap(SuperBlockmapNode &block, LineSegmentSide &lineSeg)
@@ -219,8 +218,8 @@ DENG2_PIMPL(Partitioner)
                 backSec = line->_bspWindowSector;
             }
 
-            LineSegment *seg = &buildLineSegmentBetweenVertexes(
-                line->from(), line->to(), frontSec, backSec, &line->front());
+            LineSegment *seg = makeLineSegment(line->from(), line->to(),
+                                               frontSec, backSec, &line->front());
 
             if(seg->front().hasSector())
             {
@@ -236,19 +235,20 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    void chooseNextPartitionFromSuperBlock(SuperBlockmapNode const &partList,
-        SuperBlockmapNode const &segs, LineSegmentSide **best, PartitionCost &bestCost)
+    void choosePartitionWorker(SuperBlockmapNode const &rootNode,
+        SuperBlockmapNodeData::Segments const &candidates,
+        LineSegmentSide **best, PartitionCost &bestCost)
     {
         DENG2_ASSERT(best != 0);
 
-        //LOG_AS("chooseNextPartitionFromSuperBlock");
+        //LOG_AS("chooseNextPartitionWorker");
 
         // Configure a new cost evaluator.
-        PartitionCostEvaluator evaluator(segs, *best, bestCost);
+        PartitionCostEvaluator evaluator(rootNode, *best, bestCost);
         evaluator.setSplitCost(splitCostFactor);
 
-        // Test each line segment as a potential partition.
-        foreach(LineSegmentSide *candidate, partList.userData()->segments())
+        // Test each line segment as a potential partition candidate.
+        foreach(LineSegmentSide *candidate, candidates)
         {
             //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
             //    << (canidate->hasMapLineSide()? "" : "mini-") << seg
@@ -287,11 +287,11 @@ DENG2_PIMPL(Partitioner)
     /**
      * Find the best line segment to use as the next partition.
      *
-     * @param candidates  Candidate line segments to choose from.
+     * @param sbnode  SuperBlockmap node containing the potential candidates.
      *
-     * @return  The chosen line segment.
+     * @return  The chosen partition line.
      */
-    LineSegmentSide *chooseNextPartition(SuperBlockmapNode const &candidates)
+    LineSegmentSide *choosePartition(SuperBlockmapNode const &sbnode)
     {
         LOG_AS("Partitioner::choosePartition");
 
@@ -303,14 +303,16 @@ DENG2_PIMPL(Partitioner)
         // selection.
         validCount++;
 
-        // Iterative pre-order traversal of SuperBlock.
-        SuperBlockmapNode const *cur = &candidates;
+        // Iterative pre-order traversal.
+        SuperBlockmapNode const *cur = &sbnode;
         SuperBlockmapNode const *prev = 0;
         while(cur)
         {
             while(cur)
             {
-                chooseNextPartitionFromSuperBlock(*cur, candidates, &best, bestCost);
+                SuperBlockmapNodeData::Segments const &candidatesAtNode = cur->userData()->segments();
+
+                choosePartitionWorker(sbnode, candidatesAtNode, &best, bestCost);
 
                 if(prev == cur->parentPtr())
                 {
@@ -369,12 +371,11 @@ DENG2_PIMPL(Partitioner)
         Vertex *newVert = makeVertex(point);
 
         LineSegment &oldSeg = frontLeft.line();
-        LineSegment &newSeg =
-            buildLineSegmentBetweenVertexes(oldSeg.from(), oldSeg.to(),
-                                            oldSeg.front().sectorPtr(),
-                                            oldSeg.back().sectorPtr(),
-                                            oldSeg.front().mapSidePtr(),
-                                            oldSeg.front().partitionMapLine());
+        LineSegment &newSeg = *makeLineSegment(oldSeg.from(), oldSeg.to(),
+                                               oldSeg.front().sectorPtr(),
+                                               oldSeg.back().sectorPtr(),
+                                               oldSeg.front().mapSidePtr(),
+                                               oldSeg.front().partitionMapLine());
 
         // Perform the split, updating vertex and relative segment links.
         LineSegmentSide &frontRight = newSeg.side(frontLeft.lineSideId());
@@ -725,10 +726,9 @@ DENG2_PIMPL(Partitioner)
 
             DENG2_ASSERT(sector != 0);
 
-            LineSegment &newSeg =
-                buildLineSegmentBetweenVertexes(fromVertex, toVertex,
-                                                sector, sector, 0 /*no map line*/,
-                                                partSeg? &partSeg->mapLine() : 0);
+            LineSegment &newSeg = *makeLineSegment(fromVertex, toVertex,
+                                                   sector, sector, 0 /*no map line*/,
+                                                   partSeg? &partSeg->mapLine() : 0);
 
             edgeTipSet(newSeg.from()) << EdgeTip(newSeg.front());
             edgeTipSet(newSeg.to())   << EdgeTip(newSeg.back());
@@ -926,7 +926,7 @@ DENG2_PIMPL(Partitioner)
         BspTree *rightTree = 0, *leftTree = 0;
 
         // Pick a line segment to use as the next partition plane.
-        if(LineSegmentSide *partSeg = chooseNextPartition(sbnode))
+        if(LineSegmentSide *partSeg = choosePartition(sbnode))
         {
             // Reconfigure the half-plane for the next round of partitioning.
             hplane.configure(*partSeg);
