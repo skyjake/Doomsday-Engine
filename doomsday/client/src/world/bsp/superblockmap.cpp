@@ -189,7 +189,7 @@ SuperBlockmap::Node &SuperBlockmap::NodeData::push(LineSegmentSide &seg)
         // if it doesn't already exist, and loop back to add the seg.
         if(!sb->hasChild(fromSide))
         {
-            bool const toLeft = (fromSide == Left);
+            bool const toLeft = (fromSide == Node::Left);
 
             AABox subBounds;
             if(splitVertical)
