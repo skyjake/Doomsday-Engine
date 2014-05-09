@@ -216,6 +216,7 @@ DENG_HEADERS += \
     $$SRC/include/world/bsp/hplane.h \
     $$SRC/include/world/bsp/linesegment.h \
     $$SRC/include/world/bsp/partitioncost.h \
+    $$SRC/include/world/bsp/partitioncostevaluator.h \
     $$SRC/include/world/bsp/partitioner.h \
     $$SRC/include/world/bsp/superblockmap.h \
     $$SRC/include/world/bspleaf.h \
@@ -363,6 +364,7 @@ SOURCES += \
     $$SRC/src/world/bsp/convexsubspaceproxy.cpp \
     $$SRC/src/world/bsp/hplane.cpp \
     $$SRC/src/world/bsp/linesegment.cpp \
+    $$SRC/src/world/bsp/partitioncostevaluator.cpp \
     $$SRC/src/world/bsp/partitioner.cpp \
     $$SRC/src/world/bsp/superblockmap.cpp \
     $$SRC/src/world/bspleaf.cpp \
