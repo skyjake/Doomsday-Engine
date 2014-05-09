@@ -76,12 +76,6 @@ public:
         LineSegmentSide *pop();
 
         /**
-         * Determine the axis-aligned bounding box which contains all segments
-         * linked @em directly to the node.
-         */
-        AABoxd segmentBounds() const;
-
-        /**
          * Retrieve the total number of line segments in this and all child blocks.
          *
          * @param addMap  Include map line segments in the total.
@@ -124,20 +118,6 @@ public:
 
     /// Automatic translation from SuperBlockmap to the tree root.
     operator Node /*const*/ &();
-
-    /**
-     * Empty the SuperBlockmap unlinking the line segments and clearing all blocks.
-     */
-    void clear();
-
-    /**
-     * Find the axis-aligned bounding box defined by the vertices of all line
-     * segments in the blockmap. If empty an AABox initialized to the "cleared"
-     * state (i.e., min > max) will be returned.
-     *
-     * @return  Determined line segment bounds.
-     */
-    AABoxd findSegmentBounds() const;
 
 private:
     DENG2_PRIVATE(d)

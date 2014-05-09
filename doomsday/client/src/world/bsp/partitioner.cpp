@@ -977,7 +977,7 @@ DENG2_PIMPL(Partitioner)
     /**
      * Collate (unlink) all line segments at or beneath @a node to a new list.
      */
-    QList<LineSegmentSide *> collectAllSegments(SuperBlockmapNode &node)
+    static QList<LineSegmentSide *> collectAllSegments(SuperBlockmapNode &node)
     {
         QList<LineSegmentSide *> allSegs;
 
@@ -1027,6 +1027,103 @@ DENG2_PIMPL(Partitioner)
         }
 
         return allSegs;
+    }
+
+    /**
+     * Determine the axis-aligned bounding box containing the vertex coordinates
+     * from @a allSegments.
+     */
+    static AABoxd segmentBounds(SuperBlockmap::Segments const &allSegments)
+    {
+        AABoxd bounds;
+        bool initialized = false;
+
+        foreach(LineSegmentSide *seg, allSegments)
+        {
+            AABoxd segBounds = seg->aaBox();
+            if(initialized)
+            {
+                V2d_UniteBox(bounds.arvec2, segBounds.arvec2);
+            }
+            else
+            {
+                V2d_CopyBox(bounds.arvec2, segBounds.arvec2);
+                initialized = true;
+            }
+        }
+
+        return bounds;
+    }
+
+    /**
+     * Determine the axis-aligned bounding box containing the vertices of all
+     * segments at or beneath @a node in the blockmap.
+     *
+     * @return  Determined AABox (might be empty (i.e., min > max) if no segments).
+     */
+    static AABoxd segmentBounds(SuperBlockmapNode const &node)
+    {
+        bool initialized = false;
+        AABoxd bounds;
+
+        // Iterative pre-order traversal.
+        SuperBlockmapNode const *cur = &node;
+        SuperBlockmapNode const *prev = 0;
+        while(cur)
+        {
+            while(cur)
+            {
+                SuperBlockmap::NodeData const &ndata = *cur->userData();
+
+                if(ndata.totalSegmentCount())
+                {
+                    AABoxd segBoundsAtNode = segmentBounds(ndata.segments());
+                    if(initialized)
+                    {
+                        V2d_AddToBox(bounds.arvec2, segBoundsAtNode.min);
+                    }
+                    else
+                    {
+                        V2d_InitBox(bounds.arvec2, segBoundsAtNode.min);
+                        initialized = true;
+                    }
+                    V2d_AddToBox(bounds.arvec2, segBoundsAtNode.max);
+                }
+
+                if(prev == cur->parentPtr())
+                {
+                    // Descending - right first, then left.
+                    prev = cur;
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
+                }
+                else if(prev == cur->rightPtr())
+                {
+                    // Last moved up the right branch - descend the left.
+                    prev = cur;
+                    cur = cur->leftPtr();
+                }
+                else if(prev == cur->leftPtr())
+                {
+                    // Last moved up the left branch - continue upward.
+                    prev = cur;
+                    cur = cur->parentPtr();
+                }
+            }
+
+            if(prev)
+            {
+                // No left child - back up.
+                cur = prev->parentPtr();
+            }
+        }
+
+        if(!initialized)
+        {
+            bounds.clear();
+        }
+
+        return bounds;
     }
 
     /**
@@ -1093,8 +1190,8 @@ DENG2_PIMPL(Partitioner)
 
             // Take a copy of the geometry bounds for each child/sub space
             // - we'll need this for any BspNode we produce later.
-            AABoxd rightBounds = rightBMap.findSegmentBounds();
-            AABoxd leftBounds  = leftBMap.findSegmentBounds();
+            AABoxd rightBounds = segmentBounds(rightBMap);
+            AABoxd leftBounds  = segmentBounds(leftBMap);
 
             // Recurse on each suspace, first the right space then left.
             rightTree = divideSpace(rightBMap);

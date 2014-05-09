@@ -161,29 +161,6 @@ LineSegmentSide *SuperBlockmap::NodeData::pop()
     return 0;
 }
 
-/// @todo Optimize: Cache this result.
-AABoxd SuperBlockmap::NodeData::segmentBounds() const
-{
-    AABoxd bounds;
-    bool initialized = false;
-
-    foreach(LineSegmentSide *seg, d->segments)
-    {
-        AABoxd segBounds = seg->aaBox();
-        if(initialized)
-        {
-            V2d_UniteBox(bounds.arvec2, segBounds.arvec2);
-        }
-        else
-        {
-            V2d_CopyBox(bounds.arvec2, segBounds.arvec2);
-            initialized = true;
-        }
-    }
-
-    return bounds;
-}
-
 int SuperBlockmap::NodeData::segmentCount(bool addMap, bool addPart) const
 {
     int total = 0;
@@ -222,25 +199,6 @@ DENG2_PIMPL(SuperBlockmap)
         rootNode.traversePostOrder(clearUserDataWorker);
         rootNode.clear();
     }
-
-    void findSegmentBounds(NodeData &ndata, AABoxd &bounds, bool *initialized)
-    {
-        DENG2_ASSERT(initialized);
-        if(ndata.totalSegmentCount())
-        {
-            AABoxd segBoundsAtNode = ndata.segmentBounds();
-            if(*initialized)
-            {
-                V2d_AddToBox(bounds.arvec2, segBoundsAtNode.min);
-            }
-            else
-            {
-                V2d_InitBox(bounds.arvec2, segBoundsAtNode.min);
-                *initialized = true;
-            }
-            V2d_AddToBox(bounds.arvec2, segBoundsAtNode.max);
-        }
-    }
 };
 
 SuperBlockmap::SuperBlockmap(AABox const &bounds)
@@ -250,54 +208,4 @@ SuperBlockmap::SuperBlockmap(AABox const &bounds)
 SuperBlockmap::operator SuperBlockmap::Node /*const*/ &()
 {
     return d->rootNode;
-}
-
-AABoxd SuperBlockmap::findSegmentBounds() const
-{
-    bool initialized = false;
-    AABoxd bounds;
-
-    // Iterative pre-order traversal.
-    Node *cur = &d->rootNode;
-    Node *prev = 0;
-    while(cur)
-    {
-        while(cur)
-        {
-            d->findSegmentBounds(*cur->userData(), bounds, &initialized);
-
-            if(prev == cur->parentPtr())
-            {
-                // Descending - right first, then left.
-                prev = cur;
-                if(cur->hasRight()) cur = cur->rightPtr();
-                else                cur = cur->leftPtr();
-            }
-            else if(prev == cur->rightPtr())
-            {
-                // Last moved up the right branch - descend the left.
-                prev = cur;
-                cur = cur->leftPtr();
-            }
-            else if(prev == cur->leftPtr())
-            {
-                // Last moved up the left branch - continue upward.
-                prev = cur;
-                cur = cur->parentPtr();
-            }
-        }
-
-        if(prev)
-        {
-            // No left child - back up.
-            cur = prev->parentPtr();
-        }
-    }
-
-    if(!initialized)
-    {
-        bounds.clear();
-    }
-
-    return bounds;
 }
