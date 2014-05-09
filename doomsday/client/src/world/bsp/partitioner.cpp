@@ -975,6 +975,61 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
+     * Collate (unlink) all line segments at or beneath @a node to a new list.
+     */
+    QList<LineSegmentSide *> collectAllSegments(SuperBlockmapNode &node)
+    {
+        QList<LineSegmentSide *> allSegs;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+        allSegs.reserve(node.userData()->totalSegmentCount());
+#endif
+
+        // Iterative pre-order traversal.
+        SuperBlockmapNode *cur  = &node;
+        SuperBlockmapNode *prev = 0;
+        while(cur)
+        {
+            while(cur)
+            {
+                LineSegmentSide *seg;
+                while((seg = cur->userData()->pop()))
+                {
+                    allSegs << seg;
+                }
+
+                if(prev == cur->parentPtr())
+                {
+                    // Descending - right first, then left.
+                    prev = cur;
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
+                }
+                else if(prev == cur->rightPtr())
+                {
+                    // Last moved up the right branch - descend the left.
+                    prev = cur;
+                    cur = cur->leftPtr();
+                }
+                else if(prev == cur->leftPtr())
+                {
+                    // Last moved up the left branch - continue upward.
+                    prev = cur;
+                    cur = cur->parentPtr();
+                }
+            }
+
+            if(prev)
+            {
+                // No left child - back up.
+                cur = prev->parentPtr();
+            }
+        }
+
+        return allSegs;
+    }
+
+    /**
      * Takes the line segment list and determines if it is convex, possibly
      * converting it into a BSP leaf. Otherwise, the list is divided into two
      * halves and recursion will continue on the new sub list.
@@ -994,7 +1049,7 @@ DENG2_PIMPL(Partitioner)
      *
      * @return  Newly created subtree; otherwise @c 0 (degenerate).
      */
-    BspTree *divideSpace(SuperBlockmapNode &bmap)
+    BspTree *divideSpace(SuperBlockmapNode &sbnode)
     {
         LOG_AS("Partitioner::divideSpace");
 
@@ -1002,7 +1057,7 @@ DENG2_PIMPL(Partitioner)
         BspTree *rightTree = 0, *leftTree = 0;
 
         // Pick a line segment to use as the next partition plane.
-        if(LineSegmentSide *partSeg = chooseNextPartition(bmap))
+        if(LineSegmentSide *partSeg = chooseNextPartition(sbnode))
         {
             // Reconfigure the half-plane for the next round of partitioning.
             hplane.configure(*partSeg);
@@ -1025,14 +1080,14 @@ DENG2_PIMPL(Partitioner)
             /// @todo There should be no need to use additional independent
             ///       structures to contain these subsets.
             // Copy the bounding box of the edge list to the superblocks.
-            SuperBlockmap rightBMap(bmap.userData()->bounds());
-            SuperBlockmap leftBMap(bmap.userData()->bounds());
+            SuperBlockmap rightBMap(sbnode.userData()->bounds());
+            SuperBlockmap leftBMap(sbnode.userData()->bounds());
 
             // Partition the line segements into two subsets according to their
             // spacial relationship with the half-plane (splitting any which
             // intersect).
-            divideSegments(bmap, rightBMap, leftBMap);
-            bmap.clear();
+            divideSegments(sbnode, rightBMap, leftBMap);
+            sbnode.clear();
 
             addPartitionLineSegments(rightBMap, leftBMap);
 
@@ -1055,8 +1110,8 @@ DENG2_PIMPL(Partitioner)
         else
         {
             // No partition required/possible -- already convex (or degenerate).
-            SuperBlockmap::NodeData::Segments segments = bmap.userData()->collectAllSegments();
-            bmap.clear();
+            SuperBlockmap::Segments segments = collectAllSegments(sbnode);
+            sbnode.clear();
 
             subspaces.append(ConvexSubspaceProxy());
             ConvexSubspaceProxy &convexSet = subspaces.last();
@@ -1213,7 +1268,7 @@ DENG2_PIMPL(Partitioner)
 #ifdef DENG_DEBUG
     void printSuperBlockSegments(SuperBlockmapNode const &block)
     {
-        SuperBlockmap::NodeData::Segments const &segments = block.userData()->segments();
+        SuperBlockmap::Segments const &segments = block.userData()->segments();
         foreach(LineSegmentSide const *seg, segments)
         {
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
