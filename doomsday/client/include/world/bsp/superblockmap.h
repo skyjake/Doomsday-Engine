@@ -35,95 +35,74 @@
 namespace de {
 namespace bsp {
 
+class SuperBlockmapNodeData;
+typedef de::BinaryTree<SuperBlockmapNodeData *> SuperBlockmapNode;
+
 /**
  * @ingroup bsp
  */
-class SuperBlockmap
+class SuperBlockmapNodeData
 {
 public:
-    class NodeData;
-    typedef de::BinaryTree<NodeData *> Node;
     typedef QList<LineSegmentSide *>   Segments;
 
-    class NodeData
-    {
-    public:
-        /**
-         * Retrieve the axis-aligned bounding box of the block in the blockmap.
-         * Not to be confused with the bounds defined by the line segment geometry
-         * which is determined by @ref findSegmentBounds().
-         *
-         * @return  Axis-aligned bounding box of the block.
-         */
-        AABox const &bounds() const;
-
-        /**
-         * Push (link) the given line segment onto the FIFO list of segments linked
-         * to this superblock.
-         *
-         * @param segment  Line segment to add.
-         *
-         * @return  KdTreeBlockmap that @a segment was linked to.
-         */
-        Node &push(LineSegmentSide &segment);
-
-        /**
-         * Pop (unlink) the next line segment from the FIFO list of segments
-         * linked to the node.
-         *
-         * @return  Previous top-most line segment; otherwise @c 0 (empty).
-         */
-        LineSegmentSide *pop();
-
-        /**
-         * Retrieve the total number of line segments in this and all child blocks.
-         *
-         * @param addMap  Include map line segments in the total.
-         * @param addPart Include partition line segments in the total.
-         *
-         * @return  Determined line segment total.
-         */
-        int segmentCount(bool addMap, bool addPart) const;
-
-        /// Convenience functions for retrieving line segment totals:
-        inline int partSegmentCount() const  { return segmentCount(false, true); }
-        inline int mapSegmentCount() const   { return segmentCount(true, false); }
-        inline int totalSegmentCount() const { return segmentCount(true, true);  }
-
-        /**
-         * Provides access to the list of line segments in the block, for efficient
-         * traversal.
-         */
-        Segments const &segments() const;
-
-    //private:
-        /**
-         * Block objects must be constructed within the context of an owning
-         * SuperBlockmap. Instantiation outside of this context is not permitted.
-         * @ref SuperBlockmap
-         */
-        NodeData(SuperBlockmap &owner, AABox const &bounds);
-
-        Node *_node;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
-
 public:
-    /**
-     * @param bounds  Bounding box in map coordinates for the whole blockmap.
-     */
-    SuperBlockmap(AABox const &bounds);
+    SuperBlockmapNodeData(AABox const &bounds);
 
-    /// Automatic translation from SuperBlockmap to the tree root.
-    operator Node /*const*/ &();
+    /**
+     * Retrieve the axis-aligned bounding box of the block in the blockmap.
+     * Not to be confused with the bounds defined by the line segment geometry
+     * which is determined by @ref findSegmentBounds().
+     *
+     * @return  Axis-aligned bounding box of the block.
+     */
+    AABox const &bounds() const;
+
+    /**
+     * Push (link) the given line segment onto the FIFO list of segments linked
+     * to this superblock.
+     *
+     * @param segment  Line segment to add.
+     *
+     * @return  KdTreeBlockmap that @a segment was linked to.
+     */
+    SuperBlockmapNode &push(LineSegmentSide &segment);
+
+    /**
+     * Pop (unlink) the next line segment from the FIFO list of segments
+     * linked to the node.
+     *
+     * @return  Previous top-most line segment; otherwise @c 0 (empty).
+     */
+    LineSegmentSide *pop();
+
+    /**
+     * Retrieve the total number of line segments in this and all child blocks.
+     *
+     * @param addMap  Include map line segments in the total.
+     * @param addPart Include partition line segments in the total.
+     *
+     * @return  Determined line segment total.
+     */
+    int segmentCount(bool addMap, bool addPart) const;
+
+    /// Convenience functions for retrieving line segment totals:
+    inline int partSegmentCount() const  { return segmentCount(false, true); }
+    inline int mapSegmentCount() const   { return segmentCount(true, false); }
+    inline int totalSegmentCount() const { return segmentCount(true, true);  }
+
+    /**
+     * Provides access to the list of line segments in the block, for efficient
+     * traversal.
+     */
+    Segments const &segments() const;
+
+//private:
+    SuperBlockmapNode *_node;
 
 private:
     DENG2_PRIVATE(d)
 };
-
-typedef SuperBlockmap::Node SuperBlockmapNode;
 
 } // namespace bsp
 } // namespace de

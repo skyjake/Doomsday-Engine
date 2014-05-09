@@ -53,6 +53,7 @@ using namespace bsp;
 
 typedef QList<Line *>              Lines;
 typedef QList<LineSegment *>       LineSegments;
+typedef QList<LineSegmentSide *>   LineSegmentSides;
 typedef QList<ConvexSubspaceProxy> SubspaceProxys;
 typedef QHash<Vertex *, EdgeTips>  EdgeTipSetMap;
 
@@ -72,6 +73,40 @@ DENG2_PIMPL(Partitioner)
 
     BspTree *bspRoot;           ///< The BSP tree under construction.
     HPlane hplane;              ///< Current space half-plane (partitioner state).
+
+    struct SuperBlockmap
+    {
+        SuperBlockmapNode rootNode;
+
+        /// @param bounds  Map space bounding box for the blockmap.
+        SuperBlockmap(AABox const &bounds)
+        {
+            // Attach the root Node.
+            SuperBlockmapNodeData *ndata = new SuperBlockmapNodeData(bounds);
+            rootNode.setUserData(ndata);
+            ndata->_node = &rootNode;
+        }
+
+        ~SuperBlockmap() { clear(); }
+
+        /// Automatic translation from SuperBlockmap to the tree root.
+        inline operator SuperBlockmapNode /*const*/ &() {
+            return rootNode;
+        }
+
+    private:
+        static int clearUserDataWorker(SuperBlockmapNode &subtree, void *)
+        {
+            delete subtree.userData();
+            return 0;
+        }
+
+        void clear()
+        {
+            rootNode.traversePostOrder(clearUserDataWorker);
+            rootNode.clear();
+        }
+    };
 
     Instance(Public *i)
         : Base(i)
@@ -803,7 +838,7 @@ DENG2_PIMPL(Partitioner)
         {
             while(cur)
             {
-                SuperBlockmap::NodeData &node = *cur->userData();
+                SuperBlockmapNodeData &node = *cur->userData();
 
                 LineSegmentSide *seg;
                 while((seg = node.pop()))
@@ -977,9 +1012,9 @@ DENG2_PIMPL(Partitioner)
     /**
      * Collate (unlink) all line segments at or beneath @a node to a new list.
      */
-    static QList<LineSegmentSide *> collectAllSegments(SuperBlockmapNode &node)
+    static LineSegmentSides collectAllSegments(SuperBlockmapNode &node)
     {
-        QList<LineSegmentSide *> allSegs;
+        LineSegmentSides allSegs;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
         allSegs.reserve(node.userData()->totalSegmentCount());
@@ -1033,7 +1068,7 @@ DENG2_PIMPL(Partitioner)
      * Determine the axis-aligned bounding box containing the vertex coordinates
      * from @a allSegments.
      */
-    static AABoxd segmentBounds(SuperBlockmap::Segments const &allSegments)
+    static AABoxd segmentBounds(LineSegmentSides const &allSegments)
     {
         AABoxd bounds;
         bool initialized = false;
@@ -1073,7 +1108,7 @@ DENG2_PIMPL(Partitioner)
         {
             while(cur)
             {
-                SuperBlockmap::NodeData const &ndata = *cur->userData();
+                SuperBlockmapNodeData const &ndata = *cur->userData();
 
                 if(ndata.totalSegmentCount())
                 {
@@ -1207,7 +1242,7 @@ DENG2_PIMPL(Partitioner)
         else
         {
             // No partition required/possible -- already convex (or degenerate).
-            SuperBlockmap::Segments segments = collectAllSegments(sbnode);
+            SuperBlockmapNodeData::Segments segments = collectAllSegments(sbnode);
             sbnode.clear();
 
             subspaces.append(ConvexSubspaceProxy());
@@ -1365,7 +1400,7 @@ DENG2_PIMPL(Partitioner)
 #ifdef DENG_DEBUG
     void printSuperBlockSegments(SuperBlockmapNode const &block)
     {
-        SuperBlockmap::Segments const &segments = block.userData()->segments();
+        SuperBlockmapNodeData::Segments const &segments = block.userData()->segments();
         foreach(LineSegmentSide const *seg, segments)
         {
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
@@ -1448,7 +1483,7 @@ Partitioner::BspTree *Partitioner::makeBspTree(LineSet const &lines, Mesh &mesh)
         }
     }
 
-    SuperBlockmap rootBlock(blockmapBounds(bounds));
+    Instance::SuperBlockmap rootBlock(blockmapBounds(bounds));
 
     d->createInitialLineSegments(rootBlock);
 
