@@ -37,7 +37,7 @@
 #include "world/bsp/edgetip.h"
 #include "world/bsp/hplane.h"
 #include "world/bsp/linesegment.h"
-#include "world/bsp/partitioncost.h"
+#include "world/bsp/partitioncostevaluator.h"
 #include "world/bsp/superblockmap.h"
 
 #include <de/Log>
@@ -236,272 +236,6 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    /**
-     * "Near miss" predicate.
-     */
-    static bool nearMiss(LineRelationship rel, coord_t fromDist, coord_t toDist,
-                         coord_t *distance)
-    {
-        if(rel == Right &&
-           !((fromDist >= SHORT_HEDGE_EPSILON && toDist >= SHORT_HEDGE_EPSILON) ||
-             (fromDist <= DIST_EPSILON        && toDist >= SHORT_HEDGE_EPSILON) ||
-             (toDist <= DIST_EPSILON && fromDist >= SHORT_HEDGE_EPSILON)))
-        {
-            // Need to know how close?
-            if(distance)
-            {
-                if(fromDist <= DIST_EPSILON || toDist <= DIST_EPSILON)
-                    *distance = SHORT_HEDGE_EPSILON / de::max(fromDist, toDist);
-                else
-                    *distance = SHORT_HEDGE_EPSILON / de::min(fromDist, toDist);
-            }
-            return true;
-        }
-
-        if(rel == Left &&
-           !((fromDist <= -SHORT_HEDGE_EPSILON && toDist <= -SHORT_HEDGE_EPSILON) ||
-             (fromDist >= -DIST_EPSILON        && toDist <= -SHORT_HEDGE_EPSILON) ||
-             (toDist >= -DIST_EPSILON && fromDist <= -SHORT_HEDGE_EPSILON)))
-        {
-            // Need to know how close?
-            if(distance)
-            {
-                if(fromDist >= -DIST_EPSILON || toDist >= -DIST_EPSILON)
-                    *distance = SHORT_HEDGE_EPSILON / -de::min(fromDist, toDist);
-                else
-                    *distance = SHORT_HEDGE_EPSILON / -de::max(fromDist, toDist);
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * "Near edge" predicate. Assumes intersecting line segment relationship.
-     */
-    static bool nearEdge(coord_t fromDist, coord_t toDist, coord_t *distance)
-    {
-        if(de::abs(fromDist) < SHORT_HEDGE_EPSILON || de::abs(toDist) < SHORT_HEDGE_EPSILON)
-        {
-            // Need to know how close?
-            if(distance)
-            {
-                *distance = SHORT_HEDGE_EPSILON / de::min(de::abs(fromDist), de::abs(toDist));
-            }
-            return true;
-        }
-        return false;
-    }
-
-    void evalPartitionCostForSegment(LineSegmentSide const &plSeg,
-        LineSegmentSide const &seg, PartitionCost &cost)
-    {
-        int const costFactorMultiplier = splitCostFactor;
-
-        /// Determine the relationship between @a seg and the partition plane.
-        coord_t fromDist, toDist;
-        LineRelationship rel = seg.relationship(plSeg, &fromDist, &toDist);
-        switch(rel)
-        {
-        case Collinear: {
-            // This line segment runs along the same line as the partition.
-            // Check whether it goes in the same direction or the opposite.
-            if(seg.direction().dot(plSeg.direction()) < 0)
-            {
-                cost.addSegmentLeft(seg);
-            }
-            else
-            {
-                cost.addSegmentRight(seg);
-            }
-            break; }
-
-        case Right:
-        case RightIntercept: {
-            cost.addSegmentRight(seg);
-
-            /*
-             * Near misses are bad, as they have the potential to result in
-             * really short line segments being produced later on.
-             *
-             * The closer the near miss, the higher the cost.
-             */
-            coord_t nearDist;
-            if(nearMiss(rel, fromDist, toDist, &nearDist))
-            {
-                cost.nearMiss += 1;
-                cost.total += int( 100 * costFactorMultiplier * (nearDist * nearDist - 1.0) );
-            }
-            break; }
-
-        case Left:
-        case LeftIntercept: {
-            cost.addSegmentLeft(seg);
-
-            // Near miss?
-            coord_t nearDist;
-            if(nearMiss(rel, fromDist, toDist, &nearDist))
-            {
-                /// @todo Why the cost multiplier imbalance between the left
-                /// and right edge near misses?
-                cost.nearMiss += 1;
-                cost.total += int( 70 * costFactorMultiplier * (nearDist * nearDist - 1.0) );
-            }
-            break; }
-
-        case Intersects: {
-            cost.splits += 1;
-            cost.total  += 100 * costFactorMultiplier;
-
-            /*
-             * If the split point is very close to one end, which is quite an
-             * undesirable situation (producing really short edges), thus a
-             * rather hefty surcharge.
-             *
-             * The closer to the edge, the higher the cost.
-             */
-            coord_t nearDist;
-            if(nearEdge(fromDist, toDist, &nearDist))
-            {
-                cost.iffy += 1;
-                cost.total += int( 140 * costFactorMultiplier * (nearDist * nearDist - 1.0) );
-            }
-            break; }
-        }
-    }
-
-    /**
-     * @param block
-     * @param best      Best line segment found thus far.
-     * @param bestCost  Running cost total result for the best line segment yet.
-     * @param seg       The candidate line segment to be evaluated.
-     * @param cost      PartitionCost analysis to be completed for the candidate.
-     *                  Must have been initialized prior to calling.
-     *
-     * @return  @c true iff @a lineSeg is suitable for use as a partition.
-     */
-    bool evalPartitionCostForSuperBlock(SuperBlockmapNode const &block,
-        LineSegmentSide *best, PartitionCost const &bestCost,
-        LineSegmentSide const &seg, PartitionCost &cost)
-    {
-        /*
-         * Test the whole block against the partition line to quickly handle
-         * all the line segments within it at once. Only when the partition line
-         * intercepts the box do we need to go deeper into it.
-         */
-        /// @todo Why are we extending the bounding box for this test? Also,
-        /// there is no need to convert from integer to floating-point each
-        /// time this is tested. (If we intend to do this with floating-point
-        /// then we should return that representation in SuperBlock::bounds() ).
-        AABox const &blockBounds = block.userData()->bounds();
-        AABoxd bounds(coord_t( blockBounds.minX ) - SHORT_HEDGE_EPSILON * 1.5,
-                      coord_t( blockBounds.minY ) - SHORT_HEDGE_EPSILON * 1.5,
-                      coord_t( blockBounds.maxX ) + SHORT_HEDGE_EPSILON * 1.5,
-                      coord_t( blockBounds.maxY ) + SHORT_HEDGE_EPSILON * 1.5);
-
-        int side = seg.boxOnSide(bounds);
-        if(side > 0)
-        {
-            // Right.
-            cost.mapRight  += block.userData()->mapSegmentCount();
-            cost.partRight += block.userData()->partSegmentCount();
-            return true;
-        }
-        if(side < 0)
-        {
-            // Left.
-            cost.mapLeft  += block.userData()->mapSegmentCount();
-            cost.partLeft += block.userData()->partSegmentCount();
-            return true;
-        }
-
-        // Check partition against all line segments.
-        foreach(LineSegmentSide *otherSeg, block.userData()->segments())
-        {
-            // Do we already have a better choice?
-            if(best && !(cost < bestCost)) return false;
-
-            // Evaluate the cost delta for this line segment.
-            PartitionCost costDelta;
-            evalPartitionCostForSegment(seg, *otherSeg, costDelta);
-
-            // Merge cost result into the cummulative total.
-            cost += costDelta;
-        }
-
-        // Handle sub-blocks recursively.
-        if(block.hasRight())
-        {
-            bool unsuitable = !evalPartitionCostForSuperBlock(block.right(), best, bestCost, seg, cost);
-            if(unsuitable) return false;
-        }
-
-        if(block.hasLeft())
-        {
-            bool unsuitable = !evalPartitionCostForSuperBlock(block.left(), best, bestCost, seg, cost);
-            if(unsuitable) return false;
-        }
-
-        // This is a suitable candidate.
-        return true;
-    }
-
-    /**
-     * Evaluate a partition and determine the cost, taking into account the
-     * number of splits and the difference between left and right.
-     *
-     * To be able to divide the nodes down, evalPartition must decide which
-     * is the best line segment to use as a nodeline. It does this by selecting
-     * the line with least splits and has least difference of line segments
-     * on either side of it.
-     *
-     * @return  @c true iff @a lineSeg is suitable for use as a partition.
-     */
-    bool evalPartition(SuperBlockmapNode const &block,
-                       LineSegmentSide *best, PartitionCost const &bestCost,
-                       LineSegmentSide const &lineSeg, PartitionCost &cost)
-    {
-        // Only map line segments are potential candidates.
-        if(!lineSeg.hasMapSide()) return false;
-
-        if(!evalPartitionCostForSuperBlock(block, best, bestCost, lineSeg, cost))
-        {
-            // Unsuitable or we already have a better choice.
-            return false;
-        }
-
-        // Make sure there is at least one map line segment on each side.
-        if(!cost.mapLeft || !cost.mapRight)
-        {
-            //LOG_DEBUG("evalPartition: No map line segments on %s%sside")
-            //    << (cost.mapLeft? "" : "left ")
-            //    << (cost.mapRight? "" : "right ");
-            return false;
-        }
-
-        // Increase cost by the difference between left and right.
-        cost.total += 100 * abs(cost.mapLeft - cost.mapRight);
-
-        // Allow partition segment counts to affect the outcome.
-        cost.total += 50 * abs(cost.partLeft - cost.partRight);
-
-        // Another little twist, here we show a slight preference for partition
-        // lines that lie either purely horizontally or purely vertically.
-        if(lineSeg.slopeType() != ST_HORIZONTAL && lineSeg.slopeType() != ST_VERTICAL)
-        {
-            cost.total += 25;
-        }
-
-        //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d"
-        //          " left=%d+%d right=%d+%d cost=%d.%02d")
-        //    << &lineSeg << cost.splits << cost.iffy << cost.nearMiss
-        //    << cost.mapLeft << cost.partLeft << cost.mapRight << cost.partRight
-        //    << cost.total / 100 << cost.total % 100;
-
-        return true;
-    }
-
     void chooseNextPartitionFromSuperBlock(SuperBlockmapNode const &partList,
         SuperBlockmapNode const &segs, LineSegmentSide **best, PartitionCost &bestCost)
     {
@@ -509,39 +243,42 @@ DENG2_PIMPL(Partitioner)
 
         //LOG_AS("chooseNextPartitionFromSuperBlock");
 
+        // Configure a new cost evaluator.
+        PartitionCostEvaluator evaluator(segs, *best, bestCost);
+        evaluator.setSplitCost(splitCostFactor);
+
         // Test each line segment as a potential partition.
-        foreach(LineSegmentSide *seg, partList.userData()->segments())
+        foreach(LineSegmentSide *candidate, partList.userData()->segments())
         {
             //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
-            //    << (seg->hasMapLineSide()? "" : "mini-") << seg
-            //    << (seg->sector? seg->sector->indexInMap() : -1)
-            //    << seg->fromOrigin().asText()
-            //    << seg->toOrigin().asText();
+            //    << (canidate->hasMapLineSide()? "" : "mini-") << seg
+            //    << (canidate->sector? seg->sector->indexInMap() : -1)
+            //    << canidate->fromOrigin().asText()
+            //    << canidate->toOrigin().asText();
 
             // Optimization: Only the first line segment produced from a given
-            // line is tested per round of partition costing (they are all
-            // collinear).
-            if(seg->hasMapSide())
+            // line is tested per round of partition costing (they are all collinear).
+            if(candidate->hasMapSide())
             {
                 // Can we skip this line segment?
-                if(seg->mapLine().validCount() == validCount)
+                if(candidate->mapLine().validCount() == validCount)
                     continue; // Yes.
 
-                seg->mapLine().setValidCount(validCount);
+                candidate->mapLine().setValidCount(validCount);
             }
 
-            // Calculate the cost metrics for this line segment.
-            PartitionCost cost;
-            if(evalPartition(segs, *best, bestCost, *seg, cost))
+            // Evaluate the new candidate.
+            PartitionCost costForCandidate;
+            if(evaluator.costPartition(*candidate, costForCandidate))
             {
                 // Suitable for use as a partition.
-                if(!*best || cost < bestCost)
+                if(!*best || costForCandidate < bestCost)
                 {
                     // We have a new better choice.
-                    bestCost = cost;
+                    bestCost = costForCandidate;
 
                     // Remember which line segment.
-                    *best = seg;
+                    *best = candidate;
                 }
             }
         }
