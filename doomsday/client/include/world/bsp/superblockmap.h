@@ -44,12 +44,6 @@ public:
     class NodeData;
     typedef de::BinaryTree<NodeData *> Node;
 
-    /**
-     * RIGHT - has the lower coordinates.
-     * LEFT  - has the higher coordinates.
-     * Division of a block always occurs horizontally:
-     *     e.g., 512x512 -> 256x512 -> 256x256.
-     */
     class NodeData
     {
     public:
@@ -65,8 +59,6 @@ public:
          */
         AABox const &bounds() const;
 
-        void clearSegments();
-
         /**
          * Push (link) the given line segment onto the FIFO list of segments linked
          * to this superblock.
@@ -78,12 +70,24 @@ public:
         Node &push(LineSegmentSide &segment);
 
         /**
-         * Pop (unlink) the next line segment from the FIFO list of segments linked
-         * to this superblock.
+         * Pop (unlink) the next line segment from the FIFO list of segments
+         * linked to the node.
          *
          * @return  Previous top-most line segment; otherwise @c 0 (empty).
          */
         LineSegmentSide *pop();
+
+        /**
+         * Collate (unlink) all line segments from "this" and all child blocks
+         * to a new segment list.
+         */
+        Segments collectAllSegments();
+
+        /**
+         * Determine the axis-aligned bounding box which contains all segments
+         * linked @em directly to the node.
+         */
+        AABoxd segmentBounds() const;
 
         /**
          * Retrieve the total number of line segments in this and all child blocks.
@@ -105,12 +109,6 @@ public:
          * traversal.
          */
         Segments const &segments() const;
-
-        /**
-         * Collate (unlink) all line segments from "this" and all child blocks
-         * to a new segment list.
-         */
-        Segments collateAllSegments();
 
     //private:
         /**
@@ -147,7 +145,7 @@ public:
      *
      * @return  Determined line segment bounds.
      */
-    AABoxd findSegmentBounds();
+    AABoxd findSegmentBounds() const;
 
 private:
     DENG2_PRIVATE(d)

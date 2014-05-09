@@ -792,6 +792,9 @@ DENG2_PIMPL(Partitioner)
          * @todo Revise this algorithm so that @var segments is not modified
          * during the partitioning process.
          */
+        int const totalSegs = segments.userData()->totalSegmentCount();
+        DENG2_ASSERT(totalSegs != 0);
+        DENG2_UNUSED(totalSegs);
 
         // Iterative pre-order traversal of SuperBlock.
         SuperBlockmapNode *cur = &segments;
@@ -840,11 +843,10 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Sanity checks...
-        if(!rights.userData()->totalSegmentCount())
-            throw Error("Partitioner::divideSegments", "Right set is empty");
-
-        if(!lefts.userData()->totalSegmentCount())
-            throw Error("Partitioner::divideSegments", "Left set is empty");
+        DENG2_ASSERT(rights.userData()->totalSegmentCount());
+        DENG2_ASSERT(lefts.userData ()->totalSegmentCount());
+        DENG2_ASSERT((  rights.userData()->totalSegmentCount()
+                      + lefts.userData ()->totalSegmentCount()) >= totalSegs);
     }
 
     /**
@@ -1053,7 +1055,7 @@ DENG2_PIMPL(Partitioner)
         else
         {
             // No partition required/possible -- already convex (or degenerate).
-            SuperBlockmap::NodeData::Segments segments = bmap.userData()->collateAllSegments();
+            SuperBlockmap::NodeData::Segments segments = bmap.userData()->collectAllSegments();
             bmap.clear();
 
             subspaces.append(ConvexSubspaceProxy());
