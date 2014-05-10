@@ -1,12 +1,12 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
 win32|macx: TARGET = Doomsday
       else: TARGET = doomsday
 
-# Build Configuration --------------------------------------------------------
+# Build Configuration ----------------------------------------------------------
 
 include(../config.pri)
 
@@ -21,7 +21,7 @@ echo(Doomsday Client $${DENG_VERSION}.)
         -Wno-missing-braces
 }
 
-# External Dependencies ------------------------------------------------------
+# External Dependencies --------------------------------------------------------
 
 CONFIG += deng_qtgui deng_qtopengl
 
@@ -39,7 +39,7 @@ include(../dep_gui.pri)
 include(../dep_appfw.pri)
 include(../dep_doomsday.pri)
 
-# Definitions ----------------------------------------------------------------
+# Definitions ------------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__ __CLIENT__
 
@@ -50,7 +50,7 @@ DEFINES += __DOOMSDAY__ __CLIENT__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
-# Linking --------------------------------------------------------------------
+# Linking ----------------------------------------------------------------------
 
 win32 {
     RC_FILE = res/windows/doomsday.rc
@@ -69,7 +69,7 @@ else {
     !freebsd-*: LIBS += -ldl
 }
 
-# Source Files ---------------------------------------------------------------
+# Source Files -----------------------------------------------------------------
 
 PRECOMPILED_HEADER = include/precompiled.h
 
@@ -415,14 +415,12 @@ DENG_HEADERS += \
     include/updater/updatersettingsdialog.h \
     include/versioninfo.h \
     include/world/blockmap.h \
-    include/world/bsp/bsptreenode.h \
     include/world/bsp/convexsubspaceproxy.h \
     include/world/bsp/edgetip.h \
     include/world/bsp/hplane.h \
     include/world/bsp/linesegment.h \
-    include/world/bsp/partitioncost.h \
-    include/world/bsp/partitioncostevaluator.h \
     include/world/bsp/partitioner.h \
+    include/world/bsp/partitionevaluator.h \
     include/world/bsp/superblockmap.h \
     include/world/bspleaf.h \
     include/world/bspnode.h \
@@ -737,7 +735,7 @@ SOURCES += \
     src/world/bsp/hplane.cpp \
     src/world/bsp/linesegment.cpp \
     src/world/bsp/partitioner.cpp \
-    src/world/bsp/partitioncostevaluator.cpp \
+    src/world/bsp/partitionevaluator.cpp \
     src/world/bsp/superblockmap.cpp \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \

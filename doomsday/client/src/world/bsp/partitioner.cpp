@@ -31,13 +31,11 @@
 #include "Sector"
 #include "Vertex"
 
-#include "world/worldsystem.h" /// validCount @todo Remove me
-
 #include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/edgetip.h"
 #include "world/bsp/hplane.h"
 #include "world/bsp/linesegment.h"
-#include "world/bsp/partitioncostevaluator.h"
+#include "world/bsp/partitionevaluator.h"
 #include "world/bsp/superblockmap.h"
 
 #include <de/Log>
@@ -61,7 +59,7 @@ DENG2_PIMPL(Partitioner)
 {
     int splitCostFactor;        ///< Cost of splitting a line segment.
 
-    Lines lines;                ///< Set of map lines to build from (in index order, unowned).
+    Lines lines;                ///< Set of map lines to build from (in index order, not owned).
     Mesh *mesh;                 ///< Provider of map geometries (cf. Factory).
 
     int segmentCount;           ///< Running total of segments built.
@@ -74,37 +72,35 @@ DENG2_PIMPL(Partitioner)
     BspTree *bspRoot;           ///< The BSP tree under construction.
     HPlane hplane;              ///< Current space half-plane (partitioner state).
 
-    struct SuperBlockmap
+    struct LineSegmentBlockTree
     {
-        SuperBlockmapNode rootNode;
+        LineSegmentBlockTreeNode *rootNode;
 
-        /// @param bounds  Map space bounding box for the blockmap.
-        SuperBlockmap(AABox const &bounds)
-        {
-            // Attach the root Node.
-            SuperBlockmapNodeData *ndata = new SuperBlockmapNodeData(bounds);
-            rootNode.setUserData(ndata);
-            ndata->_node = &rootNode;
-        }
+        /// @param bounds  Map space bounding box for the root block.
+        LineSegmentBlockTree(AABox const &bounds)
+            : rootNode(new LineSegmentBlockTreeNode(new LineSegmentBlock(bounds)))
+        {}
 
-        ~SuperBlockmap() { clear(); }
+        ~LineSegmentBlockTree() { clear(); }
 
-        /// Automatic translation from SuperBlockmap to the tree root.
-        inline operator SuperBlockmapNode /*const*/ &() {
-            return rootNode;
+        /// Implicit conversion from LineSegmentBlockTree to root tree node.
+        inline operator LineSegmentBlockTreeNode /*const*/ &() {
+            return *rootNode;
         }
 
     private:
-        static int clearUserDataWorker(SuperBlockmapNode &subtree, void *)
+        static int clearUserDataWorker(LineSegmentBlockTreeNode &subtree, void *)
         {
             delete subtree.userData();
-            return 0;
+            subtree.setUserData(0);
+            return 0; // Continue iteration.
         }
 
         void clear()
         {
-            rootNode.traversePostOrder(clearUserDataWorker);
-            rootNode.clear();
+            if(!rootNode) return;
+            rootNode->traversePostOrder(clearUserDataWorker);
+            delete rootNode; rootNode = 0;
         }
     };
 
@@ -123,7 +119,7 @@ DENG2_PIMPL(Partitioner)
     {
         delete subtree.userData();
         subtree.setUserData(0);
-        return false; // Continue iteration.
+        return 0; // Continue iteration.
     }
 
     void clearBspTree()
@@ -181,10 +177,86 @@ DENG2_PIMPL(Partitioner)
         return newSeg;
     }
 
-    inline void linkSegmentInSuperBlockmap(SuperBlockmapNode &block, LineSegmentSide &lineSeg)
+    /**
+     * Link @a seg into the line segment block tree.
+     *
+     * Performs k-d tree subdivision of the 2D coordinate space, splitting the node
+     * tree as necessary, however new nodes are created only when they need to be
+     * populated (i.e., a split does not generate two nodes at the same time).
+     */
+    void linkLineSegmentInBlockTree(LineSegmentBlockTreeNode &node_, LineSegmentSide &seg)
     {
-        // Associate this line segment with the subblock.
-        lineSeg.setBMapBlock(&block.userData()->push(lineSeg));
+        // Traverse the node tree beginning at "this" node.
+        for(LineSegmentBlockTreeNode *node = &node_; ;)
+        {
+            LineSegmentBlock &block = *node->userData();
+            AABox const &bounds     = block.bounds();
+
+            // The segment "touches" this node; increment the ref counters.
+            block.addRef(seg);
+
+            // Determine whether further subdivision is necessary/possible.
+            Vector2i dimensions(Vector2i(bounds.max) - Vector2i(bounds.min));
+            if(dimensions.x <= 256 && dimensions.y <= 256)
+            {
+                // Thats as small as we go; link it in and return.
+                block.link(seg);
+                seg.setBlockTreeNode(node);
+                return;
+            }
+
+            // Determine whether the node should be split and on which axis.
+            int const splitAxis = (dimensions.x < dimensions.y); // x=0, y=1
+            int const midOnAxis = (bounds.min[splitAxis] + bounds.max[splitAxis]) / 2;
+            LineSegmentBlockTreeNode::ChildId fromSide = LineSegmentBlockTreeNode::ChildId(seg.from().origin()[splitAxis] >= midOnAxis);
+            LineSegmentBlockTreeNode::ChildId toSide   = LineSegmentBlockTreeNode::ChildId(seg.to  ().origin()[splitAxis] >= midOnAxis);
+
+            // Does the segment lie entirely within one half of this node?
+            if(fromSide != toSide)
+            {
+                // No, the segment crosses @var midOnAxis; link it in and return.
+                block.link(seg);
+                seg.setBlockTreeNode(node);
+                return;
+            }
+
+            // Do we need to create the child node?
+            if(!node->hasChild(fromSide))
+            {
+                bool const toLeft = (fromSide == LineSegmentBlockTreeNode::Left);
+
+                AABox childBounds;
+                if(splitAxis)
+                {
+                    // Vertical split.
+                    int division = bounds.minY + 0.5 + (bounds.maxY - bounds.minY) / 2;
+
+                    childBounds.minX = bounds.minX;
+                    childBounds.minY = (toLeft? division : bounds.minY);
+
+                    childBounds.maxX = bounds.maxX;
+                    childBounds.maxY = (toLeft? bounds.maxY : division);
+                }
+                else
+                {
+                    // Horizontal split.
+                    int division = bounds.minX + 0.5 + (bounds.maxX - bounds.minX) / 2;
+
+                    childBounds.minX = (toLeft? division : bounds.minX);
+                    childBounds.minY = bounds.minY;
+
+                    childBounds.maxX = (toLeft? bounds.maxX : division);
+                    childBounds.maxY = bounds.maxY;
+                }
+
+                // Add a new child node and link it to its parent.
+                LineSegmentBlock *childBlock = new LineSegmentBlock(childBounds);
+                node->setChild(fromSide, new LineSegmentBlockTreeNode(childBlock, node));
+            }
+
+            // Descend to the child node.
+            node = node->childPtr(fromSide);
+        }
     }
 
     /**
@@ -202,10 +274,10 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Create all initial line segments and add them to @a blockmap. We can be
-     * certain there are no zero-length lines as these are screened earlier.
+     * Create all initial line segments. We can be certain there are no zero-length
+     * lines as these are screened earlier.
      */
-    void createInitialLineSegments(SuperBlockmapNode &blockmap)
+    void createInitialLineSegments(LineSegmentBlockTreeNode &rootNode)
     {
         foreach(Line *line, lines)
         {
@@ -223,132 +295,16 @@ DENG2_PIMPL(Partitioner)
 
             if(seg->front().hasSector())
             {
-                linkSegmentInSuperBlockmap(blockmap, seg->front());
+                linkLineSegmentInBlockTree(rootNode, seg->front());
             }
             if(seg->back().hasSector())
             {
-                linkSegmentInSuperBlockmap(blockmap, seg->back());
+                linkLineSegmentInBlockTree(rootNode, seg->back());
             }
 
             edgeTipSet(line->from()) << EdgeTip(seg->front());
             edgeTipSet(line->to())   << EdgeTip(seg->back());
         }
-    }
-
-    void choosePartitionWorker(SuperBlockmapNode const &rootNode,
-        SuperBlockmapNodeData::Segments const &candidates,
-        LineSegmentSide **best, PartitionCost &bestCost)
-    {
-        DENG2_ASSERT(best != 0);
-
-        //LOG_AS("chooseNextPartitionWorker");
-
-        // Configure a new cost evaluator.
-        PartitionCostEvaluator evaluator(rootNode, *best, bestCost);
-        evaluator.setSplitCost(splitCostFactor);
-
-        // Test each line segment as a potential partition candidate.
-        foreach(LineSegmentSide *candidate, candidates)
-        {
-            //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
-            //    << (canidate->hasMapLineSide()? "" : "mini-") << seg
-            //    << (canidate->sector? seg->sector->indexInMap() : -1)
-            //    << canidate->fromOrigin().asText()
-            //    << canidate->toOrigin().asText();
-
-            // Optimization: Only the first line segment produced from a given
-            // line is tested per round of partition costing (they are all collinear).
-            if(candidate->hasMapSide())
-            {
-                // Can we skip this line segment?
-                if(candidate->mapLine().validCount() == validCount)
-                    continue; // Yes.
-
-                candidate->mapLine().setValidCount(validCount);
-            }
-
-            // Evaluate the new candidate.
-            PartitionCost costForCandidate;
-            if(evaluator.costPartition(*candidate, costForCandidate))
-            {
-                // Suitable for use as a partition.
-                if(!*best || costForCandidate < bestCost)
-                {
-                    // We have a new better choice.
-                    bestCost = costForCandidate;
-
-                    // Remember which line segment.
-                    *best = candidate;
-                }
-            }
-        }
-    }
-
-    /**
-     * Find the best line segment to use as the next partition.
-     *
-     * @param sbnode  SuperBlockmap node containing the potential candidates.
-     *
-     * @return  The chosen partition line.
-     */
-    LineSegmentSide *choosePartition(SuperBlockmapNode const &sbnode)
-    {
-        LOG_AS("Partitioner::choosePartition");
-
-        PartitionCost bestCost;
-        LineSegmentSide *best = 0;
-
-        // Increment valid count so we can avoid testing the line segments
-        // produced from a single line more than once per round of partition
-        // selection.
-        validCount++;
-
-        // Iterative pre-order traversal.
-        SuperBlockmapNode const *cur = &sbnode;
-        SuperBlockmapNode const *prev = 0;
-        while(cur)
-        {
-            while(cur)
-            {
-                SuperBlockmapNodeData::Segments const &candidatesAtNode = cur->userData()->segments();
-
-                choosePartitionWorker(sbnode, candidatesAtNode, &best, bestCost);
-
-                if(prev == cur->parentPtr())
-                {
-                    // Descending - right first, then left.
-                    prev = cur;
-                    if(cur->hasRight()) cur = cur->rightPtr();
-                    else                cur = cur->leftPtr();
-                }
-                else if(prev == cur->rightPtr())
-                {
-                    // Last moved up the right branch - descend the left.
-                    prev = cur;
-                    cur = cur->leftPtr();
-                }
-                else if(prev == cur->leftPtr())
-                {
-                    // Last moved up the left branch - continue upward.
-                    prev = cur;
-                    cur = cur->parentPtr();
-                }
-            }
-
-            if(prev)
-            {
-                // No left child - back up.
-                cur = prev->parentPtr();
-            }
-        }
-
-        /*if(best)
-        {
-            LOG_DEBUG("best %p score: %d.%02d.")
-                << best << bestCost.total / 100 << bestCost.total % 100;
-        }*/
-
-        return best;
     }
 
     /**
@@ -478,7 +434,8 @@ DENG2_PIMPL(Partitioner)
      * @param rights  Set of line segments on the right side of the partition.
      * @param lefts   Set of line segments on the left side of the partition.
      */
-    void divideOneSegment(LineSegmentSide &seg, SuperBlockmapNode &rights, SuperBlockmapNode &lefts)
+    void divideOneSegment(LineSegmentSide &seg, LineSegmentBlockTreeNode &rights,
+                          LineSegmentBlockTreeNode &lefts)
     {
         coord_t fromDist, toDist;
         LineRelationship rel = hplane.relationship(seg, &fromDist, &toDist);
@@ -492,11 +449,11 @@ DENG2_PIMPL(Partitioner)
             // subset this line segment belongs.
             if(seg.direction().dot(hplane.partition().direction) < 0)
             {
-                linkSegmentInSuperBlockmap(lefts, seg);
+                linkLineSegmentInBlockTree(lefts, seg);
             }
             else
             {
-                linkSegmentInSuperBlockmap(rights, seg);
+                linkLineSegmentInBlockTree(rights, seg);
             }
             break; }
 
@@ -508,7 +465,7 @@ DENG2_PIMPL(Partitioner)
                 // with the new half-plane intercept.
                 interceptPartition(seg, (fromDist < DIST_EPSILON? LineSegment::From : LineSegment::To));
             }
-            linkSegmentInSuperBlockmap(rights, seg);
+            linkLineSegmentInBlockTree(rights, seg);
             break;
 
         case Left:
@@ -517,7 +474,7 @@ DENG2_PIMPL(Partitioner)
             {
                 interceptPartition(seg, (fromDist > -DIST_EPSILON? LineSegment::From : LineSegment::To));
             }
-            linkSegmentInSuperBlockmap(lefts, seg);
+            linkLineSegmentInBlockTree(lefts, seg);
             break;
 
         case Intersects: {
@@ -527,10 +484,10 @@ DENG2_PIMPL(Partitioner)
 
             // Ensure the new back left segment is inserted into the same block as
             // the old back right segment.
-            SuperBlockmapNode *backLeftBlock = (SuperBlockmapNode *)seg.back().bmapBlockPtr();
+            LineSegmentBlockTreeNode *backLeftBlock = (LineSegmentBlockTreeNode *)seg.back().blockTreeNodePtr();
             if(backLeftBlock)
             {
-                linkSegmentInSuperBlockmap(*backLeftBlock, newFrontRight.back());
+                linkLineSegmentInBlockTree(*backLeftBlock, newFrontRight.back());
             }
 
             interceptPartition(seg, LineSegment::To);
@@ -538,13 +495,13 @@ DENG2_PIMPL(Partitioner)
             // Direction determines which subset the line segments are added to.
             if(fromDist < 0)
             {
-                linkSegmentInSuperBlockmap(rights, newFrontRight);
-                linkSegmentInSuperBlockmap(lefts,  seg);
+                linkLineSegmentInBlockTree(rights, newFrontRight);
+                linkLineSegmentInBlockTree(lefts,  seg);
             }
             else
             {
-                linkSegmentInSuperBlockmap(rights, seg);
-                linkSegmentInSuperBlockmap(lefts,  newFrontRight);
+                linkLineSegmentInBlockTree(rights, seg);
+                linkLineSegmentInBlockTree(lefts,  newFrontRight);
             }
             break; }
         }
@@ -555,34 +512,35 @@ DENG2_PIMPL(Partitioner)
      * left or right sets according to their position relative to partition line.
      * Adds any intersections onto the intersection list as it goes.
      *
-     * @param segments  The line segments to be partitioned.
-     * @param rights    Set of line segments on the right side of the partition.
-     * @param lefts     Set of line segments on the left side of the partition.
+     * @param node    Block tree node containing the line segments to be partitioned.
+     * @param rights  Set of line segments on the right side of the partition.
+     * @param lefts   Set of line segments on the left side of the partition.
      */
-    void divideSegments(SuperBlockmapNode &segments, SuperBlockmapNode &rights, SuperBlockmapNode &lefts)
+    void divideSegments(LineSegmentBlockTreeNode &node, LineSegmentBlockTreeNode &rights,
+                        LineSegmentBlockTreeNode &lefts)
     {
         /**
          * @todo Revise this algorithm so that @var segments is not modified
          * during the partitioning process.
          */
-        int const totalSegs = segments.userData()->totalSegmentCount();
+        int const totalSegs = node.userData()->totalCount();
         DENG2_ASSERT(totalSegs != 0);
         DENG2_UNUSED(totalSegs);
 
         // Iterative pre-order traversal of SuperBlock.
-        SuperBlockmapNode *cur = &segments;
-        SuperBlockmapNode *prev = 0;
+        LineSegmentBlockTreeNode *cur = &node;
+        LineSegmentBlockTreeNode *prev = 0;
         while(cur)
         {
             while(cur)
             {
-                SuperBlockmapNodeData &node = *cur->userData();
+                LineSegmentBlock &segs = *cur->userData();
 
                 LineSegmentSide *seg;
-                while((seg = node.pop()))
+                while((seg = segs.pop()))
                 {
-                    // Disassociate the line segment from the blockmap.
-                    seg->setBMapBlock(0);
+                    // Disassociate the line segment from the block tree.
+                    seg->setBlockTreeNode(0);
 
                     divideOneSegment(*seg, rights, lefts);
                 }
@@ -616,10 +574,10 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Sanity checks...
-        DENG2_ASSERT(rights.userData()->totalSegmentCount());
-        DENG2_ASSERT(lefts.userData ()->totalSegmentCount());
-        DENG2_ASSERT((  rights.userData()->totalSegmentCount()
-                      + lefts.userData ()->totalSegmentCount()) >= totalSegs);
+        DENG2_ASSERT(rights.userData()->totalCount());
+        DENG2_ASSERT(lefts.userData ()->totalCount());
+        DENG2_ASSERT((  rights.userData()->totalCount()
+                      + lefts.userData ()->totalCount()) >= totalSegs);
     }
 
     /**
@@ -630,7 +588,8 @@ DENG2_PIMPL(Partitioner)
      * @param rights  Set of line segments on the right of the partition.
      * @param lefts   Set of line segments on the left of the partition.
      */
-    void addPartitionLineSegments(SuperBlockmapNode &rights, SuperBlockmapNode &lefts)
+    void addPartitionLineSegments(LineSegmentBlockTreeNode &rights,
+                                  LineSegmentBlockTreeNode &lefts)
     {
         LOG_TRACE("Building line segments along partition %s")
                 << hplane.partition().asText();
@@ -734,8 +693,8 @@ DENG2_PIMPL(Partitioner)
             edgeTipSet(newSeg.to())   << EdgeTip(newSeg.back());
 
             // Add each new line segment to the appropriate set.
-            linkSegmentInSuperBlockmap(rights, newSeg.front());
-            linkSegmentInSuperBlockmap(lefts,  newSeg.back());
+            linkLineSegmentInBlockTree(rights, newSeg.front());
+            linkLineSegmentInBlockTree(lefts,  newSeg.back());
 
             /*
             LOG_DEBUG("Built line segment from %s to %s (sector #%i)")
@@ -749,23 +708,25 @@ DENG2_PIMPL(Partitioner)
     /**
      * Collate (unlink) all line segments at or beneath @a node to a new list.
      */
-    static LineSegmentSides collectAllSegments(SuperBlockmapNode &node)
+    static LineSegmentSides collectAllSegments(LineSegmentBlockTreeNode &node)
     {
         LineSegmentSides allSegs;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-        allSegs.reserve(node.userData()->totalSegmentCount());
+        allSegs.reserve(node.userData()->totalCount());
 #endif
 
         // Iterative pre-order traversal.
-        SuperBlockmapNode *cur  = &node;
-        SuperBlockmapNode *prev = 0;
+        LineSegmentBlockTreeNode *cur  = &node;
+        LineSegmentBlockTreeNode *prev = 0;
         while(cur)
         {
             while(cur)
             {
+                LineSegmentBlock &segs = *cur->userData();
+
                 LineSegmentSide *seg;
-                while((seg = cur->userData()->pop()))
+                while((seg = segs.pop()))
                 {
                     allSegs << seg;
                 }
@@ -803,23 +764,22 @@ DENG2_PIMPL(Partitioner)
 
     /**
      * Determine the axis-aligned bounding box containing the vertex coordinates
-     * from @a allSegments.
+     * from all segments.
      */
     static AABoxd segmentBounds(LineSegmentSides const &allSegments)
     {
-        AABoxd bounds;
         bool initialized = false;
+        AABoxd bounds;
 
         foreach(LineSegmentSide *seg, allSegments)
         {
-            AABoxd segBounds = seg->aaBox();
             if(initialized)
             {
-                V2d_UniteBox(bounds.arvec2, segBounds.arvec2);
+                V2d_UniteBox(bounds.arvec2, seg->aaBox().arvec2);
             }
             else
             {
-                V2d_CopyBox(bounds.arvec2, segBounds.arvec2);
+                V2d_CopyBox(bounds.arvec2, seg->aaBox().arvec2);
                 initialized = true;
             }
         }
@@ -829,37 +789,37 @@ DENG2_PIMPL(Partitioner)
 
     /**
      * Determine the axis-aligned bounding box containing the vertices of all
-     * segments at or beneath @a node in the blockmap.
+     * line segments at or beneath @a node in the block tree.
      *
      * @return  Determined AABox (might be empty (i.e., min > max) if no segments).
      */
-    static AABoxd segmentBounds(SuperBlockmapNode const &node)
+    static AABoxd segmentBounds(LineSegmentBlockTreeNode const &node)
     {
         bool initialized = false;
         AABoxd bounds;
 
         // Iterative pre-order traversal.
-        SuperBlockmapNode const *cur = &node;
-        SuperBlockmapNode const *prev = 0;
+        LineSegmentBlockTreeNode const *cur = &node;
+        LineSegmentBlockTreeNode const *prev = 0;
         while(cur)
         {
             while(cur)
             {
-                SuperBlockmapNodeData const &ndata = *cur->userData();
+                LineSegmentBlock const &block = *cur->userData();
 
-                if(ndata.totalSegmentCount())
+                if(block.totalCount())
                 {
-                    AABoxd segBoundsAtNode = segmentBounds(ndata.segments());
+                    AABoxd boundsAtNode = segmentBounds(block.all());
                     if(initialized)
                     {
-                        V2d_AddToBox(bounds.arvec2, segBoundsAtNode.min);
+                        V2d_AddToBox(bounds.arvec2, boundsAtNode.min);
                     }
                     else
                     {
-                        V2d_InitBox(bounds.arvec2, segBoundsAtNode.min);
+                        V2d_InitBox(bounds.arvec2, boundsAtNode.min);
                         initialized = true;
                     }
-                    V2d_AddToBox(bounds.arvec2, segBoundsAtNode.max);
+                    V2d_AddToBox(bounds.arvec2, boundsAtNode.max);
                 }
 
                 if(prev == cur->parentPtr())
@@ -890,12 +850,12 @@ DENG2_PIMPL(Partitioner)
             }
         }
 
-        if(!initialized)
-        {
-            bounds.clear();
-        }
-
         return bounds;
+    }
+
+    LineSegmentSide *choosePartition(LineSegmentBlockTreeNode &candidateSet)
+    {
+        return PartitionEvaluator(splitCostFactor).choose(candidateSet);
     }
 
     /**
@@ -913,20 +873,20 @@ DENG2_PIMPL(Partitioner)
      * If the line segments on the right side are convex create another leaf
      * else put the line segments into the right list.
      *
-     * @param bmap  SuperBlockmap containing the set of line segments in the
-     *              plane to be partitioned into convex subspaces.
+     * @param node  Tree node for the block containing the line segments to
+     *              be partitioned.
      *
-     * @return  Newly created subtree; otherwise @c 0 (degenerate).
+     * @return  Newly created BSP subtree; otherwise @c 0 (degenerate).
      */
-    BspTree *divideSpace(SuperBlockmapNode &sbnode)
+    BspTree *partitionSpace(LineSegmentBlockTreeNode &node)
     {
-        LOG_AS("Partitioner::divideSpace");
+        LOG_AS("Partitioner::partitionSpace");
 
         BspElement *bspElement = 0; ///< Built BSP map element at this node.
-        BspTree *rightTree = 0, *leftTree = 0;
+        BspTree *rightBspTree = 0, *leftBspTree = 0;
 
         // Pick a line segment to use as the next partition plane.
-        if(LineSegmentSide *partSeg = choosePartition(sbnode))
+        if(LineSegmentSide *partSeg = choosePartition(node))
         {
             // Reconfigure the half-plane for the next round of partitioning.
             hplane.configure(*partSeg);
@@ -945,33 +905,32 @@ DENG2_PIMPL(Partitioner)
             // BspNode we produce later.
             Partition partition(hplane.partition());
 
-            // Create left and right blockmaps.
+            // Create left and right block trees.
             /// @todo There should be no need to use additional independent
             ///       structures to contain these subsets.
-            // Copy the bounding box of the edge list to the superblocks.
-            SuperBlockmap rightBMap(sbnode.userData()->bounds());
-            SuperBlockmap leftBMap(sbnode.userData()->bounds());
+            LineSegmentBlockTree rightTree(node.userData()->bounds());
+            LineSegmentBlockTree leftTree(node.userData()->bounds());
 
             // Partition the line segements into two subsets according to their
             // spacial relationship with the half-plane (splitting any which
             // intersect).
-            divideSegments(sbnode, rightBMap, leftBMap);
-            sbnode.clear();
+            divideSegments(node, rightTree, leftTree);
+            node.clear();
 
-            addPartitionLineSegments(rightBMap, leftBMap);
+            addPartitionLineSegments(rightTree, leftTree);
 
             // Take a copy of the geometry bounds for each child/sub space
             // - we'll need this for any BspNode we produce later.
-            AABoxd rightBounds = segmentBounds(rightBMap);
-            AABoxd leftBounds  = segmentBounds(leftBMap);
+            AABoxd rightBounds = segmentBounds(rightTree);
+            AABoxd leftBounds  = segmentBounds(leftTree);
 
             // Recurse on each suspace, first the right space then left.
-            rightTree = divideSpace(rightBMap);
-            leftTree  = divideSpace(leftBMap);
+            rightBspTree = partitionSpace(rightTree);
+            leftBspTree  = partitionSpace(leftTree);
 
             // Collapse degenerates upward.
-            if(!rightTree || !leftTree)
-                return rightTree? rightTree : leftTree;
+            if(!rightBspTree || !leftBspTree)
+                return rightBspTree? rightBspTree : leftBspTree;
 
             // Make a new BSP node.
             bspElement = new BspNode(partition, rightBounds, leftBounds);
@@ -979,8 +938,8 @@ DENG2_PIMPL(Partitioner)
         else
         {
             // No partition required/possible -- already convex (or degenerate).
-            SuperBlockmapNodeData::Segments segments = collectAllSegments(sbnode);
-            sbnode.clear();
+            LineSegmentSides segments = collectAllSegments(node);
+            node.clear();
 
             subspaces.append(ConvexSubspaceProxy());
             ConvexSubspaceProxy &convexSet = subspaces.last();
@@ -992,8 +951,8 @@ DENG2_PIMPL(Partitioner)
                 // Attribute the segment to the convex subspace.
                 seg->setConvexSubspace(&convexSet);
 
-                // Disassociate the segment from the blockmap.
-                seg->setBMapBlock(0);
+                // Disassociate the segment from the block tree.
+                seg->setBlockTreeNode(0);
             }
 
             // Make a new BSP leaf.
@@ -1007,9 +966,9 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Make a new BSP subtree and link up the children.
-        BspTree *subtree = new BspTree(bspElement, 0/*no parent*/, rightTree, leftTree);
-        if(rightTree) rightTree->setParent(subtree);
-        if(leftTree)  leftTree->setParent(subtree);
+        BspTree *subtree = new BspTree(bspElement, 0/*no parent*/, rightBspTree, leftBspTree);
+        if(rightBspTree) rightBspTree->setParent(subtree);
+        if(leftBspTree)  leftBspTree->setParent(subtree);
 
         return subtree;
     }
@@ -1022,7 +981,7 @@ DENG2_PIMPL(Partitioner)
      *
      * @todo Perform the split in divideSpace()
      */
-    void splitOverlappingLineSegments()
+    void splitOverlappingSegments()
     {
         foreach(ConvexSubspaceProxy const &subspace, subspaces)
         {
@@ -1078,7 +1037,7 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    void buildLeafGeometries()
+    void buildSubspaceGeometries()
     {
         foreach(ConvexSubspaceProxy const &subspace, subspaces)
         {
@@ -1135,10 +1094,9 @@ DENG2_PIMPL(Partitioner)
     }
 
 #ifdef DENG_DEBUG
-    void printSuperBlockSegments(SuperBlockmapNode const &block)
+    void printSegments(LineSegmentSides const &allSegs)
     {
-        SuperBlockmapNodeData::Segments const &segments = block.userData()->segments();
-        foreach(LineSegmentSide const *seg, segments)
+        foreach(LineSegmentSide const *seg, allSegs)
         {
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
                 << (seg->hasMapSide()? "map" : "part")
@@ -1220,15 +1178,15 @@ Partitioner::BspTree *Partitioner::makeBspTree(LineSet const &lines, Mesh &mesh)
         }
     }
 
-    Instance::SuperBlockmap rootBlock(blockmapBounds(bounds));
+    Instance::LineSegmentBlockTree blockTree(blockmapBounds(bounds));
 
-    d->createInitialLineSegments(rootBlock);
+    d->createInitialLineSegments(blockTree);
 
-    d->bspRoot = d->divideSpace(rootBlock);
+    d->bspRoot = d->partitionSpace(blockTree);
 
     // At this point we know that *something* useful was built.
-    d->splitOverlappingLineSegments();
-    d->buildLeafGeometries();
+    d->splitOverlappingSegments();
+    d->buildSubspaceGeometries();
 
     return d->bspRoot;
 }

@@ -1,4 +1,4 @@
-/** @file world/bsp/linesegment.cpp BSP Builder Line Segment.
+/** @file linesegment.cpp  BSP Builder Line Segment.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -60,7 +60,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
 
     /// The superblock that contains "this" segment, or @c 0 if the segment is
     /// no longer in any superblock (e.g., attributed to a convex subspace).
-    SuperBlockmapNode *bmapBlock;
+    LineSegmentBlockTreeNode *blockTreeNode;
 
     /// Convex subspace which "this" segment is attributed; otherwise @c 0.
     ConvexSubspaceProxy *convexSubspace;
@@ -80,19 +80,19 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
 
     Instance(LineSegment &line)
         : line(&line)
-        , mapSide(0)
+        , mapSide         (0)
         , partitionMapLine(0)
-        , rightNeighbor(0)
-        , leftNeighbor(0)
-        , bmapBlock(0)
-        , convexSubspace(0)
-        , sector(0)
-        , pLength(0)
-        , pAngle(0)
-        , pPara(0)
-        , pPerp(0)
-        , pSlopeType(ST_VERTICAL)
-        , hedge(0)
+        , rightNeighbor   (0)
+        , leftNeighbor    (0)
+        , blockTreeNode   (0)
+        , convexSubspace  (0)
+        , sector          (0)
+        , pLength         (0)
+        , pAngle          (0)
+        , pPara           (0)
+        , pPerp           (0)
+        , pSlopeType      (ST_VERTICAL)
+        , hedge           (0)
     {}
 
     inline LineSegment::Side **neighborAdr(int edge) {
@@ -221,14 +221,14 @@ void LineSegment::Side::setNeighbor(int edge, LineSegment::Side *newNeighbor)
     *d->neighborAdr(edge) = newNeighbor;
 }
 
-/*SuperBlockmapNode*/ void *LineSegment::Side::bmapBlockPtr() const
+/*LineSegmentBlockTreeNode*/ void *LineSegment::Side::blockTreeNodePtr() const
 {
-    return d->bmapBlock;
+    return d->blockTreeNode;
 }
 
-void LineSegment::Side::setBMapBlock(/*SuperBlockmapNode*/ void *newBMapBlock)
+void LineSegment::Side::setBlockTreeNode(/*LineSegmentBlockTreeNode*/ void *newNode)
 {
-    d->bmapBlock = (SuperBlockmapNode *)newBMapBlock;
+    d->blockTreeNode = (LineSegmentBlockTreeNode *)newNode;
 }
 
 bool LineSegment::Side::hasSector() const
@@ -344,8 +344,8 @@ int LineSegment::Side::boxOnSide(AABoxd const &box) const
                             LINESEGMENT_INCIDENT_DISTANCE_EPSILON);
 }
 
-DENG2_PIMPL(LineSegment),
-DENG2_OBSERVES(Vertex, OriginChange)
+DENG2_PIMPL(LineSegment)
+, DENG2_OBSERVES(Vertex, OriginChange)
 {
     /// Vertexes of the line segment (not owned).
     Vertex *from;
@@ -356,11 +356,11 @@ DENG2_OBSERVES(Vertex, OriginChange)
     LineSegment::Side back;
 
     Instance(Public *i, Vertex &from_, Vertex &to_)
-        : Base(i),
-          from(&from_),
-          to(&to_),
-          front(*i),
-          back(*i)
+        : Base (i)
+        , from (&from_)
+        , to   (&to_)
+        , front(*i)
+        , back (*i)
     {
         from->audienceForOriginChange += this;
         to->audienceForOriginChange   += this;

@@ -1,4 +1,4 @@
-/** @file superblockmap.h  World BSP SuperBlockmap.
+/** @file linesegmentblock.h  World BSP line segment block.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -23,31 +23,27 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_SUPERBLOCKMAP_H
-#define DENG_WORLD_BSP_SUPERBLOCKMAP_H
+#ifndef DENG_WORLD_BSP_LINESEGMENTBLOCK_H
+#define DENG_WORLD_BSP_LINESEGMENTBLOCK_H
 
 #include <QList>
 #include <de/aabox.h>
 #include <de/BinaryTree>
-#include <de/Vector>
 #include "world/bsp/linesegment.h"
 
 namespace de {
 namespace bsp {
 
-class SuperBlockmapNodeData;
-typedef de::BinaryTree<SuperBlockmapNodeData *> SuperBlockmapNode;
-
 /**
  * @ingroup bsp
  */
-class SuperBlockmapNodeData
+class LineSegmentBlock
 {
 public:
-    typedef QList<LineSegmentSide *>   Segments;
+    typedef QList<LineSegmentSide *> All;
 
 public:
-    SuperBlockmapNodeData(AABox const &bounds);
+    LineSegmentBlock(AABox const &bounds);
 
     /**
      * Retrieve the axis-aligned bounding box of the block in the blockmap.
@@ -58,15 +54,11 @@ public:
      */
     AABox const &bounds() const;
 
-    /**
-     * Push (link) the given line segment onto the FIFO list of segments linked
-     * to this superblock.
-     *
-     * @param segment  Line segment to add.
-     *
-     * @return  KdTreeBlockmap that @a segment was linked to.
-     */
-    SuperBlockmapNode &push(LineSegmentSide &segment);
+    void link(LineSegmentSide &seg);
+
+    void addRef(LineSegmentSide const &seg);
+
+    void decRef(LineSegmentSide const &seg);
 
     /**
      * Pop (unlink) the next line segment from the FIFO list of segments
@@ -76,35 +68,27 @@ public:
      */
     LineSegmentSide *pop();
 
-    /**
-     * Retrieve the total number of line segments in this and all child blocks.
-     *
-     * @param addMap  Include map line segments in the total.
-     * @param addPart Include partition line segments in the total.
-     *
-     * @return  Determined line segment total.
-     */
-    int segmentCount(bool addMap, bool addPart) const;
+    int mapCount() const;
+    int partCount() const;
 
-    /// Convenience functions for retrieving line segment totals:
-    inline int partSegmentCount() const  { return segmentCount(false, true); }
-    inline int mapSegmentCount() const   { return segmentCount(true, false); }
-    inline int totalSegmentCount() const { return segmentCount(true, true);  }
+    /**
+     * Returns the total number of line segments in this and all child blocks.
+     */
+    int totalCount() const;
 
     /**
      * Provides access to the list of line segments in the block, for efficient
      * traversal.
      */
-    Segments const &segments() const;
-
-//private:
-    SuperBlockmapNode *_node;
+    All const &all() const;
 
 private:
     DENG2_PRIVATE(d)
 };
 
+typedef de::BinaryTree<LineSegmentBlock *> LineSegmentBlockTreeNode;
+
 } // namespace bsp
 } // namespace de
 
-#endif // DENG_WORLD_BSP_SUPERBLOCKMAP_H
+#endif // DENG_WORLD_BSP_LINESEGMENTBLOCK_H

@@ -416,7 +416,7 @@ public:
         // Visit this node.
         if(int result = callback(*this, parameters)) return result;
 
-        if(!isLeaf())
+        if(hasRight())
         {
             int result = right().traversePreOrder(callback, parameters);
             if(result) return result;

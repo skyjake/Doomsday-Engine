@@ -278,18 +278,18 @@ public:
         inline void setRight(Side *newRight) { setNeighbor(Right, newRight); }
 
         /**
-         * Returns the superblock that contains "this" side of the line segment;
-         * otherwise @c 0 if not contained.
+         * Returns the line segment block tree node that contains "this" side of
+         * the line segment; otherwise @c 0 if not contained.
          */
-        /*SuperBlock*/ void *bmapBlockPtr() const;
+        /*LineSegmentBlockTreeNode*/ void *blockTreeNodePtr() const;
 
         /**
-         * Change the blockmap block to which "this" side of the line segment is
-         * associated.
+         * Change the line segment block tree node to which "this" side of the
+         * line segment is associated.
          *
          * @param newBMapBlock  New blockmap block. Can be @c 0.
          */
-        void setBMapBlock(/*SuperBlock*/ void *newBMapBlock);
+        void setBlockTreeNode(/*LineSegmentBlockTreeNode*/ void *newNode);
 
         /**
          * Returns @c true iff a map sector is attributed to "this" side of the
