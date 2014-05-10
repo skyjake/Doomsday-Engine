@@ -1,11 +1,11 @@
 # The Doomsday Engine Project
-# Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2012-2013 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
 TARGET = doomsday-server
 
-# Build Configuration --------------------------------------------------------
+# Build Configuration ----------------------------------------------------------
 
 include(../config.pri)
 
@@ -22,7 +22,7 @@ CONFIG -= app_bundle
         -Wno-missing-braces
 }
 
-# External Dependencies ------------------------------------------------------
+# External Dependencies --------------------------------------------------------
 
 include(../dep_zlib.pri)
 include(../dep_lzss.pri)
@@ -31,7 +31,7 @@ include(../dep_legacy.pri)
 include(../dep_shell.pri)
 include(../dep_doomsday.pri)
 
-# Definitions ----------------------------------------------------------------
+# Definitions ------------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__ __SERVER__
 
@@ -47,7 +47,7 @@ DEFINES += __DOOMSDAY__ __SERVER__
     DEFINES += __USE_BSD _GNU_SOURCE=1
 }
 
-# Linking --------------------------------------------------------------------
+# Linking ----------------------------------------------------------------------
 
 win32 {
     RC_FILE = res/windows/doomsday.rc
@@ -66,7 +66,7 @@ else {
     !freebsd-*: LIBS += -ldl
 }
 
-# Source Files ---------------------------------------------------------------
+# Source Files -----------------------------------------------------------------
 
 # Prefix for source files (shared for now):
 SRC = ../client
@@ -211,14 +211,12 @@ DENG_HEADERS += \
     $$SRC/include/ui/p_control.h \
     $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
-    $$SRC/include/world/bsp/bsptreenode.h \
     $$SRC/include/world/bsp/convexsubspaceproxy.h \
     $$SRC/include/world/bsp/edgetip.h \
     $$SRC/include/world/bsp/hplane.h \
     $$SRC/include/world/bsp/linesegment.h \
-    $$SRC/include/world/bsp/partitioncost.h \
-    $$SRC/include/world/bsp/partitioncostevaluator.h \
     $$SRC/include/world/bsp/partitioner.h \
+    $$SRC/include/world/bsp/partitionevaluator.h \
     $$SRC/include/world/bsp/superblockmap.h \
     $$SRC/include/world/bspleaf.h \
     $$SRC/include/world/bspnode.h \
@@ -368,8 +366,8 @@ SOURCES += \
     $$SRC/src/world/bsp/convexsubspaceproxy.cpp \
     $$SRC/src/world/bsp/hplane.cpp \
     $$SRC/src/world/bsp/linesegment.cpp \
-    $$SRC/src/world/bsp/partitioncostevaluator.cpp \
     $$SRC/src/world/bsp/partitioner.cpp \
+    $$SRC/src/world/bsp/partitionevaluator.cpp \
     $$SRC/src/world/bsp/superblockmap.cpp \
     $$SRC/src/world/bspleaf.cpp \
     $$SRC/src/world/bspnode.cpp \
