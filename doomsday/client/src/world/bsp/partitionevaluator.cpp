@@ -1,6 +1,6 @@
 /** @file partitionevaluator.cpp  Evaluator for a would-be BSP.
  *
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -223,12 +223,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
             LineSegmentSide **partition = &candidate.line;
             PartitionCost &cost         = candidate.cost;
 
-            if(evaluator.rootNode->traversePreOrder(costForBlockWorker, this))
-            {
-                // Unsuitable or we already have a better choice.
-                *partition = 0;
-                return;
-            }
+            costForBlock(*evaluator.rootNode);
 
             // Make sure there is at least one map line segment on each side.
             if(!cost.mapLeft || !cost.mapRight)
@@ -341,10 +336,11 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
          * line segments within it at once. Only when the partition line intercepts
          * the block do we need to go deeper into it.
          */
-        void costForBlock(LineSegmentBlock const &block)
+        void costForBlock(LineSegmentBlockTreeNode const &node)
         {
-            LineSegmentSide **partition = &candidate.line;
-            PartitionCost &cost         = candidate.cost;
+            LineSegmentBlock const &block = *node.userData();
+            LineSegmentSide **partition   = &candidate.line;
+            PartitionCost &cost           = candidate.cost;
 
             /// @todo Why are we extending the bounding box for this test? Also,
             /// there is no need to convert from integer to floating-point each
@@ -375,26 +371,20 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
             {
                 costForSegment(*otherSeg);
             }
-        }
 
-        /// @return  @c false iff the partition is still suitable.
-        static int costForBlockWorker(LineSegmentBlockTreeNode &node, void *context)
-        {
-            CostTask &task = *static_cast<CostTask *>(context);
-
-            task.costForBlock(*node.userData());
-
-            return task.candidate.line == 0;
+            if(node.hasRight())
+            {
+                costForBlock(node.right());
+            }
+            if(node.hasLeft())
+            {
+                costForBlock(node.left());
+            }
         }
     };
     TaskPool costTaskPool;
 
     /**
-     * To be able to divide the nodes down, evaluate must decide which is the
-     * best line segment to use as a partition. It does this by selecting the
-     * line with least splits and has least difference of line segments on either
-     * side of it.
-     *
      * @param line  Partition line to evaluate.
      */
     void beginPartitionCosting(LineSegmentSide *line)
