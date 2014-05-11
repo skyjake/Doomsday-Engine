@@ -64,6 +64,10 @@ HEADERS += \
     include/doomsday/console/exec.h \
     include/doomsday/console/knownword.h \
     include/doomsday/console/var.h \
+    include/doomsday/defs/ded.h \
+    include/doomsday/defs/dedfile.h \
+    include/doomsday/defs/dedparser.h \
+    include/doomsday/defs/dedtypes.h \
     include/doomsday/dualstring.h \
     include/doomsday/filesys/file.h \
     include/doomsday/filesys/filehandle.h \
@@ -84,10 +88,7 @@ HEADERS += \
     include/doomsday/resource/resourceclass.h \
     include/doomsday/resource/wav.h \
     include/doomsday/uri.h \
-    include/doomsday/world/mobj.h \
-    include/doomsday/defs/dedfile.h \
-    include/doomsday/defs/ded.h \
-    include/doomsday/defs/dedparser.h
+    include/doomsday/world/mobj.h
 
 # Sources and private headers
 SOURCES += \
@@ -97,6 +98,9 @@ SOURCES += \
     src/console/exec.cpp \
     src/console/knownword.cpp \
     src/console/var.cpp \
+    src/defs/ded.cpp \
+    src/defs/dedfile.cpp \
+    src/defs/dedparser.cpp \
     src/dualstring.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \
@@ -114,10 +118,7 @@ SOURCES += \
     src/paths.cpp \
     src/resource/resourceclass.cpp \
     src/resource/wav.cpp \
-    src/uri.cpp \
-    src/defs/dedparser.cpp \
-    src/defs/dedfile.cpp \
-    src/defs/ded.cpp
+    src/uri.cpp
 
 # Installation ---------------------------------------------------------------
 
