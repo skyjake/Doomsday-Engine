@@ -52,7 +52,6 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
         ded_count_t     sprites;
         ded_count_t     lights;
         ded_count_t     materials;
-        //ded_count_t     models;
         ded_count_t     skies;
         ded_count_t     sounds;
         ded_count_t     music;
@@ -174,6 +173,8 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
 		de::zap(count);
 	}
 
+    void clear();
+
     ded_flag_t *getFlag(char const *flag) const;
 
     int evalFlags2(char const *ptr) const;
@@ -218,6 +219,9 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
     ded_compositefont_t* findCompositeFontDef(de::Uri const& uri) const;
 
     ded_compositefont_t* getCompositeFont(char const* uriCString) const;
+
+protected:
+    void release();
 };
 
 typedef ded_s ded_t;
@@ -226,9 +230,7 @@ typedef ded_s ded_t;
 extern "C" {
 #endif
 
-// Routines for managing DED files.
-void            DED_Init(ded_t* ded);
-void            DED_Clear(ded_t* ded);
+// Routines for managing DED files:
 
 int             DED_AddFlag(ded_t* ded, char const* name, int value);
 int             DED_AddMobj(ded_t* ded, char const* idStr);
@@ -282,20 +284,6 @@ void            DED_RemoveGroup(ded_t* ded, int index);
 void            DED_RemoveSectorType(ded_t* ded, int index);
 void            DED_RemoveLineType(ded_t* ded, int index);
 void            DED_RemoveCompositeFont(ded_t* ded, int index);
-
-/**
- * @return  Pointer to the new block of memory.
- */
-void*           DED_NewEntries(void** ptr, ded_count_t* cnt, size_t elemSize, int count);
-
-/**
- * @return  Pointer to the new block of memory.
- */
-void*           DED_NewEntry(void** ptr, ded_count_t* cnt, size_t elemSize);
-
-void            DED_DelEntry(int index, void** ptr, ded_count_t* cnt, size_t elemSize);
-void            DED_DelArray(void** ptr, ded_count_t* cnt);
-void            DED_ZCount(ded_count_t* c);
 
 #ifdef __cplusplus
 } // extern "C"

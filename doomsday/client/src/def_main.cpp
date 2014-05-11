@@ -145,23 +145,19 @@ void Def_Init(void)
     stateLights = 0;
     DED_ZCount(&countStateLights);
 
-    DED_Init(&defs);
+    defs.clear();
 }
 
 void Def_Destroy(void)
 {
-    int i;
-
-    // To make sure...
-    DED_Clear(&defs);
-    DED_Init(&defs);
+    defs.clear();
 
     // Destroy the databases.
     DED_DelArray((void**) &sprNames, &countSprNames);
     DED_DelArray((void**) &states, &countStates);
     DED_DelArray((void**) &mobjInfo, &countMobjInfo);
 
-    for(i = 0; i < countSounds.num; ++i)
+    for(int i = 0; i < countSounds.num; ++i)
     {
         Str_Free(&sounds[i].external);
     }
@@ -1188,8 +1184,7 @@ void Def_Read()
     firstDED = true;
 
     // Now we can clear all existing definitions and re-init.
-    DED_Clear(&defs);
-    DED_Init(&defs);
+    defs.clear();
 
     // Generate definitions.
     generateMaterialDefs();

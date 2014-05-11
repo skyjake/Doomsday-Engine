@@ -65,6 +65,7 @@ HEADERS += \
     include/doomsday/console/knownword.h \
     include/doomsday/console/var.h \
     include/doomsday/defs/ded.h \
+    include/doomsday/defs/dedarray.h \
     include/doomsday/defs/dedfile.h \
     include/doomsday/defs/dedparser.h \
     include/doomsday/defs/dedtypes.h \
@@ -99,6 +100,7 @@ SOURCES += \
     src/console/knownword.cpp \
     src/console/var.cpp \
     src/defs/ded.cpp \
+    src/defs/dedarray.cpp \
     src/defs/dedfile.cpp \
     src/defs/dedparser.cpp \
     src/dualstring.cpp \

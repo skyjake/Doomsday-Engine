@@ -27,6 +27,7 @@
 
 #include "def_share.h"
 #include "api_gl.h"
+#include "dedarray.h"
 
 #define DED_SPRITEID_LEN            4
 #define DED_STRINGID_LEN            31
@@ -47,11 +48,6 @@ typedef ded_stringid_t ded_funcid_t;
 typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
 typedef char* ded_anystring_t;
-
-typedef struct ded_count_s {
-    int num;
-    int max;
-} ded_count_t;
 
 // Embedded sound information.
 typedef struct ded_embsound_s {
