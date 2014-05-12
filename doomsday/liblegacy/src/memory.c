@@ -62,3 +62,9 @@ void M_Free(void *ptr)
 {
     free(ptr);
 }
+
+char *M_StrDup(char const *str)
+{
+    if(!str) return 0;
+    return M_MemDup(str, strlen(str) + 1);
+}

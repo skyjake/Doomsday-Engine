@@ -58,6 +58,8 @@ DENG_PUBLIC void *M_MemDup(void const *ptr, size_t size);
 
 DENG_PUBLIC void M_Free(void *ptr);
 
+DENG_PUBLIC char *M_StrDup(char const *str);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
