@@ -22,37 +22,197 @@
 
 #include "../libdoomsday.h"
 #include <de/Vector>
+#include <de/memory.h>
+#include <cstring>
 
 struct ded_count_s
 {
     int num;
     int max;
+
+    ded_count_s() : num(0), max(0) {}
 };
 
 typedef struct ded_count_s ded_count_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
- * @return  Pointer to the new block of memory.
+ * Array of DED definitions.
+ *
+ * The array uses a memory management convention suitable for POD elements that are
+ * copied using @c memcpy: element constructors and destructors are never called, so
+ * ownership of data is managed manually using the elements' release() and reallocate()
+ * methods.
+ *
+ * Any memory allocated by the elements is @em not released automatically. Also, the
+ * array itself is also not freed in the destructor; clear() must be called before the
+ * array goes out of scope.
+ *
+ * @a PODType must be a POD class. All elements are initialized to zero.
+ * - The class must have a release() method that frees all memory owned by the element.
+ * - The class must have a reallocate() method if the entire array is assigned to
+ *   another or if elements are copied. The method must duplicate all memory owned by
+ *   the element; a plain @c memcpy has already been done by DEDArray.
+ *
  */
-LIBDOOMSDAY_PUBLIC void *DED_NewEntries(void** ptr, ded_count_t* cnt, size_t elemSize, int count);
+template <typename PODType>
+struct LIBDOOMSDAY_PUBLIC DEDArray
+{
+    PODType *elements;
+    ded_count_t count;
 
-/**
- * @return  Pointer to the new block of memory.
- */
-LIBDOOMSDAY_PUBLIC void *DED_NewEntry(void** ptr, ded_count_t* cnt, size_t elemSize);
+    DENG2_NO_COPY (DEDArray)
 
-LIBDOOMSDAY_PUBLIC void DED_DelEntry(int index, void** ptr, ded_count_t* cnt, size_t elemSize);
+public:
+    DEDArray() : elements(0) {}
 
-LIBDOOMSDAY_PUBLIC void DED_DelArray(void** ptr, ded_count_t* cnt);
+    ~DEDArray()
+    {
+        // This should have been cleared by now.
+        DENG_ASSERT(elements == 0);
+    }
 
-LIBDOOMSDAY_PUBLIC void DED_ZCount(ded_count_t* c);
+    /// @note Previous elements are not released -- they must be cleared manually.
+    DEDArray<PODType> &operator = (DEDArray<PODType> const &other)
+    {
+        elements = other.elements;
+        count    = other.count;
+        reallocate();
+        return *this;
+    }
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    void releaseAll()
+    {
+        for(int i = 0; i < count.num; ++i)
+        {
+            elements[i].release();
+        }
+    }
+
+    /**
+     * Duplicates the array and all the elements. Previous elements are not released. The
+     * assumption is that the array has been memcpy'd so it currently doesn't have
+     * ownership of the elements.
+     */
+    void reallocate()
+    {
+        PODType *copied = (PODType *) M_Malloc(sizeof(PODType) * count.max);
+        memcpy(copied, elements, sizeof(PODType) * count.num);
+        elements = copied;
+        for(int i = 0; i < count.num; ++i)
+        {
+            elements[i].reallocate();
+        }
+    }
+
+    bool isEmpty() const
+    {
+        return !size();
+    }
+
+    int size() const
+    {
+        return count.num;
+    }
+
+    PODType const &at(int index) const
+    {
+        DENG2_ASSERT(index >= 0);
+        DENG2_ASSERT(index < size());
+        return elements[index];
+    }
+
+    PODType &operator [] (int index) const
+    {
+        DENG2_ASSERT(index >= 0);
+        DENG2_ASSERT(index < size());
+        return elements[index];
+    }
+
+    /**
+     * Appends new, zeroed elements to the end of the array.
+     *
+     * @param addedCount  Number of elements to add.
+     *
+     * @return Pointer to the first new element.
+     */
+    PODType *append(int addedCount = 1)
+    {
+        DENG2_ASSERT(addedCount >= 0);
+
+        int const first = count.num;
+
+        count.num += addedCount;
+        if(count.num > count.max)
+        {
+            count.max *= 2; // Double the size of the array.
+            if(count.num > count.max) count.max = count.num;
+            elements = reinterpret_cast<PODType *>(M_Realloc(elements, sizeof(PODType) * count.max));
+        }
+
+        PODType *np = elements + first;
+        memset(np, 0, sizeof(PODType) * addedCount); // Clear the new entries.
+        return np;
+    }
+
+    void removeAt(int index)
+    {
+        DENG2_ASSERT(index >= 0);
+        DENG2_ASSERT(index < size());
+
+        if(index < 0 || index >= size()) return;
+
+        elements[index].release();
+
+        memmove(elements + index,
+                elements + (index + 1),
+                sizeof(PODType) * (count.num - index - 1));
+
+        if(--count.num < count.max / 2)
+        {
+            count.max /= 2;
+            elements = M_Realloc(elements, sizeof(PODType) * count.max);
+        }
+    }
+
+    void copyTo(int destIndex, int srcIndex)
+    {
+        DENG2_ASSERT(destIndex >= 0 && destIndex < size());
+        DENG2_ASSERT(srcIndex >= 0 && srcIndex < size());
+
+        // Free all existing allocations.
+        elements[destIndex].release();
+
+        // Do a plain copy and then duplicate allocations.
+        memcpy(&elements[destIndex], &elements[srcIndex], sizeof(PODType));
+        elements[destIndex].reallocate();
+    }
+
+    void copyTo(PODType *dest, PODType const *src)
+    {
+        copyTo(indexOf(dest), indexOf(src));
+    }
+
+    void copyTo(PODType *dest, int srcIndex)
+    {
+        copyTo(indexOf(dest), srcIndex);
+    }
+
+    int indexOf(PODType const *element) const
+    {
+        int index = element - elements;
+        DENG2_ASSERT(index >= 0 && index < size());
+        return index;
+    }
+
+    void clear()
+    {
+        releaseAll();
+
+        if(elements) M_Free(elements);
+        elements = 0;
+
+        count.num = count.max = 0;
+    }
+};
 
 #endif // LIBDOOMSDAY_DEFINITION_ARRAY_H

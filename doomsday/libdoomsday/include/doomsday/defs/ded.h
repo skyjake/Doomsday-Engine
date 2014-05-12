@@ -39,139 +39,89 @@
  * important. The Game DLL must be recompiled with the new constants if the order of the
  * array items changes.
  */
-struct LIBDOOMSDAY_PUBLIC ded_s {
+struct LIBDOOMSDAY_PUBLIC ded_s
+{
     int             version; // DED version number.
+
     ded_flags_t     modelFlags; // Default values for models.
     float           modelScale;
     float           modelOffset;
 
-    struct ded_counts_s {
-        ded_count_t     flags;
-        ded_count_t     mobjs;
-        ded_count_t     states;
-        ded_count_t     sprites;
-        ded_count_t     lights;
-        ded_count_t     materials;
-        ded_count_t     skies;
-        ded_count_t     sounds;
-        ded_count_t     music;
-        ded_count_t     mapInfo;
-        ded_count_t     text;
-        ded_count_t     textureEnv;
-        ded_count_t     values;
-        ded_count_t     details;
-        ded_count_t     ptcGens;
-        ded_count_t     finales;
-        ded_count_t     decorations;
-        ded_count_t     reflections;
-        ded_count_t     groups;
-        ded_count_t     lineTypes;
-        ded_count_t     sectorTypes;
-        ded_count_t     xgClasses;
-        ded_count_t     compositeFonts;
-    } count;
-
     // Flag values (for all types of data).
-    ded_flag_t*     flags;
+    DEDArray<ded_flag_t> flags;
 
     // Map object information.
-    ded_mobj_t*     mobjs;
+    DEDArray<ded_mobj_t> mobjs;
 
     // States.
-    ded_state_t*    states;
+    DEDArray<ded_state_t> states;
 
     // Sprites.
-    ded_sprid_t*    sprites;
+    DEDArray<ded_sprid_t> sprites;
 
     // Lights.
-    ded_light_t*    lights;
+    DEDArray<ded_light_t> lights;
 
     // Materials.
-    ded_material_t* materials;
+    DEDArray<ded_material_t> materials;
 
     // Models.
     typedef std::vector<ded_model_t> Models;
     Models models;
 
     // Skies.
-    ded_sky_t*      skies;
+    DEDArray<ded_sky_t> skies;
 
     // Sounds.
-    ded_sound_t*    sounds;
+    DEDArray<ded_sound_t> sounds;
 
     // Music.
-    ded_music_t*    music;
+    DEDArray<ded_music_t> music;
 
     // Map information.
-    ded_mapinfo_t*  mapInfo;
+    DEDArray<ded_mapinfo_t> mapInfo;
 
     // Text.
-    ded_text_t*     text;
+    DEDArray<ded_text_t> text;
 
     // Aural environments for textures.
-    ded_tenviron_t* textureEnv;
+    DEDArray<ded_tenviron_t> textureEnv;
 
     // Free-from string values.
-    ded_value_t*    values;
+    DEDArray<ded_value_t> values;
 
     // Detail texture assignments.
-    ded_detailtexture_t* details;
+    DEDArray<ded_detailtexture_t> details;
 
     // Particle generators.
-    ded_ptcgen_t*   ptcGens;
+    DEDArray<ded_ptcgen_t> ptcGens;
 
     // Finales.
-    ded_finale_t*   finales;
+    DEDArray<ded_finale_t> finales;
 
     // Decorations.
-    ded_decor_t*    decorations;
+    DEDArray<ded_decor_t> decorations;
 
     // Reflections.
-    ded_reflection_t* reflections;
+    DEDArray<ded_reflection_t> reflections;
 
     // Animation/Precache groups for textures.
-    ded_group_t*    groups;
+    DEDArray<ded_group_t> groups;
 
     // XG line types.
-    ded_linetype_t* lineTypes;
+    DEDArray<ded_linetype_t> lineTypes;
 
     // XG sector types.
-    ded_sectortype_t* sectorTypes;
+    DEDArray<ded_sectortype_t> sectorTypes;
 
     // Composite fonts.
-    ded_compositefont_t* compositeFonts;
+    DEDArray<ded_compositefont_t> compositeFonts;
 
-	/// Constructor initializes everything to zero.
-	ded_s() 
-		: version(DED_VERSION),
-		  modelFlags(0),
-		  modelScale(0),
-		  modelOffset(0),
-		  flags(0),
-		  mobjs(0),
-		  states(0),
-		  sprites(0),
-		  lights(0),
-		  materials(0),
-		  skies(0),
-		  sounds(0),
-		  music(0),
-		  mapInfo(0),
-		  text(0),
-		  textureEnv(0),
-		  values(0),
-		  details(0),
-		  ptcGens(0),
-		  finales(0),
-		  decorations(0),
-		  reflections(0),
-		  groups(0),
-		  lineTypes(0),
-		  sectorTypes(0),
-		  compositeFonts(0)
-	{
-		de::zap(count);
-	}
+public:
+    /**
+     * Constructor initializes everything to zero.
+     */
+    ded_s();
 
     void clear();
 
@@ -222,6 +172,9 @@ struct LIBDOOMSDAY_PUBLIC ded_s {
 
 protected:
     void release();
+
+    DENG2_NO_ASSIGN(ded_s)
+    DENG2_NO_COPY  (ded_s)
 };
 
 typedef ded_s ded_t;
@@ -260,30 +213,6 @@ int             DED_AddSectorType(ded_t* ded, int id);
 int             DED_AddLineType(ded_t* ded, int id);
 int             DED_AddCompositeFont(ded_t* ded, char const* uri);
 int             DED_AddCompositeFontMapCharacter(ded_compositefont_t* font);
-
-void            DED_RemoveFlag(ded_t* ded, int index);
-void            DED_RemoveMobj(ded_t* ded, int index);
-void            DED_RemoveState(ded_t* ded, int index);
-void            DED_RemoveSprite(ded_t* ded, int index);
-void            DED_RemoveLight(ded_t* ded, int index);
-void            DED_RemoveMaterial(ded_t* ded, int index);
-void            DED_RemoveModel(ded_t* ded, int index);
-void            DED_RemoveSky(ded_t* ded, int index);
-void            DED_RemoveSound(ded_t* ded, int index);
-void            DED_RemoveMusic(ded_t* ded, int index);
-void            DED_RemoveMapInfo(ded_t* ded, int index);
-void            DED_RemoveText(ded_t* ded, int index);
-void            DED_RemoveTextureEnv(ded_t* ded, int index);
-void            DED_RemoveValue(ded_t* ded, int index);
-void            DED_RemoveDetail(ded_t* ded, int index);
-void            DED_RemovePtcGen(ded_t* ded, int index);
-void            DED_RemoveFinale(ded_t* ded, int index);
-void            DED_RemoveDecoration(ded_t* ded, int index);
-void            DED_RemoveReflection(ded_t* ded, int index);
-void            DED_RemoveGroup(ded_t* ded, int index);
-void            DED_RemoveSectorType(ded_t* ded, int index);
-void            DED_RemoveLineType(ded_t* ded, int index);
-void            DED_RemoveCompositeFont(ded_t* ded, int index);
 
 #ifdef __cplusplus
 } // extern "C"

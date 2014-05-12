@@ -41,59 +41,30 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
     return radius;
 }
 
+ded_s::ded_s()
+{
+    clear();
+}
+
 void ded_s::clear()
 {
     release();
-    *this = ded_t();
+
+    version = DED_VERSION;
+    modelFlags = 0;
+    modelScale = 0;
+    modelOffset = 0;
 }
 
 void ded_s::release()
 {
-    if(flags)
-    {
-        M_Free(flags);
-        flags = 0;
-    }
+    flags.clear();
+    mobjs.clear();
+    states.clear();
+    sprites.clear();
+    lights.clear();
 
-    if(mobjs)
-    {
-        M_Free(mobjs);
-        mobjs = 0;
-    }
-
-    if(states)
-    {
-        int i;
-        for(i = 0; i < count.states.num; ++i)
-        {
-            ded_state_t* state = &states[i];
-            if(state->execute) free(state->execute);
-        }
-        free(states);
-        states = 0;
-    }
-
-    if(sprites)
-    {
-        M_Free(sprites);
-        sprites = 0;
-    }
-
-    if(lights)
-    {
-        int i;
-        for(i = 0; i < count.lights.num; ++i)
-        {
-            ded_light_t* li = &lights[i];
-            if(li->up) delete(li->up);
-            if(li->down) delete(li->down);
-            if(li->sides) delete(li->sides);
-            if(li->flare) delete(li->flare);
-        }
-        M_Free(lights);
-        lights = 0;
-    }
-
+    // 'models' is a std::vector
     for(uint i = 0; i < models.size(); ++i)
     {
         ded_model_t* mdl = &models[i];
@@ -107,311 +78,38 @@ void ded_s::release()
     }
     models.clear();
 
-    if(sounds)
-    {
-        int i;
-        for(i = 0; i < count.sounds.num; ++i)
-        {
-            ded_sound_t* snd = &sounds[i];
-            if(snd->ext) delete(snd->ext);
-        }
-        M_Free(sounds);
-        sounds = 0;
-    }
-
-    if(music)
-    {
-        int i;
-        for(i = 0; i < count.music.num; ++i)
-        {
-            ded_music_t* song = &music[i];
-            if(song->path) delete(song->path);
-        }
-        M_Free(music);
-        music = 0;
-    }
-
-    if(mapInfo)
-    {
-        int i, j;
-        for(i = 0; i < count.mapInfo.num; ++i)
-        {
-            ded_mapinfo_t* info = &mapInfo[i];
-
-            if(info->uri) delete(info->uri);
-            if(info->execute) free(info->execute);
-
-            for(j = 0; j < NUM_SKY_LAYERS; ++j)
-            {
-                ded_skylayer_t* sl = &info->sky.layers[j];
-                if(sl->material) delete(sl->material);
-            }
-
-            for(j = 0; j < NUM_SKY_MODELS; ++j)
-            {
-                ded_skymodel_t* sm = &info->sky.models[j];
-                if(sm->execute) free(sm->execute);
-            }
-        }
-        free(mapInfo);
-        mapInfo = 0;
-    }
-
-    if(skies)
-    {
-        int i, j;
-        for(i = 0; i < count.skies.num; ++i)
-        {
-            ded_sky_t* sky = &skies[i];
-            for(j = 0; j < NUM_SKY_LAYERS; ++j)
-            {
-                ded_skylayer_t* sl = &sky->layers[j];
-                if(sl->material) delete(sl->material);
-            }
-            for(j = 0; j < NUM_SKY_MODELS; ++j)
-            {
-                ded_skymodel_t* sm = &sky->models[j];
-                if(sm->execute) free(sm->execute);
-            }
-        }
-        M_Free(skies);
-        skies = 0;
-    }
-
-    if(details)
-    {
-        int i;
-        for(i = 0; i < count.details.num; ++i)
-        {
-            ded_detailtexture_t* dtex = &details[i];
-            if(dtex->material1) delete(dtex->material1);
-            if(dtex->material2) delete(dtex->material2);
-            if(dtex->stage.texture) delete(dtex->stage.texture);
-        }
-        M_Free(details);
-        details = 0;
-    }
-
-    if(materials)
-    {
-        int i, k, m;
-        for(i = 0; i < count.materials.num; ++i)
-        {
-            ded_material_t* mat = &materials[i];
-            if(mat->uri) delete(mat->uri);
-
-            for(k = 0; k < DED_MAX_MATERIAL_LAYERS; ++k)
-            {
-                ded_material_layer_t *layer = &mat->layers[k];
-                for(m = 0; m < layer->stageCount.num; ++m)
-                {
-                    if(layer->stages[m].texture) delete(layer->stages[m].texture);
-                }
-                M_Free(layer->stages);
-            }
-
-            for(k = 0; k < DED_MAX_MATERIAL_DECORATIONS; ++k)
-            {
-                ded_material_decoration_t *light = &mat->decorations[k];
-                for(m = 0; m < light->stageCount.num; ++m)
-                {
-                    ded_decorlight_stage_t *stage = &light->stages[m];
-                    if(stage->up)    delete(stage->up);
-                    if(stage->down)  delete(stage->down);
-                    if(stage->sides) delete(stage->sides);
-                    if(stage->flare) delete(stage->flare);
-                }
-                M_Free(light->stages);
-            }
-        }
-        M_Free(materials);
-        materials = 0;
-    }
-
-    if(text)
-    {
-        int i;
-        for(i = 0; i < count.text.num; ++i)
-        {
-            M_Free(text[i].text);
-        }
-        M_Free(text);
-        text = 0;
-    }
-
-    if(textureEnv)
-    {
-        int i, j;
-        for(i = 0; i < count.textureEnv.num; ++i)
-        {
-            ded_tenviron_t* tenv = &textureEnv[i];
-            for(j = 0; j < tenv->count.num; ++j)
-            {
-                if(tenv->materials[j]) delete(tenv->materials[j]);
-            }
-            M_Free(tenv->materials);
-        }
-        M_Free(textureEnv);
-        textureEnv = 0;
-    }
-
-    if(compositeFonts)
-    {
-        int i, j;
-        for(i = 0; i < count.compositeFonts.num; ++i)
-        {
-            ded_compositefont_t* cfont = &compositeFonts[i];
-
-            if(cfont->uri) delete(cfont->uri);
-
-            for(j = 0; j < cfont->charMapCount.num; ++j)
-            {
-                if(cfont->charMap[j].path) delete(cfont->charMap[j].path);
-            }
-            M_Free(cfont->charMap);
-        }
-        M_Free(compositeFonts);
-        compositeFonts = 0;
-    }
-
-    if(values)
-    {
-        int i;
-        for(i = 0; i < count.values.num; ++i)
-        {
-            M_Free(values[i].id);
-            M_Free(values[i].text);
-        }
-        M_Free(values);
-        values = 0;
-    }
-
-    if(decorations)
-    {
-        int i, j;
-        for(i = 0; i < count.decorations.num; ++i)
-        {
-            ded_decor_t *dec = &decorations[i];
-
-            if(dec->material) delete(dec->material);
-
-            for(j = 0; j < DED_DECOR_NUM_LIGHTS; ++j)
-            {
-                ded_decoration_t *light = &dec->lights[j];
-                if(light->stage.up)    delete(light->stage.up);
-                if(light->stage.down)  delete(light->stage.down);
-                if(light->stage.sides) delete(light->stage.sides);
-                if(light->stage.flare) delete(light->stage.flare);
-            }
-        }
-        M_Free(decorations);
-        decorations = 0;
-    }
-
-    if(reflections)
-    {
-        int i;
-        for(i = 0; i < count.reflections.num; ++i)
-        {
-            ded_reflection_t* ref = &reflections[i];
-
-            if(ref->material) delete(ref->material);
-            if(ref->stage.texture) delete(ref->stage.texture);
-            if(ref->stage.maskTexture) delete(ref->stage.maskTexture);
-        }
-        free(reflections);
-        reflections = 0;
-    }
-
-    if(groups)
-    {
-        int i, j;
-        for(i = 0; i < count.groups.num; ++i)
-        {
-            ded_group_t* group = &groups[i];
-            for(j = 0; j < group->count.num; ++j)
-            {
-                if(group->members[j].material) delete(group->members[j].material);
-            }
-            M_Free(group->members);
-        }
-        M_Free(groups);
-        groups = 0;
-    }
-
-    if(sectorTypes)
-    {
-        M_Free(sectorTypes);
-        sectorTypes = 0;
-    }
-
-    if(lineTypes)
-    {
-        int i;
-        for(i = 0; i < count.lineTypes.num; ++i)
-        {
-            ded_linetype_t* lt = &lineTypes[i];
-            if(lt->actMaterial) delete(lt->actMaterial);
-            if(lt->deactMaterial) delete(lt->deactMaterial);
-        }
-        M_Free(lineTypes);
-        lineTypes = 0;
-    }
-
-    if(ptcGens)
-    {
-        int i;
-        for(i = 0; i < count.ptcGens.num; ++i)
-        {
-            ded_ptcgen_t* gen = &ptcGens[i];
-            if(gen->map) delete(gen->map);
-            if(gen->material) delete(gen->material);
-            if(gen->stages) M_Free(gen->stages);
-        }
-        M_Free(ptcGens);
-        ptcGens = 0;
-    }
-
-    if(finales)
-    {
-        int i;
-        for(i = 0; i < count.finales.num; ++i)
-        {
-            ded_finale_t* fin = &finales[i];
-            if(fin->after) delete(fin->after);
-            if(fin->before) delete(fin->before);
-            if(fin->script) free(fin->script);
-        }
-        M_Free(finales);
-        finales = 0;
-    }
+    sounds.clear();
+    music.clear();
+    mapInfo.clear();
+    skies.clear();
+    details.clear();
+    materials.clear();
+    text.clear();
+    textureEnv.clear();
+    compositeFonts.clear();
+    values.clear();
+    decorations.clear();
+    reflections.clear();
+    groups.clear();
+    sectorTypes.clear();
+    lineTypes.clear();
+    ptcGens.clear();
+    finales.clear();
 }
 
 int DED_AddMobj(ded_t* ded, char const* idstr)
 {
-    ded_mobj_t* mo = (ded_mobj_t *) DED_NewEntry((void**) &ded->mobjs, &ded->count.mobjs, sizeof(ded_mobj_t));
-
+    ded_mobj_t *mo = ded->mobjs.append();
     strcpy(mo->id, idstr);
-    return mo - ded->mobjs;
-}
-
-void DED_RemoveMobj(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->mobjs, &ded->count.mobjs, sizeof(ded_mobj_t));
+    return ded->mobjs.indexOf(mo);
 }
 
 int DED_AddFlag(ded_t* ded, char const* name, int value)
 {
-    ded_flag_t* fl = (ded_flag_t *) DED_NewEntry((void**) &ded->flags, &ded->count.flags, sizeof(ded_flag_t));
-
+    ded_flag_t *fl = ded->flags.append();
     strcpy(fl->id, name);
     fl->value = value;
-    return fl - ded->flags;
-}
-
-void DED_RemoveFlag(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->flags, &ded->count.flags, sizeof(ded_flag_t));
+    return ded->flags.indexOf(fl);
 }
 
 int DED_AddModel(ded_t* ded, char const* spr)
@@ -427,7 +125,7 @@ void DED_RemoveModel(ded_t* ded, int index)
 
 int DED_AddSky(ded_t* ded, char const* id)
 {
-    ded_sky_t* sky = (ded_sky_t *) DED_NewEntry((void**) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
+    ded_sky_t *sky = ded->skies.append();
     int i;
 
     strcpy(sky->id, id);
@@ -446,118 +144,71 @@ int DED_AddSky(ded_t* ded, char const* id)
         sky->models[i].color[3] = 1;
     }
 
-    return sky - ded->skies;
-}
-
-void DED_RemoveSky(ded_t* ded, int index)
-{
-    int i;
-    for(i = 0; i < NUM_SKY_LAYERS; ++i)
-    {
-        ded_skylayer_t* sl = &ded->skies[index].layers[i];
-        if(sl->material)
-            delete(sl->material);
-    }
-    DED_DelEntry(index, (void **) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
+    return ded->skies.indexOf(sky);
 }
 
 int DED_AddState(ded_t* ded, char const* id)
 {
-    ded_state_t* st = (ded_state_t *) DED_NewEntry((void**) &ded->states, &ded->count.states, sizeof(ded_state_t));
-
+    ded_state_t *st = ded->states.append();
     strcpy(st->id, id);
-    return st - ded->states;
-}
-
-void DED_RemoveState(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void **) &ded->states, &ded->count.states, sizeof(ded_state_t));
+    return ded->states.indexOf(st);
 }
 
 int DED_AddSprite(ded_t* ded, char const* name)
 {
-    ded_sprid_t* sp = (ded_sprid_t *) DED_NewEntry((void**) &ded->sprites, &ded->count.sprites, sizeof(ded_sprid_t));
-
+    ded_sprid_t *sp = ded->sprites.append();
     strcpy(sp->id, name);
-    return sp - ded->sprites;
-}
-
-void DED_RemoveSprite(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->sprites, &ded->count.sprites, sizeof(ded_sprid_t));
+    return ded->sprites.indexOf(sp);
 }
 
 int DED_AddLight(ded_t* ded, char const* stateid)
 {
-    ded_light_t* light = (ded_light_t *) DED_NewEntry((void**) &ded->lights, &ded->count.lights, sizeof(ded_light_t));
-
+    ded_light_t* light = ded->lights.append();
     strcpy(light->state, stateid);
-    return light - ded->lights;
-}
-
-void DED_RemoveLight(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->lights, &ded->count.lights, sizeof(ded_light_t));
+    return ded->lights.indexOf(light);
 }
 
 int DED_AddMaterial(ded_t* ded, char const* uri)
 {
-    ded_material_t* mat = (ded_material_t *) DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
+    ded_material_t* mat = ded->materials.append();
     if(uri) mat->uri = new de::Uri(uri, RC_NULL);
-    return mat - ded->materials;
+    return ded->materials.indexOf(mat);
 }
 
 int DED_AddMaterialLayerStage(ded_material_layer_t *ml)
 {
-    ded_material_layer_stage_t *stage = (ded_material_layer_stage_t *) DED_NewEntry((void**) &ml->stages, &ml->stageCount, sizeof(*stage));
-    return stage - ml->stages;
+    ded_material_layer_stage_t *stage = ml->stages.append();
+    return ml->stages.indexOf(stage);
 }
 
 int DED_AddMaterialDecorationStage(ded_material_decoration_t *li)
 {
-    ded_decorlight_stage_t *stage = (ded_decorlight_stage_t *) DED_NewEntry((void**) &li->stages, &li->stageCount, sizeof(*stage));
+    ded_decorlight_stage_t *stage = li->stages.append();
 
     // The color (0,0,0) means the light is not visible during this stage.
     stage->elevation = 1;
     stage->radius    = 1;
 
-    return stage - li->stages;
-}
-
-void DED_RemoveMaterial(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
+    return li->stages.indexOf(stage);
 }
 
 int DED_AddSound(ded_t* ded, char const* id)
 {
-    ded_sound_t* snd = (ded_sound_t *) DED_NewEntry((void**) &ded->sounds, &ded->count.sounds, sizeof(ded_sound_t));
-
+    ded_sound_t* snd = ded->sounds.append();
     strcpy(snd->id, id);
-    return snd - ded->sounds;
-}
-
-void DED_RemoveSound(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void **) &ded->sounds, &ded->count.sounds, sizeof(ded_sound_t));
+    return ded->sounds.indexOf(snd);
 }
 
 int DED_AddMusic(ded_t* ded, char const* id)
 {
-    ded_music_t* mus = (ded_music_t *) DED_NewEntry((void**) &ded->music, &ded->count.music, sizeof(ded_music_t));
-
+    ded_music_t* mus = ded->music.append();
     strcpy(mus->id, id);
-    return mus - ded->music;
-}
-
-void DED_RemoveMusic(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->music, &ded->count.music, sizeof(ded_music_t));
+    return ded->music.indexOf(mus);
 }
 
 int DED_AddMapInfo(ded_t* ded, char const* uri)
 {
-    ded_mapinfo_t* inf = (ded_mapinfo_t *) DED_NewEntry((void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
+    ded_mapinfo_t* inf = ded->mapInfo.append();
     int i;
 
     if(uri) inf->uri = new de::Uri(uri, RC_NULL);
@@ -586,95 +237,44 @@ int DED_AddMapInfo(ded_t* ded, char const* uri)
         inf->sky.models[i].color[3] = 1;
     }
 
-    return inf - ded->mapInfo;
-}
-
-void DED_RemoveMapInfo(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
+    return ded->mapInfo.indexOf(inf);
 }
 
 int DED_AddText(ded_t* ded, char const* id)
 {
-    ded_text_t* txt = (ded_text_t *) DED_NewEntry((void**) &ded->text, &ded->count.text, sizeof(ded_text_t));
-
+    ded_text_t* txt = ded->text.append();
     strcpy(txt->id, id);
-    return txt - ded->text;
-}
-
-void DED_RemoveText(ded_t* ded, int index)
-{
-    M_Free(ded->text[index].text);
-    DED_DelEntry(index, (void**) &ded->text, &ded->count.text, sizeof(ded_text_t));
+    return ded->text.indexOf(txt);
 }
 
 int DED_AddTextureEnv(ded_t* ded, char const* id)
 {
-    ded_tenviron_t* env = (ded_tenviron_t *) DED_NewEntry((void**) &ded->textureEnv, &ded->count.textureEnv, sizeof(ded_tenviron_t));
-
+    ded_tenviron_t* env = ded->textureEnv.append();
     strcpy(env->id, id);
-    return env - ded->textureEnv;
-}
-
-void DED_RemoveTextureEnv(ded_t* ded, int index)
-{
-    { int i;
-    for(i = 0; i < ded->textureEnv[index].count.num; ++i)
-    {
-        if(ded->textureEnv[index].materials[i])
-            delete(ded->textureEnv[index].materials[i]);
-    }}
-    M_Free(ded->textureEnv[index].materials);
-
-    DED_DelEntry(index, (void**) &ded->textureEnv, &ded->count.textureEnv, sizeof(ded_tenviron_t));
+    return ded->textureEnv.indexOf(env);
 }
 
 int DED_AddCompositeFont(ded_t* ded, char const* uri)
 {
-    ded_compositefont_t* cfont = (ded_compositefont_t *) DED_NewEntry((void **) &ded->compositeFonts, &ded->count.compositeFonts, sizeof(ded_compositefont_t));
-
+    ded_compositefont_t* cfont = ded->compositeFonts.append();
     if(uri) cfont->uri = new de::Uri(uri, RC_NULL);
-    return cfont - ded->compositeFonts;
-}
-
-void DED_RemoveCompositeFont(ded_t* ded, int index)
-{
-    ded_compositefont_t* cfont = ded->compositeFonts + index;
-    int i;
-
-    if(cfont->uri) delete(cfont->uri);
-
-    for(i = 0; i < cfont->charMapCount.num; ++i)
-    {
-        if(cfont->charMap[i].path) delete(cfont->charMap[i].path);
-    }
-    M_Free(cfont->charMap);
-
-    DED_DelEntry(index, (void**) &ded->compositeFonts, &ded->count.compositeFonts, sizeof(ded_compositefont_t));
+    return ded->compositeFonts.indexOf(cfont);
 }
 
 int DED_AddValue(ded_t* ded, char const* id)
 {
-    ded_value_t* val = (ded_value_t *) DED_NewEntry((void**) &ded->values, &ded->count.values, sizeof(ded_value_t));
-
+    ded_value_t* val = ded->values.append();
     if(id)
     {
         val->id = (char *) M_Malloc(strlen(id) + 1);
         strcpy(val->id, id);
     }
-    return val - ded->values;
-}
-
-void DED_RemoveValue(ded_t* ded, int index)
-{
-    M_Free(ded->values[index].id);
-    M_Free(ded->values[index].text);
-    DED_DelEntry(index, (void**) &ded->values, &ded->count.values, sizeof(ded_value_t));
+    return ded->values.indexOf(val);
 }
 
 int DED_AddDetail(ded_t *ded, char const *lumpname)
 {
-    ded_detailtexture_t *dtl = (ded_detailtexture_t *) DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
+    ded_detailtexture_t *dtl = ded->details.append();
 
     // Default usage is allowed with custom textures and external replacements.
     dtl->flags = DTLF_PWAD|DTLF_EXTERNAL;
@@ -686,77 +286,53 @@ int DED_AddDetail(ded_t *ded, char const *lumpname)
     dtl->stage.scale = 1;
     dtl->stage.strength = 1;
 
-    return dtl - ded->details;
-}
-
-void DED_RemoveDetail(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
+    return ded->details.indexOf(dtl);
 }
 
 int DED_AddPtcGen(ded_t* ded, char const* state)
 {
-    ded_ptcgen_t* gen = (ded_ptcgen_t *) DED_NewEntry((void**) &ded->ptcGens, &ded->count.ptcGens, sizeof(ded_ptcgen_t));
+    ded_ptcgen_t* gen = ded->ptcGens.append();
 
     strcpy(gen->state, state);
 
     // Default choice (use either submodel zero or one).
     gen->subModel = -1;
 
-    return gen - ded->ptcGens;
+    return ded->ptcGens.indexOf(gen);
 }
 
 int DED_AddPtcGenStage(ded_ptcgen_t* gen)
 {
-    ded_ptcstage_t* stage = (ded_ptcstage_t *) DED_NewEntry((void**) &gen->stages, &gen->stageCount, sizeof(ded_ptcstage_t));
+    ded_ptcstage_t* stage = gen->stages.append();
 
     stage->model = -1;
     stage->sound.volume = 1;
     stage->hitSound.volume = 1;
 
-    return stage - gen->stages;
-}
-
-void DED_RemovePtcGen(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->ptcGens, &ded->count.ptcGens, sizeof(ded_ptcgen_t));
+    return gen->stages.indexOf(stage);
 }
 
 int DED_AddFinale(ded_t* ded)
 {
-    ded_finale_t* fin = (ded_finale_t *) DED_NewEntry((void**) &ded->finales, &ded->count.finales, sizeof(ded_finale_t));
-
-    return fin - ded->finales;
-}
-
-void DED_RemoveFinale(ded_t* ded, int index)
-{
-    M_Free(ded->finales[index].script);
-    DED_DelEntry(index, (void**) &ded->finales, &ded->count.finales, sizeof(ded_finale_t));
+    ded_finale_t* fin = ded->finales.append();
+    return ded->finales.indexOf(fin);
 }
 
 int DED_AddDecoration(ded_t* ded)
 {
-    ded_decor_t* decor = (ded_decor_t *) DED_NewEntry((void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
-    int i;
-    for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+    ded_decor_t* decor = ded->decorations.append();
+    for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
     {
         // The color (0,0,0) means the light is not active.
         decor->lights[i].stage.elevation = 1;
         decor->lights[i].stage.radius    = 1;
     }
-
-    return decor - ded->decorations;
-}
-
-void DED_RemoveDecoration(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
+    return ded->decorations.indexOf(decor);
 }
 
 int DED_AddReflection(ded_t *ded)
 {
-    ded_reflection_t *ref = (ded_reflection_t *) DED_NewEntry((void **) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
+    ded_reflection_t *ref = ded->reflections.append();
 
     // Default usage is allowed with custom textures and external replacements.
     ref->flags = REFF_PWAD|REFF_EXTERNAL;
@@ -767,74 +343,41 @@ int DED_AddReflection(ded_t *ded)
     ref->stage.maskWidth  = 1.0f;
     ref->stage.maskHeight = 1.0f;
 
-    return ref - ded->reflections;
-}
-
-void DED_RemoveReflection(ded_t *ded, int index)
-{
-    DED_DelEntry(index, (void **) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
+    return ded->reflections.indexOf(ref);
 }
 
 int DED_AddGroup(ded_t* ded)
 {
-    ded_group_t* group = (ded_group_t *) DED_NewEntry((void**) &ded->groups, &ded->count.groups, sizeof(ded_group_t));
-    return group - ded->groups;
-}
-
-void DED_RemoveGroup(ded_t* ded, int index)
-{
-    if(ded->groups[index].members)
-    {
-        int i;
-        for(i = 0; i < ded->groups[index].count.num; ++i)
-        {
-            if(ded->groups[index].members[i].material)
-                delete(ded->groups[index].members[i].material);
-        }
-        M_Free(ded->groups[index].members);
-    }
-    DED_DelEntry(index, (void**) &ded->groups, &ded->count.groups, sizeof(ded_group_t));
+    ded_group_t* group = ded->groups.append();
+    return ded->groups.indexOf(group);
 }
 
 int DED_AddGroupMember(ded_group_t* grp)
 {
-    ded_group_member_t* memb = (ded_group_member_t *) DED_NewEntry((void**) &grp->members, &grp->count, sizeof(ded_group_member_t));
-
-    return memb - grp->members;
+    ded_group_member_t* memb = grp->members.append();
+    return grp->members.indexOf(memb);
 }
 
 int DED_AddSectorType(ded_t* ded, int id)
 {
-    ded_sectortype_t* sec = (ded_sectortype_t *) DED_NewEntry((void**) &ded->sectorTypes, &ded->count.sectorTypes, sizeof(ded_sectortype_t));
-
+    ded_sectortype_t* sec = ded->sectorTypes.append();
     sec->id = id;
-    return sec - ded->sectorTypes;
-}
-
-void DED_RemoveSectorType(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->sectorTypes, &ded->count.sectorTypes, sizeof(ded_sectortype_t));
+    return ded->sectorTypes.indexOf(sec);
 }
 
 int DED_AddLineType(ded_t* ded, int id)
 {
-    ded_linetype_t* li = (ded_linetype_t *) DED_NewEntry((void**) &ded->lineTypes, &ded->count.lineTypes, sizeof(ded_linetype_t));
-
+    ded_linetype_t* li = ded->lineTypes.append();
     li->id = id;
     //li->actCount = -1;
-    return li - ded->lineTypes;
-}
-
-void DED_RemoveLineType(ded_t* ded, int index)
-{
-    DED_DelEntry(index, (void**) &ded->lineTypes, &ded->count.lineTypes, sizeof(ded_linetype_t));
+    return ded->lineTypes.indexOf(li);
 }
 
 ded_material_t *ded_s::findMaterialDef(de::Uri const &uri) const
 {
-    for(int i = count.materials.num - 1; i >= 0; i--)
+    for(int i = materials.size() - 1; i >= 0; i--)
     {
-        ded_material_t* def = &materials[i];
+        ded_material_t *def = &materials[i];
         if(!def->uri || uri != reinterpret_cast<de::Uri &>(*def->uri)) continue;
         return def;
     }
@@ -884,7 +427,7 @@ int ded_s::getMobjNum(char const *id) const
     if(!id || !id[0])
         return -1;
 
-    for(i = 0; i < count.mobjs.num; ++i)
+    for(i = 0; i < mobjs.size(); ++i)
         if(!qstricmp(mobjs[i].id, id))
             return i;
 
@@ -898,7 +441,7 @@ int ded_s::getMobjNumForName(const char *name) const
     if(!name || !name[0])
         return -1;
 
-    for(i = count.mobjs.num -1; i >= 0; --i)
+    for(i = mobjs.size() - 1; i >= 0; --i)
         if(!qstricmp(mobjs[i].name, name))
             return i;
 
@@ -908,20 +451,20 @@ int ded_s::getMobjNumForName(const char *name) const
 char const *ded_s::getMobjName(int num) const
 {
     if(num < 0) return "(<0)";
-    if(num >= count.mobjs.num) return "(>mobjtypes)";
+    if(num >= mobjs.size()) return "(>mobjtypes)";
     return mobjs[num].id;
 }
 
 int ded_s::getStateNum(char const *id) const
 {
     int idx = -1;
-    if(id && id[0] && count.states.num)
+    if(id && id[0] && states.size())
     {
         int i = 0;
         do {
             if(!qstricmp(states[i].id, id))
                 idx = i;
-        } while(idx == -1 && ++i < count.states.num);
+        } while(idx == -1 && ++i < states.size());
     }
     return idx;
 }
@@ -930,10 +473,10 @@ ded_flag_t *ded_s::getFlag(char const *flag) const
 {
     if(!flag || !flag[0]) return 0;
 
-    for(int i = count.flags.num - 1; i >= 0; i--)
+    for(int i = flags.size() - 1; i >= 0; i--)
     {
         if(!qstricmp(flags[i].id, flag))
-            return flags + i;
+            return &flags[i];
     }
 
     return 0;
@@ -981,12 +524,12 @@ int ded_s::getModelNum(const char *id) const
 int ded_s::getSoundNum(const char *id) const
 {
     int idx = -1;
-    if(id && id[0] && count.sounds.num)
+    if(id && id[0] && sounds.size())
     {
         int i = 0;
         do {
             if(!qstricmp(sounds[i].id, id)) idx = i;
-        } while(idx == -1 && ++i < count.sounds.num);
+        } while(idx == -1 && ++i < sounds.size());
     }
     return idx;
 }
@@ -996,7 +539,7 @@ int ded_s::getSoundNumForName(const char *name) const
     if(!name || !name[0])
         return -1;
 
-    for(int i = 0; i < count.sounds.num; ++i)
+    for(int i = 0; i < sounds.size(); ++i)
         if(!qstricmp(sounds[i].name, name))
             return i;
 
@@ -1005,9 +548,9 @@ int ded_s::getSoundNumForName(const char *name) const
 
 ded_music_t *ded_s::getMusic(char const *id) const
 {
-    if(id && id[0] && count.music.num)
+    if(id && id[0] && music.size())
     {
-        for(int i = 0; i < count.music.num; ++i)
+        for(int i = 0; i < music.size(); ++i)
         {
             if(!qstricmp(music[i].id, id))
                 return &music[i];
@@ -1019,12 +562,12 @@ ded_music_t *ded_s::getMusic(char const *id) const
 int ded_s::getMusicNum(const char* id) const
 {
     int idx = -1;
-    if(id && id[0] && count.music.num)
+    if(id && id[0] && music.size())
     {
         int i = 0;
         do {
             if(!qstricmp(music[i].id, id)) idx = i;
-        } while(idx == -1 && ++i < count.music.num);
+        } while(idx == -1 && ++i < music.size());
     }
     return idx;
 }
@@ -1034,10 +577,10 @@ ded_value_t* ded_s::getValueById(char const* id) const
     if(!id || !id[0]) return NULL;
 
     // Read backwards to allow patching.
-    for(int i = count.values.num - 1; i >= 0; i--)
+    for(int i = values.size() - 1; i >= 0; i--)
     {
         if(!qstricmp(values[i].id, id))
-            return values + i;
+            return &values[i];
     }
     return 0;
 }
@@ -1052,10 +595,10 @@ ded_mapinfo_t *ded_s::getMapInfo(de::Uri const *uri) const
 {
     if(!uri) return 0;
 
-    for(int i = count.mapInfo.num - 1; i >= 0; i--)
+    for(int i = mapInfo.size() - 1; i >= 0; i--)
     {
         if(mapInfo[i].uri && *uri == *mapInfo[i].uri)
-            return mapInfo + i;
+            return &mapInfo[i];
     }
     return 0;
 }
@@ -1064,17 +607,17 @@ ded_sky_t* ded_s::getSky(char const* id) const
 {
     if(!id || !id[0]) return NULL;
 
-    for(int i = count.skies.num - 1; i >= 0; i--)
+    for(int i = skies.size() - 1; i >= 0; i--)
     {
         if(!qstricmp(skies[i].id, id))
-            return skies + i;
+            return &skies[i];
     }
     return 0;
 }
 
 ded_compositefont_t* ded_s::findCompositeFontDef(de::Uri const& uri) const
 {
-    for(int i = count.compositeFonts.num - 1; i >= 0; i--)
+    for(int i = compositeFonts.size() - 1; i >= 0; i--)
     {
         ded_compositefont_t* def = &compositeFonts[i];
         if(!def->uri || uri != *def->uri) continue;
@@ -1115,14 +658,14 @@ ded_compositefont_t* ded_s::getCompositeFont(char const* uriCString) const
 int ded_s::getTextNumForName(const char* name) const
 {
     int idx = -1;
-    if(name && name[0] && count.text.num)
+    if(name && name[0] && text.size())
     {
         int i = 0;
         do
         {
             if(!qstricmp(text[i].id, name))
                 idx = i;
-        } while(idx == -1 && ++i < count.text.num);
+        } while(idx == -1 && ++i < text.size());
     }
     return idx;
 }

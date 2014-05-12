@@ -23,11 +23,14 @@
 #include <vector>
 #include <de/libcore.h>
 #include <de/Vector>
+#include <de/memory.h>
 #include "../uri.h"
 
 #include "def_share.h"
 #include "api_gl.h"
 #include "dedarray.h"
+
+#define DED_DUP_URI(u)              u = (u? new de::Uri(*u) : 0)
 
 #define DED_SPRITEID_LEN            4
 #define DED_STRINGID_LEN            31
@@ -48,6 +51,14 @@ typedef ded_stringid_t ded_funcid_t;
 typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
 typedef char* ded_anystring_t;
+
+typedef struct ded_uri_s {
+    de::Uri *uri;
+
+    void release() {
+        delete uri;
+    }
+} ded_uri_t;
 
 // Embedded sound information.
 typedef struct ded_embsound_s {
@@ -76,6 +87,9 @@ typedef struct ded_ptcstage_s {
     short           frame, endFrame;
     ded_embsound_t  sound, hitSound;
 
+    void release() {}
+    void reallocate() {}
+
     /**
      * Takes care of consistent variance.
      * Currently only used visually, collisions use the constant radius.
@@ -86,6 +100,8 @@ typedef struct ded_ptcstage_s {
 
 typedef struct {
     char            id[DED_SPRITEID_LEN + 1];
+
+    void release() {}
 } ded_sprid_t;
 
 typedef struct {
@@ -95,9 +111,11 @@ typedef struct {
 typedef struct {
     ded_stringid_t  id;
     int             value;
+
+    void release() {}
 } ded_flag_t;
 
-typedef struct {
+typedef struct ded_mobj_s {
     ded_mobjid_t    id;
     int             doomEdNum;
     ded_string_t    name;
@@ -120,9 +138,12 @@ typedef struct {
     int             damage;
     ded_flags_t     flags[NUM_MOBJ_FLAGS];
     int             misc[NUM_MOBJ_MISC];
+
+    void release() {}
+    void reallocate() {}
 } ded_mobj_t;
 
-typedef struct {
+typedef struct ded_state_s {
     ded_stateid_t   id; // ID of this state.
     ded_sprid_t     sprite;
     ded_flags_t     flags;
@@ -132,6 +153,13 @@ typedef struct {
     ded_stateid_t   nextState;
     int             misc[NUM_STATE_MISC];
     ded_anystring_t execute; // Console command.
+
+    void release() {
+        M_Free(execute);
+    }
+    void reallocate() {
+        if(execute) execute = M_StrDup(execute);
+    }
 } ded_state_t;
 
 typedef struct ded_light_s {
@@ -146,6 +174,19 @@ typedef struct ded_light_s {
     de::Uri*        up, *down, *sides;
     de::Uri*        flare;
     float           haloRadius; // Halo radius (zero = no halo).
+
+    void release() {
+        delete up;
+        delete down;
+        delete sides;
+        delete flare;
+    }
+    void reallocate() {
+        DED_DUP_URI(up);
+        DED_DUP_URI(down);
+        DED_DUP_URI(sides);
+        DED_DUP_URI(flare);
+    }
 } ded_light_t;
 
 struct ded_submodel_t
@@ -259,7 +300,7 @@ struct ded_model_t
     }
 };
 
-typedef struct {
+typedef struct ded_sound_s {
     ded_soundid_t   id; // ID of this sound, refered to by others.
     ded_string_t    name; // A tag name for the sound.
     ded_string_t    lumpName; // Actual lump name of the sound ("DS" not included).
@@ -271,20 +312,41 @@ typedef struct {
     int             channels; // Max number of channels to occupy.
     int             group; // Exclusion group.
     ded_flags_t     flags; // Flags (like chg_pitch).
+
+    void release() {
+        delete ext;
+    }
+    void reallocate() {
+        DED_DUP_URI(ext);
+    }
 } ded_sound_t;
 
-typedef struct {
+typedef struct ded_music_s {
     ded_musicid_t   id; // ID of this piece of music.
     ded_string_t    lumpName; // Lump name.
     de::Uri*        path; // External file (not a normal MUS file).
     int             cdTrack; // 0 = no track.
+
+    void release() {
+        delete path;
+    }
+    void reallocate() {
+        DED_DUP_URI(path);
+    }
 } ded_music_t;
 
-typedef struct {
+typedef struct ded_skylayer_s {
     ded_flags_t     flags;
     de::Uri*        material;
     float           offset;
     float           colorLimit;
+
+    void release() {
+        delete material;
+    }
+    void reallocate() {
+        DED_DUP_URI(material);
+    }
 } ded_skylayer_t;
 
 typedef struct ded_skymodel_s {
@@ -297,6 +359,13 @@ typedef struct ded_skymodel_s {
     float           rotate[2];
     ded_anystring_t execute; // Executed on every frame change.
     float           color[4]; // RGBA
+
+    void release() {
+        M_Free(execute);
+    }
+    void reallocate() {
+        execute = M_StrDup(execute);
+    }
 } ded_skymodel_t;
 
 #define NUM_SKY_LAYERS      2
@@ -317,6 +386,23 @@ typedef struct ded_sky_s {
     float           color[3]; // Color of sky-lit sectors.
     ded_skylayer_t  layers[NUM_SKY_LAYERS];
     ded_skymodel_t  models[NUM_SKY_MODELS];
+
+    void release() {
+        for(int i = 0; i < NUM_SKY_LAYERS; ++i) {
+            layers[i].release();
+        }
+        for(int i = 0; i < NUM_SKY_MODELS; ++i) {
+            models[i].release();
+        }
+    }
+    void reallocate() {
+        for(int i = 0; i < NUM_SKY_LAYERS; ++i) {
+            layers[i].reallocate();
+        }
+        for(int i = 0; i < NUM_SKY_MODELS; ++i) {
+            models[i].reallocate();
+        }
+    }
 } ded_sky_t;
 
 /// @todo These values should be tweaked a bit.
@@ -343,22 +429,45 @@ typedef struct ded_mapinfo_s {
     ded_stringid_t  skyID; // ID of the sky definition to use with this map. If not set, use the sky data in the mapinfo.
     ded_sky_t       sky;
     ded_anystring_t execute; // Executed during map setup (savegames, too).
+
+    void release() {
+        delete uri;
+        delete execute;
+        sky.release();
+    }
+    void reallocate() {
+        DED_DUP_URI(uri);
+        execute = M_StrDup(execute);
+        sky.reallocate();
+    }
 } ded_mapinfo_t;
 
 typedef struct {
     ded_stringid_t  id;
     char*           text;
+
+    void release() {
+        M_Free(text);
+    }
 } ded_text_t;
 
 typedef struct {
     ded_stringid_t  id;
-    ded_count_t     count;
-    de::Uri**       materials;
+    DEDArray<ded_uri_t> materials;
+
+    void release() {
+        materials.clear();
+    }
 } ded_tenviron_t;
 
 typedef struct {
-    char*           id;
-    char*           text;
+    char *id;
+    char *text;
+
+    void release() {
+        M_Free(id);
+        M_Free(text);
+    }
 } ded_value_t;
 
 typedef struct {
@@ -366,9 +475,15 @@ typedef struct {
     de::Uri*        before;
     de::Uri*        after;
     char*           script;
+
+    void release() {
+        delete before;
+        delete after;
+        M_Free(script);
+    }
 } ded_finale_t;
 
-typedef struct {
+typedef struct ded_linetype_s {
     int             id;
     char            comment[64];
     ded_flags_t     flags[3];
@@ -401,9 +516,18 @@ typedef struct {
     char            iparmStr[20][64];
     float           fparm[20];
     char            sparm[5][128];
+
+    void release() {
+        delete actMaterial;
+        delete deactMaterial;
+    }
+    void reallocate() {
+        DED_DUP_URI(actMaterial);
+        DED_DUP_URI(deactMaterial);
+    }
 } ded_linetype_t;
 
-typedef struct {
+typedef struct ded_sectortype_s {
     int             id;
     char            comment[64];
     ded_flags_t     flags;
@@ -433,6 +557,9 @@ typedef struct {
     ded_func_t      ceilFunc;
     float           ceilMul, ceilOff;
     int             ceilInterval[2];
+
+    void release() {}
+    void reallocate() {}
 } ded_sectortype_t;
 
 typedef struct ded_detail_stage_s {
@@ -442,6 +569,13 @@ typedef struct ded_detail_stage_s {
     float           scale;
     float           strength;
     float           maxDistance;
+
+    void release() {
+        delete texture;
+    }
+    void reallocate() {
+        DED_DUP_URI(texture);
+    }
 } ded_detail_stage_t;
 
 // Flags for detail texture definitions.
@@ -455,6 +589,17 @@ typedef struct ded_detailtexture_s {
     ded_flags_t     flags;
     // There is only one stage.
     ded_detail_stage_t stage;
+
+    void release() {
+        delete material1;
+        delete material2;
+        stage.release();
+    }
+    void reallocate() {
+        DED_DUP_URI(material1);
+        DED_DUP_URI(material2);
+        stage.reallocate();
+    }
 } ded_detailtexture_t;
 
 typedef struct ded_ptcgen_s {
@@ -492,8 +637,18 @@ typedef struct ded_ptcgen_s {
     float           forceAxis[3]; /* Rotation axis of the sphere force
                                       (+ speed). */
     float           forceOrigin[3]; // Offset for the force sphere.
-    ded_ptcstage_t* stages;
-    ded_count_t     stageCount;
+    DEDArray<ded_ptcstage_t> stages;
+
+    void release() {
+        delete material;
+        delete map;
+        stages.clear();
+    }
+    void reallocate() {
+        DED_DUP_URI(map);
+        DED_DUP_URI(material);
+        stages.reallocate();
+    }
 } ded_ptcgen_t;
 
 typedef struct ded_shine_stage_s {
@@ -506,6 +661,15 @@ typedef struct ded_shine_stage_s {
     float           minColor[3];
     float           maskWidth;
     float           maskHeight;
+
+    void release() {
+        delete texture;
+        delete maskTexture;
+    }
+    void reallocate() {
+        DED_DUP_URI(texture);
+        DED_DUP_URI(maskTexture);
+    }
 } ded_shine_stage_t;
 
 // Flags for reflection definitions.
@@ -518,18 +682,34 @@ typedef struct ded_reflection_s {
     ded_flags_t     flags;
     // There is only one stage.
     ded_shine_stage_t stage;
+
+    void release() {
+        delete material;
+        stage.release();
+    }
+    void reallocate() {
+        DED_DUP_URI(material);
+        stage.reallocate();
+    }
 } ded_reflection_t;
 
 typedef struct ded_group_member_s {
     de::Uri*        material;
     int             tics;
     int             randomTics;
+
+    void release() {
+        delete material;
+    }
 } ded_group_member_t;
 
 typedef struct ded_group_s {
-    ded_flags_t     flags;
-    ded_count_t     count;
-    ded_group_member_t* members;
+    ded_flags_t flags;
+    DEDArray<ded_group_member_t> members;
+
+    void release() {
+        members.clear();
+    }
 } ded_group_t;
 
 typedef struct ded_material_layer_stage_s {
@@ -539,11 +719,24 @@ typedef struct ded_material_layer_stage_s {
     float           glowStrength;
     float           glowStrengthVariance;
     float           texOrigin[2];
+
+    void release() {
+        delete texture;
+    }
+    void reallocate() {
+        DED_DUP_URI(texture);
+    }
 } ded_material_layer_stage_t;
 
 typedef struct ded_material_layer_s {
-    ded_material_layer_stage_t* stages;
-    ded_count_t     stageCount;
+    DEDArray<ded_material_layer_stage_t> stages;
+
+    void release() {
+        stages.clear();
+    }
+    void reallocate() {
+        stages.reallocate();
+    }
 } ded_material_layer_t;
 
 typedef struct ded_decorlight_stage_s {
@@ -558,22 +751,61 @@ typedef struct ded_decorlight_stage_s {
     int sysFlareIdx;
     de::Uri *up, *down, *sides;
     de::Uri *flare; // Overrides sysFlareIdx
+
+    void release() {
+        delete up;
+        delete down;
+        delete sides;
+        delete flare;
+    }
+    void reallocate() {
+        DED_DUP_URI(up);
+        DED_DUP_URI(down);
+        DED_DUP_URI(sides);
+        DED_DUP_URI(flare);
+    }
 } ded_decorlight_stage_t;
 
 typedef struct ded_material_decoration_s {
     int patternOffset[2];
     int patternSkip[2];
-    ded_decorlight_stage_t *stages;
-    ded_count_t stageCount;
+    DEDArray<ded_decorlight_stage_t> stages;
+
+    void release() {
+        stages.clear();
+    }
+    void reallocate() {
+        stages.reallocate();
+    }
 } ded_material_decoration_t;
 
 typedef struct ded_material_s {
     de::Uri *uri;
     dd_bool autoGenerated;
     ded_flags_t flags;
-    int width, height; // In world units.
+    int width;
+    int height; // In world units.
     ded_material_layer_t layers[DED_MAX_MATERIAL_LAYERS];
     ded_material_decoration_t decorations[DED_MAX_MATERIAL_DECORATIONS];
+
+    void release() {
+        delete uri;
+        for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i) {
+            layers[i].release();
+        }
+        for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i) {
+            decorations[i].release();
+        }
+    }
+    void reallocate() {
+        DED_DUP_URI(uri);
+        for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i) {
+            layers[i].reallocate();
+        }
+        for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i) {
+            decorations[i].reallocate();
+        }
+    }
 } ded_material_t;
 
 // An oldschool material-linked decoration definition.
@@ -582,6 +814,13 @@ typedef struct ded_decoration_s {
     int patternSkip[2];
     // There is only one stage.
     ded_decorlight_stage_t stage;
+
+    void release() {
+        stage.release();
+    }
+    void reallocate() {
+        stage.reallocate();
+    }
 } ded_decoration_t;
 
 // There is a fixed number of light decorations in each decoration.
@@ -596,17 +835,38 @@ typedef struct ded_decor_s {
     de::Uri *material;
     ded_flags_t flags;
     ded_decoration_t lights[DED_DECOR_NUM_LIGHTS];
+
+    void release() {
+        delete material;
+        for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i) {
+            lights[i].release();
+        }
+    }
+    void reallocate() {
+        DED_DUP_URI(material);
+        for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i) {
+            lights[i].reallocate();
+        }
+    }
 } ded_decor_t;
 
 typedef struct {
     unsigned char   ch;
     de::Uri*        path;
+
+    void release() {
+        delete path;
+    }
 } ded_compositefont_mappedcharacter_t;
 
 typedef struct ded_compositefont_s {
     de::Uri*        uri;
-    ded_count_t     charMapCount;
-    ded_compositefont_mappedcharacter_t* charMap;
+    DEDArray<ded_compositefont_mappedcharacter_t> charMap;
+
+    void release() {
+        delete uri;
+        charMap.clear();
+    }
 } ded_compositefont_t;
 
 #endif // LIBDOOMSDAY_DEFINITION_TYPES_H

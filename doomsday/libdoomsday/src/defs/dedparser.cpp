@@ -121,12 +121,6 @@ using namespace de;
 
 static struct xgclass_s *xgClassLinks;
 
-static char *sdup(char const *str)
-{
-    if(!str) return 0;
-    return strdup(str);
-}
-
 void DED_SetXGClassLinks(struct xgclass_s *links)
 {
     xgClassLinks = links;
@@ -884,7 +878,7 @@ DENG2_PIMPL(DEDParser)
                 if(prevMobjDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
-                    memcpy(mo, ded->mobjs + prevMobjDefIdx, sizeof(*mo));
+                    ded->mobjs.copyTo(mo, prevMobjDefIdx);
                 }
 
                 FINDBEGIN;
@@ -984,16 +978,7 @@ DENG2_PIMPL(DEDParser)
                 if(prevStateDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
-                    memcpy(st, ded->states + prevStateDefIdx, sizeof(*st));
-
-                    if(st->execute)
-                    {
-                        // Make a copy of the execute command string.
-                        size_t len = strlen(st->execute);
-                        char* newCmdStr = (char*) M_Malloc(len+1);
-                        memcpy(newCmdStr, st->execute, len+1);
-                        st->execute = newCmdStr;
-                    }
+                    ded->states.copyTo(st, prevStateDefIdx);
                 }
 
                 FINDBEGIN;
@@ -1066,13 +1051,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevLightDefIdx >= 0 && bCopyNext)
                 {
-                    const ded_light_t* prevLight = ded->lights + prevLightDefIdx;
-
-                    memcpy(lig, prevLight, sizeof(*lig));
-                    if(lig->up)     lig->up     = new de::Uri(*lig->up);
-                    if(lig->down)   lig->down   = new de::Uri(*lig->down);
-                    if(lig->sides)  lig->sides  = new de::Uri(*lig->sides);
-                    if(lig->flare)  lig->flare  = new de::Uri(*lig->flare);
+                    ded->lights.copyTo(lig, prevLightDefIdx);
                 }
 
                 FINDBEGIN;
@@ -1153,7 +1132,7 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     {
-                        idx = mat - ded->materials;
+                        idx = ded->materials.indexOf(mat);
                         bModify = true;
                     }
                     delete otherMat;
@@ -1168,53 +1147,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevMaterialDefIdx >= 0 && bCopyNext)
                 {
-                    ded_material_t const *prevMaterial = ded->materials + prevMaterialDefIdx;
-                    de::Uri *uri = mat->uri;
-
-                    std::memcpy(mat, prevMaterial, sizeof(*mat));
-                    mat->uri = uri;
-                    if(prevMaterial->uri)
-                    {
-                        if(mat->uri)
-                            *mat->uri = *prevMaterial->uri;
-                        else
-                            mat->uri = new de::Uri(*prevMaterial->uri);
-                    }
-
-                    // Duplicate the layers.
-                    for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
-                    {
-                        ded_material_layer_t const *l = &prevMaterial->layers[i];
-                        if(!l->stages) continue;
-
-                        mat->layers[i].stages = (ded_material_layer_stage_t*) M_Malloc(sizeof(*mat->layers[i].stages) * l->stageCount.max);
-                        std::memcpy(mat->layers[i].stages, l->stages, sizeof(*mat->layers[i].stages) * l->stageCount.num);
-
-                        for(int k = 0; k < l->stageCount.num; ++k)
-                        {
-                            if(l->stages[k].texture)
-                                mat->layers[i].stages[k].texture = new de::Uri(*l->stages[k].texture);
-                        }
-                    }
-
-                    // Duplicate decorations.
-                    for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i)
-                    {
-                        ded_material_decoration_t const *dl = &prevMaterial->decorations[i];
-                        if(!dl->stages) continue;
-
-                        mat->decorations[i].stages = (ded_decorlight_stage_t *) M_Malloc(sizeof(*mat->decorations[i].stages) * dl->stageCount.max);
-                        std::memcpy(mat->decorations[i].stages, dl->stages, sizeof(*mat->decorations[i].stages) * dl->stageCount.num);
-
-                        for(int k = 0; k < dl->stageCount.num; ++k)
-                        {
-                            ded_decorlight_stage_t *stage = &mat->decorations[i].stages[k];
-                            if(stage->flare)   stage->flare = new de::Uri(*stage->flare);
-                            if(stage->up)      stage->up    = new de::Uri(*stage->up);
-                            if(stage->down)    stage->down  = new de::Uri(*stage->down);
-                            if(stage->sides)   stage->sides = new de::Uri(*stage->sides);
-                        }
-                    }
+                    ded->materials.copyTo(mat, prevMaterialDefIdx);
                 }
 
                 uint layer = 0;
@@ -1250,7 +1183,7 @@ DENG2_PIMPL(DEDParser)
                             if(ISLABEL("Stage"))
                             {
                                 // Need to allocate a new stage?
-                                if(layerStage >= mat->layers[layer].stageCount.num)
+                                if(layerStage >= mat->layers[layer].stages.size())
                                 {
                                     DED_AddMaterialLayerStage(&mat->layers[layer]);
 
@@ -1316,7 +1249,7 @@ DENG2_PIMPL(DEDParser)
                             if(ISLABEL("Stage"))
                             {
                                 // Need to allocate a new stage?
-                                if(lightStage >= dl->stageCount.num)
+                                if(lightStage >= dl->stages.size())
                                 {
                                     lightStage = DED_AddMaterialDecorationStage(dl);
                                 }
@@ -1574,19 +1507,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevSkyDefIdx >= 0 && bCopyNext)
                 {
-                    ded_sky_t* prevSky = ded->skies + prevSkyDefIdx;
-                    int i;
-
-                    memcpy(sky, prevSky, sizeof(*sky));
-                    for(i = 0; i < NUM_SKY_LAYERS; ++i)
-                    {
-                        if(sky->layers[i].material)
-                            sky->layers[i].material = new de::Uri(*sky->layers[i].material);
-                    }
-                    for(i = 0; i < NUM_SKY_MODELS; ++i)
-                    {
-                        sky->models[i].execute = sdup(sky->models[i].execute);
-                    }
+                    ded->skies.copyTo(sky, prevSkyDefIdx);
                 }
                 prevSkyDefIdx = idx;
                 sub = 0;
@@ -1660,30 +1581,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevMapInfoDefIdx >= 0 && bCopyNext)
                 {
-                    const ded_mapinfo_t* prevMapInfo = ded->mapInfo + prevMapInfoDefIdx;
-                    de::Uri *uri = mi->uri;
-                    int i;
-
-                    memcpy(mi, prevMapInfo, sizeof(*mi));
-                    mi->uri = uri;
-                    if(prevMapInfo->uri)
-                    {
-                        if(mi->uri)
-                            *mi->uri = *prevMapInfo->uri;
-                        else
-                            mi->uri = new de::Uri(*prevMapInfo->uri);
-                    }
-
-                    mi->execute = sdup(mi->execute);
-                    for(i = 0; i < NUM_SKY_LAYERS; ++i)
-                    {
-                        if(mi->sky.layers[i].material)
-                            mi->sky.layers[i].material = new de::Uri(*mi->sky.layers[i].material);
-                    }
-                    for(i = 0; i < NUM_SKY_MODELS; ++i)
-                    {
-                        mi->sky.models[i].execute = sdup(mi->sky.models[i].execute);
-                    }
+                    ded->mapInfo.copyTo(mi, prevMapInfoDefIdx);
                 }
                 prevMapInfoDefIdx = idx;
                 sub = 0;
@@ -1805,7 +1703,7 @@ DENG2_PIMPL(DEDParser)
                     FINDBEGIN;
                     for(;;)
                     {
-                        de::Uri **mn;
+                        ded_uri_t *mn;
 
                         READLABEL;
                         RV_STR("ID", tenv->id)
@@ -1814,12 +1712,12 @@ DENG2_PIMPL(DEDParser)
                             // A new material path.
                             ddstring_t schemeName; Str_Init(&schemeName);
                             Str_Set(&schemeName, ISLABEL("Material")? "" : ISLABEL("Texture")? "Textures" : "Flats");
-                            mn = (de::Uri **) DED_NewEntry((void **)&tenv->materials, &tenv->count, sizeof(*mn));
+                            mn = tenv->materials.append();
                             FINDBEGIN;
                             for(;;)
                             {
                                 READLABEL;
-                                RV_URI("ID", mn, Str_Text(&schemeName))
+                                RV_URI("ID", &mn->uri, Str_Text(&schemeName))
                                 RV_END
                                 CHECKSC;
                             }
@@ -1861,15 +1759,15 @@ DENG2_PIMPL(DEDParser)
                                 goto ded_end_read;
                             }
 
-                            { int i;
-                            for(i = 0; i < cfont->charMapCount.num; ++i)
+                            for(int i = 0; i < cfont->charMap.size(); ++i)
+                            {
                                 if(cfont->charMap[i].ch == (unsigned char) ascii)
                                     mc = &cfont->charMap[i];
                             }
 
                             if(mc == 0)
                             {
-                                mc = (ded_compositefont_mappedcharacter_t*) DED_NewEntry((void**)&cfont->charMap, &cfont->charMapCount, sizeof(*mc));
+                                mc = cfont->charMap.append();
                                 mc->ch = ascii;
                             }
 
@@ -1988,13 +1886,7 @@ DENG2_PIMPL(DEDParser)
                  // Should we copy the previous definition?
                 if(prevDetailDefIdx >= 0 && bCopyNext)
                 {
-                    ded_detailtexture_t const *prevDetail = ded->details + prevDetailDefIdx;
-
-                    std::memcpy(dtl, prevDetail, sizeof(*dtl));
-
-                    if(dtl->material1) dtl->material1  = new de::Uri(*dtl->material1);
-                    if(dtl->material2) dtl->material2  = new de::Uri(*dtl->material2);
-                    if(dtl->stage.texture) dtl->stage.texture = new de::Uri(*dtl->stage.texture);
+                    ded->details.copyTo(dtl, prevDetailDefIdx);
                 }
 
                 FINDBEGIN;
@@ -2042,13 +1934,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevRefDefIdx >= 0 && bCopyNext)
                 {
-                    const ded_reflection_t* prevRef = ded->reflections + prevRefDefIdx;
-
-                    memcpy(ref, prevRef, sizeof(*ref));
-
-                    if(ref->material) ref->material = new de::Uri(*ref->material);
-                    if(ref->stage.texture) ref->stage.texture = new de::Uri(*ref->stage.texture);
-                    if(ref->stage.maskTexture) ref->stage.maskTexture = new de::Uri(*ref->stage.maskTexture);
+                    ded->reflections.copyTo(ref, prevRefDefIdx);
                 }
 
                 FINDBEGIN;
@@ -2092,19 +1978,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevGenDefIdx >= 0 && bCopyNext)
                 {
-                    const ded_ptcgen_t* prevGen = ded->ptcGens + prevGenDefIdx;
-
-                    memcpy(gen, prevGen, sizeof(*gen));
-
-                    if(gen->map) gen->map = new de::Uri(*gen->map);
-                    if(gen->material) gen->material = new de::Uri(*gen->material);
-
-                    // Duplicate the stages array.
-                    if(gen->stages)
-                    {
-                        gen->stages = (ded_ptcstage_t*) M_Malloc(sizeof(ded_ptcstage_t) * gen->stageCount.max);
-                        memcpy(gen->stages, prevGen->stages, sizeof(ded_ptcstage_t) * gen->stageCount.num);
-                    }
+                    ded->ptcGens.copyTo(gen, prevGenDefIdx);
                 }
 
                 FINDBEGIN;
@@ -2156,7 +2030,7 @@ DENG2_PIMPL(DEDParser)
                     {
                         ded_ptcstage_t *st = NULL;
 
-                        if(sub >= gen->stageCount.num)
+                        if(sub >= gen->stages.size())
                         {
                             // Allocate new stage.
                             sub = DED_AddPtcGenStage(gen);
@@ -2248,19 +2122,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevDecorDefIdx >= 0 && bCopyNext)
                 {
-                    ded_decor_t const *prevDecor = ded->decorations + prevDecorDefIdx;
-
-                    std::memcpy(decor, prevDecor, sizeof(*decor));
-                    if(decor->material) decor->material = new de::Uri(*decor->material);
-
-                    for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-                    {
-                        ded_decoration_t *dl = &decor->lights[i];
-                        if(dl->stage.flare)   dl->stage.flare = new de::Uri(*dl->stage.flare);
-                        if(dl->stage.up)      dl->stage.up    = new de::Uri(*dl->stage.up);
-                        if(dl->stage.down)    dl->stage.down  = new de::Uri(*dl->stage.down);
-                        if(dl->stage.sides)   dl->stage.sides = new de::Uri(*dl->stage.sides);
-                    }
+                    ded->decorations.copyTo(decor, prevDecorDefIdx);
                 }
 
                 uint sub = 0;
@@ -2353,7 +2215,7 @@ DENG2_PIMPL(DEDParser)
                         Str_Set(&schemeName, ISLABEL("Texture")? "Textures" : "Flats");
 
                         // Need to allocate new stage?
-                        if(sub >= grp->count.num)
+                        if(sub >= grp->members.size())
                             sub = DED_AddGroupMember(grp);
                         memb = &grp->members[sub];
 
@@ -2430,12 +2292,7 @@ DENG2_PIMPL(DEDParser)
                 // Should we copy the previous definition?
                 if(prevLineTypeDefIdx >= 0 && bCopyNext)
                 {
-                    const ded_linetype_t* prevLineType = ded->lineTypes + prevLineTypeDefIdx;
-
-                    memcpy(l, prevLineType, sizeof(*l));
-
-                    if(l->actMaterial)   l->actMaterial   = new de::Uri(*l->actMaterial);
-                    if(l->deactMaterial) l->deactMaterial = new de::Uri(*l->deactMaterial);
+                    ded->lineTypes.copyTo(l, prevLineTypeDefIdx);
                 }
 
                 FINDBEGIN;
@@ -2595,8 +2452,7 @@ DENG2_PIMPL(DEDParser)
                 if(prevSectorTypeDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
-                    memcpy(sec, ded->sectorTypes + prevSectorTypeDefIdx,
-                           sizeof(*sec));
+                    ded->sectorTypes.copyTo(sec, prevSectorTypeDefIdx);
                 }
 
                 FINDBEGIN;
