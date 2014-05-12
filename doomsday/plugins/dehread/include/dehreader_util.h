@@ -29,12 +29,6 @@
 #include <QStringList>
 #include "dehreader.h"
 
-/**
- * CRT's realloc can't access other modules' memory, so we must ask
- * Doomsday to reallocate memory for us.
- */
-void* DD_Realloc(void* ptr, int newSize);
-
 /// @return Newly composed map URI, must be free'd with Uri_Delete().
 Uri* composeMapUri(int episode, int map);
 

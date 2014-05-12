@@ -25,15 +25,6 @@
 #include <QStringList>
 #include <de/Block>
 
-void* DD_Realloc(void* ptr, int newSize)
-{
-    ded_count_t cnt;
-    cnt.max = 0;
-    cnt.num = newSize;
-    _api_Def.DED_NewEntries(&ptr, &cnt, 1, 0);
-    return ptr;
-}
-
 Uri* composeMapUri(int episode, int map)
 {
     if(episode > 0) // ExMy format.
@@ -51,7 +42,7 @@ Uri* composeMapUri(int episode, int map)
 int mapInfoDefForUri(const Uri& uri, ded_mapinfo_t** def)
 {
     if(!Str_IsEmpty(Uri_Path(&uri)))
-    for(int i = ded->count.mapInfo.num - 1; i >= 0; i--)
+    for(int i = ded->mapInfo.size() - 1; i >= 0; i--)
     {
         ded_mapinfo_t& info = ded->mapInfo[i];
         if(info.uri && Uri_Equality((uri_s *)info.uri, &uri))
@@ -68,7 +59,7 @@ int valueDefForPath(const QString& id, ded_value_t** def)
     if(!id.isEmpty())
     {
         de::Block idUtf8 = id.toUtf8();
-        for(int i = ded->count.values.num - 1; i >= 0; i--)
+        for(int i = ded->values.size() - 1; i >= 0; i--)
         {
             ded_value_t& value = ded->values[i];
             if(!qstricmp(value.id, idUtf8.constData()))

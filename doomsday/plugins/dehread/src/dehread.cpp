@@ -40,12 +40,12 @@ ded_funcid_t origActionNames[NUMSTATES];
 
 static void backupData()
 {
-    for(int i = 0; i < NUMSPRITES && i < ded->count.sprites.num; i++)
+    for(int i = 0; i < NUMSPRITES && i < ded->sprites.size(); i++)
     {
         qstrncpy(origSpriteNames[i].id, ded->sprites[i].id, DED_SPRITEID_LEN + 1);
     }
 
-    for(int i = 0; i < NUMSTATES && i < ded->count.states.num; i++)
+    for(int i = 0; i < NUMSTATES && i < ded->states.size(); i++)
     {
         qstrncpy(origActionNames[i], ded->states[i].action, DED_STRINGID_LEN + 1);
     }

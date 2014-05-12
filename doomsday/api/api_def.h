@@ -27,17 +27,13 @@
 /// @addtogroup defs
 ///@{
 
-DENG_API_TYPEDEF(Def) // v1
+DENG_API_TYPEDEF(Def) // v2
 {
     de_api_t api;
 
     int (*_Get)(int type, const char* id, void* out);
     int (*_Set)(int type, int index, int value, const void* ptr);
     int (*EvalFlags)(char* flags);
-
-    // Functions related to DED database manipulation (deprecated):
-    int (*DED_AddValue)(void *ded, char const* id);
-    void (*DED_NewEntries)(void** ptr, void* dedCount, size_t elemSize, int count);
 }
 DENG_API_T(Def);
 
