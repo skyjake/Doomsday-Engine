@@ -100,7 +100,6 @@ SOURCES += \
     src/console/knownword.cpp \
     src/console/var.cpp \
     src/defs/ded.cpp \
-    src/defs/dedarray.cpp \
     src/defs/dedfile.cpp \
     src/defs/dedparser.cpp \
     src/dualstring.cpp \
