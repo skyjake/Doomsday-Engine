@@ -29,9 +29,8 @@
 
 #include "MapElement"
 #include "Line"
-#include "Sector"
+#include "SectorCluster"
 
-class SectorCluster;
 struct polyobj_s;
 #ifdef __CLIENT__
 class Lumobj;
@@ -171,6 +170,14 @@ public:
      * @see hasCluster()
      */
     SectorCluster &cluster() const;
+
+    /**
+     * Convenient method returning Sector of the SectorCluster attributed to the
+     * subspace.
+     *
+     * @see cluster()
+     */
+    inline Sector &sector() const { return cluster().sector(); }
 
     /**
      * Convenient method returning a pointer to the SectorCluster attributed to

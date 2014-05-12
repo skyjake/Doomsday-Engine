@@ -1190,7 +1190,7 @@ static int countIlluminationPoints(MapElement &mapElement, int group)
     {
     case DMU_SUBSPACE: {
         ConvexSubspace &subspace = mapElement.as<ConvexSubspace>();
-        DENG2_ASSERT(group >= 0 && group < subspace.cluster().sector().planeCount()); // sanity check
+        DENG2_ASSERT(group >= 0 && group < subspace.sector().planeCount()); // sanity check
         return subspace.numFanVertices(); }
 
     case DMU_SEGMENT:

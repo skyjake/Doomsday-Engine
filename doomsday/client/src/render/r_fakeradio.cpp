@@ -196,7 +196,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 static int linkShadowLineToSubspaceWorker(ConvexSubspace *subspace, void *context)
 {
     LineSide &side = *static_cast<LineSide *>(context);
-    if(side.sectorPtr() == &subspace->cluster().sector())
+    if(side.sectorPtr() == &subspace->sector())
     {
         subspace->addShadowLine(side);
     }
