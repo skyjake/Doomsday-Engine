@@ -142,7 +142,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
                     if(containingSector)
                     {
                         // The point must be in the correct sector.
-                        if(containingSector != &subspace->cluster().sector())
+                        if(containingSector != &subspace->sector())
                             continue;
                     }
 

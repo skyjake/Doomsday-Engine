@@ -436,7 +436,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
     }
     else
     {
-        Map &map = pinfo->bspLeaf->subspace().cluster().sector().map();
+        Map &map = pinfo->bspLeaf->subspace().sector().map();
 
         if(useBias && map.hasLightGrid())
         {

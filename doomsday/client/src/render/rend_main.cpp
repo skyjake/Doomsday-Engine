@@ -2200,7 +2200,7 @@ static void writeSubspacePlane(Plane &plane)
      * Geometry write/drawing begins.
      */
 
-    if(&plane.sector() != &curSubspace->cluster().sector())
+    if(&plane.sector() != &curSubspace->sector())
     {
         // Temporarily modify the draw state.
         curSectorLightColor = Rend_AmbientLightColor(plane.sector());
@@ -2215,7 +2215,7 @@ static void writeSubspacePlane(Plane &plane)
     // Draw this section.
     renderWorldPoly(posCoords, vertCount, parm, ms);
 
-    if(&plane.sector() != &curSubspace->cluster().sector())
+    if(&plane.sector() != &curSubspace->sector())
     {
         // Undo temporary draw state changes.
         Vector4f const color = curSubspace->cluster().lightSourceColorfIntensity();
@@ -2760,6 +2760,9 @@ static void clipSubspaceLumobjs()
  */
 static void clipSubspaceLumobjsBySight()
 {
+    // Any work to do?
+    if(!curSubspace->polyobjCount()) return;
+
     foreach(Lumobj *lum, curSubspace->lumobjs())
     {
         R_ViewerClipLumobjBySight(lum, curSubspace);
@@ -2866,7 +2869,7 @@ static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
  */
 static void drawCurrentSubspace()
 {
-    Sector &sector = curSubspace->cluster().sector();
+    Sector &sector = curSubspace->sector();
 
     // Mark the leaf as visible for this frame.
     R_ViewerSubspaceMarkVisible(*curSubspace);
@@ -2889,12 +2892,7 @@ static void drawCurrentSubspace()
     occludeSubspace(true /* front facing */);
 
     clipSubspaceFrontFacingWalls();
-
-    if(curSubspace->polyobjCount())
-    {
-        // Polyobjs don't obstruct - clip lights with another algorithm.
-        clipSubspaceLumobjsBySight();
-    }
+    clipSubspaceLumobjsBySight();
 
     // Mark generators in the sector visible.
     if(useParticles)

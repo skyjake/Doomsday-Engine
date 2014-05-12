@@ -455,7 +455,7 @@ int Generator::newParticle()
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
             subspace = map().bspLeafAt(Vector2d(x, y)).subspacePtr();
-            if(subspace && sector == &subspace->cluster().sector())
+            if(subspace && sector == &subspace->sector())
                 break;
 
             subspace = 0;
