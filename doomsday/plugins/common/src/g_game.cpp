@@ -1490,10 +1490,11 @@ static void runGameAction()
             // Attempt to load the saved game session.
             try
             {
-                COMMON_GAMESESSION->load(G_SaveSlots()[gaLoadSessionSlot].saveName());
+                SaveSlot const &sslot = G_SaveSlots()[gaLoadSessionSlot];
+                COMMON_GAMESESSION->load(sslot.saveName());
 
                 // Make note of the last used save slot.
-                Con_SetInteger2("game-save-last-slot", gaLoadSessionSlot.toInt(), SVF_WRITE_OVERRIDE);
+                Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
             catch(de::Error const &er)
             {
@@ -1511,11 +1512,11 @@ static void runGameAction()
         case GA_SAVESESSION:
             try
             {
-                COMMON_GAMESESSION->save(G_SaveSlots()[gaSaveSessionSlot].saveName(),
-                                         gaSaveSessionUserDescription);
+                SaveSlot const &sslot = G_SaveSlots()[gaSaveSessionSlot];
+                COMMON_GAMESESSION->save(sslot.saveName(), gaSaveSessionUserDescription);
 
                 // Make note of the last used save slot.
-                Con_SetInteger2("game-save-last-slot", gaSaveSessionSlot.toInt(), SVF_WRITE_OVERRIDE);
+                Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
             catch(de::Error const &er)
             {
