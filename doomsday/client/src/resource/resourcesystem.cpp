@@ -1340,7 +1340,7 @@ DENG2_PIMPL(ResourceSystem)
     ModelDef *getModelDef(int state, float interMark, int select)
     {
         // Is this a valid state?
-        if(state < 0 || state >= countStates.num)
+        if(state < 0 || state >= runtimeDefs.states.size())
         {
             return 0;
         }
@@ -1348,7 +1348,7 @@ DENG2_PIMPL(ResourceSystem)
         // First try to find an existing modef.
         foreach(ModelDef const &modef, modefs)
         {
-            if(modef.state == &states[state] &&
+            if(modef.state == &runtimeDefs.states[state] &&
                modef.interMark == interMark && modef.select == select)
             {
                 // Models are loaded in reverse order; this one already has a model.
@@ -1360,7 +1360,7 @@ DENG2_PIMPL(ResourceSystem)
         ModelDef *md = &modefs.last();
 
         // Set initial data.
-        md->state     = &states[state];
+        md->state     = &runtimeDefs.states[state];
         md->interMark = interMark;
         md->select    = select;
 
@@ -1758,7 +1758,7 @@ DENG2_PIMPL(ResourceSystem)
 
         if(modef->state)
         {
-            int stateNum = modef->state - states;
+            int stateNum = runtimeDefs.states.indexOf(modef->state);
 
             // Associate this modeldef with its state.
             if(stateModefs[stateNum] < 0)
@@ -3314,7 +3314,7 @@ ModelDef &ResourceSystem::modelDef(String id)
 
 ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
 {
-    if(stateIndex < 0 || stateIndex >= defs.count.states.num)
+    if(stateIndex < 0 || stateIndex >= defs.states.size())
     {
         return 0;
     }
@@ -3375,8 +3375,8 @@ void ResourceSystem::initModels()
     d->modefs.resize(defs.models.size());
 
     // Clear the stateid => modeldef LUT.
-    d->stateModefs.resize(countStates.num);
-    for(int i = 0; i < countStates.num; ++i)
+    d->stateModefs.resize(runtimeDefs.states.size());
+    for(int i = 0; i < runtimeDefs.states.size(); ++i)
     {
         d->stateModefs[i] = -1;
     }
@@ -3640,7 +3640,7 @@ void ResourceSystem::initSprites()
             spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
             if(spriteId == -1)
             {
-                spriteId = countSprNames.num + customIdx++;
+                spriteId = runtimeDefs.sprNames.size() + customIdx++;
             }
 
             Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
@@ -3854,12 +3854,12 @@ static int findSpriteOwner(thinker_t *th, void *context)
     mobj_t *mo = reinterpret_cast<mobj_t *>(th);
     int const sprite = *static_cast<int *>(context);
 
-    if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
+    if(mo->type >= 0 && mo->type < defs.mobjs.size())
     {
         /// @todo optimize: traverses the entire state list!
-        for(int i = 0; i < defs.count.states.num; ++i)
+        for(int i = 0; i < defs.states.size(); ++i)
         {
-            if(stateOwners[i] != &mobjInfo[mo->type])
+            if(runtimeDefs.stateInfo[i].owner != &runtimeDefs.mobjInfo[mo->type])
             {
                 continue;
             }
@@ -3895,8 +3895,8 @@ static int cacheModelsForMobj(thinker_t *th, void *context)
         ModelDef &modef = resSys.modelDef(i);
 
         if(!modef.state) continue;
-        if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?
-        if(stateOwners[modef.state - states] != &mobjInfo[mo->type]) continue;
+        if(mo->type < 0 || mo->type >= defs.mobjs.size()) continue; // Hmm?
+        if(runtimeDefs.stateInfo[runtimeDefs.states.indexOf(modef.state)].owner != &runtimeDefs.mobjInfo[mo->type]) continue;
 
         resSys.cache(&modef);
     }

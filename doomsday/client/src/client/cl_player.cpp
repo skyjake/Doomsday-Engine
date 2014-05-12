@@ -439,9 +439,9 @@ void ClPlayer_ReadDelta()
                 {
                     psp->statePtr = 0;
                 }
-                else if(idx < countStates.num)
+                else if(idx < runtimeDefs.states.size())
                 {
-                    psp->statePtr = states + (idx - 1);
+                    psp->statePtr = &runtimeDefs.states[idx - 1];
                     psp->tics = psp->statePtr->tics;
                 }
             }

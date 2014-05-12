@@ -180,7 +180,7 @@ void R_ProjectSprite(mobj_t *mo)
     // ...not linked into the map?
     if(!Mobj_HasCluster(*mo)) return;
     // ...in an invalid state?
-    if(!mo->state || mo->state == states) return;
+    if(!mo->state || !runtimeDefs.states.indexOf(mo->state)) return;
     // ...no sprite frame is defined?
     Sprite *sprite = Mobj_Sprite(*mo);
     if(!sprite) return;
@@ -490,7 +490,7 @@ void R_ProjectSprite(mobj_t *mo)
             float xOffset = ms.width() * pl->originX - -tex.origin().x;
 
             // Does the mobj have an active light definition?
-            ded_light_t const *def = (mo->state? stateLights[mo->state - states] : 0);
+            ded_light_t const *def = (mo->state? runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mo->state)].light : 0);
             if(def)
             {
                 if(def->size)

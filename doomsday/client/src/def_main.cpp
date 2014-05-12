@@ -62,6 +62,7 @@ typedef struct {
 ded_t defs; // The main definitions database.
 dd_bool firstDED;
 
+/*
 sprname_t* sprNames; // Sprite name list.
 ded_count_t countSprNames;
 
@@ -85,12 +86,30 @@ ded_count_t countStateLights;
 
 ded_ptcgen_t** statePtcGens; // A pointer for each State.
 ded_count_t countStatePtcGens;
+*/
+
+RuntimeDefs runtimeDefs;
 
 static dd_bool defsInited = false;
 static mobjinfo_t* gettingFor;
 
-xgclass_t nullXgClassLinks; // Used when none defined.
-xgclass_t* xgClassLinks;
+static xgclass_t nullXgClassLinks; // Used when none defined.
+static xgclass_t* xgClassLinks;
+
+void RuntimeDefs::clear()
+{
+    for(int i = 0; i < sounds.size(); ++i)
+    {
+        Str_Free(&sounds[i].external);
+    }
+    sounds.clear();
+
+    sprNames.clear();
+    mobjInfo.clear();
+    states.clear();
+    texts.clear();
+    stateInfo.clear();
+}
 
 /**
  * Retrieves the XG Class list from the Game.
@@ -121,30 +140,7 @@ int Def_GetGameClasses(void)
  */
 void Def_Init(void)
 {
-    sprNames = 0;
-    DED_ZCount(&countSprNames);
-
-    mobjInfo = 0;
-    DED_ZCount(&countMobjInfo);
-
-    states = 0;
-    DED_ZCount(&countStates);
-
-    sounds = 0;
-    DED_ZCount(&countSounds);
-
-    texts = 0;
-    DED_ZCount(&countTexts);
-
-    stateOwners = 0;
-    DED_ZCount(&countStateOwners);
-
-    statePtcGens = 0;
-    DED_ZCount(&countStatePtcGens);
-
-    stateLights = 0;
-    DED_ZCount(&countStateLights);
-
+    runtimeDefs.clear();
     defs.clear();
 }
 
@@ -153,20 +149,7 @@ void Def_Destroy(void)
     defs.clear();
 
     // Destroy the databases.
-    DED_DelArray((void**) &sprNames, &countSprNames);
-    DED_DelArray((void**) &states, &countStates);
-    DED_DelArray((void**) &mobjInfo, &countMobjInfo);
-
-    for(int i = 0; i < countSounds.num; ++i)
-    {
-        Str_Free(&sounds[i].external);
-    }
-    DED_DelArray((void**) &sounds, &countSounds);
-
-    DED_DelArray((void**) &texts, &countTexts);
-    DED_DelArray((void**) &stateOwners, &countStateOwners);
-    DED_DelArray((void**) &statePtcGens, &countStatePtcGens);
-    DED_DelArray((void**) &stateLights, &countStateLights);
+    runtimeDefs.clear();
 
     defsInited = false;
 }
@@ -175,9 +158,9 @@ spritenum_t Def_GetSpriteNum(char const *name)
 {
     if(name && name[0])
     {
-        for(int i = 0; i < countSprNames.num; ++i)
+        for(int i = 0; i < runtimeDefs.sprNames.size(); ++i)
         {
-            if(!stricmp(sprNames[i].name, name))
+            if(!stricmp(runtimeDefs.sprNames[i].name, name))
                 return i;
         }
     }
@@ -201,9 +184,9 @@ const char* Def_GetMobjName(int num)
 
 state_t *Def_GetState(int num)
 {
-    if(num >= 0 && num < defs.count.states.num)
+    if(num >= 0 && num < defs.states.size())
     {
-        return states + num;
+        return &runtimeDefs.states[num];
     }
     return 0; // Not found.
 }
@@ -299,10 +282,10 @@ ded_decor_t *Def_GetDecoration(uri_s const *uri, /*bool hasExternal,*/ bool isCu
 {
     DENG_ASSERT(uri);
 
-    ded_decor_t *def;
     int i;
-    for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
+    for(i = defs.decorations.size() - 1; i >= 0; i--)
     {
+        ded_decor_t *def = &defs.decorations[i];
         if(def->material && Uri_Equality((uri_s *)def->material, uri))
         {
             // Is this suitable?
@@ -318,10 +301,10 @@ ded_reflection_t *Def_GetReflection(uri_s const *uri, /* bool hasExternal,*/ boo
 {
     DENG_ASSERT(uri);
 
-    ded_reflection_t *def;
     int i;
-    for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
+    for(i = defs.reflections.size() - 1; i >= 0; i--)
     {
+        ded_reflection_t *def = &defs.reflections[i];
         if(def->material && Uri_Equality((uri_s *)def->material, uri))
         {
             // Is this suitable?
@@ -337,10 +320,11 @@ ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, /*bool hasExternal,*/ bo
 {
     DENG_ASSERT(uri);
 
-    ded_detailtexture_t *def;
     int i;
-    for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
+    for(i = defs.details.size() - 1; i >= 0; i--)
     {
+        ded_detailtexture_t *def = &defs.details[i];
+
         if(def->material1 && Uri_Equality((uri_s *)def->material1, uri))
         {
             // Is this suitable?
@@ -362,9 +346,9 @@ ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
 {
     if(uri.isEmpty()) return 0;
 
-    ded_ptcgen_t *def = defs.ptcGens;
-    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+    for(int i = 0; i < defs.ptcGens.size(); ++i)
     {
+        ded_ptcgen_t *def = &defs.ptcGens[i];
         if(!def->material) continue;
 
         // Is this suitable?
@@ -401,9 +385,10 @@ ded_ptcgen_t *Def_GetGenerator(uri_s const *uri)
 ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
 {
     // Search for a suitable definition.
-    ded_ptcgen_t *def = defs.ptcGens;
-    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+    for(int i = 0; i < defs.ptcGens.size(); ++i)
     {
+        ded_ptcgen_t *def = &defs.ptcGens[i];
+
         // It must be for this type of mobj.
         if(def->damageNum == mobjType)
             return def;
@@ -523,13 +508,13 @@ int Def_StateForMobj(const char* state)
     // State zero is the NULL state.
     if(num > 0)
     {
-        stateOwners[num] = gettingFor;
+        runtimeDefs.stateInfo[num].owner = gettingFor;
         // Scan forward at most 'count' states, or until we hit a state with
         // an owner, or the NULL state.
-        for(st = states[num].nextState; st > 0 && count-- && !stateOwners[st];
-            st = states[st].nextState)
+        for(st = runtimeDefs.states[num].nextState; st > 0 && count-- && !runtimeDefs.stateInfo[st].owner;
+            st = runtimeDefs.states[st].nextState)
         {
-            stateOwners[st] = gettingFor;
+            runtimeDefs.stateInfo[st].owner = gettingFor;
         }
     }
 
@@ -788,7 +773,7 @@ static ded_group_t *findGroupDefByFrameTextureUri(de::Uri const &uri)
     if(uri.isEmpty()) return 0;
 
     // Reverse iteration (later defs override earlier ones).
-    for(int i = defs.count.groups.num; i--> 0; )
+    for(int i = defs.groups.size(); i--> 0; )
     {
         ded_group_t &grp = defs.groups[i];
 
@@ -796,9 +781,9 @@ static ded_group_t *findGroupDefByFrameTextureUri(de::Uri const &uri)
         if(grp.flags & AGF_PRECACHE) continue;
 
         // Or empty/single-frame groups.
-        if(grp.count.num < 2) continue;
+        if(grp.members.size() < 2) continue;
 
-        for(int k = 0; k < grp.count.num; ++k)
+        for(int k = 0; k < grp.members.size(); ++k)
         {
             ded_group_member_t &gm = grp.members[k];
 
@@ -861,9 +846,9 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
 
                     // Add further stages for each frame in the group.
                     startFrame++;
-                    for(int i = 0; i < grp->count.num - 1; ++i)
+                    for(int i = 0; i < grp->members.size() - 1; ++i)
                     {
-                        int frame = de::wrap(startFrame + i, 0, grp->count.num);
+                        int frame = de::wrap(startFrame + i, 0, grp->members.size());
                         ded_group_member_t const &gm = grp->members[frame];
 
                         if(!gm.material) continue;
@@ -1012,9 +997,9 @@ static void rebuildMaterialDecorations(Material &material, ded_material_t const 
         ded_material_decoration_t const &lightDef = def.decorations[i];
 
         // Is this valid? (A zero number of stages signifies the last).
-        if(!lightDef.stageCount.num) break;
+        if(!lightDef.stages.size()) break;
 
-        for(int k = 0; k < lightDef.stageCount.num; ++k)
+        for(int k = 0; k < lightDef.stages.size(); ++k)
         {
             ded_decorlight_stage_t *stage = &lightDef.stages[k];
 
@@ -1085,7 +1070,7 @@ static void interpretMaterialDef(ded_material_t const &def)
         // Update manifest classification:
         manifest->setFlags(MaterialManifest::AutoGenerated, def.autoGenerated? SetFlags : UnsetFlags);
         manifest->setFlags(MaterialManifest::Custom, UnsetFlags);
-        if(def.layers[0].stageCount.num > 0)
+        if(def.layers[0].stages.size() > 0)
         {
             ded_material_layer_t const &firstLayer = def.layers[0];
             if(firstLayer.stages[0].texture) // Not unused.
@@ -1198,23 +1183,23 @@ void Def_Read()
 
 #ifdef __CLIENT__
     // Composite fonts.
-    for(int i = 0; i < defs.count.compositeFonts.num; ++i)
+    for(int i = 0; i < defs.compositeFonts.size(); ++i)
     {
         App_ResourceSystem().newFontFromDef(defs.compositeFonts[i]);
     }
 #endif
 
     // Sprite names.
-    DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);
-    for(int i = 0; i < countSprNames.num; ++i)
+    runtimeDefs.sprNames.append(defs.sprites.size());
+    for(int i = 0; i < runtimeDefs.sprNames.size(); ++i)
     {
-        strcpy(sprNames[i].name, defs.sprites[i].id);
+        strcpy(runtimeDefs.sprNames[i].name, defs.sprites[i].id);
     }
 
     // States.
-    DED_NewEntries((void **) &states, &countStates, sizeof(*states), defs.count.states.num);
+    runtimeDefs.states.append(defs.states.size());
 
-    for(int i = 0; i < countStates.num; ++i)
+    for(int i = 0; i < runtimeDefs.states.size(); ++i)
     {
         ded_state_t *dst = &defs.states[i];
         // Make sure duplicate IDs overwrite the earliest.
@@ -1222,8 +1207,8 @@ void Def_Read()
 
         if(stateNum == -1) continue;
 
-        ded_state_t *dstNew = defs.states + stateNum;
-        state_t *st = states + stateNum;
+        ded_state_t *dstNew = &defs.states[stateNum];
+        state_t *st = &runtimeDefs.states[stateNum];
 
         st->sprite    = Def_GetSpriteNum(dst->sprite.id);
         st->flags     = dst->flags;
@@ -1247,16 +1232,16 @@ void Def_Read()
         }
     }
 
-    DED_NewEntries((void **) &stateOwners, &countStateOwners, sizeof(mobjinfo_t *), defs.count.states.num);
+    runtimeDefs.stateInfo.append(defs.states.size());
 
     // Mobj info.
-    DED_NewEntries((void **) &mobjInfo, &countMobjInfo, sizeof(*mobjInfo), defs.count.mobjs.num);
+    runtimeDefs.mobjInfo.append(defs.mobjs.size());
 
-    for(int i = 0; i < countMobjInfo.num; ++i)
+    for(int i = 0; i < runtimeDefs.mobjInfo.size(); ++i)
     {
         ded_mobj_t* dmo = &defs.mobjs[i];
         // Make sure duplicate defs overwrite the earliest.
-        mobjinfo_t* mo = &mobjInfo[Def_GetMobjNum(dmo->id)];
+        mobjinfo_t* mo = &runtimeDefs.mobjInfo[Def_GetMobjNum(dmo->id)];
 
         gettingFor       = mo;
         mo->doomEdNum    = dmo->doomEdNum;
@@ -1287,7 +1272,7 @@ void Def_Read()
     }
 
     // Decorations. (Define textures).
-    for(int i = 0; i < defs.count.decorations.num; ++i)
+    for(int i = 0; i < defs.decorations.size(); ++i)
     {
         ded_decor_t *dec = &defs.decorations[i];
         for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
@@ -1317,7 +1302,7 @@ void Def_Read()
 
     // Detail textures (Define textures).
     App_ResourceSystem().textureScheme("Details").clear();
-    for(int i = 0; i < defs.count.details.num; ++i)
+    for(int i = 0; i < defs.details.size(); ++i)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
 
@@ -1333,7 +1318,7 @@ void Def_Read()
     // Surface reflections (Define textures).
     App_ResourceSystem().textureScheme("Reflections").clear();
     App_ResourceSystem().textureScheme("Masks").clear();
-    for(int i = 0; i < defs.count.reflections.num; ++i)
+    for(int i = 0; i < defs.reflections.size(); ++i)
     {
         ded_reflection_t *ref = &defs.reflections[i];
 
@@ -1352,15 +1337,15 @@ void Def_Read()
     }
 
     // Materials.
-    for(int i = 0; i < defs.count.materials.num; ++i)
+    for(int i = 0; i < defs.materials.size(); ++i)
     {
         interpretMaterialDef(defs.materials[i]);
     }
 
-    DED_NewEntries((void **) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
+    //DED_NewEntries((void **) &stateLights, &countStateLights, sizeof(*stateLights), defs.states.size());
 
     // Dynamic lights. Update the sprite numbers.
-    for(int i = 0; i < defs.count.lights.num; ++i)
+    for(int i = 0; i < defs.lights.size(); ++i)
     {
         int const stateIdx = Def_GetStateNum(defs.lights[i].state);
         if(stateIdx < 0)
@@ -1372,17 +1357,17 @@ void Def_Read()
             }
             continue;
         }
-        stateLights[stateIdx] = &defs.lights[i];
+        runtimeDefs.stateInfo[stateIdx].light = &defs.lights[i];
     }
 
     // Sound effects.
-    DED_NewEntries((void **) &sounds, &countSounds, sizeof(*sounds), defs.count.sounds.num);
+    runtimeDefs.sounds.append(defs.sounds.size());
 
-    for(int i = 0; i < countSounds.num; ++i)
+    for(int i = 0; i < runtimeDefs.sounds.size(); ++i)
     {
-        ded_sound_t *snd = defs.sounds + i;
+        ded_sound_t *snd = &defs.sounds[i];
         // Make sure duplicate defs overwrite the earliest.
-        sfxinfo_t *si = sounds + Def_GetSoundNum(snd->id);
+        sfxinfo_t *si = &runtimeDefs.sounds[Def_GetSoundNum(snd->id)];
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
@@ -1390,7 +1375,7 @@ void Def_Read()
         strcpy(si->name, snd->name);
 
         int const soundIdx = Def_GetSoundNum(snd->link);
-        si->link        = (soundIdx >= 0 ? sounds + soundIdx : 0);
+        si->link        = (soundIdx >= 0 ? &runtimeDefs.sounds[soundIdx] : 0);
 
         si->linkPitch   = snd->linkPitch;
         si->linkVolume  = snd->linkVolume;
@@ -1407,11 +1392,11 @@ void Def_Read()
     }
 
     // Music.
-    for(int i = 0; i < defs.count.music.num; ++i)
+    for(int i = 0; i < defs.music.size(); ++i)
     {
-        ded_music_t *mus = defs.music + i;
+        ded_music_t *mus = &defs.music[i];
         // Make sure duplicate defs overwrite the earliest.
-        ded_music_t *earliest = defs.music + Def_GetMusicNum(mus->id);
+        ded_music_t *earliest = &defs.music[Def_GetMusicNum(mus->id)];
 
         if(earliest == mus) continue;
 
@@ -1433,37 +1418,37 @@ void Def_Read()
     }
 
     // Text.
-    DED_NewEntries((void **) &texts, &countTexts, sizeof(*texts), defs.count.text.num);
+    runtimeDefs.texts.append(defs.text.size());
 
-    for(int i = 0; i < countTexts.num; ++i)
+    for(int i = 0; i < defs.text.size(); ++i)
     {
-        Def_InitTextDef(texts + i, defs.text[i].text);
+        Def_InitTextDef(&runtimeDefs.texts[i], defs.text[i].text);
     }
 
     // Handle duplicate strings.
-    for(int i = 0; i < countTexts.num; ++i)
+    for(int i = 0; i < runtimeDefs.texts.size(); ++i)
     {
-        if(!texts[i].text) continue;
+        if(!runtimeDefs.texts[i].text) continue;
 
-        for(int k = i + 1; k < countTexts.num; ++k)
+        for(int k = i + 1; k < runtimeDefs.texts.size(); ++k)
         {
-            if(!texts[k].text) continue; // Already done.
+            if(!runtimeDefs.texts[k].text) continue; // Already done.
             if(stricmp(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
 
             // Update the earlier string.
-            texts[i].text = (char *) M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
-            strcpy(texts[i].text, texts[k].text);
+            runtimeDefs.texts[i].text = (char *) M_Realloc(runtimeDefs.texts[i].text, strlen(runtimeDefs.texts[k].text) + 1);
+            strcpy(runtimeDefs.texts[i].text, runtimeDefs.texts[k].text);
 
             // Free the later string, it isn't used (>NUMTEXT).
-            M_Free(texts[k].text);
-            texts[k].text = 0;
+            M_Free(runtimeDefs.texts[k].text);
+            runtimeDefs.texts[k].text = 0;
         }
     }
 
-    DED_NewEntries((void **) &statePtcGens, &countStatePtcGens, sizeof(*statePtcGens), defs.count.states.num);
+    //DED_NewEntries((void **) &statePtcGens, &countStatePtcGens, sizeof(*statePtcGens), defs.states.size());
 
     // Particle generators.
-    for(int i = 0; i < defs.count.ptcGens.num; ++i)
+    for(int i = 0; i < defs.ptcGens.size(); ++i)
     {
         ded_ptcgen_t *pg = &defs.ptcGens[i];
         int st = Def_GetStateNum(pg->state);
@@ -1476,7 +1461,7 @@ void Def_Read()
         pg->damageNum = Def_GetMobjNum(pg->damage);
 
         // Figure out embedded sound ID numbers.
-        for(int k = 0; k < pg->stageCount.num; ++k)
+        for(int k = 0; k < pg->stages.size(); ++k)
         {
             if(pg->stages[k].sound.name[0])
             {
@@ -1493,30 +1478,32 @@ void Def_Read()
         if(st <= 0)
             continue; // Not state triggered, then...
 
+        stateinfo_t *stinfo = &runtimeDefs.stateInfo[st];
+
         // Link the definition to the state.
         if(pg->flags & Generator::StateChain)
         {
             // Add to the chain.
-            pg->stateNext = statePtcGens[st];
-            statePtcGens[st] = pg;
+            pg->stateNext = stinfo->ptcGens;
+            stinfo->ptcGens = pg;
         }
         else
         {
             // Make sure the previously built list is unlinked.
-            while(statePtcGens[st])
+            while(stinfo->ptcGens)
             {
-                ded_ptcgen_t *temp = statePtcGens[st]->stateNext;
+                ded_ptcgen_t *temp = stinfo->ptcGens->stateNext;
 
-                statePtcGens[st]->stateNext = 0;
-                statePtcGens[st] = temp;
+                stinfo->ptcGens->stateNext = 0;
+                stinfo->ptcGens = temp;
             }
-            statePtcGens[st] = pg;
+            stinfo->ptcGens = pg;
             pg->stateNext = 0;
         }
     }
 
     // Map infos.
-    for(int i = 0; i < defs.count.mapInfo.num; ++i)
+    for(int i = 0; i < defs.mapInfo.size(); ++i)
     {
         ded_mapinfo_t *mi = &defs.mapInfo[i];
 
@@ -1533,16 +1520,16 @@ void Def_Read()
     LOG_RES_MSG(_E(b) "Definitions:");
     de::String str;
     QTextStream os(&str);
-    os << defCountMsg(defs.count.groups.num, "animation groups");
-    os << defCountMsg(defs.count.compositeFonts.num, "composite fonts");
-    os << defCountMsg(defs.count.details.num, "detail textures");
-    os << defCountMsg(defs.count.finales.num, "finales");
-    os << defCountMsg(defs.count.lights.num, "lights");
-    os << defCountMsg(defs.count.lineTypes.num, "line types");
-    os << defCountMsg(defs.count.mapInfo.num, "map infos");
+    os << defCountMsg(defs.groups.size(), "animation groups");
+    os << defCountMsg(defs.compositeFonts.size(), "composite fonts");
+    os << defCountMsg(defs.details.size(), "detail textures");
+    os << defCountMsg(defs.finales.size(), "finales");
+    os << defCountMsg(defs.lights.size(), "lights");
+    os << defCountMsg(defs.lineTypes.size(), "line types");
+    os << defCountMsg(defs.mapInfo.size(), "map infos");
 
     int nonAutoGeneratedCount = 0;
-    for(int i = 0; i < defs.count.materials.num; ++i)
+    for(int i = 0; i < defs.materials.size(); ++i)
     {
         if(!defs.materials[i].autoGenerated)
             ++nonAutoGeneratedCount;
@@ -1550,18 +1537,18 @@ void Def_Read()
     os << defCountMsg(nonAutoGeneratedCount, "materials");
 
     os << defCountMsg(defs.models.size(), "models");
-    os << defCountMsg(defs.count.ptcGens.num, "particle generators");
-    os << defCountMsg(defs.count.skies.num, "skies");
-    os << defCountMsg(defs.count.sectorTypes.num, "sector types");
-    os << defCountMsg(defs.count.music.num, "songs");
-    os << defCountMsg(countSounds.num, "sound effects");
-    os << defCountMsg(countSprNames.num, "sprite names");
-    os << defCountMsg(countStates.num, "states");
-    os << defCountMsg(defs.count.decorations.num, "surface decorations");
-    os << defCountMsg(defs.count.reflections.num, "surface reflections");
-    os << defCountMsg(countTexts.num, "text strings");
-    os << defCountMsg(defs.count.textureEnv.num, "texture environments");
-    os << defCountMsg(countMobjInfo.num, "things");
+    os << defCountMsg(defs.ptcGens.size(), "particle generators");
+    os << defCountMsg(defs.skies.size(), "skies");
+    os << defCountMsg(defs.sectorTypes.size(), "sector types");
+    os << defCountMsg(defs.music.size(), "songs");
+    os << defCountMsg(runtimeDefs.sounds.size(), "sound effects");
+    os << defCountMsg(runtimeDefs.sprNames.size(), "sprite names");
+    os << defCountMsg(runtimeDefs.states.size(), "states");
+    os << defCountMsg(defs.decorations.size(), "surface decorations");
+    os << defCountMsg(defs.reflections.size(), "surface reflections");
+    os << defCountMsg(runtimeDefs.texts.size(), "text strings");
+    os << defCountMsg(defs.textureEnv.size(), "texture environments");
+    os << defCountMsg(runtimeDefs.mobjInfo.size(), "things");
 
     LOG_RES_MSG("%s") << str.rightStrip();
 
@@ -1571,7 +1558,7 @@ void Def_Read()
 static void initMaterialGroup(ded_group_t &def)
 {
     ResourceSystem::MaterialManifestGroup *group = 0;
-    for(int i = 0; i < def.count.num; ++i)
+    for(int i = 0; i < def.members.size(); ++i)
     {
         ded_group_member_t *gm = &def.members[i];
         if(!gm->material) continue;
@@ -1618,12 +1605,14 @@ void Def_PostInit()
 #ifdef __CLIENT__
 
     // Particle generators: model setup.
-    ded_ptcgen_t *gen = defs.ptcGens;
-    for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
+    for(int i = 0; i < defs.ptcGens.size(); ++i)
     {
-        ded_ptcstage_t *st = gen->stages;
-        for(int k = 0; k < gen->stageCount.num; ++k, st++)
+        ded_ptcgen_t *gen = &defs.ptcGens[i];
+
+        for(int k = 0; k < gen->stages.size(); ++k)
         {
+            ded_ptcstage_t *st = &gen->stages[k];
+
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
 
@@ -1659,7 +1648,7 @@ void Def_PostInit()
 #endif // __CLIENT__
 
     // Lights.
-    for(int i = 0; i < defs.count.lights.num; ++i)
+    for(int i = 0; i < defs.lights.size(); ++i)
     {
         ded_light_t* lig = &defs.lights[i];
 
@@ -1683,7 +1672,7 @@ void Def_PostInit()
 
     // Material groups (e.g., for precaching).
     App_ResourceSystem().clearAllMaterialGroups();
-    for(int i = 0; i < defs.count.groups.num; ++i)
+    for(int i = 0; i < defs.groups.size(); ++i)
     {
         initMaterialGroup(defs.groups[i]);
     }
@@ -1695,7 +1684,9 @@ void Def_PostInit()
  */
 dd_bool Def_SameStateSequence(state_t* snew, state_t* sold)
 {
-    int it, target = snew - states, start = sold - states;
+    int it;
+    int target = runtimeDefs.states.indexOf(snew);
+    int start  = runtimeDefs.states.indexOf(sold);
     int count = 0;
 
     if(!snew || !sold)
@@ -1705,12 +1696,12 @@ dd_bool Def_SameStateSequence(state_t* snew, state_t* sold)
         return true; // Trivial.
 
     for(it = sold->nextState; it >= 0 && it != start && count < 16;
-        it = states[it].nextState, ++count)
+        it = runtimeDefs.states[it].nextState, ++count)
     {
         if(it == target)
             return true;
 
-        if(it == states[it].nextState)
+        if(it == runtimeDefs.states[it].nextState)
             break;
     }
     return false;
@@ -1718,10 +1709,10 @@ dd_bool Def_SameStateSequence(state_t* snew, state_t* sold)
 
 const char* Def_GetStateName(state_t* state)
 {
-    int idx = state - states;
+    int idx = runtimeDefs.states.indexOf(state);
     if(!state) return "(nullptr)";
-    if(idx < 0) return "(<0)";
-    if(idx >= defs.count.states.num) return "(>states)";
+    //if(idx < 0) return "(<0)";
+    //if(idx >= defs.states.size()) return "(>states)";
     return defs.states[idx].id;
 }
 
@@ -1932,9 +1923,9 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_SOUND_LUMPNAME:
         i = *((long*) id);
-        if(i < 0 || i >= countSounds.num)
+        if(i < 0 || i >= runtimeDefs.sounds.size())
             return false;
-        strcpy((char*)out, sounds[i].lumpName);
+        strcpy((char*)out, runtimeDefs.sounds[i].lumpName);
         return true;
 
     case DD_DEF_MUSIC:
@@ -1973,7 +1964,7 @@ int Def_Get(int type, const char* id, void* out)
         if(id && id[0])
         {
             // Read backwards to allow patching.
-            for(i = defs.count.text.num - 1; i >= 0; i--)
+            for(i = defs.text.size() - 1; i >= 0; i--)
             {
                 if(stricmp(defs.text[i].id, id)) continue;
                 if(out) *(char**) out = defs.text[i].text;
@@ -1987,7 +1978,7 @@ int Def_Get(int type, const char* id, void* out)
         if(id && id[0])
         {
             // Read backwards to allow patching.
-            for(idx = defs.count.values.num - 1; idx >= 0; idx--)
+            for(idx = defs.values.size() - 1; idx >= 0; idx--)
             {
                 if(!stricmp(defs.values[idx].id, id))
                     break;
@@ -1998,7 +1989,7 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_VALUE_BY_INDEX: {
         int idx = *((long*) id);
-        if(idx >= 0 && idx < defs.count.values.num)
+        if(idx >= 0 && idx < defs.values.size())
         {
             if(out) *(char**) out = defs.values[idx].text;
             return true;
@@ -2008,7 +1999,7 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_FINALE: { // Find InFine script by ID.
         finalescript_t* fin = (finalescript_t*) out;
-        for(i = defs.count.finales.num - 1; i >= 0; i--)
+        for(i = defs.finales.size() - 1; i >= 0; i--)
         {
             if(stricmp(defs.finales[i].id, id)) continue;
 
@@ -2025,7 +2016,7 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_FINALE_BEFORE: {
         finalescript_t *fin = (finalescript_t *) out;
         de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(i = defs.count.finales.num - 1; i >= 0; i--)
+        for(i = defs.finales.size() - 1; i >= 0; i--)
         {
             if(!defs.finales[i].before || *defs.finales[i].before != *uri) continue;
 
@@ -2044,7 +2035,7 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_FINALE_AFTER: {
         finalescript_t *fin = (finalescript_t *) out;
         de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(i = defs.count.finales.num - 1; i >= 0; i--)
+        for(i = defs.finales.size() - 1; i >= 0; i--)
         {
             if(!defs.finales[i].after || *defs.finales[i].after != *uri) continue;
 
@@ -2062,7 +2053,7 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_LINE_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
-        for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
+        for(i = defs.lineTypes.size() - 1; i >= 0; i--)
         {
             if(defs.lineTypes[i].id != typeId) continue;
             if(out) Def_CopyLineType((linetype_t*)out, &defs.lineTypes[i]);
@@ -2072,7 +2063,7 @@ int Def_Get(int type, const char* id, void* out)
       }
     case DD_DEF_SECTOR_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
-        for(i = defs.count.sectorTypes.num - 1; i >= 0; i--)
+        for(i = defs.sectorTypes.size() - 1; i >= 0; i--)
         {
             if(defs.sectorTypes[i].id != typeId) continue;
             if(out) Def_CopySectorType((sectortype_t*)out, &defs.sectorTypes[i]);
@@ -2095,7 +2086,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
     switch(type)
     {
     case DD_DEF_TEXT:
-        if(index < 0 || index >= defs.count.text.num)
+        if(index < 0 || index >= defs.text.size())
         {
             DENG_ASSERT(!"Def_Set: Text index is invalid");
             return false;
@@ -2106,7 +2097,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
     case DD_DEF_STATE: {
         ded_state_t* stateDef;
-        if(index < 0 || index >= defs.count.states.num)
+        if(index < 0 || index >= defs.states.size())
         {
             DENG_ASSERT(!"Def_Set: State index is invalid");
             return false;
@@ -2117,7 +2108,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
         case DD_SPRITE: {
             int sprite = *(int*) ptr;
 
-            if(sprite < 0 || sprite >= defs.count.sprites.num)
+            if(sprite < 0 || sprite >= defs.sprites.size())
             {
                 LOGDEV_RES_WARNING("Unknown sprite index %i") << sprite;
                 break;
@@ -2135,7 +2126,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
         break; }
 
     case DD_DEF_SOUND:
-        if(index < 0 || index >= countSounds.num)
+        if(index < 0 || index >= runtimeDefs.sounds.size())
         {
             DENG_ASSERT(!"Sound index is invalid");
             return false;
@@ -2145,19 +2136,19 @@ int Def_Set(int type, int index, int value, const void* ptr)
         {
         case DD_LUMP:
             S_StopSound(index, 0);
-            strcpy(sounds[index].lumpName, (char const*) ptr);
-            if(strlen(sounds[index].lumpName))
+            strcpy(runtimeDefs.sounds[index].lumpName, (char const*) ptr);
+            if(strlen(runtimeDefs.sounds[index].lumpName))
             {
-                sounds[index].lumpNum = App_FileSystem().lumpNumForName(sounds[index].lumpName);
-                if(sounds[index].lumpNum < 0)
+                runtimeDefs.sounds[index].lumpNum = App_FileSystem().lumpNumForName(runtimeDefs.sounds[index].lumpName);
+                if(runtimeDefs.sounds[index].lumpNum < 0)
                 {
                     LOG_RES_WARNING("Unknown sound lump name \"%s\"; sound #%i will be inaudible")
-                            << sounds[index].lumpName << index;
+                            << runtimeDefs.sounds[index].lumpName << index;
                 }
             }
             else
             {
-                sounds[index].lumpNum = 0;
+                runtimeDefs.sounds[index].lumpNum = 0;
             }
             break;
 
@@ -2171,11 +2162,11 @@ int Def_Set(int type, int index, int value, const void* ptr)
         {
             // We should create a new music definition.
             i = DED_AddMusic(&defs, "");    // No ID is known at this stage.
-            musdef = defs.music + i;
+            musdef = &defs.music[i];
         }
-        else if(index >= 0 && index < defs.count.music.num)
+        else if(index >= 0 && index < defs.music.size())
         {
-            musdef = defs.music + index;
+            musdef = &defs.music[index];
         }
         else
         {
@@ -2206,7 +2197,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
         // If the def was just created, return its index.
         if(index == DD_NEW)
-            return musdef - defs.music;
+            return defs.music.indexOf(musdef);
         break;
 
     default:
@@ -2219,7 +2210,7 @@ StringArray* Def_ListMobjTypeIDs(void)
 {
     StringArray* array = StringArray_New();
     int i;
-    for(i = 0; i < defs.count.mobjs.num; ++i)
+    for(i = 0; i < defs.mobjs.size(); ++i)
     {
         StringArray_Append(array, defs.mobjs[i].id);
     }
@@ -2230,28 +2221,28 @@ StringArray* Def_ListStateIDs(void)
 {
     StringArray* array = StringArray_New();
     int i;
-    for(i = 0; i < defs.count.states.num; ++i)
+    for(i = 0; i < defs.states.size(); ++i)
     {
         StringArray_Append(array, defs.states[i].id);
     }
     return array;
 }
 
-bool Def_IsAllowedDecoration(ded_decor_t *def, /*bool hasExternal,*/ bool isCustom)
+bool Def_IsAllowedDecoration(ded_decor_t const *def, /*bool hasExternal,*/ bool isCustom)
 {
     //if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & DCRF_NO_IWAD) == 0;
     return (def->flags & DCRF_PWAD) != 0;
 }
 
-bool Def_IsAllowedReflection(ded_reflection_t *def, /*bool hasExternal,*/ bool isCustom)
+bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom)
 {
     //if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & REFF_NO_IWAD) == 0;
     return (def->flags & REFF_PWAD) != 0;
 }
 
-bool Def_IsAllowedDetailTex(ded_detailtexture_t *def, /*bool hasExternal,*/ bool isCustom)
+bool Def_IsAllowedDetailTex(ded_detailtexture_t const *def, /*bool hasExternal,*/ bool isCustom)
 {
     //if(hasExternal) return (def->flags & DTLF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & DTLF_NO_IWAD) == 0;
@@ -2266,14 +2257,14 @@ D_CMD(ListMobjs)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    if(defs.count.mobjs.num <= 0)
+    if(defs.mobjs.size() <= 0)
     {
         LOG_RES_MSG("No mobjtypes defined/loaded");
         return true;
     }
 
     LOG_RES_MSG(_E(b) "Registered Mobjs (ID | Name):");
-    for(int i = 0; i < defs.count.mobjs.num; ++i)
+    for(int i = 0; i < defs.mobjs.size(); ++i)
     {
         if(defs.mobjs[i].name[0])
             LOG_RES_MSG(" %s | %s") << defs.mobjs[i].id << defs.mobjs[i].name;
@@ -2290,10 +2281,5 @@ DENG_DECLARE_API(Def) =
 
     Def_Get,
     Def_Set,
-    Def_EvalFlags,
-
-    // TODO: These should not be part of the public API
-    // (they manipulate internal data structures; hence the casting)
-    reinterpret_cast<int (*)(void *, char const *)>(DED_AddValue),
-    reinterpret_cast<void (*)(void **, void *, size_t, int)>(DED_NewEntries)
+    Def_EvalFlags
 };

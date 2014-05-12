@@ -54,12 +54,12 @@ AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri)
 {
     if(uri)
     {
-        ded_tenviron_t *env = defs.textureEnv;
-        for(int i = 0; i < defs.count.textureEnv.num; ++i, env++)
+        for(int i = 0; i < defs.textureEnv.size(); ++i)
         {
-            for(int k = 0; k < env->count.num; ++k)
+            ded_tenviron_t const *env = &defs.textureEnv[i];
+            for(int k = 0; k < env->materials.size(); ++k)
             {
-                de::Uri *ref = env->materials[k];
+                de::Uri *ref = env->materials[k].uri;
                 if(!ref || *ref != *uri) continue;
 
                 // Is this a known environment?

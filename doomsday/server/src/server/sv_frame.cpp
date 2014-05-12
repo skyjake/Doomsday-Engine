@@ -323,7 +323,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(df & MDF_STATE)
     {
         assert(d->state != 0);
-        Writer_WritePackedUInt16(msgWriter, d->state - states);
+        Writer_WritePackedUInt16(msgWriter, runtimeDefs.states.indexOf(d->state));
     }
 
     if(df & MDF_FLAGS)
@@ -411,7 +411,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
             Writer_WriteByte(msgWriter, psdf);
             if(psdf & PSDF_STATEPTR)
             {
-                Writer_WritePackedUInt16(msgWriter, psp->statePtr? (psp->statePtr - states + 1) : 0);
+                Writer_WritePackedUInt16(msgWriter, psp->statePtr? (runtimeDefs.states.indexOf(psp->statePtr) + 1) : 0);
             }
             /*if(psdf & PSDF_LIGHT)
             {

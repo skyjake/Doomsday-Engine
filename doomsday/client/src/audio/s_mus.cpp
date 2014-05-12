@@ -346,7 +346,7 @@ int Mus_Start(ded_music_t* def, dd_bool looped)
 
     if(!musAvail) return false;
 
-    songID = def - defs.music;
+    songID = defs.music.indexOf(def);
 
     LOG_AS("Mus_Start");
     LOG_AUDIO_VERBOSE("Starting ID:%i looped:%i, currentSong ID:%i") << songID << looped << currentSong;

@@ -594,15 +594,15 @@ static void renderParticles(int rtype, bool withBlend)
 
         // Is there a next stage for this particle?
         ded_ptcstage_t const *nextStDef;
-        if(pinfo->stage >= gen->def->stageCount.num - 1 ||
+        if(pinfo->stage >= gen->def->stages.size() - 1 ||
            !gen->stages[pinfo->stage + 1].type)
         {
             // There is no "next stage". Use the current one.
-            nextStDef = gen->def->stages + pinfo->stage;
+            nextStDef = &gen->def->stages[pinfo->stage];
         }
         else
         {
-            nextStDef = gen->def->stages + (pinfo->stage + 1);
+            nextStDef = &gen->def->stages[pinfo->stage + 1];
         }
 
         // Where is intermark?

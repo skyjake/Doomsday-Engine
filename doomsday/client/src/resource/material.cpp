@@ -66,7 +66,7 @@ Material::Layer::Stage *Material::Layer::Stage::fromDef(ded_material_layer_stage
 Material::Layer *Material::Layer::fromDef(ded_material_layer_t const &layerDef)
 {
     Layer *layer = new Layer();
-    for(int i = 0; i < layerDef.stageCount.num; ++i)
+    for(int i = 0; i < layerDef.stages.size(); ++i)
     {
         layer->_stages.push_back(Stage::fromDef(layerDef.stages[i]));
     }
@@ -269,7 +269,7 @@ Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t co
 {
     Decoration *dec = new Decoration(Vector2i(def.patternSkip),
                                      Vector2i(def.patternOffset));
-    for(int i = 0; i < def.stageCount.num; ++i)
+    for(int i = 0; i < def.stages.size(); ++i)
     {
         dec->_stages.push_back(Stage::fromDef(def.stages[i]));
     }

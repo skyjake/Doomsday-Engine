@@ -218,7 +218,7 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
     sfxinfo_t*          info;
     int                 i;
 
-    if(soundID <= 0 || soundID >= defs.count.sounds.num)
+    if(soundID <= 0 || soundID >= defs.sounds.size())
         return NULL;
 
     if(!freq)
@@ -232,13 +232,13 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
      * recursion.) Update the sound id at the same time.
      * The links were checked in Def_Read() so there can't be any bogus ones.
      */
-    for(info = &sounds[soundID], i = 0; info->link && i < 10;
+    for(info = &runtimeDefs.sounds[soundID], i = 0; info->link && i < 10;
         info = info->link, *freq =
         (info->linkPitch > 0 ? info->linkPitch / 128.0f : *freq), *volume +=
         (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0), soundID =
-        info - sounds, i++) {}
+        runtimeDefs.sounds.indexOf(info), i++) {}
 
-    assert(soundID < defs.count.sounds.num);
+    assert(soundID < defs.sounds.size());
 
     return info;
 }
@@ -276,7 +276,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
     if(isDedicated || BusyMode_Active())
         return false;
 
-    if(soundId <= 0 || soundId >= defs.count.sounds.num || sfxVolume <= 0 ||
+    if(soundId <= 0 || soundId >= defs.sounds.size() || sfxVolume <= 0 ||
        volume <= 0)
         return false; // This won't play...
 
@@ -511,7 +511,7 @@ int S_StartMusicNum(int id, dd_bool looped)
     // Don't play music if the volume is at zero.
     if(isDedicated) return true;
 
-    if(id < 0 || id >= defs.count.music.num) return false;
+    if(id < 0 || id >= defs.music.size()) return false;
     ded_music_t *def = &defs.music[id];
 
     LOG_AUDIO_MSG("Starting music '%s'") << def->id;

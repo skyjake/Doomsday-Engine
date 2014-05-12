@@ -144,9 +144,9 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     def    = newDef;
     _flags = Flags(def->flags);
     _pinfo = (ParticleInfo *) Z_Calloc(sizeof(ParticleInfo) * count, PU_MAP, 0);
-    stages = (ParticleStage *) Z_Calloc(sizeof(ParticleStage) * def->stageCount.num, PU_MAP, 0);
+    stages = (ParticleStage *) Z_Calloc(sizeof(ParticleStage) * def->stages.size(), PU_MAP, 0);
 
-    for(int i = 0; i < def->stageCount.num; ++i)
+    for(int i = 0; i < def->stages.size(); ++i)
     {
         ded_ptcstage_t const *sdef = &def->stages[i];
         ParticleStage *s = &stages[i];
@@ -1092,7 +1092,7 @@ void Generator::runTick()
         if(pinfo->tics-- <= 0)
         {
             // Advance to next stage.
-            if(++pinfo->stage == def->stageCount.num ||
+            if(++pinfo->stage == def->stages.size() ||
                stages[pinfo->stage].type == PTC_NONE)
             {
                 // Kill the particle.

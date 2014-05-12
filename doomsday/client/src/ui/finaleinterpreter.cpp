@@ -1762,7 +1762,7 @@ DEFFC(StateAnim)
     ((fidata_pic_t*)obj)->animComplete = false;
     for(; count > 0 && stateId > 0; count--)
     {
-        state_t* st = &states[stateId];
+        state_t* st = &runtimeDefs.states[stateId];
 #ifdef __CLIENT__
         spriteinfo_t sinf;
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
@@ -2039,17 +2039,17 @@ DEFFC(SoundAt)
 DEFFC(SeeSound)
 {
     int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), NULL);
-    if(num < 0 || mobjInfo[num].seeSound <= 0)
+    if(num < 0 || runtimeDefs.mobjInfo[num].seeSound <= 0)
         return;
-    S_LocalSound(mobjInfo[num].seeSound, NULL);
+    S_LocalSound(runtimeDefs.mobjInfo[num].seeSound, NULL);
 }
 
 DEFFC(DieSound)
 {
     int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), NULL);
-    if(num < 0 || mobjInfo[num].deathSound <= 0)
+    if(num < 0 || runtimeDefs.mobjInfo[num].deathSound <= 0)
         return;
-    S_LocalSound(mobjInfo[num].deathSound, NULL);
+    S_LocalSound(runtimeDefs.mobjInfo[num].deathSound, NULL);
 }
 
 DEFFC(Music)

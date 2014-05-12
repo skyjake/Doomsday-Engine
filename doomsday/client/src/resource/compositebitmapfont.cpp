@@ -217,7 +217,7 @@ CompositeBitmapFont *CompositeBitmapFont::fromDef(FontManifest &manifest,
     CompositeBitmapFont *font = new CompositeBitmapFont(manifest);
     font->setDefinition(const_cast<ded_compositefont_t *>(&def));
 
-    for(int i = 0; i < def.charMapCount.num; ++i)
+    for(int i = 0; i < def.charMap.size(); ++i)
     {
         if(!def.charMap[i].path) continue;
         try
@@ -253,7 +253,7 @@ void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t const &newDef)
     setDefinition(const_cast<ded_compositefont_t *>(&newDef));
     if(!d->def) return;
 
-    for(int i = 0; i < d->def->charMapCount.num; ++i)
+    for(int i = 0; i < d->def->charMap.size(); ++i)
     {
         if(!d->def->charMap[i].path) continue;
 

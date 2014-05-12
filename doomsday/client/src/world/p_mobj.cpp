@@ -170,18 +170,18 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
 #endif
 
 #ifdef DENG_DEBUG
-    if(statenum < 0 || statenum >= defs.count.states.num)
+    if(statenum < 0 || statenum >= defs.states.size())
         App_Error("Mobj_SetState: statenum %i out of bounds.\n", statenum);
 #endif
 
-    mobj->state  = states + statenum;
+    mobj->state  = &runtimeDefs.states[statenum];
     mobj->tics   = mobj->state->tics;
     mobj->sprite = mobj->state->sprite;
     mobj->frame  = mobj->state->frame;
 
 #ifdef __CLIENT__
     // Check for a ptcgen trigger.
-    for(ded_ptcgen_t *pg = statePtcGens[statenum]; pg; pg = pg->stateNext)
+    for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[statenum].ptcGens; pg; pg = pg->stateNext)
     {
         if(!(pg->flags & Generator::SpawnOnly) || spawning)
         {
@@ -415,7 +415,7 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
 {
     if(state)
     {
-        return stateLights[state - states];
+        return runtimeDefs.stateInfo[runtimeDefs.states.indexOf(state)].light;
     }
     return 0;
 }
@@ -444,7 +444,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // Are the automatically calculated light values for fullbright sprite frames in use?
     if(mo->state &&
        (!mobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
-       !stateLights[mo->state - states])
+       !runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mo->state)].light)
     {
        return;
     }
@@ -604,7 +604,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
     if(!mo.state) return 0;
 
     state_t &st = *mo.state;
-    ModelDef *modef = resSys.modelDefForState(&st - states, mo.selector);
+    ModelDef *modef = resSys.modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
     if(!modef) return 0; // No model available.
 
     float interp = -1;
@@ -664,12 +664,12 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
         }
         else if(worldTime)
         {
-            *retNextModef = resSys.modelDefForState(&st - states, mo.selector);
+            *retNextModef = resSys.modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
         }
         else if(st.nextState > 0) // Check next state.
         {
             // Find the appropriate state based on interrange.
-            state_t *it = states + st.nextState;
+            state_t *it = &runtimeDefs.states[st.nextState];
             bool foundNext = false;
             if(modef->interRange[1] < 1)
             {
@@ -680,8 +680,8 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                 int max = 20; // Let's not be here forever...
                 while(!stopScan)
                 {
-                    if(!((!resSys.modelDefForState(it - states) ||
-                          resSys.modelDefForState(it - states, mo.selector)->interRange[0] > 0) &&
+                    if(!((!resSys.modelDefForState(runtimeDefs.states.indexOf(it)) ||
+                          resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0) &&
                          it->nextState > 0))
                     {
                         stopScan = true;
@@ -689,7 +689,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                     else
                     {
                         // Scan interlinks, then go to the next state.
-                        ModelDef *mdit = resSys.modelDefForState(it - states, mo.selector);
+                        ModelDef *mdit = resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
                         if(mdit && mdit->interNext)
                         {
                             forever
@@ -717,7 +717,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                         }
                         else
                         {
-                            it = states + it->nextState;
+                            it = &runtimeDefs.states[it->nextState];
                         }
                     }
 
@@ -729,7 +729,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
 
             if(!foundNext)
             {
-                *retNextModef = resSys.modelDefForState(it - states, mo.selector);
+                *retNextModef = resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
             }
         }
     }
@@ -876,10 +876,10 @@ D_CMD(InspectMobj)
 #endif
 
     LOG_MAP_MSG("%s %i [%p] State:%s (%i)")
-            << moType << id << mo << Def_GetStateName(mo->state) << (int)(mo->state - states);
+            << moType << id << mo << Def_GetStateName(mo->state) << runtimeDefs.states.indexOf(mo->state);
     LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
             << Def_GetMobjName(mo->type) << mo->type << mo->info
-            << (mo->info? QString(" (%1)").arg(mo->info - mobjInfo) : "");
+            << (mo->info? QString(" (%1)").arg(runtimeDefs.mobjInfo.indexOf(mo->info)) : "");
     LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mo->tics << mo->ddFlags;
 #ifdef __CLIENT__
     if(info)
