@@ -163,7 +163,7 @@ DENG2_PIMPL(ArchiveFeed)
             if(folder.has(*i))
             {
                 // Already has an entry for this, skip it (wasn't pruned so it's OK).
-                return;
+                continue;
             }
 
             String entry = basePath / *i;
