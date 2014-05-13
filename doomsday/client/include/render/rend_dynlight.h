@@ -33,8 +33,8 @@ typedef struct {
     de::Vector3d const *bottomRight;
     bool isWall;
     struct {
-        de::WallEdge const *leftEdge;
-        de::WallEdge const *rightEdge;
+        de::WallEdgeSection const *leftEdge;
+        de::WallEdgeSection const *rightEdge;
     } wall;
 } renderlightprojectionparams_t;
 

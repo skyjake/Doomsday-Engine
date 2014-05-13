@@ -1,6 +1,6 @@
-/** @file render/wallspec.h Wall Geometry Specification.
+/** @file wallspec.h  Wall Geometry Specification.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_WALLSPEC
-#define DENG_RENDER_WALLSPEC
+#ifndef DENG_CLIENT_RENDER_WALLSPEC
+#define DENG_CLIENT_RENDER_WALLSPEC
 
 #include <QFlags>
 
@@ -29,9 +29,8 @@ namespace de {
 /**
  * Wall geometry specification. The members are public for convenient access.
  */
-class WallSpec
+struct WallSpec
 {
-public:
     enum Flag
     {
         /// Force the geometry to be opaque, irrespective of material opacity.
@@ -75,25 +74,18 @@ public:
     /// Specification flags.
     Flags flags;
 
-    /// Wall section identifier.
-    int section;
-
-    /**
-     * Construct a default wall geometry specification for the specifed @a section.
-     */
-    WallSpec(int section, Flags flags = DefaultFlags) : flags(flags), section(section)
-    {}
+    WallSpec(Flags flags = DefaultFlags) : flags(flags) {}
 
     /**
      * Construct a wall geometry specification appropriate for the specified
-     * @a side and @a section of a map Line considering the current map renderer
+     * @a side and @a section of a Line::Side considering the current map renderer
      * configuration.
      */
-    static WallSpec fromMapSide(LineSide const &side, int section);
+    static WallSpec fromLineSide(LineSide const &side, int section);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
 
 } // namespace de
 
-#endif // DENG_RENDER_WALLSPEC
+#endif // DENG_CLIENT_RENDER_WALLSPEC

@@ -245,12 +245,12 @@ TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
 
 void R_DivVerts(de::Vector3f *dst, de::Vector3f const *src,
-    de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
+    de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
 void R_DivTexCoords(de::Vector2f *dst, de::Vector2f const *src,
-    de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
+    de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
 void R_DivVertColors(de::Vector4f *dst, de::Vector4f const *src,
-    de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
+    de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
 #endif // CLIENT_RENDER_MAIN_H

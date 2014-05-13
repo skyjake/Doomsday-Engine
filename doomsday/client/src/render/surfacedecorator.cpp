@@ -197,17 +197,18 @@ static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
         if(!leftHEdge || !rightHEdge) return false;
 
         // Is the wall section potentially visible?
-        WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
-        WallEdge leftEdge (wallSpec, *leftHEdge, Line::From);
-        WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
+        WallEdge left(*leftHEdge, Line::From);
+        WallEdge right(*rightHEdge, Line::To);
+        WallEdgeSection &sectionLeft  = left.section(WallEdge::sectionIdFromLineSideSection(section));
+        WallEdgeSection &sectionRight = right.section(WallEdge::sectionIdFromLineSideSection(section));
 
-        if(!leftEdge.isValid() || !rightEdge.isValid() ||
-           de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
+        if(!sectionLeft.isValid() || !sectionRight.isValid() ||
+           de::fequal(sectionLeft.bottom().z(), sectionRight.top().z()))
             return false;
 
-        topLeft        = leftEdge.top().origin();
-        bottomRight    = rightEdge.bottom().origin();
-        materialOrigin = -leftEdge.materialOrigin();
+        topLeft        = sectionLeft.top().origin();
+        bottomRight    = sectionRight.bottom().origin();
+        materialOrigin = -sectionLeft.materialOrigin();
 
         return true;
     }

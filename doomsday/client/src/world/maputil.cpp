@@ -173,11 +173,11 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
                 if(ms.height() >= openRange)
                 {
                     // Possibly; check the placement.
-                    WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
-                                  *side.leftHEdge(), Line::From);
+                    WallEdge left(*side.leftHEdge(), Line::From);
+                    WallEdgeSection &sectionLeft = left.wallMiddle();
 
-                    return (edge.isValid() && edge.top().z() > edge.bottom().z()
-                            && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
+                    return (sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z()
+                            && sectionLeft.top().z() >= openTop && sectionLeft.bottom().z() <= openBottom);
                 }
             }
         }
@@ -246,11 +246,11 @@ static bool middleMaterialCoversOpening(LineSide const &side)
             if(ms.height() >= openRange)
             {
                 // Possibly; check the placement.
-                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
-                              *side.leftHEdge(), Line::From);
+                WallEdge left(*side.leftHEdge(), Line::From);
+                WallEdgeSection &sectionLeft = left.wallMiddle();
 
-                return (edge.isValid() && edge.top().z() > edge.bottom().z()
-                        && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
+                return (sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z()
+                        && sectionLeft.top().z() >= openTop && sectionLeft.bottom().z() <= openBottom);
             }
         }
     }

@@ -33,6 +33,7 @@
 #include "ConvexSubspace"
 #include "SectorCluster"
 #include "WallEdge"
+#include "WallSpec"
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/lineowner.h"
@@ -1004,17 +1005,21 @@ static void quadTexCoords(Vector2f *tc, Vector3f const *rverts, float wallLength
 }
 
 static void drawWallSectionShadow(Vector3f const *origVertices,
-    WallEdge const &leftEdge, WallEdge const &rightEdge,
+    WallEdgeSection const &leftEdge, WallEdgeSection const &rightEdge,
     rendershadowseg_params_t const &wsParms)
 {
-    DENG_ASSERT(origVertices);
+    DENG2_ASSERT(origVertices);
     bool const mustSubdivide = (leftEdge.divisionCount() || rightEdge.divisionCount());
 
     uint realNumVertices = 4;
     if(mustSubdivide)
+    {
         realNumVertices = 3 + leftEdge.divisionCount() + 3 + rightEdge.divisionCount();
+    }
     else
+    {
         realNumVertices = 4;
+    }
 
     // Allocate enough for the divisions too.
     Vector2f *rtexcoords = R_AllocRendTexCoords(realNumVertices);
@@ -1086,8 +1091,8 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
 }
 
 /// @todo fixme: Should use the visual plane heights of sector clusters.
-void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    float shadowDark, float shadowSize)
+void Rend_RadioWallSection(WallEdgeSection const &sectionLeft,
+    WallEdgeSection const &sectionRight, float shadowDark, float shadowSize)
 {
     // Disabled?
     if(!rendFakeRadio || levelFullBright)
@@ -1096,12 +1101,12 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     if(shadowSize <= 0)
         return;
 
-    LineSide &side = leftEdge.mapLineSide();
+    LineSide &side = sectionLeft.edge().lineSide();
     HEdge const *hedge = side.leftHEdge();
     SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
     SectorCluster const *backCluster = 0;
 
-    if(leftEdge.spec().section != LineSide::Middle && hedge->twin().hasFace())
+    if(sectionLeft.id() != WallEdge::WallMiddle && hedge->twin().hasFace())
     {
         backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
     }
@@ -1115,8 +1120,8 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
         return;
 
     coord_t const lineLength    = side.line().length();
-    coord_t const sectionOffset = leftEdge.mapLineSideOffset();
-    coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+    coord_t const sectionOffset = sectionLeft.edge().lineSideOffset();
+    coord_t const sectionWidth  = de::abs(Vector2d(sectionRight.edge().origin() - sectionLeft.edge().origin()).length());
 
     LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
 
@@ -1126,39 +1131,39 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     coord_t const bCeil  = (backCluster? backCluster->visCeiling().heightSmoothed() : 0);
 
     Vector3f rvertices[4] = {
-         leftEdge.bottom().origin(),
-            leftEdge.top().origin(),
-        rightEdge.bottom().origin(),
-           rightEdge.top().origin()
+         sectionLeft.bottom().origin(),
+            sectionLeft.top().origin(),
+        sectionRight.bottom().origin(),
+           sectionRight.top().origin()
     };
 
     // Top Shadow?
     if(haveTopShadower)
     {
-        if(rightEdge.top().z() > fCeil - shadowSize
-           && leftEdge.bottom().z() < fCeil)
+        if(sectionRight.top().z() > fCeil - shadowSize
+           && sectionLeft.bottom().z() < fCeil)
         {
             rendershadowseg_params_t parms;
 
             setTopShadowParams(&parms, shadowSize, shadowDark,
-                               leftEdge.top().z(), sectionOffset, sectionWidth,
+                               sectionLeft.top().z(), sectionOffset, sectionWidth,
                                fFloor, fCeil, frData);
-            drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
+            drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
         }
     }
 
     // Bottom Shadow?
     if(haveBottomShadower)
     {
-        if(leftEdge.bottom().z() < fFloor + shadowSize
-           && rightEdge.top().z() > fFloor)
+        if(sectionLeft.bottom().z() < fFloor + shadowSize
+           && sectionRight.top().z() > fFloor)
         {
             rendershadowseg_params_t parms;
 
             setBottomShadowParams(&parms, shadowSize, shadowDark,
-                                  leftEdge.top().z(), sectionOffset, sectionWidth,
+                                  sectionLeft.top().z(), sectionOffset, sectionWidth,
                                   fFloor, fCeil, frData);
-            drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
+            drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
         }
     }
 
@@ -1168,12 +1173,12 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
         rendershadowseg_params_t parms;
 
         setSideShadowParams(&parms, shadowSize, shadowDark,
-                            leftEdge.bottom().z(), leftEdge.top().z(), false,
+                            sectionLeft.bottom().z(), sectionLeft.top().z(), false,
                             haveBottomShadower, haveTopShadower,
                             sectionOffset, sectionWidth,
                             fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
                             frData);
-        drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
+        drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
     }
 
     // Right Shadow?
@@ -1183,11 +1188,11 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
         rendershadowseg_params_t parms;
 
         setSideShadowParams(&parms, shadowSize, shadowDark,
-                            leftEdge.bottom().z(), leftEdge.top().z(), true,
+                            sectionLeft.bottom().z(), sectionLeft.top().z(), true,
                             haveBottomShadower, haveTopShadower, sectionOffset, sectionWidth,
                             fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
                             frData);
-        drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
+        drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
     }
 }
 

@@ -1,6 +1,6 @@
-/** @file render/wallspec.cpp Wall Geometry Specification.
+/** @file wallspec.cpp  Wall Geometry Specification.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,14 +18,13 @@
  */
 
 #include "de_base.h"
+#include "render/wallspec.h"
 
 #include "Sector"
 #include "Surface"
 #include "world/p_players.h" // viewPlayer
 
 #include "render/rend_main.h"
-
-#include "render/walledge.h"
 
 using namespace de;
 
@@ -51,11 +50,11 @@ static bool useWallSectionLightLevelDeltas(LineSide const &side, int section)
     return true;
 }
 
-WallSpec WallSpec::fromMapSide(LineSide const &side, int section) // static
+WallSpec WallSpec::fromLineSide(LineSide const &side, int section) // static
 {
     bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
 
-    WallSpec spec(section);
+    WallSpec spec;
 
     if(side.line().definesPolyobj() || isTwoSidedMiddle)
     {

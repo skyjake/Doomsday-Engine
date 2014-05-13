@@ -1,6 +1,6 @@
-/** @file render/skyfixedge.h Sky Fix Edge Geometry.
+/** @file skyfixedge.h  Sky Fix Edge Geometry.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,12 +17,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_SKY_FIX_EDGE
-#define DENG_RENDER_SKY_FIX_EDGE
+#ifndef DENG_CLIENT_RENDER_SKYFIXEDGE
+#define DENG_CLIENT_RENDER_SKYFIXEDGE
 
+//#include <QList>
+#include <de/Error>
 #include <de/Vector>
-
+#include "Line"
 #include "TriangleStripBuilder" /// @todo remove me
+//#include "IHPlane"
 
 namespace de {
 
@@ -31,60 +34,135 @@ class HEdge;
 /**
  * @ingroup render
  */
-class SkyFixEdge : public WorldEdge
+class SkyFixEdge
 {
+    DENG2_NO_COPY  (SkyFixEdge)
+    DENG2_NO_ASSIGN(SkyFixEdge)
+
 public:
-    enum FixType
-    {
-        Lower,
-        Upper
+    /// An unknown section was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSectionError);
+
+    class SkySection; // forward
+
+    /// Logical section identifiers:
+    enum SectionId {
+        SkyBottom,
+        SkyTop
     };
 
-    class Event : public WorldEdge::Event
+    /**
+     * Sky edge event.
+     */
+    class Event : public AbstractEdge::Event
     {
     public:
-        Event(SkyFixEdge &owner, double distance = 0);
+        Event(double distance = 0);
 
+        // Implement AbstractEdge::Event:
+        double distance() const;
+        Vector3d origin() const;
         bool operator < (Event const &other) const;
 
-        double distance() const;
+        /**
+         * Returns the SkySection to which the event is attributed.
+         */
+        SkySection &section() const;
 
-        Vector3d origin() const;
+        // SkySection needs access to attribute events.
+        friend class SkySection;
 
     private:
+        double _distance;
+        SkySection *_section;
+    };
+
+    /**
+     * Sky edge section.
+     */
+    class SkySection : public AbstractEdge
+    {
+    public:
+        /**
+         * Returns the owning SkyFixEdge for the section.
+         */
+        SkyFixEdge &edge() const;
+
+        Vector3d const &pOrigin() const;
+        Vector3d const &pDirection() const;
+
+        /// Implement IEdge.
+        bool isValid() const;
+
+        /// Implement AbstractEdge:
+        SkyFixEdge::Event const &first() const;
+        SkyFixEdge::Event const &last() const;
+        Vector2f materialOrigin() const;
+
+        /// Convenient aliases:
+        inline SkyFixEdge::Event const &bottom() const { return first(); }
+        inline SkyFixEdge::Event const &top() const    { return last(); }
+
+        /**
+         * Lookup an edge event by @a index.
+         */
+        SkyFixEdge::Event const &at(EventIndex index) const;
+
+        // SkyFixEdge needs access to the private constructor.
+        friend class SkyFixEdge;
+
+    private:
+        SkySection(SkyFixEdge &owner, SectionId id, float materialOffsetS = 0);
+
         DENG2_PRIVATE(d)
     };
 
-public:
     /**
      * @param hedge    HEdge from which to determine sky fix coordinates.
      * @param fixType  Fix type.
      */
-    SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
+    SkyFixEdge(HEdge &hedge, int edge, float materialOffsetS = 0);
 
-    Vector3d const &pOrigin() const;
-    Vector3d const &pDirection() const;
+    /**
+     * Returns the X|Y origin of the edge in map space.
+     */
+    Vector2d const &origin() const;
 
-    Vector2f materialOrigin() const;
+    /**
+     * Returns the halfedge from which the edge was built.
+     */
+    HEdge &hedge() const;
 
-    /// Implement IEdge.
-    bool isValid() const;
+    /**
+     * Returns the logical front side (0: left, 1: right) of the halfedge for the edge.
+     */
+    int side() const;
 
-    /// Implement IEdge.
-    Event const &first() const;
+    /**
+     * Returns the map Line::Side for the edge.
+     */
+    LineSide &lineSide() const;
 
-    /// Implement IEdge.
-    Event const &last() const;
+    /**
+     * Returns the offset along the map Line::Side for the edge.
+     */
+    coord_t lineSideOffset() const;
 
-    inline Event const &bottom() const { return first(); }
-    inline Event const &top() const { return last(); }
+    /**
+     * Returns the SkySection associated with @a id.
+     */
+    SkySection &section(SectionId id);
 
-    Event const &at(EventIndex index) const;
+    /// Convenient accessor methods:
+    inline SkySection &skyTop()    { return section(SkyTop); }
+    inline SkySection &skyBottom() { return section(SkyBottom); }
 
 private:
     DENG2_PRIVATE(d)
 };
 
+typedef SkyFixEdge::SkySection SkyFixEdgeSection;
+
 } // namespace de
 
-#endif // DENG_RENDER_SKY_FIX_EDGE
+#endif // DENG_CLIENT_RENDER_SKYFIXEDGE

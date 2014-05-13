@@ -59,8 +59,8 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
 
     if(parm.isWall)
     {
-        WallEdge const &leftEdge  = *parm.wall.leftEdge;
-        WallEdge const &rightEdge = *parm.wall.rightEdge;
+        WallEdgeSection const &sectionLeft  = *parm.wall.leftEdge;
+        WallEdgeSection const &sectionRight = *parm.wall.rightEdge;
 
         rtexcoords[1].x = rtexcoords[0].x = tp.topLeft.x;
         rtexcoords[1].y = rtexcoords[3].y = tp.topLeft.y;
@@ -79,9 +79,9 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
             Vector2f origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
             Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
-            R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
-            R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
-            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
+            R_DivVerts(rvertices, origVerts, sectionLeft, sectionRight);
+            R_DivTexCoords(rtexcoords, origTexCoords, sectionLeft, sectionRight);
+            R_DivVertColors(rcolors, origColors, sectionLeft, sectionRight);
         }
         else
         {
@@ -108,20 +108,20 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
 
     if(mustSubdivide)
     {
-        WallEdge const &leftEdge  = *parm.wall.leftEdge;
-        WallEdge const &rightEdge = *parm.wall.rightEdge;
+        WallEdgeSection const &sectionLeft  = *parm.wall.leftEdge;
+        WallEdgeSection const &sectionRight = *parm.wall.rightEdge;
 
         shadowList.write(gl::TriangleFan,
                          BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                          Vector2f(1, 1), Vector2f(0, 0),
-                         0, 3 + rightEdge.divisionCount(),
-                         rvertices  + 3 + leftEdge.divisionCount(),
-                         rcolors    + 3 + leftEdge.divisionCount(),
-                         rtexcoords + 3 + leftEdge.divisionCount())
+                         0, 3 + sectionRight.divisionCount(),
+                         rvertices  + 3 + sectionLeft.divisionCount(),
+                         rcolors    + 3 + sectionLeft.divisionCount(),
+                         rtexcoords + 3 + sectionLeft.divisionCount())
                   .write(gl::TriangleFan,
                          BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                          Vector2f(1, 1), Vector2f(0, 0),
-                         0, 3 + leftEdge.divisionCount(),
+                         0, 3 + sectionLeft.divisionCount(),
                          rvertices, rcolors, rtexcoords);
     }
     else

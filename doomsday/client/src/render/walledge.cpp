@@ -1,4 +1,4 @@
-/** @file walledge.cpp Wall Edge Geometry.
+/** @file walledge.cpp  Wall Edge Geometry.
  *
  * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -19,23 +19,29 @@
 
 #include "de_platform.h"
 #include "render/walledge.h"
-
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "Sector"
-#include "Surface"
-
 #include "Face"
-
-#include "world/lineowner.h"
-#include "world/p_players.h"
-#include "world/maputil.h"
+#include "Plane"
+#include "Sector"
 #include "SectorCluster"
-
-#include "render/rend_main.h" // devRendSkyMode, remove me
-#include <QtAlgorithms>
+#include "Surface"
+#include "world/map.h"
+#include "world/lineowner.h"
+#include "world/maputil.h"
+#include "world/p_players.h"
+#include "render/rend_main.h"
+#include "WallSpec"
 
 using namespace de;
+
+/// Maximum number of intercepts in a WallEdge.
+#define WALLEDGE_MAX_INTERCEPTS  64
+
+static bool eventSorter(WallEdge::Event *a, WallEdge::Event *b)
+{
+    return *a < *b;
+}
 
 /**
  * Determines whether normal smoothing should be performed for the given pair of
@@ -54,18 +60,9 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
-DENG2_PIMPL_NOREF(WallEdge::Event)
-{
-    /// Wall edge instance which owns "this" event.
-    WallEdge &owner;
-
-    Instance(WallEdge &owner) : owner(owner) {}
-};
-
-WallEdge::Event::Event(WallEdge &owner, double distance)
-    : WorldEdge::Event(),
-      IHPlane::IIntercept(distance),
-      d(new Instance(owner))
+WallEdge::Event::Event(double distance)
+    : IHPlane::IIntercept(distance)
+    , _section(0)
 {}
 
 bool WallEdge::Event::operator < (Event const &other) const
@@ -80,75 +77,93 @@ double WallEdge::Event::distance() const
 
 Vector3d WallEdge::Event::origin() const
 {
-    return d->owner.pOrigin() + d->owner.pDirection() * distance();
+    return section().pOrigin() + section().pDirection() * distance();
 }
 
-static bool eventSorter(WorldEdge::Event *a, WorldEdge::Event *b)
+WallEdge::WallSection &WallEdge::Event::section() const
 {
-    return *a < *b;
+    DENG2_ASSERT(_section != 0);
+    return *_section;
 }
 
-static inline coord_t lineSideOffset(LineSideSegment &seg, int edge)
+DENG2_PIMPL(WallEdge::WallSection), public IHPlane
 {
-    return seg.lineSideOffset() + (edge? seg.length() : 0);
-}
-
-DENG2_PIMPL(WallEdge), public IHPlane
-{
+    WallEdge &owner;
+    SectionId id;
     WallSpec spec;
-    int edge;
-
-    HEdge *wallHEdge;
-
-    /// The half-plane which partitions the surface coordinate space.
-    Partition hplane;
 
     Vector3d pOrigin;
     Vector3d pDirection;
 
-    coord_t lo, hi;
-
     /// Events for the special termination points are allocated with "this".
-    Event bottom;
-    Event top;
+    WallEdge::Event bottom;
+    WallEdge::Event top;
 
-    /// All events along the partition line.
-    Events *events;
+    Partition hplane;     ///< Half-plane partition of surface space.
+    Events *events;       ///< All events along the partition line.
     bool needSortEvents;
 
+    /// Edge attributes:
     Vector2f materialOrigin;
-
     Vector3f normal;
     bool needUpdateNormal;
 
-    Instance(Public *i, WallSpec const &spec, HEdge &hedge, int edge)
-        : Base(i),
-          spec(spec),
-          edge(edge),
-          wallHEdge(&hedge),
-          lo(0),
-          hi(0),
-          bottom(*i, 0),
-          top(*i, 1),
-          events(0),
-          needSortEvents(false),
-          needUpdateNormal(true)
+    bool needPrepare;
+
+    Instance(Public *i, WallEdge &owner, SectionId id, WallSpec const &spec)
+        : Base            (i)
+        , owner           (owner)
+        , id              (id)
+        , spec            (spec)
+        , bottom          (0)
+        , top             (1)
+        , events          (0)
+        , needSortEvents  (false)
+        , needUpdateNormal(true)
+        , needPrepare     (true)
     {
+        bottom._section = thisPublic;
+        top._section    = thisPublic;
+    }
+
+    ~Instance() { clearIntercepts(); }
+
+    inline LineSide &lineSide() const {
+        return owner.hedge().mapElementAs<LineSideSegment>().lineSide();
+    }
+
+    Surface &lineSideSurface()
+    {
+        switch(id)
+        {
+        case WallMiddle: return lineSide().middle();
+        case WallBottom: return lineSide().bottom();
+        case WallTop:    return lineSide().top();
+        }
+        throw Error("lineSideSurface", "Invalid id");
+    }
+
+    void prepareIfNeeded()
+    {
+        if(!needPrepare) return;
+        needPrepare = false;
+
+        coord_t lo = 0, hi = 0;
+
         // Determine the map space Z coordinates of the wall section.
-        LineSideSegment &seg   = lineSideSegment();
-        Line const &line       = seg.line();
+        Line const &line       = lineSide().line();
         bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
         bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
         SectorCluster const *cluster =
             (line.definesPolyobj()? &line.polyobj().bspLeaf().subspace()
-                                  : &wallHEdge->face().mapElementAs<ConvexSubspace>())->clusterPtr();
+                                  : &owner.hedge().face().mapElementAs<ConvexSubspace>())->clusterPtr();
 
-        if(seg.lineSide().considerOneSided() ||
+        if(lineSide().considerOneSided() ||
            // Mapping errors may result in a line segment missing a back face.
-           (!line.definesPolyobj() && !wallHEdge->twin().hasFace()))
+           (!line.definesPolyobj() && !owner.hedge().twin().hasFace()))
         {
-            if(spec.section == LineSide::Middle)
+            if(id == WallMiddle)
             {
                 lo = cluster->visFloor().heightSmoothed();
                 hi = cluster->visCeiling().heightSmoothed();
@@ -158,7 +173,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 lo = hi = cluster->visFloor().heightSmoothed();
             }
 
-            materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
+            materialOrigin = lineSide().middle().materialOriginSmoothed();
             if(unpegBottom)
             {
                 materialOrigin.y -= hi - lo;
@@ -169,16 +184,16 @@ DENG2_PIMPL(WallEdge), public IHPlane
             // Two sided.
             SectorCluster const *backCluster =
                 line.definesPolyobj()? cluster
-                                     : wallHEdge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
+                                     : owner.hedge().twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
 
             Plane const *ffloor = &cluster->visFloor();
             Plane const *fceil  = &cluster->visCeiling();
             Plane const *bfloor = &backCluster->visFloor();
             Plane const *bceil  = &backCluster->visCeiling();
 
-            switch(spec.section)
+            switch(id)
             {
-            case LineSide::Top:
+            case WallTop:
                 // Self-referencing lines only ever get a middle.
                 if(!line.isSelfReferencing())
                 {
@@ -197,7 +212,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         hi = lo;
                     }
 
-                    materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
+                    materialOrigin = lineSide().middle().materialOriginSmoothed();
                     if(!unpegTop)
                     {
                         // Align with normal middle texture.
@@ -206,7 +221,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 }
                 break;
 
-            case LineSide::Bottom:
+            case WallBottom:
                 // Self-referencing lines only ever get a middle.
                 if(!line.isSelfReferencing())
                 {
@@ -239,7 +254,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         lo = hi;
                     }
 
-                    materialOrigin = seg.lineSide().bottom().materialOriginSmoothed();
+                    materialOrigin = lineSide().bottom().materialOriginSmoothed();
                     if(bfloor->heightSmoothed() > fceil->heightSmoothed())
                     {
                         materialOrigin.y -= (raiseToBackFloor? t : fceil->heightSmoothed())
@@ -255,9 +270,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 }
                 break;
 
-            case LineSide::Middle: {
-                LineSide const &lineSide = seg.lineSide();
-                Surface const &middle    = lineSide.middle();
+            case WallMiddle: {
+                Surface const &middle = lineSide().middle();
 
                 if(!line.isSelfReferencing() && ffloor == &cluster->sector().floor())
                 {
@@ -266,7 +280,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
-                    lo = lineSide.sector().floor().heightSmoothed();
+                    lo = lineSide().sector().floor().heightSmoothed();
                 }
 
                 if(!line.isSelfReferencing() && fceil == &cluster->sector().ceiling())
@@ -276,14 +290,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
-                    hi = lineSide.back().sector().ceiling().heightSmoothed();
+                    hi = lineSide().back().sector().ceiling().heightSmoothed();
                 }
 
                 materialOrigin = Vector2f(middle.materialOriginSmoothed().x, 0);
 
                 // Perform clipping.
                 if(middle.hasMaterial()
-                   && !seg.lineSide().isFlagged(SDF_MIDDLE_STRETCH))
+                   && !lineSide().isFlagged(SDF_MIDDLE_STRETCH))
                 {
                     coord_t openBottom, openTop;
                     if(!line.isSelfReferencing())
@@ -336,20 +350,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 break; }
             }
         }
-        materialOrigin += Vector2f(lineSideOffset(seg, edge), 0);
+        materialOrigin += Vector2f(owner.lineSideOffset(), 0);
 
-        pOrigin    = Vector3d(self.origin(), lo);
+        pOrigin    = Vector3d(owner.origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
-    }
-
-    ~Instance()
-    {
-        clearIntercepts();
-    }
-
-    inline LineSideSegment &lineSideSegment()
-    {
-        return wallHEdge->mapElementAs<LineSideSegment>();
     }
 
     void verifyValid() const
@@ -363,7 +367,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     EventIndex toEventIndex(double distance)
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events != 0);
 
         for(EventIndex i = 0; i < events->count(); ++i)
         {
@@ -379,7 +383,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         return toEventIndex(distance) != InvalidIndex;
     }
 
-    Event &createEvent(double distance)
+    WallEdge::Event &createEvent(double distance)
     {
         return *intercept(distance);
     }
@@ -397,11 +401,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 
     // Implements IHPlane
-    Event *intercept(double distance)
+    WallEdge::Event *intercept(double distance)
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events != 0);
 
-        Event *newEvent = new Event(self, distance);
+        WallEdge::Event *newEvent = new WallEdge::Event(distance);
+        newEvent->_section = thisPublic;
         events->append(newEvent);
 
         // We'll need to resort the events.
@@ -413,7 +418,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     void sortAndMergeIntercepts()
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events != 0);
 
         // Any work to do?
         if(!needSortEvents) return;
@@ -442,9 +447,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 
     // Implements IHPlane
-    Event const &at(EventIndex index) const
+    WallEdge::Event const &at(EventIndex index) const
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events != 0);
 
         if(index >= 0 && index < interceptCount())
         {
@@ -458,7 +463,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     int interceptCount() const
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events != 0);
 
         return events->count();
     }
@@ -466,7 +471,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 #ifdef DENG_DEBUG
     void printIntercepts() const
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events != 0);
 
         EventIndex index = 0;
         foreach(Event const *icpt, *events)
@@ -481,8 +486,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
      */
     void assertInterceptsInRange(double low, double hi) const
     {
-#ifdef DENG_DEBUG
-        DENG_ASSERT(events != 0);
+#ifdef DENG2_DEBUG
+        DENG2_ASSERT(events != 0);
         foreach(Event const *icpt, *events)
         {
             DENG2_ASSERT(icpt->distance() >= low && icpt->distance() <= hi);
@@ -494,15 +499,16 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     inline double distanceTo(coord_t worldHeight) const
     {
-        return (worldHeight - lo) / (hi - lo);
+        return (worldHeight - bottom.z()) / (top.z() - bottom.z());
     }
 
     void addNeighborIntercepts(coord_t bottom, coord_t top)
     {
-        ClockDirection const direction = edge? Clockwise : Anticlockwise;
+        ClockDirection const direction = owner.side()? Clockwise : Anticlockwise;
 
-        HEdge const *hedge = wallHEdge;
-        while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
+        HEdge const *base  = &owner.hedge();
+        HEdge const *hedge = base;
+        while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
             // Stop if there is no back subspace.
             ConvexSubspace const *backSubspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : 0;
@@ -573,21 +579,23 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(spec.flags & WallSpec::NoEdgeDivisions)
             return false;
 
-        if(de::fequal(hi, lo))
+        if(de::fequal(top.z(), bottom.z()))
             return false;
 
         // Cluster-internal edges won't be intercepted. This is because such an
         // edge only ever produces middle wall sections, which, do not support
         // divisions in any case (they become vissprites).
-        if(SectorCluster::isInternalEdge(wallHEdge))
+        if(SectorCluster::isInternalEdge(&owner.hedge()))
             return false;
 
         return true;
     }
 
-    void prepareEvents()
+    void prepareEventsIfNeeded()
     {
-        DENG_ASSERT(self.isValid());
+        if(events) return;
+
+        DENG2_ASSERT(self.isValid());
 
         clearIntercepts();
 
@@ -605,10 +613,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
         // Add intecepts for neighbor planes?
         if(shouldInterceptNeighbors())
         {
-            configure(Partition(Vector2d(0, hi - lo)));
+            configure(Partition(Vector2d(0, top.z() - bottom.z())));
 
             // Add intercepts (the "divisions") in ascending distance order.
-            addNeighborIntercepts(lo, hi);
+            addNeighborIntercepts(bottom.z(), top.z());
 
             // Sorting may be required. This shouldn't take too long...
             // There seldom are more than two or three intercepts.
@@ -633,23 +641,21 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
             return 0;
 
-        LineSide const &lineSide = lineSideSegment().lineSide();
-
         // Polyobj lines have no owner rings.
-        if(lineSide.line().definesPolyobj())
+        if(lineSide().line().definesPolyobj())
             return 0;
 
-        LineOwner const *farVertOwner = lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
+        LineOwner const *farVertOwner = lineSide().line().vertexOwner(lineSide().sideId() ^ owner.side());
         Line *neighbor;
-        if(R_SideBackClosed(lineSide))
+        if(R_SideBackClosed(lineSide()))
         {
-            neighbor = R_FindSolidLineNeighbor(lineSide.sectorPtr(), &lineSide.line(),
-                                               farVertOwner, edge, &diff);
+            neighbor = R_FindSolidLineNeighbor(lineSide().sectorPtr(), &lineSide().line(),
+                                               farVertOwner, owner.side(), &diff);
         }
         else
         {
-            neighbor = R_FindLineNeighbor(lineSide.sectorPtr(), &lineSide.line(),
-                                          farVertOwner, edge, &diff);
+            neighbor = R_FindLineNeighbor(lineSide().sectorPtr(), &lineSide().line(),
+                                          farVertOwner, owner.side(), &diff);
         }
 
         // No suitable line neighbor?
@@ -657,10 +663,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
         // Choose the correct side of the neighbor (determined by which vertex is shared).
         LineSide *otherSide;
-        if(&neighbor->vertex(edge ^ 1) == &lineSide.vertex(edge))
+        if(&neighbor->vertex(owner.side() ^ 1) == &lineSide().vertex(owner.side()))
+        {
             otherSide = &neighbor->front();
+        }
         else
+        {
             otherSide = &neighbor->back();
+        }
 
         // We can only blend if the neighbor has a surface.
         if(!otherSide->hasSections()) return 0;
@@ -673,12 +683,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
      * Determine the (possibly smoothed) edge normal.
      * @todo Cache the smoothed normal value somewhere...
      */
-    void updateNormal()
+    void updateNormalIfNeeded()
     {
+        if(!needUpdateNormal) return;
         needUpdateNormal = false;
 
-        LineSide &lineSide = lineSideSegment().lineSide();
-        Surface &surface   = lineSide.surface(spec.section);
+        Surface &surface = lineSideSurface();
 
         binangle_t angleDiff;
         Surface *blendSurface = findBlendNeighbor(angleDiff);
@@ -695,96 +705,170 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 };
 
-WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
-    : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Instance(this, spec, hedge, edge))
+WallEdge::WallSection::WallSection(WallEdge &owner, SectionId id, WallSpec const &spec)
+    : d(new Instance(this, owner, id, spec))
 {}
 
-Vector3d const &WallEdge::pOrigin() const
+WallEdge &WallEdge::WallSection::edge() const
 {
+    return d->owner;
+}
+
+Vector3d const &WallEdge::WallSection::pOrigin() const
+{
+    d->prepareIfNeeded();
     return d->pOrigin;
 }
 
-Vector3d const &WallEdge::pDirection() const
+Vector3d const &WallEdge::WallSection::pDirection() const
 {
+    d->prepareIfNeeded();
     return d->pDirection;
 }
 
-Vector2f WallEdge::materialOrigin() const
+Vector2f WallEdge::WallSection::materialOrigin() const
 {
+    d->prepareIfNeeded();
     return d->materialOrigin;
 }
 
-Vector3f WallEdge::normal() const
+Vector3f WallEdge::WallSection::normal() const
 {
-    if(d->needUpdateNormal)
-    {
-        d->updateNormal();
-    }
+    d->prepareIfNeeded();
+    d->updateNormalIfNeeded();
     return d->normal;
 }
 
-WallSpec const &WallEdge::spec() const
+WallSpec const &WallEdge::WallSection::spec() const
 {
     return d->spec;
 }
 
-LineSide &WallEdge::mapLineSide() const
+WallEdge::SectionId WallEdge::WallSection::id() const
 {
-    return d->lineSideSegment().lineSide();
+    return d->id;
 }
 
-coord_t WallEdge::mapLineSideOffset() const
+int WallEdge::WallSection::divisionCount() const
 {
-    return lineSideOffset(d->lineSideSegment(), d->edge);
-}
-
-int WallEdge::divisionCount() const
-{
+    d->prepareIfNeeded();
     if(!isValid()) return 0;
-    if(!d->events)
-    {
-        d->prepareEvents();
-    }
+    d->prepareEventsIfNeeded();
     return d->interceptCount() - 2;
 }
 
-WallEdge::EventIndex WallEdge::firstDivision() const
+WallEdge::WallSection::EventIndex WallEdge::WallSection::firstDivision() const
 {
     return divisionCount()? 1 : InvalidIndex;
 }
 
-WallEdge::EventIndex WallEdge::lastDivision() const
+WallEdge::WallSection::EventIndex WallEdge::WallSection::lastDivision() const
 {
     return divisionCount()? d->interceptCount() - 2 : InvalidIndex;
 }
 
-WallEdge::Events const &WallEdge::events() const
+WallEdge::WallSection::Events const &WallEdge::WallSection::events() const
 {
+    d->prepareIfNeeded();
     d->verifyValid();
-    if(!d->events)
-    {
-        d->prepareEvents();
-    }
+    d->prepareEventsIfNeeded();
     return *d->events;
 }
 
-WallEdge::Event const &WallEdge::at(EventIndex index) const
+WallEdge::Event const &WallEdge::WallSection::at(EventIndex index) const
 {
     return *events().at(index);
 }
 
-bool WallEdge::isValid() const
+bool WallEdge::WallSection::isValid() const
 {
-    return d->hi > d->lo;
+    d->prepareIfNeeded();
+    return d->top.z() > d->bottom.z();
 }
 
-WallEdge::Event const &WallEdge::first() const
+WallEdge::Event const &WallEdge::WallSection::first() const
 {
+    d->prepareIfNeeded();
     return d->bottom;
 }
 
-WallEdge::Event const &WallEdge::last() const
+WallEdge::Event const &WallEdge::WallSection::last() const
 {
+    d->prepareIfNeeded();
     return d->top;
+}
+
+DENG2_PIMPL_NOREF(WallEdge)
+{
+    HEdge &hedge;
+    int side;
+
+    WallSection middle;
+    WallSection bottom;
+    WallSection top;
+
+    Instance(WallEdge &self, HEdge &hedge, int side, LineSide &lineSide)
+        : hedge (hedge)
+        , side  (side)
+        , middle(self, WallMiddle, WallSpec::fromLineSide(lineSide, LineSide::Middle))
+        , bottom(self, WallBottom, WallSpec::fromLineSide(lineSide, LineSide::Bottom))
+        , top   (self, WallTop,    WallSpec::fromLineSide(lineSide, LineSide::Top))
+    {}
+};
+
+WallEdge::WallEdge(HEdge &hedge, int side)
+{
+    LineSide &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
+    d.reset(new Instance(*this, hedge, side, lineSide));
+}
+
+Vector2d const &WallEdge::origin() const
+{
+    return (d->side? d->hedge.twin() : d->hedge).origin();
+}
+
+LineSide &WallEdge::lineSide() const
+{
+    return d->hedge.mapElementAs<LineSideSegment>().lineSide();
+}
+
+coord_t WallEdge::lineSideOffset() const
+{
+    LineSideSegment const &seg = d->hedge.mapElementAs<LineSideSegment>();
+    return seg.lineSideOffset() + (d->side? seg.length() : 0);
+}
+
+HEdge &WallEdge::hedge() const
+{
+    return d->hedge;
+}
+
+int WallEdge::side() const
+{
+    return d->side;
+}
+
+WallEdge::WallSection &WallEdge::section(SectionId id)
+{
+    switch(id)
+    {
+    case WallMiddle: return d->middle;
+    case WallBottom: return d->bottom;
+    case WallTop:    return d->top;
+    }
+    /// @throw UnknownSectionError We do not know this section.
+    throw UnknownSectionError("WallEdge::section", "Invalid id " + String::number(id));
+}
+
+WallEdge::SectionId WallEdge::sectionIdFromLineSideSection(int section) //static
+{
+    switch(section)
+    {
+    case LineSide::Middle: return WallMiddle;
+    case LineSide::Bottom: return WallBottom;
+    case LineSide::Top:    return WallTop;
+    default: break;
+    }
+    /// @throw UnknownSectionError We do not know this section.
+    throw UnknownSectionError("WallEdge::sectionIdFromLineSideSection", "Unknown line side section " + String::number(section));
 }

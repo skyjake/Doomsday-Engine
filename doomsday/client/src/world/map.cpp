@@ -2930,21 +2930,21 @@ void Map::initSkyFix()
             // Possibility of degenerate BSP leaf.
             if(!side->leftHEdge()) continue;
 
-            WallEdge edge(WallSpec::fromMapSide(*side, LineSide::Middle),
-                          *side->leftHEdge(), Line::From);
+            WallEdge left(*side->leftHEdge(), Line::From);
+            WallEdgeSection &sectionLeft = left.wallMiddle();
 
-            if(edge.isValid() && edge.top().z() > edge.bottom().z())
+            if(sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z())
             {
-                if(skyCeil && edge.top().z() + edge.materialOrigin().y > d->skyCeilingHeight)
+                if(skyCeil && sectionLeft.top().z() + sectionLeft.materialOrigin().y > d->skyCeilingHeight)
                 {
                     // Must raise the skyfix ceiling.
-                    d->skyCeilingHeight = edge.top().z() + edge.materialOrigin().y;
+                    d->skyCeilingHeight = sectionLeft.top().z() + sectionLeft.materialOrigin().y;
                 }
 
-                if(skyFloor && edge.bottom().z() + edge.materialOrigin().y < d->skyFloorHeight)
+                if(skyFloor && sectionLeft.bottom().z() + sectionLeft.materialOrigin().y < d->skyFloorHeight)
                 {
                     // Must lower the skyfix floor.
-                    d->skyFloorHeight = edge.bottom().z() + edge.materialOrigin().y;
+                    d->skyFloorHeight = sectionLeft.bottom().z() + sectionLeft.materialOrigin().y;
                 }
             }
         }

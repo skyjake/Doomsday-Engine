@@ -140,8 +140,8 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  * @param shadowDark  Shadow darkness scale factor.
  * @param shadowSize  Shadow size scale factor.
  */
-void Rend_RadioWallSection(de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
-    float shadowDark, float shadowSize);
+void Rend_RadioWallSection(de::WallEdgeSection const &leftEdge,
+    de::WallEdgeSection const &rightEdge, float shadowDark, float shadowSize);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to

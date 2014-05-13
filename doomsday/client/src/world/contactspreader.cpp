@@ -222,11 +222,11 @@ private:
                 if(ms.height() >= openTop - openBottom)
                 {
                     // Possibly; check the placement.
-                    WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
-                                     *facingLineSide.leftHEdge(), Line::From);
+                    WallEdge left(*facingLineSide.leftHEdge(), Line::From);
+                    WallEdgeSection &sectionLeft = left.wallMiddle();
 
-                    if(edge.isValid() && edge.top().z() > edge.bottom().z() &&
-                       edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
+                    if(sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z() &&
+                       sectionLeft.top().z() >= openTop && sectionLeft.bottom().z() <= openBottom)
                         return;
                 }
             }

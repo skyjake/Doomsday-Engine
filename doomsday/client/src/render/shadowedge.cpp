@@ -135,10 +135,10 @@ static bool middleMaterialCoversOpening(LineSide const &side)
             // Possibly; check the placement.
             if(side.leftHEdge()) // possibility of degenerate BSP leaf
             {
-                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
-                              *side.leftHEdge(), Line::From);
-                return (edge.isValid() && edge.top().z() > edge.bottom().z()
-                        && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
+                WallEdge left(*side.leftHEdge(), Line::From);
+                WallEdgeSection &section = left.wallMiddle();
+                return (section.isValid() && section.top().z() > section.bottom().z()
+                        && section.top().z() >= openTop && section.bottom().z() <= openBottom);
             }
         }
     }

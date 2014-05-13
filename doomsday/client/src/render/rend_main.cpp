@@ -59,6 +59,7 @@
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
+#include "WallSpec"
 #include "render/rend_main.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
@@ -1008,8 +1009,8 @@ struct rendworldpoly_params_t
     struct {
         coord_t sectionWidth;
         Vector3f const *surfaceColor2; // Secondary color.
-        WallEdge const *leftEdge;
-        WallEdge const *rightEdge;
+        WallEdgeSection const *leftEdge;
+        WallEdgeSection const *rightEdge;
     } wall;
 };
 
@@ -1018,7 +1019,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 {
     SectorCluster &cluster = curSubspace->cluster();
 
-    DENG_ASSERT(posCoords != 0);
+    DENG2_ASSERT(posCoords != 0);
 
     uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
@@ -1372,8 +1373,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     // Write multiple polys depending on rend params.
     if(mustSubdivide)
     {
-        WallEdge const &leftEdge = *p.wall.leftEdge;
-        WallEdge const &rightEdge = *p.wall.rightEdge;
+        WallEdgeSection const &leftEdge  = *p.wall.leftEdge;
+        WallEdgeSection const &rightEdge = *p.wall.rightEdge;
 
         /*
          * Need to swap indices around into fans set the position of the division
@@ -1734,14 +1735,14 @@ static void projectDynamics(Surface const &surface, float glowStrength,
  *
  * @return  @c true= fading was applied (see above note), otherwise @c false.
  */
-static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
-                            float &opacity)
+static bool nearFadeOpacity(WallEdgeSection const &sectionLeft,
+    WallEdgeSection const &sectionRight, float &opacity)
 {
-    if(vOrigin.y < leftEdge.bottom().z() || vOrigin.y > rightEdge.top().z())
+    if(vOrigin.y < sectionLeft.bottom().z() || vOrigin.y > sectionRight.top().z())
         return false;
 
     mobj_t const *mo         = viewPlayer->shared.mo;
-    Line const &line         = leftEdge.mapLineSide().line();
+    Line const &line         = sectionLeft.edge().lineSide().line();
 
     coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
@@ -1779,24 +1780,24 @@ static float calcLightLevelDelta(Vector3f const &normal)
     return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
 }
 
-static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    float &leftDelta, float &rightDelta)
+static void wallSectionLightLevelDeltas(WallEdgeSection const &sectionLeft,
+    WallEdgeSection const &sectionRight, float &leftDelta, float &rightDelta)
 {
-    leftDelta = calcLightLevelDelta(leftEdge.normal());
+    leftDelta = calcLightLevelDelta(sectionLeft.normal());
 
-    if(leftEdge.normal() == rightEdge.normal())
+    if(sectionLeft.normal() == sectionRight.normal())
     {
         rightDelta = leftDelta;
     }
     else
     {
-        rightDelta = calcLightLevelDelta(rightEdge.normal());
+        rightDelta = calcLightLevelDelta(sectionRight.normal());
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength    = leftEdge.mapLineSide().line().length();
-        coord_t const sectionOffset = leftEdge.mapLineSideOffset();
-        coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+        coord_t const lineLength    = sectionLeft.edge().lineSide().line().length();
+        coord_t const sectionOffset = sectionLeft.edge().lineSideOffset();
+        coord_t const sectionWidth  = de::abs(Vector2d(sectionRight.edge().origin() - sectionLeft.edge().origin()).length());
 
         float deltaDiff = rightDelta - leftDelta;
         rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
@@ -1810,7 +1811,7 @@ static void writeWallSection(HEdge &hedge, int section,
     SectorCluster &cluster = curSubspace->cluster();
 
     LineSideSegment &segment = hedge.mapElementAs<LineSideSegment>();
-    DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
+    DENG2_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
@@ -1832,25 +1833,27 @@ static void writeWallSection(HEdge &hedge, int section,
         return;
 
     // Generate edge geometries.
-    WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+    WallEdge left(hedge, Line::From);
+    WallEdge right(hedge, Line::To);
 
-    WallEdge leftEdge(wallSpec, hedge, Line::From);
-    WallEdge rightEdge(wallSpec, hedge, Line::To);
+    WallEdgeSection &leftSection  = left.section(WallEdge::sectionIdFromLineSideSection(section));
+    WallEdgeSection &rightSection = right.section(WallEdge::sectionIdFromLineSideSection(section));
+    WallSpec const &wallSpec      = leftSection.spec();
 
     // Do the edge geometries describe a valid polygon?
-    if(!leftEdge.isValid() || !rightEdge.isValid() ||
-       de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
+    if(!leftSection.isValid() || !rightSection.isValid() ||
+       de::fequal(leftSection.bottom().z(), rightSection.top().z()))
         return;
 
     // Apply a fade out when the viewer is near to this geometry?
     bool didNearFade = false;
     if(wallSpec.flags.testFlag(WallSpec::NearFade))
     {
-        didNearFade = nearFadeOpacity(leftEdge, rightEdge, opacity);
+        didNearFade = nearFadeOpacity(leftSection, rightSection, opacity);
     }
 
     bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
-    bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
+    bool const twoSidedMiddle  = (section == LineSide::Middle && !side.considerOneSided());
 
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
@@ -1859,13 +1862,13 @@ static void writeWallSection(HEdge &hedge, int section,
 
     rendworldpoly_params_t parm; zap(parm);
 
-    Vector3f materialOrigin   = leftEdge.materialOrigin();
-    Vector3d topLeft          = leftEdge.top().origin();
-    Vector3d bottomRight      = rightEdge.bottom().origin();
+    Vector3f materialOrigin   = leftSection.materialOrigin();
+    Vector3d topLeft          = leftSection.top().origin();
+    Vector3d bottomRight      = rightSection.bottom().origin();
 
     parm.skyMasked            = skyMasked;
     parm.mapElement           = &segment;
-    parm.geomGroup            = wallSpec.section;
+    parm.geomGroup            = section;
     parm.topLeft              = &topLeft;
     parm.bottomRight          = &bottomRight;
     parm.forceOpaque          = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
@@ -1875,7 +1878,7 @@ static void writeWallSection(HEdge &hedge, int section,
     // Calculate the light level deltas for this wall section?
     if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
     {
-        wallSectionLightLevelDeltas(leftEdge, rightEdge,
+        wallSectionLightLevelDeltas(leftSection, rightSection,
                                     parm.surfaceLightLevelDL, parm.surfaceLightLevelDR);
     }
 
@@ -1884,9 +1887,9 @@ static void writeWallSection(HEdge &hedge, int section,
     parm.materialScale       = &materialScale;
 
     parm.isWall              = true;
-    parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
-    parm.wall.leftEdge       = &leftEdge;
-    parm.wall.rightEdge      = &rightEdge;
+    parm.wall.sectionWidth   = de::abs(Vector2d(rightSection.edge().origin() - leftSection.edge().origin()).length());
+    parm.wall.leftEdge       = &leftSection;
+    parm.wall.rightEdge      = &rightSection;
 
     if(!parm.skyMasked)
     {
@@ -1922,7 +1925,7 @@ static void writeWallSection(HEdge &hedge, int section,
                 parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
         }
 
-        side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
+        side.chooseSurfaceTintColors(section, &parm.surfaceColor, &parm.wall.surfaceColor2);
     }
 
     /*
@@ -1938,11 +1941,11 @@ static void writeWallSection(HEdge &hedge, int section,
 
     // Allocate position coordinates.
     Vector3f *posCoords;
-    if(leftEdge.divisionCount() || rightEdge.divisionCount())
+    if(leftSection.divisionCount() || rightSection.divisionCount())
     {
         // Two fans plus edge divisions.
-        posCoords = R_AllocRendVertices(3 + leftEdge.divisionCount() +
-                                        3 + rightEdge.divisionCount());
+        posCoords = R_AllocRendVertices(3 + leftSection.divisionCount() +
+                                        3 + rightSection.divisionCount());
     }
     else
     {
@@ -1950,10 +1953,10 @@ static void writeWallSection(HEdge &hedge, int section,
         posCoords = R_AllocRendVertices(4);
     }
 
-    posCoords[0] =  leftEdge.bottom().origin();
-    posCoords[1] =     leftEdge.top().origin();
-    posCoords[2] = rightEdge.bottom().origin();
-    posCoords[3] =    rightEdge.top().origin();
+    posCoords[0] =  leftSection.bottom().origin();
+    posCoords[1] =     leftSection.top().origin();
+    posCoords[2] = rightSection.bottom().origin();
+    posCoords[3] =    rightSection.top().origin();
 
     // Draw this section.
     bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
@@ -1970,7 +1973,7 @@ static void writeWallSection(HEdge &hedge, int section,
             float shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
             float shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
 
-            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
+            Rend_RadioWallSection(leftSection, rightSection, shadowDark, shadowSize);
         }
     }
 
@@ -1985,8 +1988,8 @@ static void writeWallSection(HEdge &hedge, int section,
     R_FreeRendVertices(posCoords);
 
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
-    if(retBottomZ)     *retBottomZ     = leftEdge.bottom().z();
-    if(retTopZ)        *retTopZ        = rightEdge.top().z();
+    if(retBottomZ)     *retBottomZ     = leftSection.bottom().z();
+    if(retTopZ)        *retTopZ        = rightSection.top().z();
 }
 
 /**
@@ -2231,7 +2234,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
 }
 
-static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
+static void writeSubspaceSkyMaskStrips(SkyFixEdge::SectionId sectionId)
 {
     // Determine strip generation behavior.
     ClockDirection const direction   = Clockwise;
@@ -2250,7 +2253,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
     float startMaterialOffset = 0;
 
     // Determine the relative sky plane (for monitoring material changes).
-    int relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
+    int relPlane = sectionId == SkyFixEdge::SkyTop? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
     HEdge *base  = curSubspace->poly().hedge();
@@ -2271,19 +2274,19 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
             startMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
 
             // Prepare the edge geometry
-            SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
-                               startMaterialOffset);
+            SkyFixEdge left(*hedge, (direction == Anticlockwise)? Line::To : Line::From, startMaterialOffset);
+            SkyFixEdgeSection &sectionLeft = left.section(sectionId);
 
-            if(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z())
+            if(sectionLeft.isValid() && sectionLeft.bottom().z() < sectionLeft.top().z())
             {
                 // A new strip begins.
                 stripBuilder.begin(direction);
-                stripBuilder << skyEdge;
+                stripBuilder << sectionLeft;
 
                 // Update the strip build state.
                 startNode     = hedge;
-                startZBottom  = skyEdge.bottom().z();
-                startZTop     = skyEdge.top().z();
+                startZBottom  = sectionLeft.bottom().z();
+                startZTop     = sectionLeft.top().z();
                 startMaterial = skyMaterial;
             }
         }
@@ -2301,17 +2304,17 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
                                      * (direction == Anticlockwise? -1 : 1);
 
                 // Prepare the edge geometry
-                SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
-                                   startMaterialOffset);
+                SkyFixEdge left(*hedge, (direction == Anticlockwise)? Line::From : Line::To, startMaterialOffset);
+                SkyFixEdgeSection &sectionLeft = left.section(sectionId);
 
-                if(!(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z()))
+                if(!(sectionLeft.isValid() && sectionLeft.bottom().z() < sectionLeft.top().z()))
                 {
                     endStrip = true;
                 }
                 // Must we split the strip here?
                 else if(hedge != startNode &&
-                        (!de::fequal(skyEdge.bottom().z(), startZBottom) ||
-                         !de::fequal(skyEdge.top().z(), startZTop) ||
+                        (!de::fequal(sectionLeft.bottom().z(), startZBottom) ||
+                         !de::fequal(sectionLeft.top().z(), startZTop) ||
                          (splitOnMaterialChange && skyMaterial != startMaterial)))
                 {
                     endStrip = true;
@@ -2320,7 +2323,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
                 else
                 {
                     // Extend the strip geometry.
-                    stripBuilder << skyEdge;
+                    stripBuilder << sectionLeft;
                 }
             }
             else
@@ -2424,14 +2427,14 @@ static void writeSubspaceSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     // Lower?
     if(skyCap & SKYCAP_LOWER)
     {
-        writeSubspaceSkyMaskStrips(SkyFixEdge::Lower);
+        writeSubspaceSkyMaskStrips(SkyFixEdge::SkyBottom);
         writeSubspaceSkyMaskCap(SKYCAP_LOWER);
     }
 
     // Upper?
     if(skyCap & SKYCAP_UPPER)
     {
-        writeSubspaceSkyMaskStrips(SkyFixEdge::Upper);
+        writeSubspaceSkyMaskStrips(SkyFixEdge::SkyTop);
         writeSubspaceSkyMaskCap(SKYCAP_UPPER);
     }
 }

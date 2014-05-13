@@ -318,10 +318,10 @@ void R_FreeRendTexCoords(Vector2f *rtexcoords)
 }
 
 void R_DivVerts(Vector3f *dst, Vector3f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
+    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
 {
-    int const numR = 3 + rightEdge.divisionCount();
-    int const numL = 3 + leftEdge.divisionCount();
+    int const numR = 3 + sectionRight.divisionCount();
+    int const numL = 3 + sectionLeft.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -330,9 +330,9 @@ void R_DivVerts(Vector3f *dst, Vector3f const *src,
     dst[numL + 1] = src[3];
     dst[numL + numR - 1] = src[2];
 
-    for(int n = 0; n < rightEdge.divisionCount(); ++n)
+    for(int n = 0; n < sectionRight.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
         dst[numL + 2 + n] = icpt.origin();
     }
 
@@ -341,18 +341,18 @@ void R_DivVerts(Vector3f *dst, Vector3f const *src,
     dst[1] = src[0];
     dst[numL - 1] = src[1];
 
-    for(int n = 0; n < leftEdge.divisionCount(); ++n)
+    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
         dst[2 + n] = icpt.origin();
     }
 }
 
 void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
+    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
 {
-    int const numR = 3 + rightEdge.divisionCount();
-    int const numL = 3 + leftEdge.divisionCount();
+    int const numR = 3 + sectionRight.divisionCount();
+    int const numL = 3 + sectionLeft.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -361,9 +361,9 @@ void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
     dst[numL + 1] = src[3];
     dst[numL + numR-1] = src[2];
 
-    for(int n = 0; n < rightEdge.divisionCount(); ++n)
+    for(int n = 0; n < sectionRight.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
         dst[numL + 2 + n].x = src[3].x;
         dst[numL + 2 + n].y = src[2].y + (src[3].y - src[2].y) * icpt.distance();
     }
@@ -373,19 +373,19 @@ void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
     dst[1] = src[0];
     dst[numL - 1] = src[1];
 
-    for(int n = 0; n < leftEdge.divisionCount(); ++n)
+    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
         dst[2 + n].x = src[0].x;
         dst[2 + n].y = src[0].y + (src[1].y - src[0].y) * icpt.distance();
     }
 }
 
 void R_DivVertColors(Vector4f *dst, Vector4f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
+    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
 {
-    int const numR = 3 + rightEdge.divisionCount();
-    int const numL = 3 + leftEdge.divisionCount();
+    int const numR = 3 + sectionRight.divisionCount();
+    int const numL = 3 + sectionLeft.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -394,9 +394,9 @@ void R_DivVertColors(Vector4f *dst, Vector4f const *src,
     dst[numL + 1] = src[3];
     dst[numL + numR-1] = src[2];
 
-    for(int n = 0; n < rightEdge.divisionCount(); ++n)
+    for(int n = 0; n < sectionRight.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
         dst[numL + 2 + n] = src[2] + (src[3] - src[2]) * icpt.distance();
     }
 
@@ -405,9 +405,9 @@ void R_DivVertColors(Vector4f *dst, Vector4f const *src,
     dst[1] = src[0];
     dst[numL - 1] = src[1];
 
-    for(int n = 0; n < leftEdge.divisionCount(); ++n)
+    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
         dst[2 + n] = src[0] + (src[1] - src[0]) * icpt.distance();
     }
 }

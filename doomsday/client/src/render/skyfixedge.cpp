@@ -17,29 +17,26 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-
-#include "Face"
-
+#include "de_platform.h"
+#include "render/skyfixedge.h"
+#include "BspLeaf"
 #include "ConvexSubspace"
+#include "Face"
 #include "Plane"
 #include "Sector"
 #include "SectorCluster"
 #include "Surface"
-
 #include "world/map.h"
-#include "world/maputil.h" // R_SideBackClosed, remove me
+#include "world/lineowner.h"
+#include "world/maputil.h"
 #include "world/p_players.h"
-
 #include "render/rend_main.h"
-
-#include "render/skyfixedge.h"
 
 namespace de {
 
 static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 {
-    DENG_UNUSED(backFloor);
+    DENG2_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontFloor->heightSmoothed();
     return frontFloor->map().skyFixFloor();
@@ -47,98 +44,96 @@ static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 
 static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 {
-    DENG_UNUSED(backCeil);
+    DENG2_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontCeil->heightSmoothed();
     return frontCeil->map().skyFixCeiling();
 }
 
-DENG2_PIMPL_NOREF(SkyFixEdge::Event)
-{
-    SkyFixEdge &owner;
-    double distance;
-
-    Instance(SkyFixEdge &owner, double distance)
-        : owner(owner), distance(distance)
-    {}
-};
-
-SkyFixEdge::Event::Event(SkyFixEdge &owner, double distance)
-    : WorldEdge::Event(),
-      d(new Instance(owner, distance))
+SkyFixEdge::Event::Event(double distance)
+    : AbstractEdge::Event()
+    , _distance(distance)
+    , _section (0)
 {}
 
 bool SkyFixEdge::Event::operator < (Event const &other) const
 {
-    return d->distance < other.distance();
+    return _distance < other.distance();
 }
 
 double SkyFixEdge::Event::distance() const
 {
-    return d->distance;
+    return _distance;
 }
 
 Vector3d SkyFixEdge::Event::origin() const
 {
-    return d->owner.pOrigin() + d->owner.pDirection() * distance();
+    return section().pOrigin() + section().pDirection() * distance();
 }
 
-DENG2_PIMPL(SkyFixEdge)
+SkyFixEdge::SkySection &SkyFixEdge::Event::section() const
 {
-    HEdge *hedge;
-    FixType fixType;
-    int edge;
+    DENG2_ASSERT(_section != 0);
+    return *_section;
+}
+
+DENG2_PIMPL(SkyFixEdge::SkySection)
+{
+    SkyFixEdge &owner;
+    SectionId id;
 
     Vector3d pOrigin;
     Vector3d pDirection;
 
-    coord_t lo, hi;
+    /// Events for the special termination points are allocated with "this".
+    SkyFixEdge::Event bottom;
+    SkyFixEdge::Event top;
 
-    Event bottom;
-    Event top;
-    bool isValid;
-
+    /// Edge attributes:
     Vector2f materialOrigin;
 
-    Instance(Public *i, HEdge &hedge, FixType fixType, int edge,
-             Vector2f const &materialOrigin)
-        : Base(i),
-          hedge(&hedge),
-          fixType(fixType),
-          edge(edge),
-          bottom(*i, 0),
-          top(*i, 1),
-          isValid(false),
-          materialOrigin(materialOrigin)
-    {}
+    bool needPrepare;
+
+    Instance(Public *i, SkyFixEdge &owner, SectionId id, Vector2f const &materialOrigin)
+        : Base(i)
+        , owner         (owner)
+        , id            (id)
+        , bottom        (0)
+        , top           (1)
+        , materialOrigin(materialOrigin)
+        , needPrepare   (true)
+    {
+        bottom._section = thisPublic;
+        top._section    = thisPublic;
+    }
 
     /**
      * Determines whether a sky fix is actually necessary.
      */
     bool wallSectionNeedsSkyFix() const
     {
-        DENG_ASSERT(hedge->hasFace());
+        HEdge &hedge = owner.hedge();
 
-        bool const lower = fixType == SkyFixEdge::Lower;
+        DENG2_ASSERT(hedge.hasFace());
 
         // Only edges with line segments need fixes.
-        if(!hedge->hasMapElement()) return false;
+        if(!hedge.hasMapElement()) return false;
 
-        SectorCluster const *cluster     = hedge->face().mapElementAs<ConvexSubspace>().clusterPtr();
-        SectorCluster const *backCluster = hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>() .clusterPtr() : 0;
+        SectorCluster const *cluster     = hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
+        SectorCluster const *backCluster = hedge.twin().hasFace()? hedge.twin().face().mapElementAs<ConvexSubspace>() .clusterPtr() : 0;
 
         if(backCluster && &backCluster->sector() == &cluster->sector())
             return false;
 
         // Select the relative planes for the fix type.
-        int relPlane = lower? Sector::Floor : Sector::Ceiling;
+        int relPlane = id == SkyBottom? Sector::Floor : Sector::Ceiling;
         Plane const *front   = &cluster->visPlane(relPlane);
         Plane const *back    = backCluster? &backCluster->visPlane(relPlane) : 0;
 
         if(!front->surface().hasSkyMaskedMaterial())
             return false;
 
-        LineSide const &lineSide = hedge->mapElementAs<LineSideSegment>().lineSide();
+        LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
         bool const hasClosedBack = R_SideBackClosed(lineSide);
 
         if(!devRendSkyMode)
@@ -149,7 +144,7 @@ DENG2_PIMPL(SkyFixEdge)
         }
         else
         {
-            int relSection = lower? LineSide::Bottom : LineSide::Top;
+            int relSection = id == SkyBottom? LineSide::Bottom : LineSide::Top;
 
             if(lineSide.surface(relSection).hasMaterial() ||
                !(hasClosedBack || (back && back->surface().hasSkyMaskedMaterial())))
@@ -172,99 +167,161 @@ DENG2_PIMPL(SkyFixEdge)
         coord_t planeZ = (back && back->surface().hasSkyMaskedMaterial() &&
                           fz < bz? bz : fz);
 
-        coord_t skyZ = lower? skyFixFloorZ(front, back)
-                            : -skyFixCeilZ(front, back);
+        coord_t skyZ = id == SkyBottom? skyFixFloorZ(front, back)
+                                      : -skyFixCeilZ(front, back);
 
         return (planeZ > skyZ);
     }
 
-    void prepare()
+    void prepareIfNeeded()
     {
-        if(!wallSectionNeedsSkyFix())
+        if(!needPrepare) return;
+        needPrepare = false;
+
+        coord_t lo = 0, hi = 0;
+
+        if(wallSectionNeedsSkyFix())
         {
-            isValid = false;
-            return;
+            HEdge &hedge = owner.hedge();
+
+            SectorCluster const *cluster     = hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
+            SectorCluster const *backCluster =
+                hedge.twin().hasFace()? hedge.twin().face().mapElementAs<ConvexSubspace>().clusterPtr() : 0;
+
+            Plane const *ffloor = &cluster->visFloor();
+            Plane const *fceil  = &cluster->visCeiling();
+            Plane const *bceil  = backCluster? &backCluster->visCeiling() : 0;
+            Plane const *bfloor = backCluster? &backCluster->visFloor()   : 0;
+
+            if(id == SkyTop)
+            {
+                hi = skyFixCeilZ(fceil, bceil);
+                lo = de::max((backCluster && bceil->surface().hasSkyMaskedMaterial())? bceil->heightSmoothed()
+                                                                                     : fceil->heightSmoothed(),
+                             ffloor->heightSmoothed());
+            }
+            else
+            {
+                hi = de::min((backCluster && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed()
+                                                                                      : ffloor->heightSmoothed(),
+                             fceil->heightSmoothed());
+                lo = skyFixFloorZ(ffloor, bfloor);
+            }
         }
 
-        SectorCluster const *cluster     = hedge->face().mapElementAs<ConvexSubspace>().clusterPtr();
-        SectorCluster const *backCluster =
-            hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr() : 0;
-
-        Plane const *ffloor = &cluster->visFloor();
-        Plane const *fceil  = &cluster->visCeiling();
-        Plane const *bceil  = backCluster? &backCluster->visCeiling() : 0;
-        Plane const *bfloor = backCluster? &backCluster->visFloor()   : 0;
-
-        if(fixType == Upper)
-        {
-            hi = skyFixCeilZ(fceil, bceil);
-            lo = de::max((backCluster && bceil->surface().hasSkyMaskedMaterial())? bceil->heightSmoothed()
-                                                                                 : fceil->heightSmoothed(),
-                         ffloor->heightSmoothed());
-        }
-        else
-        {
-            hi = de::min((backCluster && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed()
-                                                                                  : ffloor->heightSmoothed(),
-                         fceil->heightSmoothed());
-            lo = skyFixFloorZ(ffloor, bfloor);
-        }
-
-        isValid = hi > lo;
-        if(!isValid)
-            return;
-
-        pOrigin = Vector3d(self.origin(), lo);
+        pOrigin    = Vector3d(owner.origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
     }
 };
 
-SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
-    : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Instance(this, hedge, fixType, edge, Vector2f(materialOffsetS, 0)))
-{
-    /// @todo Defer until necessary.
-    d->prepare();
-}
+SkyFixEdge::SkySection::SkySection(SkyFixEdge &owner, SectionId id, float materialOffsetS)
+    : AbstractEdge()
+    , d(new Instance(this, owner, id, Vector2f(materialOffsetS, 0)))
+{}
 
-Vector3d const &SkyFixEdge::pOrigin() const
+Vector3d const &SkyFixEdge::SkySection::pOrigin() const
 {
+    d->prepareIfNeeded();
     return d->pOrigin;
 }
 
-Vector3d const &SkyFixEdge::pDirection() const
+Vector3d const &SkyFixEdge::SkySection::pDirection() const
 {
+    d->prepareIfNeeded();
     return d->pDirection;
 }
 
-Vector2f SkyFixEdge::materialOrigin() const
+Vector2f SkyFixEdge::SkySection::materialOrigin() const
 {
+    //d->prepareIfNeeded();
     return d->materialOrigin;
 }
 
-bool SkyFixEdge::isValid() const
+bool SkyFixEdge::SkySection::isValid() const
 {
-    return d->isValid;
+    d->prepareIfNeeded();
+    return d->top.z() > d->bottom.z();
 }
 
-SkyFixEdge::Event const &SkyFixEdge::first() const
+SkyFixEdge::Event const &SkyFixEdge::SkySection::first() const
 {
+    d->prepareIfNeeded();
     return d->bottom;
 }
 
-SkyFixEdge::Event const &SkyFixEdge::last() const
+SkyFixEdge::Event const &SkyFixEdge::SkySection::last() const
 {
+    d->prepareIfNeeded();
     return d->top;
 }
 
-SkyFixEdge::Event const &SkyFixEdge::at(EventIndex index) const
+SkyFixEdge::Event const &SkyFixEdge::SkySection::at(EventIndex index) const
 {
+    d->prepareIfNeeded();
     if(index >= 0 && index < 2)
     {
         return index == 0? d->bottom : d->top;
     }
     /// @throw InvalidIndexError The specified event index is not valid.
-    throw Error("SkyFixEdge::at", QString("Index '%1' does not map to a known event (count: 2)").arg(index));
+    throw Error("SkyFixEdge::SkySection::at", QString("Index '%1' does not map to a known event (count: 2)").arg(index));
+}
+
+DENG2_PIMPL_NOREF(SkyFixEdge)
+{
+    HEdge &hedge;
+    int side;
+
+    SkySection bottom;
+    SkySection top;
+
+    Instance(SkyFixEdge &self, HEdge &hedge, int side, float materialOffsetS)
+        : hedge (hedge)
+        , side  (side)
+        , bottom(self, SkyBottom, materialOffsetS)
+        , top   (self, SkyTop,    materialOffsetS)
+    {}
+};
+
+SkyFixEdge::SkyFixEdge(HEdge &hedge, int side, float materialOffsetS)
+{
+    d.reset(new Instance(*this, hedge, side, materialOffsetS));
+}
+
+Vector2d const &SkyFixEdge::origin() const
+{
+    return(d->side? d->hedge.twin() : d->hedge).origin();
+}
+
+LineSide &SkyFixEdge::lineSide() const
+{
+    return d->hedge.mapElementAs<LineSideSegment>().lineSide();
+}
+
+coord_t SkyFixEdge::lineSideOffset() const
+{
+    LineSideSegment const &seg = d->hedge.mapElementAs<LineSideSegment>();
+    return seg.lineSideOffset() + (d->side? seg.length() : 0);
+}
+
+HEdge &SkyFixEdge::hedge() const
+{
+    return d->hedge;
+}
+
+int SkyFixEdge::side() const
+{
+    return d->side;
+}
+
+SkyFixEdge::SkySection &SkyFixEdge::section(SectionId id)
+{
+    switch(id)
+    {
+    case SkyTop:    return d->top;
+    case SkyBottom: return d->bottom;
+    }
+    /// @throw UnknownSectionError We do not know this section.
+    throw UnknownSectionError("SkyFixEdge::section", "Invalid id " + String::number(id));
 }
 
 } // namespace de

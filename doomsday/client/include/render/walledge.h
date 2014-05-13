@@ -1,6 +1,6 @@
-/** @file render/walledge.h Wall Edge Geometry.
+/** @file walledge.h  Wall Edge Geometry.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,28 +17,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_WALLEDGE
-#define DENG_RENDER_WALLEDGE
+#ifndef DENG_CLIENT_RENDER_WALLEDGE
+#define DENG_CLIENT_RENDER_WALLEDGE
 
 #include <QList>
-
 #include <de/Error>
 #include <de/Vector>
-
 #include "Line"
-#include "WallSpec"
-
-#include "TriangleStripBuilder"
+#include "TriangleStripBuilder" /// @todo remove me
 #include "IHPlane"
-
-class Surface;
-
-/// Maximum number of intercepts in a WallEdge.
-#define WALLEDGE_MAX_INTERCEPTS          64
 
 namespace de {
 
 class HEdge;
+struct WallSpec;
 
 /**
  * Helper/utility class intended to simplify the process of generating
@@ -46,83 +38,172 @@ class HEdge;
  *
  * @ingroup world
  */
-class WallEdge : public WorldEdge
+class WallEdge
 {
     DENG2_NO_COPY  (WallEdge)
     DENG2_NO_ASSIGN(WallEdge)
 
 public:
-    /// Invalid range geometry was found during prepare() @ingroup errors
-    DENG2_ERROR(InvalidError);
+    /// An unknown section was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSectionError);
 
-    class Event : public WorldEdge::Event, public IHPlane::IIntercept
+    class WallSection; // forward
+
+    /// Logical section identifiers:
+    enum SectionId {
+        WallMiddle,
+        WallBottom,
+        WallTop
+    };
+
+    /**
+     * Utility for converting a Line::Side @a section to SectionId.
+     */
+    static SectionId sectionIdFromLineSideSection(int section);
+
+    /**
+     * Wall edge event.
+     */
+    class Event : public AbstractEdge::Event, public IHPlane::IIntercept
     {
     public:
-        Event(WallEdge &owner, double distance = 0);
+        Event(double distance = 0);
 
+        // Implement AbstractEdge::Event:
+        double distance() const;
+        Vector3d origin() const;
         bool operator < (Event const &other) const;
 
-        double distance() const;
+        /**
+         * Returns the WallSection to which the event is attributed.
+         */
+        WallSection &section() const;
 
-        Vector3d origin() const;
+        // WallSection needs access to attribute events.
+        friend class WallSection;
 
     private:
+        WallSection *_section; ///< The attributed section.
+    };
+
+    /**
+     * Wall edge section.
+     */
+    class WallSection : public AbstractEdge
+    {
+    public:
+        /// A valid edge is required. @ingroup errors
+        DENG2_ERROR(InvalidError);
+
+        typedef QList<WallEdge::Event *> Events;
+
+    public:
+        /**
+         * Returns the owning WallEdge for the section.
+         */
+        WallEdge &edge() const;
+
+        /**
+         * Returns the WallSpec for the section.
+         */
+        WallSpec const &spec() const;
+        SectionId id() const;
+
+        Vector3d const &pOrigin() const;
+        Vector3d const &pDirection() const;
+
+        /// Implement IEdge:
+        bool isValid() const;
+
+        /// Implement AbstractEdge:
+        WallEdge::Event const &first() const;
+        WallEdge::Event const &last() const;
+        Vector2f materialOrigin() const;
+        Vector3f normal() const;
+
+        /// Convenient aliases:
+        inline WallEdge::Event const &bottom() const { return first(); }
+        inline WallEdge::Event const &top() const    { return last(); }
+
+        int divisionCount() const;
+        EventIndex firstDivision() const;
+        EventIndex lastDivision() const;
+
+        /**
+         * Lookup an edge event by @a index.
+         */
+        WallEdge::Event const &at(EventIndex index) const;
+
+        /// @see at()
+        inline WallEdge::Event const &operator [] (EventIndex index) const {
+            return at(index);
+        }
+
+        /**
+         * Provides access to all edge events for the section, for efficient traversal.
+         */
+        Events const &events() const;
+
+        // WallEdge needs access to the private constructor.
+        friend class WallEdge;
+
+    private:
+        WallSection(WallEdge &owner, SectionId id, WallSpec const &spec);
+
         DENG2_PRIVATE(d)
     };
 
-    typedef QList<Event *> Events;
-
-public:
     /**
-     * @param spec   Geometry specification for the wall section. A copy is made.
+     * Construct a new WallEdge for the specified @a hedge, @a side.
      *
      * @param hedge  Assumed to have a mapped LineSideSegment with sections.
+     * @param side   Logical front side of the halfedge (0: left, 1: right).
      */
-    WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
+    WallEdge(HEdge &hedge, int side);
 
-    inline Event const &operator [] (EventIndex index) const {
-        return at(index);
-    }
+    /**
+     * Returns the X|Y origin of the edge in map space.
+     */
+    Vector2d const &origin() const;
 
-    Vector3d const &pOrigin() const;
-    Vector3d const &pDirection() const;
+    /**
+     * Returns the halfedge from which the edge was built.
+     */
+    HEdge &hedge() const;
 
-    Vector2f materialOrigin() const;
+    /**
+     * Returns the logical front side (0: left, 1: right) of the halfedge for the edge.
+     */
+    int side() const;
 
-    Vector3f normal() const;
+    /**
+     * Returns the map Line::Side for the edge.
+     */
+    LineSide &lineSide() const;
 
-    WallSpec const &spec() const;
+    /**
+     * Returns the offset along the map Line::Side for the edge.
+     */
+    coord_t lineSideOffset() const;
 
-    LineSide &mapLineSide() const;
+    /**
+     * Returns the WallSection associated with @a id.
+     *
+     * @see sectionIdFromLineSideSection()
+     */
+    WallSection &section(SectionId id);
 
-    coord_t mapLineSideOffset() const;
-
-    /// Implement IEdge.
-    bool isValid() const;
-
-    /// Implement IEdge.
-    Event const &first() const;
-
-    /// Implement IEdge.
-    Event const &last() const;
-
-    int divisionCount() const;
-
-    EventIndex firstDivision() const;
-
-    EventIndex lastDivision() const;
-
-    inline Event const &bottom() const { return first(); }
-    inline Event const &top() const { return last(); }
-
-    Events const &events() const;
-
-    Event const &at(EventIndex index) const;
+    /// Convenient accessor methods:
+    inline WallSection &wallTop()    { return section(WallTop); }
+    inline WallSection &wallMiddle() { return section(WallMiddle); }
+    inline WallSection &wallBottom() { return section(WallBottom); }
 
 private:
     DENG2_PRIVATE(d)
 };
 
+typedef WallEdge::WallSection WallEdgeSection;
+
 } // namespace de
 
-#endif // DENG_RENDER_WALLEDGE
+#endif // DENG_CLIENT_RENDER_WALLEDGE
