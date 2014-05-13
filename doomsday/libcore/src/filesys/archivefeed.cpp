@@ -225,15 +225,27 @@ void ArchiveFeed::populate(Folder &folder)
 
 bool ArchiveFeed::prune(File &file) const
 {
+    LOG_AS("ArchiveFeed::prune");
+
     ArchiveEntryFile *entryFile = file.maybeAs<ArchiveEntryFile>();
     if(entryFile && &entryFile->archive() == &archive())
     {
         if(!archive().hasEntry(entryFile->entryPath()))
+        {
+            LOG_RES_VERBOSE("%s removed from archive") << file.description();
             return true; // It's gone...
+        }
 
         // Prune based on entry status.
-        return archive().entryStatus(entryFile->entryPath()).modifiedAt !=
-               file.status().modifiedAt;
+        if(archive().entryStatus(entryFile->entryPath()).modifiedAt !=
+           file.status().modifiedAt)
+        {
+            LOG_RES_XVERBOSE("%s has been modified (arch:%s != file:%s)")
+                    << file.description()
+                    << archive().entryStatus(entryFile->entryPath()).modifiedAt.asText()
+                    << file.status().modifiedAt.asText();
+            return true;
+        }
     }
     return false;
 }
