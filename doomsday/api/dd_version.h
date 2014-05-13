@@ -51,8 +51,8 @@ extern "C" {
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_VERSION_BASE   "1.14.2"
-#define DOOMSDAY_VERSION_NUMBER 1,14,2,0 // For WIN32 version info.
+#define DOOMSDAY_VERSION_BASE   "1.14.3"
+#define DOOMSDAY_VERSION_NUMBER 1,14,3,0 // For WIN32 version info.
 //#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
