@@ -104,7 +104,8 @@ void ArchiveEntryFile::set(Offset at, Byte const *values, Size count)
     // Update status.
     Status st = status();
     st.size = entryBlock.size();
-    st.modifiedAt = Time();
+    // Timestamps must match, otherwise would be pruned needlessly.
+    st.modifiedAt = archive().entryStatus(_entryPath).modifiedAt;
     setStatus(st);
 }
 

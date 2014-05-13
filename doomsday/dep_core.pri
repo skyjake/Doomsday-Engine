@@ -13,6 +13,17 @@ deng_qtgui {
     }
 }
 
+win32: defineReplace(qtDLL) {
+    greaterThan(QT_MAJOR_VERSION, 4) {
+        deng_debug: return(Qt$${QT_MAJOR_VERSION}$${1}d.dll)
+              else: return(Qt$${QT_MAJOR_VERSION}$${1}.dll)
+    }
+    else {
+        deng_debug: return(Qt$${1}$${QT_MAJOR_VERSION}d.dll)
+              else: return(Qt$${1}$${QT_MAJOR_VERSION}.dll)
+    }
+}
+
 deng_debug: qtver = d$$QT_MAJOR_VERSION
 else:       qtver = $$QT_MAJOR_VERSION
 
@@ -20,15 +31,31 @@ win32 {
     # Install the required Qt DLLs into the products dir.
     INSTALLS *= qtlibs qtplugins
     qtlibs.files += \
-        $$[QT_INSTALL_BINS]/QtCore$${qtver}.dll \
-        $$[QT_INSTALL_BINS]/QtNetwork$${qtver}.dll
-    deng_qtgui:     qtlibs.files += $$[QT_INSTALL_BINS]/QtGui$${qtver}.dll
-    deng_qtwidgets: qtlibs.files += $$[QT_INSTALL_BINS]/QtWidgets$${qtver}.dll
-    deng_qtopengl:  qtlibs.files += $$[QT_INSTALL_BINS]/QtOpenGL$${qtver}.dll
+        $$[QT_INSTALL_BINS]/$$qtDLL(Core) \
+        $$[QT_INSTALL_BINS]/$$qtDLL(Network)
+    deng_qtgui:     qtlibs.files += $$[QT_INSTALL_BINS]/$$qtDLL(Gui)
+    deng_qtwidgets: qtlibs.files += $$[QT_INSTALL_BINS]/$$qtDLL(Widgets)
+    deng_qtopengl:  qtlibs.files += $$[QT_INSTALL_BINS]/$$qtDLL(OpenGL)
     qtlibs.path = $$DENG_LIB_DIR
 
-    qtplugins.files = $$[QT_INSTALL_PLUGINS]/imageformats/qjpeg4.dll
     qtplugins.path = $$DENG_LIB_DIR/imageformats
+    greaterThan(QT_MAJOR_VERSION, 4) {
+        qtplugins.files = \
+            $$[QT_INSTALL_PLUGINS]/imageformats/qjpeg.dll \
+            $$[QT_INSTALL_PLUGINS]/imageformats/qico.dll \
+            $$[QT_INSTALL_PLUGINS]/imageformats/qgif.dll
+
+        # International Components for Unicode
+        INSTALLS *= qtdeps
+        qtdeps.files += \
+            $$[QT_INSTALL_BINS]/icuin52.dll \
+            $$[QT_INSTALL_BINS]/icuuc52.dll \
+            $$[QT_INSTALL_BINS]/icudt52.dll
+        qtdeps.path = $$DENG_LIB_DIR
+    }
+    else {
+        qtplugins.files = $$[QT_INSTALL_PLUGINS]/imageformats/qjpeg4.dll
+    }
 }
 
 macx {

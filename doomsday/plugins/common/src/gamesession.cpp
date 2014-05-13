@@ -189,8 +189,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State")
                 << serializeCurrentMapState();
 
-        saved->flush();
-        saved->populate();
+        saved->flush(); // No need to populate; FS2 Files already in sync with source data.
         saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
 
         return *saved;

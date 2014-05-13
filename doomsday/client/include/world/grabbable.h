@@ -156,7 +156,7 @@ public:
      *
      * @see origin()
      */
-    virtual void setOrigin(de::Vector3d const &newOrigin) {}
+    virtual void setOrigin(de::Vector3d const & /*newOrigin*/) {}
 
 protected:
     /**

@@ -155,7 +155,7 @@ void Folder::populate(PopulationBehavior behavior)
         // If the file has a designated feed, ask it about pruning.
         if(file->originFeed() && file->originFeed()->prune(*file))
         {
-            LOG_RES_XVERBOSE("Pruning \"%s\"") << file->path();
+            LOG_RES_XVERBOSE("Pruning \"%s\" due to origin feed %s") << file->path() << file->originFeed()->description();
             mustPrune = true;
         }
         else if(!file->originFeed())
@@ -167,7 +167,8 @@ void Folder::populate(PopulationBehavior behavior)
             {
                 if((*f)->prune(*file))
                 {
-                    LOG_RES_XVERBOSE("Pruning ") << file->path();
+                    LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s")
+                            << file->path() << (*f)->description();
                     mustPrune = true;
                     break;
                 }
