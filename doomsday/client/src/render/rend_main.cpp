@@ -55,7 +55,6 @@
 #include "LightDecoration"
 #include "Lumobj"
 #include "Shard"
-#include "SkyFixEdge"
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
@@ -2234,7 +2233,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
 }
 
-static void writeSubspaceSkyMaskStrips(SkyFixEdge::SectionId sectionId)
+static void writeSubspaceSkyMaskStrips(WallEdge::SectionId sectionId)
 {
     // Determine strip generation behavior.
     ClockDirection const direction   = Clockwise;
@@ -2253,7 +2252,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::SectionId sectionId)
     float startMaterialOffset = 0;
 
     // Determine the relative sky plane (for monitoring material changes).
-    int relPlane = sectionId == SkyFixEdge::SkyTop? Sector::Ceiling : Sector::Floor;
+    int relPlane = sectionId == WallEdge::SkyTop? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
     HEdge *base  = curSubspace->poly().hedge();
@@ -2274,8 +2273,8 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::SectionId sectionId)
             startMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
 
             // Prepare the edge geometry
-            SkyFixEdge left(*hedge, (direction == Anticlockwise)? Line::To : Line::From, startMaterialOffset);
-            SkyFixEdgeSection &sectionLeft = left.section(sectionId);
+            WallEdge left(*hedge, (direction == Anticlockwise)? Line::To : Line::From, startMaterialOffset);
+            WallEdgeSection &sectionLeft = left.section(sectionId);
 
             if(sectionLeft.isValid() && sectionLeft.bottom().z() < sectionLeft.top().z())
             {
@@ -2304,8 +2303,8 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::SectionId sectionId)
                                      * (direction == Anticlockwise? -1 : 1);
 
                 // Prepare the edge geometry
-                SkyFixEdge left(*hedge, (direction == Anticlockwise)? Line::From : Line::To, startMaterialOffset);
-                SkyFixEdgeSection &sectionLeft = left.section(sectionId);
+                WallEdge left(*hedge, (direction == Anticlockwise)? Line::From : Line::To, startMaterialOffset);
+                WallEdgeSection &sectionLeft = left.section(sectionId);
 
                 if(!(sectionLeft.isValid() && sectionLeft.bottom().z() < sectionLeft.top().z()))
                 {
@@ -2427,14 +2426,14 @@ static void writeSubspaceSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     // Lower?
     if(skyCap & SKYCAP_LOWER)
     {
-        writeSubspaceSkyMaskStrips(SkyFixEdge::SkyBottom);
+        writeSubspaceSkyMaskStrips(WallEdge::SkyBottom);
         writeSubspaceSkyMaskCap(SKYCAP_LOWER);
     }
 
     // Upper?
     if(skyCap & SKYCAP_UPPER)
     {
-        writeSubspaceSkyMaskStrips(SkyFixEdge::SkyTop);
+        writeSubspaceSkyMaskStrips(WallEdge::SkyTop);
         writeSubspaceSkyMaskCap(SKYCAP_UPPER);
     }
 }

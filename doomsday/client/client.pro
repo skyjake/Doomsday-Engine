@@ -164,7 +164,6 @@ DENG_CONVENIENCE_HEADERS += \
     include/SectorCluster \
     include/SettingsRegister \
     include/Shard \
-    include/SkyFixEdge \
     include/Sprite \
     include/Surface \
     include/SurfaceDecorator \
@@ -303,7 +302,6 @@ DENG_HEADERS += \
     include/render/shadowedge.h \
     include/render/shard.h \
     include/render/sky.h \
-    include/render/skyfixedge.h \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
     include/render/viewports.h \
@@ -620,7 +618,6 @@ SOURCES += \
     src/render/shadowedge.cpp \
     src/render/shard.cpp \
     src/render/sky.cpp \
-    src/render/skyfixedge.cpp \
     src/render/surfacedecorator.cpp \
     src/render/trianglestripbuilder.cpp \
     src/render/viewports.cpp \

@@ -33,8 +33,8 @@ class HEdge;
 struct WallSpec;
 
 /**
- * Helper/utility class intended to simplify the process of generating
- * sections of wall geometry from a map Line segment.
+ * Helper/utility class intended to simplify the process of generating sections
+ * of edge geometry from a map Line side segment.
  *
  * @ingroup world
  */
@@ -47,10 +47,12 @@ public:
     /// An unknown section was referenced. @ingroup errors
     DENG2_ERROR(UnknownSectionError);
 
-    class WallSection; // forward
+    class Section; // forward
 
     /// Logical section identifiers:
     enum SectionId {
+        SkyTop,
+        SkyBottom,
         WallMiddle,
         WallBottom,
         WallTop
@@ -75,21 +77,21 @@ public:
         bool operator < (Event const &other) const;
 
         /**
-         * Returns the WallSection to which the event is attributed.
+         * Returns the Section to which the event is attributed.
          */
-        WallSection &section() const;
+        Section &section() const;
 
-        // WallSection needs access to attribute events.
-        friend class WallSection;
+        // Section needs access to attribute events.
+        friend class Section;
 
     private:
-        WallSection *_section; ///< The attributed section.
+        Section *_section; ///< The attributed section.
     };
 
     /**
      * Wall edge section.
      */
-    class WallSection : public AbstractEdge
+    class Section : public AbstractEdge
     {
     public:
         /// A valid edge is required. @ingroup errors
@@ -102,12 +104,17 @@ public:
          * Returns the owning WallEdge for the section.
          */
         WallEdge &edge() const;
+        SectionId id() const;
 
         /**
          * Returns the WallSpec for the section.
          */
         WallSpec const &spec() const;
-        SectionId id() const;
+
+        /**
+         * Replace the WallSpec for the section with a copy of @a newSpec.
+         */
+        void setSpec(WallSpec const &newSpec);
 
         Vector3d const &pOrigin() const;
         Vector3d const &pDirection() const;
@@ -148,7 +155,8 @@ public:
         friend class WallEdge;
 
     private:
-        WallSection(WallEdge &owner, SectionId id, WallSpec const &spec);
+        Section(WallEdge &owner, SectionId id, Vector2f const &materialOrigin = Vector2f(),
+                WallSpec const *spec = 0);
 
         DENG2_PRIVATE(d)
     };
@@ -159,7 +167,7 @@ public:
      * @param hedge  Assumed to have a mapped LineSideSegment with sections.
      * @param side   Logical front side of the halfedge (0: left, 1: right).
      */
-    WallEdge(HEdge &hedge, int side);
+    WallEdge(HEdge &hedge, int side, float materialOffsetS = 0);
 
     /**
      * Returns the X|Y origin of the edge in map space.
@@ -187,22 +195,24 @@ public:
     coord_t lineSideOffset() const;
 
     /**
-     * Returns the WallSection associated with @a id.
+     * Returns the Section associated with @a id.
      *
      * @see sectionIdFromLineSideSection()
      */
-    WallSection &section(SectionId id);
+    Section &section(SectionId id);
 
     /// Convenient accessor methods:
-    inline WallSection &wallTop()    { return section(WallTop); }
-    inline WallSection &wallMiddle() { return section(WallMiddle); }
-    inline WallSection &wallBottom() { return section(WallBottom); }
+    inline Section &skyBottom()  { return section(SkyBottom); }
+    inline Section &skyTop()     { return section(SkyTop); }
+    inline Section &wallMiddle() { return section(WallMiddle); }
+    inline Section &wallBottom() { return section(WallBottom); }
+    inline Section &wallTop()    { return section(WallTop); }
 
 private:
     DENG2_PRIVATE(d)
 };
 
-typedef WallEdge::WallSection WallEdgeSection;
+typedef WallEdge::Section WallEdgeSection;
 
 } // namespace de
 

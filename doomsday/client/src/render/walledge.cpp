@@ -38,11 +38,6 @@ using namespace de;
 /// Maximum number of intercepts in a WallEdge.
 #define WALLEDGE_MAX_INTERCEPTS  64
 
-static bool eventSorter(WallEdge::Event *a, WallEdge::Event *b)
-{
-    return *a < *b;
-}
-
 /**
  * Determines whether normal smoothing should be performed for the given pair of
  * map surfaces (which are assumed to share an edge).
@@ -58,6 +53,22 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
 {
     DENG2_UNUSED2(sufA, sufB);
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
+}
+
+static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
+{
+    DENG2_UNUSED(backFloor);
+    if(devRendSkyMode || P_IsInVoid(viewPlayer))
+        return frontFloor->heightSmoothed();
+    return frontFloor->map().skyFixFloor();
+}
+
+static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
+{
+    DENG2_UNUSED(backCeil);
+    if(devRendSkyMode || P_IsInVoid(viewPlayer))
+        return frontCeil->heightSmoothed();
+    return frontCeil->map().skyFixCeiling();
 }
 
 WallEdge::Event::Event(double distance)
@@ -80,17 +91,19 @@ Vector3d WallEdge::Event::origin() const
     return section().pOrigin() + section().pDirection() * distance();
 }
 
-WallEdge::WallSection &WallEdge::Event::section() const
+WallEdge::Section &WallEdge::Event::section() const
 {
     DENG2_ASSERT(_section != 0);
     return *_section;
 }
 
-DENG2_PIMPL(WallEdge::WallSection), public IHPlane
+static bool eventSorter(WallEdge::Event *a, WallEdge::Event *b) { return *a < *b; }
+
+DENG2_PIMPL(WallEdge::Section), public IHPlane
 {
     WallEdge &owner;
     SectionId id;
-    WallSpec spec;
+    QScopedPointer<WallSpec> spec;
 
     Vector3d pOrigin;
     Vector3d pDirection;
@@ -110,15 +123,15 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
 
     bool needPrepare;
 
-    Instance(Public *i, WallEdge &owner, SectionId id, WallSpec const &spec)
+    Instance(Public *i, WallEdge &owner, SectionId id, Vector2f const &materialOrigin)
         : Base            (i)
         , owner           (owner)
         , id              (id)
-        , spec            (spec)
         , bottom          (0)
         , top             (1)
         , events          (0)
         , needSortEvents  (false)
+        , materialOrigin  (materialOrigin)
         , needUpdateNormal(true)
         , needPrepare     (true)
     {
@@ -143,6 +156,72 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
         throw Error("lineSideSurface", "Invalid id");
     }
 
+    /**
+     * Determines whether a sky fix is actually necessary.
+     */
+    bool wallSectionNeedsSkyFix() const
+    {
+        HEdge &hedge = owner.hedge();
+
+        DENG2_ASSERT(hedge.hasFace());
+
+        // Only edges with line segments need fixes.
+        if(!hedge.hasMapElement()) return false;
+
+        SectorCluster const *cluster     = hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
+        SectorCluster const *backCluster = hedge.twin().hasFace()? hedge.twin().face().mapElementAs<ConvexSubspace>() .clusterPtr() : 0;
+
+        if(backCluster && &backCluster->sector() == &cluster->sector())
+            return false;
+
+        // Select the relative planes for the fix type.
+        int relPlane = id == SkyBottom? Sector::Floor : Sector::Ceiling;
+        Plane const *front   = &cluster->visPlane(relPlane);
+        Plane const *back    = backCluster? &backCluster->visPlane(relPlane) : 0;
+
+        if(!front->surface().hasSkyMaskedMaterial())
+            return false;
+
+        LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
+        bool const hasClosedBack = R_SideBackClosed(lineSide);
+
+        if(!devRendSkyMode)
+        {
+            if(!P_IsInVoid(viewPlayer) &&
+               !(hasClosedBack || !(back && back->surface().hasSkyMaskedMaterial())))
+                return false;
+        }
+        else
+        {
+            int relSection = id == SkyBottom? LineSide::Bottom : LineSide::Top;
+
+            if(lineSide.surface(relSection).hasMaterial() ||
+               !(hasClosedBack || (back && back->surface().hasSkyMaskedMaterial())))
+                return false;
+        }
+
+        // Figure out the relative plane heights.
+        coord_t fz = front->heightSmoothed();
+        if(relPlane == Sector::Ceiling)
+            fz = -fz;
+
+        coord_t bz = 0;
+        if(back)
+        {
+            bz = back->heightSmoothed();
+            if(relPlane == Sector::Ceiling)
+                bz = -bz;
+        }
+
+        coord_t planeZ = (back && back->surface().hasSkyMaskedMaterial() &&
+                          fz < bz? bz : fz);
+
+        coord_t skyZ = id == SkyBottom? skyFixFloorZ(front, back)
+                                      : -skyFixCeilZ(front, back);
+
+        return (planeZ > skyZ);
+    }
+
     void prepareIfNeeded()
     {
         if(!needPrepare) return;
@@ -150,207 +229,241 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
 
         coord_t lo = 0, hi = 0;
 
-        // Determine the map space Z coordinates of the wall section.
-        Line const &line       = lineSide().line();
-        bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
-        bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
-
-        SectorCluster const *cluster =
-            (line.definesPolyobj()? &line.polyobj().bspLeaf().subspace()
-                                  : &owner.hedge().face().mapElementAs<ConvexSubspace>())->clusterPtr();
-
-        if(lineSide().considerOneSided() ||
-           // Mapping errors may result in a line segment missing a back face.
-           (!line.definesPolyobj() && !owner.hedge().twin().hasFace()))
+        if(id == SkyBottom || id == SkyTop)
         {
-            if(id == WallMiddle)
+            if(wallSectionNeedsSkyFix())
             {
-                lo = cluster->visFloor().heightSmoothed();
-                hi = cluster->visCeiling().heightSmoothed();
-            }
-            else
-            {
-                lo = hi = cluster->visFloor().heightSmoothed();
-            }
+                HEdge &hedge = owner.hedge();
 
-            materialOrigin = lineSide().middle().materialOriginSmoothed();
-            if(unpegBottom)
-            {
-                materialOrigin.y -= hi - lo;
+                SectorCluster const *cluster     = hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
+                SectorCluster const *backCluster =
+                    hedge.twin().hasFace()? hedge.twin().face().mapElementAs<ConvexSubspace>().clusterPtr() : 0;
+
+                Plane const *ffloor = &cluster->visFloor();
+                Plane const *fceil  = &cluster->visCeiling();
+                Plane const *bceil  = backCluster? &backCluster->visCeiling() : 0;
+                Plane const *bfloor = backCluster? &backCluster->visFloor()   : 0;
+
+                if(id == SkyTop)
+                {
+                    hi = skyFixCeilZ(fceil, bceil);
+                    lo = de::max((backCluster && bceil->surface().hasSkyMaskedMaterial())? bceil->heightSmoothed()
+                                                                                         : fceil->heightSmoothed(),
+                                 ffloor->heightSmoothed());
+                }
+                else
+                {
+                    hi = de::min((backCluster && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed()
+                                                                                          : ffloor->heightSmoothed(),
+                                 fceil->heightSmoothed());
+                    lo = skyFixFloorZ(ffloor, bfloor);
+                }
             }
         }
         else
         {
-            // Two sided.
-            SectorCluster const *backCluster =
-                line.definesPolyobj()? cluster
-                                     : owner.hedge().twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
+            // Determine the map space Z coordinates of the wall section.
+            Line const &line       = lineSide().line();
+            bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
+            bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-            Plane const *ffloor = &cluster->visFloor();
-            Plane const *fceil  = &cluster->visCeiling();
-            Plane const *bfloor = &backCluster->visFloor();
-            Plane const *bceil  = &backCluster->visCeiling();
+            SectorCluster const *cluster =
+                (line.definesPolyobj()? &line.polyobj().bspLeaf().subspace()
+                                      : &owner.hedge().face().mapElementAs<ConvexSubspace>())->clusterPtr();
 
-            switch(id)
+            if(lineSide().considerOneSided() ||
+               // Mapping errors may result in a line segment missing a back face.
+               (!line.definesPolyobj() && !owner.hedge().twin().hasFace()))
             {
-            case WallTop:
-                // Self-referencing lines only ever get a middle.
-                if(!line.isSelfReferencing())
+                if(id == WallMiddle)
                 {
-                    // Can't go over front ceiling (would induce geometry flaws).
-                    if(bceil->heightSmoothed() < ffloor->heightSmoothed())
-                        lo = ffloor->heightSmoothed();
-                    else
-                        lo = bceil->heightSmoothed();
-
-                    hi = fceil->heightSmoothed();
-
-                    if(spec.flags.testFlag(WallSpec::SkyClip)
-                       && fceil->surface().hasSkyMaskedMaterial()
-                       && bceil->surface().hasSkyMaskedMaterial())
-                    {
-                        hi = lo;
-                    }
-
-                    materialOrigin = lineSide().middle().materialOriginSmoothed();
-                    if(!unpegTop)
-                    {
-                        // Align with normal middle texture.
-                        materialOrigin.y -= fceil->heightSmoothed() - bceil->heightSmoothed();
-                    }
-                }
-                break;
-
-            case WallBottom:
-                // Self-referencing lines only ever get a middle.
-                if(!line.isSelfReferencing())
-                {
-                    bool const raiseToBackFloor =
-                        (fceil->surface().hasSkyMaskedMaterial()
-                         && bceil->surface().hasSkyMaskedMaterial()
-                         && fceil->heightSmoothed() < bceil->heightSmoothed()
-                         && bfloor->heightSmoothed() > fceil->heightSmoothed());
-
-                    coord_t t = bfloor->heightSmoothed();
-
-                    lo = ffloor->heightSmoothed();
-
-                    // Can't go over the back ceiling, would induce polygon flaws.
-                    if(bfloor->heightSmoothed() > bceil->heightSmoothed())
-                        t = bceil->heightSmoothed();
-
-                    // Can't go over front ceiling, would induce polygon flaws.
-                    // In the special case of a sky masked upper we must extend the bottom
-                    // section up to the height of the back floor.
-                    if(t > fceil->heightSmoothed() && !raiseToBackFloor)
-                        t = fceil->heightSmoothed();
-
-                    hi = t;
-
-                    if(spec.flags.testFlag(WallSpec::SkyClip)
-                       && ffloor->surface().hasSkyMaskedMaterial()
-                       && bfloor->surface().hasSkyMaskedMaterial())
-                    {
-                        lo = hi;
-                    }
-
-                    materialOrigin = lineSide().bottom().materialOriginSmoothed();
-                    if(bfloor->heightSmoothed() > fceil->heightSmoothed())
-                    {
-                        materialOrigin.y -= (raiseToBackFloor? t : fceil->heightSmoothed())
-                                          - bfloor->heightSmoothed();
-                    }
-
-                    if(unpegBottom)
-                    {
-                        // Align with normal middle texture.
-                        materialOrigin.y += (raiseToBackFloor? t : fceil->heightSmoothed())
-                                          - bfloor->heightSmoothed();
-                    }
-                }
-                break;
-
-            case WallMiddle: {
-                Surface const &middle = lineSide().middle();
-
-                if(!line.isSelfReferencing() && ffloor == &cluster->sector().floor())
-                {
-                    lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
+                    lo = cluster->visFloor().heightSmoothed();
+                    hi = cluster->visCeiling().heightSmoothed();
                 }
                 else
                 {
-                    // Use the unmapped heights for positioning purposes.
-                    lo = lineSide().sector().floor().heightSmoothed();
+                    lo = hi = cluster->visFloor().heightSmoothed();
                 }
 
-                if(!line.isSelfReferencing() && fceil == &cluster->sector().ceiling())
+                materialOrigin = lineSide().middle().materialOriginSmoothed();
+                if(unpegBottom)
                 {
-                    hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
+                    materialOrigin.y -= hi - lo;
                 }
-                else
-                {
-                    // Use the unmapped heights for positioning purposes.
-                    hi = lineSide().back().sector().ceiling().heightSmoothed();
-                }
+            }
+            else
+            {
+                // Two sided.
+                SectorCluster const *backCluster =
+                    line.definesPolyobj()? cluster
+                                         : owner.hedge().twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
 
-                materialOrigin = Vector2f(middle.materialOriginSmoothed().x, 0);
+                Plane const *ffloor = &cluster->visFloor();
+                Plane const *fceil  = &cluster->visCeiling();
+                Plane const *bfloor = &backCluster->visFloor();
+                Plane const *bceil  = &backCluster->visCeiling();
 
-                // Perform clipping.
-                if(middle.hasMaterial()
-                   && !lineSide().isFlagged(SDF_MIDDLE_STRETCH))
+                switch(id)
                 {
-                    coord_t openBottom, openTop;
+                case WallTop:
+                    // Self-referencing lines only ever get a middle.
                     if(!line.isSelfReferencing())
                     {
-                        openBottom = lo;
-                        openTop    = hi;
+                        // Can't go over front ceiling (would induce geometry flaws).
+                        if(bceil->heightSmoothed() < ffloor->heightSmoothed())
+                            lo = ffloor->heightSmoothed();
+                        else
+                            lo = bceil->heightSmoothed();
+
+                        hi = fceil->heightSmoothed();
+
+                        if(spec->flags.testFlag(WallSpec::SkyClip) &&
+                           fceil->surface().hasSkyMaskedMaterial() &&
+                           bceil->surface().hasSkyMaskedMaterial())
+                        {
+                            hi = lo;
+                        }
+
+                        materialOrigin = lineSide().middle().materialOriginSmoothed();
+                        if(!unpegTop)
+                        {
+                            // Align with normal middle texture.
+                            materialOrigin.y -= fceil->heightSmoothed() - bceil->heightSmoothed();
+                        }
+                    }
+                    break;
+
+                case WallBottom:
+                    // Self-referencing lines only ever get a middle.
+                    if(!line.isSelfReferencing())
+                    {
+                        bool const raiseToBackFloor =
+                            (fceil->surface().hasSkyMaskedMaterial()
+                             && bceil->surface().hasSkyMaskedMaterial()
+                             && fceil->heightSmoothed() < bceil->heightSmoothed()
+                             && bfloor->heightSmoothed() > fceil->heightSmoothed());
+
+                        coord_t t = bfloor->heightSmoothed();
+
+                        lo = ffloor->heightSmoothed();
+
+                        // Can't go over the back ceiling, would induce polygon flaws.
+                        if(bfloor->heightSmoothed() > bceil->heightSmoothed())
+                            t = bceil->heightSmoothed();
+
+                        // Can't go over front ceiling, would induce polygon flaws.
+                        // In the special case of a sky masked upper we must extend the bottom
+                        // section up to the height of the back floor.
+                        if(t > fceil->heightSmoothed() && !raiseToBackFloor)
+                            t = fceil->heightSmoothed();
+
+                        hi = t;
+
+                        if(spec->flags.testFlag(WallSpec::SkyClip) &&
+                           ffloor->surface().hasSkyMaskedMaterial() &&
+                           bfloor->surface().hasSkyMaskedMaterial())
+                        {
+                            lo = hi;
+                        }
+
+                        materialOrigin = lineSide().bottom().materialOriginSmoothed();
+                        if(bfloor->heightSmoothed() > fceil->heightSmoothed())
+                        {
+                            materialOrigin.y -= (raiseToBackFloor? t : fceil->heightSmoothed())
+                                              - bfloor->heightSmoothed();
+                        }
+
+                        if(unpegBottom)
+                        {
+                            // Align with normal middle texture.
+                            materialOrigin.y += (raiseToBackFloor? t : fceil->heightSmoothed())
+                                              - bfloor->heightSmoothed();
+                        }
+                    }
+                    break;
+
+                case WallMiddle: {
+                    Surface const &middle = lineSide().middle();
+
+                    if(!line.isSelfReferencing() && ffloor == &cluster->sector().floor())
+                    {
+                        lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
                     }
                     else
                     {
-                        openBottom = ffloor->heightSmoothed();
-                        openTop    = fceil->heightSmoothed();
+                        // Use the unmapped heights for positioning purposes.
+                        lo = lineSide().sector().floor().heightSmoothed();
                     }
 
-                    if(openTop > openBottom)
+                    if(!line.isSelfReferencing() && fceil == &cluster->sector().ceiling())
                     {
-                        if(unpegBottom)
+                        hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
+                    }
+                    else
+                    {
+                        // Use the unmapped heights for positioning purposes.
+                        hi = lineSide().back().sector().ceiling().heightSmoothed();
+                    }
+
+                    materialOrigin = Vector2f(middle.materialOriginSmoothed().x, 0);
+
+                    // Perform clipping.
+                    if(middle.hasMaterial()
+                       && !lineSide().isFlagged(SDF_MIDDLE_STRETCH))
+                    {
+                        coord_t openBottom, openTop;
+                        if(!line.isSelfReferencing())
                         {
-                            lo += middle.materialOriginSmoothed().y;
-                            hi = lo + middle.material().height();
+                            openBottom = lo;
+                            openTop    = hi;
                         }
                         else
                         {
-                            hi += middle.materialOriginSmoothed().y;
-                            lo = hi - middle.material().height();
+                            openBottom = ffloor->heightSmoothed();
+                            openTop    = fceil->heightSmoothed();
                         }
 
-                        if(hi > openTop)
+                        if(openTop > openBottom)
                         {
-                            materialOrigin.y = hi - openTop;
-                        }
+                            if(unpegBottom)
+                            {
+                                lo += middle.materialOriginSmoothed().y;
+                                hi = lo + middle.material().height();
+                            }
+                            else
+                            {
+                                hi += middle.materialOriginSmoothed().y;
+                                lo = hi - middle.material().height();
+                            }
 
-                        // Clip it?
-                        bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
-                        bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
-                        if(clipTop || clipBottom)
-                        {
-                            if(clipBottom && lo < openBottom)
-                                lo = openBottom;
+                            if(hi > openTop)
+                            {
+                                materialOrigin.y = hi - openTop;
+                            }
 
-                            if(clipTop && hi > openTop)
-                                hi = openTop;
-                        }
+                            // Clip it?
+                            bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
+                            bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
+                            if(clipTop || clipBottom)
+                            {
+                                if(clipBottom && lo < openBottom)
+                                    lo = openBottom;
 
-                        if(!clipTop)
-                        {
-                            materialOrigin.y = 0;
+                                if(clipTop && hi > openTop)
+                                    hi = openTop;
+                            }
+
+                            if(!clipTop)
+                            {
+                                materialOrigin.y = 0;
+                            }
                         }
                     }
+                    break; }
                 }
-                break; }
             }
+            materialOrigin += Vector2f(owner.lineSideOffset(), 0);
         }
-        materialOrigin += Vector2f(owner.lineSideOffset(), 0);
 
         pOrigin    = Vector3d(owner.origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
@@ -361,7 +474,7 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
         if(!self.isValid())
         {
             /// @throw InvalidError  Invalid range geometry was specified.
-            throw InvalidError("WallEdge::verifyValid", "Range geometry is not valid (top < bottom)");
+            throw InvalidError("WallEdge::WallSection::verifyValid", "Range geometry is not valid (top < bottom)");
         }
     }
 
@@ -456,8 +569,8 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
             return *(*events)[index];
         }
         /// @throw UnknownInterceptError The specified intercept index is not valid.
-        throw UnknownInterceptError("WallEdge::at", QString("Index '%1' does not map to a known intercept (count: %2)")
-                                                        .arg(index).arg(interceptCount()));
+        throw UnknownInterceptError("WallEdge::WallSection::at", QString("Index '%1' does not map to a known intercept (count: %2)")
+                                                                     .arg(index).arg(interceptCount()));
     }
 
     // Implements IHPlane
@@ -576,7 +689,10 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
      */
     bool shouldInterceptNeighbors()
     {
-        if(spec.flags & WallSpec::NoEdgeDivisions)
+        if(id == SkyBottom || id == SkyTop)
+            return false;
+
+        if(spec->flags & WallSpec::NoEdgeDivisions)
             return false;
 
         if(de::fequal(top.z(), bottom.z()))
@@ -638,7 +754,7 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
         diff = 0;
 
         // Are we not blending?
-        if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
+        if(spec->flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
             return 0;
 
         // Polyobj lines have no owner rings.
@@ -705,51 +821,60 @@ DENG2_PIMPL(WallEdge::WallSection), public IHPlane
     }
 };
 
-WallEdge::WallSection::WallSection(WallEdge &owner, SectionId id, WallSpec const &spec)
-    : d(new Instance(this, owner, id, spec))
-{}
+WallEdge::Section::Section(WallEdge &owner, SectionId id, Vector2f const &materialOrigin,
+    WallSpec const *spec)
+    : d(new Instance(this, owner, id, materialOrigin))
+{
+    if(spec) setSpec(*spec);
+}
 
-WallEdge &WallEdge::WallSection::edge() const
+WallEdge &WallEdge::Section::edge() const
 {
     return d->owner;
 }
 
-Vector3d const &WallEdge::WallSection::pOrigin() const
+WallEdge::SectionId WallEdge::Section::id() const
+{
+    return d->id;
+}
+
+WallSpec const &WallEdge::Section::spec() const
+{
+    DENG2_ASSERT(!d->spec.isNull());
+    return *d->spec;
+}
+
+void WallEdge::Section::setSpec(WallSpec const &newSpec)
+{
+    return d->spec.reset(new WallSpec(newSpec));
+}
+
+Vector3d const &WallEdge::Section::pOrigin() const
 {
     d->prepareIfNeeded();
     return d->pOrigin;
 }
 
-Vector3d const &WallEdge::WallSection::pDirection() const
+Vector3d const &WallEdge::Section::pDirection() const
 {
     d->prepareIfNeeded();
     return d->pDirection;
 }
 
-Vector2f WallEdge::WallSection::materialOrigin() const
+Vector2f WallEdge::Section::materialOrigin() const
 {
     d->prepareIfNeeded();
     return d->materialOrigin;
 }
 
-Vector3f WallEdge::WallSection::normal() const
+Vector3f WallEdge::Section::normal() const
 {
     d->prepareIfNeeded();
     d->updateNormalIfNeeded();
     return d->normal;
 }
 
-WallSpec const &WallEdge::WallSection::spec() const
-{
-    return d->spec;
-}
-
-WallEdge::SectionId WallEdge::WallSection::id() const
-{
-    return d->id;
-}
-
-int WallEdge::WallSection::divisionCount() const
+int WallEdge::Section::divisionCount() const
 {
     d->prepareIfNeeded();
     if(!isValid()) return 0;
@@ -757,17 +882,17 @@ int WallEdge::WallSection::divisionCount() const
     return d->interceptCount() - 2;
 }
 
-WallEdge::WallSection::EventIndex WallEdge::WallSection::firstDivision() const
+WallEdge::Section::EventIndex WallEdge::Section::firstDivision() const
 {
     return divisionCount()? 1 : InvalidIndex;
 }
 
-WallEdge::WallSection::EventIndex WallEdge::WallSection::lastDivision() const
+WallEdge::Section::EventIndex WallEdge::Section::lastDivision() const
 {
     return divisionCount()? d->interceptCount() - 2 : InvalidIndex;
 }
 
-WallEdge::WallSection::Events const &WallEdge::WallSection::events() const
+WallEdge::Section::Events const &WallEdge::Section::events() const
 {
     d->prepareIfNeeded();
     d->verifyValid();
@@ -775,24 +900,24 @@ WallEdge::WallSection::Events const &WallEdge::WallSection::events() const
     return *d->events;
 }
 
-WallEdge::Event const &WallEdge::WallSection::at(EventIndex index) const
+WallEdge::Event const &WallEdge::Section::at(EventIndex index) const
 {
     return *events().at(index);
 }
 
-bool WallEdge::WallSection::isValid() const
+bool WallEdge::Section::isValid() const
 {
     d->prepareIfNeeded();
     return d->top.z() > d->bottom.z();
 }
 
-WallEdge::Event const &WallEdge::WallSection::first() const
+WallEdge::Event const &WallEdge::Section::first() const
 {
     d->prepareIfNeeded();
     return d->bottom;
 }
 
-WallEdge::Event const &WallEdge::WallSection::last() const
+WallEdge::Event const &WallEdge::Section::last() const
 {
     d->prepareIfNeeded();
     return d->top;
@@ -803,23 +928,31 @@ DENG2_PIMPL_NOREF(WallEdge)
     HEdge &hedge;
     int side;
 
-    WallSection middle;
-    WallSection bottom;
-    WallSection top;
+    Section skyBottom;
+    Section skyTop;
+    Section wallMiddle;
+    Section wallBottom;
+    Section wallTop;
 
-    Instance(WallEdge &self, HEdge &hedge, int side, LineSide &lineSide)
-        : hedge (hedge)
-        , side  (side)
-        , middle(self, WallMiddle, WallSpec::fromLineSide(lineSide, LineSide::Middle))
-        , bottom(self, WallBottom, WallSpec::fromLineSide(lineSide, LineSide::Bottom))
-        , top   (self, WallTop,    WallSpec::fromLineSide(lineSide, LineSide::Top))
-    {}
+    Instance(WallEdge &self, HEdge &hedge, int side, LineSide &lineSide, float materialOffsetS)
+        : hedge     (hedge)
+        , side      (side)
+        , skyBottom (self, SkyBottom,  Vector2f(materialOffsetS, 0))
+        , skyTop    (self, SkyTop,     Vector2f(materialOffsetS, 0))
+        , wallMiddle(self, WallMiddle)
+        , wallBottom(self, WallBottom)
+        , wallTop   (self, WallTop)
+    {
+        wallMiddle.setSpec(WallSpec::fromLineSide(lineSide, LineSide::Middle));
+        wallBottom.setSpec(WallSpec::fromLineSide(lineSide, LineSide::Bottom));
+        wallTop   .setSpec(WallSpec::fromLineSide(lineSide, LineSide::Top));
+    }
 };
 
-WallEdge::WallEdge(HEdge &hedge, int side)
+WallEdge::WallEdge(HEdge &hedge, int side, float materialOffsetS)
 {
     LineSide &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
-    d.reset(new Instance(*this, hedge, side, lineSide));
+    d.reset(new Instance(*this, hedge, side, lineSide, materialOffsetS));
 }
 
 Vector2d const &WallEdge::origin() const
@@ -848,13 +981,15 @@ int WallEdge::side() const
     return d->side;
 }
 
-WallEdge::WallSection &WallEdge::section(SectionId id)
+WallEdge::Section &WallEdge::section(SectionId id)
 {
     switch(id)
     {
-    case WallMiddle: return d->middle;
-    case WallBottom: return d->bottom;
-    case WallTop:    return d->top;
+    case SkyTop:     return d->skyTop;
+    case SkyBottom:  return d->skyBottom;
+    case WallMiddle: return d->wallMiddle;
+    case WallBottom: return d->wallBottom;
+    case WallTop:    return d->wallTop;
     }
     /// @throw UnknownSectionError We do not know this section.
     throw UnknownSectionError("WallEdge::section", "Invalid id " + String::number(id));
@@ -870,5 +1005,5 @@ WallEdge::SectionId WallEdge::sectionIdFromLineSideSection(int section) //static
     default: break;
     }
     /// @throw UnknownSectionError We do not know this section.
-    throw UnknownSectionError("WallEdge::sectionIdFromLineSideSection", "Unknown line side section " + String::number(section));
+    throw UnknownSectionError("WallEdge::sectionIdFromLineSideSection", "Unknown section " + String::number(section));
 }
