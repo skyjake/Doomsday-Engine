@@ -46,7 +46,7 @@ enum {
  * Basic types.
  */
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) || _MSC_VER >= 1800
 #  include <stdint.h> // use C99 standard header (MSVC doesn't have C99)
 #else
 /* MSVC must define them ouselves.

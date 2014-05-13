@@ -23,6 +23,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef WIN32
+#  pragma warning (disable:4100) // lots of unused arguments
+#endif
+
 #define DENG_NO_API_MACROS_PLAYER
 
 #include <ctype.h>
