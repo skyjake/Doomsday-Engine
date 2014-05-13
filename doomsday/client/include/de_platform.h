@@ -38,7 +38,9 @@
 #  include <QIODevice>
 #  include <QFile>
 #  include <QTemporaryFile>
-#  include <QAbstractFileEngine>
+#  ifndef DENG2_QT_5_0_OR_NEWER
+#    include <QAbstractFileEngine>
+#  endif
 #endif
 
 #define WIN32_LEAN_AND_MEAN
