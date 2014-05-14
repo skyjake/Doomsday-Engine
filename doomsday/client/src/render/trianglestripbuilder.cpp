@@ -1,4 +1,4 @@
-/** @file render/trianglestripbuilder.cpp Triangle Strip Geometry Builder.
+/** @file trianglestripbuilder.cpp  Triangle Strip Geometry Builder.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,9 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QScopedPointer>
-
 #include "render/trianglestripbuilder.h"
+#include <QScopedPointer>
 
 namespace de {
 

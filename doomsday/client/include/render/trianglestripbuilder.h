@@ -1,4 +1,4 @@
-/** @file render/trianglestripbuilder.h Triangle Strip Geometry Builder.
+/** @file trianglestripbuilder.h  Triangle Strip Geometry Builder.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -21,81 +21,11 @@
 #define DENG_RENDER_TRIANGLE_STRIP_BUILDER
 
 #include <QVarLengthArray> /// @todo Remove me
-
 #include <de/libcore.h>
 #include <de/Vector>
+#include "IEdge"
 
 namespace de {
-
-/**
- * Abstract interface for a component that can be interpreted as an "edge"
- * geometry.
- *
- * @ingroup math
- */
-class IEdge
-{
-public:
-    class IEvent
-    {
-    public:
-        virtual ~IEvent() {}
-
-        virtual bool operator < (IEvent const &other) const {
-            return distance() < other.distance();
-        }
-
-        virtual double distance() const = 0;
-    };
-
-public:
-    virtual ~IEdge() {}
-
-    virtual bool isValid() const = 0;
-
-    virtual IEvent const &first() const = 0;
-
-    virtual IEvent const &last() const = 0;
-};
-
-} // namespace de
-
-namespace de {
-
-/**
- * @ingroup render
- */
-class AbstractEdge : public IEdge
-{
-public:
-    typedef int EventIndex;
-
-    /// Special identifier used to mark an invalid event index.
-    enum { InvalidIndex = -1 };
-
-    class Event : public IEvent
-    {
-    public:
-        virtual ~Event() {}
-
-        virtual Vector3d origin() const = 0;
-
-        inline double x() const { return origin().x; }
-        inline double y() const { return origin().y; }
-        inline double z() const { return origin().z; }
-    };
-
-public:
-    virtual ~AbstractEdge() {}
-
-    virtual Event const &first() const = 0;
-
-    virtual Event const &last() const = 0;
-
-    virtual Vector2f materialOrigin() const { return Vector2f(); }
-
-    virtual Vector3f normal() const { return Vector3f(); }
-};
 
 typedef QVarLengthArray<Vector3f, 24> PositionBuffer;
 typedef QVarLengthArray<Vector2f, 24> TexCoordBuffer;

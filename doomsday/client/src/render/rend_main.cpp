@@ -58,7 +58,6 @@
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
-#include "WallSpec"
 #include "render/rend_main.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"

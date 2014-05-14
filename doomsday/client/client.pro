@@ -141,6 +141,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/HEdge \
     include/HueCircle \
     include/HueCircleVisual \
+    include/IEdge \
     include/IHPlane \
     include/Interceptor \
     include/LightDecoration \
@@ -174,7 +175,6 @@ DENG_CONVENIENCE_HEADERS += \
     include/TriangleStripBuilder \
     include/Vertex \
     include/WallEdge \
-    include/WallSpec \
     include/WidgetActions
 
 # Private headers.
@@ -279,6 +279,7 @@ DENG_HEADERS += \
     include/render/fx/postprocessing.h \
     include/render/fx/vignette.h \
     include/render/huecirclevisual.h \
+    include/render/iedge.h \
     include/render/ilightsource.h \
     include/render/lightdecoration.h \
     include/render/lightgrid.h \
@@ -309,7 +310,6 @@ DENG_HEADERS += \
     include/render/vlight.h \
     include/render/vr.h \
     include/render/walledge.h \
-    include/render/wallspec.h \
     include/resource/abstractfont.h \
     include/resource/animgroup.h \
     include/resource/bitmapfont.h \
@@ -625,7 +625,6 @@ SOURCES += \
     src/render/vlight.cpp \
     src/render/vr.cpp \
     src/render/walledge.cpp \
-    src/render/wallspec.cpp \
     src/resource/abstractfont.cpp \
     src/resource/animgroup.cpp \
     src/resource/api_material.cpp \

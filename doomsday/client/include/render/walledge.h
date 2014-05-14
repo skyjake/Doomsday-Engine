@@ -20,17 +20,77 @@
 #ifndef DENG_CLIENT_RENDER_WALLEDGE
 #define DENG_CLIENT_RENDER_WALLEDGE
 
+#include <QFlags>
 #include <QList>
 #include <de/Error>
 #include <de/Vector>
 #include "Line"
-#include "TriangleStripBuilder" /// @todo remove me
+#include "IEdge"
 #include "IHPlane"
 
 namespace de {
 
 class HEdge;
-struct WallSpec;
+
+/**
+ * Wall section specification. The members are public for convenient access.
+ */
+struct WallSpec
+{
+    enum Flag
+    {
+        /// Force the geometry to be opaque, irrespective of material opacity.
+        ForceOpaque           = 0x001,
+
+        /// Fade out the geometry the closer it is to the viewer.
+        NearFade              = 0x002,
+
+        /**
+         * Clip the geometry if the neighbor plane surface relevant for the
+         * specified section (i.e., the floor if @c Side::Bottom or ceiling if
+         * @c Side::Top) has a sky-masked material bound to it.
+         */
+        SkyClip               = 0x004,
+
+        /// Sort the dynamic light projections by descending luminosity.
+        SortDynLights         = 0x008,
+
+        /// Do not generate geometry for dynamic lights.
+        NoDynLights           = 0x010,
+
+        /// Do not generate geometry for dynamic (mobj) shadows.
+        NoDynShadows          = 0x020,
+
+        /// Do not generate geometry for faked radiosity.
+        NoFakeRadio           = 0x040,
+
+        /// Do not apply angle based light level deltas.
+        NoLightDeltas         = 0x080,
+
+        /// Do not intercept edges with neighboring geometries.
+        NoEdgeDivisions       = 0x100,
+
+        /// Do not smooth edge normals.
+        NoEdgeNormalSmoothing = 0x200,
+
+        DefaultFlags = ForceOpaque | SkyClip
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    /// Specification flags.
+    Flags flags;
+
+    WallSpec(Flags flags = DefaultFlags) : flags(flags) {}
+
+    /**
+     * Construct a wall geometry specification appropriate for the specified
+     * @a side and @a section of a Line::Side considering the current map renderer
+     * configuration.
+     */
+    static WallSpec fromLineSide(LineSide const &side, int section);
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
 
 /**
  * Helper/utility class intended to simplify the process of generating sections

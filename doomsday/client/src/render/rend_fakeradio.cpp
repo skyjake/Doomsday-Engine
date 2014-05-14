@@ -33,7 +33,6 @@
 #include "ConvexSubspace"
 #include "SectorCluster"
 #include "WallEdge"
-#include "WallSpec"
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/lineowner.h"
