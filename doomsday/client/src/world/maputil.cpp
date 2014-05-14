@@ -107,7 +107,7 @@ lineopening_s &lineopening_s::operator = (lineopening_s const &other)
  *
  * @todo fixme: Should use the visual plane heights of sector clusters.
  */
-static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = 0, coord_t *retTop = 0)
+coord_t R_VisOpenRange(LineSide const &side, coord_t *retBottom, coord_t *retTop)
 {
     Sector const *frontSec = side.sectorPtr();
     Sector const *backSec  = side.back().sectorPtr();
@@ -136,54 +136,6 @@ static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = 0, coord_
     if(retTop)    *retTop    = top;
 
     return top - bottom;
-}
-
-/// @todo fixme: Should use the visual plane heights of sector clusters.
-bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
-{
-    if(!side.hasSections()) return false;
-    if(!side.hasSector()) return false;
-    if(side.line().isSelfReferencing()) return false; // Never.
-
-    if(side.considerOneSided()) return true;
-
-    Sector const &frontSec = side.sector();
-    Sector const &backSec  = side.back().sector();
-
-    if(backSec.floor().heightSmoothed()   >= backSec.ceiling().heightSmoothed())  return true;
-    if(backSec.ceiling().heightSmoothed() <= frontSec.floor().heightSmoothed())   return true;
-    if(backSec.floor().heightSmoothed()   >= frontSec.ceiling().heightSmoothed()) return true;
-
-    // Perhaps a middle material completely covers the opening?
-    if(side.middle().hasMaterial())
-    {
-        // Ensure we have up to date info about the material.
-        MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
-
-        if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
-        {
-            // Stretched middles always cover the opening.
-            if(side.isFlagged(SDF_MIDDLE_STRETCH))
-                return true;
-
-            if(side.leftHEdge()) // possibility of degenerate BSP leaf
-            {
-                coord_t openRange, openBottom, openTop;
-                openRange = visOpenRange(side, &openBottom, &openTop);
-                if(ms.height() >= openRange)
-                {
-                    // Possibly; check the placement.
-                    WallEdge left(*side.leftHEdge(), Line::From);
-                    WallEdgeSection &sectionLeft = left.wallMiddle();
-
-                    return (sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z()
-                            && sectionLeft.top().z() >= openTop && sectionLeft.bottom().z() <= openBottom);
-                }
-            }
-        }
-    }
-
-    return false;
 }
 
 Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
@@ -242,7 +194,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
         if(side.leftHEdge()) // possibility of degenerate BSP leaf
         {
             coord_t openRange, openBottom, openTop;
-            openRange = visOpenRange(side, &openBottom, &openTop);
+            openRange = R_VisOpenRange(side, &openBottom, &openTop);
             if(ms.height() >= openRange)
             {
                 // Possibly; check the placement.

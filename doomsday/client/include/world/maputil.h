@@ -27,15 +27,8 @@
 class Sector;
 class LineOwner;
 
-/**
- * @param side  LineSide instance.
- * @param ignoreOpacity  @c true= do not consider Material opacity.
- *
- * @return  @c true if this side is considered "closed" (i.e., there is no opening
- * through which the relative back Sector can be seen). Tests consider all Planes
- * which interface with this and the "middle" Material used on the "this" side.
- */
-bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity = true);
+/// @deprecated
+coord_t R_VisOpenRange(LineSide const &side, coord_t *retBottom = 0, coord_t *retTop = 0);
 
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the

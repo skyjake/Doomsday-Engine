@@ -22,6 +22,7 @@
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Face"
+#include "MaterialSnapshot"
 #include "Plane"
 #include "Sector"
 #include "SectorCluster"
@@ -197,6 +198,64 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
     }
 
     /**
+     * @param side  LineSide instance.
+     * @param ignoreOpacity  @c true= do not consider Material opacity.
+     *
+     * @return  @c true if this side is considered "closed" (i.e., there is no opening
+     * through which the relative back Sector can be seen). Tests consider all Planes
+     * which interface with this and the "middle" Material used on the "this" side.
+     *
+     * @todo fixme: Should use the visual plane heights of sector clusters.
+     */
+    bool sideBackClosed(LineSide const &side, bool ignoreOpacity = true) const
+    {
+        if(!side.hasSections()) return false;
+        if(!side.hasSector()) return false;
+        if(side.line().isSelfReferencing()) return false; // Never.
+
+        if(side.considerOneSided()) return true;
+
+        Sector const &frontSec = side.sector();
+        Sector const &backSec  = side.back().sector();
+
+        if(backSec.floor().heightSmoothed()   >= backSec.ceiling().heightSmoothed())  return true;
+        if(backSec.ceiling().heightSmoothed() <= frontSec.floor().heightSmoothed())   return true;
+        if(backSec.floor().heightSmoothed()   >= frontSec.ceiling().heightSmoothed()) return true;
+
+        // Perhaps a middle material completely covers the opening?
+        if(side.middle().hasMaterial())
+        {
+            // Ensure we have up to date info about the material.
+            MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+
+            if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
+            {
+                // Stretched middles always cover the opening.
+                if(side.isFlagged(SDF_MIDDLE_STRETCH))
+                    return true;
+
+                if(side.leftHEdge()) // possibility of degenerate BSP leaf
+                {
+                    coord_t openRange, openBottom, openTop;
+                    openRange = R_VisOpenRange(side, &openBottom, &openTop);
+                    if(ms.height() >= openRange)
+                    {
+                        // Possibly; check the placement.
+                        WallEdge leftEdge(*side.leftHEdge(), Line::From);
+                        WallEdgeSection &leftSection = leftEdge.wallMiddle();
+
+                        return (leftSection.isValid() && //sectionLeft.top().z() > sectionLeft.bottom().z()
+                                leftSection.top   ().z() >= openTop &&
+                                leftSection.bottom().z() <= openBottom);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Determines whether a sky fix is actually necessary.
      */
     bool wallSectionNeedsSkyFix() const
@@ -223,7 +282,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
             return false;
 
         LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
-        bool const hasClosedBack = R_SideBackClosed(lineSide);
+        bool const hasClosedBack = sideBackClosed(lineSide);
 
         if(!devRendSkyMode)
         {
@@ -792,7 +851,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
         LineOwner const *farVertOwner = lineSide().line().vertexOwner(lineSide().sideId() ^ owner.side());
         Line *neighbor;
-        if(R_SideBackClosed(lineSide()))
+        if(sideBackClosed(lineSide()))
         {
             neighbor = R_FindSolidLineNeighbor(lineSide().sectorPtr(), &lineSide().line(),
                                                farVertOwner, owner.side(), &diff);
