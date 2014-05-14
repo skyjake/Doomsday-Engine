@@ -97,25 +97,22 @@ public:
         enum Flag
         {
             /// Force the geometry to be opaque, irrespective of material opacity.
-            ForceOpaque           = 0x01,
-
-            /// Fade out the geometry the closer it is to the viewer.
-            NearFade              = 0x02,
+            ForceOpaque    = 0x01,
 
             /// Sort the dynamic light projections by descending luminosity.
-            SortDynLights         = 0x04,
+            SortDynLights  = 0x02,
 
             /// Do not project dynamic lights for the geometry.
-            NoDynLights           = 0x08,
+            NoDynLights    = 0x04,
 
             /// Do not project dynamic (mobj) shadows for the geometry.
-            NoDynShadows          = 0x10,
+            NoDynShadows   = 0x08,
 
             /// Do not generate faked radiosity for the geometry.
-            NoFakeRadio           = 0x20,
+            NoFakeRadio    = 0x10,
 
             /// Do not apply angle based light level deltas.
-            NoLightDeltas         = 0x40
+            NoLightDeltas  = 0x20
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 

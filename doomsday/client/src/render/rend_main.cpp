@@ -1733,15 +1733,25 @@ static void projectDynamics(Surface const &surface, float glowStrength,
  *
  * @return  @c true= fading was applied (see above note), otherwise @c false.
  */
-static bool nearFadeOpacity(WallEdgeSection const &sectionLeft,
-    WallEdgeSection const &sectionRight, float &opacity)
+static bool nearFadeOpacity(WallEdgeSection const &leftSection,
+    WallEdgeSection const &rightSection, float &opacity)
 {
-    if(vOrigin.y < sectionLeft.bottom().z() || vOrigin.y > sectionRight.top().z())
+    // Only middle wall section for a two-sided line is considered for near-fading.
+    if(leftSection.id() != WallEdge::WallMiddle) return false;
+
+    LineSide const &side = leftSection.edge().lineSide();
+    if(side.considerOneSided()) return false;
+
+    // Blocking lines only receive a near-fade when the viewplayer is a camera.
+    if(side.line().isFlagged(DDLF_BLOCKING) &&
+       !(viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)))
         return false;
 
-    mobj_t const *mo         = viewPlayer->shared.mo;
-    Line const &line         = sectionLeft.edge().lineSide().line();
+    if(vOrigin.y < leftSection.bottom().z() || vOrigin.y > rightSection.top().z())
+        return false;
 
+    Line const &line         = side.line();
+    mobj_t const *mo         = viewPlayer->shared.mo;
     coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
     vec2d_t result;
@@ -1837,11 +1847,8 @@ static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &righ
         return;
 
     // Apply a fade out when the viewer is near to this geometry?
-    bool didNearFade = false;
-    if(leftSection.flags().testFlag(WallEdgeSection::NearFade))
-    {
-        didNearFade = nearFadeOpacity(leftSection, rightSection, opacity);
-    }
+    bool const didNearFade = nearFadeOpacity(leftSection, rightSection, opacity);
+
 
     bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
     bool const twoSidedMiddle  = (section == LineSide::Middle && !side.considerOneSided());

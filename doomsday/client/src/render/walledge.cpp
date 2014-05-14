@@ -1051,10 +1051,6 @@ DENG2_PIMPL_NOREF(WallEdge)
 
         if(isTwoSidedMiddle)
         {
-            if(viewPlayer && ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-                              !side.line().isFlagged(DDLF_BLOCKING)))
-                flags |= Section::NearFade;
-
             flags |= Section::SortDynLights;
         }
 
