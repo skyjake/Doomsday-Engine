@@ -151,7 +151,8 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
     bool needPrepare;
 
-    Instance(Public *i, WallEdge &owner, SectionId id, Vector2f const &materialOrigin, Flags const &flags)
+    Instance(Public *i, WallEdge &owner, SectionId id, Flags const &flags,
+             Vector2f const &materialOrigin)
         : Base            (i)
         , owner           (owner)
         , id              (id)
@@ -181,8 +182,18 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         case WallMiddle: return lineSide().middle();
         case WallBottom: return lineSide().bottom();
         case WallTop:    return lineSide().top();
+        default: break;
         }
-        throw Error("lineSideSurface", "Invalid id");
+        throw Error("WallEdge::Section::lineSideSurface", "No implicit surface for section '" + String::number(id) + "'");
+    }
+
+    void verifyValid() const
+    {
+        if(!self.isValid())
+        {
+            /// @throw InvalidError  Invalid range geometry was specified.
+            throw InvalidError("WallEdge::Section::verifyValid", "Range geometry is not valid (top < bottom)");
+        }
     }
 
     /**
@@ -489,6 +500,9 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
                         }
                     }
                     break; }
+
+                default:
+                    DENG2_ASSERT(!"WallEdge::Section::prepareIfNeeded: Invalid section id");
                 }
             }
             materialOrigin += Vector2f(owner.lineSideOffset(), 0);
@@ -496,15 +510,6 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
         pOrigin    = Vector3d(owner.origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
-    }
-
-    void verifyValid() const
-    {
-        if(!self.isValid())
-        {
-            /// @throw InvalidError  Invalid range geometry was specified.
-            throw InvalidError("WallEdge::WallSection::verifyValid", "Range geometry is not valid (top < bottom)");
-        }
     }
 
     EventIndex toEventIndex(double distance)
@@ -598,8 +603,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
             return *(*events)[index];
         }
         /// @throw UnknownInterceptError The specified intercept index is not valid.
-        throw UnknownInterceptError("WallEdge::WallSection::at", QString("Index '%1' does not map to a known intercept (count: %2)")
-                                                                     .arg(index).arg(interceptCount()));
+        throw UnknownInterceptError("WallEdge::Section::at", QString("Index '%1' does not map to a known intercept (count: %2)").arg(index).arg(interceptCount()));
     }
 
     // Implements IHPlane
@@ -610,7 +614,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         return events->count();
     }
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     void printIntercepts() const
     {
         DENG2_ASSERT(events != 0);
@@ -639,7 +643,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 #endif
     }
 
-    inline double distanceTo(coord_t worldHeight) const
+    inline coord_t distanceTo(coord_t worldHeight) const
     {
         return (worldHeight - bottom.z()) / (top.z() - bottom.z());
     }
@@ -718,9 +722,6 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
      */
     bool shouldInterceptNeighbors()
     {
-        if(id == SkyBottom || id == SkyTop)
-            return false;
-
         if(flags & NoEdgeDivisions)
             return false;
 
@@ -730,10 +731,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         // Cluster-internal edges won't be intercepted. This is because such an
         // edge only ever produces middle wall sections, which, do not support
         // divisions in any case (they become vissprites).
-        if(SectorCluster::isInternalEdge(&owner.hedge()))
-            return false;
-
-        return true;
+        return !SectorCluster::isInternalEdge(&owner.hedge());
     }
 
     void prepareEventsIfNeeded()
@@ -841,7 +839,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
         {
             // Average normals.
-            normal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
+            normal = (surface.normal() + blendSurface->normal()) / 2;
         }
         else
         {
@@ -850,9 +848,9 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
     }
 };
 
-WallEdge::Section::Section(WallEdge &owner, SectionId id, Vector2f const &materialOrigin,
-    Flags const &flags)
-    : d(new Instance(this, owner, id, materialOrigin, flags))
+WallEdge::Section::Section(WallEdge &owner, SectionId id, Flags const &flags,
+    Vector2f const &materialOrigin)
+    : d(new Instance(this, owner, id, flags, materialOrigin))
 {}
 
 WallEdge &WallEdge::Section::edge() const
@@ -960,14 +958,14 @@ DENG2_PIMPL_NOREF(WallEdge)
     Section wallBottom;
     Section wallTop;
 
-    Instance(WallEdge &self, HEdge &hedge, int side, LineSide &lineSide, float materialOffsetS)
+    Instance(WallEdge &self, HEdge &hedge, int side, LineSide &lineSide, Vector2f const &materialOffset)
         : hedge     (hedge)
         , side      (side)
-        , skyBottom (self, SkyBottom,  Vector2f(materialOffsetS, 0), skySectionFlags)
-        , skyTop    (self, SkyTop,     Vector2f(materialOffsetS, 0), skySectionFlags)
-        , wallMiddle(self, WallMiddle, Vector2f(),                   wallSectionFlags(lineSide, LineSide::Middle))
-        , wallBottom(self, WallBottom, Vector2f(),                   wallSectionFlags(lineSide, LineSide::Bottom))
-        , wallTop   (self, WallTop,    Vector2f(),                   wallSectionFlags(lineSide, LineSide::Top))
+        , skyBottom (self, SkyBottom,  skySectionFlags, materialOffset)
+        , skyTop    (self, SkyTop,     skySectionFlags, materialOffset)
+        , wallMiddle(self, WallMiddle, wallSectionFlags(lineSide, LineSide::Middle))
+        , wallBottom(self, WallBottom, wallSectionFlags(lineSide, LineSide::Bottom))
+        , wallTop   (self, WallTop,    wallSectionFlags(lineSide, LineSide::Top))
     {}
 
     /**
@@ -1017,8 +1015,9 @@ DENG2_PIMPL_NOREF(WallEdge)
 
 WallEdge::WallEdge(HEdge &hedge, int side, float materialOffsetS)
 {
-    LineSide &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
-    d.reset(new Instance(*this, hedge, side, lineSide, materialOffsetS));
+    d.reset(new Instance(*this, hedge, side,
+                         hedge.mapElementAs<LineSideSegment>().lineSide(),
+                         Vector2f(materialOffsetS, 0)));
 }
 
 Vector2d const &WallEdge::origin() const

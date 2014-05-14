@@ -102,32 +102,29 @@ public:
             /// Fade out the geometry the closer it is to the viewer.
             NearFade              = 0x002,
 
-            /**
-             * Clip the geometry if the neighbor plane surface relevant for the
-             * specified section (i.e., the floor if @c Side::Bottom or ceiling if
-             * @c Side::Top) has a sky-masked material bound to it.
-             */
+            /// Clip the geometry if the neighbor plane surface relevant for the
+            /// section has a sky-masked material bound to it.
             SkyClip               = 0x004,
 
             /// Sort the dynamic light projections by descending luminosity.
             SortDynLights         = 0x008,
 
-            /// Do not generate geometry for dynamic lights.
+            /// Do not project dynamic lights for the geometry.
             NoDynLights           = 0x010,
 
-            /// Do not generate geometry for dynamic (mobj) shadows.
+            /// Do not project dynamic (mobj) shadows for the geometry.
             NoDynShadows          = 0x020,
 
-            /// Do not generate geometry for faked radiosity.
+            /// Do not generate faked radiosity for the geometry.
             NoFakeRadio           = 0x040,
 
             /// Do not apply angle based light level deltas.
             NoLightDeltas         = 0x080,
 
-            /// Do not intercept edges with neighboring geometries.
+            /// Do not intercept with the events of neighbor edges.
             NoEdgeDivisions       = 0x100,
 
-            /// Do not smooth edge normals.
+            /// Do not smooth the edge normal.
             NoEdgeNormalSmoothing = 0x200
         };
         Q_DECLARE_FLAGS(Flags, Flag)
@@ -142,6 +139,10 @@ public:
          * Returns the owning WallEdge for the section.
          */
         WallEdge &edge() const;
+
+        /**
+         * Returns the identifier for the section.
+         */
         SectionId id() const;
 
         /**
@@ -188,8 +189,8 @@ public:
         friend class WallEdge;
 
     private:
-        Section(WallEdge &owner, SectionId id, Vector2f const &materialOrigin = Vector2f(),
-                Flags const &flags = 0);
+        Section(WallEdge &owner, SectionId id, Flags const &flags = 0,
+                Vector2f const &materialOrigin = Vector2f());
 
         DENG2_PRIVATE(d)
     };
