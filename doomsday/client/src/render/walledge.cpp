@@ -72,9 +72,9 @@ namespace internal
     }
 
     /**
-     * Should angle based light level deltas be applied?
+     * Determines whether Line angle derived light level deltas will be applied.
      */
-    static bool useWallSectionLightLevelDeltas(LineSide const &side, int section)
+    static bool useLineAngleLightLevelDeltas(LineSide const &side, int section)
     {
         // Disabled?
         if(rendLightWallAngle <= 0)
@@ -357,7 +357,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
                         hi = fceil->heightSmoothed();
 
-                        if(flags.testFlag(SkyClip) &&
+                        if(!devRendSkyMode && // Suppress clipping in debug mode.
                            fceil->surface().hasSkyMaskedMaterial() &&
                            bceil->surface().hasSkyMaskedMaterial())
                         {
@@ -399,7 +399,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
                         hi = t;
 
-                        if(flags.testFlag(SkyClip) &&
+                        if(!devRendSkyMode && // Suppress clipping in debug mode.
                            ffloor->surface().hasSkyMaskedMaterial() &&
                            bfloor->surface().hasSkyMaskedMaterial())
                         {
@@ -722,8 +722,9 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
      */
     bool shouldInterceptNeighbors()
     {
-        if(flags & NoEdgeDivisions)
-            return false;
+        if(id == SkyBottom || id == SkyTop) return false;
+        if(owner.lineSide().line().definesPolyobj()) return false;
+        if(id == WallMiddle && !owner.lineSide().considerOneSided()) return false;
 
         if(de::fequal(top.z(), bottom.z()))
             return false;
@@ -781,8 +782,9 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         diff = 0;
 
         // Are we not blending?
-        if(flags.testFlag(NoEdgeNormalSmoothing))
-            return 0;
+        if(id == SkyBottom || id == SkyTop) return 0;
+        // We can skip if light level delta smoothing won't be done.
+        if(flags.testFlag(NoLightDeltas)) return 0;
 
         // Polyobj lines have no owner rings.
         if(lineSide().line().definesPolyobj())
@@ -944,8 +946,7 @@ WallEdge::Event const &WallEdge::Section::last() const
 
 static WallEdge::Section::Flags const skySectionFlags =
     WallEdge::Section::NoDynLights     | WallEdge::Section::NoDynShadows |
-    WallEdge::Section::NoFakeRadio     | WallEdge::Section::NoLightDeltas |
-    WallEdge::Section::NoEdgeDivisions | WallEdge::Section::NoEdgeNormalSmoothing;
+    WallEdge::Section::NoFakeRadio     | WallEdge::Section::NoLightDeltas;
 
 DENG2_PIMPL_NOREF(WallEdge)
 {
@@ -977,12 +978,11 @@ DENG2_PIMPL_NOREF(WallEdge)
     {
         bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
 
-        Section::Flags flags = Section::ForceOpaque | Section::SkyClip;
+        Section::Flags flags = Section::ForceOpaque;
 
         if(side.line().definesPolyobj() || isTwoSidedMiddle)
         {
             flags &= ~Section::ForceOpaque;
-            flags |= Section::NoEdgeDivisions;
         }
 
         if(isTwoSidedMiddle)
@@ -994,20 +994,11 @@ DENG2_PIMPL_NOREF(WallEdge)
             flags |= Section::SortDynLights;
         }
 
-        // Suppress the sky clipping in debug mode.
-        if(devRendSkyMode)
-            flags &= ~Section::SkyClip;
-
         if(side.line().definesPolyobj())
             flags |= Section::NoFakeRadio;
 
-        bool useLightLevelDeltas = useWallSectionLightLevelDeltas(side, section);
-        if(!useLightLevelDeltas)
+        if(!useLineAngleLightLevelDeltas(side, section))
             flags |= Section::NoLightDeltas;
-
-        // We can skip normal smoothing if light level delta smoothing won't be done.
-        if(!useLightLevelDeltas || !rendLightWallAngleSmooth)
-            flags |= Section::NoEdgeNormalSmoothing;
 
         return flags;
     }
@@ -1050,8 +1041,8 @@ WallEdge::Section &WallEdge::section(SectionId id)
 {
     switch(id)
     {
-    case SkyTop:     return d->skyTop;
     case SkyBottom:  return d->skyBottom;
+    case SkyTop:     return d->skyTop;
     case WallMiddle: return d->wallMiddle;
     case WallBottom: return d->wallBottom;
     case WallTop:    return d->wallTop;

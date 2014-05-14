@@ -51,8 +51,8 @@ public:
 
     /// Logical section identifiers:
     enum SectionId {
-        SkyTop,
         SkyBottom,
+        SkyTop,
         WallMiddle,
         WallBottom,
         WallTop
@@ -97,35 +97,25 @@ public:
         enum Flag
         {
             /// Force the geometry to be opaque, irrespective of material opacity.
-            ForceOpaque           = 0x001,
+            ForceOpaque           = 0x01,
 
             /// Fade out the geometry the closer it is to the viewer.
-            NearFade              = 0x002,
-
-            /// Clip the geometry if the neighbor plane surface relevant for the
-            /// section has a sky-masked material bound to it.
-            SkyClip               = 0x004,
+            NearFade              = 0x02,
 
             /// Sort the dynamic light projections by descending luminosity.
-            SortDynLights         = 0x008,
+            SortDynLights         = 0x04,
 
             /// Do not project dynamic lights for the geometry.
-            NoDynLights           = 0x010,
+            NoDynLights           = 0x08,
 
             /// Do not project dynamic (mobj) shadows for the geometry.
-            NoDynShadows          = 0x020,
+            NoDynShadows          = 0x10,
 
             /// Do not generate faked radiosity for the geometry.
-            NoFakeRadio           = 0x040,
+            NoFakeRadio           = 0x20,
 
             /// Do not apply angle based light level deltas.
-            NoLightDeltas         = 0x080,
-
-            /// Do not intercept with the events of neighbor edges.
-            NoEdgeDivisions       = 0x100,
-
-            /// Do not smooth the edge normal.
-            NoEdgeNormalSmoothing = 0x200
+            NoLightDeltas         = 0x40
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 
