@@ -25,7 +25,7 @@
 #include <de/memory.h>
 #include <cstring>
 
-struct ded_count_s
+struct LIBDOOMSDAY_PUBLIC ded_count_s
 {
     int num;
     int max;
@@ -170,7 +170,7 @@ public:
         if(--count.num < count.max / 2)
         {
             count.max /= 2;
-            elements = M_Realloc(elements, sizeof(PODType) * count.max);
+            elements = (PODType *) M_Realloc(elements, sizeof(PODType) * count.max);
         }
     }
 

@@ -52,13 +52,21 @@ typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
 typedef char* ded_anystring_t;
 
-typedef struct ded_uri_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_uri_s {
     de::Uri *uri;
 
     void release() {
         delete uri;
     }
+    void reallocate() {
+        DED_DUP_URI(uri);
+    }
 } ded_uri_t;
+
+#ifdef _MSC_VER
+// MSVC needs some hand-holding.
+template struct LIBDOOMSDAY_PUBLIC DEDArray<ded_uri_t>;
+#endif
 
 // Embedded sound information.
 typedef struct ded_embsound_s {
@@ -67,7 +75,7 @@ typedef struct ded_embsound_s {
     float           volume;
 } ded_embsound_t;
 
-typedef struct ded_ptcstage_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_ptcstage_s {
     ded_flags_t     type;
     int             tics;
     float           variance; // Stage variance (time).
@@ -115,7 +123,7 @@ typedef struct {
     void release() {}
 } ded_flag_t;
 
-typedef struct ded_mobj_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_mobj_s {
     ded_mobjid_t    id;
     int             doomEdNum;
     ded_string_t    name;
@@ -143,7 +151,7 @@ typedef struct ded_mobj_s {
     void reallocate() {}
 } ded_mobj_t;
 
-typedef struct ded_state_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_state_s {
     ded_stateid_t   id; // ID of this state.
     ded_sprid_t     sprite;
     ded_flags_t     flags;
@@ -162,7 +170,7 @@ typedef struct ded_state_s {
     }
 } ded_state_t;
 
-typedef struct ded_light_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_light_s {
     ded_stateid_t   state;
     char            uniqueMapID[64];
     float           offset[3]; /* Origin offset in world coords
@@ -189,7 +197,7 @@ typedef struct ded_light_s {
     }
 } ded_light_t;
 
-struct ded_submodel_t
+struct LIBDOOMSDAY_PUBLIC ded_submodel_t
 {
     de::Uri*        filename;
     de::Uri*        skinFilename; // Optional; override model's skin.
@@ -230,7 +238,7 @@ struct ded_submodel_t
     }
 };
 
-struct ded_model_t
+struct LIBDOOMSDAY_PUBLIC ded_model_t
 {
     ded_stringid_t  id; // Optional identifier for the definition.
     ded_stateid_t   state;
@@ -300,7 +308,7 @@ struct ded_model_t
     }
 };
 
-typedef struct ded_sound_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
     ded_soundid_t   id; // ID of this sound, refered to by others.
     ded_string_t    name; // A tag name for the sound.
     ded_string_t    lumpName; // Actual lump name of the sound ("DS" not included).
@@ -321,7 +329,7 @@ typedef struct ded_sound_s {
     }
 } ded_sound_t;
 
-typedef struct ded_music_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_music_s {
     ded_musicid_t   id; // ID of this piece of music.
     ded_string_t    lumpName; // Lump name.
     de::Uri*        path; // External file (not a normal MUS file).
@@ -335,7 +343,7 @@ typedef struct ded_music_s {
     }
 } ded_music_t;
 
-typedef struct ded_skylayer_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_skylayer_s {
     ded_flags_t     flags;
     de::Uri*        material;
     float           offset;
@@ -349,7 +357,7 @@ typedef struct ded_skylayer_s {
     }
 } ded_skylayer_t;
 
-typedef struct ded_skymodel_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_skymodel_s {
     ded_stringid_t  id;
     int             layer; // Defaults to -1.
     float           frameInterval; // Seconds per frame.
@@ -378,7 +386,7 @@ typedef struct ded_skymodel_s {
 #define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
 #define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 
-typedef struct ded_sky_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
     ded_stringid_t  id;
     ded_flags_t     flags; // Flags.
     float           height;
@@ -413,7 +421,7 @@ typedef struct ded_sky_s {
 #define DEFAULT_FOG_COLOR_GREEN 138.0f/255
 #define DEFAULT_FOG_COLOR_BLUE  138.0f/255
 
-typedef struct ded_mapinfo_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
     de::Uri*        uri; // ID of the map (e.g. E2M3 or MAP21).
     ded_string_t    name; // Name of the map.
     ded_string_t    author; // Author of the map.
@@ -483,7 +491,7 @@ typedef struct {
     }
 } ded_finale_t;
 
-typedef struct ded_linetype_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_linetype_s {
     int             id;
     char            comment[64];
     ded_flags_t     flags[3];
@@ -527,7 +535,7 @@ typedef struct ded_linetype_s {
     }
 } ded_linetype_t;
 
-typedef struct ded_sectortype_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_sectortype_s {
     int             id;
     char            comment[64];
     ded_flags_t     flags;
@@ -562,7 +570,7 @@ typedef struct ded_sectortype_s {
     void reallocate() {}
 } ded_sectortype_t;
 
-typedef struct ded_detail_stage_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_detail_stage_s {
     int             tics;
     float           variance;
     de::Uri *       texture; // The file/lump with the detail texture.
@@ -583,7 +591,7 @@ typedef struct ded_detail_stage_s {
 #define DTLF_PWAD           0x2 // Can use if from PWAD.
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
-typedef struct ded_detailtexture_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_detailtexture_s {
     de::Uri        *material1;
     de::Uri        *material2;
     ded_flags_t     flags;
@@ -602,7 +610,7 @@ typedef struct ded_detailtexture_s {
     }
 } ded_detailtexture_t;
 
-typedef struct ded_ptcgen_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_ptcgen_s {
     struct ded_ptcgen_s* stateNext; // List of generators for a state.
     ded_stateid_t   state; // Triggered by this state (if mobj-gen).
     de::Uri*        material;
@@ -651,7 +659,7 @@ typedef struct ded_ptcgen_s {
     }
 } ded_ptcgen_t;
 
-typedef struct ded_shine_stage_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_shine_stage_s {
     int             tics;
     float           variance;
     de::Uri        *texture;
@@ -677,7 +685,7 @@ typedef struct ded_shine_stage_s {
 #define REFF_PWAD           0x2 // Can use if from PWAD.
 #define REFF_EXTERNAL       0x4 // Can use if from external resource.
 
-typedef struct ded_reflection_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_reflection_s {
     de::Uri        *material;
     ded_flags_t     flags;
     // There is only one stage.
@@ -693,7 +701,7 @@ typedef struct ded_reflection_s {
     }
 } ded_reflection_t;
 
-typedef struct ded_group_member_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_group_member_s {
     de::Uri*        material;
     int             tics;
     int             randomTics;
@@ -701,9 +709,12 @@ typedef struct ded_group_member_s {
     void release() {
         delete material;
     }
+    void reallocate() {
+        DED_DUP_URI(material);
+    }
 } ded_group_member_t;
 
-typedef struct ded_group_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_group_s {
     ded_flags_t flags;
     DEDArray<ded_group_member_t> members;
 
@@ -712,7 +723,7 @@ typedef struct ded_group_s {
     }
 } ded_group_t;
 
-typedef struct ded_material_layer_stage_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_material_layer_stage_s {
     de::Uri*        texture;
     int             tics;
     float           variance; // Stage variance (time).
@@ -728,7 +739,7 @@ typedef struct ded_material_layer_stage_s {
     }
 } ded_material_layer_stage_t;
 
-typedef struct ded_material_layer_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_material_layer_s {
     DEDArray<ded_material_layer_stage_t> stages;
 
     void release() {
@@ -739,7 +750,7 @@ typedef struct ded_material_layer_s {
     }
 } ded_material_layer_t;
 
-typedef struct ded_decorlight_stage_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_stage_s {
     int tics;
     float variance; // Stage variance (time).
     float pos[2]; // Coordinates on the surface.
@@ -766,7 +777,7 @@ typedef struct ded_decorlight_stage_s {
     }
 } ded_decorlight_stage_t;
 
-typedef struct ded_material_decoration_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_material_decoration_s {
     int patternOffset[2];
     int patternSkip[2];
     DEDArray<ded_decorlight_stage_t> stages;
@@ -779,7 +790,7 @@ typedef struct ded_material_decoration_s {
     }
 } ded_material_decoration_t;
 
-typedef struct ded_material_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_material_s {
     de::Uri *uri;
     dd_bool autoGenerated;
     ded_flags_t flags;
@@ -809,7 +820,7 @@ typedef struct ded_material_s {
 } ded_material_t;
 
 // An oldschool material-linked decoration definition.
-typedef struct ded_decoration_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_decoration_s {
     int patternOffset[2];
     int patternSkip[2];
     // There is only one stage.
@@ -831,7 +842,7 @@ typedef struct ded_decoration_s {
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
 #define DCRF_EXTERNAL       0x4 // Can use if from external resource.
 
-typedef struct ded_decor_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_decor_s {
     de::Uri *material;
     ded_flags_t flags;
     ded_decoration_t lights[DED_DECOR_NUM_LIGHTS];
@@ -850,16 +861,19 @@ typedef struct ded_decor_s {
     }
 } ded_decor_t;
 
-typedef struct {
+typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_mappedcharacter_s {
     unsigned char   ch;
     de::Uri*        path;
 
     void release() {
         delete path;
     }
+    void reallocate() {
+        DED_DUP_URI(path);
+    }
 } ded_compositefont_mappedcharacter_t;
 
-typedef struct ded_compositefont_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_s {
     de::Uri*        uri;
     DEDArray<ded_compositefont_mappedcharacter_t> charMap;
 

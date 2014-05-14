@@ -55,6 +55,10 @@
 #include <de/memory.h>
 #include <de/vector1.h>
 
+#ifdef WIN32
+#  define stricmp _stricmp
+#endif
+
 using namespace de;
 
 #define MAX_RECUR_DEPTH     30

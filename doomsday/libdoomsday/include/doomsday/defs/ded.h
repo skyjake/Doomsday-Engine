@@ -28,7 +28,7 @@
 #include "dedtypes.h"
 
 // Version 6 does not require semicolons.
-#define DED_VERSION                 6
+#define DED_VERSION 6
 
 /**
  * The ded_t structure encapsulates all the data one definition file can contain. This is
@@ -190,13 +190,13 @@ int             DED_AddMobj(ded_t* ded, char const* idStr);
 int             DED_AddState(ded_t* ded, char const* id);
 int             DED_AddSprite(ded_t* ded, char const* name);
 int             DED_AddLight(ded_t* ded, char const* stateID);
-int             DED_AddMaterial(ded_t* ded, char const* uri);
-int             DED_AddMaterialLayerStage(ded_material_layer_t *ml);
+LIBDOOMSDAY_PUBLIC int DED_AddMaterial(ded_t* ded, char const* uri);
+LIBDOOMSDAY_PUBLIC int DED_AddMaterialLayerStage(ded_material_layer_t *ml);
 int             DED_AddMaterialDecorationStage(ded_material_decoration_t *li);
 int             DED_AddModel(ded_t* ded, char const* spr);
 int             DED_AddSky(ded_t* ded, char const* id);
 int             DED_AddSound(ded_t* ded, char const* id);
-int             DED_AddMusic(ded_t* ded, char const* id);
+LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);
 int             DED_AddMapInfo(ded_t* ded, char const* uri);
 int             DED_AddText(ded_t* ded, char const* id);
 int             DED_AddTextureEnv(ded_t* ded, char const* id);
