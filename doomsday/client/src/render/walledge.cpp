@@ -99,45 +99,6 @@ namespace internal
 using namespace de;
 using namespace internal;
 
-WallSpec WallSpec::fromLineSide(LineSide const &side, int section) // static
-{
-    bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
-
-    WallSpec spec;
-
-    if(side.line().definesPolyobj() || isTwoSidedMiddle)
-    {
-        spec.flags &= ~WallSpec::ForceOpaque;
-        spec.flags |= WallSpec::NoEdgeDivisions;
-    }
-
-    if(isTwoSidedMiddle)
-    {
-        if(viewPlayer && ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-                          !side.line().isFlagged(DDLF_BLOCKING)))
-            spec.flags |= WallSpec::NearFade;
-
-        spec.flags |= WallSpec::SortDynLights;
-    }
-
-    // Suppress the sky clipping in debug mode.
-    if(devRendSkyMode)
-        spec.flags &= ~WallSpec::SkyClip;
-
-    if(side.line().definesPolyobj())
-        spec.flags |= WallSpec::NoFakeRadio;
-
-    bool useLightLevelDeltas = useWallSectionLightLevelDeltas(side, section);
-    if(!useLightLevelDeltas)
-        spec.flags |= WallSpec::NoLightDeltas;
-
-    // We can skip normal smoothing if light level delta smoothing won't be done.
-    if(!useLightLevelDeltas || !rendLightWallAngleSmooth)
-        spec.flags |= WallSpec::NoEdgeNormalSmoothing;
-
-    return spec;
-}
-
 WallEdge::Event::Event(double distance)
     : IHPlane::IIntercept(distance)
     , _section(0)
@@ -170,7 +131,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 {
     WallEdge &owner;
     SectionId id;
-    QScopedPointer<WallSpec> spec;
+    Flags flags;
 
     Vector3d pOrigin;
     Vector3d pDirection;
@@ -190,10 +151,11 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
     bool needPrepare;
 
-    Instance(Public *i, WallEdge &owner, SectionId id, Vector2f const &materialOrigin)
+    Instance(Public *i, WallEdge &owner, SectionId id, Vector2f const &materialOrigin, Flags const &flags)
         : Base            (i)
         , owner           (owner)
         , id              (id)
+        , flags           (flags)
         , bottom          (0)
         , top             (1)
         , events          (0)
@@ -384,7 +346,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
                         hi = fceil->heightSmoothed();
 
-                        if(spec->flags.testFlag(WallSpec::SkyClip) &&
+                        if(flags.testFlag(SkyClip) &&
                            fceil->surface().hasSkyMaskedMaterial() &&
                            bceil->surface().hasSkyMaskedMaterial())
                         {
@@ -426,7 +388,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 
                         hi = t;
 
-                        if(spec->flags.testFlag(WallSpec::SkyClip) &&
+                        if(flags.testFlag(SkyClip) &&
                            ffloor->surface().hasSkyMaskedMaterial() &&
                            bfloor->surface().hasSkyMaskedMaterial())
                         {
@@ -759,7 +721,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         if(id == SkyBottom || id == SkyTop)
             return false;
 
-        if(spec->flags & WallSpec::NoEdgeDivisions)
+        if(flags & NoEdgeDivisions)
             return false;
 
         if(de::fequal(top.z(), bottom.z()))
@@ -821,7 +783,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         diff = 0;
 
         // Are we not blending?
-        if(spec->flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
+        if(flags.testFlag(NoEdgeNormalSmoothing))
             return 0;
 
         // Polyobj lines have no owner rings.
@@ -889,11 +851,9 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
 };
 
 WallEdge::Section::Section(WallEdge &owner, SectionId id, Vector2f const &materialOrigin,
-    WallSpec const *spec)
-    : d(new Instance(this, owner, id, materialOrigin))
-{
-    if(spec) setSpec(*spec);
-}
+    Flags const &flags)
+    : d(new Instance(this, owner, id, materialOrigin, flags))
+{}
 
 WallEdge &WallEdge::Section::edge() const
 {
@@ -905,15 +865,9 @@ WallEdge::SectionId WallEdge::Section::id() const
     return d->id;
 }
 
-WallSpec const &WallEdge::Section::spec() const
+WallEdge::Section::Flags WallEdge::Section::flags() const
 {
-    DENG2_ASSERT(!d->spec.isNull());
-    return *d->spec;
-}
-
-void WallEdge::Section::setSpec(WallSpec const &newSpec)
-{
-    return d->spec.reset(new WallSpec(newSpec));
+    return d->flags;
 }
 
 Vector3d const &WallEdge::Section::pOrigin() const
@@ -990,6 +944,11 @@ WallEdge::Event const &WallEdge::Section::last() const
     return d->top;
 }
 
+static WallEdge::Section::Flags const skySectionFlags =
+    WallEdge::Section::NoDynLights     | WallEdge::Section::NoDynShadows |
+    WallEdge::Section::NoFakeRadio     | WallEdge::Section::NoLightDeltas |
+    WallEdge::Section::NoEdgeDivisions | WallEdge::Section::NoEdgeNormalSmoothing;
+
 DENG2_PIMPL_NOREF(WallEdge)
 {
     HEdge &hedge;
@@ -1004,15 +963,55 @@ DENG2_PIMPL_NOREF(WallEdge)
     Instance(WallEdge &self, HEdge &hedge, int side, LineSide &lineSide, float materialOffsetS)
         : hedge     (hedge)
         , side      (side)
-        , skyBottom (self, SkyBottom,  Vector2f(materialOffsetS, 0))
-        , skyTop    (self, SkyTop,     Vector2f(materialOffsetS, 0))
-        , wallMiddle(self, WallMiddle)
-        , wallBottom(self, WallBottom)
-        , wallTop   (self, WallTop)
+        , skyBottom (self, SkyBottom,  Vector2f(materialOffsetS, 0), skySectionFlags)
+        , skyTop    (self, SkyTop,     Vector2f(materialOffsetS, 0), skySectionFlags)
+        , wallMiddle(self, WallMiddle, Vector2f(),                   wallSectionFlags(lineSide, LineSide::Middle))
+        , wallBottom(self, WallBottom, Vector2f(),                   wallSectionFlags(lineSide, LineSide::Bottom))
+        , wallTop   (self, WallTop,    Vector2f(),                   wallSectionFlags(lineSide, LineSide::Top))
+    {}
+
+    /**
+     * Determine the wall section specification appropriate for the specified
+     * @a side and @a section of a Line::Side considering the current map renderer
+     * configuration.
+     */
+    static Section::Flags wallSectionFlags(LineSide const &side, int section)
     {
-        wallMiddle.setSpec(WallSpec::fromLineSide(lineSide, LineSide::Middle));
-        wallBottom.setSpec(WallSpec::fromLineSide(lineSide, LineSide::Bottom));
-        wallTop   .setSpec(WallSpec::fromLineSide(lineSide, LineSide::Top));
+        bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
+
+        Section::Flags flags = Section::ForceOpaque | Section::SkyClip;
+
+        if(side.line().definesPolyobj() || isTwoSidedMiddle)
+        {
+            flags &= ~Section::ForceOpaque;
+            flags |= Section::NoEdgeDivisions;
+        }
+
+        if(isTwoSidedMiddle)
+        {
+            if(viewPlayer && ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+                              !side.line().isFlagged(DDLF_BLOCKING)))
+                flags |= Section::NearFade;
+
+            flags |= Section::SortDynLights;
+        }
+
+        // Suppress the sky clipping in debug mode.
+        if(devRendSkyMode)
+            flags &= ~Section::SkyClip;
+
+        if(side.line().definesPolyobj())
+            flags |= Section::NoFakeRadio;
+
+        bool useLightLevelDeltas = useWallSectionLightLevelDeltas(side, section);
+        if(!useLightLevelDeltas)
+            flags |= Section::NoLightDeltas;
+
+        // We can skip normal smoothing if light level delta smoothing won't be done.
+        if(!useLightLevelDeltas || !rendLightWallAngleSmooth)
+            flags |= Section::NoEdgeNormalSmoothing;
+
+        return flags;
     }
 };
 

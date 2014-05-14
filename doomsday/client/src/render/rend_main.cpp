@@ -1836,7 +1836,6 @@ static void writeWallSection(HEdge &hedge, int section,
 
     WallEdgeSection &leftSection  = left.section(WallEdge::sectionIdFromLineSideSection(section));
     WallEdgeSection &rightSection = right.section(WallEdge::sectionIdFromLineSideSection(section));
-    WallSpec const &wallSpec      = leftSection.spec();
 
     // Do the edge geometries describe a valid polygon?
     if(!leftSection.isValid() || !rightSection.isValid() ||
@@ -1845,7 +1844,7 @@ static void writeWallSection(HEdge &hedge, int section,
 
     // Apply a fade out when the viewer is near to this geometry?
     bool didNearFade = false;
-    if(wallSpec.flags.testFlag(WallSpec::NearFade))
+    if(leftSection.flags().testFlag(WallEdgeSection::NearFade))
     {
         didNearFade = nearFadeOpacity(leftSection, rightSection, opacity);
     }
@@ -1869,12 +1868,12 @@ static void writeWallSection(HEdge &hedge, int section,
     parm.geomGroup            = section;
     parm.topLeft              = &topLeft;
     parm.bottomRight          = &bottomRight;
-    parm.forceOpaque          = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
+    parm.forceOpaque          = leftSection.flags().testFlag(WallEdgeSection::ForceOpaque);
     parm.alpha                = parm.forceOpaque? 1 : opacity;
     parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
     // Calculate the light level deltas for this wall section?
-    if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
+    if(!leftSection.flags().testFlag(WallEdgeSection::NoLightDeltas))
     {
         wallSectionLightLevelDeltas(leftSection, rightSection,
                                     parm.surfaceLightLevelDL, parm.surfaceLightLevelDR);
@@ -1911,9 +1910,9 @@ static void writeWallSection(HEdge &hedge, int section,
         }
 
         projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
-                        wallSpec.flags.testFlag(WallSpec::NoDynLights),
-                        wallSpec.flags.testFlag(WallSpec::NoDynShadows),
-                        wallSpec.flags.testFlag(WallSpec::SortDynLights),
+                        leftSection.flags().testFlag(WallEdgeSection::NoDynLights),
+                        leftSection.flags().testFlag(WallEdgeSection::NoDynShadows),
+                        leftSection.flags().testFlag(WallEdgeSection::SortDynLights),
                         parm.lightListIdx, parm.shadowListIdx);
 
         if(twoSidedMiddle)
@@ -1961,7 +1960,7 @@ static void writeWallSection(HEdge &hedge, int section,
     if(wroteOpaque)
     {
         // Render FakeRadio for this section?
-        if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
+        if(!leftSection.flags().testFlag(WallEdgeSection::NoFakeRadio) && !skyMasked &&
            !(parm.glowing > 0) && curSectorLightLevel > 0)
         {
             Rend_RadioUpdateForLineSide(side);

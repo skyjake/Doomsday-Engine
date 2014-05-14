@@ -33,66 +33,6 @@ namespace de {
 class HEdge;
 
 /**
- * Wall section specification. The members are public for convenient access.
- */
-struct WallSpec
-{
-    enum Flag
-    {
-        /// Force the geometry to be opaque, irrespective of material opacity.
-        ForceOpaque           = 0x001,
-
-        /// Fade out the geometry the closer it is to the viewer.
-        NearFade              = 0x002,
-
-        /**
-         * Clip the geometry if the neighbor plane surface relevant for the
-         * specified section (i.e., the floor if @c Side::Bottom or ceiling if
-         * @c Side::Top) has a sky-masked material bound to it.
-         */
-        SkyClip               = 0x004,
-
-        /// Sort the dynamic light projections by descending luminosity.
-        SortDynLights         = 0x008,
-
-        /// Do not generate geometry for dynamic lights.
-        NoDynLights           = 0x010,
-
-        /// Do not generate geometry for dynamic (mobj) shadows.
-        NoDynShadows          = 0x020,
-
-        /// Do not generate geometry for faked radiosity.
-        NoFakeRadio           = 0x040,
-
-        /// Do not apply angle based light level deltas.
-        NoLightDeltas         = 0x080,
-
-        /// Do not intercept edges with neighboring geometries.
-        NoEdgeDivisions       = 0x100,
-
-        /// Do not smooth edge normals.
-        NoEdgeNormalSmoothing = 0x200,
-
-        DefaultFlags = ForceOpaque | SkyClip
-    };
-    Q_DECLARE_FLAGS(Flags, Flag)
-
-    /// Specification flags.
-    Flags flags;
-
-    WallSpec(Flags flags = DefaultFlags) : flags(flags) {}
-
-    /**
-     * Construct a wall geometry specification appropriate for the specified
-     * @a side and @a section of a Line::Side considering the current map renderer
-     * configuration.
-     */
-    static WallSpec fromLineSide(LineSide const &side, int section);
-};
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
-
-/**
  * Helper/utility class intended to simplify the process of generating sections
  * of edge geometry from a map Line side segment.
  *
@@ -154,6 +94,44 @@ public:
     class Section : public AbstractEdge
     {
     public:
+        enum Flag
+        {
+            /// Force the geometry to be opaque, irrespective of material opacity.
+            ForceOpaque           = 0x001,
+
+            /// Fade out the geometry the closer it is to the viewer.
+            NearFade              = 0x002,
+
+            /**
+             * Clip the geometry if the neighbor plane surface relevant for the
+             * specified section (i.e., the floor if @c Side::Bottom or ceiling if
+             * @c Side::Top) has a sky-masked material bound to it.
+             */
+            SkyClip               = 0x004,
+
+            /// Sort the dynamic light projections by descending luminosity.
+            SortDynLights         = 0x008,
+
+            /// Do not generate geometry for dynamic lights.
+            NoDynLights           = 0x010,
+
+            /// Do not generate geometry for dynamic (mobj) shadows.
+            NoDynShadows          = 0x020,
+
+            /// Do not generate geometry for faked radiosity.
+            NoFakeRadio           = 0x040,
+
+            /// Do not apply angle based light level deltas.
+            NoLightDeltas         = 0x080,
+
+            /// Do not intercept edges with neighboring geometries.
+            NoEdgeDivisions       = 0x100,
+
+            /// Do not smooth edge normals.
+            NoEdgeNormalSmoothing = 0x200
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
         /// A valid edge is required. @ingroup errors
         DENG2_ERROR(InvalidError);
 
@@ -167,14 +145,9 @@ public:
         SectionId id() const;
 
         /**
-         * Returns the WallSpec for the section.
+         * Returns the specification flags for the section.
          */
-        WallSpec const &spec() const;
-
-        /**
-         * Replace the WallSpec for the section with a copy of @a newSpec.
-         */
-        void setSpec(WallSpec const &newSpec);
+        Flags flags() const;
 
         Vector3d const &pOrigin() const;
         Vector3d const &pDirection() const;
@@ -216,7 +189,7 @@ public:
 
     private:
         Section(WallEdge &owner, SectionId id, Vector2f const &materialOrigin = Vector2f(),
-                WallSpec const *spec = 0);
+                Flags const &flags = 0);
 
         DENG2_PRIVATE(d)
     };
@@ -273,6 +246,8 @@ private:
 };
 
 typedef WallEdge::Section WallEdgeSection;
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(WallEdge::Section::Flags)
 
 } // namespace de
 
