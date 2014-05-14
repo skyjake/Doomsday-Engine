@@ -36,6 +36,7 @@
 #  include "BiasIllum"
 #  include "BiasTracker"
 #  include "Shard"
+#  include "WallEdge"
 #endif
 
 #include <doomsday/console/var.h>
@@ -128,6 +129,8 @@ DENG2_PIMPL(SectorCluster)
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
     bool needReverbUpdate;
+
+    WallEdges wallEdges;
 #endif
 
     Instance(Public *i)
@@ -153,6 +156,8 @@ DENG2_PIMPL(SectorCluster)
 #ifdef __CLIENT__
         self.sector().audienceForLightLevelChange -= this;
         self.sector().audienceForLightColorChange -= this;
+
+        qDeleteAll(wallEdges);
 
         DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
         {
@@ -927,6 +932,30 @@ DENG2_PIMPL(SectorCluster)
             reverb[SRD_VOLUME] = 1;
     }
 
+    WallEdge *findWallEdge(HEdge &hedge, int side)
+    {
+        // Verify that the hedge is one of "ours".
+        DENG2_ASSERT(hedge.face().mapElementAs<ConvexSubspace>().clusterPtr() == thisPublic);
+        // Verify that the hedge represents a drawable wall.
+        DENG2_ASSERT(hedge.mapElementAs<LineSideSegment>().lineSide().hasSections());
+
+        // Perhaps we already have a wall edge for this?
+        WallEdges::iterator it = wallEdges.find(&hedge);
+        while(it != wallEdges.end() && it.key() == &hedge)
+        {
+            WallEdge *wedge = *it;
+            if(side == wedge->side())
+            {
+                return wedge; // Found it.
+            }
+            it++;
+        }
+
+        // Allocate this now.
+        /// @todo Do this during cluster init.
+        return wallEdges.insert(&hedge, new WallEdge(hedge, side)).value();
+    }
+
     /// Observes Plane HeightSmoothedChange.
     void planeHeightSmoothedChanged(Plane &plane)
     {
@@ -1126,6 +1155,21 @@ bool SectorCluster::hasSkyMaskedPlane() const
             return true;
     }
     return false;
+}
+
+WallEdge &SectorCluster::wallEdge(HEdge &hedge, int side)
+{
+    if(WallEdge *wedge = d->findWallEdge(hedge, side))
+    {
+        return *wedge;
+    }
+    /// @throw MissingWallEdgeError  No matching WallEdge exists.
+    throw MissingWallEdgeError("SectorCluster::wallEdge", "The referenced WallEdge does not exist");
+}
+
+SectorCluster::WallEdges const &SectorCluster::allWallEdges() const
+{
+    return d->wallEdges;
 }
 
 SectorCluster::LightId SectorCluster::lightSourceId() const

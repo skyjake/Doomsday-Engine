@@ -1803,20 +1803,21 @@ static void wallSectionLightLevelDeltas(WallEdgeSection const &sectionLeft,
     }
 }
 
-static void writeWallSection(HEdge &hedge, int section,
+static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &rightSection,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
-    SectorCluster &cluster = curSubspace->cluster();
+    DENG2_ASSERT(leftSection.edge().hedge().mapElementAs<LineSideSegment>().isFrontFacing());
 
-    LineSideSegment &segment = hedge.mapElementAs<LineSideSegment>();
-    DENG2_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
+    SectorCluster &cluster = curSubspace->cluster();
+    LineSide &side         = leftSection.edge().lineSide();
+    Surface &surface       = *leftSection.surfacePtr();
+    int const section      = leftSection.id() == WallEdge::WallMiddle? LineSide::Middle :
+                             leftSection.id() == WallEdge::WallBottom? LineSide::Bottom :
+                                                                       LineSide::Top;
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
-
-    LineSide &side    = segment.lineSide();
-    Surface &surface  = side.surface(section);
 
     // Skip nearly transparent surfaces.
     float opacity = surface.opacity();
@@ -1829,13 +1830,6 @@ static void writeWallSection(HEdge &hedge, int section,
     // A drawable material is required.
     if(!material || !material->isDrawable())
         return;
-
-    // Generate edge geometries.
-    WallEdge left(hedge, Line::From);
-    WallEdge right(hedge, Line::To);
-
-    WallEdgeSection &leftSection  = left.section(WallEdge::sectionIdFromLineSideSection(section));
-    WallEdgeSection &rightSection = right.section(WallEdge::sectionIdFromLineSideSection(section));
 
     // Do the edge geometries describe a valid polygon?
     if(!leftSection.isValid() || !rightSection.isValid() ||
@@ -1864,7 +1858,7 @@ static void writeWallSection(HEdge &hedge, int section,
     Vector3d bottomRight      = rightSection.bottom().origin();
 
     parm.skyMasked            = skyMasked;
-    parm.mapElement           = &segment;
+    parm.mapElement           = &leftSection.edge().hedge().mapElementAs<LineSideSegment>();
     parm.geomGroup            = section;
     parm.topLeft              = &topLeft;
     parm.bottomRight          = &bottomRight;
@@ -1951,9 +1945,9 @@ static void writeWallSection(HEdge &hedge, int section,
     }
 
     posCoords[0] =  leftSection.bottom().origin();
-    posCoords[1] =     leftSection.top().origin();
+    posCoords[1] =  leftSection.top   ().origin();
     posCoords[2] = rightSection.bottom().origin();
-    posCoords[3] =    rightSection.top().origin();
+    posCoords[3] = rightSection.top   ().origin();
 
     // Draw this section.
     bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
@@ -2530,15 +2524,19 @@ static void writeAllWallSections(HEdge *hedge)
     if(!seg.isFrontFacing() || !seg.lineSide().hasSections())
         return;
 
-    // Done here because of the logic of doom.exe wrt the automap.
-    reportWallSectionDrawn(seg.line());
+    reportWallSectionDrawn(seg.line()); // Here because of doom.exe automap logic.
 
+    // Generate and write the wall section geometries to the draw lists.
     bool wroteOpaqueMiddle = false;
-    coord_t middleBottomZ = 0, middleTopZ = 0;
+    coord_t middleBottomZ  = 0;
+    coord_t middleTopZ     = 0;
 
-    writeWallSection(*hedge, LineSide::Bottom);
-    writeWallSection(*hedge, LineSide::Top);
-    writeWallSection(*hedge, LineSide::Middle,
+    WallEdge &leftEdge     = curSubspace->cluster().wallEdge(*hedge, Line::From);
+    WallEdge &rightEdge    = curSubspace->cluster().wallEdge(*hedge, Line::To);
+
+    writeWallSection(leftEdge.wallBottom(), rightEdge.wallBottom());
+    writeWallSection(leftEdge.wallTop(),    rightEdge.wallTop());
+    writeWallSection(leftEdge.wallMiddle(), rightEdge.wallMiddle(),
                      &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
 
     // We can occlude the angle range defined by the X|Y origins of the

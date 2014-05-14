@@ -140,6 +140,12 @@ public:
          */
         Flags flags() const;
 
+        /**
+         * Returns a pointer to the Surface for the section. Note that only wall
+         * sections have a surface.
+         */
+        Surface *surfacePtr() const;
+
         Vector3d const &pOrigin() const;
         Vector3d const &pDirection() const;
 

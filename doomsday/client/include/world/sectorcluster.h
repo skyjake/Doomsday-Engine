@@ -31,6 +31,7 @@
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
+#  include "WallEdge"
 #endif
 
 #include <de/Observers>
@@ -57,10 +58,18 @@ class SectorCluster
 #endif
 {
 public:
+#ifdef __CLIENT__
+    /// The referenced wall edge is missing. @ingroup errors
+    DENG2_ERROR(MissingWallEdgeError);
+#endif
+
     /// Notified when the cluster is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
 
     typedef QList<ConvexSubspace *> Subspaces;
+#ifdef __CLIENT__
+    typedef QMultiMap<de::HEdge *, de::WallEdge *> WallEdges;
+#endif
 
 public:
     /**
@@ -233,6 +242,16 @@ public:
      * this time (@ref markReverbDirty()).
      */
     AudioEnvironmentFactors const &reverb() const;
+
+    /**
+     * Lookup the WallEdge for the specified geometry group.
+     */
+    de::WallEdge &wallEdge(de::HEdge &hedge, int side);
+
+    /**
+     * Provides access to the WallEdges for efficient traversal.
+     */
+    WallEdges const &allWallEdges() const;
 
     /**
      * Returns the unique identifier of the light source.

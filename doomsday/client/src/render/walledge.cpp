@@ -870,6 +870,12 @@ WallEdge::Section::Flags WallEdge::Section::flags() const
     return d->flags;
 }
 
+Surface *WallEdge::Section::surfacePtr() const
+{
+    if(d->id == SkyBottom || d->id == SkyTop) return 0;
+    return &d->lineSideSurface();
+}
+
 Vector3d const &WallEdge::Section::pOrigin() const
 {
     d->prepareIfNeeded();
