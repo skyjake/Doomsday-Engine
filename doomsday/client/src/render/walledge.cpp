@@ -38,23 +38,6 @@
 namespace de {
 namespace internal
 {
-    /**
-     * Determines whether normal smoothing should be performed for the given pair of
-     * map surfaces (which are assumed to share an edge).
-     *
-     * Yes if the angle between the two surfaces is less than 45 degrees.
-     * @todo Should be user customizable with a Material property. -ds
-     *
-     * @param sufA       The "left"  map surface which shares an edge with @a sufB.
-     * @param sufB       The "right" map surface which shares an edge with @a sufA.
-     * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
-     */
-    static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDiff)
-    {
-        DENG2_UNUSED2(sufA, sufB);
-        return INRANGE_OF(angleDiff, BANG_180, BANG_45);
-    }
-
     static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
     {
         DENG2_UNUSED(backFloor);
@@ -69,6 +52,23 @@ namespace internal
         if(devRendSkyMode || P_IsInVoid(viewPlayer))
             return frontCeil->heightSmoothed();
         return frontCeil->map().skyFixCeiling();
+    }
+
+    /**
+     * Determines whether normal smoothing should be performed for the given pair of
+     * map surfaces (which are assumed to share an edge).
+     *
+     * Yes if the angle between the two surfaces is less than 45 degrees.
+     * @todo Should be user customizable with a Material property. -ds
+     *
+     * @param sufA       The "left"  map surface which shares an edge with @a sufB.
+     * @param sufB       The "right" map surface which shares an edge with @a sufA.
+     * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
+     */
+    static bool useSmoothedNormal(Surface &sufA, Surface &sufB, binangle_t angleDiff)
+    {
+        DENG2_UNUSED2(sufA, sufB);
+        return INRANGE_OF(angleDiff, BANG_180, BANG_45);
     }
 
     /**
@@ -838,7 +838,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
         binangle_t angleDiff;
         Surface *blendSurface = findBlendNeighbor(angleDiff);
 
-        if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
+        if(blendSurface && useSmoothedNormal(surface, *blendSurface, angleDiff))
         {
             // Average normals.
             normal = (surface.normal() + blendSurface->normal()) / 2;
@@ -970,9 +970,8 @@ DENG2_PIMPL_NOREF(WallEdge)
     {}
 
     /**
-     * Determine the wall section specification appropriate for the specified
-     * @a side and @a section of a Line::Side considering the current map renderer
-     * configuration.
+     * Determine the wall section flags appropriate for the given line @a side
+     * @a section, considering the current renderer configuration.
      */
     static Section::Flags wallSectionFlags(LineSide const &side, int section)
     {
