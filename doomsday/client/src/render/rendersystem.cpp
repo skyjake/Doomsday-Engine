@@ -19,78 +19,21 @@
 #include "de_platform.h"
 #include "clientapp.h"
 #include "render/rendersystem.h"
-
+#include "DrawLists"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
-
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include <de/memory.h>
 
 using namespace de;
 
-Store::Store() : posCoords(0), colorCoords(0), vertCount(0), vertMax(0)
-{
-    zap(texCoords);
-}
-
-Store::~Store()
-{
-    clear();
-}
-
-void Store::rewind()
-{
-    vertCount = 0;
-}
-
-void Store::clear()
-{
-    vertCount = vertMax = 0;
-
-    M_Free(posCoords); posCoords = 0;
-    M_Free(colorCoords); colorCoords = 0;
-
-    for(int i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
-    {
-        M_Free(texCoords[i]); texCoords[i] = 0;
-    }
-}
-
-uint Store::allocateVertices(uint count)
-{
-    uint const base = vertCount;
-
-    // Do we need to allocate more memory?
-    vertCount += count;
-    while(vertCount > vertMax)
-    {
-        if(vertMax == 0)
-        {
-            vertMax = 16;
-        }
-        else
-        {
-            vertMax *= 2;
-        }
-
-        posCoords = (Vector4f *) M_Realloc(posCoords, sizeof(*posCoords) * vertMax);
-        colorCoords = (Vector4ub *) M_Realloc(colorCoords, sizeof(*colorCoords) * vertMax);
-        for(int i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
-        {
-            texCoords[i] = (Vector2f *) M_Realloc(texCoords[i], sizeof(Vector2f) * vertMax);
-        }
-    }
-
-    return base;
-}
-
 DENG2_PIMPL(RenderSystem)
 {
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
     ImageBank images;
-    Store buffer;
+    WorldVBuf vbuf;
     DrawLists drawLists;
 
     Instance(Public *i) : Base(i)
@@ -261,25 +204,21 @@ SettingsRegister &RenderSystem::appearanceSettings()
     return d->appearanceSettings;
 }
 
-Store &RenderSystem::buffer()
+WorldVBuf &RenderSystem::buffer()
 {
-    return d->buffer;
+    return d->vbuf;
 }
 
 void RenderSystem::clearDrawLists()
 {
     d->drawLists.clear();
-
-    // Clear the global vertex buffer, also.
-    d->buffer.clear();
+    d->vbuf.clear(); // Clear the global vertex buffer, also.
 }
 
 void RenderSystem::resetDrawLists()
 {
     d->drawLists.reset();
-
-    // Start reallocating storage from the global vertex buffer, also.
-    d->buffer.rewind();
+    d->vbuf.reset(); // Start reallocating storage from the global vertex buffer, also.
 }
 
 DrawLists &RenderSystem::drawLists()

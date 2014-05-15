@@ -27,6 +27,7 @@
 #include "clientapp.h"
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
+#include "DrawLists"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Face"

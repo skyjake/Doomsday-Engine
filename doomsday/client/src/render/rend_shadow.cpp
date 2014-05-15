@@ -17,22 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/Vector>
-
 #include "de_base.h"
+#include "clientapp.h"
+#include "render/rend_shadow.h"
+
 #include "de_graphics.h"
 #include "de_play.h"
 #include "de_render.h"
 #include "de_system.h"
-#include "clientapp.h"
-
 #include "world/map.h"
+#include "DrawLists"
 #include "MaterialSnapshot"
 #include "WallEdge"
-
 #include "gl/gl_texmanager.h"
-
-#include "render/rend_shadow.h"
+#include <de/Vector>
 
 using namespace de;
 

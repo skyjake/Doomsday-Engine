@@ -71,7 +71,7 @@ DENG2_PIMPL(DrawList)
         uint size; ///< Size of this element (zero = n/a).
 
         struct Data {
-            Store *buffer;
+            WorldVBuf *buffer;
             gl::Primitive type;
 
             // Element indices into the global backing store for the geometry.
@@ -171,18 +171,18 @@ DENG2_PIMPL(DrawList)
                     {
                         if(texUnitMap[j])
                         {
-                            Vector2f const &tc = buffer->texCoords[texUnitMap[j] - 1][index];
+                            Vector2f const &tc = (*buffer)[index].texCoord[texUnitMap[j] - 1];
                             glMultiTexCoord2f(GL_TEXTURE0 + j, tc.x, tc.y);
                         }
                     }
 
                     if(!(conditions & NoColor))
                     {
-                        Vector4ub const &color = buffer->colorCoords[index];
-                        glColor4ub(color.x, color.y, color.z, color.w);
+                        Vector4f const &color = (*buffer)[index].rgba;
+                        glColor4f(color.x, color.y, color.z, color.w);
                     }
 
-                    Vector3f const &pos = buffer->posCoords[index];
+                    Vector3f const &pos = (*buffer)[index].pos;
                     glVertex3f(pos.x, pos.z, pos.y);
                 }
                 glEnd();
@@ -342,7 +342,7 @@ DENG2_PIMPL(DrawList)
         }
     }
 
-    Element *newElement(Store &buffer, gl::Primitive primitive)
+    Element *newElement(WorldVBuf &buffer, gl::Primitive primitive)
     {
         // This becomes the new last element.
         last = (Element *) allocateData(sizeof(Element));
@@ -818,14 +818,14 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
     elem->data.dtexOffset = detailTexOffset;
 
     // Allocate geometry from the backing store.
-    uint base = elem->data.buffer->allocateVertices(vertCount);
+    uint base = elem->data.buffer->reserveElements(vertCount);
 
     // Setup the indices.
     d->allocateIndices(vertCount, base);
 
     for(uint i = 0; i < vertCount; ++i)
     {
-        elem->data.buffer->posCoords[base + i] = posCoords[i];
+        (*elem->data.buffer)[base + i].pos = posCoords[i];
 
         // Sky masked polys need nothing more.
         if(d->spec.group == SkyMaskGeom) continue;
@@ -834,25 +834,25 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
         if(d->spec.unit(TU_PRIMARY).hasTexture())
         {
             DENG2_ASSERT(texCoords != 0);
-            elem->data.buffer->texCoords[Store::TCA_MAIN][base + i] = texCoords[i];
+            (*elem->data.buffer)[base + i].texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
         }
 
         // Secondary texture coordinates.
         if(d->spec.unit(TU_INTER).hasTexture())
         {
             DENG2_ASSERT(interTexCoords != 0);
-            elem->data.buffer->texCoords[Store::TCA_BLEND][base + i] = interTexCoords[i];
+            (*elem->data.buffer)[base + i].texCoord[WorldVBuf::TCA_BLEND] = interTexCoords[i];
         }
 
         // First light texture coordinates.
         if((elem->data.oneLight || elem->data.manyLights) && IS_MTEX_LIGHTS)
         {
             DENG2_ASSERT(modTexCoords != 0);
-            elem->data.buffer->texCoords[Store::TCA_LIGHT][base + i] = modTexCoords[i];
+            (*elem->data.buffer)[base + i].texCoord[WorldVBuf::TCA_LIGHT] = modTexCoords[i];
         }
 
         // Color.
-        Vector4ub &color = elem->data.buffer->colorCoords[base + i];
+        Vector4f &color = (*elem->data.buffer)[base + i].rgba;
         if(colorCoords)
         {
             Vector4f const &srcColor = colorCoords[i];
@@ -863,14 +863,11 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
             DENG2_ASSERT(INRANGE_OF(srcColor.z, 0.f, 1.f));
             DENG2_ASSERT(INRANGE_OF(srcColor.w, 0.f, 1.f));
 
-            color = Vector4ub(dbyte(255 * de::clamp(0.f, srcColor.x, 1.f)),
-                              dbyte(255 * de::clamp(0.f, srcColor.y, 1.f)),
-                              dbyte(255 * de::clamp(0.f, srcColor.z, 1.f)),
-                              dbyte(255 * de::clamp(0.f, srcColor.w, 1.f)));
+            color = srcColor.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
         }
         else
         {
-            color = Vector4ub(255, 255, 255, 255);
+            color = Vector4f(1, 1, 1, 1);
         }
     }
 

@@ -1,4 +1,4 @@
-/** @file render/rend_dynlight.cpp
+/** @file rend_dynlight.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -18,14 +18,14 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
+#include "clientapp.h"
+#include "render/rend_dynlight.h"
+
+//#include "de_console.h"
 #include "de_graphics.h"
 #include "de_render.h"
-#include "clientapp.h"
-
+#include "DrawLists"
 #include "WallEdge"
-
-#include "render/rend_dynlight.h"
 
 using namespace de;
 

@@ -51,6 +51,7 @@
 #include "SectorCluster"
 #include "Surface"
 #include "BiasIllum"
+#include "DrawLists"
 #include "HueCircleVisual"
 #include "LightDecoration"
 #include "Lumobj"
@@ -2996,8 +2997,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_ALL:
         // The first texture unit is used for the main texture.
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -3018,14 +3019,14 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(2);
         if(mode == DM_LIGHT_MOD_TEXTURE)
         {
-            texUnitMap[0] = Store::TCA_LIGHT + 1;
-            texUnitMap[1] = Store::TCA_MAIN + 1;
+            texUnitMap[0] = WorldVBuf::TCA_LIGHT + 1;
+            texUnitMap[1] = WorldVBuf::TCA_MAIN + 1;
             GL_ModulateTexture(4); // Light * texture.
         }
         else
         {
-            texUnitMap[0] = Store::TCA_MAIN + 1;
-            texUnitMap[1] = Store::TCA_LIGHT + 1;
+            texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+            texUnitMap[1] = WorldVBuf::TCA_LIGHT + 1;
             GL_ModulateTexture(5); // Texture + light.
         }
         glDisable(GL_ALPHA_TEST);
@@ -3045,7 +3046,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_FIRST_LIGHT:
         // One light, no texture.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_LIGHT + 1;
+        texUnitMap[0] = WorldVBuf::TCA_LIGHT + 1;
         GL_ModulateTexture(6);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -3058,7 +3059,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_BLENDED_FIRST_LIGHT:
         // One additive light, no texture.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_LIGHT + 1;
+        texUnitMap[0] = WorldVBuf::TCA_LIGHT + 1;
         GL_ModulateTexture(7); // Add light, no color.
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3083,7 +3084,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_LIGHTS:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3105,8 +3106,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_MOD_TEXTURE_MANY_LIGHTS:
     case DM_BLENDED_MOD_TEXTURE:
         // The first texture unit is used for the main texture.
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3118,8 +3119,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[1] = WorldVBuf::TCA_MAIN + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -3135,8 +3136,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         break;
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[1] = WorldVBuf::TCA_MAIN + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3149,7 +3150,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_ALL_DETAILS:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
         GL_ModulateTexture(0);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3170,8 +3171,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_BLENDED_DETAILS:
         GL_SelectTexUnits(2);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1;
         GL_ModulateTexture(3);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3193,7 +3194,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_SHADOW:
         // A bit like 'negative lights'.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3212,7 +3213,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_SHINY:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
         GL_ModulateTexture(1); // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3230,8 +3231,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_MASKED_SHINY:
         GL_SelectTexUnits(2);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1; // the mask
+        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1; // the mask
         GL_ModulateTexture(8); // same as with details
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);

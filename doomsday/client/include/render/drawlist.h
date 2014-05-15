@@ -23,6 +23,7 @@
 
 #include "gl/gltextureunit.h"
 #include "api_gl.h" // blendmode_e
+#include "rendersystem.h"
 #include <de/GLBuffer>
 #include <de/Vector>
 #include <QFlags>

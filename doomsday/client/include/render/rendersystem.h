@@ -19,47 +19,70 @@
 #ifndef CLIENT_RENDERSYSTEM_H
 #define CLIENT_RENDERSYSTEM_H
 
+#include <QVector>
 #include <de/System>
 #include <de/Vector>
+#include <de/GLBuffer>
 #include <de/GLShaderBank>
 #include <de/ImageBank>
-#include "DrawLists"
 #include "settingsregister.h"
 
+class DrawLists;
+
 /**
- * Geometry backing store (arrays).
- * @todo Replace with GLBuffer -ds
+ * Vertex buffer for the map renderer. @todo Replace with GLBuffer
  */
-struct Store
+template <typename VertexType>
+class VBufT : public QVector<VertexType>
 {
-    /// Texture coordinate array indices.
-    enum
-    {
-        TCA_MAIN, // Main texture.
-        TCA_BLEND, // Blendtarget texture.
-        TCA_LIGHT, // Dynlight texture.
-        NUM_TEXCOORD_ARRAYS
-    };
+public:
+    typedef VertexType Type;
 
-    de::Vector3f *posCoords;
-    de::Vector2f *texCoords[NUM_TEXCOORD_ARRAYS];
-    de::Vector4ub *colorCoords;
+public:
+    VBufT() : _curElem(0) {}
 
-    Store();
-    ~Store();
+    void clear() { // shadow QVector::clear()
+        _curElem = 0;
+        QVector::clear();
+    }
 
-    void rewind();
+    void reset() {
+        _curElem = 0;
+    }
 
-    void clear();
-
-    uint allocateVertices(uint count);
+    int reserveElements(int numElements) {
+        int const base = _curElem;
+        _curElem += de::max(numElements, 0);
+        if(_curElem > size())
+        {
+            resize(_curElem);
+        }
+        return base;
+    }
 
 private:
-    uint vertCount, vertMax;
+    int _curElem;
 };
 
 /**
- * Renderer subsystems, draw lists, etc... @ingroup render
+ * World vertex buffer for RenderSystem.
+ *
+ * @ingroup render
+ */
+struct WorldVBuf : public VBufT<de::Vertex3Tex3Rgba>
+{
+    // Texture coordinate array indices:
+    enum {
+        TCA_MAIN,   ///< Main texture.
+        TCA_BLEND,  ///< Blendtarget texture.
+        TCA_LIGHT   ///< Dynlight texture.
+    };
+};
+
+/**
+ * Renderer subsystems, draw lists, etc...
+ *
+ * @ingroup render
  */
 class RenderSystem : public de::System
 {
@@ -73,9 +96,9 @@ public:
     SettingsRegister &appearanceSettings();
 
     /**
-     * Provides access to the central map geometry buffer.
+     * Provides access to the central world vertex buffer.
      */
-    Store &buffer();
+    WorldVBuf &buffer();
 
     void clearDrawLists();
 
