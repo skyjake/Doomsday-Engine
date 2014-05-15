@@ -298,7 +298,6 @@ DENG_HEADERS += \
     include/render/rend_model.h \
     include/render/rend_particle.h \
     include/render/rend_shadow.h \
-    include/render/rendpoly.h \
     include/render/rendersystem.h \
     include/render/shadowedge.h \
     include/render/shard.h \
@@ -613,7 +612,6 @@ SOURCES += \
     src/render/rend_model.cpp \
     src/render/rend_particle.cpp \
     src/render/rend_shadow.cpp \
-    src/render/rendpoly.cpp \
     src/render/rendersystem.cpp \
     src/render/shadowedge.cpp \
     src/render/shard.cpp \

@@ -685,7 +685,7 @@ DENG2_PIMPL(WorldSystem)
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
 
         ClientApp::renderSystem().clearDrawLists();
-        R_InitRendPolyPools();
+        ClientApp::renderSystem().resetCoordPools();
         Rend_UpdateLightModMatrix();
 
         Rend_RadioInitForMap(*map);

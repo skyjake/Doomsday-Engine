@@ -744,6 +744,101 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     return 0;
 }
 
+void R_DivVerts(Vector3f *dst, Vector3f const *src,
+    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
+{
+    int const numR = 3 + sectionRight.divisionCount();
+    int const numL = 3 + sectionLeft.divisionCount();
+
+    if(numR + numL == 6) return; // Nothing to do.
+
+    // Right fan:
+    dst[numL + 0] = src[0];
+    dst[numL + 1] = src[3];
+    dst[numL + numR - 1] = src[2];
+
+    for(int n = 0; n < sectionRight.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
+        dst[numL + 2 + n] = icpt.origin();
+    }
+
+    // Left fan:
+    dst[0] = src[3];
+    dst[1] = src[0];
+    dst[numL - 1] = src[1];
+
+    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
+        dst[2 + n] = icpt.origin();
+    }
+}
+
+void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
+    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
+{
+    int const numR = 3 + sectionRight.divisionCount();
+    int const numL = 3 + sectionLeft.divisionCount();
+
+    if(numR + numL == 6) return; // Nothing to do.
+
+    // Right fan:
+    dst[numL + 0] = src[0];
+    dst[numL + 1] = src[3];
+    dst[numL + numR-1] = src[2];
+
+    for(int n = 0; n < sectionRight.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
+        dst[numL + 2 + n].x = src[3].x;
+        dst[numL + 2 + n].y = src[2].y + (src[3].y - src[2].y) * icpt.distance();
+    }
+
+    // Left fan:
+    dst[0] = src[3];
+    dst[1] = src[0];
+    dst[numL - 1] = src[1];
+
+    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
+        dst[2 + n].x = src[0].x;
+        dst[2 + n].y = src[0].y + (src[1].y - src[0].y) * icpt.distance();
+    }
+}
+
+void R_DivVertColors(Vector4f *dst, Vector4f const *src,
+    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
+{
+    int const numR = 3 + sectionRight.divisionCount();
+    int const numL = 3 + sectionLeft.divisionCount();
+
+    if(numR + numL == 6) return; // Nothing to do.
+
+    // Right fan:
+    dst[numL + 0] = src[0];
+    dst[numL + 1] = src[3];
+    dst[numL + numR-1] = src[2];
+
+    for(int n = 0; n < sectionRight.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
+        dst[numL + 2 + n] = src[2] + (src[3] - src[2]) * icpt.distance();
+    }
+
+    // Left fan:
+    dst[0] = src[3];
+    dst[1] = src[0];
+    dst[numL - 1] = src[1];
+
+    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
+        dst[2 + n] = src[0] + (src[1] - src[0]) * icpt.distance();
+    }
+}
+
 static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
                         Vector3f const &ambientColor)
 {
@@ -1036,9 +1131,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     GLTextureUnit const *shinyRTU         = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
     GLTextureUnit const *shinyMaskRTU     = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
-    Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
-    Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
-    Vector2f *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
+    Vector4f *colorCoords    = !skyMaskedMaterial? ClientApp::renderSystem().colorPool().alloc(realNumVertices) : 0;
+    Vector2f *primaryCoords  = ClientApp::renderSystem().texPool().alloc(realNumVertices);
+    Vector2f *interCoords    = interRTU? ClientApp::renderSystem().texPool().alloc(realNumVertices) : 0;
 
     Vector4f *shinyColors    = 0;
     Vector2f *shinyTexCoords = 0;
@@ -1054,10 +1149,10 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         if(shinyRTU && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
-            shinyColors = R_AllocRendColors(realNumVertices);
+            shinyColors = ClientApp::renderSystem().colorPool().alloc(realNumVertices);
             // The normal texcoords are used with the mask.
             // New texcoords are required for shiny texture.
-            shinyTexCoords = R_AllocRendTexCoords(realNumVertices);
+            shinyTexCoords = ClientApp::renderSystem().texPool().alloc(realNumVertices);
         }
 
         if(p.glowing < 1)
@@ -1076,7 +1171,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
                 modTex      = dyn->texture;
-                modCoords   = R_AllocRendTexCoords(realNumVertices);
+                modCoords   = ClientApp::renderSystem().texPool().alloc(realNumVertices);
                 modColor    = dyn->color;
                 modTexSt[0] = dyn->topLeft;
                 modTexSt[1] = dyn->bottomRight;
@@ -1316,12 +1411,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
-        R_FreeRendTexCoords(primaryCoords);
-        R_FreeRendColors(colorCoords);
-        R_FreeRendTexCoords(interCoords);
-        R_FreeRendTexCoords(modCoords);
-        R_FreeRendTexCoords(shinyTexCoords);
-        R_FreeRendColors(shinyColors);
+        ClientApp::renderSystem().texPool().release(primaryCoords);
+        ClientApp::renderSystem().colorPool().release(colorCoords);
+        ClientApp::renderSystem().texPool().release(interCoords);
+        ClientApp::renderSystem().texPool().release(modCoords);
+        ClientApp::renderSystem().texPool().release(shinyTexCoords);
+        ClientApp::renderSystem().colorPool().release(shinyColors);
 
         return false; // We HAD to use a vissprite, so it MUST not be opaque.
     }
@@ -1664,12 +1759,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         }
     }
 
-    R_FreeRendTexCoords(primaryCoords);
-    R_FreeRendTexCoords(interCoords);
-    R_FreeRendTexCoords(modCoords);
-    R_FreeRendTexCoords(shinyTexCoords);
-    R_FreeRendColors(colorCoords);
-    R_FreeRendColors(shinyColors);
+    ClientApp::renderSystem().texPool().release(primaryCoords);
+    ClientApp::renderSystem().texPool().release(interCoords);
+    ClientApp::renderSystem().texPool().release(modCoords);
+    ClientApp::renderSystem().texPool().release(shinyTexCoords);
+    ClientApp::renderSystem().colorPool().release(colorCoords);
+    ClientApp::renderSystem().colorPool().release(shinyColors);
 
     return (p.forceOpaque || skyMaskedMaterial ||
             !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
@@ -1943,13 +2038,13 @@ static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &righ
     if(leftSection.divisionCount() || rightSection.divisionCount())
     {
         // Two fans plus edge divisions.
-        posCoords = R_AllocRendVertices(3 + leftSection.divisionCount() +
+        posCoords = ClientApp::renderSystem().posPool().alloc(3 + leftSection.divisionCount() +
                                         3 + rightSection.divisionCount());
     }
     else
     {
         // One quad.
-        posCoords = R_AllocRendVertices(4);
+        posCoords = ClientApp::renderSystem().posPool().alloc(4);
     }
 
     posCoords[0] =  leftSection.bottom().origin();
@@ -1984,7 +2079,7 @@ static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &righ
         curSectorLightLevel = color.w;
     }
 
-    R_FreeRendVertices(posCoords);
+    ClientApp::renderSystem().posPool().release(posCoords);
 
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
     if(retBottomZ)     *retBottomZ     = leftSection.bottom().z();
@@ -2000,7 +2095,7 @@ static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &righ
  * @param height     Z map space height coordinate to be set for each vertex.
  * @param verts      Built position coordinates are written here. It is the
  *                   responsibility of the caller to release this storage with
- *                   @ref R_FreeRendVertices() when done.
+ *                   @ref ClientApp::renderSystem().posPool().release() when done.
  *
  * @return  Number of built vertices.
  */
@@ -2013,7 +2108,7 @@ static uint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height,
     HEdge *fanBase        = curSubspace->fanBase();
     uint const totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
 
-    *verts = R_AllocRendVertices(totalVerts);
+    *verts = ClientApp::renderSystem().posPool().alloc(totalVerts);
 
     uint n = 0;
     if(!fanBase)
@@ -2185,7 +2280,7 @@ static void writeSubspacePlane(Plane &plane)
         curSectorLightLevel = color.w;
     }
 
-    R_FreeRendVertices(posCoords);
+    ClientApp::renderSystem().posPool().release(posCoords);
 }
 
 static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
@@ -2401,7 +2496,7 @@ static void writeSubspaceSkyMaskCap(int skyCap)
                          Vector2f(1, 1), Vector2f(0, 0), 0,
                          vertCount, posCoords);
 
-    R_FreeRendVertices(posCoords);
+    ClientApp::renderSystem().posPool().release(posCoords);
 }
 
 /// @param skyCap  @ref skyCapFlags

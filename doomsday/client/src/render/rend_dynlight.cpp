@@ -35,9 +35,9 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
     if(!(Rend_IsMTexLights() && parm.lastIdx == 0))
     {
         // Allocate enough for the divisions too.
-        Vector3f *rvertices  = R_AllocRendVertices(parm.realNumVertices);
-        Vector2f *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
-        Vector4f *rcolors    = R_AllocRendColors(parm.realNumVertices);
+        Vector3f *rvertices  = ClientApp::renderSystem().posPool().alloc(parm.realNumVertices);
+        Vector2f *rtexcoords = ClientApp::renderSystem().texPool().alloc(parm.realNumVertices);
+        Vector4f *rcolors    = ClientApp::renderSystem().colorPool().alloc(parm.realNumVertices);
         bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
         for(uint i = 0; i < parm.numVertices; ++i)
@@ -128,9 +128,9 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                             rvertices, rcolors, rtexcoords);
         }
 
-        R_FreeRendVertices(rvertices);
-        R_FreeRendTexCoords(rtexcoords);
-        R_FreeRendColors(rcolors);
+        ClientApp::renderSystem().posPool().release(rvertices);
+        ClientApp::renderSystem().texPool().release(rtexcoords);
+        ClientApp::renderSystem().colorPool().release(rcolors);
     }
     parm.lastIdx++;
 }

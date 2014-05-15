@@ -24,9 +24,12 @@
 #include "render/rend_halo.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include <de/memory.h>
+//#include <de/memory.h>
+#include <doomsday/console/var.h>
 
 using namespace de;
+
+static byte printVBufPoolDevInfo; // cvar
 
 DENG2_PIMPL(RenderSystem)
 {
@@ -34,6 +37,9 @@ DENG2_PIMPL(RenderSystem)
     SettingsRegister appearanceSettings;
     ImageBank images;
     WorldVBuf vbuf;
+    PosCoordPool posPool;
+    ColorCoordPool colorPool;
+    TexCoordPool texPool;
     DrawLists drawLists;
 
     Instance(Public *i) : Base(i)
@@ -226,9 +232,41 @@ DrawLists &RenderSystem::drawLists()
     return d->drawLists;
 }
 
+void RenderSystem::printCoordPoolInfo()
+{
+    if(!printVBufPoolDevInfo) return;
+
+    d->posPool.devPrint();
+    d->colorPool.devPrint();
+    d->texPool.devPrint();
+}
+
+void RenderSystem::resetCoordPools()
+{
+    d->posPool.reset();
+    d->colorPool.reset();
+    d->texPool.reset();
+}
+
+RenderSystem::PosCoordPool &RenderSystem::posPool() const
+{
+    return d->posPool;
+}
+
+RenderSystem::ColorCoordPool &RenderSystem::colorPool() const
+{
+    return d->colorPool;
+}
+
+RenderSystem::TexCoordPool &RenderSystem::texPool() const
+{
+    return d->texPool;
+}
+
 void RenderSystem::consoleRegister()
 {
     Viewports_Register();
     Rend_Register();
     H_Register();
+    C_VAR_BYTE("rend-info-rendpolys", &printVBufPoolDevInfo, CVF_NO_ARCHIVE, 0, 1);
 }

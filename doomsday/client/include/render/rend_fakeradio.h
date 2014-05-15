@@ -40,7 +40,7 @@
 
 #include "WallEdge"
 
-#include "render/rendpoly.h" // r_vertex_t
+#include "render/rendersystem.h"
 
 class ConvexSubspace;
 

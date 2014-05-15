@@ -37,7 +37,7 @@
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/lineowner.h"
-#include "render/rendpoly.h"
+#include "render/rendersystem.h"
 #include "render/shadowedge.h"
 #include "render/rend_fakeradio.h"
 
@@ -1022,8 +1022,8 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
     }
 
     // Allocate enough for the divisions too.
-    Vector2f *rtexcoords = R_AllocRendTexCoords(realNumVertices);
-    Vector4f *rcolors = R_AllocRendColors(realNumVertices);
+    Vector2f *rtexcoords = ClientApp::renderSystem().texPool().alloc(realNumVertices);
+    Vector4f *rcolors = ClientApp::renderSystem().colorPool().alloc(realNumVertices);
 
     quadTexCoords(rtexcoords, origVertices, wsParms.sectionWidth,
                   leftEdge.top().origin(), rightEdge.bottom().origin(),
@@ -1049,7 +1049,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
              * color.
              */
 
-            Vector3f *rvertices = R_AllocRendVertices(realNumVertices);
+            Vector3f *rvertices = ClientApp::renderSystem().posPool().alloc(realNumVertices);
 
             Vector2f origTexCoords[4];
             std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
@@ -1074,7 +1074,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
                              0, 3 + leftEdge.divisionCount(),
                              rvertices, rcolors, rtexcoords);
 
-            R_FreeRendVertices(rvertices);
+            ClientApp::renderSystem().posPool().release(rvertices);
         }
         else
         {
@@ -1086,8 +1086,8 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
         }
     }
 
-    R_FreeRendTexCoords(rtexcoords);
-    R_FreeRendColors(rcolors);
+    ClientApp::renderSystem().texPool().release(rtexcoords);
+    ClientApp::renderSystem().colorPool().release(rcolors);
 }
 
 /// @todo fixme: Should use the visual plane heights of sector clusters.

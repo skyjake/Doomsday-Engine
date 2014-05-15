@@ -92,7 +92,6 @@ void Viewports_Register()
     C_VAR_BYTE("rend-info-deltas-angles",   &showViewAngleDeltas,   0, 0, 1);
     C_VAR_BYTE("rend-info-deltas-pos",      &showViewPosDeltas,     0, 0, 1);
     C_VAR_BYTE("rend-info-frametime",       &showFrameTimePos,      0, 0, 1);
-    C_VAR_BYTE("rend-info-rendpolys",       &rendInfoRPolys,        CVF_NO_ARCHIVE, 0, 1);
     //C_VAR_INT ("rend-info-tris",            &rendInfoTris,          0, 0, 1); // not implemented atm
 
     C_CMD("viewgrid", "ii", ViewGrid);
@@ -937,7 +936,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         player->shared.mo->ddFlags = oldFlags;
     }
 
-    R_PrintRendPoolInfo();
+    ClientApp::renderSystem().printCoordPoolInfo();
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
     {
