@@ -153,6 +153,12 @@ public:
     coord_t height() const;
 
     /**
+     * Change the @em sharp height of the plane to @a newHeight. The HeightChange
+     * audience is notified whenever the height changes.
+     */
+    void setHeight(coord_t newHeight);
+
+    /**
      * Returns the target height of the plane in the map coordinate space.
      * The target height is the destination height following a successful move.
      * Note that this may be the same as @ref height(), in which case the plane

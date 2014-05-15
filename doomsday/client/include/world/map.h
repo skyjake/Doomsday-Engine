@@ -540,19 +540,59 @@ public:
         int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
 
 #ifdef __CLIENT__
-    coord_t skyFix(bool ceiling) const;
+    /// Logical SkyPlane identifiers:
+    enum SkyPlaneId {
+        SkyFloor,
+        SkyCeiling
+    };
 
-    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
-    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
+    /**
+     * Map-global sky plane. Works mostly like a Plane except that there is no
+     * source sector and therefore no surface (or material).
+     */
+    class SkyPlane
+    {
+    public:
+        /// Notified whenever a @em sharp height change occurs.
+        DENG2_DEFINE_AUDIENCE(HeightChange, void skyPlaneHeightChanged(SkyPlane &plane))
 
-    void setSkyFix(bool ceiling, coord_t newHeight);
+        /**
+         * Returns the current height of the plane relative to @c 0 on the map
+         * up axis. The HeightChange audience is notified whenever the height
+         * changes.
+         */
+        coord_t height() const;
 
-    inline void setSkyFixFloor(coord_t newHeight) {
-        setSkyFix(false /*the floor*/, newHeight);
-    }
-    inline void setSkyFixCeiling(coord_t newHeight) {
-        setSkyFix(true /*the ceiling*/, newHeight);
-    }
+        /**
+         * Change the height of the plane to @a newHeight. The HeightChange
+         * audience is notified whenever the height changes.
+         */
+        void setHeight(coord_t newHeight);
+
+        /// Returns @c true iff this is the map's floor sky plane.
+        bool isSkyFloor() const;
+
+        /// Returns @c true iff this is the map's ceiling sky plane.
+        bool isSkyCeiling() const;
+
+        // Map needs access to the private constructor.
+        friend class Map;
+
+    private:
+        SkyPlane(Map &owner, coord_t height);
+
+        Map &_owner;
+        coord_t _height;
+    };
+
+    /**
+     * Returns the SkyPlane referenced by the SkyPlaneId @a which.
+     */
+    SkyPlane &skyPlane(SkyPlaneId which) const;
+
+    /// Convenient accessor methods:
+    inline SkyPlane &skyFloor() const   { return skyPlane(SkyFloor); }
+    inline SkyPlane &skyCeiling() const { return skyPlane(SkyCeiling); }
 
     /**
      * Attempt to spawn a new (particle) generator for the map. If no free identifier

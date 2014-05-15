@@ -106,6 +106,38 @@ struct EditableElements
     void clearAll();
 };
 
+#ifdef __CLIENT__
+
+Map::SkyPlane::SkyPlane(Map &owner, coord_t height)
+    : _owner(owner), _height(height)
+{}
+
+coord_t Map::SkyPlane::height() const
+{
+    return _height;
+}
+
+void Map::SkyPlane::setHeight(coord_t newHeight)
+{
+    if(_height != newHeight)
+    {
+        _height = newHeight;
+        DENG2_FOR_AUDIENCE(HeightChange, i) i->skyPlaneHeightChanged(*this);
+    }
+}
+
+bool Map::SkyPlane::isSkyFloor() const
+{
+    return this == &_owner.skyFloor();
+}
+
+bool Map::SkyPlane::isSkyCeiling() const
+{
+    return this == &_owner.skyCeiling();
+}
+
+#endif // __CLIENT__
+
 DENG2_PIMPL(Map)
 , DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 {
@@ -296,8 +328,8 @@ DENG2_PIMPL(Map)
 
     QScopedPointer<SurfaceDecorator> decorator;
 
-    coord_t skyFloorHeight;
-    coord_t skyCeilingHeight;
+    SkyPlane skyFloor;
+    SkyPlane skyCeiling;
 
     ClMobjHash clMobjHash;
 
@@ -309,13 +341,13 @@ DENG2_PIMPL(Map)
 #endif
 
     Instance(Public *i, Uri const &uri)
-        : Base            (i)
-        , editingEnabled  (true)
-        , uri             (uri)
-        , lineLinks       (0)
+        : Base          (i)
+        , editingEnabled(true)
+        , uri           (uri)
+        , lineLinks     (0)
 #ifdef __CLIENT__
-        , skyFloorHeight  (DDMAXFLOAT)
-        , skyCeilingHeight(DDMINFLOAT)
+        , skyFloor      (*i, DDMAXFLOAT)
+        , skyCeiling    (*i, DDMINFLOAT)
 #endif
     {
         zap(oldUniqueId);
@@ -2871,8 +2903,8 @@ void Map::initSkyFix()
 
     LOG_AS("Map::initSkyFix");
 
-    d->skyFloorHeight   = DDMAXFLOAT;
-    d->skyCeilingHeight = DDMINFLOAT;
+    d->skyFloor.setHeight(DDMAXFLOAT);
+    d->skyCeiling.setHeight(DDMINFLOAT);
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     /// @todo Can't we defer this?
@@ -2888,10 +2920,10 @@ void Map::initSkyFix()
         if(skyCeil)
         {
             // Adjust for the plane height.
-            if(sector->ceiling().heightSmoothed() > d->skyCeilingHeight)
+            if(sector->ceiling().heightSmoothed() > d->skyCeiling.height())
             {
                 // Must raise the skyfix ceiling.
-                d->skyCeilingHeight = sector->ceiling().heightSmoothed();
+                d->skyCeiling.setHeight(sector->ceiling().heightSmoothed());
             }
 
             // Check that all the mobjs in the sector fit in.
@@ -2899,10 +2931,10 @@ void Map::initSkyFix()
             {
                 coord_t extent = mo->origin[VZ] + mo->height;
 
-                if(extent > d->skyCeilingHeight)
+                if(extent > d->skyCeiling.height())
                 {
                     // Must raise the skyfix ceiling.
-                    d->skyCeilingHeight = extent;
+                    d->skyCeiling.setHeight(extent);
                 }
             }
         }
@@ -2910,10 +2942,10 @@ void Map::initSkyFix()
         if(skyFloor)
         {
             // Adjust for the plane height.
-            if(sector->floor().heightSmoothed() < d->skyFloorHeight)
+            if(sector->floor().heightSmoothed() < d->skyFloor.height())
             {
                 // Must lower the skyfix floor.
-                d->skyFloorHeight = sector->floor().heightSmoothed();
+                d->skyFloor.setHeight(sector->floor().heightSmoothed());
             }
         }
 
@@ -2935,16 +2967,16 @@ void Map::initSkyFix()
 
             if(sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z())
             {
-                if(skyCeil && sectionLeft.top().z() + sectionLeft.materialOrigin().y > d->skyCeilingHeight)
+                if(skyCeil && sectionLeft.top().z() + sectionLeft.materialOrigin().y > d->skyCeiling.height())
                 {
                     // Must raise the skyfix ceiling.
-                    d->skyCeilingHeight = sectionLeft.top().z() + sectionLeft.materialOrigin().y;
+                    d->skyCeiling.setHeight(sectionLeft.top().z() + sectionLeft.materialOrigin().y);
                 }
 
-                if(skyFloor && sectionLeft.bottom().z() + sectionLeft.materialOrigin().y < d->skyFloorHeight)
+                if(skyFloor && sectionLeft.bottom().z() + sectionLeft.materialOrigin().y < d->skyFloor.height())
                 {
                     // Must lower the skyfix floor.
-                    d->skyFloorHeight = sectionLeft.bottom().z() + sectionLeft.materialOrigin().y;
+                    d->skyFloor.setHeight(sectionLeft.bottom().z() + sectionLeft.materialOrigin().y);
                 }
             }
         }
@@ -2953,15 +2985,16 @@ void Map::initSkyFix()
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
-coord_t Map::skyFix(bool ceiling) const
+Map::SkyPlane &Map::skyPlane(SkyPlaneId which) const
 {
-    return ceiling? d->skyCeilingHeight : d->skyFloorHeight;
-}
-
-void Map::setSkyFix(bool ceiling, coord_t newHeight)
-{
-    if(ceiling) d->skyCeilingHeight = newHeight;
-    else        d->skyFloorHeight   = newHeight;
+    switch(which)
+    {
+    case SkyFloor:   return d->skyFloor;
+    case SkyCeiling: return d->skyCeiling;
+    default: break;
+    }
+    /// @throw Error We do not know this sky plane.
+    throw Error("Map::skyPlane", "Unknown sky plane id " + String::number(which));
 }
 
 Generator *Map::newGenerator()

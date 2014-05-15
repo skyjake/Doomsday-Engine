@@ -44,7 +44,7 @@ namespace internal
         DENG2_UNUSED(backFloor);
         if(devRendSkyMode || P_IsInVoid(viewPlayer))
             return frontFloor->heightSmoothed();
-        return frontFloor->map().skyFixFloor();
+        return frontFloor->map().skyFloor().height();
     }
 
     static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
@@ -52,7 +52,7 @@ namespace internal
         DENG2_UNUSED(backCeil);
         if(devRendSkyMode || P_IsInVoid(viewPlayer))
             return frontCeil->heightSmoothed();
-        return frontCeil->map().skyFixCeiling();
+        return frontCeil->map().skyCeiling().height();
     }
 
     /**

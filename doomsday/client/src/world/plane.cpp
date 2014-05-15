@@ -91,39 +91,6 @@ DENG2_PIMPL(Plane)
     }
 #endif
 
-    void applySharpHeightChange(coord_t newHeight)
-    {
-        // No change?
-        if(de::fequal(newHeight, height))
-            return;
-
-        height = newHeight;
-
-        if(!ddMapSetup)
-        {
-            // Update the sound emitter origin for the plane.
-            self.updateSoundEmitterOrigin();
-
-#ifdef __CLIENT__
-            // We need the decorations updated.
-            /// @todo optimize: Translation on the world up axis would be a
-            /// trivial operation to perform, which, would not require plotting
-            /// decorations again. This frequent case should be designed for.
-            surface.markAsNeedingDecorationUpdate();
-#endif
-        }
-
-        notifyHeightChanged();
-
-#ifdef __CLIENT__
-        if(!ddMapSetup)
-        {
-            // Add ourself to tracked plane list (for movement interpolation).
-            self.map().trackedPlanes().insert(&self);
-        }
-#endif
-    }
-
 #ifdef __CLIENT__
     struct findgeneratorworker_params_t
     {
@@ -228,6 +195,39 @@ void Plane::updateSoundEmitterOrigin()
 coord_t Plane::height() const
 {
     return d->height;
+}
+
+void Plane::setHeight(coord_t newHeight)
+{
+    // No change?
+    if(de::fequal(newHeight, d->height))
+        return;
+
+    d->height = newHeight;
+
+    if(!ddMapSetup)
+    {
+        // Update the sound emitter origin for the plane.
+        updateSoundEmitterOrigin();
+
+#ifdef __CLIENT__
+        // We need the decorations updated.
+        /// @todo optimize: Translation on the world up axis would be a
+        /// trivial operation to perform, which, would not require plotting
+        /// decorations again. This frequent case should be designed for.
+        d->surface.markAsNeedingDecorationUpdate();
+#endif
+    }
+
+    d->notifyHeightChanged();
+
+#ifdef __CLIENT__
+    if(!ddMapSetup)
+    {
+        // Add ourself to tracked plane list (for movement interpolation).
+        map().trackedPlanes().insert(this);
+    }
+#endif
 }
 
 coord_t Plane::targetHeight() const
@@ -395,7 +395,7 @@ int Plane::setProperty(DmuArgs const &args)
     case DMU_HEIGHT: {
         coord_t newHeight = d->height;
         args.value(DMT_PLANE_HEIGHT, &newHeight, 0);
-        d->applySharpHeightChange(newHeight);
+        setHeight(newHeight);
         break; }
     case DMU_TARGET_HEIGHT:
         args.value(DMT_PLANE_TARGET, &d->targetHeight, 0);

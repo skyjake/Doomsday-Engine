@@ -2371,14 +2371,15 @@ static void writeSubspaceSkyMaskStrips(WallEdge::SectionId sectionId)
 static coord_t skyPlaneZ(int skyCap)
 {
     SectorCluster &cluster = curSubspace->cluster();
-
-    int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
     {
-        return cluster.sector().map().skyFix(relPlane == Sector::Ceiling);
+        Map &map = cluster.sector().map();
+        return map.skyPlane((skyCap & SKYCAP_UPPER)? Map::SkyCeiling : Map::SkyFloor).height();
     }
-
-    return cluster.visPlane(relPlane).heightSmoothed();
+    else
+    {
+        return cluster.visPlane((skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor).heightSmoothed();
+    }
 }
 
 /// @param skyCap  @ref skyCapFlags.
@@ -2797,11 +2798,12 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
                        && mo.origin[VZ] <= cluster.visCeiling().heightSmoothed()
                        && mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
                     {
+                        Map::SkyPlane &skyCeiling = cluster.sector().map().skyCeiling();
                         coord_t visibleTop = mo.origin[VZ] + material->height();
-                        if(visibleTop > cluster.sector().map().skyFixCeiling())
+                        if(visibleTop > skyCeiling.height())
                         {
                             // Raise skyfix ceiling.
-                            cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                            skyCeiling.setHeight(visibleTop + 16/*leeway*/);
                         }
                     }
                 }
@@ -4585,7 +4587,7 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
         if(plane.surface().hasSkyMaskedMaterial() &&
            (plane.isSectorFloor() || plane.isSectorCeiling()))
         {
-            height = plane.map().skyFix(plane.isSectorCeiling());
+            height = plane.map().skyPlane(plane.isSectorCeiling()? Map::SkyCeiling : Map::SkyFloor).height();
         }
         else
         {

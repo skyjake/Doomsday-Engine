@@ -130,7 +130,7 @@ dd_bool P_IsInVoid(player_t *player)
 #ifdef __CLIENT__
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            coord_t const skyCeil = cluster.sector().map().skyFixCeiling();
+            coord_t const skyCeil = cluster.sector().map().skyCeiling().height();
             if(skyCeil < DDMAXFLOAT && mo->origin[VZ] > skyCeil - 4)
                 return true;
         }
@@ -145,7 +145,7 @@ dd_bool P_IsInVoid(player_t *player)
 #ifdef __CLIENT__
         if(cluster.visFloor().surface().hasSkyMaskedMaterial())
         {
-            coord_t const skyFloor = cluster.sector().map().skyFixFloor();
+            coord_t const skyFloor = cluster.sector().map().skyFloor().height();
             if(skyFloor > DDMINFLOAT && mo->origin[VZ] < skyFloor + 4)
                 return true;
         }
