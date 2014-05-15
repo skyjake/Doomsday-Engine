@@ -2539,8 +2539,8 @@ static void writeAllWallSections(HEdge *hedge)
     coord_t middleBottomZ  = 0;
     coord_t middleTopZ     = 0;
 
-    WallEdge &leftEdge     = curSubspace->cluster().wallEdge(*hedge, Line::From);
-    WallEdge &rightEdge    = curSubspace->cluster().wallEdge(*hedge, Line::To);
+    WallEdge leftEdge(*hedge, Line::From);// = curSubspace->cluster().wallEdge(*hedge, Line::From);
+    WallEdge rightEdge(*hedge, Line::To); // = curSubspace->cluster().wallEdge(*hedge, Line::To);
 
     writeWallSection(leftEdge.wallBottom(), rightEdge.wallBottom());
     writeWallSection(leftEdge.wallTop(),    rightEdge.wallTop());
