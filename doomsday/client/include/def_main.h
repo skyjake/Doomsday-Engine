@@ -46,8 +46,11 @@ struct Array : public std::vector<PODType>
         for(int i = 0; i < count; ++i) {
             std::vector<PODType>::push_back(PODType());
         }
-        _elements = &(*this)[0];
-        return &_elements[size() - count];
+        if(!isEmpty()) {
+            _elements = &(*this)[0];
+            return &_elements[size() - count];
+        }
+        return 0;
     }
     /// Determine the index of element @a elem. Performance is O(1).
     int indexOf(PODType const *elem) const {
