@@ -46,11 +46,17 @@ public:
 
 public:
     VBufPoolT() {}
+    ~VBufPoolT() { clear(); }
 
-    void reset()
+    void clear()
     {
         qDeleteAll(items);
         items.clear();
+    }
+
+    void reset()
+    {
+        clear();
         release( alloc(24) ); // Alloc an initial buffer and mark as unused.
     }
 
