@@ -192,7 +192,7 @@ public:
     /**
      * Constructs a data bank.
      *
-     * @param bankNameForLog  Name to identify the bank in log entries (latin1).
+     * @param nameForLog  Name to identify the bank in log entries (latin1).
      * @param flags  Flags that determine the behavior of the bank.
      * @param hotStorageLocation  Location where the hot storage files are kept.
      */
