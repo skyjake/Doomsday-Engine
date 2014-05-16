@@ -37,6 +37,7 @@ DENG2_PIMPL(RenderSystem)
     SettingsRegister appearanceSettings;
     ImageBank images;
     WorldVBuf vbuf;
+    IndicePool indicePool;
     PosCoordPool posPool;
     ColorCoordPool colorPool;
     TexCoordPool texPool;
@@ -232,20 +233,27 @@ DrawLists &RenderSystem::drawLists()
     return d->drawLists;
 }
 
-void RenderSystem::printCoordPoolInfo()
+void RenderSystem::printVBufPoolInfo()
 {
     if(!printVBufPoolDevInfo) return;
 
+    d->indicePool.devPrint();
     d->posPool.devPrint();
     d->colorPool.devPrint();
     d->texPool.devPrint();
 }
 
-void RenderSystem::resetCoordPools()
+void RenderSystem::resetVBufPools()
 {
+    d->indicePool.reset();
     d->posPool.reset();
     d->colorPool.reset();
     d->texPool.reset();
+}
+
+RenderSystem::IndicePool &RenderSystem::indicePool() const
+{
+    return d->indicePool;
 }
 
 RenderSystem::PosCoordPool &RenderSystem::posPool() const

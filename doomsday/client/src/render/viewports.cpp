@@ -936,7 +936,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         player->shared.mo->ddFlags = oldFlags;
     }
 
-    ClientApp::renderSystem().printCoordPoolInfo();
+    ClientApp::renderSystem().printVBufPoolInfo();
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
     {

@@ -186,6 +186,8 @@ struct WorldVBuf : public VBufT<de::Vertex3Tex3Rgba>
         TCA_BLEND,  ///< Blendtarget texture.
         TCA_LIGHT   ///< Dynlight texture.
     };
+
+    typedef de::duint16 Index;
 };
 
 /**
@@ -196,10 +198,11 @@ struct WorldVBuf : public VBufT<de::Vertex3Tex3Rgba>
 class RenderSystem : public de::System
 {
 public:
-    // Pooled vertex coordinate work buffers:
-    typedef VBufPoolT<de::Vector3f> PosCoordPool;
-    typedef VBufPoolT<de::Vector4f> ColorCoordPool;
-    typedef VBufPoolT<de::Vector2f> TexCoordPool;
+    // Pooled vertex work buffers:
+    typedef VBufPoolT<WorldVBuf::Index> IndicePool;
+    typedef VBufPoolT<de::Vector3f>     PosCoordPool;
+    typedef VBufPoolT<de::Vector4f>     ColorCoordPool;
+    typedef VBufPoolT<de::Vector2f>     TexCoordPool;
 
 public:
     RenderSystem();
@@ -222,6 +225,11 @@ public:
     DrawLists &drawLists();
 
     /**
+     * Returns the vertex indice pool.
+     */
+    IndicePool &indicePool() const;
+
+    /**
      * Returns the vertex position, coordinate pool.
      */
     PosCoordPool &posPool() const;
@@ -239,9 +247,9 @@ public:
     /**
      * @note Should be called at the start of each map.
      */
-    void resetCoordPools();
+    void resetVBufPools();
 
-    void printCoordPoolInfo();
+    void printVBufPoolInfo();
 
     // System.
     void timeChanged(de::Clock const &);
