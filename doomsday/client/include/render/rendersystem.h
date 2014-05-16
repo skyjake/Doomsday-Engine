@@ -146,6 +146,8 @@ class VBufT : public QVector<VertexType>
 {
 public:
     typedef VertexType Type;
+    typedef de::duint16 Index;
+    typedef QVector<Index> Indices;
 
 public:
     VBufT() : _curElem(0) {}
@@ -159,18 +161,29 @@ public:
         _curElem = 0;
     }
 
-    int reserveElements(int numElements) {
-        int const base = _curElem;
-        _curElem += de::max(numElements, 0);
+    Index reserveElements(Index numElements, Index *indices = 0) {
+        Index const base = _curElem;
+        _curElem += de::max(numElements, Index(0));
         if(_curElem > size())
         {
             resize(_curElem);
         }
+        if(indices)
+        {
+            for(int i = 0; i < numElements; ++i)
+            {
+                indices[i] = base + i;
+            }
+        }
         return base;
     }
 
+    inline Index reserveElements(Index numElements, Indices &indices) {
+        return reserveElements(numElements, indices.data());
+    }
+
 private:
-    int _curElem;
+    Index _curElem;
 };
 
 /**
@@ -187,7 +200,21 @@ struct WorldVBuf : public VBufT<de::Vertex3Tex3Rgba>
         TCA_LIGHT   ///< Dynlight texture.
     };
 
-    typedef de::duint16 Index;
+    /**
+     * @param vertCount       Number of vertex elements being written to.
+     * @param indices         Indices of the vertex elements being written to.
+     * @param posCoods        Map space position coordinates for each vertex.
+     * @param colorCoords     Color coordinates for each vertex (if any).
+     * @param texCoords       @em Primary texture coordinates for each vertex (if any).
+     * @param interTexCoords  @em Inter texture coordinates for each vertex (if any).
+     * @param modTexCoords    Modulation texture coordinates for each vertex (if any).
+     */
+    void setVertices(Index vertCount, Index const *indices,
+                     de::Vector3f const *posCoords,
+                     de::Vector4f const *colorCoords    = 0,
+                     de::Vector2f const *texCoords      = 0,
+                     de::Vector2f const *interTexCoords = 0,
+                     de::Vector2f const *modTexCoords   = 0);
 };
 
 /**

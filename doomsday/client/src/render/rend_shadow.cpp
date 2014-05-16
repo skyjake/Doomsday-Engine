@@ -44,10 +44,13 @@ using namespace de;
 static void drawShadow(DrawList &shadowList, TexProjection const &tp,
     rendershadowprojectionparams_t &parm)
 {
+    RenderSystem &rendSys = ClientApp::renderSystem();
+    WorldVBuf &vbuf       = rendSys.buffer();
+
     // Allocate enough for the divisions too.
-    Vector3f *rvertices  = ClientApp::renderSystem().posPool().alloc(parm.realNumVertices);
-    Vector2f *rtexcoords = ClientApp::renderSystem().texPool().alloc(parm.realNumVertices);
-    Vector4f *rcolors    = ClientApp::renderSystem().colorPool().alloc(parm.realNumVertices);
+    Vector3f *rvertices  = rendSys.posPool().alloc(parm.realNumVertices);
+    Vector2f *rtexcoords = rendSys.texPool().alloc(parm.realNumVertices);
+    Vector4f *rcolors    = rendSys.colorPool().alloc(parm.realNumVertices);
     bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
     for(uint i = 0; i < parm.numVertices; ++i)
@@ -109,31 +112,56 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
         WallEdgeSection const &sectionLeft  = *parm.wall.leftEdge;
         WallEdgeSection const &sectionRight = *parm.wall.rightEdge;
 
-        shadowList.write(gl::TriangleFan,
-                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                         Vector2f(1, 1), Vector2f(0, 0),
-                         0, 3 + sectionRight.divisionCount(),
-                         rvertices  + 3 + sectionLeft.divisionCount(),
-                         rcolors    + 3 + sectionLeft.divisionCount(),
-                         rtexcoords + 3 + sectionLeft.divisionCount())
-                  .write(gl::TriangleFan,
-                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                         Vector2f(1, 1), Vector2f(0, 0),
-                         0, 3 + sectionLeft.divisionCount(),
-                         rvertices, rcolors, rtexcoords);
+        {
+            WorldVBuf::Index vertCount = 3 + sectionRight.divisionCount();
+            WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+            vbuf.reserveElements(vertCount, indices);
+            vbuf.setVertices(vertCount, indices,
+                             rvertices  + 3 + sectionLeft.divisionCount(),
+                             rcolors    + 3 + sectionLeft.divisionCount(),
+                             rtexcoords + 3 + sectionLeft.divisionCount());
+
+            shadowList.write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, vertCount, indices);
+
+            rendSys.indicePool().release(indices);
+        }
+        {
+            WorldVBuf::Index vertCount = 3 + sectionLeft.divisionCount();
+            WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+            vbuf.reserveElements(vertCount, indices);
+            vbuf.setVertices(vertCount, indices,
+                             rvertices, rcolors, rtexcoords);
+
+            shadowList.write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, vertCount, indices);
+
+            rendSys.indicePool().release(indices);
+        }
     }
     else
     {
+        WorldVBuf::Index vertCount = parm.numVertices;
+        WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+        vbuf.reserveElements(vertCount, indices);
+        vbuf.setVertices(vertCount, indices,
+                         rvertices, rcolors, rtexcoords);
+
         shadowList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
                          BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                          Vector2f(1, 1), Vector2f(0, 0),
-                         0, parm.numVertices,
-                         rvertices, rcolors, rtexcoords);
+                         0, vertCount, indices);
+
+        rendSys.indicePool().release(indices);
     }
 
-    ClientApp::renderSystem().posPool().release(rvertices);
-    ClientApp::renderSystem().texPool().release(rtexcoords);
-    ClientApp::renderSystem().colorPool().release(rcolors);
+    rendSys.posPool().release(rvertices);
+    rendSys.texPool().release(rtexcoords);
+    rendSys.colorPool().release(rcolors);
 }
 
 struct drawshadowworker_params_t

@@ -31,6 +31,64 @@ using namespace de;
 
 static byte printVBufPoolDevInfo; // cvar
 
+void WorldVBuf::setVertices(Index vertCount, Index const *indices,
+    Vector3f const *posCoords, Vector4f const *colorCoords,
+    Vector2f const *texCoords, Vector2f const *interTexCoords,
+    Vector2f const *modTexCoords)
+{
+    for(int i = 0; i < vertCount; ++i)
+    {
+        Type &vertex = (*this)[indices[i]];
+
+        vertex.pos = posCoords[i];
+
+        // Sky masked polys need nothing more.
+        //if(d->spec.group == SkyMaskGeom) continue;
+
+        // Primary texture coordinates.
+        //if(d->spec.unit(TU_PRIMARY).hasTexture())
+        if(texCoords)
+        {
+            DENG2_ASSERT(texCoords != 0);
+            vertex.texCoord[TCA_MAIN] = texCoords[i];
+        }
+
+        // Secondary texture coordinates.
+        //if(d->spec.unit(TU_INTER).hasTexture())
+        if(interTexCoords)
+        {
+            DENG2_ASSERT(interTexCoords != 0);
+            vertex.texCoord[TCA_BLEND] = interTexCoords[i];
+        }
+
+        // First light texture coordinates.
+        //if((elem->data.flags & Instance::Element::Data::HasLights) && IS_MTEX_LIGHTS)
+        if(modTexCoords)
+        {
+            DENG2_ASSERT(modTexCoords != 0);
+            vertex.texCoord[TCA_LIGHT] = modTexCoords[i];
+        }
+
+        // Color.
+        if(colorCoords)
+        {
+            Vector4f const &srcColor = colorCoords[i];
+
+            // We should not be relying on clamping at this late stage...
+            DENG2_ASSERT(INRANGE_OF(srcColor.x, 0.f, 1.f));
+            DENG2_ASSERT(INRANGE_OF(srcColor.y, 0.f, 1.f));
+            DENG2_ASSERT(INRANGE_OF(srcColor.z, 0.f, 1.f));
+            DENG2_ASSERT(INRANGE_OF(srcColor.w, 0.f, 1.f));
+
+            vertex.rgba = srcColor.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
+        }
+        else
+        {
+            vertex.rgba = Vector4f(1, 1, 1, 1);
+        }
+    }
+}
+
 DENG2_PIMPL(RenderSystem)
 {
     SettingsRegister settings;

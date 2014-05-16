@@ -1008,7 +1008,11 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
     WallEdgeSection const &leftEdge, WallEdgeSection const &rightEdge,
     rendershadowseg_params_t const &wsParms)
 {
-    DENG2_ASSERT(origVertices);
+    DENG2_ASSERT(origVertices != 0);
+
+    RenderSystem &rendSys = ClientApp::renderSystem();
+    WorldVBuf &vbuf       = rendSys.buffer();
+
     bool const mustSubdivide = (leftEdge.divisionCount() || rightEdge.divisionCount());
 
     uint realNumVertices = 4;
@@ -1022,8 +1026,8 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
     }
 
     // Allocate enough for the divisions too.
-    Vector2f *rtexcoords = ClientApp::renderSystem().texPool().alloc(realNumVertices);
-    Vector4f *rcolors = ClientApp::renderSystem().colorPool().alloc(realNumVertices);
+    Vector2f *rtexcoords = rendSys.texPool().alloc(realNumVertices);
+    Vector4f *rcolors = rendSys.colorPool().alloc(realNumVertices);
 
     quadTexCoords(rtexcoords, origVertices, wsParms.sectionWidth,
                   leftEdge.top().origin(), rightEdge.bottom().origin(),
@@ -1039,7 +1043,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
         listSpec.texunits[TU_PRIMARY] =
             GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
 
-        DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
+        DrawList &shadowList = rendSys.drawLists().find(listSpec);
 
         if(mustSubdivide)
         {
@@ -1049,7 +1053,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
              * color.
              */
 
-            Vector3f *rvertices = ClientApp::renderSystem().posPool().alloc(realNumVertices);
+            Vector3f *rvertices = rendSys.posPool().alloc(realNumVertices);
 
             Vector2f origTexCoords[4];
             std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
@@ -1061,33 +1065,58 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
             R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
             R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
 
-            shadowList.write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, 3 + rightEdge.divisionCount(),
-                             rvertices  + 3 + leftEdge.divisionCount(),
-                             rcolors    + 3 + leftEdge.divisionCount(),
-                             rtexcoords + 3 + leftEdge.divisionCount())
-                      .write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, 3 + leftEdge.divisionCount(),
-                             rvertices, rcolors, rtexcoords);
+            {
+                WorldVBuf::Index vertCount = 3 + rightEdge.divisionCount();
+                WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+                vbuf.reserveElements(vertCount, indices);
+                vbuf.setVertices(vertCount, indices,
+                                 rvertices  + 3 + leftEdge.divisionCount(),
+                                 rcolors    + 3 + leftEdge.divisionCount(),
+                                 rtexcoords + 3 + leftEdge.divisionCount());
 
-            ClientApp::renderSystem().posPool().release(rvertices);
+                shadowList.write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, vertCount, indices);
+
+                rendSys.indicePool().release(indices);
+            }
+            {
+                WorldVBuf::Index vertCount = 3 + leftEdge.divisionCount();
+                WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+                vbuf.reserveElements(vertCount, indices);
+                vbuf.setVertices(vertCount, indices,
+                                 rvertices, rcolors, rtexcoords);
+
+                shadowList.write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, vertCount, indices);
+
+                rendSys.indicePool().release(indices);
+            }
+
+            rendSys.posPool().release(rvertices);
         }
         else
         {
+            WorldVBuf::Index vertCount = 4;
+            WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+            vbuf.reserveElements(vertCount, indices);
+            vbuf.setVertices(vertCount, indices,
+                             origVertices, rcolors, rtexcoords);
+
             shadowList.write(gl::TriangleStrip,
                              BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                              Vector2f(1, 1), Vector2f(0, 0),
-                             0, 4,
-                             origVertices, rcolors, rtexcoords);
+                             0, vertCount, indices);
+
+            rendSys.indicePool().release(indices);
         }
     }
 
-    ClientApp::renderSystem().texPool().release(rtexcoords);
-    ClientApp::renderSystem().colorPool().release(rcolors);
+    rendSys.texPool().release(rtexcoords);
+    rendSys.colorPool().release(rcolors);
 }
 
 /// @todo fixme: Should use the visual plane heights of sector clusters.
@@ -1205,6 +1234,9 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
+    RenderSystem &rendSys = ClientApp::renderSystem();
+    WorldVBuf &vbuf       = rendSys.buffer();
+
     float const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge.sectorOpenness()), 1.f);
     float const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.sectorOpenness()), 1.f);
 
@@ -1252,12 +1284,18 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
     if(rendFakeRadio == 2) return;
 
-    ClientApp::renderSystem().drawLists()
-              .find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
-                  .write(gl::TriangleFan,
-                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                         Vector2f(1, 1), Vector2f(0, 0),
-                         0, 4, rvertices, rcolors);
+    WorldVBuf::Index vertCount = 4;
+    WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+    vbuf.reserveElements(vertCount, indices);
+    vbuf.setVertices(vertCount, indices, rvertices, rcolors);
+
+    rendSys.drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
+                .write(gl::TriangleFan, BM_NORMAL,
+                       Vector2f(1, 1), Vector2f(0, 0),
+                       Vector2f(1, 1), Vector2f(0, 0),
+                       0, vertCount, indices);
+
+    rendSys.indicePool().release(indices);
 }
 
 static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)

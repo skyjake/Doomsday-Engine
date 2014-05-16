@@ -113,25 +113,18 @@ public:
     /**
      * Write the given geometry primitive to the list.
      *
-     * @param primitive       Type identifier for the GL primitive being written.
-     * @param isLit           @todo Retrieve from list specification?
-     * @param vertCount       Number of vertices being written.
-     * @param posCoods        Map space position coordinates for each vertex.
-     * @param colorCoords     Color coordinates for each vertex (if any).
-     * @param texCoords       @em Primary texture coordinates for each vertex (if any).
-     * @param interTexCoords  @em Inter texture coordinates for each vertex (if any).
-     * @param modTexture      GL name of the modulation texture (if any).
-     * @param modColor        Modulation color (if any).
-     * @param modTexCoords    Modulation texture coordinates for each vertex (if any).
+     * @param primitive   Type identifier for the GL primitive being written.
+     * @param isLit       @todo Retrieve from list specification?
+     * @param vertCount   Number of vertices being written.
+     * @param indices     Vertex indices for the primitive.
+     * @param modTexture  GL name of the modulation texture (if any).
+     * @param modColor    Modulation color (if any).
      */
     DrawList &write(de::gl::Primitive primitive, blendmode_e blendMode,
         de::Vector2f const &texScale, de::Vector2f const &texOffset,
         de::Vector2f const &detailTexScale, de::Vector2f const &detailTexOffset,
-        bool isLit, uint vertCount,
-        de::Vector3f const *posCoords, de::Vector4f const *colorCoords = 0,
-        de::Vector2f const *texCoords = 0, de::Vector2f const *interTexCoords = 0,
-        GLuint modTexture = 0, de::Vector3f const *modColor = 0,
-        de::Vector2f const *modTexCoords = 0);
+        bool isLit, WorldVBuf::Index vertCount, WorldVBuf::Index const *indices,
+        GLuint modTexture = 0, de::Vector3f const *modColor = 0);
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 

@@ -93,10 +93,10 @@ DENG2_PIMPL(DrawList)
             // for the remaining vertices. The indices array is allocated from
             // the same storage region as used for the list itself, therefore it
             // is necessary to update the pointers when the list is resized.
-            uint numIndices;
+            WorldVBuf::Index numIndices;
             union {
-                uint *indices;
-                uint base;
+                WorldVBuf::Index *indices;
+                WorldVBuf::Index base;
             };
 
             blendmode_t blendMode;
@@ -184,16 +184,16 @@ DENG2_PIMPL(DrawList)
                 }
 
                 glBegin(type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
-                for(uint i = 0; i < numIndices; ++i)
+                for(WorldVBuf::Index i = 0; i < numIndices; ++i)
                 {
                     WorldVBuf::Type const &vertex = vbuf()[(flags & SequentialIndices)? base + i : indices[i]];
 
-                    for(int j = 0; j < numTexUnits; ++j)
+                    for(int k = 0; k < numTexUnits; ++k)
                     {
-                        if(texUnitMap[j])
+                        if(texUnitMap[k])
                         {
-                            Vector2f const &tc = vertex.texCoord[texUnitMap[j] - 1];
-                            glMultiTexCoord2f(GL_TEXTURE0 + j, tc.x, tc.y);
+                            Vector2f const &tc = vertex.texCoord[texUnitMap[k] - 1];
+                            glMultiTexCoord2f(GL_TEXTURE0 + k, tc.x, tc.y);
                         }
                     }
 
@@ -335,7 +335,7 @@ DENG2_PIMPL(DrawList)
                 {
                     if(!(elem->data.flags & Element::Data::SequentialIndices) && elem->data.indices)
                     {
-                        elem->data.indices = (uint *) (data + ((byte *) elem->data.indices - oldData));
+                        elem->data.indices = (WorldVBuf::Index *) (data + ((byte *) elem->data.indices - oldData));
                     }
                 }
             }
@@ -347,23 +347,20 @@ DENG2_PIMPL(DrawList)
         return data + startOffset;
     }
 
-    void writeIndices(uint numIndices, uint base)
+    void writeIndices(WorldVBuf::Index vertCount, WorldVBuf::Index const *indices)
     {
         // Note that last may be reallocated during allocateData.
-        last->data.numIndices = numIndices;
+        last->data.numIndices = vertCount;
         // Temporary variable to avoid segfault on Ubuntu linux CMB
-        uint *lti = (uint *) allocateData(sizeof(uint) * numIndices);
+        WorldVBuf::Index *lti = (WorldVBuf::Index *) allocateData(sizeof(*lti) * last->data.numIndices);
         last->data.indices = lti;
 
-        for(uint i = 0; i < numIndices; ++i)
-        {
-            last->data.indices[i] = base + i;
-        }
+        std::memcpy(last->data.indices, indices, sizeof(WorldVBuf::Index) * vertCount);
     }
 
-    void writeIndicesSequential(uint numIndices, uint base)
+    void writeIndicesSequential(WorldVBuf::Index vertCount, WorldVBuf::Index base)
     {
-        last->data.numIndices = numIndices;
+        last->data.numIndices = vertCount;
         last->data.base       = base;
         last->data.flags     |= Element::Data::SequentialIndices;
     }
@@ -801,15 +798,15 @@ bool DrawList::isEmpty() const
     return d->last == 0;
 }
 
-DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
-    Vector2f const &texScale, Vector2f const &texOffset,
-    Vector2f const &detailTexScale, Vector2f const &detailTexOffset, bool isLit, uint vertCount,
-    Vector3f const *posCoords, Vector4f const *colorCoords, Vector2f const *texCoords,
-    Vector2f const *interTexCoords, GLuint modTexture, Vector3f const *modColor,
-    Vector2f const *modTexCoords)
+DrawList &DrawList::write(gl::Primitive primitive, blendmode_e blendMode,
+    Vector2f const &texScale, Vector2f const &texOffset, Vector2f const &detailTexScale,
+    Vector2f const &detailTexOffset,
+    bool isLit, WorldVBuf::Index vertCount, WorldVBuf::Index const *indices,
+    GLuint modTexture, Vector3f const *modColor)
 {
-    DENG2_ASSERT(posCoords != 0);
     DENG2_ASSERT(vertCount >= 3);
+    DENG2_ASSERT(indices != 0);
+    //DENG2_ASSERT(posCoords != 0);
 
     // Rationalize write arguments.
     if(d->spec.group == SkyMaskGeom || d->spec.group == LightGeom || d->spec.group == ShadowGeom)
@@ -842,60 +839,27 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
     elem->data.dtexScale  = detailTexScale;
     elem->data.dtexOffset = detailTexOffset;
 
-    // Allocate vertices from the world-wide vertex buffer.
-    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
-    uint base = vbuf.reserveElements(vertCount);
-
-    // Setup the indices.
-    d->writeIndicesSequential(vertCount, base);
-
-    for(uint i = 0; i < vertCount; ++i)
+    // Do we need to take a copy of the indice sequence?
+    WorldVBuf::Index const base = indices[0];
+    WorldVBuf::Index idx = 1;
+    bool contiguous      = true;
+    while(contiguous && idx < vertCount)
     {
-        WorldVBuf::Type &vertex = vbuf[base + i];
-
-        vertex.pos = posCoords[i];
-
-        // Sky masked polys need nothing more.
-        if(d->spec.group == SkyMaskGeom) continue;
-
-        // Primary texture coordinates.
-        if(d->spec.unit(TU_PRIMARY).hasTexture())
+        if(indices[idx] != base + idx)
         {
-            DENG2_ASSERT(texCoords != 0);
-            vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+            contiguous = false;
         }
+        idx++;
+    }
 
-        // Secondary texture coordinates.
-        if(d->spec.unit(TU_INTER).hasTexture())
-        {
-            DENG2_ASSERT(interTexCoords != 0);
-            vertex.texCoord[WorldVBuf::TCA_BLEND] = interTexCoords[i];
-        }
-
-        // First light texture coordinates.
-        if((elem->data.flags & Instance::Element::Data::HasLights) && IS_MTEX_LIGHTS)
-        {
-            DENG2_ASSERT(modTexCoords != 0);
-            vertex.texCoord[WorldVBuf::TCA_LIGHT] = modTexCoords[i];
-        }
-
-        // Color.
-        if(colorCoords)
-        {
-            Vector4f const &srcColor = colorCoords[i];
-
-            // We should not be relying on clamping at this late stage...
-            DENG2_ASSERT(INRANGE_OF(srcColor.x, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.y, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.z, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.w, 0.f, 1.f));
-
-            vertex.rgba = srcColor.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
-        }
-        else
-        {
-            vertex.rgba = Vector4f(1, 1, 1, 1);
-        }
+    // Setup the vertex indices for this element.
+    if(contiguous)
+    {
+        d->writeIndicesSequential(vertCount, base);
+    }
+    else
+    {
+        d->writeIndices(vertCount, indices);
     }
 
     d->endElement();
