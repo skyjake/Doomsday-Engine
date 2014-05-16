@@ -69,7 +69,7 @@ DENG2_PIMPL(ColorBank)
     {}
 };
 
-ColorBank::ColorBank() : InfoBank(DisableHotStorage), d(new Instance(this))
+ColorBank::ColorBank() : InfoBank("ColorBank", DisableHotStorage), d(new Instance(this))
 {}
 
 void ColorBank::addFromInfo(File const &file)

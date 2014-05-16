@@ -298,7 +298,7 @@ public:
     /**
      * Parses a file containing Info source.
      *
-     * @param source  Info source text.
+     * @param file  Info source text.
      */
     Info(File const &file);
 

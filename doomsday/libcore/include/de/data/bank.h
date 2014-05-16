@@ -192,10 +192,13 @@ public:
     /**
      * Constructs a data bank.
      *
+     * @param bankNameForLog  Name to identify the bank in log entries (latin1).
      * @param flags  Flags that determine the behavior of the bank.
      * @param hotStorageLocation  Location where the hot storage files are kept.
      */
-    Bank(Flags const &flags = DefaultFlags, String const &hotStorageLocation = "/home/cache");
+    Bank(char const *nameForLog = "Bank",
+         Flags const &flags = DefaultFlags,
+         String const &hotStorageLocation = "/home/cache");
 
     virtual ~Bank();
 

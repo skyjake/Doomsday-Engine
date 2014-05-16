@@ -111,7 +111,6 @@ private:
 
 } // namespace internal
 
-
 DENG2_PIMPL(Bank),
 DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via main Loop
 {
@@ -525,6 +524,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
     typedef FIFO<Notification> NotifyQueue;
 
+    char const *nameForLog;
     Flags flags;
     SourceCache sourceCache;
     ObjectCache memoryCache;
@@ -533,10 +533,11 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
     TaskPool jobs;
     NotifyQueue notifications;
 
-    Instance(Public *i, Flags const &flg)
-        : Base(i),
-          flags(flg),
-          serialCache(0)
+    Instance(Public *i, char const *name, Flags const &flg)
+        : Base(i)
+        , nameForLog(name)
+        , flags(flg)
+        , serialCache(0)
     {
         if(!flags.testFlag(DisableHotStorage))
         {
@@ -723,8 +724,8 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 DENG2_AUDIENCE_METHOD(Bank, Load)
 DENG2_AUDIENCE_METHOD(Bank, CacheLevel)
 
-Bank::Bank(Flags const &flags, String const &hotStorageLocation)
-    : d(new Instance(this, flags))
+Bank::Bank(char const *nameForLog, Flags const &flags, String const &hotStorageLocation)
+    : d(new Instance(this, nameForLog, flags))
 {
     d->setSerialLocation(hotStorageLocation);
 }
@@ -785,7 +786,7 @@ void Bank::clear()
 
 void Bank::add(DotPath const &path, ISource *source)
 {
-    LOG_AS("Bank");
+    LOG_AS(d->nameForLog);
 
     QScopedPointer<ISource> src(source);
     Instance::Data &item = d->items.insert(path);
@@ -842,7 +843,7 @@ void Bank::loadAll()
 
 Bank::IData &Bank::data(DotPath const &path) const
 {
-    LOG_AS("Bank");
+    LOG_AS(d->nameForLog);
 
     // First check if the item is already in memory.
     Instance::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);

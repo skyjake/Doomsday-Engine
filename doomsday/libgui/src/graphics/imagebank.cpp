@@ -63,7 +63,7 @@ DENG2_PIMPL_NOREF(ImageBank)
     };
 };
 
-ImageBank::ImageBank(Flags const &flags) : InfoBank(flags), d(new Instance)
+ImageBank::ImageBank(Flags const &flags) : InfoBank("ImageBank", flags), d(new Instance)
 {}
 
 void ImageBank::add(DotPath const &path, String const &imageFilePath)

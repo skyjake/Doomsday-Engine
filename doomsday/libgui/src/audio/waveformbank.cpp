@@ -58,7 +58,7 @@ DENG2_PIMPL_NOREF(WaveformBank)
     };
 };
 
-WaveformBank::WaveformBank(Flags const &flags) : InfoBank(flags), d(new Instance)
+WaveformBank::WaveformBank(Flags const &flags) : InfoBank("WaveformBank", flags), d(new Instance)
 {}
 
 void WaveformBank::add(DotPath const &id, String const &waveformFilePath)

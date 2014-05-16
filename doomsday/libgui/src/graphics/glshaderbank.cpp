@@ -157,7 +157,7 @@ DENG2_PIMPL(GLShaderBank)
     }
 };
 
-GLShaderBank::GLShaderBank() : d(new Instance(this))
+GLShaderBank::GLShaderBank() : InfoBank("GLShaderBank"), d(new Instance(this))
 {}
 
 void GLShaderBank::addFromInfo(File const &file)

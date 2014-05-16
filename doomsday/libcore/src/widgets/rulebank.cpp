@@ -60,7 +60,7 @@ DENG2_PIMPL(RuleBank)
     }
 };
 
-RuleBank::RuleBank() : InfoBank(DisableHotStorage), d(new Instance(this))
+RuleBank::RuleBank() : InfoBank("RuleBank", DisableHotStorage), d(new Instance(this))
 {}
 
 void RuleBank::addFromInfo(File const &file)
