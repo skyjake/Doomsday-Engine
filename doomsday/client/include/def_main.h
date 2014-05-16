@@ -25,7 +25,7 @@
 
 #include "Material"
 #include <de/stringarray.h>
-#include <de/vector>
+#include <vector>
 
 template <typename PODType>
 struct Array : public std::vector<PODType>
@@ -106,7 +106,8 @@ typedef struct stateinfo_s {
 } stateinfo_t;
 
 /**
- * Definitions that are accessible via the public runtime API.
+ * Definitions that have been preprocessed for runtime use. Some of these are
+ * visible to the games via the InternalData API.
  */
 struct RuntimeDefs
 {
