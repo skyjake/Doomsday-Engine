@@ -50,17 +50,17 @@ AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
     return envInfo[1 + int(id)];
 }
 
-AudioEnvironmentId S_AudioEnvironmentId(uri_s const *uri)
+AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri)
 {
     if(uri)
     {
-        ded_tenviron_t *env = defs.textureEnv;
-        for(int i = 0; i < defs.count.textureEnv.num; ++i, env++)
+        for(int i = 0; i < defs.textureEnv.size(); ++i)
         {
-            for(int k = 0; k < env->count.num; ++k)
+            ded_tenviron_t const *env = &defs.textureEnv[i];
+            for(int k = 0; k < env->materials.size(); ++k)
             {
-                uri_s *ref = env->materials[k];
-                if(!ref || !Uri_Equality(ref, uri)) continue;
+                de::Uri *ref = env->materials[k].uri;
+                if(!ref || *ref != *uri) continue;
 
                 // Is this a known environment?
                 for(int m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)

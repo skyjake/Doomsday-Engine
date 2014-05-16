@@ -23,8 +23,8 @@
 
 #include <vector>
 #include <de/Vector>
+#include <doomsday/defs/ded.h>
 
-#include "def_data.h"
 #include "resource/model.h"
 
 /**

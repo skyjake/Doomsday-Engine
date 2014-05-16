@@ -24,7 +24,6 @@
 #  error "resource/materialvariantspec.h only exists in the Client"
 #endif
 
-#include "def_data.h"
 #include "MaterialContext"
 #include "Texture" // TextureVariantSpec
 

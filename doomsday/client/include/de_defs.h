@@ -24,8 +24,10 @@
 #ifndef __DOOMSDAY_DEFINITIONS_H__
 #define __DOOMSDAY_DEFINITIONS_H__
 
-#include "def_main.h"
-#include "def_data.h"
 #include "def_share.h"
+#include "def_main.h"
+#include <doomsday/defs/ded.h>
+#include <doomsday/defs/dedfile.h>
+#include <doomsday/defs/dedparser.h>
 
 #endif

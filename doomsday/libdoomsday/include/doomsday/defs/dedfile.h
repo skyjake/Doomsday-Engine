@@ -1,6 +1,4 @@
-/**
- * @file memory.c
- * Memory allocations. @ingroup system
+/** @file defs/dedfile.h  Definition files. @ingroup defs
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,51 +18,33 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/memory.h"
-#include <stdlib.h>
-#include <string.h>
+#ifndef LIBDOOMSDAY_DEFS_DED_H
+#define LIBDOOMSDAY_DEFS_DED_H
 
-void *M_Malloc(size_t size)
-{
-    void *p = malloc(size);
-    if(!p) Libdeng_BadAlloc();
-    return p;
-}
+#include "../libdoomsday.h"
+#include "ded.h"
 
-void *M_Calloc(size_t size)
-{
-    void *p = calloc(size, 1);
-    if(!p) Libdeng_BadAlloc();
-    return p;
-}
+LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, char const* path);
 
-void *M_Realloc(void *ptr, size_t size)
-{
-    void *p = 0;
-    if(!size)
-    {
-        if(ptr) M_Free(ptr);
-        return 0;
-    }
-    p = realloc(ptr, size);
-    if(!p) Libdeng_BadAlloc(); // was supposed to be non-null
-    return p;
-}
+/**
+ * Reads definitions from the given lump.
+ */
+LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
 
-void *M_MemDup(void const *ptr, size_t size)
-{
-    void *copy = M_Malloc(size);
-    memcpy(copy, ptr, size);
-    return copy;
-}
+/**
+ * Reads definitions from the given buffer.
+ * The definition is being loaded from @a _sourcefile (DED or WAD).
+ *
+ * @param buffer        The data to be read, must be null-terminated.
+ * @param _sourceFile   Just FYI.
+ */
+int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile);
 
-void M_Free(void *ptr)
-{
-    free(ptr);
-}
+/**
+ * @return  @c true, if the file was successfully loaded.
+ */
+int DED_Read(ded_t* ded, const char* path);
 
-char *M_StrDup(char const *str)
-{
-    if(!str) return 0;
-    return M_MemDup(str, strlen(str) + 1);
-}
+void DED_SetError(char const *str);
+
+#endif // LIBDOOMSDAY_DEFS_DED_H

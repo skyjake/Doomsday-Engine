@@ -63,14 +63,14 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 
     if(novideo) return;
     if(!((useModels && precacheSkins) || precacheSprites)) return;
-    if(num < 0 || num >= defs.count.mobjs.num) return;
+    if(num < 0 || num >= defs.mobjs.size()) return;
 
     de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
     /// @todo Optimize: Traverses the entire state list!
-    for(int i = 0; i < defs.count.states.num; ++i)
+    for(int i = 0; i < defs.states.size(); ++i)
     {
-        if(stateOwners[i] != &mobjInfo[num]) continue;
+        if(runtimeDefs.stateInfo[i].owner != &runtimeDefs.mobjInfo[num]) continue;
 
         Models_CacheForState(i);
 

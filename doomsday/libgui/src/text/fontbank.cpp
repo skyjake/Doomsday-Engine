@@ -82,7 +82,7 @@ DENG2_PIMPL(FontBank)
     {}
 };
 
-FontBank::FontBank() : InfoBank(DisableHotStorage), d(new Instance(this))
+FontBank::FontBank() : InfoBank("FontBank", DisableHotStorage), d(new Instance(this))
 {}
 
 void FontBank::addFromInfo(File const &file)

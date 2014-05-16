@@ -600,7 +600,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
 
     if(!sfxAvail) return false;
 
-    if(sample->id < 1 || sample->id >= defs.count.sounds.num) return false;
+    if(sample->id < 1 || sample->id >= defs.sounds.size()) return false;
     if(volume <= 0 || !sample->size) return false;
 
     if(emitter && sfxOneSoundPerEmitter)
@@ -625,7 +625,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
     float lowPrio = 0;
 
     // Ensure there aren't already too many channels playing this sample.
-    sfxinfo_t *info = sounds + sample->id;
+    sfxinfo_t *info = &runtimeDefs.sounds[sample->id];
     if(info->channels > 0)
     {
         // The decision to stop channels is based on priorities.

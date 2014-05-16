@@ -279,7 +279,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parseThing(ded->mobjs + mobjType, ignore);
+                        parseThing(&ded->mobjs[mobjType], ignore);
                     }
                     else if(line.beginsWith("Frame", Qt::CaseInsensitive))
                     {
@@ -294,7 +294,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parseFrame(ded->states + stateNum, ignore);
+                        parseFrame(&ded->states[stateNum], ignore);
                     }
                     else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
                     {
@@ -309,7 +309,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parsePointer(ded->states + stateNum, ignore);
+                        parsePointer(&ded->states[stateNum], ignore);
                     }
                     else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
                     {
@@ -324,7 +324,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parseSprite(ded->sprites + spriteNum, ignore);
+                        parseSprite(&ded->sprites[spriteNum], ignore);
                     }
                     else if(line.beginsWith("Ammo", Qt::CaseInsensitive))
                     {
@@ -369,7 +369,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parseSound(ded->sounds + soundNum, ignore);
+                        parseSound(&ded->sounds[soundNum], ignore);
                     }
                     else if(line.beginsWith("Text", Qt::CaseInsensitive))
                     {
@@ -510,14 +510,14 @@ public:
     {
         int result = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
         if(mobjType) *mobjType = result;
-        return (result >= 0 && result < ded->count.mobjs.num);
+        return (result >= 0 && result < ded->mobjs.size());
     }
 
     bool parseSoundNum(String const &str, int *soundNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(soundNum) *soundNum = result;
-        return (result >= 0 && result < ded->count.sounds.num);
+        return (result >= 0 && result < ded->sounds.size());
     }
 
     bool parseSpriteNum(String const &str, int *spriteNum)
@@ -531,14 +531,14 @@ public:
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(stateNum) *stateNum = result;
-        return (result >= 0 && result < ded->count.states.num);
+        return (result >= 0 && result < ded->states.size());
     }
 
     bool parseStateNumFromActionOffset(String const &str, int *stateNum)
     {
         int result = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
         if(stateNum) *stateNum = result;
-        return (result >= 0 && result < ded->count.states.num);
+        return (result >= 0 && result < ded->states.size());
     }
 
     bool parseWeaponNum(String const &str, int *weaponNum)
@@ -753,7 +753,7 @@ public:
 
     void parseThing(ded_mobj_t *mobj, bool ignore = false)
     {
-        int const mobjType = (mobj - ded->mobjs);
+        int const mobjType = ded->mobjs.indexOf(mobj);
         bool hadHeight     = false, checkHeight = false;
 
         LOG_AS("parseThing");
@@ -777,7 +777,7 @@ public:
                     int const value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
-                        if(value < 0 || value >= ded->count.states.num)
+                        if(value < 0 || value >= ded->states.size())
                         {
                             LOG_WARNING("Frame #%i out of range, ignoring.") << value;
                         }
@@ -811,7 +811,7 @@ public:
                     int const value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
-                        if(value < 0 || value >= ded->count.sounds.num)
+                        if(value < 0 || value >= ded->sounds.size())
                         {
                             LOG_WARNING("Sound #%i out of range, ignoring.") << value;
                         }
@@ -1002,7 +1002,7 @@ public:
 
     void parseFrame(ded_state_t *state, bool ignore = false)
     {
-        int const stateNum = (state - ded->states);
+        int const stateNum = ded->states.indexOf(state);
         LOG_AS("parseFrame");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1023,7 +1023,7 @@ public:
                 int const value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    if(value < 0 || value >= ded->count.states.num)
+                    if(value < 0 || value >= ded->states.size())
                     {
                         LOG_WARNING("Frame #%i out of range, ignoring.") << value;
                     }
@@ -1046,7 +1046,7 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    if(value < 0 || value > ded->count.sprites.num)
+                    if(value < 0 || value > ded->sprites.size())
                     {
                         LOG_WARNING("Sprite #%i out of range, ignoring.") << value;
                     }
@@ -1108,7 +1108,7 @@ public:
 
     void parseSprite(ded_sprid_t *sprite, bool ignore = false)
     {
-        int const sprNum = sprite - ded->sprites;
+        int const sprNum = ded->sprites.indexOf(sprite);
         LOG_AS("parseSprite");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1130,7 +1130,7 @@ public:
                         offset = (value - spriteNameTableOffset[doomVersion] - 22044) / 8;
                     }
 
-                    if(offset < 0 || offset >= ded->count.sprites.num)
+                    if(offset < 0 || offset >= ded->sprites.size())
                     {
                         LOG_WARNING("Sprite offset #%i out of range, ignoring.") << value;
                     }
@@ -1152,7 +1152,7 @@ public:
 
     void parseSound(ded_sound_t *sound, bool ignore = false)
     {
-        int const soundIdx = sound - ded->sounds;
+        int const soundIdx = ded->sounds.indexOf(sound);
         LOG_AS("parseSound");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1293,13 +1293,13 @@ public:
                 {
                     if(!ignore)
                     {
-                        if(value < 0 || value > ded->count.states.num)
+                        if(value < 0 || value > ded->states.size())
                         {
                             LOG_WARNING("Frame #%i out of range, ignoring.") << value;
                         }
                         else
                         {
-                            DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->count.states.num);
+                            DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->states.size());
 
                             ded_state_t const &state = ded->states[value];
                             createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
@@ -1340,7 +1340,7 @@ public:
 
     void parsePointer(ded_state_t *state, bool ignore)
     {
-        int const stateIdx = state - ded->states;
+        int const stateIdx = ded->states.indexOf(state);
         LOG_AS("parsePointer");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1565,7 +1565,7 @@ public:
             if(var.startsWith("Frame ", Qt::CaseInsensitive))
             {
                 int const stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
-                if(stateNum < 0 || stateNum >= ded->count.states.num)
+                if(stateNum < 0 || stateNum >= ded->states.size())
                 {
                     LOG_WARNING("Frame #%d out of range, ignoring. (Create more State defs!)")
                             << stateNum;
@@ -1658,16 +1658,15 @@ public:
         if(idx < 0)
         {
             // Not found - create a new Value.
-            Block pathUtf8 = path.toUtf8();
-            idx = _api_Def.DED_AddValue(ded, pathUtf8.constData());
-            def = &ded->values[idx];
+            def = ded->values.append();
+            def->id = M_StrDup(path.toUtf8());
             def->text = 0;
+
+            idx = ded->values.indexOf(def);
         }
 
-        // Must allocate memory using DD_Realloc.
-        def->text = static_cast<char *>(DD_Realloc(def->text, value.length() + 1));
-        Block valueUtf8 = value.toUtf8();
-        qstrcpy(def->text, valueUtf8.constData());
+        def->text = static_cast<char *>(M_Realloc(def->text, value.length() + 1));
+        qstrcpy(def->text, value.toUtf8());
 
         LOG_DEBUG("Value #%i \"%s\" => \"%s\"") << idx << path << def->text;
     }
@@ -1722,7 +1721,7 @@ public:
 
         // Update ALL songs using this lump name.
         int numPatched = 0;
-        for(int i = 0; i < ded->count.music.num; ++i)
+        for(int i = 0; i < ded->music.size(); ++i)
         {
             ded_music_t &music = ded->music[i];
             if(qstricmp(music.lumpName, origNamePrefUtf8.constData())) continue;
@@ -1747,7 +1746,7 @@ public:
 
         // Update ALL sounds using this lump name.
         int numPatched = 0;
-        for(int i = 0; i < ded->count.sounds.num; ++i)
+        for(int i = 0; i < ded->sounds.size(); ++i)
         {
             ded_sound_t &sound = ded->sounds[i];
             if(qstricmp(sound.lumpName, origNamePrefUtf8.constData())) continue;

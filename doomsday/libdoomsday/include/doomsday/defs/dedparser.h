@@ -1,8 +1,7 @@
-/** @file api_def.h Public API for definitions.
- * @ingroup defs
+/** @file defs/dedparser.h  DED v1 parser. @ingroup defs
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,34 +18,28 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_DEF_H
-#define DOOMSDAY_DEF_H
+#ifndef LIBDOOMSDAY_DED_V1_PARSER_H
+#define LIBDOOMSDAY_DED_V1_PARSER_H
 
-#include "api_base.h"
+#include <de/libcore.h>
+#include "../libdoomsday.h"
+#include "ded.h"
 
-/// @addtogroup defs
-///@{
+LIBDOOMSDAY_PUBLIC void DED_SetXGClassLinks(struct xgclass_s *links);
 
-DENG_API_TYPEDEF(Def) // v2
+/**
+ * Parser of DED v1 definitions.
+ * @ingroup data
+ */
+class LIBDOOMSDAY_PUBLIC DEDParser
 {
-    de_api_t api;
+public:
+    DEDParser(ded_t *ded);
 
-    int (*_Get)(int type, const char* id, void* out);
-    int (*_Set)(int type, int index, int value, const void* ptr);
-    int (*EvalFlags)(char* flags);
-}
-DENG_API_T(Def);
+    int parse(char const *buffer, char const *sourceFile);
 
-#ifndef DENG_NO_API_MACROS_DEFINITIONS
-#define Def_Get         _api_Def._Get
-#define Def_Set         _api_Def._Set
-#define Def_EvalFlags   _api_Def.EvalFlags
-#endif
+private:
+    DENG2_PRIVATE(d)
+};
 
-#ifdef __DOOMSDAY__
-DENG_USING_API(Def);
-#endif
-
-///@}
-
-#endif // DOOMSDAY_DEF_H
+#endif // LIBDOOMSDAY_DED_V1_PARSER_H

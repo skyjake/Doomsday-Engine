@@ -56,10 +56,10 @@ using namespace de;
 DENG_DECLARE_API(InternalData) =
 {
     { DE_API_INTERNAL_DATA },
-    &mobjInfo,
-    &states,
-    &sprNames,
-    &texts,
+    runtimeDefs.mobjInfo.elementsPtr(),
+    runtimeDefs.states  .elementsPtr(),
+    runtimeDefs.sprNames.elementsPtr(),
+    runtimeDefs.texts   .elementsPtr(),
     &validCount
 };
 game_export_t __gx;

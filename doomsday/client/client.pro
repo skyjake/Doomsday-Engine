@@ -109,7 +109,8 @@ DENG_API_HEADERS = \
     $$DENG_API_DIR/dd_version.h \
     $$DENG_API_DIR/def_share.h \
     $$DENG_API_DIR/dengproject.h \
-    $$DENG_API_DIR/doomsday.h
+    $$DENG_API_DIR/doomsday.h \
+    $$DENG_API_DIR/xgclass.h
 
 # Convenience headers.
 DENG_CONVENIENCE_HEADERS += \
@@ -225,7 +226,6 @@ DENG_HEADERS += \
     include/de_resource.h \
     include/de_system.h \
     include/de_ui.h \
-    include/def_data.h \
     include/def_main.h \
     include/edit_bias.h \
     include/edit_map.h \
@@ -540,9 +540,7 @@ SOURCES += \
     src/dd_pinit.cpp \
     src/dd_plugin.cpp \
     src/dd_wad.cpp \
-    src/def_data.cpp \
     src/def_main.cpp \
-    src/def_read.cpp \
     src/edit_bias.cpp \
     src/face.cpp \
     src/game.cpp \

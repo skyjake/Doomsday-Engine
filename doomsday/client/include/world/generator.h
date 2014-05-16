@@ -21,7 +21,6 @@
 #ifndef DENG_CLIENT_WORLD_GENERATOR_H
 #define DENG_CLIENT_WORLD_GENERATOR_H
 
-#include "def_data.h"
 #include "map.h"
 #include <de/Vector>
 

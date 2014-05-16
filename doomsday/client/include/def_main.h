@@ -23,9 +23,55 @@
 #ifndef LIBDENG_DEFINITIONS_MAIN_H
 #define LIBDENG_DEFINITIONS_MAIN_H
 
-#include "def_data.h"
 #include "Material"
 #include <de/stringarray.h>
+#include <vector>
+
+template <typename PODType>
+struct Array : public std::vector<PODType>
+{
+    Array() : _elements(0) {}
+    bool isEmpty() const {
+        return !size();
+    }
+    int size() const {
+        return std::vector<PODType>::size();
+    }
+    void clear() {
+        _elements = 0;
+        std::vector<PODType>::clear();
+    }
+    PODType *append(int count = 1) {
+        DENG2_ASSERT(count >= 0);
+        for(int i = 0; i < count; ++i) {
+            std::vector<PODType>::push_back(PODType());
+        }
+        if(!isEmpty()) {
+            _elements = &(*this)[0];
+            return &_elements[size() - count];
+        }
+        return 0;
+    }
+    /// Determine the index of element @a elem. Performance is O(1).
+    int indexOf(PODType const *elem) const {
+        if(!elem) return 0;
+        int index = elem - elements();
+        DENG_ASSERT(index >= 0 && index < size());
+        //if(index < 0 || index >= size()) return 0;
+        return index;
+    }
+    PODType *elements() {
+        return _elements;
+    }
+    PODType const *elements() const {
+        return _elements;
+    }
+    PODType **elementsPtr() {
+        return &_elements;
+    }
+private:
+    PODType *_elements;
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,18 +97,31 @@ typedef struct sfxinfo_s {
     ddstring_t external; /// Path to external file.
 } sfxinfo_t;
 
-extern ded_t defs; // The main definitions database.
-extern sprname_t* sprNames; // Sprite name list.
-extern state_t* states; // State list.
-extern mobjinfo_t* mobjInfo; // Map object info database.
-extern sfxinfo_t* sounds; // Sound effect list.
-extern ddtext_t* texts; // Text list.
-extern mobjinfo_t** stateOwners;
-extern ded_light_t** stateLights;
-extern ded_ptcgen_t** statePtcGens;
-extern ded_count_t countSprNames;
-extern ded_count_t countStates;
-extern struct xgclass_s* xgClassLinks;
+extern ded_t defs; ///< Main definitions database (internal).
+
+typedef struct stateinfo_s {
+    mobjinfo_t *owner;
+    ded_light_t *light;
+    ded_ptcgen_t *ptcGens;
+} stateinfo_t;
+
+/**
+ * Definitions that have been preprocessed for runtime use. Some of these are
+ * visible to the games via the InternalData API.
+ */
+struct RuntimeDefs
+{
+    Array<sprname_t>   sprNames; ///< Sprite name list.
+    Array<mobjinfo_t>  mobjInfo; ///< Map object info database.
+    Array<state_t>     states;   ///< State list.
+    Array<stateinfo_t> stateInfo;
+    Array<sfxinfo_t>   sounds;   ///< Sound effect list.
+    Array<ddtext_t>    texts;    ///< Text string list.
+
+    void clear();
+};
+
+extern RuntimeDefs runtimeDefs;
 
 void            Def_Init(void);
 int             Def_GetGameClasses(void);
@@ -83,7 +142,6 @@ void            Def_Destroy(void);
  * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
  */
 void            Def_Read(void);
-void            Def_ReadProcessDED(const char* fileName);
 
 int             Def_GetMobjNum(const char* id);
 int             Def_GetMobjNumForName(const char* name);
@@ -131,7 +189,6 @@ extern "C" {
 
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
-int             Def_EvalFlags2(char const *string);
 int             Def_EvalFlags(char *string);
 
 /**
@@ -166,17 +223,17 @@ StringArray* Def_ListStateIDs(void);
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-bool Def_IsAllowedDecoration(ded_decor_t *def, /*bool hasExternal,*/ bool isCustom);
+bool Def_IsAllowedDecoration(ded_decor_t const *def, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-bool Def_IsAllowedReflection(ded_reflection_t *def, /*bool hasExternal,*/ bool isCustom);
+bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-bool Def_IsAllowedDetailTex(ded_detailtexture_t *def, /*bool hasExternal,*/ bool isCustom);
+bool Def_IsAllowedDetailTex(ded_detailtexture_t const *def, /*bool hasExternal,*/ bool isCustom);
 
 D_CMD(ListMobjs);
 

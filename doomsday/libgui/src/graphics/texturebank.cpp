@@ -60,7 +60,7 @@ DENG2_PIMPL_NOREF(TextureBank)
     Instance() : atlas(0) {}
 };
 
-TextureBank::TextureBank() : d(new Instance)
+TextureBank::TextureBank() : Bank("TextureBank"), d(new Instance)
 {}
 
 void TextureBank::setAtlas(AtlasTexture &atlas)

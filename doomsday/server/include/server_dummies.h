@@ -30,8 +30,7 @@
 #define SERVER_DUMMIES_H
 
 #include <de/liblegacy.h>
-
-#include "def_data.h"
+#include <doomsday/defs/ded.h>
 #include "world/map.h"
 
 #ifndef __SERVER__

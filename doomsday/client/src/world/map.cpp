@@ -1369,14 +1369,13 @@ DENG2_PIMPL(Map)
 
     void spawnMapParticleGens()
     {
-        //if(!useParticles) return;
-
-        ded_ptcgen_t *def = defs.ptcGens;
-        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        for(int i = 0; i < defs.ptcGens.size(); ++i)
         {
+            ded_ptcgen_t *def = &defs.ptcGens[i];
+
             if(!def->map) continue;
 
-            if(!Uri_Equality(def->map, reinterpret_cast<uri_s *>(&uri)))
+            if(*def->map != uri)
                 continue;
 
             // Are we still spawning using this generator?
@@ -1405,11 +1404,10 @@ DENG2_PIMPL(Map)
      */
     void spawnTypeParticleGens()
     {
-        //if(!useParticles) return;
-
-        ded_ptcgen_t *def = defs.ptcGens;
-        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        for(int i = 0; i < defs.ptcGens.size(); ++i)
         {
+            ded_ptcgen_t *def = &defs.ptcGens[i];
+
             if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0)
                 continue;
 
@@ -1434,9 +1432,10 @@ DENG2_PIMPL(Map)
         DENG2_ASSERT(gen != 0);
 
         // Search for a suitable definition.
-        ded_ptcgen_t *def = defs.ptcGens;
-        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        for(int i = 0; i < defs.ptcGens.size(); ++i)
         {
+            ded_ptcgen_t *def = &defs.ptcGens[i];
+
             // A type generator?
             if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
             {
@@ -1494,7 +1493,7 @@ DENG2_PIMPL(Map)
 
             // A state generator?
             if(gen->source && def->state[0] &&
-               gen->source->state - states == Def_GetStateNum(def->state))
+               runtimeDefs.states.indexOf(gen->source->state) == Def_GetStateNum(def->state))
             {
                 return i + 1; // 1-based index.
             }
@@ -1526,7 +1525,7 @@ DENG2_PIMPL(Map)
             if(int defIndex = findDefForGenerator(gen))
             {
                 // Update the generator using the new definition.
-                ded_ptcgen_t *def = defs.ptcGens + (defIndex-1);
+                ded_ptcgen_t *def = &defs.ptcGens[defIndex - 1];
                 gen->def = def;
             }
             else
@@ -1899,9 +1898,9 @@ void Map::initBias()
     d->bias.sources.clear();
 
     // Load light sources from Light definitions.
-    for(int i = 0; i < defs.count.lights.num; ++i)
+    for(int i = 0; i < defs.lights.size(); ++i)
     {
-        ded_light_t *def = defs.lights + i;
+        ded_light_t *def = &defs.lights[i];
 
         if(def->state[0]) continue;
         if(qstricmp(d->oldUniqueId, def->uniqueMapID)) continue;

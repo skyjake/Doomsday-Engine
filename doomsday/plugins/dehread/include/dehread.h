@@ -33,7 +33,7 @@
  * This dependency should be removed entirely, by making this plugin modify the
  * definitions via a public API provided by the engine.
  */
-#include "../../../client/include/def_data.h"
+#include <doomsday/defs/ded.h>
 struct font_s;
 
 #define DENG_INTERNAL_DATA_ACCESS

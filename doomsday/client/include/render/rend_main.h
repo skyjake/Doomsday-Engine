@@ -43,7 +43,7 @@ class LightGrid;
 #define IS_MUL              (dynlightBlend != 1 && !usingFog)
 
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
-                              defs.count.details.num > 0)
+                              defs.details.size() > 0)
 #define IS_MTEX_DETAILS     (MTEX_DETAILS_ENABLED && numTexUnits > 1)
 #define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !usingFog && useMultiTexLights \
                              && numTexUnits > 1 && envModAdd)

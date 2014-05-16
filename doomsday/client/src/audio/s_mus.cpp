@@ -231,11 +231,11 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
 
     if(!musAvail || !AudioDriver_Music_Available() || !def) return false;
 
-    if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
+    if(def->path && !def->path->path().isEmpty())
     {
         // All external music files are specified relative to the base path.
         AutoStr *fullPath = AutoStr_NewStd();
-        F_PrependBasePath(fullPath, Uri_Path(def->path));
+        F_PrependBasePath(fullPath, def->path->pathStr());
         F_FixSlashes(fullPath, fullPath);
 
         if(F_Access(Str_Text(fullPath)))
@@ -281,8 +281,8 @@ int Mus_GetCD(ded_music_t *def)
     if(def->cdTrack)
         return def->cdTrack;
 
-    if(def->path && !stricmp(Str_Text(Uri_Scheme(def->path)), "cd"))
-        return atoi(Str_Text(Uri_Path(def->path)));
+    if(def->path && !stricmp(def->path->schemeCStr(), "cd"))
+        return atoi(def->path->pathCStr());
 
     return 0;
 }
@@ -346,7 +346,7 @@ int Mus_Start(ded_music_t* def, dd_bool looped)
 
     if(!musAvail) return false;
 
-    songID = def - defs.music;
+    songID = defs.music.indexOf(def);
 
     LOG_AS("Mus_Start");
     LOG_AUDIO_VERBOSE("Starting ID:%i looped:%i, currentSong ID:%i") << songID << looped << currentSong;

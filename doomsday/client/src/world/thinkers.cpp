@@ -278,7 +278,7 @@ void Thinkers::remove(thinker_t &th)
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
         // end) and shouldn't be included in netGame deltas.
-        if(!mo->state || mo->state == states)
+        if(!mo->state || !runtimeDefs.states.indexOf(mo->state))
         {
             Sv_MobjRemoved(th.id);
         }

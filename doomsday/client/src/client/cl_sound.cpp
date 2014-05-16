@@ -247,7 +247,7 @@ void Cl_Sound()
     }
 
     // Is the ID valid?
-    if(sound < 1 || sound >= defs.count.sounds.num)
+    if(sound < 1 || sound >= defs.sounds.size())
     {
         LOGDEV_NET_WARNING("Invalid sound ID %i") << sound;
         return;

@@ -41,7 +41,8 @@ class File;
 class DENG2_PUBLIC InfoBank : public Bank
 {
 public:
-    InfoBank(Bank::Flags const &flags         = Bank::DefaultFlags,
+    InfoBank(char const *nameForLog           = "InfoBank",
+             Bank::Flags const &flags         = Bank::DefaultFlags,
              String const &hotStorageLocation = "/home/cache");
 
     void parse(String const &infoSource);

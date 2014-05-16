@@ -30,8 +30,8 @@ DENG2_PIMPL_NOREF(InfoBank)
     String relativeToPath;
 };
 
-InfoBank::InfoBank(Bank::Flags const &flags, String const &hotStorageLocation)
-    : Bank(flags, hotStorageLocation), d(new Instance)
+InfoBank::InfoBank(char const *nameForLog, Bank::Flags const &flags, String const &hotStorageLocation)
+    : Bank(nameForLog, flags, hotStorageLocation), d(new Instance)
 {}
 
 void InfoBank::parse(String const &source)

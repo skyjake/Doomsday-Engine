@@ -118,7 +118,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
             askUpgrade = true;
 
             self.title().setText(tr("Update Available"));
-            self.message().setText(tr("The latest %1 release is %2, while you are running %3.")
+            self.message().setText(tr("There is an update available. The latest %1 release is %2, while you are running %3.")
                                    .arg(channel)
                                    .arg(_E(b) + latestVersion.asText() + _E(.))
                                    .arg(currentVersion.asText()));

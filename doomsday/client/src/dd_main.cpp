@@ -2422,15 +2422,15 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #endif
     {&isDedicated, 0},
     {&novideo, 0},
-    {&defs.count.mobjs.num, 0},
+    {&defs.mobjs.count.num, 0},
     {&gotFrame, 0},
 #ifdef __CLIENT__
     {&playback, 0},
 #else
     {0, 0},
 #endif
-    {&defs.count.sounds.num, 0},
-    {&defs.count.music.num, 0},
+    {&defs.sounds.count.num, 0},
+    {&defs.music.count.num, 0},
     {0, 0},
 #ifdef __CLIENT__
     {&clientPaused, &clientPaused},

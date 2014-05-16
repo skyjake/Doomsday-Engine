@@ -125,7 +125,7 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
     do
     {
         Mobj_SetState(mo, stnum);
-        stnum = states[stnum].nextState;
+        stnum = runtimeDefs.states[stnum].nextState;
 
     } while(!mo->tics && stnum > 0);
 }
@@ -282,7 +282,7 @@ dd_bool ClMobj_Reveal(mobj_t *mo)
     }
 
     LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)")
-            << mo->thinker.id << mo->state << (int)(mo->state - states);
+            << mo->thinker.id << mo->state << runtimeDefs.states.indexOf(mo->state);
 
     return true;
 }
@@ -512,7 +512,7 @@ void ClMobj_ReadDelta()
     if(moreFlags & MDFE_TYPE)
     {
         d->type = Cl_LocalMobjType(Reader_ReadInt32(msgReader));
-        d->info = &mobjInfo[d->type];
+        d->info = &runtimeDefs.mobjInfo[d->type];
     }
 
     // Is it time to remove the Hidden status?
