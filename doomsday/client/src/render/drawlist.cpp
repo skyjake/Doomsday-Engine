@@ -1,7 +1,7 @@
 /** @file drawlist.cpp  Drawable primitive list.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -71,17 +71,34 @@ DENG2_PIMPL(DrawList)
         uint size; ///< Size of this element (zero = n/a).
 
         struct Data {
-            WorldVBuf *buffer;
             gl::Primitive type;
 
-            // Element indices into the global backing store for the geometry.
-            // These are always contiguous and all are used (some are shared):
-            //   indices[0] is the base, and indices[1...n] > indices[0].
-            uint numIndices;
-            uint *indices;
+            enum Flag {
+                OneLight          = 0x1,
+                ManyLights        = 0x2,
+                SequentialIndices = 0x4,
 
-            bool oneLight;
-            bool manyLights;
+                HasLights         = OneLight | ManyLights
+            };
+            byte flags;
+
+            // Element indices into the global backing store for the geometry.
+            //
+            // If SequentialIndicies:
+            // @var base is the first and a contiguous range of indices from base
+            // to base + numIndices is used for vertices.
+            //
+            // Else:
+            // indices[0] is the first vertex followed by a further numIndices-1
+            // for the remaining vertices. The indices array is allocated from
+            // the same storage region as used for the list itself, therefore it
+            // is necessary to update the pointers when the list is resized.
+            uint numIndices;
+            union {
+                uint *indices;
+                uint base;
+            };
+
             blendmode_t blendMode;
             DGLuint  modTexture;
             Vector3f modColor;
@@ -91,6 +108,10 @@ DENG2_PIMPL(DrawList)
 
             Vector2f dtexOffset;
             Vector2f dtexScale;
+
+            inline WorldVBuf const &vbuf() const {
+                return ClientApp::renderSystem().buffer();
+            }
 
             /**
              * Draw the geometry for this element.
@@ -165,25 +186,23 @@ DENG2_PIMPL(DrawList)
                 glBegin(type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
                 for(uint i = 0; i < numIndices; ++i)
                 {
-                    uint const index = indices[i];
+                    WorldVBuf::Type const &vertex = vbuf()[(flags & SequentialIndices)? base + i : indices[i]];
 
                     for(int j = 0; j < numTexUnits; ++j)
                     {
                         if(texUnitMap[j])
                         {
-                            Vector2f const &tc = (*buffer)[index].texCoord[texUnitMap[j] - 1];
+                            Vector2f const &tc = vertex.texCoord[texUnitMap[j] - 1];
                             glMultiTexCoord2f(GL_TEXTURE0 + j, tc.x, tc.y);
                         }
                     }
 
                     if(!(conditions & NoColor))
                     {
-                        Vector4f const &color = (*buffer)[index].rgba;
-                        glColor4f(color.x, color.y, color.z, color.w);
+                        glColor4f(vertex.rgba.x, vertex.rgba.y, vertex.rgba.z, vertex.rgba.w);
                     }
 
-                    Vector3f const &pos = (*buffer)[index].pos;
-                    glVertex3f(pos.x, pos.z, pos.y);
+                    glVertex3f(vertex.pos.x, vertex.pos.z, vertex.pos.y);
                 }
                 glEnd();
 
@@ -238,11 +257,11 @@ DENG2_PIMPL(DrawList)
 
     Instance(Public *i, Spec const &spec)
         : Base(i)
-        , spec(spec)
+        , spec    (spec)
         , dataSize(0)
-        , data(0)
-        , cursor(0)
-        , last(0)
+        , data    (0)
+        , cursor  (0)
+        , last    (0)
     {}
 
     ~Instance()
@@ -314,7 +333,7 @@ DENG2_PIMPL(DrawList)
             {
                 for(Element *elem = first(); elem && elem <= last; elem = elem->next())
                 {
-                    if(elem->data.indices)
+                    if(elem->data.indices && !(elem->data.flags & Element::Data::SequentialIndices))
                     {
                         elem->data.indices = (uint *) (data + ((byte *) elem->data.indices - oldData));
                     }
@@ -328,12 +347,12 @@ DENG2_PIMPL(DrawList)
         return data + startOffset;
     }
 
-    void allocateIndices(uint numIndices, uint base)
+    void writeIndices(uint numIndices, uint base)
     {
         // Note that last may be reallocated during allocateData.
         last->data.numIndices = numIndices;
         // Temporary variable to avoid segfault on Ubuntu linux CMB
-        uint * lti = (uint *) allocateData(sizeof(uint) * numIndices);
+        uint *lti = (uint *) allocateData(sizeof(uint) * numIndices);
         last->data.indices = lti;
 
         for(uint i = 0; i < numIndices; ++i)
@@ -342,22 +361,29 @@ DENG2_PIMPL(DrawList)
         }
     }
 
-    Element *newElement(WorldVBuf &buffer, gl::Primitive primitive)
+    void writeIndicesSequential(uint numIndices, uint base)
+    {
+        // Note that last may be reallocated during allocateData.
+        last->data.numIndices = numIndices;
+        last->data.base       = base;
+        last->data.flags     |= Element::Data::SequentialIndices;
+    }
+
+    Element *beginElement(gl::Primitive primitive)
     {
         // This becomes the new last element.
         last = (Element *) allocateData(sizeof(Element));
         last->size = 0;
 
-        last->data.buffer     = &buffer;
         last->data.type       = primitive;
         last->data.indices    = 0;
         last->data.numIndices = 0;
-        last->data.oneLight   = last->data.manyLights = false;
+        last->data.flags      = 0;
 
         return last;
     }
 
-    void endWrite()
+    void endElement()
     {
         // The element has been written, update the size in the header.
         last->size = cursor - (byte *) last;
@@ -783,6 +809,7 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
     Vector2f const *interTexCoords, GLuint modTexture, Vector3f const *modColor,
     Vector2f const *modTexCoords)
 {
+    DENG2_ASSERT(posCoords != 0);
     DENG2_ASSERT(vertCount >= 3);
 
     // Rationalize write arguments.
@@ -793,17 +820,16 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
         modColor   = 0;
     }
 
-    Instance::Element *elem =
-        d->newElement(ClientApp::renderSystem().buffer(), primitive);
+    Instance::Element *elem = d->beginElement(primitive);
 
     // Is the geometry lit?
     if(modTexture && !isLit)
     {
-        elem->data.oneLight = true; // Using modulation.
+        elem->data.flags |= Instance::Element::Data::OneLight; // Using modulation.
     }
     else if(modTexture || isLit)
     {
-        elem->data.manyLights = true;
+        elem->data.flags |= Instance::Element::Data::ManyLights;
     }
 
     // Configure the GL state to be applied when this geometry is drawn later.
@@ -817,15 +843,18 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
     elem->data.dtexScale  = detailTexScale;
     elem->data.dtexOffset = detailTexOffset;
 
-    // Allocate geometry from the backing store.
-    uint base = elem->data.buffer->reserveElements(vertCount);
+    // Allocate vertices from the world-wide vertex buffer.
+    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+    uint base = vbuf.reserveElements(vertCount);
 
     // Setup the indices.
-    d->allocateIndices(vertCount, base);
+    d->writeIndicesSequential(vertCount, base);
 
     for(uint i = 0; i < vertCount; ++i)
     {
-        (*elem->data.buffer)[base + i].pos = posCoords[i];
+        WorldVBuf::Type &vertex = vbuf[base + i];
+
+        vertex.pos = posCoords[i];
 
         // Sky masked polys need nothing more.
         if(d->spec.group == SkyMaskGeom) continue;
@@ -834,25 +863,24 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
         if(d->spec.unit(TU_PRIMARY).hasTexture())
         {
             DENG2_ASSERT(texCoords != 0);
-            (*elem->data.buffer)[base + i].texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+            vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
         }
 
         // Secondary texture coordinates.
         if(d->spec.unit(TU_INTER).hasTexture())
         {
             DENG2_ASSERT(interTexCoords != 0);
-            (*elem->data.buffer)[base + i].texCoord[WorldVBuf::TCA_BLEND] = interTexCoords[i];
+            vertex.texCoord[WorldVBuf::TCA_BLEND] = interTexCoords[i];
         }
 
         // First light texture coordinates.
-        if((elem->data.oneLight || elem->data.manyLights) && IS_MTEX_LIGHTS)
+        if((elem->data.flags & Instance::Element::Data::HasLights) && IS_MTEX_LIGHTS)
         {
             DENG2_ASSERT(modTexCoords != 0);
-            (*elem->data.buffer)[base + i].texCoord[WorldVBuf::TCA_LIGHT] = modTexCoords[i];
+            vertex.texCoord[WorldVBuf::TCA_LIGHT] = modTexCoords[i];
         }
 
         // Color.
-        Vector4f &color = (*elem->data.buffer)[base + i].rgba;
         if(colorCoords)
         {
             Vector4f const &srcColor = colorCoords[i];
@@ -863,15 +891,15 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
             DENG2_ASSERT(INRANGE_OF(srcColor.z, 0.f, 1.f));
             DENG2_ASSERT(INRANGE_OF(srcColor.w, 0.f, 1.f));
 
-            color = srcColor.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
+            vertex.rgba = srcColor.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
         }
         else
         {
-            color = Vector4f(1, 1, 1, 1);
+            vertex.rgba = Vector4f(1, 1, 1, 1);
         }
     }
 
-    d->endWrite();
+    d->endElement();
 
     return *this;
 }
@@ -923,11 +951,11 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
         if(!bypass)
         {
             skip = false;
-            if(conditions.testFlag(JustOneLight) && elem->data.manyLights)
+            if(conditions.testFlag(JustOneLight) && (elem->data.flags & Instance::Element::Data::ManyLights))
             {
                 skip = true;
             }
-            else if(conditions.testFlag(ManyLights) && elem->data.oneLight)
+            else if(conditions.testFlag(ManyLights) && (elem->data.flags & Instance::Element::Data::OneLight))
             {
                 skip = true;
             }
