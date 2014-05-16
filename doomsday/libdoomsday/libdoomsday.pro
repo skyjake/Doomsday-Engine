@@ -4,7 +4,7 @@
 # Copyright (c) 2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
-TARGET = doomsday
+TARGET = deng_doomsday
 
 # Build Configuration --------------------------------------------------------
 
@@ -124,15 +124,15 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibcore  (libdoomsday)
-    linkDylibToBundledLiblegacy(libdoomsday)
-    linkDylibToBundledLibshell (libdoomsday)
+    linkDylibToBundledLibcore  (libdeng_doomsday)
+    linkDylibToBundledLiblegacy(libdeng_doomsday)
+    linkDylibToBundledLibshell (libdeng_doomsday)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdoomsday.1.dylib libdoomsday.1.dylib")
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_doomsday.1.dylib libdeng_doomsday.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
-    doPostLink("cp -fRp libdoomsday*dylib ../client/Doomsday.app/Contents/Frameworks")
+    doPostLink("cp -fRp libdeng_doomsday*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
 else {
     INSTALLS += target

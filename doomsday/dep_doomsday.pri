@@ -8,13 +8,13 @@ INCLUDEPATH += $$PWD/libdoomsday/include
     }
 }
 
-LIBS += -ldoomsday
+LIBS += -ldeng_doomsday
 
 macx {
     defineTest(linkBinaryToBundledLibdoomsday) {
-        fixInstallName($${1}, libdoomsday.1.dylib, ..)
+        fixInstallName($${1}, libdeng_doomsday.1.dylib, ..)
     }
     defineTest(linkToBundledLibdoomsday) {
-        fixInstallName($${1}.bundle/$$1, libdoomsday.1.dylib, ..)
+        fixInstallName($${1}.bundle/$$1, libdeng_doomsday.1.dylib, ..)
     }
 }

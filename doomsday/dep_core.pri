@@ -13,7 +13,7 @@ deng_qtgui {
     }
 }
 
-win32: defineReplace(qtDLL) {
+win32: defineReplace(qtLibraryFile) {
     greaterThan(QT_MAJOR_VERSION, 4) {
         deng_debug: return(Qt$${QT_MAJOR_VERSION}$${1}d.dll)
               else: return(Qt$${QT_MAJOR_VERSION}$${1}.dll)
@@ -31,11 +31,11 @@ win32 {
     # Install the required Qt DLLs into the products dir.
     INSTALLS *= qtlibs qtplugins
     qtlibs.files += \
-        $$[QT_INSTALL_BINS]/$$qtDLL(Core) \
-        $$[QT_INSTALL_BINS]/$$qtDLL(Network)
-    deng_qtgui:     qtlibs.files += $$[QT_INSTALL_BINS]/$$qtDLL(Gui)
-    deng_qtwidgets: qtlibs.files += $$[QT_INSTALL_BINS]/$$qtDLL(Widgets)
-    deng_qtopengl:  qtlibs.files += $$[QT_INSTALL_BINS]/$$qtDLL(OpenGL)
+        $$[QT_INSTALL_BINS]/$$qtLibraryFile(Core) \
+        $$[QT_INSTALL_BINS]/$$qtLibraryFile(Network)
+    deng_qtgui:     qtlibs.files += $$[QT_INSTALL_BINS]/$$qtLibraryFile(Gui)
+    deng_qtwidgets: qtlibs.files += $$[QT_INSTALL_BINS]/$$qtLibraryFile(Widgets)
+    deng_qtopengl:  qtlibs.files += $$[QT_INSTALL_BINS]/$$qtLibraryFile(OpenGL)
     qtlibs.path = $$DENG_LIB_DIR
 
     qtplugins.path = $$DENG_LIB_DIR/imageformats
@@ -45,7 +45,7 @@ win32 {
             $$[QT_INSTALL_PLUGINS]/imageformats/qico.dll \
             $$[QT_INSTALL_PLUGINS]/imageformats/qgif.dll
 
-        # International Components for Unicode
+        # International Components for Unicode (not system-provided on Windows)
         INSTALLS *= qtdeps
         qtdeps.files += \
             $$[QT_INSTALL_BINS]/icuin52.dll \

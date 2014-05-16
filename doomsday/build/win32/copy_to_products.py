@@ -33,7 +33,7 @@ copy_if_newer(os.path.join(solDir, 'libhexen.pk3'), os.path.join(dest, '..', 'da
 copy_if_newer(os.path.join(solDir, 'libdoom64.pk3'), os.path.join(dest, '..', 'data', 'jdoom64', 'libdoom64.pk3'))
 
 targets = ['libcore', 'liblegacy', 'libshell', 'libgui', 'libappfw',
-           'client', 'server', 
+           'libdoomsday', 'client', 'server', 
            'plugins\*', 'tools\*', 'tools\shell\*', 'tests\*'] 
 
 for target in targets:

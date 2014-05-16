@@ -51,6 +51,7 @@ Name: "{app}\doc"
 
 ; Obsolete files which should be removed if present when upgrading.
 [InstallDelete]
+Type: files; Name: "{app}\bin\doomsday.dll"
 Type: files; Name: "{app}\bin\deng1.dll"
 Type: files; Name: "{app}\bin\deng2.dll"
 Type: files; Name: "{app}\bin\libcurl.dll"
@@ -93,7 +94,7 @@ Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Component
 
 ; Libraries
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
-Source: "bin\doomsday.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_doomsday.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_appfw.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_core.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
