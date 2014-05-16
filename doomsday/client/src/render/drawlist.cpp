@@ -84,7 +84,7 @@ DENG2_PIMPL(DrawList)
 
             // Element indices into the global backing store for the geometry.
             //
-            // If SequentialIndicies:
+            // If SequentialIndices:
             // @var base is the first and a contiguous range of indices from base
             // to base + numIndices is used for vertices.
             //
@@ -333,7 +333,7 @@ DENG2_PIMPL(DrawList)
             {
                 for(Element *elem = first(); elem && elem <= last; elem = elem->next())
                 {
-                    if(elem->data.indices && !(elem->data.flags & Element::Data::SequentialIndices))
+                    if(!(elem->data.flags & Element::Data::SequentialIndices) && elem->data.indices)
                     {
                         elem->data.indices = (uint *) (data + ((byte *) elem->data.indices - oldData));
                     }
@@ -363,7 +363,6 @@ DENG2_PIMPL(DrawList)
 
     void writeIndicesSequential(uint numIndices, uint base)
     {
-        // Note that last may be reallocated during allocateData.
         last->data.numIndices = numIndices;
         last->data.base       = base;
         last->data.flags     |= Element::Data::SequentialIndices;
