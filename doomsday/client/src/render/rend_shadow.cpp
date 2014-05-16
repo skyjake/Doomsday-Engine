@@ -42,26 +42,26 @@ using namespace de;
  * @param parm        Shadow drawer parameters.
  */
 static void drawShadow(DrawList &shadowList, TexProjection const &tp,
-    rendershadowprojectionparams_t &parm)
+    rendershadowprojectionparams_t &p)
 {
     RenderSystem &rendSys = ClientApp::renderSystem();
     WorldVBuf &vbuf       = rendSys.buffer();
 
     // Allocate enough for the divisions too.
-    Vector3f *rvertices  = rendSys.posPool().alloc(parm.realNumVertices);
-    Vector2f *rtexcoords = rendSys.texPool().alloc(parm.realNumVertices);
-    Vector4f *rcolors    = rendSys.colorPool().alloc(parm.realNumVertices);
-    bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
+    Vector3f *rvertices  = rendSys.posPool().alloc(p.realNumVertices);
+    Vector2f *rtexcoords = rendSys.texPool().alloc(p.realNumVertices);
+    Vector4f *rcolors    = rendSys.colorPool().alloc(p.realNumVertices);
+    bool const mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount() ));
 
-    for(uint i = 0; i < parm.numVertices; ++i)
+    for(uint i = 0; i < p.numVertices; ++i)
     {
         rcolors[i] = tp.color;
     }
 
-    if(parm.isWall)
+    if(p.isWall)
     {
-        WallEdgeSection const &sectionLeft  = *parm.wall.leftEdge;
-        WallEdgeSection const &sectionRight = *parm.wall.rightEdge;
+        WallEdgeSection const &sectionLeft  = *p.wall.leftEdge;
+        WallEdgeSection const &sectionRight = *p.wall.rightEdge;
 
         rtexcoords[1].x = rtexcoords[0].x = tp.topLeft.x;
         rtexcoords[1].y = rtexcoords[3].y = tp.topLeft.y;
@@ -76,7 +76,7 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
              * color.
              */
 
-            Vector3f origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(Vector3f) * 4);
+            Vector3f origVerts[4]; std::memcpy(origVerts, p.rvertices, sizeof(Vector3f) * 4);
             Vector2f origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
             Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
@@ -86,31 +86,31 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
         }
         else
         {
-            std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
+            std::memcpy(rvertices, p.rvertices, sizeof(Vector3f) * p.numVertices);
         }
     }
     else
     {
         // It's a flat.
-        float const width  = parm.bottomRight->x - parm.topLeft->x;
-        float const height = parm.bottomRight->y - parm.topLeft->y;
+        float const width  = p.bottomRight->x - p.topLeft->x;
+        float const height = p.bottomRight->y - p.topLeft->y;
 
-        for(uint i = 0; i < parm.numVertices; ++i)
+        for(uint i = 0; i < p.numVertices; ++i)
         {
-            rtexcoords[i].x = ((parm.bottomRight->x - parm.rvertices[i].x) / width * tp.topLeft.x) +
-                ((parm.rvertices[i].x - parm.topLeft->x) / width * tp.bottomRight.x);
+            rtexcoords[i].x = ((p.bottomRight->x - p.rvertices[i].x) / width * tp.topLeft.x) +
+                ((p.rvertices[i].x - p.topLeft->x) / width * tp.bottomRight.x);
 
-            rtexcoords[i].y = ((parm.bottomRight->y - parm.rvertices[i].y) / height * tp.topLeft.y) +
-                ((parm.rvertices[i].y - parm.topLeft->y) / height * tp.bottomRight.y);
+            rtexcoords[i].y = ((p.bottomRight->y - p.rvertices[i].y) / height * tp.topLeft.y) +
+                ((p.rvertices[i].y - p.topLeft->y) / height * tp.bottomRight.y);
         }
 
-        std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
+        std::memcpy(rvertices, p.rvertices, sizeof(Vector3f) * p.numVertices);
     }
 
     if(mustSubdivide)
     {
-        WallEdgeSection const &sectionLeft  = *parm.wall.leftEdge;
-        WallEdgeSection const &sectionRight = *parm.wall.rightEdge;
+        WallEdgeSection const &sectionLeft  = *p.wall.leftEdge;
+        WallEdgeSection const &sectionRight = *p.wall.rightEdge;
 
         {
             WorldVBuf::Index vertCount = 3 + sectionRight.divisionCount();
@@ -121,10 +121,7 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
                              rcolors    + 3 + sectionLeft.divisionCount(),
                              rtexcoords + 3 + sectionLeft.divisionCount());
 
-            shadowList.write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, vertCount, indices);
+            shadowList.write(gl::TriangleFan, vertCount, indices);
 
             rendSys.indicePool().release(indices);
         }
@@ -135,26 +132,21 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
             vbuf.setVertices(vertCount, indices,
                              rvertices, rcolors, rtexcoords);
 
-            shadowList.write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, vertCount, indices);
+            shadowList.write(gl::TriangleFan, vertCount, indices);
 
             rendSys.indicePool().release(indices);
         }
     }
     else
     {
-        WorldVBuf::Index vertCount = parm.numVertices;
+        WorldVBuf::Index vertCount = p.numVertices;
         WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
         vbuf.reserveElements(vertCount, indices);
         vbuf.setVertices(vertCount, indices,
                          rvertices, rcolors, rtexcoords);
 
-        shadowList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
-                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                         Vector2f(1, 1), Vector2f(0, 0),
-                         0, vertCount, indices);
+        shadowList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                         vertCount, indices);
 
         rendSys.indicePool().release(indices);
     }

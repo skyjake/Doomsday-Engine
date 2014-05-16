@@ -86,7 +86,8 @@ public:
     struct Spec
     {
         GeomGroup group;
-        de::GLTextureUnit texunits[NUM_TEXTURE_UNITS];
+        typedef de::GLTextureUnit UnitSpecs[NUM_TEXTURE_UNITS];
+        UnitSpecs texunits;
 
         Spec(GeomGroup group = UnlitGeom) : group(group)
         {}
@@ -113,18 +114,29 @@ public:
     /**
      * Write the given geometry primitive to the list.
      *
-     * @param primitive   Type identifier for the GL primitive being written.
-     * @param isLit       @todo Retrieve from list specification?
-     * @param vertCount   Number of vertices being written.
-     * @param indices     Vertex indices for the primitive.
-     * @param modTexture  GL name of the modulation texture (if any).
-     * @param modColor    Modulation color (if any).
+     * @param primitive        Type identifier for the GL primitive being written.
+     * @param vertCount        Number of vertices being written.
+     * @param indices          Vertex indices for the primitive.
+     * @param texScale         @em primary texture unit scale.
+     * @param texOffset        @em primary texture unit offset.
+     * @param detailTexScale   @em detail texture unit scale.
+     * @param detailTexOffset  @em detail texture unit offset.
+     * @param blendmode        Texture blending mode.
+     * @param modTexture       GL name of the modulation texture (if any).
+     * @param modColor         Modulation color (if any).
+     *
+     * @param isLit            Is the primative lit? (@todo Retrieve from list specification?)
      */
-    DrawList &write(de::gl::Primitive primitive, blendmode_e blendMode,
-        de::Vector2f const &texScale, de::Vector2f const &texOffset,
-        de::Vector2f const &detailTexScale, de::Vector2f const &detailTexOffset,
-        bool isLit, WorldVBuf::Index vertCount, WorldVBuf::Index const *indices,
-        GLuint modTexture = 0, de::Vector3f const *modColor = 0);
+    DrawList &write(de::gl::Primitive primitive, WorldVBuf::Index vertCount,
+                    WorldVBuf::Index const *indices,
+                    de::Vector2f const &texScale        = de::Vector2f(1, 1),
+                    de::Vector2f const &texOffset       = de::Vector2f(0, 0),
+                    de::Vector2f const &detailTexScale  = de::Vector2f(1, 1),
+                    de::Vector2f const &detailTexOffset = de::Vector2f(0, 0),
+                    blendmode_e blendmode               = BM_NORMAL,
+                    GLuint modTexture                   = 0,
+                    de::Vector3f const *modColor        = 0,
+                    bool isLit                          = false);
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 

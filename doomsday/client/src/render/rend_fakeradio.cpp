@@ -1074,10 +1074,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
                                  rcolors    + 3 + leftEdge.divisionCount(),
                                  rtexcoords + 3 + leftEdge.divisionCount());
 
-                shadowList.write(gl::TriangleFan,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, vertCount, indices);
+                shadowList.write(gl::TriangleFan, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
@@ -1088,10 +1085,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
                 vbuf.setVertices(vertCount, indices,
                                  rvertices, rcolors, rtexcoords);
 
-                shadowList.write(gl::TriangleFan,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, vertCount, indices);
+                shadowList.write(gl::TriangleFan, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
@@ -1106,10 +1100,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
             vbuf.setVertices(vertCount, indices,
                              origVertices, rcolors, rtexcoords);
 
-            shadowList.write(gl::TriangleStrip,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, vertCount, indices);
+            shadowList.write(gl::TriangleStrip, vertCount, indices);
 
             rendSys.indicePool().release(indices);
         }
@@ -1290,10 +1281,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     vbuf.setVertices(vertCount, indices, rvertices, rcolors);
 
     rendSys.drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
-                .write(gl::TriangleFan, BM_NORMAL,
-                       Vector2f(1, 1), Vector2f(0, 0),
-                       Vector2f(1, 1), Vector2f(0, 0),
-                       0, vertCount, indices);
+                .write(gl::TriangleFan, vertCount, indices);
 
     rendSys.indicePool().release(indices);
 }

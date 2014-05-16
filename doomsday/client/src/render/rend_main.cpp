@@ -1536,9 +1536,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 vbuf.setVertices(vertCount, indices,
                                  posCoords + 3 + leftEdge.divisionCount());
 
-                skyList.write(gl::TriangleFan, BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                              Vector2f(1, 1), Vector2f(0, 0), 0,
-                              vertCount, indices);
+                skyList.write(gl::TriangleFan, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
@@ -1549,9 +1547,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 vbuf.reserveElements(vertCount, indices);
                 vbuf.setVertices(vertCount, indices, posCoords);
 
-                skyList.write(gl::TriangleFan, BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                              Vector2f(1, 1), Vector2f(0, 0), 0,
-                              vertCount, indices);
+                skyList.write(gl::TriangleFan, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
@@ -1620,13 +1616,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
                                  modCoords? modCoords + 3 + leftEdge.divisionCount() : 0);
 
-                list.write(gl::TriangleFan, BM_NORMAL,
+                list.write(gl::TriangleFan, vertCount, indices,
                            listSpec.unit(TU_PRIMARY       ).scale,
                            listSpec.unit(TU_PRIMARY       ).offset,
                            listSpec.unit(TU_PRIMARY_DETAIL).scale,
                            listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                           hasDynlights, vertCount, indices,
-                           modTex, &modColor);
+                           BM_NORMAL, modTex, &modColor, hasDynlights);
 
                 rendSys.indicePool().release(indices);
             }
@@ -1638,13 +1633,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, colorCoords, primaryCoords,
                                  interCoords, modCoords);
 
-                list.write(gl::TriangleFan, BM_NORMAL,
+                list.write(gl::TriangleFan, vertCount, indices,
                            listSpec.unit(TU_PRIMARY       ).scale,
                            listSpec.unit(TU_PRIMARY       ).offset,
                            listSpec.unit(TU_PRIMARY_DETAIL).scale,
                            listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                           hasDynlights, vertCount, indices,
-                           modTex, &modColor);
+                           BM_NORMAL, modTex, &modColor, hasDynlights);
 
                 rendSys.indicePool().release(indices);
             }
@@ -1680,11 +1674,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
                                      shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0);
 
-                    list.write(gl::TriangleFan, ms.shineBlendMode(),
+                    list.write(gl::TriangleFan, vertCount, indices,
                                listSpec.unit(TU_INTER).scale,
                                listSpec.unit(TU_INTER).offset,
                                Vector2f(1, 1), Vector2f(0, 0),
-                               false, vertCount, indices);
+                               ms.shineBlendMode());
 
                     rendSys.indicePool().release(indices);
                 }
@@ -1696,11 +1690,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                      posCoords, shinyColors, shinyTexCoords,
                                      shinyMaskRTU? primaryCoords : 0);
 
-                    list.write(gl::TriangleFan, ms.shineBlendMode(),
+                    list.write(gl::TriangleFan, vertCount, indices,
                                listSpec.unit(TU_INTER).scale,
                                listSpec.unit(TU_INTER).offset,
                                Vector2f(1, 1), Vector2f(0, 0),
-                               false, vertCount, indices);
+                               ms.shineBlendMode());
 
                     rendSys.indicePool().release(indices);
                 }
@@ -1720,9 +1714,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             vbuf.setVertices(vertCount, indices, posCoords);
 
             skyList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                          BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                          Vector2f(1, 1), Vector2f(0, 0),
-                          0, numVertices, indices);
+                          numVertices, indices);
 
             rendSys.indicePool().release(indices);
         }
@@ -1787,13 +1779,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                              modCoords);
 
             list.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                      BM_NORMAL,
+                      vertCount, indices,
                       listSpec.unit(TU_PRIMARY       ).scale,
                       listSpec.unit(TU_PRIMARY       ).offset,
                       listSpec.unit(TU_PRIMARY_DETAIL).scale,
                       listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                      hasDynlights, vertCount, indices,
-                      modTex, &modColor);
+                      BM_NORMAL, modTex, &modColor, hasDynlights);
 
             rendSys.indicePool().release(indices);
 
@@ -1826,12 +1817,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  shinyMaskRTU? primaryCoords : 0);
 
                 list.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                           ms.shineBlendMode(),
+                           vertCount, indices,
                            listSpec.unit(TU_INTER         ).scale,
                            listSpec.unit(TU_INTER         ).offset,
                            listSpec.unit(TU_PRIMARY_DETAIL).scale,
                            listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                           false, vertCount, indices);
+                           ms.shineBlendMode());
 
                 rendSys.indicePool().release(indices);
             }
@@ -2378,10 +2369,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
         vbuf.reserveElements(vertCount, indices);
         vbuf.setVertices(vertCount, indices, posCoords);
 
-        skyList.write(gl::TriangleStrip,
-                      BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                      Vector2f(1, 1), Vector2f(0, 0),
-                      0, vertCount, indices);
+        skyList.write(gl::TriangleStrip, vertCount, indices);
 
         rendSys.indicePool().release(indices);
     }
@@ -2408,12 +2396,11 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
         vbuf.reserveElements(vertCount, indices);
         vbuf.setVertices(vertCount, indices, posCoords, 0, texCoords);
 
-        list.write(gl::TriangleStrip, BM_NORMAL,
+        list.write(gl::TriangleStrip, vertCount, indices,
                    listSpec.unit(TU_PRIMARY       ).scale,
                    listSpec.unit(TU_PRIMARY       ).offset,
                    listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                   listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                   0, vertCount, indices);
+                   listSpec.unit(TU_PRIMARY_DETAIL).offset);
 
         rendSys.indicePool().release(indices);
     }
@@ -2588,10 +2575,7 @@ static void writeSubspaceSkyMaskCap(int skyCap)
     vbuf.reserveElements(vertCount, indices);
     vbuf.setVertices(vertCount, indices, posCoords);
 
-    list.write(gl::TriangleFan,
-               BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-               Vector2f(1, 1), Vector2f(0, 0), 0,
-               vertCount, indices);
+    list.write(gl::TriangleFan, vertCount, indices);
 
     rendSys.posPool().release(posCoords);
     rendSys.indicePool().release(indices);

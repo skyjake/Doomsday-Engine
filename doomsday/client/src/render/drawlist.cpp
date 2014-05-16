@@ -798,11 +798,12 @@ bool DrawList::isEmpty() const
     return d->last == 0;
 }
 
-DrawList &DrawList::write(gl::Primitive primitive, blendmode_e blendMode,
-    Vector2f const &texScale, Vector2f const &texOffset, Vector2f const &detailTexScale,
-    Vector2f const &detailTexOffset,
-    bool isLit, WorldVBuf::Index vertCount, WorldVBuf::Index const *indices,
-    GLuint modTexture, Vector3f const *modColor)
+DrawList &DrawList::write(gl::Primitive primitive, WorldVBuf::Index vertCount,
+    WorldVBuf::Index const *indices,
+    Vector2f const &texScale, Vector2f const &texOffset,
+    Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
+    blendmode_e blendmode, GLuint modTexture, const Vector3f *modColor,
+    bool isLit)
 {
     DENG2_ASSERT(vertCount >= 3);
     DENG2_ASSERT(indices != 0);
@@ -829,7 +830,7 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_e blendMode,
     }
 
     // Configure the GL state to be applied when this geometry is drawn later.
-    elem->data.blendMode  = blendMode;
+    elem->data.blendMode  = blendmode;
     elem->data.modTexture = modTexture;
     elem->data.modColor   = modColor? *modColor : Vector3f();
 
