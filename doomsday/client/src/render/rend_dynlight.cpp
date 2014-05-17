@@ -130,8 +130,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                              ((p.rvertices[i].y - p.topLeft->y)     / pDimensions.y * tp.bottomRight.y));
             }
 
-            rendSys.drawLists().find(listSpec)
-                        .write(gl::TriangleFan, vertCount, indices);
+            lightList.write(gl::TriangleFan, vertCount, indices);
 
             rendSys.indicePool().release(indices);
         }

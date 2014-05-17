@@ -112,22 +112,6 @@ void Rend_RadioUpdateForLineSide(LineSide &side)
     frData.updateCount = R_FrameCount(); // Mark as done.
 }
 
-/**
- * Set the vertex colors in the rendpoly.
- */
-static void setRendpolyColor(Vector4f *colorCoords, uint num, float darkness)
-{
-    DENG_ASSERT(colorCoords != 0);
-    // Shadows are black.
-    Vector4f const shadowColor(0, 0, 0, de::clamp(0.f, darkness, 1.f));
-
-    Vector4f *colorIt = colorCoords;
-    for(uint i = 0; i < num; ++i, colorIt++)
-    {
-        *colorIt = shadowColor;
-    }
-}
-
 /// @return  @c true, if there is open space in the sector.
 static inline bool isSectorOpen(Sector const *sector)
 {
@@ -1015,108 +999,66 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
 
     bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
-    uint realNumVertices = 4;
-    if(mustSubdivide)
-    {
-        realNumVertices = 3 + leftSection.divisionCount() + 3 + rightSection.divisionCount();
-    }
-    else
-    {
-        realNumVertices = 4;
-    }
+    if(rendFakeRadio > 1) return;
+
+    // Shadows are black.
+    Vector4f const shadowColor(0, 0, 0, de::clamp(0.f, wsParms.shadowDark * wsParms.shadowMul, 1.f));
+
+    DrawListSpec listSpec;
+    listSpec.group = ShadowGeom;
+    listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
+
+    DrawList &shadowList = rendSys.drawLists().find(listSpec);
 
     // Allocate enough for the divisions too.
-    Vector2f *texCoords   = rendSys.texPool().alloc(realNumVertices);
-    Vector4f *colorCoords = rendSys.colorPool().alloc(realNumVertices);
-
-    quadTexCoords(texCoords, origPosCoords, wsParms.sectionWidth,
+    Vector2f quadCoords[4];
+    quadTexCoords(quadCoords, origPosCoords, wsParms.sectionWidth,
                   leftSection.top().origin(), rightSection.bottom().origin(),
                   wsParms.texOrigin, wsParms.texDimensions, wsParms.horizontal);
 
-    setRendpolyColor(colorCoords, 4, wsParms.shadowDark * wsParms.shadowMul);
+    // Write multiple polys depending on rend params.
 
-    if(rendFakeRadio != 2)
+    if(mustSubdivide) // Draw as two triangle fans.
     {
-        // Write multiple polys depending on rend params.
-        DrawListSpec listSpec;
-        listSpec.group = ShadowGeom;
-        listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
+        WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
+        WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
+        WorldVBuf::Index *indices = rendSys.indicePool().alloc(leftFanSize + rightFanSize);
 
-        DrawList &shadowList = rendSys.drawLists().find(listSpec);
+        vbuf.reserveElements(leftFanSize + rightFanSize, indices);
 
-        if(mustSubdivide)
+        R_DivVerts(indices, origPosCoords, leftSection, rightSection);
+
+        R_DivTexCoords(indices, quadCoords, leftSection, rightSection,
+                       WorldVBuf::PrimaryTex);
+
+        for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
         {
-            // Need to swap indices around into fans set the position of the division
-            // vertices, interpolate texcoords and color.
-
-            Vector3f *posCoords = rendSys.posPool().alloc(realNumVertices);
-
-            Vector2f origTexCoords[4];   std::memcpy(origTexCoords,   texCoords,   sizeof(Vector2f) * 4);
-            Vector4f origColorCoords[4]; std::memcpy(origColorCoords, colorCoords, sizeof(Vector4f) * 4);
-
-            R_DivVerts(posCoords, origPosCoords, leftSection, rightSection);
-            R_DivTexCoords(texCoords, origTexCoords, leftSection, rightSection);
-            R_DivVertColors(colorCoords, origColorCoords, leftSection, rightSection);
-
-            {
-                WorldVBuf::Index vertCount = 3 + rightSection.divisionCount();
-                WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
-
-                vbuf.reserveElements(vertCount, indices);
-                for(int i = 0; i < vertCount; ++i)
-                {
-                    WorldVBuf::Type &vertex = vbuf[indices[i]];
-                    vertex.pos  =   posCoords[3 + leftSection.divisionCount() + i];
-                    vertex.rgba = colorCoords[3 + leftSection.divisionCount() + i];
-                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[3 + leftSection.divisionCount() + i];
-                }
-
-                shadowList.write(gl::TriangleFan, vertCount, indices);
-
-                rendSys.indicePool().release(indices);
-            }
-            {
-                WorldVBuf::Index vertCount = 3 + leftSection.divisionCount();
-                WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
-
-                vbuf.reserveElements(vertCount, indices);
-                for(int i = 0; i < vertCount; ++i)
-                {
-                    WorldVBuf::Type &vertex = vbuf[indices[i]];
-                    vertex.pos  =   posCoords[i];
-                    vertex.rgba = colorCoords[i];
-                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
-                }
-
-                shadowList.write(gl::TriangleFan, vertCount, indices);
-
-                rendSys.indicePool().release(indices);
-            }
-
-            rendSys.posPool().release(posCoords);
+            vbuf[indices[i]].rgba = shadowColor;
         }
-        else
-        {
-            WorldVBuf::Index vertCount = 4;
-            WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
-            vbuf.reserveElements(vertCount, indices);
-            for(int i = 0; i < vertCount; ++i)
-            {
-                WorldVBuf::Type &vertex = vbuf[indices[i]];
-                vertex.pos  = origPosCoords[i];
-                vertex.rgba =   colorCoords[i];
-                vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
-            }
+        shadowList.write(gl::TriangleFan, rightFanSize, indices + leftFanSize)
+                  .write(gl::TriangleFan, leftFanSize, indices);
 
-            shadowList.write(gl::TriangleStrip, vertCount, indices);
-
-            rendSys.indicePool().release(indices);
-        }
+        rendSys.indicePool().release(indices);
     }
+    else
+    {
+        WorldVBuf::Index vertCount = 4;
+        WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
-    rendSys.texPool().release(texCoords);
-    rendSys.colorPool().release(colorCoords);
+        vbuf.reserveElements(vertCount, indices);
+        for(int i = 0; i < vertCount; ++i)
+        {
+            WorldVBuf::Type &vertex = vbuf[indices[i]];
+            vertex.pos  = origPosCoords[i];
+            vertex.rgba = shadowColor;
+            vertex.texCoord[WorldVBuf::PrimaryTex] = quadCoords[i];
+        }
+
+        shadowList.write(gl::TriangleStrip, vertCount, indices);
+
+        rendSys.indicePool().release(indices);
+    }
 }
 
 /// @todo fixme: Should use the visual plane heights of sector clusters.
