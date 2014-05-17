@@ -72,15 +72,7 @@ void WorldVBuf::setVertices(Index vertCount, Index const *indices,
         // Color.
         if(colorCoords)
         {
-            Vector4f const &srcColor = colorCoords[i];
-
-            // We should not be relying on clamping at this late stage...
-            DENG2_ASSERT(INRANGE_OF(srcColor.x, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.y, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.z, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.w, 0.f, 1.f));
-
-            vertex.rgba = srcColor.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
+            vertex.rgba = colorCoords[i];
         }
         else
         {

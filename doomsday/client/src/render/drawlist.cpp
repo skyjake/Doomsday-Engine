@@ -199,7 +199,17 @@ DENG2_PIMPL(DrawList)
 
                     if(!(conditions & NoColor))
                     {
-                        glColor4f(vertex.rgba.x, vertex.rgba.y, vertex.rgba.z, vertex.rgba.w);
+                        Vector4f color = vertex.rgba;
+
+                        // We should not be relying on clamping at this late stage...
+                        DENG2_ASSERT(INRANGE_OF(color.x, 0.f, 1.f));
+                        DENG2_ASSERT(INRANGE_OF(color.y, 0.f, 1.f));
+                        DENG2_ASSERT(INRANGE_OF(color.z, 0.f, 1.f));
+                        DENG2_ASSERT(INRANGE_OF(color.w, 0.f, 1.f));
+
+                        color = color.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
+
+                        glColor4f(color.x, color.y, color.z, color.w);
                     }
 
                     glVertex3f(vertex.pos.x, vertex.pos.z, vertex.pos.y);
