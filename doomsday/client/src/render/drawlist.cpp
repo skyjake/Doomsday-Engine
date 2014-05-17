@@ -807,7 +807,6 @@ DrawList &DrawList::write(gl::Primitive primitive, WorldVBuf::Index vertCount,
 {
     DENG2_ASSERT(vertCount >= 3);
     DENG2_ASSERT(indices != 0);
-    //DENG2_ASSERT(posCoords != 0);
 
     // Rationalize write arguments.
     if(d->spec.group == SkyMaskGeom || d->spec.group == LightGeom || d->spec.group == ShadowGeom)

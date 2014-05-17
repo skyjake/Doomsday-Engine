@@ -1114,6 +1114,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     DENG2_ASSERT(posCoords != 0);
 
     RenderSystem &rendSys  = ClientApp::renderSystem();
+    WorldVBuf &vbuf        = rendSys.buffer();
     SectorCluster &cluster = curSubspace->cluster();
 
     uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
@@ -1468,19 +1469,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     // Write multiple polys depending on rend params.
     if(mustSubdivide)
     {
-        WallEdgeSection const &leftEdge  = *p.wall.leftEdge;
-        WallEdgeSection const &rightEdge = *p.wall.rightEdge;
+        // Need to swap indices around into fans set the position of the division
+        // vertices, interpolate texcoords and color.
 
-        /*
-         * Need to swap indices around into fans set the position of the division
-         * vertices, interpolate texcoords and color.
-         */
+        WallEdgeSection const &sectionLeft  = *p.wall.leftEdge;
+        WallEdgeSection const &sectionRight = *p.wall.rightEdge;
 
-        Vector3f origVerts[4];
-        std::memcpy(origVerts, posCoords, sizeof(origVerts));
-
-        Vector2f origTexCoords[4];
-        std::memcpy(origTexCoords, primaryCoords, sizeof(origTexCoords));
+        Vector3f origPosCoords[4]; std::memcpy(origPosCoords, posCoords,     sizeof(origPosCoords));
+        Vector2f origTexCoords[4]; std::memcpy(origTexCoords, primaryCoords, sizeof(origTexCoords));
 
         Vector4f origColors[4];
         if(colorCoords || shinyColors)
@@ -1488,61 +1484,54 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             std::memcpy(origColors, colorCoords, sizeof(origColors));
         }
 
-        R_DivVerts(posCoords, origVerts, leftEdge, rightEdge);
-        R_DivTexCoords(primaryCoords, origTexCoords, leftEdge, rightEdge);
+        R_DivVerts(posCoords, origPosCoords, sectionLeft, sectionRight);
+        R_DivTexCoords(primaryCoords, origTexCoords, sectionLeft, sectionRight);
 
         if(colorCoords)
         {
-            R_DivVertColors(colorCoords, origColors, leftEdge, rightEdge);
+            R_DivVertColors(colorCoords, origColors, sectionLeft, sectionRight);
         }
 
         if(interCoords)
         {
-            Vector2f origTexCoords2[4];
-            std::memcpy(origTexCoords2, interCoords, sizeof(origTexCoords2));
-            R_DivTexCoords(interCoords, origTexCoords2, leftEdge, rightEdge);
+            Vector2f origTexCoords2[4]; std::memcpy(origTexCoords2, interCoords, sizeof(origTexCoords2));
+            R_DivTexCoords(interCoords, origTexCoords2, sectionLeft, sectionRight);
         }
 
         if(modCoords)
         {
-            Vector2f origTexCoords5[4];
-            std::memcpy(origTexCoords5, modCoords, sizeof(origTexCoords5));
-            R_DivTexCoords(modCoords, origTexCoords5, leftEdge, rightEdge);
+            Vector2f origTexCoords5[4]; std::memcpy(origTexCoords5, modCoords, sizeof(origTexCoords5));
+            R_DivTexCoords(modCoords, origTexCoords5, sectionLeft, sectionRight);
         }
 
         if(shinyTexCoords)
         {
-            Vector2f origShinyTexCoords[4];
-            std::memcpy(origShinyTexCoords, shinyTexCoords, sizeof(origShinyTexCoords));
-            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, leftEdge, rightEdge);
+            Vector2f origShinyTexCoords[4]; std::memcpy(origShinyTexCoords, shinyTexCoords, sizeof(origShinyTexCoords));
+            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, sectionLeft, sectionRight);
         }
 
         if(shinyColors)
         {
-            Vector4f origShinyColors[4];
-            std::memcpy(origShinyColors, shinyColors, sizeof(origShinyColors));
-            R_DivVertColors(shinyColors, origShinyColors, leftEdge, rightEdge);
+            Vector4f origShinyColors[4]; std::memcpy(origShinyColors, shinyColors, sizeof(origShinyColors));
+            R_DivVertColors(shinyColors, origShinyColors, sectionLeft, sectionRight);
         }
 
         if(p.skyMasked)
         {
-            WorldVBuf &vbuf   = rendSys.buffer();
             DrawList &skyList = rendSys.drawLists().find(DrawListSpec(SkyMaskGeom));
-
             {
-                WorldVBuf::Index vertCount = 3 + rightEdge.divisionCount();
+                WorldVBuf::Index vertCount = 3 + sectionRight.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                 vbuf.reserveElements(vertCount, indices);
                 vbuf.setVertices(vertCount, indices,
-                                 posCoords + 3 + leftEdge.divisionCount());
+                                 posCoords + 3 + sectionLeft.divisionCount());
 
                 skyList.write(gl::TriangleFan, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
-
             {
-                WorldVBuf::Index vertCount = 3 + leftEdge.divisionCount();
+                WorldVBuf::Index vertCount = 3 + sectionLeft.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                 vbuf.reserveElements(vertCount, indices);
                 vbuf.setVertices(vertCount, indices, posCoords);
@@ -1602,19 +1591,17 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            WorldVBuf &vbuf = rendSys.buffer();
             DrawList &list  = rendSys.drawLists().find(listSpec);
-
             {
-                WorldVBuf::Index vertCount = 3 + rightEdge.divisionCount();
+                WorldVBuf::Index vertCount = 3 + sectionRight.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                 vbuf.reserveElements(vertCount, indices);
                 vbuf.setVertices(vertCount, indices,
-                                 posCoords + 3 + leftEdge.divisionCount(),
-                                 colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
-                                 primaryCoords + 3 + leftEdge.divisionCount(),
-                                 interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
-                                 modCoords? modCoords + 3 + leftEdge.divisionCount() : 0);
+                                 posCoords     + 3 + sectionLeft.divisionCount(),
+                                 colorCoords? colorCoords + 3 + sectionLeft.divisionCount() : 0,
+                                 primaryCoords + 3 + sectionLeft.divisionCount(),
+                                 interCoords? interCoords + 3 + sectionLeft.divisionCount() : 0,
+                                 modCoords  ? modCoords   + 3 + sectionLeft.divisionCount() : 0);
 
                 list.write(gl::TriangleFan, vertCount, indices,
                            listSpec.unit(TU_PRIMARY       ).scale,
@@ -1626,7 +1613,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 rendSys.indicePool().release(indices);
             }
             {
-                WorldVBuf::Index vertCount = 3 + leftEdge.divisionCount();
+                WorldVBuf::Index vertCount = 3 + sectionLeft.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                 vbuf.reserveElements(vertCount, indices);
                 vbuf.setVertices(vertCount, indices,
@@ -1665,14 +1652,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
                 DrawList &list = rendSys.drawLists().find(listSpec);
                 {
-                    WorldVBuf::Index vertCount = 3 + rightEdge.divisionCount();
+                    WorldVBuf::Index vertCount = 3 + sectionRight.divisionCount();
                     WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                     vbuf.reserveElements(vertCount, indices);
                     vbuf.setVertices(vertCount, indices,
-                                     posCoords + 3 + leftEdge.divisionCount(),
-                                     shinyColors + 3 + leftEdge.divisionCount(),
-                                     shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
-                                     shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0);
+                                     posCoords   + 3 + sectionLeft.divisionCount(),
+                                     shinyColors + 3 + sectionLeft.divisionCount(),
+                                     shinyTexCoords? shinyTexCoords + 3 + sectionLeft.divisionCount() : 0,
+                                     shinyMaskRTU  ? primaryCoords  + 3 + sectionLeft.divisionCount() : 0);
 
                     list.write(gl::TriangleFan, vertCount, indices,
                                listSpec.unit(TU_INTER).scale,
@@ -1683,7 +1670,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                     rendSys.indicePool().release(indices);
                 }
                 {
-                    WorldVBuf::Index vertCount = 3 + leftEdge.divisionCount();
+                    WorldVBuf::Index vertCount = 3 + sectionLeft.divisionCount();
                     WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                     vbuf.reserveElements(vertCount, indices);
                     vbuf.setVertices(vertCount, indices,
@@ -1705,16 +1692,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     {
         if(p.skyMasked)
         {
-            WorldVBuf &vbuf   = rendSys.buffer();
-            DrawList &skyList = rendSys.drawLists().find(DrawListSpec(SkyMaskGeom));
-
             WorldVBuf::Index vertCount = numVertices;
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
             vbuf.reserveElements(vertCount, indices);
             vbuf.setVertices(vertCount, indices, posCoords);
 
-            skyList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                          numVertices, indices);
+            rendSys.drawLists().find(DrawListSpec(SkyMaskGeom))
+                        .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                               numVertices, indices);
 
             rendSys.indicePool().release(indices);
         }
@@ -1768,9 +1753,6 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            WorldVBuf &vbuf = rendSys.buffer();
-            DrawList &list  = rendSys.drawLists().find(listSpec);
-
             WorldVBuf::Index vertCount = numVertices;
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
             vbuf.reserveElements(vertCount, indices);
@@ -1778,13 +1760,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                              posCoords, colorCoords, primaryCoords, interCoords,
                              modCoords);
 
-            list.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                      vertCount, indices,
-                      listSpec.unit(TU_PRIMARY       ).scale,
-                      listSpec.unit(TU_PRIMARY       ).offset,
-                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                      listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                      BM_NORMAL, modTex, &modColor, hasDynlights);
+            rendSys.drawLists().find(listSpec)
+                        .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                               vertCount, indices,
+                               listSpec.unit(TU_PRIMARY       ).scale,
+                               listSpec.unit(TU_PRIMARY       ).offset,
+                               listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                               listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                               BM_NORMAL, modTex, &modColor, hasDynlights);
 
             rendSys.indicePool().release(indices);
 
@@ -1808,7 +1791,6 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                     }
                 }
 
-                DrawList &list = rendSys.drawLists().find(listSpec);
                 WorldVBuf::Index vertCount = numVertices;
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                 vbuf.reserveElements(vertCount, indices);
@@ -1816,13 +1798,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, shinyColors, shinyTexCoords,
                                  shinyMaskRTU? primaryCoords : 0);
 
-                list.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                           vertCount, indices,
-                           listSpec.unit(TU_INTER         ).scale,
-                           listSpec.unit(TU_INTER         ).offset,
-                           listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                           listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                           ms.shineBlendMode());
+                rendSys.drawLists().find(listSpec)
+                            .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                   vertCount, indices,
+                                   listSpec.unit(TU_INTER         ).scale,
+                                   listSpec.unit(TU_INTER         ).offset,
+                                   listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                   listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                                   ms.shineBlendMode());
 
                 rendSys.indicePool().release(indices);
             }
@@ -2363,13 +2346,12 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
 
     if(!devRendSkyMode)
     {
-        DrawList &skyList = rendSys.drawLists().find(DrawListSpec(SkyMaskGeom));
-
         WorldVBuf::Index *indices = rendSys.indicePool().alloc(vertCount);
         vbuf.reserveElements(vertCount, indices);
         vbuf.setVertices(vertCount, indices, posCoords);
 
-        skyList.write(gl::TriangleStrip, vertCount, indices);
+        rendSys.drawLists().find(DrawListSpec(SkyMaskGeom))
+                    .write(gl::TriangleStrip, vertCount, indices);
 
         rendSys.indicePool().release(indices);
     }
@@ -2391,16 +2373,16 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
             listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
         }
 
-        DrawList &list = rendSys.drawLists().find(listSpec);
         WorldVBuf::Index *indices = rendSys.indicePool().alloc(vertCount);
         vbuf.reserveElements(vertCount, indices);
         vbuf.setVertices(vertCount, indices, posCoords, 0, texCoords);
 
-        list.write(gl::TriangleStrip, vertCount, indices,
-                   listSpec.unit(TU_PRIMARY       ).scale,
-                   listSpec.unit(TU_PRIMARY       ).offset,
-                   listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                   listSpec.unit(TU_PRIMARY_DETAIL).offset);
+        rendSys.drawLists().find(listSpec)
+                    .write(gl::TriangleStrip, vertCount, indices,
+                           listSpec.unit(TU_PRIMARY       ).scale,
+                           listSpec.unit(TU_PRIMARY       ).offset,
+                           listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                           listSpec.unit(TU_PRIMARY_DETAIL).offset);
 
         rendSys.indicePool().release(indices);
     }
@@ -2570,12 +2552,12 @@ static void writeSubspaceSkyMaskCap(int skyCap)
     uint vertCount = buildSubspacePlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
                                                 skyPlaneZ(skyCap), &posCoords);
 
-    DrawList &list = rendSys.drawLists().find(DrawListSpec(SkyMaskGeom));
     WorldVBuf::Index *indices = rendSys.indicePool().alloc(vertCount);
     vbuf.reserveElements(vertCount, indices);
     vbuf.setVertices(vertCount, indices, posCoords);
 
-    list.write(gl::TriangleFan, vertCount, indices);
+    rendSys.drawLists().find(DrawListSpec(SkyMaskGeom))
+                .write(gl::TriangleFan, vertCount, indices);
 
     rendSys.posPool().release(posCoords);
     rendSys.indicePool().release(indices);

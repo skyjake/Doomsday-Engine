@@ -125,7 +125,7 @@ public:
      * @param modTexture       GL name of the modulation texture (if any).
      * @param modColor         Modulation color (if any).
      *
-     * @param isLit            Is the primative lit? (@todo Retrieve from list specification?)
+     * @param isLit            Is the primitive lit? (@todo Retrieve from list specification?)
      */
     DrawList &write(de::gl::Primitive primitive, WorldVBuf::Index vertCount,
                     WorldVBuf::Index const *indices,

@@ -38,25 +38,25 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
     if(!(Rend_IsMTexLights() && p.lastIdx == 0))
     {
         // Allocate enough for the divisions too.
-        Vector3f *rvertices  = rendSys.posPool().alloc(p.realNumVertices);
-        Vector2f *rtexcoords = rendSys.texPool().alloc(p.realNumVertices);
-        Vector4f *rcolors    = rendSys.colorPool().alloc(p.realNumVertices);
+        Vector3f *posCoords   = rendSys.posPool().alloc(p.realNumVertices);
+        Vector2f *texCoords   = rendSys.texPool().alloc(p.realNumVertices);
+        Vector4f *colorCoords = rendSys.colorPool().alloc(p.realNumVertices);
         bool const mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount() ));
 
         for(uint i = 0; i < p.numVertices; ++i)
         {
-            rcolors[i] = tp.color;
+            colorCoords[i] = tp.color;
         }
 
         if(p.isWall)
         {
-            WallEdgeSection const &sectionLeft  = *p.wall.leftEdge;
-            WallEdgeSection const &sectionRight = *p.wall.rightEdge;
+            WallEdgeSection const &leftSection  = *p.wall.leftEdge;
+            WallEdgeSection const &rightSection = *p.wall.rightEdge;
 
-            rtexcoords[1].x = rtexcoords[0].x = tp.topLeft.x;
-            rtexcoords[1].y = rtexcoords[3].y = tp.topLeft.y;
-            rtexcoords[3].x = rtexcoords[2].x = tp.bottomRight.x;
-            rtexcoords[2].y = rtexcoords[0].y = tp.bottomRight.y;
+            texCoords[1].x = texCoords[0].x = tp.topLeft.x;
+            texCoords[1].y = texCoords[3].y = tp.topLeft.y;
+            texCoords[3].x = texCoords[2].x = tp.bottomRight.x;
+            texCoords[2].y = texCoords[0].y = tp.bottomRight.y;
 
             if(mustSubdivide)
             {
@@ -66,17 +66,17 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                  * color.
                  */
 
-                Vector3f origVerts[4]; std::memcpy(origVerts, p.rvertices, sizeof(Vector3f) * 4);
-                Vector2f origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
-                Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
+                Vector3f origPosCoords[4];   std::memcpy(origPosCoords,   p.rvertices, sizeof(Vector3f) * 4);
+                Vector2f origTexCoords[4];   std::memcpy(origTexCoords,   texCoords,   sizeof(Vector2f) * 4);
+                Vector4f origColorCoords[4]; std::memcpy(origColorCoords, colorCoords, sizeof(Vector4f) * 4);
 
-                R_DivVerts(rvertices, origVerts, sectionLeft, sectionRight);
-                R_DivTexCoords(rtexcoords, origTexCoords, sectionLeft, sectionRight);
-                R_DivVertColors(rcolors, origColors, sectionLeft, sectionRight);
+                R_DivVerts(posCoords, origPosCoords, leftSection, rightSection);
+                R_DivTexCoords(texCoords, origTexCoords, leftSection, rightSection);
+                R_DivVertColors(colorCoords, origColorCoords, leftSection, rightSection);
             }
             else
             {
-                std::memcpy(rvertices, p.rvertices, sizeof(Vector3f) * p.numVertices);
+                std::memcpy(posCoords, p.rvertices, sizeof(Vector3f) * p.numVertices);
             }
         }
         else
@@ -87,14 +87,14 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
             for(uint i = 0; i < p.numVertices; ++i)
             {
-                rtexcoords[i].x = ((p.bottomRight->x - p.rvertices[i].x) / width * tp.topLeft.x) +
-                    ((p.rvertices[i].x - p.topLeft->x) / width * tp.bottomRight.x);
+                texCoords[i].x = ((p.bottomRight->x - p.rvertices[i].x) / width  * tp.topLeft.x)
+                               + ((p.rvertices[i].x - p.topLeft->x)     / width  * tp.bottomRight.x);
 
-                rtexcoords[i].y = ((p.bottomRight->y - p.rvertices[i].y) / height * tp.topLeft.y) +
-                    ((p.rvertices[i].y - p.topLeft->y) / height * tp.bottomRight.y);
+                texCoords[i].y = ((p.bottomRight->y - p.rvertices[i].y) / height * tp.topLeft.y)
+                               + ((p.rvertices[i].y - p.topLeft->y)     / height * tp.bottomRight.y);
             }
 
-            std::memcpy(rvertices, p.rvertices, sizeof(Vector3f) * p.numVertices);
+            std::memcpy(posCoords, p.rvertices, sizeof(Vector3f) * p.numVertices);
         }
 
         DrawListSpec listSpec;
@@ -106,28 +106,28 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
         if(mustSubdivide)
         {
-            WallEdgeSection const &sectionLeft  = *p.wall.leftEdge;
-            WallEdgeSection const &sectionRight = *p.wall.rightEdge;
+            WallEdgeSection const &leftSection  = *p.wall.leftEdge;
+            WallEdgeSection const &rightSection = *p.wall.rightEdge;
 
             {
-                WorldVBuf::Index vertCount = 3 + sectionRight.divisionCount();
+                WorldVBuf::Index vertCount = 3 + rightSection.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                 vbuf.reserveElements(vertCount, indices);
                 vbuf.setVertices(vertCount, indices,
-                                 rvertices  + 3 + sectionLeft.divisionCount(),
-                                 rcolors    + 3 + sectionLeft.divisionCount(),
-                                 rtexcoords + 3 + sectionLeft.divisionCount());
+                                 posCoords   + 3 + leftSection.divisionCount(),
+                                 colorCoords + 3 + leftSection.divisionCount(),
+                                 texCoords   + 3 + leftSection.divisionCount());
 
                 lightList.write(gl::TriangleFan, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
             {
-                WorldVBuf::Index vertCount = 3 + sectionLeft.divisionCount();
+                WorldVBuf::Index vertCount = 3 + leftSection.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
                 vbuf.reserveElements(vertCount, indices);
                 vbuf.setVertices(vertCount, indices,
-                                 rvertices, rcolors, rtexcoords);
+                                 posCoords, colorCoords, texCoords);
 
                 lightList.write(gl::TriangleFan, vertCount, indices);
 
@@ -140,7 +140,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
             vbuf.reserveElements(vertCount, indices);
             vbuf.setVertices(vertCount, indices,
-                             rvertices, rcolors, rtexcoords);
+                             posCoords, colorCoords, texCoords);
 
             lightList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
                             vertCount, indices);
@@ -148,9 +148,9 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             rendSys.indicePool().release(indices);
         }
 
-        rendSys.posPool().release(rvertices);
-        rendSys.texPool().release(rtexcoords);
-        rendSys.colorPool().release(rcolors);
+        rendSys.posPool().release(posCoords);
+        rendSys.texPool().release(texCoords);
+        rendSys.colorPool().release(colorCoords);
     }
     p.lastIdx++;
 }
