@@ -21,7 +21,6 @@
 #include "clientapp.h"
 #include "render/rend_dynlight.h"
 
-//#include "de_console.h"
 #include "de_graphics.h"
 #include "de_render.h"
 #include "DrawLists"
@@ -37,132 +36,105 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
     // If multitexturing is in use we skip the first.
     if(!(Rend_IsMTexLights() && p.lastIdx == 0))
     {
-        // Allocate enough for the divisions too.
-        Vector3f *posCoords   = rendSys.posPool().alloc(p.realNumVertices);
-        Vector2f *texCoords   = rendSys.texPool().alloc(p.realNumVertices);
-        Vector4f *colorCoords = rendSys.colorPool().alloc(p.realNumVertices);
-        bool const mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount() ));
-
-        for(uint i = 0; i < p.numVertices; ++i)
-        {
-            colorCoords[i] = tp.color;
-        }
-
-        if(p.isWall)
-        {
-            WallEdgeSection const &leftSection  = *p.wall.leftEdge;
-            WallEdgeSection const &rightSection = *p.wall.rightEdge;
-
-            texCoords[1].x = texCoords[0].x = tp.topLeft.x;
-            texCoords[1].y = texCoords[3].y = tp.topLeft.y;
-            texCoords[3].x = texCoords[2].x = tp.bottomRight.x;
-            texCoords[2].y = texCoords[0].y = tp.bottomRight.y;
-
-            if(mustSubdivide)
-            {
-                // Need to swap indices around into fans set the position of the
-                // division vertices, interpolate texcoords and color.
-
-                Vector3f origPosCoords[4];   std::memcpy(origPosCoords,   p.rvertices, sizeof(Vector3f) * 4);
-                Vector2f origTexCoords[4];   std::memcpy(origTexCoords,   texCoords,   sizeof(Vector2f) * 4);
-                Vector4f origColorCoords[4]; std::memcpy(origColorCoords, colorCoords, sizeof(Vector4f) * 4);
-
-                R_DivVerts(posCoords, origPosCoords, leftSection, rightSection);
-                R_DivTexCoords(texCoords, origTexCoords, leftSection, rightSection);
-                R_DivVertColors(colorCoords, origColorCoords, leftSection, rightSection);
-            }
-            else
-            {
-                std::memcpy(posCoords, p.rvertices, sizeof(Vector3f) * p.numVertices);
-            }
-        }
-        else
-        {
-            // It's a flat.
-            float const width  = p.bottomRight->x - p.topLeft->x;
-            float const height = p.bottomRight->y - p.topLeft->y;
-
-            for(uint i = 0; i < p.numVertices; ++i)
-            {
-                texCoords[i].x = ((p.bottomRight->x - p.rvertices[i].x) / width  * tp.topLeft.x)
-                               + ((p.rvertices[i].x - p.topLeft->x)     / width  * tp.bottomRight.x);
-
-                texCoords[i].y = ((p.bottomRight->y - p.rvertices[i].y) / height * tp.topLeft.y)
-                               + ((p.rvertices[i].y - p.topLeft->y)     / height * tp.bottomRight.y);
-            }
-
-            std::memcpy(posCoords, p.rvertices, sizeof(Vector3f) * p.numVertices);
-        }
-
         DrawListSpec listSpec;
         listSpec.group = LightGeom;
         listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
 
         DrawList &lightList = rendSys.drawLists().find(listSpec);
 
-        if(mustSubdivide)
+        if(p.isWall)
         {
             WallEdgeSection const &leftSection  = *p.wall.leftEdge;
             WallEdgeSection const &rightSection = *p.wall.rightEdge;
+            bool const mustSubdivide            = (leftSection.divisionCount() || rightSection.divisionCount());
 
+            if(mustSubdivide) // Draw as two triangle fans.
             {
-                WorldVBuf::Index vertCount = 3 + rightSection.divisionCount();
-                WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+                WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
+                WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
+                WorldVBuf::Index *indices = rendSys.indicePool().alloc(leftFanSize + rightFanSize);
 
-                vbuf.reserveElements(vertCount, indices);
-                for(int i = 0; i < vertCount; ++i)
+                vbuf.reserveElements(leftFanSize + rightFanSize, indices);
+
+                R_DivVerts(indices, p.rvertices, leftSection, rightSection);
+
+                Vector2f quadCoords[4] = {
+                    Vector2f(tp.topLeft.x,     tp.bottomRight.y),
+                    Vector2f(tp.topLeft.x,     tp.topLeft.y    ),
+                    Vector2f(tp.bottomRight.x, tp.bottomRight.y),
+                    Vector2f(tp.bottomRight.x, tp.topLeft.y    )
+                };
+                R_DivTexCoords(indices, quadCoords, leftSection, rightSection,
+                               WorldVBuf::PrimaryTex);
+
+                for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
                 {
-                    WorldVBuf::Type &vertex = vbuf[indices[i]];
-                    vertex.pos  =   posCoords[3 + leftSection.divisionCount() + i];
-                    vertex.rgba = colorCoords[3 + leftSection.divisionCount() + i];
-                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[3 + leftSection.divisionCount() + i];
+                    vbuf[indices[i]].rgba = tp.color;
                 }
 
-                lightList.write(gl::TriangleFan, vertCount, indices);
+                lightList.write(gl::TriangleFan, rightFanSize, indices + leftFanSize)
+                         .write(gl::TriangleFan, leftFanSize, indices);
 
                 rendSys.indicePool().release(indices);
             }
+            else
             {
-                WorldVBuf::Index vertCount = 3 + leftSection.divisionCount();
+                WorldVBuf::Index vertCount = p.numVertices;
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
                 vbuf.reserveElements(vertCount, indices);
                 for(int i = 0; i < vertCount; ++i)
                 {
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
-                    vertex.pos  =   posCoords[i];
-                    vertex.rgba = colorCoords[i];
-                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
+                    vertex.pos  = p.rvertices[i];
+                    vertex.rgba = tp.color;
                 }
 
-                lightList.write(gl::TriangleFan, vertCount, indices);
+                vbuf[indices[1]].texCoord[WorldVBuf::PrimaryTex].x =
+                vbuf[indices[0]].texCoord[WorldVBuf::PrimaryTex].x = tp.topLeft.x;
+
+                vbuf[indices[1]].texCoord[WorldVBuf::PrimaryTex].y =
+                vbuf[indices[3]].texCoord[WorldVBuf::PrimaryTex].y = tp.topLeft.y;
+
+                vbuf[indices[3]].texCoord[WorldVBuf::PrimaryTex].x =
+                vbuf[indices[2]].texCoord[WorldVBuf::PrimaryTex].x = tp.bottomRight.x;
+
+                vbuf[indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
+                vbuf[indices[0]].texCoord[WorldVBuf::PrimaryTex].y = tp.bottomRight.y;
+
+                lightList.write(gl::TriangleStrip, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
         }
-        else
+        else // A flat.
         {
+            Vector2f const pDimensions = p.bottomRight->xy() - p.topLeft->xy();
+
             WorldVBuf::Index vertCount = p.numVertices;
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
             vbuf.reserveElements(vertCount, indices);
-            for(int i = 0; i < vertCount; ++i)
+            for(WorldVBuf::Index i = 0; i < vertCount; ++i)
             {
                 WorldVBuf::Type &vertex = vbuf[indices[i]];
-                vertex.pos  =   posCoords[i];
-                vertex.rgba = colorCoords[i];
-                vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
+
+                vertex.pos  = p.rvertices[i];
+                vertex.rgba = tp.color;
+
+                vertex.texCoord[WorldVBuf::PrimaryTex] =
+                    Vector2f(((p.bottomRight->x - p.rvertices[i].x) / pDimensions.x * tp.topLeft.x) +
+                             ((p.rvertices[i].x - p.topLeft->x)     / pDimensions.x * tp.bottomRight.x)
+                             ,
+                             ((p.bottomRight->y - p.rvertices[i].y) / pDimensions.y * tp.topLeft.y) +
+                             ((p.rvertices[i].y - p.topLeft->y)     / pDimensions.y * tp.bottomRight.y));
             }
 
-            lightList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                            vertCount, indices);
+            rendSys.drawLists().find(listSpec)
+                        .write(gl::TriangleFan, vertCount, indices);
 
             rendSys.indicePool().release(indices);
         }
-
-        rendSys.posPool().release(posCoords);
-        rendSys.texPool().release(texCoords);
-        rendSys.colorPool().release(colorCoords);
     }
     p.lastIdx++;
 }
