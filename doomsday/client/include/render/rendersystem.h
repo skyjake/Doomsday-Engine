@@ -199,22 +199,6 @@ struct WorldVBuf : public VBufT<de::Vertex3Tex3Rgba>
         TCA_BLEND,  ///< Blendtarget texture.
         TCA_LIGHT   ///< Dynlight texture.
     };
-
-    /**
-     * @param vertCount       Number of vertex elements being written to.
-     * @param indices         Indices of the vertex elements being written to.
-     * @param posCoods        Map space position coordinates for each vertex.
-     * @param colorCoords     Color coordinates for each vertex (if any).
-     * @param texCoords       @em Primary texture coordinates for each vertex (if any).
-     * @param interTexCoords  @em Inter texture coordinates for each vertex (if any).
-     * @param modTexCoords    Modulation texture coordinates for each vertex (if any).
-     */
-    void setVertices(Index vertCount, Index const *indices,
-                     de::Vector3f const *posCoords,
-                     de::Vector4f const *colorCoords    = 0,
-                     de::Vector2f const *texCoords      = 0,
-                     de::Vector2f const *interTexCoords = 0,
-                     de::Vector2f const *modTexCoords   = 0);
 };
 
 /**

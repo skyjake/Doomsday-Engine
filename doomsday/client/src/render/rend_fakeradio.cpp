@@ -1005,7 +1005,7 @@ static void quadTexCoords(Vector2f *tc, Vector3f const *rverts, float wallLength
 }
 
 static void drawWallSectionShadow(Vector3f const *origPosCoords,
-    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight,
+    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection,
     rendershadowseg_params_t const &wsParms)
 {
     DENG2_ASSERT(origPosCoords != 0);
@@ -1013,12 +1013,12 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
     RenderSystem &rendSys = ClientApp::renderSystem();
     WorldVBuf &vbuf       = rendSys.buffer();
 
-    bool const mustSubdivide = (sectionLeft.divisionCount() || sectionRight.divisionCount());
+    bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
     uint realNumVertices = 4;
     if(mustSubdivide)
     {
-        realNumVertices = 3 + sectionLeft.divisionCount() + 3 + sectionRight.divisionCount();
+        realNumVertices = 3 + leftSection.divisionCount() + 3 + rightSection.divisionCount();
     }
     else
     {
@@ -1030,7 +1030,7 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
     Vector4f *colorCoords = rendSys.colorPool().alloc(realNumVertices);
 
     quadTexCoords(texCoords, origPosCoords, wsParms.sectionWidth,
-                  sectionLeft.top().origin(), sectionRight.bottom().origin(),
+                  leftSection.top().origin(), rightSection.bottom().origin(),
                   wsParms.texOrigin, wsParms.texDimensions, wsParms.horizontal);
 
     setRendpolyColor(colorCoords, 4, wsParms.shadowDark * wsParms.shadowMul);
@@ -1051,35 +1051,42 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
 
             Vector3f *posCoords = rendSys.posPool().alloc(realNumVertices);
 
-            Vector2f origTexCoords[4];
-            std::memcpy(origTexCoords, texCoords, sizeof(Vector2f) * 4);
+            Vector2f origTexCoords[4];   std::memcpy(origTexCoords,   texCoords,   sizeof(Vector2f) * 4);
+            Vector4f origColorCoords[4]; std::memcpy(origColorCoords, colorCoords, sizeof(Vector4f) * 4);
 
-            Vector4f origColorCoords[4];
-            std::memcpy(origColorCoords, colorCoords, sizeof(Vector4f) * 4);
-
-            R_DivVerts(posCoords, origPosCoords, sectionLeft, sectionRight);
-            R_DivTexCoords(texCoords, origTexCoords, sectionLeft, sectionRight);
-            R_DivVertColors(colorCoords, origColorCoords, sectionLeft, sectionRight);
+            R_DivVerts(posCoords, origPosCoords, leftSection, rightSection);
+            R_DivTexCoords(texCoords, origTexCoords, leftSection, rightSection);
+            R_DivVertColors(colorCoords, origColorCoords, leftSection, rightSection);
 
             {
-                WorldVBuf::Index vertCount = 3 + sectionRight.divisionCount();
+                WorldVBuf::Index vertCount = 3 + rightSection.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+
                 vbuf.reserveElements(vertCount, indices);
-                vbuf.setVertices(vertCount, indices,
-                                 posCoords   + 3 + sectionLeft.divisionCount(),
-                                 colorCoords + 3 + sectionLeft.divisionCount(),
-                                 texCoords   + 3 + sectionLeft.divisionCount());
+                for(int i = 0; i < vertCount; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[indices[i]];
+                    vertex.pos  =   posCoords[3 + leftSection.divisionCount() + i];
+                    vertex.rgba = colorCoords[3 + leftSection.divisionCount() + i];
+                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[3 + leftSection.divisionCount() + i];
+                }
 
                 shadowList.write(gl::TriangleFan, vertCount, indices);
 
                 rendSys.indicePool().release(indices);
             }
             {
-                WorldVBuf::Index vertCount = 3 + sectionLeft.divisionCount();
+                WorldVBuf::Index vertCount = 3 + leftSection.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+
                 vbuf.reserveElements(vertCount, indices);
-                vbuf.setVertices(vertCount, indices,
-                                 posCoords, colorCoords, texCoords);
+                for(int i = 0; i < vertCount; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[indices[i]];
+                    vertex.pos  =   posCoords[i];
+                    vertex.rgba = colorCoords[i];
+                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+                }
 
                 shadowList.write(gl::TriangleFan, vertCount, indices);
 
@@ -1092,9 +1099,15 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
         {
             WorldVBuf::Index vertCount = 4;
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+
             vbuf.reserveElements(vertCount, indices);
-            vbuf.setVertices(vertCount, indices,
-                             origPosCoords, colorCoords, texCoords);
+            for(int i = 0; i < vertCount; ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                vertex.pos  = origPosCoords[i];
+                vertex.rgba =   colorCoords[i];
+                vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+            }
 
             shadowList.write(gl::TriangleStrip, vertCount, indices);
 
@@ -1265,8 +1278,14 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
     WorldVBuf::Index vertCount = 4;
     WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+
     vbuf.reserveElements(vertCount, indices);
-    vbuf.setVertices(vertCount, indices, posCoords, colorCoords);
+    for(int i = 0; i < vertCount; ++i)
+    {
+        WorldVBuf::Type &vertex = vbuf[indices[i]];
+        vertex.pos  =   posCoords[i];
+        vertex.rgba = colorCoords[i];
+    }
 
     rendSys.drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
                 .write(gl::TriangleFan, vertCount, indices);

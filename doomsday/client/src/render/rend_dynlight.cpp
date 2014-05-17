@@ -112,11 +112,15 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             {
                 WorldVBuf::Index vertCount = 3 + rightSection.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+
                 vbuf.reserveElements(vertCount, indices);
-                vbuf.setVertices(vertCount, indices,
-                                 posCoords   + 3 + leftSection.divisionCount(),
-                                 colorCoords + 3 + leftSection.divisionCount(),
-                                 texCoords   + 3 + leftSection.divisionCount());
+                for(int i = 0; i < vertCount; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[indices[i]];
+                    vertex.pos  =   posCoords[3 + leftSection.divisionCount() + i];
+                    vertex.rgba = colorCoords[3 + leftSection.divisionCount() + i];
+                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[3 + leftSection.divisionCount() + i];
+                }
 
                 lightList.write(gl::TriangleFan, vertCount, indices);
 
@@ -125,9 +129,15 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             {
                 WorldVBuf::Index vertCount = 3 + leftSection.divisionCount();
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+
                 vbuf.reserveElements(vertCount, indices);
-                vbuf.setVertices(vertCount, indices,
-                                 posCoords, colorCoords, texCoords);
+                for(int i = 0; i < vertCount; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[indices[i]];
+                    vertex.pos  =   posCoords[i];
+                    vertex.rgba = colorCoords[i];
+                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+                }
 
                 lightList.write(gl::TriangleFan, vertCount, indices);
 
@@ -138,9 +148,15 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
         {
             WorldVBuf::Index vertCount = p.numVertices;
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+
             vbuf.reserveElements(vertCount, indices);
-            vbuf.setVertices(vertCount, indices,
-                             posCoords, colorCoords, texCoords);
+            for(int i = 0; i < vertCount; ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                vertex.pos  =   posCoords[i];
+                vertex.rgba = colorCoords[i];
+                vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+            }
 
             lightList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
                             vertCount, indices);
