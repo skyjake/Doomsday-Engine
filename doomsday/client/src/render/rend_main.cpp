@@ -1829,7 +1829,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             {
                 WorldVBuf::Type &vertex = vbuf[indices[i]];
                 vertex.pos  =   posCoords[i];
-                vertex.rgba = colorCoords[i];
+                vertex.rgba = colorCoords? colorCoords[i] : Vector4f(1, 1, 1, 1);
                 vertex.texCoord[WorldVBuf::TCA_MAIN] = primaryCoords[i];
                 if(interCoords)
                 {
