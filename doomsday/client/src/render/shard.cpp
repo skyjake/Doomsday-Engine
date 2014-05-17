@@ -20,6 +20,7 @@
 #include <QVector>
 #include <QtAlgorithms>
 #include <doomsday/console/var.h>
+#include "clientapp.h"
 #include "BiasIllum"
 #include "BiasTracker"
 #include "SectorCluster"
@@ -95,6 +96,39 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
     for(int i = 0; i < d->biasIllums.count(); ++i, posIt++, colorIt++)
     {
         *colorIt += d->biasIllums[i]->evaluate(*posIt, sufNormal, biasTime);
+    }
+
+    if(biasUpdated)
+    {
+        // Any changes from contributors will have now been applied.
+        d->biasTracker.markIllumUpdateCompleted();
+    }
+}
+
+void Shard::lightWithBiasSources(WorldVBuf::Index const *indices,
+    Matrix3f const &tangentMatrix, uint biasTime)
+{
+    DENG2_ASSERT(indices != 0);
+
+    RenderSystem &rendSys = ClientApp::renderSystem();
+    WorldVBuf &vbuf       = rendSys.buffer();
+
+    if(d->biasIllums.isEmpty()) return;
+
+    // Is it time to update bias contributors?
+    bool biasUpdated = false;
+    if(d->needBiasContributorUpdate())
+    {
+        // Perhaps our owner has updated lighting contributions for us?
+        biasUpdated = d->owner->updateBiasContributors(this);
+    }
+
+    // Light the given geometry.
+    Vector3f const sufNormal = tangentMatrix.column(2);
+    for(WorldVBuf::Index i = 0; i < d->biasIllums.count(); ++i)
+    {
+        WorldVBuf::Type &vertex = vbuf[indices[i]];
+        vertex.rgba += d->biasIllums[i]->evaluate(vertex.pos, sufNormal, biasTime);
     }
 
     if(biasUpdated)

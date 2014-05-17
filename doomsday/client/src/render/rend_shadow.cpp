@@ -74,7 +74,9 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
 
             for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
             {
-                vbuf[indices[i]].rgba = tp.color;
+                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                //vertex.pos  = vbuf[p.indices[i]].pos;
+                vertex.rgba = tp.color;
             }
 
             shadowList.write(gl::TriangleFan, rightFanSize, indices + leftFanSize)
@@ -91,7 +93,7 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
             for(WorldVBuf::Index i = 0; i < vertCount; ++i)
             {
                 WorldVBuf::Type &vertex = vbuf[indices[i]];
-                vertex.pos  = p.rvertices[i];
+                vertex.pos  = p.rvertices[i];//vbuf[p.indices[i]].pos;
                 vertex.rgba = tp.color;
             }
 
@@ -123,15 +125,15 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
         {
             WorldVBuf::Type &vertex = vbuf[indices[i]];
 
-            vertex.pos  = p.rvertices[i];
+            vertex.pos  = vbuf[p.indices[i]].pos;
             vertex.rgba =    tp.color;
 
             vertex.texCoord[WorldVBuf::PrimaryTex] =
-                Vector2f(((p.bottomRight->x - p.rvertices[i].x) / pDimensions.x * tp.topLeft.x) +
-                         ((p.rvertices[i].x - p.topLeft->x)     / pDimensions.x * tp.bottomRight.x)
+                Vector2f(((p.bottomRight->x - vertex.pos.x) / pDimensions.x * tp.topLeft.x) +
+                         ((vertex.pos.x     - p.topLeft->x) / pDimensions.x * tp.bottomRight.x)
                          ,
-                         ((p.bottomRight->y - p.rvertices[i].y) / pDimensions.y * tp.topLeft.y) +
-                         ((p.rvertices[i].y - p.topLeft->y)     / pDimensions.y * tp.bottomRight.y));
+                         ((p.bottomRight->y - vertex.pos.y) / pDimensions.y * tp.topLeft.y) +
+                         ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * tp.bottomRight.y));
         }
 
         shadowList.write(gl::TriangleFan, vertCount, indices);

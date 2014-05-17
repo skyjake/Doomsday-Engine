@@ -21,14 +21,17 @@
 #define DENG_RENDER_MOBJ_SHADOW_H
 
 #include <de/Vector>
-
+#include "render/rendersystem.h"
 #include "WallEdge"
 
 /// Parameters for Rend_RenderShadowProjections (POD).
 typedef struct {
     uint lastIdx;
-    de::Vector3f const *rvertices;
-    uint numVertices, realNumVertices;
+    union {
+        de::Vector3f const *rvertices;
+        WorldVBuf::Index const *indices;
+    };
+    WorldVBuf::Index numVertices;
     de::Vector3d const *topLeft;
     de::Vector3d const *bottomRight;
     bool isWall;

@@ -21,6 +21,7 @@
 
 #include <de/Matrix>
 #include <de/Vector>
+#include "rendersystem.h"
 
 class BiasTracker;
 class SectorCluster;
@@ -60,6 +61,8 @@ public:
      *                       used for interpolation.
      */
     void lightWithBiasSources(de::Vector3f const *posCoords, de::Vector4f *colorCoords,
+                              de::Matrix3f const &tangentMatrix, uint biasTime);
+    void lightWithBiasSources(WorldVBuf::Index const *indices,
                               de::Matrix3f const &tangentMatrix, uint biasTime);
 
     /**

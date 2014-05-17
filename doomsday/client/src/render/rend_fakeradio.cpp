@@ -1010,13 +1010,10 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
 
     DrawList &shadowList = rendSys.drawLists().find(listSpec);
 
-    // Allocate enough for the divisions too.
     Vector2f quadCoords[4];
     quadTexCoords(quadCoords, origPosCoords, wsParms.sectionWidth,
                   leftSection.top().origin(), rightSection.bottom().origin(),
                   wsParms.texOrigin, wsParms.texDimensions, wsParms.horizontal);
-
-    // Write multiple polys depending on rend params.
 
     if(mustSubdivide) // Draw as two triangle fans.
     {
@@ -1047,7 +1044,7 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
         WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
         vbuf.reserveElements(vertCount, indices);
-        for(int i = 0; i < vertCount; ++i)
+        for(WorldVBuf::Index i = 0; i < vertCount; ++i)
         {
             WorldVBuf::Type &vertex = vbuf[indices[i]];
             vertex.pos  = origPosCoords[i];
