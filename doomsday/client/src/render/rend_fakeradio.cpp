@@ -1068,7 +1068,7 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
                     vertex.pos  =   posCoords[3 + leftSection.divisionCount() + i];
                     vertex.rgba = colorCoords[3 + leftSection.divisionCount() + i];
-                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[3 + leftSection.divisionCount() + i];
+                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[3 + leftSection.divisionCount() + i];
                 }
 
                 shadowList.write(gl::TriangleFan, vertCount, indices);
@@ -1085,7 +1085,7 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
                     vertex.pos  =   posCoords[i];
                     vertex.rgba = colorCoords[i];
-                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
                 }
 
                 shadowList.write(gl::TriangleFan, vertCount, indices);
@@ -1106,7 +1106,7 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
                 WorldVBuf::Type &vertex = vbuf[indices[i]];
                 vertex.pos  = origPosCoords[i];
                 vertex.rgba =   colorCoords[i];
-                vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+                vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
             }
 
             shadowList.write(gl::TriangleStrip, vertCount, indices);

@@ -194,10 +194,10 @@ private:
 struct WorldVBuf : public VBufT<de::Vertex3Tex3Rgba>
 {
     // Texture coordinate array indices:
-    enum {
-        TCA_MAIN,   ///< Main texture.
-        TCA_BLEND,  ///< Blendtarget texture.
-        TCA_LIGHT   ///< Dynlight texture.
+    enum TC {
+        PrimaryTex,  ///< Primary coords.
+        InterTex,    ///< Blend-target coords.
+        ModTex       ///< Modulation coords.
     };
 };
 

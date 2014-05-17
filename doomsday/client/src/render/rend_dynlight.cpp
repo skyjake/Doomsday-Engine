@@ -60,11 +60,8 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
             if(mustSubdivide)
             {
-                /*
-                 * Need to swap indices around into fans set the position
-                 * of the division vertices, interpolate texcoords and
-                 * color.
-                 */
+                // Need to swap indices around into fans set the position of the
+                // division vertices, interpolate texcoords and color.
 
                 Vector3f origPosCoords[4];   std::memcpy(origPosCoords,   p.rvertices, sizeof(Vector3f) * 4);
                 Vector2f origTexCoords[4];   std::memcpy(origTexCoords,   texCoords,   sizeof(Vector2f) * 4);
@@ -99,8 +96,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
         DrawListSpec listSpec;
         listSpec.group = LightGeom;
-        listSpec.texunits[TU_PRIMARY] =
-            GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
+        listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
 
         DrawList &lightList = rendSys.drawLists().find(listSpec);
 
@@ -119,7 +115,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
                     vertex.pos  =   posCoords[3 + leftSection.divisionCount() + i];
                     vertex.rgba = colorCoords[3 + leftSection.divisionCount() + i];
-                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[3 + leftSection.divisionCount() + i];
+                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[3 + leftSection.divisionCount() + i];
                 }
 
                 lightList.write(gl::TriangleFan, vertCount, indices);
@@ -136,7 +132,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
                     vertex.pos  =   posCoords[i];
                     vertex.rgba = colorCoords[i];
-                    vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+                    vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
                 }
 
                 lightList.write(gl::TriangleFan, vertCount, indices);
@@ -155,7 +151,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                 WorldVBuf::Type &vertex = vbuf[indices[i]];
                 vertex.pos  =   posCoords[i];
                 vertex.rgba = colorCoords[i];
-                vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+                vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
             }
 
             lightList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan,

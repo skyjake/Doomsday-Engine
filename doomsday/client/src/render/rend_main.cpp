@@ -745,10 +745,12 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
 }
 
 void R_DivVerts(Vector3f *dst, Vector3f const *src,
-    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
+    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
 {
-    int const numR = 3 + sectionRight.divisionCount();
-    int const numL = 3 + sectionLeft.divisionCount();
+    DENG2_ASSERT(dst != 0 && src != 0 && dst != src);
+
+    int const numR = 3 + rightSection.divisionCount();
+    int const numL = 3 + leftSection.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -757,9 +759,9 @@ void R_DivVerts(Vector3f *dst, Vector3f const *src,
     dst[numL + 1] = src[3];
     dst[numL + numR - 1] = src[2];
 
-    for(int n = 0; n < sectionRight.divisionCount(); ++n)
+    for(int n = 0; n < rightSection.divisionCount(); ++n)
     {
-        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
+        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
         dst[numL + 2 + n] = icpt.origin();
     }
 
@@ -768,18 +770,53 @@ void R_DivVerts(Vector3f *dst, Vector3f const *src,
     dst[1] = src[0];
     dst[numL - 1] = src[1];
 
-    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
+    for(int n = 0; n < leftSection.divisionCount(); ++n)
     {
-        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
+        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
         dst[2 + n] = icpt.origin();
     }
 }
 
-void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
-    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
+void R_DivVerts(WorldVBuf::Index *dst, Vector3f const *src,
+    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
 {
-    int const numR = 3 + sectionRight.divisionCount();
-    int const numL = 3 + sectionLeft.divisionCount();
+    DENG2_ASSERT(dst != 0 && src != 0);
+
+    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+
+    int const numR = 3 + rightSection.divisionCount();
+    int const numL = 3 + leftSection.divisionCount();
+
+    if(numR + numL == 6) return; // Nothing to do.
+
+    // Right fan:
+    vbuf[dst[numL + 0]].pos = src[0];
+    vbuf[dst[numL + 1]].pos = src[3];
+    vbuf[dst[numL + numR - 1]].pos = src[2];
+
+    for(int n = 0; n < rightSection.divisionCount(); ++n)
+    {
+        vbuf[dst[numL + 2 + n]].pos = rightSection[rightSection.lastDivision() - n].origin();
+    }
+
+    // Left fan:
+    vbuf[dst[0]].pos = src[3];
+    vbuf[dst[1]].pos = src[0];
+    vbuf[dst[numL - 1]].pos = src[1];
+
+    for(int n = 0; n < leftSection.divisionCount(); ++n)
+    {
+        vbuf[dst[2 + n]].pos = leftSection[leftSection.firstDivision() + n].origin();
+    }
+}
+
+void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
+    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
+{
+    DENG2_ASSERT(dst != 0 && src != 0 && dst != src);
+
+    int const numR = 3 + rightSection.divisionCount();
+    int const numL = 3 + leftSection.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -788,9 +825,9 @@ void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
     dst[numL + 1] = src[3];
     dst[numL + numR-1] = src[2];
 
-    for(int n = 0; n < sectionRight.divisionCount(); ++n)
+    for(int n = 0; n < rightSection.divisionCount(); ++n)
     {
-        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
+        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
         dst[numL + 2 + n].x = src[3].x;
         dst[numL + 2 + n].y = src[2].y + (src[3].y - src[2].y) * icpt.distance();
     }
@@ -800,19 +837,59 @@ void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
     dst[1] = src[0];
     dst[numL - 1] = src[1];
 
-    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
+    for(int n = 0; n < leftSection.divisionCount(); ++n)
     {
-        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
+        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
         dst[2 + n].x = src[0].x;
         dst[2 + n].y = src[0].y + (src[1].y - src[0].y) * icpt.distance();
     }
 }
 
-void R_DivVertColors(Vector4f *dst, Vector4f const *src,
-    WallEdgeSection const &sectionLeft, WallEdgeSection const &sectionRight)
+void R_DivTexCoords(WorldVBuf::Index *dst, Vector2f const *src,
+    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection,
+    WorldVBuf::TC tc)
 {
-    int const numR = 3 + sectionRight.divisionCount();
-    int const numL = 3 + sectionLeft.divisionCount();
+    DENG2_ASSERT(dst != 0 && src != 0);
+
+    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+
+    int const numR = 3 + rightSection.divisionCount();
+    int const numL = 3 + leftSection.divisionCount();
+
+    if(numR + numL == 6) return; // Nothing to do.
+
+    // Right fan:
+    vbuf[dst[numL + 0]].texCoord[tc] = src[0];
+    vbuf[dst[numL + 1]].texCoord[tc] = src[3];
+    vbuf[dst[numL + numR-1]].texCoord[tc] = src[2];
+
+    for(int n = 0; n < rightSection.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
+        vbuf[dst[numL + 2 + n]].texCoord[tc].x = src[3].x;
+        vbuf[dst[numL + 2 + n]].texCoord[tc].y = src[2].y + (src[3].y - src[2].y) * icpt.distance();
+    }
+
+    // Left fan:
+    vbuf[dst[0]].texCoord[tc] = src[3];
+    vbuf[dst[1]].texCoord[tc] = src[0];
+    vbuf[dst[numL - 1]].texCoord[tc] = src[1];
+
+    for(int n = 0; n < leftSection.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
+        vbuf[dst[2 + n]].texCoord[tc].x = src[0].x;
+        vbuf[dst[2 + n]].texCoord[tc].y = src[0].y + (src[1].y - src[0].y) * icpt.distance();
+    }
+}
+
+void R_DivVertColors(Vector4f *dst, Vector4f const *src,
+    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
+{
+    DENG2_ASSERT(dst != 0 && src != 0 && dst != src);
+
+    int const numR = 3 + rightSection.divisionCount();
+    int const numL = 3 + leftSection.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -821,9 +898,9 @@ void R_DivVertColors(Vector4f *dst, Vector4f const *src,
     dst[numL + 1] = src[3];
     dst[numL + numR-1] = src[2];
 
-    for(int n = 0; n < sectionRight.divisionCount(); ++n)
+    for(int n = 0; n < rightSection.divisionCount(); ++n)
     {
-        WallEdgeSection::Event const &icpt = sectionRight[sectionRight.lastDivision() - n];
+        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
         dst[numL + 2 + n] = src[2] + (src[3] - src[2]) * icpt.distance();
     }
 
@@ -832,10 +909,45 @@ void R_DivVertColors(Vector4f *dst, Vector4f const *src,
     dst[1] = src[0];
     dst[numL - 1] = src[1];
 
-    for(int n = 0; n < sectionLeft.divisionCount(); ++n)
+    for(int n = 0; n < leftSection.divisionCount(); ++n)
     {
-        WallEdgeSection::Event const &icpt = sectionLeft[sectionLeft.firstDivision() + n];
+        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
         dst[2 + n] = src[0] + (src[1] - src[0]) * icpt.distance();
+    }
+}
+
+void R_DivVertColors(WorldVBuf::Index *dst, Vector4f const *src,
+    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
+{
+    DENG2_ASSERT(dst != 0 && src != 0);
+
+    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+
+    int const numR = 3 + rightSection.divisionCount();
+    int const numL = 3 + leftSection.divisionCount();
+
+    if(numR + numL == 6) return; // Nothing to do.
+
+    // Right fan:
+    vbuf[dst[numL + 0]].rgba = src[0];
+    vbuf[dst[numL + 1]].rgba = src[3];
+    vbuf[dst[numL + numR-1]].rgba = src[2];
+
+    for(int n = 0; n < rightSection.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
+        vbuf[dst[numL + 2 + n]].rgba = src[2] + (src[3] - src[2]) * icpt.distance();
+    }
+
+    // Left fan:
+    vbuf[dst[0]].rgba = src[3];
+    vbuf[dst[1]].rgba = src[0];
+    vbuf[dst[numL - 1]].rgba = src[1];
+
+    for(int n = 0; n < leftSection.divisionCount(); ++n)
+    {
+        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
+        vbuf[dst[2 + n]].rgba = src[0] + (src[1] - src[0]) * icpt.distance();
     }
 }
 
@@ -1615,14 +1727,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                         vertex.rgba = colorCoords[3 + leftSection.divisionCount() + i];
                     }
 
-                    vertex.texCoord[WorldVBuf::TCA_MAIN] = primaryCoords[3 + leftSection.divisionCount() + i];
+                    vertex.texCoord[WorldVBuf::PrimaryTex] = primaryCoords[3 + leftSection.divisionCount() + i];
                     if(interCoords)
                     {
-                        vertex.texCoord[WorldVBuf::TCA_BLEND] = interCoords[3 + leftSection.divisionCount() + i];
+                        vertex.texCoord[WorldVBuf::InterTex] = interCoords[3 + leftSection.divisionCount() + i];
                     }
                     if(modCoords)
                     {
-                        vertex.texCoord[WorldVBuf::TCA_LIGHT] = modCoords[3 + leftSection.divisionCount() + i];
+                        vertex.texCoord[WorldVBuf::ModTex] = modCoords[3 + leftSection.divisionCount() + i];
                     }
                 }
 
@@ -1651,14 +1763,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                         vertex.rgba = colorCoords[i];
                     }
 
-                    vertex.texCoord[WorldVBuf::TCA_MAIN] = primaryCoords[i];
+                    vertex.texCoord[WorldVBuf::PrimaryTex] = primaryCoords[i];
                     if(interCoords)
                     {
-                        vertex.texCoord[WorldVBuf::TCA_BLEND] = interCoords[i];
+                        vertex.texCoord[WorldVBuf::InterTex] = interCoords[i];
                     }
                     if(modCoords)
                     {
-                        vertex.texCoord[WorldVBuf::TCA_LIGHT] = modCoords[i];
+                        vertex.texCoord[WorldVBuf::ModTex] = modCoords[i];
                     }
                 }
 
@@ -1705,11 +1817,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                         vertex.rgba = shinyColors[3 + leftSection.divisionCount() + i];
                         if(shinyTexCoords)
                         {
-                            vertex.texCoord[WorldVBuf::TCA_MAIN] = shinyTexCoords[3 + leftSection.divisionCount() + i];
+                            vertex.texCoord[WorldVBuf::PrimaryTex] = shinyTexCoords[3 + leftSection.divisionCount() + i];
                         }
                         if(shinyMaskRTU)
                         {
-                            vertex.texCoord[WorldVBuf::TCA_BLEND] = primaryCoords[3 + leftSection.divisionCount() + i];
+                            vertex.texCoord[WorldVBuf::InterTex] = primaryCoords[3 + leftSection.divisionCount() + i];
                         }
                     }
 
@@ -1733,11 +1845,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                         vertex.rgba = shinyColors[i];
                         if(shinyTexCoords)
                         {
-                            vertex.texCoord[WorldVBuf::TCA_MAIN] = shinyTexCoords[i];
+                            vertex.texCoord[WorldVBuf::PrimaryTex] = shinyTexCoords[i];
                         }
                         if(shinyMaskRTU)
                         {
-                            vertex.texCoord[WorldVBuf::TCA_BLEND] = primaryCoords[i];
+                            vertex.texCoord[WorldVBuf::InterTex] = primaryCoords[i];
                         }
                     }
 
@@ -1830,14 +1942,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 WorldVBuf::Type &vertex = vbuf[indices[i]];
                 vertex.pos  =   posCoords[i];
                 vertex.rgba = colorCoords? colorCoords[i] : Vector4f(1, 1, 1, 1);
-                vertex.texCoord[WorldVBuf::TCA_MAIN] = primaryCoords[i];
+                vertex.texCoord[WorldVBuf::PrimaryTex] = primaryCoords[i];
                 if(interCoords)
                 {
-                    vertex.texCoord[WorldVBuf::TCA_BLEND] = interCoords[i];
+                    vertex.texCoord[WorldVBuf::InterTex] = interCoords[i];
                 }
                 if(modCoords)
                 {
-                    vertex.texCoord[WorldVBuf::TCA_LIGHT] = modCoords[i];
+                    vertex.texCoord[WorldVBuf::ModTex] = modCoords[i];
                 }
             }
 
@@ -1881,10 +1993,10 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
                     vertex.pos  =   posCoords[i];
                     vertex.rgba = shinyColors[i];
-                    vertex.texCoord[WorldVBuf::TCA_MAIN] = shinyTexCoords[i];
+                    vertex.texCoord[WorldVBuf::PrimaryTex] = shinyTexCoords[i];
                     if(shinyMaskRTU)
                     {
-                        vertex.texCoord[WorldVBuf::TCA_BLEND] = primaryCoords[i];
+                        vertex.texCoord[WorldVBuf::InterTex] = primaryCoords[i];
                     }
                 }
 
@@ -2475,7 +2587,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
             WorldVBuf::Type &vertex = vbuf[indices[i]];
             vertex.pos  = posCoords[i];
             vertex.rgba = Vector4f(1, 1, 1, 1); // This geometry is always fully lit.
-            vertex.texCoord[WorldVBuf::TCA_MAIN] = texCoords[i];
+            vertex.texCoord[WorldVBuf::PrimaryTex] = texCoords[i];
         }
 
         rendSys.drawLists().find(listSpec)
@@ -3261,8 +3373,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_ALL:
         // The first texture unit is used for the main texture.
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
-        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
+        texUnitMap[1] = WorldVBuf::InterTex + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -3283,14 +3395,14 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(2);
         if(mode == DM_LIGHT_MOD_TEXTURE)
         {
-            texUnitMap[0] = WorldVBuf::TCA_LIGHT + 1;
-            texUnitMap[1] = WorldVBuf::TCA_MAIN + 1;
+            texUnitMap[0] = WorldVBuf::ModTex + 1;
+            texUnitMap[1] = WorldVBuf::PrimaryTex + 1;
             GL_ModulateTexture(4); // Light * texture.
         }
         else
         {
-            texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
-            texUnitMap[1] = WorldVBuf::TCA_LIGHT + 1;
+            texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
+            texUnitMap[1] = WorldVBuf::ModTex + 1;
             GL_ModulateTexture(5); // Texture + light.
         }
         glDisable(GL_ALPHA_TEST);
@@ -3310,7 +3422,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_FIRST_LIGHT:
         // One light, no texture.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = WorldVBuf::TCA_LIGHT + 1;
+        texUnitMap[0] = WorldVBuf::ModTex + 1;
         GL_ModulateTexture(6);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -3323,7 +3435,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_BLENDED_FIRST_LIGHT:
         // One additive light, no texture.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = WorldVBuf::TCA_LIGHT + 1;
+        texUnitMap[0] = WorldVBuf::ModTex + 1;
         GL_ModulateTexture(7); // Add light, no color.
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3348,7 +3460,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_LIGHTS:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3370,8 +3482,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_MOD_TEXTURE_MANY_LIGHTS:
     case DM_BLENDED_MOD_TEXTURE:
         // The first texture unit is used for the main texture.
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
-        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
+        texUnitMap[1] = WorldVBuf::InterTex + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3383,8 +3495,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
-        texUnitMap[1] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
+        texUnitMap[1] = WorldVBuf::PrimaryTex + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -3400,8 +3512,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         break;
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
-        texUnitMap[1] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
+        texUnitMap[1] = WorldVBuf::PrimaryTex + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3414,7 +3526,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_ALL_DETAILS:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
         GL_ModulateTexture(0);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3435,8 +3547,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_BLENDED_DETAILS:
         GL_SelectTexUnits(2);
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
-        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
+        texUnitMap[1] = WorldVBuf::InterTex + 1;
         GL_ModulateTexture(3);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3458,7 +3570,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_SHADOW:
         // A bit like 'negative lights'.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3477,7 +3589,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_SHINY:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
         GL_ModulateTexture(1); // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3495,8 +3607,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_MASKED_SHINY:
         GL_SelectTexUnits(2);
-        texUnitMap[0] = WorldVBuf::TCA_MAIN + 1;
-        texUnitMap[1] = WorldVBuf::TCA_BLEND + 1; // the mask
+        texUnitMap[0] = WorldVBuf::PrimaryTex + 1;
+        texUnitMap[1] = WorldVBuf::InterTex + 1; // the mask
         GL_ModulateTexture(8); // same as with details
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
