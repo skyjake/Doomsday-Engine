@@ -26,6 +26,7 @@
 
 #include "dd_types.h"
 #include "def_main.h"
+#include "render/rendersystem.h"
 #include "MaterialVariantSpec"
 #include "WallEdge"
 #include <de/Vector>

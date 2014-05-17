@@ -417,6 +417,9 @@ public:
         if(vecAbs.z > vecAbs[axis]) axis = 2;
         return axis;
     }
+    Vector2<Type> xy() const {
+        return Vector2<Type>(Vector2<Type>::x, Vector2<Type>::y);
+    }
     Vector2<Type> xz() const {
         return Vector2<Type>(Vector2<Type>::x, z);
     }
