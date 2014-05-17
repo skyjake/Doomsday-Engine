@@ -1234,58 +1234,47 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
+    static Vector3f const black(0, 0, 0);
+    static Vector3f const white(1, 1, 1);
+
     RenderSystem &rendSys = ClientApp::renderSystem();
     WorldVBuf &vbuf       = rendSys.buffer();
 
-    float const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge.sectorOpenness()), 1.f);
-    float const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.sectorOpenness()), 1.f);
+    float leftOuterAlpha  = de::min(shadowDark * (1 - leftEdge.sectorOpenness()), 1.f);
+    if(leftEdge.openness() < 1)
+        leftOuterAlpha *= 1 - leftEdge.openness();
 
-    if(!(outerLeftAlpha > .0001 && outerRightAlpha > .0001)) return;
+    float rightOuterAlpha = de::min(shadowDark * (1 - rightEdge.sectorOpenness()), 1.f);
+    if(rightEdge.openness() < 1)
+        rightOuterAlpha *= 1 - rightEdge.openness();
+
+    if(!(leftOuterAlpha > .0001 && rightOuterAlpha > .0001))
+        return;
+
+    if(rendFakeRadio == 2)
+        return;
 
     // What vertex winding order? (0 = left, 1 = right)
     // (for best results, the cross edge should always be the shortest).
     uint winding = (rightEdge.length() > leftEdge.length()? 1 : 0);
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
-    Vector3f posCoords[4];
-    posCoords[idx[0]] = leftEdge.outer();  // Left outer.
-    posCoords[idx[1]] = rightEdge.outer(); // Right outer.
-    posCoords[idx[2]] = rightEdge.inner(); // Right inner.
-    posCoords[idx[3]] = leftEdge.inner();  // Left inner.
-
-    Vector4f colorCoords[4];
-    if(renderWireframe)
-    {
-        // Draw shadow geometry white to assist visual debugging.
-        static Vector4f const white(1, 1, 1, 1);
-        for(uint i = 0; i < 4; ++i)
-        {
-            colorCoords[idx[i]] = white;
-        }
-    }
-
-    // Left outer.
-    colorCoords[idx[0]].w = outerLeftAlpha;
-    if(leftEdge.openness() < 1)
-        colorCoords[idx[0]].w *= 1 - leftEdge.openness();
-
-    // Right outer.
-    colorCoords[idx[1]].w = outerRightAlpha;
-    if(rightEdge.openness() < 1)
-        colorCoords[idx[1]].w *= 1 - rightEdge.openness();
-
-    if(rendFakeRadio == 2) return;
-
     WorldVBuf::Index vertCount = 4;
     WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
     vbuf.reserveElements(vertCount, indices);
-    for(int i = 0; i < vertCount; ++i)
-    {
-        WorldVBuf::Type &vertex = vbuf[indices[i]];
-        vertex.pos  =   posCoords[i];
-        vertex.rgba = colorCoords[i];
-    }
+    vbuf[indices[idx[0]]].pos = leftEdge.outer();  // Left outer.
+    vbuf[indices[idx[1]]].pos = rightEdge.outer(); // Right outer.
+    vbuf[indices[idx[2]]].pos = rightEdge.inner(); // Right inner.
+    vbuf[indices[idx[3]]].pos = leftEdge.inner();  // Left inner.
+
+    // Shadows are black (unless we're in wireframe; use white for visual debugging).
+    Vector3f const &vtxColor = renderWireframe? white : black;
+
+    vbuf[indices[idx[0]]].rgba = Vector4f(vtxColor, leftOuterAlpha);  // Left outer.
+    vbuf[indices[idx[1]]].rgba = Vector4f(vtxColor, rightOuterAlpha); // Right outer.
+    vbuf[indices[idx[2]]].rgba = Vector4f(vtxColor, 0);               // Right inner.
+    vbuf[indices[idx[3]]].rgba = Vector4f(vtxColor, 0);               // Left inner.
 
     rendSys.drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
                 .write(gl::TriangleFan, vertCount, indices);
