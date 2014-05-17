@@ -1234,47 +1234,39 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     uint winding = (rightEdge.length() > leftEdge.length()? 1 : 0);
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
-    Vector3f rvertices[4];
+    Vector3f posCoords[4];
+    posCoords[idx[0]] = leftEdge.outer();  // Left outer.
+    posCoords[idx[1]] = rightEdge.outer(); // Right outer.
+    posCoords[idx[2]] = rightEdge.inner(); // Right inner.
+    posCoords[idx[3]] = leftEdge.inner();  // Left inner.
 
-    // Left outer.
-    rvertices[idx[0]] = leftEdge.outer();
-
-    // Right outer.
-    rvertices[idx[1]] = rightEdge.outer();
-
-    // Right inner.
-    rvertices[idx[2]] = rightEdge.inner();
-
-    // Left inner.
-    rvertices[idx[3]] = leftEdge.inner();
-
-    Vector4f rcolors[4];
+    Vector4f colorCoords[4];
     if(renderWireframe)
     {
         // Draw shadow geometry white to assist visual debugging.
-        static const Vector4f white(1, 1, 1, 1);
+        static Vector4f const white(1, 1, 1, 1);
         for(uint i = 0; i < 4; ++i)
         {
-            rcolors[idx[i]] = white;
+            colorCoords[idx[i]] = white;
         }
     }
 
     // Left outer.
-    rcolors[idx[0]].w = outerLeftAlpha;
+    colorCoords[idx[0]].w = outerLeftAlpha;
     if(leftEdge.openness() < 1)
-        rcolors[idx[0]].w *= 1 - leftEdge.openness();
+        colorCoords[idx[0]].w *= 1 - leftEdge.openness();
 
     // Right outer.
-    rcolors[idx[1]].w = outerRightAlpha;
+    colorCoords[idx[1]].w = outerRightAlpha;
     if(rightEdge.openness() < 1)
-        rcolors[idx[1]].w *= 1 - rightEdge.openness();
+        colorCoords[idx[1]].w *= 1 - rightEdge.openness();
 
     if(rendFakeRadio == 2) return;
 
     WorldVBuf::Index vertCount = 4;
     WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
     vbuf.reserveElements(vertCount, indices);
-    vbuf.setVertices(vertCount, indices, rvertices, rcolors);
+    vbuf.setVertices(vertCount, indices, posCoords, colorCoords);
 
     rendSys.drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
                 .write(gl::TriangleFan, vertCount, indices);

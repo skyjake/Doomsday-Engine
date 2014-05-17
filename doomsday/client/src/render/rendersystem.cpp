@@ -74,10 +74,10 @@ void WorldVBuf::setVertices(Index vertCount, Index const *indices,
         {
             vertex.rgba = colorCoords[i];
         }
-        else
+        /*else
         {
             vertex.rgba = Vector4f(1, 1, 1, 1);
-        }
+        }*/
     }
 }
 

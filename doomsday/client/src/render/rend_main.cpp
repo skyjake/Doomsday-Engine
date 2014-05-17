@@ -2377,6 +2377,12 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
         vbuf.reserveElements(vertCount, indices);
         vbuf.setVertices(vertCount, indices, posCoords, 0, texCoords);
 
+        // This geometry is always fully lit.
+        for(int i = 0; i < vertCount; ++i)
+        {
+            vbuf[indices[i]].rgba = Vector4f(1, 1, 1, 1);
+        }
+
         rendSys.drawLists().find(listSpec)
                     .write(gl::TriangleStrip, vertCount, indices,
                            listSpec.unit(TU_PRIMARY       ).scale,
