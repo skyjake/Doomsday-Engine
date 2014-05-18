@@ -37,12 +37,12 @@ class DrawLists;
  *
  * @ingroup render
  */
-template <typename VertexType>
+template <typename Type>
 class BufferPoolT
 {
 public:
-    typedef VertexType Type;
-    typedef QVector<VertexType> Vertices;
+    typedef Type ValueType;
+    typedef QVector<ValueType> Vertices;
 
 public:
     BufferPoolT() {}
@@ -60,7 +60,7 @@ public:
         release( alloc(24) ); // Alloc an initial buffer and mark as unused.
     }
 
-    VertexType *alloc(int numElements)
+    ValueType *alloc(int numElements)
     {
         numElements = de::max(4, numElements); // Useful minimum.
 
@@ -88,7 +88,7 @@ public:
         return found->buffer.data();
     }
 
-    void release(VertexType *data)
+    void release(ValueType *data)
     {
         if(!data) return;
         if(Item *item = findItemForBufferData(data))
@@ -96,12 +96,12 @@ public:
             item->inUse = false;
             return;
         }
-        LOGDEV_GL_WARNING("VBufPool::release: Dangling ptr!");
+        LOGDEV_GL_WARNING("BufferPool::release: Dangling ptr!");
     }
 
     void devPrint()
     {
-        LOGDEV_GL_MSG("VBufPool {%p} %i buffers:")
+        LOGDEV_GL_MSG("BufferPool {%p} %i buffers:")
                 << this << items.count();
         for(int i = 0; i < items.count(); ++i)
         {
@@ -121,7 +121,7 @@ private:
         {}
     };
 
-    Item *findItemForBufferData(VertexType *data)
+    Item *findItemForBufferData(ValueType *data)
     {
         if(!data) return 0;
         for(int i = 0; i < items.count(); ++i)
