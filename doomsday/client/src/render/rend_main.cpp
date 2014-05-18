@@ -782,7 +782,7 @@ void R_DivVerts(WorldVBuf::Index *dst, Vector3f const *src,
 {
     DENG2_ASSERT(dst != 0 && src != 0);
 
-    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
 
     int const numR = 3 + rightSection.divisionCount();
     int const numL = 3 + leftSection.divisionCount();
@@ -851,7 +851,7 @@ void R_DivTexCoords(WorldVBuf::Index *dst, Vector2f const *src,
 {
     DENG2_ASSERT(dst != 0 && src != 0);
 
-    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
 
     int const numR = 3 + rightSection.divisionCount();
     int const numL = 3 + leftSection.divisionCount();
@@ -921,7 +921,7 @@ void R_DivVertColors(WorldVBuf::Index *dst, Vector4f const *src,
 {
     DENG2_ASSERT(dst != 0 && src != 0);
 
-    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
 
     int const numR = 3 + rightSection.divisionCount();
     int const numL = 3 + leftSection.divisionCount();
@@ -982,7 +982,7 @@ static void lightVertices(uint num, Vector4f *colors, Vector3f const *verts,
 static void lightVertices(WorldVBuf::Index num, WorldVBuf::Index const *indices,
                           float lightLevel, Vector3f const &ambientColor)
 {
-    WorldVBuf &vbuf = ClientApp::renderSystem().buffer();
+    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
     for(WorldVBuf::Index i = 0; i < num; ++i)
     {
         WorldVBuf::Type &vertex = vbuf[indices[i]];
@@ -1370,7 +1370,7 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
     DENG2_ASSERT(p.leftSection != 0 && p.rightSection != 0);
 
     RenderSystem &rendSys  = ClientApp::renderSystem();
-    WorldVBuf &vbuf        = rendSys.buffer();
+    WorldVBuf &vbuf        = rendSys.worldVBuf();
     SectorCluster &cluster = curSubspace->cluster();
 
     bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
@@ -2095,7 +2095,7 @@ static void drawSubspacePlane(WorldVBuf::Index vertCount, WorldVBuf::Index const
     DENG2_ASSERT(indices != 0);
 
     RenderSystem &rendSys  = ClientApp::renderSystem();
-    WorldVBuf &vbuf        = rendSys.buffer();
+    WorldVBuf &vbuf        = rendSys.worldVBuf();
     SectorCluster &cluster = curSubspace->cluster();
 
     bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
@@ -2797,7 +2797,7 @@ static WorldVBuf::Index buildSubspacePlaneGeometry(ClockDirection direction,
     DENG2_ASSERT(indices != 0);
 
     RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.buffer();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     Face const &poly = curSubspace->poly();
     HEdge *fanBase   = curSubspace->fanBase();
@@ -2983,7 +2983,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     DENG2_ASSERT(posCoords != 0);
 
     RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.buffer();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     if(!devRendSkyMode)
     {

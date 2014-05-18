@@ -110,7 +110,7 @@ DENG2_PIMPL(DrawList)
             Vector2f dtexScale;
 
             inline WorldVBuf const &vbuf() const {
-                return ClientApp::renderSystem().buffer();
+                return ClientApp::renderSystem().worldVBuf();
             }
 
             /**

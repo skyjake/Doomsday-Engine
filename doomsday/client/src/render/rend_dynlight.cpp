@@ -31,7 +31,7 @@ using namespace de;
 static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t &p)
 {
     RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.buffer();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     // If multitexturing is in use we skip the first.
     if(!(Rend_IsMTexLights() && p.lastIdx == 0))

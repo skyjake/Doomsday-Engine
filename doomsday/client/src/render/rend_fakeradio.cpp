@@ -995,7 +995,7 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
     DENG2_ASSERT(origPosCoords != 0);
 
     RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.buffer();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
@@ -1185,7 +1185,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     static Vector3f const white(1, 1, 1);
 
     RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.buffer();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     float leftOuterAlpha  = de::min(shadowDark * (1 - leftEdge.sectorOpenness()), 1.f);
     if(leftEdge.openness() < 1)

@@ -33,20 +33,20 @@
 class DrawLists;
 
 /**
- * Vertex coordinate pool.
+ * Pooled work buffer set.
  *
  * @ingroup render
  */
 template <typename VertexType>
-class VBufPoolT
+class BufferPoolT
 {
 public:
     typedef VertexType Type;
     typedef QVector<VertexType> Vertices;
 
 public:
-    VBufPoolT() {}
-    ~VBufPoolT() { clear(); }
+    BufferPoolT() {}
+    ~BufferPoolT() { clear(); }
 
     void clear()
     {
@@ -209,11 +209,8 @@ struct WorldVBuf : public VBufT<de::Vertex3Tex3Rgba>
 class RenderSystem : public de::System
 {
 public:
-    // Pooled vertex work buffers:
-    typedef VBufPoolT<WorldVBuf::Index> IndicePool;
-    typedef VBufPoolT<de::Vector3f>     PosCoordPool;
-    typedef VBufPoolT<de::Vector4f>     ColorCoordPool;
-    typedef VBufPoolT<de::Vector2f>     TexCoordPool;
+    // Pooled work buffers:
+    typedef BufferPoolT<WorldVBuf::Index> IndicePool;
 
 public:
     RenderSystem();
@@ -227,7 +224,7 @@ public:
     /**
      * Provides access to the central world vertex buffer.
      */
-    WorldVBuf &buffer();
+    WorldVBuf &worldVBuf();
 
     void clearDrawLists();
 
@@ -241,26 +238,11 @@ public:
     IndicePool &indicePool() const;
 
     /**
-     * Returns the vertex position, coordinate pool.
-     */
-    PosCoordPool &posPool() const;
-
-    /**
-     * Returns the vertex color, coordinate pool.
-     */
-    ColorCoordPool &colorPool() const;
-
-    /**
-     * Returns the vertex texture, coordinate pool.
-     */
-    TexCoordPool &texPool() const;
-
-    /**
      * @note Should be called at the start of each map.
      */
-    void resetVBufPools();
+    void resetPools();
 
-    void printVBufPoolInfo();
+    void printPoolInfo();
 
     // System.
     void timeChanged(de::Clock const &);

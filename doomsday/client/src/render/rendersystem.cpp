@@ -28,7 +28,7 @@
 
 using namespace de;
 
-static byte printVBufPoolDevInfo; // cvar
+static byte printPoolDevInfo; // cvar
 
 DENG2_PIMPL(RenderSystem)
 {
@@ -37,9 +37,6 @@ DENG2_PIMPL(RenderSystem)
     ImageBank images;
     WorldVBuf vbuf;
     IndicePool indicePool;
-    PosCoordPool posPool;
-    ColorCoordPool colorPool;
-    TexCoordPool texPool;
     DrawLists drawLists;
 
     Instance(Public *i) : Base(i)
@@ -210,7 +207,7 @@ SettingsRegister &RenderSystem::appearanceSettings()
     return d->appearanceSettings;
 }
 
-WorldVBuf &RenderSystem::buffer()
+WorldVBuf &RenderSystem::worldVBuf()
 {
     return d->vbuf;
 }
@@ -232,22 +229,15 @@ DrawLists &RenderSystem::drawLists()
     return d->drawLists;
 }
 
-void RenderSystem::printVBufPoolInfo()
+void RenderSystem::printPoolInfo()
 {
-    if(!printVBufPoolDevInfo) return;
-
+    if(!printPoolDevInfo) return;
     d->indicePool.devPrint();
-    d->posPool.devPrint();
-    d->colorPool.devPrint();
-    d->texPool.devPrint();
 }
 
-void RenderSystem::resetVBufPools()
+void RenderSystem::resetPools()
 {
     d->indicePool.reset();
-    d->posPool.reset();
-    d->colorPool.reset();
-    d->texPool.reset();
 }
 
 RenderSystem::IndicePool &RenderSystem::indicePool() const
@@ -255,25 +245,10 @@ RenderSystem::IndicePool &RenderSystem::indicePool() const
     return d->indicePool;
 }
 
-RenderSystem::PosCoordPool &RenderSystem::posPool() const
-{
-    return d->posPool;
-}
-
-RenderSystem::ColorCoordPool &RenderSystem::colorPool() const
-{
-    return d->colorPool;
-}
-
-RenderSystem::TexCoordPool &RenderSystem::texPool() const
-{
-    return d->texPool;
-}
-
 void RenderSystem::consoleRegister()
 {
     Viewports_Register();
     Rend_Register();
     H_Register();
-    C_VAR_BYTE("rend-info-rendpolys", &printVBufPoolDevInfo, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-info-rendpolys", &printPoolDevInfo, CVF_NO_ARCHIVE, 0, 1);
 }

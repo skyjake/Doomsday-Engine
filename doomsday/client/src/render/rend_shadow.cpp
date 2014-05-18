@@ -45,7 +45,7 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
     rendershadowprojectionparams_t &p)
 {
     RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.buffer();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     if(p.leftSection) // A wall.
     {

@@ -111,7 +111,7 @@ void Shard::lightWithBiasSources(WorldVBuf::Index const *indices,
     DENG2_ASSERT(indices != 0);
 
     RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.buffer();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     if(d->biasIllums.isEmpty()) return;
 
