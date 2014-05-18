@@ -1771,8 +1771,8 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
                                 shineListSpec.unit(TU_INTER).scale,
                                 shineListSpec.unit(TU_INTER).offset,
                                 Vector2f(1, 1), Vector2f(0, 0),
-                                ms.shineBlendMode()),
-                shineList.write(gl::TriangleFan, leftFanSize, shineIndices,
+                                ms.shineBlendMode())
+                         .write(gl::TriangleFan, leftFanSize, shineIndices,
                                 shineListSpec.unit(TU_INTER).scale,
                                 shineListSpec.unit(TU_INTER).offset,
                                 Vector2f(1, 1), Vector2f(0, 0),
