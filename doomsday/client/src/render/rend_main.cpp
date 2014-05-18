@@ -1206,32 +1206,35 @@ struct rendworldpoly_params_t
     } wall;
 };
 
-static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices,
-    rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
+static void drawWallSectionAsVissprite(rendworldpoly_params_t const &p,
+    MaterialSnapshot const &ms)
 {
     DENG2_ASSERT(p.isWall);
-    DENG2_ASSERT(posCoords != 0);
+    DENG2_ASSERT(!p.wall.leftEdge->divisionCount() && !p.wall.rightEdge->divisionCount());
     DENG2_ASSERT(!(p.skyMasked || (ms.material().isSkyMasked())));
     DENG2_ASSERT(!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0))
 
-    RenderSystem &rendSys  = ClientApp::renderSystem();
     SectorCluster &cluster = curSubspace->cluster();
 
-    uint const realNumVertices = 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount();
+    WallEdgeSection const &leftSection  = *p.wall.leftEdge;
+    WallEdgeSection const &rightSection = *p.wall.rightEdge;
 
-    Vector4f *colorCoords   = rendSys.colorPool().alloc(realNumVertices);
-    Vector2f *primaryCoords = rendSys.texPool().alloc(realNumVertices);
-
-    // Primary texture coordinates.
-    quadTexCoords(primaryCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
+    duint16 const vertCount = 4;
+    Vector3f posCoords[vertCount] = {
+        Vector3f( leftSection.bottom().origin()),
+        Vector3f( leftSection.top   ().origin()),
+        Vector3f(rightSection.bottom().origin()),
+        Vector3f(rightSection.top   ().origin())
+    };
 
     // Light this polygon.
+    Vector4f colorCoords[vertCount];
     if(levelFullBright || !(p.glowing < 1))
     {
         // Uniform color. Apply to all vertices.
         float ll = de::clamp(0.f, curSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
         Vector4f *colorIt = colorCoords;
-        for(uint i = 0; i < numVertices; ++i, colorIt++)
+        for(duint16 i = 0; i < vertCount; ++i, colorIt++)
         {
             colorIt->x = colorIt->y = colorIt->z = ll;
         }
@@ -1249,7 +1252,7 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
             {
                 Vector3f const *posIt = posCoords;
                 Vector4f *colorIt     = colorCoords;
-                for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
+                for(duint16 i = 0; i < vertCount; ++i, posIt++, colorIt++)
                 {
                     *colorIt = map.lightGrid().evaluate(*posIt);
                 }
@@ -1264,7 +1267,7 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
             {
                 Vector4f const glow(p.glowing, p.glowing, p.glowing, 0);
                 Vector4f *colorIt = colorCoords;
-                for(uint i = 0; i < numVertices; ++i, colorIt++)
+                for(duint16 i = 0; i < vertCount; ++i, colorIt++)
                 {
                     *colorIt += glow;
                 }
@@ -1273,7 +1276,7 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
             // Apply light range compression and clamp.
             Vector3f const *posIt = posCoords;
             Vector4f *colorIt     = colorCoords;
-            for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
+            for(duint16 i = 0; i < vertCount; ++i, posIt++, colorIt++)
             {
                 for(int k = 0; k < 3; ++k)
                 {
@@ -1301,7 +1304,7 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
                 }
                 else
                 {
-                    lightVertices(numVertices, colorCoords, posCoords, llL, vColor);
+                    lightVertices(vertCount, colorCoords, posCoords, llL, vColor);
                 }
             }
             else
@@ -1316,7 +1319,7 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
                 }
                 else
                 {
-                    lightVertices(numVertices, colorCoords, posCoords, llL, curSectorLightColor);
+                    lightVertices(vertCount, colorCoords, posCoords, llL, curSectorLightColor);
                 }
             }
 
@@ -1335,8 +1338,8 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
         if(viewPlayer->shared.fixedColorMap)
         {
             Vector3f const *posIt = posCoords;
-            Vector4f *colorIt = colorCoords;
-            for(uint i = 0; i < numVertices; ++i, colorIt++, posIt++)
+            Vector4f *colorIt     = colorCoords;
+            for(duint16 i = 0; i < vertCount; ++i, colorIt++, posIt++)
             {
                 Rend_ApplyTorchLight(*colorIt, Rend_PointDist2D(*posIt));
             }
@@ -1345,7 +1348,7 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
 
     // Apply uniform alpha (overwritting luminance factors).
     Vector4f *colorIt = colorCoords;
-    for(uint i = 0; i < numVertices; ++i, colorIt++)
+    for(duint16 i = 0; i < vertCount; ++i, colorIt++)
     {
         colorIt->w = p.alpha;
     }
@@ -1355,10 +1358,6 @@ static bool renderWorldPolyWallAsVissprite(Vector3f *posCoords, uint numVertices
     // polys). Otherwise there will be artifacts.
     Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
                        *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
-
-    rendSys.colorPool().release(colorCoords);
-
-    return false; // We HAD to use a vissprite, so it MUST not be opaque.
 }
 
 /**
@@ -1372,7 +1371,7 @@ static bool mustDrawAsVissprite(rendworldpoly_params_t const &p, MaterialSnapsho
     return (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 }
 
-static bool renderWorldPolyWall(Vector3f *posCoords, uint numVertices,
+static void drawWallSection(uint numVertices, Vector3f *posCoords,
     rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
 {
     DENG2_ASSERT(p.isWall);
@@ -2095,12 +2094,9 @@ static bool renderWorldPolyWall(Vector3f *posCoords, uint numVertices,
     rendSys.texPool().release(shinyTexCoords);
     rendSys.colorPool().release(colorCoords);
     rendSys.colorPool().release(shinyColors);
-
-    return (p.forceOpaque || skyMaskedMaterial ||
-            !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
 }
 
-static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Index vertCount,
+static void drawSubspacePlane(WorldVBuf::Index vertCount, WorldVBuf::Index const *indices,
     rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
 {
     DENG2_ASSERT(!p.isWall);
@@ -2111,7 +2107,6 @@ static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Inde
     SectorCluster &cluster = curSubspace->cluster();
 
     bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
-    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     bool useLights = false, useShadows = false, hasDynlights = false;
 
@@ -2136,7 +2131,7 @@ static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Inde
     if(!skyMaskedMaterial)
     {
         // ShinySurface?
-        if(shineRTU && !drawAsVisSprite)
+        if(shineRTU)
         {
             shineIndices = rendSys.indicePool().alloc(vertCount);
             vbuf.reserveElements(vertCount, shineIndices);
@@ -2306,7 +2301,7 @@ static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Inde
             }
         }
 
-        if(shineRTU && !drawAsVisSprite)
+        if(shineRTU)
         {
             // Strength of the shine.
             Vector3f const &minColor = ms.shineMinColor();
@@ -2327,11 +2322,9 @@ static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Inde
 
     if(useLights || useShadows)
     {
-        /*
-         * Surfaces lit by dynamic lights may need to be rendered differently
-         * than non-lit surfaces. Determine the average light level of this rend
-         * poly, if too bright; do not bother with lights.
-         */
+        // Surfaces lit by dynamic lights may need to be rendered differently
+        // than non-lit surfaces. Determine the average light level of this rend
+        // poly, if too bright; do not bother with lights.
         float avgLightlevel = 0;
         for(WorldVBuf::Index i = 0; i < vertCount; ++i)
         {
@@ -2355,15 +2348,12 @@ static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Inde
     if(useLights)
     {
         // Render all lights projected onto this surface.
-        renderlightprojectionparams_t parm;
+        renderlightprojectionparams_t parm; de::zap(parm);
 
-        zap(parm);
         parm.indices     = indices;
         parm.numVertices = vertCount;
-        parm.lastIdx     = 0;
         parm.topLeft     = p.topLeft;
         parm.bottomRight = p.bottomRight;
-        parm.isWall      = false;
 
         hasDynlights = (0 != Rend_RenderLightProjections(p.lightListIdx, parm));
     }
@@ -2371,14 +2361,12 @@ static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Inde
     if(useShadows)
     {
         // Render all shadows projected onto this surface.
-        rendershadowprojectionparams_t parm;
+        rendershadowprojectionparams_t parm; de::zap(parm);
 
-        zap(parm);
         parm.indices     = indices;
         parm.numVertices = vertCount;
         parm.topLeft     = p.topLeft;
         parm.bottomRight = p.bottomRight;
-        parm.isWall      = false;
 
         Rend_RenderShadowProjections(p.shadowListIdx, parm);
     }
@@ -2501,13 +2489,10 @@ static bool renderWorldPolyFlat(WorldVBuf::Index const *indices, WorldVBuf::Inde
                                listSpec.unit(TU_PRIMARY_DETAIL).scale,
                                listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                ms.shineBlendMode());
-
-            rendSys.indicePool().release(shineIndices);
         }
     }
 
-    return (p.forceOpaque || skyMaskedMaterial ||
-            !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
+    rendSys.indicePool().release(shineIndices);
 }
 
 static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
@@ -2771,7 +2756,7 @@ static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &righ
     }
 
     // Draw this section.
-    bool wroteOpaque;
+    bool wroteOpaque = true;
     if(!mustDrawAsVissprite(parm, matSnapshot))
     {
         bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
@@ -2792,23 +2777,14 @@ static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &righ
         posCoords[2] = rightSection.bottom().origin();
         posCoords[3] = rightSection.top   ().origin();
 
-        wroteOpaque = renderWorldPolyWall(posCoords, 4, parm, matSnapshot);
+        drawWallSection(4, posCoords, parm, matSnapshot);
 
         rendSys.posPool().release(posCoords);
     }
     else
     {
-        DENG2_ASSERT(!leftSection.divisionCount() && !rightSection.divisionCount());
-
-        Vector3f *posCoords = rendSys.posPool().alloc(4);
-        posCoords[0] =  leftSection.bottom().origin();
-        posCoords[1] =  leftSection.top   ().origin();
-        posCoords[2] = rightSection.bottom().origin();
-        posCoords[3] = rightSection.top   ().origin();
-
-        wroteOpaque = renderWorldPolyWallAsVissprite(posCoords, 4, parm, matSnapshot);
-
-        rendSys.posPool().release(posCoords);
+        drawWallSectionAsVissprite(parm, matSnapshot);
+        wroteOpaque = false; // We @em had to use a vissprite; clearly not opaque.
     }
 
     if(wroteOpaque)
@@ -3032,7 +3008,7 @@ static void writeSubspacePlane(Plane &plane)
                                    plane.heightSmoothed(), &indices);
 
     // Draw this section.
-    renderWorldPolyFlat(indices, vertCount, parm, ms);
+    drawSubspacePlane(vertCount, indices, parm, ms);
 
     if(&plane.sector() != &curSubspace->sector())
     {
