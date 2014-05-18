@@ -2176,19 +2176,18 @@ static void drawSubspacePlane(WorldVBuf::Index vertCount, WorldVBuf::Index const
 
             // Determine distance to viewer. If too small it will result in an
             // ugly 'crunch' below and above the viewpoint (so clamp it).
-            float distToEye = Vector2f(vOrigin.xz() - shineVertex.pos.xy()).normalize().length();
+            float distToEye = (vOrigin.xz() - vertex.pos.xy()).normalize().length();
             if(distToEye < 10) distToEye = 10;
 
             // Offset from the normal view plane.
             Vector2f start(vOrigin.x, vOrigin.z);
-
-            float offset = ((start.y - shineVertex.pos.y) * sin(.4f)/*viewFrontVec[VX]*/ -
-                            (start.x - shineVertex.pos.x) * cos(.4f)/*viewFrontVec[VZ]*/);
+            float offset = ((start.y - vertex.pos.y) * sin(.4f)/*viewFrontVec[VX]*/ -
+                            (start.x - vertex.pos.x) * cos(.4f)/*viewFrontVec[VZ]*/);
 
             shineVertex.texCoord[WorldVBuf::PrimaryTex] =
                     Vector2f(.5f + (shinyVertical(offset, distToEye) - .5f) * 2
                              ,
-                             shinyVertical(vOrigin.y - shineVertex.pos.z, distToEye));
+                             shinyVertical(vOrigin.y - vertex.pos.z, distToEye));
 
             if(shineMaskRTU)
             {
@@ -2472,7 +2471,7 @@ static void drawSubspacePlane(WorldVBuf::Index vertCount, WorldVBuf::Index const
             }*/
 
             rendSys.drawLists().find(listSpec)
-                        .write(gl::TriangleFan, vertCount, indices,
+                        .write(gl::TriangleFan, vertCount, shineIndices,
                                listSpec.unit(TU_INTER         ).scale,
                                listSpec.unit(TU_INTER         ).offset,
                                listSpec.unit(TU_PRIMARY_DETAIL).scale,
