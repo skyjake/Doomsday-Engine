@@ -174,6 +174,9 @@ public:
     /// Returns an upper-case version of the string.
     String upper() const;
 
+    /// Returns a version of the string where the first character is in uppercase.
+    String upperFirstChar() const;
+
     /// Extracts the base name from the string (includes extension).
     String fileName(QChar dirChar = '/') const;
 

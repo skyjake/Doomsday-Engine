@@ -206,6 +206,13 @@ String String::upper() const
     return toUpper();
 }
 
+String String::upperFirstChar() const
+{
+    if(isEmpty()) return "";
+    if(size() == 1) return upper();
+    return at(0).toUpper() + substr(1);
+}
+
 /*
 std::wstring String::stringToWide(String const &str)
 {
