@@ -1759,7 +1759,7 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
                                WorldVBuf::ModTex);
             }
 
-            if(shineRTU)
+            /*if(shineRTU)
             {
                 //Vector2f origCoords[4]; std::memcpy(origCoords, shinyTexCoords, sizeof(origCoords));
                 R_DivTexCoords(shineIndices, shineTexCoords, *p.leftSection, *p.rightSection,
@@ -1773,7 +1773,7 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
                     R_DivTexCoords(shineIndices, primaryTexCoords, *p.leftSection, *p.rightSection,
                                    WorldVBuf::InterTex);
                 }
-            }
+            }*/
 
             WorldVBuf::Index rightFanSize = 3 + p.rightSection->divisionCount();
             WorldVBuf::Index leftFanSize  = 3 + p.leftSection->divisionCount();
@@ -2029,7 +2029,7 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
                     }
                 }
 
-                shineList.write(gl::TriangleStrip, vertCount, indices,
+                shineList.write(gl::TriangleStrip, vertCount, shineIndices,
                                 shineListSpec.unit(TU_INTER         ).scale,
                                 shineListSpec.unit(TU_INTER         ).offset,
                                 shineListSpec.unit(TU_PRIMARY_DETAIL).scale,
