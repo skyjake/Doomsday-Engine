@@ -42,7 +42,7 @@ class BufferPoolT
 {
 public:
     typedef Type ValueType;
-    typedef QVector<ValueType> Vertices;
+    typedef QVector<ValueType> Values;
 
 public:
     BufferPoolT() {}
@@ -116,7 +116,7 @@ private:
     struct Item
     {
         bool inUse;
-        Vertices buffer;
+        Values buffer;
         Item(int numElements) : inUse(false), buffer(numElements)
         {}
     };
