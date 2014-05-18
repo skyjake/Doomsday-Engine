@@ -245,23 +245,14 @@ TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
 
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
 
-void R_DivVerts(de::Vector3f *dst, de::Vector3f const *src,
+void Rend_DivPosCoords(WorldVBuf::Index *dst, de::Vector3f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
-void R_DivTexCoords(de::Vector2f *dst, de::Vector2f const *src,
-    de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
-
-void R_DivVertColors(de::Vector4f *dst, de::Vector4f const *src,
-    de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
-
-void R_DivVerts(WorldVBuf::Index *dst, de::Vector3f const *src,
-    de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
-
-void R_DivTexCoords(WorldVBuf::Index *dst, de::Vector2f const *src,
+void Rend_DivTexCoords(WorldVBuf::Index *dst, de::Vector2f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge,
     WorldVBuf::TC tc);
 
-void R_DivVertColors(WorldVBuf::Index *dst, de::Vector4f const *src,
+void Rend_DivColorCoords(WorldVBuf::Index *dst, de::Vector4f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
 #endif // CLIENT_RENDER_MAIN_H

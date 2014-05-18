@@ -56,7 +56,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
                 vbuf.reserveElements(leftFanSize + rightFanSize, indices);
 
-                R_DivVerts(indices, p.posCoords, leftSection, rightSection);
+                Rend_DivPosCoords(indices, p.posCoords, leftSection, rightSection);
 
                 Vector2f quadCoords[4] = {
                     Vector2f(tp.topLeft.x,     tp.bottomRight.y),
@@ -64,8 +64,8 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                     Vector2f(tp.bottomRight.x, tp.bottomRight.y),
                     Vector2f(tp.bottomRight.x, tp.topLeft.y    )
                 };
-                R_DivTexCoords(indices, quadCoords, leftSection, rightSection,
-                               WorldVBuf::PrimaryTex);
+                Rend_DivTexCoords(indices, quadCoords, leftSection, rightSection,
+                                  WorldVBuf::PrimaryTex);
 
                 for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
                 {

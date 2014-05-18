@@ -744,40 +744,7 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     return 0;
 }
 
-void R_DivVerts(Vector3f *dst, Vector3f const *src,
-    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
-{
-    DENG2_ASSERT(dst != 0 && src != 0 && dst != src);
-
-    int const numR = 3 + rightSection.divisionCount();
-    int const numL = 3 + leftSection.divisionCount();
-
-    if(numR + numL == 6) return; // Nothing to do.
-
-    // Right fan:
-    dst[numL + 0] = src[0];
-    dst[numL + 1] = src[3];
-    dst[numL + numR - 1] = src[2];
-
-    for(int n = 0; n < rightSection.divisionCount(); ++n)
-    {
-        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
-        dst[numL + 2 + n] = icpt.origin();
-    }
-
-    // Left fan:
-    dst[0] = src[3];
-    dst[1] = src[0];
-    dst[numL - 1] = src[1];
-
-    for(int n = 0; n < leftSection.divisionCount(); ++n)
-    {
-        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
-        dst[2 + n] = icpt.origin();
-    }
-}
-
-void R_DivVerts(WorldVBuf::Index *dst, Vector3f const *src,
+void Rend_DivPosCoords(WorldVBuf::Index *dst, Vector3f const *src,
     WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
 {
     DENG2_ASSERT(dst != 0 && src != 0);
@@ -810,42 +777,7 @@ void R_DivVerts(WorldVBuf::Index *dst, Vector3f const *src,
     }
 }
 
-void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
-    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
-{
-    DENG2_ASSERT(dst != 0 && src != 0 && dst != src);
-
-    int const numR = 3 + rightSection.divisionCount();
-    int const numL = 3 + leftSection.divisionCount();
-
-    if(numR + numL == 6) return; // Nothing to do.
-
-    // Right fan:
-    dst[numL + 0] = src[0];
-    dst[numL + 1] = src[3];
-    dst[numL + numR-1] = src[2];
-
-    for(int n = 0; n < rightSection.divisionCount(); ++n)
-    {
-        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
-        dst[numL + 2 + n].x = src[3].x;
-        dst[numL + 2 + n].y = src[2].y + (src[3].y - src[2].y) * icpt.distance();
-    }
-
-    // Left fan:
-    dst[0] = src[3];
-    dst[1] = src[0];
-    dst[numL - 1] = src[1];
-
-    for(int n = 0; n < leftSection.divisionCount(); ++n)
-    {
-        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
-        dst[2 + n].x = src[0].x;
-        dst[2 + n].y = src[0].y + (src[1].y - src[0].y) * icpt.distance();
-    }
-}
-
-void R_DivTexCoords(WorldVBuf::Index *dst, Vector2f const *src,
+void Rend_DivTexCoords(WorldVBuf::Index *dst, Vector2f const *src,
     WallEdgeSection const &leftSection, WallEdgeSection const &rightSection,
     WorldVBuf::TC tc)
 {
@@ -883,40 +815,7 @@ void R_DivTexCoords(WorldVBuf::Index *dst, Vector2f const *src,
     }
 }
 
-void R_DivVertColors(Vector4f *dst, Vector4f const *src,
-    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
-{
-    DENG2_ASSERT(dst != 0 && src != 0 && dst != src);
-
-    int const numR = 3 + rightSection.divisionCount();
-    int const numL = 3 + leftSection.divisionCount();
-
-    if(numR + numL == 6) return; // Nothing to do.
-
-    // Right fan:
-    dst[numL + 0] = src[0];
-    dst[numL + 1] = src[3];
-    dst[numL + numR-1] = src[2];
-
-    for(int n = 0; n < rightSection.divisionCount(); ++n)
-    {
-        WallEdgeSection::Event const &icpt = rightSection[rightSection.lastDivision() - n];
-        dst[numL + 2 + n] = src[2] + (src[3] - src[2]) * icpt.distance();
-    }
-
-    // Left fan:
-    dst[0] = src[3];
-    dst[1] = src[0];
-    dst[numL - 1] = src[1];
-
-    for(int n = 0; n < leftSection.divisionCount(); ++n)
-    {
-        WallEdgeSection::Event const &icpt = leftSection[leftSection.firstDivision() + n];
-        dst[2 + n] = src[0] + (src[1] - src[0]) * icpt.distance();
-    }
-}
-
-void R_DivVertColors(WorldVBuf::Index *dst, Vector4f const *src,
+void Rend_DivColorCoords(WorldVBuf::Index *dst, Vector4f const *src,
     WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
 {
     DENG2_ASSERT(dst != 0 && src != 0);
@@ -1700,25 +1599,25 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
 
         if(mustSubdivide) // Draw as two triangle fans.
         {
-            R_DivVerts(indices, posCoords, *p.leftSection, *p.rightSection);
-            R_DivVertColors(indices, colorCoords, *p.leftSection, *p.rightSection);
+            Rend_DivPosCoords(indices, posCoords, *p.leftSection, *p.rightSection);
+            Rend_DivColorCoords(indices, colorCoords, *p.leftSection, *p.rightSection);
 
             if(primaryRTU)
             {
-                R_DivTexCoords(indices, primaryTexCoords, *p.leftSection, *p.rightSection,
-                               WorldVBuf::PrimaryTex);
+                Rend_DivTexCoords(indices, primaryTexCoords, *p.leftSection, *p.rightSection,
+                                  WorldVBuf::PrimaryTex);
             }
 
             if(interRTU)
             {
-                R_DivTexCoords(indices, interTexCoords, *p.leftSection, *p.rightSection,
-                               WorldVBuf::InterTex);
+                Rend_DivTexCoords(indices, interTexCoords, *p.leftSection, *p.rightSection,
+                                  WorldVBuf::InterTex);
             }
 
             if(modTex && Rend_IsMTexLights())
             {
-                R_DivTexCoords(indices, modTexCoords, *p.leftSection, *p.rightSection,
-                               WorldVBuf::ModTex);
+                Rend_DivTexCoords(indices, modTexCoords, *p.leftSection, *p.rightSection,
+                                  WorldVBuf::ModTex);
             }
 
             WorldVBuf::Index rightFanSize = 3 + p.rightSection->divisionCount();
@@ -1756,15 +1655,15 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
                 }
                 DrawList &shineList = rendSys.drawLists().find(shineListSpec);
 
-                R_DivVerts(shineIndices, posCoords, *p.leftSection, *p.rightSection);
-                R_DivVertColors(shineIndices, shineColorCoords, *p.leftSection, *p.rightSection);
-                R_DivTexCoords(shineIndices, shineTexCoords, *p.leftSection, *p.rightSection,
-                               WorldVBuf::PrimaryTex);
+                Rend_DivPosCoords(shineIndices, posCoords, *p.leftSection, *p.rightSection);
+                Rend_DivColorCoords(shineIndices, shineColorCoords, *p.leftSection, *p.rightSection);
+                Rend_DivTexCoords(shineIndices, shineTexCoords, *p.leftSection, *p.rightSection,
+                                  WorldVBuf::PrimaryTex);
 
                 if(shineMaskRTU)
                 {
-                    R_DivTexCoords(shineIndices, primaryTexCoords, *p.leftSection, *p.rightSection,
-                                   WorldVBuf::InterTex);
+                    Rend_DivTexCoords(shineIndices, primaryTexCoords, *p.leftSection, *p.rightSection,
+                                      WorldVBuf::InterTex);
                 }
 
                 shineList.write(gl::TriangleFan, rightFanSize, shineIndices + leftFanSize,
@@ -1856,7 +1755,7 @@ static void drawWallSection(rendworldpoly_params_t const &p, MaterialSnapshot co
             WorldVBuf::Index rightFanSize = 3 + p.rightSection->divisionCount();
             WorldVBuf::Index leftFanSize  = 3 + p.leftSection->divisionCount();
 
-            R_DivVerts(indices, posCoords, *p.leftSection, *p.rightSection);
+            Rend_DivPosCoords(indices, posCoords, *p.leftSection, *p.rightSection);
 
             skyList.write(gl::TriangleFan, rightFanSize, indices + leftFanSize)
                    .write(gl::TriangleFan, leftFanSize, indices);
