@@ -47,10 +47,10 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
     RenderSystem &rendSys = ClientApp::renderSystem();
     WorldVBuf &vbuf       = rendSys.buffer();
 
-    if(p.isWall)
+    if(p.leftSection) // A wall.
     {
-        WallEdgeSection const &leftSection  = *p.wall.leftEdge;
-        WallEdgeSection const &rightSection = *p.wall.rightEdge;
+        WallEdgeSection const &leftSection  = *p.leftSection;
+        WallEdgeSection const &rightSection = *p.rightSection;
         bool const mustSubdivide            = (leftSection.divisionCount() || rightSection.divisionCount());
 
         if(mustSubdivide) // Draw as two triangle fans.
@@ -61,7 +61,7 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
 
             vbuf.reserveElements(leftFanSize + rightFanSize, indices);
 
-            R_DivVerts(indices, p.rvertices, leftSection, rightSection);
+            R_DivVerts(indices, p.posCoords, leftSection, rightSection);
 
             Vector2f quadCoords[4] = {
                 Vector2f(tp.topLeft.x,     tp.bottomRight.y),
@@ -86,14 +86,14 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
         }
         else
         {
-            WorldVBuf::Index vertCount = p.numVertices;
+            WorldVBuf::Index vertCount = p.vertCount;
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
             vbuf.reserveElements(vertCount, indices);
             for(WorldVBuf::Index i = 0; i < vertCount; ++i)
             {
                 WorldVBuf::Type &vertex = vbuf[indices[i]];
-                vertex.pos  = p.rvertices[i];//vbuf[p.indices[i]].pos;
+                vertex.pos  = p.posCoords[i];//vbuf[p.indices[i]].pos;
                 vertex.rgba = tp.color;
             }
 
@@ -117,7 +117,7 @@ static void drawShadow(DrawList &shadowList, TexProjection const &tp,
     else // A flat.
     {
         Vector2f const pDimensions = p.bottomRight->xy() - p.topLeft->xy();
-        WorldVBuf::Index vertCount = p.numVertices;
+        WorldVBuf::Index vertCount = p.vertCount;
         WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
         vbuf.reserveElements(vertCount, indices);
@@ -155,7 +155,7 @@ static int drawShadowWorker(TexProjection const *tp, void *context)
     return 0; // Continue iteration.
 }
 
-void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t &p)
+void Rend_DrawProjectedShadows(uint listIdx, rendershadowprojectionparams_t &p)
 {
     DrawListSpec listSpec;
     listSpec.group = ShadowGeom;

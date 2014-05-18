@@ -42,10 +42,10 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
         DrawList &lightList = rendSys.drawLists().find(listSpec);
 
-        if(p.isWall)
+        if(p.leftSection) // A wall.
         {
-            WallEdgeSection const &leftSection  = *p.wall.leftEdge;
-            WallEdgeSection const &rightSection = *p.wall.rightEdge;
+            WallEdgeSection const &leftSection  = *p.leftSection;
+            WallEdgeSection const &rightSection = *p.rightSection;
             bool const mustSubdivide            = (leftSection.divisionCount() || rightSection.divisionCount());
 
             if(mustSubdivide) // Draw as two triangle fans.
@@ -56,7 +56,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
                 vbuf.reserveElements(leftFanSize + rightFanSize, indices);
 
-                R_DivVerts(indices, p.rvertices, leftSection, rightSection);
+                R_DivVerts(indices, p.posCoords, leftSection, rightSection);
 
                 Vector2f quadCoords[4] = {
                     Vector2f(tp.topLeft.x,     tp.bottomRight.y),
@@ -81,14 +81,14 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             }
             else
             {
-                WorldVBuf::Index vertCount = p.numVertices;
+                WorldVBuf::Index vertCount = p.vertCount;
                 WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
                 vbuf.reserveElements(vertCount, indices);
                 for(int i = 0; i < vertCount; ++i)
                 {
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
-                    vertex.pos  = p.rvertices[i];// vbuf[p.indices[i]].pos;
+                    vertex.pos  = p.posCoords[i];// vbuf[p.indices[i]].pos;
                     vertex.rgba = tp.color;
                 }
 
@@ -113,7 +113,7 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
         {
             Vector2f const pDimensions = p.bottomRight->xy() - p.topLeft->xy();
 
-            WorldVBuf::Index vertCount = p.numVertices;
+            WorldVBuf::Index vertCount = p.vertCount;
             WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
             vbuf.reserveElements(vertCount, indices);
@@ -147,7 +147,7 @@ static int drawDynlightWorker(TexProjection const *tp, void *context)
     return 0; // Continue iteration.
 }
 
-uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t &p)
+uint Rend_DrawProjectedLights(uint listIdx, renderlightprojectionparams_t &p)
 {
     uint numRendered = p.lastIdx;
 
