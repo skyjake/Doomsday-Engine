@@ -1212,7 +1212,7 @@ static void drawWallSectionAsVissprite(rendworldpoly_params_t const &p,
     DENG2_ASSERT(p.isWall);
     DENG2_ASSERT(!p.wall.leftEdge->divisionCount() && !p.wall.rightEdge->divisionCount());
     DENG2_ASSERT(!(p.skyMasked || (ms.material().isSkyMasked())));
-    DENG2_ASSERT(!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0))
+    DENG2_ASSERT(!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     SectorCluster &cluster = curSubspace->cluster();
 
@@ -2780,28 +2780,18 @@ static void writeWallSection(WallEdgeSection &leftSection, WallEdgeSection &righ
         drawWallSection(4, posCoords, parm, matSnapshot);
 
         rendSys.posPool().release(posCoords);
+
+        // Render FakeRadio for this section?
+        if(!leftSection.flags().testFlag(WallEdgeSection::NoFakeRadio) &&
+           !parm.skyMasked && !(parm.glowing > 0))
+        {
+            Rend_RadioWallSection(leftSection, rightSection, curSectorLightLevel);
+        }
     }
     else
     {
         drawWallSectionAsVissprite(parm, matSnapshot);
-        wroteOpaque = false; // We @em had to use a vissprite; clearly not opaque.
-    }
-
-    if(wroteOpaque)
-    {
-        // Render FakeRadio for this section?
-        if(!leftSection.flags().testFlag(WallEdgeSection::NoFakeRadio) && !parm.skyMasked &&
-           !(parm.glowing > 0) && curSectorLightLevel > 0)
-        {
-            Rend_RadioUpdateForLineSide(side);
-
-            // Determine the shadow properties.
-            /// @todo Make cvars out of constants.
-            float shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
-            float shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
-
-            Rend_RadioWallSection(leftSection, rightSection, shadowDark, shadowSize);
-        }
+        wroteOpaque = false; /// We @em had to use a vissprite; clearly not opaque.
     }
 
     if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())

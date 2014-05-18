@@ -1058,18 +1058,26 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
     }
 }
 
-/// @todo fixme: Should use the visual plane heights of sector clusters.
 void Rend_RadioWallSection(WallEdgeSection const &sectionLeft,
-    WallEdgeSection const &sectionRight, float shadowDark, float shadowSize)
+    WallEdgeSection const &sectionRight, float ambientLightLevel)
 {
     // Disabled?
-    if(!rendFakeRadio || levelFullBright)
-        return;
+    if(!rendFakeRadio) return;
+    if(levelFullBright) return;
+
+    // Don't bother with shadows on geometry that is near enough "black" already.
+    if(ambientLightLevel < 0.01f) return;
+
+    /// Determine the shadow properties (@todo Make cvars out of constants).
+    float const shadowSize = 2 * (8 + 16 - ambientLightLevel * 16);
+    float const shadowDark = Rend_RadioCalcShadowDarkness(ambientLightLevel);
 
     if(shadowSize <= 0)
         return;
 
     LineSide &side = sectionLeft.edge().lineSide();
+    Rend_RadioUpdateForLineSide(side);
+
     HEdge const *hedge = side.leftHEdge();
     SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
     SectorCluster const *backCluster = 0;
@@ -1098,11 +1106,11 @@ void Rend_RadioWallSection(WallEdgeSection const &sectionLeft,
     coord_t const bFloor = (backCluster? backCluster->visFloor().heightSmoothed() : 0);
     coord_t const bCeil  = (backCluster? backCluster->visCeiling().heightSmoothed() : 0);
 
-    Vector3f rvertices[4] = {
-         sectionLeft.bottom().origin(),
-            sectionLeft.top().origin(),
-        sectionRight.bottom().origin(),
-           sectionRight.top().origin()
+    Vector3f posCoords[4] = {
+        Vector3f( sectionLeft.bottom().origin()),
+        Vector3f( sectionLeft.top   ().origin()),
+        Vector3f(sectionRight.bottom().origin()),
+        Vector3f(sectionRight.top   ().origin())
     };
 
     // Top Shadow?
@@ -1116,7 +1124,7 @@ void Rend_RadioWallSection(WallEdgeSection const &sectionLeft,
             setTopShadowParams(&parms, shadowSize, shadowDark,
                                sectionLeft.top().z(), sectionOffset, sectionWidth,
                                fFloor, fCeil, frData);
-            drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
+            drawWallSectionShadow(posCoords, sectionLeft, sectionRight, parms);
         }
     }
 
@@ -1131,7 +1139,7 @@ void Rend_RadioWallSection(WallEdgeSection const &sectionLeft,
             setBottomShadowParams(&parms, shadowSize, shadowDark,
                                   sectionLeft.top().z(), sectionOffset, sectionWidth,
                                   fFloor, fCeil, frData);
-            drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
+            drawWallSectionShadow(posCoords, sectionLeft, sectionRight, parms);
         }
     }
 
@@ -1146,7 +1154,7 @@ void Rend_RadioWallSection(WallEdgeSection const &sectionLeft,
                             sectionOffset, sectionWidth,
                             fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
                             frData);
-        drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
+        drawWallSectionShadow(posCoords, sectionLeft, sectionRight, parms);
     }
 
     // Right Shadow?
@@ -1160,7 +1168,7 @@ void Rend_RadioWallSection(WallEdgeSection const &sectionLeft,
                             haveBottomShadower, haveTopShadower, sectionOffset, sectionWidth,
                             fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
                             frData);
-        drawWallSectionShadow(rvertices, sectionLeft, sectionRight, parms);
+        drawWallSectionShadow(posCoords, sectionLeft, sectionRight, parms);
     }
 }
 
