@@ -71,6 +71,10 @@ public:
         IgnoreDoubleUnderscoreMembers
     };
 
+    DENG2_DEFINE_AUDIENCE2(Addition, void recordMemberAdded(Record &record, Variable &member))
+
+    DENG2_DEFINE_AUDIENCE2(Removal, void recordMemberRemoved(Record &record, Variable &member))
+
     DENG2_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
 
 public:

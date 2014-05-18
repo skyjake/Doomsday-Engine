@@ -172,9 +172,13 @@ DENG2_PIMPL(Record)
     }
 
     DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(Addition)
+    DENG2_PIMPL_AUDIENCE(Removal)
 };
 
 DENG2_AUDIENCE_METHOD(Record, Deletion)
+DENG2_AUDIENCE_METHOD(Record, Addition)
+DENG2_AUDIENCE_METHOD(Record, Removal)
 
 Record::Record() : d(new Instance(*this))
 {}
@@ -188,7 +192,10 @@ Record::Record(Record const &other, CopyBehavior behavior)
 
 Record::~Record()
 {
+    // Notify before deleting members so that observers have full visibility
+    // to the record prior to deletion.
     DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
+
     clear();
 }
 
@@ -198,6 +205,8 @@ void Record::clear()
     {
         DENG2_FOR_EACH(Members, i, d->members)
         {
+            DENG2_FOR_AUDIENCE2(Removal, o) o->recordMemberRemoved(*this, **i);
+
             i.value()->audienceForDeletion() -= this;
             delete i.value();
         }
@@ -277,6 +286,9 @@ Variable &Record::add(Variable *variable)
     }
     var->audienceForDeletion() += this;
     d->members[variable->name()] = var.release();
+
+    DENG2_FOR_AUDIENCE2(Addition, i) i->recordMemberAdded(*this, *variable);
+
     return *variable;
 }
 
@@ -284,6 +296,9 @@ Variable *Record::remove(Variable &variable)
 {
     variable.audienceForDeletion() -= this;
     d->members.remove(variable.name());
+
+    DENG2_FOR_AUDIENCE2(Removal, i) i->recordMemberRemoved(*this, variable);
+
     return &variable;
 }
 

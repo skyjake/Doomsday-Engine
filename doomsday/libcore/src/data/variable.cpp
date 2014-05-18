@@ -59,10 +59,12 @@ DENG2_PIMPL_NOREF(Variable)
 
     DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(Change)
+    DENG2_PIMPL_AUDIENCE(ChangeFrom)
 };
 
 DENG2_AUDIENCE_METHOD(Variable, Deletion)
 DENG2_AUDIENCE_METHOD(Variable, Change)
+DENG2_AUDIENCE_METHOD(Variable, ChangeFrom)
 
 Variable::Variable(String const &name, Value *initial, Flags const &m)
     : d(new Instance)
@@ -131,6 +133,7 @@ Variable &Variable::set(Value *v)
         if(notify)
         {
             DENG2_FOR_AUDIENCE2(Change, i) i->variableValueChanged(*this, *d->value);
+            DENG2_FOR_AUDIENCE2(ChangeFrom, i) i->variableValueChangedFrom(*this, *oldValue, *d->value);
         }
     }
     return *this;
