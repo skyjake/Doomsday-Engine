@@ -18,12 +18,13 @@
  */
 
 #include "de/ArrayValue"
+#include "de/FunctionValue"
 #include "de/NumberValue"
+#include "de/Process"
+#include "de/Reader"
+#include "de/RecordValue"
 #include "de/TextValue"
 #include "de/Writer"
-#include "de/Reader"
-#include "de/FunctionValue"
-#include "de/Process"
 
 #include <algorithm>
 #include <QTextStream>
@@ -69,6 +70,7 @@ Value::Text ArrayValue::asText() const
         {
             s << ",";
         }
+        if((*i)->is<RecordValue>()) s << "\n"; // Records have multiple lines.
         s << " " << (*i)->asText();
         isFirst = false;
     }
