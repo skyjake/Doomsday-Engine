@@ -135,15 +135,15 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  * Note that unlike Rend_RadioBspLeafEdges() there is no guard to ensure shadow
  * geometry is rendered only once per frame.
  *
- * @param sectionLeft        Geometry for the left wall section edge.
- * @param sectionRight       Geometry for the right wall section edge.
+ * @param leftSection        Geometry for the left wall section edge.
+ * @param rightSection       Geometry for the right wall section edge.
  * @param ambientLightLevel  Ambient light level for the wall section. This is
  *                           @em not automatically taken from the sector on the
  *                           front side of the wall as various map-hacks dictate
  *                           otherwise.
  */
-void Rend_RadioWallSection(de::WallEdgeSection const &sectionLeft,
-    de::WallEdgeSection const &sectionRight, float ambientLightLevel);
+void Rend_RadioWallSection(de::WallEdgeSection const &leftSection,
+    de::WallEdgeSection const &rightSection, float ambientLightLevel);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to
