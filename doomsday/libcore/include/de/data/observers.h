@@ -324,6 +324,16 @@ public:
         return size() == 0;
     }
 
+    bool contains(Type const *observer) const {
+        DENG2_GUARD(this);
+        return _members.contains(const_cast<Type *>(observer));
+    }
+
+    bool contains(Type const &observer) const {
+        DENG2_GUARD(this);
+        return _members.contains(const_cast<Type *>(&observer));
+    }
+
     iterator begin() {
         return _members.begin();
     }
