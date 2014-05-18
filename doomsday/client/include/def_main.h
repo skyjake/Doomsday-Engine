@@ -163,7 +163,6 @@ int             Def_GetModelNum(const char* id);
 ded_music_t*    Def_GetMusic(char const *id);
 int             Def_GetMusicNum(const char* id);
 int             Def_GetSoundNum(const char* id);
-ded_flag_t*     Def_GetFlag(const char* id);
 ded_value_t*    Def_GetValueById(const char* id);
 ded_value_t*    Def_GetValueByUri(const Uri* uri);
 ded_mapinfo_t*  Def_GetMapInfo(const Uri* uri);
@@ -189,7 +188,7 @@ extern "C" {
 
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
-int             Def_EvalFlags(char *string);
+int             Def_EvalFlags(char const *string);
 
 /**
  * @return  @c true= the definition was found.
