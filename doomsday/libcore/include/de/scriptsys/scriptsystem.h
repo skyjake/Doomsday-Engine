@@ -49,6 +49,8 @@ public:
      */
     void addNativeModule(String const &name, Record &module);
 
+    void removeNativeModule(String const &name);
+
     Record &nativeModule(String const &name);
 
     /**

@@ -95,6 +95,14 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         module.audienceForDeletion() += this;
     }
 
+    void removeNativeModule(String const &name)
+    {
+        if(!nativeModules.contains(name)) return;
+
+        nativeModules[name]->audienceForDeletion() -= this;
+        nativeModules.remove(name);
+    }
+
     void recordBeingDeleted(Record &record)
     {
         QMutableMapIterator<String, Record *> iter(nativeModules);
@@ -118,6 +126,11 @@ ScriptSystem::~ScriptSystem()
 void ScriptSystem::addNativeModule(String const &name, Record &module)
 {
     d->addNativeModule(name, module);
+}
+
+void ScriptSystem::removeNativeModule(String const &name)
+{
+    d->removeNativeModule(name);
 }
 
 Record &ScriptSystem::nativeModule(String const &name)
