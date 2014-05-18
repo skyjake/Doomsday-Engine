@@ -19,6 +19,7 @@
 
 #include "de/DictionaryValue"
 #include "de/ArrayValue"
+#include "de/RecordValue"
 #include "de/Writer"
 #include "de/Reader"
 
@@ -74,6 +75,22 @@ void DictionaryValue::add(Value *key, Value *value)
     }
 }
 
+void DictionaryValue::remove(Value const &key)
+{
+    Elements::iterator i = _elements.find(ValueRef(&key));
+    if(i != _elements.end())
+    {
+        remove(i);
+    }
+}
+
+void DictionaryValue::remove(Elements::iterator const &pos)
+{
+    delete pos->first.value;
+    delete pos->second;
+    _elements.erase(pos);
+}
+
 Value *DictionaryValue::duplicate() const
 {
     return new DictionaryValue(*this);
@@ -94,6 +111,7 @@ Value::Text DictionaryValue::asText() const
         {
             s << ",";
         }
+        if(i->second->is<RecordValue>()) s << "\n"; // Records have multiple lines.
         s << " " << i->first.value->asText() << ": " << i->second->asText();
         isFirst = false;
     }
