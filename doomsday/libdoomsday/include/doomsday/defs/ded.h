@@ -23,9 +23,11 @@
 #include <vector>
 #include <de/libcore.h>
 #include <de/Vector>
+#include <de/Record>
 #include "../uri.h"
 
 #include "dedtypes.h"
+#include "dedregister.h"
 
 // Version 6 does not require semicolons.
 #define DED_VERSION 6
@@ -41,14 +43,17 @@
  */
 struct LIBDOOMSDAY_PUBLIC ded_s
 {
-    int             version; // DED version number.
+    de::Record names; ///< Namespace where definition values are stored.
 
-    ded_flags_t     modelFlags; // Default values for models.
-    float           modelScale;
-    float           modelOffset;
+    int version; // DED version number.
+
+    ded_flags_t modelFlags; // Default values for models.
+    float       modelScale;
+    float       modelOffset;
 
     // Flag values (for all types of data).
-    DEDArray<ded_flag_t> flags;
+    //DEDArray<ded_flag_t> flags;
+    DEDRegister flags;
 
     // Map object information.
     DEDArray<ded_mobj_t> mobjs;
@@ -125,7 +130,9 @@ public:
 
     void clear();
 
-    ded_flag_t *getFlag(char const *flag) const;
+    int addFlag(char const *id, int value);
+
+    //ded_flag_t *getFlag(char const *flag) const;
 
     int evalFlags2(char const *ptr) const;
 
@@ -185,7 +192,6 @@ extern "C" {
 
 // Routines for managing DED files:
 
-int             DED_AddFlag(ded_t* ded, char const* name, int value);
 int             DED_AddMobj(ded_t* ded, char const* idStr);
 int             DED_AddState(ded_t* ded, char const* id);
 int             DED_AddSprite(ded_t* ded, char const* name);

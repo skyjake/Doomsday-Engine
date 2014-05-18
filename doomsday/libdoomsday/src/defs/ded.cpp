@@ -42,7 +42,10 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 }
 
 ded_s::ded_s()
+    : flags(names.addRecord("flags"))
 {
+    flags.addLookupKey("id");
+
     clear();
 }
 
@@ -54,6 +57,14 @@ void ded_s::clear()
     modelFlags = 0;
     modelScale = 0;
     modelOffset = 0;
+}
+
+int ded_s::addFlag(char const *id, int value)
+{
+    Record &def = flags.append();
+    def.addText("id", id);
+    def.addNumber("value", value);
+    return def.geti("__order__");
 }
 
 void ded_s::release()
@@ -102,14 +113,6 @@ int DED_AddMobj(ded_t* ded, char const* idstr)
     ded_mobj_t *mo = ded->mobjs.append();
     strcpy(mo->id, idstr);
     return ded->mobjs.indexOf(mo);
-}
-
-int DED_AddFlag(ded_t* ded, char const* name, int value)
-{
-    ded_flag_t *fl = ded->flags.append();
-    strcpy(fl->id, name);
-    fl->value = value;
-    return ded->flags.indexOf(fl);
 }
 
 int DED_AddModel(ded_t* ded, char const* spr)
@@ -469,6 +472,7 @@ int ded_s::getStateNum(char const *id) const
     return idx;
 }
 
+/*
 ded_flag_t *ded_s::getFlag(char const *flag) const
 {
     if(!flag || !flag[0]) return 0;
@@ -480,7 +484,7 @@ ded_flag_t *ded_s::getFlag(char const *flag) const
     }
 
     return 0;
-}
+}*/
 
 int ded_s::evalFlags2(char const *ptr) const
 {
@@ -496,9 +500,9 @@ int ded_s::evalFlags2(char const *ptr) const
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
-        if(ded_flag_t *flag = getFlag(flagName.toUtf8().constData()))
+        if(Record const *flag = flags.tryFind("id", flagName.toLower()))
         {
-            value |= flag->value;
+            value |= flag->geti("value");
         }
         else
         {

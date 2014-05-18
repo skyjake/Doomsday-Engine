@@ -68,6 +68,7 @@ HEADERS += \
     include/doomsday/defs/dedarray.h \
     include/doomsday/defs/dedfile.h \
     include/doomsday/defs/dedparser.h \
+    include/doomsday/defs/dedregister.h \
     include/doomsday/defs/dedtypes.h \
     include/doomsday/dualstring.h \
     include/doomsday/filesys/file.h \
@@ -102,6 +103,7 @@ SOURCES += \
     src/defs/ded.cpp \
     src/defs/dedfile.cpp \
     src/defs/dedparser.cpp \
+    src/defs/dedregister.cpp \
     src/dualstring.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \

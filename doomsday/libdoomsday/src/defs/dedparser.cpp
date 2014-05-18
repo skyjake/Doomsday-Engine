@@ -821,19 +821,25 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Flag"))
             {
+                ded_stringid_t id;
+                int value;
                 char dummyStr[2];
-                // A new flag.
-                idx = DED_AddFlag(ded, "", 0);
+
                 FINDBEGIN;
                 for(;;)
                 {
                     READLABEL;
-                    RV_STR("ID", ded->flags[idx].id)
-                    RV_UINT("Value", ded->flags[idx].value)
+                    RV_STR("ID", id)
+                    RV_UINT("Value", value)
                     RV_STR("Info", dummyStr) // ignored
                     RV_END
                     CHECKSC;
                 }
+
+                ded->addFlag(id, value);
+
+                // Sanity check.
+                DENG2_ASSERT(ded->flags.find("id", id).geti("value") == value);
             }
 
             if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
