@@ -458,14 +458,14 @@ void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
         if(i == _deferredTasksSize)
             break;
 
-        memmove(&_deferredTasks[i], &_deferredTasks[i + 1], sizeof(DeferredTask) * (_deferredTasksSize - i));
+        std::memmove(&_deferredTasks[i], &_deferredTasks[i + 1], sizeof(*_deferredTasks) * (_deferredTasksSize - i));
     }
 
     if(_deferredTasksSize < origSize)
     {
         if(_deferredTasksSize)
         {
-            _deferredTasks = (DeferredTask **) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
+            _deferredTasks = (DeferredTask **) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * _deferredTasksSize, PU_GAMESTATIC);
         }
         else
         {
