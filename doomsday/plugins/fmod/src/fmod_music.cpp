@@ -153,7 +153,14 @@ void DM_Music_Shutdown(void)
 /// @internal
 void DMFmod_Music_SetSoundFont(char const *fileName)
 {
-    soundFontFileName = fileName;
+    if(fileName && fileName[0])
+    {
+        soundFontFileName = fileName;
+    }
+    else
+    {
+        soundFontFileName.clear();
+    }
 }
 
 void DMFmod_Music_Set(int prop, float value)
