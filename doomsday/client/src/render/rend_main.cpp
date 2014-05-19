@@ -2705,8 +2705,8 @@ static void writeSubspaceSkyMaskStrips(WallEdge::SectionId sectionId)
     // Configure the strip builder wrt vertex attributes.
     TriangleStripBuilder stripBuilder(buildTexCoords);
 
-    // Configure the strip build state (we'll most likely need to break
-    // edge loop into multiple strips).
+    // Configure the strip build state (we'll most likely need to break edge loop
+    // into multiple strips).
     HEdge *startNode          = 0;
     coord_t startZBottom      = 0;
     coord_t startZTop         = 0;
@@ -2732,23 +2732,27 @@ static void writeSubspaceSkyMaskStrips(WallEdge::SectionId sectionId)
         // Add a first (left) edge to the current strip?
         if(startNode == 0 && hedge->hasMapElement())
         {
-            startMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
-
-            // Prepare the edge geometry
-            WallEdge left(*hedge, (direction == Anticlockwise)? Line::To : Line::From, startMaterialOffset);
-            WallEdgeSection &sectionLeft = left.section(sectionId);
-
-            if(sectionLeft.isValid() && sectionLeft.bottom().z() < sectionLeft.top().z())
+            LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+            if(seg.lineSide().hasSections())
             {
-                // A new strip begins.
-                stripBuilder.begin(direction);
-                stripBuilder << sectionLeft;
+                startMaterialOffset = seg.lineSideOffset();
 
-                // Update the strip build state.
-                startNode     = hedge;
-                startZBottom  = sectionLeft.bottom().z();
-                startZTop     = sectionLeft.top().z();
-                startMaterial = skyMaterial;
+                // Prepare the edge geometry.
+                WallEdge left(*hedge, (direction == Anticlockwise)? Line::To : Line::From, startMaterialOffset);
+                WallEdgeSection &sectionLeft = left.section(sectionId);
+
+                if(sectionLeft.isValid())// && sectionLeft.bottom().z() < sectionLeft.top().z())
+                {
+                    // A new strip begins.
+                    stripBuilder.begin(direction);
+                    stripBuilder << sectionLeft;
+
+                    // Update the strip build state.
+                    startNode     = hedge;
+                    startZBottom  = sectionLeft.bottom().z();
+                    startZTop     = sectionLeft.top().z();
+                    startMaterial = skyMaterial;
+                }
             }
         }
 
@@ -2761,30 +2765,37 @@ static void writeSubspaceSkyMaskStrips(WallEdge::SectionId sectionId)
             bool endStrip = false;
             if(hedge->hasMapElement())
             {
-                startMaterialOffset += hedge->mapElementAs<LineSideSegment>().length()
-                                     * (direction == Anticlockwise? -1 : 1);
-
-                // Prepare the edge geometry
-                WallEdge left(*hedge, (direction == Anticlockwise)? Line::From : Line::To, startMaterialOffset);
-                WallEdgeSection &sectionLeft = left.section(sectionId);
-
-                if(!(sectionLeft.isValid() && sectionLeft.bottom().z() < sectionLeft.top().z()))
+                LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+                if(seg.lineSide().hasSections())
                 {
-                    endStrip = true;
-                }
-                // Must we split the strip here?
-                else if(hedge != startNode &&
-                        (!de::fequal(sectionLeft.bottom().z(), startZBottom) ||
-                         !de::fequal(sectionLeft.top().z(), startZTop) ||
-                         (splitOnMaterialChange && skyMaterial != startMaterial)))
-                {
-                    endStrip = true;
-                    beginNewStrip = true; // We'll continue from here.
+                    startMaterialOffset += seg.length() * (direction == Anticlockwise? -1 : 1);
+
+                    // Prepare the edge geometry
+                    WallEdge left(*hedge, (direction == Anticlockwise)? Line::From : Line::To, startMaterialOffset);
+                    WallEdgeSection &sectionLeft = left.section(sectionId);
+
+                    if(!sectionLeft.isValid())// && sectionLeft.bottom().z() < sectionLeft.top().z()))
+                    {
+                        endStrip = true;
+                    }
+                    // Must we split the strip here?
+                    else if(hedge != startNode &&
+                            (!de::fequal(sectionLeft.bottom().z(), startZBottom) ||
+                             !de::fequal(sectionLeft.top().z(), startZTop) ||
+                             (splitOnMaterialChange && skyMaterial != startMaterial)))
+                    {
+                        endStrip = true;
+                        beginNewStrip = true; // We'll continue from here.
+                    }
+                    else
+                    {
+                        // Extend the strip geometry.
+                        stripBuilder << sectionLeft;
+                    }
                 }
                 else
                 {
-                    // Extend the strip geometry.
-                    stripBuilder << sectionLeft;
+                    endStrip = true;
                 }
             }
             else
