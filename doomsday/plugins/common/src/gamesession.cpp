@@ -620,6 +620,9 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
             std::memcpy(plr, &pb->player, sizeof(player_t));
 
+            // Reset the inventory as it will now be restored from the backup.
+            P_InventoryEmpty(i);
+
             for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
             {
                 // Don't give back the wings of wrath if reborn.
