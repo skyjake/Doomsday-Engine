@@ -4,7 +4,8 @@ INCLUDEPATH += $$LIBDENG_INCLUDE_DIR
 
 win32 {
     # Tell rc where to get the API headers.
-    QMAKE_RC = $$QMAKE_RC /I \"$$LIBDENG_INCLUDE_DIR\"
+    deng_msvc:  QMAKE_RC = $$QMAKE_RC /I \"$$LIBDENG_INCLUDE_DIR\"
+    deng_mingw: QMAKE_RC = $$QMAKE_RC --include-dir=\"$$LIBDENG_INCLUDE_DIR\"
 }
 
 # Use the appropriate library path (trying some alternatives).

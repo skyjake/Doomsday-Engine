@@ -357,7 +357,7 @@ public:
         m.at(3, 2) = -Type(2) * farDistance * nearDistance / depth;
         return m;
     }
-    static Matrix4 perspectiveZoom(Type width, Type height, Type near = 1.f, Type far = 1000.f, Type zoom = 1.f) {
+    static Matrix4 perspectiveZoom(Type width, Type height, Type nearDist = 1.f, Type farDist = 1000.f, Type zoom = 1.f) {
         Type const zoomHalf =  zoom / 2;
         Type const aspect   =  width / height;
         Type const left     = -zoomHalf;
@@ -365,10 +365,10 @@ public:
         Type const bottom   = -zoomHalf / aspect;
         Type const top      =  zoomHalf / aspect;
         Type m[16] = {
-            2 * near / (right - left), 0, 0, 0,
-            0, 2 * near / (top - bottom), 0, 0,
-            (right + left) / (right - left), (top + bottom) / (top - bottom), -(far + near) / (far - near), -1,
-            0, 0, -2 * (far * near) / (far - near), 0
+            2 * nearDist / (right - left), 0, 0, 0,
+            0, 2 * nearDist / (top - bottom), 0, 0,
+            (right + left) / (right - left), (top + bottom) / (top - bottom), -(farDist + nearDist) / (farDist - nearDist), -1,
+            0, 0, -2 * (farDist * nearDist) / (farDist - nearDist), 0
         };
         return m;
     }

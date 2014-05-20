@@ -23,7 +23,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef WIN32
+#ifdef WIN32_MSVC
 #  pragma warning (disable:4100) // lots of unused arguments
 #endif
 

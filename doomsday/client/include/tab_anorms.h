@@ -8,7 +8,7 @@
  * From Quake.
  */
 
-#ifdef WIN32
+#ifdef WIN32_MSVC
 #pragma warning(disable:4305)
 #endif
 

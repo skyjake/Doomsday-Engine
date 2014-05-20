@@ -33,6 +33,8 @@
 
 namespace de {
 
+#undef main
+
 /**
  * Window management subsystem.
  *
