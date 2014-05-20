@@ -432,12 +432,11 @@ String Uri::compose(ComposeAsTextFlags compositionFlags, QChar sep) const
     }
     if(!(compositionFlags & OmitPath))
     {
-        QString path = d->path;
+        QString path = d->path.withSeparators(sep);
         if(compositionFlags & DecodePath)
         {
             path = QByteArray::fromPercentEncoding(path.toUtf8());
         }
-        if(sep != '/') path.replace('/', sep);
         text += path;
     }
     return text;
