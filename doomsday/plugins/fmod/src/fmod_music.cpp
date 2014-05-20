@@ -41,6 +41,7 @@
 
 #include "driver_fmod.h"
 #include <string.h>
+#include <string>
 
 struct SongBuffer
 {
@@ -61,7 +62,7 @@ static FMOD::Channel* music;
 static bool needReleaseSong;
 static float musicVolume;
 static SongBuffer* songBuffer;
-static const char* soundFontFileName;
+static std::string soundFontFileName;
 
 static FMOD_RESULT F_CALLBACK
 musicCallback(FMOD_CHANNEL* chanPtr, FMOD_CHANNEL_CALLBACKTYPE type,
@@ -127,7 +128,7 @@ int DM_Music_Init(void)
     needReleaseSong = false;
     musicVolume = 1.f;
     songBuffer = 0;
-    soundFontFileName = 0; // empty for the default
+    soundFontFileName.clear(); // empty for the default
     return fmodSystem != 0;
 }
 
@@ -138,7 +139,7 @@ void DMFmod_Music_Shutdown(void)
     releaseSongBuffer();
     releaseSong();
 
-    soundFontFileName = 0;
+    soundFontFileName.clear();
 
     // Will be shut down with the rest of FMOD.
     DSFMOD_TRACE("Music_Shutdown.");
@@ -150,9 +151,16 @@ void DM_Music_Shutdown(void)
 }
 
 /// @internal
-void DMFmod_Music_SetSoundFont(const char* fileName)
+void DMFmod_Music_SetSoundFont(char const *fileName)
 {
-    soundFontFileName = fileName;
+    if(fileName && fileName[0])
+    {
+        soundFontFileName = fileName;
+    }
+    else
+    {
+        soundFontFileName.clear();
+    }
 }
 
 void DMFmod_Music_Set(int prop, float value)
@@ -271,9 +279,9 @@ int DM_Music_Play(int looped)
         FMOD_CREATESOUNDEXINFO extra;
         zeroStruct(extra);
         extra.length = songBuffer->size;
-        if(endsWith(soundFontFileName, ".dls"))
+        if(endsWith(soundFontFileName.c_str(), ".dls"))
         {
-            extra.dlsname = soundFontFileName;
+            extra.dlsname = soundFontFileName.c_str();
         }
 
         // Load a new song.
@@ -330,9 +338,9 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     FMOD_CREATESOUNDEXINFO extra;
     zeroStruct(extra);
-    if(endsWith(soundFontFileName, ".dls"))
+    if(endsWith(soundFontFileName.c_str(), ".dls"))
     {
-        extra.dlsname = soundFontFileName;
+        extra.dlsname = soundFontFileName.c_str();
     }
 
     FMOD_RESULT result;
