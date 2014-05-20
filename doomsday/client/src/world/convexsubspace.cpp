@@ -60,6 +60,8 @@ DENG2_PIMPL(ConvexSubspace)
     HEdge *fanBase;                 ///< Trifan base Half-edge (otherwise the center point is used).
     bool needUpdateFanBase;         ///< @c true= need to rechoose a fan base half-edge.
     AudioEnvironmentFactors reverb; ///< Cached characteristics.
+
+    Shards shards;
 #endif
 
     Instance(Public *i, Face &poly)
@@ -447,6 +449,11 @@ bool ConvexSubspace::updateReverb()
 ConvexSubspace::AudioEnvironmentFactors const &ConvexSubspace::reverb() const
 {
     return d->reverb;
+}
+
+ConvexSubspace::Shards &ConvexSubspace::shards()
+{
+    return d->shards;
 }
 
 #endif // __CLIENT__

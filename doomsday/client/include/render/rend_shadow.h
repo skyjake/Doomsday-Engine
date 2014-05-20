@@ -24,11 +24,14 @@
 #include "render/rendersystem.h"
 #include "WallEdge"
 
+class ConvexSubspace;
+
 /**
  * Parameters for Rend_DrawProjectedShadows (POD).
  * @ingroup render
  */
 typedef struct {
+    ConvexSubspace *subspace;
     uint lastIdx;
     WorldVBuf::Index vertCount;
     union {

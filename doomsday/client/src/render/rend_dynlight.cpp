@@ -23,6 +23,7 @@
 
 #include "de_graphics.h"
 #include "de_render.h"
+#include "ConvexSubspace"
 #include "DrawLists"
 #include "WallEdge"
 
@@ -30,8 +31,7 @@ using namespace de;
 
 static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t &p)
 {
-    RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.worldVBuf();
+    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
 
     // If multitexturing is in use we skip the first.
     if(!(Rend_IsMTexLights() && p.lastIdx == 0))
@@ -39,8 +39,6 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
         DrawListSpec listSpec;
         listSpec.group = LightGeom;
         listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
-
-        DrawList &lightList = rendSys.drawLists().find(listSpec);
 
         if(p.leftSection) // A wall.
         {
@@ -52,11 +50,6 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             {
                 WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
                 WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
-                WorldVBuf::Index *indices = rendSys.indicePool().alloc(leftFanSize + rightFanSize);
-
-                vbuf.reserveElements(leftFanSize + rightFanSize, indices);
-
-                Rend_DivPosCoords(indices, p.posCoords, leftSection, rightSection);
 
                 Vector2f quadCoords[4] = {
                     Vector2f(tp.topLeft.x,     tp.bottomRight.y),
@@ -64,49 +57,82 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                     Vector2f(tp.bottomRight.x, tp.bottomRight.y),
                     Vector2f(tp.bottomRight.x, tp.topLeft.y    )
                 };
-                Rend_DivTexCoords(indices, quadCoords, leftSection, rightSection,
+
+                Shard::Geom *shard = new Shard::Geom(listSpec);
+                shard->indices.resize(leftFanSize + rightFanSize);
+
+                vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
+                Rend_DivPosCoords(shard->indices.data(), p.posCoords, leftSection, rightSection);
+                Rend_DivTexCoords(shard->indices.data(), quadCoords, leftSection, rightSection,
                                   WorldVBuf::PrimaryTex);
 
                 for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
                 {
-                    WorldVBuf::Type &vertex = vbuf[indices[i]];
+                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                     //vertex.pos  = vbuf[p.indices[i]].pos;
                     vertex.rgba = tp.color;
                 }
 
-                lightList.write(gl::TriangleFan, rightFanSize, indices + leftFanSize)
-                         .write(gl::TriangleFan, leftFanSize, indices);
+                Shard::Geom::Primitive leftFan;
+                leftFan.type             = gl::TriangleFan;
+                leftFan.vertCount        = leftFanSize;
+                leftFan.indices          = shard->indices.data();
+                leftFan.texScale         = Vector2f(1, 1);
+                leftFan.texOffset        = Vector2f(0, 0);
+                leftFan.detailTexScale   = Vector2f(1, 1);
+                leftFan.detailTexOffset  = Vector2f(0, 0);
+                shard->primitives.append(leftFan);
 
-                rendSys.indicePool().release(indices);
+                Shard::Geom::Primitive rightFan;
+                rightFan.type            = gl::TriangleFan;
+                rightFan.vertCount       = rightFanSize;
+                rightFan.indices         = shard->indices.data() + leftFan.vertCount;
+                rightFan.texScale        = Vector2f(1, 1);
+                rightFan.texOffset       = Vector2f(0, 0);
+                rightFan.detailTexScale  = Vector2f(1, 1);
+                rightFan.detailTexOffset = Vector2f(0, 0);
+                shard->primitives.append(rightFan);
+
+                p.subspace->shards() << shard;
             }
-            else
+            else // Draw as one quad.
             {
                 WorldVBuf::Index vertCount = p.vertCount;
-                WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
 
-                vbuf.reserveElements(vertCount, indices);
+                Shard::Geom *shard = new Shard::Geom(listSpec);
+                shard->indices.resize(vertCount);
+
+                vbuf.reserveElements(vertCount, shard->indices);
                 for(int i = 0; i < vertCount; ++i)
                 {
-                    WorldVBuf::Type &vertex = vbuf[indices[i]];
+                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                     vertex.pos  = p.posCoords[i];// vbuf[p.indices[i]].pos;
                     vertex.rgba = tp.color;
                 }
 
-                vbuf[indices[1]].texCoord[WorldVBuf::PrimaryTex].x =
-                vbuf[indices[0]].texCoord[WorldVBuf::PrimaryTex].x = tp.topLeft.x;
+                vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].x =
+                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].x = tp.topLeft.x;
 
-                vbuf[indices[1]].texCoord[WorldVBuf::PrimaryTex].y =
-                vbuf[indices[3]].texCoord[WorldVBuf::PrimaryTex].y = tp.topLeft.y;
+                vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].y =
+                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].y = tp.topLeft.y;
 
-                vbuf[indices[3]].texCoord[WorldVBuf::PrimaryTex].x =
-                vbuf[indices[2]].texCoord[WorldVBuf::PrimaryTex].x = tp.bottomRight.x;
+                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].x =
+                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].x = tp.bottomRight.x;
 
-                vbuf[indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
-                vbuf[indices[0]].texCoord[WorldVBuf::PrimaryTex].y = tp.bottomRight.y;
+                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
+                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = tp.bottomRight.y;
 
-                lightList.write(gl::TriangleStrip, vertCount, indices);
+                Shard::Geom::Primitive prim;
+                prim.type            = gl::TriangleStrip;
+                prim.vertCount       = vertCount;
+                prim.indices         = shard->indices.data();
+                prim.texScale        = Vector2f(1, 1);
+                prim.texOffset       = Vector2f(0, 0);
+                prim.detailTexScale  = Vector2f(1, 1);
+                prim.detailTexOffset = Vector2f(0, 0);
+                shard->primitives.append(prim);
 
-                rendSys.indicePool().release(indices);
+                p.subspace->shards() << shard;
             }
         }
         else // A flat.
@@ -114,12 +140,13 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             Vector2f const pDimensions = p.bottomRight->xy() - p.topLeft->xy();
 
             WorldVBuf::Index vertCount = p.vertCount;
-            WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
+            Shard::Geom *shard = new Shard::Geom(listSpec);
+            shard->indices.resize(vertCount);
 
-            vbuf.reserveElements(vertCount, indices);
+            vbuf.reserveElements(vertCount, shard->indices);
             for(WorldVBuf::Index i = 0; i < vertCount; ++i)
             {
-                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
 
                 vertex.pos  = vbuf[p.indices[i]].pos;
                 vertex.rgba = tp.color;
@@ -129,12 +156,20 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
                              ((vertex.pos.x     - p.topLeft->x) / pDimensions.x * tp.bottomRight.x)
                              ,
                              ((p.bottomRight->y - vertex.pos.y) / pDimensions.y * tp.topLeft.y) +
-                             ((vertex.pos.y     - p.topLeft->y)     / pDimensions.y * tp.bottomRight.y));
+                             ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * tp.bottomRight.y));
             }
 
-            lightList.write(gl::TriangleFan, vertCount, indices);
+            Shard::Geom::Primitive prim;
+            prim.type            = gl::TriangleFan;
+            prim.vertCount       = vertCount;
+            prim.indices         = shard->indices.data();
+            prim.texScale        = Vector2f(1, 1);
+            prim.texOffset       = Vector2f(0, 0);
+            prim.detailTexScale  = Vector2f(1, 1);
+            prim.detailTexOffset = Vector2f(0, 0);
+            shard->primitives.append(prim);
 
-            rendSys.indicePool().release(indices);
+            p.subspace->shards() << shard;
         }
     }
     p.lastIdx++;

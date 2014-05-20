@@ -21,15 +21,17 @@
 #ifndef DENG_WORLD_CONVEXSUBSPACE_H
 #define DENG_WORLD_CONVEXSUBSPACE_H
 
+#include <QList>
 #include <QSet>
 #include <de/Error>
 #include <de/Vector>
-
 #include "Mesh"
-
 #include "MapElement"
 #include "Line"
 #include "SectorCluster"
+#ifdef __CLIENT__
+#  include "Shard"
+#endif
 
 struct polyobj_s;
 #ifdef __CLIENT__
@@ -58,6 +60,7 @@ public:
 #ifdef __CLIENT__
     typedef QSet<Lumobj *>    Lumobjs;
     typedef QSet<LineSide *>  ShadowLines;
+    typedef QList<Shard::Geom *> Shards;
 
     // Final audio environment characteristics.
     typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
@@ -294,6 +297,7 @@ public:
      */
     AudioEnvironmentFactors const &reverb() const;
 
+    Shards &shards();
 #endif // __CLIENT__
 
 private:

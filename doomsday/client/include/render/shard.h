@@ -19,9 +19,11 @@
 #ifndef DENG_CLIENT_RENDER_SHARD_H
 #define DENG_CLIENT_RENDER_SHARD_H
 
+#include <QList>
 #include <de/Matrix>
 #include <de/Vector>
 #include "rendersystem.h"
+#include "DrawList"
 
 class BiasTracker;
 class SectorCluster;
@@ -35,6 +37,41 @@ class SectorCluster;
  */
 class Shard
 {
+public:
+    struct Geom
+    {
+        DrawList::Spec listSpec;
+        blendmode_t blendmode;
+        GLuint modTex;
+        de::Vector3f modColor;
+        bool hasDynlights;
+        WorldVBuf::Indices indices;
+        struct Primitive
+        {
+            de::gl::Primitive type;
+            WorldVBuf::Index vertCount;
+            WorldVBuf::Index const *indices;
+            de::Vector2f texScale;
+            de::Vector2f texOffset;
+            de::Vector2f detailTexScale;
+            de::Vector2f detailTexOffset;
+        };
+        typedef QList<Primitive> Primitives;
+        Primitives primitives;
+
+        Geom(DrawList::Spec const &listSpec,
+             blendmode_t blendmode        = BM_NORMAL,
+             GLuint modTex                = 0,
+             de::Vector3f const &modColor = de::Vector3f(),
+             bool hasDynlights            = false)
+            : listSpec    (listSpec)
+            , blendmode   (blendmode)
+            , modTex      (modTex)
+            , modColor    (modColor)
+            , hasDynlights(hasDynlights)
+        {}
+    };
+
 public:
     /**
      * Construct a new Shard of 3D map geometry.

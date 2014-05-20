@@ -28,6 +28,7 @@
 #include "def_main.h"
 #include "render/rendersystem.h"
 #include "MaterialVariantSpec"
+#include "Shard"
 #include "WallEdge"
 #include <de/Vector>
 #include <de/Matrix>
