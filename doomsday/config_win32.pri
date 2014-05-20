@@ -10,7 +10,7 @@ win32-g++* {
 }
 else {
     CONFIG += deng_msvc
-    DEFINES += MSVC
+    DEFINES += MSVC WIN32_MSVC
 }
 
 DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES

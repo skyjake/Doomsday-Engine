@@ -26,6 +26,8 @@
 
 namespace de {
 
+#undef main
+
 /**
  * General-purpose top-level window with persistent state. Each instance must
  * be identified by a unique name (e.g., "main") that is used when saving the

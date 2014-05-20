@@ -34,8 +34,13 @@ deng_extassimp {
         # On Windows we assume that cmake has been run in the root of
         # the assimp source tree.
         aiIncDir = $$ASSIMP_DIR/include
-        deng_debug: aiLibs = -L$$ASSIMP_DIR/lib/debug -lassimpd
-              else: aiLibs = -L$$ASSIMP_DIR/lib/release -lassimp
+        deng_msvc {
+            deng_debug: aiLibs = -L$$ASSIMP_DIR/lib/debug -lassimpd
+                  else: aiLibs = -L$$ASSIMP_DIR/lib/release -lassimp
+        }
+        else {
+            aiLibs = -L$$ASSIMP_DIR/lib -lassimp
+        }
 
         INSTALLS += assimplib
         assimplib.path = $$DENG_BIN_DIR

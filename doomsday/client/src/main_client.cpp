@@ -84,4 +84,5 @@ int main(int argc, char** argv)
     // Check that all reference-counted objects have been deleted.
     DENG2_ASSERT(de::Counted::totalCount == 0);
 #endif
+    return 0;
 }
