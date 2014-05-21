@@ -21,7 +21,9 @@ SOURCES += \
     src/savegameconverter.cpp
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpsavegameconverter.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpsavegameconverter.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/dpsavegameconverter.def\"
+
     OTHER_FILES += api/dpsavegameconverter.def
 
     RC_FILE = res/savegameconverter.rc

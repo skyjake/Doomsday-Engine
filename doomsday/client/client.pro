@@ -56,7 +56,7 @@ win32 {
     RC_FILE = res/windows/doomsday.rc
     OTHER_FILES += $$RC_FILE
 
-    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
+    deng_msvc: QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32
 }
@@ -71,7 +71,7 @@ else {
 
 # Source Files -----------------------------------------------------------------
 
-PRECOMPILED_HEADER = include/precompiled.h
+!deng_mingw: PRECOMPILED_HEADER = include/precompiled.h
 
 DENG_API_HEADERS = \
     $$DENG_API_DIR/apis.h \

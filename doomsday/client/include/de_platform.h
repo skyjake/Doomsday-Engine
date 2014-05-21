@@ -26,6 +26,7 @@
 #define __DOOMSDAY_PLATFORM__
 
 #include "dd_types.h"
+#include <de/libcore.h>
 
 /*
  * The Win32 Platform

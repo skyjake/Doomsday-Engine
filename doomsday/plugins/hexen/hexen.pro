@@ -102,7 +102,9 @@ SOURCES += \
     src/x_api.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/hexen.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/hexen.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/hexen.def\"
+
     OTHER_FILES += api/hexen.def
 
     RC_FILE = res/hexen.rc

@@ -20,6 +20,7 @@
 #define DENG_NO_API_MACROS_FILESYS
 
 #include "de_platform.h"
+#include "de_console.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -42,7 +43,6 @@
 #endif
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_graphics.h"

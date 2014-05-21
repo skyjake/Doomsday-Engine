@@ -23,6 +23,7 @@
 
 #include "directinput.h"
 #include "dd_winit.h"
+#include <de/Log>
 
 static LPDIRECTINPUT8 dInput;
 static LPDIRECTINPUT dInput3;

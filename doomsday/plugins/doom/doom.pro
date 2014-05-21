@@ -94,7 +94,9 @@ SOURCES += \
     src/wi_stuff.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/doom.def\"
+
     OTHER_FILES += api/doom.def
 
     RC_FILE = res/doom.rc

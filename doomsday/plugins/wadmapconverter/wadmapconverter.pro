@@ -33,7 +33,9 @@ SOURCES += \
 win32 {
     RC_FILE = res/wadmapconverter.rc
 
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpwadmapconverter.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpwadmapconverter.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/dpwadmapconverter.def\"
+
     OTHER_FILES += api/dpwadmapconverter.def
 }
 

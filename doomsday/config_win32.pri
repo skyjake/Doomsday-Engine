@@ -5,14 +5,21 @@
 # Windows-specific configuration.
 
 win32-g++* {
-    error("Sorry, gcc is not supported in the Windows build.")
+    CONFIG += deng_mingw
+    DEFINES += MINGW32 GNU_X86_FIXED_ASM
+}
+else {
+    CONFIG += deng_msvc
+    DEFINES += MSVC WIN32_MSVC
 }
 
-DEFINES += WIN32 MSVC _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
+DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 
-# Disable warnings about unreferenced formal parameters (C4100).
-QMAKE_CFLAGS += -w14505 -wd4100 -wd4748
-QMAKE_CXXFLAGS += -w14505 -wd4100 -wd4748
+deng_msvc {
+    # Disable warnings about unreferenced formal parameters (C4100).
+    QMAKE_CFLAGS += -w14505 -wd4100 -wd4748
+    QMAKE_CXXFLAGS += -w14505 -wd4100 -wd4748
+}
 
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 
@@ -24,10 +31,15 @@ DENG_PLUGIN_LIB_DIR = $$DENG_LIB_DIR/plugins
 DENG_DATA_DIR       = $$DENG_BASE_DIR/data
 DENG_DOCS_DIR       = $$DENG_BASE_DIR/doc
 
-# Tell rc where to get the API headers.
-QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"
+deng_msvc {
+    # Tell rc where to get the API headers.
+    QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"
 
-deng_debug: QMAKE_RC = $$QMAKE_RC /d _DEBUG
+    deng_debug: QMAKE_RC = $$QMAKE_RC /d _DEBUG
+}
+deng_mingw {
+    QMAKE_RC = $$QMAKE_RC --include-dir=\"$$DENG_API_DIR\"
+}
 
 # Also build the OpenAL plugin.
 CONFIG += deng_openal
