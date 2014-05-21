@@ -86,7 +86,9 @@ SOURCES += \
     src/wi_stuff.c \
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom64.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom64.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/doom64.def\"
+
     OTHER_FILES += api/doom64.def
 
     RC_FILE = res/doom64.rc

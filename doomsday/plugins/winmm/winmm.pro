@@ -29,7 +29,8 @@ RC_FILE = res/winmm.rc
 
 LIBS += -lwinmm
 
-QMAKE_LFLAGS += /DEF:\"$$PWD/api/dswinmm.def\"
+deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/dswinmm.def\"
+deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/dswinmm.def\"
 OTHER_FILES += api/dswinmm.def
 
 INSTALLS += target
