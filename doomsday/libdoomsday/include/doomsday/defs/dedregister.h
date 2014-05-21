@@ -28,7 +28,7 @@
  * The important characteristics of definitions are:
  * - preserving the order in which the definitions were parsed
  * - definitions are looked up by ID, name, and/or other members in addition to the
- *   ordinal number
+ *   ordinal number (lookup is text-based)
  *
  * DEDRegister is not specific to any one kind of definition, but instead maintains an
  * array of definitions and a set of lookup dictionaries referencing subrecords in the
