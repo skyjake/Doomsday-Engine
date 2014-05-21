@@ -35,11 +35,44 @@
 
 class Sector;
 class SectorCluster;
+struct TexProjection;
 
 namespace de {
 class Map;
+class HEdge;
 class LightGrid;
+class MaterialSnapshot;
 }
+
+/// @todo remove me
+struct rendworldpoly_params_t
+{
+    bool            skyMasked;
+    blendmode_t     blendmode;
+    de::Vector3d const *topLeft;
+    de::Vector3d const *bottomRight;
+    de::Vector2f const *materialOrigin;
+    de::Vector2f const *materialScale;
+    float           opacity;
+    float           surfaceLightLevelDL;
+    float           surfaceLightLevelDR;
+    de::Vector3f const *surfaceColor;
+    de::Matrix3f const *surfaceTangentMatrix;
+
+    uint            lightListIdx; // List of lights that affect this poly.
+    uint            shadowListIdx; // List of shadows that affect this poly.
+    float           glowing;
+    bool            forceOpaque;
+    de::MapElement *mapElement;
+    int             geomGroup;
+
+    // Wall section edges:
+    // Both are provided or none at all. If present then this is a wall geometry.
+    de::WallEdgeSection const *leftSection;
+    de::WallEdgeSection const *rightSection;
+    coord_t sectionWidth;
+    de::Vector3f const *surfaceColor2; // Secondary color.
+};
 
 // Multiplicative blending for dynamic lights?
 #define IS_MUL              (dynlightBlend != 1 && !usingFog)
@@ -108,6 +141,7 @@ DENG_EXTERN_C byte useLightDecorations;
 DENG_EXTERN_C int useShinySurfaces;
 
 DENG_EXTERN_C float detailFactor, detailScale;
+DENG_EXTERN_C int r_detail;
 
 DENG_EXTERN_C int ratioLimit;
 DENG_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
@@ -149,6 +183,8 @@ float Rend_FieldOfView();
 void Rend_ModelViewMatrix(bool useAngles = true);
 
 de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles = true);
+
+de::Vector3d const Rend_ViewerOrigin();
 
 #define Rend_PointDist2D(c) (fabs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
@@ -215,6 +251,14 @@ bool Rend_SkyLightIsEnabled();
 de::Vector3f Rend_SkyLightColor();
 
 /**
+ * Determine the effective ambient light color for the given @a sector. Usually
+ * one would obtain this info from SectorCluster, however in some situations the
+ * correct light color is *not* that of the cluster (e.g., where map hacks use
+ * mapped planes to reference another sector).
+ */
+de::Vector3f Rend_AmbientLightColor(Sector const &sector);
+
+/**
  * Blend the given light value with the luminous object's color, applying any
  * applicable global modifiers and returns the result.
  *
@@ -255,5 +299,52 @@ void Rend_DivTexCoords(WorldVBuf::Index *dst, de::Vector2f const *src,
 
 void Rend_DivColorCoords(WorldVBuf::Index *dst, de::Vector4f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
+
+void Rend_ProjectDynamics(Surface const &surface, float glowStrength,
+    de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
+    bool noLights, bool noShadows, bool sortLights,
+    uint &lightListIdx, uint &shadowListIdx);
+
+int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters);
+
+void Rend_ReportWallSectionDrawn(Line &line);
+
+/**
+ * Fade the specified @a opacity value to fully transparent the closer the view
+ * player is to the geometry.
+ *
+ * @note When the viewer is close enough we should NOT try to occlude with this
+ * section in the angle clipper, otherwise HOM would occur when directly on top
+ * of the wall (e.g., passing through an opaque waterfall).
+ *
+ * @return  @c true= fading was applied (see above note), otherwise @c false.
+ */
+bool Rend_NearFadeOpacity(de::WallEdgeSection const &leftSection,
+    de::WallEdgeSection const &rightSection, float &opacity);
+
+/**
+ * Determines whether a vissprite must be used according to the config specified.
+ * All masked polys must be sorted (sprites are masked polys), otherwise there
+ * would be artifacts.
+ *
+ * @param p   Geometry configuration.
+ * @param ms  Material configuration.
+ */
+bool Rend_MustDrawAsVissprite(rendworldpoly_params_t const &p, de::MaterialSnapshot const &ms);
+
+void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
+    de::MaterialSnapshot const &ms, float curSectorLightLevel, de::Vector3f curSectorLightColor);
+
+bool Rend_CoveredOpenRange(de::HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
+    bool wroteOpaqueMiddle);
+
+void Rend_LightVertex(de::Vector4f &color, de::Vector3f const &vtx, float lightLevel,
+                      de::Vector3f const &ambientColor);
+
+void Rend_LightVertices(uint num, de::Vector4f *colors, de::Vector3f const *verts,
+                        float lightLevel, de::Vector3f const &ambientColor);
+
+void Rend_LightVertices(WorldVBuf::Index num, WorldVBuf::Index const *indices,
+                        float lightLevel, de::Vector3f const &ambientColor);
 
 #endif // CLIENT_RENDER_MAIN_H

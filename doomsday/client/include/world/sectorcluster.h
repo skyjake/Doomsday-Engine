@@ -321,6 +321,12 @@ public:
      */
     uint biasLastChangeOnFrame() const;
 
+    /**
+     * Prepare all geometry shards for the given @a subspace, which should be
+     * subspace attributed to the cluster.
+     */
+    void prepareShards(ConvexSubspace &subspace);
+
 #endif // __CLIENT__
 
 private:
