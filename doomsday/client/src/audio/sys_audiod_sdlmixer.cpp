@@ -30,6 +30,7 @@
 
 #include <SDL.h>
 #include <SDL_mixer.h>
+#undef main
 
 #include "de_base.h"
 #include "de_console.h"

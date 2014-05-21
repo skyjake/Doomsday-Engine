@@ -147,7 +147,7 @@ dd_bool Joystick_Init()
     }
 
     // Set properties.
-    for(int i = 0; i < sizeof(joyProp) / sizeof(joyProp[0]); ++i)
+    for(uint i = 0; i < sizeof(joyProp) / sizeof(joyProp[0]); ++i)
     {
         hr = didJoy->SetProperty(DIPROP_RANGE, DIPropRange(DIPH_BYOFFSET, joyProp[i], IJOY_AXISMIN, IJOY_AXISMAX));
         if(FAILED(hr))

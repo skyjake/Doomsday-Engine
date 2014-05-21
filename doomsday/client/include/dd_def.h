@@ -38,7 +38,7 @@
 extern "C" {
 #endif
 
-#ifdef WIN32
+#ifdef WIN32_MSVC
 // Disable annoying MSVC warnings.
 // 4761: integral size mismatch in argument
 // 4244: conversion from 'type1' to 'type2', possible loss of data

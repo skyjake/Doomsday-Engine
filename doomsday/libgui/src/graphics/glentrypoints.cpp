@@ -122,7 +122,11 @@ void getAllOpenGLEntryPoints()
     if(haveProcs) return;
 
 #ifdef WIN32
-#  define GET_PROC_EXT(name) *((void**)&name) = wglGetProcAddress(#name)
+#  ifdef MSVC
+#    define GET_PROC_EXT(name) *((void**)&name) = wglGetProcAddress(#name)
+#  else
+#    define GET_PROC_EXT(name) *reinterpret_cast<PROC *>(&name) = wglGetProcAddress(#name)
+#  endif
 #else
 #  define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
 #endif

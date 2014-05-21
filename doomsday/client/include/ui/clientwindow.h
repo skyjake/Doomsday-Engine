@@ -29,6 +29,8 @@
 #include "resource/image.h"
 #include "ui/widgets/gamewidget.h"
 
+#undef main
+
 /**
  * Macro for conveniently accessing the current active window. There is always
  * one active window, so no need to worry about NULLs. The easiest way to get

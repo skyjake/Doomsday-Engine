@@ -18,7 +18,9 @@ SOURCES += \
 win32 {
     RC_FILE = res/example.rc
 
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/example.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/example.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/example.def\"
+
     OTHER_FILES += \
         api/example.def \
         doc/readme.txt \

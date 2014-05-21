@@ -26,3 +26,9 @@ INCLUDEPATH += $$DENG_API_DIR
 else: include(../dep_core.pri)
 
 include(../dep_legacy.pri)
+
+deng_mingw: QMAKE_CFLAGS_WARN_ON += \
+    -Wno-unused-parameter \
+    -Wno-missing-field-initializers \
+    -Wno-missing-braces \
+    -Wno-unused-function

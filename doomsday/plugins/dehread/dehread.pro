@@ -30,7 +30,9 @@ SOURCES += src/dehread.cpp \
     src/info.cpp
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpdehread.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpdehread.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/dpdehread.def\"
+
     OTHER_FILES += api/dpdehread.def
 
     RC_FILE = res/dehread.rc
