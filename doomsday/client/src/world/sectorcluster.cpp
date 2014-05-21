@@ -293,6 +293,7 @@ DENG2_PIMPL(SectorCluster)
     AudioEnvironmentFactors reverb;
     bool needReverbUpdate;
 
+    typedef QMultiMap<de::HEdge *, de::WallEdge *> WallEdges;
     WallEdges wallEdges;
 #endif
 
@@ -2571,8 +2572,8 @@ DENG2_PIMPL(SectorCluster)
         coord_t middleBottomZ  = 0;
         coord_t middleTopZ     = 0;
 
-        WallEdge leftEdge(*hedge, Line::From);// = wallEdge(*hedge, Line::From);
-        WallEdge rightEdge(*hedge, Line::To); // = wallEdge(*hedge, Line::To);
+        WallEdge leftEdge(*hedge, Line::From);// = findWallEdge(*hedge, Line::From);
+        WallEdge rightEdge(*hedge, Line::To); // = findWallEdge(*hedge, Line::To);
 
         prepareWallSectionShards(subspace, leftEdge.wallBottom(), rightEdge.wallBottom());
         prepareWallSectionShards(subspace, leftEdge.wallTop(),    rightEdge.wallTop());
@@ -3378,21 +3379,6 @@ bool SectorCluster::hasSkyMaskedPlane() const
             return true;
     }
     return false;
-}
-
-WallEdge &SectorCluster::wallEdge(HEdge &hedge, int side)
-{
-    if(WallEdge *wedge = d->findWallEdge(hedge, side))
-    {
-        return *wedge;
-    }
-    /// @throw MissingWallEdgeError  No matching WallEdge exists.
-    throw MissingWallEdgeError("SectorCluster::wallEdge", "The referenced WallEdge does not exist");
-}
-
-SectorCluster::WallEdges const &SectorCluster::allWallEdges() const
-{
-    return d->wallEdges;
 }
 
 SectorCluster::LightId SectorCluster::lightSourceId() const
