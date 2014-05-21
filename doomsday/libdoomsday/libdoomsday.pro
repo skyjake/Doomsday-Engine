@@ -128,7 +128,7 @@ macx {
     linkDylibToBundledLiblegacy(libdoomsday)
     linkDylibToBundledLibshell (libdoomsday)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdoomsday.1.dylib libdoomsday.1.dylib")
+    doPostLink("install_name_tool -id @rpath/libdoomsday.1.dylib libdoomsday.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

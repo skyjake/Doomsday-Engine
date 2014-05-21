@@ -218,11 +218,11 @@ OTHER_FILES += \
 macx {
     linkDylibToBundledLibcore(libdeng_gui)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_gui.1.dylib libdeng_gui.1.dylib")
+    doPostLink("install_name_tool -id @rpath/libdeng_gui.1.dylib libdeng_gui.1.dylib")
 
     # Prepare Assimp for deployment.
     doPostLink("cp -fRp $$ASSIMP_DIR/lib/libassimp*dylib .")
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libassimp.3.dylib libassimp.3.dylib")
+    doPostLink("install_name_tool -id @rpath/libassimp.3.dylib libassimp.3.dylib")
     linkBinaryToBundledAssimp(libdeng_gui.1.dylib, ..)
 }
 else {

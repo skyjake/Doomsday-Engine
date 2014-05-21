@@ -44,7 +44,7 @@ win32 {
 }
 else:macx {
     fixPluginInstallId($$TARGET, 1)
-    doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../Frameworks/libfmodex.dylib audio_fmod.bundle/audio_fmod")
+    doPostLink("install_name_tool -change ./libfmodex.dylib @rpath/libfmodex.dylib audio_fmod.bundle/audio_fmod")
 }
 else {
     INSTALLS += target
