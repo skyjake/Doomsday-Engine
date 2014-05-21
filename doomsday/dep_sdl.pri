@@ -67,7 +67,11 @@ else {
         LIBS += -framework SDL2_mixer
     }
     else {
-        LIBS += -lSDL2_mixer
+        # Generic Unix.
+        sdlflags = $$system(pkg-config SDL2_mixer --cflags)
+        QMAKE_CFLAGS += $$sdlflags
+        QMAKE_CXXFLAGS += $$sdlflags
+        LIBS += $$system(pkg-config SDL2_mixer --libs)
     }
 }
 

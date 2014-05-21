@@ -2,7 +2,7 @@ Source: doomsday
 Section: universe/games
 Priority: optional
 Maintainer: Jaakko Keränen <jaakko.keranen@iki.fi>
-Build-Depends: debhelper (>= 8.0.0), python, libsdl1.2-dev, libsdl-mixer1.2-dev, libxrandr-dev, libxxf86vm-dev, libqt4-network (>= 4.7), libqtcore4 (>= 4.7), libqtgui4 (>= 4.7), qt4-qmake (>= 4.7), libqt4-opengl-dev (>= 4.7), zlib1g-dev, libfluidsynth-dev, libncurses5-dev, cmake (>= 2.8)
+Build-Depends: debhelper (>= 8.0.0), python, libsdl2-dev, libsdl2-mixer-dev, libxrandr-dev, libxxf86vm-dev, libqt4-network (>= 4.7), libqtcore4 (>= 4.7), libqtgui4 (>= 4.7), qt4-qmake (>= 4.7), libqt4-opengl-dev (>= 4.7), zlib1g-dev, libfluidsynth-dev, libncurses5-dev, cmake (>= 2.8)
 Standards-Version: 3.9.3
 Homepage: http://dengine.net/
 Vcs-Git: https://github.com/skyjake/Doomsday-Engine.git
@@ -10,7 +10,7 @@ Vcs-Browser: http://github.com/skyjake/Doomsday-Engine
 
 Package: doomsday
 Architecture: ${Arch}
-Depends: ${shlibs:Depends}, ${misc:Depends}, python-wxgtk2.8, libsdl1.2debian, libsdl-mixer1.2
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-wxgtk2.8
 Description: Doom/Heretic/Hexen port with enhanced graphics
  The Doomsday Engine is a portable version of the classic first person 
  shooters DOOM, Heretic, and Hexen. It lets you enjoy the original games
