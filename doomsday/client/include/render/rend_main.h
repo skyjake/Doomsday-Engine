@@ -300,11 +300,6 @@ void Rend_DivTexCoords(WorldVBuf::Index *dst, de::Vector2f const *src,
 void Rend_DivColorCoords(WorldVBuf::Index *dst, de::Vector4f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
-void Rend_ProjectDynamics(Surface const &surface, float glowStrength,
-    de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
-    bool noLights, bool noShadows, bool sortLights,
-    uint &lightListIdx, uint &shadowListIdx);
-
 int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters);
 
 void Rend_ReportWallSectionDrawn(Line &line);
@@ -333,18 +328,19 @@ bool Rend_NearFadeOpacity(de::WallEdgeSection const &leftSection,
 bool Rend_MustDrawAsVissprite(rendworldpoly_params_t const &p, de::MaterialSnapshot const &ms);
 
 void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
-    de::MaterialSnapshot const &ms, float curSectorLightLevel, de::Vector3f curSectorLightColor);
+    de::MaterialSnapshot const &ms, ConvexSubspace &subspace, float curSectorLightLevel,
+    de::Vector3f curSectorLightColor);
 
 bool Rend_CoveredOpenRange(de::HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle);
 
 void Rend_LightVertex(de::Vector4f &color, de::Vector3f const &vtx, float lightLevel,
-                      de::Vector3f const &ambientColor);
+    de::Vector3f const &ambientColor);
 
 void Rend_LightVertices(uint num, de::Vector4f *colors, de::Vector3f const *verts,
-                        float lightLevel, de::Vector3f const &ambientColor);
+    float lightLevel, de::Vector3f const &ambientColor);
 
 void Rend_LightVertices(WorldVBuf::Index num, WorldVBuf::Index const *indices,
-                        float lightLevel, de::Vector3f const &ambientColor);
+    float lightLevel, de::Vector3f const &ambientColor);
 
 #endif // CLIENT_RENDER_MAIN_H

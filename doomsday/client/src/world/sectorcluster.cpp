@@ -105,6 +105,14 @@ namespace internal
         }
     }
 
+    static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
+    {
+        if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
+        // Must be a plane then.
+        Plane const &plane = surface.parent().as<Plane>();
+        return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
+    }
+
     static void quadTexCoords(Vector2f *tc, Vector3f const *posCoords,
         coord_t wallLength, Vector3d const &topLeft)
     {
@@ -1112,6 +1120,47 @@ DENG2_PIMPL(SectorCluster)
         return wallEdges.insert(&hedge, new WallEdge(hedge, side)).value();
     }
 
+    void projectDynamics(ConvexSubspace &subspace, Surface const &surface,
+        float glowStrength, Vector3d const &topLeft, Vector3d const &bottomRight,
+        bool noLights, bool noShadows, bool sortLights,
+        uint &lightListIdx, uint &shadowListIdx)
+    {
+        if(glowStrength >= 1 || levelFullBright)
+            return;
+
+        // lights?
+        if(!noLights)
+        {
+            float const blendFactor = 1;
+
+            if(useDynLights)
+            {
+                Rend_ProjectLumobjs(&subspace, topLeft, bottomRight,
+                                    surface.tangentMatrix(), blendFactor,
+                                    lightmapForSurface(surface), sortLights,
+                                    lightListIdx);
+            }
+
+            if(useGlowOnWalls && surface.parent().type() == DMU_SIDE)
+            {
+                Rend_ProjectPlaneGlows(&subspace, topLeft, bottomRight,
+                                       surface.tangentMatrix(), blendFactor,
+                                       sortLights, lightListIdx);
+            }
+        }
+
+        // Shadows?
+        if(!noShadows && useShadows)
+        {
+            // Glow inversely diminishes shadow strength.
+            float const blendFactor = 1 - glowStrength;
+
+            Rend_ProjectMobjShadows(&subspace, topLeft, bottomRight,
+                                    surface.tangentMatrix(), blendFactor,
+                                    shadowListIdx);
+        }
+    }
+
     /// @param skyCap  @ref skyCapFlags.
     void prepareSkyMaskCapShards(ConvexSubspace &subspace, int skyCap)
     {
@@ -2056,11 +2105,11 @@ DENG2_PIMPL(SectorCluster)
                 parm.glowing *= glowFactor; // Global scale factor.
             }
 
-            Rend_ProjectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
-                                 leftSection.flags().testFlag(WallEdgeSection::NoDynLights),
-                                 leftSection.flags().testFlag(WallEdgeSection::NoDynShadows),
-                                 leftSection.flags().testFlag(WallEdgeSection::SortDynLights),
-                                 parm.lightListIdx, parm.shadowListIdx);
+            projectDynamics(subspace, surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
+                            leftSection.flags().testFlag(WallEdgeSection::NoDynLights),
+                            leftSection.flags().testFlag(WallEdgeSection::NoDynShadows),
+                            leftSection.flags().testFlag(WallEdgeSection::SortDynLights),
+                            parm.lightListIdx, parm.shadowListIdx);
 
             if(twoSidedMiddle)
             {
@@ -2098,7 +2147,7 @@ DENG2_PIMPL(SectorCluster)
         }
         else
         {
-            Rend_PrepareWallSectionVissprite(parm, matSnapshot, curSectorLightLevel, curSectorLightColor);
+            Rend_PrepareWallSectionVissprite(parm, matSnapshot, subspace, curSectorLightLevel, curSectorLightColor);
             wroteOpaque = false; /// We @em had to use a vissprite; clearly not opaque.
         }
 
@@ -2286,9 +2335,9 @@ DENG2_PIMPL(SectorCluster)
                 parm.glowing *= glowFactor; // Global scale factor.
             }
 
-            Rend_ProjectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
-                                 false /*do light*/, false /*do shadow*/, false /*don't sort*/,
-                                 parm.lightListIdx, parm.shadowListIdx);
+            projectDynamics(subspace, surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
+                            false /*do light*/, false /*do shadow*/, false /*don't sort*/,
+                            parm.lightListIdx, parm.shadowListIdx);
         }
 
         /*

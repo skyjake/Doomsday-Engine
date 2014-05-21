@@ -54,11 +54,11 @@
 #include "DrawLists"
 #include "HueCircleVisual"
 #include "LightDecoration"
-#include "Lumobj"
+//#include "Lumobj"
 #include "Shard"
 #include "SurfaceDecorator"
-#include "TriangleStripBuilder"
-#include "WallEdge"
+//#include "TriangleStripBuilder"
+//#include "WallEdge"
 #include "render/rend_main.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
@@ -263,7 +263,7 @@ static void drawVertexes(Map &map);
 
 // Draw state:
 static Vector3d eyeOrigin; // Viewer origin.
-static ConvexSubspace *curSubspace; // Subspace currently being drawn.
+//static ConvexSubspace *curSubspace; // Subspace currently being drawn.
 static bool firstSubspace; // No range checking for the first one.
 
 static void scheduleFullLightGridUpdate()
@@ -1000,14 +1000,15 @@ bool Rend_MustDrawAsVissprite(rendworldpoly_params_t const &p, MaterialSnapshot 
 }
 
 void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
-    MaterialSnapshot const &ms, float curSectorLightLevel, Vector3f curSectorLightColor)
+    MaterialSnapshot const &ms, ConvexSubspace &subspace, float curSectorLightLevel,
+    Vector3f curSectorLightColor)
 {
     DENG2_ASSERT(p.leftSection != 0 && p.rightSection != 0);
     DENG2_ASSERT(!p.leftSection->divisionCount() && !p.rightSection->divisionCount());
     DENG2_ASSERT(!(p.skyMasked || (ms.material().isSkyMasked())));
     DENG2_ASSERT(!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.opacity < 1 || p.blendmode > 0));
 
-    SectorCluster &cluster = curSubspace->cluster();
+    SectorCluster &cluster = subspace.cluster();
 
     duint16 const vertCount = 4;
     Vector3f const posCoords[vertCount] = {
@@ -1147,55 +1148,6 @@ void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
                        *p.materialOrigin, p.blendmode, p.lightListIdx, p.glowing);
 }
 
-static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
-{
-    if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
-    // Must be a plane then.
-    Plane const &plane = surface.parent().as<Plane>();
-    return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
-}
-
-void Rend_ProjectDynamics(Surface const &surface, float glowStrength,
-    Vector3d const &topLeft, Vector3d const &bottomRight,
-    bool noLights, bool noShadows, bool sortLights,
-    uint &lightListIdx, uint &shadowListIdx)
-{
-    if(glowStrength >= 1 || levelFullBright)
-        return;
-
-    // lights?
-    if(!noLights)
-    {
-        float const blendFactor = 1;
-
-        if(useDynLights)
-        {
-            Rend_ProjectLumobjs(curSubspace, topLeft, bottomRight,
-                                surface.tangentMatrix(), blendFactor,
-                                lightmapForSurface(surface), sortLights,
-                                lightListIdx);
-        }
-
-        if(useGlowOnWalls && surface.parent().type() == DMU_SIDE)
-        {
-            Rend_ProjectPlaneGlows(curSubspace, topLeft, bottomRight,
-                                   surface.tangentMatrix(), blendFactor,
-                                   sortLights, lightListIdx);
-        }
-    }
-
-    // Shadows?
-    if(!noShadows && useShadows)
-    {
-        // Glow inversely diminishes shadow strength.
-        float const blendFactor = 1 - glowStrength;
-
-        Rend_ProjectMobjShadows(curSubspace, topLeft, bottomRight,
-                                surface.tangentMatrix(), blendFactor,
-                                shadowListIdx);
-    }
-}
-
 bool Rend_NearFadeOpacity(WallEdgeSection const &leftSection,
     WallEdgeSection const &rightSection, float &opacity)
 {
@@ -1331,22 +1283,22 @@ static void markFrontFacingWalls(HEdge *hedge)
     seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
 
-static void markSubspaceFrontFacingWalls()
+static void markSubspaceFrontFacingWalls(ConvexSubspace &subspace)
 {
-    HEdge *base = curSubspace->poly().hedge();
+    HEdge *base = subspace.poly().hedge();
     HEdge *hedge = base;
     do
     {
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
+    foreach(Mesh *mesh, subspace.extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         markFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
+    foreach(Polyobj *po, subspace.polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         markFrontFacingWalls(hedge);
@@ -1364,14 +1316,14 @@ static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &b
 /**
  * Add angle clipper occlusion ranges for the edges of the current subspace.
  */
-static void occludeSubspace(bool frontFacing)
+static void occludeSubspace(ConvexSubspace &subspace, bool frontFacing)
 {
-    SectorCluster &cluster = curSubspace->cluster();
+    SectorCluster &cluster = subspace.cluster();
 
     if(devNoCulling) return;
     if(P_IsInVoid(viewPlayer)) return;
 
-    HEdge *base = curSubspace->poly().hedge();
+    HEdge *base = subspace.poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -1438,30 +1390,6 @@ static void occludeSubspace(bool frontFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
-static void clipSubspaceLumobjs()
-{
-    foreach(Lumobj *lum, curSubspace->lumobjs())
-    {
-        R_ViewerClipLumobj(lum);
-    }
-}
-
-/**
- * In the situation where a subspace contains both lumobjs and a polyobj, lumobjs
- * must be clipped more carefully. Here we check if the line of sight intersects
- * any of the polyobj half-edges facing the viewer.
- */
-static void clipSubspaceLumobjsBySight()
-{
-    // Any work to do?
-    if(!curSubspace->polyobjCount()) return;
-
-    foreach(Lumobj *lum, curSubspace->lumobjs())
-    {
-        R_ViewerClipLumobjBySight(lum, curSubspace);
-    }
-}
-
 /// If not front facing this is no-op.
 static void clipFrontFacingWalls(HEdge *hedge)
 {
@@ -1478,31 +1406,38 @@ static void clipFrontFacingWalls(HEdge *hedge)
     }
 }
 
-static void clipSubspaceFrontFacingWalls()
+static void clipSubspaceFrontFacingWalls(ConvexSubspace &subspace)
 {
-    HEdge *base = curSubspace->poly().hedge();
+    HEdge *base = subspace.poly().hedge();
     HEdge *hedge = base;
     do
     {
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
+    foreach(Mesh *mesh, subspace.extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         clipFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
+    foreach(Polyobj *po, subspace.polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         clipFrontFacingWalls(hedge);
     }
 }
 
-static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
+static int markGeneratorVisibleWorker(Generator *generator, void * /*context*/)
 {
-    SectorCluster &cluster = curSubspace->cluster();
+    R_ViewerGeneratorMarkVisible(*generator);
+    return 0; // Continue iteration.
+}
+
+static int projectSpriteWorker(mobj_t &mo, void *context)
+{
+    ConvexSubspace *subspace = static_cast<ConvexSubspace *>(context);
+    SectorCluster &cluster   = subspace->cluster();
 
     if(mo.addFrameCount != R_FrameCount())
     {
@@ -1541,57 +1476,57 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
     return false; // Continue iteration.
 }
 
-static void projectSubspaceSprites()
-{
-    // Do not use validCount because other parts of the renderer may change it.
-    if(curSubspace->lastSpriteProjectFrame() == R_FrameCount())
-        return; // Already added.
-
-    R_SubspaceMobjContactIterator(*curSubspace, projectSpriteWorker);
-
-    curSubspace->setLastSpriteProjectFrame(R_FrameCount());
-}
-
-static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
-{
-    R_ViewerGeneratorMarkVisible(*generator);
-    return 0; // Continue iteration.
-}
-
 /**
  * @pre Assumes the subspace is at least partially visible.
  */
-static void drawCurrentSubspace()
+static void drawSubspace(ConvexSubspace &subspace)
 {
-    RenderSystem &rendSys = ClientApp::renderSystem();
-    Sector &sector        = curSubspace->sector();
+    DENG2_ASSERT(subspace.hasCluster());
+
+    // Skip zero-volume subspaces. (Neighbors handle the angle clipper ranges).
+    if(!subspace.cluster().hasWorldVolume())
+        return;
+
+    // Is this subspace visible?
+    if(!firstSubspace && !C_IsPolyVisible(subspace.poly()))
+        return;
 
     // Mark the leaf as visible for this frame.
-    R_ViewerSubspaceMarkVisible(*curSubspace);
+    R_ViewerSubspaceMarkVisible(subspace);
 
-    markSubspaceFrontFacingWalls();
+    markSubspaceFrontFacingWalls(subspace);
 
     // Perform contact spreading for this map region.
-    sector.map().spreadAllContacts(curSubspace->poly().aaBox());
+    Sector &sector = subspace.sector();
+    sector.map().spreadAllContacts(subspace.poly().aaBox());
 
-    Rend_RadioSubspaceEdges(*curSubspace);
+    Rend_RadioSubspaceEdges(subspace);
 
     // Before clip testing lumobjs (for halos), range-occlude the back facing
     // edges. After testing, range-occlude the front facing edges. Done before
     // drawing wall sections so that opening occlusions cut out unnecessary
     // oranges.
+    occludeSubspace(subspace, false /* back facing */);
 
-    occludeSubspace(false /* back facing */);
-    clipSubspaceLumobjs();
-    occludeSubspace(true /* front facing */);
+    // Clip lumobjs in the subspace.
+    foreach(Lumobj *lum, subspace.lumobjs()) R_ViewerClipLumobj(lum);
 
-    clipSubspaceFrontFacingWalls();
-    clipSubspaceLumobjsBySight();
+    occludeSubspace(subspace, true /* front facing */);
+
+    clipSubspaceFrontFacingWalls(subspace);
+
+    // In the situation where a subspace contains both lumobjs and a polyobj,
+    // lumobjs must be clipped more carefully. Here we check if the line of sight
+    // intersects any of the polyobj half-edges facing the viewer.
+    if(subspace.polyobjCount())
+    {
+        foreach(Lumobj *lum, subspace.lumobjs()) R_ViewerClipLumobjBySight(lum, &subspace);
+    }
 
     // Mark generators in the sector visible.
     if(useParticles)
     {
-        sector.map().generatorListIterator(sector.indexInMap(), generatorMarkVisibleWorker);
+        sector.map().generatorListIterator(sector.indexInMap(), markGeneratorVisibleWorker);
     }
 
     // Sprites for this subspace have to be drawn.
@@ -1602,25 +1537,30 @@ static void drawCurrentSubspace()
     //
     // Must be done AFTER the lumobjs have been clipped as this affects the
     // projection of halos.
-    projectSubspaceSprites();
+    if(subspace.lastSpriteProjectFrame() != R_FrameCount())
+    {
+        R_SubspaceMobjContactIterator(subspace, projectSpriteWorker, &subspace);
+        subspace.setLastSpriteProjectFrame(R_FrameCount());
+    }
 
     // Prepare shard geometries.
-    curSubspace->cluster().prepareShards(*curSubspace);
+    subspace.cluster().prepareShards(subspace);
 
-    // Draw all shard geometries for the current subspace.
-    foreach(Shard::Geom const *geom, curSubspace->shards())
+    // Draw all shard geometries.
+    DrawLists &drawLists = ClientApp::renderSystem().drawLists();
+    foreach(Shard::Geom const *geom, subspace.shards())
     foreach(Shard::Geom::Primitive const &prim, geom->primitives)
     {
-        DrawList &list = rendSys.drawLists().find(geom->listSpec);
-        list.write(prim.type, prim.vertCount, prim.indices,
+        drawLists.find(geom->listSpec)
+            .write(prim.type, prim.vertCount, prim.indices,
                    prim.texScale, prim.texOffset,
                    prim.detailTexScale, prim.detailTexOffset,
                    geom->blendmode, geom->modTex, geom->modTex? &geom->modColor : 0,
                    geom->hasDynlights);
     }
 
-    qDeleteAll(curSubspace->shards());
-    curSubspace->shards().clear();
+    qDeleteAll(subspace.shards());
+    subspace.shards().clear();
 }
 
 static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
@@ -1630,7 +1570,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
     while(!bspTree->isLeaf())
     {
         // Descend deeper into the nodes.
-        BspNode &bspNode = bspTree->userData()->as<BspNode>();
+        BspNode const &bspNode = bspTree->userData()->as<BspNode>();
 
         // Decide which side the view point is on.
         int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
@@ -1649,27 +1589,12 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
     }
     // We've arrived at a leaf.
 
-    // Only leafs with a convex subspace geometry have drawable geometries.
-    if(ConvexSubspace *subspace = bspTree->userData()->as<BspLeaf>().subspacePtr())
+    // Only leafs with a subspace have drawable geometries.
+    BspLeaf const &bspLeaf = bspTree->userData()->as<BspLeaf>();
+    if(bspLeaf.hasSubspace())
     {
-        DENG2_ASSERT(subspace->hasCluster());
-
-        // Skip zero-volume subspaces.
-        // (Neighbors handle the angle clipper ranges.)
-        if(!subspace->cluster().hasWorldVolume())
-            return;
-
-        // Is this subspace visible?
-        if(!firstSubspace && !C_IsPolyVisible(subspace->poly()))
-            return;
-
-        // This is now the current subspace.
-        curSubspace = subspace;
-
-        drawCurrentSubspace();
-
-        // This is no longer the first subspace.
-        firstSubspace = false;
+        drawSubspace(bspLeaf.subspace());
+        firstSubspace = false; // No longer the first.
     }
 }
 
@@ -2550,9 +2475,6 @@ void Rend_RenderMap(Map &map)
 
         // We don't want BSP clip checking for the first subspace.
         firstSubspace = true;
-
-        // No current subspace as of yet.
-        curSubspace = 0;
 
         // Draw the world!
         traverseBspTreeAndDrawSubspaces(&map.bspTree());
