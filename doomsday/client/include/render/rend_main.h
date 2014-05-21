@@ -256,7 +256,7 @@ de::Vector3f Rend_SkyLightColor();
  * correct light color is *not* that of the cluster (e.g., where map hacks use
  * mapped planes to reference another sector).
  */
-de::Vector3f Rend_AmbientLightColor(Sector const &sector);
+de::Vector4f Rend_AmbientLightColor(Sector const &sector);
 
 /**
  * Blend the given light value with the luminous object's color, applying any
@@ -290,14 +290,14 @@ TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
 
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
 
-void Rend_DivPosCoords(WorldVBuf::Index *dst, de::Vector3f const *src,
+void Rend_DivPosCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, de::Vector3f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
-void Rend_DivTexCoords(WorldVBuf::Index *dst, de::Vector2f const *src,
+void Rend_DivTexCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, de::Vector2f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge,
     WorldVBuf::TC tc);
 
-void Rend_DivColorCoords(WorldVBuf::Index *dst, de::Vector4f const *src,
+void Rend_DivColorCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, de::Vector4f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
 int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters);
@@ -331,16 +331,13 @@ void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
     de::MaterialSnapshot const &ms, ConvexSubspace &subspace, float curSectorLightLevel,
     de::Vector3f curSectorLightColor);
 
-bool Rend_CoveredOpenRange(de::HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
-    bool wroteOpaqueMiddle);
-
 void Rend_LightVertex(de::Vector4f &color, de::Vector3f const &vtx, float lightLevel,
     de::Vector3f const &ambientColor);
 
 void Rend_LightVertices(uint num, de::Vector4f *colors, de::Vector3f const *verts,
     float lightLevel, de::Vector3f const &ambientColor);
 
-void Rend_LightVertices(WorldVBuf::Index num, WorldVBuf::Index const *indices,
+void Rend_LightVertices(WorldVBuf &vbuf, WorldVBuf::Index num, WorldVBuf::Index const *indices,
     float lightLevel, de::Vector3f const &ambientColor);
 
 #endif // CLIENT_RENDER_MAIN_H

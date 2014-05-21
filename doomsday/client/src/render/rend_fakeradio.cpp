@@ -1023,9 +1023,9 @@ static void drawWallSectionShadow(Vector3f const *origPosCoords,
 
         vbuf.reserveElements(leftFanSize + rightFanSize, indices);
 
-        Rend_DivPosCoords(indices, origPosCoords, leftSection, rightSection);
+        Rend_DivPosCoords(vbuf, indices, origPosCoords, leftSection, rightSection);
 
-        Rend_DivTexCoords(indices, quadCoords, leftSection, rightSection,
+        Rend_DivTexCoords(vbuf, indices, quadCoords, leftSection, rightSection,
                           WorldVBuf::PrimaryTex);
 
         for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)

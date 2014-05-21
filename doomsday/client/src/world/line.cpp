@@ -49,25 +49,21 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(Line::Side::Segment)
 {
-    /// Half-edge attributed to the line segment (not owned).
-    HEdge *hedge;
-
+    HEdge *hedge;            ///< Half-edge attributed to the line segment (not owned).
 #ifdef __CLIENT__
-    /// Distance along the attributed map line at which the half-edge vertex occurs.
-    coord_t lineSideOffset;
-
-    /// Accurate length of the segment.
-    coord_t length;
-
+    coord_t lineSideOffset;  ///< Distance along the attributed map line at which the half-edge vertex occurs.
+    coord_t length;          ///< Accurate length of the segment.
     bool frontFacing;
+    bool openRangeCovered;
 #endif
 
     Instance(HEdge *hedge)
-        : hedge(hedge)
+        : hedge           (hedge)
 #ifdef __CLIENT__
-        , lineSideOffset(0)
-        , length(0)
-        , frontFacing(false)
+        , lineSideOffset  (0)
+        , length          (0)
+        , frontFacing     (false)
+        , openRangeCovered(false)
 #endif
     {}
 };
@@ -113,6 +109,16 @@ bool Line::Side::Segment::isFrontFacing() const
 void Line::Side::Segment::setFrontFacing(bool yes)
 {
     d->frontFacing = yes;
+}
+
+bool Line::Side::Segment::isOpenRangeCovered() const
+{
+    return d->openRangeCovered;
+}
+
+void Line::Side::Segment::setOpenRangeCovered(bool yes)
+{
+    d->openRangeCovered = yes;
 }
 
 #endif // __CLIENT__

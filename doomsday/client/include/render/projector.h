@@ -44,10 +44,10 @@ struct TexProjection
 
     TexProjection(DGLuint texture, de::Vector2f const &topLeft,
                   de::Vector2f const &bottomRight, de::Vector4f const &color)
-        : texture(texture),
-          topLeft(topLeft),
-          bottomRight(bottomRight),
-          color(color)
+        : texture(texture)
+        , topLeft(topLeft)
+        , bottomRight(bottomRight)
+        , color(color)
     {}
 };
 

@@ -86,28 +86,28 @@ DENG2_PIMPL(DrawList)
             //
             // If SequentialIndices:
             // @var base is the first and a contiguous range of indices from base
-            // to base + numIndices is used for vertices.
+            // to base + vertCount is used for vertices.
             //
             // Else:
-            // indices[0] is the first vertex followed by a further numIndices-1
+            // indices[0] is the first vertex followed by a further vertCount-1
             // for the remaining vertices. The indices array is allocated from
             // the same storage region as used for the list itself, therefore it
             // is necessary to update the pointers when the list is resized.
-            WorldVBuf::Index numIndices;
+            WorldVBuf::Index vertCount;
             union {
                 WorldVBuf::Index *indices;
                 WorldVBuf::Index base;
             };
 
-            blendmode_t blendMode;
-            DGLuint  modTexture;
+            blendmode_t blendmode;
+            GLuint  modTex;
             Vector3f modColor;
 
-            Vector2f texOffset;
             Vector2f texScale;
+            Vector2f texOffset;
 
-            Vector2f dtexOffset;
-            Vector2f dtexScale;
+            Vector2f detailTexScale;
+            Vector2f detailTexOffset;
 
             inline WorldVBuf const &vbuf() const {
                 return ClientApp::renderSystem().worldVBuf();
@@ -122,7 +122,7 @@ DENG2_PIMPL(DrawList)
                 {
                     // Use the correct texture and color for the light.
                     glActiveTexture((conditions & SetLightEnv0)? GL_TEXTURE0 : GL_TEXTURE1);
-                    GL_BindTextureUnmanaged(!renderTextures? 0 : modTexture,
+                    GL_BindTextureUnmanaged(!renderTextures? 0 : modTex,
                                             gl::ClampToEdge, gl::ClampToEdge);
 
                     float modColorV[4] = { modColor.x, modColor.y, modColor.z, 0 };
@@ -162,8 +162,8 @@ DENG2_PIMPL(DrawList)
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(dtexOffset.x * dtexScale.x, dtexOffset.y * dtexScale.y, 1);
-                        glScalef(dtexScale.x, dtexScale.y, 1);
+                        glTranslatef(detailTexOffset.x * detailTexScale.x, detailTexOffset.y * detailTexScale.y, 1);
+                        glScalef(detailTexScale.x, detailTexScale.y, 1);
                     }
 
                     if(conditions & SetMatrixDTexture1)
@@ -172,19 +172,19 @@ DENG2_PIMPL(DrawList)
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(dtexOffset.x * dtexScale.x, dtexOffset.y * dtexScale.y, 1);
-                        glScalef(dtexScale.x, dtexScale.y, 1);
+                        glTranslatef(detailTexOffset.x * detailTexScale.x, detailTexOffset.y * detailTexScale.y, 1);
+                        glScalef(detailTexScale.x, detailTexScale.y, 1);
                     }
                 }
 
                 if(conditions & SetBlendMode)
                 {
                     // Primitive-specific blending. Not used in all lists.
-                    GL_BlendMode(blendMode);
+                    GL_BlendMode(blendmode);
                 }
 
                 glBegin(type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
-                for(WorldVBuf::Index i = 0; i < numIndices; ++i)
+                for(WorldVBuf::Index i = 0; i < vertCount; ++i)
                 {
                     WorldVBuf::Type const &vertex = vbuf()[(flags & SequentialIndices)? base + i : indices[i]];
 
@@ -360,9 +360,9 @@ DENG2_PIMPL(DrawList)
     void writeIndices(WorldVBuf::Index vertCount, WorldVBuf::Index const *indices)
     {
         // Note that last may be reallocated during allocateData.
-        last->data.numIndices = vertCount;
+        last->data.vertCount = vertCount;
         // Temporary variable to avoid segfault on Ubuntu linux CMB
-        WorldVBuf::Index *lti = (WorldVBuf::Index *) allocateData(sizeof(*lti) * last->data.numIndices);
+        WorldVBuf::Index *lti = (WorldVBuf::Index *) allocateData(sizeof(*lti) * last->data.vertCount);
         last->data.indices = lti;
 
         std::memcpy(last->data.indices, indices, sizeof(WorldVBuf::Index) * vertCount);
@@ -370,7 +370,7 @@ DENG2_PIMPL(DrawList)
 
     void writeIndicesSequential(WorldVBuf::Index vertCount, WorldVBuf::Index base)
     {
-        last->data.numIndices = vertCount;
+        last->data.vertCount = vertCount;
         last->data.base       = base;
         last->data.flags     |= Element::Data::SequentialIndices;
     }
@@ -383,7 +383,7 @@ DENG2_PIMPL(DrawList)
 
         last->data.type       = primitive;
         last->data.indices    = 0;
-        last->data.numIndices = 0;
+        last->data.vertCount = 0;
         last->data.flags      = 0;
 
         return last;
@@ -839,15 +839,15 @@ DrawList &DrawList::write(gl::Primitive primitive, WorldVBuf::Index vertCount,
     }
 
     // Configure the GL state to be applied when this geometry is drawn later.
-    elem->data.blendMode  = blendmode;
-    elem->data.modTexture = modTexture;
-    elem->data.modColor   = modColor? *modColor : Vector3f();
+    elem->data.blendmode       = blendmode;
+    elem->data.modTex          = modTexture;
+    elem->data.modColor        = modColor? *modColor : Vector3f();
 
-    elem->data.texScale   = texScale;
-    elem->data.texOffset  = texOffset;
+    elem->data.texScale        = texScale;
+    elem->data.texOffset       = texOffset;
 
-    elem->data.dtexScale  = detailTexScale;
-    elem->data.dtexOffset = detailTexOffset;
+    elem->data.detailTexScale  = detailTexScale;
+    elem->data.detailTexOffset = detailTexOffset;
 
     // Do we need to take a copy of the indice sequence?
     WorldVBuf::Index const base = indices[0];

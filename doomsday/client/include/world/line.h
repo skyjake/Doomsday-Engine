@@ -187,6 +187,10 @@ public:
              */
             void setFrontFacing(bool yes = true);
 
+            bool isOpenRangeCovered() const;
+
+            void setOpenRangeCovered(bool yes = true);
+
 #endif // __CLIENT__
 
         private:

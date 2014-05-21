@@ -680,16 +680,16 @@ Vector3f Rend_SkyLightColor()
     return Vector3f(1, 1, 1);
 }
 
-Vector3f Rend_AmbientLightColor(Sector const &sector)
+Vector4f Rend_AmbientLightColor(Sector const &sector)
 {
     if(Rend_SkyLightIsEnabled() && sector.hasSkyMaskedPlane())
     {
-        return Rend_SkyLightColor();
+        return Vector4f(Rend_SkyLightColor(), sector.lightLevel());
     }
 
     // A non-skylight sector (i.e., everything else!)
     // Return the sector's ambient light color.
-    return sector.lightColor();
+    return Vector4f(sector.lightColor(), sector.lightLevel());
 }
 
 Vector3f Rend_LuminousColor(Vector3f const &color, float light)
@@ -741,12 +741,10 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     return 0;
 }
 
-void Rend_DivPosCoords(WorldVBuf::Index *dst, Vector3f const *src,
+void Rend_DivPosCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, Vector3f const *src,
     WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
 {
     DENG2_ASSERT(dst != 0 && src != 0);
-
-    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
 
     int const numR = 3 + rightSection.divisionCount();
     int const numL = 3 + leftSection.divisionCount();
@@ -774,13 +772,11 @@ void Rend_DivPosCoords(WorldVBuf::Index *dst, Vector3f const *src,
     }
 }
 
-void Rend_DivTexCoords(WorldVBuf::Index *dst, Vector2f const *src,
+void Rend_DivTexCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, Vector2f const *src,
     WallEdgeSection const &leftSection, WallEdgeSection const &rightSection,
     WorldVBuf::TC tc)
 {
     DENG2_ASSERT(dst != 0 && src != 0);
-
-    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
 
     int const numR = 3 + rightSection.divisionCount();
     int const numL = 3 + leftSection.divisionCount();
@@ -812,12 +808,10 @@ void Rend_DivTexCoords(WorldVBuf::Index *dst, Vector2f const *src,
     }
 }
 
-void Rend_DivColorCoords(WorldVBuf::Index *dst, Vector4f const *src,
+void Rend_DivColorCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, Vector4f const *src,
     WallEdgeSection const &leftSection, WallEdgeSection const &rightSection)
 {
     DENG2_ASSERT(dst != 0 && src != 0);
-
-    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
 
     int const numR = 3 + rightSection.divisionCount();
     int const numL = 3 + leftSection.divisionCount();
@@ -875,10 +869,9 @@ void Rend_LightVertices(uint num, Vector4f *colors, Vector3f const *verts,
     }
 }
 
-void Rend_LightVertices(WorldVBuf::Index num, WorldVBuf::Index const *indices,
+void Rend_LightVertices(WorldVBuf &vbuf, WorldVBuf::Index num, WorldVBuf::Index const *indices,
                         float lightLevel, Vector3f const &ambientColor)
 {
-    WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
     for(WorldVBuf::Index i = 0; i < num; ++i)
     {
         WorldVBuf::Type &vertex = vbuf[indices[i]];
@@ -1192,89 +1185,6 @@ bool Rend_NearFadeOpacity(WallEdgeSection const &leftSection,
     return true;
 }
 
-bool Rend_CoveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
-    bool wroteOpaqueMiddle)
-{
-    LineSide const &front = hedge.mapElementAs<LineSideSegment>().lineSide();
-
-    if(front.considerOneSided())
-    {
-        return wroteOpaqueMiddle;
-    }
-
-    /// @todo fixme: This additional test should not be necessary. For the obove
-    /// test to fail and this to pass means that the geometry produced by the BSP
-    /// builder is not correct (see: eternall.wad MAP10; note mapping errors).
-    if(!hedge.twin().hasFace())
-    {
-        return wroteOpaqueMiddle;
-    }
-
-    SectorCluster const &cluster     = hedge.face().mapElementAs<ConvexSubspace>().cluster();
-    SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
-
-    coord_t const ffloor   = cluster.visFloor().heightSmoothed();
-    coord_t const fceil    = cluster.visCeiling().heightSmoothed();
-    coord_t const bfloor   = backCluster.visFloor().heightSmoothed();
-    coord_t const bceil    = backCluster.visCeiling().heightSmoothed();
-
-    bool middleCoversOpening = false;
-    if(wroteOpaqueMiddle)
-    {
-        coord_t xbottom = de::max(bfloor, ffloor);
-        coord_t xtop    = de::min(bceil,  fceil);
-
-        Surface const &middle = front.middle();
-        xbottom += middle.materialOriginSmoothed().y;
-        xtop    += middle.materialOriginSmoothed().y;
-
-        middleCoversOpening = (middleTopZ >= xtop &&
-                               middleBottomZ <= xbottom);
-    }
-
-    if(wroteOpaqueMiddle && middleCoversOpening)
-        return true;
-
-    if(   (bceil <= ffloor &&
-               (front.top().hasMaterial()    || front.middle().hasMaterial()))
-       || (bfloor >= fceil &&
-               (front.bottom().hasMaterial() || front.middle().hasMaterial())))
-    {
-        Surface const &ffloorSurface = cluster.visFloor().surface();
-        Surface const &fceilSurface  = cluster.visCeiling().surface();
-        Surface const &bfloorSurface = backCluster.visFloor().surface();
-        Surface const &bceilSurface  = backCluster.visCeiling().surface();
-
-        // A closed gap?
-        if(de::fequal(fceil, bfloor))
-        {
-            return (bceil <= bfloor) ||
-                   !(fceilSurface.hasSkyMaskedMaterial() &&
-                     bceilSurface.hasSkyMaskedMaterial());
-        }
-
-        if(de::fequal(ffloor, bceil))
-        {
-            return (bfloor >= bceil) ||
-                   !(ffloorSurface.hasSkyMaskedMaterial() &&
-                     bfloorSurface.hasSkyMaskedMaterial());
-        }
-
-        return true;
-    }
-
-    /// @todo Is this still necessary?
-    if(bceil <= bfloor ||
-       (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil &&
-        front.top().hasMaterial() && front.bottom().hasMaterial()))
-    {
-        // A zero height back segment
-        return true;
-    }
-
-    return false;
-}
-
 static void markFrontFacingWalls(HEdge *hedge)
 {
     if(!hedge || !hedge->hasMapElement()) return;
@@ -1558,6 +1468,64 @@ static void drawSubspace(ConvexSubspace &subspace)
 
     qDeleteAll(subspace.shards());
     subspace.shards().clear();
+
+    // When the viewer is not in the void, we can angle-occlude the range defined by
+    // the XY origins of the halfedge if the opening between floor and ceiling has
+    // completely covered by opaque geometry.
+    HEdge *base = subspace.poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        if(hedge->hasMapElement())
+        {
+            LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+            if(seg.isFrontFacing() && seg.lineSide().hasSections())
+            {
+                Rend_ReportWallSectionDrawn(seg.line());
+            }
+
+            if(!P_IsInVoid(viewPlayer) && seg.isOpenRangeCovered())
+            {
+                C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
+            }
+        }
+    } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, subspace.extraMeshes())
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        if(hedge->hasMapElement())
+        {
+            LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+            if(seg.isFrontFacing() && seg.lineSide().hasSections())
+            {
+                Rend_ReportWallSectionDrawn(seg.line());
+            }
+
+            if(!P_IsInVoid(viewPlayer) && seg.isOpenRangeCovered())
+            {
+                C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
+            }
+        }
+    }
+
+    foreach(Polyobj *po, subspace.polyobjs())
+    foreach(HEdge *hedge, po->mesh().hedges())
+    {
+        if(hedge->hasMapElement())
+        {
+            LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+            if(seg.isFrontFacing() && seg.lineSide().hasSections())
+            {
+                Rend_ReportWallSectionDrawn(seg.line());
+            }
+
+            if(!P_IsInVoid(viewPlayer) && hedge->mapElementAs<LineSideSegment>().isOpenRangeCovered())
+            {
+                C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
+            }
+        }
+    }
 }
 
 static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)

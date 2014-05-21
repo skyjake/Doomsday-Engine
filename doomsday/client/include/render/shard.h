@@ -45,7 +45,8 @@ public:
         GLuint modTex;
         de::Vector3f modColor;
         bool hasDynlights;
-        WorldVBuf::Indices indices;
+        typedef WorldVBuf::Indices Indices;
+        Indices indices;
         struct Primitive
         {
             de::gl::Primitive type;
