@@ -35,14 +35,13 @@
 #include "world/p_players.h"
 
 #ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
 #  include "render/rend_main.h"
 #  include "render/billboard.h"
 #  include "render/projector.h"
 #  include "render/r_main.h"
 #  include "render/rend_clip.h"       /// @todo remove me
-#  include "render/rend_dynlight.h"
 #  include "render/rend_fakeradio.h"
-#  include "render/rend_shadow.h"
 #  include "BiasIllum"
 #  include "BiasTracker"
 #  include "MaterialSnapshot"
@@ -1120,6 +1119,395 @@ DENG2_PIMPL(SectorCluster)
         return wallEdges.insert(&hedge, new WallEdge(hedge, side)).value();
     }
 
+    struct preparedynlightshards_params_t
+    {
+        Instance *inst;
+        ConvexSubspace *subspace;
+        uint lastIdx;
+        WorldVBuf::Index vertCount;
+        union {
+            de::Vector3f const *posCoords;
+            WorldVBuf::Index const *indices;
+        };
+        Vector3d const *topLeft;
+        Vector3d const *bottomRight;
+
+        // Wall section edges:
+        // Both are provided or none at all. If present then this is a wall geometry.
+        WallEdgeSection const *leftSection;
+        WallEdgeSection const *rightSection;
+    };
+
+    void prepareDynlightShards(TexProjection const &tp, preparedynlightshards_params_t &p)
+    {
+        WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
+
+        // If multitexturing is in use we skip the first.
+        if(!(Rend_IsMTexLights() && p.lastIdx == 0))
+        {
+            DrawListSpec listSpec;
+            listSpec.group = LightGeom;
+            listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
+
+            if(p.leftSection) // A wall.
+            {
+                WallEdgeSection const &leftSection  = *p.leftSection;
+                WallEdgeSection const &rightSection = *p.rightSection;
+                bool const mustSubdivide            = (leftSection.divisionCount() || rightSection.divisionCount());
+
+                if(mustSubdivide) // Draw as two triangle fans.
+                {
+                    WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
+                    WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
+
+                    Vector2f const quadCoords[4] = {
+                        Vector2f(tp.topLeft.x,     tp.bottomRight.y),
+                        Vector2f(tp.topLeft.x,     tp.topLeft.y    ),
+                        Vector2f(tp.bottomRight.x, tp.bottomRight.y),
+                        Vector2f(tp.bottomRight.x, tp.topLeft.y    )
+                    };
+
+                    Shard::Geom *shard = new Shard::Geom(listSpec);
+                    p.subspace->shards() << shard;
+
+                    shard->indices.resize(leftFanSize + rightFanSize);
+
+                    vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
+                    Rend_DivPosCoords(shard->indices.data(), p.posCoords, leftSection, rightSection);
+                    Rend_DivTexCoords(shard->indices.data(), quadCoords, leftSection, rightSection,
+                                      WorldVBuf::PrimaryTex);
+
+                    for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
+                    {
+                        WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+                        //vertex.pos  = vbuf[p.indices[i]].pos;
+                        vertex.rgba = tp.color;
+                    }
+
+                    Shard::Geom::Primitive leftFan;
+                    leftFan.type             = gl::TriangleFan;
+                    leftFan.vertCount        = leftFanSize;
+                    leftFan.indices          = shard->indices.data();
+                    leftFan.texScale         = Vector2f(1, 1);
+                    leftFan.texOffset        = Vector2f(0, 0);
+                    leftFan.detailTexScale   = Vector2f(1, 1);
+                    leftFan.detailTexOffset  = Vector2f(0, 0);
+                    shard->primitives.append(leftFan);
+
+                    Shard::Geom::Primitive rightFan;
+                    rightFan.type            = gl::TriangleFan;
+                    rightFan.vertCount       = rightFanSize;
+                    rightFan.indices         = shard->indices.data() + leftFan.vertCount;
+                    rightFan.texScale        = Vector2f(1, 1);
+                    rightFan.texOffset       = Vector2f(0, 0);
+                    rightFan.detailTexScale  = Vector2f(1, 1);
+                    rightFan.detailTexOffset = Vector2f(0, 0);
+                    shard->primitives.append(rightFan);
+                }
+                else // Draw as one quad.
+                {
+                    WorldVBuf::Index vertCount = p.vertCount;
+
+                    Shard::Geom *shard = new Shard::Geom(listSpec);
+                    p.subspace->shards() << shard;
+
+                    shard->indices.resize(vertCount);
+
+                    vbuf.reserveElements(vertCount, shard->indices);
+                    for(int i = 0; i < vertCount; ++i)
+                    {
+                        WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+                        vertex.pos  = p.posCoords[i];// vbuf[p.indices[i]].pos;
+                        vertex.rgba = tp.color;
+                    }
+
+                    vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].x =
+                    vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].x = tp.topLeft.x;
+
+                    vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].y =
+                    vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].y = tp.topLeft.y;
+
+                    vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].x =
+                    vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].x = tp.bottomRight.x;
+
+                    vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
+                    vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = tp.bottomRight.y;
+
+                    Shard::Geom::Primitive prim;
+                    prim.type            = gl::TriangleStrip;
+                    prim.vertCount       = vertCount;
+                    prim.indices         = shard->indices.data();
+                    prim.texScale        = Vector2f(1, 1);
+                    prim.texOffset       = Vector2f(0, 0);
+                    prim.detailTexScale  = Vector2f(1, 1);
+                    prim.detailTexOffset = Vector2f(0, 0);
+                    shard->primitives.append(prim);
+                }
+            }
+            else // A flat.
+            {
+                Vector2f const pDimensions = p.bottomRight->xy() - p.topLeft->xy();
+                WorldVBuf::Index vertCount = p.vertCount;
+
+                Shard::Geom *shard = new Shard::Geom(listSpec);
+                p.subspace->shards() << shard;
+
+                shard->indices.resize(vertCount);
+
+                vbuf.reserveElements(vertCount, shard->indices);
+                for(WorldVBuf::Index i = 0; i < vertCount; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+
+                    vertex.pos  = vbuf[p.indices[i]].pos;
+                    vertex.rgba = tp.color;
+
+                    vertex.texCoord[WorldVBuf::PrimaryTex] =
+                        Vector2f(((p.bottomRight->x - vertex.pos.x) / pDimensions.x * tp.topLeft.x) +
+                                 ((vertex.pos.x     - p.topLeft->x) / pDimensions.x * tp.bottomRight.x)
+                                 ,
+                                 ((p.bottomRight->y - vertex.pos.y) / pDimensions.y * tp.topLeft.y) +
+                                 ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * tp.bottomRight.y));
+                }
+
+                Shard::Geom::Primitive prim;
+                prim.type            = gl::TriangleFan;
+                prim.vertCount       = vertCount;
+                prim.indices         = shard->indices.data();
+                prim.texScale        = Vector2f(1, 1);
+                prim.texOffset       = Vector2f(0, 0);
+                prim.detailTexScale  = Vector2f(1, 1);
+                prim.detailTexOffset = Vector2f(0, 0);
+                shard->primitives.append(prim);
+            }
+        }
+        p.lastIdx++;
+    }
+
+    /// Generates a new primitive for each light projection.
+    static int prepareDynlightShardsWorker(TexProjection const *tp, void *context)
+    {
+        preparedynlightshards_params_t &parm = *static_cast<preparedynlightshards_params_t *>(context);
+        parm.inst->prepareDynlightShards(*tp, parm);
+        return 0; // Continue iteration.
+    }
+
+    /**
+     * Render all dynlights in projection list @a listIdx according to @a parm
+     * writing them to the renderering lists for the current frame.
+     *
+     * @note If multi-texturing is being used for the first light; it is skipped.
+     *
+     * @return  Number of lights rendered.
+     */
+    uint prepareAllDynlightShards(uint listIdx, preparedynlightshards_params_t &parm)
+    {
+        uint numRendered = parm.lastIdx;
+
+        Rend_IterateProjectionList(listIdx, prepareDynlightShardsWorker, (void *)&parm);
+
+        numRendered = parm.lastIdx - numRendered;
+        if(Rend_IsMTexLights())
+        {
+            numRendered -= 1;
+        }
+        return numRendered;
+    }
+
+    struct preparealldynshadowshards_params_t
+    {
+        ConvexSubspace *subspace;
+        uint lastIdx;
+        WorldVBuf::Index vertCount;
+        union {
+            Vector3f const *posCoords;
+            WorldVBuf::Index const *indices;
+        };
+        Vector3d const *topLeft;
+        Vector3d const *bottomRight;
+
+        // Wall section edges:
+        // Both are provided or none at all. If present then this is a wall geometry.
+        WallEdgeSection const *leftSection;
+        WallEdgeSection const *rightSection;
+    };
+
+    /**
+     * Generates a new primitive for the shadow projection.
+     *
+     * @param drawListSpec  Draw list specififcation for the projected geometry.
+     * @param tp            The projected texture.
+     * @param parm          Shadow drawer parameters.
+     */
+    void prepareDynshadowShards(DrawListSpec &drawListSpec, TexProjection const &tp,
+        preparealldynshadowshards_params_t &p)
+    {
+        WorldVBuf &vbuf = ClientApp::renderSystem().worldVBuf();
+
+        if(p.leftSection) // A wall.
+        {
+            WallEdgeSection const &leftSection  = *p.leftSection;
+            WallEdgeSection const &rightSection = *p.rightSection;
+            bool const mustSubdivide            = (leftSection.divisionCount() || rightSection.divisionCount());
+
+            if(mustSubdivide) // Draw as two triangle fans.
+            {
+                WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
+                WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
+
+                Vector2f quadCoords[4] = {
+                    Vector2f(tp.topLeft.x,     tp.bottomRight.y),
+                    Vector2f(tp.topLeft.x,     tp.topLeft.y    ),
+                    Vector2f(tp.bottomRight.x, tp.bottomRight.y),
+                    Vector2f(tp.bottomRight.x, tp.topLeft.y    )
+                };
+
+                Shard::Geom *shard = new Shard::Geom(drawListSpec);
+                shard->indices.resize(leftFanSize + rightFanSize);
+
+                vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
+                Rend_DivPosCoords(shard->indices.data(), p.posCoords, leftSection, rightSection);
+                Rend_DivTexCoords(shard->indices.data(), quadCoords, leftSection, rightSection,
+                                  WorldVBuf::PrimaryTex);
+
+                for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+                    //vertex.pos  = vbuf[p.indices[i]].pos;
+                    vertex.rgba = tp.color;
+                }
+
+                Shard::Geom::Primitive leftFan;
+                leftFan.type             = gl::TriangleFan;
+                leftFan.vertCount        = leftFanSize;
+                leftFan.indices          = shard->indices.data();
+                leftFan.texScale         = Vector2f(1, 1);
+                leftFan.texOffset        = Vector2f(0, 0);
+                leftFan.detailTexScale   = Vector2f(1, 1);
+                leftFan.detailTexOffset  = Vector2f(0, 0);
+                shard->primitives.append(leftFan);
+
+                Shard::Geom::Primitive rightFan;
+                rightFan.type            = gl::TriangleFan;
+                rightFan.vertCount       = rightFanSize;
+                rightFan.indices         = shard->indices.data() + leftFan.vertCount;
+                rightFan.texScale        = Vector2f(1, 1);
+                rightFan.texOffset       = Vector2f(0, 0);
+                rightFan.detailTexScale  = Vector2f(1, 1);
+                rightFan.detailTexOffset = Vector2f(0, 0);
+                shard->primitives.append(rightFan);
+
+                p.subspace->shards() << shard;
+            }
+            else
+            {
+                WorldVBuf::Index vertCount = p.vertCount;
+
+                Shard::Geom *shard = new Shard::Geom(drawListSpec);
+                shard->indices.resize(vertCount);
+
+                vbuf.reserveElements(vertCount, shard->indices);
+                for(WorldVBuf::Index i = 0; i < vertCount; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+                    vertex.pos  = p.posCoords[i];//vbuf[p.indices[i]].pos;
+                    vertex.rgba = tp.color;
+                }
+
+                vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].x =
+                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].x = tp.topLeft.x;
+
+                vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].y =
+                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].y = tp.topLeft.y;
+
+                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].x =
+                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].x = tp.bottomRight.x;
+
+                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
+                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = tp.bottomRight.y;
+
+                Shard::Geom::Primitive prim;
+                prim.type            = gl::TriangleStrip;
+                prim.vertCount       = vertCount;
+                prim.indices         = shard->indices.data();
+                prim.texScale        = Vector2f(1, 1);
+                prim.texOffset       = Vector2f(0, 0);
+                prim.detailTexScale  = Vector2f(1, 1);
+                prim.detailTexOffset = Vector2f(0, 0);
+                shard->primitives.append(prim);
+
+                p.subspace->shards() << shard;
+            }
+        }
+        else // A flat.
+        {
+            Vector2f const pDimensions = p.bottomRight->xy() - p.topLeft->xy();
+
+            WorldVBuf::Index vertCount = p.vertCount;
+
+            Shard::Geom *shard = new Shard::Geom(drawListSpec);
+            shard->indices.resize(vertCount);
+
+            vbuf.reserveElements(vertCount, shard->indices);
+            for(WorldVBuf::Index i = 0; i < vertCount; ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+
+                vertex.pos  = vbuf[p.indices[i]].pos;
+                vertex.rgba =    tp.color;
+
+                vertex.texCoord[WorldVBuf::PrimaryTex] =
+                    Vector2f(((p.bottomRight->x - vertex.pos.x) / pDimensions.x * tp.topLeft.x) +
+                             ((vertex.pos.x     - p.topLeft->x) / pDimensions.x * tp.bottomRight.x)
+                             ,
+                             ((p.bottomRight->y - vertex.pos.y) / pDimensions.y * tp.topLeft.y) +
+                             ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * tp.bottomRight.y));
+            }
+
+            Shard::Geom::Primitive prim;
+            prim.type            = gl::TriangleFan;
+            prim.vertCount       = vertCount;
+            prim.indices         = shard->indices.data();
+            prim.texScale        = Vector2f(1, 1);
+            prim.texOffset       = Vector2f(0, 0);
+            prim.detailTexScale  = Vector2f(1, 1);
+            prim.detailTexOffset = Vector2f(0, 0);
+            shard->primitives.append(prim);
+
+            p.subspace->shards() << shard;
+        }
+    }
+
+    struct drawshadowworker_params_t
+    {
+        Instance *inst;
+        DrawListSpec drawListSpec;
+        preparealldynshadowshards_params_t *drawShadowParms;
+    };
+
+    static int prepareDynshadowShardsWorker(TexProjection const *tp, void *context)
+    {
+        drawshadowworker_params_t &parm = *static_cast<drawshadowworker_params_t *>(context);
+        parm.inst->prepareDynshadowShards(parm.drawListSpec, *tp, *parm.drawShadowParms);
+        return 0; // Continue iteration.
+    }
+
+    /**
+     * Render all shadows in projection list @a listIdx according to @a parm
+     * writing them to the renderering lists for the current frame.
+     */
+    void prepareAllDynshadowShards(uint listIdx, preparealldynshadowshards_params_t &p)
+    {
+        // Write shadows to the render lists.
+        drawshadowworker_params_t parm;
+        parm.inst                              = this;
+        parm.drawListSpec.group                = ShadowGeom;
+        parm.drawListSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge);
+        parm.drawShadowParms = &p;
+
+        Rend_IterateProjectionList(listIdx, prepareDynshadowShardsWorker, &parm);
+    }
+
     void projectDynamics(ConvexSubspace &subspace, Surface const &surface,
         float glowStrength, Vector3d const &topLeft, Vector3d const &bottomRight,
         bool noLights, bool noShadows, bool sortLights,
@@ -1688,8 +2076,9 @@ DENG2_PIMPL(SectorCluster)
         if(useLights)
         {
             // Render all lights projected onto this surface.
-            renderlightprojectionparams_t parm; de::zap(parm);
+            preparedynlightshards_params_t parm; de::zap(parm);
 
+            parm.inst         = this;
             parm.subspace     = &subspace;
             parm.vertCount    = 4;
             parm.posCoords    = posCoords;
@@ -1698,13 +2087,13 @@ DENG2_PIMPL(SectorCluster)
             parm.leftSection  = p.leftSection;
             parm.rightSection = p.rightSection;
 
-            hasDynlights = (0 != Rend_DrawProjectedLights(p.lightListIdx, parm));
+            hasDynlights = (0 != prepareAllDynlightShards(p.lightListIdx, parm));
         }
 
         if(useShadows)
         {
             // Render all shadows projected onto this surface.
-            rendershadowprojectionparams_t parm; de::zap(parm);
+            preparealldynshadowshards_params_t parm; de::zap(parm);
 
             parm.subspace     = &subspace;
             parm.vertCount    = 4;
@@ -1714,7 +2103,7 @@ DENG2_PIMPL(SectorCluster)
             parm.leftSection  = p.leftSection;
             parm.rightSection = p.rightSection;
 
-            Rend_DrawProjectedShadows(p.shadowListIdx, parm);
+            prepareAllDynshadowShards(p.shadowListIdx, parm);
         }
 
         if(!p.skyMasked)
@@ -2628,7 +3017,7 @@ DENG2_PIMPL(SectorCluster)
         if(useLights)
         {
             // Render all lights projected onto this surface.
-            renderlightprojectionparams_t plparm; de::zap(plparm);
+            preparedynlightshards_params_t plparm; de::zap(plparm);
 
             plparm.subspace    = &subspace;
             plparm.vertCount   = vertCount;
@@ -2636,13 +3025,13 @@ DENG2_PIMPL(SectorCluster)
             plparm.topLeft     = parm.topLeft;
             plparm.bottomRight = parm.bottomRight;
 
-            hasDynlights = (0 != Rend_DrawProjectedLights(parm.lightListIdx, plparm));
+            hasDynlights = (0 != prepareAllDynlightShards(parm.lightListIdx, plparm));
         }
 
         if(useShadows)
         {
             // Render all shadows projected onto this surface.
-            rendershadowprojectionparams_t psparm; de::zap(psparm);
+            preparealldynshadowshards_params_t psparm; de::zap(psparm);
 
             psparm.subspace    = &subspace;
             psparm.vertCount   = vertCount;
@@ -2650,7 +3039,7 @@ DENG2_PIMPL(SectorCluster)
             psparm.topLeft     = parm.topLeft;
             psparm.bottomRight = parm.bottomRight;
 
-            Rend_DrawProjectedShadows(parm.shadowListIdx, psparm);
+            prepareAllDynshadowShards(parm.shadowListIdx, psparm);
         }
 
         if(!parm.skyMasked)
@@ -3196,6 +3585,8 @@ uint SectorCluster::biasLastChangeOnFrame() const
 
 void SectorCluster::prepareShards(ConvexSubspace &subspace)
 {
+    DENG2_ASSERT(subspace.clusterPtr() == this);
+
     Vector4f const color = lightSourceColorfIntensity();
     curSectorLightColor = color.toVector3f();
     curSectorLightLevel = color.w;

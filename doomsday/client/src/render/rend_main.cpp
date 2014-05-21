@@ -1476,9 +1476,6 @@ static int projectSpriteWorker(mobj_t &mo, void *context)
     return false; // Continue iteration.
 }
 
-/**
- * @pre Assumes the subspace is at least partially visible.
- */
 static void drawSubspace(ConvexSubspace &subspace)
 {
     DENG2_ASSERT(subspace.hasCluster());
@@ -1572,7 +1569,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
         // Descend deeper into the nodes.
         BspNode const &bspNode = bspTree->userData()->as<BspNode>();
 
-        // Decide which side the view point is on.
+        // On which side is the viewer?
         int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.

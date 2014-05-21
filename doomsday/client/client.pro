@@ -290,14 +290,12 @@ DENG_HEADERS += \
     include/render/r_main.h \
     include/render/r_things.h \
     include/render/rend_clip.h \
-    include/render/rend_dynlight.h \
     include/render/rend_fakeradio.h \
     include/render/rend_font.h \
     include/render/rend_halo.h \
     include/render/rend_main.h \
     include/render/rend_model.h \
     include/render/rend_particle.h \
-    include/render/rend_shadow.h \
     include/render/rendersystem.h \
     include/render/shadowedge.h \
     include/render/shard.h \
@@ -602,14 +600,12 @@ SOURCES += \
     src/render/r_main.cpp \
     src/render/r_things.cpp \
     src/render/rend_clip.cpp \
-    src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.cpp \
     src/render/rend_halo.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
     src/render/rend_particle.cpp \
-    src/render/rend_shadow.cpp \
     src/render/rendersystem.cpp \
     src/render/shadowedge.cpp \
     src/render/shard.cpp \
