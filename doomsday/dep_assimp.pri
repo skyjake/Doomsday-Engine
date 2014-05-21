@@ -71,6 +71,6 @@ macx {
         # 1: binary
         # 2: relative path to Frameworks
         doPostLink(install_name_tool -change "$$ASSIMP_DIR/lib/libassimp.3.dylib" \
-                   "@executable_path/$${2}/Frameworks/libassimp.3.dylib" "$$1")
+                   "@rpath/libassimp.3.dylib" "$$1")
     }
 }

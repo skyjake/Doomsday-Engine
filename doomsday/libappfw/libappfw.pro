@@ -250,7 +250,7 @@ SOURCES += \
 macx {
     linkDylibToBundledLibcore(libdeng_appfw)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_appfw.1.dylib libdeng_appfw.1.dylib")
+    doPostLink("install_name_tool -id @rpath/libdeng_appfw.1.dylib libdeng_appfw.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
