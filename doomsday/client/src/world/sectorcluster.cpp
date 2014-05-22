@@ -1945,6 +1945,16 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
+    /**
+     * Prepare all FakeRadio Shards for the specified wall section.
+     *
+     * @param leftSection        Geometry for the left wall section edge.
+     * @param rightSection       Geometry for the right wall section edge.
+     * @param ambientLightColor  Ambient light values for the wall section. This is
+     *                           @em not automatically taken from the sector on the
+     *                           front side of the wall as various map-hacks dictate
+     *                           otherwise.
+     */
     void prepareAllWallFakeradioShards(ConvexSubspace &subspace,
         WallEdgeSection const &leftSection, WallEdgeSection const &rightSection,
         Vector4f const &ambientLightColor)
@@ -1992,7 +2002,7 @@ DENG2_PIMPL(SectorCluster)
         coord_t const bFloor = (backCluster? backCluster->visFloor().heightSmoothed() : 0);
         coord_t const bCeil  = (backCluster? backCluster->visCeiling().heightSmoothed() : 0);
 
-        Vector3f posCoords[4] = {
+        Vector3f const posCoords[4] = {
             Vector3f( leftSection.bottom().origin()),
             Vector3f( leftSection.top   ().origin()),
             Vector3f(rightSection.bottom().origin()),

@@ -955,20 +955,57 @@ void rendershadowseg_params_t::setupForSide(float shadowSize, float shadowDark,
     }
 }
 
-/**
- * Construct and write a new shadow polygon to the rendering lists.
- */
-static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &rightEdge,
-    bool isFloor, float shadowDark)
+static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)
 {
+    DENG_ASSERT(side.hasSections());
+    DENG_ASSERT(!side.line().definesPolyobj());
+
+    RenderSystem &rendSys = ClientApp::renderSystem();
+    WorldVBuf &vbuf       = rendSys.worldVBuf();
+
+    if(!(shadowDark > .0001)) return;
+
+    if(!side.leftHEdge()) return;
+
+    HEdge const *leftHEdge = side.leftHEdge();
+    Plane const &plane     = side.sector().plane(planeIndex);
+    Surface const *suf     = &plane.surface();
+
+    // Surfaces with a missing material don't shadow.
+    if(!suf->hasMaterial()) return;
+
+    // Missing, glowing or sky-masked materials are exempted.
+    Material const &material = suf->material();
+    if(material.isSkyMasked() || material.hasGlow())
+        return;
+
+    // If the sector containing the shadowing line section is fully closed (i.e., volume
+    // is not positive) then skip shadow drawing entirely.
+    /// @todo Encapsulate this logic in ShadowEdge -ds
+    if(!leftHEdge->hasFace() || !leftHEdge->face().hasMapElement())
+        return;
+
+    if(!leftHEdge->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
+        return;
+
+    static ShadowEdge leftEdge; // this function is called often; keep these around
+    static ShadowEdge rightEdge;
+
+    leftEdge.init(*leftHEdge, Line::From);
+    rightEdge.init(*leftHEdge, Line::To);
+
+    leftEdge.prepare(planeIndex);
+    rightEdge.prepare(planeIndex);
+
+    if(leftEdge.sectorOpenness() >= 1 && rightEdge.sectorOpenness() >= 1) return;
+
+    bool const isFloor = suf->normal()[VZ] > 0;
+
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
     static Vector3f const black(0, 0, 0);
     static Vector3f const white(1, 1, 1);
-
-    RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.worldVBuf();
 
     float leftOuterAlpha  = de::min(shadowDark * (1 - leftEdge.sectorOpenness()), 1.f);
     if(leftEdge.openness() < 1)
@@ -1010,50 +1047,6 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
                 .write(gl::TriangleFan, vertCount, indices);
 
     rendSys.indicePool().release(indices);
-}
-
-static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)
-{
-    DENG_ASSERT(side.hasSections());
-    DENG_ASSERT(!side.line().definesPolyobj());
-
-    if(!(shadowDark > .0001)) return;
-
-    if(!side.leftHEdge()) return;
-
-    HEdge const *leftHEdge = side.leftHEdge();
-    Plane const &plane     = side.sector().plane(planeIndex);
-    Surface const *suf     = &plane.surface();
-
-    // Surfaces with a missing material don't shadow.
-    if(!suf->hasMaterial()) return;
-
-    // Missing, glowing or sky-masked materials are exempted.
-    Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlow())
-        return;
-
-    // If the sector containing the shadowing line section is fully closed (i.e., volume
-    // is not positive) then skip shadow drawing entirely.
-    /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!leftHEdge->hasFace() || !leftHEdge->face().hasMapElement())
-        return;
-
-    if(!leftHEdge->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
-        return;
-
-    static ShadowEdge leftEdge; // this function is called often; keep these around
-    static ShadowEdge rightEdge;
-
-    leftEdge.init(*leftHEdge, Line::From);
-    rightEdge.init(*leftHEdge, Line::To);
-
-    leftEdge.prepare(planeIndex);
-    rightEdge.prepare(planeIndex);
-
-    if(leftEdge.sectorOpenness() >= 1 && rightEdge.sectorOpenness() >= 1) return;
-
-    writeShadowSection2(leftEdge, rightEdge, suf->normal()[VZ] > 0, shadowDark);
 }
 
 /**

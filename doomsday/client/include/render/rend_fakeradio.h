@@ -132,23 +132,6 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx);
 float Rend_RadioCalcShadowDarkness(float lightLevel);
 
 /**
- * Render FakeRadio for the specified wall section. Generates and then draws all
- * shadow geometry for the wall section.
- *
- * Note that unlike Rend_RadioBspLeafEdges() there is no guard to ensure shadow
- * geometry is rendered only once per frame.
- *
- * @param leftSection        Geometry for the left wall section edge.
- * @param rightSection       Geometry for the right wall section edge.
- * @param ambientLightColor  Ambient light values for the wall section. This is
- *                           @em not automatically taken from the sector on the
- *                           front side of the wall as various map-hacks dictate
- *                           otherwise.
- */
-void prepareAllWallFakeradioShards(de::WallEdgeSection const &leftSection,
-    de::WallEdgeSection const &rightSection, de::Vector4f const &ambientLightColor);
-
-/**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to
  * the ConvexSubspace, that has not already been rendered.
  */
