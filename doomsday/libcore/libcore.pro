@@ -185,11 +185,11 @@ OTHER_FILES += \
 
 macx {
     defineTest(fixInstallName) {
-        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 libdeng_core.2.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @executable_path/../Frameworks/$$1 libdeng_core.2.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng_core.2.dylib")
+        doPostLink("install_name_tool -change $$1 @rpath/$$1 libdeng_core.2.dylib")
+        doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @rpath/$$1 libdeng_core.2.dylib")
+        doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @rpath/$$1 libdeng_core.2.dylib")
     }
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_core.2.dylib libdeng_core.2.dylib")
+    doPostLink("install_name_tool -id @rpath/libdeng_core.2.dylib libdeng_core.2.dylib")
     fixInstallName("QtCore.framework/Versions/$$QT_MAJOR_VERSION/QtCore")
     fixInstallName("QtNetwork.framework/Versions/$$QT_MAJOR_VERSION/QtNetwork")
 

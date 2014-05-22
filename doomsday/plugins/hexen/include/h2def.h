@@ -30,7 +30,9 @@
 #include <string.h>
 
 #ifdef WIN32
-#  pragma warning(disable:4244)
+#  ifdef MSVC
+#    pragma warning(disable:4244)
+#  endif
 #  define stricmp _stricmp
 #  define strnicmp _strnicmp
 #  define strlwr _strlwr

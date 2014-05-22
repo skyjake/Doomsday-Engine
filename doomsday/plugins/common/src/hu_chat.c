@@ -43,17 +43,17 @@
 #include "hu_chat.h"
 
 cvartemplate_t chatCVars[] = {
-    { "chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0 },
-    { "chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0 },
-    { "chat-macro2", 0, CVT_CHARPTR, &cfg.chatMacros[2], 0, 0 },
-    { "chat-macro3", 0, CVT_CHARPTR, &cfg.chatMacros[3], 0, 0 },
-    { "chat-macro4", 0, CVT_CHARPTR, &cfg.chatMacros[4], 0, 0 },
-    { "chat-macro5", 0, CVT_CHARPTR, &cfg.chatMacros[5], 0, 0 },
-    { "chat-macro6", 0, CVT_CHARPTR, &cfg.chatMacros[6], 0, 0 },
-    { "chat-macro7", 0, CVT_CHARPTR, &cfg.chatMacros[7], 0, 0 },
-    { "chat-macro8", 0, CVT_CHARPTR, &cfg.chatMacros[8], 0, 0 },
-    { "chat-macro9", 0, CVT_CHARPTR, &cfg.chatMacros[9], 0, 0 },
-    { "chat-beep",   0, CVT_BYTE,    &cfg.chatBeep, 0, 1 },
+    { "chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0, NULL },
+    { "chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0, NULL },
+    { "chat-macro2", 0, CVT_CHARPTR, &cfg.chatMacros[2], 0, 0, NULL },
+    { "chat-macro3", 0, CVT_CHARPTR, &cfg.chatMacros[3], 0, 0, NULL },
+    { "chat-macro4", 0, CVT_CHARPTR, &cfg.chatMacros[4], 0, 0, NULL },
+    { "chat-macro5", 0, CVT_CHARPTR, &cfg.chatMacros[5], 0, 0, NULL },
+    { "chat-macro6", 0, CVT_CHARPTR, &cfg.chatMacros[6], 0, 0, NULL },
+    { "chat-macro7", 0, CVT_CHARPTR, &cfg.chatMacros[7], 0, 0, NULL },
+    { "chat-macro8", 0, CVT_CHARPTR, &cfg.chatMacros[8], 0, 0, NULL },
+    { "chat-macro9", 0, CVT_CHARPTR, &cfg.chatMacros[9], 0, 0, NULL },
+    { "chat-beep",   0, CVT_BYTE,    &cfg.chatBeep,      0, 1, NULL },
     { NULL }
 };
 

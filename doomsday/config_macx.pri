@@ -95,6 +95,9 @@ deng_c++11 {
     QMAKE_LFLAGS += -stdlib=libc++
 }
 
+# Add the bundled Frameworks to the rpath.
+QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../Frameworks
+
 # Macros ---------------------------------------------------------------------
 
 defineTest(useFramework) {

@@ -82,34 +82,34 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     chmod u+w $FWDIR/libglib-2.0.0.dylib $FWDIR/libgthread-2.0.0.dylib $FWDIR/libintl.8.dylib
 
     # IDs
-    install_name_tool -id @executable_path/../Frameworks/libglib-2.0.0.dylib $FWDIR/libglib-2.0.0.dylib
-    install_name_tool -id @executable_path/../Frameworks/libgthread-2.0.0.dylib $FWDIR/libgthread-2.0.0.dylib
-    install_name_tool -id @executable_path/../Frameworks/libintl.8.dylib $FWDIR/libintl.8.dylib
+    install_name_tool -id @rpath/libglib-2.0.0.dylib $FWDIR/libglib-2.0.0.dylib
+    install_name_tool -id @rpath/libgthread-2.0.0.dylib $FWDIR/libgthread-2.0.0.dylib
+    install_name_tool -id @rpath/libintl.8.dylib $FWDIR/libintl.8.dylib
 
     # glib-2.0.0
     install_name_tool -change /usr/local/Cellar/gettext/$GETTEXT_VER/lib/libintl.8.dylib \
-    	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libglib-2.0.0.dylib
+    	@rpath/libintl.8.dylib $FWDIR/libglib-2.0.0.dylib
     install_name_tool -change /usr/local/opt/gettext/lib/libintl.8.dylib \
-    	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libglib-2.0.0.dylib
+    	@rpath/libintl.8.dylib $FWDIR/libglib-2.0.0.dylib
 
     # gthread-2.0.0
     install_name_tool -change /usr/local/Cellar/glib/$GLIB_VER/lib/libglib-2.0.0.dylib \
-    	@executable_path/../Frameworks/libglib-2.0.0.dylib $FWDIR/libgthread-2.0.0.dylib
+    	@rpath/libglib-2.0.0.dylib $FWDIR/libgthread-2.0.0.dylib
     install_name_tool -change /usr/local/Cellar/gettext/$GETTEXT_VER/lib/libintl.8.dylib \
-    	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
+    	@rpath/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
     install_name_tool -change /usr/local/opt/gettext/lib/libintl.8.dylib \
-    	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
+    	@rpath/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
 
     # audio_fluidsynth
     DSFS=$PLUGDIR/audio_fluidsynth.bundle/audio_fluidsynth
     install_name_tool -change /usr/local/lib/libglib-2.0.0.dylib \
-    	@executable_path/../Frameworks/libglib-2.0.0.dylib $DSFS
+    	@rpath/libglib-2.0.0.dylib $DSFS
     install_name_tool -change /usr/local/lib/libgthread-2.0.0.dylib \
-    	@executable_path/../Frameworks/libgthread-2.0.0.dylib $DSFS
+    	@rpath/libgthread-2.0.0.dylib $DSFS
     install_name_tool -change /usr/local/Cellar/gettext/$GETTEXT_VER/lib/libintl.8.dylib \
-    	@executable_path/../Frameworks/libintl.8.dylib $DSFS
+    	@rpath/libintl.8.dylib $DSFS
     install_name_tool -change /usr/local/opt/gettext/lib/libintl.8.dylib \
-    	@executable_path/../Frameworks/libintl.8.dylib $DSFS
+    	@rpath/libintl.8.dylib $DSFS
 fi
 
 qtVer=`qmake -query QT_VERSION`
