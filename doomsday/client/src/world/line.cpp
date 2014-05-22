@@ -456,62 +456,6 @@ void Line::Side::setFlags(int flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColor,
-                                         Vector3f const **bottomColor) const
-{
-    if(hasSections())
-    {
-        switch(sectionId)
-        {
-        case Middle:
-            if(isFlagged(SDF_BLENDMIDTOTOP))
-            {
-                *topColor    = &top().tintColor();
-                *bottomColor = &middle().tintColor();
-            }
-            else if(isFlagged(SDF_BLENDMIDTOBOTTOM))
-            {
-                *topColor    = &middle().tintColor();
-                *bottomColor = &bottom().tintColor();
-            }
-            else
-            {
-                *topColor    = &middle().tintColor();
-                *bottomColor = 0;
-            }
-            return;
-
-        case Top:
-            if(isFlagged(SDF_BLENDTOPTOMID))
-            {
-                *topColor    = &top().tintColor();
-                *bottomColor = &middle().tintColor();
-            }
-            else
-            {
-                *topColor    = &top().tintColor();
-                *bottomColor = 0;
-            }
-            return;
-
-        case Bottom:
-            if(isFlagged(SDF_BLENDBOTTOMTOMID))
-            {
-                *topColor    = &middle().tintColor();
-                *bottomColor = &bottom().tintColor();
-            }
-            else
-            {
-                *topColor    = &bottom().tintColor();
-                *bottomColor = 0;
-            }
-            return;
-        }
-    }
-    /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-    throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceTintColors", QString("Invalid section id %1").arg(sectionId));
-}
-
 int Line::Side::shadowVisCount() const
 {
     return d->shadowVisCount;

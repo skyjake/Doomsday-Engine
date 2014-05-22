@@ -997,7 +997,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     Vector4f const &ambientLightColor, Vector3f const &surfaceColor, float glowing,
     float opacity, blendmode_t blendmode,
     Vector2f const &matOrigin, MaterialSnapshot const &matSnapshot,
-    MapElement &mapElement, int geomGroup, uint lightListIdx,
+    uint lightListIdx,
     float surfaceLightLevelDL, float surfaceLightLevelDR, Matrix3f const &surfaceTangentMatrix,
     WallEdgeSection const *leftSection, WallEdgeSection const *rightSection,
     Vector3f const *surfaceColor2)
@@ -1036,6 +1036,11 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         // Non-uniform color.
         if(useBias)
         {
+            MapElement &mapElement = leftSection->edge().hedge().mapElement();
+            int const geomGroup    = leftSection->id() == WallEdge::WallMiddle? LineSide::Middle :
+                                     leftSection->id() == WallEdge::WallBottom? LineSide::Bottom :
+                                                                                LineSide::Top;
+
             Map &map     = cluster.sector().map();
             Shard &shard = cluster.shard(mapElement, geomGroup);
 

@@ -210,6 +210,8 @@ public:
      */
     Surface &setMaterialOrigin(de::Vector2f const &newOrigin);
 
+    de::Vector2f materialScale() const;
+
     /**
      * Compose a URI for the surface's material. If no material is bound then a
      * default (i.e., empty) URI is returned.

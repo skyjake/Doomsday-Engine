@@ -40,7 +40,6 @@
 #  include "render/billboard.h"
 #  include "render/projector.h"
 #  include "render/r_main.h"
-#  include "render/rend_clip.h"       /// @todo remove me
 #  include "render/rend_fakeradio.h"
 #  include "BiasIllum"
 #  include "BiasTracker"
@@ -88,6 +87,115 @@ namespace internal
         // Must be a plane then.
         Plane const &plane = surface.parent().as<Plane>();
         return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
+    }
+
+    static Vector2f calcFlatMaterialOrigin(ConvexSubspace const &subspace, Plane const &plane)
+    {
+        Vector2f origin = subspace.worldGridOffset() // Align to the worldwide grid.
+                          + plane.surface().materialOriginSmoothed();
+
+        // Add the Y offset to orient the Y flipped material.
+        /// @todo fixme: What is this meant to do? -ds
+        if(plane.isSectorCeiling())
+        {
+            origin.y -= subspace.poly().aaBox().maxY - subspace.poly().aaBox().minY;
+        }
+        origin.y = -origin.y;
+
+        return origin;
+    }
+
+#if 0
+    static blendmode_t chooseFlatBlendmode(Plane const &plane)
+    {
+        if(plane.indexInSector() <= Sector::Ceiling)
+        {
+            return BM_NORMAL;
+        }
+
+        blendmode_t blendmode = plane.surface().blendMode();
+        if(blendmode == BM_NORMAL && noSpriteTrans)
+        {
+            blendmode = BM_ZEROALPHA; // "no translucency" mode
+        }
+        return blendmode;
+    }
+#endif
+
+    static blendmode_t chooseWallBlendmode(WallEdgeSection const &wallSection)
+    {
+        LineSide &side = wallSection.edge().lineSide();
+
+        if(wallSection.id() != WallEdge::WallMiddle || side.considerOneSided())
+        {
+            return BM_NORMAL;
+        }
+
+        blendmode_t blendmode = side.surface(LineSide::Middle).blendMode();
+        if(blendmode == BM_NORMAL && noSpriteTrans)
+        {
+            blendmode = BM_ZEROALPHA; // "no translucency" mode
+        }
+        return blendmode;
+    }
+
+    static void chooseWallTintColors(WallEdgeSection const &wallSection,
+        Vector3f const **bottomColor, Vector3f const **topColor)
+    {
+        DENG2_ASSERT(bottomColor != 0 && topColor != 0);
+
+        LineSide &side = wallSection.edge().lineSide();
+
+        switch(wallSection.id())
+        {
+        case WallEdge::WallMiddle:
+            if(side.isFlagged(SDF_BLENDMIDTOTOP))
+            {
+                *bottomColor = &side.middle().tintColor();
+                *topColor    = &side.top().tintColor();
+            }
+            else if(side.isFlagged(SDF_BLENDMIDTOBOTTOM))
+            {
+                *bottomColor = &side.bottom().tintColor();
+                *topColor    = &side.middle().tintColor();
+            }
+            else
+            {
+                *bottomColor = 0;
+                *topColor    = &side.middle().tintColor();
+            }
+            break;
+
+        case WallEdge::WallBottom:
+            if(side.isFlagged(SDF_BLENDBOTTOMTOMID))
+            {
+                *bottomColor = &side.bottom().tintColor();
+                *topColor    = &side.middle().tintColor();
+            }
+            else
+            {
+                *bottomColor = 0;
+                *topColor    = &side.bottom().tintColor();
+            }
+            break;
+
+        case WallEdge::WallTop:
+            if(side.isFlagged(SDF_BLENDTOPTOMID))
+            {
+                *bottomColor = &side.middle().tintColor();
+                *topColor    = &side.top().tintColor();
+            }
+            else
+            {
+                *bottomColor = 0;
+                *topColor    = &side.top().tintColor();
+            }
+            break;
+
+        default:
+            *bottomColor = *topColor = 0;
+            break;
+        }
     }
 
     static void quadTexCoords(Vector2f *tc, Vector3f const *posCoords,
@@ -204,24 +312,33 @@ namespace internal
         return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
     }
 
-    static void wallSectionLightLevelDeltas(WallEdgeSection const &sectionLeft,
-        WallEdgeSection const &sectionRight, float &leftDelta, float &rightDelta)
+    static void wallLightLevelDeltas(WallEdgeSection const &leftSection,
+        WallEdgeSection const &rightSection, float deltas[2])
     {
-        leftDelta = calcLightLevelDelta(sectionLeft.normal());
+        float &leftDelta  = deltas[0];
+        float &rightDelta = deltas[1];
 
-        if(sectionLeft.normal() == sectionRight.normal())
+        if(leftSection.flags().testFlag(WallEdgeSection::NoLightDeltas))
+        {
+            leftDelta = rightDelta = 0;
+            return;
+        }
+
+        leftDelta = calcLightLevelDelta(leftSection.normal());
+
+        if(leftSection.normal() == rightSection.normal())
         {
             rightDelta = leftDelta;
         }
         else
         {
-            rightDelta = calcLightLevelDelta(sectionRight.normal());
+            rightDelta = calcLightLevelDelta(rightSection.normal());
 
             // Linearly interpolate to find the light level delta values for the
             // vertical edges of this wall section.
-            coord_t const lineLength    = sectionLeft.edge().lineSide().line().length();
-            coord_t const sectionOffset = sectionLeft.edge().lineSideOffset();
-            coord_t const sectionWidth  = de::abs(Vector2d(sectionRight.edge().origin() - sectionLeft.edge().origin()).length());
+            coord_t const lineLength    = leftSection.edge().lineSide().line().length();
+            coord_t const sectionOffset = leftSection.edge().lineSideOffset();
+            coord_t const sectionWidth  = de::abs(Vector2d(rightSection.edge().origin() - leftSection.edge().origin()).length());
 
             float deltaDiff = rightDelta - leftDelta;
             rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
@@ -1245,6 +1362,28 @@ DENG2_PIMPL(SectorCluster)
         return wallEdges.insert(&hedge, new WallEdge(hedge, side)).value();
     }
 
+    /**
+     * Determines whether ambient light for the given @a wallSection should be
+     * sourced from the Sector attributed to the Line::Side instead of "this"
+     * cluster. (Support id Tech 1 map-hacks).
+     */
+    bool useAmbientLightFromSide(WallEdgeSection const &wallSection)
+    {
+        if(wallSection.id() != WallEdge::WallMiddle) return false;
+        if(wallSection.edge().lineSide().considerOneSided()) return false;
+        return wallSection.edge().lineSide().sectorPtr() != &self.sector();
+    }
+
+    /**
+     * Determines whether ambient light for the given @a plane should be sourced
+     * from the Sector attributed to the Plane instead of "this" cluster.
+     * (Support id Tech 1 map-hacks).
+     */
+    bool useAmbientLightFromPlane(Plane const &plane)
+    {
+        return &plane.sector() != &self.sector();
+    }
+
     void projectDynamics(ConvexSubspace &subspace, Surface const &surface,
         float glowStrength, Vector3d const &topLeft, Vector3d const &bottomRight,
         bool noLights, bool noShadows, bool sortLights,
@@ -1900,7 +2039,6 @@ DENG2_PIMPL(SectorCluster)
         shadowListSpec.group = ShadowGeom;
         shadowListSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
 
-
         bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
         if(mustSubdivide) // Draw as two triangle fans.
@@ -2071,31 +2209,27 @@ DENG2_PIMPL(SectorCluster)
     }
 
     void prepareWallSectionShards(ConvexSubspace &subspace,
-        WallEdgeSection &leftSection, WallEdgeSection &rightSection,
+        WallEdge &leftEdge, WallEdge &rightEdge, WallEdge::SectionId sectionId,
         bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
     {
-        DENG2_ASSERT(leftSection.edge().hedge().mapElementAs<LineSideSegment>().isFrontFacing());
+        DENG2_ASSERT(sectionId >= WallEdge::WallMiddle && sectionId <= WallEdge::WallTop);
 
-        LineSide &side            = leftSection.edge().lineSide();
-        Surface &surface          = *leftSection.surfacePtr();
-        bool const twoSidedMiddle = leftSection.id() == WallEdge::WallMiddle && !side.considerOneSided();
-        int const section         = leftSection.id() == WallEdge::WallMiddle? LineSide::Middle :
-                                    leftSection.id() == WallEdge::WallBottom? LineSide::Bottom :
-                                                                              LineSide::Top;
+        WallEdgeSection &leftSection  =  leftEdge.section(sectionId);
+        WallEdgeSection &rightSection = rightEdge.section(sectionId);
+        Surface &surface              = *leftSection.surfacePtr();
 
         if(retWroteOpaque) *retWroteOpaque = false;
         if(retBottomZ)     *retBottomZ     = 0;
         if(retTopZ)        *retTopZ        = 0;
 
-        // Skip nearly transparent surfaces.
-        float opacity = surface.opacity();
-        if(opacity < .001f)
-            return;
-
         // Do the edge geometries describe a valid polygon?
         if(!leftSection.isValid() || !rightSection.isValid() ||
            de::fequal(leftSection.bottom().z(), rightSection.top().z()))
             return;
+
+        // Skip nearly transparent surfaces.
+        float opacity = surface.opacity();
+        if(opacity < .001f) return;
 
         // Determine which Material to use (a drawable material is required).
         Material *material = Rend_ChooseMapSurfaceMaterial(surface);
@@ -2105,38 +2239,15 @@ DENG2_PIMPL(SectorCluster)
         // Should we apply a fade out when the viewer is near to this geometry?
         bool const useNearFade = Rend_NearFadeOpacity(leftSection, rightSection, opacity);
 
-
-        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-        Vector3d const topLeft        = leftSection.top().origin();
-        Vector3d const bottomRight    = rightSection.bottom().origin();
-        Vector3f const materialOrigin = leftSection.materialOrigin();
-        Vector2f const materialScale  = Vector2f((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
-
-        bool const skyMasked = (material->isSkyMasked() && !devRendSkyMode);
-
         if(leftSection.flags().testFlag(WallEdgeSection::ForceOpaque))
         {
             opacity = 1;
         }
 
-        // Calculate the light level deltas for this wall section?
-        float surfaceLightLevelDL = 0, surfaceLightLevelDR = 0;
-        if(!leftSection.flags().testFlag(WallEdgeSection::NoLightDeltas))
-        {
-            wallSectionLightLevelDeltas(leftSection, rightSection,
-                                        surfaceLightLevelDL, surfaceLightLevelDR);
-        }
+        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
+        bool const skyMasked = (material->isSkyMasked() && !devRendSkyMode);
 
-        float glowing                 = 0;
-        blendmode_t blendmode         = BM_NORMAL;
-        Vector3f const *surfaceColor  = 0;
-        Vector3f const *surfaceColor2 = 0; // Secondary color.
-
-        // Lists of projected lights/shadows that affect this geometry.
-        uint lightListIdx = 0, shadowListIdx = 0;
-
+        float glowing = 0;
         if(!skyMasked)
         {
             if(glowFactor > .0001f)
@@ -2157,36 +2268,45 @@ DENG2_PIMPL(SectorCluster)
 
                 glowing *= glowFactor; // Global scale factor.
             }
+        }
 
+        Vector3d const topLeft        = leftSection.top().origin();
+        Vector3d const bottomRight    = rightSection.bottom().origin();
+
+        Vector3f const materialOrigin = leftSection.materialOrigin();
+        Vector2f const materialScale  = surface.materialScale();
+
+        blendmode_t const blendmode   = chooseWallBlendmode(leftSection);
+        Vector4f const ambientLight   =
+            useAmbientLightFromSide(leftSection)? Rend_AmbientLightColor(leftEdge.lineSide().sector())
+                                                : self.lightSourceColorfIntensity();
+
+        Vector3f const *topTintColor  = 0, *bottomTintColor = 0;
+        if(!skyMasked)
+        {
+            chooseWallTintColors(leftSection, &bottomTintColor, &topTintColor);
+        }
+
+        // Calculate the light level deltas for this wall section.
+        float lightLevelDeltas[2]; // [left, right]
+        wallLightLevelDeltas(leftSection, rightSection, lightLevelDeltas);
+
+        // Lists of projected lights/shadows that affect this geometry.
+        uint lightListIdx = 0, shadowListIdx = 0;
+        if(!skyMasked)
+        {
             projectDynamics(subspace, surface, glowing, topLeft, bottomRight,
                             leftSection.flags().testFlag(WallEdgeSection::NoDynLights),
                             leftSection.flags().testFlag(WallEdgeSection::NoDynShadows),
                             leftSection.flags().testFlag(WallEdgeSection::SortDynLights),
                             lightListIdx, shadowListIdx);
-
-            if(twoSidedMiddle)
-            {
-                blendmode = surface.blendMode();
-                if(blendmode == BM_NORMAL && noSpriteTrans)
-                    blendmode = BM_ZEROALPHA; // "no translucency" mode
-            }
-
-            side.chooseSurfaceTintColors(section, &surfaceColor, &surfaceColor2);
         }
-
-        bool const takeLightingFromSide  = (twoSidedMiddle && side.sectorPtr() != &self.sector());
-        Vector4f const ambientLightColor = takeLightingFromSide? Rend_AmbientLightColor(side.sector())
-                                                               : self.lightSourceColorfIntensity();
 
         bool wroteOpaque = true;
         if(!Rend_MustDrawAsVissprite(leftSection.flags().testFlag(WallEdgeSection::ForceOpaque),
                                      skyMasked, opacity, blendmode, matSnapshot))
         {
             WorldVBuf &vbuf = worldVBuf();
-
-            bool useLights = false, useShadows = false;
-
-            bool const skyMaskedMaterial = (skyMasked || (matSnapshot.material().isSkyMasked()));
 
             // Map RTU configuration from prepared MaterialSnapshot(s).
             GLTextureUnit const *primaryRTU       = (!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL;
@@ -2196,10 +2316,13 @@ DENG2_PIMPL(SectorCluster)
             GLTextureUnit const *shineRTU         = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture())? &matSnapshot.unit(RTU_REFLECTION) : NULL;
             GLTextureUnit const *shineMaskRTU     = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture() && matSnapshot.unit(RTU_REFLECTION_MASK).hasTexture())? &matSnapshot.unit(RTU_REFLECTION_MASK) : NULL;
 
+            bool useLights = false, useShadows = false;
+
             DGLuint modTex = 0;
             Vector2f modTexSt[2]; // [topLeft, bottomRight]
             Vector3f modColor;
 
+            bool const skyMaskedMaterial = (skyMasked || (matSnapshot.material().isSkyMasked()));
             if(!skyMaskedMaterial && glowing < 1)
             {
                 useLights  = (lightListIdx  > 0);
@@ -2225,7 +2348,7 @@ DENG2_PIMPL(SectorCluster)
                 Vector3f(rightSection.bottom().origin()),
                 Vector3f(rightSection.top   ().origin())
             };
-            coord_t const sectionWidth = de::abs(Vector2d(rightSection.edge().origin() - leftSection.edge().origin()).length());
+            coord_t const sectionWidth = de::abs((rightSection.edge().origin() - leftSection.edge().origin()).length());
 
             Vector2f primaryTexCoords[4];
             quadTexCoords(primaryTexCoords, posCoords, sectionWidth, topLeft);
@@ -2256,7 +2379,7 @@ DENG2_PIMPL(SectorCluster)
                 if(levelFullBright || !(glowing < 1))
                 {
                     // Uniform color. Apply to all vertices.
-                    float ll = de::clamp(0.f, ambientLightColor.w + (levelFullBright? 1 : glowing), 1.f);
+                    float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
                     Vector4f *colorIt = colorCoords;
                     for(duint16 i = 0; i < 4; ++i, colorIt++)
                     {
@@ -2268,10 +2391,13 @@ DENG2_PIMPL(SectorCluster)
                     // Non-uniform color.
                     if(useBias)
                     {
-                        LineSideSegment &seg = leftSection.edge().hedge().mapElementAs<LineSideSegment>();
+                        MapElement &mapElement = leftEdge.hedge().mapElement();
+                        int const geomGroup = sectionId == WallEdge::WallMiddle? LineSide::Middle :
+                                              sectionId == WallEdge::WallBottom? LineSide::Bottom :
+                                                                                 LineSide::Top;
 
                         Map &map     = self.sector().map();
-                        Shard &shard = self.shard(seg, section);
+                        Shard &shard = self.shard(mapElement, geomGroup);
 
                         // Apply the ambient light term from the grid (if available).
                         if(map.hasLightGrid())
@@ -2312,25 +2438,24 @@ DENG2_PIMPL(SectorCluster)
                     }
                     else
                     {
-                        float llL = de::clamp(0.f, ambientLightColor.w + surfaceLightLevelDL + glowing, 1.f);
-                        float llR = de::clamp(0.f, ambientLightColor.w + surfaceLightLevelDR + glowing, 1.f);
+                        float llL = de::clamp(0.f, ambientLight.w + lightLevelDeltas[0] + glowing, 1.f);
+                        float llR = de::clamp(0.f, ambientLight.w + lightLevelDeltas[1] + glowing, 1.f);
 
                         // Calculate the color for each vertex, blended with plane color?
-                        if(surfaceColor->x < 1 || surfaceColor->y < 1 || surfaceColor->z < 1)
+                        if(topTintColor->x < 1 || topTintColor->y < 1 || topTintColor->z < 1)
                         {
-                            // Blend sector light+color+surfacecolor
-                            Vector3f vColor = (*surfaceColor) * ambientLightColor;
+                            Vector3f const finalColor = ambientLight.xyz() * (*topTintColor);
 
                             if(llL != llR)
                             {
-                                Rend_LightVertex(colorCoords[0], posCoords[0], llL, vColor);
-                                Rend_LightVertex(colorCoords[1], posCoords[1], llL, vColor);
-                                Rend_LightVertex(colorCoords[2], posCoords[2], llR, vColor);
-                                Rend_LightVertex(colorCoords[3], posCoords[3], llR, vColor);
+                                Rend_LightVertex(colorCoords[0], posCoords[0], llL, finalColor);
+                                Rend_LightVertex(colorCoords[1], posCoords[1], llL, finalColor);
+                                Rend_LightVertex(colorCoords[2], posCoords[2], llR, finalColor);
+                                Rend_LightVertex(colorCoords[3], posCoords[3], llR, finalColor);
                             }
                             else
                             {
-                                Rend_LightVertices(4, colorCoords, posCoords, llL, vColor);
+                                Rend_LightVertices(4, colorCoords, posCoords, llL, finalColor);
                             }
                         }
                         else
@@ -2338,25 +2463,23 @@ DENG2_PIMPL(SectorCluster)
                             // Use sector light+color only.
                             if(llL != llR)
                             {
-                                Rend_LightVertex(colorCoords[0], posCoords[0], llL, ambientLightColor);
-                                Rend_LightVertex(colorCoords[1], posCoords[1], llL, ambientLightColor);
-                                Rend_LightVertex(colorCoords[2], posCoords[2], llR, ambientLightColor);
-                                Rend_LightVertex(colorCoords[3], posCoords[3], llR, ambientLightColor);
+                                Rend_LightVertex(colorCoords[0], posCoords[0], llL, ambientLight.xyz());
+                                Rend_LightVertex(colorCoords[1], posCoords[1], llL, ambientLight.xyz());
+                                Rend_LightVertex(colorCoords[2], posCoords[2], llR, ambientLight.xyz());
+                                Rend_LightVertex(colorCoords[3], posCoords[3], llR, ambientLight.xyz());
                             }
                             else
                             {
-                                Rend_LightVertices(4, colorCoords, posCoords, llL, ambientLightColor);
+                                Rend_LightVertices(4, colorCoords, posCoords, llL, ambientLight.xyz());
                             }
                         }
 
-                        // Bottom color (if different from top)?
-                        if(surfaceColor2)
+                        if(bottomTintColor)
                         {
-                            // Blend sector light+color+surfacecolor
-                            Vector3f vColor = (*surfaceColor2) * ambientLightColor;
+                            Vector3f const finalColor = ambientLight.xyz() * (*bottomTintColor);
 
-                            Rend_LightVertex(colorCoords[0], posCoords[0], llL, vColor);
-                            Rend_LightVertex(colorCoords[2], posCoords[2], llR, vColor);
+                            Rend_LightVertex(colorCoords[0], posCoords[0], llL, finalColor);
+                            Rend_LightVertex(colorCoords[2], posCoords[2], llR, finalColor);
                         }
                     }
 
@@ -2394,9 +2517,10 @@ DENG2_PIMPL(SectorCluster)
 
             if(useLights || useShadows)
             {
-                // Surfaces lit by dynamic lights may need to be rendered differently
-                // than non-lit surfaces. Determine the average light level of this rend
-                // poly, if too bright; do not bother with lights.
+                // Geometry which is lit by dynamic lights may need to be drawn
+                // differently than non-lit surfaces depending on the renderer
+                // configuration. If the averaged vertex light level is nearly
+                // fully saturated we can skip adding extra lights.
                 float avgLightlevel = 0;
                 for(duint16 i = 0; i < 4; ++i)
                 {
@@ -2419,7 +2543,7 @@ DENG2_PIMPL(SectorCluster)
             bool hasDynlights = false;
             if(useLights)
             {
-                // Render all lights projected onto this surface.
+                // Project dynamic lights to shards.
                 splinterdynlight_params_t parm; de::zap(parm);
 
                 parm.inst         = this;
@@ -2436,7 +2560,7 @@ DENG2_PIMPL(SectorCluster)
 
             if(useShadows)
             {
-                // Render all shadows projected onto this surface.
+                // Project dynamic shadows to shards.
                 splinterdynshadow_params_t parm; de::zap(parm);
 
                 parm.inst         = this;
@@ -2453,8 +2577,6 @@ DENG2_PIMPL(SectorCluster)
 
             if(!skyMasked)
             {
-                bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
-
                 DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
                 if(primaryRTU)
                 {
@@ -2480,6 +2602,8 @@ DENG2_PIMPL(SectorCluster)
                     listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
                     listSpec.texunits[TU_INTER_DETAIL].offset += materialOrigin;
                 }
+
+                bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
                 if(mustSubdivide) // Generate two triangle fans.
                 {
@@ -2576,7 +2700,7 @@ DENG2_PIMPL(SectorCluster)
                     for(WorldVBuf::Index i = 0; i < 4; ++i)
                     {
                         WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
-                        vertex.pos  =   posCoords[i];
+                        vertex.pos  = posCoords[i];
                         vertex.rgba = colorCoords[i];
                         if(primaryRTU)
                         {
@@ -2619,7 +2743,7 @@ DENG2_PIMPL(SectorCluster)
                         for(WorldVBuf::Index i = 0; i < 4; ++i)
                         {
                             WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
-                            vertex.pos  =   posCoords[i];
+                            vertex.pos  = posCoords[i];
                             vertex.rgba = shineColorCoords[i];
                             vertex.texCoord[WorldVBuf::PrimaryTex] = shineTexCoords[i];
                             if(shineMaskRTU)
@@ -2671,28 +2795,26 @@ DENG2_PIMPL(SectorCluster)
                 }
             }
 
-            // Render FakeRadio for this section?
+            // Prepare FakeRadio shards for this section?
             if(!leftSection.flags().testFlag(WallEdgeSection::NoFakeRadio) &&
                !skyMasked && !(glowing > 0))
             {
                 prepareAllWallFakeradioShards(subspace, leftSection, rightSection,
-                                              ambientLightColor);
+                                              ambientLight);
             }
         }
         else
         {
-            LineSideSegment &seg = leftSection.edge().hedge().mapElementAs<LineSideSegment>();
-
-            Rend_PrepareWallSectionVissprite(subspace, ambientLightColor,
-                                             *surfaceColor,
+            Rend_PrepareWallSectionVissprite(subspace, ambientLight,
+                                             *topTintColor,
                                              glowing,
                                              opacity, blendmode,
                                              materialOrigin, matSnapshot,
-                                             seg, section,
                                              lightListIdx,
-                                             surfaceLightLevelDL, surfaceLightLevelDR,
+                                             lightLevelDeltas[0], lightLevelDeltas[1],
                                              surface.tangentMatrix(),
-                                             &leftSection, &rightSection, surfaceColor2);
+                                             &leftSection, &rightSection, bottomTintColor);
+
             wroteOpaque = false; /// We @em had to use a vissprite; clearly not opaque.
         }
 
@@ -2713,7 +2835,7 @@ DENG2_PIMPL(SectorCluster)
         bool geomCoversOpening = false;
 
         LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
-        if(seg.isFrontFacing() && seg.lineSide().hasSections())
+        if(seg.lineSide().hasSections() && seg.isFrontFacing())
         {
             // Generate the wall section shard geometries.
             bool builtOpaqueMiddle = false;
@@ -2723,9 +2845,9 @@ DENG2_PIMPL(SectorCluster)
             WallEdge leftEdge(*hedge, Line::From);// = findWallEdge(*hedge, Line::From);
             WallEdge rightEdge(*hedge, Line::To); // = findWallEdge(*hedge, Line::To);
 
-            prepareWallSectionShards(subspace, leftEdge.wallBottom(), rightEdge.wallBottom());
-            prepareWallSectionShards(subspace, leftEdge.wallTop(),    rightEdge.wallTop());
-            prepareWallSectionShards(subspace, leftEdge.wallMiddle(), rightEdge.wallMiddle(),
+            prepareWallSectionShards(subspace, leftEdge, rightEdge, WallEdge::WallBottom);
+            prepareWallSectionShards(subspace, leftEdge, rightEdge, WallEdge::WallTop);
+            prepareWallSectionShards(subspace, leftEdge, rightEdge, WallEdge::WallMiddle,
                                      &builtOpaqueMiddle, &middleBottomZ, &middleTopZ);
 
             geomCoversOpening = coveredOpenRange(*hedge, middleBottomZ, middleTopZ, builtOpaqueMiddle);
@@ -2758,9 +2880,15 @@ DENG2_PIMPL(SectorCluster)
 
     void prepareFlatShard(ConvexSubspace &subspace, Plane &plane)
     {
-        WorldVBuf &vbuf        = worldVBuf();
         Face const &poly       = subspace.poly();
         Surface const &surface = plane.surface();
+
+        // Skip planes with a sky-masked material? (Drawn with the mask geometry).
+        if(!devRendSkyMode && surface.hasSkyMaskedMaterial() &&
+           plane.indexInSector() <= Sector::Ceiling)
+        {
+            return;
+        }
 
         // Skip nearly transparent surfaces.
         float opacity = surface.opacity();
@@ -2771,72 +2899,14 @@ DENG2_PIMPL(SectorCluster)
         if(!material || !material->isDrawable())
             return;
 
-        // Skip planes with a sky-masked material?
-        if(!devRendSkyMode)
-        {
-            if(surface.hasSkyMaskedMaterial() && plane.indexInSector() <= Sector::Ceiling)
-            {
-                return; // Not handled here (drawn with the mask geometry).
-            }
-        }
-
-        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-        Vector2f materialOrigin = subspace.worldGridOffset() // Align to the worldwide grid.
-                                + surface.materialOriginSmoothed();
-
-        // Add the Y offset to orient the Y flipped material.
-        /// @todo fixme: What is this meant to do? -ds
-        if(plane.isSectorCeiling())
-        {
-            materialOrigin.y -= poly.aaBox().maxY - poly.aaBox().minY;
-        }
-        materialOrigin.y = -materialOrigin.y;
-
-        Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                     (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
-
-        // Determine coordinates of the projection quad (Y is flipped for the ceiling).
-        Vector3d const topLeft(poly.aaBox().minX,
-                               poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
-                               plane.heightSmoothed());
-
-        Vector3d const bottomRight(poly.aaBox().maxX,
-                                   poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
-                                   plane.heightSmoothed());
-
-        bool skyMasked = false;
-        blendmode_t blendmode = BM_NORMAL;
-
-        if(material->isSkyMasked())
-        {
-            // In devRendSkyMode mode we render all polys destined for the
-            // skymask as regular world polys (with a few obvious properties).
-            if(devRendSkyMode)
-            {
-                opacity = 1;
-            }
-            else
-            {
-                // We'll mask this.
-                skyMasked = true;
-            }
-        }
-        else if(plane.indexInSector() <= Sector::Ceiling)
+        // Force opaque?
+        if(plane.indexInSector() <= Sector::Ceiling || (material->isSkyMasked() && devRendSkyMode))
         {
             opacity = 1;
         }
-        else
-        {
-            blendmode = surface.blendMode();
-            if(blendmode == BM_NORMAL && noSpriteTrans)
-            {
-                blendmode = BM_ZEROALPHA; // "no translucency" mode
-            }
-        }
 
-        // Lists of projected lights/shadows that affect this geometry.
-        uint lightListIdx = 0, shadowListIdx = 0;
+        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
+        bool const skyMasked = (material->isSkyMasked() && !devRendSkyMode);
 
         float glowing = 0;
         if(!skyMasked)
@@ -2859,51 +2929,30 @@ DENG2_PIMPL(SectorCluster)
 
                 glowing *= glowFactor; // Global scale factor.
             }
+        }
 
+        AABoxd const &aaBox           = poly.aaBox();
+        Vector3d const topLeft        = Vector3d(aaBox.minX, aaBox.arvec2[plane.isSectorFloor()? 1 : 0][VY], plane.heightSmoothed());
+        Vector3d const bottomRight    = Vector3d(aaBox.maxX, aaBox.arvec2[plane.isSectorFloor()? 0 : 1][VY], plane.heightSmoothed());
+
+        Vector2f const materialOrigin = calcFlatMaterialOrigin(subspace, plane);
+        Vector2f const materialScale  = surface.materialScale();
+
+        //blendmode_t const blendmode   = chooseFlatBlendmode(plane);
+        Vector4f const ambientLight   =
+                useAmbientLightFromPlane(plane)? Rend_AmbientLightColor(plane.sector())
+                                               : self.lightSourceColorfIntensity();
+
+        // Lists of projected lights/shadows that affect this geometry.
+        uint lightListIdx = 0, shadowListIdx = 0;
+        if(!skyMasked)
+        {
             projectDynamics(subspace, surface, glowing, topLeft, bottomRight,
                             false /*do light*/, false /*do shadow*/, false /*don't sort*/,
                             lightListIdx, shadowListIdx);
         }
 
-        bool const takeLightingFromPlane = &plane.sector() != &subspace.sector();
-        Vector4f const ambientLightColor = takeLightingFromPlane? Rend_AmbientLightColor(plane.sector())
-                                                                : self.lightSourceColorfIntensity();
-
-        ClockDirection const direction = (plane.isSectorCeiling())? Anticlockwise : Clockwise;
-        coord_t const height           = plane.heightSmoothed();
-
-        HEdge *fanBase = subspace.fanBase();
-        WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
-
-        WorldVBuf::Indices indices(fanSize);
-
-        vbuf.reserveElements(fanSize, indices);
-
-        WorldVBuf::Index n = 0;
-        if(!fanBase)
-        {
-            vbuf[indices[n]].pos = Vector3f(poly.center(), height);
-            n++;
-        }
-
-        // Add the vertices for each hedge.
-        HEdge *base  = fanBase? fanBase : poly.hedge();
-        HEdge *hedge = base;
-        do
-        {
-            vbuf[indices[n]].pos = Vector3f(hedge->origin(), height);
-            n++;
-        } while((hedge = &hedge->neighbor(direction)) != base);
-
-        // The last vertex is always equal to the first.
-        if(!fanBase)
-        {
-            vbuf[indices[n]].pos = Vector3f(poly.hedge()->origin(), height);
-        }
-
-        bool const skyMaskedMaterial = (skyMasked || (matSnapshot.material().isSkyMasked()));
-
-        bool useLights = false, useShadows = false;
+        WorldVBuf &vbuf = worldVBuf();
 
         // Map RTU configuration from prepared MaterialSnapshot(s).
         GLTextureUnit const *primaryRTU       = (!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL;
@@ -2913,23 +2962,13 @@ DENG2_PIMPL(SectorCluster)
         GLTextureUnit const *shineRTU         = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture())? &matSnapshot.unit(RTU_REFLECTION) : NULL;
         GLTextureUnit const *shineMaskRTU     = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture() && matSnapshot.unit(RTU_REFLECTION_MASK).hasTexture())? &matSnapshot.unit(RTU_REFLECTION_MASK) : NULL;
 
-        WorldVBuf::Indices shineIndices;
+        bool useLights = false, useShadows = false;
 
         DGLuint modTex = 0;
         Vector2f modTexSt[2]; // [topLeft, bottomRight]
         Vector3f modColor;
 
-        // ShinySurface?
-        if(shineRTU)
-        {
-            shineIndices.resize(fanSize);
-            vbuf.reserveElements(fanSize, shineIndices);
-            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-            {
-                vbuf[shineIndices[i]].pos = vbuf[indices[i]].pos;
-            }
-        }
-
+        bool const skyMaskedMaterial = (skyMasked || (matSnapshot.material().isSkyMasked()));
         if(!skyMaskedMaterial && glowing < 1)
         {
             useLights  = (lightListIdx  > 0);
@@ -2946,6 +2985,49 @@ DENG2_PIMPL(SectorCluster)
                 modColor    = dyn->color;
                 modTexSt[0] = dyn->topLeft;
                 modTexSt[1] = dyn->bottomRight;
+            }
+        }
+
+        ClockDirection const direction = (plane.isSectorCeiling())? Anticlockwise : Clockwise;
+        HEdge *fanBase                 = subspace.fanBase();
+        WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
+
+        WorldVBuf::Indices indices(fanSize);
+
+        vbuf.reserveElements(fanSize, indices);
+
+        WorldVBuf::Index n = 0;
+        if(!fanBase)
+        {
+            vbuf[indices[n]].pos = Vector3f(poly.center(), plane.heightSmoothed());
+            n++;
+        }
+
+        // Add the vertices for each hedge.
+        HEdge *base  = fanBase? fanBase : poly.hedge();
+        HEdge *hedge = base;
+        do
+        {
+            vbuf[indices[n]].pos = Vector3f(hedge->origin(), plane.heightSmoothed());
+            n++;
+        } while((hedge = &hedge->neighbor(direction)) != base);
+
+        // The last vertex is always equal to the first.
+        if(!fanBase)
+        {
+            vbuf[indices[n]].pos = Vector3f(poly.hedge()->origin(), plane.heightSmoothed());
+        }
+
+        WorldVBuf::Indices shineIndices;
+
+        // ShinySurface?
+        if(shineRTU)
+        {
+            shineIndices.resize(fanSize);
+            vbuf.reserveElements(fanSize, shineIndices);
+            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+            {
+                vbuf[shineIndices[i]].pos = vbuf[indices[i]].pos;
             }
         }
 
@@ -3007,7 +3089,7 @@ DENG2_PIMPL(SectorCluster)
             if(levelFullBright || !(glowing < 1))
             {
                 // Uniform color. Apply to all vertices.
-                float ll = de::clamp(0.f, ambientLightColor.w + (levelFullBright? 1 : glowing), 1.f);
+                float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
                 for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                 {
                     WorldVBuf::Type &vertex = vbuf[indices[i]];
@@ -3058,20 +3140,18 @@ DENG2_PIMPL(SectorCluster)
                 }
                 else
                 {
-                    float llL = de::clamp(0.f, ambientLightColor.w + glowing, 1.f);
+                    float lightlevel = de::clamp(0.f, ambientLight.w + glowing, 1.f);
 
                     // Calculate the color for each vertex, blended with plane color?
                     Vector3f const &surfaceColor = surface.tintColor();
                     if(surfaceColor.x < 1 || surfaceColor.y < 1 || surfaceColor.z < 1)
                     {
-                        // Blend sector light+color+surfacecolor
-                        Vector3f vColor = surfaceColor * ambientLightColor;
-                        Rend_LightVertices(vbuf, fanSize, indices.data(), llL, vColor);
+                        Vector3f finalColor = ambientLight.xyz() * surfaceColor;
+                        Rend_LightVertices(vbuf, fanSize, indices.data(), lightlevel, finalColor);
                     }
                     else
                     {
-                        // Use sector light+color only.
-                        Rend_LightVertices(vbuf, fanSize, indices.data(), llL, ambientLightColor);
+                        Rend_LightVertices(vbuf, fanSize, indices.data(), lightlevel, ambientLight.xyz());
                     }
                 }
 
@@ -3115,9 +3195,10 @@ DENG2_PIMPL(SectorCluster)
 
         if(useLights || useShadows)
         {
-            // Surfaces lit by dynamic lights may need to be rendered differently
-            // than non-lit surfaces. Determine the average light level of this rend
-            // poly, if too bright; do not bother with lights.
+            // Geometry which is lit by dynamic lights may need to be drawn
+            // differently than non-lit surfaces depending on the renderer
+            // configuration. If the averaged vertex light level is nearly
+            // fully saturated we can skip adding extra lights.
             float avgLightlevel = 0;
             for(WorldVBuf::Index i = 0; i < fanSize; ++i)
             {
@@ -3141,9 +3222,10 @@ DENG2_PIMPL(SectorCluster)
         bool hasDynlights = false;
         if(useLights)
         {
-            // Render all lights projected onto this surface.
+            // Project dynamic lights to shards.
             splinterdynlight_params_t parm; de::zap(parm);
 
+            parm.inst        = this;
             parm.subspace    = &subspace;
             parm.vertCount   = fanSize;
             parm.indices     = indices.data();
@@ -3155,9 +3237,10 @@ DENG2_PIMPL(SectorCluster)
 
         if(useShadows)
         {
-            // Render all shadows projected onto this surface.
+            // Project dynamic shadows to shards.
             splinterdynshadow_params_t parm; de::zap(parm);
 
+            parm.inst        = this;
             parm.subspace    = &subspace;
             parm.vertCount   = fanSize;
             parm.indices     = indices.data();

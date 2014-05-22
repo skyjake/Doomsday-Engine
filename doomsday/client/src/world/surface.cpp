@@ -283,6 +283,12 @@ Vector2f const &Surface::materialOrigin() const
     return d->materialOrigin;
 }
 
+Vector2f Surface::materialScale() const
+{
+    return Vector2f((flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                    (flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+}
+
 Surface &Surface::setMaterialOrigin(Vector2f const &newOrigin)
 {
     if(d->materialOrigin != newOrigin)

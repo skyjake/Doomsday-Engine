@@ -19,103 +19,49 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_render.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-#include "de_play.h"
-#include "clientapp.h"
-#include "gl/gl_texmanager.h"
-#include "gl/sys_opengl.h"
-#include "DrawLists"
-#include "MaterialSnapshot"
-#include "MaterialVariantSpec"
-#include "Face"
-#include "ConvexSubspace"
-#include "SectorCluster"
-#include "WallEdge"
-#include "world/map.h"
-#include "world/maputil.h"
-#include "world/lineowner.h"
-#include "render/rendersystem.h"
-#include "render/shadowedge.h"
 #include "render/rend_fakeradio.h"
 
-#include <de/concurrency.h>
+#include "clientapp.h"
+#include "gl/gl_main.h"
+
+#include "world/map.h"
+#include "world/lineowner.h"
+#include "world/maputil.h"
+#include "world/p_players.h"
+#include "ConvexSubspace"
+#include "Face"
+#include "SectorCluster"
+#include "Surface"
+
+#include "render/rendersystem.h"
+#include "render/r_main.h"
+#include "render/rend_main.h"
+#include "render/shadowedge.h"
+#include "DrawLists"
+
+#include <doomsday/console/var.h>
 #include <de/Vector>
-#include <QBitArray>
-#include <cstring>
 
 using namespace de;
 
-#define MIN_OPEN                (.1f)
+#define MIN_OPEN (.1f)
 
-#define MINDIFF                 (8) // min plane height difference (world units)
-#define INDIFF                  (8) // max plane height for indifference offset
+#define MINDIFF  (8) // min plane height difference (world units)
+#define INDIFF   (8) // max plane height for indifference offset
 
-#define BOTTOM                  (0)
-#define TOP                     (1)
+#define BOTTOM   (0)
+#define TOP      (1)
 
-typedef struct edge_s {
-    dd_bool done;
-    Line *line;
-    Sector *sector;
-    float length;
-    binangle_t diff;
-} edge_t;
+// Cvars:
+int rendFakeRadio = true;
+static float rendFakeRadioDarkness = 1.2f;
+static byte devFakeRadioUpdate = true;
 
-static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], LineSide const &side);
-
-int rendFakeRadio = true; ///< cvar
-float rendFakeRadioDarkness = 1.2f; ///< cvar
-
-static byte devFakeRadioUpdate = true; ///< cvar
-
-void Rend_RadioRegister()
-{
-    C_VAR_INT  ("rend-fakeradio",               &rendFakeRadio,         0, 0, 2);
-    C_VAR_FLOAT("rend-fakeradio-darkness",      &rendFakeRadioDarkness, 0, 0, 2);
-
-    C_VAR_BYTE ("rend-dev-fakeradio-update",    &devFakeRadioUpdate,    CVF_NO_ARCHIVE, 0, 1);
-}
-
+/// @todo Make cvars out of constants.
 float Rend_RadioCalcShadowDarkness(float lightLevel)
 {
     lightLevel += Rend_LightAdaptationDelta(lightLevel);
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
-}
-
-void Rend_RadioUpdateForLineSide(LineSide &side)
-{
-    // Disabled completely?
-    if(!rendFakeRadio || levelFullBright) return;
-
-    // Updates are disabled?
-    if(!devFakeRadioUpdate) return;
-
-    // Sides without sectors don't need updating. $degenleaf
-    if(!side.hasSector()) return;
-
-    // Have already determined the shadow properties on this side?
-    LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
-    if(frData.updateCount == R_FrameCount()) return;
-
-    // Not yet - Calculate now.
-    for(uint i = 0; i < 2; ++i)
-    {
-        frData.spans[i].length = side.line().length();
-        frData.spans[i].shift = 0;
-    }
-
-    scanEdges(frData.topCorners, frData.bottomCorners, frData.sideCorners, frData.spans, side);
-    frData.updateCount = R_FrameCount(); // Mark as done.
-}
-
-/// @return  @c true, if there is open space in the sector.
-static inline bool isSectorOpen(Sector const *sector)
-{
-    return (sector && sector->ceiling().height() > sector->floor().height());
 }
 
 /**
@@ -144,10 +90,24 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
     return bottom - z;
 }
 
+/// @return  @c true iff there is open space in the sector.
+static inline bool isSectorOpen(Sector const *sector)
+{
+    return (sector && sector->ceiling().height() > sector->floor().height());
+}
+
+struct edge_t
+{
+    dd_bool done;
+    Line *line;
+    Sector *sector;
+    float length;
+    binangle_t diff;
+};
+
 /// @todo fixme: Should be rewritten to work at half-edge level.
 /// @todo fixme: Should use the visual plane heights of sector clusters.
-static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
-                         bool toLeft)
+static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge, bool toLeft)
 {
     int const SEP = 10;
 
@@ -511,6 +471,32 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
 
         scanNeighbors(topCorners, bottomCorners, side, spans, !i);
     }
+}
+
+void Rend_RadioUpdateForLineSide(LineSide &side)
+{
+    // Disabled completely?
+    if(!rendFakeRadio || levelFullBright) return;
+
+    // Updates are disabled?
+    if(!devFakeRadioUpdate) return;
+
+    // Sides without sectors don't need updating. $degenleaf
+    if(!side.hasSector()) return;
+
+    // Have already determined the shadow properties on this side?
+    LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
+    if(frData.updateCount == R_FrameCount()) return;
+
+    // Not yet - Calculate now.
+    for(uint i = 0; i < 2; ++i)
+    {
+        frData.spans[i].length = side.line().length();
+        frData.spans[i].shift = 0;
+    }
+
+    scanEdges(frData.topCorners, frData.bottomCorners, frData.sideCorners, frData.spans, side);
+    frData.updateCount = R_FrameCount(); // Mark as done.
 }
 
 void rendershadowseg_params_t::setupForTop(float shadowSize, float shadowDark,
@@ -955,96 +941,99 @@ void rendershadowseg_params_t::setupForSide(float shadowSize, float shadowDark,
     }
 }
 
-static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)
+static float shadowEdgeOpacity(float darkness, ShadowEdge const &edge)
 {
-    DENG_ASSERT(side.hasSections());
-    DENG_ASSERT(!side.line().definesPolyobj());
+    float const openness       = edge.openness();
+    float const sectorOpenness = edge.sectorOpenness();
+
+    float opacity = de::min(darkness * (1 - sectorOpenness), 1.f);
+    if(openness < 1)
+    {
+        opacity *= 1 - openness;
+    }
+    return opacity;
+}
+
+static void writeShadowPrimitive(LineSide const &side, int planeIndex, float shadowDark)
+{
+    DENG2_ASSERT(side.hasSections());
+    DENG2_ASSERT(!side.line().definesPolyobj());
 
     RenderSystem &rendSys = ClientApp::renderSystem();
     WorldVBuf &vbuf       = rendSys.worldVBuf();
 
-    if(!(shadowDark > .0001)) return;
+    if(shadowDark < .0001f) return;
 
+    // Only sides with a subspace edge cast shadow.
     if(!side.leftHEdge()) return;
+    HEdge const &hedge = *side.leftHEdge();
 
-    HEdge const *leftHEdge = side.leftHEdge();
-    Plane const &plane     = side.sector().plane(planeIndex);
-    Surface const *suf     = &plane.surface();
+    // Surfaces with missing, sky-masked or glowing materials aren't shadowed.
+    Surface const &surface = side.sector().plane(planeIndex).surface();
+    if(!surface.hasMaterial()) return;
+    if(surface.material().isSkyMasked()) return;
+    if(surface.material().hasGlow()) return;
 
-    // Surfaces with a missing material don't shadow.
-    if(!suf->hasMaterial()) return;
-
-    // Missing, glowing or sky-masked materials are exempted.
-    Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlow())
-        return;
-
-    // If the sector containing the shadowing line section is fully closed (i.e., volume
-    // is not positive) then skip shadow drawing entirely.
-    /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!leftHEdge->hasFace() || !leftHEdge->face().hasMapElement())
-        return;
-
-    if(!leftHEdge->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
+    /// Skip shadowing in clusters with zero volume. (@todo Move to ShadowEdge -ds).
+    if(!hedge.hasFace()) return;
+    if(!hedge.face().hasMapElement()) return;
+    if(!hedge.face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
         return;
 
     static ShadowEdge leftEdge; // this function is called often; keep these around
     static ShadowEdge rightEdge;
 
-    leftEdge.init(*leftHEdge, Line::From);
-    rightEdge.init(*leftHEdge, Line::To);
+    leftEdge.init(hedge, Line::From);
+    rightEdge.init(hedge, Line::To);
 
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);
 
-    if(leftEdge.sectorOpenness() >= 1 && rightEdge.sectorOpenness() >= 1) return;
+    if(leftEdge.sectorOpenness() >= 1 && rightEdge.sectorOpenness() >= 1)
+        return;
 
-    bool const isFloor = suf->normal()[VZ] > 0;
+    // Determine shadow edge opacity (a function of edge "openness").
+    float const leftOpacity  = shadowEdgeOpacity(shadowDark, leftEdge);
+    if(leftOpacity < .0001f) return;
+
+    float const rightOpacity = shadowEdgeOpacity(shadowDark, rightEdge);
+    if(rightOpacity < .0001f) return;
+
+    // Process but don't draw?
+    if(rendFakeRadio > 1) return;
+
+    // This edge will be shadowed.
 
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
-    static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
-
-    static Vector3f const black(0, 0, 0);
-    static Vector3f const white(1, 1, 1);
-
-    float leftOuterAlpha  = de::min(shadowDark * (1 - leftEdge.sectorOpenness()), 1.f);
-    if(leftEdge.openness() < 1)
-        leftOuterAlpha *= 1 - leftEdge.openness();
-
-    float rightOuterAlpha = de::min(shadowDark * (1 - rightEdge.sectorOpenness()), 1.f);
-    if(rightEdge.openness() < 1)
-        rightOuterAlpha *= 1 - rightEdge.openness();
-
-    if(!(leftOuterAlpha > .0001 && rightOuterAlpha > .0001))
-        return;
-
-    if(rendFakeRadio == 2)
-        return;
+    static uint const  ceilIndices[][4] = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
     // What vertex winding order? (0 = left, 1 = right)
     // (for best results, the cross edge should always be the shortest).
-    uint winding = (rightEdge.length() > leftEdge.length()? 1 : 0);
-    uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
-
-    WorldVBuf::Index vertCount = 4;
-    WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
-
-    vbuf.reserveElements(vertCount, indices);
-    vbuf[indices[idx[0]]].pos = leftEdge.outer();  // Left outer.
-    vbuf[indices[idx[1]]].pos = rightEdge.outer(); // Right outer.
-    vbuf[indices[idx[2]]].pos = rightEdge.inner(); // Right inner.
-    vbuf[indices[idx[3]]].pos = leftEdge.inner();  // Left inner.
+    uint const winding = (rightEdge.length() > leftEdge.length()? 1 : 0);
+    bool const isFloor = surface.normal().z > 0;
+    uint const *idx    = (isFloor? floorIndices[winding] : ceilIndices[winding]);
 
     // Shadows are black (unless we're in wireframe; use white for visual debugging).
-    Vector3f const &vtxColor = renderWireframe? white : black;
+    Vector3f const black(0, 0, 0), white(1, 1, 1);
+    Vector3f const &color = !renderWireframe? black : white;
 
-    vbuf[indices[idx[0]]].rgba = Vector4f(vtxColor, leftOuterAlpha);  // Left outer.
-    vbuf[indices[idx[1]]].rgba = Vector4f(vtxColor, rightOuterAlpha); // Right outer.
-    vbuf[indices[idx[2]]].rgba = Vector4f(vtxColor, 0);               // Right inner.
-    vbuf[indices[idx[3]]].rgba = Vector4f(vtxColor, 0);               // Left inner.
+    WorldVBuf::Index *indices = rendSys.indicePool().alloc(4);
 
-    rendSys.drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
-                .write(gl::TriangleFan, vertCount, indices);
+    vbuf.reserveElements(4, indices);
+    vbuf[indices[idx[0]]].pos  = leftEdge.outer();
+    vbuf[indices[idx[0]]].rgba = Vector4f(color, leftOpacity);
+
+    vbuf[indices[idx[1]]].pos  = rightEdge.outer();
+    vbuf[indices[idx[1]]].rgba = Vector4f(color, rightOpacity);
+
+    vbuf[indices[idx[2]]].pos  = rightEdge.inner();
+    vbuf[indices[idx[2]]].rgba = Vector4f(color, 0);
+
+    vbuf[indices[idx[3]]].pos  = leftEdge.inner();
+    vbuf[indices[idx[3]]].rgba = Vector4f(color, 0);
+
+    rendSys.drawLists().find(DrawListSpec(!renderWireframe? ShadowGeom : UnlitGeom))
+                .write(gl::TriangleFan, 4, indices);
 
     rendSys.indicePool().release(indices);
 }
@@ -1062,94 +1051,79 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     if(shadowLines.isEmpty()) return;
 
     SectorCluster &cluster = subspace.cluster();
-    float sectorlight = cluster.lightSourceIntensity();
+    float const ambientLightLevel = cluster.lightSourceIntensity();
 
-    // Determine the shadow properties.
-    /// @todo Make cvars out of constants.
-    //float shadowWallSize = 2 * (8 + 16 - sectorlight * 16);
-    float shadowDark = Rend_RadioCalcShadowDarkness(sectorlight);
-
-    // Any need to continue?
+    // Determine the shadow darkness factor.
+    float const shadowDark = Rend_RadioCalcShadowDarkness(ambientLightLevel);
     if(shadowDark < .0001f) return;
 
-    Vector3f const eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - subspace.poly().center());
+    Vector3f const eyeToSurface(vOrigin.xz() - subspace.poly().center());
 
-    // We need to check all the shadow lines linked to this subspace for
-    // the purpose of fakeradio shadowing.
+    // We need to check all the shadow lines linked to this subspace.
     foreach(LineSide *side, shadowLines)
     {
-        // Already rendered during the current frame? We only want to
-        // render each shadow once per frame.
-        if(side->shadowVisCount() != R_FrameCount())
-        {
-            side->setShadowVisCount(R_FrameCount());
+        // Already drawn this frame?
+        if(side->shadowVisCount() == R_FrameCount()) continue;
+        side->setShadowVisCount(R_FrameCount());
 
-            for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
+        for(int planeIdx = 0; planeIdx < cluster.visPlaneCount(); ++planeIdx)
+        {
+            Plane const &plane = cluster.visPlane(planeIdx);
+            if(Vector3f(eyeToSurface, vOrigin.y - plane.heightSmoothed())
+                    .dot(plane.surface().normal()) >= 0)
             {
-                Plane const &plane = cluster.visPlane(pln);
-                if(Vector3f(eyeToSurface, vOrigin.y - plane.heightSmoothed())
-                        .dot(plane.surface().normal()) >= 0)
-                {
-                    writeShadowSection(pln, *side, shadowDark);
-                }
+                writeShadowPrimitive(*side, planeIdx, shadowDark);
             }
         }
     }
 }
 
-#ifdef DENG_DEBUG
-static void drawPoint(Vector3d const &point, int radius, float const color[4])
+#ifdef DENG2_DEBUG
+static void drawPoint(Vector3d const &point, int radius, Vector4f const &color)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
-    Vector3d const leftOff      = viewData->upVec + viewData->sideVec;
-    Vector3d const rightOff     = viewData->upVec - viewData->sideVec;
-
-    //Vector3d const viewToCenter = point - vOrigin;
-    //float scale = float(viewToCenter.dot(viewData->frontVec)) /
-    //                viewData->frontVec.dot(viewData->frontVec);
-
-    Vector3d finalPos( point.x, point.z, point.y );
+    Vector3d const leftOff     = viewData->upVec + viewData->sideVec;
+    Vector3d const rightOff    = viewData->upVec - viewData->sideVec;
 
     // The final radius.
-    float radX = radius * 1;
-    float radY = radX / 1.2f;
+    float const radX = radius * 1;
+    float const radY = radX / 1.2f;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4fv(color);
+    glColor4f(color.x, color.y, color.z, color.w);
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex3d(finalPos.x + radX * leftOff.x,
-                   finalPos.y + radY * leftOff.y,
-                   finalPos.z + radX * leftOff.z);
+        glVertex3d(point.x + radX * leftOff.x,
+                   point.z + radY * leftOff.y,
+                   point.y + radX * leftOff.z);
         glTexCoord2f(1, 0);
-        glVertex3d(finalPos.x + radX * rightOff.x,
-                   finalPos.y + radY * rightOff.y,
-                   finalPos.z + radX * rightOff.z);
+        glVertex3d(point.x + radX * rightOff.x,
+                   point.z + radY * rightOff.y,
+                   point.y + radX * rightOff.z);
         glTexCoord2f(1, 1);
-        glVertex3d(finalPos.x - radX * leftOff.x,
-                   finalPos.y - radY * leftOff.y,
-                   finalPos.z - radX * leftOff.z);
+        glVertex3d(point.x - radX * leftOff.x,
+                   point.z - radY * leftOff.y,
+                   point.y - radX * leftOff.z);
         glTexCoord2f(0, 1);
-        glVertex3d(finalPos.x - radX * rightOff.x,
-                   finalPos.y - radY * rightOff.y,
-                   finalPos.z - radX * rightOff.z);
+        glVertex3d(point.x - radX * rightOff.x,
+                   point.z - radY * rightOff.y,
+                   point.y - radX * rightOff.z);
     glEnd();
 }
 
 void Rend_DrawShadowOffsetVerts()
 {
-    static const float red[4] = { 1.f, .2f, .2f, 1.f};
-    static const float yellow[4] = {.7f, .7f, .2f, 1.f};
+    static Vector4f const red(1, 0.2f, 0.2f, 1);
+    static Vector4f const yellow(0.7f, 0.7f, 0.2f, 1);
 
     if(!App_WorldSystem().hasMap()) return;
 
     Map &map = App_WorldSystem().map();
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glDepthMask(GL_FALSE);
@@ -1157,23 +1131,22 @@ void Rend_DrawShadowOffsetVerts()
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
                             gl::ClampToEdge, gl::ClampToEdge);
+
     glEnable(GL_TEXTURE_2D);
 
     /// @todo fixme: Should use the visual plane heights of sector clusters.
     foreach(Line *line, map.lines())
-    for(uint k = 0; k < 2; ++k)
+    for(int i = 0; i < 2; ++i)
     {
-        Vertex &vtx = line->vertex(k);
+        Vertex const &vtx     = line->vertex(i);
         LineOwner const *base = vtx.firstLineOwner();
-        LineOwner const *own = base;
+        LineOwner const *own  = base;
         do
         {
-            Vector2d xy = vtx.origin() + own->extendedShadowOffset();
             coord_t z = own->line().frontSector().floor().heightSmoothed();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
 
-            xy = vtx.origin() + own->innerShadowOffset();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
+            drawPoint(Vector3d(vtx.origin() + own->extendedShadowOffset(), z), 1, yellow);
+            drawPoint(Vector3d(vtx.origin() + own->innerShadowOffset   (), z), 1, red);
 
             own = &own->next();
         } while(own != base);
@@ -1184,3 +1157,10 @@ void Rend_DrawShadowOffsetVerts()
     glEnable(GL_DEPTH_TEST);
 }
 #endif
+
+void Rend_RadioRegister()
+{
+    C_VAR_INT  ("rend-fakeradio",               &rendFakeRadio,         0, 0, 2);
+    C_VAR_FLOAT("rend-fakeradio-darkness",      &rendFakeRadioDarkness, 0, 0, 2);
+    C_VAR_BYTE ("rend-dev-fakeradio-update",    &devFakeRadioUpdate,    CVF_NO_ARCHIVE, 0, 1);
+}

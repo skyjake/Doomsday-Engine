@@ -301,7 +301,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     de::Vector4f const &ambientLightColor, de::Vector3f const &surfaceColor,
     float glowing, float opacity, blendmode_t blendmode,
     de::Vector2f const &materialOrigin, de::MaterialSnapshot const &matSnapshot,
-    de::MapElement &mapElement, int geomGroup, uint lightListIdx,
+    uint lightListIdx,
     float surfaceLightLevelDL, float surfaceLightLevelDR, de::Matrix3f const &surfaceTangentMatrix,
     de::WallEdgeSection const *leftSection = 0, de::WallEdgeSection const *rightSection = 0,
     de::Vector3f const *surfaceColor2 = 0);
