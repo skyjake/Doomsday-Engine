@@ -513,21 +513,12 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
     }
 }
 
-typedef struct {
-    lightingtexid_t texture;
-    bool horizontal;
-    float shadowMul;
-    float shadowDark;
-    Vector2f texOrigin;
-    Vector2f texDimensions;
-    float sectionWidth;
-} rendershadowseg_params_t;
-
-static void setTopShadowParams(rendershadowseg_params_t *p, float shadowSize,
-    float shadowDark, coord_t top, coord_t xOffset, coord_t sectionWidth,
-    coord_t fFloor, coord_t fCeil,
+void rendershadowseg_params_t::setupForTop(float shadowSize, float shadowDark,
+    coord_t top, coord_t xOffset, coord_t sectionWidth, coord_t fFloor, coord_t fCeil,
     LineSideRadioData const &frData)
 {
+    rendershadowseg_params_t *p = this;
+
     p->shadowDark = shadowDark;
     p->shadowMul = 1;
     p->horizontal = false;
@@ -680,11 +671,12 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float shadowSize,
     }
 }
 
-static void setBottomShadowParams(rendershadowseg_params_t *p, float shadowSize,
-    float shadowDark, coord_t top, coord_t xOffset, coord_t sectionWidth,
-    coord_t fFloor, coord_t fCeil,
+void rendershadowseg_params_t::setupForBottom(float shadowSize, float shadowDark,
+    coord_t top, coord_t xOffset, coord_t sectionWidth, coord_t fFloor, coord_t fCeil,
     LineSideRadioData const &frData)
 {
+    rendershadowseg_params_t *p = this;
+
     p->shadowDark = shadowDark;
     p->shadowMul = 1;
     p->horizontal = false;
@@ -838,14 +830,14 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float shadowSize,
     }
 }
 
-static void setSideShadowParams(rendershadowseg_params_t *p, float shadowSize,
-    float shadowDark, coord_t bottom, coord_t top, int rightSide,
-    bool haveBottomShadower, bool haveTopShadower,
-    coord_t xOffset, coord_t sectionWidth,
-    coord_t fFloor, coord_t fCeil,
+void rendershadowseg_params_t::setupForSide(float shadowSize, float shadowDark,
+    coord_t bottom, coord_t top, int rightSide, bool haveBottomShadower, bool haveTopShadower,
+    coord_t xOffset, coord_t sectionWidth, coord_t fFloor, coord_t fCeil,
     bool hasBackSector, coord_t bFloor, coord_t bCeil,
     coord_t lineLength, LineSideRadioData const &frData)
 {
+    rendershadowseg_params_t *p = this;
+
     p->shadowDark = shadowDark;
     p->shadowMul = frData.sideCorners[rightSide? 1 : 0].corner * .8f;
     p->shadowMul *= p->shadowMul * p->shadowMul;
@@ -960,215 +952,6 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float shadowSize,
         {
             p->texture = LST_RADIO_CC;
         }
-    }
-}
-
-static void quadTexCoords(Vector2f *tc, Vector3f const *rverts, float wallLength,
-    Vector3f const &texTopLeft, Vector3f const &texBottomRight,
-    Vector2f const &texOrigin, Vector2f const &texDimensions, bool horizontal)
-{
-    if(horizontal)
-    {
-        // Special horizontal coordinates for wall shadows.
-        tc[0].x = tc[2].x = rverts[0].x - texTopLeft.x + texOrigin.y / texDimensions.y;
-        tc[0].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.x / texDimensions.x;
-
-        tc[1].x = tc[0].x + (rverts[1].z - texBottomRight.z) / texDimensions.y;
-        tc[3].x = tc[0].x + (rverts[3].z - texBottomRight.z) / texDimensions.y;
-        tc[3].y = tc[0].y + wallLength / texDimensions.x;
-        tc[2].y = tc[0].y + wallLength / texDimensions.x;
-        return;
-    }
-
-    tc[0].x = tc[1].x = rverts[0].x - texTopLeft.x + texOrigin.x / texDimensions.x;
-    tc[3].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.y / texDimensions.y;
-
-    tc[3].x = tc[2].x = tc[0].x + wallLength / texDimensions.x;
-    tc[2].y = tc[3].y + (rverts[1].z - rverts[0].z) / texDimensions.y;
-    tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z) / texDimensions.y;
-}
-
-static void drawWallSectionShadow(Vector3f const *origPosCoords,
-    WallEdgeSection const &leftSection, WallEdgeSection const &rightSection,
-    rendershadowseg_params_t const &wsParms)
-{
-    DENG2_ASSERT(origPosCoords != 0);
-
-    RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.worldVBuf();
-
-    bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
-
-    if(rendFakeRadio > 1) return;
-
-    // Shadows are black.
-    Vector4f const shadowColor(0, 0, 0, de::clamp(0.f, wsParms.shadowDark * wsParms.shadowMul, 1.f));
-
-    DrawListSpec listSpec;
-    listSpec.group = ShadowGeom;
-    listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
-
-    DrawList &shadowList = rendSys.drawLists().find(listSpec);
-
-    Vector2f quadCoords[4];
-    quadTexCoords(quadCoords, origPosCoords, wsParms.sectionWidth,
-                  leftSection.top().origin(), rightSection.bottom().origin(),
-                  wsParms.texOrigin, wsParms.texDimensions, wsParms.horizontal);
-
-    if(mustSubdivide) // Draw as two triangle fans.
-    {
-        WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
-        WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
-        WorldVBuf::Index *indices = rendSys.indicePool().alloc(leftFanSize + rightFanSize);
-
-        vbuf.reserveElements(leftFanSize + rightFanSize, indices);
-
-        Rend_DivPosCoords(vbuf, indices, origPosCoords, leftSection, rightSection);
-
-        Rend_DivTexCoords(vbuf, indices, quadCoords, leftSection, rightSection,
-                          WorldVBuf::PrimaryTex);
-
-        for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
-        {
-            vbuf[indices[i]].rgba = shadowColor;
-        }
-
-        shadowList.write(gl::TriangleFan, rightFanSize, indices + leftFanSize)
-                  .write(gl::TriangleFan, leftFanSize, indices);
-
-        rendSys.indicePool().release(indices);
-    }
-    else
-    {
-        WorldVBuf::Index vertCount = 4;
-        WorldVBuf::Index *indices  = rendSys.indicePool().alloc(vertCount);
-
-        vbuf.reserveElements(vertCount, indices);
-        for(WorldVBuf::Index i = 0; i < vertCount; ++i)
-        {
-            WorldVBuf::Type &vertex = vbuf[indices[i]];
-            vertex.pos  = origPosCoords[i];
-            vertex.rgba = shadowColor;
-            vertex.texCoord[WorldVBuf::PrimaryTex] = quadCoords[i];
-        }
-
-        shadowList.write(gl::TriangleStrip, vertCount, indices);
-
-        rendSys.indicePool().release(indices);
-    }
-}
-
-void Rend_RadioWallSection(WallEdgeSection const &leftSection,
-    WallEdgeSection const &rightSection, float ambientLightLevel)
-{
-    // Disabled?
-    if(!rendFakeRadio) return;
-    if(levelFullBright) return;
-
-    // Don't bother with shadows on geometry that is near enough "black" already.
-    if(ambientLightLevel < 0.01f) return;
-
-    /// Determine the shadow properties (@todo Make cvars out of constants).
-    float const shadowSize = 2 * (8 + 16 - ambientLightLevel * 16);
-    float const shadowDark = Rend_RadioCalcShadowDarkness(ambientLightLevel);
-
-    if(shadowSize <= 0)
-        return;
-
-    LineSide &side = leftSection.edge().lineSide();
-    Rend_RadioUpdateForLineSide(side);
-
-    HEdge const *hedge = side.leftHEdge();
-    SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
-    SectorCluster const *backCluster = 0;
-
-    if(leftSection.id() != WallEdge::WallMiddle && hedge->twin().hasFace())
-    {
-        backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
-    }
-
-    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
-    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(cluster->visCeiling());
-
-    // Walls unaffected by floor and ceiling shadow casters will receive no side
-    // shadows either. We could do better here...
-    if(!haveBottomShadower && !haveTopShadower)
-        return;
-
-    coord_t const lineLength    = side.line().length();
-    coord_t const sectionOffset = leftSection.edge().lineSideOffset();
-    coord_t const sectionWidth  = de::abs(Vector2d(rightSection.edge().origin() - leftSection.edge().origin()).length());
-
-    coord_t const fFloor = cluster->visFloor().heightSmoothed();
-    coord_t const fCeil  = cluster->visCeiling().heightSmoothed();
-    coord_t const bFloor = (backCluster? backCluster->visFloor().heightSmoothed() : 0);
-    coord_t const bCeil  = (backCluster? backCluster->visCeiling().heightSmoothed() : 0);
-
-    Vector3f posCoords[4] = {
-        Vector3f( leftSection.bottom().origin()),
-        Vector3f( leftSection.top   ().origin()),
-        Vector3f(rightSection.bottom().origin()),
-        Vector3f(rightSection.top   ().origin())
-    };
-
-    LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
-
-    // Top Shadow?
-    if(haveTopShadower)
-    {
-        if(rightSection.top().z() > fCeil - shadowSize &&
-           leftSection.bottom().z() < fCeil)
-        {
-            rendershadowseg_params_t parms;
-            setTopShadowParams(&parms, shadowSize, shadowDark,
-                               leftSection.top().z(), sectionOffset, sectionWidth,
-                               fFloor, fCeil, frData);
-
-            drawWallSectionShadow(posCoords, leftSection, rightSection, parms);
-        }
-    }
-
-    // Bottom Shadow?
-    if(haveBottomShadower)
-    {
-        if(leftSection.bottom().z() < fFloor + shadowSize &&
-           rightSection.top().z() > fFloor)
-        {
-            rendershadowseg_params_t parms;
-            setBottomShadowParams(&parms, shadowSize, shadowDark,
-                                  leftSection.top().z(), sectionOffset, sectionWidth,
-                                  fFloor, fCeil, frData);
-
-            drawWallSectionShadow(posCoords, leftSection, rightSection, parms);
-        }
-    }
-
-    // Left Shadow?
-    if(frData.sideCorners[0].corner > 0 && sectionOffset < shadowSize)
-    {
-        rendershadowseg_params_t parms;
-        setSideShadowParams(&parms, shadowSize, shadowDark,
-                            leftSection.bottom().z(), leftSection.top().z(), false,
-                            haveBottomShadower, haveTopShadower,
-                            sectionOffset, sectionWidth,
-                            fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
-                            frData);
-
-        drawWallSectionShadow(posCoords, leftSection, rightSection, parms);
-    }
-
-    // Right Shadow?
-    if(frData.sideCorners[1].corner > 0 &&
-       sectionOffset + sectionWidth > lineLength - shadowSize)
-    {
-        rendershadowseg_params_t parms;
-        setSideShadowParams(&parms, shadowSize, shadowDark,
-                            leftSection.bottom().z(), leftSection.top().z(), true,
-                            haveBottomShadower, haveTopShadower, sectionOffset, sectionWidth,
-                            fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
-                            frData);
-
-        drawWallSectionShadow(posCoords, leftSection, rightSection, parms);
     }
 }
 

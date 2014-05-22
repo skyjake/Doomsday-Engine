@@ -1,4 +1,4 @@
-/** @file rend_fakeradio.h Faked Radiosity Lighting.
+/** @file rend_fakeradio.h  Faked Radiosity Lighting.
  *
  * Perhaps the most distinctive characteristic of radiosity lighting is that
  * the corners of a room are slightly dimmer than the rest of the surfaces.
@@ -31,8 +31,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_FAKERADIO
-#define DENG_RENDER_FAKERADIO
+#ifndef DENG_CLIENT_RENDER_FAKERADIO
+#define DENG_CLIENT_RENDER_FAKERADIO
 
 #include "Line"
 #include "Sector"
@@ -40,6 +40,7 @@
 
 #include "WallEdge"
 
+#include "gl/gl_texmanager.h"     // lightingtexid_t
 #include "render/rendersystem.h"
 
 class ConvexSubspace;
@@ -82,6 +83,8 @@ struct LineSideRadioData
     /// [bottom, top]
     edgespan_t spans[2];
 };
+
+DENG2_EXTERN_C int rendFakeRadio; ///< cvar
 
 /**
  * Register the console commands, variables, etc..., of this module.
@@ -137,19 +140,44 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  *
  * @param leftSection        Geometry for the left wall section edge.
  * @param rightSection       Geometry for the right wall section edge.
- * @param ambientLightLevel  Ambient light level for the wall section. This is
+ * @param ambientLightColor  Ambient light values for the wall section. This is
  *                           @em not automatically taken from the sector on the
  *                           front side of the wall as various map-hacks dictate
  *                           otherwise.
  */
-void Rend_RadioWallSection(de::WallEdgeSection const &leftSection,
-    de::WallEdgeSection const &rightSection, float ambientLightLevel);
+void prepareAllWallFakeradioShards(de::WallEdgeSection const &leftSection,
+    de::WallEdgeSection const &rightSection, de::Vector4f const &ambientLightColor);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to
  * the ConvexSubspace, that has not already been rendered.
  */
 void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace);
+
+struct rendershadowseg_params_t
+{
+    lightingtexid_t texture;
+    bool horizontal;
+    float shadowMul;
+    float shadowDark;
+    de::Vector2f texOrigin;
+    de::Vector2f texDimensions;
+    float sectionWidth;
+
+    void setupForTop(float shadowSize, float shadowDark, coord_t top,
+        coord_t xOffset, coord_t sectionWidth, coord_t fFloor, coord_t fCeil,
+        LineSideRadioData const &frData);
+
+    void setupForBottom(float shadowSize, float shadowDark, coord_t top,
+        coord_t xOffset, coord_t sectionWidth, coord_t fFloor, coord_t fCeil,
+        LineSideRadioData const &frData);
+
+    void setupForSide(float shadowSize, float shadowDark, coord_t bottom, coord_t top,
+        int rightSide, bool haveBottomShadower, bool haveTopShadower,
+        coord_t xOffset, coord_t sectionWidth, coord_t fFloor, coord_t fCeil,
+        bool hasBackSector, coord_t bFloor, coord_t bCeil,
+        coord_t lineLength, LineSideRadioData const &frData);
+};
 
 /**
  * Render the shadow poly vertices, for debug.
@@ -158,4 +186,4 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace);
 void Rend_DrawShadowOffsetVerts();
 #endif
 
-#endif // DENG_RENDER_FAKERADIO
+#endif // DENG_CLIENT_RENDER_FAKERADIO
