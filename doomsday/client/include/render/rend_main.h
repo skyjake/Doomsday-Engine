@@ -44,36 +44,6 @@ class LightGrid;
 class MaterialSnapshot;
 }
 
-/// @todo remove me
-struct rendworldpoly_params_t
-{
-    bool            skyMasked;
-    blendmode_t     blendmode;
-    de::Vector3d const *topLeft;
-    de::Vector3d const *bottomRight;
-    de::Vector2f const *materialOrigin;
-    de::Vector2f const *materialScale;
-    float           opacity;
-    float           surfaceLightLevelDL;
-    float           surfaceLightLevelDR;
-    de::Vector3f const *surfaceColor;
-    de::Matrix3f const *surfaceTangentMatrix;
-
-    uint            lightListIdx; // List of lights that affect this poly.
-    uint            shadowListIdx; // List of shadows that affect this poly.
-    float           glowing;
-    bool            forceOpaque;
-    de::MapElement *mapElement;
-    int             geomGroup;
-
-    // Wall section edges:
-    // Both are provided or none at all. If present then this is a wall geometry.
-    de::WallEdgeSection const *leftSection;
-    de::WallEdgeSection const *rightSection;
-    coord_t sectionWidth;
-    de::Vector3f const *surfaceColor2; // Secondary color.
-};
-
 // Multiplicative blending for dynamic lights?
 #define IS_MUL              (dynlightBlend != 1 && !usingFog)
 
@@ -322,14 +292,19 @@ bool Rend_NearFadeOpacity(de::WallEdgeSection const &leftSection,
  * All masked polys must be sorted (sprites are masked polys), otherwise there
  * would be artifacts.
  *
- * @param p   Geometry configuration.
  * @param ms  Material configuration.
  */
-bool Rend_MustDrawAsVissprite(rendworldpoly_params_t const &p, de::MaterialSnapshot const &ms);
+bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
+    blendmode_t blendmode, de::MaterialSnapshot const &ms);
 
-void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
-    de::MaterialSnapshot const &ms, ConvexSubspace &subspace, float curSectorLightLevel,
-    de::Vector3f curSectorLightColor);
+void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
+    de::Vector4f const &ambientLightColor, de::Vector3f const &surfaceColor,
+    float glowing, float opacity, blendmode_t blendmode,
+    de::Vector2f const &materialOrigin, de::MaterialSnapshot const &matSnapshot,
+    de::MapElement &mapElement, int geomGroup, uint lightListIdx,
+    float surfaceLightLevelDL, float surfaceLightLevelDR, de::Matrix3f const &surfaceTangentMatrix,
+    de::WallEdgeSection const *leftSection = 0, de::WallEdgeSection const *rightSection = 0,
+    de::Vector3f const *surfaceColor2 = 0);
 
 void Rend_LightVertex(de::Vector4f &color, de::Vector3f const &vtx, float lightLevel,
     de::Vector3f const &ambientColor);

@@ -31,6 +31,7 @@
 #include "settingsregister.h"
 
 class DrawLists;
+class Material;
 
 /**
  * Pooled work buffer set.
@@ -220,6 +221,11 @@ public:
 
     SettingsRegister &settings();
     SettingsRegister &appearanceSettings();
+
+    /**
+     * Returns the special "missing" material to be used where a surface lacks one.
+     */
+    Material &missingMaterial() const;
 
     /**
      * Provides access to the central world vertex buffer.

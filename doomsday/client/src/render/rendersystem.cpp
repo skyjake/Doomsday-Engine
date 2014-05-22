@@ -207,6 +207,11 @@ SettingsRegister &RenderSystem::appearanceSettings()
     return d->appearanceSettings;
 }
 
+Material &RenderSystem::missingMaterial() const
+{
+    return ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
+}
+
 WorldVBuf &RenderSystem::worldVBuf()
 {
     return d->vbuf;

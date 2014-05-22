@@ -987,36 +987,44 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     }
 }
 
-bool Rend_MustDrawAsVissprite(rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
+bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
+    blendmode_t blendmode, MaterialSnapshot const &ms)
 {
-    return (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.opacity < 1 || p.blendmode > 0));
+    return (!forceOpaque && !skyMasked && (!ms.isOpaque() || opacity < 1 || blendmode > 0));
 }
 
-void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
-    MaterialSnapshot const &ms, ConvexSubspace &subspace, float curSectorLightLevel,
-    Vector3f curSectorLightColor)
+void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
+    Vector4f const &ambientLightColor, Vector3f const &surfaceColor, float glowing,
+    float opacity, blendmode_t blendmode,
+    Vector2f const &matOrigin, MaterialSnapshot const &matSnapshot,
+    MapElement &mapElement, int geomGroup, uint lightListIdx,
+    float surfaceLightLevelDL, float surfaceLightLevelDR, Matrix3f const &surfaceTangentMatrix,
+    WallEdgeSection const *leftSection, WallEdgeSection const *rightSection,
+    Vector3f const *surfaceColor2)
 {
-    DENG2_ASSERT(p.leftSection != 0 && p.rightSection != 0);
-    DENG2_ASSERT(!p.leftSection->divisionCount() && !p.rightSection->divisionCount());
-    DENG2_ASSERT(!(p.skyMasked || (ms.material().isSkyMasked())));
-    DENG2_ASSERT(!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.opacity < 1 || p.blendmode > 0));
+    // Only wall sections can presently be prepared as vissprites.
+    DENG2_ASSERT(leftSection != 0 && rightSection != 0);
+
+    DENG2_ASSERT(!leftSection->divisionCount() && !rightSection->divisionCount());
+    DENG2_ASSERT(!matSnapshot.material().isSkyMasked());
+    DENG2_ASSERT(!matSnapshot.isOpaque() || opacity < 1 || blendmode > 0);
 
     SectorCluster &cluster = subspace.cluster();
 
     duint16 const vertCount = 4;
     Vector3f const posCoords[vertCount] = {
-        Vector3f( p.leftSection->bottom().origin()),
-        Vector3f( p.leftSection->top   ().origin()),
-        Vector3f(p.rightSection->bottom().origin()),
-        Vector3f(p.rightSection->top   ().origin())
+        Vector3f( leftSection->bottom().origin()),
+        Vector3f( leftSection->top   ().origin()),
+        Vector3f(rightSection->bottom().origin()),
+        Vector3f(rightSection->top   ().origin())
     };
 
     // Light this polygon.
     Vector4f colorCoords[vertCount];
-    if(levelFullBright || !(p.glowing < 1))
+    if(levelFullBright || !(glowing < 1))
     {
         // Uniform color. Apply to all vertices.
-        float ll = de::clamp(0.f, curSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
+        float ll = de::clamp(0.f, ambientLightColor.w + (levelFullBright? 1 : glowing), 1.f);
         Vector4f *colorIt = colorCoords;
         for(duint16 i = 0; i < vertCount; ++i, colorIt++)
         {
@@ -1029,7 +1037,7 @@ void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
         if(useBias)
         {
             Map &map     = cluster.sector().map();
-            Shard &shard = cluster.shard(*p.mapElement, p.geomGroup);
+            Shard &shard = cluster.shard(mapElement, geomGroup);
 
             // Apply the ambient light term from the grid (if available).
             if(map.hasLightGrid())
@@ -1043,13 +1051,13 @@ void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
             }
 
             // Apply bias light source contributions.
-            shard.lightWithBiasSources(posCoords, colorCoords, *p.surfaceTangentMatrix,
+            shard.lightWithBiasSources(posCoords, colorCoords, surfaceTangentMatrix,
                                        map.biasCurrentTime());
 
             // Apply surface glow.
-            if(p.glowing > 0)
+            if(glowing > 0)
             {
-                Vector4f const glow(p.glowing, p.glowing, p.glowing, 0);
+                Vector4f const glow(glowing, glowing, glowing, 0);
                 Vector4f *colorIt = colorCoords;
                 for(duint16 i = 0; i < vertCount; ++i, colorIt++)
                 {
@@ -1070,14 +1078,14 @@ void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
         }
         else
         {
-            float llL = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
-            float llR = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
+            float llL = de::clamp(0.f, ambientLightColor.w + surfaceLightLevelDL + glowing, 1.f);
+            float llR = de::clamp(0.f, ambientLightColor.w + surfaceLightLevelDR + glowing, 1.f);
 
             // Calculate the color for each vertex, blended with plane color?
-            if(p.surfaceColor->x < 1 || p.surfaceColor->y < 1 || p.surfaceColor->z < 1)
+            if(surfaceColor.x < 1 || surfaceColor.y < 1 || surfaceColor.z < 1)
             {
                 // Blend sector light+color+surfacecolor
-                Vector3f vColor = (*p.surfaceColor) * curSectorLightColor;
+                Vector3f vColor = surfaceColor * ambientLightColor;
 
                 if(llL != llR)
                 {
@@ -1096,22 +1104,22 @@ void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
                 // Use sector light+color only.
                 if(llL != llR)
                 {
-                    Rend_LightVertex(colorCoords[0], posCoords[0], llL, curSectorLightColor);
-                    Rend_LightVertex(colorCoords[1], posCoords[1], llL, curSectorLightColor);
-                    Rend_LightVertex(colorCoords[2], posCoords[2], llR, curSectorLightColor);
-                    Rend_LightVertex(colorCoords[3], posCoords[3], llR, curSectorLightColor);
+                    Rend_LightVertex(colorCoords[0], posCoords[0], llL, ambientLightColor);
+                    Rend_LightVertex(colorCoords[1], posCoords[1], llL, ambientLightColor);
+                    Rend_LightVertex(colorCoords[2], posCoords[2], llR, ambientLightColor);
+                    Rend_LightVertex(colorCoords[3], posCoords[3], llR, ambientLightColor);
                 }
                 else
                 {
-                    Rend_LightVertices(vertCount, colorCoords, posCoords, llL, curSectorLightColor);
+                    Rend_LightVertices(vertCount, colorCoords, posCoords, llL, ambientLightColor);
                 }
             }
 
             // Bottom color (if different from top)?
-            if(p.surfaceColor2)
+            if(surfaceColor2)
             {
                 // Blend sector light+color+surfacecolor
-                Vector3f vColor = (*p.surfaceColor2) * curSectorLightColor;
+                Vector3f vColor = (*surfaceColor2) * ambientLightColor;
 
                 Rend_LightVertex(colorCoords[0], posCoords[0], llL, vColor);
                 Rend_LightVertex(colorCoords[2], posCoords[2], llR, vColor);
@@ -1134,11 +1142,13 @@ void Rend_PrepareWallSectionVissprite(rendworldpoly_params_t const &p,
     Vector4f *colorIt = colorCoords;
     for(duint16 i = 0; i < vertCount; ++i, colorIt++)
     {
-        colorIt->w = p.opacity;
+        colorIt->w = opacity;
     }
 
-    Rend_AddMaskedPoly(posCoords, colorCoords, p.sectionWidth, &ms.materialVariant(),
-                       *p.materialOrigin, p.blendmode, p.lightListIdx, p.glowing);
+    coord_t const sectionWidth = de::abs(Vector2d(rightSection->edge().origin() - leftSection->edge().origin()).length());
+    Rend_AddMaskedPoly(posCoords, colorCoords, sectionWidth,
+                       &matSnapshot.materialVariant(), matOrigin,
+                       blendmode, lightListIdx, glowing);
 }
 
 bool Rend_NearFadeOpacity(WallEdgeSection const &leftSection,
