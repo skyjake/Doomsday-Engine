@@ -305,6 +305,9 @@ void ConvexSubspace::clearShadowLines()
 
 void ConvexSubspace::addShadowLine(LineSide &side)
 {
+    DENG2_ASSERT(side.hasSector());
+    DENG2_ASSERT(side.hasSections());
+
     d->shadowLines.insert(&side);
 }
 

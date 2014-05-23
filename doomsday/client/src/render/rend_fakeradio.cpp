@@ -1032,8 +1032,8 @@ static void writeShadowPrimitive(LineSide const &side, int planeIndex, float sha
     vbuf[indices[idx[3]]].pos  = leftEdge.inner();
     vbuf[indices[idx[3]]].rgba = Vector4f(color, 0);
 
-    rendSys.drawLists().find(DrawListSpec(!renderWireframe? ShadowGeom : UnlitGeom))
-                .write(gl::TriangleFan, 4, indices);
+    //rendSys.drawLists().find(DrawListSpec(!renderWireframe? ShadowGeom : UnlitGeom))
+    //            .write(gl::TriangleFan, 4, indices, vbuf);
 
     rendSys.indicePool().release(indices);
 }

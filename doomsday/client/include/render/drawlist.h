@@ -1,7 +1,7 @@
 /** @file drawlist.h  Drawable primitive list.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,9 +24,9 @@
 #include "gl/gltextureunit.h"
 #include "api_gl.h" // blendmode_e
 #include "render/rendersystem.h"
-#include <de/GLBuffer>
 #include <de/Vector>
-#include <QFlags>
+
+struct ShardGeom;
 
 /// Semantic geometry group identifiers.
 enum GeomGroup
@@ -117,6 +117,7 @@ public:
      * @param primitive        Type identifier for the GL primitive being written.
      * @param vertCount        Number of vertices being written.
      * @param indices          Vertex indices for the primitive.
+     * @param vbuffer          Buffer in which the vertex elements reside.
      * @param texScale         @em primary texture unit scale.
      * @param texOffset        @em primary texture unit offset.
      * @param detailTexScale   @em detail texture unit scale.
@@ -127,8 +128,8 @@ public:
      *
      * @param isLit            Is the primitive lit? (@todo Retrieve from list specification?)
      */
-    DrawList &write(de::gl::Primitive primitive, WorldVBuf::Index vertCount,
-                    WorldVBuf::Index const *indices,
+    /*DrawList &write(de::gl::Primitive primitive, WorldVBuf::Index vertCount,
+                    WorldVBuf::Index const *indices, WorldVBuf const &vbuffer,
                     de::Vector2f const &texScale        = de::Vector2f(1, 1),
                     de::Vector2f const &texOffset       = de::Vector2f(0, 0),
                     de::Vector2f const &detailTexScale  = de::Vector2f(1, 1),
@@ -136,7 +137,8 @@ public:
                     blendmode_e blendmode               = BM_NORMAL,
                     GLuint modTexture                   = 0,
                     de::Vector3f const *modColor        = 0,
-                    bool isLit                          = false);
+                    bool isLit                          = false);*/
+    DrawList &write(ShardGeom const &shard);
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 

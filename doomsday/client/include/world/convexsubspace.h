@@ -60,7 +60,7 @@ public:
 #ifdef __CLIENT__
     typedef QSet<Lumobj *>    Lumobjs;
     typedef QSet<LineSide *>  ShadowLines;
-    typedef QList<Shard::Geom *> Shards;
+    typedef QSet<Shard::Geom *> Shards;
 
     // Final audio environment characteristics.
     typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];

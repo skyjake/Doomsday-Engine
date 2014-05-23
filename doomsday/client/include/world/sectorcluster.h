@@ -31,6 +31,7 @@
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
+#  include "Shard"
 #endif
 
 #include <de/Observers>
@@ -307,6 +308,8 @@ public:
      * subspace attributed to the cluster.
      */
     void prepareShards(ConvexSubspace &subspace);
+
+    void clearAllShards();
 
 #endif // __CLIENT__
 

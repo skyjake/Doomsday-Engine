@@ -26,6 +26,7 @@
 #include "clientapp.h"
 #include <de/concurrency.h>
 #include <de/memoryzone.h>
+#include <QFlags>
 
 using namespace de;
 
@@ -71,12 +72,12 @@ DENG2_PIMPL(DrawList)
         uint size; ///< Size of this element (zero = n/a).
 
         struct Data {
-            gl::Primitive type;
+            //gl::Primitive type;
 
             enum Flag {
                 OneLight          = 0x1,
                 ManyLights        = 0x2,
-                SequentialIndices = 0x4,
+                //SequentialIndices = 0x4,
 
                 HasLights         = OneLight | ManyLights
             };
@@ -93,6 +94,7 @@ DENG2_PIMPL(DrawList)
             // for the remaining vertices. The indices array is allocated from
             // the same storage region as used for the list itself, therefore it
             // is necessary to update the pointers when the list is resized.
+            /*WorldVBuf const *vbuf;
             WorldVBuf::Index vertCount;
             union {
                 WorldVBuf::Index *indices;
@@ -100,18 +102,15 @@ DENG2_PIMPL(DrawList)
             };
 
             blendmode_t blendmode;
-            GLuint  modTex;
+            GLuint modTex;
             Vector3f modColor;
 
             Vector2f texScale;
             Vector2f texOffset;
 
             Vector2f detailTexScale;
-            Vector2f detailTexOffset;
-
-            inline WorldVBuf const &vbuf() const {
-                return ClientApp::renderSystem().worldVBuf();
-            }
+            Vector2f detailTexOffset;*/
+            Shard::Geom const *shard;
 
             /**
              * Draw the geometry for this element.
@@ -122,130 +121,133 @@ DENG2_PIMPL(DrawList)
                 {
                     // Use the correct texture and color for the light.
                     glActiveTexture((conditions & SetLightEnv0)? GL_TEXTURE0 : GL_TEXTURE1);
-                    GL_BindTextureUnmanaged(!renderTextures? 0 : modTex,
+                    GL_BindTextureUnmanaged(!renderTextures? 0 : shard->modTex,
                                             gl::ClampToEdge, gl::ClampToEdge);
 
-                    float modColorV[4] = { modColor.x, modColor.y, modColor.z, 0 };
+                    float modColorV[4] = { shard->modColor.x, shard->modColor.y, shard->modColor.z, 0 };
                     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColorV);
-                }
-
-                if(conditions & SetMatrixTexture)
-                {
-                    // Primitive-specific texture translation & scale.
-                    if(conditions & SetMatrixTexture0)
-                    {
-                        glActiveTexture(GL_TEXTURE0);
-                        glMatrixMode(GL_TEXTURE);
-                        glPushMatrix();
-                        glLoadIdentity();
-                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
-                        glScalef(texScale.x, texScale.y, 1);
-                    }
-
-                    if(conditions & SetMatrixTexture1)
-                    {
-                        glActiveTexture(GL_TEXTURE1);
-                        glMatrixMode(GL_TEXTURE);
-                        glPushMatrix();
-                        glLoadIdentity();
-                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
-                        glScalef(texScale.x, texScale.y, 1);
-                    }
-                }
-
-                if(conditions & SetMatrixDTexture)
-                {
-                    // Primitive-specific texture translation & scale.
-                    if(conditions & SetMatrixDTexture0)
-                    {
-                        glActiveTexture(GL_TEXTURE0);
-                        glMatrixMode(GL_TEXTURE);
-                        glPushMatrix();
-                        glLoadIdentity();
-                        glTranslatef(detailTexOffset.x * detailTexScale.x, detailTexOffset.y * detailTexScale.y, 1);
-                        glScalef(detailTexScale.x, detailTexScale.y, 1);
-                    }
-
-                    if(conditions & SetMatrixDTexture1)
-                    {
-                        glActiveTexture(GL_TEXTURE1);
-                        glMatrixMode(GL_TEXTURE);
-                        glPushMatrix();
-                        glLoadIdentity();
-                        glTranslatef(detailTexOffset.x * detailTexScale.x, detailTexOffset.y * detailTexScale.y, 1);
-                        glScalef(detailTexScale.x, detailTexScale.y, 1);
-                    }
                 }
 
                 if(conditions & SetBlendMode)
                 {
                     // Primitive-specific blending. Not used in all lists.
-                    GL_BlendMode(blendmode);
+                    GL_BlendMode(shard->blendmode);
                 }
 
-                glBegin(type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
-                for(WorldVBuf::Index i = 0; i < vertCount; ++i)
+                foreach(Shard::Geom::Primitive const &prim, shard->primitives)
                 {
-                    WorldVBuf::Type const &vertex = vbuf()[(flags & SequentialIndices)? base + i : indices[i]];
-
-                    for(int k = 0; k < numTexUnits; ++k)
+                    if(conditions & SetMatrixTexture)
                     {
-                        if(texUnitMap[k])
+                        // Primitive-specific texture translation & scale.
+                        if(conditions & SetMatrixTexture0)
                         {
-                            Vector2f const &tc = vertex.texCoord[texUnitMap[k] - 1];
-                            glMultiTexCoord2f(GL_TEXTURE0 + k, tc.x, tc.y);
+                            glActiveTexture(GL_TEXTURE0);
+                            glMatrixMode(GL_TEXTURE);
+                            glPushMatrix();
+                            glLoadIdentity();
+                            glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
+                            glScalef(prim.texScale.x, prim.texScale.y, 1);
+                        }
+
+                        if(conditions & SetMatrixTexture1)
+                        {
+                            glActiveTexture(GL_TEXTURE1);
+                            glMatrixMode(GL_TEXTURE);
+                            glPushMatrix();
+                            glLoadIdentity();
+                            glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
+                            glScalef(prim.texScale.x, prim.texScale.y, 1);
                         }
                     }
 
-                    if(!(conditions & NoColor))
+                    if(conditions & SetMatrixDTexture)
                     {
-                        Vector4f color = vertex.rgba;
+                        // Primitive-specific texture translation & scale.
+                        if(conditions & SetMatrixDTexture0)
+                        {
+                            glActiveTexture(GL_TEXTURE0);
+                            glMatrixMode(GL_TEXTURE);
+                            glPushMatrix();
+                            glLoadIdentity();
+                            glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
+                            glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
+                        }
 
-                        // We should not be relying on clamping at this late stage...
-                        DENG2_ASSERT(INRANGE_OF(color.x, 0.f, 1.f));
-                        DENG2_ASSERT(INRANGE_OF(color.y, 0.f, 1.f));
-                        DENG2_ASSERT(INRANGE_OF(color.z, 0.f, 1.f));
-                        DENG2_ASSERT(INRANGE_OF(color.w, 0.f, 1.f));
-
-                        color = color.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
-
-                        glColor4f(color.x, color.y, color.z, color.w);
+                        if(conditions & SetMatrixDTexture1)
+                        {
+                            glActiveTexture(GL_TEXTURE1);
+                            glMatrixMode(GL_TEXTURE);
+                            glPushMatrix();
+                            glLoadIdentity();
+                            glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
+                            glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
+                        }
                     }
 
-                    glVertex3f(vertex.pos.x, vertex.pos.z, vertex.pos.y);
-                }
-                glEnd();
+                    glBegin(prim.type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
+                    for(WorldVBuf::Index i = 0; i < prim.vertCount; ++i)
+                    {
+                        WorldVBuf::Type const &vertex = (*prim.vbuffer)[/*(flags & SequentialIndices)? base + i :*/ prim.indices[i]];
 
-                // Restore the texture matrix if changed.
-                if(conditions & SetMatrixDTexture)
-                {
-                    if(conditions & SetMatrixDTexture0)
-                    {
-                        glActiveTexture(GL_TEXTURE0);
-                        glMatrixMode(GL_TEXTURE);
-                        glPopMatrix();
-                    }
-                    if(conditions & SetMatrixDTexture1)
-                    {
-                        glActiveTexture(GL_TEXTURE1);
-                        glMatrixMode(GL_TEXTURE);
-                        glPopMatrix();
-                    }
-                }
+                        for(int k = 0; k < numTexUnits; ++k)
+                        {
+                            if(texUnitMap[k])
+                            {
+                                Vector2f const &tc = vertex.texCoord[texUnitMap[k] - 1];
+                                glMultiTexCoord2f(GL_TEXTURE0 + k, tc.x, tc.y);
+                            }
+                        }
 
-                if(conditions & SetMatrixTexture)
-                {
-                    if(conditions & SetMatrixTexture0)
-                    {
-                        glActiveTexture(GL_TEXTURE0);
-                        glMatrixMode(GL_TEXTURE);
-                        glPopMatrix();
+                        if(!(conditions & NoColor))
+                        {
+                            Vector4f color = vertex.rgba;
+
+                            // We should not be relying on clamping at this late stage...
+                            DENG2_ASSERT(INRANGE_OF(color.x, 0.f, 1.f));
+                            DENG2_ASSERT(INRANGE_OF(color.y, 0.f, 1.f));
+                            DENG2_ASSERT(INRANGE_OF(color.z, 0.f, 1.f));
+                            DENG2_ASSERT(INRANGE_OF(color.w, 0.f, 1.f));
+
+                            color = color.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
+
+                            glColor4f(color.x, color.y, color.z, color.w);
+                        }
+
+                        glVertex3f(vertex.pos.x, vertex.pos.z, vertex.pos.y);
                     }
-                    if(conditions & SetMatrixTexture1)
+                    glEnd();
+
+                    // Restore the texture matrix if changed.
+                    if(conditions & SetMatrixDTexture)
                     {
-                        glActiveTexture(GL_TEXTURE1);
-                        glMatrixMode(GL_TEXTURE);
-                        glPopMatrix();
+                        if(conditions & SetMatrixDTexture0)
+                        {
+                            glActiveTexture(GL_TEXTURE0);
+                            glMatrixMode(GL_TEXTURE);
+                            glPopMatrix();
+                        }
+                        if(conditions & SetMatrixDTexture1)
+                        {
+                            glActiveTexture(GL_TEXTURE1);
+                            glMatrixMode(GL_TEXTURE);
+                            glPopMatrix();
+                        }
+                    }
+
+                    if(conditions & SetMatrixTexture)
+                    {
+                        if(conditions & SetMatrixTexture0)
+                        {
+                            glActiveTexture(GL_TEXTURE0);
+                            glMatrixMode(GL_TEXTURE);
+                            glPopMatrix();
+                        }
+                        if(conditions & SetMatrixTexture1)
+                        {
+                            glActiveTexture(GL_TEXTURE1);
+                            glMatrixMode(GL_TEXTURE);
+                            glPopMatrix();
+                        }
                     }
                 }
             }
@@ -339,7 +341,7 @@ DENG2_PIMPL(DrawList)
             // Restore in-list pointers.
             // When the list is resized, pointers in the primitives need to be
             // restored so that they point to the new list data.
-            if(oldData)
+            /*if(oldData)
             {
                 for(Element *elem = first(); elem && elem <= last; elem = elem->next())
                 {
@@ -348,7 +350,7 @@ DENG2_PIMPL(DrawList)
                         elem->data.indices = (WorldVBuf::Index *) (data + ((byte *) elem->data.indices - oldData));
                     }
                 }
-            }
+            }*/
         }
 
         // Advance the cursor.
@@ -357,8 +359,10 @@ DENG2_PIMPL(DrawList)
         return data + startOffset;
     }
 
-    void writeIndices(WorldVBuf::Index vertCount, WorldVBuf::Index const *indices)
+    /*
+    void writeIndices(WorldVBuf const &vbuf, WorldVBuf::Index vertCount, WorldVBuf::Index const *indices)
     {
+        last->data.vbuf      = &vbuf;
         // Note that last may be reallocated during allocateData.
         last->data.vertCount = vertCount;
         // Temporary variable to avoid segfault on Ubuntu linux CMB
@@ -368,23 +372,26 @@ DENG2_PIMPL(DrawList)
         std::memcpy(last->data.indices, indices, sizeof(WorldVBuf::Index) * vertCount);
     }
 
-    void writeIndicesSequential(WorldVBuf::Index vertCount, WorldVBuf::Index base)
+    void writeIndicesSequential(WorldVBuf const &vbuf, WorldVBuf::Index vertCount, WorldVBuf::Index base)
     {
-        last->data.vertCount = vertCount;
+        last->data.vbuf       = &vbuf;
+        last->data.vertCount  = vertCount;
         last->data.base       = base;
         last->data.flags     |= Element::Data::SequentialIndices;
     }
+    */
 
-    Element *beginElement(gl::Primitive primitive)
+    Element *beginElement(Shard::Geom const &shard/*gl::Primitive primitive*/)
     {
         // This becomes the new last element.
         last = (Element *) allocateData(sizeof(Element));
         last->size = 0;
 
-        last->data.type       = primitive;
-        last->data.indices    = 0;
-        last->data.vertCount = 0;
-        last->data.flags      = 0;
+        last->data.shard     = &shard;
+        /*last->data.type      = primitive;
+        last->data.indices   = 0;
+        last->data.vertCount = 0;*/
+        last->data.flags     = 0;
 
         return last;
     }
@@ -808,38 +815,42 @@ bool DrawList::isEmpty() const
     return d->last == 0;
 }
 
-DrawList &DrawList::write(gl::Primitive primitive, WorldVBuf::Index vertCount,
-    WorldVBuf::Index const *indices,
+/*DrawList &DrawList::write(gl::Primitive primitive, WorldVBuf::Index vertCount,
+    WorldVBuf::Index const *indices, WorldVBuf const &vbuffer,
     Vector2f const &texScale, Vector2f const &texOffset,
     Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
     blendmode_e blendmode, GLuint modTexture, const Vector3f *modColor,
-    bool isLit)
+    bool isLit)*/
+DrawList &DrawList::write(Shard::Geom const &shard)
 {
-    DENG2_ASSERT(vertCount >= 3);
-    DENG2_ASSERT(indices != 0);
+    if(shard.primitives.isEmpty()) return *this; // Huh?
+
+    //DENG2_ASSERT(vertCount >= 3);
+    //DENG2_ASSERT(indices != 0);
 
     // Rationalize write arguments.
+    bool isLit = shard.hasDynlights;
     if(d->spec.group == SkyMaskGeom || d->spec.group == LightGeom || d->spec.group == ShadowGeom)
     {
         isLit      = false;
-        modTexture = 0;
-        modColor   = 0;
+        //modTexture = 0;
+        //modColor   = 0;
     }
 
-    Instance::Element *elem = d->beginElement(primitive);
+    Instance::Element *elem = d->beginElement(shard/*primitive*/);
 
     // Is the geometry lit?
-    if(modTexture && !isLit)
+    if(shard.modTex && !isLit)
     {
         elem->data.flags |= Instance::Element::Data::OneLight; // Using modulation.
     }
-    else if(modTexture || isLit)
+    else if(shard.modTex || isLit)
     {
         elem->data.flags |= Instance::Element::Data::ManyLights;
     }
 
     // Configure the GL state to be applied when this geometry is drawn later.
-    elem->data.blendmode       = blendmode;
+    /*elem->data.blendmode       = blendmode;
     elem->data.modTex          = modTexture;
     elem->data.modColor        = modColor? *modColor : Vector3f();
 
@@ -865,12 +876,13 @@ DrawList &DrawList::write(gl::Primitive primitive, WorldVBuf::Index vertCount,
     // Setup the vertex indices for this element.
     if(contiguous)
     {
-        d->writeIndicesSequential(vertCount, base);
+        d->writeIndicesSequential(vbuffer, vertCount, base);
     }
     else
     {
-        d->writeIndices(vertCount, indices);
+        d->writeIndices(vbuffer, vertCount, indices);
     }
+    */
 
     d->endElement();
 

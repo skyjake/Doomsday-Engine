@@ -1470,19 +1470,20 @@ static void drawSubspace(ConvexSubspace &subspace)
 
     // Draw all shard geometries.
     DrawLists &drawLists = ClientApp::renderSystem().drawLists();
-    foreach(Shard::Geom const *geom, subspace.shards())
-    foreach(Shard::Geom::Primitive const &prim, geom->primitives)
+    foreach(Shard::Geom const *shard, subspace.shards())
     {
-        drawLists.find(geom->listSpec)
-            .write(prim.type, prim.vertCount, prim.indices,
-                   prim.texScale, prim.texOffset,
-                   prim.detailTexScale, prim.detailTexOffset,
-                   geom->blendmode, geom->modTex, geom->modTex? &geom->modColor : 0,
-                   geom->hasDynlights);
-    }
+        drawLists.find(shard->listSpec).write(*shard);
 
-    qDeleteAll(subspace.shards());
-    subspace.shards().clear();
+        /*foreach(Shard::Geom::Primitive const &prim, shard->primitives)
+        {
+            drawLists.find(shard->listSpec)
+                .write(prim.type, prim.vertCount, prim.indices, *prim.vbuffer,
+                       prim.texScale, prim.texOffset,
+                       prim.detailTexScale, prim.detailTexOffset,
+                       shard->blendmode, shard->modTex, shard->modTex? &shard->modColor : 0,
+                       shard->hasDynlights);
+        }*/
+    }
 
     // When the viewer is not in the void, we can angle-occlude the range defined by
     // the XY origins of the halfedge if the opening between floor and ceiling has
@@ -2421,6 +2422,9 @@ void Rend_RenderMap(Map &map)
 
     if(!freezeRLs)
     {
+        // Discard all Shards generated for the previous frame only.
+        foreach(SectorCluster *cluster, map.clusters()) cluster->clearAllShards();
+
         // Prepare for rendering.
         ClientApp::renderSystem().resetDrawLists(); // Clear the lists for new geometry.
         C_ClearRanges(); // Clear the clipper.

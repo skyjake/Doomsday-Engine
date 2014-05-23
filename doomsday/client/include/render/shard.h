@@ -28,6 +28,49 @@
 class BiasTracker;
 class SectorCluster;
 
+struct ShardGeom
+{
+    DrawList::Spec listSpec;
+    blendmode_t blendmode;
+    GLuint modTex;
+    de::Vector3f modColor;
+    bool hasDynlights;
+    typedef WorldVBuf::Indices Indices;
+    Indices indices;
+    struct Primitive
+    {
+        enum Flag {
+            SequentialIndices = 0x4
+        };
+        byte flags;
+        de::gl::Primitive type;
+        WorldVBuf const *vbuffer;
+        WorldVBuf::Index vertCount;
+        union {
+            WorldVBuf::Index *indices;
+            WorldVBuf::Index base;
+        };
+        de::Vector2f texScale;
+        de::Vector2f texOffset;
+        de::Vector2f detailTexScale;
+        de::Vector2f detailTexOffset;
+    };
+    typedef QList<Primitive> Primitives;
+    Primitives primitives;
+
+    ShardGeom(DrawList::Spec const &listSpec,
+         blendmode_t blendmode        = BM_NORMAL,
+         GLuint modTex                = 0,
+         de::Vector3f const &modColor = de::Vector3f(),
+         bool hasDynlights            = false)
+        : listSpec    (listSpec)
+        , blendmode   (blendmode)
+        , modTex      (modTex)
+        , modColor    (modColor)
+        , hasDynlights(hasDynlights)
+    {}
+};
+
 /**
  * 3D map geometry fragment.
  *
@@ -38,40 +81,7 @@ class SectorCluster;
 class Shard
 {
 public:
-    struct Geom
-    {
-        DrawList::Spec listSpec;
-        blendmode_t blendmode;
-        GLuint modTex;
-        de::Vector3f modColor;
-        bool hasDynlights;
-        typedef WorldVBuf::Indices Indices;
-        Indices indices;
-        struct Primitive
-        {
-            de::gl::Primitive type;
-            WorldVBuf::Index vertCount;
-            WorldVBuf::Index const *indices;
-            de::Vector2f texScale;
-            de::Vector2f texOffset;
-            de::Vector2f detailTexScale;
-            de::Vector2f detailTexOffset;
-        };
-        typedef QList<Primitive> Primitives;
-        Primitives primitives;
-
-        Geom(DrawList::Spec const &listSpec,
-             blendmode_t blendmode        = BM_NORMAL,
-             GLuint modTex                = 0,
-             de::Vector3f const &modColor = de::Vector3f(),
-             bool hasDynlights            = false)
-            : listSpec    (listSpec)
-            , blendmode   (blendmode)
-            , modTex      (modTex)
-            , modColor    (modColor)
-            , hasDynlights(hasDynlights)
-        {}
-    };
+    typedef ShardGeom Geom;
 
 public:
     /**

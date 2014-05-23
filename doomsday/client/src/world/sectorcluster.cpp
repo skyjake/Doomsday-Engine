@@ -433,13 +433,14 @@ namespace internal
      * Configure @a prim according to the arguments given.
      */
     static Shard::Geom::Primitive &makeListPrimitive(Shard::Geom &shard,
-        gl::Primitive type, WorldVBuf::Index vertCount,
+        gl::Primitive type, WorldVBuf::Index vertCount, WorldVBuf &vbuf,
         WorldVBuf::Index indicesOffset = 0)
     {
         shard.primitives.append(Shard::Geom::Primitive());
         Shard::Geom::Primitive &prim = shard.primitives.last();
 
         prim.type            = type;
+        prim.vbuffer         = &vbuf;
         prim.vertCount       = vertCount;
         prim.indices         = shard.indices.data() + indicesOffset;
         prim.texScale        = Vector2f(1, 1);
@@ -454,7 +455,7 @@ namespace internal
      * Configure @a prim according to the arguments given.
      */
     static Shard::Geom::Primitive &makeListPrimitive(Shard::Geom &shard,
-        gl::Primitive type, WorldVBuf::Index vertCount,
+        gl::Primitive type, WorldVBuf::Index vertCount, WorldVBuf &vbuf,
         Vector2f const &texScale, Vector2f const &texOffset,
         Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
         WorldVBuf::Index indicesOffset = 0)
@@ -463,6 +464,7 @@ namespace internal
         Shard::Geom::Primitive &prim = shard.primitives.last();
 
         prim.type            = type;
+        prim.vbuffer         = &vbuf;
         prim.vertCount       = vertCount;
         prim.indices         = shard.indices.data() + indicesOffset;
         prim.texScale        = texScale;
@@ -519,8 +521,8 @@ DENG2_PIMPL(SectorCluster)
         {}
     };
     /// @todo Avoid two-stage lookup.
-    typedef QMap<int, GeometryData *> Shards;
-    typedef QMap<MapElement *, Shards> GeometryGroups;
+    typedef QMap<int, GeometryData *> GShards;
+    typedef QMap<MapElement *, GShards> GeometryGroups;
     GeometryGroups geomGroups;
 
     /// Reverse lookup hash from Shard => GeometryData.
@@ -537,6 +539,9 @@ DENG2_PIMPL(SectorCluster)
 
     typedef QMultiMap<de::HEdge *, de::WallEdge *> WallEdges;
     WallEdges wallEdges;
+
+    typedef QList<Shard::Geom *> Shards;
+    Shards shards;
 #endif
 
     Instance(Public *i)
@@ -567,9 +572,11 @@ DENG2_PIMPL(SectorCluster)
 
         DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
         {
-            Shards &shards = *geomGroup;
+            GShards &shards = *geomGroup;
             qDeleteAll(shards);
         }
+
+        self.clearAllShards();
 #endif
 
         clearMapping(Sector::Floor);
@@ -1187,8 +1194,8 @@ DENG2_PIMPL(SectorCluster)
         GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
         if(foundGroup != geomGroups.end())
         {
-            Shards &shards = *foundGroup;
-            Shards::iterator found = shards.find(geomId);
+            GShards &shards = *foundGroup;
+            GShards::iterator found = shards.find(geomId);
             if(found != shards.end())
             {
                 return *found;
@@ -1199,7 +1206,7 @@ DENG2_PIMPL(SectorCluster)
 
         if(foundGroup == geomGroups.end())
         {
-            foundGroup = geomGroups.insert(&mapElement, Shards());
+            foundGroup = geomGroups.insert(&mapElement, GShards());
         }
 
         return *foundGroup->insert(geomId, new GeometryData(&mapElement, geomId));
@@ -1515,8 +1522,8 @@ DENG2_PIMPL(SectorCluster)
                     vertex.rgba = light.color;
                 }
 
-                makeListPrimitive(*shard, gl::TriangleFan, leftFanSize);
-                makeListPrimitive(*shard, gl::TriangleFan, rightFanSize,
+                makeListPrimitive(*shard, gl::TriangleFan, leftFanSize, vbuf);
+                makeListPrimitive(*shard, gl::TriangleFan, rightFanSize, vbuf,
                                   leftFanSize /*indices offset*/);
             }
             else // Generate one triangle strip.
@@ -1544,7 +1551,7 @@ DENG2_PIMPL(SectorCluster)
                 vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
                 vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = light.bottomRight.y;
 
-                makeListPrimitive(*shard, gl::TriangleStrip, stripSize);
+                makeListPrimitive(*shard, gl::TriangleStrip, stripSize, vbuf);
             }
         }
         else // A flat.
@@ -1567,7 +1574,7 @@ DENG2_PIMPL(SectorCluster)
                              ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * light.bottomRight.y));
             }
 
-            makeListPrimitive(*shard, gl::TriangleFan, fanSize);
+            makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
         }
 
         return shard;
@@ -1615,8 +1622,8 @@ DENG2_PIMPL(SectorCluster)
                     vertex.rgba = shadow.color;
                 }
 
-                makeListPrimitive(*shard, gl::TriangleFan, leftFanSize);
-                makeListPrimitive(*shard, gl::TriangleFan, rightFanSize,
+                makeListPrimitive(*shard, gl::TriangleFan, leftFanSize, vbuf);
+                makeListPrimitive(*shard, gl::TriangleFan, rightFanSize, vbuf,
                                   leftFanSize /*indices offset*/);
             }
             else // Generate one triangle strip.
@@ -1644,7 +1651,7 @@ DENG2_PIMPL(SectorCluster)
                 vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
                 vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = shadow.bottomRight.y;
 
-                makeListPrimitive(*shard, gl::TriangleStrip, stripSize);
+                makeListPrimitive(*shard, gl::TriangleStrip, stripSize, vbuf);
             }
         }
         else // A flat.
@@ -1667,7 +1674,7 @@ DENG2_PIMPL(SectorCluster)
                              ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * shadow.bottomRight.y));
             }
 
-            makeListPrimitive(*shard, gl::TriangleFan, fanSize);
+            makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
         }
 
         return shard;
@@ -1678,7 +1685,9 @@ DENG2_PIMPL(SectorCluster)
         // If multitexturing is in use we skip the first.
         if(!(Rend_IsMTexLights() && p.lastIdx == 0))
         {
-            p.subspace->shards() << splinterDynlight(light, p);
+            Shard::Geom *shard = splinterDynlight(light, p);
+            shards << shard; // take ownership.
+            p.subspace->shards() << shard; // link to the subspace.
         }
         p.lastIdx++;
     }
@@ -1692,7 +1701,9 @@ DENG2_PIMPL(SectorCluster)
     void prepareDynshadowShards(TexProjection const &shadow, splinterdynshadow_params_t &p,
         DrawListSpec const &listSpec)
     {
-        p.subspace->shards() << splinterDynshadow(shadow, p, listSpec);
+        Shard::Geom *shard = splinterDynshadow(shadow, p, listSpec);
+        shards << shard; // take ownership.
+        p.subspace->shards() << shard; // link to the subspace.
     }
 
     /// Generates a new primitive for each light projection.
@@ -1771,7 +1782,8 @@ DENG2_PIMPL(SectorCluster)
         if(devRendSkyMode) return;
 
         Shard::Geom *shard = new Shard::Geom(DrawListSpec(SkyMaskGeom));
-        subspace.shards() << shard;
+        shards << shard; // take ownership.
+        subspace.shards() << shard; // link to the subspace.
 
         ClockDirection const direction = (upper? Anticlockwise : Clockwise);
         coord_t const height           = skyPlaneZ(upper);
@@ -1804,7 +1816,7 @@ DENG2_PIMPL(SectorCluster)
             vbuf[shard->indices[n]].pos = Vector3f(poly.hedge()->origin(), height);
         }
 
-        makeListPrimitive(*shard, gl::TriangleFan, fanSize);
+        makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
     }
 
     void prepareSkyMaskWallShardStrip(ConvexSubspace &subspace, WorldVBuf::Index vertCount,
@@ -1828,7 +1840,8 @@ DENG2_PIMPL(SectorCluster)
         }
 
         Shard::Geom *shard = new Shard::Geom(listSpec);
-        subspace.shards() << shard;
+        shards << shard; // take ownership.
+        subspace.shards() << shard; // link to the subspace.
 
         shard->indices.resize(vertCount);
 
@@ -1848,11 +1861,11 @@ DENG2_PIMPL(SectorCluster)
 
         if(!devRendSkyMode)
         {
-            makeListPrimitive(*shard, gl::TriangleStrip, vertCount);
+            makeListPrimitive(*shard, gl::TriangleStrip, vertCount, vbuf);
         }
         else
         {
-            makeListPrimitive(*shard, gl::TriangleStrip, vertCount,
+            makeListPrimitive(*shard, gl::TriangleStrip, vertCount, vbuf,
                               shard->listSpec.unit(TU_PRIMARY       ).scale,
                               shard->listSpec.unit(TU_PRIMARY       ).offset,
                               shard->listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -2043,12 +2056,13 @@ DENG2_PIMPL(SectorCluster)
 
         if(mustSubdivide) // Draw as two triangle fans.
         {
-            WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
             WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
+            WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
 
             Shard::Geom *shard = new Shard::Geom(shadowListSpec);
             shard->indices.resize(leftFanSize + rightFanSize);
-            subspace.shards() << shard;
+            shards << shard; // take ownership.
+            subspace.shards() << shard; // link to the subspace.
 
             vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
             Rend_DivPosCoords(vbuf, shard->indices.data(), origPosCoords, leftSection, rightSection);
@@ -2060,15 +2074,16 @@ DENG2_PIMPL(SectorCluster)
                 vbuf[shard->indices[i]].rgba = shadowColor;
             }
 
-            makeListPrimitive(*shard, gl::TriangleFan, leftFanSize);
-            makeListPrimitive(*shard, gl::TriangleFan, rightFanSize,
+            makeListPrimitive(*shard, gl::TriangleFan, leftFanSize, vbuf);
+            makeListPrimitive(*shard, gl::TriangleFan, rightFanSize, vbuf,
                               leftFanSize /*indices offset*/);
         }
         else
         {
             Shard::Geom *shard = new Shard::Geom(shadowListSpec);
             shard->indices.resize(4);
-            subspace.shards() << shard;
+            shards << shard; // take ownership.
+            subspace.shards() << shard; // link to the subspace.
 
             vbuf.reserveElements(4, shard->indices);
             for(WorldVBuf::Index i = 0; i < 4; ++i)
@@ -2079,34 +2094,34 @@ DENG2_PIMPL(SectorCluster)
                 vertex.texCoord[WorldVBuf::PrimaryTex] = quadCoords[i];
             }
 
-            makeListPrimitive(*shard, gl::TriangleStrip, 4);
+            makeListPrimitive(*shard, gl::TriangleStrip, 4, vbuf);
         }
     }
 
     /**
      * Prepare all FakeRadio Shards for the specified wall section.
      *
-     * @param leftSection        Geometry for the left wall section edge.
-     * @param rightSection       Geometry for the right wall section edge.
-     * @param ambientLightColor  Ambient light values for the wall section. This is
-     *                           @em not automatically taken from the sector on the
-     *                           front side of the wall as various map-hacks dictate
-     *                           otherwise.
+     * @param leftSection   Geometry for the left wall section edge.
+     * @param rightSection  Geometry for the right wall section edge.
+     * @param ambientLight  Ambient light values for the wall section. This is
+     *                      @em not automatically taken from the sector on the
+     *                      front side of the wall as various map-hacks dictate
+     *                      otherwise.
      */
     void prepareAllWallFakeradioShards(ConvexSubspace &subspace,
         WallEdgeSection const &leftSection, WallEdgeSection const &rightSection,
-        Vector4f const &ambientLightColor)
+        Vector4f const &ambientLight)
     {
         // Disabled?
         if(!rendFakeRadio) return;
         if(levelFullBright) return;
 
         // Don't bother with shadows on geometry that is near enough "black" already.
-        if(ambientLightColor.w < 0.01f) return;
+        if(ambientLight.w < 0.01f) return;
 
         /// Determine the shadow properties (@todo Make cvars out of constants).
-        float const shadowSize = 2 * (8 + 16 - ambientLightColor.w * 16);
-        float const shadowDark = Rend_RadioCalcShadowDarkness(ambientLightColor.w);
+        float const shadowSize = 2 * (8 + 16 - ambientLight.w * 16);
+        float const shadowDark = Rend_RadioCalcShadowDarkness(ambientLight.w);
 
         if(shadowSize <= 0)
             return;
@@ -2611,7 +2626,8 @@ DENG2_PIMPL(SectorCluster)
                     WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
 
                     Shard::Geom *shard = new Shard::Geom(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
-                    subspace.shards() << shard;
+                    shards << shard; // take ownership.
+                    subspace.shards() << shard; // link to the subspace.
 
                     shard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2634,13 +2650,13 @@ DENG2_PIMPL(SectorCluster)
                                           WorldVBuf::ModTex);
                     }
 
-                    makeListPrimitive(*shard, gl::TriangleFan, leftFanSize,
+                    makeListPrimitive(*shard, gl::TriangleFan, leftFanSize, vbuf,
                                       listSpec.unit(TU_PRIMARY       ).scale,
                                       listSpec.unit(TU_PRIMARY       ).offset,
                                       listSpec.unit(TU_PRIMARY_DETAIL).scale,
                                       listSpec.unit(TU_PRIMARY_DETAIL).offset);
 
-                    makeListPrimitive(*shard, gl::TriangleFan, rightFanSize,
+                    makeListPrimitive(*shard, gl::TriangleFan, rightFanSize, vbuf,
                                       listSpec.unit(TU_PRIMARY       ).scale,
                                       listSpec.unit(TU_PRIMARY       ).offset,
                                       listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -2660,7 +2676,8 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         Shard::Geom *shineShard = new Shard::Geom(shineListSpec, matSnapshot.shineBlendMode());
-                        subspace.shards() << shineShard;
+                        shards << shineShard; // take ownership.
+                        subspace.shards() << shineShard; // link subspace.
 
                         shineShard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2675,13 +2692,13 @@ DENG2_PIMPL(SectorCluster)
                                               WorldVBuf::InterTex);
                         }
 
-                        makeListPrimitive(*shineShard, gl::TriangleFan, leftFanSize,
+                        makeListPrimitive(*shineShard, gl::TriangleFan, leftFanSize, vbuf,
                                           shineListSpec.unit(TU_INTER).scale,
                                           shineListSpec.unit(TU_INTER).offset,
                                           Vector2f(1, 1),
                                           Vector2f(0, 0));
 
-                        makeListPrimitive(*shineShard, gl::TriangleFan, rightFanSize,
+                        makeListPrimitive(*shineShard, gl::TriangleFan, rightFanSize, vbuf,
                                           shineListSpec.unit(TU_INTER).scale,
                                           shineListSpec.unit(TU_INTER).offset,
                                           Vector2f(1, 1),
@@ -2692,7 +2709,8 @@ DENG2_PIMPL(SectorCluster)
                 else // Generate one triangle strip.
                 {
                     Shard::Geom *shard = new Shard::Geom(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
-                    subspace.shards() << shard;
+                    shards << shard; // take ownership.
+                    subspace.shards() << shard; // link to the subspace.
 
                     shard->indices.resize(4);
 
@@ -2716,7 +2734,7 @@ DENG2_PIMPL(SectorCluster)
                         }
                     }
 
-                    makeListPrimitive(*shard, gl::TriangleStrip, 4,
+                    makeListPrimitive(*shard, gl::TriangleStrip, 4, vbuf,
                                       listSpec.unit(TU_PRIMARY       ).scale,
                                       listSpec.unit(TU_PRIMARY       ).offset,
                                       listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -2735,7 +2753,8 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         Shard::Geom *shineShard = new Shard::Geom(shineListSpec, matSnapshot.shineBlendMode());
-                        subspace.shards() << shineShard;
+                        shards << shineShard; // take ownership.
+                        subspace.shards() << shineShard; // link to the subspace.
 
                         shineShard->indices.resize(4);
 
@@ -2752,7 +2771,7 @@ DENG2_PIMPL(SectorCluster)
                             }
                         }
 
-                        makeListPrimitive(*shineShard, gl::TriangleStrip, 4,
+                        makeListPrimitive(*shineShard, gl::TriangleStrip, 4, vbuf,
                                           shineListSpec.unit(TU_INTER         ).scale,
                                           shineListSpec.unit(TU_INTER         ).offset,
                                           shineListSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -2765,7 +2784,8 @@ DENG2_PIMPL(SectorCluster)
                 bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
                 Shard::Geom *shard = new Shard::Geom(DrawListSpec(SkyMaskGeom));
-                subspace.shards() << shard;
+                shards << shard; // take ownership.
+                subspace.shards() << shard; // link to the subspace.
 
                 if(mustSubdivide) // Generate two triangle fans.
                 {
@@ -2777,8 +2797,8 @@ DENG2_PIMPL(SectorCluster)
                     vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
                     Rend_DivPosCoords(vbuf, shard->indices.data(), posCoords, leftSection, rightSection);
 
-                    makeListPrimitive(*shard, gl::TriangleFan, leftFanSize);
-                    makeListPrimitive(*shard, gl::TriangleFan, rightFanSize,
+                    makeListPrimitive(*shard, gl::TriangleFan, leftFanSize, vbuf);
+                    makeListPrimitive(*shard, gl::TriangleFan, rightFanSize, vbuf,
                                       leftFanSize /*indices offset*/);
                 }
                 else // Generate one triangle strip.
@@ -2791,7 +2811,7 @@ DENG2_PIMPL(SectorCluster)
                         vbuf[shard->indices[i]].pos = posCoords[i];
                     }
 
-                    makeListPrimitive(*shard, gl::TriangleStrip, 4);
+                    makeListPrimitive(*shard, gl::TriangleStrip, 4, vbuf);
                 }
             }
 
@@ -3280,9 +3300,10 @@ DENG2_PIMPL(SectorCluster)
 
             Shard::Geom *shard = new Shard::Geom(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
             shard->indices = indices;
-            subspace.shards() << shard;
+            shards << shard; // take ownership.
+            subspace.shards() << shard; // link to the subspace.
 
-            makeListPrimitive(*shard, gl::TriangleFan, fanSize,
+            makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf,
                               listSpec.unit(TU_PRIMARY       ).scale,
                               listSpec.unit(TU_PRIMARY       ).offset,
                               listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -3302,9 +3323,10 @@ DENG2_PIMPL(SectorCluster)
 
                 Shard::Geom *shineShard = new Shard::Geom(shineListSpec, matSnapshot.shineBlendMode());
                 shineShard->indices = shineIndices;
-                subspace.shards() << shineShard;
+                shards << shineShard; // take ownership.
+                subspace.shards() << shineShard; // link to the subspace.
 
-                makeListPrimitive(*shineShard, gl::TriangleFan, fanSize,
+                makeListPrimitive(*shineShard, gl::TriangleFan, fanSize, vbuf,
                                   shineListSpec.unit(TU_INTER         ).scale,
                                   shineListSpec.unit(TU_INTER         ).offset,
                                   shineListSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -3315,9 +3337,10 @@ DENG2_PIMPL(SectorCluster)
         {
             Shard::Geom *shard = new Shard::Geom(DrawListSpec(SkyMaskGeom));
             shard->indices = indices;
-            subspace.shards() << shard;
+            shards << shard; // take ownership.
+            subspace.shards() << shard; // link to the subspace.
 
-            makeListPrimitive(*shard, gl::TriangleFan, fanSize);
+            makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
         }
     }
 
@@ -3733,6 +3756,16 @@ void SectorCluster::prepareShards(ConvexSubspace &subspace)
     d->prepareAllWallShards(subspace);
     d->prepareAllFlatShards(subspace);
 }
+
+void SectorCluster::clearAllShards()
+{
+    // Unlink the Shards from the subspace.
+    foreach(ConvexSubspace *subspace, d->subspaces) subspace->shards().clear();
+
+    qDeleteAll(d->shards);
+    d->shards.clear();
+}
+
 #endif // __CLIENT__
 
 // SectorClusterCirculator -----------------------------------------------------
