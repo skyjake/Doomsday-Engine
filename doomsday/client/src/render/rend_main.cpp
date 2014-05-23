@@ -254,7 +254,7 @@ float devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
 static void drawMobjBoundingBoxes(Map &map);
 static void drawSoundEmitters(Map &map);
 static void drawGenerators(Map &map);
-static void drawAllSurfaceTangentVectors(Map &map);
+static void drawSurfaceTangentVectors(Map &map);
 static void drawBiasEditingVisuals(Map &map);
 static void drawLumobjs(Map &map);
 static void drawSectors(Map &map);
@@ -2466,7 +2466,7 @@ void Rend_RenderMap(Map &map)
     drawAllLists(map);
 
     // Draw various debugging displays:
-    drawAllSurfaceTangentVectors(map);
+    drawSurfaceTangentVectors(map);
     drawLumobjs(map);
     drawMobjBoundingBoxes(map);
     drawSectors(map);
@@ -3074,9 +3074,9 @@ static void drawMobjBoundingBoxes(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void drawVector(Vector3f const &vector, float scalar, const float color[3])
+static void drawVector(Vector3f const &vector, float scalar, float const color[3])
 {
-    static const float black[4] = { 0, 0, 0, 0 };
+    static float const black[4] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -3173,15 +3173,15 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
     }
 }
 
-/**
- * @todo Use drawTangentVectorsForWallSections() for polyobjs too.
- */
-static void drawSurfaceTangentVectors(SectorCluster *cluster)
+static int drawSurfaceTangentVectorsWorker(ConvexSubspace *subspace, void *)
 {
-    if(!cluster) return;
+    DENG2_ASSERT(subspace->hasCluster());
 
-    foreach(ConvexSubspace *subspace, cluster->subspaces())
+    // Have we yet to process this subspace?
+    if(subspace->validCount() != validCount)
     {
+        subspace->setValidCount(validCount); // Don't do so again.
+
         HEdge const *base  = subspace->poly().hedge();
         HEdge const *hedge = base;
         do
@@ -3200,41 +3200,45 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
         {
             drawTangentVectorsForWallSections(hedge);
         }
+
+        int const planeCount = subspace->cluster().visPlaneCount();
+        for(int i = 0; i < planeCount; ++i)
+        {
+            Plane const &plane = subspace->cluster().visPlane(i);
+            coord_t height     = 0;
+
+            if(plane.surface().hasSkyMaskedMaterial() &&
+               (plane.isSectorFloor() || plane.isSectorCeiling()))
+            {
+                height = plane.map().skyPlane(plane.isSectorCeiling()? Map::SkyCeiling : Map::SkyFloor).height();
+            }
+            else
+            {
+                height = plane.heightSmoothed();
+            }
+
+            drawTangentVectorsForSurface(plane.surface(), Vector3d(subspace->poly().center(), height));
+        }
     }
 
-    int const planeCount = cluster->sector().planeCount();
-    for(int i = 0; i < planeCount; ++i)
-    {
-        Plane const &plane = cluster->visPlane(i);
-        coord_t height     = 0;
-
-        if(plane.surface().hasSkyMaskedMaterial() &&
-           (plane.isSectorFloor() || plane.isSectorCeiling()))
-        {
-            height = plane.map().skyPlane(plane.isSectorCeiling()? Map::SkyCeiling : Map::SkyFloor).height();
-        }
-        else
-        {
-            height = plane.heightSmoothed();
-        }
-
-        drawTangentVectorsForSurface(plane.surface(), Vector3d(cluster->center(), height));
-    }
+    return 0; // Continue iteration.
 }
 
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
-static void drawAllSurfaceTangentVectors(Map &map)
+static void drawSurfaceTangentVectors(Map &map)
 {
+    coord_t const MAX_DISTANCE = 1280; ///< From the viewer.
+
     if(!devSurfaceVectors) return;
 
     glDisable(GL_CULL_FACE);
 
-    foreach(SectorCluster *cluster, map.clusters())
-    {
-        drawSurfaceTangentVectors(cluster);
-    }
+    validCount++;
+    AABoxd box(eyeOrigin.x - MAX_DISTANCE, eyeOrigin.y - MAX_DISTANCE,
+               eyeOrigin.x + MAX_DISTANCE, eyeOrigin.y + MAX_DISTANCE);
+    map.subspaceBoxIterator(box, drawSurfaceTangentVectorsWorker);
 
     glEnable(GL_CULL_FACE);
 }

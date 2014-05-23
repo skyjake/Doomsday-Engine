@@ -61,8 +61,6 @@ public:
     /// Notified when the cluster is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
 
-    typedef QList<ConvexSubspace *> Subspaces;
-
 public:
     /**
      * Construct a new sector cluster comprised of the specified set of subspaces.
@@ -71,7 +69,7 @@ public:
      *
      * @param subspaces  Set of subspaces comprising the resulting cluster.
      */
-    SectorCluster(Subspaces const &subspaces);
+    SectorCluster(QList<ConvexSubspace *> const &subspaces);
     virtual ~SectorCluster();
 
     /**
@@ -177,17 +175,6 @@ public:
      * @see Surface::hasSkyMaskedMaterial()
      */
     bool hasSkyMaskedPlane() const;
-
-    /**
-     * Provides access to the list of all subspaces in the cluster, for efficient
-     * traversal.
-     */
-    Subspaces const &subspaces() const;
-
-    /**
-     * Returns the total number of subspaces in the cluster.
-     */
-    inline int subspaceCount() const { return subspaces().count(); }
 
     /**
      * Returns the axis-aligned bounding box of the cluster.

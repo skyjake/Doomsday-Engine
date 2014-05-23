@@ -494,6 +494,7 @@ DENG2_PIMPL(SectorCluster)
 {
     bool needClassify; ///< @c true= (Re)classification is necessary.
     ClusterFlags flags;
+    typedef QList<ConvexSubspace *> Subspaces;
     Subspaces subspaces;
     QScopedPointer<AABoxd> aaBox;
 
@@ -3390,7 +3391,7 @@ DENG2_PIMPL(SectorCluster)
 #endif // __CLIENT__
 };
 
-SectorCluster::SectorCluster(Subspaces const &subspaces)
+SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspaces)
     : d(new Instance(this))
 {
     d->subspaces.append(subspaces);
@@ -3502,11 +3503,6 @@ AABoxd const &SectorCluster::aaBox() const
     }
 
     return *d->aaBox;
-}
-
-SectorCluster::Subspaces const &SectorCluster::subspaces() const
-{
-    return d->subspaces;
 }
 
 #ifdef __CLIENT__
