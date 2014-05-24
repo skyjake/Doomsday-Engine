@@ -1247,7 +1247,7 @@ DENG2_PIMPL(SectorCluster)
      * that is), they do not move and are not created/destroyed once the map has
      * been loaded; this step can be pre-processed.
      *
-     * @pre The Map's BSP leaf blockmap must be ready for use.
+     * @pre The Map's subspace blockmap must be ready for use.
      */
     void findReverbSubspaces()
     {
@@ -1725,12 +1725,11 @@ DENG2_PIMPL(SectorCluster)
     }
 
     /**
-     * Render all dynlights in projection list @a listIdx according to @a parm
-     * writing them to the renderering lists for the current frame.
+     * Prepare Shards for dynamic lights in projection list @a listIdx.
      *
-     * @note If multi-texturing is being used for the first light; it is skipped.
+     * @note If multi-texturing is to be used for the first light; it is skipped.
      *
-     * @return  Number of lights rendered.
+     * @return  Number of shards prepared.
      */
     uint splinterAllDynlights(uint listIdx, splinterdynlight_params_t &parm)
     {
@@ -1747,12 +1746,10 @@ DENG2_PIMPL(SectorCluster)
     }
 
     /**
-     * Render all shadows in projection list @a listIdx according to @a parm
-     * writing them to the renderering lists for the current frame.
+     * Prepare Shards for dynamic shadows in projection list @a listIdx.
      */
     void splinterAllDynshadows(uint listIdx, splinterdynshadow_params_t &p)
     {
-        // Write shadows to the render lists.
         drawshadowworker_params_t parm;
         parm.drawListSpec.group                = ShadowGeom;
         parm.drawListSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge);

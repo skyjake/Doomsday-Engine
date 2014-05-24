@@ -20,331 +20,95 @@
 
 #include "de_platform.h"
 #include "render/drawlist.h"
-
+#include "clientapp.h"
 #include "gl/gl_main.h"
 #include "render/rend_main.h"
-#include "clientapp.h"
-#include <de/concurrency.h>
-#include <de/memoryzone.h>
+#include "Shard"
 #include <QFlags>
+#include <QList>
 
-using namespace de;
+namespace de {
+namespace internal {
 
-/**
- * Drawing condition flags.
- *
- * @todo Most of these are actually list specification parameters. Rather than
- * set them each time an identified list is drawn it would be better to record
- * in the list itself. -ds
- */
-enum DrawCondition
-{
-    NoBlend            = 0x00000001,
-    Blend              = 0x00000002,
-    SetLightEnv0       = 0x00000004,
-    SetLightEnv1       = 0x00000008,
-    JustOneLight       = 0x00000010,
-    ManyLights         = 0x00000020,
-    SetBlendMode       = 0x00000040, // Primitive-specific blending.
-    SetMatrixDTexture0 = 0x00000080,
-    SetMatrixDTexture1 = 0x00000100,
-    SetMatrixTexture0  = 0x00000200,
-    SetMatrixTexture1  = 0x00000400,
-    NoColor            = 0x00000800,
-
-    Skip               = 0x80000000,
-
-    SetLightEnv        = SetLightEnv0 | SetLightEnv1,
-    SetMatrixDTexture  = SetMatrixDTexture0 | SetMatrixDTexture1,
-    SetMatrixTexture   = SetMatrixTexture0 | SetMatrixTexture1
-};
-
-Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
-Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
-
-DENG2_PIMPL(DrawList)
-{
     /**
-     * Each element references a Shard of drawable geometry.
+     * Drawing condition flags.
+     *
+     * @todo Most of these are actually list specification parameters. Rather than
+     * set them each time an identified list is drawn it would be better to record
+     * in the list itself. -ds
      */
-    struct Element {
-        // Must be an offset since the list is sometimes reallocated.
-        uint size; ///< Size of this element (zero = n/a).
+    enum DrawCondition
+    {
+        NoBlend            = 0x00000001,
+        Blend              = 0x00000002,
+        SetLightEnv0       = 0x00000004,
+        SetLightEnv1       = 0x00000008,
+        JustOneLight       = 0x00000010,
+        ManyLights         = 0x00000020,
+        SetBlendMode       = 0x00000040, // Primitive-specific blending.
+        SetMatrixDTexture0 = 0x00000080,
+        SetMatrixDTexture1 = 0x00000100,
+        SetMatrixTexture0  = 0x00000200,
+        SetMatrixTexture1  = 0x00000400,
+        NoColor            = 0x00000800,
 
-        struct Data {
-            enum Flag {
-                OneLight   = 0x1,
-                ManyLights = 0x2,
-                HasLights  = OneLight | ManyLights
-            };
-            byte flags;
-            Shard const *shard;
+        Skip               = 0x80000000,
 
-            void draw(DrawConditions const &conditions, TexUnitMap const &texUnitMap)
-            {
-                if(conditions & SetLightEnv)
-                {
-                    // Use the correct texture and color for the light.
-                    glActiveTexture((conditions & SetLightEnv0)? GL_TEXTURE0 : GL_TEXTURE1);
-                    GL_BindTextureUnmanaged(!renderTextures? 0 : shard->modTex,
-                                            gl::ClampToEdge, gl::ClampToEdge);
-
-                    float modColorV[4] = { shard->modColor.x, shard->modColor.y, shard->modColor.z, 0 };
-                    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColorV);
-                }
-
-                if(conditions & SetBlendMode)
-                {
-                    // Primitive-specific blending. Not used in all lists.
-                    GL_BlendMode(shard->blendmode);
-                }
-
-                foreach(Shard::Primitive const &prim, shard->primitives)
-                {
-                    if(conditions & SetMatrixTexture)
-                    {
-                        // Primitive-specific texture translation & scale.
-                        if(conditions & SetMatrixTexture0)
-                        {
-                            glActiveTexture(GL_TEXTURE0);
-                            glMatrixMode(GL_TEXTURE);
-                            glPushMatrix();
-                            glLoadIdentity();
-                            glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
-                            glScalef(prim.texScale.x, prim.texScale.y, 1);
-                        }
-
-                        if(conditions & SetMatrixTexture1)
-                        {
-                            glActiveTexture(GL_TEXTURE1);
-                            glMatrixMode(GL_TEXTURE);
-                            glPushMatrix();
-                            glLoadIdentity();
-                            glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
-                            glScalef(prim.texScale.x, prim.texScale.y, 1);
-                        }
-                    }
-
-                    if(conditions & SetMatrixDTexture)
-                    {
-                        // Primitive-specific texture translation & scale.
-                        if(conditions & SetMatrixDTexture0)
-                        {
-                            glActiveTexture(GL_TEXTURE0);
-                            glMatrixMode(GL_TEXTURE);
-                            glPushMatrix();
-                            glLoadIdentity();
-                            glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
-                            glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
-                        }
-
-                        if(conditions & SetMatrixDTexture1)
-                        {
-                            glActiveTexture(GL_TEXTURE1);
-                            glMatrixMode(GL_TEXTURE);
-                            glPushMatrix();
-                            glLoadIdentity();
-                            glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
-                            glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
-                        }
-                    }
-
-                    glBegin(prim.type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
-                    for(WorldVBuf::Index i = 0; i < prim.vertCount; ++i)
-                    {
-                        WorldVBuf::Type const &vertex = (*prim.vbuffer)[/*(flags & SequentialIndices)? base + i :*/ prim.indices[i]];
-
-                        for(int k = 0; k < numTexUnits; ++k)
-                        {
-                            if(texUnitMap[k])
-                            {
-                                Vector2f const &tc = vertex.texCoord[texUnitMap[k] - 1];
-                                glMultiTexCoord2f(GL_TEXTURE0 + k, tc.x, tc.y);
-                            }
-                        }
-
-                        if(!(conditions & NoColor))
-                        {
-                            Vector4f color = vertex.rgba;
-
-                            // We should not be relying on clamping at this late stage...
-                            DENG2_ASSERT(INRANGE_OF(color.x, 0.f, 1.f));
-                            DENG2_ASSERT(INRANGE_OF(color.y, 0.f, 1.f));
-                            DENG2_ASSERT(INRANGE_OF(color.z, 0.f, 1.f));
-                            DENG2_ASSERT(INRANGE_OF(color.w, 0.f, 1.f));
-
-                            color = color.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
-
-                            glColor4f(color.x, color.y, color.z, color.w);
-                        }
-
-                        glVertex3f(vertex.pos.x, vertex.pos.z, vertex.pos.y);
-                    }
-                    glEnd();
-
-                    // Restore the texture matrix if changed.
-                    if(conditions & SetMatrixDTexture)
-                    {
-                        if(conditions & SetMatrixDTexture0)
-                        {
-                            glActiveTexture(GL_TEXTURE0);
-                            glMatrixMode(GL_TEXTURE);
-                            glPopMatrix();
-                        }
-                        if(conditions & SetMatrixDTexture1)
-                        {
-                            glActiveTexture(GL_TEXTURE1);
-                            glMatrixMode(GL_TEXTURE);
-                            glPopMatrix();
-                        }
-                    }
-
-                    if(conditions & SetMatrixTexture)
-                    {
-                        if(conditions & SetMatrixTexture0)
-                        {
-                            glActiveTexture(GL_TEXTURE0);
-                            glMatrixMode(GL_TEXTURE);
-                            glPopMatrix();
-                        }
-                        if(conditions & SetMatrixTexture1)
-                        {
-                            glActiveTexture(GL_TEXTURE1);
-                            glMatrixMode(GL_TEXTURE);
-                            glPopMatrix();
-                        }
-                    }
-                }
-            }
-        } data;
-
-        Element *next() {
-            if(!size) return 0;
-            Element *elem = (Element *) ((byte *) (this) + size);
-            if(!elem->size) return 0;
-            return elem;
-        }
+        SetLightEnv        = SetLightEnv0 | SetLightEnv1,
+        SetMatrixDTexture  = SetMatrixDTexture0 | SetMatrixDTexture1,
+        SetMatrixTexture   = SetMatrixTexture0 | SetMatrixTexture1
     };
 
-    Spec spec;        ///< List specification.
-    size_t dataSize;  ///< Number of bytes allocated for the data.
-    byte *data;       ///< Data for a number of polygons (The List).
-    byte *cursor;     ///< Data pointer for reading/writing.
-    Element *last;    ///< Last element (if any).
+    Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
 
-    Instance(Public *i, Spec const &spec)
-        : Base(i)
-        , spec    (spec)
-        , dataSize(0)
-        , data    (0)
-        , cursor  (0)
-        , last    (0)
-    {}
+} // namespace internal
+} // namespace de
 
-    ~Instance()
+using namespace de;
+using namespace internal;
+
+DENG2_PIMPL_NOREF(DrawList)
+{
+    Spec spec; ///< Draw state specification.
+
+    // Rewindable list buffer of geometries to be drawn (not owned).
+    struct Shards : private QList<Shard const *>
     {
-        clearAllData();
-    }
-
-    void clearAllData()
-    {
-        if(data)
-        {
-            // All the list data will be destroyed.
-            Z_Free(data); data = 0;
-#ifdef DENG_DEBUG
-            Z_CheckHeap();
-#endif
+        Shards() : _cursor(0) {
+            QList<Shard const *>::reserve(64);
         }
 
-        cursor   = 0;
-        last     = 0;
-        dataSize = 0;
-    }
+        int size() const { return _cursor; }
+        inline bool isEmpty() const { return size() == 0; }
 
-    /// @todo This mechanism for managing list elements should now be replaced. -ds
-    Element *addElement(Shard const &shard)
-    {
-        size_t bytes = sizeof(Element);
-
-        // Number of extra bytes to keep allocated in the end of each list.
-        int const PADDING = 16;
-
-        // We require the extra bytes because we want that the end of the list
-        // data is always safe for writing-in-advance. This is needed when the
-        // 'end of data' marker is written.
-        int const startOffset = cursor - data;
-        size_t const required = startOffset + bytes + PADDING;
-
-        // First check that the data buffer of the list is large enough.
-        if(required > dataSize)
-        {
-            // Offsets must be preserved.
-            byte *oldData = data;
-
-            int const cursorOffset = (cursor? cursor - oldData : -1);
-            int const lastOffset   = (last? (byte *) last - oldData : -1);
-
-            // Allocate more memory for the data buffer.
-            if(dataSize == 0)
-            {
-                dataSize = 1024;
-            }
-            while(dataSize < required)
-            {
-                dataSize *= 2;
-            }
-
-            data = (byte *) Z_Realloc(data, dataSize, PU_APPSTATIC);
-
-            // Restore main pointers.
-            cursor = (cursorOffset >= 0? data + cursorOffset : data);
-            last   = (lastOffset >= 0? (Element *) (data + lastOffset) : 0);
+        void clear() {
+            QList<Shard const *>::clear();
+            rewind();
         }
 
-        // Advance the cursor.
-        cursor += bytes;
-
-        last = (Element *)(data + startOffset);
-        last->size = cursor - (byte *) last;
-
-        // Write the end marker (will be overwritten by the next write). The
-        // idea is that this zero is interpreted as the size of the following
-        // Element.
-        *(int *) cursor = 0;
-
-        Element *elem = last;
-
-        // Rationalize write arguments.
-        bool isLit = shard.hasDynlights;
-        if(spec.group == SkyMaskGeom || spec.group == LightGeom || spec.group == ShadowGeom)
-        {
-            isLit = false;
+        void rewind() {
+            _cursor = 0;
         }
 
-        elem->data.shard = &shard;
-
-        // Is the geometry lit?
-        elem->data.flags = 0;
-        if(shard.modTex && !isLit)
-        {
-            elem->data.flags |= Element::Data::OneLight; // Using modulation.
-        }
-        else if(shard.modTex || isLit)
-        {
-            elem->data.flags |= Element::Data::ManyLights;
+        void operator << (Shard const &shard) {
+            if(_cursor < QList<Shard const *>::size())
+                replace(_cursor, &shard);
+            else
+                append(&shard);
+            _cursor += 1;
         }
 
-        return elem;
-    }
+        Shard const &operator [] (int idx) const {
+            DENG2_ASSERT(idx < size());
+            return *at(idx);
+        }
 
-    /// Returns a pointer to the first element in the list; otherwise @c 0.
-    Element *firstElement() const
-    {
-        Element *elem = (Element *)data;
-        if(!elem->size) return 0;
-        return elem;
-    }
+    private:
+        int _cursor;
+    } shards;
+
+    Instance(Spec const &spec) : spec(spec) {}
 
     /**
      * Configure GL state for drawing in this @a mode.
@@ -738,26 +502,26 @@ DENG2_PIMPL(DrawList)
     }
 };
 
-DrawList::DrawList(Spec const &spec) : d(new Instance(this, spec))
+DrawList::DrawList(Spec const &spec) : d(new Instance(spec))
 {}
 
 bool DrawList::isEmpty() const
 {
-    return d->last == 0;
+    return d->shards.isEmpty();
 }
 
 DrawList &DrawList::write(Shard const &shard)
 {
     if(!shard.primitives.isEmpty())
     {
-        d->addElement(shard); // Becomes the new last element.
+        d->shards << shard; // Becomes the new last element.
     }
     return *this;
 }
 
 void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup GL state for this list.
@@ -796,25 +560,161 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
     }
 
     bool skip = false;
-    for(Instance::Element *elem = d->firstElement(); elem; elem = elem->next())
+    for(int i = 0; i < d->shards.size(); ++i)
     {
+        Shard const &shard = d->shards[i];
+
         // Check for skip conditions.
         if(!bypass)
         {
             skip = false;
-            if(conditions.testFlag(JustOneLight) && (elem->data.flags & Instance::Element::Data::ManyLights))
+            if(shard.modTex && !shard.hasDynlights)
             {
-                skip = true;
+                if(conditions.testFlag(ManyLights))
+                    skip = true;
             }
-            else if(conditions.testFlag(ManyLights) && (elem->data.flags & Instance::Element::Data::OneLight))
+            else if(shard.modTex || shard.hasDynlights)
             {
-                skip = true;
+                if(conditions.testFlag(JustOneLight))
+                    skip = true;
             }
         }
 
         if(!skip)
         {
-            elem->data.draw(conditions, texUnitMap);
+            if(conditions & SetLightEnv)
+            {
+                // Use the correct texture and color for the light.
+                glActiveTexture((conditions & SetLightEnv0)? GL_TEXTURE0 : GL_TEXTURE1);
+                GL_BindTextureUnmanaged(!renderTextures? 0 : shard.modTex,
+                                        gl::ClampToEdge, gl::ClampToEdge);
+
+                float modColorV[4] = { shard.modColor.x, shard.modColor.y, shard.modColor.z, 0 };
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColorV);
+            }
+
+            if(conditions & SetBlendMode)
+            {
+                // Primitive-specific blending. Not used in all lists.
+                GL_BlendMode(shard.blendmode);
+            }
+
+            foreach(Shard::Primitive const &prim, shard.primitives)
+            {
+                if(conditions & SetMatrixTexture)
+                {
+                    // Primitive-specific texture translation & scale.
+                    if(conditions & SetMatrixTexture0)
+                    {
+                        glActiveTexture(GL_TEXTURE0);
+                        glMatrixMode(GL_TEXTURE);
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
+                        glScalef(prim.texScale.x, prim.texScale.y, 1);
+                    }
+
+                    if(conditions & SetMatrixTexture1)
+                    {
+                        glActiveTexture(GL_TEXTURE1);
+                        glMatrixMode(GL_TEXTURE);
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
+                        glScalef(prim.texScale.x, prim.texScale.y, 1);
+                    }
+                }
+
+                if(conditions & SetMatrixDTexture)
+                {
+                    // Primitive-specific texture translation & scale.
+                    if(conditions & SetMatrixDTexture0)
+                    {
+                        glActiveTexture(GL_TEXTURE0);
+                        glMatrixMode(GL_TEXTURE);
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
+                        glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
+                    }
+
+                    if(conditions & SetMatrixDTexture1)
+                    {
+                        glActiveTexture(GL_TEXTURE1);
+                        glMatrixMode(GL_TEXTURE);
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
+                        glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
+                    }
+                }
+
+                glBegin(prim.type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
+                for(WorldVBuf::Index k = 0; k < prim.vertCount; ++k)
+                {
+                    WorldVBuf::Type const &vertex = (*prim.vbuffer)[prim.indices[k]];
+
+                    for(int m = 0; m < numTexUnits; ++m)
+                    {
+                        if(texUnitMap[m])
+                        {
+                            Vector2f const &tc = vertex.texCoord[texUnitMap[m] - 1];
+                            glMultiTexCoord2f(GL_TEXTURE0 + m, tc.x, tc.y);
+                        }
+                    }
+
+                    if(!(conditions & NoColor))
+                    {
+                        Vector4f color = vertex.rgba;
+
+                        // We should not be relying on clamping at this late stage...
+                        DENG2_ASSERT(INRANGE_OF(color.x, 0.f, 1.f));
+                        DENG2_ASSERT(INRANGE_OF(color.y, 0.f, 1.f));
+                        DENG2_ASSERT(INRANGE_OF(color.z, 0.f, 1.f));
+                        DENG2_ASSERT(INRANGE_OF(color.w, 0.f, 1.f));
+
+                        color = color.max(Vector4f(0, 0, 0, 0)).min(Vector4f(1, 1, 1, 1));
+
+                        glColor4f(color.x, color.y, color.z, color.w);
+                    }
+
+                    glVertex3f(vertex.pos.x, vertex.pos.z, vertex.pos.y);
+                }
+                glEnd();
+
+                // Restore the texture matrix if changed.
+                if(conditions & SetMatrixDTexture)
+                {
+                    if(conditions & SetMatrixDTexture0)
+                    {
+                        glActiveTexture(GL_TEXTURE0);
+                        glMatrixMode(GL_TEXTURE);
+                        glPopMatrix();
+                    }
+                    if(conditions & SetMatrixDTexture1)
+                    {
+                        glActiveTexture(GL_TEXTURE1);
+                        glMatrixMode(GL_TEXTURE);
+                        glPopMatrix();
+                    }
+                }
+
+                if(conditions & SetMatrixTexture)
+                {
+                    if(conditions & SetMatrixTexture0)
+                    {
+                        glActiveTexture(GL_TEXTURE0);
+                        glMatrixMode(GL_TEXTURE);
+                        glPopMatrix();
+                    }
+                    if(conditions & SetMatrixTexture1)
+                    {
+                        glActiveTexture(GL_TEXTURE1);
+                        glMatrixMode(GL_TEXTURE);
+                        glPopMatrix();
+                    }
+                }
+            }
 
             DENG2_ASSERT(!Sys_GLCheckError());
         }
@@ -836,11 +736,10 @@ DrawList::Spec const &DrawList::spec() const
 
 void DrawList::clear()
 {
-    d->clearAllData();
+    d->shards.clear();
 }
 
 void DrawList::rewind()
 {
-    d->cursor = d->data;
-    d->last = 0;
+    d->shards.rewind();
 }

@@ -152,7 +152,7 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
         return *d->skyMaskList;
     }
 
-    DrawList *convertable = 0;
+    DrawList *convertible = 0;
 
     // Find/create a list in the hash.
     GLuint const key  = spec.unit(TU_PRIMARY).getTextureGLName();
@@ -177,10 +177,10 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
             }
 
             // Is this eligible for conversion to a blended list?
-            if(list->isEmpty() && !convertable && spec.unit(TU_INTER).hasTexture())
+            if(list->isEmpty() && !convertible && spec.unit(TU_INTER).hasTexture())
             {
                 // If necessary, this empty list will be selected.
-                convertable = list;
+                convertible = list;
             }
 
             // Possibly an exact match?
@@ -195,21 +195,21 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
         }
     }
 
-    // Did we find a convertable list?
-    if(convertable)
+    // Did we find a convertible list?
+    if(convertible)
     {
         // This list is currently empty.
         if(spec.group == ShineGeom)
         {
-            convertable->spec().unit(TU_INTER) = spec.unit(TU_INTER);
+            convertible->spec().unit(TU_INTER) = spec.unit(TU_INTER);
         }
         else
         {
-            convertable->spec().unit(TU_INTER) = spec.unit(TU_INTER);
-            convertable->spec().unit(TU_INTER_DETAIL) = spec.unit(TU_INTER_DETAIL);
+            convertible->spec().unit(TU_INTER) = spec.unit(TU_INTER);
+            convertible->spec().unit(TU_INTER_DETAIL) = spec.unit(TU_INTER_DETAIL);
         }
 
-        return *convertable;
+        return *convertible;
     }
 
     // Create a new list.

@@ -1473,16 +1473,6 @@ static void drawSubspace(ConvexSubspace &subspace)
     foreach(Shard const *shard, subspace.shards())
     {
         drawLists.find(shard->listSpec).write(*shard);
-
-        /*foreach(Shard::Geom::Primitive const &prim, shard->primitives)
-        {
-            drawLists.find(shard->listSpec)
-                .write(prim.type, prim.vertCount, prim.indices, *prim.vbuffer,
-                       prim.texScale, prim.texOffset,
-                       prim.detailTexScale, prim.detailTexOffset,
-                       shard->blendmode, shard->modTex, shard->modTex? &shard->modColor : 0,
-                       shard->hasDynlights);
-        }*/
     }
 
     // When the viewer is not in the void, we can angle-occlude the range defined by
