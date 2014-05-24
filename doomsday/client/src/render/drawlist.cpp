@@ -505,18 +505,14 @@ DENG2_PIMPL_NOREF(DrawList)
 DrawList::DrawList(Spec const &spec) : d(new Instance(spec))
 {}
 
-bool DrawList::isEmpty() const
+DrawList::Spec &DrawList::spec()
 {
-    return d->shards.isEmpty();
+    return d->spec;
 }
 
-DrawList &DrawList::write(Shard const &shard)
+DrawList::Spec const &DrawList::spec() const
 {
-    if(!shard.primitives.isEmpty())
-    {
-        d->shards << shard; // Becomes the new last element.
-    }
-    return *this;
+    return d->spec;
 }
 
 void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
@@ -724,14 +720,22 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
     d->popGLState(mode);
 }
 
-DrawList::Spec &DrawList::spec()
+bool DrawList::isEmpty() const
 {
-    return d->spec;
+    return d->shards.isEmpty();
 }
 
-DrawList::Spec const &DrawList::spec() const
+void DrawList::append(Shard const &shard)
 {
-    return d->spec;
+    if(!shard.primitives.isEmpty())
+    {
+        d->shards << shard; // Becomes the new last element.
+    }
+}
+
+void DrawList::append(QList<Shard *> const &shards)
+{
+    foreach(Shard *shard, shards) append(*shard);
 }
 
 void DrawList::clear()

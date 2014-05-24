@@ -1472,7 +1472,7 @@ static void drawSubspace(ConvexSubspace &subspace)
     DrawLists &drawLists = ClientApp::renderSystem().drawLists();
     foreach(Shard const *shard, subspace.shards())
     {
-        drawLists.find(shard->listSpec).write(*shard);
+        drawLists.find(shard->listSpec) << *shard;
     }
 
     // When the viewer is not in the void, we can angle-occlude the range defined by

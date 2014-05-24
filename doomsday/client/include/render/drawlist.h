@@ -25,6 +25,7 @@
 #include "api_gl.h" // blendmode_e
 #include "render/rendersystem.h"
 #include <de/Vector>
+#include <QList>
 
 class Shard;
 
@@ -110,16 +111,50 @@ public:
     DrawList(Spec const &spec);
 
     /**
-     * Add the given geometry @a shard to the list. It is assumed that shard's
-     * draw list specification is compatible with "this" list (glitches will
-     * occur if its not).
+     * Provides mutable access to the list's specification. Note that any changes
+     * to this configuration will affect @em all geometries in the list.
      */
-    DrawList &write(Shard const &shard);
+    Spec &spec();
+
+    /**
+     * Provides immutable access to the list's specification.
+     */
+    Spec const &spec() const;
 
     /**
      * Draw all geometry Shards in the list, in the order in which they were added.
      */
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
+
+    /**
+     * Add the geometry @a shard onto the end of the DrawList. The order of the
+     * list determines draw order.
+     *
+     * @note It is assumed that the shard's draw list specification is compatible
+     * with "this" list (glitches will occur if its not).
+     */
+    void append(Shard const &shard);
+
+    /**
+     * Add each of the geometry @a shards onto the end of the DrawList. The order
+     * of the list determines draw order.
+     *
+     * @note It is assumed that the shard's draw list specification is compatible
+     * with "this" list (glitches will occur if its not).
+     */
+    void append(QList<Shard *> const &shards);
+
+    /// @see append()
+    inline DrawList &operator << (Shard const &shard) {
+        append(shard);
+        return *this;
+    }
+
+    /// @see append()
+    inline DrawList &operator << (QList<Shard *> const &shardList) {
+        append(shardList);
+        return *this;
+    }
 
     /**
      * Returns @c true iff there are no geometries in the list.
@@ -139,17 +174,6 @@ public:
      * are added to the list.
      */
     void rewind();
-
-    /**
-     * Provides mutable access to the list's specification. Note that any changes
-     * to this configuration will affect @em all geometries in the list.
-     */
-    Spec &spec();
-
-    /**
-     * Provides immutable access to the list's specification.
-     */
-    Spec const &spec() const;
 
 private:
     DENG2_PRIVATE(d)
