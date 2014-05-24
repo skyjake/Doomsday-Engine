@@ -44,22 +44,21 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 
 DENG2_PIMPL(ConvexSubspace)
 {
-    Face &poly;               ///< Convex polygon geometry (not owned).
-    Meshes extraMeshes;       ///< Additional meshes (owned).
-    Polyobjs polyobjs;        ///< Linked polyobjs (if any, not owned).
-    SectorCluster *cluster;   ///< Attributed cluster (if any, not owned).
-    int validCount;           ///< Used to prevent repeated processing.
-    Vector2d worldGridOffset; ///< For aligning the materials to the map space grid.
+    Face &poly;                      ///< Convex polygon geometry (not owned).
+    Meshes extraMeshes;              ///< Additional meshes (owned).
+    Polyobjs polyobjs;               ///< Linked polyobjs (if any, not owned).
+    SectorCluster *cluster;          ///< Attributed cluster (if any, not owned).
+    int validCount;                  ///< Used to prevent repeated processing.
+    Vector2d worldGridOffset;        ///< For aligning the materials to the map space grid.
     BspLeaf *bspLeaf;
 
 #ifdef __CLIENT__
-    int addSpriteCount;             ///< Frame number of last R_AddSprites.
-    Lumobjs lumobjs;                ///< Linked lumobjs (not owned).
-    ShadowLines shadowLines;        ///< Linked map lines for fake radio shadowing.
+    Lumobjs lumobjs;                 ///< Linked lumobjs (not owned).
+    ShadowLines shadowLines;         ///< Linked map lines for fake radio shadowing.
 
-    HEdge *fanBase;                 ///< Trifan base Half-edge (otherwise the center point is used).
-    bool needUpdateFanBase;         ///< @c true= need to rechoose a fan base half-edge.
-    AudioEnvironmentFactors reverb; ///< Cached characteristics.
+    HEdge *fanBase;                  ///< Trifan base Half-edge (otherwise the center point is used).
+    bool needUpdateFanBase;          ///< @c true= need to rechoose a fan base half-edge.
+    AudioEnvironmentFactors reverb;  ///< Cached characteristics.
 
     Shards shards;
 #endif
@@ -71,7 +70,6 @@ DENG2_PIMPL(ConvexSubspace)
         , validCount       (0)
         , bspLeaf          (0)
 #ifdef __CLIENT__
-        , addSpriteCount   (0)
         , fanBase          (0)
         , needUpdateFanBase(true)
 #endif
@@ -334,16 +332,6 @@ void ConvexSubspace::link(Lumobj &lumobj)
 ConvexSubspace::Lumobjs const &ConvexSubspace::lumobjs() const
 {
     return d->lumobjs;
-}
-
-int ConvexSubspace::lastSpriteProjectFrame() const
-{
-    return d->addSpriteCount;
-}
-
-void ConvexSubspace::setLastSpriteProjectFrame(int newFrameCount)
-{
-    d->addSpriteCount = newFrameCount;
 }
 
 HEdge *ConvexSubspace::fanBase() const

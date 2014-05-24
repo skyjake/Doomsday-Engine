@@ -256,20 +256,6 @@ public:
     Lumobjs const &lumobjs() const;
 
     /**
-     * Returns the frame number of the last time mobj sprite projection was
-     * performed for the subspace.
-     */
-    int lastSpriteProjectFrame() const;
-
-    /**
-     * Change the frame number of the last time mobj sprite projection was
-     * performed for the subspace.
-     *
-     * @param newFrame  New frame number.
-     */
-    void setLastSpriteProjectFrame(int newFrame);
-
-    /**
      * Returns a pointer to the face geometry half-edge which has been chosen
      * for use as the base for a triangle fan GL primitive. May return @c 0 if
      * no suitable base was determined.

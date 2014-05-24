@@ -1459,11 +1459,7 @@ static void drawSubspace(ConvexSubspace &subspace)
     //
     // Must be done AFTER the lumobjs have been clipped as this affects the
     // projection of halos.
-    if(subspace.lastSpriteProjectFrame() != R_FrameCount())
-    {
-        R_SubspaceMobjContactIterator(subspace, projectSpriteWorker, &subspace);
-        subspace.setLastSpriteProjectFrame(R_FrameCount());
-    }
+    R_SubspaceMobjContactIterator(subspace, projectSpriteWorker, &subspace);
 
     // Prepare shard geometries.
     subspace.cluster().prepareShards(subspace);
