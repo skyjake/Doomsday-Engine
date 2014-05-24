@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<installer-gui-script minSpecVersion="1">
+    <title>Doomsday Engine</title>
+    <background file="background.png" mime-type="image/png" />
+    <readme file="Read Me.rtf" mime-type="text/rtf" />
+    <pkg-ref id="net.dengine.doomsday.frontend.pkg"/>
+    <pkg-ref id="net.dengine.doomsday.shell.pkg"/>
+    <options customize="never" require-scripts="false"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="net.dengine.doomsday.frontend.pkg"/>
+            <line choice="net.dengine.doomsday.shell.pkg"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="net.dengine.doomsday.frontend.pkg" visible="false">
+        <pkg-ref id="net.dengine.doomsday.frontend.pkg"/>
+    </choice>
+    <pkg-ref id="net.dengine.doomsday.frontend.pkg" version="${Version}" onConclusion="none">Frontend.pkg</pkg-ref>
+    <choice id="net.dengine.doomsday.shell.pkg" visible="false">
+        <pkg-ref id="net.dengine.doomsday.shell.pkg"/>
+    </choice>
+    <pkg-ref id="net.dengine.doomsday.shell.pkg" version="${Version}" onConclusion="none">Shell.pkg</pkg-ref>
+</installer-gui-script>
