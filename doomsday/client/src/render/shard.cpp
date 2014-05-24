@@ -27,141 +27,138 @@
 
 using namespace de;
 
-static int devUpdateBiasContributors = true; //cvar
+static int devUpdateContributors = true; //cvar
 
-DENG2_PIMPL_NOREF(Shard)
+DENG2_PIMPL_NOREF(BiasSurface)
 {
     SectorCluster *owner;
-    typedef QVector<BiasIllum *> BiasIllums;
-    BiasIllums biasIllums;
-    BiasTracker biasTracker;
-    uint biasLastUpdateFrame;
+    typedef QVector<BiasIllum *> Illums;
+    Illums illums;
+    BiasTracker tracker;
+    uint lastUpdateFrame;
 
-    Instance() : owner(0), biasLastUpdateFrame(0) {}
-    ~Instance() { qDeleteAll(biasIllums); }
+    Instance() : owner(0), lastUpdateFrame(0) {}
+    ~Instance() { qDeleteAll(illums); }
 
     /**
-     * Determines whether it is time to update bias lighting contributors.
+     * Determines whether it is time to update lighting contributors.
      */
-    bool needBiasContributorUpdate()
+    bool needContributorUpdate()
     {
         // Are updates disabled?
-        if(!devUpdateBiasContributors) return false;
+        if(!devUpdateContributors) return false;
 
-        // Unowned shards cannot be updated.
+        // Unowned surfaces cannot be updated.
         if(!owner) return false;
 
         // If the data is already up to date, nothing needs to be done.
         uint lastChangeFrame = owner->biasLastChangeOnFrame();
-        if(biasLastUpdateFrame == lastChangeFrame) return false;
+        if(lastUpdateFrame == lastChangeFrame) return false;
 
         // Mark the data as having been updated (it will be soon).
-        biasLastUpdateFrame = lastChangeFrame;
+        lastUpdateFrame = lastChangeFrame;
         return true;
     }
 };
 
-Shard::Shard(int numBiasIllums, SectorCluster *owner) : d(new Instance)
+BiasSurface::BiasSurface(int numIllums, SectorCluster *owner) : d(new Instance)
 {
     setCluster(owner);
-    if(numBiasIllums)
+    if(numIllums)
     {
-        d->biasIllums.reserve(numBiasIllums);
-        for(int i = 0; i < numBiasIllums; ++i)
+        d->illums.reserve(numIllums);
+        for(int i = 0; i < numIllums; ++i)
         {
-            d->biasIllums << new BiasIllum(&d->biasTracker);
+            d->illums << new BiasIllum(&d->tracker);
         }
     }
 }
 
-void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
+void BiasSurface::light(Vector3f const *posCoords, Vector4f *colorCoords,
     Matrix3f const &tangentMatrix, uint biasTime)
 {
     DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
     Vector3f const sufNormal = tangentMatrix.column(2);
 
-    if(d->biasIllums.isEmpty()) return;
+    if(d->illums.isEmpty()) return;
 
-    // Is it time to update bias contributors?
-    bool biasUpdated = false;
-    if(d->needBiasContributorUpdate())
+    // Is it time to update contributors?
+    bool updated = false;
+    if(d->needContributorUpdate())
     {
         // Perhaps our owner has updated lighting contributions for us?
-        biasUpdated = d->owner->updateBiasContributors(this);
+        updated = d->owner->updateBiasContributors(this);
     }
 
     // Light the given geometry.
     Vector3f const *posIt    = posCoords;
     Vector4f *colorIt        = colorCoords;
-    for(int i = 0; i < d->biasIllums.count(); ++i, posIt++, colorIt++)
+    for(int i = 0; i < d->illums.count(); ++i, posIt++, colorIt++)
     {
-        *colorIt += d->biasIllums[i]->evaluate(*posIt, sufNormal, biasTime);
+        *colorIt += d->illums[i]->evaluate(*posIt, sufNormal, biasTime);
     }
 
-    if(biasUpdated)
+    if(updated)
     {
         // Any changes from contributors will have now been applied.
-        d->biasTracker.markIllumUpdateCompleted();
+        d->tracker.markIllumUpdateCompleted();
     }
 }
 
-void Shard::lightWithBiasSources(WorldVBuf::Index const *indices,
+void BiasSurface::light(WorldVBuf::Index const *indices, WorldVBuf &vbuffer,
     Matrix3f const &tangentMatrix, uint biasTime)
 {
     DENG2_ASSERT(indices != 0);
 
-    RenderSystem &rendSys = ClientApp::renderSystem();
-    WorldVBuf &vbuf       = rendSys.worldVBuf();
+    if(d->illums.isEmpty()) return;
 
-    if(d->biasIllums.isEmpty()) return;
-
-    // Is it time to update bias contributors?
-    bool biasUpdated = false;
-    if(d->needBiasContributorUpdate())
+    // Is it time to update contributors?
+    bool updated = false;
+    if(d->needContributorUpdate())
     {
         // Perhaps our owner has updated lighting contributions for us?
-        biasUpdated = d->owner->updateBiasContributors(this);
+        updated = d->owner->updateBiasContributors(this);
     }
 
     // Light the given geometry.
     Vector3f const sufNormal = tangentMatrix.column(2);
-    for(WorldVBuf::Index i = 0; i < d->biasIllums.count(); ++i)
+    for(WorldVBuf::Index i = 0; i < d->illums.count(); ++i)
     {
-        WorldVBuf::Type &vertex = vbuf[indices[i]];
-        vertex.rgba += d->biasIllums[i]->evaluate(vertex.pos, sufNormal, biasTime);
+        WorldVBuf::Type &vertex = vbuffer[indices[i]];
+        vertex.rgba += d->illums[i]->evaluate(vertex.pos, sufNormal, biasTime);
     }
 
-    if(biasUpdated)
+    if(updated)
     {
         // Any changes from contributors will have now been applied.
-        d->biasTracker.markIllumUpdateCompleted();
+        d->tracker.markIllumUpdateCompleted();
     }
 }
 
-SectorCluster *Shard::cluster() const
+SectorCluster *BiasSurface::cluster() const
 {
     return d->owner;
 }
 
-void Shard::setCluster(SectorCluster *newOwner)
+void BiasSurface::setCluster(SectorCluster *newOwner)
 {
     d->owner = newOwner;
 }
 
-BiasTracker &Shard::biasTracker() const
+BiasTracker &BiasSurface::tracker() const
 {
-    return d->biasTracker;
+    return d->tracker;
 }
 
-void Shard::updateBiasAfterMove()
+void BiasSurface::updateAfterMove()
 {
-    d->biasTracker.updateAllContributors();
+    d->tracker.updateAllContributors();
 }
 
-void Shard::consoleRegister() // static
+void BiasSurface::consoleRegister() // static
 {
 #ifdef __CLIENT__
     // Development variables.
-    C_VAR_INT("rend-dev-bias-affected", &devUpdateBiasContributors, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-dev-bias-affected", &devUpdateContributors, CVF_NO_ARCHIVE, 0, 1);
 #endif
 }

@@ -432,12 +432,12 @@ namespace internal
     /**
      * Configure @a prim according to the arguments given.
      */
-    static Shard::Geom::Primitive &makeListPrimitive(Shard::Geom &shard,
+    static Shard::Primitive &makeListPrimitive(Shard &shard,
         gl::Primitive type, WorldVBuf::Index vertCount, WorldVBuf &vbuf,
         WorldVBuf::Index indicesOffset = 0)
     {
-        shard.primitives.append(Shard::Geom::Primitive());
-        Shard::Geom::Primitive &prim = shard.primitives.last();
+        shard.primitives.append(Shard::Primitive());
+        Shard::Primitive &prim = shard.primitives.last();
 
         prim.type            = type;
         prim.vbuffer         = &vbuf;
@@ -454,14 +454,14 @@ namespace internal
     /**
      * Configure @a prim according to the arguments given.
      */
-    static Shard::Geom::Primitive &makeListPrimitive(Shard::Geom &shard,
+    static Shard::Primitive &makeListPrimitive(Shard &shard,
         gl::Primitive type, WorldVBuf::Index vertCount, WorldVBuf &vbuf,
         Vector2f const &texScale, Vector2f const &texOffset,
         Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
         WorldVBuf::Index indicesOffset = 0)
     {
-        shard.primitives.append(Shard::Geom::Primitive());
-        Shard::Geom::Primitive &prim = shard.primitives.last();
+        shard.primitives.append(Shard::Primitive());
+        Shard::Primitive &prim = shard.primitives.last();
 
         prim.type            = type;
         prim.vbuffer         = &vbuf;
@@ -515,20 +515,20 @@ DENG2_PIMPL(SectorCluster)
     {
         MapElement *mapElement;
         int geomId;
-        QScopedPointer<Shard> shard;
+        QScopedPointer<BiasSurface> biasSurface;
 
         GeometryData(MapElement *mapElement, int geomId)
             : mapElement(mapElement), geomId(geomId)
         {}
     };
     /// @todo Avoid two-stage lookup.
-    typedef QMap<int, GeometryData *> GShards;
-    typedef QMap<MapElement *, GShards> GeometryGroups;
+    typedef QMap<int, GeometryData *> GeometryGroup;
+    typedef QMap<MapElement *, GeometryGroup> GeometryGroups;
     GeometryGroups geomGroups;
 
-    /// Reverse lookup hash from Shard => GeometryData.
-    typedef QHash<Shard *, GeometryData *> ShardGeometryMap;
-    ShardGeometryMap shardGeomMap;
+    /// Reverse lookup hash from BiasSurface => GeometryData.
+    typedef QHash<BiasSurface *, GeometryData *> BiasSurfaceGeometryMap;
+    BiasSurfaceGeometryMap biasSurfaceGeomMap;
 
     /// Subspaces in the neighborhood effecting environmental audio characteristics.
     typedef QSet<ConvexSubspace *> ReverbSubspaces;
@@ -541,7 +541,7 @@ DENG2_PIMPL(SectorCluster)
     typedef QMultiMap<de::HEdge *, de::WallEdge *> WallEdges;
     WallEdges wallEdges;
 
-    typedef QList<Shard::Geom *> Shards;
+    typedef QList<Shard *> Shards;
     Shards shards;
 #endif
 
@@ -573,7 +573,7 @@ DENG2_PIMPL(SectorCluster)
 
         DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
         {
-            GShards &shards = *geomGroup;
+            GeometryGroup &shards = *geomGroup;
             qDeleteAll(shards);
         }
 
@@ -1103,17 +1103,17 @@ DENG2_PIMPL(SectorCluster)
         if(!hedge->hasMapElement()) return;
 
         MapElement *mapElement = &hedge->mapElement();
-        if(Shard *shard = self.findShard(*mapElement, LineSide::Middle))
+        if(BiasSurface *bsuf = self.findBiasSurface(*mapElement, LineSide::Middle))
         {
-            shard->updateBiasAfterMove();
+            bsuf->updateAfterMove();
         }
-        if(Shard *shard = self.findShard(*mapElement, LineSide::Bottom))
+        if(BiasSurface *bsuf = self.findBiasSurface(*mapElement, LineSide::Bottom))
         {
-            shard->updateBiasAfterMove();
+            bsuf->updateAfterMove();
         }
-        if(Shard *shard = self.findShard(*mapElement, LineSide::Top))
+        if(BiasSurface *bsuf = self.findBiasSurface(*mapElement, LineSide::Top))
         {
-            shard->updateBiasAfterMove();
+            bsuf->updateAfterMove();
         }
     }
 #endif
@@ -1152,9 +1152,9 @@ DENG2_PIMPL(SectorCluster)
                 // Inform bias surfaces of changed geometry.
                 foreach(ConvexSubspace *subspace, subspaces)
                 {
-                    if(Shard *shard = self.findShard(*subspace, plane.indexInSector()))
+                    if(BiasSurface *bsuf = self.findBiasSurface(*subspace, plane.indexInSector()))
                     {
-                        shard->updateBiasAfterMove();
+                        bsuf->updateAfterMove();
                     }
 
                     HEdge *base = subspace->poly().hedge();
@@ -1195,9 +1195,9 @@ DENG2_PIMPL(SectorCluster)
         GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
         if(foundGroup != geomGroups.end())
         {
-            GShards &shards = *foundGroup;
-            GShards::iterator found = shards.find(geomId);
-            if(found != shards.end())
+            GeometryGroup &geomDatas = *foundGroup;
+            GeometryGroup::iterator found = geomDatas.find(geomId);
+            if(found != geomDatas.end())
             {
                 return *found;
             }
@@ -1207,21 +1207,21 @@ DENG2_PIMPL(SectorCluster)
 
         if(foundGroup == geomGroups.end())
         {
-            foundGroup = geomGroups.insert(&mapElement, GShards());
+            foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
         }
 
         return *foundGroup->insert(geomId, new GeometryData(&mapElement, geomId));
     }
 
     /**
-     * Find the GeometryData for the given @a shard.
+     * Find the GeometryData for the given @a biasSurface.
      */
-    GeometryData *geomDataForShard(Shard *shard)
+    GeometryData *geomDataForBiasSurface(BiasSurface *biasSurface)
     {
-        if(shard && shard->cluster() == thisPublic)
+        if(biasSurface && biasSurface->cluster() == thisPublic)
         {
-            ShardGeometryMap::const_iterator found = shardGeomMap.find(shard);
-            if(found != shardGeomMap.end())
+            BiasSurfaceGeometryMap::const_iterator found = biasSurfaceGeomMap.find(biasSurface);
+            if(found != biasSurfaceGeomMap.end())
                 return *found;
         }
         return 0;
@@ -1481,7 +1481,7 @@ DENG2_PIMPL(SectorCluster)
     /**
      * @param light Projected light geometry to splinter into a shard.
      */
-    Shard::Geom *splinterDynlight(TexProjection const &light, splinterdynlight_params_t const &p)
+    Shard *splinterDynlight(TexProjection const &light, splinterdynlight_params_t const &p)
     {
         WorldVBuf &vbuf = worldVBuf();
 
@@ -1489,7 +1489,7 @@ DENG2_PIMPL(SectorCluster)
         listSpec.group = LightGeom;
         listSpec.texunits[TU_PRIMARY] = GLTextureUnit(light.texture, gl::ClampToEdge, gl::ClampToEdge);
 
-        Shard::Geom *shard = new Shard::Geom(listSpec);
+        Shard *shard = new Shard(listSpec);
 
         if(p.leftSection) // A wall.
         {
@@ -1584,12 +1584,12 @@ DENG2_PIMPL(SectorCluster)
     /**
      * @param shadow  Projected shadow geometry to splinter into a shard.
      */
-    Shard::Geom *splinterDynshadow(TexProjection const &shadow,
+    Shard *splinterDynshadow(TexProjection const &shadow,
         splinterdynshadow_params_t const &p, DrawListSpec const &listSpec)
     {
         WorldVBuf &vbuf = worldVBuf();
 
-        Shard::Geom *shard = new Shard::Geom(listSpec);
+        Shard *shard = new Shard(listSpec);
 
         if(p.leftSection) // A wall.
         {
@@ -1686,7 +1686,7 @@ DENG2_PIMPL(SectorCluster)
         // If multitexturing is in use we skip the first.
         if(!(Rend_IsMTexLights() && p.lastIdx == 0))
         {
-            Shard::Geom *shard = splinterDynlight(light, p);
+            Shard *shard = splinterDynlight(light, p);
             shards << shard; // take ownership.
             p.subspace->shards() << shard; // link to the subspace.
         }
@@ -1702,7 +1702,7 @@ DENG2_PIMPL(SectorCluster)
     void prepareDynshadowShards(TexProjection const &shadow, splinterdynshadow_params_t &p,
         DrawListSpec const &listSpec)
     {
-        Shard::Geom *shard = splinterDynshadow(shadow, p, listSpec);
+        Shard *shard = splinterDynshadow(shadow, p, listSpec);
         shards << shard; // take ownership.
         p.subspace->shards() << shard; // link to the subspace.
     }
@@ -1782,7 +1782,7 @@ DENG2_PIMPL(SectorCluster)
         // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
         if(devRendSkyMode) return;
 
-        Shard::Geom *shard = new Shard::Geom(DrawListSpec(SkyMaskGeom));
+        Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
         shards << shard; // take ownership.
         subspace.shards() << shard; // link to the subspace.
 
@@ -1840,7 +1840,7 @@ DENG2_PIMPL(SectorCluster)
             listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
         }
 
-        Shard::Geom *shard = new Shard::Geom(listSpec);
+        Shard *shard = new Shard(listSpec);
         shards << shard; // take ownership.
         subspace.shards() << shard; // link to the subspace.
 
@@ -2060,7 +2060,7 @@ DENG2_PIMPL(SectorCluster)
             WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
             WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
 
-            Shard::Geom *shard = new Shard::Geom(shadowListSpec);
+            Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(leftFanSize + rightFanSize);
             shards << shard; // take ownership.
             subspace.shards() << shard; // link to the subspace.
@@ -2081,7 +2081,7 @@ DENG2_PIMPL(SectorCluster)
         }
         else
         {
-            Shard::Geom *shard = new Shard::Geom(shadowListSpec);
+            Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(4);
             shards << shard; // take ownership.
             subspace.shards() << shard; // link to the subspace.
@@ -2413,7 +2413,7 @@ DENG2_PIMPL(SectorCluster)
                                                                                  LineSide::Top;
 
                         Map &map     = self.sector().map();
-                        Shard &shard = self.shard(mapElement, geomGroup);
+                        BiasSurface &biasSurface = self.biasSurface(mapElement, geomGroup);
 
                         // Apply the ambient light term from the grid (if available).
                         if(map.hasLightGrid())
@@ -2427,8 +2427,8 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         // Apply bias light source contributions.
-                        shard.lightWithBiasSources(posCoords, colorCoords, surface.tangentMatrix(),
-                                                   map.biasCurrentTime());
+                        biasSurface.light(posCoords, colorCoords, surface.tangentMatrix(),
+                                          map.biasCurrentTime());
 
                         // Apply surface glow.
                         if(glowing > 0)
@@ -2626,7 +2626,7 @@ DENG2_PIMPL(SectorCluster)
                     WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
                     WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
 
-                    Shard::Geom *shard = new Shard::Geom(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
+                    Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
                     shards << shard; // take ownership.
                     subspace.shards() << shard; // link to the subspace.
 
@@ -2676,7 +2676,7 @@ DENG2_PIMPL(SectorCluster)
                             shineListSpec.texunits[TU_INTER].offset *= materialScale;
                         }
 
-                        Shard::Geom *shineShard = new Shard::Geom(shineListSpec, matSnapshot.shineBlendMode());
+                        Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                         shards << shineShard; // take ownership.
                         subspace.shards() << shineShard; // link subspace.
 
@@ -2709,7 +2709,7 @@ DENG2_PIMPL(SectorCluster)
                 }
                 else // Generate one triangle strip.
                 {
-                    Shard::Geom *shard = new Shard::Geom(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
+                    Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
                     shards << shard; // take ownership.
                     subspace.shards() << shard; // link to the subspace.
 
@@ -2753,7 +2753,7 @@ DENG2_PIMPL(SectorCluster)
                             shineListSpec.texunits[TU_INTER].offset *= materialScale;
                         }
 
-                        Shard::Geom *shineShard = new Shard::Geom(shineListSpec, matSnapshot.shineBlendMode());
+                        Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                         shards << shineShard; // take ownership.
                         subspace.shards() << shineShard; // link to the subspace.
 
@@ -2784,7 +2784,7 @@ DENG2_PIMPL(SectorCluster)
             {
                 bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
-                Shard::Geom *shard = new Shard::Geom(DrawListSpec(SkyMaskGeom));
+                Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
                 shards << shard; // take ownership.
                 subspace.shards() << shard; // link to the subspace.
 
@@ -3123,7 +3123,7 @@ DENG2_PIMPL(SectorCluster)
                 if(useBias)
                 {
                     Map &map     = self.sector().map();
-                    Shard &shard = self.shard(subspace, plane.indexInSector());
+                    BiasSurface &biasSurface = self.biasSurface(subspace, plane.indexInSector());
 
                     // Apply the ambient light term from the grid (if available).
                     if(map.hasLightGrid())
@@ -3136,8 +3136,8 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     // Apply bias light source contributions.
-                    shard.lightWithBiasSources(indices.data(), surface.tangentMatrix(),
-                                               map.biasCurrentTime());
+                    biasSurface.light(indices.data(), vbuf,
+                                      surface.tangentMatrix(), map.biasCurrentTime());
 
                     // Apply surface glow.
                     if(glowing > 0)
@@ -3299,7 +3299,7 @@ DENG2_PIMPL(SectorCluster)
                 listSpec.texunits[TU_INTER_DETAIL].offset += materialOrigin;
             }
 
-            Shard::Geom *shard = new Shard::Geom(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
+            Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
             shard->indices = indices;
             shards << shard; // take ownership.
             subspace.shards() << shard; // link to the subspace.
@@ -3322,7 +3322,7 @@ DENG2_PIMPL(SectorCluster)
                     shineListSpec.texunits[TU_INTER].offset *= materialScale;
                 }
 
-                Shard::Geom *shineShard = new Shard::Geom(shineListSpec, matSnapshot.shineBlendMode());
+                Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                 shineShard->indices = shineIndices;
                 shards << shineShard; // take ownership.
                 subspace.shards() << shineShard; // link to the subspace.
@@ -3336,7 +3336,7 @@ DENG2_PIMPL(SectorCluster)
         }
         else // Sky-masked.
         {
-            Shard::Geom *shard = new Shard::Geom(DrawListSpec(SkyMaskGeom));
+            Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
             shard->indices = indices;
             shards << shard; // take ownership.
             subspace.shards() << shard; // link to the subspace.
@@ -3602,10 +3602,10 @@ int SectorCluster::blockLightSourceZBias()
 
 void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 {
-    Instance::ShardGeometryMap::const_iterator it = d->shardGeomMap.constBegin();
-    while(it != d->shardGeomMap.constEnd())
+    Instance::BiasSurfaceGeometryMap::const_iterator it = d->biasSurfaceGeomMap.constBegin();
+    while(it != d->biasSurfaceGeomMap.constEnd())
     {
-        it.key()->biasTracker().applyChanges(allChanges);
+        it.key()->tracker().applyChanges(allChanges);
         ++it;
     }
 }
@@ -3631,21 +3631,21 @@ static int countIlluminationPoints(MapElement &mapElement, int group)
     return 0;
 }
 
-Shard &SectorCluster::shard(MapElement &mapElement, int geomId)
+BiasSurface &SectorCluster::biasSurface(MapElement &mapElement, int geomId)
 {
     Instance::GeometryData *gdata = d->geomData(mapElement, geomId, true /*create*/);
-    if(gdata->shard.isNull())
+    if(gdata->biasSurface.isNull())
     {
-        gdata->shard.reset(new Shard(countIlluminationPoints(mapElement, geomId), this));
+        gdata->biasSurface.reset(new BiasSurface(countIlluminationPoints(mapElement, geomId), this));
     }
-    return *gdata->shard;
+    return *gdata->biasSurface;
 }
 
-Shard *SectorCluster::findShard(MapElement &mapElement, int geomId)
+BiasSurface *SectorCluster::findBiasSurface(MapElement &mapElement, int geomId)
 {
     if(Instance::GeometryData *gdata = d->geomData(mapElement, geomId))
     {
-        return gdata->shard.data();
+        return gdata->biasSurface.data();
     }
     return 0;
 }
@@ -3654,13 +3654,13 @@ Shard *SectorCluster::findShard(MapElement &mapElement, int geomId)
  * @todo This could be enhanced so that only the lights on the right side of the
  * surface are taken into consideration.
  */
-bool SectorCluster::updateBiasContributors(Shard *shard)
+bool SectorCluster::updateBiasContributors(BiasSurface *biasSurface)
 {
-    if(Instance::GeometryData *gdata = d->geomDataForShard(shard))
+    if(Instance::GeometryData *gdata = d->geomDataForBiasSurface(biasSurface))
     {
         Map::BiasSources const &sources = sector().map().biasSources();
 
-        BiasTracker &tracker = shard->biasTracker();
+        BiasTracker &tracker = biasSurface->tracker();
         tracker.clearContributors();
 
         switch(gdata->mapElement->type())

@@ -65,56 +65,21 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
 DENG2_PIMPL(DrawList)
 {
     /**
-     * Each Element begins a block of GL commands/geometry to apply/transfer.
+     * Each element references a Shard of drawable geometry.
      */
     struct Element {
         // Must be an offset since the list is sometimes reallocated.
         uint size; ///< Size of this element (zero = n/a).
 
         struct Data {
-            //gl::Primitive type;
-
             enum Flag {
-                OneLight          = 0x1,
-                ManyLights        = 0x2,
-                //SequentialIndices = 0x4,
-
-                HasLights         = OneLight | ManyLights
+                OneLight   = 0x1,
+                ManyLights = 0x2,
+                HasLights  = OneLight | ManyLights
             };
             byte flags;
+            Shard const *shard;
 
-            // Element indices into the global backing store for the geometry.
-            //
-            // If SequentialIndices:
-            // @var base is the first and a contiguous range of indices from base
-            // to base + vertCount is used for vertices.
-            //
-            // Else:
-            // indices[0] is the first vertex followed by a further vertCount-1
-            // for the remaining vertices. The indices array is allocated from
-            // the same storage region as used for the list itself, therefore it
-            // is necessary to update the pointers when the list is resized.
-            /*WorldVBuf const *vbuf;
-            WorldVBuf::Index vertCount;
-            union {
-                WorldVBuf::Index *indices;
-                WorldVBuf::Index base;
-            };
-
-            blendmode_t blendmode;
-            GLuint modTex;
-            Vector3f modColor;
-
-            Vector2f texScale;
-            Vector2f texOffset;
-
-            Vector2f detailTexScale;
-            Vector2f detailTexOffset;*/
-            Shard::Geom const *shard;
-
-            /**
-             * Draw the geometry for this element.
-             */
             void draw(DrawConditions const &conditions, TexUnitMap const &texUnitMap)
             {
                 if(conditions & SetLightEnv)
@@ -134,7 +99,7 @@ DENG2_PIMPL(DrawList)
                     GL_BlendMode(shard->blendmode);
                 }
 
-                foreach(Shard::Geom::Primitive const &prim, shard->primitives)
+                foreach(Shard::Primitive const &prim, shard->primitives)
                 {
                     if(conditions & SetMatrixTexture)
                     {
@@ -297,15 +262,13 @@ DENG2_PIMPL(DrawList)
         dataSize = 0;
     }
 
-    /**
-     * @return  Start of the allocated data.
-     */
-    void *allocateData(uint bytes)
+    /// @todo This mechanism for managing list elements should now be replaced. -ds
+    Element *addElement(Shard const &shard)
     {
+        size_t bytes = sizeof(Element);
+
         // Number of extra bytes to keep allocated in the end of each list.
         int const PADDING = 16;
-
-        if(!bytes) return 0;
 
         // We require the extra bytes because we want that the end of the list
         // data is always safe for writing-in-advance. This is needed when the
@@ -337,78 +300,46 @@ DENG2_PIMPL(DrawList)
             // Restore main pointers.
             cursor = (cursorOffset >= 0? data + cursorOffset : data);
             last   = (lastOffset >= 0? (Element *) (data + lastOffset) : 0);
-
-            // Restore in-list pointers.
-            // When the list is resized, pointers in the primitives need to be
-            // restored so that they point to the new list data.
-            /*if(oldData)
-            {
-                for(Element *elem = first(); elem && elem <= last; elem = elem->next())
-                {
-                    if(!(elem->data.flags & Element::Data::SequentialIndices) && elem->data.indices)
-                    {
-                        elem->data.indices = (WorldVBuf::Index *) (data + ((byte *) elem->data.indices - oldData));
-                    }
-                }
-            }*/
         }
 
         // Advance the cursor.
         cursor += bytes;
 
-        return data + startOffset;
-    }
-
-    /*
-    void writeIndices(WorldVBuf const &vbuf, WorldVBuf::Index vertCount, WorldVBuf::Index const *indices)
-    {
-        last->data.vbuf      = &vbuf;
-        // Note that last may be reallocated during allocateData.
-        last->data.vertCount = vertCount;
-        // Temporary variable to avoid segfault on Ubuntu linux CMB
-        WorldVBuf::Index *lti = (WorldVBuf::Index *) allocateData(sizeof(*lti) * last->data.vertCount);
-        last->data.indices = lti;
-
-        std::memcpy(last->data.indices, indices, sizeof(WorldVBuf::Index) * vertCount);
-    }
-
-    void writeIndicesSequential(WorldVBuf const &vbuf, WorldVBuf::Index vertCount, WorldVBuf::Index base)
-    {
-        last->data.vbuf       = &vbuf;
-        last->data.vertCount  = vertCount;
-        last->data.base       = base;
-        last->data.flags     |= Element::Data::SequentialIndices;
-    }
-    */
-
-    Element *beginElement(Shard::Geom const &shard/*gl::Primitive primitive*/)
-    {
-        // This becomes the new last element.
-        last = (Element *) allocateData(sizeof(Element));
-        last->size = 0;
-
-        last->data.shard     = &shard;
-        /*last->data.type      = primitive;
-        last->data.indices   = 0;
-        last->data.vertCount = 0;*/
-        last->data.flags     = 0;
-
-        return last;
-    }
-
-    void endElement()
-    {
-        // The element has been written, update the size in the header.
+        last = (Element *)(data + startOffset);
         last->size = cursor - (byte *) last;
 
         // Write the end marker (will be overwritten by the next write). The
         // idea is that this zero is interpreted as the size of the following
         // Element.
         *(int *) cursor = 0;
+
+        Element *elem = last;
+
+        // Rationalize write arguments.
+        bool isLit = shard.hasDynlights;
+        if(spec.group == SkyMaskGeom || spec.group == LightGeom || spec.group == ShadowGeom)
+        {
+            isLit = false;
+        }
+
+        elem->data.shard = &shard;
+
+        // Is the geometry lit?
+        elem->data.flags = 0;
+        if(shard.modTex && !isLit)
+        {
+            elem->data.flags |= Element::Data::OneLight; // Using modulation.
+        }
+        else if(shard.modTex || isLit)
+        {
+            elem->data.flags |= Element::Data::ManyLights;
+        }
+
+        return elem;
     }
 
     /// Returns a pointer to the first element in the list; otherwise @c 0.
-    Element *first() const
+    Element *firstElement() const
     {
         Element *elem = (Element *)data;
         if(!elem->size) return 0;
@@ -815,77 +746,12 @@ bool DrawList::isEmpty() const
     return d->last == 0;
 }
 
-/*DrawList &DrawList::write(gl::Primitive primitive, WorldVBuf::Index vertCount,
-    WorldVBuf::Index const *indices, WorldVBuf const &vbuffer,
-    Vector2f const &texScale, Vector2f const &texOffset,
-    Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
-    blendmode_e blendmode, GLuint modTexture, const Vector3f *modColor,
-    bool isLit)*/
-DrawList &DrawList::write(Shard::Geom const &shard)
+DrawList &DrawList::write(Shard const &shard)
 {
-    if(shard.primitives.isEmpty()) return *this; // Huh?
-
-    //DENG2_ASSERT(vertCount >= 3);
-    //DENG2_ASSERT(indices != 0);
-
-    // Rationalize write arguments.
-    bool isLit = shard.hasDynlights;
-    if(d->spec.group == SkyMaskGeom || d->spec.group == LightGeom || d->spec.group == ShadowGeom)
+    if(!shard.primitives.isEmpty())
     {
-        isLit      = false;
-        //modTexture = 0;
-        //modColor   = 0;
+        d->addElement(shard); // Becomes the new last element.
     }
-
-    Instance::Element *elem = d->beginElement(shard/*primitive*/);
-
-    // Is the geometry lit?
-    if(shard.modTex && !isLit)
-    {
-        elem->data.flags |= Instance::Element::Data::OneLight; // Using modulation.
-    }
-    else if(shard.modTex || isLit)
-    {
-        elem->data.flags |= Instance::Element::Data::ManyLights;
-    }
-
-    // Configure the GL state to be applied when this geometry is drawn later.
-    /*elem->data.blendmode       = blendmode;
-    elem->data.modTex          = modTexture;
-    elem->data.modColor        = modColor? *modColor : Vector3f();
-
-    elem->data.texScale        = texScale;
-    elem->data.texOffset       = texOffset;
-
-    elem->data.detailTexScale  = detailTexScale;
-    elem->data.detailTexOffset = detailTexOffset;
-
-    // Do we need to take a copy of the indice sequence?
-    WorldVBuf::Index const base = indices[0];
-    WorldVBuf::Index idx = 1;
-    bool contiguous      = true;
-    while(contiguous && idx < vertCount)
-    {
-        if(indices[idx] != base + idx)
-        {
-            contiguous = false;
-        }
-        idx++;
-    }
-
-    // Setup the vertex indices for this element.
-    if(contiguous)
-    {
-        d->writeIndicesSequential(vbuffer, vertCount, base);
-    }
-    else
-    {
-        d->writeIndices(vbuffer, vertCount, indices);
-    }
-    */
-
-    d->endElement();
-
     return *this;
 }
 
@@ -930,7 +796,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
     }
 
     bool skip = false;
-    for(Instance::Element *elem = d->first(); elem; elem = elem->next())
+    for(Instance::Element *elem = d->firstElement(); elem; elem = elem->next())
     {
         // Check for skip conditions.
         if(!bypass)

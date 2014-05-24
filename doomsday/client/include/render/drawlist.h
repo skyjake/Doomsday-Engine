@@ -26,7 +26,7 @@
 #include "render/rendersystem.h"
 #include <de/Vector>
 
-struct ShardGeom;
+class Shard;
 
 /// Semantic geometry group identifiers.
 enum GeomGroup
@@ -105,66 +105,44 @@ public:
 
 public:
     /**
-     * Construct a new draw list.
-     *
-     * @param spec  List specification. A copy is made.
+     * Construct a new draw list with the given @a spec (a copy is made).
      */
     DrawList(Spec const &spec);
 
     /**
-     * Write the given geometry primitive to the list.
-     *
-     * @param primitive        Type identifier for the GL primitive being written.
-     * @param vertCount        Number of vertices being written.
-     * @param indices          Vertex indices for the primitive.
-     * @param vbuffer          Buffer in which the vertex elements reside.
-     * @param texScale         @em primary texture unit scale.
-     * @param texOffset        @em primary texture unit offset.
-     * @param detailTexScale   @em detail texture unit scale.
-     * @param detailTexOffset  @em detail texture unit offset.
-     * @param blendmode        Texture blending mode.
-     * @param modTexture       GL name of the modulation texture (if any).
-     * @param modColor         Modulation color (if any).
-     *
-     * @param isLit            Is the primitive lit? (@todo Retrieve from list specification?)
+     * Add the given geometry @a shard to the list. It is assumed that shard's
+     * draw list specification is compatible with "this" list (glitches will
+     * occur if its not).
      */
-    /*DrawList &write(de::gl::Primitive primitive, WorldVBuf::Index vertCount,
-                    WorldVBuf::Index const *indices, WorldVBuf const &vbuffer,
-                    de::Vector2f const &texScale        = de::Vector2f(1, 1),
-                    de::Vector2f const &texOffset       = de::Vector2f(0, 0),
-                    de::Vector2f const &detailTexScale  = de::Vector2f(1, 1),
-                    de::Vector2f const &detailTexOffset = de::Vector2f(0, 0),
-                    blendmode_e blendmode               = BM_NORMAL,
-                    GLuint modTexture                   = 0,
-                    de::Vector3f const *modColor        = 0,
-                    bool isLit                          = false);*/
-    DrawList &write(ShardGeom const &shard);
+    DrawList &write(Shard const &shard);
 
+    /**
+     * Draw all geometry Shards in the list, in the order in which they were added.
+     */
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 
     /**
-     * Returns @c true iff there are no commands/geometries in the list.
+     * Returns @c true iff there are no geometries in the list.
      */
     bool isEmpty() const;
 
     /**
-     * Clear the list of all buffered GL commands, returning it to the default,
-     * empty state.
+     * Empty the list of all geometries and rewind the read/write cursor.
      */
     void clear();
 
     /**
-     * Return the read/write cursor to the beginning of the list, retaining all
-     * allocated storage for buffered GL commands so that it can be reused.
+     * Return the read/write cursor to the beginning of the list, retaining any
+     * storage allocated so that it can be reused.
      *
-     * To be called at the beginning of a new render frame before any geometry
-     * is written to the list.
+     * To be called at the beginning of a new render frame before any geometries
+     * are added to the list.
      */
     void rewind();
 
     /**
      * Provides mutable access to the list's specification. Note that any changes
-     * to this configuration will affect @em all geometry in the list.
+     * to this configuration will affect @em all geometries in the list.
      */
     Spec &spec();
 

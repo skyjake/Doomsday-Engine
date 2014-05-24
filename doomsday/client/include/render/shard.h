@@ -20,16 +20,19 @@
 #define DENG_CLIENT_RENDER_SHARD_H
 
 #include <QList>
-#include <de/Matrix>
 #include <de/Vector>
 #include "rendersystem.h"
 #include "DrawList"
 
-class BiasTracker;
-class SectorCluster;
-
-struct ShardGeom
+/**
+ * 3D map geometry fragment.
+ *
+ * Shards are produced by SectorClusters when the map geometry is split into
+ * drawable geometry fragments.
+ */
+class Shard
 {
+public:
     DrawList::Spec listSpec;
     blendmode_t blendmode;
     GLuint modTex;
@@ -39,17 +42,10 @@ struct ShardGeom
     Indices indices;
     struct Primitive
     {
-        enum Flag {
-            SequentialIndices = 0x4
-        };
-        byte flags;
         de::gl::Primitive type;
         WorldVBuf const *vbuffer;
         WorldVBuf::Index vertCount;
-        union {
-            WorldVBuf::Index *indices;
-            WorldVBuf::Index base;
-        };
+        WorldVBuf::Index *indices;
         de::Vector2f texScale;
         de::Vector2f texOffset;
         de::Vector2f detailTexScale;
@@ -58,11 +54,15 @@ struct ShardGeom
     typedef QList<Primitive> Primitives;
     Primitives primitives;
 
-    ShardGeom(DrawList::Spec const &listSpec,
-         blendmode_t blendmode        = BM_NORMAL,
-         GLuint modTex                = 0,
-         de::Vector3f const &modColor = de::Vector3f(),
-         bool hasDynlights            = false)
+public:
+    /**
+     * Construct a new Shard of 3D map geometry.
+     */
+    Shard(DrawList::Spec const &listSpec,
+          blendmode_t blendmode        = BM_NORMAL,
+          GLuint modTex                = 0,
+          de::Vector3f const &modColor = de::Vector3f(),
+          bool hasDynlights            = false)
         : listSpec    (listSpec)
         , blendmode   (blendmode)
         , modTex      (modTex)
@@ -71,29 +71,24 @@ struct ShardGeom
     {}
 };
 
-/**
- * 3D map geometry fragment.
- *
- * Shards are produced (and perhaps owned) by SectorClusters when the map geometry
- * is split into drawable geometry fragments. Shard ownership may be transferred
- * however a shard should never outlive the MapElement for which it was produced.
- */
-class Shard
+#include <de/Matrix>
+
+class BiasTracker;
+class SectorCluster;
+
+class BiasSurface
 {
 public:
-    typedef ShardGeom Geom;
-
-public:
     /**
-     * Construct a new Shard of 3D map geometry.
+     * Construct a new BiasSurface.
      *
-     * @param numBiasIllums  Number of bias illumination points for the geometry.
-     * @param owner          SectorCluster which owns the shard (if any).
+     * @param numIllums  Number of illumination points for the geometry.
+     * @param owner      SectorCluster which owns the surface (if any).
      */
-    Shard(int numBiasIllums, SectorCluster *owner = 0);
+    BiasSurface(int numIllums, SectorCluster *owner = 0);
 
     /**
-     * Perform bias lighting for the supplied vertex geometry.
+     * Perform bias lighting for the vertex geometry supplied.
      *
      * @note Important: It assumed that the given geometry buffers have at least
      * the same number of elements as there are bias illumination points.
@@ -108,30 +103,30 @@ public:
      * @param biasTime       Time in milliseconds of the last bias frame update,
      *                       used for interpolation.
      */
-    void lightWithBiasSources(de::Vector3f const *posCoords, de::Vector4f *colorCoords,
-                              de::Matrix3f const &tangentMatrix, uint biasTime);
-    void lightWithBiasSources(WorldVBuf::Index const *indices,
-                              de::Matrix3f const &tangentMatrix, uint biasTime);
+    void light(de::Vector3f const *posCoords, de::Vector4f *colorCoords,
+               de::Matrix3f const &tangentMatrix, uint biasTime);
+    void light(WorldVBuf::Index const *indices, WorldVBuf &vbuffer,
+               de::Matrix3f const &tangentMatrix, uint biasTime);
 
     /**
-     * Returns a pointer to the SectorCluster which owns the shard (if any).
+     * Returns a pointer to the SectorCluster which owns the surface (if any).
      */
     SectorCluster *cluster() const;
 
     /**
-     * Change SectorCluster which owns the shard to @a newOwner.
+     * Change SectorCluster which owns the surface to @a newOwner.
      */
     void setCluster(SectorCluster *newOwner);
 
     /**
-     * Returns the BiasTracker for the shard.
+     * Returns the BiasTracker for the surface.
      */
-    BiasTracker &biasTracker() const;
+    BiasTracker &tracker() const;
 
     /**
-     * Schedule a bias lighting update for the Shard following a move/transform.
+     * Schedule a bias lighting update for the surface following a move/transform.
      */
-    void updateBiasAfterMove();
+    void updateAfterMove();
 
     /**
      * To be called to register the commands and variables of this module.

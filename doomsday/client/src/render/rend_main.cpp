@@ -432,7 +432,7 @@ void Rend_Register()
     fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
-    Shard::consoleRegister();
+    BiasSurface::consoleRegister();
     VR_ConsoleRegister();
 }
 
@@ -1041,8 +1041,8 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
                                      leftSection->id() == WallEdge::WallBottom? LineSide::Bottom :
                                                                                 LineSide::Top;
 
-            Map &map     = cluster.sector().map();
-            Shard &shard = cluster.shard(mapElement, geomGroup);
+            Map &map = cluster.sector().map();
+            BiasSurface &biasSurface = cluster.biasSurface(mapElement, geomGroup);
 
             // Apply the ambient light term from the grid (if available).
             if(map.hasLightGrid())
@@ -1056,7 +1056,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             }
 
             // Apply bias light source contributions.
-            shard.lightWithBiasSources(posCoords, colorCoords, surfaceTangentMatrix,
+            biasSurface.light(posCoords, colorCoords, surfaceTangentMatrix,
                                        map.biasCurrentTime());
 
             // Apply surface glow.
@@ -1470,7 +1470,7 @@ static void drawSubspace(ConvexSubspace &subspace)
 
     // Draw all shard geometries.
     DrawLists &drawLists = ClientApp::renderSystem().drawLists();
-    foreach(Shard::Geom const *shard, subspace.shards())
+    foreach(Shard const *shard, subspace.shards())
     {
         drawLists.find(shard->listSpec).write(*shard);
 

@@ -42,7 +42,7 @@
 class ConvexSubspace;
 #ifdef __CLIENT__
 class BiasDigest;
-class Shard;
+class BiasSurface;
 #endif
 
 /**
@@ -238,7 +238,7 @@ public:
      * Returns the final ambient light intensity for the source.
      * @see lightSourceColorf()
      */
-    de::dfloat lightSourceIntensity(de::Vector3d const &viewPoint = de::Vector3d(0, 0, 0)) const;
+    de::dfloat lightSourceIntensity(de::Vector3d const &viewPoint = de::Vector3d()) const;
 
     /**
      * Returns the final ambient light color and intensity for the source.
@@ -254,26 +254,26 @@ public:
     int blockLightSourceZBias();
 
     /**
-     * Returns the geometry Shard for the specified @a mapElement and geometry
-     * group identifier @a geomId; otherwise @c 0.
+     * Returns the BiasSurface for the specified @a mapElement and geometry group
+     * identifier @a geomId; otherwise @c 0.
      */
-    Shard *findShard(de::MapElement &mapElement, int geomId);
+    BiasSurface *findBiasSurface(de::MapElement &mapElement, int geomId);
 
     /**
-     * Generate/locate the geometry Shard for the specified @a mapElement and
+     * Generate/locate the BiasSurface for the specified @a mapElement and
      * geometry group identifier @a geomId.
      */
-    Shard &shard(de::MapElement &mapElement, int geomId);
+    BiasSurface &biasSurface(de::MapElement &mapElement, int geomId);
 
     /**
-     * Shards owned by the SectorCluster should call this periodically to update
-     * their bias lighting contributions.
+     * BiasSurfaces owned by the cluster should call this periodically to update
+     * their lighting contributions.
      *
-     * @param shard  Shard to be updated (owned by the SectorCluster).
+     * @param biasSurface  BiasSurface to be updated (owned by the SectorCluster).
      *
      * @return  @c true if one or more BiasIllum contributors was updated.
      */
-    bool updateBiasContributors(Shard *shard);
+    bool updateBiasContributors(BiasSurface *biasSurface);
 
     /**
      * Apply bias lighting changes to @em all geometry Shards within the cluster.

@@ -61,9 +61,9 @@ static void notifyGeometryChanged(Polyobj &po)
 
             /// @note If polyobjs are allowed to move between sector clusters
             /// then we'll need to revise the bias illumination storage specially.
-            if(Shard *shard = po.bspLeaf().subspace().cluster().findShard(hedge->mapElement(), LineSide::Middle))
+            if(BiasSurface *shard = po.bspLeaf().subspace().cluster().findBiasSurface(hedge->mapElement(), LineSide::Middle))
             {
-                shard->updateBiasAfterMove();
+                shard->updateAfterMove();
             }
         }
     }
