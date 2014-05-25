@@ -397,6 +397,7 @@ def handleCompletedTasks():
         elif task == 'build':
             newTask('source', forClient='ubuntu')
             newTask('source', forClient='saucy')
+            newTask('source', forClient='trusty')
 
         elif task == 'source':
             newTask('sign', forClient='master')
