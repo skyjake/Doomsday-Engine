@@ -956,7 +956,7 @@ bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
 }
 
 void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
-    Vector4f const &ambientLightColor, Vector3f const &surfaceColor, float glowing,
+    Vector4f const &ambientLight, Vector3f const &surfaceColor, float glowing,
     float opacity, blendmode_t blendmode,
     Vector2f const &matOrigin, MaterialSnapshot const &matSnapshot,
     uint lightListIdx,
@@ -973,8 +973,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
 
     SectorCluster &cluster = subspace.cluster();
 
-    duint16 const vertCount = 4;
-    Vector3f const posCoords[vertCount] = {
+    Vector3f const posCoords[4] = {
         Vector3f( leftSection->bottom().origin()),
         Vector3f( leftSection->top   ().origin()),
         Vector3f(rightSection->bottom().origin()),
@@ -982,13 +981,13 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     };
 
     // Light this polygon.
-    Vector4f colorCoords[vertCount];
+    Vector4f colorCoords[4];
     if(levelFullBright || !(glowing < 1))
     {
         // Uniform color. Apply to all vertices.
-        float ll = de::clamp(0.f, ambientLightColor.w + (levelFullBright? 1 : glowing), 1.f);
+        float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
         Vector4f *colorIt = colorCoords;
-        for(duint16 i = 0; i < vertCount; ++i, colorIt++)
+        for(duint16 i = 0; i < 4; ++i, colorIt++)
         {
             colorIt->x = colorIt->y = colorIt->z = ll;
         }
@@ -1011,7 +1010,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             {
                 Vector3f const *posIt = posCoords;
                 Vector4f *colorIt     = colorCoords;
-                for(duint16 i = 0; i < vertCount; ++i, posIt++, colorIt++)
+                for(duint16 i = 0; i < 4; ++i, posIt++, colorIt++)
                 {
                     *colorIt = map.lightGrid().evaluate(*posIt);
                 }
@@ -1026,7 +1025,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             {
                 Vector4f const glow(glowing, glowing, glowing, 0);
                 Vector4f *colorIt = colorCoords;
-                for(duint16 i = 0; i < vertCount; ++i, colorIt++)
+                for(duint16 i = 0; i < 4; ++i, colorIt++)
                 {
                     *colorIt += glow;
                 }
@@ -1035,7 +1034,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             // Apply light range compression and clamp.
             Vector3f const *posIt = posCoords;
             Vector4f *colorIt     = colorCoords;
-            for(duint16 i = 0; i < vertCount; ++i, posIt++, colorIt++)
+            for(duint16 i = 0; i < 4; ++i, posIt++, colorIt++)
             {
                 for(int k = 0; k < 3; ++k)
                 {
@@ -1045,228 +1044,46 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         }
         else
         {
-            float llL = de::clamp(0.f, ambientLightColor.w + surfaceLightLevelDL + glowing, 1.f);
-            float llR = de::clamp(0.f, ambientLightColor.w + surfaceLightLevelDR + glowing, 1.f);
-
-            // Calculate the color for each vertex, blended with plane color?
-            if(surfaceColor.x < 1 || surfaceColor.y < 1 || surfaceColor.z < 1)
+            // Apply the ambient light term.
+            Vector4f const extraLight = Vector4f(0, 0, 0, Rend_ExtraLightDelta() + glowing);
+            Vector4f const finalColor = ambientLight * Vector4f(surfaceColor, 1) + extraLight;
+            colorCoords[1] = finalColor;
+            colorCoords[3] = finalColor;
+            if(!surfaceColor2)
             {
-                // Blend sector light+color+surfacecolor
-                Vector3f const finalColor = surfaceColor * ambientLightColor;
-
-                if(llL != llR)
-                {
-                    {
-                        float const blDist = Rend_PointDist2D(posCoords[0]);
-
-                        // Apply distance attenuation.
-                        float lightLevel = Rend_AttenuateLightLevel(blDist, llL);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[0][i] = lightLevel * finalColor[i];
-                        }
-
-                        float const tlDist = Rend_PointDist2D(posCoords[1]);
-
-                        // Apply distance attenuation.
-                        lightLevel = Rend_AttenuateLightLevel(tlDist, llL);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[1][i] = lightLevel * finalColor[i];
-                        }
-                    }
-
-                    {
-                        float const brDist = Rend_PointDist2D(posCoords[2]);
-
-                        // Apply distance attenuation.
-                        float lightLevel = Rend_AttenuateLightLevel(brDist, llR);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[2][i] = lightLevel * finalColor[i];
-                        }
-
-                        float const trDist = Rend_PointDist2D(posCoords[3]);
-
-                        // Apply distance attenuation.
-                        lightLevel = Rend_AttenuateLightLevel(trDist, llR);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[3][i] = lightLevel * finalColor[i];
-                        }
-                    }
-                }
-                else
-                {
-                    for(duint16 i = 0; i < vertCount; ++i)
-                    {
-                        float const dist = Rend_PointDist2D(posCoords[i]);
-
-                        // Apply distance attenuation.
-                        float lightLevel = Rend_AttenuateLightLevel(dist, llL);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int k = 0; k < 3; ++k)
-                        {
-                            colorCoords[i][k] = lightLevel * finalColor[k];
-                        }
-                    }
-                }
+                colorCoords[0] = finalColor;
+                colorCoords[2] = finalColor;
             }
             else
             {
-                // Use sector light+color only.
-                if(llL != llR)
-                {
-                    {
-                        float const blDist = Rend_PointDist2D(posCoords[0]);
-
-                        // Apply distance attenuation.
-                        float lightLevel = Rend_AttenuateLightLevel(blDist, llL);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[0][i] = lightLevel * ambientLightColor[i];
-                        }
-
-                        float const tlDist = Rend_PointDist2D(posCoords[1]);
-
-                        // Apply distance attenuation.
-                        lightLevel = Rend_AttenuateLightLevel(tlDist, llL);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[1][i] = lightLevel * ambientLightColor[i];
-                        }
-                    }
-
-                    {
-                        float const brDist = Rend_PointDist2D(posCoords[2]);
-
-                        // Apply distance attenuation.
-                        float lightLevel = Rend_AttenuateLightLevel(brDist, llR);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[2][i] = lightLevel * ambientLightColor[i];
-                        }
-
-                        float const trDist = Rend_PointDist2D(posCoords[3]);
-
-                        // Apply distance attenuation.
-                        lightLevel = Rend_AttenuateLightLevel(trDist, llR);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int i = 0; i < 3; ++i)
-                        {
-                            colorCoords[3][i] = lightLevel * ambientLightColor[i];
-                        }
-                    }
-                }
-                else
-                {
-                    for(duint16 i = 0; i < vertCount; ++i)
-                    {
-                        float const dist = Rend_PointDist2D(posCoords[i]);
-
-                        // Apply distance attenuation.
-                        float lightLevel = Rend_AttenuateLightLevel(dist, llL);
-
-                        // Add extra light.
-                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                        Rend_ApplyLightAdaptation(lightLevel);
-
-                        for(int k = 0; k < 3; ++k)
-                        {
-                            colorCoords[i][k] = lightLevel * ambientLightColor[k];
-                        }
-                    }
-                }
+                Vector4f const finalBottomColor = ambientLight * Vector4f(*surfaceColor2, 1) + extraLight;
+                colorCoords[0] = finalBottomColor;
+                colorCoords[2] = finalBottomColor;
             }
 
-            // Bottom color (if different from top)?
-            if(surfaceColor2)
+            // Apply the wall angle deltas to luminance.
+            colorCoords[0].w += surfaceLightLevelDL;
+            colorCoords[1].w += surfaceLightLevelDL;
+            colorCoords[2].w += surfaceLightLevelDR;
+            colorCoords[3].w += surfaceLightLevelDR;
+
+            // Apply distance attenuation and compression to luminance.
+            for(duint16 i = 0; i < 4; ++i)
             {
-                // Blend sector light+color+surfacecolor
-                Vector3f const finalColor = (*surfaceColor2) * ambientLightColor;
+                float const dist = Rend_PointDist2D(posCoords[i]);
+                colorCoords[i].w = Rend_AttenuateLightLevel(dist, colorCoords[i].w);
 
-                float const blDist = Rend_PointDist2D(posCoords[0]);
+                // Apply range compression to the final luminance value.
+                Rend_ApplyLightAdaptation(colorCoords[i].w);
+            }
 
-                // Apply distance attenuation.
-                float lightLevel = Rend_AttenuateLightLevel(blDist, llL);
-
-                // Add extra light.
-                lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                Rend_ApplyLightAdaptation(lightLevel);
-
-                for(int i = 0; i < 3; ++i)
-                {
-                    colorCoords[0][i] = lightLevel * finalColor[i];
-                }
-
-                float const brDist = Rend_PointDist2D(posCoords[2]);
-
-                // Apply distance attenuation.
-                lightLevel = Rend_AttenuateLightLevel(brDist, llR);
-
-                // Add extra light.
-                lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-                Rend_ApplyLightAdaptation(lightLevel);
-
-                for(int i = 0; i < 3; ++i)
-                {
-                    colorCoords[2][i] = lightLevel * finalColor[i];
-                }
+            // Multiply color with luminance and clamp (ignore alpha, we'll replace it soon).
+            for(duint16 i = 0; i < 4; ++i)
+            {
+                float const luma = colorCoords[i].w;
+                colorCoords[i].x = de::clamp(0.f, colorCoords[i].x * luma, 1.f);
+                colorCoords[i].y = de::clamp(0.f, colorCoords[i].y * luma, 1.f);
+                colorCoords[i].z = de::clamp(0.f, colorCoords[i].z * luma, 1.f);
             }
         }
 
@@ -1275,7 +1092,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         {
             Vector3f const *posIt = posCoords;
             Vector4f *colorIt     = colorCoords;
-            for(duint16 i = 0; i < vertCount; ++i, colorIt++, posIt++)
+            for(duint16 i = 0; i < 4; ++i, colorIt++, posIt++)
             {
                 Rend_ApplyTorchLight(*colorIt, Rend_PointDist2D(*posIt));
             }
@@ -1284,7 +1101,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
 
     // Apply uniform alpha (overwritting luminance factors).
     Vector4f *colorIt = colorCoords;
-    for(duint16 i = 0; i < vertCount; ++i, colorIt++)
+    for(duint16 i = 0; i < 4; ++i, colorIt++)
     {
         colorIt->w = opacity;
     }
