@@ -1,4 +1,4 @@
-Source: doomsday
+Source: ${Package}
 Section: universe/games
 Priority: optional
 Maintainer: Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -8,7 +8,7 @@ Homepage: http://dengine.net/
 Vcs-Git: https://github.com/skyjake/Doomsday-Engine.git
 Vcs-Browser: http://github.com/skyjake/Doomsday-Engine
 
-Package: doomsday
+Package: ${Package}
 Architecture: ${Arch}
 Depends: ${shlibs:Depends}, ${misc:Depends}, python-wxgtk2.8
 Description: Doom/Heretic/Hexen port with enhanced graphics

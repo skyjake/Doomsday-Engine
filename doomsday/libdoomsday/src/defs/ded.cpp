@@ -19,6 +19,10 @@
 
 #include "doomsday/defs/ded.h"
 
+#include <de/ArrayValue>
+#include <de/NumberValue>
+#include <de/RecordValue>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -42,9 +46,12 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 }
 
 ded_s::ded_s()
-    : flags(names.addRecord("flags"))
+    : flags (names.addRecord("flags"))
+    , models(names.addRecord("models"))
 {
     flags.addLookupKey("id");
+    models.addLookupKey("id", DEDRegister::OnlyFirst);
+    models.addLookupKey("state");
 
     clear();
 }
@@ -67,6 +74,102 @@ int ded_s::addFlag(char const *id, int value)
     return def.geti("__order__");
 }
 
+int ded_s::addModel()
+{
+    Record &def = models.append();
+
+    // Add all expected fields with their default values.
+    def.addText  ("id", "");
+    def.addText  ("state", "");
+    def.addNumber("off", 0);
+    def.addText  ("sprite", "");
+    def.addNumber("spriteFrame", 0);
+    def.addNumber("group", 0);
+    def.addNumber("selected", 0);
+    def.addNumber("flags", 0);
+    def.addNumber("interMark", 0);
+    def.addArray ("interRange", new ArrayValue(Vector2i(0, 1)));
+    def.addNumber("skinTics", 0);
+    def.addArray ("scale", new ArrayValue(Vector3i(1, 1, 1)));
+    def.addNumber("resize", 0);
+    def.addArray ("offset", new ArrayValue(Vector3f()));
+    def.addNumber("shadowRadius", 0);
+    def.addArray ("sub", new ArrayValue);
+
+    return def.geti("__order__");
+}
+
+Record &defn::Model::addSub()
+{
+    DENG2_ASSERT(_def);
+
+    Record *def = new Record;
+
+    def->addText  ("filename", "");
+    def->addText  ("skinFilename", "");
+    def->addText  ("frame", "");
+    def->addNumber("frameRange", 0);
+    def->addNumber("flags", 0);
+    def->addNumber("skin", 0);
+    def->addNumber("skinRange", 0);
+    def->addArray ("offset", new ArrayValue(Vector3f()));
+    def->addNumber("alpha", 0);
+    def->addNumber("parm", 0);
+    def->addNumber("selSkinMask", 0);
+    def->addNumber("selSkinShift", 0);
+
+    ArrayValue *skins = new ArrayValue;
+    for(int i = 0; i < 8; ++i) *skins << NumberValue(0);
+    def->addArray ("selSkins", skins);
+
+    def->addText  ("shinySkin", "");
+    def->addNumber("shiny", 0);
+    def->addArray ("shinyColor", new ArrayValue(Vector3f(1, 1, 1)));
+    def->addNumber("shinyReact", 1);
+    def->addNumber("blendMode", BM_NORMAL);
+
+    (*_def)["sub"].value<ArrayValue>()
+            .add(new RecordValue(def, RecordValue::OwnsRecord));
+
+    return *def;
+}
+
+int defn::Model::subCount() const
+{
+    return int((*_constDef)["sub"].value().size());
+}
+
+Record &defn::Model::sub(int index)
+{
+    DENG2_ASSERT(_def);
+
+    return *(*_def)["sub"].value().element(NumberValue(index)).as<RecordValue>().record();
+}
+
+void defn::Model::cleanupAfterParsing(Record const &prev)
+{
+    DENG2_ASSERT(_def);
+
+    if(_def->gets("state") == "-")
+    {
+        _def->set("state", prev.gets("state"));
+    }
+    if(_def->gets("sprite") == "-")
+    {
+        _def->set("sprite", prev.gets("sprite"));
+    }
+
+    for(int i = 0; i < subCount(); ++i)
+    {
+        Record &subDef = sub(i);
+
+        if(subDef.gets("filename") == "-")     subDef.set("filename", "");
+        if(subDef.gets("skinFilename") == "-") subDef.set("skinFilename", "");
+        if(subDef.gets("shinySkin") == "-")    subDef.set("shinySkin", "");
+        if(subDef.gets("frame") == "-")        subDef.set("frame", "");
+    }
+}
+
 void ded_s::release()
 {
     flags.clear();
@@ -74,21 +177,7 @@ void ded_s::release()
     states.clear();
     sprites.clear();
     lights.clear();
-
-    // 'models' is a std::vector
-    for(uint i = 0; i < models.size(); ++i)
-    {
-        ded_model_t* mdl = &models[i];
-        for(uint j = 0; j < mdl->subCount(); ++j)
-        {
-            ded_submodel_t* sub = &mdl->sub(j);
-            if(sub->filename)     delete(sub->filename);
-            if(sub->skinFilename) delete(sub->skinFilename);
-            if(sub->shinySkin)    delete(sub->shinySkin);
-        }
-    }
     models.clear();
-
     sounds.clear();
     music.clear();
     mapInfo.clear();
@@ -113,17 +202,6 @@ int DED_AddMobj(ded_t* ded, char const* idstr)
     ded_mobj_t *mo = ded->mobjs.append();
     strcpy(mo->id, idstr);
     return ded->mobjs.indexOf(mo);
-}
-
-int DED_AddModel(ded_t* ded, char const* spr)
-{
-    ded->models.push_back(ded_model_t(spr));
-    return ded->models.size() - 1;
-}
-
-void DED_RemoveModel(ded_t* ded, int index)
-{
-    ded->models.erase(ded->models.begin() + index);
 }
 
 int DED_AddSky(ded_t* ded, char const* id)
@@ -514,7 +592,13 @@ int ded_s::evalFlags2(char const *ptr) const
 
 int ded_s::getModelNum(const char *id) const
 {
-    int idx = -1;
+    if(Record const *def = models.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+
+/*    int idx = -1;
     if(id && id[0] && !models.empty())
     {
         int i = 0;
@@ -522,7 +606,7 @@ int ded_s::getModelNum(const char *id) const
             if(!qstricmp(models[i].id, id)) idx = i;
         } while(idx == -1 && ++i < (int)models.size());
     }
-    return idx;
+    return idx;*/
 }
 
 int ded_s::getSoundNum(const char *id) const

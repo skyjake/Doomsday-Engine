@@ -32,6 +32,7 @@
 #include "../Writer"
 #include "../Reader"
 #include "../String"
+#include "../NumberValue"
 
 #include <QTextStream>
 #include <cmath>
@@ -58,6 +59,24 @@ inline bool numberEqual(ddouble const &a, ddouble const &b) {
 }
 
 /**
+ * Utility for converting a value with multiple elements into a vector. This
+ * only works if the value contains a sufficient number of elements and they
+ * can be converted to numbers.
+ *
+ * @param value  Value with multiple elements.
+ *
+ * @return Vector.
+ */
+template <typename VecType>
+VecType vectorFromValue(Value const &value) {
+    VecType converted;
+    for(int i = 0; i < converted.size(); ++i) {
+        converted[i] = typename VecType::ValueType(value.element(NumberValue(i)).asNumber());
+    }
+    return converted;
+}
+
+/**
  * Template class for 2D vectors (points). The members are public for
  * convenient access. The used value type must be serializable.
  *
@@ -75,6 +94,7 @@ public:
 public:
     Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
     Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
+    Vector2(Value const &value) { *this = vectorFromValue< Vector2<Type> >(value); }
 
     /// Implicit conversion operator to a float vector.
     operator Vector2<dfloat> () const {
@@ -89,6 +109,9 @@ public:
     }
     Vector2<duint> toVector2ui() const {
         return Vector2<duint>(duint(de::max(Type(0), x)), duint(de::max(Type(0), y)));
+    }
+    int size() const {
+        return 2;
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
@@ -263,6 +286,7 @@ public:
     Vector3(Type a = 0, Type b = 0, Type c = 0) : Vector2<Type>(a, b), z(c) {}
     Vector3(Vector2<Type> const &v2, Type c = 0) : Vector2<Type>(v2), z(c) {}
     Vector3(Type const *abc) : Vector2<Type>(abc), z(abc[2]) {}
+    Vector3(Value const &value) { *this = vectorFromValue< Vector3<Type> >(value); }
 
     /// Implicit conversion operator to a float vector.
     operator Vector3<dfloat> () const {
@@ -277,6 +301,9 @@ public:
     }
     Vector3<dint> toVector3i() const {
         return Vector3<dint>(dint(Vector2<Type>::x), dint(Vector2<Type>::y), dint(z));
+    }
+    int size() const {
+        return 3;
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 2);
@@ -480,6 +507,7 @@ public:
     Vector4(Vector3<Type> const &v3, Type d = 0) : Vector3<Type>(v3), w(d) {}
     Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
     Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
+    Vector4(Value const &value) { *this = vectorFromValue< Vector4<Type> >(value); }
 
     /// Implicit conversion operator to a float vector.
     operator Vector4<dfloat> () const {
@@ -497,6 +525,9 @@ public:
     }
     Vector4<dfloat> toVector4f() const {
         return Vector4<dfloat>(dfloat(Vector3<Type>::x), dfloat(Vector3<Type>::y), dfloat(Vector3<Type>::z), dfloat(w));
+    }
+    int size() const {
+        return 4;
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 3);

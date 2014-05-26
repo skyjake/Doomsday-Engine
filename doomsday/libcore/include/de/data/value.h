@@ -27,6 +27,7 @@
 namespace de {
 
 class Process;
+class NumberValue;
 
 /**
  * The base class for all runtime values.  This is an abstract class.
@@ -83,7 +84,7 @@ public:
      * Convert the value to into a text string.  All values have
      * to implement this.
      */
-    virtual Text asText() const = 0;
+    virtual Text asText() const = 0;     
 
     template <typename ValueType>
     bool is() const {

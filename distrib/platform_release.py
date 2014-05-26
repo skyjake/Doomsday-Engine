@@ -297,9 +297,28 @@ def mac_release():
                 templateFile, output_filename('_apps-' + mac_osx_suffix() + '.dmg')))
         remove(templateFile)
     
-    print 'Creating disk:', target
-    os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
+    # Package the apps and create an installer package.
+    os.system('mkdir package')
+    duptree('Doomsday Engine.app', 'package/Doomsday Engine.app')
+    os.system('pkgbuild --identifier net.dengine.doomsday.frontend.pkg --version %s ' % DOOMSDAY_VERSION_FULL + \
+        '--install-location /Applications --root package Frontend.pkg')
+    os.system('rm -rf package')
+
+    os.system('mkdir package')
+    duptree('Doomsday Shell.app', 'package/Doomsday Shell.app')
+    os.system('pkgbuild --identifier net.dengine.doomsday.shell.pkg --version %s ' % DOOMSDAY_VERSION_FULL + \
+        '--install-location /Applications --root package Shell.pkg')
+    os.system('rm -rf package')
     
+    os.system("sed 's/${Version}/%s/' < ../macx/Distribution.xml.in > Distribution.xml" % DOOMSDAY_VERSION_FULL)
+    os.system('mkdir res')
+    shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'res/Read Me.rtf')
+    shutil.copy('../macx/background.png', 'res/background.png')
+    os.system('productbuild --distribution Distribution.xml --package-path . --resources res --sign "Developer ID Installer: Jaakko Keranen" Doomsday.pkg')
+        
+    print 'Creating disk:', target
+        
+    # Compress a disk image containing the installer package.
     masterPkg = target
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage')
@@ -310,7 +329,7 @@ def mac_release():
     remkdir('imaging')
     os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
     try:
-        shutil.copy('/Users/jaakko/Desktop/Doomsday.pkg', 'imaging/Doomsday.pkg')
+        shutil.copy('Doomsday.pkg', 'imaging/Doomsday.pkg')
     except Exception, ex:
         print 'No installer available:', ex
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
@@ -318,7 +337,7 @@ def mac_release():
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
 
-    os.system('hdiutil detach -quiet imaging')
+    os.system('hdiutil detach -quiet imaging; rmdir imaging')
     os.system('hdiutil convert imaging.sparseimage -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
     remove('imaging.sparseimage')
 

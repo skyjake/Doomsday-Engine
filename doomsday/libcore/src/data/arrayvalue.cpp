@@ -335,3 +335,8 @@ void ArrayValue::callElements(ArrayValue const &args)
         Process(func.globals()).call(func, args);
     }
 }
+
+void ArrayValue::setElement(dint index, Number value)
+{
+    setElement(NumberValue(index), new NumberValue(value));
+}

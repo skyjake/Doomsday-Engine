@@ -71,8 +71,9 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_material_t> materials;
 
     // Models.
-    typedef std::vector<ded_model_t> Models;
-    Models models;
+    //typedef std::vector<ded_model_t> Models;
+    //Models models;
+    DEDRegister models;
 
     // Skies.
     DEDArray<ded_sky_t> skies;
@@ -132,6 +133,8 @@ public:
 
     int addFlag(char const *id, int value);
 
+    int addModel();
+
     //ded_flag_t *getFlag(char const *flag) const;
 
     int evalFlags2(char const *ptr) const;
@@ -184,6 +187,31 @@ protected:
     DENG2_NO_COPY  (ded_s)
 };
 
+namespace defn
+{
+    /**
+     * Utility for handling model definitions.
+     */
+    class LIBDOOMSDAY_PUBLIC Model
+    {
+    public:
+        Model(de::Record &d) : _def(&d), _constDef(&d) {}
+        Model(de::Record const &d) : _def(0), _constDef(&d) {}
+
+        de::Record &addSub();
+
+        int subCount() const;
+        de::Record &sub(int index);
+        de::Record const &sub(int index) const;
+
+        void cleanupAfterParsing(de::Record const &prev);
+
+    private:
+        de::Record *_def;
+        de::Record const *_constDef;
+    };
+}
+
 typedef ded_s ded_t;
 
 #ifdef __cplusplus
@@ -199,7 +227,6 @@ int             DED_AddLight(ded_t* ded, char const* stateID);
 LIBDOOMSDAY_PUBLIC int DED_AddMaterial(ded_t* ded, char const* uri);
 LIBDOOMSDAY_PUBLIC int DED_AddMaterialLayerStage(ded_material_layer_t *ml);
 int             DED_AddMaterialDecorationStage(ded_material_decoration_t *li);
-int             DED_AddModel(ded_t* ded, char const* spr);
 int             DED_AddSky(ded_t* ded, char const* id);
 int             DED_AddSound(ded_t* ded, char const* id);
 LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);

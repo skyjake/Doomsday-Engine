@@ -64,7 +64,10 @@ else {
 INCLUDEPATH    += $$aiIncDir
 QMAKE_CFLAGS   += $$aiOpts
 QMAKE_CXXFLAGS += $$aiOpts
-LIBS           += $$aiLibs
+
+!libgui_headers_only {
+    LIBS       += $$aiLibs
+}
 
 macx {
     defineTest(linkBinaryToBundledAssimp) {
