@@ -979,7 +979,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
 
     // Light this polygon.
     Vector4f colorCoords[4];
-    if(levelFullBright || !(glowing < 1))
+    if(!(glowing < 1))
     {
         // Uniform color. Apply to all vertices.
         float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
@@ -994,34 +994,45 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         // Non-uniform color.
         if(useBias)
         {
-            MapElement &mapElement = leftSection->edge().hedge().mapElement();
-            int const geomGroup    = leftSection->id() == WallEdge::WallMiddle? LineSide::Middle :
-                                     leftSection->id() == WallEdge::WallBottom? LineSide::Bottom :
-                                                                                LineSide::Top;
-
-            Map &map = cluster.sector().map();
-            BiasSurface &biasSurface = cluster.biasSurface(mapElement, geomGroup);
-
-            // Apply the ambient light term from the grid (if available).
-            if(map.hasLightGrid())
+            if(!levelFullBright)
             {
-                for(duint16 i = 0; i < 4; ++i)
+                MapElement &mapElement = leftSection->edge().hedge().mapElement();
+                int const geomGroup    = leftSection->id() == WallEdge::WallMiddle? LineSide::Middle :
+                                         leftSection->id() == WallEdge::WallBottom? LineSide::Bottom :
+                                                                                    LineSide::Top;
+
+                Map &map = cluster.sector().map();
+                BiasSurface &biasSurface = cluster.biasSurface(mapElement, geomGroup);
+
+                // Apply the ambient light term from the grid (if available).
+                if(map.hasLightGrid())
                 {
-                    colorCoords[i] = map.lightGrid().evaluate(posCoords[i]);
+                    for(duint16 i = 0; i < 4; ++i)
+                    {
+                        colorCoords[i] = map.lightGrid().evaluate(posCoords[i]);
+                    }
+                }
+
+                // Apply bias light source contributions.
+                biasSurface.light(posCoords, colorCoords, surfaceTangentMatrix,
+                                  map.biasCurrentTime());
+
+                // Apply surface glow.
+                if(glowing > 0)
+                {
+                    Vector4f const glow(glowing, glowing, glowing, 0);
+                    for(duint16 i = 0; i < 4; ++i)
+                    {
+                        colorCoords[i] += glow;
+                    }
                 }
             }
-
-            // Apply bias light source contributions.
-            biasSurface.light(posCoords, colorCoords, surfaceTangentMatrix,
-                              map.biasCurrentTime());
-
-            // Apply surface glow.
-            if(glowing > 0)
+            else
             {
-                Vector4f const glow(glowing, glowing, glowing, 0);
+                Vector4f const finalColor(1, 1, 1, 1);
                 for(duint16 i = 0; i < 4; ++i)
                 {
-                    colorCoords[i] += glow;
+                    colorCoords[i] = finalColor;
                 }
             }
 
@@ -1037,9 +1048,18 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         }
         else
         {
-            // Apply the ambient light term.
-            Vector4f const extraLight = Vector4f(0, 0, 0, Rend_ExtraLightDelta() + glowing);
-            Vector4f const finalColor = ambientLight * Vector4f(surfaceColor, 1) + extraLight;
+            // Determine the ambient light term.
+            Vector4f finalColor = ambientLight * Vector4f(surfaceColor, 1);
+            if(!levelFullBright)
+            {
+                // Add extra light.
+                finalColor.w += Rend_ExtraLightDelta() + glowing;
+            }
+            else
+            {
+                finalColor.w = 1;
+            }
+
             colorCoords[1] = finalColor;
             colorCoords[3] = finalColor;
             if(!surfaceColor2)
@@ -1049,21 +1069,37 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             }
             else
             {
-                Vector4f const finalBottomColor = ambientLight * Vector4f(*surfaceColor2, 1) + extraLight;
+                Vector4f finalBottomColor = ambientLight * Vector4f(*surfaceColor2, 1);
+                if(!levelFullBright)
+                {
+                    // Add extra light.
+                    finalBottomColor.w += Rend_ExtraLightDelta() + glowing;
+                }
+                else
+                {
+                    finalBottomColor.w = 1;
+                }
+
                 colorCoords[0] = finalBottomColor;
                 colorCoords[2] = finalBottomColor;
             }
 
-            // Apply the wall angle deltas to luminance.
-            colorCoords[0].w += surfaceLightLevelDL;
-            colorCoords[1].w += surfaceLightLevelDL;
-            colorCoords[2].w += surfaceLightLevelDR;
-            colorCoords[3].w += surfaceLightLevelDR;
+            // Apply the wall angle deltas to luminance?
+            if(!levelFullBright)
+            {
+                colorCoords[0].w += surfaceLightLevelDL;
+                colorCoords[1].w += surfaceLightLevelDL;
+                colorCoords[2].w += surfaceLightLevelDR;
+                colorCoords[3].w += surfaceLightLevelDR;
+            }
 
             // Apply distance attenuation and compression to luminance.
             for(duint16 i = 0; i < 4; ++i)
             {
-                Rend_AttenuateLightLevel(colorCoords[i].w, Rend_PointDist2D(posCoords[i]));
+                if(!levelFullBright)
+                {
+                    Rend_AttenuateLightLevel(colorCoords[i].w, Rend_PointDist2D(posCoords[i]));
+                }
 
                 // Apply range compression to the final luminance value.
                 Rend_ApplyLightAdaptation(colorCoords[i].w);
@@ -1080,7 +1116,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         }
 
         // Apply torch light?
-        if(viewPlayer->shared.fixedColorMap)
+        if(!levelFullBright && viewPlayer->shared.fixedColorMap)
         {
             for(duint16 i = 0; i < 4; ++i)
             {

@@ -2389,7 +2389,7 @@ DENG2_PIMPL(SectorCluster)
             Vector4f shineColorCoords[4];
             if(!skyMaskedMaterial)
             {
-                if(levelFullBright || !(glowing < 1))
+                if(!(glowing < 1))
                 {
                     // Uniform color. Apply to all vertices.
                     float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
@@ -2404,34 +2404,45 @@ DENG2_PIMPL(SectorCluster)
                     // Non-uniform color.
                     if(useBias)
                     {
-                        MapElement &mapElement = leftEdge.hedge().mapElement();
-                        int const geomGroup = sectionId == WallEdge::WallMiddle? LineSide::Middle :
-                                              sectionId == WallEdge::WallBottom? LineSide::Bottom :
-                                                                                 LineSide::Top;
-
-                        Map &map = self.sector().map();
-                        BiasSurface &biasSurface = self.biasSurface(mapElement, geomGroup);
-
-                        // Apply the ambient light term from the grid (if available).
-                        if(map.hasLightGrid())
+                        if(!levelFullBright)
                         {
-                            for(duint16 i = 0; i < 4; ++i)
+                            MapElement &mapElement = leftEdge.hedge().mapElement();
+                            int const geomGroup = sectionId == WallEdge::WallMiddle? LineSide::Middle :
+                                                  sectionId == WallEdge::WallBottom? LineSide::Bottom :
+                                                                                     LineSide::Top;
+
+                            Map &map = self.sector().map();
+                            BiasSurface &biasSurface = self.biasSurface(mapElement, geomGroup);
+
+                            // Apply the ambient light term from the grid (if available).
+                            if(map.hasLightGrid())
                             {
-                                colorCoords[i] = map.lightGrid().evaluate(posCoords[i]);
+                                for(duint16 i = 0; i < 4; ++i)
+                                {
+                                    colorCoords[i] = map.lightGrid().evaluate(posCoords[i]);
+                                }
+                            }
+
+                            // Apply bias light source contributions.
+                            biasSurface.light(posCoords, colorCoords, surface.tangentMatrix(),
+                                              map.biasCurrentTime());
+
+                            // Apply surface glow.
+                            if(glowing > 0)
+                            {
+                                Vector4f const glow(glowing, glowing, glowing, 0);
+                                for(duint16 i = 0; i < 4; ++i)
+                                {
+                                    colorCoords[i] += glow;
+                                }
                             }
                         }
-
-                        // Apply bias light source contributions.
-                        biasSurface.light(posCoords, colorCoords, surface.tangentMatrix(),
-                                          map.biasCurrentTime());
-
-                        // Apply surface glow.
-                        if(glowing > 0)
+                        else
                         {
-                            Vector4f const glow(glowing, glowing, glowing, 0);
+                            Vector4f const finalColor(1, 1, 1, 1);
                             for(duint16 i = 0; i < 4; ++i)
                             {
-                                colorCoords[i] += glow;
+                                colorCoords[i] = finalColor;
                             }
                         }
 
@@ -2447,9 +2458,18 @@ DENG2_PIMPL(SectorCluster)
                     }
                     else
                     {
-                        // Apply the ambient light term.
-                        Vector4f const extraLight = Vector4f(0, 0, 0, Rend_ExtraLightDelta() + glowing);
-                        Vector4f const finalColor = ambientLight * Vector4f(*topTintColor, 1) + extraLight;
+                        // Determine the ambient light term.
+                        Vector4f finalColor = ambientLight * Vector4f(*topTintColor, 1);
+                        if(!levelFullBright)
+                        {
+                            // Add extra light.
+                            finalColor.w += Rend_ExtraLightDelta() + glowing;
+                        }
+                        else
+                        {
+                            finalColor.w = 1;
+                        }
+
                         colorCoords[1] = finalColor;
                         colorCoords[3] = finalColor;
                         if(!bottomTintColor)
@@ -2459,21 +2479,37 @@ DENG2_PIMPL(SectorCluster)
                         }
                         else
                         {
-                            Vector4f const finalBottomColor = ambientLight * Vector4f(*bottomTintColor, 1) + extraLight;
+                            Vector4f finalBottomColor = ambientLight * Vector4f(*bottomTintColor, 1);
+                            if(!levelFullBright)
+                            {
+                                // Add extra light.
+                                finalBottomColor.w += Rend_ExtraLightDelta() + glowing;
+                            }
+                            else
+                            {
+                                finalBottomColor.w = 1;
+                            }
+
                             colorCoords[0] = finalBottomColor;
                             colorCoords[2] = finalBottomColor;
                         }
 
-                        // Apply the wall angle deltas to luminance.
-                        colorCoords[0].w += lightLevelDeltas[0];
-                        colorCoords[1].w += lightLevelDeltas[0];
-                        colorCoords[2].w += lightLevelDeltas[1];
-                        colorCoords[3].w += lightLevelDeltas[1];
+                        // Apply the wall angle deltas to luminance?
+                        if(!levelFullBright)
+                        {
+                            colorCoords[0].w += lightLevelDeltas[0];
+                            colorCoords[1].w += lightLevelDeltas[0];
+                            colorCoords[2].w += lightLevelDeltas[1];
+                            colorCoords[3].w += lightLevelDeltas[1];
+                        }
 
                         // Apply distance attenuation and compression to luminance.
                         for(duint16 i = 0; i < 4; ++i)
                         {
-                            Rend_AttenuateLightLevel(colorCoords[i].w, Rend_PointDist2D(posCoords[i]));
+                            if(!levelFullBright)
+                            {
+                                Rend_AttenuateLightLevel(colorCoords[i].w, Rend_PointDist2D(posCoords[i]));
+                            }
 
                             // Apply range compression to the final luminance value.
                             Rend_ApplyLightAdaptation(colorCoords[i].w);
@@ -2490,7 +2526,7 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     // Apply torch light? (post clamp!?)
-                    if(viewPlayer->shared.fixedColorMap)
+                    if(!levelFullBright && viewPlayer->shared.fixedColorMap)
                     {
                         for(duint16 i = 0; i < 4; ++i)
                         {
@@ -3094,7 +3130,7 @@ DENG2_PIMPL(SectorCluster)
         // Light this polygon.
         if(!skyMaskedMaterial)
         {
-            if(levelFullBright || !(glowing < 1))
+            if(!(glowing < 1))
             {
                 // Uniform color. Apply to all vertices.
                 float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
@@ -3109,30 +3145,41 @@ DENG2_PIMPL(SectorCluster)
                 // Non-uniform color.
                 if(useBias)
                 {
-                    Map &map     = self.sector().map();
-                    BiasSurface &biasSurface = self.biasSurface(subspace, plane.indexInSector());
-
-                    // Apply the ambient light term from the grid (if available).
-                    if(map.hasLightGrid())
+                    if(!levelFullBright)
                     {
-                        for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+                        Map &map = self.sector().map();
+                        BiasSurface &biasSurface = self.biasSurface(subspace, plane.indexInSector());
+
+                        // Apply the ambient light term from the grid (if available).
+                        if(map.hasLightGrid())
                         {
-                            WorldVBuf::Type &vertex = vbuf[indices[i]];
-                            vertex.rgba = map.lightGrid().evaluate(vertex.pos);
+                            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+                            {
+                                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                                vertex.rgba = map.lightGrid().evaluate(vertex.pos);
+                            }
+                        }
+
+                        // Apply bias light source contributions.
+                        biasSurface.light(indices.data(), vbuf,
+                                          surface.tangentMatrix(), map.biasCurrentTime());
+
+                        // Apply surface glow.
+                        if(glowing > 0)
+                        {
+                            Vector4f const glow(glowing, glowing, glowing, 0);
+                            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+                            {
+                                vbuf[indices[i]].rgba += glow;
+                            }
                         }
                     }
-
-                    // Apply bias light source contributions.
-                    biasSurface.light(indices.data(), vbuf,
-                                      surface.tangentMatrix(), map.biasCurrentTime());
-
-                    // Apply surface glow.
-                    if(glowing > 0)
+                    else
                     {
-                        Vector4f const glow(glowing, glowing, glowing, 0);
+                        Vector4f const finalColor(1, 1, 1, 1);
                         for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                         {
-                            vbuf[indices[i]].rgba += glow;
+                            vbuf[indices[i]].rgba = finalColor;
                         }
                     }
 
@@ -3148,9 +3195,18 @@ DENG2_PIMPL(SectorCluster)
                 }
                 else
                 {
-                    // Apply the ambient light term.
-                    Vector4f const extraLight = Vector4f(0, 0, 0, Rend_ExtraLightDelta() + glowing);
-                    Vector4f const finalColor = ambientLight * Vector4f(surface.tintColor(), 1) + extraLight;
+                    // Determine the ambient light term.
+                    Vector4f finalColor = ambientLight * Vector4f(surface.tintColor(), 1);
+                    if(!levelFullBright)
+                    {
+                        // Add extra light.
+                        finalColor.w += Rend_ExtraLightDelta() + glowing;
+                    }
+                    else
+                    {
+                        finalColor.w = 1;
+                    }
+
                     for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                     {
                         vbuf[indices[i]].rgba = finalColor;
@@ -3160,7 +3216,11 @@ DENG2_PIMPL(SectorCluster)
                     for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                     {
                         WorldVBuf::Type &vertex = vbuf[indices[i]];
-                        Rend_AttenuateLightLevel(vertex.rgba.w, Rend_PointDist2D(vertex.pos));
+
+                        if(!levelFullBright)
+                        {
+                            Rend_AttenuateLightLevel(vertex.rgba.w, Rend_PointDist2D(vertex.pos));
+                        }
 
                         // Apply range compression to the final luminance value.
                         Rend_ApplyLightAdaptation(vertex.rgba.w);
@@ -3178,7 +3238,7 @@ DENG2_PIMPL(SectorCluster)
                 }
 
                 // Apply torch light?
-                if(viewPlayer->shared.fixedColorMap)
+                if(!levelFullBright && viewPlayer->shared.fixedColorMap)
                 {
                     for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                     {
