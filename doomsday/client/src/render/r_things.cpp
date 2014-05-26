@@ -76,7 +76,8 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
         {
             Vector4f const color = cluster.lightSourceColorfIntensity();
 
-            float lightLevel = color.w;
+            float lightLevel = color.w + Rend_ExtraLightDelta();
+
             /* if(spr->type == VSPR_DECORATION)
             {
                 // Wall decorations receive an additional light delta.
@@ -84,11 +85,10 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
             } */
 
             // Apply distance attenuation.
-            lightLevel = Rend_AttenuateLightLevel(distToEye, lightLevel);
+            Rend_AttenuateLightLevel(lightLevel, distToEye);
 
-            // Add extra light.
-            lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final color.

@@ -2393,10 +2393,10 @@ DENG2_PIMPL(SectorCluster)
                 {
                     // Uniform color. Apply to all vertices.
                     float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
-                    Vector4f *colorIt = colorCoords;
-                    for(duint16 i = 0; i < 4; ++i, colorIt++)
+                    Vector4f const finalColor(ll, ll, ll, ll);
+                    for(duint16 i = 0; i < 4; ++i)
                     {
-                        colorIt->x = colorIt->y = colorIt->z = ll;
+                        colorCoords[i] = finalColor;
                     }
                 }
                 else
@@ -2409,17 +2409,15 @@ DENG2_PIMPL(SectorCluster)
                                               sectionId == WallEdge::WallBottom? LineSide::Bottom :
                                                                                  LineSide::Top;
 
-                        Map &map     = self.sector().map();
+                        Map &map = self.sector().map();
                         BiasSurface &biasSurface = self.biasSurface(mapElement, geomGroup);
 
                         // Apply the ambient light term from the grid (if available).
                         if(map.hasLightGrid())
                         {
-                            Vector3f const *posIt = posCoords;
-                            Vector4f *colorIt     = colorCoords;
-                            for(duint16 i = 0; i < 4; ++i, posIt++, colorIt++)
+                            for(duint16 i = 0; i < 4; ++i)
                             {
-                                *colorIt = map.lightGrid().evaluate(*posIt);
+                                colorCoords[i] = map.lightGrid().evaluate(posCoords[i]);
                             }
                         }
 
@@ -2431,21 +2429,19 @@ DENG2_PIMPL(SectorCluster)
                         if(glowing > 0)
                         {
                             Vector4f const glow(glowing, glowing, glowing, 0);
-                            Vector4f *colorIt = colorCoords;
-                            for(duint16 i = 0; i < 4; ++i, colorIt++)
+                            for(duint16 i = 0; i < 4; ++i)
                             {
-                                *colorIt += glow;
+                                colorCoords[i] += glow;
                             }
                         }
 
                         // Apply light range compression and clamp.
-                        Vector3f const *posIt = posCoords;
-                        Vector4f *colorIt     = colorCoords;
-                        for(duint16 i = 0; i < 4; ++i, posIt++, colorIt++)
+                        for(duint16 i = 0; i < 4; ++i)
                         {
+                            Vector4f &color = colorCoords[i];
                             for(int k = 0; k < 3; ++k)
                             {
-                                (*colorIt)[k] = de::clamp(0.f, (*colorIt)[k] + Rend_LightAdaptationDelta((*colorIt)[k]), 1.f);
+                                color[k] = de::clamp(0.f, color[k] + Rend_LightAdaptationDelta(color[k]), 1.f);
                             }
                         }
                     }
@@ -2477,8 +2473,7 @@ DENG2_PIMPL(SectorCluster)
                         // Apply distance attenuation and compression to luminance.
                         for(duint16 i = 0; i < 4; ++i)
                         {
-                            float const dist = Rend_PointDist2D(posCoords[i]);
-                            colorCoords[i].w = Rend_AttenuateLightLevel(dist, colorCoords[i].w);
+                            Rend_AttenuateLightLevel(colorCoords[i].w, Rend_PointDist2D(posCoords[i]));
 
                             // Apply range compression to the final luminance value.
                             Rend_ApplyLightAdaptation(colorCoords[i].w);
@@ -2497,11 +2492,9 @@ DENG2_PIMPL(SectorCluster)
                     // Apply torch light? (post clamp!?)
                     if(viewPlayer->shared.fixedColorMap)
                     {
-                        Vector3f const *posIt = posCoords;
-                        Vector4f *colorIt = colorCoords;
-                        for(duint16 i = 0; i < 4; ++i, colorIt++, posIt++)
+                        for(duint16 i = 0; i < 4; ++i)
                         {
-                            Rend_ApplyTorchLight(*colorIt, Rend_PointDist2D(*posIt));
+                            Rend_ApplyTorchLight(colorCoords[i], Rend_PointDist2D(posCoords[i]));
                         }
                     }
                 }
@@ -2519,10 +2512,9 @@ DENG2_PIMPL(SectorCluster)
                 }
 
                 // Apply uniform alpha (overwritting luminance factors).
-                Vector4f *colorIt = colorCoords;
-                for(duint16 i = 0; i < 4; ++i, colorIt++)
+                for(duint16 i = 0; i < 4; ++i)
                 {
-                    colorIt->w = opacity;
+                    colorCoords[i].w = opacity;
                 }
             }
 
@@ -3106,10 +3098,10 @@ DENG2_PIMPL(SectorCluster)
             {
                 // Uniform color. Apply to all vertices.
                 float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
+                Vector4f const finalColor(ll, ll, ll, ll);
                 for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                 {
-                    WorldVBuf::Type &vertex = vbuf[indices[i]];
-                    vertex.rgba.x = vertex.rgba.y = vertex.rgba.z = ll;
+                    vbuf[indices[i]].rgba = finalColor;
                 }
             }
             else
@@ -3165,18 +3157,17 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     // Apply distance attenuation and compression to luminance.
-                    for(duint16 i = 0; i < fanSize; ++i)
+                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                     {
                         WorldVBuf::Type &vertex = vbuf[indices[i]];
-                        float const dist = Rend_PointDist2D(vertex.pos);
-                        vertex.rgba.w = Rend_AttenuateLightLevel(dist, vertex.rgba.w);
+                        Rend_AttenuateLightLevel(vertex.rgba.w, Rend_PointDist2D(vertex.pos));
 
                         // Apply range compression to the final luminance value.
                         Rend_ApplyLightAdaptation(vertex.rgba.w);
                     }
 
                     // Multiply color with luminance and clamp (ignore alpha, we'll replace it soon).
-                    for(duint16 i = 0; i < fanSize; ++i)
+                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                     {
                         WorldVBuf::Type &vertex = vbuf[indices[i]];
                         float const luma = vertex.rgba.w;

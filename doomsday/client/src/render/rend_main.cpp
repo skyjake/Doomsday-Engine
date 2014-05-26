@@ -612,22 +612,19 @@ void Rend_ApplyTorchLight(float *color3, float distance)
     }
 }
 
-float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
+bool Rend_AttenuateLightLevel(float &lightLevel, float distToViewer)
 {
-    if(distToViewer > 0 && rendLightDistanceAttenuation > 0)
-    {
-        float real = lightLevel -
-            (distToViewer - 32) / rendLightDistanceAttenuation *
-                (1 - lightLevel);
+    if(!(distToViewer > 0)) return false;
+    if(!(rendLightDistanceAttenuation > 0)) return false;
 
-        float minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
-        if(real < minimum)
-            real = minimum; // Clamp it.
+    float real = lightLevel -
+        (distToViewer - 32) / rendLightDistanceAttenuation * (1 - lightLevel);
 
-        return de::min(real, 1.f);
-    }
+    float minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
+    if(real < minimum) real = minimum; // Clamp it.
 
-    return lightLevel;
+    lightLevel = de::min(real, 1.f);
+    return true;
 }
 
 float Rend_ShadowAttenuationFactor(coord_t distance)
@@ -986,10 +983,10 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     {
         // Uniform color. Apply to all vertices.
         float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
-        Vector4f *colorIt = colorCoords;
-        for(duint16 i = 0; i < 4; ++i, colorIt++)
+        Vector4f const finalColor(ll, ll, ll, ll);
+        for(duint16 i = 0; i < 4; ++i)
         {
-            colorIt->x = colorIt->y = colorIt->z = ll;
+            colorCoords[i] = finalColor;
         }
     }
     else
@@ -1008,37 +1005,33 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             // Apply the ambient light term from the grid (if available).
             if(map.hasLightGrid())
             {
-                Vector3f const *posIt = posCoords;
-                Vector4f *colorIt     = colorCoords;
-                for(duint16 i = 0; i < 4; ++i, posIt++, colorIt++)
+                for(duint16 i = 0; i < 4; ++i)
                 {
-                    *colorIt = map.lightGrid().evaluate(*posIt);
+                    colorCoords[i] = map.lightGrid().evaluate(posCoords[i]);
                 }
             }
 
             // Apply bias light source contributions.
             biasSurface.light(posCoords, colorCoords, surfaceTangentMatrix,
-                                       map.biasCurrentTime());
+                              map.biasCurrentTime());
 
             // Apply surface glow.
             if(glowing > 0)
             {
                 Vector4f const glow(glowing, glowing, glowing, 0);
-                Vector4f *colorIt = colorCoords;
-                for(duint16 i = 0; i < 4; ++i, colorIt++)
+                for(duint16 i = 0; i < 4; ++i)
                 {
-                    *colorIt += glow;
+                    colorCoords[i] += glow;
                 }
             }
 
             // Apply light range compression and clamp.
-            Vector3f const *posIt = posCoords;
-            Vector4f *colorIt     = colorCoords;
-            for(duint16 i = 0; i < 4; ++i, posIt++, colorIt++)
+            for(duint16 i = 0; i < 4; ++i)
             {
+                Vector4f &color = colorCoords[i];
                 for(int k = 0; k < 3; ++k)
                 {
-                    (*colorIt)[k] = de::clamp(0.f, (*colorIt)[k] + Rend_LightAdaptationDelta((*colorIt)[k]), 1.f);
+                    color[k] = de::clamp(0.f, color[k] + Rend_LightAdaptationDelta(color[k]), 1.f);
                 }
             }
         }
@@ -1070,8 +1063,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             // Apply distance attenuation and compression to luminance.
             for(duint16 i = 0; i < 4; ++i)
             {
-                float const dist = Rend_PointDist2D(posCoords[i]);
-                colorCoords[i].w = Rend_AttenuateLightLevel(dist, colorCoords[i].w);
+                Rend_AttenuateLightLevel(colorCoords[i].w, Rend_PointDist2D(posCoords[i]));
 
                 // Apply range compression to the final luminance value.
                 Rend_ApplyLightAdaptation(colorCoords[i].w);
@@ -1090,20 +1082,17 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         // Apply torch light?
         if(viewPlayer->shared.fixedColorMap)
         {
-            Vector3f const *posIt = posCoords;
-            Vector4f *colorIt     = colorCoords;
-            for(duint16 i = 0; i < 4; ++i, colorIt++, posIt++)
+            for(duint16 i = 0; i < 4; ++i)
             {
-                Rend_ApplyTorchLight(*colorIt, Rend_PointDist2D(*posIt));
+                Rend_ApplyTorchLight(colorCoords[i], Rend_PointDist2D(posCoords[i]));
             }
         }
     }
 
     // Apply uniform alpha (overwritting luminance factors).
-    Vector4f *colorIt = colorCoords;
-    for(duint16 i = 0; i < 4; ++i, colorIt++)
+    for(duint16 i = 0; i < 4; ++i)
     {
-        colorIt->w = opacity;
+        colorCoords[i].w = opacity;
     }
 
     coord_t const sectionWidth = de::abs(Vector2d(rightSection->edge().origin() - leftSection->edge().origin()).length());

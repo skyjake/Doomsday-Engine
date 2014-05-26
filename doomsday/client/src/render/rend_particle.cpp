@@ -451,13 +451,10 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
         {
             Vector4f const color = pinfo->bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
-            float lightLevel = color.w;
+            float lightLevel = color.w + Rend_ExtraLightDelta();
 
             // Apply distance attenuation.
-            lightLevel = Rend_AttenuateLightLevel(parm.distance, lightLevel);
-
-            // Add extra light.
-            lightLevel += Rend_ExtraLightDelta();
+            Rend_AttenuateLightLevel(lightLevel, parm.distance);
 
             // The last step is to compress the resultant light value by
             // the global lighting function.

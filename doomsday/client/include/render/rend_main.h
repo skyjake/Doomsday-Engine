@@ -179,14 +179,14 @@ void Rend_ApplyLightAdaptation(float &lightValue);
 float Rend_LightAdaptationDelta(float lightvalue);
 
 /**
- * The DOOM lighting model applies distance attenuation to sector light
- * levels.
+ * DOOM's sector lighting model applies distance attenuation to light levels.
  *
- * @param distToViewer  Distance from the viewer to this object.
- * @param lightLevel    Sector lightLevel at this object's origin.
- * @return              The specified lightLevel plus any attentuation.
+ * @param lightLevel    Sector lightLevel to receive attenuation.
+ * @param distToViewer  Distance from the viewer to the point in map space.
+ *
+ * @return  @c true iff attenuation was applied (FYI).
  */
-float Rend_AttenuateLightLevel(float distToViewer, float lightLevel);
+bool Rend_AttenuateLightLevel(float &lightLevel, float distToViewer);
 
 float Rend_ShadowAttenuationFactor(coord_t distance);
 
