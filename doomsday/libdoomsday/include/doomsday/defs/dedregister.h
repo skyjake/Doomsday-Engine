@@ -50,9 +50,9 @@ public:
     enum LookupFlag
     {
         CaseSensitive = 0x1,    ///< Looking up is done case sensitively.
-        OnlyFirst     = 0x2,    ///< Only the first defined value is stored (otherwise last).
+        OnlyFirst     = 0x2,    ///< Only the first defined value is kept in lookup (otherwise last).
 
-        DefaultLookup = 0
+        DefaultLookup = 0       ///< Latest in order, case insensitive.
     };
     Q_DECLARE_FLAGS(LookupFlags, LookupFlag)
 
