@@ -306,13 +306,4 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     de::WallEdgeSection const *leftSection = 0, de::WallEdgeSection const *rightSection = 0,
     de::Vector3f const *surfaceColor2 = 0);
 
-void Rend_LightVertex(de::Vector4f &color, de::Vector3f const &vtx, float lightLevel,
-    de::Vector3f const &ambientColor);
-
-void Rend_LightVertices(uint num, de::Vector4f *colors, de::Vector3f const *verts,
-    float lightLevel, de::Vector3f const &ambientColor);
-
-void Rend_LightVertices(WorldVBuf &vbuf, WorldVBuf::Index num, WorldVBuf::Index const *indices,
-    float lightLevel, de::Vector3f const &ambientColor);
-
 #endif // CLIENT_RENDER_MAIN_H

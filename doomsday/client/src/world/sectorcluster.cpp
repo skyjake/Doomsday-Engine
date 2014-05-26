@@ -2461,14 +2461,89 @@ DENG2_PIMPL(SectorCluster)
 
                             if(llL != llR)
                             {
-                                Rend_LightVertex(colorCoords[0], posCoords[0], llL, finalColor);
-                                Rend_LightVertex(colorCoords[1], posCoords[1], llL, finalColor);
-                                Rend_LightVertex(colorCoords[2], posCoords[2], llR, finalColor);
-                                Rend_LightVertex(colorCoords[3], posCoords[3], llR, finalColor);
+                                {
+                                    float const blDist = Rend_PointDist2D(posCoords[0]);
+
+                                    // Apply distance attenuation.
+                                    float lightLevel = Rend_AttenuateLightLevel(blDist, llL);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[0][i] = lightLevel * finalColor[i];
+                                    }
+
+                                    float const tlDist = Rend_PointDist2D(posCoords[1]);
+
+                                    // Apply distance attenuation.
+                                    lightLevel = Rend_AttenuateLightLevel(tlDist, llL);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[1][i] = lightLevel * finalColor[i];
+                                    }
+                                }
+
+                                {
+                                    float const brDist = Rend_PointDist2D(posCoords[2]);
+
+                                    // Apply distance attenuation.
+                                    float lightLevel = Rend_AttenuateLightLevel(brDist, llR);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[2][i] = lightLevel * finalColor[i];
+                                    }
+
+                                    float const trDist = Rend_PointDist2D(posCoords[3]);
+
+                                    // Apply distance attenuation.
+                                    lightLevel = Rend_AttenuateLightLevel(trDist, llR);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[3][i] = lightLevel * finalColor[i];
+                                    }
+                                }
                             }
                             else
                             {
-                                Rend_LightVertices(4, colorCoords, posCoords, llL, finalColor);
+                                for(duint16 i = 0; i < 4; ++i)
+                                {
+                                    float const dist = Rend_PointDist2D(posCoords[i]);
+
+                                    // Apply distance attenuation.
+                                    float lightLevel = Rend_AttenuateLightLevel(dist, llL);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int k = 0; k < 3; ++k)
+                                    {
+                                        colorCoords[i][k] = lightLevel * finalColor[k];
+                                    }
+                                }
                             }
                         }
                         else
@@ -2476,14 +2551,89 @@ DENG2_PIMPL(SectorCluster)
                             // Use sector light+color only.
                             if(llL != llR)
                             {
-                                Rend_LightVertex(colorCoords[0], posCoords[0], llL, ambientLight.xyz());
-                                Rend_LightVertex(colorCoords[1], posCoords[1], llL, ambientLight.xyz());
-                                Rend_LightVertex(colorCoords[2], posCoords[2], llR, ambientLight.xyz());
-                                Rend_LightVertex(colorCoords[3], posCoords[3], llR, ambientLight.xyz());
+                                {
+                                    float const blDist = Rend_PointDist2D(posCoords[0]);
+
+                                    // Apply distance attenuation.
+                                    float lightLevel = Rend_AttenuateLightLevel(blDist, llL);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[0][i] = lightLevel * ambientLight[i];
+                                    }
+
+                                    float const tlDist = Rend_PointDist2D(posCoords[1]);
+
+                                    // Apply distance attenuation.
+                                    lightLevel = Rend_AttenuateLightLevel(tlDist, llL);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[1][i] = lightLevel * ambientLight[i];
+                                    }
+                                }
+
+                                {
+                                    float const brDist = Rend_PointDist2D(posCoords[2]);
+
+                                    // Apply distance attenuation.
+                                    float lightLevel = Rend_AttenuateLightLevel(brDist, llR);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[2][i] = lightLevel * ambientLight[i];
+                                    }
+
+                                    float const trDist = Rend_PointDist2D(posCoords[3]);
+
+                                    // Apply distance attenuation.
+                                    lightLevel = Rend_AttenuateLightLevel(trDist, llR);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int i = 0; i < 3; ++i)
+                                    {
+                                        colorCoords[3][i] = lightLevel * ambientLight[i];
+                                    }
+                                }
                             }
                             else
                             {
-                                Rend_LightVertices(4, colorCoords, posCoords, llL, ambientLight.xyz());
+                                for(duint16 i = 0; i < 4; ++i)
+                                {
+                                    float const dist = Rend_PointDist2D(posCoords[i]);
+
+                                    // Apply distance attenuation.
+                                    float lightLevel = Rend_AttenuateLightLevel(dist, llL);
+
+                                    // Add extra light.
+                                    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                                    Rend_ApplyLightAdaptation(lightLevel);
+
+                                    for(int k = 0; k < 3; ++k)
+                                    {
+                                        colorCoords[i][k] = lightLevel * ambientLight[k];
+                                    }
+                                }
                             }
                         }
 
@@ -2491,8 +2641,35 @@ DENG2_PIMPL(SectorCluster)
                         {
                             Vector3f const finalColor = ambientLight.xyz() * (*bottomTintColor);
 
-                            Rend_LightVertex(colorCoords[0], posCoords[0], llL, finalColor);
-                            Rend_LightVertex(colorCoords[2], posCoords[2], llR, finalColor);
+                            float const blDist = Rend_PointDist2D(posCoords[0]);
+
+                            // Apply distance attenuation.
+                            float lightLevel = Rend_AttenuateLightLevel(blDist, llL);
+
+                            // Add extra light.
+                            lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                            Rend_ApplyLightAdaptation(lightLevel);
+
+                            for(int i = 0; i < 3; ++i)
+                            {
+                                colorCoords[0][i] = lightLevel * finalColor[i];
+                            }
+
+                            float const brDist = Rend_PointDist2D(posCoords[2]);
+
+                            // Apply distance attenuation.
+                            lightLevel = Rend_AttenuateLightLevel(brDist, llR);
+
+                            // Add extra light.
+                            lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                            Rend_ApplyLightAdaptation(lightLevel);
+
+                            for(int i = 0; i < 3; ++i)
+                            {
+                                colorCoords[2][i] = lightLevel * finalColor[i];
+                            }
                         }
                     }
 
@@ -3146,7 +3323,7 @@ DENG2_PIMPL(SectorCluster)
                         }
                     }
 
-                    // Apply light range compression and clamparm.
+                    // Apply light range compression and clamp.
                     for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                     {
                         WorldVBuf::Type &vertex = vbuf[indices[i]];
@@ -3158,18 +3335,31 @@ DENG2_PIMPL(SectorCluster)
                 }
                 else
                 {
-                    float lightlevel = de::clamp(0.f, ambientLight.w + glowing, 1.f);
+                    float const ambientLightLevel = de::clamp(0.f, ambientLight.w + glowing, 1.f);
 
-                    // Calculate the color for each vertex, blended with plane color?
-                    Vector3f const &surfaceColor = surface.tintColor();
-                    if(surfaceColor.x < 1 || surfaceColor.y < 1 || surfaceColor.z < 1)
+                    Vector3f finalColor = ambientLight.xyz();
+                    if(surface.tintColor() < Vector3f(1, 1, 1))
                     {
-                        Vector3f finalColor = ambientLight.xyz() * surfaceColor;
-                        Rend_LightVertices(vbuf, fanSize, indices.data(), lightlevel, finalColor);
+                        finalColor *= surface.tintColor();
                     }
-                    else
+
+                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
                     {
-                        Rend_LightVertices(vbuf, fanSize, indices.data(), lightlevel, ambientLight.xyz());
+                        WorldVBuf::Type &vertex = vbuf[indices[i]];
+                        float const dist = Rend_PointDist2D(vertex.pos);
+
+                        // Apply distance attenuation.
+                        float lightLevel = Rend_AttenuateLightLevel(dist, ambientLightLevel);
+
+                        // Add extra light.
+                        lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+                        Rend_ApplyLightAdaptation(lightLevel);
+
+                        for(int k = 0; k < 3; ++k)
+                        {
+                            vertex.rgba[k] = lightLevel * finalColor[k];
+                        }
                     }
                 }
 
