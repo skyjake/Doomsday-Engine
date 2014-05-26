@@ -191,13 +191,16 @@ def build_source_package():
     os.chdir(os.path.join(builder.config.DISTRIB_DIR))
     remkdir('srcwork')
     os.chdir('srcwork')
+    pkgName = 'doomsday'
     if ev.release_type() == 'stable':
+        print 'Stable packages will be prepared'
         system_command('deng_package_source.sh ' + ev.version_base())
+        pkgName += '-stable'
     else:
         system_command('deng_package_source.sh build %i %s' % (ev.number(), 
                                                                ev.version_base()))
     for fn in os.listdir('.'):
-        if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz':
+        if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz' and ev.version_base() in fn:
             remote_copy(fn, ev.file_path(fn))
             break
 
@@ -207,7 +210,9 @@ def build_source_package():
 
     # Create a source Debian package and upload it to Launchpad.
     pkgVer = '%s.%i+%s' % (ev.version_base(), ev.number(), distro)
-    pkgDir = 'doomsday-%s' % pkgVer
+    pkgDir = pkgName + '-%s' % pkgVer
+    system_command('tar xzf %s' % fn)
+    os.rename(fn[:-7], pkgDir + '.orig')
     system_command('tar xzf %s' % fn)
     os.rename(fn[:-7], pkgDir)
     os.chdir(pkgDir)
@@ -226,14 +231,17 @@ def build_source_package():
     dsub = ''
     if distro:
         dsub = 's/) precise;/) %s;/' % distro
+    if pkgName != 'doomsday':
+        if dsub: dsub += ';'
+        dsub += 's/^doomsday /%s /' % pkgName
 
     gen_changelog('../../../debian/changelog', 'changelog', dsub)
-    system_command("sed 's/${Arch}/i386 amd64/' ../../../debian/control.template > control")
+    system_command("sed 's/${Arch}/i386 amd64/;s/${Package}/%s/' ../../../debian/control.template > control" % pkgName)
     system_command("sed 's/`..\/build_number.py --print`/%i/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules" % ev.number())
     os.chdir('..')
     system_command('debuild -S')
     os.chdir('..')
-    system_command('dput ppa:sjke/doomsday doomsday_%s_source.changes' % (pkgVer))
+    system_command('dput ppa:sjke/doomsday %s_%s_source.changes' % (pkgName, pkgVer))
 
 
 def rebuild_apt_repository():

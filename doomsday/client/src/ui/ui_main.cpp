@@ -350,6 +350,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
 
 void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
 {
+    /*
     ui_color_t const *dark  = UI_Color(UIC_BG_DARK);
     ui_color_t const *light = UI_Color(UIC_BG_LIGHT);
     float const mul = 1.5f;
@@ -359,8 +360,9 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
         App_ResourceSystem().material(de::Uri("System", Path("ui/background")))
             .prepare(UI_MaterialSpec(TSF_MONOCHROME));
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
+    */
 
-    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D);
     if(alpha < 1.0)
     {
         GL_BlendMode(BM_NORMAL);
@@ -370,19 +372,20 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
         glDisable(GL_BLEND);
     }
 
+    glColor4f(0, 0, 0, alpha);
     glBegin(GL_QUADS);
         // Top color.
-        glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-        glTexCoord2f(0, 0);
+        //glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
+        //glTexCoord2f(0, 0);
         glVertex2f(origin.x, origin.y);
-        glTexCoord2f(1, 0);
+        //glTexCoord2f(1, 0);
         glVertex2f(origin.x + dimensions.width, origin.y);
 
         // Bottom color.
-        glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-        glTexCoord2f(1, 1);
+        //glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
+        //glTexCoord2f(1, 1);
         glVertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
-        glTexCoord2f(0, 1);
+        //glTexCoord2f(0, 1);
         glVertex2f(0, origin.y + dimensions.height);
     glEnd();
 
