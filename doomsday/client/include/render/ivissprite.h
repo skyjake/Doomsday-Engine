@@ -44,6 +44,8 @@ public:
     virtual de::Vector3d const &origin() const = 0;
 
     virtual void draw() = 0;
+
+    virtual void init() {}
 };
 
 #endif // DENG_CLIENT_RENDER_IVISSPRITE_H

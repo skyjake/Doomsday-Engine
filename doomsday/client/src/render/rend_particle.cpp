@@ -377,61 +377,61 @@ static int listVisibleParticles(Map &map)
     return true;
 }
 
-static void setupModelParamsForParticle(vismodel_t &parm,
+static void setupModelParamsForParticle(vismodel_t &vmodel,
     ParticleInfo const *pinfo, GeneratorParticleStage const *st,
     ded_ptcstage_t const *dst, Vector3f const &origin, float dist, float size,
     float mark, float alpha)
 {
-    zap(parm);
+    vmodel.init();
 
     // Render the particle as a model.
-    parm._origin[VX] = origin.x;
-    parm._origin[VY] = origin.z;
-    parm._origin[VZ] = parm.gzt = origin.y;
-    parm._distance   = dist;
+    vmodel._origin[VX] = origin.x;
+    vmodel._origin[VY] = origin.z;
+    vmodel._origin[VZ] = vmodel.gzt = origin.y;
+    vmodel._distance   = dist;
 
-    parm.extraScale  = size; // Extra scaling factor.
-    parm.mf = &ClientApp::resourceSystem().modelDef(dst->model);
-    parm.alwaysInterpolate = true;
+    vmodel.extraScale  = size; // Extra scaling factor.
+    vmodel.mf = &ClientApp::resourceSystem().modelDef(dst->model);
+    vmodel.alwaysInterpolate = true;
 
     int frame;
     if(dst->endFrame < 0)
     {
         frame = dst->frame;
-        parm.inter = 0;
+        vmodel.inter = 0;
     }
     else
     {
         frame = dst->frame + (dst->endFrame - dst->frame) * mark;
-        parm.inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
+        vmodel.inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
-    ClientApp::resourceSystem().setModelDefFrame(*parm.mf, frame);
+    ClientApp::resourceSystem().setModelDefFrame(*vmodel.mf, frame);
     // Set the correct orientation for the particle.
-    if(parm.mf->testSubFlag(0, MFF_MOVEMENT_YAW))
+    if(vmodel.mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {
-        parm.yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
+        vmodel.yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
     }
     else
     {
-        parm.yaw = pinfo->yaw / 32768.0f * 180;
+        vmodel.yaw = pinfo->yaw / 32768.0f * 180;
     }
 
-    if(parm.mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
+    if(vmodel.mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
     {
-        parm.pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
+        vmodel.pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
     }
     else
     {
-        parm.pitch = pinfo->pitch / 32768.0f * 180;
+        vmodel.pitch = pinfo->pitch / 32768.0f * 180;
     }
 
-    parm.ambientColor[CA] = alpha;
+    vmodel.ambientColor[CA] = alpha;
 
     if(st->flags.testFlag(GeneratorParticleStage::Bright) || levelFullBright)
     {
-        parm.ambientColor[CR] = parm.ambientColor[CG] = parm.ambientColor[CB] = 1;
-        parm.vLightListIdx = 0;
+        vmodel.ambientColor[CR] = vmodel.ambientColor[CG] = vmodel.ambientColor[CB] = 1;
+        vmodel.vLightListIdx = 0;
     }
     else
     {
@@ -439,13 +439,13 @@ static void setupModelParamsForParticle(vismodel_t &parm,
 
         if(useBias && map.hasLightGrid())
         {
-            Vector4f color = map.lightGrid().evaluate(parm.origin());
+            Vector4f color = map.lightGrid().evaluate(vmodel.origin());
             // Apply light range compression.
             for(int i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
-            V3f_Set(parm.ambientColor, color.x, color.y, color.z);
+            V3f_Set(vmodel.ambientColor, color.x, color.y, color.z);
         }
         else
         {
@@ -454,7 +454,7 @@ static void setupModelParamsForParticle(vismodel_t &parm,
             float lightLevel = color.w + Rend_ExtraLightDelta();
 
             // Apply distance attenuation.
-            Rend_AttenuateLightLevel(lightLevel, parm.distance());
+            Rend_AttenuateLightLevel(lightLevel, vmodel.distance());
 
             // The last step is to compress the resultant light value by
             // the global lighting function.
@@ -463,18 +463,18 @@ static void setupModelParamsForParticle(vismodel_t &parm,
             // Determine the final ambientColor.
             for(int i = 0; i < 3; ++i)
             {
-                parm.ambientColor[i] = lightLevel * color[i];
+                vmodel.ambientColor[i] = lightLevel * color[i];
             }
         }
 
-        Rend_ApplyTorchLight(parm.ambientColor, parm.distance());
+        Rend_ApplyTorchLight(vmodel.ambientColor, vmodel.distance());
 
         collectaffectinglights_params_t lparams; de::zap(lparams);
-        lparams.origin       = parm.origin();
+        lparams.origin       = vmodel.origin();
         lparams.subspace     = map.bspLeafAt(lparams.origin).subspacePtr();
-        lparams.ambientColor = Vector3f(parm.ambientColor);
+        lparams.ambientColor = Vector3f(vmodel.ambientColor);
 
-        parm.vLightListIdx = R_CollectAffectingLights(&lparams);
+        vmodel.vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 

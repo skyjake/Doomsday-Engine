@@ -377,30 +377,30 @@ DENG2_PIMPL(Sky)
 
             float inter = (minfo.maxTimer > 0 ? minfo.timer / float(minfo.maxTimer) : 0);
 
-            vismodel_t dmodel; zap(dmodel);
+            vismodel_t vmodel;
 
             // Calculate the coordinates for the model.
-            dmodel._origin[VX]       = vOrigin.x * -minfo.def->coordFactor[VX];
-            dmodel._origin[VY]       = vOrigin.z * -minfo.def->coordFactor[VZ];
-            dmodel._origin[VZ]       = vOrigin.y * -minfo.def->coordFactor[VY];
-            dmodel.gzt               = dmodel._origin[VZ];
-            dmodel._distance         = 1;
+            vmodel._origin[VX]       = vOrigin.x * -minfo.def->coordFactor[VX];
+            vmodel._origin[VY]       = vOrigin.z * -minfo.def->coordFactor[VZ];
+            vmodel._origin[VZ]       = vOrigin.y * -minfo.def->coordFactor[VY];
+            vmodel.gzt               = vmodel._origin[VZ];
+            vmodel._distance         = 1;
 
-            dmodel.extraYawAngle     = dmodel.yawAngleOffset   = minfo.def->rotate[0];
-            dmodel.extraPitchAngle   = dmodel.pitchAngleOffset = minfo.def->rotate[1];
-            dmodel.inter             = inter;
-            dmodel.mf                = minfo.model;
-            dmodel.alwaysInterpolate = true;
+            vmodel.extraYawAngle     = vmodel.yawAngleOffset   = minfo.def->rotate[0];
+            vmodel.extraPitchAngle   = vmodel.pitchAngleOffset = minfo.def->rotate[1];
+            vmodel.inter             = inter;
+            vmodel.mf                = minfo.model;
+            vmodel.alwaysInterpolate = true;
             App_ResourceSystem().setModelDefFrame(*minfo.model, minfo.frame);
-            dmodel.yaw               = minfo.yaw;
+            vmodel.yaw               = minfo.yaw;
             for(int c = 0; c < 4; ++c)
             {
-                dmodel.ambientColor[c] = minfo.def->color[c];
+                vmodel.ambientColor[c] = minfo.def->color[c];
             }
-            dmodel.vLightListIdx     = 0;
-            dmodel.shineTranslateWithViewerPos = true;
+            vmodel.vLightListIdx     = 0;
+            vmodel.shineTranslateWithViewerPos = true;
 
-            dmodel.draw();
+            vmodel.draw();
         }
 
         // We don't want that anything interferes with what was drawn.

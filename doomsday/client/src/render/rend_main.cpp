@@ -1030,13 +1030,12 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         colorCoords[i].w = opacity;
     }
 
-    vismaskedwall_t *vis = rendSys.vissprites().newMaskedWall();
+    vismaskedwall_t *vwall = rendSys.vissprites().newMaskedWall();
 
-    vis->_origin   = (posCoords[0] + posCoords[3]) / 2;
-    vis->_distance = Rend_PointDist2D(vis->origin());
-
-    vis->texOffset[0] = matOrigin[VX];
-    vis->texOffset[1] = matOrigin[VY];
+    vwall->_origin      = (posCoords[0] + posCoords[3]) / 2;
+    vwall->_distance    = Rend_PointDist2D(vwall->origin());
+    vwall->texOffset[0] = matOrigin[VX];
+    vwall->texOffset[1] = matOrigin[VY];
 
     // Masked walls are sometimes used for special effects like arcs, cobwebs
     // and bottoms of sails. In order for them to look right, we need to disable
@@ -1052,24 +1051,23 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         MaterialSnapshot const &ms = material->prepare();
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
-        vis->texCoord[0][VX] = vis->texOffset[0] / ms.width();
-        vis->texCoord[1][VX] = vis->texCoord[0][VX] + sectionWidth / ms.width();
-        vis->texCoord[0][VY] = vis->texOffset[1] / ms.height();
-        vis->texCoord[1][VY] = vis->texCoord[0][VY] +
-                (posCoords[3].z - posCoords[0].z) / ms.height();
+        vwall->texCoord[0][VX] = vwall->texOffset[0] / ms.width();
+        vwall->texCoord[1][VX] = vwall->texCoord[0][VX] + sectionWidth / ms.width();
+        vwall->texCoord[0][VY] = vwall->texOffset[1] / ms.height();
+        vwall->texCoord[1][VY] = vwall->texCoord[0][VY] + (posCoords[3].z - posCoords[0].z) / ms.height();
 
         if(!ms.isOpaque())
         {
-            if(!(vis->texCoord[0][VX] < 0 || vis->texCoord[0][VX] > 1 ||
-                 vis->texCoord[1][VX] < 0 || vis->texCoord[1][VX] > 1))
+            if(!(vwall->texCoord[0][VX] < 0 || vwall->texCoord[0][VX] > 1 ||
+                 vwall->texCoord[1][VX] < 0 || vwall->texCoord[1][VX] > 1))
             {
                 // Visible portion is within the actual [0..1] range.
                 wrapS = GL_CLAMP_TO_EDGE;
             }
 
             // Clamp on the vertical axis if the coords are in the normal [0..1] range.
-            if(!(vis->texCoord[0][VY] < 0 || vis->texCoord[0][VY] > 1 ||
-                 vis->texCoord[1][VY] < 0 || vis->texCoord[1][VY] > 1))
+            if(!(vwall->texCoord[0][VY] < 0 || vwall->texCoord[0][VY] > 1 ||
+                 vwall->texCoord[1][VY] < 0 || vwall->texCoord[1][VY] > 1))
             {
                 wrapT = GL_CLAMP_TO_EDGE;
             }
@@ -1081,19 +1079,19 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
                                       true /*can create variant*/);
     }
 
-    vis->material  = material;
-    vis->blendMode = blendmode;
+    vwall->material  = material;
+    vwall->blendMode = blendmode;
 
     for(int i = 0; i < 4; ++i)
     {
-        vis->vertices[i].pos[VX] = posCoords[i].x;
-        vis->vertices[i].pos[VY] = posCoords[i].y;
-        vis->vertices[i].pos[VZ] = posCoords[i].z;
+        vwall->vertices[i].pos[VX] = posCoords[i].x;
+        vwall->vertices[i].pos[VY] = posCoords[i].y;
+        vwall->vertices[i].pos[VZ] = posCoords[i].z;
 
         for(int c = 0; c < 4; ++c)
         {
             /// @todo Do not clamp here.
-            vis->vertices[i].color[c] = de::clamp(0.f, colorCoords[i][c], 1.f);
+            vwall->vertices[i].color[c] = de::clamp(0.f, colorCoords[i][c], 1.f);
         }
     }
 
@@ -1107,19 +1105,19 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         // and largest of them is first in the list. So grab that one.
         Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
-        vis->modTex = dyn->texture;
-        vis->modTexCoord[0][0] = dyn->topLeft.x;
-        vis->modTexCoord[0][1] = dyn->topLeft.y;
-        vis->modTexCoord[1][0] = dyn->bottomRight.x;
-        vis->modTexCoord[1][1] = dyn->bottomRight.y;
+        vwall->modTex = dyn->texture;
+        vwall->modTexCoord[0][0] = dyn->topLeft.x;
+        vwall->modTexCoord[0][1] = dyn->topLeft.y;
+        vwall->modTexCoord[1][0] = dyn->bottomRight.x;
+        vwall->modTexCoord[1][1] = dyn->bottomRight.y;
         for(int c = 0; c < 4; ++c)
         {
-            vis->modColor[c] = dyn->color[c];
+            vwall->modColor[c] = dyn->color[c];
         }
     }
     else
     {
-        vis->modTex = 0;
+        vwall->modTex = 0;
     }
 }
 

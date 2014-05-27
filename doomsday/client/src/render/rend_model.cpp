@@ -650,10 +650,10 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
     return skin;
 }
 
-static void drawSubmodel(uint number, vismodel_t const &parm)
+static void drawSubmodel(uint number, vismodel_t const &vmodel)
 {
-    int const zSign = (parm.mirror? -1 : 1);
-    ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
+    int const zSign = (vmodel.mirror? -1 : 1);
+    ModelDef *mf = vmodel.mf, *mfNext = vmodel.nextMF;
     SubmodelDef const &smf = mf->subModelDef(number);
 
     Model &mdl = App_ResourceSystem().model(smf.modelId);
@@ -662,12 +662,12 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
     if(mf->scale == Vector3f(0, 0, 0))
         return;
 
-    float alpha = parm.ambientColor[CA];
+    float alpha = vmodel.ambientColor[CA];
 
     // Is the submodel-defined alpha multiplier in effect?
     // With df_brightshadow2, the alpha multiplier will be applied anyway.
     if(smf.testFlag(MFF_BRIGHTSHADOW2) ||
-       !(parm.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
+       !(vmodel.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
         alpha *= smf.alpha / 255.f;
     }
@@ -677,28 +677,28 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
 
     blendmode_t blending = smf.blendMode;
     // Is the submodel-defined blend mode in effect?
-    if(parm.flags & DDMF_BRIGHTSHADOW)
+    if(vmodel.flags & DDMF_BRIGHTSHADOW)
     {
         blending = BM_ADD;
     }
 
-    int useSkin = chooseSkin(*mf, number, parm.id, parm.selector, parm.tmap);
+    int useSkin = chooseSkin(*mf, number, vmodel.id, vmodel.selector, vmodel.tmap);
 
     // Scale interpos. Intermark becomes zero and endmark becomes one.
     // (Full sub-interpolation!) But only do it for the standard
     // interrange. If a custom one is defined, don't touch interpos.
     float endPos = 0;
-    float inter = parm.inter;
+    float inter = vmodel.inter;
     if((mf->interRange[0] == 0 && mf->interRange[1] == 1) || smf.testFlag(MFF_WORLD_TIME_ANIM))
     {
         endPos = (mf->interNext ? mf->interNext->interMark : 1);
-        inter = (parm.inter - mf->interMark) / (endPos - mf->interMark);
+        inter = (vmodel.inter - mf->interMark) / (endPos - mf->interMark);
     }
 
-    ModelFrame *frame = &visibleModelFrame(*mf, number, parm.id);
+    ModelFrame *frame = &visibleModelFrame(*mf, number, vmodel.id);
     ModelFrame *nextFrame = 0;
     // Do we have a sky/particle model here?
-    if(parm.alwaysInterpolate)
+    if(vmodel.alwaysInterpolate)
     {
         // Always interpolate, if there's animation.
         // Used with sky and particle models.
@@ -712,7 +712,7 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
         {
             if(mfNext->hasSub(number) && mfNext->subModelId(number) == smf.modelId)
             {
-                nextFrame = &visibleModelFrame(*mfNext, number, parm.id);
+                nextFrame = &visibleModelFrame(*mfNext, number, vmodel.id);
             }
         }
     }
@@ -743,36 +743,36 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
     glPushMatrix();
 
     // Model space => World space
-    glTranslatef(parm.origin().x + parm.srvo[VX] +
+    glTranslatef(vmodel.origin().x + vmodel.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
-                 parm.origin().z + parm.srvo[VZ] +
+                 vmodel.origin().z + vmodel.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
-                 parm.origin().y + parm.srvo[VY] + zSign *
+                 vmodel.origin().y + vmodel.srvo[VY] + zSign *
                    de::lerp(mf->offset.z, mfNext->offset.z, inter));
 
-    if(parm.extraYawAngle || parm.extraPitchAngle)
+    if(vmodel.extraYawAngle || vmodel.extraPitchAngle)
     {
         // Sky models have an extra rotation.
         glScalef(1, 200 / 240.0f, 1);
-        glRotatef(parm.extraYawAngle, 1, 0, 0);
-        glRotatef(parm.extraPitchAngle, 0, 0, 1);
+        glRotatef(vmodel.extraYawAngle, 1, 0, 0);
+        glRotatef(vmodel.extraPitchAngle, 0, 0, 1);
         glScalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    glRotatef(parm.viewAlign ? parm.yawAngleOffset : parm.yaw,
+    glRotatef(vmodel.viewAlign ? vmodel.yawAngleOffset : vmodel.yaw,
               0, 1, 0);
-    glRotatef(parm.viewAlign ? parm.pitchAngleOffset : parm.pitch,
+    glRotatef(vmodel.viewAlign ? vmodel.pitchAngleOffset : vmodel.pitch,
               0, 0, 1);
 
     // Scaling and model space offset.
     glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
              de::lerp(mf->scale.y, mfNext->scale.y, inter),
              de::lerp(mf->scale.z, mfNext->scale.z, inter));
-    if(parm.extraScale)
+    if(vmodel.extraScale)
     {
         // Particle models have an extra scale.
-        glScalef(parm.extraScale, parm.extraScale, parm.extraScale);
+        glScalef(vmodel.extraScale, vmodel.extraScale, vmodel.extraScale);
     }
     glTranslatef(smf.offset.x, smf.offset.y, smf.offset.z);
 
@@ -786,7 +786,7 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
         }
 
         // Determine the LOD we will be using.
-        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * parm.distance(), mdl.lodCount() - 1));
+        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * vmodel.distance(), mdl.lodCount() - 1));
     }
     else
     {
@@ -804,8 +804,8 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter = Vector3f(parm.origin().x, parm.origin().y, (parm.origin().z + parm.gzt) * 2)
-            + Vector3d(parm.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
+    modelCenter = Vector3f(vmodel.origin().x, vmodel.origin().y, (vmodel.origin().z + vmodel.gzt) * 2)
+            + Vector3d(vmodel.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.
     Vector4f ambient;
@@ -815,21 +815,21 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
         ambient = Vector4f(1, 1, 1, 1);
         Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
-    else if(!parm.vLightListIdx)
+    else if(!vmodel.vLightListIdx)
     {
         // Lit uniformly.
-        ambient = Vector4f(parm.ambientColor, alpha);
+        ambient = Vector4f(vmodel.ambientColor, alpha);
         Mod_FixedVertexColors(numVerts, modelColorCoords,
                               (ambient * 255).toVector4ub());
     }
     else
     {
         // Lit normally.
-        ambient = Vector4f(parm.ambientColor, alpha);
+        ambient = Vector4f(vmodel.ambientColor, alpha);
 
         Mod_VertexColors(modelColorCoords, numVerts,
-                         modelNormCoords, parm.vLightListIdx, modelLight + 1,
-                         ambient, (mf->scale[VY] < 0), -parm.yaw, -parm.pitch);
+                         modelNormCoords, vmodel.vLightListIdx, modelLight + 1,
+                         ambient, (mf->scale[VY] < 0), -vmodel.yaw, -vmodel.pitch);
     }
 
     TextureVariant *shinyTexture = 0;
@@ -858,20 +858,20 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
         Vector3f shinyColor = mf->def->sub(number).shinyColor;
 
         // With psprites, add the view angle/pitch.
-        float offset = parm.shineYawOffset;
+        float offset = vmodel.shineYawOffset;
 
         // Calculate normalized (0,1) model yaw and pitch.
-        float normYaw = M_CycleIntoRange(((parm.viewAlign ? parm.yawAngleOffset
-                                                           : parm.yaw) + offset) / 360, 1);
+        float normYaw = M_CycleIntoRange(((vmodel.viewAlign ? vmodel.yawAngleOffset
+                                                           : vmodel.yaw) + offset) / 360, 1);
 
-        offset = parm.shinePitchOffset;
+        offset = vmodel.shinePitchOffset;
 
-        float normPitch = M_CycleIntoRange(((parm.viewAlign ? parm.pitchAngleOffset
-                                                             : parm.pitch) + offset) / 360, 1);
+        float normPitch = M_CycleIntoRange(((vmodel.viewAlign ? vmodel.pitchAngleOffset
+                                                             : vmodel.pitch) + offset) / 360, 1);
 
         float shinyAng = 0;
         float shinyPnt = 0;
-        if(parm.shinepspriteCoordSpace)
+        if(vmodel.shinepspriteCoordSpace)
         {
             // This is a hack to accommodate the psprite coordinate space.
             shinyPnt = 0.5;
@@ -880,7 +880,7 @@ static void drawSubmodel(uint number, vismodel_t const &parm)
         {
             Vector3f delta = modelCenter;
 
-            if(!parm.shineTranslateWithViewerPos)
+            if(!vmodel.shineTranslateWithViewerPos)
             {
                 delta -= vOrigin.xzy();
             }
@@ -1093,7 +1093,7 @@ void vismodel_t::setup(Vector3d const &origin, coord_t distToEye,
     p.pitchAngleOffset  = pitchAngleOffset;
     p.extraScale        = 0;
     p.viewAlign         = viewAlign;
-    p.mirror            = 0;
+    p.mirror            = false;
     p.shineYawOffset    = 0;
     p.shinePitchOffset  = 0;
 

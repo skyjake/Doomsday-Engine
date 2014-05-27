@@ -96,7 +96,7 @@ visflare_t *VisspritePool::newFlare()
     d->allUsed.append(vs);
     d->needSortAllUsed = true;
 
-    de::zapPtr(vs);
+    vs->init();
     return vs;
 }
 
@@ -106,7 +106,7 @@ vismaskedwall_t *VisspritePool::newMaskedWall()
     d->allUsed.append(vs);
     d->needSortAllUsed = true;
 
-    de::zapPtr(vs);
+    vs->init();
     return vs;
 }
 
@@ -116,7 +116,7 @@ vismodel_t *VisspritePool::newModel()
     d->allUsed.append(vs);
     d->needSortAllUsed = true;
 
-    de::zapPtr(vs);
+    vs->init();
     return vs;
 }
 
@@ -126,7 +126,7 @@ vissprite_t *VisspritePool::newSprite()
     d->allUsed.append(vs);
     d->needSortAllUsed = true;
 
-    de::zapPtr(vs);
+    vs->init();
     return vs;
 }
 

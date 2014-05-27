@@ -193,43 +193,43 @@ void Rend_Draw2DPlayerSprites()
     }
 }
 
-static void setupModelParamsForVisPSprite(vismodel_t *params, vispsprite_t *spr)
+static void setupModelParamsForVisPSprite(vismodel_t *vmodel, vispsprite_t *spr)
 {
-    params->mf = spr->data.model.mf;
-    params->nextMF = spr->data.model.nextMF;
-    params->inter = spr->data.model.inter;
-    params->alwaysInterpolate = false;
-    params->id = spr->data.model.id;
-    params->selector = spr->data.model.selector;
-    params->flags = spr->data.model.flags;
-    params->_origin[VX] = spr->origin[VX];
-    params->_origin[VY] = spr->origin[VY];
-    params->_origin[VZ] = spr->origin[VZ];
-    params->srvo[VX] = spr->data.model.visOff[VX];
-    params->srvo[VY] = spr->data.model.visOff[VY];
-    params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
-    params->gzt = spr->data.model.gzt;
-    params->_distance = -10;
-    params->yaw = spr->data.model.yaw;
-    params->extraYawAngle = 0;
-    params->yawAngleOffset = spr->data.model.yawAngleOffset;
-    params->pitch = spr->data.model.pitch;
-    params->extraPitchAngle = 0;
-    params->pitchAngleOffset = spr->data.model.pitchAngleOffset;
-    params->extraScale = 0;
-    params->viewAlign = spr->data.model.viewAligned;
-    params->mirror = (mirrorHudModels? true : false);
-    params->shineYawOffset = -vang;
-    params->shinePitchOffset = vpitch + 90;
-    params->shineTranslateWithViewerPos = false;
-    params->shinepspriteCoordSpace = true;
-    params->ambientColor[CA] = spr->data.model.alpha;
+    vmodel->mf = spr->data.model.mf;
+    vmodel->nextMF = spr->data.model.nextMF;
+    vmodel->inter = spr->data.model.inter;
+    vmodel->alwaysInterpolate = false;
+    vmodel->id = spr->data.model.id;
+    vmodel->selector = spr->data.model.selector;
+    vmodel->flags = spr->data.model.flags;
+    vmodel->_origin[VX] = spr->origin[VX];
+    vmodel->_origin[VY] = spr->origin[VY];
+    vmodel->_origin[VZ] = spr->origin[VZ];
+    vmodel->srvo[VX] = spr->data.model.visOff[VX];
+    vmodel->srvo[VY] = spr->data.model.visOff[VY];
+    vmodel->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
+    vmodel->gzt = spr->data.model.gzt;
+    vmodel->_distance = -10;
+    vmodel->yaw = spr->data.model.yaw;
+    vmodel->extraYawAngle = 0;
+    vmodel->yawAngleOffset = spr->data.model.yawAngleOffset;
+    vmodel->pitch = spr->data.model.pitch;
+    vmodel->extraPitchAngle = 0;
+    vmodel->pitchAngleOffset = spr->data.model.pitchAngleOffset;
+    vmodel->extraScale = 0;
+    vmodel->viewAlign = CPP_BOOL(spr->data.model.viewAligned);
+    vmodel->mirror = (mirrorHudModels? true : false);
+    vmodel->shineYawOffset = -vang;
+    vmodel->shinePitchOffset = vpitch + 90;
+    vmodel->shineTranslateWithViewerPos = false;
+    vmodel->shinepspriteCoordSpace = true;
+    vmodel->ambientColor[CA] = spr->data.model.alpha;
 
     if((levelFullBright || spr->data.model.stateFullBright) &&
        !spr->data.model.mf->testSubFlag(0, MFF_DIM))
     {
-        params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
-        params->vLightListIdx = 0;
+        vmodel->ambientColor[CR] = vmodel->ambientColor[CG] = vmodel->ambientColor[CB] = 1;
+        vmodel->vLightListIdx = 0;
     }
     else
     {
@@ -237,13 +237,13 @@ static void setupModelParamsForVisPSprite(vismodel_t *params, vispsprite_t *spr)
 
         if(useBias && map.hasLightGrid())
         {
-            Vector4f color = map.lightGrid().evaluate(params->origin());
+            Vector4f color = map.lightGrid().evaluate(vmodel->origin());
             // Apply light range compression.
             for(int i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
-            V3f_Set(params->ambientColor, color.x, color.y, color.z);
+            V3f_Set(vmodel->ambientColor, color.x, color.y, color.z);
         }
         else
         {
@@ -262,19 +262,19 @@ static void setupModelParamsForVisPSprite(vismodel_t *params, vispsprite_t *spr)
             // Determine the final ambientColor.
             for(int i = 0; i < 3; ++i)
             {
-                params->ambientColor[i] = lightLevel * color[i];
+                vmodel->ambientColor[i] = lightLevel * color[i];
             }
         }
 
-        Rend_ApplyTorchLight(params->ambientColor, params->distance());
+        Rend_ApplyTorchLight(vmodel->ambientColor, vmodel->distance());
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
         lparams.subspace     = spr->data.model.bspLeaf->subspacePtr();
-        lparams.ambientColor = Vector3f(params->ambientColor);
+        lparams.ambientColor = Vector3f(vmodel->ambientColor);
         lparams.starkLight   = true;
 
-        params->vLightListIdx = R_CollectAffectingLights(&lparams);
+        vmodel->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 

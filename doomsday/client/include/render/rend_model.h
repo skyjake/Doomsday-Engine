@@ -34,42 +34,74 @@ class TextureVariantSpec;
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
 struct vismodel_t : public IVissprite
 {
-// Animation, frame interpolation.
-    ModelDef *mf, *nextMF;
+// Animation, frame interpolation:
+    ModelDef       *mf;
+    ModelDef       *nextMF;
     float           inter;
-    dd_bool         alwaysInterpolate;
-    int             id; // For a unique skin offset.
+    bool            alwaysInterpolate;
+    int             id;                ///< For a unique skin offset.
     int             selector;
 
-// Position/Orientation/Scale
-    coord_t         gzt; // The real center point and global top z for silhouette clipping.
-    coord_t         srvo[3]; // Short-range visual offset.
-    float           yaw, extraYawAngle, yawAngleOffset; ///< @todo We do not need three sets of angles...
-    float           pitch, extraPitchAngle, pitchAngleOffset;
+// Position/Orientation/Scale:
+    de::Vector3d    _origin;
+    coord_t         _distance;         ///< From the viewer (vissprites are sorted by distance).
+    coord_t         gzt;               ///< Global top Z (for silhouette clipping).
+    coord_t         srvo[3];           ///< Short-range visual offset.
+    float           yaw;
+    float           extraYawAngle;
+    float           yawAngleOffset;    ///< @todo We do not need three sets of angles...
+    float           pitch;
+    float           extraPitchAngle;
+    float           pitchAngleOffset;
 
     float           extraScale;
 
-    dd_bool         viewAlign;
-    dd_bool         mirror; // If true the model will be mirrored about its Z axis (in model space).
+    bool            viewAlign;
+    bool            mirror;            ///< On the Z axis (in model space).
 
-// Appearance
-    int             flags; // Mobj flags.
+// Appearance:
+    int             flags;             ///< Mobj flags.
     int             tmap;
 
-    // Lighting/color:
     float           ambientColor[4];
     uint            vLightListIdx;
 
-    // Shiney texture mapping:
     float           shineYawOffset;
     float           shinePitchOffset;
-    dd_bool         shineTranslateWithViewerPos;
-    dd_bool         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
-
-    coord_t _distance; // Vissprites are sorted by distance.
-    de::Vector3d _origin;
+    bool            shineTranslateWithViewerPos;
+    bool            shinepspriteCoordSpace; ///< Use the psprite coordinate space hack.
 
 public:
+    vismodel_t()
+        : mf(0)
+        , nextMF(0)
+        , inter(0)
+        , alwaysInterpolate(false)
+        , id(0)
+        , selector(0)
+        , _origin(0, 0, 0)
+        , _distance(0)
+        , gzt(0)
+        , yaw(0)
+        , extraYawAngle(0)
+        , yawAngleOffset(0)
+        , pitch(0)
+        , extraPitchAngle(0)
+        , pitchAngleOffset(0)
+        , extraScale(0)
+        , viewAlign(false)
+        , mirror(false)
+        , flags(0)
+        , tmap(0)
+        , vLightListIdx(0)
+        , shineYawOffset(0)
+        , shinePitchOffset(0)
+        , shineTranslateWithViewerPos(false)
+        , shinepspriteCoordSpace(false)
+    {
+        de::zap(srvo);
+        de::zap(ambientColor);
+    }
     virtual ~vismodel_t() {}
 
     void setup(de::Vector3d const &origin, coord_t distToEye, de::Vector3d const &visOffset,
@@ -84,6 +116,8 @@ public:
     coord_t distance() const { return _distance; }
     de::Vector3d const &origin() const { return _origin; }
     void draw();
+
+    void init() { *this = vismodel_t(); }
 };
 
 DENG_EXTERN_C byte useModels;
