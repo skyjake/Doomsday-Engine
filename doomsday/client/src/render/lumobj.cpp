@@ -229,7 +229,7 @@ void Lumobj::generateFlare(Vector3d const &eye, double distFromEye)
 
     vflare->_origin      = origin();
     vflare->_distance    = distFromEye;
-    V3f_Set(vflare->color, d->color.x, d->color.y, d->color.z);
+    vflare->color        = d->color;
     vflare->mul          = d->source->occlusion(eye) * attenuation(distFromEye);
     vflare->size         = d->flareSize > 0? de::max(1.f, d->flareSize * 60 * (50 + haloSize) / 100.0f) : 0;
     vflare->tex          = d->flareTex;

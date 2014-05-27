@@ -426,11 +426,9 @@ static void setupModelParamsForParticle(vismodel_t &vmodel,
         vmodel.pitch = pinfo->pitch / 32768.0f * 180;
     }
 
-    vmodel.ambientColor[CA] = alpha;
-
     if(st->flags.testFlag(GeneratorParticleStage::Bright) || levelFullBright)
     {
-        vmodel.ambientColor[CR] = vmodel.ambientColor[CG] = vmodel.ambientColor[CB] = 1;
+        vmodel.ambientColor = Vector4f(1, 1, 1, alpha);
         vmodel.vLightListIdx = 0;
     }
     else
@@ -445,7 +443,7 @@ static void setupModelParamsForParticle(vismodel_t &vmodel,
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
-            V3f_Set(vmodel.ambientColor, color.x, color.y, color.z);
+            vmodel.ambientColor = Vector4f(color.xyz(), alpha);
         }
         else
         {
@@ -461,10 +459,7 @@ static void setupModelParamsForParticle(vismodel_t &vmodel,
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(int i = 0; i < 3; ++i)
-            {
-                vmodel.ambientColor[i] = lightLevel * color[i];
-            }
+            vmodel.ambientColor = Vector4f(color.xyz() * lightLevel, alpha);
         }
 
         Rend_ApplyTorchLight(vmodel.ambientColor, vmodel.distance());
@@ -472,7 +467,7 @@ static void setupModelParamsForParticle(vismodel_t &vmodel,
         collectaffectinglights_params_t lparams; de::zap(lparams);
         lparams.origin       = vmodel.origin();
         lparams.subspace     = map.bspLeafAt(lparams.origin).subspacePtr();
-        lparams.ambientColor = Vector3f(vmodel.ambientColor);
+        lparams.ambientColor = vmodel.ambientColor.xyz();
 
         vmodel.vLightListIdx = R_CollectAffectingLights(&lparams);
     }

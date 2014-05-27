@@ -91,15 +91,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
-
-    params->mat = material;
-    params->ambientColor[3] = spr->data.sprite.alpha;
+    params->mat        = material;
 
     if(spr->data.sprite.isFullBright)
     {
-        params->ambientColor[0] =
-            params->ambientColor[1] =
-                params->ambientColor[2] = 1;
+        params->ambientColor = Vector4f(1, 1, 1, spr->data.sprite.alpha);
         params->vLightListIdx = 0;
     }
     else
@@ -117,7 +113,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
 
-            V3f_Set(params->ambientColor, color.x, color.y, color.z);
+            params->ambientColor = Vector4f(color.xyz(), spr->data.sprite.alpha);
         }
         else
         {
@@ -135,10 +131,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(int i = 0; i < 3; ++i)
-            {
-                params->ambientColor[i] = lightLevel * color[i];
-            }
+            params->ambientColor = Vector4f(color.xyz() * lightLevel, spr->data.sprite.alpha);
         }
 
         Rend_ApplyTorchLight(params->ambientColor, 0);
@@ -146,7 +139,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
         lparams.subspace     = spr->data.sprite.bspLeaf->subspacePtr();
-        lparams.ambientColor = Vector3f(params->ambientColor);
+        lparams.ambientColor = params->ambientColor.xyz();
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
@@ -223,12 +216,11 @@ static void setupModelParamsForVisPSprite(vismodel_t *vmodel, vispsprite_t *spr)
     vmodel->shinePitchOffset = vpitch + 90;
     vmodel->shineTranslateWithViewerPos = false;
     vmodel->shinepspriteCoordSpace = true;
-    vmodel->ambientColor[CA] = spr->data.model.alpha;
 
     if((levelFullBright || spr->data.model.stateFullBright) &&
        !spr->data.model.mf->testSubFlag(0, MFF_DIM))
     {
-        vmodel->ambientColor[CR] = vmodel->ambientColor[CG] = vmodel->ambientColor[CB] = 1;
+        vmodel->ambientColor  = Vector4f(vmodel->ambientColor.xyz(), spr->data.model.alpha);
         vmodel->vLightListIdx = 0;
     }
     else
@@ -243,7 +235,7 @@ static void setupModelParamsForVisPSprite(vismodel_t *vmodel, vispsprite_t *spr)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
-            V3f_Set(vmodel->ambientColor, color.x, color.y, color.z);
+            vmodel->ambientColor = Vector4f(color.xyz(), spr->data.model.alpha);
         }
         else
         {
@@ -260,10 +252,7 @@ static void setupModelParamsForVisPSprite(vismodel_t *vmodel, vispsprite_t *spr)
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(int i = 0; i < 3; ++i)
-            {
-                vmodel->ambientColor[i] = lightLevel * color[i];
-            }
+            vmodel->ambientColor = Vector4f(color.xyz() * lightLevel, spr->data.model.alpha);
         }
 
         Rend_ApplyTorchLight(vmodel->ambientColor, vmodel->distance());
@@ -271,7 +260,7 @@ static void setupModelParamsForVisPSprite(vismodel_t *vmodel, vispsprite_t *spr)
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
         lparams.subspace     = spr->data.model.bspLeaf->subspacePtr();
-        lparams.ambientColor = Vector3f(vmodel->ambientColor);
+        lparams.ambientColor = vmodel->ambientColor.xyz();
         lparams.starkLight   = true;
 
         vmodel->vLightListIdx = R_CollectAffectingLights(&lparams);

@@ -512,12 +512,11 @@ void R_ProjectSprite(mobj_t *mo)
                 vflare->size = 8;
 
             // Color is taken from the associated lumobj.
-            V3f_Set(vflare->color, lum->color().x, lum->color().y, lum->color().z);
-
+            vflare->color  = lum->color();
             vflare->factor = mo->haloFactors[viewPlayer - ddPlayers];
-            vflare->xOff = xOffset;
-            vflare->mul = 1;
-            vflare->tex = 0;
+            vflare->xOff   = xOffset;
+            vflare->mul    = 1;
+            vflare->tex    = 0;
 
             if(def && def->flare)
             {

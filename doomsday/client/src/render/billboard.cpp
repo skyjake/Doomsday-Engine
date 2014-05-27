@@ -90,12 +90,7 @@ void vismaskedwall_t::draw()
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    Texture::Variant *tex = 0;
-    if(renderTextures)
-    {
-        MaterialSnapshot const &ms = reinterpret_cast<MaterialVariant *>(material)->prepare();
-        tex = &ms.texture(MTU_PRIMARY);
-    }
+    TextureVariant *tex = (renderTextures? &material->prepare().texture(MTU_PRIMARY) : 0);
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
@@ -106,27 +101,22 @@ void vismaskedwall_t::draw()
         if(IS_MUL)
         {
             normal = 1;
-            dyn = 0;
-        }
-        else
-        {
-            normal = 0;
-            dyn = 1;
+            dyn    = 0;
         }
 
         GL_SelectTexUnits(2);
-        GL_ModulateTexture(IS_MUL ? 4 : 5);
+        GL_ModulateTexture(IS_MUL? 4 : 5);
 
         // The dynamic light.
-        glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
+        glActiveTexture(IS_MUL? GL_TEXTURE0 : GL_TEXTURE1);
         /// @todo modTex may be the name of a "managed" texture.
-        GL_BindTextureUnmanaged(renderTextures ? modTex : 0,
-                                gl::ClampToEdge, gl::ClampToEdge);
+        GL_BindTextureUnmanaged(renderTextures? modTex : 0, gl::ClampToEdge, gl::ClampToEdge);
 
-        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColor);
+        float const modColorv[] = { modColor.x, modColor.y, modColor.z, modColor.w };
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColorv);
 
         // The actual texture.
-        glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
+        glActiveTexture(IS_MUL? GL_TEXTURE1 : GL_TEXTURE0);
         GL_BindTexture(tex);
 
         withDyn = true;
@@ -139,10 +129,10 @@ void vismaskedwall_t::draw()
         normal = 0;
     }
 
-    GL_BlendMode(blendMode);
+    GL_BlendMode(blendmode);
 
-    GLenum const normalTarget = normal? GL_TEXTURE1 : GL_TEXTURE0;
-    GLenum const dynTarget    =    dyn? GL_TEXTURE1 : GL_TEXTURE0;
+    GLenum const normalTarget = (normal? GL_TEXTURE1 : GL_TEXTURE0);
+    GLenum const dynTarget    = (   dyn? GL_TEXTURE1 : GL_TEXTURE0);
 
     // Draw one quad. This is obviously not a very efficient way to render
     // lots of masked walls, but since 3D models and sprites must be
@@ -151,41 +141,25 @@ void vismaskedwall_t::draw()
     if(withDyn)
     {
         glBegin(GL_QUADS);
-            glColor4fv(vertices[0].color);
-            glMultiTexCoord2f(normalTarget, texCoord[0][0], texCoord[1][1]);
+            glColor4f( vertices[0].rgba.x,  vertices[0].rgba.y, vertices[0].rgba.z, vertices[0].rgba.w);
+            glMultiTexCoord2f(normalTarget,    texCoord[0].x,      texCoord[1].y);
+            glMultiTexCoord2f(dynTarget,    modTexCoord[0].x,   modTexCoord[1].y);
+            glVertex3f(vertices[0].pos.x,   vertices[0].pos.z,  vertices[0].pos.y);
 
-            glMultiTexCoord2f(dynTarget, modTexCoord[0][0], modTexCoord[1][1]);
+            glColor4f( vertices[1].rgba.x,  vertices[1].rgba.y, vertices[1].rgba.z, vertices[1].rgba.w);
+            glMultiTexCoord2f(normalTarget,    texCoord[0].x,      texCoord[0].y);
+            glMultiTexCoord2f(dynTarget,    modTexCoord[0].x,   modTexCoord[0].y);
+            glVertex3f(vertices[1].pos.x,   vertices[1].pos.z,  vertices[1].pos.y);
 
-            glVertex3f(vertices[0].pos[VX],
-                       vertices[0].pos[VZ],
-                       vertices[0].pos[VY]);
+            glColor4f( vertices[3].rgba.x,  vertices[3].rgba.y, vertices[3].rgba.z, vertices[3].rgba.w);
+            glMultiTexCoord2f(normalTarget,    texCoord[1].x,      texCoord[0].y);
+            glMultiTexCoord2f(dynTarget,    modTexCoord[1].x,   modTexCoord[0].y);
+            glVertex3f(vertices[3].pos.x,   vertices[3].pos.z,  vertices[3].pos.y);
 
-            glColor4fv(vertices[1].color);
-            glMultiTexCoord2f(normalTarget, texCoord[0][0], texCoord[0][1]);
-
-            glMultiTexCoord2f(dynTarget, modTexCoord[0][0], modTexCoord[0][1]);
-
-            glVertex3f(vertices[1].pos[VX],
-                       vertices[1].pos[VZ],
-                       vertices[1].pos[VY]);
-
-            glColor4fv(vertices[3].color);
-            glMultiTexCoord2f(normalTarget, texCoord[1][0], texCoord[0][1]);
-
-            glMultiTexCoord2f(dynTarget, modTexCoord[1][0], modTexCoord[0][1]);
-
-            glVertex3f(vertices[3].pos[VX],
-                       vertices[3].pos[VZ],
-                       vertices[3].pos[VY]);
-
-            glColor4fv(vertices[2].color);
-            glMultiTexCoord2f(normalTarget, texCoord[1][0], texCoord[1][1]);
-
-            glMultiTexCoord2f(dynTarget, modTexCoord[1][0], modTexCoord[1][1]);
-
-            glVertex3f(vertices[2].pos[VX],
-                       vertices[2].pos[VZ],
-                       vertices[2].pos[VY]);
+            glColor4f( vertices[2].rgba.x,  vertices[2].rgba.y, vertices[2].rgba.z, vertices[2].rgba.w);
+            glMultiTexCoord2f(normalTarget,    texCoord[1].x,      texCoord[1].y);
+            glMultiTexCoord2f(dynTarget,    modTexCoord[1].x,   modTexCoord[1].y);
+            glVertex3f(vertices[2].pos.x,   vertices[2].pos.z,  vertices[2].pos.y);
         glEnd();
 
         // Restore normal GL state.
@@ -195,33 +169,21 @@ void vismaskedwall_t::draw()
     else
     {
         glBegin(GL_QUADS);
-            glColor4fv(vertices[0].color);
-            glTexCoord2f(texCoord[0][0], texCoord[1][1]);
+            glColor4f( vertices[0].rgba.x, vertices[0].rgba.y, vertices[0].rgba.z, vertices[0].rgba.w);
+            glTexCoord2f( texCoord[0].x,      texCoord[1].y);
+            glVertex3f(vertices[0].pos.x,  vertices[0].pos.z,  vertices[0].pos.y);
 
-            glVertex3f(vertices[0].pos[VX],
-                       vertices[0].pos[VZ],
-                       vertices[0].pos[VY]);
+            glColor4f( vertices[1].rgba.x, vertices[1].rgba.y, vertices[1].rgba.z, vertices[1].rgba.w);
+            glTexCoord2f( texCoord[0].x,      texCoord[0].y);
+            glVertex3f(vertices[1].pos.x,  vertices[1].pos.z,  vertices[1].pos.y);
 
-            glColor4fv(vertices[1].color);
-            glTexCoord2f(texCoord[0][0], texCoord[0][1]);
+            glColor4f( vertices[3].rgba.x, vertices[3].rgba.y, vertices[3].rgba.z, vertices[3].rgba.w);
+            glTexCoord2f( texCoord[1].x,      texCoord[0].y);
+            glVertex3f(vertices[3].pos.x,  vertices[3].pos.z,  vertices[3].pos.y);
 
-            glVertex3f(vertices[1].pos[VX],
-                       vertices[1].pos[VZ],
-                       vertices[1].pos[VY]);
-
-            glColor4fv(vertices[3].color);
-            glTexCoord2f(texCoord[1][0], texCoord[0][1]);
-
-            glVertex3f(vertices[3].pos[VX],
-                       vertices[3].pos[VZ],
-                       vertices[3].pos[VY]);
-
-            glColor4fv(vertices[2].color);
-            glTexCoord2f(texCoord[1][0], texCoord[1][1]);
-
-            glVertex3f(vertices[2].pos[VX],
-                       vertices[2].pos[VZ],
-                       vertices[2].pos[VY]);
+            glColor4f( vertices[2].rgba.x, vertices[2].rgba.y, vertices[2].rgba.z, vertices[2].rgba.w);
+            glTexCoord2f( texCoord[1].x,      texCoord[1].y);
+            glVertex3f(vertices[2].pos.x,  vertices[2].pos.z,  vertices[2].pos.y);
         glEnd();
     }
 
@@ -232,14 +194,14 @@ void vismaskedwall_t::draw()
 /**
  * Set all the colors in the array to that specified.
  */
-static void applyUniformColor(int count, dgl_color_t *colors, float const *rgba)
+static void applyUniformColor(int count, dgl_color_t *colors, Vector4f const &rgba)
 {
     for(; count-- > 0; colors++)
     {
-        colors->rgba[CR] = (byte) (255 * rgba[CR]);
-        colors->rgba[CG] = (byte) (255 * rgba[CG]);
-        colors->rgba[CB] = (byte) (255 * rgba[CB]);
-        colors->rgba[CA] = (byte) (255 * rgba[CA]);
+        colors->rgba[CR] = (byte) (255 * rgba.x);
+        colors->rgba[CG] = (byte) (255 * rgba.y);
+        colors->rgba[CB] = (byte) (255 * rgba.z);
+        colors->rgba[CA] = (byte) (255 * rgba.w);
     }
 }
 
@@ -284,29 +246,29 @@ static int lightSpriteWorker(VectorLight const *vlight, void *context)
  * Calculate vertex lighting.
  */
 static void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
-    uint vLightListIdx, uint maxLights, float const *ambient)
+    uint vLightListIdx, uint maxLights, Vector4f const &ambient)
 {
     Vector3f const saturated(1, 1, 1);
-    lightspriteworker_params_t parms;
+    lightspriteworker_params_t parm;
 
     for(int i = 0; i < count; ++i, out++, normal++)
     {
         // Begin with total darkness.
-        parms.color        = Vector3f();
-        parms.extra        = Vector3f();
-        parms.normal       = Vector3f(normal->xyz);
-        parms.max          = maxLights;
-        parms.numProcessed = 0;
+        parm.color        = Vector3f();
+        parm.extra        = Vector3f();
+        parm.normal       = Vector3f(normal->xyz);
+        parm.max          = maxLights;
+        parm.numProcessed = 0;
 
-        VL_ListIterator(vLightListIdx, lightSpriteWorker, &parms);
+        VL_ListIterator(vLightListIdx, lightSpriteWorker, &parm);
 
         // Check for ambient and convert to ubyte.
-        Vector3f color = (parms.color.max(ambient) + parms.extra).min(saturated);
+        Vector3f color = (parm.color.max(ambient) + parm.extra).min(saturated);
 
         out->rgba[CR] = byte( 255 * color.x );
         out->rgba[CG] = byte( 255 * color.y );
         out->rgba[CB] = byte( 255 * color.z );
-        out->rgba[CA] = byte( 255 * ambient[CA] );
+        out->rgba[CA] = byte( 255 * ambient.w );
     }
 }
 
@@ -432,7 +394,7 @@ static MaterialVariant *chooseSpriteMaterial(vissprite_t const &p)
     }
 
     // Use the pre-chosen sprite.
-    return reinterpret_cast<MaterialVariant *>(p.material);
+    return p.material;
 }
 
 static int drawVectorLightWorker(VectorLight const *vlight, void *context)
@@ -460,28 +422,22 @@ void vissprite_t::setup(Vector3d const &center, coord_t distToEye,
     DENG2_ASSERT((tClass == 0 && tMap == 0) ||
                  (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
 
-    p.center[VX]      = center.x;
-    p.center[VY]      = center.y;
-    p.center[VZ]      = center.z;
-    p.srvo[VX]        = visOffset.x;
-    p.srvo[VY]        = visOffset.y;
-    p.srvo[VZ]        = visOffset.z;
-    p._distance       = distToEye;
-    p.bspLeaf         = bspLeafAtOrigin;
-    p.viewAligned     = viewAligned;
-    p.noZWrite        = CPP_BOOL(noSpriteZWrite);
+    p.center        = center;
+    p.srvo          = visOffset;
+    p._distance     = distToEye;
+    p.bspLeaf       = bspLeafAtOrigin;
+    p.viewAligned   = viewAligned;
+    p.noZWrite      = CPP_BOOL(noSpriteZWrite);
 
-    p.material        = variant;
-    p.matFlip[0]      = matFlipS;
-    p.matFlip[1]      = matFlipT;
-    p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
+    p.material      = variant;
+    p.matFlip[0]    = matFlipS;
+    p.matFlip[1]    = matFlipT;
+    p.blendmode     = (useSpriteBlend? blendMode : BM_NORMAL);
 
-    p.ambientColor[0] = ambientColor.x;
-    p.ambientColor[1] = ambientColor.y;
-    p.ambientColor[2] = ambientColor.z;
-    p.ambientColor[3] = (useSpriteAlpha? ambientColor.w : 1);
+    p.ambientColor  = ambientColor;
+    if(!useSpriteAlpha) p.ambientColor.w = 1;
 
-    p.vLightListIdx   = vLightListIdx;
+    p.vLightListIdx = vLightListIdx;
 }
 
 void vissprite_t::draw()
@@ -502,7 +458,7 @@ void vissprite_t::draw()
     if(material)
     {
         // Ensure this variant has been prepared.
-        ms = &reinterpret_cast<MaterialVariant *>(material)->prepare();
+        ms = &material->prepare();
 
         variantspecification_t const &texSpec = ms->texture(MTU_PRIMARY).spec().variant;
         size.width  = ms->width() + texSpec.border * 2;
@@ -517,7 +473,7 @@ void vissprite_t::draw()
 
     // We may want to draw using another material instead.
     MaterialVariant *mat = chooseSpriteMaterial(*this);
-    if(mat != reinterpret_cast<MaterialVariant *>(material))
+    if(mat != material)
     {
         ms = mat? &mat->prepare() : 0;
     }
@@ -533,9 +489,9 @@ void vissprite_t::draw()
     }
 
     // Coordinates to the center of the sprite (game coords).
-    coord_t spriteCenter[3] = { center[VX] + srvo[VX],
-                                center[VY] + srvo[VY],
-                                center[VZ] + srvo[VZ] };
+    coord_t spriteCenter[3] = { center.x + srvo.x,
+                                center.y + srvo.y,
+                                center.z + srvo.z };
 
     coord_t v1[3], v2[3], v3[3], v4[3];
     R_ProjectViewRelativeLine2D(spriteCenter, viewAligned,
@@ -637,14 +593,14 @@ void vissprite_t::draw()
     }
 
     // Need to change blending modes?
-    if(blendMode != BM_NORMAL)
+    if(blendmode != BM_NORMAL)
     {
-        GL_BlendMode(blendMode);
+        GL_BlendMode(blendmode);
     }
 
     // Transparent sprites shouldn't be written to the Z buffer.
-    if(noZWrite || ambientColor[CA] < .98f ||
-       !(blendMode == BM_NORMAL || blendMode == BM_ZEROALPHA))
+    if(noZWrite || ambientColor.w < .98f ||
+       !(blendmode == BM_NORMAL || blendmode == BM_ZEROALPHA))
     {
         restoreZ = true;
         glDepthMask(GL_FALSE);
@@ -698,7 +654,7 @@ void vissprite_t::draw()
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(center[VX], center[VZ], center[VY]);
+        glTranslatef(center.x, center.z, center.y);
 
         coord_t distFromViewer = de::abs(_distance);
         VL_ListIterator(vLightListIdx, drawVectorLightWorker, &distFromViewer);
@@ -717,7 +673,7 @@ void vissprite_t::draw()
     }
 
     // Change back to normal blending?
-    if(blendMode != BM_NORMAL)
+    if(blendmode != BM_NORMAL)
     {
         GL_BlendMode(BM_NORMAL);
     }

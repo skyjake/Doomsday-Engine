@@ -167,7 +167,6 @@ de::Vector3d const Rend_ViewerOrigin();
  */
 float Rend_ExtraLightDelta();
 
-void Rend_ApplyTorchLight(float *color3, float distance);
 void Rend_ApplyTorchLight(de::Vector4f &color, float distance);
 
 /**

@@ -39,39 +39,32 @@ class BspLeaf;
 struct vismaskedwall_t : public IVissprite
 {
     de::Vector3d _origin;
-    coord_t _distance;       ///< Vissprites are sorted by distance.
-    void *material;          ///< MaterialVariant
-    blendmode_t blendMode;   ///< Blendmode to be used when drawing (two sided mid textures only)
-    struct wall_vertex_s {
-        float pos[3];        ///< x y and z coordinates.
-        float color[4];
-    } vertices[4];
+    coord_t _distance;            ///< Vissprites are sorted by distance.
+    MaterialVariant *material;
+    blendmode_t blendmode;
+    struct Vertex {
+        de::Vector3f pos;
+        de::Vector4f rgba;
+    } vertices[4];                ///< [bottom-left, top-left, bottom-right, top-right ]
 
-    double texOffset[2];
-    float texCoord[2][2];    ///< u and v coordinates.
+    de::Vector2d texOffset;
+    de::Vector2f texCoord[2];     ///< [top-left, bottom-right]
 
-    DGLuint modTex;          ///< Texture to modulate with.
-    float modTexCoord[2][2]; ///< [top-left, bottom-right][x, y]
-    float modColor[4];
+    DGLuint modTex;               ///< Texture to modulate with.
+    de::Vector2f modTexCoord[2];  ///< [top-left, bottom-right]
+    de::Vector4f modColor;
 
 public:
     vismaskedwall_t()
-        : _origin  (0, 0, 0)
-        , _distance(0)
+        : _distance(0)
         , material (0)
-        , blendMode(BM_NORMAL)
+        , blendmode(BM_NORMAL)
         , modTex   (0)
-    {
-        de::zap(vertices);
-        de::zap(texOffset);
-        de::zap(texCoord);
-        de::zap(modTexCoord);
-        de::zap(modColor);
-    }
+    {}
     virtual ~vismaskedwall_t() {}
 
     // Implements IVissprite.
-    coord_t distance() const { return _distance; }
+    de::ddouble distance() const { return _distance; }
     de::Vector3d const &origin() const { return _origin; }
     void draw();
     void init() { *this = vismaskedwall_t(); }
@@ -87,47 +80,43 @@ struct vissprite_t : public IVissprite
 {
 // Position/Orientation/Scale:
     de::Vector3d _origin;
-    coord_t _distance;      ///< Vissprites are sorted by distance.
-    coord_t center[3];      ///< The real center point.
-    coord_t srvo[3];        ///< Short-range visual offset.
+    coord_t _distance;          ///< Vissprites are sorted by distance.
+    de::Vector3d center;        ///< The real center point.
+    de::Vector3d srvo;          ///< Short-range visual offset.
     bool viewAligned;
     BspLeaf *bspLeaf;
 
 // Appearance:
     bool noZWrite;
-    blendmode_t blendMode;
-    void *material;         ///< MaterialVariant
-    bool matFlip[2];        ///< [S, T] Flip along the specified axis.
-    float ambientColor[4];
+    blendmode_t blendmode;
+    MaterialVariant *material;
+    bool matFlip[2];            ///< [S, T] Flip along the specified axis.
+    de::Vector4f ambientColor;
     uint vLightListIdx;
 
 public:
     vissprite_t()
-        : _origin      (0, 0, 0)
-        , _distance    (0)
+        : _distance    (0)
         , viewAligned  (false)
         , bspLeaf      (0)
         , noZWrite     (false)
-        , blendMode    (BM_NORMAL)
+        , blendmode    (BM_NORMAL)
         , material     (0)
         , vLightListIdx(0)
     {
-        de::zap(center);
-        de::zap(srvo);
         de::zap(matFlip);
-        de::zap(ambientColor);
     }
     virtual ~vissprite_t() {}
 
     void setup(de::Vector3d const &center, coord_t distToEye, de::Vector3d const &visOffset,
         float secFloor, float secCeil, float floorClip, float top,
-        Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
+        Material &material, bool matFlipS, bool matFlipT, blendmode_t blendmode,
         de::Vector4f const &ambientColor,
         uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
         bool floorAdjust, bool fitTop, bool fitBottom, bool viewAligned);
 
     // Implements IVissprite.
-    coord_t distance() const { return _distance; }
+    de::ddouble distance() const { return _distance; }
     de::Vector3d const &origin() const { return _origin; }
     void draw();
 
@@ -155,7 +144,7 @@ struct visflare_t : public IVissprite
     coord_t _distance;     ///< Vissprites are sorted by distance.
     byte flags;            ///< @ref rendFlareFlags.
     int size;
-    float color[3];
+    de::Vector3f color;
     byte factor;
     float xOff;
     DGLuint tex;           ///< Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
@@ -165,8 +154,7 @@ struct visflare_t : public IVissprite
 
 public:
     visflare_t()
-        : _origin     (0, 0, 0)
-        , _distance   (0)
+        : _distance   (0)
         , flags       (0)
         , size        (0)
         , factor      (0)
@@ -175,16 +163,14 @@ public:
         , mul         (0)
         , isDecoration(false)
         , lumIdx      (0)
-    {
-        de::zap(color);
-    }
+    {}
     virtual ~visflare_t() {}
 
     void drawPrimary();
     void drawSecondarys();
 
     // Implements IVissprite.
-    coord_t distance() const { return _distance; }
+    de::ddouble distance() const { return _distance; }
     de::Vector3d const &origin() const { return _origin; }
     void draw() { drawPrimary(); }
 
@@ -203,7 +189,7 @@ struct rendpspriteparams_t
     float texOffset[2];
     dd_bool texFlip[2]; // {X, Y} Flip along the specified axis.
 
-    float ambientColor[4];
+    de::Vector4f ambientColor;
     uint vLightListIdx;
 };
 

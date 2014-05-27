@@ -63,7 +63,7 @@ struct vismodel_t : public IVissprite
     int             flags;             ///< Mobj flags.
     int             tmap;
 
-    float           ambientColor[4];
+    de::Vector4f    ambientColor;
     uint            vLightListIdx;
 
     float           shineYawOffset;
@@ -79,7 +79,6 @@ public:
         , alwaysInterpolate(false)
         , id(0)
         , selector(0)
-        , _origin(0, 0, 0)
         , _distance(0)
         , gzt(0)
         , yaw(0)
@@ -100,7 +99,6 @@ public:
         , shinepspriteCoordSpace(false)
     {
         de::zap(srvo);
-        de::zap(ambientColor);
     }
     virtual ~vismodel_t() {}
 
@@ -113,7 +111,7 @@ public:
         bool viewAlign, bool fullBright, bool alwaysInterpolate);
 
     // Implements IVissprite.
-    coord_t distance() const { return _distance; }
+    de::ddouble distance() const { return _distance; }
     de::Vector3d const &origin() const { return _origin; }
     void draw();
 

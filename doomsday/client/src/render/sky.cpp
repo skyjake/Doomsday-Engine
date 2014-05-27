@@ -393,10 +393,7 @@ DENG2_PIMPL(Sky)
             vmodel.alwaysInterpolate = true;
             App_ResourceSystem().setModelDefFrame(*minfo.model, minfo.frame);
             vmodel.yaw               = minfo.yaw;
-            for(int c = 0; c < 4; ++c)
-            {
-                vmodel.ambientColor[c] = minfo.def->color[c];
-            }
+            vmodel.ambientColor      = Vector4f(minfo.def->color);
             vmodel.vLightListIdx     = 0;
             vmodel.shineTranslateWithViewerPos = true;
 

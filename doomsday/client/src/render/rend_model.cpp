@@ -662,7 +662,7 @@ static void drawSubmodel(uint number, vismodel_t const &vmodel)
     if(mf->scale == Vector3f(0, 0, 0))
         return;
 
-    float alpha = vmodel.ambientColor[CA];
+    float alpha = vmodel.ambientColor.w;
 
     // Is the submodel-defined alpha multiplier in effect?
     // With df_brightshadow2, the alpha multiplier will be applied anyway.
@@ -818,14 +818,14 @@ static void drawSubmodel(uint number, vismodel_t const &vmodel)
     else if(!vmodel.vLightListIdx)
     {
         // Lit uniformly.
-        ambient = Vector4f(vmodel.ambientColor, alpha);
+        ambient = Vector4f(vmodel.ambientColor.xyz(), alpha);
         Mod_FixedVertexColors(numVerts, modelColorCoords,
                               (ambient * 255).toVector4ub());
     }
     else
     {
         // Lit normally.
-        ambient = Vector4f(vmodel.ambientColor, alpha);
+        ambient = Vector4f(vmodel.ambientColor.xyz(), alpha);
 
         Mod_VertexColors(modelColorCoords, numVerts,
                          modelNormCoords, vmodel.vLightListIdx, modelLight + 1,
@@ -1099,11 +1099,7 @@ void vismodel_t::setup(Vector3d const &origin, coord_t distToEye,
 
     p.shineTranslateWithViewerPos = p.shinepspriteCoordSpace = false;
 
-    p.ambientColor[0]   = ambientColor.x;
-    p.ambientColor[1]   = ambientColor.y;
-    p.ambientColor[2]   = ambientColor.z;
-    p.ambientColor[3]   = ambientColor.w;
-
+    p.ambientColor      = ambientColor.x;
     p.vLightListIdx     = vLightListIdx;
 }
 
