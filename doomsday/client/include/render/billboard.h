@@ -26,6 +26,7 @@
 #include "dd_types.h"
 #include "Material"
 #include "MaterialVariantSpec"
+#include "render/ivissprite.h"
 
 class BspLeaf;
 
@@ -35,25 +36,122 @@ class BspLeaf;
  * A sort of a sprite, I guess... Masked walls must be rendered sorted with
  * sprites, so no artifacts appear when sprites are seen behind masked walls.
  */
-struct drawmaskedwallparams_t
+struct vismaskedwall_t : public IVissprite
 {
-    void *material; /// MaterialVariant
-    blendmode_t blendMode; ///< Blendmode to be used when drawing
-                               /// (two sided mid textures only)
+    void *material;          ///< MaterialVariant
+    blendmode_t blendMode;   ///< Blendmode to be used when drawing (two sided mid textures only)
     struct wall_vertex_s {
-        float pos[3]; ///< x y and z coordinates.
+        float pos[3];        ///< x y and z coordinates.
         float color[4];
     } vertices[4];
 
     double texOffset[2];
-    float texCoord[2][2]; ///< u and v coordinates.
+    float texCoord[2][2];    ///< u and v coordinates.
 
-    DGLuint modTex; ///< Texture to modulate with.
+    DGLuint modTex;          ///< Texture to modulate with.
     float modTexCoord[2][2]; ///< [top-left, bottom-right][x, y]
     float modColor[4];
+
+    coord_t _distance;       ///< Vissprites are sorted by distance.
+    de::Vector3d _origin;
+
+public:
+    virtual ~vismaskedwall_t() {}
+
+    // Implements IVissprite.
+    coord_t distance() const { return _distance; }
+    de::Vector3d const &origin() const { return _origin; }
+    void draw();
 };
 
-void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms);
+#define MAX_VISSPRITE_LIGHTS (10)
+
+/**
+ * Billboard drawing arguments for a map entity, sprite visualization.
+ * Sprites look better with Z buffer writes turned off.
+ */
+struct vissprite_t : public IVissprite
+{
+// Position/Orientation/Scale
+    coord_t center[3];      ///< The real center point.
+    coord_t srvo[3];        ///< Short-range visual offset.
+    dd_bool viewAligned;
+
+// Appearance
+    dd_bool noZWrite;
+    blendmode_t blendMode;
+
+    // Material:
+    void *material;         ///< MaterialVariant
+    dd_bool matFlip[2];     ///< [S, T] Flip along the specified axis.
+
+    // Lighting/color:
+    float ambientColor[4];
+    uint vLightListIdx;
+
+// Misc
+    BspLeaf *bspLeaf;
+
+    coord_t _distance;      ///< Vissprites are sorted by distance.
+    de::Vector3d _origin;
+
+public:
+    virtual ~vissprite_t() {}
+
+    void setup(de::Vector3d const &center, coord_t distToEye, de::Vector3d const &visOffset,
+        float secFloor, float secCeil, float floorClip, float top,
+        Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
+        de::Vector4f const &ambientColor,
+        uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
+        bool floorAdjust, bool fitTop, bool fitBottom, bool viewAligned);
+
+    // Implements IVissprite.
+    coord_t distance() const { return _distance; }
+    de::Vector3d const &origin() const { return _origin; }
+    void draw();
+};
+
+de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
+
+/**
+ * @defgroup rendFlareFlags  Flare renderer flags
+ * @{
+ */
+#define RFF_NO_PRIMARY      0x1 ///< Do not draw a primary flare (aka halo).
+#define RFF_NO_TURN         0x2 ///< Flares do not turn in response to viewangle/viewdir
+/**@}*/
+
+/**
+ * Billboard drawing arguments for a lens flare.
+ *
+ * @see H_RenderHalo()
+ */
+struct visflare_t : public IVissprite
+{
+    byte flags;            ///< @ref rendFlareFlags.
+    int size;
+    float color[3];
+    byte factor;
+    float xOff;
+    DGLuint tex;           ///< Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
+    float mul;             ///< Flare brightness factor.
+    dd_bool isDecoration;
+    int lumIdx;
+
+    coord_t _distance;     ///< Vissprites are sorted by distance.
+    de::Vector3d _origin;
+
+public:
+    virtual ~visflare_t() {}
+
+    void drawPrimary();
+    void drawSecondarys();
+
+    // Implements IVissprite.
+    coord_t distance() const { return _distance; }
+    de::Vector3d const &origin() const { return _origin; }
+    void draw() { drawPrimary(); }
+};
 
 /**
  * Billboard drawing arguments for a "player" sprite (HUD sprite).
@@ -72,63 +170,6 @@ struct rendpspriteparams_t
 };
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms);
-
-/**
- * Billboard drawing arguments for a map entity, sprite visualization.
- */
-struct drawspriteparams_t
-{
-// Position/Orientation/Scale
-    coord_t center[3]; // The real center point.
-    coord_t srvo[3]; // Short-range visual offset.
-    coord_t distance; // Distance from viewer.
-    dd_bool viewAligned;
-
-// Appearance
-    dd_bool noZWrite;
-    blendmode_t blendMode;
-
-    // Material:
-    void *material; /// MaterialVariant
-    dd_bool matFlip[2]; // [S, T] Flip along the specified axis.
-
-    // Lighting/color:
-    float ambientColor[4];
-    uint vLightListIdx;
-
-// Misc
-    BspLeaf *bspLeaf;
-};
-
-void Rend_DrawSprite(drawspriteparams_t const &parms);
-
-de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
-
-/**
- * @defgroup rendFlareFlags  Flare renderer flags
- * @{
- */
-#define RFF_NO_PRIMARY      0x1 ///< Do not draw a primary flare (aka halo).
-#define RFF_NO_TURN         0x2 ///< Flares do not turn in response to viewangle/viewdir
-/**@}*/
-
-/**
- * Billboard drawing arguments for a lens flare.
- *
- * @see H_RenderHalo()
- */
-struct drawflareparams_t
-{
-    byte flags; // @ref rendFlareFlags.
-    int size;
-    float color[3];
-    byte factor;
-    float xOff;
-    DGLuint tex; // Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
-    float mul; // Flare brightness factor.
-    dd_bool isDecoration;
-    int lumIdx;
-};
 
 DENG_EXTERN_C int alwaysAlign;
 DENG_EXTERN_C int spriteLight, useSpriteAlpha, useSpriteBlend;

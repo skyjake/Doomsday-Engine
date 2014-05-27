@@ -1,7 +1,6 @@
-/** @file vissprite.h  Projected visible sprite ("vissprite") management.
+/** @file vissprite.h  Vissprite pool.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,66 +17,68 @@
  * 02110-1301 USA</small>
  */
 
-#ifdef __CLIENT__
 #ifndef DENG_CLIENT_RENDER_VISSPRITE_H
 #define DENG_CLIENT_RENDER_VISSPRITE_H
 
-#include <de/Vector>
-
 #include "render/billboard.h"
-#include "rend_model.h"
-
-#define MAXVISSPRITES   8192
-
-// These constants are used as the type of vissprite_s.
-typedef enum {
-    VSPR_SPRITE,
-    VSPR_MASKED_WALL,
-    VSPR_MODEL,
-    VSPR_FLARE
-} visspritetype_t;
-
-#define MAX_VISSPRITE_LIGHTS    (10)
+#include "render/ivissprite.h"
+#include "render/rend_model.h"
+#include <QList>
 
 /**
- * vissprite_t is a mobj or masked wall that will be drawn refresh.
+ * Vissprite pool.
+ *
+ * @ingroup render
  */
-typedef struct vissprite_s {
-    struct vissprite_s *prev, *next;
-    visspritetype_t type; // VSPR_* type of vissprite.
-    coord_t distance; // Vissprites are sorted by distance.
-    de::Vector3d origin;
+class VisspritePool
+{
+public:
+    // Sorted list of vissprites.
+    typedef QList<IVissprite *> SortedVissprites;
 
-    // An anonymous union for the data.
-    union vissprite_data_u {
-        drawspriteparams_t sprite;
-        drawmaskedwallparams_t wall;
-        drawmodelparams_t model;
-        drawflareparams_t flare;
-    } data;
-} vissprite_t;
+public:
+    VisspritePool();
 
-#define VS_SPRITE(v)        (&((v)->data.sprite))
-#define VS_WALL(v)          (&((v)->data.wall))
-#define VS_MODEL(v)         (&((v)->data.model))
-#define VS_FLARE(v)         (&((v)->data.flare))
+    /**
+     * To be called at the start of the a render frame to return all vissprites
+     * currently in use to the unused list.
+     */
+    void reset();
 
-void VisSprite_SetupSprite(drawspriteparams_t &p,
-    de::Vector3d const &center, coord_t distToEye, de::Vector3d const &visOffset,
-    float secFloor, float secCeil, float floorClip, float top,
-    Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    de::Vector4f const &ambientColor,
-    uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
-    bool floorAdjust, bool fitTop, bool fitBottom, bool viewAligned);
+    /**
+     * Retrieve an unused flare from the vissprite pool (ownership is retained).
+     */
+    visflare_t *newFlare();
 
-void VisSprite_SetupModel(drawmodelparams_t &p,
-    de::Vector3d const &origin, coord_t distToEye, de::Vector3d const &visOffset,
-    float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
-    ModelDef *mf, ModelDef *nextMF, float inter,
-    de::Vector4f const &ambientColor,
-    uint vLightListIdx,
-    int id, int selector, BspLeaf *bspLeafAtOrigin, int mobjDDFlags, int tmap,
-    bool viewAlign, bool fullBright, bool alwaysInterpolate);
+    /**
+     * Retrieve an unused masked wall from the vissprite pool (ownership is retained).
+     */
+    vismaskedwall_t *newMaskedWall();
+
+    /**
+     * Retrieve an unused model from the vissprite pool (ownership is retained).
+     */
+    vismodel_t *newModel();
+
+    /**
+     * Retrieve an unused sprite from the vissprite pool (ownership is retained).
+     */
+    vissprite_t *newSprite();
+
+    /**
+     * Provides access to the sorted list of @em all vissprites currently in use.
+     */
+    SortedVissprites const &sorted() const;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+// -----------------------------------------------------------------------------
+
+#include "BspLeaf"
+
+struct ModelDef;
 
 typedef enum {
     VPSPR_SPRITE,
@@ -119,16 +120,6 @@ typedef struct vispsprite_s {
     } data;
 } vispsprite_t;
 
-DENG_EXTERN_C vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
-DENG_EXTERN_C vissprite_t visSprSortedHead;
 DENG_EXTERN_C vispsprite_t visPSprites[DDMAXPSPRITES];
 
-/// To be called at the start of the current render frame to clear the vissprite list.
-void R_ClearVisSprites();
-
-vissprite_t *R_NewVisSprite(visspritetype_t type);
-
-void R_SortVisSprites();
-
 #endif // DENG_CLIENT_RENDER_VISSPRITE_H
-#endif // __CLIENT__

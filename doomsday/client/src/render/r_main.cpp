@@ -26,6 +26,7 @@
 
 #include "render/billboard.h"
 #include "render/rend_main.h"
+#include "render/rend_model.h"
 #include "render/vissprite.h"
 #include "render/vlight.h"
 
@@ -192,7 +193,7 @@ void Rend_Draw2DPlayerSprites()
     }
 }
 
-static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_t *spr)
+static void setupModelParamsForVisPSprite(vismodel_t *params, vispsprite_t *spr)
 {
     params->mf = spr->data.model.mf;
     params->nextMF = spr->data.model.nextMF;
@@ -201,14 +202,14 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
     params->id = spr->data.model.id;
     params->selector = spr->data.model.selector;
     params->flags = spr->data.model.flags;
-    params->origin[VX] = spr->origin[VX];
-    params->origin[VY] = spr->origin[VY];
-    params->origin[VZ] = spr->origin[VZ];
+    params->_origin[VX] = spr->origin[VX];
+    params->_origin[VY] = spr->origin[VY];
+    params->_origin[VZ] = spr->origin[VZ];
     params->srvo[VX] = spr->data.model.visOff[VX];
     params->srvo[VY] = spr->data.model.visOff[VY];
     params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
     params->gzt = spr->data.model.gzt;
-    params->distance = -10;
+    params->_distance = -10;
     params->yaw = spr->data.model.yaw;
     params->extraYawAngle = 0;
     params->yawAngleOffset = spr->data.model.yawAngleOffset;
@@ -236,7 +237,7 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
 
         if(useBias && map.hasLightGrid())
         {
-            Vector4f color = map.lightGrid().evaluate(params->origin);
+            Vector4f color = map.lightGrid().evaluate(params->origin());
             // Apply light range compression.
             for(int i = 0; i < 3; ++i)
             {
@@ -265,7 +266,7 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
             }
         }
 
-        Rend_ApplyTorchLight(params->ambientColor, params->distance);
+        Rend_ApplyTorchLight(params->ambientColor, params->distance());
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
@@ -297,8 +298,8 @@ void Rend_Draw3DPlayerSprites()
             altDepth.target().clear(GLTarget::DepthStencil);
         }
 
-        drawmodelparams_t parms; zap(parms);
-        setupModelParamsForVisPSprite(&parms, spr);
-        Rend_DrawModel(parms);
+        vismodel_t dmodel; de::zap(dmodel);
+        setupModelParamsForVisPSprite(&dmodel, spr);
+        dmodel.draw();
     }
 }

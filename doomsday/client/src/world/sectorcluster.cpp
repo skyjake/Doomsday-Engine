@@ -3698,6 +3698,7 @@ BiasSurface &SectorCluster::biasSurface(MapElement &mapElement, int geomId)
     if(gdata->biasSurface.isNull())
     {
         gdata->biasSurface.reset(new BiasSurface(countIlluminationPoints(mapElement, geomId), this));
+        d->biasSurfaceGeomMap.insert(gdata->biasSurface.data(), gdata);
     }
     return *gdata->biasSurface;
 }

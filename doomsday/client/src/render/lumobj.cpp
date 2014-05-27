@@ -23,7 +23,7 @@
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_render.h"
-
+#include "clientapp.h"
 #include "world/map.h"
 
 #include "render/lumobj.h"
@@ -225,16 +225,16 @@ void Lumobj::generateFlare(Vector3d const &eye, double distFromEye)
     /// @todo Remove this limitation.
     if(!d->source) return;
 
-    vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
+    visflare_t *vis = ClientApp::renderSystem().vissprites().newFlare();
 
-    vis->origin                  = origin();
-    vis->distance                = distFromEye;
-    V3f_Set(vis->data.flare.color, d->color.x, d->color.y, d->color.z);
-    vis->data.flare.mul          = d->source->occlusion(eye) * attenuation(distFromEye);
-    vis->data.flare.size         = d->flareSize > 0? de::max(1.f, d->flareSize * 60 * (50 + haloSize) / 100.0f) : 0;
-    vis->data.flare.tex          = d->flareTex;
-    vis->data.flare.lumIdx       = indexInMap();
-    vis->data.flare.isDecoration = true;
+    vis->_origin      = origin();
+    vis->_distance    = distFromEye;
+    V3f_Set(vis->color, d->color.x, d->color.y, d->color.z);
+    vis->mul          = d->source->occlusion(eye) * attenuation(distFromEye);
+    vis->size         = d->flareSize > 0? de::max(1.f, d->flareSize * 60 * (50 + haloSize) / 100.0f) : 0;
+    vis->tex          = d->flareTex;
+    vis->lumIdx       = indexInMap();
+    vis->isDecoration = true;
 }
 
 void Lumobj::consoleRegister() // static

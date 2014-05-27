@@ -32,6 +32,7 @@
 #include "WallEdge"
 #include <de/Vector>
 #include <de/Matrix>
+#include <QList>
 
 class Sector;
 class SectorCluster;
@@ -297,6 +298,12 @@ bool Rend_NearFadeOpacity(de::WallEdgeSection const &leftSection,
 bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
     blendmode_t blendmode, de::MaterialSnapshot const &ms);
 
+/**
+ * This doesn't create a rendering primitive but a vissprite! The vissprite
+ * represents the masked poly and will be rendered during the rendering
+ * of sprites. This is necessary because all masked polygons must be
+ * rendered back-to-front, or there will be alpha artifacts along edges.
+ */
 void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     de::Vector4f const &ambientLightColor, de::Vector3f const &surfaceColor,
     float glowing, float opacity, blendmode_t blendmode,
@@ -305,5 +312,8 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     float surfaceLightLevelDL, float surfaceLightLevelDR, de::Matrix3f const &surfaceTangentMatrix,
     de::WallEdgeSection const *leftSection = 0, de::WallEdgeSection const *rightSection = 0,
     de::Vector3f const *surfaceColor2 = 0);
+
+typedef QList<visflare_t *> FlareSources;
+FlareSources &Rend_SecondaryFlareSources();
 
 #endif // CLIENT_RENDER_MAIN_H

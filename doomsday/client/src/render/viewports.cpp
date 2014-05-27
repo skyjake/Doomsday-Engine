@@ -684,7 +684,7 @@ void R_SetupFrame(player_t *player)
 
     if(!freezeRLs)
     {
-        R_ClearVisSprites();
+        ClientApp::renderSystem().vissprites().reset();
     }
 
 #undef MINEXTRALIGHTFRAMES
@@ -936,7 +936,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         player->shared.mo->ddFlags = oldFlags;
     }
 
-    ClientApp::renderSystem().printPoolInfo();
+    ClientApp::renderSystem().printIndicesInfo();
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
     {

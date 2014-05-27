@@ -650,7 +650,7 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
     return skin;
 }
 
-static void drawSubmodel(uint number, drawmodelparams_t const &parm)
+static void drawSubmodel(uint number, vismodel_t const &parm)
 {
     int const zSign = (parm.mirror? -1 : 1);
     ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
@@ -743,11 +743,11 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     glPushMatrix();
 
     // Model space => World space
-    glTranslatef(parm.origin[VX] + parm.srvo[VX] +
+    glTranslatef(parm.origin().x + parm.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
-                 parm.origin[VZ] + parm.srvo[VZ] +
+                 parm.origin().z + parm.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
-                 parm.origin[VY] + parm.srvo[VY] + zSign *
+                 parm.origin().y + parm.srvo[VY] + zSign *
                    de::lerp(mf->offset.z, mfNext->offset.z, inter));
 
     if(parm.extraYawAngle || parm.extraPitchAngle)
@@ -786,7 +786,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         }
 
         // Determine the LOD we will be using.
-        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * parm.distance, mdl.lodCount() - 1));
+        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * parm.distance(), mdl.lodCount() - 1));
     }
     else
     {
@@ -804,7 +804,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter = Vector3f(parm.origin[VX], parm.origin[VY], (parm.origin[VZ] + parm.gzt) * 2)
+    modelCenter = Vector3f(parm.origin().x, parm.origin().y, (parm.origin().z + parm.gzt) * 2)
             + Vector3d(parm.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.
@@ -1060,28 +1060,77 @@ static int drawLightVectorWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_DrawModel(drawmodelparams_t const &parm)
+void vismodel_t::setup(Vector3d const &origin, coord_t distToEye,
+    Vector3d const &visOffset, float gzt, float yaw, float yawAngleOffset,
+    float pitch, float pitchAngleOffset, ModelDef *mf, ModelDef *nextMF, float inter,
+    Vector4f const &ambientColor, uint vLightListIdx,
+    int id, int selector, BspLeaf * /*bspLeafAtOrigin*/, int mobjDDFlags, int tmap,
+    bool viewAlign, bool /*fullBright*/, bool alwaysInterpolate)
 {
+    vismodel_t &p = *this;
+
+    p.mf                = mf;
+    p.nextMF            = nextMF;
+    p.inter             = inter;
+    p.alwaysInterpolate = alwaysInterpolate;
+    p.id                = id;
+    p.selector          = selector;
+    p.flags             = mobjDDFlags;
+    p.tmap              = tmap;
+    p._origin[VX]       = origin.x;
+    p._origin[VY]       = origin.y;
+    p._origin[VZ]       = origin.z;
+    p.srvo[VX]          = visOffset.x;
+    p.srvo[VY]          = visOffset.y;
+    p.srvo[VZ]          = visOffset.z;
+    p.gzt               = gzt;
+    p._distance         = distToEye;
+    p.yaw               = yaw;
+    p.extraYawAngle     = 0;
+    p.yawAngleOffset    = yawAngleOffset;
+    p.pitch             = pitch;
+    p.extraPitchAngle   = 0;
+    p.pitchAngleOffset  = pitchAngleOffset;
+    p.extraScale        = 0;
+    p.viewAlign         = viewAlign;
+    p.mirror            = 0;
+    p.shineYawOffset    = 0;
+    p.shinePitchOffset  = 0;
+
+    p.shineTranslateWithViewerPos = p.shinepspriteCoordSpace = false;
+
+    p.ambientColor[0]   = ambientColor.x;
+    p.ambientColor[1]   = ambientColor.y;
+    p.ambientColor[2]   = ambientColor.z;
+    p.ambientColor[3]   = ambientColor.w;
+
+    p.vLightListIdx     = vLightListIdx;
+}
+
+void vismodel_t::draw()
+{
+    vismodel_t &p = *this;
+
     DENG2_ASSERT(inited);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(!parm.mf) return;
+    if(!p.mf) return;
 
     // Render all the submodels of this model.
-    for(uint i = 0; i < parm.mf->subCount(); ++i)
+    for(uint i = 0; i < p.mf->subCount(); ++i)
     {
-        if(parm.mf->subModelId(i))
+        if(p.mf->subModelId(i))
         {
-            bool disableZ = (parm.mf->flags & MFF_DISABLE_Z_WRITE ||
-                             parm.mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
+            bool disableZ = (p.mf->flags & MFF_DISABLE_Z_WRITE ||
+                             p.mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
 
             if(disableZ)
             {
                 glDepthMask(GL_FALSE);
             }
 
-            drawSubmodel(i, parm);
+            drawSubmodel(i, p);
 
             if(disableZ)
             {
@@ -1090,7 +1139,7 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
         }
     }
 
-    if(devMobjVLights && parm.vLightListIdx)
+    if(devMobjVLights && p.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
@@ -1099,10 +1148,10 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(parm.origin[VX], parm.origin[VZ], parm.origin[VY]);
+        glTranslatef(p.origin().x, p.origin().z, p.origin().y);
 
-        coord_t distFromViewer = de::abs(parm.distance);
-        VL_ListIterator(parm.vLightListIdx, drawLightVectorWorker, &distFromViewer);
+        coord_t distFromViewer = de::abs(p.distance());
+        VL_ListIterator(p.vLightListIdx, drawLightVectorWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

@@ -29,6 +29,7 @@
 #include <de/System>
 #include <de/Vector>
 #include "settingsregister.h"
+#include "render/vissprite.h"
 
 class DrawLists;
 class Material;
@@ -241,14 +242,19 @@ public:
     /**
      * Returns the vertex indice pool.
      */
-    IndicePool &indicePool() const;
+    IndicePool &indices() const;
+
+    /**
+     * Returns the vissprite pool.
+     */
+    VisspritePool &vissprites() const;
 
     /**
      * @note Should be called at the start of each map.
      */
-    void resetPools();
+    void resetIndices();
 
-    void printPoolInfo();
+    void printIndicesInfo();
 
     // System.
     void timeChanged(de::Clock const &);

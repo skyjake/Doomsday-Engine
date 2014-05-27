@@ -23,6 +23,7 @@
 #include "de_platform.h"
 #include "render/r_things.h"
 
+#include "clientapp.h"
 #include "de_render.h"
 #include "dd_main.h" // App_WorldSystem()
 #include "dd_loop.h" // frameTimePos
@@ -127,25 +128,23 @@ static Vector3d mobjOriginSmoothed(mobj_t *mo)
 
 struct findmobjzoriginworker_params_t
 {
-    vissprite_t *vis;
+    coord_t *z;
     mobj_t const *mo;
     bool floorAdjust;
 };
 
-static int findMobjZOriginWorker(Sector *sector, void *parameters)
+static int findMobjZOriginWorker(Sector *sector, void *context)
 {
-    DENG_ASSERT(sector != 0);
-    DENG_ASSERT(parameters != 0);
-    findmobjzoriginworker_params_t *p = (findmobjzoriginworker_params_t *) parameters;
+    findmobjzoriginworker_params_t &p = *static_cast<findmobjzoriginworker_params_t *>(context);
 
-    if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
+    if(p.floorAdjust && p.mo->origin[VZ] == sector->floor().height())
     {
-        p->vis->origin.z = sector->floor().heightSmoothed();
+        (*p.z) = sector->floor().heightSmoothed();
     }
 
-    if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
+    if(p.mo->origin[VZ] + p.mo->height == sector->ceiling().height())
     {
-        p->vis->origin.z = sector->ceiling().heightSmoothed() - p->mo->height;
+        (*p.z) = sector->ceiling().heightSmoothed() - p.mo->height;
     }
 
     return false; // Continue iteration.
@@ -158,22 +157,21 @@ static int findMobjZOriginWorker(Sector *sector, void *parameters)
  *
  * @todo fixme: Should use the visual plane heights of sector clusters.
  */
-static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
+static void findMobjZOrigin(mobj_t &mo, bool floorAdjust, coord_t &z)
 {
-    DENG_ASSERT(mo != 0);
-    DENG_ASSERT(vis != 0);
-
-    findmobjzoriginworker_params_t params; zap(params);
-    params.vis         = vis;
-    params.mo          = mo;
-    params.floorAdjust = floorAdjust;
+    findmobjzoriginworker_params_t parm; de::zap(parm);
+    parm.z           = &z;
+    parm.mo          = &mo;
+    parm.floorAdjust = floorAdjust;
 
     validCount++;
-    Mobj_TouchedSectorsIterator(mo, findMobjZOriginWorker, &params);
+    Mobj_TouchedSectorsIterator(&mo, findMobjZOriginWorker, &parm);
 }
 
 void R_ProjectSprite(mobj_t *mo)
 {
+    RenderSystem &rendSys = ClientApp::renderSystem();
+
     if(!mo) return;
 
     // Not all objects can/will be visualized. Skip this object if:
@@ -195,7 +193,7 @@ void R_ProjectSprite(mobj_t *mo)
     if(!cluster.hasWorldVolume()) return;
 
     // Determine distance to object.
-    Vector3d const moPos = mobjOriginSmoothed(mo);
+    Vector3d moPos = mobjOriginSmoothed(mo);
     coord_t const distFromEye = Rend_PointDist2D(moPos);
 
     // Should we use a 3D model?
@@ -286,12 +284,6 @@ void R_ProjectSprite(mobj_t *mo)
 #undef MAX_OBJECT_RADIUS
     }
 
-    // Store information in a vissprite.
-    vissprite_t *vis = R_NewVisSprite(mf? VSPR_MODEL : VSPR_SPRITE);
-
-    vis->origin   = moPos;
-    vis->distance = distFromEye;
-
     /*
      * The Z origin of the visual should match that of the mobj. When smoothing
      * is enabled this requires examining all touched sector planes in the vicinity.
@@ -302,10 +294,10 @@ void R_ProjectSprite(mobj_t *mo)
     if(!Mobj_OriginBehindVisPlane(mo))
     {
         floorAdjust = de::abs(floor.heightSmoothed() - floor.height()) < 8;
-        findMobjZOrigin(mo, floorAdjust, vis);
+        findMobjZOrigin(*mo, floorAdjust, moPos.z);
     }
 
-    coord_t gzt = vis->origin.z + -tex.origin().y;
+    coord_t gzt = moPos.z + -tex.origin().y;
 
     // Determine floor clipping.
     coord_t floorClip = mo->floorClip;
@@ -315,9 +307,33 @@ void R_ProjectSprite(mobj_t *mo)
         floorClip += Mobj_BobOffset(mo);
     }
 
+    // Determine possible short-range visual offset.
+    Vector3d visOff;
+    if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
+    {
+        if(mo->tics >= 0)
+        {
+            visOff = Vector3d(mo->srvo) * (mo->tics - frameTimePos) / (float) mo->state->tics;
+        }
+
+        if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+           !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
+           !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
+        {
+            // Use the object's speed to calculate a short-range offset.
+            visOff += Vector3d(mo->mom) * frameTimePos;
+        }
+    }
+
     float yaw = 0, pitch = 0;
     if(mf)
     {
+        // Store information in a vissprite.
+        vismodel_t *vmodel = rendSys.vissprites().newModel();
+
+        vmodel->_origin   = moPos;
+        vmodel->_distance = distFromEye;
+
         // Determine the rotation angles (in degrees).
         if(mf->testSubFlag(0, MFF_ALIGN_YAW))
         {
@@ -350,7 +366,7 @@ void R_ProjectSprite(mobj_t *mo)
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
             viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-            Vector2d delta((vis->origin.z + gzt) / 2 - viewData->current.origin.z, distFromEye);
+            Vector2d delta((vmodel->origin().z + gzt) / 2 - viewData->current.origin.z, distFromEye);
 
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
         }
@@ -362,28 +378,32 @@ void R_ProjectSprite(mobj_t *mo)
         {
             pitch = 0;
         }
+
+        Vector4f ambientColor;
+        uint vLightListIdx = 0;
+        evaluateLighting(vmodel->origin(), subspace, vmodel->distance(),
+                         fullbright, ambientColor, &vLightListIdx);
+
+        // Apply uniform alpha (overwritting intensity factor).
+        ambientColor.w = alpha;
+
+        vmodel->setup(vmodel->origin(), vmodel->distance(),
+                     Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                     gzt, yaw, 0, pitch, 0,
+                     mf, nextmf, interp,
+                     ambientColor, vLightListIdx, mo->thinker.id, mo->selector,
+                     &Mobj_BspLeafAtOrigin(*mo),
+                     mo->ddFlags, mo->tmap, viewAlign,
+                     fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
     }
-
-    // Determine possible short-range visual offset.
-    Vector3d visOff;
-    if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
+    else
     {
-        if(mo->tics >= 0)
-        {
-            visOff = Vector3d(mo->srvo) * (mo->tics - frameTimePos) / (float) mo->state->tics;
-        }
+        // Store information in a vissprite.
+        vissprite_t *vsprite = rendSys.vissprites().newSprite();
 
-        if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-           !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
-           !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
-        {
-            // Use the object's speed to calculate a short-range offset.
-            visOff += Vector3d(mo->mom) * frameTimePos;
-        }
-    }
+        vsprite->_origin   = moPos;
+        vsprite->_distance = distFromEye;
 
-    if(!mf)
-    {
         bool const brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW) != 0;
         bool const fitTop       = (mo->ddFlags & DDMF_FITTOP)       != 0;
         bool const fitBottom    = (mo->ddFlags & DDMF_NOFITBOTTOM)  == 0;
@@ -418,41 +438,22 @@ void R_ProjectSprite(mobj_t *mo)
         // Adjust by the floor clip.
         gzt -= floorClip;
 
-        Vector3d const origin(vis->origin.x, vis->origin.y, gzt - ms.height() / 2.0f);
+        Vector3d const origin(vsprite->origin().x, vsprite->origin().y, gzt - ms.height() / 2.0f);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(origin, subspace, vis->distance, fullbright,
+        evaluateLighting(origin, subspace, vsprite->distance(), fullbright,
                          ambientColor, &vLightListIdx);
 
         // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;
 
-        VisSprite_SetupSprite(vis->data.sprite, origin, vis->distance, visOff,
-                              floor.heightSmoothed(), ceiling.heightSmoothed(),
-                              floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
-                              ambientColor, vLightListIdx,
-                              mo->tclass, mo->tmap,
-                              &Mobj_BspLeafAtOrigin(*mo),
-                              floorAdjust, fitTop, fitBottom, viewAlign);
-    }
-    else
-    {
-        Vector4f ambientColor;
-        uint vLightListIdx = 0;
-        evaluateLighting(vis->origin, subspace, vis->distance,
-                         fullbright, ambientColor, &vLightListIdx);
-
-        // Apply uniform alpha (overwritting intensity factor).
-        ambientColor.w = alpha;
-
-        VisSprite_SetupModel(vis->data.model, vis->origin, vis->distance,
-                             Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
-                             gzt, yaw, 0, pitch, 0,
-                             mf, nextmf, interp,
-                             ambientColor, vLightListIdx, mo->thinker.id, mo->selector,
-                             &Mobj_BspLeafAtOrigin(*mo),
-                             mo->ddFlags, mo->tmap, viewAlign,
-                             fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
+        vsprite->setup(origin, vsprite->distance(), visOff,
+                      floor.heightSmoothed(), ceiling.heightSmoothed(),
+                      floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
+                      ambientColor, vLightListIdx,
+                      mo->tclass, mo->tmap,
+                      &Mobj_BspLeafAtOrigin(*mo),
+                      floorAdjust, fitTop, fitBottom, viewAlign);
     }
 
     // Do we need to project a flare source too?
@@ -478,15 +479,15 @@ void R_ProjectSprite(mobj_t *mo)
             DENG2_ASSERT(pl != 0);
 
             Lumobj const *lum = cluster.sector().map().lumobj(mo->lumIdx);
-            DENG_ASSERT(lum != 0);
+            DENG2_ASSERT(lum != 0);
 
-            vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
+            visflare_t *vflare = rendSys.vissprites().newFlare();
 
-            vis->distance = distFromEye;
+            vflare->_distance = distFromEye;
 
             // Determine the exact center of the flare.
-            vis->origin = moPos + visOff;
-            vis->origin.z += lum->zOffset();
+            vflare->_origin = moPos + visOff;
+            vflare->_origin.z += lum->zOffset();
 
             float flareSize = pl->brightMul;
             // X offset to the flare position.
@@ -503,27 +504,27 @@ void R_ProjectSprite(mobj_t *mo)
                 if(def->offset[VX])
                     xOffset = def->offset[VX];
 
-                vis->data.flare.flags = def->flags;
+                vflare->flags = def->flags;
             }
 
-            vis->data.flare.size = flareSize * 60 * (50 + haloSize) / 100.0f;
-            if(vis->data.flare.size < 8)
-                vis->data.flare.size = 8;
+            vflare->size = flareSize * 60 * (50 + haloSize) / 100.0f;
+            if(vflare->size < 8)
+                vflare->size = 8;
 
             // Color is taken from the associated lumobj.
-            V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
+            V3f_Set(vflare->color, lum->color().x, lum->color().y, lum->color().z);
 
-            vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
-            vis->data.flare.xOff = xOffset;
-            vis->data.flare.mul = 1;
-            vis->data.flare.tex = 0;
+            vflare->factor = mo->haloFactors[viewPlayer - ddPlayers];
+            vflare->xOff = xOffset;
+            vflare->mul = 1;
+            vflare->tex = 0;
 
             if(def && def->flare)
             {
                 de::Uri const &flaremapResourceUri = *reinterpret_cast<de::Uri const *>(def->flare);
                 if(flaremapResourceUri.path().toStringRef().compareWithoutCase("-"))
                 {
-                    vis->data.flare.tex = GL_PrepareFlaremap(flaremapResourceUri);
+                    vflare->tex = GL_PrepareFlaremap(flaremapResourceUri);
                 }
             }
         }

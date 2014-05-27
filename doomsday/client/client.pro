@@ -281,6 +281,7 @@ DENG_HEADERS += \
     include/render/huecirclevisual.h \
     include/render/iedge.h \
     include/render/ilightsource.h \
+    include/render/ivissprite.h \
     include/render/lightdecoration.h \
     include/render/lightgrid.h \
     include/render/lumobj.h \

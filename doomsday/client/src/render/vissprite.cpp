@@ -1,9 +1,6 @@
-/** @file vissprite.cpp Projected visible sprite ("vissprite") management.
+/** @file vissprite.cpp  Vissprite pool.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,181 +17,123 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_render.h"
-#include "de_resource.h"
-
 #include "render/vissprite.h"
+#include <QVector>
+#include <QtAlgorithms>
 
 using namespace de;
 
-vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
-vispsprite_t visPSprites[DDMAXPSPRITES];
-
-vissprite_t visSprSortedHead;
-
-static vissprite_t overflowVisSprite;
-
-void R_ClearVisSprites()
+static bool sortByDistanceDesc(IVissprite const *a, IVissprite const *b)
 {
-    visSpriteP = visSprites;
+    return a->distance() > b->distance();
 }
 
-vissprite_t *R_NewVisSprite(visspritetype_t type)
+DENG2_PIMPL_NOREF(VisspritePool)
 {
-    vissprite_t *spr;
-
-    if(visSpriteP == &visSprites[MAXVISSPRITES])
+    template <typename Type>
+    struct Pool : private QVector<Type>
     {
-        spr = &overflowVisSprite;
-    }
-    else
-    {
-        visSpriteP++;
-        spr = visSpriteP - 1;
-    }
-
-    zapPtr(spr);
-    spr->type = type;
-
-    return spr;
-}
-
-void VisSprite_SetupSprite(drawspriteparams_t &p,
-    Vector3d const &center, coord_t distToEye, Vector3d const &visOffset,
-    float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
-    Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    Vector4f const &ambientColor,
-    uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
-    bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/, bool viewAligned)
-{
-    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
-    MaterialVariant *variant = material.chooseVariant(spec, true);
-
-    DENG2_ASSERT((tClass == 0 && tMap == 0) ||
-                 (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
-
-    p.center[VX]      = center.x;
-    p.center[VY]      = center.y;
-    p.center[VZ]      = center.z;
-    p.srvo[VX]        = visOffset.x;
-    p.srvo[VY]        = visOffset.y;
-    p.srvo[VZ]        = visOffset.z;
-    p.distance        = distToEye;
-    p.bspLeaf         = bspLeafAtOrigin;
-    p.viewAligned     = viewAligned;
-    p.noZWrite        = noSpriteZWrite;
-
-    p.material        = variant;
-    p.matFlip[0]      = matFlipS;
-    p.matFlip[1]      = matFlipT;
-    p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
-
-    p.ambientColor[0] = ambientColor.x;
-    p.ambientColor[1] = ambientColor.y;
-    p.ambientColor[2] = ambientColor.z;
-    p.ambientColor[3] = (useSpriteAlpha? ambientColor.w : 1);
-
-    p.vLightListIdx   = vLightListIdx;
-}
-
-void VisSprite_SetupModel(drawmodelparams_t &p,
-    Vector3d const &origin, coord_t distToEye, Vector3d const &visOffset,
-    float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
-    ModelDef *mf, ModelDef *nextMF, float inter,
-    Vector4f const &ambientColor,
-    uint vLightListIdx,
-    int id, int selector, BspLeaf * /*bspLeafAtOrigin*/, int mobjDDFlags, int tmap,
-    bool viewAlign, bool /*fullBright*/, bool alwaysInterpolate)
-{
-    p.mf                = mf;
-    p.nextMF            = nextMF;
-    p.inter             = inter;
-    p.alwaysInterpolate = alwaysInterpolate;
-    p.id                = id;
-    p.selector          = selector;
-    p.flags             = mobjDDFlags;
-    p.tmap              = tmap;
-    p.origin[VX]        = origin.x;
-    p.origin[VY]        = origin.y;
-    p.origin[VZ]        = origin.z;
-    p.srvo[VX]          = visOffset.x;
-    p.srvo[VY]          = visOffset.y;
-    p.srvo[VZ]          = visOffset.z;
-    p.gzt               = gzt;
-    p.distance          = distToEye;
-    p.yaw               = yaw;
-    p.extraYawAngle     = 0;
-    p.yawAngleOffset    = yawAngleOffset;
-    p.pitch             = pitch;
-    p.extraPitchAngle   = 0;
-    p.pitchAngleOffset  = pitchAngleOffset;
-    p.extraScale        = 0;
-    p.viewAlign         = viewAlign;
-    p.mirror            = 0;
-    p.shineYawOffset    = 0;
-    p.shinePitchOffset  = 0;
-
-    p.shineTranslateWithViewerPos = p.shinepspriteCoordSpace = false;
-
-    p.ambientColor[0]   = ambientColor.x;
-    p.ambientColor[1]   = ambientColor.y;
-    p.ambientColor[2]   = ambientColor.z;
-    p.ambientColor[3]   = ambientColor.w;
-
-    p.vLightListIdx     = vLightListIdx;
-}
-
-void R_SortVisSprites()
-{
-    int count = visSpriteP - visSprites;
-    if(!count) return;
-
-    vissprite_t unsorted;
-    unsorted.next = unsorted.prev = &unsorted;
-
-    for(vissprite_t *ds = visSprites; ds < visSpriteP; ds++)
-    {
-        ds->next = ds + 1;
-        ds->prev = ds - 1;
-    }
-    visSprites[0].prev = &unsorted;
-    unsorted.next = &visSprites[0];
-    (visSpriteP - 1)->next = &unsorted;
-    unsorted.prev = visSpriteP - 1;
-
-    // Pull the vissprites out by distance.
-    visSprSortedHead.next = visSprSortedHead.prev = &visSprSortedHead;
-
-    /**
-     * @todo Optimize:
-     * Profile results from nuts.wad show over 25% of total execution time
-     * was spent sorting vissprites (nuts.wad map01 is a perfect pathological
-     * test case).
-     *
-     * Rather than try to speed up the sort, it would make more sense to
-     * actually construct the vissprites in z order if it can be done in
-     * linear time.
-     */
-
-    vissprite_t *best = 0;
-    for(int i = 0; i < count; ++i)
-    {
-        coord_t bestdist = 0;
-        for(vissprite_t *ds = unsorted.next; ds != &unsorted; ds = ds->next)
-        {
-            if(ds->distance >= bestdist)
-            {
-                bestdist = ds->distance;
-                best = ds;
-            }
+        typedef Type ObjectType;
+        int _cursor;
+        Pool() : _cursor(0) {
+            QVector<ObjectType>::reserve(512);
         }
 
-        best->next->prev = best->prev;
-        best->prev->next = best->next;
-        best->next = &visSprSortedHead;
-        best->prev = visSprSortedHead.prev;
-        visSprSortedHead.prev->next = best;
-        visSprSortedHead.prev = best;
+        int size() const { return _cursor; }
+        inline bool isEmpty() const { return size() == 0; }
+
+        void clear() {
+            QVector<ObjectType>::clear();
+            rewind();
+        }
+
+        void rewind() {
+            _cursor = 0;
+        }
+
+        ObjectType *allocate() {
+            if(_cursor >= QVector<ObjectType>::size())
+                append(ObjectType());
+            return &(*this)[_cursor++];
+        }
+    };
+
+    Pool<visflare_t> flares;
+    Pool<vismodel_t> models;
+    Pool<vismaskedwall_t> maskedwalls;
+    Pool<vissprite_t> sprites;
+
+    SortedVissprites allUsed;
+    bool needSortAllUsed;
+
+    Instance() : needSortAllUsed(false)
+    {}
+
+    void sortAllUsedIfNeeded()
+    {
+        if(!needSortAllUsed) return;
+        needSortAllUsed = false;
+        qStableSort(allUsed.begin(), allUsed.end(), sortByDistanceDesc);
     }
+};
+
+VisspritePool::VisspritePool() : d(new Instance())
+{}
+
+void VisspritePool::reset()
+{
+    d->flares.rewind();
+    d->models.rewind();
+    d->maskedwalls.rewind();
+    d->sprites.rewind();
+
+    d->allUsed.clear();
 }
+
+visflare_t *VisspritePool::newFlare()
+{
+    visflare_t *vs = d->flares.allocate();
+    d->allUsed.append(vs);
+    d->needSortAllUsed = true;
+
+    de::zapPtr(vs);
+    return vs;
+}
+
+vismaskedwall_t *VisspritePool::newMaskedWall()
+{
+    vismaskedwall_t *vs = d->maskedwalls.allocate();
+    d->allUsed.append(vs);
+    d->needSortAllUsed = true;
+
+    de::zapPtr(vs);
+    return vs;
+}
+
+vismodel_t *VisspritePool::newModel()
+{
+    vismodel_t *vs = d->models.allocate();
+    d->allUsed.append(vs);
+    d->needSortAllUsed = true;
+
+    de::zapPtr(vs);
+    return vs;
+}
+
+vissprite_t *VisspritePool::newSprite()
+{
+    vissprite_t *vs = d->sprites.allocate();
+    d->allUsed.append(vs);
+    d->needSortAllUsed = true;
+
+    de::zapPtr(vs);
+    return vs;
+}
+
+VisspritePool::SortedVissprites const &VisspritePool::sorted() const
+{
+    d->sortAllUsedIfNeeded();
+    return d->allUsed;
+}
+
+vispsprite_t visPSprites[DDMAXPSPRITES];

@@ -24,6 +24,7 @@
 #define DENG_CLIENT_RENDER_MODEL_H
 
 #include "ModelDef"
+#include "render/ivissprite.h"
 
 class TextureVariantSpec;
 
@@ -31,7 +32,7 @@ class TextureVariantSpec;
 #define RENDER_MAX_MODEL_VERTS  16192
 
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
-struct drawmodelparams_t
+struct vismodel_t : public IVissprite
 {
 // Animation, frame interpolation.
     ModelDef *mf, *nextMF;
@@ -41,9 +42,8 @@ struct drawmodelparams_t
     int             selector;
 
 // Position/Orientation/Scale
-    coord_t         origin[3], gzt; // The real center point and global top z for silhouette clipping.
+    coord_t         gzt; // The real center point and global top z for silhouette clipping.
     coord_t         srvo[3]; // Short-range visual offset.
-    coord_t         distance; // Distance from viewer.
     float           yaw, extraYawAngle, yawAngleOffset; ///< @todo We do not need three sets of angles...
     float           pitch, extraPitchAngle, pitchAngleOffset;
 
@@ -65,6 +65,25 @@ struct drawmodelparams_t
     float           shinePitchOffset;
     dd_bool         shineTranslateWithViewerPos;
     dd_bool         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
+
+    coord_t _distance; // Vissprites are sorted by distance.
+    de::Vector3d _origin;
+
+public:
+    virtual ~vismodel_t() {}
+
+    void setup(de::Vector3d const &origin, coord_t distToEye, de::Vector3d const &visOffset,
+        float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
+        ModelDef *mf, ModelDef *nextMF, float inter,
+        de::Vector4f const &ambientColor,
+        uint vLightListIdx,
+        int id, int selector, BspLeaf *bspLeafAtOrigin, int mobjDDFlags, int tmap,
+        bool viewAlign, bool fullBright, bool alwaysInterpolate);
+
+    // Implements IVissprite.
+    coord_t distance() const { return _distance; }
+    de::Vector3d const &origin() const { return _origin; }
+    void draw();
 };
 
 DENG_EXTERN_C byte useModels;
@@ -126,10 +145,5 @@ TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression);
  * @return  Specification to be used when preparing such textures.
  */
 TextureVariantSpec const &Rend_ModelShinyTextureSpec();
-
-/**
- * Render all the submodels of a model.
- */
-void Rend_DrawModel(drawmodelparams_t const &parms);
 
 #endif // DENG_CLIENT_RENDER_MODEL_H

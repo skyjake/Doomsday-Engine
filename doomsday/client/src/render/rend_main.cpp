@@ -845,107 +845,6 @@ int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
     return 1; // Stop iteration.
 }
 
-/**
- * This doesn't create a rendering primitive but a vissprite! The vissprite
- * represents the masked poly and will be rendered during the rendering
- * of sprites. This is necessary because all masked polygons must be
- * rendered back-to-front, or there will be alpha artifacts along edges.
- */
-void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
-    coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
-    blendmode_t blendMode, uint lightListIdx, float glow)
-{
-    vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
-
-    vis->origin   = (rvertices[0] + rvertices[3]) / 2;
-    vis->distance = Rend_PointDist2D(vis->origin);
-
-    VS_WALL(vis)->texOffset[0] = materialOrigin[VX];
-    VS_WALL(vis)->texOffset[1] = materialOrigin[VY];
-
-    // Masked walls are sometimes used for special effects like arcs, cobwebs
-    // and bottoms of sails. In order for them to look right, we need to disable
-    // texture wrapping on the horizontal axis (S).
-    //
-    // Most masked walls need wrapping, though. What we need to do is look at
-    // the texture coordinates and see if they require texture wrapping.
-
-    if(renderTextures)
-    {
-        MaterialSnapshot const &ms = material->prepare();
-        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
-
-        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.width();
-        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms.width();
-        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms.height();
-        VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
-                (rvertices[3].z - rvertices[0].z) / ms.height();
-
-        if(!ms.isOpaque())
-        {
-            if(!(VS_WALL(vis)->texCoord[0][VX] < 0 || VS_WALL(vis)->texCoord[0][VX] > 1 ||
-                 VS_WALL(vis)->texCoord[1][VX] < 0 || VS_WALL(vis)->texCoord[1][VX] > 1))
-            {
-                // Visible portion is within the actual [0..1] range.
-                wrapS = GL_CLAMP_TO_EDGE;
-            }
-
-            // Clamp on the vertical axis if the coords are in the normal [0..1] range.
-            if(!(VS_WALL(vis)->texCoord[0][VY] < 0 || VS_WALL(vis)->texCoord[0][VY] > 1 ||
-                 VS_WALL(vis)->texCoord[1][VY] < 0 || VS_WALL(vis)->texCoord[1][VY] > 1))
-            {
-                wrapT = GL_CLAMP_TO_EDGE;
-            }
-        }
-
-        // Choose a specific variant for use as a middle wall section.
-        material = material->generalCase()
-                       .chooseVariant(Rend_MapSurfaceMaterialSpec(wrapS, wrapT),
-                                      true /*can create variant*/);
-    }
-
-    VS_WALL(vis)->material = material;
-    VS_WALL(vis)->blendMode = blendMode;
-
-    for(int i = 0; i < 4; ++i)
-    {
-        VS_WALL(vis)->vertices[i].pos[VX] = rvertices[i].x;
-        VS_WALL(vis)->vertices[i].pos[VY] = rvertices[i].y;
-        VS_WALL(vis)->vertices[i].pos[VZ] = rvertices[i].z;
-
-        for(int c = 0; c < 4; ++c)
-        {
-            /// @todo Do not clamp here.
-            VS_WALL(vis)->vertices[i].color[c] = de::clamp(0.f, rcolors[i][c], 1.f);
-        }
-    }
-
-    /// @todo Semitransparent masked polys arn't lit atm
-    if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
-       !(rcolors[0].w < 1))
-    {
-        TexProjection const *dyn = 0;
-
-        // The dynlights will have already been sorted so that the brightest
-        // and largest of them is first in the list. So grab that one.
-        Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
-
-        VS_WALL(vis)->modTex = dyn->texture;
-        VS_WALL(vis)->modTexCoord[0][0] = dyn->topLeft.x;
-        VS_WALL(vis)->modTexCoord[0][1] = dyn->topLeft.y;
-        VS_WALL(vis)->modTexCoord[1][0] = dyn->bottomRight.x;
-        VS_WALL(vis)->modTexCoord[1][1] = dyn->bottomRight.y;
-        for(int c = 0; c < 4; ++c)
-        {
-            VS_WALL(vis)->modColor[c] = dyn->color[c];
-        }
-    }
-    else
-    {
-        VS_WALL(vis)->modTex = 0;
-    }
-}
-
 bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
     blendmode_t blendmode, MaterialSnapshot const &ms)
 {
@@ -968,6 +867,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     DENG2_ASSERT(!matSnapshot.material().isSkyMasked());
     DENG2_ASSERT(!matSnapshot.isOpaque() || opacity < 1 || blendmode > 0);
 
+    RenderSystem &rendSys  = ClientApp::renderSystem();
     SectorCluster &cluster = subspace.cluster();
 
     Vector3f const posCoords[4] = {
@@ -982,8 +882,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     if(!(glowing < 1))
     {
         // Uniform color. Apply to all vertices.
-        float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
-        Vector4f const finalColor(ll, ll, ll, ll);
+        Vector4f const finalColor(1, 1, 1, 1);
         for(duint16 i = 0; i < 4; ++i)
         {
             colorCoords[i] = finalColor;
@@ -1131,10 +1030,97 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         colorCoords[i].w = opacity;
     }
 
-    coord_t const sectionWidth = de::abs(Vector2d(rightSection->edge().origin() - leftSection->edge().origin()).length());
-    Rend_AddMaskedPoly(posCoords, colorCoords, sectionWidth,
-                       &matSnapshot.materialVariant(), matOrigin,
-                       blendmode, lightListIdx, glowing);
+    vismaskedwall_t *vis = rendSys.vissprites().newMaskedWall();
+
+    vis->_origin   = (posCoords[0] + posCoords[3]) / 2;
+    vis->_distance = Rend_PointDist2D(vis->origin());
+
+    vis->texOffset[0] = matOrigin[VX];
+    vis->texOffset[1] = matOrigin[VY];
+
+    // Masked walls are sometimes used for special effects like arcs, cobwebs
+    // and bottoms of sails. In order for them to look right, we need to disable
+    // texture wrapping on the horizontal axis (S).
+    //
+    // Most masked walls need wrapping, though. What we need to do is look at
+    // the texture coordinates and see if they require texture wrapping.
+    MaterialVariant *material = &matSnapshot.materialVariant();
+    if(renderTextures)
+    {
+        coord_t const sectionWidth = de::abs(Vector2d(rightSection->edge().origin() - leftSection->edge().origin()).length());
+
+        MaterialSnapshot const &ms = material->prepare();
+        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+
+        vis->texCoord[0][VX] = vis->texOffset[0] / ms.width();
+        vis->texCoord[1][VX] = vis->texCoord[0][VX] + sectionWidth / ms.width();
+        vis->texCoord[0][VY] = vis->texOffset[1] / ms.height();
+        vis->texCoord[1][VY] = vis->texCoord[0][VY] +
+                (posCoords[3].z - posCoords[0].z) / ms.height();
+
+        if(!ms.isOpaque())
+        {
+            if(!(vis->texCoord[0][VX] < 0 || vis->texCoord[0][VX] > 1 ||
+                 vis->texCoord[1][VX] < 0 || vis->texCoord[1][VX] > 1))
+            {
+                // Visible portion is within the actual [0..1] range.
+                wrapS = GL_CLAMP_TO_EDGE;
+            }
+
+            // Clamp on the vertical axis if the coords are in the normal [0..1] range.
+            if(!(vis->texCoord[0][VY] < 0 || vis->texCoord[0][VY] > 1 ||
+                 vis->texCoord[1][VY] < 0 || vis->texCoord[1][VY] > 1))
+            {
+                wrapT = GL_CLAMP_TO_EDGE;
+            }
+        }
+
+        // Choose a specific variant for use as a middle wall section.
+        material = material->generalCase()
+                       .chooseVariant(Rend_MapSurfaceMaterialSpec(wrapS, wrapT),
+                                      true /*can create variant*/);
+    }
+
+    vis->material  = material;
+    vis->blendMode = blendmode;
+
+    for(int i = 0; i < 4; ++i)
+    {
+        vis->vertices[i].pos[VX] = posCoords[i].x;
+        vis->vertices[i].pos[VY] = posCoords[i].y;
+        vis->vertices[i].pos[VZ] = posCoords[i].z;
+
+        for(int c = 0; c < 4; ++c)
+        {
+            /// @todo Do not clamp here.
+            vis->vertices[i].color[c] = de::clamp(0.f, colorCoords[i][c], 1.f);
+        }
+    }
+
+    /// @todo Semitransparent masked polys arn't lit atm
+    if(glowing < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
+       !(colorCoords[0].w < 1))
+    {
+        TexProjection const *dyn = 0;
+
+        // The dynlights will have already been sorted so that the brightest
+        // and largest of them is first in the list. So grab that one.
+        Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
+
+        vis->modTex = dyn->texture;
+        vis->modTexCoord[0][0] = dyn->topLeft.x;
+        vis->modTexCoord[0][1] = dyn->topLeft.y;
+        vis->modTexCoord[1][0] = dyn->bottomRight.x;
+        vis->modTexCoord[1][1] = dyn->bottomRight.y;
+        for(int c = 0; c < 4; ++c)
+        {
+            vis->modColor[c] = dyn->color[c];
+        }
+    }
+    else
+    {
+        vis->modTex = 0;
+    }
 }
 
 bool Rend_NearFadeOpacity(WallEdgeSection const &leftSection,
@@ -2060,37 +2046,10 @@ static void drawSky()
     glEnable(GL_DEPTH_TEST);
 }
 
-static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
+FlareSources &Rend_SecondaryFlareSources()
 {
-    float occlusionFactor;
-
-    if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
-    {
-        return false;
-    }
-
-    if(spr->data.flare.isDecoration)
-    {
-        /*
-         * Surface decorations do not yet persist over frames, so we do
-         * not smoothly occlude their flares. Instead, we will have to
-         * put up with them instantly appearing/disappearing.
-         */
-        occlusionFactor = R_ViewerLumobjIsClipped(spr->data.flare.lumIdx)? 0 : 1;
-    }
-    else
-    {
-        occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
-    }
-
-    return H_RenderHalo(spr->origin,
-                        spr->data.flare.size,
-                        spr->data.flare.tex,
-                        spr->data.flare.color,
-                        spr->distance,
-                        occlusionFactor, spr->data.flare.mul,
-                        spr->data.flare.xOff, primary,
-                        (spr->data.flare.flags & RFF_NO_TURN) == 0);
+    static FlareSources flareSources;
+    return flareSources;
 }
 
 /**
@@ -2105,62 +2064,30 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
  */
 static void drawMasked()
 {
+    RenderSystem &rendSys = ClientApp::renderSystem();
     if(devNoSprites) return;
 
-    R_SortVisSprites();
+    Rend_SecondaryFlareSources().clear();
 
-    if(visSpriteP > visSprites)
+    // Draw all vissprites back to front.
+    foreach(IVissprite *spr, rendSys.vissprites().sorted())
     {
-        bool primaryHaloDrawn = false;
+        spr->draw();
+    }
 
-        // Draw all vissprites back to front.
-        // Sprites look better with Z buffer writes turned off.
-        for(vissprite_t *spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
+    // Draw secondary halos?
+    if(!Rend_SecondaryFlareSources().isEmpty())
+    {
+        // Init GL state for drawing secondary flares.
+        H_SetupState(true);
+
+        foreach(visflare_t *vflare, Rend_SecondaryFlareSources())
         {
-            switch(spr->type)
-            {
-            default: break;
-
-            case VSPR_MASKED_WALL:
-                // A masked wall is a specialized sprite.
-                Rend_DrawMaskedWall(spr->data.wall);
-                break;
-
-            case VSPR_SPRITE:
-                // Render an old fashioned sprite, ah the nostalgia...
-                Rend_DrawSprite(spr->data.sprite);
-                break;
-
-            case VSPR_MODEL:
-                Rend_DrawModel(spr->data.model);
-                break;
-
-            case VSPR_FLARE:
-                if(generateHaloForVisSprite(spr, true))
-                {
-                    primaryHaloDrawn = true;
-                }
-                break;
-            }
+            vflare->drawSecondarys();
         }
 
-        // Draw secondary halos?
-        if(primaryHaloDrawn && haloMode > 1)
-        {
-            // Now we can setup the state only once.
-            H_SetupState(true);
-
-            for(vissprite_t *spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
-            {
-                if(spr->type == VSPR_FLARE)
-                {
-                    generateHaloForVisSprite(spr);
-                }
-            }
-
-            // And we're done...
-            H_SetupState(false);
-        }
+        // And we're done...
+        H_SetupState(false);
     }
 }
 

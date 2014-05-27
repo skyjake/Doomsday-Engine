@@ -377,7 +377,7 @@ static int listVisibleParticles(Map &map)
     return true;
 }
 
-static void setupModelParamsForParticle(drawmodelparams_t &parm,
+static void setupModelParamsForParticle(vismodel_t &parm,
     ParticleInfo const *pinfo, GeneratorParticleStage const *st,
     ded_ptcstage_t const *dst, Vector3f const &origin, float dist, float size,
     float mark, float alpha)
@@ -385,12 +385,12 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
     zap(parm);
 
     // Render the particle as a model.
-    parm.origin[VX] = origin.x;
-    parm.origin[VY] = origin.z;
-    parm.origin[VZ] = parm.gzt = origin.y;
-    parm.distance = dist;
+    parm._origin[VX] = origin.x;
+    parm._origin[VY] = origin.z;
+    parm._origin[VZ] = parm.gzt = origin.y;
+    parm._distance   = dist;
 
-    parm.extraScale = size; // Extra scaling factor.
+    parm.extraScale  = size; // Extra scaling factor.
     parm.mf = &ClientApp::resourceSystem().modelDef(dst->model);
     parm.alwaysInterpolate = true;
 
@@ -439,7 +439,7 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
 
         if(useBias && map.hasLightGrid())
         {
-            Vector4f color = map.lightGrid().evaluate(parm.origin);
+            Vector4f color = map.lightGrid().evaluate(parm.origin());
             // Apply light range compression.
             for(int i = 0; i < 3; ++i)
             {
@@ -454,7 +454,7 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
             float lightLevel = color.w + Rend_ExtraLightDelta();
 
             // Apply distance attenuation.
-            Rend_AttenuateLightLevel(lightLevel, parm.distance);
+            Rend_AttenuateLightLevel(lightLevel, parm.distance());
 
             // The last step is to compress the resultant light value by
             // the global lighting function.
@@ -467,10 +467,10 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
             }
         }
 
-        Rend_ApplyTorchLight(parm.ambientColor, parm.distance);
+        Rend_ApplyTorchLight(parm.ambientColor, parm.distance());
 
-        collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(parm.origin);
+        collectaffectinglights_params_t lparams; de::zap(lparams);
+        lparams.origin       = parm.origin();
         lparams.subspace     = map.bspLeafAt(lparams.origin).subspacePtr();
         lparams.ambientColor = Vector3f(parm.ambientColor);
 
@@ -689,9 +689,9 @@ static void renderParticles(int rtype, bool withBlend)
         // Model particles are rendered using the normal model rendering routine.
         if(rtype == PTC_MODEL && stDef->model >= 0)
         {
-            drawmodelparams_t parms;
-            setupModelParamsForParticle(parms, pinfo, st, stDef, center, dist, size, inter, color.w);
-            Rend_DrawModel(parms);
+            vismodel_t pmodel;
+            setupModelParamsForParticle(pmodel, pinfo, st, stDef, center, dist, size, inter, color.w);
+            pmodel.draw();
             continue;
         }
 

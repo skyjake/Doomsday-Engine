@@ -22,6 +22,7 @@
 #include "DrawLists"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
+#include "render/vissprite.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include <doomsday/console/var.h>
@@ -37,6 +38,7 @@ DENG2_PIMPL(RenderSystem)
     ImageBank images;
     WorldVBuf vbuf;
     IndicePool indicePool;
+    VisspritePool visspritePool;
     DrawLists drawLists;
 
     Instance(Public *i) : Base(i)
@@ -234,20 +236,25 @@ DrawLists &RenderSystem::drawLists()
     return d->drawLists;
 }
 
-void RenderSystem::printPoolInfo()
+void RenderSystem::printIndicesInfo()
 {
     if(!printPoolDevInfo) return;
     d->indicePool.devPrint();
 }
 
-void RenderSystem::resetPools()
+void RenderSystem::resetIndices()
 {
     d->indicePool.reset();
 }
 
-RenderSystem::IndicePool &RenderSystem::indicePool() const
+RenderSystem::IndicePool &RenderSystem::indices() const
 {
     return d->indicePool;
+}
+
+VisspritePool &RenderSystem::vissprites() const
+{
+    return d->visspritePool;
 }
 
 void RenderSystem::consoleRegister()

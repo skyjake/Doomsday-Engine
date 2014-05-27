@@ -85,8 +85,10 @@ static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
     glEnd();
 }
 
-void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
+void vismaskedwall_t::draw()
 {
+    vismaskedwall_t &p = *this;
+
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -96,7 +98,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     if(renderTextures)
     {
         MaterialSnapshot const &ms =
-            reinterpret_cast<MaterialVariant *>(parms.material)->prepare();
+            reinterpret_cast<MaterialVariant *>(p.material)->prepare();
         tex = &ms.texture(MTU_PRIMARY);
     }
 
@@ -104,7 +106,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     // This only happens when multitexturing is enabled.
     bool withDyn = false;
     int normal = 0, dyn = 1;
-    if(parms.modTex && numTexUnits > 1)
+    if(p.modTex && numTexUnits > 1)
     {
         if(IS_MUL)
         {
@@ -123,10 +125,10 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         // The dynamic light.
         glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
         /// @todo modTex may be the name of a "managed" texture.
-        GL_BindTextureUnmanaged(renderTextures ? parms.modTex : 0,
+        GL_BindTextureUnmanaged(renderTextures ? p.modTex : 0,
                                 gl::ClampToEdge, gl::ClampToEdge);
 
-        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, parms.modColor);
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, p.modColor);
 
         // The actual texture.
         glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
@@ -142,7 +144,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         normal = 0;
     }
 
-    GL_BlendMode(parms.blendMode);
+    GL_BlendMode(p.blendMode);
 
     normalTarget = normal? GL_TEXTURE1 : GL_TEXTURE0;
     dynTarget    =    dyn? GL_TEXTURE1 : GL_TEXTURE0;
@@ -154,41 +156,41 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     if(withDyn)
     {
         glBegin(GL_QUADS);
-            glColor4fv(parms.vertices[0].color);
-            glMultiTexCoord2f(normalTarget, parms.texCoord[0][0], parms.texCoord[1][1]);
+            glColor4fv(p.vertices[0].color);
+            glMultiTexCoord2f(normalTarget, p.texCoord[0][0], p.texCoord[1][1]);
 
-            glMultiTexCoord2f(dynTarget, parms.modTexCoord[0][0], parms.modTexCoord[1][1]);
+            glMultiTexCoord2f(dynTarget, p.modTexCoord[0][0], p.modTexCoord[1][1]);
 
-            glVertex3f(parms.vertices[0].pos[VX],
-                       parms.vertices[0].pos[VZ],
-                       parms.vertices[0].pos[VY]);
+            glVertex3f(p.vertices[0].pos[VX],
+                       p.vertices[0].pos[VZ],
+                       p.vertices[0].pos[VY]);
 
-            glColor4fv(parms.vertices[1].color);
-            glMultiTexCoord2f(normalTarget, parms.texCoord[0][0], parms.texCoord[0][1]);
+            glColor4fv(p.vertices[1].color);
+            glMultiTexCoord2f(normalTarget, p.texCoord[0][0], p.texCoord[0][1]);
 
-            glMultiTexCoord2f(dynTarget, parms.modTexCoord[0][0], parms.modTexCoord[0][1]);
+            glMultiTexCoord2f(dynTarget, p.modTexCoord[0][0], p.modTexCoord[0][1]);
 
-            glVertex3f(parms.vertices[1].pos[VX],
-                       parms.vertices[1].pos[VZ],
-                       parms.vertices[1].pos[VY]);
+            glVertex3f(p.vertices[1].pos[VX],
+                       p.vertices[1].pos[VZ],
+                       p.vertices[1].pos[VY]);
 
-            glColor4fv(parms.vertices[3].color);
-            glMultiTexCoord2f(normalTarget, parms.texCoord[1][0], parms.texCoord[0][1]);
+            glColor4fv(p.vertices[3].color);
+            glMultiTexCoord2f(normalTarget, p.texCoord[1][0], p.texCoord[0][1]);
 
-            glMultiTexCoord2f(dynTarget, parms.modTexCoord[1][0], parms.modTexCoord[0][1]);
+            glMultiTexCoord2f(dynTarget, p.modTexCoord[1][0], p.modTexCoord[0][1]);
 
-            glVertex3f(parms.vertices[3].pos[VX],
-                       parms.vertices[3].pos[VZ],
-                       parms.vertices[3].pos[VY]);
+            glVertex3f(p.vertices[3].pos[VX],
+                       p.vertices[3].pos[VZ],
+                       p.vertices[3].pos[VY]);
 
-            glColor4fv(parms.vertices[2].color);
-            glMultiTexCoord2f(normalTarget, parms.texCoord[1][0], parms.texCoord[1][1]);
+            glColor4fv(p.vertices[2].color);
+            glMultiTexCoord2f(normalTarget, p.texCoord[1][0], p.texCoord[1][1]);
 
-            glMultiTexCoord2f(dynTarget, parms.modTexCoord[1][0], parms.modTexCoord[1][1]);
+            glMultiTexCoord2f(dynTarget, p.modTexCoord[1][0], p.modTexCoord[1][1]);
 
-            glVertex3f(parms.vertices[2].pos[VX],
-                       parms.vertices[2].pos[VZ],
-                       parms.vertices[2].pos[VY]);
+            glVertex3f(p.vertices[2].pos[VX],
+                       p.vertices[2].pos[VZ],
+                       p.vertices[2].pos[VY]);
         glEnd();
 
         // Restore normal GL state.
@@ -198,33 +200,33 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     else
     {
         glBegin(GL_QUADS);
-            glColor4fv(parms.vertices[0].color);
-            glTexCoord2f(parms.texCoord[0][0], parms.texCoord[1][1]);
+            glColor4fv(p.vertices[0].color);
+            glTexCoord2f(p.texCoord[0][0], p.texCoord[1][1]);
 
-            glVertex3f(parms.vertices[0].pos[VX],
-                       parms.vertices[0].pos[VZ],
-                       parms.vertices[0].pos[VY]);
+            glVertex3f(p.vertices[0].pos[VX],
+                       p.vertices[0].pos[VZ],
+                       p.vertices[0].pos[VY]);
 
-            glColor4fv(parms.vertices[1].color);
-            glTexCoord2f(parms.texCoord[0][0], parms.texCoord[0][1]);
+            glColor4fv(p.vertices[1].color);
+            glTexCoord2f(p.texCoord[0][0], p.texCoord[0][1]);
 
-            glVertex3f(parms.vertices[1].pos[VX],
-                       parms.vertices[1].pos[VZ],
-                       parms.vertices[1].pos[VY]);
+            glVertex3f(p.vertices[1].pos[VX],
+                       p.vertices[1].pos[VZ],
+                       p.vertices[1].pos[VY]);
 
-            glColor4fv(parms.vertices[3].color);
-            glTexCoord2f(parms.texCoord[1][0], parms.texCoord[0][1]);
+            glColor4fv(p.vertices[3].color);
+            glTexCoord2f(p.texCoord[1][0], p.texCoord[0][1]);
 
-            glVertex3f(parms.vertices[3].pos[VX],
-                       parms.vertices[3].pos[VZ],
-                       parms.vertices[3].pos[VY]);
+            glVertex3f(p.vertices[3].pos[VX],
+                       p.vertices[3].pos[VZ],
+                       p.vertices[3].pos[VY]);
 
-            glColor4fv(parms.vertices[2].color);
-            glTexCoord2f(parms.texCoord[1][0], parms.texCoord[1][1]);
+            glColor4fv(p.vertices[2].color);
+            glTexCoord2f(p.texCoord[1][0], p.texCoord[1][1]);
 
-            glVertex3f(parms.vertices[2].pos[VX],
-                       parms.vertices[2].pos[VZ],
-                       parms.vertices[2].pos[VY]);
+            glVertex3f(p.vertices[2].pos[VX],
+                       p.vertices[2].pos[VZ],
+                       p.vertices[2].pos[VY]);
         glEnd();
     }
 
@@ -424,7 +426,7 @@ MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
                                                     1, -2, -1, true, true, true, false);
 }
 
-static MaterialVariant *chooseSpriteMaterial(drawspriteparams_t const &p)
+static MaterialVariant *chooseSpriteMaterial(vissprite_t const &p)
 {
     if(!renderTextures) return 0;
     if(renderTextures == 2)
@@ -448,8 +450,49 @@ static int drawVectorLightWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_DrawSprite(drawspriteparams_t const &parms)
+void vissprite_t::setup(Vector3d const &center, coord_t distToEye,
+    Vector3d const &visOffset, float /*secFloor*/, float /*secCeil*/,
+    float /*floorClip*/, float /*top*/, Material &material, bool matFlipS,
+    bool matFlipT, blendmode_t blendMode, Vector4f const &ambientColor,
+    uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
+    bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/, bool viewAligned)
 {
+    vissprite_t &p = *this;
+
+    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
+    MaterialVariant *variant = material.chooseVariant(spec, true);
+
+    DENG2_ASSERT((tClass == 0 && tMap == 0) ||
+                 (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
+
+    p.center[VX]      = center.x;
+    p.center[VY]      = center.y;
+    p.center[VZ]      = center.z;
+    p.srvo[VX]        = visOffset.x;
+    p.srvo[VY]        = visOffset.y;
+    p.srvo[VZ]        = visOffset.z;
+    p._distance       = distToEye;
+    p.bspLeaf         = bspLeafAtOrigin;
+    p.viewAligned     = viewAligned;
+    p.noZWrite        = noSpriteZWrite;
+
+    p.material        = variant;
+    p.matFlip[0]      = matFlipS;
+    p.matFlip[1]      = matFlipT;
+    p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
+
+    p.ambientColor[0] = ambientColor.x;
+    p.ambientColor[1] = ambientColor.y;
+    p.ambientColor[2] = ambientColor.z;
+    p.ambientColor[3] = (useSpriteAlpha? ambientColor.w : 1);
+
+    p.vLightListIdx   = vLightListIdx;
+}
+
+void vissprite_t::draw()
+{
+    vissprite_t &p = *this;
+
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -463,10 +506,10 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     float s = 1, t = 1; ///< Bottom right coords.
 
     // Many sprite properties are inherited from the material.
-    if(parms.material)
+    if(p.material)
     {
         // Ensure this variant has been prepared.
-        ms = &reinterpret_cast<MaterialVariant *>(parms.material)->prepare();
+        ms = &reinterpret_cast<MaterialVariant *>(p.material)->prepare();
 
         variantspecification_t const &texSpec = ms->texture(MTU_PRIMARY).spec().variant;
         size.width  = ms->width() + texSpec.border * 2;
@@ -480,8 +523,8 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     }
 
     // We may want to draw using another material instead.
-    MaterialVariant *mat = chooseSpriteMaterial(parms);
-    if(mat != reinterpret_cast<MaterialVariant *>(parms.material))
+    MaterialVariant *mat = chooseSpriteMaterial(p);
+    if(mat != reinterpret_cast<MaterialVariant *>(p.material))
     {
         ms = mat? &mat->prepare() : 0;
     }
@@ -497,12 +540,12 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     }
 
     // Coordinates to the center of the sprite (game coords).
-    coord_t spriteCenter[3] = { parms.center[VX] + parms.srvo[VX],
-                                parms.center[VY] + parms.srvo[VY],
-                                parms.center[VZ] + parms.srvo[VZ] };
+    coord_t spriteCenter[3] = { p.center[VX] + p.srvo[VX],
+                                p.center[VY] + p.srvo[VY],
+                                p.center[VZ] + p.srvo[VZ] };
 
     coord_t v1[3], v2[3], v3[3], v4[3];
-    R_ProjectViewRelativeLine2D(spriteCenter, parms.viewAligned,
+    R_ProjectViewRelativeLine2D(spriteCenter, p.viewAligned,
                                 size.width, viewOffset.x, v1, v4);
 
     v2[VX] = v1[VX];
@@ -539,20 +582,20 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
         V3f_Copyd(quadNormals[i].xyz, surfaceNormal);
     }
 
-    if(!parms.vLightListIdx)
+    if(!p.vLightListIdx)
     {
         // Lit uniformly.
-        applyUniformColor(4, quadColors, parms.ambientColor);
+        applyUniformColor(4, quadColors, p.ambientColor);
     }
     else
     {
         // Lit normally.
-        Spr_VertexColors(4, quadColors, quadNormals, parms.vLightListIdx,
-                         spriteLight + 1, parms.ambientColor);
+        Spr_VertexColors(4, quadColors, quadNormals, p.vLightListIdx,
+                         spriteLight + 1, p.ambientColor);
     }
 
     // Do we need to do some aligning?
-    if(parms.viewAligned || alwaysAlign >= 2)
+    if(p.viewAligned || alwaysAlign >= 2)
     {
         // We must set up a modelview transformation matrix.
         restoreMatrix = true;
@@ -561,7 +604,7 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
 
         // Rotate around the center of the sprite.
         glTranslatef(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
-        if(!parms.viewAligned)
+        if(!p.viewAligned)
         {
             float s_dx = v1[VX] - v2[VX];
             float s_dy = v1[VY] - v2[VY];
@@ -601,14 +644,14 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     }
 
     // Need to change blending modes?
-    if(parms.blendMode != BM_NORMAL)
+    if(p.blendMode != BM_NORMAL)
     {
-        GL_BlendMode(parms.blendMode);
+        GL_BlendMode(p.blendMode);
     }
 
     // Transparent sprites shouldn't be written to the Z buffer.
-    if(parms.noZWrite || parms.ambientColor[CA] < .98f ||
-       !(parms.blendMode == BM_NORMAL || parms.blendMode == BM_ZEROALPHA))
+    if(p.noZWrite || p.ambientColor[CA] < .98f ||
+       !(p.blendMode == BM_NORMAL || p.blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
         glDepthMask(GL_FALSE);
@@ -637,14 +680,14 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     v[3].xyz[1] = v4[VZ];
     v[3].xyz[2] = v4[VY];
 
-    tc[0].st[0] = s *  (parms.matFlip[0]? 1:0);
-    tc[0].st[1] = t * (!parms.matFlip[1]? 1:0);
-    tc[1].st[0] = s *  (parms.matFlip[0]? 1:0);
-    tc[1].st[1] = t *  (parms.matFlip[1]? 1:0);
-    tc[2].st[0] = s * (!parms.matFlip[0]? 1:0);
-    tc[2].st[1] = t *  (parms.matFlip[1]? 1:0);
-    tc[3].st[0] = s * (!parms.matFlip[0]? 1:0);
-    tc[3].st[1] = t * (!parms.matFlip[1]? 1:0);
+    tc[0].st[0] = s *  (p.matFlip[0]? 1:0);
+    tc[0].st[1] = t * (!p.matFlip[1]? 1:0);
+    tc[1].st[0] = s *  (p.matFlip[0]? 1:0);
+    tc[1].st[1] = t *  (p.matFlip[1]? 1:0);
+    tc[2].st[0] = s * (!p.matFlip[0]? 1:0);
+    tc[2].st[1] = t *  (p.matFlip[1]? 1:0);
+    tc[3].st[0] = s * (!p.matFlip[0]? 1:0);
+    tc[3].st[1] = t * (!p.matFlip[1]? 1:0);
 
     drawQuad(v, quadColors, tc);
 
@@ -653,7 +696,7 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
         glDisable(GL_TEXTURE_2D);
     }
 
-    if(devMobjVLights && parms.vLightListIdx)
+    if(devMobjVLights && p.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
@@ -662,10 +705,10 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(parms.center[VX], parms.center[VZ], parms.center[VY]);
+        glTranslatef(p.center[VX], p.center[VZ], p.center[VY]);
 
-        coord_t distFromViewer = de::abs(parms.distance);
-        VL_ListIterator(parms.vLightListIdx, drawVectorLightWorker, &distFromViewer);
+        coord_t distFromViewer = de::abs(p._distance);
+        VL_ListIterator(p.vLightListIdx, drawVectorLightWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -681,7 +724,7 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     }
 
     // Change back to normal blending?
-    if(parms.blendMode != BM_NORMAL)
+    if(p.blendMode != BM_NORMAL)
     {
         GL_BlendMode(BM_NORMAL);
     }
@@ -691,4 +734,53 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     {
         glDepthMask(GL_TRUE);
     }
+}
+
+void visflare_t::drawPrimary()
+{
+    if(flags & RFF_NO_PRIMARY) return;
+
+    float occlusionFactor;
+    if(isDecoration)
+    {
+        // Surface decorations do not yet persist over frames, so we do not smoothly
+        // occlude their flares. Instead, we will have to put up with them instantly
+        // appearing/disappearing.
+        occlusionFactor = R_ViewerLumobjIsClipped(lumIdx)? 0 : 1;
+    }
+    else
+    {
+        occlusionFactor = (factor & 0x7f) / 127.0f;
+    }
+
+    if(H_RenderHalo(origin(), size, tex, color, distance(), occlusionFactor,
+                    mul, xOff, true/*primary*/, (flags & RFF_NO_TURN) == 0))
+    {
+        if(haloMode > 1)
+        {
+            // Add this to the list of secondary flare sources.
+            // (Somewhat of a kludge but it doesn't matter given fx::LensFlares will
+            // be taking over in the near future).
+            Rend_SecondaryFlareSources().append(this);
+        }
+    }
+}
+
+void visflare_t::drawSecondarys()
+{
+    float occlusionFactor;
+    if(isDecoration)
+    {
+        // Surface decorations do not yet persist over frames, so we do not smoothly
+        // occlude their flares. Instead, we will have to put up with them instantly
+        // appearing/disappearing.
+        occlusionFactor = R_ViewerLumobjIsClipped(lumIdx)? 0 : 1;
+    }
+    else
+    {
+        occlusionFactor = (factor & 0x7f) / 127.0f;
+    }
+
+    H_RenderHalo(origin(), size, tex, color, distance(), occlusionFactor,
+                 mul, xOff, false/*secondary*/, (flags & RFF_NO_TURN) == 0);
 }
