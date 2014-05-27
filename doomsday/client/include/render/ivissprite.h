@@ -23,8 +23,8 @@
 #include <de/Vector>
 
 /**
- * Interface for an object that can treated as a drawable "vissprite", such as a
- * mobj or a masked wall.
+ * Interface for an object that can be interpreted as a drawable "vissprite",
+ * such as a mobj, or a masked wall.
  *
  * @ingroup render
  */

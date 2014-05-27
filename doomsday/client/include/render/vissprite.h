@@ -40,7 +40,7 @@ public:
     VisspritePool();
 
     /**
-     * To be called at the start of the a render frame to return all vissprites
+     * To be called at the start of a render frame to return all vissprites
      * currently in use to the unused list.
      */
     void reset();
