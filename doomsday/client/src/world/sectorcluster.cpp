@@ -50,7 +50,7 @@
 #endif
 
 #include <doomsday/console/var.h>
-#include <de/vector1.h>
+#include <de/vector1.h> // V2d_UniteBox
 #include <QtAlgorithms>
 #include <QHash>
 #include <QMap>
@@ -208,29 +208,27 @@ namespace internal
         tc[0].y = tc[3].y + (posCoords[3].z - posCoords[2].z);
     }
 
-    static void quadTexFakeradioCoords(Vector2f *tc, Vector3f const *rverts, float wallLength,
-        Vector3f const &texTopLeft, Vector3f const &texBottomRight,
+    static void quadTexFakeradioCoords(Vector2f *tc, Vector3f const *posCoords,
+        coord_t wallLength, Vector3f const &topLeft, Vector3f const &bottomRight,
         Vector2f const &texOrigin, Vector2f const &texDimensions, bool horizontal)
     {
         if(horizontal)
         {
-            // Special horizontal coordinates for wall shadows.
-            tc[0].x = tc[2].x = rverts[0].x - texTopLeft.x + texOrigin.y / texDimensions.y;
-            tc[0].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.x / texDimensions.x;
+            tc[0].x = tc[2].x = posCoords[0].x - topLeft.x + texOrigin.y / texDimensions.y;
+            tc[0].y = tc[1].y = posCoords[0].y - topLeft.y + texOrigin.x / texDimensions.x;
 
-            tc[1].x = tc[0].x + (rverts[1].z - texBottomRight.z) / texDimensions.y;
-            tc[3].x = tc[0].x + (rverts[3].z - texBottomRight.z) / texDimensions.y;
+            tc[1].x = tc[0].x + (posCoords[1].z - bottomRight.z) / texDimensions.y;
+            tc[3].x = tc[0].x + (posCoords[3].z - bottomRight.z) / texDimensions.y;
             tc[3].y = tc[0].y + wallLength / texDimensions.x;
             tc[2].y = tc[0].y + wallLength / texDimensions.x;
             return;
         }
 
-        tc[0].x = tc[1].x = rverts[0].x - texTopLeft.x + texOrigin.x / texDimensions.x;
-        tc[3].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.y / texDimensions.y;
-
+        tc[0].x = tc[1].x = posCoords[0].x - topLeft.x + texOrigin.x / texDimensions.x;
+        tc[3].y = tc[1].y = posCoords[0].y - topLeft.y + texOrigin.y / texDimensions.y;
         tc[3].x = tc[2].x = tc[0].x + wallLength / texDimensions.x;
-        tc[2].y = tc[3].y + (rverts[1].z - rverts[0].z) / texDimensions.y;
-        tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z) / texDimensions.y;
+        tc[2].y = tc[3].y + (posCoords[1].z - posCoords[0].z) / texDimensions.y;
+        tc[0].y = tc[3].y + (posCoords[3].z - posCoords[2].z) / texDimensions.y;
     }
 
     static void quadLightCoords(Vector2f *tc, Vector2f const &topLeft, Vector2f const &bottomRight)
@@ -241,42 +239,35 @@ namespace internal
         tc[2].y = tc[0].y = bottomRight.y;
     }
 
-    static float shinyVertical(float dy, float dx)
+    static inline float shinyVertical(float dy, float dx)
     {
-        return ((atan(dy/dx) / (PI/2)) + 1) / 2;
+        return ((atan(dy/dx) / (de::PI/2)) + 1) / 2;
     }
 
+    // Calculate coordinates based on viewpoint and surface normal.
     static void quadShinyTexCoords(Vector2f *tc, Vector3f const *posCoords, coord_t wallLength)
     {
+        Vector3d const &eye         = Rend_ViewerOrigin();
         Vector3f const *topLeft     = &posCoords[1];
         Vector3f const *bottomRight = &posCoords[2];
 
-        vec2f_t surface, normal, projected, s, reflected, view;
-        float distance, angle, prevAngle = 0;
-        uint i;
+        Vector2f const sufNormal(  (bottomRight->y - topLeft->y) / wallLength,
+                                 -((bottomRight->x - topLeft->x) / wallLength));
 
-        // Quad surface vector.
-        V2f_Set(surface, (bottomRight->x - topLeft->x) / wallLength,
-                         (bottomRight->y - topLeft->y) / wallLength);
-
-        V2f_Set(normal, surface[VY], -surface[VX]);
-
-        // Calculate coordinates based on viewpoint and surface normal.
-        for(i = 0; i < 2; ++i)
+        float prevAngle = 0;
+        for(int i = 0; i < 2; ++i)
         {
-            // View vector.
-            V2f_Set(view, vOrigin.x - (i == 0? topLeft->x : bottomRight->x),
-                          vOrigin.z - (i == 0? topLeft->y : bottomRight->y));
+            Vector2f eyeToVertex    = eye.xy() - (i == 0? *topLeft : *bottomRight);
+            float const distFromEye = eyeToVertex.length();
 
-            distance = V2f_Normalize(view);
+            eyeToVertex = eyeToVertex.normalize();
 
-            V2f_Project(projected, view, normal);
-            V2f_Subtract(s, projected, view);
-            V2f_Scale(s, 2);
-            V2f_Sum(reflected, view, s);
+            float const div = sufNormal.lengthSquared();
+            Vector2f const projected = (div == 0? Vector2f() : sufNormal * (eyeToVertex.dot(sufNormal) / div));
+            Vector2f const reflected = eyeToVertex + (projected - eyeToVertex) * 2;
 
-            angle = acos(reflected[VY]) / PI;
-            if(reflected[VX] < 0)
+            float angle = acos(reflected.y) / de::PI;
+            if(reflected.x < 0)
             {
                 angle = 1 - angle;
             }
@@ -296,8 +287,8 @@ namespace internal
                 tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*acos(-dot)/PI*/
 
             // Vertical coordinates.
-            tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin.y - bottomRight->z, distance);
-            tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin.y - topLeft->z, distance);
+            tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(eye.z - bottomRight->z, distFromEye);
+            tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(eye.z -     topLeft->z, distFromEye);
         }
     }
 
