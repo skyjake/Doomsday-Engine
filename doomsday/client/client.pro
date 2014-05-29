@@ -25,7 +25,7 @@ echo(Doomsday Client $${DENG_VERSION}.)
 
 CONFIG += deng_qtgui deng_qtopengl
 
-include(../dep_sdl.pri)
+include(../dep_sdl2.pri)
 include(../dep_opengl.pri)
 include(../dep_zlib.pri)
 include(../dep_lzss.pri)
