@@ -34,12 +34,12 @@ NumberValue::NumberValue(dsize initialSize)
     : _value(initialSize), _semantic(Generic)
 {}
 
-NumberValue::NumberValue(dint initialInteger)
-    : _value(initialInteger), _semantic(Generic)
+NumberValue::NumberValue(dint initialInteger, SemanticHints semantic)
+    : _value(initialInteger), _semantic(semantic)
 {}
 
-NumberValue::NumberValue(duint initialUnsignedInteger)
-    : _value(initialUnsignedInteger), _semantic(Generic)
+NumberValue::NumberValue(duint initialUnsignedInteger, SemanticHints semantic)
+    : _value(initialUnsignedInteger), _semantic(semantic)
 {}
 
 NumberValue::NumberValue(bool initialBoolean)
@@ -63,6 +63,10 @@ Value::Text NumberValue::asText() const
     if(_semantic.testFlag(Boolean) && (_value == True || _value == False))
     {
         s << (isTrue()? "True" : "False");
+    }
+    else if(_semantic.testFlag(Hex))
+    {
+        s << "0x" << QString::number(int(_value), 16);
     }
     else
     {

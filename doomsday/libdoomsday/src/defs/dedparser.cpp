@@ -635,7 +635,7 @@ DENG2_PIMPL(DEDParser)
         int value = 0;
         if(ReadFlags(&value, prefix))
         {
-            dest->set(NumberValue(value));
+            dest->set(NumberValue(value, NumberValue::Hex));
             return true;
         }
         return false;
