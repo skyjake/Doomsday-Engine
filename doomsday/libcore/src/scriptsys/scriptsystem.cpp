@@ -151,10 +151,10 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
     std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
     defaultImportPath->add("");
     defaultImportPath->add("*"); // Newest module with a matching name.
-    ArrayValue *importPath = defaultImportPath.get();
+    ArrayValue const *importPath = defaultImportPath.get();
     try
     {
-        importPath = &App::config()["importPath"].value<ArrayValue>();
+        importPath = &App::config().geta("importPath");
     }
     catch(Record::NotFoundError const &)
     {}

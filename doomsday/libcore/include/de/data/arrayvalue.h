@@ -185,6 +185,9 @@ public:
      */
     void setElement(dint index, Number value);
 
+    Value const &element(dint index) const;
+    Value const &operator [] (dint index) const;
+
 private:
     Elements::iterator indexToIterator(dint index);
     Elements::const_iterator indexToIterator(dint index) const;

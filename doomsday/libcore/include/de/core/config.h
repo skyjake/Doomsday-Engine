@@ -24,6 +24,7 @@
 #include "../String"
 #include "../Path"
 #include "../Version"
+#include "../Record"
 
 namespace de {
 
@@ -47,7 +48,7 @@ class ArrayValue;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Config
+class DENG2_PUBLIC Config : public RecordAccessor
 {
 public:
     /**
@@ -62,43 +63,6 @@ public:
 
     /// Writes the configuration to /home.
     void write() const;
-
-    /// Returns the value of @a name as a Value.
-    Value const &get(String const &name) const;
-
-    /// Returns the value of @a name as an integer.
-    dint geti(String const &name) const;
-
-    dint geti(String const &name, dint defaultValue) const;
-
-    /// Returns the value of @a name as a boolean.
-    bool getb(String const &name) const;
-
-    bool getb(String const &name, bool defaultValue) const;
-
-    /// Returns the value of @a name as an unsigned integer.
-    duint getui(String const &name) const;
-
-    duint getui(String const &name, duint defaultValue) const;
-
-    /// Returns the value of @a name as a double-precision floating point number.
-    ddouble getd(String const &name) const;
-
-    ddouble getd(String const &name, ddouble defaultValue) const;
-
-    /// Returns the value of @a name as a string.
-    String gets(String const &name) const;
-
-    String gets(String const &name, String const &defaultValue) const;
-
-    /// Returns the value of @a name as an array value. An exception is thrown
-    /// if the variable does not have an array value.
-    ArrayValue const &geta(String const &name) const;
-
-    template <typename ValueType>
-    ValueType const &getAs(String const &name) const {
-        return names().getAs<ValueType>(name);
-    }
 
     /**
      * Sets the value of a variable, creating the variable if needed.

@@ -52,6 +52,11 @@ Value::Number Value::asSafeNumber(Number const &defaultValue) const
     }
 }
 
+int Value::asInt() const
+{
+    return round<int>(asNumber());
+}
+
 dsize Value::size() const
 {
     /// @throw IllegalError Size is meaningless.

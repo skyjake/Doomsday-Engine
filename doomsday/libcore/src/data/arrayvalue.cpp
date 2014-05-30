@@ -340,3 +340,13 @@ void ArrayValue::setElement(dint index, Number value)
 {
     setElement(NumberValue(index), new NumberValue(value));
 }
+
+Value const &ArrayValue::element(dint index) const
+{
+    return element(NumberValue(index));
+}
+
+Value const &ArrayValue::operator [] (dint index) const
+{
+    return element(index);
+}

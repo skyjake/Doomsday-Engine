@@ -81,6 +81,11 @@ public:
     virtual Number asSafeNumber(Number const &defaultValue = 0.0) const;
 
     /**
+     * Convert the value to the nearest integer. Uses asNumber().
+     */
+    int asInt() const;
+
+    /**
      * Convert the value to into a text string.  All values have
      * to implement this.
      */
