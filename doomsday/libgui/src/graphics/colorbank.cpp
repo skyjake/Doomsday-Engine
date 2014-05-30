@@ -38,11 +38,11 @@ DENG2_PIMPL(ColorBank)
             ArrayValue const *colorDef = 0;
             if(def.has("rgb"))
             {
-                colorDef = &def["rgb"].value<ArrayValue>();
+                colorDef = &def.geta("rgb");
             }
             else
             {
-                colorDef = &def["rgba"].value<ArrayValue>();
+                colorDef = &def.geta("rgba");
             }
 
             ddouble alpha = 1.0;
