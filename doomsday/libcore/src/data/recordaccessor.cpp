@@ -33,6 +33,11 @@ Record const &RecordAccessor::accessedRecord() const
     return *_rec;
 }
 
+Record const *RecordAccessor::accessedRecordPtr() const
+{
+    return _rec;
+}
+
 Value const &RecordAccessor::get(String const &name) const
 {
     return accessedRecord()[name].value();
@@ -73,7 +78,7 @@ duint RecordAccessor::getui(String const &name, duint defaultValue) const
 
 dfloat RecordAccessor::getf(String const &name) const
 {
-    return dfloat(get(name).asNumber());
+    return dfloat(getd(name));
 }
 
 dfloat RecordAccessor::getf(String const &name, dfloat defaultValue) const

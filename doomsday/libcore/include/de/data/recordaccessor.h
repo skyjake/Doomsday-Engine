@@ -47,6 +47,7 @@ public:
     RecordAccessor(Record const &rec);
 
     Record const &accessedRecord() const;
+    Record const *accessedRecordPtr() const;
 
     Value const &get(String const &name) const;
     dint geti(String const &name) const;
