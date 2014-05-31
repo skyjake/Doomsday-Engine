@@ -39,6 +39,7 @@
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
+#include "doomsday/defs/model.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/uri.h"
@@ -1396,7 +1397,7 @@ DENG2_PIMPL(DEDParser)
                 Record *prevModel = 0;
                 int sub = 0;
 
-                // A new model.
+                // New models are appended to the end of the list.
                 idx = ded->addModel();
                 Record &mdl = ded->models[idx];
 
@@ -1404,8 +1405,9 @@ DENG2_PIMPL(DEDParser)
                 {
                     prevModel = &ded->models[prevModelDefIdx];
 
-                    // Should we copy the previous definition?
-                    if(bCopyNext) mdl = *prevModel;
+                    // Private members are used for metadata (like __order__) that should
+                    // not be copied.
+                    if(bCopyNext) mdl.assign(*prevModel, Record::IgnoreDoubleUnderscoreMembers);
                 }
 
                 FINDBEGIN;

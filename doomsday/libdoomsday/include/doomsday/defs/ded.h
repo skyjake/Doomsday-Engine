@@ -151,6 +151,8 @@ public:
 
     char const *getMobjName(int num) const;
 
+    int getStateNum(de::String const &id) const;
+
     int getStateNum(char const *id) const;
 
     int getModelNum(char const *id) const;
@@ -186,31 +188,6 @@ protected:
     DENG2_NO_ASSIGN(ded_s)
     DENG2_NO_COPY  (ded_s)
 };
-
-namespace defn
-{
-    /**
-     * Utility for handling model definitions.
-     */
-    class LIBDOOMSDAY_PUBLIC Model
-    {
-    public:
-        Model(de::Record &d) : _def(&d), _constDef(&d) {}
-        Model(de::Record const &d) : _def(0), _constDef(&d) {}
-
-        de::Record &addSub();
-
-        int subCount() const;
-        de::Record &sub(int index);
-        de::Record const &sub(int index) const;
-
-        void cleanupAfterParsing(de::Record const &prev);
-
-    private:
-        de::Record *_def;
-        de::Record const *_constDef;
-    };
-}
 
 typedef ded_s ded_t;
 
