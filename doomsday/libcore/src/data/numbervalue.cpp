@@ -157,10 +157,12 @@ void NumberValue::modulo(Value const &divisor)
 
 // Flags for serialization:
 static duint8 const SEMANTIC_BOOLEAN = 0x01;
+static duint8 const SEMANTIC_HEX     = 0x02;
 
 void NumberValue::operator >> (Writer &to) const
 {
-    duint8 flags = (_semantic.testFlag(Boolean)? SEMANTIC_BOOLEAN : 0);
+    duint8 flags = (_semantic.testFlag(Boolean)? SEMANTIC_BOOLEAN : 0) |
+                   (_semantic.testFlag(Hex)?     SEMANTIC_HEX     : 0);
 
     to << SerialId(NUMBER) << flags << _value;
 }
@@ -178,7 +180,8 @@ void NumberValue::operator << (Reader &from)
     duint8 flags;
     from >> flags >> _value;
 
-    _semantic = SemanticHints(flags & SEMANTIC_BOOLEAN? Boolean : 0);
+    _semantic = SemanticHints((flags & SEMANTIC_BOOLEAN? Boolean : 0) |
+                              (flags & SEMANTIC_HEX?     Hex : 0));
 }
 
 } // namespace de
