@@ -160,6 +160,11 @@ void Def_Destroy(void)
     defsInited = false;
 }
 
+spritenum_t Def_GetSpriteNum(String const &name)
+{
+    return Def_GetSpriteNum(name.toLatin1());
+}
+
 spritenum_t Def_GetSpriteNum(char const *name)
 {
     if(name && name[0])

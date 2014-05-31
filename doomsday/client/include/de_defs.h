@@ -27,6 +27,7 @@
 #include "def_share.h"
 #include "def_main.h"
 #include <doomsday/defs/ded.h>
+#include <doomsday/defs/model.h>
 #include <doomsday/defs/dedfile.h>
 #include <doomsday/defs/dedparser.h>
 

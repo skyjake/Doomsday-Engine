@@ -24,6 +24,7 @@
 #include <vector>
 #include <de/Vector>
 #include <doomsday/defs/ded.h>
+#include <doomsday/defs/model.h>
 
 #include "resource/model.h"
 
@@ -133,7 +134,7 @@ struct ModelDef
 
     float visualRadius;
 
-    ded_model_t *def;
+    defn::Model def;
 
     /// Points to next inter-frame, or NULL.
     ModelDef *interNext;
@@ -154,7 +155,6 @@ struct ModelDef
           interMark(0),
           resize(0),
           visualRadius(0),
-          def(0),
           interNext(0),
           selectNext(0)
     {

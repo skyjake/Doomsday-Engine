@@ -39,6 +39,7 @@
 
 #include <doomsday/console/var.h>
 #include <de/Log>
+#include <de/ArrayValue>
 #include <de/binangle.h>
 #include <de/memory.h>
 #include <de/concurrency.h>
@@ -584,11 +585,12 @@ static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords
 
 static int chooseSelSkin(ModelDef &mf, int submodel, int selector)
 {
-    if(mf.def->hasSub(submodel))
+    if(mf.def.hasSub(submodel))
     {
-        int i = (selector >> DDMOBJ_SELECTOR_SHIFT) &
-                mf.def->sub(submodel).selSkinBits[0]; // Selskin mask
-        int c = mf.def->sub(submodel).selSkinBits[1]; // Selskin shift
+        Record &subDef = mf.def.sub(submodel);
+
+        int i = (selector >> DDMOBJ_SELECTOR_SHIFT) & subDef.geti("selSkinMask");
+        int c = subDef.geti("selSkinShift");
 
         if(c > 0) i >>= c;
         else      i <<= -c;
@@ -596,7 +598,7 @@ static int chooseSelSkin(ModelDef &mf, int submodel, int selector)
         if(i > 7) i = 7; // Maximum number of skins for selskin.
         if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
 
-        return mf.def->sub(submodel).selSkins[i];
+        return subDef.geta("selSkins")[i].asInt();
     }
     return 0;
 }
@@ -834,9 +836,9 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
 
     TextureVariant *shinyTexture = 0;
     float shininess = 0;
-    if(mf->def->hasSub(number))
+    if(mf->def.hasSub(number))
     {
-        shininess = de::clamp(0.f, mf->def->sub(number).shiny * modelShinyFactor, 1.f);
+        shininess = float(de::clamp(0.0, mf->def.sub(number).getd("shiny") * modelShinyFactor, 1.0));
         // Ensure we've prepared the shiny skin.
         if(shininess > 0)
         {
@@ -855,7 +857,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     if(shininess > 0)
     {
         // Calculate shiny coordinates.
-        Vector3f shinyColor = mf->def->sub(number).shinyColor;
+        Vector3f shinyColor = mf->def.sub(number).get("shinyColor");
 
         // With psprites, add the view angle/pitch.
         float offset = parm.shineYawOffset;
@@ -892,7 +894,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
 
         Mod_ShinyCoords(modelTexCoords, numVerts,
                         modelNormCoords, normYaw, normPitch, shinyAng, shinyPnt,
-                        mf->def->sub(number).shinyReact);
+                        mf->def.sub(number).getf("shinyReact"));
 
         // Shiny color.
         if(smf.testFlag(MFF_SHINY_LIT))

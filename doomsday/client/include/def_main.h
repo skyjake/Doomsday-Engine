@@ -179,6 +179,8 @@ ded_detailtexture_t* Def_GetDetailTex(Uri const *uri, /*bool hasExternal,*/ bool
 } // extern "C"
 #endif
 
+spritenum_t Def_GetSpriteNum(de::String const &name);
+
 ded_ptcgen_t *Def_GetGenerator(Uri const *uri);
 ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
 

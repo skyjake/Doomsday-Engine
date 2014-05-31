@@ -68,6 +68,7 @@
 #include <de/Log>
 #include <de/Loop>
 #include <de/Module>
+#include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/Reader>
 #include <de/Task>
@@ -1349,7 +1350,7 @@ DENG2_PIMPL(ResourceSystem)
         foreach(ModelDef const &modef, modefs)
         {
             if(modef.state == &runtimeDefs.states[state] &&
-               modef.interMark == interMark && modef.select == select)
+               fequal(modef.interMark, interMark) && modef.select == select)
             {
                 // Models are loaded in reverse order; this one already has a model.
                 return 0;
@@ -1539,50 +1540,51 @@ DENG2_PIMPL(ResourceSystem)
      * Model DEDs, each State that has a model will have a pointer to the one
      * with the smallest intermark (start of a chain).
      */
-    void setupModel(ded_model_t &def)
+    void setupModel(defn::Model const &def)
     {
         LOG_AS("setupModel");
 
-        int const modelScopeFlags = def.flags | defs.modelFlags;
-        int const statenum = Def_GetStateNum(def.state);
+        int const modelScopeFlags = def.geti("flags") | defs.modelFlags;
+        int const statenum = defs.getStateNum(def.gets("state"));
 
         // Is this an ID'd model?
-        ModelDef *modef = getModelDefWithId(def.id);
+        ModelDef *modef = getModelDefWithId(def.gets("id"));
         if(!modef)
         {
             // No, normal State-model.
             if(statenum < 0) return;
 
-            modef = getModelDef(statenum + def.off, def.interMark, def.selector);
-            if(!modef) return; // Can't get a modef, quit!
+            modef = getModelDef(statenum + def.geti("off"), def.getf("interMark"), def.geti("selector"));
+            if(!modef) return; // Overridden or invalid definition.
         }
 
         // Init modef info (state & intermark already set).
-        modef->def       = &def;
-        modef->group     = def.group;
+        modef->def       = def;
+        modef->group     = def.getui("group");
         modef->flags     = modelScopeFlags;
-        modef->offset    = def.offset;
+        modef->offset    = Vector3f(def.get("offset"));
         modef->offset.y += defs.modelOffset; // Common Y axis offset.
-        modef->scale     = def.scale;
+        modef->scale     = Vector3f(def.get("scale"));
         modef->scale.y  *= defs.modelScale;  // Common Y axis scaling.
-        modef->resize    = def.resize;
-        modef->skinTics  = de::max(def.skinTics, 1);
+        modef->resize    = def.getf("resize");
+        modef->skinTics  = de::max(def.geti("skinTics"), 1);
         for(int i = 0; i < 2; ++i)
         {
-            modef->interRange[i] = def.interRange[i];
+            modef->interRange[i] = float(def.geta("interRange")[i].asNumber());
         }
 
         // Submodels.
         modef->clearSubs();
-        for(uint i = 0; i < def.subCount(); ++i)
+        for(int i = 0; i < def.subCount(); ++i)
         {
-            ded_submodel_t const *subdef = &def.sub(i);
+            Record const &subdef = def.sub(i);
             SubmodelDef *sub = modef->addSub();
 
             sub->modelId = 0;
 
-            if(!subdef->filename) continue;
-            de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
+            if(subdef.gets("filename").isEmpty()) continue;
+
+            de::Uri const searchPath(subdef.gets("filename"));
             if(searchPath.isEmpty()) continue;
 
             try
@@ -1628,15 +1630,15 @@ DENG2_PIMPL(ResourceSystem)
                 if(!mdl) continue;
 
                 sub->modelId    = mdl->modelId();
-                sub->frame      = mdl->frameNumber(subdef->frame);
+                sub->frame      = mdl->frameNumber(subdef.gets("frame"));
                 if(sub->frame < 0) sub->frame = 0;
-                sub->frameRange = de::max(1, subdef->frameRange); // Frame range must always be greater than zero.
+                sub->frameRange = de::max(1, subdef.geti("frameRange")); // Frame range must always be greater than zero.
 
-                sub->alpha      = byte(de::clamp(0, int(255 - subdef->alpha * 255), 255));
-                sub->blendMode  = subdef->blendMode;
+                sub->alpha      = byte(de::clamp(0, int(255 - subdef.getf("alpha") * 255), 255));
+                sub->blendMode  = blendmode_t(subdef.geti("blendMode"));
 
                 // Submodel-specific flags cancel out model-scope flags!
-                sub->setFlags(modelScopeFlags ^ subdef->flags);
+                sub->setFlags(modelScopeFlags ^ subdef.geti("flags"));
 
                 // Flags may override alpha and/or blendmode.
                 if(sub->testFlag(MFF_BRIGHTSHADOW))
@@ -1671,10 +1673,10 @@ DENG2_PIMPL(ResourceSystem)
                     sub->blendMode = BM_SUBTRACT;
                 }
 
-                if(subdef->skinFilename && !subdef->skinFilename->isEmpty())
+                if(!subdef.gets("skinFilename").isEmpty())
                 {
                     // A specific file name has been given for the skin.
-                    String const &skinFilePath  = subdef->skinFilename->path();
+                    String const &skinFilePath  = de::Uri(subdef.gets("skinFilename")).path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
@@ -1682,26 +1684,26 @@ DENG2_PIMPL(ResourceSystem)
 
                         sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
                     }
-                    catch(FS1::NotFoundError const&)
+                    catch(FS1::NotFoundError const &)
                     {
                         LOG_RES_WARNING("Failed to locate skin \"%s\" for model \"%s\"")
-                            << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
+                            << subdef.gets("skinFilename") << NativePath(modelFilePath).pretty();
                     }
                 }
                 else
                 {
-                    sub->skin = subdef->skin;
+                    sub->skin = subdef.geti("skin");
                 }
 
                 // Skin range must always be greater than zero.
-                sub->skinRange = de::max(subdef->skinRange, 1);
+                sub->skinRange = de::max(subdef.geti("skinRange"), 1);
 
                 // Offset within the model.
-                sub->offset = subdef->offset;
+                sub->offset = subdef.get("offset");
 
-                if(subdef->shinySkin && !subdef->shinySkin->isEmpty())
+                if(!subdef.gets("shinySkin").isEmpty())
                 {
-                    String const &skinFilePath  = subdef->shinySkin->path();
+                    String const &skinFilePath  = de::Uri(subdef.gets("shinySkin")).path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
@@ -1740,8 +1742,8 @@ DENG2_PIMPL(ResourceSystem)
         }
         else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
         {
-            spritenum_t sprNum = Def_GetSpriteNum(def.sprite.id);
-            int sprFrame       = def.spriteFrame;
+            spritenum_t sprNum = Def_GetSpriteNum(def.gets("sprite"));
+            int sprFrame       = def.geti("spriteFrame");
 
             if(sprNum < 0)
             {
@@ -3409,8 +3411,11 @@ void ResourceSystem::initModels()
         {
             ModelDef *other = &d->modefs[k];
 
+            /// @todo Need an index by state. -jk
+            if(other->state != me->state) continue;
+
             // Same state and a bigger order are the requirements.
-            if(other->state == me->state && other->def > me->def && // Defined after me.
+            if(other->def.order() > me->def.order() && // Defined after me.
                other->interMark > me->interMark &&
                other->interMark < minmark)
             {
@@ -3437,7 +3442,8 @@ void ResourceSystem::initModels()
             ModelDef *other = &d->modefs[k];
 
             // Same state and a bigger order are the requirements.
-            if(other->state == me->state && other->def > me->def && // Defined after me.
+            if(other->state == me->state &&
+               other->def.order() > me->def.order() && // Defined after me.
                other->select > me->select && other->select < minsel &&
                other->interMark >= me->interMark)
             {
