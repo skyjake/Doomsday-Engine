@@ -67,7 +67,7 @@ public:
     typedef std::pair<String, String> KeyValue;
     typedef QList<KeyValue> List;
 
-    enum CopyBehavior {
+    enum Behavior {
         AllMembers,
         IgnoreDoubleUnderscoreMembers
     };
@@ -87,14 +87,16 @@ public:
      * @param other     Record to copy.
      * @param behavior  Which members to copy.
      */
-    Record(Record const &other, CopyBehavior behavior = AllMembers);
+    Record(Record const &other, Behavior behavior = AllMembers);
 
     virtual ~Record();
 
     /**
      * Deletes all the variables in the record.
+     *
+     * @param behavior  Clear behavior: which members to remove.
      */
-    void clear();
+    void clear(Behavior behavior = AllMembers);
 
     /**
      * Adds a copy of each member of another record into this record. The
@@ -104,12 +106,23 @@ public:
      * @param other     Record whose members are to be copied.
      * @param behavior  Copy behavior.
      */
-    void copyMembersFrom(Record const &other, CopyBehavior behavior = AllMembers);
+    void copyMembersFrom(Record const &other, Behavior behavior = AllMembers);
 
     /**
      * Assignment operator.
+     * @return This record.
      */
     Record &operator = (Record const &other);
+
+    /**
+     * Assignment with specific behavior. All existing members in this record
+     * are cleared (unless ignored due to @a behavior).
+     *
+     * @param behavior  Which members to assign.
+     *
+     * @return This record.
+     */
+    Record &assign(Record const &other, Behavior behavior = AllMembers);
 
     /**
      * Determines if the record contains a variable or a subrecord named @a variableName.

@@ -145,7 +145,17 @@ Record const &RecordValue::dereference() const
 Value *RecordValue::duplicate() const
 {
     verify();
-    /// The return duplicated value does not own the record, just references it.
+    if(hasOwnership())
+    {
+        // Make a complete duplicate using a new record.
+        return new RecordValue(new Record(*d->record), OwnsRecord);
+    }
+    return new RecordValue(d->record);
+}
+
+RecordValue *RecordValue::duplicateUnowned() const
+{
+    verify();
     return new RecordValue(d->record);
 }
 

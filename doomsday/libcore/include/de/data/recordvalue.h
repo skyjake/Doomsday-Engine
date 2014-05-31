@@ -119,6 +119,8 @@ public:
     // Observes Record deletion.
     void recordBeingDeleted(Record &record);
 
+    RecordValue *duplicateUnowned() const;
+
 public:
     DENG2_PRIVATE(d)
 };

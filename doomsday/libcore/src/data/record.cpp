@@ -183,7 +183,7 @@ DENG2_AUDIENCE_METHOD(Record, Removal)
 Record::Record() : RecordAccessor(this), d(new Instance(*this))
 {}
 
-Record::Record(Record const &other, CopyBehavior behavior)
+Record::Record(Record const &other, Behavior behavior)
     : RecordAccessor(this)
     , d(new Instance(*this))
 {
@@ -199,22 +199,32 @@ Record::~Record()
     clear();
 }
 
-void Record::clear()
+void Record::clear(Behavior behavior)
 {
     if(!d->members.empty())
     {
+        Record::Members remaining; // Contains all members that are not removed.
+
         DENG2_FOR_EACH(Members, i, d->members)
         {
+            if(behavior == IgnoreDoubleUnderscoreMembers &&
+               i.key().startsWith("__"))
+            {
+                remaining.insert(i.key(), i.value());
+                continue;
+            }
+
             DENG2_FOR_AUDIENCE2(Removal, o) o->recordMemberRemoved(*this, **i);
 
             i.value()->audienceForDeletion() -= this;
             delete i.value();
         }
-        d->members.clear();
+
+        d->members = remaining;
     }
 }
 
-void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
+void Record::copyMembersFrom(Record const &other, Behavior behavior)
 {
     DENG2_FOR_EACH_CONST(Members, i, other.d->members)
     {
@@ -222,23 +232,6 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
            i.key().startsWith("__")) continue;
 
         Variable *var = new Variable(*i.value());
-
-        // Ownerships of copied subrecords should be retained in the copy.
-        if(RecordValue *recVal = var->value().maybeAs<RecordValue>())
-        {
-            DENG2_ASSERT(!recVal->hasOwnership()); // RecordValue duplication behavior
-
-            RecordValue const &original = i.value()->value().as<RecordValue>();
-            if(original.hasOwnership())
-            {
-                DENG2_ASSERT(recVal->record() == original.record());
-
-                // Make a true copy of the subrecord.
-                recVal->setRecord(new Record(*recVal->record(), behavior),
-                                  RecordValue::OwnsRecord);
-            }
-        }
-
         var->audienceForDeletion() += this;
         d->members[i.key()] = var;
     }
@@ -246,8 +239,13 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
 
 Record &Record::operator = (Record const &other)
 {
-    clear();
-    copyMembersFrom(other);
+    return assign(other);
+}
+
+Record &Record::assign(Record const &other, Behavior behavior)
+{
+    clear(behavior);
+    copyMembersFrom(other, behavior);
     return *this;
 }
 

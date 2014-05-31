@@ -169,6 +169,13 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             // Reference to the variable.
             return new RefValue(variable);
         }
+        else if(RecordValue *recVal = variable->value().maybeAs<RecordValue>())
+        {
+            // As a special case, RecordValue is always passed as an unowned reference.
+            // One specifically has to request a copy with the built-in Record()
+            // function to get a copy.
+            return recVal->duplicateUnowned();
+        }
         else
         {
             // Variables evaluate to their values.
