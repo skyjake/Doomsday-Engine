@@ -115,17 +115,17 @@ QList<Address> ServerFinder::foundServers() const
 
 String ServerFinder::name(Address const &server) const
 {
-    return messageFromServer(server)["name"].value<TextValue>();
+    return messageFromServer(server).gets("name");
 }
 
 int ServerFinder::playerCount(Address const &server) const
 {
-    return messageFromServer(server)["nump"].value<NumberValue>().as<int>();
+    return messageFromServer(server).geti("nump");
 }
 
 int ServerFinder::maxPlayers(Address const &server) const
 {
-    return messageFromServer(server)["maxp"].value<NumberValue>().as<int>();
+    return messageFromServer(server).geti("maxp");
 }
 
 Record const &ServerFinder::messageFromServer(Address const &address) const

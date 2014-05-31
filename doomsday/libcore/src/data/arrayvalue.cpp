@@ -92,7 +92,7 @@ Value const &ArrayValue::element(Value const &indexValue) const
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
         throw IllegalIndexError("ArrayValue::element", "Array index must be a number");
     }
-    dint index = v->as<dint>();
+    dint index = v->asInt();
     Elements::const_iterator elem = indexToIterator(index);
     return **elem;
 }
@@ -110,7 +110,7 @@ void ArrayValue::setElement(Value const &indexValue, Value *value)
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
         throw IllegalIndexError("ArrayValue::setElement", "Array index must be a number");
     }
-    replace(v->as<dint>(), value);
+    replace(v->asInt(), value);
 }
 
 bool ArrayValue::contains(Value const &value) const
