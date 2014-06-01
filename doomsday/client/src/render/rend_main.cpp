@@ -51,6 +51,7 @@
 #include "SectorCluster"
 #include "Surface"
 #include "BiasIllum"
+#include "BiasTracker"
 #include "DrawLists"
 #include "HueCircleVisual"
 #include "LightDecoration"
@@ -230,6 +231,8 @@ DGLuint dlBBox;
  * Debug/Development cvars:
  */
 
+int devUpdateBiasContributors = true; //cvar
+
 byte devMobjVLights;            ///< @c 1= Draw mobj vertex lighting vector.
 int devMobjBBox;                ///< @c 1= Draw mobj bounding boxes.
 int devPolyobjBBox;             ///< @c 1= Draw polyobj bounding boxes.
@@ -391,6 +394,7 @@ void Rend_Register()
 
     C_VAR_BYTE  ("rend-bias-grid-debug",            &devLightGrid,                  CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT ("rend-bias-grid-debug-size",       &devLightGridSize,              0,              .1f, 100);
+    C_VAR_INT   ("rend-dev-bias-affected",          &devUpdateBiasContributors,     CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
     C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE, 0, 1);
@@ -432,7 +436,6 @@ void Rend_Register()
     fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
-    BiasSurface::consoleRegister();
     VR_ConsoleRegister();
 }
 
@@ -841,12 +844,18 @@ bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
     return (!forceOpaque && !skyMasked && (!ms.isOpaque() || opacity < 1 || blendmode > 0));
 }
 
+bool Rend_BiasContributorUpdatesEnabled()
+{
+    // Are updates disabled?
+    return CPP_BOOL(devUpdateBiasContributors);
+}
+
 void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     Vector4f const &ambientLight, Vector3f const &surfaceColor, float glowing,
     float opacity, blendmode_t blendmode,
     Vector2f const &matOrigin, MaterialSnapshot const &matSnapshot,
     uint lightListIdx,
-    float surfaceLightLevelDL, float surfaceLightLevelDR, Matrix3f const &surfaceTangentMatrix,
+    float surfaceLightLevelDL, float surfaceLightLevelDR,
     WallEdgeSection const *leftSection, WallEdgeSection const *rightSection,
     Vector3f const *surfaceColor2)
 {
@@ -885,15 +894,8 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         {
             if(!levelFullBright)
             {
-                MapElement &mapElement = leftSection->edge().hedge().mapElement();
-                int const geomGroup    = leftSection->id() == WallEdge::WallMiddle? LineSide::Middle :
-                                         leftSection->id() == WallEdge::WallBottom? LineSide::Bottom :
-                                                                                    LineSide::Top;
-
-                Map &map = cluster.sector().map();
-                BiasSurface &biasSurface = cluster.biasSurface(mapElement, geomGroup);
-
                 // Apply the ambient light term from the grid (if available).
+                Map &map = cluster.sector().map();
                 if(map.hasLightGrid())
                 {
                     for(duint16 i = 0; i < 4; ++i)
@@ -903,8 +905,12 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
                 }
 
                 // Apply bias light source contributions.
-                biasSurface.light(posCoords, colorCoords, surfaceTangentMatrix,
-                                  map.biasCurrentTime());
+                cluster.lightWithBiasSources(leftSection->edge().hedge().mapElement(),
+                                             (leftSection->id() == WallEdge::WallMiddle? LineSide::Middle :
+                                              leftSection->id() == WallEdge::WallBottom? LineSide::Bottom :
+                                                                                         LineSide::Top),
+                                             leftSection->surfacePtr()->tangentMatrix(),
+                                             posCoords, colorCoords);
 
                 // Apply surface glow.
                 if(glowing > 0)

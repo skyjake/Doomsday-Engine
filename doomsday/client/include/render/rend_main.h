@@ -297,6 +297,8 @@ bool Rend_NearFadeOpacity(de::WallEdgeSection const &leftSection,
 bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
     blendmode_t blendmode, de::MaterialSnapshot const &ms);
 
+bool Rend_BiasContributorUpdatesEnabled();
+
 /**
  * This doesn't create a rendering primitive but a vissprite! The vissprite
  * represents the masked poly and will be rendered during the rendering
@@ -308,7 +310,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     float glowing, float opacity, blendmode_t blendmode,
     de::Vector2f const &materialOrigin, de::MaterialSnapshot const &matSnapshot,
     uint lightListIdx,
-    float surfaceLightLevelDL, float surfaceLightLevelDR, de::Matrix3f const &surfaceTangentMatrix,
+    float surfaceLightLevelDL, float surfaceLightLevelDR,
     de::WallEdgeSection const *leftSection = 0, de::WallEdgeSection const *rightSection = 0,
     de::Vector3f const *surfaceColor2 = 0);
 

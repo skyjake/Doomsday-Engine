@@ -32,6 +32,7 @@
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
 #  include "Shard"
+#  include <de/Matrix>
 #endif
 
 #include <de/Observers>
@@ -42,7 +43,6 @@
 class ConvexSubspace;
 #ifdef __CLIENT__
 class BiasDigest;
-class BiasSurface;
 #endif
 
 /**
@@ -253,27 +253,11 @@ public:
      */
     int blockLightSourceZBias();
 
-    /**
-     * Returns the BiasSurface for the specified @a mapElement and geometry group
-     * identifier @a geomId; otherwise @c 0.
-     */
-    BiasSurface *findBiasSurface(de::MapElement &mapElement, int geomId);
+    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
+                              de::Vector3f const *posCoords, de::Vector4f *colorCoords);
 
-    /**
-     * Generate/locate the BiasSurface for the specified @a mapElement and
-     * geometry group identifier @a geomId.
-     */
-    BiasSurface &biasSurface(de::MapElement &mapElement, int geomId);
-
-    /**
-     * BiasSurfaces owned by the cluster should call this periodically to update
-     * their lighting contributions.
-     *
-     * @param biasSurface  BiasSurface to be updated (owned by the SectorCluster).
-     *
-     * @return  @c true if one or more BiasIllum contributors was updated.
-     */
-    bool updateBiasContributors(BiasSurface *biasSurface);
+    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
+                              WorldVBuf &vbuf, WorldVBuf::Indices const &indices);
 
     /**
      * Apply bias lighting changes to @em all geometry Shards within the cluster.
@@ -282,13 +266,7 @@ public:
      */
     void applyBiasDigest(BiasDigest &changes);
 
-    /**
-     * Convenient method of determining the frameCount of the current bias render
-     * frame. Used for tracking changes to bias sources/surfaces.
-     *
-     * @see Map::biasLastChangeOnFrame()
-     */
-    uint biasLastChangeOnFrame() const;
+    void updateAfterMove(Polyobj &po);
 
     /**
      * Prepare all geometry shards for the given @a subspace, which should be

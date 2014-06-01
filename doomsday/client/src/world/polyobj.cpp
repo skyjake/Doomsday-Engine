@@ -52,20 +52,9 @@ static void notifyGeometryChanged(Polyobj &po)
 #ifdef __CLIENT__
     if(!ddMapSetup && useBias)
     {
-        // Shadow bias must be informed when surfaces move/deform.
-        foreach(HEdge *hedge, po.mesh().hedges())
-        {
-            // Is this on the back of a one-sided line?
-            if(!hedge->hasMapElement())
-                continue;
-
-            /// @note If polyobjs are allowed to move between sector clusters
-            /// then we'll need to revise the bias illumination storage specially.
-            if(BiasSurface *shard = po.bspLeaf().subspace().cluster().findBiasSurface(hedge->mapElement(), LineSide::Middle))
-            {
-                shard->updateAfterMove();
-            }
-        }
+        /// @note If polyobjs are allowed to move between sector clusters
+        /// then we'll need to revise the bias illumination storage specially.
+        po.bspLeaf().subspace().cluster().updateAfterMove(po);
     }
 #else // !__CLIENT__
     DENG2_UNUSED(po);

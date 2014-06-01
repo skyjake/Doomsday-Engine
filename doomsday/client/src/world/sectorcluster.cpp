@@ -57,6 +57,7 @@
 #include <QMutableMapIterator>
 #include <QRect>
 #include <QSet>
+#include <QVector>
 
 namespace de {
 
@@ -329,7 +330,7 @@ namespace internal
             // vertical edges of this wall section.
             coord_t const lineLength    = leftSection.edge().lineSide().line().length();
             coord_t const sectionOffset = leftSection.edge().lineSideOffset();
-            coord_t const sectionWidth  = de::abs(Vector2d(rightSection.edge().origin() - leftSection.edge().origin()).length());
+            coord_t const sectionWidth  = de::abs((rightSection.edge().origin() - leftSection.edge().origin()).length());
 
             float deltaDiff = rightDelta - leftDelta;
             rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
@@ -504,22 +505,110 @@ DENG2_PIMPL(SectorCluster)
 #ifdef __CLIENT__
     struct GeometryData
     {
+        typedef QVector<BiasIllum *> BiasIllums;
+
+        SectorCluster &cluster;
         MapElement *mapElement;
         int geomId;
+    private:
+        struct BiasSurface
+        {
+            BiasTracker tracker;
+            uint lastUpdateFrame;
+            BiasIllums illums;
+
+            BiasSurface() : lastUpdateFrame(0) {}
+            ~BiasSurface() { qDeleteAll(illums); }
+        };
         QScopedPointer<BiasSurface> biasSurface;
 
-        GeometryData(MapElement *mapElement, int geomId)
-            : mapElement(mapElement), geomId(geomId)
+    public:
+        GeometryData(SectorCluster &owner, MapElement *mapElement, int geomId)
+            : cluster   (owner)
+            , mapElement(mapElement)
+            , geomId    (geomId)
         {}
+
+        BiasIllums &biasIllums() {
+            addBiasSurfaceIfMissing();
+            return biasSurface->illums;
+        }
+
+        BiasTracker &biasTracker() {
+            addBiasSurfaceIfMissing();
+            return biasSurface->tracker;
+        }
+
+        void applyBiasDigest(BiasDigest &allChanges) {
+            if(!biasSurface.isNull()) {
+                biasSurface->tracker.applyChanges(allChanges);
+            }
+        }
+
+        void markBiasContributorUpdateNeeded() {
+            if(!biasSurface.isNull()) {
+                biasSurface->tracker.updateAllContributors();
+            }
+        }
+
+        void markBiasIllumUpdateCompleted() {
+            if(!biasSurface.isNull()) {
+                biasSurface->tracker.markIllumUpdateCompleted();
+            }
+        }
+
+        uint lastBiasUpdateFrame() {
+            addBiasSurfaceIfMissing();
+            return biasSurface->lastUpdateFrame;
+        }
+
+        void setBiasLastUpdateFrame(uint updateFrame) {
+            if(!biasSurface.isNull()) {
+                biasSurface->lastUpdateFrame = updateFrame;
+            }
+        }
+
+    private:
+        void addBiasSurfaceIfMissing() {
+            if(!biasSurface.isNull()) return;
+
+            biasSurface.reset(new BiasSurface);
+
+            // Determine the number of bias illumination points needed (presently
+            // we define a 1:1 mapping to geometry vertices).
+            int numIllums = 0;
+            switch(mapElement->type())
+            {
+            case DMU_SUBSPACE: {
+                ConvexSubspace &subspace = mapElement->as<ConvexSubspace>();
+                DENG2_ASSERT(geomId >= 0 && geomId < subspace.sector().planeCount()); // sanity check
+                numIllums = subspace.numFanVertices();
+                break; }
+
+            case DMU_SEGMENT:
+                DENG2_ASSERT(geomId >= 0 && geomId <= LineSide::Top); // sanity check
+                numIllums = 4;
+                break;
+
+            default:
+                DENG2_ASSERT(!"SectorCluster::GeometryData::addBiasSurfaceIfMissing(): Invalid MapElement type");
+            }
+
+            if(numIllums > 0)
+            {
+                biasSurface->illums.reserve(numIllums);
+                for(int i = 0; i < numIllums; ++i)
+                {
+                    biasSurface->illums << new BiasIllum(&biasSurface->tracker);
+                }
+            }
+        }
     };
+
     /// @todo Avoid two-stage lookup.
     typedef QMap<int, GeometryData *> GeometryGroup;
     typedef QMap<MapElement *, GeometryGroup> GeometryGroups;
     GeometryGroups geomGroups;
-
-    /// Reverse lookup hash from BiasSurface => GeometryData.
-    typedef QHash<BiasSurface *, GeometryData *> BiasSurfaceGeometryMap;
-    BiasSurfaceGeometryMap biasSurfaceGeomMap;
 
     /// Subspaces in the neighborhood effecting environmental audio characteristics.
     typedef QSet<ConvexSubspace *> ReverbSubspaces;
@@ -1072,6 +1161,58 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
+    /**
+     * Find the GeometryData for a MapElement by the element-unique @a group
+     * identifier.
+     *
+     * @param geomId    Geometry identifier.
+     * @param canAlloc  @c true= to allocate if no data exists. Note that the
+     *                  number of vertices in the fan geometry must be known
+     *                  at this time.
+     */
+    GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
+    {
+        GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
+        if(foundGroup != geomGroups.end())
+        {
+            GeometryGroup &geomDatas = *foundGroup;
+            GeometryGroup::iterator found = geomDatas.find(geomId);
+            if(found != geomDatas.end())
+            {
+                return *found;
+            }
+        }
+
+        if(!canAlloc) return 0;
+
+        if(foundGroup == geomGroups.end())
+        {
+            foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
+        }
+
+        return foundGroup->insert(geomId, new GeometryData(self, &mapElement, geomId)).value();
+    }
+
+    void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
+    {
+        if(!hedge) return;
+        if(!hedge->hasMapElement()) return;
+
+        MapElement &mapElement = hedge->mapElement();
+        if(GeometryData *geom = geomData(mapElement, LineSide::Middle))
+        {
+            geom->markBiasContributorUpdateNeeded();
+        }
+        if(GeometryData *geom = geomData(mapElement, LineSide::Bottom))
+        {
+            geom->markBiasContributorUpdateNeeded();
+        }
+        if(GeometryData *geom = geomData(mapElement, LineSide::Top))
+        {
+            geom->markBiasContributorUpdateNeeded();
+        }
+    }
+
 #endif // __CLIENT__
 
     /// Observes SectorCluster Deletion.
@@ -1086,28 +1227,6 @@ DENG2_PIMPL(SectorCluster)
     {
         clearMapping(plane.indexInSector());
     }
-
-#ifdef __CLIENT__
-    void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
-    {
-        if(!hedge) return;
-        if(!hedge->hasMapElement()) return;
-
-        MapElement *mapElement = &hedge->mapElement();
-        if(BiasSurface *bsuf = self.findBiasSurface(*mapElement, LineSide::Middle))
-        {
-            bsuf->updateAfterMove();
-        }
-        if(BiasSurface *bsuf = self.findBiasSurface(*mapElement, LineSide::Bottom))
-        {
-            bsuf->updateAfterMove();
-        }
-        if(BiasSurface *bsuf = self.findBiasSurface(*mapElement, LineSide::Top))
-        {
-            bsuf->updateAfterMove();
-        }
-    }
-#endif
 
     /// Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane)
@@ -1143,9 +1262,9 @@ DENG2_PIMPL(SectorCluster)
                 // Inform bias surfaces of changed geometry.
                 foreach(ConvexSubspace *subspace, subspaces)
                 {
-                    if(BiasSurface *bsuf = self.findBiasSurface(*subspace, plane.indexInSector()))
+                    if(GeometryData *geom = geomData(*subspace, plane.indexInSector()))
                     {
-                        bsuf->updateAfterMove();
+                        geom->markBiasContributorUpdateNeeded();
                     }
 
                     HEdge *base = subspace->poly().hedge();
@@ -1172,52 +1291,6 @@ DENG2_PIMPL(SectorCluster)
     }
 
 #ifdef __CLIENT__
-    /**
-     * Find the GeometryData for a MapElement by the element-unique @a group
-     * identifier.
-     *
-     * @param geomId    Geometry identifier.
-     * @param canAlloc  @c true= to allocate if no data exists. Note that the
-     *                  number of vertices in the fan geometry must be known
-     *                  at this time.
-     */
-    GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
-    {
-        GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
-        if(foundGroup != geomGroups.end())
-        {
-            GeometryGroup &geomDatas = *foundGroup;
-            GeometryGroup::iterator found = geomDatas.find(geomId);
-            if(found != geomDatas.end())
-            {
-                return *found;
-            }
-        }
-
-        if(!canAlloc) return 0;
-
-        if(foundGroup == geomGroups.end())
-        {
-            foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
-        }
-
-        return *foundGroup->insert(geomId, new GeometryData(&mapElement, geomId));
-    }
-
-    /**
-     * Find the GeometryData for the given @a biasSurface.
-     */
-    GeometryData *geomDataForBiasSurface(BiasSurface *biasSurface)
-    {
-        if(biasSurface && biasSurface->cluster() == thisPublic)
-        {
-            BiasSurfaceGeometryMap::const_iterator found = biasSurfaceGeomMap.find(biasSurface);
-            if(found != biasSurfaceGeomMap.end())
-                return *found;
-        }
-        return 0;
-    }
-
     void addReverbSubspace(ConvexSubspace *subspace)
     {
         if(!subspace) return;
@@ -2137,7 +2210,7 @@ DENG2_PIMPL(SectorCluster)
 
         coord_t const lineLength    = side.line().length();
         coord_t const sectionOffset = leftSection.edge().lineSideOffset();
-        coord_t const sectionWidth  = de::abs(Vector2d(rightSection.edge().origin() - leftSection.edge().origin()).length());
+        coord_t const sectionWidth  = de::abs((rightSection.edge().origin() - leftSection.edge().origin()).length());
 
         coord_t const fFloor = cluster->visFloor().heightSmoothed();
         coord_t const fCeil  = cluster->visCeiling().heightSmoothed();
@@ -2397,15 +2470,8 @@ DENG2_PIMPL(SectorCluster)
                     {
                         if(!levelFullBright)
                         {
-                            MapElement &mapElement = leftEdge.hedge().mapElement();
-                            int const geomGroup = sectionId == WallEdge::WallMiddle? LineSide::Middle :
-                                                  sectionId == WallEdge::WallBottom? LineSide::Bottom :
-                                                                                     LineSide::Top;
-
-                            Map &map = self.sector().map();
-                            BiasSurface &biasSurface = self.biasSurface(mapElement, geomGroup);
-
                             // Apply the ambient light term from the grid (if available).
+                            Map &map = self.sector().map();
                             if(map.hasLightGrid())
                             {
                                 for(duint16 i = 0; i < 4; ++i)
@@ -2415,8 +2481,12 @@ DENG2_PIMPL(SectorCluster)
                             }
 
                             // Apply bias light source contributions.
-                            biasSurface.light(posCoords, colorCoords, surface.tangentMatrix(),
-                                              map.biasCurrentTime());
+                            self.lightWithBiasSources(leftEdge.hedge().mapElement(),
+                                                      (sectionId == WallEdge::WallMiddle? LineSide::Middle :
+                                                       sectionId == WallEdge::WallBottom? LineSide::Bottom :
+                                                                                          LineSide::Top),
+                                                      surface.tangentMatrix(),
+                                                      posCoords, colorCoords);
 
                             // Apply surface glow.
                             if(glowing > 0)
@@ -2847,7 +2917,6 @@ DENG2_PIMPL(SectorCluster)
                                              materialOrigin, matSnapshot,
                                              lightListIdx,
                                              lightLevelDeltas[0], lightLevelDeltas[1],
-                                             surface.tangentMatrix(),
                                              &leftSection, &rightSection, bottomTintColor);
 
             wroteOpaque = false; /// We @em had to use a vissprite; clearly not opaque.
@@ -3138,10 +3207,8 @@ DENG2_PIMPL(SectorCluster)
                 {
                     if(!levelFullBright)
                     {
-                        Map &map = self.sector().map();
-                        BiasSurface &biasSurface = self.biasSurface(subspace, plane.indexInSector());
-
                         // Apply the ambient light term from the grid (if available).
+                        Map &map = self.sector().map();
                         if(map.hasLightGrid())
                         {
                             for(WorldVBuf::Index i = 0; i < fanSize; ++i)
@@ -3152,8 +3219,9 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         // Apply bias light source contributions.
-                        biasSurface.light(indices.data(), vbuf,
-                                          surface.tangentMatrix(), map.biasCurrentTime());
+                        self.lightWithBiasSources(subspace, plane.indexInSector(),
+                                                  surface.tangentMatrix(),
+                                                  vbuf, indices);
 
                         // Apply surface glow.
                         if(glowing > 0)
@@ -3412,6 +3480,94 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
+    bool updateBiasContributorsIfNeeded(GeometryData &gdata)
+    {
+        if(!Rend_BiasContributorUpdatesEnabled())
+            return false;
+
+        uint const lastBiasChangeFrame = self.sector().map().biasLastChangeOnFrame();
+        if(gdata.lastBiasUpdateFrame() == lastBiasChangeFrame)
+            return false;
+
+        // Mark the data as having been updated (it will be soon).
+        gdata.setBiasLastUpdateFrame(lastBiasChangeFrame);
+        gdata.biasTracker().clearContributors();
+
+        Map::BiasSources const &sources = self.sector().map().biasSources();
+        switch(gdata.mapElement->type())
+        {
+        case DMU_SUBSPACE: {
+            ConvexSubspace &subspace = gdata.mapElement->as<ConvexSubspace>();
+            Plane const &plane       = self.visPlane(gdata.geomId);
+            Surface const &surface   = plane.surface();
+
+            Vector3d surfacePoint(subspace.poly().center(), plane.heightSmoothed());
+
+            foreach(BiasSource *source, sources)
+            {
+                // If the source is too weak we will ignore it completely.
+                if(source->intensity() <= 0)
+                    continue;
+
+                Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
+                coord_t distance = 0;
+
+                // Calculate minimum 2D distance to the subspace.
+                /// @todo This is probably too accurate an estimate.
+                HEdge *baseNode = subspace.poly().hedge();
+                HEdge *node = baseNode;
+                do
+                {
+                    coord_t len = (Vector2d(source->origin()) - node->origin()).length();
+                    if(node == baseNode || len < distance)
+                        distance = len;
+                } while((node = &node->next()) != baseNode);
+
+                if(sourceToSurface.dot(surface.normal()) < 0)
+                    continue;
+
+                gdata.biasTracker().addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            }
+            break; }
+
+        case DMU_SEGMENT: {
+            LineSideSegment &seg   = gdata.mapElement->as<LineSideSegment>();
+            Surface const &surface = seg.lineSide().middle();
+            Vector2d const &from   = seg.hedge().origin();
+            Vector2d const &to     = seg.hedge().twin().origin();
+            Vector2d const center  = (from + to) / 2;
+
+            foreach(BiasSource *source, sources)
+            {
+                // If the source is too weak we will ignore it completely.
+                if(source->intensity() <= 0)
+                    continue;
+
+                Vector3d sourceToSurface = (source->origin() - center).normalize();
+
+                // Calculate minimum 2D distance to the segment.
+                coord_t distance = 0;
+                for(int k = 0; k < 2; ++k)
+                {
+                    coord_t len = (Vector2d(source->origin()) - (!k? from : to)).length();
+                    if(k == 0 || len < distance)
+                        distance = len;
+                }
+
+                if(sourceToSurface.dot(surface.normal()) < 0)
+                    continue;
+
+                gdata.biasTracker().addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            }
+            break; }
+
+        default:
+            DENG2_ASSERT(!"updateBiasContributorsIfNeeded: Invalid MapElement type");
+        }
+
+        return true;
+    }
+
     /// Observes Plane HeightSmoothedChange.
     void planeHeightSmoothedChanged(Plane &plane)
     {
@@ -3654,147 +3810,76 @@ int SectorCluster::blockLightSourceZBias()
 
 void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 {
-    Instance::BiasSurfaceGeometryMap::const_iterator it = d->biasSurfaceGeomMap.constBegin();
-    while(it != d->biasSurfaceGeomMap.constEnd())
+    foreach(Instance::GeometryGroup const &group, d->geomGroups)
+    foreach(Instance::GeometryData *gdata, group)
     {
-        it.key()->tracker().applyChanges(allChanges);
-        ++it;
+        gdata->applyBiasDigest(allChanges);
     }
 }
 
-// Determine the number of bias illumination points needed for this geometry.
-// Presently we define a 1:1 mapping to geometry vertices.
-static int countIlluminationPoints(MapElement &mapElement, int group)
+void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
+    Matrix3f const &surfaceTangentMatrix,
+    Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    switch(mapElement.type())
+    Instance::GeometryData &gdata = *d->geomData(mapElement, geomId, true /*create*/);
+    Instance::GeometryData::BiasIllums &illums = gdata.biasIllums();
+
+    // Any contributor updates?
+    bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
+
+    Vector3f const sufNormal = surfaceTangentMatrix.column(2);
+    uint const biasTime      = sector().map().biasCurrentTime();
+    for(int i = 0; i < illums.count(); ++i)
     {
-    case DMU_SUBSPACE: {
-        ConvexSubspace &subspace = mapElement.as<ConvexSubspace>();
-        DENG2_ASSERT(group >= 0 && group < subspace.sector().planeCount()); // sanity check
-        return subspace.numFanVertices(); }
-
-    case DMU_SEGMENT:
-        DENG2_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check
-        return 4;
-
-    default:
-        throw Error("SectorCluster::countIlluminationPoints", "Invalid MapElement type");
+        colorCoords[i] += illums[i]->evaluate(posCoords[i], sufNormal, biasTime);
     }
-    return 0;
+
+    if(didUpdate)
+    {
+        // Changes from contributors will have now been applied.
+        gdata.markBiasIllumUpdateCompleted();
+    }
 }
 
-BiasSurface &SectorCluster::biasSurface(MapElement &mapElement, int geomId)
+void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
+    Matrix3f const &surfaceTangentMatrix,
+    WorldVBuf &vbuf, WorldVBuf::Indices const &indices)
 {
-    Instance::GeometryData *gdata = d->geomData(mapElement, geomId, true /*create*/);
-    if(gdata->biasSurface.isNull())
+    Instance::GeometryData &gdata = *d->geomData(mapElement, geomId, true /*create*/);
+    Instance::GeometryData::BiasIllums &illums = gdata.biasIllums();
+
+    // Any contributor updates?
+    bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
+
+    Vector3f const sufNormal = surfaceTangentMatrix.column(2);
+    uint const biasTime      = sector().map().biasCurrentTime();
+    for(WorldVBuf::Index i = 0; i < illums.count(); ++i)
     {
-        gdata->biasSurface.reset(new BiasSurface(countIlluminationPoints(mapElement, geomId), this));
-        d->biasSurfaceGeomMap.insert(gdata->biasSurface.data(), gdata);
+        WorldVBuf::Type &vertex = vbuf[indices[i]];
+        vertex.rgba += illums[i]->evaluate(vertex.pos, sufNormal, biasTime);
     }
-    return *gdata->biasSurface;
+
+    if(didUpdate)
+    {
+        // Changes from contributors will have now been applied.
+        gdata.markBiasIllumUpdateCompleted();
+    }
 }
 
-BiasSurface *SectorCluster::findBiasSurface(MapElement &mapElement, int geomId)
+void SectorCluster::updateAfterMove(Polyobj &po)
 {
-    if(Instance::GeometryData *gdata = d->geomData(mapElement, geomId))
+    // Shadow bias must be informed when surfaces move/deform.
+    foreach(HEdge *hedge, po.mesh().hedges())
     {
-        return gdata->biasSurface.data();
-    }
-    return 0;
-}
+        // Is this on the back of a one-sided line?
+        if(!hedge->hasMapElement())
+            continue;
 
-/**
- * @todo This could be enhanced so that only the lights on the right side of the
- * surface are taken into consideration.
- */
-bool SectorCluster::updateBiasContributors(BiasSurface *biasSurface)
-{
-    if(Instance::GeometryData *gdata = d->geomDataForBiasSurface(biasSurface))
-    {
-        Map::BiasSources const &sources = sector().map().biasSources();
-
-        BiasTracker &tracker = biasSurface->tracker();
-        tracker.clearContributors();
-
-        switch(gdata->mapElement->type())
+        if(Instance::GeometryData *geom = d->geomData(hedge->mapElement(), LineSide::Middle))
         {
-        case DMU_SUBSPACE: {
-            ConvexSubspace &subspace = gdata->mapElement->as<ConvexSubspace>();
-            Plane const &plane       = visPlane(gdata->geomId);
-            Surface const &surface   = plane.surface();
-
-            Vector3d surfacePoint(subspace.poly().center(), plane.heightSmoothed());
-
-            foreach(BiasSource *source, sources)
-            {
-                // If the source is too weak we will ignore it completely.
-                if(source->intensity() <= 0)
-                    continue;
-
-                Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
-                coord_t distance = 0;
-
-                // Calculate minimum 2D distance to the subspace.
-                /// @todo This is probably too accurate an estimate.
-                HEdge *baseNode = subspace.poly().hedge();
-                HEdge *node = baseNode;
-                do
-                {
-                    coord_t len = (Vector2d(source->origin()) - node->origin()).length();
-                    if(node == baseNode || len < distance)
-                        distance = len;
-                } while((node = &node->next()) != baseNode);
-
-                if(sourceToSurface.dot(surface.normal()) < 0)
-                    continue;
-
-                tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-            }
-            break; }
-
-        case DMU_SEGMENT: {
-            LineSideSegment &seg   = gdata->mapElement->as<LineSideSegment>();
-            Surface const &surface = seg.lineSide().middle();
-            Vector2d const &from   = seg.hedge().origin();
-            Vector2d const &to     = seg.hedge().twin().origin();
-            Vector2d const center  = (from + to) / 2;
-
-            foreach(BiasSource *source, sources)
-            {
-                // If the source is too weak we will ignore it completely.
-                if(source->intensity() <= 0)
-                    continue;
-
-                Vector3d sourceToSurface = (source->origin() - center).normalize();
-
-                // Calculate minimum 2D distance to the segment.
-                coord_t distance = 0;
-                for(int k = 0; k < 2; ++k)
-                {
-                    coord_t len = (Vector2d(source->origin()) - (!k? from : to)).length();
-                    if(k == 0 || len < distance)
-                        distance = len;
-                }
-
-                if(sourceToSurface.dot(surface.normal()) < 0)
-                    continue;
-
-                tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-            }
-            break; }
-
-        default:
-            throw Error("SectorCluster::updateBiasContributors", "Invalid MapElement type");
+            geom->markBiasContributorUpdateNeeded();
         }
-
-        return true;
     }
-    return false;
-}
-
-uint SectorCluster::biasLastChangeOnFrame() const
-{
-    return sector().map().biasLastChangeOnFrame();
 }
 
 void SectorCluster::prepareShards(ConvexSubspace &subspace)
