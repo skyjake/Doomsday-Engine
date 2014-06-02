@@ -24,14 +24,12 @@ using namespace de;
 
 FILE *FS_Win32_fopen(char const *filenameUtf8, char const *mode)
 {
-    qDebug() << "Trying to open"<< String(filenameUtf8);
     return _wfopen(String(filenameUtf8).toStdWString().c_str(),
                    String(mode).toStdWString().c_str());
 }
 
 int FS_Win32_access(char const *pathUtf8, int mode)
 {
-    qDebug() << "Trying to access"<< String(pathUtf8);
     return _waccess(String(pathUtf8).toStdWString().c_str(), mode);
 }
 
