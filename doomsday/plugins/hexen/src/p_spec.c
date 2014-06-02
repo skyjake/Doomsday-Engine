@@ -1024,10 +1024,11 @@ static void P_LightningFlash(void)
         if(cfg.snd3D && plrmo && !IS_NETGAME)
         {
             if((crashOrigin =
-                P_SpawnMobjXYZ(plrmo->origin[VX] + (16 * (M_Random() - 127) << FRACBITS),
-                              plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
-                              plrmo->origin[VZ] + (4000 << FRACBITS), MT_CAMERA,
-                              0, 0)))
+                P_SpawnMobjXYZ(MT_CAMERA,
+                               plrmo->origin[VX] + (16 * (M_Random() - 127) << FRACBITS),
+                               plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
+                               plrmo->origin[VZ] + (4000 << FRACBITS),
+                               0, 0)) != NULL)
             {
                 crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
             }

@@ -93,6 +93,9 @@ HEADERS += \
     include/doomsday/uri.h \
     include/doomsday/world/mobj.h
 
+win32: HEADERS += \
+    include/doomsday/filesys/fs_windows.h
+
 # Sources and private headers
 SOURCES += \
     src/audio/logical.cpp \
@@ -124,6 +127,9 @@ SOURCES += \
     src/resource/resourceclass.cpp \
     src/resource/wav.cpp \
     src/uri.cpp
+
+win32: SOURCES += \
+    src/filesys/fs_windows.cpp
 
 # Installation ---------------------------------------------------------------
 

@@ -117,7 +117,7 @@ SOURCES += \
     src/writer.c
 
 win32 {
-    SOURCES += src/findfile_windows.c
+    SOURCES += src/findfile_windows.cpp
 }
 else:unix {
     SOURCES += src/findfile_unix.c

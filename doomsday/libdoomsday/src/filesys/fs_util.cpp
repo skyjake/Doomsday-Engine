@@ -27,8 +27,6 @@
 #ifdef WIN32
 #  include <direct.h>
 #  include <io.h>
-#  define access _access
-#  define mkdir  _mkdir
 #endif
 
 #ifdef UNIX

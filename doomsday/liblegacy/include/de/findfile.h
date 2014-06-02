@@ -36,7 +36,7 @@ extern "C" {
 #define A_ARCH                  0x8
 
 typedef struct finddata_s {
-    void* finddata;
+    void *finddata;
 #if defined(UNIX)
     long date;
     long time;
@@ -46,7 +46,7 @@ typedef struct finddata_s {
     time_t time;
     size_t size;
 #endif
-    ddstring_t name;
+    ddstring_t name; // UTF-8 encoded
     long attrib;
 } FindData;
 
