@@ -1,4 +1,4 @@
-/** @file findfile_windows.c Win32-style native file finding.
+/** @file findfile_windows.cpp  Win32-style native file finding.
  * @ingroup system
  *
  * @author Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -24,20 +24,24 @@
 #include <string.h>
 #include <assert.h>
 
+#include <string>
+#include <de/String>
+
+#include "de/memory.h"
 #include "de/findfile.h"
 
 typedef struct winfinddata_s {
-    struct _finddata_t data;
+    struct _wfinddata_t data;
     intptr_t handle;
 } winfinddata_t;
 
 static void setdata(FindData *dta)
 {
-    winfinddata_t *fd = dta->finddata;
+    winfinddata_t *fd = reinterpret_cast<winfinddata_t *>(dta->finddata);
     dta->date = fd->data.time_write;
     dta->time = fd->data.time_write;
     dta->size = fd->data.size;
-    Str_Set(&dta->name, fd->data.name);
+    Str_Set(&dta->name, QString::fromWCharArray(fd->data.name).toUtf8());
     Str_ReplaceAll(&dta->name, '\\', '/');
     dta->attrib = 0;
     if(fd->data.attrib & _A_SUBDIR)
@@ -50,17 +54,17 @@ static void setdata(FindData *dta)
     }
 }
 
-int FindFile_FindFirst(FindData *dta, char const *filename)
+int FindFile_FindFirst(FindData *dta, char const *filenameUtf8)
 {
-    winfinddata_t *fd;
-    assert(filename && dta);
+    DENG_ASSERT(filenameUtf8 && dta);
 
     // Allocate a new private finddata struct.
-    dta->finddata = fd = calloc(1, sizeof(*fd));
+    winfinddata_t *fd = reinterpret_cast<winfinddata_t *>(M_Calloc(sizeof(*fd)));
+    dta->finddata = fd;
     Str_InitStd(&dta->name);
 
     // Begin the search.
-    fd->handle = _findfirst(filename, &fd->data);
+    fd->handle = _wfindfirst(de::String(filenameUtf8).toStdWString().c_str(), &fd->data);
 
     setdata(dta);
     return (fd->handle == (long) (-1));
@@ -73,18 +77,21 @@ int FindFile_FindNext(FindData *dta)
 
     if(!dta) return 0;
 
-    fd = dta->finddata;
-    result = _findnext(fd->handle, &fd->data);
+    fd = reinterpret_cast<winfinddata_t *>(dta->finddata);
+    result = _wfindnext(fd->handle, &fd->data);
     if(!result)
+    {
         setdata(dta);
+    }
     return result != 0;
 }
 
 void FindFile_Finish(FindData *dta)
 {
-    assert(dta);
+    DENG_ASSERT(dta);
+
     _findclose(((winfinddata_t*) dta->finddata)->handle);
-    free(dta->finddata);
+    M_Free(dta->finddata);
     Str_Free(&dta->name);
     memset(dta, 0, sizeof(FindData));
 }

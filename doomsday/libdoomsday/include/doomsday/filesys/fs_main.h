@@ -36,6 +36,10 @@
 #include "filehandle.h"
 #include "filehandlebuilder.h"
 
+#ifdef WIN32
+#  include "fs_windows.h"
+#endif
+
 #ifdef __cplusplus
 
 #include <QList>

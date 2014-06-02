@@ -54,8 +54,9 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath(QString const &str);
+    NativePath(String const &str);
 
+    NativePath(QString const &qstr);
     NativePath(char const *nullTerminatedCStr);
     NativePath(char const *cStr, dsize length);
 
@@ -65,8 +66,9 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath &operator = (QString const &str);
+    NativePath &operator = (String const &str);
 
+    NativePath &operator = (QString const &str);
     NativePath &operator = (char const *nullTerminatedCStr);
 
     /**
@@ -78,7 +80,7 @@ public:
      */
     NativePath concatenatePath(NativePath const &nativePath) const;
 
-    NativePath concatenatePath(QString const &nativePath) const;
+    NativePath concatenatePath(String const &nativePath) const;
 
     /// A more convenient way to invoke concatenatePath().
     NativePath operator / (NativePath const &nativePath) const;
@@ -88,8 +90,9 @@ public:
      * @param str  Path that is converted to a native path.
      * @return Concatenated path.
      */
-    NativePath operator / (QString const &str) const;
+    NativePath operator / (String const &str) const;
 
+    NativePath operator / (QString const &str) const;
     NativePath operator / (char const *nullTerminatedCStr) const;
 
     /// Extracts the path of the string, using native directory separators.

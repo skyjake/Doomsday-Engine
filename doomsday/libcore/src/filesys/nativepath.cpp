@@ -55,7 +55,7 @@
 
 namespace de {
 
-static QString toNative(QString const &s)
+static QString toNative(String const &s)
 {
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
@@ -65,7 +65,10 @@ static QString toNative(QString const &s)
 NativePath::NativePath() : Path()
 {}
 
-NativePath::NativePath(QString const &str) : Path(toNative(str), DIR_SEPARATOR)
+NativePath::NativePath(String const &str) : Path(toNative(str), DIR_SEPARATOR)
+{}
+
+NativePath::NativePath(QString const &qstr) : Path(toNative(qstr), DIR_SEPARATOR)
 {}
 
 NativePath::NativePath(char const *nullTerminatedCStr)
@@ -74,8 +77,14 @@ NativePath::NativePath(char const *nullTerminatedCStr)
 }
 
 NativePath::NativePath(char const *cStr, dsize length)
-    : Path(toNative(QString::fromUtf8(cStr, length)), DIR_SEPARATOR)
+    : Path(toNative(String(cStr, length)), DIR_SEPARATOR)
 {}
+
+NativePath &NativePath::operator = (String const &str)
+{
+    set(toNative(str), DIR_SEPARATOR);
+    return *this;
+}
 
 NativePath &NativePath::operator = (QString const &str)
 {
@@ -85,7 +94,7 @@ NativePath &NativePath::operator = (QString const &str)
 
 NativePath &NativePath::operator = (char const *nullTerminatedCStr)
 {
-    return (*this) = QString(nullTerminatedCStr);
+    return (*this) = String(nullTerminatedCStr);
 }
 
 NativePath NativePath::concatenatePath(NativePath const &nativePath) const
@@ -94,7 +103,7 @@ NativePath NativePath::concatenatePath(NativePath const &nativePath) const
     return toString().concatenatePath(nativePath, QChar(DIR_SEPARATOR));
 }
 
-NativePath NativePath::concatenatePath(QString const &nativePath) const
+NativePath NativePath::concatenatePath(String const &nativePath) const
 {
     return concatenatePath(NativePath(nativePath));
 }
@@ -102,6 +111,11 @@ NativePath NativePath::concatenatePath(QString const &nativePath) const
 NativePath NativePath::operator / (NativePath const &nativePath) const
 {
     return concatenatePath(nativePath);
+}
+
+NativePath NativePath::operator / (String const &str) const
+{
+    return *this / NativePath(str);
 }
 
 NativePath NativePath::operator / (QString const &str) const
