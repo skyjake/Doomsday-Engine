@@ -76,6 +76,8 @@ public:
     static de::Games &games();
     static de::WorldSystem &worldSystem();
 
+    static bool hasRenderSystem();
+
 public slots:
     void openHomepageInBrowser();
     void openInBrowser(QUrl url);
