@@ -55,9 +55,16 @@ DENG2_PIMPL(Record)
 
     bool isSubrecord(Variable const &var) const
     {
-        RecordValue const *value = dynamic_cast<RecordValue const *>(&var.value());
+        RecordValue const *value = var.value().maybeAs<RecordValue>();
         return value && value->record() && value->hasOwnership();
     }
+
+    /*
+    bool isOwnedSubrecord(Variable const &var) const
+    {
+        RecordValue const *value = var.value().maybeAs<RecordValue>();
+        return value && value->record() && value->hasOwnership();
+    }*/
 
     Record::Subrecords listSubrecords() const
     {
@@ -66,7 +73,7 @@ DENG2_PIMPL(Record)
         {
             if(isSubrecord(*i.value()))
             {
-                subs.insert(i.key(), static_cast<RecordValue &>(i.value()->value()).record());
+                subs.insert(i.key(), i.value()->value().as<RecordValue>().record());
             }
         }
         return subs;
@@ -384,9 +391,9 @@ Record *Record::remove(String const &name)
     Members::const_iterator found = d->members.find(name);
     if(found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        Record *rec = static_cast<RecordValue *>(&found.value()->value())->takeRecord();
+        Record *returnedToCaller = found.value()->value().as<RecordValue>().takeRecord();
         remove(*found.value());
-        return rec;
+        return returnedToCaller;
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
@@ -479,7 +486,7 @@ Record const &Record::subrecord(String const &name) const
     Members::const_iterator found = d->members.find(name);
     if(found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        return *static_cast<RecordValue const &>(found.value()->value()).record();
+        return *found.value()->value().as<RecordValue>().record();
     }
     throw NotFoundError("Record::subrecord", "Subrecord '" + name + "' not found");
 }

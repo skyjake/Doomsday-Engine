@@ -20,6 +20,7 @@
 #include "de/Process"
 #include "de/Variable"
 #include "de/ArrayValue"
+#include "de/RecordValue"
 #include "de/TextValue"
 #include "de/NoneValue"
 #include "de/TryStatement"
@@ -322,6 +323,9 @@ void Process::call(Function const &function, ArrayValue const &arguments)
         Function::Arguments::const_iterator a = function.arguments().begin();
         for(; b != argValues.end() && a != function.arguments().end(); ++b, ++a)
         {
+            // Records must only be passed as unowned references.
+            DENG2_ASSERT(!(*b)->is<RecordValue>() || !(*b)->as<RecordValue>().hasOwnership());
+
             context().names().add(new Variable(*a, (*b)->duplicate()));
         }
         
