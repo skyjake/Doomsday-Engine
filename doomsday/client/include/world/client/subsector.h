@@ -25,10 +25,9 @@
 #include "MapElement"
 #include <QVector>
 
-struct Subsector
+class Subsector
 {
-    ConvexSubspace *subspace;
-
+public:
     struct GeometryData
     {
         typedef QVector<BiasIllum *> BiasIllums;
@@ -58,16 +57,11 @@ struct Subsector
     /// @todo Avoid two-stage lookup.
     typedef QMap<int, GeometryData *> GeometryGroup;
     typedef QMap<de::MapElement *, GeometryGroup> GeometryGroups;
-    GeometryGroups geomGroups;
 
-    de::HEdge *_fanBase;      ///< Trifan base Half-edge (otherwise the center point is used).
-    bool _needUpdateFanBase;  ///< @c true= need to rechoose a fan base half-edge.
-
-    Subsector();
-    ~Subsector();
+public:
+    Subsector(ConvexSubspace &subspace);
 
     ConvexSubspace &convexSubspace() const;
-    void setConvexSubspace(ConvexSubspace &newSubspace);
 
     void addBiasSurfaceIfMissing(GeometryData &gdata);
 
@@ -76,26 +70,6 @@ struct Subsector
     BiasTracker &biasTracker(GeometryData &gdata);
 
     uint lastBiasUpdateFrame(GeometryData &gdata);
-
-    /**
-     * Determine the half-edge whose vertex is suitable for use as the center point
-     * of a trifan primitive.
-     *
-     * Note that we do not want any overlapping or zero-area (degenerate) triangles.
-     *
-     * @par Algorithm
-     * <pre>For each vertex
-     *    For each triangle
-     *        if area is not greater than minimum bound, move to next vertex
-     *    Vertex is suitable
-     * </pre>
-     *
-     * If a vertex exists which results in no zero-area triangles it is suitable for
-     * use as the center of our trifan. If a suitable vertex is not found then the
-     * center of BSP leaf should be selected instead (it will always be valid as
-     * BSP leafs are convex).
-     */
-    void chooseFanBase();
 
     /**
      * Returns a pointer to the face geometry half-edge which has been chosen
@@ -112,6 +86,8 @@ struct Subsector
 
     void clearAllSubspaceShards() const;
 
+    GeometryGroups const &geomGroups() const;
+
     /**
      * Find the GeometryData for a MapElement by the element-unique @a group
      * identifier.
@@ -124,6 +100,9 @@ struct Subsector
     GeometryData *geomData(de::MapElement &mapElement, int geomId, bool canAlloc = false);
 
     bool updateBiasContributorsIfNeeded(GeometryData &gdata);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_WORLD_CLIENT_SUBSECTOR_H

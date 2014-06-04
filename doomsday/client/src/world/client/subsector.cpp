@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "client/subsector.h"
+#include "world/client/subsector.h"
 #include "world/map.h"
 #include "Face"
 #include "Surface"
@@ -38,7 +38,6 @@ namespace internal {
 using namespace de;
 using namespace internal;
 
-#ifdef __CLIENT__
 Subsector::GeometryData::GeometryData(MapElement *mapElement, int geomId)
     : mapElement(mapElement)
     , geomId    (geomId)
@@ -75,38 +74,113 @@ void Subsector::GeometryData::setBiasLastUpdateFrame(uint updateFrame)
         biasSurface->lastUpdateFrame = updateFrame;
     }
 }
-#endif // __CLIENT__
 
-Subsector::Subsector()
-    : subspace          (0)
-#ifdef __CLIENT__
-    , _fanBase          (0)
-    , _needUpdateFanBase(true)
-#endif
-{}
-
-#ifdef __CLIENT__
-Subsector::~Subsector()
+DENG2_PIMPL_NOREF(Subsector)
 {
-    foreach(GeometryGroup const &group, geomGroups)
+    ConvexSubspace *subspace;
+    GeometryGroups geomGroups;
+    HEdge *fanBase;             ///< Trifan base Half-edge (otherwise the center point is used).
+    bool needUpdateFanBase;     ///< @c true= need to rechoose a fan base half-edge.
+
+    Instance(ConvexSubspace &subspace)
+        : subspace         (&subspace)
+        , fanBase          (0)
+        , needUpdateFanBase(true)
+    {}
+
+    ~Instance()
     {
-        qDeleteAll(group); // Delete all GeometryData.
+        // Clear all subspace shards.
+        subspace->shards().clear();
+
+        // Delete all GeometryData.
+        foreach(GeometryGroup const &group, geomGroups) qDeleteAll(group);
     }
-}
-#endif
+
+    /**
+     * Determine the half-edge whose vertex is suitable for use as the center point
+     * of a trifan primitive.
+     *
+     * Note that we do not want any overlapping or zero-area (degenerate) triangles.
+     *
+     * @par Algorithm
+     * <pre>For each vertex
+     *    For each triangle
+     *        if area is not greater than minimum bound, move to next vertex
+     *    Vertex is suitable
+     * </pre>
+     *
+     * If a vertex exists which results in no zero-area triangles it is suitable for
+     * use as the center of our trifan. If a suitable vertex is not found then the
+     * center of BSP leaf should be selected instead (it will always be valid as
+     * BSP leafs are convex).
+     */
+    void chooseFanBase()
+    {
+#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
+
+        needUpdateFanBase = false;
+
+        HEdge *firstNode = subspace->poly().hedge();
+        fanBase = firstNode;
+
+        if(subspace->poly().hedgeCount() > 3)
+        {
+            // Splines with higher vertex counts demand checking.
+            Vertex const *base, *a, *b;
+
+            // Search for a good base.
+            do
+            {
+                HEdge *other = firstNode;
+
+                base = &fanBase->vertex();
+                do
+                {
+                    // Test this triangle?
+                    if(!(fanBase != firstNode && (other == fanBase || other == &fanBase->prev())))
+                    {
+                        a = &other->vertex();
+                        b = &other->next().vertex();
+
+                        if(de::abs(triangleArea(base->origin(), a->origin(), b->origin())) <= MIN_TRIANGLE_EPSILON)
+                        {
+                            // No good. We'll move on to the next vertex.
+                            base = 0;
+                        }
+                    }
+
+                    // On to the next triangle.
+                } while(base && (other = &other->next()) != firstNode);
+
+                if(!base)
+                {
+                    // No good. Select the next vertex and start over.
+                    fanBase = &fanBase->next();
+                }
+            } while(!base && fanBase != firstNode);
+
+            // Did we find something suitable?
+            if(!base) // No.
+            {
+                fanBase = 0;
+            }
+        }
+        //else Implicitly suitable (or completely degenerate...).
+
+#undef MIN_TRIANGLE_EPSILON
+    }
+};
+
+Subsector::Subsector(ConvexSubspace &subspace) : d(new Instance(subspace))
+{}
 
 ConvexSubspace &Subsector::convexSubspace() const
 {
-    DENG2_ASSERT(subspace != 0);
-    return *subspace;
+    DENG2_ASSERT(d->subspace != 0);
+    return *d->subspace;
 }
 
-void Subsector::setConvexSubspace(ConvexSubspace &newSubspace)
-{
-    subspace = &newSubspace;
-}
-
-#ifdef __CLIENT__
 void Subsector::addBiasSurfaceIfMissing(GeometryData &gdata)
 {
     if(!gdata.biasSurface.isNull()) return;
@@ -161,69 +235,13 @@ uint Subsector::lastBiasUpdateFrame(GeometryData &gdata)
     return gdata.biasSurface->lastUpdateFrame;
 }
 
-void Subsector::chooseFanBase()
-{
-#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
-
-    _needUpdateFanBase = false;
-
-    HEdge *firstNode = convexSubspace().poly().hedge();
-    _fanBase = firstNode;
-
-    if(convexSubspace().poly().hedgeCount() > 3)
-    {
-        // Splines with higher vertex counts demand checking.
-        Vertex const *base, *a, *b;
-
-        // Search for a good base.
-        do
-        {
-            HEdge *other = firstNode;
-
-            base = &_fanBase->vertex();
-            do
-            {
-                // Test this triangle?
-                if(!(_fanBase != firstNode && (other == _fanBase || other == &_fanBase->prev())))
-                {
-                    a = &other->vertex();
-                    b = &other->next().vertex();
-
-                    if(de::abs(triangleArea(base->origin(), a->origin(), b->origin())) <= MIN_TRIANGLE_EPSILON)
-                    {
-                        // No good. We'll move on to the next vertex.
-                        base = 0;
-                    }
-                }
-
-                // On to the next triangle.
-            } while(base && (other = &other->next()) != firstNode);
-
-            if(!base)
-            {
-                // No good. Select the next vertex and start over.
-                _fanBase = &_fanBase->next();
-            }
-        } while(!base && _fanBase != firstNode);
-
-        // Did we find something suitable?
-        if(!base) // No.
-        {
-            _fanBase = 0;
-        }
-    }
-    //else Implicitly suitable (or completely degenerate...).
-
-#undef MIN_TRIANGLE_EPSILON
-}
-
 HEdge *Subsector::fanBase() const
 {
-    if(_needUpdateFanBase)
+    if(d->needUpdateFanBase)
     {
-        const_cast<Subsector *>(this)->chooseFanBase();
+        d->chooseFanBase();
     }
-    return _fanBase;
+    return d->fanBase;
 }
 
 int Subsector::numFanVertices() const
@@ -237,10 +255,15 @@ void Subsector::clearAllSubspaceShards() const
     convexSubspace().shards().clear();
 }
 
+Subsector::GeometryGroups const &Subsector::geomGroups() const
+{
+    return d->geomGroups;
+}
+
 Subsector::GeometryData *Subsector::geomData(MapElement &mapElement, int geomId, bool canAlloc)
 {
-    GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
-    if(foundGroup != geomGroups.end())
+    GeometryGroups::iterator foundGroup = d->geomGroups.find(&mapElement);
+    if(foundGroup != d->geomGroups.end())
     {
         GeometryGroup &geomDatas = *foundGroup;
         GeometryGroup::iterator found = geomDatas.find(geomId);
@@ -252,9 +275,9 @@ Subsector::GeometryData *Subsector::geomData(MapElement &mapElement, int geomId,
 
     if(!canAlloc) return 0;
 
-    if(foundGroup == geomGroups.end())
+    if(foundGroup == d->geomGroups.end())
     {
-        foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
+        foundGroup = d->geomGroups.insert(&mapElement, GeometryGroup());
     }
 
     return foundGroup->insert(geomId, new GeometryData(&mapElement, geomId)).value();
@@ -348,5 +371,3 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
 
     return true;
 }
-
-#endif // __CLIENT__

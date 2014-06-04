@@ -487,7 +487,7 @@ DENG2_PIMPL(SectorCluster)
     QScopedPointer<AABoxd> aaBox;
 
 #ifdef __CLIENT__
-    typedef QHash<ConvexSubspace *, Subsector> Subsectors;
+    typedef QHash<ConvexSubspace *, Subsector *> Subsectors;
     Subsectors subsectors;
 #else
     /// @todo On server side the list of subspaces is only needed to calculate
@@ -552,12 +552,11 @@ DENG2_PIMPL(SectorCluster)
         self.sector().audienceForLightLevelChange -= this;
         self.sector().audienceForLightColorChange -= this;
 
-        qDeleteAll(wallEdges);
-
-        self.clearAllShards();
-
         clearMapping(Sector::Floor);
         clearMapping(Sector::Ceiling);
+
+        qDeleteAll(subsectors);
+        qDeleteAll(wallEdges);
 #endif
 
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
@@ -568,7 +567,7 @@ DENG2_PIMPL(SectorCluster)
 #ifdef __CLIENT__
         Subsectors::const_iterator first = subsectors.constBegin();
         DENG2_ASSERT(first != subsectors.constEnd());
-        return first->convexSubspace();
+        return first.value()->convexSubspace();
 #else
         return *subspaces.first();
 #endif
@@ -706,9 +705,9 @@ DENG2_PIMPL(SectorCluster)
 
             flags &= ~(NeverMapped|PartSelfRef);
             flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
-            foreach(Subsector const &ssec, subsectors)
+            foreach(Subsector const *ssec, subsectors)
             {
-                HEdge const *base  = ssec.convexSubspace().poly().hedge();
+                HEdge const *base  = ssec->convexSubspace().poly().hedge();
                 HEdge const *hedge = base;
                 do
                 {
@@ -789,9 +788,9 @@ DENG2_PIMPL(SectorCluster)
         if(!boundaryData.isNull()) return;
 
         QMap<SectorCluster *, HEdge *> extClusterMap;
-        foreach(Subsector const &ssec, subsectors)
+        foreach(Subsector const *ssec, subsectors)
         {
-            HEdge *base = ssec.convexSubspace().poly().hedge();
+            HEdge *base = ssec->convexSubspace().poly().hedge();
             HEdge *hedge = base;
             do
             {
@@ -1078,8 +1077,8 @@ DENG2_PIMPL(SectorCluster)
         if(ddMapSetup) return;
         if(!useBias) return;
 
-        foreach(Subsector const &ssec, subsectors)
-        foreach(Subsector::GeometryGroup const &group, ssec.geomGroups)
+        foreach(Subsector const *ssec, subsectors)
+        foreach(Subsector::GeometryGroup const &group, ssec->geomGroups())
         foreach(Subsector::GeometryData *gdata, group)
         {
             gdata->markBiasContributorUpdateNeeded();
@@ -1696,7 +1695,7 @@ DENG2_PIMPL(SectorCluster)
         coord_t const height           = skyPlaneZ(upper);
         Face const &poly               = subspace.poly();
 
-        HEdge *fanBase = subsectors[&subspace].fanBase();
+        HEdge *fanBase = subsectors[&subspace]->fanBase();
         WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
         shard->indices.resize(fanSize);
 
@@ -2797,7 +2796,7 @@ DENG2_PIMPL(SectorCluster)
         }
 
         ClockDirection const direction = (plane.isSectorCeiling())? Anticlockwise : Clockwise;
-        HEdge *fanBase                 = subsectors[&subspace].fanBase();
+        HEdge *fanBase                 = subsectors[&subspace]->fanBase();
         WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
 
         WorldVBuf::Indices indices(fanSize);
@@ -3146,8 +3145,7 @@ SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspacesToAdd)
     foreach(ConvexSubspace *subspace, subspacesToAdd)
     {
 #ifdef __CLIENT__
-        Subsector &ssec = d->subsectors.insert(subspace, Subsector()).value();
-        ssec.setConvexSubspace(*subspace);
+        d->subsectors.insert(subspace, new Subsector(*subspace));
 #else
         d->subspaces.append(subspace);
 #endif
@@ -3264,9 +3262,9 @@ AABoxd const &SectorCluster::aaBox() const
     {
         // Unite the geometry bounding boxes of all subspaces in the cluster.
 #ifdef __CLIENT__
-        foreach(Subsector const &ssec, d->subsectors)
+        foreach(Subsector const *ssec, d->subsectors)
         {
-            ConvexSubspace *subspace = &ssec.convexSubspace();
+            ConvexSubspace *subspace = &ssec->convexSubspace();
 #else
         foreach(ConvexSubspace *subspace, d->subspaces)
         {
@@ -3353,7 +3351,7 @@ int SectorCluster::blockLightSourceZBias()
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Subsector &ssec = *d->subsectors[&d->subspaceForMapElement(mapElement)];
     Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
     Subsector::GeometryData::BiasIllums &illums = ssec.biasIllums(gdata);
 
@@ -3377,7 +3375,7 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     WorldVBuf &vbuf, WorldVBuf::Indices const &indices)
 {
-    Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Subsector &ssec = *d->subsectors[&d->subspaceForMapElement(mapElement)];
     Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
     Subsector::GeometryData::BiasIllums &illums = ssec.biasIllums(gdata);
 
@@ -3401,8 +3399,8 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 
 void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 {
-    foreach(Subsector const &ssec, d->subsectors)
-    foreach(Subsector::GeometryGroup const &group, ssec.geomGroups)
+    foreach(Subsector const *ssec, d->subsectors)
+    foreach(Subsector::GeometryGroup const &group, ssec->geomGroups())
     foreach(Subsector::GeometryData *gdata, group)
     {
         gdata->applyBiasDigest(allChanges);
@@ -3421,7 +3419,7 @@ void SectorCluster::prepareShards(ConvexSubspace &subspace)
 void SectorCluster::clearAllShards()
 {
     // Unlink the Shards from the subspace.
-    foreach(Subsector const &ssec, d->subsectors) ssec.clearAllSubspaceShards();
+    foreach(Subsector const *ssec, d->subsectors) ssec->clearAllSubspaceShards();
 
     qDeleteAll(d->shards);
     d->shards.clear();
@@ -3436,7 +3434,7 @@ void SectorCluster::mapElementMoved(Polyobj &po)
         MapElement &mapElement = hedge->mapElement();
         int const geomId       = WallEdge::WallMiddle;
 
-        Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+        Subsector &ssec = *d->subsectors[&d->subspaceForMapElement(mapElement)];
         if(Subsector::GeometryData *geom = ssec.geomData(mapElement, geomId))
         {
             geom->markBiasContributorUpdateNeeded();
