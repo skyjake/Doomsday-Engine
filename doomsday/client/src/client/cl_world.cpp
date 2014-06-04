@@ -337,7 +337,7 @@ void Cl_ReadSideDelta(int /*deltaType*/)
 
     if(df & SIDF_MID_BLENDMODE)
     {
-        side->middle().setBlendMode(blendmode_t(Reader_ReadInt32(msgReader)));
+        side->middle().setBlendmode(blendmode_t(Reader_ReadInt32(msgReader)));
     }
 
     if(df & SIDF_FLAGS)

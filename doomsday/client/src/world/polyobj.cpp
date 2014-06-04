@@ -54,7 +54,7 @@ static void notifyGeometryChanged(Polyobj &po)
     {
         /// @note If polyobjs are allowed to move between sector clusters
         /// then we'll need to revise the bias illumination storage specially.
-        po.bspLeaf().subspace().cluster().updateAfterMove(po);
+        po.bspLeaf().subspace().cluster().mapElementMoved(po);
     }
 #else // !__CLIENT__
     DENG2_UNUSED(po);

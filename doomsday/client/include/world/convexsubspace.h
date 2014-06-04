@@ -21,21 +21,23 @@
 #ifndef DENG_WORLD_CONVEXSUBSPACE_H
 #define DENG_WORLD_CONVEXSUBSPACE_H
 
+#ifdef __CLIENT__
+#  include "dd_share.h" // NUM_REVERB_DATA
+#  include "Line"
+#endif
+#include "Mesh"
+#include "MapElement"
+#include "SectorCluster"
 #include <QList>
 #include <QSet>
 #include <de/Error>
 #include <de/Vector>
-#include "Mesh"
-#include "MapElement"
-#include "Line"
-#include "SectorCluster"
-#ifdef __CLIENT__
-#  include "Shard"
-#endif
 
+class BspLeaf;
 struct polyobj_s;
 #ifdef __CLIENT__
 class Lumobj;
+class Shard;
 #endif
 
 /**
@@ -81,6 +83,9 @@ public:
      */
     BspLeaf &bspLeaf() const;
 
+    /**
+     * Change the BspLeaf attributed to the subspace to @a newBspLeaf.
+     */
     void setBspLeaf(BspLeaf *newBspLeaf);
 
     /**

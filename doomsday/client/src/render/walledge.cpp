@@ -228,7 +228,7 @@ DENG2_PIMPL(WallEdge::Section), public IHPlane
             // Ensure we have up to date info about the material.
             MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
-            if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
+            if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendmode() && side.middle().opacity() >= 1))
             {
                 // Stretched middles always cover the opening.
                 if(side.isFlagged(SDF_MIDDLE_STRETCH))

@@ -473,7 +473,7 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
 
         // Only middle sections support blending.
         reg->middle.rgba[CA]  = side->middle().opacity();
-        reg->middle.blendMode = side->middle().blendMode();
+        reg->middle.blendMode = side->middle().blendmode();
     }
 
     reg->lineFlags = side->line().flags() & 0xff;
@@ -851,11 +851,11 @@ dd_bool Sv_RegisterCompareSide(cregister_t *reg, uint number,
                 r->bottom.rgba[3] = side->bottom().tintColor().z;
         }
 
-        if(r->middle.blendMode != side->middle().blendMode())
+        if(r->middle.blendMode != side->middle().blendmode())
         {
             df |= SIDF_MID_BLENDMODE;
             if(doUpdate)
-                r->middle.blendMode = side->middle().blendMode();
+                r->middle.blendMode = side->middle().blendmode();
         }
     }
 

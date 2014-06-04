@@ -55,7 +55,7 @@ DENG2_PIMPL(Surface)
     Vector2f materialOrigin;       ///< @em sharp surface space material origin.
     Vector3f tintColor;
     float opacity;
-    blendmode_t blendMode;
+    blendmode_t blendmode;
     int flags;                     ///< @ref sufFlags
 
 #ifdef __CLIENT__
@@ -73,7 +73,7 @@ DENG2_PIMPL(Surface)
         , material(0)
         , materialIsMissingFix(false)
         , opacity(0)
-        , blendMode(BM_NORMAL)
+        , blendmode(BM_NORMAL)
         , flags(0)
     {}
 
@@ -411,14 +411,14 @@ Surface &Surface::setTintColor(Vector3f const &newTintColor)
     return *this;
 }
 
-blendmode_t Surface::blendMode() const
+blendmode_t Surface::blendmode() const
 {
-    return d->blendMode;
+    return d->blendmode;
 }
 
-Surface &Surface::setBlendMode(blendmode_t newBlendMode)
+Surface &Surface::setBlendmode(blendmode_t newBlendmode)
 {
-    d->blendMode = newBlendMode;
+    d->blendmode = newBlendmode;
     return *this;
 }
 
@@ -572,7 +572,7 @@ int Surface::property(DmuArgs &args) const
         break;
 
     case DMU_BLENDMODE:
-        args.setValue(DMT_SURFACE_BLENDMODE, &d->blendMode, 0);
+        args.setValue(DMT_SURFACE_BLENDMODE, &d->blendmode, 0);
         break;
 
     case DMU_FLAGS:
@@ -593,7 +593,7 @@ int Surface::setProperty(DmuArgs const &args)
     case DMU_BLENDMODE: {
         blendmode_t newBlendMode;
         args.value(DMT_SURFACE_BLENDMODE, &newBlendMode, 0);
-        setBlendMode(newBlendMode);
+        setBlendmode(newBlendMode);
         break; }
 
     case DMU_FLAGS:

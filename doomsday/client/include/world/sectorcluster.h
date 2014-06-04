@@ -20,25 +20,23 @@
 #ifndef DENG_WORLD_SECTORCLUSTER_H
 #define DENG_WORLD_SECTORCLUSTER_H
 
-#include "dd_share.h" // AudioEnvironmentFactors
-
-#include "HEdge"
-
-#include "MapElement"
-#include "Line"
-#include "Plane"
-#include "Sector"
-
 #ifdef __CLIENT__
+#  include "dd_share.h" // AudioEnvironmentFactors
 #  include "render/lightgrid.h"
-#  include "Shard"
-#  include <de/Matrix>
+#  include "render/rendersystem.h" // WorldVBuf
 #endif
 
+#include "HEdge"
+#include "MapElement"
+#include "Sector"
+#include <QList>
+#include <de/aabox.h>
+#include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
-#include <de/aabox.h>
-#include <QList>
+#ifdef __CLIENT__
+#  include <de/Matrix>
+#endif
 
 class ConvexSubspace;
 #ifdef __CLIENT__
@@ -94,9 +92,9 @@ public:
     Sector &sector();
 
     /**
-     * Returns the identified @em physical plane of the parent sector. Note
-     * that this is not the same as the "visual" plane which may well be
-     * defined by another sector.
+     * Returns the identified @em physical plane of the parent sector. Note that
+     * this is not the same as the "visual" plane which may well be defined by
+     * another sector.
      *
      * @param planeIndex  Index of the plane to return.
      */
@@ -106,8 +104,8 @@ public:
     Plane &plane(int planeIndex);
 
     /**
-     * Returns the sector plane which defines the @em physical floor of the
-     * cluster.
+     * Returns the sector plane which defines the @em physical floor of the cluster.
+     *
      * @see hasSector(), plane()
      */
     inline Plane const &floor() const { return plane(Sector::Floor); }
@@ -116,8 +114,8 @@ public:
     inline Plane &floor() { return plane(Sector::Floor); }
 
     /**
-     * Returns the sector plane which defines the @em physical ceiling of
-     * the cluster.
+     * Returns the sector plane which defines the @em physical ceiling of the cluster.
+     *
      * @see hasSector(), plane()
      */
     inline Plane const &ceiling() const { return plane(Sector::Ceiling); }
@@ -137,8 +135,8 @@ public:
     Plane &visPlane(int planeIndex);
 
     /**
-     * Returns the sector plane which defines the @em visual floor of the
-     * cluster.
+     * Returns the sector plane which defines the @em visual floor of the cluster.
+     *
      * @see hasSector(), floor()
      */
     inline Plane const &visFloor() const { return visPlane(Sector::Floor); }
@@ -147,8 +145,8 @@ public:
     inline Plane &visFloor() { return visPlane(Sector::Floor); }
 
     /**
-     * Returns the sector plane which defines the @em visual ceiling of the
-     * cluster.
+     * Returns the sector plane which defines the @em visual ceiling of the cluster.
+     *
      * @see hasSector(), ceiling()
      */
     inline Plane const &visCeiling() const { return visPlane(Sector::Ceiling); }
@@ -207,6 +205,43 @@ public:
     coord_t roughArea() const;
 
     /**
+     * Apply lighting from bias sources to the given geometry.
+     *
+     * @param mapElement            Attributed to the geometry to be lit.
+     * @param geomId                Attributed to the geometry to be lit.
+     * @param surfaceTangentMatrix  Surface tangent space vectors.
+     */
+    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
+                              de::Vector3f const *posCoords, de::Vector4f *colorCoords);
+
+    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
+                              WorldVBuf &vbuf, WorldVBuf::Indices const &indices);
+
+    /**
+     * Apply bias lighting changes to @em all geometry Shards within the cluster.
+     *
+     * @param changes  Digest of lighting changes to be applied.
+     */
+    void applyBiasDigest(BiasDigest &changes);
+
+    /**
+     * Prepare all geometry shards for the given @a subspace, which should be
+     * subspace attributed to the cluster.
+     */
+    void prepareShards(ConvexSubspace &subspace);
+
+    /**
+     * Destroy all geometry shards for all subspaces attributed to the cluster.
+     */
+    void clearAllShards();
+
+    /**
+     * To be called when an element of the map has @a moved, to schedule any
+     * bias lighting updates necessary (deferred) for @em dependent geometries.
+     */
+    void mapElementMoved(Polyobj &moved);
+
+    /**
      * Request re-calculation of environmental audio (reverb) characteristics for
      * the cluster (update is deferred until next accessed).
      *
@@ -221,6 +256,8 @@ public:
      * this time (@ref markReverbDirty()).
      */
     AudioEnvironmentFactors const &reverb() const;
+
+// Implement LightGrid::IBlockLightSource: -------------------------------------
 
     /**
      * Returns the unique identifier of the light source.
@@ -252,29 +289,6 @@ public:
      * Returns the Z-axis bias scale factor for the light grid, block light source.
      */
     int blockLightSourceZBias();
-
-    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
-                              de::Vector3f const *posCoords, de::Vector4f *colorCoords);
-
-    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
-                              WorldVBuf &vbuf, WorldVBuf::Indices const &indices);
-
-    /**
-     * Apply bias lighting changes to @em all geometry Shards within the cluster.
-     *
-     * @param changes  Digest of lighting changes to be applied.
-     */
-    void applyBiasDigest(BiasDigest &changes);
-
-    void updateAfterMove(Polyobj &po);
-
-    /**
-     * Prepare all geometry shards for the given @a subspace, which should be
-     * subspace attributed to the cluster.
-     */
-    void prepareShards(ConvexSubspace &subspace);
-
-    void clearAllShards();
 
 #endif // __CLIENT__
 

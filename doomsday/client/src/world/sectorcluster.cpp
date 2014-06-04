@@ -132,7 +132,7 @@ namespace internal
             return BM_NORMAL;
         }
 
-        blendmode_t blendmode = side.surface(LineSide::Middle).blendMode();
+        blendmode_t blendmode = side.surface(LineSide::Middle).blendmode();
         if(blendmode == BM_NORMAL && noSpriteTrans)
         {
             blendmode = BM_ZEROALPHA; // "no translucency" mode
@@ -507,7 +507,6 @@ DENG2_PIMPL(SectorCluster)
     {
         typedef QVector<BiasIllum *> BiasIllums;
 
-        SectorCluster &cluster;
         MapElement *mapElement;
         int geomId;
     private:
@@ -523,9 +522,8 @@ DENG2_PIMPL(SectorCluster)
         QScopedPointer<BiasSurface> biasSurface;
 
     public:
-        GeometryData(SectorCluster &owner, MapElement *mapElement, int geomId)
-            : cluster   (owner)
-            , mapElement(mapElement)
+        GeometryData(MapElement *mapElement, int geomId)
+            : mapElement(mapElement)
             , geomId    (geomId)
         {}
 
@@ -586,7 +584,7 @@ DENG2_PIMPL(SectorCluster)
                 break; }
 
             case DMU_SEGMENT:
-                DENG2_ASSERT(geomId >= 0 && geomId <= LineSide::Top); // sanity check
+                DENG2_ASSERT(geomId >= WallEdge::WallMiddle && geomId <= WallEdge::WallTop); // sanity check
                 numIllums = 4;
                 break;
 
@@ -653,8 +651,7 @@ DENG2_PIMPL(SectorCluster)
 
         DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
         {
-            GeometryGroup &shards = *geomGroup;
-            qDeleteAll(shards);
+            qDeleteAll(*geomGroup);
         }
 
         self.clearAllShards();
@@ -1103,7 +1100,39 @@ DENG2_PIMPL(SectorCluster)
 
 #ifdef __CLIENT__
 
-    void markAllSurfacesForDecorationUpdate(Line &line)
+    /**
+     * Find the GeometryData for a MapElement by the element-unique @a group
+     * identifier.
+     *
+     * @param geomId    Geometry identifier.
+     * @param canAlloc  @c true= to allocate if no data exists. Note that the
+     *                  number of vertices in the fan geometry must be known
+     *                  at this time.
+     */
+    GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
+    {
+        GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
+        if(foundGroup != geomGroups.end())
+        {
+            GeometryGroup &geomDatas = *foundGroup;
+            GeometryGroup::iterator found = geomDatas.find(geomId);
+            if(found != geomDatas.end())
+            {
+                return *found;
+            }
+        }
+
+        if(!canAlloc) return 0;
+
+        if(foundGroup == geomGroups.end())
+        {
+            foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
+        }
+
+        return foundGroup->insert(geomId, new GeometryData(&mapElement, geomId)).value();
+    }
+
+    void markLineSurfacesForDecorationUpdate(Line &line)
     {
         LineSide &front = line.front();
         DENG2_ASSERT(front.hasSections());
@@ -1142,7 +1171,7 @@ DENG2_PIMPL(SectorCluster)
             {
                 if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
                 {
-                    markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+                    markLineSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
                 }
             } while(&it.next() != base);
         }
@@ -1155,61 +1184,21 @@ DENG2_PIMPL(SectorCluster)
             {
                 if(it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
                 {
-                    markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
+                    markLineSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
                 }
             } while(&it.next() != base);
         }
     }
 
-    /**
-     * Find the GeometryData for a MapElement by the element-unique @a group
-     * identifier.
-     *
-     * @param geomId    Geometry identifier.
-     * @param canAlloc  @c true= to allocate if no data exists. Note that the
-     *                  number of vertices in the fan geometry must be known
-     *                  at this time.
-     */
-    GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
+    void markDependentSurfacesForBiasContributorUpdate()
     {
-        GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
-        if(foundGroup != geomGroups.end())
-        {
-            GeometryGroup &geomDatas = *foundGroup;
-            GeometryGroup::iterator found = geomDatas.find(geomId);
-            if(found != geomDatas.end())
-            {
-                return *found;
-            }
-        }
+        if(ddMapSetup) return;
+        if(!useBias) return;
 
-        if(!canAlloc) return 0;
-
-        if(foundGroup == geomGroups.end())
+        foreach(GeometryGroup const &group, geomGroups)
+        foreach(GeometryData *gdata, group)
         {
-            foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
-        }
-
-        return foundGroup->insert(geomId, new GeometryData(self, &mapElement, geomId)).value();
-    }
-
-    void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
-    {
-        if(!hedge) return;
-        if(!hedge->hasMapElement()) return;
-
-        MapElement &mapElement = hedge->mapElement();
-        if(GeometryData *geom = geomData(mapElement, LineSide::Middle))
-        {
-            geom->markBiasContributorUpdateNeeded();
-        }
-        if(GeometryData *geom = geomData(mapElement, LineSide::Bottom))
-        {
-            geom->markBiasContributorUpdateNeeded();
-        }
-        if(GeometryData *geom = geomData(mapElement, LineSide::Top))
-        {
-            geom->markBiasContributorUpdateNeeded();
+            gdata->markBiasContributorUpdateNeeded();
         }
     }
 
@@ -1257,33 +1246,9 @@ DENG2_PIMPL(SectorCluster)
             // We'll need to recalculate environmental audio characteristics.
             needReverbUpdate = true;
 
-            if(!ddMapSetup && useBias)
-            {
-                // Inform bias surfaces of changed geometry.
-                foreach(ConvexSubspace *subspace, subspaces)
-                {
-                    if(GeometryData *geom = geomData(*subspace, plane.indexInSector()))
-                    {
-                        geom->markBiasContributorUpdateNeeded();
-                    }
-
-                    HEdge *base = subspace->poly().hedge();
-                    HEdge *hedge = base;
-                    do
-                    {
-                        updateBiasForWallSectionsAfterGeometryMove(hedge);
-                    } while((hedge = &hedge->next()) != base);
-
-                    foreach(Mesh *mesh, subspace->extraMeshes())
-                    foreach(HEdge *hedge, mesh->hedges())
-                    {
-                        updateBiasForWallSectionsAfterGeometryMove(hedge);
-                    }
-                }
-            }
-
+            markDependentSurfacesForBiasContributorUpdate();
             markDependantSurfacesForDecorationUpdate();
-#endif // __CLIENT__
+#endif
         }
 
         // We may need to update one or both mapped planes.
@@ -1329,15 +1294,16 @@ DENG2_PIMPL(SectorCluster)
     /**
      * Recalculate environmental audio (reverb) for the sector.
      */
-    void updateReverb()
+    void updateReverbIfNeeded()
     {
+        if(!needReverbUpdate) return;
+        needReverbUpdate = false;
+
         // Need to initialize?
         if(reverbSubspaces.isEmpty())
         {
             findReverbSubspaces();
         }
-
-        needReverbUpdate = false;
 
         uint spaceVolume = int((self.visCeiling().height() - self.visFloor().height())
                          * self.roughArea());
@@ -2481,10 +2447,7 @@ DENG2_PIMPL(SectorCluster)
                             }
 
                             // Apply bias light source contributions.
-                            self.lightWithBiasSources(leftEdge.hedge().mapElement(),
-                                                      (sectionId == WallEdge::WallMiddle? LineSide::Middle :
-                                                       sectionId == WallEdge::WallBottom? LineSide::Bottom :
-                                                                                          LineSide::Top),
+                            self.lightWithBiasSources(leftEdge.hedge().mapElement(), sectionId,
                                                       surface.tangentMatrix(),
                                                       posCoords, colorCoords);
 
@@ -3637,7 +3600,7 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 
 Sector const &SectorCluster::sector() const
 {
-    return *const_cast<ConvexSubspace const *>(d->subspaces.first())->bspLeaf().sectorPtr();
+    return *d->subspaces.first()->bspLeaf().sectorPtr();
 }
 
 Sector &SectorCluster::sector()
@@ -3681,6 +3644,22 @@ Plane const &SectorCluster::visPlane(int planeIndex) const
     }
     // Not mapped.
     return sector().plane(planeIndex);
+}
+
+void SectorCluster::markVisPlanesDirty()
+{
+    d->maybeInvalidateMapping(Sector::Floor);
+    d->maybeInvalidateMapping(Sector::Ceiling);
+}
+
+bool SectorCluster::hasSkyMaskedPlane() const
+{
+    for(int i = 0; i < sector().planeCount(); ++i)
+    {
+        if(visPlane(i).surface().hasSkyMaskedMaterial())
+            return true;
+    }
+    return false;
 }
 
 AABoxd const &SectorCluster::aaBox() const
@@ -3733,37 +3712,6 @@ coord_t SectorCluster::roughArea() const
     return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
 }
 
-void SectorCluster::markReverbDirty(bool yes)
-{
-    d->needReverbUpdate = yes;
-}
-
-AudioEnvironmentFactors const &SectorCluster::reverb() const
-{
-    // Perform any scheduled update now.
-    if(d->needReverbUpdate)
-    {
-        d->updateReverb();
-    }
-    return d->reverb;
-}
-
-void SectorCluster::markVisPlanesDirty()
-{
-    d->maybeInvalidateMapping(Sector::Floor);
-    d->maybeInvalidateMapping(Sector::Ceiling);
-}
-
-bool SectorCluster::hasSkyMaskedPlane() const
-{
-    for(int i = 0; i < sector().planeCount(); ++i)
-    {
-        if(visPlane(i).surface().hasSkyMaskedMaterial())
-            return true;
-    }
-    return false;
-}
-
 SectorCluster::LightId SectorCluster::lightSourceId() const
 {
     /// @todo Need unique cluster ids.
@@ -3806,15 +3754,6 @@ int SectorCluster::blockLightSourceZBias()
         return (height - 100) / 2;
     }
     return 0;
-}
-
-void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
-{
-    foreach(Instance::GeometryGroup const &group, d->geomGroups)
-    foreach(Instance::GeometryData *gdata, group)
-    {
-        gdata->applyBiasDigest(allChanges);
-    }
 }
 
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
@@ -3866,19 +3805,12 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     }
 }
 
-void SectorCluster::updateAfterMove(Polyobj &po)
+void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 {
-    // Shadow bias must be informed when surfaces move/deform.
-    foreach(HEdge *hedge, po.mesh().hedges())
+    foreach(Instance::GeometryGroup const &group, d->geomGroups)
+    foreach(Instance::GeometryData *gdata, group)
     {
-        // Is this on the back of a one-sided line?
-        if(!hedge->hasMapElement())
-            continue;
-
-        if(Instance::GeometryData *geom = d->geomData(hedge->mapElement(), LineSide::Middle))
-        {
-            geom->markBiasContributorUpdateNeeded();
-        }
+        gdata->applyBiasDigest(allChanges);
     }
 }
 
@@ -3898,6 +3830,31 @@ void SectorCluster::clearAllShards()
 
     qDeleteAll(d->shards);
     d->shards.clear();
+}
+
+void SectorCluster::mapElementMoved(Polyobj &po)
+{
+    foreach(HEdge *hedge, po.mesh().hedges())
+    {
+        // Is this on the back of a one-sided line?
+        if(!hedge->hasMapElement()) continue;
+
+        if(Instance::GeometryData *geom = d->geomData(hedge->mapElement(), WallEdge::WallMiddle))
+        {
+            geom->markBiasContributorUpdateNeeded();
+        }
+    }
+}
+
+void SectorCluster::markReverbDirty(bool yes)
+{
+    d->needReverbUpdate = yes;
+}
+
+AudioEnvironmentFactors const &SectorCluster::reverb() const
+{
+    d->updateReverbIfNeeded();
+    return d->reverb;
 }
 
 #endif // __CLIENT__

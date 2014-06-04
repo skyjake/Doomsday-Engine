@@ -189,7 +189,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     // Ensure we have up to date info about the material.
     MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if(ms.isOpaque() && !side.middle().blendmode() && side.middle().opacity() >= 1)
     {
         if(side.leftHEdge()) // possibility of degenerate BSP leaf
         {

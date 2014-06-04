@@ -100,7 +100,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
     // Might the material cover the opening?
-    if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if(ms.isOpaque() && !side.middle().blendmode() && side.middle().opacity() >= 1)
     {
         // Stretched middles always cover the opening.
         if(side.isFlagged(SDF_MIDDLE_STRETCH))

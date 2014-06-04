@@ -20,8 +20,9 @@
 #define DENG_CLIENT_RENDER_SHARD_H
 
 #include <QList>
+#include <de/GLBuffer>
 #include <de/Vector>
-#include "rendersystem.h"
+#include "rendersystem.h" // WorldVBuf
 #include "DrawList"
 
 /**
@@ -62,13 +63,8 @@ public:
           blendmode_t blendmode        = BM_NORMAL,
           GLuint modTex                = 0,
           de::Vector3f const &modColor = de::Vector3f(),
-          bool hasDynlights            = false)
-        : listSpec    (listSpec)
-        , blendmode   (blendmode)
-        , modTex      (modTex)
-        , modColor    (modColor)
-        , hasDynlights(hasDynlights)
-    {}
+          bool hasDynlights            = false);
+
 };
 
 #endif // DENG_CLIENT_RENDER_SHARD_H

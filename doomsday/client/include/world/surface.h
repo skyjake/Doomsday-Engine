@@ -259,14 +259,14 @@ public:
     /**
      * Returns the blendmode for the surface.
      */
-    blendmode_t blendMode() const;
+    blendmode_t blendmode() const;
 
     /**
      * Change blendmode.
      *
-     * @param newBlendMode  New blendmode.
+     * @param newBlendmode  New blendmode.
      */
-    Surface &setBlendMode(blendmode_t newBlendMode);
+    Surface &setBlendmode(blendmode_t newBlendmode);
 
 #ifdef __CLIENT__
 

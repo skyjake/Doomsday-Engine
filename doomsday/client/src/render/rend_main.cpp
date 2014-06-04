@@ -905,10 +905,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
                 }
 
                 // Apply bias light source contributions.
-                cluster.lightWithBiasSources(leftSection->edge().hedge().mapElement(),
-                                             (leftSection->id() == WallEdge::WallMiddle? LineSide::Middle :
-                                              leftSection->id() == WallEdge::WallBottom? LineSide::Bottom :
-                                                                                         LineSide::Top),
+                cluster.lightWithBiasSources(leftSection->edge().hedge().mapElement(), leftSection->id(),
                                              leftSection->surfacePtr()->tangentMatrix(),
                                              posCoords, colorCoords);
 
@@ -3540,7 +3537,7 @@ static void drawSectors(Map &map)
 
     foreach(SectorCluster *cluster, map.clusters())
     {
-        Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
+        Vector3d const origin(cluster->center(), cluster->visFloor().heightSmoothed());
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {
