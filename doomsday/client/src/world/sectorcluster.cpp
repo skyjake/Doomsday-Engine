@@ -486,8 +486,183 @@ DENG2_PIMPL(SectorCluster)
 {
     bool needClassify; ///< @c true= (Re)classification is necessary.
     ClusterFlags flags;
-    typedef QList<ConvexSubspace *> Subspaces;
-    Subspaces subspaces;
+
+    struct Subsector
+    {
+        ConvexSubspace *subspace;
+
+#ifdef __CLIENT__
+        struct GeometryData
+        {
+            typedef QVector<BiasIllum *> BiasIllums;
+
+            MapElement *mapElement;
+            int geomId;
+        private:
+            struct BiasSurface
+            {
+                BiasTracker tracker;
+                uint lastUpdateFrame;
+                BiasIllums illums;
+
+                BiasSurface() : lastUpdateFrame(0) {}
+                ~BiasSurface() { qDeleteAll(illums); }
+            };
+            QScopedPointer<BiasSurface> biasSurface;
+
+        public:
+            GeometryData(MapElement *mapElement, int geomId)
+                : mapElement(mapElement)
+                , geomId    (geomId)
+            {}
+
+            BiasIllums &biasIllums() {
+                addBiasSurfaceIfMissing();
+                return biasSurface->illums;
+            }
+
+            BiasTracker &biasTracker() {
+                addBiasSurfaceIfMissing();
+                return biasSurface->tracker;
+            }
+
+            void applyBiasDigest(BiasDigest &allChanges) {
+                if(!biasSurface.isNull()) {
+                    biasSurface->tracker.applyChanges(allChanges);
+                }
+            }
+
+            void markBiasContributorUpdateNeeded() {
+                if(!biasSurface.isNull()) {
+                    biasSurface->tracker.updateAllContributors();
+                }
+            }
+
+            void markBiasIllumUpdateCompleted() {
+                if(!biasSurface.isNull()) {
+                    biasSurface->tracker.markIllumUpdateCompleted();
+                }
+            }
+
+            uint lastBiasUpdateFrame() {
+                addBiasSurfaceIfMissing();
+                return biasSurface->lastUpdateFrame;
+            }
+
+            void setBiasLastUpdateFrame(uint updateFrame) {
+                if(!biasSurface.isNull()) {
+                    biasSurface->lastUpdateFrame = updateFrame;
+                }
+            }
+
+        private:
+            void addBiasSurfaceIfMissing() {
+                if(!biasSurface.isNull()) return;
+
+                biasSurface.reset(new BiasSurface);
+
+                // Determine the number of bias illumination points needed (presently
+                // we define a 1:1 mapping to geometry vertices).
+                int numIllums = 0;
+                switch(mapElement->type())
+                {
+                case DMU_SUBSPACE: {
+                    ConvexSubspace &subspace = mapElement->as<ConvexSubspace>();
+                    DENG2_ASSERT(geomId >= 0 && geomId < subspace.sector().planeCount()); // sanity check
+                    numIllums = subspace.numFanVertices();
+                    break; }
+
+                case DMU_SEGMENT:
+                    DENG2_ASSERT(geomId >= WallEdge::WallMiddle && geomId <= WallEdge::WallTop); // sanity check
+                    numIllums = 4;
+                    break;
+
+                default:
+                    DENG2_ASSERT(!"SectorCluster::Subsector::GeometryData::addBiasSurfaceIfMissing(): Invalid MapElement type");
+                }
+
+                if(numIllums > 0)
+                {
+                    biasSurface->illums.reserve(numIllums);
+                    for(int i = 0; i < numIllums; ++i)
+                    {
+                        biasSurface->illums << new BiasIllum(&biasSurface->tracker);
+                    }
+                }
+            }
+        };
+
+        /// @todo Avoid two-stage lookup.
+        typedef QMap<int, GeometryData *> GeometryGroup;
+        typedef QMap<MapElement *, GeometryGroup> GeometryGroups;
+        GeometryGroups geomGroups;
+#endif
+
+        Subsector() : subspace(0) {}
+
+#ifdef __CLIENT__
+        ~Subsector() {
+            foreach(GeometryGroup const &group, geomGroups) {
+                qDeleteAll(group); // Delete all GeometryData.
+            }
+        }
+#endif
+
+        Sector &sector() const {
+            Sector *sec = subspace->bspLeaf().sectorPtr();
+            DENG2_ASSERT(sec != 0);
+            return *sec;
+        }
+
+        void setSubspace(ConvexSubspace &newSubspace) {
+            subspace = &newSubspace;
+        }
+
+        Face &convexSubspacePoly() const {
+            return subspace->poly();
+        }
+
+#ifdef __CLIENT__
+        void clearAllSubspaceShards() const {
+            subspace->shards().clear();
+        }
+
+        /**
+         * Find the GeometryData for a MapElement by the element-unique @a group
+         * identifier.
+         *
+         * @param geomId    Geometry identifier.
+         * @param canAlloc  @c true= to allocate if no data exists. Note that the
+         *                  number of vertices in the fan geometry must be known
+         *                  at this time.
+         */
+        GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
+        {
+            GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
+            if(foundGroup != geomGroups.end())
+            {
+                GeometryGroup &geomDatas = *foundGroup;
+                GeometryGroup::iterator found = geomDatas.find(geomId);
+                if(found != geomDatas.end())
+                {
+                    return *found;
+                }
+            }
+
+            if(!canAlloc) return 0;
+
+            if(foundGroup == geomGroups.end())
+            {
+                foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
+            }
+
+            return foundGroup->insert(geomId, new GeometryData(&mapElement, geomId)).value();
+        }
+#endif
+    };
+    typedef QHash<ConvexSubspace *, Subsector> Subsectors;
+    Subsectors subsectors;
+
     QScopedPointer<AABoxd> aaBox;
 
     SectorCluster *mappedVisFloor;
@@ -503,111 +678,6 @@ DENG2_PIMPL(SectorCluster)
     QScopedPointer<BoundaryData> boundaryData;
 
 #ifdef __CLIENT__
-    struct GeometryData
-    {
-        typedef QVector<BiasIllum *> BiasIllums;
-
-        MapElement *mapElement;
-        int geomId;
-    private:
-        struct BiasSurface
-        {
-            BiasTracker tracker;
-            uint lastUpdateFrame;
-            BiasIllums illums;
-
-            BiasSurface() : lastUpdateFrame(0) {}
-            ~BiasSurface() { qDeleteAll(illums); }
-        };
-        QScopedPointer<BiasSurface> biasSurface;
-
-    public:
-        GeometryData(MapElement *mapElement, int geomId)
-            : mapElement(mapElement)
-            , geomId    (geomId)
-        {}
-
-        BiasIllums &biasIllums() {
-            addBiasSurfaceIfMissing();
-            return biasSurface->illums;
-        }
-
-        BiasTracker &biasTracker() {
-            addBiasSurfaceIfMissing();
-            return biasSurface->tracker;
-        }
-
-        void applyBiasDigest(BiasDigest &allChanges) {
-            if(!biasSurface.isNull()) {
-                biasSurface->tracker.applyChanges(allChanges);
-            }
-        }
-
-        void markBiasContributorUpdateNeeded() {
-            if(!biasSurface.isNull()) {
-                biasSurface->tracker.updateAllContributors();
-            }
-        }
-
-        void markBiasIllumUpdateCompleted() {
-            if(!biasSurface.isNull()) {
-                biasSurface->tracker.markIllumUpdateCompleted();
-            }
-        }
-
-        uint lastBiasUpdateFrame() {
-            addBiasSurfaceIfMissing();
-            return biasSurface->lastUpdateFrame;
-        }
-
-        void setBiasLastUpdateFrame(uint updateFrame) {
-            if(!biasSurface.isNull()) {
-                biasSurface->lastUpdateFrame = updateFrame;
-            }
-        }
-
-    private:
-        void addBiasSurfaceIfMissing() {
-            if(!biasSurface.isNull()) return;
-
-            biasSurface.reset(new BiasSurface);
-
-            // Determine the number of bias illumination points needed (presently
-            // we define a 1:1 mapping to geometry vertices).
-            int numIllums = 0;
-            switch(mapElement->type())
-            {
-            case DMU_SUBSPACE: {
-                ConvexSubspace &subspace = mapElement->as<ConvexSubspace>();
-                DENG2_ASSERT(geomId >= 0 && geomId < subspace.sector().planeCount()); // sanity check
-                numIllums = subspace.numFanVertices();
-                break; }
-
-            case DMU_SEGMENT:
-                DENG2_ASSERT(geomId >= WallEdge::WallMiddle && geomId <= WallEdge::WallTop); // sanity check
-                numIllums = 4;
-                break;
-
-            default:
-                DENG2_ASSERT(!"SectorCluster::GeometryData::addBiasSurfaceIfMissing(): Invalid MapElement type");
-            }
-
-            if(numIllums > 0)
-            {
-                biasSurface->illums.reserve(numIllums);
-                for(int i = 0; i < numIllums; ++i)
-                {
-                    biasSurface->illums << new BiasIllum(&biasSurface->tracker);
-                }
-            }
-        }
-    };
-
-    /// @todo Avoid two-stage lookup.
-    typedef QMap<int, GeometryData *> GeometryGroup;
-    typedef QMap<MapElement *, GeometryGroup> GeometryGroups;
-    GeometryGroups geomGroups;
-
     /// Subspaces in the neighborhood effecting environmental audio characteristics.
     typedef QSet<ConvexSubspace *> ReverbSubspaces;
     ReverbSubspaces reverbSubspaces;
@@ -649,11 +719,6 @@ DENG2_PIMPL(SectorCluster)
 
         qDeleteAll(wallEdges);
 
-        DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
-        {
-            qDeleteAll(*geomGroup);
-        }
-
         self.clearAllShards();
 #endif
 
@@ -661,6 +726,13 @@ DENG2_PIMPL(SectorCluster)
         clearMapping(Sector::Ceiling);
 
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
+    }
+
+    Subsector &firstSubsector() const
+    {
+        Subsectors::const_iterator first = subsectors.constBegin();
+        DENG2_ASSERT(first != subsectors.constEnd());
+        return const_cast<Subsector &>(first.value());
     }
 
     inline bool floorIsMapped()
@@ -789,9 +861,9 @@ DENG2_PIMPL(SectorCluster)
 
             flags &= ~(NeverMapped|PartSelfRef);
             flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
-            foreach(ConvexSubspace const *subspace, subspaces)
+            foreach(Subsector const &ssec, subsectors)
             {
-                HEdge const *base  = subspace->poly().hedge();
+                HEdge const *base  = ssec.convexSubspacePoly().hedge();
                 HEdge const *hedge = base;
                 do
                 {
@@ -872,9 +944,9 @@ DENG2_PIMPL(SectorCluster)
         if(!boundaryData.isNull()) return;
 
         QMap<SectorCluster *, HEdge *> extClusterMap;
-        foreach(ConvexSubspace *subspace, subspaces)
+        foreach(Subsector const &ssec, subsectors)
         {
-            HEdge *base = subspace->poly().hedge();
+            HEdge *base = ssec.convexSubspacePoly().hedge();
             HEdge *hedge = base;
             do
             {
@@ -1099,39 +1171,6 @@ DENG2_PIMPL(SectorCluster)
     }
 
 #ifdef __CLIENT__
-
-    /**
-     * Find the GeometryData for a MapElement by the element-unique @a group
-     * identifier.
-     *
-     * @param geomId    Geometry identifier.
-     * @param canAlloc  @c true= to allocate if no data exists. Note that the
-     *                  number of vertices in the fan geometry must be known
-     *                  at this time.
-     */
-    GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
-    {
-        GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
-        if(foundGroup != geomGroups.end())
-        {
-            GeometryGroup &geomDatas = *foundGroup;
-            GeometryGroup::iterator found = geomDatas.find(geomId);
-            if(found != geomDatas.end())
-            {
-                return *found;
-            }
-        }
-
-        if(!canAlloc) return 0;
-
-        if(foundGroup == geomGroups.end())
-        {
-            foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
-        }
-
-        return foundGroup->insert(geomId, new GeometryData(&mapElement, geomId)).value();
-    }
-
     void markLineSurfacesForDecorationUpdate(Line &line)
     {
         LineSide &front = line.front();
@@ -1195,8 +1234,9 @@ DENG2_PIMPL(SectorCluster)
         if(ddMapSetup) return;
         if(!useBias) return;
 
-        foreach(GeometryGroup const &group, geomGroups)
-        foreach(GeometryData *gdata, group)
+        foreach(Subsector const &ssec, subsectors)
+        foreach(Subsector::GeometryGroup const &group, ssec.geomGroups)
+        foreach(Subsector::GeometryData *gdata, group)
         {
             gdata->markBiasContributorUpdateNeeded();
         }
@@ -3192,6 +3232,33 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
+    ConvexSubspace &subspaceForMapElement(MapElement &mapElement)
+    {
+        ConvexSubspace *subspace = 0;
+        switch(mapElement.type())
+        {
+        case DMU_SUBSPACE: subspace = &mapElement.as<ConvexSubspace>();
+
+        case DMU_SEGMENT: {
+            LineSideSegment &seg = mapElement.as<LineSideSegment>();
+            if(seg.line().definesPolyobj())
+            {
+                subspace = &seg.line().polyobj().bspLeaf().subspace();
+            }
+            else
+            {
+                subspace = &seg.hedge().face().mapElementAs<ConvexSubspace>();
+            }
+            break; }
+
+        default: break;
+        }
+
+        if(!subspace) throw Error("SectorCluster::subspaceForMapElement", "Unknown map element referenced");
+        DENG2_ASSERT(&subspace->cluster() == thisPublic); // Sanity check.
+        return *subspace;
+    }
+
     Surface &surfaceForGeometry(MapElement &mapElement, int geomId)
     {
         switch(mapElement.type())
@@ -3200,10 +3267,10 @@ DENG2_PIMPL(SectorCluster)
         case DMU_SEGMENT:  return mapElement.as<LineSideSegment>().lineSide().surface(geomId - WallEdge::WallMiddle);
         default: break;
         }
-        throw Error("SectorCluster::surfaceForGeometry", "Unknown geometry reference");
+        throw Error("SectorCluster::surfaceForGeometry", "Unknown map element/geometry id referenced");
     }
 
-    bool updateBiasContributorsIfNeeded(GeometryData &gdata)
+    bool updateBiasContributorsIfNeeded(Subsector::GeometryData &gdata)
     {
         if(!Rend_BiasContributorUpdatesEnabled())
             return false;
@@ -3325,9 +3392,10 @@ DENG2_PIMPL(SectorCluster)
 SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspaces)
     : d(new Instance(this))
 {
-    d->subspaces.append(subspaces);
     foreach(ConvexSubspace *subspace, subspaces)
     {
+        Instance::Subsector &ssec = d->subsectors.insert(subspace, Instance::Subsector()).value();
+        ssec.setSubspace(*subspace);
         // Attribute the subspace to the cluster.
         subspace->setCluster(this);
     }
@@ -3360,12 +3428,12 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 
 Sector const &SectorCluster::sector() const
 {
-    return *d->subspaces.first()->bspLeaf().sectorPtr();
+    return d->firstSubsector().sector();
 }
 
 Sector &SectorCluster::sector()
 {
-    return *d->subspaces.first()->bspLeaf().sectorPtr();
+    return d->firstSubsector().sector();
 }
 
 Plane const &SectorCluster::plane(int planeIndex) const
@@ -3426,18 +3494,18 @@ AABoxd const &SectorCluster::aaBox() const
 {
     // If the cluster is comprised of a single subspace we can use the bounding
     // box of the subspace geometry directly.
-    if(d->subspaces.count() == 1)
+    if(d->subsectors.count() == 1)
     {
-        return d->subspaces.first()->poly().aaBox();
+        return d->firstSubsector().convexSubspacePoly().aaBox();
     }
 
     // Time to determine bounds?
     if(d->aaBox.isNull())
     {
         // Unite the geometry bounding boxes of all subspaces in the cluster.
-        foreach(ConvexSubspace const *subspace, d->subspaces)
+        foreach(Instance::Subsector const &ssec, d->subsectors)
         {
-            AABoxd const &leafAABox = subspace->poly().aaBox();
+            AABoxd const &leafAABox = ssec.convexSubspacePoly().aaBox();
             if(!d->aaBox.isNull())
             {
                 V2d_UniteBox((*d->aaBox).arvec2, leafAABox.arvec2);
@@ -3519,8 +3587,9 @@ int SectorCluster::blockLightSourceZBias()
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    Instance::GeometryData &gdata = *d->geomData(mapElement, geomId, true /*create*/);
-    Instance::GeometryData::BiasIllums &illums = gdata.biasIllums();
+    Instance::Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Instance::Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
+    Instance::Subsector::GeometryData::BiasIllums &illums = gdata.biasIllums();
 
     // Any contributor updates?
     bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
@@ -3542,8 +3611,9 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     WorldVBuf &vbuf, WorldVBuf::Indices const &indices)
 {
-    Instance::GeometryData &gdata = *d->geomData(mapElement, geomId, true /*create*/);
-    Instance::GeometryData::BiasIllums &illums = gdata.biasIllums();
+    Instance::Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Instance::Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
+    Instance::Subsector::GeometryData::BiasIllums &illums = gdata.biasIllums();
 
     // Any contributor updates?
     bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
@@ -3565,8 +3635,9 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 
 void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 {
-    foreach(Instance::GeometryGroup const &group, d->geomGroups)
-    foreach(Instance::GeometryData *gdata, group)
+    foreach(Instance::Subsector const &ssec, d->subsectors)
+    foreach(Instance::Subsector::GeometryGroup const &group, ssec.geomGroups)
+    foreach(Instance::Subsector::GeometryData *gdata, group)
     {
         gdata->applyBiasDigest(allChanges);
     }
@@ -3584,7 +3655,7 @@ void SectorCluster::prepareShards(ConvexSubspace &subspace)
 void SectorCluster::clearAllShards()
 {
     // Unlink the Shards from the subspace.
-    foreach(ConvexSubspace *subspace, d->subspaces) subspace->shards().clear();
+    foreach(Instance::Subsector const &ssec, d->subsectors) ssec.clearAllSubspaceShards();
 
     qDeleteAll(d->shards);
     d->shards.clear();
@@ -3596,8 +3667,11 @@ void SectorCluster::mapElementMoved(Polyobj &po)
     {
         // Is this on the back of a one-sided line?
         if(!hedge->hasMapElement()) continue;
+        MapElement &mapElement = hedge->mapElement();
+        int const geomId       = WallEdge::WallMiddle;
 
-        if(Instance::GeometryData *geom = d->geomData(hedge->mapElement(), WallEdge::WallMiddle))
+        Instance::Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+        if(Instance::Subsector::GeometryData *geom = ssec.geomData(mapElement, geomId))
         {
             geom->markBiasContributorUpdateNeeded();
         }
