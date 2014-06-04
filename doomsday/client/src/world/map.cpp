@@ -41,6 +41,7 @@
 #include "Vertex"
 
 #include "world/bsp/partitioner.h"
+#include "world/client/subsector.h"
 #include "world/worldsystem.h" // ddMapSetup, validCount
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
@@ -3086,7 +3087,7 @@ Lumobj &Map::addLumobj(Lumobj const &lumobj)
     lum.setMap(this);
     lum.setIndexInMap(d->lumobjs.count() - 1);
     DENG2_ASSERT(lum.bspLeafAtOrigin().hasSubspace());
-    lum.bspLeafAtOrigin().subspace().link(lum);
+    lum.bspLeafAtOrigin().subspace().subsector().link(lum);
     R_AddContact(lum); // For spreading purposes.
 
     return lum;
@@ -3104,7 +3105,7 @@ void Map::removeAllLumobjs()
 {
     foreach(ConvexSubspace *subspace, d->subspaces)
     {
-        subspace->unlinkAllLumobjs();
+        subspace->subsector().unlinkAllLumobjs();
     }
     qDeleteAll(d->lumobjs);
     d->lumobjs.clear();

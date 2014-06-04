@@ -24,6 +24,7 @@
 #include "clientapp.h"
 #include "gl/gl_main.h"
 
+#include "world/client/subsector.h"
 #include "world/map.h"
 #include "world/lineowner.h"
 #include "world/maputil.h"
@@ -1047,7 +1048,7 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    ConvexSubspace::ShadowLines const &shadowLines = subspace.shadowLines();
+    Subsector::ShadowLines const &shadowLines = subspace.subsector().shadowLines();
     if(shadowLines.isEmpty()) return;
 
     SectorCluster &cluster = subspace.cluster();

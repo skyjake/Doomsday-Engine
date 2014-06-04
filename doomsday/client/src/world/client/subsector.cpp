@@ -18,10 +18,14 @@
 
 #include "world/client/subsector.h"
 #include "world/map.h"
+#include "ConvexSubspace"
 #include "Face"
+#include "Mesh"
 #include "Surface"
 #include "WallEdge"
 #include "render/rend_main.h"
+#include <de/Log>
+#include <QtAlgorithms>
 
 namespace de {
 namespace internal {
@@ -79,19 +83,26 @@ DENG2_PIMPL_NOREF(Subsector)
 {
     ConvexSubspace *subspace;
     GeometryGroups geomGroups;
-    HEdge *fanBase;             ///< Trifan base Half-edge (otherwise the center point is used).
-    bool needUpdateFanBase;     ///< @c true= need to rechoose a fan base half-edge.
+    HEdge *fanBase;                  ///< Trifan base Half-edge (otherwise the center point is used).
+    bool needUpdateFanBase;          ///< @c true= need to rechoose a fan base half-edge.
+
+    Lumobjs lumobjs;                 ///< Linked lumobjs (not owned).
+    ShadowLines shadowLines;         ///< Linked map lines for fake radio shadowing.
+    AudioEnvironmentFactors reverb;  ///< Cached characteristics.
+    Shards shards;
 
     Instance(ConvexSubspace &subspace)
         : subspace         (&subspace)
         , fanBase          (0)
         , needUpdateFanBase(true)
-    {}
+    {
+        de::zap(reverb);
+    }
 
     ~Instance()
     {
-        // Clear all subspace shards.
-        subspace->shards().clear();
+        // Clear all geometry shards.
+        shards.clear();
 
         // Delete all GeometryData.
         foreach(GeometryGroup const &group, geomGroups) qDeleteAll(group);
@@ -247,12 +258,12 @@ HEdge *Subsector::fanBase() const
 int Subsector::numFanVertices() const
 {
     // Are we to use one of the half-edge vertexes as the fan base?
-    return convexSubspace().poly().hedgeCount() + (fanBase()? 0 : 2);
+    return d->subspace->poly().hedgeCount() + (fanBase()? 0 : 2);
 }
 
-void Subsector::clearAllSubspaceShards() const
+void Subsector::clearAllShards() const
 {
-    convexSubspace().shards().clear();
+    d->shards.clear();
 }
 
 Subsector::GeometryGroups const &Subsector::geomGroups() const
@@ -288,7 +299,7 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
     if(!Rend_BiasContributorUpdatesEnabled())
         return false;
 
-    Map &map = convexSubspace().map();
+    Map &map = d->subspace->map();
 
     uint const lastBiasChangeFrame = map.biasLastChangeOnFrame();
     if(lastBiasUpdateFrame(gdata) == lastBiasChangeFrame)
@@ -370,4 +381,142 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
     }
 
     return true;
+}
+
+void Subsector::clearShadowLines()
+{
+    d->shadowLines.clear();
+}
+
+void Subsector::addShadowLine(LineSide &side)
+{
+    DENG2_ASSERT(side.hasSector());
+    DENG2_ASSERT(side.hasSections());
+
+    d->shadowLines.insert(&side);
+}
+
+Subsector::ShadowLines const &Subsector::shadowLines() const
+{
+    return d->shadowLines;
+}
+
+void Subsector::unlinkAllLumobjs()
+{
+    d->lumobjs.clear();
+}
+
+void Subsector::unlink(Lumobj &lumobj)
+{
+    d->lumobjs.remove(&lumobj);
+}
+
+void Subsector::link(Lumobj &lumobj)
+{
+    d->lumobjs.insert(&lumobj);
+}
+
+Subsector::Lumobjs const &Subsector::lumobjs() const
+{
+    return d->lumobjs;
+}
+
+static void accumReverbForWallSections(HEdge const *hedge,
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], float &total)
+{
+    // Edges with no map line segment implicitly have no surfaces.
+    if(!hedge || !hedge->hasMapElement())
+        return;
+
+    LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
+    if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
+        return;
+
+    Material &material = seg.lineSide().middle().material();
+    AudioEnvironmentId env = material.audioEnvironment();
+    if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
+        env = AE_WOOD; // Assume it's wood if unknown.
+
+    total += seg.length();
+
+    envSpaceAccum[env] += seg.length();
+}
+
+bool Subsector::updateReverb()
+{
+    DENG2_ASSERT(d->subspace->hasCluster()); // *never* false? -ds
+    if(!d->subspace->hasCluster())
+    {
+        d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
+            d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
+        return false;
+    }
+    SectorCluster &cluster = d->subspace->cluster();
+
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
+    de::zap(envSpaceAccum);
+
+    // Space is the rough volume of the subspace bounding box.
+    AABoxd const &aaBox = d->subspace->poly().aaBox();
+    d->reverb[SRD_SPACE] = int(cluster.ceiling().height() - cluster.floor().height())
+                         * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
+
+    // The other reverb properties can be found out by taking a look at the
+    // materials of all surfaces in the BSP leaf.
+    float total  = 0;
+    HEdge *base  = d->subspace->poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
+    } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, d->subspace->extraMeshes())
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
+    }
+
+    if(!total)
+    {
+        // Huh?
+        d->reverb[SRD_VOLUME] = d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
+        return false;
+    }
+
+    // Average the results.
+    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    {
+        envSpaceAccum[i] /= total;
+    }
+
+    // Accumulate and clamp the final characteristics
+    int accum[NUM_REVERB_DATA]; zap(accum);
+    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    {
+        AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
+        // Volume.
+        accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
+
+        // Decay time.
+        accum[SRD_DECAY]   += envSpaceAccum[i] * envInfo.decayMul;
+
+        // High frequency damping.
+        accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
+    }
+    d->reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
+    d->reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
+    d->reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
+
+    return true;
+}
+
+Subsector::AudioEnvironmentFactors const &Subsector::reverb() const
+{
+    return d->reverb;
+}
+
+Subsector::Shards &Subsector::shards()
+{
+    return d->shards;
 }

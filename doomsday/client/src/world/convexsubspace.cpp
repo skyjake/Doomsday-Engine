@@ -32,20 +32,13 @@ using namespace de;
 
 DENG2_PIMPL(ConvexSubspace)
 {
-    Face &poly;                      ///< Convex polygon geometry (not owned).
-    Meshes extraMeshes;              ///< Additional meshes (owned).
-    Polyobjs polyobjs;               ///< Linked polyobjs (if any, not owned).
-    SectorCluster *cluster;          ///< Attributed cluster (if any, not owned).
-    int validCount;                  ///< Used to prevent repeated processing.
-    Vector2d worldGridOffset;        ///< For aligning the materials to the map space grid.
+    Face &poly;                ///< Convex polygon geometry (not owned).
+    Meshes extraMeshes;        ///< Additional meshes (owned).
+    Polyobjs polyobjs;         ///< Linked polyobjs (if any, not owned).
+    SectorCluster *cluster;    ///< Attributed cluster (if any, not owned).
+    int validCount;            ///< Used to prevent repeated processing.
+    Vector2d worldGridOffset;  ///< For aligning the materials to the map space grid.
     BspLeaf *bspLeaf;
-
-#ifdef __CLIENT__
-    Lumobjs lumobjs;                 ///< Linked lumobjs (not owned).
-    ShadowLines shadowLines;         ///< Linked map lines for fake radio shadowing.
-    AudioEnvironmentFactors reverb;  ///< Cached characteristics.
-    Shards shards;
-#endif
 
     Instance(Public *i, Face &poly)
         : Base(i)
@@ -53,11 +46,7 @@ DENG2_PIMPL(ConvexSubspace)
         , cluster   (0)
         , validCount(0)
         , bspLeaf   (0)
-    {
-#ifdef __CLIENT__
-        de::zap(reverb);
-#endif
-    }
+    {}
 
     ~Instance() { qDeleteAll(extraMeshes); }
 };
@@ -196,142 +185,3 @@ void ConvexSubspace::setValidCount(int newValidCount)
 {
     d->validCount = newValidCount;
 }
-
-#ifdef __CLIENT__
-void ConvexSubspace::clearShadowLines()
-{
-    d->shadowLines.clear();
-}
-
-void ConvexSubspace::addShadowLine(LineSide &side)
-{
-    DENG2_ASSERT(side.hasSector());
-    DENG2_ASSERT(side.hasSections());
-
-    d->shadowLines.insert(&side);
-}
-
-ConvexSubspace::ShadowLines const &ConvexSubspace::shadowLines() const
-{
-    return d->shadowLines;
-}
-
-void ConvexSubspace::unlinkAllLumobjs()
-{
-    d->lumobjs.clear();
-}
-
-void ConvexSubspace::unlink(Lumobj &lumobj)
-{
-    d->lumobjs.remove(&lumobj);
-}
-
-void ConvexSubspace::link(Lumobj &lumobj)
-{
-    d->lumobjs.insert(&lumobj);
-}
-
-ConvexSubspace::Lumobjs const &ConvexSubspace::lumobjs() const
-{
-    return d->lumobjs;
-}
-
-static void accumReverbForWallSections(HEdge const *hedge,
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], float &total)
-{
-    // Edges with no map line segment implicitly have no surfaces.
-    if(!hedge || !hedge->hasMapElement())
-        return;
-
-    LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
-    if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
-        return;
-
-    Material &material = seg.lineSide().middle().material();
-    AudioEnvironmentId env = material.audioEnvironment();
-    if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
-        env = AE_WOOD; // Assume it's wood if unknown.
-
-    total += seg.length();
-
-    envSpaceAccum[env] += seg.length();
-}
-
-bool ConvexSubspace::updateReverb()
-{
-    if(!hasCluster())
-    {
-        d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
-            d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
-    de::zap(envSpaceAccum);
-
-    // Space is the rough volume of the BSP leaf (bounding box).
-    AABoxd const &aaBox = d->poly.aaBox();
-    d->reverb[SRD_SPACE] = int(cluster().ceiling().height() - cluster().floor().height())
-                         * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
-
-    // The other reverb properties can be found out by taking a look at the
-    // materials of all surfaces in the BSP leaf.
-    float total  = 0;
-    HEdge *base  = d->poly.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
-    } while((hedge = &hedge->next()) != base);
-
-    foreach(Mesh *mesh, d->extraMeshes)
-    foreach(HEdge *hedge, mesh->hedges())
-    {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
-    }
-
-    if(!total)
-    {
-        // Huh?
-        d->reverb[SRD_VOLUME] = d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    // Average the results.
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
-    {
-        envSpaceAccum[i] /= total;
-    }
-
-    // Accumulate and clamp the final characteristics
-    int accum[NUM_REVERB_DATA]; zap(accum);
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
-    {
-        AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
-        // Volume.
-        accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
-
-        // Decay time.
-        accum[SRD_DECAY]   += envSpaceAccum[i] * envInfo.decayMul;
-
-        // High frequency damping.
-        accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
-    }
-    d->reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
-    d->reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
-    d->reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
-
-    return true;
-}
-
-ConvexSubspace::AudioEnvironmentFactors const &ConvexSubspace::reverb() const
-{
-    return d->reverb;
-}
-
-ConvexSubspace::Shards &ConvexSubspace::shards()
-{
-    return d->shards;
-}
-
-#endif // __CLIENT__

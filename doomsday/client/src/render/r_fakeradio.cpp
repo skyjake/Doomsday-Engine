@@ -28,6 +28,7 @@
 #include "de_base.h"
 #include "de_render.h"
 
+#include "world/client/subsector.h"
 #include "world/lineowner.h"
 #include "world/map.h"
 #include "ConvexSubspace"
@@ -198,7 +199,7 @@ static int linkShadowLineToSubspaceWorker(ConvexSubspace *subspace, void *contex
     LineSide &side = *static_cast<LineSide *>(context);
     if(side.sectorPtr() == &subspace->sector())
     {
-        subspace->addShadowLine(side);
+        subspace->subsector().addShadowLine(side);
     }
     return false; // Continue iteration.
 }

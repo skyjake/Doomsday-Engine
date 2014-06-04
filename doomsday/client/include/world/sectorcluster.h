@@ -41,6 +41,7 @@
 class ConvexSubspace;
 #ifdef __CLIENT__
 class BiasDigest;
+class Subsector;
 #endif
 
 /**
@@ -203,6 +204,14 @@ public:
      * for all the subspaces which define the cluster (map units squared).
      */
     coord_t roughArea() const;
+
+    /**
+     * Lookup the Subsector associated with the given convex @a subspace (which,
+     * is assumed to be a member of the set attributed to the cluster).
+     *
+     * @return  Subsector associated with @a subspace.
+     */
+    Subsector &subsector(ConvexSubspace const &subspace) const;
 
     /**
      * Apply lighting from bias sources to the given geometry.

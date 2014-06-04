@@ -21,29 +21,19 @@
 #ifndef DENG_WORLD_CONVEXSUBSPACE_H
 #define DENG_WORLD_CONVEXSUBSPACE_H
 
-#ifdef __CLIENT__
-#  include "dd_share.h" // NUM_REVERB_DATA
-#  include "Line"
-#endif
 #include "Mesh"
 #include "MapElement"
 #include "SectorCluster"
-#include <QList>
 #include <QSet>
 #include <de/Error>
-#include <de/Vector>
 
 class BspLeaf;
 struct polyobj_s;
 #ifdef __CLIENT__
-class Lumobj;
-class Shard;
+class Subsector;
 #endif
 
 /**
- * On client side a convex subspace also provides / links to various geometry
- * data assets and properties used to visualize the subspace.
- *
  * @ingroup world
  */
 class ConvexSubspace : public de::MapElement
@@ -58,15 +48,6 @@ public:
     /// Linked-element lists/sets:
     typedef QSet<de::Mesh *>  Meshes;
     typedef QSet<polyobj_s *> Polyobjs;
-
-#ifdef __CLIENT__
-    typedef QSet<Lumobj *>    Lumobjs;
-    typedef QSet<LineSide *>  ShadowLines;
-    typedef QSet<Shard *>     Shards;
-
-    // Final audio environment characteristics.
-    typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
-#endif
 
 public:
     /**
@@ -210,69 +191,15 @@ public:
 
 #ifdef __CLIENT__
     /**
-     * Clear the list of fake radio shadow line sides for the subspace.
-     */
-    void clearShadowLines();
-
-    /**
-     * Add the specified line @a side to the set of fake radio shadow lines for
-     * the subspace. If the line is already present in this set then nothing
-     * will happen.
+     * Convenient method returning the Subsector associated with the subspace,
+     * from the attributed SectorCluster.
      *
-     * @param side  Map line side to add to the set.
+     * @see hasCluster(), SectorCluster::subsector()
      */
-    void addShadowLine(LineSide &side);
-
-    /**
-     * Provides access to the set of fake radio shadow lines for the subspace.
-     */
-    ShadowLines const &shadowLines() const;
-
-    /**
-     * Clear all lumobj links for the subspace.
-     */
-    void unlinkAllLumobjs();
-
-    /**
-     * Unlink the specified @a lumobj in the subspace. If the lumobj is not
-     * linked then nothing will happen.
-     *
-     * @param lumobj  Lumobj to unlink.
-     *
-     * @see link()
-     */
-    void unlink(Lumobj &lumobj);
-
-    /**
-     * Link the specified @a lumobj in the subspace. If the lumobj is already
-     * linked then nothing will happen.
-     *
-     * @param lumobj  Lumobj to link.
-     *
-     * @see lumobjs(), unlink()
-     */
-    void link(Lumobj &lumobj);
-
-    /**
-     * Provides access to the set of lumobjs linked to the subspace.
-     *
-     * @see linkLumobj(), clearLumobjs()
-     */
-    Lumobjs const &lumobjs() const;
-
-    /**
-     * Recalculate the environmental audio characteristics (reverb) of the subspace.
-     */
-    bool updateReverb();
-
-    /**
-     * Provides access to the final environmental audio characteristics (reverb)
-     * of the subspace, for efficient accumulation.
-     */
-    AudioEnvironmentFactors const &reverb() const;
-
-    Shards &shards();
-#endif // __CLIENT__
+    inline Subsector &subsector() const {
+        return cluster().subsector(*this);
+    }
+#endif
 
 private:
     ConvexSubspace(de::Face &convexPolygon, BspLeaf *bspLeaf = 0);

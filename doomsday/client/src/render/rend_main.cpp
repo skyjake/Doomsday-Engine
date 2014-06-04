@@ -38,6 +38,7 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "Face"
+#include "world/client/subsector.h"
 #include "world/map.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
@@ -55,11 +56,8 @@
 #include "DrawLists"
 #include "HueCircleVisual"
 #include "LightDecoration"
-//#include "Lumobj"
 #include "Shard"
 #include "SurfaceDecorator"
-//#include "TriangleStripBuilder"
-//#include "WallEdge"
 #include "render/rend_main.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
@@ -1479,6 +1477,7 @@ static int projectSpriteWorker(mobj_t &mo, void *context)
 static void drawSubspace(ConvexSubspace &subspace)
 {
     DENG2_ASSERT(subspace.hasCluster());
+    Subsector &subsector = subspace.subsector();
 
     // Skip zero-volume subspaces. (Neighbors handle the angle clipper ranges).
     if(!subspace.cluster().hasWorldVolume())
@@ -1506,7 +1505,7 @@ static void drawSubspace(ConvexSubspace &subspace)
     occludeSubspace(subspace, false /* back facing */);
 
     // Clip lumobjs in the subspace.
-    foreach(Lumobj *lum, subspace.lumobjs()) R_ViewerClipLumobj(lum);
+    foreach(Lumobj *lum, subsector.lumobjs()) R_ViewerClipLumobj(lum);
 
     occludeSubspace(subspace, true /* front facing */);
 
@@ -1517,7 +1516,7 @@ static void drawSubspace(ConvexSubspace &subspace)
     // intersects any of the polyobj half-edges facing the viewer.
     if(subspace.polyobjCount())
     {
-        foreach(Lumobj *lum, subspace.lumobjs()) R_ViewerClipLumobjBySight(lum, &subspace);
+        foreach(Lumobj *lum, subsector.lumobjs()) R_ViewerClipLumobjBySight(lum, &subspace);
     }
 
     // Mark generators in the sector visible.
@@ -1541,7 +1540,7 @@ static void drawSubspace(ConvexSubspace &subspace)
 
     // Draw all shard geometries.
     DrawLists &drawLists = ClientApp::renderSystem().drawLists();
-    foreach(Shard const *shard, subspace.shards())
+    foreach(Shard const *shard, subsector.shards())
     {
         drawLists.find(shard->listSpec) << *shard;
     }

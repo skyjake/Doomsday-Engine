@@ -1191,9 +1191,10 @@ DENG2_PIMPL(SectorCluster)
 
         foreach(ConvexSubspace *subspace, reverbSubspaces)
         {
-            if(subspace->updateReverb())
+            Subsector &ssec = subspace->subsector();
+            if(ssec.updateReverb())
             {
-                ConvexSubspace::AudioEnvironmentFactors const &subReverb = subspace->reverb();
+                Subsector::AudioEnvironmentFactors const &subReverb = ssec.reverb();
 
                 reverb[SRD_SPACE]   += subReverb[SRD_SPACE];
 
@@ -1596,7 +1597,7 @@ DENG2_PIMPL(SectorCluster)
         {
             Shard *shard = splinterDynlight(light, p);
             shards << shard; // take ownership.
-            p.subspace->shards() << shard; // link to the subspace.
+            p.subspace->subsector().shards() << shard; // link to the subsector.
         }
         p.lastIdx++;
     }
@@ -1612,7 +1613,7 @@ DENG2_PIMPL(SectorCluster)
     {
         Shard *shard = splinterDynshadow(shadow, p, listSpec);
         shards << shard; // take ownership.
-        p.subspace->shards() << shard; // link to the subspace.
+        p.subspace->subsector().shards() << shard; // link to the subsector.
     }
 
     /// Generates a new primitive for each light projection.
@@ -1689,7 +1690,7 @@ DENG2_PIMPL(SectorCluster)
 
         Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
         shards << shard; // take ownership.
-        subspace.shards() << shard; // link to the subspace.
+        subspace.subsector().shards() << shard; // link to the subsector.
 
         ClockDirection const direction = (upper? Anticlockwise : Clockwise);
         coord_t const height           = skyPlaneZ(upper);
@@ -1747,7 +1748,7 @@ DENG2_PIMPL(SectorCluster)
 
         Shard *shard = new Shard(listSpec);
         shards << shard; // take ownership.
-        subspace.shards() << shard; // link to the subspace.
+        subspace.subsector().shards() << shard; // link to the subsector.
 
         shard->indices.resize(vertCount);
 
@@ -1968,7 +1969,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(leftFanSize + rightFanSize);
             shards << shard; // take ownership.
-            subspace.shards() << shard; // link to the subspace.
+            subspace.subsector().shards() << shard; // link to the subsector.
 
             vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
             Rend_DivPosCoords(vbuf, shard->indices.data(), origPosCoords, leftSection, rightSection);
@@ -1989,7 +1990,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(4);
             shards << shard; // take ownership.
-            subspace.shards() << shard; // link to the subspace.
+            subspace.subsector().shards() << shard; // link to the subsector.
 
             vbuf.reserveElements(4, shard->indices);
             for(WorldVBuf::Index i = 0; i < 4; ++i)
@@ -2417,7 +2418,7 @@ DENG2_PIMPL(SectorCluster)
 
                     Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
                     shards << shard; // take ownership.
-                    subspace.shards() << shard; // link to the subspace.
+                    subspace.subsector().shards() << shard; // link to the subsector.
 
                     shard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2467,7 +2468,7 @@ DENG2_PIMPL(SectorCluster)
 
                         Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                         shards << shineShard; // take ownership.
-                        subspace.shards() << shineShard; // link subspace.
+                        subspace.subsector().shards() << shineShard; // link subspace.
 
                         shineShard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2500,7 +2501,7 @@ DENG2_PIMPL(SectorCluster)
                 {
                     Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
                     shards << shard; // take ownership.
-                    subspace.shards() << shard; // link to the subspace.
+                    subspace.subsector().shards() << shard; // link to the subsector.
 
                     shard->indices.resize(4);
 
@@ -2544,7 +2545,7 @@ DENG2_PIMPL(SectorCluster)
 
                         Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                         shards << shineShard; // take ownership.
-                        subspace.shards() << shineShard; // link to the subspace.
+                        subspace.subsector().shards() << shineShard; // link to the subsector.
 
                         shineShard->indices.resize(4);
 
@@ -2575,7 +2576,7 @@ DENG2_PIMPL(SectorCluster)
 
                 Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
                 shards << shard; // take ownership.
-                subspace.shards() << shard; // link to the subspace.
+                subspace.subsector().shards() << shard; // link to the subsector.
 
                 if(mustSubdivide) // Generate two triangle fans.
                 {
@@ -3012,7 +3013,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
             shard->indices = indices;
             shards << shard; // take ownership.
-            subspace.shards() << shard; // link to the subspace.
+            subspace.subsector().shards() << shard; // link to the subsector.
 
             makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf,
                               listSpec.unit(TU_PRIMARY       ).scale,
@@ -3035,7 +3036,7 @@ DENG2_PIMPL(SectorCluster)
                 Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                 shineShard->indices = shineIndices;
                 shards << shineShard; // take ownership.
-                subspace.shards() << shineShard; // link to the subspace.
+                subspace.subsector().shards() << shineShard; // link to the subsector.
 
                 makeListPrimitive(*shineShard, gl::TriangleFan, fanSize, vbuf,
                                   shineListSpec.unit(TU_INTER         ).scale,
@@ -3049,7 +3050,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
             shard->indices = indices;
             shards << shard; // take ownership.
-            subspace.shards() << shard; // link to the subspace.
+            subspace.subsector().shards() << shard; // link to the subsector.
 
             makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
         }
@@ -3304,6 +3305,13 @@ coord_t SectorCluster::roughArea() const
     return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
 }
 
+Subsector &SectorCluster::subsector(ConvexSubspace const &subspace) const
+{
+    ConvexSubspace *csPtr = const_cast<ConvexSubspace *>(&subspace);
+    DENG2_ASSERT(d->subsectors.contains(csPtr));
+    return *d->subsectors[csPtr];
+}
+
 SectorCluster::LightId SectorCluster::lightSourceId() const
 {
     /// @todo Need unique cluster ids.
@@ -3351,7 +3359,7 @@ int SectorCluster::blockLightSourceZBias()
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    Subsector &ssec = *d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Subsector &ssec = subsector(d->subspaceForMapElement(mapElement));
     Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
     Subsector::GeometryData::BiasIllums &illums = ssec.biasIllums(gdata);
 
@@ -3375,7 +3383,7 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     WorldVBuf &vbuf, WorldVBuf::Indices const &indices)
 {
-    Subsector &ssec = *d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Subsector &ssec = subsector(d->subspaceForMapElement(mapElement));
     Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
     Subsector::GeometryData::BiasIllums &illums = ssec.biasIllums(gdata);
 
@@ -3419,7 +3427,7 @@ void SectorCluster::prepareShards(ConvexSubspace &subspace)
 void SectorCluster::clearAllShards()
 {
     // Unlink the Shards from the subspace.
-    foreach(Subsector const *ssec, d->subsectors) ssec->clearAllSubspaceShards();
+    foreach(Subsector const *ssec, d->subsectors) ssec->clearAllShards();
 
     qDeleteAll(d->shards);
     d->shards.clear();
@@ -3434,7 +3442,7 @@ void SectorCluster::mapElementMoved(Polyobj &po)
         MapElement &mapElement = hedge->mapElement();
         int const geomId       = WallEdge::WallMiddle;
 
-        Subsector &ssec = *d->subsectors[&d->subspaceForMapElement(mapElement)];
+        Subsector &ssec = subsector(d->subspaceForMapElement(mapElement));
         if(Subsector::GeometryData *geom = ssec.geomData(mapElement, geomId))
         {
             geom->markBiasContributorUpdateNeeded();
