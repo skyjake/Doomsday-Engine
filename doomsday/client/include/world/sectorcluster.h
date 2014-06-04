@@ -207,14 +207,13 @@ public:
     /**
      * Apply lighting from bias sources to the given geometry.
      *
-     * @param mapElement            Attributed to the geometry to be lit.
-     * @param geomId                Attributed to the geometry to be lit.
-     * @param surfaceTangentMatrix  Surface tangent space vectors.
+     * @param mapElement  Attributed to the geometry to be lit.
+     * @param geomId      Attributed to the geometry to be lit.
      */
-    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
+    void lightWithBiasSources(de::MapElement &mapElement, int geomId,
                               de::Vector3f const *posCoords, de::Vector4f *colorCoords);
 
-    void lightWithBiasSources(de::MapElement &mapElement, int geomId, de::Matrix3f const &surfaceTangentMatrix,
+    void lightWithBiasSources(de::MapElement &mapElement, int geomId,
                               WorldVBuf &vbuf, WorldVBuf::Indices const &indices);
 
     /**

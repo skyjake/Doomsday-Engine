@@ -2419,145 +2419,9 @@ DENG2_PIMPL(SectorCluster)
             Vector4f shineColorCoords[4];
             if(!skyMaskedMaterial)
             {
-                if(!(glowing < 1))
-                {
-                    // Uniform color. Apply to all vertices.
-                    float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
-                    Vector4f const finalColor(ll, ll, ll, ll);
-                    for(duint16 i = 0; i < 4; ++i)
-                    {
-                        colorCoords[i] = finalColor;
-                    }
-                }
-                else
-                {
-                    // Non-uniform color.
-                    if(useBias)
-                    {
-                        if(!levelFullBright)
-                        {
-                            // Apply the ambient light term from the grid (if available).
-                            Map &map = self.sector().map();
-                            if(map.hasLightGrid())
-                            {
-                                for(duint16 i = 0; i < 4; ++i)
-                                {
-                                    colorCoords[i] = map.lightGrid().evaluate(posCoords[i]);
-                                }
-                            }
-
-                            // Apply bias light source contributions.
-                            self.lightWithBiasSources(leftEdge.hedge().mapElement(), sectionId,
-                                                      surface.tangentMatrix(),
-                                                      posCoords, colorCoords);
-
-                            // Apply surface glow.
-                            if(glowing > 0)
-                            {
-                                Vector4f const glow(glowing, glowing, glowing, 0);
-                                for(duint16 i = 0; i < 4; ++i)
-                                {
-                                    colorCoords[i] += glow;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Vector4f const finalColor(1, 1, 1, 1);
-                            for(duint16 i = 0; i < 4; ++i)
-                            {
-                                colorCoords[i] = finalColor;
-                            }
-                        }
-
-                        // Apply light range compression and clamp.
-                        for(duint16 i = 0; i < 4; ++i)
-                        {
-                            Vector4f &color = colorCoords[i];
-                            for(int k = 0; k < 3; ++k)
-                            {
-                                color[k] = de::clamp(0.f, color[k] + Rend_LightAdaptationDelta(color[k]), 1.f);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Determine the ambient light term.
-                        Vector4f finalColor = ambientLight * Vector4f(*topTintColor, 1);
-                        if(!levelFullBright)
-                        {
-                            // Add extra light.
-                            finalColor.w += Rend_ExtraLightDelta() + glowing;
-                        }
-                        else
-                        {
-                            finalColor.w = 1;
-                        }
-
-                        colorCoords[1] = finalColor;
-                        colorCoords[3] = finalColor;
-                        if(!bottomTintColor)
-                        {
-                            colorCoords[0] = finalColor;
-                            colorCoords[2] = finalColor;
-                        }
-                        else
-                        {
-                            Vector4f finalBottomColor = ambientLight * Vector4f(*bottomTintColor, 1);
-                            if(!levelFullBright)
-                            {
-                                // Add extra light.
-                                finalBottomColor.w += Rend_ExtraLightDelta() + glowing;
-                            }
-                            else
-                            {
-                                finalBottomColor.w = 1;
-                            }
-
-                            colorCoords[0] = finalBottomColor;
-                            colorCoords[2] = finalBottomColor;
-                        }
-
-                        // Apply the wall angle deltas to luminance?
-                        if(!levelFullBright)
-                        {
-                            colorCoords[0].w += lightLevelDeltas[0];
-                            colorCoords[1].w += lightLevelDeltas[0];
-                            colorCoords[2].w += lightLevelDeltas[1];
-                            colorCoords[3].w += lightLevelDeltas[1];
-                        }
-
-                        // Apply distance attenuation and compression to luminance.
-                        for(duint16 i = 0; i < 4; ++i)
-                        {
-                            if(!levelFullBright)
-                            {
-                                Rend_AttenuateLightLevel(colorCoords[i].w, Rend_PointDist2D(posCoords[i]));
-                            }
-
-                            // Apply range compression to the final luminance value.
-                            Rend_ApplyLightAdaptation(colorCoords[i].w);
-                        }
-
-                        // Multiply color with luminance and clamp (ignore alpha, we'll replace it soon).
-                        for(duint16 i = 0; i < 4; ++i)
-                        {
-                            float const luma = colorCoords[i].w;
-                            colorCoords[i].x = de::clamp(0.f, colorCoords[i].x * luma, 1.f);
-                            colorCoords[i].y = de::clamp(0.f, colorCoords[i].y * luma, 1.f);
-                            colorCoords[i].z = de::clamp(0.f, colorCoords[i].z * luma, 1.f);
-                        }
-                    }
-
-                    // Apply torch light? (post clamp!?)
-                    if(!levelFullBright && viewPlayer->shared.fixedColorMap)
-                    {
-                        for(duint16 i = 0; i < 4; ++i)
-                        {
-                            Rend_ApplyTorchLight(colorCoords[i], Rend_PointDist2D(posCoords[i]));
-                        }
-                    }
-                }
+                Rend_LightWallGeometry(self, leftEdge.hedge().mapElement(), sectionId,
+                                       ambientLight, glowing, topTintColor, bottomTintColor, lightLevelDeltas,
+                                       posCoords, colorCoords);
 
                 if(shineRTU)
                 {
@@ -2873,13 +2737,11 @@ DENG2_PIMPL(SectorCluster)
         }
         else
         {
-            Rend_PrepareWallSectionVissprite(subspace, ambientLight,
-                                             *topTintColor,
-                                             glowing,
+            Rend_PrepareWallSectionVissprite(subspace,
+                                             ambientLight, *topTintColor, glowing,
                                              opacity, blendmode,
                                              materialOrigin, matSnapshot,
-                                             lightListIdx,
-                                             lightLevelDeltas[0], lightLevelDeltas[1],
+                                             lightListIdx, lightLevelDeltas,
                                              &leftSection, &rightSection, bottomTintColor);
 
             wroteOpaque = false; /// We @em had to use a vissprite; clearly not opaque.
@@ -3153,122 +3015,9 @@ DENG2_PIMPL(SectorCluster)
         // Light this polygon.
         if(!skyMaskedMaterial)
         {
-            if(!(glowing < 1))
-            {
-                // Uniform color. Apply to all vertices.
-                float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
-                Vector4f const finalColor(ll, ll, ll, ll);
-                for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                {
-                    vbuf[indices[i]].rgba = finalColor;
-                }
-            }
-            else
-            {
-                // Non-uniform color.
-                if(useBias)
-                {
-                    if(!levelFullBright)
-                    {
-                        // Apply the ambient light term from the grid (if available).
-                        Map &map = self.sector().map();
-                        if(map.hasLightGrid())
-                        {
-                            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                            {
-                                WorldVBuf::Type &vertex = vbuf[indices[i]];
-                                vertex.rgba = map.lightGrid().evaluate(vertex.pos);
-                            }
-                        }
-
-                        // Apply bias light source contributions.
-                        self.lightWithBiasSources(subspace, plane.indexInSector(),
-                                                  surface.tangentMatrix(),
-                                                  vbuf, indices);
-
-                        // Apply surface glow.
-                        if(glowing > 0)
-                        {
-                            Vector4f const glow(glowing, glowing, glowing, 0);
-                            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                            {
-                                vbuf[indices[i]].rgba += glow;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Vector4f const finalColor(1, 1, 1, 1);
-                        for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                        {
-                            vbuf[indices[i]].rgba = finalColor;
-                        }
-                    }
-
-                    // Apply light range compression and clamp.
-                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                    {
-                        WorldVBuf::Type &vertex = vbuf[indices[i]];
-                        for(int k = 0; k < 3; ++k)
-                        {
-                            vertex.rgba[k] = de::clamp(0.f, vertex.rgba[k] + Rend_LightAdaptationDelta(vertex.rgba[k]), 1.f);
-                        }
-                    }
-                }
-                else
-                {
-                    // Determine the ambient light term.
-                    Vector4f finalColor = ambientLight * Vector4f(surface.tintColor(), 1);
-                    if(!levelFullBright)
-                    {
-                        // Add extra light.
-                        finalColor.w += Rend_ExtraLightDelta() + glowing;
-                    }
-                    else
-                    {
-                        finalColor.w = 1;
-                    }
-
-                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                    {
-                        vbuf[indices[i]].rgba = finalColor;
-                    }
-
-                    // Apply distance attenuation and compression to luminance.
-                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                    {
-                        WorldVBuf::Type &vertex = vbuf[indices[i]];
-
-                        if(!levelFullBright)
-                        {
-                            Rend_AttenuateLightLevel(vertex.rgba.w, Rend_PointDist2D(vertex.pos));
-                        }
-
-                        // Apply range compression to the final luminance value.
-                        Rend_ApplyLightAdaptation(vertex.rgba.w);
-                    }
-
-                    // Multiply color with luminance and clamp (ignore alpha, we'll replace it soon).
-                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                    {
-                        WorldVBuf::Type &vertex = vbuf[indices[i]];
-                        float const luma = vertex.rgba.w;
-                        vertex.rgba.x = de::clamp(0.f, vertex.rgba.x * luma, 1.f);
-                        vertex.rgba.y = de::clamp(0.f, vertex.rgba.y * luma, 1.f);
-                        vertex.rgba.z = de::clamp(0.f, vertex.rgba.z * luma, 1.f);
-                    }
-                }
-
-                // Apply torch light?
-                if(!levelFullBright && viewPlayer->shared.fixedColorMap)
-                {
-                    for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                    {
-                        WorldVBuf::Type &vertex = vbuf[indices[i]];
-                        Rend_ApplyTorchLight(vertex.rgba, Rend_PointDist2D(vertex.pos));
-                    }
-                }
-            }
+            Rend_LightFlatGeometry(self, subspace, plane.indexInSector(),
+                                   ambientLight, glowing, &surface.tintColor(),
+                                   vbuf, indices);
 
             if(shineRTU)
             {
@@ -3441,6 +3190,17 @@ DENG2_PIMPL(SectorCluster)
 
             prepareFlatShard(subspace, plane);
         }
+    }
+
+    Surface &surfaceForGeometry(MapElement &mapElement, int geomId)
+    {
+        switch(mapElement.type())
+        {
+        case DMU_SUBSPACE: return self.visPlane(geomId).surface();
+        case DMU_SEGMENT:  return mapElement.as<LineSideSegment>().lineSide().surface(geomId - WallEdge::WallMiddle);
+        default: break;
+        }
+        throw Error("SectorCluster::surfaceForGeometry", "Unknown geometry reference");
     }
 
     bool updateBiasContributorsIfNeeded(GeometryData &gdata)
@@ -3757,7 +3517,6 @@ int SectorCluster::blockLightSourceZBias()
 }
 
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
-    Matrix3f const &surfaceTangentMatrix,
     Vector3f const *posCoords, Vector4f *colorCoords)
 {
     Instance::GeometryData &gdata = *d->geomData(mapElement, geomId, true /*create*/);
@@ -3766,7 +3525,7 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     // Any contributor updates?
     bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
 
-    Vector3f const sufNormal = surfaceTangentMatrix.column(2);
+    Vector3f const sufNormal = d->surfaceForGeometry(mapElement, geomId).normal();
     uint const biasTime      = sector().map().biasCurrentTime();
     for(int i = 0; i < illums.count(); ++i)
     {
@@ -3781,7 +3540,6 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 }
 
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
-    Matrix3f const &surfaceTangentMatrix,
     WorldVBuf &vbuf, WorldVBuf::Indices const &indices)
 {
     Instance::GeometryData &gdata = *d->geomData(mapElement, geomId, true /*create*/);
@@ -3790,7 +3548,7 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     // Any contributor updates?
     bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
 
-    Vector3f const sufNormal = surfaceTangentMatrix.column(2);
+    Vector3f const sufNormal = d->surfaceForGeometry(mapElement, geomId).normal();
     uint const biasTime      = sector().map().biasCurrentTime();
     for(WorldVBuf::Index i = 0; i < illums.count(); ++i)
     {

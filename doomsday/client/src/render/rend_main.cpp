@@ -838,46 +838,16 @@ int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
     return 1; // Stop iteration.
 }
 
-bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
-    blendmode_t blendmode, MaterialSnapshot const &ms)
-{
-    return (!forceOpaque && !skyMasked && (!ms.isOpaque() || opacity < 1 || blendmode > 0));
-}
-
 bool Rend_BiasContributorUpdatesEnabled()
 {
     // Are updates disabled?
     return CPP_BOOL(devUpdateBiasContributors);
 }
 
-void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
-    Vector4f const &ambientLight, Vector3f const &surfaceColor, float glowing,
-    float opacity, blendmode_t blendmode,
-    Vector2f const &matOrigin, MaterialSnapshot const &matSnapshot,
-    uint lightListIdx,
-    float surfaceLightLevelDL, float surfaceLightLevelDR,
-    WallEdgeSection const *leftSection, WallEdgeSection const *rightSection,
-    Vector3f const *surfaceColor2)
+void Rend_LightWallGeometry(SectorCluster &cluster, MapElement &mapElement, int geomId,
+    Vector4f const &ambientLight, float glowing, Vector3f const *topTintColor, Vector3f const *bottomTintColor, float const lightLevelDeltas[2],
+    Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    // Only wall sections can presently be prepared as vissprites.
-    DENG2_ASSERT(leftSection != 0 && rightSection != 0);
-
-    DENG2_ASSERT(!leftSection->divisionCount() && !rightSection->divisionCount());
-    DENG2_ASSERT(!matSnapshot.material().isSkyMasked());
-    DENG2_ASSERT(!matSnapshot.isOpaque() || opacity < 1 || blendmode > 0);
-
-    RenderSystem &rendSys  = ClientApp::renderSystem();
-    SectorCluster &cluster = subspace.cluster();
-
-    Vector3f const posCoords[4] = {
-        Vector3f( leftSection->bottom().origin()),
-        Vector3f( leftSection->top   ().origin()),
-        Vector3f(rightSection->bottom().origin()),
-        Vector3f(rightSection->top   ().origin())
-    };
-
-    // Light this polygon.
-    Vector4f colorCoords[4];
     if(!(glowing < 1))
     {
         // Uniform color. Apply to all vertices.
@@ -905,8 +875,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
                 }
 
                 // Apply bias light source contributions.
-                cluster.lightWithBiasSources(leftSection->edge().hedge().mapElement(), leftSection->id(),
-                                             leftSection->surfacePtr()->tangentMatrix(),
+                cluster.lightWithBiasSources(mapElement, geomId,
                                              posCoords, colorCoords);
 
                 // Apply surface glow.
@@ -941,7 +910,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
         else
         {
             // Determine the ambient light term.
-            Vector4f finalColor = ambientLight * Vector4f(surfaceColor, 1);
+            Vector4f finalColor = ambientLight * Vector4f(*topTintColor, 1);
             if(!levelFullBright)
             {
                 // Add extra light.
@@ -954,14 +923,14 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
 
             colorCoords[1] = finalColor;
             colorCoords[3] = finalColor;
-            if(!surfaceColor2)
+            if(!bottomTintColor)
             {
                 colorCoords[0] = finalColor;
                 colorCoords[2] = finalColor;
             }
             else
             {
-                Vector4f finalBottomColor = ambientLight * Vector4f(*surfaceColor2, 1);
+                Vector4f finalBottomColor = ambientLight * Vector4f(*bottomTintColor, 1);
                 if(!levelFullBright)
                 {
                     // Add extra light.
@@ -979,10 +948,10 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             // Apply the wall angle deltas to luminance?
             if(!levelFullBright)
             {
-                colorCoords[0].w += surfaceLightLevelDL;
-                colorCoords[1].w += surfaceLightLevelDL;
-                colorCoords[2].w += surfaceLightLevelDR;
-                colorCoords[3].w += surfaceLightLevelDR;
+                colorCoords[0].w += lightLevelDeltas[0];
+                colorCoords[1].w += lightLevelDeltas[0];
+                colorCoords[2].w += lightLevelDeltas[1];
+                colorCoords[3].w += lightLevelDeltas[1];
             }
 
             // Apply distance attenuation and compression to luminance.
@@ -1007,7 +976,7 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             }
         }
 
-        // Apply torch light?
+        // Apply torch light? (post clamp!?)
         if(!levelFullBright && viewPlayer->shared.fixedColorMap)
         {
             for(duint16 i = 0; i < 4; ++i)
@@ -1016,6 +985,166 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
             }
         }
     }
+}
+
+void Rend_LightFlatGeometry(SectorCluster &cluster, MapElement &mapElement, int geomId,
+    Vector4f const &ambientLight, float glowing, Vector3f const *surfaceTintColor,
+    WorldVBuf &vbuf, WorldVBuf::Indices const &indices)
+{
+    if(!(glowing < 1))
+    {
+        // Uniform color. Apply to all vertices.
+        float ll = de::clamp(0.f, ambientLight.w + (levelFullBright? 1 : glowing), 1.f);
+        Vector4f const finalColor(ll, ll, ll, ll);
+        for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+        {
+            vbuf[indices[i]].rgba = finalColor;
+        }
+    }
+    else
+    {
+        // Non-uniform color.
+        if(useBias)
+        {
+            if(!levelFullBright)
+            {
+                // Apply the ambient light term from the grid (if available).
+                Map &map = cluster.sector().map();
+                if(map.hasLightGrid())
+                {
+                    for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+                    {
+                        WorldVBuf::Type &vertex = vbuf[indices[i]];
+                        vertex.rgba = map.lightGrid().evaluate(vertex.pos);
+                    }
+                }
+
+                // Apply bias light source contributions.
+                cluster.lightWithBiasSources(mapElement, geomId,
+                                          vbuf, indices);
+
+                // Apply surface glow.
+                if(glowing > 0)
+                {
+                    Vector4f const glow(glowing, glowing, glowing, 0);
+                    for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+                    {
+                        vbuf[indices[i]].rgba += glow;
+                    }
+                }
+            }
+            else
+            {
+                Vector4f const finalColor(1, 1, 1, 1);
+                for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+                {
+                    vbuf[indices[i]].rgba = finalColor;
+                }
+            }
+
+            // Apply light range compression and clamp.
+            for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                for(int k = 0; k < 3; ++k)
+                {
+                    vertex.rgba[k] = de::clamp(0.f, vertex.rgba[k] + Rend_LightAdaptationDelta(vertex.rgba[k]), 1.f);
+                }
+            }
+        }
+        else
+        {
+            // Determine the ambient light term.
+            DENG2_ASSERT(surfaceTintColor != 0);
+            Vector4f finalColor = ambientLight * Vector4f(*surfaceTintColor, 1);
+            if(!levelFullBright)
+            {
+                // Add extra light.
+                finalColor.w += Rend_ExtraLightDelta() + glowing;
+            }
+            else
+            {
+                finalColor.w = 1;
+            }
+
+            for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+            {
+                vbuf[indices[i]].rgba = finalColor;
+            }
+
+            // Apply distance attenuation and compression to luminance.
+            for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[indices[i]];
+
+                if(!levelFullBright)
+                {
+                    Rend_AttenuateLightLevel(vertex.rgba.w, Rend_PointDist2D(vertex.pos));
+                }
+
+                // Apply range compression to the final luminance value.
+                Rend_ApplyLightAdaptation(vertex.rgba.w);
+            }
+
+            // Multiply color with luminance and clamp (ignore alpha, we'll replace it soon).
+            for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                float const luma = vertex.rgba.w;
+                vertex.rgba.x = de::clamp(0.f, vertex.rgba.x * luma, 1.f);
+                vertex.rgba.y = de::clamp(0.f, vertex.rgba.y * luma, 1.f);
+                vertex.rgba.z = de::clamp(0.f, vertex.rgba.z * luma, 1.f);
+            }
+        }
+
+        // Apply torch light?
+        if(!levelFullBright && viewPlayer->shared.fixedColorMap)
+        {
+            for(WorldVBuf::Index i = 0; i < indices.size(); ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                Rend_ApplyTorchLight(vertex.rgba, Rend_PointDist2D(vertex.pos));
+            }
+        }
+    }
+}
+
+bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
+    blendmode_t blendmode, MaterialSnapshot const &ms)
+{
+    return (!forceOpaque && !skyMasked && (!ms.isOpaque() || opacity < 1 || blendmode > 0));
+}
+
+void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
+    Vector4f const &ambientLight, Vector3f const &surfaceColor, float glowing,
+    float opacity, blendmode_t blendmode,
+    Vector2f const &matOrigin, MaterialSnapshot const &matSnapshot,
+    uint lightListIdx, float const lightLevelDeltas[2],
+    WallEdgeSection const *leftSection, WallEdgeSection const *rightSection,
+    Vector3f const *surfaceColor2)
+{
+    // Only wall sections can presently be prepared as vissprites.
+    DENG2_ASSERT(leftSection != 0 && rightSection != 0);
+
+    DENG2_ASSERT(!leftSection->divisionCount() && !rightSection->divisionCount());
+    DENG2_ASSERT(!matSnapshot.material().isSkyMasked());
+    DENG2_ASSERT(!matSnapshot.isOpaque() || opacity < 1 || blendmode > 0);
+
+    RenderSystem &rendSys  = ClientApp::renderSystem();
+    SectorCluster &cluster = subspace.cluster();
+
+    Vector3f const posCoords[4] = {
+        Vector3f( leftSection->bottom().origin()),
+        Vector3f( leftSection->top   ().origin()),
+        Vector3f(rightSection->bottom().origin()),
+        Vector3f(rightSection->top   ().origin())
+    };
+    Vector4f colorCoords[4];
+
+    // Light this polygon.
+    Rend_LightWallGeometry(cluster, leftSection->edge().hedge().mapElement(), leftSection->id(),
+                           ambientLight, glowing, &surfaceColor, surfaceColor2, lightLevelDeltas,
+                           posCoords, colorCoords);
 
     // Apply uniform alpha (overwritting luminance factors).
     for(duint16 i = 0; i < 4; ++i)

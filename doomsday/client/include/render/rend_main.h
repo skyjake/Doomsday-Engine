@@ -299,6 +299,14 @@ bool Rend_MustDrawAsVissprite(bool forceOpaque, bool skyMasked, float opacity,
 
 bool Rend_BiasContributorUpdatesEnabled();
 
+void Rend_LightWallGeometry(SectorCluster &cluster, de::MapElement &mapElement, int geomId,
+    de::Vector4f const &ambientLight, float glowing, de::Vector3f const *topTintColor, de::Vector3f const *bottomTintColor, float const lightLevelDeltas[2],
+    de::Vector3f const *posCoords, de::Vector4f *colorCoords);
+
+void Rend_LightFlatGeometry(SectorCluster &cluster, de::MapElement &mapElement, int geomId,
+    de::Vector4f const &ambientLight, float glowing, de::Vector3f const *surfaceTintColor,
+    WorldVBuf &vbuf, WorldVBuf::Indices const &indices);
+
 /**
  * This doesn't create a rendering primitive but a vissprite! The vissprite
  * represents the masked poly and will be rendered during the rendering
@@ -306,11 +314,10 @@ bool Rend_BiasContributorUpdatesEnabled();
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
-    de::Vector4f const &ambientLightColor, de::Vector3f const &surfaceColor,
+    de::Vector4f const &ambientLight, de::Vector3f const &surfaceColor,
     float glowing, float opacity, blendmode_t blendmode,
     de::Vector2f const &materialOrigin, de::MaterialSnapshot const &matSnapshot,
-    uint lightListIdx,
-    float surfaceLightLevelDL, float surfaceLightLevelDR,
+    uint lightListIdx, float const lightLevelDeltas[2],
     de::WallEdgeSection const *leftSection = 0, de::WallEdgeSection const *rightSection = 0,
     de::Vector3f const *surfaceColor2 = 0);
 

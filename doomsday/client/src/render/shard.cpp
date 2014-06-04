@@ -21,11 +21,10 @@
 using namespace de;
 
 Shard::Shard(DrawList::Spec const &listSpec, blendmode_t blendmode, GLuint modTex,
-    de::Vector3f const &modColor, bool hasDynlights)
+    Vector3f const &modColor, bool hasDynlights)
     : listSpec    (listSpec)
     , blendmode   (blendmode)
     , modTex      (modTex)
     , modColor    (modColor)
     , hasDynlights(hasDynlights)
 {}
-
