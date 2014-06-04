@@ -35,6 +35,7 @@
 #include "world/p_players.h"
 
 #ifdef __CLIENT__
+#  include "world/client/subsector.h"
 #  include "gl/gl_texmanager.h"
 #  include "render/rend_main.h"
 #  include "render/billboard.h"
@@ -59,8 +60,8 @@
 #include <QSet>
 #include <QVector>
 
+#ifdef __CLIENT__
 namespace de {
-
 namespace internal
 {
     /// Classification flags:
@@ -81,7 +82,6 @@ namespace internal
         return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
     }
 
-#ifdef __CLIENT__
     static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
     {
         if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
@@ -467,203 +467,39 @@ namespace internal
         return prim;
     }
 
+} // namespace internal
+} // namespace de
 #endif // __CLIENT__
-}
-}
 
 using namespace de;
 using namespace de::internal;
 
 DENG2_PIMPL(SectorCluster)
-, DENG2_OBSERVES(SectorCluster, Deletion)
-, DENG2_OBSERVES(Plane,  Deletion)
-, DENG2_OBSERVES(Plane,  HeightChange)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(Plane,  HeightSmoothedChange)
-, DENG2_OBSERVES(Sector, LightColorChange)
-, DENG2_OBSERVES(Sector, LightLevelChange)
+, DENG2_OBSERVES(SectorCluster, Deletion)
+, DENG2_OBSERVES(Plane,         Deletion)
+, DENG2_OBSERVES(Plane,         HeightChange)
+, DENG2_OBSERVES(Plane,         HeightSmoothedChange)
+, DENG2_OBSERVES(Sector,        LightColorChange)
+, DENG2_OBSERVES(Sector,        LightLevelChange)
 #endif
 {
-    bool needClassify; ///< @c true= (Re)classification is necessary.
-    ClusterFlags flags;
-
-    struct Subsector
-    {
-        ConvexSubspace *subspace;
+    QScopedPointer<AABoxd> aaBox;
 
 #ifdef __CLIENT__
-        struct GeometryData
-        {
-            typedef QVector<BiasIllum *> BiasIllums;
-
-            MapElement *mapElement;
-            int geomId;
-        private:
-            struct BiasSurface
-            {
-                BiasTracker tracker;
-                uint lastUpdateFrame;
-                BiasIllums illums;
-
-                BiasSurface() : lastUpdateFrame(0) {}
-                ~BiasSurface() { qDeleteAll(illums); }
-            };
-            QScopedPointer<BiasSurface> biasSurface;
-
-        public:
-            GeometryData(MapElement *mapElement, int geomId)
-                : mapElement(mapElement)
-                , geomId    (geomId)
-            {}
-
-            BiasIllums &biasIllums() {
-                addBiasSurfaceIfMissing();
-                return biasSurface->illums;
-            }
-
-            BiasTracker &biasTracker() {
-                addBiasSurfaceIfMissing();
-                return biasSurface->tracker;
-            }
-
-            void applyBiasDigest(BiasDigest &allChanges) {
-                if(!biasSurface.isNull()) {
-                    biasSurface->tracker.applyChanges(allChanges);
-                }
-            }
-
-            void markBiasContributorUpdateNeeded() {
-                if(!biasSurface.isNull()) {
-                    biasSurface->tracker.updateAllContributors();
-                }
-            }
-
-            void markBiasIllumUpdateCompleted() {
-                if(!biasSurface.isNull()) {
-                    biasSurface->tracker.markIllumUpdateCompleted();
-                }
-            }
-
-            uint lastBiasUpdateFrame() {
-                addBiasSurfaceIfMissing();
-                return biasSurface->lastUpdateFrame;
-            }
-
-            void setBiasLastUpdateFrame(uint updateFrame) {
-                if(!biasSurface.isNull()) {
-                    biasSurface->lastUpdateFrame = updateFrame;
-                }
-            }
-
-        private:
-            void addBiasSurfaceIfMissing() {
-                if(!biasSurface.isNull()) return;
-
-                biasSurface.reset(new BiasSurface);
-
-                // Determine the number of bias illumination points needed (presently
-                // we define a 1:1 mapping to geometry vertices).
-                int numIllums = 0;
-                switch(mapElement->type())
-                {
-                case DMU_SUBSPACE: {
-                    ConvexSubspace &subspace = mapElement->as<ConvexSubspace>();
-                    DENG2_ASSERT(geomId >= 0 && geomId < subspace.sector().planeCount()); // sanity check
-                    numIllums = subspace.numFanVertices();
-                    break; }
-
-                case DMU_SEGMENT:
-                    DENG2_ASSERT(geomId >= WallEdge::WallMiddle && geomId <= WallEdge::WallTop); // sanity check
-                    numIllums = 4;
-                    break;
-
-                default:
-                    DENG2_ASSERT(!"SectorCluster::Subsector::GeometryData::addBiasSurfaceIfMissing(): Invalid MapElement type");
-                }
-
-                if(numIllums > 0)
-                {
-                    biasSurface->illums.reserve(numIllums);
-                    for(int i = 0; i < numIllums; ++i)
-                    {
-                        biasSurface->illums << new BiasIllum(&biasSurface->tracker);
-                    }
-                }
-            }
-        };
-
-        /// @todo Avoid two-stage lookup.
-        typedef QMap<int, GeometryData *> GeometryGroup;
-        typedef QMap<MapElement *, GeometryGroup> GeometryGroups;
-        GeometryGroups geomGroups;
-#endif
-
-        Subsector() : subspace(0) {}
-
-#ifdef __CLIENT__
-        ~Subsector() {
-            foreach(GeometryGroup const &group, geomGroups) {
-                qDeleteAll(group); // Delete all GeometryData.
-            }
-        }
-#endif
-
-        Sector &sector() const {
-            Sector *sec = subspace->bspLeaf().sectorPtr();
-            DENG2_ASSERT(sec != 0);
-            return *sec;
-        }
-
-        void setSubspace(ConvexSubspace &newSubspace) {
-            subspace = &newSubspace;
-        }
-
-        Face &convexSubspacePoly() const {
-            return subspace->poly();
-        }
-
-#ifdef __CLIENT__
-        void clearAllSubspaceShards() const {
-            subspace->shards().clear();
-        }
-
-        /**
-         * Find the GeometryData for a MapElement by the element-unique @a group
-         * identifier.
-         *
-         * @param geomId    Geometry identifier.
-         * @param canAlloc  @c true= to allocate if no data exists. Note that the
-         *                  number of vertices in the fan geometry must be known
-         *                  at this time.
-         */
-        GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
-        {
-            GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
-            if(foundGroup != geomGroups.end())
-            {
-                GeometryGroup &geomDatas = *foundGroup;
-                GeometryGroup::iterator found = geomDatas.find(geomId);
-                if(found != geomDatas.end())
-                {
-                    return *found;
-                }
-            }
-
-            if(!canAlloc) return 0;
-
-            if(foundGroup == geomGroups.end())
-            {
-                foundGroup = geomGroups.insert(&mapElement, GeometryGroup());
-            }
-
-            return foundGroup->insert(geomId, new GeometryData(&mapElement, geomId)).value();
-        }
-#endif
-    };
     typedef QHash<ConvexSubspace *, Subsector> Subsectors;
     Subsectors subsectors;
+#else
+    /// @todo On server side the list of subspaces is only needed to calculate
+    /// the axis-aligned bounding box of the Sector, which, is only necessary
+    /// for the sector sound emitter (whose position is irrelevant on server). -ds
+    typedef QList<ConvexSubspace *> Subspaces;
+    Subspaces subspaces;
+#endif
 
-    QScopedPointer<AABoxd> aaBox;
+#ifdef __CLIENT__
+    bool needClassify; ///< @c true= (Re)classification is necessary.
+    ClusterFlags flags;
 
     SectorCluster *mappedVisFloor;
     SectorCluster *mappedVisCeiling;
@@ -677,7 +513,6 @@ DENG2_PIMPL(SectorCluster)
     };
     QScopedPointer<BoundaryData> boundaryData;
 
-#ifdef __CLIENT__
     /// Subspaces in the neighborhood effecting environmental audio characteristics.
     typedef QSet<ConvexSubspace *> ReverbSubspaces;
     ReverbSubspaces reverbSubspaces;
@@ -695,11 +530,11 @@ DENG2_PIMPL(SectorCluster)
 
     Instance(Public *i)
         : Base            (i)
+#ifdef __CLIENT__
         , needClassify    (true)
         , flags           (0)
         , mappedVisFloor  (0)
         , mappedVisCeiling(0)
-#ifdef __CLIENT__
         , needReverbUpdate(true)
 #endif
     {
@@ -710,31 +545,45 @@ DENG2_PIMPL(SectorCluster)
 
     ~Instance()
     {
+#ifdef __CLIENT__
         observePlane(&self.sector().floor(), false);
         observePlane(&self.sector().ceiling(), false);
 
-#ifdef __CLIENT__
         self.sector().audienceForLightLevelChange -= this;
         self.sector().audienceForLightColorChange -= this;
 
         qDeleteAll(wallEdges);
 
         self.clearAllShards();
-#endif
 
         clearMapping(Sector::Floor);
         clearMapping(Sector::Ceiling);
+#endif
 
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
     }
 
-    Subsector &firstSubsector() const
+    ConvexSubspace &firstSubspace() const
     {
+#ifdef __CLIENT__
         Subsectors::const_iterator first = subsectors.constBegin();
         DENG2_ASSERT(first != subsectors.constEnd());
-        return const_cast<Subsector &>(first.value());
+        return first->convexSubspace();
+#else
+        return *subspaces.first();
+#endif
     }
 
+    inline int subspaceCount() const
+    {
+#ifdef __CLIENT__
+        return subsectors.count();
+#else
+        return subspaces.count();
+#endif
+    }
+
+#ifdef __CLIENT__
     inline bool floorIsMapped()
     {
         return mappedVisFloor != 0 && mappedVisFloor != thisPublic;
@@ -786,18 +635,14 @@ DENG2_PIMPL(SectorCluster)
             if(observeHeight)
             {
                 plane->audienceForHeightChange         += this;
-#ifdef __CLIENT__
                 plane->audienceForHeightSmoothedChange += this;
-#endif
             }
         }
         else
         {
             plane->audienceForDeletion             -= this;
             plane->audienceForHeightChange         -= this;
-#ifdef __CLIENT__
             plane->audienceForHeightSmoothedChange -= this;
-#endif
         }
     }
 
@@ -863,7 +708,7 @@ DENG2_PIMPL(SectorCluster)
             flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
             foreach(Subsector const &ssec, subsectors)
             {
-                HEdge const *base  = ssec.convexSubspacePoly().hedge();
+                HEdge const *base  = ssec.convexSubspace().poly().hedge();
                 HEdge const *hedge = base;
                 do
                 {
@@ -946,7 +791,7 @@ DENG2_PIMPL(SectorCluster)
         QMap<SectorCluster *, HEdge *> extClusterMap;
         foreach(Subsector const &ssec, subsectors)
         {
-            HEdge *base = ssec.convexSubspacePoly().hedge();
+            HEdge *base = ssec.convexSubspace().poly().hedge();
             HEdge *hedge = base;
             do
             {
@@ -1170,7 +1015,6 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
-#ifdef __CLIENT__
     void markLineSurfacesForDecorationUpdate(Line &line)
     {
         LineSide &front = line.front();
@@ -1242,8 +1086,6 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
-#endif // __CLIENT__
-
     /// Observes SectorCluster Deletion.
     void sectorClusterBeingDeleted(SectorCluster const &cluster)
     {
@@ -1282,20 +1124,17 @@ DENG2_PIMPL(SectorCluster)
                 }
             }
 
-#ifdef __CLIENT__
             // We'll need to recalculate environmental audio characteristics.
             needReverbUpdate = true;
 
             markDependentSurfacesForBiasContributorUpdate();
             markDependantSurfacesForDecorationUpdate();
-#endif
         }
 
         // We may need to update one or both mapped planes.
         maybeInvalidateMapping(plane.indexInSector());
     }
 
-#ifdef __CLIENT__
     void addReverbSubspace(ConvexSubspace *subspace)
     {
         if(!subspace) return;
@@ -1857,7 +1696,7 @@ DENG2_PIMPL(SectorCluster)
         coord_t const height           = skyPlaneZ(upper);
         Face const &poly               = subspace.poly();
 
-        HEdge *fanBase = subspace.fanBase();
+        HEdge *fanBase = subsectors[&subspace].fanBase();
         WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
         shard->indices.resize(fanSize);
 
@@ -2958,7 +2797,7 @@ DENG2_PIMPL(SectorCluster)
         }
 
         ClockDirection const direction = (plane.isSectorCeiling())? Anticlockwise : Clockwise;
-        HEdge *fanBase                 = subspace.fanBase();
+        HEdge *fanBase                 = subsectors[&subspace].fanBase();
         WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
 
         WorldVBuf::Indices indices(fanSize);
@@ -3237,7 +3076,7 @@ DENG2_PIMPL(SectorCluster)
         ConvexSubspace *subspace = 0;
         switch(mapElement.type())
         {
-        case DMU_SUBSPACE: subspace = &mapElement.as<ConvexSubspace>();
+        case DMU_SUBSPACE: subspace = &mapElement.as<ConvexSubspace>(); break;
 
         case DMU_SEGMENT: {
             LineSideSegment &seg = mapElement.as<LineSideSegment>();
@@ -3268,94 +3107,6 @@ DENG2_PIMPL(SectorCluster)
         default: break;
         }
         throw Error("SectorCluster::surfaceForGeometry", "Unknown map element/geometry id referenced");
-    }
-
-    bool updateBiasContributorsIfNeeded(Subsector::GeometryData &gdata)
-    {
-        if(!Rend_BiasContributorUpdatesEnabled())
-            return false;
-
-        uint const lastBiasChangeFrame = self.sector().map().biasLastChangeOnFrame();
-        if(gdata.lastBiasUpdateFrame() == lastBiasChangeFrame)
-            return false;
-
-        // Mark the data as having been updated (it will be soon).
-        gdata.setBiasLastUpdateFrame(lastBiasChangeFrame);
-        gdata.biasTracker().clearContributors();
-
-        Map::BiasSources const &sources = self.sector().map().biasSources();
-        switch(gdata.mapElement->type())
-        {
-        case DMU_SUBSPACE: {
-            ConvexSubspace &subspace = gdata.mapElement->as<ConvexSubspace>();
-            Plane const &plane       = self.visPlane(gdata.geomId);
-            Surface const &surface   = plane.surface();
-
-            Vector3d surfacePoint(subspace.poly().center(), plane.heightSmoothed());
-
-            foreach(BiasSource *source, sources)
-            {
-                // If the source is too weak we will ignore it completely.
-                if(source->intensity() <= 0)
-                    continue;
-
-                Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
-                coord_t distance = 0;
-
-                // Calculate minimum 2D distance to the subspace.
-                /// @todo This is probably too accurate an estimate.
-                HEdge *baseNode = subspace.poly().hedge();
-                HEdge *node = baseNode;
-                do
-                {
-                    coord_t len = (Vector2d(source->origin()) - node->origin()).length();
-                    if(node == baseNode || len < distance)
-                        distance = len;
-                } while((node = &node->next()) != baseNode);
-
-                if(sourceToSurface.dot(surface.normal()) < 0)
-                    continue;
-
-                gdata.biasTracker().addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-            }
-            break; }
-
-        case DMU_SEGMENT: {
-            LineSideSegment &seg   = gdata.mapElement->as<LineSideSegment>();
-            Surface const &surface = seg.lineSide().middle();
-            Vector2d const &from   = seg.hedge().origin();
-            Vector2d const &to     = seg.hedge().twin().origin();
-            Vector2d const center  = (from + to) / 2;
-
-            foreach(BiasSource *source, sources)
-            {
-                // If the source is too weak we will ignore it completely.
-                if(source->intensity() <= 0)
-                    continue;
-
-                Vector3d sourceToSurface = (source->origin() - center).normalize();
-
-                // Calculate minimum 2D distance to the segment.
-                coord_t distance = 0;
-                for(int k = 0; k < 2; ++k)
-                {
-                    coord_t len = (Vector2d(source->origin()) - (!k? from : to)).length();
-                    if(k == 0 || len < distance)
-                        distance = len;
-                }
-
-                if(sourceToSurface.dot(surface.normal()) < 0)
-                    continue;
-
-                gdata.biasTracker().addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-            }
-            break; }
-
-        default:
-            DENG2_ASSERT(!"updateBiasContributorsIfNeeded: Invalid MapElement type");
-        }
-
-        return true;
     }
 
     /// Observes Plane HeightSmoothedChange.
@@ -3389,22 +3140,27 @@ DENG2_PIMPL(SectorCluster)
 #endif // __CLIENT__
 };
 
-SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspaces)
+SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspacesToAdd)
     : d(new Instance(this))
 {
-    foreach(ConvexSubspace *subspace, subspaces)
+    foreach(ConvexSubspace *subspace, subspacesToAdd)
     {
-        Instance::Subsector &ssec = d->subsectors.insert(subspace, Instance::Subsector()).value();
-        ssec.setSubspace(*subspace);
+#ifdef __CLIENT__
+        Subsector &ssec = d->subsectors.insert(subspace, Subsector()).value();
+        ssec.setConvexSubspace(*subspace);
+#else
+        d->subspaces.append(subspace);
+#endif
+
         // Attribute the subspace to the cluster.
         subspace->setCluster(this);
     }
 
+#ifdef __CLIENT__
     // Observe changes to plane heights in "this" sector.
     d->observePlane(&sector().floor());
     d->observePlane(&sector().ceiling());
 
-#ifdef __CLIENT__
     // Observe changes to sector lighting properties.
     sector().audienceForLightLevelChange += d;
     sector().audienceForLightColorChange += d;
@@ -3428,12 +3184,12 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 
 Sector const &SectorCluster::sector() const
 {
-    return d->firstSubsector().sector();
+    return *d->firstSubspace().bspLeaf().sectorPtr();
 }
 
 Sector &SectorCluster::sector()
 {
-    return d->firstSubsector().sector();
+    return *d->firstSubspace().bspLeaf().sectorPtr();
 }
 
 Plane const &SectorCluster::plane(int planeIndex) const
@@ -3455,6 +3211,7 @@ Plane &SectorCluster::visPlane(int planeIndex)
 
 Plane const &SectorCluster::visPlane(int planeIndex) const
 {
+#ifdef __CLIENT__
     if(planeIndex >= Sector::Floor && planeIndex <= Sector::Ceiling)
     {
         // Time to remap the planes?
@@ -3470,14 +3227,17 @@ Plane const &SectorCluster::visPlane(int planeIndex) const
             return mappedCluster->visPlane(planeIndex);
         }
     }
+#endif
     // Not mapped.
     return sector().plane(planeIndex);
 }
 
 void SectorCluster::markVisPlanesDirty()
 {
+#ifdef __CLIENT__
     d->maybeInvalidateMapping(Sector::Floor);
     d->maybeInvalidateMapping(Sector::Ceiling);
+#endif
 }
 
 bool SectorCluster::hasSkyMaskedPlane() const
@@ -3494,18 +3254,24 @@ AABoxd const &SectorCluster::aaBox() const
 {
     // If the cluster is comprised of a single subspace we can use the bounding
     // box of the subspace geometry directly.
-    if(d->subsectors.count() == 1)
+    if(d->subspaceCount() == 1)
     {
-        return d->firstSubsector().convexSubspacePoly().aaBox();
+        return d->firstSubspace().poly().aaBox();
     }
 
     // Time to determine bounds?
     if(d->aaBox.isNull())
     {
         // Unite the geometry bounding boxes of all subspaces in the cluster.
-        foreach(Instance::Subsector const &ssec, d->subsectors)
+#ifdef __CLIENT__
+        foreach(Subsector const &ssec, d->subsectors)
         {
-            AABoxd const &leafAABox = ssec.convexSubspacePoly().aaBox();
+            ConvexSubspace *subspace = &ssec.convexSubspace();
+#else
+        foreach(ConvexSubspace *subspace, d->subspaces)
+        {
+#endif
+            AABoxd const &leafAABox = subspace->poly().aaBox();
             if(!d->aaBox.isNull())
             {
                 V2d_UniteBox((*d->aaBox).arvec2, leafAABox.arvec2);
@@ -3587,12 +3353,12 @@ int SectorCluster::blockLightSourceZBias()
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    Instance::Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
-    Instance::Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
-    Instance::Subsector::GeometryData::BiasIllums &illums = gdata.biasIllums();
+    Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
+    Subsector::GeometryData::BiasIllums &illums = ssec.biasIllums(gdata);
 
     // Any contributor updates?
-    bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
+    bool didUpdate = ssec.updateBiasContributorsIfNeeded(gdata);
 
     Vector3f const sufNormal = d->surfaceForGeometry(mapElement, geomId).normal();
     uint const biasTime      = sector().map().biasCurrentTime();
@@ -3611,12 +3377,12 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
     WorldVBuf &vbuf, WorldVBuf::Indices const &indices)
 {
-    Instance::Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
-    Instance::Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
-    Instance::Subsector::GeometryData::BiasIllums &illums = gdata.biasIllums();
+    Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+    Subsector::GeometryData &gdata = *ssec.geomData(mapElement, geomId, true /*create*/);
+    Subsector::GeometryData::BiasIllums &illums = ssec.biasIllums(gdata);
 
     // Any contributor updates?
-    bool didUpdate = d->updateBiasContributorsIfNeeded(gdata);
+    bool didUpdate = ssec.updateBiasContributorsIfNeeded(gdata);
 
     Vector3f const sufNormal = d->surfaceForGeometry(mapElement, geomId).normal();
     uint const biasTime      = sector().map().biasCurrentTime();
@@ -3635,9 +3401,9 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 
 void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 {
-    foreach(Instance::Subsector const &ssec, d->subsectors)
-    foreach(Instance::Subsector::GeometryGroup const &group, ssec.geomGroups)
-    foreach(Instance::Subsector::GeometryData *gdata, group)
+    foreach(Subsector const &ssec, d->subsectors)
+    foreach(Subsector::GeometryGroup const &group, ssec.geomGroups)
+    foreach(Subsector::GeometryData *gdata, group)
     {
         gdata->applyBiasDigest(allChanges);
     }
@@ -3655,7 +3421,7 @@ void SectorCluster::prepareShards(ConvexSubspace &subspace)
 void SectorCluster::clearAllShards()
 {
     // Unlink the Shards from the subspace.
-    foreach(Instance::Subsector const &ssec, d->subsectors) ssec.clearAllSubspaceShards();
+    foreach(Subsector const &ssec, d->subsectors) ssec.clearAllSubspaceShards();
 
     qDeleteAll(d->shards);
     d->shards.clear();
@@ -3670,8 +3436,8 @@ void SectorCluster::mapElementMoved(Polyobj &po)
         MapElement &mapElement = hedge->mapElement();
         int const geomId       = WallEdge::WallMiddle;
 
-        Instance::Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
-        if(Instance::Subsector::GeometryData *geom = ssec.geomData(mapElement, geomId))
+        Subsector &ssec = d->subsectors[&d->subspaceForMapElement(mapElement)];
+        if(Subsector::GeometryData *geom = ssec.geomData(mapElement, geomId))
         {
             geom->markBiasContributorUpdateNeeded();
         }

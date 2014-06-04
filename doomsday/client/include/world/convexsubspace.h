@@ -261,23 +261,6 @@ public:
     Lumobjs const &lumobjs() const;
 
     /**
-     * Returns a pointer to the face geometry half-edge which has been chosen
-     * for use as the base for a triangle fan GL primitive. May return @c 0 if
-     * no suitable base was determined.
-     */
-    de::HEdge *fanBase() const;
-
-    /**
-     * Returns the number of vertices needed for a triangle fan GL primitive.
-     *
-     * @note When first called after a face geometry is assigned a new 'base'
-     * half-edge for the triangle fan primitive will be determined.
-     *
-     * @see fanBase()
-     */
-    int numFanVertices() const;
-
-    /**
      * Recalculate the environmental audio characteristics (reverb) of the subspace.
      */
     bool updateReverb();

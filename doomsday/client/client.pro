@@ -418,6 +418,7 @@ DENG_HEADERS += \
     include/world/bsp/partitioner.h \
     include/world/bsp/partitionevaluator.h \
     include/world/bsp/superblockmap.h \
+    include/world/client/subsector.h \
     include/world/bspleaf.h \
     include/world/bspnode.h \
     include/world/contact.h \
@@ -726,6 +727,7 @@ SOURCES += \
     src/world/bsp/partitioner.cpp \
     src/world/bsp/partitionevaluator.cpp \
     src/world/bsp/superblockmap.cpp \
+    src/world/client/subsector.cpp \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
     src/world/contact.cpp \

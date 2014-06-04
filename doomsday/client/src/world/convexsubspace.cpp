@@ -30,18 +30,6 @@
 
 using namespace de;
 
-#ifdef __CLIENT__
-
-/// Compute the area of a triangle defined by three 2D point vectors.
-ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
-{
-    Vector2d a = v2 - v1;
-    Vector2d b = v3 - v1;
-    return (a.x * b.y - b.x * a.y) / 2;
-}
-
-#endif // __CLIENT__
-
 DENG2_PIMPL(ConvexSubspace)
 {
     Face &poly;                      ///< Convex polygon geometry (not owned).
@@ -55,24 +43,16 @@ DENG2_PIMPL(ConvexSubspace)
 #ifdef __CLIENT__
     Lumobjs lumobjs;                 ///< Linked lumobjs (not owned).
     ShadowLines shadowLines;         ///< Linked map lines for fake radio shadowing.
-
-    HEdge *fanBase;                  ///< Trifan base Half-edge (otherwise the center point is used).
-    bool needUpdateFanBase;          ///< @c true= need to rechoose a fan base half-edge.
     AudioEnvironmentFactors reverb;  ///< Cached characteristics.
-
     Shards shards;
 #endif
 
     Instance(Public *i, Face &poly)
         : Base(i)
-        , poly             (poly)
-        , cluster          (0)
-        , validCount       (0)
-        , bspLeaf          (0)
-#ifdef __CLIENT__
-        , fanBase          (0)
-        , needUpdateFanBase(true)
-#endif
+        , poly      (poly)
+        , cluster   (0)
+        , validCount(0)
+        , bspLeaf   (0)
     {
 #ifdef __CLIENT__
         de::zap(reverb);
@@ -80,84 +60,6 @@ DENG2_PIMPL(ConvexSubspace)
     }
 
     ~Instance() { qDeleteAll(extraMeshes); }
-
-#ifdef __CLIENT__
-
-    /**
-     * Determine the half-edge whose vertex is suitable for use as the center point
-     * of a trifan primitive.
-     *
-     * Note that we do not want any overlapping or zero-area (degenerate) triangles.
-     *
-     * @par Algorithm
-     * <pre>For each vertex
-     *    For each triangle
-     *        if area is not greater than minimum bound, move to next vertex
-     *    Vertex is suitable
-     * </pre>
-     *
-     * If a vertex exists which results in no zero-area triangles it is suitable for
-     * use as the center of our trifan. If a suitable vertex is not found then the
-     * center of BSP leaf should be selected instead (it will always be valid as
-     * BSP leafs are convex).
-     */
-    void chooseFanBase()
-    {
-#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
-
-        HEdge *firstNode = poly.hedge();
-
-        fanBase = firstNode;
-
-        if(poly.hedgeCount() > 3)
-        {
-            // Splines with higher vertex counts demand checking.
-            Vertex const *base, *a, *b;
-
-            // Search for a good base.
-            do
-            {
-                HEdge *other = firstNode;
-
-                base = &fanBase->vertex();
-                do
-                {
-                    // Test this triangle?
-                    if(!(fanBase != firstNode && (other == fanBase || other == &fanBase->prev())))
-                    {
-                        a = &other->vertex();
-                        b = &other->next().vertex();
-
-                        if(de::abs(triangleArea(base->origin(), a->origin(), b->origin())) <= MIN_TRIANGLE_EPSILON)
-                        {
-                            // No good. We'll move on to the next vertex.
-                            base = 0;
-                        }
-                    }
-
-                    // On to the next triangle.
-                } while(base && (other = &other->next()) != firstNode);
-
-                if(!base)
-                {
-                    // No good. Select the next vertex and start over.
-                    fanBase = &fanBase->next();
-                }
-            } while(!base && fanBase != firstNode);
-
-            // Did we find something suitable?
-            if(!base) // No.
-            {
-                fanBase = 0;
-            }
-        }
-        //else Implicitly suitable (or completely degenerate...).
-
-        needUpdateFanBase = false;
-
-#undef MIN_TRIANGLE_EPSILON
-    }
-#endif // __CLIENT__
 };
 
 ConvexSubspace::ConvexSubspace(Face &convexPolygon, BspLeaf *bspLeaf)
@@ -332,21 +234,6 @@ void ConvexSubspace::link(Lumobj &lumobj)
 ConvexSubspace::Lumobjs const &ConvexSubspace::lumobjs() const
 {
     return d->lumobjs;
-}
-
-HEdge *ConvexSubspace::fanBase() const
-{
-    if(d->needUpdateFanBase)
-    {
-        d->chooseFanBase();
-    }
-    return d->fanBase;
-}
-
-int ConvexSubspace::numFanVertices() const
-{
-    // Are we to use one of the half-edge vertexes as the fan base?
-    return d->poly.hedgeCount() + (fanBase()? 0 : 2);
 }
 
 static void accumReverbForWallSections(HEdge const *hedge,
