@@ -554,12 +554,14 @@ DENG2_PIMPL(SectorCluster)
 
         clearMapping(Sector::Floor);
         clearMapping(Sector::Ceiling);
-
-        qDeleteAll(subsectors);
-        qDeleteAll(wallEdges);
 #endif
 
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
+
+#ifdef __CLIENT__
+        qDeleteAll(subsectors);
+        qDeleteAll(wallEdges);
+#endif
     }
 
     ConvexSubspace &firstSubspace() const

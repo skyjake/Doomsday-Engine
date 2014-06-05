@@ -161,8 +161,8 @@ public:
     SectorCluster &cluster() const;
 
     /**
-     * Convenient method returning Sector of the SectorCluster attributed to the
-     * subspace.
+     * Convenient method returning the Sector of the SectorCluster attributed to
+     * the subspace.
      *
      * @see cluster()
      */
