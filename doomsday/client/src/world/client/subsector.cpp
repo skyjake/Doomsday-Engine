@@ -84,7 +84,7 @@ DENG2_PIMPL_NOREF(Subsector)
     ConvexSubspace *subspace;
     GeometryGroups geomGroups;
     HEdge *fanBase;                  ///< Trifan base Half-edge (otherwise the center point is used).
-    bool needUpdateFanBase;          ///< @c true= need to rechoose a fan base half-edge.
+    bool needFanBaseUpdate;          ///< @c true= need to rechoose a fan base half-edge.
 
     Lumobjs lumobjs;                 ///< Linked lumobjs (not owned).
     ShadowLines shadowLines;         ///< Linked map lines for fake radio shadowing.
@@ -94,7 +94,7 @@ DENG2_PIMPL_NOREF(Subsector)
     Instance(ConvexSubspace &subspace)
         : subspace         (&subspace)
         , fanBase          (0)
-        , needUpdateFanBase(true)
+        , needFanBaseUpdate(true)
     {
         de::zap(reverb);
     }
@@ -106,6 +106,48 @@ DENG2_PIMPL_NOREF(Subsector)
 
         // Delete all GeometryData.
         foreach(GeometryGroup const &group, geomGroups) qDeleteAll(group);
+    }
+
+    int numFanVertices()
+    {
+        updateFanBaseIfNeeded();
+        // Are we to use one of the half-edge vertexes as the fan base?
+        return subspace->poly().hedgeCount() + (fanBase? 0 : 2);
+    }
+
+    void addBiasSurfaceIfMissing(GeometryData &gdata)
+    {
+        if(!gdata.biasSurface.isNull()) return;
+
+        gdata.biasSurface.reset(new GeometryData::BiasSurface);
+
+        // Determine the number of bias illumination points needed (presently
+        // we define a 1:1 mapping to geometry vertices).
+        int numIllums = 0;
+        switch(gdata.mapElement->type())
+        {
+        case DMU_SUBSPACE: {
+            DENG2_ASSERT(gdata.geomId >= 0 && gdata.geomId < subspace->sector().planeCount()); // sanity check
+            numIllums = numFanVertices();
+            break; }
+
+        case DMU_SEGMENT:
+            DENG2_ASSERT(gdata.geomId >= WallEdge::WallMiddle && gdata.geomId <= WallEdge::WallTop); // sanity check
+            numIllums = 4;
+            break;
+
+        default:
+            DENG2_ASSERT(!"Subsector::addBiasSurfaceIfMissing(): Invalid MapElement type");
+        }
+
+        if(numIllums > 0)
+        {
+            gdata.biasSurface->illums.reserve(numIllums);
+            for(int i = 0; i < numIllums; ++i)
+            {
+                gdata.biasSurface->illums << new BiasIllum(&gdata.biasSurface->tracker);
+            }
+        }
     }
 
     /**
@@ -126,11 +168,12 @@ DENG2_PIMPL_NOREF(Subsector)
      * center of BSP leaf should be selected instead (it will always be valid as
      * BSP leafs are convex).
      */
-    void chooseFanBase()
+    void updateFanBaseIfNeeded()
     {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-        needUpdateFanBase = false;
+        if(!needFanBaseUpdate) return;
+        needFanBaseUpdate = false;
 
         HEdge *firstNode = subspace->poly().hedge();
         fanBase = firstNode;
@@ -192,83 +235,31 @@ ConvexSubspace &Subsector::convexSubspace() const
     return *d->subspace;
 }
 
-void Subsector::addBiasSurfaceIfMissing(GeometryData &gdata)
-{
-    if(!gdata.biasSurface.isNull()) return;
-
-    gdata.biasSurface.reset(new GeometryData::BiasSurface);
-
-    // Determine the number of bias illumination points needed (presently
-    // we define a 1:1 mapping to geometry vertices).
-    int numIllums = 0;
-    switch(gdata.mapElement->type())
-    {
-    case DMU_SUBSPACE: {
-        ConvexSubspace &subspace = gdata.mapElement->as<ConvexSubspace>();
-        DENG2_ASSERT(gdata.geomId >= 0 && gdata.geomId < subspace.sector().planeCount()); // sanity check
-        numIllums = numFanVertices();
-        break; }
-
-    case DMU_SEGMENT:
-        DENG2_ASSERT(gdata.geomId >= WallEdge::WallMiddle && gdata.geomId <= WallEdge::WallTop); // sanity check
-        numIllums = 4;
-        break;
-
-    default:
-        DENG2_ASSERT(!"Subsector::addBiasSurfaceIfMissing(): Invalid MapElement type");
-    }
-
-    if(numIllums > 0)
-    {
-        gdata.biasSurface->illums.reserve(numIllums);
-        for(int i = 0; i < numIllums; ++i)
-        {
-            gdata.biasSurface->illums << new BiasIllum(&gdata.biasSurface->tracker);
-        }
-    }
-}
-
 Subsector::GeometryData::BiasIllums &Subsector::biasIllums(GeometryData &gdata)
 {
-    addBiasSurfaceIfMissing(gdata);
+    d->addBiasSurfaceIfMissing(gdata);
     return gdata.biasSurface->illums;
-}
-
-BiasTracker &Subsector::biasTracker(GeometryData &gdata)
-{
-    addBiasSurfaceIfMissing(gdata);
-    return gdata.biasSurface->tracker;
-}
-
-uint Subsector::lastBiasUpdateFrame(GeometryData &gdata)
-{
-    addBiasSurfaceIfMissing(gdata);
-    return gdata.biasSurface->lastUpdateFrame;
 }
 
 HEdge *Subsector::fanBase() const
 {
-    if(d->needUpdateFanBase)
-    {
-        d->chooseFanBase();
-    }
+    d->updateFanBaseIfNeeded();
     return d->fanBase;
 }
 
 int Subsector::numFanVertices() const
 {
-    // Are we to use one of the half-edge vertexes as the fan base?
-    return d->subspace->poly().hedgeCount() + (fanBase()? 0 : 2);
-}
-
-void Subsector::clearAllShards() const
-{
-    d->shards.clear();
+    return d->numFanVertices();
 }
 
 Subsector::GeometryGroups const &Subsector::geomGroups() const
 {
     return d->geomGroups;
+}
+
+bool Subsector::hasGeomData(de::MapElement &mapElement, int geomId) const
+{
+    return const_cast<Subsector *>(this)->geomData(mapElement, geomId) != 0;
 }
 
 Subsector::GeometryData *Subsector::geomData(MapElement &mapElement, int geomId, bool canAlloc)
@@ -299,15 +290,20 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
     if(!Rend_BiasContributorUpdatesEnabled())
         return false;
 
+    if(gdata.biasSurface.isNull()) return false;
+
     Map &map = d->subspace->map();
 
     uint const lastBiasChangeFrame = map.biasLastChangeOnFrame();
-    if(lastBiasUpdateFrame(gdata) == lastBiasChangeFrame)
+    if(gdata.biasSurface->lastUpdateFrame == lastBiasChangeFrame)
         return false;
 
     // Mark the data as having been updated (it will be soon).
     gdata.setBiasLastUpdateFrame(lastBiasChangeFrame);
-    biasTracker(gdata).clearContributors();
+
+    BiasTracker &biasTracker = gdata.biasSurface->tracker;
+
+    biasTracker.clearContributors();
 
     switch(gdata.mapElement->type())
     {
@@ -341,7 +337,7 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            biasTracker(gdata).addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
         break; }
 
@@ -372,7 +368,7 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            biasTracker(gdata).addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
         break; }
 
@@ -519,4 +515,9 @@ Subsector::AudioEnvironmentFactors const &Subsector::reverb() const
 Subsector::Shards &Subsector::shards()
 {
     return d->shards;
+}
+
+void Subsector::clearShards() const
+{
+    d->shards.clear();
 }

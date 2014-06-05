@@ -2690,7 +2690,7 @@ DENG2_PIMPL(SectorCluster)
 
     void prepareFlatShard(ConvexSubspace &subspace, Plane &plane)
     {
-        Face const &poly       = subspace.poly();
+        Subsector &subsector   = subspace.subsector();
         Surface const &surface = plane.surface();
 
         // Skip planes with a sky-masked material? (Drawn with the mask geometry).
@@ -2741,7 +2741,7 @@ DENG2_PIMPL(SectorCluster)
             }
         }
 
-        AABoxd const &aaBox           = poly.aaBox();
+        AABoxd const &aaBox           = subspace.poly().aaBox();
         Vector3d const topLeft        = Vector3d(aaBox.minX, aaBox.arvec2[plane.isSectorFloor()? 1 : 0][VY], plane.heightSmoothed());
         Vector3d const bottomRight    = Vector3d(aaBox.maxX, aaBox.arvec2[plane.isSectorFloor()? 0 : 1][VY], plane.heightSmoothed());
 
@@ -2799,8 +2799,8 @@ DENG2_PIMPL(SectorCluster)
         }
 
         ClockDirection const direction = (plane.isSectorCeiling())? Anticlockwise : Clockwise;
-        HEdge *fanBase                 = subsectors[&subspace]->fanBase();
-        WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
+        HEdge *fanBase                 = subsector.fanBase();
+        WorldVBuf::Index const fanSize = subsector.numFanVertices();
 
         WorldVBuf::Indices indices(fanSize);
 
@@ -2809,12 +2809,12 @@ DENG2_PIMPL(SectorCluster)
         WorldVBuf::Index n = 0;
         if(!fanBase)
         {
-            vbuf[indices[n]].pos = Vector3f(poly.center(), plane.heightSmoothed());
+            vbuf[indices[n]].pos = Vector3f(subspace.poly().center(), plane.heightSmoothed());
             n++;
         }
 
         // Add the vertices for each hedge.
-        HEdge *base  = fanBase? fanBase : poly.hedge();
+        HEdge *base  = fanBase? fanBase : subspace.poly().hedge();
         HEdge *hedge = base;
         do
         {
@@ -2825,7 +2825,7 @@ DENG2_PIMPL(SectorCluster)
         // The last vertex is always equal to the first.
         if(!fanBase)
         {
-            vbuf[indices[n]].pos = Vector3f(poly.hedge()->origin(), plane.heightSmoothed());
+            vbuf[indices[n]].pos = Vector3f(subspace.poly().hedge()->origin(), plane.heightSmoothed());
         }
 
         WorldVBuf::Indices shineIndices;
@@ -3429,7 +3429,7 @@ void SectorCluster::prepareShards(ConvexSubspace &subspace)
 void SectorCluster::clearAllShards()
 {
     // Unlink the Shards from the subspace.
-    foreach(Subsector const *ssec, d->subsectors) ssec->clearAllShards();
+    foreach(Subsector const *ssec, d->subsectors) ssec->clearShards();
 
     qDeleteAll(d->shards);
     d->shards.clear();

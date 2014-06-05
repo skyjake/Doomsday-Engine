@@ -88,13 +88,7 @@ public:
 
     ConvexSubspace &convexSubspace() const;
 
-    void addBiasSurfaceIfMissing(GeometryData &gdata);
-
     GeometryData::BiasIllums &biasIllums(GeometryData &gdata);
-
-    BiasTracker &biasTracker(GeometryData &gdata);
-
-    uint lastBiasUpdateFrame(GeometryData &gdata);
 
     /**
      * Returns a pointer to the face geometry half-edge which has been chosen
@@ -109,9 +103,7 @@ public:
      */
     int numFanVertices() const;
 
-    void clearAllShards() const;
-
-    GeometryGroups const &geomGroups() const;
+    bool hasGeomData(de::MapElement &mapElement, int geomId) const;
 
     /**
      * Find the GeometryData for a MapElement by the element-unique @a group
@@ -123,6 +115,8 @@ public:
      *                  at this time.
      */
     GeometryData *geomData(de::MapElement &mapElement, int geomId, bool canAlloc = false);
+
+    GeometryGroups const &geomGroups() const;
 
     bool updateBiasContributorsIfNeeded(GeometryData &gdata);
 
@@ -189,6 +183,8 @@ public:
     AudioEnvironmentFactors const &reverb() const;
 
     Shards &shards();
+
+    void clearShards() const;
 
 private:
     DENG2_PRIVATE(d)
