@@ -1685,21 +1685,21 @@ DENG2_PIMPL(SectorCluster)
     /// @param skyCap  @ref skyCapFlags.
     void prepareSkyMaskCapShards(ConvexSubspace &subspace, bool upper)
     {
-        WorldVBuf &vbuf = worldVBuf();
+        Subsector &subsector = subspace.subsector();
+        WorldVBuf &vbuf      = worldVBuf();
 
         // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
         if(devRendSkyMode) return;
 
         Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
         shards << shard; // take ownership.
-        subspace.subsector().shards() << shard; // link to the subsector.
+        subsector.shards() << shard; // link to the subsector.
 
         ClockDirection const direction = (upper? Anticlockwise : Clockwise);
         coord_t const height           = skyPlaneZ(upper);
         Face const &poly               = subspace.poly();
-
-        HEdge *fanBase = subsectors[&subspace]->fanBase();
-        WorldVBuf::Index const fanSize = poly.hedgeCount() + (!fanBase? 2 : 0);
+        HEdge *fanBase                 = subsector.fanBase();
+        WorldVBuf::Index const fanSize = subsector.numFanVertices();
         shard->indices.resize(fanSize);
 
         vbuf.reserveElements(fanSize, shard->indices);
@@ -1733,7 +1733,8 @@ DENG2_PIMPL(SectorCluster)
     {
         DENG2_ASSERT(posCoords != 0);
 
-        WorldVBuf &vbuf = worldVBuf();
+        Subsector &subsector = subspace.subsector();
+        WorldVBuf &vbuf      = worldVBuf();
 
         DrawListSpec listSpec;
         listSpec.group = (devRendSkyMode? UnlitGeom : SkyMaskGeom);
@@ -1750,7 +1751,7 @@ DENG2_PIMPL(SectorCluster)
 
         Shard *shard = new Shard(listSpec);
         shards << shard; // take ownership.
-        subspace.subsector().shards() << shard; // link to the subsector.
+        subsector.shards() << shard; // link to the subsector.
 
         shard->indices.resize(vertCount);
 
@@ -1945,7 +1946,8 @@ DENG2_PIMPL(SectorCluster)
     {
         DENG2_ASSERT(origPosCoords != 0);
 
-        WorldVBuf &vbuf = worldVBuf();
+        Subsector &subsector = subspace.subsector();
+        WorldVBuf &vbuf      = worldVBuf();
 
         if(rendFakeRadio > 1) return;
 
@@ -1971,7 +1973,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(leftFanSize + rightFanSize);
             shards << shard; // take ownership.
-            subspace.subsector().shards() << shard; // link to the subsector.
+            subsector.shards() << shard; // link to the subsector.
 
             vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
             Rend_DivPosCoords(vbuf, shard->indices.data(), origPosCoords, leftSection, rightSection);
@@ -1992,7 +1994,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(4);
             shards << shard; // take ownership.
-            subspace.subsector().shards() << shard; // link to the subsector.
+            subsector.shards() << shard; // link to the subsector.
 
             vbuf.reserveElements(4, shard->indices);
             for(WorldVBuf::Index i = 0; i < 4; ++i)
@@ -2138,6 +2140,8 @@ DENG2_PIMPL(SectorCluster)
     {
         DENG2_ASSERT(sectionId >= WallEdge::WallMiddle && sectionId <= WallEdge::WallTop);
 
+        Subsector &subsector          = subspace.subsector();
+        WorldVBuf &vbuf               = worldVBuf();
         WallEdgeSection &leftSection  =  leftEdge.section(sectionId);
         WallEdgeSection &rightSection = rightEdge.section(sectionId);
         Surface &surface              = *leftSection.surfacePtr();
@@ -2230,8 +2234,6 @@ DENG2_PIMPL(SectorCluster)
         if(!Rend_MustDrawAsVissprite(leftSection.flags().testFlag(WallEdgeSection::ForceOpaque),
                                      skyMasked, opacity, blendmode, matSnapshot))
         {
-            WorldVBuf &vbuf = worldVBuf();
-
             // Map RTU configuration from prepared MaterialSnapshot(s).
             GLTextureUnit const *primaryRTU       = (!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL;
             GLTextureUnit const *primaryDetailRTU = (r_detail && !skyMasked && matSnapshot.unit(RTU_PRIMARY_DETAIL).hasTexture())? &matSnapshot.unit(RTU_PRIMARY_DETAIL) : NULL;
@@ -2420,7 +2422,7 @@ DENG2_PIMPL(SectorCluster)
 
                     Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
                     shards << shard; // take ownership.
-                    subspace.subsector().shards() << shard; // link to the subsector.
+                    subsector.shards() << shard; // link to the subsector.
 
                     shard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2470,7 +2472,7 @@ DENG2_PIMPL(SectorCluster)
 
                         Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                         shards << shineShard; // take ownership.
-                        subspace.subsector().shards() << shineShard; // link subspace.
+                        subsector.shards() << shineShard; // link subspace.
 
                         shineShard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2503,7 +2505,7 @@ DENG2_PIMPL(SectorCluster)
                 {
                     Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
                     shards << shard; // take ownership.
-                    subspace.subsector().shards() << shard; // link to the subsector.
+                    subsector.shards() << shard; // link to the subsector.
 
                     shard->indices.resize(4);
 
@@ -2547,7 +2549,7 @@ DENG2_PIMPL(SectorCluster)
 
                         Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                         shards << shineShard; // take ownership.
-                        subspace.subsector().shards() << shineShard; // link to the subsector.
+                        subsector.shards() << shineShard; // link to the subsector.
 
                         shineShard->indices.resize(4);
 
@@ -2578,7 +2580,7 @@ DENG2_PIMPL(SectorCluster)
 
                 Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
                 shards << shard; // take ownership.
-                subspace.subsector().shards() << shard; // link to the subsector.
+                subsector.shards() << shard; // link to the subsector.
 
                 if(mustSubdivide) // Generate two triangle fans.
                 {
@@ -2688,9 +2690,10 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
-    void prepareFlatShard(ConvexSubspace &subspace, Plane &plane)
+    void prepareFlatShards(ConvexSubspace &subspace, Plane &plane)
     {
         Subsector &subsector   = subspace.subsector();
+        WorldVBuf &vbuf        = worldVBuf();
         Surface const &surface = plane.surface();
 
         // Skip planes with a sky-masked material? (Drawn with the mask geometry).
@@ -2761,8 +2764,6 @@ DENG2_PIMPL(SectorCluster)
                             false /*do light*/, false /*do shadow*/, false /*don't sort*/,
                             lightListIdx, shadowListIdx);
         }
-
-        WorldVBuf &vbuf = worldVBuf();
 
         // Map RTU configuration from prepared MaterialSnapshot(s).
         GLTextureUnit const *primaryRTU       = (!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL;
@@ -3015,7 +3016,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
             shard->indices = indices;
             shards << shard; // take ownership.
-            subspace.subsector().shards() << shard; // link to the subsector.
+            subsector.shards() << shard; // link to the subsector.
 
             makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf,
                               listSpec.unit(TU_PRIMARY       ).scale,
@@ -3038,7 +3039,7 @@ DENG2_PIMPL(SectorCluster)
                 Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                 shineShard->indices = shineIndices;
                 shards << shineShard; // take ownership.
-                subspace.subsector().shards() << shineShard; // link to the subsector.
+                subsector.shards() << shineShard; // link to the subsector.
 
                 makeListPrimitive(*shineShard, gl::TriangleFan, fanSize, vbuf,
                                   shineListSpec.unit(TU_INTER         ).scale,
@@ -3052,7 +3053,7 @@ DENG2_PIMPL(SectorCluster)
             Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
             shard->indices = indices;
             shards << shard; // take ownership.
-            subspace.subsector().shards() << shard; // link to the subsector.
+            subsector.shards() << shard; // link to the subsector.
 
             makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
         }
@@ -3069,7 +3070,7 @@ DENG2_PIMPL(SectorCluster)
             if((Rend_ViewerOrigin() - pointOnPlane).dot(plane.surface().normal()) < 0)
                 continue;
 
-            prepareFlatShard(subspace, plane);
+            prepareFlatShards(subspace, plane);
         }
     }
 
@@ -3419,7 +3420,7 @@ void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 
 void SectorCluster::prepareShards(ConvexSubspace &subspace)
 {
-    DENG2_ASSERT(subspace.clusterPtr() == this);
+    if(subspace.clusterPtr() != this) return;
 
     d->prepareAllSkyMaskShards(subspace);
     d->prepareAllWallShards(subspace);
