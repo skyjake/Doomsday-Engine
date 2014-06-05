@@ -22,7 +22,6 @@
 #include <QtAlgorithms>
 #include <QList>
 #include <QVector>
-#include "../../doomsday/libgui/include/de/gui/libgui.h"
 #include <de/GLBuffer>
 #include <de/GLShaderBank>
 #include <de/ImageBank>
