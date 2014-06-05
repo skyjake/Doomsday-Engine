@@ -81,15 +81,17 @@ void Subsector::GeometryData::setBiasLastUpdateFrame(uint updateFrame)
 
 DENG2_PIMPL_NOREF(Subsector)
 {
-    ConvexSubspace *subspace;
-    GeometryGroups geomGroups;
+    ConvexSubspace *subspace;        ///< Convex map subspace (not owned).
     HEdge *fanBase;                  ///< Trifan base Half-edge (otherwise the center point is used).
     bool needFanBaseUpdate;          ///< @c true= need to rechoose a fan base half-edge.
 
+    // Shard preparation data for all map geometries in the subsector (owned).
+    GeometryGroups geomGroups;
+
     Lumobjs lumobjs;                 ///< Linked lumobjs (not owned).
-    ShadowLines shadowLines;         ///< Linked map lines for fake radio shadowing.
+    ShadowLines shadowLines;         ///< Linked map lines for fake radio shadowing (not owned).
+    Shards shards;                   ///< Linked geometry shards (not owned).
     AudioEnvironmentFactors reverb;  ///< Cached characteristics.
-    Shards shards;
 
     Instance(ConvexSubspace &subspace)
         : subspace         (&subspace)
@@ -101,9 +103,6 @@ DENG2_PIMPL_NOREF(Subsector)
 
     ~Instance()
     {
-        // Clear all geometry shards.
-        shards.clear();
-
         // Delete all GeometryData.
         foreach(GeometryGroup const &group, geomGroups) qDeleteAll(group);
     }
@@ -226,35 +225,43 @@ DENG2_PIMPL_NOREF(Subsector)
     }
 };
 
-Subsector::Subsector(ConvexSubspace &subspace) : d(new Instance(subspace))
+Subsector::Subsector(ConvexSubspace &convexSubspace) : d(new Instance(convexSubspace))
 {}
-
-ConvexSubspace &Subsector::convexSubspace() const
-{
-    DENG2_ASSERT(d->subspace != 0);
-    return *d->subspace;
-}
-
-Subsector::GeometryData::BiasIllums &Subsector::biasIllums(GeometryData &gdata)
-{
-    d->addBiasSurfaceIfMissing(gdata);
-    return gdata.biasSurface->illums;
-}
-
-HEdge *Subsector::fanBase() const
-{
-    d->updateFanBaseIfNeeded();
-    return d->fanBase;
-}
 
 int Subsector::numFanVertices() const
 {
     return d->numFanVertices();
 }
 
-Subsector::GeometryGroups const &Subsector::geomGroups() const
+void Subsector::writePosCoords(WorldVBuf &vbuf, WorldVBuf::Indices const &indices,
+    ClockDirection direction, coord_t height)
 {
-    return d->geomGroups;
+    d->updateFanBaseIfNeeded();
+
+    Face const &poly = d->subspace->poly();
+    HEdge *fanBase   = d->fanBase;
+
+    WorldVBuf::Index n = 0;
+    if(!fanBase)
+    {
+        vbuf[indices[n]].pos = Vector3f(poly.center(), height);
+        n++;
+    }
+
+    // Add the vertices for each hedge.
+    HEdge *base  = fanBase? fanBase : poly.hedge();
+    HEdge *hedge = base;
+    do
+    {
+        vbuf[indices[n]].pos = Vector3f(hedge->origin(), height);
+        n++;
+    } while((hedge = &hedge->neighbor(direction)) != base);
+
+    // The last vertex is always equal to the first.
+    if(!fanBase)
+    {
+        vbuf[indices[n]].pos = Vector3f(poly.hedge()->origin(), height);
+    }
 }
 
 bool Subsector::hasGeomData(de::MapElement &mapElement, int geomId) const
@@ -283,6 +290,17 @@ Subsector::GeometryData *Subsector::geomData(MapElement &mapElement, int geomId,
     }
 
     return foundGroup->insert(geomId, new GeometryData(&mapElement, geomId)).value();
+}
+
+Subsector::GeometryGroups const &Subsector::geomGroups() const
+{
+    return d->geomGroups;
+}
+
+Subsector::GeometryData::BiasIllums &Subsector::biasIllums(GeometryData &gdata)
+{
+    d->addBiasSurfaceIfMissing(gdata);
+    return gdata.biasSurface->illums;
 }
 
 bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
@@ -517,7 +535,8 @@ Subsector::Shards &Subsector::shards()
     return d->shards;
 }
 
-void Subsector::clearShards() const
+ConvexSubspace &Subsector::convexSubspace() const
 {
-    d->shards.clear();
+    DENG2_ASSERT(d->subspace != 0);
+    return *d->subspace;
 }

@@ -1685,45 +1685,20 @@ DENG2_PIMPL(SectorCluster)
     /// @param skyCap  @ref skyCapFlags.
     void prepareSkyMaskCapShards(ConvexSubspace &subspace, bool upper)
     {
-        Subsector &subsector = subspace.subsector();
-        WorldVBuf &vbuf      = worldVBuf();
-
         // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
         if(devRendSkyMode) return;
+
+        Subsector &subsector = subspace.subsector();
+        WorldVBuf &vbuf      = worldVBuf();
 
         Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
         shards << shard; // take ownership.
         subsector.shards() << shard; // link to the subsector.
 
-        ClockDirection const direction = (upper? Anticlockwise : Clockwise);
-        coord_t const height           = skyPlaneZ(upper);
-        Face const &poly               = subspace.poly();
-        HEdge *fanBase                 = subsector.fanBase();
         WorldVBuf::Index const fanSize = subsector.numFanVertices();
         shard->indices.resize(fanSize);
-
         vbuf.reserveElements(fanSize, shard->indices);
-        WorldVBuf::Index n = 0;
-        if(!fanBase)
-        {
-            vbuf[shard->indices[n]].pos = Vector3f(poly.center(), height);
-            n++;
-        }
-
-        // Add the vertices for each hedge.
-        HEdge *base  = fanBase? fanBase : poly.hedge();
-        HEdge *hedge = base;
-        do
-        {
-            vbuf[shard->indices[n]].pos = Vector3f(hedge->origin(), height);
-            n++;
-        } while((hedge = &hedge->neighbor(direction)) != base);
-
-        // The last vertex is always equal to the first.
-        if(!fanBase)
-        {
-            vbuf[shard->indices[n]].pos = Vector3f(poly.hedge()->origin(), height);
-        }
+        subsector.writePosCoords(vbuf, shard->indices, (upper? Anticlockwise : Clockwise), skyPlaneZ(upper));
 
         makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
     }
@@ -2799,39 +2774,15 @@ DENG2_PIMPL(SectorCluster)
             }
         }
 
-        ClockDirection const direction = (plane.isSectorCeiling())? Anticlockwise : Clockwise;
-        HEdge *fanBase                 = subsector.fanBase();
         WorldVBuf::Index const fanSize = subsector.numFanVertices();
-
         WorldVBuf::Indices indices(fanSize);
-
         vbuf.reserveElements(fanSize, indices);
-
-        WorldVBuf::Index n = 0;
-        if(!fanBase)
-        {
-            vbuf[indices[n]].pos = Vector3f(subspace.poly().center(), plane.heightSmoothed());
-            n++;
-        }
-
-        // Add the vertices for each hedge.
-        HEdge *base  = fanBase? fanBase : subspace.poly().hedge();
-        HEdge *hedge = base;
-        do
-        {
-            vbuf[indices[n]].pos = Vector3f(hedge->origin(), plane.heightSmoothed());
-            n++;
-        } while((hedge = &hedge->neighbor(direction)) != base);
-
-        // The last vertex is always equal to the first.
-        if(!fanBase)
-        {
-            vbuf[indices[n]].pos = Vector3f(subspace.poly().hedge()->origin(), plane.heightSmoothed());
-        }
-
-        WorldVBuf::Indices shineIndices;
+        subsector.writePosCoords(vbuf, indices,
+                                 (plane.isSectorCeiling()? Anticlockwise : Clockwise),
+                                 plane.heightSmoothed());
 
         // ShinySurface?
+        WorldVBuf::Indices shineIndices;
         if(shineRTU)
         {
             shineIndices.resize(fanSize);
@@ -3112,7 +3063,7 @@ DENG2_PIMPL(SectorCluster)
         throw Error("SectorCluster::surfaceForGeometry", "Unknown map element/geometry id referenced");
     }
 
-    /// Observes Plane HeightSmoothedChange.
+    /// Observe Plane HeightSmoothedChange.
     void planeHeightSmoothedChanged(Plane &plane)
     {
         markDependantSurfacesForDecorationUpdate();
@@ -3121,7 +3072,7 @@ DENG2_PIMPL(SectorCluster)
         maybeInvalidateMapping(plane.indexInSector());
     }
 
-    /// Observes Sector LightLevelChange.
+    /// Observe Sector LightLevelChange.
     void sectorLightLevelChanged(Sector &sector)
     {
         DENG2_ASSERT(&sector == &self.sector());
@@ -3131,7 +3082,7 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
-    /// Observes Sector LightColorChange.
+    /// Observe Sector LightColorChange.
     void sectorLightColorChanged(Sector &sector)
     {
         DENG2_ASSERT(&sector == &self.sector());
@@ -3159,11 +3110,11 @@ SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspacesToAdd)
     }
 
 #ifdef __CLIENT__
-    // Observe changes to plane heights in "this" sector.
+    // Must observe plane height changes in the sector.
     d->observePlane(&sector().floor());
     d->observePlane(&sector().ceiling());
 
-    // Observe changes to sector lighting properties.
+    // Must observe lighting changes in the sector.
     sector().audienceForLightLevelChange += d;
     sector().audienceForLightColorChange += d;
 #endif
@@ -3430,7 +3381,7 @@ void SectorCluster::prepareShards(ConvexSubspace &subspace)
 void SectorCluster::clearAllShards()
 {
     // Unlink the Shards from the subspace.
-    foreach(Subsector const *ssec, d->subsectors) ssec->clearShards();
+    foreach(Subsector *ssec, d->subsectors) ssec->shards().clear();
 
     qDeleteAll(d->shards);
     d->shards.clear();

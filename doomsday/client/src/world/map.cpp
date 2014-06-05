@@ -41,7 +41,6 @@
 #include "Vertex"
 
 #include "world/bsp/partitioner.h"
-#include "world/client/subsector.h"
 #include "world/worldsystem.h" // ddMapSetup, validCount
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
@@ -49,6 +48,7 @@
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #ifdef __CLIENT__
+#  include "world/client/subsector.h"
 #  include "Contact"
 #  include "ContactSpreader"
 #endif
@@ -754,7 +754,7 @@ DENG2_PIMPL(Map)
         }
 
         // How much time did we spend?
-        LOGDEV_MAP_VERBOSE("BSP built in %.2f seconds") << begunAt.since();
+        LOGDEV_MAP_MSG("BSP built in %.2f seconds") << begunAt.since();
 
         return bsp.tree != 0;
     }

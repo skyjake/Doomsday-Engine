@@ -20,12 +20,14 @@
 #define DENG_WORLD_CLIENT_SUBSECTOR_H
 
 #include "dd_share.h" // NUM_REVERB_DATA
+#include "render/rendersystem.h" // WorldVBuf
+#include "BiasDigest"
 #include "BiasIllum"
 #include "BiasTracker"
 #include "Line"
 #include "MapElement"
 #include <QSet>
-#include <QList>
+#include <QMap>
 #include <QVector>
 
 class ConvexSubspace;
@@ -50,7 +52,7 @@ public:
     typedef QSet<LineSide *>  ShadowLines;
     typedef QSet<Shard *>     Shards;
 
-    // Final audio environment characteristics.
+    /// Final audio environment characteristics.
     typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
 
     struct GeometryData
@@ -84,25 +86,29 @@ public:
     typedef QMap<de::MapElement *, GeometryGroup> GeometryGroups;
 
 public:
-    Subsector(ConvexSubspace &subspace);
-
-    ConvexSubspace &convexSubspace() const;
-
-    GeometryData::BiasIllums &biasIllums(GeometryData &gdata);
+    Subsector(ConvexSubspace &convexSubspace);
 
     /**
-     * Returns a pointer to the face geometry half-edge which has been chosen
-     * for use as the base for a triangle fan GL primitive. May return @c 0 if
-     * no suitable base was determined.
-     */
-    de::HEdge *fanBase() const;
-
-    /**
-     * Returns the number of vertices needed for a triangle fan GL primitive.
-     * @see fanBase()
+     * Returns the number of vertices needed for a triangle fan GL primitive
      */
     int numFanVertices() const;
 
+    /**
+     * Write world position coords for the subsector to the given vertex buffer.
+     *
+     * @param vbuf       Vertex buffer being written to.
+     * @param indices    Vertex buffer indices of the elements being written.
+     * @param direction  Vertex winding order.
+     * @param height     Z coordinate in map space.
+     *
+     * @see numFanVertices()
+     */
+    void writePosCoords(WorldVBuf &vbuf, WorldVBuf::Indices const &indices,
+                        de::ClockDirection direction, coord_t height);
+
+    /**
+     * Determines whether GeometryData exists for the referenced @a mapElement.
+     */
     bool hasGeomData(de::MapElement &mapElement, int geomId) const;
 
     /**
@@ -116,8 +122,23 @@ public:
      */
     GeometryData *geomData(de::MapElement &mapElement, int geomId, bool canAlloc = false);
 
+    /**
+     * Provides access to all the GeometryData for the subsector, for efficient traversal.
+     */
     GeometryGroups const &geomGroups() const;
 
+    /**
+     * Convenient method returning the bias illumination points for the given
+     * geometry data (allocating them if necessary).
+     *
+     * @param gdata  Geometry data to retrieve illumination points for.
+     */
+    GeometryData::BiasIllums &biasIllums(GeometryData &gdata);
+
+    /**
+     * To be called (periodically) to update the bias light source contributors
+     * for the given geometry data.
+     */
     bool updateBiasContributorsIfNeeded(GeometryData &gdata);
 
     /**
@@ -182,9 +203,17 @@ public:
      */
     AudioEnvironmentFactors const &reverb() const;
 
+    /**
+     * Provides access to the list of geometry Shards linked to the subsector.
+     * Anyone may add or remove shards from this list as its sole purpose is to
+     * provide a convenient place for them, for drawing (during BSP traversal).
+     */
     Shards &shards();
 
-    void clearShards() const;
+    /**
+     * Returns the ConvexSubspace associated with the subsector (FYI).
+     */
+    ConvexSubspace &convexSubspace() const;
 
 private:
     DENG2_PRIVATE(d)
