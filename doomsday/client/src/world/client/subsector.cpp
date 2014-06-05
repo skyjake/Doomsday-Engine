@@ -47,14 +47,6 @@ Subsector::GeometryData::GeometryData(MapElement *mapElement, int geomId)
     , geomId    (geomId)
 {}
 
-void Subsector::GeometryData::applyBiasDigest(BiasDigest &allChanges)
-{
-    if(!biasSurface.isNull())
-    {
-        biasSurface->tracker.applyChanges(allChanges);
-    }
-}
-
 void Subsector::GeometryData::markBiasContributorUpdateNeeded()
 {
     if(!biasSurface.isNull())
@@ -68,14 +60,6 @@ void Subsector::GeometryData::markBiasIllumUpdateCompleted()
     if(!biasSurface.isNull())
     {
         biasSurface->tracker.markIllumUpdateCompleted();
-    }
-}
-
-void Subsector::GeometryData::setBiasLastUpdateFrame(uint updateFrame)
-{
-    if(!biasSurface.isNull())
-    {
-        biasSurface->lastUpdateFrame = updateFrame;
     }
 }
 
@@ -237,19 +221,19 @@ void Subsector::writePosCoords(WorldVBuf &vbuf, WorldVBuf::Indices const &indice
     ClockDirection direction, coord_t height)
 {
     d->updateFanBaseIfNeeded();
+    DENG2_ASSERT(indices.size() >= numFanVertices());
 
-    Face const &poly = d->subspace->poly();
-    HEdge *fanBase   = d->fanBase;
+    Face const &convexPoly = d->subspace->poly();
 
     WorldVBuf::Index n = 0;
-    if(!fanBase)
+    if(!d->fanBase)
     {
-        vbuf[indices[n]].pos = Vector3f(poly.center(), height);
+        vbuf[indices[n]].pos = Vector3f(convexPoly.center(), height);
         n++;
     }
 
     // Add the vertices for each hedge.
-    HEdge *base  = fanBase? fanBase : poly.hedge();
+    HEdge *base  = d->fanBase? d->fanBase : convexPoly.hedge();
     HEdge *hedge = base;
     do
     {
@@ -258,9 +242,9 @@ void Subsector::writePosCoords(WorldVBuf &vbuf, WorldVBuf::Indices const &indice
     } while((hedge = &hedge->neighbor(direction)) != base);
 
     // The last vertex is always equal to the first.
-    if(!fanBase)
+    if(!d->fanBase)
     {
-        vbuf[indices[n]].pos = Vector3f(poly.hedge()->origin(), height);
+        vbuf[indices[n]].pos = Vector3f(convexPoly.hedge()->origin(), height);
     }
 }
 
@@ -303,25 +287,39 @@ Subsector::GeometryData::BiasIllums &Subsector::biasIllums(GeometryData &gdata)
     return gdata.biasSurface->illums;
 }
 
+void Subsector::applyBiasDigest(BiasDigest &allChanges)
+{
+    foreach(GeometryGroup const &group, d->geomGroups)
+    foreach(GeometryData *gdata, group)
+    {
+        if(!gdata->biasSurface.isNull())
+        {
+            gdata->biasSurface->tracker.applyChanges(allChanges);
+        }
+    }
+}
+
 bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
 {
+    // Geometries with no illumination points don't need updating.
+    if(gdata.biasSurface.isNull()) return false;
+    GeometryData::BiasSurface &biasSurface = *gdata.biasSurface;
+
+    // Update disabled?
     if(!Rend_BiasContributorUpdatesEnabled())
         return false;
 
-    if(gdata.biasSurface.isNull()) return false;
-
+    // Update unecessary?
     Map &map = d->subspace->map();
-
     uint const lastBiasChangeFrame = map.biasLastChangeOnFrame();
-    if(gdata.biasSurface->lastUpdateFrame == lastBiasChangeFrame)
+    if(biasSurface.lastUpdateFrame == lastBiasChangeFrame)
         return false;
 
-    // Mark the data as having been updated (it will be soon).
-    gdata.setBiasLastUpdateFrame(lastBiasChangeFrame);
+    // Mark the geometry as having been updated (it will be soon).
+    biasSurface.lastUpdateFrame = lastBiasChangeFrame;
 
-    BiasTracker &biasTracker = gdata.biasSurface->tracker;
-
-    biasTracker.clearContributors();
+    // Clear existing contributors - we're starting over.
+    biasSurface.tracker.clearContributors();
 
     switch(gdata.mapElement->type())
     {
@@ -355,7 +353,7 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            biasSurface.tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
         break; }
 
@@ -386,7 +384,7 @@ bool Subsector::updateBiasContributorsIfNeeded(GeometryData &gdata)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            biasSurface.tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
         break; }
 

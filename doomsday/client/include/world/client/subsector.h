@@ -75,10 +75,8 @@ public:
     public:
         GeometryData(de::MapElement *mapElement, int geomId);
 
-        void applyBiasDigest(BiasDigest &allChanges);
         void markBiasContributorUpdateNeeded();
         void markBiasIllumUpdateCompleted();
-        void setBiasLastUpdateFrame(uint updateFrame);
     };
 
     /// @todo Avoid two-stage lookup.
@@ -134,6 +132,14 @@ public:
      * @param gdata  Geometry data to retrieve illumination points for.
      */
     GeometryData::BiasIllums &biasIllums(GeometryData &gdata);
+
+    /**
+     * Apply bias lighting changes to @em all geometry illumination points for
+     * the subsector.
+     *
+     * @param changes  Digest of lighting changes to be applied.
+     */
+    void applyBiasDigest(BiasDigest &allChanges);
 
     /**
      * To be called (periodically) to update the bias light source contributors

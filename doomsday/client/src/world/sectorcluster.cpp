@@ -1081,9 +1081,9 @@ DENG2_PIMPL(SectorCluster)
 
         foreach(Subsector const *ssec, subsectors)
         foreach(Subsector::GeometryGroup const &group, ssec->geomGroups())
-        foreach(Subsector::GeometryData *gdata, group)
+        foreach(Subsector::GeometryData *geom, group)
         {
-            gdata->markBiasContributorUpdateNeeded();
+            geom->markBiasContributorUpdateNeeded();
         }
     }
 
@@ -3361,12 +3361,7 @@ void SectorCluster::lightWithBiasSources(MapElement &mapElement, int geomId,
 
 void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 {
-    foreach(Subsector const *ssec, d->subsectors)
-    foreach(Subsector::GeometryGroup const &group, ssec->geomGroups())
-    foreach(Subsector::GeometryData *gdata, group)
-    {
-        gdata->applyBiasDigest(allChanges);
-    }
+    foreach(Subsector *ssec, d->subsectors) ssec->applyBiasDigest(allChanges);
 }
 
 void SectorCluster::prepareShards(ConvexSubspace &subspace)
@@ -3389,6 +3384,9 @@ void SectorCluster::clearAllShards()
 
 void SectorCluster::mapElementMoved(Polyobj &po)
 {
+    if(ddMapSetup) return;
+    if(!useBias) return;
+
     foreach(HEdge *hedge, po.mesh().hedges())
     {
         // Is this on the back of a one-sided line?
