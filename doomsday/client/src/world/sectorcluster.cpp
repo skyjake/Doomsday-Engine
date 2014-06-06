@@ -1390,17 +1390,16 @@ DENG2_PIMPL(SectorCluster)
     };
 
     /**
-     * @param light Projected light geometry to splinter into a shard.
+     * @param light  Projected light geometry to splinter into a shard.
      */
-    Shard *splinterDynlight(TexProjection const &light, splinterdynlight_params_t const &p)
+    void splinterDynlight(TexProjection const &light, splinterdynlight_params_t const &p)
     {
         WorldVBuf &vbuf = worldVBuf();
 
-        DrawListSpec listSpec;
-        listSpec.group = LightGeom;
-        listSpec.texunits[TU_PRIMARY] = GLTextureUnit(light.texture, gl::ClampToEdge, gl::ClampToEdge);
-
-        Shard *shard = new Shard(listSpec);
+        Shard *shard = new Shard(LightGeom);
+        shard->listSpec.unit(TU_PRIMARY) = GLTextureUnit(light.texture, gl::ClampToEdge, gl::ClampToEdge);
+        shards << shard; // take ownership.
+        p.subspace->subsector().shards() << shard; // link to the subsector.
 
         if(p.leftSection) // A wall.
         {
@@ -1488,19 +1487,19 @@ DENG2_PIMPL(SectorCluster)
 
             makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf);
         }
-
-        return shard;
     }
 
     /**
      * @param shadow  Projected shadow geometry to splinter into a shard.
      */
-    Shard *splinterDynshadow(TexProjection const &shadow,
-        splinterdynshadow_params_t const &p, DrawListSpec const &listSpec)
+    Shard *splinterDynshadow(TexProjection const &shadow, splinterdynshadow_params_t const &p)
     {
         WorldVBuf &vbuf = worldVBuf();
 
-        Shard *shard = new Shard(listSpec);
+        Shard *shard = new Shard(ShadowGeom);
+        shard->listSpec.unit(TU_PRIMARY) = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge);;
+        shards << shard; // take ownership.
+        p.subspace->subsector().shards() << shard; // link to the subsector.
 
         if(p.leftSection) // A wall.
         {
@@ -1597,25 +1596,14 @@ DENG2_PIMPL(SectorCluster)
         // If multitexturing is in use we skip the first.
         if(!(Rend_IsMTexLights() && p.lastIdx == 0))
         {
-            Shard *shard = splinterDynlight(light, p);
-            shards << shard; // take ownership.
-            p.subspace->subsector().shards() << shard; // link to the subsector.
+            splinterDynlight(light, p);
         }
         p.lastIdx++;
     }
 
-    struct drawshadowworker_params_t
+    void prepareDynshadowShards(TexProjection const &shadow, splinterdynshadow_params_t &p)
     {
-        DrawListSpec drawListSpec;
-        splinterdynshadow_params_t *drawShadowParms;
-    };
-
-    void prepareDynshadowShards(TexProjection const &shadow, splinterdynshadow_params_t &p,
-        DrawListSpec const &listSpec)
-    {
-        Shard *shard = splinterDynshadow(shadow, p, listSpec);
-        shards << shard; // take ownership.
-        p.subspace->subsector().shards() << shard; // link to the subsector.
+        splinterDynshadow(shadow, p);
     }
 
     /// Generates a new primitive for each light projection.
@@ -1629,9 +1617,8 @@ DENG2_PIMPL(SectorCluster)
     /// Generates a new primitive for each shadow projection.
     static int splinterDynshadowWorker(TexProjection const *shadow, void *context)
     {
-        drawshadowworker_params_t &itParm = *static_cast<drawshadowworker_params_t *>(context);
-        splinterdynshadow_params_t &parm  = *itParm.drawShadowParms;
-        parm.inst->prepareDynshadowShards(*shadow, parm, itParm.drawListSpec);
+        splinterdynshadow_params_t &parm  = *static_cast<splinterdynshadow_params_t *>(context);
+        parm.inst->prepareDynshadowShards(*shadow, parm);
         return 0; // Continue iteration.
     }
 
@@ -1659,13 +1646,8 @@ DENG2_PIMPL(SectorCluster)
     /**
      * Prepare Shards for dynamic shadows in projection list @a listIdx.
      */
-    void splinterAllDynshadows(uint listIdx, splinterdynshadow_params_t &p)
+    void splinterAllDynshadows(uint listIdx, splinterdynshadow_params_t &parm)
     {
-        drawshadowworker_params_t parm;
-        parm.drawListSpec.group                = ShadowGeom;
-        parm.drawListSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge);
-        parm.drawShadowParms = &p;
-
         Rend_IterateProjectionList(listIdx, splinterDynshadowWorker, &parm);
     }
 
@@ -1691,7 +1673,7 @@ DENG2_PIMPL(SectorCluster)
         Subsector &subsector = subspace.subsector();
         WorldVBuf &vbuf      = worldVBuf();
 
-        Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
+        Shard *shard = new Shard(SkyMaskGeom);
         shards << shard; // take ownership.
         subsector.shards() << shard; // link to the subsector.
 
@@ -1711,20 +1693,17 @@ DENG2_PIMPL(SectorCluster)
         Subsector &subsector = subspace.subsector();
         WorldVBuf &vbuf      = worldVBuf();
 
-        DrawListSpec listSpec;
-        listSpec.group = (devRendSkyMode? UnlitGeom : SkyMaskGeom);
+        Shard *shard = new Shard((devRendSkyMode? UnlitGeom : SkyMaskGeom));
         if(devRendSkyMode && renderTextures != 2)
         {
             // Map RTU configuration from the sky surface material.
             DENG2_ASSERT(material != 0);
             MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-            listSpec.texunits[TU_PRIMARY]        = ms.unit(RTU_PRIMARY);
-            listSpec.texunits[TU_PRIMARY_DETAIL] = ms.unit(RTU_PRIMARY_DETAIL);
-            listSpec.texunits[TU_INTER]          = ms.unit(RTU_INTER);
-            listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
+            shard->listSpec.unit(TU_PRIMARY)        = ms.unit(RTU_PRIMARY);
+            shard->listSpec.unit(TU_PRIMARY_DETAIL) = ms.unit(RTU_PRIMARY_DETAIL);
+            shard->listSpec.unit(TU_INTER)          = ms.unit(RTU_INTER);
+            shard->listSpec.unit(TU_INTER_DETAIL)   = ms.unit(RTU_INTER_DETAIL);
         }
-
-        Shard *shard = new Shard(listSpec);
         shards << shard; // take ownership.
         subsector.shards() << shard; // link to the subsector.
 
@@ -1934,9 +1913,10 @@ DENG2_PIMPL(SectorCluster)
                                leftSection.top().origin(), rightSection.bottom().origin(),
                                wsParms.texOrigin, wsParms.texDimensions, wsParms.horizontal);
 
-        DrawListSpec shadowListSpec;
-        shadowListSpec.group = ShadowGeom;
-        shadowListSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
+        Shard *shard = new Shard(ShadowGeom);
+        shard->listSpec.unit(TU_PRIMARY) = GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
+        shards << shard; // take ownership.
+        subsector.shards() << shard; // link to the subsector.
 
         bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
@@ -1945,10 +1925,7 @@ DENG2_PIMPL(SectorCluster)
             WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
             WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
 
-            Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(leftFanSize + rightFanSize);
-            shards << shard; // take ownership.
-            subsector.shards() << shard; // link to the subsector.
 
             vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
             Rend_DivPosCoords(vbuf, shard->indices.data(), origPosCoords, leftSection, rightSection);
@@ -1966,10 +1943,7 @@ DENG2_PIMPL(SectorCluster)
         }
         else
         {
-            Shard *shard = new Shard(shadowListSpec);
             shard->indices.resize(4);
-            shards << shard; // take ownership.
-            subsector.shards() << shard; // link to the subsector.
 
             vbuf.reserveElements(4, shard->indices);
             for(WorldVBuf::Index i = 0; i < 4; ++i)
@@ -2362,30 +2336,50 @@ DENG2_PIMPL(SectorCluster)
 
             if(!skyMasked)
             {
-                DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+                Shard *shard = new Shard((modTex || hasDynlights)? LitGeom : UnlitGeom,
+                                         BM_NORMAL, modTex, modColor, hasDynlights);
                 if(primaryRTU)
                 {
-                    listSpec.texunits[TU_PRIMARY] = *primaryRTU;
-                    listSpec.texunits[TU_PRIMARY].offset += materialOrigin;
-                    listSpec.texunits[TU_PRIMARY].scale  *= materialScale;
-                    listSpec.texunits[TU_PRIMARY].offset *= materialScale;
+                    shard->listSpec.unit(TU_PRIMARY) = *primaryRTU;
+                    shard->listSpec.unit(TU_PRIMARY).offset += materialOrigin;
+                    shard->listSpec.unit(TU_PRIMARY).scale  *= materialScale;
+                    shard->listSpec.unit(TU_PRIMARY).offset *= materialScale;
                 }
                 if(primaryDetailRTU)
                 {
-                    listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
-                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += materialOrigin;
+                    shard->listSpec.unit(TU_PRIMARY_DETAIL) = *primaryDetailRTU;
+                    shard->listSpec.unit(TU_PRIMARY_DETAIL).offset += materialOrigin;
                 }
                 if(interRTU)
                 {
-                    listSpec.texunits[TU_INTER] = *interRTU;
-                    listSpec.texunits[TU_INTER].offset += materialOrigin;
-                    listSpec.texunits[TU_INTER].scale  *= materialScale;
-                    listSpec.texunits[TU_INTER].offset *= materialScale;
+                    shard->listSpec.unit(TU_INTER) = *interRTU;
+                    shard->listSpec.unit(TU_INTER).offset += materialOrigin;
+                    shard->listSpec.unit(TU_INTER).scale  *= materialScale;
+                    shard->listSpec.unit(TU_INTER).offset *= materialScale;
                 }
                 if(interDetailRTU)
                 {
-                    listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
-                    listSpec.texunits[TU_INTER_DETAIL].offset += materialOrigin;
+                    shard->listSpec.unit(TU_INTER_DETAIL) = *interDetailRTU;
+                    shard->listSpec.unit(TU_INTER_DETAIL).offset += materialOrigin;
+                }
+                shards << shard; // take ownership.
+                subsector.shards() << shard; // link to the subsector.
+
+                // Need a shard for the surface shine effect?
+                Shard *shineShard = 0;
+                if(shineRTU)
+                {
+                    shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
+                    shineShard->listSpec.unit(TU_PRIMARY) = *shineRTU;
+                    if(shineMaskRTU)
+                    {
+                        shineShard->listSpec.unit(TU_INTER) = *shineMaskRTU;
+                        shineShard->listSpec.unit(TU_INTER).offset += materialOrigin;
+                        shineShard->listSpec.unit(TU_INTER).scale  *= materialScale;
+                        shineShard->listSpec.unit(TU_INTER).offset *= materialScale;
+                    }
+                    shards << shineShard; // take ownership.
+                    subsector.shards() << shineShard; // link subspace.
                 }
 
                 bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
@@ -2394,10 +2388,6 @@ DENG2_PIMPL(SectorCluster)
                 {
                     WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
                     WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
-
-                    Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
-                    shards << shard; // take ownership.
-                    subsector.shards() << shard; // link to the subsector.
 
                     shard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2421,34 +2411,20 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     makeListPrimitive(*shard, gl::TriangleFan, leftFanSize, vbuf,
-                                      listSpec.unit(TU_PRIMARY       ).scale,
-                                      listSpec.unit(TU_PRIMARY       ).offset,
-                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                      listSpec.unit(TU_PRIMARY_DETAIL).offset);
+                                      shard->listSpec.unit(TU_PRIMARY       ).scale,
+                                      shard->listSpec.unit(TU_PRIMARY       ).offset,
+                                      shard->listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                      shard->listSpec.unit(TU_PRIMARY_DETAIL).offset);
 
                     makeListPrimitive(*shard, gl::TriangleFan, rightFanSize, vbuf,
-                                      listSpec.unit(TU_PRIMARY       ).scale,
-                                      listSpec.unit(TU_PRIMARY       ).offset,
-                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                      listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                                      shard->listSpec.unit(TU_PRIMARY       ).scale,
+                                      shard->listSpec.unit(TU_PRIMARY       ).offset,
+                                      shard->listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                      shard->listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                       leftFanSize /*indices offset*/);
 
                     if(shineRTU)
                     {
-                        DrawListSpec shineListSpec(ShineGeom);
-                        shineListSpec.texunits[TU_PRIMARY] = *shineRTU;
-                        if(shineMaskRTU)
-                        {
-                            shineListSpec.texunits[TU_INTER] = *shineMaskRTU;
-                            shineListSpec.texunits[TU_INTER].offset += materialOrigin;
-                            shineListSpec.texunits[TU_INTER].scale  *= materialScale;
-                            shineListSpec.texunits[TU_INTER].offset *= materialScale;
-                        }
-
-                        Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
-                        shards << shineShard; // take ownership.
-                        subsector.shards() << shineShard; // link subspace.
-
                         shineShard->indices.resize(leftFanSize + rightFanSize);
 
                         vbuf.reserveElements(leftFanSize + rightFanSize, shineShard->indices);
@@ -2463,14 +2439,14 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         makeListPrimitive(*shineShard, gl::TriangleFan, leftFanSize, vbuf,
-                                          shineListSpec.unit(TU_INTER).scale,
-                                          shineListSpec.unit(TU_INTER).offset,
+                                          shineShard->listSpec.unit(TU_INTER).scale,
+                                          shineShard->listSpec.unit(TU_INTER).offset,
                                           Vector2f(1, 1),
                                           Vector2f(0, 0));
 
                         makeListPrimitive(*shineShard, gl::TriangleFan, rightFanSize, vbuf,
-                                          shineListSpec.unit(TU_INTER).scale,
-                                          shineListSpec.unit(TU_INTER).offset,
+                                          shineShard->listSpec.unit(TU_INTER).scale,
+                                          shineShard->listSpec.unit(TU_INTER).offset,
                                           Vector2f(1, 1),
                                           Vector2f(0, 0),
                                           leftFanSize /*indices offset*/);
@@ -2478,10 +2454,6 @@ DENG2_PIMPL(SectorCluster)
                 }
                 else // Generate one triangle strip.
                 {
-                    Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
-                    shards << shard; // take ownership.
-                    subsector.shards() << shard; // link to the subsector.
-
                     shard->indices.resize(4);
 
                     vbuf.reserveElements(4, shard->indices);
@@ -2505,27 +2477,13 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     makeListPrimitive(*shard, gl::TriangleStrip, 4, vbuf,
-                                      listSpec.unit(TU_PRIMARY       ).scale,
-                                      listSpec.unit(TU_PRIMARY       ).offset,
-                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                      listSpec.unit(TU_PRIMARY_DETAIL).offset);
+                                      shard->listSpec.unit(TU_PRIMARY       ).scale,
+                                      shard->listSpec.unit(TU_PRIMARY       ).offset,
+                                      shard->listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                      shard->listSpec.unit(TU_PRIMARY_DETAIL).offset);
 
                     if(shineRTU)
                     {
-                        DrawListSpec shineListSpec(ShineGeom);
-                        shineListSpec.texunits[TU_PRIMARY] = *shineRTU;
-                        if(shineMaskRTU)
-                        {
-                            shineListSpec.texunits[TU_INTER] = *shineMaskRTU;
-                            shineListSpec.texunits[TU_INTER].offset += materialOrigin;
-                            shineListSpec.texunits[TU_INTER].scale  *= materialScale;
-                            shineListSpec.texunits[TU_INTER].offset *= materialScale;
-                        }
-
-                        Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
-                        shards << shineShard; // take ownership.
-                        subsector.shards() << shineShard; // link to the subsector.
-
                         shineShard->indices.resize(4);
 
                         vbuf.reserveElements(4, shineShard->indices);
@@ -2542,10 +2500,10 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         makeListPrimitive(*shineShard, gl::TriangleStrip, 4, vbuf,
-                                          shineListSpec.unit(TU_INTER         ).scale,
-                                          shineListSpec.unit(TU_INTER         ).offset,
-                                          shineListSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                          shineListSpec.unit(TU_PRIMARY_DETAIL).offset);
+                                          shineShard->listSpec.unit(TU_INTER         ).scale,
+                                          shineShard->listSpec.unit(TU_INTER         ).offset,
+                                          shineShard->listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                          shineShard->listSpec.unit(TU_PRIMARY_DETAIL).offset);
                     }
                 }
             }
@@ -2553,7 +2511,7 @@ DENG2_PIMPL(SectorCluster)
             {
                 bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
-                Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
+                Shard *shard = new Shard(SkyMaskGeom);
                 shards << shard; // take ownership.
                 subsector.shards() << shard; // link to the subsector.
 
@@ -2938,70 +2896,67 @@ DENG2_PIMPL(SectorCluster)
 
         if(!skyMasked)
         {
-            DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+            Shard *shard = new Shard((modTex || hasDynlights)? LitGeom : UnlitGeom,
+                                     BM_NORMAL, modTex, modColor, hasDynlights);
             if(primaryRTU)
             {
-                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
-                listSpec.texunits[TU_PRIMARY].offset += materialOrigin;
-                listSpec.texunits[TU_PRIMARY].scale  *= materialScale;
-                listSpec.texunits[TU_PRIMARY].offset *= materialScale;
+                shard->listSpec.unit(TU_PRIMARY) = *primaryRTU;
+                shard->listSpec.unit(TU_PRIMARY).offset += materialOrigin;
+                shard->listSpec.unit(TU_PRIMARY).scale  *= materialScale;
+                shard->listSpec.unit(TU_PRIMARY).offset *= materialScale;
             }
             if(primaryDetailRTU)
             {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
-                listSpec.texunits[TU_PRIMARY_DETAIL].offset += materialOrigin;
+                shard->listSpec.unit(TU_PRIMARY_DETAIL) = *primaryDetailRTU;
+                shard->listSpec.unit(TU_PRIMARY_DETAIL).offset += materialOrigin;
             }
             if(interRTU)
             {
-                listSpec.texunits[TU_INTER] = *interRTU;
-                listSpec.texunits[TU_INTER].offset += materialOrigin;
-                listSpec.texunits[TU_INTER].scale  *= materialScale;
-                listSpec.texunits[TU_INTER].offset *= materialScale;
+                shard->listSpec.unit(TU_INTER) = *interRTU;
+                shard->listSpec.unit(TU_INTER).offset += materialOrigin;
+                shard->listSpec.unit(TU_INTER).scale  *= materialScale;
+                shard->listSpec.unit(TU_INTER).offset *= materialScale;
             }
             if(interDetailRTU)
             {
-                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
-                listSpec.texunits[TU_INTER_DETAIL].offset += materialOrigin;
+                shard->listSpec.unit(TU_INTER_DETAIL) = *interDetailRTU;
+                shard->listSpec.unit(TU_INTER_DETAIL).offset += materialOrigin;
             }
-
-            Shard *shard = new Shard(listSpec, BM_NORMAL, modTex, modColor, hasDynlights);
             shard->indices = indices;
             shards << shard; // take ownership.
             subsector.shards() << shard; // link to the subsector.
 
             makeListPrimitive(*shard, gl::TriangleFan, fanSize, vbuf,
-                              listSpec.unit(TU_PRIMARY       ).scale,
-                              listSpec.unit(TU_PRIMARY       ).offset,
-                              listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                              listSpec.unit(TU_PRIMARY_DETAIL).offset);
+                              shard->listSpec.unit(TU_PRIMARY       ).scale,
+                              shard->listSpec.unit(TU_PRIMARY       ).offset,
+                              shard->listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                              shard->listSpec.unit(TU_PRIMARY_DETAIL).offset);
 
             if(shineRTU)
             {
-                DrawListSpec shineListSpec(ShineGeom);
-                shineListSpec.texunits[TU_PRIMARY] = *shineRTU;
+                Shard *shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
+                shineShard->listSpec.unit(TU_PRIMARY) = *shineRTU;
                 if(shineMaskRTU)
                 {
-                    shineListSpec.texunits[TU_INTER] = *shineMaskRTU;
-                    shineListSpec.texunits[TU_INTER].offset += materialOrigin;
-                    shineListSpec.texunits[TU_INTER].scale  *= materialScale;
-                    shineListSpec.texunits[TU_INTER].offset *= materialScale;
+                    shineShard->listSpec.unit(TU_INTER) = *shineMaskRTU;
+                    shineShard->listSpec.unit(TU_INTER).offset += materialOrigin;
+                    shineShard->listSpec.unit(TU_INTER).scale  *= materialScale;
+                    shineShard->listSpec.unit(TU_INTER).offset *= materialScale;
                 }
-
-                Shard *shineShard = new Shard(shineListSpec, matSnapshot.shineBlendMode());
                 shineShard->indices = shineIndices;
                 shards << shineShard; // take ownership.
                 subsector.shards() << shineShard; // link to the subsector.
 
                 makeListPrimitive(*shineShard, gl::TriangleFan, fanSize, vbuf,
-                                  shineListSpec.unit(TU_INTER         ).scale,
-                                  shineListSpec.unit(TU_INTER         ).offset,
-                                  shineListSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                  shineListSpec.unit(TU_PRIMARY_DETAIL).offset);
+                                  shineShard->listSpec.unit(TU_INTER         ).scale,
+                                  shineShard->listSpec.unit(TU_INTER         ).offset,
+                                  shineShard->listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                  shineShard->listSpec.unit(TU_PRIMARY_DETAIL).offset);
             }
         }
         else // Sky-masked.
         {
-            Shard *shard = new Shard(DrawListSpec(SkyMaskGeom));
+            Shard *shard = new Shard(SkyMaskGeom);
             shard->indices = indices;
             shards << shard; // take ownership.
             subsector.shards() << shard; // link to the subsector.

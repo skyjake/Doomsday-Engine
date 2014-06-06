@@ -90,9 +90,6 @@ public:
         typedef de::GLTextureUnit UnitSpecs[NUM_TEXTURE_UNITS];
         UnitSpecs texunits;
 
-        Spec(GeomGroup group = UnlitGeom) : group(group)
-        {}
-
         inline de::GLTextureUnit &unit(int index) {
             DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
             return texunits[index];

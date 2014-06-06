@@ -20,11 +20,12 @@
 
 using namespace de;
 
-Shard::Shard(DrawList::Spec const &listSpec, blendmode_t blendmode, GLuint modTex,
-    Vector3f const &modColor, bool hasDynlights)
-    : listSpec    (listSpec)
-    , blendmode   (blendmode)
+Shard::Shard(GeomGroup geomGroup, blendmode_t blendmode,
+    GLuint modTex, Vector3f const &modColor, bool hasDynlights)
+    : blendmode   (blendmode)
     , modTex      (modTex)
     , modColor    (modColor)
     , hasDynlights(hasDynlights)
-{}
+{
+    listSpec.group = geomGroup;
+}

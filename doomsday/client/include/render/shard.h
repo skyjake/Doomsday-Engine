@@ -59,7 +59,7 @@ public:
     /**
      * Construct a new Shard of 3D map geometry.
      */
-    Shard(DrawList::Spec const &listSpec,
+    Shard(GeomGroup geomGroup          = UnlitGeom,
           blendmode_t blendmode        = BM_NORMAL,
           GLuint modTex                = 0,
           de::Vector3f const &modColor = de::Vector3f(),
