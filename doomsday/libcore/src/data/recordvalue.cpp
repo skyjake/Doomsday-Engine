@@ -153,7 +153,7 @@ Value *RecordValue::duplicate() const
     return new RecordValue(d->record);
 }
 
-RecordValue *RecordValue::duplicateUnowned() const
+Value *RecordValue::duplicateAsReference() const
 {
     verify();
     return new RecordValue(d->record);
@@ -192,7 +192,7 @@ Value *RecordValue::duplicateElement(Value const &value) const
     }
     if(dereference().hasMember(*text))
     {
-        return dereference()[*text].value().duplicate();
+        return dereference()[*text].value().duplicateAsReference();
     }
     throw NotFoundError("RecordValue::duplicateElement",
                         "'" + text->asText() + "' does not exist in the record");

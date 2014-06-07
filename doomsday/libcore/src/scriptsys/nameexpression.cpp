@@ -169,22 +169,17 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             // Reference to the variable.
             return new RefValue(variable);
         }
-        else if(RecordValue *recVal = variable->value().maybeAs<RecordValue>())
-        {
-            // As a special case, RecordValue is always passed as an unowned reference.
-            // One specifically has to request a copy with the built-in Record()
-            // function to get a copy.
-            return recVal->duplicateUnowned();
-        }
         else
         {
-            // Variables evaluate to their values.
-            return variable->value().duplicate();
+            // Variables evaluate to their values. As a special case, values may have
+            // ownership of their data. Here we don't want to duplicate the data, only
+            // reference it.
+            return variable->value().duplicateAsReference();
         }
     }
     
     throw NotFoundError("NameExpression::evaluate", "Identifier '" + _identifier + 
-        "' does not exist");
+                        "' does not exist");
 }
 
 void NameExpression::operator >> (Writer &to) const

@@ -503,6 +503,13 @@ sections.subsection('Creating new members using [].')
 myrec['assignedElement'] = 3000
 print myrec
 
+sections.subsection('Copying members using recutil.')
+import recutil
+record copyTarget
+recutil.copyMissingMembers(myrec, copyTarget)
+print "Copied:\n", copyTarget
+del recutil
+
 sections.subsection('Having two variables reference the same record.')
 reference = myrec
 print len(reference)

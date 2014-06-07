@@ -104,6 +104,7 @@ public:
     Record const &dereference() const;
 
     Value *duplicate() const;
+    Value *duplicateAsReference() const;
     Text asText() const;
     dsize size() const;
     void setElement(Value const &index, Value *elementValue);

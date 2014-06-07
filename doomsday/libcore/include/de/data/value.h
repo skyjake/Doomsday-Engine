@@ -65,6 +65,18 @@ public:
     virtual Value *duplicate() const = 0;
 
     /**
+     * Creates a duplicate copy of the value. If the value has ownership of its data,
+     * the ownership relationship is not replicated in the duplicate, but instead
+     * the duplicate references the original data.
+     *
+     * If the Value does not support this type of ownership, this method behaves just
+     * like duplicate().
+     *
+     * @return New Value object. Caller gets ownership of the object.
+     */
+    virtual Value *duplicateAsReference() const;
+
+    /**
      * Convert the value to a number.  Implementing this is
      * optional.  The default implementation will raise an
      * exception.

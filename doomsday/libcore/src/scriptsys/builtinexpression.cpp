@@ -91,11 +91,11 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         {
             if(_type == DICTIONARY_KEYS)
             {
-                array->add(i->first.value->duplicate());
+                array->add(i->first.value->duplicateAsReference());
             }
             else
             {
-                array->add(i->second->duplicate());
+                array->add(i->second->duplicateAsReference());
             }
         }
         return array;

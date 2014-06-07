@@ -6,6 +6,7 @@ include(../dep_core.pri)
 
 mod.files = \
     $$DENG_MODULES_DIR/Config.de \
+    $$DENG_MODULES_DIR/Log.de \
     $$DENG_MODULES_DIR/recutil.de
 
 macx {

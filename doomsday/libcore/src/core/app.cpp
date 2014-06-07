@@ -297,6 +297,13 @@ App::App(NativePath const &appFilePath, QStringList args)
     // be flushed (Config.log.file).
     d->logBuffer.enableFlushing(false);
 
+    if(d->cmdLine.has("-stdout"))
+    {
+        // Standard output can be flushed straight away.
+        d->logBuffer.enableStandardOutput(true);
+        d->logBuffer.enableFlushing(true);
+    }
+
     // The log filter will be read from Config, but until that time we can use
     // the options from the command line.
     d->setLogLevelAccordingToOptions();
