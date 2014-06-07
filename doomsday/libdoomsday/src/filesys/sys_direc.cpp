@@ -29,8 +29,6 @@
 #  include <direct.h>
 #  include <io.h>
 #  define strdup _strdup
-#  define mkdir  _mkdir
-#  define access _access
 #endif
 
 #if defined(UNIX)
@@ -48,6 +46,7 @@
 #include <de/Log>
 
 #include "doomsday/filesys/sys_direc.h"
+#include "doomsday/filesys/fs_util.h"
 #include "doomsday/paths.h"
 
 static void setPathFromPathDir(directory_t* dir, const char* path);

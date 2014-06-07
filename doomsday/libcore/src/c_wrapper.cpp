@@ -230,7 +230,7 @@ Info *Info_NewFromFile(char const *nativePath)
     try
     {
         QScopedPointer<de::Info> info(new de::Info);
-        info->parseNativeFile(QString::fromUtf8(nativePath));
+        info->parseNativeFile(nativePath);
         return reinterpret_cast<Info *>(info.take());
     }
     catch(de::Error const &er)

@@ -50,18 +50,12 @@
 
 #define INTEGER64 __int64
 
-#define stricmp _stricmp
+#define stricmp  _stricmp
 #define strnicmp _strnicmp
-//#define open _open
-//#define close _close
-//#define read _read
-//#define write _write
-#define access _access
-#define mkdir _mkdir
-#define strlwr _strlwr
-#define strupr _strupr
-#define strdup _strdup
-#define spawnlp _spawnlp
+#define strlwr   _strlwr
+#define strupr   _strupr
+#define strdup   _strdup
+#define spawnlp  _spawnlp
 
 #endif                          // WIN32
 
