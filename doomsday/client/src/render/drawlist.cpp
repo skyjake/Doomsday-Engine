@@ -600,14 +600,20 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
                 if(conditions & SetMatrixTexture)
                 {
                     // Primitive-specific texture translation & scale.
+                    DENG2_ASSERT(prim.texunits[0].useOffset);
+                    DENG2_ASSERT(prim.texunits[0].useScale);
+
+                    Vector2f const texOffset = (prim.texunits[0].useOffset? prim.texunits[0].offset : Vector2f());
+                    Vector2f const texScale  = (prim.texunits[0].useScale?  prim.texunits[0].scale  : Vector2f(1, 1));
+
                     if(conditions & SetMatrixTexture0)
                     {
                         glActiveTexture(GL_TEXTURE0);
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
-                        glScalef(prim.texScale.x, prim.texScale.y, 1);
+                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
+                        glScalef(texScale.x, texScale.y, 1);
                     }
 
                     if(conditions & SetMatrixTexture1)
@@ -616,22 +622,28 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(prim.texOffset.x * prim.texScale.x, prim.texOffset.y * prim.texScale.y, 1);
-                        glScalef(prim.texScale.x, prim.texScale.y, 1);
+                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
+                        glScalef(texScale.x, texScale.y, 1);
                     }
                 }
 
                 if(conditions & SetMatrixDTexture)
                 {
                     // Primitive-specific texture translation & scale.
+                    DENG2_ASSERT(prim.texunits[1].useOffset);
+                    DENG2_ASSERT(prim.texunits[1].useScale);
+
+                    Vector2f const texOffset = (prim.texunits[1].useOffset? prim.texunits[1].offset : Vector2f());
+                    Vector2f const texScale  = (prim.texunits[1].useScale?  prim.texunits[1].scale  : Vector2f(1, 1));
+
                     if(conditions & SetMatrixDTexture0)
                     {
                         glActiveTexture(GL_TEXTURE0);
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
-                        glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
+                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
+                        glScalef(texScale.x, texScale.y, 1);
                     }
 
                     if(conditions & SetMatrixDTexture1)
@@ -640,8 +652,8 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(prim.detailTexOffset.x * prim.detailTexScale.x, prim.detailTexOffset.y * prim.detailTexScale.y, 1);
-                        glScalef(prim.detailTexScale.x, prim.detailTexScale.y, 1);
+                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
+                        glScalef(texScale.x, texScale.y, 1);
                     }
                 }
 

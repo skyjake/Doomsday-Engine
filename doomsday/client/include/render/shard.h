@@ -24,6 +24,7 @@
 #include <de/Vector>
 #include "rendersystem.h" // WorldVBuf
 #include "DrawList"
+#include "gl/gltextureunit.h"
 
 /**
  * 3D map geometry fragment.
@@ -34,7 +35,7 @@
 class Shard
 {
 public:
-    DrawList::Spec listSpec;
+    DrawListSpec listSpec;
     blendmode_t blendmode;
     GLuint modTex;
     de::Vector3f modColor;
@@ -47,10 +48,20 @@ public:
         WorldVBuf const *vbuffer;
         WorldVBuf::Index vertCount;
         WorldVBuf::Index *indices;
-        de::Vector2f texScale;
-        de::Vector2f texOffset;
-        de::Vector2f detailTexScale;
-        de::Vector2f detailTexOffset;
+        struct Texunit {
+            bool useOffset;
+            bool useScale;
+            de::Vector2f offset;
+            de::Vector2f scale;
+        } texunits[2];
+
+        Primitive &setTexOffset(int unit, de::Vector2f const &newOffset);
+        Primitive &setTexScale (int unit, de::Vector2f const &newScale);
+
+        inline Primitive &setTex0Offset(de::Vector2f const &newOffset) { return setTexOffset(0, newOffset); }
+        inline Primitive &setTex0Scale (de::Vector2f const &newScale)  { return setTexScale (0, newScale);  }
+        inline Primitive &setTex1Offset(de::Vector2f const &newOffset) { return setTexOffset(1, newOffset); }
+        inline Primitive &setTex1Scale (de::Vector2f const &newScale)  { return setTexScale (1, newScale);  }
     };
     typedef QList<Primitive> Primitives;
     Primitives primitives;
@@ -65,6 +76,14 @@ public:
           de::Vector3f const &modColor = de::Vector3f(),
           bool hasDynlights            = false);
 
+    DrawListSpec const &drawListSpec() const;
+
+    Shard &setTextureUnit(texunitid_t unit, de::GLTextureUnit const &gltu);
+
+    Primitive &newPrimitive(de::gl::Primitive type, WorldVBuf::Index vertCount,
+        WorldVBuf &vbuf, WorldVBuf::Index indicesOffset = 0);
 };
+
+typedef Shard::Primitive ShardPrimitive;
 
 #endif // DENG_CLIENT_RENDER_SHARD_H

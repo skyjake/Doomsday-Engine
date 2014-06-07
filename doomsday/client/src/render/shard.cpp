@@ -20,6 +20,22 @@
 
 using namespace de;
 
+Shard::Primitive &Shard::Primitive::setTexOffset(int unit, Vector2f const &newOffset)
+{
+    DENG2_ASSERT(unit >= 0 && unit < 2);
+    texunits[unit].offset    = newOffset;
+    texunits[unit].useOffset = true;
+    return *this;
+}
+
+Shard::Primitive &Shard::Primitive::setTexScale(int unit, Vector2f const &newScale)
+{
+    DENG2_ASSERT(unit >= 0 && unit < 2);
+    texunits[unit].scale    = newScale;
+    texunits[unit].useScale = true;
+    return *this;
+}
+
 Shard::Shard(GeomGroup geomGroup, blendmode_t blendmode,
     GLuint modTex, Vector3f const &modColor, bool hasDynlights)
     : blendmode   (blendmode)
@@ -28,4 +44,29 @@ Shard::Shard(GeomGroup geomGroup, blendmode_t blendmode,
     , hasDynlights(hasDynlights)
 {
     listSpec.group = geomGroup;
+}
+
+DrawListSpec const &Shard::drawListSpec() const
+{
+    return listSpec;
+}
+
+Shard &Shard::setTextureUnit(texunitid_t unit, GLTextureUnit const &gltu)
+{
+    listSpec.unit(unit) = gltu;
+    return *this;
+}
+
+Shard::Primitive &Shard::newPrimitive(gl::Primitive type, WorldVBuf::Index vertCount,
+    WorldVBuf &vbuf, WorldVBuf::Index indicesOffset)
+{
+    primitives.append(Primitive());
+    Primitive &prim = primitives.last();
+
+    prim.type      = type;
+    prim.vbuffer   = &vbuf;
+    prim.vertCount = vertCount;
+    prim.indices   = indices.data() + indicesOffset;
+
+    return prim;
 }

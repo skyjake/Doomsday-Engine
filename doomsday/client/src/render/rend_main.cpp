@@ -1538,11 +1538,12 @@ static void drawSubspace(ConvexSubspace &subspace)
     // Prepare shard geometries.
     subspace.cluster().prepareShards(subspace);
 
-    // Draw all shard geometries.
+    // Add all shard geometries for the subspace to the relevant draw lists for
+    // batched drawing (later).
     DrawLists &drawLists = ClientApp::renderSystem().drawLists();
     foreach(Shard const *shard, subsector.shards())
     {
-        drawLists.find(shard->listSpec) << *shard;
+        drawLists.find(shard->drawListSpec()) << *shard;
     }
 
     // When the viewer is not in the void, we can angle-occlude the range defined by
