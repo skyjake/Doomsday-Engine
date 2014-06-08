@@ -40,8 +40,8 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
-    typedef QMap<String, Record *> NativeModules; // not owned
-    NativeModules nativeModules;
+    typedef QMap<String, Record *> NativeModules;
+    NativeModules nativeModules; // not owned
     Record versionModule; // Version: information about the platform and build
     Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
@@ -138,6 +138,11 @@ Record &ScriptSystem::nativeModule(String const &name)
     Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
     DENG2_ASSERT(foundNative != d->nativeModules.constEnd());
     return *foundNative.value();
+}
+
+StringList ScriptSystem::nativeModules() const
+{
+    return d->nativeModules.keys();
 }
 
 static int sortFilesByModifiedAt(File const *a, File const *b)

@@ -24,6 +24,8 @@
 #include "../Record"
 #include "../File"
 
+#include <QMap>
+
 namespace de {
 
 /**
@@ -52,6 +54,13 @@ public:
     void removeNativeModule(String const &name);
 
     Record &nativeModule(String const &name);
+
+    /**
+     * Returns a list of the names of all the existing native modules.
+     *
+     * @return List of module names.
+     */
+    StringList nativeModules() const;
 
     /**
      * Imports a script module that is located on the import path.

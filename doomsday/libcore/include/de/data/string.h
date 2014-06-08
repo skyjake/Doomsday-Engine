@@ -327,6 +327,8 @@ public:
  */
 size_t qchar_strlen(QChar const *str);
 
+typedef QList<String> StringList;
+
 } // namespace de
 
 #endif // LIBDENG2_STRING_H
