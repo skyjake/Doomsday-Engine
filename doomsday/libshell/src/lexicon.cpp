@@ -21,34 +21,62 @@
 namespace de {
 namespace shell {
 
-Lexicon::Lexicon()
+DENG2_PIMPL_NOREF(Lexicon)
+{
+    Terms terms;
+    String extraChars;
+    bool caseSensitive;
+
+    Instance() : caseSensitive(false) {}
+};
+
+Lexicon::Lexicon() : d(new Instance)
 {}
+
+Lexicon::Lexicon(Lexicon const &other) : d(new Instance(*other.d))
+{}
+
+Lexicon &Lexicon::operator = (Lexicon const &other)
+{
+    d.reset(new Instance(*other.d));
+    return *this;
+}
 
 void Lexicon::setAdditionalWordChars(String const &chars)
 {
-    _extraChars = chars;
+    d->extraChars = chars;
+}
+
+void Lexicon::setCaseSensitive(bool sensitive)
+{
+    d->caseSensitive = sensitive;
 }
 
 void Lexicon::addTerm(String const &term)
 {
-    _terms.insert(term);
+    d->terms.insert(term);
 }
 
 Lexicon::Terms Lexicon::terms() const
 {
-    return _terms;
+    return d->terms;
 }
 
 String Lexicon::additionalWordChars() const
 {
-    return _extraChars;
+    return d->extraChars;
 }
 
 bool Lexicon::isWordChar(QChar ch) const
 {
     // Default word characters.
     if(ch.isLetterOrNumber()) return true;
-    return _extraChars.contains(ch);
+    return d->extraChars.contains(ch);
+}
+
+bool Lexicon::isCaseSensitive() const
+{
+    return d->caseSensitive;
 }
 
 } // namespace shell
