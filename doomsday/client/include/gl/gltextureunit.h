@@ -134,24 +134,6 @@ public:
         return *this;
     }
 
-    bool operator == (GLTextureUnit const &other) const {
-        if(texture)
-        {
-            if(texture != other.texture) return false;
-        }
-        else
-        {
-            if(unmanaged != other.unmanaged) return false;
-        }
-        if(!de::fequal(opacity, other.opacity)) return false;
-        if(scale != other.scale) return false;
-        if(offset != other.offset) return false;
-        return true;
-    }
-    bool operator != (GLTextureUnit const other) const {
-        return !(*this == other);
-    }
-
     bool hasTexture() const {
         return (texture && texture->glName() != 0) || unmanaged.glName != 0;
     }
