@@ -600,11 +600,15 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
                 if(conditions & SetMatrixTexture)
                 {
                     // Primitive-specific texture translation & scale.
-                    DENG2_ASSERT(prim.texunits[0].useOffset);
-                    DENG2_ASSERT(prim.texunits[0].useScale);
+                    Vector2f const primOffset = (prim.texunits[0].useOffset? prim.texunits[0].offset : Vector2f());
+                    Vector2f const primScale  = (prim.texunits[0].useScale?  prim.texunits[0].scale  : Vector2f(1, 1));
 
-                    Vector2f const texOffset = (prim.texunits[0].useOffset? prim.texunits[0].offset : Vector2f());
-                    Vector2f const texScale  = (prim.texunits[0].useScale?  prim.texunits[0].scale  : Vector2f(1, 1));
+                    Vector2f texOffset = d->spec.unit(d->spec.group == ShineGeom? TU_INTER : TU_PRIMARY).offset;
+                    Vector2f texScale  = d->spec.unit(d->spec.group == ShineGeom? TU_INTER : TU_PRIMARY).scale;
+
+                    texOffset += primOffset;
+                    texScale  *= primScale;
+                    texOffset *= primScale;
 
                     if(conditions & SetMatrixTexture0)
                     {
@@ -630,11 +634,15 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
                 if(conditions & SetMatrixDTexture)
                 {
                     // Primitive-specific texture translation & scale.
-                    DENG2_ASSERT(prim.texunits[1].useOffset);
-                    DENG2_ASSERT(prim.texunits[1].useScale);
+                    Vector2f const primOffset = (prim.texunits[1].useOffset? prim.texunits[1].offset : Vector2f());
+                    Vector2f const primScale  = (prim.texunits[1].useScale?  prim.texunits[1].scale  : Vector2f(1, 1));
 
-                    Vector2f const texOffset = (prim.texunits[1].useOffset? prim.texunits[1].offset : Vector2f());
-                    Vector2f const texScale  = (prim.texunits[1].useScale?  prim.texunits[1].scale  : Vector2f(1, 1));
+                    Vector2f texOffset = d->spec.unit(TU_PRIMARY_DETAIL).offset;
+                    Vector2f texScale  = d->spec.unit(TU_PRIMARY_DETAIL).scale;
+
+                    texOffset += primOffset;
+                    texScale  *= primScale;
+                    texOffset *= primScale;
 
                     if(conditions & SetMatrixDTexture0)
                     {

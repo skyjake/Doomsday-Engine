@@ -1677,20 +1677,8 @@ DENG2_PIMPL(SectorCluster)
             }
         }
 
-        if(!devRendSkyMode)
-        {
-            shard->newPrimitive(gl::TriangleStrip, vertCount, vbuf);
-        }
-        else
-        {
-            shard->newPrimitive(gl::TriangleStrip, vertCount, vbuf)
-                    .setTex0Offset(shard->listSpec.unit(TU_PRIMARY       ).offset)
-                    .setTex0Scale (shard->listSpec.unit(TU_PRIMARY       ).scale )
-                    .setTex1Offset(shard->listSpec.unit(TU_PRIMARY_DETAIL).offset)
-                    .setTex1Scale (shard->listSpec.unit(TU_PRIMARY_DETAIL).scale );
-        }
+        shard->newPrimitive(gl::TriangleStrip, vertCount, vbuf);
     }
-
     void prepareSkyMaskWallShards(ConvexSubspace &subspace, WallEdge::SectionId sectionId)
     {
         // Determine strip generation behavior.
@@ -2295,26 +2283,18 @@ DENG2_PIMPL(SectorCluster)
                 if(primaryRTU)
                 {
                     shard->setTextureUnit(TU_PRIMARY, *primaryRTU);
-                    shard->listSpec.unit(TU_PRIMARY).offset += materialOrigin;
-                    shard->listSpec.unit(TU_PRIMARY).scale  *= materialScale;
-                    shard->listSpec.unit(TU_PRIMARY).offset *= materialScale;
                 }
                 if(primaryDetailRTU)
                 {
                     shard->setTextureUnit(TU_PRIMARY_DETAIL, *primaryDetailRTU);
-                    shard->listSpec.unit(TU_PRIMARY_DETAIL).offset += materialOrigin;
                 }
                 if(interRTU)
                 {
                     shard->setTextureUnit(TU_INTER, *interRTU);
-                    shard->listSpec.unit(TU_INTER).offset += materialOrigin;
-                    shard->listSpec.unit(TU_INTER).scale  *= materialScale;
-                    shard->listSpec.unit(TU_INTER).offset *= materialScale;
                 }
                 if(interDetailRTU)
                 {
                     shard->setTextureUnit(TU_INTER_DETAIL, *interDetailRTU);
-                    shard->listSpec.unit(TU_INTER_DETAIL).offset += materialOrigin;
                 }
                 shards << shard; // take ownership.
                 subsector.shards() << shard; // link to the subsector.
@@ -2328,9 +2308,6 @@ DENG2_PIMPL(SectorCluster)
                     if(shineMaskRTU)
                     {
                         shineShard->setTextureUnit(TU_INTER, *shineMaskRTU);
-                        shineShard->listSpec.unit(TU_INTER).offset += materialOrigin;
-                        shineShard->listSpec.unit(TU_INTER).scale  *= materialScale;
-                        shineShard->listSpec.unit(TU_INTER).offset *= materialScale;
                     }
                     shards << shineShard; // take ownership.
                     subsector.shards() << shineShard; // link subspace.
@@ -2365,16 +2342,14 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     shard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf)
-                            .setTex0Offset(shard->listSpec.unit(TU_PRIMARY       ).offset)
-                            .setTex0Scale (shard->listSpec.unit(TU_PRIMARY       ).scale )
-                            .setTex1Offset(shard->listSpec.unit(TU_PRIMARY_DETAIL).offset)
-                            .setTex1Scale (shard->listSpec.unit(TU_PRIMARY_DETAIL).scale );
+                            .setTex0Offset(materialOrigin)
+                            .setTex0Scale (materialScale)
+                            .setTex1Offset(materialOrigin);
 
                     shard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf, leftFanSize /*indices offset*/)
-                            .setTex0Offset(shard->listSpec.unit(TU_PRIMARY       ).offset)
-                            .setTex0Scale (shard->listSpec.unit(TU_PRIMARY       ).scale )
-                            .setTex1Offset(shard->listSpec.unit(TU_PRIMARY_DETAIL).offset)
-                            .setTex1Scale (shard->listSpec.unit(TU_PRIMARY_DETAIL).scale );
+                            .setTex0Offset(materialOrigin)
+                            .setTex0Scale (materialScale)
+                            .setTex1Offset(materialOrigin);
 
                     if(shineRTU)
                     {
@@ -2392,12 +2367,12 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         shineShard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf)
-                                .setTex0Offset(shineShard->listSpec.unit(TU_INTER).offset)
-                                .setTex0Scale (shineShard->listSpec.unit(TU_INTER).scale );
+                                .setTex0Offset(materialOrigin)
+                                .setTex0Scale (materialScale);
 
                         shineShard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf, leftFanSize /*indices offset*/)
-                                .setTex0Offset(shineShard->listSpec.unit(TU_INTER).offset)
-                                .setTex0Scale (shineShard->listSpec.unit(TU_INTER).scale );
+                                .setTex0Offset(materialOrigin)
+                                .setTex0Scale (materialScale);
                     }
                 }
                 else // Generate one triangle strip.
@@ -2425,10 +2400,9 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     shard->newPrimitive(gl::TriangleStrip, 4, vbuf)
-                            .setTex0Offset(shard->listSpec.unit(TU_PRIMARY       ).offset)
-                            .setTex0Scale (shard->listSpec.unit(TU_PRIMARY       ).scale )
-                            .setTex1Offset(shard->listSpec.unit(TU_PRIMARY_DETAIL).offset)
-                            .setTex1Scale (shard->listSpec.unit(TU_PRIMARY_DETAIL).scale );
+                            .setTex0Offset(materialOrigin)
+                            .setTex0Scale (materialScale)
+                            .setTex1Offset(materialOrigin);
 
                     if(shineRTU)
                     {
@@ -2448,8 +2422,8 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         shineShard->newPrimitive(gl::TriangleStrip, 4, vbuf)
-                                .setTex0Offset(shineShard->listSpec.unit(TU_INTER).offset)
-                                .setTex0Scale (shineShard->listSpec.unit(TU_INTER).scale );
+                                .setTex0Offset(materialOrigin)
+                                .setTex0Scale (materialScale);
                     }
                 }
             }
@@ -2847,36 +2821,27 @@ DENG2_PIMPL(SectorCluster)
             if(primaryRTU)
             {
                 shard->setTextureUnit(TU_PRIMARY, *primaryRTU);
-                shard->listSpec.unit(TU_PRIMARY).offset += materialOrigin;
-                shard->listSpec.unit(TU_PRIMARY).scale  *= materialScale;
-                shard->listSpec.unit(TU_PRIMARY).offset *= materialScale;
             }
             if(primaryDetailRTU)
             {
                 shard->setTextureUnit(TU_PRIMARY_DETAIL, *primaryDetailRTU);
-                shard->listSpec.unit(TU_PRIMARY_DETAIL).offset += materialOrigin;
             }
             if(interRTU)
             {
                 shard->setTextureUnit(TU_INTER, *interRTU);
-                shard->listSpec.unit(TU_INTER).offset += materialOrigin;
-                shard->listSpec.unit(TU_INTER).scale  *= materialScale;
-                shard->listSpec.unit(TU_INTER).offset *= materialScale;
             }
             if(interDetailRTU)
             {
                 shard->setTextureUnit(TU_INTER_DETAIL, *interDetailRTU);
-                shard->listSpec.unit(TU_INTER_DETAIL).offset += materialOrigin;
             }
             shard->indices = indices;
             shards << shard; // take ownership.
             subsector.shards() << shard; // link to the subsector.
 
             shard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
-                    .setTex0Offset(shard->listSpec.unit(TU_PRIMARY       ).offset)
-                    .setTex0Scale (shard->listSpec.unit(TU_PRIMARY       ).scale )
-                    .setTex1Offset(shard->listSpec.unit(TU_PRIMARY_DETAIL).offset)
-                    .setTex1Scale (shard->listSpec.unit(TU_PRIMARY_DETAIL).scale );
+                    .setTex0Offset(materialOrigin)
+                    .setTex0Scale (materialScale)
+                    .setTex1Offset(materialOrigin);
 
             if(shineRTU)
             {
@@ -2885,17 +2850,14 @@ DENG2_PIMPL(SectorCluster)
                 if(shineMaskRTU)
                 {
                     shineShard->setTextureUnit(TU_INTER, *shineMaskRTU);
-                    shineShard->listSpec.unit(TU_INTER).offset += materialOrigin;
-                    shineShard->listSpec.unit(TU_INTER).scale  *= materialScale;
-                    shineShard->listSpec.unit(TU_INTER).offset *= materialScale;
                 }
                 shineShard->indices = shineIndices;
                 shards << shineShard; // take ownership.
                 subsector.shards() << shineShard; // link to the subsector.
 
                 shineShard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
-                        .setTex0Offset(shineShard->listSpec.unit(TU_INTER).offset)
-                        .setTex0Scale (shineShard->listSpec.unit(TU_INTER).scale );
+                        .setTex0Offset(materialOrigin)
+                        .setTex0Scale (materialScale);
             }
         }
         else // Sky-masked.
