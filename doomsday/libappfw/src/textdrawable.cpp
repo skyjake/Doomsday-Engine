@@ -290,4 +290,9 @@ bool TextDrawable::isBeingWrapped() const
     return !d->tasks.isDone();
 }
 
+Font const &TextDrawable::font() const
+{
+    return d->backWrap->font();
+}
+
 } // namespace de

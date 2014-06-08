@@ -154,7 +154,7 @@ DENG2_PIMPL(GLTextComposer)
             if(i < lines.size())
             {
                 // Is the rasterized copy up to date?
-                if(!isLineVisible(i) || matchingSegments(i, info))
+                if(/*!isLineVisible(i) ||*/ matchingSegments(i, info))
                 {
                     // This line can be kept as is.
                     continue;
