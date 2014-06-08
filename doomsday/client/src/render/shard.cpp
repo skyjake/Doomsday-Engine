@@ -20,6 +20,26 @@
 
 using namespace de;
 
+Vector2f Shard::Primitive::texOffset(int unit) const
+{
+    DENG2_ASSERT(unit >= 0 && unit < 2);
+    if(texunits[unit].useOffset)
+    {
+        return texunits[unit].offset;
+    }
+    return Vector2f();
+}
+
+Vector2f Shard::Primitive::texScale(int unit) const
+{
+    DENG2_ASSERT(unit >= 0 && unit < 2);
+    if(texunits[unit].useScale)
+    {
+        return texunits[unit].scale;
+    }
+    return Vector2f(1, 1);
+}
+
 Shard::Primitive &Shard::Primitive::setTexOffset(int unit, Vector2f const &newOffset)
 {
     DENG2_ASSERT(unit >= 0 && unit < 2);

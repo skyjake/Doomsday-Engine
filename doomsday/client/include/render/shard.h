@@ -55,8 +55,16 @@ public:
             de::Vector2f scale;
         } texunits[2];
 
+        de::Vector2f texOffset(int unit) const;
+        de::Vector2f texScale (int unit) const;
+
         Primitive &setTexOffset(int unit, de::Vector2f const &newOffset);
         Primitive &setTexScale (int unit, de::Vector2f const &newScale);
+
+        inline de::Vector2f tex0Offset() const { return texOffset(0); }
+        inline de::Vector2f tex0Scale () const { return texScale (0); }
+        inline de::Vector2f tex1Offset() const { return texOffset(1); }
+        inline de::Vector2f tex1Scale () const { return texScale (1); }
 
         inline Primitive &setTex0Offset(de::Vector2f const &newOffset) { return setTexOffset(0, newOffset); }
         inline Primitive &setTex0Scale (de::Vector2f const &newScale)  { return setTexScale (0, newScale);  }
@@ -76,10 +84,27 @@ public:
           de::Vector3f const &modColor = de::Vector3f(),
           bool hasDynlights            = false);
 
+    /**
+     * Returns the final DrawList specification for the Shard.
+     */
     DrawListSpec const &drawListSpec() const;
 
+    /**
+     * Configure all GL texture units in order, according to the given @a gltumap.
+     * @note If no entry exists for a given unit then it will remain @em unchanged.
+     *
+     * @see setTextureUnit()
+     */
     Shard &setAllTextureUnits(de::GLTextureUnit const *gltumap[NUM_TEXTURE_UNITS]);
 
+    /**
+     * Configure a single GL texture @a unit according to @a gltu.
+     *
+     * @param unit  Unique identifier of the texture unit to change.
+     * @param gltu  GL texture unit configuration to apply.
+     *
+     * @see setAllTextureUnits()
+     */
     Shard &setTextureUnit(texunitid_t unit, de::GLTextureUnit const &gltu);
 
     Primitive &newPrimitive(de::gl::Primitive type, WorldVBuf::Index vertCount,
