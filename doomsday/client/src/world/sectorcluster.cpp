@@ -2125,13 +2125,19 @@ DENG2_PIMPL(SectorCluster)
         if(!Rend_MustDrawAsVissprite(leftSection.flags().testFlag(WallEdgeSection::ForceOpaque),
                                      skyMasked, opacity, blendmode, matSnapshot))
         {
-            // Map RTU configuration from prepared MaterialSnapshot(s).
-            GLTextureUnit const *primaryRTU       = (!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL;
-            GLTextureUnit const *primaryDetailRTU = (r_detail && !skyMasked && matSnapshot.unit(RTU_PRIMARY_DETAIL).hasTexture())? &matSnapshot.unit(RTU_PRIMARY_DETAIL) : NULL;
-            GLTextureUnit const *interRTU         = (!skyMasked && matSnapshot.unit(RTU_INTER).hasTexture())? &matSnapshot.unit(RTU_INTER) : NULL;
-            GLTextureUnit const *interDetailRTU   = (r_detail && !skyMasked && matSnapshot.unit(RTU_INTER_DETAIL).hasTexture())? &matSnapshot.unit(RTU_INTER_DETAIL) : NULL;
-            GLTextureUnit const *shineRTU         = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture())? &matSnapshot.unit(RTU_REFLECTION) : NULL;
-            GLTextureUnit const *shineMaskRTU     = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture() && matSnapshot.unit(RTU_REFLECTION_MASK).hasTexture())? &matSnapshot.unit(RTU_REFLECTION_MASK) : NULL;
+            // Map GL texture units to "virtual units" in the prepared material snapshot:
+            GLTextureUnit const *texUnitMap[NUM_TEXTURE_UNITS] = {
+                /* TU_PRIMARY */        ((!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL),
+                /* TU_PRIMARY_DETAIL */ ((r_detail && !skyMasked && matSnapshot.unit(RTU_PRIMARY_DETAIL).hasTexture())? &matSnapshot.unit(RTU_PRIMARY_DETAIL) : NULL),
+                /* TU_INTER */          ((!skyMasked && matSnapshot.unit(RTU_INTER).hasTexture())? &matSnapshot.unit(RTU_INTER) : NULL),
+                /* TU_INTER_DETAIL */   ((r_detail && !skyMasked && matSnapshot.unit(RTU_INTER_DETAIL).hasTexture())? &matSnapshot.unit(RTU_INTER_DETAIL) : NULL)
+            };
+            GLTextureUnit const *shineTexUnitMap[NUM_TEXTURE_UNITS] = {
+                /* TU_PRIMARY */        ((useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture())? &matSnapshot.unit(RTU_REFLECTION) : NULL),
+                /* TU_PRIMARY_DETAIL */ 0,
+                /* TU_INTER */          ((useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture() && matSnapshot.unit(RTU_REFLECTION_MASK).hasTexture())? &matSnapshot.unit(RTU_REFLECTION_MASK) : NULL),
+                /* TU_INTER_DETAIL */   0
+            };
 
             bool useLights = false, useShadows = false;
 
@@ -2168,24 +2174,27 @@ DENG2_PIMPL(SectorCluster)
             coord_t const sectionWidth = de::abs((rightSection.edge().origin() - leftSection.edge().origin()).length());
 
             Vector2f primaryTexCoords[4];
-            quadTexCoords(primaryTexCoords, posCoords, sectionWidth, topLeft);
+            if(texUnitMap[TU_PRIMARY])
+            {
+                quadTexCoords(primaryTexCoords, posCoords, sectionWidth, topLeft);
+            }
 
             Vector2f interTexCoords[4];
-            if(interRTU)
+            if(texUnitMap[TU_INTER])
             {
                 quadTexCoords(interTexCoords, posCoords, sectionWidth, topLeft);
             }
 
-            Vector2f shineTexCoords[4];
-            if(shineRTU)
-            {
-                quadShinyTexCoords(shineTexCoords, posCoords, sectionWidth);
-            }
-
             Vector2f modTexCoords[4];
-            if(modTex && Rend_IsMTexLights())
+            if(modTex)
             {
                 quadLightCoords(modTexCoords, modTexSt[0], modTexSt[1]);
+            }
+
+            Vector2f shineTexCoords[4];
+            if(shineTexUnitMap[TU_PRIMARY])
+            {
+                quadShinyTexCoords(shineTexCoords, posCoords, sectionWidth);
             }
 
             // Light this polygon.
@@ -2197,7 +2206,7 @@ DENG2_PIMPL(SectorCluster)
                                        ambientLight, glowing, topTintColor, bottomTintColor, lightLevelDeltas,
                                        posCoords, colorCoords);
 
-                if(shineRTU)
+                if(shineTexUnitMap[TU_PRIMARY])
                 {
                     // Strength of the shine.
                     Vector3f const &minColor = matSnapshot.shineMinColor();
@@ -2205,7 +2214,7 @@ DENG2_PIMPL(SectorCluster)
                     {
                         Vector4f &color = shineColorCoords[i];
                         color = Vector3f(colorCoords[i]).max(minColor);
-                        color.w = shineRTU->opacity;
+                        color.w = shineTexUnitMap[TU_PRIMARY]->opacity;
                     }
                 }
 
@@ -2280,35 +2289,18 @@ DENG2_PIMPL(SectorCluster)
             {
                 Shard *shard = new Shard((modTex || hasDynlights)? LitGeom : UnlitGeom,
                                          BM_NORMAL, modTex, modColor, hasDynlights);
-                if(primaryRTU)
-                {
-                    shard->setTextureUnit(TU_PRIMARY, *primaryRTU);
-                }
-                if(primaryDetailRTU)
-                {
-                    shard->setTextureUnit(TU_PRIMARY_DETAIL, *primaryDetailRTU);
-                }
-                if(interRTU)
-                {
-                    shard->setTextureUnit(TU_INTER, *interRTU);
-                }
-                if(interDetailRTU)
-                {
-                    shard->setTextureUnit(TU_INTER_DETAIL, *interDetailRTU);
-                }
+                shard->setAllTextureUnits(texUnitMap);
+
                 shards << shard; // take ownership.
                 subsector.shards() << shard; // link to the subsector.
 
                 // Need a shard for the surface shine effect?
                 Shard *shineShard = 0;
-                if(shineRTU)
+                if(shineTexUnitMap[TU_PRIMARY])
                 {
                     shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
-                    shineShard->setTextureUnit(TU_PRIMARY, *shineRTU);
-                    if(shineMaskRTU)
-                    {
-                        shineShard->setTextureUnit(TU_INTER, *shineMaskRTU);
-                    }
+                    shineShard->setAllTextureUnits(shineTexUnitMap);
+
                     shards << shineShard; // take ownership.
                     subsector.shards() << shineShard; // link subspace.
                 }
@@ -2325,17 +2317,17 @@ DENG2_PIMPL(SectorCluster)
                     vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
                     Rend_DivPosCoords(vbuf, shard->indices.data(), posCoords, leftSection, rightSection);
                     Rend_DivColorCoords(vbuf, shard->indices.data(), colorCoords, leftSection, rightSection);
-                    if(primaryRTU)
+                    if(texUnitMap[TU_PRIMARY])
                     {
                         Rend_DivTexCoords(vbuf, shard->indices.data(), primaryTexCoords, leftSection, rightSection,
                                           WorldVBuf::PrimaryTex);
                     }
-                    if(interRTU)
+                    if(texUnitMap[TU_INTER])
                     {
                         Rend_DivTexCoords(vbuf, shard->indices.data(), interTexCoords, leftSection, rightSection,
                                           WorldVBuf::InterTex);
                     }
-                    if(modTex && Rend_IsMTexLights())
+                    if(modTex)
                     {
                         Rend_DivTexCoords(vbuf, shard->indices.data(), modTexCoords, leftSection, rightSection,
                                           WorldVBuf::ModTex);
@@ -2351,7 +2343,7 @@ DENG2_PIMPL(SectorCluster)
                             .setTex0Scale (materialScale)
                             .setTex1Offset(materialOrigin);
 
-                    if(shineRTU)
+                    if(shineTexUnitMap[TU_PRIMARY])
                     {
                         shineShard->indices.resize(leftFanSize + rightFanSize);
 
@@ -2360,7 +2352,7 @@ DENG2_PIMPL(SectorCluster)
                         Rend_DivColorCoords(vbuf, shineShard->indices.data(), shineColorCoords, leftSection, rightSection);
                         Rend_DivTexCoords(vbuf, shineShard->indices.data(), shineTexCoords, leftSection, rightSection,
                                           WorldVBuf::PrimaryTex);
-                        if(shineMaskRTU)
+                        if(shineTexUnitMap[TU_INTER])
                         {
                             Rend_DivTexCoords(vbuf, shineShard->indices.data(), primaryTexCoords, leftSection, rightSection,
                                               WorldVBuf::InterTex);
@@ -2385,15 +2377,15 @@ DENG2_PIMPL(SectorCluster)
                         WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                         vertex.pos  = posCoords[i];
                         vertex.rgba = colorCoords[i];
-                        if(primaryRTU)
+                        if(texUnitMap[TU_PRIMARY])
                         {
                             vertex.texCoord[WorldVBuf::PrimaryTex] = primaryTexCoords[i];
                         }
-                        if(interRTU)
+                        if(texUnitMap[TU_INTER])
                         {
                             vertex.texCoord[WorldVBuf::InterTex] = interTexCoords[i];
                         }
-                        if(modTex && Rend_IsMTexLights())
+                        if(modTex)
                         {
                             vertex.texCoord[WorldVBuf::ModTex] = modTexCoords[i];
                         }
@@ -2404,7 +2396,7 @@ DENG2_PIMPL(SectorCluster)
                             .setTex0Scale (materialScale)
                             .setTex1Offset(materialOrigin);
 
-                    if(shineRTU)
+                    if(shineTexUnitMap[TU_PRIMARY])
                     {
                         shineShard->indices.resize(4);
 
@@ -2415,7 +2407,7 @@ DENG2_PIMPL(SectorCluster)
                             vertex.pos  = posCoords[i];
                             vertex.rgba = shineColorCoords[i];
                             vertex.texCoord[WorldVBuf::PrimaryTex] = shineTexCoords[i];
-                            if(shineMaskRTU)
+                            if(shineTexUnitMap[TU_INTER])
                             {
                                 vertex.texCoord[WorldVBuf::InterTex] = primaryTexCoords[i];
                             }
@@ -2429,11 +2421,11 @@ DENG2_PIMPL(SectorCluster)
             }
             else // Sky-masked
             {
-                bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
-
                 Shard *shard = new Shard(SkyMaskGeom);
                 shards << shard; // take ownership.
                 subsector.shards() << shard; // link to the subsector.
+
+                bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
                 if(mustSubdivide) // Generate two triangle fans.
                 {
@@ -2618,13 +2610,19 @@ DENG2_PIMPL(SectorCluster)
                             lightListIdx, shadowListIdx);
         }
 
-        // Map RTU configuration from prepared MaterialSnapshot(s).
-        GLTextureUnit const *primaryRTU       = (!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL;
-        GLTextureUnit const *primaryDetailRTU = (r_detail && !skyMasked && matSnapshot.unit(RTU_PRIMARY_DETAIL).hasTexture())? &matSnapshot.unit(RTU_PRIMARY_DETAIL) : NULL;
-        GLTextureUnit const *interRTU         = (!skyMasked && matSnapshot.unit(RTU_INTER).hasTexture())? &matSnapshot.unit(RTU_INTER) : NULL;
-        GLTextureUnit const *interDetailRTU   = (r_detail && !skyMasked && matSnapshot.unit(RTU_INTER_DETAIL).hasTexture())? &matSnapshot.unit(RTU_INTER_DETAIL) : NULL;
-        GLTextureUnit const *shineRTU         = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture())? &matSnapshot.unit(RTU_REFLECTION) : NULL;
-        GLTextureUnit const *shineMaskRTU     = (useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture() && matSnapshot.unit(RTU_REFLECTION_MASK).hasTexture())? &matSnapshot.unit(RTU_REFLECTION_MASK) : NULL;
+        // Map GL texture units to "virtual units" in the prepared material snapshot:
+        GLTextureUnit const *texUnitMap[NUM_TEXTURE_UNITS] = {
+            /* TU_PRIMARY */        ((!skyMasked)? &matSnapshot.unit(RTU_PRIMARY) : NULL),
+            /* TU_PRIMARY_DETAIL */ ((r_detail && !skyMasked && matSnapshot.unit(RTU_PRIMARY_DETAIL).hasTexture())? &matSnapshot.unit(RTU_PRIMARY_DETAIL) : NULL),
+            /* TU_INTER */          ((!skyMasked && matSnapshot.unit(RTU_INTER).hasTexture())? &matSnapshot.unit(RTU_INTER) : NULL),
+            /* TU_INTER_DETAIL */   ((r_detail && !skyMasked && matSnapshot.unit(RTU_INTER_DETAIL).hasTexture())? &matSnapshot.unit(RTU_INTER_DETAIL) : NULL)
+        };
+        GLTextureUnit const *shineTexUnitMap[NUM_TEXTURE_UNITS] = {
+            /* TU_PRIMARY */        ((useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture())? &matSnapshot.unit(RTU_REFLECTION) : NULL),
+            /* TU_PRIMARY_DETAIL */ 0,
+            /* TU_INTER */          ((useShinySurfaces && !skyMasked && matSnapshot.unit(RTU_REFLECTION).hasTexture() && matSnapshot.unit(RTU_REFLECTION_MASK).hasTexture())? &matSnapshot.unit(RTU_REFLECTION_MASK) : NULL),
+            /* TU_INTER_DETAIL */   0
+        };
 
         bool useLights = false, useShadows = false;
 
@@ -2661,7 +2659,7 @@ DENG2_PIMPL(SectorCluster)
 
         // ShinySurface?
         WorldVBuf::Indices shineIndices;
-        if(shineRTU)
+        if(shineTexUnitMap[TU_PRIMARY])
         {
             shineIndices.resize(fanSize);
             vbuf.reserveElements(fanSize, shineIndices);
@@ -2676,17 +2674,17 @@ DENG2_PIMPL(SectorCluster)
             WorldVBuf::Type &vertex = vbuf[indices[i]];
             Vector3f const delta(vertex.pos - topLeft);
 
-            if(primaryRTU)
+            if(texUnitMap[TU_PRIMARY])
             {
                 vertex.texCoord[WorldVBuf::PrimaryTex] = Vector2f(delta.x, -delta.y);
             }
 
-            if(interRTU)
+            if(texUnitMap[TU_INTER])
             {
                 vertex.texCoord[WorldVBuf::InterTex] = Vector2f(delta.x, -delta.y);
             }
 
-            if(shineRTU)
+            if(shineTexUnitMap[TU_PRIMARY])
             {
                 WorldVBuf::Type &shineVertex = vbuf[shineIndices[i]];
 
@@ -2705,14 +2703,14 @@ DENG2_PIMPL(SectorCluster)
                                  ,
                                  shinyVertical(vOrigin.y - vertex.pos.z, distToEye));
 
-                if(shineMaskRTU)
+                if(shineTexUnitMap[TU_INTER])
                 {
                     shineVertex.texCoord[WorldVBuf::InterTex] = Vector2f(delta.x, -delta.y);
                 }
             }
 
             // First light texture coordinates.
-            if(modTex && Rend_IsMTexLights())
+            if(modTex)
             {
                 Vector2f const pdimensions = bottomRight.xy() - topLeft.xy();
 
@@ -2730,7 +2728,7 @@ DENG2_PIMPL(SectorCluster)
                                    ambientLight, glowing, &surface.tintColor(),
                                    vbuf, indices);
 
-            if(shineRTU)
+            if(shineTexUnitMap[TU_PRIMARY])
             {
                 // Strength of the shine.
                 Vector3f const &minColor = matSnapshot.shineMinColor();
@@ -2738,7 +2736,7 @@ DENG2_PIMPL(SectorCluster)
                 {
                     Vector4f &color = vbuf[shineIndices[i]].rgba;
                     color = Vector3f(vbuf[indices[i]].rgba).max(minColor);
-                    color.w = shineRTU->opacity;
+                    color.w = shineTexUnitMap[TU_PRIMARY]->opacity;
                 }
             }
 
@@ -2818,22 +2816,8 @@ DENG2_PIMPL(SectorCluster)
         {
             Shard *shard = new Shard((modTex || hasDynlights)? LitGeom : UnlitGeom,
                                      BM_NORMAL, modTex, modColor, hasDynlights);
-            if(primaryRTU)
-            {
-                shard->setTextureUnit(TU_PRIMARY, *primaryRTU);
-            }
-            if(primaryDetailRTU)
-            {
-                shard->setTextureUnit(TU_PRIMARY_DETAIL, *primaryDetailRTU);
-            }
-            if(interRTU)
-            {
-                shard->setTextureUnit(TU_INTER, *interRTU);
-            }
-            if(interDetailRTU)
-            {
-                shard->setTextureUnit(TU_INTER_DETAIL, *interDetailRTU);
-            }
+            shard->setAllTextureUnits(texUnitMap);
+
             shard->indices = indices;
             shards << shard; // take ownership.
             subsector.shards() << shard; // link to the subsector.
@@ -2843,14 +2827,11 @@ DENG2_PIMPL(SectorCluster)
                     .setTex0Scale (materialScale)
                     .setTex1Offset(materialOrigin);
 
-            if(shineRTU)
+            if(shineTexUnitMap[TU_PRIMARY])
             {
                 Shard *shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
-                shineShard->setTextureUnit(TU_PRIMARY, *shineRTU);
-                if(shineMaskRTU)
-                {
-                    shineShard->setTextureUnit(TU_INTER, *shineMaskRTU);
-                }
+                shineShard->setAllTextureUnits(shineTexUnitMap);
+
                 shineShard->indices = shineIndices;
                 shards << shineShard; // take ownership.
                 subsector.shards() << shineShard; // link to the subsector.

@@ -78,6 +78,8 @@ public:
 
     DrawListSpec const &drawListSpec() const;
 
+    Shard &setAllTextureUnits(de::GLTextureUnit const *gltumap[NUM_TEXTURE_UNITS]);
+
     Shard &setTextureUnit(texunitid_t unit, de::GLTextureUnit const &gltu);
 
     Primitive &newPrimitive(de::gl::Primitive type, WorldVBuf::Index vertCount,

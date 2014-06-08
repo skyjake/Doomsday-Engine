@@ -51,6 +51,16 @@ DrawListSpec const &Shard::drawListSpec() const
     return listSpec;
 }
 
+Shard &Shard::setAllTextureUnits(GLTextureUnit const *gltumap[])
+{
+    DENG2_ASSERT(gltumap != 0);
+    for(int i = 0; i < NUM_TEXTURE_UNITS; ++i)
+    {
+        if(gltumap[i]) setTextureUnit(texunitid_t(i), *gltumap[i]);
+    }
+    return *this;
+}
+
 Shard &Shard::setTextureUnit(texunitid_t unit, GLTextureUnit const &gltu)
 {
     listSpec.unit(unit) = gltu;
