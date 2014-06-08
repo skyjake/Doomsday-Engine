@@ -149,7 +149,7 @@ public Font::RichFormat::IStyle
 
         void update(int yBottom, Rangei const &visiblePixels)
         {
-            if(!_height) return;
+            if(!_height || drawable.isBeingWrapped()) return;
 
             // Determine which lines might be visible.
             int const lineSpacing = drawable.font().lineSpacing().value();
@@ -197,7 +197,7 @@ public Font::RichFormat::IStyle
             //int const oldHeight = _height;
 
             // Prepare the visible lines for drawing.
-            drawable.update();
+            //drawable.update();
 
             /*{
                 //_dirty = false;
@@ -812,20 +812,26 @@ public Font::RichFormat::IStyle
     void updateEntries()
     {
         int oldHeight = self.contentHeight();
+        bool needNotify = false;
 
         for(int idx = cache.size() - 1; idx >= 0; --idx)
         {
             CacheEntry *entry = cache[idx];
 
+            int prevHeight = entry->height();
+
             int delta = entry->updateHeightOnly();
             if(delta)
             {
+                // We won't notify when content height changes because of rewrapping.
+                if(!prevHeight) needNotify = true;
+
                 // The new height will be effective on the next frame.
                 modifyContentHeight(delta);
             }
         }
 
-        if(self.contentHeight() > oldHeight)
+        if(needNotify && self.contentHeight() > oldHeight)
         {
             emit self.contentHeightIncreased(self.contentHeight() - oldHeight);
         }
