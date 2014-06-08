@@ -2448,10 +2448,8 @@ DENG2_PIMPL(SectorCluster)
                         }
 
                         shineShard->newPrimitive(gl::TriangleStrip, 4, vbuf)
-                                .setTex0Offset(shineShard->listSpec.unit(TU_INTER         ).offset)
-                                .setTex0Scale (shineShard->listSpec.unit(TU_INTER         ).scale )
-                                .setTex1Offset(shineShard->listSpec.unit(TU_PRIMARY_DETAIL).offset)
-                                .setTex1Scale (shineShard->listSpec.unit(TU_PRIMARY_DETAIL).scale );
+                                .setTex0Offset(shineShard->listSpec.unit(TU_INTER).offset)
+                                .setTex0Scale (shineShard->listSpec.unit(TU_INTER).scale );
                     }
                 }
             }
@@ -2896,10 +2894,8 @@ DENG2_PIMPL(SectorCluster)
                 subsector.shards() << shineShard; // link to the subsector.
 
                 shineShard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
-                        .setTex0Offset(shineShard->listSpec.unit(TU_INTER         ).offset)
-                        .setTex0Scale (shineShard->listSpec.unit(TU_INTER         ).scale )
-                        .setTex1Offset(shineShard->listSpec.unit(TU_PRIMARY_DETAIL).offset)
-                        .setTex1Scale (shineShard->listSpec.unit(TU_PRIMARY_DETAIL).scale );
+                        .setTex0Offset(shineShard->listSpec.unit(TU_INTER).offset)
+                        .setTex0Scale (shineShard->listSpec.unit(TU_INTER).scale );
             }
         }
         else // Sky-masked.
