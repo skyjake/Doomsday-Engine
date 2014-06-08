@@ -2414,8 +2414,7 @@ DENG2_PIMPL(SectorCluster)
             return;
 
         // Prepare FakeRadio shards for this section?
-        if(!leftSection.flags().testFlag(WallEdgeSection::NoFakeRadio) &&
-           !skyMasked && !(glowing > 0))
+        if(!skyMasked && !(glowing > 0))
         {
             // Disabled?
             if(!rendFakeRadio) return;

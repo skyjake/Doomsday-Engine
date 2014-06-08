@@ -1010,8 +1010,9 @@ WallEdge::Event const &WallEdge::Section::last() const
 }
 
 static WallEdge::Section::Flags const skySectionFlags =
-    WallEdge::Section::NoDynLights     | WallEdge::Section::NoDynShadows |
-    WallEdge::Section::NoFakeRadio     | WallEdge::Section::NoLightDeltas;
+    WallEdge::Section::NoDynLights |
+    WallEdge::Section::NoDynShadows |
+    WallEdge::Section::NoLightDeltas;
 
 DENG2_PIMPL_NOREF(WallEdge)
 {
@@ -1053,9 +1054,6 @@ DENG2_PIMPL_NOREF(WallEdge)
         {
             flags |= Section::SortDynLights;
         }
-
-        if(side.line().definesPolyobj())
-            flags |= Section::NoFakeRadio;
 
         if(!useLineAngleLightLevelDeltas(side, section))
             flags |= Section::NoLightDeltas;

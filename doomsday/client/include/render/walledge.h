@@ -108,11 +108,8 @@ public:
             /// Do not project dynamic (mobj) shadows for the geometry.
             NoDynShadows   = 0x08,
 
-            /// Do not generate faked radiosity for the geometry.
-            NoFakeRadio    = 0x10,
-
             /// Do not apply angle based light level deltas.
-            NoLightDeltas  = 0x20
+            NoLightDeltas  = 0x10
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 
