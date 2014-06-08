@@ -48,6 +48,7 @@ public:
 protected:
     bool isAcceptedAsCommand(String const &text);
     void executeCommand(String const &text);
+    void autoCompletionBegan(String const &prefix);
 
 private:
     DENG2_PRIVATE(d)
