@@ -192,42 +192,45 @@ private:
             // Might a material cover the opening?
             if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
             {
-                // Stretched middles always cover the opening.
-                if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
-                    return;
-
-                // Determine the opening between the visual sector planes at this edge.
-                coord_t openBottom;
-                if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
-                {
-                    openBottom = toCluster.visFloor().heightSmoothed();
-                }
-                else
-                {
-                    openBottom = fromCluster.visFloor().heightSmoothed();
-                }
-
-                coord_t openTop;
-                if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
-                {
-                    openTop = toCluster.visCeiling().heightSmoothed();
-                }
-                else
-                {
-                    openTop = fromCluster.visCeiling().heightSmoothed();
-                }
-
                 // Ensure we have up to date info about the material.
                 MaterialSnapshot const &ms = facingLineSide.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
-                if(ms.height() >= openTop - openBottom)
+                if(ms.isOpaque())
                 {
-                    // Possibly; check the placement.
-                    WallEdge left(*facingLineSide.leftHEdge(), Line::From);
-                    WallEdgeSection &sectionLeft = left.wallMiddle();
-
-                    if(sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z() &&
-                       sectionLeft.top().z() >= openTop && sectionLeft.bottom().z() <= openBottom)
+                    // Stretched middles always cover the opening.
+                    if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
                         return;
+
+                    // Determine the opening between the visual sector planes at this edge.
+                    coord_t openBottom;
+                    if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
+                    {
+                        openBottom = toCluster.visFloor().heightSmoothed();
+                    }
+                    else
+                    {
+                        openBottom = fromCluster.visFloor().heightSmoothed();
+                    }
+
+                    coord_t openTop;
+                    if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
+                    {
+                        openTop = toCluster.visCeiling().heightSmoothed();
+                    }
+                    else
+                    {
+                        openTop = fromCluster.visCeiling().heightSmoothed();
+                    }
+
+                    if(ms.height() >= openTop - openBottom)
+                    {
+                        // Possibly; check the placement.
+                        WallEdge left(*facingLineSide.leftHEdge(), Line::From);
+                        WallEdgeSection &sectionLeft = left.wallMiddle();
+
+                        if(sectionLeft.isValid() && sectionLeft.top().z() > sectionLeft.bottom().z() &&
+                           sectionLeft.top().z() >= openTop && sectionLeft.bottom().z() <= openBottom)
+                            return;
+                    }
                 }
             }
         }
