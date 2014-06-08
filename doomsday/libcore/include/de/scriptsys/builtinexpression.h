@@ -79,6 +79,11 @@ public:
      */
     static Type findType(String const &identifier);
 
+    /**
+     * Returns a list of all the built-in functions.
+     */
+    static StringList identifiers();
+
 private:
     Type _type;
     Expression *_arg;

@@ -351,49 +351,59 @@ bool ScriptLex::combinesWith(QChar a, QChar b)
     return false;
 }
 
+static QChar const *keywordStr[] =
+{
+    ScriptLex::AND,
+    ScriptLex::BREAK,
+    ScriptLex::CATCH,
+    ScriptLex::CONST,
+    ScriptLex::CONTINUE,
+    ScriptLex::DEF,
+    ScriptLex::DEL,
+    ScriptLex::ELSE,
+    ScriptLex::ELSIF,
+    ScriptLex::END,
+    ScriptLex::FOR,
+    ScriptLex::IF,
+    ScriptLex::IMPORT,
+    ScriptLex::EXPORT,
+    ScriptLex::IN,
+    ScriptLex::NOT,
+    ScriptLex::OR,
+    ScriptLex::PASS,
+    ScriptLex::PRINT,
+    ScriptLex::RECORD,
+    ScriptLex::RETURN,
+    ScriptLex::THROW,
+    ScriptLex::TRY,
+    ScriptLex::WHILE,
+    ScriptLex::NONE,
+    ScriptLex::T_FALSE,
+    ScriptLex::T_TRUE,
+    ScriptLex::PI,
+    0
+};
+
 bool ScriptLex::isKeyword(Token const &token)
 {
-    QChar const *keywords[] =
+    for(int i = 0; keywordStr[i]; ++i)
     {
-        AND,
-        BREAK,
-        CATCH,
-        CONST,
-        CONTINUE,
-        DEF,
-        DEL,
-        ELSE,
-        ELSIF,
-        END,
-        FOR,
-        IF,
-        IMPORT,
-        EXPORT,
-        IN,
-        NOT,
-        OR,
-        PASS,
-        PRINT,
-        RECORD,
-        RETURN,
-        THROW,
-        TRY,
-        WHILE,
-        NONE,
-        T_FALSE,
-        T_TRUE,
-        PI,
-        0
-    };
-    
-    for(int i = 0; keywords[i]; ++i)
-    {
-        if(token.equals(keywords[i]))
+        if(token.equals(keywordStr[i]))
         {
             return true;
         }
     }
     return false;
+}
+
+StringList ScriptLex::keywords()
+{
+    StringList kw;
+    for(int i = 0; keywordStr[i]; ++i)
+    {
+        kw << keywordStr[i];
+    }
+    return kw;
 }
 
 String ScriptLex::unescapeStringToken(Token const &token)

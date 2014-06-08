@@ -114,6 +114,9 @@ public:
     /// Determines whether a token is a Haw script keyword.
     static bool isKeyword(Token const &token);
 
+    /// Returns a list of all the keywords.
+    static StringList keywords();
+
     /// Determines whether one character should join another to
     /// form a longer token.
     static bool combinesWith(QChar a, QChar b);
