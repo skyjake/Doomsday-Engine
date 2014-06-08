@@ -140,6 +140,35 @@ namespace internal
         return blendmode;
     }
 
+    static Material *chooseSurfaceGlowMaterial(Surface const &surface, Material *visMaterial)
+    {
+        DENG2_ASSERT(visMaterial != 0 && visMaterial->isDrawable());
+        if(visMaterial == surface.materialPtr())
+        {
+            return visMaterial;
+        }
+        if(surface.hasMaterial())
+        {
+            return surface.materialPtr();
+        }
+        return &ClientApp::renderSystem().missingMaterial();
+    }
+
+    static float chooseSurfaceGlowStrength(Surface const &surface, Material *visMaterial)
+    {
+        DENG2_ASSERT(visMaterial != 0);
+
+        if(!devRendSkyMode && visMaterial->isSkyMasked())
+            return 0;
+
+        // Disabled?
+        if(glowFactor < .0001f) return 0;
+
+        Material *glowMaterial     = chooseSurfaceGlowMaterial(surface, visMaterial);
+        MaterialSnapshot const &ms = glowMaterial->prepare(Rend_MapSurfaceMaterialSpec());
+        return ms.glowStrength() * glowFactor; // Global scale factor.
+    }
+
     static void chooseWallTintColors(WallEdgeSection const &wallSection,
         Vector3f const **bottomColor, Vector3f const **topColor)
     {
@@ -1938,44 +1967,25 @@ DENG2_PIMPL(SectorCluster)
             opacity = 1;
         }
 
-        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
-        bool const skyMasked = (material->isSkyMasked() && !devRendSkyMode);
+        bool const skyMasked            = (material->isSkyMasked() && !devRendSkyMode);
 
-        float glowing = 0;
-        if(!skyMasked)
-        {
-            if(glowFactor > .0001f)
-            {
-                if(material == surface.materialPtr())
-                {
-                    glowing = matSnapshot.glowStrength();
-                }
-                else
-                {
-                    Material *actualMaterial =
-                        surface.hasMaterial()? surface.materialPtr()
-                                             : &ClientApp::renderSystem().missingMaterial();
+        Vector3d const topLeft          = leftSection.top().origin();
+        Vector3d const bottomRight      = rightSection.bottom().origin();
 
-                    MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                    glowing = ms.glowStrength();
-                }
+        Vector3f const materialOrigin   = leftSection.materialOrigin();
+        Vector2f const materialScale    = surface.materialScale();
 
-                glowing *= glowFactor; // Global scale factor.
-            }
-        }
-
-        Vector3d const topLeft        = leftSection.top().origin();
-        Vector3d const bottomRight    = rightSection.bottom().origin();
-
-        Vector3f const materialOrigin = leftSection.materialOrigin();
-        Vector2f const materialScale  = surface.materialScale();
-
-        blendmode_t const blendmode   = chooseWallBlendmode(leftSection);
-        Vector4f const ambientLight   =
+        Vector4f const ambientLight     =
             useAmbientLightFromSide(leftSection)? Rend_AmbientLightColor(leftEdge.lineSide().sector())
                                                 : self.lightSourceColorfIntensity();
 
-        Vector3f const *topTintColor  = 0, *bottomTintColor = 0;
+        blendmode_t const blendmode     = chooseWallBlendmode(leftSection);
+        float const glowing             = chooseSurfaceGlowStrength(surface, material);
+
+        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
+
+        Vector3f const *topTintColor    = 0;
+        Vector3f const *bottomTintColor = 0;
         if(!skyMasked)
         {
             chooseWallTintColors(leftSection, &bottomTintColor, &topTintColor);
@@ -2352,6 +2362,10 @@ DENG2_PIMPL(SectorCluster)
     {
         DENG2_ASSERT(sectionId >= WallEdge::WallMiddle && sectionId <= WallEdge::WallTop);
 
+        // Disabled?
+        if(!rendFakeRadio) return;
+        if(levelFullBright) return;
+
         WallEdgeSection &leftSection  =  leftEdge.section(sectionId);
         WallEdgeSection &rightSection = rightEdge.section(sectionId);
         Surface &surface              = *leftSection.surfacePtr();
@@ -2378,173 +2392,127 @@ DENG2_PIMPL(SectorCluster)
             opacity = 1;
         }
 
-        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
         bool const skyMasked = (material->isSkyMasked() && !devRendSkyMode);
+        if(skyMasked) return;
 
-        float glowing = 0;
-        if(!skyMasked)
-        {
-            if(glowFactor > .0001f)
-            {
-                if(material == surface.materialPtr())
-                {
-                    glowing = matSnapshot.glowStrength();
-                }
-                else
-                {
-                    Material *actualMaterial =
-                        surface.hasMaterial()? surface.materialPtr()
-                                             : &ClientApp::renderSystem().missingMaterial();
+        float const glowing = chooseSurfaceGlowStrength(surface, material);
+        if(glowing > 0) return;
 
-                    MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                    glowing = ms.glowStrength();
-                }
-
-                glowing *= glowFactor; // Global scale factor.
-            }
-        }
-
-        blendmode_t const blendmode = chooseWallBlendmode(leftSection);
-        Vector4f const ambientLight =
-            useAmbientLightFromSide(leftSection)? Rend_AmbientLightColor(leftEdge.lineSide().sector())
-                                                : self.lightSourceColorfIntensity();
+        blendmode_t const blendmode         = chooseWallBlendmode(leftSection);
+        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
 
         if(Rend_MustDrawAsVissprite(leftSection.flags().testFlag(WallEdgeSection::ForceOpaque),
                                     skyMasked, opacity, blendmode, matSnapshot))
             return;
 
-        // Prepare FakeRadio shards for this section?
-        if(!skyMasked && !(glowing > 0))
+        Vector4f const ambientLight =
+            useAmbientLightFromSide(leftSection)? Rend_AmbientLightColor(leftEdge.lineSide().sector())
+                                                : self.lightSourceColorfIntensity();
+
+        // Don't bother with shadows on geometry that is near enough "black" already.
+        if(ambientLight.w < 0.01f) return;
+
+        /// Determine the shadow properties (@todo Make cvars out of constants).
+        float const shadowSize = 2 * (8 + 16 - ambientLight.w * 16);
+        float const shadowDark = Rend_RadioCalcShadowDarkness(ambientLight.w);
+
+        if(shadowSize <= 0)
+            return;
+
+        LineSide &side = leftSection.edge().lineSide();
+        Rend_RadioUpdateForLineSide(side);
+
+        HEdge const *hedge = side.leftHEdge();
+        SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
+        SectorCluster const *backCluster = 0;
+
+        if(leftSection.id() != WallEdge::WallMiddle && hedge->twin().hasFace())
         {
-            // Disabled?
-            if(!rendFakeRadio) return;
-            if(levelFullBright) return;
+            backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
+        }
 
-            // Don't bother with shadows on geometry that is near enough "black" already.
-            if(ambientLight.w < 0.01f) return;
+        bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
+        bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(cluster->visCeiling());
 
-            /// Determine the shadow properties (@todo Make cvars out of constants).
-            float const shadowSize = 2 * (8 + 16 - ambientLight.w * 16);
-            float const shadowDark = Rend_RadioCalcShadowDarkness(ambientLight.w);
+        // Walls unaffected by floor and ceiling shadow casters will receive no side
+        // shadows either. We could do better here...
+        if(!haveBottomShadower && !haveTopShadower)
+            return;
 
-            if(shadowSize <= 0)
-                return;
+        coord_t const lineLength    = side.line().length();
+        coord_t const sectionOffset = leftSection.edge().lineSideOffset();
+        coord_t const sectionWidth  = de::abs((rightSection.edge().origin() - leftSection.edge().origin()).length());
 
-            LineSide &side = leftSection.edge().lineSide();
-            Rend_RadioUpdateForLineSide(side);
+        coord_t const fFloor = cluster->visFloor().heightSmoothed();
+        coord_t const fCeil  = cluster->visCeiling().heightSmoothed();
+        coord_t const bFloor = (backCluster? backCluster->visFloor().heightSmoothed() : 0);
+        coord_t const bCeil  = (backCluster? backCluster->visCeiling().heightSmoothed() : 0);
 
-            HEdge const *hedge = side.leftHEdge();
-            SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
-            SectorCluster const *backCluster = 0;
+        Vector3f const posCoords[4] = {
+            Vector3f( leftSection.bottom().origin()),
+            Vector3f( leftSection.top   ().origin()),
+            Vector3f(rightSection.bottom().origin()),
+            Vector3f(rightSection.top   ().origin())
+        };
 
-            if(leftSection.id() != WallEdge::WallMiddle && hedge->twin().hasFace())
-            {
-                backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
-            }
+        LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
 
-            bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
-            bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(cluster->visCeiling());
-
-            // Walls unaffected by floor and ceiling shadow casters will receive no side
-            // shadows either. We could do better here...
-            if(!haveBottomShadower && !haveTopShadower)
-                return;
-
-            coord_t const lineLength    = side.line().length();
-            coord_t const sectionOffset = leftSection.edge().lineSideOffset();
-            coord_t const sectionWidth  = de::abs((rightSection.edge().origin() - leftSection.edge().origin()).length());
-
-            coord_t const fFloor = cluster->visFloor().heightSmoothed();
-            coord_t const fCeil  = cluster->visCeiling().heightSmoothed();
-            coord_t const bFloor = (backCluster? backCluster->visFloor().heightSmoothed() : 0);
-            coord_t const bCeil  = (backCluster? backCluster->visCeiling().heightSmoothed() : 0);
-
-            Vector3f const posCoords[4] = {
-                Vector3f( leftSection.bottom().origin()),
-                Vector3f( leftSection.top   ().origin()),
-                Vector3f(rightSection.bottom().origin()),
-                Vector3f(rightSection.top   ().origin())
-            };
-
-            LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
-
-            // Top Shadow?
-            if(haveTopShadower)
-            {
-                if(rightSection.top().z() > fCeil - shadowSize &&
-                   leftSection.bottom().z() < fCeil)
-                {
-                    rendershadowseg_params_t parms;
-                    parms.setupForTop(shadowSize, shadowDark,
-                                      leftSection.top().z(), sectionOffset, sectionWidth,
-                                      fFloor, fCeil, frData);
-
-                    prepareWallSectionFakeRadioShard(subspace, leftSection, rightSection, posCoords, parms);
-                }
-            }
-
-            // Bottom Shadow?
-            if(haveBottomShadower)
-            {
-                if(leftSection.bottom().z() < fFloor + shadowSize &&
-                   rightSection.top().z() > fFloor)
-                {
-                    rendershadowseg_params_t parms;
-                    parms.setupForBottom(shadowSize, shadowDark,
-                                         leftSection.top().z(), sectionOffset, sectionWidth,
-                                         fFloor, fCeil, frData);
-
-                    prepareWallSectionFakeRadioShard(subspace, leftSection, rightSection, posCoords, parms);
-                }
-            }
-
-            // Left Shadow?
-            if(frData.sideCorners[0].corner > 0 && sectionOffset < shadowSize)
+        // Top Shadow?
+        if(haveTopShadower)
+        {
+            if(rightSection.top().z() > fCeil - shadowSize &&
+               leftSection.bottom().z() < fCeil)
             {
                 rendershadowseg_params_t parms;
-                parms.setupForSide(shadowSize, shadowDark,
-                                   leftSection.bottom().z(), leftSection.top().z(), false,
-                                   haveBottomShadower, haveTopShadower,
-                                   sectionOffset, sectionWidth,
-                                   fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
-                                   frData);
-
-                prepareWallSectionFakeRadioShard(subspace, leftSection, rightSection, posCoords, parms);
-            }
-
-            // Right Shadow?
-            if(frData.sideCorners[1].corner > 0 &&
-               sectionOffset + sectionWidth > lineLength - shadowSize)
-            {
-                rendershadowseg_params_t parms;
-                parms.setupForSide(shadowSize, shadowDark,
-                                   leftSection.bottom().z(), leftSection.top().z(), true,
-                                   haveBottomShadower, haveTopShadower, sectionOffset, sectionWidth,
-                                   fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
-                                   frData);
+                parms.setupForTop(shadowSize, shadowDark,
+                                  leftSection.top().z(), sectionOffset, sectionWidth,
+                                  fFloor, fCeil, frData);
 
                 prepareWallSectionFakeRadioShard(subspace, leftSection, rightSection, posCoords, parms);
             }
         }
-    }
 
-    void prepareWallFakeRadioShards(ConvexSubspace &subspace, HEdge *hedge)
-    {
-        DENG2_ASSERT(hedge != 0);
-
-        // Edges without a map line segment implicitly have no surfaces.
-        if(!hedge->hasMapElement()) return;
-
-        LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
-        if(seg.lineSide().hasSections() && seg.isFrontFacing())
+        // Bottom Shadow?
+        if(haveBottomShadower)
         {
-            // Generate the wall section shard geometries.
-            WallEdge leftEdge(*hedge, Line::From);// = findWallEdge(*hedge, Line::From);
-            WallEdge rightEdge(*hedge, Line::To); // = findWallEdge(*hedge, Line::To);
+            if(leftSection.bottom().z() < fFloor + shadowSize &&
+               rightSection.top().z() > fFloor)
+            {
+                rendershadowseg_params_t parms;
+                parms.setupForBottom(shadowSize, shadowDark,
+                                     leftSection.top().z(), sectionOffset, sectionWidth,
+                                     fFloor, fCeil, frData);
 
-            prepareWallSectionFakeRadioShards(subspace, leftEdge, rightEdge, WallEdge::WallBottom);
-            prepareWallSectionFakeRadioShards(subspace, leftEdge, rightEdge, WallEdge::WallTop);
-            prepareWallSectionFakeRadioShards(subspace, leftEdge, rightEdge, WallEdge::WallMiddle);
+                prepareWallSectionFakeRadioShard(subspace, leftSection, rightSection, posCoords, parms);
+            }
+        }
+
+        // Left Shadow?
+        if(frData.sideCorners[0].corner > 0 && sectionOffset < shadowSize)
+        {
+            rendershadowseg_params_t parms;
+            parms.setupForSide(shadowSize, shadowDark,
+                               leftSection.bottom().z(), leftSection.top().z(), false,
+                               haveBottomShadower, haveTopShadower,
+                               sectionOffset, sectionWidth,
+                               fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
+                               frData);
+
+            prepareWallSectionFakeRadioShard(subspace, leftSection, rightSection, posCoords, parms);
+        }
+
+        // Right Shadow?
+        if(frData.sideCorners[1].corner > 0 &&
+           sectionOffset + sectionWidth > lineLength - shadowSize)
+        {
+            rendershadowseg_params_t parms;
+            parms.setupForSide(shadowSize, shadowDark,
+                               leftSection.bottom().z(), leftSection.top().z(), true,
+                               haveBottomShadower, haveTopShadower, sectionOffset, sectionWidth,
+                               fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
+                               frData);
+
+            prepareWallSectionFakeRadioShard(subspace, leftSection, rightSection, posCoords, parms);
         }
     }
 
@@ -2579,6 +2547,26 @@ DENG2_PIMPL(SectorCluster)
         }
 
         seg.setOpenRangeCovered(geomCoversOpening);
+    }
+
+    void prepareWallFakeRadioShards(ConvexSubspace &subspace, HEdge *hedge)
+    {
+        DENG2_ASSERT(hedge != 0);
+
+        // Edges without a map line segment implicitly have no surfaces.
+        if(!hedge->hasMapElement()) return;
+
+        LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+        if(seg.lineSide().hasSections() && seg.isFrontFacing())
+        {
+            // Generate the wall section shard geometries.
+            WallEdge leftEdge(*hedge, Line::From);// = findWallEdge(*hedge, Line::From);
+            WallEdge rightEdge(*hedge, Line::To); // = findWallEdge(*hedge, Line::To);
+
+            prepareWallSectionFakeRadioShards(subspace, leftEdge, rightEdge, WallEdge::WallBottom);
+            prepareWallSectionFakeRadioShards(subspace, leftEdge, rightEdge, WallEdge::WallTop);
+            prepareWallSectionFakeRadioShards(subspace, leftEdge, rightEdge, WallEdge::WallMiddle);
+        }
     }
 
     void prepareAllWallShards(ConvexSubspace &subspace)
@@ -2647,31 +2635,7 @@ DENG2_PIMPL(SectorCluster)
             opacity = 1;
         }
 
-        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
-        bool const skyMasked = (material->isSkyMasked() && !devRendSkyMode);
-
-        float glowing = 0;
-        if(!skyMasked)
-        {
-            if(glowFactor > .0001f)
-            {
-                if(material == surface.materialPtr())
-                {
-                    glowing = matSnapshot.glowStrength();
-                }
-                else
-                {
-                    Material *actualMaterial =
-                        surface.hasMaterial()? surface.materialPtr()
-                                             : &ClientApp::renderSystem().missingMaterial();
-
-                    MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                    glowing = ms.glowStrength();
-                }
-
-                glowing *= glowFactor; // Global scale factor.
-            }
-        }
+        bool const skyMasked          = (material->isSkyMasked() && !devRendSkyMode);
 
         AABoxd const &aaBox           = subspace.poly().aaBox();
         Vector3d const topLeft        = Vector3d(aaBox.minX, aaBox.arvec2[plane.isSectorFloor()? 1 : 0][VY], plane.heightSmoothed());
@@ -2684,6 +2648,10 @@ DENG2_PIMPL(SectorCluster)
         Vector4f const ambientLight   =
                 useAmbientLightFromPlane(plane)? Rend_AmbientLightColor(plane.sector())
                                                : self.lightSourceColorfIntensity();
+
+        float const glowing           = chooseSurfaceGlowStrength(surface, material);
+
+        MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
 
         // Lists of projected lights/shadows that affect this geometry.
         uint lightListIdx = 0, shadowListIdx = 0;
