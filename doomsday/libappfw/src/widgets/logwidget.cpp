@@ -22,8 +22,6 @@
  */
 
 #include "de/LogWidget"
-//#include "de/FontLineWrapping"
-//#include "de/GLTextComposer"
 #include "de/TextDrawable"
 #include "de/Style"
 
@@ -63,33 +61,22 @@ public Font::RichFormat::IStyle
     {
         int _height; ///< Current height of the entry, in pixels.
         int _oldHeight;
-        //bool _unknownHeight; ///< Cannot be drawn yet, or new content is being prepared.
 
     public:
-        //int sinkIndex; ///< Index of the corresponding entry in the Sink (for sorting).
-        //Font::RichFormat format;
-        //FontLineWrapping wraps;
-        //GLTextComposer composer;
         TextDrawable drawable;
 
-        CacheEntry(/*int index, */Font const &font, Font::RichFormat::IStyle &richStyle, Atlas &atlas)
+        CacheEntry(Font const &font, Font::RichFormat::IStyle &richStyle, Atlas &atlas)
             : _height(0)
             , _oldHeight(0)
-            //, _dirty(true)
-            //, sinkIndex(index), format(richStyle)
         {
             drawable.init(atlas, font, &richStyle);
             drawable.setRange(Rangei()); // Determined later.
-            //wraps.setFont(font);
-            //composer.setAtlas(atlas);
         }
 
         ~CacheEntry()
         {
-            //DENG2_GUARD(this);
             // Free atlas allocations.
             drawable.deinit();
-            //composer.release();
         }
 
         int height() const
@@ -109,25 +96,13 @@ public Font::RichFormat::IStyle
 
         void wrap(String const &richText, int width)
         {
-            //DENG2_GUARD(this);
-            //_dirty = true;
-            /*String plain = format.initFromStyledText(richText);
-            wraps.wrapTextToWidth(plain, format, width);
-            composer.setText(plain, format);
-            composer.setWrapping(wraps);
-            recalculateHeight();*/            
             drawable.setLineWrapWidth(width);
             drawable.setText(richText);
         }
 
         void rewrap(int width)
         {
-            //DENG2_GUARD(this);
-            //int oldHeight = _height;
-            //wraps.wrapTextToWidth(wraps.text(), format, width);
             drawable.setLineWrapWidth(width);
-            //recalculateHeight();
-            //return _height - oldHeight;
         }
 
         /// Returns the possible delta in the height of the entry.
@@ -208,45 +183,21 @@ public Font::RichFormat::IStyle
                                drawable.wraps().height());
             }
 
-            //qDebug() << yBottom << visiblePixels.asText() << "=>" << range.asText();
-
             drawable.setRange(range);
-
-            //if(!needsUpdate()) return 0;
-
-            //int const oldHeight = _height;
 
             // Updating will prepare the visible lines for drawing.
             return update() + heightDelta;
-
-            /*{
-                //_dirty = false;
-                //recalculateHeight();
-                return _height - oldHeight;
-            }
-            return 0;*/
         }
 
         void make(GLTextComposer::Vertices &verts, int y)
         {
             DENG2_ASSERT(isReady());
-            //DENG2_GUARD(this);
-            //composer.update();
-            //if(isReady())
-            {
-                drawable.makeVertices(verts, Vector2i(0, y), AlignLeft);
-            }
+            drawable.makeVertices(verts, Vector2i(0, y), AlignLeft);
         }
 
-        void clear()
+        void releaseFromAtlas()
         {
-            //DENG2_GUARD(this);
             drawable.setRange(Rangei()); // Nothing visible.
-            /*
-            if(composer.isReady())
-            {
-                composer.release();
-            }*/
         }
     };
 
@@ -268,23 +219,12 @@ public Font::RichFormat::IStyle
             , _maxEntries(1000)
             , _next(0)
             , _width(0)
-        {
-            // Whenever the pool is idle, we'll check if pruning should be done.
-            /*QObject::connect(&_pool, SIGNAL(allTasksDone()),
-                             d->thisPublic, SLOT(pruneExcessEntries()));*/
-        }
+        {}
 
         ~WrappingMemoryLogSink()
         {
-            //_pool.waitForDone();
             clear();
         }
-
-        /*
-        bool isBusy() const
-        {
-            return !_pool.isDone();
-        }*/
 
         int maxEntries() const { return _maxEntries; }
 
@@ -320,41 +260,6 @@ public Font::RichFormat::IStyle
             return _wrappedEntries.takeFirst();
         }
 
-#if 0
-    protected:
-        /**
-         * Asynchronous task for wrapping an incoming entry as rich text in the
-         * background. WrapTask is responsible for creating the CacheEntry
-         * instances for the LogWidget's entry cache.
-         */
-        class WrapTask : public Task
-        {
-        public:
-            WrapTask(WrappingMemoryLogSink &owner, int index, String const &styledText)
-                : _sink(owner),
-                  _index(index),
-                  _styledText(styledText)
-            {}
-
-            void runTask()
-            {
-                CacheEntry *cached = new CacheEntry(_index, *_sink.d->font, *_sink.d,
-                                                    *_sink.d->entryAtlas);
-                cached->wrap(_styledText, _sink._width);
-
-                //usleep(75000); // testing aid
-
-                DENG2_GUARD_FOR(_sink._wrappedEntries, G);
-                _sink._wrappedEntries << cached;
-            }
-
-        private:
-            WrappingMemoryLogSink &_sink;
-            int _index;
-            String _styledText;
-        };
-#endif
-
         /**
          * Schedules wrapping tasks for all incoming entries.
          */
@@ -369,13 +274,8 @@ public Font::RichFormat::IStyle
                 LogEntry const &ent = entry(_next);
                 String const styled = d->formatter->logEntryToTextLines(ent).at(0);
 
-                //_pool.start(new WrapTask(*this, _next, styled));
-
-                CacheEntry *cached = new CacheEntry(/*_next, */*d->font, *d, *d->entryAtlas);
-                //cached->wrap(_styledText, _sink._width);
+                CacheEntry *cached = new CacheEntry(*d->font, *d, *d->entryAtlas);
                 cached->wrap(styled, _width);
-
-                //usleep(75000); // testing aid
 
                 DENG2_GUARD(_wrappedEntries);
                 _wrappedEntries << cached;
@@ -392,62 +292,13 @@ public Font::RichFormat::IStyle
         int _width;
 
         struct WrappedEntries : public QList<CacheEntry *>, public Lockable {};
-        WrappedEntries _wrappedEntries;
+        WrappedEntries _wrappedEntries; ///< New entries possibly created in background threads.
     };
 
     WrappingMemoryLogSink sink;
 
-    QList<CacheEntry *> cache; ///< Indices match entry indices in sink.
+    QList<CacheEntry *> cache; ///< Cached entries in use when drawing.
     int cacheWidth;
-
-#if 0
-    /**
-     * Asynchronous task that iterates through the cached entries in reverse
-     * order and rewraps their existing content to a new maximum width. The
-     * task is cancellable because an existing wrap should be abandoned if the
-     * widget content width changes again during a rewrap.
-     *
-     * The total height of the entries is updated as the entries are rewrapped.
-     */
-    class RewrapTask : public Task
-    {
-        LogWidget::Instance *d;
-        duint32 _cancelLevel;
-        int _next;
-        int _width;
-
-    public:
-        RewrapTask(LogWidget::Instance *wd, int startFrom, int width)
-            : d(wd), _cancelLevel(wd->cancelRewrap), _next(startFrom), _width(width)
-        {}
-
-        void runTask()
-        {
-            while(_next >= 0 && _cancelLevel == d->cancelRewrap)
-            {
-                CacheEntry *e = d->cache[_next--];
-
-                // Rewrap and update total height.
-                int delta = e->rewrap(_width);
-                d->self.modifyContentHeight(delta);
-
-                /// @todo Adjust the scroll position if this entry is below it
-                /// (would cause a visible scroll to occur).
-
-                if(_next < d->visibleRange.end)
-                {
-                    // Above the visible range, no need to rush.
-                    TimeDelta(.001).sleep();
-                }
-            }
-        }
-    };
-
-    TaskPool rewrapPool; ///< Used when rewrapping existing cached entries.
-    volatile duint32 cancelRewrap;
-
-    enum { CancelAllRewraps = 0xffffffff };
-#endif
 
     // State.
     Rangei visibleRange;
@@ -485,7 +336,6 @@ public Font::RichFormat::IStyle
         : Base(i)
         , sink(this)
         , cacheWidth(0)
-        //, cancelRewrap(0)
         , visibleRange(Rangei(-1, -1))
         , formatter(0)
         , font(0)
@@ -516,13 +366,8 @@ public Font::RichFormat::IStyle
 
     void cancelRewraps()
     {
-        /*
-        cancelRewrap = CancelAllRewraps;
-        rewrapPool.waitForDone();
-        cancelRewrap = 0;*/
-
         // Cancel all wraps.
-
+        /// @todo TextDrawable does not support cancelling.
     }
 
     void clearCache()
@@ -662,15 +507,13 @@ public Font::RichFormat::IStyle
 
     void modifyContentHeight(float delta)
     {
-        self.modifyContentHeight(delta); //cached->height());
+        self.modifyContentHeight(delta);
 
         // Adjust visible offset so it remains fixed in relation to
         // existing entries.
         if(self.scrollPositionY().animation().target() > 0)
         {
             self.scrollPositionY().shift(delta);
-
-            //emit self.scrollPositionChanged(visibleOffset.target());
         }
     }
 
@@ -678,60 +521,21 @@ public Font::RichFormat::IStyle
     {
         while(CacheEntry *cached = sink.nextCachedEntry())
         {
-            // Find a suitable place according to the original index in the sink;
-            // the task pool may output the entries slightly out of order as
-            // multiple threads may be in use.
-            /*int pos = cache.size();
-            while(pos > 0 && cache.at(pos - 1)->sinkIndex > cached->sinkIndex)
-            {
-                --pos;
-            }
-            cache.insert(pos, cached);*/
-
             cache << cached;
-
-#if 0
-            self.modifyContentHeight(cached->height());
-
-            // Adjust visible offset so it remains fixed in relation to
-            // existing entries.
-            if(self.scrollPositionY().animation().target() > 0)
-            {
-                self.scrollPositionY().shift(cached->height());
-
-                //emit self.scrollPositionChanged(visibleOffset.target());
-            }
-#endif
         }
     }
 
     void rewrapCache()
     {
-        /*if(cache.isEmpty()) return;
-
-        if(isRewrapping())
-        {
-            // Cancel an existing rewrap.
-            cancelRewrap++;
-        }
-
-        // Start a rewrapping task that goes through all the existing entries,
-        // starting from the latest entry.
-        rewrapPool.start(new RewrapTask(this, cache.size() - 1, contentWidth()));*/
-
+        // Resize all the existing entries, starting from the latest visible entry.
         for(int idx = cache.size() - 1; idx >= 0; --idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
-    }
 
-    /*
-    bool isRewrapping() const
-    {
-        //return !rewrapPool.isDone();
-        return numberOfUnwrappedEntries > 0;
+        // TODO - Resize the rest of the items (below the visible range).
+
     }
-    */
 
     void releaseExcessComposedEntries()
     {
@@ -743,14 +547,14 @@ public Font::RichFormat::IStyle
         int excess = visibleRange.start - len;
         for(int i = 0; i <= excess && i < cache.size(); ++i)
         {
-            cache[i]->clear();
+            cache[i]->releaseFromAtlas();
         }
 
         // Excess entries after the visible range.
         excess = visibleRange.end + len;
         for(int i = excess; i < cache.size(); ++i)
         {
-            cache[i]->clear();
+            cache[i]->releaseFromAtlas();
         }
     }
 
@@ -763,7 +567,7 @@ public Font::RichFormat::IStyle
         {
             if(!visibleRange.contains(i))
             {
-                cache[i]->clear();
+                cache[i]->releaseFromAtlas();
             }
         }
     }
@@ -774,52 +578,22 @@ public Font::RichFormat::IStyle
     void prune()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-#if 0
-        if(isRewrapping())
-        {
-            // Rewrapper is busy, let's not do this right now.
-            return;
-        }
 
-        // We must lock the sink so no new entries are added.
+        // We must lock the sink during this so no new entries are added.
         DENG2_GUARD(sink);
 
-        /*if(sink.isBusy())
-        {
-            // New entries are being added, prune later.
-            return;
-        }*/
-
-        fetchNewCachedEntries();
-
-        DENG2_ASSERT(sink.entryCount() == cache.size());
-#endif
-#if 0
-        // We must lock the sink so no new entries are added.
-        DENG2_GUARD(sink);
-
-        fetchNewCachedEntries();
-
-        // There has to be a cache entry for each sink entry.
-        DENG2_ASSERT(sink.entryCount() == cache.size());
-
+        // Remove oldest excess entries.
         int num = sink.entryCount() - sink.maxEntries();
         if(num > 0)
         {
+            // There is one sink entry and one cached entry for each log entry.
             sink.remove(0, num);
             for(int i = 0; i < num; ++i)
             {
                 self.modifyContentHeight(-cache[0]->height());
                 delete cache.takeFirst();
             }
-            /*
-            // Adjust existing indices to match.
-            for(int i = 0; i < cache.size(); ++i)
-            {
-                cache[i]->sinkIndex -= num;
-            }*/
         }
-#endif
     }
 
     void updateProjection()
@@ -828,30 +602,6 @@ public Font::RichFormat::IStyle
 
         uBgMvpMatrix = projMatrix;
     }
-
-    /*
-    bool updateEntries()
-    {
-        bool notify = false;
-        for(int idx = cache.size() - 1; idx >= 0; --idx)
-        {
-            CacheEntry *entry = cache[idx];
-
-            int prevHeight = entry->height();
-
-            int delta = entry->update();
-            if(delta)
-            {
-                // We won't notify when content height changes because of rewrapping.
-                if(!prevHeight) notify = true;
-
-                // The new height will be effective on the next frame.
-                modifyContentHeight(delta);
-            }
-        }
-        return notify;
-    }
-    */
 
     Rangei extendPixelRangeWithPadding(Rangei const &range)
     {
@@ -897,8 +647,6 @@ public Font::RichFormat::IStyle
             visibleRange = Rangei(-1, -1);
             entryAtlasLayoutChanged = false;
 
-            //bool gotReady = false;
-
             // Find the visible range and update all visible entries.
             for(int idx = cache.size() - 1; yBottom >= -contentOffsetForDrawing && idx >= 0; --idx)
             {
@@ -921,13 +669,6 @@ public Font::RichFormat::IStyle
                         continue;
                     }
                 }
-
-                /*
-                if(gotReady && !entry->isReady())
-                {
-                    // Everything above this likely has an undefined position, so we must stop here.
-                    break;
-                }*/
 
                 yBottom -= entry->height();
 
@@ -1026,8 +767,6 @@ LogWidget::LogWidget(String const &name)
 {
     setOrigin(Bottom);
 
-    //connect(&d->rewrapPool, SIGNAL(allTasksDone()), this, SLOT(pruneExcessEntries()));
-
     LogBuffer::appBuffer().addSink(d->sink);
 }
 
@@ -1091,11 +830,6 @@ void LogWidget::drawContent()
 bool LogWidget::handleEvent(Event const &event)
 {
     return ScrollAreaWidget::handleEvent(event);
-}
-
-void LogWidget::pruneExcessEntries()
-{
-    d->prune();
 }
 
 void LogWidget::glInit()

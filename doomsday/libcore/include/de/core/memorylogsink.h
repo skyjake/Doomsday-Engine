@@ -47,6 +47,11 @@ public:
     void clear();
 
 protected:
+    /**
+     * Called after a new entry has been appended to the end of the entries list.
+     *
+     * @param entry  Added entry.
+     */
     virtual void addedNewEntry(LogEntry &entry);
 
 private:
