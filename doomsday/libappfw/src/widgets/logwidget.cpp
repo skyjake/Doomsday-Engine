@@ -913,6 +913,12 @@ public Font::RichFormat::IStyle
                         // A bit of the kludge: height was changed due to a first-time
                         // update of content (new content appears rather than being a rewrap).
                         needHeightNotify = true;
+
+                        // Don't draw this entry yet; we'll need to fire the notification
+                        // first to ensure that offsets are properly set so that the
+                        // new entry's height is taken into account. The new entry will
+                        // be visible on the next frame.
+                        continue;
                     }
                 }
 
