@@ -1,9 +1,9 @@
 !deng_nosdl {
 
-# Build configuration for SDL (core library).
+# Build configuration for SDL 1.2 (core library).
 win32 {
     isEmpty(SDL_DIR) {
-        error("dep_sdl: SDL path not defined, check your config_user.pri")
+        error("dep_sdl: SDL 1.2 path not defined, check your config_user.pri (SDL_DIR)")
     }
     sdlLibDir = $$SDL_DIR/lib
     exists($$SDL_DIR/lib/x86): sdlLibDir = $$SDL_DIR/lib/x86
@@ -39,7 +39,7 @@ else {
 !deng_nosdlmixer {
     win32 {
         isEmpty(SDL_MIXER_DIR) {
-            error("dep_sdl: SDL_mixer path not defined, check your config_user.pri")
+            error("dep_sdl: SDL_mixer path not defined, check your config_user.pri (SDL_MIXER_DIR)")
         }
         sdlMixerLibDir = $$SDL_MIXER_DIR/lib
         exists($$SDL_MIXER_DIR/lib/x86): sdlMixerLibDir = $$SDL_MIXER_DIR/lib/x86

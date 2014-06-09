@@ -4,7 +4,7 @@
 # Copyright (c) 2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
-TARGET = doomsday
+TARGET = deng_doomsday
 
 # Build Configuration --------------------------------------------------------
 
@@ -68,7 +68,9 @@ HEADERS += \
     include/doomsday/defs/dedarray.h \
     include/doomsday/defs/dedfile.h \
     include/doomsday/defs/dedparser.h \
+    include/doomsday/defs/dedregister.h \
     include/doomsday/defs/dedtypes.h \
+    include/doomsday/defs/model.h \
     include/doomsday/dualstring.h \
     include/doomsday/filesys/file.h \
     include/doomsday/filesys/filehandle.h \
@@ -91,6 +93,9 @@ HEADERS += \
     include/doomsday/uri.h \
     include/doomsday/world/mobj.h
 
+win32: HEADERS += \
+    include/doomsday/filesys/fs_windows.h
+
 # Sources and private headers
 SOURCES += \
     src/audio/logical.cpp \
@@ -102,6 +107,8 @@ SOURCES += \
     src/defs/ded.cpp \
     src/defs/dedfile.cpp \
     src/defs/dedparser.cpp \
+    src/defs/dedregister.cpp \
+    src/defs/model.cpp \
     src/dualstring.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \
@@ -121,18 +128,21 @@ SOURCES += \
     src/resource/wav.cpp \
     src/uri.cpp
 
+win32: SOURCES += \
+    src/filesys/fs_windows.cpp
+
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibcore  (libdoomsday)
-    linkDylibToBundledLiblegacy(libdoomsday)
-    linkDylibToBundledLibshell (libdoomsday)
+    linkDylibToBundledLibcore  (libdeng_doomsday)
+    linkDylibToBundledLiblegacy(libdeng_doomsday)
+    linkDylibToBundledLibshell (libdeng_doomsday)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdoomsday.1.dylib libdoomsday.1.dylib")
+    doPostLink("install_name_tool -id @rpath/libdeng_doomsday.1.dylib libdeng_doomsday.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
-    doPostLink("cp -fRp libdoomsday*dylib ../client/Doomsday.app/Contents/Frameworks")
+    doPostLink("cp -fRp libdeng_doomsday*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
 else {
     INSTALLS += target

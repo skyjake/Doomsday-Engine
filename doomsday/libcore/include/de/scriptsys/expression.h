@@ -38,7 +38,7 @@ class Record;
  *
  * @ingroup script
  */
-class Expression : public ISerializable
+class DENG2_PUBLIC Expression : public ISerializable
 {
 public:
     /// Deserialization of an expression failed. @ingroup errors

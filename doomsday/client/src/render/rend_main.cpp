@@ -461,6 +461,8 @@ void Rend_Init()
 
 void Rend_Shutdown()
 {
+    if(!ClientApp::hasRenderSystem()) return;
+
     ClientApp::renderSystem().clearDrawLists();
 }
 

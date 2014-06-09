@@ -25,12 +25,17 @@
 
 namespace de {
 
+#ifdef WIN32
+#  undef IN
+#  undef CONST
+#endif
+
 /**
  * Lexical analyzer specific to Doomsday scripts.
  *
  * @ingroup script
  */
-class ScriptLex : public Lex
+class DENG2_PUBLIC ScriptLex : public Lex
 {
 public:
     /// Base error for syntax errors at the level of lexical analysis (e.g.,
@@ -113,6 +118,9 @@ public:
 
     /// Determines whether a token is a Haw script keyword.
     static bool isKeyword(Token const &token);
+
+    /// Returns a list of all the keywords.
+    static StringList keywords();
 
     /// Determines whether one character should join another to
     /// form a longer token.

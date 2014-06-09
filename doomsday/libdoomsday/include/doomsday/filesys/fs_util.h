@@ -29,6 +29,10 @@
 #include "../libdoomsday.h"
 #include "dd_types.h"
 
+#ifdef WIN32
+#  include "fs_windows.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -34,12 +34,12 @@ NumberValue::NumberValue(dsize initialSize)
     : _value(initialSize), _semantic(Generic)
 {}
 
-NumberValue::NumberValue(dint initialInteger)
-    : _value(initialInteger), _semantic(Generic)
+NumberValue::NumberValue(dint initialInteger, SemanticHints semantic)
+    : _value(initialInteger), _semantic(semantic)
 {}
 
-NumberValue::NumberValue(duint initialUnsignedInteger)
-    : _value(initialUnsignedInteger), _semantic(Generic)
+NumberValue::NumberValue(duint initialUnsignedInteger, SemanticHints semantic)
+    : _value(initialUnsignedInteger), _semantic(semantic)
 {}
 
 NumberValue::NumberValue(bool initialBoolean)
@@ -63,6 +63,10 @@ Value::Text NumberValue::asText() const
     if(_semantic.testFlag(Boolean) && (_value == True || _value == False))
     {
         s << (isTrue()? "True" : "False");
+    }
+    else if(_semantic.testFlag(Hex))
+    {
+        s << "0x" << QString::number(int(_value), 16);
     }
     else
     {
@@ -153,10 +157,12 @@ void NumberValue::modulo(Value const &divisor)
 
 // Flags for serialization:
 static duint8 const SEMANTIC_BOOLEAN = 0x01;
+static duint8 const SEMANTIC_HEX     = 0x02;
 
 void NumberValue::operator >> (Writer &to) const
 {
-    duint8 flags = (_semantic.testFlag(Boolean)? SEMANTIC_BOOLEAN : 0);
+    duint8 flags = (_semantic.testFlag(Boolean)? SEMANTIC_BOOLEAN : 0) |
+                   (_semantic.testFlag(Hex)?     SEMANTIC_HEX     : 0);
 
     to << SerialId(NUMBER) << flags << _value;
 }
@@ -174,7 +180,8 @@ void NumberValue::operator << (Reader &from)
     duint8 flags;
     from >> flags >> _value;
 
-    _semantic = SemanticHints(flags & SEMANTIC_BOOLEAN? Boolean : 0);
+    _semantic = SemanticHints((flags & SEMANTIC_BOOLEAN? Boolean : 0) |
+                              (flags & SEMANTIC_HEX?     Hex : 0));
 }
 
 } // namespace de

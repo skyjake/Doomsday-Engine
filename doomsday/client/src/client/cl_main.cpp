@@ -36,6 +36,7 @@
 #include "world/p_players.h"
 
 #include <doomsday/console/exec.h>
+#include <doomsday/filesys/fs_main.h>
 #include <de/timer.h>
 #include <cstdio>
 #include <cstdlib>

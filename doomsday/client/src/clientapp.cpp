@@ -473,8 +473,13 @@ InputSystem &ClientApp::inputSystem()
 RenderSystem &ClientApp::renderSystem()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->renderSys != 0);
+    DENG2_ASSERT(hasRenderSystem());
     return *a.d->renderSys;
+}
+
+bool ClientApp::hasRenderSystem()
+{
+    return ClientApp::app().d->renderSys != 0;
 }
 
 ResourceSystem &ClientApp::resourceSystem()

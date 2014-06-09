@@ -84,7 +84,7 @@ public:
     /**
      * Returns the record this reference points to.
      */
-    Record *record() const { return _record; }
+    Record *record() const;
 
     /**
      * Sets the record that the value is referencing.
@@ -104,6 +104,7 @@ public:
     Record const &dereference() const;
 
     Value *duplicate() const;
+    Value *duplicateAsReference() const;
     Text asText() const;
     dsize size() const;
     void setElement(Value const &index, Value *elementValue);
@@ -119,10 +120,10 @@ public:
     // Observes Record deletion.
     void recordBeingDeleted(Record &record);
 
+    RecordValue *duplicateUnowned() const;
+
 public:
-    Record *_record;
-    OwnershipFlags _ownership;
-    OwnershipFlags _oldOwnership; // prior to serialization
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(RecordValue::OwnershipFlags)

@@ -26,6 +26,7 @@
 #include "../Value"
 #include "../Audience"
 #include "../Log"
+#include "../RecordAccessor"
 
 #include <QMap>
 #include <QList>
@@ -48,8 +49,11 @@ class NativeFunctionSpec;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Record : public ISerializable, public LogEntry::Arg::Base,
-                            DENG2_OBSERVES(Variable, Deletion)
+class DENG2_PUBLIC Record
+        : public RecordAccessor
+        , public ISerializable
+        , public LogEntry::Arg::Base
+        , DENG2_OBSERVES(Variable, Deletion)
 {
 public:
     /// Unknown variable name was given. @ingroup errors
@@ -58,18 +62,19 @@ public:
     /// All variables and subrecords in the record must have a name. @ingroup errors
     DENG2_ERROR(UnnamedError);
 
-    /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
-    DENG2_ERROR(ValueTypeError);
-
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
     typedef QList<KeyValue> List;
 
-    enum CopyBehavior {
+    enum Behavior {
         AllMembers,
         IgnoreDoubleUnderscoreMembers
     };
+
+    DENG2_DEFINE_AUDIENCE2(Addition, void recordMemberAdded(Record &record, Variable &member))
+
+    DENG2_DEFINE_AUDIENCE2(Removal, void recordMemberRemoved(Record &record, Variable &member))
 
     DENG2_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
 
@@ -82,14 +87,16 @@ public:
      * @param other     Record to copy.
      * @param behavior  Which members to copy.
      */
-    Record(Record const &other, CopyBehavior behavior = AllMembers);
+    Record(Record const &other, Behavior behavior = AllMembers);
 
     virtual ~Record();
 
     /**
      * Deletes all the variables in the record.
+     *
+     * @param behavior  Clear behavior: which members to remove.
      */
-    void clear();
+    void clear(Behavior behavior = AllMembers);
 
     /**
      * Adds a copy of each member of another record into this record. The
@@ -99,12 +106,23 @@ public:
      * @param other     Record whose members are to be copied.
      * @param behavior  Copy behavior.
      */
-    void copyMembersFrom(Record const &other, CopyBehavior behavior = AllMembers);
+    void copyMembersFrom(Record const &other, Behavior behavior = AllMembers);
 
     /**
      * Assignment operator.
+     * @return This record.
      */
     Record &operator = (Record const &other);
+
+    /**
+     * Assignment with specific behavior. All existing members in this record
+     * are cleared (unless ignored due to @a behavior).
+     *
+     * @param behavior  Which members to assign.
+     *
+     * @return This record.
+     */
+    Record &assign(Record const &other, Behavior behavior = AllMembers);
 
     /**
      * Determines if the record contains a variable or a subrecord named @a variableName.
@@ -263,31 +281,6 @@ public:
      * @return  Caller gets ownership of the removed record.
      */
     Record *remove(String const &name);
-
-    // Convenient value getters:
-    Value const &get(String const &name) const;
-    dint geti(String const &name) const;
-    dint geti(String const &name, dint defaultValue) const;
-    bool getb(String const &name) const;
-    bool getb(String const &name, bool defaultValue) const;
-    duint getui(String const &name) const;
-    duint getui(String const &name, duint defaultValue) const;
-    ddouble getd(String const &name) const;
-    ddouble getd(String const &name, ddouble defaultValue) const;
-    String gets(String const &name) const;
-    String gets(String const &name, String const &defaultValue) const;
-    ArrayValue const &geta(String const &name) const;
-
-    template <typename ValueType>
-    ValueType const &getAs(String const &name) const {
-        ValueType const *v = get(name).maybeAs<ValueType>();
-        if(!v)
-        {
-            throw ValueTypeError("Record::getAs", String("Cannot cast to expected type (") +
-                                 DENG2_TYPE_NAME(ValueType) + ")");
-        }
-        return *v;
-    }
 
     /**
      * Sets the value of a variable, creating the variable if needed.

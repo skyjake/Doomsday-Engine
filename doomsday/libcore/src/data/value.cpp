@@ -34,6 +34,11 @@ using namespace de;
 Value::~Value()
 {}
 
+Value *Value::duplicateAsReference() const
+{
+    return duplicate();
+}
+
 Value::Number Value::asNumber() const
 {
     /// @throw ConversionError Value cannot be converted to number.
@@ -50,6 +55,11 @@ Value::Number Value::asSafeNumber(Number const &defaultValue) const
     {
         return defaultValue;
     }
+}
+
+int Value::asInt() const
+{
+    return round<int>(asNumber());
 }
 
 dsize Value::size() const

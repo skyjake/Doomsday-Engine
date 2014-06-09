@@ -27,6 +27,7 @@
 namespace de {
 
 class Process;
+class NumberValue;
 
 /**
  * The base class for all runtime values.  This is an abstract class.
@@ -64,6 +65,18 @@ public:
     virtual Value *duplicate() const = 0;
 
     /**
+     * Creates a duplicate copy of the value. If the value has ownership of its data,
+     * the ownership relationship is not replicated in the duplicate, but instead
+     * the duplicate references the original data.
+     *
+     * If the Value does not support this type of ownership, this method behaves just
+     * like duplicate().
+     *
+     * @return New Value object. Caller gets ownership of the object.
+     */
+    virtual Value *duplicateAsReference() const;
+
+    /**
      * Convert the value to a number.  Implementing this is
      * optional.  The default implementation will raise an
      * exception.
@@ -80,10 +93,15 @@ public:
     virtual Number asSafeNumber(Number const &defaultValue = 0.0) const;
 
     /**
+     * Convert the value to the nearest integer. Uses asNumber().
+     */
+    int asInt() const;
+
+    /**
      * Convert the value to into a text string.  All values have
      * to implement this.
      */
-    virtual Text asText() const = 0;
+    virtual Text asText() const = 0;     
 
     template <typename ValueType>
     bool is() const {

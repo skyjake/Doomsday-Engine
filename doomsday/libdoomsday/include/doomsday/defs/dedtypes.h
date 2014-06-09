@@ -197,6 +197,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_light_s {
     }
 } ded_light_t;
 
+#if 0
 struct LIBDOOMSDAY_PUBLIC ded_submodel_t
 {
     de::Uri*        filename;
@@ -307,6 +308,7 @@ struct LIBDOOMSDAY_PUBLIC ded_model_t
         _sub.push_back(ded_submodel_t());
     }
 };
+#endif
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
     ded_soundid_t   id; // ID of this sound, refered to by others.

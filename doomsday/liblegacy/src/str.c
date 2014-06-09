@@ -203,6 +203,8 @@ static void deleteString(Str *str)
 
 void Str_Delete(Str *str)
 {
+    if(!str) return;
+
     DENG_ASSERT(!Garbage_IsTrashed(str));
 
 #if 0 // use this is release builds if encountering Str/AutoStr errors

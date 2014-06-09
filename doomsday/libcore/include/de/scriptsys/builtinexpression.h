@@ -31,7 +31,7 @@ namespace de {
  *
  * @ingroup script
  */
-class BuiltInExpression : public Expression
+class DENG2_PUBLIC BuiltInExpression : public Expression
 {
 public:
     /// A wrong number of arguments is given to one of the built-in methods. @ingroup errors
@@ -78,6 +78,11 @@ public:
      * Checks if the identifier is one of the built-in functions.
      */
     static Type findType(String const &identifier);
+
+    /**
+     * Returns a list of all the built-in functions.
+     */
+    static StringList identifiers();
 
 private:
     Type _type;

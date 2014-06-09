@@ -26,25 +26,38 @@
 #include "de/Reader"
 #include "de/math.h"
 
-using namespace de;
+namespace de {
 
-RecordValue::RecordValue(Record *record, OwnershipFlags o)
-    : _record(record), _ownership(o), _oldOwnership(o)
+DENG2_PIMPL_NOREF(RecordValue)
 {
-    DENG2_ASSERT(_record != NULL);
+    Record *record;
+    OwnershipFlags ownership;
+    OwnershipFlags oldOwnership; // prior to serialization
 
-    if(!_ownership.testFlag(OwnsRecord))
+    Instance() : record(0) {}
+};
+
+RecordValue::RecordValue(Record *record, OwnershipFlags o) : d(new Instance)
+{
+    d->record = record;
+    d->ownership = o;
+    d->oldOwnership = o;
+
+    DENG2_ASSERT(d->record != NULL);
+
+    if(!d->ownership.testFlag(OwnsRecord))
     {
         // If we don't own it, someone may delete the record.
-        _record->audienceForDeletion() += this;
+        d->record->audienceForDeletion() += this;
     }
 }
 
-RecordValue::RecordValue(Record &record)
-    : _record(&record), _ownership(0), _oldOwnership(0)
+RecordValue::RecordValue(Record &record) : d(new Instance)
 {
+    d->record = &record;
+
     // Someone may delete the record.
-    _record->audienceForDeletion() += this;
+    d->record->audienceForDeletion() += this;
 }
 
 RecordValue::~RecordValue()
@@ -54,34 +67,43 @@ RecordValue::~RecordValue()
 
 bool RecordValue::hasOwnership() const
 {
-    return _ownership.testFlag(OwnsRecord);
+    return d->ownership.testFlag(OwnsRecord);
 }
 
 bool RecordValue::usedToHaveOwnership() const
 {
-    return _oldOwnership.testFlag(OwnsRecord);
+    return d->oldOwnership.testFlag(OwnsRecord);
+}
+
+Record *RecordValue::record() const
+{
+    return d->record;
 }
 
 void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 {
-    if(record == _record) return; // Got it already.
+    if(record == d->record) return; // Got it already.
 
     if(hasOwnership())
     {
-        delete _record;
+        DENG2_ASSERT(!d->record->audienceForDeletion().contains(this));
+
+        delete d->record;
     }
-    else if(_record)
+    else if(d->record)
     {
-        _record->audienceForDeletion() -= this;
+        DENG2_ASSERT(d->record->audienceForDeletion().contains(this));
+
+        d->record->audienceForDeletion() -= this;
     }
 
-    _record = record;
-    _ownership = ownership;
+    d->record = record;
+    d->ownership = ownership;
 
-    if(_record && !_ownership.testFlag(OwnsRecord))
+    if(d->record && !d->ownership.testFlag(OwnsRecord))
     {
         // Since we don't own it, someone may delete the record.
-        _record->audienceForDeletion() += this;
+        d->record->audienceForDeletion() += this;
     }
 }
 
@@ -93,15 +115,15 @@ Record *RecordValue::takeRecord()
         /// @throw OwnershipError Cannot give away ownership of a record that is not owned.
         throw OwnershipError("RecordValue::takeRecord", "Value does not own the record");
     }
-    Record *rec = _record;
-    _record = 0;
-    _ownership = 0;
+    Record *rec = d->record;
+    d->record = 0;
+    d->ownership = 0;
     return rec;
 }
 
 void RecordValue::verify() const
 {
-    if(!_record)
+    if(!d->record)
     {
         /// @throw NullError The value no longer points to a record.
         throw NullError("RecordValue::verify", "Value no longer references a record");
@@ -111,20 +133,30 @@ void RecordValue::verify() const
 Record &RecordValue::dereference()
 {
     verify();
-    return *_record;
+    return *d->record;
 }
 
 Record const &RecordValue::dereference() const
 {
     verify();
-    return *_record;
+    return *d->record;
 }
 
 Value *RecordValue::duplicate() const
 {
     verify();
-    /// The return duplicated value does not own the record, just references it.
-    return new RecordValue(_record);
+    if(hasOwnership())
+    {
+        // Make a complete duplicate using a new record.
+        return new RecordValue(new Record(*d->record), OwnsRecord);
+    }
+    return new RecordValue(d->record);
+}
+
+Value *RecordValue::duplicateAsReference() const
+{
+    verify();
+    return new RecordValue(d->record);
 }
 
 Value::Text RecordValue::asText() const
@@ -160,7 +192,7 @@ Value *RecordValue::duplicateElement(Value const &value) const
     }
     if(dereference().hasMember(*text))
     {
-        return dereference()[*text].value().duplicate();
+        return dereference()[*text].value().duplicateAsReference();
     }
     throw NotFoundError("RecordValue::duplicateElement",
                         "'" + text->asText() + "' does not exist in the record");
@@ -192,7 +224,7 @@ dint RecordValue::compare(Value const &value) const
         return cmp(reinterpret_cast<void const *>(this), 
                    reinterpret_cast<void const *>(&value));
     }
-    return cmp(recValue->_record, _record);
+    return cmp(recValue->d->record, d->record);
 }
 
 // Flags for serialization:
@@ -219,14 +251,18 @@ void RecordValue::operator << (Reader &from)
     // Old flags.
     duint8 flags = 0;
     from >> flags;
-    _oldOwnership = OwnershipFlags(flags & OWNS_RECORD? OwnsRecord : 0);
+    d->oldOwnership = OwnershipFlags(flags & OWNS_RECORD? OwnsRecord : 0);
 
     from >> dereference();
 }
 
 void RecordValue::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
 {
-    DENG2_ASSERT(_record == &record);
-    DENG2_ASSERT(!_ownership.testFlag(OwnsRecord));
-    _record = 0;
+    if(!d->record) return; // Not associated with a record any more.
+
+    DENG2_ASSERT(d->record == &record);
+    DENG2_ASSERT(!d->ownership.testFlag(OwnsRecord));
+    d->record = 0;
 }
+
+} // namespace de

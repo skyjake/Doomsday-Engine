@@ -304,11 +304,15 @@ DENG2_PIMPL(AbstractLineEditor)
 
     QStringList completionsForBase(String base, String &commonPrefix) const
     {
+        Qt::CaseSensitivity const sensitivity =
+                lexicon.isCaseSensitive()? Qt::CaseSensitive : Qt::CaseInsensitive;
+
         bool first = true;
         QStringList sugs;
+
         foreach(String term, lexicon.terms())
         {
-            if(term.startsWith(base, Qt::CaseInsensitive) && term.size() > base.size())
+            if(term.startsWith(base, sensitivity) && term.size() > base.size())
             {
                 sugs << term;
 
@@ -320,7 +324,7 @@ DENG2_PIMPL(AbstractLineEditor)
                 }
                 else if(!commonPrefix.isEmpty())
                 {
-                    int len = commonPrefix.commonPrefixLength(term, Qt::CaseInsensitive);
+                    int len = commonPrefix.commonPrefixLength(term, sensitivity);
                     commonPrefix = commonPrefix.left(len);
                 }
             }

@@ -1,7 +1,6 @@
-/** @file
+/** @file fs_windows.h  Windows-specific file system operations.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,18 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * de_defs.h: Definitions Subsystem
- */
+#ifndef LIBDOOMSDAY_FS_WINDOWS_H
+#define LIBDOOMSDAY_FS_WINDOWS_H
 
-#ifndef __DOOMSDAY_DEFINITIONS_H__
-#define __DOOMSDAY_DEFINITIONS_H__
+#include "../libdoomsday.h"
+#include <stdio.h>
 
-#include "def_share.h"
-#include "def_main.h"
-#include <doomsday/defs/ded.h>
-#include <doomsday/defs/model.h>
-#include <doomsday/defs/dedfile.h>
-#include <doomsday/defs/dedparser.h>
+#define fopen  FS_Win32_fopen
+#define access FS_Win32_access
+#define mkdir  FS_Win32_mkdir
 
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+LIBDOOMSDAY_PUBLIC FILE *FS_Win32_fopen(char const *filenameUtf8, char const *mode);
+LIBDOOMSDAY_PUBLIC int FS_Win32_access(char const *pathUtf8, int mode);
+LIBDOOMSDAY_PUBLIC int FS_Win32_mkdir(char const *dirnameUtf8);
+
+#ifdef __cplusplus
+} //extern "C"
+#endif
+
+#endif // LIBDOOMSDAY_FS_WINDOWS_H

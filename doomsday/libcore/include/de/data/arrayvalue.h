@@ -21,6 +21,8 @@
 #define LIBDENG2_ARRAYVALUE_H
 
 #include "../Value"
+#include "../NumberValue"
+#include "../Vector"
 
 #include <vector>
 
@@ -47,6 +49,18 @@ public:
 public:
     ArrayValue();
     ArrayValue(ArrayValue const &other);
+
+    /**
+     * Construct an array out of the values in a vector.
+     * @param vec  Any kind of vector type (one of de::Vector<>).
+     */
+    template <typename VecType>
+    ArrayValue(VecType const &vec) {
+        for(int i = 0; i < vec.size(); ++i) {
+            add(new NumberValue(vec[i]));
+        }
+    }
+
     ~ArrayValue();
 
     /// Const accessor to the array elements.
@@ -163,6 +177,16 @@ public:
      *              DictionaryValue containing any labeled argument values.
      */
     void callElements(ArrayValue const &args);
+
+    /**
+     * Convenient element setter for native code.
+     * @param index  Index to set.
+     * @param value  Value to set.
+     */
+    void setElement(dint index, Number value);
+
+    Value const &element(dint index) const;
+    Value const &operator [] (dint index) const;
 
 private:
     Elements::iterator indexToIterator(dint index);

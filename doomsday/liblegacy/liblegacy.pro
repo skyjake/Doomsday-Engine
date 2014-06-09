@@ -117,7 +117,7 @@ SOURCES += \
     src/writer.c
 
 win32 {
-    SOURCES += src/findfile_windows.c
+    SOURCES += src/findfile_windows.cpp
 }
 else:unix {
     SOURCES += src/findfile_unix.c
@@ -128,7 +128,7 @@ else:unix {
 macx {
     linkDylibToBundledLibcore(libdeng_legacy)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_legacy.1.dylib libdeng_legacy.1.dylib")
+    doPostLink("install_name_tool -id @rpath/libdeng_legacy.1.dylib libdeng_legacy.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

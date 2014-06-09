@@ -40,8 +40,8 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
-    typedef QMap<String, Record *> NativeModules; // not owned
-    NativeModules nativeModules;
+    typedef QMap<String, Record *> NativeModules;
+    NativeModules nativeModules; // not owned
     Record versionModule; // Version: information about the platform and build
     Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
@@ -95,6 +95,14 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         module.audienceForDeletion() += this;
     }
 
+    void removeNativeModule(String const &name)
+    {
+        if(!nativeModules.contains(name)) return;
+
+        nativeModules[name]->audienceForDeletion() -= this;
+        nativeModules.remove(name);
+    }
+
     void recordBeingDeleted(Record &record)
     {
         QMutableMapIterator<String, Record *> iter(nativeModules);
@@ -120,11 +128,21 @@ void ScriptSystem::addNativeModule(String const &name, Record &module)
     d->addNativeModule(name, module);
 }
 
+void ScriptSystem::removeNativeModule(String const &name)
+{
+    d->removeNativeModule(name);
+}
+
 Record &ScriptSystem::nativeModule(String const &name)
 {
     Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
     DENG2_ASSERT(foundNative != d->nativeModules.constEnd());
     return *foundNative.value();
+}
+
+StringList ScriptSystem::nativeModules() const
+{
+    return d->nativeModules.keys();
 }
 
 static int sortFilesByModifiedAt(File const *a, File const *b)
@@ -138,10 +156,10 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
     std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
     defaultImportPath->add("");
     defaultImportPath->add("*"); // Newest module with a matching name.
-    ArrayValue *importPath = defaultImportPath.get();
+    ArrayValue const *importPath = defaultImportPath.get();
     try
     {
-        importPath = &App::config()["importPath"].value<ArrayValue>();
+        importPath = &App::config().geta("importPath");
     }
     catch(Record::NotFoundError const &)
     {}

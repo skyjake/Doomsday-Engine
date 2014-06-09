@@ -48,6 +48,7 @@ public:
 
     enum SemanticHint {
         Boolean = 0x1,      ///< The number is intended to be a boolean value.
+        Hex = 0x2,          ///< The number is intended to be a hexadecimal value.
         Generic = 0         ///< Generic number.
     };
     Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
@@ -55,8 +56,8 @@ public:
 public:
     NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
     NumberValue(dsize initialSize);
-    NumberValue(dint initialInteger);
-    NumberValue(duint initialUnsignedInteger);
+    NumberValue(dint initialInteger, SemanticHints semantic = Generic);
+    NumberValue(duint initialUnsignedInteger, SemanticHints semantic = Generic);
     NumberValue(bool initialBoolean);
 
     /**

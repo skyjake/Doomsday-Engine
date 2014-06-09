@@ -59,6 +59,9 @@ public:
     /// Returns a direct reference to the elements map.
     Elements const &elements() const { return _elements; }
 
+    /// Returns a direct reference to the elements map.
+    Elements &elements() { return _elements; }
+
     /**
      * Clears the dictionary of all values.
      */
@@ -72,6 +75,15 @@ public:
      * @param value  Value. Ownership given to DictionaryValue.
      */
     void add(Value *key, Value *value);
+
+    /**
+     * Removes a key-value pair from the dictionary.
+     *
+     * @param key  Key that will be removed.
+     */
+    void remove(Value const &key);
+
+    void remove(Elements::iterator const &pos);
 
     // Implementations of pure virtual methods.
     Value *duplicate() const;

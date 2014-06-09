@@ -55,9 +55,16 @@ DENG2_PIMPL(Record)
 
     bool isSubrecord(Variable const &var) const
     {
-        RecordValue const *value = dynamic_cast<RecordValue const *>(&var.value());
+        RecordValue const *value = var.value().maybeAs<RecordValue>();
         return value && value->record() && value->hasOwnership();
     }
+
+    /*
+    bool isOwnedSubrecord(Variable const &var) const
+    {
+        RecordValue const *value = var.value().maybeAs<RecordValue>();
+        return value && value->record() && value->hasOwnership();
+    }*/
 
     Record::Subrecords listSubrecords() const
     {
@@ -66,7 +73,7 @@ DENG2_PIMPL(Record)
         {
             if(isSubrecord(*i.value()))
             {
-                subs.insert(i.key(), static_cast<RecordValue &>(i.value()->value()).record());
+                subs.insert(i.key(), i.value()->value().as<RecordValue>().record());
             }
         }
         return subs;
@@ -172,40 +179,59 @@ DENG2_PIMPL(Record)
     }
 
     DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(Addition)
+    DENG2_PIMPL_AUDIENCE(Removal)
 };
 
 DENG2_AUDIENCE_METHOD(Record, Deletion)
+DENG2_AUDIENCE_METHOD(Record, Addition)
+DENG2_AUDIENCE_METHOD(Record, Removal)
 
-Record::Record() : d(new Instance(*this))
+Record::Record() : RecordAccessor(this), d(new Instance(*this))
 {}
 
-Record::Record(Record const &other, CopyBehavior behavior)
-    : ISerializable(), LogEntry::Arg::Base(), Variable::IDeletionObserver(),
-      d(new Instance(*this))
+Record::Record(Record const &other, Behavior behavior)
+    : RecordAccessor(this)
+    , d(new Instance(*this))
 {
     copyMembersFrom(other, behavior);
 }
 
 Record::~Record()
 {
+    // Notify before deleting members so that observers have full visibility
+    // to the record prior to deletion.
     DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
+
     clear();
 }
 
-void Record::clear()
+void Record::clear(Behavior behavior)
 {
     if(!d->members.empty())
     {
+        Record::Members remaining; // Contains all members that are not removed.
+
         DENG2_FOR_EACH(Members, i, d->members)
         {
+            if(behavior == IgnoreDoubleUnderscoreMembers &&
+               i.key().startsWith("__"))
+            {
+                remaining.insert(i.key(), i.value());
+                continue;
+            }
+
+            DENG2_FOR_AUDIENCE2(Removal, o) o->recordMemberRemoved(*this, **i);
+
             i.value()->audienceForDeletion() -= this;
             delete i.value();
         }
-        d->members.clear();
+
+        d->members = remaining;
     }
 }
 
-void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
+void Record::copyMembersFrom(Record const &other, Behavior behavior)
 {
     DENG2_FOR_EACH_CONST(Members, i, other.d->members)
     {
@@ -213,23 +239,6 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
            i.key().startsWith("__")) continue;
 
         Variable *var = new Variable(*i.value());
-
-        // Ownerships of copied subrecords should be retained in the copy.
-        if(RecordValue *recVal = var->value().maybeAs<RecordValue>())
-        {
-            DENG2_ASSERT(!recVal->hasOwnership()); // RecordValue duplication behavior
-
-            RecordValue const &original = i.value()->value().as<RecordValue>();
-            if(original.hasOwnership())
-            {
-                DENG2_ASSERT(recVal->record() == original.record());
-
-                // Make a true copy of the subrecord.
-                recVal->setRecord(new Record(*recVal->record(), behavior),
-                                  RecordValue::OwnsRecord);
-            }
-        }
-
         var->audienceForDeletion() += this;
         d->members[i.key()] = var;
     }
@@ -237,8 +246,13 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
 
 Record &Record::operator = (Record const &other)
 {
-    clear();
-    copyMembersFrom(other);
+    return assign(other);
+}
+
+Record &Record::assign(Record const &other, Behavior behavior)
+{
+    clear(behavior);
+    copyMembersFrom(other, behavior);
     return *this;
 }
 
@@ -277,6 +291,9 @@ Variable &Record::add(Variable *variable)
     }
     var->audienceForDeletion() += this;
     d->members[variable->name()] = var.release();
+
+    DENG2_FOR_AUDIENCE2(Addition, i) i->recordMemberAdded(*this, *variable);
+
     return *variable;
 }
 
@@ -284,6 +301,9 @@ Variable *Record::remove(Variable &variable)
 {
     variable.audienceForDeletion() -= this;
     d->members.remove(variable.name());
+
+    DENG2_FOR_AUDIENCE2(Removal, i) i->recordMemberRemoved(*this, variable);
+
     return &variable;
 }
 
@@ -371,76 +391,11 @@ Record *Record::remove(String const &name)
     Members::const_iterator found = d->members.find(name);
     if(found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        Record *rec = static_cast<RecordValue *>(&found.value()->value())->takeRecord();
+        Record *returnedToCaller = found.value()->value().as<RecordValue>().takeRecord();
         remove(*found.value());
-        return rec;
+        return returnedToCaller;
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
-}
-
-Value const &Record::get(String const &name) const
-{
-    return (*this)[name].value();
-}
-
-dint Record::geti(String const &name) const
-{
-    return dint(get(name).asNumber());
-}
-
-dint Record::geti(String const &name, dint defaultValue) const
-{
-    if(!hasMember(name)) return defaultValue;
-    return geti(name);
-}
-
-bool Record::getb(String const &name) const
-{
-    return get(name).isTrue();
-}
-
-bool Record::getb(String const &name, bool defaultValue) const
-{
-    if(!hasMember(name)) return defaultValue;
-    return getb(name);
-}
-
-duint Record::getui(String const &name) const
-{
-    return duint(get(name).asNumber());
-}
-
-duint Record::getui(String const &name, duint defaultValue) const
-{
-    if(!hasMember(name)) return defaultValue;
-    return getui(name);
-}
-
-ddouble Record::getd(String const &name) const
-{
-    return get(name).asNumber();
-}
-
-ddouble Record::getd(String const &name, ddouble defaultValue) const
-{
-    if(!hasMember(name)) return defaultValue;
-    return getd(name);
-}
-
-String Record::gets(String const &name) const
-{
-    return get(name).asText();
-}
-
-String Record::gets(String const &name, String const &defaultValue) const
-{
-    if(!hasMember(name)) return defaultValue;
-    return gets(name);
-}
-
-ArrayValue const &Record::geta(String const &name) const
-{
-    return getAs<ArrayValue>(name);
 }
 
 Variable &Record::set(String const &name, bool value)
@@ -531,7 +486,7 @@ Record const &Record::subrecord(String const &name) const
     Members::const_iterator found = d->members.find(name);
     if(found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        return *static_cast<RecordValue const &>(found.value()->value()).record();
+        return *found.value()->value().as<RecordValue>().record();
     }
     throw NotFoundError("Record::subrecord", "Subrecord '" + name + "' not found");
 }

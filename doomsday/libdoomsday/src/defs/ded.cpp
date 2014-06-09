@@ -18,6 +18,11 @@
  */
 
 #include "doomsday/defs/ded.h"
+#include "doomsday/defs/model.h"
+
+#include <de/ArrayValue>
+#include <de/NumberValue>
+#include <de/RecordValue>
 
 #include <cstdio>
 #include <cstdlib>
@@ -42,7 +47,13 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 }
 
 ded_s::ded_s()
+    : flags (names.addRecord("flags"))
+    , models(names.addRecord("models"))
 {
+    flags.addLookupKey("id");
+    models.addLookupKey("id", DEDRegister::OnlyFirst);
+    models.addLookupKey("state");
+
     clear();
 }
 
@@ -56,6 +67,21 @@ void ded_s::clear()
     modelOffset = 0;
 }
 
+int ded_s::addFlag(char const *id, int value)
+{
+    Record &def = flags.append();
+    def.addText("id", id);
+    def.addNumber("value", value);
+    return def.geti("__order__");
+}
+
+int ded_s::addModel()
+{
+    Record &def = models.append();
+    defn::Model(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
 void ded_s::release()
 {
     flags.clear();
@@ -63,21 +89,7 @@ void ded_s::release()
     states.clear();
     sprites.clear();
     lights.clear();
-
-    // 'models' is a std::vector
-    for(uint i = 0; i < models.size(); ++i)
-    {
-        ded_model_t* mdl = &models[i];
-        for(uint j = 0; j < mdl->subCount(); ++j)
-        {
-            ded_submodel_t* sub = &mdl->sub(j);
-            if(sub->filename)     delete(sub->filename);
-            if(sub->skinFilename) delete(sub->skinFilename);
-            if(sub->shinySkin)    delete(sub->shinySkin);
-        }
-    }
     models.clear();
-
     sounds.clear();
     music.clear();
     mapInfo.clear();
@@ -102,25 +114,6 @@ int DED_AddMobj(ded_t* ded, char const* idstr)
     ded_mobj_t *mo = ded->mobjs.append();
     strcpy(mo->id, idstr);
     return ded->mobjs.indexOf(mo);
-}
-
-int DED_AddFlag(ded_t* ded, char const* name, int value)
-{
-    ded_flag_t *fl = ded->flags.append();
-    strcpy(fl->id, name);
-    fl->value = value;
-    return ded->flags.indexOf(fl);
-}
-
-int DED_AddModel(ded_t* ded, char const* spr)
-{
-    ded->models.push_back(ded_model_t(spr));
-    return ded->models.size() - 1;
-}
-
-void DED_RemoveModel(ded_t* ded, int index)
-{
-    ded->models.erase(ded->models.begin() + index);
 }
 
 int DED_AddSky(ded_t* ded, char const* id)
@@ -455,6 +448,11 @@ char const *ded_s::getMobjName(int num) const
     return mobjs[num].id;
 }
 
+int ded_s::getStateNum(String const &id) const
+{
+    return getStateNum(id.toLatin1().constData());
+}
+
 int ded_s::getStateNum(char const *id) const
 {
     int idx = -1;
@@ -469,6 +467,7 @@ int ded_s::getStateNum(char const *id) const
     return idx;
 }
 
+/*
 ded_flag_t *ded_s::getFlag(char const *flag) const
 {
     if(!flag || !flag[0]) return 0;
@@ -480,7 +479,7 @@ ded_flag_t *ded_s::getFlag(char const *flag) const
     }
 
     return 0;
-}
+}*/
 
 int ded_s::evalFlags2(char const *ptr) const
 {
@@ -496,9 +495,9 @@ int ded_s::evalFlags2(char const *ptr) const
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
-        if(ded_flag_t *flag = getFlag(flagName.toUtf8().constData()))
+        if(Record const *flag = flags.tryFind("id", flagName.toLower()))
         {
-            value |= flag->value;
+            value |= flag->geti("value");
         }
         else
         {
@@ -510,7 +509,13 @@ int ded_s::evalFlags2(char const *ptr) const
 
 int ded_s::getModelNum(const char *id) const
 {
-    int idx = -1;
+    if(Record const *def = models.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+
+/*    int idx = -1;
     if(id && id[0] && !models.empty())
     {
         int i = 0;
@@ -518,7 +523,7 @@ int ded_s::getModelNum(const char *id) const
             if(!qstricmp(models[i].id, id)) idx = i;
         } while(idx == -1 && ++i < (int)models.size());
     }
-    return idx;
+    return idx;*/
 }
 
 int ded_s::getSoundNum(const char *id) const

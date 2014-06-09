@@ -44,6 +44,7 @@
 
 #include <doomsday/defs/dedfile.h>
 #include <doomsday/defs/dedparser.h>
+#include <de/App>
 #include <de/NativePath>
 #include <QTextStream>
 #include <cctype>
@@ -142,16 +143,26 @@ void Def_Init(void)
 {
     runtimeDefs.clear();
     defs.clear();
+
+    // Make the definitions visible in the global namespace.
+    App::app().scriptSystem().addNativeModule("Defs", defs.names);
 }
 
 void Def_Destroy(void)
 {
+    App::app().scriptSystem().removeNativeModule("Defs");
+
     defs.clear();
 
     // Destroy the databases.
     runtimeDefs.clear();
 
     defsInited = false;
+}
+
+spritenum_t Def_GetSpriteNum(String const &name)
+{
+    return Def_GetSpriteNum(name.toLatin1());
 }
 
 spritenum_t Def_GetSpriteNum(char const *name)
@@ -397,9 +408,9 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
 }
 
 #undef Def_EvalFlags
-int Def_EvalFlags(char *ptr)
+int Def_EvalFlags(char const *ptr)
 {
-    return defs.evalFlags2(const_cast<char const *>(ptr));
+    return defs.evalFlags2(ptr);
 }
 
 int Def_GetTextNumForName(const char* name)

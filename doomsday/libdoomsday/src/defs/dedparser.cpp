@@ -39,6 +39,7 @@
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
+#include "doomsday/defs/model.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/uri.h"
@@ -51,6 +52,7 @@
 
 #include <de/App>
 #include <de/NativePath>
+#include <de/ArrayValue>
 #include <de/game/Game>
 #include <de/memory.h>
 #include <de/vector1.h>
@@ -104,6 +106,7 @@ using namespace de;
 #define READFLAGS(X,P) if(!ReadFlags(&X, P)) { FAILURE }
 #define READBLENDMODE(X) if(!ReadBlendmode(&X)) { FAILURE }
 #define READSTRING(S,I) if(!ReadString(S, sizeof(S))) { I = strtol(token,0,0); }
+#define READVECTOR(X,N) if(!ReadVector(X, N)) { FAILURE }
 
 #define RV_BYTE(lab, X) if(ISLABEL(lab)) { READBYTE(X); } else
 #define RV_INT(lab, X)  if(ISLABEL(lab)) { READINT(X); } else
@@ -111,6 +114,7 @@ using namespace de;
 #define RV_FLT(lab, X)  if(ISLABEL(lab)) { READFLT(X); } else
 #define RV_VEC(lab, X, N)   if(ISLABEL(lab)) { int b; FINDBEGIN; \
                         for(b=0; b<N; ++b) {READFLT(X[b])} ReadToken(); } else
+#define RV_VEC_VAR(lab, X, N) if(ISLABEL(lab)) { READVECTOR(X, N); } else
 #define RV_IVEC(lab, X, N)  if(ISLABEL(lab)) { int b; FINDBEGIN; \
                         for(b=0; b<N; ++b) {READINT(X[b])} ReadToken(); } else
 #define RV_NBVEC(lab, X, N) if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
@@ -399,6 +403,14 @@ DENG2_PIMPL(DEDParser)
         return true;
     }
 
+    int ReadString(Variable &var, int)
+    {
+        String buffer;
+        if(!ReadString(buffer)) return false;
+        var.set(TextValue(buffer));
+        return true;
+    }
+
     /**
      * Read a string of (pretty much) any length.
      */
@@ -421,7 +433,7 @@ DENG2_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadUri(de::Uri **dest_, char const *defaultScheme)
+    int ReadUri(de::Uri **dest, char const *defaultScheme)
     {
         String buffer;
 
@@ -431,30 +443,35 @@ DENG2_PIMPL(DEDParser)
         // URIs are expected to use forward slashes.
         buffer = Path::normalizeString(buffer);
 
-        if(!*dest_)
-            *dest_ = new de::Uri(buffer, RC_NULL);
+        if(!*dest)
+            *dest = new de::Uri(buffer, RC_NULL);
         else
-            (*dest_)->setUri(buffer, RC_NULL);
+            (*dest)->setUri(buffer, RC_NULL);
 
-        de::Uri *dest = *dest_;
-
-        if(defaultScheme && defaultScheme[0] && dest->scheme().isEmpty())
-            dest->setScheme(defaultScheme);
+        if(defaultScheme && defaultScheme[0] && (*dest)->scheme().isEmpty())
+            (*dest)->setScheme(defaultScheme);
 
         return true;
     }
 
-    int ReadNByteVector(unsigned char* dest, int max)
+    int ReadUri(Variable &var, char const *defaultScheme)
     {
-        int                 i;
+        de::Uri *uri = 0;
+        if(!ReadUri(&uri, defaultScheme)) return false;
+        var.set(TextValue(uri->compose()));
+        delete uri;
+        return true;
+    }
 
+    int ReadNByteVector(Variable &var, int count)
+    {
         FINDBEGIN;
-        for(i = 0; i < max; ++i)
+        for(int i = 0; i < count; ++i)
         {
             ReadToken();
             if(ISTOKEN("}"))
                 return true;
-            dest[i] = strtoul(token, 0, 0);
+            var.value<ArrayValue>().setElement(i, strtoul(token, 0, 0));
         }
         FINDEND;
         return true;
@@ -492,6 +509,17 @@ DENG2_PIMPL(DEDParser)
         return true;
     }
 
+    int ReadInt(Variable *var, int unsign)
+    {
+        int value = 0;
+        if(ReadInt(&value, unsign))
+        {
+            var->set(NumberValue(value));
+            return true;
+        }
+        return false;
+    }
+
     /**
      * @return              @c true, if successful.
      */
@@ -505,6 +533,30 @@ DENG2_PIMPL(DEDParser)
         }
 
         *dest = (float) strtod(token, 0);
+        return true;
+    }
+
+    int ReadFloat(Variable *var)
+    {
+        float value = 0;
+        if(ReadFloat(&value))
+        {
+            var->set(NumberValue(value));
+            return true;
+        }
+        return false;
+    }
+
+    int ReadVector(Variable &var, int componentCount)
+    {
+        FINDBEGIN;
+        for(int b = 0; b < componentCount; ++b)
+        {
+            float value = 0;
+            if(!ReadFloat(&value)) return false;
+            var.value<ArrayValue>().setElement(b, value);
+        }
+        ReadToken();
         return true;
     }
 
@@ -579,6 +631,17 @@ DENG2_PIMPL(DEDParser)
         return true;
     }
 
+    int ReadFlags(Variable *dest, char const *prefix)
+    {
+        int value = 0;
+        if(ReadFlags(&value, prefix))
+        {
+            dest->set(NumberValue(value, NumberValue::Hex));
+            return true;
+        }
+        return false;
+    }
+
     int ReadBlendmode(blendmode_t *dest)
     {
         LOG_AS("ReadBlendmode");
@@ -615,6 +678,14 @@ DENG2_PIMPL(DEDParser)
                 << flag << (source ? source->fileName : "?") << (source ? source->lineNumber : 0);
         }
 
+        return true;
+    }
+
+    int ReadBlendmode(Variable *var)
+    {
+        blendmode_t mode;
+        if(!ReadBlendmode(&mode)) return false;
+        var->set(NumberValue(int(mode)));
         return true;
     }
 
@@ -821,19 +892,25 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Flag"))
             {
+                ded_stringid_t id;
+                int value;
                 char dummyStr[2];
-                // A new flag.
-                idx = DED_AddFlag(ded, "", 0);
+
                 FINDBEGIN;
                 for(;;)
                 {
                     READLABEL;
-                    RV_STR("ID", ded->flags[idx].id)
-                    RV_UINT("Value", ded->flags[idx].value)
+                    RV_STR("ID", id)
+                    RV_UINT("Value", value)
                     RV_STR("Info", dummyStr) // ignored
                     RV_END
                     CHECKSC;
                 }
+
+                ded->addFlag(id, value);
+
+                // Sanity check.
+                DENG2_ASSERT(ded->flags.find("id", id).geti("value") == value);
             }
 
             if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
@@ -1317,90 +1394,88 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Model"))
             {
-                ded_model_t* mdl, *prevModel = NULL;
-                uint sub = 0;
+                Record *prevModel = 0;
+                int sub = 0;
 
-                // A new model.
-                idx = DED_AddModel(ded, "");
-                mdl = &ded->models[idx];
+                // New models are appended to the end of the list.
+                idx = ded->addModel();
+                Record &mdl = ded->models[idx];
 
                 if(prevModelDefIdx >= 0)
                 {
                     prevModel = &ded->models[prevModelDefIdx];
-                    // Should we copy the previous definition?
-                    if(bCopyNext)
-                    {
-                        *mdl = *prevModel;
-                        for(uint i = 0; i < mdl->subCount(); ++i)
-                        {
-                            if(mdl->sub(i).filename)
-                                mdl->sub(i).filename = new de::Uri(*mdl->sub(i).filename);
 
-                            if(mdl->sub(i).skinFilename)
-                                mdl->sub(i).skinFilename = new de::Uri(*mdl->sub(i).skinFilename);
-
-                            if(mdl->sub(i).shinySkin)
-                                mdl->sub(i).shinySkin = new de::Uri(*mdl->sub(i).shinySkin);
-                        }
-                    }
+                    // Private members are used for metadata (like __order__) that should
+                    // not be copied.
+                    if(bCopyNext) mdl.assign(*prevModel, Record::IgnoreDoubleUnderscoreMembers);
                 }
 
                 FINDBEGIN;
                 for(;;)
                 {
                     READLABEL;
-                    RV_STR("ID", mdl->id)
-                    RV_STR("State", mdl->state)
-                    RV_INT("Off", mdl->off)
-                    RV_STR("Sprite", mdl->sprite.id)
-                    RV_INT("Sprite frame", mdl->spriteFrame)
-                    RV_FLAGS("Group", mdl->group, "mg_")
-                    RV_INT("Selector", mdl->selector)
-                    RV_FLAGS("Flags", mdl->flags, "df_")
-                    RV_FLT("Inter", mdl->interMark)
-                    RV_INT("Skin tics", mdl->skinTics)
-                    RV_FLT("Resize", mdl->resize)
+                    RV_STR("ID", mdl["id"])
+                    RV_STR("State", mdl["state"])
+                    RV_INT("Off", mdl["off"])
+                    RV_STR("Sprite", mdl["sprite"])
+                    RV_INT("Sprite frame", mdl["spriteFrame"])
+                    RV_FLAGS("Group", mdl["group"], "mg_")
+                    RV_INT("Selector", mdl["selector"])
+                    RV_FLAGS("Flags", mdl["flags"], "df_")
+                    RV_FLT("Inter", mdl["interMark"])
+                    RV_INT("Skin tics", mdl["skinTics"])
+                    RV_FLT("Resize", mdl["resize"])
                     if(ISLABEL("Scale"))
                     {
                         float scale; READFLT(scale);
-                        mdl->scale = Vector3f(scale, scale, scale);
+                        mdl["scale"] = new ArrayValue(Vector3f(scale, scale, scale));
                     }
-                    else RV_VEC("Scale XYZ", mdl->scale, 3)
-                    RV_FLT("Offset", mdl->offset[1])
-                    RV_VEC("Offset XYZ", mdl->offset, 3)
-                    RV_VEC("Interpolate", mdl->interRange, 2)
-                    RV_FLT("Shadow radius", mdl->shadowRadius)
+                    else
+                    RV_VEC_VAR("Scale XYZ", mdl["scale"], 3)
+                    if(ISLABEL("Offset"))
+                    {
+                        float offy; READFLT(offy);
+                        mdl["offset"].value<ArrayValue>().setElement(1, offy);
+                    }
+                    else
+                    RV_VEC_VAR("Offset XYZ", mdl["offset"], 3)
+                    RV_VEC_VAR("Interpolate", mdl["interRange"], 2)
+                    RV_FLT("Shadow radius", mdl["shadowRadius"])
                     if(ISLABEL("Md2") || ISLABEL("Sub"))
                     {
+                        defn::Model mainDef(mdl);
+
                         // Add another submodel.
-                        if(sub >= mdl->subCount())
+                        if(sub >= mainDef.subCount())
                         {
-                            mdl->appendSub();
+                            mainDef.addSub();
                         }
-                        DENG_ASSERT(sub < mdl->subCount());
+                        DENG_ASSERT(sub < mainDef.subCount());
+
+                        Record &subDef = mainDef.sub(sub);
 
                         FINDBEGIN;
                         for(;;)
                         {
                             READLABEL;
-                            RV_URI("File", &mdl->sub(sub).filename, "Models")
-                            RV_STR("Frame", mdl->sub(sub).frame)
-                            RV_INT("Frame range", mdl->sub(sub).frameRange)
-                            RV_BLENDMODE("Blending mode", mdl->sub(sub).blendMode)
-                            RV_INT("Skin", mdl->sub(sub).skin)
-                            RV_URI("Skin file", &mdl->sub(sub).skinFilename, "Models")
-                            RV_INT("Skin range", mdl->sub(sub).skinRange)
-                            RV_VEC("Offset XYZ", mdl->sub(sub).offset, 3)
-                            RV_FLAGS("Flags", mdl->sub(sub).flags, "df_")
-                            RV_FLT("Transparent", mdl->sub(sub).alpha)
-                            RV_FLT("Parm", mdl->sub(sub).parm)
-                            RV_BYTE("Selskin mask", mdl->sub(sub).selSkinBits[0])
-                            RV_BYTE("Selskin shift", mdl->sub(sub).selSkinBits[1])
-                            RV_NBVEC("Selskins", mdl->sub(sub).selSkins, 8)
-                            RV_URI("Shiny skin", &mdl->sub(sub).shinySkin, "Models")
-                            RV_FLT("Shiny", mdl->sub(sub).shiny)
-                            RV_VEC("Shiny color", mdl->sub(sub).shinyColor, 3)
-                            RV_FLT("Shiny reaction", mdl->sub(sub).shinyReact)
+                            RV_URI("File", subDef["filename"], "Models")
+                            RV_STR("Frame", subDef["frame"])
+                            RV_INT("Frame range", subDef["frameRange"])
+                            RV_BLENDMODE("Blending mode", subDef["blendMode"])
+                            RV_INT("Skin", subDef["skin"])
+                            RV_URI("Skin file", subDef["skinFilename"], "Models")
+                            RV_INT("Skin range", subDef["skinRange"])
+                            RV_VEC_VAR("Offset XYZ", subDef["offset"], 3)
+                            RV_FLAGS("Flags", subDef["flags"], "df_")
+                            RV_FLT("Transparent", subDef["alpha"])
+                            RV_FLT("Parm", subDef["parm"])
+                            RV_INT("Selskin mask", subDef["selSkinMask"])
+                            RV_INT("Selskin shift", subDef["selSkinShift"])
+                            RV_NBVEC("Selskins", subDef["selSkins"], 8)
+                            RV_URI("Shiny skin", subDef["shinySkin"], "Models")
+                            RV_FLT("Shiny", subDef["shiny"])
+                            RV_VEC_VAR("Shiny color", subDef["shinyColor"], 3)
+                            RV_FLT("Shiny reaction", subDef["shinyReact"])
                             RV_END
                             CHECKSC;
                         }
@@ -1410,40 +1485,9 @@ DENG2_PIMPL(DEDParser)
                     CHECKSC;
                 }
 
-                // Some post-processing. No point in doing this in a fancy way,
-                // the whole reader will be rewritten sooner or later...
                 if(prevModel)
                 {
-                    if(!strcmp(mdl->state, "-"))
-                        strcpy(mdl->state, prevModel->state);
-                    if(!strcmp(mdl->sprite.id, "-"))
-                        strcpy(mdl->sprite.id, prevModel->sprite.id);
-                    //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevModel->group);
-                    //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevModel->flags);
-
-                    for(uint i = 0; i < mdl->subCount(); ++i)
-                    {
-                        if(mdl->sub(i).filename && !Str_CompareIgnoreCase(mdl->sub(i).filename->pathStr(), "-"))
-                        {
-                            delete mdl->sub(i).filename;
-                            mdl->sub(i).filename = NULL;
-                        }
-
-                        if(mdl->sub(i).skinFilename && !Str_CompareIgnoreCase(mdl->sub(i).skinFilename->pathStr(), "-"))
-                        {
-                            delete mdl->sub(i).skinFilename;
-                            mdl->sub(i).skinFilename = NULL;
-                        }
-
-                        if(mdl->sub(i).shinySkin && !Str_CompareIgnoreCase(mdl->sub(i).shinySkin->pathStr(), "-"))
-                        {
-                            delete mdl->sub(i).shinySkin;
-                            mdl->sub(i).shinySkin = NULL;
-                        }
-
-                        if(!strcmp(mdl->sub(i).frame, "-"))
-                            memset(mdl->sub(i).frame, 0, sizeof(ded_string_t));
-                    }
+                    defn::Model(mdl).cleanupAfterParsing(*prevModel);
                 }
 
                 prevModelDefIdx = idx;

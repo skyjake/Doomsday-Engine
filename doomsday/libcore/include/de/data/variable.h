@@ -278,6 +278,9 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(Change, void variableValueChanged(Variable &variable, Value const &newValue))
 
+    DENG2_DEFINE_AUDIENCE2(ChangeFrom, void variableValueChangedFrom(Variable &variable, Value const &oldValue,
+                                                                     Value const &newValue))
+
 private:
     DENG2_PRIVATE(d)
 };

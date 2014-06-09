@@ -91,11 +91,11 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         {
             if(_type == DICTIONARY_KEYS)
             {
-                array->add(i->first.value->duplicate());
+                array->add(i->first.value->duplicateAsReference());
             }
             else
             {
-                array->add(i->second->duplicate());
+                array->add(i->second->duplicateAsReference());
             }
         }
         return array;
@@ -322,30 +322,30 @@ void BuiltInExpression::operator << (Reader &from)
     _arg = Expression::constructFrom(from);
 }
 
+static struct {
+    char const *str;
+    BuiltInExpression::Type type;
+} types[] = {
+    { "len",         BuiltInExpression::LENGTH },
+    { "dictkeys",    BuiltInExpression::DICTIONARY_KEYS },
+    { "dictvalues",  BuiltInExpression::DICTIONARY_VALUES },
+    { "Text",        BuiltInExpression::AS_TEXT },
+    { "Number",      BuiltInExpression::AS_NUMBER },
+    { "locals",      BuiltInExpression::LOCAL_NAMESPACE },
+    { "members",     BuiltInExpression::RECORD_MEMBERS },
+    { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
+    { "serialize",   BuiltInExpression::SERIALIZE },
+    { "deserialize", BuiltInExpression::DESERIALIZE },
+    { "Time",        BuiltInExpression::AS_TIME },
+    { "timedelta",   BuiltInExpression::TIME_DELTA },
+    { "Record",      BuiltInExpression::AS_RECORD },
+    { "floor",       BuiltInExpression::FLOOR },
+    { "eval",        BuiltInExpression::EVALUATE },
+    { NULL,          BuiltInExpression::NONE }
+};
+
 BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
-{
-    struct {
-        char const *str;
-        Type type;
-    } types[] = {
-        { "len",         LENGTH },
-        { "dictkeys",    DICTIONARY_KEYS },
-        { "dictvalues",  DICTIONARY_VALUES },
-        { "Text",        AS_TEXT },
-        { "Number",      AS_NUMBER },
-        { "locals",      LOCAL_NAMESPACE },
-        { "members",     RECORD_MEMBERS },
-        { "subrecords",  RECORD_SUBRECORDS },
-        { "serialize",   SERIALIZE },
-        { "deserialize", DESERIALIZE },
-        { "Time",        AS_TIME },
-        { "timedelta",   TIME_DELTA },
-        { "Record",      AS_RECORD },
-        { "floor",       FLOOR },
-        { "eval",        EVALUATE },
-        { NULL,          NONE }
-    };
-    
+{    
     for(duint i = 0; types[i].str; ++i)
     {
         if(identifier == types[i].str)
@@ -354,4 +354,14 @@ BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
         }
     }
     return NONE;
+}
+
+StringList BuiltInExpression::identifiers()
+{
+    StringList names;
+    for(int i = 0; types[i].str; ++i)
+    {
+        names << types[i].str;
+    }
+    return names;
 }

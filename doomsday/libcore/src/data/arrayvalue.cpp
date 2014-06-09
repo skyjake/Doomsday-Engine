@@ -18,12 +18,13 @@
  */
 
 #include "de/ArrayValue"
+#include "de/FunctionValue"
 #include "de/NumberValue"
+#include "de/Process"
+#include "de/Reader"
+#include "de/RecordValue"
 #include "de/TextValue"
 #include "de/Writer"
-#include "de/Reader"
-#include "de/FunctionValue"
-#include "de/Process"
 
 #include <algorithm>
 #include <QTextStream>
@@ -69,6 +70,7 @@ Value::Text ArrayValue::asText() const
         {
             s << ",";
         }
+        if((*i)->is<RecordValue>()) s << "\n"; // Records have multiple lines.
         s << " " << (*i)->asText();
         isFirst = false;
     }
@@ -90,7 +92,7 @@ Value const &ArrayValue::element(Value const &indexValue) const
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
         throw IllegalIndexError("ArrayValue::element", "Array index must be a number");
     }
-    dint index = v->as<dint>();
+    dint index = v->asInt();
     Elements::const_iterator elem = indexToIterator(index);
     return **elem;
 }
@@ -108,7 +110,7 @@ void ArrayValue::setElement(Value const &indexValue, Value *value)
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
         throw IllegalIndexError("ArrayValue::setElement", "Array index must be a number");
     }
-    replace(v->as<dint>(), value);
+    replace(v->asInt(), value);
 }
 
 bool ArrayValue::contains(Value const &value) const
@@ -332,4 +334,19 @@ void ArrayValue::callElements(ArrayValue const &args)
         Function const &func = at(i).as<FunctionValue>().function();
         Process(func.globals()).call(func, args);
     }
+}
+
+void ArrayValue::setElement(dint index, Number value)
+{
+    setElement(NumberValue(index), new NumberValue(value));
+}
+
+Value const &ArrayValue::element(dint index) const
+{
+    return element(NumberValue(index));
+}
+
+Value const &ArrayValue::operator [] (dint index) const
+{
+    return element(index);
 }

@@ -1,7 +1,6 @@
-/** @file
+/** @file fs_windows.cpp  Windows-specific file system operations.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,18 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * de_defs.h: Definitions Subsystem
- */
+#include "doomsday/filesys/fs_windows.h"
+#include <stdio.h>
+#include <de/String>
 
-#ifndef __DOOMSDAY_DEFINITIONS_H__
-#define __DOOMSDAY_DEFINITIONS_H__
+using namespace de;
 
-#include "def_share.h"
-#include "def_main.h"
-#include <doomsday/defs/ded.h>
-#include <doomsday/defs/model.h>
-#include <doomsday/defs/dedfile.h>
-#include <doomsday/defs/dedparser.h>
+FILE *FS_Win32_fopen(char const *filenameUtf8, char const *mode)
+{
+    return _wfopen(String(filenameUtf8).toStdWString().c_str(),
+                   String(mode).toStdWString().c_str());
+}
 
-#endif
+int FS_Win32_access(char const *pathUtf8, int mode)
+{
+    return _waccess(String(pathUtf8).toStdWString().c_str(), mode);
+}
+
+int FS_Win32_mkdir(char const *dirnameUtf8)
+{
+    return _wmkdir(String(dirnameUtf8).toStdWString().c_str());
+}

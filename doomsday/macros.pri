@@ -79,7 +79,7 @@ macx {
         # 2: library name
         # 3: path to Frameworks/
         removeQtLibPrefix($$1, $$2)
-        doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
+        doPostLink("install_name_tool -change $$2 @rpath/$$2 $$1")
     }
     defineTest(fixPluginInstallId) {
         # 1: target name

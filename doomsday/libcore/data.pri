@@ -38,6 +38,7 @@ publicHeaders(root, \
     include/de/Property \
     include/de/Reader \
     include/de/Record \
+    include/de/RecordAccessor \
     include/de/RecordValue \
     include/de/Refuge \
     include/de/RefValue \
@@ -93,6 +94,7 @@ publicHeaders(data, \
     include/de/data/property.h \
     include/de/data/reader.h \
     include/de/data/record.h \
+    include/de/data/recordaccessor.h \
     include/de/data/recordvalue.h \
     include/de/data/refuge.h \
     include/de/data/refvalue.h \
@@ -139,6 +141,7 @@ SOURCES += \
     src/data/pathtreenode.cpp \
     src/data/reader.cpp \
     src/data/record.cpp \
+    src/data/recordaccessor.cpp \
     src/data/recordvalue.cpp \
     src/data/refuge.cpp \
     src/data/refvalue.cpp \
