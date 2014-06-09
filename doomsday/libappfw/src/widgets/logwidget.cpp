@@ -62,6 +62,7 @@ public Font::RichFormat::IStyle
     class CacheEntry // : public Lockable
     {
         int _height; ///< Current height of the entry, in pixels.
+        int _oldHeight;
         //bool _unknownHeight; ///< Cannot be drawn yet, or new content is being prepared.
 
     public:
@@ -73,6 +74,7 @@ public Font::RichFormat::IStyle
 
         CacheEntry(/*int index, */Font const &font, Font::RichFormat::IStyle &richStyle, Atlas &atlas)
             : _height(0)
+            , _oldHeight(0)
             //, _dirty(true)
             //, sinkIndex(index), format(richStyle)
         {
@@ -93,6 +95,11 @@ public Font::RichFormat::IStyle
         int height() const
         {
             return _height;
+        }
+
+        int oldHeight() const
+        {
+            return _oldHeight;
         }
 
         bool isReady() const
@@ -123,33 +130,46 @@ public Font::RichFormat::IStyle
             //return _height - oldHeight;
         }
 
-        void recalculateHeight()
-        {
-            //_height = wraps.height() * wraps.font().lineSpacing().valuei();
-            _height = drawable.wraps().height() * drawable.font().lineSpacing().valuei();
-        }
-
-        /*bool needsUpdate() const
-        {
-            return _dirty;
-        }*/
-
         /// Returns the possible delta in the height of the entry.
         /// Does not block even though a long wrapping task is in progress.
-        int updateHeightOnly()
+        int update()
         {
-            int const oldHeight = _height;
+            int const old = _height;
             if(drawable.update())
             {
-                recalculateHeight();
-                return _height - oldHeight;
+                _height = drawable.wraps().height() * drawable.font().lineSpacing().valuei();
+                return _height - old;
             }
             return 0;
         }
 
-        void update(int yBottom, Rangei const &visiblePixels)
+        /// Returns the difference in height.
+        int updateVisibility(int yBottom, Rangei const &visiblePixels)
         {
-            if(!_height || drawable.isBeingWrapped()) return;
+            int heightDelta = 0;
+
+            // Remember the height we had prior to any updating.
+            _oldHeight = _height;
+
+            /*
+             * At this point:
+             * - we may have no content ready yet (_height is 0)
+             * - wrapping may have completed for the first time
+             * - wrapping may be ongoing for rewrapping, but we can still update the
+             *   current content's visibility
+             * - wrapping may have completed for an updated content
+             */
+
+            if(!drawable.isBeingWrapped())
+            {
+                // We may now have the number of wrapped lines.
+                heightDelta += update();
+            }
+            if(!_height)
+            {
+                // Content not ready yet.
+                return 0;
+            }
 
             // Determine which lines might be visible.
             int const lineSpacing = drawable.font().lineSpacing().value();
@@ -196,8 +216,8 @@ public Font::RichFormat::IStyle
 
             //int const oldHeight = _height;
 
-            // Prepare the visible lines for drawing.
-            //drawable.update();
+            // Updating will prepare the visible lines for drawing.
+            return update() + heightDelta;
 
             /*{
                 //_dirty = false;
@@ -809,33 +829,29 @@ public Font::RichFormat::IStyle
         uBgMvpMatrix = projMatrix;
     }
 
-    void updateEntries()
+    /*
+    bool updateEntries()
     {
-        int oldHeight = self.contentHeight();
-        bool needNotify = false;
-
+        bool notify = false;
         for(int idx = cache.size() - 1; idx >= 0; --idx)
         {
             CacheEntry *entry = cache[idx];
 
             int prevHeight = entry->height();
 
-            int delta = entry->updateHeightOnly();
+            int delta = entry->update();
             if(delta)
             {
                 // We won't notify when content height changes because of rewrapping.
-                if(!prevHeight) needNotify = true;
+                if(!prevHeight) notify = true;
 
                 // The new height will be effective on the next frame.
                 modifyContentHeight(delta);
             }
         }
-
-        if(needNotify && self.contentHeight() > oldHeight)
-        {
-            emit self.contentHeightIncreased(self.contentHeight() - oldHeight);
-        }
+        return notify;
     }
+    */
 
     Rangei extendPixelRangeWithPadding(Rangei const &range)
     {
@@ -845,6 +861,8 @@ public Font::RichFormat::IStyle
 
     void updateGeometry()
     {
+        bool needHeightNotify = false; // if changed as entries are updated
+        int heightDelta = 0;
         Vector2i const contentSize = self.viewportSize();
 
         // If the width of the widget changes, text needs to be reflowed with the
@@ -854,8 +872,6 @@ public Font::RichFormat::IStyle
             rewrapCache();
             cacheWidth = contentSize.x;
         }
-
-        updateEntries();
 
         // If the atlas becomes full, we'll retry once.
         entryAtlasFull = false;
@@ -881,26 +897,37 @@ public Font::RichFormat::IStyle
             visibleRange = Rangei(-1, -1);
             entryAtlasLayoutChanged = false;
 
-            bool gotReady = false;
+            //bool gotReady = false;
 
             // Find the visible range and update all visible entries.
             for(int idx = cache.size() - 1; yBottom >= -contentOffsetForDrawing && idx >= 0; --idx)
             {
                 CacheEntry *entry = cache[idx];
 
-                entry->update(yBottom, visiblePixelRange);
+                if(int delta = entry->updateVisibility(yBottom, visiblePixelRange))
+                {
+                    heightDelta += delta;
 
+                    if(!entry->oldHeight())
+                    {
+                        // A bit of the kludge: height was changed due to a first-time
+                        // update of content (new content appears rather than being a rewrap).
+                        needHeightNotify = true;
+                    }
+                }
+
+                /*
                 if(gotReady && !entry->isReady())
                 {
-                    // Anything above this has an undefined position, so we must stop here.
+                    // Everything above this likely has an undefined position, so we must stop here.
                     break;
-                }
+                }*/
 
                 yBottom -= entry->height();
 
                 if(entry->isReady() && yBottom + contentOffsetForDrawing <= contentSize.y)
                 {
-                    gotReady = true;
+                    //gotReady = true;
 
                     // Rasterize and allocate if needed.
                     entry->make(verts, yBottom);
@@ -932,6 +959,17 @@ nextAttempt:
         self.glMakeScrollIndicatorGeometry(verts);
 
         buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
+
+        // Apply changes to content height that may have occurred as text becomes
+        // available for drawing.
+        if(heightDelta)
+        {
+            modifyContentHeight(heightDelta);
+            if(needHeightNotify && heightDelta > 0)
+            {
+                emit self.contentHeightIncreased(heightDelta);
+            }
+        }
     }
 
     void draw()
