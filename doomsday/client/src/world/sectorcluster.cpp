@@ -1334,11 +1334,12 @@ DENG2_PIMPL(SectorCluster)
         return ClientApp::renderSystem().worldVBuf();
     }
 
-    struct splinterdynlight_params_t
+    struct splinterprojected_params_t
     {
         Instance *inst;
         ConvexSubspace *subspace;
         uint lastIdx;
+        bool skipFirst; ///< If multitexturing is used for lights we skip the first.
         WorldVBuf::Index vertCount;
         union {
             de::Vector3f const *posCoords;
@@ -1353,34 +1354,15 @@ DENG2_PIMPL(SectorCluster)
         WallEdgeSection const *rightSection;
     };
 
-    struct splinterdynshadow_params_t
-    {
-        Instance *inst;
-        ConvexSubspace *subspace;
-        uint lastIdx;
-        WorldVBuf::Index vertCount;
-        union {
-            Vector3f const *posCoords;
-            WorldVBuf::Index const *indices;
-        };
-        Vector3d const *topLeft;
-        Vector3d const *bottomRight;
-
-        // Wall section edges:
-        // Both are provided or none at all. If present then this is a wall geometry.
-        WallEdgeSection const *leftSection;
-        WallEdgeSection const *rightSection;
-    };
-
     /**
-     * @param light  Projected light geometry to splinter into a shard.
+     * @param projected  Projected texture geometry to splinter into a shard.
      */
-    void splinterDynlight(TexProjection const &light, splinterdynlight_params_t const &p)
+    void splinterProjected(TexProjection const &projected, splinterprojected_params_t const &p)
     {
         WorldVBuf &vbuf = worldVBuf();
 
         Shard *shard = new Shard(LightGeom);
-        shard->setTextureUnit(TU_PRIMARY, GLTextureUnit(light.texture, gl::ClampToEdge, gl::ClampToEdge));
+        shard->setTextureUnit(TU_PRIMARY, GLTextureUnit(projected.texture, gl::ClampToEdge, gl::ClampToEdge));
         shards << shard; // take ownership.
         p.subspace->subsector().shards() << shard; // link to the subsector.
 
@@ -1390,10 +1372,10 @@ DENG2_PIMPL(SectorCluster)
             WallEdgeSection const &rightSection = *p.rightSection;
 
             Vector2f const quadTexCoords[4] = {
-                Vector2f(light.topLeft.x,     light.bottomRight.y),
-                Vector2f(light.topLeft.x,     light.topLeft.y    ),
-                Vector2f(light.bottomRight.x, light.bottomRight.y),
-                Vector2f(light.bottomRight.x, light.topLeft.y    )
+                Vector2f(projected.topLeft.x,     projected.bottomRight.y),
+                Vector2f(projected.topLeft.x,     projected.topLeft.y    ),
+                Vector2f(projected.bottomRight.x, projected.bottomRight.y),
+                Vector2f(projected.bottomRight.x, projected.topLeft.y    )
             };
 
             bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
@@ -1413,7 +1395,7 @@ DENG2_PIMPL(SectorCluster)
                 {
                     WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                     //vertex.pos  = vbuf[p.indices[i]].pos;
-                    vertex.rgba = light.color;
+                    vertex.rgba = projected.color;
                 }
 
                 shard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf);
@@ -1430,20 +1412,20 @@ DENG2_PIMPL(SectorCluster)
                 {
                     WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                     vertex.pos  = p.posCoords[i];//vbuf[p.indices[i]].pos;
-                    vertex.rgba = light.color;
+                    vertex.rgba = projected.color;
                 }
 
                 vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].x =
-                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].x = light.topLeft.x;
+                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].x = projected.topLeft.x;
 
                 vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].y =
-                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].y = light.topLeft.y;
+                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].y = projected.topLeft.y;
 
                 vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].x =
-                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].x = light.bottomRight.x;
+                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].x = projected.bottomRight.x;
 
                 vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
-                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = light.bottomRight.y;
+                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = projected.bottomRight.y;
 
                 shard->newPrimitive(gl::TriangleStrip, stripSize, vbuf);
             }
@@ -1459,179 +1441,53 @@ DENG2_PIMPL(SectorCluster)
             {
                 WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                 vertex.pos  = vbuf[p.indices[i]].pos;
-                vertex.rgba = light.color;
+                vertex.rgba = projected.color;
                 vertex.texCoord[WorldVBuf::PrimaryTex] =
-                    Vector2f(((p.bottomRight->x - vertex.pos.x) / pDimensions.x * light.topLeft.x) +
-                             ((vertex.pos.x     - p.topLeft->x) / pDimensions.x * light.bottomRight.x)
+                    Vector2f(((p.bottomRight->x - vertex.pos.x) / pDimensions.x * projected.topLeft.x) +
+                             ((vertex.pos.x     - p.topLeft->x) / pDimensions.x * projected.bottomRight.x)
                              ,
-                             ((p.bottomRight->y - vertex.pos.y) / pDimensions.y * light.topLeft.y) +
-                             ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * light.bottomRight.y));
+                             ((p.bottomRight->y - vertex.pos.y) / pDimensions.y * projected.topLeft.y) +
+                             ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * projected.bottomRight.y));
             }
 
             shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
         }
     }
 
-    /**
-     * @param shadow  Projected shadow geometry to splinter into a shard.
-     */
-    Shard *splinterDynshadow(TexProjection const &shadow, splinterdynshadow_params_t const &p)
-    {
-        WorldVBuf &vbuf = worldVBuf();
-
-        Shard *shard = new Shard(ShadowGeom);
-        shard->setTextureUnit(TU_PRIMARY, GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge));
-        shards << shard; // take ownership.
-        p.subspace->subsector().shards() << shard; // link to the subsector.
-
-        if(p.leftSection) // A wall.
-        {
-            WallEdgeSection const &leftSection  = *p.leftSection;
-            WallEdgeSection const &rightSection = *p.rightSection;
-
-            Vector2f const quadTexCoords[4] = {
-                Vector2f(shadow.topLeft.x,     shadow.bottomRight.y),
-                Vector2f(shadow.topLeft.x,     shadow.topLeft.y    ),
-                Vector2f(shadow.bottomRight.x, shadow.bottomRight.y),
-                Vector2f(shadow.bottomRight.x, shadow.topLeft.y    )
-            };
-
-            bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
-
-            if(mustSubdivide) // Generate two triangle fans.
-            {
-                WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
-                WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
-                shard->indices.resize(leftFanSize + rightFanSize);
-
-                vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
-                Rend_DivPosCoords(vbuf, shard->indices.data(), p.posCoords, leftSection, rightSection);
-                Rend_DivTexCoords(vbuf, shard->indices.data(), quadTexCoords, leftSection, rightSection,
-                                  WorldVBuf::PrimaryTex);
-
-                for(WorldVBuf::Index i = 0; i < leftFanSize + rightFanSize; ++i)
-                {
-                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
-                    //vertex.pos  = vbuf[p.indices[i]].pos;
-                    vertex.rgba = shadow.color;
-                }
-
-                shard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf);
-                shard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf,
-                                    leftFanSize /*indices offset*/);
-            }
-            else // Generate one triangle strip.
-            {
-                WorldVBuf::Index stripSize = p.vertCount;
-                shard->indices.resize(stripSize);
-
-                vbuf.reserveElements(stripSize, shard->indices);
-                for(WorldVBuf::Index i = 0; i < stripSize; ++i)
-                {
-                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
-                    vertex.pos  = p.posCoords[i];//vbuf[p.indices[i]].pos;
-                    vertex.rgba = shadow.color;
-                }
-
-                vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].x =
-                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].x = shadow.topLeft.x;
-
-                vbuf[shard->indices[1]].texCoord[WorldVBuf::PrimaryTex].y =
-                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].y = shadow.topLeft.y;
-
-                vbuf[shard->indices[3]].texCoord[WorldVBuf::PrimaryTex].x =
-                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].x = shadow.bottomRight.x;
-
-                vbuf[shard->indices[2]].texCoord[WorldVBuf::PrimaryTex].y =
-                vbuf[shard->indices[0]].texCoord[WorldVBuf::PrimaryTex].y = shadow.bottomRight.y;
-
-                shard->newPrimitive(gl::TriangleStrip, stripSize, vbuf);
-            }
-        }
-        else // A flat.
-        {
-            WorldVBuf::Index fanSize = p.vertCount;
-            shard->indices.resize(fanSize);
-
-            vbuf.reserveElements(fanSize, shard->indices);
-            Vector2f const pDimensions = p.bottomRight->xy() - p.topLeft->xy();
-            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-            {
-                WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
-                vertex.pos  = vbuf[p.indices[i]].pos;
-                vertex.rgba =    shadow.color;
-                vertex.texCoord[WorldVBuf::PrimaryTex] =
-                    Vector2f(((p.bottomRight->x - vertex.pos.x) / pDimensions.x * shadow.topLeft.x) +
-                             ((vertex.pos.x     - p.topLeft->x) / pDimensions.x * shadow.bottomRight.x)
-                             ,
-                             ((p.bottomRight->y - vertex.pos.y) / pDimensions.y * shadow.topLeft.y) +
-                             ((vertex.pos.y     - p.topLeft->y) / pDimensions.y * shadow.bottomRight.y));
-            }
-
-            shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
-        }
-
-        return shard;
-    }
-
-    void prepareDynlightShards(TexProjection const &light, splinterdynlight_params_t &p)
+    void prepareProjectionShards(TexProjection const &projected, splinterprojected_params_t &p)
     {
         // If multitexturing is in use we skip the first.
-        if(!(Rend_IsMTexLights() && p.lastIdx == 0))
+        if(!(p.skipFirst && p.lastIdx == 0))
         {
-            splinterDynlight(light, p);
+            splinterProjected(projected, p);
         }
         p.lastIdx++;
     }
 
-    void prepareDynshadowShards(TexProjection const &shadow, splinterdynshadow_params_t &p)
+    static int splinterProjectedWorker(TexProjection const *projected, void *context)
     {
-        splinterDynshadow(shadow, p);
-    }
-
-    /// Generates a new primitive for each light projection.
-    static int splinterDynlightWorker(TexProjection const *light, void *context)
-    {
-        splinterdynlight_params_t &parm = *static_cast<splinterdynlight_params_t *>(context);
-        parm.inst->prepareDynlightShards(*light, parm);
-        return 0; // Continue iteration.
-    }
-
-    /// Generates a new primitive for each shadow projection.
-    static int splinterDynshadowWorker(TexProjection const *shadow, void *context)
-    {
-        splinterdynshadow_params_t &parm  = *static_cast<splinterdynshadow_params_t *>(context);
-        parm.inst->prepareDynshadowShards(*shadow, parm);
+        splinterprojected_params_t &parm = *static_cast<splinterprojected_params_t *>(context);
+        parm.inst->prepareProjectionShards(*projected, parm);
         return 0; // Continue iteration.
     }
 
     /**
-     * Prepare Shards for dynamic lights in projection list @a listIdx.
+     * Prepare Shards for dynamic texture projections in list @a listIdx.
      *
-     * @note If multi-texturing is to be used for the first light; it is skipped.
-     *
-     * @return  Number of shards prepared.
+     * @return  Number of shards prepared (FYI).
      */
-    uint splinterAllDynlights(uint listIdx, splinterdynlight_params_t &parm)
+    uint splinterAllProjections(uint listIdx, splinterprojected_params_t &parm)
     {
         uint numRendered = parm.lastIdx;
 
-        Rend_IterateProjectionList(listIdx, splinterDynlightWorker, &parm);
+        Rend_IterateProjectionList(listIdx, splinterProjectedWorker, &parm);
 
         numRendered = parm.lastIdx - numRendered;
-        if(Rend_IsMTexLights())
+        if(parm.skipFirst)
         {
             numRendered -= 1;
         }
         return numRendered;
-    }
-
-    /**
-     * Prepare Shards for dynamic shadows in projection list @a listIdx.
-     */
-    void splinterAllDynshadows(uint listIdx, splinterdynshadow_params_t &parm)
-    {
-        Rend_IterateProjectionList(listIdx, splinterDynshadowWorker, &parm);
     }
 
     coord_t skyPlaneZ(bool upper) const
@@ -2131,10 +1987,11 @@ DENG2_PIMPL(SectorCluster)
             if(useLights)
             {
                 // Project dynamic lights to shards.
-                splinterdynlight_params_t parm; de::zap(parm);
+                splinterprojected_params_t parm; de::zap(parm);
 
                 parm.inst         = this;
                 parm.subspace     = &subspace;
+                parm.skipFirst    = Rend_IsMTexLights();
                 parm.vertCount    = 4;
                 parm.posCoords    = posCoords;
                 parm.topLeft      = &topLeft;
@@ -2142,13 +1999,13 @@ DENG2_PIMPL(SectorCluster)
                 parm.leftSection  = &leftSection;
                 parm.rightSection = &rightSection;
 
-                hasDynlights = (0 != splinterAllDynlights(lightListIdx, parm));
+                hasDynlights = (0 != splinterAllProjections(lightListIdx, parm));
             }
 
             if(useShadows)
             {
                 // Project dynamic shadows to shards.
-                splinterdynshadow_params_t parm; de::zap(parm);
+                splinterprojected_params_t parm; de::zap(parm);
 
                 parm.inst         = this;
                 parm.subspace     = &subspace;
@@ -2159,7 +2016,7 @@ DENG2_PIMPL(SectorCluster)
                 parm.leftSection  = &leftSection;
                 parm.rightSection = &rightSection;
 
-                splinterAllDynshadows(shadowListIdx, parm);
+                splinterAllProjections(shadowListIdx, parm);
             }
 
             // Prepare the primary shard.
@@ -2809,22 +2666,23 @@ DENG2_PIMPL(SectorCluster)
         if(useLights)
         {
             // Project dynamic lights to shards.
-            splinterdynlight_params_t parm; de::zap(parm);
+            splinterprojected_params_t parm; de::zap(parm);
 
             parm.inst        = this;
             parm.subspace    = &subspace;
+            parm.skipFirst   = Rend_IsMTexLights();
             parm.vertCount   = fanSize;
             parm.indices     = indices.data();
             parm.topLeft     = &topLeft;
             parm.bottomRight = &bottomRight;
 
-            hasDynlights = (0 != splinterAllDynlights(lightListIdx, parm));
+            hasDynlights = (0 != splinterAllProjections(lightListIdx, parm));
         }
 
         if(useShadows)
         {
             // Project dynamic shadows to shards.
-            splinterdynshadow_params_t parm; de::zap(parm);
+            splinterprojected_params_t parm; de::zap(parm);
 
             parm.inst        = this;
             parm.subspace    = &subspace;
@@ -2833,7 +2691,7 @@ DENG2_PIMPL(SectorCluster)
             parm.topLeft     = &topLeft;
             parm.bottomRight = &bottomRight;
 
-            splinterAllDynshadows(shadowListIdx, parm);
+            splinterAllProjections(shadowListIdx, parm);
         }
 
         // Prepare the primary shard.
