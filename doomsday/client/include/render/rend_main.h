@@ -270,8 +270,6 @@ void Rend_DivTexCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, de::Vector2f cons
 void Rend_DivColorCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, de::Vector4f const *src,
     de::WallEdgeSection const &leftEdge, de::WallEdgeSection const &rightEdge);
 
-int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters);
-
 void Rend_ReportWallSectionDrawn(Line &line);
 
 /**

@@ -2026,9 +2026,7 @@ DENG2_PIMPL(SectorCluster)
 
             bool useLights = false, useShadows = false;
 
-            DGLuint modTex = 0;
-            Vector2f modTexSt[2]; // [topLeft, bottomRight]
-            Vector3f modColor;
+            TexProjection *firstDynlight = 0;
 
             bool const skyMaskedMaterial = (skyMasked || (matSnapshot.material().isSkyMasked()));
             if(!skyMaskedMaterial && glowing < 1)
@@ -2040,13 +2038,7 @@ DENG2_PIMPL(SectorCluster)
                 // affecting this surface, grab the parameters needed to draw it.
                 if(useLights && Rend_IsMTexLights())
                 {
-                    TexProjection *dyn = 0;
-                    Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, &dyn);
-
-                    modTex       = dyn->texture;
-                    modColor     = dyn->color;
-                    modTexSt[0]  = dyn->topLeft;
-                    modTexSt[1]  = dyn->bottomRight;
+                    firstDynlight = Rend_ProjectionListFirst(lightListIdx);
                 }
             }
 
@@ -2071,9 +2063,9 @@ DENG2_PIMPL(SectorCluster)
             }
 
             Vector2f modTexCoords[4];
-            if(modTex)
+            if(firstDynlight)
             {
-                quadLightCoords(modTexCoords, modTexSt[0], modTexSt[1]);
+                quadLightCoords(modTexCoords, firstDynlight->topLeft, firstDynlight->bottomRight);
             }
 
             Vector2f shineTexCoords[4];
@@ -2170,173 +2162,161 @@ DENG2_PIMPL(SectorCluster)
                 splinterAllDynshadows(shadowListIdx, parm);
             }
 
-            if(!skyMasked)
+            // Prepare the primary shard.
+            Shard *shard = new Shard(skyMasked? SkyMaskGeom
+                                     : (firstDynlight || hasDynlights)? LitGeom : UnlitGeom);
+            shards << shard;             // take ownership.
+            subsector.shards() << shard; // link to the subsector.
+
+            shard->setAllTextureUnits(texUnitMap);
+            shard->hasDynlights = hasDynlights;
+
+            if(firstDynlight)
             {
-                Shard *shard = new Shard((modTex || hasDynlights)? LitGeom : UnlitGeom,
-                                         BM_NORMAL, modTex, modColor, hasDynlights);
-                shard->setAllTextureUnits(texUnitMap);
+                DENG2_ASSERT(!skyMasked);
+                shard->modTex   = firstDynlight->texture;
+                shard->modColor = firstDynlight->color;
+            }
 
-                shards << shard; // take ownership.
-                subsector.shards() << shard; // link to the subsector.
+            bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
 
-                // Need a shard for the surface shine effect?
-                Shard *shineShard = 0;
-                if(shineTexUnitMap[TU_PRIMARY])
+            if(mustSubdivide) // Generate two triangle fans.
+            {
+                WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
+                WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
+
+                shard->indices.resize(leftFanSize + rightFanSize);
+
+                vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
+                Rend_DivPosCoords(vbuf, shard->indices.data(), posCoords, leftSection, rightSection);
+                if(!skyMasked)
                 {
-                    shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
-                    shineShard->setAllTextureUnits(shineTexUnitMap);
-
-                    shards << shineShard; // take ownership.
-                    subsector.shards() << shineShard; // link subspace.
+                    Rend_DivColorCoords(vbuf, shard->indices.data(), colorCoords, leftSection, rightSection);
+                }
+                if(texUnitMap[TU_PRIMARY])
+                {
+                    Rend_DivTexCoords(vbuf, shard->indices.data(), primaryTexCoords, leftSection, rightSection,
+                                      WorldVBuf::PrimaryTex);
+                }
+                if(texUnitMap[TU_INTER])
+                {
+                    Rend_DivTexCoords(vbuf, shard->indices.data(), interTexCoords, leftSection, rightSection,
+                                      WorldVBuf::InterTex);
+                }
+                if(firstDynlight)
+                {
+                    DENG2_ASSERT(!skyMasked);
+                    Rend_DivTexCoords(vbuf, shard->indices.data(), modTexCoords, leftSection, rightSection,
+                                      WorldVBuf::ModTex);
                 }
 
-                bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
-
-                if(mustSubdivide) // Generate two triangle fans.
+                ShardPrimitive &leftFan  = shard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf);
+                ShardPrimitive &rightFan = shard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf,
+                                                               leftFanSize /*indices offset*/);
+                if(!skyMasked)
                 {
-                    WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
-                    WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
+                    leftFan.setTex0Offset(materialOrigin)
+                           .setTex0Scale (materialScale)
+                           .setTex1Offset(materialOrigin);
 
-                    shard->indices.resize(leftFanSize + rightFanSize);
+                    rightFan.setTex0Offset(materialOrigin)
+                            .setTex0Scale (materialScale)
+                            .setTex1Offset(materialOrigin);
+                }
+            }
+            else // Generate one triangle strip.
+            {
+                shard->indices.resize(4);
 
-                    vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
-                    Rend_DivPosCoords(vbuf, shard->indices.data(), posCoords, leftSection, rightSection);
-                    Rend_DivColorCoords(vbuf, shard->indices.data(), colorCoords, leftSection, rightSection);
+                vbuf.reserveElements(4, shard->indices);
+                for(WorldVBuf::Index i = 0; i < 4; ++i)
+                {
+                    WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+                    vertex.pos = posCoords[i];
+                    if(!skyMasked)
+                    {
+                        vertex.rgba = colorCoords[i];
+                    }
                     if(texUnitMap[TU_PRIMARY])
                     {
-                        Rend_DivTexCoords(vbuf, shard->indices.data(), primaryTexCoords, leftSection, rightSection,
-                                          WorldVBuf::PrimaryTex);
+                        vertex.texCoord[WorldVBuf::PrimaryTex] = primaryTexCoords[i];
                     }
                     if(texUnitMap[TU_INTER])
                     {
-                        Rend_DivTexCoords(vbuf, shard->indices.data(), interTexCoords, leftSection, rightSection,
-                                          WorldVBuf::InterTex);
+                        vertex.texCoord[WorldVBuf::InterTex] = interTexCoords[i];
                     }
-                    if(modTex)
+                    if(firstDynlight)
                     {
-                        Rend_DivTexCoords(vbuf, shard->indices.data(), modTexCoords, leftSection, rightSection,
-                                          WorldVBuf::ModTex);
-                    }
-
-                    shard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf)
-                            .setTex0Offset(materialOrigin)
-                            .setTex0Scale (materialScale)
-                            .setTex1Offset(materialOrigin);
-
-                    shard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf, leftFanSize /*indices offset*/)
-                            .setTex0Offset(materialOrigin)
-                            .setTex0Scale (materialScale)
-                            .setTex1Offset(materialOrigin);
-
-                    if(shineTexUnitMap[TU_PRIMARY])
-                    {
-                        shineShard->indices.resize(leftFanSize + rightFanSize);
-
-                        vbuf.reserveElements(leftFanSize + rightFanSize, shineShard->indices);
-                        Rend_DivPosCoords(vbuf, shineShard->indices.data(), posCoords, leftSection, rightSection);
-                        Rend_DivColorCoords(vbuf, shineShard->indices.data(), shineColorCoords, leftSection, rightSection);
-                        Rend_DivTexCoords(vbuf, shineShard->indices.data(), shineTexCoords, leftSection, rightSection,
-                                          WorldVBuf::PrimaryTex);
-                        if(shineTexUnitMap[TU_INTER])
-                        {
-                            Rend_DivTexCoords(vbuf, shineShard->indices.data(), primaryTexCoords, leftSection, rightSection,
-                                              WorldVBuf::InterTex);
-                        }
-
-                        shineShard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf)
-                                .setTex0Offset(materialOrigin)
-                                .setTex0Scale (materialScale);
-
-                        shineShard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf, leftFanSize /*indices offset*/)
-                                .setTex0Offset(materialOrigin)
-                                .setTex0Scale (materialScale);
+                        DENG2_ASSERT(!skyMasked);
+                        vertex.texCoord[WorldVBuf::ModTex] = modTexCoords[i];
                     }
                 }
-                else // Generate one triangle strip.
+
+                ShardPrimitive &triStrip = shard->newPrimitive(gl::TriangleStrip, 4, vbuf);
+                if(!skyMasked)
                 {
-                    shard->indices.resize(4);
-
-                    vbuf.reserveElements(4, shard->indices);
-                    for(WorldVBuf::Index i = 0; i < 4; ++i)
-                    {
-                        WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
-                        vertex.pos  = posCoords[i];
-                        vertex.rgba = colorCoords[i];
-                        if(texUnitMap[TU_PRIMARY])
-                        {
-                            vertex.texCoord[WorldVBuf::PrimaryTex] = primaryTexCoords[i];
-                        }
-                        if(texUnitMap[TU_INTER])
-                        {
-                            vertex.texCoord[WorldVBuf::InterTex] = interTexCoords[i];
-                        }
-                        if(modTex)
-                        {
-                            vertex.texCoord[WorldVBuf::ModTex] = modTexCoords[i];
-                        }
-                    }
-
-                    shard->newPrimitive(gl::TriangleStrip, 4, vbuf)
-                            .setTex0Offset(materialOrigin)
+                    triStrip.setTex0Offset(materialOrigin)
                             .setTex0Scale (materialScale)
                             .setTex1Offset(materialOrigin);
-
-                    if(shineTexUnitMap[TU_PRIMARY])
-                    {
-                        shineShard->indices.resize(4);
-
-                        vbuf.reserveElements(4, shineShard->indices);
-                        for(WorldVBuf::Index i = 0; i < 4; ++i)
-                        {
-                            WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
-                            vertex.pos  = posCoords[i];
-                            vertex.rgba = shineColorCoords[i];
-                            vertex.texCoord[WorldVBuf::PrimaryTex] = shineTexCoords[i];
-                            if(shineTexUnitMap[TU_INTER])
-                            {
-                                vertex.texCoord[WorldVBuf::InterTex] = primaryTexCoords[i];
-                            }
-                        }
-
-                        shineShard->newPrimitive(gl::TriangleStrip, 4, vbuf)
-                                .setTex0Offset(materialOrigin)
-                                .setTex0Scale (materialScale);
-                    }
                 }
             }
-            else // Sky-masked
-            {
-                Shard *shard = new Shard(SkyMaskGeom);
-                shards << shard; // take ownership.
-                subsector.shards() << shard; // link to the subsector.
 
-                bool const mustSubdivide = (leftSection.divisionCount() || rightSection.divisionCount());
+            // Prepare a shine shard?
+            if(shineTexUnitMap[TU_PRIMARY])
+            {
+                DENG2_ASSERT(!skyMasked);
+                Shard *shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
+                shards << shineShard; // take ownership.
+                subsector.shards() << shineShard; // link subspace.
+
+                shineShard->setAllTextureUnits(shineTexUnitMap);
 
                 if(mustSubdivide) // Generate two triangle fans.
                 {
                     WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
                     WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
 
-                    shard->indices.resize(leftFanSize + rightFanSize);
+                    shineShard->indices.resize(leftFanSize + rightFanSize);
 
-                    vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
-                    Rend_DivPosCoords(vbuf, shard->indices.data(), posCoords, leftSection, rightSection);
+                    vbuf.reserveElements(leftFanSize + rightFanSize, shineShard->indices);
+                    Rend_DivPosCoords(vbuf, shineShard->indices.data(), posCoords, leftSection, rightSection);
+                    Rend_DivColorCoords(vbuf, shineShard->indices.data(), shineColorCoords, leftSection, rightSection);
+                    Rend_DivTexCoords(vbuf, shineShard->indices.data(), shineTexCoords, leftSection, rightSection,
+                                      WorldVBuf::PrimaryTex);
+                    if(shineTexUnitMap[TU_INTER])
+                    {
+                        Rend_DivTexCoords(vbuf, shineShard->indices.data(), primaryTexCoords, leftSection, rightSection,
+                                          WorldVBuf::InterTex);
+                    }
 
-                    shard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf);
-                    shard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf,
-                                        leftFanSize /*indices offset*/);
+                    shineShard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf)
+                                    .setTex0Offset(materialOrigin)
+                                    .setTex0Scale (materialScale);
+
+                    shineShard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf, leftFanSize /*indices offset*/)
+                                    .setTex0Offset(materialOrigin)
+                                    .setTex0Scale (materialScale);
                 }
                 else // Generate one triangle strip.
                 {
-                    shard->indices.resize(4);
+                    shineShard->indices.resize(4);
 
-                    vbuf.reserveElements(4, shard->indices);
+                    vbuf.reserveElements(4, shineShard->indices);
                     for(WorldVBuf::Index i = 0; i < 4; ++i)
                     {
-                        vbuf[shard->indices[i]].pos = posCoords[i];
+                        WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
+                        vertex.pos  = posCoords[i];
+                        vertex.rgba = shineColorCoords[i];
+                        vertex.texCoord[WorldVBuf::PrimaryTex] = shineTexCoords[i];
+                        if(shineTexUnitMap[TU_INTER])
+                        {
+                            vertex.texCoord[WorldVBuf::InterTex] = primaryTexCoords[i];
+                        }
                     }
 
-                    shard->newPrimitive(gl::TriangleStrip, 4, vbuf);
+                    shineShard->newPrimitive(gl::TriangleStrip, 4, vbuf)
+                                    .setTex0Offset(materialOrigin)
+                                    .setTex0Scale (materialScale);
                 }
             }
         }
@@ -2678,9 +2658,7 @@ DENG2_PIMPL(SectorCluster)
 
         bool useLights = false, useShadows = false;
 
-        DGLuint modTex = 0;
-        Vector2f modTexSt[2]; // [topLeft, bottomRight]
-        Vector3f modColor;
+        TexProjection *firstDynlight = 0;
 
         bool const skyMaskedMaterial = (skyMasked || (matSnapshot.material().isSkyMasked()));
         if(!skyMaskedMaterial && glowing < 1)
@@ -2692,13 +2670,7 @@ DENG2_PIMPL(SectorCluster)
             // affecting this surface, grab the parameters needed to draw it.
             if(useLights && Rend_IsMTexLights())
             {
-                TexProjection *dyn = 0;
-                Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, &dyn);
-
-                modTex      = dyn->texture;
-                modColor    = dyn->color;
-                modTexSt[0] = dyn->topLeft;
-                modTexSt[1] = dyn->bottomRight;
+                firstDynlight = Rend_ProjectionListFirst(lightListIdx);
             }
         }
 
@@ -2762,14 +2734,13 @@ DENG2_PIMPL(SectorCluster)
             }
 
             // First light texture coordinates.
-            if(modTex)
+            if(firstDynlight)
             {
                 Vector2f const pdimensions = bottomRight.xy() - topLeft.xy();
 
                 vertex.texCoord[WorldVBuf::ModTex] =
-                    Vector2f(((bottomRight.x - vertex.pos.x) / pdimensions.x * modTexSt[0].x) + (delta.x / pdimensions.x  * modTexSt[1].x)
-                             ,
-                             ((bottomRight.y - vertex.pos.y) / pdimensions.y * modTexSt[0].y) + (delta.y / pdimensions.y * modTexSt[1].y));
+                            ((bottomRight.xy() - vertex.pos.xy()) / pdimensions * firstDynlight->topLeft    ) +
+                                                     (delta.xy()  / pdimensions * firstDynlight->bottomRight);
             }
         }
 
@@ -2801,9 +2772,10 @@ DENG2_PIMPL(SectorCluster)
         else
         {
             // Uniform color. Apply to all vertices.
+            Vector4f const saturated(1, 1, 1, 1);
             for(WorldVBuf::Index i = 0; i < fanSize; ++i)
             {
-                vbuf[indices[i]].rgba = Vector4f(1, 1, 1, 1);
+                vbuf[indices[i]].rgba = saturated;
             }
         }
 
@@ -2864,43 +2836,45 @@ DENG2_PIMPL(SectorCluster)
             splinterAllDynshadows(shadowListIdx, parm);
         }
 
+        // Prepare the primary shard.
+        Shard *shard = new Shard(skyMasked? SkyMaskGeom
+                                 : (firstDynlight || hasDynlights)? LitGeom : UnlitGeom);
+        shards << shard;             // take ownership.
+        subsector.shards() << shard; // link to the subsector.
+
+        shard->setAllTextureUnits(texUnitMap);
+        shard->hasDynlights = hasDynlights;
+
+        if(firstDynlight)
+        {
+            DENG2_ASSERT(!skyMasked);
+            shard->modTex   = firstDynlight->texture;
+            shard->modColor = firstDynlight->color;
+        }
+
+        shard->indices = indices;
+        ShardPrimitive &triFan = shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
         if(!skyMasked)
         {
-            Shard *shard = new Shard((modTex || hasDynlights)? LitGeom : UnlitGeom,
-                                     BM_NORMAL, modTex, modColor, hasDynlights);
-            shard->setAllTextureUnits(texUnitMap);
-
-            shard->indices = indices;
-            shards << shard; // take ownership.
-            subsector.shards() << shard; // link to the subsector.
-
-            shard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
-                    .setTex0Offset(materialOrigin)
-                    .setTex0Scale (materialScale)
-                    .setTex1Offset(materialOrigin);
-
-            if(shineTexUnitMap[TU_PRIMARY])
-            {
-                Shard *shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
-                shineShard->setAllTextureUnits(shineTexUnitMap);
-
-                shineShard->indices = shineIndices;
-                shards << shineShard; // take ownership.
-                subsector.shards() << shineShard; // link to the subsector.
-
-                shineShard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
-                        .setTex0Offset(materialOrigin)
-                        .setTex0Scale (materialScale);
-            }
+            triFan.setTex0Offset(materialOrigin)
+                  .setTex0Scale (materialScale)
+                  .setTex1Offset(materialOrigin);
         }
-        else // Sky-masked.
-        {
-            Shard *shard = new Shard(SkyMaskGeom);
-            shard->indices = indices;
-            shards << shard; // take ownership.
-            subsector.shards() << shard; // link to the subsector.
 
-            shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
+        // Prepare a shine shard?
+        if(shineTexUnitMap[TU_PRIMARY])
+        {
+            DENG2_ASSERT(!skyMasked);
+            Shard *shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
+            shards << shineShard;             // take ownership.
+            subsector.shards() << shineShard; // link to the subsector.
+
+            shineShard->setAllTextureUnits(shineTexUnitMap);
+
+            shineShard->indices = shineIndices;
+            shineShard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
+                            .setTex0Offset(materialOrigin)
+                            .setTex0Scale (materialScale);
         }
     }
 

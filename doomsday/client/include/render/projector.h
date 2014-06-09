@@ -149,4 +149,10 @@ void Rend_ProjectMobjShadows(ConvexSubspace *subspace, de::Vector3d const &topLe
 int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection const *, void *),
     void *context = 0);
 
+/**
+ * Returns the first TexProjection from the referenced projection @a listIdx.
+ * If the list is empty or the list is unknown then @c 0 is returned.
+ */
+TexProjection *Rend_ProjectionListFirst(uint listIdx);
+
 #endif // DENG_CLIENT_RENDER_PROJECTOR_H

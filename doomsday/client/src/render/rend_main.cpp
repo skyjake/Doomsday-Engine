@@ -829,13 +829,6 @@ void Rend_DivColorCoords(WorldVBuf &vbuf, WorldVBuf::Index *dst, Vector4f const 
     }
 }
 
-int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
-{
-    TexProjection const **ptr = (TexProjection const **)parameters;
-    *ptr = dyn;
-    return 1; // Stop iteration.
-}
-
 bool Rend_BiasContributorUpdatesEnabled()
 {
     // Are updates disabled?
@@ -1165,15 +1158,14 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
     MaterialVariant *material = &matSnapshot.materialVariant();
     if(renderTextures)
     {
-        coord_t const sectionWidth = de::abs(Vector2d(rightSection->edge().origin() - leftSection->edge().origin()).length());
-
         MaterialSnapshot const &ms = material->prepare();
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
-        vwall->texCoord[0].x = vwall->texOffset.x / ms.width();
-        vwall->texCoord[1].x = vwall->texCoord[0].x + sectionWidth / ms.width();
-        vwall->texCoord[0].y = vwall->texOffset.y / ms.height();
-        vwall->texCoord[1].y = vwall->texCoord[0].y + (posCoords[3].z - posCoords[0].z) / ms.height();
+        Vector2f pdimensions(de::abs((rightSection->edge().origin() - leftSection->edge().origin()).length()),
+                             posCoords[3].z - posCoords[0].z);
+
+        vwall->texCoord[0] = vwall->texOffset / ms.dimensions();
+        vwall->texCoord[1] = vwall->texCoord[0] + pdimensions / ms.dimensions();
 
         if(!ms.isOpaque())
         {
@@ -1216,16 +1208,12 @@ void Rend_PrepareWallSectionVissprite(ConvexSubspace &subspace,
 
         // The dynlights will have already been sorted so that the brightest
         // and largest of them is first in the list. So grab that one.
-        Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
+        dyn = Rend_ProjectionListFirst(lightListIdx);
 
         vwall->modTex         = dyn->texture;
         vwall->modTexCoord[0] = dyn->topLeft;
         vwall->modTexCoord[1] = dyn->bottomRight;
         vwall->modColor       = dyn->color;
-    }
-    else
-    {
-        vwall->modTex = 0;
     }
 }
 

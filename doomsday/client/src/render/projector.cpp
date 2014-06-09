@@ -531,3 +531,15 @@ int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection cons
     }
     return 0; // Continue iteration.
 }
+
+TexProjection *Rend_ProjectionListFirst(uint listIdx)
+{
+    if(listIdx > 0 && listIdx <= listCount)
+    {
+        if(ListNode *node = lists[listIdx - 1].head)
+        {
+            return &node->projection;
+        }
+    }
+    return 0; // Not found.
+}
