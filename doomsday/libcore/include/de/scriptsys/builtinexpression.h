@@ -31,7 +31,7 @@ namespace de {
  *
  * @ingroup script
  */
-class BuiltInExpression : public Expression
+class DENG2_PUBLIC BuiltInExpression : public Expression
 {
 public:
     /// A wrong number of arguments is given to one of the built-in methods. @ingroup errors

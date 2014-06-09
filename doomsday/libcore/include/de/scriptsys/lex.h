@@ -33,7 +33,7 @@ namespace de {
  *
  * @ingroup script
  */
-class Lex
+class DENG2_PUBLIC Lex
 {
 public:
     /// Attempt to read characters when there are non left. @ingroup errors
