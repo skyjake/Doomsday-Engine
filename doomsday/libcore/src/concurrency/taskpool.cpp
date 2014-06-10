@@ -55,14 +55,17 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable
         tasks.insert(t);
     }
 
-    void remove(Task *t)
+    /// Returns @c true, if the pool became empty as result of the remove.
+    bool remove(Task *t)
     {
         DENG2_GUARD(this);
         tasks.remove(t);
         if(tasks.isEmpty())
         {
             post();
+            return true;
         }
+        return false;
     }
 
     void waitForEmpty() const
@@ -70,7 +73,7 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable
         wait();
         DENG2_GUARD(this);
         DENG2_ASSERT(tasks.isEmpty());
-        post();
+        post(); // When empty, the semaphore is available.
     }
 
     bool isEmpty() const
@@ -104,11 +107,10 @@ bool TaskPool::isDone() const
 
 void TaskPool::taskFinished(Task &task)
 {
-    d->remove(&task);
-
-    if(d->isEmpty())
+    DENG2_GUARD(d);
+    if(d->remove(&task))
     {
-        allTasksDone();
+        emit allTasksDone();
     }
 }
 

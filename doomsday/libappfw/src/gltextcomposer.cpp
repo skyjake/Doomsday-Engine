@@ -83,12 +83,14 @@ DENG2_PIMPL(GLTextComposer)
         {
             if(!isLineVisible(i))
             {
-                releaseLine(i);
+                releaseLine(i, ReleaseButKeepSegs);
             }
         }
     }
 
-    void releaseLine(int index)
+    enum ReleaseBehavior { ReleaseFully, ReleaseButKeepSegs };
+
+    void releaseLine(int index, ReleaseBehavior behavior = ReleaseFully)
     {
         Line &ln = lines[index];
         for(int i = 0; i < ln.segs.size(); ++i)
@@ -96,9 +98,13 @@ DENG2_PIMPL(GLTextComposer)
             if(!ln.segs[i].id.isNone())
             {
                 atlas->release(ln.segs[i].id);
+                ln.segs[i].id = Id::None;
             }
         }
-        ln.segs.clear();
+        if(behavior == ReleaseFully)
+        {
+            ln.segs.clear();
+        }
     }
 
     bool isLineVisible(int line) const
@@ -154,7 +160,7 @@ DENG2_PIMPL(GLTextComposer)
             if(i < lines.size())
             {
                 // Is the rasterized copy up to date?
-                if(!isLineVisible(i) || matchingSegments(i, info))
+                if(/*!isLineVisible(i) ||*/ matchingSegments(i, info))
                 {
                     // This line can be kept as is.
                     continue;
@@ -201,6 +207,8 @@ DENG2_PIMPL(GLTextComposer)
                 }
                 line.segs << seg;
             }
+
+            DENG2_ASSERT(line.segs.size() == info.segs.size());
         }
 
         // Remove the excess lines.
@@ -286,7 +294,8 @@ DENG2_PIMPL(GLTextComposer)
         // Set segment X coordinates by stacking them left-to-right on each line.
         for(int i = lineRange.start; i < rangeEnd; ++i)
         {
-            if(lines[i].segs.isEmpty()) continue;
+            if(lines[i].segs.isEmpty() || i >= visibleLineRange.end)
+                continue;
 
             lines[i].segs[0].x = wraps->lineInfo(i).indent;
 
@@ -305,7 +314,11 @@ DENG2_PIMPL(GLTextComposer)
             // Find the maximum right edge for this spot.
             for(int i = lineRange.start; i < rangeEnd; ++i)
             {
-                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
+                if(i >= visibleLineRange.end) break;
+
+                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);                                               
+
+                DENG2_ASSERT(info.segs.size() == lines[i].segs.size());
                 for(int k = 0; k < info.segs.size(); ++k)
                 {
                     Instance::Line::Segment &seg = lines[i].segs[k];
@@ -319,6 +332,8 @@ DENG2_PIMPL(GLTextComposer)
             // Move the segments to this position.
             for(int i = lineRange.start; i < rangeEnd; ++i)
             {
+                if(i >= visibleLineRange.end) break;
+
                 int localRight = maxRight;
 
                 FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);

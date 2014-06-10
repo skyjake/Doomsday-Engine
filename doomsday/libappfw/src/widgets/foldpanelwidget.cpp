@@ -85,8 +85,8 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             ColorBank::Colorf const &textColor = fold.title().textColorf();
 
             // Frame.
-            verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
-                                    atlas.imageRectf(root.roundCorners()));
+            /*verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
+                                    atlas.imageRectf(root.roundCorners()));*/
 
             Rectanglef uv = atlas.imageRectf(root.styleTexture("fold"));
             Matrix4f const turn = Matrix4f::rotateAround(rect.middle(), angle);
