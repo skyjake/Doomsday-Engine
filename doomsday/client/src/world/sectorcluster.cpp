@@ -1361,7 +1361,7 @@ DENG2_PIMPL(SectorCluster)
     {
         WorldVBuf &vbuf = worldVBuf();
 
-        Shard *shard = new Shard(LightGeom);
+        Shard *shard = new Shard(Shard::Light);
         shard->setTextureUnit(TU_PRIMARY, GLTextureUnit(projected.texture, gl::ClampToEdge, gl::ClampToEdge));
         shards << shard; // take ownership.
         p.subspace->subsector().shards() << shard; // link to the subsector.
@@ -1512,7 +1512,7 @@ DENG2_PIMPL(SectorCluster)
         Subsector &subsector = subspace.subsector();
         WorldVBuf &vbuf      = worldVBuf();
 
-        Shard *shard = new Shard(SkyMaskGeom);
+        Shard *shard = new Shard(Shard::SkyMask);
         shards << shard; // take ownership.
         subsector.shards() << shard; // link to the subsector.
 
@@ -1532,7 +1532,7 @@ DENG2_PIMPL(SectorCluster)
         Subsector &subsector = subspace.subsector();
         WorldVBuf &vbuf      = worldVBuf();
 
-        Shard *shard = new Shard((devRendSkyMode? UnlitGeom : SkyMaskGeom));
+        Shard *shard = new Shard((devRendSkyMode? Shard::General : Shard::SkyMask));
         if(devRendSkyMode && renderTextures != 2)
         {
             // Map RTU configuration from the sky surface material.
@@ -1740,7 +1740,7 @@ DENG2_PIMPL(SectorCluster)
                                leftSection.top().origin(), rightSection.bottom().origin(),
                                wsParms.texOrigin, wsParms.texDimensions, wsParms.horizontal);
 
-        Shard *shard = new Shard(ShadowGeom);
+        Shard *shard = new Shard(Shard::Shadow);
         shard->setTextureUnit(TU_PRIMARY, GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge));
         shards << shard; // take ownership.
         subsector.shards() << shard; // link to the subsector.
@@ -2020,8 +2020,7 @@ DENG2_PIMPL(SectorCluster)
             }
 
             // Prepare the primary shard.
-            Shard *shard = new Shard(skyMasked? SkyMaskGeom
-                                     : (firstDynlight || hasDynlights)? LitGeom : UnlitGeom);
+            Shard *shard = new Shard(skyMasked? Shard::SkyMask : Shard::General);
             shards << shard;             // take ownership.
             subsector.shards() << shard; // link to the subsector.
 
@@ -2122,7 +2121,7 @@ DENG2_PIMPL(SectorCluster)
             if(shineTexUnitMap[TU_PRIMARY])
             {
                 DENG2_ASSERT(!skyMasked);
-                Shard *shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
+                Shard *shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
                 shards << shineShard; // take ownership.
                 subsector.shards() << shineShard; // link subspace.
 
@@ -2695,8 +2694,7 @@ DENG2_PIMPL(SectorCluster)
         }
 
         // Prepare the primary shard.
-        Shard *shard = new Shard(skyMasked? SkyMaskGeom
-                                 : (firstDynlight || hasDynlights)? LitGeom : UnlitGeom);
+        Shard *shard = new Shard(skyMasked? Shard::SkyMask : Shard::General);
         shards << shard;             // take ownership.
         subsector.shards() << shard; // link to the subsector.
 
@@ -2723,7 +2721,7 @@ DENG2_PIMPL(SectorCluster)
         if(shineTexUnitMap[TU_PRIMARY])
         {
             DENG2_ASSERT(!skyMasked);
-            Shard *shineShard = new Shard(ShineGeom, matSnapshot.shineBlendMode());
+            Shard *shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
             shards << shineShard;             // take ownership.
             subsector.shards() << shineShard; // link to the subsector.
 

@@ -21,8 +21,8 @@
 #include "de_platform.h"
 #include "render/drawlists.h"
 
+#include "Shard"
 #include <de/Log>
-#include <de/memoryzone.h>
 #include <QMultiHash>
 #include <QtAlgorithms>
 
@@ -41,9 +41,7 @@ DENG2_PIMPL(DrawLists)
 
     Instance(Public *i) : Base(i)
     {
-        DrawListSpec newSpec;
-        newSpec.group = SkyMaskGeom;
-        skyMaskList.reset(new DrawList(newSpec));
+         skyMaskList.reset(new DrawList(DrawListSpec()));
     }
 
     /// Choose the correct draw list hash table.
@@ -143,11 +141,25 @@ static bool compareTexUnit(GLTextureUnit const &lhs, GLTextureUnit const &rhs)
     return true;
 }
 
-DrawList &DrawLists::find(DrawListSpec const &spec)
+DrawList &DrawLists::findCompatible(Shard const &shard)
 {
+    // Determine in which draw list group the shard belongs.
+    GeomGroup group;
+    switch(shard.type)
+    {
+    case Shard::General:
+        group = ((shard.modTex || shard.hasDynlights)? LitGeom : UnlitGeom);
+        break;
+
+    case Shard::Light:   group = LightGeom;   break;
+    case Shard::Shadow:  group = ShadowGeom;  break;
+    case Shard::Shine:   group = ShineGeom;   break;
+    case Shard::SkyMask: group = SkyMaskGeom; break;
+    };
+
     // Sky masked geometry is never textured; therefore no draw list hash.
     /// @todo Make hash management dynamic. -ds
-    if(spec.group == SkyMaskGeom)
+    if(group == SkyMaskGeom)
     {
         return *d->skyMaskList;
     }
@@ -155,40 +167,40 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
     DrawList *convertible = 0;
 
     // Find/create a list in the hash.
-    GLuint const key  = spec.unit(TU_PRIMARY).getTextureGLName();
-    DrawListHash &hash = d->listHash(spec.group);
+    GLuint const key   = shard.listSpec.unit(TU_PRIMARY).getTextureGLName();
+    DrawListHash &hash = d->listHash(group);
     for(DrawListHash::const_iterator it = hash.find(key);
         it != hash.end() && it.key() == key; ++it)
     {
         DrawList *list = it.value();
         DrawListSpec const &listSpec = list->spec();
 
-        if((spec.group == ShineGeom &&
-            compareTexUnit(listSpec.unit(TU_PRIMARY), spec.unit(TU_PRIMARY))) ||
-           (spec.group != ShineGeom &&
-            compareTexUnit(listSpec.unit(TU_PRIMARY), spec.unit(TU_PRIMARY)) &&
-            compareTexUnit(listSpec.unit(TU_PRIMARY_DETAIL), spec.unit(TU_PRIMARY_DETAIL))))
+        if((group == ShineGeom &&
+            compareTexUnit(listSpec.unit(TU_PRIMARY), shard.listSpec.unit(TU_PRIMARY))) ||
+           (group != ShineGeom &&
+            compareTexUnit(listSpec.unit(TU_PRIMARY), shard.listSpec.unit(TU_PRIMARY)) &&
+            compareTexUnit(listSpec.unit(TU_PRIMARY_DETAIL), shard.listSpec.unit(TU_PRIMARY_DETAIL))))
         {
             if(!listSpec.unit(TU_INTER).hasTexture() &&
-               !spec.unit(TU_INTER).hasTexture())
+               !shard.listSpec.unit(TU_INTER).hasTexture())
             {
                 // This will do great.
                 return *list;
             }
 
             // Is this eligible for conversion to a blended list?
-            if(list->isEmpty() && !convertible && spec.unit(TU_INTER).hasTexture())
+            if(list->isEmpty() && !convertible && shard.listSpec.unit(TU_INTER).hasTexture())
             {
                 // If necessary, this empty list will be selected.
                 convertible = list;
             }
 
             // Possibly an exact match?
-            if((spec.group == ShineGeom &&
-                compareTexUnit(listSpec.unit(TU_INTER), spec.unit(TU_INTER))) ||
-               (spec.group != ShineGeom &&
-                compareTexUnit(listSpec.unit(TU_INTER), spec.unit(TU_INTER)) &&
-                compareTexUnit(listSpec.unit(TU_INTER_DETAIL), spec.unit(TU_INTER_DETAIL))))
+            if((group == ShineGeom &&
+                compareTexUnit(listSpec.unit(TU_INTER), shard.listSpec.unit(TU_INTER))) ||
+               (group != ShineGeom &&
+                compareTexUnit(listSpec.unit(TU_INTER), shard.listSpec.unit(TU_INTER)) &&
+                compareTexUnit(listSpec.unit(TU_INTER_DETAIL), shard.listSpec.unit(TU_INTER_DETAIL))))
             {
                 return *list;
             }
@@ -199,21 +211,21 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
     if(convertible)
     {
         // This list is currently empty.
-        if(spec.group == ShineGeom)
+        if(group == ShineGeom)
         {
-            convertible->spec().unit(TU_INTER) = spec.unit(TU_INTER);
+            convertible->spec().unit(TU_INTER) = shard.listSpec.unit(TU_INTER);
         }
         else
         {
-            convertible->spec().unit(TU_INTER) = spec.unit(TU_INTER);
-            convertible->spec().unit(TU_INTER_DETAIL) = spec.unit(TU_INTER_DETAIL);
+            convertible->spec().unit(TU_INTER)        = shard.listSpec.unit(TU_INTER);
+            convertible->spec().unit(TU_INTER_DETAIL) = shard.listSpec.unit(TU_INTER_DETAIL);
         }
 
         return *convertible;
     }
 
     // Create a new list.
-    return *hash.insert(key, new DrawList(spec)).value();
+    return *hash.insert(key, new DrawList(shard.listSpec)).value();
 }
 
 int DrawLists::findAll(GeomGroup group, FoundLists &found)

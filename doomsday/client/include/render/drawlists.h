@@ -34,13 +34,13 @@ public:
     DrawLists();
 
     /**
-     * Locate an appropriate draw list for the given specification.
+     * Locate an appropriate draw list for the Shard geometry.
      *
-     * @param spec  Draw list specification.
+     * @param shard  Geometry shard to find a suitable list for.
      *
-     * @return  The chosen list.
+     * @return  The chosen DrawList.
      */
-    DrawList &find(DrawListSpec const &spec);
+    DrawList &findCompatible(Shard const &shard);
 
     /**
      * Finds all draw lists which match the given specification. Note that only

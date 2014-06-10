@@ -35,6 +35,17 @@
 class Shard
 {
 public:
+    /// Logical shard types (primarily for identification/grouping):
+    enum Type {
+        General,  ///< Regular geometry (walls, flats).
+        Light,    ///< Dynamic lights (mobjs, plane glows).
+        Shadow,   ///< Dynamic shadows (including FakeRadio).
+        Shine,    ///< Surface shine geometry.
+        SkyMask   ///< Sky-masked geometry.
+    };
+
+public:
+    Type type;
     DrawListSpec listSpec;
     blendmode_t blendmode;
     GLuint modTex;
@@ -78,16 +89,11 @@ public:
     /**
      * Construct a new Shard of 3D map geometry.
      */
-    Shard(GeomGroup geomGroup          = UnlitGeom,
+    Shard(Type type                    = General,
           blendmode_t blendmode        = BM_NORMAL,
           GLuint modTex                = 0,
           de::Vector3f const &modColor = de::Vector3f(),
           bool hasDynlights            = false);
-
-    /**
-     * Returns the final DrawList specification for the Shard.
-     */
-    DrawListSpec const &drawListSpec() const;
 
     /**
      * Configure all GL texture units in order, according to the given @a gltumap.

@@ -56,20 +56,14 @@ Shard::Primitive &Shard::Primitive::setTexScale(int unit, Vector2f const &newSca
     return *this;
 }
 
-Shard::Shard(GeomGroup geomGroup, blendmode_t blendmode,
+Shard::Shard(Type type, blendmode_t blendmode,
     GLuint modTex, Vector3f const &modColor, bool hasDynlights)
-    : blendmode   (blendmode)
+    : type        (type)
+    , blendmode   (blendmode)
     , modTex      (modTex)
     , modColor    (modColor)
     , hasDynlights(hasDynlights)
-{
-    listSpec.group = geomGroup;
-}
-
-DrawListSpec const &Shard::drawListSpec() const
-{
-    return listSpec;
-}
+{}
 
 Shard &Shard::setAllTextureUnits(GLTextureUnit const *gltumap[])
 {

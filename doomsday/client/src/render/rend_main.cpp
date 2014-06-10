@@ -1533,7 +1533,7 @@ static void drawSubspace(ConvexSubspace &subspace)
     DrawLists &drawLists = ClientApp::renderSystem().drawLists();
     foreach(Shard const *shard, subsector.shards())
     {
-        drawLists.find(shard->drawListSpec()) << *shard;
+        drawLists.findCompatible(*shard) << *shard;
     }
 
     // When the viewer is not in the void, we can angle-occlude the range defined by

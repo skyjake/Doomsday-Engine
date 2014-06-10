@@ -86,7 +86,6 @@ class DrawList
 public:
     struct Spec
     {
-        GeomGroup group;
         typedef de::GLTextureUnit UnitSpecs[NUM_TEXTURE_UNITS];
         UnitSpecs texunits;
 
