@@ -1,11 +1,6 @@
 /** @file widgets/logwidget.cpp  Widget for output message log.
  *
- * @todo Refactor: Separate the non-Log-related functionality into its own
- * class that handles long text documents with a background thread used for
- * preparing it for showing on the screen. Such a class can be used as the
- * foundation of DocumentWidget as well.
- *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -50,17 +45,20 @@ public Font::RichFormat::IStyle
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
 
     /**
-     * Cached log entry ready for drawing. The styled text of the entry is
-     * wrapped onto multiple lines according to the available content width.
+     * Cached log entry ready for drawing. TextDrawable takes the styled text of the
+     * entry and wraps it onto multiple lines according to the available content width.
      *
-     * CacheEntry is Lockable because it is accessed both by the main thread
-     * when drawing and by RewrapTask when wrapping the cached entries to a
-     * resized content width.
+     * The height of the entry is initially zero. When TextDrawable has finished
+     * laying out and preparing the text, the real height is then updated and the
+     * content height of the log increases.
+     *
+     * CacheEntry is accessed only from the main thread. However, instances may be
+     * initially created also in background threads (if they happen to flush the log).
      */
-    class CacheEntry // : public Lockable
+    class CacheEntry
     {
-        int _height; ///< Current height of the entry, in pixels.
-        int _oldHeight;
+        int _height;    ///< Current height of the entry, in pixels.
+        int _oldHeight; ///< Previous height, before calling updateVisibility().
 
     public:
         TextDrawable drawable;
@@ -118,7 +116,15 @@ public Font::RichFormat::IStyle
             return 0;
         }
 
-        /// Returns the difference in height.
+        /**
+         * Updates the entry's visibility: which lines might be visible to the user
+         * and thus need to be allocated on an atlas and ready to draw.
+         *
+         * @param yBottom       Bottom coordinate for the entry.
+         * @param visibleRange  Full range of currently visible pixels in the widget.
+         *
+         * @return Possible change in the height of the entry.
+         */
         int updateVisibility(int yBottom, Rangei const &visiblePixels)
         {
             int heightDelta = 0;
@@ -202,14 +208,13 @@ public Font::RichFormat::IStyle
     };
 
     /**
-     * Log sink that wraps log entries as rich text to multiple lines before
-     * they are shown by LogWidget. The wrapping is done by a TaskPool in the
-     * background.
+     * Log sink that where all entries that will be visible in the widget will
+     * be received. For each entry, a CacheEntry is created and its TextDrawable
+     * will start processing the entry contents in the background.
      *
-     * Whenever all the wrapping tasks are complete, LogWidget will be notified
-     * and it will check if excess entries should be removed. Entries are only
-     * removed from the sink (and cache) during a prune, in the main thread,
-     * and during this no background tasks are running.
+     * LogWidget will periodically check if excess entries should be removed. Entries are
+     * only removed from the sink (and cache) during a prune, in the main thread,
+     * during which the sink is locked.
      */
     class WrappingMemoryLogSink : public MemoryLogSink
     {
@@ -527,14 +532,23 @@ public Font::RichFormat::IStyle
 
     void rewrapCache()
     {
+        int startFrom = cache.size() - 1;
+        if(visibleRange >= 0)
+        {
+            startFrom = min(startFrom, visibleRange.end + 1);
+        }
+
         // Resize all the existing entries, starting from the latest visible entry.
-        for(int idx = cache.size() - 1; idx >= 0; --idx)
+        for(int idx = startFrom; idx >= 0; --idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
 
-        // TODO - Resize the rest of the items (below the visible range).
-
+        // Resize the rest of the items (below the visible range).
+        for(int idx = startFrom + 1; idx < cache.size(); ++idx)
+        {
+            cache[idx]->rewrap(contentWidth());
+        }
     }
 
     void releaseExcessComposedEntries()
