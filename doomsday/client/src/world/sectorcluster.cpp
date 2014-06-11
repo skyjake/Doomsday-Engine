@@ -1831,25 +1831,10 @@ DENG2_PIMPL(SectorCluster)
         Vector3f const materialOrigin   = leftSection.materialOrigin();
         Vector2f const materialScale    = surface.materialScale();
 
-        Vector4f const ambientLight     =
-            useAmbientLightFromSide(leftSection)? Rend_AmbientLightColor(leftEdge.lineSide().sector())
-                                                : self.lightSourceColorfIntensity();
-
         blendmode_t const blendmode     = chooseWallBlendmode(leftSection);
         float const glowing             = chooseSurfaceGlowStrength(surface, material);
 
         MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-        Vector3f const *topTintColor    = 0;
-        Vector3f const *bottomTintColor = 0;
-        if(!skyMasked)
-        {
-            chooseWallTintColors(leftSection, &bottomTintColor, &topTintColor);
-        }
-
-        // Calculate the light level deltas for this wall section.
-        float lightLevelDeltas[2]; // [left, right]
-        wallLightLevelDeltas(leftSection, rightSection, lightLevelDeltas);
 
         // Lists of projected lights/shadows that affect this geometry.
         uint lightListIdx = 0, shadowListIdx = 0;
@@ -1930,102 +1915,12 @@ DENG2_PIMPL(SectorCluster)
                 quadShinyTexCoords(shineTexCoords, posCoords, sectionWidth);
             }
 
-            // Light this polygon.
-            Vector4f colorCoords[4];
-            Vector4f shineColorCoords[4];
-            if(!skyMaskedMaterial)
-            {
-                Rend_LightWallGeometry(self, leftEdge.hedge().mapElement(), sectionId,
-                                       ambientLight, glowing, topTintColor, bottomTintColor, lightLevelDeltas,
-                                       posCoords, colorCoords);
-
-                if(shineTexUnitMap[TU_PRIMARY])
-                {
-                    // Strength of the shine.
-                    Vector3f const &minColor = matSnapshot.shineMinColor();
-                    for(duint16 i = 0; i < 4; ++i)
-                    {
-                        Vector4f &color = shineColorCoords[i];
-                        color = Vector3f(colorCoords[i]).max(minColor);
-                        color.w = shineTexUnitMap[TU_PRIMARY]->opacity;
-                    }
-                }
-
-                // Apply uniform alpha (overwritting luminance factors).
-                for(duint16 i = 0; i < 4; ++i)
-                {
-                    colorCoords[i].w = opacity;
-                }
-            }
-
-            if(useLights || useShadows)
-            {
-                // Geometry which is lit by dynamic lights may need to be drawn
-                // differently than non-lit surfaces depending on the renderer
-                // configuration. If the averaged vertex light level is nearly
-                // fully saturated we can skip adding extra lights.
-                float avgLightlevel = 0;
-                for(duint16 i = 0; i < 4; ++i)
-                {
-                    avgLightlevel += colorCoords[i].x;
-                    avgLightlevel += colorCoords[i].y;
-                    avgLightlevel += colorCoords[i].z;
-                }
-                avgLightlevel /= 4 * 3;
-
-                if(avgLightlevel > 0.98f)
-                {
-                    useLights = false;
-                }
-                if(avgLightlevel < 0.02f)
-                {
-                    useShadows = false;
-                }
-            }
-
-            bool hasDynlights = false;
-            if(useLights)
-            {
-                // Project dynamic lights to shards.
-                splinterprojected_params_t parm; de::zap(parm);
-
-                parm.inst         = this;
-                parm.subspace     = &subspace;
-                parm.skipFirst    = Rend_IsMTexLights();
-                parm.vertCount    = 4;
-                parm.posCoords    = posCoords;
-                parm.topLeft      = &topLeft;
-                parm.bottomRight  = &bottomRight;
-                parm.leftSection  = &leftSection;
-                parm.rightSection = &rightSection;
-
-                hasDynlights = (0 != splinterAllProjections(lightListIdx, parm));
-            }
-
-            if(useShadows)
-            {
-                // Project dynamic shadows to shards.
-                splinterprojected_params_t parm; de::zap(parm);
-
-                parm.inst         = this;
-                parm.subspace     = &subspace;
-                parm.vertCount    = 4;
-                parm.posCoords    = posCoords;
-                parm.topLeft      = &topLeft;
-                parm.bottomRight  = &bottomRight;
-                parm.leftSection  = &leftSection;
-                parm.rightSection = &rightSection;
-
-                splinterAllProjections(shadowListIdx, parm);
-            }
-
             // Prepare the primary shard.
             Shard *shard = new Shard(skyMasked? Shard::SkyMask : Shard::General);
             shards << shard;             // take ownership.
             subsector.shards() << shard; // link to the subsector.
 
             shard->setAllTextureUnits(texUnitMap);
-            shard->hasDynlights = hasDynlights;
 
             if(firstDynlight)
             {
@@ -2045,10 +1940,6 @@ DENG2_PIMPL(SectorCluster)
 
                 vbuf.reserveElements(leftFanSize + rightFanSize, shard->indices);
                 Rend_DivPosCoords(vbuf, shard->indices.data(), posCoords, leftSection, rightSection);
-                if(!skyMasked)
-                {
-                    Rend_DivColorCoords(vbuf, shard->indices.data(), colorCoords, leftSection, rightSection);
-                }
                 if(texUnitMap[TU_PRIMARY])
                 {
                     Rend_DivTexCoords(vbuf, shard->indices.data(), primaryTexCoords, leftSection, rightSection,
@@ -2089,10 +1980,6 @@ DENG2_PIMPL(SectorCluster)
                 {
                     WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                     vertex.pos = posCoords[i];
-                    if(!skyMasked)
-                    {
-                        vertex.rgba = colorCoords[i];
-                    }
                     if(texUnitMap[TU_PRIMARY])
                     {
                         vertex.texCoord[WorldVBuf::PrimaryTex] = primaryTexCoords[i];
@@ -2117,6 +2004,49 @@ DENG2_PIMPL(SectorCluster)
                 }
             }
 
+            // Light this polygon.
+            Vector4f colorCoords[4];
+            if(!skyMaskedMaterial)
+            {
+                Vector4f const ambientLight     =
+                    useAmbientLightFromSide(leftSection)? Rend_AmbientLightColor(leftEdge.lineSide().sector())
+                                                        : self.lightSourceColorfIntensity();
+
+                Vector3f const *topTintColor    = 0;
+                Vector3f const *bottomTintColor = 0;
+                if(!skyMasked)
+                {
+                    chooseWallTintColors(leftSection, &bottomTintColor, &topTintColor);
+                }
+
+                // Calculate the light level deltas for this wall section.
+                float lightLevelDeltas[2]; // [left, right]
+                wallLightLevelDeltas(leftSection, rightSection, lightLevelDeltas);
+
+                Rend_LightWallGeometry(self, leftEdge.hedge().mapElement(), sectionId,
+                                       ambientLight, glowing, topTintColor, bottomTintColor, lightLevelDeltas,
+                                       posCoords, colorCoords);
+
+                // Apply uniform alpha (overwritting luminance factors).
+                for(duint16 i = 0; i < 4; ++i)
+                {
+                    colorCoords[i].w = opacity;
+                }
+
+                if(mustSubdivide)
+                {
+                    Rend_DivColorCoords(vbuf, shard->indices.data(), colorCoords, leftSection, rightSection);
+                }
+                else
+                {
+                    for(WorldVBuf::Index i = 0; i < 4; ++i)
+                    {
+                        WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
+                        vertex.rgba = colorCoords[i];
+                    }
+                }
+            }
+
             // Prepare a shine shard?
             if(shineTexUnitMap[TU_PRIMARY])
             {
@@ -2126,6 +2056,16 @@ DENG2_PIMPL(SectorCluster)
                 subsector.shards() << shineShard; // link subspace.
 
                 shineShard->setAllTextureUnits(shineTexUnitMap);
+
+                // Strength of the shine.
+                Vector3f const &minColor = matSnapshot.shineMinColor();
+                Vector4f shineColorCoords[4];
+                for(duint16 i = 0; i < 4; ++i)
+                {
+                    Vector4f &color = shineColorCoords[i];
+                    color = Vector3f(colorCoords[i]).max(minColor);
+                    color.w = shineTexUnitMap[TU_PRIMARY]->opacity;
+                }
 
                 if(mustSubdivide) // Generate two triangle fans.
                 {
@@ -2175,9 +2115,87 @@ DENG2_PIMPL(SectorCluster)
                                     .setTex0Scale (materialScale);
                 }
             }
+
+            if(useLights || useShadows)
+            {
+                // Geometry which is lit by dynamic lights may need to be drawn
+                // differently than non-lit surfaces depending on the renderer
+                // configuration. If the averaged vertex light level is nearly
+                // fully saturated we can skip adding extra lights.
+                float avgLightlevel = 0;
+                for(duint16 i = 0; i < 4; ++i)
+                {
+                    avgLightlevel += colorCoords[i].x;
+                    avgLightlevel += colorCoords[i].y;
+                    avgLightlevel += colorCoords[i].z;
+                }
+                avgLightlevel /= 4 * 3;
+
+                if(avgLightlevel > 0.98f)
+                {
+                    useLights = false;
+                }
+                if(avgLightlevel < 0.02f)
+                {
+                    useShadows = false;
+                }
+            }
+
+            if(useLights)
+            {
+                // Project dynamic lights to shards.
+                splinterprojected_params_t parm; de::zap(parm);
+
+                parm.inst         = this;
+                parm.subspace     = &subspace;
+                parm.skipFirst    = Rend_IsMTexLights();
+                parm.vertCount    = 4;
+                parm.posCoords    = posCoords;
+                parm.topLeft      = &topLeft;
+                parm.bottomRight  = &bottomRight;
+                parm.leftSection  = &leftSection;
+                parm.rightSection = &rightSection;
+
+                // For efficient drawing primitives are separated into batches
+                // for lit and unlit geometries. Flag the shard to signal that
+                // dynamic lights will be drawn over it in a separate pass.
+                shard->hasDynlights = (0 != splinterAllProjections(lightListIdx, parm));
+            }
+
+            if(useShadows)
+            {
+                // Project dynamic shadows to shards.
+                splinterprojected_params_t parm; de::zap(parm);
+
+                parm.inst         = this;
+                parm.subspace     = &subspace;
+                parm.vertCount    = 4;
+                parm.posCoords    = posCoords;
+                parm.topLeft      = &topLeft;
+                parm.bottomRight  = &bottomRight;
+                parm.leftSection  = &leftSection;
+                parm.rightSection = &rightSection;
+
+                splinterAllProjections(shadowListIdx, parm);
+            }
         }
         else
         {
+            Vector4f const ambientLight     =
+                useAmbientLightFromSide(leftSection)? Rend_AmbientLightColor(leftEdge.lineSide().sector())
+                                                    : self.lightSourceColorfIntensity();
+
+            Vector3f const *topTintColor    = 0;
+            Vector3f const *bottomTintColor = 0;
+            if(!skyMasked)
+            {
+                chooseWallTintColors(leftSection, &bottomTintColor, &topTintColor);
+            }
+
+            // Calculate the light level deltas for this wall section.
+            float lightLevelDeltas[2]; // [left, right]
+            wallLightLevelDeltas(leftSection, rightSection, lightLevelDeltas);
+
             Rend_PrepareWallSectionVissprite(subspace,
                                              ambientLight, *topTintColor, glowing,
                                              opacity, blendmode,
@@ -2481,10 +2499,6 @@ DENG2_PIMPL(SectorCluster)
         Vector2f const materialScale  = surface.materialScale();
 
         //blendmode_t const blendmode   = chooseFlatBlendmode(plane);
-        Vector4f const ambientLight   =
-                useAmbientLightFromPlane(plane)? Rend_AmbientLightColor(plane.sector())
-                                               : self.lightSourceColorfIntensity();
-
         float const glowing           = chooseSurfaceGlowStrength(surface, material);
 
         MaterialSnapshot const &matSnapshot = material->prepare(Rend_MapSurfaceMaterialSpec());
@@ -2530,28 +2544,39 @@ DENG2_PIMPL(SectorCluster)
             }
         }
 
+        // Prepare the primary shard.
+        Shard *shard = new Shard(skyMasked? Shard::SkyMask : Shard::General);
+        shards << shard;             // take ownership.
+        subsector.shards() << shard; // link to the subsector.
+
+        shard->setAllTextureUnits(texUnitMap);
+
+        if(firstDynlight)
+        {
+            DENG2_ASSERT(!skyMasked);
+            shard->modTex   = firstDynlight->texture;
+            shard->modColor = firstDynlight->color;
+        }
+
         WorldVBuf::Index const fanSize = subsector.numFanVertices();
-        WorldVBuf::Indices indices(fanSize);
-        vbuf.reserveElements(fanSize, indices);
-        subsector.writePosCoords(vbuf, indices,
+        shard->indices.resize(fanSize);
+        vbuf.reserveElements(fanSize, shard->indices);
+
+        subsector.writePosCoords(vbuf, shard->indices,
                                  (plane.isSectorCeiling()? Anticlockwise : Clockwise),
                                  plane.heightSmoothed());
 
-        // ShinySurface?
-        WorldVBuf::Indices shineIndices;
-        if(shineTexUnitMap[TU_PRIMARY])
+        ShardPrimitive &triFan = shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
+        if(!skyMasked)
         {
-            shineIndices.resize(fanSize);
-            vbuf.reserveElements(fanSize, shineIndices);
-            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-            {
-                vbuf[shineIndices[i]].pos = vbuf[indices[i]].pos;
-            }
+            triFan.setTex0Offset(materialOrigin)
+                  .setTex0Scale (materialScale)
+                  .setTex1Offset(materialOrigin);
         }
 
         for(WorldVBuf::Index i = 0; i < fanSize; ++i)
         {
-            WorldVBuf::Type &vertex = vbuf[indices[i]];
+            WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
             Vector3f const delta(vertex.pos - topLeft);
 
             if(texUnitMap[TU_PRIMARY])
@@ -2562,31 +2587,6 @@ DENG2_PIMPL(SectorCluster)
             if(texUnitMap[TU_INTER])
             {
                 vertex.texCoord[WorldVBuf::InterTex] = Vector2f(delta.x, -delta.y);
-            }
-
-            if(shineTexUnitMap[TU_PRIMARY])
-            {
-                WorldVBuf::Type &shineVertex = vbuf[shineIndices[i]];
-
-                // Determine distance to viewer. If too small it will result in an
-                // ugly 'crunch' below and above the viewpoint (so clamp it).
-                float distToEye = (vOrigin.xz() - vertex.pos.xy()).normalize().length();
-                if(distToEye < 10) distToEye = 10;
-
-                // Offset from the normal view plane.
-                Vector2f start(vOrigin.x, vOrigin.z);
-                float offset = ((start.y - vertex.pos.y) * sin(.4f)/*viewFrontVec[VX]*/ -
-                                (start.x - vertex.pos.x) * cos(.4f)/*viewFrontVec[VZ]*/);
-
-                shineVertex.texCoord[WorldVBuf::PrimaryTex] =
-                        Vector2f(.5f + (shinyVertical(offset, distToEye) - .5f) * 2
-                                 ,
-                                 shinyVertical(vOrigin.y - vertex.pos.z, distToEye));
-
-                if(shineTexUnitMap[TU_INTER])
-                {
-                    shineVertex.texCoord[WorldVBuf::InterTex] = Vector2f(delta.x, -delta.y);
-                }
             }
 
             // First light texture coordinates.
@@ -2603,26 +2603,18 @@ DENG2_PIMPL(SectorCluster)
         // Light this polygon.
         if(!skyMaskedMaterial)
         {
+            Vector4f const ambientLight =
+                    useAmbientLightFromPlane(plane)? Rend_AmbientLightColor(plane.sector())
+                                                   : self.lightSourceColorfIntensity();
+
             Rend_LightFlatGeometry(self, subspace, plane.indexInSector(),
                                    ambientLight, glowing, &surface.tintColor(),
-                                   vbuf, indices);
-
-            if(shineTexUnitMap[TU_PRIMARY])
-            {
-                // Strength of the shine.
-                Vector3f const &minColor = matSnapshot.shineMinColor();
-                for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-                {
-                    Vector4f &color = vbuf[shineIndices[i]].rgba;
-                    color = Vector3f(vbuf[indices[i]].rgba).max(minColor);
-                    color.w = shineTexUnitMap[TU_PRIMARY]->opacity;
-                }
-            }
+                                   vbuf, shard->indices);
 
             // Apply uniform alpha (overwritting luminance factors).
             for(WorldVBuf::Index i = 0; i < fanSize; ++i)
             {
-                vbuf[indices[i]].rgba.w = opacity;
+                vbuf[shard->indices[i]].rgba.w = opacity;
             }
         }
         else
@@ -2631,8 +2623,61 @@ DENG2_PIMPL(SectorCluster)
             Vector4f const saturated(1, 1, 1, 1);
             for(WorldVBuf::Index i = 0; i < fanSize; ++i)
             {
-                vbuf[indices[i]].rgba = saturated;
+                vbuf[shard->indices[i]].rgba = saturated;
             }
+        }
+
+        // Prepare a shine shard?
+        if(shineTexUnitMap[TU_PRIMARY])
+        {
+            DENG2_ASSERT(!skyMasked);
+            Shard *shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
+            shards << shineShard;             // take ownership.
+            subsector.shards() << shineShard; // link to the subsector.
+
+            shineShard->setAllTextureUnits(shineTexUnitMap);
+
+            shineShard->indices.resize(fanSize);
+            vbuf.reserveElements(fanSize, shineShard->indices);
+
+            // Strength of the shine.
+            Vector3f const &minColor = matSnapshot.shineMinColor();
+
+            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
+
+                vertex.pos    = vbuf[shard->indices[i]].pos;
+
+                vertex.rgba   = Vector3f(vbuf[shard->indices[i]].rgba).max(minColor);
+                vertex.rgba.w = shineTexUnitMap[TU_PRIMARY]->opacity;
+
+                // Determine distance to viewer. If too small it will result in an
+                // ugly 'crunch' below and above the viewpoint (so clamp it).
+                float distToEye = (vOrigin.xz() - vertex.pos.xy()).normalize().length();
+                if(distToEye < 10) distToEye = 10;
+
+                // Offset from the normal view plane.
+                Vector2f start(vOrigin.x, vOrigin.z);
+                float offset = ((start.y - vertex.pos.y) * sin(.4f)/*viewFrontVec[VX]*/ -
+                                (start.x - vertex.pos.x) * cos(.4f)/*viewFrontVec[VZ]*/);
+
+                vertex.texCoord[WorldVBuf::PrimaryTex] =
+                        Vector2f(.5f + (shinyVertical(offset, distToEye) - .5f) * 2
+                                 ,
+                                 shinyVertical(vOrigin.y - vertex.pos.z, distToEye));
+
+                if(shineTexUnitMap[TU_INTER])
+                {
+                    vertex.texCoord[WorldVBuf::InterTex] =
+                               Vector2f(  vertex.pos.x - topLeft.x,
+                                        -(vertex.pos.y - topLeft.y));
+                }
+            }
+
+            shineShard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
+                            .setTex0Offset(materialOrigin)
+                            .setTex0Scale (materialScale);
         }
 
         if(useLights || useShadows)
@@ -2644,7 +2689,7 @@ DENG2_PIMPL(SectorCluster)
             float avgLightlevel = 0;
             for(WorldVBuf::Index i = 0; i < fanSize; ++i)
             {
-                WorldVBuf::Type &vertex = vbuf[indices[i]];
+                WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
                 avgLightlevel += vertex.rgba.x;
                 avgLightlevel += vertex.rgba.y;
                 avgLightlevel += vertex.rgba.z;
@@ -2661,7 +2706,6 @@ DENG2_PIMPL(SectorCluster)
             }
         }
 
-        bool hasDynlights = false;
         if(useLights)
         {
             // Project dynamic lights to shards.
@@ -2671,11 +2715,14 @@ DENG2_PIMPL(SectorCluster)
             parm.subspace    = &subspace;
             parm.skipFirst   = Rend_IsMTexLights();
             parm.vertCount   = fanSize;
-            parm.indices     = indices.data();
+            parm.indices     = shard->indices.data();
             parm.topLeft     = &topLeft;
             parm.bottomRight = &bottomRight;
 
-            hasDynlights = (0 != splinterAllProjections(lightListIdx, parm));
+            // For efficient drawing primitives are separated into batches
+            // for lit and unlit geometries. Flag the shard to signal that
+            // dynamic lights will be drawn over it in a separate pass.
+            shard->hasDynlights = (0 != splinterAllProjections(lightListIdx, parm));
         }
 
         if(useShadows)
@@ -2686,51 +2733,11 @@ DENG2_PIMPL(SectorCluster)
             parm.inst        = this;
             parm.subspace    = &subspace;
             parm.vertCount   = fanSize;
-            parm.indices     = indices.data();
+            parm.indices     = shard->indices.data();
             parm.topLeft     = &topLeft;
             parm.bottomRight = &bottomRight;
 
             splinterAllProjections(shadowListIdx, parm);
-        }
-
-        // Prepare the primary shard.
-        Shard *shard = new Shard(skyMasked? Shard::SkyMask : Shard::General);
-        shards << shard;             // take ownership.
-        subsector.shards() << shard; // link to the subsector.
-
-        shard->setAllTextureUnits(texUnitMap);
-        shard->hasDynlights = hasDynlights;
-
-        if(firstDynlight)
-        {
-            DENG2_ASSERT(!skyMasked);
-            shard->modTex   = firstDynlight->texture;
-            shard->modColor = firstDynlight->color;
-        }
-
-        shard->indices = indices;
-        ShardPrimitive &triFan = shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
-        if(!skyMasked)
-        {
-            triFan.setTex0Offset(materialOrigin)
-                  .setTex0Scale (materialScale)
-                  .setTex1Offset(materialOrigin);
-        }
-
-        // Prepare a shine shard?
-        if(shineTexUnitMap[TU_PRIMARY])
-        {
-            DENG2_ASSERT(!skyMasked);
-            Shard *shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
-            shards << shineShard;             // take ownership.
-            subsector.shards() << shineShard; // link to the subsector.
-
-            shineShard->setAllTextureUnits(shineTexUnitMap);
-
-            shineShard->indices = shineIndices;
-            shineShard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
-                            .setTex0Offset(materialOrigin)
-                            .setTex0Scale (materialScale);
         }
     }
 

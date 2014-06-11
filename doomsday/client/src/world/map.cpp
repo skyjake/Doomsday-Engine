@@ -692,6 +692,7 @@ DENG2_PIMPL(Map)
                             {
                                 // Add this subspace to the LUT.
                                 ConvexSubspace &subspace = leaf.subspace();
+                                subspace.setMap(thisPublic);
                                 subspace.setIndexInMap(subspaces.count());
                                 subspaces.append(&subspace);
 
