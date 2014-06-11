@@ -340,17 +340,20 @@ DeleteStatement *Parser::parseDeleteStatement()
 
 FunctionStatement *Parser::parseFunctionStatement()
 {
+    // "def" name-expr "(" [ name-expr ["," name-expr]* ] ")" cond-compound
+
     dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
     if(pos < 0)
     {
-        throw MissingTokenError("Parser::parseMethodStatement",
+        throw MissingTokenError("Parser::parseFunctionStatement",
             "Expected arguments for " + _statementRange.firstToken().asText());
     }
 
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseExpression(_statementRange.between(1, pos), 
-            Expression::LocalOnly | Expression::ByReference | Expression::NewVariable | Expression::NotInScope)));
+                        Expression::LocalOnly   | Expression::ByReference |
+                        Expression::NewVariable | Expression::NotInScope)));
 
     // Collect the argument names.
     TokenRange argRange = _statementRange.between(pos + 1, _statementRange.closingBracket(pos));

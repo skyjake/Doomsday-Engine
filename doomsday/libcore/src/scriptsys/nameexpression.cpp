@@ -46,11 +46,11 @@ DENG2_PIMPL_NOREF(NameExpression)
             foundIn = const_cast<Record *>(&where);
             return const_cast<Variable *>(&where[identifier]);
         }
-        if(lookInClass && where.hasMember("__isa__"))
+        if(lookInClass && where.hasMember("__super__"))
         {
             // The namespace is derived from another record. Let's look into each
             // super-record in turn.
-            ArrayValue const &supers = where.geta("__isa__");
+            ArrayValue const &supers = where.geta("__super__");
             for(dsize i = 0; i < supers.size(); ++i)
             {
                 if(Variable *found = findIdentifier(supers.at(i).as<RecordValue>().dereference(),

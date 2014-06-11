@@ -21,6 +21,10 @@
 #include "de/TextValue"
 #include "de/RefValue"
 #include "de/NoneValue"
+#include "de/FunctionValue"
+#include "de/Process"
+#include "de/Context"
+#include "de/Evaluator"
 #include "de/Variable"
 #include "de/Writer"
 #include "de/Reader"
@@ -231,6 +235,32 @@ dint RecordValue::compare(Value const &value) const
                    reinterpret_cast<void const *>(&value));
     }
     return cmp(recValue->d->record, d->record);
+}
+
+void RecordValue::call(Process &process, Value const &arguments, Value *) const
+{
+    verify();
+
+    // Calling a record causes it to be treated as a class and a new record is
+    // initialized as a member of the class.
+    QScopedPointer<RecordValue> instance(new RecordValue(new Record, RecordValue::OwnsRecord));
+
+    ArrayValue *super = new ArrayValue;
+    *super << new RecordValue(d->record);
+    instance->record()->add(new Variable("__super__", super));
+
+    // If there is an initializer method, call it now.
+    if(dereference().hasMember("__init__"))
+    {
+        FunctionValue const &func = dereference().getAs<FunctionValue>("__init__");
+        process.call(func.function(), arguments.as<ArrayValue>(),
+                     instance->duplicateAsReference());
+
+        // Discard the return value from the init function.
+        delete process.context().evaluator().popResult();
+    }
+
+    process.context().evaluator().pushResult(instance.take());
 }
 
 // Flags for serialization:
