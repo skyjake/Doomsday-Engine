@@ -188,8 +188,10 @@ DENG2_PIMPL(App)
             NativePath appDir = appPath.fileNamePath();
             binFolder.attach(new DirectoryFeed(appDir));
             fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
-            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
-
+            if((self.nativeBasePath() / "modules").exists())
+            {
+                fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+            }
 #elif WIN32
             NativePath appDir = appPath.fileNamePath();
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
@@ -508,6 +510,11 @@ NativePath App::nativeBasePath()
 # else
     path = DENG_BASE_DIR;
 # endif
+    if(!path.exists())
+    {
+        // Fall back to using the application binary path, which always exists.
+        path = d->appPath.fileNamePath();
+    }
     // Also check the system config files.
     d->unixInfo->path("basedir", path);
 #endif
@@ -555,7 +562,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     LogBuffer &logBuf = LogBuffer::appBuffer();
 
     // Update the log buffer max entry count: number of items to hold in memory.
-    logBuf.setMaxEntryCount(d->config->getui("log.bufferSize"));
+    logBuf.setMaxEntryCount(d->config->getui("log.bufferSize", 1000));
 
     try
     {
