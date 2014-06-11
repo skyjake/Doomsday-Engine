@@ -87,9 +87,7 @@ public:
      */
     Process(Script const &script);
 
-    virtual ~Process();
-
-    State state() const { return _state; }
+    State state() const;
 
     /// Determines the current depth of the call stack.
     dsize depth() const;
@@ -162,6 +160,19 @@ public:
     Context &context(duint downDepth = 0);
 
     /**
+     * Pushes a new context to the process's stack.
+     *
+     * @param context  Context. Ownership taken.
+     */
+    void pushContext(Context *context);
+
+    /**
+     * Pops the topmost context off the stack and returns it. Ownership given
+     * to caller.
+     */
+    Context *popContext();
+
+    /**
      * Performs a function call. A new context is created on the context
      * stack and the function's statements are executed on the new stack.
      * After the call is finished, the result value is pushed to the
@@ -193,34 +204,8 @@ public:
      */
     Record &globals();
 
-protected:   
-    void run(Statement const *firstStatement);
-
-    /// Pops contexts off the stack until depth @a downToLevel is reached.
-    void clearStack(duint downToLevel = 0);
-
-    /// Pops the topmost context off the stack and returns it. Ownership given
-    /// to caller.
-    Context *popContext();
-
-    /// Fast forward to a suitable catch statement for @a err.
-    /// @return  @c true, if suitable catch statement found.
-    bool jumpIntoCatch(Error const &err);
-
 private:
-    State _state;
-
-    // The execution environment.
-    typedef std::vector<Context *> ContextStack;
-    ContextStack _stack;
-
-    /// This is the current working folder of the process. Relative paths
-    /// given to workingFile() are located in relation to this
-    /// folder. Initial value is the root folder.
-    String _workingPath;
-
-    /// Time when execution was started at depth 1.
-    Time _startedAt;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

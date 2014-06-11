@@ -28,21 +28,134 @@
 
 #include <sstream>
 
-using namespace de;
 using std::auto_ptr;
+
+namespace de {
+
+DENG2_PIMPL(Process)
+{
+    State state;
+
+    // The execution environment.
+    typedef std::vector<Context *> ContextStack;
+    ContextStack stack;
+
+    /// This is the current working folder of the process. Relative paths
+    /// given to workingFile() are located in relation to this
+    /// folder. Initial value is the root folder.
+    String workingPath;
+
+    /// Time when execution was started at depth 1.
+    Time startedAt;
+
+    Instance(Public *i)
+        : Base(i)
+        , state(Stopped)
+        , workingPath("/")
+    {}
+
+    ~Instance()
+    {
+        clearStack();
+    }
+
+    void clear()
+    {
+        state = Stopped;
+        clearStack();
+        self.pushContext(new Context(Context::BaseProcess, thisPublic));
+        workingPath = "/";
+    }
+
+    Context &context(duint downDepth = 0)
+    {
+        DENG2_ASSERT(downDepth < depth());
+        return **(stack.rbegin() + downDepth);
+    }
+
+    inline dsize depth() const
+    {
+        return stack.size();
+    }
+
+    /// Pops contexts off the stack until depth @a downToLevel is reached.
+    void clearStack(duint downToLevel = 0)
+    {
+        while(depth() > downToLevel)
+        {
+            delete stack.back();
+            stack.pop_back();
+        }
+    }
+
+    void run(Statement const *firstStatement)
+    {
+        if(state != Stopped)
+        {
+            throw NotStoppedError("Process::run", "Process must be stopped first");
+        }
+        state = Running;
+
+        // Make sure the stack is clear except for the process context.
+        clearStack(1);
+
+        context().start(firstStatement);
+    }
+
+    /// Fast forward to a suitable catch statement for @a err.
+    /// @return  @c true, if suitable catch statement found.
+    bool jumpIntoCatch(Error const &err)
+    {
+        dint level = 0;
+
+        // Proceed along default flow.
+        for(context().proceed(); context().current(); context().proceed())
+        {
+            Statement const *statement = context().current();
+            TryStatement const *tryStatement = dynamic_cast<TryStatement const *>(statement);
+            if(tryStatement)
+            {
+                // Encountered a nested try statement.
+                ++level;
+                continue;
+            }
+            CatchStatement const *catchStatement = dynamic_cast<CatchStatement const *>(statement);
+            if(catchStatement)
+            {
+                if(!level)
+                {
+                    // This might be the catch for us.
+                    if(catchStatement->matches(err))
+                    {
+                        catchStatement->executeCatch(context(), err);
+                        return true;
+                    }
+                }
+                if(catchStatement->isFinal() && level > 0)
+                {
+                    // A sequence of catch statements has ended.
+                    --level;
+                }
+            }
+        }
+
+        // Failed to find a catch statement that matches the given error.
+        return false;
+    }
+};
     
 /// If execution continues for longer than this, a HangError is thrown.
 static TimeDelta const MAX_EXECUTION_TIME = 10;
 
-Process::Process(Record *externalGlobalNamespace) : _state(Stopped), _workingPath("/")
+Process::Process(Record *externalGlobalNamespace) : d(new Instance(this))
 {
     // Push the first context on the stack. This bottommost context
     // is never popped from the stack. Its namespace is the global namespace
     // of the process.
-    _stack.push_back(new Context(Context::BaseProcess, this, externalGlobalNamespace));
+    pushContext(new Context(Context::BaseProcess, this, externalGlobalNamespace));
 }
 
-Process::Process(Script const &script) : _state(Stopped), _workingPath("/")
+Process::Process(Script const &script) : d(new Instance(this))
 {
     clear();
 
@@ -50,36 +163,24 @@ Process::Process(Script const &script) : _state(Stopped), _workingPath("/")
     run(script);
 }
 
-Process::~Process()
+Process::State Process::state() const
 {
-    clearStack();
+    return d->state;
 }
 
 void Process::clear()
 {
-    _state = Stopped;
-    clearStack();
-    _stack.push_back(new Context(Context::BaseProcess, this));
-    _workingPath = "/";
-}
-
-void Process::clearStack(duint downToLevel)
-{
-    while(depth() > downToLevel)
-    {
-        delete _stack.back();
-        _stack.pop_back();
-    }
+    d->clear();
 }
 
 dsize Process::depth() const
 {
-    return _stack.size();
+    return d->depth();
 }
 
 void Process::run(Script const &script)
 {
-    run(script.firstStatement());
+    d->run(script.firstStatement());
     
     // Set up the automatic variables.
     Record &ns = globals();
@@ -93,48 +194,34 @@ void Process::run(Script const &script)
     }
 }
 
-void Process::run(Statement const *firstStatement)
-{
-    if(_state != Stopped)
-    {
-        throw NotStoppedError("Process::run", "Process must be stopped first");
-    }
-    _state = Running;
-
-    // Make sure the stack is clear except for the process context.
-    clearStack(1);
-
-    context().start(firstStatement);
-}
-
 void Process::suspend(bool suspended)
 {
-    if(_state == Stopped)
+    if(d->state == Stopped)
     {
         throw SuspendError("Process:suspend", 
             "Stopped processes cannot be suspended or resumed");
     }    
     
-    _state = (suspended? Suspended : Running);
+    d->state = (suspended? Suspended : Running);
 }
 
 void Process::stop()
 {
-    _state = Stopped;
+    d->state = Stopped;
     
     // Clear the context stack, apart from the bottommost context, which 
     // represents the process itself.
-    DENG2_FOR_EACH_REVERSE(ContextStack, i, _stack)
+    DENG2_FOR_EACH_REVERSE(Instance::ContextStack, i, d->stack)
     {
-        if(*i != _stack[0])
+        if(*i != d->stack[0])
         {
             delete *i;
         }
     }
-    DENG2_ASSERT(!_stack.empty());
+    DENG2_ASSERT(!d->stack.empty());
 
     // Erase all but the first context.
-    _stack.erase(_stack.begin() + 1, _stack.end());
+    d->stack.erase(d->stack.begin() + 1, d->stack.end());
     
     // This will reset any half-done evaluations, but it won't clear the namespace.
     context().reset();
@@ -142,7 +229,7 @@ void Process::stop()
 
 void Process::execute()
 {
-    if(_state == Suspended || _state == Stopped)
+    if(d->state == Suspended || d->state == Stopped)
     {
         // The process is not active.
         return;
@@ -153,11 +240,11 @@ void Process::execute()
     if(startDepth == 1)
     {
         // Mark the start time.
-        _startedAt = Time();
+        d->startedAt = Time();
     }
 
     // Execute the next command(s).
-    while(_state == Running && depth() >= startDepth)
+    while(d->state == Running && depth() >= startDepth)
     {
         try
         {
@@ -165,7 +252,7 @@ void Process::execute()
             {
                 finish();
             }
-            if(_startedAt.since() > MAX_EXECUTION_TIME)
+            if(d->startedAt.since() > MAX_EXECUTION_TIME)
             {
                 /// @throw HangError  Execution takes too long.
                 throw HangError("Process::execute", 
@@ -177,7 +264,7 @@ void Process::execute()
             //std::cerr << "Caught " << err.asText() << " at depth " << depth() << "\n";
             
             // Fast-forward to find a suitable catch statement.
-            if(jumpIntoCatch(err))
+            if(d->jumpIntoCatch(err))
             {
                 // Suitable catch statement was found. The current statement is now
                 // pointing at the catch compound's first statement.
@@ -200,61 +287,26 @@ void Process::execute()
     }
 }
 
-bool Process::jumpIntoCatch(Error const &err)
-{
-    dint level = 0;
-
-    // Proceed along default flow.
-    for(context().proceed(); context().current(); context().proceed())
-    {
-        Statement const *statement = context().current();
-        TryStatement const *tryStatement = dynamic_cast<TryStatement const *>(statement);
-        if(tryStatement)
-        {
-            // Encountered a nested try statement.
-            ++level;
-            continue;
-        }
-        CatchStatement const *catchStatement = dynamic_cast<CatchStatement const *>(statement);
-        if(catchStatement)
-        {
-            if(!level)
-            {
-                // This might be the catch for us.
-                if(catchStatement->matches(err))
-                {
-                    catchStatement->executeCatch(context(), err);
-                    return true;
-                }
-            }
-            if(catchStatement->isFinal() && level > 0)
-            {
-                // A sequence of catch statements has ended.
-                --level;
-            }
-        }
-    }
-    
-    // Failed to find a catch statement that matches the given error.
-    return false;
-}
-
 Context &Process::context(duint downDepth)
 {
-    DENG2_ASSERT(downDepth < depth());
-    return **(_stack.rbegin() + downDepth);
+    return d->context(downDepth);
+}
+
+void Process::pushContext(Context *context)
+{
+    d->stack.push_back(context);
 }
 
 Context *Process::popContext()
 {
-    Context *topmost = _stack.back();
-    _stack.pop_back();
+    Context *topmost = d->stack.back();
+    d->stack.pop_back();
 
     // Pop a global namespace as well, if present.
     if(context().type() == Context::GlobalNamespace)
     {
-        delete _stack.back();
-        _stack.pop_back();
+        delete d->stack.back();
+        d->stack.pop_back();
     }    
     
     return topmost;
@@ -278,21 +330,21 @@ void Process::finish(Value *returnValue)
     }
     else
     {
-        DENG2_ASSERT(_stack.back()->type() == Context::BaseProcess);
+        DENG2_ASSERT(d->stack.back()->type() == Context::BaseProcess);
         
         // This was the last level.
-        _state = Stopped;
+        d->state = Stopped;
     }   
 }
 
 String const &Process::workingPath() const
 {
-    return _workingPath;
+    return d->workingPath;
 }
 
 void Process::setWorkingPath(String const &newWorkingPath)
 {
-    _workingPath = newWorkingPath;
+    d->workingPath = newWorkingPath;
 }
 
 void Process::call(Function const &function, ArrayValue const &arguments, Value *instanceScope)
@@ -314,11 +366,11 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         // that namespace on the stack first.
         if(function.globals() && function.globals() != &globals())
         {
-            _stack.push_back(new Context(Context::GlobalNamespace, this, function.globals()));
+            pushContext(new Context(Context::GlobalNamespace, this, function.globals()));
         }
         
         // Create a new context.
-        _stack.push_back(new Context(Context::FunctionCall, this));
+        pushContext(new Context(Context::FunctionCall, this));
 
         // If the scope is defined, create the "self" variable for it.
         if(instanceScope)
@@ -338,21 +390,21 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         }
         
         // This should never be called if the process is suspended.
-        DENG2_ASSERT(_state != Suspended);
+        DENG2_ASSERT(d->state != Suspended);
 
-        if(_state == Running)
+        if(d->state == Running)
         {
             // Execute the function as part of the currently running process.
             context().start(function.compound().firstStatement());
             execute();
         }
-        else if(_state == Stopped)
+        else if(d->state == Stopped)
         {
             // We'll execute just this one function.
-            _state = Running;
+            d->state = Running;
             context().start(function.compound().firstStatement());
             execute();
-            _state = Stopped;
+            d->state = Stopped;
         }
     }
 }
@@ -361,7 +413,7 @@ void Process::namespaces(Namespaces &spaces) const
 {
     spaces.clear();
     
-    DENG2_FOR_EACH_CONST_REVERSE(ContextStack, i, _stack)
+    DENG2_FOR_EACH_CONST_REVERSE(Instance::ContextStack, i, d->stack)
     {
         Context &context = **i;
         spaces.push_back(&context.names());
@@ -375,5 +427,7 @@ void Process::namespaces(Namespaces &spaces) const
 
 Record &Process::globals()
 {
-    return _stack[0]->names();
+    return d->stack[0]->names();
 }
+
+} // namespace de
