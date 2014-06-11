@@ -2004,7 +2004,65 @@ DENG2_PIMPL(SectorCluster)
                 }
             }
 
-            // Light this polygon.
+            // Prepare a shine shard?
+            Shard *shineShard = 0;
+            if(shineTexUnitMap[TU_PRIMARY])
+            {
+                DENG2_ASSERT(!skyMasked);
+                shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
+                shards << shineShard; // take ownership.
+                subsector.shards() << shineShard; // link subspace.
+
+                shineShard->setAllTextureUnits(shineTexUnitMap);
+
+                if(mustSubdivide) // Generate two triangle fans.
+                {
+                    WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
+                    WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
+
+                    shineShard->indices.resize(leftFanSize + rightFanSize);
+
+                    vbuf.reserveElements(leftFanSize + rightFanSize, shineShard->indices);
+                    Rend_DivPosCoords(vbuf, shineShard->indices.data(), posCoords, leftSection, rightSection);
+                    Rend_DivTexCoords(vbuf, shineShard->indices.data(), shineTexCoords, leftSection, rightSection,
+                                      WorldVBuf::PrimaryTex);
+                    if(shineTexUnitMap[TU_INTER])
+                    {
+                        Rend_DivTexCoords(vbuf, shineShard->indices.data(), primaryTexCoords, leftSection, rightSection,
+                                          WorldVBuf::InterTex);
+                    }
+
+                    shineShard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf)
+                                    .setTex0Offset(materialOrigin)
+                                    .setTex0Scale (materialScale);
+
+                    shineShard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf, leftFanSize /*indices offset*/)
+                                    .setTex0Offset(materialOrigin)
+                                    .setTex0Scale (materialScale);
+                }
+                else // Generate one triangle strip.
+                {
+                    shineShard->indices.resize(4);
+
+                    vbuf.reserveElements(4, shineShard->indices);
+                    for(WorldVBuf::Index i = 0; i < 4; ++i)
+                    {
+                        WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
+                        vertex.pos  = posCoords[i];
+                        vertex.texCoord[WorldVBuf::PrimaryTex] = shineTexCoords[i];
+                        if(shineTexUnitMap[TU_INTER])
+                        {
+                            vertex.texCoord[WorldVBuf::InterTex] = primaryTexCoords[i];
+                        }
+                    }
+
+                    shineShard->newPrimitive(gl::TriangleStrip, 4, vbuf)
+                                    .setTex0Offset(materialOrigin)
+                                    .setTex0Scale (materialScale);
+                }
+            }
+
+            // Light the primary shard geometry.
             Vector4f colorCoords[4];
             if(!skyMaskedMaterial)
             {
@@ -2047,18 +2105,11 @@ DENG2_PIMPL(SectorCluster)
                 }
             }
 
-            // Prepare a shine shard?
+            // Light the shine shard geometry (must follow lighting of the primary polygon).
             if(shineTexUnitMap[TU_PRIMARY])
             {
-                DENG2_ASSERT(!skyMasked);
-                Shard *shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
-                shards << shineShard; // take ownership.
-                subsector.shards() << shineShard; // link subspace.
-
-                shineShard->setAllTextureUnits(shineTexUnitMap);
-
-                // Strength of the shine.
-                Vector3f const &minColor = matSnapshot.shineMinColor();
+                DENG2_ASSERT(!skyMasked && shineShard != 0);
+                Vector3f const &minColor = matSnapshot.shineMinColor(); // Strength of the shine.
                 Vector4f shineColorCoords[4];
                 for(duint16 i = 0; i < 4; ++i)
                 {
@@ -2067,52 +2118,17 @@ DENG2_PIMPL(SectorCluster)
                     color.w = shineTexUnitMap[TU_PRIMARY]->opacity;
                 }
 
-                if(mustSubdivide) // Generate two triangle fans.
+                if(mustSubdivide)
                 {
-                    WorldVBuf::Index const leftFanSize  = 3 + leftSection.divisionCount();
-                    WorldVBuf::Index const rightFanSize = 3 + rightSection.divisionCount();
-
-                    shineShard->indices.resize(leftFanSize + rightFanSize);
-
-                    vbuf.reserveElements(leftFanSize + rightFanSize, shineShard->indices);
-                    Rend_DivPosCoords(vbuf, shineShard->indices.data(), posCoords, leftSection, rightSection);
                     Rend_DivColorCoords(vbuf, shineShard->indices.data(), shineColorCoords, leftSection, rightSection);
-                    Rend_DivTexCoords(vbuf, shineShard->indices.data(), shineTexCoords, leftSection, rightSection,
-                                      WorldVBuf::PrimaryTex);
-                    if(shineTexUnitMap[TU_INTER])
-                    {
-                        Rend_DivTexCoords(vbuf, shineShard->indices.data(), primaryTexCoords, leftSection, rightSection,
-                                          WorldVBuf::InterTex);
-                    }
-
-                    shineShard->newPrimitive(gl::TriangleFan, leftFanSize, vbuf)
-                                    .setTex0Offset(materialOrigin)
-                                    .setTex0Scale (materialScale);
-
-                    shineShard->newPrimitive(gl::TriangleFan, rightFanSize, vbuf, leftFanSize /*indices offset*/)
-                                    .setTex0Offset(materialOrigin)
-                                    .setTex0Scale (materialScale);
                 }
                 else // Generate one triangle strip.
                 {
-                    shineShard->indices.resize(4);
-
-                    vbuf.reserveElements(4, shineShard->indices);
                     for(WorldVBuf::Index i = 0; i < 4; ++i)
                     {
                         WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
-                        vertex.pos  = posCoords[i];
                         vertex.rgba = shineColorCoords[i];
-                        vertex.texCoord[WorldVBuf::PrimaryTex] = shineTexCoords[i];
-                        if(shineTexUnitMap[TU_INTER])
-                        {
-                            vertex.texCoord[WorldVBuf::InterTex] = primaryTexCoords[i];
-                        }
                     }
-
-                    shineShard->newPrimitive(gl::TriangleStrip, 4, vbuf)
-                                    .setTex0Offset(materialOrigin)
-                                    .setTex0Scale (materialScale);
                 }
             }
 
@@ -2566,14 +2582,6 @@ DENG2_PIMPL(SectorCluster)
                                  (plane.isSectorCeiling()? Anticlockwise : Clockwise),
                                  plane.heightSmoothed());
 
-        ShardPrimitive &triFan = shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
-        if(!skyMasked)
-        {
-            triFan.setTex0Offset(materialOrigin)
-                  .setTex0Scale (materialScale)
-                  .setTex1Offset(materialOrigin);
-        }
-
         for(WorldVBuf::Index i = 0; i < fanSize; ++i)
         {
             WorldVBuf::Type &vertex = vbuf[shard->indices[i]];
@@ -2600,38 +2608,20 @@ DENG2_PIMPL(SectorCluster)
             }
         }
 
-        // Light this polygon.
-        if(!skyMaskedMaterial)
+        ShardPrimitive &triFan = shard->newPrimitive(gl::TriangleFan, fanSize, vbuf);
+        if(!skyMasked)
         {
-            Vector4f const ambientLight =
-                    useAmbientLightFromPlane(plane)? Rend_AmbientLightColor(plane.sector())
-                                                   : self.lightSourceColorfIntensity();
-
-            Rend_LightFlatGeometry(self, subspace, plane.indexInSector(),
-                                   ambientLight, glowing, &surface.tintColor(),
-                                   vbuf, shard->indices);
-
-            // Apply uniform alpha (overwritting luminance factors).
-            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-            {
-                vbuf[shard->indices[i]].rgba.w = opacity;
-            }
-        }
-        else
-        {
-            // Uniform color. Apply to all vertices.
-            Vector4f const saturated(1, 1, 1, 1);
-            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
-            {
-                vbuf[shard->indices[i]].rgba = saturated;
-            }
+            triFan.setTex0Offset(materialOrigin)
+                  .setTex0Scale (materialScale)
+                  .setTex1Offset(materialOrigin);
         }
 
         // Prepare a shine shard?
+        Shard *shineShard = 0;
         if(shineTexUnitMap[TU_PRIMARY])
         {
             DENG2_ASSERT(!skyMasked);
-            Shard *shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
+            shineShard = new Shard(Shard::Shine, matSnapshot.shineBlendMode());
             shards << shineShard;             // take ownership.
             subsector.shards() << shineShard; // link to the subsector.
 
@@ -2640,17 +2630,11 @@ DENG2_PIMPL(SectorCluster)
             shineShard->indices.resize(fanSize);
             vbuf.reserveElements(fanSize, shineShard->indices);
 
-            // Strength of the shine.
-            Vector3f const &minColor = matSnapshot.shineMinColor();
-
             for(WorldVBuf::Index i = 0; i < fanSize; ++i)
             {
                 WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
 
-                vertex.pos    = vbuf[shard->indices[i]].pos;
-
-                vertex.rgba   = Vector3f(vbuf[shard->indices[i]].rgba).max(minColor);
-                vertex.rgba.w = shineTexUnitMap[TU_PRIMARY]->opacity;
+                vertex.pos = vbuf[shard->indices[i]].pos;
 
                 // Determine distance to viewer. If too small it will result in an
                 // ugly 'crunch' below and above the viewpoint (so clamp it).
@@ -2678,6 +2662,46 @@ DENG2_PIMPL(SectorCluster)
             shineShard->newPrimitive(gl::TriangleFan, fanSize, vbuf)
                             .setTex0Offset(materialOrigin)
                             .setTex0Scale (materialScale);
+        }
+
+        // Light the primary shard geometry.
+        if(!skyMaskedMaterial)
+        {
+            Vector4f const ambientLight =
+                    useAmbientLightFromPlane(plane)? Rend_AmbientLightColor(plane.sector())
+                                                   : self.lightSourceColorfIntensity();
+
+            Rend_LightFlatGeometry(self, subspace, plane.indexInSector(),
+                                   ambientLight, glowing, &surface.tintColor(),
+                                   vbuf, shard->indices);
+
+            // Apply uniform alpha (overwritting luminance factors).
+            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+            {
+                vbuf[shard->indices[i]].rgba.w = opacity;
+            }
+        }
+        else
+        {
+            // Uniform color. Apply to all vertices.
+            Vector4f const saturated(1, 1, 1, 1);
+            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+            {
+                vbuf[shard->indices[i]].rgba = saturated;
+            }
+        }
+
+        // Light the shine shard geometry (must follow lighting of the primary polygon).
+        if(shineTexUnitMap[TU_PRIMARY])
+        {
+            DENG2_ASSERT(!skyMasked && shineShard != 0);
+            Vector3f const &minColor = matSnapshot.shineMinColor(); // Strength of the shine.
+            for(WorldVBuf::Index i = 0; i < fanSize; ++i)
+            {
+                WorldVBuf::Type &vertex = vbuf[shineShard->indices[i]];
+                vertex.rgba   = Vector3f(vbuf[shard->indices[i]].rgba).max(minColor);
+                vertex.rgba.w = shineTexUnitMap[TU_PRIMARY]->opacity;
+            }
         }
 
         if(useLights || useShadows)
