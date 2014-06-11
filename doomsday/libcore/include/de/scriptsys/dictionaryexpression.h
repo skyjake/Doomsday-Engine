@@ -48,7 +48,7 @@ public:
      */
     void add(Expression *key, Expression *value);
 
-    void push(Evaluator &evaluator, Record *names = 0) const;
+    void push(Evaluator &evaluator, Value *scope = 0) const;
 
     /**
      * Collects the result keys and values of the arguments and puts them

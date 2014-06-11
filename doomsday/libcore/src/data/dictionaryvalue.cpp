@@ -20,6 +20,7 @@
 #include "de/DictionaryValue"
 #include "de/ArrayValue"
 #include "de/RecordValue"
+#include "de/ScriptSystem"
 #include "de/Writer"
 #include "de/Reader"
 
@@ -91,6 +92,24 @@ void DictionaryValue::remove(Elements::iterator const &pos)
     _elements.erase(pos);
 }
 
+ArrayValue *DictionaryValue::contentsAsArray(ContentSelection selection) const
+{
+    QScopedPointer<ArrayValue> array(new ArrayValue);
+
+    DENG2_FOR_EACH_CONST(Elements, i, elements())
+    {
+        if(selection == Keys)
+        {
+            array->add(i->first.value->duplicateAsReference());
+        }
+        else
+        {
+            array->add(i->second->duplicateAsReference());
+        }
+    }
+    return array.take();
+}
+
 Value *DictionaryValue::duplicate() const
 {
     return new DictionaryValue(*this);
@@ -118,6 +137,11 @@ Value::Text DictionaryValue::asText() const
     
     s << " }";
     return result;
+}
+
+Record *DictionaryValue::memberScope() const
+{
+    return &ScriptSystem::builtInClass("Dictionary");
 }
 
 dsize DictionaryValue::size() const

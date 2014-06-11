@@ -106,6 +106,7 @@ public:
     Value *duplicate() const;
     Value *duplicateAsReference() const;
     Text asText() const;
+    Record *memberScope() const;
     dsize size() const;
     void setElement(Value const &index, Value *elementValue);
     Value *duplicateElement(Value const &value) const;

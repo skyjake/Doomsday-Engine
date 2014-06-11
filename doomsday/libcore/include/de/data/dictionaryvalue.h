@@ -26,6 +26,8 @@
 
 namespace de {
 
+class ArrayValue;
+
 /**
  * Subclass of Value that contains an array of values, indexed by any value.
  *
@@ -85,9 +87,21 @@ public:
 
     void remove(Elements::iterator const &pos);
 
+    enum ContentSelection { Keys, Values };
+
+    /**
+     * Creates an array with the keys or the values of the dictionary.
+     *
+     * @param selection  Keys or values.
+     *
+     * @return Caller gets ownership.
+     */
+    ArrayValue *contentsAsArray(ContentSelection selection) const;
+
     // Implementations of pure virtual methods.
     Value *duplicate() const;
     Text asText() const;
+    Record *memberScope() const;
     dsize size() const;
     Value const &element(Value const &index) const;
     Value &element(Value const &index);

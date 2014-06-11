@@ -22,31 +22,71 @@
 #include "de/Process"
 #include "de/TextValue"
 #include "de/RefValue"
+#include "de/ArrayValue"
 #include "de/RecordValue"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/App"
 #include "de/Module"
 
-using namespace de;
+namespace de {
 
-NameExpression::NameExpression()
+DENG2_PIMPL_NOREF(NameExpression)
+{
+    String identifier;
+
+    Instance(String const &id = "") : identifier(id) {}
+
+    Variable *findIdentifier(Record const &where, Record *&foundIn, bool lookInClass = true) const
+    {
+        if(where.hasMember(identifier))
+        {
+            // The name exists in this namespace. Even though the lookup was done as
+            // const, the caller expects non-const return values.
+            foundIn = const_cast<Record *>(&where);
+            return const_cast<Variable *>(&where[identifier]);
+        }
+        if(lookInClass && where.hasMember("__isa__"))
+        {
+            // The namespace is derived from another record. Let's look into each
+            // super-record in turn.
+            ArrayValue const &supers = where.geta("__isa__");
+            for(dsize i = 0; i < supers.size(); ++i)
+            {
+                if(Variable *found = findIdentifier(supers.at(i).as<RecordValue>().dereference(),
+                                                    foundIn))
+                {
+                    return found;
+                }
+            }
+        }
+        return 0;
+    }
+};
+
+} // namespace de
+
+namespace de {
+
+NameExpression::NameExpression() : d(new Instance)
 {}
 
 NameExpression::NameExpression(String const &identifier, Flags const &flags) 
-    : _identifier(identifier)
+    : d(new Instance(identifier))
 {
     setFlags(flags);
 }
 
-NameExpression::~NameExpression()
-{}
+String const &NameExpression::identifier() const
+{
+    return d->identifier;
+}
 
 Value *NameExpression::evaluate(Evaluator &evaluator) const
 {
     //LOG_AS("NameExpression::evaluate");
     //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
-    LOGDEV_SCR_XVERBOSE_DEBUGONLY("evaluating name:\"%s\" flags:%x", _identifier << flags());
+    LOGDEV_SCR_XVERBOSE_DEBUGONLY("evaluating name:\"%s\" flags:%x", d->identifier << flags());
     
     // Collect the namespaces to search.
     Evaluator::Namespaces spaces;
@@ -59,11 +99,13 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     DENG2_FOR_EACH(Evaluator::Namespaces, i, spaces)
     {
         Record &ns = **i;
-        if(ns.hasMember(_identifier))
+        if((variable = d->findIdentifier(ns, foundInNamespace,
+                                         // allow looking in class if local not required
+                                         !flags().testFlag(LocalOnly))) != 0)
         {
             // The name exists in this namespace.
-            variable = &ns[_identifier];
-            foundInNamespace = &ns;
+            //variable = &ns[d->identifier];
+            //foundInNamespace = &ns;
 
             // Also note the higher namespace (for export).
             Evaluator::Namespaces::iterator next = i;
@@ -72,6 +114,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         }
         if(flags().testFlag(LocalOnly))
         {
+            // Not allowed to look in outer scopes.
             break;
         }
     }
@@ -86,14 +129,14 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     if(flags().testFlag(NotInScope) && variable)
     {
         throw AlreadyExistsError("NameExpression::evaluate", 
-            "Identifier '" + _identifier + "' already exists");
+            "Identifier '" + d->identifier + "' already exists");
     }
 
     // Create a new subrecord in the namespace? ("record xyz")
     if(flags().testFlag(NewSubrecord))
     {
         // Replaces existing member with this identifier.
-        Record &record = spaces.front()->addRecord(_identifier);
+        Record &record = spaces.front()->addRecord(d->identifier);
 
         return new RecordValue(record);
     }
@@ -102,7 +145,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Occurs when assigning into new variables.
     if(!variable && flags().testFlag(NewVariable))
     {
-        variable = new Variable(_identifier);
+        variable = new Variable(d->identifier);
 
         // Add it to the local namespace.
         spaces.front()->add(variable);
@@ -124,14 +167,14 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         if(!variable)
         {
             throw NotFoundError("NameExpression::evaluate",
-                                "Cannot export nonexistent identifier '" + _identifier + "'");
+                                "Cannot export nonexistent identifier '" + d->identifier + "'");
         }
         if(!higherNamespace)
         {
             throw NotFoundError("NameExpression::evaluate",
-                                "No higher namespace for exporting '" + _identifier + "' into");
+                                "No higher namespace for exporting '" + d->identifier + "' into");
         }
-        if(higherNamespace != foundInNamespace)
+        if(higherNamespace != foundInNamespace && foundInNamespace)
         {
             foundInNamespace->remove(*variable);
             higherNamespace->add(variable);
@@ -141,11 +184,11 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Should we import a namespace?
     if(flags() & Import)
     {
-        Record *record = &App::scriptSystem().importModule(_identifier,
+        Record *record = &App::scriptSystem().importModule(d->identifier,
             evaluator.process().globals()["__file__"].value().asText());
 
         // Overwrite any existing member with this identifier.
-        spaces.front()->add(variable = new Variable(_identifier));
+        spaces.front()->add(variable = new Variable(d->identifier));
 
         if(flags().testFlag(ByValue))
         {
@@ -178,7 +221,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         }
     }
     
-    throw NotFoundError("NameExpression::evaluate", "Identifier '" + _identifier + 
+    throw NotFoundError("NameExpression::evaluate", "Identifier '" + d->identifier +
                         "' does not exist");
 }
 
@@ -188,7 +231,7 @@ void NameExpression::operator >> (Writer &to) const
 
     Expression::operator >> (to);
 
-    to << _identifier;
+    to << d->identifier;
 }
 
 void NameExpression::operator << (Reader &from)
@@ -204,5 +247,7 @@ void NameExpression::operator << (Reader &from)
 
     Expression::operator << (from);
 
-    from >> _identifier;
+    from >> d->identifier;
 }
+
+} // namespace de

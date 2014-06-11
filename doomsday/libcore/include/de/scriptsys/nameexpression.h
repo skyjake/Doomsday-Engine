@@ -48,10 +48,9 @@ public:
 public:
     NameExpression();
     NameExpression(String const &identifier, Flags const &flags = ByValue);
-    ~NameExpression();
 
     /// Returns the identifier in the name expression.
-    String const &identifier() const { return _identifier; }
+    String const &identifier() const;
 
     Value *evaluate(Evaluator &evaluator) const;
 
@@ -60,7 +59,7 @@ public:
     void operator << (Reader &from);
 
 private:
-    String _identifier;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

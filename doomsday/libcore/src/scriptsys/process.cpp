@@ -295,7 +295,7 @@ void Process::setWorkingPath(String const &newWorkingPath)
     _workingPath = newWorkingPath;
 }
 
-void Process::call(Function const &function, ArrayValue const &arguments)
+void Process::call(Function const &function, ArrayValue const &arguments, Value *instanceScope)
 {
     // First map the argument values.
     Function::ArgumentValues argValues;
@@ -304,7 +304,9 @@ void Process::call(Function const &function, ArrayValue const &arguments)
     if(function.isNative())
     {
         // Do a native function call.
+        context().setInstanceScope(instanceScope);
         context().evaluator().pushResult(function.callNative(context(), argValues));
+        context().setInstanceScope(0);
     }
     else
     {
@@ -317,6 +319,12 @@ void Process::call(Function const &function, ArrayValue const &arguments)
         
         // Create a new context.
         _stack.push_back(new Context(Context::FunctionCall, this));
+
+        // If the scope is defined, create the "self" variable for it.
+        if(instanceScope)
+        {
+            context().names().add(new Variable("self", instanceScope /*taken*/));
+        }
         
         // Create local variables for the arguments in the new context.
         Function::ArgumentValues::const_iterator b = argValues.begin();

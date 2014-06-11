@@ -88,7 +88,7 @@ public:
 public:
     virtual ~Expression();
 
-    virtual void push(Evaluator &evaluator, Record *names = 0) const;
+    virtual void push(Evaluator &evaluator, Value *scope = 0) const;
 
     virtual Value *evaluate(Evaluator &evaluator) const = 0;
 

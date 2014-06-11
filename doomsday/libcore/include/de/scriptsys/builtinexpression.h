@@ -65,7 +65,7 @@ public:
 
     ~BuiltInExpression();
 
-    void push(Evaluator &evaluator, Record *names = 0) const;
+    void push(Evaluator &evaluator, Value *scope = 0) const;
 
     Value *evaluate(Evaluator &evaluator) const;
 

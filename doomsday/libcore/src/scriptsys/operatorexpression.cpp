@@ -61,7 +61,7 @@ OperatorExpression::~OperatorExpression()
     delete _rightOperand;
 }
 
-void OperatorExpression::push(Evaluator &evaluator, Record *names) const
+void OperatorExpression::push(Evaluator &evaluator, Value *scope) const
 {
     Expression::push(evaluator);
     
@@ -69,15 +69,15 @@ void OperatorExpression::push(Evaluator &evaluator, Record *names) const
     {
         // The MEMBER operator works a bit differently. Just push the left side
         // now. We'll push the other side when we've found out what is the 
-        // scope defined by the result of the left side (which must be a RecordValue).
-        _leftOperand->push(evaluator, names);
+        // scope defined by the result of the left side.
+        _leftOperand->push(evaluator, scope);
     }
     else
     {
         _rightOperand->push(evaluator);
         if(_leftOperand)
         {
-            _leftOperand->push(evaluator, names);
+            _leftOperand->push(evaluator, scope);
         }
     }
 }
@@ -100,10 +100,15 @@ void OperatorExpression::verifyAssignable(Value *value)
 
 Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 {
+    qDebug() << "OperatorExpression:" << operatorToText(_op);
+
     // Get the operands.
     Value *rightValue = (_op == MEMBER? 0 : evaluator.popResult());
-    Value *leftValue = (_leftOperand? evaluator.popResult() : 0);
+    Value *leftScopePtr = 0;
+    Value *leftValue = (_leftOperand? evaluator.popResult(&leftScopePtr) : 0);
     Value *result = (leftValue? leftValue : rightValue);
+
+    QScopedPointer<Value> leftScope(leftScopePtr); // will be deleted if not needed
 
     DENG2_ASSERT(_op == MEMBER ||
                  (!isUnary(_op) && leftValue && rightValue) ||
@@ -214,7 +219,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
 
         case CALL:
-            leftValue->call(evaluator.process(), *rightValue);
+            leftValue->call(evaluator.process(), *rightValue, leftScope.take());
             // Result comes from whatever is being called.
             result = 0;
             break;
@@ -247,20 +252,20 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
         case MEMBER: 
         {
-            RecordValue const *recValue = dynamic_cast<RecordValue const *>(leftValue);
-            if(!recValue)
+            Record *scope = (leftValue? leftValue->memberScope() : 0);
+            if(!scope)
             {
                 throw ScopeError("OperatorExpression::evaluate",
-                    "Left side of " + operatorToText(_op) + " must evaluate to a record [" +
+                    "Left side of " + operatorToText(_op) + " does not have members [" +
                                  DENG2_TYPE_NAME(*leftValue) + "]");
             }
             
             // Now that we know what the scope is, push the rest of the expression
             // for evaluation (in this specific scope).
-            _rightOperand->push(evaluator, recValue->record());
+            _rightOperand->push(evaluator, leftValue);
             
             // Cleanup.
-            delete leftValue;
+            //delete leftValue;
             DENG2_ASSERT(rightValue == NULL);
 
             // The MEMBER operator does not evaluate to any result. 

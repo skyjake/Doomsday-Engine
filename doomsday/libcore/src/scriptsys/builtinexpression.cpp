@@ -47,9 +47,9 @@ BuiltInExpression::~BuiltInExpression()
     delete _arg;
 }
 
-void BuiltInExpression::push(Evaluator &evaluator, Record *) const
+void BuiltInExpression::push(Evaluator &evaluator, Value *scope) const
 {
-    Expression::push(evaluator);    
+    Expression::push(evaluator, scope);
     _arg->push(evaluator);
 }
 
@@ -85,20 +85,9 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Argument must be a dictionary");
         }
-        ArrayValue *array = new ArrayValue();
-        for(DictionaryValue::Elements::const_iterator i = dict->elements().begin();
-            i != dict->elements().end(); ++i)
-        {
-            if(_type == DICTIONARY_KEYS)
-            {
-                array->add(i->first.value->duplicateAsReference());
-            }
-            else
-            {
-                array->add(i->second->duplicateAsReference());
-            }
-        }
-        return array;
+
+        return dict->contentsAsArray(_type == DICTIONARY_KEYS ? DictionaryValue::Keys
+                                                              : DictionaryValue::Values);
     }
     
     case RECORD_MEMBERS:    

@@ -45,7 +45,7 @@ public:
     bool isTrue() const;
     bool isFalse() const;
     dint compare(Value const &value) const;
-    void call(Process &process, Value const &arguments) const;
+    void call(Process &process, Value const &arguments, Value *instanceScope) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

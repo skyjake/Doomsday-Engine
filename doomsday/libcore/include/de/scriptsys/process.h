@@ -172,8 +172,11 @@ public:
      *                   must be a DictionaryValue containing values for the
      *                   named arguments of the call. The rest of the array
      *                   are the unnamed arguments.
+     * @parm instanceScope  Optional scope that becomes the value of the "self"
+     *                   variable. Ownership given to Process.
      */
-    void call(Function const &function, ArrayValue const &arguments);
+    void call(Function const &function, ArrayValue const &arguments,
+              Value *instanceScope = 0);
 
     /**
      * Collects the namespaces currently visible. This includes the process's

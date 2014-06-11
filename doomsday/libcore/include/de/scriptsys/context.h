@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -39,6 +39,9 @@ public:
     /// Attempting a jump when there is no suitable target (continue or break). @ingroup errors
     DENG2_ERROR(JumpError);
 
+    /// There is no instance scope defined for the context. @ingroup errors
+    DENG2_ERROR(UndefinedScopeError);
+
     enum Type {
         BaseProcess,
         GlobalNamespace,
@@ -55,13 +58,11 @@ public:
      */
     Context(Type type, Process *owner, Record *globals = 0);
 
-    virtual ~Context();
-
     /// Determines the type of the execution context.
-    Type type() { return _type; }
+    Type type();
 
     /// Returns the process that owns this context.
-    Process &process() { return *_owner; }
+    Process &process();
 
     /// Returns the namespace of the context.
     Record &names();
@@ -135,84 +136,28 @@ public:
     void setIterationValue(Value *value);
 
     /**
+     * Sets the instance scope of the context. This is equivalent to the value
+     * of the "self" variable, however only used for native function calls.
+     *
+     * @param scope  Value that specifies the instance whose scope the context
+     *               is being evaluated in. Ownership taken.
+     */
+    void setInstanceScope(Value *scope);
+
+    /**
+     * Returns the current instance scope. A scope must exist if this is called.
+     */
+    Value &instanceScope() const;
+
+    /**
      * Returns the throwaway variable. This can be used for dumping
      * values that are not needed. For instance, the weak assignment operator
      * will use this when the identifier already exists.
      */
-    Variable &throwaway() { return _throwaway; }
+    Variable &throwaway();
 
 private:
-    /**
-     * Information about the control flow is stored within a stack of
-     * ControlFlow instances.
-     */
-    class ControlFlow {
-    public:
-        /**
-         * Constructor.
-         *
-         * @param current  Current statement being executed.
-         * @param f        Statement where normal flow continues.
-         * @param c        Statement where to jump on "continue".
-         *                 @c NULL if continuing is not allowed.
-         * @param b        Statement where to jump to and flow from on "break".
-         *                 @c NULL if breaking is not allowed.
-         */
-        ControlFlow(Statement const *current,
-                    Statement const *f = 0,
-                    Statement const *c = 0,
-                    Statement const *b = 0)
-            : flow(f), jumpContinue(c), jumpBreak(b), iteration(0), _current(current) {}
-
-        /// Returns the currently executed statement.
-        Statement const *current() const { return _current; }
-
-        /// Sets the currently executed statement. When the statement
-        /// changes, the phase is reset back to zero.
-        void setCurrent(Statement const *s) { _current = s; }
-
-    public:
-        Statement const *flow;
-        Statement const *jumpContinue;
-        Statement const *jumpBreak;
-        Value *iteration;
-
-    private:
-        Statement const *_current;
-    };
-
-private:
-    /// Returns the topmost control flow information.
-    ControlFlow &flow() { return _controlFlow.back(); }
-
-    /// Pops the topmost control flow instance off of the stack. The
-    /// iteration value is deleted, if it has been defined.
-    void popFlow();
-
-    /// Sets the currently executed statement.
-    void setCurrent(Statement const *statement);
-
-private:
-    /// Type of the execution context.
-    Type _type;
-
-    /// The process that owns this context.
-    Process *_owner;
-
-    /// Control flow stack.
-    typedef std::vector<ControlFlow> FlowStack;
-    FlowStack _controlFlow;
-
-    /// Expression evaluator.
-    Evaluator _evaluator;
-
-    /// Determines whether the namespace is owned by the context.
-    bool _ownsNamespace;
-
-    /// The local namespace of this context.
-    Record *_names;
-
-    Variable _throwaway;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

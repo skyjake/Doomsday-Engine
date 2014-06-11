@@ -46,9 +46,9 @@ void ArrayExpression::add(Expression *arg)
     _arguments.push_back(arg);
 }
 
-void ArrayExpression::push(Evaluator &evaluator, Record *names) const
+void ArrayExpression::push(Evaluator &evaluator, Value *scope) const
 {
-    Expression::push(evaluator, names);
+    Expression::push(evaluator, scope);
     
     // The arguments in reverse order (so they are evaluated in
     // natural order, i.e., the same order they are in the source).

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -23,77 +23,190 @@
 #include "de/Context"
 #include "de/Process"
 
-using namespace de;
+#include <QList>
 
-Evaluator::Evaluator(Context &owner) : _context(owner), _current(0), _names(0)
+namespace de {
+
+DENG2_PIMPL(Evaluator)
+{
+    /// The context that owns this evaluator.
+    Context &context;
+
+    struct ScopedExpression {
+        Expression const *expression;
+        Value *scope; // owned
+
+        ScopedExpression(Expression const *e = 0, Value *s = 0) : expression(e), scope(s) {}
+        Record *names() const {
+            if(!scope) return 0;
+            return scope->memberScope();
+        }
+    };
+    struct ScopedResult {
+        Value *result;
+        Value *scope; // owned
+
+        ScopedResult(Value *v, Value *s = 0) : result(v), scope(s) {}
+    };
+
+    typedef QList<ScopedExpression> Expressions;
+    typedef QList<ScopedResult> Results;
+
+    /// The expression that is currently being evaluated.
+    Expression const *current;
+
+    /// Namespace for the current expression.
+    Record *names;
+
+    Expressions stack;
+    Results results;
+
+    /// Returned when there is no result to give.
+    NoneValue noResult;
+
+    Instance(Public *i, Context &owner)
+        : Base(i)
+        , context(owner)
+        , current(0)
+        , names(0)
+    {}
+
+    ~Instance()
+    {
+        clearNames();
+        clearResults();
+    }
+
+    void clearNames()
+    {
+        if(names)
+        {
+            names = 0;
+        }
+    }
+
+    void clearResults()
+    {
+        foreach(ScopedResult const &i, results)
+        {
+            delete i.result;
+        }
+        results.clear();
+    }
+
+    void clearStack()
+    {
+        while(!stack.empty())
+        {
+            ScopedExpression top = stack.takeLast();
+            clearNames();
+            names = top.names();
+            delete top.scope;
+        }
+    }
+
+    void pushResult(Value *value, Value *scope = 0 /*take*/)
+    {
+        // NULLs are not pushed onto the results stack as they indicate that
+        // no result was given.
+        if(value)
+        {
+            qDebug() << "Evaluator: Pushing result" << value->asText() << "in scope"
+                        << (scope? scope->asText() : "null");
+            results << ScopedResult(value, scope);
+        }
+    }
+
+    Value &result()
+    {
+        if(results.isEmpty())
+        {
+            return noResult;
+        }
+        return *results.first().result;
+    }
+
+    Value &evaluate(Expression const *expression)
+    {
+        DENG2_ASSERT(names == NULL);
+        DENG2_ASSERT(stack.empty());
+
+        qDebug() << "Evaluator: Starting evaluation of" << expression;
+
+        // Begin a new evaluation operation.
+        current = expression;
+        expression->push(self);
+
+        // Clear the result stack.
+        clearResults();
+
+        while(!stack.empty())
+        {
+            // Continue by processing the next step in the evaluation.
+            ScopedExpression top = stack.takeLast();
+            clearNames();
+            names = top.names();
+            qDebug() << "Evaluator: Evaluating latest scoped expression" << top.expression
+                     << "in" << (top.scope? names->asText() : "null scope");
+            pushResult(top.expression->evaluate(self), top.scope);
+        }
+
+        // During function call evaluation the process's context changes. We should
+        // now be back at the level we started from.
+        DENG2_ASSERT(&self.process().context() == &context);
+
+        // Exactly one value should remain in the result stack: the result of the
+        // evaluated expression.
+        DENG2_ASSERT(self.hasResult());
+
+        clearNames();
+        current = NULL;
+        return result();
+    }
+};
+
+} // namespace de
+
+namespace de {
+
+Evaluator::Evaluator(Context &owner) : d(new Instance(this, owner))
 {}
 
-Evaluator::~Evaluator()
+Context &Evaluator::context()
 {
-    clearNames();
-    clearResults();
+    return d->context;
 }
 
 Process &Evaluator::process()
 { 
-    return _context.process(); 
+    return d->context.process();
 }
 
 Process const &Evaluator::process() const
 {
-    return _context.process();
+    return d->context.process();
 }
 
 void Evaluator::reset()
 {
-    _current = NULL;
+    d->current = NULL;
     
-    clearStack();
-    clearNames();
+    d->clearStack();
+    d->clearNames();
 }
 
 Value &Evaluator::evaluate(Expression const *expression)
 {
-    DENG2_ASSERT(_names == NULL);
-    DENG2_ASSERT(_stack.empty());
-        
-    // Begin a new evaluation operation.
-    _current = expression;
-    expression->push(*this);
-
-    // Clear the result stack.
-    clearResults();
-
-    while(!_stack.empty())
-    {
-        // Continue by processing the next step in the evaluation.
-        ScopedExpression top = _stack.back();
-        _stack.pop_back();
-        clearNames();
-        _names = top.names;
-        pushResult(top.expression->evaluate(*this));
-    }
-
-    // During function call evaluation the process's context changes. We should
-    // now be back at the level we started from.
-    DENG2_ASSERT(&process().context() == &_context);
-
-    // Exactly one value should remain in the result stack: the result of the
-    // evaluated expression.
-    DENG2_ASSERT(hasResult());
-
-    clearNames();
-    _current = NULL;
-    return result();
+    return d->evaluate(expression);
 }
 
 void Evaluator::namespaces(Namespaces &spaces) const
 {
-    if(_names)
+    if(d->names)
     {
         // A specific namespace has been defined.
         spaces.clear();
-        spaces.push_back(_names);
+        spaces.push_back(d->names);
     }
     else
     {
@@ -113,66 +226,42 @@ Record *Evaluator::localNamespace() const
 
 bool Evaluator::hasResult() const
 {
-    return _results.size() == 1;
+    return d->results.size() == 1;
 }
 
 Value &Evaluator::result()
 {
-    if(_results.empty())
-    {
-        return _noResult;
-    }
-    return *_results.front();
+    return d->result();
 }
 
-void Evaluator::push(Expression const *expression, Record *names)
+void Evaluator::push(Expression const *expression, Value *scope)
 {
-    _stack.push_back(ScopedExpression(expression, names));
+    d->stack.push_back(Instance::ScopedExpression(expression, scope));
 }
 
 void Evaluator::pushResult(Value *value)
 {
-    // NULLs are not pushed onto the results stack as they indicate that
-    // no result was given.
-    if(value)
-    {
-        _results.push_back(value);
-    }
+    d->pushResult(value);
 }
 
-Value *Evaluator::popResult()
+Value *Evaluator::popResult(Value **evaluationScope)
 {
-    DENG2_ASSERT(_results.size() > 0);
+    DENG2_ASSERT(d->results.size() > 0);
 
-    Value *result = _results.back();
-    _results.pop_back();
-    return result;
-}
+    Instance::ScopedResult result = d->results.takeLast();
+    qDebug() << "Evaluator: Popping result" << result.result->asText()
+                << "in scope" << (result.scope? result.scope->asText() : "null");
 
-void Evaluator::clearNames()
-{
-    if(_names)
+    if(evaluationScope)
     {
-        _names = 0;
+        *evaluationScope = result.scope;
     }
+    else
+    {
+        delete result.scope; // Was owned by us and the caller didn't want it.
+    }
+
+    return result.result;
 }
 
-void Evaluator::clearResults()
-{
-    for(Results::iterator i = _results.begin(); i != _results.end(); ++i)
-    {
-        delete *i;
-    }
-    _results.clear();
-}
-
-void Evaluator::clearStack()
-{
-    while(!_stack.empty())
-    {
-        ScopedExpression top = _stack.back();
-        _stack.pop_back();
-        clearNames();
-        _names = top.names;
-    }
-}
+} // namespace de

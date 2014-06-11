@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -49,9 +49,8 @@ public:
 
 public:
     Evaluator(Context &owner);
-    ~Evaluator();
 
-    Context &context() { return _context; }
+    Context &context();
 
     /**
      * Returns the process that owns this evaluator.
@@ -114,9 +113,10 @@ public:
      * Insert the given expression to the top of the expression stack.
      *
      * @param expression  Expression to push on the stack.
-     * @param names       Namespace scope for this expression only.
+     * @param scope       Scope for this expression only (using memberScope()).
+     *                    Evaluator takes ownership of this value.
      */
-    void push(Expression const *expression, Record *names = 0);
+    void push(Expression const *expression, Value *scope = 0);
 
     /**
      * Push a value onto the result stack.
@@ -129,10 +129,15 @@ public:
     /**
      * Pop a value off of the result stack.
      *
+     * @param evaluationScope  If not @c NULL, the scope used for evaluating the
+     *                         result is passed here to the caller. If there was
+     *                         a scope, ownership of the scope value is given to
+     *                         the caller.
+     *
      * @return  Value resulting from expression evaluation. Caller
      *          gets ownership of the returned object.
      */
-    Value *popResult();
+    Value *popResult(Value **evaluationScope = 0);
 
     /**
      * Pop a value off of the result stack, making sure it has a specific type.
@@ -163,32 +168,7 @@ public:
     Value &result();
 
 private:
-    void clearNames();
-    void clearResults();
-    void clearStack();
-
-    /// The context that owns this evaluator.
-    Context &_context;
-
-    struct ScopedExpression {
-        Expression const *expression;
-        Record *names;
-        ScopedExpression(Expression const *e = 0, Record *n = 0) : expression(e), names(n) {}
-    };
-    typedef std::vector<ScopedExpression> Expressions;
-    typedef std::vector<Value *> Results;
-
-    /// The expression that is currently being evaluated.
-    Expression const *_current;
-
-    /// Namespace for the current expression.
-    Record *_names;
-
-    Expressions _stack;
-    Results _results;
-
-    /// Returned when there is no result to give.
-    NoneValue _noResult;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

@@ -52,7 +52,7 @@ public:
      */
     void add(Expression *arg);
 
-    void push(Evaluator &evaluator, Record *names = 0) const;
+    void push(Evaluator &evaluator, Value *scope = 0) const;
 
     /**
      * Returns one of the expressions in the array.

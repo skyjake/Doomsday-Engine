@@ -164,6 +164,12 @@ Value::Text RecordValue::asText() const
     return dereference().asText();
 }
 
+Record *RecordValue::memberScope() const
+{
+    verify();
+    return d->record;
+}
+
 dsize RecordValue::size() const
 {
     return dereference().members().size();

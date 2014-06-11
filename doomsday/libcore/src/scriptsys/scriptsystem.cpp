@@ -23,6 +23,8 @@
 #include "de/Version"
 #include "de/ArrayValue"
 #include "de/NumberValue"
+#include "de/RecordValue"
+#include "de/DictionaryValue"
 #include "de/math.h"
 
 #include <QMap>
@@ -34,7 +36,18 @@ Value *Function_Path_FileNamePath(Context &, Function::ArgumentValues const &arg
     return new TextValue(args.at(0)->asText().fileNamePath());
 }
 
-DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
+Value *Function_Dictionary_Keys(Context &ctx, Function::ArgumentValues const &)
+{    
+    return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Keys);
+}
+
+Value *Function_Dictionary_Values(Context &ctx, Function::ArgumentValues const &)
+{
+    return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Values);
+}
+
+DENG2_PIMPL(ScriptSystem)
+, DENG2_OBSERVES(Record, Deletion)
 {
     Binder binder;
 
@@ -42,6 +55,7 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules;
     NativeModules nativeModules; // not owned
+    Record scriptModule;  // Script: built-in script classes.
     Record versionModule; // Version: information about the platform and build
     Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
@@ -51,6 +65,8 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
     Instance(Public *i) : Base(*i)
     {
+        initScriptModule();
+
         // Setup the Version module.
         {
             Version ver;
@@ -87,6 +103,18 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         {
             i.value()->audienceForDeletion() -= this;
         }
+    }
+
+    void initScriptModule()
+    {
+        {
+            Record &dict = scriptModule.addRecord("Dictionary");
+            binder.init(dict)
+                << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
+                << DENG2_FUNC_NOARG(Dictionary_Values, "values");
+        }
+
+        addNativeModule("Script", scriptModule);
     }
 
     void addNativeModule(String const &name, Record &module)
@@ -220,6 +248,12 @@ File const &ScriptSystem::findModuleSource(String const &name, String const &loc
         throw NotFoundError("ScriptSystem::findModuleSource", "Cannot find module '" + name + "'");
     }
     return *src;
+}
+
+Record &ScriptSystem::builtInClass(String const &name)
+{
+    return const_cast<Record &>(App::scriptSystem().nativeModule("Script")
+                                .getAs<RecordValue>(name).dereference());
 }
 
 Record &ScriptSystem::importModule(String const &name, String const &importedFromPath)
