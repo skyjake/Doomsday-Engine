@@ -100,7 +100,7 @@ void OperatorExpression::verifyAssignable(Value *value)
 
 Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 {
-    qDebug() << "OperatorExpression:" << operatorToText(_op);
+    //qDebug() << "OperatorExpression:" << operatorToText(_op);
 
     // Get the operands.
     Value *rightValue = (_op == MEMBER? 0 : evaluator.popResult());

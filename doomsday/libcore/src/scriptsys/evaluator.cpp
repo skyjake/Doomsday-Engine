@@ -111,8 +111,8 @@ DENG2_PIMPL(Evaluator)
         // no result was given.
         if(value)
         {
-            qDebug() << "Evaluator: Pushing result" << value->asText() << "in scope"
-                        << (scope? scope->asText() : "null");
+            /*qDebug() << "Evaluator: Pushing result" << value->asText() << "in scope"
+                        << (scope? scope->asText() : "null");*/
             results << ScopedResult(value, scope);
         }
     }
@@ -131,7 +131,7 @@ DENG2_PIMPL(Evaluator)
         DENG2_ASSERT(names == NULL);
         DENG2_ASSERT(stack.empty());
 
-        qDebug() << "Evaluator: Starting evaluation of" << expression;
+        //qDebug() << "Evaluator: Starting evaluation of" << expression;
 
         // Begin a new evaluation operation.
         current = expression;
@@ -146,8 +146,8 @@ DENG2_PIMPL(Evaluator)
             ScopedExpression top = stack.takeLast();
             clearNames();
             names = top.names();
-            qDebug() << "Evaluator: Evaluating latest scoped expression" << top.expression
-                     << "in" << (top.scope? names->asText() : "null scope");
+            /*qDebug() << "Evaluator: Evaluating latest scoped expression" << top.expression
+                     << "in" << (top.scope? names->asText() : "null scope");*/
             pushResult(top.expression->evaluate(self), top.scope);
         }
 
@@ -249,8 +249,8 @@ Value *Evaluator::popResult(Value **evaluationScope)
     DENG2_ASSERT(d->results.size() > 0);
 
     Instance::ScopedResult result = d->results.takeLast();
-    qDebug() << "Evaluator: Popping result" << result.result->asText()
-                << "in scope" << (result.scope? result.scope->asText() : "null");
+    /*qDebug() << "Evaluator: Popping result" << result.result->asText()
+             << "in scope" << (result.scope? result.scope->asText() : "null");*/
 
     if(evaluationScope)
     {
