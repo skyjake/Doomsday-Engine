@@ -163,7 +163,7 @@ Copy Map Info {
 Copy Map Info {
   ID = "MAP21";
   Name = "THUSTR_21";
-  Music = "in_cit";
+  Music = "count2";
   Par time = 240;
   Sky = "sky3";
 }
