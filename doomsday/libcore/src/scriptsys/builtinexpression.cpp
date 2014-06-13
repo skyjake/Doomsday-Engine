@@ -315,21 +315,21 @@ static struct {
     char const *str;
     BuiltInExpression::Type type;
 } types[] = {
-    { "len",         BuiltInExpression::LENGTH },
+    { "Number",      BuiltInExpression::AS_NUMBER },
+    { "Record",      BuiltInExpression::AS_RECORD },
+    { "Text",        BuiltInExpression::AS_TEXT },
+    { "Time",        BuiltInExpression::AS_TIME },
+    { "deserialize", BuiltInExpression::DESERIALIZE },
     { "dictkeys",    BuiltInExpression::DICTIONARY_KEYS },
     { "dictvalues",  BuiltInExpression::DICTIONARY_VALUES },
-    { "Text",        BuiltInExpression::AS_TEXT },
-    { "Number",      BuiltInExpression::AS_NUMBER },
+    { "eval",        BuiltInExpression::EVALUATE },
+    { "floor",       BuiltInExpression::FLOOR },
+    { "len",         BuiltInExpression::LENGTH },
     { "locals",      BuiltInExpression::LOCAL_NAMESPACE },
     { "members",     BuiltInExpression::RECORD_MEMBERS },
-    { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
     { "serialize",   BuiltInExpression::SERIALIZE },
-    { "deserialize", BuiltInExpression::DESERIALIZE },
-    { "Time",        BuiltInExpression::AS_TIME },
+    { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
     { "timedelta",   BuiltInExpression::TIME_DELTA },
-    { "Record",      BuiltInExpression::AS_RECORD },
-    { "floor",       BuiltInExpression::FLOOR },
-    { "eval",        BuiltInExpression::EVALUATE },
     { NULL,          BuiltInExpression::NONE }
 };
 
