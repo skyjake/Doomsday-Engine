@@ -236,7 +236,7 @@ void Process::execute()
     }
 
     // We will execute until this depth is complete.
-    duint startDepth = depth();
+    duint startDepth = d->depth();
     if(startDepth == 1)
     {
         // Mark the start time.
@@ -244,15 +244,18 @@ void Process::execute()
     }
 
     // Execute the next command(s).
-    while(d->state == Running && depth() >= startDepth)
+    while(d->state == Running && d->depth() >= startDepth)
     {
         try
         {
-            if(!context().execute())
+            dsize execDepth = d->depth();
+            if(!context().execute() && d->depth() == execDepth)
             {
+                // There was no statement left to execute, and no new contexts were
+                // added to the stack.
                 finish();
             }
-            if(d->startedAt.since() > MAX_EXECUTION_TIME)
+            else if(d->startedAt.since() > MAX_EXECUTION_TIME)
             {
                 /// @throw HangError  Execution takes too long.
                 throw HangError("Process::execute", 
@@ -368,6 +371,10 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         {
             pushContext(new Context(Context::GlobalNamespace, this, function.globals()));
         }
+
+        // If the function is not in the global namespace, add its own parent
+        // namespace to the stack, too.
+
         
         // Create a new context.
         pushContext(new Context(Context::FunctionCall, this));
@@ -412,10 +419,19 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
 void Process::namespaces(Namespaces &spaces) const
 {
     spaces.clear();
+
+    bool gotFunction = false;
     
     DENG2_FOR_EACH_CONST_REVERSE(Instance::ContextStack, i, d->stack)
     {
         Context &context = **i;
+        if(context.type() == Context::FunctionCall)
+        {
+            // Only the topmost function call namespace is available: one cannot
+            // access the local variables of the callers.
+            if(gotFunction) continue;
+            gotFunction = true;
+        }
         spaces.push_back(&context.names());
         if(context.type() == Context::GlobalNamespace)
         {
@@ -428,6 +444,11 @@ void Process::namespaces(Namespaces &spaces) const
 Record &Process::globals()
 {
     return d->stack[0]->names();
+}
+
+Record &Process::locals()
+{
+    return d->stack.back()->names();
 }
 
 } // namespace de

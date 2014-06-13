@@ -45,7 +45,8 @@ public:
     enum Type {
         BaseProcess,
         GlobalNamespace,
-        FunctionCall
+        FunctionCall,
+        Namespace
     };
 
 public:

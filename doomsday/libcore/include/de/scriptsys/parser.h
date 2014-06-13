@@ -33,6 +33,7 @@
 namespace de {
 
 class Compound;
+class Statement;
 class ExpressionStatement;
 class PrintStatement;
 class IfStatement;
@@ -99,7 +100,7 @@ public:
 
     ExpressionStatement *parseExportStatement();
 
-    ExpressionStatement *parseDeclarationStatement();
+    Statement *parseDeclarationStatement();
 
     DeleteStatement *parseDeleteStatement();
 

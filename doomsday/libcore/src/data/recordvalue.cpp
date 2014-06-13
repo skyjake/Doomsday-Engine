@@ -28,6 +28,7 @@
 #include "de/Variable"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/ScopeStatement"
 #include "de/math.h"
 
 namespace de {
@@ -247,7 +248,7 @@ void RecordValue::call(Process &process, Value const &arguments, Value *) const
 
     ArrayValue *super = new ArrayValue;
     *super << new RecordValue(d->record);
-    instance->record()->add(new Variable("__super__", super));
+    instance->record()->add(new Variable(ScopeStatement::SUPER_NAME, super));
 
     // If there is an initializer method, call it now.
     if(dereference().hasMember("__init__"))

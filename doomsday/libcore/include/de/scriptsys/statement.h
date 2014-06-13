@@ -72,7 +72,8 @@ protected:
         PRINT,
         TRY,
         WHILE,
-        DELETE
+        DELETE,
+        SCOPE
     };
 
 private:

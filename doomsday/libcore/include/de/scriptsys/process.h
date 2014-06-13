@@ -199,10 +199,16 @@ public:
     void namespaces(Namespaces &spaces) const;
 
     /**
-     * Returns the global namespace of the process. This is always the
-     * bottommost context in the stack.
+     * Returns the global namespace of the process. This is always the bottommost context
+     * in the stack.
      */
     Record &globals();
+
+    /**
+     * Returns the local namespace of the process. This is always the topmost context in
+     * the stack.
+     */
+    Record &locals();
 
 private:
     DENG2_PRIVATE(d)
