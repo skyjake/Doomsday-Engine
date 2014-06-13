@@ -55,7 +55,7 @@ DENG2_PIMPL(ScriptSystem)
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules;
     NativeModules nativeModules; // not owned
-    Record scriptModule;  // Script: built-in script classes.
+    Record coreModule;  // Script: built-in script classes.
     Record versionModule; // Version: information about the platform and build
     Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
@@ -65,7 +65,7 @@ DENG2_PIMPL(ScriptSystem)
 
     Instance(Public *i) : Base(*i)
     {
-        initScriptModule();
+        initCoreModule();
 
         // Setup the Version module.
         {
@@ -105,16 +105,16 @@ DENG2_PIMPL(ScriptSystem)
         }
     }
 
-    void initScriptModule()
+    void initCoreModule()
     {
         {
-            Record &dict = scriptModule.addRecord("Dictionary");
+            Record &dict = coreModule.addRecord("Dictionary");
             binder.init(dict)
                 << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
                 << DENG2_FUNC_NOARG(Dictionary_Values, "values");
         }
 
-        addNativeModule("Script", scriptModule);
+        addNativeModule("Core", coreModule);
     }
 
     void addNativeModule(String const &name, Record &module)
@@ -252,7 +252,7 @@ File const &ScriptSystem::findModuleSource(String const &name, String const &loc
 
 Record &ScriptSystem::builtInClass(String const &name)
 {
-    return const_cast<Record &>(App::scriptSystem().nativeModule("Script")
+    return const_cast<Record &>(App::scriptSystem().nativeModule("Core")
                                 .getAs<RecordValue>(name).dereference());
 }
 
