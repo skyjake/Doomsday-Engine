@@ -532,12 +532,15 @@ String Record::asText(String const &prefix, List *lines) const
     {
         maxLength = maxLength.max(Vector2ui(i->first.size(), i->second.size()));
     }
-    
+
+    os.setFieldAlignment(QTextStream::AlignLeft);
+
     // Print aligned.
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
+        int extra = 0;
         if(i != allLines.begin()) os << "\n";
-        os << qSetFieldWidth(maxLength.x) << i->first << qSetFieldWidth(0) << " ";
+        os << qSetFieldWidth(maxLength.x) << i->first << qSetFieldWidth(0);
         // Print the value line by line.
         int pos = 0;
         while(pos >= 0)
@@ -545,7 +548,7 @@ String Record::asText(String const &prefix, List *lines) const
             int next = i->second.indexOf('\n', pos);
             if(pos > 0)
             {
-                os << qSetFieldWidth(maxLength.x) << "" << qSetFieldWidth(0) << " ";
+                os << qSetFieldWidth(maxLength.x + extra) << "" << qSetFieldWidth(0);
             }
             os << i->second.substr(pos, next != String::npos? next - pos + 1 : next);
             pos = next;

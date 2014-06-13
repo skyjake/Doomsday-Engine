@@ -122,16 +122,21 @@ Value::Text DictionaryValue::asText() const
     s << "{";
 
     bool isFirst = true;
+    bool hadNewline = false;
 
     // Compose a textual representation of the array elements.
     for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
+        String const label = i->first.value->asText() + ": ";
+        String content = i->second->asText();
+        bool const multiline = content.contains('\n');
         if(!isFirst)
         {
+            if(hadNewline || multiline) s << "\n";
             s << ",";
         }
-        if(i->second->is<RecordValue>()) s << "\n"; // Records have multiple lines.
-        s << " " << i->first.value->asText() << ": " << i->second->asText();
+        hadNewline = multiline;
+        s << " " << label << content.replace("\n", "\n" + String(label.size() + 2, ' '));
         isFirst = false;
     }
     
