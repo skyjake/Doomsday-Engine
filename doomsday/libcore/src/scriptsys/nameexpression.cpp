@@ -24,6 +24,7 @@
 #include "de/RefValue"
 #include "de/ArrayValue"
 #include "de/RecordValue"
+#include "de/ScopeStatement"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/App"
@@ -31,33 +32,75 @@
 
 namespace de {
 
+String const NameExpression::LOCAL_SCOPE = "-";
+
 DENG2_PIMPL_NOREF(NameExpression)
 {
     String identifier;
+    String scopeIdentifier;
 
-    Instance(String const &id = "") : identifier(id) {}
+    Instance(String const &id      = "",
+             String const &scopeId = "")
+        : identifier(id)
+        , scopeIdentifier(scopeId)
+    {}
 
-    Variable *findIdentifier(Record const &where, Record *&foundIn, bool lookInClass = true) const
+    Variable *findInRecord(String const & name,
+                           Record const & where,
+                           Record *&      foundIn,
+                           bool           lookInClass = true) const
     {
-        if(where.hasMember(identifier))
+        if(where.hasMember(name))
         {
             // The name exists in this namespace. Even though the lookup was done as
             // const, the caller expects non-const return values.
             foundIn = const_cast<Record *>(&where);
-            return const_cast<Variable *>(&where[identifier]);
+            return const_cast<Variable *>(&where[name]);
         }
-        if(lookInClass && where.hasMember("__super__"))
+        if(lookInClass && where.hasMember(ScopeStatement::SUPER_NAME))
         {
             // The namespace is derived from another record. Let's look into each
             // super-record in turn.
-            ArrayValue const &supers = where.geta("__super__");
+            ArrayValue const &supers = where.geta(ScopeStatement::SUPER_NAME);
             for(dsize i = 0; i < supers.size(); ++i)
             {
-                if(Variable *found = findIdentifier(supers.at(i).as<RecordValue>().dereference(),
-                                                    foundIn))
+                if(Variable *found = findInRecord(
+                        name, supers.at(i).as<RecordValue>().dereference(), foundIn))
                 {
                     return found;
                 }
+            }
+        }
+        return 0;
+    }
+
+    Variable *findInNamespaces(String const & name,
+                               Evaluator::Namespaces const &spaces,
+                               bool           localOnly,
+                               Record *&      foundInNamespace,
+                               Record **      higherNamespace = 0)
+    {
+        DENG2_FOR_EACH_CONST(Evaluator::Namespaces, i, spaces)
+        {
+            Record &ns = **i;
+            if(Variable *variable =
+                    findInRecord(name, ns, foundInNamespace,
+                                   // allow looking in class if local not required:
+                                   !localOnly))
+            {
+                // The name exists in this namespace.
+                // Also note the higher namespace (for export).
+                Evaluator::Namespaces::const_iterator next = i;
+                if(++next != spaces.end())
+                {
+                    if(higherNamespace) *higherNamespace = *next;
+                }
+                return variable;
+            }
+            if(localOnly)
+            {
+                // Not allowed to look in outer scopes.
+                break;
             }
         }
         return 0;
@@ -71,8 +114,9 @@ namespace de {
 NameExpression::NameExpression() : d(new Instance)
 {}
 
-NameExpression::NameExpression(String const &identifier, Flags const &flags) 
-    : d(new Instance(identifier))
+NameExpression::NameExpression(String const &identifier, Flags const &flags,
+                               String const &scopeIdentifier)
+    : d(new Instance(identifier, scopeIdentifier))
 {
     setFlags(flags);
 }
@@ -87,36 +131,45 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     //LOG_AS("NameExpression::evaluate");
     //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
     LOGDEV_SCR_XVERBOSE_DEBUGONLY("evaluating name:\"%s\" flags:%x", d->identifier << flags());
-    
+
     // Collect the namespaces to search.
     Evaluator::Namespaces spaces;
-    evaluator.namespaces(spaces);
-    
+
     Record *foundInNamespace = 0;
     Record *higherNamespace = 0;
     Variable *variable = 0;
-    
-    DENG2_FOR_EACH(Evaluator::Namespaces, i, spaces)
-    {
-        Record &ns = **i;
-        if((variable = d->findIdentifier(ns, foundInNamespace,
-                                         // allow looking in class if local not required
-                                         !flags().testFlag(LocalOnly))) != 0)
-        {
-            // The name exists in this namespace.
-            //variable = &ns[d->identifier];
-            //foundInNamespace = &ns;
 
-            // Also note the higher namespace (for export).
-            Evaluator::Namespaces::iterator next = i;
-            if(++next != spaces.end()) higherNamespace = *next;
-            break;
-        }
-        if(flags().testFlag(LocalOnly))
+    if(d->scopeIdentifier.isEmpty() || d->scopeIdentifier == LOCAL_SCOPE)
+    {
+        if(d->scopeIdentifier != LOCAL_SCOPE)
         {
-            // Not allowed to look in outer scopes.
-            break;
+            // This is the usual case: scope defined by the left side of the member
+            // operator, or if that is not specified, the context's namespace stack.
+            evaluator.namespaces(spaces);
         }
+        else
+        {
+            // Start with the context's local namespace.
+            evaluator.process().namespaces(spaces);
+        }
+        variable = d->findInNamespaces(d->identifier, spaces, flags().testFlag(LocalOnly),
+                                       foundInNamespace, &higherNamespace);
+    }
+    else
+    {
+        // An explicit scope has been defined; try to find it first. Look in the current
+        // context of the process, ignoring any narrower scopes that may apply here.
+        evaluator.process().namespaces(spaces);
+        Variable *scope = d->findInNamespaces(d->scopeIdentifier, spaces, false, foundInNamespace);
+        if(!scope)
+        {
+            throw NotFoundError("NameExpression::evaluate",
+                                "Scope '" + d->scopeIdentifier + "' not found");
+        }
+        // Locate the identifier from this scope, disregarding the regular
+        // namespace context.
+        variable = d->findInRecord(d->identifier, scope->valueAsRecord(),
+                                   foundInNamespace);
     }
 
     if(flags().testFlag(ThrowawayIfInScope) && variable)
@@ -133,11 +186,11 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     }
 
     // Create a new subrecord in the namespace? ("record xyz")
-    if(flags().testFlag(NewSubrecord))
+    if(flags().testFlag(NewSubrecord) ||
+       (flags().testFlag(NewSubrecordIfNotInScope) && !variable))
     {
         // Replaces existing member with this identifier.
         Record &record = spaces.front()->addRecord(d->identifier);
-
         return new RecordValue(record);
     }
 
@@ -231,7 +284,7 @@ void NameExpression::operator >> (Writer &to) const
 
     Expression::operator >> (to);
 
-    to << d->identifier;
+    to << d->identifier << d->scopeIdentifier;
 }
 
 void NameExpression::operator << (Reader &from)
@@ -248,6 +301,11 @@ void NameExpression::operator << (Reader &from)
     Expression::operator << (from);
 
     from >> d->identifier;
+
+    if(from.version() >= DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier)
+    {
+        from >> d->scopeIdentifier;
+    }
 }
 
 } // namespace de

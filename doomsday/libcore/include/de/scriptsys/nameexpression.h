@@ -45,9 +45,14 @@ public:
     /// The identifier does not specify an existing variable. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
+    /// Special scope that can be specified in the constructor to tell the
+    /// expression to start looking in the context's local namespace.
+    static String const LOCAL_SCOPE;
+
 public:
     NameExpression();
-    NameExpression(String const &identifier, Flags const &flags = ByValue);
+    NameExpression(String const &identifier, Flags const &flags = ByValue,
+                   String const &scopeIdentifier = "");
 
     /// Returns the identifier in the name expression.
     String const &identifier() const;
