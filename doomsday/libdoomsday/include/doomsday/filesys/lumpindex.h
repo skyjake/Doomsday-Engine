@@ -1,16 +1,9 @@
-/**
- * @file lumpindex.h
- *
- * Index of lumps. @ingroup fs
- *
- * Virtual file system component used to model an indexable collection of
- * lumps. A single index may include lumps originating from many different
- * file containers.
+/** @file lumpindex.h  Index of lumps.
  *
  * @todo Move the definition of lumpnum_t into this header.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -53,20 +46,26 @@ namespace de {
 
 /// @}
 
+/**
+ * Virtual file system component used to model an indexable collection of
+ * lumps. A single index may include lumps originating from many different
+ * file containers.
+ *
+ * @ingroup fs
+ */
 class LIBDOOMSDAY_PUBLIC LumpIndex
 {
 public:
     /// No file(s) found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
-    typedef QList<File1*> Lumps;
+    typedef QList<File1 *> Lumps;
 
 public:
     /**
      * @param flags  @ref lumpIndexFlags
      */
     LumpIndex(int flags = 0);
-    ~LumpIndex();
 
     /// Number of lumps in the directory.
     int size() const;
@@ -75,7 +74,7 @@ public:
     bool isValidIndex(lumpnum_t lumpNum) const;
 
     /// Returns the index associated to the last lump matching @a path; otherwise @c -1.
-    lumpnum_t lastIndexForPath(Path const& path) const;
+    lumpnum_t lastIndexForPath(Path const &path) const;
 
     /// Returns the index associated to the first lump matching @a path; otherwise @c -1.
     lumpnum_t firstIndexForPath(Path const &path) const;
@@ -83,18 +82,18 @@ public:
     /**
      * Lookup a file at specific offset in the index.
      *
-     * @param lumpNum   Logical lumpnum associated to the file being looked up.
+     * @param lumpNum  Logical lumpnum associated to the file being looked up.
      *
      * @return  The requested file.
      *
      * @throws NotFoundError If the requested file could not be found.
      */
-    File1& lump(lumpnum_t lumpNum) const;
+    File1 &lump(lumpnum_t lumpNum) const;
 
     /**
      * Provides access to the list of lumps for efficient traversals.
      */
-    Lumps const& lumps() const;
+    Lumps const &lumps() const;
 
     /**
      * Clear the index back to its default (i.e., empty state).
@@ -104,38 +103,38 @@ public:
     /**
      * Are any lumps from @a file published in this index?
      *
-     * @param file      File containing the lumps to look for.
+     * @param file  File containing the lumps to look for.
      *
      * @return  @c true= One or more lumps are included.
      */
-    bool catalogues(File1& file);
+    bool catalogues(File1 &file);
 
     /**
      * Append a lump to the index.
      *
      * @post Lump name hashes may be invalidated (will be rebuilt upon next search).
      *
-     * @param lump      Lump to be being added.
+     * @param lump  Lump to be being added.
      */
-    void catalogLump(File1& lump);
+    void catalogLump(File1 &lump);
 
     /**
      * Prune all lumps catalogued from @a file.
      *
-     * @param file      File containing the lumps to prune
+     * @param file  File containing the lumps to prune
      *
      * @return  Number of lumps pruned.
      */
-    int pruneByFile(File1& file);
+    int pruneByFile(File1 &file);
 
     /**
      * Prune the lump referenced by @a lumpInfo.
      *
-     * @param lump      Lump file to prune.
+     * @param lump  Lump file to prune.
      *
      * @return  @c true if found and pruned.
      */
-    bool pruneLump(File1& lump);
+    bool pruneLump(File1 &lump);
 
     /**
      * Print contents of index @a index.
@@ -143,12 +142,10 @@ public:
     static void print(LumpIndex const& index);
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
 #endif // __cplusplus
-
 #endif // LIBDENG_FILESYS_LUMPINDEX_H

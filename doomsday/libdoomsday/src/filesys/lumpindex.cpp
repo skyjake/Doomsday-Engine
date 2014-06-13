@@ -1,13 +1,12 @@
-/** @file lumpindex.cpp 
- * @ingroup fs
+/** @file lumpindex.cpp  Index of lumps.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright &copy; 1999-2006 by Colin Phipps, Florian Schulze, Neil Stevens, Andrey Budko (PrBoom 2.2.6)
- * @authors Copyright &copy; 1999-2001 by Jess Haas, Nicolas Kalkhof (PrBoom 2.2.6)
- * @authors Copyright &copy; 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 1999-2006 by Colin Phipps, Florian Schulze, Neil Stevens, Andrey Budko (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2001 by Jess Haas, Nicolas Kalkhof (PrBoom 2.2.6)
+ * @authors Copyright © 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -52,22 +51,23 @@ struct LumpIndexHashRecord
     lumpnum_t head, next;
 };
 
-struct LumpIndex::Instance
+DENG2_PIMPL(LumpIndex)
 {
+    int flags;    ///< @ref lumpIndexFlags
+    Lumps lumps;
+
     typedef QVector<LumpIndexHashRecord> HashMap;
+    QScopedPointer<HashMap> hashMap;
 
-    LumpIndex* self;
-    int flags; /// @ref lumpIndexFlags
-    LumpIndex::Lumps lumps;
-    HashMap* hashMap;
-
-    Instance(LumpIndex* d, int _flags)
-        : self(d), flags(_flags & ~LIF_INTERNAL_MASK), lumps(), hashMap(0)
+    Instance(Public *i, int _flags)
+        : Base   (i)
+        , flags  (_flags & ~LIF_INTERNAL_MASK)
+        , hashMap(0)
     {}
 
     ~Instance()
     {
-        if(hashMap) delete hashMap;
+        self.clear();
     }
 
     void buildHashMap()
@@ -75,8 +75,14 @@ struct LumpIndex::Instance
         if(!(flags & LIF_NEED_REBUILD_HASH)) return;
 
         int const numElements = lumps.size();
-        if(!hashMap)    hashMap = new HashMap(numElements);
-        else            hashMap->resize(numElements);
+        if(hashMap.isNull())
+        {
+            hashMap.reset(new HashMap(numElements));
+        }
+        else
+        {
+            hashMap->resize(numElements);
+        }
 
         // Clear the chains.
         DENG2_FOR_EACH(HashMap, i, *hashMap)
@@ -88,17 +94,17 @@ struct LumpIndex::Instance
         // the last lump with a given name appears first in the chain.
         for(int i = 0; i < numElements; ++i)
         {
-            File1 const& lump = *(lumps[i]);
-            PathTree::Node const& node = lump.directoryNode();
-            ushort j = node.hash() % (unsigned)numElements;
+            File1 const &lump = *(lumps[i]);
+            PathTree::Node const &node = lump.directoryNode();
+            ushort k = node.hash() % (unsigned)numElements;
 
-            (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
-            (*hashMap)[j].head = i;
+            (*hashMap)[i].next = (*hashMap)[k].head; // Prepend to the chain.
+            (*hashMap)[k].head = i;
         }
 
         flags &= ~LIF_NEED_REBUILD_HASH;
 
-        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << self;
+        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << &self;
     }
 
     /**
@@ -107,16 +113,16 @@ struct LumpIndex::Instance
      *
      * @return Number of lumps newly flagged during this op.
      */
-    int flagContainedLumps(QBitArray& pruneFlags, File1& file)
+    int flagContainedLumps(QBitArray &pruneFlags, File1 &file)
     {
-        DENG_ASSERT(pruneFlags.size() == lumps.size());
+        DENG2_ASSERT(pruneFlags.size() == lumps.size());
 
         int const numRecords = lumps.size();
         int numFlagged = 0;
         for(int i = 0; i < numRecords; ++i)
         {
             if(pruneFlags.testBit(i)) continue;
-            if(reinterpret_cast<File1*>(&lumps[i]->container()) != &file) continue;
+            if(reinterpret_cast<File1 *>(&lumps[i]->container()) != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
         }
@@ -125,21 +131,22 @@ struct LumpIndex::Instance
 
     struct LumpSortInfo
     {
-        File1 const* lump;
-        String* path;
+        File1 const *lump;
+        String *path;
         int origIndex;
     };
-    static int lumpSorter(void const* a, void const* b)
+    static int lumpSorter(void const *a, void const *b)
     {
-        LumpSortInfo const* infoA = (LumpSortInfo const*)a;
-        LumpSortInfo const* infoB = (LumpSortInfo const*)b;
-        int result = infoA->path->compare(infoB->path, Qt::CaseInsensitive);
-        if(0 != result) return result;
+        LumpSortInfo const *infoA = (LumpSortInfo const*)a;
+        LumpSortInfo const *infoB = (LumpSortInfo const*)b;
+
+        if(int delta = infoA->path->compare(infoB->path, Qt::CaseInsensitive))
+            return delta;
 
         // Still matched; try the file load order indexes.
-        result = (infoA->lump->container().loadOrderIndex() -
-                  infoB->lump->container().loadOrderIndex());
-        if(0 != result) return result;
+        if(int delta = (infoA->lump->container().loadOrderIndex() -
+                        infoB->lump->container().loadOrderIndex()))
+            return delta;
 
         // Still matched (i.e., present in the same package); use the original indexes.
         return (infoB->origIndex - infoA->origIndex);
@@ -149,7 +156,7 @@ struct LumpIndex::Instance
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
      * @return Number of lumps newly flagged during this op.
      */
-    int flagDuplicateLumps(QBitArray& pruneFlags)
+    int flagDuplicateLumps(QBitArray &pruneFlags)
     {
         DENG_ASSERT(pruneFlags.size() == lumps.size());
 
@@ -161,15 +168,15 @@ struct LumpIndex::Instance
         if(numRecords <= 1) return 0;
 
         // Sort in descending load order for pruning.
-        LumpSortInfo* sortInfos = new LumpSortInfo[numRecords];
+        LumpSortInfo *sortInfos = new LumpSortInfo[numRecords];
         for(int i = 0; i < numRecords; ++i)
         {
-            LumpSortInfo& sortInfo   = sortInfos[i];
-            File1 const* lump = lumps[i];
+            LumpSortInfo &sortInfo = sortInfos[i];
+            File1 const *lump      = lumps[i];
 
-            sortInfo.lump = lump;
+            sortInfo.lump      = lump;
             sortInfo.origIndex = i;
-            sortInfo.path = new String(lump->composePath());
+            sortInfo.path      = new String(lump->composePath());
         }
         qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
 
@@ -186,7 +193,7 @@ struct LumpIndex::Instance
         // Free temporary sort data.
         for(int i = 0; i < numRecords; ++i)
         {
-            LumpSortInfo& sortInfo = sortInfos[i];
+            LumpSortInfo &sortInfo = sortInfos[i];
             delete sortInfo.path;
         }
         delete[] sortInfos;
@@ -234,7 +241,7 @@ struct LumpIndex::Instance
         return numFlaggedForPrune;
     }
 
-    void pruneDuplicates()
+    void pruneDuplicatesIfNeeded()
     {
         if(!(flags & LIF_NEED_PRUNE_DUPLICATES)) return;
 
@@ -249,21 +256,13 @@ struct LumpIndex::Instance
     }
 };
 
-LumpIndex::LumpIndex(int flags)
-{
-    d = new Instance(this, flags);
-}
-
-LumpIndex::~LumpIndex()
-{
-    clear();
-    delete d;
-}
+LumpIndex::LumpIndex(int flags) : d(new Instance(this, flags))
+{}
 
 bool LumpIndex::isValidIndex(lumpnum_t lumpNum) const
 {
     // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
+    d->pruneDuplicatesIfNeeded();
     return (lumpNum >= 0 && lumpNum < d->lumps.size());
 }
 
@@ -275,29 +274,27 @@ static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-File1& LumpIndex::lump(lumpnum_t lumpNum) const
+File1 &LumpIndex::lump(lumpnum_t lumpNum) const
 {
     if(!isValidIndex(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
     return *d->lumps[lumpNum];
 }
 
-LumpIndex::Lumps const& LumpIndex::lumps() const
+LumpIndex::Lumps const &LumpIndex::lumps() const
 {
     // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
-
+    d->pruneDuplicatesIfNeeded();
     return d->lumps;
 }
 
 int LumpIndex::size() const
 {
     // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
-
+    d->pruneDuplicatesIfNeeded();
     return d->lumps.size();
 }
 
-int LumpIndex::pruneByFile(File1& file)
+int LumpIndex::pruneByFile(File1 &file)
 {
     if(d->lumps.empty()) return 0;
 
@@ -319,12 +316,11 @@ int LumpIndex::pruneByFile(File1& file)
     return numFlaggedForFile;
 }
 
-bool LumpIndex::pruneLump(File1& lump)
+bool LumpIndex::pruneLump(File1 &lump)
 {
     if(d->lumps.empty()) return 0;
 
-    // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
+    d->pruneDuplicatesIfNeeded();
 
     // Prune this lump.
     if(!d->lumps.removeOne(&lump)) return false;
@@ -334,7 +330,7 @@ bool LumpIndex::pruneLump(File1& lump)
     return true;
 }
 
-void LumpIndex::catalogLump(File1& lump)
+void LumpIndex::catalogLump(File1 &lump)
 {
     d->lumps.push_back(&lump);
 
@@ -354,29 +350,29 @@ void LumpIndex::clear()
     d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
 }
 
-bool LumpIndex::catalogues(File1& file)
+bool LumpIndex::catalogues(File1 &file)
 {
     // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
+    d->pruneDuplicatesIfNeeded();
 
     DENG2_FOR_EACH(Lumps, i, d->lumps)
     {
-        File1 const& lump = **i;
+        File1 const &lump = **i;
         if(&lump.container() == &file) return true;
     }
     return false;
 }
 
-lumpnum_t LumpIndex::lastIndexForPath(Path const& path) const
+lumpnum_t LumpIndex::lastIndexForPath(Path const &path) const
 {
     if(path.isEmpty() || d->lumps.empty()) return -1;
 
     // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
+    d->pruneDuplicatesIfNeeded();
 
     // We may need to rebuild the path hash map.
     d->buildHashMap();
-    DENG_ASSERT(d->hashMap);
+    DENG2_ASSERT(!d->hashMap.isNull());
 
     // Perform the search.
     ushort hash = path.lastSegment().hash() % d->hashMap->size();
@@ -384,8 +380,8 @@ lumpnum_t LumpIndex::lastIndexForPath(Path const& path) const
 
     for(int idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
-        File1 const& lump = *d->lumps[idx];
-        PathTree::Node const& node = lump.directoryNode();
+        File1 const &lump = *d->lumps[idx];
+        PathTree::Node const &node = lump.directoryNode();
 
         if(node.comparePath(path, 0)) continue;
 
@@ -402,17 +398,17 @@ lumpnum_t LumpIndex::firstIndexForPath(Path const &path) const
     if(path.isEmpty() || d->lumps.empty()) return -1;
 
     // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
+    d->pruneDuplicatesIfNeeded();
 
     // We may need to rebuild the path hash map.
     d->buildHashMap();
-    DENG_ASSERT(d->hashMap);
+    DENG2_ASSERT(!d->hashMap.isNull());
 
     // Perform the search.
     for(lumpnum_t idx = 0; idx < d->lumps.size(); ++idx)
     {
-        File1 const& lump = *d->lumps[idx];
-        PathTree::Node const& node = lump.directoryNode();
+        File1 const &lump = *d->lumps[idx];
+        PathTree::Node const &node = lump.directoryNode();
 
         if(node.comparePath(path, 0)) continue;
 
@@ -422,19 +418,20 @@ lumpnum_t LumpIndex::firstIndexForPath(Path const &path) const
     return -1;
 }
 
-void LumpIndex::print(LumpIndex const& index)
+void LumpIndex::print(LumpIndex const &index)
 {
     int const numRecords = index.size();
-    int const numIndexDigits = MAX_OF(3, M_NumDigits(numRecords));
+    int const numIndexDigits = de::max(3, M_NumDigits(numRecords));
 
     LOG_RES_MSG("LumpIndex %p (%i records):") << &index << numRecords;
 
     int idx = 0;
     DENG2_FOR_EACH_CONST(Lumps, i, index.lumps())
     {
-        File1 const& lump = **i;
+        File1 const &lump    = **i;
         String containerPath = NativePath(lump.container().composePath()).pretty();
-        String lumpPath = NativePath(lump.composePath()).pretty();
+        String lumpPath      = NativePath(lump.composePath()).pretty();
+
         LOG_RES_MSG(QString("%1 - \"%2:%3\" (size: %4 bytes%5)")
                     .arg(idx++, numIndexDigits, 10, QChar('0'))
                     .arg(containerPath)
