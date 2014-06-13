@@ -429,7 +429,7 @@ void Time::operator >> (Writer &to) const
 
 void Time::operator << (Reader &from)
 {
-    if(from.version() >= DENG2_PROTOCOL_1_11_0_BUILD_926)
+    if(from.version() >= DENG2_PROTOCOL_1_11_0_Time_high_performance)
     {
         /*
          * Starting from build 926, Time can optionally contain a
