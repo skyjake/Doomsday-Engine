@@ -24,68 +24,75 @@
  */
 
 #include "doomsday/filesys/lumpindex.h"
-
 #include <QBitArray>
-#include <QList>
 #include <QVector>
-
 #include <de/Log>
 #include <de/NativePath>
-#include <de/mathutil.h>
 
 namespace de {
-
-/**
- * @ingroup lumpIndexFlags
- */
-///@{
-#define LIF_INTERNAL_MASK               0xff000000
-#define LIF_NEED_REBUILD_HASH           0x80000000 ///< Path hash map must be rebuilt.
-#define LIF_NEED_PRUNE_DUPLICATES       0x40000000 ///< Path duplicate records must be pruned.
-///@}
-
-/// Stores indexes into LumpIndex::Instance::records forming a chain of
-/// PathTree::Node fragment hashes. For ultra-fast name lookups.
-struct LumpIndexHashRecord
+namespace internal
 {
-    lumpnum_t head, next;
-};
+    struct LumpSortInfo
+    {
+        File1 const *lump;
+        String path;
+        int origIndex;
+    };
+
+    static int lumpSorter(void const *a, void const *b)
+    {
+        LumpSortInfo const *infoA = (LumpSortInfo const*)a;
+        LumpSortInfo const *infoB = (LumpSortInfo const*)b;
+
+        if(int delta = infoA->path.compare(infoB->path, Qt::CaseInsensitive))
+            return delta;
+
+        // Still matched; try the file load order indexes.
+        if(int delta = (infoA->lump->container().loadOrderIndex() -
+                        infoB->lump->container().loadOrderIndex()))
+            return delta;
+
+        // Still matched (i.e., present in the same package); use the original indexes.
+        return (infoB->origIndex - infoA->origIndex);
+    }
+
+} // namespace internal
+
+using namespace internal;
 
 DENG2_PIMPL(LumpIndex)
 {
-    int flags;    ///< @ref lumpIndexFlags
+    bool pathsAreUnique;
+
     Lumps lumps;
+    bool needPruneDuplicateLumps;
 
-    typedef QVector<LumpIndexHashRecord> HashMap;
-    QScopedPointer<HashMap> hashMap;
+    /// Stores indexes into records forming a chain of PathTree::Node fragment
+    /// hashes. For ultra-fast lookup by path.
+    struct PathHashRecord
+    {
+        lumpnum_t head, nextInLoadOrder;
+    };
+    typedef QVector<PathHashRecord> PathHash;
+    QScopedPointer<PathHash> lumpsByPath;
 
-    Instance(Public *i, int _flags)
-        : Base   (i)
-        , flags  (_flags & ~LIF_INTERNAL_MASK)
-        , hashMap(0)
+    Instance(Public *i)
+        : Base(i)
+        , pathsAreUnique         (false)
+        , needPruneDuplicateLumps(false)
     {}
 
-    ~Instance()
-    {
-        self.clear();
-    }
+    ~Instance() { self.clear(); }
 
-    void buildHashMap()
+    void buildLumpsByPathIfNeeded()
     {
-        if(!(flags & LIF_NEED_REBUILD_HASH)) return;
+        if(!lumpsByPath.isNull()) return;
 
         int const numElements = lumps.size();
-        if(hashMap.isNull())
-        {
-            hashMap.reset(new HashMap(numElements));
-        }
-        else
-        {
-            hashMap->resize(numElements);
-        }
+        lumpsByPath.reset(new PathHash(numElements));
 
         // Clear the chains.
-        DENG2_FOR_EACH(HashMap, i, *hashMap)
+        DENG2_FOR_EACH(PathHash, i, *lumpsByPath)
         {
             i->head = -1;
         }
@@ -98,11 +105,9 @@ DENG2_PIMPL(LumpIndex)
             PathTree::Node const &node = lump.directoryNode();
             ushort k = node.hash() % (unsigned)numElements;
 
-            (*hashMap)[i].next = (*hashMap)[k].head; // Prepend to the chain.
-            (*hashMap)[k].head = i;
+            (*lumpsByPath)[i].nextInLoadOrder = (*lumpsByPath)[k].head;
+            (*lumpsByPath)[k].head = i;
         }
-
-        flags &= ~LIF_NEED_REBUILD_HASH;
 
         LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << &self;
     }
@@ -129,40 +134,17 @@ DENG2_PIMPL(LumpIndex)
         return numFlagged;
     }
 
-    struct LumpSortInfo
-    {
-        File1 const *lump;
-        String *path;
-        int origIndex;
-    };
-    static int lumpSorter(void const *a, void const *b)
-    {
-        LumpSortInfo const *infoA = (LumpSortInfo const*)a;
-        LumpSortInfo const *infoB = (LumpSortInfo const*)b;
-
-        if(int delta = infoA->path->compare(infoB->path, Qt::CaseInsensitive))
-            return delta;
-
-        // Still matched; try the file load order indexes.
-        if(int delta = (infoA->lump->container().loadOrderIndex() -
-                        infoB->lump->container().loadOrderIndex()))
-            return delta;
-
-        // Still matched (i.e., present in the same package); use the original indexes.
-        return (infoB->origIndex - infoA->origIndex);
-    }
-
     /**
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
      * @return Number of lumps newly flagged during this op.
      */
     int flagDuplicateLumps(QBitArray &pruneFlags)
     {
-        DENG_ASSERT(pruneFlags.size() == lumps.size());
+        DENG2_ASSERT(pruneFlags.size() == lumps.size());
 
         // Any work to do?
-        if(!(flags & LIF_UNIQUE_PATHS)) return 0;
-        if(!(flags & LIF_NEED_PRUNE_DUPLICATES)) return 0;
+        if(!pathsAreUnique) return 0;
+        if(!needPruneDuplicateLumps) return 0;
 
         int const numRecords = lumps.size();
         if(numRecords <= 1) return 0;
@@ -175,8 +157,8 @@ DENG2_PIMPL(LumpIndex)
             File1 const *lump      = lumps[i];
 
             sortInfo.lump      = lump;
+            sortInfo.path      = lump->composePath();
             sortInfo.origIndex = i;
-            sortInfo.path      = new String(lump->composePath());
         }
         qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
 
@@ -185,17 +167,12 @@ DENG2_PIMPL(LumpIndex)
         for(int i = 1; i < numRecords; ++i)
         {
             if(pruneFlags.testBit(i)) continue;
-            if(sortInfos[i - 1].path->compare(sortInfos[i].path, Qt::CaseInsensitive)) continue;
+            if(sortInfos[i - 1].path.compare(sortInfos[i].path, Qt::CaseInsensitive)) continue;
             pruneFlags.setBit(sortInfos[i].origIndex, true);
             numFlagged += 1;
         }
 
-        // Free temporary sort data.
-        for(int i = 0; i < numRecords; ++i)
-        {
-            LumpSortInfo &sortInfo = sortInfos[i];
-            delete sortInfo.path;
-        }
+        // We're done with the sort info.
         delete[] sortInfos;
 
         return numFlagged;
@@ -204,14 +181,14 @@ DENG2_PIMPL(LumpIndex)
     /// @return Number of pruned lumps.
     int pruneFlaggedLumps(QBitArray flaggedLumps)
     {
-        DENG_ASSERT(flaggedLumps.size() == lumps.size());
+        DENG2_ASSERT(flaggedLumps.size() == lumps.size());
 
         // Have we lumps to prune?
         int const numFlaggedForPrune = flaggedLumps.count(true);
         if(numFlaggedForPrune)
         {
             // We'll need to rebuild the hash after this.
-            flags |= LIF_NEED_REBUILD_HASH;
+            lumpsByPath.reset();
 
             int numRecords = lumps.size();
             if(numRecords == numFlaggedForPrune)
@@ -243,7 +220,8 @@ DENG2_PIMPL(LumpIndex)
 
     void pruneDuplicatesIfNeeded()
     {
-        if(!(flags & LIF_NEED_PRUNE_DUPLICATES)) return;
+        if(!needPruneDuplicateLumps) return;
+        needPruneDuplicateLumps = false;
 
         int const numRecords = lumps.size();
         if(numRecords <= 1) return;
@@ -251,17 +229,16 @@ DENG2_PIMPL(LumpIndex)
         QBitArray pruneFlags(numRecords);
         flagDuplicateLumps(pruneFlags);
         pruneFlaggedLumps(pruneFlags);
-
-        flags &= ~LIF_NEED_PRUNE_DUPLICATES;
     }
 };
 
-LumpIndex::LumpIndex(int flags) : d(new Instance(this, flags))
-{}
-
-bool LumpIndex::isValidIndex(lumpnum_t lumpNum) const
+LumpIndex::LumpIndex(bool pathsAreUnique) : d(new Instance(this))
 {
-    // We may need to prune path-duplicate lumps.
+    d->pathsAreUnique = pathsAreUnique;
+}
+
+bool LumpIndex::hasLump(lumpnum_t lumpNum) const
+{
     d->pruneDuplicatesIfNeeded();
     return (lumpNum >= 0 && lumpNum < d->lumps.size());
 }
@@ -274,22 +251,20 @@ static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-File1 &LumpIndex::lump(lumpnum_t lumpNum) const
+File1 &LumpIndex::toLump(lumpnum_t lumpNum) const
 {
-    if(!isValidIndex(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
+    if(!hasLump(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
     return *d->lumps[lumpNum];
 }
 
-LumpIndex::Lumps const &LumpIndex::lumps() const
+LumpIndex::Lumps const &LumpIndex::allLumps() const
 {
-    // We may need to prune path-duplicate lumps.
     d->pruneDuplicatesIfNeeded();
     return d->lumps;
 }
 
 int LumpIndex::size() const
 {
-    // We may need to prune path-duplicate lumps.
     d->pruneDuplicatesIfNeeded();
     return d->lumps.size();
 }
@@ -311,7 +286,7 @@ int LumpIndex::pruneByFile(File1 &file)
     // Perform the prune.
     d->pruneFlaggedLumps(pruneFlags);
 
-    d->flags &= ~LIF_NEED_PRUNE_DUPLICATES;
+    d->needPruneDuplicateLumps = false;
 
     return numFlaggedForFile;
 }
@@ -326,107 +301,134 @@ bool LumpIndex::pruneLump(File1 &lump)
     if(!d->lumps.removeOne(&lump)) return false;
 
     // We'll need to rebuild the path hash chains.
-    d->flags |= LIF_NEED_REBUILD_HASH;
+    d->lumpsByPath.reset();
+
     return true;
 }
 
 void LumpIndex::catalogLump(File1 &lump)
 {
     d->lumps.push_back(&lump);
+    d->lumpsByPath.reset();    // We'll need to rebuild the name hash chains.
 
-    // We'll need to rebuild the name hash chains.
-    d->flags |= LIF_NEED_REBUILD_HASH;
-
-    if(d->flags & LIF_UNIQUE_PATHS)
+    if(d->pathsAreUnique)
     {
         // We may need to prune duplicate paths.
-        d->flags |= LIF_NEED_PRUNE_DUPLICATES;
+        d->needPruneDuplicateLumps = true;
     }
 }
 
 void LumpIndex::clear()
 {
     d->lumps.clear();
-    d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
+    d->lumpsByPath.reset();
+    d->needPruneDuplicateLumps = false;
 }
 
 bool LumpIndex::catalogues(File1 &file)
 {
-    // We may need to prune path-duplicate lumps.
     d->pruneDuplicatesIfNeeded();
 
     DENG2_FOR_EACH(Lumps, i, d->lumps)
     {
         File1 const &lump = **i;
-        if(&lump.container() == &file) return true;
+        if(&lump.container() == &file)
+            return true;
     }
+
     return false;
 }
 
-lumpnum_t LumpIndex::lastIndexForPath(Path const &path) const
+int LumpIndex::findAll(Path const &path, FoundIndices &found) const
 {
-    if(path.isEmpty() || d->lumps.empty()) return -1;
+    LOG_AS("LumpIndex::findAll");
 
-    // We may need to prune path-duplicate lumps.
+    found.clear();
+
+    if(path.isEmpty() || d->lumps.empty()) return 0;
+
     d->pruneDuplicatesIfNeeded();
-
-    // We may need to rebuild the path hash map.
-    d->buildHashMap();
-    DENG2_ASSERT(!d->hashMap.isNull());
+    d->buildLumpsByPathIfNeeded();
 
     // Perform the search.
-    ushort hash = path.lastSegment().hash() % d->hashMap->size();
-    if((*d->hashMap)[hash].head == -1) return -1;
-
-    for(int idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
+    DENG2_ASSERT(!d->lumpsByPath.isNull());
+    ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
+    for(int idx = (*d->lumpsByPath)[hash].head; idx != -1;
+        idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
-        File1 const &lump = *d->lumps[idx];
+        File1 const &lump          = *d->lumps[idx];
         PathTree::Node const &node = lump.directoryNode();
 
-        if(node.comparePath(path, 0)) continue;
-
-        // This is the lump we are looking for.
-        return idx;
+        if(!node.comparePath(path, 0))
+        {
+            found.push_front(idx);
+        }
     }
 
-    return -1;
+    return int(found.size());
 }
 
-/// @todo Make use of the hash!
-lumpnum_t LumpIndex::firstIndexForPath(Path const &path) const
+lumpnum_t LumpIndex::findLast(Path const &path) const
 {
     if(path.isEmpty() || d->lumps.empty()) return -1;
 
-    // We may need to prune path-duplicate lumps.
     d->pruneDuplicatesIfNeeded();
-
-    // We may need to rebuild the path hash map.
-    d->buildHashMap();
-    DENG2_ASSERT(!d->hashMap.isNull());
+    d->buildLumpsByPathIfNeeded();
 
     // Perform the search.
-    for(lumpnum_t idx = 0; idx < d->lumps.size(); ++idx)
+    DENG2_ASSERT(!d->lumpsByPath.isNull());
+    ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
+    for(int idx = (*d->lumpsByPath)[hash].head; idx != -1;
+        idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
-        File1 const &lump = *d->lumps[idx];
+        File1 const &lump          = *d->lumps[idx];
         PathTree::Node const &node = lump.directoryNode();
 
-        if(node.comparePath(path, 0)) continue;
-
-        // This is the lump we are looking for.
-        return idx;
+        if(!node.comparePath(path, 0))
+        {
+            return idx; // This is the lump we are looking for.
+        }
     }
-    return -1;
+
+    return -1; // Not found.
+}
+
+lumpnum_t LumpIndex::findFirst(Path const &path) const
+{
+    if(path.isEmpty() || d->lumps.empty()) return -1;
+
+    d->pruneDuplicatesIfNeeded();
+    d->buildLumpsByPathIfNeeded();
+
+    lumpnum_t earliest = -1; // Not found.
+
+    // Perform the search.
+    DENG2_ASSERT(!d->lumpsByPath.isNull());
+    ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
+    for(int idx = (*d->lumpsByPath)[hash].head; idx != -1;
+        idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
+    {
+        File1 const &lump          = *d->lumps[idx];
+        PathTree::Node const &node = lump.directoryNode();
+
+        if(!node.comparePath(path, 0))
+        {
+            earliest = idx; // This is now the first lump loaded.
+        }
+    }
+
+    return earliest; // Not found.
 }
 
 void LumpIndex::print(LumpIndex const &index)
 {
-    int const numRecords = index.size();
+    int const numRecords     = index.size();
     int const numIndexDigits = de::max(3, M_NumDigits(numRecords));
 
     LOG_RES_MSG("LumpIndex %p (%i records):") << &index << numRecords;
 
     int idx = 0;
-    DENG2_FOR_EACH_CONST(Lumps, i, index.lumps())
+    DENG2_FOR_EACH_CONST(Lumps, i, index.allLumps())
     {
         File1 const &lump    = **i;
         String containerPath = NativePath(lump.container().composePath()).pretty();
