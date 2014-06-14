@@ -8,8 +8,8 @@ script {
     import Version, gui 
     # Load the Open Sans font contained in this pack.
     def loadOpenSans()
-        import App, Path
-        fontDir = Path.fileNamePath(__file__) / "fonts"
+        import App
+        fontDir = __file__.fileNamePath() / "fonts"
         # Sadly, light fonts seem to not work in Qt presently.
         for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']  #'Light', 'LightItalic'
             App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))

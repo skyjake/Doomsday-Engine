@@ -31,9 +31,24 @@
 
 namespace de {
 
-Value *Function_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
+Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
 {
     return new TextValue(args.at(0)->asText().fileNamePath());
+}
+
+Value *Function_String_FileNamePath(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().fileNamePath());
+}
+
+Value *Function_String_Upper(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().upper());
+}
+
+Value *Function_String_Lower(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().lower());
 }
 
 Value *Function_Dictionary_Keys(Context &ctx, Function::ArgumentValues const &)
@@ -55,7 +70,7 @@ DENG2_PIMPL(ScriptSystem)
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules;
     NativeModules nativeModules; // not owned
-    Record coreModule;  // Script: built-in script classes.
+    Record coreModule;  // Script: built-in script classes and functions.
     Record versionModule; // Version: information about the platform and build
     Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
@@ -90,8 +105,7 @@ DENG2_PIMPL(ScriptSystem)
 
         // Setup the Path module.
         binder.init(pathModule)
-                << DENG2_FUNC(Path_FileNamePath, "fileNamePath", "path");
-
+                << DENG2_FUNC(Path_WithoutFileName, "withoutFileName", "path");
         addNativeModule("Path", pathModule);
     }
 
@@ -107,11 +121,21 @@ DENG2_PIMPL(ScriptSystem)
 
     void initCoreModule()
     {
+        // Dictionary
         {
             Record &dict = coreModule.addRecord("Dictionary");
             binder.init(dict)
-                << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
-                << DENG2_FUNC_NOARG(Dictionary_Values, "values");
+                    << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
+                    << DENG2_FUNC_NOARG(Dictionary_Values, "values");
+        }
+
+        // String
+        {
+            Record &dict = coreModule.addRecord("String");
+            binder.init(dict)
+                    << DENG2_FUNC_NOARG(String_Upper, "upper")
+                    << DENG2_FUNC_NOARG(String_Upper, "lower")
+                    << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath");
         }
 
         addNativeModule("Core", coreModule);

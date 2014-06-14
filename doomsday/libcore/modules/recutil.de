@@ -24,8 +24,8 @@ def copyMissingMembers(src, dest)
     # the missing members to 'dest'. Private keys in 'src' are ignored.
     # - src:  Source record.
     # - dest: Destination record.
-
-    for name in dictkeys(members(src))
+    
+    for name in members(src).keys()
         # Private members should be ignored.
         if name[:2] == "__": continue
 
