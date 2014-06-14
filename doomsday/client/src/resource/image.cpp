@@ -655,7 +655,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
     {
-        de::File1 &file = App_FileSystem().nameIndex().lump(i->lumpNum());
+        de::File1 &file = App_FileSystem().nameIndex()[i->lumpNum()];
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
         // A DOOM patch?
@@ -819,7 +819,7 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                     try
                     {
                         lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
                         de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                         source = loadFlat(image, hndl);
@@ -859,7 +859,7 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                     try
                     {
                         lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
                         de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
@@ -913,7 +913,7 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                     try
                     {
                         lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
                         de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
@@ -941,7 +941,7 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                 lumpnum_t lumpNum = App_FileSystem().lumpNumForName(resourceUri.path());
                 try
                 {
-                    de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                    de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
                     de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                     source = loadDetail(image, hndl);

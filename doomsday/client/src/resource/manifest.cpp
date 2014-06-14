@@ -151,11 +151,11 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
         name += ".lmp";
     }
 
-    lumpnum_t lumpNum = lumpIndex.lastIndexForPath(Path(name));
+    lumpnum_t lumpNum = lumpIndex.findLast(Path(name));
     if(lumpNum < 0) return -1;
 
     // Check the condition.
-    size_t lumpSize = lumpIndex.lump(lumpNum).info().size;
+    size_t lumpSize = lumpIndex[lumpNum].info().size;
     switch(sizeCond)
     {
     case LSCOND_EQUAL:

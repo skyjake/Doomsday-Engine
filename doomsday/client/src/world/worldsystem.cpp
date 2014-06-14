@@ -433,7 +433,7 @@ DENG2_PIMPL(WorldSystem)
         }
 
         // Generate and attribute the old unique map id.
-        File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
+        File1 &markerLump       = App_FileSystem().nameIndex()[markerLumpNum];
         String uniqueId         = composeUniqueMapId(markerLump);
         QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
         newMap->setOldUniqueId(uniqueIdUtf8.constData());

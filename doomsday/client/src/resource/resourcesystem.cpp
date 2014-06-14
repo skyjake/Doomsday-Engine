@@ -950,7 +950,7 @@ DENG2_PIMPL(ResourceSystem)
         try
         {
             lumpnum_t lumpNum = fileSystem().lumpNumForName(lumpName);
-            de::File1 &file = fileSystem().nameIndex().lump(lumpNum);
+            de::File1 &file   = fileSystem().nameIndex()[lumpNum];
 
             if(file.size() < 4)
             {
@@ -2202,7 +2202,7 @@ static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
      */
     for(int i = 0; i < index.size(); ++i)
     {
-        de::File1 &file = index.lump(i);
+        de::File1 &file = index[i];
 
         // Will this be processed anyway?
         if(i == firstTexLump) continue;
@@ -2220,12 +2220,12 @@ static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
 
     if(firstTexLump >= 0)
     {
-        result.append(&index.lump(firstTexLump));
+        result.append(&index[firstTexLump]);
     }
 
     if(secondTexLump >= 0)
     {
-        result.append(&index.lump(secondTexLump));
+        result.append(&index[secondTexLump]);
     }
 
     return result;
@@ -2255,14 +2255,14 @@ void ResourceSystem::initFlatTextures()
     LOG_RES_VERBOSE("Initializing Flat textures...");
 
     LumpIndex const &index = d->fileSystem().nameIndex();
-    lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
+    lumpnum_t firstFlatMarkerLumpNum = index.findFirst(Path("F_START.lmp"));
     if(firstFlatMarkerLumpNum >= 0)
     {
         lumpnum_t lumpNum;
         de::File1 *blockContainer = 0;
         for(lumpNum = index.size(); lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
-            de::File1 &file = index.lump(lumpNum);
+            de::File1 &file = index[lumpNum];
             String percentEncodedName = file.name().fileNameWithoutExtension();
 
             if(blockContainer && blockContainer != &file.container())
@@ -2396,7 +2396,7 @@ void ResourceSystem::initSpriteTextures()
     LumpIndex const &index = d->fileSystem().nameIndex();
     for(int i = 0; i < index.size(); ++i)
     {
-        de::File1 &file = index.lump(i);
+        de::File1 &file = index[i];
         String fileName = file.name().fileNameWithoutExtension();
 
         if(fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
@@ -2563,14 +2563,14 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
-    lumpnum_t lumpNum = d->fileSystem().nameIndex().lastIndexForPath(lumpPath);
+    lumpnum_t lumpNum = d->fileSystem().nameIndex().findLast(lumpPath);
     if(lumpNum < 0)
     {
         LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
         return 0;
     }
 
-    de::File1 &file = d->fileSystem().nameIndex().lump(lumpNum);
+    de::File1 &file = d->fileSystem().nameIndex().toLump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -2652,7 +2652,7 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     if(!raw)
     {
         // An entirely new raw texture.
-        String const &name = App_FileSystem().nameIndex().lump(lumpNum).name();
+        String const &name = App_FileSystem().nameIndex()[lumpNum].name();
         raw = new rawtex_t(name, lumpNum);
         d->rawTexHash.insert(lumpNum, raw);
     }

@@ -486,7 +486,7 @@ static void Def_ReadLumpDefs()
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     for(lumpnum_t i = 0; i < lumpIndex.size(); ++i)
     {
-        de::File1 const& lump = lumpIndex.lump(i);
+        de::File1 const &lump = lumpIndex[i];
         if(!lump.name().beginsWith("DD_DEFNS", Qt::CaseInsensitive)) continue;
 
         numProcessedLumps += 1;

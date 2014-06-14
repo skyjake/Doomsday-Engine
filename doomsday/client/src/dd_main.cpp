@@ -1071,7 +1071,7 @@ static void initPathLumpMappings()
     uint8_t *buf = 0;
 
     // Add the contents of all DD_DIREC lumps.
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().lumps())
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().allLumps())
     {
         de::File1 &lump = **i;
         FileInfo const &lumpInfo = lump.info();
