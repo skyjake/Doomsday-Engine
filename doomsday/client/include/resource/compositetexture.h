@@ -72,6 +72,12 @@ public:
         /// Origin of the top left corner of the component (in texture space units).
         Vector2i const &origin() const;
 
+        bool operator == (Component const &other) const;
+
+        inline bool operator != (Component const &other) const {
+            return !(*this == other);
+        }
+
         /// X-axis origin of the top left corner of the component (in texture space units).
         inline int xOrigin() const { return origin().x; }
 
@@ -112,6 +118,17 @@ public:
      */
     static CompositeTexture *constructFrom(Reader &reader, QList<PatchName> patchNames,
                                            ArchiveFormat format = DoomFormat);
+
+    /**
+     * Compare two composite texture definitions for equality.
+     *
+     * @return @c true if the definitions are equal.
+     */
+    bool operator == (CompositeTexture const &other) const;
+
+    inline bool operator != (CompositeTexture const &other) const {
+        return !(*this == other);
+    }
 
     /// Returns the percent-endcoded symbolic name of the texture.
     String percentEncodedName() const;

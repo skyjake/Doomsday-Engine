@@ -221,6 +221,136 @@ namespace internal
         return result;
     }
 
+    typedef QList<CompositeTexture *> CompositeTextures;
+    typedef QList<PatchName> PatchNames;
+
+    static PatchNames readPatchNames(de::File1 &file)
+    {
+        LOG_AS("readPatchNames");
+        PatchNames names;
+
+        if(file.size() < 4)
+        {
+            LOG_RES_WARNING("File \"%s\" does not appear to be valid PNAMES data")
+                    << NativePath(file.composeUri().asText()).pretty();
+            return names;
+        }
+
+        ByteRefArray lumpData(file.cache(), file.size());
+        de::Reader from(lumpData);
+
+        // The data begins with the total number of patch names.
+        dint32 numNames;
+        from >> numNames;
+
+        // Followed by the names (eight character ASCII strings).
+        if(numNames > 0)
+        {
+            if((unsigned) numNames > (file.size() - 4) / 8)
+            {
+                // The data appears to be truncated.
+                LOG_RES_WARNING("File \"%s\" appears to be truncated (%u bytes, expected %u)")
+                        << NativePath(file.composeUri().asText()).pretty()
+                        << file.size() << (numNames * 8 + 4);
+
+                // We'll only read this many names.
+                numNames = (file.size() - 4) / 8;
+            }
+
+            // Read the names.
+            for(int i = 0; i < numNames; ++i)
+            {
+                PatchName name;
+                from >> name;
+                names.append(name);
+            }
+        }
+
+        file.unlock();
+
+        return names;
+    }
+
+    /**
+     * Reads patch composite texture definitions from @a file.
+     *
+     * @param file           File to be read.
+     * @param origIndexBase  Base value for the "original index" logic.
+     * @param archiveCount   Will be updated with the total number of definitions
+     *                       in the file (which may not necessarily equal the total
+     *                       number of definitions which are actually read).
+     */
+    static CompositeTextures readCompositeTextureDefs(de::File1 &file,
+        PatchNames const &patchNames, int origIndexBase, int &archiveCount)
+    {
+        LOG_AS("readCompositeTextureDefs");
+
+        CompositeTextures result; ///< The resulting set of validated definitions.
+
+        // The game data format determines the format of the archived data.
+        CompositeTexture::ArchiveFormat format =
+                (gameDataFormat == 0? CompositeTexture::DoomFormat : CompositeTexture::StrifeFormat);
+
+        ByteRefArray data(file.cache(), file.size());
+        de::Reader reader(data);
+
+        // First is a count of the total number of definitions.
+        dint32 definitionCount;
+        reader >> definitionCount;
+
+        // Next is directory of offsets to the definitions.
+        typedef QMap<dint32, int> Offsets;
+        Offsets offsets;
+        for(int i = 0; i < definitionCount; ++i)
+        {
+            dint32 offset;
+            reader >> offset;
+
+            // Ensure the offset is within valid range.
+            if(offset < 0 || (unsigned) offset < definitionCount * sizeof(offset) ||
+               (dsize) offset > reader.source()->size())
+            {
+                LOG_RES_WARNING("Ignoring definition #%i: invalid offset %i") << i << offset;
+            }
+            else
+            {
+                offsets.insert(offset, origIndexBase + i);
+            }
+        }
+
+        // Seek to each offset and deserialize the definition.
+        DENG2_FOR_EACH_CONST(Offsets, i, offsets)
+        {
+            // Read the next definition.
+            reader.setOffset(i.key());
+            CompositeTexture *def = CompositeTexture::constructFrom(reader, patchNames, format);
+
+            // Attribute the "original index".
+            def->setOrigIndex(i.value());
+
+            // If the composite contains at least one known component image it is
+            // considered valid and we will therefore produce a Texture for it.
+            DENG2_FOR_EACH_CONST(CompositeTexture::Components, it, def->components())
+            {
+                if(it->lumpNum() >= 0)
+                {
+                    // Its valid - include in the result.
+                    result.append(def);
+                    def = 0;
+                    break;
+                }
+            }
+
+            // Failed to validate? Dump it.
+            if(def) delete def;
+        }
+
+        file.unlock(); // We have now finished with this file.
+
+        archiveCount = definitionCount;
+        return result;
+    }
+
 #ifdef __CLIENT__
     static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
     {
@@ -301,9 +431,6 @@ Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues cons
     String gameId = args[0]->asText();
     return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId));
 }
-
-typedef QList<CompositeTexture *> CompositeTextures;
-typedef QList<PatchName> PatchNames;
 
 DENG2_PIMPL(ResourceSystem)
 , DENG2_OBSERVES(Loop,             Iteration)       // post savegame conversion FS population
@@ -564,7 +691,7 @@ DENG2_PIMPL(ResourceSystem)
         self.clearAllTextureSchemes();
         clearTextureManifests();
 #ifdef __CLIENT__
-        clearAllRawTextures();
+        self.clearAllRawTextures();
 #endif
 
 #ifdef __CLIENT__
@@ -646,12 +773,6 @@ DENG2_PIMPL(ResourceSystem)
 
         // We want notification when a new manifest is defined in this scheme.
         newScheme->audienceForManifestDefined += this;
-    }
-
-    void clearAllRawTextures()
-    {
-        qDeleteAll(rawTexHash);
-        rawTexHash.clear();
     }
 
 #ifdef __CLIENT__
@@ -1054,53 +1175,6 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    PatchNames loadPatchNames(de::File1 &file)
-    {
-        LOG_AS("loadPatchNames");
-        PatchNames names;
-
-        if(file.size() < 4)
-        {
-            LOG_RES_WARNING("File \"%s\" does not appear to be valid PNAMES data")
-                << NativePath(file.composeUri().asText()).pretty();
-            return names;
-        }
-
-        ByteRefArray lumpData(file.cache(), file.size());
-        de::Reader from(lumpData);
-
-        // The data begins with the total number of patch names.
-        dint32 numNames;
-        from >> numNames;
-
-        // Followed by the names (eight character ASCII strings).
-        if(numNames > 0)
-        {
-            if((unsigned) numNames > (file.size() - 4) / 8)
-            {
-                // The data appears to be truncated.
-                LOG_RES_WARNING("File \"%s\" appears to be truncated (%u bytes, expected %u)")
-                    << NativePath(file.composeUri().asText()).pretty()
-                    << file.size() << (numNames * 8 + 4);
-
-                // We'll only read this many names.
-                numNames = (file.size() - 4) / 8;
-            }
-
-            // Read the names.
-            for(int i = 0; i < numNames; ++i)
-            {
-                PatchName name;
-                from >> name;
-                names.append(name);
-            }
-        }
-
-        file.unlock();
-
-        return names;
-    }
-
     CompositeTextures loadCompositeTextureDefs()
     {
         LOG_AS("loadCompositeTextureDefs");
@@ -1111,7 +1185,7 @@ DENG2_PIMPL(ResourceSystem)
         PatchNames pnames;
         try
         {
-            pnames = loadPatchNames(fileSys().lump(fileSys().lumpNumForName("PNAMES")));
+            pnames = readPatchNames(fileSys().lump(fileSys().lumpNumForName("PNAMES")));
         }
         catch(LumpIndex::NotFoundError const &er)
         {
@@ -1151,10 +1225,7 @@ DENG2_PIMPL(ResourceSystem)
 
             // Buffer the file and read the next set of definitions.
             int archiveCount;
-            ByteRefArray dataBuffer   = ByteRefArray(file.cache(), file.size());
-            CompositeTextures newDefs = readCompositeTextureDefs(dataBuffer, pnames, origIndexBase, archiveCount);
-
-            file.unlock(); // We have now finished with this file.
+            CompositeTextures newDefs = readCompositeTextureDefs(file, pnames, origIndexBase, archiveCount);
 
             // In which set do these belong?
             CompositeTextures *existingDefs =
@@ -1210,32 +1281,9 @@ DENG2_PIMPL(ResourceSystem)
                 {
                     haveReplacement = true; // Uses a custom patch.
                 }
-                else
+                else if(*orig != *custom)
                 {
-                    // Do the definitions differ?
-                    if(custom->dimensions()        != orig->dimensions()  ||
-                       custom->logicalDimensions() != orig->logicalDimensions() ||
-                       custom->componentCount()    != orig->componentCount())
-                    {
-                        haveReplacement = true;
-                    }
-                    else
-                    {
-                        // Check the patches.
-                        for(int k = 0; k < orig->componentCount(); ++k)
-                        {
-                            CompositeTextureComponent const &origP   = orig->components()[k];
-                            CompositeTextureComponent const &customP = custom->components()[k];
-
-                            if(origP.lumpNum() != customP.lumpNum() &&
-                               origP.xOrigin() != customP.xOrigin() &&
-                               origP.yOrigin() != customP.yOrigin())
-                            {
-                                haveReplacement = true;
-                                break;
-                            }
-                        }
-                    }
+                    haveReplacement = true;
                 }
 
                 if(haveReplacement)
@@ -1262,93 +1310,17 @@ DENG2_PIMPL(ResourceSystem)
         return defs;
     }
 
-    /**
-     * Reads patch composite texture definitions from @a file.
-     *
-     * @param data  The data buffer to be read.
-     * @param origIndexBase  Base value for the "original index" logic.
-     * @param archiveCount  Will be updated with the total number of definitions
-     *                      in the file (which may not necessarily equal the total
-     *                      number of definitions which are actually read).
-     */
-    CompositeTextures readCompositeTextureDefs(IByteArray &data,
-        PatchNames const &patchNames, int origIndexBase, int &archiveCount)
+    void initCompositeTextures()
     {
-        LOG_AS("readCompositeTextureDefs");
+        Time begunAt;
 
-        CompositeTextures result; ///< The resulting set of validated definitions.
+        LOG_RES_VERBOSE("Initializing CompositeTextures...");
 
-        // The game data format determines the format of the archived data.
-        CompositeTexture::ArchiveFormat format =
-                (gameDataFormat == 0? CompositeTexture::DoomFormat : CompositeTexture::StrifeFormat);
-
-        de::Reader reader(data);
-
-        // First is a count of the total number of definitions.
-        dint32 definitionCount;
-        reader >> definitionCount;
-
-        // Next is directory of offsets to the definitions.
-        typedef QMap<dint32, int> Offsets;
-        Offsets offsets;
-        for(int i = 0; i < definitionCount; ++i)
+        // Load texture definitions from TEXTURE1/2 lumps.
+        CompositeTextures allDefs = loadCompositeTextureDefs();
+        while(!allDefs.isEmpty())
         {
-            dint32 offset;
-            reader >> offset;
-
-            // Ensure the offset is within valid range.
-            if(offset < 0 || (unsigned) offset < definitionCount * sizeof(offset) ||
-               (dsize) offset > reader.source()->size())
-            {
-                LOG_RES_WARNING("Ignoring definition #%i: invalid offset %i") << i << offset;
-            }
-            else
-            {
-                offsets.insert(offset, origIndexBase + i);
-            }
-        }
-
-        // Seek to each offset and deserialize the definition.
-        DENG2_FOR_EACH_CONST(Offsets, i, offsets)
-        {
-            // Read the next definition.
-            reader.setOffset(i.key());
-            CompositeTexture* def = CompositeTexture::constructFrom(reader, patchNames, format);
-
-            // Attribute the "original index".
-            def->setOrigIndex(i.value());
-
-            // If the composite contains at least one known component image it is
-            // considered valid and we will therefore produce a Texture for it.
-            DENG2_FOR_EACH_CONST(CompositeTexture::Components, it, def->components())
-            {
-                if(it->lumpNum() >= 0)
-                {
-                    // Its valid - include in the result.
-                    result.append(def);
-                    def = 0;
-                    break;
-                }
-            }
-
-            // Failed to validate? Dump it.
-            if(def) delete def;
-        }
-
-        archiveCount = definitionCount;
-        return result;
-    }
-
-    /**
-     * @param defs  Definitions to be processed.
-     */
-    void processCompositeTextureDefs(CompositeTextures &defs)
-    {
-        LOG_AS("processCompositeTextureDefs");
-
-        while(!defs.isEmpty())
-        {
-            CompositeTexture &def = *defs.takeFirst();
+            CompositeTexture &def = *allDefs.takeFirst();
             de::Uri uri("Textures", Path(def.percentEncodedName()));
 
             Texture::Flags flags;
@@ -1399,19 +1371,6 @@ DENG2_PIMPL(ResourceSystem)
 
             delete &def;
         }
-    }
-
-    void initCompositeTextures()
-    {
-        Time begunAt;
-
-        LOG_RES_VERBOSE("Initializing CompositeTextures...");
-
-        // Load texture definitions from TEXTURE1/2 lumps.
-        CompositeTextures texs = loadCompositeTextureDefs();
-        processCompositeTextureDefs(texs);
-
-        DENG2_ASSERT(texs.isEmpty());
 
         LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
     }
@@ -1557,10 +1516,10 @@ DENG2_PIMPL(ResourceSystem)
                 catch(IByteArray::OffsetError const &)
                 {
                     LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
-                                "World dimension and origin offset not set for sprite \"%s\".")
-                        << NativePath(file.container().composePath()).pretty()
-                        << NativePath(file.composePath()).pretty()
-                        << uri;
+                                    "World dimension and origin offset not set for sprite \"%s\".")
+                            << NativePath(file.container().composePath()).pretty()
+                            << NativePath(file.composePath()).pretty()
+                            << uri;
                 }
             }
             file.unlock();
@@ -2673,7 +2632,8 @@ QList<rawtex_t *> ResourceSystem::collectRawTextures() const
 
 void ResourceSystem::clearAllRawTextures()
 {
-    d->clearAllRawTextures();
+    qDeleteAll(d->rawTexHash);
+    d->rawTexHash.clear();
 }
 
 MaterialScheme &ResourceSystem::materialScheme(String name) const

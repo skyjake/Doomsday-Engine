@@ -55,6 +55,13 @@ CompositeTexture::Component::Component(Vector2i const &origin)
     , _lumpNum(-1)
 {}
 
+bool CompositeTexture::Component::operator == (Component const &other) const
+{
+    if(lumpNum() != other.lumpNum()) return false;
+    if(origin()  != other.origin())  return false;
+    return true;
+}
+
 Vector2i const &CompositeTexture::Component::origin() const
 {
     return _origin;
@@ -84,6 +91,21 @@ CompositeTexture::CompositeTexture(String const &percentEncodedName,
     d->name              = percentEncodedName;
     d->flags             = flags;
     d->logicalDimensions = logicalDimensions;
+}
+
+bool CompositeTexture::operator == (CompositeTexture const &other) const
+{
+    if(dimensions()        != other.dimensions())        return false;
+    if(logicalDimensions() != other.logicalDimensions()) return false;
+    if(componentCount()    != other.componentCount())    return false;
+
+    // Check each component also.
+    for(int i = 0; i < componentCount(); ++i)
+    {
+        if(components()[i] != other.components()[i]) return false;
+    }
+
+    return true;
 }
 
 String CompositeTexture::percentEncodedName() const
