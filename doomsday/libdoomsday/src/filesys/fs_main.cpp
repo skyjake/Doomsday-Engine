@@ -771,15 +771,9 @@ uint FS1::loadedFilesCRC()
     return d->loadedFilesCRC;
 }
 
-int FS1::findAll(FS1::FileList& found) const
+FS1::FileList const &FS1::loadedFiles() const
 {
-    int numFound = 0;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
-    {
-        found.push_back(*i);
-        numFound += 1;
-    }
-    return numFound;
+    return d->loadedFiles;
 }
 
 int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* parameters,
@@ -1211,24 +1205,22 @@ D_CMD(ListFiles)
 
     LOG_RES_MSG(_E(b) "Loaded Files " _E(l) "(in load order)" _E(w) ":");
 
-    size_t totalFiles = 0, totalPackages = 0;
+    int totalFiles = 0;
+    int totalPackages = 0;
     if(fileSystem)
     {
-        FS1::FileList foundFiles;
-        int fileCount = App_FileSystem().findAll(foundFiles);
-        if(!fileCount) return true;
-
-        DENG2_FOR_EACH_CONST(FS1::FileList, i, foundFiles)
+        FS1::FileList const &allLoadedFiles = App_FileSystem().loadedFiles();
+        DENG2_FOR_EACH_CONST(FS1::FileList, i, allLoadedFiles)
         {
-            de::File1& file = (*i)->file();
+            de::File1 &file = (*i)->file();
             uint crc = 0;
 
             int fileCount = 1;
-            if(de::Zip* zip = dynamic_cast<de::Zip*>(&file))
+            if(de::Zip *zip = dynamic_cast<de::Zip *>(&file))
             {
                 fileCount = zip->lumpCount();
             }
-            else if(de::Wad* wad = dynamic_cast<de::Wad*>(&file))
+            else if(de::Wad *wad = dynamic_cast<de::Wad *>(&file))
             {
                 fileCount = wad->lumpCount();
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
@@ -1240,12 +1232,14 @@ D_CMD(ListFiles)
                     << (file.hasStartup()? ", startup" : "")
                     << (crc? QString(" [%1]").arg(crc, 0, 16) : "");
 
-            totalFiles += size_t(fileCount);
+            totalFiles += fileCount;
             ++totalPackages;
         }
     }
+
     LOG_RES_MSG(_E(b)"Total: " _E(.) "%i files in %i packages")
             << totalFiles << totalPackages;
+
     return true;
 }
 

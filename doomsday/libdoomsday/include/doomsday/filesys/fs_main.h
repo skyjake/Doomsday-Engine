@@ -464,15 +464,6 @@ public:
     File1 &find(Uri const &search);
 
     /**
-     * Finds all files.
-     *
-     * @param found  Set of files that match the result.
-     *
-     * @return  Number of files found.
-     */
-    int findAll(FileList &found) const;
-
-    /**
      * Finds all files which meet the supplied @a predicate.
      *
      * @param predicate     If not @c NULL, this predicate evaluator callback must
@@ -558,6 +549,12 @@ public:
      * Calculate a CRC for the loaded file list.
      */
     uint loadedFilesCRC();
+
+    /**
+     * Provides access to the list of all loaded files (in load order), for
+     * efficient traversal.
+     */
+    FileList const &loadedFiles() const;
 
     /**
      * Unload all files loaded after startup.
