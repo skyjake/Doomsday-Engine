@@ -55,9 +55,7 @@ AutoStr *W_LumpName(lumpnum_t lumpNum)
 {
     try
     {
-        String const &name  = App_FileSystem().lump(lumpNum).name();
-        QByteArray nameUtf8 = name.toUtf8();
-        return AutoStr_FromTextStd(nameUtf8.constData());
+        return AutoStr_FromTextStd(App_FileSystem().lump(lumpNum).name().toUtf8().constData());
     }
     catch(FS1::NotFoundError const &er)
     {
@@ -87,8 +85,8 @@ AutoStr *W_LumpSourceFile(lumpnum_t lumpNum)
 {
     try
     {
-        QByteArray path = App_FileSystem().lump(lumpNum).container().composePath().toUtf8();
-        return AutoStr_FromText(path.constData());
+        de::File1 const &container = App_FileSystem().lump(lumpNum).container();
+        return AutoStr_FromText(container.composePath().toUtf8().constData());
     }
     catch(LumpIndex::NotFoundError const &er)
     {
@@ -116,14 +114,12 @@ dd_bool W_LumpIsCustom(lumpnum_t lumpNum)
 #undef W_CheckLumpNumForName
 lumpnum_t W_CheckLumpNumForName(char const *name)
 {
-    lumpnum_t lumpNum;
     if(!name || !name[0])
     {
         LOGDEV_RES_WARNING("W_CheckLumpNumForName: Empty lump name, returning invalid lumpnum");
         return -1;
     }
-    lumpNum = App_FileSystem().lumpNumForName(name);
-    return lumpNum;
+    return App_FileSystem().lumpNumForName(name);
 }
 
 #undef W_GetLumpNumForName

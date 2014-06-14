@@ -56,7 +56,7 @@ public:
      * Archived format variants.
      */
     enum ArchiveFormat {
-        DoomFormat,   ///< Format used by most id-tech 1 games.
+        DoomFormat,   ///< Format used by most id Tech 1 games.
         StrifeFormat  ///< Differs slightly from DoomFormat (omits unused values).
     };
 

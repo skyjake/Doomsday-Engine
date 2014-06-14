@@ -1455,7 +1455,7 @@ DENG2_PIMPL(ResourceSystem)
 
         int uniqueId = 1/*1-based index*/;
 
-        /// @todo fixme: Order here does not respect id tech1 logic.
+        /// @todo fixme: Order here does not respect id Tech 1 logic.
         ddstack_t *stack = Stack_New();
 
         LumpIndex const &index = fileSys().nameIndex();
@@ -2258,7 +2258,6 @@ DENG2_PIMPL(ResourceSystem)
 
         void runTask()
         {
-            /// @todo fixme: Concurrent active plugins!!
             DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
         }
     };

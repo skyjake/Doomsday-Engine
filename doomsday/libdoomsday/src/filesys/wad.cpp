@@ -1,9 +1,9 @@
-/** @file wad.cpp WAD Archive.
+/** @file wad.cpp  WAD Archive (file).
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -167,33 +167,25 @@ private:
     uint crc_;
 };
 
-struct Wad::Instance
+DENG2_PIMPL(Wad)
 {
-    Wad *self;
-
-    /// Number of lump records in the archived wad.
-    int arcRecordsCount;
-
-    /// Offset to the lump record table in the archived wad.
-    size_t arcRecordsOffset;
-
-    /// Directory containing structure and info records for all lumps.
-    UserDataPathTree *lumpDirectory;
+    int arcRecordsCount;              ///< Number of lump records in the archived wad.
+    size_t arcRecordsOffset;          ///< Offset to the lump record table in the archived wad.
+    UserDataPathTree *lumpDirectory;  ///< Directory structure and info records for all lumps.
 
     /// LUT which maps logical lump indices to PathTreeNodes.
     typedef std::vector<UserDataNode *> LumpNodeLut;
     LumpNodeLut *lumpNodeLut;
 
-    /// Lump data cache.
-    LumpCache *lumpCache;
+    LumpCache *lumpCache;             ///< Data payload cache.
 
-    Instance(Wad *d, FileHandle &file, String path)
-        : self(d),
-          arcRecordsCount(0),
-          arcRecordsOffset(0),
-          lumpDirectory(0),
-          lumpNodeLut(0),
-          lumpCache(0)
+    Instance(Public *i, FileHandle &file, String path)
+        : Base(i)
+        , arcRecordsCount (0)
+        , arcRecordsOffset(0)
+        , lumpDirectory   (0)
+        , lumpNodeLut     (0)
+        , lumpCache       (0)
     {
         // Seek to the start of the header.
         file.seek(0, SeekSet);
@@ -208,17 +200,19 @@ struct Wad::Instance
 
     ~Instance()
     {
+        self.clearLumpCache();
+
         if(lumpDirectory)
         {
             lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, clearWadFileWorker);
             delete lumpDirectory;
         }
 
-        if(lumpNodeLut) delete lumpNodeLut;
-        if(lumpCache) delete lumpCache;
+        delete lumpNodeLut;
+        delete lumpCache;
     }
 
-    static int clearWadFileWorker(UserDataNode &node, void * /*parameters*/)
+    static int clearWadFileWorker(UserDataNode &node, void *)
     {
         WadFile *lump = reinterpret_cast<WadFile *>(node.userPointer());
         if(lump)
@@ -302,8 +296,8 @@ struct Wad::Instance
         // We'll load the lump directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
         wadlumprecord_t *arcRecords = new wadlumprecord_t[arcRecordsCount];
-        self->handle_->seek(arcRecordsOffset, SeekSet);
-        self->handle_->read((uint8_t *)arcRecords, arcRecordsCount * sizeof(*arcRecords));
+        self.handle_->seek(arcRecordsOffset, SeekSet);
+        self.handle_->read((uint8_t *)arcRecords, arcRecordsCount * sizeof(*arcRecords));
 
         // Reserve a small work buffer for processing archived lump names.
         ddstring_t absPath;
@@ -326,12 +320,12 @@ struct Wad::Instance
             WadFile *lump =
                 new WadFile(*dummy,
                             Str_Text(&absPath),
-                            FileInfo(self->lastModified(), // Inherited from the container (note recursion).
+                            FileInfo(self.lastModified(), // Inherited from the container (note recursion).
                                      i,
                                      littleEndianByteOrder.toNative(arcRecord->filePos),
                                      littleEndianByteOrder.toNative(arcRecord->size),
                                      littleEndianByteOrder.toNative(arcRecord->size)),
-                            self);
+                            thisPublic);
             UserDataNode *node = &lumpDirectory->insert(Path(Str_Text(&absPath)));
             node->setUserPointer(lump);
         }
@@ -346,7 +340,7 @@ struct Wad::Instance
     {
         Instance *wadInst = (Instance *)parameters;
         WadFile *lump = reinterpret_cast<WadFile *>(node.userPointer());
-        DENG2_ASSERT(lump && wadInst->self->isValidIndex(lump->info().lumpIdx)); // Sanity check.
+        DENG2_ASSERT(lump && wadInst->self.isValidIndex(lump->info().lumpIdx)); // Sanity check.
         (*wadInst->lumpNodeLut)[lump->info().lumpIdx] = &node;
         return 0; // Continue iteration.
     }
@@ -357,24 +351,17 @@ struct Wad::Instance
         // Been here already?
         if(lumpNodeLut) return;
 
-        lumpNodeLut = new LumpNodeLut(self->lumpCount());
+        lumpNodeLut = new LumpNodeLut(self.lumpCount());
         if(!lumpDirectory) return;
 
-        lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, buildLumpNodeLutWorker, (void*)this);
+        lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, buildLumpNodeLutWorker, this);
     }
 };
 
 Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
-{
-    d = new Instance(this, hndl, path);
-}
-
-Wad::~Wad()
-{
-    clearLumpCache();
-    delete d;
-}
+    , d(new Instance(this, hndl, path))
+{}
 
 bool Wad::isValidIndex(int lumpIdx) const
 {

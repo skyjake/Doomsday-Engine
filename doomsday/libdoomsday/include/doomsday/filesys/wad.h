@@ -1,9 +1,7 @@
-/** @file wad.h WAD Archive (File).
+/** @file wad.h  WAD Archive (File).
  *
- * @todo This should be replaced with a FS2 based WadFolder class.
- *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,21 +18,24 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_WAD_H
-#define LIBDENG_RESOURCE_WAD_H
+#ifndef LIBDOOMSDAY_FILESYS_WAD_H
+#define LIBDOOMSDAY_FILESYS_WAD_H
 
 #include "../libdoomsday.h"
 #include "file.h"
 #include "fileinfo.h"
+#include <de/Error>
 #include <de/PathTree>
 
 namespace de {
 
 /**
  * WAD archive file format.
- * @ingroup resource
+ * @ingroup fs
  *
  * @see file.h, File1
+ *
+ * @todo This should be replaced with a FS2 based WadFolder class.
  */
 class LIBDOOMSDAY_PUBLIC Wad : public File1
 {
@@ -47,7 +48,6 @@ public:
 
 public:
     Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
-    ~Wad();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
     bool isValidIndex(int lumpIdx) const;
@@ -166,10 +166,9 @@ public:
     static bool recognise(FileHandle &file);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_WAD_H */
+#endif // LIBDOOMSDAY_FILESYS_WAD_H
