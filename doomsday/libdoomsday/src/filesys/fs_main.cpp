@@ -261,7 +261,7 @@ struct FS1::Instance
                 lumpnum_t lumpNum = self.lumpNumForName(mapping.second);
                 if(lumpNum < 0) continue;
 
-                return &self.nameIndex()[lumpNum];
+                return &self.lump(lumpNum);
             }
         }
 
@@ -707,7 +707,7 @@ void FS1::endStartup()
     d->loadingForStartup = false;
 }
 
-LumpIndex const& FS1::nameIndex() const
+LumpIndex const &FS1::nameIndex() const
 {
     return d->primaryIndex;
 }
@@ -1175,9 +1175,8 @@ D_CMD(ListLumps)
     if(!fileSystem) return false;
 
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-
-    int const numRecords     = lumpIndex.size();
-    int const numIndexDigits = de::max(3, M_NumDigits(numRecords));
+    int const numRecords       = lumpIndex.size();
+    int const numIndexDigits   = de::max(3, M_NumDigits(numRecords));
 
     LOG_RES_MSG("LumpIndex %p (%i records):") << &lumpIndex << numRecords;
 
@@ -1363,12 +1362,12 @@ struct filehandle_s* F_Open(char const* nativePath, char const* mode)
     return F_Open2(nativePath, mode, 0/*base offset*/);
 }
 
-struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
+struct filehandle_s *F_OpenLump(lumpnum_t lumpNum)
 {
+    de::FS1 &fileSys = App_FileSystem();
     try
     {
-        de::File1& lump = App_FileSystem().nameIndex()[lumpNum];
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem().openLump(lump));
+        return reinterpret_cast<struct filehandle_s*>(&fileSys.openLump(fileSys.lump(lumpNum)));
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1395,7 +1394,7 @@ AutoStr* F_LumpName(lumpnum_t lumpNum)
 {
     try
     {
-        String const& name = App_FileSystem().nameIndex()[lumpNum].name();
+        String const &name = App_FileSystem().lump(lumpNum).name();
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromTextStd(nameUtf8.constData());
     }
@@ -1408,7 +1407,7 @@ size_t F_LumpLength(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem().nameIndex()[lumpNum].size();
+        return App_FileSystem().lump(lumpNum).size();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1419,7 +1418,7 @@ uint F_LumpLastModified(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem().nameIndex()[lumpNum].lastModified();
+        return App_FileSystem().lump(lumpNum).lastModified();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1519,9 +1518,9 @@ struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx)
 {
     try
     {
-        de::File1 const &lump = App_FileSystem().nameIndex()[lumpNum];
+        de::File1 const &lump = App_FileSystem().lump(lumpNum);
         if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
-        return reinterpret_cast<struct file1_s*>(&lump.container());
+        return reinterpret_cast<struct file1_s *>(&lump.container());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1532,8 +1531,7 @@ struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const &lump = App_FileSystem().nameIndex()[lumpNum];
-        return reinterpret_cast<struct file1_s *>(&lump.container());
+        return reinterpret_cast<struct file1_s *>(&App_FileSystem().lump(lumpNum).container());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1544,8 +1542,7 @@ AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const &lump = App_FileSystem().nameIndex()[lumpNum];
-        QByteArray path       = lump.container().composePath().toUtf8();
+        QByteArray path = App_FileSystem().lump(lumpNum).container().composePath().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
     catch(LumpIndex::NotFoundError const&)
@@ -1557,8 +1554,7 @@ dd_bool F_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const &lump = App_FileSystem().nameIndex()[lumpNum];
-        return lump.container().hasCustom();
+        return App_FileSystem().lump(lumpNum).container().hasCustom();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.

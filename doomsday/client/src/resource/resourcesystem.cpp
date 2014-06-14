@@ -995,7 +995,7 @@ DENG2_PIMPL(ResourceSystem)
         PatchNames pnames;
         try
         {
-            pnames = loadPatchNames(fileSys().nameIndex()[fileSys().lumpNumForName("PNAMES")]);
+            pnames = loadPatchNames(fileSys().lump(fileSys().lumpNumForName("PNAMES")));
         }
         catch(LumpIndex::NotFoundError const &er)
         {
@@ -2558,14 +2558,14 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
-    lumpnum_t lumpNum = d->fileSys().nameIndex().findLast(lumpPath);
-    if(lumpNum < 0)
+    if(!d->fileSys().nameIndex().contains(lumpPath))
     {
         LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
         return 0;
     }
 
-    de::File1 &file = d->fileSys().nameIndex().toLump(lumpNum);
+    lumpnum_t const lumpNum = d->fileSys().nameIndex().findLast(lumpPath);
+    de::File1 &file = d->fileSys().lump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -2647,7 +2647,7 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     if(!raw)
     {
         // An entirely new raw texture.
-        String const &name = App_FileSystem().nameIndex()[lumpNum].name();
+        String const &name = App_FileSystem().lump(lumpNum).name();
         raw = new rawtex_t(name, lumpNum);
         d->rawTexHash.insert(lumpNum, raw);
     }

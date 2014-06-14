@@ -702,9 +702,7 @@ dd_bool F_DumpLump2(lumpnum_t lumpNum, char const *_path)
 {
     try
     {
-        de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
-        String path     = String(_path? _path : "");
-        return dumpLump(lump, path);
+        return dumpLump(App_FileSystem().lump(lumpNum), _path? String(_path) : "");
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.

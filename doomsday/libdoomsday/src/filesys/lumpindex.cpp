@@ -338,6 +338,11 @@ bool LumpIndex::catalogues(File1 &file)
     return false;
 }
 
+bool LumpIndex::contains(Path const &path) const
+{
+    return findFirst(path) >= 0;
+}
+
 int LumpIndex::findAll(Path const &path, FoundIndices &found) const
 {
     LOG_AS("LumpIndex::findAll");

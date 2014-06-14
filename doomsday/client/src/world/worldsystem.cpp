@@ -388,7 +388,7 @@ DENG2_PIMPL(WorldSystem)
         /*lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(uri.path().toString().toLatin1().constData());
         if(markerLumpNum >= 0)
         {
-            File1 &lump = App_FileSystem().nameIndex().lump(markerLumpNum);
+            File1 &lump = App_FileSystem().lump(markerLumpNum);
             String cacheDir = cachePath(lump.container().composePath());
 
             rec.path = cacheDir + lump.name() + ".dcm";
@@ -433,7 +433,7 @@ DENG2_PIMPL(WorldSystem)
         }
 
         // Generate and attribute the old unique map id.
-        File1 &markerLump       = App_FileSystem().nameIndex()[markerLumpNum];
+        File1 &markerLump       = App_FileSystem().lump(markerLumpNum);
         String uniqueId         = composeUniqueMapId(markerLump);
         QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
         newMap->setOldUniqueId(uniqueIdUtf8.constData());

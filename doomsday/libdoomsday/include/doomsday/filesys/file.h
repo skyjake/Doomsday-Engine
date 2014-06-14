@@ -40,8 +40,6 @@
 
 namespace de {
 
-class LumpIndex;
-
 /**
  * File1 is a core component of the filesystem intended for use as the base
  * for all types of (pseudo-)file resources.

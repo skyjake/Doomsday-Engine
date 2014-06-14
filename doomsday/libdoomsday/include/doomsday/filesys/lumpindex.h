@@ -69,6 +69,11 @@ public:
     bool hasLump(lumpnum_t lumpNum) const;
 
     /**
+     * Returns @c true iff the index contains one or more lumps with a matching @a path.
+     */
+    bool contains(Path const &path) const;
+
+    /**
      * Finds all indices for lumps with a matching @a path.
      *
      * @param path   Path of the lump(s) to .

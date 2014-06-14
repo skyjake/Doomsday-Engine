@@ -50,6 +50,7 @@
 #include "filetype.h"
 #include "searchpath.h"
 #include "../resource/resourceclass.h"
+#include "../filesys/lumpindex.h"
 
 /**
  * @defgroup fs File System
@@ -412,6 +413,14 @@ public:
      * used for efficiently looking up files based on name.
      */
     LumpIndex const &nameIndex() const;
+
+    /**
+     * Convenient method of looking up a file from the lump name index given its
+     * unique @a lumpnum.
+     *
+     * @see nameIndex(), LumpIndex::toLump()
+     */
+    inline File1 &lump(lumpnum_t lumpnum) const { return nameIndex()[lumpnum]; }
 
     /**
      * Opens the given file (will be translated) for reading.

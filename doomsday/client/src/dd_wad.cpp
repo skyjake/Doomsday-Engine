@@ -40,7 +40,7 @@ size_t W_LumpLength(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem().nameIndex()[lumpNum].info().size;
+        return App_FileSystem().lump(lumpNum).info().size;
     }
     catch(LumpIndex::NotFoundError const &er)
     {
@@ -55,7 +55,7 @@ AutoStr *W_LumpName(lumpnum_t lumpNum)
 {
     try
     {
-        String const& name = App_FileSystem().nameIndex()[lumpNum].name();
+        String const &name  = App_FileSystem().lump(lumpNum).name();
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromTextStd(nameUtf8.constData());
     }
@@ -72,7 +72,7 @@ uint W_LumpLastModified(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem().nameIndex()[lumpNum].info().lastModified;
+        return App_FileSystem().lump(lumpNum).info().lastModified;
     }
     catch(LumpIndex::NotFoundError const &er)
     {
@@ -87,8 +87,7 @@ AutoStr *W_LumpSourceFile(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem().nameIndex()[lumpNum];
-        QByteArray path = lump.container().composePath().toUtf8();
+        QByteArray path = App_FileSystem().lump(lumpNum).container().composePath().toUtf8();
         return AutoStr_FromText(path.constData());
     }
     catch(LumpIndex::NotFoundError const &er)
@@ -104,8 +103,7 @@ dd_bool W_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem().nameIndex()[lumpNum];
-        return lump.container().hasCustom();
+        return App_FileSystem().lump(lumpNum).container().hasCustom();
     }
     catch(LumpIndex::NotFoundError const &er)
     {
@@ -140,11 +138,11 @@ lumpnum_t W_GetLumpNumForName(char const *name)
 }
 
 #undef W_ReadLump
-size_t W_ReadLump(lumpnum_t lumpNum, uint8_t* buffer)
+size_t W_ReadLump(lumpnum_t lumpNum, uint8_t *buffer)
 {
     try
     {
-        de::File1& lump = App_FileSystem().nameIndex()[lumpNum];
+        de::File1 &lump = App_FileSystem().lump(lumpNum);
         return lump.read(buffer, 0, lump.size());
     }
     catch(LumpIndex::NotFoundError const &er)
@@ -156,12 +154,11 @@ size_t W_ReadLump(lumpnum_t lumpNum, uint8_t* buffer)
 }
 
 #undef W_ReadLumpSection
-size_t W_ReadLumpSection(lumpnum_t lumpNum, uint8_t* buffer, size_t startOffset, size_t length)
+size_t W_ReadLumpSection(lumpnum_t lumpNum, uint8_t *buffer, size_t startOffset, size_t length)
 {
     try
     {
-        de::File1& lump = App_FileSystem().nameIndex()[lumpNum];
-        return lump.read(buffer, startOffset, length);
+        return App_FileSystem().lump(lumpNum).read(buffer, startOffset, length);
     }
     catch(LumpIndex::NotFoundError const &er)
     {
@@ -176,7 +173,7 @@ uint8_t const *W_CacheLump(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem().nameIndex()[lumpNum].cache();
+        return App_FileSystem().lump(lumpNum).cache();
     }
     catch(LumpIndex::NotFoundError const &er)
     {
@@ -191,7 +188,7 @@ void W_UnlockLump(lumpnum_t lumpNum)
 {
     try
     {
-        App_FileSystem().nameIndex()[lumpNum].unlock();
+        App_FileSystem().lump(lumpNum).unlock();
     }
     catch(LumpIndex::NotFoundError const &er)
     {

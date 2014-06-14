@@ -655,7 +655,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
     {
-        de::File1 &file       = App_FileSystem().nameIndex()[i->lumpNum()];
+        de::File1 &file       = App_FileSystem().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
         // A DOOM patch?
@@ -767,6 +767,8 @@ static Source loadDetail(image_t &image, de::FileHandle &hndl)
 Source GL_LoadSourceImage(image_t &image, Texture const &tex,
     TextureVariantSpec const &spec)
 {
+    de::FS1 &fileSys = App_FileSystem();
+
     Source source = None;
     variantspecification_t const &vspec = spec.variant;
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
@@ -818,13 +820,12 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                 {
                     try
                     {
-                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                        de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
-                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
+                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        de::FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadFlat(image, hndl);
 
-                        App_FileSystem().releaseFile(hndl.file());
+                        fileSys.releaseFile(hndl.file());
                         delete &hndl;
                     }
                     catch(LumpIndex::NotFoundError const&)
@@ -858,13 +859,12 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                 {
                     try
                     {
-                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                        de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
-                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
+                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        de::FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
-                        App_FileSystem().releaseFile(hndl.file());
+                        fileSys.releaseFile(hndl.file());
                         delete &hndl;
                     }
                     catch(LumpIndex::NotFoundError const&)
@@ -912,13 +912,12 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                 {
                     try
                     {
-                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                        de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
-                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
+                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        de::FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
-                        App_FileSystem().releaseFile(hndl.file());
+                        fileSys.releaseFile(hndl.file());
                         delete &hndl;
                     }
                     catch(LumpIndex::NotFoundError const&)
@@ -938,15 +937,15 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
             }
             else
             {
-                lumpnum_t lumpNum = App_FileSystem().lumpNumForName(resourceUri.path());
+                lumpnum_t const lumpNum = fileSys.lumpNumForName(resourceUri.path());
                 try
                 {
-                    de::File1 &lump = App_FileSystem().nameIndex()[lumpNum];
-                    de::FileHandle &hndl = App_FileSystem().openLump(lump);
+                    de::File1 &lump = fileSys.lump(lumpNum);
+                    de::FileHandle &hndl = fileSys.openLump(lump);
 
                     source = loadDetail(image, hndl);
 
-                    App_FileSystem().releaseFile(hndl.file());
+                    fileSys.releaseFile(hndl.file());
                     delete &hndl;
                 }
                 catch(LumpIndex::NotFoundError const&)
