@@ -884,11 +884,10 @@ public:
     bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
 
 public: /// @todo Should be private:
-    void initCompositeTextures();
-    void initFlatTextures();
-    void initRawTextures();
-    void initSpriteTextures();
+    void initTextures();
     void initSystemTextures();
+
+    void clearAllRawTextures();
 
     void initSprites();
 #ifdef __CLIENT__

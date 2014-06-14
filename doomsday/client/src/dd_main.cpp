@@ -1168,9 +1168,7 @@ static int DD_ActivateGameWorker(void *context)
     ResourceSystem &resSys = App_ResourceSystem();
 
     // Texture resources are located now, prior to initializing the game.
-    resSys.initCompositeTextures();
-    resSys.initFlatTextures();
-    resSys.initSpriteTextures();
+    resSys.initTextures();
     resSys.textureScheme("Lightmaps").clear();
     resSys.textureScheme("Flaremaps").clear();
 
@@ -2071,9 +2069,7 @@ dd_bool DD_Init(void)
         initPathMappings();
         App_FileSystem().resetAllSchemes();
 
-        App_ResourceSystem().initCompositeTextures();
-        App_ResourceSystem().initFlatTextures();
-        App_ResourceSystem().initSpriteTextures();
+        App_ResourceSystem().initTextures();
         App_ResourceSystem().textureScheme("Lightmaps").clear();
         App_ResourceSystem().textureScheme("Flaremaps").clear();
 
@@ -2270,7 +2266,7 @@ static int DD_UpdateEngineStateWorker(void *context)
     // Re-read definitions.
     Def_Read();
 
-    App_ResourceSystem().initRawTextures();
+    App_ResourceSystem().clearAllRawTextures();
     App_ResourceSystem().initSprites(); // Fully reinitialize sprites.
 #ifdef __CLIENT__
     App_ResourceSystem().initModels(); // Defs might've changed.
@@ -2325,9 +2321,7 @@ void DD_UpdateEngineState()
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem().resetAllSchemes();
 
-    App_ResourceSystem().initCompositeTextures();
-    App_ResourceSystem().initFlatTextures();
-    App_ResourceSystem().initSpriteTextures();
+    App_ResourceSystem().initTextures();
 
     if(App_GameLoaded() && gx.UpdateState)
     {
