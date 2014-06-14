@@ -169,23 +169,21 @@ private:
 
 DENG2_PIMPL(Wad)
 {
-    int arcRecordsCount;              ///< Number of lump records in the archived wad.
-    size_t arcRecordsOffset;          ///< Offset to the lump record table in the archived wad.
-    UserDataPathTree *lumpDirectory;  ///< Directory structure and info records for all lumps.
+    int arcRecordsCount;                  ///< Number of lump records in the archived wad.
+    size_t arcRecordsOffset;              ///< Offset to the lump record table in the archived wad.
+    UserDataPathTree *lumpDirectory;      ///< Directory structure and info records for all lumps.
 
     /// LUT which maps logical lump indices to PathTreeNodes.
     typedef std::vector<UserDataNode *> LumpNodeLut;
-    LumpNodeLut *lumpNodeLut;
+    QScopedPointer<LumpNodeLut> lumpNodeLut;
 
-    LumpCache *lumpCache;             ///< Data payload cache.
+    QScopedPointer<LumpCache> lumpCache;  ///< Data payload cache.
 
     Instance(Public *i, FileHandle &file, String path)
         : Base(i)
         , arcRecordsCount (0)
         , arcRecordsOffset(0)
         , lumpDirectory   (0)
-        , lumpNodeLut     (0)
-        , lumpCache       (0)
     {
         // Seek to the start of the header.
         file.seek(0, SeekSet);
@@ -200,16 +198,11 @@ DENG2_PIMPL(Wad)
 
     ~Instance()
     {
-        self.clearLumpCache();
-
         if(lumpDirectory)
         {
             lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, clearWadFileWorker);
             delete lumpDirectory;
         }
-
-        delete lumpNodeLut;
-        delete lumpCache;
     }
 
     static int clearWadFileWorker(UserDataNode &node, void *)
@@ -349,9 +342,9 @@ DENG2_PIMPL(Wad)
     {
         LOG_AS("Wad");
         // Been here already?
-        if(lumpNodeLut) return;
+        if(!lumpNodeLut.isNull()) return;
 
-        lumpNodeLut = new LumpNodeLut(self.lumpCount());
+        lumpNodeLut.reset(new LumpNodeLut(self.lumpCount()));
         if(!lumpDirectory) return;
 
         lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, buildLumpNodeLutWorker, this);
@@ -407,7 +400,7 @@ void Wad::clearCachedLump(int lumpIdx, bool *retCleared)
 
     if(isValidIndex(lumpIdx))
     {
-        if(d->lumpCache)
+        if(!d->lumpCache.isNull())
         {
             d->lumpCache->remove(lumpIdx, retCleared);
         }
@@ -421,7 +414,10 @@ void Wad::clearCachedLump(int lumpIdx, bool *retCleared)
 void Wad::clearLumpCache()
 {
     LOG_AS("Wad::clearLumpCache");
-    if(d->lumpCache) d->lumpCache->clear();
+    if(!d->lumpCache.isNull())
+    {
+        d->lumpCache->clear();
+    }
 }
 
 uint8_t const *Wad::cacheLump(int lumpIdx)
@@ -438,15 +434,15 @@ uint8_t const *Wad::cacheLump(int lumpIdx)
         << (file.info().isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
-    if(!d->lumpCache)
+    if(d->lumpCache.isNull())
     {
-        d->lumpCache = new LumpCache(lumpCount());
+        d->lumpCache.reset(new LumpCache(lumpCount()));
     }
 
     uint8_t const *data = d->lumpCache->data(lumpIdx);
     if(data) return data;
 
-    uint8_t * region = (uint8_t *) Z_Malloc(file.info().size, PU_APPSTATIC, 0);
+    uint8_t *region = (uint8_t *) Z_Malloc(file.info().size, PU_APPSTATIC, 0);
     if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(file.info().size).arg(lumpIdx));
 
     readLump(lumpIdx, region, false);
@@ -462,7 +458,7 @@ void Wad::unlockLump(int lumpIdx)
 
     if(isValidIndex(lumpIdx))
     {
-        if(d->lumpCache)
+        if(!d->lumpCache.isNull())
         {
             d->lumpCache->unlock(lumpIdx);
         }
@@ -497,7 +493,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache)
     {
-        uint8_t const *data = d->lumpCache? d->lumpCache->data(lumpIdx) : 0;
+        uint8_t const *data = (!d->lumpCache.isNull() ? d->lumpCache->data(lumpIdx) : 0);
         LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
