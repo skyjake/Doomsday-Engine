@@ -88,6 +88,7 @@
 using namespace de;
 
 typedef QList<CompositeTexture *> CompositeTextures;
+typedef QList<PatchName> PatchNames;
 
 static QList<de::File1 *> collectPatchCompositeDefinitionFiles();
 
@@ -211,9 +212,6 @@ DENG2_PIMPL(ResourceSystem)
 
     typedef QList<AnimGroup *> AnimGroups;
     AnimGroups animGroups;
-
-    typedef QList<PatchName> PatchNames;
-    PatchNames patchNames;
 
     typedef QMap<colorpaletteid_t, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes;
@@ -473,7 +471,7 @@ DENG2_PIMPL(ResourceSystem)
         self.clearAllColorPalettes();
     }
 
-    inline de::FS1 &fileSystem()
+    inline de::FS1 &fileSys()
     {
         return App_FileSystem();
     }
@@ -940,56 +938,64 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    void loadPatchNames(String lumpName)
+    PatchNames loadPatchNames(de::File1 &file)
     {
         LOG_AS("loadPatchNames");
+        PatchNames names;
 
-        // Clear any previously exisiting names.
-        patchNames.clear();
+        if(file.size() < 4)
+        {
+            LOG_RES_WARNING("File \"%s\" does not appear to be valid PNAMES data")
+                << NativePath(file.composeUri().asText()).pretty();
+            return names;
+        }
 
+        ByteRefArray lumpData(file.cache(), file.size());
+        de::Reader from(lumpData);
+
+        // The data begins with the total number of patch names.
+        dint32 numNames;
+        from >> numNames;
+
+        // Followed by the names (eight character ASCII strings).
+        if(numNames > 0)
+        {
+            if((unsigned) numNames > (file.size() - 4) / 8)
+            {
+                // The data appears to be truncated.
+                LOG_RES_WARNING("File \"%s\" appears to be truncated (%u bytes, expected %u)")
+                    << NativePath(file.composeUri().asText()).pretty()
+                    << file.size() << (numNames * 8 + 4);
+
+                // We'll only read this many names.
+                numNames = (file.size() - 4) / 8;
+            }
+
+            // Read the names.
+            for(int i = 0; i < numNames; ++i)
+            {
+                PatchName name;
+                from >> name;
+                names.append(name);
+            }
+        }
+
+        file.unlock();
+
+        return names;
+    }
+
+    CompositeTextures loadCompositeTextureDefs()
+    {
+        LOG_AS("loadCompositeTextureDefs");
+
+        typedef QMultiMap<String, CompositeTexture *> CompositeTextureMap;
+
+        // Load the patch names from the PNAMES lump.
+        PatchNames pnames;
         try
         {
-            lumpnum_t lumpNum = fileSystem().lumpNumForName(lumpName);
-            de::File1 &file   = fileSystem().nameIndex()[lumpNum];
-
-            if(file.size() < 4)
-            {
-                LOG_RES_WARNING("File \"%s\" (#%i) does not appear to be valid PNAMES data")
-                    << NativePath(file.composeUri().asText()).pretty() << lumpNum;
-                return;
-            }
-
-            ByteRefArray lumpData = ByteRefArray(file.cache(), file.size());
-            de::Reader from = de::Reader(lumpData);
-
-            // The data begins with the total number of patch names.
-            dint32 numNames;
-            from >> numNames;
-
-            // Followed by the names (eight character ASCII strings).
-            if(numNames > 0)
-            {
-                if((unsigned) numNames > (file.size() - 4) / 8)
-                {
-                    // The data appears to be truncated.
-                    LOG_RES_WARNING("File \"%s\" (#%i) appears to be truncated (%u bytes, expected %u)")
-                        << NativePath(file.composeUri().asText()).pretty() << lumpNum
-                        << file.size() << (numNames * 8 + 4);
-
-                    // We'll only read this many names.
-                    numNames = (file.size() - 4) / 8;
-                }
-
-                // Read the names.
-                for(int i = 0; i < numNames; ++i)
-                {
-                    PatchName name;
-                    from >> name;
-                    patchNames.append(name);
-                }
-            }
-
-            file.unlock();
+            pnames = loadPatchNames(fileSys().nameIndex()[fileSys().lumpNumForName("PNAMES")]);
         }
         catch(LumpIndex::NotFoundError const &er)
         {
@@ -998,17 +1004,9 @@ DENG2_PIMPL(ResourceSystem)
                 LOGDEV_RES_WARNING(er.asText());
             }
         }
-    }
-
-    CompositeTextures loadCompositeTextureDefs()
-    {
-        LOG_AS("loadCompositeTextureDefs");
-
-        // Load the patch names from the PNAMES lump.
-        loadPatchNames("PNAMES");
 
         // If no patch names - there is no point continuing further.
-        if(!patchNames.count()) return CompositeTextures();
+        if(!pnames.count()) return CompositeTextures();
 
         // Collate an ordered list of all the definition files we intend to process.
         QList<de::File1 *> defFiles = collectPatchCompositeDefinitionFiles();
@@ -1035,18 +1033,15 @@ DENG2_PIMPL(ResourceSystem)
                 << NativePath(file.container().composeUri().asText()).pretty()
                 << NativePath(file.composeUri().asText()).pretty();
 
-            // Buffer the file.
-            ByteRefArray dataBuffer = ByteRefArray(file.cache(), file.size());
-
-            // Read the next set of definitions.
+            // Buffer the file and read the next set of definitions.
             int archiveCount;
-            CompositeTextures newDefs = readCompositeTextureDefs(dataBuffer, origIndexBase, archiveCount);
+            ByteRefArray dataBuffer   = ByteRefArray(file.cache(), file.size());
+            CompositeTextures newDefs = readCompositeTextureDefs(dataBuffer, pnames, origIndexBase, archiveCount);
 
-            // We have now finished with this file.
-            file.unlock();
+            file.unlock(); // We have now finished with this file.
 
             // In which set do these belong?
-            CompositeTextures* existingDefs =
+            CompositeTextures *existingDefs =
                     (file.container().hasCustom()? &customDefs : &defs);
 
             if(!existingDefs->isEmpty())
@@ -1113,8 +1108,8 @@ DENG2_PIMPL(ResourceSystem)
                         // Check the patches.
                         for(int k = 0; k < orig->componentCount(); ++k)
                         {
-                            CompositeTexture::Component const &origP   = orig->components()[k];
-                            CompositeTexture::Component const &customP = custom->components()[k];
+                            CompositeTextureComponent const &origP   = orig->components()[k];
+                            CompositeTextureComponent const &customP = custom->components()[k];
 
                             if(origP.lumpNum() != customP.lumpNum() &&
                                origP.xOrigin() != customP.xOrigin() &&
@@ -1140,8 +1135,8 @@ DENG2_PIMPL(ResourceSystem)
             }
 
             /*
-             * List 'defs' now contains only those definitions which are not superceeded
-             * by those in the 'customDefs' list.
+             * List 'defs' now contains only those definitions which are not
+             * superceeded by those in the 'customDefs' list.
              */
 
             // Add definitions from the custom list to the end of the main set.
@@ -1161,7 +1156,7 @@ DENG2_PIMPL(ResourceSystem)
      *                      number of definitions which are actually read).
      */
     CompositeTextures readCompositeTextureDefs(IByteArray &data,
-        int origIndexBase, int& archiveCount)
+        PatchNames const &patchNames, int origIndexBase, int &archiveCount)
     {
         LOG_AS("readCompositeTextureDefs");
 
@@ -1378,16 +1373,16 @@ DENG2_PIMPL(ResourceSystem)
             // The "first choice" directory is that in which the model file resides.
             try
             {
-                return fileSystem().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
-                                             RLF_DEFAULT, self.resClass(RC_GRAPHIC));
+                return fileSys().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
+                                          RLF_DEFAULT, self.resClass(RC_GRAPHIC));
             }
             catch(FS1::NotFoundError const &)
             {} // Ignore this error.
         }
 
         /// @throws FS1::NotFoundError if no resource was found.
-        return fileSystem().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
-                                     self.resClass(RC_GRAPHIC));
+        return fileSys().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
+                                  self.resClass(RC_GRAPHIC));
     }
 
     /**
@@ -1447,8 +1442,8 @@ DENG2_PIMPL(ResourceSystem)
 
             try
             {
-                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         self.resClass(RC_GRAPHIC));
+                String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
+                                                      self.resClass(RC_GRAPHIC));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -1589,8 +1584,8 @@ DENG2_PIMPL(ResourceSystem)
 
             try
             {
-                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         self.resClass(RC_MODEL));
+                String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
+                                                      self.resClass(RC_MODEL));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -1600,12 +1595,12 @@ DENG2_PIMPL(ResourceSystem)
                 if(!mdl)
                 {
                     // Attempt to load it in now.
-                    QScopedPointer<de::FileHandle> hndl(&fileSystem().openFile(foundPath, "rb"));
+                    QScopedPointer<de::FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
 
                     mdl = Model::loadFromFile(*hndl, modelAspectMod);
 
                     // We're done with the file.
-                    fileSystem().releaseFile(hndl->file());
+                    fileSys().releaseFile(hndl->file());
 
                     // Loaded?
                     if(mdl)
@@ -2236,13 +2231,13 @@ void ResourceSystem::initCompositeTextures()
     Time begunAt;
 
     LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Initializing PatchComposite textures...");
+    LOG_RES_VERBOSE("Initializing CompositeTextures...");
 
     // Load texture definitions from TEXTURE1/2 lumps.
     CompositeTextures texs = d->loadCompositeTextureDefs();
     d->processCompositeTextureDefs(texs);
 
-    DENG_ASSERT(texs.isEmpty());
+    DENG2_ASSERT(texs.isEmpty());
 
     LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
 }
@@ -2254,7 +2249,7 @@ void ResourceSystem::initFlatTextures()
     LOG_AS("ResourceSystem");
     LOG_RES_VERBOSE("Initializing Flat textures...");
 
-    LumpIndex const &index = d->fileSystem().nameIndex();
+    LumpIndex const &index = d->fileSys().nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.findFirst(Path("F_START.lmp"));
     if(firstFlatMarkerLumpNum >= 0)
     {
@@ -2393,7 +2388,7 @@ void ResourceSystem::initSpriteTextures()
     /// @todo fixme: Order here does not respect id tech1 logic.
     ddstack_t *stack = Stack_New();
 
-    LumpIndex const &index = d->fileSystem().nameIndex();
+    LumpIndex const &index = d->fileSys().nameIndex();
     for(int i = 0; i < index.size(); ++i)
     {
         de::File1 &file = index[i];
@@ -2563,14 +2558,14 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
-    lumpnum_t lumpNum = d->fileSystem().nameIndex().findLast(lumpPath);
+    lumpnum_t lumpNum = d->fileSys().nameIndex().findLast(lumpPath);
     if(lumpNum < 0)
     {
         LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
         return 0;
     }
 
-    de::File1 &file = d->fileSystem().nameIndex().toLump(lumpNum);
+    de::File1 &file = d->fileSys().nameIndex().toLump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -3193,7 +3188,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePat
 {
     LOG_AS("ResourceSystem::newFontFromFile");
 
-    if(!d->fileSystem().accessFile(de::Uri::fromNativePath(filePath)))
+    if(!d->fileSys().accessFile(de::Uri::fromNativePath(filePath)))
     {
         LOGDEV_RES_WARNING("Ignoring invalid filePath: ") << filePath;
         return 0;

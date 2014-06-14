@@ -655,7 +655,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
     {
-        de::File1 &file = App_FileSystem().nameIndex()[i->lumpNum()];
+        de::File1 &file       = App_FileSystem().nameIndex()[i->lumpNum()];
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
         // A DOOM patch?
@@ -666,7 +666,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
                 Patch::Flags loadFlags;
                 if(maskZero) loadFlags |= Patch::MaskZero;
 
-                Block patchImg = Patch::load(fileData, loadFlags);
+                Block patchImg     = Patch::load(fileData, loadFlags);
                 PatchMetadata info = Patch::loadMetadata(fileData);
 
                 Vector2i origin = i->origin();
