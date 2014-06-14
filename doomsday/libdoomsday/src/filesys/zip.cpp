@@ -165,7 +165,7 @@ public:
      */
     PathTree::Node const& directoryNode() const
     {
-        return dynamic_cast<Zip&>(container()).lumpDirectoryNode(info_.lumpIdx);
+        return container().as<Zip>().lumpDirectoryNode(info_.lumpIdx);
     }
 
     /**
@@ -181,7 +181,7 @@ public:
      */
     size_t read(uint8_t* buffer, bool tryCache = true)
     {
-        return dynamic_cast<Zip&>(container()).readLump(info_.lumpIdx, buffer, tryCache);
+        return container().as<Zip>().readLump(info_.lumpIdx, buffer, tryCache);
     }
 
     /**
@@ -196,7 +196,7 @@ public:
      */
     size_t read(uint8_t* buffer, size_t startOffset, size_t length, bool tryCache = true)
     {
-        return dynamic_cast<Zip&>(container()).readLump(info_.lumpIdx, buffer, startOffset, length, tryCache);
+        return container().as<Zip>().readLump(info_.lumpIdx, buffer, startOffset, length, tryCache);
     }
 
     /**
@@ -206,7 +206,7 @@ public:
      */
     uint8_t const* cache()
     {
-        return dynamic_cast<Zip&>(container()).cacheLump(info_.lumpIdx);
+        return container().as<Zip>().cacheLump(info_.lumpIdx);
     }
 
     /**
@@ -216,7 +216,7 @@ public:
      */
     ZipFile& unlock()
     {
-        dynamic_cast<Zip&>(container()).unlockLump(info_.lumpIdx);
+        container().as<Zip>().unlockLump(info_.lumpIdx);
         return *this;
     }
 };

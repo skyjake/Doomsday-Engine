@@ -839,7 +839,7 @@ static void loadResource(ResourceManifest &manifest)
         file->setCustom(false);
 
         // Print the 'CRC' number of IWADs, so they can be identified.
-        if(Wad *wad = dynamic_cast<Wad*>(file))
+        if(Wad *wad = file->maybeAs<Wad>())
         {
             LOG_RES_MSG("IWAD identification: %08x") << wad->calculateCRC();
         }

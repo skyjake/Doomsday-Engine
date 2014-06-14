@@ -477,7 +477,7 @@ void FS1::index(de::File1 &file)
 #endif
 
     // Publish lumps to one or more indexes?
-    if(Zip *zip = dynamic_cast<Zip *>(&file))
+    if(Zip *zip = file.maybeAs<Zip>())
     {
         if(!zip->empty())
         {
@@ -493,7 +493,7 @@ void FS1::index(de::File1 &file)
             }
         }
     }
-    else if(Wad *wad = dynamic_cast<Wad *>(&file))
+    else if(Wad *wad = file.maybeAs<Wad>())
     {
         if(!wad->empty())
         {
@@ -741,16 +741,18 @@ void FS1::releaseFile(de::File1& file)
 }
 
 /// @return @c NULL= Not found.
-static Wad* findFirstWadFile(FS1::FileList& list, bool custom)
+static Wad *findFirstWadFile(FS1::FileList &list, bool custom)
 {
     if(list.empty()) return 0;
     DENG2_FOR_EACH(FS1::FileList, i, list)
     {
-        de::File1& file = (*i)->file();
+        de::File1 &file = (*i)->file();
         if(custom != file.hasCustom()) continue;
 
-        Wad* wad = dynamic_cast<Wad*>(&file);
-        if(wad) return wad;
+        if(Wad *wad = file.maybeAs<Wad>())
+        {
+            return wad;
+        }
     }
     return 0;
 }
@@ -1216,11 +1218,11 @@ D_CMD(ListFiles)
             uint crc = 0;
 
             int fileCount = 1;
-            if(de::Zip *zip = dynamic_cast<de::Zip *>(&file))
+            if(de::Zip *zip = file.maybeAs<de::Zip>())
             {
                 fileCount = zip->lumpCount();
             }
-            else if(de::Wad *wad = dynamic_cast<de::Wad *>(&file))
+            else if(de::Wad *wad = file.maybeAs<de::Wad>())
             {
                 fileCount = wad->lumpCount();
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
@@ -1446,31 +1448,33 @@ void F_SetCustom(struct file1_s* file, dd_bool yes)
     reinterpret_cast<de::File1*>(file)->setCustom(CPP_BOOL(yes));
 }
 
-size_t F_ReadLump(struct file1_s* _file, int lumpIdx, uint8_t* buffer)
+size_t F_ReadLump(struct file1_s *_file, int lumpIdx, uint8_t *buffer)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(Wad* wad = dynamic_cast<Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(Wad *wad = file->maybeAs<Wad>())
     {
         return wad->lump(lumpIdx).read(buffer);
     }
-    if(Zip* zip = dynamic_cast<Zip*>(file))
+    if(Zip *zip = file->maybeAs<Zip>())
     {
         return zip->lump(lumpIdx).read(buffer);
     }
     return file->read(buffer);
 }
 
-size_t F_ReadLumpSection(struct file1_s* _file, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(struct file1_s *_file, int lumpIdx, uint8_t *buffer,
     size_t startOffset, size_t length)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         return wad->lump(lumpIdx).read(buffer, startOffset, length);
     }
-    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         return zip->lump(lumpIdx).read(buffer, startOffset, length);
     }
@@ -1481,11 +1485,12 @@ uint8_t const *F_CacheLump(struct file1_s *_file, int lumpIdx)
 {
     if(!_file) return 0;
     de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    if(de::Wad *wad = dynamic_cast<de::Wad *>(file))
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         return wad->lump(lumpIdx).cache();
     }
-    if(de::Zip *zip = dynamic_cast<de::Zip *>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         return zip->lump(lumpIdx).cache();
     }
@@ -1496,12 +1501,13 @@ void F_UnlockLump(struct file1_s *_file, int lumpIdx)
 {
     if(!_file) return;
     de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    if(de::Wad *wad = dynamic_cast<de::Wad *>(file))
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         wad->unlockLump(lumpIdx);
         return;
     }
-    if(de::Zip *zip = dynamic_cast<de::Zip *>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         zip->unlockLump(lumpIdx);
         return;
@@ -1559,16 +1565,17 @@ dd_bool F_LumpIsCustom(lumpnum_t lumpNum)
     return false;
 }
 
-AutoStr* F_ComposeLumpPath2(struct file1_s* _file, int lumpIdx, char delimiter)
+AutoStr *F_ComposeLumpPath2(struct file1_s *_file, int lumpIdx, char delimiter)
 {
     if(!_file) return AutoStr_NewStd();
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         QByteArray path = wad->lump(lumpIdx).composePath(delimiter).toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
-    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         QByteArray path = zip->lump(lumpIdx).composePath(delimiter).toUtf8();
         return AutoStr_FromTextStd(path.constData());

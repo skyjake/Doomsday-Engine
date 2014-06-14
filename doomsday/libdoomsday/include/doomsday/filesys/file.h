@@ -85,6 +85,8 @@ public:
      */
     virtual ~File1();
 
+    DENG2_AS_IS_METHODS()
+
     /// @return  Name of this file.
     virtual String const& name() const;
 

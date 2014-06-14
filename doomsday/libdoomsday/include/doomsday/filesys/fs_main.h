@@ -70,13 +70,6 @@
 
 namespace de {
 
-namespace internal {
-    template <typename Type>
-    inline bool cannotCastFileTo(File1 *file) {
-        return dynamic_cast<Type *>(file) == NULL;
-    }
-}
-
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
  * other files are single lumps whose base filename will become the lump name.
@@ -499,8 +492,10 @@ public:
         while(i.hasNext())
         {
             i.next();
-            if(internal::cannotCastFileTo<Type>(&i.value()->file()))
+            if(!i.value()->file().is<Type>())
+            {
                 i.remove();
+            }
         }
         return found.count();
     }

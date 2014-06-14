@@ -184,7 +184,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
     {
         de::FileHandle &hndl = App_FileSystem().openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
 
-        if(Wad *wad = dynamic_cast<Wad *>(&hndl.file()))
+        if(Wad *wad = hndl.file().maybeAs<Wad>())
         {
             // Ensure all identity lumps are present.
             if(identityKeys.count())
