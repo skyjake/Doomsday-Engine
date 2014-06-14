@@ -81,14 +81,16 @@ public:
     int findAll(Path const &path, FoundIndices &found) const;
 
     /**
-     * Returns the index of the @em first lump with a matching @a path; otherwise @c -1.
+     * Returns the index of the @em first loaded lump with a matching @a path.
+     * If no lump is found then @c -1 is returned.
      *
      * @see findLast(), findAll()
      */
     lumpnum_t findFirst(Path const &path) const;
 
     /**
-     * Returns the index of the @em last last with a matching @a path; otherwise @c -1.
+     * Returns the index of the @em last loaded lump with a matching @a path.
+     * If no lump is found then @c -1 is returned.
      *
      * @see findFirst(), findAll()
      */

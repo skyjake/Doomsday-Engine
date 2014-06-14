@@ -416,7 +416,7 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
         }
     }
 
-    return earliest; // Not found.
+    return earliest;
 }
 
 } // namespace de
