@@ -158,11 +158,6 @@ public:
      */
     bool pruneLump(File1 &lump);
 
-    /**
-     * Print contents of index @a index.
-     */
-    static void print(LumpIndex const &index);
-
 private:
     DENG2_PRIVATE(d)
 };

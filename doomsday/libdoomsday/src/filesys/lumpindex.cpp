@@ -27,7 +27,6 @@
 #include <QBitArray>
 #include <QVector>
 #include <de/Log>
-#include <de/NativePath>
 
 namespace de {
 namespace internal
@@ -309,7 +308,7 @@ bool LumpIndex::pruneLump(File1 &lump)
 void LumpIndex::catalogLump(File1 &lump)
 {
     d->lumps.push_back(&lump);
-    d->lumpsByPath.reset();    // We'll need to rebuild the name hash chains.
+    d->lumpsByPath.reset();    // We'll need to rebuild the path hash chains.
 
     if(d->pathsAreUnique)
     {
@@ -418,30 +417,6 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
     }
 
     return earliest; // Not found.
-}
-
-void LumpIndex::print(LumpIndex const &index)
-{
-    int const numRecords     = index.size();
-    int const numIndexDigits = de::max(3, M_NumDigits(numRecords));
-
-    LOG_RES_MSG("LumpIndex %p (%i records):") << &index << numRecords;
-
-    int idx = 0;
-    DENG2_FOR_EACH_CONST(Lumps, i, index.allLumps())
-    {
-        File1 const &lump    = **i;
-        String containerPath = NativePath(lump.container().composePath()).pretty();
-        String lumpPath      = NativePath(lump.composePath()).pretty();
-
-        LOG_RES_MSG(QString("%1 - \"%2:%3\" (size: %4 bytes%5)")
-                    .arg(idx++, numIndexDigits, 10, QChar('0'))
-                    .arg(containerPath)
-                    .arg(lumpPath)
-                    .arg(lump.info().size)
-                    .arg(lump.info().isCompressed()? " compressed" : ""));
-    }
-    LOG_RES_MSG("---End of lumps---");
 }
 
 } // namespace de

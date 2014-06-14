@@ -467,7 +467,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String pa
     return i;
 }
 
-void FS1::index(de::File1& file)
+void FS1::index(de::File1 &file)
 {
 #ifdef DENG_DEBUG
     // Ensure this hasn't yet been indexed.
@@ -477,14 +477,14 @@ void FS1::index(de::File1& file)
 #endif
 
     // Publish lumps to one or more indexes?
-    if(Zip* zip = dynamic_cast<Zip*>(&file))
+    if(Zip *zip = dynamic_cast<Zip *>(&file))
     {
         if(!zip->empty())
         {
             // Insert the lumps into their rightful places in the index.
             for(int i = 0; i < zip->lumpCount(); ++i)
             {
-                File1& lump = zip->lump(i);
+                File1 &lump = zip->lump(i);
 
                 d->primaryIndex.catalogLump(lump);
 
@@ -493,22 +493,22 @@ void FS1::index(de::File1& file)
             }
         }
     }
-    else if(Wad* wad = dynamic_cast<Wad*>(&file))
+    else if(Wad *wad = dynamic_cast<Wad *>(&file))
     {
         if(!wad->empty())
         {
             // Insert the lumps into their rightful places in the index.
             for(int i = 0; i < wad->lumpCount(); ++i)
             {
-                File1& lump = wad->lump(i);
+                File1 &lump = wad->lump(i);
                 d->primaryIndex.catalogLump(lump);
             }
         }
     }
 
     // Add a handle to the loaded files list.
-    FileHandle* loadedFilesHndl = FileHandleBuilder::fromFile(file);
-    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
+    FileHandle *loadedFilesHndl = FileHandleBuilder::fromFile(file);
+    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s *>(&d->loadedFiles));
     d->loadedFilesCRC = 0;
 }
 
@@ -1174,21 +1174,40 @@ D_CMD(DumpLump)
 /// List virtual files inside containers.
 D_CMD(ListLumps)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
-    if(fileSystem)
+    if(!fileSystem) return false;
+
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+
+    int const numRecords     = lumpIndex.size();
+    int const numIndexDigits = de::max(3, M_NumDigits(numRecords));
+
+    LOG_RES_MSG("LumpIndex %p (%i records):") << &lumpIndex << numRecords;
+
+    int idx = 0;
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, lumpIndex.allLumps())
     {
-        LumpIndex::print(App_FileSystem().nameIndex());
-        return true;
-    }
+        de::File1 const &lump = **i;
+        String containerPath  = NativePath(lump.container().composePath()).pretty();
+        String lumpPath       = NativePath(lump.composePath()).pretty();
 
-    return false;
+        LOG_RES_MSG(String("%1 - \"%2:%3\" (size: %4 bytes%5)")
+                        .arg(idx++, numIndexDigits, 10, QChar('0'))
+                        .arg(containerPath)
+                        .arg(lumpPath)
+                        .arg(lump.info().size)
+                        .arg(lump.info().isCompressed()? " compressed" : ""));
+    }
+    LOG_RES_MSG("---End of lumps---");
+
+    return true;
 }
 
 /// List presently loaded files in original load order.
 D_CMD(ListFiles)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     LOG_RES_MSG(_E(b) "Loaded Files " _E(l) "(in load order)" _E(w) ":");
 

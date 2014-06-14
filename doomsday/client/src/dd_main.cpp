@@ -1071,15 +1071,13 @@ static void initPathLumpMappings()
     uint8_t *buf = 0;
 
     // Add the contents of all DD_DIREC lumps.
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().allLumps())
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    LumpIndex::FoundIndices foundDirecs;
+    lumpIndex.findAll("DD_DIREC", foundDirecs);
+    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
-        de::File1 &lump = **i;
+        de::File1 &lump          = lumpIndex[*i];
         FileInfo const &lumpInfo = lump.info();
-
-        if(!lump.name().beginsWith("DD_DIREC", Qt::CaseInsensitive))
-        {
-            continue;
-        }
 
         // Make a copy of it so we can ensure it ends in a null.
         if(bufSize < lumpInfo.size + 1)

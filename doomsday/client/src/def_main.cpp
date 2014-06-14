@@ -481,23 +481,19 @@ static void Def_ReadLumpDefs()
 {
     LOG_AS("Def_ReadLumpDefs");
 
-    int numProcessedLumps = 0;
-
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-    for(lumpnum_t i = 0; i < lumpIndex.size(); ++i)
+    LumpIndex::FoundIndices foundDefns;
+    lumpIndex.findAll("DD_DEFNS", foundDefns);
+    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDefns)
     {
-        de::File1 const &lump = lumpIndex[i];
-        if(!lump.name().beginsWith("DD_DEFNS", Qt::CaseInsensitive)) continue;
-
-        numProcessedLumps += 1;
-
-        if(!DED_ReadLump(&defs, i))
+        if(!DED_ReadLump(&defs, *i))
         {
-            QByteArray path = NativePath(lump.container().composePath()).pretty().toUtf8();
+            QByteArray path = NativePath(lumpIndex[*i].container().composePath()).pretty().toUtf8();
             App_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
         }
     }
 
+    int const numProcessedLumps = foundDefns.size();
     if(verbose && numProcessedLumps > 0)
     {
         LOG_RES_NOTE("Processed %i %s")
