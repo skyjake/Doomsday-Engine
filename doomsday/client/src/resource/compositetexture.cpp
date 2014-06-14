@@ -1,7 +1,7 @@
-/** @file compositetexture.cpp Composite Texture Definition.
+/** @file compositetexture.cpp  Composite Texture.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,70 +18,73 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "de_filesys.h"
-#include "resource/patch.h"
-#include "resource/patchname.h"
+#include "de_base.h"
+#include "resource/compositetexture.h"
+
+#include <QList>
+#include <QRect>
 #include <de/ByteRefArray>
 #include <de/String>
 #include <de/Reader>
-#include <QList>
-#include <QRect>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/lumpindex.h>
+#include "resource/patch.h"
+#include "resource/patchname.h"
 
-#include "resource/compositetexture.h"
+namespace de {
+namespace internal {
 
-using namespace de;
+    static String readAndPercentEncodeRawName(de::Reader &from)
+    {
+        /// @attention The raw ASCII name is not necessarily terminated.
+        char asciiName[9];
+        for(int i = 0; i < 8; ++i) { from >> asciiName[i]; }
+        asciiName[8] = 0;
 
-CompositeTexture::Component::Component(int xOrigin, int yOrigin)
-    : origin_(xOrigin, yOrigin), lumpNum_(-1)
+        // WAD format allows characters not typically permitted in native paths.
+        // To achieve uniformity we apply a percent encoding to the "raw" names.
+        return QString(QByteArray(asciiName).toPercentEncoding());
+    }
+
+} // namespace internal
+
+using namespace internal;
+
+CompositeTexture::Component::Component(Vector2i const &origin)
+    : _origin (origin)
+    , _lumpNum(-1)
 {}
 
 Vector2i const &CompositeTexture::Component::origin() const
 {
-    return origin_;
+    return _origin;
 }
 
 lumpnum_t CompositeTexture::Component::lumpNum() const
 {
-    return lumpNum_;
+    return _lumpNum;
 }
 
-DENG2_PIMPL(CompositeTexture)
+DENG2_PIMPL_NOREF(CompositeTexture)
 {
-    /// Symbolic name of the texture (percent encoded).
-    String name;
+    String name;                 ///< Symbolic, percent encoded.
+    Flags flags;                 ///< Usage traits.
+    Vector2i logicalDimensions;  ///< In map space units.
+    Vector2i dimensions;         ///< In pixels.
+    int origIndex;               ///< Determined by the original game logic.
+    Components components;       ///< Images to be composited.
 
-    /// Flags denoting usage traits.
-    CompositeTexture::Flags flags;
-
-    /// Logical dimensions of the texture in map coordinate space units.
-    Vector2i logicalDimensions;
-
-    /// Dimensions of the texture in pixels.
-    Vector2i dimensions;
-
-    /// Index of this resource determined by the logic of the indexing algorithm
-    /// used by the original game.
-    int origIndex;
-
-    /// Set of component images to be composited.
-    Components components;
-
-    Instance(Public *i, String percentEncodedName, int width, int height,
-             CompositeTexture::Flags _flags)
-      : Base(i),
-        name(percentEncodedName),
-        flags(_flags),
-        logicalDimensions(width, height),
-        dimensions(0, 0),
-        origIndex(-1)
-    {}
+    Instance() : origIndex(-1) {}
 };
 
-CompositeTexture::CompositeTexture(String percentEncodedName,
-    int width, int height, Flags flags)
-    : d(new Instance(this, percentEncodedName, width, height, flags))
-{}
+CompositeTexture::CompositeTexture(String const &percentEncodedName,
+    Vector2i logicalDimensions, Flags flags)
+    : d(new Instance)
+{
+    d->name              = percentEncodedName;
+    d->flags             = flags;
+    d->logicalDimensions = logicalDimensions;
+}
 
 String CompositeTexture::percentEncodedName() const
 {
@@ -128,18 +131,6 @@ void CompositeTexture::setOrigIndex(int newIndex)
     d->origIndex = newIndex;
 }
 
-static String readAndPercentEncodeRawName(de::Reader &from)
-{
-    /// @attention The raw ASCII name is not necessarily terminated.
-    char asciiName[9];
-    for(int i = 0; i < 8; ++i) { from >> asciiName[i]; }
-    asciiName[8] = 0;
-
-    // WAD format allows characters not typically permitted in native paths.
-    // To achieve uniformity we apply a percent encoding to the "raw" names.
-    return QString(QByteArray(asciiName).toPercentEncoding());
-}
-
 CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
     QList<PatchName> patchNames, ArchiveFormat format)
 {
@@ -161,10 +152,8 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
 
     // We'll initially accept these values as logical dimensions. However
     // we may need to adjust once we've checked the patch dimensions.
-    pctex->d->logicalDimensions.x = dimensions[0];
-    pctex->d->logicalDimensions.y = dimensions[1];
-
-    pctex->d->dimensions = pctex->d->logicalDimensions;
+    pctex->d->logicalDimensions =
+        pctex->d->dimensions = Vector2i(dimensions[0], dimensions[1]);
 
     if(format == DoomFormat)
     {
@@ -187,12 +176,11 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
     int foundComponentCount = 0;
     for(dint16 i = 0; i < componentCount; ++i)
     {
-        Component patch;
+        Component comp;
 
         dint16 origin16[2];
         reader >> origin16[0] >> origin16[1];
-        patch.origin_.x = origin16[0];
-        patch.origin_.y = origin16[1];
+        comp._origin = Vector2i(origin16[0], origin16[1]);
 
         dint16 pnamesIndex;
         reader >> pnamesIndex;
@@ -200,18 +188,18 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
         if(pnamesIndex < 0 || pnamesIndex >= patchNames.count())
         {
             LOG_RES_WARNING("Invalid PNAMES index %i in composite texture \"%s\", ignoring.")
-                << pnamesIndex << pctex->d->name;
+                    << pnamesIndex << pctex->d->name;
         }
         else
         {
-            patch.lumpNum_ = patchNames[pnamesIndex].lumpNum();
+            comp._lumpNum = patchNames[pnamesIndex].lumpNum();
 
-            if(patch.lumpNum() >= 0)
+            if(comp.lumpNum() >= 0)
             {
                 /// There is now one more found component.
                 foundComponentCount += 1;
 
-                de::File1 &file = App_FileSystem().nameIndex().lump(patch.lumpNum_);
+                de::File1 &file = App_FileSystem().lump(comp.lumpNum());
 
                 // If this a "custom" component - the whole texture is.
                 if(file.container().hasCustom())
@@ -226,15 +214,15 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
                     try
                     {
                         Patch::Metadata info = Patch::loadMetadata(fileData);
-                        geom |= QRect(QPoint(patch.origin_.x, patch.origin_.y),
+                        geom |= QRect(QPoint(comp.origin().x, comp.origin().y),
                                       QSize(info.dimensions.x, info.dimensions.y));
                     }
                     catch(IByteArray::OffsetError const &)
                     {
                         LOG_RES_WARNING("Component image \"%s\" (#%i) does not appear to be a valid Patch. "
                                         "It may be missing from composite texture \"%s\".")
-                            << patchNames[pnamesIndex].percentEncodedNameRef() << i
-                            << pctex->d->name;
+                                << patchNames[pnamesIndex].percentEncodedNameRef() << i
+                                << pctex->d->name;
                     }
                 }
                 file.unlock();
@@ -242,8 +230,8 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
             else
             {
                 LOG_RES_WARNING("Missing component image \"%s\" (#%i) in composite texture \"%s\", ignoring.")
-                    << patchNames[pnamesIndex].percentEncodedNameRef() << i
-                    << pctex->d->name;
+                        << patchNames[pnamesIndex].percentEncodedNameRef() << i
+                        << pctex->d->name;
             }
         }
 
@@ -251,19 +239,23 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
         reader >> unused16 >> unused16;
 
         // Add this component.
-        pctex->d->components.push_back(patch);
+        pctex->d->components.push_back(comp);
     }
 
     // Clip and apply the final height.
     if(geom.top()  < 0) geom.setTop(0);
     if(geom.height() > pctex->d->logicalDimensions.y)
+    {
         pctex->d->dimensions.y = geom.height();
+    }
 
     if(!foundComponentCount)
     {
-        LOG_RES_WARNING("Zero valid component images in composite texture %s, ignoring.")
+        LOG_RES_WARNING("Zero valid component images in composite texture %s (will be ignored).")
             << pctex->d->name;
     }
 
     return pctex;
 }
+
+} // namespace de

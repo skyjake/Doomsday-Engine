@@ -85,88 +85,202 @@
 #include <QVector>
 #include <QtAlgorithms>
 
-using namespace de;
-
-typedef QList<CompositeTexture *> CompositeTextures;
-
-static QList<de::File1 *> collectPatchCompositeDefinitionFiles();
-
-/**
- * Compose the path to the data resource.
- * @note We do not use the lump name, instead we use the logical lump index
- * in the global LumpIndex. This is necessary because of the way id tech 1
- * manages graphic references in animations (intermediate frames are chosen
- * by their 'original indices' rather than by name).
- */
-static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
+namespace de {
+namespace internal
 {
-    return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
-}
-
-/// Ensure a texture has been derived for @a manifest.
-static Texture *deriveTexture(TextureManifest &manifest)
-{
-    LOG_AS("deriveTexture");
-    Texture *tex = manifest.derive();
-    if(!tex)
+    /**
+     * Compose the path to the data resource.
+     * @note We do not use the lump name, instead we use the logical lump index
+     * in the global LumpIndex. This is necessary because of the way id tech 1
+     * manages graphic references in animations (intermediate frames are chosen
+     * by their 'original indices' rather than by name).
+     */
+    static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
     {
-        LOGDEV_RES_WARNING("Failed to derive a Texture for \"%s\", ignoring") << manifest.composeUri();
+        return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
     }
-    return tex;
-}
+
+    /// Returns a value in the range [0..Sprite::max_angles] if @a rotCode can be
+    /// interpreted as a sprite rotation number; otherwise @c -1
+    static int toSpriteRotation(QChar rotCode)
+    {
+        int rot = -1; // Unknown.
+
+        if(rotCode.isDigit())
+        {
+            rot = rotCode.digitValue();
+        }
+        else if(rotCode.isLetter())
+        {
+            char charCodeLatin1 = rotCode.toUpper().toLatin1();
+            if(charCodeLatin1 >= 'A')
+            {
+                rot = charCodeLatin1 - 'A' + 10;
+            }
+        }
+
+        if(rot > Sprite::max_angles)
+        {
+            rot = -1;
+        }
+        else if(rot > 0)
+        {
+            if(rot <= Sprite::max_angles / 2)
+            {
+                rot = (rot - 1) * 2 + 1;
+            }
+            else
+            {
+                rot = (rot - 9) * 2 + 2;
+            }
+        }
+
+        return rot;
+    }
+
+    /// Returns @c true iff @a name is a well-formed sprite name.
+    static bool validateSpriteName(String name)
+    {
+        if(name.length() < 6) return false;
+
+        // Character at position 5 is a rotation number.
+        if(toSpriteRotation(name.at(5)) < 0)
+        {
+            return false;
+        }
+
+        // If defined, the character at position 7 is also a rotation number.
+        if(name.length() >= 7)
+        {
+            if(toSpriteRotation(name.at(7)) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// Ensure a texture has been derived for @a manifest.
+    static Texture *deriveTexture(TextureManifest &manifest)
+    {
+        LOG_AS("deriveTexture");
+        Texture *tex = manifest.derive();
+        if(!tex)
+        {
+            LOGDEV_RES_WARNING("Failed to derive a Texture for \"%s\", ignoring") << manifest.composeUri();
+        }
+        return tex;
+    }
+
+    static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
+    {
+        QList<de::File1 *> result;
+
+        /*
+         * Precedence order of definitions is defined by id tech1 which processes
+         * the TEXTURE1/2 lumps in the following order:
+         *
+         * (last)TEXTURE2 > (last)TEXTURE1
+         */
+        LumpIndex const &index  = App_FileSystem().nameIndex();
+        lumpnum_t firstTexLump  = App_FileSystem().lumpNumForName("TEXTURE1");
+        lumpnum_t secondTexLump = App_FileSystem().lumpNumForName("TEXTURE2");
+
+        /*
+         * Also process all other lumps named TEXTURE1/2.
+         */
+        for(int i = 0; i < index.size(); ++i)
+        {
+            de::File1 &file = index[i];
+
+            // Will this be processed anyway?
+            if(i == firstTexLump) continue;
+            if(i == secondTexLump) continue;
+
+            String fileName = file.name().fileNameWithoutExtension();
+            if(fileName.compareWithoutCase("TEXTURE1") &&
+               fileName.compareWithoutCase("TEXTURE2"))
+            {
+                continue;
+            }
+
+            result.append(&file);
+        }
+
+        if(firstTexLump >= 0)
+        {
+            result.append(&index[firstTexLump]);
+        }
+
+        if(secondTexLump >= 0)
+        {
+            result.append(&index[secondTexLump]);
+        }
+
+        return result;
+    }
 
 #ifdef __CLIENT__
-static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
-{
-    return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
-}
-
-static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
-    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
-{
-    DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
-
-    flags &= ~TSF_INTERNAL_MASK;
-
-    spec.context         = tc;
-    spec.flags           = flags;
-    spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
-    spec.mipmapped       = mipmapped;
-    spec.wrapS           = wrapS;
-    spec.wrapT           = wrapT;
-    spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
-    spec.magFilter       = de::clamp(-3, magFilter, 1);
-    spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
-    spec.gammaCorrection = gammaCorrection;
-    spec.noStretch       = noStretch;
-    spec.toAlpha         = toAlpha;
-
-    if(tClass || tMap)
+    static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
     {
-        spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
-        spec.tClass      = de::max(0, tClass);
-        spec.tMap        = de::max(0, tMap);
+        return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
     }
 
-    return spec;
-}
+    static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
+        texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
+        int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+        dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
+    {
+        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
-static detailvariantspecification_t &configureDetailTextureSpec(
-    detailvariantspecification_t &spec, float contrast)
-{
-    int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+        flags &= ~TSF_INTERNAL_MASK;
 
-    spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
-    return spec;
-}
+        spec.context         = tc;
+        spec.flags           = flags;
+        spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
+        spec.mipmapped       = mipmapped;
+        spec.wrapS           = wrapS;
+        spec.wrapT           = wrapT;
+        spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
+        spec.magFilter       = de::clamp(-3, magFilter, 1);
+        spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
+        spec.gammaCorrection = gammaCorrection;
+        spec.noStretch       = noStretch;
+        spec.toAlpha         = toAlpha;
 
+        if(tClass || tMap)
+        {
+            spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
+            spec.tClass      = de::max(0, tClass);
+            spec.tMap        = de::max(0, tMap);
+        }
+
+        return spec;
+    }
+
+    static detailvariantspecification_t &configureDetailTextureSpec(
+        detailvariantspecification_t &spec, float contrast)
+    {
+        int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+
+        spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
+        return spec;
+    }
+
+#endif // __CLIENT__
+
+} // namespace internal
+} // namespace de
+
+#ifdef __CLIENT__
 /// @c TST_DETAIL type specifications are stored separately into a set of
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
+#endif
 
-#endif // __CLIENT__
+using namespace de;
+using namespace internal;
 
 /**
  * Native Doomsday Script utility for scheduling conversion of a single legacy savegame.
@@ -187,6 +301,9 @@ Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues cons
     String gameId = args[0]->asText();
     return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId));
 }
+
+typedef QList<CompositeTexture *> CompositeTextures;
+typedef QList<PatchName> PatchNames;
 
 DENG2_PIMPL(ResourceSystem)
 , DENG2_OBSERVES(Loop,             Iteration)       // post savegame conversion FS population
@@ -211,9 +328,6 @@ DENG2_PIMPL(ResourceSystem)
 
     typedef QList<AnimGroup *> AnimGroups;
     AnimGroups animGroups;
-
-    typedef QList<PatchName> PatchNames;
-    PatchNames patchNames;
 
     typedef QMap<colorpaletteid_t, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes;
@@ -473,7 +587,7 @@ DENG2_PIMPL(ResourceSystem)
         self.clearAllColorPalettes();
     }
 
-    inline de::FS1 &fileSystem()
+    inline de::FS1 &fileSys()
     {
         return App_FileSystem();
     }
@@ -940,56 +1054,64 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    void loadPatchNames(String lumpName)
+    PatchNames loadPatchNames(de::File1 &file)
     {
         LOG_AS("loadPatchNames");
+        PatchNames names;
 
-        // Clear any previously exisiting names.
-        patchNames.clear();
+        if(file.size() < 4)
+        {
+            LOG_RES_WARNING("File \"%s\" does not appear to be valid PNAMES data")
+                << NativePath(file.composeUri().asText()).pretty();
+            return names;
+        }
 
+        ByteRefArray lumpData(file.cache(), file.size());
+        de::Reader from(lumpData);
+
+        // The data begins with the total number of patch names.
+        dint32 numNames;
+        from >> numNames;
+
+        // Followed by the names (eight character ASCII strings).
+        if(numNames > 0)
+        {
+            if((unsigned) numNames > (file.size() - 4) / 8)
+            {
+                // The data appears to be truncated.
+                LOG_RES_WARNING("File \"%s\" appears to be truncated (%u bytes, expected %u)")
+                    << NativePath(file.composeUri().asText()).pretty()
+                    << file.size() << (numNames * 8 + 4);
+
+                // We'll only read this many names.
+                numNames = (file.size() - 4) / 8;
+            }
+
+            // Read the names.
+            for(int i = 0; i < numNames; ++i)
+            {
+                PatchName name;
+                from >> name;
+                names.append(name);
+            }
+        }
+
+        file.unlock();
+
+        return names;
+    }
+
+    CompositeTextures loadCompositeTextureDefs()
+    {
+        LOG_AS("loadCompositeTextureDefs");
+
+        typedef QMultiMap<String, CompositeTexture *> CompositeTextureMap;
+
+        // Load the patch names from the PNAMES lump.
+        PatchNames pnames;
         try
         {
-            lumpnum_t lumpNum = fileSystem().lumpNumForName(lumpName);
-            de::File1 &file = fileSystem().nameIndex().lump(lumpNum);
-
-            if(file.size() < 4)
-            {
-                LOG_RES_WARNING("File \"%s\" (#%i) does not appear to be valid PNAMES data")
-                    << NativePath(file.composeUri().asText()).pretty() << lumpNum;
-                return;
-            }
-
-            ByteRefArray lumpData = ByteRefArray(file.cache(), file.size());
-            de::Reader from = de::Reader(lumpData);
-
-            // The data begins with the total number of patch names.
-            dint32 numNames;
-            from >> numNames;
-
-            // Followed by the names (eight character ASCII strings).
-            if(numNames > 0)
-            {
-                if((unsigned) numNames > (file.size() - 4) / 8)
-                {
-                    // The data appears to be truncated.
-                    LOG_RES_WARNING("File \"%s\" (#%i) appears to be truncated (%u bytes, expected %u)")
-                        << NativePath(file.composeUri().asText()).pretty() << lumpNum
-                        << file.size() << (numNames * 8 + 4);
-
-                    // We'll only read this many names.
-                    numNames = (file.size() - 4) / 8;
-                }
-
-                // Read the names.
-                for(int i = 0; i < numNames; ++i)
-                {
-                    PatchName name;
-                    from >> name;
-                    patchNames.append(name);
-                }
-            }
-
-            file.unlock();
+            pnames = loadPatchNames(fileSys().lump(fileSys().lumpNumForName("PNAMES")));
         }
         catch(LumpIndex::NotFoundError const &er)
         {
@@ -998,17 +1120,9 @@ DENG2_PIMPL(ResourceSystem)
                 LOGDEV_RES_WARNING(er.asText());
             }
         }
-    }
-
-    CompositeTextures loadCompositeTextureDefs()
-    {
-        LOG_AS("loadCompositeTextureDefs");
-
-        // Load the patch names from the PNAMES lump.
-        loadPatchNames("PNAMES");
 
         // If no patch names - there is no point continuing further.
-        if(!patchNames.count()) return CompositeTextures();
+        if(!pnames.count()) return CompositeTextures();
 
         // Collate an ordered list of all the definition files we intend to process.
         QList<de::File1 *> defFiles = collectPatchCompositeDefinitionFiles();
@@ -1035,18 +1149,15 @@ DENG2_PIMPL(ResourceSystem)
                 << NativePath(file.container().composeUri().asText()).pretty()
                 << NativePath(file.composeUri().asText()).pretty();
 
-            // Buffer the file.
-            ByteRefArray dataBuffer = ByteRefArray(file.cache(), file.size());
-
-            // Read the next set of definitions.
+            // Buffer the file and read the next set of definitions.
             int archiveCount;
-            CompositeTextures newDefs = readCompositeTextureDefs(dataBuffer, origIndexBase, archiveCount);
+            ByteRefArray dataBuffer   = ByteRefArray(file.cache(), file.size());
+            CompositeTextures newDefs = readCompositeTextureDefs(dataBuffer, pnames, origIndexBase, archiveCount);
 
-            // We have now finished with this file.
-            file.unlock();
+            file.unlock(); // We have now finished with this file.
 
             // In which set do these belong?
-            CompositeTextures* existingDefs =
+            CompositeTextures *existingDefs =
                     (file.container().hasCustom()? &customDefs : &defs);
 
             if(!existingDefs->isEmpty())
@@ -1113,8 +1224,8 @@ DENG2_PIMPL(ResourceSystem)
                         // Check the patches.
                         for(int k = 0; k < orig->componentCount(); ++k)
                         {
-                            CompositeTexture::Component const &origP   = orig->components()[k];
-                            CompositeTexture::Component const &customP = custom->components()[k];
+                            CompositeTextureComponent const &origP   = orig->components()[k];
+                            CompositeTextureComponent const &customP = custom->components()[k];
 
                             if(origP.lumpNum() != customP.lumpNum() &&
                                origP.xOrigin() != customP.xOrigin() &&
@@ -1140,8 +1251,8 @@ DENG2_PIMPL(ResourceSystem)
             }
 
             /*
-             * List 'defs' now contains only those definitions which are not superceeded
-             * by those in the 'customDefs' list.
+             * List 'defs' now contains only those definitions which are not
+             * superceeded by those in the 'customDefs' list.
              */
 
             // Add definitions from the custom list to the end of the main set.
@@ -1161,7 +1272,7 @@ DENG2_PIMPL(ResourceSystem)
      *                      number of definitions which are actually read).
      */
     CompositeTextures readCompositeTextureDefs(IByteArray &data,
-        int origIndexBase, int& archiveCount)
+        PatchNames const &patchNames, int origIndexBase, int &archiveCount)
     {
         LOG_AS("readCompositeTextureDefs");
 
@@ -1290,6 +1401,194 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
+    void initCompositeTextures()
+    {
+        Time begunAt;
+
+        LOG_RES_VERBOSE("Initializing CompositeTextures...");
+
+        // Load texture definitions from TEXTURE1/2 lumps.
+        CompositeTextures texs = loadCompositeTextureDefs();
+        processCompositeTextureDefs(texs);
+
+        DENG2_ASSERT(texs.isEmpty());
+
+        LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
+    }
+
+    void initFlatTextures()
+    {
+        Time begunAt;
+
+        LOG_RES_VERBOSE("Initializing Flat textures...");
+
+        LumpIndex const &index = fileSys().nameIndex();
+        lumpnum_t firstFlatMarkerLumpNum = index.findFirst(Path("F_START.lmp"));
+        if(firstFlatMarkerLumpNum >= 0)
+        {
+            lumpnum_t lumpNum;
+            de::File1 *blockContainer = 0;
+            for(lumpNum = index.size(); lumpNum --> firstFlatMarkerLumpNum + 1;)
+            {
+                de::File1 &file = index[lumpNum];
+                String percentEncodedName = file.name().fileNameWithoutExtension();
+
+                if(blockContainer && blockContainer != &file.container())
+                {
+                    blockContainer = 0;
+                }
+
+                if(!blockContainer)
+                {
+                    if(!percentEncodedName.compareWithoutCase("F_END") ||
+                       !percentEncodedName.compareWithoutCase("FF_END"))
+                    {
+                        blockContainer = &file.container();
+                    }
+                    continue;
+                }
+
+                if(!percentEncodedName.compareWithoutCase("F_START"))
+                {
+                    blockContainer = 0;
+                    continue;
+                }
+
+                // Ignore extra marker lumps.
+                if(!percentEncodedName.compareWithoutCase("FF_START") ||
+                   !percentEncodedName.compareWithoutCase("F_END")    ||
+                   !percentEncodedName.compareWithoutCase("FF_END")) continue;
+
+                de::Uri uri("Flats", Path(percentEncodedName));
+                if(self.hasTextureManifest(uri)) continue;
+
+                Texture::Flags flags;
+                if(file.container().hasCustom()) flags |= Texture::Custom;
+
+                /*
+                 * Kludge Assume 64x64 else when the flat is loaded it will inherit the
+                 * pixel dimensions of the graphic, which, if it has been replaced with
+                 * a hires version - will be much larger than it should be.
+                 *
+                 * @todo Always determine size from the lowres original.
+                 */
+                Vector2i dimensions(64, 64);
+                Vector2i origin(0, 0);
+                int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
+                de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
+
+                self.declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+            }
+        }
+
+        // Define any as yet undefined flat textures.
+        /// @todo Defer until necessary (manifest texture is first referenced).
+        deriveAllTexturesInScheme("Flats");
+
+        LOG_RES_VERBOSE("Flat textures initialized in %.2f seconds") << begunAt.since();
+    }
+
+    void initSpriteTextures()
+    {
+        Time begunAt;
+
+        LOG_RES_VERBOSE("Initializing Sprite textures...");
+
+        int uniqueId = 1/*1-based index*/;
+
+        /// @todo fixme: Order here does not respect id tech1 logic.
+        ddstack_t *stack = Stack_New();
+
+        LumpIndex const &index = fileSys().nameIndex();
+        for(int i = 0; i < index.size(); ++i)
+        {
+            de::File1 &file = index[i];
+            String fileName = file.name().fileNameWithoutExtension();
+
+            if(fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
+            {
+                if(fileName.endsWith("_START", Qt::CaseInsensitive))
+                {
+                    // We've arrived at *a* sprite block.
+                    Stack_Push(stack, NULL);
+                    continue;
+                }
+
+                if(fileName.endsWith("_END", Qt::CaseInsensitive))
+                {
+                    // The sprite block ends.
+                    Stack_Pop(stack);
+                    continue;
+                }
+            }
+
+            if(!Stack_Height(stack)) continue;
+
+            String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
+            if(!validateSpriteName(decodedFileName))
+            {
+                LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
+                continue;
+            }
+
+            de::Uri uri("Sprites", Path(fileName));
+
+            Texture::Flags flags = 0;
+            // If this is from an add-on flag it as "custom".
+            if(file.container().hasCustom())
+            {
+                flags |= Texture::Custom;
+            }
+
+            Vector2i dimensions;
+            Vector2i origin;
+
+            // If this is a Patch read the world dimension and origin offset values.
+            ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+            if(Patch::recognize(fileData))
+            {
+                try
+                {
+                    PatchMetadata info = Patch::loadMetadata(fileData);
+
+                    dimensions = info.logicalDimensions;
+                    origin     = -info.origin;
+                }
+                catch(IByteArray::OffsetError const &)
+                {
+                    LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
+                                "World dimension and origin offset not set for sprite \"%s\".")
+                        << NativePath(file.container().composePath()).pretty()
+                        << NativePath(file.composePath()).pretty()
+                        << uri;
+                }
+            }
+            file.unlock();
+
+            de::Uri resourceUri = composeLumpIndexResourceUrn(i);
+            try
+            {
+                self.declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+                uniqueId++;
+            }
+            catch(TextureScheme::InvalidPathError const &er)
+            {
+                LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
+            }
+        }
+
+        while(Stack_Height(stack))
+        { Stack_Pop(stack); }
+
+        Stack_Delete(stack);
+
+        // Define any as yet undefined sprite textures.
+        /// @todo Defer until necessary (manifest texture is first referenced).
+        deriveAllTexturesInScheme("Sprites");
+
+        LOG_RES_VERBOSE("Sprite textures initialized in %.2f seconds") << begunAt.since();
+    }
+
 #ifdef __CLIENT__
     void clearModels()
     {
@@ -1378,16 +1677,16 @@ DENG2_PIMPL(ResourceSystem)
             // The "first choice" directory is that in which the model file resides.
             try
             {
-                return fileSystem().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
-                                             RLF_DEFAULT, self.resClass(RC_GRAPHIC));
+                return fileSys().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
+                                          RLF_DEFAULT, self.resClass(RC_GRAPHIC));
             }
             catch(FS1::NotFoundError const &)
             {} // Ignore this error.
         }
 
         /// @throws FS1::NotFoundError if no resource was found.
-        return fileSystem().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
-                                     self.resClass(RC_GRAPHIC));
+        return fileSys().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
+                                  self.resClass(RC_GRAPHIC));
     }
 
     /**
@@ -1447,8 +1746,8 @@ DENG2_PIMPL(ResourceSystem)
 
             try
             {
-                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         self.resClass(RC_GRAPHIC));
+                String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
+                                                      self.resClass(RC_GRAPHIC));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -1589,8 +1888,8 @@ DENG2_PIMPL(ResourceSystem)
 
             try
             {
-                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         self.resClass(RC_MODEL));
+                String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
+                                                      self.resClass(RC_MODEL));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -1600,12 +1899,12 @@ DENG2_PIMPL(ResourceSystem)
                 if(!mdl)
                 {
                     // Attempt to load it in now.
-                    QScopedPointer<de::FileHandle> hndl(&fileSystem().openFile(foundPath, "rb"));
+                    QScopedPointer<de::FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
 
                     mdl = Model::loadFromFile(*hndl, modelAspectMod);
 
                     // We're done with the file.
-                    fileSystem().releaseFile(hndl->file());
+                    fileSys().releaseFile(hndl->file());
 
                     // Loaded?
                     if(mdl)
@@ -2060,9 +2359,7 @@ DENG2_PIMPL(ResourceSystem)
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
-{
-
-}
+{}
 
 void ResourceSystem::timeChanged(Clock const &)
 {
@@ -2147,6 +2444,15 @@ ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
     throw MissingResourceError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
 }
 
+void ResourceSystem::initTextures()
+{
+    LOG_AS("ResourceSystem");
+
+    d->initCompositeTextures();
+    d->initFlatTextures();
+    d->initSpriteTextures();
+}
+
 void ResourceSystem::initSystemTextures()
 {
     LOG_AS("ResourceSystem");
@@ -2181,306 +2487,6 @@ void ResourceSystem::initSystemTextures()
     // Define any as yet undefined system textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("System");
-}
-
-static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
-{
-    QList<de::File1 *> result;
-
-    /*
-     * Precedence order of definitions is defined by id tech1 which processes
-     * the TEXTURE1/2 lumps in the following order:
-     *
-     * (last)TEXTURE2 > (last)TEXTURE1
-     */
-    LumpIndex const &index  = App_FileSystem().nameIndex();
-    lumpnum_t firstTexLump  = App_FileSystem().lumpNumForName("TEXTURE1");
-    lumpnum_t secondTexLump = App_FileSystem().lumpNumForName("TEXTURE2");
-
-    /*
-     * Also process all other lumps named TEXTURE1/2.
-     */
-    for(int i = 0; i < index.size(); ++i)
-    {
-        de::File1 &file = index.lump(i);
-
-        // Will this be processed anyway?
-        if(i == firstTexLump) continue;
-        if(i == secondTexLump) continue;
-
-        String fileName = file.name().fileNameWithoutExtension();
-        if(fileName.compareWithoutCase("TEXTURE1") &&
-           fileName.compareWithoutCase("TEXTURE2"))
-        {
-            continue;
-        }
-
-        result.append(&file);
-    }
-
-    if(firstTexLump >= 0)
-    {
-        result.append(&index.lump(firstTexLump));
-    }
-
-    if(secondTexLump >= 0)
-    {
-        result.append(&index.lump(secondTexLump));
-    }
-
-    return result;
-}
-
-void ResourceSystem::initCompositeTextures()
-{
-    Time begunAt;
-
-    LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Initializing PatchComposite textures...");
-
-    // Load texture definitions from TEXTURE1/2 lumps.
-    CompositeTextures texs = d->loadCompositeTextureDefs();
-    d->processCompositeTextureDefs(texs);
-
-    DENG_ASSERT(texs.isEmpty());
-
-    LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
-}
-
-void ResourceSystem::initFlatTextures()
-{
-    Time begunAt;
-
-    LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Initializing Flat textures...");
-
-    LumpIndex const &index = d->fileSystem().nameIndex();
-    lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
-    if(firstFlatMarkerLumpNum >= 0)
-    {
-        lumpnum_t lumpNum;
-        de::File1 *blockContainer = 0;
-        for(lumpNum = index.size(); lumpNum --> firstFlatMarkerLumpNum + 1;)
-        {
-            de::File1 &file = index.lump(lumpNum);
-            String percentEncodedName = file.name().fileNameWithoutExtension();
-
-            if(blockContainer && blockContainer != &file.container())
-            {
-                blockContainer = 0;
-            }
-
-            if(!blockContainer)
-            {
-                if(!percentEncodedName.compareWithoutCase("F_END") ||
-                   !percentEncodedName.compareWithoutCase("FF_END"))
-                {
-                    blockContainer = &file.container();
-                }
-                continue;
-            }
-
-            if(!percentEncodedName.compareWithoutCase("F_START"))
-            {
-                blockContainer = 0;
-                continue;
-            }
-
-            // Ignore extra marker lumps.
-            if(!percentEncodedName.compareWithoutCase("FF_START") ||
-               !percentEncodedName.compareWithoutCase("F_END")    ||
-               !percentEncodedName.compareWithoutCase("FF_END")) continue;
-
-            de::Uri uri("Flats", Path(percentEncodedName));
-            if(hasTextureManifest(uri)) continue;
-
-            Texture::Flags flags;
-            if(file.container().hasCustom()) flags |= Texture::Custom;
-
-            /*
-             * Kludge Assume 64x64 else when the flat is loaded it will inherit the
-             * pixel dimensions of the graphic, which, if it has been replaced with
-             * a hires version - will be much larger than it should be.
-             *
-             * @todo Always determine size from the lowres original.
-             */
-            Vector2i dimensions(64, 64);
-            Vector2i origin(0, 0);
-            int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
-            de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
-
-            declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-        }
-    }
-
-    // Define any as yet undefined flat textures.
-    /// @todo Defer until necessary (manifest texture is first referenced).
-    d->deriveAllTexturesInScheme("Flats");
-
-    LOG_RES_VERBOSE("Flat textures initialized in %.2f seconds") << begunAt.since();
-}
-
-/// Returns a value in the range [0..Sprite::max_angles] if @a rotCode can be
-/// interpreted as a sprite rotation number; otherwise @c -1
-static int toSpriteRotation(QChar rotCode)
-{
-    int rot = -1; // Unknown.
-
-    if(rotCode.isDigit())
-    {
-        rot = rotCode.digitValue();
-    }
-    else if(rotCode.isLetter())
-    {
-        char charCodeLatin1 = rotCode.toUpper().toLatin1();
-        if(charCodeLatin1 >= 'A')
-        {
-            rot = charCodeLatin1 - 'A' + 10;
-        }
-    }
-
-    if(rot > Sprite::max_angles)
-    {
-        rot = -1;
-    }
-    else if(rot > 0)
-    {
-        if(rot <= Sprite::max_angles / 2)
-        {
-            rot = (rot - 1) * 2 + 1;
-        }
-        else
-        {
-            rot = (rot - 9) * 2 + 2;
-        }
-    }
-
-    return rot;
-}
-
-/// Returns @c true iff @a name is a well-formed sprite name.
-static bool validateSpriteName(String name)
-{
-    if(name.length() < 6) return false;
-
-    // Character at position 5 is a rotation number.
-    if(toSpriteRotation(name.at(5)) < 0)
-    {
-        return false;
-    }
-
-    // If defined, the character at position 7 is also a rotation number.
-    if(name.length() >= 7)
-    {
-        if(toSpriteRotation(name.at(7)) < 0)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void ResourceSystem::initSpriteTextures()
-{
-    Time begunAt;
-
-    LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Initializing Sprite textures...");
-
-    int uniqueId = 1/*1-based index*/;
-
-    /// @todo fixme: Order here does not respect id tech1 logic.
-    ddstack_t *stack = Stack_New();
-
-    LumpIndex const &index = d->fileSystem().nameIndex();
-    for(int i = 0; i < index.size(); ++i)
-    {
-        de::File1 &file = index.lump(i);
-        String fileName = file.name().fileNameWithoutExtension();
-
-        if(fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
-        {
-            if(fileName.endsWith("_START", Qt::CaseInsensitive))
-            {
-                // We've arrived at *a* sprite block.
-                Stack_Push(stack, NULL);
-                continue;
-            }
-
-            if(fileName.endsWith("_END", Qt::CaseInsensitive))
-            {
-                // The sprite block ends.
-                Stack_Pop(stack);
-                continue;
-            }
-        }
-
-        if(!Stack_Height(stack)) continue;
-
-        String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
-        if(!validateSpriteName(decodedFileName))
-        {
-            LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
-            continue;
-        }
-
-        de::Uri uri("Sprites", Path(fileName));
-
-        Texture::Flags flags = 0;
-        // If this is from an add-on flag it as "custom".
-        if(file.container().hasCustom())
-        {
-            flags |= Texture::Custom;
-        }
-
-        Vector2i dimensions;
-        Vector2i origin;
-
-        // If this is a Patch read the world dimension and origin offset values.
-        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-        if(Patch::recognize(fileData))
-        {
-            try
-            {
-                Patch::Metadata info = Patch::loadMetadata(fileData);
-
-                dimensions = info.logicalDimensions;
-                origin     = -info.origin;
-            }
-            catch(IByteArray::OffsetError const &)
-            {
-                LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
-                            "World dimension and origin offset not set for sprite \"%s\".")
-                    << NativePath(file.container().composePath()).pretty()
-                    << NativePath(file.composePath()).pretty()
-                    << uri;
-            }
-        }
-        file.unlock();
-
-        de::Uri resourceUri = composeLumpIndexResourceUrn(i);
-        try
-        {
-            declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-            uniqueId++;
-        }
-        catch(TextureScheme::InvalidPathError const &er)
-        {
-            LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
-        }
-    }
-
-    while(Stack_Height(stack))
-    { Stack_Pop(stack); }
-
-    Stack_Delete(stack);
-
-    // Define any as yet undefined sprite textures.
-    /// @todo Defer until necessary (manifest texture is first referenced).
-    d->deriveAllTexturesInScheme("Sprites");
-
-    LOG_RES_VERBOSE("Sprite textures initialized in %.2f seconds") << begunAt.since();
 }
 
 Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
@@ -2563,14 +2569,14 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
-    lumpnum_t lumpNum = d->fileSystem().nameIndex().lastIndexForPath(lumpPath);
-    if(lumpNum < 0)
+    if(!d->fileSys().nameIndex().contains(lumpPath))
     {
         LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
         return 0;
     }
 
-    de::File1 &file = d->fileSystem().nameIndex().lump(lumpNum);
+    lumpnum_t const lumpNum = d->fileSys().nameIndex().findLast(lumpPath);
+    de::File1 &file = d->fileSys().lump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -2652,7 +2658,7 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     if(!raw)
     {
         // An entirely new raw texture.
-        String const &name = App_FileSystem().nameIndex().lump(lumpNum).name();
+        String const &name = App_FileSystem().lump(lumpNum).name();
         raw = new rawtex_t(name, lumpNum);
         d->rawTexHash.insert(lumpNum, raw);
     }
@@ -2665,7 +2671,7 @@ QList<rawtex_t *> ResourceSystem::collectRawTextures() const
     return d->rawTexHash.values();
 }
 
-void ResourceSystem::initRawTextures()
+void ResourceSystem::clearAllRawTextures()
 {
     d->clearAllRawTextures();
 }
@@ -3193,7 +3199,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePat
 {
     LOG_AS("ResourceSystem::newFontFromFile");
 
-    if(!d->fileSystem().accessFile(de::Uri::fromNativePath(filePath)))
+    if(!d->fileSys().accessFile(de::Uri::fromNativePath(filePath)))
     {
         LOGDEV_RES_WARNING("Ignoring invalid filePath: ") << filePath;
         return 0;

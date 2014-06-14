@@ -1,16 +1,9 @@
-/**
- * @file lumpindex.h
- *
- * Index of lumps. @ingroup fs
- *
- * Virtual file system component used to model an indexable collection of
- * lumps. A single index may include lumps originating from many different
- * file containers.
+/** @file lumpindex.h  Index of lumps.
  *
  * @todo Move the definition of lumpnum_t into this header.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -42,59 +35,94 @@
 namespace de {
 
 /**
- * @defgroup lumpIndexFlags Lump Index Flags
- * @ingroup flags
- * @{
+ * Virtual file system component used to model an indexable collection of
+ * lumps. A single index may include lumps originating from many different
+ * file containers.
+ *
+ * @ingroup fs
  */
-
-/// Lumps in the index must have unique paths. Inserting a lump with the same
-/// path as one which already exists will result in the earlier lump being pruned.
-#define LIF_UNIQUE_PATHS                0x1
-
-/// @}
-
 class LIBDOOMSDAY_PUBLIC LumpIndex
 {
 public:
     /// No file(s) found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
-    typedef QList<File1*> Lumps;
+    typedef QList<File1 *> Lumps;
+    typedef std::list<lumpnum_t> FoundIndices;
 
 public:
     /**
-     * @param flags  @ref lumpIndexFlags
+     * @param pathsAreUnique  Lumps in the index must have unique paths. Inserting
+     *                        a lump with the same path as one which already exists
+     *                        will result in the earlier lump being pruned.
      */
-    LumpIndex(int flags = 0);
-    ~LumpIndex();
+    explicit LumpIndex(bool pathsAreUnique = false);
 
-    /// Number of lumps in the directory.
+    /**
+     * Returns the total number of lumps in the directory.
+     */
     int size() const;
 
-    /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
-    bool isValidIndex(lumpnum_t lumpNum) const;
+    /**
+     * Returns @c true iff @a lumpNum can be interpreted as a valid lump index.
+     */
+    bool hasLump(lumpnum_t lumpNum) const;
 
-    /// Returns the index associated to the last lump matching @a path; otherwise @c -1.
-    lumpnum_t lastIndexForPath(Path const& path) const;
+    /**
+     * Returns @c true iff the index contains one or more lumps with a matching @a path.
+     */
+    bool contains(Path const &path) const;
 
-    /// Returns the index associated to the first lump matching @a path; otherwise @c -1.
-    lumpnum_t firstIndexForPath(Path const &path) const;
+    /**
+     * Finds all indices for lumps with a matching @a path.
+     *
+     * @param path   Path of the lump(s) to .
+     * @param found  Set of lumps that match @a path (in load order; most recent last).
+     *
+     * @return  Number of lumps found.
+     *
+     * @see findFirst(), findLast()
+     */
+    int findAll(Path const &path, FoundIndices &found) const;
+
+    /**
+     * Returns the index of the @em first loaded lump with a matching @a path.
+     * If no lump is found then @c -1 is returned.
+     *
+     * @see findLast(), findAll()
+     */
+    lumpnum_t findFirst(Path const &path) const;
+
+    /**
+     * Returns the index of the @em last loaded lump with a matching @a path.
+     * If no lump is found then @c -1 is returned.
+     *
+     * @see findFirst(), findAll()
+     */
+    lumpnum_t findLast(Path const &path) const;
 
     /**
      * Lookup a file at specific offset in the index.
      *
-     * @param lumpNum   Logical lumpnum associated to the file being looked up.
+     * @param lumpNum  Logical lumpnum associated to the file being looked up.
      *
      * @return  The requested file.
      *
      * @throws NotFoundError If the requested file could not be found.
+     * @see hasLump()
      */
-    File1& lump(lumpnum_t lumpNum) const;
+    File1 &toLump(lumpnum_t lumpNum) const;
 
     /**
-     * Provides access to the list of lumps for efficient traversals.
+     * @copydoc toLump()
+     * @see toLump()
      */
-    Lumps const& lumps() const;
+    inline File1 &operator [] (lumpnum_t lumpNum) const { return toLump(lumpNum); }
+
+    /**
+     * Provides access to list containing @em all the lumps, for efficient traversals.
+     */
+    Lumps const &allLumps() const;
 
     /**
      * Clear the index back to its default (i.e., empty state).
@@ -104,51 +132,44 @@ public:
     /**
      * Are any lumps from @a file published in this index?
      *
-     * @param file      File containing the lumps to look for.
+     * @param file  File containing the lumps to look for.
      *
      * @return  @c true= One or more lumps are included.
      */
-    bool catalogues(File1& file);
+    bool catalogues(File1 &file);
 
     /**
      * Append a lump to the index.
      *
      * @post Lump name hashes may be invalidated (will be rebuilt upon next search).
      *
-     * @param lump      Lump to be being added.
+     * @param lump  Lump to be being added.
      */
-    void catalogLump(File1& lump);
+    void catalogLump(File1 &lump);
 
     /**
      * Prune all lumps catalogued from @a file.
      *
-     * @param file      File containing the lumps to prune
+     * @param file  File containing the lumps to prune
      *
      * @return  Number of lumps pruned.
      */
-    int pruneByFile(File1& file);
+    int pruneByFile(File1 &file);
 
     /**
      * Prune the lump referenced by @a lumpInfo.
      *
-     * @param lump      Lump file to prune.
+     * @param lump  Lump file to prune.
      *
      * @return  @c true if found and pruned.
      */
-    bool pruneLump(File1& lump);
-
-    /**
-     * Print contents of index @a index.
-     */
-    static void print(LumpIndex const& index);
+    bool pruneLump(File1 &lump);
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
 #endif // __cplusplus
-
 #endif // LIBDENG_FILESYS_LUMPINDEX_H

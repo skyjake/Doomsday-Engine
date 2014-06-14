@@ -110,10 +110,11 @@ struct FS1::Instance
     /// System subspace schemes containing subsets of the total files.
     Schemes schemes;
 
-    Instance(FS1* d) : self(*d),
-        loadingForStartup(true),
-        loadedFilesCRC(0),
-        zipFileIndex(LIF_UNIQUE_PATHS)
+    Instance(FS1 *d)
+        : self(*d)
+        , loadingForStartup(true)
+        , loadedFilesCRC   (0)
+        , zipFileIndex     (true/*paths are unique*/)
     {}
 
     ~Instance()
@@ -243,10 +244,10 @@ struct FS1::Instance
         }
 
         // First check the Zip lump index.
-        lumpnum_t lumpNum = zipFileIndex.lastIndexForPath(path);
+        lumpnum_t lumpNum = zipFileIndex.findLast(path);
         if(lumpNum >= 0)
         {
-            return &zipFileIndex.lump(lumpNum);
+            return &zipFileIndex[lumpNum];
         }
 
         // Nope. Any applicable dir/WAD redirects?
@@ -260,7 +261,7 @@ struct FS1::Instance
                 lumpnum_t lumpNum = self.lumpNumForName(mapping.second);
                 if(lumpNum < 0) continue;
 
-                return &self.nameIndex().lump(lumpNum);
+                return &self.lump(lumpNum);
             }
         }
 
@@ -466,7 +467,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String pa
     return i;
 }
 
-void FS1::index(de::File1& file)
+void FS1::index(de::File1 &file)
 {
 #ifdef DENG_DEBUG
     // Ensure this hasn't yet been indexed.
@@ -476,14 +477,14 @@ void FS1::index(de::File1& file)
 #endif
 
     // Publish lumps to one or more indexes?
-    if(Zip* zip = dynamic_cast<Zip*>(&file))
+    if(Zip *zip = file.maybeAs<Zip>())
     {
         if(!zip->empty())
         {
             // Insert the lumps into their rightful places in the index.
             for(int i = 0; i < zip->lumpCount(); ++i)
             {
-                File1& lump = zip->lump(i);
+                File1 &lump = zip->lump(i);
 
                 d->primaryIndex.catalogLump(lump);
 
@@ -492,22 +493,22 @@ void FS1::index(de::File1& file)
             }
         }
     }
-    else if(Wad* wad = dynamic_cast<Wad*>(&file))
+    else if(Wad *wad = file.maybeAs<Wad>())
     {
         if(!wad->empty())
         {
             // Insert the lumps into their rightful places in the index.
             for(int i = 0; i < wad->lumpCount(); ++i)
             {
-                File1& lump = wad->lump(i);
+                File1 &lump = wad->lump(i);
                 d->primaryIndex.catalogLump(lump);
             }
         }
     }
 
     // Add a handle to the loaded files list.
-    FileHandle* loadedFilesHndl = FileHandleBuilder::fromFile(file);
-    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
+    FileHandle *loadedFilesHndl = FileHandleBuilder::fromFile(file);
+    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s *>(&d->loadedFiles));
     d->loadedFilesCRC = 0;
 }
 
@@ -706,7 +707,7 @@ void FS1::endStartup()
     d->loadingForStartup = false;
 }
 
-LumpIndex const& FS1::nameIndex() const
+LumpIndex const &FS1::nameIndex() const
 {
     return d->primaryIndex;
 }
@@ -724,7 +725,7 @@ lumpnum_t FS1::lumpNumForName(String name)
     }
 
     // Perform the search.
-    return d->primaryIndex.lastIndexForPath(Path(name));
+    return d->primaryIndex.findLast(Path(name));
 }
 
 void FS1::releaseFile(de::File1& file)
@@ -740,16 +741,18 @@ void FS1::releaseFile(de::File1& file)
 }
 
 /// @return @c NULL= Not found.
-static Wad* findFirstWadFile(FS1::FileList& list, bool custom)
+static Wad *findFirstWadFile(FS1::FileList &list, bool custom)
 {
     if(list.empty()) return 0;
     DENG2_FOR_EACH(FS1::FileList, i, list)
     {
-        de::File1& file = (*i)->file();
+        de::File1 &file = (*i)->file();
         if(custom != file.hasCustom()) continue;
 
-        Wad* wad = dynamic_cast<Wad*>(&file);
-        if(wad) return wad;
+        if(Wad *wad = file.maybeAs<Wad>())
+        {
+            return wad;
+        }
     }
     return 0;
 }
@@ -770,15 +773,9 @@ uint FS1::loadedFilesCRC()
     return d->loadedFilesCRC;
 }
 
-int FS1::findAll(FS1::FileList& found) const
+FS1::FileList const &FS1::loadedFiles() const
 {
-    int numFound = 0;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
-    {
-        found.push_back(*i);
-        numFound += 1;
-    }
-    return numFound;
+    return d->loadedFiles;
 }
 
 int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* parameters,
@@ -809,7 +806,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     /*
      * Check the Zip directory.
      */
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.lumps())
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.allLumps())
     {
         File1 const &lump = **i;
         PathTree::Node const &node = lump.directoryNode();
@@ -1173,42 +1170,58 @@ D_CMD(DumpLump)
 /// List virtual files inside containers.
 D_CMD(ListLumps)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
-    if(fileSystem)
+    if(!fileSystem) return false;
+
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    int const numRecords       = lumpIndex.size();
+    int const numIndexDigits   = de::max(3, M_NumDigits(numRecords));
+
+    LOG_RES_MSG("LumpIndex %p (%i records):") << &lumpIndex << numRecords;
+
+    int idx = 0;
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, lumpIndex.allLumps())
     {
-        LumpIndex::print(App_FileSystem().nameIndex());
-        return true;
-    }
+        de::File1 const &lump = **i;
+        String containerPath  = NativePath(lump.container().composePath()).pretty();
+        String lumpPath       = NativePath(lump.composePath()).pretty();
 
-    return false;
+        LOG_RES_MSG(String("%1 - \"%2:%3\" (size: %4 bytes%5)")
+                        .arg(idx++, numIndexDigits, 10, QChar('0'))
+                        .arg(containerPath)
+                        .arg(lumpPath)
+                        .arg(lump.info().size)
+                        .arg(lump.info().isCompressed()? " compressed" : ""));
+    }
+    LOG_RES_MSG("---End of lumps---");
+
+    return true;
 }
 
 /// List presently loaded files in original load order.
 D_CMD(ListFiles)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     LOG_RES_MSG(_E(b) "Loaded Files " _E(l) "(in load order)" _E(w) ":");
 
-    size_t totalFiles = 0, totalPackages = 0;
+    int totalFiles = 0;
+    int totalPackages = 0;
     if(fileSystem)
     {
-        FS1::FileList foundFiles;
-        int fileCount = App_FileSystem().findAll(foundFiles);
-        if(!fileCount) return true;
-
-        DENG2_FOR_EACH_CONST(FS1::FileList, i, foundFiles)
+        FS1::FileList const &allLoadedFiles = App_FileSystem().loadedFiles();
+        DENG2_FOR_EACH_CONST(FS1::FileList, i, allLoadedFiles)
         {
-            de::File1& file = (*i)->file();
+            de::File1 &file = (*i)->file();
             uint crc = 0;
 
             int fileCount = 1;
-            if(de::Zip* zip = dynamic_cast<de::Zip*>(&file))
+            if(de::Zip *zip = file.maybeAs<de::Zip>())
             {
                 fileCount = zip->lumpCount();
             }
-            else if(de::Wad* wad = dynamic_cast<de::Wad*>(&file))
+            else if(de::Wad *wad = file.maybeAs<de::Wad>())
             {
                 fileCount = wad->lumpCount();
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
@@ -1220,12 +1233,14 @@ D_CMD(ListFiles)
                     << (file.hasStartup()? ", startup" : "")
                     << (crc? QString(" [%1]").arg(crc, 0, 16) : "");
 
-            totalFiles += size_t(fileCount);
+            totalFiles += fileCount;
             ++totalPackages;
         }
     }
+
     LOG_RES_MSG(_E(b)"Total: " _E(.) "%i files in %i packages")
             << totalFiles << totalPackages;
+
     return true;
 }
 
@@ -1347,12 +1362,12 @@ struct filehandle_s* F_Open(char const* nativePath, char const* mode)
     return F_Open2(nativePath, mode, 0/*base offset*/);
 }
 
-struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
+struct filehandle_s *F_OpenLump(lumpnum_t lumpNum)
 {
+    de::FS1 &fileSys = App_FileSystem();
     try
     {
-        de::File1& lump = App_FileSystem().nameIndex().lump(lumpNum);
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem().openLump(lump));
+        return reinterpret_cast<struct filehandle_s*>(&fileSys.openLump(fileSys.lump(lumpNum)));
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1361,7 +1376,7 @@ struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
 
 dd_bool F_IsValidLumpNum(lumpnum_t lumpNum)
 {
-    return App_FileSystem().nameIndex().isValidIndex(lumpNum);
+    return App_FileSystem().nameIndex().hasLump(lumpNum);
 }
 
 lumpnum_t F_LumpNumForName(char const* name)
@@ -1379,7 +1394,7 @@ AutoStr* F_LumpName(lumpnum_t lumpNum)
 {
     try
     {
-        String const& name = App_FileSystem().nameIndex().lump(lumpNum).name();
+        String const &name = App_FileSystem().lump(lumpNum).name();
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromTextStd(nameUtf8.constData());
     }
@@ -1392,7 +1407,7 @@ size_t F_LumpLength(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem().nameIndex().lump(lumpNum).size();
+        return App_FileSystem().lump(lumpNum).size();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1403,14 +1418,14 @@ uint F_LumpLastModified(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem().nameIndex().lump(lumpNum).lastModified();
+        return App_FileSystem().lump(lumpNum).lastModified();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
     return (uint)time(0);
 }
 
-void F_Delete(struct filehandle_s* _hndl)
+void F_Delete(struct filehandle_s *_hndl)
 {
     if(!_hndl) return;
     de::FileHandle& hndl = *reinterpret_cast<de::FileHandle*>(_hndl);
@@ -1432,62 +1447,66 @@ void F_SetCustom(struct file1_s* file, dd_bool yes)
     reinterpret_cast<de::File1*>(file)->setCustom(CPP_BOOL(yes));
 }
 
-size_t F_ReadLump(struct file1_s* _file, int lumpIdx, uint8_t* buffer)
+size_t F_ReadLump(struct file1_s *_file, int lumpIdx, uint8_t *buffer)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(Wad* wad = dynamic_cast<Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(Wad *wad = file->maybeAs<Wad>())
     {
         return wad->lump(lumpIdx).read(buffer);
     }
-    if(Zip* zip = dynamic_cast<Zip*>(file))
+    if(Zip *zip = file->maybeAs<Zip>())
     {
         return zip->lump(lumpIdx).read(buffer);
     }
     return file->read(buffer);
 }
 
-size_t F_ReadLumpSection(struct file1_s* _file, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(struct file1_s *_file, int lumpIdx, uint8_t *buffer,
     size_t startOffset, size_t length)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         return wad->lump(lumpIdx).read(buffer, startOffset, length);
     }
-    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         return zip->lump(lumpIdx).read(buffer, startOffset, length);
     }
     return file->read(buffer, startOffset, length);
 }
 
-uint8_t const* F_CacheLump(struct file1_s* _file, int lumpIdx)
+uint8_t const *F_CacheLump(struct file1_s *_file, int lumpIdx)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         return wad->lump(lumpIdx).cache();
     }
-    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         return zip->lump(lumpIdx).cache();
     }
     return file->cache();
 }
 
-void F_UnlockLump(struct file1_s* _file, int lumpIdx)
+void F_UnlockLump(struct file1_s *_file, int lumpIdx)
 {
     if(!_file) return;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         wad->unlockLump(lumpIdx);
         return;
     }
-    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         zip->unlockLump(lumpIdx);
         return;
@@ -1495,37 +1514,35 @@ void F_UnlockLump(struct file1_s* _file, int lumpIdx)
     file->unlock();
 }
 
-struct file1_s* F_FindFileForLumpNum2(lumpnum_t lumpNum, int* lumpIdx)
+struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
+        de::File1 const &lump = App_FileSystem().lump(lumpNum);
         if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
-        return reinterpret_cast<struct file1_s*>(&lump.container());
+        return reinterpret_cast<struct file1_s *>(&lump.container());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
     return 0;
 }
 
-struct file1_s* F_FindFileForLumpNum(lumpnum_t lumpNum)
+struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
-        return reinterpret_cast<struct file1_s*>(&lump.container());
+        return reinterpret_cast<struct file1_s *>(&App_FileSystem().lump(lumpNum).container());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
     return 0;
 }
 
-AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum)
+AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
-        QByteArray path = lump.container().composePath().toUtf8();
+        QByteArray path = App_FileSystem().lump(lumpNum).container().composePath().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
     catch(LumpIndex::NotFoundError const&)
@@ -1537,24 +1554,24 @@ dd_bool F_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
-        return lump.container().hasCustom();
+        return App_FileSystem().lump(lumpNum).container().hasCustom();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
     return false;
 }
 
-AutoStr* F_ComposeLumpPath2(struct file1_s* _file, int lumpIdx, char delimiter)
+AutoStr *F_ComposeLumpPath2(struct file1_s *_file, int lumpIdx, char delimiter)
 {
     if(!_file) return AutoStr_NewStd();
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
+    DENG_ASSERT(file != 0);
+    if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         QByteArray path = wad->lump(lumpIdx).composePath(delimiter).toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
-    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    if(de::Zip *zip = file->maybeAs<de::Zip>())
     {
         QByteArray path = zip->lump(lumpIdx).composePath(delimiter).toUtf8();
         return AutoStr_FromTextStd(path.constData());

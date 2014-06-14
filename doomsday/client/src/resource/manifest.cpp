@@ -151,11 +151,11 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
         name += ".lmp";
     }
 
-    lumpnum_t lumpNum = lumpIndex.lastIndexForPath(Path(name));
+    lumpnum_t lumpNum = lumpIndex.findLast(Path(name));
     if(lumpNum < 0) return -1;
 
     // Check the condition.
-    size_t lumpSize = lumpIndex.lump(lumpNum).info().size;
+    size_t lumpSize = lumpIndex[lumpNum].info().size;
     switch(sizeCond)
     {
     case LSCOND_EQUAL:
@@ -184,7 +184,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
     {
         de::FileHandle &hndl = App_FileSystem().openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
 
-        if(Wad *wad = dynamic_cast<Wad *>(&hndl.file()))
+        if(Wad *wad = hndl.file().maybeAs<Wad>())
         {
             // Ensure all identity lumps are present.
             if(identityKeys.count())

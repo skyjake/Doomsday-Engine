@@ -291,7 +291,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
     try
     {
-        de::FileHandle &file = fileSys.openLump(fileSys.nameIndex().lump(raw.lumpNum));
+        de::FileHandle &file = fileSys.openLump(fileSys.lump(raw.lumpNum));
         if(Image_LoadFromFile(image, file))
         {
             fileSys.releaseFile(file.file());

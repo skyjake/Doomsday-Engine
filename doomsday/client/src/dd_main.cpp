@@ -839,7 +839,7 @@ static void loadResource(ResourceManifest &manifest)
         file->setCustom(false);
 
         // Print the 'CRC' number of IWADs, so they can be identified.
-        if(Wad *wad = dynamic_cast<Wad*>(file))
+        if(Wad *wad = file->maybeAs<Wad>())
         {
             LOG_RES_MSG("IWAD identification: %08x") << wad->calculateCRC();
         }
@@ -1071,15 +1071,13 @@ static void initPathLumpMappings()
     uint8_t *buf = 0;
 
     // Add the contents of all DD_DIREC lumps.
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().lumps())
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    LumpIndex::FoundIndices foundDirecs;
+    lumpIndex.findAll("DD_DIREC", foundDirecs);
+    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
-        de::File1 &lump = **i;
+        de::File1 &lump          = lumpIndex[*i];
         FileInfo const &lumpInfo = lump.info();
-
-        if(!lump.name().beginsWith("DD_DIREC", Qt::CaseInsensitive))
-        {
-            continue;
-        }
 
         // Make a copy of it so we can ensure it ends in a null.
         if(bufSize < lumpInfo.size + 1)
@@ -1170,9 +1168,7 @@ static int DD_ActivateGameWorker(void *context)
     ResourceSystem &resSys = App_ResourceSystem();
 
     // Texture resources are located now, prior to initializing the game.
-    resSys.initCompositeTextures();
-    resSys.initFlatTextures();
-    resSys.initSpriteTextures();
+    resSys.initTextures();
     resSys.textureScheme("Lightmaps").clear();
     resSys.textureScheme("Flaremaps").clear();
 
@@ -2073,9 +2069,7 @@ dd_bool DD_Init(void)
         initPathMappings();
         App_FileSystem().resetAllSchemes();
 
-        App_ResourceSystem().initCompositeTextures();
-        App_ResourceSystem().initFlatTextures();
-        App_ResourceSystem().initSpriteTextures();
+        App_ResourceSystem().initTextures();
         App_ResourceSystem().textureScheme("Lightmaps").clear();
         App_ResourceSystem().textureScheme("Flaremaps").clear();
 
@@ -2272,7 +2266,7 @@ static int DD_UpdateEngineStateWorker(void *context)
     // Re-read definitions.
     Def_Read();
 
-    App_ResourceSystem().initRawTextures();
+    App_ResourceSystem().clearAllRawTextures();
     App_ResourceSystem().initSprites(); // Fully reinitialize sprites.
 #ifdef __CLIENT__
     App_ResourceSystem().initModels(); // Defs might've changed.
@@ -2327,9 +2321,7 @@ void DD_UpdateEngineState()
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem().resetAllSchemes();
 
-    App_ResourceSystem().initCompositeTextures();
-    App_ResourceSystem().initFlatTextures();
-    App_ResourceSystem().initSpriteTextures();
+    App_ResourceSystem().initTextures();
 
     if(App_GameLoaded() && gx.UpdateState)
     {

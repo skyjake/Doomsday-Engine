@@ -50,6 +50,7 @@
 #include "filetype.h"
 #include "searchpath.h"
 #include "../resource/resourceclass.h"
+#include "../filesys/lumpindex.h"
 
 /**
  * @defgroup fs File System
@@ -69,13 +70,6 @@
 ///@}
 
 namespace de {
-
-namespace internal {
-    template <typename Type>
-    inline bool cannotCastFileTo(File1 *file) {
-        return dynamic_cast<Type *>(file) == NULL;
-    }
-}
 
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
@@ -421,6 +415,14 @@ public:
     LumpIndex const &nameIndex() const;
 
     /**
+     * Convenient method of looking up a file from the lump name index given its
+     * unique @a lumpnum.
+     *
+     * @see nameIndex(), LumpIndex::toLump()
+     */
+    inline File1 &lump(lumpnum_t lumpnum) const { return nameIndex()[lumpnum]; }
+
+    /**
      * Opens the given file (will be translated) for reading.
      *
      * @post If @a allowDuplicate = @c false a new file ID for this will have been
@@ -464,15 +466,6 @@ public:
     File1 &find(Uri const &search);
 
     /**
-     * Finds all files.
-     *
-     * @param found  Set of files that match the result.
-     *
-     * @return  Number of files found.
-     */
-    int findAll(FileList &found) const;
-
-    /**
      * Finds all files which meet the supplied @a predicate.
      *
      * @param predicate     If not @c NULL, this predicate evaluator callback must
@@ -508,8 +501,10 @@ public:
         while(i.hasNext())
         {
             i.next();
-            if(internal::cannotCastFileTo<Type>(&i.value()->file()))
+            if(!i.value()->file().is<Type>())
+            {
                 i.remove();
+            }
         }
         return found.count();
     }
@@ -558,6 +553,12 @@ public:
      * Calculate a CRC for the loaded file list.
      */
     uint loadedFilesCRC();
+
+    /**
+     * Provides access to the list of all loaded files (in load order), for
+     * efficient traversal.
+     */
+    FileList const &loadedFiles() const;
 
     /**
      * Unload all files loaded after startup.
