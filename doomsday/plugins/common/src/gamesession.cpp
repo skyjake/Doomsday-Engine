@@ -1023,6 +1023,7 @@ void GameSession::leaveMap()
 
     // Are we revisiting a previous map?
     bool const revisit = saved && saved->hasState(String("maps") / Str_Text(Uri_Compose(gameMapUri)));
+
     d->reloadMap(revisit);
 
     // On exit logic:
@@ -1030,7 +1031,14 @@ void GameSession::leaveMap()
     if(!revisit)
     {
         // First visit; destroy all freshly spawned players (??).
-        P_RemoveAllPlayerMobjs();
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            ddplayer_t *ddplr = players[i].plr;
+            if(ddplr->inGame)
+            {
+                P_MobjRemove(ddplr->mo, true);
+            }
+        }
     }
 
     d->restorePlayersInHub(playerBackup, nextMapEntrance);
@@ -1042,7 +1050,7 @@ void GameSession::leaveMap()
     Game_ACScriptInterpreter_RunDeferredTasks(gameMapUri);
 #endif
 
-    if(saved && !revisit)
+    if(saved)
     {
         DENG2_ASSERT(saved->mode().testFlag(File::Write));
 
