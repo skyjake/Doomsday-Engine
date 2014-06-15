@@ -495,13 +495,12 @@ void FS1::index(de::File1 &file)
     }
     else if(Wad *wad = file.maybeAs<Wad>())
     {
-        if(!wad->empty())
+        if(!wad->isEmpty())
         {
             // Insert the lumps into their rightful places in the index.
             for(int i = 0; i < wad->lumpCount(); ++i)
             {
-                File1 &lump = wad->lump(i);
-                d->primaryIndex.catalogLump(lump);
+                d->primaryIndex.catalogLump(wad->lump(i));
             }
         }
     }

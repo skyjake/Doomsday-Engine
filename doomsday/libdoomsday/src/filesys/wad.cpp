@@ -29,13 +29,13 @@
 #include <de/ByteOrder>
 #include <de/Error>
 #include <de/NativePath>
-#include <de/PathTree>
 #include <de/Log>
 #include <de/memoryzone.h>
 
 static QString invalidIndexMessage(int invalidIdx, int lastValidIdx);
 
 namespace de {
+namespace internal {
 
 /// The following structures are used to read data directly from WAD files.
 #pragma pack(1)
@@ -52,130 +52,119 @@ typedef struct {
 } wadlumprecord_t;
 #pragma pack()
 
-class WadFile : public File1
+static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
-public:
-    WadFile(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
-        : File1(hndl, path, info, container), crc_(0)
-    {}
+    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
+    if(lastValidIdx < 0) msg += "(file is empty)";
+    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
+    return msg;
+}
 
-    /// @return  Name of this file.
-    String const &name() const
+/// @return Length of the archived lump name in characters.
+static int nameLength(wadlumprecord_t const &lrec)
+{
+    int nameLen = 0;
+    while(nameLen < LUMPNAME_T_LASTINDEX && lrec.name[nameLen])
+    { nameLen++; }
+    return nameLen;
+}
+
+/// Perform all translations and encodings to the archived lump name and write
+/// the result to @a normName.
+static void normalizeLumpName(wadlumprecord_t const &lrec, ddstring_t *normName)
+{
+    if(!normName) return;
+
+    Str_Clear(normName);
+    int nameLen = nameLength(lrec);
+    for(int i = 0; i < nameLen; ++i)
     {
-        return directoryNode().name();
+        /// The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
+        /// @todo Ensure that this doesn't break other IWADs. The 0x80-0xff
+        ///       range isn't normally used in lump names, right??
+        char ch = lrec.name[i] & 0x7f;
+        Str_AppendChar(normName, ch);
     }
 
-    /**
-     * Compose an absolute URI to this file.
-     *
-     * @param delimiter     Delimit directory using this character.
-     *
-     * @return The absolute URI.
-     */
-    Uri composeUri(QChar delimiter = '/') const
+    // Lump names allow characters the file system does not. Therefore they
+    // will be percent-encoded here and later decoded if/when necessary.
+    if(!Str_IsEmpty(normName))
     {
-        return directoryNode().path(delimiter);
+        Str_PercentEncode(normName);
+    }
+    else
+    {
+        /// We do not consider zero-length names to be valid, so replace with
+        /// with _something_.
+        /// @todo fixme: Handle this more elegantly...
+        Str_Set(normName, "________");
     }
 
-    /**
-     * Retrieve the directory node for this file.
-     *
-     * @return  Directory node for this file.
-     */
-    PathTree::Node const &directoryNode() const
+    // All lumps are ordained with an extension if they don't have one.
+    char const *ext = F_FindFileExtension(Str_Text(normName));
+    if(!(ext && Str_Length(normName) > ext - Str_Text(normName) + 1))
     {
-        return container().as<Wad>().lumpDirectoryNode(info_.lumpIdx);
+        Str_Append(normName, !Str_CompareIgnoreCase(normName, "DEHACKED")? ".deh" : ".lmp");
     }
+}
 
-    /**
-     * Read the file data into @a buffer.
-     *
-     * @param buffer        Buffer to read into. Must be at least large enough to
-     *                      contain the whole file.
-     * @param tryCache      @c true= try the lump cache first.
-     *
-     * @return Number of bytes read.
-     *
-     * @see size() or info() to determine the size of buffer needed.
-     */
-    size_t read(uint8_t *buffer, bool tryCache = true)
-    {
-        return container().as<Wad>().readLump(info_.lumpIdx, buffer, tryCache);
-    }
+} // namespace internal
 
-    /**
-     * Read a subsection of the file data into @a buffer.
-     *
-     * @param buffer        Buffer to read into. Must be at least @a length bytes.
-     * @param startOffset   Offset from the beginning of the file to start reading.
-     * @param length        Number of bytes to read.
-     * @param tryCache      If @c true try the local data cache first.
-     *
-     * @return Number of bytes read.
-     */
-    size_t read(uint8_t *buffer, size_t startOffset, size_t length, bool tryCache = true)
-    {
-        return container().as<Wad>().readLump(info_.lumpIdx, buffer, startOffset, length, tryCache);
-    }
+using namespace internal;
 
-    /**
-     * Read this lump into the local cache.
-     *
-     * @return Pointer to the cached copy of the associated data.
-     */
-    uint8_t const *cache()
-    {
-        return container().as<Wad>().cacheLump(info_.lumpIdx);
-    }
+Wad::LumpFile::LumpFile(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
+    : File1(hndl, path, info, container)
+{}
 
-    /**
-     * Remove a lock on the locally cached data.
-     *
-     * @return This instance.
-     */
-    WadFile &unlock()
-    {
-        container().as<Wad>().unlockLump(info_.lumpIdx);
-        return *this;
-    }
+String const &Wad::LumpFile::name() const
+{
+    return directoryNode().name();
+}
 
-    uint crc() const { return crc_; }
+Uri Wad::LumpFile::composeUri(QChar delimiter) const
+{
+    return directoryNode().path(delimiter);
+}
 
-    /**
-     * Calculate a simple CRC for the lump.
-     *
-     * @note This algorithm should be replaced if the CRC is needed for anything
-     *       critical/meaningful.
-     *
-     * @attention Calls back into the owning container instance to obtain the name.
-     */
-    WadFile &updateCRC()
-    {
-        crc_ = uint(info_.size);
+PathTree::Node const &Wad::LumpFile::directoryNode() const
+{
+    return wad().lumpEntry(info_.lumpIdx);
+}
 
-        PathTree::Node const &node = directoryNode();
-        String const &name = node.name();
-        int const nameLen = name.length();
-        for(int k = 0; k < nameLen; ++k)
-        {
-            crc_ += name.at(k).unicode();
-        }
-        return *this;
-    }
+size_t Wad::LumpFile::read(uint8_t *buffer, bool tryCache)
+{
+    return wad().readLump(info_.lumpIdx, buffer, tryCache);
+}
 
-private:
-    uint crc_;
-};
+size_t Wad::LumpFile::read(uint8_t *buffer, size_t startOffset, size_t length, bool tryCache)
+{
+    return wad().readLump(info_.lumpIdx, buffer, startOffset, length, tryCache);
+}
+
+uint8_t const *Wad::LumpFile::cache()
+{
+    return wad().cacheLump(info_.lumpIdx);
+}
+
+Wad::LumpFile &Wad::LumpFile::unlock()
+{
+    wad().unlockLump(info_.lumpIdx);
+    return *this;
+}
+
+Wad &Wad::LumpFile::wad() const {
+    return container().as<Wad>();
+}
 
 DENG2_PIMPL(Wad)
 {
     int arcRecordsCount;                  ///< Number of lump records in the archived wad.
     size_t arcRecordsOffset;              ///< Offset to the lump record table in the archived wad.
-    UserDataPathTree *lumpDirectory;      ///< Directory structure and info records for all lumps.
+    QScopedPointer<LumpTree> entries;     ///< Directory structure and entry records for all lumps.
 
-    /// LUT which maps logical lump indices to PathTreeNodes.
-    typedef std::vector<UserDataNode *> LumpNodeLut;
-    QScopedPointer<LumpNodeLut> lumpNodeLut;
+    /// LUT which maps logical lump indices to Entry structures.
+    typedef std::vector<Entry *> LumpEntryLut;
+    QScopedPointer<LumpEntryLut> lumpEntryLut;
 
     QScopedPointer<LumpCache> lumpCache;  ///< Data payload cache.
 
@@ -183,7 +172,6 @@ DENG2_PIMPL(Wad)
         : Base(i)
         , arcRecordsCount (0)
         , arcRecordsOffset(0)
-        , lumpDirectory   (0)
     {
         // Seek to the start of the header.
         file.seek(0, SeekSet);
@@ -194,27 +182,6 @@ DENG2_PIMPL(Wad)
 
         arcRecordsCount  = hdr.lumpRecordsCount;
         arcRecordsOffset = hdr.lumpRecordsOffset;
-    }
-
-    ~Instance()
-    {
-        if(lumpDirectory)
-        {
-            lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, clearWadFileWorker);
-            delete lumpDirectory;
-        }
-    }
-
-    static int clearWadFileWorker(UserDataNode &node, void *)
-    {
-        WadFile *lump = reinterpret_cast<WadFile *>(node.userPointer());
-        if(lump)
-        {
-            // Detach our user data from this node.
-            node.setUserPointer(0);
-            delete lump;
-        }
-        return 0; // Continue iteration.
     }
 
     /// @pre @a file is positioned at the start of the header.
@@ -230,61 +197,14 @@ DENG2_PIMPL(Wad)
         return false;
     }
 
-    /// @return Length of the archived lump name in characters.
-    static int nameLength(wadlumprecord_t const &lrec)
-    {
-        int nameLen = 0;
-        while(nameLen < LUMPNAME_T_LASTINDEX && lrec.name[nameLen])
-        { nameLen++; }
-        return nameLen;
-    }
-
-    /// Perform all translations and encodings to the archived lump name and write
-    /// the result to @a normName.
-    static void normalizeName(wadlumprecord_t const &lrec, ddstring_t *normName)
+    void readLumpEntries()
     {
         LOG_AS("Wad");
-        if(!normName) return;
 
-        Str_Clear(normName);
-        int nameLen = nameLength(lrec);
-        for(int i = 0; i < nameLen; ++i)
-        {
-            /// The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
-            /// @todo Ensure that this doesn't break other IWADs. The 0x80-0xff
-            ///       range isn't normally used in lump names, right??
-            char ch = lrec.name[i] & 0x7f;
-            Str_AppendChar(normName, ch);
-        }
-
-        // Lump names allow characters the file system does not. Therefore they
-        // will be percent-encoded here and later decoded if/when necessary.
-        if(!Str_IsEmpty(normName))
-        {
-            Str_PercentEncode(normName);
-        }
-        else
-        {
-            /// We do not consider zero-length names to be valid, so replace with
-            /// with _something_.
-            /// @todo fixme: Handle this more elegantly...
-            Str_Set(normName, "________");
-        }
-
-        // All lumps are ordained with an extension if they don't have one.
-        char const *ext = F_FindFileExtension(Str_Text(normName));
-        if(!(ext && Str_Length(normName) > ext - Str_Text(normName) + 1))
-        {
-            Str_Append(normName, !Str_CompareIgnoreCase(normName, "DEHACKED")? ".deh" : ".lmp");
-        }
-    }
-
-    void readLumpDirectory()
-    {
-        LOG_AS("Wad");
         if(arcRecordsCount <= 0) return;
+
         // Already been here?
-        if(lumpDirectory) return;
+        if(!entries.isNull()) return;
 
         // We'll load the lump directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
@@ -297,30 +217,30 @@ DENG2_PIMPL(Wad)
         Str_Reserve(Str_Init(&absPath), LUMPNAME_T_LASTINDEX + 4/*.lmp*/);
 
         // Intialize the directory.
-        lumpDirectory = new UserDataPathTree(PathTree::MultiLeaf);
+        entries.reset(new LumpTree(PathTree::MultiLeaf));
 
         // Build our runtime representation from the archived lump directory.
         wadlumprecord_t const *arcRecord = arcRecords;
         for(int i = 0; i < arcRecordsCount; ++i, arcRecord++)
         {
             // Determine the name for this lump in the VFS.
-            normalizeName(*arcRecord, &absPath);
+            normalizeLumpName(*arcRecord, &absPath);
 
             // Make it absolute.
             F_PrependBasePath(&absPath, &absPath);
 
+            String const path = Str_Text(&absPath);
+            Entry &entry      = entries->insert(Path(path));
+
             FileHandle *dummy = 0; /// @todo Fixme!
-            WadFile *lump =
-                new WadFile(*dummy,
-                            Str_Text(&absPath),
-                            FileInfo(self.lastModified(), // Inherited from the container (note recursion).
-                                     i,
-                                     littleEndianByteOrder.toNative(arcRecord->filePos),
-                                     littleEndianByteOrder.toNative(arcRecord->size),
-                                     littleEndianByteOrder.toNative(arcRecord->size)),
-                            thisPublic);
-            UserDataNode *node = &lumpDirectory->insert(Path(Str_Text(&absPath)));
-            node->setUserPointer(lump);
+            LumpFile *lumpFile = new LumpFile(*dummy, path,
+                                              FileInfo(self.lastModified(), // Inherited from the container (note recursion).
+                                                       i,
+                                                       littleEndianByteOrder.toNative(arcRecord->filePos),
+                                                       littleEndianByteOrder.toNative(arcRecord->size),
+                                                       littleEndianByteOrder.toNative(arcRecord->size)),
+                                              thisPublic);
+            entry.lumpFile.reset(lumpFile); // takes ownership
         }
 
         Str_Free(&absPath);
@@ -329,25 +249,20 @@ DENG2_PIMPL(Wad)
         delete[] arcRecords;
     }
 
-    static int buildLumpNodeLutWorker(UserDataNode &node, void *parameters)
-    {
-        Instance *wadInst = (Instance *)parameters;
-        WadFile *lump = reinterpret_cast<WadFile *>(node.userPointer());
-        DENG2_ASSERT(lump && wadInst->self.isValidIndex(lump->info().lumpIdx)); // Sanity check.
-        (*wadInst->lumpNodeLut)[lump->info().lumpIdx] = &node;
-        return 0; // Continue iteration.
-    }
-
-    void buildLumpNodeLut()
+    void buildLumpEntryLutIfNeeded()
     {
         LOG_AS("Wad");
         // Been here already?
-        if(!lumpNodeLut.isNull()) return;
+        if(!lumpEntryLut.isNull()) return;
 
-        lumpNodeLut.reset(new LumpNodeLut(self.lumpCount()));
-        if(!lumpDirectory) return;
+        lumpEntryLut.reset(new LumpEntryLut(self.lumpCount()));
+        if(entries.isNull()) return;
 
-        lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, buildLumpNodeLutWorker, this);
+        for(PathTreeIterator<LumpTree> iter(entries->leafNodes()); iter.hasNext(); )
+        {
+            Entry &entry = iter.next();
+            (*lumpEntryLut)[entry.file().info().lumpIdx] = &entry;
+        }
     }
 };
 
@@ -368,46 +283,38 @@ int Wad::lastIndex() const
 
 int Wad::lumpCount() const
 {
-    d->readLumpDirectory();
-    return d->lumpDirectory? d->lumpDirectory->size() : 0;
+    d->readLumpEntries();
+    return d->entries.isNull()? 0 : d->entries->size();
 }
 
-bool Wad::empty()
-{
-    return !lumpCount();
-}
-
-PathTree::Node &Wad::lumpDirectoryNode(int lumpIdx) const
-{
-    if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
-    d->buildLumpNodeLut();
-    return *((*d->lumpNodeLut)[lumpIdx]);
-}
-
-File1 &Wad::lump(int lumpIdx)
+Wad::Entry &Wad::lumpEntry(int lumpIndex) const
 {
     LOG_AS("Wad");
-    if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lump", invalidIndexMessage(lumpIdx, lastIndex()));
-    d->buildLumpNodeLut();
-    return *reinterpret_cast<WadFile *>((*d->lumpNodeLut)[lumpIdx]->userPointer());
+    if(isValidIndex(lumpIndex))
+    {
+        d->buildLumpEntryLutIfNeeded();
+        return *(*d->lumpEntryLut)[lumpIndex];
+    }
+    /// @throw NotFoundEntry  The lump index given is out of range.
+    throw NotFoundError("Wad::entry", invalidIndexMessage(lumpIndex, lastIndex()));
 }
 
-void Wad::clearCachedLump(int lumpIdx, bool *retCleared)
+void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 {
     LOG_AS("Wad::clearCachedLump");
 
     if(retCleared) *retCleared = false;
 
-    if(isValidIndex(lumpIdx))
+    if(isValidIndex(lumpIndex))
     {
         if(!d->lumpCache.isNull())
         {
-            d->lumpCache->remove(lumpIdx, retCleared);
+            d->lumpCache->remove(lumpIndex, retCleared);
         }
     }
     else
     {
-        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIdx, lastIndex()));
+        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIndex, lastIndex()));
     }
 }
 
@@ -420,18 +327,18 @@ void Wad::clearLumpCache()
     }
 }
 
-uint8_t const *Wad::cacheLump(int lumpIdx)
+uint8_t const *Wad::cacheLump(int lumpIndex)
 {
     LOG_AS("Wad::cacheLump");
 
-    if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIndex)) throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIndex, lastIndex()));
 
-    WadFile const &file = reinterpret_cast<WadFile &>(lump(lumpIdx));
+    LumpFile const &file = lumpEntry(lumpIndex).file();
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)")
-        << NativePath(composePath()).pretty()
-        << NativePath(file.composePath()).pretty()
-        << (unsigned long) file.info().size
-        << (file.info().isCompressed()? ", compressed" : "");
+            << NativePath(composePath()).pretty()
+            << NativePath(file.composePath()).pretty()
+            << (unsigned long) file.info().size
+            << (file.info().isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
     if(d->lumpCache.isNull())
@@ -439,56 +346,58 @@ uint8_t const *Wad::cacheLump(int lumpIdx)
         d->lumpCache.reset(new LumpCache(lumpCount()));
     }
 
-    uint8_t const *data = d->lumpCache->data(lumpIdx);
+    uint8_t const *data = d->lumpCache->data(lumpIndex);
     if(data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(file.info().size, PU_APPSTATIC, 0);
-    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(file.info().size).arg(lumpIdx));
+    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(file.info().size).arg(lumpIndex));
 
-    readLump(lumpIdx, region, false);
-    d->lumpCache->insert(lumpIdx, region);
+    readLump(lumpIndex, region, false);
+    d->lumpCache->insert(lumpIndex, region);
 
     return region;
 }
 
-void Wad::unlockLump(int lumpIdx)
+void Wad::unlockLump(int lumpIndex)
 {
     LOG_AS("Wad::unlockLump");
-    LOGDEV_RES_XVERBOSE("\"%s:%s\"") << NativePath(composePath()).pretty() << NativePath(lump(lumpIdx).composePath()).pretty();
+    LOGDEV_RES_XVERBOSE("\"%s:%s\"")
+            << NativePath(composePath()).pretty()
+            << NativePath(lumpEntry(lumpIndex).file().composePath()).pretty();
 
-    if(isValidIndex(lumpIdx))
+    if(isValidIndex(lumpIndex))
     {
         if(!d->lumpCache.isNull())
         {
-            d->lumpCache->unlock(lumpIdx);
+            d->lumpCache->unlock(lumpIndex);
         }
     }
     else
     {
-        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIdx, lastIndex()));
+        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIndex, lastIndex()));
     }
 }
 
-size_t Wad::readLump(int lumpIdx, uint8_t *buffer, bool tryCache)
+size_t Wad::readLump(int lumpIndex, uint8_t *buffer, bool tryCache)
 {
     LOG_AS("Wad::readLump");
-    if(!isValidIndex(lumpIdx)) return 0;
-    return readLump(lumpIdx, buffer, 0, lump(lumpIdx).size(), tryCache);
+    if(!isValidIndex(lumpIndex)) return 0;
+    return readLump(lumpIndex, buffer, 0, lumpEntry(lumpIndex).file().size(), tryCache);
 }
 
 size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     LOG_AS("Wad::readLump");
-    WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
+    LumpFile const &file = static_cast<LumpFile &>(lump(lumpIdx));
 
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]")
-        << NativePath(composePath()).pretty()
-        << NativePath(file.composePath()).pretty()
-        << (unsigned long) file.size()
-        << (file.isCompressed()? ", compressed" : "")
-        << startOffset
-        << length;
+            << NativePath(composePath()).pretty()
+            << NativePath(file.composePath()).pretty()
+            << (unsigned long) file.size()
+            << (file.isCompressed()? ", compressed" : "")
+            << startOffset
+            << length;
 
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache)
@@ -519,9 +428,16 @@ uint Wad::calculateCRC()
     int const numLumps = lumpCount();
     for(int i = 0; i < numLumps; ++i)
     {
-        WadFile &file = reinterpret_cast<WadFile&>(lump(i));
-        file.updateCRC();
-        crc += file.crc();
+        Entry &entry = lumpEntry(i);
+
+        entry.crc = uint(entry.file().size());
+        String const lumpName = entry.name();
+        int const nameLen = lumpName.length();
+        for(int i = 0; i < nameLen; ++i) {
+            entry.crc += lumpName.at(i).unicode();
+        }
+
+        crc += entry.crc;
     }
     return crc;
 }
@@ -544,12 +460,10 @@ bool Wad::recognise(FileHandle &file)
     return true;
 }
 
-} // namespace de
-
-static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
+Wad::LumpTree const &Wad::lumps() const
 {
-    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
-    if(lastValidIdx < 0) msg += "(file is empty)";
-    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
-    return msg;
+    d->readLumpEntries();
+    return *d->entries;
 }
+
+} // namespace de

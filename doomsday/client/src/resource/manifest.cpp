@@ -189,7 +189,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
             // Ensure all identity lumps are present.
             if(identityKeys.count())
             {
-                if(wad->empty())
+                if(wad->isEmpty())
                 {
                     // Clear not what we are looking for.
                     validated = false;
