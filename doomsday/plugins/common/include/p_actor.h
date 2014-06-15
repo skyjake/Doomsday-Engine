@@ -36,8 +36,6 @@ extern "C" {
  */
 void P_MobjRemove(mobj_t *mo, dd_bool noRespawn);
 
-void P_RemoveAllPlayerMobjs(void);
-
 /**
  * To be called after a move, to link the mobj back into the world.
  *

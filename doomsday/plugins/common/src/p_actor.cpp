@@ -114,18 +114,6 @@ justDoIt:
     Mobj_Destroy(mo);
 }
 
-void P_RemoveAllPlayerMobjs()
-{
-    for(uint i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t *plr = players + i;
-        ddplayer_t *ddplr = plr->plr;
-        if(!ddplr->inGame) continue;
-
-        P_MobjRemove(ddplr->mo, true);
-    }
-}
-
 void P_MobjLink(struct mobj_s *mobj)
 {
     DENG_ASSERT(mobj != 0);
