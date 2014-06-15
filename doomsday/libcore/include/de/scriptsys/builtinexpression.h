@@ -55,7 +55,8 @@ public:
         TIME_DELTA = 12,
         AS_RECORD = 13,
         FLOOR = 14,
-        EVALUATE = 15
+        EVALUATE = 15,
+        DIR = 16
     };
 
 public:

@@ -89,6 +89,32 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         return dict->contentsAsArray(_type == DICTIONARY_KEYS ? DictionaryValue::Keys
                                                               : DictionaryValue::Values);
     }
+
+    case DIR:
+    {
+        if(args.size() > 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly at most one arguments for DIR");
+        }
+
+        Record const *ns;
+        if(args.size() == 1)
+        {
+            ns = evaluator.localNamespace();
+        }
+        else
+        {
+            ns = &args.at(1).as<RecordValue>().dereference();
+        }
+
+        ArrayValue *keys = new ArrayValue;
+        DENG2_FOR_EACH_CONST(Record::Members, i, ns->members())
+        {
+            *keys << new TextValue(i.key());
+        }
+        return keys;
+    }
     
     case RECORD_MEMBERS:    
     case RECORD_SUBRECORDS:
@@ -322,6 +348,7 @@ static struct {
     { "deserialize", BuiltInExpression::DESERIALIZE },
     { "dictkeys",    BuiltInExpression::DICTIONARY_KEYS },
     { "dictvalues",  BuiltInExpression::DICTIONARY_VALUES },
+    { "dir",         BuiltInExpression::DIR },
     { "eval",        BuiltInExpression::EVALUATE },
     { "floor",       BuiltInExpression::FLOOR },
     { "len",         BuiltInExpression::LENGTH },
