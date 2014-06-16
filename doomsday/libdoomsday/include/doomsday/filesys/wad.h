@@ -50,8 +50,8 @@ public:
      * File system object for a lump in the WAD.
      *
      * The purpose of this abstraction is to redirect various File1 methods to the
-     * containing WAD file. Such a mechanism would be unnecessary in file system in
-     * which proper OO design is used for the package / file abstaction. -ds
+     * containing Wad file. Such a mechanism would be unnecessary in a file system
+     * in which proper OO design is used for the package / file abstraction. -ds
      */
     class LumpFile : public File1
     {
@@ -122,26 +122,6 @@ public:
         Wad &wad() const;
     };
 
-    /**
-     * Models an entry in the internal lump tree.
-     */
-    struct Entry : public PathTree::Node
-    {
-        QScopedPointer<LumpFile> lumpFile;  ///< File system object for the lump data.
-        uint crc;                           ///< CRC for the lump data.
-
-        Entry(PathTree::NodeArgs const &args)
-            : Node(args)
-            , crc (0)
-        {}
-
-        LumpFile &file() const {
-            DENG2_ASSERT(!lumpFile.isNull());
-            return *lumpFile;
-        }
-    };
-    typedef PathTreeT<Entry> LumpTree;
-
 public:
     Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
 
@@ -166,18 +146,11 @@ public:
     inline bool isEmpty() { return !lumpCount(); }
 
     /**
-     * Returns the Entry for the specified @a lumpIndex.
-     *
-     * @throws NotFoundError  If @a lumpIndex is not valid.
-     */
-    Entry &lumpEntry(int lumpIndex) const;
-
-    /**
      * Convenient method of looking up the LumpFile for a given @a lumpIndex.
      *
      * @see lumpEntry(), Entry::file()
      */
-    inline LumpFile &lump(int lumpIndex) const { return lumpEntry(lumpIndex).file(); }
+    LumpFile &lump(int lumpIndex) const;
 
     /**
      * Read the data associated with lump @a lumpIndex into @a buffer.
@@ -251,11 +224,6 @@ public:
      */
     uint calculateCRC();
 
-    /**
-     * Provides access to the internal LumpTree, for efficient traversal.
-     */
-    LumpTree const &lumps() const;
-
 public:
     /**
      * Determines whether a File looks like it could be accessed using Wad.
@@ -265,6 +233,40 @@ public:
      * @return @c true, if the file looks like a WAD.
      */
     static bool recognise(FileHandle &file);
+
+protected:
+    /**
+     * Models an entry in the internal lump tree.
+     */
+    struct Entry : public PathTree::Node
+    {
+        dint32 offset;
+        dint32 size;
+        QScopedPointer<LumpFile> lumpFile;  ///< File system object for the lump data.
+        uint crc;                           ///< CRC for the lump data.
+
+        Entry(PathTree::NodeArgs const &args)
+            : Node(args), offset(0), size(0), crc(0)
+        {}
+
+        LumpFile &file() const;
+
+        /// Recalculates CRC of the entry.
+        void update();
+    };
+    typedef PathTreeT<Entry> LumpTree;
+
+    /**
+     * Returns the Entry for the specified @a lumpIndex.
+     *
+     * @throws NotFoundError  If @a lumpIndex is not valid.
+     */
+    Entry &lumpEntry(int lumpIndex) const;
+
+    /**
+     * Provides access to the internal LumpTree, for efficient traversal.
+     */
+    LumpTree const &lumps() const;
 
 private:
     DENG2_PRIVATE(d)
