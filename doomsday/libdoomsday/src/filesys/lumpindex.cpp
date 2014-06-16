@@ -250,7 +250,7 @@ static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-File1 &LumpIndex::toLump(lumpnum_t lumpNum) const
+File1 &LumpIndex::lump(lumpnum_t lumpNum) const
 {
     if(!hasLump(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
     return *d->lumps[lumpNum];
@@ -266,6 +266,11 @@ int LumpIndex::size() const
 {
     d->pruneDuplicatesIfNeeded();
     return d->lumps.size();
+}
+
+int LumpIndex::lastIndex() const
+{
+    return d->lumps.size() - 1;
 }
 
 int LumpIndex::pruneByFile(File1 &file)

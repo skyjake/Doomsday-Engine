@@ -59,9 +59,22 @@ public:
     explicit LumpIndex(bool pathsAreUnique = false);
 
     /**
+     * Returns @c true iff the directory contains no lumps.
+     */
+    inline bool isEmpty() const { return !size(); }
+
+    /**
      * Returns the total number of lumps in the directory.
      */
     int size() const;
+
+    /// @copydoc size()
+    inline int lumpCount() const { return size(); } // alias
+
+    /**
+     * Returns the logicial index of the last lump in the directory, or @c -1 if empty.
+     */
+    int lastIndex() const;
 
     /**
      * Returns @c true iff @a lumpNum can be interpreted as a valid lump index.
@@ -111,13 +124,13 @@ public:
      * @throws NotFoundError If the requested file could not be found.
      * @see hasLump()
      */
-    File1 &toLump(lumpnum_t lumpNum) const;
+    File1 &lump(lumpnum_t lumpNum) const;
 
     /**
-     * @copydoc toLump()
-     * @see toLump()
+     * @copydoc lump()
+     * @see lump()
      */
-    inline File1 &operator [] (lumpnum_t lumpNum) const { return toLump(lumpNum); }
+    inline File1 &operator [] (lumpnum_t lumpNum) const { return lump(lumpNum); }
 
     /**
      * Provides access to list containing @em all the lumps, for efficient traversals.
