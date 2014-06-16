@@ -321,12 +321,12 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
     if(!isValidIndex(lumpIndex))
         throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIndex, lastIndex()));
 
-    LumpFile const &file = lumpEntry(lumpIndex).file();
+    LumpFile const &lumpFile = lump(lumpIndex);
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)")
             << NativePath(composePath()).pretty()
-            << NativePath(file.composePath()).pretty()
-            << (unsigned long) file.info().size
-            << (file.info().isCompressed()? ", compressed" : "");
+            << NativePath(lumpFile.composePath()).pretty()
+            << (unsigned long) lumpFile.info().size
+            << (lumpFile.info().isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
     if(d->lumpCache.isNull())
@@ -337,8 +337,8 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
     uint8_t const *data = d->lumpCache->data(lumpIndex);
     if(data) return data;
 
-    uint8_t *region = (uint8_t *) Z_Malloc(file.info().size, PU_APPSTATIC, 0);
-    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(file.info().size).arg(lumpIndex));
+    uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
+    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
 
     readLump(lumpIndex, region, false);
     d->lumpCache->insert(lumpIndex, region);
@@ -351,7 +351,7 @@ void Wad::unlockLump(int lumpIndex)
     LOG_AS("Wad::unlockLump");
     LOGDEV_RES_XVERBOSE("\"%s:%s\"")
             << NativePath(composePath()).pretty()
-            << NativePath(lumpEntry(lumpIndex).file().composePath()).pretty();
+            << NativePath(lump(lumpIndex).composePath()).pretty();
 
     if(isValidIndex(lumpIndex))
     {
@@ -370,20 +370,20 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, bool tryCache)
 {
     LOG_AS("Wad::readLump");
     if(!isValidIndex(lumpIndex)) return 0;
-    return readLump(lumpIndex, buffer, 0, lumpEntry(lumpIndex).file().size(), tryCache);
+    return readLump(lumpIndex, buffer, 0, lump(lumpIndex).size(), tryCache);
 }
 
 size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     LOG_AS("Wad::readLump");
-    LumpFile const &file = static_cast<LumpFile &>(lump(lumpIdx));
+    LumpFile const &lumpFile = lump(lumpIdx);
 
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]")
             << NativePath(composePath()).pretty()
-            << NativePath(file.composePath()).pretty()
-            << (unsigned long) file.size()
-            << (file.isCompressed()? ", compressed" : "")
+            << NativePath(lumpFile.composePath()).pretty()
+            << (unsigned long) lumpFile.size()
+            << (lumpFile.isCompressed()? ", compressed" : "")
             << startOffset
             << length;
 
@@ -394,13 +394,13 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
         LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = de::min(file.size(), length);
+            size_t readBytes = de::min(lumpFile.size(), length);
             std::memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
 
-    handle_->seek(file.info().baseOffset + startOffset, SeekSet);
+    handle_->seek(lumpFile.info().baseOffset + startOffset, SeekSet);
     size_t readBytes = handle_->read(buffer, length);
 
     /// @todo Do not check the read length here.
