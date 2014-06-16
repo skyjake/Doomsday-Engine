@@ -95,7 +95,7 @@ struct IndexEntry
         // To achieve uniformity we apply a percent encoding to the "raw" names.
         if(!normName.isEmpty())
         {
-            normName = QString(normName.toAscii().toPercentEncoding());
+            normName = QString(normName.toLatin1().toPercentEncoding());
         }
         else
         {
@@ -394,7 +394,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
         LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = de::min(lumpFile.size(), length);
+            size_t readBytes = de::min(size_t(lumpFile.size()), length);
             std::memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
