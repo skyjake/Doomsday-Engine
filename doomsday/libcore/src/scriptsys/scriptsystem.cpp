@@ -134,7 +134,7 @@ DENG2_PIMPL(ScriptSystem)
             Record &dict = coreModule.addRecord("String");
             binder.init(dict)
                     << DENG2_FUNC_NOARG(String_Upper, "upper")
-                    << DENG2_FUNC_NOARG(String_Upper, "lower")
+                    << DENG2_FUNC_NOARG(String_Lower, "lower")
                     << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath");
         }
 
