@@ -538,7 +538,7 @@ void LogEntry::operator << (Reader &from)
          >> _section
          >> _format;
 
-    if(from.version() >= DENG2_PROTOCOL_1_14_0_BUILD_1099)
+    if(from.version() >= DENG2_PROTOCOL_1_14_0_LogEntry_metadata)
     {
         // This version adds context information to the entry.
         from.readAs<duint32>(_metadata);

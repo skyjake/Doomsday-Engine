@@ -27,6 +27,7 @@
 #include "de/IfStatement"
 #include "de/FlowStatement"
 #include "de/PrintStatement"
+#include "de/ScopeStatement"
 #include "de/TryStatement"
 #include "de/WhileStatement"
 #include "de/Reader"
@@ -85,6 +86,10 @@ Statement *Statement::constructFrom(Reader &reader)
         
     case WHILE:
         result.reset(new WhileStatement);
+        break;
+
+    case SCOPE:
+        result.reset(new ScopeStatement);
         break;
                 
     default:

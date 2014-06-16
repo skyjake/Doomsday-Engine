@@ -1,9 +1,7 @@
-/** @file wad.h WAD Archive (File).
+/** @file wad.h  WAD Archive (File).
  *
- * @todo This should be replaced with a FS2 based WadFolder class.
- *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,89 +18,139 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_WAD_H
-#define LIBDENG_RESOURCE_WAD_H
+#ifndef LIBDOOMSDAY_FILESYS_WAD_H
+#define LIBDOOMSDAY_FILESYS_WAD_H
 
 #include "../libdoomsday.h"
+#include "../filesys/lumpindex.h"
 #include "file.h"
 #include "fileinfo.h"
+#include <de/Error>
 #include <de/PathTree>
 
 namespace de {
 
 /**
  * WAD archive file format.
- * @ingroup resource
+ * @ingroup fs
  *
  * @see file.h, File1
+ *
+ * @todo This should be replaced with a FS2 based WadFolder class.
  */
-class LIBDOOMSDAY_PUBLIC Wad : public File1
+class LIBDOOMSDAY_PUBLIC Wad : public File1, public LumpIndex
 {
+protected:
+    struct Entry; // forward
+
 public:
     /// Base class for format-related errors. @ingroup errors
     DENG2_ERROR(FormatError);
 
-    /// The requested entry does not exist in the wad. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    /**
+     * File system object for a lump in the WAD.
+     *
+     * The purpose of this abstraction is to redirect various File1 methods to the
+     * containing Wad file. Such a mechanism would be unnecessary in a file system
+     * in which proper OO design is used for the package / file abstraction. -ds
+     */
+    class LumpFile : public File1
+    {
+    public:
+        LumpFile(Entry &entry, FileHandle &hndl, String path, FileInfo const &info,
+                 File1 *container);
+
+        /// @return  Name of this file.
+        String const &name() const;
+
+        /**
+         * Compose an absolute URI to this file.
+         *
+         * @param delimiter     Delimit directory using this character.
+         *
+         * @return The absolute URI.
+         */
+        Uri composeUri(QChar delimiter = '/') const;
+
+        /**
+         * Retrieve the directory node for this file.
+         *
+         * @return  Directory node for this file.
+         */
+        PathTree::Node &directoryNode() const;
+
+        /**
+         * Read the file data into @a buffer.
+         *
+         * @param buffer        Buffer to read into. Must be at least large enough to
+         *                      contain the whole file.
+         * @param tryCache      @c true= try the lump cache first.
+         *
+         * @return Number of bytes read.
+         *
+         * @see size() or info() to determine the size of buffer needed.
+         */
+        size_t read(uint8_t *buffer, bool tryCache = true);
+
+        /**
+         * Read a subsection of the file data into @a buffer.
+         *
+         * @param buffer        Buffer to read into. Must be at least @a length bytes.
+         * @param startOffset   Offset from the beginning of the file to start reading.
+         * @param length        Number of bytes to read.
+         * @param tryCache      If @c true try the local data cache first.
+         *
+         * @return Number of bytes read.
+         */
+        size_t read(uint8_t *buffer, size_t startOffset, size_t length, bool tryCache = true);
+
+        /**
+         * Read this lump into the local cache.
+         *
+         * @return Pointer to the cached copy of the associated data.
+         */
+        uint8_t const *cache();
+
+        /**
+         * Remove a lock on the locally cached data.
+         *
+         * @return This instance.
+         */
+        LumpFile &unlock();
+
+        /**
+         * Convenient method returning the containing Wad file instance.
+         */
+        Wad &wad() const;
+
+    private:
+        Entry &entry;
+    };
 
 public:
     Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
-    ~Wad();
-
-    /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
-    bool isValidIndex(int lumpIdx) const;
-
-    /// @return Logical index of the last lump in this file's directory or @c -1 if empty.
-    int lastIndex() const;
-
-    /// @return Number of lumps contained by this file or @c 0 if empty.
-    int lumpCount() const;
-
-    /// @return @c true= There are no lumps in this file's directory.
-    bool empty();
+    virtual ~Wad();
 
     /**
-     * Retrieve the directory node for a lump contained by this file.
+     * Read the data associated with lump @a lumpIndex into @a buffer.
      *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return  Directory node for this lump.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
-     */
-    PathTree::Node &lumpDirectoryNode(int lumpIdx) const;
-
-    /**
-     * Retrieve a lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return The lump.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
-     */
-    File1 &lump(int lumpIdx);
-
-    /**
-     * Read the data associated with lump @a lumpIdx into @a buffer.
-     *
-     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param lumpIndex     Lump index associated with the data to be read.
      * @param buffer        Buffer to read into. Must be at least large enough to
      *                      contain the whole lump.
      * @param tryCache      @c true= try the lump cache first.
      *
      * @return Number of bytes read.
      *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIndex is not valid.
      *
      * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
      */
-    size_t readLump(int lumpIdx, uint8_t *buffer, bool tryCache = true);
+    size_t readLump(int lumpIndex, uint8_t *buffer, bool tryCache = true);
 
     /**
-     * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
+     * Read a subsection of the data associated with lump @a lumpIndex into @a buffer.
      *
-     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param lumpIndex     Lump index associated with the data to be read.
      * @param buffer        Buffer to read into. Must be at least @a length bytes.
      * @param startOffset   Offset from the beginning of the lump to start reading.
      * @param length        Number of bytes to read.
@@ -110,37 +158,37 @@ public:
      *
      * @return Number of bytes read.
      *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIndex is not valid.
      */
-    size_t readLump(int lumpIdx, uint8_t *buffer, size_t startOffset, size_t length,
+    size_t readLump(int lumpIndex, uint8_t *buffer, size_t startOffset, size_t length,
                     bool tryCache = true);
 
     /**
-     * Read the data associated with lump @a lumpIdx into the cache.
+     * Read the data associated with lump @a lumpIndex into the cache.
      *
-     * @param lumpIdx   Lump index associated with the data to be cached.
+     * @param lumpIndex   Lump index associated with the data to be cached.
      *
      * @return Pointer to the cached copy of the associated data.
      *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIndex is not valid.
      */
-    uint8_t const *cacheLump(int lumpIdx);
+    uint8_t const *cacheLump(int lumpIndex);
 
     /**
      * Remove a lock on a cached data lump.
      *
-     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     * @param lumpIndex   Lump index associated with the cached data to be changed.
      */
-    void unlockLump(int lumpIdx);
+    void unlockLump(int lumpIndex);
 
     /**
-     * Clear any cached data for lump @a lumpIdx from the lump cache.
+     * Clear any cached data for lump @a lumpIndex from the lump cache.
      *
-     * @param lumpIdx       Lump index associated with the cached data to be cleared.
+     * @param lumpIndex     Lump index associated with the cached data to be cleared.
      * @param retCleared    If not @c NULL write @c true to this address if data was
      *                      present and subsequently cleared from the cache.
      */
-    void clearCachedLump(int lumpIdx, bool *retCleared = 0);
+    void clearCachedLump(int lumpIndex, bool *retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
@@ -165,11 +213,37 @@ public:
      */
     static bool recognise(FileHandle &file);
 
+protected:
+    /**
+     * Models an entry in the internal lump tree.
+     */
+    struct Entry : public PathTree::Node
+    {
+        dint32 offset;
+        dint32 size;
+        QScopedPointer<LumpFile> lumpFile;  ///< File system object for the lump data.
+        uint crc;                           ///< CRC for the lump data.
+
+        Entry(PathTree::NodeArgs const &args)
+            : Node(args), offset(0), size(0), crc(0)
+        {}
+
+        LumpFile &file() const;
+
+        /// Recalculates CRC of the entry.
+        void update();
+    };
+    typedef PathTreeT<Entry> LumpTree;
+
+    /**
+     * Provides access to the internal LumpTree, for efficient traversal.
+     */
+    LumpTree const &lumpTree() const;
+
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_WAD_H */
+#endif // LIBDOOMSDAY_FILESYS_WAD_H

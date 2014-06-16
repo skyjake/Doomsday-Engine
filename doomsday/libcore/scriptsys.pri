@@ -26,6 +26,7 @@ publicHeaders(root, \
     include/de/Parser \
     include/de/PrintStatement \
     include/de/Process \
+    include/de/ScopeStatement \
     include/de/Script \
     include/de/ScriptedInfo \
     include/de/ScriptLex \
@@ -64,7 +65,8 @@ publicHeaders(scriptsys, \
     include/de/scriptsys/operatorexpression.h \
     include/de/scriptsys/parser.h \
     include/de/scriptsys/printstatement.h \
-    include/de/scriptsys/process.h \
+    include/de/scriptsys/process.h\
+    include/de/scriptsys/scopestatement.h \
     include/de/scriptsys/script.h \
     include/de/scriptsys/scriptedinfo.h \
     include/de/scriptsys/scriptlex.h \
@@ -103,6 +105,7 @@ SOURCES += \
     src/scriptsys/parser.cpp \
     src/scriptsys/printstatement.cpp \
     src/scriptsys/process.cpp \
+    src/scriptsys/scopestatement.cpp \
     src/scriptsys/script.cpp \
     src/scriptsys/scriptedinfo.cpp \
     src/scriptsys/scriptlex.cpp \

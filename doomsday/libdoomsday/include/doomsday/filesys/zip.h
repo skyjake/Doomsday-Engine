@@ -1,9 +1,7 @@
-/** @file zip.h ZIP Archive (file)
+/** @file zip.h  ZIP Archive (File).
  *
- * @todo This is obsolete: should use ZipArchive/PackageFolder in libcore.
- *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_ZIP_H
-#define LIBDENG_RESOURCE_ZIP_H
+#ifndef LIBDOOMSDAY_FILESYS_ZIP_H
+#define LIBDOOMSDAY_FILESYS_ZIP_H
 
 #include "../libdoomsday.h"
 #include "file.h"
@@ -39,6 +37,8 @@ class FileHandle;
  * @note Presently only the zlib method (Deflate) of compression is supported.
  *
  * @see file.h, File1
+ *
+ * @todo This is obsolete: should use ZipArchive/PackageFolder in libcore.
  */
 class LIBDOOMSDAY_PUBLIC Zip : public File1
 {
@@ -50,9 +50,7 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    Zip(FileHandle &hndl, String path, FileInfo const &info,
-        File1 *container = 0);
-    ~Zip();
+    Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
     bool isValidIndex(int lumpIdx) const;
@@ -225,10 +223,9 @@ public:
     static uint8_t *compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int level);
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_ZIP_H */
+#endif // LIBDOOMSDAY_FILESYS_ZIP_H

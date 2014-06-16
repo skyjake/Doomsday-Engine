@@ -61,17 +61,21 @@ Value::Text ArrayValue::asText() const
     s << "[";
 
     bool isFirst = true;
+    bool hadNewline = false;
 
     // Compose a textual representation of the array elements.
     for(Elements::const_iterator i = _elements.begin();
         i != _elements.end(); ++i)
     {
+        String content = (*i)->asText();
+        bool multiline = content.contains('\n');
         if(!isFirst)
         {
+            if(hadNewline || multiline) s << "\n";
             s << ",";
         }
-        if((*i)->is<RecordValue>()) s << "\n"; // Records have multiple lines.
-        s << " " << (*i)->asText();
+        hadNewline = multiline;
+        s << " " << content.replace("\n", "\n  ");
         isFirst = false;
     }
     

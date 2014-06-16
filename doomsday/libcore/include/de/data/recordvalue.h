@@ -106,12 +106,14 @@ public:
     Value *duplicate() const;
     Value *duplicateAsReference() const;
     Text asText() const;
+    Record *memberScope() const;
     dsize size() const;
     void setElement(Value const &index, Value *elementValue);
     Value *duplicateElement(Value const &value) const;
     bool contains(Value const &value) const;
     bool isTrue() const;
     dint compare(Value const &value) const;
+    void call(Process &process, Value const &arguments, Value *instanceScope = 0) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

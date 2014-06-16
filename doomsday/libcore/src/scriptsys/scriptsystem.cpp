@@ -23,18 +23,46 @@
 #include "de/Version"
 #include "de/ArrayValue"
 #include "de/NumberValue"
+#include "de/RecordValue"
+#include "de/DictionaryValue"
 #include "de/math.h"
 
 #include <QMap>
 
 namespace de {
 
-Value *Function_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
+Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
 {
     return new TextValue(args.at(0)->asText().fileNamePath());
 }
 
-DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
+Value *Function_String_FileNamePath(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().fileNamePath());
+}
+
+Value *Function_String_Upper(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().upper());
+}
+
+Value *Function_String_Lower(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().lower());
+}
+
+Value *Function_Dictionary_Keys(Context &ctx, Function::ArgumentValues const &)
+{    
+    return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Keys);
+}
+
+Value *Function_Dictionary_Values(Context &ctx, Function::ArgumentValues const &)
+{
+    return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Values);
+}
+
+DENG2_PIMPL(ScriptSystem)
+, DENG2_OBSERVES(Record, Deletion)
 {
     Binder binder;
 
@@ -42,6 +70,7 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules;
     NativeModules nativeModules; // not owned
+    Record coreModule;  // Script: built-in script classes and functions.
     Record versionModule; // Version: information about the platform and build
     Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
@@ -51,6 +80,8 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
     Instance(Public *i) : Base(*i)
     {
+        initCoreModule();
+
         // Setup the Version module.
         {
             Version ver;
@@ -74,8 +105,7 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
         // Setup the Path module.
         binder.init(pathModule)
-                << DENG2_FUNC(Path_FileNamePath, "fileNamePath", "path");
-
+                << DENG2_FUNC(Path_WithoutFileName, "withoutFileName", "path");
         addNativeModule("Path", pathModule);
     }
 
@@ -87,6 +117,28 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         {
             i.value()->audienceForDeletion() -= this;
         }
+    }
+
+    void initCoreModule()
+    {
+        // Dictionary
+        {
+            Record &dict = coreModule.addRecord("Dictionary");
+            binder.init(dict)
+                    << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
+                    << DENG2_FUNC_NOARG(Dictionary_Values, "values");
+        }
+
+        // String
+        {
+            Record &dict = coreModule.addRecord("String");
+            binder.init(dict)
+                    << DENG2_FUNC_NOARG(String_Upper, "upper")
+                    << DENG2_FUNC_NOARG(String_Lower, "lower")
+                    << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath");
+        }
+
+        addNativeModule("Core", coreModule);
     }
 
     void addNativeModule(String const &name, Record &module)
@@ -220,6 +272,12 @@ File const &ScriptSystem::findModuleSource(String const &name, String const &loc
         throw NotFoundError("ScriptSystem::findModuleSource", "Cannot find module '" + name + "'");
     }
     return *src;
+}
+
+Record &ScriptSystem::builtInClass(String const &name)
+{
+    return const_cast<Record &>(App::scriptSystem().nativeModule("Core")
+                                .getAs<RecordValue>(name).dereference());
 }
 
 Record &ScriptSystem::importModule(String const &name, String const &importedFromPath)

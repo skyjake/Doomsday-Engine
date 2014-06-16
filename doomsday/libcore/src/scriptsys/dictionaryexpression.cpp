@@ -52,9 +52,9 @@ void DictionaryExpression::add(Expression *key, Expression *value)
     _arguments.push_back(ExpressionPair(key, value));
 }
 
-void DictionaryExpression::push(Evaluator &evaluator, Record *names) const
+void DictionaryExpression::push(Evaluator &evaluator, Value *scope) const
 {
-    Expression::push(evaluator, names);
+    Expression::push(evaluator, scope);
     
     // The arguments in reverse order (so they are evaluated in
     // natural order, i.e., the same order they are in the source).

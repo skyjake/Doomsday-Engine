@@ -70,6 +70,7 @@ public:
     static String const IMPORT;
     static String const EXPORT;
     static String const RECORD;
+    static String const SCOPE;
     static String const DEL;
     static String const PASS;
     static String const CONTINUE;

@@ -4,6 +4,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS +=  \
+    doomsdayscript \
     savegametool \
     shell   \
     md2tool \

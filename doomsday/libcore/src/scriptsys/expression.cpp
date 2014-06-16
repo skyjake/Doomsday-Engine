@@ -33,9 +33,9 @@ using namespace de;
 Expression::~Expression()
 {}
 
-void Expression::push(Evaluator &evaluator, Record *names) const
+void Expression::push(Evaluator &evaluator, Value *scope) const
 {
-    evaluator.push(this, names);
+    evaluator.push(this, scope);
 }
 
 Expression *Expression::constructFrom(Reader &reader)

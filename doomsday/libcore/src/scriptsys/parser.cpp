@@ -31,6 +31,7 @@
 #include "de/AssignStatement"
 #include "de/DeleteStatement"
 #include "de/FunctionStatement"
+#include "de/ScopeStatement"
 #include "de/TryStatement"
 #include "de/CatchStatement"
 #include "de/ArrayExpression"
@@ -312,17 +313,36 @@ ExpressionStatement *Parser::parseExportStatement()
                                              Expression::Export | Expression::LocalOnly));
 }
 
-ExpressionStatement *Parser::parseDeclarationStatement()
+Statement *Parser::parseDeclarationStatement()
 {
     // "record" name-expr ["," name-expr]*
+    // "record" name-expr "(" [ name-expr ["," name-expr]* ] ")" members-compound
 
     if(_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    Expression::Flags flags = Expression::LocalOnly | Expression::NewSubrecord;
-    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
+
+    // Is this a class record declaration?
+    dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
+    if(pos >= 0)
+    {
+        QScopedPointer<Expression> name(parseExpression(_statementRange.between(1, pos),
+                                                        Expression::NewSubrecordIfNotInScope));
+        QScopedPointer<ScopeStatement> names(new ScopeStatement(name.take(),
+                parseList(_statementRange.between(pos + 1, _statementRange.closingBracket(pos)))));
+
+        parseConditionalCompound(names->compound(),
+                                 IgnoreExtraBeforeColon | StayAtClosingStatement);
+        return names.take();
+    }
+    else
+    {
+        // Regular record declaration.
+        Expression::Flags flags = Expression::LocalOnly | Expression::NewSubrecord;
+        return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
+    }
 }
 
 DeleteStatement *Parser::parseDeleteStatement()
@@ -340,17 +360,20 @@ DeleteStatement *Parser::parseDeleteStatement()
 
 FunctionStatement *Parser::parseFunctionStatement()
 {
+    // "def" name-expr "(" [ name-expr ["," name-expr]* ] ")" cond-compound
+
     dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
     if(pos < 0)
     {
-        throw MissingTokenError("Parser::parseMethodStatement",
+        throw MissingTokenError("Parser::parseFunctionStatement",
             "Expected arguments for " + _statementRange.firstToken().asText());
     }
 
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseExpression(_statementRange.between(1, pos), 
-            Expression::LocalOnly | Expression::ByReference | Expression::NewVariable | Expression::NotInScope)));
+                        Expression::LocalOnly   | Expression::ByReference |
+                        Expression::NewVariable | Expression::NotInScope)));
 
     // Collect the argument names.
     TokenRange argRange = _statementRange.between(pos + 1, _statementRange.closingBracket(pos));
@@ -858,6 +881,14 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
         {
             return ConstantExpression::Pi();
         }
+        else if(token.equals(ScriptLex::SCOPE) &&
+                range.size() == 2 &&
+                range.token(1).type() == Token::IDENTIFIER)
+        {
+            // Explicit local scope.
+            return new NameExpression(range.token(1).str(), flags,
+                                      NameExpression::LOCAL_SCOPE);
+        }
     }
 
     switch(token.type())
@@ -867,12 +898,21 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
         {
             return new NameExpression(range.token(0).str(), flags);
         }
+        else if(range.size() == 3 &&
+                range.token(1).equals(ScriptLex::SCOPE) &&
+                range.token(2).type() == Token::IDENTIFIER)
+        {
+            // Scoped name. This is intended for allowing access to shadowed
+            // identifiers from super records.
+            return new NameExpression(range.token(2).str(), flags,
+                                      range.token(0).str());
+        }
         else
         {
             throw UnexpectedTokenError("Parser::parseTokenExpression", 
                 "Unexpected token " + range.token(1).asText());
         }
-        
+
     case Token::LITERAL_STRING_APOSTROPHE:
     case Token::LITERAL_STRING_QUOTED:
     case Token::LITERAL_STRING_LONG:
