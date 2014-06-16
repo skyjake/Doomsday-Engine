@@ -161,7 +161,7 @@ public:
      *
      * @return  Directory node for this file.
      */
-    virtual PathTree::Node const& directoryNode() const
+    virtual PathTree::Node &directoryNode() const
     {
         throw de::Error("File1::directoryNode", "No owner directory");
     }

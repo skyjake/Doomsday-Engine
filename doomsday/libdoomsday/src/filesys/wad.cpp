@@ -99,8 +99,7 @@ struct IndexEntry
         }
         else
         {
-            /// We do not consider zero-length names to be valid, so replace with
-            /// with _something_.
+            /// Zero-length names are not considered valid - replace with *something*.
             /// @todo fixme: Handle this more elegantly...
             normName = "________";
         }
@@ -127,8 +126,10 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 
 using namespace internal;
 
-Wad::LumpFile::LumpFile(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
+Wad::LumpFile::LumpFile(Entry &entry, FileHandle &hndl, String path,
+    FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
+    , entry(entry)
 {}
 
 String const &Wad::LumpFile::name() const
@@ -141,9 +142,9 @@ Uri Wad::LumpFile::composeUri(QChar delimiter) const
     return directoryNode().path(delimiter);
 }
 
-PathTree::Node const &Wad::LumpFile::directoryNode() const
+PathTree::Node &Wad::LumpFile::directoryNode() const
 {
-    return wad().lumpEntry(info_.lumpIdx);
+    return entry;
 }
 
 size_t Wad::LumpFile::read(uint8_t *buffer, bool tryCache)
@@ -172,119 +173,66 @@ Wad &Wad::LumpFile::wad() const
     return container().as<Wad>();
 }
 
-DENG2_PIMPL(Wad)
+DENG2_PIMPL_NOREF(Wad)
 {
     int arcRecordsCount;                  ///< Number of lump records in the archived wad.
     size_t arcRecordsOffset;              ///< Offset to the lump record table in the archived wad.
-    QScopedPointer<LumpTree> entries;     ///< Directory structure and entry records for all lumps.
+    LumpTree entries;                     ///< Directory structure and entry records for all lumps.
+    QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
 
-    /// LUT which maps logical lump indices to Entry structures.
-    typedef std::vector<Entry *> LumpEntryLut;
-    QScopedPointer<LumpEntryLut> lumpEntryLut;
-
-    QScopedPointer<LumpCache> lumpCache;  ///< Data payload cache.
-
-    Instance(Public *i) : Base(i), arcRecordsCount(0), arcRecordsOffset(0)
+    Instance()
+        : arcRecordsCount(0)
+        , arcRecordsOffset(0)
+        , entries(PathTree::MultiLeaf)
     {}
-
-    void readLumpEntries()
-    {
-        LOG_AS("Wad");
-
-        if(arcRecordsCount <= 0) return;
-
-        // Already been here?
-        if(!entries.isNull()) return;
-
-        // Intialize the lump entry tree.
-        entries.reset(new LumpTree(PathTree::MultiLeaf));
-
-        // Seek to the start of the lump index.
-        self.handle_->seek(arcRecordsOffset, SeekSet);
-        for(int i = 0; i < arcRecordsCount; ++i)
-        {
-            IndexEntry lump;
-            lump << *self.handle_;
-
-            // Determine the name for this lump in the VFS.
-            String absPath = String(DD_BasePath()) + lump.nameNormalized();
-
-            // Make an index entry for this lump.
-            Entry &entry = entries->insert(absPath);
-
-            entry.offset = lump.offset;
-            entry.size   = lump.size;
-
-            FileHandle *dummy = 0; /// @todo Fixme!
-            LumpFile *lumpFile = new LumpFile(*dummy, entry.path(),
-                                              FileInfo(self.lastModified(), // Inherited from the container (note recursion).
-                                                       i, entry.offset, entry.size, entry.size),
-                                              thisPublic);
-            entry.lumpFile.reset(lumpFile); // takes ownership
-        }
-    }
-
-    void buildLumpEntryLutIfNeeded()
-    {
-        LOG_AS("Wad");
-        // Been here already?
-        if(!lumpEntryLut.isNull()) return;
-
-        lumpEntryLut.reset(new LumpEntryLut(self.lumpCount()));
-        if(entries.isNull()) return;
-
-        for(PathTreeIterator<LumpTree> iter(entries->leafNodes()); iter.hasNext(); )
-        {
-            Entry &entry = iter.next();
-            (*lumpEntryLut)[entry.file().info().lumpIdx] = &entry;
-        }
-    }
 };
 
 Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
-    , d(new Instance(this))
-{
-    // Seek to the start of the header.
-    hndl.seek(0, SeekSet);
-    FileHeader hdr;
-    hdr << hndl;
-    d->arcRecordsCount  = hdr.lumpRecordsCount;
-    d->arcRecordsOffset = hdr.lumpRecordsOffset;
-}
-
-bool Wad::isValidIndex(int lumpIdx) const
-{
-    return lumpIdx >= 0 && lumpIdx < lumpCount();
-}
-
-int Wad::lastIndex() const
-{
-    return lumpCount() - 1;
-}
-
-int Wad::lumpCount() const
-{
-    d->readLumpEntries();
-    return d->entries.isNull()? 0 : d->entries->size();
-}
-
-Wad::LumpFile &Wad::lump(int lumpIndex) const
-{
-    return lumpEntry(lumpIndex).file();
-}
-
-Wad::Entry &Wad::lumpEntry(int lumpIndex) const
+    , LumpIndex()
+    , d(new Instance)
 {
     LOG_AS("Wad");
-    if(isValidIndex(lumpIndex))
+
+    // Seek to the start of the header.
+    handle_->seek(0, SeekSet);
+    FileHeader hdr;
+    hdr << *handle_;
+    d->arcRecordsCount  = hdr.lumpRecordsCount;
+    d->arcRecordsOffset = hdr.lumpRecordsOffset;
+
+    // Read the lump entries:
+    if(d->arcRecordsCount <= 0) return;
+
+    // Seek to the start of the lump index.
+    handle_->seek(d->arcRecordsOffset, SeekSet);
+    for(int i = 0; i < d->arcRecordsCount; ++i)
     {
-        d->buildLumpEntryLutIfNeeded();
-        return *(*d->lumpEntryLut)[lumpIndex];
+        IndexEntry lump;
+        lump << *handle_;
+
+        // Determine the name for this lump in the VFS.
+        String absPath = String(DD_BasePath()) / lump.nameNormalized();
+
+        // Make an index entry for this lump.
+        Entry &entry = d->entries.insert(absPath);
+
+        entry.offset = lump.offset;
+        entry.size   = lump.size;
+
+        FileHandle *dummy = 0; /// @todo Fixme!
+        LumpFile *lumpFile = new LumpFile(entry, *dummy, entry.path(),
+                                          FileInfo(lastModified(), // Inherited from the container (note recursion).
+                                                   i, entry.offset, entry.size, entry.size),
+                                          this);
+        entry.lumpFile.reset(lumpFile); // takes ownership
+
+        catalogLump(*lumpFile);
     }
-    /// @throw NotFoundEntry  The lump index given is out of range.
-    throw NotFoundError("Wad::lumpEntry", invalidIndexMessage(lumpIndex, lastIndex()));
 }
+
+Wad::~Wad()
+{}
 
 void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 {
@@ -292,11 +240,11 @@ void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 
     if(retCleared) *retCleared = false;
 
-    if(isValidIndex(lumpIndex))
+    if(hasLump(lumpIndex))
     {
-        if(!d->lumpCache.isNull())
+        if(!d->dataCache.isNull())
         {
-            d->lumpCache->remove(lumpIndex, retCleared);
+            d->dataCache->remove(lumpIndex, retCleared);
         }
     }
     else
@@ -308,9 +256,9 @@ void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 void Wad::clearLumpCache()
 {
     LOG_AS("Wad::clearLumpCache");
-    if(!d->lumpCache.isNull())
+    if(!d->dataCache.isNull())
     {
-        d->lumpCache->clear();
+        d->dataCache->clear();
     }
 }
 
@@ -318,10 +266,7 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
 {
     LOG_AS("Wad::cacheLump");
 
-    if(!isValidIndex(lumpIndex))
-        throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIndex, lastIndex()));
-
-    LumpFile const &lumpFile = lump(lumpIndex);
+    LumpFile const &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)")
             << NativePath(composePath()).pretty()
             << NativePath(lumpFile.composePath()).pretty()
@@ -329,19 +274,19 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
             << (lumpFile.info().isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
-    if(d->lumpCache.isNull())
+    if(d->dataCache.isNull())
     {
-        d->lumpCache.reset(new LumpCache(lumpCount()));
+        d->dataCache.reset(new LumpCache(LumpIndex::size()));
     }
 
-    uint8_t const *data = d->lumpCache->data(lumpIndex);
+    uint8_t const *data = d->dataCache->data(lumpIndex);
     if(data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
     if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
 
     readLump(lumpIndex, region, false);
-    d->lumpCache->insert(lumpIndex, region);
+    d->dataCache->insert(lumpIndex, region);
 
     return region;
 }
@@ -353,11 +298,11 @@ void Wad::unlockLump(int lumpIndex)
             << NativePath(composePath()).pretty()
             << NativePath(lump(lumpIndex).composePath()).pretty();
 
-    if(isValidIndex(lumpIndex))
+    if(hasLump(lumpIndex))
     {
-        if(!d->lumpCache.isNull())
+        if(!d->dataCache.isNull())
         {
-            d->lumpCache->unlock(lumpIndex);
+            d->dataCache->unlock(lumpIndex);
         }
     }
     else
@@ -369,16 +314,15 @@ void Wad::unlockLump(int lumpIndex)
 size_t Wad::readLump(int lumpIndex, uint8_t *buffer, bool tryCache)
 {
     LOG_AS("Wad::readLump");
-    if(!isValidIndex(lumpIndex)) return 0;
     return readLump(lumpIndex, buffer, 0, lump(lumpIndex).size(), tryCache);
 }
 
-size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
+size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     LOG_AS("Wad::readLump");
-    LumpFile const &lumpFile = lump(lumpIdx);
 
+    LumpFile const &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]")
             << NativePath(composePath()).pretty()
             << NativePath(lumpFile.composePath()).pretty()
@@ -390,8 +334,8 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache)
     {
-        uint8_t const *data = (!d->lumpCache.isNull() ? d->lumpCache->data(lumpIdx) : 0);
-        LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
+        uint8_t const *data = (!d->dataCache.isNull() ? d->dataCache->data(lumpIndex) : 0);
+        LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIndex;
         if(data)
         {
             size_t readBytes = de::min(size_t(lumpFile.size()), length);
@@ -405,7 +349,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
 
     /// @todo Do not check the read length here.
     if(readBytes < length)
-        throw Error("Wad::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
+        throw Error("Wad::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIndex));
 
     return readBytes;
 }
@@ -413,10 +357,9 @@ size_t Wad::readLump(int lumpIdx, uint8_t *buffer, size_t startOffset,
 uint Wad::calculateCRC()
 {
     uint crc = 0;
-    int const numLumps = lumpCount();
-    for(int i = 0; i < numLumps; ++i)
+    foreach(File1 *file, allLumps())
     {
-        Entry &entry = lumpEntry(i);
+        Entry &entry = static_cast<Entry &>(file->as<LumpFile>().directoryNode());
         entry.update();
         crc += entry.crc;
     }
@@ -448,10 +391,9 @@ bool Wad::recognise(FileHandle &file)
     return (hdr.identification == "IWAD" || hdr.identification == "PWAD");
 }
 
-Wad::LumpTree const &Wad::lumps() const
+Wad::LumpTree const &Wad::lumpTree() const
 {
-    d->readLumpEntries();
-    return *d->entries;
+    return d->entries;
 }
 
 Wad::LumpFile &Wad::Entry::file() const

@@ -22,6 +22,7 @@
 #define LIBDOOMSDAY_FILESYS_WAD_H
 
 #include "../libdoomsday.h"
+#include "../filesys/lumpindex.h"
 #include "file.h"
 #include "fileinfo.h"
 #include <de/Error>
@@ -37,14 +38,14 @@ namespace de {
  *
  * @todo This should be replaced with a FS2 based WadFolder class.
  */
-class LIBDOOMSDAY_PUBLIC Wad : public File1
+class LIBDOOMSDAY_PUBLIC Wad : public File1, public LumpIndex
 {
+protected:
+    struct Entry; // forward
+
 public:
     /// Base class for format-related errors. @ingroup errors
     DENG2_ERROR(FormatError);
-
-    /// The requested entry does not exist in the wad. @ingroup errors
-    DENG2_ERROR(NotFoundError);
 
     /**
      * File system object for a lump in the WAD.
@@ -56,7 +57,8 @@ public:
     class LumpFile : public File1
     {
     public:
-        LumpFile(FileHandle &hndl, String path, FileInfo const &info, File1 *container);
+        LumpFile(Entry &entry, FileHandle &hndl, String path, FileInfo const &info,
+                 File1 *container);
 
         /// @return  Name of this file.
         String const &name() const;
@@ -75,7 +77,7 @@ public:
          *
          * @return  Directory node for this file.
          */
-        PathTree::Node const &directoryNode() const;
+        PathTree::Node &directoryNode() const;
 
         /**
          * Read the file data into @a buffer.
@@ -120,37 +122,14 @@ public:
          * Convenient method returning the containing Wad file instance.
          */
         Wad &wad() const;
+
+    private:
+        Entry &entry;
     };
 
 public:
     Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
-
-    /**
-     * @return @c true= @a lumpIndex is a valid logical index for a lump in this file.
-     */
-    bool isValidIndex(int lumpIndex) const;
-
-    /**
-     * @return Logical index of the last lump in this file's directory or @c -1 if empty.
-     */
-    int lastIndex() const;
-
-    /**
-     * @return Number of lumps contained by this file or @c 0 if empty.
-     */
-    int lumpCount() const;
-
-    /**
-     * @return @c true= There are no lumps in this file's directory.
-     */
-    inline bool isEmpty() { return !lumpCount(); }
-
-    /**
-     * Convenient method of looking up the LumpFile for a given @a lumpIndex.
-     *
-     * @see lumpEntry(), Entry::file()
-     */
-    LumpFile &lump(int lumpIndex) const;
+    virtual ~Wad();
 
     /**
      * Read the data associated with lump @a lumpIndex into @a buffer.
@@ -257,16 +236,9 @@ protected:
     typedef PathTreeT<Entry> LumpTree;
 
     /**
-     * Returns the Entry for the specified @a lumpIndex.
-     *
-     * @throws NotFoundError  If @a lumpIndex is not valid.
-     */
-    Entry &lumpEntry(int lumpIndex) const;
-
-    /**
      * Provides access to the internal LumpTree, for efficient traversal.
      */
-    LumpTree const &lumps() const;
+    LumpTree const &lumpTree() const;
 
 private:
     DENG2_PRIVATE(d)

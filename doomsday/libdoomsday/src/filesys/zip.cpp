@@ -162,7 +162,7 @@ public:
      *
      * @return  Directory node for this file.
      */
-    PathTree::Node const &directoryNode() const
+    PathTree::Node &directoryNode() const
     {
         return container().as<Zip>().lumpDirectoryNode(info_.lumpIdx);
     }
