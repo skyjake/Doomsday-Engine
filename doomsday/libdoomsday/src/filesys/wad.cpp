@@ -28,7 +28,6 @@
 #include <de/NativePath>
 #include <de/Log>
 #include <de/memoryzone.h>
-#include <vector>
 #include <cstring> // memcpy
 
 namespace de {
@@ -175,16 +174,10 @@ Wad &Wad::LumpFile::wad() const
 
 DENG2_PIMPL_NOREF(Wad)
 {
-    int arcRecordsCount;                  ///< Number of lump records in the archived wad.
-    size_t arcRecordsOffset;              ///< Offset to the lump record table in the archived wad.
     LumpTree entries;                     ///< Directory structure and entry records for all lumps.
     QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
 
-    Instance()
-        : arcRecordsCount(0)
-        , arcRecordsOffset(0)
-        , entries(PathTree::MultiLeaf)
-    {}
+    Instance() : entries(PathTree::MultiLeaf) {}
 };
 
 Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
@@ -198,15 +191,13 @@ Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     handle_->seek(0, SeekSet);
     FileHeader hdr;
     hdr << *handle_;
-    d->arcRecordsCount  = hdr.lumpRecordsCount;
-    d->arcRecordsOffset = hdr.lumpRecordsOffset;
 
     // Read the lump entries:
-    if(d->arcRecordsCount <= 0) return;
+    if(hdr.lumpRecordsCount <= 0) return;
 
     // Seek to the start of the lump index.
-    handle_->seek(d->arcRecordsOffset, SeekSet);
-    for(int i = 0; i < d->arcRecordsCount; ++i)
+    handle_->seek(hdr.lumpRecordsOffset, SeekSet);
+    for(int i = 0; i < hdr.lumpRecordsCount; ++i)
     {
         IndexEntry lump;
         lump << *handle_;
