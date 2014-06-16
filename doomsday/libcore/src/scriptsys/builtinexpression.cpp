@@ -47,9 +47,9 @@ BuiltInExpression::~BuiltInExpression()
     delete _arg;
 }
 
-void BuiltInExpression::push(Evaluator &evaluator, Record *) const
+void BuiltInExpression::push(Evaluator &evaluator, Value *scope) const
 {
-    Expression::push(evaluator);    
+    Expression::push(evaluator, scope);
     _arg->push(evaluator);
 }
 
@@ -85,20 +85,35 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Argument must be a dictionary");
         }
-        ArrayValue *array = new ArrayValue();
-        for(DictionaryValue::Elements::const_iterator i = dict->elements().begin();
-            i != dict->elements().end(); ++i)
+
+        return dict->contentsAsArray(_type == DICTIONARY_KEYS ? DictionaryValue::Keys
+                                                              : DictionaryValue::Values);
+    }
+
+    case DIR:
+    {
+        if(args.size() > 2)
         {
-            if(_type == DICTIONARY_KEYS)
-            {
-                array->add(i->first.value->duplicateAsReference());
-            }
-            else
-            {
-                array->add(i->second->duplicateAsReference());
-            }
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly at most one arguments for DIR");
         }
-        return array;
+
+        Record const *ns;
+        if(args.size() == 1)
+        {
+            ns = evaluator.localNamespace();
+        }
+        else
+        {
+            ns = &args.at(1).as<RecordValue>().dereference();
+        }
+
+        ArrayValue *keys = new ArrayValue;
+        DENG2_FOR_EACH_CONST(Record::Members, i, ns->members())
+        {
+            *keys << new TextValue(i.key());
+        }
+        return keys;
     }
     
     case RECORD_MEMBERS:    
@@ -326,21 +341,22 @@ static struct {
     char const *str;
     BuiltInExpression::Type type;
 } types[] = {
-    { "len",         BuiltInExpression::LENGTH },
+    { "Number",      BuiltInExpression::AS_NUMBER },
+    { "Record",      BuiltInExpression::AS_RECORD },
+    { "Text",        BuiltInExpression::AS_TEXT },
+    { "Time",        BuiltInExpression::AS_TIME },
+    { "deserialize", BuiltInExpression::DESERIALIZE },
     { "dictkeys",    BuiltInExpression::DICTIONARY_KEYS },
     { "dictvalues",  BuiltInExpression::DICTIONARY_VALUES },
-    { "Text",        BuiltInExpression::AS_TEXT },
-    { "Number",      BuiltInExpression::AS_NUMBER },
+    { "dir",         BuiltInExpression::DIR },
+    { "eval",        BuiltInExpression::EVALUATE },
+    { "floor",       BuiltInExpression::FLOOR },
+    { "len",         BuiltInExpression::LENGTH },
     { "locals",      BuiltInExpression::LOCAL_NAMESPACE },
     { "members",     BuiltInExpression::RECORD_MEMBERS },
-    { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
     { "serialize",   BuiltInExpression::SERIALIZE },
-    { "deserialize", BuiltInExpression::DESERIALIZE },
-    { "Time",        BuiltInExpression::AS_TIME },
+    { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
     { "timedelta",   BuiltInExpression::TIME_DELTA },
-    { "Record",      BuiltInExpression::AS_RECORD },
-    { "floor",       BuiltInExpression::FLOOR },
-    { "eval",        BuiltInExpression::EVALUATE },
     { NULL,          BuiltInExpression::NONE }
 };
 

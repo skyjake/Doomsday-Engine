@@ -27,6 +27,7 @@
 namespace de {
 
 class Process;
+class Record;
 class NumberValue;
 
 /**
@@ -137,6 +138,15 @@ public:
     ValueType const *maybeAs() const {
         return dynamic_cast<ValueType const *>(this);
     }
+
+    /**
+     * Returns the scope for any members of this value. When evaluating a member in
+     * reference to this value, this will return the primary scope using which the
+     * members can be found.
+     *
+     * For built-in types, this may return one of the Script.* records.
+     */
+    virtual Record *memberScope() const;
 
     /**
      * Determine the size of the value.  The meaning of this
@@ -279,12 +289,13 @@ public:
     /**
      * Applies the call operator on the value.
      *
-     * @param process    Process where the call is made.
-     * @param arguments  Arguments of the call.
-     *
-     * @return  Result of the call operator, which can be anything.
+     * @param process        Process where the call is made.
+     * @param arguments      Arguments of the call.
+     * @param instanceScope  Optional scope that becomes the value of the "self"
+     *                       variable in the called function's local namespace.
+     *                       Ownership taken.
      */
-    virtual void call(Process &process, Value const &arguments) const;
+    virtual void call(Process &process, Value const &arguments, Value *instanceScope = 0) const;
 
 public:
     /**

@@ -81,14 +81,17 @@ public:
         ReadOnly = 0x200,
 
         /// Variable will be raised into a higher namespace.
-        Export = 0x400
+        Export = 0x400,
+
+        /// If missing, create a new subrecord. Otherwise, reuse the existing record.
+        NewSubrecordIfNotInScope = 0x800
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     virtual ~Expression();
 
-    virtual void push(Evaluator &evaluator, Record *names = 0) const;
+    virtual void push(Evaluator &evaluator, Value *scope = 0) const;
 
     virtual Value *evaluate(Evaluator &evaluator) const = 0;
 

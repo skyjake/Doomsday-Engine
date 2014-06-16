@@ -62,6 +62,12 @@ int Value::asInt() const
     return round<int>(asNumber());
 }
 
+Record *Value::memberScope() const
+{
+    // By default, there are no members are thus no scope for them.
+    return 0;
+}
+
 dsize Value::size() const
 {
     /// @throw IllegalError Size is meaningless.
@@ -168,7 +174,7 @@ void Value::assign(Value *value)
     throw IllegalError("Value::assign", "Cannot assign to value");
 }
 
-void Value::call(Process &/*process*/, Value const &/*arguments*/) const
+void Value::call(Process &, Value const &, Value *) const
 {
     /// @throw IllegalError Value cannot be called.
     throw IllegalError("Value::call", "Value cannot be called");

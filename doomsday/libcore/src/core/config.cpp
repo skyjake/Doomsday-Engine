@@ -74,6 +74,8 @@ Config::Config(Path const &path) : RecordAccessor(0), d(new Instance(path))
 
 void Config::read()
 {
+    if(d->configPath.isEmpty()) return;
+
     LOG_AS("Config::read");
     
     // Current version.
@@ -160,6 +162,8 @@ void Config::read()
 
 void Config::write() const
 {
+    if(d->configPath.isEmpty()) return;
+
     d->refuge.write();
 }
 

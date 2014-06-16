@@ -47,6 +47,7 @@ public:
     Value *duplicate() const;
     Number asNumber() const;
     Text asText() const;
+    Record *memberScope() const;
     dsize size() const;
     bool isTrue() const;
     dint compare(Value const &value) const;

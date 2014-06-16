@@ -481,12 +481,23 @@ enum ClockDirection {
  */
 enum ProtocolVersion {
     DENG2_PROTOCOL_1_9_10 = 0,
+
     DENG2_PROTOCOL_1_10_0 = 0,
-    DENG2_PROTOCOL_1_11_0_BUILD_926 = 1, // Time serilization changed
+
+    DENG2_PROTOCOL_1_11_0_Time_high_performance = 1,
     DENG2_PROTOCOL_1_11_0 = 1,
-    DENG2_PROTOCOL_1_14_0_BUILD_1099 = 2, // LogEntry serialization changed
+
+    DENG2_PROTOCOL_1_12_0 = 1,
+
+    DENG2_PROTOCOL_1_13_0 = 1,
+
+    DENG2_PROTOCOL_1_14_0_LogEntry_metadata = 2,
     DENG2_PROTOCOL_1_14_0 = 2,
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_14_0
+
+    DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier = 3,
+    DENG2_PROTOCOL_1_15_0 = 3,
+
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_15_0
 };
 
 //@{

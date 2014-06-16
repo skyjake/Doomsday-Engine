@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -21,43 +21,156 @@
 #include "de/Statement"
 #include "de/Process"
 
-using namespace de;
+namespace de {
+
+DENG2_PIMPL(Context)
+{
+    /**
+     * Information about the control flow is stored within a stack of
+     * ControlFlow instances.
+     */
+    class ControlFlow {
+    public:
+        /**
+         * Constructor.
+         *
+         * @param current  Current statement being executed.
+         * @param f        Statement where normal flow continues.
+         * @param c        Statement where to jump on "continue".
+         *                 @c NULL if continuing is not allowed.
+         * @param b        Statement where to jump to and flow from on "break".
+         *                 @c NULL if breaking is not allowed.
+         */
+        ControlFlow(Statement const *current,
+                    Statement const *f = 0,
+                    Statement const *c = 0,
+                    Statement const *b = 0)
+            : flow(f), jumpContinue(c), jumpBreak(b), iteration(0), _current(current) {}
+
+        /// Returns the currently executed statement.
+        Statement const *current() const { return _current; }
+
+        /// Sets the currently executed statement. When the statement
+        /// changes, the phase is reset back to zero.
+        void setCurrent(Statement const *s) { _current = s; }
+
+    public:
+        Statement const *flow;
+        Statement const *jumpContinue;
+        Statement const *jumpBreak;
+        Value *iteration;
+
+    private:
+        Statement const *_current;
+    };
+
+    /// Type of the execution context.
+    Type type;
+
+    /// The process that owns this context.
+    Process *owner;
+
+    /// Control flow stack.
+    typedef std::vector<ControlFlow> FlowStack;
+    FlowStack controlFlow;
+
+    /// Expression evaluator.
+    Evaluator evaluator;
+
+    /// Determines whether the namespace is owned by the context.
+    bool ownsNamespace;
+
+    /// The local namespace of this context.
+    Record *names;
+
+    QScopedPointer<Value> instanceScope;
+
+    Variable throwaway;
+
+    Instance(Public *i, Type type, Process *owner, Record *globals)
+        : Base(i)
+        , type(type)
+        , owner(owner)
+        , evaluator(self)
+        , ownsNamespace(false)
+        , names(globals)
+    {
+        if(!names)
+        {
+            // Create a private empty namespace.
+            DENG2_ASSERT(type != GlobalNamespace);
+            names = new Record;
+            ownsNamespace = true;
+        }
+    }
+
+    ~Instance()
+    {
+        if(ownsNamespace)
+        {
+            delete names;
+        }
+        self.reset();
+    }
+
+    /// Returns the topmost control flow information.
+    ControlFlow &flow()
+    {
+        return controlFlow.back();
+    }
+
+    /// Pops the topmost control flow instance off of the stack. The
+    /// iteration value is deleted, if it has been defined.
+    void popFlow()
+    {
+        DENG2_ASSERT(!controlFlow.empty());
+        delete flow().iteration;
+        controlFlow.pop_back();
+    }
+
+    /// Sets the currently executed statement.
+    void setCurrent(Statement const *statement)
+    {
+        if(controlFlow.size())
+        {
+            evaluator.reset();
+            flow().setCurrent(statement);
+        }
+        else
+        {
+            DENG2_ASSERT(statement == NULL);
+        }
+    }
+};
 
 Context::Context(Type type, Process *owner, Record *globals)
-    : _type(type), _owner(owner), _evaluator(*this), _ownsNamespace(false), _names(globals)
+    : d(new Instance(this, type, owner, globals))
+{}
+
+Context::Type Context::type()
 {
-    if(!_names)
-    {
-        // Create a private empty namespace.
-        DENG2_ASSERT(_type != GlobalNamespace);
-        _names = new Record();
-        _ownsNamespace = true;
-    }
+    return d->type;
 }
 
-Context::~Context()
+Process &Context::process()
 {
-    if(_ownsNamespace)
-    {
-        delete _names;
-    }        
-    reset();
+    return *d->owner;
 }
 
 Evaluator &Context::evaluator()
 {
-    return _evaluator;
+    return d->evaluator;
 }
 
 Record &Context::names() 
 {
-    return *_names;
+    return *d->names;
 }
 
-void Context::start(Statement const *statement, Statement const *fallback, 
-    Statement const *jumpContinue, Statement const *jumpBreak)
+void Context::start(Statement const *statement,    Statement const *fallback,
+                    Statement const *jumpContinue, Statement const *jumpBreak)
 {
-    _controlFlow.push_back(ControlFlow(statement, fallback, jumpContinue, jumpBreak));
+    d->controlFlow.push_back(Instance::ControlFlow(statement, fallback, jumpContinue, jumpBreak));
 
     // When the current statement is NULL it means that the sequence of statements
     // has ended, so we shouldn't do that until there really is no more statements.
@@ -69,11 +182,11 @@ void Context::start(Statement const *statement, Statement const *fallback,
 
 void Context::reset()
 {
-    while(!_controlFlow.empty())
+    while(!d->controlFlow.empty())
     {
-        popFlow();
+        d->popFlow();
     }    
-    _evaluator.reset();
+    d->evaluator.reset();
 }
 
 bool Context::execute()
@@ -94,27 +207,27 @@ void Context::proceed()
         st = current()->next();
     }
     // Should we fall back to a point that was specified earlier?
-    while(!st && _controlFlow.size())
+    while(!st && d->controlFlow.size())
     {
-        st = _controlFlow.back().flow;
-        popFlow();
+        st = d->controlFlow.back().flow;
+        d->popFlow();
     }
-    setCurrent(st);
+    d->setCurrent(st);
 }
 
 void Context::jumpContinue()
 {
     Statement const *st = NULL;
-    while(!st && _controlFlow.size())
+    while(!st && d->controlFlow.size())
     {
-        st = _controlFlow.back().jumpContinue;
-        popFlow();
+        st = d->controlFlow.back().jumpContinue;
+        d->popFlow();
     }
     if(!st)
     {
         throw JumpError("Context::jumpContinue", "No jump targets defined for continue");
     }
-    setCurrent(st);
+    d->setCurrent(st);
 }
 
 void Context::jumpBreak(duint count)
@@ -125,14 +238,14 @@ void Context::jumpBreak(duint count)
     }
     
     Statement const *st = NULL;
-    while((!st || count > 0) && _controlFlow.size())
+    while((!st || count > 0) && d->controlFlow.size())
     {
-        st = _controlFlow.back().jumpBreak;
+        st = d->controlFlow.back().jumpBreak;
         if(st)
         {
             --count;
         }
-        popFlow();
+        d->popFlow();
     }
     if(count > 0)
     {
@@ -142,43 +255,30 @@ void Context::jumpBreak(duint count)
     {
         throw JumpError("Context::jumpBreak", "No jump targets defined for break");
     }
-    setCurrent(st);
+    d->setCurrent(st);
     proceed();
 }
 
 Statement const *Context::current()
 {
-    if(_controlFlow.size())
+    if(d->controlFlow.size())
     {
-        return flow().current();
+        return d->flow().current();
     }
     return NULL;
 }
 
-void Context::setCurrent(Statement const *statement)
-{
-    if(_controlFlow.size())
-    {
-        _evaluator.reset();
-        flow().setCurrent(statement);
-    }
-    else
-    {
-        DENG2_ASSERT(statement == NULL);
-    }
-}
-
 Value *Context::iterationValue()
 {
-    DENG2_ASSERT(_controlFlow.size());
-    return _controlFlow.back().iteration;
+    DENG2_ASSERT(d->controlFlow.size());
+    return d->controlFlow.back().iteration;
 }
 
 void Context::setIterationValue(Value *value)
 {
-    DENG2_ASSERT(_controlFlow.size());
+    DENG2_ASSERT(d->controlFlow.size());
     
-    ControlFlow &fl = flow();
+    Instance::ControlFlow &fl = d->flow();
     if(fl.iteration)
     {
         delete fl.iteration;
@@ -186,9 +286,25 @@ void Context::setIterationValue(Value *value)
     fl.iteration = value;
 }
 
-void Context::popFlow()
+void Context::setInstanceScope(Value *scope)
 {
-    DENG2_ASSERT(!_controlFlow.empty());
-    delete flow().iteration;
-    _controlFlow.pop_back();
+    d->instanceScope.reset(scope);
 }
+
+Value &Context::instanceScope() const
+{
+    DENG2_ASSERT(!d->instanceScope.isNull());
+    if(d->instanceScope.isNull())
+    {
+        throw UndefinedScopeError("Context::instanceScope",
+                                  "Context is not executing in scope of any instance");
+    }
+    return *d->instanceScope;
+}
+
+Variable &Context::throwaway()
+{
+    return d->throwaway;
+}
+
+} // namespace de

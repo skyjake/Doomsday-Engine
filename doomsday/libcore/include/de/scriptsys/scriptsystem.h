@@ -92,6 +92,8 @@ public:
      */
     File const &findModuleSource(String const &name, String const &localPath = "");
 
+    static Record &builtInClass(String const &name);
+
     void timeChanged(Clock const &);
 
 private:

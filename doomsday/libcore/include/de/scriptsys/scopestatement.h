@@ -1,7 +1,6 @@
-/*
- * The Doomsday Engine Project -- libcore
+/** @file scopestatement.h  Scope statement.
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -14,47 +13,48 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FUNCTIONVALUE_H
-#define LIBDENG2_FUNCTIONVALUE_H
+#ifndef LIBDENG2_SCOPESTATEMENT_H
+#define LIBDENG2_SCOPESTATEMENT_H
 
-#include "../Value"
-#include "../Function"
+#include "../Statement"
+#include "../Expression"
+#include "../Compound"
+#include "../String"
 
 namespace de {
 
 /**
- * Holds a reference to a function and provides a way to call the function.
+ * Class record declaration. The compound statement is executed in a specific
+ * namespace.
  *
  * @ingroup script
  */
-class FunctionValue : public Value
+class ScopeStatement : public Statement
 {
 public:
-    FunctionValue();
-    FunctionValue(Function *func);
-    ~FunctionValue();
+    /// Name of the special variable that specifies super records.
+    static String const SUPER_NAME;
 
-    /// Returns the function.
-    Function const &function() const { return *_func; }
+public:
+    ScopeStatement();
+    ScopeStatement(Expression *identifier, Expression *superRecords);
 
-    Value *duplicate() const;
-    Text asText() const;
-    bool isTrue() const;
-    bool isFalse() const;
-    dint compare(Value const &value) const;
-    void call(Process &process, Value const &arguments, Value *instanceScope) const;
+    /// Returns the compound of the statement.
+    Compound &compound();
+
+    void execute(Context &context) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
 private:
-    Function *_func;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_FUNCTIONVALUE_H */
+#endif // LIBDENG2_SCOPESTATEMENT_H

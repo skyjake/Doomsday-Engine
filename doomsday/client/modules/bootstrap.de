@@ -42,7 +42,7 @@ def upgradeMaintenance()
         # per-plugin as the bindings are stored separately for each.
         # Config is persistent so these will be remembered even after 
         # shutting down the app.
-        for plug in dictvalues(subrecords(Config.plugin))
+        for plug in subrecords(Config.plugin).values()
             plug.onNextLoad += [bindDefaultConsoleTildeKey]
         end
     end

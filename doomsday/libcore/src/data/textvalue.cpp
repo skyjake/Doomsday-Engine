@@ -23,6 +23,7 @@
 #include "de/String"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/ScriptSystem"
 
 #include <QTextStream>
 #include <list>
@@ -53,6 +54,11 @@ Value::Number TextValue::asNumber() const
 Value::Text TextValue::asText() const
 {
     return _value;
+}
+
+Record *TextValue::memberScope() const
+{
+    return &ScriptSystem::builtInClass("String");
 }
 
 dsize TextValue::size() const

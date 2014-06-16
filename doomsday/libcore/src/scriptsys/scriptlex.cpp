@@ -40,6 +40,7 @@ String const ScriptLex::TRY("try");
 String const ScriptLex::IMPORT("import");
 String const ScriptLex::EXPORT("export");
 String const ScriptLex::RECORD("record");
+String const ScriptLex::SCOPE("->");
 String const ScriptLex::DEL("del");
 String const ScriptLex::PASS("pass");
 String const ScriptLex::CONTINUE("continue");
@@ -171,6 +172,16 @@ duint ScriptLex::getStatement(TokenBuffer &output)
                     output.setType(Token::KEYWORD);
                 }
                 
+                output.endToken();
+                counter++;
+                continue;
+            }
+
+            // The scope keyword.
+            if(c == '-' && peek() == '>')
+            {
+                output.setType(Token::KEYWORD);
+                output.appendChar(get());
                 output.endToken();
                 counter++;
                 continue;
@@ -374,6 +385,7 @@ static QChar const *keywordStr[] =
     ScriptLex::PRINT,
     ScriptLex::RECORD,
     ScriptLex::RETURN,
+    ScriptLex::SCOPE,
     ScriptLex::THROW,
     ScriptLex::TRY,
     ScriptLex::WHILE,
@@ -409,8 +421,8 @@ StringList ScriptLex::keywords()
 String ScriptLex::unescapeStringToken(Token const &token)
 {
     DENG2_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
-             token.type() == Token::LITERAL_STRING_QUOTED ||
-             token.type() == Token::LITERAL_STRING_LONG);
+                 token.type() == Token::LITERAL_STRING_QUOTED ||
+                 token.type() == Token::LITERAL_STRING_LONG);
     
     String result;
     QTextStream os(&result);

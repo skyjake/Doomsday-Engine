@@ -55,7 +55,8 @@ public:
         TIME_DELTA = 12,
         AS_RECORD = 13,
         FLOOR = 14,
-        EVALUATE = 15
+        EVALUATE = 15,
+        DIR = 16
     };
 
 public:
@@ -65,7 +66,7 @@ public:
 
     ~BuiltInExpression();
 
-    void push(Evaluator &evaluator, Record *names = 0) const;
+    void push(Evaluator &evaluator, Value *scope = 0) const;
 
     Value *evaluate(Evaluator &evaluator) const;
 

@@ -75,6 +75,11 @@ Value::Text RefValue::asText() const
     return dereference().asText();
 }
 
+Record *RefValue::memberScope() const
+{
+    return dereference().memberScope();
+}
+
 dsize RefValue::size() const
 {
     return dereference().size();
@@ -161,9 +166,9 @@ void RefValue::assign(Value *value)
     _variable->set(value);
 }
 
-void RefValue::call(Process &process, Value const &arguments) const
+void RefValue::call(Process &process, Value const &arguments, Value *instanceScope) const
 {
-    dereference().call(process, arguments);
+    dereference().call(process, arguments, instanceScope);
 }
 
 void RefValue::operator >> (Writer &to) const
