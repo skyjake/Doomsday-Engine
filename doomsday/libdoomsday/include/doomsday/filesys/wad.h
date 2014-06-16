@@ -129,6 +129,7 @@ public:
 
 public:
     Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
+    virtual ~Wad();
 
     /**
      * Read the data associated with lump @a lumpIndex into @a buffer.

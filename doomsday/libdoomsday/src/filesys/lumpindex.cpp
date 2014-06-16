@@ -236,6 +236,9 @@ LumpIndex::LumpIndex(bool pathsAreUnique) : d(new Instance(this))
     d->pathsAreUnique = pathsAreUnique;
 }
 
+LumpIndex::~LumpIndex()
+{}
+
 bool LumpIndex::hasLump(lumpnum_t lumpNum) const
 {
     d->pruneDuplicatesIfNeeded();

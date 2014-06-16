@@ -57,6 +57,7 @@ public:
      *                        will result in the earlier lump being pruned.
      */
     explicit LumpIndex(bool pathsAreUnique = false);
+    virtual ~LumpIndex();
 
     /**
      * Returns @c true iff the directory contains no lumps.

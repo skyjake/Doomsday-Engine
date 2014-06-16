@@ -231,6 +231,9 @@ Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     }
 }
 
+Wad::~Wad()
+{}
+
 void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 {
     LOG_AS("Wad::clearCachedLump");
