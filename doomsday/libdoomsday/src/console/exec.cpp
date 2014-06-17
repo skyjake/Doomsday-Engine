@@ -902,7 +902,7 @@ dd_bool Con_Parse(char const *fileName, dd_bool silently)
         line++;
     }
 
-    F_Delete(file);
+    F_Delete(reinterpret_cast<de::FileHandle *>(file));
 
     return true;
 }

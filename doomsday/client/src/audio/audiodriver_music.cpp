@@ -73,7 +73,7 @@ static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lumpNum, dd_b
         FileHandle *hndl    = reinterpret_cast<FileHandle *>(&App_FileSystem().openLump(App_FileSystem().lump(lumpNum)));
         size_t const length = FileHandle_Length(hndl);
         FileHandle_Read(hndl, (uint8_t *) iMusic->SongBuffer(length), length);
-        F_Delete(hndl);
+        F_Delete(reinterpret_cast<de::FileHandle *>(hndl));
 
         return iMusic->Play(looped);
     }
@@ -101,7 +101,7 @@ static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNa
         F_Dump(buf, len, Str_Text(fileName));
         M_Free(buf); buf = 0;
 
-        F_Delete(file);
+        F_Delete(reinterpret_cast<de::FileHandle *>(file));
 
         // Music maestro, if you please!
         return musicPlayNativeFile(iMusic, Str_Text(fileName), looped);
@@ -109,7 +109,7 @@ static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNa
 
     // Music interface offers buffered playback. Use it.
     FileHandle_Read(file, (uint8_t *) iMusic->SongBuffer(len), len);
-    F_Delete(file);
+    F_Delete(reinterpret_cast<de::FileHandle *>(file));
 
     return iMusic->Play(looped);
 }

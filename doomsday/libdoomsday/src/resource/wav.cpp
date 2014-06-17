@@ -187,17 +187,13 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
     return sampledata;
 }
 
-void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
+void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
 {
-    FileHandle* file = F_Open(filename, "rb");
-    void* sampledata;
-    uint8_t* data;
-    size_t size;
-
-    if(!file) return NULL;
+    FileHandle *file = F_Open(filename, "rb");
+    if(!file) return 0;
 
     // Read in the whole thing.
-    size = FileHandle_Length(file);
+    size_t size = FileHandle_Length(file);
 
     LOG_AS("WAV_Load");
     LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
@@ -205,14 +201,14 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
             << size
             << FileHandle_Tell(file);
 
-    data = (uint8_t*) M_Malloc(size);
+    uint8_t *data = (uint8_t *) M_Malloc(size);
 
     FileHandle_Read(file, data, size);
-    F_Delete(file);
+    F_Delete(reinterpret_cast<de::FileHandle *>(file));
     file = 0;
 
     // Parse the RIFF data.
-    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
+    void *sampledata = WAV_MemoryLoad((byte const *) data, size, bits, rate, samples);
     if(!sampledata)
     {
         LOG_RES_WARNING("Failed to load \"%s\"") << filename;

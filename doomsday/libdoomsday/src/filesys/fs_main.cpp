@@ -1315,12 +1315,6 @@ void F_Shutdown(void)
     delete fileSystem; fileSystem = 0;
 }
 
-void F_ReleaseFile(struct file1_s *file)
-{
-    if(!file) return;
-    App_FileSystem().releaseFile(*reinterpret_cast<de::File1 *>(file));
-}
-
 struct filehandle_s *F_Open(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate)
 {
     try
@@ -1345,12 +1339,11 @@ lumpnum_t F_LumpNumForName(char const *name)
     return -1;
 }
 
-void F_Delete(struct filehandle_s *_hndl)
+void F_Delete(de::FileHandle *hndl)
 {
-    if(!_hndl) return;
-    de::FileHandle& hndl = *reinterpret_cast<de::FileHandle*>(_hndl);
-    App_FileSystem().releaseFile(hndl.file());
-    delete &hndl;
+    if(!hndl) return;
+    App_FileSystem().releaseFile(hndl->file());
+    delete hndl;
 }
 
 size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer,

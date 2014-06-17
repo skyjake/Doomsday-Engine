@@ -585,9 +585,6 @@ LIBDOOMSDAY_PUBLIC de::FS1 &App_FileSystem();
  */
 LIBDOOMSDAY_PUBLIC de::String App_BasePath();
 
-struct filelist_s;
-typedef struct filelist_s FileList;
-
 /// Initialize this module. Cannot be re-initialized, must shutdown first.
 LIBDOOMSDAY_PUBLIC void F_Init(void);
 
@@ -600,7 +597,7 @@ LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
 
 LIBDOOMSDAY_PUBLIC de::File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx);
 
-LIBDOOMSDAY_PUBLIC void F_Delete(struct filehandle_s *file);
+LIBDOOMSDAY_PUBLIC void F_Delete(de::FileHandle *hndl);
 
 LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer,
                                             size_t startOffset, size_t length);

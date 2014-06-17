@@ -39,6 +39,7 @@ typedef enum {
 #ifdef __cplusplus
 
 struct filelist_s;
+typedef struct filelist_s FileList;
 
 namespace de {
 
