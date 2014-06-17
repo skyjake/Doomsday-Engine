@@ -852,17 +852,17 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
-static void readLine(char *buffer, size_t len, struct filehandle_s *file)
+static void readLine(char *buffer, size_t len, de::FileHandle *file)
 {
     std::memset(buffer, 0, len);
 
     size_t p = 0;
     while(p < len - 1) // Make the last null stay there.
     {
-        char ch = FileHandle_GetC(file);
+        char ch = file->getC();
         if(ch == '\r') continue;
 
-        if(FileHandle_AtEnd(file) || ch == '\n')
+        if(file->atEnd() || ch == '\n')
             return;
 
         buffer[p++] = ch;
@@ -872,7 +872,7 @@ static void readLine(char *buffer, size_t len, struct filehandle_s *file)
 dd_bool Con_Parse(char const *fileName, dd_bool silently)
 {
     // Open the file.
-    filehandle_s *file = F_Open(fileName, "rt");
+    de::FileHandle *file = F_Open(fileName, "rt");
     if(!file)
     {
         LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
@@ -897,12 +897,12 @@ dd_bool Con_Parse(char const *fileName, dd_bool silently)
             }
         }
 
-        if(FileHandle_AtEnd(file)) break;
+        if(file->atEnd()) break;
 
         line++;
     }
 
-    F_Delete(reinterpret_cast<de::FileHandle *>(file));
+    F_Delete(file);
 
     return true;
 }

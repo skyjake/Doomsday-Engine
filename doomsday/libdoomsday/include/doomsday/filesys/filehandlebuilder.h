@@ -28,8 +28,6 @@
 #include "../libdoomsday.h"
 #include "fs_main.h"
 
-#ifdef __cplusplus
-
 namespace de {
 
 class LIBDOOMSDAY_PUBLIC FileHandleBuilder
@@ -43,7 +41,7 @@ public:
      *
      * @param file  The file being opened.
      */
-    static FileHandle* fromFile(File1& file);
+    static FileHandle *fromFile(File1 &file);
 
     /**
      * Create a new handle on @a lump.
@@ -51,7 +49,7 @@ public:
      * @param lump  The lump to be opened.
      * @param dontBuffer  @c true= do not buffer a copy of the lump.
      */
-    static FileHandle* fromLump(File1& lump, bool dontBuffer);
+    static FileHandle *fromLump(File1 &lump, bool dontBuffer);
 
     /**
      * Create a new handle on the specified native file.
@@ -59,7 +57,7 @@ public:
      * @param nativeFile  Native file system handle to the file being opened.
      * @param baseOffset  Offset from the start of the file in bytes to begin.
      */
-    static FileHandle* fromNativeFile(FILE& nativeFile, size_t baseOffset);
+    static FileHandle *fromNativeFile(FILE &nativeFile, size_t baseOffset);
 
     /**
      * Create a duplicate of handle @a hndl. Note that the duplicate is in
@@ -68,26 +66,9 @@ public:
      *
      * @param hndl  Handle to be duplicated.
      */
-    static FileHandle* dup(FileHandle const& hndl);
+    static FileHandle *dup(FileHandle const &hndl);
 };
 
 } // namespace de
-
-extern "C" {
-#endif
-
-/**
- * Non-public methods of FileHandle. Placed here temporarily.
- */
-
-/// @return  File object represented by this handle.
-struct file1_s* FileHandle_File(FileHandle* hndl);
-
-/// @return  File object represented by this handle.
-struct file1_s* FileHandle_File_const(FileHandle const* hndl);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_FILESYS_FILEHANDLEBUILDER_H */

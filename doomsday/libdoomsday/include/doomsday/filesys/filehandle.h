@@ -29,15 +29,6 @@
 #include "../libdoomsday.h"
 #include <de/types.h>
 
-/// Seek methods
-typedef enum {
-    SeekSet = 0,
-    SeekCur = 1,
-    SeekEnd = 2
-} SeekMethod;
-
-#ifdef __cplusplus
-
 struct filelist_s;
 typedef struct filelist_s FileList;
 
@@ -45,6 +36,13 @@ namespace de {
 
 class File1;
 class FileHandleBuilder;
+
+/// Seek methods
+typedef enum {
+    SeekSet = 0,
+    SeekCur = 1,
+    SeekEnd = 2
+} SeekMethod;
 
 /**
  * Reference/handle to a unique file in the engine's virtual file system.
@@ -57,18 +55,18 @@ public:
     /**
      * Close the file if open. Note that this clears any previously buffered data.
      */
-    FileHandle& close();
+    FileHandle &close();
 
     /// @todo Should not be visible outside the engine.
-    struct filelist_s* list();
+    struct filelist_s *list();
 
     /// @todo Should not be visible outside the engine.
-    FileHandle& setList(struct filelist_s* list);
+    FileHandle &setList(struct filelist_s *list);
 
     bool hasFile() const;
 
-    File1& file();
-    File1& file() const;
+    File1 &file();
+    File1 &file() const;
 
     /// @return  @c true iff this handle's internal state is valid.
     bool isValid() const;
@@ -82,7 +80,7 @@ public:
     /**
      * @return  Number of bytes read (at most @a count bytes will be read).
      */
-    size_t read(uint8_t* buffer, size_t count);
+    size_t read(uint8_t *buffer, size_t count);
 
     /**
      * Read a character from the stream, advancing the read position in the process.
@@ -108,7 +106,7 @@ public:
     /**
      * Rewind the stream to the start of the file.
      */
-    FileHandle& rewind();
+    FileHandle &rewind();
 
     friend class FileHandleBuilder;
 
@@ -116,45 +114,9 @@ private:
     FileHandle();
 
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace de
-
-extern "C" {
-#endif // __cplusplus
-
-/**
- * C wrapper API:
- */
-
-struct filehandle_s; // The filehandle instance (opaque).
-typedef struct filehandle_s FileHandle;
-
-LIBDOOMSDAY_PUBLIC void FileHandle_Delete(FileHandle* hndl);
-
-LIBDOOMSDAY_PUBLIC void FileHandle_Close(FileHandle* hndl);
-
-LIBDOOMSDAY_PUBLIC dd_bool FileHandle_IsValid(FileHandle const* hndl);
-
-LIBDOOMSDAY_PUBLIC size_t FileHandle_Length(FileHandle* hndl);
-
-LIBDOOMSDAY_PUBLIC size_t FileHandle_BaseOffset(FileHandle const* hndl);
-
-LIBDOOMSDAY_PUBLIC size_t FileHandle_Read(FileHandle* hndl, uint8_t* buffer, size_t count);
-
-LIBDOOMSDAY_PUBLIC unsigned char FileHandle_GetC(FileHandle* hndl);
-
-LIBDOOMSDAY_PUBLIC dd_bool FileHandle_AtEnd(FileHandle* hndl);
-
-LIBDOOMSDAY_PUBLIC size_t FileHandle_Tell(FileHandle* hndl);
-
-LIBDOOMSDAY_PUBLIC size_t FileHandle_Seek(FileHandle* hndl, size_t offset, SeekMethod whence);
-
-LIBDOOMSDAY_PUBLIC void FileHandle_Rewind(FileHandle* hndl);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_FILESYS_FILEHANDLE_H */

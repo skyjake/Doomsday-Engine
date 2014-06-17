@@ -70,10 +70,10 @@ static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lumpNum, dd_b
     // Buffer the data using the driver's facilities.
     try
     {
-        FileHandle *hndl    = reinterpret_cast<FileHandle *>(&App_FileSystem().openLump(App_FileSystem().lump(lumpNum)));
-        size_t const length = FileHandle_Length(hndl);
-        FileHandle_Read(hndl, (uint8_t *) iMusic->SongBuffer(length), length);
-        F_Delete(reinterpret_cast<de::FileHandle *>(hndl));
+        de::FileHandle &hndl = App_FileSystem().openLump(App_FileSystem().lump(lumpNum));
+        size_t const length  = hndl.length();
+        hndl.read((uint8_t *) iMusic->SongBuffer(length), length);
+        F_Delete(&hndl);
 
         return iMusic->Play(looped);
     }
@@ -85,10 +85,10 @@ static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lumpNum, dd_b
 
 static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNativePath, dd_bool looped)
 {
-    FileHandle *file = F_Open(virtualOrNativePath, "rb");
+    de::FileHandle *file = F_Open(virtualOrNativePath, "rb");
     if(!file) return 0;
 
-    size_t len = FileHandle_Length(file);
+    size_t len = file->length();
 
     if(!iMusic->Play || !iMusic->SongBuffer)
     {
@@ -97,19 +97,19 @@ static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNa
         AutoStr *fileName = AudioDriver_Music_ComposeTempBufferFilename(NULL);
         uint8_t *buf = (uint8_t *)M_Malloc(len);
 
-        FileHandle_Read(file, buf, len);
+        file->read(buf, len);
         F_Dump(buf, len, Str_Text(fileName));
         M_Free(buf); buf = 0;
 
-        F_Delete(reinterpret_cast<de::FileHandle *>(file));
+        F_Delete(file);
 
         // Music maestro, if you please!
         return musicPlayNativeFile(iMusic, Str_Text(fileName), looped);
     }
 
     // Music interface offers buffered playback. Use it.
-    FileHandle_Read(file, (uint8_t *) iMusic->SongBuffer(len), len);
-    F_Delete(reinterpret_cast<de::FileHandle *>(file));
+    file->read((uint8_t *) iMusic->SongBuffer(len), len);
+    F_Delete(file);
 
     return iMusic->Play(looped);
 }

@@ -591,7 +591,7 @@ LIBDOOMSDAY_PUBLIC void F_Init(void);
 /// Shutdown this module.
 LIBDOOMSDAY_PUBLIC void F_Shutdown(void);
 
-LIBDOOMSDAY_PUBLIC FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset = 0, dd_bool allowDuplicate = true);
+LIBDOOMSDAY_PUBLIC de::FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset = 0, dd_bool allowDuplicate = true);
 
 LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
 

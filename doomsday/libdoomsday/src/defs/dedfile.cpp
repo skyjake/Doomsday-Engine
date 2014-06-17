@@ -78,22 +78,16 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
     return false;
 }
 
-int DED_Read(ded_t* ded, const char* path)
+int DED_Read(ded_t *ded, char const *path)
 {
-    ddstring_t transPath;
-    size_t bufferedDefSize;
-    char* bufferedDef;
-    filehandle_s* file;
-    int result;
-
     // Compose the (possibly-translated) path.
-    Str_InitStd(&transPath);
+    ddstring_t transPath; Str_InitStd(&transPath);
     Str_Set(&transPath, path);
     F_FixSlashes(&transPath, &transPath);
     F_ExpandBasePath(&transPath, &transPath);
 
     // Attempt to open a definition file on this path.
-    file = F_Open(Str_Text(&transPath), "rb");
+    de::FileHandle *file = F_Open(Str_Text(&transPath), "rb");
     if(!file)
     {
         DED_SetError("File could not be opened for reading.");
@@ -102,11 +96,11 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // We will buffer a local copy of the file. How large a buffer do we need?
-    FileHandle_Seek(file, 0, SeekEnd);
-    bufferedDefSize = FileHandle_Tell(file);
-    FileHandle_Rewind(file);
-    bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
-    if(NULL == bufferedDef)
+    file->seek(0, SeekEnd);
+    size_t bufferedDefSize = file->tell();
+    file->rewind();
+    char *bufferedDef = (char *) calloc(1, bufferedDefSize + 1);
+    if(!bufferedDef)
     {
         DED_SetError("Out of memory while trying to buffer file for reading.");
         Str_Free(&transPath);
@@ -114,9 +108,9 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // Copy the file into the local buffer and parse definitions.
-    FileHandle_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
-    F_Delete(reinterpret_cast<de::FileHandle *>(file));
-    result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
+    file->read((uint8_t *)bufferedDef, bufferedDefSize);
+    F_Delete(file);
+    int result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 
     // Done. Release temporary storage and return the result.
     free(bufferedDef);

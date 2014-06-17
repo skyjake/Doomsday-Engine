@@ -991,9 +991,9 @@ de::File1 &FS1::interpret(de::FileHandle &hndl, String filePath, FileInfo const 
     return *interpretedFile;
 }
 
-de::FileHandle& FS1::openFile(String const& path, String const& mode, size_t baseOffset, bool allowDuplicate)
+de::FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOffset, bool allowDuplicate)
 {
-#if _DEBUG
+#ifdef DENG_DEBUG
     for(int i = 0; i < mode.length(); ++i)
     {
         if(mode[i] != 'r' && mode[i] != 't' && mode[i] != 'b' && mode[i] != 'f')
@@ -1001,24 +1001,24 @@ de::FileHandle& FS1::openFile(String const& path, String const& mode, size_t bas
     }
 #endif
 
-    File1* file = d->openFile(path, mode, baseOffset, allowDuplicate);
+    File1 *file = d->openFile(path, mode, baseOffset, allowDuplicate);
     if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + path + "'");
 
     // Add a handle to the opened files list.
-    FileHandle& openFilesHndl = *FileHandleBuilder::fromFile(*file);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
+    FileHandle &openFilesHndl = *FileHandleBuilder::fromFile(*file);
+    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s *>(&d->openFiles));
     return openFilesHndl;
 }
 
-de::FileHandle& FS1::openLump(de::File1& lump)
+de::FileHandle &FS1::openLump(de::File1 &lump)
 {
     // Add a handle to the opened files list.
-    FileHandle& openFilesHndl = *FileHandleBuilder::fromLump(lump, false/*do buffer*/);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
+    FileHandle &openFilesHndl = *FileHandleBuilder::fromLump(lump, false/*do buffer*/);
+    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s *>(&d->openFiles));
     return openFilesHndl;
 }
 
-bool FS1::accessFile(de::Uri const& search)
+bool FS1::accessFile(de::Uri const &search)
 {
     try
     {
@@ -1030,7 +1030,7 @@ bool FS1::accessFile(de::Uri const& search)
             return true;
         }
     }
-    catch(de::Uri::ResolveError const& er)
+    catch(de::Uri::ResolveError const &er)
     {
         // Log but otherwise ignore unresolved paths.
         LOGDEV_RES_VERBOSE(er.asText());
@@ -1315,13 +1315,13 @@ void F_Shutdown(void)
     delete fileSystem; fileSystem = 0;
 }
 
-struct filehandle_s *F_Open(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate)
+de::FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate)
 {
     try
     {
         // Relative paths are relative to the native working directory.
         String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem().openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
+        return &App_FileSystem().openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate));
     }
     catch(FS1::NotFoundError const &)
     {} // Ignore error.

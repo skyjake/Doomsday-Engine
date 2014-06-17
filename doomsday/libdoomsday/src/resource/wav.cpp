@@ -189,23 +189,22 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
 
 void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
 {
-    FileHandle *file = F_Open(filename, "rb");
-    if(!file) return 0;
+    de::FileHandle *hndl = F_Open(filename, "rb");
+    if(!hndl) return 0;
 
     // Read in the whole thing.
-    size_t size = FileHandle_Length(file);
+    size_t size = hndl->length();
 
     LOG_AS("WAV_Load");
     LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
-            << de::NativePath(reinterpret_cast<de::File1 *>(FileHandle_File_const(file))->composePath()).pretty()
+            << de::NativePath(hndl->file().composePath()).pretty()
             << size
-            << FileHandle_Tell(file);
+            << hndl->tell();
 
     uint8_t *data = (uint8_t *) M_Malloc(size);
 
-    FileHandle_Read(file, data, size);
-    F_Delete(reinterpret_cast<de::FileHandle *>(file));
-    file = 0;
+    hndl->read(data, size);
+    F_Delete(hndl);
 
     // Parse the RIFF data.
     void *sampledata = WAV_MemoryLoad((byte const *) data, size, bits, rate, samples);
