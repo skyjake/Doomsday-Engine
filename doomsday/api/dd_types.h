@@ -55,15 +55,7 @@ typedef unsigned int nodeid_t;
 /// @todo Should be a public typedef of a type defined by de::LumpIndex.
 typedef int32_t lumpnum_t;
 
-/// \todo dj: Refactor me away
-#define FILENAME_T_MAXLEN 256
-#define FILENAME_T_LASTINDEX 255
-typedef char            filename_t[FILENAME_T_MAXLEN];
-
-typedef void (*con_textfilter_t) (char* text);
-
 // Forward declarations for map data types.
-struct polyblock_s;
 struct polyobj_s;
 
 #include <de/str.h>

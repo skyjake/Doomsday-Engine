@@ -41,6 +41,10 @@
 extern "C" {
 #endif
 
+#define FILENAME_T_MAXLEN 256
+#define FILENAME_T_LASTINDEX 255
+typedef char filename_t[FILENAME_T_MAXLEN];
+
 typedef struct directory_s {
 #if defined(WIN32)
     int drive;
