@@ -52,6 +52,12 @@
 
 using namespace de;
 
+int F_Access(char const *nativePath)
+{
+    de::Uri path = de::Uri::fromNativePath(nativePath);
+    return App_FileSystem().accessFile(path)? 1 : 0;
+}
+
 int F_FileExists(char const *path)
 {
     int result = -1;

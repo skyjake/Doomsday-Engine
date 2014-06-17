@@ -585,13 +585,6 @@ LIBDOOMSDAY_PUBLIC de::FS1 &App_FileSystem();
  */
 LIBDOOMSDAY_PUBLIC de::String App_BasePath();
 
-extern "C" {
-#endif // __cplusplus
-
-/**
- * C wrapper API:
- */
-
 struct filelist_s;
 typedef struct filelist_s FileList;
 
@@ -601,11 +594,7 @@ LIBDOOMSDAY_PUBLIC void F_Init(void);
 /// Shutdown this module.
 LIBDOOMSDAY_PUBLIC void F_Shutdown(void);
 
-LIBDOOMSDAY_PUBLIC int F_Access(char const *nativePath);
-
-LIBDOOMSDAY_PUBLIC FileHandle *F_Open3(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate);
-LIBDOOMSDAY_PUBLIC FileHandle *F_Open2(char const *nativePath, char const *mode, size_t baseOffset/*, allowDuplicate = true */);
-LIBDOOMSDAY_PUBLIC FileHandle *F_Open(char const *nativePath, char const *mode/*, baseOffset = 0 */);
+LIBDOOMSDAY_PUBLIC FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset = 0, dd_bool allowDuplicate = true);
 
 LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
 
@@ -622,8 +611,5 @@ LIBDOOMSDAY_PUBLIC uint8_t const *F_CacheLump(struct file1_s *file, int lumpIdx)
 
 LIBDOOMSDAY_PUBLIC void F_UnlockLump(struct file1_s *file, int lumpIdx);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
+#endif // __cplusplus
 #endif /* LIBDENG_FILESYS_MAIN_H */

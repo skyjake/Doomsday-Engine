@@ -1291,10 +1291,6 @@ D_CMD(ListFiles)
     return true;
 }
 
-/**
- * C Wrapper API
- */
-
 FS1 &App_FileSystem()
 {
     if(!fileSystem) throw Error("App_FileSystem", "File system not yet initialized");
@@ -1319,19 +1315,13 @@ void F_Shutdown(void)
     delete fileSystem; fileSystem = 0;
 }
 
-int F_Access(char const *nativePath)
-{
-    de::Uri path = de::Uri::fromNativePath(nativePath);
-    return App_FileSystem().accessFile(path)? 1 : 0;
-}
-
-void F_ReleaseFile(struct file1_s* file)
+void F_ReleaseFile(struct file1_s *file)
 {
     if(!file) return;
-    App_FileSystem().releaseFile(*reinterpret_cast<de::File1*>(file));
+    App_FileSystem().releaseFile(*reinterpret_cast<de::File1 *>(file));
 }
 
-struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, dd_bool allowDuplicate)
+struct filehandle_s *F_Open(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate)
 {
     try
     {
@@ -1339,22 +1329,12 @@ struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t ba
         String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
         return reinterpret_cast<struct filehandle_s*>(&App_FileSystem().openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
-    catch(FS1::NotFoundError const&)
+    catch(FS1::NotFoundError const &)
     {} // Ignore error.
     return 0;
 }
 
-struct filehandle_s* F_Open2(char const* nativePath, char const* mode, size_t baseOffset)
-{
-    return F_Open3(nativePath, mode, baseOffset, true/*allow duplicates*/);
-}
-
-struct filehandle_s* F_Open(char const* nativePath, char const* mode)
-{
-    return F_Open2(nativePath, mode, 0/*base offset*/);
-}
-
-lumpnum_t F_LumpNumForName(char const* name)
+lumpnum_t F_LumpNumForName(char const *name)
 {
     try
     {

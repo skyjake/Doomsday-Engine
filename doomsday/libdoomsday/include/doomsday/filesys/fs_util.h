@@ -38,6 +38,8 @@
 extern "C" {
 #endif
 
+LIBDOOMSDAY_PUBLIC int F_Access(char const *nativePath);
+
 LIBDOOMSDAY_PUBLIC int F_FileExists(char const *path);
 
 LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(char const *path);
