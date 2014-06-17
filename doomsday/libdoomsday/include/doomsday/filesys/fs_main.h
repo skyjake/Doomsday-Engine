@@ -598,18 +598,16 @@ LIBDOOMSDAY_PUBLIC FileHandle *F_Open(char const *nativePath, char const *mode, 
 
 LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
 
-LIBDOOMSDAY_PUBLIC struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx);
+LIBDOOMSDAY_PUBLIC de::File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx);
 
 LIBDOOMSDAY_PUBLIC void F_Delete(struct filehandle_s *file);
 
-LIBDOOMSDAY_PUBLIC size_t F_ReadLump(struct file1_s *file, int lumpIdx, uint8_t *buffer);
-
-LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(struct file1_s *file, int lumpIdx, uint8_t *buffer,
+LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer,
                                             size_t startOffset, size_t length);
 
-LIBDOOMSDAY_PUBLIC uint8_t const *F_CacheLump(struct file1_s *file, int lumpIdx);
+LIBDOOMSDAY_PUBLIC uint8_t const *F_CacheLump(de::File1 *file, int lumpIdx);
 
-LIBDOOMSDAY_PUBLIC void F_UnlockLump(struct file1_s *file, int lumpIdx);
+LIBDOOMSDAY_PUBLIC void F_UnlockLump(de::File1 *file, int lumpIdx);
 
 #endif // __cplusplus
 #endif /* LIBDENG_FILESYS_MAIN_H */

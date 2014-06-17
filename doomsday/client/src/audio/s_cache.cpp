@@ -584,7 +584,8 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
         if(lumpLength <= 8) return 0;
 
         int lumpIdx;
-        struct file1_s *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
+        de::File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
+        DENG2_ASSERT(file != 0);
 
         char hdr[12];
         F_ReadLumpSection(file, lumpIdx, (uint8_t *)hdr, 0, 12);
@@ -628,7 +629,8 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
     if(lumpLength > 8)
     {
         int lumpIdx;
-        struct file1_s *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
+        de::File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
+        DENG2_ASSERT(file != 0);
 
         uint8_t hdr[8];
         F_ReadLumpSection(file, lumpIdx, hdr, 0, 8);

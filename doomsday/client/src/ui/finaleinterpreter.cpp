@@ -2103,7 +2103,7 @@ DEFFC(TextFromLump)
     {
         int lumpIdx;
         size_t lumpSize        = App_FileSystem().lump(lumpNum).size();
-        struct file1_s *file   = F_FindFileForLumpNum(lumpNum, &lumpIdx);
+        de::File1 *file        = F_FindFileForLumpNum(lumpNum, &lumpIdx);
         uint8_t const *lumpPtr = F_CacheLump(file, lumpIdx);
 
         size_t bufSize = 2 * lumpSize + 1;

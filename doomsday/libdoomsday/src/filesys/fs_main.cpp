@@ -1353,28 +1353,11 @@ void F_Delete(struct filehandle_s *_hndl)
     delete &hndl;
 }
 
-size_t F_ReadLump(struct file1_s *_file, int lumpIdx, uint8_t *buffer)
-{
-    if(!_file) return 0;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
-    if(Wad *wad = file->maybeAs<Wad>())
-    {
-        return wad->lump(lumpIdx).read(buffer);
-    }
-    if(Zip *zip = file->maybeAs<Zip>())
-    {
-        return zip->lump(lumpIdx).read(buffer);
-    }
-    return file->read(buffer);
-}
-
-size_t F_ReadLumpSection(struct file1_s *_file, int lumpIdx, uint8_t *buffer,
+size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer,
     size_t startOffset, size_t length)
 {
-    if(!_file) return 0;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
+    if(!file) return 0;
+
     if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         return wad->lump(lumpIdx).read(buffer, startOffset, length);
@@ -1386,11 +1369,10 @@ size_t F_ReadLumpSection(struct file1_s *_file, int lumpIdx, uint8_t *buffer,
     return file->read(buffer, startOffset, length);
 }
 
-uint8_t const *F_CacheLump(struct file1_s *_file, int lumpIdx)
+uint8_t const *F_CacheLump(de::File1 *file, int lumpIdx)
 {
-    if(!_file) return 0;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
+    if(!file) return 0;
+
     if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         return wad->lump(lumpIdx).cache();
@@ -1402,11 +1384,10 @@ uint8_t const *F_CacheLump(struct file1_s *_file, int lumpIdx)
     return file->cache();
 }
 
-void F_UnlockLump(struct file1_s *_file, int lumpIdx)
+void F_UnlockLump(de::File1 *file, int lumpIdx)
 {
-    if(!_file) return;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
+    if(!file) return;
+
     if(de::Wad *wad = file->maybeAs<de::Wad>())
     {
         wad->unlockLump(lumpIdx);
@@ -1420,13 +1401,13 @@ void F_UnlockLump(struct file1_s *_file, int lumpIdx)
     file->unlock();
 }
 
-struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx)
+de::File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx)
 {
     try
     {
         de::File1 const &lump = App_FileSystem().lump(lumpNum);
         if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
-        return reinterpret_cast<struct file1_s *>(&lump.container());
+        return &lump.container();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.

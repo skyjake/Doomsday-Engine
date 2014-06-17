@@ -210,10 +210,10 @@ dd_bool Mus_IsMUSLump(lumpnum_t lumpNum)
 {
     char buf[4];
     int lumpIdx;
-    struct file1_s* file = F_FindFileForLumpNum(lumpNum, &lumpIdx);
+    de::File1 *file = F_FindFileForLumpNum(lumpNum, &lumpIdx);
     if(!file) return false;
 
-    F_ReadLumpSection(file, lumpIdx, (uint8_t*)buf, 0, 4);
+    F_ReadLumpSection(file, lumpIdx, (uint8_t *)buf, 0, 4);
 
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
     return !strncmp(buf, "MUS\x01a", 4);
@@ -299,27 +299,23 @@ int Mus_StartLump(lumpnum_t lumpNum, dd_bool looped, dd_bool canPlayMUS)
     if(Mus_IsMUSLump(lumpNum))
     {
         // Lump is in DOOM's MUS format. We must first convert it to MIDI.
-        AutoStr *srcFile = 0;
-        struct file1_s *file;
-        size_t lumpLength;
-        int lumpIdx;
-        uint8_t *buf;
-
         if(!canPlayMUS)
             return -1;
 
-        srcFile = AudioDriver_Music_ComposeTempBufferFilename(".mid");
+        AutoStr *srcFile = AudioDriver_Music_ComposeTempBufferFilename(".mid");
 
         // Read the lump, convert to MIDI and output to a temp file in the
         // working directory. Use a filename with the .mid extension so that
         // any player which relies on the it for format recognition works as
         // expected.
 
-        lumpLength = App_FileSystem().lump(lumpNum).size();
-        buf        = (uint8_t *) M_Malloc(lumpLength);
-        file       = F_FindFileForLumpNum(lumpNum, &lumpIdx);
+        size_t const lumpLength = App_FileSystem().lump(lumpNum).size();
+        uint8_t *buf            = (uint8_t *) M_Malloc(lumpLength);
+        int lumpIdx;
+        de::File1 *file         = F_FindFileForLumpNum(lumpNum, &lumpIdx);
+
         F_ReadLumpSection(file, lumpIdx, buf, 0, lumpLength);
-        M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
+        M_Mus2Midi((void *)buf, lumpLength, Str_Text(srcFile));
         M_Free(buf);
 
         return AudioDriver_Music_PlayNativeFile(Str_Text(srcFile), looped);
