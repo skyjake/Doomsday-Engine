@@ -117,6 +117,7 @@ SOURCES += \
     src/filesys/fs_main.cpp \
     src/filesys/fs_scheme.cpp \
     src/filesys/fs_util.cpp \
+    src/filesys/lumpcache.cpp \
     src/filesys/lumpindex.cpp \
     src/filesys/searchpath.cpp \
     src/filesys/sys_direc.cpp \

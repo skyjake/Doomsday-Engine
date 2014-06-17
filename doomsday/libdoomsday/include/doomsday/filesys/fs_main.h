@@ -241,7 +241,7 @@ public:
          */
         bool mapPath(String &path) const;
 
-#if _DEBUG
+#ifdef DENG_DEBUG
         void debugPrint() const;
 #endif
 
@@ -320,8 +320,7 @@ public:
      * Reset all the schemes, returning their indexes to an empty state and clearing
      * any @ref ExtraPaths which have been registered since creation.
      */
-    inline void resetAllSchemes()
-    {
+    inline void resetAllSchemes() {
         Schemes schemes = allSchemes();
         DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->reset(); }
     }
@@ -596,8 +595,7 @@ LIBDOOMSDAY_PUBLIC de::File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpI
 
 LIBDOOMSDAY_PUBLIC void F_Delete(de::FileHandle *hndl);
 
-LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer,
-                                            size_t startOffset, size_t length);
+LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer, size_t startOffset, size_t length);
 
 LIBDOOMSDAY_PUBLIC uint8_t const *F_CacheLump(de::File1 *file, int lumpIdx);
 
