@@ -584,7 +584,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
         if(lumpLength <= 8) return 0;
 
         int lumpIdx;
-        de::File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
+        File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
         DENG2_ASSERT(file != 0);
 
         char hdr[12];
@@ -629,7 +629,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
     if(lumpLength > 8)
     {
         int lumpIdx;
-        de::File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
+        File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
         DENG2_ASSERT(file != 0);
 
         uint8_t hdr[8];

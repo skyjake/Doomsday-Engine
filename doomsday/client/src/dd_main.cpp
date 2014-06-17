@@ -119,7 +119,7 @@ public:
         addKnownExtension(".zip");
     }
 
-    de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Zip::recognise(hndl))
         {
@@ -139,7 +139,7 @@ public:
         addKnownExtension(".wad");
     }
 
-    de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Wad::recognise(hndl))
         {
@@ -164,7 +164,7 @@ static void DD_AutoLoad();
  *
  * @return  @c true iff the referenced file was loaded.
  */
-static de::File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
+static File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
 
 int isDedicated;
 
@@ -833,7 +833,7 @@ static void loadResource(ResourceManifest &manifest)
     de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
     if(path.isEmpty()) return;
 
-    if(de::File1 *file = tryLoadFile(path, 0/*base offset*/))
+    if(File1 *file = tryLoadFile(path, 0/*base offset*/))
     {
         // Mark this as an original game resource.
         file->setCustom(false);
@@ -1076,7 +1076,7 @@ static void initPathLumpMappings()
     lumpIndex.findAll("DD_DIREC", foundDirecs);
     DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
-        de::File1 &lump          = lumpIndex[*i];
+        File1 &lump          = lumpIndex[*i];
         FileInfo const &lumpInfo = lump.info();
 
         // Make a copy of it so we can ensure it ends in a null.
@@ -2149,7 +2149,7 @@ static int DD_StartupWorker(void * /*context*/)
     String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
-    de::File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
+    File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
     DENG2_ASSERT(loadedFile != 0);
     DENG2_UNUSED(loadedFile);
 
@@ -2850,11 +2850,11 @@ D_CMD(Load)
     return didLoadGame || didLoadResource;
 }
 
-static de::File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
+static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
 {
     try
     {
-        de::FileHandle& hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
+        FileHandle& hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
 
         de::Uri foundFileUri = hndl.file().composeUri();
         LOG_VERBOSE("Loading \"%s\"...") << NativePath(foundFileUri.asText()).pretty().toUtf8().constData();
@@ -2878,7 +2878,7 @@ static bool tryUnloadFile(de::Uri const &search)
 {
     try
     {
-        de::File1 &file = App_FileSystem().find(search);
+        File1 &file = App_FileSystem().find(search);
         de::Uri foundFileUri = file.composeUri();
         NativePath nativePath(foundFileUri.asText());
 

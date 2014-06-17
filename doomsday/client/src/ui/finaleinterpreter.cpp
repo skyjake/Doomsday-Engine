@@ -2093,7 +2093,7 @@ DEFFC(TextFromDef)
 
 DEFFC(TextFromLump)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     lumpnum_t lumpNum;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);

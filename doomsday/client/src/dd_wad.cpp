@@ -85,7 +85,7 @@ AutoStr *W_LumpSourceFile(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const &container = App_FileSystem().lump(lumpNum).container();
+        File1 const &container = App_FileSystem().lump(lumpNum).container();
         return AutoStr_FromText(container.composePath().toUtf8().constData());
     }
     catch(LumpIndex::NotFoundError const &er)
@@ -138,7 +138,7 @@ size_t W_ReadLump(lumpnum_t lumpNum, uint8_t *buffer)
 {
     try
     {
-        de::File1 &lump = App_FileSystem().lump(lumpNum);
+        File1 &lump = App_FileSystem().lump(lumpNum);
         return lump.read(buffer, 0, lump.size());
     }
     catch(LumpIndex::NotFoundError const &er)

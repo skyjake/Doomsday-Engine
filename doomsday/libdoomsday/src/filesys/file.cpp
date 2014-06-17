@@ -61,7 +61,7 @@ File1& File1::container() const
     return *container_;
 }
 
-de::FileHandle& File1::handle()
+FileHandle& File1::handle()
 {
     return *handle_;
 }

@@ -61,7 +61,7 @@ static void setLastError(char const *msg)
     strcpy(lastErrorMsg, msg);
 }
 
-static bool load(de::FileHandle &file, int width, int height, uint8_t *dstBuf)
+static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
 {
     DENG2_ASSERT(dstBuf != 0);
 
@@ -123,7 +123,7 @@ char const *PCX_LastError()
     return 0;
 }
 
-uint8_t *PCX_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
+uint8_t *PCX_Load(FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
 {
     uint8_t *dstBuf = 0;
 

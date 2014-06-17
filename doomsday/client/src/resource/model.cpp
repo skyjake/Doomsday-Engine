@@ -75,7 +75,7 @@ struct md2_header_t
 };
 #pragma pack()
 
-static bool readMd2Header(de::FileHandle &file, md2_header_t &hdr)
+static bool readMd2Header(FileHandle &file, md2_header_t &hdr)
 {
     size_t readBytes = file.read((uint8_t *)&hdr, sizeof(md2_header_t));
     if(readBytes < sizeof(md2_header_t)) return false;
@@ -112,7 +112,7 @@ struct dmd_header_t
 };
 #pragma pack()
 
-static bool readHeaderDmd(de::FileHandle &file, dmd_header_t &hdr)
+static bool readHeaderDmd(FileHandle &file, dmd_header_t &hdr)
 {
     size_t readBytes = file.read((uint8_t *)&hdr, sizeof(dmd_header_t));
     if(readBytes < sizeof(dmd_header_t)) return false;
@@ -123,7 +123,7 @@ static bool readHeaderDmd(de::FileHandle &file, dmd_header_t &hdr)
     return true;
 }
 
-static void *allocAndLoad(de::FileHandle &file, int offset, int len)
+static void *allocAndLoad(FileHandle &file, int offset, int len)
 {
     uint8_t *ptr = (uint8_t *) M_Malloc(len);
     file.seek(offset, SeekSet);
@@ -187,7 +187,7 @@ DENG2_PIMPL(Model)
     /**
      * Note vertex Z/Y are swapped here (ordered XYZ in the serialized data).
      */
-    static Model *loadMd2(de::FileHandle &file, float aspectScale)
+    static Model *loadMd2(FileHandle &file, float aspectScale)
     {
         // Determine whether this appears to be a MD2 model.
         md2_header_t hdr;
@@ -353,7 +353,7 @@ DENG2_PIMPL(Model)
     /**
      * Note vertex Z/Y are swapped here (ordered XYZ in the serialized data).
      */
-    static Model *loadDmd(de::FileHandle &file, float aspectScale)
+    static Model *loadDmd(FileHandle &file, float aspectScale)
     {
         // Determine whether this appears to be a DMD model.
         dmd_header_t hdr;
@@ -603,7 +603,7 @@ Model::Model(Flags flags) : d(new Instance(this))
     setFlags(flags, de::ReplaceFlags);
 }
 
-static bool recogniseDmd(de::FileHandle &file)
+static bool recogniseDmd(FileHandle &file)
 {
     dmd_header_t hdr;
     size_t initPos = file.tell();
@@ -615,7 +615,7 @@ static bool recogniseDmd(de::FileHandle &file)
     return result;
 }
 
-static bool recogniseMd2(de::FileHandle &file)
+static bool recogniseMd2(FileHandle &file)
 {
     md2_header_t hdr;
     size_t initPos = file.tell();
@@ -627,7 +627,7 @@ static bool recogniseMd2(de::FileHandle &file)
     return result;
 }
 
-bool Model::recognise(de::FileHandle &hndl) //static
+bool Model::recognise(FileHandle &hndl) //static
 {
     LOG_AS("Model");
 
@@ -641,10 +641,10 @@ struct ModelFileType
     String name; ///< Symbolic name of the resource type.
     String ext;  ///< Known file extension.
 
-    Model *(*loadFunc)(de::FileHandle &hndl, float aspectScale);
+    Model *(*loadFunc)(FileHandle &hndl, float aspectScale);
 };
 
-Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
+Model *Model::loadFromFile(FileHandle &hndl, float aspectScale) //static
 {
     LOG_AS("Model");
 

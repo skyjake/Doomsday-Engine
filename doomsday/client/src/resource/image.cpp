@@ -58,29 +58,29 @@ struct GraphicFileType
     /// Known file extension.
     String ext;
 
-    bool (*interpretFunc)(de::FileHandle &hndl, String filePath, image_t &img);
+    bool (*interpretFunc)(FileHandle &hndl, String filePath, image_t &img);
 
     char const *(*getLastErrorFunc)(); ///< Can be NULL.
 };
 
-static bool interpretPcx(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+static bool interpretPcx(FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     Image_Init(img);
     img.pixels = PCX_Load(hndl, img.size, img.pixelSize);
     return (0 != img.pixels);
 }
 
-static bool interpretJpg(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+static bool interpretJpg(FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     return Image_LoadFromFileWithFormat(img, "JPG", hndl);
 }
 
-static bool interpretPng(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+static bool interpretPng(FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     return Image_LoadFromFileWithFormat(img, "PNG", hndl);
 }
 
-static bool interpretTga(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+static bool interpretTga(FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     Image_Init(img);
     img.pixels = TGA_Load(hndl, img.size, img.pixelSize);
@@ -114,7 +114,7 @@ static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
     return 0; // Unknown.
 }
 
-static void interpretGraphic(de::FileHandle &hndl, String filePath, image_t &img)
+static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
 {
     // Firstly try the interpreter for the guessed resource types.
     GraphicFileType const *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
@@ -270,7 +270,7 @@ bool Image_HasAlpha(image_t const &img)
     return false;
 }
 
-uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
+uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
 {
 #ifdef __CLIENT__
     LOG_AS("Image_LoadFromFile");
@@ -320,7 +320,7 @@ uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
 #endif
 }
 
-bool Image_LoadFromFileWithFormat(image_t &img, char const *format, de::FileHandle &hndl)
+bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &hndl)
 {
 #ifdef __CLIENT__
     LOG_AS("Image_LoadFromFileWithFormat");
@@ -414,7 +414,7 @@ uint8_t *GL_LoadImage(image_t &image, String nativePath)
         // Relative paths are relative to the native working directory.
         String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
 
-        de::FileHandle &hndl = App_FileSystem().openFile(path, "rb");
+        FileHandle &hndl = App_FileSystem().openFile(path, "rb");
         uint8_t *pixels = Image_LoadFromFile(image, hndl);
 
         App_FileSystem().releaseFile(hndl.file());
@@ -587,7 +587,7 @@ static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palI
     }
 }
 
-static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
+static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
     int tmap = 0, int border = 0)
 {
     LOG_AS("image_t::loadPatch");
@@ -597,7 +597,7 @@ static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
         return External;
     }
 
-    de::File1 &file = hndl.file();
+    File1 &file = hndl.file();
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
     // A DOOM patch?
@@ -655,7 +655,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
     {
-        de::File1 &file       = App_FileSystem().lump(i->lumpNum());
+        File1 &file       = App_FileSystem().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
         // A DOOM patch?
@@ -697,7 +697,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
     return Original;
 }
 
-static Source loadFlat(image_t &image, de::FileHandle &hndl)
+static Source loadFlat(image_t &image, FileHandle &hndl)
 {
     if(Image_LoadFromFile(image, hndl))
     {
@@ -712,7 +712,7 @@ static Source loadFlat(image_t &image, de::FileHandle &hndl)
     image.pixelSize = 1;
     image.paletteId = App_ResourceSystem().defaultColorPalette();
 
-    de::File1 &file   = hndl.file();
+    File1 &file   = hndl.file();
     size_t fileLength = hndl.length();
 
     size_t bufSize = de::max(fileLength, (size_t) image.size.x * image.size.y);
@@ -728,7 +728,7 @@ static Source loadFlat(image_t &image, de::FileHandle &hndl)
     return Original;
 }
 
-static Source loadDetail(image_t &image, de::FileHandle &hndl)
+static Source loadDetail(image_t &image, FileHandle &hndl)
 {
     if(Image_LoadFromFile(image, hndl))
     {
@@ -739,7 +739,7 @@ static Source loadDetail(image_t &image, de::FileHandle &hndl)
     Image_Init(image);
 
     // How big is it?
-    de::File1 &file = hndl.file();
+    File1 &file = hndl.file();
     size_t fileLength = hndl.length();
     switch(fileLength)
     {
@@ -821,7 +821,7 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                     try
                     {
                         lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
-                        de::FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
+                        FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadFlat(image, hndl);
 
@@ -860,7 +860,7 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                     try
                     {
                         lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
-                        de::FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
+                        FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
@@ -913,7 +913,7 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                     try
                     {
                         lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
-                        de::FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
+                        FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
@@ -940,8 +940,8 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
                 lumpnum_t const lumpNum = fileSys.lumpNumForName(resourceUri.path());
                 try
                 {
-                    de::File1 &lump = fileSys.lump(lumpNum);
-                    de::FileHandle &hndl = fileSys.openLump(lump);
+                    File1 &lump = fileSys.lump(lumpNum);
+                    FileHandle &hndl = fileSys.openLump(lump);
 
                     source = loadDetail(image, hndl);
 

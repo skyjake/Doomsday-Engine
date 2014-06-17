@@ -268,7 +268,7 @@ static inline lumpnum_t markerLumpNumForPath(String path)
     return App_FileSystem().lumpNumForName(path);
 }
 
-static String composeUniqueMapId(de::File1 &markerLump)
+static String composeUniqueMapId(File1 &markerLump)
 {
     return String("%1|%2|%3|%4")
               .arg(markerLump.name().fileNameWithoutExtension())

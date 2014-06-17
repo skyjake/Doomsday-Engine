@@ -86,7 +86,7 @@ static String composeFilePathString(FS1::FileList &files, int flags = DEFAULT_PA
     String result;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
     {
-        de::File1 &file = (*i)->file();
+        File1 &file = (*i)->file();
 
         if(flags & PTSF_QUOTED)
             result.append('"');
@@ -121,7 +121,7 @@ static String composeFilePathString(FS1::FileList &files, int flags = DEFAULT_PA
     return result;
 }
 
-static bool findCustomFilesPredicate(de::File1 &file, void * /*parameters*/)
+static bool findCustomFilesPredicate(File1 &file, void * /*parameters*/)
 {
     return file.hasCustom();
 }

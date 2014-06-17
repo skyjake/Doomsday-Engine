@@ -483,7 +483,7 @@ dd_bool F_Dump(void const *data, size_t size, char const *path)
     return true;
 }
 
-dd_bool F_DumpFile(de::File1 &file, char const *outputPath)
+dd_bool F_DumpFile(File1 &file, char const *outputPath)
 {
     String dumpPath = ((!outputPath || !outputPath[0])? file.name() : String(outputPath));
     QByteArray dumpPathUtf8 = dumpPath.toUtf8();

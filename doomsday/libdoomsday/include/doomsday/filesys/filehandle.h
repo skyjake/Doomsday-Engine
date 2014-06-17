@@ -29,20 +29,19 @@
 #include "../libdoomsday.h"
 #include <de/types.h>
 
-struct filelist_s;
-typedef struct filelist_s FileList;
-
 namespace de {
 
 class File1;
 class FileHandleBuilder;
+struct FileList;
 
 /// Seek methods
-typedef enum {
+enum SeekMethod
+{
     SeekSet = 0,
     SeekCur = 1,
     SeekEnd = 2
-} SeekMethod;
+};
 
 /**
  * Reference/handle to a unique file in the engine's virtual file system.
@@ -58,10 +57,10 @@ public:
     FileHandle &close();
 
     /// @todo Should not be visible outside the engine.
-    struct filelist_s *list();
+    FileList *list();
 
     /// @todo Should not be visible outside the engine.
-    FileHandle &setList(struct filelist_s *list);
+    FileHandle &setList(FileList *list);
 
     bool hasFile() const;
 

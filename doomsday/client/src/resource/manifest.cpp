@@ -182,7 +182,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
     bool validated = true;
     try
     {
-        de::FileHandle &hndl = App_FileSystem().openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
+        FileHandle &hndl = App_FileSystem().openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
 
         if(Wad *wad = hndl.file().maybeAs<Wad>())
         {
@@ -235,7 +235,7 @@ static bool validateZip(String const &filePath, QStringList const & /*identityKe
 {
     try
     {
-        de::FileHandle &hndl = App_FileSystem().openFile(filePath, "rbf");
+        FileHandle &hndl = App_FileSystem().openFile(filePath, "rbf");
         bool result = Zip::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
         App_FileSystem().releaseFile(hndl.file());

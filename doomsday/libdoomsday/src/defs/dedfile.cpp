@@ -63,7 +63,7 @@ void Def_ReadProcessDED(ded_t *defs, char const* path)
 int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
 {
     int lumpIdx;
-    if(de::File1 *file = F_FindFileForLumpNum(lumpNum, &lumpIdx))
+    if(File1 *file = F_FindFileForLumpNum(lumpNum, &lumpIdx))
     {
         if(App_FileSystem().lump(lumpNum).size() != 0)
         {
@@ -87,7 +87,7 @@ int DED_Read(ded_t *ded, char const *path)
     F_ExpandBasePath(&transPath, &transPath);
 
     // Attempt to open a definition file on this path.
-    de::FileHandle *file = F_Open(Str_Text(&transPath), "rb");
+    FileHandle *file = F_Open(Str_Text(&transPath), "rb");
     if(!file)
     {
         DED_SetError("File could not be opened for reading.");

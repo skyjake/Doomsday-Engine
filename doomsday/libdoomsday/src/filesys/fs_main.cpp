@@ -271,7 +271,7 @@ struct FS1::Instance
         {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
-        de::File1* file = openFile(search.path(), "rb", 0, true /* allow duplicates */);
+        File1* file = openFile(search.path(), "rb", 0, true /* allow duplicates */);
         if(file)
         {
             String found = file->composePath();
@@ -364,7 +364,7 @@ struct FS1::Instance
         return 0;
     }
 
-    de::File1* openFile(String path, String const& mode, size_t baseOffset,
+    File1* openFile(String path, String const& mode, size_t baseOffset,
                         bool allowDuplicate)
     {
         if(path.isEmpty()) return 0;
@@ -479,7 +479,7 @@ void FS1::consoleRegister()
  * @note Performance is O(n).
  * @return @c iterator pointing to list->end() if not found.
  */
-static FS1::FileList::iterator findListFile(FS1::FileList& list, de::File1& file)
+static FS1::FileList::iterator findListFile(FS1::FileList& list, File1& file)
 {
     if(list.empty()) return list.end();
     // Perform the search.
@@ -507,7 +507,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String pa
     FS1::FileList::iterator i;
     for(i = list.begin(); i != list.end(); ++i)
     {
-        de::File1& file = (*i)->file();
+        File1& file = (*i)->file();
         if(!file.composePath().compare(path, Qt::CaseInsensitive))
         {
             break; // This is the node we are looking for.
@@ -516,7 +516,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String pa
     return i;
 }
 
-void FS1::index(de::File1 &file)
+void FS1::index(File1 &file)
 {
 #ifdef DENG_DEBUG
     // Ensure this hasn't yet been indexed.
@@ -556,11 +556,11 @@ void FS1::index(de::File1 &file)
 
     // Add a handle to the loaded files list.
     FileHandle *loadedFilesHndl = FileHandleBuilder::fromFile(file);
-    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s *>(&d->loadedFiles));
+    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<de::FileList *>(&d->loadedFiles));
     d->loadedFilesCRC = 0;
 }
 
-void FS1::deindex(de::File1& file)
+void FS1::deindex(File1 &file)
 {
     FileList::iterator found = findListFile(d->loadedFiles, file);
     if(found == d->loadedFiles.end()) return; // Most peculiar..
@@ -576,7 +576,7 @@ void FS1::deindex(de::File1& file)
     delete *found;
 }
 
-de::File1& FS1::find(de::Uri const& search)
+File1& FS1::find(de::Uri const& search)
 {
     LOG_AS("FS1::find");
     if(!search.isEmpty())
@@ -680,8 +680,8 @@ static void printFileList(FS1::FileList& list)
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, list)
     {
-        de::FileHandle& hndl = **i;
-        de::File1& file = hndl.file();
+        FileHandle& hndl = **i;
+        File1& file = hndl.file();
 
         QByteArray path = file.composePath().toUtf8();
         FileId fileId = FileId::fromPath(path.constData());
@@ -776,7 +776,7 @@ lumpnum_t FS1::lumpNumForName(String name)
     return d->primaryIndex.findLast(Path(name));
 }
 
-void FS1::releaseFile(de::File1& file)
+void FS1::releaseFile(File1& file)
 {
     for(int i = d->openFiles.size() - 1; i >= 0; i--)
     {
@@ -794,7 +794,7 @@ static Wad *findFirstWadFile(FS1::FileList &list, bool custom)
     if(list.empty()) return 0;
     DENG2_FOR_EACH(FS1::FileList, i, list)
     {
-        de::File1 &file = (*i)->file();
+        File1 &file = (*i)->file();
         if(custom != file.hasCustom()) continue;
 
         if(Wad *wad = file.maybeAs<Wad>())
@@ -826,7 +826,7 @@ FS1::FileList const &FS1::loadedFiles() const
     return d->loadedFiles;
 }
 
-int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* parameters,
+int FS1::findAll(bool (*predicate)(File1& file, void* parameters), void* parameters,
                  FS1::FileList& found) const
 {
     int numFound = 0;
@@ -949,11 +949,11 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     return found.count() - numFoundSoFar;
 }
 
-de::File1 &FS1::interpret(de::FileHandle &hndl, String filePath, FileInfo const &info)
+File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
 {
     DENG_ASSERT(!filePath.isEmpty());
 
-    de::File1 *interpretedFile = 0;
+    File1 *interpretedFile = 0;
 
     // Firstly try the interpreter for the guessed resource types.
     FileType const &ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
@@ -991,7 +991,7 @@ de::File1 &FS1::interpret(de::FileHandle &hndl, String filePath, FileInfo const 
     return *interpretedFile;
 }
 
-de::FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOffset, bool allowDuplicate)
+FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOffset, bool allowDuplicate)
 {
 #ifdef DENG_DEBUG
     for(int i = 0; i < mode.length(); ++i)
@@ -1006,15 +1006,15 @@ de::FileHandle &FS1::openFile(String const &path, String const &mode, size_t bas
 
     // Add a handle to the opened files list.
     FileHandle &openFilesHndl = *FileHandleBuilder::fromFile(*file);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s *>(&d->openFiles));
+    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
     return openFilesHndl;
 }
 
-de::FileHandle &FS1::openLump(de::File1 &lump)
+FileHandle &FS1::openLump(File1 &lump)
 {
     // Add a handle to the opened files list.
     FileHandle &openFilesHndl = *FileHandleBuilder::fromLump(lump, false/*do buffer*/);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s *>(&d->openFiles));
+    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
     return openFilesHndl;
 }
 
@@ -1023,7 +1023,7 @@ bool FS1::accessFile(de::Uri const &search)
     try
     {
         String searchPath = search.resolved();
-        de::File1* file = d->openFile(searchPath, "rb", 0, true /* allow duplicates */);
+        File1 *file = d->openFile(searchPath, "rb", 0, true /* allow duplicates */);
         if(file)
         {
             delete file;
@@ -1230,7 +1230,7 @@ D_CMD(ListLumps)
     int idx = 0;
     DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, lumpIndex.allLumps())
     {
-        de::File1 const &lump = **i;
+        File1 const &lump = **i;
         String containerPath  = NativePath(lump.container().composePath()).pretty();
         String lumpPath       = NativePath(lump.composePath()).pretty();
 
@@ -1260,7 +1260,7 @@ D_CMD(ListFiles)
         FS1::FileList const &allLoadedFiles = App_FileSystem().loadedFiles();
         DENG2_FOR_EACH_CONST(FS1::FileList, i, allLoadedFiles)
         {
-            de::File1 &file = (*i)->file();
+            File1 &file = (*i)->file();
             uint crc = 0;
 
             int fileCount = 1;
@@ -1315,7 +1315,7 @@ void F_Shutdown(void)
     delete fileSystem; fileSystem = 0;
 }
 
-de::FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate)
+FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate)
 {
     try
     {
@@ -1339,14 +1339,14 @@ lumpnum_t F_LumpNumForName(char const *name)
     return -1;
 }
 
-void F_Delete(de::FileHandle *hndl)
+void F_Delete(FileHandle *hndl)
 {
     if(!hndl) return;
     App_FileSystem().releaseFile(hndl->file());
     delete hndl;
 }
 
-size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer,
+size_t F_ReadLumpSection(File1 *file, int lumpIdx, uint8_t *buffer,
     size_t startOffset, size_t length)
 {
     if(!file) return 0;
@@ -1362,7 +1362,7 @@ size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer,
     return file->read(buffer, startOffset, length);
 }
 
-uint8_t const *F_CacheLump(de::File1 *file, int lumpIdx)
+uint8_t const *F_CacheLump(File1 *file, int lumpIdx)
 {
     if(!file) return 0;
 
@@ -1377,7 +1377,7 @@ uint8_t const *F_CacheLump(de::File1 *file, int lumpIdx)
     return file->cache();
 }
 
-void F_UnlockLump(de::File1 *file, int lumpIdx)
+void F_UnlockLump(File1 *file, int lumpIdx)
 {
     if(!file) return;
 
@@ -1394,11 +1394,11 @@ void F_UnlockLump(de::File1 *file, int lumpIdx)
     file->unlock();
 }
 
-de::File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx)
+File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx)
 {
     try
     {
-        de::File1 const &lump = App_FileSystem().lump(lumpNum);
+        File1 const &lump = App_FileSystem().lump(lumpNum);
         if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
         return &lump.container();
     }
