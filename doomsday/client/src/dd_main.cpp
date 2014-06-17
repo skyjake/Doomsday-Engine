@@ -1973,7 +1973,7 @@ dd_bool DD_Init(void)
         lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
         if(lumpNum >= 0)
         {
-            F_DumpLump(lumpNum);
+            F_DumpFile(App_FileSystem().lump(lumpNum), 0);
         }
         else
         {

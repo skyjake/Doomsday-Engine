@@ -1150,15 +1150,14 @@ D_CMD(Dir)
 /// Dump a copy of a virtual file to the runtime directory.
 D_CMD(DumpLump)
 {
-    DENG_UNUSED(src);
-    DENG_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
 
     if(fileSystem)
     {
         lumpnum_t lumpNum = App_FileSystem().lumpNumForName(argv[1]);
         if(lumpNum >= 0)
         {
-            return F_DumpLump(lumpNum);
+            return F_DumpFile(App_FileSystem().lump(lumpNum), 0);
         }
         LOG_RES_ERROR("No such lump");
         return false;

@@ -556,29 +556,15 @@ dd_bool F_Dump(void const* data, size_t size, char const* path)
     return true;
 }
 
-static bool dumpLump(de::File1& lump, String path)
+dd_bool F_DumpFile(de::File1 &file, char const *outputPath)
 {
-    String dumpPath = path.isEmpty()? lump.name() : path;
+    String dumpPath = ((!outputPath || !outputPath[0])? file.name() : String(outputPath));
     QByteArray dumpPathUtf8 = dumpPath.toUtf8();
-    bool dumpedOk = F_Dump(lump.cache(), lump.info().size, dumpPathUtf8.constData());
-    lump.unlock();
-    if(!dumpedOk) return false;
-    LOG_RES_VERBOSE("%s dumped to \"%s\"") << lump.name() << NativePath(dumpPath).pretty();
-    return true;
-}
-
-dd_bool F_DumpLump2(lumpnum_t lumpNum, char const *_path)
-{
-    try
+    bool dumpedOk = F_Dump(file.cache(), file.info().size, dumpPathUtf8.constData());
+    if(dumpedOk)
     {
-        return dumpLump(App_FileSystem().lump(lumpNum), _path? String(_path) : "");
+        LOG_RES_VERBOSE("%s dumped to \"%s\"") << file.name() << NativePath(dumpPath).pretty();
     }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore error.
-    return false;
-}
-
-dd_bool F_DumpLump(lumpnum_t lumpNum)
-{
-    return F_DumpLump2(lumpNum, 0);
+    file.unlock();
+    return dumpedOk;
 }

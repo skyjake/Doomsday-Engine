@@ -52,14 +52,14 @@ static int musicPlayNativeFile(audiointerface_music_t *iMusic, char const *fileN
     return iMusic->PlayFile(fileName, looped);
 }
 
-static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lump, dd_bool looped)
+static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lumpNum, dd_bool looped)
 {
     if(!iMusic->Play || !iMusic->SongBuffer)
     {
         // Music interface does not offer buffer playback.
         // Write this lump to disk and play from there.
         AutoStr *musicFile = AudioDriver_Music_ComposeTempBufferFilename(0);
-        if(!F_DumpLump2(lump, Str_Text(musicFile)))
+        if(!F_DumpFile(App_FileSystem().lump(lumpNum), Str_Text(musicFile)))
         {
             // Failed to write the lump...
             return 0;
@@ -68,7 +68,7 @@ static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lump, dd_bool
     }
 
     // Buffer the data using the driver's facilities.
-    FileHandle *hndl = F_OpenLump(lump);
+    FileHandle *hndl = F_OpenLump(lumpNum);
     size_t length = FileHandle_Length(hndl);
 
     if(!hndl) return 0;

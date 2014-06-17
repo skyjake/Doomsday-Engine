@@ -27,6 +27,7 @@
 #define LIBDENG_FILESYS_UTIL_H
 
 #include "../libdoomsday.h"
+#include "../filesys/file.h"
 #include "dd_types.h"
 
 #ifdef WIN32
@@ -94,20 +95,16 @@ LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath(ddstring_t* dst, const ddstring_t* 
 LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
 
 /**
- * Write the data associated with the specified lump index to @a fileName.
+ * Write the data associated with the specified lump index to @a outputPath.
  *
- * @param lumpNum           Absolute index of the lump to open.
+ * @param file        File to be dumped.
+ * @param outputPath  If not @c NULL write the associated data to this path.
+ *                    Can be @c NULL in which case the path and file name will
+ *                    be chosen automatically.
  *
  * @return  @c true iff successful.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_DumpLump(lumpnum_t lumpNum/*, fileName = 0*/);
-
-/**
- * @copydoc F_DumpLump
- * @param fileName          If not @c NULL write the associated data to this path.
- *                          Can be @c NULL in which case the fileName will be chosen automatically.
- */
-LIBDOOMSDAY_PUBLIC dd_bool F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
+LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(de::File1 &file, char const *fileName);
 
 /**
  * Write data into a file.
@@ -118,7 +115,7 @@ LIBDOOMSDAY_PUBLIC dd_bool F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
  *
  * @return @c true if successful, otherwise @c false.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_Dump(void const* data, size_t size, char const* path);
+LIBDOOMSDAY_PUBLIC dd_bool F_Dump(void const *data, size_t size, char const *path);
 
 LIBDOOMSDAY_PUBLIC const char* F_PrettyPath(const char* path);
 
