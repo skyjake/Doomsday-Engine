@@ -422,6 +422,8 @@ public:
      */
     inline File1 &lump(lumpnum_t lumpnum) const { return nameIndex()[lumpnum]; }
 
+    inline int lumpCount() const { return nameIndex().size(); }
+
     /**
      * Opens the given file (will be translated) for reading.
      *
@@ -593,65 +595,23 @@ extern "C" {
 struct filelist_s;
 typedef struct filelist_s FileList;
 
-LIBDOOMSDAY_PUBLIC void F_Register(void);
-
 /// Initialize this module. Cannot be re-initialized, must shutdown first.
 LIBDOOMSDAY_PUBLIC void F_Init(void);
 
 /// Shutdown this module.
 LIBDOOMSDAY_PUBLIC void F_Shutdown(void);
 
-LIBDOOMSDAY_PUBLIC void F_EndStartup(void);
-
-LIBDOOMSDAY_PUBLIC int F_UnloadAllNonStartupFiles();
-
-LIBDOOMSDAY_PUBLIC void F_AddVirtualDirectoryMapping(char const *nativeSourcePath, char const *nativeDestinationPath);
-
-LIBDOOMSDAY_PUBLIC void F_AddLumpDirectoryMapping(char const *lumpName, char const *nativeDestinationPath);
-
-LIBDOOMSDAY_PUBLIC void F_ResetFileIds(void);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_CheckFileId(char const *nativePath);
-
-LIBDOOMSDAY_PUBLIC int F_LumpCount(void);
-
 LIBDOOMSDAY_PUBLIC int F_Access(char const *nativePath);
-
-LIBDOOMSDAY_PUBLIC void F_Index(struct file1_s *file);
-
-LIBDOOMSDAY_PUBLIC void F_Deindex(struct file1_s *file);
 
 LIBDOOMSDAY_PUBLIC FileHandle *F_Open3(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate);
 LIBDOOMSDAY_PUBLIC FileHandle *F_Open2(char const *nativePath, char const *mode, size_t baseOffset/*, allowDuplicate = true */);
 LIBDOOMSDAY_PUBLIC FileHandle *F_Open(char const *nativePath, char const *mode/*, baseOffset = 0 */);
 
-LIBDOOMSDAY_PUBLIC FileHandle *F_OpenLump(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_IsValidLumpNum(lumpnum_t lumpNum);
-
 LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
 
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_LumpIsCustom(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC AutoStr *F_LumpName(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC size_t F_LumpLength(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC uint F_LumpLastModified(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx);
-LIBDOOMSDAY_PUBLIC struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum/*, lumpIdx = 0 */);
+LIBDOOMSDAY_PUBLIC struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx);
 
 LIBDOOMSDAY_PUBLIC void F_Delete(struct filehandle_s *file);
-
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposePath(struct file1_s const *file);
-
-LIBDOOMSDAY_PUBLIC void F_SetCustom(struct file1_s *file, dd_bool yes);
-
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposeLumpPath2(struct file1_s *file, int lumpIdx, char delimiter);
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposeLumpPath(struct file1_s *file, int lumpIdx/*, delimiter ='/' */);
 
 LIBDOOMSDAY_PUBLIC size_t F_ReadLump(struct file1_s *file, int lumpIdx, uint8_t *buffer);
 
@@ -661,13 +621,6 @@ LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(struct file1_s *file, int lumpIdx, u
 LIBDOOMSDAY_PUBLIC uint8_t const *F_CacheLump(struct file1_s *file, int lumpIdx);
 
 LIBDOOMSDAY_PUBLIC void F_UnlockLump(struct file1_s *file, int lumpIdx);
-
-/**
- * Compiles a list of file names, separated by @a delimiter.
- */
-LIBDOOMSDAY_PUBLIC void F_ComposePWADFileList(char *outBuf, size_t outBufSize, char const *delimiter);
-
-LIBDOOMSDAY_PUBLIC uint F_LoadedFilesCRC(void);
 
 #ifdef __cplusplus
 } // extern "C"

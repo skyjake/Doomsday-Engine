@@ -2156,7 +2156,7 @@ static int DD_StartupWorker(void * /*context*/)
     /*
      * No more lumps/packages will be loaded in startup mode after this point.
      */
-    F_EndStartup();
+    App_FileSystem().endStartup();
 
     // Load engine help resources.
     DD_InitHelp();
@@ -2262,7 +2262,7 @@ static int DD_UpdateEngineStateWorker(void *context)
     }
 
     // Reset file IDs so previously seen files can be processed again.
-    F_ResetFileIds();
+    App_FileSystem().resetFileIds();
     // Re-read definitions.
     Def_Read();
 
@@ -2474,7 +2474,7 @@ int DD_GetInteger(int ddvalue)
 #endif
 
     case DD_NUMLUMPS:
-        return F_LumpCount();
+        return App_FileSystem().lumpCount();
 
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
@@ -2596,7 +2596,7 @@ void *DD_GetVariable(int ddvalue)
 
     case DD_NUMLUMPS: {
         static int count;
-        count = F_LumpCount();
+        count = App_FileSystem().lumpCount();
         return &count; }
 
     default: break;
@@ -3244,7 +3244,7 @@ static void consoleRegister()
 #endif
 
     DD_RegisterLoop();
-    F_Register();
+    FS1::consoleRegister();
     Con_Register();
     Games::consoleRegister();
     DH_Register();

@@ -40,6 +40,8 @@ extern "C" {
 
 LIBDOOMSDAY_PUBLIC int F_FileExists(char const *path);
 
+LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(char const *path);
+
 /**
  * Converts directory slashes to our internal '/'.
  * @return  @c true iff the path was modified.
@@ -80,6 +82,8 @@ LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(ddstring_t const *path);
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t *dst, ddstring_t const *src);
 
+LIBDOOMSDAY_PUBLIC char const *F_PrettyPath(char const *path);
+
 /**
  * Write the data associated with the specified lump index to @a outputPath.
  *
@@ -102,10 +106,6 @@ LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(de::File1 &file, char const *outputPath);
  * @return @c true if successful, otherwise @c false.
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_Dump(void const *data, size_t size, char const *path);
-
-LIBDOOMSDAY_PUBLIC char const *F_PrettyPath(char const *path);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(char const *path);
 
 #ifdef __cplusplus
 } // extern "C"

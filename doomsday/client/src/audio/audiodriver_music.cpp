@@ -68,15 +68,19 @@ static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lumpNum, dd_b
     }
 
     // Buffer the data using the driver's facilities.
-    FileHandle *hndl = F_OpenLump(lumpNum);
-    size_t length = FileHandle_Length(hndl);
+    try
+    {
+        FileHandle *hndl    = reinterpret_cast<FileHandle *>(&App_FileSystem().openLump(App_FileSystem().lump(lumpNum)));
+        size_t const length = FileHandle_Length(hndl);
+        FileHandle_Read(hndl, (uint8_t *) iMusic->SongBuffer(length), length);
+        F_Delete(hndl);
 
-    if(!hndl) return 0;
+        return iMusic->Play(looped);
+    }
+    catch(de::LumpIndex::NotFoundError const &)
+    {} // Ignore error.
 
-    FileHandle_Read(hndl, (uint8_t *) iMusic->SongBuffer(length), length);
-    F_Delete(hndl);
-
-    return iMusic->Play(looped);
+    return 0;
 }
 
 static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNativePath, dd_bool looped)

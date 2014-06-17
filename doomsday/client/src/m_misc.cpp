@@ -398,7 +398,7 @@ DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
     DENG2_UNUSED(bits);
 
     de::String fullName(name);
-    if(de::String(name).fileNameExtension().isEmpty())
+    if(fullName.fileNameExtension().isEmpty())
     {
         fullName += ".png"; // Default format.
     }

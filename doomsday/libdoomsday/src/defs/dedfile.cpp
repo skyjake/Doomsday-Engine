@@ -60,16 +60,16 @@ void Def_ReadProcessDED(ded_t *defs, char const* path)
     }
 }
 
-int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
+int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
 {
     int lumpIdx;
-    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    if(file)
+    if(struct file1_s *file = F_FindFileForLumpNum(lumpNum, &lumpIdx))
     {
-        if(F_LumpLength(lumpNum) != 0)
+        if(App_FileSystem().lump(lumpNum).size() != 0)
         {
-            uint8_t const* lumpPtr = F_CacheLump(file, lumpIdx);
-            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(F_ComposePath(file)));
+            uint8_t const *lumpPtr = F_CacheLump(file, lumpIdx);
+            String sourcePath = reinterpret_cast<de::File1 *>(file)->composePath();
+            DED_ReadData(ded, (char const *)lumpPtr, sourcePath.toUtf8().constData());
             F_UnlockLump(file, lumpIdx);
         }
         return true;

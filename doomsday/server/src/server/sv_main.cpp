@@ -57,7 +57,90 @@ char   *netPassword = (char *) ""; // Remote login password.
 // This is the limit when accepting new clients.
 int     svMaxPlayers = DDMAXPLAYERS;
 
-static MaterialArchive* materialDict;
+static MaterialArchive *materialDict;
+
+/**
+ * @defgroup pathToStringFlags  Path To String Flags
+ * @ingroup flags
+ */
+///@{
+#define PTSF_QUOTED                     0x1 ///< Add double quotes around the path.
+#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2 ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
+#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
+///@}
+
+#define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
+
+/**
+ * @param files      List of files from which to compose the path string.
+ * @param flags      @ref pathToStringFlags
+ * @param delimiter  If not @c NULL, path fragments in the resultant string
+ *                   will be delimited by this.
+ *
+ * @return  New string containing a concatenated, possibly delimited set of
+ *          all file paths in the list.
+ */
+static String composeFilePathString(FS1::FileList &files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
+                                    String const &delimiter = ";")
+{
+    String result;
+    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
+    {
+        de::File1 &file = (*i)->file();
+
+        if(flags & PTSF_QUOTED)
+            result.append('"');
+
+        if(flags & PTSF_TRANSFORM_EXCLUDE_PATH)
+        {
+            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+                result.append(file.name().fileNameWithoutExtension());
+            else
+                result.append(file.name());
+        }
+        else
+        {
+            String path = file.composePath();
+            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+            {
+                result.append(path.fileNamePath() + '/' + path.fileNameWithoutExtension());
+            }
+            else
+            {
+                result.append(path);
+            }
+        }
+
+        if(flags & PTSF_QUOTED)
+            result.append('"');
+
+        if(*i != files.last())
+            result.append(delimiter);
+    }
+
+    return result;
+}
+
+static bool findCustomFilesPredicate(de::File1 &file, void * /*parameters*/)
+{
+    return file.hasCustom();
+}
+
+/**
+ * Compiles a list of file names, separated by @a delimiter.
+ */
+static void composePWADFileList(char *outBuf, size_t outBufSize, char const *delimiter)
+{
+    if(!outBuf || 0 == outBufSize) return;
+    memset(outBuf, 0, outBufSize);
+
+    FS1::FileList foundFiles;
+    if(!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
+
+    String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
+    QByteArray strUtf8 = str.toUtf8();
+    strncpy(outBuf, strUtf8.constData(), outBufSize);
+}
 
 /**
  * Fills the provided struct with information about the local server.
@@ -105,10 +188,10 @@ void Sv_GetInfo(serverinfo_t *info)
     }
 
     // Some WAD names.
-    F_ComposePWADFileList(info->pwads, sizeof(info->pwads), ";");
+    composePWADFileList(info->pwads, sizeof(info->pwads), ";");
 
     // This should be a CRC number that describes all the loaded data.
-    info->loadedFilesCRC = F_LoadedFilesCRC();
+    info->loadedFilesCRC = App_FileSystem().loadedFilesCRC();;
 }
 
 de::Record *Sv_InfoToRecord(serverinfo_t *info)

@@ -210,7 +210,7 @@ dd_bool Mus_IsMUSLump(lumpnum_t lumpNum)
 {
     char buf[4];
     int lumpIdx;
-    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    struct file1_s* file = F_FindFileForLumpNum(lumpNum, &lumpIdx);
     if(!file) return false;
 
     F_ReadLumpSection(file, lumpIdx, (uint8_t*)buf, 0, 4);
@@ -292,18 +292,18 @@ int Mus_GetCD(ded_music_t *def)
  * @return 1, if music was started. 0, if attempted to start but failed.
  *         -1, if it was MUS data and @a canPlayMUS says we can't play it.
  */
-int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS)
+int Mus_StartLump(lumpnum_t lumpNum, dd_bool looped, dd_bool canPlayMUS)
 {
-    if(!AudioDriver_Music_Available() || lump < 0) return 0;
+    if(!AudioDriver_Music_Available() || lumpNum < 0) return 0;
 
-    if(Mus_IsMUSLump(lump))
+    if(Mus_IsMUSLump(lumpNum))
     {
         // Lump is in DOOM's MUS format. We must first convert it to MIDI.
-        AutoStr* srcFile = 0;
-        struct file1_s* file;
+        AutoStr *srcFile = 0;
+        struct file1_s *file;
         size_t lumpLength;
         int lumpIdx;
-        uint8_t* buf;
+        uint8_t *buf;
 
         if(!canPlayMUS)
             return -1;
@@ -315,9 +315,9 @@ int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS)
         // any player which relies on the it for format recognition works as
         // expected.
 
-        lumpLength = F_LumpLength(lump);
-        buf = (uint8_t*) M_Malloc(lumpLength);
-        file = F_FindFileForLumpNum2(lump, &lumpIdx);
+        lumpLength = App_FileSystem().lump(lumpNum).size();
+        buf        = (uint8_t *) M_Malloc(lumpLength);
+        file       = F_FindFileForLumpNum(lumpNum, &lumpIdx);
         F_ReadLumpSection(file, lumpIdx, buf, 0, lumpLength);
         M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
         M_Free(buf);
@@ -326,7 +326,7 @@ int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS)
     }
     else
     {
-        return AudioDriver_Music_PlayLump(lump, looped);
+        return AudioDriver_Music_PlayLump(lumpNum, looped);
     }
 }
 

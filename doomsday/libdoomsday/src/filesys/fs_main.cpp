@@ -1307,11 +1307,6 @@ String App_BasePath()
     return App::app().nativeBasePath().withSeparators('/'); // + '/';
 }
 
-void F_Register(void)
-{
-    FS1::consoleRegister();
-}
-
 void F_Init(void)
 {
     DENG_ASSERT(!fileSystem);
@@ -1324,60 +1319,10 @@ void F_Shutdown(void)
     delete fileSystem; fileSystem = 0;
 }
 
-void F_EndStartup(void)
-{
-    App_FileSystem().endStartup();
-}
-
-int F_UnloadAllNonStartupFiles(void)
-{
-    return App_FileSystem().unloadAllNonStartupFiles();
-}
-
-void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath)
-{
-    String source      = NativePath(nativeSourcePath).expand().withSeparators('/');
-    String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem().addPathMapping(source, destination);
-}
-
-void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath)
-{
-    String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem().addPathLumpMapping(destination, String(lumpName));
-}
-
-void F_ResetFileIds(void)
-{
-    App_FileSystem().resetFileIds();
-}
-
-dd_bool F_CheckFileId(char const* nativePath)
-{
-    return App_FileSystem().checkFileId(de::Uri::fromNativePath(nativePath));
-}
-
-int F_LumpCount(void)
-{
-    return App_FileSystem().nameIndex().size();
-}
-
-int F_Access(char const* nativePath)
+int F_Access(char const *nativePath)
 {
     de::Uri path = de::Uri::fromNativePath(nativePath);
     return App_FileSystem().accessFile(path)? 1 : 0;
-}
-
-void F_Index(struct file1_s* file)
-{
-    if(!file) return;
-    App_FileSystem().index(*reinterpret_cast<de::File1*>(file));
-}
-
-void F_Deindex(struct file1_s* file)
-{
-    if(!file) return;
-    App_FileSystem().deindex(*reinterpret_cast<de::File1*>(file));
 }
 
 void F_ReleaseFile(struct file1_s* file)
@@ -1409,23 +1354,6 @@ struct filehandle_s* F_Open(char const* nativePath, char const* mode)
     return F_Open2(nativePath, mode, 0/*base offset*/);
 }
 
-struct filehandle_s *F_OpenLump(lumpnum_t lumpNum)
-{
-    de::FS1 &fileSys = App_FileSystem();
-    try
-    {
-        return reinterpret_cast<struct filehandle_s*>(&fileSys.openLump(fileSys.lump(lumpNum)));
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
-}
-
-dd_bool F_IsValidLumpNum(lumpnum_t lumpNum)
-{
-    return App_FileSystem().nameIndex().hasLump(lumpNum);
-}
-
 lumpnum_t F_LumpNumForName(char const* name)
 {
     try
@@ -1437,61 +1365,12 @@ lumpnum_t F_LumpNumForName(char const* name)
     return -1;
 }
 
-AutoStr* F_LumpName(lumpnum_t lumpNum)
-{
-    try
-    {
-        String const &name = App_FileSystem().lump(lumpNum).name();
-        QByteArray nameUtf8 = name.toUtf8();
-        return AutoStr_FromTextStd(nameUtf8.constData());
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return AutoStr_NewStd();
-}
-
-size_t F_LumpLength(lumpnum_t lumpNum)
-{
-    try
-    {
-        return App_FileSystem().lump(lumpNum).size();
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return 0;
-}
-
-uint F_LumpLastModified(lumpnum_t lumpNum)
-{
-    try
-    {
-        return App_FileSystem().lump(lumpNum).lastModified();
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return (uint)time(0);
-}
-
 void F_Delete(struct filehandle_s *_hndl)
 {
     if(!_hndl) return;
     de::FileHandle& hndl = *reinterpret_cast<de::FileHandle*>(_hndl);
     App_FileSystem().releaseFile(hndl.file());
     delete &hndl;
-}
-
-AutoStr* F_ComposePath(struct file1_s const* _file)
-{
-    if(!_file) return AutoStr_NewStd();
-    de::File1 const& file = reinterpret_cast<de::File1 const&>(*_file);
-    QByteArray path = file.composePath().toUtf8();
-    return AutoStr_FromTextStd(path.constData());
-}
-
-void F_SetCustom(struct file1_s* file, dd_bool yes)
-{
-    if(!file) return;
-    reinterpret_cast<de::File1*>(file)->setCustom(CPP_BOOL(yes));
 }
 
 size_t F_ReadLump(struct file1_s *_file, int lumpIdx, uint8_t *buffer)
@@ -1561,7 +1440,7 @@ void F_UnlockLump(struct file1_s *_file, int lumpIdx)
     file->unlock();
 }
 
-struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx)
+struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx)
 {
     try
     {
@@ -1572,150 +1451,4 @@ struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx)
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
     return 0;
-}
-
-struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum)
-{
-    try
-    {
-        return reinterpret_cast<struct file1_s *>(&App_FileSystem().lump(lumpNum).container());
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
-}
-
-AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum)
-{
-    try
-    {
-        QByteArray path = App_FileSystem().lump(lumpNum).container().composePath().toUtf8();
-        return AutoStr_FromTextStd(path.constData());
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return AutoStr_NewStd();
-}
-
-dd_bool F_LumpIsCustom(lumpnum_t lumpNum)
-{
-    try
-    {
-        return App_FileSystem().lump(lumpNum).container().hasCustom();
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return false;
-}
-
-AutoStr *F_ComposeLumpPath2(struct file1_s *_file, int lumpIdx, char delimiter)
-{
-    if(!_file) return AutoStr_NewStd();
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        QByteArray path = wad->lump(lumpIdx).composePath(delimiter).toUtf8();
-        return AutoStr_FromTextStd(path.constData());
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        QByteArray path = zip->lump(lumpIdx).composePath(delimiter).toUtf8();
-        return AutoStr_FromTextStd(path.constData());
-    }
-    QByteArray path = file->composePath(delimiter).toUtf8();
-    return AutoStr_FromTextStd(path.constData());
-}
-
-AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx)
-{
-    return F_ComposeLumpPath2(file, lumpIdx, '/');
-}
-
-/**
- * @defgroup pathToStringFlags  Path To String Flags
- * @ingroup flags
- */
-///@{
-#define PTSF_QUOTED                     0x1 ///< Add double quotes around the path.
-#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2 ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
-#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
-///@}
-
-#define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
-
-/**
- * @param files      List of files from which to compose the path string.
- * @param flags      @ref pathToStringFlags
- * @param delimiter  If not @c NULL, path fragments in the resultant string
- *                   will be delimited by this.
- *
- * @return  New string containing a concatenated, possibly delimited set of
- *          all file paths in the list.
- */
-static String composeFilePathString(FS1::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
-                                    String const& delimiter = ";")
-{
-    String result;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
-    {
-        de::File1& file = (*i)->file();
-
-        if(flags & PTSF_QUOTED)
-            result.append('"');
-
-        if(flags & PTSF_TRANSFORM_EXCLUDE_PATH)
-        {
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-                result.append(file.name().fileNameWithoutExtension());
-            else
-                result.append(file.name());
-        }
-        else
-        {
-            String path = file.composePath();
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-            {
-                result.append(path.fileNamePath() + '/' + path.fileNameWithoutExtension());
-            }
-            else
-            {
-                result.append(path);
-            }
-        }
-
-        if(flags & PTSF_QUOTED)
-            result.append('"');
-
-        if(*i != files.last())
-            result.append(delimiter);
-    }
-
-    return result;
-}
-
-static bool findCustomFilesPredicate(de::File1& file, void* /*parameters*/)
-{
-    return file.hasCustom();
-}
-
-/**
- * Compiles a list of file names, separated by @a delimiter.
- */
-void F_ComposePWADFileList(char* outBuf, size_t outBufSize, char const* delimiter)
-{
-    if(!outBuf || 0 == outBufSize) return;
-    memset(outBuf, 0, outBufSize);
-
-    FS1::FileList foundFiles;
-    if(!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
-
-    String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
-    QByteArray strUtf8 = str.toUtf8();
-    strncpy(outBuf, strUtf8.constData(), outBufSize);
-}
-
-uint F_LoadedFilesCRC(void)
-{
-    return App_FileSystem().loadedFilesCRC();
 }

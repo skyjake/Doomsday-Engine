@@ -2587,9 +2587,10 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
 rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ResourceSystem::rawTexture");
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    if(-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
-        LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0") << lumpNum << F_LumpCount();
+        LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0")
+                << lumpNum << App_FileSystem().lumpCount();
         return 0;
     }
 
@@ -2604,10 +2605,10 @@ rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
 rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ResourceSystem::rawTexture");
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    if(-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
         LOGDEV_RES_WARNING("LumpNum #%i out of range %s, returning 0")
-            << lumpNum << Rangeui(0, F_LumpCount()).asText();
+            << lumpNum << Rangeui(0, App_FileSystem().lumpCount()).asText();
         return 0;
     }
 

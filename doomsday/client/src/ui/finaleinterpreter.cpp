@@ -2102,15 +2102,15 @@ DEFFC(TextFromLump)
     if(lumpNum >= 0)
     {
         int lumpIdx;
-        size_t lumpSize = F_LumpLength(lumpNum);
-        struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-        const uint8_t* lumpPtr = F_CacheLump(file, lumpIdx);
-        size_t bufSize = 2 * lumpSize + 1, i;
-        char* str, *out;
+        size_t lumpSize        = App_FileSystem().lump(lumpNum).size();
+        struct file1_s *file   = F_FindFileForLumpNum(lumpNum, &lumpIdx);
+        uint8_t const *lumpPtr = F_CacheLump(file, lumpIdx);
 
-        str = (char*) M_Calloc(bufSize);
+        size_t bufSize = 2 * lumpSize + 1;
+        char *str = (char *) M_Calloc(bufSize);
 
-        for(i = 0, out = str; i < lumpSize; ++i)
+        char *out = str;
+        for(size_t i = 0; i < lumpSize; ++i)
         {
             char ch = (char)(lumpPtr[i]);
             if(ch == '\r') continue;

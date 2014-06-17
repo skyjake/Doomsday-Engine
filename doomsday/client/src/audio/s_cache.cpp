@@ -549,7 +549,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
          * external resource (probably a custom sound).
          * @todo should be a cvar.
          */
-        if(info->lumpNum < 0 || !F_LumpIsCustom(info->lumpNum))
+        if(info->lumpNum < 0 || !App_FileSystem().lump(info->lumpNum).container().hasCustom())
         {
             try
             {
@@ -580,11 +580,11 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
             return 0;
         }
 
-        size_t lumpLength = F_LumpLength(info->lumpNum);
+        size_t lumpLength = App_FileSystem().lump(info->lumpNum).size();
         if(lumpLength <= 8) return 0;
 
         int lumpIdx;
-        struct file1_s *file = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        struct file1_s *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
 
         char hdr[12];
         F_ReadLumpSection(file, lumpIdx, (uint8_t *)hdr, 0, 12);
@@ -619,11 +619,16 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
     }
 
     // Probably an old-fashioned DOOM sample.
-    size_t lumpLength = F_LumpLength(info->lumpNum);
+    size_t lumpLength = 0;
+    if(info->lumpNum >= 0)
+    {
+        lumpLength = App_FileSystem().lump(info->lumpNum).size();
+    }
+
     if(lumpLength > 8)
     {
         int lumpIdx;
-        struct file1_s *file = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        struct file1_s *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
 
         uint8_t hdr[8];
         F_ReadLumpSection(file, lumpIdx, hdr, 0, 8);

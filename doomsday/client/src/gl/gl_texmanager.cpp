@@ -335,7 +335,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
 GLuint GL_PrepareRawTexture(rawtex_t &raw)
 {
-    if(raw.lumpNum < 0 || raw.lumpNum >= F_LumpCount()) return 0;
+    if(raw.lumpNum < 0 || raw.lumpNum >= App_FileSystem().lumpCount()) return 0;
 
     if(!raw.tex)
     {

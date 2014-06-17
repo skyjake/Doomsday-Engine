@@ -201,7 +201,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 
     LOG_AS("WAV_Load");
     LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
-            << de::NativePath(Str_Text(F_ComposePath(FileHandle_File_const(file)))).pretty()
+            << de::NativePath(reinterpret_cast<de::File1 *>(FileHandle_File_const(file))->composePath()).pretty()
             << size
             << FileHandle_Tell(file);
 
