@@ -70,7 +70,8 @@ static void readLump(lumpnum_t lumpNum)
     W_UnlockLump(lumpNum);
 
     LOG_RES_MSG("Applying DeHackEd patch lump #%i \"%s:%s\"")
-            << lumpNum << F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))
+            << lumpNum
+            << NativePath(Str_Text(W_LumpSourceFile(lumpNum))).pretty()
             << Str_Text(W_LumpName(lumpNum));
 
     readDehPatch(deh, NoInclude | IgnoreEOF);
@@ -90,7 +91,8 @@ static void readFile(String const &filePath)
     Block deh = file.readAll();
     deh.append(QChar(0));
 
-    LOG_RES_MSG("Applying DeHackEd patch file \"%s\"") << F_PrettyPath(filePath.toUtf8());
+    LOG_RES_MSG("Applying DeHackEd patch file \"%s\"")
+            << NativePath(filePath).pretty();
 
     readDehPatch(deh, IgnoreEOF);
 }

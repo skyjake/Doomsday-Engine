@@ -650,8 +650,7 @@ public:
                     deh.append(QChar(0));
                     file.close();
 
-                    LOG_RES_VERBOSE("Including \"%s\"...")
-                            << F_PrettyPath(filePath.toUtf8().constData());
+                    LOG_RES_VERBOSE("Including \"%s\"...") << filePath.pretty();
 
                     try
                     {

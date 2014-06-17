@@ -57,9 +57,6 @@ DENG_API_TYPEDEF(F)
     dd_bool         (*MakePath)(const char* path);
 
     void            (*FileName)(Str* dst, const char* src);
-    void            (*ExtractFileBase)(char* dst, const char* path, size_t len);
-    const char*     (*FindFileExtension)(const char* path);
-    dd_bool         (*TranslatePath)(ddstring_t* dst, const Str* src);
 
     /**
      * @warning Not thread-safe!
@@ -89,9 +86,6 @@ DENG_API_T(F);
 #define F_GetLastModified       _api_F.GetLastModified
 #define F_MakePath              _api_F.MakePath
 #define F_FileName              _api_F.FileName
-#define F_ExtractFileBase       _api_F.ExtractFileBase
-#define F_FindFileExtension     _api_F.FindFileExtension
-#define F_TranslatePath         _api_F.TranslatePath
 #define F_PrettyPath            _api_F.PrettyPath
 #define M_ReadFile              _api_F.ReadFile
 #define M_ReadFileIntoString    _api_F.ReadFileIntoString

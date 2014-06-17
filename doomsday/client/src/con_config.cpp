@@ -239,7 +239,9 @@ bool Con_ParseCommands(char const *fileName, int flags)
     // Update the allowed operations.
     flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
-    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)") << F_PrettyPath(fileName) << setDefault;
+    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)")
+            << NativePath(fileName).pretty()
+            << setDefault;
 
     return Con_Parse(fileName, setDefault /* => silently */);
 }

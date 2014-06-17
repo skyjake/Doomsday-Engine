@@ -280,7 +280,7 @@ static bool SBE_Save(char const *name = 0)
         Str_Set(&fileName, name);
         F_ExpandBasePath(&fileName, &fileName);
         // Do we need to append an extension?
-        if(!F_FindFileExtension(Str_Text(&fileName)))
+        if(String(Str_Text(&fileName)).fileNameExtension().isEmpty())
         {
             Str_Append(&fileName, ".ded");
         }
@@ -291,12 +291,13 @@ static bool SBE_Save(char const *name = 0)
     if(!file)
     {
         LOG_RES_WARNING("Failed to save light sources to \"%s\": could not open file")
-                << F_PrettyPath(Str_Text(&fileName));
+                << NativePath(Str_Text(&fileName)).pretty();
         Str_Free(&fileName);
         return false;
     }
 
-    LOG_RES_VERBOSE("Saving to \"%s\"...") << F_PrettyPath(Str_Text(&fileName));
+    LOG_RES_VERBOSE("Saving to \"%s\"...")
+            << NativePath(Str_Text(&fileName)).pretty();
 
     Map &map = App_WorldSystem().map();
 

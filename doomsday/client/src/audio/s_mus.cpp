@@ -405,7 +405,7 @@ int Mus_Start(ded_music_t* def, dd_bool looped)
             if(Mus_GetExt(def, &path))
             {
                 LOG_AUDIO_VERBOSE("Attempting to play song '%s' (file \"%s\")")
-                        << def->id << F_PrettyPath(Str_Text(&path));
+                        << def->id << NativePath(Str_Text(&path)).pretty();
 
                 // Its an external file.
                 return AudioDriver_Music_PlayFile(Str_Text(&path), looped);

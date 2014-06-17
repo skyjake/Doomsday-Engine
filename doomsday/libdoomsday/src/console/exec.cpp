@@ -852,6 +852,23 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
+static void readLine(char *buffer, size_t len, struct filehandle_s *file)
+{
+    std::memset(buffer, 0, len);
+
+    size_t p = 0;
+    while(p < len - 1) // Make the last null stay there.
+    {
+        char ch = FileHandle_GetC(file);
+        if(ch == '\r') continue;
+
+        if(FileHandle_AtEnd(file) || ch == '\n')
+            return;
+
+        buffer[p++] = ch;
+    }
+}
+
 dd_bool Con_Parse(char const *fileName, dd_bool silently)
 {
     // Open the file.
@@ -867,14 +884,16 @@ dd_bool Con_Parse(char const *fileName, dd_bool silently)
     char buff[512];
     for(int line = 1; ;)
     {
-        F_ReadLine(buff, 512, file);
+        readLine(buff, 512, file);
         if(buff[0] && !M_IsComment(buff))
         {
             // Execute the commands silently.
             if(!Con_Execute(CMDS_CONFIG, buff, silently, false))
             {
                 LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
-                        << F_PrettyPath(fileName) << line << buff;
+                        << NativePath(fileName).pretty()
+                        << line
+                        << buff;
             }
         }
 

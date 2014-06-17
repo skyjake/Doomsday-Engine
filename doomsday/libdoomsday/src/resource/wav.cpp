@@ -25,6 +25,7 @@
 #include "doomsday/filesys/fs_util.h"
 
 #include <de/Log>
+#include <de/NativePath>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include "dd_share.h"
@@ -200,7 +201,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 
     LOG_AS("WAV_Load");
     LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
-            << F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file))))
+            << de::NativePath(Str_Text(F_ComposePath(FileHandle_File_const(file)))).pretty()
             << size
             << FileHandle_Tell(file);
 

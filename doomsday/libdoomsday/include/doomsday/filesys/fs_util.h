@@ -37,31 +37,15 @@
 extern "C" {
 #endif
 
-LIBDOOMSDAY_PUBLIC void F_FileDir(ddstring_t* dst, const ddstring_t* str);
-
 LIBDOOMSDAY_PUBLIC void F_FileName(ddstring_t* dst, const char* src);
 
-LIBDOOMSDAY_PUBLIC void F_FileNameAndExtension(ddstring_t* dst, const char* src);
-
 LIBDOOMSDAY_PUBLIC int F_FileExists(const char *path);
-
-LIBDOOMSDAY_PUBLIC const char* F_FindFileExtension(const char* path);
-
-LIBDOOMSDAY_PUBLIC void F_ExtractFileBase(char* dest, const char* path, size_t len);
-
-LIBDOOMSDAY_PUBLIC void F_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
 
 /**
  * Converts directory slashes to our internal '/'.
  * @return  @c true iff the path was modified.
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_FixSlashes(ddstring_t* dst, const ddstring_t* src);
-
-/**
- * Appends a slash at the end of @a pathStr if there isn't one.
- * @return @c true if a slash was appended, @c false otherwise.
- */
-LIBDOOMSDAY_PUBLIC dd_bool F_AppendMissingSlash(ddstring_t* pathStr);
 
 /**
  * Appends a slash at the end of @a path if there isn't one.
@@ -76,33 +60,10 @@ LIBDOOMSDAY_PUBLIC dd_bool F_AppendMissingSlashCString(char* path, size_t maxLen
 LIBDOOMSDAY_PUBLIC dd_bool F_ToNativeSlashes(ddstring_t* dst, const ddstring_t* src);
 
 /**
- * Convert the symbolic path into a real path.
- * @todo: This seems rather redundant; refactor callers.
- */
-LIBDOOMSDAY_PUBLIC void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src);
-
-/**
  * @return  @c true, if the given path is absolute (starts with \ or / or the
  *          second character is a ':' (drive).
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(const ddstring_t* path);
-
-/**
- * @return  @c true iff the path can be made into a relative path.
- */
-LIBDOOMSDAY_PUBLIC dd_bool F_IsRelativeToBase(const char* path, const char* base);
-
-/**
- * Attempt to remove the base path if found at the beginning of the path.
- *
- * @param dst  Potential base-relative path written here.
- * @param src  Possibly absolute path.
- * @param base  Base to attempt to remove from @a src.
- *
- * @return  @c true iff the base path was found and removed.
- */
-LIBDOOMSDAY_PUBLIC dd_bool F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
-LIBDOOMSDAY_PUBLIC dd_bool F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
 
 /**
  * Attempt to prepend the base path. If @a src is already absolute do nothing.
@@ -115,16 +76,6 @@ LIBDOOMSDAY_PUBLIC dd_bool F_RemoveBasePath(ddstring_t* dst, const ddstring_t* s
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
 LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
-
-/**
- * Attempt to prepend the current work path. If @a src is already absolute do nothing.
- *
- * @param dst  Absolute path written here.
- * @param src  Original path.
- *
- * @return  @c true iff the path was prepended.
- */
-LIBDOOMSDAY_PUBLIC dd_bool F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Expands relative path directives like '>'.
@@ -141,10 +92,6 @@ LIBDOOMSDAY_PUBLIC dd_bool F_PrependWorkPath(ddstring_t* dst, const ddstring_t* 
  * @return  @c true iff the path was expanded.
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Write the data associated with the specified lump index to @a fileName.
@@ -178,8 +125,6 @@ LIBDOOMSDAY_PUBLIC const char* F_PrettyPath(const char* path);
 LIBDOOMSDAY_PUBLIC uint F_GetLastModified(const char* path);
 
 LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(const char* path);
-
-LIBDOOMSDAY_PUBLIC void F_ReadLine(char* buffer, size_t len, struct filehandle_s *file);
 
 #ifdef __cplusplus
 } // extern "C"

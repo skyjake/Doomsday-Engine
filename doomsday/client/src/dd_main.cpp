@@ -2008,7 +2008,7 @@ dd_bool DD_Init(void)
                 break;
             }
 
-            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << NativePath(arg).pretty();
             Con_ParseCommands(arg);
         }
         LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
@@ -2137,7 +2137,7 @@ static int DD_StartupWorker(void * /*context*/)
             char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
 
-            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << NativePath(arg).pretty();
             Con_ParseCommands(arg);
         }
         LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();

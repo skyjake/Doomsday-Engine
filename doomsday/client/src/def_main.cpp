@@ -548,9 +548,34 @@ static void readDefinitionFile(String path)
 {
     if(path.isEmpty()) return;
 
-    QByteArray pathUtf8 = path.toUtf8();
-    LOG_RES_VERBOSE("Reading \"%s\"") << F_PrettyPath(pathUtf8.constData());
-    Def_ReadProcessDED(&defs, pathUtf8);
+    LOG_RES_VERBOSE("Reading \"%s\"") << NativePath(path).pretty();
+    Def_ReadProcessDED(&defs, path.toUtf8());
+}
+
+/**
+ * Attempt to prepend the current work path. If @a src is already absolute do nothing.
+ *
+ * @param dst  Absolute path written here.
+ * @param src  Original path.
+ */
+static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
+{
+    DENG2_ASSERT(dst != 0 && src != 0);
+
+    if(!F_IsAbsolute(src))
+    {
+        char *curPath = Dir_CurrentPath();
+        Str_Prepend(dst, curPath);
+        Dir_CleanPathStr(dst);
+        free(curPath);
+        return;
+    }
+
+    // Do we need to copy anyway?
+    if(dst != src)
+    {
+        Str_Set(dst, Str_Text(src));
+    }
 }
 
 static void readAllDefinitions()
@@ -626,7 +651,7 @@ static void readAllDefinitions()
             F_ExpandBasePath(buf, buf);
             // We must have an absolute path. If we still do not have one then
             // prepend the current working directory if necessary.
-            F_PrependWorkPath(buf, buf);
+            prependWorkPath(buf, buf);
 
             readDefinitionFile(String(Str_Text(buf)));
         }

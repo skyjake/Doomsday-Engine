@@ -42,6 +42,7 @@
 #include "doomsday/defs/model.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
+#include "doomsday/filesys/sys_direc.h"
 #include "doomsday/uri.h"
 #include "xgclass.h"
 
@@ -779,7 +780,12 @@ DENG2_PIMPL(DEDParser)
 
         // For including other files -- we must know where we are.
         Str_Init(&sourceFileDir);
-        F_FileDir(&sourceFileDir, &sourceFile);
+        {
+            /// @todo Potentially truncates @a src to FILENAME_T_MAXLEN
+            directory_t *dir = Dir_FromText(Str_Text(&sourceFile));
+            Str_Set(&sourceFileDir, Dir_Path(dir));
+            Dir_Delete(dir);
+        }
 
         // Get the next entry from the source stack.
         DED_InitReader(buffer, Str_Text(&sourceFile));
