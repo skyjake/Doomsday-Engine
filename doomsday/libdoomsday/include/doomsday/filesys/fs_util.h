@@ -65,18 +65,6 @@ LIBDOOMSDAY_PUBLIC dd_bool F_ToNativeSlashes(ddstring_t *dst, ddstring_t const *
 LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(ddstring_t const *path);
 
 /**
- * Attempt to prepend the base path. If @a src is already absolute do nothing.
- *
- * @param dst  Absolute path written here.
- * @param src  Original path.
- * @param base  Base to attempt to prepend to @a src.
- *
- * @return  @c true iff the path was prepended.
- */
-LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath2(ddstring_t *dst, ddstring_t const *src, ddstring_t const *base);
-LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath(ddstring_t *dst, ddstring_t const *src /*, ddstring_t const *base = ddBasePath*/);
-
-/**
  * Expands relative path directives like '>'.
  *
  * @note Despite appearances this function is *not* an alternative version of
@@ -102,7 +90,7 @@ LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t *dst, ddstring_t const *s
  *
  * @return  @c true iff successful.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(de::File1 &file, char const *fileName);
+LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(de::File1 &file, char const *outputPath);
 
 /**
  * Write data into a file.

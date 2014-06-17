@@ -301,32 +301,6 @@ dd_bool F_IsAbsolute(const ddstring_t* str)
     return false;
 }
 
-dd_bool F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base)
-{
-    assert(dst && src && base);
-
-    if(!F_IsAbsolute(src))
-    {
-        if(dst != src)
-            Str_Set(dst, Str_Text(src));
-        Str_Prepend(dst, Str_Text(base));
-        return true;
-    }
-
-    // Do we need to copy anyway?
-    if(dst != src)
-        Str_Set(dst, Str_Text(src));
-
-    return false; // Not done.
-}
-
-dd_bool F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
-{
-    ddstring_t base;
-    Str_InitStatic(&base, DD_BasePath());
-    return F_PrependBasePath2(dst, src, &base);
-}
-
 dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 {
     assert(dst && src);
@@ -486,7 +460,7 @@ dd_bool F_Dump(void const *data, size_t size, char const *path)
 
     if(!size) return false;
 
-    AutoStr* nativePath = AutoStr_NewStd();
+    AutoStr *nativePath = AutoStr_NewStd();
     Str_Set(nativePath, path);
     F_ToNativeSlashes(nativePath, nativePath);
 
