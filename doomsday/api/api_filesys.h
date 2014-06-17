@@ -42,21 +42,11 @@ DENG_API_TYPEDEF(F)
     int             (*FileExists)(const char* path);
 
     /**
-     * @return  The time when the file/directory was last modified, as seconds since
-     *          the Epoch else zero if @a path is not found.
-     *
-     * @attention This only works on native paths.
-     */
-    unsigned int    (*GetLastModified)(const char* path);
-
-    /**
      * Check that the given directory exists. If it doesn't, create it.
      *
      * @return  @c true if successful.
      */
     dd_bool         (*MakePath)(const char* path);
-
-    void            (*FileName)(Str* dst, const char* src);
 
     /**
      * @warning Not thread-safe!
@@ -83,9 +73,7 @@ DENG_API_T(F);
 #ifndef DENG_NO_API_MACROS_FILESYS
 #define F_Access                _api_F.Access
 #define F_FileExists            _api_F.FileExists
-#define F_GetLastModified       _api_F.GetLastModified
 #define F_MakePath              _api_F.MakePath
-#define F_FileName              _api_F.FileName
 #define F_PrettyPath            _api_F.PrettyPath
 #define M_ReadFile              _api_F.ReadFile
 #define M_ReadFileIntoString    _api_F.ReadFileIntoString

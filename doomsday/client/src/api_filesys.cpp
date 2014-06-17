@@ -24,9 +24,7 @@
 
 /*
 extern int F_FileExists(char const *path);
-extern uint F_GetLastModified(char const *path);
 extern dd_bool F_MakePath(char const *path);
-extern void F_FileName(ddstring_t *dst, char const *src);
 extern const char* F_PrettyPath(char const *path);
 */
 
@@ -41,9 +39,7 @@ DENG_DECLARE_API(F) =
 
     F_Access,
     F_FileExists,
-    F_GetLastModified,
     F_MakePath,
-    F_FileName,
     F_PrettyPath,
     M_ReadFile,
     M_ReadFileIntoString,

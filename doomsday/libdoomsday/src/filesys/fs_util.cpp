@@ -52,22 +52,7 @@
 
 using namespace de;
 
-void F_FileName(ddstring_t* dst, const char* src)
-{
-#ifdef WIN32
-    char name[_MAX_FNAME];
-#else
-    char name[NAME_MAX];
-#endif
-
-    if(!dst) return;
-    Str_Clear(dst);
-    if(!src) return;
-    _splitpath(src, 0, 0, name, 0);
-    Str_Set(dst, name);
-}
-
-int F_FileExists(const char* path)
+int F_FileExists(char const *path)
 {
     int result = -1;
     if(path && path[0])
@@ -86,7 +71,7 @@ int F_FileExists(const char* path)
     return result;
 }
 
-uint F_GetLastModified(const char* path)
+uint F_GetLastModified(char const *path)
 {
 #ifdef UNIX
     struct stat s;
@@ -101,7 +86,7 @@ uint F_GetLastModified(const char* path)
 #endif
 }
 
-dd_bool F_MakePath(const char* path)
+dd_bool F_MakePath(char const *path)
 {
 #if !defined(WIN32) && !defined(UNIX)
 #  error F_MakePath has no implementation for this platform.
@@ -495,47 +480,9 @@ const char* F_PrettyPath(const char* path)
 #undef NUM_BUFS
 }
 
-bool F_MatchFileName(de::String const &string, de::String const &pattern)
+dd_bool F_Dump(void const *data, size_t size, char const *path)
 {
-    static QChar const ASTERISK('*');
-    static QChar const QUESTION_MARK('?');
-
-    QChar const *in = string.constData(), *st = pattern.constData();
-
-    while(!in->isNull())
-    {
-        if(*st == ASTERISK)
-        {
-            st++;
-            continue;
-        }
-
-        if(*st != QUESTION_MARK && st->toLower() != in->toLower())
-        {
-            // A mismatch. Hmm. Go back to a previous '*'.
-            while(st >= pattern && *st != ASTERISK)
-                st--;
-            if(st < pattern)
-                return false; // No match!
-            // The asterisk lets us continue.
-        }
-
-        // This character of the pattern is OK.
-        st++;
-        in++;
-    }
-
-    // Match is good if the end of the pattern was reached.
-    while(*st == ASTERISK)
-        st++; // Skip remaining asterisks.
-
-    return st->isNull();
-}
-
-dd_bool F_Dump(void const* data, size_t size, char const* path)
-{
-    DENG_ASSERT(data);
-    DENG_ASSERT(path);
+    DENG2_ASSERT(data != 0 && path != 0);
 
     if(!size) return false;
 
@@ -543,7 +490,7 @@ dd_bool F_Dump(void const* data, size_t size, char const* path)
     Str_Set(nativePath, path);
     F_ToNativeSlashes(nativePath, nativePath);
 
-    FILE* outFile = fopen(Str_Text(nativePath), "wb");
+    FILE *outFile = fopen(Str_Text(nativePath), "wb");
     if(!outFile)
     {
         LOG_RES_WARNING("Failed to open \"%s\" for writing: %s")

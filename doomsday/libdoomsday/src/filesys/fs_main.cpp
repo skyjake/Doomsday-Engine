@@ -45,6 +45,8 @@
 
 using namespace de;
 
+extern uint F_GetLastModified(char const *path);
+
 D_CMD(Dir);
 D_CMD(DumpLump);
 D_CMD(ListFiles);
@@ -76,6 +78,53 @@ typedef QPair<QString, QString> PathMapping;
 typedef QList<PathMapping> PathMappings;
 
 static bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
+
+/**
+ * Performs a case-insensitive pattern match. The pattern can contain
+ * wildcards.
+ *
+ * @param filePath  Path to match.
+ * @param pattern   Pattern with * and ? as wildcards.
+ *
+ * @return  @c true, if @a filePath matches the pattern.
+ */
+static bool matchFileName(String const &string, String const &pattern)
+{
+    static QChar const ASTERISK('*');
+    static QChar const QUESTION_MARK('?');
+
+    QChar const *in = string.constData(), *st = pattern.constData();
+
+    while(!in->isNull())
+    {
+        if(*st == ASTERISK)
+        {
+            st++;
+            continue;
+        }
+
+        if(*st != QUESTION_MARK && st->toLower() != in->toLower())
+        {
+            // A mismatch. Hmm. Go back to a previous '*'.
+            while(st >= pattern && *st != ASTERISK) { st--; }
+
+            if(st < pattern)
+                return false; // No match!
+            // The asterisk lets us continue.
+        }
+
+        // This character of the pattern is OK.
+        st++;
+        in++;
+    }
+
+    // Match is good if the end of the pattern was reached.
+
+    // Skip remaining asterisks.
+    while(*st == ASTERISK) { st++; }
+
+    return st->isNull();
+}
 
 struct FS1::Instance
 {
@@ -815,7 +864,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
         if(!(flags & SearchPath::NoDescend))
         {
             filePath = lump.composePath();
-            patternMatched = F_MatchFileName(filePath, searchPattern);
+            patternMatched = matchFileName(filePath, searchPattern);
         }
         else
         {
@@ -840,7 +889,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     {
         DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
-            if(!F_MatchFileName(i->first, searchPattern)) continue;
+            if(!matchFileName(i->first, searchPattern)) continue;
 
             found.push_back(PathListItem(i->first, 0 /*only filepaths (i.e., leaves) can be mapped to lumps*/));
         }
@@ -881,7 +930,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
                         String foundPath = searchDirectory / NativePath(Str_Text(&fd.name)).withSeparators('/');
-                        if(!F_MatchFileName(foundPath, searchPattern)) continue;
+                        if(!matchFileName(foundPath, searchPattern)) continue;
 
                         nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }

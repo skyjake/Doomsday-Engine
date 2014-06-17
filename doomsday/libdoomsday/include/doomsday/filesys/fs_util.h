@@ -38,33 +38,31 @@
 extern "C" {
 #endif
 
-LIBDOOMSDAY_PUBLIC void F_FileName(ddstring_t* dst, const char* src);
-
-LIBDOOMSDAY_PUBLIC int F_FileExists(const char *path);
+LIBDOOMSDAY_PUBLIC int F_FileExists(char const *path);
 
 /**
  * Converts directory slashes to our internal '/'.
  * @return  @c true iff the path was modified.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_FixSlashes(ddstring_t* dst, const ddstring_t* src);
+LIBDOOMSDAY_PUBLIC dd_bool F_FixSlashes(ddstring_t *dst, ddstring_t const *src);
 
 /**
  * Appends a slash at the end of @a path if there isn't one.
  * @return @c true if a slash was appended, @c false otherwise.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_AppendMissingSlashCString(char* path, size_t maxLen);
+LIBDOOMSDAY_PUBLIC dd_bool F_AppendMissingSlashCString(char *path, size_t maxLen);
 
 /**
  * Converts directory slashes to tha used by the host file system.
  * @return  @c true iff the path was modified.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_ToNativeSlashes(ddstring_t* dst, const ddstring_t* src);
+LIBDOOMSDAY_PUBLIC dd_bool F_ToNativeSlashes(ddstring_t *dst, ddstring_t const *src);
 
 /**
  * @return  @c true, if the given path is absolute (starts with \ or / or the
  *          second character is a ':' (drive).
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(const ddstring_t* path);
+LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(ddstring_t const *path);
 
 /**
  * Attempt to prepend the base path. If @a src is already absolute do nothing.
@@ -75,8 +73,8 @@ LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(const ddstring_t* path);
  *
  * @return  @c true iff the path was prepended.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
-LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
+LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath2(ddstring_t *dst, ddstring_t const *src, ddstring_t const *base);
+LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath(ddstring_t *dst, ddstring_t const *src /*, ddstring_t const *base = ddBasePath*/);
 
 /**
  * Expands relative path directives like '>'.
@@ -92,7 +90,7 @@ LIBDOOMSDAY_PUBLIC dd_bool F_PrependBasePath(ddstring_t* dst, const ddstring_t* 
  *
  * @return  @c true iff the path was expanded.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
+LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t *dst, ddstring_t const *src);
 
 /**
  * Write the data associated with the specified lump index to @a outputPath.
@@ -117,28 +115,12 @@ LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(de::File1 &file, char const *fileName);
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_Dump(void const *data, size_t size, char const *path);
 
-LIBDOOMSDAY_PUBLIC const char* F_PrettyPath(const char* path);
+LIBDOOMSDAY_PUBLIC char const *F_PrettyPath(char const *path);
 
-LIBDOOMSDAY_PUBLIC uint F_GetLastModified(const char* path);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(const char* path);
+LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(char const *path);
 
 #ifdef __cplusplus
 } // extern "C"
-
-#include <de/String>
-
-/**
- * Performs a case-insensitive pattern match. The pattern can contain
- * wildcards.
- *
- * @param filePath  Path to match.
- * @param pattern   Pattern with * and ? as wildcards.
- *
- * @return  @c true, if @a filePath matches the pattern.
- */
-LIBDOOMSDAY_PUBLIC bool F_MatchFileName(de::String const &filePath, de::String const &pattern);
-
 #endif
 
 #endif // LIBDENG_FILESYS_UTIL_H
