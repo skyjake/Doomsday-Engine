@@ -458,7 +458,7 @@ int floor_s::read(MapStateReader *msr)
             // Flat number is an absolute lump index.
             Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
             ddstring_t name; Str_Init(&name);
-            F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
+            Str_Set(&name, de::String(Str_Text(W_LumpName(Reader_ReadInt16(reader)))).fileNameWithoutExtension().toUtf8().constData());
             Uri_SetPath(uri, Str_Text(&name));
             material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
             Uri_Delete(uri);
@@ -507,7 +507,7 @@ int floor_s::read(MapStateReader *msr)
         // Flat number is an absolute lump index.
         Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
         ddstring_t name; Str_Init(&name);
-        F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
+        Str_Set(&name, de::String(Str_Text(W_LumpName(Reader_ReadInt16(reader)))).fileNameWithoutExtension().toUtf8().constData());
         Uri_SetPath(uri, Str_Text(&name));
         material               = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
