@@ -234,13 +234,11 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
     if(def->path && !def->path->path().isEmpty())
     {
         // All external music files are specified relative to the base path.
-        AutoStr *fullPath = AutoStr_NewStd();
-        F_PrependBasePath(fullPath, def->path->pathStr());
-        F_FixSlashes(fullPath, fullPath);
+        String fullPath = App_BasePath() / def->path->path();
 
-        if(F_Access(Str_Text(fullPath)))
+        if(F_Access(fullPath.toUtf8().constData()))
         {
-            if(retPath) Str_Set(retPath, Str_Text(fullPath));
+            if(retPath) Str_Set(retPath, fullPath.toUtf8().constData());
             return true;
         }
 

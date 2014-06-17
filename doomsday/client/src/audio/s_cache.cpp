@@ -531,11 +531,9 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
     /// @note Path is relative to the base path.
     if(!Str_IsEmpty(&info->external))
     {
-        AutoStr *searchPath = AutoStr_NewStd();
-        F_PrependBasePath(searchPath, &info->external);
-
+        String searchPath = App_BasePath() / String(Str_Text(&info->external));
         // Try loading.
-        data = WAV_Load(Str_Text(searchPath), &bytesPer, &rate, &numSamples);
+        data = WAV_Load(searchPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);
         if(data)
         {
             bytesPer /= 8; // Was returned as bits.
