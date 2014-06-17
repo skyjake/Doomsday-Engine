@@ -479,7 +479,7 @@ void FS1::index(de::File1 &file)
     // Publish lumps to one or more indexes?
     if(Zip *zip = file.maybeAs<Zip>())
     {
-        if(!zip->empty())
+        if(!zip->isEmpty())
         {
             // Insert the lumps into their rightful places in the index.
             for(int i = 0; i < zip->lumpCount(); ++i)
