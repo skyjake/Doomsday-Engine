@@ -33,9 +33,6 @@ namespace de {
 class LIBDOOMSDAY_PUBLIC FileHandleBuilder
 {
 public:
-    static void init();
-    static void shutdown();
-
     /**
      * Create a new handle on the File @a file.
      *

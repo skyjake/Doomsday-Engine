@@ -283,8 +283,6 @@ public:
      */
     FS1();
 
-    virtual ~FS1();
-
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
 
@@ -569,8 +567,7 @@ public:
     int unloadAllNonStartupFiles();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Scheme::Flags)

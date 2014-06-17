@@ -126,41 +126,25 @@ static bool matchFileName(String const &string, String const &pattern)
     return st->isNull();
 }
 
-struct FS1::Instance
+DENG2_PIMPL(FS1)
 {
-    FS1& self;
+    bool loadingForStartup;     ///< @c true= Flag newly opened files as "startup".
 
-    /// @c true= Flag newly opened files as "startup".
-    bool loadingForStartup;
-
-    /// List of currently opened files.
-    FileList openFiles;
-
-    /// List of all loaded files present in the system.
-    FileList loadedFiles;
-
+    FileList openFiles;         ///< List of currently opened files.
+    FileList loadedFiles;       ///< List of all loaded files present in the system.
     uint loadedFilesCRC;
+    FileIds fileIds;            ///< Database of unique identifiers for all loaded/opened files.
 
-    /// Database of unique identifiers for all loaded/opened files.
-    FileIds fileIds;
+    LumpIndex primaryIndex;     ///< Primary index of all files in the system.
+    LumpIndex zipFileIndex;     ///< Type-specific index for ZipFiles.
 
-    /// Primary index of all files in the system.
-    LumpIndex primaryIndex;
+    LumpMappings lumpMappings;  ///< Virtual (file) path => Lump name mapping.
+    PathMappings pathMappings;  ///< Virtual file-directory mapping.
 
-    /// Type-specific index for ZipFiles.
-    LumpIndex zipFileIndex;
+    Schemes schemes;            ///< File subsets.
 
-    /// Virtual (file) path => Lump name mapping.
-    LumpMappings lumpMappings;
-
-    /// Virtual file-directory mapping.
-    PathMappings pathMappings;
-
-    /// System subspace schemes containing subsets of the total files.
-    Schemes schemes;
-
-    Instance(FS1 *d)
-        : self(*d)
+    Instance(Public *i)
+        : Base(i)
         , loadingForStartup(true)
         , loadedFilesCRC   (0)
         , zipFileIndex     (true/*paths are unique*/)
@@ -206,14 +190,14 @@ struct FS1::Instance
         return false;
     }
 
-    void clearLoadedFiles(de::LumpIndex* index = 0)
+    void clearLoadedFiles(de::LumpIndex *index = 0)
     {
         loadedFilesCRC = 0;
 
         // Unload in reverse load order.
         for(int i = loadedFiles.size() - 1; i >= 0; i--)
         {
-            File1& file = loadedFiles[i]->file();
+            File1 &file = loadedFiles[i]->file();
             if(!index || index->catalogues(file))
             {
                 self.deindex(file);
@@ -234,12 +218,12 @@ struct FS1::Instance
         zipFileIndex.clear();
     }
 
-    String findPath(de::Uri const& search)
+    String findPath(de::Uri const &search)
     {
         // Within a subspace scheme?
         try
         {
-            FS1::Scheme& scheme = self.scheme(search.scheme());
+            FS1::Scheme &scheme = self.scheme(search.scheme());
             LOG_RES_XVERBOSE("Using scheme '%s'...") << scheme.name();
 
             // Ensure the scheme's index is up to date.
@@ -255,7 +239,7 @@ struct FS1::Instance
                 // At least one node name was matched (perhaps partially).
                 DENG2_FOR_EACH_CONST(FS1::Scheme::FoundNodes, i, foundNodes)
                 {
-                    PathTree::Node& node = **i;
+                    PathTree::Node &node = **i;
                     if(!node.comparePath(search.path(), PathTree::NoBranch))
                     {
                         // This is the file we are looking for.
@@ -267,11 +251,11 @@ struct FS1::Instance
             /// @todo Should return not-found here but some searches are still dependent
             ///       on falling back to a wider search. -ds
         }
-        catch(FS1::UnknownSchemeError const&)
+        catch(FS1::UnknownSchemeError const &)
         {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
-        File1* file = openFile(search.path(), "rb", 0, true /* allow duplicates */);
+        File1 *file = openFile(search.path(), "rb", 0, true /* allow duplicates */);
         if(file)
         {
             String found = file->composePath();
@@ -282,7 +266,7 @@ struct FS1::Instance
         return ""; // Not found.
     }
 
-    File1* findLump(String path, String const& /*mode*/)
+    File1 *findLump(String path, String const & /*mode*/)
     {
         if(path.isEmpty()) return 0;
 
@@ -304,7 +288,7 @@ struct FS1::Instance
         {
             DENG2_FOR_EACH_CONST(LumpMappings, i, lumpMappings)
             {
-                LumpMapping const& mapping = *i;
+                LumpMapping const &mapping = *i;
                 if(mapping.first.compare(path)) continue;
 
                 lumpnum_t lumpNum = self.lumpNumForName(mapping.second);
@@ -317,9 +301,9 @@ struct FS1::Instance
         return 0;
     }
 
-    FILE* findAndOpenNativeFile(String path, String const& mymode, String& foundPath)
+    FILE *findAndOpenNativeFile(String path, String const &mymode, String &foundPath)
     {
-        DENG_ASSERT(!path.isEmpty());
+        DENG2_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
         path = NativePath::workPath().withSeparators('/') / path;
@@ -333,7 +317,7 @@ struct FS1::Instance
 
         // First try a real native file at this absolute path.
         NativePath nativePath = NativePath(path);
-        FILE* nativeFile = fopen(nativePath.toUtf8().constData(), mode);
+        FILE *nativeFile = fopen(nativePath.toUtf8().constData(), mode);
         if(nativeFile)
         {
             foundPath = nativePath.expand().withSeparators('/');
@@ -344,7 +328,7 @@ struct FS1::Instance
         if(!pathMappings.empty())
         {
             QByteArray pathUtf8 = path.toUtf8();
-            AutoStr* mapped = AutoStr_NewStd();
+            AutoStr *mapped = AutoStr_NewStd();
             DENG2_FOR_EACH_CONST(PathMappings, i, pathMappings)
             {
                 Str_Set(mapped, pathUtf8.constData());
@@ -364,8 +348,8 @@ struct FS1::Instance
         return 0;
     }
 
-    File1* openFile(String path, String const& mode, size_t baseOffset,
-                        bool allowDuplicate)
+    File1 *openFile(String path, String const& mode, size_t baseOffset,
+                    bool allowDuplicate)
     {
         if(path.isEmpty()) return 0;
 
@@ -378,13 +362,13 @@ struct FS1::Instance
 
         bool const reqNativeFile = mode.contains('f');
 
-        FileHandle* hndl = 0;
+        FileHandle *hndl = 0;
         FileInfo info; // The temporary info descriptor.
 
         // First check for lumps?
         if(!reqNativeFile)
         {
-            if(File1* found = findLump(path, mode))
+            if(File1 *found = findLump(path, mode))
             {
                 // Do not read files twice.
                 if(!allowDuplicate && !self.checkFileId(found->composeUri())) return 0;
@@ -403,7 +387,7 @@ struct FS1::Instance
         if(!hndl)
         {
             String foundPath;
-            if(FILE* found = findAndOpenNativeFile(path, mode, foundPath))
+            if(FILE *found = findAndOpenNativeFile(path, mode, foundPath))
             {
                 // Do not read files twice.
                 if(!allowDuplicate && !self.checkFileId(de::Uri(foundPath, RC_NULL)))
@@ -427,7 +411,7 @@ struct FS1::Instance
         // been mapped to another location. We want the file to be attributed with
         // the path it is to be known by throughout the virtual file system.
 
-        File1& file = self.interpret(*hndl, path, info);
+        File1 &file = self.interpret(*hndl, path, info);
 
         if(loadingForStartup)
         {
@@ -438,27 +422,18 @@ struct FS1::Instance
     }
 };
 
-FS1::FS1()
-{
-    d = new Instance(this);
-    FileHandleBuilder::init();
-}
+FS1::FS1() : d(new Instance(this))
+{}
 
-FS1::~FS1()
+FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)
 {
-    delete d;
-    FileHandleBuilder::shutdown();
-}
-
-FS1::Scheme& FS1::createScheme(String name, Scheme::Flags flags)
-{
-    DENG_ASSERT(name.length() >= Scheme::min_name_length);
+    DENG2_ASSERT(name.length() >= Scheme::min_name_length);
 
     // Ensure this is a unique name.
     if(knownScheme(name)) return scheme(name);
 
     // Create a new scheme.
-    Scheme* newScheme = new Scheme(name, flags);
+    Scheme *newScheme = new Scheme(name, flags);
     d->schemes.insert(name.toLower(), newScheme);
     return *newScheme;
 }

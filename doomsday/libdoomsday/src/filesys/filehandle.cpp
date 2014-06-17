@@ -71,17 +71,7 @@ static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
     if(!file.isValid()) exit(1);
 }
 
-void FileHandleBuilder::init()
-{
-    // Nothing to do.
-}
-
-void FileHandleBuilder::shutdown()
-{
-    // Nothing to do.
-}
-
-FileHandle* FileHandleBuilder::fromLump(File1 &lump, bool dontBuffer)
+FileHandle *FileHandleBuilder::fromLump(File1 &lump, bool dontBuffer)
 {
     LOG_AS("FileHandle::fromLump");
 
