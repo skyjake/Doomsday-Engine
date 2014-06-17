@@ -79,7 +79,7 @@ struct IndexEntry
 
         // Determine the actual length of the name.
         int nameLen = 0;
-        while(nameLen < LUMPNAME_T_LASTINDEX && name[nameLen]) { nameLen++; }
+        while(nameLen < 8 && name[nameLen]) { nameLen++; }
 
         for(int i = 0; i < nameLen; ++i)
         {

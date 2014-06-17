@@ -53,10 +53,7 @@
 typedef unsigned int nodeid_t;
 
 /// @todo Should be a public typedef of a type defined by de::LumpIndex.
-typedef int32_t         lumpnum_t;
-#define LUMPNAME_T_MAXLEN 9
-#define LUMPNAME_T_LASTINDEX 8
-typedef char            lumpname_t[LUMPNAME_T_MAXLEN];
+typedef int32_t lumpnum_t;
 
 /// \todo dj: Refactor me away
 #define FILENAME_T_MAXLEN 256

@@ -982,9 +982,9 @@ static inline char const *skipSpace(char const *ptr)
     return ptr;
 }
 
-static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t *path, char const *buffer)
+static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring_t *path, char const *buffer)
 {
-    DENG2_ASSERT(lumpName && path != 0);
+    DENG2_ASSERT(lumpName != 0 && path != 0);
 
     // Find the start of the lump name.
     char const *ptr = skipSpace(buffer);
@@ -1000,7 +1000,7 @@ static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t *path, char con
     // Invalid lump name?
     if(len > 8) return false;
 
-    memset(lumpName, 0, LUMPNAME_T_MAXLEN);
+    memset(lumpName, 0, 9/*LUMPNAME_T_MAXLEN*/);
     strncpy(lumpName, ptr, len);
     strupr(lumpName);
 
@@ -1030,7 +1030,7 @@ static bool parsePathLumpMappings(char const *buffer)
     ddstring_t line; Str_Init(&line);
 
     char const *ch = buffer;
-    lumpname_t lumpName;
+    char lumpName[9/*LUMPNAME_T_MAXLEN*/];
     do
     {
         ch = Str_GetLine(&line, ch);

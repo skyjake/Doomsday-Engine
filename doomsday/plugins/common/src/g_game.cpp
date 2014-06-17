@@ -2476,22 +2476,22 @@ uint G_CurrentLogicalMapNumber()
 
 Uri *G_ComposeMapUri(uint episode, uint map)
 {
-    lumpname_t mapId;
+    AutoStr *mapId = AutoStr_NewStd();
 #if __JDOOM64__
-    dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
-    DENG_UNUSED(episode);
+    Str_Appendf(mapId, "MAP%02u", map+1);
+    DENG2_UNUSED(episode);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
-        dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
+        Str_Appendf(mapId, "MAP%02u", map+1);
     else
-        dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "E%uM%u", episode+1, map+1);
+        Str_Appendf(mapId, "E%uM%u", episode+1, map+1);
 #elif  __JHERETIC__
-    dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "E%uM%u", episode+1, map+1);
+    Str_Appendf(mapId, "E%uM%u", episode+1, map+1);
 #else
-    dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
-    DENG_UNUSED(episode);
+    Str_Appendf(mapId, "MAP%02u", map+1);
+    DENG2_UNUSED(episode);
 #endif
-    return Uri_NewWithPath2(mapId, RC_NULL);
+    return Uri_NewWithPath2(Str_Text(mapId), RC_NULL);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
