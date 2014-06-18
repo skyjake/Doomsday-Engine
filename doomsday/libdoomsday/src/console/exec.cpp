@@ -875,14 +875,14 @@ dd_bool Con_Parse(char const *fileName, dd_bool silently)
     {
         // Relative paths are relative to the native working directory.
         String path = (NativePath::workPath() / NativePath(fileName).expand()).withSeparators('/');
-        FileHandle *file = &App_FileSystem().openFile(path, "rt");
+        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(path, "rt"));
 
         // This file is filled with console commands.
         // Each line is a command.
         char buff[512];
         for(int line = 1; ;)
         {
-            readLine(buff, 512, file);
+            readLine(buff, 512, hndl.data());
             if(buff[0] && !M_IsComment(buff))
             {
                 // Execute the commands silently.
@@ -895,12 +895,13 @@ dd_bool Con_Parse(char const *fileName, dd_bool silently)
                 }
             }
 
-            if(file->atEnd()) break;
+            if(hndl->atEnd()) break;
 
             line++;
         }
 
-        F_Delete(file);
+        App_FileSystem().releaseFile(hndl->file());
+
         return true;
     }
     catch(FS1::NotFoundError const &)

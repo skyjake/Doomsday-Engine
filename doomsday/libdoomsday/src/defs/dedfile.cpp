@@ -92,13 +92,13 @@ int DED_Read(ded_t *ded, char const *path)
     try
     {
         // Relative paths are relative to the native working directory.
-        String path      = (NativePath::workPath() / NativePath(Str_Text(&transPath)).expand()).withSeparators('/');
-        FileHandle *file = &App_FileSystem().openFile(path, "rb");
+        String path = (NativePath::workPath() / NativePath(Str_Text(&transPath)).expand()).withSeparators('/');
+        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
 
         // We will buffer a local copy of the file. How large a buffer do we need?
-        file->seek(0, SeekEnd);
-        size_t bufferedDefSize = file->tell();
-        file->rewind();
+        hndl->seek(0, SeekEnd);
+        size_t bufferedDefSize = hndl->tell();
+        hndl->rewind();
         char *bufferedDef = (char *) calloc(1, bufferedDefSize + 1);
         if(!bufferedDef)
         {
@@ -108,8 +108,9 @@ int DED_Read(ded_t *ded, char const *path)
         }
 
         // Copy the file into the local buffer and parse definitions.
-        file->read((uint8_t *)bufferedDef, bufferedDefSize);
-        F_Delete(file);
+        hndl->read((uint8_t *)bufferedDef, bufferedDefSize);
+        App_FileSystem().releaseFile(hndl->file());
+
         int result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 
         // Done. Release temporary storage and return the result.

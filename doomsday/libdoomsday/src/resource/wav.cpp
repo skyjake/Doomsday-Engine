@@ -193,7 +193,7 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
     {
         // Relative paths are relative to the native working directory.
         de::String path = (de::NativePath::workPath() / de::NativePath(filename).expand()).withSeparators('/');
-        de::FileHandle *hndl = &App_FileSystem().openFile(path, "rb");
+        QScopedPointer<de::FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
 
         // Read in the whole thing.
         size_t size = hndl->length();
@@ -207,7 +207,7 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
         uint8_t *data = (uint8_t *) M_Malloc(size);
 
         hndl->read(data, size);
-        F_Delete(hndl);
+        App_FileSystem().releaseFile(hndl->file());
 
         // Parse the RIFF data.
         void *sampledata = WAV_MemoryLoad((byte const *) data, size, bits, rate, samples);

@@ -1290,13 +1290,6 @@ void F_Shutdown()
     delete fileSystem; fileSystem = 0;
 }
 
-void F_Delete(FileHandle *hndl)
-{
-    if(!hndl) return;
-    App_FileSystem().releaseFile(hndl->file());
-    delete hndl;
-}
-
 size_t F_ReadLumpSection(File1 *file, int lumpIdx, uint8_t *buffer,
     size_t startOffset, size_t length)
 {
