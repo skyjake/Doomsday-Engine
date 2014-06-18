@@ -85,33 +85,39 @@ static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lumpNum, dd_b
 
 static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNativePath, dd_bool looped)
 {
-    de::FileHandle *file = F_Open(virtualOrNativePath, "rb");
-    if(!file) return 0;
-
-    size_t len = file->length();
-
-    if(!iMusic->Play || !iMusic->SongBuffer)
+    try
     {
-        // Music interface does not offer buffer playback.
-        // Write to disk and play from there.
-        AutoStr *fileName = AudioDriver_Music_ComposeTempBufferFilename(NULL);
-        uint8_t *buf = (uint8_t *)M_Malloc(len);
+        // Relative paths are relative to the native working directory.
+        de::String path      = (de::NativePath::workPath() / de::NativePath(virtualOrNativePath).expand()).withSeparators('/');
+        de::FileHandle *file = &App_FileSystem().openFile(path, "rb");
+        size_t const len     = file->length();
 
-        file->read(buf, len);
-        F_Dump(buf, len, Str_Text(fileName));
-        M_Free(buf); buf = 0;
+        if(!iMusic->Play || !iMusic->SongBuffer)
+        {
+            // Music interface does not offer buffer playback.
+            // Write to disk and play from there.
+            AutoStr *fileName = AudioDriver_Music_ComposeTempBufferFilename(NULL);
+            uint8_t *buf      = (uint8_t *)M_Malloc(len);
 
+            file->read(buf, len);
+            F_Dump(buf, len, Str_Text(fileName));
+            M_Free(buf); buf = 0;
+
+            F_Delete(file);
+
+            // Music maestro, if you please!
+            return musicPlayNativeFile(iMusic, Str_Text(fileName), looped);
+        }
+
+        // Music interface offers buffered playback. Use it.
+        file->read((uint8_t *) iMusic->SongBuffer(len), len);
         F_Delete(file);
 
-        // Music maestro, if you please!
-        return musicPlayNativeFile(iMusic, Str_Text(fileName), looped);
+        return iMusic->Play(looped);
     }
-
-    // Music interface offers buffered playback. Use it.
-    file->read((uint8_t *) iMusic->SongBuffer(len), len);
-    F_Delete(file);
-
-    return iMusic->Play(looped);
+    catch(de::FS1::NotFoundError const &)
+    {} // Ignore error.
+    return 0;
 }
 
 static int musicPlayCDTrack(audiointerface_cd_t *iCD, int track, dd_bool looped)

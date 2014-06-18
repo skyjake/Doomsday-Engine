@@ -582,14 +582,10 @@ LIBDOOMSDAY_PUBLIC de::FS1 &App_FileSystem();
 LIBDOOMSDAY_PUBLIC de::String App_BasePath();
 
 /// Initialize this module. Cannot be re-initialized, must shutdown first.
-LIBDOOMSDAY_PUBLIC void F_Init(void);
+LIBDOOMSDAY_PUBLIC void F_Init();
 
 /// Shutdown this module.
-LIBDOOMSDAY_PUBLIC void F_Shutdown(void);
-
-LIBDOOMSDAY_PUBLIC de::FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset = 0, dd_bool allowDuplicate = true);
-
-LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
+LIBDOOMSDAY_PUBLIC void F_Shutdown();
 
 LIBDOOMSDAY_PUBLIC void F_Delete(de::FileHandle *hndl);
 

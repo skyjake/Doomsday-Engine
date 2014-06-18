@@ -871,41 +871,44 @@ static void readLine(char *buffer, size_t len, FileHandle *file)
 
 dd_bool Con_Parse(char const *fileName, dd_bool silently)
 {
-    // Open the file.
-    FileHandle *file = F_Open(fileName, "rt");
-    if(!file)
+    try
     {
-        LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
-        return false;
-    }
+        // Relative paths are relative to the native working directory.
+        String path = (NativePath::workPath() / NativePath(fileName).expand()).withSeparators('/');
+        FileHandle *file = &App_FileSystem().openFile(path, "rt");
 
-    // This file is filled with console commands.
-    // Each line is a command.
-    char buff[512];
-    for(int line = 1; ;)
-    {
-        readLine(buff, 512, file);
-        if(buff[0] && !M_IsComment(buff))
+        // This file is filled with console commands.
+        // Each line is a command.
+        char buff[512];
+        for(int line = 1; ;)
         {
-            // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, buff, silently, false))
+            readLine(buff, 512, file);
+            if(buff[0] && !M_IsComment(buff))
             {
-                LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
-                        << NativePath(fileName).pretty()
-                        << line
-                        << buff;
+                // Execute the commands silently.
+                if(!Con_Execute(CMDS_CONFIG, buff, silently, false))
+                {
+                    LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
+                            << NativePath(fileName).pretty()
+                            << line
+                            << buff;
+                }
             }
+
+            if(file->atEnd()) break;
+
+            line++;
         }
 
-        if(file->atEnd()) break;
-
-        line++;
+        F_Delete(file);
+        return true;
     }
-
-    F_Delete(file);
-
-    return true;
+    catch(FS1::NotFoundError const &)
+    {} // Ignore.
+    LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
+    return false;
 }
+
 /**
  * Create an alias.
  */

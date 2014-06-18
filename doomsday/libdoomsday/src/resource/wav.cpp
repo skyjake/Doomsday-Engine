@@ -189,30 +189,37 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
 
 void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
 {
-    de::FileHandle *hndl = F_Open(filename, "rb");
-    if(!hndl) return 0;
-
-    // Read in the whole thing.
-    size_t size = hndl->length();
-
-    LOG_AS("WAV_Load");
-    LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
-            << de::NativePath(hndl->file().composePath()).pretty()
-            << size
-            << hndl->tell();
-
-    uint8_t *data = (uint8_t *) M_Malloc(size);
-
-    hndl->read(data, size);
-    F_Delete(hndl);
-
-    // Parse the RIFF data.
-    void *sampledata = WAV_MemoryLoad((byte const *) data, size, bits, rate, samples);
-    if(!sampledata)
+    try
     {
-        LOG_RES_WARNING("Failed to load \"%s\"") << filename;
-    }
+        // Relative paths are relative to the native working directory.
+        de::String path = (de::NativePath::workPath() / de::NativePath(filename).expand()).withSeparators('/');
+        de::FileHandle *hndl = &App_FileSystem().openFile(path, "rb");
 
-    M_Free(data);
-    return sampledata;
+        // Read in the whole thing.
+        size_t size = hndl->length();
+
+        LOG_AS("WAV_Load");
+        LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
+                << de::NativePath(hndl->file().composePath()).pretty()
+                << size
+                << hndl->tell();
+
+        uint8_t *data = (uint8_t *) M_Malloc(size);
+
+        hndl->read(data, size);
+        F_Delete(hndl);
+
+        // Parse the RIFF data.
+        void *sampledata = WAV_MemoryLoad((byte const *) data, size, bits, rate, samples);
+        if(!sampledata)
+        {
+            LOG_RES_WARNING("Failed to load \"%s\"") << filename;
+        }
+
+        M_Free(data);
+        return sampledata;
+    }
+    catch(de::FS1::NotFoundError const &)
+    {} // Ignore.
+    return 0;
 }

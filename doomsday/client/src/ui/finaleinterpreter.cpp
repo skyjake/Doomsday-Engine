@@ -1563,7 +1563,7 @@ DEFFC(Image)
 {
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
-    lumpnum_t lumpNum = F_LumpNumForName(name);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
     rawtex_t* rawTex;
 
     LOG_AS("FIC_Image");
@@ -1585,7 +1585,7 @@ DEFFC(ImageAt)
     float x = OP_FLOAT(1);
     float y = OP_FLOAT(2);
     const char* name = OP_CSTRING(3);
-    lumpnum_t lumpNum = F_LumpNumForName(name);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
     rawtex_t* rawTex;
 
     LOG_AS("FIC_ImageAt");
@@ -1734,7 +1734,7 @@ DEFFC(AnimImage)
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    lumpnum_t lumpNum = F_LumpNumForName(encodedName);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(encodedName);
     rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
     LOG_AS("FIC_AnimImage");
     if(rawTex)
@@ -2098,7 +2098,7 @@ DEFFC(TextFromLump)
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
 
-    lumpNum = F_LumpNumForName(OP_CSTRING(3));
+    lumpNum = App_FileSystem().lumpNumForName(OP_CSTRING(3));
     if(lumpNum >= 0)
     {
         de::File1 &lump     = App_FileSystem().lump(lumpNum);

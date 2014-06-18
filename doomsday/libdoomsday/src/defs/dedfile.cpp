@@ -89,35 +89,40 @@ int DED_Read(ded_t *ded, char const *path)
     F_ExpandBasePath(&transPath, &transPath);
 
     // Attempt to open a definition file on this path.
-    FileHandle *file = F_Open(Str_Text(&transPath), "rb");
-    if(!file)
+    try
     {
-        DED_SetError("File could not be opened for reading.");
+        // Relative paths are relative to the native working directory.
+        String path      = (NativePath::workPath() / NativePath(Str_Text(&transPath)).expand()).withSeparators('/');
+        FileHandle *file = &App_FileSystem().openFile(path, "rb");
+
+        // We will buffer a local copy of the file. How large a buffer do we need?
+        file->seek(0, SeekEnd);
+        size_t bufferedDefSize = file->tell();
+        file->rewind();
+        char *bufferedDef = (char *) calloc(1, bufferedDefSize + 1);
+        if(!bufferedDef)
+        {
+            DED_SetError("Out of memory while trying to buffer file for reading.");
+            Str_Free(&transPath);
+            return false;
+        }
+
+        // Copy the file into the local buffer and parse definitions.
+        file->read((uint8_t *)bufferedDef, bufferedDefSize);
+        F_Delete(file);
+        int result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
+
+        // Done. Release temporary storage and return the result.
+        free(bufferedDef);
         Str_Free(&transPath);
-        return false;
+        return result;
     }
+    catch(FS1::NotFoundError const &)
+    {} // Ignore.
 
-    // We will buffer a local copy of the file. How large a buffer do we need?
-    file->seek(0, SeekEnd);
-    size_t bufferedDefSize = file->tell();
-    file->rewind();
-    char *bufferedDef = (char *) calloc(1, bufferedDefSize + 1);
-    if(!bufferedDef)
-    {
-        DED_SetError("Out of memory while trying to buffer file for reading.");
-        Str_Free(&transPath);
-        return false;
-    }
-
-    // Copy the file into the local buffer and parse definitions.
-    file->read((uint8_t *)bufferedDef, bufferedDefSize);
-    F_Delete(file);
-    int result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
-
-    // Done. Release temporary storage and return the result.
-    free(bufferedDef);
+    DED_SetError("File could not be opened for reading.");
     Str_Free(&transPath);
-    return result;
+    return false;
 }
 
 int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)

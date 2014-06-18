@@ -1290,30 +1290,6 @@ void F_Shutdown()
     delete fileSystem; fileSystem = 0;
 }
 
-FileHandle *F_Open(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate)
-{
-    try
-    {
-        // Relative paths are relative to the native working directory.
-        String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
-        return &App_FileSystem().openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate));
-    }
-    catch(FS1::NotFoundError const &)
-    {} // Ignore error.
-    return 0;
-}
-
-lumpnum_t F_LumpNumForName(char const *name)
-{
-    try
-    {
-        return App_FileSystem().lumpNumForName(name);
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore error.
-    return -1;
-}
-
 void F_Delete(FileHandle *hndl)
 {
     if(!hndl) return;
