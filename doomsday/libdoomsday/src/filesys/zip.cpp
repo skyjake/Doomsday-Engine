@@ -356,6 +356,7 @@ DENG2_PIMPL(Zip)
 
 Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
+    , LumpIndex(true/*paths are unique*/)
     , d(new Instance(this))
 {
     // Scan the end of the file for the central directory end record.

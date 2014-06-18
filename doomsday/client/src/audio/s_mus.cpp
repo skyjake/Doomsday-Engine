@@ -208,15 +208,19 @@ void Mus_Stop(void)
  */
 dd_bool Mus_IsMUSLump(lumpnum_t lumpNum)
 {
-    char buf[4];
-    int lumpIdx;
-    File1 *file = F_FindFileForLumpNum(lumpNum, &lumpIdx);
-    if(!file) return false;
+    try
+    {
+        File1 const &lump = App_FileSystem().lump(lumpNum);
 
-    F_ReadLumpSection(file, lumpIdx, (uint8_t *)buf, 0, 4);
+        char buf[4];
+        F_ReadLumpSection(&lump.container(), lump.info().lumpIdx, (uint8_t *)buf, 0, 4);
 
-    // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
-    return !strncmp(buf, "MUS\x01a", 4);
+        // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
+        return !strncmp(buf, "MUS\x01a", 4);
+    }
+    catch(LumpIndex::NotFoundError const&)
+    {} // Ignore error.
+    return false;
 }
 
 /**
@@ -309,13 +313,12 @@ int Mus_StartLump(lumpnum_t lumpNum, dd_bool looped, dd_bool canPlayMUS)
         // any player which relies on the it for format recognition works as
         // expected.
 
-        size_t const lumpLength = App_FileSystem().lump(lumpNum).size();
-        uint8_t *buf            = (uint8_t *) M_Malloc(lumpLength);
-        int lumpIdx;
-        File1 *file         = F_FindFileForLumpNum(lumpNum, &lumpIdx);
+        File1 &lump  = App_FileSystem().lump(lumpNum);
+        uint8_t *buf = (uint8_t *) M_Malloc(lump.size());
 
-        F_ReadLumpSection(file, lumpIdx, buf, 0, lumpLength);
-        M_Mus2Midi((void *)buf, lumpLength, Str_Text(srcFile));
+        F_ReadLumpSection(&lump.container(), lump.info().lumpIdx, buf, 0, lump.size());
+        M_Mus2Midi((void *)buf, lump.size(), Str_Text(srcFile));
+
         M_Free(buf);
 
         return AudioDriver_Music_PlayNativeFile(Str_Text(srcFile), looped);

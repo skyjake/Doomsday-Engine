@@ -2101,18 +2101,16 @@ DEFFC(TextFromLump)
     lumpNum = F_LumpNumForName(OP_CSTRING(3));
     if(lumpNum >= 0)
     {
-        int lumpIdx;
-        size_t lumpSize        = App_FileSystem().lump(lumpNum).size();
-        de::File1 *file        = F_FindFileForLumpNum(lumpNum, &lumpIdx);
-        uint8_t const *lumpPtr = F_CacheLump(file, lumpIdx);
+        de::File1 &lump     = App_FileSystem().lump(lumpNum);
+        uint8_t const *data = F_CacheLump(&lump.container(), lump.info().lumpIdx);
 
-        size_t bufSize = 2 * lumpSize + 1;
+        size_t bufSize = 2 * lump.size() + 1;
         char *str = (char *) M_Calloc(bufSize);
 
         char *out = str;
-        for(size_t i = 0; i < lumpSize; ++i)
+        for(size_t i = 0; i < lump.size(); ++i)
         {
-            char ch = (char)(lumpPtr[i]);
+            char ch = (char)(data[i]);
             if(ch == '\r') continue;
             if(ch == '\n')
             {
@@ -2124,7 +2122,7 @@ DEFFC(TextFromLump)
                 *out++ = ch;
             }
         }
-        F_UnlockLump(file, lumpIdx);
+        F_UnlockLump(&lump.container(), lump.info().lumpIdx);
 
         FIData_TextCopy(obj, str);
         free(str);

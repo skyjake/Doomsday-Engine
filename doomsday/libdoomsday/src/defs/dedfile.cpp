@@ -62,18 +62,20 @@ void Def_ReadProcessDED(ded_t *defs, char const* path)
 
 int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
 {
-    int lumpIdx;
-    if(File1 *file = F_FindFileForLumpNum(lumpNum, &lumpIdx))
+    try
     {
-        if(App_FileSystem().lump(lumpNum).size() != 0)
+        File1 const &lump = App_FileSystem().lump(lumpNum);
+        if(lump.size() > 0)
         {
-            uint8_t const *lumpPtr = F_CacheLump(file, lumpIdx);
-            String sourcePath = file->composePath();
-            DED_ReadData(ded, (char const *)lumpPtr, sourcePath.toUtf8().constData());
-            F_UnlockLump(file, lumpIdx);
+            uint8_t const *data = F_CacheLump(&lump.container(), lump.info().lumpIdx);
+            String sourcePath = lump.container().composePath();
+            DED_ReadData(ded, (char const *)data, sourcePath.toUtf8().constData());
+            F_UnlockLump(&lump.container(), lump.info().lumpIdx);
         }
         return true;
     }
+    catch(LumpIndex::NotFoundError const&)
+    {} // Ignore error.
     DED_SetError("Bad lump number.");
     return false;
 }

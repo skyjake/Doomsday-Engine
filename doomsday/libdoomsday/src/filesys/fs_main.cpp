@@ -1368,16 +1368,3 @@ void F_UnlockLump(File1 *file, int lumpIdx)
     }
     file->unlock();
 }
-
-File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx)
-{
-    try
-    {
-        File1 const &lump = App_FileSystem().lump(lumpNum);
-        if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
-        return &lump.container();
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
-}

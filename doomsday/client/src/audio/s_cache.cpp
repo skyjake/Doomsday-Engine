@@ -580,24 +580,21 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
             return 0;
         }
 
-        size_t lumpLength = App_FileSystem().lump(info->lumpNum).size();
-        if(lumpLength <= 8) return 0;
-
-        int lumpIdx;
-        File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
-        DENG2_ASSERT(file != 0);
+        File1 &lump = App_FileSystem().lump(info->lumpNum);
+        if(lump.size() <= 8) return 0;
 
         char hdr[12];
-        F_ReadLumpSection(file, lumpIdx, (uint8_t *)hdr, 0, 12);
+        F_ReadLumpSection(&lump.container(), lump.info().lumpIdx,
+                          (uint8_t *)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat(hdr))
         {
             // Load as WAV, then.
-            uint8_t const *sp = F_CacheLump(file, lumpIdx);
+            uint8_t const *sp = F_CacheLump(&lump.container(), lump.info().lumpIdx);
 
-            data = WAV_MemoryLoad((byte const *) sp, lumpLength, &bytesPer, &rate, &numSamples);
-            F_UnlockLump(file, lumpIdx);
+            data = WAV_MemoryLoad((byte const *) sp, lump.size(), &bytesPer, &rate, &numSamples);
+            F_UnlockLump(&lump.container(), lump.info().lumpIdx);
 
             if(!data)
             {
@@ -623,35 +620,31 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
     size_t lumpLength = 0;
     if(info->lumpNum >= 0)
     {
-        lumpLength = App_FileSystem().lump(info->lumpNum).size();
-    }
+        File1 &lump = App_FileSystem().lump(info->lumpNum);
 
-    if(lumpLength > 8)
-    {
-        int lumpIdx;
-        File1 *file = F_FindFileForLumpNum(info->lumpNum, &lumpIdx);
-        DENG2_ASSERT(file != 0);
-
-        uint8_t hdr[8];
-        F_ReadLumpSection(file, lumpIdx, hdr, 0, 8);
-        int head   = SHORT(*(short const *) (hdr));
-        rate       = SHORT(*(short const *) (hdr + 2));
-        numSamples = de::max(0, LONG(*(int const *) (hdr + 4)));
-
-        bytesPer = 1; // 8-bit.
-
-        if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
+        if(lump.size() > 8)
         {
-            // The sample data can be used as-is - load directly from the lump cache.
-            uint8_t const *data = F_CacheLump(file, lumpIdx) + 8; // Skip the header.
+            uint8_t hdr[8];
+            F_ReadLumpSection(&lump.container(), lump.info().lumpIdx, hdr, 0, 8);
+            int head   = SHORT(*(short const *) (hdr));
+            rate       = SHORT(*(short const *) (hdr + 2));
+            numSamples = de::max(0, LONG(*(int const *) (hdr + 4)));
 
-            // Insert a copy of this into the cache.
-            SfxCache *node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
-                                               bytesPer, rate, info->group);
+            bytesPer = 1; // 8-bit.
 
-            F_UnlockLump(file, lumpIdx);
+            if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
+            {
+                // The sample data can be used as-is - load directly from the lump cache.
+                uint8_t const *data = F_CacheLump(&lump.container(), lump.info().lumpIdx) + 8; // Skip the header.
 
-            return &node->sample;
+                // Insert a copy of this into the cache.
+                SfxCache *node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
+                                                   bytesPer, rate, info->group);
+
+                F_UnlockLump(&lump.container(), lump.info().lumpIdx);
+
+                return &node->sample;
+            }
         }
     }
 

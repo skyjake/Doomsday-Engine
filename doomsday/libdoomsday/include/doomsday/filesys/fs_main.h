@@ -591,8 +591,6 @@ LIBDOOMSDAY_PUBLIC de::FileHandle *F_Open(char const *nativePath, char const *mo
 
 LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
 
-LIBDOOMSDAY_PUBLIC de::File1 *F_FindFileForLumpNum(lumpnum_t lumpNum, int *lumpIdx);
-
 LIBDOOMSDAY_PUBLIC void F_Delete(de::FileHandle *hndl);
 
 LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer, size_t startOffset, size_t length);
