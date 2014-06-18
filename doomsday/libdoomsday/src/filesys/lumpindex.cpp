@@ -40,8 +40,8 @@ namespace internal
 
     static int lumpSorter(void const *a, void const *b)
     {
-        LumpSortInfo const *infoA = (LumpSortInfo const*)a;
-        LumpSortInfo const *infoB = (LumpSortInfo const*)b;
+        LumpSortInfo const *infoA = (LumpSortInfo const *)a;
+        LumpSortInfo const *infoB = (LumpSortInfo const *)b;
 
         if(int delta = infoA->path.compare(infoB->path, Qt::CaseInsensitive))
             return delta;
@@ -100,7 +100,7 @@ DENG2_PIMPL(LumpIndex)
         // the last lump with a given name appears first in the chain.
         for(int i = 0; i < numElements; ++i)
         {
-            File1 const &lump = *(lumps[i]);
+            File1 const &lump          = *(lumps[i]);
             PathTree::Node const &node = lump.directoryNode();
             ushort k = node.hash() % (unsigned)numElements;
 
@@ -126,7 +126,7 @@ DENG2_PIMPL(LumpIndex)
         for(int i = 0; i < numRecords; ++i)
         {
             if(pruneFlags.testBit(i)) continue;
-            if(reinterpret_cast<File1 *>(&lumps[i]->container()) != &file) continue;
+            if(&lumps[i]->container() != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
         }

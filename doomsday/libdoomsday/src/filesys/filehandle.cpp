@@ -44,9 +44,9 @@ struct FileHandle::Instance
     void *list;
 
     struct dfile_flags_s {
-        uint open:1; /// Presently open.
-        uint eof:1; /// Reader has reached the end of the stream.
-        uint reference:1; /// This handle is a reference to another dfile instance.
+        uint open:1;       ///< Presently open.
+        uint eof:1;        ///< Reader has reached the end of the stream.
+        uint reference:1;  ///< This handle is a reference to another dfile instance.
     } flags;
 
     /// Offset from start of owning package.
@@ -82,7 +82,7 @@ FileHandle *FileHandleBuilder::fromLump(File1 &lump, bool dontBuffer)
     if(!dontBuffer)
     {
         hndl->d->size = lump.size();
-        hndl->d->pos  = hndl->d->data = (uint8_t*) M_Malloc(hndl->d->size);
+        hndl->d->pos  = hndl->d->data = (uint8_t *) M_Malloc(hndl->d->size);
 
         LOGDEV_RES_XVERBOSE_DEBUGONLY("[%p] Buffering \"%s:%s\"...", dintptr(hndl)
                                      << NativePath(lump.container().composePath()).pretty()
@@ -280,7 +280,9 @@ size_t FileHandle::tell()
     else
     {
         if(d->hndl)
+        {
             return (size_t) ftell(d->hndl);
+        }
         return d->pos - d->data;
     }
 }

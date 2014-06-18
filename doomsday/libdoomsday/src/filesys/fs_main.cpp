@@ -52,7 +52,7 @@ D_CMD(DumpLump);
 D_CMD(ListFiles);
 D_CMD(ListLumps);
 
-static FS1* fileSystem;
+static FS1 *fileSystem;
 
 typedef QList<FileId> FileIds;
 
@@ -77,7 +77,7 @@ typedef QList<LumpMapping> LumpMappings;
 typedef QPair<QString, QString> PathMapping;
 typedef QList<PathMapping> PathMappings;
 
-static bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
+static bool applyPathMapping(ddstring_t *path, PathMapping const &vdm);
 
 /**
  * Performs a case-insensitive pattern match. The pattern can contain
@@ -190,7 +190,7 @@ DENG2_PIMPL(FS1)
         return false;
     }
 
-    void clearLoadedFiles(de::LumpIndex *index = 0)
+    void clearLoadedFiles(LumpIndex *index = 0)
     {
         loadedFilesCRC = 0;
 
@@ -223,7 +223,7 @@ DENG2_PIMPL(FS1)
         // Within a subspace scheme?
         try
         {
-            FS1::Scheme &scheme = self.scheme(search.scheme());
+            Scheme &scheme = self.scheme(search.scheme());
             LOG_RES_XVERBOSE("Using scheme '%s'...") << scheme.name();
 
             // Ensure the scheme's index is up to date.
@@ -233,11 +233,11 @@ DENG2_PIMPL(FS1)
             String name = search.path().lastSegment().toString().fileNameWithoutExtension();
 
             // Perform the search.
-            FS1::Scheme::FoundNodes foundNodes;
+            Scheme::FoundNodes foundNodes;
             if(scheme.findAll(name, foundNodes))
             {
                 // At least one node name was matched (perhaps partially).
-                DENG2_FOR_EACH_CONST(FS1::Scheme::FoundNodes, i, foundNodes)
+                DENG2_FOR_EACH_CONST(Scheme::FoundNodes, i, foundNodes)
                 {
                     PathTree::Node &node = **i;
                     if(!node.comparePath(search.path(), PathTree::NoBranch))
@@ -251,7 +251,7 @@ DENG2_PIMPL(FS1)
             /// @todo Should return not-found here but some searches are still dependent
             ///       on falling back to a wider search. -ds
         }
-        catch(FS1::UnknownSchemeError const &)
+        catch(UnknownSchemeError const &)
         {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
@@ -1136,7 +1136,7 @@ bool FS1::knownScheme(String name)
     return false;
 }
 
-FS1::Scheme& FS1::scheme(String name)
+FS1::Scheme &FS1::scheme(String name)
 {
     if(!name.isEmpty())
     {
@@ -1147,7 +1147,7 @@ FS1::Scheme& FS1::scheme(String name)
     throw UnknownSchemeError("FS1::scheme", "No scheme found matching '" + name + "'");
 }
 
-FS1::Schemes const& FS1::allSchemes()
+FS1::Schemes const &FS1::allSchemes()
 {
     return d->schemes;
 }
@@ -1155,7 +1155,7 @@ FS1::Schemes const& FS1::allSchemes()
 /// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
     if(argc > 1)
     {
         for(int i = 1; i < argc; ++i)
@@ -1250,7 +1250,7 @@ D_CMD(ListFiles)
             }
 
             LOG_RES_MSG(" %s " _E(2)_E(>) "(%i %s%s)%s")
-                    << de::NativePath(file.composePath()).pretty()
+                    << NativePath(file.composePath()).pretty()
                     << fileCount << (fileCount != 1 ? "files" : "file")
                     << (file.hasStartup()? ", startup" : "")
                     << (crc? QString(" [%1]").arg(crc, 0, 16) : "");
@@ -1278,13 +1278,13 @@ String App_BasePath()
     return App::app().nativeBasePath().withSeparators('/'); // + '/';
 }
 
-void F_Init(void)
+void F_Init()
 {
-    DENG_ASSERT(!fileSystem);
-    fileSystem = new de::FS1();
+    DENG2_ASSERT(!fileSystem);
+    fileSystem = new FS1();
 }
 
-void F_Shutdown(void)
+void F_Shutdown()
 {
     if(!fileSystem) return;
     delete fileSystem; fileSystem = 0;
