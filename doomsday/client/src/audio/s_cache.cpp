@@ -584,17 +584,15 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
         if(lump.size() <= 8) return 0;
 
         char hdr[12];
-        F_ReadLumpSection(&lump.container(), lump.info().lumpIdx,
-                          (uint8_t *)hdr, 0, 12);
+        lump.read((uint8_t *)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat(hdr))
         {
             // Load as WAV, then.
-            uint8_t const *sp = F_CacheLump(&lump.container(), lump.info().lumpIdx);
-
+            uint8_t const *sp = lump.cache();
             data = WAV_MemoryLoad((byte const *) sp, lump.size(), &bytesPer, &rate, &numSamples);
-            F_UnlockLump(&lump.container(), lump.info().lumpIdx);
+            lump.unlock();
 
             if(!data)
             {
@@ -625,7 +623,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
         if(lump.size() > 8)
         {
             uint8_t hdr[8];
-            F_ReadLumpSection(&lump.container(), lump.info().lumpIdx, hdr, 0, 8);
+            lump.read(hdr, 0, 8);
             int head   = SHORT(*(short const *) (hdr));
             rate       = SHORT(*(short const *) (hdr + 2));
             numSamples = de::max(0, LONG(*(int const *) (hdr + 4)));
@@ -635,13 +633,13 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
             if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
             {
                 // The sample data can be used as-is - load directly from the lump cache.
-                uint8_t const *data = F_CacheLump(&lump.container(), lump.info().lumpIdx) + 8; // Skip the header.
+                uint8_t const *data = lump.cache() + 8; // Skip the header.
 
                 // Insert a copy of this into the cache.
                 SfxCache *node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
                                                    bytesPer, rate, info->group);
 
-                F_UnlockLump(&lump.container(), lump.info().lumpIdx);
+                lump.unlock();
 
                 return &node->sample;
             }

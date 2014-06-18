@@ -587,13 +587,5 @@ LIBDOOMSDAY_PUBLIC void F_Init();
 /// Shutdown this module.
 LIBDOOMSDAY_PUBLIC void F_Shutdown();
 
-LIBDOOMSDAY_PUBLIC void F_Delete(de::FileHandle *hndl);
-
-LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(de::File1 *file, int lumpIdx, uint8_t *buffer, size_t startOffset, size_t length);
-
-LIBDOOMSDAY_PUBLIC uint8_t const *F_CacheLump(de::File1 *file, int lumpIdx);
-
-LIBDOOMSDAY_PUBLIC void F_UnlockLump(de::File1 *file, int lumpIdx);
-
 #endif // __cplusplus
 #endif /* LIBDENG_FILESYS_MAIN_H */

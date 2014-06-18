@@ -210,10 +210,8 @@ dd_bool Mus_IsMUSLump(lumpnum_t lumpNum)
 {
     try
     {
-        File1 const &lump = App_FileSystem().lump(lumpNum);
-
         char buf[4];
-        F_ReadLumpSection(&lump.container(), lump.info().lumpIdx, (uint8_t *)buf, 0, 4);
+        App_FileSystem().lump(lumpNum).read((uint8_t *)buf, 0, 4);
 
         // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
         return !strncmp(buf, "MUS\x01a", 4);
@@ -316,7 +314,7 @@ int Mus_StartLump(lumpnum_t lumpNum, dd_bool looped, dd_bool canPlayMUS)
         File1 &lump  = App_FileSystem().lump(lumpNum);
         uint8_t *buf = (uint8_t *) M_Malloc(lump.size());
 
-        F_ReadLumpSection(&lump.container(), lump.info().lumpIdx, buf, 0, lump.size());
+        lump.read(buf, 0, lump.size());
         M_Mus2Midi((void *)buf, lump.size(), Str_Text(srcFile));
 
         M_Free(buf);

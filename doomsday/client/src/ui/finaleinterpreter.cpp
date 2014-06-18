@@ -2102,7 +2102,7 @@ DEFFC(TextFromLump)
     if(lumpNum >= 0)
     {
         de::File1 &lump     = App_FileSystem().lump(lumpNum);
-        uint8_t const *data = F_CacheLump(&lump.container(), lump.info().lumpIdx);
+        uint8_t const *data = lump.cache();
 
         size_t bufSize = 2 * lump.size() + 1;
         char *str = (char *) M_Calloc(bufSize);
@@ -2122,7 +2122,7 @@ DEFFC(TextFromLump)
                 *out++ = ch;
             }
         }
-        F_UnlockLump(&lump.container(), lump.info().lumpIdx);
+        lump.unlock();
 
         FIData_TextCopy(obj, str);
         free(str);

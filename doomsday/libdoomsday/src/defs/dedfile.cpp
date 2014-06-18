@@ -64,13 +64,13 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
 {
     try
     {
-        File1 const &lump = App_FileSystem().lump(lumpNum);
+        File1 &lump = App_FileSystem().lump(lumpNum);
         if(lump.size() > 0)
         {
-            uint8_t const *data = F_CacheLump(&lump.container(), lump.info().lumpIdx);
+            uint8_t const *data = lump.cache();
             String sourcePath = lump.container().composePath();
             DED_ReadData(ded, (char const *)data, sourcePath.toUtf8().constData());
-            F_UnlockLump(&lump.container(), lump.info().lumpIdx);
+            lump.unlock();
         }
         return true;
     }

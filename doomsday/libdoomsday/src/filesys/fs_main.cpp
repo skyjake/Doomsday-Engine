@@ -1274,8 +1274,7 @@ FS1 &App_FileSystem()
 
 String App_BasePath()
 {
-    /// @todo Shouldn't this end in '/'? It causes failure to locate doomsday.pk3...
-    return App::app().nativeBasePath().withSeparators('/'); // + '/';
+    return App::app().nativeBasePath().withSeparators('/');
 }
 
 void F_Init()
@@ -1288,52 +1287,4 @@ void F_Shutdown()
 {
     if(!fileSystem) return;
     delete fileSystem; fileSystem = 0;
-}
-
-size_t F_ReadLumpSection(File1 *file, int lumpIdx, uint8_t *buffer,
-    size_t startOffset, size_t length)
-{
-    if(!file) return 0;
-
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        return wad->lump(lumpIdx).read(buffer, startOffset, length);
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        return zip->lump(lumpIdx).read(buffer, startOffset, length);
-    }
-    return file->read(buffer, startOffset, length);
-}
-
-uint8_t const *F_CacheLump(File1 *file, int lumpIdx)
-{
-    if(!file) return 0;
-
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        return wad->lump(lumpIdx).cache();
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        return zip->lump(lumpIdx).cache();
-    }
-    return file->cache();
-}
-
-void F_UnlockLump(File1 *file, int lumpIdx)
-{
-    if(!file) return;
-
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        wad->unlockLump(lumpIdx);
-        return;
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        zip->unlockLump(lumpIdx);
-        return;
-    }
-    file->unlock();
 }
