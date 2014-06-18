@@ -376,7 +376,7 @@ DENG2_PIMPL(FS1)
                 // Get a handle to the lump we intend to open.
                 /// @todo The way this buffering works is nonsensical it should not be done here
                 ///        but should instead be deferred until the content of the lump is read.
-                hndl = FileHandleBuilder::fromLump(*found, /*baseOffset,*/ false/*dontBuffer*/);
+                hndl = FileHandle::fromLump(*found, /*baseOffset,*/ false/*dontBuffer*/);
 
                 // Prepare a temporary info descriptor.
                 info = found->info();
@@ -397,7 +397,7 @@ DENG2_PIMPL(FS1)
                 }
 
                 // Acquire a handle on the file we intend to open.
-                hndl = FileHandleBuilder::fromNativeFile(*found, baseOffset);
+                hndl = FileHandle::fromNativeFile(*found, baseOffset);
 
                 // Prepare the temporary info descriptor.
                 info = FileInfo(F_GetLastModified(foundPath.toUtf8().constData()));
@@ -530,7 +530,7 @@ void FS1::index(File1 &file)
     }
 
     // Add a handle to the loaded files list.
-    FileHandle *loadedFilesHndl = FileHandleBuilder::fromFile(file);
+    FileHandle *loadedFilesHndl = FileHandle::fromFile(file);
     d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<de::FileList *>(&d->loadedFiles));
     d->loadedFilesCRC = 0;
 }
@@ -980,7 +980,7 @@ FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOff
     if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + path + "'");
 
     // Add a handle to the opened files list.
-    FileHandle &openFilesHndl = *FileHandleBuilder::fromFile(*file);
+    FileHandle &openFilesHndl = *FileHandle::fromFile(*file);
     d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
     return openFilesHndl;
 }
@@ -988,7 +988,7 @@ FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOff
 FileHandle &FS1::openLump(File1 &lump)
 {
     // Add a handle to the opened files list.
-    FileHandle &openFilesHndl = *FileHandleBuilder::fromLump(lump, false/*do buffer*/);
+    FileHandle &openFilesHndl = *FileHandle::fromLump(lump, false/*do buffer*/);
     d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
     return openFilesHndl;
 }

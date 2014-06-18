@@ -32,7 +32,6 @@
 namespace de {
 
 class File1;
-class FileHandleBuilder;
 struct FileList;
 
 /// Seek methods
@@ -107,7 +106,38 @@ public:
      */
     FileHandle &rewind();
 
-    friend class FileHandleBuilder;
+public:
+    /**
+     * Create a new handle on the File @a file.
+     *
+     * @param file  The file being opened.
+     */
+    static FileHandle *fromFile(File1 &file);
+
+    /**
+     * Create a new handle on @a lump.
+     *
+     * @param lump  The lump to be opened.
+     * @param dontBuffer  @c true= do not buffer a copy of the lump.
+     */
+    static FileHandle *fromLump(File1 &lump, bool dontBuffer);
+
+    /**
+     * Create a new handle on the specified native file.
+     *
+     * @param nativeFile  Native file system handle to the file being opened.
+     * @param baseOffset  Offset from the start of the file in bytes to begin.
+     */
+    static FileHandle *fromNativeFile(FILE &nativeFile, size_t baseOffset);
+
+    /**
+     * Create a duplicate of handle @a hndl. Note that the duplicate is in
+     * fact a "reference" to the original, so all changes to the file which they
+     * represent are implicitly shared.
+     *
+     * @param hndl  Handle to be duplicated.
+     */
+    static FileHandle *dup(FileHandle const &hndl);
 
 private:
     FileHandle();

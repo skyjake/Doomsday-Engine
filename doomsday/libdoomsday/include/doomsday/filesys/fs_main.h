@@ -34,7 +34,6 @@
 
 #include "file.h"
 #include "filehandle.h"
-#include "filehandlebuilder.h"
 
 #ifdef WIN32
 #  include "fs_windows.h"

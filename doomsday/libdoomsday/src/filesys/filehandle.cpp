@@ -22,7 +22,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/filesys/filehandlebuilder.h"
 #include "doomsday/filesys/file.h"
 
 #include <cctype>
@@ -71,7 +70,7 @@ static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
     if(!file.isValid()) exit(1);
 }
 
-FileHandle *FileHandleBuilder::fromLump(File1 &lump, bool dontBuffer)
+FileHandle *FileHandle::fromLump(File1 &lump, bool dontBuffer)
 {
     LOG_AS("FileHandle::fromLump");
 
@@ -91,33 +90,6 @@ FileHandle *FileHandleBuilder::fromLump(File1 &lump, bool dontBuffer)
         lump.read((uint8_t *)hndl->d->data, 0, lump.size());
     }
     return hndl;
-}
-
-FileHandle *FileHandleBuilder::fromFile(File1 &file)
-{
-    FileHandle *hndl = new FileHandle();
-    hndl->d->file            = &file;
-    hndl->d->flags.open      = true;
-    hndl->d->flags.reference = true;
-    return hndl;
-}
-
-FileHandle *FileHandleBuilder::fromNativeFile(FILE &file, size_t baseOffset)
-{
-    FileHandle *hndl = new FileHandle();
-    hndl->d->flags.open = true;
-    hndl->d->hndl       = &file;
-    hndl->d->baseOffset = baseOffset;
-    return hndl;
-}
-
-FileHandle *FileHandleBuilder::dup(FileHandle const &hndl)
-{
-    FileHandle *clone = new FileHandle();
-    clone->d->flags.open      = true;
-    clone->d->flags.reference = true;
-    clone->d->file            = &hndl.file();
-    return clone;
 }
 
 FileHandle::FileHandle()
@@ -323,6 +295,33 @@ FileHandle &FileHandle::rewind()
 {
     seek(0, SeekSet);
     return *this;
+}
+
+FileHandle *FileHandle::fromFile(File1 &file)
+{
+    FileHandle *hndl = new FileHandle();
+    hndl->d->file            = &file;
+    hndl->d->flags.open      = true;
+    hndl->d->flags.reference = true;
+    return hndl;
+}
+
+FileHandle *FileHandle::fromNativeFile(FILE &file, size_t baseOffset)
+{
+    FileHandle *hndl = new FileHandle();
+    hndl->d->flags.open = true;
+    hndl->d->hndl       = &file;
+    hndl->d->baseOffset = baseOffset;
+    return hndl;
+}
+
+FileHandle *FileHandle::dup(FileHandle const &hndl)
+{
+    FileHandle *clone = new FileHandle();
+    clone->d->flags.open      = true;
+    clone->d->flags.reference = true;
+    clone->d->file            = &hndl.file();
+    return clone;
 }
 
 } // namespace de

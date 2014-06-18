@@ -74,7 +74,6 @@ HEADERS += \
     include/doomsday/dualstring.h \
     include/doomsday/filesys/file.h \
     include/doomsday/filesys/filehandle.h \
-    include/doomsday/filesys/filehandlebuilder.h \
     include/doomsday/filesys/fileid.h \
     include/doomsday/filesys/fileinfo.h \
     include/doomsday/filesys/filetype.h \
