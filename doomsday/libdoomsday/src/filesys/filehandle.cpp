@@ -70,28 +70,6 @@ static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
     if(!file.isValid()) exit(1);
 }
 
-FileHandle *FileHandle::fromLump(File1 &lump, bool dontBuffer)
-{
-    LOG_AS("FileHandle::fromLump");
-
-    FileHandle *hndl = new FileHandle();
-    // Init and load in the lump data.
-    hndl->d->file       = &lump;
-    hndl->d->flags.open = true;
-    if(!dontBuffer)
-    {
-        hndl->d->size = lump.size();
-        hndl->d->pos  = hndl->d->data = (uint8_t *) M_Malloc(hndl->d->size);
-
-        LOGDEV_RES_XVERBOSE_DEBUGONLY("[%p] Buffering \"%s:%s\"...", dintptr(hndl)
-                                     << NativePath(lump.container().composePath()).pretty()
-                                     << NativePath(lump.composePath()).pretty());
-
-        lump.read((uint8_t *)hndl->d->data, 0, lump.size());
-    }
-    return hndl;
-}
-
 FileHandle::FileHandle()
 {
     d = new Instance();
@@ -297,7 +275,7 @@ FileHandle &FileHandle::rewind()
     return *this;
 }
 
-FileHandle *FileHandle::fromFile(File1 &file)
+FileHandle *FileHandle::fromFile(File1 &file) // static
 {
     FileHandle *hndl = new FileHandle();
     hndl->d->file            = &file;
@@ -306,7 +284,7 @@ FileHandle *FileHandle::fromFile(File1 &file)
     return hndl;
 }
 
-FileHandle *FileHandle::fromNativeFile(FILE &file, size_t baseOffset)
+FileHandle *FileHandle::fromNativeFile(FILE &file, size_t baseOffset) // static
 {
     FileHandle *hndl = new FileHandle();
     hndl->d->flags.open = true;
@@ -315,13 +293,26 @@ FileHandle *FileHandle::fromNativeFile(FILE &file, size_t baseOffset)
     return hndl;
 }
 
-FileHandle *FileHandle::dup(FileHandle const &hndl)
+FileHandle *FileHandle::fromLump(File1 &lump, bool dontBuffer) // static
 {
-    FileHandle *clone = new FileHandle();
-    clone->d->flags.open      = true;
-    clone->d->flags.reference = true;
-    clone->d->file            = &hndl.file();
-    return clone;
+    LOG_AS("FileHandle::fromLump");
+
+    FileHandle *hndl = new FileHandle();
+    // Init and load in the lump data.
+    hndl->d->file       = &lump;
+    hndl->d->flags.open = true;
+    if(!dontBuffer)
+    {
+        hndl->d->size = lump.size();
+        hndl->d->pos  = hndl->d->data = (uint8_t *) M_Malloc(hndl->d->size);
+
+        LOGDEV_RES_XVERBOSE_DEBUGONLY("[%p] Buffering \"%s:%s\"...", dintptr(hndl)
+                                     << NativePath(lump.container().composePath()).pretty()
+                                     << NativePath(lump.composePath()).pretty());
+
+        lump.read((uint8_t *)hndl->d->data, 0, lump.size());
+    }
+    return hndl;
 }
 
 } // namespace de

@@ -47,11 +47,6 @@ using namespace de;
 
 extern uint F_GetLastModified(char const *path);
 
-D_CMD(Dir);
-D_CMD(DumpLump);
-D_CMD(ListFiles);
-D_CMD(ListLumps);
-
 static FS1 *fileSystem;
 
 typedef QList<FileId> FileIds;
@@ -76,6 +71,47 @@ typedef QList<LumpMapping> LumpMappings;
  */
 typedef QPair<QString, QString> PathMapping;
 typedef QList<PathMapping> PathMappings;
+
+/**
+ * @note Performance is O(n).
+ * @return @c iterator pointing to list->end() if not found.
+ */
+static FS1::FileList::iterator findListFile(FS1::FileList &list, File1 &file)
+{
+    if(list.empty()) return list.end();
+    // Perform the search.
+    FS1::FileList::iterator i;
+    for(i = list.begin(); i != list.end(); ++i)
+    {
+        if(&file == &(*i)->file())
+        {
+            break; // This is the node we are looking for.
+        }
+    }
+    return i;
+}
+
+/**
+ * @note Performance is O(n).
+ * @return @c iterator pointing to list->end() if not found.
+ */
+static FS1::FileList::iterator findListFileByPath(FS1::FileList &list, String path)
+{
+    if(list.empty()) return list.end();
+    if(path.isEmpty()) return list.end();
+
+    // Perform the search.
+    FS1::FileList::iterator i;
+    for(i = list.begin(); i != list.end(); ++i)
+    {
+        File1 &file = (*i)->file();
+        if(!file.composePath().compare(path, Qt::CaseInsensitive))
+        {
+            break; // This is the node we are looking for.
+        }
+    }
+    return i;
+}
 
 static bool applyPathMapping(ddstring_t *path, PathMapping const &vdm);
 
@@ -156,7 +192,7 @@ DENG2_PIMPL(FS1)
         clearOpenFiles();
         clearIndexes();
 
-        fileIds.clear(); // Should be null-op if bookkeeping is correct.
+        fileIds.clear(); // Should be NOP, if bookkeeping is correct.
 
         pathMappings.clear();
         lumpMappings.clear();
@@ -208,8 +244,7 @@ DENG2_PIMPL(FS1)
 
     void clearOpenFiles()
     {
-        while(!openFiles.isEmpty())
-        { delete openFiles.takeLast(); }
+        while(!openFiles.isEmpty()){ delete openFiles.takeLast(); }
     }
 
     void clearIndexes()
@@ -255,12 +290,10 @@ DENG2_PIMPL(FS1)
         {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
-        File1 *file = openFile(search.path(), "rb", 0, true /* allow duplicates */);
-        if(file)
+        QScopedPointer<File1> file(openFile(search.path(), "rb", 0, true /* allow duplicates */));
+        if(!file.isNull())
         {
-            String found = file->composePath();
-            delete file;
-            return found;
+            return file->composePath();
         }
 
         return ""; // Not found.
@@ -376,7 +409,7 @@ DENG2_PIMPL(FS1)
                 // Get a handle to the lump we intend to open.
                 /// @todo The way this buffering works is nonsensical it should not be done here
                 ///        but should instead be deferred until the content of the lump is read.
-                hndl = FileHandle::fromLump(*found, /*baseOffset,*/ false/*dontBuffer*/);
+                hndl = FileHandle::fromLump(*found);
 
                 // Prepare a temporary info descriptor.
                 info = found->info();
@@ -438,59 +471,6 @@ FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)
     return *newScheme;
 }
 
-void FS1::consoleRegister()
-{
-    C_CMD("dir", "", Dir);
-    C_CMD("ls", "", Dir); // Alias
-    C_CMD("dir", "s*", Dir);
-    C_CMD("ls", "s*", Dir); // Alias
-
-    C_CMD("dump", "s", DumpLump);
-    C_CMD("listfiles", "", ListFiles);
-    C_CMD("listlumps", "", ListLumps);
-}
-
-/**
- * @note Performance is O(n).
- * @return @c iterator pointing to list->end() if not found.
- */
-static FS1::FileList::iterator findListFile(FS1::FileList& list, File1& file)
-{
-    if(list.empty()) return list.end();
-    // Perform the search.
-    FS1::FileList::iterator i;
-    for(i = list.begin(); i != list.end(); ++i)
-    {
-        if(&file == &(*i)->file())
-        {
-            break; // This is the node we are looking for.
-        }
-    }
-    return i;
-}
-
-/**
- * @note Performance is O(n).
- * @return @c iterator pointing to list->end() if not found.
- */
-static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String path)
-{
-    if(list.empty()) return list.end();
-    if(path.isEmpty()) return list.end();
-
-    // Perform the search.
-    FS1::FileList::iterator i;
-    for(i = list.begin(); i != list.end(); ++i)
-    {
-        File1& file = (*i)->file();
-        if(!file.composePath().compare(path, Qt::CaseInsensitive))
-        {
-            break; // This is the node we are looking for.
-        }
-    }
-    return i;
-}
-
 void FS1::index(File1 &file)
 {
 #ifdef DENG_DEBUG
@@ -530,8 +510,8 @@ void FS1::index(File1 &file)
     }
 
     // Add a handle to the loaded files list.
-    FileHandle *loadedFilesHndl = FileHandle::fromFile(file);
-    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<de::FileList *>(&d->loadedFiles));
+    FileHandle *hndl = FileHandle::fromFile(file);
+    d->loadedFiles.push_back(hndl); hndl->setList(reinterpret_cast<de::FileList *>(&d->loadedFiles));
     d->loadedFilesCRC = 0;
 }
 
@@ -540,8 +520,7 @@ void FS1::deindex(File1 &file)
     FileList::iterator found = findListFile(d->loadedFiles, file);
     if(found == d->loadedFiles.end()) return; // Most peculiar..
 
-    QByteArray path = file.composePath().toUtf8();
-    d->releaseFileId(path.constData());
+    d->releaseFileId(file.composePath());
 
     d->zipFileIndex.pruneByFile(file);
     d->primaryIndex.pruneByFile(file);
@@ -551,7 +530,7 @@ void FS1::deindex(File1 &file)
     delete *found;
 }
 
-File1& FS1::find(de::Uri const& search)
+File1 &FS1::find(de::Uri const &search)
 {
     LOG_AS("FS1::find");
     if(!search.isEmpty())
@@ -573,7 +552,7 @@ File1& FS1::find(de::Uri const& search)
                 return (*found)->file();
             }
         }
-        catch(de::Uri::ResolveError const& er)
+        catch(de::Uri::ResolveError const &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -584,7 +563,7 @@ File1& FS1::find(de::Uri const& search)
     throw NotFoundError("FS1::find", "No files found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
+String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
 {
     LOG_AS("FS1::findPath");
     if(!search.isEmpty())
@@ -615,13 +594,13 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
             {
                 DENG2_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
                 {
-                    String const& ext = *i;
+                    String const &ext = *i;
                     String found = d->findPath(de::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
                     if(!found.isEmpty()) return found;
                 }
             };
         }
-        catch(de::Uri::ResolveError const& er)
+        catch(de::Uri::ResolveError const &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -632,13 +611,13 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
     throw NotFoundError("FS1::findPath", "No paths found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(de::Uri const& search, int flags)
+String FS1::findPath(de::Uri const &search, int flags)
 {
     return findPath(search, flags, ResourceClass::classForId(RC_NULL));
 }
 
-#if _DEBUG
-static void printFileIds(FileIds const& fileIds)
+#ifdef DENG_DEBUG
+static void printFileIds(FileIds const &fileIds)
 {
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FileIds, i, fileIds)
@@ -650,20 +629,18 @@ static void printFileIds(FileIds const& fileIds)
 #endif
 
 #ifdef DENG_DEBUG
-static void printFileList(FS1::FileList& list)
+static void printFileList(FS1::FileList &list)
 {
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, list)
     {
-        FileHandle& hndl = **i;
-        File1& file = hndl.file();
-
-        QByteArray path = file.composePath().toUtf8();
-        FileId fileId = FileId::fromPath(path.constData());
+        FileHandle &hndl = **i;
+        File1 &file   = hndl.file();
+        FileId fileId = FileId::fromPath(file.composePath());
 
         LOGDEV_RES_VERBOSE(" %c%d: %s - \"%s\" (handle: %p)")
-            << (file.hasStartup()? '*' : ' ') << idx
-            << fileId << fileId.path() << (void*)&hndl;
+                << (file.hasStartup()? '*' : ' ') << idx
+                << fileId << fileId.path() << &hndl;
         ++idx;
     }
 }
@@ -685,7 +662,7 @@ int FS1::unloadAllNonStartupFiles()
     int numUnloadedFiles = 0;
     for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
     {
-        File1& file = d->loadedFiles[i]->file();
+        File1 &file = d->loadedFiles[i]->file();
         if(file.hasStartup()) continue;
 
         deindex(file);
@@ -693,7 +670,7 @@ int FS1::unloadAllNonStartupFiles()
         numUnloadedFiles += 1;
     }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     // Sanity check: look for orphaned identifiers.
     if(!d->fileIds.empty())
     {
@@ -705,7 +682,7 @@ int FS1::unloadAllNonStartupFiles()
     return numUnloadedFiles;
 }
 
-bool FS1::checkFileId(de::Uri const& path)
+bool FS1::checkFileId(de::Uri const &path)
 {
     if(!accessFile(path)) return false;
 
@@ -751,11 +728,11 @@ lumpnum_t FS1::lumpNumForName(String name)
     return d->primaryIndex.findLast(Path(name));
 }
 
-void FS1::releaseFile(File1& file)
+void FS1::releaseFile(File1 &file)
 {
     for(int i = d->openFiles.size() - 1; i >= 0; i--)
     {
-        FileHandle& hndl = *(d->openFiles[i]);
+        FileHandle &hndl = *(d->openFiles[i]);
         if(&hndl.file() == &file)
         {
             d->openFiles.removeAt(i);
@@ -789,7 +766,7 @@ uint FS1::loadedFilesCRC()
          * @todo Really kludgy...
          */
         // CRC not calculated yet, let's do it now.
-        Wad* iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
+        Wad *iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
         if(!iwad) return 0;
         d->loadedFilesCRC = iwad->calculateCRC();
     }
@@ -801,8 +778,8 @@ FS1::FileList const &FS1::loadedFiles() const
     return d->loadedFiles;
 }
 
-int FS1::findAll(bool (*predicate)(File1& file, void* parameters), void* parameters,
-                 FS1::FileList& found) const
+int FS1::findAll(bool (*predicate)(File1 &file, void *parameters), void *parameters,
+    FS1::FileList &found) const
 {
     int numFound = 0;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
@@ -816,7 +793,7 @@ int FS1::findAll(bool (*predicate)(File1& file, void* parameters), void* paramet
     return numFound;
 }
 
-int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
+int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
 {
     int const numFoundSoFar = found.count();
 
@@ -880,7 +857,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     {
         QByteArray searchDirectoryUtf8 = searchDirectory.toUtf8();
         PathList nativeFilePaths;
-        AutoStr* wildPath = AutoStr_NewStd();
+        AutoStr *wildPath = AutoStr_NewStd();
         Str_Reserve(wildPath, searchDirectory.length() + 2 + 16); // Conservative estimate.
 
         for(int i = -1; i < (int)d->pathMappings.count(); ++i)
@@ -926,7 +903,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
 
 File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
 {
-    DENG_ASSERT(!filePath.isEmpty());
+    DENG2_ASSERT(!filePath.isEmpty());
 
     File1 *interpretedFile = 0;
 
@@ -962,7 +939,7 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
         interpretedFile = new File1(hndl, filePath, info, container);
     }
 
-    DENG_ASSERT(interpretedFile);
+    DENG2_ASSERT(interpretedFile);
     return *interpretedFile;
 }
 
@@ -980,30 +957,25 @@ FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOff
     if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + path + "'");
 
     // Add a handle to the opened files list.
-    FileHandle &openFilesHndl = *FileHandle::fromFile(*file);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
-    return openFilesHndl;
+    FileHandle &hndl = *FileHandle::fromFile(*file);
+    d->openFiles.push_back(&hndl); hndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
+    return hndl;
 }
 
 FileHandle &FS1::openLump(File1 &lump)
 {
     // Add a handle to the opened files list.
-    FileHandle &openFilesHndl = *FileHandle::fromLump(lump, false/*do buffer*/);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
-    return openFilesHndl;
+    FileHandle &hndl = *FileHandle::fromLump(lump);
+    d->openFiles.push_back(&hndl); hndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
+    return hndl;
 }
 
 bool FS1::accessFile(de::Uri const &search)
 {
     try
     {
-        String searchPath = search.resolved();
-        File1 *file = d->openFile(searchPath, "rb", 0, true /* allow duplicates */);
-        if(file)
-        {
-            delete file;
-            return true;
-        }
+        QScopedPointer<File1> file(d->openFile(search.resolved(), "rb", 0, true /* allow duplicates */));
+        return !file.isNull();
     }
     catch(de::Uri::ResolveError const &er)
     {
@@ -1028,12 +1000,12 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
     LumpMappings::iterator found = d->lumpMappings.begin();
     for(; found != d->lumpMappings.end(); ++found)
     {
-        LumpMapping const& ldm = *found;
+        LumpMapping const &ldm = *found;
         if(!ldm.first.compare(destination, Qt::CaseInsensitive))
             break;
     }
 
-    LumpMapping* ldm;
+    LumpMapping *ldm;
     if(found == d->lumpMappings.end())
     {
         // No. Acquire another mapping.
@@ -1056,16 +1028,16 @@ void FS1::clearPathLumpMappings()
 }
 
 /// @return  @c true iff the mapping matched the path.
-static bool applyPathMapping(ddstring_t* path, PathMapping const& pm)
+static bool applyPathMapping(ddstring_t *path, PathMapping const &pm)
 {
     if(!path) return false;
     QByteArray destUtf8 = pm.first.toUtf8();
-    AutoStr* dest = AutoStr_FromTextStd(destUtf8.constData());
+    AutoStr *dest = AutoStr_FromTextStd(destUtf8.constData());
     if(qstrnicmp(Str_Text(path), Str_Text(dest), Str_Length(dest))) return false;
 
     // Replace the beginning with the source path.
     QByteArray sourceUtf8 = pm.second.toUtf8();
-    AutoStr* temp = AutoStr_FromTextStd(sourceUtf8.constData());
+    AutoStr *temp = AutoStr_FromTextStd(sourceUtf8.constData());
     Str_PartAppend(temp, Str_Text(path), pm.first.length(), Str_Length(path) - pm.first.length());
     Str_Copy(path, temp);
     return true;
@@ -1079,7 +1051,7 @@ void FS1::addPathMapping(String source, String destination)
     PathMappings::iterator found = d->pathMappings.begin();
     for(; found != d->pathMappings.end(); ++found)
     {
-        PathMapping const& pm = *found;
+        PathMapping const &pm = *found;
         if(!pm.second.compare(source, Qt::CaseInsensitive))
             break;
     }
@@ -1099,7 +1071,7 @@ void FS1::addPathMapping(String source, String destination)
     }
 
     LOG_RES_MSG("Path \"%s\" now mapped to \"%s\"")
-        << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
+            << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
 }
 
 void FS1::clearPathMappings()
@@ -1264,6 +1236,18 @@ D_CMD(ListFiles)
             << totalFiles << totalPackages;
 
     return true;
+}
+
+void FS1::consoleRegister()
+{
+    C_CMD("dir", "",   Dir);
+    C_CMD("ls",  "",   Dir); // Alias
+    C_CMD("dir", "s*", Dir);
+    C_CMD("ls",  "s*", Dir); // Alias
+
+    C_CMD("dump",      "s", DumpLump);
+    C_CMD("listfiles", "",  ListFiles);
+    C_CMD("listlumps", "",  ListLumps);
 }
 
 FS1 &App_FileSystem()
