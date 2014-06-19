@@ -549,7 +549,7 @@ static void readDefinitionFile(String path)
     if(path.isEmpty()) return;
 
     LOG_RES_VERBOSE("Reading \"%s\"") << NativePath(path).pretty();
-    Def_ReadProcessDED(&defs, path.toUtf8());
+    Def_ReadProcessDED(&defs, path);
 }
 
 /**

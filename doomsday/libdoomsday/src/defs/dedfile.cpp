@@ -1,7 +1,7 @@
-/** @file defs/dedfile.cpp
+/** @file dedfile.cpp
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -33,11 +33,11 @@ void DED_SetError(char const *str)
     strncpy(dedReadError, str, sizeof(dedReadError));
 }
 
-void Def_ReadProcessDED(ded_t *defs, char const* path)
+void Def_ReadProcessDED(ded_t *defs, String path)
 {
     LOG_AS("Def_ReadProcessDED");
 
-    if(!path || !path[0]) return;
+    if(path.isEmpty()) return;
 
     de::Uri const uri(path, RC_NULL);
     if(!App_FileSystem().accessFile(uri))
@@ -69,7 +69,7 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
         {
             uint8_t const *data = lump.cache();
             String sourcePath = lump.container().composePath();
-            DED_ReadData(ded, (char const *)data, sourcePath.toUtf8().constData());
+            DED_ReadData(ded, (char const *)data, sourcePath);
             lump.unlock();
         }
         return true;
@@ -80,53 +80,39 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
     return false;
 }
 
-int DED_Read(ded_t *ded, char const *path)
+int DED_Read(ded_t *ded, String path)
 {
-    // Compose the (possibly-translated) path.
-    ddstring_t transPath; Str_InitStd(&transPath);
-    Str_Set(&transPath, path);
-    F_FixSlashes(&transPath, &transPath);
-    F_ExpandBasePath(&transPath, &transPath);
-
     // Attempt to open a definition file on this path.
     try
     {
         // Relative paths are relative to the native working directory.
-        String path = (NativePath::workPath() / NativePath(Str_Text(&transPath)).expand()).withSeparators('/');
-        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
+        String fullPath = (NativePath::workPath() / NativePath(path).expand()).withSeparators('/');
+        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(fullPath, "rb"));
 
         // We will buffer a local copy of the file. How large a buffer do we need?
         hndl->seek(0, SeekEnd);
         size_t bufferedDefSize = hndl->tell();
         hndl->rewind();
-        char *bufferedDef = (char *) calloc(1, bufferedDefSize + 1);
-        if(!bufferedDef)
-        {
-            DED_SetError("Out of memory while trying to buffer file for reading.");
-            Str_Free(&transPath);
-            return false;
-        }
+        char *bufferedDef = (char *) M_Calloc(bufferedDefSize + 1);
 
         // Copy the file into the local buffer and parse definitions.
         hndl->read((uint8_t *)bufferedDef, bufferedDefSize);
         App_FileSystem().releaseFile(hndl->file());
 
-        int result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
+        int result = DED_ReadData(ded, bufferedDef, path);
 
         // Done. Release temporary storage and return the result.
-        free(bufferedDef);
-        Str_Free(&transPath);
+        M_Free(bufferedDef);
         return result;
     }
     catch(FS1::NotFoundError const &)
     {} // Ignore.
 
     DED_SetError("File could not be opened for reading.");
-    Str_Free(&transPath);
     return false;
 }
 
-int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
+int DED_ReadData(ded_t *ded, char const *buffer, String _sourceFile)
 {
     return DEDParser(ded).parse(buffer, _sourceFile);
 }

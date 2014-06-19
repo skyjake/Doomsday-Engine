@@ -1,4 +1,5 @@
-/** @file defs/dedparser.h  DED v1 parser. @ingroup defs
+/** @file dedparser.h  DED v1 parser.
+ * @ingroup defs
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -36,7 +37,7 @@ class LIBDOOMSDAY_PUBLIC DEDParser
 public:
     DEDParser(ded_t *ded);
 
-    int parse(char const *buffer, char const *sourceFile);
+    int parse(char const *buffer, de::String sourceFile);
 
 private:
     DENG2_PRIVATE(d)
