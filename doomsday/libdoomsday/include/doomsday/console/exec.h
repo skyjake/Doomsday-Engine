@@ -24,6 +24,7 @@
 #include "dd_share.h"
 #include "dd_types.h"
 #include <de/game/Game>
+#include <de/Path>
 
 #include <de/shell/Lexicon> // known words
 #include <cstdio>
@@ -69,7 +70,7 @@ LIBDOOMSDAY_PUBLIC void Con_Ticker(timespan_t time);
 LIBDOOMSDAY_PUBLIC int Con_Execute(byte src, char const *command, int silent, dd_bool netCmd);
 LIBDOOMSDAY_PUBLIC int Con_Executef(byte src, int silent, char const *command, ...) PRINTF_F(3,4);
 
-LIBDOOMSDAY_PUBLIC dd_bool Con_Parse(char const *fileName, dd_bool silently);
+LIBDOOMSDAY_PUBLIC dd_bool Con_Parse(de::Path const &fileName, dd_bool silently);
 
 #ifdef __cplusplus
 } // extern "C"

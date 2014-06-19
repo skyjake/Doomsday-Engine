@@ -1,8 +1,8 @@
 /** @file con_config.h  Config file IO.
  * @ingroup console
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,13 +22,14 @@
 #define DENG_CONSOLE_CONFIG_H
 
 #include "dd_share.h"
+#include <de/Path>
 
 // Flags for Con_ParseCommands:
 #define CPCF_SET_DEFAULT            0x1
 #define CPCF_ALLOW_SAVE_STATE       0x2
 #define CPCF_ALLOW_SAVE_BINDINGS    0x4
 
-bool Con_ParseCommands(char const *fileName, int flags = 0);
+bool Con_ParseCommands(de::Path const &fileName, int flags = 0);
 
 /**
  * Saves all bindings, aliases and archiveable console variables.

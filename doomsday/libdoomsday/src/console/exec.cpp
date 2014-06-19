@@ -869,7 +869,7 @@ static void readLine(char *buffer, size_t len, FileHandle *file)
     }
 }
 
-dd_bool Con_Parse(char const *fileName, dd_bool silently)
+dd_bool Con_Parse(Path const &fileName, dd_bool silently)
 {
     try
     {
@@ -906,7 +906,7 @@ dd_bool Con_Parse(char const *fileName, dd_bool silently)
     }
     catch(FS1::NotFoundError const &)
     {} // Ignore.
-    LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
+    LOG_SCR_WARNING("Failed to open \"%s\" for write") << NativePath(fileName).pretty();
     return false;
 }
 

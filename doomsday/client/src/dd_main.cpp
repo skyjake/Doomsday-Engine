@@ -1207,14 +1207,14 @@ static int DD_ActivateGameWorker(void *context)
         }
 
         LOG_SCR_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
-        Con_ParseCommands(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
+        Con_ParseCommands(configFile, CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands(App_CurrentGame().bindingConfig().toUtf8().constData(), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands(App_CurrentGame().bindingConfig(), CPCF_ALLOW_SAVE_BINDINGS);
 #endif
     }
 
