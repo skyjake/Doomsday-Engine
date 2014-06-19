@@ -904,9 +904,10 @@ dd_bool Con_Parse(Path const &fileName, dd_bool silently)
 
         return true;
     }
-    catch(FS1::NotFoundError const &)
-    {} // Ignore.
-    LOG_SCR_WARNING("Failed to open \"%s\" for write") << NativePath(fileName).pretty();
+    catch(FS1::NotFoundError const &er)
+    {
+        LOG_SCR_WARNING(er.asText());
+    }
     return false;
 }
 
