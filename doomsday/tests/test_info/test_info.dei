@@ -33,7 +33,7 @@ thing A {
 
 thing B inherits A {
     member2: value from B
-    script { print "Contents of B:"; print __this__ }
+    script { print "Contents of B:"; print self }
 }
 
 group {
@@ -42,12 +42,12 @@ group {
     
     thing C {
         member2: value from C
-        script { print "Contents of C:"; print __this__ }
+        script { print "Contents of C:"; print self }
     }
     thing D inherits B {
         # Inherits A from group, then B.
         member3: value from D
-        script { print "Contents of D:"; print __this__ }
+        script { print "Contents of D:"; print self }
     }
 }
     
@@ -67,7 +67,7 @@ group font {
 
         script {
             print "Default font:"
-            print __this__
+            print self
         }
     }
     
@@ -75,7 +75,7 @@ group font {
     # sensitive), however group types are forced lower case (FoNt==font).
     FoNt "Title" inherits font.Default {
         SIZE: 24pt
-        weight $: if __this__.weight == "normal": "bold"; else: "normal"
+        weight $: if self.weight == "normal": "bold"; else: "normal"
     }
 }
 

@@ -89,7 +89,7 @@ group {
 }
 
 font title inherits default {
-    size $: gui.scale(__this__.size, 1.75)
+    size $: gui.scale(self.size, 1.75)
     weight: light
 }
 
@@ -98,7 +98,7 @@ font heading inherits title {
 }
 
 font small inherits default {
-    size $: gui.scale(__this__.size, 0.75)
+    size $: gui.scale(self.size, 0.75)
 }
 
 group editor {
@@ -111,11 +111,12 @@ group editor {
 
 group separator {
     font empty inherits default {
-        size $: gui.scale(__this__.size, 0.5)
+        size $: gui.scale(self.size, 0.5)
     }
     font label inherits small {
         weight: bold
     }
+    font annotation inherits small {}    
 }
 
 group choice {

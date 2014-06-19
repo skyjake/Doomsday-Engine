@@ -98,9 +98,9 @@ DENG2_PIMPL(ScriptedInfo)
     {
         Record &ns = process.globals();
 
-        // The global "__this__" will point to the block where the script
-        // is running.
-        bool needRemoveThis = false;
+        // The global "self" variable will point to the block where the script
+        // is running (analogous to "self" in class member calling).
+        bool needRemoveSelf = false;
         if(context)
         {
             String varName = variableName(*context);
@@ -111,17 +111,17 @@ DENG2_PIMPL(ScriptedInfo)
                     // If it doesn't exist yet, make sure it does.
                     ns.addRecord(varName);
                 }
-                ns.add("__this__") = new RecordValue(ns.subrecord(varName));
-                needRemoveThis = true;
+                ns.add("self") = new RecordValue(ns.subrecord(varName));
+                needRemoveSelf = true;
             }
         }
 
         // Execute the current script.
         process.execute();
 
-        if(needRemoveThis)
+        if(needRemoveSelf)
         {
-            delete &ns["__this__"];
+            delete &ns["self"];
         }
     }
 
@@ -339,10 +339,10 @@ DENG2_PIMPL(ScriptedInfo)
     }
 
     /**
-     * Constructs a Value from the value of an element. If the element value
-     * has been marked with the semantic hint for scripting, it will be
-     * evaluated as a script. The global __this__ will be pointed to the
-     * Record representing the @a context block.
+     * Constructs a Value from the value of an element. If the element value has been
+     * marked with the semantic hint for scripting, it will be evaluated as a script. A
+     * global "self" variable will be pointed to the Record representing the @a context
+     * block.
      *
      * @param rawValue  Value of an element.
      * @param context   Containing block element.
