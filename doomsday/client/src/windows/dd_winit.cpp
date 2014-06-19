@@ -1,7 +1,7 @@
 /** @file dd_winit.cpp  Engine Initialization (Windows).
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -33,19 +33,10 @@
 #include <stdlib.h>
 #include <tchar.h>
 
-#include "resource.h"
-
 #include "de_base.h"
-#include "de_graphics.h"
-#include "de_console.h"
 #include "de_system.h"
-#include "de_play.h"
-#include "de_network.h"
-#include "de_misc.h"
-#include "de_ui.h"
 #include "dd_winit.h"
 
-#include <doomsday/filesys/fs_util.h>
 #include <doomsday/paths.h>
 #include <de/App>
 
@@ -92,9 +83,18 @@ char const *DD_Win32_GetLastErrorMessage()
     return buffer;
 }
 
-static void determineGlobalPaths(application_t *app)
+dd_bool DD_Win32_Init()
 {
-    DENG2_ASSERT(app != 0);
+    zap(app);
+    app.hInstance = GetModuleHandle(NULL);
+
+    // Initialize COM.
+    CoInitialize(NULL);
+
+    // Prepare the command line arguments.
+    DD_InitCommandLine();
+
+    Library_Init();
 
     // Change to a custom working directory?
     if(CommandLine_CheckWith("-userdir", 1))
@@ -103,7 +103,7 @@ static void determineGlobalPaths(application_t *app)
         if(NativePath::setWorkPath(runtimePath))
         {
             LOG_VERBOSE("Changed current directory to \"%s\"") << NativePath::workPath();
-            app->usingUserDir = true;
+            app.usingUserDir = true;
         }
     }
 
@@ -122,26 +122,9 @@ static void determineGlobalPaths(application_t *app)
         String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
         DD_SetBasePath(baseDir.toUtf8().constData());
     }
-}
 
-dd_bool DD_Win32_Init()
-{
+    // Perform early initialization of subsystems that require it.
     BOOL failed = TRUE;
-
-    std::memset(&app, 0, sizeof(app));
-    app.hInstance = GetModuleHandle(NULL);
-
-    // Initialize COM.
-    CoInitialize(NULL);
-
-    // Prepare the command line arguments.
-    DD_InitCommandLine();
-
-    Library_Init();
-
-    // Determine our basedir and other global paths.
-    determineGlobalPaths(&app);
-
     if(!DD_EarlyInit())
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
