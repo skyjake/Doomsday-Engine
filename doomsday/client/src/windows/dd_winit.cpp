@@ -49,6 +49,8 @@
 #include <doomsday/paths.h>
 #include <de/App>
 
+using namespace de;
+
 application_t app;
 
 /**
@@ -90,55 +92,34 @@ char const *DD_Win32_GetLastErrorMessage()
     return buffer;
 }
 
-static BOOL initDGL()
-{
-#ifdef __CLIENT__
-    return (BOOL) Sys_GLPreInit();
-#else
-    return TRUE;
-#endif
-}
-
 static void determineGlobalPaths(application_t *app)
 {
     DENG2_ASSERT(app != 0);
 
-    de::String binDir = de::App::executablePath().fileNamePath().withSeparators('/');
-
-    // The -userdir option sets the working directory.
+    // Change to a custom working directory?
     if(CommandLine_CheckWith("-userdir", 1))
     {
-        filename_t runtimePath;
-        directory_t *temp;
-
-        strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
-        Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
-        // Ensure the path is closed with a directory separator.
-        F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
-
-        temp = Dir_New(runtimePath);
-        app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
-        if(app->usingUserDir)
+        String runtimePath = QDir::cleanPath(CommandLine_NextAsPath());
+        if(NativePath::setWorkPath(runtimePath))
         {
-            DD_SetRuntimePath(Dir_Path(temp));
+            LOG_VERBOSE("Changed current directory to \"%s\"") << NativePath::workPath();
+            app->usingUserDir = true;
         }
-        Dir_Delete(temp);
     }
 
-    if(!app->usingUserDir)
-    {
-        // The current working directory is the runtime dir.
-        DD_SetRuntimePath((de::NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
-    }
+    // The runtime directory is the current working directory.
+    DD_SetRuntimePath((NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
 
+    // Use a custom base directory?
     if(CommandLine_CheckWith("-basedir", 1))
     {
         DD_SetBasePath(CommandLine_Next());
     }
     else
     {
-        // The standard base directory is one level up from the bin dir.
-        de::String baseDir = de::String(QDir::cleanPath(binDir / de::String(".."))) + '/';
+        // The default base directory is one level up from the bin dir.
+        String binDir  = App::executablePath().fileNamePath().withSeparators('/');
+        String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
         DD_SetBasePath(baseDir.toUtf8().constData());
     }
 }
@@ -165,12 +146,15 @@ dd_bool DD_Win32_Init()
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
     }
-    else if(!initDGL())
+#ifdef __CLIENT__
+    else if(!Sys_GLPreInit())
     {
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing GL.", 0);
     }
+#endif
     else
-    {   // All initialization complete.
+    {
+        // All initialization complete.
         failed = FALSE;
     }
 
