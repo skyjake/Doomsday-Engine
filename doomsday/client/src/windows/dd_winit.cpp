@@ -128,10 +128,7 @@ static void determineGlobalPaths(application_t *app)
     if(!app->usingUserDir)
     {
         // The current working directory is the runtime dir.
-        directory_t *temp = Dir_NewFromCWD();
-        Dir_SetCurrent(Dir_Path(temp));
-        DD_SetRuntimePath(Dir_Path(temp));
-        Dir_Delete(temp);
+        DD_SetRuntimePath((de::NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
     }
 
     if(CommandLine_CheckWith("-basedir", 1))
