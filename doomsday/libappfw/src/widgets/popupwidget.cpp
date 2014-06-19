@@ -133,7 +133,7 @@ DENG_GUI_PIMPL(PopupWidget)
         else
         {
             self.set(Background(st.colors().colorf("background"),
-                                Background::BorderGlow,
+                                Background::BlurredWithBorderGlow,
                                 st.colors().colorf("glow"),
                                 st.rules().rule("glow").valuei()));
         }
