@@ -48,7 +48,6 @@ DENG2_PIMPL(LogSettingsDialog)
 {
     ui::ListData levels;
     VariableToggleWidget *separately;
-    VariableToggleWidget *metadata;
     FoldPanelWidget *fold;
     GridLayout foldLayout;
     IndirectRule *columnWidth; ///< Sync column width in and out of the fold.
@@ -72,10 +71,6 @@ DENG2_PIMPL(LogSettingsDialog)
             self.area().add(separately =
                     new VariableToggleWidget(tr("Filter by Subsystem"),
                                              App::config()["log.filterBySubsystem"]));
-
-            self.area().add(metadata =
-                    new VariableToggleWidget(tr("Show Metadata in Log"),
-                                             App::config()["log.showMetadata"]));
 
             levels << new ChoiceItem(        tr("1 - X.Verbose"), LogEntry::XVerbose)
                    << new ChoiceItem(        tr("2 - Verbose"),   LogEntry::Verbose )
@@ -237,7 +232,6 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
     layout.append(*d->separately, 3);
     layout.append(*d->fold, 4)
            << Const(0);
-    layout.append(*d->metadata, 3);
 
     // Fold's layout is complete.
     d->fold->content().rule().setSize(d->foldLayout.width(), d->foldLayout.height());
