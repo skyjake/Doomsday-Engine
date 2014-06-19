@@ -47,6 +47,7 @@
 
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/paths.h>
+#include <de/App>
 
 application_t app;
 
@@ -56,7 +57,7 @@ static LPSTR utf8ConvBuf;
 #endif
 
 #ifdef UNICODE
-LPCWSTR ToWideString(const char* str)
+LPCWSTR ToWideString(char const *str)
 {
     // Determine the length of the output string.
     int wideChars = MultiByteToWideChar(CP_UTF8, 0, str, -1, 0, 0);
@@ -64,14 +65,14 @@ LPCWSTR ToWideString(const char* str)
     // Allocate the right amount of memory.
     int bufSize = wideChars * sizeof(wchar_t) + 1;
     convBuf = (LPWSTR) M_Realloc(convBuf, bufSize);
-    memset(convBuf, 0, bufSize);
+    std::memset(convBuf, 0, bufSize);
 
     MultiByteToWideChar(CP_ACP, 0, str, -1, convBuf, wideChars);
 
     return convBuf;
 }
 
-LPCSTR ToAnsiString(const wchar_t* wstr)
+LPCSTR ToAnsiString(wchar_t const *wstr)
 {
     // Determine how much memory is needed for the output string.
     int utfBytes = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, 0, 0, 0, 0);
@@ -86,15 +87,15 @@ LPCSTR ToAnsiString(const wchar_t* wstr)
 #endif
 
 /**
- * \note GetLastError() should only be called when we *know* an error was thrown.
+ * @note GetLastError() should only be called when we *know* an error was thrown.
  * The result of calling this any other time is undefined.
  *
  * @return Ptr to a string containing a textual representation of the last
  * error thrown in the current thread else @c NULL.
  */
-const char* DD_Win32_GetLastErrorMessage(void)
+char const *DD_Win32_GetLastErrorMessage()
 {
-    static char* buffer = 0; /// @todo Never free'd!
+    static char *buffer = 0; /// @todo Never free'd!
     static size_t currentBufferSize = 0;
 
     LPVOID lpMsgBuf;
@@ -123,7 +124,7 @@ const char* DD_Win32_GetLastErrorMessage(void)
     return buffer;
 }
 
-static BOOL initDGL(void)
+static BOOL initDGL()
 {
 #ifdef __CLIENT__
     return (BOOL) Sys_GLPreInit();
@@ -132,49 +133,17 @@ static BOOL initDGL(void)
 #endif
 }
 
-static void determineGlobalPaths(application_t* app)
+static void determineGlobalPaths(application_t *app)
 {
-    assert(app);
+    DENG2_ASSERT(app != 0);
 
-    // Where are we?
-#if defined(DENG_LIBRARY_DIR)
-#  if !defined(_DEBUG)
-#pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
-#  endif
-    {
-    filename_t path;
-    directory_t* temp;
-
-    dd_snprintf(path, FILENAME_T_MAXLEN, "%s", DENG_LIBRARY_DIR);
-    // Ensure it ends with a directory separator.
-    F_AppendMissingSlashCString(path, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolutePath(path);
-    temp = Dir_FromText(path);
-    DD_SetBinPath(Str_Text(temp));
-    Dir_Delete(temp);
-    }
-#else
-    {
-        directory_t* temp;
-#ifdef UNICODE
-        wchar_t path[FILENAME_T_MAXLEN];
-        GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-        temp = Dir_FromText(ToAnsiString(path));
-#else
-        filename_t path;
-        GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-        temp = Dir_FromText(path);
-#endif
-        DD_SetBinPath(Dir_Path(temp));
-        Dir_Delete(temp);
-    }
-#endif
+    de::String binDir = de::App::executablePath().fileNamePath().withSeparators('/');
 
     // The -userdir option sets the working directory.
     if(CommandLine_CheckWith("-userdir", 1))
     {
         filename_t runtimePath;
-        directory_t* temp;
+        directory_t *temp;
 
         strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
         Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
@@ -193,7 +162,7 @@ static void determineGlobalPaths(application_t* app)
     if(!app->usingUserDir)
     {
         // The current working directory is the runtime dir.
-        directory_t* temp = Dir_NewFromCWD();
+        directory_t *temp = Dir_NewFromCWD();
         Dir_SetCurrent(Dir_Path(temp));
         DD_SetRuntimePath(Dir_Path(temp));
         Dir_Delete(temp);
@@ -206,17 +175,16 @@ static void determineGlobalPaths(application_t* app)
     else
     {
         // The standard base directory is one level up from the bin dir.
-        filename_t base;
-        dd_snprintf(base, FILENAME_T_MAXLEN, "%s../", DD_BinPath());
-        DD_SetBasePath(base);
+        de::String baseDir = de::String(QDir::cleanPath(binDir / de::String(".."))) + '/';
+        DD_SetBasePath(baseDir.toUtf8().constData());
     }
 }
 
-dd_bool DD_Win32_Init(void)
+dd_bool DD_Win32_Init()
 {
     BOOL failed = TRUE;
 
-    memset(&app, 0, sizeof(app));
+    std::memset(&app, 0, sizeof(app));
     app.hInstance = GetModuleHandle(NULL);
 
     // Initialize COM.

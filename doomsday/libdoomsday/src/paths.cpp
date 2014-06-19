@@ -25,7 +25,6 @@ using namespace de;
 
 static std::string ddBasePath; // Doomsday root directory is at...?
 static std::string ddRuntimePath;
-static std::string ddBinPath;
 
 char const *DD_BasePath()
 {
@@ -56,14 +55,4 @@ char const *DD_RuntimePath()
 void DD_SetRuntimePath(char const *path)
 {
     ddRuntimePath = path;
-}
-
-char const *DD_BinPath()
-{
-    return ddBinPath.c_str();
-}
-
-void DD_SetBinPath(char const *path)
-{
-    ddBinPath = path;
 }

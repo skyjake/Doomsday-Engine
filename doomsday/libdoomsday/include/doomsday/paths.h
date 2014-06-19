@@ -32,13 +32,9 @@ LIBDOOMSDAY_PUBLIC char const *DD_BasePath();
 
 LIBDOOMSDAY_PUBLIC char const *DD_RuntimePath();
 
-LIBDOOMSDAY_PUBLIC char const *DD_BinPath();
-
 LIBDOOMSDAY_PUBLIC void DD_SetBasePath(char const *path);
 
 LIBDOOMSDAY_PUBLIC void DD_SetRuntimePath(char const *path);
-
-LIBDOOMSDAY_PUBLIC void DD_SetBinPath(char const *path);
 
 #ifdef __cplusplus
 } // extern "C"
