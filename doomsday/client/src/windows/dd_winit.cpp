@@ -51,41 +51,6 @@
 
 application_t app;
 
-#ifdef UNICODE
-static LPWSTR convBuf;
-static LPSTR utf8ConvBuf;
-#endif
-
-#ifdef UNICODE
-LPCWSTR ToWideString(char const *str)
-{
-    // Determine the length of the output string.
-    int wideChars = MultiByteToWideChar(CP_UTF8, 0, str, -1, 0, 0);
-
-    // Allocate the right amount of memory.
-    int bufSize = wideChars * sizeof(wchar_t) + 1;
-    convBuf = (LPWSTR) M_Realloc(convBuf, bufSize);
-    std::memset(convBuf, 0, bufSize);
-
-    MultiByteToWideChar(CP_ACP, 0, str, -1, convBuf, wideChars);
-
-    return convBuf;
-}
-
-LPCSTR ToAnsiString(wchar_t const *wstr)
-{
-    // Determine how much memory is needed for the output string.
-    int utfBytes = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, 0, 0, 0, 0);
-
-    // Allocate the right amount of memory.
-    utf8ConvBuf = (LPSTR) M_Realloc(utf8ConvBuf, utfBytes);
-
-    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, utf8ConvBuf, utfBytes, 0, 0);
-
-    return utf8ConvBuf;
-}
-#endif
-
 /**
  * @note GetLastError() should only be called when we *know* an error was thrown.
  * The result of calling this any other time is undefined.
@@ -114,8 +79,9 @@ char const *DD_Win32_GetLastErrorMessage()
     dd_snprintf(buffer, currentBufferSize, "#%-5d: ", (int)dw);
 
     // Continue splitting as long as there are parts.
-    { char* part, *cursor = (char*)lpMsgBuf;
+    char *part, *cursor = (char *)lpMsgBuf;
     while(*(part = M_StrTok(&cursor, "\n")))
+    {
         strcat(buffer, part);
     }
 
@@ -232,11 +198,6 @@ void DD_Shutdown()
     DD_ShutdownAll(); // Stop all engine subsystems.
     Plug_UnloadAll();
     Library_Shutdown();
-
-#ifdef UNICODE
-    M_Free(convBuf); convBuf = 0;
-    M_Free(utf8ConvBuf); utf8ConvBuf = 0;
-#endif
 
     // No more use of COM beyond, this point.
     CoUninitialize();
