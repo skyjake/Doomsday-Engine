@@ -58,6 +58,26 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen);
 #endif
 static void resolvePathRelativeDirectives(char* path);
 
+static void Dir_SetPath(directory_t* dir, const char *path);
+
+/**
+ * Extract just the file name including any extension from @a path.
+ */
+static void Dir_FileName(char* name, const char* path, size_t len);
+
+/**
+ * Convert directory separators in @a path to their system-specifc form.
+ */
+static void Dir_ToNativeSeparators(char* path, size_t len);
+
+/**
+ * Convert directory separators in @a path to our internal '/' form.
+ */
+static void Dir_FixSeparators(char* path, size_t len);
+
+/// @return  @c true if @a path is absolute.
+static int Dir_IsAbsolutePath(const char* path);
+
 directory_t* Dir_New(const char* path)
 {
     directory_t* dir = (directory_t*) M_Calloc(sizeof *dir);
@@ -101,23 +121,13 @@ void Dir_Delete(directory_t* dir)
     M_Free(dir);
 }
 
-dd_bool Dir_IsEqual(directory_t* a, directory_t* b)
-{
-    if(a == b) return true;
-#if defined(WIN32)
-    if(a->drive != b->drive)
-        return false;
-#endif
-    return !qstricmp(a->path, b->path);
-}
-
 const char* Dir_Path(directory_t* dir)
 {
     DENG_ASSERT(NULL != dir);
     return dir->path;
 }
 
-void Dir_SetPath(directory_t* dir, const char* path)
+static void Dir_SetPath(directory_t* dir, const char* path)
 {
     filename_t fileName;
     DENG_ASSERT(dir);
@@ -293,7 +303,7 @@ char* Dir_CurrentPath(void)
     return strdup(path.toLatin1());
 }
 
-void Dir_FileName(char* name, const char* path, size_t len)
+static void Dir_FileName(char* name, const char* path, size_t len)
 {
     char ext[100]; /// @todo  Use dynamic string.
     if(!path || !name || 0 == len) return;
@@ -301,7 +311,7 @@ void Dir_FileName(char* name, const char* path, size_t len)
     M_StrCat(name, ext, len);
 }
 
-int Dir_IsAbsolutePath(const char* path)
+static int Dir_IsAbsolutePath(const char* path)
 {
     if(!path || !path[0]) return 0;
     if(path[0] == '/' || path[1] == ':')
@@ -373,7 +383,7 @@ void Dir_MakeAbsolutePath(char* path, size_t len)
     Dir_FixSeparators(path, len);
 }
 
-void Dir_ToNativeSeparators(char* path, size_t len)
+static void Dir_ToNativeSeparators(char* path, size_t len)
 {
     size_t i;
     if(!path || !path[0] || 0 == len) return;
@@ -385,7 +395,7 @@ void Dir_ToNativeSeparators(char* path, size_t len)
     }
 }
 
-void Dir_FixSeparators(char* path, size_t len)
+static void Dir_FixSeparators(char* path, size_t len)
 {
     size_t i;
     if(!path || !path[0] || 0 == len) return;

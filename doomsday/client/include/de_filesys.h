@@ -30,7 +30,6 @@
 
 #include <doomsday/filesys/filehandle.h>
 #include <doomsday/filesys/filetype.h>
-#include <doomsday/filesys/filehandlebuilder.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/lumpindex.h>

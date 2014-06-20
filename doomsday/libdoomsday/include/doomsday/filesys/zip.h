@@ -22,13 +22,13 @@
 #define LIBDOOMSDAY_FILESYS_ZIP_H
 
 #include "../libdoomsday.h"
+#include "../filesys/lumpindex.h"
 #include "file.h"
 #include "fileinfo.h"
+#include <de/Error>
 #include <de/PathTree>
 
 namespace de {
-
-class FileHandle;
 
 /**
  * ZIP archive file format.
@@ -40,108 +40,155 @@ class FileHandle;
  *
  * @todo This is obsolete: should use ZipArchive/PackageFolder in libcore.
  */
-class LIBDOOMSDAY_PUBLIC Zip : public File1
+class LIBDOOMSDAY_PUBLIC Zip : public File1, public LumpIndex
 {
+protected:
+    struct Entry; // forward
+
 public:
     /// Base class for format-related errors. @ingroup errors
     DENG2_ERROR(FormatError);
 
-    /// The requested entry does not exist in the zip. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    /**
+     * File system object for a lump in the ZIP.
+     *
+     * The purpose of this abstraction is to redirect various File1 methods to the
+     * containing Zip file. Such a mechanism would be unnecessary in a file system
+     * in which proper OO design is used for the package / file abstraction. -ds
+     */
+    class LumpFile : public File1
+    {
+    public:
+        LumpFile(Entry &entry, FileHandle &hndl, String path, FileInfo const &info,
+                 File1 *container);
+
+        /// @return  Name of this file.
+        String const &name() const;
+
+        /**
+         * Compose an absolute URI to this file.
+         *
+         * @param delimiter     Delimit directory using this character.
+         *
+         * @return The absolute URI.
+         */
+        Uri composeUri(QChar delimiter = '/') const;
+
+        /**
+         * Retrieve the directory node for this file.
+         *
+         * @return  Directory node for this file.
+         */
+        PathTree::Node &directoryNode() const;
+
+        /**
+         * Read the file data into @a buffer.
+         *
+         * @param buffer        Buffer to read into. Must be at least large enough to
+         *                      contain the whole file.
+         * @param tryCache      @c true= try the lump cache first.
+         *
+         * @return Number of bytes read.
+         *
+         * @see size() or info() to determine the size of buffer needed.
+         */
+        size_t read(uint8_t *buffer, bool tryCache = true);
+
+        /**
+         * Read a subsection of the file data into @a buffer.
+         *
+         * @param buffer        Buffer to read into. Must be at least @a length bytes.
+         * @param startOffset   Offset from the beginning of the file to start reading.
+         * @param length        Number of bytes to read.
+         * @param tryCache      If @c true try the local data cache first.
+         *
+         * @return Number of bytes read.
+         */
+        size_t read(uint8_t *buffer, size_t startOffset, size_t length, bool tryCache = true);
+
+        /**
+         * Read this lump into the local cache.
+
+         * @return Pointer to the cached copy of the associated data.
+         */
+        uint8_t const *cache();
+
+        /**
+         * Remove a lock on the locally cached data.
+         *
+         * @return This instance.
+         */
+        LumpFile &unlock();
+
+        /**
+         * Convenient method returning the containing Zip file instance.
+         */
+        Zip &zip() const;
+
+    private:
+        Entry &entry;
+    };
 
 public:
     Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
-
-    /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
-    bool isValidIndex(int lumpIdx) const;
-
-    /// @return Logical index of the last lump in this file's directory or @c -1 if empty.
-    int lastIndex() const;
-
-    /// @return Number of lumps contained by this file or @c 0 if empty.
-    int lumpCount() const;
-
-    /// @return @c true= There are no lumps in this file's directory.
-    bool empty();
+    virtual ~Zip();
 
     /**
-     * Retrieve the directory node for a lump contained by this file.
+     * Read the data associated with lump @a lumpIndex into @a buffer.
      *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return  Directory node for this lump.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
-     */
-    PathTree::Node &lumpDirectoryNode(int lumpIdx) const;
-
-    /**
-     * Retrieve a lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return The lump.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
-     */
-    File1 &lump(int lumpIdx);
-
-    /**
-     * Read the data associated with lump @a lumpIdx into @a buffer.
-     *
-     * @param lumpIdx       Lump index associated with the data to be read.
-     * @param buffer        Buffer to read into. Must be at least large enough to
-     *                      contain the whole lump.
-     * @param tryCache      @c true= try the lump cache first.
+     * @param lumpIndex  Lump index associated with the data to be read.
+     * @param buffer     Buffer to read into. Must be at least large enough to
+     *                   contain the whole lump.
+     * @param tryCache   @c true= try the lump cache first.
      *
      * @return Number of bytes read.
      *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIndex is not valid.
      *
      * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
      */
-    size_t readLump(int lumpIdx, uint8_t *buffer, bool tryCache = true);
+    size_t readLump(int lumpIndex, uint8_t *buffer, bool tryCache = true);
 
     /**
-     * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
+     * Read a subsection of the data associated with lump @a lumpIndex into @a buffer.
      *
-     * @param lumpIdx       Lump index associated with the data to be read.
-     * @param buffer        Buffer to read into. Must be at least @a length bytes.
-     * @param startOffset   Offset from the beginning of the lump to start reading.
-     * @param length        Number of bytes to read.
-     * @param tryCache      @c true= try the lump cache first.
+     * @param lumpIndex    Lump index associated with the data to be read.
+     * @param buffer       Buffer to read into. Must be at least @a length bytes.
+     * @param startOffset  Offset from the beginning of the lump to start reading.
+     * @param length       Number of bytes to read.
+     * @param tryCache     @c true= try the lump cache first.
      *
      * @return Number of bytes read.
      *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIndex is not valid.
      */
-    size_t readLump(int lumpIdx, uint8_t *buffer, size_t startOffset, size_t length,
+    size_t readLump(int lumpIndex, uint8_t *buffer, size_t startOffset, size_t length,
                     bool tryCache = true);
 
     /**
-     * Read the data associated with lump @a lumpIdx into the cache.
+     * Read the data associated with lump @a lumpIndex into the cache.
      *
-     * @param lumpIdx   Lump index associated with the data to be cached.
+     * @param lumpIndex  Lump index associated with the data to be cached.
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    uint8_t const *cacheLump(int lumpIdx);
+    uint8_t const *cacheLump(int lumpIndex);
 
     /**
      * Remove a lock on a cached data lump.
      *
-     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     * @param lumpIndex  Lump index associated with the cached data to be changed.
      */
-    void unlockLump(int lumpIdx);
+    void unlockLump(int lumpIndex);
 
     /**
-     * Clear any cached data for lump @a lumpIdx from the lump cache.
+     * Clear any cached data for lump @a lumpIndex from the lump cache.
      *
-     * @param lumpIdx       Lump index associated with the cached data to be cleared.
-     * @param retCleared    If not @c NULL write @c true to this address if data was
-     *                      present and subsequently cleared from the cache.
+     * @param lumpIndex   Lump index associated with the cached data to be cleared.
+     * @param retCleared  If not @c NULL write @c true to this address if data was
+     *                    present and subsequently cleared from the cache.
      */
-    void clearCachedLump(int lumpIdx, bool *retCleared = 0);
+    void clearCachedLump(int lumpIndex, bool *retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
@@ -154,7 +201,7 @@ public:
      * Determines whether the specified file appears to be in a format recognised by
      * Zip.
      *
-     * @param file      Stream file handle/wrapper to the file being interpreted.
+     * @param file  Stream file handle/wrapper to the file being interpreted.
      *
      * @return  @c true= this is a file that can be represented using Zip.
      */
@@ -221,6 +268,30 @@ public:
      *          @a outSize is set to zero.
      */
     static uint8_t *compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int level);
+
+protected:
+    /**
+     * Models an entry in the internal lump tree.
+     */
+    struct Entry : public PathTree::Node
+    {
+        dsize offset;
+        dsize size;
+        dsize compressedSize;
+        QScopedPointer<LumpFile> lumpFile;  ///< File system object for the lump data.
+
+        Entry(PathTree::NodeArgs const &args)
+            : Node(args), offset(0), size(0), compressedSize(0)
+        {}
+
+        LumpFile &file() const;
+    };
+    typedef PathTreeT<Entry> LumpTree;
+
+    /**
+     * Provides access to the internal LumpTree, for efficient traversal.
+     */
+    LumpTree const &lumpTree() const;
 
 private:
     DENG2_PRIVATE(d)

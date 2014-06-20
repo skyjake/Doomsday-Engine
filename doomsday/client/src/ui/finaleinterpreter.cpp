@@ -1563,7 +1563,7 @@ DEFFC(Image)
 {
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
-    lumpnum_t lumpNum = F_LumpNumForName(name);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
     rawtex_t* rawTex;
 
     LOG_AS("FIC_Image");
@@ -1585,7 +1585,7 @@ DEFFC(ImageAt)
     float x = OP_FLOAT(1);
     float y = OP_FLOAT(2);
     const char* name = OP_CSTRING(3);
-    lumpnum_t lumpNum = F_LumpNumForName(name);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
     rawtex_t* rawTex;
 
     LOG_AS("FIC_ImageAt");
@@ -1734,7 +1734,7 @@ DEFFC(AnimImage)
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    lumpnum_t lumpNum = F_LumpNumForName(encodedName);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(encodedName);
     rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
     LOG_AS("FIC_AnimImage");
     if(rawTex)
@@ -2093,26 +2093,24 @@ DEFFC(TextFromDef)
 
 DEFFC(TextFromLump)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     lumpnum_t lumpNum;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
 
-    lumpNum = F_LumpNumForName(OP_CSTRING(3));
+    lumpNum = App_FileSystem().lumpNumForName(OP_CSTRING(3));
     if(lumpNum >= 0)
     {
-        int lumpIdx;
-        size_t lumpSize = F_LumpLength(lumpNum);
-        struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-        const uint8_t* lumpPtr = F_CacheLump(file, lumpIdx);
-        size_t bufSize = 2 * lumpSize + 1, i;
-        char* str, *out;
+        de::File1 &lump     = App_FileSystem().lump(lumpNum);
+        uint8_t const *data = lump.cache();
 
-        str = (char*) M_Calloc(bufSize);
+        size_t bufSize = 2 * lump.size() + 1;
+        char *str = (char *) M_Calloc(bufSize);
 
-        for(i = 0, out = str; i < lumpSize; ++i)
+        char *out = str;
+        for(size_t i = 0; i < lump.size(); ++i)
         {
-            char ch = (char)(lumpPtr[i]);
+            char ch = (char)(data[i]);
             if(ch == '\r') continue;
             if(ch == '\n')
             {
@@ -2124,7 +2122,7 @@ DEFFC(TextFromLump)
                 *out++ = ch;
             }
         }
-        F_UnlockLump(file, lumpIdx);
+        lump.unlock();
 
         FIData_TextCopy(obj, str);
         free(str);

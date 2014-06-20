@@ -531,11 +531,9 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
     /// @note Path is relative to the base path.
     if(!Str_IsEmpty(&info->external))
     {
-        AutoStr *searchPath = AutoStr_NewStd();
-        F_PrependBasePath(searchPath, &info->external);
-
+        String searchPath = App_BasePath() / String(Str_Text(&info->external));
         // Try loading.
-        data = WAV_Load(Str_Text(searchPath), &bytesPer, &rate, &numSamples);
+        data = WAV_Load(searchPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);
         if(data)
         {
             bytesPer /= 8; // Was returned as bits.
@@ -551,7 +549,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
          * external resource (probably a custom sound).
          * @todo should be a cvar.
          */
-        if(info->lumpNum < 0 || !F_LumpIsCustom(info->lumpNum))
+        if(info->lumpNum < 0 || !App_FileSystem().lump(info->lumpNum).container().hasCustom())
         {
             try
             {
@@ -582,23 +580,19 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
             return 0;
         }
 
-        size_t lumpLength = F_LumpLength(info->lumpNum);
-        if(lumpLength <= 8) return 0;
-
-        int lumpIdx;
-        struct file1_s *file = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        File1 &lump = App_FileSystem().lump(info->lumpNum);
+        if(lump.size() <= 8) return 0;
 
         char hdr[12];
-        F_ReadLumpSection(file, lumpIdx, (uint8_t *)hdr, 0, 12);
+        lump.read((uint8_t *)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat(hdr))
         {
             // Load as WAV, then.
-            uint8_t const *sp = F_CacheLump(file, lumpIdx);
-
-            data = WAV_MemoryLoad((byte const *) sp, lumpLength, &bytesPer, &rate, &numSamples);
-            F_UnlockLump(file, lumpIdx);
+            uint8_t const *sp = lump.cache();
+            data = WAV_MemoryLoad((byte const *) sp, lump.size(), &bytesPer, &rate, &numSamples);
+            lump.unlock();
 
             if(!data)
             {
@@ -621,32 +615,34 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
     }
 
     // Probably an old-fashioned DOOM sample.
-    size_t lumpLength = F_LumpLength(info->lumpNum);
-    if(lumpLength > 8)
+    size_t lumpLength = 0;
+    if(info->lumpNum >= 0)
     {
-        int lumpIdx;
-        struct file1_s *file = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        File1 &lump = App_FileSystem().lump(info->lumpNum);
 
-        uint8_t hdr[8];
-        F_ReadLumpSection(file, lumpIdx, hdr, 0, 8);
-        int head   = SHORT(*(short const *) (hdr));
-        rate       = SHORT(*(short const *) (hdr + 2));
-        numSamples = de::max(0, LONG(*(int const *) (hdr + 4)));
-
-        bytesPer = 1; // 8-bit.
-
-        if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
+        if(lump.size() > 8)
         {
-            // The sample data can be used as-is - load directly from the lump cache.
-            uint8_t const *data = F_CacheLump(file, lumpIdx) + 8; // Skip the header.
+            uint8_t hdr[8];
+            lump.read(hdr, 0, 8);
+            int head   = SHORT(*(short const *) (hdr));
+            rate       = SHORT(*(short const *) (hdr + 2));
+            numSamples = de::max(0, LONG(*(int const *) (hdr + 4)));
 
-            // Insert a copy of this into the cache.
-            SfxCache *node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
-                                               bytesPer, rate, info->group);
+            bytesPer = 1; // 8-bit.
 
-            F_UnlockLump(file, lumpIdx);
+            if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
+            {
+                // The sample data can be used as-is - load directly from the lump cache.
+                uint8_t const *data = lump.cache() + 8; // Skip the header.
 
-            return &node->sample;
+                // Insert a copy of this into the cache.
+                SfxCache *node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
+                                                   bytesPer, rate, info->group);
+
+                lump.unlock();
+
+                return &node->sample;
+            }
         }
     }
 

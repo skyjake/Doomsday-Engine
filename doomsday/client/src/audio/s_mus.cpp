@@ -208,15 +208,17 @@ void Mus_Stop(void)
  */
 dd_bool Mus_IsMUSLump(lumpnum_t lumpNum)
 {
-    char buf[4];
-    int lumpIdx;
-    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    if(!file) return false;
+    try
+    {
+        char buf[4];
+        App_FileSystem().lump(lumpNum).read((uint8_t *)buf, 0, 4);
 
-    F_ReadLumpSection(file, lumpIdx, (uint8_t*)buf, 0, 4);
-
-    // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
-    return !strncmp(buf, "MUS\x01a", 4);
+        // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
+        return !strncmp(buf, "MUS\x01a", 4);
+    }
+    catch(LumpIndex::NotFoundError const&)
+    {} // Ignore error.
+    return false;
 }
 
 /**
@@ -234,13 +236,11 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
     if(def->path && !def->path->path().isEmpty())
     {
         // All external music files are specified relative to the base path.
-        AutoStr *fullPath = AutoStr_NewStd();
-        F_PrependBasePath(fullPath, def->path->pathStr());
-        F_FixSlashes(fullPath, fullPath);
+        String fullPath = App_BasePath() / def->path->path();
 
-        if(F_Access(Str_Text(fullPath)))
+        if(F_Access(fullPath.toUtf8().constData()))
         {
-            if(retPath) Str_Set(retPath, Str_Text(fullPath));
+            if(retPath) Str_Set(retPath, fullPath.toUtf8().constData());
             return true;
         }
 
@@ -294,41 +294,36 @@ int Mus_GetCD(ded_music_t *def)
  * @return 1, if music was started. 0, if attempted to start but failed.
  *         -1, if it was MUS data and @a canPlayMUS says we can't play it.
  */
-int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS)
+int Mus_StartLump(lumpnum_t lumpNum, dd_bool looped, dd_bool canPlayMUS)
 {
-    if(!AudioDriver_Music_Available() || lump < 0) return 0;
+    if(!AudioDriver_Music_Available() || lumpNum < 0) return 0;
 
-    if(Mus_IsMUSLump(lump))
+    if(Mus_IsMUSLump(lumpNum))
     {
         // Lump is in DOOM's MUS format. We must first convert it to MIDI.
-        AutoStr* srcFile = 0;
-        struct file1_s* file;
-        size_t lumpLength;
-        int lumpIdx;
-        uint8_t* buf;
-
         if(!canPlayMUS)
             return -1;
 
-        srcFile = AudioDriver_Music_ComposeTempBufferFilename(".mid");
+        AutoStr *srcFile = AudioDriver_Music_ComposeTempBufferFilename(".mid");
 
         // Read the lump, convert to MIDI and output to a temp file in the
         // working directory. Use a filename with the .mid extension so that
         // any player which relies on the it for format recognition works as
         // expected.
 
-        lumpLength = F_LumpLength(lump);
-        buf = (uint8_t*) M_Malloc(lumpLength);
-        file = F_FindFileForLumpNum2(lump, &lumpIdx);
-        F_ReadLumpSection(file, lumpIdx, buf, 0, lumpLength);
-        M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
+        File1 &lump  = App_FileSystem().lump(lumpNum);
+        uint8_t *buf = (uint8_t *) M_Malloc(lump.size());
+
+        lump.read(buf, 0, lump.size());
+        M_Mus2Midi((void *)buf, lump.size(), Str_Text(srcFile));
+
         M_Free(buf);
 
         return AudioDriver_Music_PlayNativeFile(Str_Text(srcFile), looped);
     }
     else
     {
-        return AudioDriver_Music_PlayLump(lump, looped);
+        return AudioDriver_Music_PlayLump(lumpNum, looped);
     }
 }
 
@@ -405,7 +400,7 @@ int Mus_Start(ded_music_t* def, dd_bool looped)
             if(Mus_GetExt(def, &path))
             {
                 LOG_AUDIO_VERBOSE("Attempting to play song '%s' (file \"%s\")")
-                        << def->id << F_PrettyPath(Str_Text(&path));
+                        << def->id << NativePath(Str_Text(&path)).pretty();
 
                 // Its an external file.
                 return AudioDriver_Music_PlayFile(Str_Text(&path), looped);
@@ -420,7 +415,7 @@ int Mus_Start(ded_music_t* def, dd_bool looped)
             if(AudioDriver_Music_Available())
             {
                 lumpnum_t lump;
-                if(def->lumpName && (lump = F_LumpNumForName(def->lumpName)) >= 0)
+                if(def->lumpName && (lump = App_FileSystem().lumpNumForName(def->lumpName)) >= 0)
                 {
                     int result = Mus_StartLump(lump, looped, canPlayMUS);
                     if(result < 0) break;
@@ -493,7 +488,7 @@ D_CMD(PlayMusic)
     case 3:
         if(!stricmp(argv[1], "lump"))
         {
-            lumpnum_t lump = F_LumpNumForName(argv[2]);
+            lumpnum_t lump = App_FileSystem().lumpNumForName(argv[2]);
             if(lump < 0) return false; // No such lump.
 
             Mus_Stop();

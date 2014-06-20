@@ -45,12 +45,9 @@
 
 using namespace de;
 
-D_CMD(Dir);
-D_CMD(DumpLump);
-D_CMD(ListFiles);
-D_CMD(ListLumps);
+extern uint F_GetLastModified(char const *path);
 
-static FS1* fileSystem;
+static FS1 *fileSystem;
 
 typedef QList<FileId> FileIds;
 
@@ -75,43 +72,115 @@ typedef QList<LumpMapping> LumpMappings;
 typedef QPair<QString, QString> PathMapping;
 typedef QList<PathMapping> PathMappings;
 
-static bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
-
-struct FS1::Instance
+/**
+ * @note Performance is O(n).
+ * @return @c iterator pointing to list->end() if not found.
+ */
+static FS1::FileList::iterator findListFile(FS1::FileList &list, File1 &file)
 {
-    FS1& self;
+    if(list.empty()) return list.end();
+    // Perform the search.
+    FS1::FileList::iterator i;
+    for(i = list.begin(); i != list.end(); ++i)
+    {
+        if(&file == &(*i)->file())
+        {
+            break; // This is the node we are looking for.
+        }
+    }
+    return i;
+}
 
-    /// @c true= Flag newly opened files as "startup".
-    bool loadingForStartup;
+/**
+ * @note Performance is O(n).
+ * @return @c iterator pointing to list->end() if not found.
+ */
+static FS1::FileList::iterator findListFileByPath(FS1::FileList &list, String path)
+{
+    if(list.empty()) return list.end();
+    if(path.isEmpty()) return list.end();
 
-    /// List of currently opened files.
-    FileList openFiles;
+    // Perform the search.
+    FS1::FileList::iterator i;
+    for(i = list.begin(); i != list.end(); ++i)
+    {
+        File1 &file = (*i)->file();
+        if(!file.composePath().compare(path, Qt::CaseInsensitive))
+        {
+            break; // This is the node we are looking for.
+        }
+    }
+    return i;
+}
 
-    /// List of all loaded files present in the system.
-    FileList loadedFiles;
+static bool applyPathMapping(ddstring_t *path, PathMapping const &vdm);
 
+/**
+ * Performs a case-insensitive pattern match. The pattern can contain
+ * wildcards.
+ *
+ * @param filePath  Path to match.
+ * @param pattern   Pattern with * and ? as wildcards.
+ *
+ * @return  @c true, if @a filePath matches the pattern.
+ */
+static bool matchFileName(String const &string, String const &pattern)
+{
+    static QChar const ASTERISK('*');
+    static QChar const QUESTION_MARK('?');
+
+    QChar const *in = string.constData(), *st = pattern.constData();
+
+    while(!in->isNull())
+    {
+        if(*st == ASTERISK)
+        {
+            st++;
+            continue;
+        }
+
+        if(*st != QUESTION_MARK && st->toLower() != in->toLower())
+        {
+            // A mismatch. Hmm. Go back to a previous '*'.
+            while(st >= pattern && *st != ASTERISK) { st--; }
+
+            if(st < pattern)
+                return false; // No match!
+            // The asterisk lets us continue.
+        }
+
+        // This character of the pattern is OK.
+        st++;
+        in++;
+    }
+
+    // Match is good if the end of the pattern was reached.
+
+    // Skip remaining asterisks.
+    while(*st == ASTERISK) { st++; }
+
+    return st->isNull();
+}
+
+DENG2_PIMPL(FS1)
+{
+    bool loadingForStartup;     ///< @c true= Flag newly opened files as "startup".
+
+    FileList openFiles;         ///< List of currently opened files.
+    FileList loadedFiles;       ///< List of all loaded files present in the system.
     uint loadedFilesCRC;
+    FileIds fileIds;            ///< Database of unique identifiers for all loaded/opened files.
 
-    /// Database of unique identifiers for all loaded/opened files.
-    FileIds fileIds;
+    LumpIndex primaryIndex;     ///< Primary index of all files in the system.
+    LumpIndex zipFileIndex;     ///< Type-specific index for ZipFiles.
 
-    /// Primary index of all files in the system.
-    LumpIndex primaryIndex;
+    LumpMappings lumpMappings;  ///< Virtual (file) path => Lump name mapping.
+    PathMappings pathMappings;  ///< Virtual file-directory mapping.
 
-    /// Type-specific index for ZipFiles.
-    LumpIndex zipFileIndex;
+    Schemes schemes;            ///< File subsets.
 
-    /// Virtual (file) path => Lump name mapping.
-    LumpMappings lumpMappings;
-
-    /// Virtual file-directory mapping.
-    PathMappings pathMappings;
-
-    /// System subspace schemes containing subsets of the total files.
-    Schemes schemes;
-
-    Instance(FS1 *d)
-        : self(*d)
+    Instance(Public *i)
+        : Base(i)
         , loadingForStartup(true)
         , loadedFilesCRC   (0)
         , zipFileIndex     (true/*paths are unique*/)
@@ -123,7 +192,7 @@ struct FS1::Instance
         clearOpenFiles();
         clearIndexes();
 
-        fileIds.clear(); // Should be null-op if bookkeeping is correct.
+        fileIds.clear(); // Should be NOP, if bookkeeping is correct.
 
         pathMappings.clear();
         lumpMappings.clear();
@@ -157,14 +226,14 @@ struct FS1::Instance
         return false;
     }
 
-    void clearLoadedFiles(de::LumpIndex* index = 0)
+    void clearLoadedFiles(LumpIndex *index = 0)
     {
         loadedFilesCRC = 0;
 
         // Unload in reverse load order.
         for(int i = loadedFiles.size() - 1; i >= 0; i--)
         {
-            File1& file = loadedFiles[i]->file();
+            File1 &file = loadedFiles[i]->file();
             if(!index || index->catalogues(file))
             {
                 self.deindex(file);
@@ -175,8 +244,7 @@ struct FS1::Instance
 
     void clearOpenFiles()
     {
-        while(!openFiles.isEmpty())
-        { delete openFiles.takeLast(); }
+        while(!openFiles.isEmpty()){ delete openFiles.takeLast(); }
     }
 
     void clearIndexes()
@@ -185,12 +253,12 @@ struct FS1::Instance
         zipFileIndex.clear();
     }
 
-    String findPath(de::Uri const& search)
+    String findPath(de::Uri const &search)
     {
         // Within a subspace scheme?
         try
         {
-            FS1::Scheme& scheme = self.scheme(search.scheme());
+            Scheme &scheme = self.scheme(search.scheme());
             LOG_RES_XVERBOSE("Using scheme '%s'...") << scheme.name();
 
             // Ensure the scheme's index is up to date.
@@ -200,13 +268,13 @@ struct FS1::Instance
             String name = search.path().lastSegment().toString().fileNameWithoutExtension();
 
             // Perform the search.
-            FS1::Scheme::FoundNodes foundNodes;
+            Scheme::FoundNodes foundNodes;
             if(scheme.findAll(name, foundNodes))
             {
                 // At least one node name was matched (perhaps partially).
-                DENG2_FOR_EACH_CONST(FS1::Scheme::FoundNodes, i, foundNodes)
+                DENG2_FOR_EACH_CONST(Scheme::FoundNodes, i, foundNodes)
                 {
-                    PathTree::Node& node = **i;
+                    PathTree::Node &node = **i;
                     if(!node.comparePath(search.path(), PathTree::NoBranch))
                     {
                         // This is the file we are looking for.
@@ -218,22 +286,20 @@ struct FS1::Instance
             /// @todo Should return not-found here but some searches are still dependent
             ///       on falling back to a wider search. -ds
         }
-        catch(FS1::UnknownSchemeError const&)
+        catch(UnknownSchemeError const &)
         {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
-        de::File1* file = openFile(search.path(), "rb", 0, true /* allow duplicates */);
-        if(file)
+        QScopedPointer<File1> file(openFile(search.path(), "rb", 0, true /* allow duplicates */));
+        if(!file.isNull())
         {
-            String found = file->composePath();
-            delete file;
-            return found;
+            return file->composePath();
         }
 
         return ""; // Not found.
     }
 
-    File1* findLump(String path, String const& /*mode*/)
+    File1 *findLump(String path, String const & /*mode*/)
     {
         if(path.isEmpty()) return 0;
 
@@ -255,7 +321,7 @@ struct FS1::Instance
         {
             DENG2_FOR_EACH_CONST(LumpMappings, i, lumpMappings)
             {
-                LumpMapping const& mapping = *i;
+                LumpMapping const &mapping = *i;
                 if(mapping.first.compare(path)) continue;
 
                 lumpnum_t lumpNum = self.lumpNumForName(mapping.second);
@@ -268,9 +334,9 @@ struct FS1::Instance
         return 0;
     }
 
-    FILE* findAndOpenNativeFile(String path, String const& mymode, String& foundPath)
+    FILE *findAndOpenNativeFile(String path, String const &mymode, String &foundPath)
     {
-        DENG_ASSERT(!path.isEmpty());
+        DENG2_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
         path = NativePath::workPath().withSeparators('/') / path;
@@ -284,7 +350,7 @@ struct FS1::Instance
 
         // First try a real native file at this absolute path.
         NativePath nativePath = NativePath(path);
-        FILE* nativeFile = fopen(nativePath.toUtf8().constData(), mode);
+        FILE *nativeFile = fopen(nativePath.toUtf8().constData(), mode);
         if(nativeFile)
         {
             foundPath = nativePath.expand().withSeparators('/');
@@ -295,7 +361,7 @@ struct FS1::Instance
         if(!pathMappings.empty())
         {
             QByteArray pathUtf8 = path.toUtf8();
-            AutoStr* mapped = AutoStr_NewStd();
+            AutoStr *mapped = AutoStr_NewStd();
             DENG2_FOR_EACH_CONST(PathMappings, i, pathMappings)
             {
                 Str_Set(mapped, pathUtf8.constData());
@@ -315,8 +381,8 @@ struct FS1::Instance
         return 0;
     }
 
-    de::File1* openFile(String path, String const& mode, size_t baseOffset,
-                        bool allowDuplicate)
+    File1 *openFile(String path, String const& mode, size_t baseOffset,
+                    bool allowDuplicate)
     {
         if(path.isEmpty()) return 0;
 
@@ -329,13 +395,13 @@ struct FS1::Instance
 
         bool const reqNativeFile = mode.contains('f');
 
-        FileHandle* hndl = 0;
+        FileHandle *hndl = 0;
         FileInfo info; // The temporary info descriptor.
 
         // First check for lumps?
         if(!reqNativeFile)
         {
-            if(File1* found = findLump(path, mode))
+            if(File1 *found = findLump(path, mode))
             {
                 // Do not read files twice.
                 if(!allowDuplicate && !self.checkFileId(found->composeUri())) return 0;
@@ -343,7 +409,7 @@ struct FS1::Instance
                 // Get a handle to the lump we intend to open.
                 /// @todo The way this buffering works is nonsensical it should not be done here
                 ///        but should instead be deferred until the content of the lump is read.
-                hndl = FileHandleBuilder::fromLump(*found, /*baseOffset,*/ false/*dontBuffer*/);
+                hndl = FileHandle::fromLump(*found);
 
                 // Prepare a temporary info descriptor.
                 info = found->info();
@@ -354,7 +420,7 @@ struct FS1::Instance
         if(!hndl)
         {
             String foundPath;
-            if(FILE* found = findAndOpenNativeFile(path, mode, foundPath))
+            if(FILE *found = findAndOpenNativeFile(path, mode, foundPath))
             {
                 // Do not read files twice.
                 if(!allowDuplicate && !self.checkFileId(de::Uri(foundPath, RC_NULL)))
@@ -364,7 +430,7 @@ struct FS1::Instance
                 }
 
                 // Acquire a handle on the file we intend to open.
-                hndl = FileHandleBuilder::fromNativeFile(*found, baseOffset);
+                hndl = FileHandle::fromNativeFile(*found, baseOffset);
 
                 // Prepare the temporary info descriptor.
                 info = FileInfo(F_GetLastModified(foundPath.toUtf8().constData()));
@@ -378,7 +444,7 @@ struct FS1::Instance
         // been mapped to another location. We want the file to be attributed with
         // the path it is to be known by throughout the virtual file system.
 
-        File1& file = self.interpret(*hndl, path, info);
+        File1 &file = self.interpret(*hndl, path, info);
 
         if(loadingForStartup)
         {
@@ -389,85 +455,23 @@ struct FS1::Instance
     }
 };
 
-FS1::FS1()
-{
-    d = new Instance(this);
-    FileHandleBuilder::init();
-}
+FS1::FS1() : d(new Instance(this))
+{}
 
-FS1::~FS1()
+FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)
 {
-    delete d;
-    FileHandleBuilder::shutdown();
-}
-
-FS1::Scheme& FS1::createScheme(String name, Scheme::Flags flags)
-{
-    DENG_ASSERT(name.length() >= Scheme::min_name_length);
+    DENG2_ASSERT(name.length() >= Scheme::min_name_length);
 
     // Ensure this is a unique name.
     if(knownScheme(name)) return scheme(name);
 
     // Create a new scheme.
-    Scheme* newScheme = new Scheme(name, flags);
+    Scheme *newScheme = new Scheme(name, flags);
     d->schemes.insert(name.toLower(), newScheme);
     return *newScheme;
 }
 
-void FS1::consoleRegister()
-{
-    C_CMD("dir", "", Dir);
-    C_CMD("ls", "", Dir); // Alias
-    C_CMD("dir", "s*", Dir);
-    C_CMD("ls", "s*", Dir); // Alias
-
-    C_CMD("dump", "s", DumpLump);
-    C_CMD("listfiles", "", ListFiles);
-    C_CMD("listlumps", "", ListLumps);
-}
-
-/**
- * @note Performance is O(n).
- * @return @c iterator pointing to list->end() if not found.
- */
-static FS1::FileList::iterator findListFile(FS1::FileList& list, de::File1& file)
-{
-    if(list.empty()) return list.end();
-    // Perform the search.
-    FS1::FileList::iterator i;
-    for(i = list.begin(); i != list.end(); ++i)
-    {
-        if(&file == &(*i)->file())
-        {
-            break; // This is the node we are looking for.
-        }
-    }
-    return i;
-}
-
-/**
- * @note Performance is O(n).
- * @return @c iterator pointing to list->end() if not found.
- */
-static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String path)
-{
-    if(list.empty()) return list.end();
-    if(path.isEmpty()) return list.end();
-
-    // Perform the search.
-    FS1::FileList::iterator i;
-    for(i = list.begin(); i != list.end(); ++i)
-    {
-        de::File1& file = (*i)->file();
-        if(!file.composePath().compare(path, Qt::CaseInsensitive))
-        {
-            break; // This is the node we are looking for.
-        }
-    }
-    return i;
-}
-
-void FS1::index(de::File1 &file)
+void FS1::index(File1 &file)
 {
 #ifdef DENG_DEBUG
     // Ensure this hasn't yet been indexed.
@@ -479,7 +483,7 @@ void FS1::index(de::File1 &file)
     // Publish lumps to one or more indexes?
     if(Zip *zip = file.maybeAs<Zip>())
     {
-        if(!zip->empty())
+        if(!zip->isEmpty())
         {
             // Insert the lumps into their rightful places in the index.
             for(int i = 0; i < zip->lumpCount(); ++i)
@@ -506,18 +510,17 @@ void FS1::index(de::File1 &file)
     }
 
     // Add a handle to the loaded files list.
-    FileHandle *loadedFilesHndl = FileHandleBuilder::fromFile(file);
-    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s *>(&d->loadedFiles));
+    FileHandle *hndl = FileHandle::fromFile(file);
+    d->loadedFiles.push_back(hndl); hndl->setList(reinterpret_cast<de::FileList *>(&d->loadedFiles));
     d->loadedFilesCRC = 0;
 }
 
-void FS1::deindex(de::File1& file)
+void FS1::deindex(File1 &file)
 {
     FileList::iterator found = findListFile(d->loadedFiles, file);
     if(found == d->loadedFiles.end()) return; // Most peculiar..
 
-    QByteArray path = file.composePath().toUtf8();
-    d->releaseFileId(path.constData());
+    d->releaseFileId(file.composePath());
 
     d->zipFileIndex.pruneByFile(file);
     d->primaryIndex.pruneByFile(file);
@@ -527,7 +530,7 @@ void FS1::deindex(de::File1& file)
     delete *found;
 }
 
-de::File1& FS1::find(de::Uri const& search)
+File1 &FS1::find(de::Uri const &search)
 {
     LOG_AS("FS1::find");
     if(!search.isEmpty())
@@ -549,7 +552,7 @@ de::File1& FS1::find(de::Uri const& search)
                 return (*found)->file();
             }
         }
-        catch(de::Uri::ResolveError const& er)
+        catch(de::Uri::ResolveError const &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -560,7 +563,7 @@ de::File1& FS1::find(de::Uri const& search)
     throw NotFoundError("FS1::find", "No files found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
+String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
 {
     LOG_AS("FS1::findPath");
     if(!search.isEmpty())
@@ -591,13 +594,13 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
             {
                 DENG2_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
                 {
-                    String const& ext = *i;
+                    String const &ext = *i;
                     String found = d->findPath(de::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
                     if(!found.isEmpty()) return found;
                 }
             };
         }
-        catch(de::Uri::ResolveError const& er)
+        catch(de::Uri::ResolveError const &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -608,13 +611,13 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
     throw NotFoundError("FS1::findPath", "No paths found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(de::Uri const& search, int flags)
+String FS1::findPath(de::Uri const &search, int flags)
 {
     return findPath(search, flags, ResourceClass::classForId(RC_NULL));
 }
 
-#if _DEBUG
-static void printFileIds(FileIds const& fileIds)
+#ifdef DENG_DEBUG
+static void printFileIds(FileIds const &fileIds)
 {
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FileIds, i, fileIds)
@@ -626,20 +629,18 @@ static void printFileIds(FileIds const& fileIds)
 #endif
 
 #ifdef DENG_DEBUG
-static void printFileList(FS1::FileList& list)
+static void printFileList(FS1::FileList &list)
 {
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, list)
     {
-        de::FileHandle& hndl = **i;
-        de::File1& file = hndl.file();
-
-        QByteArray path = file.composePath().toUtf8();
-        FileId fileId = FileId::fromPath(path.constData());
+        FileHandle &hndl = **i;
+        File1 &file   = hndl.file();
+        FileId fileId = FileId::fromPath(file.composePath());
 
         LOGDEV_RES_VERBOSE(" %c%d: %s - \"%s\" (handle: %p)")
-            << (file.hasStartup()? '*' : ' ') << idx
-            << fileId << fileId.path() << (void*)&hndl;
+                << (file.hasStartup()? '*' : ' ') << idx
+                << fileId << fileId.path() << &hndl;
         ++idx;
     }
 }
@@ -661,7 +662,7 @@ int FS1::unloadAllNonStartupFiles()
     int numUnloadedFiles = 0;
     for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
     {
-        File1& file = d->loadedFiles[i]->file();
+        File1 &file = d->loadedFiles[i]->file();
         if(file.hasStartup()) continue;
 
         deindex(file);
@@ -669,7 +670,7 @@ int FS1::unloadAllNonStartupFiles()
         numUnloadedFiles += 1;
     }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     // Sanity check: look for orphaned identifiers.
     if(!d->fileIds.empty())
     {
@@ -681,7 +682,7 @@ int FS1::unloadAllNonStartupFiles()
     return numUnloadedFiles;
 }
 
-bool FS1::checkFileId(de::Uri const& path)
+bool FS1::checkFileId(de::Uri const &path)
 {
     if(!accessFile(path)) return false;
 
@@ -727,11 +728,11 @@ lumpnum_t FS1::lumpNumForName(String name)
     return d->primaryIndex.findLast(Path(name));
 }
 
-void FS1::releaseFile(de::File1& file)
+void FS1::releaseFile(File1 &file)
 {
     for(int i = d->openFiles.size() - 1; i >= 0; i--)
     {
-        FileHandle& hndl = *(d->openFiles[i]);
+        FileHandle &hndl = *(d->openFiles[i]);
         if(&hndl.file() == &file)
         {
             d->openFiles.removeAt(i);
@@ -745,7 +746,7 @@ static Wad *findFirstWadFile(FS1::FileList &list, bool custom)
     if(list.empty()) return 0;
     DENG2_FOR_EACH(FS1::FileList, i, list)
     {
-        de::File1 &file = (*i)->file();
+        File1 &file = (*i)->file();
         if(custom != file.hasCustom()) continue;
 
         if(Wad *wad = file.maybeAs<Wad>())
@@ -765,7 +766,7 @@ uint FS1::loadedFilesCRC()
          * @todo Really kludgy...
          */
         // CRC not calculated yet, let's do it now.
-        Wad* iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
+        Wad *iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
         if(!iwad) return 0;
         d->loadedFilesCRC = iwad->calculateCRC();
     }
@@ -777,8 +778,8 @@ FS1::FileList const &FS1::loadedFiles() const
     return d->loadedFiles;
 }
 
-int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* parameters,
-                 FS1::FileList& found) const
+int FS1::findAll(bool (*predicate)(File1 &file, void *parameters), void *parameters,
+    FS1::FileList &found) const
 {
     int numFound = 0;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
@@ -792,7 +793,7 @@ int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* par
     return numFound;
 }
 
-int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
+int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
 {
     int const numFoundSoFar = found.count();
 
@@ -815,7 +816,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
         if(!(flags & SearchPath::NoDescend))
         {
             filePath = lump.composePath();
-            patternMatched = F_MatchFileName(filePath, searchPattern);
+            patternMatched = matchFileName(filePath, searchPattern);
         }
         else
         {
@@ -840,7 +841,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     {
         DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
-            if(!F_MatchFileName(i->first, searchPattern)) continue;
+            if(!matchFileName(i->first, searchPattern)) continue;
 
             found.push_back(PathListItem(i->first, 0 /*only filepaths (i.e., leaves) can be mapped to lumps*/));
         }
@@ -856,7 +857,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     {
         QByteArray searchDirectoryUtf8 = searchDirectory.toUtf8();
         PathList nativeFilePaths;
-        AutoStr* wildPath = AutoStr_NewStd();
+        AutoStr *wildPath = AutoStr_NewStd();
         Str_Reserve(wildPath, searchDirectory.length() + 2 + 16); // Conservative estimate.
 
         for(int i = -1; i < (int)d->pathMappings.count(); ++i)
@@ -881,7 +882,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
                         String foundPath = searchDirectory / NativePath(Str_Text(&fd.name)).withSeparators('/');
-                        if(!F_MatchFileName(foundPath, searchPattern)) continue;
+                        if(!matchFileName(foundPath, searchPattern)) continue;
 
                         nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
@@ -900,11 +901,11 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     return found.count() - numFoundSoFar;
 }
 
-de::File1 &FS1::interpret(de::FileHandle &hndl, String filePath, FileInfo const &info)
+File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
 {
-    DENG_ASSERT(!filePath.isEmpty());
+    DENG2_ASSERT(!filePath.isEmpty());
 
-    de::File1 *interpretedFile = 0;
+    File1 *interpretedFile = 0;
 
     // Firstly try the interpreter for the guessed resource types.
     FileType const &ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
@@ -938,13 +939,13 @@ de::File1 &FS1::interpret(de::FileHandle &hndl, String filePath, FileInfo const 
         interpretedFile = new File1(hndl, filePath, info, container);
     }
 
-    DENG_ASSERT(interpretedFile);
+    DENG2_ASSERT(interpretedFile);
     return *interpretedFile;
 }
 
-de::FileHandle& FS1::openFile(String const& path, String const& mode, size_t baseOffset, bool allowDuplicate)
+FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOffset, bool allowDuplicate)
 {
-#if _DEBUG
+#ifdef DENG_DEBUG
     for(int i = 0; i < mode.length(); ++i)
     {
         if(mode[i] != 'r' && mode[i] != 't' && mode[i] != 'b' && mode[i] != 'f')
@@ -952,36 +953,31 @@ de::FileHandle& FS1::openFile(String const& path, String const& mode, size_t bas
     }
 #endif
 
-    File1* file = d->openFile(path, mode, baseOffset, allowDuplicate);
+    File1 *file = d->openFile(path, mode, baseOffset, allowDuplicate);
     if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + path + "'");
 
     // Add a handle to the opened files list.
-    FileHandle& openFilesHndl = *FileHandleBuilder::fromFile(*file);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
-    return openFilesHndl;
+    FileHandle &hndl = *FileHandle::fromFile(*file);
+    d->openFiles.push_back(&hndl); hndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
+    return hndl;
 }
 
-de::FileHandle& FS1::openLump(de::File1& lump)
+FileHandle &FS1::openLump(File1 &lump)
 {
     // Add a handle to the opened files list.
-    FileHandle& openFilesHndl = *FileHandleBuilder::fromLump(lump, false/*do buffer*/);
-    d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
-    return openFilesHndl;
+    FileHandle &hndl = *FileHandle::fromLump(lump);
+    d->openFiles.push_back(&hndl); hndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
+    return hndl;
 }
 
-bool FS1::accessFile(de::Uri const& search)
+bool FS1::accessFile(de::Uri const &search)
 {
     try
     {
-        String searchPath = search.resolved();
-        de::File1* file = d->openFile(searchPath, "rb", 0, true /* allow duplicates */);
-        if(file)
-        {
-            delete file;
-            return true;
-        }
+        QScopedPointer<File1> file(d->openFile(search.resolved(), "rb", 0, true /* allow duplicates */));
+        return !file.isNull();
     }
-    catch(de::Uri::ResolveError const& er)
+    catch(de::Uri::ResolveError const &er)
     {
         // Log but otherwise ignore unresolved paths.
         LOGDEV_RES_VERBOSE(er.asText());
@@ -1004,12 +1000,12 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
     LumpMappings::iterator found = d->lumpMappings.begin();
     for(; found != d->lumpMappings.end(); ++found)
     {
-        LumpMapping const& ldm = *found;
+        LumpMapping const &ldm = *found;
         if(!ldm.first.compare(destination, Qt::CaseInsensitive))
             break;
     }
 
-    LumpMapping* ldm;
+    LumpMapping *ldm;
     if(found == d->lumpMappings.end())
     {
         // No. Acquire another mapping.
@@ -1032,16 +1028,16 @@ void FS1::clearPathLumpMappings()
 }
 
 /// @return  @c true iff the mapping matched the path.
-static bool applyPathMapping(ddstring_t* path, PathMapping const& pm)
+static bool applyPathMapping(ddstring_t *path, PathMapping const &pm)
 {
     if(!path) return false;
     QByteArray destUtf8 = pm.first.toUtf8();
-    AutoStr* dest = AutoStr_FromTextStd(destUtf8.constData());
+    AutoStr *dest = AutoStr_FromTextStd(destUtf8.constData());
     if(qstrnicmp(Str_Text(path), Str_Text(dest), Str_Length(dest))) return false;
 
     // Replace the beginning with the source path.
     QByteArray sourceUtf8 = pm.second.toUtf8();
-    AutoStr* temp = AutoStr_FromTextStd(sourceUtf8.constData());
+    AutoStr *temp = AutoStr_FromTextStd(sourceUtf8.constData());
     Str_PartAppend(temp, Str_Text(path), pm.first.length(), Str_Length(path) - pm.first.length());
     Str_Copy(path, temp);
     return true;
@@ -1055,7 +1051,7 @@ void FS1::addPathMapping(String source, String destination)
     PathMappings::iterator found = d->pathMappings.begin();
     for(; found != d->pathMappings.end(); ++found)
     {
-        PathMapping const& pm = *found;
+        PathMapping const &pm = *found;
         if(!pm.second.compare(source, Qt::CaseInsensitive))
             break;
     }
@@ -1075,7 +1071,7 @@ void FS1::addPathMapping(String source, String destination)
     }
 
     LOG_RES_MSG("Path \"%s\" now mapped to \"%s\"")
-        << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
+            << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
 }
 
 void FS1::clearPathMappings()
@@ -1112,7 +1108,7 @@ bool FS1::knownScheme(String name)
     return false;
 }
 
-FS1::Scheme& FS1::scheme(String name)
+FS1::Scheme &FS1::scheme(String name)
 {
     if(!name.isEmpty())
     {
@@ -1123,7 +1119,7 @@ FS1::Scheme& FS1::scheme(String name)
     throw UnknownSchemeError("FS1::scheme", "No scheme found matching '" + name + "'");
 }
 
-FS1::Schemes const& FS1::allSchemes()
+FS1::Schemes const &FS1::allSchemes()
 {
     return d->schemes;
 }
@@ -1131,7 +1127,7 @@ FS1::Schemes const& FS1::allSchemes()
 /// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
     if(argc > 1)
     {
         for(int i = 1; i < argc; ++i)
@@ -1150,15 +1146,14 @@ D_CMD(Dir)
 /// Dump a copy of a virtual file to the runtime directory.
 D_CMD(DumpLump)
 {
-    DENG_UNUSED(src);
-    DENG_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
 
     if(fileSystem)
     {
         lumpnum_t lumpNum = App_FileSystem().lumpNumForName(argv[1]);
         if(lumpNum >= 0)
         {
-            return F_DumpLump(lumpNum);
+            return F_DumpFile(App_FileSystem().lump(lumpNum), 0);
         }
         LOG_RES_ERROR("No such lump");
         return false;
@@ -1182,7 +1177,7 @@ D_CMD(ListLumps)
     int idx = 0;
     DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, lumpIndex.allLumps())
     {
-        de::File1 const &lump = **i;
+        File1 const &lump = **i;
         String containerPath  = NativePath(lump.container().composePath()).pretty();
         String lumpPath       = NativePath(lump.composePath()).pretty();
 
@@ -1212,7 +1207,7 @@ D_CMD(ListFiles)
         FS1::FileList const &allLoadedFiles = App_FileSystem().loadedFiles();
         DENG2_FOR_EACH_CONST(FS1::FileList, i, allLoadedFiles)
         {
-            de::File1 &file = (*i)->file();
+            File1 &file = (*i)->file();
             uint crc = 0;
 
             int fileCount = 1;
@@ -1227,7 +1222,7 @@ D_CMD(ListFiles)
             }
 
             LOG_RES_MSG(" %s " _E(2)_E(>) "(%i %s%s)%s")
-                    << de::NativePath(file.composePath()).pretty()
+                    << NativePath(file.composePath()).pretty()
                     << fileCount << (fileCount != 1 ? "files" : "file")
                     << (file.hasStartup()? ", startup" : "")
                     << (crc? QString(" [%1]").arg(crc, 0, 16) : "");
@@ -1243,9 +1238,17 @@ D_CMD(ListFiles)
     return true;
 }
 
-/**
- * C Wrapper API
- */
+void FS1::consoleRegister()
+{
+    C_CMD("dir", "",   Dir);
+    C_CMD("ls",  "",   Dir); // Alias
+    C_CMD("dir", "s*", Dir);
+    C_CMD("ls",  "s*", Dir); // Alias
+
+    C_CMD("dump",      "s", DumpLump);
+    C_CMD("listfiles", "",  ListFiles);
+    C_CMD("listlumps", "",  ListLumps);
+}
 
 FS1 &App_FileSystem()
 {
@@ -1255,419 +1258,17 @@ FS1 &App_FileSystem()
 
 String App_BasePath()
 {
-    /// @todo Shouldn't this end in '/'? It causes failure to locate doomsday.pk3...
-    return App::app().nativeBasePath().withSeparators('/'); // + '/';
+    return App::app().nativeBasePath().withSeparators('/');
 }
 
-void F_Register(void)
+void F_Init()
 {
-    FS1::consoleRegister();
+    DENG2_ASSERT(!fileSystem);
+    fileSystem = new FS1();
 }
 
-void F_Init(void)
-{
-    DENG_ASSERT(!fileSystem);
-    fileSystem = new de::FS1();
-}
-
-void F_Shutdown(void)
+void F_Shutdown()
 {
     if(!fileSystem) return;
     delete fileSystem; fileSystem = 0;
-}
-
-void F_EndStartup(void)
-{
-    App_FileSystem().endStartup();
-}
-
-int F_UnloadAllNonStartupFiles(void)
-{
-    return App_FileSystem().unloadAllNonStartupFiles();
-}
-
-void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath)
-{
-    String source      = NativePath(nativeSourcePath).expand().withSeparators('/');
-    String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem().addPathMapping(source, destination);
-}
-
-void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath)
-{
-    String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem().addPathLumpMapping(destination, String(lumpName));
-}
-
-void F_ResetFileIds(void)
-{
-    App_FileSystem().resetFileIds();
-}
-
-dd_bool F_CheckFileId(char const* nativePath)
-{
-    return App_FileSystem().checkFileId(de::Uri::fromNativePath(nativePath));
-}
-
-int F_LumpCount(void)
-{
-    return App_FileSystem().nameIndex().size();
-}
-
-int F_Access(char const* nativePath)
-{
-    de::Uri path = de::Uri::fromNativePath(nativePath);
-    return App_FileSystem().accessFile(path)? 1 : 0;
-}
-
-void F_Index(struct file1_s* file)
-{
-    if(!file) return;
-    App_FileSystem().index(*reinterpret_cast<de::File1*>(file));
-}
-
-void F_Deindex(struct file1_s* file)
-{
-    if(!file) return;
-    App_FileSystem().deindex(*reinterpret_cast<de::File1*>(file));
-}
-
-void F_ReleaseFile(struct file1_s* file)
-{
-    if(!file) return;
-    App_FileSystem().releaseFile(*reinterpret_cast<de::File1*>(file));
-}
-
-struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, dd_bool allowDuplicate)
-{
-    try
-    {
-        // Relative paths are relative to the native working directory.
-        String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem().openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
-}
-
-struct filehandle_s* F_Open2(char const* nativePath, char const* mode, size_t baseOffset)
-{
-    return F_Open3(nativePath, mode, baseOffset, true/*allow duplicates*/);
-}
-
-struct filehandle_s* F_Open(char const* nativePath, char const* mode)
-{
-    return F_Open2(nativePath, mode, 0/*base offset*/);
-}
-
-struct filehandle_s *F_OpenLump(lumpnum_t lumpNum)
-{
-    de::FS1 &fileSys = App_FileSystem();
-    try
-    {
-        return reinterpret_cast<struct filehandle_s*>(&fileSys.openLump(fileSys.lump(lumpNum)));
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
-}
-
-dd_bool F_IsValidLumpNum(lumpnum_t lumpNum)
-{
-    return App_FileSystem().nameIndex().hasLump(lumpNum);
-}
-
-lumpnum_t F_LumpNumForName(char const* name)
-{
-    try
-    {
-        return App_FileSystem().lumpNumForName(name);
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore error.
-    return -1;
-}
-
-AutoStr* F_LumpName(lumpnum_t lumpNum)
-{
-    try
-    {
-        String const &name = App_FileSystem().lump(lumpNum).name();
-        QByteArray nameUtf8 = name.toUtf8();
-        return AutoStr_FromTextStd(nameUtf8.constData());
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return AutoStr_NewStd();
-}
-
-size_t F_LumpLength(lumpnum_t lumpNum)
-{
-    try
-    {
-        return App_FileSystem().lump(lumpNum).size();
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return 0;
-}
-
-uint F_LumpLastModified(lumpnum_t lumpNum)
-{
-    try
-    {
-        return App_FileSystem().lump(lumpNum).lastModified();
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return (uint)time(0);
-}
-
-void F_Delete(struct filehandle_s *_hndl)
-{
-    if(!_hndl) return;
-    de::FileHandle& hndl = *reinterpret_cast<de::FileHandle*>(_hndl);
-    App_FileSystem().releaseFile(hndl.file());
-    delete &hndl;
-}
-
-AutoStr* F_ComposePath(struct file1_s const* _file)
-{
-    if(!_file) return AutoStr_NewStd();
-    de::File1 const& file = reinterpret_cast<de::File1 const&>(*_file);
-    QByteArray path = file.composePath().toUtf8();
-    return AutoStr_FromTextStd(path.constData());
-}
-
-void F_SetCustom(struct file1_s* file, dd_bool yes)
-{
-    if(!file) return;
-    reinterpret_cast<de::File1*>(file)->setCustom(CPP_BOOL(yes));
-}
-
-size_t F_ReadLump(struct file1_s *_file, int lumpIdx, uint8_t *buffer)
-{
-    if(!_file) return 0;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
-    if(Wad *wad = file->maybeAs<Wad>())
-    {
-        return wad->lump(lumpIdx).read(buffer);
-    }
-    if(Zip *zip = file->maybeAs<Zip>())
-    {
-        return zip->lump(lumpIdx).read(buffer);
-    }
-    return file->read(buffer);
-}
-
-size_t F_ReadLumpSection(struct file1_s *_file, int lumpIdx, uint8_t *buffer,
-    size_t startOffset, size_t length)
-{
-    if(!_file) return 0;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        return wad->lump(lumpIdx).read(buffer, startOffset, length);
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        return zip->lump(lumpIdx).read(buffer, startOffset, length);
-    }
-    return file->read(buffer, startOffset, length);
-}
-
-uint8_t const *F_CacheLump(struct file1_s *_file, int lumpIdx)
-{
-    if(!_file) return 0;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        return wad->lump(lumpIdx).cache();
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        return zip->lump(lumpIdx).cache();
-    }
-    return file->cache();
-}
-
-void F_UnlockLump(struct file1_s *_file, int lumpIdx)
-{
-    if(!_file) return;
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        wad->unlockLump(lumpIdx);
-        return;
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        zip->unlockLump(lumpIdx);
-        return;
-    }
-    file->unlock();
-}
-
-struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx)
-{
-    try
-    {
-        de::File1 const &lump = App_FileSystem().lump(lumpNum);
-        if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
-        return reinterpret_cast<struct file1_s *>(&lump.container());
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
-}
-
-struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum)
-{
-    try
-    {
-        return reinterpret_cast<struct file1_s *>(&App_FileSystem().lump(lumpNum).container());
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
-}
-
-AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum)
-{
-    try
-    {
-        QByteArray path = App_FileSystem().lump(lumpNum).container().composePath().toUtf8();
-        return AutoStr_FromTextStd(path.constData());
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return AutoStr_NewStd();
-}
-
-dd_bool F_LumpIsCustom(lumpnum_t lumpNum)
-{
-    try
-    {
-        return App_FileSystem().lump(lumpNum).container().hasCustom();
-    }
-    catch(LumpIndex::NotFoundError const&)
-    {} // Ignore this error.
-    return false;
-}
-
-AutoStr *F_ComposeLumpPath2(struct file1_s *_file, int lumpIdx, char delimiter)
-{
-    if(!_file) return AutoStr_NewStd();
-    de::File1 *file = reinterpret_cast<de::File1 *>(_file);
-    DENG_ASSERT(file != 0);
-    if(de::Wad *wad = file->maybeAs<de::Wad>())
-    {
-        QByteArray path = wad->lump(lumpIdx).composePath(delimiter).toUtf8();
-        return AutoStr_FromTextStd(path.constData());
-    }
-    if(de::Zip *zip = file->maybeAs<de::Zip>())
-    {
-        QByteArray path = zip->lump(lumpIdx).composePath(delimiter).toUtf8();
-        return AutoStr_FromTextStd(path.constData());
-    }
-    QByteArray path = file->composePath(delimiter).toUtf8();
-    return AutoStr_FromTextStd(path.constData());
-}
-
-AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx)
-{
-    return F_ComposeLumpPath2(file, lumpIdx, '/');
-}
-
-/**
- * @defgroup pathToStringFlags  Path To String Flags
- * @ingroup flags
- */
-///@{
-#define PTSF_QUOTED                     0x1 ///< Add double quotes around the path.
-#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2 ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
-#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
-///@}
-
-#define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
-
-/**
- * @param files      List of files from which to compose the path string.
- * @param flags      @ref pathToStringFlags
- * @param delimiter  If not @c NULL, path fragments in the resultant string
- *                   will be delimited by this.
- *
- * @return  New string containing a concatenated, possibly delimited set of
- *          all file paths in the list.
- */
-static String composeFilePathString(FS1::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
-                                    String const& delimiter = ";")
-{
-    String result;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
-    {
-        de::File1& file = (*i)->file();
-
-        if(flags & PTSF_QUOTED)
-            result.append('"');
-
-        if(flags & PTSF_TRANSFORM_EXCLUDE_PATH)
-        {
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-                result.append(file.name().fileNameWithoutExtension());
-            else
-                result.append(file.name());
-        }
-        else
-        {
-            String path = file.composePath();
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-            {
-                result.append(path.fileNamePath() + '/' + path.fileNameWithoutExtension());
-            }
-            else
-            {
-                result.append(path);
-            }
-        }
-
-        if(flags & PTSF_QUOTED)
-            result.append('"');
-
-        if(*i != files.last())
-            result.append(delimiter);
-    }
-
-    return result;
-}
-
-static bool findCustomFilesPredicate(de::File1& file, void* /*parameters*/)
-{
-    return file.hasCustom();
-}
-
-/**
- * Compiles a list of file names, separated by @a delimiter.
- */
-void F_ComposePWADFileList(char* outBuf, size_t outBufSize, char const* delimiter)
-{
-    if(!outBuf || 0 == outBufSize) return;
-    memset(outBuf, 0, outBufSize);
-
-    FS1::FileList foundFiles;
-    if(!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
-
-    String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
-    QByteArray strUtf8 = str.toUtf8();
-    strncpy(outBuf, strUtf8.constData(), outBufSize);
-}
-
-uint F_LoadedFilesCRC(void)
-{
-    return App_FileSystem().loadedFilesCRC();
 }

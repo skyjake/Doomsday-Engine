@@ -74,7 +74,6 @@ HEADERS += \
     include/doomsday/dualstring.h \
     include/doomsday/filesys/file.h \
     include/doomsday/filesys/filehandle.h \
-    include/doomsday/filesys/filehandlebuilder.h \
     include/doomsday/filesys/fileid.h \
     include/doomsday/filesys/fileinfo.h \
     include/doomsday/filesys/filetype.h \
@@ -117,6 +116,7 @@ SOURCES += \
     src/filesys/fs_main.cpp \
     src/filesys/fs_scheme.cpp \
     src/filesys/fs_util.cpp \
+    src/filesys/lumpcache.cpp \
     src/filesys/lumpindex.cpp \
     src/filesys/searchpath.cpp \
     src/filesys/sys_direc.cpp \

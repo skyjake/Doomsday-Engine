@@ -31,14 +31,14 @@
 
 using namespace de;
 
-static byte inByte(de::FileHandle *file)
+static byte inByte(FileHandle *file)
 {
     byte b;
     file->read((uint8_t *)&b, sizeof(b));
     return b;
 }
 
-static ushort inShort(de::FileHandle *file)
+static ushort inShort(FileHandle *file)
 {
     ushort s;
     file->read((uint8_t *)&s, sizeof(s));
@@ -112,7 +112,7 @@ DENG2_PIMPL(BitmapFont)
         return accumSize / glyphCount;
     }
 
-    uint8_t *readFormat0(de::FileHandle *file)
+    uint8_t *readFormat0(FileHandle *file)
     {
         DENG2_ASSERT(file != 0);
 
@@ -167,7 +167,7 @@ DENG2_PIMPL(BitmapFont)
         return (uint8_t *)image;
     }
 
-    uint8_t *readFormat2(de::FileHandle *file)
+    uint8_t *readFormat2(FileHandle *file)
     {
         DENG2_ASSERT(file != 0);
 
@@ -298,7 +298,7 @@ void BitmapFont::glInit()
     {
         // Relative paths are relative to the native working directory.
         String path = (NativePath::workPath() / NativePath(d->filePath).expand()).withSeparators('/');
-        de::FileHandle *hndl = &App_FileSystem().openFile(path, "rb");
+        FileHandle *hndl = &App_FileSystem().openFile(path, "rb");
 
         int format = inByte(hndl);
 

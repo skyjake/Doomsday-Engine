@@ -1,7 +1,8 @@
-/** @file defs/dedfile.h  Definition files. @ingroup defs
+/** @file dedfile.h  Definition files.
+ * @ingroup defs
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,13 +24,14 @@
 
 #include "../libdoomsday.h"
 #include "ded.h"
+#include <de/String>
 
-LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, char const* path);
+LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, de::String path);
 
 /**
  * Reads definitions from the given lump.
  */
-LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
+LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum);
 
 /**
  * Reads definitions from the given buffer.
@@ -38,12 +40,12 @@ LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
  * @param buffer        The data to be read, must be null-terminated.
  * @param _sourceFile   Just FYI.
  */
-int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile);
+int DED_ReadData(ded_t *ded, char const *buffer, de::String _sourceFile);
 
 /**
  * @return  @c true, if the file was successfully loaded.
  */
-int DED_Read(ded_t* ded, const char* path);
+int DED_Read(ded_t *ded, de::String path);
 
 void DED_SetError(char const *str);
 

@@ -1,7 +1,7 @@
 /** @file dd_winit.cpp  Engine Initialization (Windows).
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -33,68 +33,27 @@
 #include <stdlib.h>
 #include <tchar.h>
 
-#include "resource.h"
-
 #include "de_base.h"
-#include "de_graphics.h"
-#include "de_console.h"
 #include "de_system.h"
-#include "de_play.h"
-#include "de_network.h"
-#include "de_misc.h"
-#include "de_ui.h"
 #include "dd_winit.h"
 
-#include <doomsday/filesys/fs_util.h>
 #include <doomsday/paths.h>
+#include <de/App>
+
+using namespace de;
 
 application_t app;
 
-#ifdef UNICODE
-static LPWSTR convBuf;
-static LPSTR utf8ConvBuf;
-#endif
-
-#ifdef UNICODE
-LPCWSTR ToWideString(const char* str)
-{
-    // Determine the length of the output string.
-    int wideChars = MultiByteToWideChar(CP_UTF8, 0, str, -1, 0, 0);
-
-    // Allocate the right amount of memory.
-    int bufSize = wideChars * sizeof(wchar_t) + 1;
-    convBuf = (LPWSTR) M_Realloc(convBuf, bufSize);
-    memset(convBuf, 0, bufSize);
-
-    MultiByteToWideChar(CP_ACP, 0, str, -1, convBuf, wideChars);
-
-    return convBuf;
-}
-
-LPCSTR ToAnsiString(const wchar_t* wstr)
-{
-    // Determine how much memory is needed for the output string.
-    int utfBytes = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, 0, 0, 0, 0);
-
-    // Allocate the right amount of memory.
-    utf8ConvBuf = (LPSTR) M_Realloc(utf8ConvBuf, utfBytes);
-
-    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, utf8ConvBuf, utfBytes, 0, 0);
-
-    return utf8ConvBuf;
-}
-#endif
-
 /**
- * \note GetLastError() should only be called when we *know* an error was thrown.
+ * @note GetLastError() should only be called when we *know* an error was thrown.
  * The result of calling this any other time is undefined.
  *
  * @return Ptr to a string containing a textual representation of the last
  * error thrown in the current thread else @c NULL.
  */
-const char* DD_Win32_GetLastErrorMessage(void)
+char const *DD_Win32_GetLastErrorMessage()
 {
-    static char* buffer = 0; /// @todo Never free'd!
+    static char *buffer = 0; /// @todo Never free'd!
     static size_t currentBufferSize = 0;
 
     LPVOID lpMsgBuf;
@@ -113,8 +72,9 @@ const char* DD_Win32_GetLastErrorMessage(void)
     dd_snprintf(buffer, currentBufferSize, "#%-5d: ", (int)dw);
 
     // Continue splitting as long as there are parts.
-    { char* part, *cursor = (char*)lpMsgBuf;
+    char *part, *cursor = (char *)lpMsgBuf;
     while(*(part = M_StrTok(&cursor, "\n")))
+    {
         strcat(buffer, part);
     }
 
@@ -123,100 +83,9 @@ const char* DD_Win32_GetLastErrorMessage(void)
     return buffer;
 }
 
-static BOOL initDGL(void)
+dd_bool DD_Win32_Init()
 {
-#ifdef __CLIENT__
-    return (BOOL) Sys_GLPreInit();
-#else
-    return TRUE;
-#endif
-}
-
-static void determineGlobalPaths(application_t* app)
-{
-    assert(app);
-
-    // Where are we?
-#if defined(DENG_LIBRARY_DIR)
-#  if !defined(_DEBUG)
-#pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
-#  endif
-    {
-    filename_t path;
-    directory_t* temp;
-
-    dd_snprintf(path, FILENAME_T_MAXLEN, "%s", DENG_LIBRARY_DIR);
-    // Ensure it ends with a directory separator.
-    F_AppendMissingSlashCString(path, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolutePath(path);
-    temp = Dir_FromText(path);
-    DD_SetBinPath(Str_Text(temp));
-    Dir_Delete(temp);
-    }
-#else
-    {
-        directory_t* temp;
-#ifdef UNICODE
-        wchar_t path[FILENAME_T_MAXLEN];
-        GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-        temp = Dir_FromText(ToAnsiString(path));
-#else
-        filename_t path;
-        GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-        temp = Dir_FromText(path);
-#endif
-        DD_SetBinPath(Dir_Path(temp));
-        Dir_Delete(temp);
-    }
-#endif
-
-    // The -userdir option sets the working directory.
-    if(CommandLine_CheckWith("-userdir", 1))
-    {
-        filename_t runtimePath;
-        directory_t* temp;
-
-        strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
-        Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
-        // Ensure the path is closed with a directory separator.
-        F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
-
-        temp = Dir_New(runtimePath);
-        app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
-        if(app->usingUserDir)
-        {
-            DD_SetRuntimePath(Dir_Path(temp));
-        }
-        Dir_Delete(temp);
-    }
-
-    if(!app->usingUserDir)
-    {
-        // The current working directory is the runtime dir.
-        directory_t* temp = Dir_NewFromCWD();
-        Dir_SetCurrent(Dir_Path(temp));
-        DD_SetRuntimePath(Dir_Path(temp));
-        Dir_Delete(temp);
-    }
-
-    if(CommandLine_CheckWith("-basedir", 1))
-    {
-        DD_SetBasePath(CommandLine_Next());
-    }
-    else
-    {
-        // The standard base directory is one level up from the bin dir.
-        filename_t base;
-        dd_snprintf(base, FILENAME_T_MAXLEN, "%s../", DD_BinPath());
-        DD_SetBasePath(base);
-    }
-}
-
-dd_bool DD_Win32_Init(void)
-{
-    BOOL failed = TRUE;
-
-    memset(&app, 0, sizeof(app));
+    zap(app);
     app.hInstance = GetModuleHandle(NULL);
 
     // Initialize COM.
@@ -227,19 +96,48 @@ dd_bool DD_Win32_Init(void)
 
     Library_Init();
 
-    // Determine our basedir and other global paths.
-    determineGlobalPaths(&app);
+    // Change to a custom working directory?
+    if(CommandLine_CheckWith("-userdir", 1))
+    {
+        String runtimePath = QDir::cleanPath(CommandLine_NextAsPath());
+        if(NativePath::setWorkPath(runtimePath))
+        {
+            LOG_VERBOSE("Changed current directory to \"%s\"") << NativePath::workPath();
+            app.usingUserDir = true;
+        }
+    }
 
+    // The runtime directory is the current working directory.
+    DD_SetRuntimePath((NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
+
+    // Use a custom base directory?
+    if(CommandLine_CheckWith("-basedir", 1))
+    {
+        DD_SetBasePath(CommandLine_Next());
+    }
+    else
+    {
+        // The default base directory is one level up from the bin dir.
+        String binDir  = App::executablePath().fileNamePath().withSeparators('/');
+        String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
+        DD_SetBasePath(baseDir.toUtf8().constData());
+    }
+
+    // Perform early initialization of subsystems that require it.
+    BOOL failed = TRUE;
     if(!DD_EarlyInit())
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
     }
-    else if(!initDGL())
+#ifdef __CLIENT__
+    else if(!Sys_GLPreInit())
     {
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing GL.", 0);
     }
+#endif
     else
-    {   // All initialization complete.
+    {
+        // All initialization complete.
         failed = FALSE;
     }
 
@@ -264,11 +162,6 @@ void DD_Shutdown()
     DD_ShutdownAll(); // Stop all engine subsystems.
     Plug_UnloadAll();
     Library_Shutdown();
-
-#ifdef UNICODE
-    M_Free(convBuf); convBuf = 0;
-    M_Free(utf8ConvBuf); utf8ConvBuf = 0;
-#endif
 
     // No more use of COM beyond, this point.
     CoUninitialize();

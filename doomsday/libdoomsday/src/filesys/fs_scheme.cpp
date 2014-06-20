@@ -526,7 +526,7 @@ bool FS1::Scheme::mapPath(String &path) const
     return true;
 }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
 void FS1::Scheme::debugPrint() const
 {
     LOG_AS("Scheme::debugPrint");

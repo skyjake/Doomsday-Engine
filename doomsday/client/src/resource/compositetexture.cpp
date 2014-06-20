@@ -221,7 +221,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
                 /// There is now one more found component.
                 foundComponentCount += 1;
 
-                de::File1 &file = App_FileSystem().lump(comp.lumpNum());
+                File1 &file = App_FileSystem().lump(comp.lumpNum());
 
                 // If this a "custom" component - the whole texture is.
                 if(file.container().hasCustom())

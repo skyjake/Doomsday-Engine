@@ -44,7 +44,7 @@
 
 using namespace de;
 
-static filename_t cfgFile;
+static Path cfgFile;
 static int flagsAllow;
 
 static void writeHeaderComment(FILE *file)
@@ -225,21 +225,22 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
     return true;
 }
 
-bool Con_ParseCommands(char const *fileName, int flags)
+bool Con_ParseCommands(Path const &fileName, int flags)
 {
     bool const setDefault = (flags & CPCF_SET_DEFAULT) != 0;
 
     // Is this supposed to be the default?
     if(setDefault)
     {
-        strncpy(cfgFile, fileName, FILENAME_T_MAXLEN);
-        cfgFile[FILENAME_T_LASTINDEX] = '\0';
+        cfgFile = fileName;
     }
 
     // Update the allowed operations.
     flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
-    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)") << F_PrettyPath(fileName) << setDefault;
+    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)")
+            << NativePath(fileName).pretty()
+            << setDefault;
 
     return Con_Parse(fileName, setDefault /* => silently */);
 }

@@ -42,6 +42,7 @@
 #include "doomsday/defs/model.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
+#include "doomsday/filesys/sys_direc.h"
 #include "doomsday/uri.h"
 #include "xgclass.h"
 
@@ -140,30 +141,29 @@ DENG2_PIMPL(DEDParser)
 
     struct dedsource_s
     {
-        const char*     buffer;
-        const char*     pos;
-        dd_bool         atEnd;
-        int             lineNumber;
-        const char*     fileName;
-        int             version; // v6 does not require semicolons.
+        char const *buffer;
+        char const *pos;
+        dd_bool     atEnd;
+        int         lineNumber;
+        String      fileName;
+        int         version; // v6 does not require semicolons.
     };
 
     typedef dedsource_s dedsource_t;
 
     dedsource_t sourceStack[MAX_RECUR_DEPTH];
-    dedsource_t* source; // Points to the current source.
+    dedsource_t *source; // Points to the current source.
 
     char token[MAX_TOKEN_LEN+1];
     char unreadToken[MAX_TOKEN_LEN+1];
 
     Instance(Public *i) : Base(i), ded(0), source(0)
     {
-        zap(sourceStack);
         zap(token);
         zap(unreadToken);
     }
 
-    void DED_InitReader(const char* buffer, const char* fileName)
+    void DED_InitReader(char const *buffer, String fileName)
     {
         if(source && source - sourceStack >= MAX_RECUR_DEPTH)
         {
@@ -182,21 +182,21 @@ DENG2_PIMPL(DEDParser)
         }
 
         source->pos = source->buffer = buffer;
-        source->atEnd = false;
+
+        source->atEnd      = false;
         source->lineNumber = 1;
-        source->fileName = fileName;
-        source->version = DED_VERSION;
+        source->fileName   = fileName;
+        source->version    = DED_VERSION;
     }
 
-    void DED_CloseReader(void)
+    void DED_CloseReader()
     {
         if(source == sourceStack)
         {
-            source = NULL;
+            source = 0;
         }
         else
         {
-            memset(source, 0, sizeof(*source));
             source--;
         }
     }
@@ -751,7 +751,7 @@ DENG2_PIMPL(DEDParser)
         return value == expected;
     }
 
-    int readData(const char* buffer, const char* _sourceFile)
+    int readData(char const *buffer, String sourceFile)
     {
         char  dummy[128], label[128], tmp[256];
         int   dummyInt, idx, retVal = true;
@@ -771,18 +771,16 @@ DENG2_PIMPL(DEDParser)
         int   depth;
         char *rootStr = 0, *ptr;
         int   bCopyNext = 0;
-        ::Str sourceFile, sourceFileDir;
-
-        Str_Init(&sourceFile); Str_Set(&sourceFile, _sourceFile);
-        F_FixSlashes(&sourceFile, &sourceFile);
-        F_ExpandBasePath(&sourceFile, &sourceFile);
-
-        // For including other files -- we must know where we are.
-        Str_Init(&sourceFileDir);
-        F_FileDir(&sourceFileDir, &sourceFile);
 
         // Get the next entry from the source stack.
-        DED_InitReader(buffer, Str_Text(&sourceFile));
+        DED_InitReader(buffer, sourceFile);
+
+        // For including other files -- we must know where we are.
+        String sourceFileDir = sourceFile.fileNamePath();
+        if(sourceFileDir.isEmpty())
+        {
+            sourceFileDir = NativePath::workPath();
+        }
 
         while(ReadToken())
         {
@@ -823,7 +821,7 @@ DENG2_PIMPL(DEDParser)
                 READSTR(tmp);
                 CHECKSC;
 
-                DED_Include(tmp, Str_Text(&sourceFileDir));
+                DED_Include(tmp, sourceFileDir);
                 strcpy(label, "");
             }
 
@@ -843,7 +841,7 @@ DENG2_PIMPL(DEDParser)
                     READSTR(tmp);
                     CHECKSC;
 
-                    DED_Include(tmp, Str_Text(&sourceFileDir));
+                    DED_Include(tmp, sourceFileDir);
                     strcpy(label, "");
                 }
                 else
@@ -2591,25 +2589,23 @@ DENG2_PIMPL(DEDParser)
         // Free the source stack entry we were using.
         DED_CloseReader();
 
-        Str_Free(&sourceFile);
-        Str_Free(&sourceFileDir);
-
         return retVal;
     }
 
-    void DED_Include(const char* fileName, const char* parentDirectory)
+    void DED_Include(char const *fileName, String parentDirectory)
     {
         ddstring_t tmp;
 
-        Str_Init(&tmp); Str_Set(&tmp, fileName);
+        Str_InitStd(&tmp); Str_Set(&tmp, fileName);
         F_FixSlashes(&tmp, &tmp);
         F_ExpandBasePath(&tmp, &tmp);
         if(!F_IsAbsolute(&tmp))
         {
-            Str_Prepend(&tmp, parentDirectory);
+            Str_PrependChar(&tmp, '/');
+            Str_Prepend(&tmp, parentDirectory.toUtf8().constData());
         }
 
-        Def_ReadProcessDED(ded, Str_Text(&tmp));
+        Def_ReadProcessDED(ded, String(Str_Text(&tmp)));
         Str_Free(&tmp);
 
         // Reset state for continuing.
@@ -2622,14 +2618,14 @@ DENG2_PIMPL(DEDParser)
         if(more)
         {
             sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
-                    source? source->fileName : "?",
+                    source? source->fileName.toUtf8().constData() : "?",
                     source? source->lineNumber : 0,
                     str, more);
         }
         else
         {
             sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
-                    source? source->fileName : "?",
+                    source? source->fileName.toUtf8().constData() : "?",
                     source? source->lineNumber : 0,
                     str);
         }
@@ -2641,7 +2637,7 @@ DEDParser::DEDParser(ded_t *ded) : d(new Instance(this))
     d->ded = ded;
 }
 
-int DEDParser::parse(const char *buffer, const char *sourceFile)
+int DEDParser::parse(char const *buffer, String sourceFile)
 {
     return d->readData(buffer, sourceFile);
 }

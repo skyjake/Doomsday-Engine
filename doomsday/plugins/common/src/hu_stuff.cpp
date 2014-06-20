@@ -260,23 +260,25 @@ static void declareGraphicPatches()
 # endif
     {
         pMapNamesSize = 32;
-        pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+        pMapNames = (patchid_t *) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+
+        Str name; Str_InitStd(&name);
         for(uint i = 0; i < pMapNamesSize; ++i)
         {
-            lumpname_t name;
 # if __JDOOM64__
-            sprintf(name, "WILV%2.2u", i);
+            Str_Appendf(Str_Clear(&name), "WILV%2.2u", i);
 # else // __JDOOM__
-            sprintf(name, "CWILV%2.2u", i);
+            Str_Appendf(Str_Clear(&name), "CWILV%2.2u", i);
 # endif
-            pMapNames[i] = R_DeclarePatch(name);
+            pMapNames[i] = R_DeclarePatch(Str_Text(&name));
         }
+        Str_Free(&name);
     }
 # if !__JDOOM64__
     else
     {
         const uint numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
-        lumpname_t name;
+        Str name; Str_InitStd(&name);
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
@@ -286,10 +288,11 @@ static void declareGraphicPatches()
         {
             for(uint j = 0; j < 9; ++j) // Number of maps per episode.
             {
-                sprintf(name, "WILV%2.2u", (i * 10) + j);
-                pMapNames[(i* 9) + j] = R_DeclarePatch(name);
+                Str_Appendf(Str_Clear(&name), "WILV%2.2u", (i * 10) + j);
+                pMapNames[(i* 9) + j] = R_DeclarePatch(Str_Text(&name));
             }
         }
+        Str_Free(&name);
     }
 # endif
 #endif

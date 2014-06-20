@@ -173,9 +173,9 @@ namespace internal
         return tex;
     }
 
-    static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
+    static QList<File1 *> collectPatchCompositeDefinitionFiles()
     {
-        QList<de::File1 *> result;
+        QList<File1 *> result;
 
         /*
          * Precedence order of definitions is defined by id tech1 which processes
@@ -192,7 +192,7 @@ namespace internal
          */
         for(int i = 0; i < index.size(); ++i)
         {
-            de::File1 &file = index[i];
+            File1 &file = index[i];
 
             // Will this be processed anyway?
             if(i == firstTexLump) continue;
@@ -224,7 +224,7 @@ namespace internal
     typedef QList<CompositeTexture *> CompositeTextures;
     typedef QList<PatchName> PatchNames;
 
-    static PatchNames readPatchNames(de::File1 &file)
+    static PatchNames readPatchNames(File1 &file)
     {
         LOG_AS("readPatchNames");
         PatchNames names;
@@ -280,7 +280,7 @@ namespace internal
      *                       in the file (which may not necessarily equal the total
      *                       number of definitions which are actually read).
      */
-    static CompositeTextures readCompositeTextureDefs(de::File1 &file,
+    static CompositeTextures readCompositeTextureDefs(File1 &file,
         PatchNames const &patchNames, int origIndexBase, int &archiveCount)
     {
         LOG_AS("readCompositeTextureDefs");
@@ -1199,7 +1199,7 @@ DENG2_PIMPL(ResourceSystem)
         if(!pnames.count()) return CompositeTextures();
 
         // Collate an ordered list of all the definition files we intend to process.
-        QList<de::File1 *> defFiles = collectPatchCompositeDefinitionFiles();
+        QList<File1 *> defFiles = collectPatchCompositeDefinitionFiles();
 
         /**
          * Definitions are read into two discreet sets.
@@ -1215,9 +1215,9 @@ DENG2_PIMPL(ResourceSystem)
 
         // Process each definition file.
         int origIndexBase = 0;
-        DENG2_FOR_EACH_CONST(QList<de::File1 *>, i, defFiles)
+        DENG2_FOR_EACH_CONST(QList<File1 *>, i, defFiles)
         {
-            de::File1 &file = **i;
+            File1 &file = **i;
 
             LOG_RES_VERBOSE("Processing \"%s:%s\"...")
                 << NativePath(file.container().composeUri().asText()).pretty()
@@ -1386,10 +1386,10 @@ DENG2_PIMPL(ResourceSystem)
         if(firstFlatMarkerLumpNum >= 0)
         {
             lumpnum_t lumpNum;
-            de::File1 *blockContainer = 0;
+            File1 *blockContainer = 0;
             for(lumpNum = index.size(); lumpNum --> firstFlatMarkerLumpNum + 1;)
             {
-                de::File1 &file = index[lumpNum];
+                File1 &file = index[lumpNum];
                 String percentEncodedName = file.name().fileNameWithoutExtension();
 
                 if(blockContainer && blockContainer != &file.container())
@@ -1461,7 +1461,7 @@ DENG2_PIMPL(ResourceSystem)
         LumpIndex const &index = fileSys().nameIndex();
         for(int i = 0; i < index.size(); ++i)
         {
-            de::File1 &file = index[i];
+            File1 &file = index[i];
             String fileName = file.name().fileNameWithoutExtension();
 
             if(fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
@@ -1858,7 +1858,7 @@ DENG2_PIMPL(ResourceSystem)
                 if(!mdl)
                 {
                     // Attempt to load it in now.
-                    QScopedPointer<de::FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
+                    QScopedPointer<FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
 
                     mdl = Model::loadFromFile(*hndl, modelAspectMod);
 
@@ -2534,7 +2534,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     }
 
     lumpnum_t const lumpNum = d->fileSys().nameIndex().findLast(lumpPath);
-    de::File1 &file = d->fileSys().lump(lumpNum);
+    File1 &file = d->fileSys().lump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -2587,9 +2587,10 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
 rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ResourceSystem::rawTexture");
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    if(-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
-        LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0") << lumpNum << F_LumpCount();
+        LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0")
+                << lumpNum << App_FileSystem().lumpCount();
         return 0;
     }
 
@@ -2604,10 +2605,10 @@ rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
 rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ResourceSystem::rawTexture");
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    if(-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
         LOGDEV_RES_WARNING("LumpNum #%i out of range %s, returning 0")
-            << lumpNum << Rangeui(0, F_LumpCount()).asText();
+            << lumpNum << Rangeui(0, App_FileSystem().lumpCount()).asText();
         return 0;
     }
 

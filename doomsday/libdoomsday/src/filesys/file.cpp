@@ -28,9 +28,13 @@
 
 namespace de {
 
-File1::File1(FileHandle& hndl, String _path, FileInfo const& _info, File1* _container)
-    : handle_(&hndl), info_(_info), container_(_container),
-      flags(DefaultFlags), path_(_path), name_(_path.fileName())
+File1::File1(FileHandle &hndl, String _path, FileInfo const &_info, File1 *_container)
+    : handle_(&hndl)
+    , info_(_info)
+    , container_(_container)
+    , flags(DefaultFlags)
+    , path_(_path)
+    , name_(_path.fileName())
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
@@ -45,7 +49,7 @@ File1::~File1()
     if(handle_) delete handle_;
 }
 
-FileInfo const& File1::info() const
+FileInfo const &File1::info() const
 {
     return info_;
 }
@@ -55,20 +59,20 @@ bool File1::isContained() const
     return !!container_;
 }
 
-File1& File1::container() const
+File1 &File1::container() const
 {
     if(!container_) throw NotContainedError("File1::container", "File \"" + NativePath(composePath()).pretty() + " is not contained");
     return *container_;
 }
 
-de::FileHandle& File1::handle()
+FileHandle &File1::handle()
 {
     return *handle_;
 }
 
-de::Uri File1::composeUri(QChar delimiter) const
+Uri File1::composeUri(QChar delimiter) const
 {
-    return de::Uri(path_, RC_NULL, delimiter);
+    return Uri(path_, RC_NULL, delimiter);
 }
 
 uint File1::loadOrderIndex() const
@@ -81,7 +85,7 @@ bool File1::hasStartup() const
     return flags.testFlag(Startup);
 }
 
-File1& File1::setStartup(bool yes)
+File1 &File1::setStartup(bool yes)
 {
     if(yes) flags |= Startup;
     else    flags &= ~Startup;
@@ -93,14 +97,14 @@ bool File1::hasCustom() const
     return flags.testFlag(Custom);
 }
 
-File1& File1::setCustom(bool yes)
+File1 &File1::setCustom(bool yes)
 {
     if(yes) flags |= Custom;
     else    flags &= ~Custom;
     return *this;
 }
 
-String const& File1::name() const
+String const &File1::name() const
 {
     return name_;
 }
@@ -108,32 +112,32 @@ String const& File1::name() const
 size_t File1::read(uint8_t* /*buffer*/, bool /*tryCache*/)
 {
     /// @todo writeme
-    throw de::Error("File1::read", "Not yet implemented");
+    throw Error("File1::read", "Not yet implemented");
 }
 
 size_t File1::read(uint8_t* /*buffer*/, size_t /*startOffset*/, size_t /*length*/,
                    bool /*tryCache*/)
 {
     /// @todo writeme
-    throw de::Error("File1::read", "Not yet implemented");
+    throw Error("File1::read", "Not yet implemented");
 }
 
-uint8_t const* File1::cache()
+uint8_t const *File1::cache()
 {
     /// @todo writeme
-    throw de::Error("File1::cache", "Not yet implemented");
+    throw Error("File1::cache", "Not yet implemented");
 }
 
 File1& File1::unlock()
 {
     /// @todo writeme
-    throw de::Error("File1::unlock", "Not yet implemented");
+    throw Error("File1::unlock", "Not yet implemented");
 }
 
-File1& File1::clearCache(bool* /*retCleared*/)
+File1 &File1::clearCache(bool* /*retCleared*/)
 {
     /// @todo writeme
-    throw de::Error("File1::clearCache", "Not yet implemented");
+    throw Error("File1::clearCache", "Not yet implemented");
 }
 
 } // namespace de

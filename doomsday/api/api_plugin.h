@@ -1,8 +1,8 @@
-/** @file api_plugin.h Plugin subsystem.
+/** @file api_plugin.h  Plugin subsystem.
  * @ingroup base
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -69,13 +69,13 @@ typedef struct {
     dd_bool     returnVal;
 } ddhook_finale_script_evalif_paramaters_t;
 
-/// Paramaters for HOOK_FINALE_SCRIPT_TICKER
+/// Parameters for HOOK_FINALE_SCRIPT_TICKER
 typedef struct {
     dd_bool runTick;
     dd_bool canSkip;
 } ddhook_finale_script_ticker_paramaters_t;
 
-/// Paramaters for HOOK_VIEWPORT_RESHAPE
+/// Parameters for HOOK_VIEWPORT_RESHAPE
 typedef struct {
     RectRaw geometry; // New/Current.
     RectRaw oldGeometry; // Previous.
@@ -130,7 +130,7 @@ DENG_API_TYPEDEF(Plug) // v1
      * @param param         Additional arguments about the notification,
      *                      depending on the notification type.
      */
-    void (*Notify)(int notification, void* param);
+    void (*Notify)(int notification, void *param);
 
 } DENG_API_T(Plug);
 

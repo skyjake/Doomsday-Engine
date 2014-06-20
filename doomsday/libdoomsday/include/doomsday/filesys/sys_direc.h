@@ -41,6 +41,10 @@
 extern "C" {
 #endif
 
+#define FILENAME_T_MAXLEN 256
+#define FILENAME_T_LASTINDEX 255
+typedef char filename_t[FILENAME_T_MAXLEN];
+
 typedef struct directory_s {
 #if defined(WIN32)
     int drive;
@@ -64,21 +68,9 @@ LIBDOOMSDAY_PUBLIC directory_t* Dir_FromText(const char* path);
 LIBDOOMSDAY_PUBLIC void Dir_Delete(directory_t* dir);
 
 /**
- * @return  @c true if the directories @a a and @a b are considered equal
- *      (i.e., their paths match exactly).
- */
-LIBDOOMSDAY_PUBLIC dd_bool Dir_IsEqual(directory_t* dir, directory_t* other);
-
-/**
  * @return  "Raw" version of the present path.
  */
 LIBDOOMSDAY_PUBLIC const char* Dir_Path(directory_t* dir);
-
-/**
- * Change the path to that specified in @a path.
- * \note Path directives (such as '}' and '~' on Unix) are automatically expanded.
- */
-LIBDOOMSDAY_PUBLIC void Dir_SetPath(directory_t* dir, const char* path);
 
 /// Class-Static Members:
 
@@ -95,24 +87,6 @@ LIBDOOMSDAY_PUBLIC void Dir_CleanPathStr(ddstring_t* str);
  *      @c NULL if we are out of memory.
  */
 LIBDOOMSDAY_PUBLIC char* Dir_CurrentPath(void);
-
-/**
- * Extract just the file name including any extension from @a path.
- */
-LIBDOOMSDAY_PUBLIC void Dir_FileName(char* name, const char* path, size_t len);
-
-/**
- * Convert directory separators in @a path to their system-specifc form.
- */
-LIBDOOMSDAY_PUBLIC void Dir_ToNativeSeparators(char* path, size_t len);
-
-/**
- * Convert directory separators in @a path to our internal '/' form.
- */
-LIBDOOMSDAY_PUBLIC void Dir_FixSeparators(char* path, size_t len);
-
-/// @return  @c true if @a path is absolute.
-LIBDOOMSDAY_PUBLIC int Dir_IsAbsolutePath(const char* path);
 
 /**
  * Convert a path into an absolute path. If @a path is relative it is considered

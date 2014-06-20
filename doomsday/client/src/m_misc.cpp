@@ -395,21 +395,15 @@ void M_WriteTextEsc(FILE* file, const char* text)
 DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
 {
 #ifdef __CLIENT__
-    DENG_UNUSED(bits);
+    DENG2_UNUSED(bits);
 
-    ddstring_t fullName; Str_Init(&fullName);
-    Str_Set(&fullName, name);
-
-    if(!_api_F.FindFileExtension(name))
+    de::String fullName(name);
+    if(fullName.fileNameExtension().isEmpty())
     {
-        Str_Append(&fullName, ".png"); // Default format.
+        fullName += ".png"; // Default format.
     }
-    F_ToNativeSlashes(&fullName, &fullName);
 
-    bool result = ClientWindow::main().grabToFile(Str_Text(&fullName));
-    Str_Free(&fullName);
-
-    return result? 1 : 0;
+    return ClientWindow::main().grabToFile(fullName)? 1 : 0;
 #else
     DENG2_UNUSED2(name, bits);
     return false;

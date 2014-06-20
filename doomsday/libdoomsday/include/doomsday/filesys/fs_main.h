@@ -34,7 +34,6 @@
 
 #include "file.h"
 #include "filehandle.h"
-#include "filehandlebuilder.h"
 
 #ifdef WIN32
 #  include "fs_windows.h"
@@ -241,7 +240,7 @@ public:
          */
         bool mapPath(String &path) const;
 
-#if _DEBUG
+#ifdef DENG_DEBUG
         void debugPrint() const;
 #endif
 
@@ -283,8 +282,6 @@ public:
      */
     FS1();
 
-    virtual ~FS1();
-
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
 
@@ -322,8 +319,7 @@ public:
      * Reset all the schemes, returning their indexes to an empty state and clearing
      * any @ref ExtraPaths which have been registered since creation.
      */
-    inline void resetAllSchemes()
-    {
+    inline void resetAllSchemes() {
         Schemes schemes = allSchemes();
         DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->reset(); }
     }
@@ -421,6 +417,8 @@ public:
      * @see nameIndex(), LumpIndex::toLump()
      */
     inline File1 &lump(lumpnum_t lumpnum) const { return nameIndex()[lumpnum]; }
+
+    inline int lumpCount() const { return nameIndex().size(); }
 
     /**
      * Opens the given file (will be translated) for reading.
@@ -567,8 +565,7 @@ public:
     int unloadAllNonStartupFiles();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Scheme::Flags)
@@ -583,94 +580,11 @@ LIBDOOMSDAY_PUBLIC de::FS1 &App_FileSystem();
  */
 LIBDOOMSDAY_PUBLIC de::String App_BasePath();
 
-extern "C" {
-#endif // __cplusplus
-
-/**
- * C wrapper API:
- */
-
-struct filelist_s;
-typedef struct filelist_s FileList;
-
-LIBDOOMSDAY_PUBLIC void F_Register(void);
-
 /// Initialize this module. Cannot be re-initialized, must shutdown first.
-LIBDOOMSDAY_PUBLIC void F_Init(void);
+LIBDOOMSDAY_PUBLIC void F_Init();
 
 /// Shutdown this module.
-LIBDOOMSDAY_PUBLIC void F_Shutdown(void);
+LIBDOOMSDAY_PUBLIC void F_Shutdown();
 
-LIBDOOMSDAY_PUBLIC void F_EndStartup(void);
-
-LIBDOOMSDAY_PUBLIC int F_UnloadAllNonStartupFiles();
-
-LIBDOOMSDAY_PUBLIC void F_AddVirtualDirectoryMapping(char const *nativeSourcePath, char const *nativeDestinationPath);
-
-LIBDOOMSDAY_PUBLIC void F_AddLumpDirectoryMapping(char const *lumpName, char const *nativeDestinationPath);
-
-LIBDOOMSDAY_PUBLIC void F_ResetFileIds(void);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_CheckFileId(char const *nativePath);
-
-LIBDOOMSDAY_PUBLIC int F_LumpCount(void);
-
-LIBDOOMSDAY_PUBLIC int F_Access(char const *nativePath);
-
-LIBDOOMSDAY_PUBLIC void F_Index(struct file1_s *file);
-
-LIBDOOMSDAY_PUBLIC void F_Deindex(struct file1_s *file);
-
-LIBDOOMSDAY_PUBLIC FileHandle *F_Open3(char const *nativePath, char const *mode, size_t baseOffset, dd_bool allowDuplicate);
-LIBDOOMSDAY_PUBLIC FileHandle *F_Open2(char const *nativePath, char const *mode, size_t baseOffset/*, allowDuplicate = true */);
-LIBDOOMSDAY_PUBLIC FileHandle *F_Open(char const *nativePath, char const *mode/*, baseOffset = 0 */);
-
-LIBDOOMSDAY_PUBLIC FileHandle *F_OpenLump(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_IsValidLumpNum(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC lumpnum_t F_LumpNumForName(char const *name);
-
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC dd_bool F_LumpIsCustom(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC AutoStr *F_LumpName(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC size_t F_LumpLength(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC uint F_LumpLastModified(lumpnum_t lumpNum);
-
-LIBDOOMSDAY_PUBLIC struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx);
-LIBDOOMSDAY_PUBLIC struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum/*, lumpIdx = 0 */);
-
-LIBDOOMSDAY_PUBLIC void F_Delete(struct filehandle_s *file);
-
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposePath(struct file1_s const *file);
-
-LIBDOOMSDAY_PUBLIC void F_SetCustom(struct file1_s *file, dd_bool yes);
-
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposeLumpPath2(struct file1_s *file, int lumpIdx, char delimiter);
-LIBDOOMSDAY_PUBLIC AutoStr *F_ComposeLumpPath(struct file1_s *file, int lumpIdx/*, delimiter ='/' */);
-
-LIBDOOMSDAY_PUBLIC size_t F_ReadLump(struct file1_s *file, int lumpIdx, uint8_t *buffer);
-
-LIBDOOMSDAY_PUBLIC size_t F_ReadLumpSection(struct file1_s *file, int lumpIdx, uint8_t *buffer,
-                                            size_t startOffset, size_t length);
-
-LIBDOOMSDAY_PUBLIC uint8_t const *F_CacheLump(struct file1_s *file, int lumpIdx);
-
-LIBDOOMSDAY_PUBLIC void F_UnlockLump(struct file1_s *file, int lumpIdx);
-
-/**
- * Compiles a list of file names, separated by @a delimiter.
- */
-LIBDOOMSDAY_PUBLIC void F_ComposePWADFileList(char *outBuf, size_t outBufSize, char const *delimiter);
-
-LIBDOOMSDAY_PUBLIC uint F_LoadedFilesCRC(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
+#endif // __cplusplus
 #endif /* LIBDENG_FILESYS_MAIN_H */

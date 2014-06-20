@@ -247,11 +247,27 @@ void Sector::unlink(mobj_t *mobj)
     // Not linked any more.
     mobj->sNext = 0;
     mobj->sPrev = 0;
+
+    // Ensure this has been completely unlinked.
+#ifdef DENG_DEBUG
+    for(mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
+    {
+        DENG2_ASSERT(iter != mobj);
+    }
+#endif
 }
 
 void Sector::link(mobj_t *mobj)
 {
     if(!mobj) return;
+
+    // Ensure this isn't already linked.
+#ifdef DENG_DEBUG
+    for(mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
+    {
+        DENG2_ASSERT(iter != mobj);
+    }
+#endif
 
     // Prev pointers point to the pointer that points back to us.
     // (Which practically disallows traversing the list backwards.)

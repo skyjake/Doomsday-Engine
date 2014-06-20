@@ -83,7 +83,8 @@ enum {
 
     DE_API_FILE_SYSTEM_v1       = 600,     // 1.10
     DE_API_FILE_SYSTEM_v2       = 601,     // 1.14
-    DE_API_FILE_SYSTEM          = DE_API_FILE_SYSTEM_v2,
+    DE_API_FILE_SYSTEM_v3       = 602,     // 1.15
+    DE_API_FILE_SYSTEM          = DE_API_FILE_SYSTEM_v3,
 
     DE_API_FONT_RENDER_v1       = 700,     // 1.10
     DE_API_FONT_RENDER          = DE_API_FONT_RENDER_v1,

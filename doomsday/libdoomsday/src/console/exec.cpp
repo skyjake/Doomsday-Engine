@@ -852,41 +852,65 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
-dd_bool Con_Parse(char const *fileName, dd_bool silently)
+static void readLine(char *buffer, size_t len, FileHandle *file)
 {
-    // Open the file.
-    filehandle_s *file = F_Open(fileName, "rt");
-    if(!file)
-    {
-        LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
-        return false;
-    }
+    std::memset(buffer, 0, len);
 
-    // This file is filled with console commands.
-    // Each line is a command.
-    char buff[512];
-    for(int line = 1; ;)
+    size_t p = 0;
+    while(p < len - 1) // Make the last null stay there.
     {
-        F_ReadLine(buff, 512, file);
-        if(buff[0] && !M_IsComment(buff))
+        char ch = file->getC();
+        if(ch == '\r') continue;
+
+        if(file->atEnd() || ch == '\n')
+            return;
+
+        buffer[p++] = ch;
+    }
+}
+
+dd_bool Con_Parse(Path const &fileName, dd_bool silently)
+{
+    try
+    {
+        // Relative paths are relative to the native working directory.
+        String path = (NativePath::workPath() / NativePath(fileName).expand()).withSeparators('/');
+        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(path, "rt"));
+
+        // This file is filled with console commands.
+        // Each line is a command.
+        char buff[512];
+        for(int line = 1; ;)
         {
-            // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, buff, silently, false))
+            readLine(buff, 512, hndl.data());
+            if(buff[0] && !M_IsComment(buff))
             {
-                LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
-                        << F_PrettyPath(fileName) << line << buff;
+                // Execute the commands silently.
+                if(!Con_Execute(CMDS_CONFIG, buff, silently, false))
+                {
+                    LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
+                            << NativePath(fileName).pretty()
+                            << line
+                            << buff;
+                }
             }
+
+            if(hndl->atEnd()) break;
+
+            line++;
         }
 
-        if(FileHandle_AtEnd(file)) break;
+        App_FileSystem().releaseFile(hndl->file());
 
-        line++;
+        return true;
     }
-
-    F_Delete(file);
-
-    return true;
+    catch(FS1::NotFoundError const &er)
+    {
+        LOG_SCR_WARNING(er.asText());
+    }
+    return false;
 }
+
 /**
  * Create an alias.
  */

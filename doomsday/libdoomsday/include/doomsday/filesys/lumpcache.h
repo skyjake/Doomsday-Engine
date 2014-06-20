@@ -1,10 +1,6 @@
-/**
- * @file lumpcache.h
- * Provides a thread-safe data cache tailored to storing lumps (i.e., files).
+/** @file lumpcache.h  Provides a data cache tailored to storing lumps (i.e., files).
  *
- * @ingroup fs
- *
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,191 +21,70 @@
 #define LIBDENG_FILESYS_LUMPCACHE_H
 
 #include "../libdoomsday.h"
+#include "dd_types.h"
 #include <vector>
-#include <de/Error>
-#include <de/Log>
-#include <de/memory.h>
-#include <de/memoryzone.h>
 
+/**
+ * @ingroup fs
+ */
 class LIBDOOMSDAY_PUBLIC LumpCache
 {
 private:
-    class CacheRecord
+    /**
+     * Data item. Represents a lump of data in the cache.
+     */
+    class Data
     {
     public:
-        explicit CacheRecord(uint8_t* data = 0) : data_(data) {}
-        ~CacheRecord()
-        {
-            clearData();
-        }
+        explicit Data(uint8_t *data = 0);
 
-        uint8_t* data() const
-        {
-            if(data_ && Z_GetTag(data_) == PU_PURGELEVEL)
-            {
-                // Reaquire the data.
-                Z_ChangeTag2(data_, PU_APPSTATIC);
-                Z_ChangeUser(data_, (void*)&data_);
-            }
-            return data_;
-        }
+        ~Data();
 
-        uint8_t const* replaceData(uint8_t* newData)
-        {
-            clearData();
-            data_ = newData;
-            if(data_)
-            {
-                Z_ChangeUser(data_, &data_);
-            }
-            return newData;
-        }
+        uint8_t *data() const;
 
-        CacheRecord& clearData(bool* retCleared = 0)
-        {
-            bool hasData = !!data_;
-            if(hasData)
-            {
-                /// @todo Implement a proper thread-safe locking mechanism.
+        uint8_t const *replaceData(uint8_t *newData);
 
-                // Elevate the cached data to purge level so it will be explicitly
-                // free'd by the Zone the next time the rover passes it.
-                if(Z_GetTag(data_) != PU_PURGELEVEL)
-                {
-                    Z_ChangeTag2(data_, PU_PURGELEVEL);
-                }
-                // Mark the data as unowned.
-                Z_ChangeUser(data_, (void*) 0x2);
-            }
-            if(retCleared) *retCleared = hasData;
-            return *this;
-        }
+        Data &clearData(bool *retCleared = 0);
 
-        CacheRecord& lock()
-        {
-            /// @todo Implement a proper thread-safe locking mechanism.
-            return *this;
-        }
+        Data &lock();
 
-        CacheRecord& unlock()
-        {
-            /// @todo Implement a proper thread-safe locking mechanism.
-            if(data_)
-            {
-                Z_ChangeTag2(data_, PU_PURGELEVEL);
-            }
-            return *this;
-        }
+        Data &unlock();
 
     private:
-        uint8_t* data_;
+        uint8_t *data_;
     };
-    typedef std::vector<CacheRecord> DataCache;
+    typedef std::vector<Data> DataCache;
 
 public:
-    explicit LumpCache(uint size) : size_(size), dataCache(0)
-    {}
+    explicit LumpCache(uint size);
+    ~LumpCache();
 
-    ~LumpCache()
-    {
-        if(dataCache) delete dataCache;
-    }
+    uint size() const;
 
-    uint size() const { return size_; }
+    bool isValidIndex(uint idx) const;
 
-    bool isValidIndex(uint idx) const { return idx < size_; }
+    uint8_t const *data(uint lumpIdx) const;
 
-    uint8_t const* data(uint lumpIdx) const
-    {
-        LOG_AS("LumpCache::data");
-        CacheRecord const* record = cacheRecord(lumpIdx);
-        return record? record->data() : 0;
-    }
+    LumpCache &insert(uint lumpIdx, uint8_t *data);
 
-    LumpCache& insert(uint lumpIdx, uint8_t* data)
-    {
-        LOG_AS("LumpCache::insert");
-        if(!isValidIndex(lumpIdx)) throw de::Error("LumpCache::insert", QString("Invalid index %1").arg(lumpIdx));
+    LumpCache &insertAndLock(uint lumpIdx, uint8_t *data);
 
-        // Time to allocate the data cache?
-        if(!dataCache)
-        {
-            dataCache = new DataCache(size_);
-        }
+    LumpCache &lock(uint lumpIdx);
 
-        CacheRecord* record = cacheRecord(lumpIdx);
-        record->replaceData(data);
-        return *this;
-    }
+    LumpCache &unlock(uint lumpIdx);
 
-    LumpCache& insertAndLock(uint lumpIdx, uint8_t* data)
-    {
-        return insert(lumpIdx, data).lock(lumpIdx);
-    }
+    LumpCache &remove(uint lumpIdx, bool *retRemoved = 0);
 
-    LumpCache& lock(uint lumpIdx)
-    {
-        LOG_AS("LumpCache::lock");
-        if(!isValidIndex(lumpIdx)) throw de::Error("LumpCache::lock", QString("Invalid index %1").arg(lumpIdx));
-        CacheRecord* record = cacheRecord(lumpIdx);
-        record->lock();
-        return *this;
-    }
+    LumpCache &clear();
 
-    LumpCache& unlock(uint lumpIdx)
-    {
-        LOG_AS("LumpCache::unlock");
-        if(!isValidIndex(lumpIdx)) throw de::Error("LumpCache::unlock", QString("Invalid index %1").arg(lumpIdx));
-        CacheRecord* record = cacheRecord(lumpIdx);
-        record->unlock();
-        return *this;
-    }
+protected:
+    Data *cacheRecord(uint lumpIdx);
 
-    LumpCache& remove(uint lumpIdx, bool* retRemoved = 0)
-    {
-        CacheRecord* record = cacheRecord(lumpIdx);
-        if(record)
-        {
-            record->clearData(retRemoved);
-        }
-        else if(retRemoved)
-        {
-            *retRemoved = false;
-        }
-        return *this;
-    }
-
-    LumpCache& clear()
-    {
-        if(dataCache)
-        {
-            DENG2_FOR_EACH(DataCache, i, *dataCache)
-            {
-                i->clearData();
-            }
-        }
-        return *this;
-    }
+    Data const *cacheRecord(uint lumpIdx) const;
 
 private:
-    CacheRecord* cacheRecord(uint lumpIdx)
-    {
-        if(!isValidIndex(lumpIdx)) return 0;
-        return dataCache? &(*dataCache)[lumpIdx] : 0;
-    }
-
-    CacheRecord const* cacheRecord(uint lumpIdx) const
-    {
-        if(!isValidIndex(lumpIdx)) return 0;
-        return dataCache? &(*dataCache)[lumpIdx] : 0;
-    }
-
-private:
-    /// Number of data lumps which can be stored in the cache.
-    uint size_;
-
-    /// The cached data.
-    DataCache* dataCache;
+    uint _size;             ///< Number of data lumps which can be stored in the cache.
+    DataCache *_dataCache;  ///< The cached data.
 };
 
 #endif /* LIBDENG_FILESYS_LUMPCACHE_H */

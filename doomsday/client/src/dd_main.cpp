@@ -119,7 +119,7 @@ public:
         addKnownExtension(".zip");
     }
 
-    de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Zip::recognise(hndl))
         {
@@ -139,7 +139,7 @@ public:
         addKnownExtension(".wad");
     }
 
-    de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Wad::recognise(hndl))
         {
@@ -164,7 +164,7 @@ static void DD_AutoLoad();
  *
  * @return  @c true iff the referenced file was loaded.
  */
-static de::File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
+static File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
 
 int isDedicated;
 
@@ -833,7 +833,7 @@ static void loadResource(ResourceManifest &manifest)
     de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
     if(path.isEmpty()) return;
 
-    if(de::File1 *file = tryLoadFile(path, 0/*base offset*/))
+    if(File1 *file = tryLoadFile(path, 0/*base offset*/))
     {
         // Mark this as an original game resource.
         file->setCustom(false);
@@ -982,9 +982,9 @@ static inline char const *skipSpace(char const *ptr)
     return ptr;
 }
 
-static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t *path, char const *buffer)
+static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring_t *path, char const *buffer)
 {
-    DENG2_ASSERT(lumpName && path != 0);
+    DENG2_ASSERT(lumpName != 0 && path != 0);
 
     // Find the start of the lump name.
     char const *ptr = skipSpace(buffer);
@@ -1000,7 +1000,7 @@ static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t *path, char con
     // Invalid lump name?
     if(len > 8) return false;
 
-    memset(lumpName, 0, LUMPNAME_T_MAXLEN);
+    memset(lumpName, 0, 9/*LUMPNAME_T_MAXLEN*/);
     strncpy(lumpName, ptr, len);
     strupr(lumpName);
 
@@ -1030,7 +1030,7 @@ static bool parsePathLumpMappings(char const *buffer)
     ddstring_t line; Str_Init(&line);
 
     char const *ch = buffer;
-    lumpname_t lumpName;
+    char lumpName[9/*LUMPNAME_T_MAXLEN*/];
     do
     {
         ch = Str_GetLine(&line, ch);
@@ -1076,7 +1076,7 @@ static void initPathLumpMappings()
     lumpIndex.findAll("DD_DIREC", foundDirecs);
     DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
-        de::File1 &lump          = lumpIndex[*i];
+        File1 &lump          = lumpIndex[*i];
         FileInfo const &lumpInfo = lump.info();
 
         // Make a copy of it so we can ensure it ends in a null.
@@ -1207,14 +1207,14 @@ static int DD_ActivateGameWorker(void *context)
         }
 
         LOG_SCR_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
-        Con_ParseCommands(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
+        Con_ParseCommands(configFile, CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands(App_CurrentGame().bindingConfig().toUtf8().constData(), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands(App_CurrentGame().bindingConfig(), CPCF_ALLOW_SAVE_BINDINGS);
 #endif
     }
 
@@ -1973,7 +1973,7 @@ dd_bool DD_Init(void)
         lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
         if(lumpNum >= 0)
         {
-            F_DumpLump(lumpNum);
+            F_DumpFile(App_FileSystem().lump(lumpNum), 0);
         }
         else
         {
@@ -2008,7 +2008,7 @@ dd_bool DD_Init(void)
                 break;
             }
 
-            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << NativePath(arg).pretty();
             Con_ParseCommands(arg);
         }
         LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
@@ -2137,7 +2137,7 @@ static int DD_StartupWorker(void * /*context*/)
             char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
 
-            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << NativePath(arg).pretty();
             Con_ParseCommands(arg);
         }
         LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
@@ -2149,14 +2149,14 @@ static int DD_StartupWorker(void * /*context*/)
     String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
-    de::File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
+    File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
     DENG2_ASSERT(loadedFile != 0);
     DENG2_UNUSED(loadedFile);
 
     /*
      * No more lumps/packages will be loaded in startup mode after this point.
      */
-    F_EndStartup();
+    App_FileSystem().endStartup();
 
     // Load engine help resources.
     DD_InitHelp();
@@ -2262,7 +2262,7 @@ static int DD_UpdateEngineStateWorker(void *context)
     }
 
     // Reset file IDs so previously seen files can be processed again.
-    F_ResetFileIds();
+    App_FileSystem().resetFileIds();
     // Re-read definitions.
     Def_Read();
 
@@ -2474,7 +2474,7 @@ int DD_GetInteger(int ddvalue)
 #endif
 
     case DD_NUMLUMPS:
-        return F_LumpCount();
+        return App_FileSystem().lumpCount();
 
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
@@ -2596,7 +2596,7 @@ void *DD_GetVariable(int ddvalue)
 
     case DD_NUMLUMPS: {
         static int count;
-        count = F_LumpCount();
+        count = App_FileSystem().lumpCount();
         return &count; }
 
     default: break;
@@ -2850,11 +2850,11 @@ D_CMD(Load)
     return didLoadGame || didLoadResource;
 }
 
-static de::File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
+static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
 {
     try
     {
-        de::FileHandle& hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
+        FileHandle& hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
 
         de::Uri foundFileUri = hndl.file().composeUri();
         LOG_VERBOSE("Loading \"%s\"...") << NativePath(foundFileUri.asText()).pretty().toUtf8().constData();
@@ -2878,7 +2878,7 @@ static bool tryUnloadFile(de::Uri const &search)
 {
     try
     {
-        de::File1 &file = App_FileSystem().find(search);
+        File1 &file = App_FileSystem().find(search);
         de::Uri foundFileUri = file.composeUri();
         NativePath nativePath(foundFileUri.asText());
 
@@ -3244,7 +3244,7 @@ static void consoleRegister()
 #endif
 
     DD_RegisterLoop();
-    F_Register();
+    FS1::consoleRegister();
     Con_Register();
     Games::consoleRegister();
     DH_Register();
