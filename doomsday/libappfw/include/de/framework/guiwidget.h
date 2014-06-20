@@ -165,6 +165,20 @@ public:
         virtual bool handleEvent(GuiWidget &widget, Event const &event) = 0;
     };
 
+    enum Attribute
+    {
+        /**
+         * Enables or disables automatic state serialization for widgets derived from
+         * IPersistent. State serialization occurs when the widget is gl(De)Init'd.
+         */
+        RetainStatePersistently = 0x1,
+
+        AnimateOpacityWhenEnabledOrDisabled = 0x2,
+
+        DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
+    };
+    Q_DECLARE_FLAGS(Attributes, Attribute)
+
 public:
     GuiWidget(String const &name = "");
 
@@ -254,12 +268,17 @@ public:
     void removeEventHandler(IEventHandler *handler);
 
     /**
-     * Enables or disables automatic state serialization for widgets derived from
-     * IPersistent. State serialization occurs when the widget is gl(De)Init'd.
+     * Sets, unsets, or replaces one or more widget attributes.
      *
-     * @param enabled  @c true to enable, @c false to disable.
+     * @param attr  Attribute(s) to modify.
+     * @param op    Flag operation.
      */
-    void enableStateSerialization(bool enabled = true);
+    void setAttribute(Attributes const &attr, FlagOp op = SetFlags);
+
+    /**
+     * Returns the current widget attributes.
+     */
+    Attributes attributes() const;
 
     /**
      * Save the state of the widget and all its children (those who support state
@@ -422,6 +441,8 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(GuiWidget::Attributes)
 
 } // namespace de
 
