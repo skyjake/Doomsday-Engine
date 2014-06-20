@@ -119,7 +119,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         if(item.semantics().testFlag(ui::Item::Separator))
         {
             LabelWidget &lab = widget.as<LabelWidget>();
-            lab.setTextColor("label.accent");
+            lab.setTextColor(item.semantics().testFlag(ui::Item::Annotation)? "label.altaccent" : "label.accent");
             lab.setMaximumTextWidth(*maxItemWidth);
             lab.rule().setInput(Rule::Width, *maxItemWidth);
             return;
@@ -175,13 +175,15 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             }
             else
             {
-                LabelWidget &lab = widget.as<LabelWidget>();
-                widget.margins().set("halfunit");//.setLeft("");
-                lab.setAlignment(ui::AlignCenter);
+                widget.margins().set("halfunit").setLeft("unit");
                 widget.setFont("separator.label");
+                /*
+                LabelWidget &lab = widget.as<LabelWidget>();
+                //lab.setAlignment(ui::AlignCenter);
                 HeadingOverlayImage *img = new HeadingOverlayImage(widget);
                 img->setColor(style().colors().colorf("accent"));
                 lab.setOverlayImage(img, ui::AlignBottomLeft);
+                */
             }
         }
     }
