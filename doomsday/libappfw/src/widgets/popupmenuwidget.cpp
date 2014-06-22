@@ -21,7 +21,10 @@
 #include "de/ToggleWidget"
 #include "de/GuiRootWidget"
 #include "de/ChildWidgetOrganizer"
+#include "de/AtlasProceduralImage"
 #include "de/ui/Item"
+
+#include <de/IndirectRule>
 
 namespace de {
 
@@ -31,10 +34,82 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
+    class HeadingOverlayImage : public ProceduralImage
+    {
+    public:
+        HeadingOverlayImage(GuiWidget &owner)
+            : _owner(owner)
+            , _id(Id::None)
+        {
+            if(_owner.hasRoot())
+            {
+                // We can set this up right away.
+                alloc();
+            }
+        }
+
+        GuiRootWidget &root()
+        {
+            return _owner.root();
+        }
+
+        void alloc()
+        {
+            _id = root().solidWhitePixel();
+            setSize(Vector2f(1, 1)); //root().atlas().imageRect(_id).size());
+        }
+
+        void glInit()
+        {
+            alloc();
+        }
+
+        void glDeinit()
+        {
+            _id = Id::None;
+        }
+
+        void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
+        {
+            if(!_id.isNone())
+            {
+                Rectanglef visible = rect;
+                visible.setWidth(_owner.rule().width().value());
+                verts.makeQuad(visible, color(), root().atlas().imageRectf(_id));
+            }
+        }
+
+    private:
+        GuiWidget &_owner;
+        Id _id;
+    };
+
     ButtonWidget *hover;
     int oldScrollY;
+    Rule const *widestItem;
+    IndirectRule *maxItemWidth;
 
-    Instance(Public *i) : Base(i), hover(0), oldScrollY(0) {}
+    Instance(Public *i)
+        : Base(i)
+        , hover(0)
+        , oldScrollY(0)
+        , widestItem(0)
+        , maxItemWidth(0)
+    {
+        maxItemWidth = new IndirectRule;
+    }
+
+    ~Instance()
+    {
+        releaseRef(maxItemWidth);
+        releaseRef(widestItem);
+    }
+
+    void addToMaxWidth(GuiWidget &widget)
+    {
+        maxInto(widestItem, widget.rule().width());
+        maxItemWidth->setSource(*widestItem);
+    }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
@@ -44,13 +119,16 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         if(item.semantics().testFlag(ui::Item::Separator))
         {
             LabelWidget &lab = widget.as<LabelWidget>();
-            lab.setTextColor("label.accent");
+            lab.setTextColor(item.semantics().testFlag(ui::Item::Annotation)? "label.altaccent" : "label.accent");
+            lab.setMaximumTextWidth(*maxItemWidth);
+            lab.rule().setInput(Rule::Width, *maxItemWidth);
             return;
         }
 
         if(LabelWidget *lab = widget.maybeAs<LabelWidget>())
         {
             lab->margins().set("unit");
+            addToMaxWidth(widget);
         }
 
         // Customize buttons for use in the popup. We will observe the button
@@ -58,6 +136,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         // gets triggered.
         if(ButtonWidget *b = widget.maybeAs<ButtonWidget>())
         {
+            addToMaxWidth(widget);
+
             b->setHoverTextColor("inverted.text");
             b->setSizePolicy(ui::Expand, ui::Expand);
 
@@ -79,18 +159,31 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if(item.semantics().testFlag(ui::Item::Separator))
+        if(item.semantics().testFlag(ui::Item::Annotation))
+        {
+            widget.margins().set("halfunit").setLeft("unit");
+            widget.setFont("separator.annotation");
+        }
+        else if(item.semantics().testFlag(ui::Item::Separator))
         {
             // The label of a separator may change.
             if(item.label().isEmpty())
             {
                 widget.margins().set("");
                 widget.setFont("separator.empty");
+                widget.as<LabelWidget>().setOverlayImage(0);
             }
             else
             {
-                widget.margins().set("halfunit");
+                widget.margins().set("halfunit").setLeft("unit");
                 widget.setFont("separator.label");
+                /*
+                LabelWidget &lab = widget.as<LabelWidget>();
+                //lab.setAlignment(ui::AlignCenter);
+                HeadingOverlayImage *img = new HeadingOverlayImage(widget);
+                img->setColor(style().colors().colorf("accent"));
+                lab.setOverlayImage(img, ui::AlignBottomLeft);
+                */
             }
         }
     }

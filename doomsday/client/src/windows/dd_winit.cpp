@@ -99,8 +99,7 @@ dd_bool DD_Win32_Init()
     // Change to a custom working directory?
     if(CommandLine_CheckWith("-userdir", 1))
     {
-        String runtimePath = QDir::cleanPath(CommandLine_NextAsPath());
-        if(NativePath::setWorkPath(runtimePath))
+        if(NativePath::setWorkPath(CommandLine_NextAsPath()))
         {
             LOG_VERBOSE("Changed current directory to \"%s\"") << NativePath::workPath();
             app.usingUserDir = true;

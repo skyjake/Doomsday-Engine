@@ -141,6 +141,8 @@ public:
      */
     void setMaximumTextWidth(int pixels);
 
+    void setMaximumTextWidth(Rule const &pixels);
+
     /**
      * Sets an alternative style for text. By default, the rich text styling comes
      * from Style.

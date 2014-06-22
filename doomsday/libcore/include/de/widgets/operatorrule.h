@@ -170,6 +170,12 @@ inline void sumInto(RuleType const *&sum, Rule const &value) {
     else { changeRef(sum, *sum + value); }
 }
 
+template <typename RuleType>
+inline void maxInto(RuleType const *&maximum, Rule const &value) {
+    if(!maximum) { maximum = holdRef(value); }
+    else { changeRef(maximum, OperatorRule::maximum(*maximum, value)); }
+}
+
 } // namespace de
 
 #endif // LIBDENG2_OPERATORRULE_H

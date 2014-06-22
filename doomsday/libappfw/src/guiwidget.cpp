@@ -47,7 +47,7 @@ DENG2_PIMPL(GuiWidget)
     bool inited;
     bool needGeometry;
     bool styleChanged;
-    bool stateSerializationEnabled;
+    Attributes attribs;
     Background background;
     Animation opacity;
     Animation opacityWhenDisabled;
@@ -75,7 +75,7 @@ DENG2_PIMPL(GuiWidget)
         , inited(false)
         , needGeometry(true)
         , styleChanged(false)
-        , stateSerializationEnabled(true)
+        , attribs(DefaultAttributes)
         , opacity(1.f, Animation::Linear)
         , opacityWhenDisabled(1.f, Animation::Linear)
         , firstUpdateAfterCreation(true)
@@ -313,7 +313,8 @@ DENG2_PIMPL(GuiWidget)
         {
             opacityWhenDisabled.setValue(opac, .3f);
         }
-        if(firstUpdateAfterCreation)
+        if(firstUpdateAfterCreation ||
+           !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
         {
             opacityWhenDisabled.finish();
         }
@@ -541,9 +542,14 @@ void GuiWidget::removeEventHandler(IEventHandler *handler)
     d->eventHandlers.removeOne(handler);
 }
 
-void GuiWidget::enableStateSerialization(bool enabled)
+void GuiWidget::setAttribute(Attributes const &attr, FlagOp op)
 {
-    d->stateSerializationEnabled = enabled;
+    applyFlagOperation(d->attribs, attr, op);
+}
+
+GuiWidget::Attributes GuiWidget::attributes() const
+{
+    return d->attribs;
 }
 
 void GuiWidget::saveState()
@@ -581,7 +587,7 @@ void GuiWidget::initialize()
         d->inited = true;
         glInit();
 
-        if(d->stateSerializationEnabled)
+        if(d->attribs.testFlag(RetainStatePersistently))
         {
             d->restoreState();
         }
@@ -599,7 +605,7 @@ void GuiWidget::deinitialize()
 
     try
     {
-        if(d->stateSerializationEnabled)
+        if(d->attribs.testFlag(RetainStatePersistently))
         {
             d->saveState();
         }

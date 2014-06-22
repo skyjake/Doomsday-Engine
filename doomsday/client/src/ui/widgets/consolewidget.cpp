@@ -216,6 +216,9 @@ DENG2_OBSERVES(Variable, Change)
             return; // No need to change anything else.
         }
 
+        scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
+        cmdLine->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
+
         scriptCmd->show(yes);        
         scriptCmd->enable(yes);
         cmdLine->show(!yes);
@@ -298,15 +301,20 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
                        d->button->rule().top());
 
     d->menu->items()
+            << new ui::Item(ui::Item::Separator, tr("Log History"))
             << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
             << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"])
+            << new ui::VariableToggleItem(tr("Show Metadata"), App::config()["log.showMetadata"])
+            << new ui::Item(ui::Item::Annotation, tr("Time and subsystem of each entry is printed."))
             << new ui::Item(ui::Item::Separator)
+            << new ui::Item(ui::Item::Separator, tr("Behavior"))
             << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>)
             << new ui::SubwidgetItem(tr("Shortcut Key"), ui::Right, consoleShortcutPopup)
             << new ui::Item(ui::Item::Separator)
-            << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"]);
+            << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"])
+            << new ui::Item(ui::Item::Annotation, tr("The command prompt becomes an interactive script process with access to all the runtime modules."));
 
     add(d->menu);
 
@@ -499,6 +507,9 @@ void ConsoleWidget::logContentHeightIncreased(int delta)
 
 void ConsoleWidget::setFullyOpaque()
 {
+    d->scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+    d->cmdLine->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+
     d->button->setOpacity(1, .25f);
     d->cmdLine->setOpacity(1, .25f);
     d->scriptCmd->setOpacity(1, .25f);
@@ -514,6 +525,9 @@ void ConsoleWidget::commandLineFocusGained()
 
 void ConsoleWidget::commandLineFocusLost()
 {
+    d->scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+    d->cmdLine->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+
     d->button->setOpacity(.75f, .25f);
     d->cmdLine->setOpacity(.75f, .25f);
     d->scriptCmd->setOpacity(.75f, .25f);

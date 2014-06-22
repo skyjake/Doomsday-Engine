@@ -46,7 +46,7 @@ public Font::RichFormat::IStyle
     float imageScale;
     Vector4f imageColor;
     Vector4f textGLColor;
-    int maxTextWidth;
+    Rule const *maxTextWidth;
 
     ConstantRule *width;
     ConstantRule *height;
@@ -112,6 +112,7 @@ public Font::RichFormat::IStyle
         releaseRef(width);
         releaseRef(height);
         releaseRef(appearSize);
+        releaseRef(maxTextWidth);
     }
 
     void updateStyle()
@@ -451,9 +452,9 @@ public Font::RichFormat::IStyle
             }
         }
         // Apply an optional manual constraint to the text width.
-        if(maxTextWidth > 0)
+        if(maxTextWidth)
         {
-            return de::min(maxTextWidth, w);
+            return de::min(maxTextWidth->valuei(), w);
         }
         return w;
     }
@@ -651,7 +652,12 @@ void LabelWidget::setImageFit(ContentFit const &fit)
 
 void LabelWidget::setMaximumTextWidth(int pixels)
 {
-    d->maxTextWidth = pixels;
+    setMaximumTextWidth(Const(pixels));
+}
+
+void de::LabelWidget::setMaximumTextWidth(Rule const &pixels)
+{
+    changeRef(d->maxTextWidth, pixels);
     requestGeometry();
 }
 
