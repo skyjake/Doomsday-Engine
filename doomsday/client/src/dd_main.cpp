@@ -1073,7 +1073,7 @@ static void initPathLumpMappings()
     // Add the contents of all DD_DIREC lumps.
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     LumpIndex::FoundIndices foundDirecs;
-    lumpIndex.findAll("DD_DIREC", foundDirecs);
+    lumpIndex.findAll("DD_DIREC.lmp", foundDirecs);
     DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
         File1 &lump          = lumpIndex[*i];

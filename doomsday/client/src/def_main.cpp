@@ -483,7 +483,7 @@ static void Def_ReadLumpDefs()
 
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     LumpIndex::FoundIndices foundDefns;
-    lumpIndex.findAll("DD_DEFNS", foundDefns);
+    lumpIndex.findAll("DD_DEFNS.lmp", foundDefns);
     DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDefns)
     {
         if(!DED_ReadLump(&defs, *i))
