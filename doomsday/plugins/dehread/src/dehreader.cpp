@@ -1446,23 +1446,20 @@ public:
                     float parTime = float(String(args.at(arg++)).toInt(0, 10, String::AllowSuffix));
 
                     // Apply.
-                    uri_s *uri    = composeMapUri(episode, map);
-                    AutoStr *path = Uri_ToString(uri);
-
+                    de::Uri const uri = composeMapUri(episode, map);
                     ded_mapinfo_t *def;
-                    int idx = mapInfoDefForUri(*uri, &def);
+                    int idx = mapInfoDefForUri(uri, &def);
                     if(idx >= 0)
                     {
                         def->parTime = parTime;
                         LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d")
-                                << idx << Str_Text(path) << def->parTime;
+                                << idx << uri << def->parTime;
                     }
                     else
                     {
                         LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i), ignoring.")
-                                << Str_Text(path) << episode << map;
+                                << uri << episode << map;
                     }
-                    Uri_Delete(uri);
                 }
             }
             catch(SyntaxError const &er)

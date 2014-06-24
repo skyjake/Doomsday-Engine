@@ -1,9 +1,7 @@
-/**
- * @file dehreader_util.cpp
- * Miscellaneous utility routines. @ingroup dehread
+/** @file dehreader_util.cpp  Miscellaneous utility routines.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,32 +18,30 @@
  * 02110-1301 USA</small>
  */
 
-#include "dehreader.h"
-#include <QString>
-#include <QStringList>
+#include "dehreader_util.h"
 #include <de/Block>
 
-Uri* composeMapUri(int episode, int map)
+using namespace de;
+
+de::Uri composeMapUri(int episode, int map)
 {
     if(episode > 0) // ExMy format.
     {
-        de::Block pathUtf8 = QString("E%1M%2").arg(episode).arg(map).toUtf8();
-        return Uri_NewWithPath2(pathUtf8.constData(), RC_NULL);
+        return de::Uri(String("E%1M%2").arg(episode).arg(map), RC_NULL);
     }
     else // MAPxx format.
     {
-        de::Block pathUtf8 = QString("MAP%1").arg(map % 100, 2, 10, QChar('0')).toUtf8();
-        return Uri_NewWithPath2(pathUtf8.constData(), RC_NULL);
+        return de::Uri(String("MAP%1").arg(map % 100, 2, 10, QChar('0')), RC_NULL);
     }
 }
 
-int mapInfoDefForUri(const Uri& uri, ded_mapinfo_t** def)
+int mapInfoDefForUri(de::Uri const &uri, ded_mapinfo_t **def)
 {
-    if(!Str_IsEmpty(Uri_Path(&uri)))
+    if(!uri.path().isEmpty())
     for(int i = ded->mapInfo.size() - 1; i >= 0; i--)
     {
-        ded_mapinfo_t& info = ded->mapInfo[i];
-        if(info.uri && Uri_Equality((uri_s *)info.uri, &uri))
+        ded_mapinfo_t &info = ded->mapInfo[i];
+        if(info.uri && *info.uri == uri)
         {
             if(def) *def = &info;
             return i;
@@ -54,14 +50,14 @@ int mapInfoDefForUri(const Uri& uri, ded_mapinfo_t** def)
     return -1; // Not found.
 }
 
-int valueDefForPath(const QString& id, ded_value_t** def)
+int valueDefForPath(String const &id, ded_value_t **def)
 {
     if(!id.isEmpty())
     {
-        de::Block idUtf8 = id.toUtf8();
+        Block idUtf8 = id.toUtf8();
         for(int i = ded->values.size() - 1; i >= 0; i--)
         {
-            ded_value_t& value = ded->values[i];
+            ded_value_t &value = ded->values[i];
             if(!qstricmp(value.id, idUtf8.constData()))
             {
                 if(def) *def = &value;
@@ -73,7 +69,7 @@ int valueDefForPath(const QString& id, ded_value_t** def)
 }
 
 /// @todo Reimplement with a regex?
-QStringList splitMax(const QString& str, QChar sep, int max)
+QStringList splitMax(QString const &str, QChar sep, int max)
 {
     if(max < 0)
     {

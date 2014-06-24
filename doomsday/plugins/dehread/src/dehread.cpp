@@ -2,7 +2,7 @@
  * @ingroup dehread
  *
  * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -174,7 +174,6 @@ DENG_DECLARE_API(Def);
 DENG_DECLARE_API(F);
 DENG_DECLARE_API(Plug);
 DENG_DECLARE_API(W);
-DENG_DECLARE_API(Uri);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
@@ -182,6 +181,5 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_DEFINITIONS, Def);
     DENG_GET_API(DE_API_FILE_SYSTEM, F);
     DENG_GET_API(DE_API_PLUGIN, Plug);
-    DENG_GET_API(DE_API_URI, Uri);
     DENG_GET_API(DE_API_WAD, W);
 )
