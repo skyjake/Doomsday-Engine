@@ -44,7 +44,6 @@
 #include "../../hexen/include/p_inter.h"
 #include "../../hexen/include/p_lights.h"
 #include "../../hexen/include/p_local.h"
-#include "../../hexen/include/p_mapinfo.h"
 #include "../../hexen/include/p_maputl.h"
 #include "../../hexen/include/p_mobj.h"
 #include "../../hexen/include/p_pillar.h"
@@ -70,5 +69,9 @@
 #include "../../hexen/include/x_state.h"
 #include "../../hexen/include/x_think.h"
 #include "../../hexen/include/xddefs.h"
+
+#ifdef __cplusplus
+#  include "../../hexen/include/p_mapinfo.h"
+#endif
 
 #endif // __JHEXEN_CONVENIENCE_H__

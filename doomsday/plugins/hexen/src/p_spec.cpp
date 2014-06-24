@@ -76,7 +76,7 @@ void P_InitLava(void)
 
 void P_InitSky(Uri const *mapUri)
 {
-    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+    mapinfo_t const *mapInfo = P_MapInfo(reinterpret_cast<de::Uri const *>(mapUri));
     if(mapInfo)
     {
         sky1Material     = mapInfo->sky1Material;
@@ -198,28 +198,19 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte *args, mobj_t *mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-static Uri *mapUriFromLogicalNumber(int number)
+static de::Uri mapUriFromLogicalNumber(int number)
 {
-    if(!number) return 0; // current map.
+    if(!number) return gameMapUri; // current map.
     return G_ComposeMapUri(gameEpisode, number - 1);
 }
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
 {
-    byte newArgs[5];
-    int i, lock;
-    dd_bool success;
-    Uri *mapUri;
+    DENG2_ASSERT(args != 0 && mo != 0);
 
-    DENG_ASSERT(args != 0);
+    if(!mo->player) return false;
 
-    if(!mo->player)
-    {
-        return false;
-    }
-
-    lock = args[4];
-    if(lock)
+    if(int lock = args[4])
     {
         if(!(mo->player->keys & (1 << (lock - 1))))
         {
@@ -231,17 +222,15 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
         }
     }
 
-    for(i = 0; i < 4; ++i)
+    byte newArgs[5];
+    for(int i = 0; i < 4; ++i)
     {
         newArgs[i] = args[i];
     }
     newArgs[4] = 0;
 
-    mapUri = mapUriFromLogicalNumber(newArgs[1]);
-    success = Game_ACScriptInterpreter_StartScript(newArgs[0], mapUri, &newArgs[2], mo, line, side);
-    Uri_Delete(mapUri);
-
-    return success;
+    de::Uri mapUri = mapUriFromLogicalNumber(newArgs[1]);
+    return Game_ACScriptInterpreter().startScript(newArgs[0], &mapUri, &newArgs[2], mo, line, side);
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
@@ -518,21 +507,18 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 80: /* ACS_Execute */ {
-        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
-        success = Game_ACScriptInterpreter_StartScript(args[0], mapUri, &args[2], mo, line, side);
-        Uri_Delete(mapUri);
+        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter().startScript(args[0], &mapUri, &args[2], mo, line, side);
         break; }
 
     case 81: /* ACS_Suspend */ {
-        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
-        success = Game_ACScriptInterpreter_SuspendScript(args[0], mapUri);
-        Uri_Delete(mapUri);
+        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter().suspendScript(args[0], &mapUri);
         break; }
 
     case 82: /* ACS_Terminate */ {
-        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
-        success = Game_ACScriptInterpreter_TerminateScript(args[0], mapUri);
-        Uri_Delete(mapUri);
+        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter().terminateScript(args[0], &mapUri);
         break; }
 
     case 83: // ACS_LockedExecute

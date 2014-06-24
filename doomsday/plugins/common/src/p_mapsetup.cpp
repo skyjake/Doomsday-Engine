@@ -1096,15 +1096,16 @@ void P_ResetWorldState()
 #endif
 }
 
-char const *P_MapTitle(Uri const *mapUri)
+char const *P_MapTitle(Uri const *mapUri_)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
+    if(!mapUri) mapUri = &gameMapUri;
 
     char const *title = 0;
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
+    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
     {
         if(mapInfo.name[0])
         {
@@ -1150,7 +1151,7 @@ char const *P_MapTitle(Uri const *mapUri)
 
 char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    if(!mapUri) mapUri = reinterpret_cast<Uri *>(&gameMapUri);
 
     AutoStr *path = Uri_Resolved(mapUri);
     if(!path || Str_IsEmpty(path))
@@ -1180,16 +1181,17 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
     return author;
 }
 
-patchid_t P_MapTitlePatch(Uri const *mapUri)
+patchid_t P_MapTitlePatch(Uri const *mapUri_)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
+    if(!mapUri) mapUri = &gameMapUri;
 
 #if __JDOOM__ || __JDOOM64__
-    uint map = G_MapNumberFor(mapUri);
+    uint map = G_MapNumberFor(*mapUri);
 #  if __JDOOM__
     if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
     {
-        uint episode = G_EpisodeNumberFor(mapUri);
+        uint episode = G_EpisodeNumberFor(*mapUri);
         map = (episode * 9) + map;
     }
 #  endif

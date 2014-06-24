@@ -686,7 +686,7 @@ void NetSv_SendGameState(int flags, int to)
     // Print a short message that describes the game state.
     App_Log(DE2_NET_NOTE, "Sending game setup: %s %s %s",
             gameId.toLatin1().constData(),
-            Str_Text(Uri_Resolved(gameMapUri)),
+            gameMapUri.resolved().toLatin1().constData(),
             gameConfigString);
 
     // Send an update to all the players in the game.
@@ -703,7 +703,7 @@ void NetSv_SendGameState(int flags, int to)
         Writer_Write(writer, gameId.toLatin1().constData(), gameId.length());
 
         // The current map.
-        Uri_Write(gameMapUri, writer);
+        Uri_Write(reinterpret_cast<Uri *>(&gameMapUri), writer);
 
         // Also include the episode and map numbers.
         Writer_WriteByte(writer, gameEpisode);

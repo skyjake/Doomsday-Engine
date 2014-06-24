@@ -323,14 +323,11 @@ void H_PreInit()
 void H_PostInit()
 {
     dd_bool autoStart = false;
-    Uri *startMapUri = 0;
+    de::Uri startMapUri;
 
     /// @todo Kludge: Shareware WAD has different border background.
     /// @todo Do this properly!
-    if(gameMode == heretic_shareware)
-        borderGraphics[0] = "Flats:FLOOR04";
-    else
-        borderGraphics[0] = "Flats:FLAT513";
+    borderGraphics[0] = (gameMode == heretic_shareware)? "Flats:FLOOR04" : "Flats:FLAT513";
 
     // Common post init routine.
     G_CommonPostInit();
@@ -416,7 +413,7 @@ void H_PostInit()
         autoStart = true;
     }
 
-    if(!startMapUri)
+    if(startMapUri.isEmpty())
     {
         startMapUri = G_ComposeMapUri(0, 0);
     }
@@ -425,22 +422,19 @@ void H_PostInit()
     if(autoStart)
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
-                              F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
+                              startMapUri.asText().toUtf8().constData(),
                               defaultGameRules.skill);
     }
 
     // Validate episode and map.
-    AutoStr *path = Uri_Compose(startMapUri);
-    if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
+    if((autoStart || IS_NETGAME) && P_MapExists(startMapUri.compose().toUtf8().constData()))
     {
-        G_SetGameActionNewSession(*startMapUri, 0/*default*/, defaultGameRules);
+        G_SetGameActionNewSession(startMapUri, 0/*default*/, defaultGameRules);
     }
     else
     {
         COMMON_GAMESESSION->endAndBeginTitle(); // Start up intro loop.
     }
-
-    Uri_Delete(startMapUri);
 }
 
 void H_Shutdown()

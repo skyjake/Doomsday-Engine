@@ -151,26 +151,16 @@ static void drawFinishedTitle(void)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawEnteringTitle(void)
+static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
-    int x = SCREENWIDTH/2, y = WI_TITLEY;
-    char *mapName = NULL;
-    uint mapNum;
+    // See if there is a map name...
+    char *mapName = 0;
     ddmapinfo_t minfo;
-    patchid_t patchId;
-    patchinfo_t info;
-    AutoStr *mapPath;
-    Uri *mapUri;
-
-    // See if there is a map name.
-    mapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-    mapPath = Uri_Compose(mapUri);
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.name)
+    if(Def_Get(DD_DEF_MAP_INFO, G_ComposeMapUri(wbs->episode, wbs->nextMap).compose().toUtf8().constData(), &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
     }
-    Uri_Delete(mapUri);
 
     // Skip the E#M# or Map #.
     if(mapName)
@@ -189,12 +179,14 @@ static void drawEnteringTitle(void)
 
     // Draw "Entering"
     WI_DrawPatchXY2(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP);
+
+    patchinfo_t info;
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    mapNum = (wbs->episode * 9) + wbs->nextMap;
-    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    uint const mapNum       = (wbs->episode * 9) + wbs->nextMap;
+    patchid_t const patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY2(patchId, patchReplacementText(patchId, mapName), x, y, ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);

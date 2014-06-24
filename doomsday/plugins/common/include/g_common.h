@@ -25,12 +25,16 @@
 #include "fi_lib.h"
 #include "mobj.h"
 #include "player.h"
+#include <doomsday/uri.h>
 
 DENG_EXTERN_C dd_bool singledemo;
 
 DENG_EXTERN_C uint gameEpisode;
 
-DENG_EXTERN_C Uri *gameMapUri;
+#if __cplusplus
+extern de::Uri gameMapUri;
+#endif
+
 DENG_EXTERN_C uint gameMapEntrance;
 DENG_EXTERN_C uint gameMap; ///< @todo refactor away.
 
@@ -77,7 +81,7 @@ extern GameRuleset defaultGameRules;
  * @param mapEntrance  Logical map entry point number.
  * @param rules        Game rules to apply.
  */
-void G_SetGameActionNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
+void G_SetGameActionNewSession(de::Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
 /**
  * Schedule a game session save (deferred).
@@ -100,6 +104,16 @@ bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription =
  */
 bool G_SetGameActionLoadSession(de::String slotId);
 
+/**
+ * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
+ */
+char const *G_InFineBriefing(de::Uri const *mapUri);
+
+/**
+ * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
+ */
+char const *G_InFineDebriefing(de::Uri const *mapUri);
+
 extern "C" {
 #endif
 
@@ -118,16 +132,6 @@ void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExi
  * Returns the InFine script with the specified @a scriptId; otherwise @c 0.
  */
 char const *G_InFine(char const *scriptId);
-
-/**
- * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
- */
-char const *G_InFineBriefing(Uri const *mapUri);
-
-/**
- * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
- */
-char const *G_InFineDebriefing(Uri const *mapUri);
 
 /**
  * Reveal the game @em help display.
@@ -168,19 +172,22 @@ void G_IntermissionBegin(void);
  */
 void G_IntermissionDone(void);
 
+#if __cplusplus
+} // extern "C"
+
 /**
  * Returns the logical episode number for the identified map.
  *
  * @param mapUri  Unique identifier of the map to lookup.
  */
-uint G_EpisodeNumberFor(Uri const *mapUri);
+uint G_EpisodeNumberFor(de::Uri const &mapUri);
 
 /**
  * Returns the logical map number for the identified map.
  *
  * @param mapUri  Unique identifier of the map to lookup.
  */
-uint G_MapNumberFor(Uri const *mapUri);
+uint G_MapNumberFor(de::Uri const &mapUri);
 
 /**
  * Compose a Uri for the identified @a episode and @a map combination.
@@ -188,9 +195,12 @@ uint G_MapNumberFor(Uri const *mapUri);
  * @param episode  Logical episode number.
  * @param map      Logical map number.
  *
- * @return  Resultant Uri. Must be destroyed with Uri_Delete() when no longer needed.
+ * @return  Resultant Uri.
  */
-Uri *G_ComposeMapUri(uint episode, uint map);
+de::Uri G_ComposeMapUri(uint episode, uint map);
+
+extern "C" {
+#endif
 
 /**
  * Determine if the specified @a episode and @a map value pair are valid and if not,

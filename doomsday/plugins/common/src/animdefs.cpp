@@ -130,9 +130,9 @@ static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
     AutoStr *startPath = AutoStr_NewStd();
     AutoStr *endPath   = AutoStr_NewStd();
 
-    Uri *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
-    Uri *startUri = Uri_New();
-    Uri *endUri   = Uri_New();
+    uri_s *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+    uri_s *startUri = Uri_New();
+    uri_s *endUri   = Uri_New();
 
     // Read structures until -1 is found
     bool lastIsTexture = false;
@@ -240,7 +240,7 @@ static void AnimDefsParser(ddstring_s const *path)
         // string(texture-scheme) string(texture-path)
         if(char const *scheme = textureScheme(lexer.token()))
         {
-            Uri *uri = lexer.readUri(scheme);
+            uri_s *uri = lexer.readUri(scheme);
             int const texNumBase = Textures_UniqueId2(uri, !isCustom);
             Uri_Delete(uri);
 
@@ -277,7 +277,7 @@ static void AnimDefsParser(ddstring_s const *path)
 
                     if(!ignore)
                     {
-                        Uri *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+                        uri_s *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
                         Uri_SetPath(frameUrn, Str_Text(Str_Appendf(AutoStr_NewStd(), "%s:%i", scheme, texNumBase + picNum - 1)));
 
                         R_AddAnimGroupFrame(groupNumber, frameUrn, min, (max > 0? max - min : 0));

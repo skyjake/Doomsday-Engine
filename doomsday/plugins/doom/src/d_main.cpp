@@ -387,14 +387,11 @@ void D_PreInit()
 void D_PostInit()
 {
     dd_bool autoStart = false;
-    Uri *startMapUri = 0;
+    de::Uri startMapUri;
 
     /// @todo Kludge: Border background is different in DOOM2.
     /// @todo Do this properly!
-    if(gameModeBits & GM_ANY_DOOM2)
-        borderGraphics[0] = "Flats:GRNROCK";
-    else
-        borderGraphics[0] = "Flats:FLOOR7_2";
+    borderGraphics[0] = (gameModeBits & GM_ANY_DOOM2)? "Flats:GRNROCK" : "Flats:FLOOR7_2";
 
     // Common post init routine
     G_CommonPostInit();
@@ -498,7 +495,7 @@ void D_PostInit()
         }
     }
 
-    if(!startMapUri)
+    if(startMapUri.isEmpty())
     {
         startMapUri = G_ComposeMapUri(0, 0);
     }
@@ -507,22 +504,19 @@ void D_PostInit()
     if(autoStart)
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
-                              F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
+                              startMapUri.asText().toUtf8().constData(),
                               defaultGameRules.skill);
     }
 
     // Validate episode and map.
-    AutoStr *path = Uri_Compose(startMapUri);
-    if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
+    if((autoStart || IS_NETGAME) && P_MapExists(startMapUri.compose().toUtf8().constData()))
     {
-        G_SetGameActionNewSession(*startMapUri, 0/*default*/, defaultGameRules);
+        G_SetGameActionNewSession(startMapUri, 0/*default*/, defaultGameRules);
     }
     else
     {
         COMMON_GAMESESSION->endAndBeginTitle(); // Start up intro loop.
     }
-
-    Uri_Delete(startMapUri);
 }
 
 void D_Shutdown()

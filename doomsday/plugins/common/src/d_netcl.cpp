@@ -80,7 +80,10 @@ void NetCl_UpdateGameState(Reader *msg)
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
+    {
+        Uri_Delete(gsMapUri);
         return;
+    }
 
     // Check for a game mode mismatch.
     /// @todo  Automatically load the server's game if it is available.
@@ -91,6 +94,7 @@ void NetCl_UpdateGameState(Reader *msg)
         App_Log(DE2_NET_ERROR, "Game mismatch: server's identity key (%s) is different to yours (%s)",
                 gsGameIdentity, COMMON_GAMESESSION->gameId().toLatin1().constData());
         DD_Execute(false, "net disconnect");
+        Uri_Delete(gsMapUri);
         return;
     }
 
@@ -104,13 +108,13 @@ void NetCl_UpdateGameState(Reader *msg)
     if(gsFlags & GSF_CHANGE_MAP)
     {
         COMMON_GAMESESSION->end();
-        COMMON_GAMESESSION->begin(*gsMapUri, gameMapEntrance /*gsMapEntrance*/, gsRules);
+        COMMON_GAMESESSION->begin(*reinterpret_cast<de::Uri *>(gsMapUri), gameMapEntrance /*gsMapEntrance*/, gsRules);
     }
     else
     {
         /// @todo Breaks session management logic; rules cannot change once the session has
         /// begun and setting the current map and/or entrance is illogical at this point.
-        DENG2_ASSERT(Uri_Equality(gsMapUri, gameMapUri));
+        DENG2_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == gameMapUri);
 
         COMMON_GAMESESSION->applyNewRules(gsRules);
         //COMMON_GAMESESSION->setMap(*gsMapUri);
@@ -157,6 +161,8 @@ void NetCl_UpdateGameState(Reader *msg)
 
     // Tell the server we're ready to begin receiving frames.
     Net_SendPacket(0, DDPT_OK, 0, 0);
+
+    Uri_Delete(gsMapUri);
 }
 
 void NetCl_MobjImpulse(Reader *msg)
