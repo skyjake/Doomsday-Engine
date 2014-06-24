@@ -245,7 +245,7 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
         }
 
         LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
-            << *reinterpret_cast<de::Uri *>(def->path) << def->id;
+            << *def->path << def->id;
     }
 
     // Try the resource locator?

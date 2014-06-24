@@ -46,7 +46,7 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     {
         if(def.texture)
         {
-            return &App_ResourceSystem().texture(*reinterpret_cast<de::Uri *>(def.texture));
+            return &App_ResourceSystem().texture(*def.texture);
         }
     }
     catch(TextureManifest::MissingTextureError const &)
@@ -104,7 +104,7 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
         if(def.texture)
         {
             return &App_ResourceSystem().textureScheme("Details")
-                        .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+                        .findByResourceUri(*def.texture).texture();
         }
     }
     catch(TextureManifest::MissingTextureError const &)
@@ -163,7 +163,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
             if(def.maskTexture)
             {
                 return &App_ResourceSystem().textureScheme("Masks")
-                            .findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
+                            .findByResourceUri(*def.maskTexture).texture();
             }
         }
         else
@@ -171,7 +171,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
             if(def.texture)
             {
                 return &App_ResourceSystem().textureScheme("Reflections")
-                            .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+                            .findByResourceUri(*def.texture).texture();
             }
         }
     }
@@ -220,16 +220,16 @@ Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
 
 Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight_stage_t const &def)
 {
-    Texture *upTexture    = App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri *>(def.up));
-    Texture *downTexture  = App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri *>(def.down));
-    Texture *sidesTexture = App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri *>(def.sides));
+    Texture *upTexture    = App_ResourceSystem().texture("Lightmaps", def.up);
+    Texture *downTexture  = App_ResourceSystem().texture("Lightmaps", def.down);
+    Texture *sidesTexture = App_ResourceSystem().texture("Lightmaps", def.sides);
 
     Texture *flareTexture = 0;
     int sysFlareIdx = def.sysFlareIdx;
 
     if(def.flare && !def.flare->isEmpty())
     {
-        de::Uri const *resourceUri = reinterpret_cast<de::Uri *>(def.flare);
+        de::Uri const *resourceUri = def.flare;
 
         // Select a system flare by numeric identifier?
         if(resourceUri->path().length() == 1 &&

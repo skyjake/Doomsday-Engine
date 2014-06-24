@@ -571,7 +571,7 @@ void Sky::configure(ded_sky_t *def)
            .setFadeoutLimit(lyrDef.colorLimit)
            .enable();
 
-        if(de::Uri *matUri = reinterpret_cast<de::Uri *>(lyrDef.material))
+        if(de::Uri *matUri = lyrDef.material)
         {
             try
             {

@@ -363,7 +363,7 @@ ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
         if(!def->material) continue;
 
         // Is this suitable?
-        if(reinterpret_cast<de::Uri const &>(*def->material) == uri)
+        if(*def->material == uri)
             return def;
 
 #if 0 /// @todo $revise-texture-animation
@@ -821,7 +821,7 @@ static ded_group_t *findGroupDefByFrameTextureUri(de::Uri const &uri)
 
             if(!gm.material) continue;
 
-            if(reinterpret_cast<de::Uri const &>(*gm.material) == uri)
+            if(*gm.material == uri)
             {
                 // Found one.
                 return &grp;
@@ -866,7 +866,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                     // Determine the start frame.
                     int startFrame = 0;
                     while(!grp->members[startFrame].material ||
-                          reinterpret_cast<de::Uri const &>(*grp->members[startFrame].material) != textureUri)
+                          *grp->members[startFrame].material != textureUri)
                     {
                         startFrame++;
                     }
@@ -887,7 +887,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
 
                         try
                         {
-                            Texture &texture = App_ResourceSystem().texture(reinterpret_cast<de::Uri const &>(*gm.material));
+                            Texture &texture = App_ResourceSystem().texture(*gm.material);
                             layer0->addStage(Material::Layer::Stage(&texture, gm.tics, gm.randomTics / float( gm.tics )));
                         }
                         catch(TextureManifest::MissingTextureError const &)
@@ -924,7 +924,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         // Add a new stage.
                         try
                         {
-                            Texture &texture = App_ResourceSystem().textureScheme("Details").findByResourceUri(*reinterpret_cast<de::Uri const *>(detailDef->stage.texture)).texture();
+                            Texture &texture = App_ResourceSystem().textureScheme("Details").findByResourceUri(*detailDef->stage.texture).texture();
                             dlayer->addStage(Material::DetailLayer::Stage(&texture, stage->tics, stage->variance,
                                                                           detailDef->stage.scale, detailDef->stage.strength,
                                                                           detailDef->stage.maxDistance));
@@ -974,7 +974,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         try
                         {
                             Texture &texture = App_ResourceSystem().textureScheme("Reflections")
-                                                   .findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.texture)).texture();
+                                                   .findByResourceUri(*shineDef->stage.texture).texture();
 
                             Texture *maskTexture = 0;
                             if(shineDef->stage.maskTexture)
@@ -982,7 +982,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                                 try
                                 {
                                     maskTexture = &App_ResourceSystem().textureScheme("Masks")
-                                                       .findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.maskTexture)).texture();
+                                                       .findByResourceUri(*shineDef->stage.maskTexture).texture();
                                 }
                                 catch(TextureManifest::MissingTextureError const &)
                                 {} // Ignore this error.
@@ -1037,19 +1037,19 @@ static void rebuildMaterialDecorations(Material &material, ded_material_t const 
 
             if(stage->up)
             {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->up));
+                defineLightmap(*stage->up);
             }
             if(stage->down)
             {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->down));
+                defineLightmap(*stage->down);
             }
             if(stage->sides)
             {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->sides));
+                defineLightmap(*stage->sides);
             }
             if(stage->flare)
             {
-                defineFlaremap(*reinterpret_cast<de::Uri const *>(stage->flare));
+                defineFlaremap(*stage->flare);
             }
         }
 
@@ -1096,8 +1096,7 @@ static void interpretMaterialDef(ded_material_t const &def)
     try
     {
         // Create/retrieve a manifest for the would-be material.
-        MaterialManifest *manifest =
-            &App_ResourceSystem().declareMaterial(*reinterpret_cast<de::Uri *>(def.uri));
+        MaterialManifest *manifest = &App_ResourceSystem().declareMaterial(*def.uri);
 
         // Update manifest classification:
         manifest->setFlags(MaterialManifest::AutoGenerated, def.autoGenerated? SetFlags : UnsetFlags);
@@ -1109,7 +1108,7 @@ static void interpretMaterialDef(ded_material_t const &def)
             {
                 try
                 {
-                    Texture &texture = App_ResourceSystem().texture(*reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture));
+                    Texture &texture = App_ResourceSystem().texture(*firstLayer.stages[0].texture);
                     if(texture.isFlagged(Texture::Custom))
                     {
                         manifest->setFlags(MaterialManifest::Custom);
@@ -1119,8 +1118,8 @@ static void interpretMaterialDef(ded_material_t const &def)
                 {
                     // Log but otherwise ignore this error.
                     LOG_RES_WARNING("Ignoring unknown texture \"%s\" in Material \"%s\" (layer %i stage %i): %s")
-                        << *reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)
-                        << *reinterpret_cast<de::Uri *>(def.uri)
+                        << *firstLayer.stages[0].texture
+                        << *def.uri
                         << 0 << 0
                         << er.asText();
                 }
@@ -1149,12 +1148,12 @@ static void interpretMaterialDef(ded_material_t const &def)
     catch(ResourceSystem::UnknownSchemeError const &er)
     {
         LOG_RES_WARNING("Failed to declare material \"%s\": %s")
-            << *reinterpret_cast<de::Uri *>(def.uri) << er.asText();
+            << *def.uri << er.asText();
     }
     catch(MaterialScheme::InvalidPathError const &er)
     {
         LOG_RES_WARNING("Failed to declare material \"%s\": %s")
-            << *reinterpret_cast<de::Uri *>(def.uri) << er.asText();
+            << *def.uri << er.asText();
     }
 }
 
@@ -1315,19 +1314,19 @@ void Def_Read()
 
             if(dl->stage.up)
             {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(dl->stage.up));
+                defineLightmap(*dl->stage.up);
             }
             if(dl->stage.down)
             {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(dl->stage.down));
+                defineLightmap(*dl->stage.down);
             }
             if(dl->stage.sides)
             {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(dl->stage.sides));
+                defineLightmap(*dl->stage.sides);
             }
             if(dl->stage.flare)
             {
-                defineFlaremap(*reinterpret_cast<de::Uri const *>(dl->stage.flare));
+                defineFlaremap(*dl->stage.flare);
             }
         }
     }
@@ -1344,7 +1343,7 @@ void Def_Read()
 
         if(!dtl->stage.texture) continue;
 
-        App_ResourceSystem().defineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->stage.texture));
+        App_ResourceSystem().defineTexture("Details", *dtl->stage.texture);
     }
 
     // Surface reflections (Define textures).
@@ -1359,11 +1358,11 @@ void Def_Read()
 
         if(ref->stage.texture)
         {
-            App_ResourceSystem().defineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->stage.texture));
+            App_ResourceSystem().defineTexture("Reflections", *ref->stage.texture);
         }
         if(ref->stage.maskTexture)
         {
-            App_ResourceSystem().defineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->stage.maskTexture),
+            App_ResourceSystem().defineTexture("Masks", *ref->stage.maskTexture,
                             Vector2i(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
@@ -1597,7 +1596,7 @@ static void initMaterialGroup(ded_group_t &def)
 
         try
         {
-            MaterialManifest &manifest = App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri *>(gm->material));
+            MaterialManifest &manifest = App_ResourceSystem().materialManifest(*gm->material);
 
             if(def.flags & AGF_PRECACHE) // A precache group.
             {
@@ -1626,7 +1625,7 @@ static void initMaterialGroup(ded_group_t &def)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING("Unknown material \"%s\" in group def %i: %s")
-                << *reinterpret_cast<de::Uri *>(gm->material)
+                << *gm->material
                 << i << er.asText();
         }
     }
@@ -1682,23 +1681,23 @@ void Def_PostInit()
     // Lights.
     for(int i = 0; i < defs.lights.size(); ++i)
     {
-        ded_light_t* lig = &defs.lights[i];
+        ded_light_t *lig = &defs.lights[i];
 
         if(lig->up)
         {
-            defineLightmap(*reinterpret_cast<de::Uri const *>(lig->up));
+            defineLightmap(*lig->up);
         }
         if(lig->down)
         {
-            defineLightmap(*reinterpret_cast<de::Uri const *>(lig->down));
+            defineLightmap(*lig->down);
         }
         if(lig->sides)
         {
-            defineLightmap(*reinterpret_cast<de::Uri const *>(lig->sides));
+            defineLightmap(*lig->sides);
         }
         if(lig->flare)
         {
-            defineFlaremap(*reinterpret_cast<de::Uri const *>(lig->flare));
+            defineFlaremap(*lig->flare);
         }
     }
 
@@ -1797,7 +1796,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     {
         try
         {
-            l->actMaterial = App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
+            l->actMaterial = App_ResourceSystem().materialManifest(*def->actMaterial).id();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.
@@ -1807,7 +1806,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     {
         try
         {
-            l->deactMaterial = App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
+            l->deactMaterial = App_ResourceSystem().materialManifest(*def->deactMaterial).id();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.

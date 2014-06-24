@@ -222,7 +222,7 @@ CompositeBitmapFont *CompositeBitmapFont::fromDef(FontManifest &manifest,
         if(!def.charMap[i].path) continue;
         try
         {
-            String glyphPatchPath = reinterpret_cast<de::Uri &>(*def.charMap[i].path).resolved();
+            String glyphPatchPath = def.charMap[i].path->resolved();
             font->glyphSetPatch(def.charMap[i].ch, glyphPatchPath);
         }
         catch(de::Uri::ResolveError const &er)
@@ -259,7 +259,7 @@ void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t const &newDef)
 
         try
         {
-            String glyphPatchPath = reinterpret_cast<de::Uri &>(*d->def->charMap[i].path).resolved();
+            String glyphPatchPath = d->def->charMap[i].path->resolved();
             glyphSetPatch(d->def->charMap[i].ch, glyphPatchPath);
         }
         catch(de::Uri::ResolveError const& er)
