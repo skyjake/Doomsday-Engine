@@ -28,6 +28,10 @@
 
 DENG_EXTERN_C int TextKeyMessages[];
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 dd_bool P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
 
 dd_bool P_GiveKey(player_t *player, keytype_t keyType);
@@ -50,5 +54,9 @@ dd_bool P_GiveHealth(player_t *player, int amount);
 dd_bool P_GivePower(player_t *player, powertype_t powerType);
 
 dd_bool P_MorphPlayer(player_t *player);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBHEXEN_P_INTER_H

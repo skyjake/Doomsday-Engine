@@ -81,7 +81,7 @@ SOURCES += \
     src/hconsole.c \
     src/hrefresh.c \
     src/in_lude.c \
-    src/m_cheat.c \
+    src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
