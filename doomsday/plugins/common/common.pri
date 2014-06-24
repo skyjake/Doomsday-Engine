@@ -86,7 +86,7 @@ SOURCES += \
     $$common_src/g_defs.c \
     $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.cpp \
-    $$common_src/g_update.c \
+    $$common_src/g_update.cpp \
     $$common_src/gamerules.cpp \
     $$common_src/gamesession.cpp \
     $$common_src/gl_drawpatch.c \
