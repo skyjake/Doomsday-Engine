@@ -29,7 +29,7 @@
 #include <QStringList>
 #include "dehreader.h"
 
-/// @return Newly composed map URI, must be free'd with Uri_Delete().
+/// @return Newly composed map URI.
 de::Uri composeMapUri(int episode, int map);
 
 int mapInfoDefForUri(de::Uri const &uri, ded_mapinfo_t **def = 0);
