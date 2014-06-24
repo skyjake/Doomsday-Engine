@@ -25,6 +25,7 @@ INCLUDEPATH += $$DENG_API_DIR
 }
 else: include(../dep_core.pri)
 
+include(../dep_doomsday.pri)
 include(../dep_legacy.pri)
 
 deng_mingw: QMAKE_CFLAGS_WARN_ON += \
