@@ -25,3 +25,4 @@ tools/*/release
 vc100.pdb
 *.pyc
 *~
+precompiled.h.cpp
