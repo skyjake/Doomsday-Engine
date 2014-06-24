@@ -70,7 +70,7 @@ SOURCES += \
     src/d_items.c \
     src/d_main.cpp \
     src/d_refresh.c \
-    src/m_cheat.c \
+    src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
