@@ -83,7 +83,7 @@ SOURCES += \
     src/p_telept.c \
     src/st_stuff.c \
     src/tables.c \
-    src/wi_stuff.c \
+    src/wi_stuff.cpp \
 
 win32 {
     deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom64.def\"
