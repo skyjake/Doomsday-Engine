@@ -140,28 +140,25 @@ void P_AnimateSky(void)
     }
 }
 
-dd_bool EV_SectorSoundChange(byte* args)
+dd_bool EV_SectorSoundChange(byte *args)
 {
-    dd_bool             rtn = false;
-    Sector*             sec = NULL;
-    iterlist_t*         list;
+    if(!args[0]) return false;
 
-    if(!args[0])
-        return false;
+    dd_bool result = false;
 
-    list = P_GetSectorIterListForTag((int) args[0], false);
-    if(!list)
-        return rtn;
-
-    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
-    IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+    if(iterlist_t *list = P_GetSectorIterListForTag((int) args[0], false))
     {
-        P_ToXSector(sec)->seqType = args[1];
-        rtn = true;
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        Sector *sec = 0;
+        while((sec = (Sector *)IterList_MoveIterator(list)))
+        {
+            P_ToXSector(sec)->seqType = seqtype_t(args[1]);
+            result = true;
+        }
     }
 
-    return rtn;
+    return result;
 }
 
 static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
@@ -188,15 +185,12 @@ static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
+dd_bool EV_LineSearchForPuzzleItem(Line *line, byte *args, mobj_t *mo)
 {
-    inventoryitemtype_t  type;
-
     if(!mo || !mo->player || !line)
         return false;
 
-    type = IIT_FIRSTPUZZITEM + P_ToXLine(line)->arg1;
-
+    inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRSTPUZZITEM + P_ToXLine(line)->arg1);
     if(type < IIT_FIRSTPUZZITEM)
         return false;
 
@@ -703,7 +697,7 @@ dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
        buttonSuccess)
     {
-        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), 0, false,
+        P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), 0, false,
                        repeat? BUTTONTIME : 0);
     }
 
@@ -837,16 +831,14 @@ void P_PlayerOnSpecialFloor(player_t* player)
     }
 }
 
-void P_SpawnSectorSpecialThinkers(void)
+void P_SpawnSectorSpecialThinkers()
 {
-    int i;
-
     // Clients do not spawn sector specials.
     if(IS_CLIENT) return;
 
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
     {
-        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
         xsector_t *xsec = P_ToXSector(sec);
 
         switch(xsec->special)
@@ -929,7 +921,7 @@ static void P_LightningFlash(void)
         {
             for(i = 0; i < numsectors; ++i)
             {
-                Sector *sec = P_ToPtr(DMU_SECTOR, i);
+                Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -948,7 +940,7 @@ static void P_LightningFlash(void)
             // Remove the alternate lightning flash special.
             for(i = 0; i < numsectors; ++i)
             {
-                Sector *sec = P_ToPtr(DMU_SECTOR, i);
+                Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -973,7 +965,7 @@ static void P_LightningFlash(void)
     foundSec = false;
     for(i = 0; i < numsectors; ++i)
     {
-        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
@@ -1080,7 +1072,7 @@ void P_InitLightning(void)
     secCount = 0;
     for(i = 0; i < numsectors; ++i)
     {
-        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
@@ -1092,7 +1084,7 @@ void P_InitLightning(void)
     {
         mapHasLightning = true;
 
-        lightningLightLevels = Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
+        lightningLightLevels = (float *)Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
 
         // Don't flash immediately on entering the map.
         nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
