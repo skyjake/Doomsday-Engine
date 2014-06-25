@@ -175,6 +175,9 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             }
             else
             {
+                // Make it all caps.
+                widget.as<LabelWidget>().setText(item.label().toUpper());
+
                 widget.margins().set("halfunit").setLeft("unit");
                 widget.setFont("separator.label");
                 /*
