@@ -23,7 +23,6 @@ HEADERS += \
 
 SOURCES += \
     src/id1map.cpp \
-    src/id1map_load.cpp \
     src/id1map_loadblockmap.cpp \
     src/id1map_util.cpp \
     src/wadmapconverter.cpp
