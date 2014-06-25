@@ -2,7 +2,7 @@
  *
  * @ingroup wadmapconverter
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,12 +20,12 @@
  */
 
 #include "wadmapconverter.h"
-#include "id1map_load.h"
 #include "id1map_util.h"
 #include <de/Error>
 #include <de/Log>
 
 using namespace de;
+using namespace wadimp;
 
 typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
 
@@ -105,7 +105,7 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
 
         // Determine the number of map data objects of each data type.
         uint *elemCountAddr = 0;
-        size_t const elemSize = ElementSizeForMapLumpType(mapFormat, type);
+        size_t const elemSize = Id1Map::ElementSizeForMapLumpType(mapFormat, type);
 
         switch(type)
         {

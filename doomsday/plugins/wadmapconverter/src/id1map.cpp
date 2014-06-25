@@ -1,7 +1,7 @@
 /** @file id1map.cpp  id Tech 1 map format reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,8 +19,6 @@
  */
 
 #include "wadmapconverter.h"
-#include "id1map_datatypes.h"
-#include "id1map_load.h"
 #include "id1map_util.h"
 #include <de/libcore.h>
 #include <de/Error>
@@ -31,6 +29,576 @@
 #include <QVector>
 
 using namespace de;
+
+namespace wadimp {
+namespace internal {
+
+/// Sizes of the map data structures in the arrived map formats (in bytes).
+#define SIZEOF_64VERTEX         (4 * 2)
+#define SIZEOF_VERTEX           (2 * 2)
+#define SIZEOF_64THING          (2 * 7)
+#define SIZEOF_XTHING           (2 * 7 + 1 * 6)
+#define SIZEOF_THING            (2 * 5)
+#define SIZEOF_XLINEDEF         (2 * 5 + 1 * 6)
+#define SIZEOF_64LINEDEF        (2 * 6 + 1 * 4)
+#define SIZEOF_LINEDEF          (2 * 7)
+#define SIZEOF_64SIDEDEF        (2 * 6)
+#define SIZEOF_SIDEDEF          (2 * 3 + 8 * 3)
+#define SIZEOF_64SECTOR         (2 * 12)
+#define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
+#define SIZEOF_LIGHT            (1 * 6)
+
+struct SideDef
+{
+    int                 index;
+    int16_t             offset[2];
+    Id1Map::MaterialId  topMaterial;
+    Id1Map::MaterialId  bottomMaterial;
+    Id1Map::MaterialId  middleMaterial;
+    int                 sector;
+
+    void read(reader_s &reader, Id1Map &map)
+    {
+        offset[VX] = SHORT( Reader_ReadInt16(&reader) );
+        offset[VY] = SHORT( Reader_ReadInt16(&reader) );
+
+        char name[9];
+        Reader_Read(&reader, name, 8); name[8] = '\0';
+        topMaterial    = map.toMaterialId(name, Id1Map::WallMaterials);
+
+        Reader_Read(&reader, name, 8); name[8] = '\0';
+        bottomMaterial = map.toMaterialId(name, Id1Map::WallMaterials);
+
+        Reader_Read(&reader, name, 8); name[8] = '\0';
+        middleMaterial = map.toMaterialId(name, Id1Map::WallMaterials);
+
+        int idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sector = (idx == 0xFFFF? -1 : idx);
+    }
+
+    void read_Doom64(reader_s &reader, Id1Map &map)
+    {
+        offset[VX] = SHORT( Reader_ReadInt16(&reader) );
+        offset[VY] = SHORT( Reader_ReadInt16(&reader) );
+
+        int idx;
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        topMaterial    = map.toMaterialId(idx, Id1Map::WallMaterials);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        bottomMaterial = map.toMaterialId(idx, Id1Map::WallMaterials);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        middleMaterial = map.toMaterialId(idx, Id1Map::WallMaterials);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sector = (idx == 0xFFFF? -1 : idx);
+    }
+};
+
+/**
+ * @defgroup lineAnalysisFlags  Line Analysis flags
+ */
+///@{
+#define LAF_POLYOBJ             0x1 ///< Line defines a polyobj segment.
+///@}
+
+#define PO_LINE_START           (1) ///< Polyobj line start special.
+#define PO_LINE_EXPLICIT        (5)
+
+#define SEQTYPE_NUMSEQ          (10)
+
+struct LineDef
+{
+    enum Side {
+        Front,
+        Back
+    };
+
+    int             index;
+    int             v[2];
+    int             sides[2];
+    int16_t         flags; ///< MF_* flags.
+
+    // Analysis data:
+    int16_t         aFlags;
+
+    // DOOM format members:
+    int16_t         dType;
+    int16_t         dTag;
+
+    // Hexen format members:
+    int8_t          xType;
+    int8_t          xArgs[5];
+
+    // DOOM64 format members:
+    int8_t          d64drawFlags;
+    int8_t          d64texFlags;
+    int8_t          d64type;
+    int8_t          d64useType;
+    int16_t         d64tag;
+
+    int             ddFlags;
+    uint            validCount; ///< Used for polyobj line collection.
+
+    void read(reader_s &reader, Id1Map &map)
+    {
+        int idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        v[0] = (idx == 0xFFFF? -1 : idx);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        v[1] = (idx == 0xFFFF? -1 : idx);
+
+        flags = SHORT( Reader_ReadInt16(&reader) );
+        dType = SHORT( Reader_ReadInt16(&reader) );
+        dTag  = SHORT( Reader_ReadInt16(&reader) );
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sides[Front] = (idx == 0xFFFF? -1 : idx);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sides[Back] = (idx == 0xFFFF? -1 : idx);
+
+        aFlags       = 0;
+        validCount   = 0;
+        ddFlags      = 0;
+
+        xlatFlags(map.format());
+    }
+
+    void read_Doom64(reader_s &reader, Id1Map &map)
+    {
+        int idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        v[0] = (idx == 0xFFFF? -1 : idx);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        v[1] = (idx == 0xFFFF? -1 : idx);
+
+        flags = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        d64drawFlags = Reader_ReadByte(&reader);
+        d64texFlags  = Reader_ReadByte(&reader);
+        d64type      = Reader_ReadByte(&reader);
+        d64useType   = Reader_ReadByte(&reader);
+        d64tag       = SHORT( Reader_ReadInt16(&reader) );
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sides[Front] = (idx == 0xFFFF? -1 : idx);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sides[Back] = (idx == 0xFFFF? -1 : idx);
+
+        aFlags       = 0;
+        validCount   = 0;
+        ddFlags      = 0;
+
+        xlatFlags(map.format());
+    }
+
+    void read_Hexen(reader_s &reader, Id1Map &map)
+    {
+        int idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        v[0] = (idx == 0xFFFF? -1 : idx);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        v[1] = (idx == 0xFFFF? -1 : idx);
+
+        flags = SHORT( Reader_ReadInt16(&reader) );
+        xType    = Reader_ReadByte(&reader);
+        xArgs[0] = Reader_ReadByte(&reader);
+        xArgs[1] = Reader_ReadByte(&reader);
+        xArgs[2] = Reader_ReadByte(&reader);
+        xArgs[3] = Reader_ReadByte(&reader);
+        xArgs[4] = Reader_ReadByte(&reader);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sides[Front] = (idx == 0xFFFF? -1 : idx);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        sides[Back] = (idx == 0xFFFF? -1 : idx);
+
+        aFlags       = 0;
+        validCount   = 0;
+        ddFlags      = 0;
+
+        xlatFlags(map.format());
+    }
+
+    /**
+     * Translate the line flags for Doomsday.
+     */
+    void xlatFlags(Id1Map::Format mapFormat)
+    {
+#define ML_BLOCKING              1 ///< Solid, is an obstacle.
+#define ML_DONTPEGTOP            8 ///< Upper texture unpegged.
+#define ML_DONTPEGBOTTOM        16 ///< Lower texture unpegged.
+
+/// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
+#define ML_INVALID              2048
+#define DOOM_VALIDMASK          0x000001ff
+
+        /**
+         * Zero unused flags if ML_INVALID is set.
+         *
+         * @attention "This has been found to be necessary because of errors
+         *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
+         *  the value 0xFE00 masked into the flags value.
+         *  There could potentially be many more maps with this problem,
+         *  as it is well-known that Hellmaker wads set all bits in
+         *  mapthings that it does not understand."
+         *  Thanks to Quasar for the heads up.
+         *
+         * Only valid for DOOM format maps.
+         */
+        if(mapFormat == Id1Map::DoomFormat)
+        {
+            if(flags & ML_INVALID)
+                flags &= DOOM_VALIDMASK;
+        }
+
+        if(flags & ML_BLOCKING)
+        {
+            ddFlags |= DDLF_BLOCKING;
+            flags &= ~ML_BLOCKING;
+        }
+
+        if(flags & ML_DONTPEGTOP)
+        {
+            ddFlags |= DDLF_DONTPEGTOP;
+            flags &= ~ML_DONTPEGTOP;
+        }
+
+        if(flags & ML_DONTPEGBOTTOM)
+        {
+            ddFlags |= DDLF_DONTPEGBOTTOM;
+            flags &= ~ML_DONTPEGBOTTOM;
+        }
+
+#undef DOOM_VALIDMASK
+#undef ML_INVALID
+#undef ML_DONTPEGBOTTOM
+#undef ML_DONTPEGTOP
+#undef ML_BLOCKING
+    }
+};
+
+struct SectorDef
+{
+    int             index;
+    int16_t         floorHeight;
+    int16_t         ceilHeight;
+    int16_t         lightLevel;
+    int16_t         type;
+    int16_t         tag;
+    Id1Map::MaterialId  floorMaterial;
+    Id1Map::MaterialId  ceilMaterial;
+
+    // DOOM64 format members:
+    int16_t         d64flags;
+    uint16_t        d64floorColor;
+    uint16_t        d64ceilingColor;
+    uint16_t        d64unknownColor;
+    uint16_t        d64wallTopColor;
+    uint16_t        d64wallBottomColor;
+
+    void read(reader_s &reader, Id1Map &map)
+    {
+        floorHeight  = SHORT( Reader_ReadInt16(&reader) );
+        ceilHeight   = SHORT( Reader_ReadInt16(&reader) );
+
+        char name[9];
+        Reader_Read(&reader, name, 8); name[8] = '\0';
+        floorMaterial= map.toMaterialId(name, Id1Map::PlaneMaterials);
+
+        Reader_Read(&reader, name, 8); name[8] = '\0';
+        ceilMaterial = map.toMaterialId(name, Id1Map::PlaneMaterials);
+
+        lightLevel   = SHORT( Reader_ReadInt16(&reader) );
+        type         = SHORT( Reader_ReadInt16(&reader) );
+        tag          = SHORT( Reader_ReadInt16(&reader) );
+    }
+
+    void read_Doom64(reader_s &reader, Id1Map &map)
+    {
+        floorHeight  = SHORT( Reader_ReadInt16(&reader));
+        ceilHeight   = SHORT( Reader_ReadInt16(&reader) );
+
+        int idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        floorMaterial= map.toMaterialId(idx, Id1Map::PlaneMaterials);
+
+        idx = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        ceilMaterial = map.toMaterialId(idx, Id1Map::PlaneMaterials);
+
+        d64ceilingColor    = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        d64floorColor      = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        d64unknownColor    = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        d64wallTopColor    = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+        d64wallBottomColor = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+
+        type     = SHORT( Reader_ReadInt16(&reader) );
+        tag      = SHORT( Reader_ReadInt16(&reader) );
+        d64flags = USHORT( uint16_t(Reader_ReadInt16(&reader)) );
+
+        lightLevel = 160; ///?
+    }
+};
+
+// Thing DoomEdNums for polyobj anchors/spawn spots.
+#define PO_ANCHOR_DOOMEDNUM     (3000)
+#define PO_SPAWN_DOOMEDNUM      (3001)
+#define PO_SPAWNCRUSH_DOOMEDNUM (3002)
+
+/// @todo Get these from a game api header.
+#define MTF_Z_FLOOR         0x20000000 ///< Spawn relative to floor height.
+#define MTF_Z_CEIL          0x40000000 ///< Spawn relative to ceiling height (minus thing height).
+#define MTF_Z_RANDOM        0x80000000 ///< Random point between floor and ceiling.
+
+#define ANG45               0x20000000
+
+struct Thing
+{
+    int             index;
+    int16_t         origin[3];
+    angle_t         angle;
+    int16_t         doomEdNum;
+    int32_t         flags;
+    int32_t         skillModes;
+
+    // Hexen format members:
+    int16_t         xTID;
+    int8_t          xSpecial;
+    int8_t          xArgs[5];
+
+    // DOOM64 format members:
+    int16_t         d64TID;
+
+    void read(reader_s &reader, Id1Map & /*map*/)
+    {
+/**
+ * DOOM Thing flags:
+ */
+#define MTF_EASY            0x00000001 ///< Can be spawned in Easy skill modes.
+#define MTF_MEDIUM          0x00000002 ///< Can be spawned in Medium skill modes.
+#define MTF_HARD            0x00000004 ///< Can be spawned in Hard skill modes.
+#define MTF_DEAF            0x00000008 ///< Mobj will be deaf spawned deaf.
+#define MTF_NOTSINGLE       0x00000010 ///< (BOOM) Can not be spawned in single player gamemodes.
+#define MTF_NOTDM           0x00000020 ///< (BOOM) Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000040 ///< (BOOM) Can not be spawned in the Co-op gameMode.
+#define MTF_FRIENDLY        0x00000080 ///< (BOOM) friendly monster.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
+
+        origin[VX]   = SHORT( Reader_ReadInt16(&reader) );
+        origin[VY]   = SHORT( Reader_ReadInt16(&reader) );
+        origin[VZ]   = 0;
+        angle        = ANG45 * (SHORT( Reader_ReadInt16(&reader) ) / 45);
+        doomEdNum    = SHORT( Reader_ReadInt16(&reader) );
+        flags        = SHORT( Reader_ReadInt16(&reader) );
+
+        skillModes = 0;
+        if(flags & MTF_EASY)
+            skillModes |= 0x00000001 | 0x00000002;
+        if(flags & MTF_MEDIUM)
+            skillModes |= 0x00000004;
+        if(flags & MTF_HARD)
+            skillModes |= 0x00000008 | 0x00000010;
+
+        flags &= ~MASK_UNKNOWN_THING_FLAGS;
+        // DOOM format things spawn on the floor by default unless their
+        // type-specific flags override.
+        flags |= MTF_Z_FLOOR;
+
+#undef MASK_UNKNOWN_THING_FLAGS
+#undef MTF_FRIENDLY
+#undef MTF_NOTCOOP
+#undef MTF_NOTDM
+#undef MTF_NOTSINGLE
+#undef MTF_AMBUSH
+#undef MTF_HARD
+#undef MTF_MEDIUM
+#undef MTF_EASY
+    }
+
+    void read_Doom64(reader_s &reader, Id1Map & /*map*/)
+    {
+/**
+ * DOOM64 Thing flags:
+ */
+#define MTF_EASY            0x00000001 ///< Appears in easy skill modes.
+#define MTF_MEDIUM          0x00000002 ///< Appears in medium skill modes.
+#define MTF_HARD            0x00000004 ///< Appears in hard skill modes.
+#define MTF_DEAF            0x00000008 ///< Thing is deaf.
+#define MTF_NOTSINGLE       0x00000010 ///< Appears in multiplayer game modes only.
+#define MTF_DONTSPAWNATSTART 0x00000020 ///< Do not spawn this thing at map start.
+#define MTF_SCRIPT_TOUCH    0x00000040 ///< Mobjs spawned from this spot will envoke a script when touched.
+#define MTF_SCRIPT_DEATH    0x00000080 ///< Mobjs spawned from this spot will envoke a script on death.
+#define MTF_SECRET          0x00000100 ///< A secret (bonus) item.
+#define MTF_NOTARGET        0x00000200 ///< Mobjs spawned from this spot will not target their attacker when hurt.
+#define MTF_NOTDM           0x00000400 ///< Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000800 ///< Can not be spawned in the Co-op gameMode.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
+
+        origin[VX]   = SHORT( Reader_ReadInt16(&reader) );
+        origin[VY]   = SHORT( Reader_ReadInt16(&reader) );
+        origin[VZ]   = SHORT( Reader_ReadInt16(&reader) );
+        angle        = ANG45 * (SHORT( Reader_ReadInt16(&reader) ) / 45);
+        doomEdNum    = SHORT( Reader_ReadInt16(&reader) );
+        flags        = SHORT( Reader_ReadInt16(&reader) );
+
+        skillModes = 0;
+        if(flags & MTF_EASY)
+            skillModes |= 0x00000001;
+        if(flags & MTF_MEDIUM)
+            skillModes |= 0x00000002;
+        if(flags & MTF_HARD)
+            skillModes |= 0x00000004 | 0x00000008;
+
+        flags &= ~MASK_UNKNOWN_THING_FLAGS;
+        // DOOM64 format things spawn relative to the floor by default
+        // unless their type-specific flags override.
+        flags |= MTF_Z_FLOOR;
+
+        d64TID = SHORT( Reader_ReadInt16(&reader) );
+
+#undef MASK_UNKNOWN_THING_FLAGS
+#undef MTF_NOTCOOP
+#undef MTF_NOTDM
+#undef MTF_NOTARGET
+#undef MTF_SECRET
+#undef MTF_SCRIPT_DEATH
+#undef MTF_SCRIPT_TOUCH
+#undef MTF_DONTSPAWNATSTART
+#undef MTF_NOTSINGLE
+#undef MTF_DEAF
+#undef MTF_HARD
+#undef MTF_MEDIUM
+#undef MTF_EASY
+    }
+
+    void read_Hexen(reader_s &reader, Id1Map & /*map*/)
+    {
+/**
+ * Hexen Thing flags:
+ */
+#define MTF_EASY            0x00000001
+#define MTF_MEDIUM          0x00000002
+#define MTF_HARD            0x00000004
+#define MTF_AMBUSH          0x00000008
+#define MTF_DORMANT         0x00000010
+#define MTF_FIGHTER         0x00000020
+#define MTF_CLERIC          0x00000040
+#define MTF_MAGE            0x00000080
+#define MTF_GSINGLE         0x00000100
+#define MTF_GCOOP           0x00000200
+#define MTF_GDEATHMATCH     0x00000400
+// The following are not currently used:
+#define MTF_SHADOW          0x00000800 ///< (ZDOOM) Thing is 25% translucent.
+#define MTF_INVISIBLE       0x00001000 ///< (ZDOOM) Makes the thing invisible.
+#define MTF_FRIENDLY        0x00002000 ///< (ZDOOM) Friendly monster.
+#define MTF_STILL           0x00004000 ///< (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
+
+        xTID         = SHORT( Reader_ReadInt16(&reader) );
+        origin[VX]   = SHORT( Reader_ReadInt16(&reader) );
+        origin[VY]   = SHORT( Reader_ReadInt16(&reader) );
+        origin[VZ]   = SHORT( Reader_ReadInt16(&reader) );
+        angle        = SHORT( Reader_ReadInt16(&reader) );
+        doomEdNum    = SHORT( Reader_ReadInt16(&reader) );
+
+        /**
+         * For some reason, the Hexen format stores polyobject tags in
+         * the angle field in THINGS. Thus, we cannot translate the
+         * angle until we know whether it is a polyobject type or no
+         */
+        if(doomEdNum != PO_ANCHOR_DOOMEDNUM &&
+           doomEdNum != PO_SPAWN_DOOMEDNUM &&
+           doomEdNum != PO_SPAWNCRUSH_DOOMEDNUM)
+        {
+            angle = ANG45 * (angle / 45);
+        }
+
+        flags = SHORT( Reader_ReadInt16(&reader) );
+
+        skillModes = 0;
+        if(flags & MTF_EASY)
+            skillModes |= 0x00000001 | 0x00000002;
+        if(flags & MTF_MEDIUM)
+            skillModes |= 0x00000004;
+        if(flags & MTF_HARD)
+            skillModes |= 0x00000008 | 0x00000010;
+
+        flags &= ~MASK_UNKNOWN_THING_FLAGS;
+        /**
+         * Translate flags:
+         */
+        // Game type logic is inverted.
+        flags ^= (MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH);
+
+        // HEXEN format things spawn relative to the floor by default
+        // unless their type-specific flags override.
+        flags |= MTF_Z_FLOOR;
+
+        xSpecial = Reader_ReadByte(&reader);
+        xArgs[0] = Reader_ReadByte(&reader);
+        xArgs[1] = Reader_ReadByte(&reader);
+        xArgs[2] = Reader_ReadByte(&reader);
+        xArgs[3] = Reader_ReadByte(&reader);
+        xArgs[4] = Reader_ReadByte(&reader);
+
+#undef MASK_UNKNOWN_THING_FLAGS
+#undef MTF_STILL
+#undef MTF_FRIENDLY
+#undef MTF_INVISIBLE
+#undef MTF_SHADOW
+#undef MTF_GDEATHMATCH
+#undef MTF_GCOOP
+#undef MTF_GSINGLE
+#undef MTF_MAGE
+#undef MTF_CLERIC
+#undef MTF_FIGHTER
+#undef MTF_DORMANT
+#undef MTF_AMBUSH
+#undef MTF_HARD
+#undef MTF_NORMAL
+#undef MTF_EASY
+    }
+};
+
+struct Polyobj
+{
+    typedef QVector<int> LineIndices;
+
+    int             index;
+    LineIndices     lineIndices;
+    int             tag;
+    int             seqType;
+    int16_t         anchor[2];
+};
+
+struct TintColor
+{
+    int             index;
+    float           rgb[3];
+    int8_t          xx[3];
+
+    void read_Doom64(reader_s &reader, Id1Map & /*map*/)
+    {
+        rgb[0] = Reader_ReadByte(&reader) / 255.f;
+        rgb[1] = Reader_ReadByte(&reader) / 255.f;
+        rgb[2] = Reader_ReadByte(&reader) / 255.f;
+        xx[0]  = Reader_ReadByte(&reader);
+        xx[1]  = Reader_ReadByte(&reader);
+        xx[2]  = Reader_ReadByte(&reader);
+    }
+};
+
+} // namespace internal
+
+using namespace internal;
 
 static reader_s *bufferLump(lumpnum_t lumpNum);
 static void clearReadBuffer();
@@ -43,14 +611,70 @@ DENG2_PIMPL(Id1Map)
 
     QVector<coord_t> vertCoords; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
 
+    typedef std::vector<LineDef> Lines;
     Lines lines;
+
+    typedef std::vector<SideDef> Sides;
     Sides sides;
+
+    typedef std::vector<SectorDef> Sectors;
     Sectors sectors;
+
+    typedef std::vector<Thing> Things;
     Things things;
+
+    typedef std::vector<TintColor> SurfaceTints;
     SurfaceTints surfaceTints;
+
+    typedef std::list<Polyobj> Polyobjs;
     Polyobjs polyobjs;
 
-    StringPool materials; ///< Material dictionary.
+    struct MaterialDict
+    {
+        StringPool dict;
+
+        String const &find(MaterialId id) const
+        {
+            return dict.stringRef(id);
+        }
+
+        MaterialId toMaterialId(String name, MaterialGroup group)
+        {
+            // In original DOOM, texture name references beginning with the
+            // hypen '-' character are always treated as meaning "no reference"
+            // or "invalid texture" and surfaces using them were not drawn.
+            if(group != PlaneMaterials && name[0] == '-')
+            {
+                return 0; // Not a valid id.
+            }
+
+            // Prepare the encoded URI for insertion into the dictionary.
+            // Material paths must be encoded.
+            AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
+            Uri *uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
+            Uri_SetScheme(uri, group == PlaneMaterials? "Flats" : "Textures");
+            AutoStr *uriCString = Uri_Compose(uri);
+            Uri_Delete(uri);
+
+            // Intern this material URI in the dictionary.
+            return dict.intern(String(Str_Text(uriCString)));
+        }
+
+        MaterialId toMaterialId(int uniqueId, MaterialGroup group)
+        {
+            // Prepare the encoded URI for insertion into the dictionary.
+            AutoStr *uriCString;
+
+            Uri *textureUrn = Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", group == PlaneMaterials? "Flats" : "Textures", uniqueId)), RC_NULL);
+            Uri *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(textureUrn)));
+            uriCString = Uri_Compose(uri);
+            Uri_Delete(uri);
+            Uri_Delete(textureUrn);
+
+            // Intern this material URI in the dictionary.
+            return dict.intern(String(Str_Text(uriCString)));
+        }
+    } materials;
 
     Instance(Public *i)
         : Base(i)
@@ -61,18 +685,9 @@ DENG2_PIMPL(Id1Map)
         return vertCoords.count() / 2;
     }
 
-    inline String const &findMaterialInDictionary(MaterialId id) const {
-        return materials.stringRef(id);
-    }
-
     /// @todo fixme: A real performance killer...
-    AutoStr *composeMaterialRef(MaterialId id)
-    {
-        AutoStr *ref = AutoStr_NewStd();
-        String const &material = findMaterialInDictionary(id);
-        QByteArray materialUtf8 = material.toUtf8();
-        Str_Set(ref, materialUtf8.constData());
-        return ref;
+    inline AutoStr *composeMaterialRef(MaterialId id) {
+        return AutoStr_FromTextStd(materials.find(id).toUtf8().constData());
     }
 
     bool loadVertexes(reader_s &reader, int numElements)
@@ -106,17 +721,18 @@ DENG2_PIMPL(Id1Map)
             lines.reserve(lines.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
-                lines.push_back(mline_t());
-                mline_t &line = lines.back();
+                lines.push_back(LineDef());
+                LineDef &line = lines.back();
 
                 line.index = n;
 
                 switch(format)
                 {
                 default:
-                case DoomFormat:   MLine_Read(line, self, reader);   break;
-                case Doom64Format: MLine64_Read(line, self, reader); break;
-                case HexenFormat:  MLineHx_Read(line, self, reader); break;
+                case DoomFormat:   line.read(reader, self);        break;
+
+                case Doom64Format: line.read_Doom64(reader, self); break;
+                case HexenFormat:  line.read_Hexen(reader, self);  break;
                 }
             }
         }
@@ -132,16 +748,17 @@ DENG2_PIMPL(Id1Map)
             sides.reserve(sides.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
-                sides.push_back(mside_t());
-                mside_t &side = sides.back();
+                sides.push_back(SideDef());
+                SideDef &side = sides.back();
 
                 side.index = n;
 
                 switch(format)
                 {
                 default:
-                case DoomFormat:   MSide_Read(side, self, reader);   break;
-                case Doom64Format: MSide64_Read(side, self, reader); break;
+                case DoomFormat:   side.read(reader, self);        break;
+
+                case Doom64Format: side.read_Doom64(reader, self); break;
                 }
             }
         }
@@ -157,15 +774,18 @@ DENG2_PIMPL(Id1Map)
             sectors.reserve(sectors.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
-                sectors.push_back(msector_t());
-                msector_t &sector = sectors.back();
+                sectors.push_back(SectorDef());
+                SectorDef &sector = sectors.back();
 
                 sector.index = n;
 
                 switch(format)
                 {
-                default:           MSector_Read(sector, self, reader);   break;
-                case Doom64Format: MSector64_Read(sector, self, reader); break;
+                default:
+                case DoomFormat:
+                case HexenFormat:  sector.read(reader, self);        break;
+
+                case Doom64Format: sector.read_Doom64(reader, self); break;
                 }
             }
         }
@@ -181,17 +801,18 @@ DENG2_PIMPL(Id1Map)
             things.reserve(things.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
-                things.push_back(mthing_t());
-                mthing_t &thing = things.back();
+                things.push_back(Thing());
+                Thing &thing = things.back();
 
                 thing.index = n;
 
                 switch(format)
                 {
                 default:
-                case DoomFormat:   MThing_Read(thing, self, reader);   break;
-                case Doom64Format: MThing64_Read(thing, self, reader); break;
-                case HexenFormat:  MThingHx_Read(thing, self, reader); break;
+                case DoomFormat:   thing.read(reader, self);        break;
+
+                case Doom64Format: thing.read_Doom64(reader, self); break;
+                case HexenFormat:  thing.read_Hexen(reader, self);  break;
                 }
             }
         }
@@ -207,11 +828,11 @@ DENG2_PIMPL(Id1Map)
             surfaceTints.reserve(surfaceTints.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
-                surfaceTints.push_back(surfacetint_t());
-                surfacetint_t &tint = surfaceTints.back();
+                surfaceTints.push_back(TintColor());
+                TintColor &tint = surfaceTints.back();
 
                 tint.index = n;
-                SurfaceTint_Read(tint, self, reader);
+                tint.read_Doom64(reader, self);
             }
         }
 
@@ -221,14 +842,14 @@ DENG2_PIMPL(Id1Map)
     /**
      * Create a temporary polyobj.
      */
-    mpolyobj_t *createPolyobj(mpolyobj_t::LineIndices const &lineIndices, int tag,
+    Polyobj *createPolyobj(Polyobj::LineIndices const &lineIndices, int tag,
         int sequenceType, int16_t anchorX, int16_t anchorY)
     {
         // Allocate the new polyobj.
-        polyobjs.push_back(mpolyobj_t());
-        mpolyobj_t *po = &polyobjs.back();
+        polyobjs.push_back(Polyobj());
+        Polyobj *po = &polyobjs.back();
 
-        po->index       = polyobjs.size()-1;
+        po->index       = polyobjs.size() - 1;
         po->tag         = tag;
         po->seqType     = sequenceType;
         po->anchor[VX]  = anchorX;
@@ -237,7 +858,7 @@ DENG2_PIMPL(Id1Map)
 
         foreach(int lineIdx, po->lineIndices)
         {
-            mline_t *line = &lines[lineIdx];
+            LineDef *line = &lines[lineIdx];
 
             // This line now belongs to a polyobj.
             line->aFlags |= LAF_POLYOBJ;
@@ -250,7 +871,7 @@ DENG2_PIMPL(Id1Map)
              * Here we emulate this behavior by automatically applying bottom unpegging
              * for two-sided linedefs.
              */
-            if(line->sides[LEFT] >= 0)
+            if(line->sides[LineDef::Back] >= 0)
                 line->ddFlags |= DDLF_DONTPEGBOTTOM;
         }
 
@@ -267,7 +888,7 @@ DENG2_PIMPL(Id1Map)
      */
     bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
     {
-        mpolyobj_t::LineIndices polyLines;
+        Polyobj::LineIndices polyLines;
 
         // First look for a PO_LINE_START linedef set with this tag.
         DENG2_FOR_EACH(Lines, i, lines)
@@ -347,7 +968,7 @@ DENG2_PIMPL(Id1Map)
             return false;
         }
 
-        mline_t *line = &lines[ polyLines.first() ];
+        LineDef *line = &lines[ polyLines.first() ];
         int8_t const sequenceType = line->xArgs[3];
 
         // Setup the mirror if it exists.
@@ -424,8 +1045,8 @@ DENG2_PIMPL(Id1Map)
         LOGDEV_MAP_XVERBOSE("Transfering lines and sides...");
         DENG2_FOR_EACH(Lines, i, lines)
         {
-            mside_t *front = ((i)->sides[RIGHT] >= 0? &sides[(i)->sides[RIGHT]] : 0);
-            mside_t *back  = ((i)->sides[LEFT]  >= 0? &sides[(i)->sides[LEFT]] : 0);
+            SideDef *front = ((i)->sides[LineDef::Front] >= 0? &sides[(i)->sides[LineDef::Front]] : 0);
+            SideDef *back  = ((i)->sides[LineDef::Back]  >= 0? &sides[(i)->sides[LineDef::Back]] : 0);
 
             int sideFlags = (format == Doom64Format? SDF_MIDDLE_STRETCH : 0);
 
@@ -438,7 +1059,7 @@ DENG2_PIMPL(Id1Map)
                                          back? back->sector : -1, i->ddFlags, i->index);
             if(front)
             {
-                MPE_LineAddSide(lineIdx, RIGHT, sideFlags,
+                MPE_LineAddSide(lineIdx, LineDef::Front, sideFlags,
                                 composeMaterialRef(front->topMaterial),
                                 front->offset[VX], front->offset[VY], 1, 1, 1,
                                 composeMaterialRef(front->middleMaterial),
@@ -449,7 +1070,7 @@ DENG2_PIMPL(Id1Map)
             }
             if(back)
             {
-                MPE_LineAddSide(lineIdx, LEFT, sideFlags,
+                MPE_LineAddSide(lineIdx, LineDef::Back, sideFlags,
                                 composeMaterialRef(back->topMaterial),
                                 back->offset[VX], back->offset[VY], 1, 1, 1,
                                 composeMaterialRef(back->middleMaterial),
@@ -559,7 +1180,7 @@ DENG2_PIMPL(Id1Map)
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
      */
-    void collectPolyobjLinesWorker(mpolyobj_t::LineIndices &lineList,
+    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList,
         coord_t x, coord_t y)
     {
         DENG2_FOR_EACH(Lines, i, lines)
@@ -589,9 +1210,9 @@ DENG2_PIMPL(Id1Map)
      * @todo This terribly inefficent (naive) algorithm may need replacing
      *       (it is far outside an acceptable polynomial range!).
      */
-    void collectPolyobjLines(mpolyobj_t::LineIndices &lineList, Lines::iterator lineIt)
+    void collectPolyobjLines(Polyobj::LineIndices &lineList, Lines::iterator lineIt)
     {
-        mline_t &line = *lineIt;
+        LineDef &line = *lineIt;
         line.xType    = 0;
         line.xArgs[0] = 0;
 
@@ -633,39 +1254,12 @@ String const &Id1Map::formatName(Format id) //static
 
 Id1Map::MaterialId Id1Map::toMaterialId(String name, MaterialGroup group)
 {
-    // In original DOOM, texture name references beginning with the
-    // hypen '-' character are always treated as meaning "no reference"
-    // or "invalid texture" and surfaces using them were not drawn.
-    if(group != PlaneMaterials && name[0] == '-')
-    {
-        return 0; // Not a valid id.
-    }
-
-    // Prepare the encoded URI for insertion into the dictionary.
-    // Material paths must be encoded.
-    AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
-    Uri *uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-    Uri_SetScheme(uri, group == PlaneMaterials? "Flats" : "Textures");
-    AutoStr *uriCString = Uri_Compose(uri);
-    Uri_Delete(uri);
-
-    // Intern this material URI in the dictionary.
-    return d->materials.intern(String(Str_Text(uriCString)));
+    return d->materials.toMaterialId(name, group);
 }
 
 Id1Map::MaterialId Id1Map::toMaterialId(int uniqueId, MaterialGroup group)
 {
-    // Prepare the encoded URI for insertion into the dictionary.
-    AutoStr *uriCString;
-
-    Uri *textureUrn = Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", group == PlaneMaterials? "Flats" : "Textures", uniqueId)), RC_NULL);
-    Uri *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(textureUrn)));
-    uriCString = Uri_Compose(uri);
-    Uri_Delete(uri);
-    Uri_Delete(textureUrn);
-
-    // Intern this material URI in the dictionary.
-    return d->materials.intern(String(Str_Text(uriCString)));
+    return d->materials.toMaterialId(uniqueId, group);
 }
 
 void Id1Map::load(QMap<MapLumpType, lumpnum_t> const &lumps)
@@ -729,6 +1323,34 @@ void Id1Map::transfer(uri_s const &uri)
     MPE_End();
 
     LOGDEV_MAP_VERBOSE("Transfer completed in %.2f seconds") << begunAt.since();
+}
+
+size_t Id1Map::ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type) // static
+{
+    switch(type)
+    {
+    default: return 0;
+
+    case ML_VERTEXES:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+
+    case ML_LINEDEFS:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64LINEDEF :
+                mapFormat == Id1Map::HexenFormat ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
+
+    case ML_SIDEDEFS:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+
+    case ML_SECTORS:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+
+    case ML_THINGS:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64THING :
+                mapFormat == Id1Map::HexenFormat ? SIZEOF_XTHING  : SIZEOF_THING);
+
+    case ML_LIGHTS:
+        return SIZEOF_LIGHT;
+    }
 }
 
 static uint8_t *readPtr;
@@ -802,3 +1424,5 @@ static void clearReadBuffer()
     readBuffer = 0;
     readBufferSize = 0;
 }
+
+} // namespace wadimp

@@ -1,6 +1,6 @@
 /** @file id1map.h  id Tech 1 map format reader/interpreter.
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,12 +29,7 @@
 #include <vector>
 #include <list>
 
-struct mline_t;
-struct mpolyobj_t;
-struct msector_t;
-struct mside_t;
-struct mthing_t;
-struct surfacetint_t;
+namespace wadimp {
 
 /**
  * @ingroup wadmapconverter
@@ -56,13 +51,6 @@ public:
         MapFormatCount
     };
 
-    typedef std::vector<mline_t> Lines;
-    typedef std::vector<mside_t> Sides;
-    typedef std::vector<msector_t> Sectors;
-    typedef std::vector<mthing_t> Things;
-    typedef std::vector<surfacetint_t> SurfaceTints;
-    typedef std::list<mpolyobj_t> Polyobjs;
-
     /// Material group identifiers.
     enum MaterialGroup {
         PlaneMaterials,
@@ -81,11 +69,6 @@ public:
      * Returns the unique format identifier for the map.
      */
     Format format() const;
-
-    /**
-     * Returns the textual name for the identified map format @a id.
-     */
-    static de::String const &formatName(Format id);
 
     /**
      * Attempt to load a new map data set from the identified @a lumps.
@@ -110,8 +93,28 @@ public:
      */
     MaterialId toMaterialId(int number, MaterialGroup group);
 
+public:
+    /**
+     * Returns the textual name for the identified map format @a id.
+     */
+    static de::String const &formatName(Format id);
+
+    /**
+     * Determine the size (in bytes) of an element of the specified map data
+     * lump @a type for the current map format.
+     *
+     * @param mapFormat     Map format identifier.
+     * @param type          Map lump data type.
+     * @return Size of an element of the specified type.
+     *
+     * @todo Should not be public.
+     */
+    static size_t ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type);
+
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace wadimp
 
 #endif // WADMAPCONVERTER_ID1MAP_H
