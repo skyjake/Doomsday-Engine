@@ -659,11 +659,12 @@ using namespace internal;
 
 DENG2_PIMPL_NOREF(Id1Map::Recognizer)
 {
+    lumpnum_t lastLump;
     Lumps lumps;
     String id;
     Id1Map::Format format;
 
-    Instance() : format(Id1Map::UnknownFormat) {}
+    Instance() : lastLump(-1), format(Id1Map::UnknownFormat) {}
 };
 
 /// @todo Obtain the LumpIndex from the engine.
@@ -675,10 +676,10 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
     // Keep checking lumps to see if its a map data lump.
     dint const numLumps = *reinterpret_cast<dint *>(DD_GetVariable(DD_NUMLUMPS));
     String sourceFile;
-    for(lumpnum_t i = de::max(lumpIndexOffset, 0); i < numLumps; ++i)
+    for(d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
     {
         // Lump name determines whether this lump is a candidate.
-        MapLumpType dataType = MapLumpTypeForName(Str_Text(W_LumpName(i)));
+        MapLumpType dataType = MapLumpTypeForName(Str_Text(W_LumpName(d->lastLump)));
 
         if(d->lumps.isEmpty())
         {
@@ -686,13 +687,13 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
             if(dataType == ML_INVALID) continue;
 
             // Missing a header?
-            if(i == 0) return;
+            if(d->lastLump == 0) return;
 
             // The id of the map is the name of the lump which precedes the first
             // recognized data lump (which should be the header). Note that some
             // ports include MAPINFO-like data in the header.
-            d->id = Str_Text(W_LumpName(i - 1));
-            sourceFile = Str_Text(W_LumpSourceFile(i));
+            d->id = Str_Text(W_LumpName(d->lastLump - 1));
+            sourceFile = Str_Text(W_LumpSourceFile(d->lastLump));
         }
         else
         {
@@ -700,12 +701,13 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
             if(dataType == ML_INVALID) break;
 
             // A lump from another source file also ends the sequence.
-            if(sourceFile.compareWithoutCase(Str_Text(W_LumpSourceFile(i)))) break;
+            if(sourceFile.compareWithoutCase(Str_Text(W_LumpSourceFile(d->lastLump))))
+                break;
         }
 
         // A recognized map data lump; record it in the collection (replacing any
         // existing record of the same type).
-        d->lumps.insert(dataType, i);
+        d->lumps.insert(dataType, d->lastLump);
     }
 
     if(d->lumps.isEmpty()) return;
@@ -792,6 +794,11 @@ Id1Map::Format Id1Map::Recognizer::mapFormat() const
 Id1Map::Recognizer::Lumps const &Id1Map::Recognizer::lumps() const
 {
     return d->lumps;
+}
+
+lumpnum_t Id1Map::Recognizer::lastLump() const
+{
+    return d->lastLump;
 }
 
 static uint validCount = 0; ///< Used with Polyobj LineDef collection.

@@ -88,6 +88,13 @@ public:
 
         Lumps const &lumps() const;
 
+        /**
+         * Returns the lump index number of the last data lump inspected by the
+         * recognizer, making it possible to collate/locate all the map data sets
+         * using multiple recognizers.
+         */
+        lumpnum_t lastLump() const;
+
     private:
         DENG2_PRIVATE(d)
     };
