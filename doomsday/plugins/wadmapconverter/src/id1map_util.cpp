@@ -60,7 +60,7 @@ MapLumpType MapLumpTypeForName(String name)
 
     if(!name.isEmpty())
     {
-        for(int i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
+        for(dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
         {
             LumpTypeInfo const &info = lumpTypeInfo[i];
             if(!info.name.compareWithoutCase(name) &&

@@ -37,10 +37,9 @@ typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
  *
  * @return Lump number for the found data else @c -1
  */
-static lumpnum_t locateMapMarkerLumpForUri(Uri const &uri)
+static lumpnum_t locateMapMarkerLumpForUri(de::Uri const &uri)
 {
-    char const *mapId = Str_Text(Uri_Path(&uri));
-    return W_CheckLumpNumForName(mapId);
+    return W_CheckLumpNumForName(uri.path().toUtf8().constData());
 }
 
 /**
@@ -58,7 +57,7 @@ static void collectMapLumps(MapDataLumps &lumps, lumpnum_t startLump)
     if(startLump < 0) return;
 
     // Keep checking lumps to see if its a map data lump.
-    int const numLumps = *reinterpret_cast<int *>(DD_GetVariable(DD_NUMLUMPS));
+    dint const numLumps = *reinterpret_cast<dint *>(DD_GetVariable(DD_NUMLUMPS));
     for(lumpnum_t i = startLump; i < numLumps; ++i)
     {
         // Lump name determines whether this lump should be included.
@@ -97,15 +96,15 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
     }
 
     // Determine whether each data lump is of the expected size.
-    uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
+    duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
     DENG2_FOR_EACH_CONST(MapDataLumps, i, lumps)
     {
         MapLumpType type  = i.key();
         lumpnum_t lumpNum = i.value();
 
         // Determine the number of map data objects of each data type.
-        uint *elemCountAddr = 0;
-        size_t const elemSize = Id1Map::ElementSizeForMapLumpType(mapFormat, type);
+        duint *elemCountAddr = 0;
+        dsize const elemSize = Id1Map::ElementSizeForMapLumpType(mapFormat, type);
 
         switch(type)
         {
@@ -121,7 +120,7 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
 
         if(elemCountAddr)
         {
-            size_t const lumpLength = W_LumpLength(lumpNum);
+            dsize const lumpLength = W_LumpLength(lumpNum);
 
             if(lumpLength % elemSize != 0)
             {
@@ -143,7 +142,7 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
     return mapFormat;
 }
 
-static void loadAndTransferMap(Uri const &uri, Id1Map::Format mapFormat,
+static void loadAndTransferMap(de::Uri const &uri, Id1Map::Format mapFormat,
     MapDataLumps &lumps)
 {
     QScopedPointer<Id1Map> map(new Id1Map(mapFormat));
@@ -168,7 +167,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     DENG2_ASSERT(context != 0);
 
     // Attempt to locate the identified map data marker lump.
-    Uri const &uri = *reinterpret_cast<Uri const *>(context);
+    de::Uri const &uri = *reinterpret_cast<de::Uri const *>(context);
     lumpnum_t markerLump = locateMapMarkerLumpForUri(uri);
     if(markerLump < 0)
     {

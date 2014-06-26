@@ -20,18 +20,20 @@
 #ifndef WADMAPCONVERTER_ID1MAP_H
 #define WADMAPCONVERTER_ID1MAP_H
 
-#include "id1map_util.h"
-#include "dd_types.h"
+#include "id1map_util.h"   // MapLumpType
+#include "dd_types.h"      // lumpnum_t
+#include <doomsday/uri.h>
+#include <de/libcore.h>
 #include <de/Error>
 #include <de/String>
 #include <de/StringPool>
 #include <QMap>
-#include <vector>
-#include <list>
 
 namespace wadimp {
 
 /**
+ * Map resource converter/interpreter for id Tech 1 map format(s).
+ *
  * @ingroup wadmapconverter
  */
 class Id1Map
@@ -81,7 +83,7 @@ public:
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the
      * public MapEdit API).
      */
-    void transfer(Uri const &uri);
+    void transfer(de::Uri const &uri);
 
     /**
      * Convert a textual material @a name to an internal material dictionary id.
@@ -91,7 +93,7 @@ public:
     /**
      * Convert a Doom64 style unique material @a number to an internal dictionary id.
      */
-    MaterialId toMaterialId(int number, MaterialGroup group);
+    MaterialId toMaterialId(de::dint number, MaterialGroup group);
 
 public:
     /**
@@ -109,7 +111,7 @@ public:
      *
      * @todo Should not be public.
      */
-    static size_t ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type);
+    static de::dsize ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type);
 
 private:
     DENG2_PRIVATE(d)
