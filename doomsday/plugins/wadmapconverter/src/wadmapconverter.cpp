@@ -27,8 +27,6 @@
 using namespace de;
 using namespace wadimp;
 
-typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
-
 /**
  * Given a map @a uri, attempt to locate the associated marker lump for the
  * map data using the Doomsday file system.
@@ -40,119 +38,6 @@ typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
 static lumpnum_t locateMapMarkerLumpForUri(de::Uri const &uri)
 {
     return W_CheckLumpNumForName(uri.path().toUtf8().constData());
-}
-
-/**
- * Find all data lumps associated with this map and populate their metadata
- * in the @a lumpInfos record set.
- *
- * @param lumps      Record set to populate.
- * @param startLump  Lump number at which to begin searching.
- */
-static void collectMapLumps(MapDataLumps &lumps, lumpnum_t startLump)
-{
-    LOG_AS("WadMapConverter");
-    LOG_RES_XVERBOSE("Locating data lumps...");
-
-    if(startLump < 0) return;
-
-    // Keep checking lumps to see if its a map data lump.
-    dint const numLumps = *reinterpret_cast<dint *>(DD_GetVariable(DD_NUMLUMPS));
-    for(lumpnum_t i = startLump; i < numLumps; ++i)
-    {
-        // Lump name determines whether this lump should be included.
-        MapLumpType lumpType = MapLumpTypeForName(Str_Text(W_LumpName(i)));
-
-        // If this lump is of an invalid type then we *should* have found all
-        // the required map data lumps.
-        if(lumpType == ML_INVALID) break; // Stop looking.
-
-        // A recognized map data lump; record it in the collection (replacing any
-        // existing record of the same type).
-        lumps.insert(lumpType, i);
-    }
-}
-
-static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
-{
-    LOG_AS("WadMapConverter");
-
-    Id1Map::Format mapFormat = Id1Map::UnknownFormat;
-
-    // Some data lumps are specific to a particular map format and thus their
-    // presence unambiguously signifies which format we have.
-    if(lumps.contains(ML_BEHAVIOR))
-    {
-        mapFormat = Id1Map::HexenFormat;
-    }
-    else if(lumps.contains(ML_MACROS) || lumps.contains(ML_LIGHTS) ||
-            lumps.contains(ML_LEAFS))
-    {
-        mapFormat = Id1Map::Doom64Format;
-    }
-    else
-    {
-        mapFormat = Id1Map::DoomFormat;
-    }
-
-    // Determine whether each data lump is of the expected size.
-    duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumps)
-    {
-        MapLumpType type  = i.key();
-        lumpnum_t lumpNum = i.value();
-
-        // Determine the number of map data objects of each data type.
-        duint *elemCountAddr = 0;
-        dsize const elemSize = Id1Map::ElementSizeForMapLumpType(mapFormat, type);
-
-        switch(type)
-        {
-        default: break;
-
-        case ML_VERTEXES:   elemCountAddr = &numVertexes;    break;
-        case ML_THINGS:     elemCountAddr = &numThings;      break;
-        case ML_LINEDEFS:   elemCountAddr = &numLines;       break;
-        case ML_SIDEDEFS:   elemCountAddr = &numSides;       break;
-        case ML_SECTORS:    elemCountAddr = &numSectors;     break;
-        case ML_LIGHTS:     elemCountAddr = &numLights;      break;
-        }
-
-        if(elemCountAddr)
-        {
-            dsize const lumpLength = W_LumpLength(lumpNum);
-
-            if(lumpLength % elemSize != 0)
-            {
-                // What *is* this??
-                return Id1Map::UnknownFormat;
-            }
-
-            *elemCountAddr += lumpLength / elemSize;
-        }
-    }
-
-    // A valid map has at least one of each of these element types.
-    if(!numVertexes || !numLines || !numSides || !numSectors)
-    {
-        return Id1Map::UnknownFormat;
-    }
-
-    LOG_RES_VERBOSE("Recognized %s format map") << Id1Map::formatName(mapFormat);
-    return mapFormat;
-}
-
-static void loadAndTransferMap(de::Uri const &uri, Id1Map::Format mapFormat,
-    MapDataLumps &lumps)
-{
-    QScopedPointer<Id1Map> map(new Id1Map(mapFormat));
-
-    // Load the archived map.
-    map->load(lumps);
-
-    // Rebuild the map in Doomsday's native format.
-    LOG_AS("WadMapConverter");
-    map->transfer(uri);
 }
 
 /**
@@ -168,30 +53,29 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 
     // Attempt to locate the identified map data marker lump.
     de::Uri const &uri = *reinterpret_cast<de::Uri const *>(context);
-    lumpnum_t markerLump = locateMapMarkerLumpForUri(uri);
-    if(markerLump < 0)
-    {
-        return false;
-    }
+    lumpnum_t lumpIndexOffset = locateMapMarkerLumpForUri(uri);
+    if(lumpIndexOffset < 0) return false;
 
-    // Collect all of the map data lumps associated with this map.
-    MapDataLumps lumps;
-    collectMapLumps(lumps, markerLump + 1 /*begin after the marker*/);
-
-    // Is this a recognized format?
-    Id1Map::Format mapFormat = recognizeMapFormat(lumps);
-    if(mapFormat != Id1Map::UnknownFormat)
+    // Collate map data lumps and attempt to recognize the format.
+    Id1MapRecognizer recognizer(lumpIndexOffset);
+    if(recognizer.mapFormat() != Id1Map::UnknownFormat)
     {
-        // Convert this map.
+        // Attempt a conversion...
         try
         {
-            loadAndTransferMap(uri, mapFormat, lumps);
+            QScopedPointer<Id1Map> map(new Id1Map(recognizer));
+
+            // The archived map data was read successfully.
+            // Transfer to the engine via the runtime map editing interface.
+            /// @todo Build it using native components directly...
+            LOG_AS("WadMapConverter");
+            map->transfer(uri);
             return true; // success
         }
         catch(Id1Map::LoadError const &er)
         {
             LOG_AS("WadMapConverter");
-            LOG_MAP_ERROR("Load error: %s") << er.asText();
+            LOG_MAP_ERROR("Load error: ") << er.asText();
         }
     }
 

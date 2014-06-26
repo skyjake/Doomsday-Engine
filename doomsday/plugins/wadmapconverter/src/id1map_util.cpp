@@ -25,6 +25,7 @@
 
 using namespace de;
 
+/// @todo Optimize: Replace linear search...
 MapLumpType MapLumpTypeForName(String name)
 {
     static const struct LumpTypeInfo {

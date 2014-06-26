@@ -31,6 +31,16 @@
 
 namespace wadimp {
 
+class MaterialDict;
+
+/// Material group identifiers.
+enum MaterialGroup {
+    PlaneMaterials,
+    WallMaterials
+};
+
+typedef de::StringPool::Id MaterialId;
+
 /**
  * Map resource converter/interpreter for id Tech 1 map format(s).
  *
@@ -53,31 +63,40 @@ public:
         MapFormatCount
     };
 
-    /// Material group identifiers.
-    enum MaterialGroup {
-        PlaneMaterials,
-        WallMaterials
-    };
+    /**
+     * Heuristic based map data (format) recognizer.
+     *
+     * Unfortunately id Tech 1 maps cannot be easily recognized, due to their
+     * lack of identification signature, the mechanics of the WAD format lump
+     * index and the existence of several subformat variations. Therefore it is
+     * necessary to use heuristic analysis of the lump index and the lump data.
+     */
+    class Recognizer
+    {
+    public:
+        typedef QMap<MapLumpType, lumpnum_t> Lumps;
 
-    typedef de::StringPool::Id MaterialId;
+    public:
+        /**
+         * Attempt to recognize an id Tech 1 format by traversing the WAD lump
+         * index, beginning at the @a lumpIndexOffset specified.
+         */
+        Recognizer(lumpnum_t lumpIndexOffset);
+
+        de::String const &mapId() const;
+        Format mapFormat() const;
+
+        Lumps const &lumps() const;
+
+    private:
+        DENG2_PRIVATE(d)
+    };
 
 public:
     /**
-     * Construct a new Id1Map of the specified @a format.
+     * Attempt to construct a new Id1Map from the @a recognized data specified.
      */
-    Id1Map(Format format);
-
-    /**
-     * Returns the unique format identifier for the map.
-     */
-    Format format() const;
-
-    /**
-     * Attempt to load a new map data set from the identified @a lumps.
-     *
-     * @param lumps  Map of lumps for each data type to be processed.
-     */
-    void load(QMap<MapLumpType, lumpnum_t> const &lumps);
+    Id1Map(Recognizer const &recognized);
 
     /**
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the
@@ -101,21 +120,11 @@ public:
      */
     static de::String const &formatName(Format id);
 
-    /**
-     * Determine the size (in bytes) of an element of the specified map data
-     * lump @a type for the current map format.
-     *
-     * @param mapFormat     Map format identifier.
-     * @param type          Map lump data type.
-     * @return Size of an element of the specified type.
-     *
-     * @todo Should not be public.
-     */
-    static de::dsize ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type);
-
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef Id1Map::Recognizer Id1MapRecognizer;
 
 } // namespace wadimp
 
