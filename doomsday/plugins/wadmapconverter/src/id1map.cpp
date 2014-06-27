@@ -885,9 +885,8 @@ DENG2_PIMPL(Id1Map)
         return AutoStr_FromTextStd(materials.find(id).toUtf8().constData());
     }
 
-    bool loadVertexes(de::Reader &from, dint numElements)
+    void readVertexes(de::Reader &from, dint numElements)
     {
-        LOGDEV_MAP_XVERBOSE("Processing vertexes...");
         Id1Map::Format format = Id1Map::Format(from.version());
         for(dint n = 0; n < numElements; ++n)
         {
@@ -909,98 +908,71 @@ DENG2_PIMPL(Id1Map)
                 break; }
             }
         }
-
-        return true;
     }
 
-    bool loadLineDefs(de::Reader &reader, dint numElements)
+    void readLineDefs(de::Reader &reader, dint numElements)
     {
-        LOGDEV_MAP_XVERBOSE("Processing line definitions...");
-        if(numElements)
+        if(numElements <= 0) return;
+        lines.reserve(lines.size() + numElements);
+        for(dint n = 0; n < numElements; ++n)
         {
-            lines.reserve(lines.size() + numElements);
-            for(dint n = 0; n < numElements; ++n)
-            {
-                lines.push_back(LineDef(self));
-                LineDef &line = lines.back();
-                line << reader;
-                line.index = n;
-            }
+            lines.push_back(LineDef(self));
+            LineDef &line = lines.back();
+            line << reader;
+            line.index = n;
         }
-
-        return true;
     }
 
-    bool loadSideDefs(de::Reader &reader, dint numElements)
+    void readSideDefs(de::Reader &reader, dint numElements)
     {
-        LOGDEV_MAP_XVERBOSE("Processing side definitions...");
-        if(numElements)
+        if(numElements <= 0) return;
+        sides.reserve(sides.size() + numElements);
+        for(dint n = 0; n < numElements; ++n)
         {
-            sides.reserve(sides.size() + numElements);
-            for(dint n = 0; n < numElements; ++n)
-            {
-                sides.push_back(SideDef(self));
-                SideDef &side = sides.back();
-                side << reader;
-                side.index = n;
-            }
+            sides.push_back(SideDef(self));
+            SideDef &side = sides.back();
+            side << reader;
+            side.index = n;
         }
-
-        return true;
     }
 
-    bool loadSectors(de::Reader &reader, dint numElements)
+    void readSectorDefs(de::Reader &reader, dint numElements)
     {
-        LOGDEV_MAP_XVERBOSE("Processing sector definitions...");
-        if(numElements)
+        if(numElements <= 0) return;
+        sectors.reserve(sectors.size() + numElements);
+        for(dint n = 0; n < numElements; ++n)
         {
-            sectors.reserve(sectors.size() + numElements);
-            for(dint n = 0; n < numElements; ++n)
-            {
-                sectors.push_back(SectorDef(self));
-                SectorDef &sector = sectors.back();
-                sector << reader;
-                sector.index = n;
-            }
+            sectors.push_back(SectorDef(self));
+            SectorDef &sector = sectors.back();
+            sector << reader;
+            sector.index = n;
         }
-
-        return true;
     }
 
-    bool loadThings(de::Reader &reader, dint numElements)
+    void readThings(de::Reader &reader, dint numElements)
     {
-        LOGDEV_MAP_XVERBOSE("Processing things...");
-        if(numElements)
+        if(numElements <= 0) return;
+        things.reserve(things.size() + numElements);
+        for(dint n = 0; n < numElements; ++n)
         {
-            things.reserve(things.size() + numElements);
-            for(dint n = 0; n < numElements; ++n)
-            {
-                things.push_back(Thing(self));
-                Thing &thing = things.back();
-                thing << reader;
-                thing.index = n;
-            }
+            things.push_back(Thing(self));
+            Thing &thing = things.back();
+            thing << reader;
+            thing.index = n;
         }
-
-        return true;
     }
 
-    bool loadSurfaceTints(de::Reader &reader, dint numElements)
+    void readTintColors(de::Reader &reader, dint numElements)
     {
-        LOGDEV_MAP_XVERBOSE("Processing surface tints...");
-        if(numElements)
+        if(numElements <= 0) return;
+        surfaceTints.reserve(surfaceTints.size() + numElements);
+        for(dint n = 0; n < numElements; ++n)
         {
-            surfaceTints.reserve(surfaceTints.size() + numElements);
-            for(dint n = 0; n < numElements; ++n)
-            {
-                surfaceTints.push_back(TintColor(self));
-                TintColor &tint = surfaceTints.back();
-                tint << reader;
-                tint.index = n;
-            }
+            surfaceTints.push_back(TintColor(self));
+            TintColor &tint = surfaceTints.back();
+            tint << reader;
+            tint.index = n;
         }
-
-        return true;
     }
 
     /**
@@ -1414,12 +1386,12 @@ Id1Map::Id1Map(Recognizer const &recognized)
         {
         default: break;
 
-        case ML_VERTEXES: d->loadVertexes(reader, elemCount);     break;
-        case ML_LINEDEFS: d->loadLineDefs(reader, elemCount);     break;
-        case ML_SIDEDEFS: d->loadSideDefs(reader, elemCount);     break;
-        case ML_SECTORS:  d->loadSectors(reader, elemCount);      break;
-        case ML_THINGS:   d->loadThings(reader, elemCount);       break;
-        case ML_LIGHTS:   d->loadSurfaceTints(reader, elemCount); break;
+        case ML_VERTEXES: d->readVertexes(reader, elemCount);     break;
+        case ML_LINEDEFS: d->readLineDefs(reader, elemCount);     break;
+        case ML_SIDEDEFS: d->readSideDefs(reader, elemCount);     break;
+        case ML_SECTORS:  d->readSectorDefs(reader, elemCount);      break;
+        case ML_THINGS:   d->readThings(reader, elemCount);       break;
+        case ML_LIGHTS:   d->readTintColors(reader, elemCount); break;
         }
 
         W_UnlockLump(lumpNum);
