@@ -89,10 +89,9 @@ void G_RegisterCheats()
 
 CHEAT_FUNC(Init)
 {
-    player_t *plr = &players[player];
+    DENG2_UNUSED2(args, numArgs);
 
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    player_t *plr = &players[player];
 
     if(IS_NETGAME) return false;
     if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
@@ -108,10 +107,9 @@ CHEAT_FUNC(Init)
 
 CHEAT_FUNC(IDKFA)
 {
-    player_t *plr = &players[player];
+    DENG2_UNUSED2(args, numArgs);
 
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    player_t *plr = &players[player];
 
     if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
@@ -132,8 +130,7 @@ CHEAT_FUNC(IDKFA)
 
 CHEAT_FUNC(Quicken)
 {
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, "Trying to cheat? That's one...");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -143,8 +140,7 @@ CHEAT_FUNC(Quicken)
 
 CHEAT_FUNC(Quicken2)
 {
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, "That's two...");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -154,10 +150,9 @@ CHEAT_FUNC(Quicken2)
 
 CHEAT_FUNC(Quicken3)
 {
-    player_t *plr = &players[player];
+    DENG2_UNUSED2(args, numArgs);
 
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    player_t *plr = &players[player];
 
     if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
@@ -172,8 +167,7 @@ CHEAT_FUNC(Quicken3)
 
 CHEAT_FUNC(Class)
 {
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, "Enter new player class number");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -183,8 +177,7 @@ CHEAT_FUNC(Class)
 
 CHEAT_FUNC(Script)
 {
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, "Run which script (01-99)?");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -194,8 +187,7 @@ CHEAT_FUNC(Script)
 
 CHEAT_FUNC(Script2)
 {
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DENG2_UNUSED2(args, numArgs);
 
     P_SetMessage(&players[player], LMF_NO_HIDE, "Run which script (01-99)?");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -205,10 +197,9 @@ CHEAT_FUNC(Script2)
 
 CHEAT_FUNC(Reveal)
 {
-    player_t *plr = &players[player];
+    DENG2_UNUSED2(args, numArgs);
 
-    DENG2_UNUSED(args);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    player_t *plr = &players[player];
 
     if(IS_NETGAME && G_Ruleset_Deathmatch()) return false;
     if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
@@ -229,6 +220,8 @@ CHEAT_FUNC(Reveal)
  */
 D_CMD(Cheat)
 {
+    DENG2_UNUSED2(src, argc);
+
     // Give each of the characters in argument two to the SB event handler.
     int const len = (int) strlen(argv[1]);
     for(int i = 0; i < len; ++i)
@@ -245,6 +238,8 @@ D_CMD(Cheat)
 
 D_CMD(CheatGod)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -282,6 +277,8 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -336,6 +333,8 @@ static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*u
 
 D_CMD(CheatSuicide)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_NETGAME && !netSvAllowCheats) return false;
@@ -375,6 +374,8 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
+    DENG2_UNUSED2(src, argc);
+
     // Server operator can always reveal.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
         return false;
@@ -410,6 +411,8 @@ static void giveAllWeaponsAndPieces(player_t *plr)
 
 D_CMD(CheatGive)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() != GS_MAP)
     {
         App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!");
@@ -621,6 +624,8 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -644,6 +649,8 @@ D_CMD(CheatMassacre)
 
 D_CMD(CheatWhere)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(G_GameState() != GS_MAP)
         return true;
 
@@ -680,6 +687,8 @@ D_CMD(CheatWhere)
 
 D_CMD(CheatMorph)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -723,6 +732,8 @@ D_CMD(CheatMorph)
 
 D_CMD(CheatShadowcaster)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         playerclass_t newClass = (playerclass_t)atoi(argv[1]);
@@ -760,6 +771,8 @@ D_CMD(CheatShadowcaster)
 
 D_CMD(CheatRunScript)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         int scriptNum = atoi(argv[1]);

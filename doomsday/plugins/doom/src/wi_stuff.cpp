@@ -35,114 +35,107 @@
 #define MAX_ANIM_FRAMES         (3)
 #define NUMMAPS                 (9)
 
-typedef struct wianim_s {
-    /// If not @c 0= the logical map-number+1 for which this animation should only be displayed.
-    int mapNum;
-
-    /// Number of tics each frame of the animation lasts for.
-    int tics;
-
-    /// Location origin of the animation on the map.
-    Point2Raw origin;
-
-    /// Number of used frames in the animation.
-    int numFrames;
+struct wianimdef_t
+{
+    int mapNum;        ///< If not @c 0= the logical map-number+1 for which this animation should only be displayed.
+    int tics;          ///< Number of tics each frame of the animation lasts for.
+    Point2Raw origin;  ///< Location origin of the animation on the map.
+    int numFrames;     ///< Number of used frames in the animation.
 
     /// Names of the patches for each frame of the animation.
     char *patchNames[MAX_ANIM_FRAMES];
 
     /// State at which this animation begins/becomes visible.
     interludestate_t beginState;
-} wianimdef_t;
+};
 
-typedef struct wianimstate_s {
-    /// Next tic on which to progress the animation.
-    int nextTic;
-
-    /// Current frame number (index to patches); otherwise @c -1 (not yet begun).
-    int frame;
+struct wianimstate_t
+{
+    int nextTic;  ///< Next tic on which to progress the animation.
+    int frame;    ///< Current frame number (index to patches); otherwise @c -1 (not yet begun).
 
     /// Graphics for each frame of the animation.
     patchid_t patches[MAX_ANIM_FRAMES];
-} wianimstate_t;
+};
 
-typedef struct teaminfo_s {
-    int playerCount; /// @c 0= team not present.
+struct teaminfo_t
+{
+    int playerCount;      ///< @c 0= team not present.
     int frags[NUMTEAMS];
-    int totalFrags; /// Kills minus suicides.
+    int totalFrags;       ///< Kills minus suicides.
     int items;
     int kills;
     int secret;
-} teaminfo_t;
+};
 
-static Point2Raw locations[][NUMMAPS] = {
+static Point2Raw const locations[][NUMMAPS] = {
     {   // Episode 0
-        ( 185, 164 ),
-        ( 148, 143 ),
-        (  69, 122 ),
-        ( 209, 102 ),
-        ( 116,  89 ),
-        ( 166,  55 ),
-        (  71,  56 ),
-        ( 135,  29 ),
-        (  71,  24 )
+        Point2Raw( 185, 164 ),
+        Point2Raw( 148, 143 ),
+        Point2Raw(  69, 122 ),
+        Point2Raw( 209, 102 ),
+        Point2Raw( 116,  89 ),
+        Point2Raw( 166,  55 ),
+        Point2Raw(  71,  56 ),
+        Point2Raw( 135,  29 ),
+        Point2Raw(  71,  24 )
     },
     {   // Episode 1
-        ( 254,  25 ),
-        (  97,  50 ),
-        ( 188,  64 ),
-        ( 128,  78 ),
-        ( 214,  92 ),
-        ( 133, 130 ),
-        ( 208, 136 ),
-        ( 148, 140 ),
-        ( 235, 158 )
+        Point2Raw( 254,  25 ),
+        Point2Raw(  97,  50 ),
+        Point2Raw( 188,  64 ),
+        Point2Raw( 128,  78 ),
+        Point2Raw( 214,  92 ),
+        Point2Raw( 133, 130 ),
+        Point2Raw( 208, 136 ),
+        Point2Raw( 148, 140 ),
+        Point2Raw( 235, 158 )
     },
     {   // Episode 2
-        ( 156, 168 ),
-        (  48, 154 ),
-        ( 174,  95 ),
-        ( 265,  75 ),
-        ( 130,  48 ),
-        ( 279,  23 ),
-        ( 198,  48 ),
-        ( 140,  25 ),
-        ( 281, 136 )
+        Point2Raw( 156, 168 ),
+        Point2Raw(  48, 154 ),
+        Point2Raw( 174,  95 ),
+        Point2Raw( 265,  75 ),
+        Point2Raw( 130,  48 ),
+        Point2Raw( 279,  23 ),
+        Point2Raw( 198,  48 ),
+        Point2Raw( 140,  25 ),
+        Point2Raw( 281, 136 )
     }
 };
 
-static wianimdef_t episode0AnimDefs[] = {
-    { 0, 11, ( 224, 104 ), 3, { "wia00000", "wia00001", "wia00002" } },
-    { 0, 11, ( 184, 160 ), 3, { "wia00100", "wia00101", "wia00102" } },
-    { 0, 11, ( 112, 136 ), 3, { "wia00200", "wia00201", "wia00202" } },
-    { 0, 11, (  72, 112 ), 3, { "wia00300", "wia00301", "wia00302" } },
-    { 0, 11, (  88,  96 ), 3, { "wia00400", "wia00401", "wia00402" } },
-    { 0, 11, (  64,  48 ), 3, { "wia00500", "wia00501", "wia00502" } },
-    { 0, 11, ( 192,  40 ), 3, { "wia00600", "wia00601", "wia00602" } },
-    { 0, 11, ( 136,  16 ), 3, { "wia00700", "wia00701", "wia00702" } },
-    { 0, 11, (  80,  16 ), 3, { "wia00800", "wia00801", "wia00802" } },
-    { 0, 11, (  64,  24 ), 3, { "wia00900", "wia00901", "wia00902" } }
+static wianimdef_t const episode0AnimDefs[] = {
+    { 0, 11, Point2Raw( 224, 104 ), 3, { "wia00000", "wia00001", "wia00002" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 184, 160 ), 3, { "wia00100", "wia00101", "wia00102" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 112, 136 ), 3, { "wia00200", "wia00201", "wia00202" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  72, 112 ), 3, { "wia00300", "wia00301", "wia00302" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  88,  96 ), 3, { "wia00400", "wia00401", "wia00402" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  64,  48 ), 3, { "wia00500", "wia00501", "wia00502" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 192,  40 ), 3, { "wia00600", "wia00601", "wia00602" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 136,  16 ), 3, { "wia00700", "wia00701", "wia00702" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  80,  16 ), 3, { "wia00800", "wia00801", "wia00802" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  64,  24 ), 3, { "wia00900", "wia00901", "wia00902" }, ILS_SHOW_STATS }
 };
 
-static wianimdef_t episode1AnimDefs[] = {
-    { 1,  0, ( 128, 136 ), 1, { "wia10000" } },
-    { 2,  0, ( 128, 136 ), 1, { "wia10100" } },
-    { 3,  0, ( 128, 136 ), 1, { "wia10200" } },
-    { 4,  0, ( 128, 136 ), 1, { "wia10300" } },
-    { 5,  0, ( 128, 136 ), 1, { "wia10400" } },
-    { 6,  0, ( 128, 136 ), 1, { "wia10500" } },
-    { 7,  0, ( 128, 136 ), 1, { "wia10600" } },
-    { 8, 11, ( 192, 144 ), 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
-    { 8,  0, ( 128, 136 ), 1, { "wia10400" } }
+static wianimdef_t const episode1AnimDefs[] = {
+    { 1,  0, Point2Raw( 128, 136 ), 1, { "wia10000" }, ILS_SHOW_STATS },
+    { 2,  0, Point2Raw( 128, 136 ), 1, { "wia10100" }, ILS_SHOW_STATS },
+    { 3,  0, Point2Raw( 128, 136 ), 1, { "wia10200" }, ILS_SHOW_STATS },
+    { 4,  0, Point2Raw( 128, 136 ), 1, { "wia10300" }, ILS_SHOW_STATS },
+    { 5,  0, Point2Raw( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS },
+    { 6,  0, Point2Raw( 128, 136 ), 1, { "wia10500" }, ILS_SHOW_STATS },
+    { 7,  0, Point2Raw( 128, 136 ), 1, { "wia10600" }, ILS_SHOW_STATS },
+    { 8, 11, Point2Raw( 192, 144 ), 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
+    { 8,  0, Point2Raw( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS }
 };
 
-static wianimdef_t episode2AnimDefs[] = {
-    { 0, 11, ( 104, 168 ), 3, { "wia20000", "wia20001", "wia20002" } },
-    { 0, 11, (  40, 136 ), 3, { "wia20100", "wia20101", "wia20102" } },
-    { 0, 11, ( 160,  96 ), 3, { "wia20200", "wia20201", "wia20202" } },
-    { 0, 11, ( 104,  80 ), 3, { "wia20300", "wia20301", "wia20302" } },
-    { 0, 11, ( 120,  32 ), 3, { "wia20400", "wia20401", "wia20402" } },
-    { 0,  8, (  40,   0 ), 3, { "wia20500", "wia20501", "wia20502" } }
+static wianimdef_t const episode2AnimDefs[] = {
+    { 0, 11, Point2Raw( 104, 168 ), 3, { "wia20000", "wia20001", "wia20002" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  40, 136 ), 3, { "wia20100", "wia20101", "wia20102" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 160,  96 ), 3, { "wia20200", "wia20201", "wia20202" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 104,  80 ), 3, { "wia20300", "wia20301", "wia20302" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 120,  32 ), 3, { "wia20400", "wia20401", "wia20402" }, ILS_SHOW_STATS },
+    { 0,  8, Point2Raw(  40,   0 ), 3, { "wia20500", "wia20501", "wia20502" }, ILS_SHOW_STATS }
 };
 
 static int animCounts[] = {
@@ -151,20 +144,20 @@ static int animCounts[] = {
     sizeof(episode2AnimDefs) / sizeof(wianimdef_t)
 };
 
-static wianimdef_t* animDefs[] = {
+static wianimdef_t const *animDefs[] = {
     episode0AnimDefs,
     episode1AnimDefs,
     episode2AnimDefs
 };
 
-static wianimstate_t* animStates = NULL;
+static wianimstate_t *animStates;
 
 static teaminfo_t teamInfo[NUMTEAMS];
 
 // Used to accelerate or skip a stage.
 static dd_bool advanceState;
 
-static dd_bool drawYouAreHere = false;
+static dd_bool drawYouAreHere;
 
 static int spState, dmState, ngState;
 
@@ -190,8 +183,8 @@ static int cntPar;
 static int cntPause;
 
 // Passed into intermission.
-static wbstartstruct_t* wbs;
-static wbplayerstruct_t* inPlayerInfo;
+static wbstartstruct_t *wbs;
+static wbplayerstruct_t *inPlayerInfo;
 
 static patchid_t pBackground;
 static patchid_t pYouAreHereRight;
@@ -223,22 +216,18 @@ static inline char const *patchReplacementText(patchid_t patchId, char const *te
                                       patchId, text);
 }
 
-void WI_Register(void)
+void WI_Register()
 {
-    cvartemplate_t cvars[] = {
-        { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
-        { "inlude-patch-replacement", 0, CVT_INT, &cfg.inludePatchReplaceMode, PRM_FIRST, PRM_LAST },
-        { NULL }
-    };
-    Con_AddVariableList(cvars);
+    C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, PRM_FIRST, PRM_LAST);
 }
 
-void IN_SkipToNext(void)
+void IN_SkipToNext()
 {
     advanceState = true;
 }
 
-static void drawBackground(void)
+static void drawBackground()
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -389,20 +378,19 @@ static void drawPatchIfFits(patchid_t patchId, const Point2Raw* origin)
  * Begin any animations that were previously waiting on a state.
  * To be called upon changing the value of @var inState.
  */
-static void beginAnimations(void)
+static void beginAnimations()
 {
-    int i;
-
     if(gameModeBits & GM_ANY_DOOM2) return;
     if(wbs->episode > 2) return;
 
-    for(i = 0; i < animCounts[wbs->episode]; ++i)
+    for(int i = 0; i < animCounts[wbs->episode]; ++i)
     {
         wianimdef_t const *def = &animDefs[wbs->episode][i];
-        wianimstate_t *state = &animStates[i];
+        wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && wbs->nextMap != def->mapNum) continue;
+        if(def->mapNum && wbs->nextMap != (unsigned)def->mapNum)
+            continue;
 
         // Already begun?
         if(state->frame >= 0) continue;
@@ -424,22 +412,19 @@ static void beginAnimations(void)
     }
 }
 
-static void animateBackground(void)
+static void animateBackground()
 {
-    wianimdef_t const *def;
-    wianimstate_t *state;
-    int i;
-
     if(gameModeBits & GM_ANY_DOOM2) return;
     if(wbs->episode > 2) return;
 
-    for(i = 0; i < animCounts[wbs->episode]; ++i)
+    for(int i = 0; i < animCounts[wbs->episode]; ++i)
     {
-        def = &animDefs[wbs->episode][i];
-        state = &animStates[i];
+        wianimdef_t const *def = &animDefs[wbs->episode][i];
+        wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && wbs->nextMap != def->mapNum) continue;
+        if(def->mapNum && wbs->nextMap != (unsigned)def->mapNum)
+            continue;
 
         // Has the animation begun yet
         if(state->frame < 0) continue;
