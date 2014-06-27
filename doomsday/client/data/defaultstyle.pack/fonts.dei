@@ -113,7 +113,8 @@ group separator {
     font empty inherits default {
         size $: gui.scale(self.size, 0.5)
     }
-    font label inherits small {
+    font label inherits default {
+        size $: gui.scale(self.size, 0.7)
         weight: bold
     }
     font annotation inherits small {}    

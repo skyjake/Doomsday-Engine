@@ -52,14 +52,15 @@ DENG2_PIMPL(GameFilterWidget)
                 << new TabItem(tr("All Games"),    AllGames);
 
         sortLabel->setFont("small");
+        sortLabel->margins().setLeft("");
         sortBy->setFont("tab.label");
         sortBy->setOpeningDirection(ui::Down);
         sortBy->items()
                 << new ChoiceItem(tr("Title"),        SortByTitle)
                 << new ChoiceItem(tr("Identity key"), SortByIdentityKey);
 
-        SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
-        layout << *sortBy << *sortLabel;
+        SequentialLayout layout(self.rule().left(), self.rule().top(), ui::Right);
+        layout << *sortLabel << *sortBy;
 
         tabs->rule()
                 .setInput(Rule::Width, self.rule().width())
