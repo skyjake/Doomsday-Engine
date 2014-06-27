@@ -5106,7 +5106,7 @@ void Rend_LightGridVisual(LightGrid &lg)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Determine the grid reference of the view player.
-    LightGrid::Index viewerGridIndex;
+    LightGrid::Index viewerGridIndex = 0;
     if(viewPlayer)
     {
         blink++;
