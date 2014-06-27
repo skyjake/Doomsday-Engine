@@ -161,21 +161,17 @@ dd_bool EV_SectorSoundChange(byte *args)
     return result;
 }
 
-static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
+static dd_bool CheckedLockedDoor(mobj_t *mo, byte lock)
 {
-    extern int  TextKeyMessages[11];
-    char        LockedBuffer[80];
+    DENG2_ASSERT(mo != 0);
 
-    if(!mo->player)
-        return false;
-
-    if(!lock)
-        return true;
+    if(!mo->player) return false;
+    if(!lock) return true;
 
     if(!(mo->player->keys & (1 << (lock - 1))))
     {
-        sprintf(LockedBuffer, "YOU NEED THE %s\n",
-                GET_TXT(TextKeyMessages[lock - 1]));
+        char LockedBuffer[80];
+        sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
 
         P_SetMessage(mo->player, 0, LockedBuffer);
         S_StartSound(SFX_DOOR_LOCKED, mo);
@@ -185,7 +181,7 @@ static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-dd_bool EV_LineSearchForPuzzleItem(Line *line, byte *args, mobj_t *mo)
+dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 {
     if(!mo || !mo->player || !line)
         return false;
