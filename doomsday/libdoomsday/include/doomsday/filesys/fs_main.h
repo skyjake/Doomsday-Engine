@@ -586,5 +586,7 @@ LIBDOOMSDAY_PUBLIC void F_Init();
 /// Shutdown this module.
 LIBDOOMSDAY_PUBLIC void F_Shutdown();
 
+LIBDOOMSDAY_PUBLIC void const *F_LumpIndex();
+
 #endif // __cplusplus
 #endif /* LIBDENG_FILESYS_MAIN_H */

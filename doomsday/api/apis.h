@@ -1,4 +1,4 @@
-/** @file api/apis.h Doomsday's public API mechanism.
+/** @file apis.h  Doomsday's public API mechanism.
  * @ingroup base
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -143,11 +143,7 @@ enum {
 
     DE_API_URI_v1               = 2300,    // 1.10
     DE_API_URI_v2               = 2301,    // 1.14
-    DE_API_URI                  = DE_API_URI_v2,
-
-    DE_API_WAD_v1               = 2400,    // 1.10
-    DE_API_WAD_v2               = 2401,    // 1.14
-    DE_API_WAD                  = DE_API_WAD_v2
+    DE_API_URI                  = DE_API_URI_v2
 };
 
 /**

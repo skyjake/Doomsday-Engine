@@ -46,6 +46,8 @@
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
 
+using namespace de;
+
 // Our private map data structures
 xsector_t *xsectors;
 xline_t *xlines;
@@ -660,7 +662,7 @@ static void initFog(ddmapinfo_t *ddMapInfo)
     if(mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/))
     {
         int fadeTable = mapInfo->fadeTable;
-        if(fadeTable == W_GetLumpNumForName("COLORMAP"))
+        if(CentralLumpIndex().contains("COLORMAP.lmp"))
         {
             // We don't want fog in this case.
             GL_UseFog(false);
@@ -668,7 +670,7 @@ static void initFog(ddmapinfo_t *ddMapInfo)
         else
         {
             // Probably fog ... don't use fullbright sprites
-            if(fadeTable == W_GetLumpNumForName("FOGMAP"))
+            if(fadeTable == CentralLumpIndex().findLast("FOGMAP.lmp"))
             {
                 // Tell the renderer to turn on the fog.
                 GL_UseFog(true);
@@ -678,7 +680,7 @@ static void initFog(ddmapinfo_t *ddMapInfo)
 #endif
 }
 
-void P_SetupMap(Uri const *mapUri)
+void P_SetupMap(uri_s const *mapUri)
 {
     DENG2_ASSERT(mapUri != 0);
 
@@ -909,7 +911,7 @@ static void precacheResources()
 #endif
 }
 
-void P_FinalizeMapChange(Uri const *uri)
+void P_FinalizeMapChange(uri_s const *uri)
 {
 #if !__JHEXEN__
     DENG_UNUSED(uri);
@@ -931,18 +933,22 @@ void P_FinalizeMapChange(Uri const *uri)
     PO_InitForMap();
 
 #if __JHEXEN__
-    /// @todo Should be translated by the map converter.
-    lumpnum_t acsLumpNum = W_CheckLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/;
-    if(acsLumpNum >= 0 && !IS_CLIENT)
+    if(!IS_CLIENT)
     {
-        ACScriptInterpreter &interp = Game_ACScriptInterpreter();
+        /// @todo Should be translated by the map converter.
+        lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(String(Str_Text(Uri_Path(uri))) + ".lmp");
+        lumpnum_t acsLumpNum = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
+        if(acsLumpNum < CentralLumpIndex().size())
+        {
+            ACScriptInterpreter &interp = Game_ACScriptInterpreter();
 
-        interp.loadBytecode(acsLumpNum);
+            interp.loadBytecode(CentralLumpIndex()[acsLumpNum]);
 
-        memset(interp.mapVars, 0, sizeof(interp.mapVars));
+            std::memset(interp.mapVars, 0, sizeof(interp.mapVars));
 
-        // Start all scripts flagged to begin immediately.
-        interp.startOpenScripts();
+            // Start all scripts flagged to begin immediately.
+            interp.startOpenScripts();
+        }
     }
 #endif
 
@@ -1096,15 +1102,16 @@ void P_ResetWorldState()
 #endif
 }
 
-char const *P_MapTitle(Uri const *mapUri)
+char const *P_MapTitle(uri_s const *mapUri_)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
+    if(!mapUri) mapUri = &gameMapUri;
 
     char const *title = 0;
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
+    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
     {
         if(mapInfo.name[0])
         {
@@ -1148,9 +1155,9 @@ char const *P_MapTitle(Uri const *mapUri)
     return title;
 }
 
-char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
+char const *P_MapAuthor(uri_s const *mapUri, dd_bool supressGameAuthor)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    if(!mapUri) mapUri = reinterpret_cast<uri_s const *>(&gameMapUri);
 
     AutoStr *path = Uri_Resolved(mapUri);
     if(!path || Str_IsEmpty(path))
@@ -1180,16 +1187,17 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
     return author;
 }
 
-patchid_t P_MapTitlePatch(Uri const *mapUri)
+patchid_t P_MapTitlePatch(uri_s const *mapUri_)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
+    if(!mapUri) mapUri = &gameMapUri;
 
 #if __JDOOM__ || __JDOOM64__
-    uint map = G_MapNumberFor(mapUri);
+    uint map = G_MapNumberFor(*mapUri);
 #  if __JDOOM__
     if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
     {
-        uint episode = G_EpisodeNumberFor(mapUri);
+        uint episode = G_EpisodeNumberFor(*mapUri);
         map = (episode * 9) + map;
     }
 #  endif

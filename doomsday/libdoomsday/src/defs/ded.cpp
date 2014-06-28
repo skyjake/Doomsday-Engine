@@ -371,10 +371,12 @@ ded_material_t *ded_s::findMaterialDef(de::Uri const &uri) const
     for(int i = materials.size() - 1; i >= 0; i--)
     {
         ded_material_t *def = &materials[i];
-        if(!def->uri || uri != reinterpret_cast<de::Uri &>(*def->uri)) continue;
-        return def;
+        if(def->uri && uri == *def->uri)
+        {
+            return def;
+        }
     }
-    return NULL;
+    return 0; // Not found.
 }
 
 ded_material_t* ded_s::getMaterial(char const *uriCString) const

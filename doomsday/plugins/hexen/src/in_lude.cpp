@@ -352,18 +352,17 @@ static void CheckForSkip(void)
     }
 }
 
-void IN_Drawer(void)
+void IN_Drawer()
 {
-    dgl_borderedprojectionstate_t bp;
-    lumpnum_t lumpNum;
-
     if(!intermission || interState)
         return;
 
-    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.inludeScaleMode);
+    dgl_borderedprojectionstate_t bp;
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT,
+                                   Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
 
-    lumpNum = W_GetLumpNumForName("INTERPIC");
+    lumpnum_t lumpNum = CentralLumpIndex().findLast("INTERPIC.lmp");
     if(lumpNum >= 0)
     {
         DGL_Color4f(1, 1, 1, 1);
@@ -381,13 +380,9 @@ void IN_Drawer(void)
     GL_EndBorderedProjection(&bp);
 }
 
-static void drawDeathTally(void)
+static void drawDeathTally()
 {
     static dd_bool showTotals;
-
-    fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
-    int i, j, x, y;
-    dd_bool bold;
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -395,6 +390,7 @@ static void drawDeathTally(void)
     GL_DrawPatchXY(dpTallyTop, TALLY_TOP_X, TALLY_TOP_Y);
     GL_DrawPatchXY(dpTallyLeft, TALLY_LEFT_X, TALLY_LEFT_Y);
 
+    fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
     if(interTime < TALLY_EFFECT_TICKS)
     {
         showTotals = false;
@@ -417,18 +413,18 @@ static void drawDeathTally(void)
         showTotals = true;
         S_StartSound(SFX_PLATFORM_STOP, NULL);
     }
-    y = yPos >> FRACBITS;
+    int y = yPos >> FRACBITS;
 
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         xPos = xStart;
-        for(j = 0; j < MAXPLAYERS; ++j, xPos += xDelta)
+        for(int j = 0; j < MAXPLAYERS; ++j, xPos += xDelta)
         {
-            x = xPos >> FRACBITS;
-            bold = (i == CONSOLEPLAYER || j == CONSOLEPLAYER);
+            int x = xPos >> FRACBITS;
+            dd_bool bold = (i == CONSOLEPLAYER || j == CONSOLEPLAYER);
             if(players[i].plr->inGame && players[j].plr->inGame)
             {
                 if(bold)

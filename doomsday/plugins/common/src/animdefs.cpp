@@ -130,9 +130,9 @@ static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
     AutoStr *startPath = AutoStr_NewStd();
     AutoStr *endPath   = AutoStr_NewStd();
 
-    Uri *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
-    Uri *startUri = Uri_New();
-    Uri *endUri   = Uri_New();
+    uri_s *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+    uri_s *startUri = Uri_New();
+    uri_s *endUri   = Uri_New();
 
     // Read structures until -1 is found
     bool lastIsTexture = false;
@@ -240,7 +240,7 @@ static void AnimDefsParser(ddstring_s const *path)
         // string(texture-scheme) string(texture-path)
         if(char const *scheme = textureScheme(lexer.token()))
         {
-            Uri *uri = lexer.readUri(scheme);
+            uri_s *uri = lexer.readUri(scheme);
             int const texNumBase = Textures_UniqueId2(uri, !isCustom);
             Uri_Delete(uri);
 
@@ -277,7 +277,7 @@ static void AnimDefsParser(ddstring_s const *path)
 
                     if(!ignore)
                     {
-                        Uri *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+                        uri_s *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
                         Uri_SetPath(frameUrn, Str_Text(Str_Appendf(AutoStr_NewStd(), "%s:%i", scheme, texNumBase + picNum - 1)));
 
                         R_AddAnimGroupFrame(groupNumber, frameUrn, min, (max > 0? max - min : 0));
@@ -302,26 +302,25 @@ static void AnimDefsParser(ddstring_s const *path)
 }
 #endif // __JHEXEN__
 
-void P_InitPicAnims(void)
+void P_InitPicAnims()
 {
 #if __JHEXEN__
     AnimDefsParser(AutoStr_FromText("Lumps:ANIMDEFS"));
 #else
-    lumpnum_t animsLump;
-    if((animsLump = W_CheckLumpNumForName("ANIMATED")) > 0)
+    if(CentralLumpIndex().contains("ANIMATED.lmp"))
     {
-        /**
-         * We'll support this BOOM extension by reading the data and then registering
-         * the new animations into Doomsday using the animation groups feature.
-         *
-         * Support for this extension should be considered deprecated.
-         * All new features should be added, accessed via DED.
-         */
-        LOG_RES_VERBOSE("Processing lump %s::ANIMATED")
-                << NativePath(Str_Text(W_LumpSourceFile(animsLump))).pretty();
+        File1 &lump = CentralLumpIndex()[CentralLumpIndex().findLast("ANIMATED.lmp")];
 
-        loadAnimDefs((TextureAnimDef *)W_CacheLump(animsLump), true);
-        W_UnlockLump(animsLump);
+        // Support this BOOM extension by reading the data and then registering
+        // the new animations into Doomsday using the animation groups feature.
+        //
+        // Support for this extension should be considered deprecated.
+        // All new features should be added, accessed via DED.
+        LOG_RES_VERBOSE("Processing lump %s::ANIMATED")
+                << NativePath(lump.container().composePath()).pretty();
+
+        loadAnimDefs((TextureAnimDef *)lump.cache(), true);
+        lump.unlock();
         return;
     }
 

@@ -32,7 +32,15 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
-int         P_Massacre(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
+int P_Massacre(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

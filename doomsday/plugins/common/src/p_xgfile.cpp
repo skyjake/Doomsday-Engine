@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace de;
+
 enum xgsegenum_t
 {
     XGSEG_END,
@@ -100,7 +102,7 @@ static void ReadString(char **str)
     (*str)[len] = 0;
 }
 
-static Uri *readTextureUrn()
+static uri_s *readTextureUrn()
 {
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:Textures:%i", ReadShort())), RC_NULL);
 }
@@ -114,11 +116,10 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
 
     App_Log(DE2_RES_MSG, "Reading XG types from DDXGDATA");
 
-    size_t len = W_LumpLength(lumpNum);
-    uint8_t *buf = (uint8_t *) M_Malloc(len);
-    W_ReadLump(lumpNum, buf);
+    LumpIndex const &lumps = CentralLumpIndex();
+    File1 &lump = lumps[lumpNum];
 
-    readptr = (byte *)buf;
+    readptr = (byte *)lump.cache();
 
     // Allocate the arrays.
 
@@ -168,13 +169,13 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
             li->wallSection = ReadByte();
 
             {
-                Uri *textureUrn = readTextureUrn();
+                uri_s *textureUrn = readTextureUrn();
                 li->actMaterial = P_ToIndex(DD_MaterialForTextureUri(textureUrn));
                 Uri_Delete(textureUrn);
             }
 
             {
-                Uri *textureUrn = readTextureUrn();
+                uri_s *textureUrn = readTextureUrn();
                 li->deactMaterial = P_ToIndex(DD_MaterialForTextureUri(textureUrn));
                 Uri_Delete(textureUrn);
             }
@@ -265,11 +266,12 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
             break; }
 
         default:
+            lump.unlock();
             Con_Error("XG_ReadXGLump: Bad segment!");
         }
     }
 
-    M_Free(buf);
+    lump.unlock();
 }
 
 void XG_ReadTypes()
@@ -280,10 +282,10 @@ void XG_ReadTypes()
     num_sectypes = 0;
     Z_Free(sectypes); sectypes = 0;
 
-    XG_ReadXGLump(W_CheckLumpNumForName("DDXGDATA"));
+    XG_ReadXGLump(CentralLumpIndex().findLast("DDXGDATA.lmp"));
 }
 
-linetype_t* XG_GetLumpLine(int id)
+linetype_t *XG_GetLumpLine(int id)
 {
     for(int i = 0; i < num_linetypes; ++i)
     {

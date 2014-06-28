@@ -30,16 +30,16 @@
 #  include "p_mapinfo.h"
 #endif
 
-void S_MapMusic(Uri const *mapUri)
+void S_MapMusic(de::Uri const *mapUri)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    if(!mapUri) mapUri = &gameMapUri;
 
 #ifdef __JHEXEN__
     mapinfo_t const *mapInfo = P_MapInfo(mapUri);
     int const cdTrack = mapInfo->cdTrack;
     char const *lump  = strcasecmp(mapInfo->songLump, "DEFSONG")? mapInfo->songLump : 0;
 
-    App_Log(DE2_RES_VERBOSE, "S_MapMusic: %s lump: %s", Str_Text(Uri_Compose(mapUri)), lump);
+    App_Log(DE2_RES_VERBOSE, "S_MapMusic: %s lump: %s", mapUri->compose().toUtf8().constData(), lump);
 
     // Update the 'currentmap' music definition.
     int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
@@ -52,9 +52,8 @@ void S_MapMusic(Uri const *mapUri)
         Con_SetInteger2("map-music", defIndex, SVF_WRITE_OVERRIDE);
     }
 #else
-    AutoStr *mapPath = Uri_Compose(mapUri);
     ddmapinfo_t ddMapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &ddMapInfo))
+    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &ddMapInfo))
     {
         if(S_StartMusicNum(ddMapInfo.music, true))
         {
@@ -127,12 +126,11 @@ void SndInfoParser(Str const *path)
 
                 if(mapNumber > 0)
                 {
-                    Uri *mapUri = G_ComposeMapUri(0, mapNumber - 1);
-                    if(mapinfo_t *mapInfo = P_MapInfo(mapUri))
+                    de::Uri mapUri = G_ComposeMapUri(0, mapNumber - 1);
+                    if(mapinfo_t *mapInfo = P_MapInfo(&mapUri))
                     {
                         strncpy(mapInfo->songLump, Str_Text(lumpName), sizeof(mapInfo->songLump));
                     }
-                    Uri_Delete(mapUri);
                 }
                 continue;
             }

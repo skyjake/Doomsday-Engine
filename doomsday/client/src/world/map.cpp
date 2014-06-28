@@ -1460,7 +1460,7 @@ DENG2_PIMPL(Map)
             {
                 try
                 {
-                    Material *defMat = &App_ResourceSystem().material(*reinterpret_cast<de::Uri const *>(def->material));
+                    Material *defMat = &App_ResourceSystem().material(*def->material);
 
                     Material *mat = gen->plane->surface().materialPtr();
                     if(def->flags & Generator::SpawnFloor)

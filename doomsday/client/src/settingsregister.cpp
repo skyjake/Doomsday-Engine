@@ -369,6 +369,19 @@ DENG2_OBSERVES(App, GameChange)
         }
     }
 
+    bool addCustomProfileIfMissing()
+    {
+        if(!profiles.contains(CUSTOM_PROFILE))
+        {
+            addProfile(CUSTOM_PROFILE);
+
+            // Use whatever values are currently in effect.
+            fetch(CUSTOM_PROFILE);
+            return true;
+        }
+        return false; // nothing added
+	}
+
     /**
      * Deserializes all the profiles (see aboutToUnloadGame()). In addition,
      * fixed/built-in profiles are loaded from /data/profiles/(persistentName)/
@@ -412,44 +425,36 @@ DENG2_OBSERVES(App, GameChange)
         {
             // Settings haven't previously been created -- make sure we at least
             // have the Custom profile.
-            if(!profiles.contains(CUSTOM_PROFILE))
+            if(addCustomProfileIfMissing())
             {
-                addProfile(CUSTOM_PROFILE);
-
-                // Use whatever values are currently in effect.
-                fetch(CUSTOM_PROFILE);
                 current = CUSTOM_PROFILE;
             }
         }
 
         // Still nothing?
-        if(profiles.isEmpty())
-        {
-            addProfile(CUSTOM_PROFILE);
-            fetch(CUSTOM_PROFILE);
-        }
+        addCustomProfileIfMissing();
 
         if(App::config().names().has(confName()))
         {
             // Update current profile.
             current = App::config()[confName()].value().asText();
+		}
 
-            if(!profiles.contains(current))
+        if(!profiles.contains(current))
+        {
+            // Fall back to the one profile we know is available.
+            if(profiles.contains(CUSTOM_PROFILE))
             {
-                // Fall back to the one profile we know is available.
-                if(profiles.contains(CUSTOM_PROFILE))
-                {
-                    current = CUSTOM_PROFILE;
-                }
-                else
-                {
-                    current = profiles.keys().first();
-                }
+                current = CUSTOM_PROFILE;
             }
-
-            // Make sure these are the values now in use.
-            apply(current);
+            else
+            {
+                current = profiles.keys().first();
+            }
         }
+
+        // Make sure these are the values now in use.
+        apply(current);
 
         App::config().set(confName(), current);
     }

@@ -44,7 +44,6 @@
 #include "dd_version.h"
 #include "dd_types.h"
 #include "def_share.h"
-#include "api_wad.h"
 #include "api_thinker.h"
 #include "api_map.h"
 #include "api_gl.h"
@@ -152,7 +151,7 @@ enum {
     DD_PLAYBACK,
     DD_NUMSOUNDS,
     DD_NUMMUSIC,
-    DD_NUMLUMPS,
+    DD_UNUSED12, // DD_NUMLUMPS
     DD_CLIENT_PAUSED,
     DD_WEAPON_OFFSET_SCALE_Y, ///< 1000x
     DD_GAME_DATA_FORMAT,

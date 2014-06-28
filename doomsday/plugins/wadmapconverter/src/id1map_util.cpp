@@ -3,7 +3,7 @@
  * @ingroup wadmapconverter
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,6 +25,7 @@
 
 using namespace de;
 
+/// @todo Optimize: Replace linear search...
 MapLumpType MapLumpTypeForName(String name)
 {
     static const struct LumpTypeInfo {
@@ -60,7 +61,7 @@ MapLumpType MapLumpTypeForName(String name)
 
     if(!name.isEmpty())
     {
-        for(int i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
+        for(dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
         {
             LumpTypeInfo const &info = lumpTypeInfo[i];
             if(!info.name.compareWithoutCase(name) &&

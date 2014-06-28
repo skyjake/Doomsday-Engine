@@ -17,15 +17,12 @@ INCLUDEPATH += include
 
 HEADERS += \
     include/id1map.h \
-    include/id1map_datatypes.h \
-    include/id1map_load.h \
     include/id1map_util.h \
     include/version.h \
     include/wadmapconverter.h
 
 SOURCES += \
     src/id1map.cpp \
-    src/id1map_load.cpp \
     src/id1map_loadblockmap.cpp \
     src/id1map_util.cpp \
     src/wadmapconverter.cpp

@@ -6,7 +6,7 @@
  * id Tech 1 format to Doomsday's native map format, using the engine's public
  * MapEdit API.
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,11 +30,11 @@
 #include "id1map.h"
 
 DENG_USING_API(Base);
+DENG_USING_API(F);
 DENG_USING_API(Map);
 DENG_USING_API(Material);
 DENG_USING_API(MPE);
 DENG_USING_API(Plug);
 DENG_USING_API(Uri);
-DENG_USING_API(W);
 
 #endif // WADMAPCONVERTER_H

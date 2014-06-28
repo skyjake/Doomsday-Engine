@@ -46,6 +46,9 @@
 
 #include "gamerules.h"
 #include "pause.h"
+#ifdef __cplusplus
+#  include <doomsday/filesys/lumpindex.h>
+#endif
 
 DENG_EXTERN_C dd_bool sc_FileScripts;
 DENG_EXTERN_C char const *sc_ScriptsDir;
@@ -57,6 +60,14 @@ extern "C" {
 int Common_GetInteger(int id);
 
 #ifdef __cplusplus
+/**
+ * Returns the central LumpIndex from the engine. For use with old subsystems
+ * which still depend on this old fashioned mechanism for file access.
+ *
+ * @deprecated  Implement file access without depending on this specialized behavior.
+ */
+inline de::LumpIndex const &CentralLumpIndex() { return *reinterpret_cast<de::LumpIndex const *>(F_LumpIndex()); }
+
 } // extern "C"
 #endif
 

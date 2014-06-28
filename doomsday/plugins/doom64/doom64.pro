@@ -70,7 +70,7 @@ SOURCES += \
     src/d_items.c \
     src/d_main.cpp \
     src/d_refresh.c \
-    src/m_cheat.c \
+    src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
@@ -83,7 +83,7 @@ SOURCES += \
     src/p_telept.c \
     src/st_stuff.c \
     src/tables.c \
-    src/wi_stuff.c \
+    src/wi_stuff.cpp \
 
 win32 {
     deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom64.def\"

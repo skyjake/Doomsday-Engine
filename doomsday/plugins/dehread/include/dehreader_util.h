@@ -1,11 +1,11 @@
-/**
- * @file dehreader_util.h
- * DeHackEd patch parser. @ingroup dehread
+/** @file dehreader_util.h  DeHackEd patch parser.
+ *
+ * @ingroup dehread
  *
  * Miscellaneous utility routines.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,12 +29,12 @@
 #include <QStringList>
 #include "dehreader.h"
 
-/// @return Newly composed map URI, must be free'd with Uri_Delete().
-Uri* composeMapUri(int episode, int map);
+/// @return Newly composed map URI.
+de::Uri composeMapUri(int episode, int map);
 
-int mapInfoDefForUri(const Uri& uri, ded_mapinfo_t** def = NULL);
+int mapInfoDefForUri(de::Uri const &uri, ded_mapinfo_t **def = 0);
 
-int valueDefForPath(const QString& id, ded_value_t** def = NULL);
+int valueDefForPath(de::String const &id, ded_value_t **def = 0);
 
 /**
  * Tokenize a @a string, splitting it into at most @a max tokens.
@@ -54,6 +54,6 @@ int valueDefForPath(const QString& id, ded_value_t** def = NULL);
  *
  * @todo Should this be incorporated into de::String ?
  */
-QStringList splitMax(const QString& string, QChar sep, int max = -1);
+QStringList splitMax(QString const &string, QChar sep, int max = -1);
 
 #endif // LIBDEHREAD_DEHREADER_UTIL_H

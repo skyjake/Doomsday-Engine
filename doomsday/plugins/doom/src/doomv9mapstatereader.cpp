@@ -86,7 +86,7 @@ static reader_s *SV_NewReader_Dm_v19()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
 }
 
-static Uri *readTextureUrn(reader_s *reader, char const *schemeName)
+static uri_s *readTextureUrn(reader_s *reader, char const *schemeName)
 {
     DENG_ASSERT(reader != 0 && schemeName != 0);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(reader))), RC_NULL);
@@ -468,7 +468,7 @@ typedef struct {
     floor->state           = floorstate_e(Reader_ReadInt32(reader));
     floor->newSpecial      = Reader_ReadInt32(reader);
 
-    Uri *newTextureUrn = readTextureUrn(reader, "Flats");
+    uri_s *newTextureUrn = readTextureUrn(reader, "Flats");
     floor->material        = DD_MaterialForTextureUri(newTextureUrn);
     Uri_Delete(newTextureUrn);
 
@@ -823,11 +823,11 @@ void DoomV9MapStateReader::read(String const & /*mapUriStr*/)
         P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t) Reader_ReadInt16(d->reader));
         P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t) Reader_ReadInt16(d->reader));
 
-        Uri *floorTextureUrn = readTextureUrn(d->reader, "Flats");
+        uri_s *floorTextureUrn = readTextureUrn(d->reader, "Flats");
         P_SetPtrp   (sec, DMU_FLOOR_MATERIAL,   DD_MaterialForTextureUri(floorTextureUrn));
         Uri_Delete(floorTextureUrn);
 
-        Uri *ceilingTextureUrn = readTextureUrn(d->reader, "Flats");
+        uri_s *ceilingTextureUrn = readTextureUrn(d->reader, "Flats");
         P_SetPtrp   (sec, DMU_CEILING_MATERIAL, DD_MaterialForTextureUri(ceilingTextureUrn));
         Uri_Delete(ceilingTextureUrn);
 
@@ -860,15 +860,15 @@ void DoomV9MapStateReader::read(String const & /*mapUriStr*/)
             P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
             P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
 
-            Uri *topTextureUrn = readTextureUrn(d->reader, "Textures");
+            uri_s *topTextureUrn = readTextureUrn(d->reader, "Textures");
             P_SetPtrp(sdef, DMU_TOP_MATERIAL,    DD_MaterialForTextureUri(topTextureUrn));
             Uri_Delete(topTextureUrn);
 
-            Uri *bottomTextureUrn = readTextureUrn(d->reader, "Textures");
+            uri_s *bottomTextureUrn = readTextureUrn(d->reader, "Textures");
             P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, DD_MaterialForTextureUri(bottomTextureUrn));
             Uri_Delete(bottomTextureUrn);
 
-            Uri *middleTextureUrn = readTextureUrn(d->reader, "Textures");
+            uri_s *middleTextureUrn = readTextureUrn(d->reader, "Textures");
             P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, DD_MaterialForTextureUri(middleTextureUrn));
             Uri_Delete(middleTextureUrn);
         }

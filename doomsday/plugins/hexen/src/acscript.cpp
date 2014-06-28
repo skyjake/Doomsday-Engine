@@ -65,23 +65,18 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
-ACScriptInterpreter::DeferredTask::DeferredTask(Uri const &mapUri, int scriptNumber, byte const args_[])
-    : mapUri(Uri_Dup(&mapUri))
+ACScriptInterpreter::DeferredTask::DeferredTask(de::Uri const &mapUri, int scriptNumber, byte const args_[])
+    : mapUri      (mapUri)
     , scriptNumber(scriptNumber)
 {
     std::memcpy(args, args_, sizeof(args));
-}
-
-ACScriptInterpreter::DeferredTask::~DeferredTask()
-{
-    Uri_Delete(mapUri);
 }
 
 ACScriptInterpreter::DeferredTask *ACScriptInterpreter::DeferredTask::newFromReader(de::Reader &from) //static
 {
     de::String mapUriStr;
     from >> mapUriStr;
-    Uri *mapUri = Uri_NewWithPath2(mapUriStr.toUtf8().constData(), RC_NULL);
+    de::Uri mapUri(mapUriStr, RC_NULL);
     int scriptNumber; ///< On the target map.
     from >> scriptNumber;
     byte args[4];
@@ -89,14 +84,12 @@ ACScriptInterpreter::DeferredTask *ACScriptInterpreter::DeferredTask::newFromRea
     {
         from >> args[i];
     }
-    DeferredTask *task = new DeferredTask(*mapUri, scriptNumber, args);
-    Uri_Delete(mapUri);
-    return task;
+    return new DeferredTask(mapUri, scriptNumber, args);
 }
 
 void ACScriptInterpreter::DeferredTask::operator >> (de::Writer &to) const
 {
-    to << de::String(Str_Text(Uri_Compose(mapUri)))
+    to << mapUri.compose()
        << scriptNumber;
     for(int i = 0; i < 4; ++i)
     {
@@ -108,7 +101,7 @@ void ACScriptInterpreter::DeferredTask::operator << (de::Reader &from)
 {
     de::String mapUriStr;
     from >> mapUriStr;
-    mapUri = Uri_NewWithPath2(mapUriStr.toUtf8().constData(), RC_NULL);
+    mapUri = de::Uri(mapUriStr, RC_NULL);
     from >> scriptNumber;
     for(int i = 0; i < 4; ++i)
     {
@@ -154,21 +147,20 @@ ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const 
     return script;
 }
 
-bool ACScriptInterpreter::newDeferredTask(Uri const *mapUri, int scriptNumber, byte const args[])
+bool ACScriptInterpreter::newDeferredTask(de::Uri const &mapUri, int scriptNumber, byte const args[])
 {
     // Don't allow duplicates.
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
         DeferredTask &task = *_deferredTasks[i];
-        if(task.scriptNumber == scriptNumber &&
-           Uri_Equality(task.mapUri, mapUri))
+        if(task.scriptNumber == scriptNumber && task.mapUri == mapUri)
         {
             return false;
         }
     }
 
     _deferredTasks = (DeferredTask **) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * ++_deferredTasksSize, PU_GAMESTATIC);
-    _deferredTasks[_deferredTasksSize - 1] = new DeferredTask(*mapUri, scriptNumber, args);
+    _deferredTasks[_deferredTasksSize - 1] = new DeferredTask(mapUri, scriptNumber, args);
     return true;
 }
 
@@ -182,29 +174,27 @@ ACScriptInterpreter::ACScriptInterpreter()
     , _deferredTasks(0)
 {}
 
-void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
+void ACScriptInterpreter::loadBytecode(de::File1 &lump)
 {
 #define OPEN_SCRIPTS_BASE 1000
 
     DENG2_ASSERT(!IS_CLIENT);
 
-    size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
-
-    App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s (#%i)...",
-            F_PrettyPath(Str_Text(W_LumpSourceFile(lump))),
-            Str_Text(W_LumpName(lump)), lump);
+    App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s...",
+            F_PrettyPath(lump.container().composePath().toUtf8().constData()),
+            lump.name().toUtf8().constData());
 
     _scriptCount = 0;
 
     int const *readBuf = 0;
-    if(lumpLength >= sizeof(BytecodeHeader))
+    if(lump.size() >= sizeof(BytecodeHeader))
     {
-        void *region = Z_Malloc(lumpLength, PU_MAP, 0);
-        W_ReadLump(lump, (uint8_t *)region);
+        void *region = Z_Malloc(lump.size(), PU_MAP, 0);
+        lump.read((uint8_t *)region);
         BytecodeHeader const *header = (BytecodeHeader const *) region;
         _pcode = (byte const *) header;
 
-        if(LONG(header->infoOffset) < (int)lumpLength)
+        if(LONG(header->infoOffset) < (int)lump.size())
         {
             readBuf = (int *) ((byte const *) header + LONG(header->infoOffset));
             _scriptCount = LONG(*readBuf++);
@@ -214,7 +204,9 @@ void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
     if(!_scriptCount)
     {
         // Empty/Invalid lump.
-        App_Log(DE2_SCR_WARNING, "Lump #%i does not appear to be valid ACS bytecode data", lump);
+        App_Log(DE2_SCR_WARNING, "Lump %s:%s does not appear to be valid ACS bytecode data",
+                F_PrettyPath(lump.container().composePath().toUtf8().constData()),
+                lump.name().toUtf8().constData());
         return;
     }
 
@@ -276,18 +268,18 @@ void ACScriptInterpreter::startOpenScripts()
     }
 }
 
-bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
+bool ACScriptInterpreter::startScript(int scriptNumber, de::Uri const *mapUri,
     byte const args[], mobj_t *activator, Line *line, int side)
 {
     DENG2_ASSERT(!IS_CLIENT);
 
     if(mapUri)
     {
-        if(!Uri_Equality(gameMapUri, mapUri))
+        if(gameMapUri != *mapUri)
         {
             // Script is not for the current map.
             // Add it to the store to be started when that map is next entered.
-            return newDeferredTask(mapUri, scriptNumber, args);
+            return newDeferredTask(*mapUri, scriptNumber, args);
         }
     }
 
@@ -316,7 +308,7 @@ bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
     return false; // Perhaps its already executing?
 }
 
-bool ACScriptInterpreter::suspendScript(int scriptNumber, Uri const * /*mapUri*/)
+bool ACScriptInterpreter::suspendScript(int scriptNumber, de::Uri const * /*mapUri*/)
 {
     if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
     {
@@ -331,7 +323,7 @@ bool ACScriptInterpreter::suspendScript(int scriptNumber, Uri const * /*mapUri*/
     return false;
 }
 
-bool ACScriptInterpreter::terminateScript(int scriptNumber, Uri const * /*mapUri*/)
+bool ACScriptInterpreter::terminateScript(int scriptNumber, de::Uri const * /*mapUri*/)
 {
     if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
     {
@@ -412,7 +404,7 @@ void ACScriptInterpreter::clearDeferredTasks()
     _deferredTasksSize = 0;
 }
 
-void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
+void ACScriptInterpreter::runDeferredTasks(de::Uri const &mapUri)
 {
     if(COMMON_GAMESESSION->rules().deathmatch)
     {
@@ -429,7 +421,7 @@ void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
         DeferredTask *task = _deferredTasks[i];
         int scriptNumber = task->scriptNumber;
 
-        if(!Uri_Equality(task->mapUri, mapUri))
+        if(task->mapUri != mapUri)
         {
             i++;
             continue;
@@ -1830,23 +1822,25 @@ ACScriptInterpreter &Game_ACScriptInterpreter()
 
 void Game_ACScriptInterpreter_RunDeferredTasks(Uri const *mapUri)
 {
-    interp.runDeferredTasks(mapUri);
+    if(!mapUri) return;
+    interp.runDeferredTasks(*reinterpret_cast<de::Uri const *>(mapUri));
 }
 
 dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, Uri const *mapUri,
     byte const args[], mobj_t *activator, Line *line, int side)
 {
-    return interp.startScript(scriptNumber, mapUri, args, activator, line, side);
+    return interp.startScript(scriptNumber, reinterpret_cast<de::Uri const *>(mapUri),
+                              args, activator, line, side);
 }
 
 dd_bool Game_ACScriptInterpreter_TerminateScript(int scriptNumber, Uri const *mapUri)
 {
-    return interp.terminateScript(scriptNumber, mapUri);
+    return interp.terminateScript(scriptNumber, reinterpret_cast<de::Uri const *>(mapUri));
 }
 
 dd_bool Game_ACScriptInterpreter_SuspendScript(int scriptNumber, Uri const *mapUri)
 {
-    return interp.suspendScript(scriptNumber, mapUri);
+    return interp.suspendScript(scriptNumber, reinterpret_cast<de::Uri const *>(mapUri));
 }
 
 void ACScript_Thinker(ACScript *script)

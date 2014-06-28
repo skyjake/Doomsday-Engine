@@ -34,6 +34,8 @@
 #  include <de/ISerializable>
 #  include <de/Reader>
 #  include <de/Writer>
+#  include <doomsday/filesys/file.h>
+#  include <doomsday/uri.h>
 #endif
 
 #define MAX_ACS_SCRIPT_VARS     10
@@ -126,7 +128,7 @@ public:
     /**
      * Load new ACS bytecode from the specified @a lump.
      */
-    void loadBytecode(lumpnum_t lump);
+    void loadBytecode(de::File1 &lump);
 
     /**
      * To be called when a new game session begins to reset the interpreter. The world state is
@@ -152,12 +154,12 @@ public:
      *
      * @return  @c true iff a script was newly started (or deferred).
      */
-    bool startScript(int scriptNumber, Uri const *mapUri, byte const args[4],
+    bool startScript(int scriptNumber, de::Uri const *mapUri, byte const args[4],
                      mobj_t *activator = 0, Line *line = 0, int side = 0);
 
-    bool suspendScript(int scriptNumber, Uri const *mapUri);
+    bool suspendScript(int scriptNumber, de::Uri const *mapUri);
 
-    bool terminateScript(int scriptNumber, Uri const *mapUri);
+    bool terminateScript(int scriptNumber, de::Uri const *mapUri);
 
     void tagFinished(int tag);
     void polyobjFinished(int tag);
@@ -192,7 +194,7 @@ public:
      * To be called when the current map changes to activate any deferred scripts
      * which should now begin/resume.
      */
-    void runDeferredTasks(Uri const *mapUri);
+    void runDeferredTasks(de::Uri const &mapUri);
 
     /**
      * To be called when the specified @a script is to be formally terminated.
@@ -237,7 +239,7 @@ private:
      */
     struct DeferredTask : public de::ISerializable
     {
-        Uri *mapUri;      ///< Target map.
+        de::Uri mapUri;   ///< Target map.
         int scriptNumber; ///< On the target map.
         byte args[4];
 
@@ -246,8 +248,7 @@ private:
          * @param scriptNumber  Script number to execute on the target map.
          * @param args          Script arguments.
          */
-        DeferredTask(Uri const &mapUri, int scriptNumber, byte const args[4]);
-        ~DeferredTask();
+        DeferredTask(de::Uri const &mapUri, int scriptNumber, byte const args[4]);
 
         static DeferredTask *newFromReader(de::Reader &from);
 
@@ -255,7 +256,7 @@ private:
         void operator << (de::Reader &from);
     };
 
-    bool newDeferredTask(Uri const *mapUri, int scriptNumber, byte const args[4]);
+    bool newDeferredTask(de::Uri const &mapUri, int scriptNumber, byte const args[4]);
 
     byte const *_pcode; ///< Start of the loaded bytecode.
 

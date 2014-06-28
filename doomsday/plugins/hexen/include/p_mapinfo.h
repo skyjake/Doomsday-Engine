@@ -27,8 +27,10 @@
 #endif
 
 #include "doomsday.h"
+#include <doomsday/uri.h>
 
-typedef struct mapinfo_s {
+struct mapinfo_t
+{
     uint         map; ///< Logical map number.
     int          hub;
     uint         warpTrans;
@@ -43,11 +45,7 @@ typedef struct mapinfo_s {
     dd_bool      lightning;
     int          fadeTable;
     char         songLump[10];
-} mapinfo_t;
-
-#if __cplusplus
-extern "C" {
-#endif
+};
 
 /**
  * Populate the MapInfo database by parsing the MAPINFO lump.
@@ -60,7 +58,7 @@ void MapInfoParser(Str const *path);
  *
  * @return  MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
  */
-mapinfo_t *P_MapInfo(Uri const *mapUri);
+mapinfo_t *P_MapInfo(de::Uri const *mapUri = 0);
 
 #define P_INVALID_LOGICAL_MAP   0xffffffff
 
@@ -84,9 +82,5 @@ uint P_TranslateMapIfExists(uint map);
  * found, returns 0 (first available logical map).
  */
 uint P_TranslateMap(uint map);
-
-#if __cplusplus
-} // extern "C"
-#endif
 
 #endif // JHEXEN_DEF_MAPINFO_H

@@ -1,7 +1,7 @@
-/** @file g_update.c  Engine reset => game update logic.
+/** @file g_update.cpp  Engine reset => game update logic.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,7 +19,9 @@
  */
 
 #include "common.h"
+#include "g_update.h"
 
+#include <ctype.h>
 #include "animdefs.h"
 #include "hu_chat.h"
 #include "hu_log.h"
@@ -31,31 +33,26 @@
 #include "p_sound.h"
 #include "p_start.h"
 #include "r_common.h"
-#if __JHEXEN__
-#  include "m_cheat.h"
-#endif
-
-#include <ctype.h>
 
 #define MANGLE_STATE(x)     (INT2PTR(state_t, ((x)? (x)-STATES : -1)))
 #define RESTORE_STATE(x)    (PTR2INT(x) < 0? NULL : &STATES[PTR2INT(x)])
 
-static int mangleMobj(thinker_t* th, void* context)
+static int mangleMobj(thinker_t *th, void * /*context*/)
 {
-    mobj_t*             mo = (mobj_t *) th;
+    mobj_t *mo = (mobj_t *) th;
 
     mo->state = MANGLE_STATE(mo->state);
-    mo->info = INT2PTR(mobjinfo_t, mo->info - MOBJINFO);
+    mo->info  = INT2PTR(mobjinfo_t, mo->info - MOBJINFO);
 
     return false; // Continue iteration.
 }
 
-static int restoreMobj(thinker_t* th, void* context)
+static int restoreMobj(thinker_t *th, void * /*context*/)
 {
-    mobj_t*             mo = (mobj_t *) th;
+    mobj_t *mo = (mobj_t *) th;
 
     mo->state = RESTORE_STATE(mo->state);
-    mo->info = &MOBJINFO[PTR2INT(mo->info)];
+    mo->info  = &MOBJINFO[PTR2INT(mo->info)];
 
     return false; // Continue iteration.
 }
@@ -64,37 +61,31 @@ static int restoreMobj(thinker_t* th, void* context)
  * Called before the engine re-inits the definitions. After that all the
  * state, info, etc. pointers will be obsolete.
  */
-void G_MangleState(void)
+void G_MangleState()
 {
-    int                 i;
-
     Thinker_Iterate(P_MobjThinker, mangleMobj, NULL);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr = &players[i];
-        int                 k;
-
-        for(k = 0; k < NUMPSPRITES; ++k)
-            plr->pSprites[k].state =
-                MANGLE_STATE(plr->pSprites[k].state);
+        player_t *plr = &players[i];
+        for(int k = 0; k < NUMPSPRITES; ++k)
+        {
+            plr->pSprites[k].state = MANGLE_STATE(plr->pSprites[k].state);
+        }
     }
 }
 
-void G_RestoreState(void)
+void G_RestoreState()
 {
-    int                 i;
-
     Thinker_Iterate(P_MobjThinker, restoreMobj, NULL);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr = &players[i];
-        int                 k;
-
-        for(k = 0; k < NUMPSPRITES; ++k)
-            plr->pSprites[k].state =
-                RESTORE_STATE(plr->pSprites[k].state);
+        player_t *plr = &players[i];
+        for(int k = 0; k < NUMPSPRITES; ++k)
+        {
+            plr->pSprites[k].state = RESTORE_STATE(plr->pSprites[k].state);
+        }
     }
 
     HU_UpdatePsprites();
@@ -109,8 +100,7 @@ void G_UpdateState(int step)
     {
     case DD_PRE:
         G_MangleState();
-        // Redefine the texture animations.
-        P_InitPicAnims();
+        P_InitPicAnims(); // Redefine texture animations.
         break;
 
     case DD_POST:

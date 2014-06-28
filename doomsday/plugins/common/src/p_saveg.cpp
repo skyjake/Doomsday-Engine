@@ -364,13 +364,12 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
     if(mapVersion == 1)
     {
         // The flat numbers are absolute lump indices.
-        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-        Uri_SetPath(uri, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
-        floorMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        de::Uri uri("Flats:", RC_NULL);
+        uri.setPath(CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
+        floorMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
-        Uri_SetPath(uri, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
-        ceilingMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-        Uri_Delete(uri);
+        uri.setPath(CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
+        ceilingMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
     }
     else if(mapVersion >= 4)
 #endif
@@ -879,7 +878,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     }
 
     // Do we need to change the map?
-    if(!Uri_Equality(gameMapUri, mapUri))
+    if(gameMapUri != *reinterpret_cast<de::Uri *>(mapUri))
     {
         COMMON_GAMESESSION->begin(*mapUri, 0/*default*/, *rules);
     }

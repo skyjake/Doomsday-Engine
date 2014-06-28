@@ -76,7 +76,7 @@ void P_InitLava(void)
 
 void P_InitSky(Uri const *mapUri)
 {
-    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+    mapinfo_t const *mapInfo = P_MapInfo(reinterpret_cast<de::Uri const *>(mapUri));
     if(mapInfo)
     {
         sky1Material     = mapInfo->sky1Material;
@@ -140,45 +140,38 @@ void P_AnimateSky(void)
     }
 }
 
-dd_bool EV_SectorSoundChange(byte* args)
+dd_bool EV_SectorSoundChange(byte *args)
 {
-    dd_bool             rtn = false;
-    Sector*             sec = NULL;
-    iterlist_t*         list;
+    if(!args[0]) return false;
 
-    if(!args[0])
-        return false;
+    dd_bool result = false;
 
-    list = P_GetSectorIterListForTag((int) args[0], false);
-    if(!list)
-        return rtn;
-
-    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
-    IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+    if(iterlist_t *list = P_GetSectorIterListForTag((int) args[0], false))
     {
-        P_ToXSector(sec)->seqType = args[1];
-        rtn = true;
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        Sector *sec = 0;
+        while((sec = (Sector *)IterList_MoveIterator(list)))
+        {
+            P_ToXSector(sec)->seqType = seqtype_t(args[1]);
+            result = true;
+        }
     }
 
-    return rtn;
+    return result;
 }
 
-static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
+static dd_bool CheckedLockedDoor(mobj_t *mo, byte lock)
 {
-    extern int  TextKeyMessages[11];
-    char        LockedBuffer[80];
+    DENG2_ASSERT(mo != 0);
 
-    if(!mo->player)
-        return false;
-
-    if(!lock)
-        return true;
+    if(!mo->player) return false;
+    if(!lock) return true;
 
     if(!(mo->player->keys & (1 << (lock - 1))))
     {
-        sprintf(LockedBuffer, "YOU NEED THE %s\n",
-                GET_TXT(TextKeyMessages[lock - 1]));
+        char LockedBuffer[80];
+        sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
 
         P_SetMessage(mo->player, 0, LockedBuffer);
         S_StartSound(SFX_DOOR_LOCKED, mo);
@@ -188,15 +181,12 @@ static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
+dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 {
-    inventoryitemtype_t  type;
-
     if(!mo || !mo->player || !line)
         return false;
 
-    type = IIT_FIRSTPUZZITEM + P_ToXLine(line)->arg1;
-
+    inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRSTPUZZITEM + P_ToXLine(line)->arg1);
     if(type < IIT_FIRSTPUZZITEM)
         return false;
 
@@ -204,28 +194,19 @@ dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-static Uri *mapUriFromLogicalNumber(int number)
+static de::Uri mapUriFromLogicalNumber(int number)
 {
-    if(!number) return 0; // current map.
+    if(!number) return gameMapUri; // current map.
     return G_ComposeMapUri(gameEpisode, number - 1);
 }
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
 {
-    byte newArgs[5];
-    int i, lock;
-    dd_bool success;
-    Uri *mapUri;
+    DENG2_ASSERT(args != 0 && mo != 0);
 
-    DENG_ASSERT(args != 0);
+    if(!mo->player) return false;
 
-    if(!mo->player)
-    {
-        return false;
-    }
-
-    lock = args[4];
-    if(lock)
+    if(int lock = args[4])
     {
         if(!(mo->player->keys & (1 << (lock - 1))))
         {
@@ -237,17 +218,15 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
         }
     }
 
-    for(i = 0; i < 4; ++i)
+    byte newArgs[5];
+    for(int i = 0; i < 4; ++i)
     {
         newArgs[i] = args[i];
     }
     newArgs[4] = 0;
 
-    mapUri = mapUriFromLogicalNumber(newArgs[1]);
-    success = Game_ACScriptInterpreter_StartScript(newArgs[0], mapUri, &newArgs[2], mo, line, side);
-    Uri_Delete(mapUri);
-
-    return success;
+    de::Uri mapUri = mapUriFromLogicalNumber(newArgs[1]);
+    return Game_ACScriptInterpreter().startScript(newArgs[0], &mapUri, &newArgs[2], mo, line, side);
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
@@ -524,21 +503,18 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 80: /* ACS_Execute */ {
-        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
-        success = Game_ACScriptInterpreter_StartScript(args[0], mapUri, &args[2], mo, line, side);
-        Uri_Delete(mapUri);
+        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter().startScript(args[0], &mapUri, &args[2], mo, line, side);
         break; }
 
     case 81: /* ACS_Suspend */ {
-        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
-        success = Game_ACScriptInterpreter_SuspendScript(args[0], mapUri);
-        Uri_Delete(mapUri);
+        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter().suspendScript(args[0], &mapUri);
         break; }
 
     case 82: /* ACS_Terminate */ {
-        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
-        success = Game_ACScriptInterpreter_TerminateScript(args[0], mapUri);
-        Uri_Delete(mapUri);
+        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter().terminateScript(args[0], &mapUri);
         break; }
 
     case 83: // ACS_LockedExecute
@@ -703,7 +679,7 @@ dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
        buttonSuccess)
     {
-        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), 0, false,
+        P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), 0, false,
                        repeat? BUTTONTIME : 0);
     }
 
@@ -837,16 +813,14 @@ void P_PlayerOnSpecialFloor(player_t* player)
     }
 }
 
-void P_SpawnSectorSpecialThinkers(void)
+void P_SpawnSectorSpecialThinkers()
 {
-    int i;
-
     // Clients do not spawn sector specials.
     if(IS_CLIENT) return;
 
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
     {
-        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
         xsector_t *xsec = P_ToXSector(sec);
 
         switch(xsec->special)
@@ -929,7 +903,7 @@ static void P_LightningFlash(void)
         {
             for(i = 0; i < numsectors; ++i)
             {
-                Sector *sec = P_ToPtr(DMU_SECTOR, i);
+                Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -948,7 +922,7 @@ static void P_LightningFlash(void)
             // Remove the alternate lightning flash special.
             for(i = 0; i < numsectors; ++i)
             {
-                Sector *sec = P_ToPtr(DMU_SECTOR, i);
+                Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -973,7 +947,7 @@ static void P_LightningFlash(void)
     foundSec = false;
     for(i = 0; i < numsectors; ++i)
     {
-        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
@@ -1080,7 +1054,7 @@ void P_InitLightning(void)
     secCount = 0;
     for(i = 0; i < numsectors; ++i)
     {
-        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
@@ -1092,7 +1066,7 @@ void P_InitLightning(void)
     {
         mapHasLightning = true;
 
-        lightningLightLevels = Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
+        lightningLightLevels = (float *)Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
 
         // Don't flash immediately on entering the map.
         nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;

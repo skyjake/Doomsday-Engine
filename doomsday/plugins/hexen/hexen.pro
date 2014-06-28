@@ -80,8 +80,8 @@ SOURCES += \
     src/h2_main.cpp \
     src/hconsole.c \
     src/hrefresh.c \
-    src/in_lude.c \
-    src/m_cheat.c \
+    src/in_lude.cpp \
+    src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
@@ -92,7 +92,7 @@ SOURCES += \
     src/p_pillar.cpp \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_spec.c \
+    src/p_spec.cpp \
     src/p_telept.c \
     src/p_things.c \
     src/p_waggle.cpp \

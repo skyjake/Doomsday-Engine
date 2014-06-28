@@ -67,6 +67,11 @@ DENG_API_TYPEDEF(F)
     AutoStr*        (*ReadFileIntoString)(Str const *path, dd_bool *isCustom);
 
     dd_bool         (*WriteFile)(const char* path, const char* source, size_t length);
+
+    /**
+     * Returns a pointer to the global WAD lump index.
+     */
+    void const*     (*LumpIndex)();
 }
 DENG_API_T(F);
 
@@ -78,6 +83,7 @@ DENG_API_T(F);
 #define M_ReadFile              _api_F.ReadFile
 #define M_ReadFileIntoString    _api_F.ReadFileIntoString
 #define M_WriteFile             _api_F.WriteFile
+#define F_LumpIndex             _api_F.LumpIndex
 #endif
 
 #ifdef __DOOMSDAY__

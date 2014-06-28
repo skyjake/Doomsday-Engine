@@ -1,6 +1,6 @@
 /** @file id1map.h  id Tech 1 map format reader/interpreter.
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,23 +20,32 @@
 #ifndef WADMAPCONVERTER_ID1MAP_H
 #define WADMAPCONVERTER_ID1MAP_H
 
-#include "id1map_util.h"
-#include "dd_types.h"
+#include "id1map_util.h"   // MapLumpType
+#include "dd_types.h"      // lumpnum_t
+#include <doomsday/filesys/file.h>
+#include <doomsday/filesys/lumpindex.h>
+#include <doomsday/uri.h>
+#include <de/libcore.h>
 #include <de/Error>
 #include <de/String>
 #include <de/StringPool>
 #include <QMap>
-#include <vector>
-#include <list>
 
-struct mline_t;
-struct mpolyobj_t;
-struct msector_t;
-struct mside_t;
-struct mthing_t;
-struct surfacetint_t;
+namespace wadimp {
+
+class MaterialDict;
+
+/// Material group identifiers.
+enum MaterialGroup {
+    PlaneMaterials,
+    WallMaterials
+};
+
+typedef de::StringPool::Id MaterialId;
 
 /**
+ * Map resource converter/interpreter for id Tech 1 map format(s).
+ *
  * @ingroup wadmapconverter
  */
 class Id1Map
@@ -56,49 +65,53 @@ public:
         MapFormatCount
     };
 
-    typedef std::vector<mline_t> Lines;
-    typedef std::vector<mside_t> Sides;
-    typedef std::vector<msector_t> Sectors;
-    typedef std::vector<mthing_t> Things;
-    typedef std::vector<surfacetint_t> SurfaceTints;
-    typedef std::list<mpolyobj_t> Polyobjs;
+    /**
+     * Heuristic based map data (format) recognizer.
+     *
+     * Unfortunately id Tech 1 maps cannot be easily recognized, due to their
+     * lack of identification signature, the mechanics of the WAD format lump
+     * index and the existence of several subformat variations. Therefore it is
+     * necessary to use heuristic analysis of the lump index and the lump data.
+     */
+    class Recognizer
+    {
+    public:
+        typedef QMap<MapLumpType, de::File1 *> Lumps;
 
-    /// Material group identifiers.
-    enum MaterialGroup {
-        PlaneMaterials,
-        WallMaterials
+    public:
+        /**
+         * Attempt to recognize an id Tech 1 format by traversing the WAD lump
+         * index, beginning at the @a lumpIndexOffset specified.
+         */
+        Recognizer(de::LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset);
+
+        de::String const &mapId() const;
+        Format mapFormat() const;
+
+        Lumps const &lumps() const;
+
+        /**
+         * Returns the lump index number of the last data lump inspected by the
+         * recognizer, making it possible to collate/locate all the map data sets
+         * using multiple recognizers.
+         */
+        lumpnum_t lastLump() const;
+
+    private:
+        DENG2_PRIVATE(d)
     };
-
-    typedef de::StringPool::Id MaterialId;
 
 public:
     /**
-     * Construct a new Id1Map of the specified @a format.
+     * Attempt to construct a new Id1Map from the @a recognized data specified.
      */
-    Id1Map(Format format);
-
-    /**
-     * Returns the unique format identifier for the map.
-     */
-    Format format() const;
-
-    /**
-     * Returns the textual name for the identified map format @a id.
-     */
-    static de::String const &formatName(Format id);
-
-    /**
-     * Attempt to load a new map data set from the identified @a lumps.
-     *
-     * @param lumps  Map of lumps for each data type to be processed.
-     */
-    void load(QMap<MapLumpType, lumpnum_t> const &lumps);
+    Id1Map(Recognizer const &recognized);
 
     /**
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the
      * public MapEdit API).
      */
-    void transfer(Uri const &uri);
+    void transfer(de::Uri const &uri);
 
     /**
      * Convert a textual material @a name to an internal material dictionary id.
@@ -108,10 +121,20 @@ public:
     /**
      * Convert a Doom64 style unique material @a number to an internal dictionary id.
      */
-    MaterialId toMaterialId(int number, MaterialGroup group);
+    MaterialId toMaterialId(de::dint number, MaterialGroup group);
+
+public:
+    /**
+     * Returns the textual name for the identified map format @a id.
+     */
+    static de::String const &formatName(Format id);
 
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef Id1Map::Recognizer Id1MapRecognizer;
+
+} // namespace wadimp
 
 #endif // WADMAPCONVERTER_ID1MAP_H

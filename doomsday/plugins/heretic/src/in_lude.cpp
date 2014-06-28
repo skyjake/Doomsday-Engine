@@ -645,7 +645,7 @@ void IN_DrawStatBack()
 
 void IN_DrawOldLevel()
 {
-    Uri *oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
+    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -653,7 +653,7 @@ void IN_DrawOldLevel()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(P_MapTitle(oldMapUri), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
@@ -661,9 +661,8 @@ void IN_DrawOldLevel()
 
     if(wbs->currentMap == 8)
     {
-        uint i;
         DGL_Color4f(1, 1, 1, 1);
-        for(i = 0; i < wbs->nextMap; ++i)
+        for(uint i = 0; i < wbs->nextMap; ++i)
         {
             GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
         }
@@ -675,9 +674,8 @@ void IN_DrawOldLevel()
     }
     else
     {
-        uint i;
         DGL_Color4f(1, 1, 1, 1);
-        for(i = 0; i < wbs->currentMap; ++i)
+        for(uint i = 0; i < wbs->currentMap; ++i)
         {
             GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
         }
@@ -694,14 +692,11 @@ void IN_DrawOldLevel()
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    Uri_Delete(oldMapUri);
 }
 
-void IN_DrawYAH(void)
+void IN_DrawYAH()
 {
-    Uri *nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-    uint i;
+    de::Uri nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
 
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
@@ -710,10 +705,10 @@ void IN_DrawYAH(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(P_MapTitle(nextMapUri), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&nextMapUri)), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
-    for(i = 0; i < wbs->nextMap; ++i)
+    for(uint i = 0; i < wbs->nextMap; ++i)
     {
         GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
     }
@@ -728,17 +723,15 @@ void IN_DrawYAH(void)
         // Draw the destination 'X'
         GL_DrawPatch(dpGoingThere, &YAHspot[wbs->episode][wbs->nextMap]);
     }
-
-    Uri_Delete(nextMapUri);
 }
 
-void IN_DrawSingleStats(void)
+void IN_DrawSingleStats()
 {
 #define TRACKING                (1)
 
     static int sounds;
 
-    Uri *oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
+    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
     char buf[20];
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -750,7 +743,7 @@ void IN_DrawSingleStats(void)
     FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(oldMapUri), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -758,8 +751,6 @@ void IN_DrawSingleStats(void)
     FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    Uri_Delete(oldMapUri); oldMapUri = 0;
 
     if(interTime < 30)
     {
@@ -856,7 +847,7 @@ void IN_DrawSingleStats(void)
     }
     else
     {
-        Uri *nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
+        de::Uri nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
 
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -866,26 +857,23 @@ void IN_DrawSingleStats(void)
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(P_MapTitle(nextMapUri), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&nextMapUri)), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
         skipIntermission = false;
-
-        Uri_Delete(nextMapUri);
     }
 
 #undef TRACKING
 }
 
-void IN_DrawCoopStats(void)
+void IN_DrawCoopStats()
 {
 #define TRACKING                    (1)
 
     static int sounds;
 
-    Uri *oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
-    int i, ypos;
+    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -896,7 +884,7 @@ void IN_DrawCoopStats(void)
     FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(oldMapUri), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -905,8 +893,8 @@ void IN_DrawCoopStats(void)
     FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);
 
-    ypos = 50;
-    for(i = 0; i < NUMTEAMS; ++i)
+    int ypos = 50;
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
         if(teamInfo[i].members)
         {
@@ -946,8 +934,6 @@ void IN_DrawCoopStats(void)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    Uri_Delete(oldMapUri);
 
 #undef TRACKING
 }

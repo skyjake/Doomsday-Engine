@@ -1,11 +1,10 @@
-/**
- * @file dehreader.h
- * DeHackEd patch parser. @ingroup dehreader
+/** @file dehreader.h  DeHackEd patch parser.
+ * @ingroup dehreader
  *
  * Parses DeHackEd patches and updates the engine's definition databases.
  *
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -50,6 +49,6 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DehReaderFlags)
  * @param patch  DeHackEd patch to parse.
  * @param flags  @ref DehReaderFlags
  */
-void readDehPatch(const de::Block& patch, DehReaderFlags flags = 0);
+void readDehPatch(de::Block const &patch, DehReaderFlags flags = 0);
 
 #endif // LIBDEHREAD_DEHREADER_H

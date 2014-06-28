@@ -1,34 +1,24 @@
-/**\file m_cheat.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file m_cheat.cpp  Doom64 cheat code sequences
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Cheats - Doom64 specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <string.h>
@@ -52,46 +42,29 @@
 
 #include "p_inventory.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct {
-    unsigned char*  sequence;
-    size_t          length, pos;
-    int             args[2];
-    int             currentArg;
+    unsigned char *sequence;
+    size_t length;
+    size_t pos;
+    int args[2];
+    int currentArg;
 } cheatseq_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+void Cht_LaserFunc(player_t *plr);
+void Cht_GodFunc(player_t *plr);
+void Cht_GiveWeaponsFunc(player_t *plr);
+void Cht_GiveAmmoFunc(player_t *plr);
+void Cht_GiveKeysFunc(player_t *plr);
+void Cht_NoClipFunc(player_t *plr);
+void Cht_GiveArmorFunc(player_t *plr);
+dd_bool Cht_PowerUpFunc(player_t *plr, cheatseq_t *cheat);
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void Cht_LaserFunc(player_t* p);
-void Cht_GodFunc(player_t* plr);
-void Cht_GiveWeaponsFunc(player_t* plr);
-void Cht_GiveAmmoFunc(player_t* plr);
-void Cht_GiveKeysFunc(player_t* plr);
-void Cht_NoClipFunc(player_t* plr);
-void Cht_GiveArmorFunc(player_t* plr);
-dd_bool Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-static dd_bool cheatsEnabled(void)
+static dd_bool cheatsEnabled()
 {
     return !IS_NETGAME;
 }
 
-void Cht_GodFunc(player_t* plr)
+void Cht_GodFunc(player_t *plr)
 {
     plr->cheats ^= CF_GODMODE;
     plr->update |= PSF_STATE;
@@ -107,55 +80,55 @@ void Cht_GodFunc(player_t* plr)
     P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
 }
 
-void Cht_SuicideFunc(player_t* plr)
+void Cht_SuicideFunc(player_t *plr)
 {
     P_DamageMobj(plr->plr->mo, NULL, NULL, 10000, false);
 }
 
-void Cht_GiveArmorFunc(player_t* plr)
+void Cht_GiveArmorFunc(player_t *plr)
 {
     plr->armorPoints = armorPoints[1];
     plr->armorType = armorClass[1];
     plr->update |= PSF_STATE | PSF_ARMOR_POINTS;
 }
 
-void Cht_GiveWeaponsFunc(player_t* plr)
+void Cht_GiveWeaponsFunc(player_t *plr)
 {
-    int i;
-
     plr->update |= PSF_OWNED_WEAPONS;
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
         plr->weapons[i].owned = true;
+    }
 }
 
-void Cht_GiveAmmoFunc(player_t* plr)
+void Cht_GiveAmmoFunc(player_t *plr)
 {
-    int i;
-
     plr->update |= PSF_AMMO;
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
         plr->ammo[i].owned = plr->ammo[i].max;
+    }
 }
 
-void Cht_GiveKeysFunc(player_t* plr)
+void Cht_GiveKeysFunc(player_t *plr)
 {
-    int i;
-
     plr->update |= PSF_KEYS;
-    for(i = 0; i < NUM_KEY_TYPES; ++i)
+    for(int i = 0; i < NUM_KEY_TYPES; ++i)
+    {
         plr->keys[i] = true;
+    }
 }
 
-void Cht_NoClipFunc(player_t* plr)
+void Cht_NoClipFunc(player_t *plr)
 {
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
     P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
 }
 
-dd_bool Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
+dd_bool Cht_PowerUpFunc(player_t *plr, cheatseq_t *cheat)
 {
-    static const char args[] = { 'v', 's', 'i', 'r', 'a', 'l' };
+    static char const args[] = { 'v', 's', 'i', 'r', 'a', 'l' };
     size_t i, numArgs = sizeof(args) / sizeof(args[0]);
 
     for(i = 0; i < numArgs; ++i)
@@ -183,30 +156,26 @@ dd_bool Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
 
 void printDebugInfo(player_t *plr)
 {
-    char textBuffer[256];
-    Sector *sector;
-    mobj_t *plrMo;
-    Uri *matUri;
-
-    DENG_ASSERT(plr != 0);
+    DENG2_ASSERT(plr != 0);
 
     if(G_GameState() != GS_MAP)
         return;
 
-    plrMo = plr->plr->mo;
+    mobj_t *plrMo = plr->plr->mo;
     if(!plrMo) return;
 
+    char textBuffer[256];
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        Str_Text(Uri_ToString(gameMapUri)),
+                        gameMapUri.asText().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 
     // Also print some information to the console.
     App_Log(DE2_MAP_NOTE, "%s", textBuffer);
 
-    sector = Mobj_Sector(plrMo);
+    Sector *sector = Mobj_Sector(plrMo);
 
-    matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
+    Uri *matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
     App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s",
                          P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(Uri_ToString(matUri)));
     Uri_Delete(matUri);
@@ -225,7 +194,7 @@ void printDebugInfo(player_t *plr)
  * Each time the plr enters the code, plr gains a powerup.
  * When entered again, plr recieves next powerup.
  */
-void Cht_LaserFunc(player_t* p)
+void Cht_LaserFunc(player_t *p)
 {
     if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
     {
@@ -253,7 +222,7 @@ D_CMD(CheatGod)
         }
         else
         {
-            player_t* plr = &players[CONSOLEPLAYER];
+            player_t *plr = &players[CONSOLEPLAYER];
 
             if(IS_NETGAME && !netSvAllowCheats)
                 return false;
@@ -263,10 +232,13 @@ D_CMD(CheatGod)
                 int i = atoi(argv[1]);
                 if(i < 0 || i >= MAXPLAYERS)
                     return false;
+
                 plr = &players[i];
             }
             else
+            {
                 plr = &players[CONSOLEPLAYER];
+            }
 
             if(!plr->plr->inGame)
                 return false;
@@ -287,7 +259,7 @@ D_CMD(CheatNoClip)
         }
         else
         {
-            player_t* plr = &players[CONSOLEPLAYER];
+            player_t *plr = &players[CONSOLEPLAYER];
 
             if(IS_NETGAME && !netSvAllowCheats)
                 return false;
@@ -297,10 +269,13 @@ D_CMD(CheatNoClip)
                 int i = atoi(argv[1]);
                 if(i < 0 || i >= MAXPLAYERS)
                     return false;
+
                 plr = &players[i];
             }
             else
+            {
                 plr = &players[CONSOLEPLAYER];
+            }
 
             if(!plr->plr->inGame)
                 return false;
@@ -311,14 +286,18 @@ D_CMD(CheatNoClip)
     return true;
 }
 
-static int suicideResponse(msgresponse_t response, int userValue, void* userPointer)
+static int suicideResponse(msgresponse_t response, int /*userValue*/, void *userPointer)
 {
     if(response == MSG_YES)
     {
         if(IS_NETGAME && IS_CLIENT)
+        {
             NetCl_CheatRequest("suicide");
+        }
         else
+        {
             Cht_SuicideFunc(&players[CONSOLEPLAYER]);
+        }
     }
     return true;
 }
@@ -327,7 +306,7 @@ D_CMD(CheatSuicide)
 {
     if(G_GameState() == GS_MAP)
     {
-        player_t* plr;
+        player_t *plr;
 
         if(IS_NETGAME && !netSvAllowCheats)
             return false;
@@ -337,10 +316,13 @@ D_CMD(CheatSuicide)
             int i = atoi(argv[1]);
             if(i < 0 || i >= MAXPLAYERS)
                 return false;
+
             plr = &players[i];
         }
         else
+        {
             plr = &players[CONSOLEPLAYER];
+        }
 
         if(!plr->plr->inGame)
             return false;
@@ -367,23 +349,25 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
-    int option, i;
-
     if(!cheatsEnabled())
         return false;
 
-    option = atoi(argv[1]);
+    int option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_SetAutomapCheatLevel(i, 0);
         ST_RevealAutomap(i, false);
         if(option == 1)
+        {
             ST_RevealAutomap(i, true);
+        }
         else if(option != 0)
+        {
             ST_SetAutomapCheatLevel(i, option -1);
+        }
     }
 
     return true;
@@ -391,17 +375,12 @@ D_CMD(CheatReveal)
 
 D_CMD(CheatGive)
 {
-    char buf[100];
-    int player = CONSOLEPLAYER;
-    player_t* plr;
-    size_t i, stuffLen;
-
     if(IS_CLIENT)
     {
         if(argc != 2)
             return false;
 
-        sprintf(buf, "give %s", argv[1]);
+        char buf[100]; sprintf(buf, "give %s", argv[1]);
         NetCl_CheatRequest(buf);
         return true;
     }
@@ -432,6 +411,7 @@ D_CMD(CheatGive)
         return true;
     }
 
+    int player = CONSOLEPLAYER;
     if(argc == 3)
     {
         player = atoi(argv[2]);
@@ -447,22 +427,21 @@ D_CMD(CheatGive)
 
     if(!players[player].plr->inGame)
         return true; // Can't give to a plr who's not playing
-    plr = &players[player];
+    player_t *plr = &players[player];
 
-    strcpy(buf, argv[1]); // Stuff is the 2nd arg.
+    char buf[100]; strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
-    stuffLen = strlen(buf);
-    for(i = 0; buf[i]; ++i)
+    size_t const stuffLen = strlen(buf);
+    for(size_t i = 0; buf[i]; ++i)
     {
         switch(buf[i])
         {
         case 'a':
             if(i < stuffLen)
             {
-                char* end;
-                long idx;
+                char *end;
                 errno = 0;
-                idx = strtol(&buf[i+1], &end, 0);
+                long idx = strtol(&buf[i+1], &end, 0);
                 if(end != &buf[i+1] && errno != ERANGE)
                 {
                     i += end - &buf[i+1];
@@ -488,20 +467,20 @@ D_CMD(CheatGive)
             cheatseq_t cheat;
             cheat.args[0] = PT_STRENGTH;
             Cht_PowerUpFunc(plr, &cheat);
-            break;
-        }
+            break; }
+
         case 'f': {
             cheatseq_t cheat;
             cheat.args[0] = PT_FLIGHT;
             Cht_PowerUpFunc(plr, &cheat);
-            break;
-        }
+            break; }
+
         case 'g': {
             cheatseq_t cheat;
             cheat.args[0] = PT_INFRARED;
             Cht_PowerUpFunc(plr, &cheat);
-            break;
-        }
+            break; }
+
         case 'h':
             P_GiveBody(plr, healthLimit);
             break;
@@ -510,15 +489,14 @@ D_CMD(CheatGive)
             cheatseq_t cheat;
             cheat.args[0] = PT_INVULNERABILITY;
             Cht_PowerUpFunc(plr, &cheat);
-            break;
-        }
+            break; }
+
         case 'k':
             if(i < stuffLen)
             {
-                char* end;
-                long idx;
+                char *end;
                 errno = 0;
-                idx = strtol(&buf[i+1], &end, 0);
+                long idx = strtol(&buf[i+1], &end, 0);
                 if(end != &buf[i+1] && errno != ERANGE)
                 {
                     i += end - &buf[i+1];
@@ -544,8 +522,8 @@ D_CMD(CheatGive)
             cheatseq_t cheat;
             cheat.args[0] = PT_ALLMAP;
             Cht_PowerUpFunc(plr, &cheat);
-            break;
-        }
+            break; }
+
         case 'p':
             P_GiveBackpack(plr);
             break;
@@ -558,21 +536,20 @@ D_CMD(CheatGive)
             cheatseq_t cheat;
             cheat.args[0] = PT_IRONFEET;
             Cht_PowerUpFunc(plr, &cheat);
-            break;
-        }
+            break; }
+
         case 'v': {
             cheatseq_t cheat;
             cheat.args[0] = PT_INVISIBILITY;
             Cht_PowerUpFunc(plr, &cheat);
-            break;
-        }
+            break; }
+
         case 'w':
             if(i < stuffLen)
             {
-                char* end;
-                long idx;
+                char *end;
                 errno = 0;
-                idx = strtol(&buf[i+1], &end, 0);
+                long idx = strtol(&buf[i+1], &end, 0);
                 if(end != &buf[i+1] && errno != ERANGE)
                 {
                     i += end - &buf[i+1];
@@ -584,7 +561,7 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific weapon.
-                    P_GiveWeapon(plr, idx, false);
+                    P_GiveWeapon(plr, weapontype_t(idx), false);
                     break;
                 }
             }

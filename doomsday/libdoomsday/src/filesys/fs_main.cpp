@@ -1272,3 +1272,8 @@ void F_Shutdown()
     if(!fileSystem) return;
     delete fileSystem; fileSystem = 0;
 }
+
+void const *F_LumpIndex()
+{
+    return &App_FileSystem().nameIndex();
+}

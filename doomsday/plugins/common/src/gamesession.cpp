@@ -127,7 +127,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         meta.set("gameIdentityKey", Session::gameId());
         meta.set("userDescription", "(Unsaved)");
-        meta.set("mapUri",          Str_Text(Uri_Compose(::gameMapUri)));
+        meta.set("mapUri",          ::gameMapUri.compose());
         meta.set("mapTime",         ::mapTime);
 
         meta.add("gameRules",       self.rules().toRecord()); // Takes ownership.
@@ -186,7 +186,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State")
+        mapsFolder.replaceFile(gameMapUri.compose() + "State")
                 << serializeCurrentMapState();
 
         saved->flush(); // No need to populate; FS2 Files already in sync with source data.
@@ -457,9 +457,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         inProgress = true;
 
-        Uri *mapUri = Uri_NewWithPath2(metadata.gets("mapUri").toUtf8().constData(), RC_NULL);
-        setMap(*mapUri);
-        Uri_Delete(mapUri); mapUri = 0;
+        setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
         //::gameMapEntrance = mapEntrance; // not saved??
 
         reloadMap();
@@ -467,26 +465,24 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         ::mapTime = metadata.geti("mapTime");
 #endif
 
-        String mapUriStr = Str_Text(Uri_Resolved(::gameMapUri));
+        String mapUriStr = ::gameMapUri.resolved();
         makeMapStateReader(saved, mapUriStr)->read(mapUriStr);
     }
 
-    void setMap(Uri const &mapUri)
+    void setMap(de::Uri const &mapUri)
     {
         DENG2_ASSERT(inProgress);
 
-        Uri_Copy(::gameMapUri, &mapUri);
-        ::gameEpisode     = G_EpisodeNumberFor(::gameMapUri);
-        ::gameMap         = G_MapNumberFor(::gameMapUri);
+        ::gameMapUri  = mapUri;
+        ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
+        ::gameMap     = G_MapNumberFor(::gameMapUri);
 
         // Ensure that the episode and map numbers are good.
         if(!G_ValidateMap(&::gameEpisode, &::gameMap))
         {
-            Uri *validMapUri = G_ComposeMapUri(::gameEpisode, ::gameMap);
-            Uri_Copy(::gameMapUri, validMapUri);
+            ::gameMapUri  = G_ComposeMapUri(::gameEpisode, ::gameMap);
             ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
             ::gameMap     = G_MapNumberFor(::gameMapUri);
-            Uri_Delete(validMapUri);
         }
 
         // Update game status cvars:
@@ -520,7 +516,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         {
             briefDisabled = true;
         }
-        char const *briefing = G_InFineBriefing(gameMapUri);
+        char const *briefing = G_InFineBriefing(&gameMapUri);
 
         // Restart the map music?
         if(!briefing)
@@ -542,11 +538,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             //S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
 
-            S_MapMusic(gameMapUri);
+            S_MapMusic(&gameMapUri);
             S_PauseMusic(true);
         }
 
-        P_SetupMap(gameMapUri);
+        P_SetupMap(reinterpret_cast<uri_s *>(&gameMapUri));
 
         if(revisit)
         {
@@ -556,7 +552,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 #endif
 
             SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
-            String const mapUriStr = Str_Text(Uri_Compose(gameMapUri));
+            String const mapUriStr = gameMapUri.compose();
             makeMapStateReader(saved, mapUriStr)->read(mapUriStr);
         }
 
@@ -845,7 +841,7 @@ void GameSession::endAndBeginTitle()
     throw Error("GameSession::endAndBeginTitle", "An InFine 'title' script must be defined");
 }
 
-void GameSession::begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &newRules)
+void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset const &newRules)
 {
     if(hasBegun())
     {
@@ -929,7 +925,7 @@ void GameSession::reloadMap()
         // Restart the session entirely.
         briefDisabled = true; // We won't brief again.
         end();
-        begin(*::gameMapUri, ::gameMapEntrance, d->rules);
+        begin(::gameMapUri, ::gameMapEntrance, d->rules);
     }
 }
 
@@ -946,7 +942,7 @@ void GameSession::leaveMap()
 
     // Ensure that the episode and map indices are good.
     G_ValidateMap(&gameEpisode, &nextMap);
-    Uri const *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    de::Uri const nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process
@@ -971,7 +967,7 @@ void GameSession::leaveMap()
 
         // Are we entering a new hub?
 #if __JHEXEN__
-        if(P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub)
+        if(P_MapInfo(0/*current map*/)->hub != P_MapInfo(&nextMapUri)->hub)
 #endif
         {
             // Clear all saved map states in the old hub.
@@ -984,7 +980,7 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         else
         {
-            File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
+            File &outFile = mapsFolder.replaceFile(gameMapUri.compose() + "State");
             outFile << serializeCurrentMapState(true /*exclude players*/);
             // We'll flush whole package soon.
         }
@@ -1016,13 +1012,11 @@ void GameSession::leaveMap()
 #endif
 
     // Change the current map.
-    d->setMap(*nextMapUri);
+    d->setMap(nextMapUri);
     ::gameMapEntrance = ::nextMapEntrance;
 
-    Uri_Delete(const_cast<Uri *>(nextMapUri)); nextMapUri = 0;
-
     // Are we revisiting a previous map?
-    bool const revisit = saved && saved->hasState(String("maps") / Str_Text(Uri_Compose(gameMapUri)));
+    bool const revisit = saved && saved->hasState(String("maps") / gameMapUri.compose());
 
     d->reloadMap(revisit);
 
@@ -1047,7 +1041,7 @@ void GameSession::leaveMap()
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    Game_ACScriptInterpreter_RunDeferredTasks(gameMapUri);
+    Game_ACScriptInterpreter().runDeferredTasks(gameMapUri);
 #endif
 
     if(saved)
@@ -1070,7 +1064,7 @@ void GameSession::leaveMap()
         Folder &mapsFolder = saved->locate<Folder>("maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        File &outFile = mapsFolder.replaceFile(String(Str_Text(Uri_Compose(gameMapUri))) + "State");
+        File &outFile = mapsFolder.replaceFile(gameMapUri.compose() + "State");
         outFile << serializeCurrentMapState();
 
         // Write all changes to the package.

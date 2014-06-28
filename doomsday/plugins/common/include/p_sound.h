@@ -25,15 +25,16 @@
 #define LIBCOMMON_PLAY_SOUND_H
 
 #include "doomsday.h"
-
 #ifdef __cplusplus
-extern "C" {
-#endif
+#include <doomsday/uri.h>
 
 /**
  * Start the song for the specified map.
  */
-void S_MapMusic(Uri const *mapUri);
+void S_MapMusic(de::Uri const *mapUri);
+
+extern "C" {
+#endif
 
 /**
  * Doom-like sector sounds: when a new sound starts, stop any existing sounds from

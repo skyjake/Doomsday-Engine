@@ -72,7 +72,7 @@ void MapInfoParser(Str const *path)
         defMapInfo.sky2ScrollDelta = 0;
         defMapInfo.doubleSky       = false;
         defMapInfo.lightning       = false;
-        defMapInfo.fadeTable       = W_GetLumpNumForName("COLORMAP");
+        defMapInfo.fadeTable       = CentralLumpIndex().findLast("COLORMAP.lmp");
         strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
         strcpy(defMapInfo.songLump, "DEFSONG"); // Unknown.
 
@@ -119,15 +119,15 @@ void MapInfoParser(Str const *path)
                               lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                 }
 
-                Uri *mapUri = G_ComposeMapUri(0, tmap - 1);
-                mapinfo_t *info = P_MapInfo(mapUri);
+                de::Uri mapUri = G_ComposeMapUri(0, tmap - 1);
+                mapinfo_t *info = P_MapInfo(&mapUri);
                 if(!info)
                 {
                     // A new map info.
-                    info = &mapInfos[Str_Text(Uri_Compose(mapUri))];
+                    info = &mapInfos[mapUri.compose().toUtf8().constData()];
 
                     // Initialize with the default values.
-                    memcpy(info, &defMapInfo, sizeof(*info));
+                    std::memcpy(info, &defMapInfo, sizeof(*info));
 
                     // Assign a logical map index.
                     info->map = tmap - 1;
@@ -135,7 +135,6 @@ void MapInfoParser(Str const *path)
                     // The warp translation defaults to the logical map index.
                     info->warpTrans = tmap - 1;
                 }
-                Uri_Delete(mapUri);
 
                 // Map title must follow the number.
                 strcpy(info->title, Str_Text(lexer.readString()));
@@ -175,7 +174,7 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "fadetable"))
                     {
-                        info->fadeTable = W_GetLumpNumForName(Str_Text(lexer.readString()));
+                        info->fadeTable = CentralLumpIndex().findLast(de::String(Str_Text(lexer.readString())) + ".lmp");
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
@@ -243,13 +242,11 @@ void MapInfoParser(Str const *path)
 #endif
 }
 
-mapinfo_t *P_MapInfo(Uri const *mapUri)
+mapinfo_t *P_MapInfo(de::Uri const *mapUri)
 {
-    if(!mapUri) mapUri = gameMapUri;
+    if(!mapUri) mapUri = &gameMapUri;
 
-    AutoStr *mapUriStr = Uri_Compose(mapUri);
-    std::string mapPath(Str_Text(mapUriStr));
-    MapInfos::iterator found = mapInfos.find(mapPath);
+    MapInfos::iterator found = mapInfos.find(mapUri->compose().toStdString());
     if(found != mapInfos.end())
     {
         return &found->second;

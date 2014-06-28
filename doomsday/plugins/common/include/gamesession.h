@@ -22,6 +22,7 @@
 
 #include <de/game/Session>
 #include <de/String>
+#include <doomsday/uri.h>
 #include "doomsday.h"
 #include "gamerules.h"
 
@@ -102,7 +103,7 @@ public:
      *
      * @throws InProgressError if the session has already begun.
      */
-    void begin(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
+    void begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
 
     /**
      * Reload the @em current map, automatically loading any saved progress from the backing

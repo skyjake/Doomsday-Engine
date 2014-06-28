@@ -26,6 +26,7 @@
 #include <cstring>
 
 #include <de/memoryzone.h>
+#include <doomsday/filesys/fs_main.h>
 
 #include "de_base.h"
 #include "de_play.h"
@@ -1453,7 +1454,7 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
+    lumpnum_t lumpNum = App_FileSystem().nameIndex().findLast(uri.path().toString() + ".lmp");
     return (lumpNum >= 0);
 }
 
@@ -1461,17 +1462,17 @@ DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
-    return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
+    lumpnum_t lumpNum = App_FileSystem().nameIndex().findLast(uri.path().toString() + ".lmp");
+    return (lumpNum >= 0 && App_FileSystem().lump(lumpNum).hasCustom());
 }
 
 #undef P_MapSourceFile
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
+    lumpnum_t lumpNum = App_FileSystem().nameIndex().findLast(uri.path().toString() + ".lmp");
     if(lumpNum < 0) return AutoStr_NewStd();
-    return W_LumpSourceFile(lumpNum);
+    return AutoStr_FromTextStd(App_FileSystem().lump(lumpNum).container().composePath().toUtf8().constData());
 }
 
 #undef P_MapChange

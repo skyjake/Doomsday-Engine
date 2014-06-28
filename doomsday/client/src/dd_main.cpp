@@ -1073,7 +1073,7 @@ static void initPathLumpMappings()
     // Add the contents of all DD_DIREC lumps.
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     LumpIndex::FoundIndices foundDirecs;
-    lumpIndex.findAll("DD_DIREC", foundDirecs);
+    lumpIndex.findAll("DD_DIREC.lmp", foundDirecs);
     DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
         File1 &lump          = lumpIndex[*i];
@@ -2473,9 +2473,6 @@ int DD_GetInteger(int ddvalue)
         return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
 #endif
 
-    case DD_NUMLUMPS:
-        return App_FileSystem().lumpCount();
-
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
@@ -2593,11 +2590,6 @@ void *DD_GetVariable(int ddvalue)
         static timespan_t fracTic;
         fracTic = gameTime * TICSPERSEC;
         return &fracTic; }
-
-    case DD_NUMLUMPS: {
-        static int count;
-        count = App_FileSystem().lumpCount();
-        return &count; }
 
     default: break;
     }

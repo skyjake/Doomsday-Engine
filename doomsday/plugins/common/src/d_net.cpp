@@ -125,16 +125,14 @@ int D_NetServerStarted(int before)
     uint netMap = cfg.netMap;
 #endif
 
-    Uri *netMapUri = G_ComposeMapUri(netEpisode, netMap);
+    de::Uri netMapUri = G_ComposeMapUri(netEpisode, netMap);
 
     GameRuleset netRules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
     netRules.skill = skillmode_t(cfg.netSkill);
 
     COMMON_GAMESESSION->end();
-    COMMON_GAMESESSION->begin(*netMapUri, 0/*default*/, netRules);
+    COMMON_GAMESESSION->begin(netMapUri, 0/*default*/, netRules);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
-
-    Uri_Delete(netMapUri);
 
     return true;
 }

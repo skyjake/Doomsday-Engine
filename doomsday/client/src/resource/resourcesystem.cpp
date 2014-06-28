@@ -3104,7 +3104,7 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
     LOG_AS("ResourceSystem::newFontFromDef");
 
     if(!def.uri) return 0;
-    de::Uri const &uri = *reinterpret_cast<de::Uri *>(def.uri);
+    de::Uri const &uri = *def.uri;
 
     try
     {

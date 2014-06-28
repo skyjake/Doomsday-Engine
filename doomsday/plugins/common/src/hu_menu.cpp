@@ -6447,13 +6447,11 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     newRules.skill = mnSkillmode;
 
 #if __JHEXEN__
-    Uri *newMapUri = G_ComposeMapUri(mnEpisode, P_TranslateMap(0));
+    de::Uri newMapUri = G_ComposeMapUri(mnEpisode, P_TranslateMap(0));
 #else
-    Uri *newMapUri = G_ComposeMapUri(mnEpisode, 0);
+    de::Uri newMapUri = G_ComposeMapUri(mnEpisode, 0);
 #endif
-
-    G_SetGameActionNewSession(*newMapUri, 0/*default*/, newRules);
-    Uri_Delete(newMapUri);
+    G_SetGameActionNewSession(newMapUri, 0/*default*/, newRules);
 }
 
 int Hu_MenuActionInitNewGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)

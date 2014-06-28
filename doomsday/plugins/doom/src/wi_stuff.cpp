@@ -1,26 +1,22 @@
-/**\file wi_stuff.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file wi_stuff.cpp  DOOM specific intermission screens.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <assert.h>
@@ -29,6 +25,7 @@
 #include <string.h>
 
 #include "jdoom.h"
+#include "wi_stuff.h"
 
 #include "hu_stuff.h"
 #include "d_net.h"
@@ -38,114 +35,107 @@
 #define MAX_ANIM_FRAMES         (3)
 #define NUMMAPS                 (9)
 
-typedef struct wianim_s {
-    /// If not @c 0= the logical map-number+1 for which this animation should only be displayed.
-    int mapNum;
-
-    /// Number of tics each frame of the animation lasts for.
-    int tics;
-
-    /// Location origin of the animation on the map.
-    Point2Raw origin;
-
-    /// Number of used frames in the animation.
-    int numFrames;
+struct wianimdef_t
+{
+    int mapNum;        ///< If not @c 0= the logical map-number+1 for which this animation should only be displayed.
+    int tics;          ///< Number of tics each frame of the animation lasts for.
+    Point2Raw origin;  ///< Location origin of the animation on the map.
+    int numFrames;     ///< Number of used frames in the animation.
 
     /// Names of the patches for each frame of the animation.
     char *patchNames[MAX_ANIM_FRAMES];
 
     /// State at which this animation begins/becomes visible.
     interludestate_t beginState;
-} wianimdef_t;
+};
 
-typedef struct wianimstate_s {
-    /// Next tic on which to progress the animation.
-    int nextTic;
-
-    /// Current frame number (index to patches); otherwise @c -1 (not yet begun).
-    int frame;
+struct wianimstate_t
+{
+    int nextTic;  ///< Next tic on which to progress the animation.
+    int frame;    ///< Current frame number (index to patches); otherwise @c -1 (not yet begun).
 
     /// Graphics for each frame of the animation.
     patchid_t patches[MAX_ANIM_FRAMES];
-} wianimstate_t;
+};
 
-typedef struct teaminfo_s {
-    int playerCount; /// @c 0= team not present.
+struct teaminfo_t
+{
+    int playerCount;      ///< @c 0= team not present.
     int frags[NUMTEAMS];
-    int totalFrags; /// Kills minus suicides.
+    int totalFrags;       ///< Kills minus suicides.
     int items;
     int kills;
     int secret;
-} teaminfo_t;
+};
 
-static Point2Raw locations[][NUMMAPS] = {
-    { // Episode 0
-     { 185, 164 },
-     { 148, 143 },
-     {  69, 122 },
-     { 209, 102 },
-     { 116,  89 },
-     { 166,  55 },
-     {  71,  56 },
-     { 135,  29 },
-     {  71,  24 }
+static Point2Raw const locations[][NUMMAPS] = {
+    {   // Episode 0
+        Point2Raw( 185, 164 ),
+        Point2Raw( 148, 143 ),
+        Point2Raw(  69, 122 ),
+        Point2Raw( 209, 102 ),
+        Point2Raw( 116,  89 ),
+        Point2Raw( 166,  55 ),
+        Point2Raw(  71,  56 ),
+        Point2Raw( 135,  29 ),
+        Point2Raw(  71,  24 )
     },
-    { // Episode 1
-     { 254,  25 },
-     {  97,  50 },
-     { 188,  64 },
-     { 128,  78 },
-     { 214,  92 },
-     { 133, 130 },
-     { 208, 136 },
-     { 148, 140 },
-     { 235, 158 }
+    {   // Episode 1
+        Point2Raw( 254,  25 ),
+        Point2Raw(  97,  50 ),
+        Point2Raw( 188,  64 ),
+        Point2Raw( 128,  78 ),
+        Point2Raw( 214,  92 ),
+        Point2Raw( 133, 130 ),
+        Point2Raw( 208, 136 ),
+        Point2Raw( 148, 140 ),
+        Point2Raw( 235, 158 )
     },
-    { // Episode 2
-     { 156, 168 },
-     {  48, 154 },
-     { 174,  95 },
-     { 265,  75 },
-     { 130,  48 },
-     { 279,  23 },
-     { 198,  48 },
-     { 140,  25 },
-     { 281, 136 }
+    {   // Episode 2
+        Point2Raw( 156, 168 ),
+        Point2Raw(  48, 154 ),
+        Point2Raw( 174,  95 ),
+        Point2Raw( 265,  75 ),
+        Point2Raw( 130,  48 ),
+        Point2Raw( 279,  23 ),
+        Point2Raw( 198,  48 ),
+        Point2Raw( 140,  25 ),
+        Point2Raw( 281, 136 )
     }
 };
 
-static wianimdef_t episode0AnimDefs[] = {
-    { 0, 11, { 224, 104 }, 3, { "wia00000", "wia00001", "wia00002" } },
-    { 0, 11, { 184, 160 }, 3, { "wia00100", "wia00101", "wia00102" } },
-    { 0, 11, { 112, 136 }, 3, { "wia00200", "wia00201", "wia00202" } },
-    { 0, 11, {  72, 112 }, 3, { "wia00300", "wia00301", "wia00302" } },
-    { 0, 11, {  88,  96 }, 3, { "wia00400", "wia00401", "wia00402" } },
-    { 0, 11, {  64,  48 }, 3, { "wia00500", "wia00501", "wia00502" } },
-    { 0, 11, { 192,  40 }, 3, { "wia00600", "wia00601", "wia00602" } },
-    { 0, 11, { 136,  16 }, 3, { "wia00700", "wia00701", "wia00702" } },
-    { 0, 11, {  80,  16 }, 3, { "wia00800", "wia00801", "wia00802" } },
-    { 0, 11, {  64,  24 }, 3, { "wia00900", "wia00901", "wia00902" } }
+static wianimdef_t const episode0AnimDefs[] = {
+    { 0, 11, Point2Raw( 224, 104 ), 3, { "wia00000", "wia00001", "wia00002" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 184, 160 ), 3, { "wia00100", "wia00101", "wia00102" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 112, 136 ), 3, { "wia00200", "wia00201", "wia00202" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  72, 112 ), 3, { "wia00300", "wia00301", "wia00302" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  88,  96 ), 3, { "wia00400", "wia00401", "wia00402" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  64,  48 ), 3, { "wia00500", "wia00501", "wia00502" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 192,  40 ), 3, { "wia00600", "wia00601", "wia00602" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 136,  16 ), 3, { "wia00700", "wia00701", "wia00702" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  80,  16 ), 3, { "wia00800", "wia00801", "wia00802" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  64,  24 ), 3, { "wia00900", "wia00901", "wia00902" }, ILS_SHOW_STATS }
 };
 
-static wianimdef_t episode1AnimDefs[] = {
-    { 1,  0, { 128, 136 }, 1, { "wia10000" } },
-    { 2,  0, { 128, 136 }, 1, { "wia10100" } },
-    { 3,  0, { 128, 136 }, 1, { "wia10200" } },
-    { 4,  0, { 128, 136 }, 1, { "wia10300" } },
-    { 5,  0, { 128, 136 }, 1, { "wia10400" } },
-    { 6,  0, { 128, 136 }, 1, { "wia10500" } },
-    { 7,  0, { 128, 136 }, 1, { "wia10600" } },
-    { 8, 11, { 192, 144 }, 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
-    { 8,  0, { 128, 136 }, 1, { "wia10400" } }
+static wianimdef_t const episode1AnimDefs[] = {
+    { 1,  0, Point2Raw( 128, 136 ), 1, { "wia10000" }, ILS_SHOW_STATS },
+    { 2,  0, Point2Raw( 128, 136 ), 1, { "wia10100" }, ILS_SHOW_STATS },
+    { 3,  0, Point2Raw( 128, 136 ), 1, { "wia10200" }, ILS_SHOW_STATS },
+    { 4,  0, Point2Raw( 128, 136 ), 1, { "wia10300" }, ILS_SHOW_STATS },
+    { 5,  0, Point2Raw( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS },
+    { 6,  0, Point2Raw( 128, 136 ), 1, { "wia10500" }, ILS_SHOW_STATS },
+    { 7,  0, Point2Raw( 128, 136 ), 1, { "wia10600" }, ILS_SHOW_STATS },
+    { 8, 11, Point2Raw( 192, 144 ), 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
+    { 8,  0, Point2Raw( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS }
 };
 
-static wianimdef_t episode2AnimDefs[] = {
-    { 0, 11, { 104, 168 }, 3, { "wia20000", "wia20001", "wia20002" } },
-    { 0, 11, {  40, 136 }, 3, { "wia20100", "wia20101", "wia20102" } },
-    { 0, 11, { 160,  96 }, 3, { "wia20200", "wia20201", "wia20202" } },
-    { 0, 11, { 104,  80 }, 3, { "wia20300", "wia20301", "wia20302" } },
-    { 0, 11, { 120,  32 }, 3, { "wia20400", "wia20401", "wia20402" } },
-    { 0,  8, {  40,   0 }, 3, { "wia20500", "wia20501", "wia20502" } }
+static wianimdef_t const episode2AnimDefs[] = {
+    { 0, 11, Point2Raw( 104, 168 ), 3, { "wia20000", "wia20001", "wia20002" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw(  40, 136 ), 3, { "wia20100", "wia20101", "wia20102" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 160,  96 ), 3, { "wia20200", "wia20201", "wia20202" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 104,  80 ), 3, { "wia20300", "wia20301", "wia20302" }, ILS_SHOW_STATS },
+    { 0, 11, Point2Raw( 120,  32 ), 3, { "wia20400", "wia20401", "wia20402" }, ILS_SHOW_STATS },
+    { 0,  8, Point2Raw(  40,   0 ), 3, { "wia20500", "wia20501", "wia20502" }, ILS_SHOW_STATS }
 };
 
 static int animCounts[] = {
@@ -154,20 +144,20 @@ static int animCounts[] = {
     sizeof(episode2AnimDefs) / sizeof(wianimdef_t)
 };
 
-static wianimdef_t* animDefs[] = {
+static wianimdef_t const *animDefs[] = {
     episode0AnimDefs,
     episode1AnimDefs,
     episode2AnimDefs
 };
 
-static wianimstate_t* animStates = NULL;
+static wianimstate_t *animStates;
 
 static teaminfo_t teamInfo[NUMTEAMS];
 
 // Used to accelerate or skip a stage.
 static dd_bool advanceState;
 
-static dd_bool drawYouAreHere = false;
+static dd_bool drawYouAreHere;
 
 static int spState, dmState, ngState;
 
@@ -193,8 +183,8 @@ static int cntPar;
 static int cntPause;
 
 // Passed into intermission.
-static wbstartstruct_t* wbs;
-static wbplayerstruct_t* inPlayerInfo;
+static wbstartstruct_t *wbs;
+static wbplayerstruct_t *inPlayerInfo;
 
 static patchid_t pBackground;
 static patchid_t pYouAreHereRight;
@@ -218,22 +208,26 @@ static patchid_t pFaceDead;
 static patchid_t pTeamBackgrounds[NUMTEAMS];
 static patchid_t pTeamIcons[NUMTEAMS];
 
-void WI_Register(void)
+/// @todo Revise API to select a replacement mode according to the usage context
+/// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
+static inline char const *patchReplacementText(patchid_t patchId, char const *text = 0)
 {
-    cvartemplate_t cvars[] = {
-        { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
-        { "inlude-patch-replacement", 0, CVT_INT, &cfg.inludePatchReplaceMode, PRM_FIRST, PRM_LAST },
-        { NULL }
-    };
-    Con_AddVariableList(cvars);
+    return Hu_ChoosePatchReplacement2(patchreplacemode_t(cfg.inludePatchReplaceMode),
+                                      patchId, text);
 }
 
-void IN_SkipToNext(void)
+void WI_Register()
+{
+    C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, PRM_FIRST, PRM_LAST);
+}
+
+void IN_SkipToNext()
 {
     advanceState = true;
 }
 
-static void drawBackground(void)
+static void drawBackground()
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -256,7 +250,7 @@ static void drawBackground(void)
             if(state->frame < 0) continue;
 
             patchId = state->patches[state->frame];
-            WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId), &def->origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch3(patchId, patchReplacementText(patchId), &def->origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
     }
     DGL_Disable(DGL_TEXTURE_2D);
@@ -286,28 +280,19 @@ static void drawFinishedTitle(void)
 
     // Draw <MapName>
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapTitle), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw "Finished!"
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-    WI_DrawPatchXY3(pFinished, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFinished), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pFinished, patchReplacementText(pFinished), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawEnteringTitle(void)
+static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
-    int x = SCREENWIDTH/2, y = WI_TITLEY;
-    char* mapName = NULL;
-    uint mapNum;
-    ddmapinfo_t minfo;
-    patchid_t patchId;
-    patchinfo_t info;
-    AutoStr* mapPath;
-    Uri* mapUri;
-
     /// @kludge We need to properly externalize the map progression.
     if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) && wbs->nextMap == 30)
     {
@@ -315,15 +300,14 @@ static void drawEnteringTitle(void)
     }
     /// kludge end.
 
-    // See if there is a map name.
-    mapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-    mapPath = Uri_Compose(mapUri);
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.name)
+    // See if there is a map name...
+    char *mapName = 0;
+    ddmapinfo_t minfo;
+    if(Def_Get(DD_DEF_MAP_INFO, G_ComposeMapUri(wbs->episode, wbs->nextMap).compose().toUtf8().constData(), &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
     }
-    Uri_Delete(mapUri);
 
     // Skip the E#M# or Map #.
     if(mapName)
@@ -343,16 +327,17 @@ static void drawEnteringTitle(void)
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     // Draw "Entering"
-    WI_DrawPatchXY3(pEntering, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
+    patchinfo_t info;
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    mapNum = (wbs->episode * 9) + wbs->nextMap;
-    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    uint const mapNum       = (wbs->episode * 9) + wbs->nextMap;
+    patchid_t const patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
-    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -385,7 +370,7 @@ static void drawPatchIfFits(patchid_t patchId, const Point2Raw* origin)
     assert(origin);
     if(patchFits(patchId, origin->x, origin->y))
     {
-        WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatch3(patchId, patchReplacementText(patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     }
 }
 
@@ -393,20 +378,19 @@ static void drawPatchIfFits(patchid_t patchId, const Point2Raw* origin)
  * Begin any animations that were previously waiting on a state.
  * To be called upon changing the value of @var inState.
  */
-static void beginAnimations(void)
+static void beginAnimations()
 {
-    int i;
-
     if(gameModeBits & GM_ANY_DOOM2) return;
     if(wbs->episode > 2) return;
 
-    for(i = 0; i < animCounts[wbs->episode]; ++i)
+    for(int i = 0; i < animCounts[wbs->episode]; ++i)
     {
         wianimdef_t const *def = &animDefs[wbs->episode][i];
-        wianimstate_t *state = &animStates[i];
+        wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && wbs->nextMap != def->mapNum) continue;
+        if(def->mapNum && wbs->nextMap != (unsigned)def->mapNum)
+            continue;
 
         // Already begun?
         if(state->frame >= 0) continue;
@@ -428,22 +412,19 @@ static void beginAnimations(void)
     }
 }
 
-static void animateBackground(void)
+static void animateBackground()
 {
-    wianimdef_t const *def;
-    wianimstate_t *state;
-    int i;
-
     if(gameModeBits & GM_ANY_DOOM2) return;
     if(wbs->episode > 2) return;
 
-    for(i = 0; i < animCounts[wbs->episode]; ++i)
+    for(int i = 0; i < animCounts[wbs->episode]; ++i)
     {
-        def = &animDefs[wbs->episode][i];
-        state = &animStates[i];
+        wianimdef_t const *def = &animDefs[wbs->episode][i];
+        wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && wbs->nextMap != def->mapNum) continue;
+        if(def->mapNum && wbs->nextMap != (unsigned)def->mapNum)
+            continue;
 
         // Has the animation begun yet
         if(state->frame < 0) continue;
@@ -512,7 +493,7 @@ static void drawTime(int x, int y, int t)
     // "sucks"
     if(!R_GetPatchInfo(pSucks, &info)) return;
 
-    WI_DrawPatchXY3(pSucks, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pSucks), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pSucks, patchReplacementText(pSucks), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 }
 
 void WI_End(void)
@@ -592,7 +573,7 @@ static void drawLocationMarks(void)
             patchid_t patchId = chooseYouAreHerePatch(origin);
             if(0 != patchId)
             {
-                WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+                WI_DrawPatch3(patchId, patchReplacementText(patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
             }
         }
 
@@ -719,10 +700,10 @@ static void drawDeathmatchStats(void)
     // Draw stat titles (top line).
     { patchinfo_t info;
     if(R_GetPatchInfo(pTotal, &info))
-        WI_DrawPatchXY3(pTotal, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pTotal), DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN); }
+        WI_DrawPatchXY3(pTotal, patchReplacementText(pTotal), DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN); }
 
-    WI_DrawPatchXY3(pKillers, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pKillers), DM_KILLERSX, DM_KILLERSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatchXY3(pVictims, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pVictims), DM_VICTIMSX, DM_VICTIMSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pKillers, patchReplacementText(pKillers), DM_KILLERSX, DM_KILLERSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pVictims, patchReplacementText(pVictims), DM_VICTIMSX, DM_VICTIMSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
     x = DM_MATRIXX + DM_SPACINGX;
     y = DM_MATRIXY;
@@ -738,14 +719,14 @@ static void drawDeathmatchStats(void)
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
             R_GetPatchInfo(patchId, &info);
-            replacement = Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId);
+            replacement = patchReplacementText(patchId);
             WI_DrawPatchXY3(patchId, replacement, x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
             WI_DrawPatchXY3(patchId, replacement, DM_MATRIXX - info.geometry.size.width / 2, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
             if(i == inPlayerTeam)
             {
-                WI_DrawPatchXY3(pFaceDead, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFaceDead), x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-                WI_DrawPatchXY3(pFaceAlive, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFaceAlive), DM_MATRIXX - info.geometry.size.width / 2, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+                WI_DrawPatchXY3(pFaceDead, patchReplacementText(pFaceDead), x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+                WI_DrawPatchXY3(pFaceAlive, patchReplacementText(pFaceAlive), DM_MATRIXX - info.geometry.size.width / 2, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
             }
 
             // If more than 1 member, show the member count.
@@ -762,7 +743,7 @@ static void drawDeathmatchStats(void)
         else
         {
             patchid_t patchId = pTeamIcons[i];
-            const char* replacement = Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId);
+            const char* replacement = patchReplacementText(patchId);
             patchinfo_t info;
 
             FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
@@ -984,14 +965,14 @@ static void drawNetgameStats(void)
 
     // Draw stat titles (top line).
     R_GetPatchInfo(pKills, &info);
-    WI_DrawPatchXY3(pKills, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pKills), ORIGINX + NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pKills, patchReplacementText(pKills), ORIGINX + NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     y = NG_STATSY + info.geometry.size.height;
 
-    WI_DrawPatchXY3(pItems, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pItems), ORIGINX + 2 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatchXY3(pSecret, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pSecret), ORIGINX + 3 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pItems, patchReplacementText(pItems), ORIGINX + 2 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pSecret, patchReplacementText(pSecret), ORIGINX + 3 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     if(doFrags)
     {
-        WI_DrawPatchXY3(pFrags, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFrags), ORIGINX + 4 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatchXY3(pFrags, patchReplacementText(pFrags), ORIGINX + 4 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     }
 
     // Draw stats.
@@ -1007,7 +988,7 @@ static void drawNetgameStats(void)
 
         x = ORIGINX;
         R_GetPatchInfo(pTeamBackgrounds[i], &info);
-        WI_DrawPatchXY3(pTeamBackgrounds[i], Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pTeamBackgrounds[i]), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatchXY3(pTeamBackgrounds[i], patchReplacementText(pTeamBackgrounds[i]), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
@@ -1021,7 +1002,7 @@ static void drawNetgameStats(void)
         FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
         if(i == inPlayerTeam)
-            WI_DrawPatchXY3(pFaceAlive, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFaceAlive), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatchXY3(pFaceAlive, patchReplacementText(pFaceAlive), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         x += NG_SPACINGX;
 
         FR_SetFont(FID(GF_SMALL));
@@ -1061,13 +1042,13 @@ static void drawSinglePlayerStats(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    WI_DrawPatchXY3(pKills, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pKills), SP_STATSX, SP_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatchXY3(pItems, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pItems), SP_STATSX, SP_STATSY + lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatchXY3(pSecretSP, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pSecretSP), SP_STATSX, SP_STATSY + 2 * lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatchXY3(pTime, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pTime), SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pKills, patchReplacementText(pKills), SP_STATSX, SP_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pItems, patchReplacementText(pItems), SP_STATSX, SP_STATSY + lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pSecretSP, patchReplacementText(pSecretSP), SP_STATSX, SP_STATSY + 2 * lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(pTime, patchReplacementText(pTime), SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     if(wbs->parTime != -1)
     {
-        WI_DrawPatchXY3(pPar, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pPar), SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatchXY3(pPar, patchReplacementText(pPar), SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     }
 
     FR_SetFont(FID(GF_SMALL));
@@ -1375,7 +1356,7 @@ void WI_Drawer(void)
     /// kludge end.
 
     GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK | BPF_OVERDRAW_CLIP,
-        SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.inludeScaleMode);
+        SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     drawBackground();
