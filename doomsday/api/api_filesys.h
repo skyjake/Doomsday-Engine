@@ -71,7 +71,7 @@ DENG_API_TYPEDEF(F)
     /**
      * Returns a pointer to the global WAD lump index.
      */
-    void*           (*LumpIndex)();
+    void const*     (*LumpIndex)();
 }
 DENG_API_T(F);
 

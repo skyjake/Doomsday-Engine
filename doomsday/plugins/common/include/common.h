@@ -61,12 +61,12 @@ int Common_GetInteger(int id);
 
 #ifdef __cplusplus
 /**
- * Returns the primary LumpIndex from the engine. For use with old subsystems
+ * Returns the central LumpIndex from the engine. For use with old subsystems
  * which still depend on this old fashioned mechanism for file access.
  *
  * @deprecated  Implement file access without depending on this specialized behavior.
  */
-inline de::LumpIndex const &CentralLumpIndex() { return *reinterpret_cast<de::LumpIndex *>(F_LumpIndex()); }
+inline de::LumpIndex const &CentralLumpIndex() { return *reinterpret_cast<de::LumpIndex const *>(F_LumpIndex()); }
 
 } // extern "C"
 #endif

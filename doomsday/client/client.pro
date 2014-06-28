@@ -103,7 +103,6 @@ DENG_API_HEADERS = \
     $$DENG_API_DIR/api_svg.h \
     $$DENG_API_DIR/api_thinker.h \
     $$DENG_API_DIR/api_uri.h \
-    $$DENG_API_DIR/api_wad.h \
     $$DENG_API_DIR/dd_share.h \
     $$DENG_API_DIR/dd_types.h \
     $$DENG_API_DIR/dd_version.h \
@@ -541,7 +540,6 @@ SOURCES += \
     src/dd_main.cpp \
     src/dd_pinit.cpp \
     src/dd_plugin.cpp \
-    src/dd_wad.cpp \
     src/def_main.cpp \
     src/edit_bias.cpp \
     src/face.cpp \

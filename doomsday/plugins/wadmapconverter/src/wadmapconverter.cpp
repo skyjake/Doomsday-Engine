@@ -39,7 +39,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     DENG2_ASSERT(context != 0);
 
     // Attempt to locate the identified map data marker lump.
-    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex *>(F_LumpIndex());
+    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
     de::Uri const &mapUri      = *reinterpret_cast<de::Uri const *>(context);
     lumpnum_t lumpIndexOffset  = lumpIndex.findLast(mapUri.path() + ".lmp");
     if(lumpIndexOffset < 0) return false;

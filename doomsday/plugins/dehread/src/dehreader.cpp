@@ -1220,7 +1220,7 @@ public:
                 int const lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex *>(F_LumpIndex());
+                    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
                     int const numLumps = lumpIndex.size();
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {

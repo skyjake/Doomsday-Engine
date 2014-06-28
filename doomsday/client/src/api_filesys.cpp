@@ -43,5 +43,6 @@ DENG_DECLARE_API(F) =
     F_PrettyPath,
     M_ReadFile,
     M_ReadFileIntoString,
-    M_WriteFile
+    M_WriteFile,
+    F_LumpIndex
 };

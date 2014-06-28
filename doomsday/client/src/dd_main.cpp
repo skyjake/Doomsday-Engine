@@ -2473,9 +2473,6 @@ int DD_GetInteger(int ddvalue)
         return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
 #endif
 
-    case DD_NUMLUMPS:
-        return App_FileSystem().lumpCount();
-
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
@@ -2593,11 +2590,6 @@ void *DD_GetVariable(int ddvalue)
         static timespan_t fracTic;
         fracTic = gameTime * TICSPERSEC;
         return &fracTic; }
-
-    case DD_NUMLUMPS: {
-        static int count;
-        count = App_FileSystem().lumpCount();
-        return &count; }
 
     default: break;
     }

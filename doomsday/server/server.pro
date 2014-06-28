@@ -106,7 +106,6 @@ DENG_API_HEADERS = \
     $$DENG_API_DIR/api_svg.h \
     $$DENG_API_DIR/api_thinker.h \
     $$DENG_API_DIR/api_uri.h \
-    $$DENG_API_DIR/api_wad.h \
     $$DENG_API_DIR/dd_share.h \
     $$DENG_API_DIR/dd_types.h \
     $$DENG_API_DIR/dd_version.h \
@@ -308,7 +307,6 @@ SOURCES += \
     $$SRC/src/dd_main.cpp \
     $$SRC/src/dd_pinit.cpp \
     $$SRC/src/dd_plugin.cpp \
-    $$SRC/src/dd_wad.cpp \
     $$SRC/src/def_main.cpp \
     $$SRC/src/face.cpp \
     $$SRC/src/game.cpp \

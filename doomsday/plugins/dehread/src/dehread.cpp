@@ -143,7 +143,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
     backupData();
 
     // Check for DEHACKED lumps.
-    readPatchLumps(*reinterpret_cast<de::LumpIndex *>(F_LumpIndex()));
+    readPatchLumps(*reinterpret_cast<de::LumpIndex const *>(F_LumpIndex()));
 
     // Process all patch files specified with -deh options on the command line.
     readPatchFiles();

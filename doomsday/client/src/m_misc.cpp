@@ -69,6 +69,8 @@
 #define write _write
 #endif
 
+using namespace de;
+
 static size_t FileReader(char const* name, char** buffer);
 
 extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
@@ -241,24 +243,26 @@ DENG_EXTERN_C size_t M_ReadFile(const char* name, char** buffer)
     return FileReader(name, buffer);
 }
 
-DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
+DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
 {
     if(isCustom) *isCustom = false;
 
     if(Str_StartsWith(path, "Lumps:"))
     {
-        lumpnum_t lumpNum = W_CheckLumpNumForName(Str_Text(path) + 6);
-        if(lumpNum < 0) return 0;
+        char const *lumpName       = Str_Text(path) + 6;
+        LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+        if(!lumpIndex.contains(String(lumpName) + ".lmp"))
+            return 0;
 
-        if(isCustom) *isCustom = W_LumpIsCustom(lumpNum);
+        File1 &lump = lumpIndex[lumpIndex.findLast(String(lumpName) + ".lmp")];
+        if(isCustom) *isCustom = lump.hasCustom();
 
         // Ignore zero-length lumps.
-        size_t lumpLen = W_LumpLength(lumpNum);
-        if(!lumpLen) return 0;
+        if(!lump.size()) return 0;
 
         // Ensure the resulting string is terminated.
-        AutoStr *string = Str_PartAppend(AutoStr_New(), (char *)W_CacheLump(lumpNum), 0, lumpLen);
-        W_UnlockLump(lumpNum);
+        AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (char const *)lump.cache(), 0, lump.size());
+        lump.unlock();
 
         if(Str_IsEmpty(string))
             return 0;
