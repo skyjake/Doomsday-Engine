@@ -667,7 +667,6 @@ DENG2_PIMPL_NOREF(Id1Map::Recognizer)
     Instance() : lastLump(-1), format(Id1Map::UnknownFormat) {}
 };
 
-/// @todo Obtain the LumpIndex from the engine.
 Id1Map::Recognizer::Recognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset)
     : d(new Instance)
 {
