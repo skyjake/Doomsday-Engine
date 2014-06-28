@@ -174,29 +174,27 @@ ACScriptInterpreter::ACScriptInterpreter()
     , _deferredTasks(0)
 {}
 
-void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
+void ACScriptInterpreter::loadBytecode(de::File1 &lump)
 {
 #define OPEN_SCRIPTS_BASE 1000
 
     DENG2_ASSERT(!IS_CLIENT);
 
-    size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
-
-    App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s (#%i)...",
-            F_PrettyPath(Str_Text(W_LumpSourceFile(lump))),
-            Str_Text(W_LumpName(lump)), lump);
+    App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s...",
+            F_PrettyPath(lump.container().composePath().toUtf8().constData()),
+            lump.name().toUtf8().constData());
 
     _scriptCount = 0;
 
     int const *readBuf = 0;
-    if(lumpLength >= sizeof(BytecodeHeader))
+    if(lump.size() >= sizeof(BytecodeHeader))
     {
-        void *region = Z_Malloc(lumpLength, PU_MAP, 0);
-        W_ReadLump(lump, (uint8_t *)region);
+        void *region = Z_Malloc(lump.size(), PU_MAP, 0);
+        lump.read((uint8_t *)region);
         BytecodeHeader const *header = (BytecodeHeader const *) region;
         _pcode = (byte const *) header;
 
-        if(LONG(header->infoOffset) < (int)lumpLength)
+        if(LONG(header->infoOffset) < (int)lump.size())
         {
             readBuf = (int *) ((byte const *) header + LONG(header->infoOffset));
             _scriptCount = LONG(*readBuf++);
@@ -206,7 +204,9 @@ void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
     if(!_scriptCount)
     {
         // Empty/Invalid lump.
-        App_Log(DE2_SCR_WARNING, "Lump #%i does not appear to be valid ACS bytecode data", lump);
+        App_Log(DE2_SCR_WARNING, "Lump %s:%s does not appear to be valid ACS bytecode data",
+                F_PrettyPath(lump.container().composePath().toUtf8().constData()),
+                lump.name().toUtf8().constData());
         return;
     }
 

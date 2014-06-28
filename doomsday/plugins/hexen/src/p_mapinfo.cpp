@@ -72,7 +72,7 @@ void MapInfoParser(Str const *path)
         defMapInfo.sky2ScrollDelta = 0;
         defMapInfo.doubleSky       = false;
         defMapInfo.lightning       = false;
-        defMapInfo.fadeTable       = W_GetLumpNumForName("COLORMAP");
+        defMapInfo.fadeTable       = CentralLumpIndex().findLast("COLORMAP.lmp");
         strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
         strcpy(defMapInfo.songLump, "DEFSONG"); // Unknown.
 
@@ -174,7 +174,7 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "fadetable"))
                     {
-                        info->fadeTable = W_GetLumpNumForName(Str_Text(lexer.readString()));
+                        info->fadeTable = CentralLumpIndex().findLast(de::String(Str_Text(lexer.readString())) + ".lmp");
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))

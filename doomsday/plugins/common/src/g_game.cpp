@@ -69,6 +69,7 @@
 #include <de/NativePath>
 #include <doomsday/uri.h>
 
+using namespace de;
 using namespace common;
 
 static GameSession session;
@@ -661,101 +662,91 @@ void R_LoadColorPalettes()
 #define PALENTRIES          (256)
 #define PALID               (0)
 
-    lumpnum_t lumpNum = W_GetLumpNumForName(PALLUMPNAME);
-    uint8_t colors[PALENTRIES*3];
-    colorpaletteid_t palId;
-    Str xlatId;
-    Str_InitStd(&xlatId);
+    File1 &playpal = CentralLumpIndex()[CentralLumpIndex().findLast(String(PALLUMPNAME) + ".lmp")];
 
-    // Record whether we are using a custom palette.
-    customPal = W_LumpIsCustom(lumpNum);
+    customPal = playpal.hasCustom(); // Remember whether we are using a custom palette.
 
-    W_ReadLumpSection(lumpNum, colors, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
-    palId = R_CreateColorPalette("R8G8B8", PALLUMPNAME, colors, PALENTRIES);
+    uint8_t colors[PALENTRIES * 3];
+    playpal.read(colors, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
+    colorpaletteid_t palId = R_CreateColorPalette("R8G8B8", PALLUMPNAME, colors, PALENTRIES);
+
+    ddstring_s xlatId; Str_InitStd(&xlatId);
 
 #if __JHEXEN__
     // Load the translation tables.
     {
-    int const numPerClass = (gameMode == hexen_v10? 3 : 7);
+        int const numPerClass = (gameMode == hexen_v10? 3 : 7);
 
-    int i, cl;
-    int xlatNum;
-    lumpnum_t lumpNum;
-    Str lumpName;
-    Str_Reserve(Str_InitStd(&lumpName), 8);
+        // In v1.0, the color translations are a bit different. There are only
+        // three translation maps per class, whereas Doomsday assumes seven maps
+        // per class. Thus we'll need to account for the difference.
 
-    // In v1.0, the color translations are a bit different. There are only
-    // three translation maps per class, whereas Doomsday assumes seven maps
-    // per class. Thus we'll need to account for the difference.
-
-    xlatNum = 0;
-    for(cl = 0; cl < 3; ++cl)
-    for(i = 0; i < 7; ++i)
-    {
-        if(i == numPerClass) break; // Not present.
-
-        Str_Clear(&lumpName);
-        if(xlatNum < 10)
+        int xlatNum = 0;
+        for(int cl = 0; cl < 3; ++cl)
+        for(int i = 0; i < 7; ++i)
         {
-            Str_Appendf(&lumpName, "TRANTBL%i", xlatNum);
-        }
-        else
-        {
-            Str_Appendf(&lumpName, "TRANTBL%c", 'A' + (xlatNum - 10));
-        }
-        xlatNum++;
+            if(i == numPerClass) break; // Not present.
 
-        App_Log(DE2_DEV_RES_MSG, "Reading translation table '%s' as tclass=%i tmap=%i",
-                Str_Text(&lumpName), cl, i);
+            String lumpName;
+            if(xlatNum < 10)
+            {
+                lumpName = String("TRANTBL%1").arg(xlatNum);
+            }
+            else
+            {
+                lumpName = String("TRANTBL%1").arg('A' + (xlatNum - 10));
+            }
+            xlatNum++;
 
-        if(-1 != (lumpNum = W_CheckLumpNumForName(Str_Text(&lumpName))))
-        {
-            uint8_t const *mappings = W_CacheLump(lumpNum);
-            Str_Appendf(Str_Clear(&xlatId), "%i", 7 * cl + i);
-            R_CreateColorPaletteTranslation(palId, &xlatId, mappings);
-            W_UnlockLump(lumpNum);
+            App_Log(DE2_DEV_RES_MSG, "Reading translation table '%s' as tclass=%i tmap=%i",
+                    lumpName.toUtf8().constData(), cl, i);
+
+            lumpName += ".lmp";
+            if(CentralLumpIndex().contains(lumpName))
+            {
+                File1 &lump = CentralLumpIndex()[CentralLumpIndex().findLast(lumpName)];
+                uint8_t const *mappings = lump.cache();
+                Str_Appendf(Str_Clear(&xlatId), "%i", 7 * cl + i);
+                R_CreateColorPaletteTranslation(palId, &xlatId, mappings);
+                lump.unlock();
+            }
         }
-    }
-
-    Str_Free(&lumpName);
     }
 #else
     // Create the translation tables to map the green color ramp to gray,
     // brown, red. Could be read from a lump instead?
     {
-    uint8_t xlat[PALENTRIES];
-    int xlatNum, palIdx;
-
-    for(xlatNum = 0; xlatNum < 3; ++xlatNum)
-    {
-        // Translate just the 16 green colors.
-        for(palIdx = 0; palIdx < 256; ++palIdx)
+        uint8_t xlat[PALENTRIES];
+        for(int xlatNum = 0; xlatNum < 3; ++xlatNum)
         {
+            // Translate just the 16 green colors.
+            for(int palIdx = 0; palIdx < 256; ++palIdx)
+            {
 #  if __JHERETIC__
-            if(palIdx >= 225 && palIdx <= 240)
-            {
-                xlat[palIdx] = xlatNum == 0? 114 + (palIdx - 225) /*yellow*/ :
-                               xlatNum == 1? 145 + (palIdx - 225) /*red*/ :
-                                             190 + (palIdx - 225) /*blue*/;
-            }
+                if(palIdx >= 225 && palIdx <= 240)
+                {
+                    xlat[palIdx] = xlatNum == 0? 114 + (palIdx - 225) /*yellow*/ :
+                                   xlatNum == 1? 145 + (palIdx - 225) /*red*/ :
+                                                 190 + (palIdx - 225) /*blue*/;
+                }
 #  else
-            if(palIdx >= 0x70 && palIdx <= 0x7f)
-            {
-                // Map green ramp to gray, brown, red.
-                xlat[palIdx] = xlatNum == 0? 0x60 + (palIdx & 0xf) :
-                               xlatNum == 1? 0x40 + (palIdx & 0xf) :
-                                             0x20 + (palIdx & 0xf);
-            }
+                if(palIdx >= 0x70 && palIdx <= 0x7f)
+                {
+                    // Map green ramp to gray, brown, red.
+                    xlat[palIdx] = xlatNum == 0? 0x60 + (palIdx & 0xf) :
+                                   xlatNum == 1? 0x40 + (palIdx & 0xf) :
+                                                 0x20 + (palIdx & 0xf);
+                }
 #  endif
-            else
-            {
-                // Keep all other colors as is.
-                xlat[palIdx] = palIdx;
+                else
+                {
+                    // Keep all other colors as is.
+                    xlat[palIdx] = palIdx;
+                }
             }
+            Str_Appendf(Str_Clear(&xlatId), "%i", xlatNum);
+            R_CreateColorPaletteTranslation(palId, &xlatId, xlat);
         }
-        Str_Appendf(Str_Clear(&xlatId), "%i", xlatNum);
-        R_CreateColorPaletteTranslation(palId, &xlatId, xlat);
-    }
     }
 #endif
 
@@ -927,9 +918,9 @@ void R_LoadVectorGraphics()
  * @param name  Name of the font to lookup.
  * @return  Unique id of the found font.
  */
-fontid_t R_MustFindFontForName(const char* name)
+fontid_t R_MustFindFontForName(char const *name)
 {
-    Uri* uri = Uri_NewWithPath2(name, RC_NULL);
+    uri_s *uri = Uri_NewWithPath2(name, RC_NULL);
     fontid_t fontId = Fonts_ResolveUri(uri);
     Uri_Delete(uri);
     if(fontId) return fontId;
@@ -945,14 +936,20 @@ void R_InitRefresh()
 
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
-    { Uri* paths[9];
-    uint i;
-    for(i = 0; i < 9; ++i)
-        paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], RC_NULL) : 0);
-    R_SetBorderGfx((const Uri**)paths);
-    for(i = 0; i < 9; ++i)
-        if(paths[i])
-            Uri_Delete(paths[i]);
+    {
+        uri_s *paths[9];
+        for(int i = 0; i < 9; ++i)
+        {
+            paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], RC_NULL) : 0);
+        }
+        R_SetBorderGfx((uri_s const **)paths);
+        for(int i = 0; i < 9; ++i)
+        {
+            if(paths[i])
+            {
+                Uri_Delete(paths[i]);
+            }
+        }
     }
     R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
 
@@ -971,9 +968,8 @@ void R_InitRefresh()
 #endif
     fonts[GF_MAPPOINT] = R_MustFindFontForName("mappoint");
 
-    { float mul = 1.4f;
+    float mul = 1.4f;
     DD_SetVariable(DD_PSPRITE_LIGHTLEVEL_MULTIPLIER, &mul);
-    }
 }
 
 void R_InitHud()
@@ -1646,8 +1642,8 @@ static void rebornPlayers()
             if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                Str msg; Str_Appendf(Str_Init(&msg), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
-                Hu_MsgStart(MSG_YESNO, Str_Text(&msg), rebornLoadConfirmed, 0, 0);
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmed, 0, 0);
                 return;
             }
 

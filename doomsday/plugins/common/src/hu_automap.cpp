@@ -38,6 +38,8 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace de;
+
 #define LERP(start, end, pos)   (end * pos + start * (1 - pos))
 
 // Translate between frame and map distances:
@@ -182,23 +184,26 @@ void UIAutomap_ClearLists(uiwidget_t* obj)
     }
 }
 
-void UIAutomap_LoadResources(void)
+void UIAutomap_LoadResources()
 {
+    LumpIndex const &lumps = CentralLumpIndex();
+
     if(autopageLumpNum >= 0)
-        autopageLumpNum = W_CheckLumpNumForName("autopage");
+        autopageLumpNum = lumps.findLast("autopage.lmp");
 
     if(!amMaskTexture)
     {
-        lumpnum_t lumpNum = W_GetLumpNumForName("mapmask");
+        lumpnum_t lumpNum = lumps.findLast("mapmask.lmp");
         if(lumpNum >= 0)
         {
-            const uint8_t* pixels = (const uint8_t*) W_CacheLump(lumpNum);
+            File1 &lump = lumps[lumpNum];
+            uint8_t const *pixels = (uint8_t const *) lump.cache();
             int width = 256, height = 256;
 
             amMaskTexture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height, pixels,
                 0x8, DGL_NEAREST, DGL_LINEAR, 0 /*no anisotropy*/, DGL_REPEAT, DGL_REPEAT);
 
-            W_UnlockLump(lumpNum);
+            lump.unlock();
         }
     }
 }
@@ -1153,6 +1158,8 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
  */
 static void setupGLStateForMap(uiwidget_t *obj)
 {
+    DENG2_ASSERT(obj != 0 && obj->type == GUI_AUTOMAP);
+
     //guidata_automap_t *am = (guidata_automap_t *)obj->typedata;
     float const alpha = uiRendState->pageAlpha;
 #if __JDOOM64__
@@ -1161,8 +1168,6 @@ static void setupGLStateForMap(uiwidget_t *obj)
     float angle, bgColor[3];
     coord_t plx, ply;
     RectRaw geometry;
-
-    assert(obj->type == GUI_AUTOMAP);
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
@@ -1176,7 +1181,7 @@ static void setupGLStateForMap(uiwidget_t *obj)
     DGL_PushMatrix();
 
 #if __JHERETIC__ || __JHEXEN__
-    if(W_CheckLumpNumForName("AUTOPAGE") == -1)
+    if(!CentralLumpIndex().contains("AUTOPAGE.lmp"))
     {
         bgColor[CR] = .55f; bgColor[CG] = .45f; bgColor[CB] = .35f;
     }

@@ -34,6 +34,7 @@
 #  include <de/ISerializable>
 #  include <de/Reader>
 #  include <de/Writer>
+#  include <doomsday/filesys/file.h>
 #  include <doomsday/uri.h>
 #endif
 
@@ -127,7 +128,7 @@ public:
     /**
      * Load new ACS bytecode from the specified @a lump.
      */
-    void loadBytecode(lumpnum_t lump);
+    void loadBytecode(de::File1 &lump);
 
     /**
      * To be called when a new game session begins to reset the interpreter. The world state is

@@ -354,15 +354,15 @@ static void CheckForSkip(void)
 
 void IN_Drawer()
 {
-    dgl_borderedprojectionstate_t bp;
-
     if(!intermission || interState)
         return;
 
-    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
+    dgl_borderedprojectionstate_t bp;
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT,
+                                   Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
 
-    lumpnum_t lumpNum = W_GetLumpNumForName("INTERPIC");
+    lumpnum_t lumpNum = CentralLumpIndex().findLast("INTERPIC.lmp");
     if(lumpNum >= 0)
     {
         DGL_Color4f(1, 1, 1, 1);

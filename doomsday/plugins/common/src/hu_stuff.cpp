@@ -197,7 +197,7 @@ static int patchReplacementValueIndex(patchid_t patchId, bool canCreate = true)
  */
 static void initFogEffect()
 {
-    fogeffectdata_t* fog = &fogEffectData;
+    fogeffectdata_t *fog = &fogEffectData;
 
     fog->texture = 0;
     fog->alpha = fog->targetAlpha = 0;
@@ -219,14 +219,16 @@ static void prepareFogTexture()
     // Already prepared?
     if(fogEffectData.texture) return;
 
-    lumpnum_t lumpNum     = W_GetLumpNumForName("menufog");
-    const uint8_t* pixels = W_CacheLump(lumpNum);
-    const int width = 64, height = 64; /// @todo fixme: Do not assume dimensions.
+    if(CentralLumpIndex().contains("menufog.lmp"))
+    {
+        de::File1 &lump       = CentralLumpIndex()[CentralLumpIndex().findLast("menufog.lmp")];
+        uint8_t const *pixels = lump.cache();
+        /// @todo fixme: Do not assume dimensions.
+        fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, 64, 64,
+            pixels, 0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
 
-    fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height,
-        pixels, 0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
-
-    W_UnlockLump(lumpNum);
+        lump.unlock();
+    }
 }
 
 static void releaseFogTexture()
@@ -235,7 +237,7 @@ static void releaseFogTexture()
     // Not prepared?
     if(!fogEffectData.texture) return;
 
-    DGL_DeleteTextures(1, (DGLuint*) &fogEffectData.texture);
+    DGL_DeleteTextures(1, (DGLuint *) &fogEffectData.texture);
     fogEffectData.texture = 0;
 }
 

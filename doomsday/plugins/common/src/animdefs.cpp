@@ -302,26 +302,25 @@ static void AnimDefsParser(ddstring_s const *path)
 }
 #endif // __JHEXEN__
 
-void P_InitPicAnims(void)
+void P_InitPicAnims()
 {
 #if __JHEXEN__
     AnimDefsParser(AutoStr_FromText("Lumps:ANIMDEFS"));
 #else
-    lumpnum_t animsLump;
-    if((animsLump = W_CheckLumpNumForName("ANIMATED")) > 0)
+    if(CentralLumpIndex().contains("ANIMATED.lmp"))
     {
-        /**
-         * We'll support this BOOM extension by reading the data and then registering
-         * the new animations into Doomsday using the animation groups feature.
-         *
-         * Support for this extension should be considered deprecated.
-         * All new features should be added, accessed via DED.
-         */
-        LOG_RES_VERBOSE("Processing lump %s::ANIMATED")
-                << NativePath(Str_Text(W_LumpSourceFile(animsLump))).pretty();
+        File1 &lump = CentralLumpIndex()[CentralLumpIndex().findLast("ANIMATED.lmp")];
 
-        loadAnimDefs((TextureAnimDef *)W_CacheLump(animsLump), true);
-        W_UnlockLump(animsLump);
+        // Support this BOOM extension by reading the data and then registering
+        // the new animations into Doomsday using the animation groups feature.
+        //
+        // Support for this extension should be considered deprecated.
+        // All new features should be added, accessed via DED.
+        LOG_RES_VERBOSE("Processing lump %s::ANIMATED")
+                << NativePath(lump.container().composePath()).pretty();
+
+        loadAnimDefs((TextureAnimDef *)lump.cache(), true);
+        lump.unlock();
         return;
     }
 

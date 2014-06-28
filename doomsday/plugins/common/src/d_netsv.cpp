@@ -374,7 +374,7 @@ int NetSv_ScanCycle(int index, maprule_t *rules)
 
                     sprintf(lump, "MAP%02u", m);
 #endif
-                    if(W_CheckLumpNumForName(lump) >= 0)
+                    if(CentralLumpIndex().findLast(de::String(lump) + ".lmp") >= 0)
                     {
                         tmp[0] = episode + '0';
                         tmp[1] = map + '0';
