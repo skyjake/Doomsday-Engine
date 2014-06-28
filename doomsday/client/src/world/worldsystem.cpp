@@ -441,10 +441,7 @@ DENG2_PIMPL(WorldSystem)
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        ddhook_map_convert_t parm;
-        parm.lumpIndex = const_cast<LumpIndex *>(&App_FileSystem().nameIndex());
-        parm.mapUri    = const_cast<uri_s *>(reinterpret_cast<uri_s const *>(&uri));
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, &parm))
+        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<uri_s *>(reinterpret_cast<uri_s const *>(&uri))))
             return 0;
 
         // A converter signalled success.

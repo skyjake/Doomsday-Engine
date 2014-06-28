@@ -30,6 +30,7 @@
 #include "id1map.h"
 
 DENG_USING_API(Base);
+DENG_USING_API(F);
 DENG_USING_API(Map);
 DENG_USING_API(Material);
 DENG_USING_API(MPE);
