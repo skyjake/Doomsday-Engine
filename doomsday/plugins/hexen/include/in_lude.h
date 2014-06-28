@@ -44,11 +44,11 @@ extern "C" {
 /// To be called to register the console commands and variables of this module.
 void WI_Register(void);
 
-void            IN_Init(void);
-void            IN_Stop(void);
-void            IN_Ticker(void);
-void            IN_Drawer(void);
-void            IN_SkipToNext(void);
+void IN_Init(void);
+void IN_Stop(void);
+void IN_Ticker(void);
+void IN_Drawer(void);
+void IN_SkipToNext(void);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -80,7 +80,7 @@ SOURCES += \
     src/h2_main.cpp \
     src/hconsole.c \
     src/hrefresh.c \
-    src/in_lude.c \
+    src/in_lude.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
