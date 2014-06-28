@@ -21,6 +21,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <doomsday/filesys/lumpindex.h>
 #include <de/App>
 #include <de/Block>
 #include <de/Log>
@@ -51,28 +52,29 @@ static void backupData()
     }
 }
 
-static void readLump(lumpnum_t lumpNum)
+static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
 {
-    if(0 > lumpNum || lumpNum >= DD_GetInteger(DD_NUMLUMPS))
+    if(0 > lumpNum || lumpNum >= lumpIndex.size())
     {
         LOG_AS("DehRead::readLump");
         LOG_WARNING("Invalid lump index #%i, ignoring.") << lumpNum;
         return;
     }
 
-    size_t len = W_LumpLength(lumpNum);
-    Block deh  = Block::fromRawData((char const *)W_CacheLump(lumpNum), len);
+    File1 &lump = lumpIndex[lumpNum];
+    size_t len  = lump.size();
+    Block deh   = Block::fromRawData((char const *)lump.cache(), len);
     /// @attention Results in a deep-copy of the lump data into the Block
     ///            thus the cached lump can be released after this call.
     ///
     /// @todo Do not use a local buffer - read using QTextStream.
     deh.append(QChar(0));
-    W_UnlockLump(lumpNum);
+    lump.unlock();
 
     LOG_RES_MSG("Applying DeHackEd patch lump #%i \"%s:%s\"")
             << lumpNum
-            << NativePath(Str_Text(W_LumpSourceFile(lumpNum))).pretty()
-            << Str_Text(W_LumpName(lumpNum));
+            << NativePath(lump.container().composePath()).pretty()
+            << lump.name();
 
     readDehPatch(deh, NoInclude | IgnoreEOF);
 }
@@ -97,15 +99,14 @@ static void readFile(String const &filePath)
     readDehPatch(deh, IgnoreEOF);
 }
 
-static void readPatchLumps()
+static void readPatchLumps(LumpIndex const &lumpIndex)
 {
     bool const readAll = DENG2_APP->commandLine().check("-alldehs");
-
-    for(int i = DD_GetInteger(DD_NUMLUMPS) - 1; i >= 0; i--)
+    for(int i = lumpIndex.size() - 1; i >= 0; i--)
     {
-        if(String(Str_Text(W_LumpName(i))).fileNameExtension().toLower() == ".deh")
+        if(lumpIndex[i].name().fileNameExtension().toLower() == ".deh")
         {
-            readLump(i);
+            readLump(lumpIndex, i);
             if(!readAll) return;
         }
     }
@@ -142,7 +143,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
     backupData();
 
     // Check for DEHACKED lumps.
-    readPatchLumps();
+    readPatchLumps(*reinterpret_cast<de::LumpIndex *>(F_LumpIndex()));
 
     // Process all patch files specified with -deh options on the command line.
     readPatchFiles();
@@ -173,7 +174,6 @@ DENG_DECLARE_API(Con);
 DENG_DECLARE_API(Def);
 DENG_DECLARE_API(F);
 DENG_DECLARE_API(Plug);
-DENG_DECLARE_API(W);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
@@ -181,5 +181,4 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_DEFINITIONS, Def);
     DENG_GET_API(DE_API_FILE_SYSTEM, F);
     DENG_GET_API(DE_API_PLUGIN, Plug);
-    DENG_GET_API(DE_API_WAD, W);
 )

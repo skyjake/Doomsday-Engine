@@ -30,6 +30,7 @@
 #include <QRegExp>
 #include <QStringList>
 
+#include <doomsday/filesys/lumpindex.h>
 #include <de/App>
 #include <de/Block>
 #include <de/Error>
@@ -1219,14 +1220,15 @@ public:
                 int const lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    int const numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
+                    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex *>(F_LumpIndex());
+                    int const numLumps = lumpIndex.size();
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {
                         LOG_WARNING("Neg. One 2 #%i out of range, ignoring.") << lumpNum;
                     }
                     else
                     {
-                        qstrncpy(sound->lumpName, Str_Text(W_LumpName(lumpNum)), DED_STRINGID_LEN + 1);
+                        qstrncpy(sound->lumpName, lumpIndex[lumpNum].name().toUtf8().constData(), DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
                                 << soundIdx << sound->id << sound->lumpName;
                     }
