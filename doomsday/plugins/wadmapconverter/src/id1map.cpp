@@ -668,18 +668,20 @@ DENG2_PIMPL_NOREF(Id1Map::Recognizer)
 };
 
 /// @todo Obtain the LumpIndex from the engine.
-Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
+Id1Map::Recognizer::Recognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset)
+    : d(new Instance)
 {
     LOG_AS("Id1Map::Recognizer");
     LOG_RES_XVERBOSE("Locating data lumps...");
 
     // Keep checking lumps to see if its a map data lump.
-    dint const numLumps = *reinterpret_cast<dint *>(DD_GetVariable(DD_NUMLUMPS));
+    dint const numLumps = lumpIndex.size();
     String sourceFile;
     for(d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
     {
         // Lump name determines whether this lump is a candidate.
-        MapLumpType dataType = MapLumpTypeForName(Str_Text(W_LumpName(d->lastLump)));
+        File1 &lump          = lumpIndex[d->lastLump];
+        MapLumpType dataType = MapLumpTypeForName(lump.name());
 
         if(d->lumps.isEmpty())
         {
@@ -692,8 +694,8 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
             // The id of the map is the name of the lump which precedes the first
             // recognized data lump (which should be the header). Note that some
             // ports include MAPINFO-like data in the header.
-            d->id = Str_Text(W_LumpName(d->lastLump - 1));
-            sourceFile = Str_Text(W_LumpSourceFile(d->lastLump));
+            d->id = lumpIndex[d->lastLump - 1].name();
+            sourceFile = lump.container().composePath();
         }
         else
         {
@@ -701,13 +703,13 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
             if(dataType == ML_INVALID) break;
 
             // A lump from another source file also ends the sequence.
-            if(sourceFile.compareWithoutCase(Str_Text(W_LumpSourceFile(d->lastLump))))
+            if(sourceFile.compareWithoutCase(lump.container().composePath()))
                 break;
         }
 
         // A recognized map data lump; record it in the collection (replacing any
         // existing record of the same type).
-        d->lumps.insert(dataType, d->lastLump);
+        d->lumps.insert(dataType, &lump);
     }
 
     if(d->lumps.isEmpty()) return;
@@ -735,7 +737,7 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
     DENG2_FOR_EACH_CONST(Lumps, i, d->lumps)
     {
         MapLumpType type  = i.key();
-        lumpnum_t lumpNum = i.value();
+        File1 const &lump = *i.value();
 
         // Determine the number of map data objects of each data type.
         duint *elemCountAddr = 0;
@@ -755,9 +757,7 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
 
         if(elemCountAddr)
         {
-            dsize const lumpLength = W_LumpLength(lumpNum);
-
-            if(lumpLength % elemSize != 0)
+            if(lump.size() % elemSize != 0)
             {
                 // What *is* this??
                 d->format = Id1Map::UnknownFormat;
@@ -765,7 +765,7 @@ Id1Map::Recognizer::Recognizer(lumpnum_t lumpIndexOffset) : d(new Instance)
                 return;
             }
 
-            *elemCountAddr += lumpLength / elemSize;
+            *elemCountAddr += lump.size() / elemSize;
         }
     }
 
@@ -1362,16 +1362,16 @@ Id1Map::Id1Map(Recognizer const &recognized)
 
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    duint vertexCount = W_LumpLength(recognized.lumps().find(ML_VERTEXES).value())
+    duint vertexCount = recognized.lumps().find(ML_VERTEXES).value()->size()
                       / ElementSizeForMapLumpType(d->format, ML_VERTEXES);
     d->vertCoords.resize(vertexCount * 2);
 
     DENG2_FOR_EACH_CONST(Recognizer::Lumps, i, recognized.lumps())
     {
         MapLumpType type  = i.key();
-        lumpnum_t lumpNum = i.value();
+        File1 *lump = i.value();
 
-        dsize lumpLength = W_LumpLength(lumpNum);
+        dsize lumpLength = lump->size();
         if(!lumpLength) continue;
 
         dsize elemSize = ElementSizeForMapLumpType(d->format, type);
@@ -1379,22 +1379,22 @@ Id1Map::Id1Map(Recognizer const &recognized)
 
         // Process this data lump.
         duint const elemCount = lumpLength / elemSize;
-        ByteRefArray lumpData(W_CacheLump(lumpNum), lumpLength);
+        ByteRefArray lumpData(lump->cache(), lumpLength);
         de::Reader reader(lumpData);
         reader.setVersion(d->format);
         switch(type)
         {
         default: break;
 
-        case ML_VERTEXES: d->readVertexes(reader, elemCount);     break;
-        case ML_LINEDEFS: d->readLineDefs(reader, elemCount);     break;
-        case ML_SIDEDEFS: d->readSideDefs(reader, elemCount);     break;
-        case ML_SECTORS:  d->readSectorDefs(reader, elemCount);      break;
-        case ML_THINGS:   d->readThings(reader, elemCount);       break;
+        case ML_VERTEXES: d->readVertexes(reader, elemCount);   break;
+        case ML_LINEDEFS: d->readLineDefs(reader, elemCount);   break;
+        case ML_SIDEDEFS: d->readSideDefs(reader, elemCount);   break;
+        case ML_SECTORS:  d->readSectorDefs(reader, elemCount); break;
+        case ML_THINGS:   d->readThings(reader, elemCount);     break;
         case ML_LIGHTS:   d->readTintColors(reader, elemCount); break;
         }
 
-        W_UnlockLump(lumpNum);
+        lump->unlock();
     }
 
     // Perform post load analyses.

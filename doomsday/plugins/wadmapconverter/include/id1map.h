@@ -22,6 +22,8 @@
 
 #include "id1map_util.h"   // MapLumpType
 #include "dd_types.h"      // lumpnum_t
+#include <doomsday/filesys/file.h>
+#include <doomsday/filesys/lumpindex.h>
 #include <doomsday/uri.h>
 #include <de/libcore.h>
 #include <de/Error>
@@ -74,14 +76,14 @@ public:
     class Recognizer
     {
     public:
-        typedef QMap<MapLumpType, lumpnum_t> Lumps;
+        typedef QMap<MapLumpType, de::File1 *> Lumps;
 
     public:
         /**
          * Attempt to recognize an id Tech 1 format by traversing the WAD lump
          * index, beginning at the @a lumpIndexOffset specified.
          */
-        Recognizer(lumpnum_t lumpIndexOffset);
+        Recognizer(de::LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset);
 
         de::String const &mapId() const;
         Format mapFormat() const;

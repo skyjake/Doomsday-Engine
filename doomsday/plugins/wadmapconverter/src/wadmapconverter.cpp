@@ -28,19 +28,6 @@ using namespace de;
 using namespace wadimp;
 
 /**
- * Given a map @a uri, attempt to locate the associated marker lump for the
- * map data using the Doomsday file system.
- *
- * @param uri  Map identifier, e.g., "Map:E1M1"
- *
- * @return Lump number for the found data else @c -1
- */
-static lumpnum_t locateMapMarkerLumpForUri(de::Uri const &uri)
-{
-    return W_CheckLumpNumForName(uri.path().toUtf8().constData());
-}
-
-/**
  * This function will be called when Doomsday is asked to load a map that is
  * not available in its native map format.
  *
@@ -50,14 +37,16 @@ static lumpnum_t locateMapMarkerLumpForUri(de::Uri const &uri)
 int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
     DENG2_ASSERT(context != 0);
+    ddhook_map_convert_t const &p = *static_cast<ddhook_map_convert_t *>(context);
 
     // Attempt to locate the identified map data marker lump.
-    de::Uri const &uri = *reinterpret_cast<de::Uri const *>(context);
-    lumpnum_t lumpIndexOffset = locateMapMarkerLumpForUri(uri);
+    LumpIndex const &lumpIndex = *reinterpret_cast<de::LumpIndex *>(p.lumpIndex);
+    de::Uri const &mapUri      = *reinterpret_cast<de::Uri const *>(p.mapUri);
+    lumpnum_t lumpIndexOffset  = lumpIndex.findLast(mapUri.path() + ".lmp");
     if(lumpIndexOffset < 0) return false;
 
     // Collate map data lumps and attempt to recognize the format.
-    Id1MapRecognizer recognizer(lumpIndexOffset);
+    Id1MapRecognizer recognizer(lumpIndex, lumpIndexOffset);
     if(recognizer.mapFormat() != Id1Map::UnknownFormat)
     {
         // Attempt a conversion...
@@ -69,7 +58,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
             // Transfer to the engine via the runtime map editing interface.
             /// @todo Build it using native components directly...
             LOG_AS("WadMapConverter");
-            map->transfer(uri);
+            map->transfer(mapUri);
             return true; // success
         }
         catch(Id1Map::LoadError const &er)
@@ -106,7 +95,6 @@ DENG_DECLARE_API(Map);
 DENG_DECLARE_API(MPE);
 DENG_DECLARE_API(Plug);
 DENG_DECLARE_API(Uri);
-DENG_DECLARE_API(W);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
@@ -115,5 +103,4 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_MAP_EDIT, MPE);
     DENG_GET_API(DE_API_PLUGIN, Plug);
     DENG_GET_API(DE_API_URI, Uri);
-    DENG_GET_API(DE_API_WAD, W);
 )

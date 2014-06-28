@@ -63,7 +63,13 @@ enum {
 /// Zero is not a valid ID.
 typedef int pluginid_t;
 
-/// Paramaters for HOOK_FINALE_EVAL_IF
+/// Parameters for HOOK_MAP_CONVERT
+typedef struct {
+    void       *lumpIndex;
+    uri_s      *mapUri;
+} ddhook_map_convert_t;
+
+/// Parameters for HOOK_FINALE_EVAL_IF
 typedef struct {
     const char* token;
     dd_bool     returnVal;
