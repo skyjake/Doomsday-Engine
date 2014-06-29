@@ -347,7 +347,6 @@ ccmdtemplate_t gameCmds[] = {
     { "endgame",         "s",    CCmdEndSession, 0 },
     { "endgame",         "",     CCmdEndSession, 0 },
     { "helpscreen",      "",     CCmdHelpScreen, 0 },
-    { "listmaps",        "",     CCmdListMaps, 0 },
     { "loadgame",        "ss",   CCmdLoadSession, 0 },
     { "loadgame",        "s",    CCmdLoadSession, 0 },
     { "loadgame",        "",     CCmdOpenLoadMenu, 0 },
@@ -2674,81 +2673,6 @@ uint G_NextLogicalMapNumber(dd_bool secretExit)
     return G_GetNextMap(gameEpisode, gameMap, secretExit);
 }
 
-/**
- * Print a list of maps and the WAD files where they are from.
- */
-void G_PrintFormattedMapList(uint episode, char const **files, uint count)
-{
-    char const *current = 0;
-    uint rangeStart = 0;
-
-    for(uint i = 0; i < count; ++i)
-    {
-        if(!current && files[i])
-        {
-            current = files[i];
-            rangeStart = i;
-        }
-        else if(current && (!files[i] || stricmp(current, files[i])))
-        {
-            // Print a range.
-            uint len = i - rangeStart;
-            LogBuffer_Printf(DE2_RES_MSG, "  "); // Indentation.
-            if(len <= 2)
-            {
-                for(uint k = rangeStart; k < i; ++k)
-                {
-                    char const *separator = (k != i - 1) ? "," : "";
-                    LogBuffer_Printf(DE2_RES_MSG, "%s%s", G_ComposeMapUri(episode, k).asText().toUtf8().constData(),
-                                                          separator);
-                }
-            }
-            else
-            {
-                LogBuffer_Printf(DE2_RES_MSG, "%s-", G_ComposeMapUri(episode, rangeStart).asText().toUtf8().constData());
-                LogBuffer_Printf(DE2_RES_MSG, "%s",  G_ComposeMapUri(episode, i - 1     ).asText().toUtf8().constData());
-            }
-            LogBuffer_Printf(DE2_RES_MSG, " " DE2_ESC(2) DE2_ESC(>) "%s\n", F_PrettyPath(current));
-
-            // Moving on to a different file.
-            current = files[i];
-            rangeStart = i;
-        }
-    }
-}
-
-void G_PrintMapList()
-{
-#if __JDOOM__
-    uint maxEpisodes       = (gameModeBits & GM_ANY_DOOM)? 9 : 1;
-    uint maxMapsPerEpisode = (gameModeBits & GM_ANY_DOOM)? 9 : 99;
-#elif __JHERETIC__
-    uint maxEpisodes       = 9;
-    uint maxMapsPerEpisode = 9;
-#else
-    uint maxEpisodes       = 1;
-    uint maxMapsPerEpisode = 99;
-#endif
-
-    char const *sourceList[100];
-
-    for(uint episode = 0; episode < maxEpisodes; ++episode)
-    {
-        de::zap(sourceList);
-
-        // Find the name of each map (not all may exist).
-        for(uint map = 0; map < maxMapsPerEpisode; ++map)
-        {
-            AutoStr *path = P_MapSourceFile(G_ComposeMapUri(episode, map).compose().toUtf8().constData());
-            if(!Str_IsEmpty(path))
-            {
-                sourceList[map] = Str_Text(path);
-            }
-        }
-        G_PrintFormattedMapList(episode, sourceList, 99);
-    }
-}
-
 char const *G_InFine(char const *scriptId)
 {
     ddfinale_t fin;
@@ -3189,15 +3113,6 @@ D_CMD(CycleTextureGamma)
     DENG2_UNUSED3(src, argc, argv);
 
     R_CycleGammaLevel();
-    return true;
-}
-
-D_CMD(ListMaps)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    App_Log(DE2_RES_MSG, "Available maps:");
-    G_PrintMapList();
     return true;
 }
 

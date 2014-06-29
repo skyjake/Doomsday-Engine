@@ -95,7 +95,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
             // The id of the map is the name of the lump which precedes the first
             // recognized data lump (which should be the header). Note that some
             // ports include MAPINFO-like data in the header.
-            d->id = lumpIndex[d->lastLump - 1].name();
+            d->id = lumpIndex[d->lastLump - 1].name().fileNameAndPathWithoutExtension();
             sourceFile = lump.container().composePath();
         }
         else
@@ -195,6 +195,12 @@ LumpIndex::Id1MapRecognizer::Format LumpIndex::Id1MapRecognizer::format() const
 LumpIndex::Id1MapRecognizer::Lumps const &LumpIndex::Id1MapRecognizer::lumps() const
 {
     return d->lumps;
+}
+
+File1 *LumpIndex::Id1MapRecognizer::sourceFile() const
+{
+    if(d->lumps.isEmpty()) return 0;
+    return &lumps().find(VertexData).value()->container();
 }
 
 lumpnum_t LumpIndex::Id1MapRecognizer::lastLump() const

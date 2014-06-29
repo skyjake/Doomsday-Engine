@@ -114,6 +114,8 @@ public:
 
         Lumps const &lumps() const;
 
+        File1 *sourceFile() const;
+
         /**
          * Returns the lump index number of the last data lump inspected by the
          * recognizer, making it possible to collate/locate all the map data sets

@@ -4541,6 +4541,48 @@ D_CMD(InspectSavegame)
     return false;
 }
 
+/**
+ * Print a list of all currently available maps and the location of the source
+ * file which contains them.
+ *
+ * @todo Improve output: find common map id prefixes, find "suffixed" numerical
+ * ranges, etc... (Do not assume *anything* about the formatting of map ids -
+ * ZDoom allows the mod author to give a map any id they wish, which, is then
+ * specified in MAPINFO when defining the map progression, clusters, etc...).
+ */
+D_CMD(ListMaps)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    // Step 1 - Locate all the maps using the central lump index:
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    lumpnum_t lastLump = -1;
+    typedef QMap<String, File1 *> MapList;
+    MapList allMaps;
+    while(lastLump < lumpIndex.size())
+    {
+        Id1MapRecognizer recognizer(lumpIndex, lastLump);
+        if(recognizer.format() != Id1MapRecognizer::UnknownFormat)
+        {
+            allMaps.insert(recognizer.id(), recognizer.sourceFile());
+        }
+        lastLump = recognizer.lastLump();
+    }
+
+    // Step 2 - Print a formatted map listing:
+    LOG_RES_MSG(_E(b) "Available maps:" _E(.));
+    MapList::const_iterator i = allMaps.constBegin();
+    while(i != allMaps.constEnd())
+    {
+        LOG_RES_MSG(_E(Ta) "  %s " _E(Tb) _E(C) "from \"%s\"" _E(.))
+                << i.key()
+                << NativePath(i.value()->composePath()).pretty();
+        ++i;
+    }
+
+    return true;
+}
+
 void ResourceSystem::consoleRegister() // static
 {
     C_CMD("listtextures",   "ss",   ListTextures)
@@ -4567,6 +4609,7 @@ void ResourceSystem::consoleRegister() // static
 #ifdef DENG_DEBUG
     C_CMD("materialstats",  NULL,   PrintMaterialStats)
 #endif
+    C_CMD("listmaps",       "",     ListMaps)
 
     Texture::consoleRegister();
     Material::consoleRegister();
