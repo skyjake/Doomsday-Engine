@@ -20,7 +20,6 @@
  */
 
 #include "wadmapconverter.h"
-#include "id1map_util.h"
 #include <de/Error>
 #include <de/Log>
 

@@ -46,12 +46,6 @@ public:
     Id1Map &map;
 };
 
-#define SIZEOF_64VERTEX   (4 * 2)
-#define SIZEOF_VERTEX     (2 * 2)
-
-#define SIZEOF_SIDEDEF    (2 * 3 + 8 * 3)
-#define SIZEOF_64SIDEDEF  (2 * 6)
-
 struct SideDef : public Id1MapElement
 {
     dint index;
@@ -118,10 +112,6 @@ struct SideDef : public Id1MapElement
 #define PO_LINE_EXPLICIT  (5)
 
 #define SEQTYPE_NUMSEQ  (10)
-
-#define SIZEOF_LINEDEF   (2 * 7)
-#define SIZEOF_64LINEDEF (2 * 6 + 1 * 4)
-#define SIZEOF_XLINEDEF  (2 * 5 + 1 * 6)
 
 struct LineDef : public Id1MapElement
 {
@@ -278,9 +268,6 @@ struct LineDef : public Id1MapElement
     }
 };
 
-#define SIZEOF_SECTOR    (2 * 5 + 8 * 2)
-#define SIZEOF_64SECTOR  (2 * 12)
-
 struct SectorDef : public Id1MapElement
 {
     dint index;
@@ -364,10 +351,6 @@ struct SectorDef : public Id1MapElement
 #define MTF_Z_RANDOM        0x80000000 ///< Random point between floor and ceiling.
 
 #define ANG45               0x20000000
-
-#define SIZEOF_THING        (2 * 5)
-#define SIZEOF_64THING      (2 * 7)
-#define SIZEOF_XTHING       (2 * 7 + 1 * 6)
 
 struct Thing : public Id1MapElement
 {
@@ -581,8 +564,6 @@ struct Thing : public Id1MapElement
     }
 };
 
-#define SIZEOF_LIGHT  (1 * 6)
-
 struct TintColor : public Id1MapElement
 {
     dint index;
@@ -616,43 +597,6 @@ struct Polyobj
     dint16 anchor[2];
 };
 
-/**
- * Determine the size (in bytes) of an element of the specified map data
- * lump @a type for the current map format.
- *
- * @param mapFormat     Map format identifier.
- * @param type          Map lump data type.
- *
- * @return Size of an element of the specified type.
- */
-static dsize ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type)
-{
-    switch(type)
-    {
-    default: return 0;
-
-    case ML_VERTEXES:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-
-    case ML_LINEDEFS:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64LINEDEF :
-                mapFormat == Id1Map::HexenFormat ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
-
-    case ML_SIDEDEFS:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-
-    case ML_SECTORS:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-
-    case ML_THINGS:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64THING :
-                mapFormat == Id1Map::HexenFormat ? SIZEOF_XTHING  : SIZEOF_THING);
-
-    case ML_LIGHTS:
-        return SIZEOF_LIGHT;
-    }
-}
-
 } // namespace internal
 
 using namespace internal;
@@ -679,13 +623,13 @@ Id1Map::Recognizer::Recognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOf
     for(d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
     {
         // Lump name determines whether this lump is a candidate.
-        File1 &lump          = lumpIndex[d->lastLump];
-        MapLumpType dataType = MapLumpTypeForName(lump.name());
+        File1 &lump       = lumpIndex[d->lastLump];
+        DataType dataType = typeForLumpName(lump.name());
 
         if(d->lumps.isEmpty())
         {
             // No sequence has yet begun. Continue the scan?
-            if(dataType == ML_INVALID) continue;
+            if(dataType == UnknownData) continue;
 
             // Missing a header?
             if(d->lastLump == 0) return;
@@ -699,7 +643,7 @@ Id1Map::Recognizer::Recognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOf
         else
         {
             // The first unrecognized lump ends the sequence.
-            if(dataType == ML_INVALID) break;
+            if(dataType == UnknownData) break;
 
             // A lump from another source file also ends the sequence.
             if(sourceFile.compareWithoutCase(lump.container().composePath()))
@@ -717,12 +661,12 @@ Id1Map::Recognizer::Recognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOf
 
     // Some data lumps are specific to a particular map format and thus their
     // presence unambiguously identifies the format.
-    if(d->lumps.contains(ML_BEHAVIOR))
+    if(d->lumps.contains(BehaviorData))
     {
         d->format = Id1Map::HexenFormat;
     }
-    else if(d->lumps.contains(ML_MACROS) || d->lumps.contains(ML_LIGHTS) ||
-            d->lumps.contains(ML_LEAFS))
+    else if(d->lumps.contains(MacroData) || d->lumps.contains(TintColorData) ||
+            d->lumps.contains(LeafData))
     {
         d->format = Id1Map::Doom64Format;
     }
@@ -735,23 +679,23 @@ Id1Map::Recognizer::Recognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOf
     duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
     DENG2_FOR_EACH_CONST(Lumps, i, d->lumps)
     {
-        MapLumpType type  = i.key();
-        File1 const &lump = *i.value();
+        DataType const dataType = i.key();
+        File1 const &lump       = *i.value();
 
         // Determine the number of map data objects of each data type.
         duint *elemCountAddr = 0;
-        dsize const elemSize = ElementSizeForMapLumpType(d->format, type);
+        dsize const elemSize = elementSizeForDataType(d->format, dataType);
 
-        switch(type)
+        switch(dataType)
         {
         default: break;
 
-        case ML_VERTEXES:   elemCountAddr = &numVertexes;    break;
-        case ML_THINGS:     elemCountAddr = &numThings;      break;
-        case ML_LINEDEFS:   elemCountAddr = &numLines;       break;
-        case ML_SIDEDEFS:   elemCountAddr = &numSides;       break;
-        case ML_SECTORS:    elemCountAddr = &numSectors;     break;
-        case ML_LIGHTS:     elemCountAddr = &numLights;      break;
+        case VertexData:    elemCountAddr = &numVertexes; break;
+        case ThingData:     elemCountAddr = &numThings;   break;
+        case LineDefData:   elemCountAddr = &numLines;    break;
+        case SideDefData:   elemCountAddr = &numSides;    break;
+        case SectorDefData: elemCountAddr = &numSectors;  break;
+        case TintColorData: elemCountAddr = &numLights;   break;
         }
 
         if(elemCountAddr)
@@ -798,6 +742,97 @@ Id1Map::Recognizer::Lumps const &Id1Map::Recognizer::lumps() const
 lumpnum_t Id1Map::Recognizer::lastLump() const
 {
     return d->lastLump;
+}
+
+/// @todo Optimize: Replace linear search...
+Id1Map::Recognizer::DataType Id1Map::Recognizer::typeForLumpName(String name) // static
+{
+    static const struct LumpTypeInfo {
+        String name;
+        DataType type;
+    } lumpTypeInfo[] =
+    {
+        { "THINGS",     ThingData       },
+        { "LINEDEFS",   LineDefData     },
+        { "SIDEDEFS",   SideDefData     },
+        { "VERTEXES",   VertexData      },
+        { "SEGS",       SegData         },
+        { "SSECTORS",   SubsectorData   },
+        { "NODES",      NodeData        },
+        { "SECTORS",    SectorDefData   },
+        { "REJECT",     RejectData      },
+        { "BLOCKMAP",   BlockmapData    },
+        { "BEHAVIOR",   BehaviorData    },
+        { "SCRIPTS",    ScriptData      },
+        { "LIGHTS",     TintColorData   },
+        { "MACROS",     MacroData       },
+        { "LEAFS",      LeafData        },
+        { "GL_VERT",    GLVertexData    },
+        { "GL_SEGS",    GLSegData       },
+        { "GL_SSECT",   GLSubsectorData },
+        { "GL_NODES",   GLNodeData      },
+        { "GL_PVS",     GLPVSData       },
+        { "",           UnknownData     }
+    };
+
+    // Ignore the file extension if present.
+    name = name.fileNameWithoutExtension();
+
+    if(!name.isEmpty())
+    {
+        for(dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
+        {
+            LumpTypeInfo const &info = lumpTypeInfo[i];
+            if(!info.name.compareWithoutCase(name) &&
+               info.name.length() == name.length())
+            {
+                return info.type;
+            }
+        }
+    }
+
+    return UnknownData;
+}
+
+dsize Id1Map::Recognizer::elementSizeForDataType(Id1Map::Format mapFormat, DataType dataType) // static
+{
+    dsize const SIZEOF_64VERTEX  = (4 * 2);
+    dsize const SIZEOF_VERTEX    = (2 * 2);
+    dsize const SIZEOF_SIDEDEF   = (2 * 3 + 8 * 3);
+    dsize const SIZEOF_64SIDEDEF = (2 * 6);
+    dsize const SIZEOF_LINEDEF   = (2 * 7);
+    dsize const SIZEOF_64LINEDEF = (2 * 6 + 1 * 4);
+    dsize const SIZEOF_XLINEDEF  = (2 * 5 + 1 * 6);
+    dsize const SIZEOF_SECTOR    = (2 * 5 + 8 * 2);
+    dsize const SIZEOF_64SECTOR  = (2 * 12);
+    dsize const SIZEOF_THING     = (2 * 5);
+    dsize const SIZEOF_64THING   = (2 * 7);
+    dsize const SIZEOF_XTHING    = (2 * 7 + 1 * 6);
+    dsize const SIZEOF_LIGHT     = (1 * 6);
+
+    switch(dataType)
+    {
+    default: return 0;
+
+    case VertexData:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+
+    case LineDefData:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64LINEDEF :
+                mapFormat == Id1Map::HexenFormat ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
+
+    case SideDefData:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+
+    case SectorDefData:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+
+    case ThingData:
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64THING :
+                mapFormat == Id1Map::HexenFormat ? SIZEOF_XTHING  : SIZEOF_THING);
+
+    case TintColorData: return SIZEOF_LIGHT;
+    }
 }
 
 static uint validCount = 0; ///< Used with Polyobj LineDef collection.
@@ -1361,19 +1396,19 @@ Id1Map::Id1Map(Recognizer const &recognized)
 
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    duint vertexCount = recognized.lumps().find(ML_VERTEXES).value()->size()
-                      / ElementSizeForMapLumpType(d->format, ML_VERTEXES);
+    duint vertexCount = recognized.lumps().find(Recognizer::VertexData).value()->size()
+                      / Recognizer::elementSizeForDataType(d->format, Recognizer::VertexData);
     d->vertCoords.resize(vertexCount * 2);
 
     DENG2_FOR_EACH_CONST(Recognizer::Lumps, i, recognized.lumps())
     {
-        MapLumpType type  = i.key();
+        Recognizer::DataType dataType = i.key();
         File1 *lump = i.value();
 
         dsize lumpLength = lump->size();
         if(!lumpLength) continue;
 
-        dsize elemSize = ElementSizeForMapLumpType(d->format, type);
+        dsize elemSize = Recognizer::elementSizeForDataType(d->format, dataType);
         if(!elemSize) continue;
 
         // Process this data lump.
@@ -1381,16 +1416,16 @@ Id1Map::Id1Map(Recognizer const &recognized)
         ByteRefArray lumpData(lump->cache(), lumpLength);
         de::Reader reader(lumpData);
         reader.setVersion(d->format);
-        switch(type)
+        switch(dataType)
         {
         default: break;
 
-        case ML_VERTEXES: d->readVertexes(reader, elemCount);   break;
-        case ML_LINEDEFS: d->readLineDefs(reader, elemCount);   break;
-        case ML_SIDEDEFS: d->readSideDefs(reader, elemCount);   break;
-        case ML_SECTORS:  d->readSectorDefs(reader, elemCount); break;
-        case ML_THINGS:   d->readThings(reader, elemCount);     break;
-        case ML_LIGHTS:   d->readTintColors(reader, elemCount); break;
+        case Recognizer::VertexData:    d->readVertexes(reader, elemCount);   break;
+        case Recognizer::LineDefData:   d->readLineDefs(reader, elemCount);   break;
+        case Recognizer::SideDefData:   d->readSideDefs(reader, elemCount);   break;
+        case Recognizer::SectorDefData: d->readSectorDefs(reader, elemCount); break;
+        case Recognizer::ThingData:     d->readThings(reader, elemCount);     break;
+        case Recognizer::TintColorData: d->readTintColors(reader, elemCount); break;
         }
 
         lump->unlock();
@@ -1420,13 +1455,13 @@ void Id1Map::transfer(de::Uri const &uri)
 
 String const &Id1Map::formatName(Format id) // static
 {
-    static String const names[1 + MapFormatCount] = {
+    static String const names[1 + KnownFormatCount] = {
         /* MF_UNKNOWN */ "Unknown",
         /* MF_DOOM    */ "id Tech 1 (Doom)",
         /* MF_HEXEN   */ "id Tech 1 (Hexen)",
         /* MF_DOOM64  */ "id Tech 1 (Doom64)"
     };
-    if(id >= DoomFormat && id < MapFormatCount)
+    if(id >= DoomFormat && id < KnownFormatCount)
     {
         return names[1 + id];
     }

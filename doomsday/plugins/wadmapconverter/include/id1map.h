@@ -20,8 +20,7 @@
 #ifndef WADMAPCONVERTER_ID1MAP_H
 #define WADMAPCONVERTER_ID1MAP_H
 
-#include "id1map_util.h"   // MapLumpType
-#include "dd_types.h"      // lumpnum_t
+#include "dd_types.h"                   // lumpnum_t
 #include <doomsday/filesys/file.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/uri.h>
@@ -62,7 +61,7 @@ public:
         HexenFormat,
         Doom64Format,
 
-        MapFormatCount
+        KnownFormatCount
     };
 
     /**
@@ -76,7 +75,35 @@ public:
     class Recognizer
     {
     public:
-        typedef QMap<MapLumpType, de::File1 *> Lumps;
+        /// Logical map data type identifiers:
+        enum DataType {
+            UnknownData = -1,
+
+            ThingData,
+            LineDefData,
+            SideDefData,
+            VertexData,
+            SegData,
+            SubsectorData,
+            NodeData,
+            SectorDefData,
+            RejectData,
+            BlockmapData,
+            BehaviorData,
+            ScriptData,
+            TintColorData,
+            MacroData,
+            LeafData,
+            GLVertexData,
+            GLSegData,
+            GLSubsectorData,
+            GLNodeData,
+            GLPVSData,
+
+            KnownDataCount
+        };
+
+        typedef QMap<DataType, de::File1 *> Lumps;
 
     public:
         /**
@@ -96,6 +123,23 @@ public:
          * using multiple recognizers.
          */
         lumpnum_t lastLump() const;
+
+    public:
+        /**
+         * Determines the type of a map data lump by @a name.
+         */
+        static DataType typeForLumpName(de::String name);
+
+        /**
+         * Determine the size (in bytes) of an element of the specified map data
+         * lump @a type for the current map format.
+         *
+         * @param mapFormat     Map format identifier.
+         * @param dataType      Map lump data type.
+         *
+         * @return Size of an element of the specified type.
+         */
+        static de::dsize elementSizeForDataType(Id1Map::Format mapFormat, DataType dataType);
 
     private:
         DENG2_PRIVATE(d)
