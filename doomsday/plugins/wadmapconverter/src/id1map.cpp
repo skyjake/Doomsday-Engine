@@ -59,7 +59,7 @@ struct SideDef : public Id1MapElement
 
     void operator << (de::Reader &from)
     {
-        Id1Map::Format format = Id1Map::Format(from.version());
+        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
 
         from >> offset[VX]
              >> offset[VY];
@@ -67,8 +67,8 @@ struct SideDef : public Id1MapElement
         dint idx;
         switch(format)
         {
-        case Id1Map::DoomFormat:
-        case Id1Map::HexenFormat: {
+        case Id1MapRecognizer::DoomFormat:
+        case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
             topMaterial    = map.toMaterialId(name.constData(), WallMaterials);
@@ -80,7 +80,7 @@ struct SideDef : public Id1MapElement
             middleMaterial = map.toMaterialId(name.constData(), WallMaterials);
             break; }
 
-        case Id1Map::Doom64Format:
+        case Id1MapRecognizer::Doom64Format:
             from.readAs<duint16>(idx);
             topMaterial    = map.toMaterialId(idx, WallMaterials);
 
@@ -164,7 +164,7 @@ struct LineDef : public Id1MapElement
 
     void operator << (de::Reader &from)
     {
-        Id1Map::Format format = Id1Map::Format(from.version());
+        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
 
         dint idx;
         from.readAs<duint16>(idx);
@@ -177,12 +177,12 @@ struct LineDef : public Id1MapElement
 
         switch(format)
         {
-        case Id1Map::DoomFormat:
+        case Id1MapRecognizer::DoomFormat:
             from >> dType
                  >> dTag;
             break;
 
-        case Id1Map::Doom64Format:
+        case Id1MapRecognizer::Doom64Format:
             from >> d64drawFlags
                  >> d64texFlags
                  >> d64type
@@ -190,7 +190,7 @@ struct LineDef : public Id1MapElement
                  >> d64tag;
             break;
 
-        case Id1Map::HexenFormat:
+        case Id1MapRecognizer::HexenFormat:
             from >> xType
                  >> xArgs[0]
                  >> xArgs[1]
@@ -236,7 +236,7 @@ struct LineDef : public Id1MapElement
          *
          * Only valid for DOOM format maps.
          */
-        if(format == Id1Map::DoomFormat)
+        if(format == Id1MapRecognizer::DoomFormat)
         {
             if(flags & ML_INVALID)
                 flags &= DOOM_VALIDMASK;
@@ -291,15 +291,15 @@ struct SectorDef : public Id1MapElement
 
     void operator << (de::Reader &from)
     {
-        Id1Map::Format format = Id1Map::Format(from.version());
+        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
 
         from >> floorHeight
              >> ceilHeight;
 
         switch(format)
         {
-        case Id1Map::DoomFormat:
-        case Id1Map::HexenFormat: {
+        case Id1MapRecognizer::DoomFormat:
+        case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
             floorMaterial= map.toMaterialId(name.constData(), PlaneMaterials);
@@ -310,7 +310,7 @@ struct SectorDef : public Id1MapElement
             from >> lightLevel;
             break; }
 
-        case Id1Map::Doom64Format: {
+        case Id1MapRecognizer::Doom64Format: {
             duint16 idx;
             from >> idx;
             floorMaterial= map.toMaterialId(idx, PlaneMaterials);
@@ -335,7 +335,7 @@ struct SectorDef : public Id1MapElement
         from >> type
              >> tag;
 
-        if(format == Id1Map::Doom64Format)
+        if(format == Id1MapRecognizer::Doom64Format)
             from >> d64flags;
     }
 };
@@ -373,11 +373,11 @@ struct Thing : public Id1MapElement
 
     void operator << (de::Reader &from)
     {
-        Id1Map::Format format = Id1Map::Format(from.version());
+        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
 
         switch(format)
         {
-        case Id1Map::DoomFormat: {
+        case Id1MapRecognizer::DoomFormat: {
 #define MTF_EASY            0x00000001 ///< Can be spawned in Easy skill modes.
 #define MTF_MEDIUM          0x00000002 ///< Can be spawned in Medium skill modes.
 #define MTF_HARD            0x00000004 ///< Can be spawned in Hard skill modes.
@@ -421,7 +421,7 @@ struct Thing : public Id1MapElement
 #undef MTF_EASY
             break; }
 
-        case Id1Map::Doom64Format: {
+        case Id1MapRecognizer::Doom64Format: {
 #define MTF_EASY              0x00000001 ///< Appears in easy skill modes.
 #define MTF_MEDIUM            0x00000002 ///< Appears in medium skill modes.
 #define MTF_HARD              0x00000004 ///< Appears in hard skill modes.
@@ -475,7 +475,7 @@ struct Thing : public Id1MapElement
 #undef MTF_EASY
             break; }
 
-        case Id1Map::HexenFormat: {
+        case Id1MapRecognizer::HexenFormat: {
 #define MTF_EASY            0x00000001
 #define MTF_MEDIUM          0x00000002
 #define MTF_HARD            0x00000004
@@ -601,245 +601,11 @@ struct Polyobj
 
 using namespace internal;
 
-DENG2_PIMPL_NOREF(Id1Map::Recognizer)
-{
-    lumpnum_t lastLump;
-    Lumps lumps;
-    String id;
-    Id1Map::Format format;
-
-    Instance() : lastLump(-1), format(Id1Map::UnknownFormat) {}
-};
-
-Id1Map::Recognizer::Recognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset)
-    : d(new Instance)
-{
-    LOG_AS("Id1Map::Recognizer");
-    LOG_RES_XVERBOSE("Locating data lumps...");
-
-    // Keep checking lumps to see if its a map data lump.
-    dint const numLumps = lumpIndex.size();
-    String sourceFile;
-    for(d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
-    {
-        // Lump name determines whether this lump is a candidate.
-        File1 &lump       = lumpIndex[d->lastLump];
-        DataType dataType = typeForLumpName(lump.name());
-
-        if(d->lumps.isEmpty())
-        {
-            // No sequence has yet begun. Continue the scan?
-            if(dataType == UnknownData) continue;
-
-            // Missing a header?
-            if(d->lastLump == 0) return;
-
-            // The id of the map is the name of the lump which precedes the first
-            // recognized data lump (which should be the header). Note that some
-            // ports include MAPINFO-like data in the header.
-            d->id = lumpIndex[d->lastLump - 1].name();
-            sourceFile = lump.container().composePath();
-        }
-        else
-        {
-            // The first unrecognized lump ends the sequence.
-            if(dataType == UnknownData) break;
-
-            // A lump from another source file also ends the sequence.
-            if(sourceFile.compareWithoutCase(lump.container().composePath()))
-                break;
-        }
-
-        // A recognized map data lump; record it in the collection (replacing any
-        // existing record of the same type).
-        d->lumps.insert(dataType, &lump);
-    }
-
-    if(d->lumps.isEmpty()) return;
-
-    // At this point we know we've found something that could be map data.
-
-    // Some data lumps are specific to a particular map format and thus their
-    // presence unambiguously identifies the format.
-    if(d->lumps.contains(BehaviorData))
-    {
-        d->format = Id1Map::HexenFormat;
-    }
-    else if(d->lumps.contains(MacroData) || d->lumps.contains(TintColorData) ||
-            d->lumps.contains(LeafData))
-    {
-        d->format = Id1Map::Doom64Format;
-    }
-    else
-    {
-        d->format = Id1Map::DoomFormat;
-    }
-
-    // Determine whether each data lump is of the expected size.
-    duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    DENG2_FOR_EACH_CONST(Lumps, i, d->lumps)
-    {
-        DataType const dataType = i.key();
-        File1 const &lump       = *i.value();
-
-        // Determine the number of map data objects of each data type.
-        duint *elemCountAddr = 0;
-        dsize const elemSize = elementSizeForDataType(d->format, dataType);
-
-        switch(dataType)
-        {
-        default: break;
-
-        case VertexData:    elemCountAddr = &numVertexes; break;
-        case ThingData:     elemCountAddr = &numThings;   break;
-        case LineDefData:   elemCountAddr = &numLines;    break;
-        case SideDefData:   elemCountAddr = &numSides;    break;
-        case SectorDefData: elemCountAddr = &numSectors;  break;
-        case TintColorData: elemCountAddr = &numLights;   break;
-        }
-
-        if(elemCountAddr)
-        {
-            if(lump.size() % elemSize != 0)
-            {
-                // What *is* this??
-                d->format = Id1Map::UnknownFormat;
-                d->id.clear();
-                return;
-            }
-
-            *elemCountAddr += lump.size() / elemSize;
-        }
-    }
-
-    // A valid map contains at least one of each of these element types.
-    /// @todo Support loading "empty" maps.
-    if(!numVertexes || !numLines || !numSides || !numSectors)
-    {
-        d->format = Id1Map::UnknownFormat;
-        d->id.clear();
-        return;
-    }
-
-    //LOG_RES_VERBOSE("Recognized %s format map") << Id1Map::formatName(d->format);
-}
-
-String const &Id1Map::Recognizer::mapId() const
-{
-    return d->id;
-}
-
-Id1Map::Format Id1Map::Recognizer::mapFormat() const
-{
-    return d->format;
-}
-
-Id1Map::Recognizer::Lumps const &Id1Map::Recognizer::lumps() const
-{
-    return d->lumps;
-}
-
-lumpnum_t Id1Map::Recognizer::lastLump() const
-{
-    return d->lastLump;
-}
-
-/// @todo Optimize: Replace linear search...
-Id1Map::Recognizer::DataType Id1Map::Recognizer::typeForLumpName(String name) // static
-{
-    static const struct LumpTypeInfo {
-        String name;
-        DataType type;
-    } lumpTypeInfo[] =
-    {
-        { "THINGS",     ThingData       },
-        { "LINEDEFS",   LineDefData     },
-        { "SIDEDEFS",   SideDefData     },
-        { "VERTEXES",   VertexData      },
-        { "SEGS",       SegData         },
-        { "SSECTORS",   SubsectorData   },
-        { "NODES",      NodeData        },
-        { "SECTORS",    SectorDefData   },
-        { "REJECT",     RejectData      },
-        { "BLOCKMAP",   BlockmapData    },
-        { "BEHAVIOR",   BehaviorData    },
-        { "SCRIPTS",    ScriptData      },
-        { "LIGHTS",     TintColorData   },
-        { "MACROS",     MacroData       },
-        { "LEAFS",      LeafData        },
-        { "GL_VERT",    GLVertexData    },
-        { "GL_SEGS",    GLSegData       },
-        { "GL_SSECT",   GLSubsectorData },
-        { "GL_NODES",   GLNodeData      },
-        { "GL_PVS",     GLPVSData       },
-        { "",           UnknownData     }
-    };
-
-    // Ignore the file extension if present.
-    name = name.fileNameWithoutExtension();
-
-    if(!name.isEmpty())
-    {
-        for(dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
-        {
-            LumpTypeInfo const &info = lumpTypeInfo[i];
-            if(!info.name.compareWithoutCase(name) &&
-               info.name.length() == name.length())
-            {
-                return info.type;
-            }
-        }
-    }
-
-    return UnknownData;
-}
-
-dsize Id1Map::Recognizer::elementSizeForDataType(Id1Map::Format mapFormat, DataType dataType) // static
-{
-    dsize const SIZEOF_64VERTEX  = (4 * 2);
-    dsize const SIZEOF_VERTEX    = (2 * 2);
-    dsize const SIZEOF_SIDEDEF   = (2 * 3 + 8 * 3);
-    dsize const SIZEOF_64SIDEDEF = (2 * 6);
-    dsize const SIZEOF_LINEDEF   = (2 * 7);
-    dsize const SIZEOF_64LINEDEF = (2 * 6 + 1 * 4);
-    dsize const SIZEOF_XLINEDEF  = (2 * 5 + 1 * 6);
-    dsize const SIZEOF_SECTOR    = (2 * 5 + 8 * 2);
-    dsize const SIZEOF_64SECTOR  = (2 * 12);
-    dsize const SIZEOF_THING     = (2 * 5);
-    dsize const SIZEOF_64THING   = (2 * 7);
-    dsize const SIZEOF_XTHING    = (2 * 7 + 1 * 6);
-    dsize const SIZEOF_LIGHT     = (1 * 6);
-
-    switch(dataType)
-    {
-    default: return 0;
-
-    case VertexData:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-
-    case LineDefData:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64LINEDEF :
-                mapFormat == Id1Map::HexenFormat ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
-
-    case SideDefData:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-
-    case SectorDefData:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-
-    case ThingData:
-        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64THING :
-                mapFormat == Id1Map::HexenFormat ? SIZEOF_XTHING  : SIZEOF_THING);
-
-    case TintColorData: return SIZEOF_LIGHT;
-    }
-}
-
 static uint validCount = 0; ///< Used with Polyobj LineDef collection.
 
 DENG2_PIMPL(Id1Map)
 {
-    Format format;
+    Id1MapRecognizer::Format format;
 
     QVector<coord_t> vertCoords;  ///< Position coords [v0:X, vo:Y, v1:X, v1:Y, ...]
 
@@ -903,7 +669,7 @@ DENG2_PIMPL(Id1Map)
         }
     } materials;
 
-    Instance(Public *i) : Base(i), format(UnknownFormat)
+    Instance(Public *i) : Base(i), format(Id1MapRecognizer::UnknownFormat)
     {}
 
     inline dint vertexCount() const {
@@ -921,20 +687,20 @@ DENG2_PIMPL(Id1Map)
 
     void readVertexes(de::Reader &from, dint numElements)
     {
-        Id1Map::Format format = Id1Map::Format(from.version());
+        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
         for(dint n = 0; n < numElements; ++n)
         {
             switch(format)
             {
             default:
-            case DoomFormat: {
+            case Id1MapRecognizer::DoomFormat: {
                 dint16 x, y;
                 from >> x >> y;
                 vertCoords[n * 2]     = x;
                 vertCoords[n * 2 + 1] = y;
                 break; }
 
-            case Doom64Format: {
+            case Id1MapRecognizer::Doom64Format: {
                 dint32 x, y;
                 from >> x >> y;
                 vertCoords[n * 2]     = FIX2FLT(x);
@@ -1152,7 +918,7 @@ DENG2_PIMPL(Id1Map)
     {
         Time begunAt;
 
-        if(format == HexenFormat)
+        if(format == Id1MapRecognizer::HexenFormat)
         {
             LOGDEV_MAP_XVERBOSE("Locating polyobjs...");
             DENG2_FOR_EACH(Things, i, things)
@@ -1198,7 +964,7 @@ DENG2_PIMPL(Id1Map)
             MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
             MPE_GameObjProperty("XSector", idx, "Type",   DDVT_SHORT, &i->type);
 
-            if(format == Doom64Format)
+            if(format == Id1MapRecognizer::Doom64Format)
             {
                 MPE_GameObjProperty("XSector", idx, "Flags",          DDVT_SHORT, &i->d64flags);
                 MPE_GameObjProperty("XSector", idx, "CeilingColor",   DDVT_SHORT, &i->d64ceilingColor);
@@ -1218,7 +984,7 @@ DENG2_PIMPL(Id1Map)
             SideDef *front = (i->hasFront()? &sides[i->front()] : 0);
             SideDef *back  = (i->hasBack() ? &sides[i->back() ] : 0);
 
-            dint sideFlags = (format == Doom64Format? SDF_MIDDLE_STRETCH : 0);
+            dint sideFlags = (format == Id1MapRecognizer::Doom64Format? SDF_MIDDLE_STRETCH : 0);
 
             // Interpret the lack of a ML_TWOSIDED line flag to mean the
             // suppression of the side relative back sector.
@@ -1255,12 +1021,12 @@ DENG2_PIMPL(Id1Map)
             switch(format)
             {
             default:
-            case DoomFormat:
+            case Id1MapRecognizer::DoomFormat:
                 MPE_GameObjProperty("XLinedef", lineIdx, "Type",  DDVT_SHORT, &i->dType);
                 MPE_GameObjProperty("XLinedef", lineIdx, "Tag",   DDVT_SHORT, &i->dTag);
                 break;
 
-            case Doom64Format:
+            case Id1MapRecognizer::Doom64Format:
                 MPE_GameObjProperty("XLinedef", lineIdx, "DrawFlags", DDVT_BYTE,  &i->d64drawFlags);
                 MPE_GameObjProperty("XLinedef", lineIdx, "TexFlags",  DDVT_BYTE,  &i->d64texFlags);
                 MPE_GameObjProperty("XLinedef", lineIdx, "Type",      DDVT_BYTE,  &i->d64type);
@@ -1268,7 +1034,7 @@ DENG2_PIMPL(Id1Map)
                 MPE_GameObjProperty("XLinedef", lineIdx, "Tag",       DDVT_SHORT, &i->d64tag);
                 break;
 
-            case HexenFormat:
+            case Id1MapRecognizer::HexenFormat:
                 MPE_GameObjProperty("XLinedef", lineIdx, "Type", DDVT_BYTE, &i->xType);
                 MPE_GameObjProperty("XLinedef", lineIdx, "Arg0", DDVT_BYTE, &i->xArgs[0]);
                 MPE_GameObjProperty("XLinedef", lineIdx, "Arg1", DDVT_BYTE, &i->xArgs[1]);
@@ -1329,11 +1095,11 @@ DENG2_PIMPL(Id1Map)
             MPE_GameObjProperty("Thing", idx, "SkillModes",   DDVT_INT,   &i->skillModes);
             MPE_GameObjProperty("Thing", idx, "Flags",        DDVT_INT,   &i->flags);
 
-            if(format == Doom64Format)
+            if(format == Id1MapRecognizer::Doom64Format)
             {
                 MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->d64TID);
             }
-            else if(format == HexenFormat)
+            else if(format == Id1MapRecognizer::HexenFormat)
             {
                 MPE_GameObjProperty("Thing", idx, "Special",  DDVT_BYTE,  &i->xSpecial);
                 MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->xTID);
@@ -1387,28 +1153,28 @@ DENG2_PIMPL(Id1Map)
     }
 };
 
-Id1Map::Id1Map(Recognizer const &recognized)
+Id1Map::Id1Map(Id1MapRecognizer const &recognized)
     : d(new Instance(this))
 {
-    d->format = recognized.mapFormat();
-    if(d->format == UnknownFormat)
+    d->format = recognized.format();
+    if(d->format == Id1MapRecognizer::UnknownFormat)
         throw LoadError("Id1Map", "Format unrecognized");
 
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    duint vertexCount = recognized.lumps().find(Recognizer::VertexData).value()->size()
-                      / Recognizer::elementSizeForDataType(d->format, Recognizer::VertexData);
+    duint vertexCount = recognized.lumps().find(Id1MapRecognizer::VertexData).value()->size()
+                      / Id1MapRecognizer::elementSizeForDataType(d->format, Id1MapRecognizer::VertexData);
     d->vertCoords.resize(vertexCount * 2);
 
-    DENG2_FOR_EACH_CONST(Recognizer::Lumps, i, recognized.lumps())
+    DENG2_FOR_EACH_CONST(Id1MapRecognizer::Lumps, i, recognized.lumps())
     {
-        Recognizer::DataType dataType = i.key();
+        Id1MapRecognizer::DataType dataType = i.key();
         File1 *lump = i.value();
 
         dsize lumpLength = lump->size();
         if(!lumpLength) continue;
 
-        dsize elemSize = Recognizer::elementSizeForDataType(d->format, dataType);
+        dsize elemSize = Id1MapRecognizer::elementSizeForDataType(d->format, dataType);
         if(!elemSize) continue;
 
         // Process this data lump.
@@ -1420,12 +1186,12 @@ Id1Map::Id1Map(Recognizer const &recognized)
         {
         default: break;
 
-        case Recognizer::VertexData:    d->readVertexes(reader, elemCount);   break;
-        case Recognizer::LineDefData:   d->readLineDefs(reader, elemCount);   break;
-        case Recognizer::SideDefData:   d->readSideDefs(reader, elemCount);   break;
-        case Recognizer::SectorDefData: d->readSectorDefs(reader, elemCount); break;
-        case Recognizer::ThingData:     d->readThings(reader, elemCount);     break;
-        case Recognizer::TintColorData: d->readTintColors(reader, elemCount); break;
+        case Id1MapRecognizer::VertexData:    d->readVertexes(reader, elemCount);   break;
+        case Id1MapRecognizer::LineDefData:   d->readLineDefs(reader, elemCount);   break;
+        case Id1MapRecognizer::SideDefData:   d->readSideDefs(reader, elemCount);   break;
+        case Id1MapRecognizer::SectorDefData: d->readSectorDefs(reader, elemCount); break;
+        case Id1MapRecognizer::ThingData:     d->readThings(reader, elemCount);     break;
+        case Id1MapRecognizer::TintColorData: d->readTintColors(reader, elemCount); break;
         }
 
         lump->unlock();
@@ -1451,21 +1217,6 @@ void Id1Map::transfer(de::Uri const &uri)
     MPE_End();
 
     LOGDEV_MAP_VERBOSE("Transfer completed in %.2f seconds") << begunAt.since();
-}
-
-String const &Id1Map::formatName(Format id) // static
-{
-    static String const names[1 + KnownFormatCount] = {
-        /* MF_UNKNOWN */ "Unknown",
-        /* MF_DOOM    */ "id Tech 1 (Doom)",
-        /* MF_HEXEN   */ "id Tech 1 (Hexen)",
-        /* MF_DOOM64  */ "id Tech 1 (Doom64)"
-    };
-    if(id >= DoomFormat && id < KnownFormatCount)
-    {
-        return names[1 + id];
-    }
-    return names[0];
 }
 
 MaterialId Id1Map::toMaterialId(String name, MaterialGroup group)

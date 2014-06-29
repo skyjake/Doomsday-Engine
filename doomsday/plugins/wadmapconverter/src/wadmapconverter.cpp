@@ -45,7 +45,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 
     // Collate map data lumps and attempt to recognize the format.
     Id1MapRecognizer recognizer(lumpIndex, lumpIndexOffset);
-    if(recognizer.mapFormat() != Id1Map::UnknownFormat)
+    if(recognizer.format() != Id1MapRecognizer::UnknownFormat)
     {
         // Attempt a conversion...
         try
