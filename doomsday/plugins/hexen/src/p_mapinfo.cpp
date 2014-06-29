@@ -124,7 +124,7 @@ void MapInfoParser(Str const *path)
                 if(!info)
                 {
                     // A new map info.
-                    info = &mapInfos[mapUri.compose().toUtf8().constData()];
+                    info = &mapInfos[mapUri.compose().toLower().toUtf8().constData()];
 
                     // Initialize with the default values.
                     std::memcpy(info, &defMapInfo, sizeof(*info));
@@ -246,7 +246,7 @@ mapinfo_t *P_MapInfo(de::Uri const *mapUri)
 {
     if(!mapUri) mapUri = &gameMapUri;
 
-    MapInfos::iterator found = mapInfos.find(mapUri->compose().toStdString());
+    MapInfos::iterator found = mapInfos.find(mapUri->compose().toLower().toStdString());
     if(found != mapInfos.end())
     {
         return &found->second;

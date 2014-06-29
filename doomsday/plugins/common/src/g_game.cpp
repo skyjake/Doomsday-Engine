@@ -86,6 +86,9 @@ D_CMD(HelpScreen);
 
 D_CMD(ListMaps);
 D_CMD(WarpMap);
+#if __JDOOM__ || __JHERETIC__
+D_CMD(WarpEpisodeMap);
+#endif
 
 D_CMD(LoadSession);
 D_CMD(SaveSession);
@@ -384,15 +387,15 @@ void G_Register()
         Con_AddCommand(gameCmds + i);
     }
 
-    C_CMD("warp", "i", WarpMap);
-    C_CMD("setmap", "i", WarpMap); // alias
+    C_CMD("warp", "s", WarpMap);
+    C_CMD("setmap", "s", WarpMap); // alias
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__
     if(!(gameModeBits & GM_ANY_DOOM2))
 # endif
     {
-        C_CMD("warp", "ii", WarpMap);
-        C_CMD("setmap", "ii", WarpMap); // alias
+        C_CMD("warp", "ii", WarpEpisodeMap);
+        C_CMD("setmap", "ii", WarpEpisodeMap); // alias
     }
 #endif
 }
@@ -3134,7 +3137,7 @@ D_CMD(CycleTextureGamma)
  *
  * @note "setmap" is an alias of "warp"
  */
-D_CMD(WarpMap)
+static bool G_WarpMap(de::Uri const &newMapUri)
 {
     bool const forceNewSession = IS_NETGAME != 0;
 
@@ -3145,54 +3148,11 @@ D_CMD(WarpMap)
         return false;
     }
 
-    uint epsd, map;
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
-# if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
-# endif
-    {
-        // "warp M":
-        epsd = 0;
-        map = de::max(0, de::String(argv[1]).toInt());
-    }
-#endif
-#if __JDOOM__
-    else
-#endif
-#if __JDOOM__ || __JHERETIC__
-        if(argc == 2)
-    {
-        // "warp EM" or "warp M":
-        int num = de::String(argv[1]).toInt();
-        epsd = de::max(0, num / 10);
-        map  = de::max(0, num % 10);
-    }
-    else // (argc == 3)
-    {
-        // "warp E M":
-        epsd = de::max(0, de::String(argv[1]).toInt());
-        map  = de::max(0, de::String(argv[2]).toInt());
-    }
-#endif
-
-    // Internally epsiode and map numbers are zero-based.
-    if(epsd != 0) epsd -= 1;
-    if(map != 0)  map  -= 1;
-
     // Catch invalid maps.
-#if __JHEXEN__
-    // Hexen map numbers require translation.
-    map = P_TranslateMapIfExists(map);
-#endif
-
-    if(!G_ValidateMap(&epsd, &map))
+    if(!P_MapExists(newMapUri.compose().toUtf8().constData()))
     {
-        char const *fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
-    de::Uri newMapUri = G_ComposeMapUri(epsd, map);
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
@@ -3217,7 +3177,7 @@ D_CMD(WarpMap)
     if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
     {
 #if __JHEXEN__
-        nextMap         = map;
+        nextMap         = G_MapNumberFor(newMapUri);
         nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
@@ -3227,6 +3187,66 @@ D_CMD(WarpMap)
     else
     {
         G_SetGameActionNewSession(newMapUri, 0/*default*/, defaultGameRules);
+    }
+
+    return true;
+}
+
+D_CMD(WarpMap)
+{
+    bool isNumber;
+    int number = de::String(argv[1]).toInt(&isNumber);
+
+    de::Uri newMapUri;
+    if(!isNumber)
+    {
+        // It must be a URI, then.
+        newMapUri = de::Uri::fromUserInput(argv + 1, 1);
+    }
+    else
+    {
+        uint epsd, map;
+
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
+# if __JDOOM__
+        if(gameModeBits & GM_ANY_DOOM2)
+# endif
+        {
+            // "warp M":
+            epsd = 0;
+            map = de::max(0, number);
+        }
+#endif
+#if __JDOOM__
+        else
+#endif
+#if __JDOOM__ || __JHERETIC__
+            if(argc == 2)
+        {
+            // "warp EM" or "warp M":
+            epsd = de::max(0, number / 10);
+            map  = de::max(0, number % 10);
+        }
+#endif
+        // Internally epsiode and map numbers are zero-based.
+        if(epsd != 0) epsd -= 1;
+        if(map != 0)  map  -= 1;
+
+#if __JHEXEN__
+        // Hexen map numbers require translation.
+        map = P_TranslateMapIfExists(map);
+#endif
+
+        // Compose a map URI for the given episode and map pair using the default
+        // format specific to the game (and mode).
+        newMapUri = G_ComposeMapUri(epsd, map);
+    }
+
+    if(!G_WarpMap(newMapUri))
+    {
+        String msg = String("Unknown map \"%1\"").arg(argv[1]);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
+        return false;
     }
 
     // If the command source was "us" the game library then it was probably in
@@ -3251,3 +3271,44 @@ D_CMD(WarpMap)
 
     return true;
 }
+
+#if __JDOOM__ || __JHERETIC__
+D_CMD(WarpEpisodeMap)
+{
+    uint epsd = de::max(0, de::String(argv[1]).toInt());
+    uint map  = de::max(0, de::String(argv[2]).toInt());
+
+    // Internally epsiode and map numbers are zero-based.
+    if(epsd != 0) epsd -= 1;
+    if(map != 0)  map  -= 1;
+
+    if(!G_WarpMap(G_ComposeMapUri(epsd, map)))
+    {
+        String msg = String("Unknown map \"%1 %2\"").arg(argv[1]).arg(argv[2]);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
+        return false;
+    }
+
+    // If the command source was "us" the game library then it was probably in
+    // response to the local player entering a cheat event sequence, so set the
+    // "CHANGING MAP" message.
+    // Somewhat of a kludge...
+    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    {
+#if __JHEXEN__
+        char const *msg = TXT_CHEATWARP;
+        int soundId     = SFX_PLATFORM_STOP;
+#elif __JHERETIC__
+        char const *msg = TXT_CHEATWARP;
+        int soundId     = SFX_DORCLS;
+#else //__JDOOM__ || __JDOOM64__
+        char const *msg = STSTR_CLEV;
+        int soundId     = SFX_NONE;
+#endif
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
+        S_LocalSound(soundId, NULL);
+    }
+
+    return true;
+}
+#endif // __JDOOM__ || __JHERETIC__
