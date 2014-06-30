@@ -450,6 +450,14 @@ public:
         return static_cast<Type &>(PathTree::find(path, flags));
     }
 
+    inline Type const *tryFind(Path const &path, ComparisonFlags flags) const {
+        return static_cast<Type const *>(PathTree::tryFind(path, flags));
+    }
+
+    inline Type *tryFind(Path const &path, ComparisonFlags flags) {
+        return static_cast<Type *>(PathTree::tryFind(path, flags));
+    }
+
     inline int traverse(ComparisonFlags flags, Type const *parent, Path::hash_type hashKey,
                         int (*callback) (Type &node, void *parameters), void *parameters = 0) const {
         return PathTree::traverse(flags, parent, hashKey,
