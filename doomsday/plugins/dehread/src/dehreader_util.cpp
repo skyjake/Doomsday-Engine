@@ -27,11 +27,11 @@ de::Uri composeMapUri(int episode, int map)
 {
     if(episode > 0) // ExMy format.
     {
-        return de::Uri(String("E%1M%2").arg(episode).arg(map), RC_NULL);
+        return de::Uri("Maps", String("E%1M%2").arg(episode).arg(map));
     }
     else // MAPxx format.
     {
-        return de::Uri(String("MAP%1").arg(map % 100, 2, 10, QChar('0')), RC_NULL);
+        return de::Uri("Maps", String("MAP%1").arg(map % 100, 2, 10, QChar('0')));
     }
 }
 

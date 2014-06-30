@@ -228,30 +228,30 @@ DENG_API_TYPEDEF(Map)
     de_api_t api;
 
     /**
-     * Is there a known map referenced by @a uri and if so, is it available for
-     * loading?
-     *
-     * @param uri  Uri identifying the map to be searched for.
-     * @return  @c true: a known and loadable map.
+     * Determines whether the given @a uri references a known map.
      */
     dd_bool         (*Exists)(char const *uri);
 
+    /**
+     * Determines whether the given @a uri references a known map, which, does
+     * not originate form the currently loaded game.
+     */
     dd_bool         (*IsCustom)(char const *uri);
 
     /**
-     * Retrieve the name of the source file containing the map referenced by @a
-     * uri if known and available for loading.
+     * Determines whether the given @a uri references a known map and if so returns
+     * the full path of the source file which contains it.
      *
-     * @param uri  Uri identifying the map to be searched for.
-     * @return  Fully qualified (i.e., absolute) path to the source file.
+     * @return  Fully qualified (i.e., absolute) path to the source file if known;
+     *          otherwise a zero-length string.
      */
     AutoStr        *(*SourceFile)(char const *uri);
 
     /**
-     * Change the current map (will be loaded if necessary).
+     * Attempt to change the current map (will be loaded if necessary) to that
+     * referenced by @a uri.
      *
-     * @param uri  Uri identifying the map to change to.
-     * @return  @c true= map was changed successfully.
+     * @return  @c true= the current map was changed.
      */
     dd_bool         (*Change)(char const *uri);
 

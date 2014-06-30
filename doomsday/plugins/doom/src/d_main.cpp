@@ -495,7 +495,7 @@ void D_PostInit()
         }
     }
 
-    if(startMapUri.isEmpty())
+    if(startMapUri.path().isEmpty())
     {
         startMapUri = G_ComposeMapUri(0, 0);
     }

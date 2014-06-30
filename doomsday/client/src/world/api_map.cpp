@@ -1471,13 +1471,15 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 #undef P_MapExists
 DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
-    return App_ResourceSystem().allMapDefs().has(de::Uri(uriCString, RC_NULL).path(), ResourceSystem::MapDefs::NoBranch);
+    if(!uriCString || !uriCString[0]) return false;
+    return App_ResourceSystem().mapDef(de::Uri(uriCString, RC_NULL)) != 0;
 }
 
 #undef P_MapIsCustom
 DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
-    if(MapDef const *mapDef = App_ResourceSystem().allMapDefs().tryFind(de::Uri(uriCString, RC_NULL).path(), ResourceSystem::MapDefs::NoBranch))
+    if(!uriCString || !uriCString[0]) return false;
+    if(MapDef const *mapDef = App_ResourceSystem().mapDef(de::Uri(uriCString, RC_NULL)))
     {
         return mapDef->sourceFile()->hasCustom();
     }
@@ -1487,7 +1489,8 @@ DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 #undef P_MapSourceFile
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
-    if(MapDef const *mapDef = App_ResourceSystem().allMapDefs().tryFind(de::Uri(uriCString, RC_NULL).path(), ResourceSystem::MapDefs::NoBranch))
+    if(!uriCString || !uriCString[0]) return false;
+    if(MapDef const *mapDef = App_ResourceSystem().mapDef(de::Uri(uriCString, RC_NULL)))
     {
         return AutoStr_FromTextStd(mapDef->sourceFile()->composePath().toUtf8().constData());
     }

@@ -682,7 +682,7 @@ D_CMD(CheatWhere)
     if(!plrMo) return true;
 
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        gameMapUri.asText().toUtf8().constData(),
+                        gameMapUri.path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 

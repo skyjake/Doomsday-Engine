@@ -1202,7 +1202,7 @@ static void printMapBanner()
 
     if(char const *title = P_MapTitle(0/*current map*/))
     {
-        de::String text = de::String("Map: ") + gameMapUri.asText();
+        de::String text = de::String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
         mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         text += de::String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
@@ -2322,10 +2322,10 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
     de::String description;
 
     // Include the source file name, for custom maps.
-    de::String mapPath = gameMapUri.compose();
-    if(P_MapIsCustom(mapPath.toUtf8().constData()))
+    de::String mapUriAsText = gameMapUri.compose();
+    if(P_MapIsCustom(mapUriAsText.toUtf8().constData()))
     {
-        de::String const &mapSourcePath = de::String(Str_Text(P_MapSourceFile(mapPath.toUtf8().constData())));
+        de::String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText.toUtf8().constData())));
         description += mapSourcePath.fileNameWithoutExtension() + ":";
     }
 
@@ -2335,7 +2335,7 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
     /// @todo Move this logic engine-side.
     if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')
     {
-        mapTitle = mapPath;
+        mapTitle = gameMapUri.path();
     }
     description += mapTitle;
 
@@ -2474,7 +2474,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #endif
-    return de::Uri(mapId, RC_NULL);
+    return de::Uri("Maps", mapId);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
@@ -3202,6 +3202,8 @@ D_CMD(WarpMap)
     {
         // It must be a URI, then.
         newMapUri = de::Uri::fromUserInput(argv + 1, 1);
+        if(newMapUri.scheme().isEmpty())
+            newMapUri.setScheme("Maps");
     }
     else
     {

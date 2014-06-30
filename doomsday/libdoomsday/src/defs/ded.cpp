@@ -204,7 +204,12 @@ int DED_AddMapInfo(ded_t* ded, char const* uri)
     ded_mapinfo_t* inf = ded->mapInfo.append();
     int i;
 
-    if(uri) inf->uri = new de::Uri(uri, RC_NULL);
+    if(uri)
+    {
+        inf->uri = new de::Uri(uri, RC_NULL);
+        if(inf->uri->scheme().isEmpty())
+            inf->uri->setScheme("Maps");
+    }
     inf->gravity = 1;
     inf->parTime = -1; // unknown
 

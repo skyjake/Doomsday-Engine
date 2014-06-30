@@ -186,7 +186,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        mapsFolder.replaceFile(gameMapUri.compose() + "State")
+        mapsFolder.replaceFile(gameMapUri.path() + "State")
                 << serializeCurrentMapState();
 
         saved->flush(); // No need to populate; FS2 Files already in sync with source data.
@@ -343,9 +343,10 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
      * Constructs a MapStateReader for serialized map state format interpretation.
      */
     std::auto_ptr<SavedSession::MapStateReader> makeMapStateReader(
-        SavedSession const &session, String const &mapUriStr)
+        SavedSession const &session, String const &mapUriAsText)
     {
-        File const &mapStateFile = session.locateState<File const>(String("maps") / mapUriStr);
+        de::Uri const mapUri(mapUriAsText, RC_NULL);
+        File const &mapStateFile = session.locateState<File const>(String("maps") / mapUri.path());
         if(!SV_OpenFileForRead(mapStateFile))
         {
             /// @throw Error The serialized map state file could not be opened for read.
@@ -465,8 +466,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         ::mapTime = metadata.geti("mapTime");
 #endif
 
-        String mapUriStr = ::gameMapUri.resolved();
-        makeMapStateReader(saved, mapUriStr)->read(mapUriStr);
+        makeMapStateReader(saved, ::gameMapUri)->read(::gameMapUri.compose());
     }
 
     void setMap(de::Uri const &mapUri)
@@ -552,8 +552,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 #endif
 
             SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
-            String const mapUriStr = gameMapUri.compose();
-            makeMapStateReader(saved, mapUriStr)->read(mapUriStr);
+            String const gameMapUriAsText = ::gameMapUri.compose();
+            makeMapStateReader(saved, gameMapUriAsText)->read(gameMapUriAsText);
         }
 
         if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
@@ -980,7 +980,7 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         else
         {
-            File &outFile = mapsFolder.replaceFile(gameMapUri.compose() + "State");
+            File &outFile = mapsFolder.replaceFile(gameMapUri.path() + "State");
             outFile << serializeCurrentMapState(true /*exclude players*/);
             // We'll flush whole package soon.
         }
@@ -1016,7 +1016,7 @@ void GameSession::leaveMap()
     ::gameMapEntrance = ::nextMapEntrance;
 
     // Are we revisiting a previous map?
-    bool const revisit = saved && saved->hasState(String("maps") / gameMapUri.compose());
+    bool const revisit = saved && saved->hasState(String("maps") / gameMapUri.path());
 
     d->reloadMap(revisit);
 
@@ -1064,7 +1064,7 @@ void GameSession::leaveMap()
         Folder &mapsFolder = saved->locate<Folder>("maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        File &outFile = mapsFolder.replaceFile(gameMapUri.compose() + "State");
+        File &outFile = mapsFolder.replaceFile(gameMapUri.path() + "State");
         outFile << serializeCurrentMapState();
 
         // Write all changes to the package.

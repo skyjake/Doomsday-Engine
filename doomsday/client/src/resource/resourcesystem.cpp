@@ -3476,6 +3476,13 @@ void ResourceSystem::clearAllMapDefs()
     d->mapDefs.clear();
 }
 
+MapDef *ResourceSystem::mapDef(de::Uri const &mapUri) const
+{
+    // Only one resource scheme is known for maps.
+    if(mapUri.scheme().compareWithoutCase("Maps")) return 0;
+    return d->mapDefs.tryFind(mapUri.path(), MapDefs::MatchFull | MapDefs::NoBranch);
+}
+
 ResourceSystem::MapDefs const &ResourceSystem::allMapDefs() const
 {
     return d->mapDefs;

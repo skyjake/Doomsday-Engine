@@ -426,7 +426,7 @@ DENG2_PIMPL(WorldSystem)
         if(!map)
         {
             LOG_WARNING("Failed conversion of \"%s\".") << mapDef.id();
-            //rec.lastLoadAttemptFailed = true;
+            //mapDef.lastLoadAttemptFailed = true;
         }
         return map;
     }
@@ -444,14 +444,13 @@ DENG2_PIMPL(WorldSystem)
         DENG2_ASSERT(!map->isEditable());
 
         // Should we cache this map?
-        /*MapCacheRecord &rec = createCacheRecord(map->uri());
-        if(mapCache && !rec.dataAvailable)
+        /*if(mapCache && !haveCachedMap(&map->def()))
         {
             // Ensure the destination directory exists.
-            F_MakePath(rec.cachePath.toUtf8().constData());
+            F_MakePath(map->def().cachePath.toUtf8().constData());
 
             // Cache the map!
-            DAM_MapWrite(map, rec.cachePath);
+            DAM_MapWrite(map);
         }*/
 
 #ifdef __CLIENT__
@@ -468,23 +467,23 @@ DENG2_PIMPL(WorldSystem)
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));
+        ded_mapinfo_t *mapInfo = defs.getMapInfo(&map->uri());
         if(!mapInfo)
         {
             // Use the default def instead.
             Uri defaultMapUri(Path("*"));
-            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
+            mapInfo = defs.getMapInfo(&defaultMapUri);
         }
 
         if(mapInfo)
         {
-            map->_globalGravity = mapInfo->gravity;
+            map->_globalGravity     = mapInfo->gravity;
             map->_ambientLightLevel = mapInfo->ambient * 255;
         }
         else
         {
             // No map info found -- apply defaults.
-            map->_globalGravity = 1.0f;
+            map->_globalGravity     = 1.0f;
             map->_ambientLightLevel = 0;
         }
 
@@ -766,17 +765,17 @@ Map &WorldSystem::map() const
     throw MapError("WorldSystem::map", "No map is currently loaded");
 }
 
-bool WorldSystem::changeMap(de::Uri const &uri)
+bool WorldSystem::changeMap(de::Uri const &mapUri)
 {
     MapDef *mapDef = 0;
 
-    if(!uri.isEmpty())
+    if(!mapUri.path().isEmpty())
     {
-        mapDef = App_ResourceSystem().allMapDefs().tryFind(uri.path(), ResourceSystem::MapDefs::MatchFull | ResourceSystem::MapDefs::NoBranch);
+        mapDef = App_ResourceSystem().mapDef(mapUri);
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.
-    if(!uri.isEmpty() && !BusyMode_Active())
+    if(!mapUri.path().isEmpty() && !BusyMode_Active())
     {
         Instance::changemapworker_params_t parm;
         parm.inst   = d;

@@ -1159,14 +1159,14 @@ char const *P_MapAuthor(uri_s const *mapUri, dd_bool supressGameAuthor)
 {
     if(!mapUri) mapUri = reinterpret_cast<uri_s const *>(&gameMapUri);
 
-    AutoStr *path = Uri_Resolved(mapUri);
-    if(!path || Str_IsEmpty(path))
+    AutoStr *mapUriAsText = Uri_Resolved(mapUri);
+    if(!mapUriAsText || Str_IsEmpty(mapUriAsText))
         return 0;
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
     char const *author = 0;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(path), &mapInfo))
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriAsText), &mapInfo))
     {
         author = mapInfo.author;
     }
@@ -1178,7 +1178,7 @@ char const *P_MapAuthor(uri_s const *mapUri, dd_bool supressGameAuthor)
     /// @todo Do not do this here.
     GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
-    if(supressGameAuthor || P_MapIsCustom(Str_Text(path)))
+    if(supressGameAuthor || P_MapIsCustom(Str_Text(mapUriAsText)))
     {
         if(!Str_CompareIgnoreCase(gameInfo.author, author))
             return 0;

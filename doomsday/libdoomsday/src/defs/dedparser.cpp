@@ -1636,7 +1636,7 @@ DENG2_PIMPL(DEDParser)
                 for(;;)
                 {
                     READLABEL;
-                    RV_URI("ID", &mi->uri, NULL)
+                    RV_URI("ID", &mi->uri, "Maps")
                     RV_STR("Name", mi->name)
                     RV_STR("Author", mi->author)
                     RV_FLAGS("Flags", mi->flags, "mif_")

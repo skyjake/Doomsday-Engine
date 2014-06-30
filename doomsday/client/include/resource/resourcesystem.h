@@ -83,7 +83,7 @@ public:
         return de::String("%1|%2|%3|%4")
                   .arg(id().fileNameWithoutExtension())
                   .arg(sourceFile()->name().fileNameWithoutExtension())
-                  .arg(sourceFile()->container().hasCustom()? "pwad" : "iwad")
+                  .arg(sourceFile()->hasCustom()? "pwad" : "iwad")
                   .arg(currentGame.identityKey())
                   .toLower();
     }
@@ -781,6 +781,11 @@ public:
     void releaseFontGLTexturesByScheme(de::String schemeName);
 
 #endif // __CLIENT__
+
+    /**
+     * Convenient method of locating a MapDef for the given @a mapUri.
+     */
+    MapDef *mapDef(de::Uri const &mapUri) const;
 
     /**
      * Provides immutable access to a list containing all MapDefs in the system,

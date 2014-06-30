@@ -408,7 +408,7 @@ void X_PostInit()
         autoStart = true;
     }
 
-    if(startMapUri.isEmpty())
+    if(startMapUri.path().isEmpty())
     {
         startMapUri = G_ComposeMapUri(0, P_TranslateMap(0));
     }

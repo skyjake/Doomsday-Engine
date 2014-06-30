@@ -246,7 +246,9 @@ mapinfo_t *P_MapInfo(de::Uri const *mapUri)
 {
     if(!mapUri) mapUri = &gameMapUri;
 
-    MapInfos::iterator found = mapInfos.find(mapUri->compose().toLower().toStdString());
+    if(mapUri->scheme().compareWithoutCase("Maps")) return 0;
+
+    MapInfos::iterator found = mapInfos.find(mapUri->path().toString().toLower().toStdString());
     if(found != mapInfos.end())
     {
         return &found->second;

@@ -1537,7 +1537,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 #else
         FR_SetColorAndAlpha(.6f, .6f, .6f, alpha);
 #endif
-        FR_DrawTextXY3(gameMapUri.asText().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(gameMapUri.path().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
     else if(author)
     {

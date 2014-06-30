@@ -3593,8 +3593,8 @@ D_CMD(InspectMap)
     LOG_SCR_MSG("\n");
 
     LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
-              /*" " _E(l) "OldUid: " _E(.) _E(i) "%s" _E(.)*/
-                    _E(l) "Music: "  _E(.) _E(i) "%i")
+              /*" " _E(l) " OldUid: " _E(.) _E(i) "%s" _E(.)*/
+                    _E(l) " Music: "  _E(.) _E(i) "%i")
             << map.uri().asText()
             /*<< map.oldUniqueId()*/
             << Con_GetInteger("map-music");
