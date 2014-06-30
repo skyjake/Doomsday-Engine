@@ -21,9 +21,9 @@
 
 #include <doomsday/defs/ded.h>
 #include <doomsday/resource/resourceclass.h>
-#include "Game"
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
+#include "MapDef"
 #ifdef __CLIENT__
 #  include "AbstractFont"
 #  include "BitmapFont"
@@ -48,66 +48,6 @@
 #include <QList>
 #include <QMap>
 #include <QSet>
-
-class MapDef : public de::PathTree::Node
-{
-public:
-    MapDef(de::PathTree::NodeArgs const &args)
-        : Node(args)
-    {}
-
-    MapDef &setId(de::String const &newId) {
-        _id = newId;
-        return *this;
-    }
-
-    de::String const &id() const {
-        return _id;
-    }
-
-    /**
-     * Returns the URI this resource will be known by.
-     */
-    inline de::Uri composeUri() const { return de::Uri("Maps", _id); }
-
-    /**
-     * Returns the id used to uniquely reference the map in some (old) definitions.
-     */
-    de::String composeUniqueId(de::Game const &currentGame) const {
-        return de::String("%1|%2|%3|%4")
-                  .arg(id().fileNameWithoutExtension())
-                  .arg(sourceFile()->name().fileNameWithoutExtension())
-                  .arg(sourceFile()->hasCustom()? "pwad" : "iwad")
-                  .arg(currentGame.identityKey())
-                  .toLower();
-    }
-
-    MapDef &setSourceFile(de::File1 *newSourceFile) {
-        _sourceFile = newSourceFile;
-        return *this;
-    }
-
-    de::File1 *sourceFile() const {
-        return _sourceFile;
-    }
-
-    MapDef &setRecognizer(de::Id1MapRecognizer *newRecognizer) {
-        _recognized.reset(newRecognizer);
-        return *this;
-    }
-
-    de::Id1MapRecognizer const &recognizer() const {
-        DENG2_ASSERT(!_recognized.isNull());
-        return *_recognized;
-    }
-
-private:
-    //String cachePath;
-    //bool lastLoadAttemptFailed;
-    de::String _id;
-    de::File1 *_sourceFile;
-    QScopedPointer<de::Id1MapRecognizer> _recognized;
-};
 
 /**
  * Logical resources; materials, packages, textures, etc...

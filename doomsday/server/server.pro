@@ -186,6 +186,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/compositetexture.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/manifest.h \
+    $$SRC/include/resource/mapdef.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
     $$SRC/include/resource/materialmanifest.h \
