@@ -41,6 +41,7 @@ class Id1MapElement
 {
 public:
     Id1MapElement(Id1Map &map) : map(map) {}
+    Id1MapElement(Id1MapElement const &other) : map(other.map) {}
     virtual ~Id1MapElement() {}
 
     Id1Map &map;
