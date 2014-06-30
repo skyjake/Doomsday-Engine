@@ -3597,7 +3597,7 @@ D_CMD(InspectMap)
     LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
               /*" " _E(l) " OldUid: " _E(.) _E(i) "%s" _E(.)*/
                     _E(l) " Music: "  _E(.) _E(i) "%i")
-            << (map.def()? map.def()->composeUri().asText() : "(unknown map")
+            << (map.def()? map.def()->composeUri().asText() : "(unknown map)")
             /*<< map.oldUniqueId()*/
             << Con_GetInteger("map-music");
 

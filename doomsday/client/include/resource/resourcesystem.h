@@ -56,25 +56,19 @@ public:
         : Node(args)
     {}
 
-    MapDef &setRecognizer(de::Id1MapRecognizer *newRecognizer) {
-        _recognized.reset(newRecognizer);
+    MapDef &setId(de::String const &newId) {
+        _id = newId;
         return *this;
     }
 
-    de::Id1MapRecognizer const &recognizer() const {
-        DENG2_ASSERT(!_recognized.isNull());
-        return *_recognized;
+    de::String const &id() const {
+        return _id;
     }
-
-    inline de::String const &id() const  { return recognizer().id(); }
-    inline de::File1 *sourceFile() const { return recognizer().sourceFile(); }
 
     /**
      * Returns the URI this resource will be known by.
      */
-    de::Uri composeUri() const {
-        return de::Uri("Maps", id());
-    }
+    inline de::Uri composeUri() const { return de::Uri("Maps", _id); }
 
     /**
      * Returns the id used to uniquely reference the map in some (old) definitions.
@@ -88,9 +82,30 @@ public:
                   .toLower();
     }
 
+    MapDef &setSourceFile(de::File1 *newSourceFile) {
+        _sourceFile = newSourceFile;
+        return *this;
+    }
+
+    de::File1 *sourceFile() const {
+        return _sourceFile;
+    }
+
+    MapDef &setRecognizer(de::Id1MapRecognizer *newRecognizer) {
+        _recognized.reset(newRecognizer);
+        return *this;
+    }
+
+    de::Id1MapRecognizer const &recognizer() const {
+        DENG2_ASSERT(!_recognized.isNull());
+        return *_recognized;
+    }
+
 private:
     //String cachePath;
     //bool lastLoadAttemptFailed;
+    de::String _id;
+    de::File1 *_sourceFile;
     QScopedPointer<de::Id1MapRecognizer> _recognized;
 };
 

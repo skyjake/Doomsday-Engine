@@ -3466,7 +3466,12 @@ void ResourceSystem::initMapDefs()
         lastLump = recognizer->lastLump();
         if(recognizer->format() != Id1MapRecognizer::UnknownFormat)
         {
-            d->mapDefs.insert(recognizer->id()).setRecognizer(recognizer.take());
+            File1 *sourceFile  = recognizer->sourceFile();
+            String const mapId = recognizer->id();
+            MapDef &mapDef = d->mapDefs.insert(mapId);
+            mapDef.setId(mapId)
+                  .setSourceFile(sourceFile)
+                  .setRecognizer(recognizer.take());
         }
     }
 }
