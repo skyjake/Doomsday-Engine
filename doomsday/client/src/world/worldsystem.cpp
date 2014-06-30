@@ -268,16 +268,6 @@ static inline lumpnum_t markerLumpNumForPath(String path)
     return App_FileSystem().lumpNumForName(path);
 }
 
-static String composeUniqueMapId(File1 &markerLump)
-{
-    return String("%1|%2|%3|%4")
-              .arg(markerLump.name().fileNameWithoutExtension())
-              .arg(markerLump.container().name().fileNameWithoutExtension())
-              .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
-              .arg(App_CurrentGame().identityKey())
-              .toLower();
-}
-
 /// Determine the identity key for maps loaded from the specified @a sourcePath.
 static String cacheIdForMap(String const &sourcePath)
 {
@@ -296,30 +286,13 @@ namespace de {
 
 DENG2_PIMPL(WorldSystem)
 {
-    /**
-     * Information about a map in the cache.
-     */
-    struct MapCacheRecord
-    {
-        Uri mapUri;                 ///< Unique identifier for the map.
-        //String path;                ///< Path to the cached map data.
-        //bool dataAvailable;
-        //bool lastLoadAttemptFailed;
-    };
-    typedef QMap<String, MapCacheRecord> MapRecords;
-    MapRecords records;
-
-    Map *map;                  ///< Current map.
-    timespan_t time;           ///< World-wide time.
+    Map *map;                   ///< Current map.
+    timespan_t time;            ///< World-wide time.
 #ifdef __CLIENT__
-    QScopedPointer<Hand> hand; ///< For map editing/manipulation.
+    QScopedPointer<Hand> hand;  ///< For map editing/manipulation.
 #endif
 
-    Instance(Public *i)
-        : Base(i)
-        , map(0)
-        , time(0)
-    {}
+    Instance(Public *i) : Base(i), map(0), time(0) {}
 
     void notifyMapChange()
     {
@@ -350,54 +323,6 @@ DENG2_PIMPL(WorldSystem)
     }
 
     /**
-     * Try to locate a cache record for a map by URI.
-     *
-     * @param uri  Map identifier.
-     *
-     * @return  Pointer to the found MapCacheRecord; otherwise @c 0.
-     */
-    MapCacheRecord *findCacheRecord(Uri const &uri) const
-    {
-        MapRecords::const_iterator found = records.find(uri.resolved());
-        if(found != records.end())
-        {
-            return const_cast<MapCacheRecord *>(&found.value());
-        }
-        return 0; // Not found.
-    }
-
-    /**
-     * Create a new MapCacheRecord for the map. If an existing record is found it
-     * will be returned instead (becomes a no-op).
-     *
-     * @param uri  Map identifier.
-     *
-     * @return  Possibly newly-created MapCacheRecord.
-     */
-    MapCacheRecord &createCacheRecord(Uri const &uri)
-    {
-        // Do we have an existing record for this?
-        if(MapCacheRecord *record = findCacheRecord(uri))
-            return *record;
-
-        // Prepare a new record.
-        MapCacheRecord rec;
-        rec.mapUri = uri;
-
-        // Compose the cache directory path.
-        /*lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(uri.path().toString().toLatin1().constData());
-        if(markerLumpNum >= 0)
-        {
-            File1 &lump = App_FileSystem().lump(markerLumpNum);
-            String cacheDir = cachePath(lump.container().composePath());
-
-            rec.path = cacheDir + lump.name() + ".dcm";
-        }*/
-
-        return records.insert(uri.resolved(), rec).value();
-    }
-
-    /**
      * Attempt JIT conversion of the map data with the help of a plugin. Note that
      * the map is left in an editable state in case the caller wishes to perform
      * any further changes.
@@ -406,23 +331,20 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The newly converted map (if any).
      */
-    Map *convertMap(Uri const &uri, MapConversionReporter *reporter = 0)
+    Map *convertMap(MapDef const &mapDef, MapConversionReporter *reporter = 0)
     {
-        // Record this map if we haven't already.
-        /*MapCacheRecord &record =*/ createCacheRecord(uri);
+        de::Uri const mapUri = mapDef.composeUri();
 
         // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
             return 0;
 
-        //LOG_DEBUG("Attempting \"%s\"...") << uri;
+        LOG_DEBUG("Attempting \"%s\"...") << mapDef.id();
 
-        lumpnum_t markerLumpNum = markerLumpNumForPath(uri.path());
-        if(markerLumpNum < 0)
-            return 0;
+        if(!mapDef.sourceFile()) return 0;
 
         // Initiate the conversion process.
-        MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
+        MPE_Begin(reinterpret_cast<uri_s const *>(&mapUri));
 
         Map *newMap = MPE_Map();
 
@@ -433,15 +355,12 @@ DENG2_PIMPL(WorldSystem)
         }
 
         // Generate and attribute the old unique map id.
-        File1 &markerLump       = App_FileSystem().lump(markerLumpNum);
-        String uniqueId         = composeUniqueMapId(markerLump);
-        QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-        newMap->setOldUniqueId(uniqueIdUtf8.constData());
+        newMap->setOldUniqueId(mapDef.composeUniqueId(App_CurrentGame()).toUtf8().constData());
 
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<uri_s *>(reinterpret_cast<uri_s const *>(&uri))))
+        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<uri_s *>(reinterpret_cast<uri_s const *>(&mapUri))))
             return 0;
 
         // A converter signalled success.
@@ -457,13 +376,11 @@ DENG2_PIMPL(WorldSystem)
     /**
      * Returns @c true iff data for the map is available in the cache.
      */
-    bool isCacheDataAvailable(MapCacheRecord &rec)
+    bool haveCachedMap(MapDef &mapDef)
     {
-        if(DAM_MapIsValid(Str_Text(&rec.path), markerLumpNum()))
-        {
-            rec.dataAvailable = true;
-        }
-        return rec.dataAvailable;
+        // Disabled?
+        if(!mapCache) return false;
+        return DAM_MapIsValid(mapDef.cachePath, mapDef.id());
     }
 
     /**
@@ -473,17 +390,15 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return @c true if loading completed successfully.
      */
-    Map *loadMapFromCache(Uri const &uri)
+    Map *loadMapFromCache(MapDef &mapDef)
     {
-        // Record this map if we haven't already.
-        MapCacheRecord &rec = createCacheRecord(uri);
-
-        Map *map = DAM_MapRead(Str_Text(&rec.path));
+        Uri const mapUri = mapDef.composeUri();
+        Map *map = DAM_MapRead(mapDef.cachePath);
         if(!map)
             /// Failed to load the map specified from the data cache.
-            throw Error("loadMapFromCache", QString("Failed loading map \"%1\" from cache.").arg(uri.asText()));
+            throw Error("loadMapFromCache", "Failed loading map \"" + mapUri.asText() + "\" from cache");
 
-        map->_uri = rec.mapUri;
+        map->_uri = mapUri;
         return map;
     }
 #endif
@@ -493,27 +408,24 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The loaded map if successful. Ownership given to the caller.
      */
-    Map *loadMap(Uri const &uri, MapConversionReporter *reporter = 0)
+    Map *loadMap(MapDef &mapDef, MapConversionReporter *reporter = 0)
     {
         LOG_AS("WorldSystem::loadMap");
 
-        // Record this map if we haven't already.
-        /*MapCacheRecord &rec =*/ createCacheRecord(uri);
-
-        /*if(rec.lastLoadAttemptFailed && !forceRetry)
+        /*if(mapDef.lastLoadAttemptFailed && !forceRetry)
             return 0;
 
         // Load from cache?
-        if(mapCache && rec.dataAvailable)
+        if(haveCachedMap(mapDef))
         {
-            return loadMapFromCache(uri);
+            return loadMapFromCache(mapDef);
         }*/
 
         // Try a JIT conversion with the help of a plugin.
-        Map *map = convertMap(uri, reporter);
+        Map *map = convertMap(mapDef, reporter);
         if(!map)
         {
-            LOG_WARNING("Failed conversion of \"%s\".") << uri;
+            LOG_WARNING("Failed conversion of \"%s\".") << mapDef.id();
             //rec.lastLoadAttemptFailed = true;
         }
         return map;
@@ -744,7 +656,7 @@ DENG2_PIMPL(WorldSystem)
     }
 
     /// @todo Split this into subtasks (load, make current, cache assets).
-    bool changeMap(de::Uri const &uri)
+    bool changeMap(MapDef *mapDef = 0)
     {
 #ifdef __CLIENT__
         if(map)
@@ -768,16 +680,16 @@ DENG2_PIMPL(WorldSystem)
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         // Are we just unloading the current map?
-        if(uri.isEmpty()) return true;
+        if(!mapDef) return true;
 
-        LOG_MSG("Loading map \"%s\"...") << uri;
+        LOG_MSG("Loading map \"%s\"...") << mapDef->id();
 
         // A new map is about to be set up.
         ddMapSetup = true;
 
         // Attempt to load in the new map.
         MapConversionReporter reporter;
-        Map *newMap = loadMap(uri, &reporter);
+        Map *newMap = loadMap(*mapDef, &reporter);
         if(newMap)
         {
             // The map may still be in an editable state -- switch to playable.
@@ -809,13 +721,13 @@ DENG2_PIMPL(WorldSystem)
     struct changemapworker_params_t
     {
         Instance *inst;
-        de::Uri const *uri;
+        MapDef *mapDef;
     };
 
     static int changeMapWorker(void *context)
     {
         changemapworker_params_t &p = *static_cast<changemapworker_params_t *>(context);
-        int result = p.inst->changeMap(*p.uri);
+        int result = p.inst->changeMap(p.mapDef);
         BusyMode_WorkerEnd();
         return result;
     }
@@ -856,12 +768,19 @@ Map &WorldSystem::map() const
 
 bool WorldSystem::changeMap(de::Uri const &uri)
 {
+    MapDef *mapDef = 0;
+
+    if(!uri.isEmpty())
+    {
+        mapDef = App_ResourceSystem().allMapDefs().tryFind(uri.path(), ResourceSystem::MapDefs::MatchFull | ResourceSystem::MapDefs::NoBranch);
+    }
+
     // Switch to busy mode (if we haven't already) except when simply unloading.
     if(!uri.isEmpty() && !BusyMode_Active())
     {
         Instance::changemapworker_params_t parm;
-        parm.inst = d;
-        parm.uri  = &uri;
+        parm.inst   = d;
+        parm.mapDef = mapDef;
 
         BusyTask task; zap(task);
         /// @todo Use progress bar mode and update progress during the setup.
@@ -874,7 +793,7 @@ bool WorldSystem::changeMap(de::Uri const &uri)
     }
     else
     {
-        return d->changeMap(uri);
+        return d->changeMap(mapDef);
     }
 }
 
@@ -911,9 +830,6 @@ void WorldSystem::reset()
 
 void WorldSystem::update()
 {
-    // Reset the archived map cache (the available maps may have changed).
-    d->records.clear();
-
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t *plr = &ddPlayers[i];

@@ -3481,6 +3481,11 @@ ResourceSystem::MapDefs const &ResourceSystem::allMapDefs() const
     return d->mapDefs;
 }
 
+ResourceSystem::MapDefs &ResourceSystem::allMapDefs()
+{
+    return d->mapDefs;
+}
+
 void ResourceSystem::clearAllAnimGroups()
 {
     qDeleteAll(d->animGroups);

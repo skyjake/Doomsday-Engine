@@ -21,6 +21,7 @@
 
 #include <doomsday/defs/ded.h>
 #include <doomsday/resource/resourceclass.h>
+#include "Game"
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
 #ifdef __CLIENT__
@@ -68,7 +69,28 @@ public:
     inline de::String const &id() const  { return recognizer().id(); }
     inline de::File1 *sourceFile() const { return recognizer().sourceFile(); }
 
+    /**
+     * Returns the URI this resource will be known by.
+     */
+    de::Uri composeUri() const {
+        return de::Uri("Maps", id());
+    }
+
+    /**
+     * Returns the id used to uniquely reference the map in some (old) definitions.
+     */
+    de::String composeUniqueId(de::Game const &currentGame) const {
+        return de::String("%1|%2|%3|%4")
+                  .arg(id().fileNameWithoutExtension())
+                  .arg(sourceFile()->name().fileNameWithoutExtension())
+                  .arg(sourceFile()->container().hasCustom()? "pwad" : "iwad")
+                  .arg(currentGame.identityKey())
+                  .toLower();
+    }
+
 private:
+    //String cachePath;
+    //bool lastLoadAttemptFailed;
     QScopedPointer<de::Id1MapRecognizer> _recognized;
 };
 
@@ -765,6 +787,9 @@ public:
      * for efficient traversal.
      */
     MapDefs const &allMapDefs() const;
+
+    /// @copydoc allMapDefs()
+    MapDefs &allMapDefs();
 
     /**
      * Returns the total number of MapDefs in the system.
