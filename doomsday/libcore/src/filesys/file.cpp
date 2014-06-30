@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -31,18 +31,12 @@ namespace de {
 
 DENG2_PIMPL_NOREF(File)
 {
-    /// The parent folder.
-    Folder *parent;
-
     /// The source file (NULL for non-interpreted files).
     File *source;
 
     /// Feed that generated the file. This feed is called upon when the file needs
     /// to be pruned. May also be NULL.
     Feed *originFeed;
-
-    /// Name of the file.
-    String name;
 
     /// Status of the file.
     Status status;
@@ -53,17 +47,14 @@ DENG2_PIMPL_NOREF(File)
     /// File information.
     Record info;
 
-    Instance(String const &fileName)
-        : parent(0)
-        , originFeed(0)
-        , name(fileName) {}
+    Instance() : source(0), originFeed(0) {}
 
     DENG2_PIMPL_AUDIENCE(Deletion)
 };
 
 DENG2_AUDIENCE_METHOD(File, Deletion)
 
-File::File(String const &fileName) : d(new Instance(fileName))
+File::File(String const &fileName) : Node(fileName), d(new Instance(this))
 {
     d->source = this;
     
@@ -88,10 +79,10 @@ File::~File()
         delete d->source;
         d->source = 0;
     }
-    if(d->parent)
+    if(Folder *parentFolder = parent())
     {
         // Remove from parent folder.
-        d->parent->remove(this);
+        parentFolder->remove(this);
     }
     deindex();
 }
@@ -114,9 +105,9 @@ FileSystem &File::fileSystem()
     return DENG2_APP->fileSystem();
 }
 
-String File::name() const
+Folder *File::parent() const
 {
-    return d->name;
+    return Node::parent()->maybeAs<Folder>();
 }
 
 String File::description() const
@@ -178,16 +169,6 @@ String File::describe() const
     return "abstract File";
 }
 
-void File::setParent(Folder *parent)
-{
-    d->parent = parent;
-}
-
-Folder *File::parent() const
-{
-    return d->parent;
-}
-
 void File::setOriginFeed(Feed *feed)
 {
     DENG2_GUARD(this);
@@ -198,18 +179,6 @@ void File::setOriginFeed(Feed *feed)
 Feed *File::originFeed() const
 {
     return d->originFeed;
-}
-
-String const File::path() const
-{
-    DENG2_GUARD(this);
-
-    String thePath = name();
-    for(Folder *i = d->parent; i; i = i->File::d->parent)
-    {
-        thePath = i->name() / thePath;
-    }
-    return "/" + thePath;
 }
         
 void File::setSource(File *source)
