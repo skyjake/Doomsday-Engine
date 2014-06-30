@@ -48,6 +48,30 @@
 #include <QMap>
 #include <QSet>
 
+class MapDef : public de::PathTree::Node
+{
+public:
+    MapDef(de::PathTree::NodeArgs const &args)
+        : Node(args)
+    {}
+
+    MapDef &setRecognizer(de::Id1MapRecognizer *newRecognizer) {
+        _recognized.reset(newRecognizer);
+        return *this;
+    }
+
+    de::Id1MapRecognizer const &recognizer() const {
+        DENG2_ASSERT(!_recognized.isNull());
+        return *_recognized;
+    }
+
+    inline de::String const &id() const  { return recognizer().id(); }
+    inline de::File1 *sourceFile() const { return recognizer().sourceFile(); }
+
+private:
+    QScopedPointer<de::Id1MapRecognizer> _recognized;
+};
+
 /**
  * Logical resources; materials, packages, textures, etc...
  *
@@ -125,6 +149,7 @@ public:
 #endif
 
     typedef QList<Sprite *> SpriteSet;
+    typedef de::PathTreeT<MapDef> MapDefs;
 
 public:
     /**
@@ -736,6 +761,17 @@ public:
 #endif // __CLIENT__
 
     /**
+     * Provides immutable access to a list containing all MapDefs in the system,
+     * for efficient traversal.
+     */
+    MapDefs const &allMapDefs() const;
+
+    /**
+     * Returns the total number of MapDefs in the system.
+     */
+    inline int mapDefCount() const { return allMapDefs().size(); }
+
+    /**
      * Returns the total number of animation/precache groups.
      */
     int animGroupCount();
@@ -887,12 +923,14 @@ public: /// @todo Should be private:
     void initTextures();
     void initSystemTextures();
 
-    void clearAllRawTextures();
-
+    void initMapDefs();
     void initSprites();
 #ifdef __CLIENT__
     void initModels();
 #endif
+
+    void clearAllMapDefs();
+    void clearAllRawTextures();
 
     void clearAllTextureSpecs();
     void pruneUnusedTextureSpecs();

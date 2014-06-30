@@ -485,6 +485,8 @@ DENG2_PIMPL(ResourceSystem)
     uint materialManifestIdMapSize;
     MaterialManifest **materialManifestIdMap; ///< Index with materialid_t-1
 
+    MapDefs mapDefs;
+
 #ifdef __CLIENT__
     /// System subspace schemes containing the manifests/resources.
     FontSchemes fontSchemes;
@@ -712,6 +714,7 @@ DENG2_PIMPL(ResourceSystem)
         clearModels();
 #endif
         self.clearAllColorPalettes();
+        self.clearAllMapDefs();
     }
 
     inline de::FS1 &fileSys()
@@ -3448,6 +3451,36 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
 
 #endif // __CLIENT__
 
+void ResourceSystem::initMapDefs()
+{
+    clearAllMapDefs();
+
+    // Locate all the maps using the central lump index:
+    /// @todo Locate new maps each time a package is loaded rather than rely on
+    /// the central lump index.
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    lumpnum_t lastLump = -1;
+    while(lastLump < lumpIndex.size())
+    {
+        QScopedPointer<Id1MapRecognizer> recognizer(new Id1MapRecognizer(lumpIndex, lastLump));
+        lastLump = recognizer->lastLump();
+        if(recognizer->format() != Id1MapRecognizer::UnknownFormat)
+        {
+            d->mapDefs.insert(recognizer->id()).setRecognizer(recognizer.take());
+        }
+    }
+}
+
+void ResourceSystem::clearAllMapDefs()
+{
+    d->mapDefs.clear();
+}
+
+ResourceSystem::MapDefs const &ResourceSystem::allMapDefs() const
+{
+    return d->mapDefs;
+}
+
 void ResourceSystem::clearAllAnimGroups()
 {
     qDeleteAll(d->animGroups);
@@ -4554,30 +4587,14 @@ D_CMD(ListMaps)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    // Step 1 - Locate all the maps using the central lump index:
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-    lumpnum_t lastLump = -1;
-    typedef QMap<String, File1 *> MapList;
-    MapList allMaps;
-    while(lastLump < lumpIndex.size())
-    {
-        Id1MapRecognizer recognizer(lumpIndex, lastLump);
-        if(recognizer.format() != Id1MapRecognizer::UnknownFormat)
-        {
-            allMaps.insert(recognizer.id(), recognizer.sourceFile());
-        }
-        lastLump = recognizer.lastLump();
-    }
-
-    // Step 2 - Print a formatted map listing:
     LOG_RES_MSG(_E(b) "Available maps:" _E(.));
-    MapList::const_iterator i = allMaps.constBegin();
-    while(i != allMaps.constEnd())
+    PathTreeIterator<ResourceSystem::MapDefs> iter(App_ResourceSystem().allMapDefs().leafNodes());
+    while(iter.hasNext())
     {
+        MapDef &mapDef = iter.next();
         LOG_RES_MSG(_E(Ta) "  %s " _E(Tb) _E(C) "from \"%s\"" _E(.))
-                << i.key()
-                << NativePath(i.value()->composePath()).pretty();
-        ++i;
+                << mapDef.id()
+                << NativePath(mapDef.sourceFile()->composePath()).pretty();
     }
 
     return true;

@@ -1471,26 +1471,27 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 #undef P_MapExists
 DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
-    de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = App_FileSystem().nameIndex().findLast(uri.path().toString() + ".lmp");
-    return (lumpNum >= 0);
+    return App_ResourceSystem().allMapDefs().has(de::Uri(uriCString, RC_NULL).path(), ResourceSystem::MapDefs::NoBranch);
 }
 
 #undef P_MapIsCustom
 DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
-    de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = App_FileSystem().nameIndex().findLast(uri.path().toString() + ".lmp");
-    return (lumpNum >= 0 && App_FileSystem().lump(lumpNum).hasCustom());
+    if(MapDef const *mapDef = App_ResourceSystem().allMapDefs().tryFind(de::Uri(uriCString, RC_NULL).path(), ResourceSystem::MapDefs::NoBranch))
+    {
+        return mapDef->sourceFile()->hasCustom();
+    }
+    return false;
 }
 
 #undef P_MapSourceFile
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
-    de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = App_FileSystem().nameIndex().findLast(uri.path().toString() + ".lmp");
-    if(lumpNum < 0) return AutoStr_NewStd();
-    return AutoStr_FromTextStd(App_FileSystem().lump(lumpNum).container().composePath().toUtf8().constData());
+    if(MapDef const *mapDef = App_ResourceSystem().allMapDefs().tryFind(de::Uri(uriCString, RC_NULL).path(), ResourceSystem::MapDefs::NoBranch))
+    {
+        return AutoStr_FromTextStd(mapDef->sourceFile()->composePath().toUtf8().constData());
+    }
+    return AutoStr_NewStd();
 }
 
 #undef P_MapChange
