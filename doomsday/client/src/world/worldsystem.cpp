@@ -333,20 +333,21 @@ DENG2_PIMPL(WorldSystem)
      */
     Map *convertMap(MapDef const &mapDef, MapConversionReporter *reporter = 0)
     {
-        de::Uri const mapUri = mapDef.composeUri();
-
         // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
             return 0;
 
-        LOG_DEBUG("Attempting \"%s\"...") << mapDef.id();
+        LOG_DEBUG("Attempting \"%s\"...") << mapDef.composeUri().path();
 
         if(!mapDef.sourceFile()) return 0;
 
         // Initiate the conversion process.
-        MPE_Begin(reinterpret_cast<uri_s const *>(&mapUri));
+        MPE_Begin(0/*dummy*/);
 
         Map *newMap = MPE_Map();
+
+        // Associate the map with its corresponding definition.
+        newMap->setDef(&const_cast<MapDef &>(mapDef));
 
         if(reporter)
         {
@@ -354,12 +355,10 @@ DENG2_PIMPL(WorldSystem)
             reporter->setMap(newMap);
         }
 
-        // Generate and attribute the old unique map id.
-        newMap->setOldUniqueId(mapDef.composeUniqueId(App_CurrentGame()).toUtf8().constData());
-
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
+        de::Uri const mapUri = mapDef.composeUri();
         if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<uri_s *>(reinterpret_cast<uri_s const *>(&mapUri))))
             return 0;
 
@@ -425,7 +424,7 @@ DENG2_PIMPL(WorldSystem)
         Map *map = convertMap(mapDef, reporter);
         if(!map)
         {
-            LOG_WARNING("Failed conversion of \"%s\".") << mapDef.id();
+            LOG_WARNING("Failed conversion of \"%s\".") << mapDef.composeUri().path();
             //mapDef.lastLoadAttemptFailed = true;
         }
         return map;
@@ -467,11 +466,18 @@ DENG2_PIMPL(WorldSystem)
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
-        ded_mapinfo_t *mapInfo = defs.getMapInfo(&map->uri());
+        ded_mapinfo_t *mapInfo = 0;
+
+        if(MapDef *mapDef = map->def())
+        {
+            Uri const mapUri = mapDef->composeUri();
+            defs.getMapInfo(&mapUri);
+        }
+
         if(!mapInfo)
         {
             // Use the default def instead.
-            Uri defaultMapUri(Path("*"));
+            Uri const defaultMapUri("Maps", Path("*"));
             mapInfo = defs.getMapInfo(&defaultMapUri);
         }
 
@@ -522,7 +528,9 @@ DENG2_PIMPL(WorldSystem)
         // "current" map has changed.
         if(gx.FinalizeMapChange)
         {
-            gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&map->uri()));
+            de::Uri mapUri("Maps:", RC_NULL);
+            if(map->def()) mapUri = map->def()->composeUri();
+            gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
         }
 
         if(gameTime > 20000000 / TICSPERSEC)
@@ -624,10 +632,13 @@ DENG2_PIMPL(WorldSystem)
 
         // Run the special map setup command, which the user may alias to do
         // something useful.
-        String cmd = "init-" + map->uri().resolved();
-        if(Con_IsValidCommand(cmd.toUtf8().constData()))
+        if(MapDef *mapDef = map->def())
         {
-            Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
+            String cmd = String("init-") + mapDef->composeUri().path();
+            if(Con_IsValidCommand(cmd.toUtf8().constData()))
+            {
+                Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
+            }
         }
 
         // Reset world time.
@@ -681,7 +692,7 @@ DENG2_PIMPL(WorldSystem)
         // Are we just unloading the current map?
         if(!mapDef) return true;
 
-        LOG_MSG("Loading map \"%s\"...") << mapDef->id();
+        LOG_MSG("Loading map \"%s\"...") << mapDef->composeUri().path();
 
         // A new map is about to be set up.
         ddMapSetup = true;

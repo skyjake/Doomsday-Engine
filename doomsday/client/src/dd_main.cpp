@@ -2480,10 +2480,13 @@ int DD_GetInteger(int ddvalue)
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
-            de::Uri mapUri = App_WorldSystem().map().uri();
-            if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))
+            if(MapDef *mapDef = App_WorldSystem().map().def())
             {
-                return Def_GetMusicNum(mapInfo->music);
+                de::Uri const mapUri = mapDef->composeUri();
+                if(ded_mapinfo_t *mapInfo = defs.getMapInfo(&mapUri))
+                {
+                    return Def_GetMusicNum(mapInfo->music);
+                }
             }
         }
         return -1;

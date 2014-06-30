@@ -466,7 +466,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         ::mapTime = metadata.geti("mapTime");
 #endif
 
-        makeMapStateReader(saved, ::gameMapUri)->read(::gameMapUri.compose());
+        String const gameMapUriAsText = ::gameMapUri.compose();
+        makeMapStateReader(saved, gameMapUriAsText)->read(gameMapUriAsText);
     }
 
     void setMap(de::Uri const &mapUri)

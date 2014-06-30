@@ -124,7 +124,7 @@ void MapInfoParser(Str const *path)
                 if(!info)
                 {
                     // A new map info.
-                    info = &mapInfos[mapUri.compose().toLower().toUtf8().constData()];
+                    info = &mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
 
                     // Initialize with the default values.
                     std::memcpy(info, &defMapInfo, sizeof(*info));

@@ -200,12 +200,12 @@ Map *MPE_TakeMap()
 }
 
 #undef MPE_Begin
-dd_bool MPE_Begin(uri_s const *mapUri)
+dd_bool MPE_Begin(uri_s const * /*mapUri*/)
 {
     if(!editMapInited)
     {
         delete editMap;
-        editMap = new Map(*reinterpret_cast<de::Uri const *>(mapUri));
+        editMap = new Map;
         editMapInited = true;
     }
     return true;
