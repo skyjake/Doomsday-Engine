@@ -757,11 +757,12 @@ static void drawMapMetaData(float x, float y, float alpha)
 {
 #define BORDER              2
 
-    char const *title = P_MapTitle(0/*current map*/);
-    if(!title) title = "Unnamed";
+    de::String title = G_MapTitle(0/*current map*/);
+    if(title.isEmpty()) title = "Unnamed";
 
     char buf[256];
-    dd_snprintf(buf, 256, "%s - %s", COMMON_GAMESESSION->rules().description().toLatin1().constData(), title);
+    dd_snprintf(buf, 256, "%s - %s", COMMON_GAMESESSION->rules().description().toLatin1().constData(),
+                                     title.toLatin1().constData());
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
     FR_DrawTextXY2(buf, x + BORDER, y - BORDER, ALIGN_BOTTOMLEFT);
@@ -1481,10 +1482,10 @@ int Hu_MapTitleFirstLineHeight()
 }
 #endif
 
-dd_bool Hu_IsMapTitleAuthorVisible(void)
+dd_bool Hu_IsMapTitleAuthorVisible()
 {
-    char const *author = P_MapAuthor(0/*current map*/, cfg.hideIWADAuthor);
-    return author != 0 && (actualMapTime <= 6 * TICSPERSEC);
+    de::String const author = G_MapAuthor(0/*current map*/, CPP_BOOL(cfg.hideIWADAuthor));
+    return !author.isEmpty() && (actualMapTime <= 6 * TICSPERSEC);
 }
 
 int Hu_MapTitleHeight(void)
@@ -1502,8 +1503,8 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    char const *title  = P_MapTitle(0/*current map*/);
-    char const *author = P_MapAuthor(0/*current map*/, cfg.hideIWADAuthor);
+    de::String const title  = G_MapTitle(0/*current map*/);
+    de::String const author = G_MapAuthor(0/*current map*/, CPP_BOOL(cfg.hideIWADAuthor));
 
     float y = 0;
 
@@ -1516,15 +1517,16 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
 #if __JDOOM__ || __JDOOM64__
     patchid_t patchId = P_MapTitlePatch(0/*current map*/);
-    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
+                    0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.
     y += Hu_MapTitleFirstLineHeight();
 
 #elif __JHERETIC__ || __JHEXEN__
-    if(title)
+    if(!title.isEmpty())
     {
-        FR_DrawTextXY3(title, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(title.toUtf8().constData(), 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
         y += 20;
     }
 #endif
@@ -1539,11 +1541,11 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 #endif
         FR_DrawTextXY3(gameMapUri.path().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
-    else if(author)
+    else if(!author.isEmpty())
     {
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(.5f, .5f, .5f, alpha);
-        FR_DrawTextXY3(author, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(author.toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);

@@ -108,11 +108,6 @@ void G_StopDemo();
  */
 void G_UpdateGSVarsForPlayer(player_t *pl);
 
-/**
- * Updates game status cvars for the current map.
- */
-void G_UpdateGSVarsForMap();
-
 void R_LoadVectorGraphics();
 
 int Hook_DemoStop(int hookType, int val, void *parm);
@@ -1200,22 +1195,23 @@ static void printMapBanner()
 {
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 
-    if(char const *title = P_MapTitle(0/*current map*/))
+    String const title = G_MapTitle(0/*current map*/);
+    if(!title.isEmpty())
     {
-        de::String text = de::String("Map: ") + gameMapUri.path().asText();
+        String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
         mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
-        text += de::String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
+        text += String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
 #endif
-        text += de::String(" - " DE2_ESC(b)) + title;
+        text += String(" - " DE2_ESC(b)) + title;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
     }
 
 #if !__JHEXEN__
-    char const *author = P_MapAuthor(0/*current map*/, P_MapIsCustom(gameMapUri.compose().toUtf8().constData()));
-    if(!author) author = "Unknown";
+    String author = G_MapAuthor(0/*current map*/, P_MapIsCustom(gameMapUri.compose().toUtf8().constData()));
+    if(author.isEmpty()) author = "Unknown";
 
-    App_Log(DE2_LOG_NOTE, "Author: %s", author);
+    App_Log(DE2_LOG_NOTE, "Author: %s", author.toUtf8().constData());
 #endif
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 }
@@ -1231,7 +1227,15 @@ void G_BeginMap()
     }
 
     G_ControlReset(-1); // Clear all controls for all local players.
-    G_UpdateGSVarsForMap();
+
+    // Update the game status cvars for the current map.
+    String mapAuthor = G_MapAuthor(0/*current map*/);
+    if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
+    Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+
+    String mapTitle = G_MapTitle(0/*current map*/);
+    if(mapTitle.isEmpty()) mapTitle = "Unknown";
+    Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
 
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;
@@ -1353,18 +1357,6 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
             gsvInvItems[i] = 0;
     }
 #endif
-}
-
-void G_UpdateGSVarsForMap()
-{
-    char const *mapAuthor = P_MapAuthor(0/*current map*/, false/*don't supress*/);
-    char const *mapTitle  = P_MapTitle(0/*current map*/);
-
-    if(!mapAuthor) mapAuthor = "Unknown";
-    Con_SetString2("map-author", mapAuthor, SVF_WRITE_OVERRIDE);
-
-    if(!mapTitle) mapTitle = "Unknown";
-    Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
 }
 
 static sfxenum_t randomQuitSound()
@@ -2330,7 +2322,7 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
     }
 
     // Include the map title.
-    de::String mapTitle = de::String(P_MapTitle(0/*current map*/));
+    de::String mapTitle = G_MapTitle(0/*current map*/);
     // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
     /// @todo Move this logic engine-side.
     if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')

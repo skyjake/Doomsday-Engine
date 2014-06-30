@@ -1102,12 +1102,11 @@ void P_ResetWorldState()
 #endif
 }
 
-char const *P_MapTitle(uri_s const *mapUri_)
+String G_MapTitle(de::Uri const *mapUri)
 {
-    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
     if(!mapUri) mapUri = &gameMapUri;
 
-    char const *title = 0;
+    String title;
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
@@ -1130,7 +1129,7 @@ char const *P_MapTitle(uri_s const *mapUri_)
 
 #if __JHEXEN__
     // In Hexen we can also look in MAPINFO for the map title.
-    if(!title)
+    if(title.isEmpty())
     {
         if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
         {
@@ -1139,49 +1138,45 @@ char const *P_MapTitle(uri_s const *mapUri_)
     }
 #endif
 
-    if(!title || !title[0])
-        return 0;
-
     // Skip the "ExMx" part, if present.
-    if(char const *ptr = strchr(title, ':'))
+    int idSuffixAt = title.indexOf(':');
+    if(idSuffixAt >= 0)
     {
-        title = ptr + 1;
-        while(*title && isspace(*title))
-        {
-            title++;
-        }
+        int subStart = idSuffixAt + 1;
+        while(subStart < title.length() && title.at(subStart).isSpace()) { subStart++; }
+
+        return title.substr(subStart);
     }
 
     return title;
 }
 
-char const *P_MapAuthor(uri_s const *mapUri, dd_bool supressGameAuthor)
+String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor)
 {
-    if(!mapUri) mapUri = reinterpret_cast<uri_s const *>(&gameMapUri);
+    if(!mapUri) mapUri = &gameMapUri;
 
-    AutoStr *mapUriAsText = Uri_Resolved(mapUri);
-    if(!mapUriAsText || Str_IsEmpty(mapUriAsText))
-        return 0;
+    String mapUriAsText = mapUri->resolved();
+    if(mapUriAsText.isEmpty()) return ""; // Huh??
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
-    char const *author = 0;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriAsText), &mapInfo))
+    String author;
+    if(Def_Get(DD_DEF_MAP_INFO, mapUriAsText.toUtf8().constData(), &mapInfo))
     {
         author = mapInfo.author;
     }
 
-    if(!author || !author[0])
-        return 0;
-
-    // Should we suppress the author?
-    /// @todo Do not do this here.
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    if(supressGameAuthor || P_MapIsCustom(Str_Text(mapUriAsText)))
+    if(!author.isEmpty())
     {
-        if(!Str_CompareIgnoreCase(gameInfo.author, author))
-            return 0;
+        // Should we suppress the author?
+        /// @todo Do not do this here.
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        if(supressGameAuthor || P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+        {
+            if(!author.compareWithoutCase(Str_Text(gameInfo.author)))
+                return "";
+        }
     }
 
     return author;

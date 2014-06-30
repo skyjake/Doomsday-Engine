@@ -653,7 +653,7 @@ void IN_DrawOldLevel()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&oldMapUri).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
@@ -696,7 +696,7 @@ void IN_DrawOldLevel()
 
 void IN_DrawYAH()
 {
-    de::Uri nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
+    de::Uri const nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
 
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
@@ -705,7 +705,7 @@ void IN_DrawYAH()
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&nextMapUri)), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&nextMapUri).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
     for(uint i = 0; i < wbs->nextMap; ++i)
@@ -731,8 +731,7 @@ void IN_DrawSingleStats()
 
     static int sounds;
 
-    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
-    char buf[20];
+    de::Uri const oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -743,7 +742,7 @@ void IN_DrawSingleStats()
     FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&oldMapUri).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -766,6 +765,7 @@ void IN_DrawSingleStats()
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    char buf[20];
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].killCount);
     FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);
@@ -847,7 +847,7 @@ void IN_DrawSingleStats()
     }
     else
     {
-        de::Uri nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
+        de::Uri const nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
 
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -857,7 +857,7 @@ void IN_DrawSingleStats()
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&nextMapUri)), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(G_MapTitle(&nextMapUri).toUtf8().constData(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -873,7 +873,7 @@ void IN_DrawCoopStats()
 
     static int sounds;
 
-    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
+    de::Uri const oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -884,7 +884,7 @@ void IN_DrawCoopStats()
     FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&oldMapUri).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
