@@ -286,6 +286,8 @@ public:
      */
     bool isEmpty() const;
 
+    bool isAbsolute() const;
+
     /// Returns the length of the path.
     int length() const;
 
@@ -447,8 +449,9 @@ private:
 
 /**
  * Utility class for specifying paths that use a dot (.) as the path separator.
+ * @ingroup data
  */
-class DotPath : public Path
+class DENG2_PUBLIC DotPath : public Path
 {
 public:
     DotPath(String const &path = "")        : Path(path, '.') {}
@@ -464,6 +467,46 @@ public:
     bool operator != (DotPath const &other) const {
         return Path::operator != (other);
     }
+};
+
+/**
+ * Utility class for referring to a portion of an existing (immutable) path.
+ * @ingroup data
+ */
+class DENG2_PUBLIC PathRef
+{
+public:
+    PathRef(Path const &path)
+        : _path(path)
+        , _range(0, path.segmentCount()) {}
+    PathRef(Path const &path, Rangei const &segRange)
+        : _path(path)
+        , _range(segRange) {}
+
+    Path const &path() const { return _path; }
+    Rangei range() const { return _range; }
+
+    bool isEmpty() const { return _range.isEmpty(); }
+    bool isAbsolute() const {
+        return !isEmpty() && !firstSegment().size();
+    }
+    Path::Segment const &segment(int index) const {
+        return _path.segment(_range.start + index);
+    }
+    int segmentCount() const { return _range.size(); }
+    inline Path::Segment const &firstSegment() const {
+        return segment(0);
+    }
+    inline Path::Segment const &lastSegment() const {
+        return segment(segmentCount() - 1);
+    }
+    PathRef subPath(Rangei const &sub) const {
+        return PathRef(_path, sub + _range.start);
+    }
+
+private:
+    Path const &_path;
+    Rangei _range;
 };
 
 } // namespace de

@@ -399,6 +399,11 @@ bool Path::isEmpty() const
     return d->path.isEmpty();
 }
 
+bool Path::isAbsolute() const
+{
+    return !isEmpty() && !firstSegment().size();
+}
+
 int Path::length() const
 {
     return d->path.length();
