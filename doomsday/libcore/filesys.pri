@@ -9,12 +9,14 @@ publicHeaders(root, \
     include/de/FS \
     include/de/FileSystem \
     include/de/LibraryFile \
+    include/de/LinkFile \
     include/de/NativeFile \
     include/de/NativePath \
     include/de/PackageFolder \
 )
 
 publicHeaders(filesys, \
+    include/de/filesys/Node \
     include/de/filesys/archivefeed.h \
     include/de/filesys/archiveentryfile.h \
     include/de/filesys/bytearrayfile.h \
@@ -24,8 +26,10 @@ publicHeaders(filesys, \
     include/de/filesys/folder.h \
     include/de/filesys/filesystem.h \
     include/de/filesys/libraryfile.h \
+    include/de/filesys/linkfile.h \
     include/de/filesys/nativefile.h \
     include/de/filesys/nativepath.h \
+    include/de/filesys/node.h \
     include/de/filesys/packagefolder.h \
 )
 
@@ -39,6 +43,8 @@ SOURCES += \
     src/filesys/folder.cpp \
     src/filesys/filesystem.cpp \
     src/filesys/libraryfile.cpp \
+    src/filesys/linkfile.cpp \
     src/filesys/nativefile.cpp \
     src/filesys/nativepath.cpp \
+    src/filesys/node.cpp \
     src/filesys/packagefolder.cpp
