@@ -3469,8 +3469,8 @@ void ResourceSystem::initMapDefs()
             File1 *sourceFile  = recognizer->sourceFile();
             String const mapId = recognizer->id();
             MapDef &mapDef = d->mapDefs.insert(mapId);
-            mapDef.setId(mapId)
-                  .setSourceFile(sourceFile)
+            mapDef.set("id", mapId);
+            mapDef.setSourceFile(sourceFile)
                   .setRecognizer(recognizer.take());
         }
     }
@@ -4610,7 +4610,7 @@ D_CMD(ListMaps)
     {
         MapDef &mapDef = iter.next();
         LOG_RES_MSG(_E(Ta) "  %s " _E(Tb) _E(C) "from \"%s\"" _E(.))
-                << mapDef.id()
+                << mapDef.gets("id")
                 << NativePath(mapDef.sourceFile()->composePath()).pretty();
     }
 

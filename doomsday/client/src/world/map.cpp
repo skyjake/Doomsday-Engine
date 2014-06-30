@@ -2114,7 +2114,7 @@ void Map::setGravity(coord_t newGravity)
     {
         _effectiveGravity = newGravity;
         LOG_MAP_VERBOSE("Effective gravity for %s now %.1f")
-                << (d->def? d->def->id() : "(unknown map)") << _effectiveGravity;
+                << (d->def? d->def->gets("id") : "(unknown map)") << _effectiveGravity;
     }
 }
 

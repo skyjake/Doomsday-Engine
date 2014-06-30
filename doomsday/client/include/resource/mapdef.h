@@ -24,6 +24,7 @@
 #include <doomsday/filesys/lumpindex.h>
 #include <de/PathTree>
 #include <de/String>
+#include <de/Record>
 #include "Game"
 
 /**
@@ -31,33 +32,24 @@
  *
  * @ingroup resource
  */
-class MapDef : public de::PathTree::Node
+class MapDef : public de::PathTree::Node, public de::Record
 {
 public:
     MapDef(de::PathTree::NodeArgs const &args)
-        : Node(args)
+        : Node(args), Record()
     {}
-
-    MapDef &setId(de::String const &newId) {
-        _id = newId;
-        return *this;
-    }
-
-    de::String const &id() const {
-        return _id;
-    }
 
     /**
      * Returns the URI this resource will be known by.
      */
-    inline de::Uri composeUri() const { return de::Uri("Maps", _id); }
+    inline de::Uri composeUri() const { return de::Uri("Maps", gets("id")); }
 
     /**
      * Returns the id used to uniquely reference the map in some (old) definitions.
      */
     de::String composeUniqueId(de::Game const &currentGame) const {
         return de::String("%1|%2|%3|%4")
-                  .arg(id().fileNameWithoutExtension())
+                  .arg(gets("id").fileNameWithoutExtension())
                   .arg(sourceFile()->name().fileNameWithoutExtension())
                   .arg(sourceFile()->hasCustom()? "pwad" : "iwad")
                   .arg(currentGame.identityKey())
@@ -86,7 +78,6 @@ public:
 private:
     //String cachePath;
     //bool lastLoadAttemptFailed;
-    de::String _id;
     de::File1 *_sourceFile;
     QScopedPointer<de::Id1MapRecognizer> _recognized;
 };
