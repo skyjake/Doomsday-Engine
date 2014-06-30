@@ -63,7 +63,7 @@ public:
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the
      * public MapEdit API).
      */
-    void transfer(de::Uri const &uri);
+    void transfer();
 
     /**
      * Convert a textual material @a name to an internal material dictionary id.

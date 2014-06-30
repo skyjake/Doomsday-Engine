@@ -27,24 +27,26 @@ using namespace de;
 using namespace wadimp;
 
 /**
- * This function will be called when Doomsday is asked to load a map that is
- * not available in its native map format.
+ * This function will be called when Doomsday is asked to load a map that is not
+ * available in its native map format.
  *
- * Our job is to read in the map data structures then use the Doomsday map
- * editing interface to recreate the map in native format.
+ * Our job is to read in the map data structures then use the Doomsday map editing
+ * interface to recreate the map in native format.
+ *
+ * @note In the future the Id1MapRecognizer will @em not be supplied by the engine.
+ * Instead the Wad format interpreter, the LumpIndex and all associated components
+ * will be implemented by this plugin. During application init the plugin should
+ * register the Wad format interpreter and locate the resources when such a file
+ * is interpreted. Therefore, Id1MapRecognizer instances will be plugin-local and
+ * associated with the unique identifier of the map. When such a map resource must
+ * be converted, the engine will specify this identifier and the plugin will then
+ * locate the recognizer with which to perform the conversion.
  */
 int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
     DENG2_ASSERT(context != 0);
+    Id1MapRecognizer const &recognizer = *reinterpret_cast<de::Id1MapRecognizer *>(context);
 
-    // Attempt to locate the identified map data marker lump.
-    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
-    de::Uri const &mapUri      = *reinterpret_cast<de::Uri const *>(context);
-    lumpnum_t lumpIndexOffset  = lumpIndex.findLast(mapUri.path() + ".lmp");
-    if(lumpIndexOffset < 0) return false;
-
-    // Collate map data lumps and attempt to recognize the format.
-    Id1MapRecognizer recognizer(lumpIndex, lumpIndexOffset);
     if(recognizer.format() != Id1MapRecognizer::UnknownFormat)
     {
         // Attempt a conversion...
@@ -56,7 +58,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
             // Transfer to the engine via the runtime map editing interface.
             /// @todo Build it using native components directly...
             LOG_AS("WadMapConverter");
-            map->transfer(mapUri);
+            map->transfer();
             return true; // success
         }
         catch(Id1Map::LoadError const &er)

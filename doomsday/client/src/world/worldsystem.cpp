@@ -358,8 +358,7 @@ DENG2_PIMPL(WorldSystem)
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        de::Uri const mapUri = mapDef.composeUri();
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<uri_s *>(reinterpret_cast<uri_s const *>(&mapUri))))
+        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
             return 0;
 
         // A converter signalled success.

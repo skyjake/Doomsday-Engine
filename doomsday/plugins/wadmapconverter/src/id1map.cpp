@@ -1202,13 +1202,13 @@ Id1Map::Id1Map(Id1MapRecognizer const &recognized)
     d->analyze();
 }
 
-void Id1Map::transfer(de::Uri const &uri)
+void Id1Map::transfer()
 {
     LOG_AS("Id1Map");
 
     Time begunAt;
 
-    MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
+    MPE_Begin(0/*dummy*/);
         d->transferVertexes();
         d->transferSectors();
         d->transferLinesAndSides();
