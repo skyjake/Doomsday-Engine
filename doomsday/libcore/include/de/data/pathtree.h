@@ -426,52 +426,6 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::ComparisonFlags)
 
 /**
- * Utility template for specialized PathTree classes. @ingroup data
- */
-template <typename Type>
-class PathTreeT : public PathTree
-{
-public:
-    typedef Type Node; // shadow PathTree::Node
-    typedef QMultiHash<Path::hash_type, Type *> Nodes;
-
-public:
-    explicit PathTreeT(Flags flags = 0) : PathTree(flags) {}
-
-    inline Type &insert(Path const &path) {
-        return static_cast<Type &>(PathTree::insert(path));
-    }
-
-    inline Type const &find(Path const &path, ComparisonFlags flags) const {
-        return static_cast<Type const &>(PathTree::find(path, flags));
-    }
-
-    inline Type &find(Path const &path, ComparisonFlags flags) {
-        return static_cast<Type &>(PathTree::find(path, flags));
-    }
-
-    inline Type const *tryFind(Path const &path, ComparisonFlags flags) const {
-        return static_cast<Type const *>(PathTree::tryFind(path, flags));
-    }
-
-    inline Type *tryFind(Path const &path, ComparisonFlags flags) {
-        return static_cast<Type *>(PathTree::tryFind(path, flags));
-    }
-
-    inline int traverse(ComparisonFlags flags, Type const *parent, Path::hash_type hashKey,
-                        int (*callback) (Type &node, void *parameters), void *parameters = 0) const {
-        return PathTree::traverse(flags, parent, hashKey,
-                                  reinterpret_cast<int (*)(PathTree::Node &, void *)>(callback),
-                                  parameters);
-    }
-
-protected:
-    PathTree::Node *newNode(NodeArgs const &args) {
-        return new Type(args);
-    }
-};
-
-/**
  * Iterator template for PathTree nodes. Can be used to iterate any set of
  * Nodes returned by a PathTree (PathTree::nodes(), PathTree::leafNodes(),
  * PathTree::branchNodes()). @ingroup data
@@ -527,6 +481,68 @@ public:
 private:
     PathTree::Nodes const &_nodes;
     PathTree::Nodes::const_iterator _iter, _next, _current;
+};
+
+/**
+ * Utility template for specialized PathTree classes. @ingroup data
+ */
+template <typename Type>
+class PathTreeT : public PathTree
+{
+public:
+    typedef Type Node; // shadow PathTree::Node
+    typedef QMultiHash<Path::hash_type, Type *> Nodes;
+    typedef QList<Type *> FoundNodes;
+
+public:
+    explicit PathTreeT(Flags flags = 0) : PathTree(flags) {}
+
+    inline Type &insert(Path const &path) {
+        return static_cast<Type &>(PathTree::insert(path));
+    }
+
+    inline Type const &find(Path const &path, ComparisonFlags flags) const {
+        return static_cast<Type const &>(PathTree::find(path, flags));
+    }
+
+    inline Type &find(Path const &path, ComparisonFlags flags) {
+        return static_cast<Type &>(PathTree::find(path, flags));
+    }
+
+    inline Type const *tryFind(Path const &path, ComparisonFlags flags) const {
+        return static_cast<Type const *>(PathTree::tryFind(path, flags));
+    }
+
+    inline Type *tryFind(Path const &path, ComparisonFlags flags) {
+        return static_cast<Type *>(PathTree::tryFind(path, flags));
+    }
+
+    inline int findAll(FoundNodes &found, bool (*predicate)(Type const &node, void *context),
+                       void *context = 0) const {
+        int numFoundSoFar = found.size();
+        PathTreeIterator<PathTreeT> iter(leafNodes());
+        while(iter.hasNext())
+        {
+            Type &node = iter.next();
+            if(predicate(node, context))
+            {
+                found << &node;
+            }
+        }
+        return found.size() - numFoundSoFar;
+    }
+
+    inline int traverse(ComparisonFlags flags, Type const *parent, Path::hash_type hashKey,
+                        int (*callback) (Type &node, void *context), void *context = 0) const {
+        return PathTree::traverse(flags, parent, hashKey,
+                                  reinterpret_cast<int (*)(PathTree::Node &, void *)>(callback),
+                                  context);
+    }
+
+protected:
+    PathTree::Node *newNode(NodeArgs const &args) {
+        return new Type(args);
+    }
 };
 
 /**

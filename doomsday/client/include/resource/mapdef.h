@@ -40,6 +40,21 @@ public:
     {}
 
     /**
+     * Returns a textual description of the map definition.
+     *
+     * @return Human-friendly description the map definition.
+     */
+    de::String description(de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags) const {
+        de::String info = de::String("%1").arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
+                                               ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) );
+        if(_sourceFile)
+        {
+            info += de::String(" " _E(C) "\"%1\"" _E(.)).arg(de::NativePath(sourceFile()->composePath()).pretty());
+        }
+        return info;
+    }
+
+    /**
      * Returns the URI this resource will be known by.
      */
     inline de::Uri composeUri() const { return de::Uri("Maps", gets("id")); }
