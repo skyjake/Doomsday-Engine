@@ -646,8 +646,11 @@ void GL_TotalRestore()
     ded_mapinfo_t *mapInfo = 0;
     if(App_WorldSystem().hasMap())
     {
-        de::Uri mapUri = App_WorldSystem().map().uri();
-        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
+        if(MapDef *mapDef = App_WorldSystem().map().def())
+        {
+            de::Uri const mapUri = mapDef->composeUri();
+            mapInfo = defs.getMapInfo(&mapUri);
+        }
     }
 
     // Restore map's fog settings.

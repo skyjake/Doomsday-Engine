@@ -485,6 +485,8 @@ DENG2_PIMPL(ResourceSystem)
     uint materialManifestIdMapSize;
     MaterialManifest **materialManifestIdMap; ///< Index with materialid_t-1
 
+    MapDefs mapDefs;
+
 #ifdef __CLIENT__
     /// System subspace schemes containing the manifests/resources.
     FontSchemes fontSchemes;
@@ -712,6 +714,7 @@ DENG2_PIMPL(ResourceSystem)
         clearModels();
 #endif
         self.clearAllColorPalettes();
+        self.clearAllMapDefs();
     }
 
     inline de::FS1 &fileSys()
@@ -3448,6 +3451,53 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
 
 #endif // __CLIENT__
 
+void ResourceSystem::initMapDefs()
+{
+    clearAllMapDefs();
+
+    // Locate all the maps using the central lump index:
+    /// @todo Locate new maps each time a package is loaded rather than rely on
+    /// the central lump index.
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    lumpnum_t lastLump = -1;
+    while(lastLump < lumpIndex.size())
+    {
+        QScopedPointer<Id1MapRecognizer> recognizer(new Id1MapRecognizer(lumpIndex, lastLump));
+        lastLump = recognizer->lastLump();
+        if(recognizer->format() != Id1MapRecognizer::UnknownFormat)
+        {
+            File1 *sourceFile  = recognizer->sourceFile();
+            String const mapId = recognizer->id();
+            MapDef &mapDef = d->mapDefs.insert(mapId);
+            mapDef.set("id", mapId);
+            mapDef.setSourceFile(sourceFile)
+                  .setRecognizer(recognizer.take());
+        }
+    }
+}
+
+void ResourceSystem::clearAllMapDefs()
+{
+    d->mapDefs.clear();
+}
+
+MapDef *ResourceSystem::mapDef(de::Uri const &mapUri) const
+{
+    // Only one resource scheme is known for maps.
+    if(mapUri.scheme().compareWithoutCase("Maps")) return 0;
+    return d->mapDefs.tryFind(mapUri.path(), MapDefs::MatchFull | MapDefs::NoBranch);
+}
+
+ResourceSystem::MapDefs const &ResourceSystem::allMapDefs() const
+{
+    return d->mapDefs;
+}
+
+ResourceSystem::MapDefs &ResourceSystem::allMapDefs()
+{
+    return d->mapDefs;
+}
+
 void ResourceSystem::clearAllAnimGroups()
 {
     qDeleteAll(d->animGroups);
@@ -4022,144 +4072,52 @@ static bool pathBeginsWithComparator(ManifestType const &manifest, void *context
 }
 
 /**
- * @todo This logic should be implemented in de::PathTree -ds
- */
-template <typename SchemeType, typename ManifestType>
-static int collectManifestsInScheme(SchemeType const &scheme,
-    bool (*predicate)(ManifestType const &manifest, void *context), void *context,
-    QList<ManifestType *> *storage = 0)
-{
-    int count = 0;
-    PathTreeIterator<typename SchemeType::Index> iter(scheme.index().leafNodes());
-    while(iter.hasNext())
-    {
-        ManifestType &manifest = iter.next();
-        if(predicate(manifest, context))
-        {
-            count += 1;
-            if(storage) // Store mode?
-            {
-                storage->append(&manifest);
-            }
-        }
-    }
-    return count;
-}
-
-static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme,
-    Path const &path, QList<MaterialManifest *> *storage = 0)
-{
-    int count = 0;
-
-    if(scheme)
-    {
-        // Consider resources in the specified scheme only.
-        count += collectManifestsInScheme<MaterialScheme, MaterialManifest>(*scheme,
-                     pathBeginsWithComparator, (void *)&path, storage);
-    }
-    else
-    {
-        // Consider resources in any scheme.
-        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
-        {
-            count += collectManifestsInScheme<MaterialScheme, MaterialManifest>(*scheme,
-                         pathBeginsWithComparator, (void *)&path, storage);
-        }
-    }
-
-    // Are we done?
-    if(storage) return *storage;
-
-    // Collect and populate.
-    QList<MaterialManifest *> result;
-    if(count == 0) return result;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    result.reserve(count);
-#endif
-    return collectMaterialManifests(scheme, path, &result);
-}
-
-static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
-    Path const &path, QList<TextureManifest *> *storage = 0)
-{
-    int count = 0;
-
-    if(scheme)
-    {
-        // Consider resources in the specified scheme only.
-        count += collectManifestsInScheme<TextureScheme, TextureManifest>(*scheme,
-                    pathBeginsWithComparator, (void *)&path, storage);
-    }
-    else
-    {
-        // Consider resources in any scheme.
-        foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
-        {
-            count += collectManifestsInScheme<TextureScheme, TextureManifest>(*scheme,
-                        pathBeginsWithComparator, (void *)&path, storage);
-        }
-    }
-
-    // Are we done?
-    if(storage) return *storage;
-
-    // Collect and populate.
-    QList<TextureManifest *> result;
-    if(count == 0) return result;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    result.reserve(count);
-#endif
-    return collectTextureManifests(scheme, path, &result);
-}
-
-#ifdef __CLIENT__
-static QList<FontManifest *> collectFontManifests(FontScheme *scheme,
-    Path const &path, QList<FontManifest *> *storage = 0)
-{
-    int count = 0;
-
-    if(scheme)
-    {
-        // Consider resources in the specified scheme only.
-        count += collectManifestsInScheme<FontScheme, FontManifest>(*scheme,
-                    pathBeginsWithComparator, (void *)&path, storage);
-    }
-    else
-    {
-        // Consider resources in any scheme.
-        foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
-        {
-            count += collectManifestsInScheme<FontScheme, FontManifest>(*scheme,
-                        pathBeginsWithComparator, (void *)&path, storage);
-        }
-    }
-
-    // Are we done?
-    if(storage) return *storage;
-
-    // Collect and populate.
-    QList<FontManifest *> result;
-    if(count == 0) return result;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    result.reserve(count);
-#endif
-    return collectFontManifests(scheme, path, &result);
-}
-#endif // __CLIENT__
-
-/**
  * Decode and then lexicographically compare the two manifest paths,
  * returning @c true if @a is less than @a b.
  */
-template <typename ManifestType>
-static bool compareManifestPathsAscending(ManifestType const *a, ManifestType const *b)
+template <typename PathTreeNodeType>
+static bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTreeNodeType const *b)
 {
     String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
     String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
     return pathA.compareWithoutCase(pathB) < 0;
+}
+
+/**
+ * @param like             Map path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    ResourceSystem::MapDefs::FoundNodes found;
+    App_ResourceSystem().allMapDefs().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    if(found.isEmpty()) return 0;
+
+    //bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known maps";
+    //if(!printSchemeName && scheme)
+    //    heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<MapDef>);
+    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(MapDef *mapDef, found)
+    {
+        String info = String("%1: " _E(1) "%2" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(mapDef->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
 }
 
 /**
@@ -4171,7 +4129,18 @@ static bool compareManifestPathsAscending(ManifestType const *a, ManifestType co
 static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     de::Uri::ComposeAsTextFlags composeUriFlags)
 {
-    QList<MaterialManifest *> found = collectMaterialManifests(scheme, like);
+    MaterialScheme::Index::FoundNodes found;
+    if(scheme) // Consider resources in the specified scheme only.
+    {
+        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else // Consider resources in any scheme.
+    {
+        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        {
+            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+        }
+    }
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
@@ -4185,7 +4154,7 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), compareManifestPathsAscending<MaterialManifest>);
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<MaterialManifest>);
     int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     foreach(MaterialManifest *manifest, found)
@@ -4201,6 +4170,112 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
 
     return found.count();
 }
+
+/**
+ * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Texture path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printTextureIndex2(TextureScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    TextureScheme::Index::FoundNodes found;
+    if(scheme)  // Consider resources in the specified scheme only.
+    {
+        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else  // Consider resources in any scheme.
+    {
+        foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
+        {
+            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+        }
+    }
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known textures";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index key.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<TextureManifest>);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(TextureManifest *manifest, found)
+    {
+        String info = String("%1: %2%3")
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasTexture()? _E(0) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+#ifdef __CLIENT__
+
+/**
+ * @param scheme    Resource subspace scheme being printed. Can be @c NULL in
+ *                  which case resources are printed from all schemes.
+ * @param like      Resource path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printFontIndex2(FontScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    FontScheme::Index::FoundNodes found;
+    if(scheme) // Only resources in this scheme.
+    {
+        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else // Consider resources in any scheme.
+    {
+        foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+        {
+            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+        }
+    }
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known fonts";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<FontManifest>);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(FontManifest *manifest, found)
+    {
+        String info = String("%1: %2%3" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasResource()? _E(1) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+#endif // __CLIENT__
 
 static void printMaterialIndex(de::Uri const &search,
     de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
@@ -4236,44 +4311,12 @@ static void printMaterialIndex(de::Uri const &search,
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
 
-/**
- * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
- *                  which case textures are printed from all schemes.
- * @param like      Texture path search term.
- * @param composeUriFlags  Flags governing how URIs should be composed.
- */
-static int printTextureIndex2(TextureScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
+static void printMapsIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
 {
-    QList<TextureManifest *> found = collectTextureManifests(scheme, like);
-    if(found.isEmpty()) return 0;
-
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
-
-    // Print a heading.
-    String heading = "Known textures";
-    if(!printSchemeName && scheme)
-        heading += " in scheme '" + scheme->name() + "'";
-    if(!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
-
-    // Print the result index key.
-    qSort(found.begin(), found.end(), compareManifestPathsAscending<TextureManifest>);
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    int idx = 0;
-    foreach(TextureManifest *manifest, found)
-    {
-        String info = String("%1: %2%3")
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasTexture()? _E(0) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
-
-        LOG_RES_MSG("  " _E(>)) << info;
-        idx++;
-    }
-
-    return found.count();
+    int printTotal = printMapsIndex2(search.path(), flags | de::Uri::OmitScheme);
+    LOG_RES_MSG(_E(R));
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "map" : "maps in total");
 }
 
 static void printTextureIndex(de::Uri const &search,
@@ -4311,46 +4354,6 @@ static void printTextureIndex(de::Uri const &search,
 }
 
 #ifdef __CLIENT__
-
-/**
- * @param scheme    Resource subspace scheme being printed. Can be @c NULL in
- *                  which case resources are printed from all schemes.
- * @param like      Resource path search term.
- * @param composeUriFlags  Flags governing how URIs should be composed.
- */
-static int printFontIndex2(FontScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
-{
-    QList<FontManifest *> found = collectFontManifests(scheme, like);
-    if(found.isEmpty()) return 0;
-
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
-
-    // Print a heading.
-    String heading = "Known fonts";
-    if(!printSchemeName && scheme)
-        heading += " in scheme '" + scheme->name() + "'";
-    if(!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
-
-    // Print the result index.
-    qSort(found.begin(), found.end(), compareManifestPathsAscending<FontManifest>);
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    int idx = 0;
-    foreach(FontManifest *manifest, found)
-    {
-        String info = String("%1: %2%3" _E(.))
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasResource()? _E(1) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
-
-        LOG_RES_MSG("  " _E(>)) << info;
-        idx++;
-    }
-
-    return found.count();
-}
 
 static void printFontIndex(de::Uri const &search,
     de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
@@ -4404,6 +4407,32 @@ static bool isKnownFontSchemeCallback(String name)
     return App_ResourceSystem().knownFontScheme(name);
 }
 #endif
+
+/**
+ * Print a list of all currently available maps and the location of the source
+ * file which contains them.
+ *
+ * @todo Improve output: find common map id prefixes, find "suffixed" numerical
+ * ranges, etc... (Do not assume *anything* about the formatting of map ids -
+ * ZDoom allows the mod author to give a map any id they wish, which, is then
+ * specified in MAPINFO when defining the map progression, clusters, etc...).
+ */
+D_CMD(ListMaps)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+    if(search.scheme().isEmpty()) search.setScheme("Maps");
+
+    if(!search.scheme().isEmpty() && search.scheme().compareWithoutCase("Maps"))
+    {
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printMapsIndex(search);
+    return true;
+}
 
 D_CMD(ListMaterials)
 {
@@ -4567,6 +4596,8 @@ void ResourceSystem::consoleRegister() // static
 #ifdef DENG_DEBUG
     C_CMD("materialstats",  NULL,   PrintMaterialStats)
 #endif
+    C_CMD("listmaps",       "s",    ListMaps)
+    C_CMD("listmaps",       "",     ListMaps)
 
     Texture::consoleRegister();
     Material::consoleRegister();

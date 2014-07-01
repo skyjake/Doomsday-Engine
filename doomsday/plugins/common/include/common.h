@@ -60,6 +60,8 @@ extern "C" {
 int Common_GetInteger(int id);
 
 #ifdef __cplusplus
+} // extern "C"
+
 /**
  * Returns the central LumpIndex from the engine. For use with old subsystems
  * which still depend on this old fashioned mechanism for file access.
@@ -68,7 +70,6 @@ int Common_GetInteger(int id);
  */
 inline de::LumpIndex const &CentralLumpIndex() { return *reinterpret_cast<de::LumpIndex const *>(F_LumpIndex()); }
 
-} // extern "C"
 #endif
 
 #endif // LIBCOMMON_GAME_INCLUDES

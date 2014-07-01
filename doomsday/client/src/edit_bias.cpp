@@ -266,25 +266,27 @@ static void SBE_SetLock(int which, bool enable = true)
 
 static bool SBE_Save(char const *name = 0)
 {
-    DENG_ASSERT(editActive);
+    DENG2_ASSERT(editActive);
 
     LOG_AS("Bias");
+
+    Map &map = App_WorldSystem().map();
 
     ddstring_t fileName; Str_Init(&fileName);
     if(!name || !name[0])
     {
-        String mapPath = App_WorldSystem().map().uri().resolvedRef() + ".ded";
-        Str_Set(&fileName, mapPath.toUtf8().constData());
+        Str_Set(&fileName, String(map.def()? map.def()->composeUri().path() : "unknownmap").toUtf8().constData());
     }
     else
     {
         Str_Set(&fileName, name);
         F_ExpandBasePath(&fileName, &fileName);
-        // Do we need to append an extension?
-        if(String(Str_Text(&fileName)).fileNameExtension().isEmpty())
-        {
-            Str_Append(&fileName, ".ded");
-        }
+    }
+
+    // Do we need to append an extension?
+    if(String(Str_Text(&fileName)).fileNameExtension().isEmpty())
+    {
+        Str_Append(&fileName, ".ded");
     }
 
     F_ToNativeSlashes(&fileName, &fileName);
@@ -300,9 +302,7 @@ static bool SBE_Save(char const *name = 0)
     LOG_RES_VERBOSE("Saving to \"%s\"...")
             << NativePath(Str_Text(&fileName)).pretty();
 
-    Map &map = App_WorldSystem().map();
-
-    char const *uid = map.oldUniqueId();
+    String uid = (map.def()? map.def()->composeUniqueId(App_CurrentGame()) : "(unknown map)");
     fprintf(file, "# %i Bias Lights for %s\n\n", map.biasSourceCount(), uid);
 
     // Since there can be quite a lot of these, make sure we'll skip
@@ -709,7 +709,8 @@ void SBE_DrawGui()
     origin.y = top - size.y / 2;
 
     // The map ID.
-    drawText(String(map.oldUniqueId()), origin, UI_Color(UIC_TITLE), opacity);
+    String label = (map.def()? map.def()->composeUniqueId(App_CurrentGame()) : "(unknown map)");
+    drawText(label, origin, UI_Color(UIC_TITLE), opacity);
 
     glDisable(GL_TEXTURE_2D);
 

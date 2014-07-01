@@ -59,6 +59,261 @@ namespace internal
 
 using namespace internal;
 
+DENG2_PIMPL_NOREF(LumpIndex::Id1MapRecognizer)
+{
+    lumpnum_t lastLump;
+    Lumps lumps;
+    String id;
+    Format format;
+
+    Instance() : lastLump(-1), format(UnknownFormat) {}
+};
+
+LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset)
+    : d(new Instance)
+{
+    LOG_AS("LumpIndex::Id1MapRecognizer");
+    LOG_RES_XVERBOSE("Locating data lumps...");
+
+    // Keep checking lumps to see if its a map data lump.
+    dint const numLumps = lumpIndex.size();
+    String sourceFile;
+    for(d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
+    {
+        // Lump name determines whether this lump is a candidate.
+        File1 &lump       = lumpIndex[d->lastLump];
+        DataType dataType = typeForLumpName(lump.name());
+
+        if(d->lumps.isEmpty())
+        {
+            // No sequence has yet begun. Continue the scan?
+            if(dataType == UnknownData) continue;
+
+            // Missing a header?
+            if(d->lastLump == 0) return;
+
+            // The id of the map is the name of the lump which precedes the first
+            // recognized data lump (which should be the header). Note that some
+            // ports include MAPINFO-like data in the header.
+            d->id = lumpIndex[d->lastLump - 1].name().fileNameAndPathWithoutExtension();
+            sourceFile = lump.container().composePath();
+        }
+        else
+        {
+            // The first unrecognized lump ends the sequence.
+            if(dataType == UnknownData) break;
+
+            // A lump from another source file also ends the sequence.
+            if(sourceFile.compareWithoutCase(lump.container().composePath()))
+                break;
+        }
+
+        // A recognized map data lump; record it in the collection (replacing any
+        // existing record of the same type).
+        d->lumps.insert(dataType, &lump);
+    }
+
+    if(d->lumps.isEmpty()) return;
+
+    // At this point we know we've found something that could be map data.
+
+    // Some data lumps are specific to a particular map format and thus their
+    // presence unambiguously identifies the format.
+    if(d->lumps.contains(BehaviorData))
+    {
+        d->format = HexenFormat;
+    }
+    else if(d->lumps.contains(MacroData) || d->lumps.contains(TintColorData) ||
+            d->lumps.contains(LeafData))
+    {
+        d->format = Doom64Format;
+    }
+    else
+    {
+        d->format = DoomFormat;
+    }
+
+    // Determine whether each data lump is of the expected size.
+    duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
+    DENG2_FOR_EACH_CONST(Lumps, i, d->lumps)
+    {
+        DataType const dataType = i.key();
+        File1 const &lump       = *i.value();
+
+        // Determine the number of map data objects of each data type.
+        duint *elemCountAddr = 0;
+        dsize const elemSize = elementSizeForDataType(d->format, dataType);
+
+        switch(dataType)
+        {
+        default: break;
+
+        case VertexData:    elemCountAddr = &numVertexes; break;
+        case ThingData:     elemCountAddr = &numThings;   break;
+        case LineDefData:   elemCountAddr = &numLines;    break;
+        case SideDefData:   elemCountAddr = &numSides;    break;
+        case SectorDefData: elemCountAddr = &numSectors;  break;
+        case TintColorData: elemCountAddr = &numLights;   break;
+        }
+
+        if(elemCountAddr)
+        {
+            if(lump.size() % elemSize != 0)
+            {
+                // What *is* this??
+                d->format = UnknownFormat;
+                d->id.clear();
+                return;
+            }
+
+            *elemCountAddr += lump.size() / elemSize;
+        }
+    }
+
+    // A valid map contains at least one of each of these element types.
+    /// @todo Support loading "empty" maps.
+    if(!numVertexes || !numLines || !numSides || !numSectors)
+    {
+        d->format = UnknownFormat;
+        d->id.clear();
+        return;
+    }
+
+    //LOG_RES_VERBOSE("Recognized %s format map") << Id1Map::formatName(d->format);
+}
+
+String const &LumpIndex::Id1MapRecognizer::id() const
+{
+    return d->id;
+}
+
+LumpIndex::Id1MapRecognizer::Format LumpIndex::Id1MapRecognizer::format() const
+{
+    return d->format;
+}
+
+LumpIndex::Id1MapRecognizer::Lumps const &LumpIndex::Id1MapRecognizer::lumps() const
+{
+    return d->lumps;
+}
+
+File1 *LumpIndex::Id1MapRecognizer::sourceFile() const
+{
+    if(d->lumps.isEmpty()) return 0;
+    return &lumps().find(VertexData).value()->container();
+}
+
+lumpnum_t LumpIndex::Id1MapRecognizer::lastLump() const
+{
+    return d->lastLump;
+}
+
+String const &LumpIndex::Id1MapRecognizer::formatName(Format id) // static
+{
+    static String const names[1 + KnownFormatCount] = {
+        /* MF_UNKNOWN */ "Unknown",
+        /* MF_DOOM    */ "id Tech 1 (Doom)",
+        /* MF_HEXEN   */ "id Tech 1 (Hexen)",
+        /* MF_DOOM64  */ "id Tech 1 (Doom64)"
+    };
+    if(id >= DoomFormat && id < KnownFormatCount)
+    {
+        return names[1 + id];
+    }
+    return names[0];
+}
+
+/// @todo Optimize: Replace linear search...
+LumpIndex::Id1MapRecognizer::DataType LumpIndex::Id1MapRecognizer::typeForLumpName(String name) // static
+{
+    static const struct LumpTypeInfo {
+        String name;
+        DataType type;
+    } lumpTypeInfo[] =
+    {
+        { "THINGS",     ThingData       },
+        { "LINEDEFS",   LineDefData     },
+        { "SIDEDEFS",   SideDefData     },
+        { "VERTEXES",   VertexData      },
+        { "SEGS",       SegData         },
+        { "SSECTORS",   SubsectorData   },
+        { "NODES",      NodeData        },
+        { "SECTORS",    SectorDefData   },
+        { "REJECT",     RejectData      },
+        { "BLOCKMAP",   BlockmapData    },
+        { "BEHAVIOR",   BehaviorData    },
+        { "SCRIPTS",    ScriptData      },
+        { "LIGHTS",     TintColorData   },
+        { "MACROS",     MacroData       },
+        { "LEAFS",      LeafData        },
+        { "GL_VERT",    GLVertexData    },
+        { "GL_SEGS",    GLSegData       },
+        { "GL_SSECT",   GLSubsectorData },
+        { "GL_NODES",   GLNodeData      },
+        { "GL_PVS",     GLPVSData       },
+        { "",           UnknownData     }
+    };
+
+    // Ignore the file extension if present.
+    name = name.fileNameWithoutExtension();
+
+    if(!name.isEmpty())
+    {
+        for(dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
+        {
+            LumpTypeInfo const &info = lumpTypeInfo[i];
+            if(!info.name.compareWithoutCase(name) &&
+               info.name.length() == name.length())
+            {
+                return info.type;
+            }
+        }
+    }
+
+    return UnknownData;
+}
+
+dsize LumpIndex::Id1MapRecognizer::elementSizeForDataType(Format mapFormat, DataType dataType) // static
+{
+    dsize const SIZEOF_64VERTEX  = (4 * 2);
+    dsize const SIZEOF_VERTEX    = (2 * 2);
+    dsize const SIZEOF_SIDEDEF   = (2 * 3 + 8 * 3);
+    dsize const SIZEOF_64SIDEDEF = (2 * 6);
+    dsize const SIZEOF_LINEDEF   = (2 * 7);
+    dsize const SIZEOF_64LINEDEF = (2 * 6 + 1 * 4);
+    dsize const SIZEOF_XLINEDEF  = (2 * 5 + 1 * 6);
+    dsize const SIZEOF_SECTOR    = (2 * 5 + 8 * 2);
+    dsize const SIZEOF_64SECTOR  = (2 * 12);
+    dsize const SIZEOF_THING     = (2 * 5);
+    dsize const SIZEOF_64THING   = (2 * 7);
+    dsize const SIZEOF_XTHING    = (2 * 7 + 1 * 6);
+    dsize const SIZEOF_LIGHT     = (1 * 6);
+
+    switch(dataType)
+    {
+    default: return 0;
+
+    case VertexData:
+        return (mapFormat == Doom64Format? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+
+    case LineDefData:
+        return (mapFormat == Doom64Format? SIZEOF_64LINEDEF :
+                mapFormat == HexenFormat ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
+
+    case SideDefData:
+        return (mapFormat == Doom64Format? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+
+    case SectorDefData:
+        return (mapFormat == Doom64Format? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+
+    case ThingData:
+        return (mapFormat == Doom64Format? SIZEOF_64THING :
+                mapFormat == HexenFormat ? SIZEOF_XTHING  : SIZEOF_THING);
+
+    case TintColorData: return SIZEOF_LIGHT;
+    }
+}
+
 DENG2_PIMPL(LumpIndex)
 {
     bool pathsAreUnique;

@@ -74,12 +74,6 @@ void G_CommonShutdown(void);
 
 void R_InitRefresh(void);
 
-/**
- * Print a list of all currently available maps and the location of the
- * source file/directory which contains them.
- */
-void G_PrintMapList(void);
-
 void G_DeferredPlayDemo(char *demo);
 
 void G_QuitGame(void);

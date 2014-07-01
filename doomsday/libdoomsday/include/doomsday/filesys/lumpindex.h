@@ -50,6 +50,105 @@ public:
     typedef QList<File1 *> Lumps;
     typedef std::list<lumpnum_t> FoundIndices;
 
+    /**
+     * Heuristic based map data (format) recognizer.
+     *
+     * Unfortunately id Tech 1 maps cannot be easily recognized, due to their
+     * lack of identification signature, the mechanics of the WAD format lump
+     * index and the existence of several subformat variations. Therefore it is
+     * necessary to use heuristic analysis of the lump index and the lump data.
+     */
+    class LIBDOOMSDAY_PUBLIC Id1MapRecognizer
+    {
+    public:
+        /// Logical map format identifiers.
+        enum Format {
+            UnknownFormat = -1,
+
+            DoomFormat,
+            HexenFormat,
+            Doom64Format,
+
+            KnownFormatCount
+        };
+
+        /// Logical map data type identifiers:
+        enum DataType {
+            UnknownData = -1,
+
+            ThingData,
+            LineDefData,
+            SideDefData,
+            VertexData,
+            SegData,
+            SubsectorData,
+            NodeData,
+            SectorDefData,
+            RejectData,
+            BlockmapData,
+            BehaviorData,
+            ScriptData,
+            TintColorData,
+            MacroData,
+            LeafData,
+            GLVertexData,
+            GLSegData,
+            GLSubsectorData,
+            GLNodeData,
+            GLPVSData,
+
+            KnownDataCount
+        };
+
+        typedef QMap<DataType, File1 *> Lumps;
+
+    public:
+        /**
+         * Attempt to recognize an id Tech 1 format by traversing the WAD lump
+         * index, beginning at the @a lumpIndexOffset specified.
+         */
+        Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset);
+
+        String const &id() const;
+        Format format() const;
+
+        Lumps const &lumps() const;
+
+        File1 *sourceFile() const;
+
+        /**
+         * Returns the lump index number of the last data lump inspected by the
+         * recognizer, making it possible to collate/locate all the map data sets
+         * using multiple recognizers.
+         */
+        lumpnum_t lastLump() const;
+
+    public:
+        /**
+         * Returns the textual name for the identified map format @a id.
+         */
+        static String const &formatName(Format id);
+
+        /**
+         * Determines the type of a map data lump by @a name.
+         */
+        static DataType typeForLumpName(String name);
+
+        /**
+         * Determine the size (in bytes) of an element of the specified map data
+         * lump @a type for the current map format.
+         *
+         * @param mapFormat     Map format identifier.
+         * @param dataType      Map lump data type.
+         *
+         * @return Size of an element of the specified type.
+         */
+        static dsize elementSizeForDataType(Format mapFormat, DataType dataType);
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
 public:
     /**
      * @param pathsAreUnique  Lumps in the index must have unique paths. Inserting
@@ -182,6 +281,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef LumpIndex::Id1MapRecognizer Id1MapRecognizer;
 
 } // namespace de
 

@@ -52,24 +52,6 @@ void P_SetupMap(Uri const *uri);
  */
 void P_ResetWorldState();
 
-/**
- * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
- *                case the author for the @em current map will be returned (if set).
- */
-char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor);
-
-/**
- * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
- *                case the title for the @em current map will be returned (if set).
- */
-char const *P_MapTitle(Uri const *mapUri);
-
-/**
- * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
- *                case the title for the @em current map will be returned (if set).
- */
-patchid_t P_MapTitlePatch(Uri const *mapUri);
-
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void);
 #endif

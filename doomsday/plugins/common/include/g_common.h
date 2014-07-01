@@ -114,6 +114,24 @@ char const *G_InFineBriefing(de::Uri const *mapUri);
  */
 char const *G_InFineDebriefing(de::Uri const *mapUri);
 
+/**
+ * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
+ *                case the author for the @em current map will be returned (if set).
+ */
+de::String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor = false);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+de::String G_MapTitle(de::Uri const *mapUri);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+patchid_t G_MapTitlePatch(de::Uri const *mapUri);
+
 extern "C" {
 #endif
 

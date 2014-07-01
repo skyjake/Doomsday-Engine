@@ -386,7 +386,7 @@ void D_PostInit()
         autoStart = true;
     }
 
-    if(startMapUri.isEmpty())
+    if(startMapUri.path().isEmpty())
     {
         startMapUri = G_ComposeMapUri(0, 0);
     }

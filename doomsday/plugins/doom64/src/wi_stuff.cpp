@@ -118,7 +118,7 @@ void WI_Register(void)
     Con_AddVariableList(cvars);
 }
 
-static void drawBackground(void)
+static void drawBackground()
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -126,13 +126,10 @@ static void drawBackground(void)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawFinishedTitle(void)
+static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
-    int x = SCREENWIDTH/2, y = WI_TITLEY;
     uint mapNum = wbs->currentMap;
-    char const *mapTitle = P_MapTitle(0/*current map*/);
-    patchid_t patchId;
-    patchinfo_t info;
+    de::String const mapTitle = G_MapTitle(0/*current map*/);
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -140,8 +137,9 @@ static void drawFinishedTitle(void)
     FR_LoadDefaultAttrib();
 
     // Draw <MapName>
-    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    patchid_t patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    patchinfo_t info;
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.geometry.size.height) / 4;
 

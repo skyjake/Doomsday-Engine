@@ -49,7 +49,9 @@ void NetCl_UpdateGameState(Reader *msg)
     Reader_Read(msg, gsGameIdentity, len); gsGameIdentity[len] = 0;
 
     // Current map.
-    Uri *gsMapUri  = Uri_FromReader(msg);
+    Uri *gsMapUri = Uri_FromReader(msg);
+    Uri_SetScheme(gsMapUri, "Maps");
+
     /*uint gsEpisode =*/ Reader_ReadByte(msg);
     /*uint gsMap     =*/ Reader_ReadByte(msg);
 

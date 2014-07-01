@@ -735,7 +735,8 @@ MapStateReader::~MapStateReader()
 
 void MapStateReader::read(String const &mapUriStr)
 {
-    File const &mapStateFile = folder().locate<File const>(String("maps") / mapUriStr + "State");
+    de::Uri const mapUri(mapUriStr, RC_NULL);
+    File const &mapStateFile = folder().locate<File const>(String("maps") / mapUri.path() + "State");
     SV_OpenFileForRead(mapStateFile);
     d->reader = SV_NewReader();
 

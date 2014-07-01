@@ -64,8 +64,6 @@ void G_CommonShutdown(void);
 void R_InitRefresh(void);
 void G_DeathMatchSpawnPlayer(int playernum);
 
-void G_PrintMapList(void);
-
 void G_DeferredPlayDemo(char *demo);
 
 void G_QuitGame(void);

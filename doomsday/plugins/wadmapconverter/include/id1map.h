@@ -20,8 +20,7 @@
 #ifndef WADMAPCONVERTER_ID1MAP_H
 #define WADMAPCONVERTER_ID1MAP_H
 
-#include "id1map_util.h"   // MapLumpType
-#include "dd_types.h"      // lumpnum_t
+#include "dd_types.h"                   // lumpnum_t
 #include <doomsday/filesys/file.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/uri.h>
@@ -54,64 +53,17 @@ public:
     /// Base class for load-related errors. @ingroup errors
     DENG2_ERROR(LoadError);
 
-    /// Logical map format identifiers.
-    enum Format {
-        UnknownFormat = -1,
-
-        DoomFormat,
-        HexenFormat,
-        Doom64Format,
-
-        MapFormatCount
-    };
-
-    /**
-     * Heuristic based map data (format) recognizer.
-     *
-     * Unfortunately id Tech 1 maps cannot be easily recognized, due to their
-     * lack of identification signature, the mechanics of the WAD format lump
-     * index and the existence of several subformat variations. Therefore it is
-     * necessary to use heuristic analysis of the lump index and the lump data.
-     */
-    class Recognizer
-    {
-    public:
-        typedef QMap<MapLumpType, de::File1 *> Lumps;
-
-    public:
-        /**
-         * Attempt to recognize an id Tech 1 format by traversing the WAD lump
-         * index, beginning at the @a lumpIndexOffset specified.
-         */
-        Recognizer(de::LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset);
-
-        de::String const &mapId() const;
-        Format mapFormat() const;
-
-        Lumps const &lumps() const;
-
-        /**
-         * Returns the lump index number of the last data lump inspected by the
-         * recognizer, making it possible to collate/locate all the map data sets
-         * using multiple recognizers.
-         */
-        lumpnum_t lastLump() const;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
-
 public:
     /**
      * Attempt to construct a new Id1Map from the @a recognized data specified.
      */
-    Id1Map(Recognizer const &recognized);
+    Id1Map(de::Id1MapRecognizer const &recognized);
 
     /**
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the
      * public MapEdit API).
      */
-    void transfer(de::Uri const &uri);
+    void transfer();
 
     /**
      * Convert a textual material @a name to an internal material dictionary id.
@@ -123,17 +75,9 @@ public:
      */
     MaterialId toMaterialId(de::dint number, MaterialGroup group);
 
-public:
-    /**
-     * Returns the textual name for the identified map format @a id.
-     */
-    static de::String const &formatName(Format id);
-
 private:
     DENG2_PRIVATE(d)
 };
-
-typedef Id1Map::Recognizer Id1MapRecognizer;
 
 } // namespace wadimp
 

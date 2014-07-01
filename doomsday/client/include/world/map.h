@@ -48,6 +48,7 @@
 #include <QMultiMap>
 #include <QSet>
 
+class MapDef;
 class BspLeaf;
 class ConvexSubspace;
 class LineBlockmap;
@@ -159,52 +160,24 @@ public:
      * constructed dynamically. When done editing @ref endEditing() should be
      * called to switch the map into a non-editable (i.e., playable) state.
      *
-     * @param uri  Universal resource identifier to attribute to the map. For
-     *             example, @code "E1M1" @endcode. Note that the scheme is
-     *             presently ignored (unused).
+     * @param mapDefinition  Definition for the map (Can be set later, @ref setDef).
      */
-    Map(Uri const &uri = Uri());
+    Map(MapDef *mapDefinition = 0);
 
     /**
-     * To be called to register the commands and variables of this module.
+     * Change the definition associated with the map to @a newMapDefinition.
      */
-    static void consoleRegister();
+    void setDef(MapDef *newMapDefinition);
 
     /**
-     * To be called to initialize the dummy element arrays (which are used with
-     * the DMU API), with a fixed number of @em shared dummies.
+     * Returns the definition for the map.
      */
-    static void initDummies();
+    MapDef *def() const;
 
     /**
      * To be called following an engine reset to update the map state.
      */
     void update();
-
-    /**
-     * Returns the universal resource identifier (URI) attributed to the map.
-     */
-    Uri const &uri() const;
-
-    /**
-     * Returns the old 'unique' identifier attributed to the map.
-     */
-    char const *oldUniqueId() const;
-
-    /**
-     * Change the old 'unique' identifier attributed to the map.
-     *
-     * @param newUniqueId  New identifier to attribute.
-     */
-    void setOldUniqueId(char const *newUniqueId);
-
-    /**
-     * Determines if the map is from a container that has been flagged as a
-     * Custom resource.
-     *
-     * @see P_MapIsCustom()
-     */
-    bool isCustom() const;
 
     /**
      * Returns the points which describe the boundary of the map coordinate
@@ -835,6 +808,22 @@ public:
      * Perform spreading of all contacts in the specified map space @a region.
      */
     void spreadAllContacts(AABoxd const &region);
+
+#endif // __CLIENT__
+
+public:
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
+
+    /**
+     * To be called to initialize the dummy element arrays (which are used with
+     * the DMU API), with a fixed number of @em shared dummies.
+     */
+    static void initDummies();
+
+#ifdef __CLIENT__
 
 protected:
     /// Observes WorldSystem FrameBegin

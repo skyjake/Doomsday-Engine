@@ -56,6 +56,15 @@
  * compatibility, it must be manually added to the set of published APIs (see
  * library.cpp) and the API struct in question should be copied to a separate
  * header file for that version of the API (e.g., api_map_v1.h).
+ *
+ * @par Deprecating/removing an API
+ *
+ * When an API becomes fully obsolete, a new version with a "_REMOVED" suffix should be
+ * added. This new enum should have a new identification number to differentiate it from
+ * previous valid versions. As always, the old enums of the API should be retained for
+ * historical reasons. In the future, possible new APIs should not use the same
+ * identification numbers. A removed API does not need a 'versionless' enumeration,
+ * though, as there is no more latest version of the API available.
  */
 enum {
     DE_API_BASE_v1              = 0,       // 1.10
@@ -143,7 +152,11 @@ enum {
 
     DE_API_URI_v1               = 2300,    // 1.10
     DE_API_URI_v2               = 2301,    // 1.14
-    DE_API_URI                  = DE_API_URI_v2
+    DE_API_URI                  = DE_API_URI_v2,
+
+    DE_API_WAD_v1               = 2400,    // 1.10
+    DE_API_WAD_v2               = 2401,    // 1.14
+    DE_API_WAD_REMOVED          = 2402     // 1.15 (API removed)
 };
 
 /**

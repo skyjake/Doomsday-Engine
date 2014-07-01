@@ -147,6 +147,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/LightDecoration \
     include/Line \
     include/Lumobj \
+    include/MapDef \
     include/MapElement \
     include/MapObject \
     include/Material \
@@ -318,6 +319,7 @@ DENG_HEADERS += \
     include/resource/hq2x.h \
     include/resource/image.h \
     include/resource/manifest.h \
+    include/resource/mapdef.h \
     include/resource/material.h \
     include/resource/materialarchive.h \
     include/resource/materialmanifest.h \
@@ -630,6 +632,7 @@ SOURCES += \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
     src/resource/manifest.cpp \
+    src/resource/mapdef.cpp \
     src/resource/material.cpp \
     src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \

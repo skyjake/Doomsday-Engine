@@ -145,10 +145,8 @@ DENG2_PIMPL(Map)
     bool editingEnabled;
     EditableElements editable;
 
-    Uri uri;
-    char oldUniqueId[256]; ///< Used with some legacy definitions.
-
-    AABoxd bounds;         ///< Boundary points which encompass the entire map
+    MapDef *def;    ///< Definition for the map (not owned, may be @c NULL).
+    AABoxd bounds;  ///< Boundary points which encompass the entire map
 
     QScopedPointer<Thinkers> thinkers;
     Mesh mesh;             ///< All map geometries.
@@ -317,15 +315,15 @@ DENG2_PIMPL(Map)
     /// Shadow Bias data.
     struct Bias
     {
-        uint currentTime;       ///< The "current" frame in milliseconds.
+        uint currentTime;        ///< The "current" frame in milliseconds.
         uint lastChangeOnFrame;
-        BiasSources sources;    ///< All bias light sources (owned).
+        BiasSources sources;     ///< All bias light sources (owned).
 
         Bias() : currentTime(0), lastChangeOnFrame(0)
         {}
     } bias;
 
-    Lumobjs lumobjs; ///< All lumobjs (owned).
+    Lumobjs lumobjs;  ///< All lumobjs (owned).
 
     QScopedPointer<SurfaceDecorator> decorator;
 
@@ -341,18 +339,15 @@ DENG2_PIMPL(Map)
     ClPolyMovers clPolyMovers;
 #endif
 
-    Instance(Public *i, Uri const &uri)
+    Instance(Public *i)
         : Base          (i)
         , editingEnabled(true)
-        , uri           (uri)
         , lineLinks     (0)
 #ifdef __CLIENT__
         , skyFloor      (*i, DDMAXFLOAT)
         , skyCeiling    (*i, DDMINFLOAT)
 #endif
-    {
-        zap(oldUniqueId);
-    }
+    {}
 
     ~Instance()
     {
@@ -622,7 +617,7 @@ DENG2_PIMPL(Map)
         Time begunAt;
 
         LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...")
-            << uri << bspSplitFactor;
+            << (def? def->composeUri() : "(unknown map)") << bspSplitFactor;
 
         // First we'll scan for so-called "one-way window" constructs and mark
         // them so that the space partitioner can treat them specially.
@@ -1371,31 +1366,33 @@ DENG2_PIMPL(Map)
 
     void spawnMapParticleGens()
     {
+        if(!def) return;
+
         for(int i = 0; i < defs.ptcGens.size(); ++i)
         {
-            ded_ptcgen_t *def = &defs.ptcGens[i];
+            ded_ptcgen_t *genDef = &defs.ptcGens[i];
 
-            if(!def->map) continue;
+            if(!genDef->map) continue;
 
-            if(*def->map != uri)
+            if(*genDef->map != def->composeUri())
                 continue;
 
             // Are we still spawning using this generator?
-            if(def->spawnAge > 0 && worldSys().time() > def->spawnAge)
+            if(genDef->spawnAge > 0 && worldSys().time() > genDef->spawnAge)
                 continue;
 
             Generator *gen = self.newGenerator();
             if(!gen) return; // No more generators.
 
             // Initialize the particle generator.
-            gen->count = def->particles;
+            gen->count = genDef->particles;
             gen->spawnRateMultiplier = 1;
 
-            gen->configureFromDef(def);
+            gen->configureFromDef(genDef);
             gen->setUntriggered();
 
             // Is there a need to pre-simulate?
-            gen->presimulate(def->preSim);
+            gen->presimulate(genDef->preSim);
         }
     }
 
@@ -1603,11 +1600,23 @@ DENG2_PIMPL(Map)
 #endif // __CLIENT__
 };
 
-Map::Map(Uri const &uri) : d(new Instance(this, uri))
+Map::Map(MapDef *mapDefinition) : d(new Instance(this))
 {
-    _globalGravity = 0;
-    _effectiveGravity = 0;
+    _globalGravity     = 0;
+    _effectiveGravity  = 0;
     _ambientLightLevel = 0;
+
+    setDef(mapDefinition);
+}
+
+MapDef *Map::def() const
+{
+    return d->def;
+}
+
+void Map::setDef(MapDef *newMapDefinition)
+{
+    d->def = newMapDefinition;
 }
 
 Mesh const &Map::mesh() const
@@ -1899,19 +1908,24 @@ void Map::initBias()
     // Start with no sources whatsoever.
     d->bias.sources.clear();
 
-    // Load light sources from Light definitions.
-    for(int i = 0; i < defs.lights.size(); ++i)
+    if(d->def)
     {
-        ded_light_t *def = &defs.lights[i];
+        String const oldUniqueId = d->def->composeUniqueId(App_CurrentGame());
 
-        if(def->state[0]) continue;
-        if(qstricmp(d->oldUniqueId, def->uniqueMapID)) continue;
+        // Load light sources from Light definitions.
+        for(int i = 0; i < defs.lights.size(); ++i)
+        {
+            ded_light_t *lightDef = &defs.lights[i];
 
-        // Already at maximum capacity?
-        if(biasSourceCount() == MAX_BIAS_SOURCES)
-            break;
+            if(lightDef->state[0]) continue;
+            if(oldUniqueId.compareWithoutCase(lightDef->uniqueMapID)) continue;
 
-        addBiasSource(BiasSource::fromDef(*def));
+            // Already at maximum capacity?
+            if(biasSourceCount() == MAX_BIAS_SOURCES)
+                break;
+
+            addBiasSource(BiasSource::fromDef(*lightDef));
+        }
     }
 
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
@@ -2089,26 +2103,6 @@ ClMobjHash const &Map::clMobjHash() const
 
 #endif // __CLIENT__
 
-Uri const &Map::uri() const
-{
-    return d->uri;
-}
-
-char const *Map::oldUniqueId() const
-{
-    return d->oldUniqueId;
-}
-
-void Map::setOldUniqueId(char const *newUniqueId)
-{
-    qstrncpy(d->oldUniqueId, newUniqueId, sizeof(d->oldUniqueId));
-}
-
-bool Map::isCustom() const
-{
-    return P_MapIsCustom(uri().asText().toUtf8());
-}
-
 AABoxd const &Map::bounds() const
 {
     return d->bounds;
@@ -2124,7 +2118,8 @@ void Map::setGravity(coord_t newGravity)
     if(!de::fequal(_effectiveGravity, newGravity))
     {
         _effectiveGravity = newGravity;
-        LOG_MAP_VERBOSE("Effective gravity for %s now %.1f") << d->uri.asText() << _effectiveGravity;
+        LOG_MAP_VERBOSE("Effective gravity for %s now %.1f")
+                << (d->def? d->def->gets("id") : "(unknown map)") << _effectiveGravity;
     }
 }
 
@@ -3229,12 +3224,19 @@ void Map::update()
 #endif // __CLIENT__
 
     // Reapply values defined in MapInfo (they may have changed).
-    ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&d->uri));
+    ded_mapinfo_t *mapInfo = 0;
+
+    if(MapDef *mapDef = d->def)
+    {
+        Uri const mapUri = mapDef->composeUri();
+        mapInfo = defs.getMapInfo(&mapUri);
+    }
+
     if(!mapInfo)
     {
         // Use the default def instead.
-        Uri defaultDefUri(Path("*"));
-        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
+        Uri const defaultDefUri("Maps", Path("*"));
+        mapInfo = defs.getMapInfo(&defaultDefUri);
     }
 
     if(mapInfo)
@@ -3573,16 +3575,16 @@ D_CMD(InspectMap)
     LOG_SCR_MSG("\n");
 
     LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
-              /*" " _E(l) "OldUid: " _E(.) _E(i) "%s" _E(.)*/
-                    _E(l) "Music: "  _E(.) _E(i) "%i")
-            << map.uri().asText()
+              /*" " _E(l) " OldUid: " _E(.) _E(i) "%s" _E(.)*/
+                    _E(l) " Music: "  _E(.) _E(i) "%i")
+            << (map.def()? map.def()->composeUri().asText() : "(unknown map)")
             /*<< map.oldUniqueId()*/
             << Con_GetInteger("map-music");
 
-    if(map.isCustom())
+    if(map.def() && map.def()->sourceFile()->hasCustom())
     {
-        NativePath sourceFile(Str_Text(P_MapSourceFile(map.uri().asText().toUtf8().constData())));
-        LOG_SCR_MSG(_E(l) "Source: " _E(.) _E(i) "\"%s\"") << sourceFile.pretty();
+        LOG_SCR_MSG(_E(l) "Source: " _E(.) _E(i) "\"%s\"")
+                << NativePath(map.def()->sourceFile()->composePath()).pretty();
     }
 
     LOG_SCR_MSG("\n");

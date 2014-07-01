@@ -86,6 +86,9 @@ D_CMD(HelpScreen);
 
 D_CMD(ListMaps);
 D_CMD(WarpMap);
+#if __JDOOM__ || __JHERETIC__
+D_CMD(WarpEpisodeMap);
+#endif
 
 D_CMD(LoadSession);
 D_CMD(SaveSession);
@@ -104,11 +107,6 @@ void G_StopDemo();
  * Updates game status cvars for the specified player.
  */
 void G_UpdateGSVarsForPlayer(player_t *pl);
-
-/**
- * Updates game status cvars for the current map.
- */
-void G_UpdateGSVarsForMap();
 
 void R_LoadVectorGraphics();
 
@@ -347,7 +345,6 @@ ccmdtemplate_t gameCmds[] = {
     { "endgame",         "s",    CCmdEndSession, 0 },
     { "endgame",         "",     CCmdEndSession, 0 },
     { "helpscreen",      "",     CCmdHelpScreen, 0 },
-    { "listmaps",        "",     CCmdListMaps, 0 },
     { "loadgame",        "ss",   CCmdLoadSession, 0 },
     { "loadgame",        "s",    CCmdLoadSession, 0 },
     { "loadgame",        "",     CCmdOpenLoadMenu, 0 },
@@ -385,15 +382,15 @@ void G_Register()
         Con_AddCommand(gameCmds + i);
     }
 
-    C_CMD("warp", "i", WarpMap);
-    C_CMD("setmap", "i", WarpMap); // alias
+    C_CMD("warp", "s", WarpMap);
+    C_CMD("setmap", "s", WarpMap); // alias
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__
     if(!(gameModeBits & GM_ANY_DOOM2))
 # endif
     {
-        C_CMD("warp", "ii", WarpMap);
-        C_CMD("setmap", "ii", WarpMap); // alias
+        C_CMD("warp", "ii", WarpEpisodeMap);
+        C_CMD("setmap", "ii", WarpEpisodeMap); // alias
     }
 #endif
 }
@@ -1198,22 +1195,23 @@ static void printMapBanner()
 {
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 
-    if(char const *title = P_MapTitle(0/*current map*/))
+    String const title = G_MapTitle(0/*current map*/);
+    if(!title.isEmpty())
     {
-        de::String text = de::String("Map: ") + gameMapUri.asText();
+        String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
         mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
-        text += de::String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
+        text += String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
 #endif
-        text += de::String(" - " DE2_ESC(b)) + title;
+        text += String(" - " DE2_ESC(b)) + title;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
     }
 
 #if !__JHEXEN__
-    char const *author = P_MapAuthor(0/*current map*/, P_MapIsCustom(gameMapUri.compose().toUtf8().constData()));
-    if(!author) author = "Unknown";
+    String author = G_MapAuthor(0/*current map*/, P_MapIsCustom(gameMapUri.compose().toUtf8().constData()));
+    if(author.isEmpty()) author = "Unknown";
 
-    App_Log(DE2_LOG_NOTE, "Author: %s", author);
+    App_Log(DE2_LOG_NOTE, "Author: %s", author.toUtf8().constData());
 #endif
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 }
@@ -1229,7 +1227,15 @@ void G_BeginMap()
     }
 
     G_ControlReset(-1); // Clear all controls for all local players.
-    G_UpdateGSVarsForMap();
+
+    // Update the game status cvars for the current map.
+    String mapAuthor = G_MapAuthor(0/*current map*/);
+    if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
+    Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+
+    String mapTitle = G_MapTitle(0/*current map*/);
+    if(mapTitle.isEmpty()) mapTitle = "Unknown";
+    Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
 
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;
@@ -1351,18 +1357,6 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
             gsvInvItems[i] = 0;
     }
 #endif
-}
-
-void G_UpdateGSVarsForMap()
-{
-    char const *mapAuthor = P_MapAuthor(0/*current map*/, false/*don't supress*/);
-    char const *mapTitle  = P_MapTitle(0/*current map*/);
-
-    if(!mapAuthor) mapAuthor = "Unknown";
-    Con_SetString2("map-author", mapAuthor, SVF_WRITE_OVERRIDE);
-
-    if(!mapTitle) mapTitle = "Unknown";
-    Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
 }
 
 static sfxenum_t randomQuitSound()
@@ -2320,20 +2314,20 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
     de::String description;
 
     // Include the source file name, for custom maps.
-    de::String mapPath = gameMapUri.compose();
-    if(P_MapIsCustom(mapPath.toUtf8().constData()))
+    de::String mapUriAsText = gameMapUri.compose();
+    if(P_MapIsCustom(mapUriAsText.toUtf8().constData()))
     {
-        de::String const &mapSourcePath = de::String(Str_Text(P_MapSourceFile(mapPath.toUtf8().constData())));
+        de::String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText.toUtf8().constData())));
         description += mapSourcePath.fileNameWithoutExtension() + ":";
     }
 
     // Include the map title.
-    de::String mapTitle = de::String(P_MapTitle(0/*current map*/));
+    de::String mapTitle = G_MapTitle(0/*current map*/);
     // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
     /// @todo Move this logic engine-side.
     if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')
     {
-        mapTitle = mapPath;
+        mapTitle = gameMapUri.path();
     }
     description += mapTitle;
 
@@ -2354,7 +2348,7 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
 uint G_EpisodeNumberFor(de::Uri const &mapUri)
 {
 #if __JDOOM__ || __JHERETIC__
-    de::String path = mapUri.resolved();
+    String path = mapUri.path();
     if(!path.isEmpty())
     {
 # if __JDOOM__
@@ -2376,7 +2370,7 @@ uint G_EpisodeNumberFor(de::Uri const &mapUri)
 /// @todo Get this from MAPINFO
 uint G_MapNumberFor(de::Uri const &mapUri)
 {
-    de::String path = mapUri.resolved();
+    String path = mapUri.path();
     if(!path.isEmpty())
     {
 #if __JDOOM__ || __JHERETIC__
@@ -2398,37 +2392,7 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
-{
-    if(response == MSG_YES)
-    {
-        G_SetGameAction(GA_QUIT);
-    }
-    return true;
-}
 
-void G_QuitGame()
-{
-    if(G_QuitInProgress()) return;
-
-    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
-    {
-        // User has re-tried to quit with "quit" when the question is already on
-        // the screen. Apparently we should quit...
-        DD_Execute(true, "quit!");
-        return;
-    }
-
-    char const *endString;
-#if __JDOOM__ || __JDOOM64__
-    endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
-#else
-    endString = GET_TXT(TXT_QUITMSG);
-#endif
-
-    Con_Open(false);
-    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
-}
 
 uint G_LogicalMapNumber(uint episode, uint map)
 {
@@ -2472,7 +2436,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #endif
-    return de::Uri(mapId, RC_NULL);
+    return de::Uri("Maps", mapId);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
@@ -2674,79 +2638,108 @@ uint G_NextLogicalMapNumber(dd_bool secretExit)
     return G_GetNextMap(gameEpisode, gameMap, secretExit);
 }
 
-/**
- * Print a list of maps and the WAD files where they are from.
- */
-void G_PrintFormattedMapList(uint episode, char const **files, uint count)
+String G_MapTitle(de::Uri const *mapUri)
 {
-    char const *current = 0;
-    uint rangeStart = 0;
+    if(!mapUri) mapUri = &gameMapUri;
 
-    for(uint i = 0; i < count; ++i)
+    String title;
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
     {
-        if(!current && files[i])
+        if(mapInfo.name[0])
         {
-            current = files[i];
-            rangeStart = i;
-        }
-        else if(current && (!files[i] || stricmp(current, files[i])))
-        {
-            // Print a range.
-            uint len = i - rangeStart;
-            LogBuffer_Printf(DE2_RES_MSG, "  "); // Indentation.
-            if(len <= 2)
+            // Perhaps the title string is a reference to a Text definition?
+            void *ptr;
+            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
             {
-                for(uint k = rangeStart; k < i; ++k)
-                {
-                    char const *separator = (k != i - 1) ? "," : "";
-                    LogBuffer_Printf(DE2_RES_MSG, "%s%s", G_ComposeMapUri(episode, k).asText().toUtf8().constData(),
-                                                          separator);
-                }
+                title = (char const *) ptr; // Yes, use the resolved text string.
             }
             else
             {
-                LogBuffer_Printf(DE2_RES_MSG, "%s-", G_ComposeMapUri(episode, rangeStart).asText().toUtf8().constData());
-                LogBuffer_Printf(DE2_RES_MSG, "%s",  G_ComposeMapUri(episode, i - 1     ).asText().toUtf8().constData());
+                title = mapInfo.name;
             }
-            LogBuffer_Printf(DE2_RES_MSG, " " DE2_ESC(2) DE2_ESC(>) "%s\n", F_PrettyPath(current));
-
-            // Moving on to a different file.
-            current = files[i];
-            rangeStart = i;
         }
     }
-}
 
-void G_PrintMapList()
-{
-#if __JDOOM__
-    uint maxEpisodes       = (gameModeBits & GM_ANY_DOOM)? 9 : 1;
-    uint maxMapsPerEpisode = (gameModeBits & GM_ANY_DOOM)? 9 : 99;
-#elif __JHERETIC__
-    uint maxEpisodes       = 9;
-    uint maxMapsPerEpisode = 9;
-#else
-    uint maxEpisodes       = 1;
-    uint maxMapsPerEpisode = 99;
+#if __JHEXEN__
+    // In Hexen we can also look in MAPINFO for the map title.
+    if(title.isEmpty())
+    {
+        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
+        {
+            title = mapInfo->title;
+        }
+    }
 #endif
 
-    char const *sourceList[100];
-
-    for(uint episode = 0; episode < maxEpisodes; ++episode)
+    // Skip the "ExMx" part, if present.
+    int idSuffixAt = title.indexOf(':');
+    if(idSuffixAt >= 0)
     {
-        de::zap(sourceList);
+        int subStart = idSuffixAt + 1;
+        while(subStart < title.length() && title.at(subStart).isSpace()) { subStart++; }
 
-        // Find the name of each map (not all may exist).
-        for(uint map = 0; map < maxMapsPerEpisode; ++map)
-        {
-            AutoStr *path = P_MapSourceFile(G_ComposeMapUri(episode, map).compose().toUtf8().constData());
-            if(!Str_IsEmpty(path))
-            {
-                sourceList[map] = Str_Text(path);
-            }
-        }
-        G_PrintFormattedMapList(episode, sourceList, 99);
+        return title.substr(subStart);
     }
+
+    return title;
+}
+
+String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor)
+{
+    if(!mapUri) mapUri = &gameMapUri;
+
+    String mapUriAsText = mapUri->resolved();
+    if(mapUriAsText.isEmpty()) return ""; // Huh??
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    String author;
+    if(Def_Get(DD_DEF_MAP_INFO, mapUriAsText.toUtf8().constData(), &mapInfo))
+    {
+        author = mapInfo.author;
+    }
+
+    if(!author.isEmpty())
+    {
+        // Should we suppress the author?
+        /// @todo Do not do this here.
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        if(supressGameAuthor || P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+        {
+            if(!author.compareWithoutCase(Str_Text(gameInfo.author)))
+                return "";
+        }
+    }
+
+    return author;
+}
+
+patchid_t G_MapTitlePatch(de::Uri const *mapUri)
+{
+    if(!mapUri) mapUri = &gameMapUri;
+
+#if __JDOOM__ || __JDOOM64__
+    uint map = G_MapNumberFor(*mapUri);
+#  if __JDOOM__
+    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
+    {
+        uint episode = G_EpisodeNumberFor(*mapUri);
+        map = (episode * 9) + map;
+    }
+#  endif
+    if(map < pMapNamesSize)
+    {
+        return pMapNames[map];
+    }
+#else
+    DENG2_UNUSED(mapUri);
+#endif
+
+    return 0;
 }
 
 char const *G_InFine(char const *scriptId)
@@ -2858,6 +2851,38 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
     }
 
     return true;
+}
+
+static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
+{
+    if(response == MSG_YES)
+    {
+        G_SetGameAction(GA_QUIT);
+    }
+    return true;
+}
+
+void G_QuitGame()
+{
+    if(G_QuitInProgress()) return;
+
+    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
+    {
+        // User has re-tried to quit with "quit" when the question is already on
+        // the screen. Apparently we should quit...
+        DD_Execute(true, "quit!");
+        return;
+    }
+
+    char const *endString;
+#if __JDOOM__ || __JDOOM64__
+    endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
+#else
+    endString = GET_TXT(TXT_QUITMSG);
+#endif
+
+    Con_Open(false);
+    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
 }
 
 D_CMD(OpenLoadMenu)
@@ -3192,15 +3217,6 @@ D_CMD(CycleTextureGamma)
     return true;
 }
 
-D_CMD(ListMaps)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    App_Log(DE2_RES_MSG, "Available maps:");
-    G_PrintMapList();
-    return true;
-}
-
 /**
  * Warp behavior is as follows:
  *
@@ -3219,7 +3235,7 @@ D_CMD(ListMaps)
  *
  * @note "setmap" is an alias of "warp"
  */
-D_CMD(WarpMap)
+static bool G_WarpMap(de::Uri const &newMapUri)
 {
     bool const forceNewSession = IS_NETGAME != 0;
 
@@ -3230,54 +3246,11 @@ D_CMD(WarpMap)
         return false;
     }
 
-    uint epsd, map;
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
-# if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
-# endif
-    {
-        // "warp M":
-        epsd = 0;
-        map = de::max(0, de::String(argv[1]).toInt());
-    }
-#endif
-#if __JDOOM__
-    else
-#endif
-#if __JDOOM__ || __JHERETIC__
-        if(argc == 2)
-    {
-        // "warp EM" or "warp M":
-        int num = de::String(argv[1]).toInt();
-        epsd = de::max(0, num / 10);
-        map  = de::max(0, num % 10);
-    }
-    else // (argc == 3)
-    {
-        // "warp E M":
-        epsd = de::max(0, de::String(argv[1]).toInt());
-        map  = de::max(0, de::String(argv[2]).toInt());
-    }
-#endif
-
-    // Internally epsiode and map numbers are zero-based.
-    if(epsd != 0) epsd -= 1;
-    if(map != 0)  map  -= 1;
-
     // Catch invalid maps.
-#if __JHEXEN__
-    // Hexen map numbers require translation.
-    map = P_TranslateMapIfExists(map);
-#endif
-
-    if(!G_ValidateMap(&epsd, &map))
+    if(!P_MapExists(newMapUri.compose().toUtf8().constData()))
     {
-        char const *fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
-    de::Uri newMapUri = G_ComposeMapUri(epsd, map);
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
@@ -3302,7 +3275,7 @@ D_CMD(WarpMap)
     if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
     {
 #if __JHEXEN__
-        nextMap         = map;
+        nextMap         = G_MapNumberFor(newMapUri);
         nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
@@ -3312,6 +3285,68 @@ D_CMD(WarpMap)
     else
     {
         G_SetGameActionNewSession(newMapUri, 0/*default*/, defaultGameRules);
+    }
+
+    return true;
+}
+
+D_CMD(WarpMap)
+{
+    bool isNumber;
+    int number = de::String(argv[1]).toInt(&isNumber);
+
+    de::Uri newMapUri;
+    if(!isNumber)
+    {
+        // It must be a URI, then.
+        newMapUri = de::Uri::fromUserInput(argv + 1, 1);
+        if(newMapUri.scheme().isEmpty())
+            newMapUri.setScheme("Maps");
+    }
+    else
+    {
+        uint epsd, map;
+
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
+# if __JDOOM__
+        if(gameModeBits & GM_ANY_DOOM2)
+# endif
+        {
+            // "warp M":
+            epsd = 0;
+            map = de::max(0, number);
+        }
+#endif
+#if __JDOOM__
+        else
+#endif
+#if __JDOOM__ || __JHERETIC__
+            if(argc == 2)
+        {
+            // "warp EM" or "warp M":
+            epsd = de::max(0, number / 10);
+            map  = de::max(0, number % 10);
+        }
+#endif
+        // Internally epsiode and map numbers are zero-based.
+        if(epsd != 0) epsd -= 1;
+        if(map != 0)  map  -= 1;
+
+#if __JHEXEN__
+        // Hexen map numbers require translation.
+        map = P_TranslateMapIfExists(map);
+#endif
+
+        // Compose a map URI for the given episode and map pair using the default
+        // format specific to the game (and mode).
+        newMapUri = G_ComposeMapUri(epsd, map);
+    }
+
+    if(!G_WarpMap(newMapUri))
+    {
+        String msg = String("Unknown map \"%1\"").arg(argv[1]);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
+        return false;
     }
 
     // If the command source was "us" the game library then it was probably in
@@ -3336,3 +3371,44 @@ D_CMD(WarpMap)
 
     return true;
 }
+
+#if __JDOOM__ || __JHERETIC__
+D_CMD(WarpEpisodeMap)
+{
+    uint epsd = de::max(0, de::String(argv[1]).toInt());
+    uint map  = de::max(0, de::String(argv[2]).toInt());
+
+    // Internally epsiode and map numbers are zero-based.
+    if(epsd != 0) epsd -= 1;
+    if(map != 0)  map  -= 1;
+
+    if(!G_WarpMap(G_ComposeMapUri(epsd, map)))
+    {
+        String msg = String("Unknown map \"%1 %2\"").arg(argv[1]).arg(argv[2]);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
+        return false;
+    }
+
+    // If the command source was "us" the game library then it was probably in
+    // response to the local player entering a cheat event sequence, so set the
+    // "CHANGING MAP" message.
+    // Somewhat of a kludge...
+    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    {
+#if __JHEXEN__
+        char const *msg = TXT_CHEATWARP;
+        int soundId     = SFX_PLATFORM_STOP;
+#elif __JHERETIC__
+        char const *msg = TXT_CHEATWARP;
+        int soundId     = SFX_DORCLS;
+#else //__JDOOM__ || __JDOOM64__
+        char const *msg = STSTR_CLEV;
+        int soundId     = SFX_NONE;
+#endif
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
+        S_LocalSound(soundId, NULL);
+    }
+
+    return true;
+}
+#endif // __JDOOM__ || __JHERETIC__
