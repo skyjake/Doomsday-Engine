@@ -2392,37 +2392,7 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
-{
-    if(response == MSG_YES)
-    {
-        G_SetGameAction(GA_QUIT);
-    }
-    return true;
-}
 
-void G_QuitGame()
-{
-    if(G_QuitInProgress()) return;
-
-    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
-    {
-        // User has re-tried to quit with "quit" when the question is already on
-        // the screen. Apparently we should quit...
-        DD_Execute(true, "quit!");
-        return;
-    }
-
-    char const *endString;
-#if __JDOOM__ || __JDOOM64__
-    endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
-#else
-    endString = GET_TXT(TXT_QUITMSG);
-#endif
-
-    Con_Open(false);
-    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
-}
 
 uint G_LogicalMapNumber(uint episode, uint map)
 {
@@ -2668,6 +2638,110 @@ uint G_NextLogicalMapNumber(dd_bool secretExit)
     return G_GetNextMap(gameEpisode, gameMap, secretExit);
 }
 
+String G_MapTitle(de::Uri const *mapUri)
+{
+    if(!mapUri) mapUri = &gameMapUri;
+
+    String title;
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
+    {
+        if(mapInfo.name[0])
+        {
+            // Perhaps the title string is a reference to a Text definition?
+            void *ptr;
+            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
+            {
+                title = (char const *) ptr; // Yes, use the resolved text string.
+            }
+            else
+            {
+                title = mapInfo.name;
+            }
+        }
+    }
+
+#if __JHEXEN__
+    // In Hexen we can also look in MAPINFO for the map title.
+    if(title.isEmpty())
+    {
+        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
+        {
+            title = mapInfo->title;
+        }
+    }
+#endif
+
+    // Skip the "ExMx" part, if present.
+    int idSuffixAt = title.indexOf(':');
+    if(idSuffixAt >= 0)
+    {
+        int subStart = idSuffixAt + 1;
+        while(subStart < title.length() && title.at(subStart).isSpace()) { subStart++; }
+
+        return title.substr(subStart);
+    }
+
+    return title;
+}
+
+String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor)
+{
+    if(!mapUri) mapUri = &gameMapUri;
+
+    String mapUriAsText = mapUri->resolved();
+    if(mapUriAsText.isEmpty()) return ""; // Huh??
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    String author;
+    if(Def_Get(DD_DEF_MAP_INFO, mapUriAsText.toUtf8().constData(), &mapInfo))
+    {
+        author = mapInfo.author;
+    }
+
+    if(!author.isEmpty())
+    {
+        // Should we suppress the author?
+        /// @todo Do not do this here.
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        if(supressGameAuthor || P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+        {
+            if(!author.compareWithoutCase(Str_Text(gameInfo.author)))
+                return "";
+        }
+    }
+
+    return author;
+}
+
+patchid_t G_MapTitlePatch(de::Uri const *mapUri)
+{
+    if(!mapUri) mapUri = &gameMapUri;
+
+#if __JDOOM__ || __JDOOM64__
+    uint map = G_MapNumberFor(*mapUri);
+#  if __JDOOM__
+    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
+    {
+        uint episode = G_EpisodeNumberFor(*mapUri);
+        map = (episode * 9) + map;
+    }
+#  endif
+    if(map < pMapNamesSize)
+    {
+        return pMapNames[map];
+    }
+#else
+    DENG2_UNUSED(mapUri);
+#endif
+
+    return 0;
+}
+
 char const *G_InFine(char const *scriptId)
 {
     ddfinale_t fin;
@@ -2777,6 +2851,38 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
     }
 
     return true;
+}
+
+static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
+{
+    if(response == MSG_YES)
+    {
+        G_SetGameAction(GA_QUIT);
+    }
+    return true;
+}
+
+void G_QuitGame()
+{
+    if(G_QuitInProgress()) return;
+
+    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
+    {
+        // User has re-tried to quit with "quit" when the question is already on
+        // the screen. Apparently we should quit...
+        DD_Execute(true, "quit!");
+        return;
+    }
+
+    char const *endString;
+#if __JDOOM__ || __JDOOM64__
+    endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
+#else
+    endString = GET_TXT(TXT_QUITMSG);
+#endif
+
+    Con_Open(false);
+    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
 }
 
 D_CMD(OpenLoadMenu)

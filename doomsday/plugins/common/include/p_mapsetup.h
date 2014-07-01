@@ -52,12 +52,6 @@ void P_SetupMap(Uri const *uri);
  */
 void P_ResetWorldState();
 
-/**
- * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
- *                case the title for the @em current map will be returned (if set).
- */
-patchid_t P_MapTitlePatch(Uri const *mapUri);
-
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void);
 #endif

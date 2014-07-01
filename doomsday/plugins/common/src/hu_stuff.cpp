@@ -1474,7 +1474,7 @@ int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
     patchinfo_t patchInfo;
-    if(R_GetPatchInfo(P_MapTitlePatch(0/*current map*/), &patchInfo))
+    if(R_GetPatchInfo(G_MapTitlePatch(0/*current map*/), &patchInfo))
     {
         y = patchInfo.geometry.size.height + 2;
     }
@@ -1516,7 +1516,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    patchid_t patchId = P_MapTitlePatch(0/*current map*/);
+    patchid_t patchId = G_MapTitlePatch(0/*current map*/);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
                     0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
