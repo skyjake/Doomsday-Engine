@@ -639,6 +639,7 @@ SOURCES += \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
     src/resource/manifest.cpp \
+    src/resource/mapdef.cpp \
     src/resource/material.cpp \
     src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \

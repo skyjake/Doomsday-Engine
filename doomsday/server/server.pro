@@ -333,6 +333,7 @@ SOURCES += \
     $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
     $$SRC/src/resource/manifest.cpp \
+    $$SRC/src/resource/mapdef.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
     $$SRC/src/resource/materialmanifest.cpp \
