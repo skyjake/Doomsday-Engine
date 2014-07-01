@@ -4421,7 +4421,7 @@ D_CMD(ListMaps)
 {
     DENG2_UNUSED(src);
 
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if(search.scheme().isEmpty()) search.setScheme("Maps");
 
     if(!search.scheme().isEmpty() && search.scheme().compareWithoutCase("Maps"))
