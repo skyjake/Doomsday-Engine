@@ -2348,7 +2348,7 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
 uint G_EpisodeNumberFor(de::Uri const &mapUri)
 {
 #if __JDOOM__ || __JHERETIC__
-    de::String path = mapUri.resolved();
+    String path = mapUri.path();
     if(!path.isEmpty())
     {
 # if __JDOOM__
@@ -2370,7 +2370,7 @@ uint G_EpisodeNumberFor(de::Uri const &mapUri)
 /// @todo Get this from MAPINFO
 uint G_MapNumberFor(de::Uri const &mapUri)
 {
-    de::String path = mapUri.resolved();
+    String path = mapUri.path();
     if(!path.isEmpty())
     {
 #if __JDOOM__ || __JHERETIC__
