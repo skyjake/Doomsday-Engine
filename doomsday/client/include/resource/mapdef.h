@@ -23,8 +23,8 @@
 #include <doomsday/filesys/file.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <de/PathTree>
-#include <de/String>
 #include <de/Record>
+#include <de/String>
 #include "Game"
 
 /**
