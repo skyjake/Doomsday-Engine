@@ -47,7 +47,7 @@ public:
      *
      * @param file  Target file. This file will observe the target file for deletion.
      */
-    void setTarget(File &file);
+    void setTarget(File const &file);
 
     /**
      * Returns the file's target. This is used for indirection when descending into
@@ -78,6 +78,9 @@ public:
     // filesys::Node overrides:
     Node const *tryFollowPath(PathRef const &path) const;
     Node const *tryGetChild(String const &name) const;
+
+public:
+    static LinkFile *newLinkToFile(File const &file);
 
 private:
     DENG2_PRIVATE(d)

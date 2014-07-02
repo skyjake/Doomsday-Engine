@@ -28,6 +28,7 @@
 #include "../LogFilter"
 #include "../System"
 #include "../FileSystem"
+#include "../PackageLoader"
 #include "../ScriptSystem"
 #include "../Module"
 #include "../Config"
@@ -44,10 +45,7 @@ namespace de {
 
 class Archive;
 
-namespace game
-{
-    class Game;
-}
+namespace game { class Game; }
 
 /**
  * Represents the application and its subsystems. This is the common
@@ -257,11 +255,6 @@ public:
     static FileSystem &fileSystem();
 
     /**
-     * Returns the application's script system.
-     */
-    static ScriptSystem &scriptSystem();
-
-    /**
      * Returns the root folder of the file system.
      */
     static Folder &rootFolder();
@@ -270,6 +263,16 @@ public:
      * Returns the /home folder.
      */
     static Folder &homeFolder();
+
+    /**
+     * Returns the application's package loader.
+     */
+    static PackageLoader &packageLoader();
+
+    /**
+     * Returns the application's script system.
+     */
+    static ScriptSystem &scriptSystem();
 
     /**
      * Returns the configuration.

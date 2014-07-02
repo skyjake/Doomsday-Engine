@@ -13,6 +13,7 @@ publicHeaders(root, \
     include/de/LinkFile \
     include/de/NativeFile \
     include/de/NativePath \
+    include/de/Package \
     include/de/PackageFeed \
     include/de/PackageLoader \
 )
@@ -33,6 +34,7 @@ publicHeaders(filesys, \
     include/de/filesys/nativefile.h \
     include/de/filesys/nativepath.h \
     include/de/filesys/node.h \
+    include/de/filesys/package.h \
     include/de/filesys/packagefeed.h \
     include/de/filesys/packageloader.h \
 )
@@ -52,8 +54,6 @@ SOURCES += \
     src/filesys/nativefile.cpp \
     src/filesys/nativepath.cpp \
     src/filesys/node.cpp \
+    src/filesys/package.cpp \
     src/filesys/packagefeed.cpp \
     src/filesys/packageloader.cpp
-
-HEADERS += \
-    include/de/filesys/package.h

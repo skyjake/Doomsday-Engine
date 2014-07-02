@@ -91,6 +91,8 @@ DENG2_PIMPL(App)
 
     game::Game *currentGame;
 
+    PackageLoader packageLoader;
+
     void (*terminateFunc)(char const *);
 
     /// Optional sink for warnings and errors (set with "-errors").
@@ -603,6 +605,12 @@ void App::initSubsystems(SubsystemInitFlags flags)
     // We can start flushing now when the destination is known.
     logBuf.enableFlushing(true);
 
+    // Update the wall clock time.
+    d->clock.setTime(Time::currentHighPerformanceTime());
+
+    // Now we can start observing progress of time.
+    d->clock.audienceForTimeChange() += this;
+
     if(allowPlugins)
     {
 #if 0 // not yet handled by libcore
@@ -610,12 +618,6 @@ void App::initSubsystems(SubsystemInitFlags flags)
         loadPlugins();
 #endif
     }
-
-    // Update the wall clock time.
-    d->clock.setTime(Time::currentHighPerformanceTime());
-
-    // Now we can start observing progress of time.
-    d->clock.audienceForTimeChange() += this;
 
     LOG_VERBOSE("libcore::App %s subsystems initialized.") << Version().asText();
 }
@@ -667,6 +669,11 @@ NativePath App::nativeAppContentsPath()
 FileSystem &App::fileSystem()
 {
     return DENG2_APP->d->fs;
+}
+
+PackageLoader &App::packageLoader()
+{
+    return DENG2_APP->d->packageLoader;
 }
 
 ScriptSystem &de::App::scriptSystem()

@@ -24,7 +24,7 @@ namespace de {
 DENG2_PIMPL(LinkFile)
 , DENG2_OBSERVES(File, Deletion) // target file deletion
 {
-    File *target;
+    File const *target;
 
     Instance(Public *i)
         : Base(i)
@@ -52,7 +52,7 @@ DENG2_PIMPL(LinkFile)
         }
     }
 
-    void setTarget(File &file)
+    void setTarget(File const &file)
     {
         unsetTarget();
 
@@ -88,7 +88,7 @@ File const &LinkFile::target() const
 File &LinkFile::target()
 {
     DENG2_ASSERT(d->target != 0);
-    return *d->target;
+    return *const_cast<File *>(d->target);
 }
 
 Folder const *LinkFile::targetFolder() const
@@ -101,7 +101,7 @@ Folder *LinkFile::targetFolder()
     return target().maybeAs<Folder>();
 }
 
-void LinkFile::setTarget(File &file)
+void LinkFile::setTarget(File const &file)
 {
     DENG2_GUARD(this);
 
@@ -141,6 +141,14 @@ filesys::Node const *LinkFile::tryGetChild(String const &name) const
         return folder->tryGetChild(name);
     }
     return 0;
+}
+
+LinkFile *LinkFile::newLinkToFile(File const &file)
+{
+    LinkFile *link = new LinkFile(file.name());
+    link->setTarget(file);
+    link->setStatus(file.status());
+    return link;
 }
 
 } // namespace de
