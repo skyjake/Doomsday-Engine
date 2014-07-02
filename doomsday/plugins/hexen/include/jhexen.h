@@ -70,8 +70,4 @@
 #include "../../hexen/include/x_think.h"
 #include "../../hexen/include/xddefs.h"
 
-#ifdef __cplusplus
-#  include "../../hexen/include/p_mapinfo.h"
-#endif
-
 #endif // __JHEXEN_CONVENIENCE_H__

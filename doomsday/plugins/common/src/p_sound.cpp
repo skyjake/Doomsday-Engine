@@ -25,9 +25,9 @@
 
 #include "dmu_lib.h"
 #include "hexlex.h"
+#include "mapinfo.h"
 #ifdef __JHEXEN__
 #  include "g_common.h"
-#  include "p_mapinfo.h"
 #endif
 
 void S_MapMusic(de::Uri const *mapUri)

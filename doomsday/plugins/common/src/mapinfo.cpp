@@ -1,7 +1,7 @@
-/** @file p_mapinfo.cpp  Hexen MAPINFO parsing.
+/** @file mapinfo.h  Hexen-format MAPINFO definition parsing.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -19,14 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#include "jhexen.h"
-#include "g_common.h"
-#include "p_mapinfo.h"
-#include "hexlex.h"
+#include "mapinfo.h"
 #include <cstdio>
 #include <sstream>
-#include <string.h>
+#include <cstring>
 #include <map>
+#include "hexlex.h"
+#include "g_common.h"
+
+using namespace de;
 
 #define MUSIC_STARTUP      "startup"
 #define MUSIC_ENDING1      "hall"
@@ -49,7 +50,7 @@ static void setMusicCDTrack(char const *musicId, int track)
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
 }
 
-void MapInfoParser(Str const *path)
+void MapInfoParser(ddstring_s const *path)
 {
     mapInfos.clear();
 
@@ -66,7 +67,11 @@ void MapInfoParser(Str const *path)
         defMapInfo.warpTrans       = 0;
         defMapInfo.nextMap         = 0; // Always go to map 0 if not specified.
         defMapInfo.cdTrack         = 1;
+#ifdef __JHEXEN__
         defMapInfo.sky1Material    = Materials_ResolveUriCString(gameMode == hexen_demo || gameMode == hexen_betademo? "Textures:SKY2" : "Textures:SKY1");
+#else
+        defMapInfo.sky1Material    = Materials_ResolveUriCString("Textures:SKY1");
+#endif
         defMapInfo.sky2Material    = defMapInfo.sky1Material;
         defMapInfo.sky1ScrollDelta = 0;
         defMapInfo.sky2ScrollDelta = 0;
@@ -144,7 +149,7 @@ void MapInfoParser(Str const *path)
                 {
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
                     {
-                        Uri *uri = lexer.readUri("Textures");
+                        uri_s *uri = lexer.readUri("Textures");
 
                         info->sky1Material    = Materials_ResolveUri(uri);
                         info->sky1ScrollDelta = (float) lexer.readNumber() / 256;
@@ -154,7 +159,7 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky2"))
                     {
-                        Uri *uri = lexer.readUri("Textures");
+                        uri_s *uri = lexer.readUri("Textures");
 
                         info->sky2Material    = Materials_ResolveUri(uri);
                         info->sky2ScrollDelta = (float) lexer.readNumber() / 256;

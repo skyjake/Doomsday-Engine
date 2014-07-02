@@ -30,6 +30,7 @@
 #include "gamesession.h"
 #include "r_common.h"
 #include "d_net.h"
+#include "mapinfo.h"
 
 #include <cstring>
 

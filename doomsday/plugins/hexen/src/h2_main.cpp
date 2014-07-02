@@ -28,6 +28,7 @@
 #include "g_defs.h"
 #include "gamesession.h"
 #include "m_argv.h"
+#include "mapinfo.h"
 #include "p_inventory.h"
 #include "p_map.h"
 #include "player.h"

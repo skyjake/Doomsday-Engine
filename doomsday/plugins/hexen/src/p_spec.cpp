@@ -30,6 +30,7 @@
 
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "mapinfo.h"
 #include "p_inventory.h"
 #include "player.h"
 #include "p_map.h"

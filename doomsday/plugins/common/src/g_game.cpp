@@ -40,12 +40,10 @@
 #include "hu_msg.h"
 #include "hu_pspr.h"
 #include "hu_stuff.h"
+#include "mapinfo.h"
 #include "p_actor.h"
 #include "p_inventory.h"
 #include "p_map.h"
-#if __JHEXEN__
-#  include "p_mapinfo.h"
-#endif
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 #include "p_savedef.h"
