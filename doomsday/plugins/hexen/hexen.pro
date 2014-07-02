@@ -79,7 +79,7 @@ SOURCES += \
     src/acscript.cpp \
     src/h2_main.cpp \
     src/hconsole.c \
-    src/hrefresh.c \
+    src/hrefresh.cpp \
     src/in_lude.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
