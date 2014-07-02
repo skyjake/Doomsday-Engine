@@ -681,10 +681,8 @@ static void initFog(ddmapinfo_t *ddMapInfo)
 #endif
 }
 
-void P_SetupMap(uri_s const *mapUri)
+void P_SetupMap(de::Uri const &mapUri)
 {
-    DENG2_ASSERT(mapUri != 0);
-
     if(IS_DEDICATED)
     {
         // Whenever the map changes, update the game rule config.
@@ -722,21 +720,16 @@ void P_SetupMap(uri_s const *mapUri)
     // Initialize the logical sound manager.
     S_MapChange();
 
-    AutoStr *mapUriStr = Uri_Compose(mapUri);
-    if(!P_MapChange(Str_Text(mapUriStr)))
+    if(!P_MapChange(mapUri.compose().toUtf8().constData()))
     {
-        AutoStr *path = Uri_ToString(mapUri);
-        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", Str_Text(path));
+        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());
         exit(1); // Unreachable.
     }
 
     // Is MapInfo data available for this map?
-    {
-        AutoStr *mapUriStr = Uri_Compose(mapUri);
-        ddmapinfo_t mapInfo;
-        bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
-        initFog(haveMapInfo? &mapInfo : 0);
-    }
+    ddmapinfo_t mapInfo;
+    bool const haveMapInfo = Def_Get(DD_DEF_MAP_INFO, mapUri.compose().toUtf8().constData(), &mapInfo);
+    initFog(haveMapInfo? &mapInfo : 0);
 
     // Make sure the game is paused for the requested period.
     Pause_MapStarted();
@@ -745,10 +738,11 @@ void P_SetupMap(uri_s const *mapUri)
     mapSetup = false;
 }
 
-typedef struct {
+struct mobjtype_precachedata_t
+{
     mobjtype_t type;
     int gameModeBits;
-} mobjtype_precachedata_t;
+};
 
 static void precacheResources()
 {
@@ -912,10 +906,11 @@ static void precacheResources()
 #endif
 }
 
-void P_FinalizeMapChange(uri_s const *uri)
+void P_FinalizeMapChange(uri_s const *mapUri_)
 {
+    de::Uri const &mapUri = *reinterpret_cast<de::Uri const *>(mapUri_);
 #if !__JHEXEN__
-    DENG_UNUSED(uri);
+    DENG2_UNUSED(mapUri);
 #endif
 
     initXLines();
@@ -937,7 +932,7 @@ void P_FinalizeMapChange(uri_s const *uri)
     if(!IS_CLIENT)
     {
         /// @todo Should be translated by the map converter.
-        lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(String(Str_Text(Uri_Path(uri))) + ".lmp");
+        lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
         lumpnum_t acsLumpNum = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
         if(acsLumpNum < CentralLumpIndex().size())
         {
@@ -969,7 +964,7 @@ void P_FinalizeMapChange(uri_s const *uri)
 #endif
 
 #if __JHEXEN__
-    P_InitSky(uri);
+    P_InitSky(mapUri);
 #endif
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.

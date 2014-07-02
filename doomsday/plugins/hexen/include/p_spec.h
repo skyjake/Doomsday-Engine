@@ -92,11 +92,12 @@ dd_bool     EV_ThingDeactivate(int tid);
 dd_bool     EV_ThingRemove(int tid);
 dd_bool     EV_ThingDestroy(int tid);
 
-void P_InitSky(Uri const *mapUri);
-void P_AnimateSky(void);
-
 #ifdef __cplusplus
 } // extern "C"
+
+void P_InitSky(de::Uri const &mapUri);
+void P_AnimateSky(void);
+
 #endif
 
 #endif /* LIBHEXEN_P_SPEC_H */

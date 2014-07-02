@@ -75,9 +75,9 @@ void P_InitLava(void)
     lavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-void P_InitSky(Uri const *mapUri)
+void P_InitSky(de::Uri const &mapUri)
 {
-    mapinfo_t const *mapInfo = P_MapInfo(reinterpret_cast<de::Uri const *>(mapUri));
+    mapinfo_t const *mapInfo = P_MapInfo(&mapUri);
     if(mapInfo)
     {
         sky1Material     = mapInfo->sky1Material;

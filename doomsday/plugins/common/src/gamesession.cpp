@@ -544,7 +544,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             S_PauseMusic(true);
         }
 
-        P_SetupMap(reinterpret_cast<uri_s *>(&gameMapUri));
+        P_SetupMap(gameMapUri);
 
         if(revisit)
         {
@@ -948,7 +948,7 @@ void GameSession::leaveMap()
 
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process
-    // of calling P_SetupMap() and we need to restore them after).
+    // of calling @ref P_SetupMap() and we need to restore them after).
     Instance::playerbackup_t playerBackup[MAXPLAYERS];
     d->backupPlayersInHub(playerBackup);
 
