@@ -2160,9 +2160,8 @@ dd_bool G_IfVictory()
 static int prepareIntermission(void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    wmInfo.episode    = gameEpisode;
-    wmInfo.currentMap = gameMap;
-    wmInfo.nextMap    = nextMap;
+    wmInfo.currentMap = G_ComposeMapUri(gameEpisode, gameMap);
+    wmInfo.nextMap    = G_ComposeMapUri(gameEpisode, nextMap);
     wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__

@@ -122,7 +122,6 @@ static void drawBackground()
 
 static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
-    uint const mapNum = wbs->currentMap;
     de::String const mapTitle = G_MapTitle(); // current map
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -131,6 +130,7 @@ static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     FR_LoadDefaultAttrib();
 
     // Draw <MapName>
+    uint const mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->currentMap), G_MapNumberFor(wbs->currentMap));
     patchid_t patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
@@ -148,7 +148,7 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // See if there is a map name...
     char *mapName = 0;
     ddmapinfo_t minfo;
-    if(Def_Get(DD_DEF_MAP_INFO, G_ComposeMapUri(wbs->episode, wbs->nextMap).compose().toUtf8().constData(), &minfo) && minfo.name)
+    if(Def_Get(DD_DEF_MAP_INFO, wbs->nextMap.compose().toUtf8().constData(), &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
@@ -172,12 +172,13 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // Draw "Entering"
     WI_DrawPatchXY2(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP);
 
+    uint const mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->nextMap), G_MapNumberFor(wbs->nextMap));
+
     patchinfo_t info;
-    if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
+    if(R_GetPatchInfo(pMapNames[mapNum], &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    uint const mapNum       = (wbs->episode * 9) + wbs->nextMap;
     patchid_t const patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY2(patchId, patchReplacementText(patchId, mapName), x, y, ALIGN_TOP);
 

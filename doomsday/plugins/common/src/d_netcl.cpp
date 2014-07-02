@@ -655,14 +655,13 @@ void NetCl_Intermission(Reader *msg)
         wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
-        wmInfo.nextMap    = Reader_ReadByte(msg);
-        wmInfo.currentMap = Reader_ReadByte(msg);
+        wmInfo.nextMap    = G_ComposeMapUri(gameEpisode, Reader_ReadByte(msg));
+        wmInfo.currentMap = G_ComposeMapUri(gameEpisode, Reader_ReadByte(msg));
         wmInfo.didSecret  = Reader_ReadByte(msg);
-        wmInfo.episode    = gameEpisode;
 
         G_PrepareWIData();
 #elif __JHERETIC__
-        wmInfo.episode    = gameEpisode;
+        //wmInfo.episode    = gameEpisode;
 #elif __JHEXEN__
         nextMap           = Reader_ReadByte(msg);
         nextMapEntrance   = Reader_ReadByte(msg);

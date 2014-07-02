@@ -28,6 +28,7 @@
 #endif
 
 #include "d_player.h"
+#include <doomsday/uri.h>
 
 // Global locations
 #define WI_TITLEY               (2)
@@ -92,9 +93,9 @@ struct wbplayerstruct_t
 
 struct wbstartstruct_t
 {
-    uint episode;
     dd_bool didSecret;  ///< If true, splash the secret level.
-    uint currentMap, nextMap;
+    de::Uri currentMap;
+    de::Uri nextMap;
     int maxKills;
     int maxItems;
     int maxSecret;

@@ -26,6 +26,7 @@
 #endif
 
 #include "h_player.h"
+#include <doomsday/uri.h>
 
 extern dd_bool intermission;
 extern int interState;
@@ -48,9 +49,9 @@ extern int interTime;
 
 struct wbstartstruct_t
 {
-    uint episode;
     dd_bool didSecret;  ///< @c true= splash the secret level.
-    uint currentMap, nextMap;
+    de::Uri currentMap;
+    de::Uri nextMap;
 /*
     int maxKills;
     int maxItems;

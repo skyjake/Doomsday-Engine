@@ -632,8 +632,8 @@ void NetSv_Intermission(int flags, int state, int time)
         Writer_WriteUInt16(msg, wmInfo.maxKills);
         Writer_WriteUInt16(msg, wmInfo.maxItems);
         Writer_WriteUInt16(msg, wmInfo.maxSecret);
-        Writer_WriteByte(msg, wmInfo.nextMap);
-        Writer_WriteByte(msg, wmInfo.currentMap);
+        Writer_WriteByte(msg, G_MapNumberFor(wmInfo.nextMap));
+        Writer_WriteByte(msg, G_MapNumberFor(wmInfo.currentMap));
         Writer_WriteByte(msg, wmInfo.didSecret);
     }
 #endif

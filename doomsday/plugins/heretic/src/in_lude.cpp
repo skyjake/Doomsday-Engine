@@ -362,9 +362,11 @@ void IN_InitStats()
 
 void IN_LoadPics()
 {
-    if(wbs->episode < 3)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
+    if(episode < 3)
     {
-        dpInterPic = R_DeclarePatch(wbs->episode == 0? "MAPE1" : wbs->episode == 1? "MAPE2" : "MAPE3");
+        dpInterPic = R_DeclarePatch(episode == 0? "MAPE1" : episode == 1? "MAPE2" : "MAPE3");
     }
 
     dpBeenThere  = R_DeclarePatch("IN_X");
@@ -415,6 +417,8 @@ void IN_Ticker()
     }
     IN_CheckForSkip();
 
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
     // Counter for general background animation.
     bcnt++;
 
@@ -423,7 +427,7 @@ void IN_Ticker()
     {
         nextIntermissionState();
 
-        if(wbs->episode > 2 && interState >= 1)
+        if(episode > 2 && interState >= 1)
         {
             // Extended Wad levels:  skip directly to the next level
             endIntermissionGoToNextLevel();
@@ -433,7 +437,7 @@ void IN_Ticker()
         {
         case 0:
             oldInterTime = interTime + 300;
-            if(wbs->episode > 2)
+            if(episode > 2)
             {
                 oldInterTime = interTime + 1200;
             }
@@ -465,7 +469,7 @@ void IN_Ticker()
             NetSv_Intermission(IMF_TIME, 0, interTime);
             return;
         }
-        if(interState < 2 && wbs->episode < 3)
+        if(interState < 2 && episode < 3)
         {
             interState = 2;
             skipIntermission = false;
@@ -554,6 +558,8 @@ void IN_Drawer()
         return;
     }*/
 
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
     if(oldInterState != 2 && interState == 2)
     {
         S_LocalSound(SFX_PSTOP, NULL);
@@ -587,7 +593,7 @@ void IN_Drawer()
         break;
 
     case 1: // Leaving old level.
-        if(wbs->episode < 3)
+        if(episode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -601,7 +607,7 @@ void IN_Drawer()
         break;
 
     case 2: // Going to the next level.
-        if(wbs->episode < 3)
+        if(episode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -614,7 +620,7 @@ void IN_Drawer()
         break;
 
     case 3: // Waiting before going to the next level.
-        if(wbs->episode < 3)
+        if(episode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -646,49 +652,51 @@ void IN_DrawStatBack()
 
 void IN_DrawOldLevel()
 {
-    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(G_MapTitle(&oldMapUri).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
     FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
-    if(wbs->currentMap == 8)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
+    if(G_MapNumberFor(wbs->currentMap) == 8)
     {
         DGL_Color4f(1, 1, 1, 1);
-        for(uint i = 0; i < wbs->nextMap; ++i)
+        uint const nextMap = G_MapNumberFor(wbs->nextMap);
+        for(uint i = 0; i < nextMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
         }
     }
     else
     {
         DGL_Color4f(1, 1, 1, 1);
-        for(uint i = 0; i < wbs->currentMap; ++i)
+        uint const currentMap = G_MapNumberFor(wbs->currentMap);
+        for(uint i = 0; i < currentMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][wbs->currentMap]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][currentMap]);
         }
     }
 
@@ -697,8 +705,6 @@ void IN_DrawOldLevel()
 
 void IN_DrawYAH()
 {
-    de::Uri const nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
@@ -706,23 +712,27 @@ void IN_DrawYAH()
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(G_MapTitle(&nextMapUri).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->nextMap).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
-    for(uint i = 0; i < wbs->nextMap; ++i)
+
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+    uint const nextMap = G_MapNumberFor(wbs->nextMap);
+
+    for(uint i = 0; i < nextMap; ++i)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
     }
 
     if(!(interTime & 16) || interState == 3)
     {
         // Draw the destination 'X'
-        GL_DrawPatch(dpGoingThere, &YAHspot[wbs->episode][wbs->nextMap]);
+        GL_DrawPatch(dpGoingThere, &YAHspot[episode][nextMap]);
     }
 }
 
@@ -731,8 +741,6 @@ void IN_DrawSingleStats()
 #define TRACKING                (1)
 
     static int sounds;
-
-    de::Uri const oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -743,7 +751,7 @@ void IN_DrawSingleStats()
     FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(&oldMapUri).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -834,7 +842,9 @@ void IN_DrawSingleStats()
         sounds++;
     }
 
-    if(gameMode != heretic_extended || wbs->episode < 3)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
+    if(gameMode != heretic_extended || episode < 3)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -848,8 +858,6 @@ void IN_DrawSingleStats()
     }
     else
     {
-        de::Uri const nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTA));
@@ -858,7 +866,7 @@ void IN_DrawSingleStats()
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(G_MapTitle(&nextMapUri).toUtf8().constData(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(G_MapTitle(&wbs->nextMap).toUtf8().constData(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -874,8 +882,6 @@ void IN_DrawCoopStats()
 
     static int sounds;
 
-    de::Uri const oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
@@ -885,7 +891,7 @@ void IN_DrawCoopStats()
     FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(&oldMapUri).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);

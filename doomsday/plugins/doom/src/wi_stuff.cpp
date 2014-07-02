@@ -232,14 +232,15 @@ static void drawBackground()
 
     GL_DrawPatchXY3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
-    if(!(gameModeBits & GM_ANY_DOOM2) && wbs->episode < 3)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+    if(!(gameModeBits & GM_ANY_DOOM2) && episode < 3)
     {
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        for(int i = 0; i < animCounts[wbs->episode]; ++i)
+        for(int i = 0; i < animCounts[episode]; ++i)
         {
-            wianimdef_t const *def = &animDefs[wbs->episode][i];
+            wianimdef_t const *def = &animDefs[episode][i];
             wianimstate_t *state   = &animStates[i];
 
             // Has the animation begun yet?
@@ -255,11 +256,11 @@ static void drawBackground()
 
 static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
-    uint mapNum;
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
+    uint mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->currentMap), G_MapNumberFor(wbs->currentMap));
+    /*if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         mapNum = wbs->currentMap;
     else
-        mapNum = (wbs->episode * 9) + wbs->currentMap;
+        mapNum = (wbs->episode * 9) + wbs->currentMap;*/
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -286,7 +287,8 @@ static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
     /// @kludge We need to properly externalize the map progression.
-    if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) && wbs->nextMap == 30)
+    if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) &&
+       G_MapNumberFor(wbs->nextMap) == 30)
     {
         return;
     }
@@ -295,7 +297,7 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // See if there is a map name...
     char *mapName = 0;
     ddmapinfo_t minfo;
-    if(Def_Get(DD_DEF_MAP_INFO, G_ComposeMapUri(wbs->episode, wbs->nextMap).compose().toUtf8().constData(), &minfo) && minfo.name)
+    if(Def_Get(DD_DEF_MAP_INFO, wbs->nextMap.compose().toUtf8().constData(), &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
@@ -321,12 +323,13 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // Draw "Entering"
     WI_DrawPatchXY3(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
+    uint const mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->nextMap), G_MapNumberFor(wbs->nextMap));
+
     patchinfo_t info;
-    if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
+    if(R_GetPatchInfo(pMapNames[mapNum], &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    uint const mapNum       = (wbs->episode * 9) + wbs->nextMap;
     patchid_t const patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
     WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
@@ -376,15 +379,17 @@ static void drawPatchIfFits(patchid_t patchId, Point2Raw const *origin)
 static void beginAnimations()
 {
     if(gameModeBits & GM_ANY_DOOM2) return;
-    if(wbs->episode > 2) return;
 
-    for(int i = 0; i < animCounts[wbs->episode]; ++i)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+    if(episode > 2) return;
+
+    for(int i = 0; i < animCounts[episode]; ++i)
     {
-        wianimdef_t const *def = &animDefs[wbs->episode][i];
+        wianimdef_t const *def = &animDefs[episode][i];
         wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && wbs->nextMap != (unsigned)def->mapNum)
+        if(def->mapNum && G_MapNumberFor(wbs->nextMap) != (unsigned)def->mapNum)
             continue;
 
         // Already begun?
@@ -410,15 +415,17 @@ static void beginAnimations()
 static void animateBackground()
 {
     if(gameModeBits & GM_ANY_DOOM2) return;
-    if(wbs->episode > 2) return;
 
-    for(int i = 0; i < animCounts[wbs->episode]; ++i)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+    if(episode > 2) return;
+
+    for(int i = 0; i < animCounts[episode]; ++i)
     {
-        wianimdef_t const *def = &animDefs[wbs->episode][i];
+        wianimdef_t const *def = &animDefs[episode][i];
         wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && wbs->nextMap != (unsigned)def->mapNum)
+        if(def->mapNum && G_MapNumberFor(wbs->nextMap) != (unsigned)def->mapNum)
             continue;
 
         // Has the animation begun yet
@@ -542,7 +549,9 @@ static void tickShowNextMap()
 
 static void drawLocationMarks()
 {
-    if((gameModeBits & GM_ANY_DOOM) && wbs->episode < 3)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
+    if((gameModeBits & GM_ANY_DOOM) && episode < 3)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, 1);
@@ -550,21 +559,23 @@ static void drawLocationMarks()
         FR_LoadDefaultAttrib();
 
         // Draw a splat on taken cities.
-        int const last = (wbs->currentMap == 8) ? wbs->nextMap - 1 : wbs->currentMap;
+        int last = G_MapNumberFor(wbs->currentMap);
+        if(last == 8) last = G_MapNumberFor(wbs->nextMap) - 1;
+
         for(int i = 0; i <= last; ++i)
         {
-            drawPatchIfFits(pSplat, &locations[wbs->episode][i]);
+            drawPatchIfFits(pSplat, &locations[episode][i]);
         }
 
         // Splat the secret map?
         if(wbs->didSecret)
         {
-            drawPatchIfFits(pSplat, &locations[wbs->episode][8]);
+            drawPatchIfFits(pSplat, &locations[episode][8]);
         }
 
         if(drawYouAreHere)
         {
-            Point2Raw const *origin = &locations[wbs->episode][wbs->nextMap];
+            Point2Raw const *origin = &locations[episode][G_MapNumberFor(wbs->nextMap)];
             patchid_t const patchId = chooseYouAreHerePatch(origin);
             if(patchId)
             {
@@ -1273,28 +1284,30 @@ void WI_Ticker()
 
 static void loadData()
 {
-    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && wbs->episode > 2))
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
+    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && episode > 2))
     {
         pBackground = R_DeclarePatch("INTERPIC");
     }
     else
     {
-        char name[9]; sprintf(name, "WIMAP%u", wbs->episode);
+        char name[9]; sprintf(name, "WIMAP%u", episode);
         pBackground = R_DeclarePatch(name);
     }
 
-    if((gameModeBits & GM_ANY_DOOM) && wbs->episode < 3)
+    if((gameModeBits & GM_ANY_DOOM) && episode < 3)
     {
         pYouAreHereRight = R_DeclarePatch("WIURH0");
         pYouAreHereLeft  = R_DeclarePatch("WIURH1");
         pSplat           = R_DeclarePatch("WISPLAT");
 
-        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * animCounts[wbs->episode], PU_GAMESTATIC);
-        std::memset(animStates, 0, sizeof(*animStates) * animCounts[wbs->episode]);
+        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * animCounts[episode], PU_GAMESTATIC);
+        std::memset(animStates, 0, sizeof(*animStates) * animCounts[episode]);
 
-        for(int i = 0; i < animCounts[wbs->episode]; ++i)
+        for(int i = 0; i < animCounts[episode]; ++i)
         {
-            wianimdef_t const *def = &animDefs[wbs->episode][i];
+            wianimdef_t const *def = &animDefs[episode][i];
             wianimstate_t *state   = &animStates[i];
 
             state->frame = -1; // Not yet begun.
