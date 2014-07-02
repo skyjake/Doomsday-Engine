@@ -124,7 +124,7 @@ SOURCES += \
     $$common_src/p_start.cpp \
     $$common_src/p_switch.cpp \
     $$common_src/p_terraintype.c \
-    $$common_src/p_tick.c \
+    $$common_src/p_tick.cpp \
     $$common_src/p_user.c \
     $$common_src/p_view.c \
     $$common_src/p_xgfile.cpp \
