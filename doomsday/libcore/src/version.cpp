@@ -63,10 +63,12 @@ String Version::asText() const
  */
 void Version::parseVersionString(String const &version)
 {
+    major = minor = patch = 0;
+
     QStringList parts = version.split('.');
-    major = parts[0].toInt();
-    minor = parts[1].toInt();
-    patch = parts[2].toInt();
+    if(parts.size() >= 1) major = parts[0].toInt();
+    if(parts.size() >= 2) minor = parts[1].toInt();
+    if(parts.size() >= 3) patch = parts[2].toInt();
 }
 
 bool Version::operator < (Version const &other) const
