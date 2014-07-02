@@ -181,6 +181,8 @@ public:
      */
     int findAll(String const &path, FoundFiles &found) const;
 
+    int findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const;
+
     /**
      * Finds a single file matching a full or partial path. The search is
      * done using the file system's index; no recursive descent into
@@ -253,7 +255,7 @@ public:
      *
      * For example, to look up the index for NativeFile instances:
      * @code
-     * FS::Index &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
+     * FS::Index const &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
      * @endcode
      */
     Index const &indexFor(String const &typeIdentifier) const;

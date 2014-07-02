@@ -54,7 +54,7 @@ DENG2_PIMPL_NOREF(File)
 
 DENG2_AUDIENCE_METHOD(File, Deletion)
 
-File::File(String const &fileName) : Node(fileName), d(new Instance(this))
+File::File(String const &fileName) : Node(fileName), d(new Instance)
 {
     d->source = this;
     

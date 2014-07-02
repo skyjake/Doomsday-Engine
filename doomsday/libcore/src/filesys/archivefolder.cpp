@@ -1,4 +1,4 @@
-/** @file packagefolder.cpp Folder that hosts a data package archive.
+/** @file archivefolder.cpp  Folder whose contents represent an archive.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,35 +16,36 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/PackageFolder"
+#include "de/ArchiveFolder"
 #include "de/ArchiveFeed"
+#include "de/App"
 
 namespace de {
 
-PackageFolder::PackageFolder(File &sourceArchiveFile, String const &name) : Folder(name)
+ArchiveFolder::ArchiveFolder(File &sourceArchiveFile, String const &name) : Folder(name)
 {
     // Create the feed.
     attach(new ArchiveFeed(sourceArchiveFile));
 }
 
-PackageFolder::~PackageFolder()
+ArchiveFolder::~ArchiveFolder()
 {
     DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
 }
 
-void PackageFolder::flush()
+void ArchiveFolder::flush()
 {
     Folder::flush();
     feeds().front()->as<ArchiveFeed>().rewriteFile();
 }
 
-String PackageFolder::describe() const
+String ArchiveFolder::describe() const
 {
     DENG2_GUARD(this);
 
-    String desc = String("package \"%1\"").arg(name());
+    String desc = String("archive \"%1\"").arg(name());
 
     String const feedDesc = describeFeeds();
     if(!feedDesc.isEmpty())
@@ -55,15 +56,15 @@ String PackageFolder::describe() const
     return desc;
 }
 
-Archive &PackageFolder::archive()
+Archive &ArchiveFolder::archive()
 {
     DENG2_ASSERT(!feeds().empty());
     return feeds().front()->as<ArchiveFeed>().archive();
 }
 
-Archive const &PackageFolder::archive() const
+Archive const &ArchiveFolder::archive() const
 {
-    return const_cast<PackageFolder *>(this)->archive();
+    return const_cast<ArchiveFolder *>(this)->archive();
 }
 
 } // namespace de

@@ -31,7 +31,7 @@
 #include "de/Module"
 #include "de/NativeFile"
 #include "de/NumberValue"
-#include "de/PackageFolder"
+#include "de/ArchiveFolder"
 #include "de/Record"
 #include "de/ScriptSystem"
 #include "de/Version"
@@ -539,7 +539,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
             homeFolder().populate(Folder::PopulateOnlyThisFolder);
         }
 
-        d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
+        d->persistentData = &homeFolder().locate<ArchiveFolder>("persist.pack").archive();
     }
 
     // The configuration.

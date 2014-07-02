@@ -23,7 +23,7 @@
 #include "de/ArchiveFeed"
 #include "de/game/SavedSession"
 #include "de/NativePath"
-#include "de/PackageFolder"
+#include "de/ArchiveFolder"
 #include "de/ZipArchive"
 #include "de/Log"
 #include "de/ReadWriteLockable"
@@ -45,7 +45,34 @@ DENG2_PIMPL_NOREF(FileSystem), public ReadWriteLockable
 
     /// The root folder of the entire file system.
     Folder root;
+
+    void findInIndex(Index const &idx, String const &path, FoundFiles &found) const
+    {
+        found.clear();
+        String baseName = path.fileName().lower();
+        String dir = path.fileNamePath().lower();
+        if(!dir.empty() && !dir.beginsWith("/"))
+        {
+            // Always begin with a slash. We don't want to match partial folder names.
+            dir = "/" + dir;
+        }
+
+        DENG2_GUARD_READ(this);
+
+        ConstIndexRange range = idx.equal_range(baseName);
+        for(Index::const_iterator i = range.first; i != range.second; ++i)
+        {
+            File *file = i->second;
+            if(file->path().fileNamePath().endsWith(dir))
+            {
+                found.push_back(file);
+            }
+        }
+    }
 };
+
+#define DENG2_FS_GUARD_INDEX_R()   DENG2_GUARD_READ_FOR(*d, indexAccessGuardRead)
+#define DENG2_FS_GUARD_INDEX_W()   DENG2_GUARD_WRITE_FOR(*d, indexAccessGuardWrite)
 
 FileSystem::FileSystem() : d(new Instance)
 {}
@@ -146,7 +173,7 @@ File *FileSystem::interpret(File *sourceData)
             try
             {
                 // It is a ZIP archive: we will represent it as a folder.
-                std::auto_ptr<PackageFolder> package;
+                std::auto_ptr<ArchiveFolder> package;
 
                 if(sourceData->name().fileNameExtension() == ".save")
                 {
@@ -157,7 +184,7 @@ File *FileSystem::interpret(File *sourceData)
                 else
                 {
                     LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
-                    package.reset(new PackageFolder(*sourceData, sourceData->name()));
+                    package.reset(new ArchiveFolder(*sourceData, sourceData->name()));
                 }
 
                 // Archive opened successfully, give ownership of the source to the folder.
@@ -194,9 +221,6 @@ File *FileSystem::interpret(File *sourceData)
     return sourceData;
 }
 
-#define DENG2_FS_GUARD_INDEX_R()   DENG2_GUARD_READ_FOR(*d, indexAccessGuardRead)
-#define DENG2_FS_GUARD_INDEX_W()   DENG2_GUARD_WRITE_FOR(*d, indexAccessGuardWrite)
-
 FileSystem::Index const &FileSystem::nameIndex() const
 {
     DENG2_FS_GUARD_INDEX_R();
@@ -208,26 +232,15 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAll");
 
-    found.clear();
-    String baseName = path.fileName().lower();
-    String dir = path.fileNamePath().lower();
-    if(!dir.empty() && !dir.beginsWith("/"))
-    {
-        // Always begin with a slash. We don't want to match partial folder names.
-        dir = "/" + dir;
-    }
+    d->findInIndex(d->index, path, found);
+    return int(found.size());
+}
 
-    DENG2_FS_GUARD_INDEX_R();
+int FileSystem::findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const
+{
+    LOG_AS("FS::findAllOfType");
 
-    ConstIndexRange range = d->index.equal_range(baseName);
-    for(Index::const_iterator i = range.first; i != range.second; ++i)
-    {
-        File *file = i->second;
-        if(file->path().fileNamePath().endsWith(dir))
-        {
-            found.push_back(file);
-        }
-    }
+    d->findInIndex(indexFor(typeIdentifier), path, found);
     return int(found.size());
 }
 

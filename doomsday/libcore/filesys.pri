@@ -1,6 +1,7 @@
 publicHeaders(root, \
-    include/de/ArchiveFeed \
     include/de/ArchiveEntryFile \
+    include/de/ArchiveFeed \
+    include/de/ArchiveFolder \
     include/de/ByteArrayFile \
     include/de/DirectoryFeed \
     include/de/Feed \
@@ -12,13 +13,15 @@ publicHeaders(root, \
     include/de/LinkFile \
     include/de/NativeFile \
     include/de/NativePath \
-    include/de/PackageFolder \
+    include/de/PackageFeed \
+    include/de/PackageLoader \
 )
 
 publicHeaders(filesys, \
     include/de/filesys/Node \
-    include/de/filesys/archivefeed.h \
     include/de/filesys/archiveentryfile.h \
+    include/de/filesys/archivefeed.h \
+    include/de/filesys/archivefolder.h \
     include/de/filesys/bytearrayfile.h \
     include/de/filesys/directoryfeed.h \
     include/de/filesys/feed.h \
@@ -30,12 +33,14 @@ publicHeaders(filesys, \
     include/de/filesys/nativefile.h \
     include/de/filesys/nativepath.h \
     include/de/filesys/node.h \
-    include/de/filesys/packagefolder.h \
+    include/de/filesys/packagefeed.h \
+    include/de/filesys/packageloader.h \
 )
 
 SOURCES += \
-    src/filesys/archivefeed.cpp \
     src/filesys/archiveentryfile.cpp \
+    src/filesys/archivefeed.cpp \
+    src/filesys/archivefolder.cpp \
     src/filesys/bytearrayfile.cpp \
     src/filesys/directoryfeed.cpp \
     src/filesys/feed.cpp \
@@ -47,4 +52,8 @@ SOURCES += \
     src/filesys/nativefile.cpp \
     src/filesys/nativepath.cpp \
     src/filesys/node.cpp \
-    src/filesys/packagefolder.cpp
+    src/filesys/packagefeed.cpp \
+    src/filesys/packageloader.cpp
+
+HEADERS += \
+    include/de/filesys/package.h
