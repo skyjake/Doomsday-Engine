@@ -273,7 +273,7 @@ static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 
     // Draw <MapName>
     patchid_t const patchId   = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    de::String const mapTitle = G_MapTitle(0/*current map*/);
+    de::String const mapTitle = G_MapTitle(); // current map
     WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
     if(R_GetPatchInfo(patchId, &info))

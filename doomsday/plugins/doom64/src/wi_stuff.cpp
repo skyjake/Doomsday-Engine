@@ -129,7 +129,7 @@ static void drawBackground()
 static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
     uint mapNum = wbs->currentMap;
-    de::String const mapTitle = G_MapTitle(0/*current map*/);
+    de::String const mapTitle = G_MapTitle(); // current map
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);

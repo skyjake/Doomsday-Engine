@@ -517,7 +517,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         {
             briefDisabled = true;
         }
-        char const *briefing = G_InFineBriefing(&gameMapUri);
+        char const *briefing = G_InFineBriefing(); // current map
 
         // Restart the map music?
         if(!briefing)

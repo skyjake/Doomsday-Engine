@@ -1195,7 +1195,7 @@ static void printMapBanner()
 {
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 
-    String const title = G_MapTitle(0/*current map*/);
+    String const title = G_MapTitle(); // current map
     if(!title.isEmpty())
     {
         String text = String("Map: ") + gameMapUri.path().asText();
@@ -1229,11 +1229,11 @@ void G_BeginMap()
     G_ControlReset(-1); // Clear all controls for all local players.
 
     // Update the game status cvars for the current map.
-    String mapAuthor = G_MapAuthor(0/*current map*/);
+    String mapAuthor = G_MapAuthor(); // current map
     if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
     Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
 
-    String mapTitle = G_MapTitle(0/*current map*/);
+    String mapTitle = G_MapTitle(); // current map
     if(mapTitle.isEmpty()) mapTitle = "Unknown";
     Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
 
@@ -2269,7 +2269,7 @@ void G_IntermissionBegin()
 void G_IntermissionDone()
 {
     // We have left Intermission, however if there is an InFine for debriefing we should run it now.
-    if(G_StartFinale(G_InFineDebriefing(&gameMapUri), 0, FIMODE_AFTER, 0))
+    if(G_StartFinale(G_InFineDebriefing()/*current map*/, 0, FIMODE_AFTER, 0))
     {
         // The GA_ENDDEBRIEFING action is taken after the debriefing stops.
         return;
@@ -2322,7 +2322,7 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
     }
 
     // Include the map title.
-    de::String mapTitle = G_MapTitle(0/*current map*/);
+    de::String mapTitle = G_MapTitle(); // current map
     // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
     /// @todo Move this logic engine-side.
     if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')
@@ -2754,11 +2754,10 @@ char const *G_InFine(char const *scriptId)
 
 char const *G_InFineBriefing(de::Uri const *mapUri)
 {
-    DENG2_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = &gameMapUri;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled)
-        return 0;
+    if(briefDisabled) return 0;
 
     if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
         return 0;
@@ -2774,11 +2773,10 @@ char const *G_InFineBriefing(de::Uri const *mapUri)
 
 char const *G_InFineDebriefing(de::Uri const *mapUri)
 {
-    DENG2_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = &gameMapUri;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled)
-        return 0;
+    if(briefDisabled) return 0;
 
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&

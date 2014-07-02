@@ -757,7 +757,7 @@ static void drawMapMetaData(float x, float y, float alpha)
 {
 #define BORDER              2
 
-    de::String title = G_MapTitle(0/*current map*/);
+    de::String title = G_MapTitle(); // current map
     if(title.isEmpty()) title = "Unnamed";
 
     char buf[256];
@@ -1474,7 +1474,7 @@ int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
     patchinfo_t patchInfo;
-    if(R_GetPatchInfo(G_MapTitlePatch(0/*current map*/), &patchInfo))
+    if(R_GetPatchInfo(G_MapTitlePatch()/*current map*/, &patchInfo))
     {
         y = patchInfo.geometry.size.height + 2;
     }
@@ -1503,7 +1503,7 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    de::String const title  = G_MapTitle(0/*current map*/);
+    de::String const title  = G_MapTitle(); // current map
     de::String const author = G_MapAuthor(0/*current map*/, CPP_BOOL(cfg.hideIWADAuthor));
 
     float y = 0;
@@ -1516,7 +1516,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    patchid_t patchId = G_MapTitlePatch(0/*current map*/);
+    patchid_t patchId = G_MapTitlePatch(); // current map
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
                     0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 

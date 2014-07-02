@@ -106,31 +106,37 @@ bool G_SetGameActionLoadSession(de::String slotId);
 
 /**
  * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
+ *
+ * @param mapUri  Identifier of the map to lookup the briefing for. Can be @c 0 in which
+ *                case the briefing for the @em current map will be returned.
  */
-char const *G_InFineBriefing(de::Uri const *mapUri);
+char const *G_InFineBriefing(de::Uri const *mapUri = 0);
 
 /**
  * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
+ *
+ * @param mapUri  Identifier of the map to lookup the debriefing for. Can be @c 0 in which
+ *                case the debriefing for the @em current map will be returned.
  */
-char const *G_InFineDebriefing(de::Uri const *mapUri);
+char const *G_InFineDebriefing(de::Uri const *mapUri = 0);
 
 /**
  * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
  *                case the author for the @em current map will be returned (if set).
  */
-de::String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor = false);
+de::String G_MapAuthor(de::Uri const *mapUri = 0, bool supressGameAuthor = false);
 
 /**
  * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
  *                case the title for the @em current map will be returned (if set).
  */
-de::String G_MapTitle(de::Uri const *mapUri);
+de::String G_MapTitle(de::Uri const *mapUri = 0);
 
 /**
  * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
  *                case the title for the @em current map will be returned (if set).
  */
-patchid_t G_MapTitlePatch(de::Uri const *mapUri);
+patchid_t G_MapTitlePatch(de::Uri const *mapUri = 0);
 
 extern "C" {
 #endif
