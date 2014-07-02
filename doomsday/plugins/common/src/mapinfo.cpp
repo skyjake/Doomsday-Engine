@@ -124,7 +124,7 @@ void MapInfoParser(ddstring_s const *path)
                               lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                 }
 
-                de::Uri mapUri = G_ComposeMapUri(0, tmap - 1);
+                de::Uri const mapUri = G_ComposeMapUri(0, tmap - 1);
                 mapinfo_t *info = P_MapInfo(&mapUri);
                 if(!info)
                 {
@@ -149,22 +149,20 @@ void MapInfoParser(ddstring_s const *path)
                 {
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
                     {
-                        uri_s *uri = lexer.readUri("Textures");
+                        de::Uri uri = lexer.readUri("Textures");
 
-                        info->sky1Material    = Materials_ResolveUri(uri);
+                        info->sky1Material    = Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri));
                         info->sky1ScrollDelta = (float) lexer.readNumber() / 256;
 
-                        Uri_Delete(uri);
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky2"))
                     {
-                        uri_s *uri = lexer.readUri("Textures");
+                        de::Uri uri = lexer.readUri("Textures");
 
-                        info->sky2Material    = Materials_ResolveUri(uri);
+                        info->sky2Material    = Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri));
                         info->sky2ScrollDelta = (float) lexer.readNumber() / 256;
 
-                        Uri_Delete(uri);
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "doublesky"))

@@ -23,6 +23,8 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace de;
+
 #define T_COMMENT ';' ///< Single-line comment.
 #define T_QUOTE   '"'
 
@@ -43,12 +45,12 @@ void HexLex::syntaxError(char const *message)
               F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber, message);
 }
 
-HexLex::HexLex(Str const *script, Str const *sourcePath)
-    : _script(0)
-    , _readPos(0)
+HexLex::HexLex(ddstring_s const *script, ddstring_s const *sourcePath)
+    : _script    (0)
+    , _readPos   (0)
     , _lineNumber(0)
     , _alreadyGot(false)
-    , _multiline(false)
+    , _multiline (false)
 {
     Str_InitStd(&_sourcePath);
     Str_InitStd(&_token);
@@ -69,7 +71,7 @@ HexLex::~HexLex()
     Str_Free(&_token);
 }
 
-void HexLex::parse(Str const *script)
+void HexLex::parse(ddstring_s const *script)
 {
     _script     = script;
     _readPos    = 0;
@@ -78,7 +80,7 @@ void HexLex::parse(Str const *script)
     Str_Clear(&_token);
 }
 
-void HexLex::setSourcePath(Str const *sourcePath)
+void HexLex::setSourcePath(ddstring_s const *sourcePath)
 {
     if(!sourcePath)
     {
@@ -190,7 +192,7 @@ void HexLex::unreadToken()
     _alreadyGot = true;
 }
 
-Str const *HexLex::token()
+ddstring_s const *HexLex::token()
 {
     return &_token;
 }
@@ -213,7 +215,7 @@ int HexLex::readNumber()
     return number;
 }
 
-Str const *HexLex::readString()
+ddstring_s const *HexLex::readString()
 {
     if(!readToken())
     {
@@ -222,16 +224,13 @@ Str const *HexLex::readString()
     return &_token;
 }
 
-Uri *HexLex::readUri(char const *defaultScheme)
+de::Uri HexLex::readUri(String const &defaultScheme)
 {
     if(!readToken())
     {
         syntaxError("Missing uri");
     }
-
-    Uri *uri = Uri_SetScheme(Uri_New(), defaultScheme);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&_token)))));
-    return uri;
+    return de::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&_token))))));
 }
 
 int HexLex::lineNumber() const
