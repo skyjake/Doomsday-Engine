@@ -65,7 +65,16 @@ struct wbstartstruct_t
 /// To be called to register the console commands and variables of this module.
 void WI_Register();
 
-void IN_Init(wbstartstruct_t *wbstartstruct);
+/**
+ * Begin the intermission using the given game session and player configuration.
+ *
+ * @param wbstartstruct  Configuration to use for the intermission. Ownership is
+ *                       @em not given to WI_Init() however it is assumed that
+ *                       this structure is @em not modified while the intermission
+ *                       is in progress.
+ */
+void IN_Init(wbstartstruct_t const &wbstartstruct);
+
 void IN_SkipToNext();
 void IN_Stop();
 

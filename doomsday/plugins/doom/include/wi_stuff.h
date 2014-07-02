@@ -106,9 +106,14 @@ struct wbstartstruct_t
 void WI_Register();
 
 /**
- * Perform setup for an intermission.
+ * Begin the intermission using the given game session and player configuration.
+ *
+ * @param wbstartstruct  Configuration to use for the intermission. Ownership is
+ *                       @em not given to WI_Init() however it is assumed that
+ *                       this structure is @em not modified while the intermission
+ *                       is in progress.
  */
-void WI_Init(wbstartstruct_t *wbstartstruct);
+void WI_Init(wbstartstruct_t const &wbstartstruct);
 
 void WI_Shutdown();
 

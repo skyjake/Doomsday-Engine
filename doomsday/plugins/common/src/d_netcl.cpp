@@ -652,9 +652,9 @@ void NetCl_Intermission(Reader *msg)
 
         // @todo jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
-        wmInfo.maxKills   = Reader_ReadUInt16(msg);
-        wmInfo.maxItems   = Reader_ReadUInt16(msg);
-        wmInfo.maxSecret  = Reader_ReadUInt16(msg);
+        wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
+        wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
+        wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.nextMap    = Reader_ReadByte(msg);
         wmInfo.currentMap = Reader_ReadByte(msg);
         wmInfo.didSecret  = Reader_ReadByte(msg);
@@ -669,9 +669,9 @@ void NetCl_Intermission(Reader *msg)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-        WI_Init(&wmInfo);
+        WI_Init(wmInfo);
 #elif __JHERETIC__
-        IN_Init(&wmInfo);
+        IN_Init(wmInfo);
 #elif __JHEXEN__
         IN_Init();
 #endif

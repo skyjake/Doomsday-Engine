@@ -59,7 +59,7 @@ int interTime = -1;
 static int bcnt;
 
 // Contains information passed into intermission.
-static wbstartstruct_t *wbs;
+static wbstartstruct_t const *wbs;
 
 static dd_bool skipIntermission;
 
@@ -160,9 +160,9 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, f
     }
 }
 
-void WI_initVariables(wbstartstruct_t *wbstartstruct)
+void WI_initVariables(wbstartstruct_t const &wbstartstruct)
 {
-    wbs = wbstartstruct;
+    wbs = &wbstartstruct;
 
 /*#ifdef RANGECHECK
     if(gameMode != commercial)
@@ -206,7 +206,7 @@ void WI_initVariables(wbstartstruct_t *wbstartstruct)
     oldInterTime     = 0;
 }
 
-void IN_Init(wbstartstruct_t *wbstartstruct)
+void IN_Init(wbstartstruct_t const &wbstartstruct)
 {
     WI_initVariables(wbstartstruct);
     IN_LoadPics();

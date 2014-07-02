@@ -2166,18 +2166,18 @@ static int prepareIntermission(void * /*context*/)
     wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__
-    wmInfo.maxKills   = totalKills;
-    wmInfo.maxItems   = totalItems;
-    wmInfo.maxSecret  = totalSecret;
+    wmInfo.maxKills   = de::max(1, totalKills);
+    wmInfo.maxItems   = de::max(1, totalItems);
+    wmInfo.maxSecret  = de::max(1, totalSecret);
 
     G_PrepareWIData();
 # endif
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    WI_Init(&wmInfo);
+    WI_Init(wmInfo);
 #elif __JHERETIC__
-    IN_Init(&wmInfo);
+    IN_Init(wmInfo);
 #else /* __JHEXEN__ */
     IN_Init();
 #endif

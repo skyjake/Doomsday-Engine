@@ -22,7 +22,6 @@
 #include "jdoom.h"
 #include "wi_stuff.h"
 
-#include <cassert>
 #include <cstdio>
 #include <cctype>
 #include <cstring>
@@ -137,7 +136,7 @@ static wianimdef_t const episode2AnimDefs[] = {
     { 0,  8, Point2Raw(  40,   0 ), 3, { "wia20500", "wia20501", "wia20502" }, ILS_SHOW_STATS }
 };
 
-static int animCounts[] = {
+static int const animCounts[] = {
     sizeof(episode0AnimDefs) / sizeof(wianimdef_t),
     sizeof(episode1AnimDefs) / sizeof(wianimdef_t),
     sizeof(episode2AnimDefs) / sizeof(wianimdef_t)
@@ -182,8 +181,8 @@ static int cntPar;
 static int cntPause;
 
 // Passed into intermission.
-static wbstartstruct_t *wbs;
-static wbplayerstruct_t *inPlayerInfo;
+static wbstartstruct_t const *wbs;
+static wbplayerstruct_t const *inPlayerInfo;
 
 static patchid_t pBackground;
 static patchid_t pYouAreHereRight;
@@ -1364,25 +1363,18 @@ void WI_Drawer()
     GL_EndBorderedProjection(&bp);
 }
 
-static void initVariables(wbstartstruct_t *wbstartstruct)
+static void initVariables(wbstartstruct_t const &wbstartstruct)
 {
-    wbs = wbstartstruct;
+    wbs = &wbstartstruct;
 
     advanceState = false;
     stateCounter = backgroundAnimCounter = 0;
     inPlayerNum  = wbs->pNum;
     inPlayerTeam = cfg.playerColor[wbs->pNum];
     inPlayerInfo = wbs->plyr;
-
-    if(!wbs->maxKills)
-        wbs->maxKills = 1;
-    if(!wbs->maxItems)
-        wbs->maxItems = 1;
-    if(!wbs->maxSecret)
-        wbs->maxSecret = 1;
 }
 
-void WI_Init(wbstartstruct_t *wbstartstruct)
+void WI_Init(wbstartstruct_t const &wbstartstruct)
 {
     initVariables(wbstartstruct);
     loadData();
