@@ -19,14 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-
 #include "jdoom.h"
 #include "wi_stuff.h"
 
+#include <cassert>
+#include <cstdio>
+#include <cctype>
+#include <cstring>
 #include "hu_stuff.h"
 #include "d_net.h"
 #include "p_mapsetup.h"
@@ -231,28 +230,27 @@ static void drawBackground()
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
+
     GL_DrawPatchXY3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     if(!(gameModeBits & GM_ANY_DOOM2) && wbs->episode < 3)
     {
-        patchid_t patchId;
-        int i;
-
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        for(i = 0; i < animCounts[wbs->episode]; ++i)
+        for(int i = 0; i < animCounts[wbs->episode]; ++i)
         {
             wianimdef_t const *def = &animDefs[wbs->episode][i];
-            wianimstate_t *state = &animStates[i];
+            wianimstate_t *state   = &animStates[i];
 
             // Has the animation begun yet?
             if(state->frame < 0) continue;
 
-            patchId = state->patches[state->frame];
+            patchid_t patchId = state->patches[state->frame];
             WI_DrawPatch3(patchId, patchReplacementText(patchId), &def->origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
     }
+
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -307,7 +305,7 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // Skip the E#M# or Map #.
     if(mapName)
     {
-        char* ptr = strchr(mapName, ':');
+        char *ptr = strchr(mapName, ':');
         if(ptr)
         {
             mapName = M_SkipWhite(ptr + 1);
@@ -337,32 +335,35 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static dd_bool patchFits(patchid_t patchId, int x, int y)
+static bool patchFits(patchid_t patchId, int x, int y)
 {
-    int left, top, right, bottom;
     patchinfo_t info;
     if(!R_GetPatchInfo(patchId, &info)) return false;
 
-    left = x + info.geometry.origin.x;
-    top  = y + info.geometry.origin.y;
-    right = left + info.geometry.size.width;
-    bottom = top + info.geometry.size.height;
+    int const left   = x + info.geometry.origin.x;
+    int const top    = y + info.geometry.origin.y;
+    int const right  = left + info.geometry.size.width;
+    int const bottom = top + info.geometry.size.height;
     return (left >= 0 && right < SCREENWIDTH && top >= 0 && bottom < SCREENHEIGHT);
 }
 
-static patchid_t chooseYouAreHerePatch(const Point2Raw* origin)
+static patchid_t chooseYouAreHerePatch(Point2Raw const *origin)
 {
-    assert(origin);
+    DENG2_ASSERT(origin != 0);
+
     if(patchFits(pYouAreHereRight, origin->x, origin->y))
         return pYouAreHereRight;
+
     if(patchFits(pYouAreHereLeft, origin->x, origin->y))
         return pYouAreHereLeft;
+
     return 0; // None fits.
 }
 
-static void drawPatchIfFits(patchid_t patchId, const Point2Raw* origin)
+static void drawPatchIfFits(patchid_t patchId, Point2Raw const *origin)
 {
-    assert(origin);
+    DENG2_ASSERT(origin != 0);
+
     if(patchFits(patchId, origin->x, origin->y))
     {
         WI_DrawPatch3(patchId, patchReplacementText(patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
@@ -442,19 +443,16 @@ static void animateBackground()
             }
         }
 
-        state->nextTic = backgroundAnimCounter + MAX_OF(def->tics, 1);
+        state->nextTic = backgroundAnimCounter + de::max(def->tics, 1);
     }
 }
 
 static void drawPercent(int x, int y, int p)
 {
-    Point2Raw origin;
-    char buf[20];
     if(p < 0) return;
 
-    origin.x = x;
-    origin.y = y;
-    dd_snprintf(buf, 20, "%i", p);
+    Point2Raw origin(x, y);
+    char buf[20]; dd_snprintf(buf, 20, "%i", p);
     FR_DrawChar3('%', &origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
     FR_DrawText3(buf, &origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
 }
@@ -464,48 +462,51 @@ static void drawPercent(int x, int y, int p)
  */
 static void drawTime(int x, int y, int t)
 {
-    patchinfo_t info;
     if(t < 0) return;
 
     if(t <= 61 * 59)
     {
-        int seconds = t % 60, minutes = t / 60 % 60;
-        char buf[20];
-
         x -= 22;
 
+        int const seconds = t % 60;
+        int const minutes = t / 60 % 60;
+
+        char buf[20];
         FR_DrawCharXY3(':', x, y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
         if(minutes > 0)
         {
             dd_snprintf(buf, 20, "%d", minutes);
             FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
         }
+
         dd_snprintf(buf, 20, "%02d", seconds);
         FR_DrawTextXY3(buf, x+FR_CharWidth(':'), y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+
         return;
     }
 
     // "sucks"
+    patchinfo_t info;
     if(!R_GetPatchInfo(pSucks, &info)) return;
 
     WI_DrawPatchXY3(pSucks, patchReplacementText(pSucks), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 }
 
-void WI_End(void)
+void WI_End()
 {
     NetSv_Intermission(IMF_END, 0, 0);
 }
 
-static void initNoState(void)
+static void initNoState()
 {
-    inState = ILS_NONE;
+    inState      = ILS_NONE;
     advanceState = false;
     stateCounter = 10;
 
     NetSv_Intermission(IMF_STATE, inState, 0);
 }
 
-static void tickNoState(void)
+static void tickNoState()
 {
     --stateCounter;
     if(0 == stateCounter)
@@ -517,9 +518,9 @@ static void tickNoState(void)
     }
 }
 
-static void initShowNextMap(void)
+static void initShowNextMap()
 {
-    inState = ILS_SHOW_NEXTMAP;
+    inState      = ILS_SHOW_NEXTMAP;
     advanceState = false;
     stateCounter = SHOWNEXTLOCDELAY * TICRATE;
 
@@ -528,7 +529,7 @@ static void initShowNextMap(void)
     NetSv_Intermission(IMF_STATE, inState, 0);
 }
 
-static void tickShowNextMap(void)
+static void tickShowNextMap()
 {
     --stateCounter;
     if(0 == stateCounter || advanceState)
@@ -540,7 +541,7 @@ static void tickShowNextMap(void)
     drawYouAreHere = (stateCounter & 31) < 20;
 }
 
-static void drawLocationMarks(void)
+static void drawLocationMarks()
 {
     if((gameModeBits & GM_ANY_DOOM) && wbs->episode < 3)
     {
@@ -550,11 +551,11 @@ static void drawLocationMarks(void)
         FR_LoadDefaultAttrib();
 
         // Draw a splat on taken cities.
-        { int i, last = (wbs->currentMap == 8) ? wbs->nextMap-1 : wbs->currentMap;
-        for(i = 0; i <= last; ++i)
+        int const last = (wbs->currentMap == 8) ? wbs->nextMap - 1 : wbs->currentMap;
+        for(int i = 0; i <= last; ++i)
         {
             drawPatchIfFits(pSplat, &locations[wbs->episode][i]);
-        }}
+        }
 
         // Splat the secret map?
         if(wbs->didSecret)
@@ -564,9 +565,9 @@ static void drawLocationMarks(void)
 
         if(drawYouAreHere)
         {
-            const Point2Raw* origin = &locations[wbs->episode][wbs->nextMap];
-            patchid_t patchId = chooseYouAreHerePatch(origin);
-            if(0 != patchId)
+            Point2Raw const *origin = &locations[wbs->episode][wbs->nextMap];
+            patchid_t const patchId = chooseYouAreHerePatch(origin);
+            if(patchId)
             {
                 WI_DrawPatch3(patchId, patchReplacementText(patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
             }
@@ -576,39 +577,33 @@ static void drawLocationMarks(void)
     }
 }
 
-static void initDeathmatchStats(void)
+static void initDeathmatchStats()
 {
-    int i;
-
-    inState = ILS_SHOW_STATS;
+    inState      = ILS_SHOW_STATS;
     advanceState = false;
-    dmState = 1;
-
-    cntPause = TICRATE;
+    dmState      = 1;
+    cntPause     = TICRATE;
 
     // Clear the on-screen counters.
-    memset(dmTotals, 0, sizeof(dmTotals));
-    for(i = 0; i < NUMTEAMS; ++i)
+    std::memset(dmTotals, 0, sizeof(dmTotals));
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
-        memset(dmFrags[i], 0, sizeof(dmFrags[i]));
+        std::memset(dmFrags[i], 0, sizeof(dmFrags[i]));
     }
 
     beginAnimations();
 }
 
-static void updateDeathmatchStats(void)
+static void updateDeathmatchStats()
 {
-    int i, j;
-    dd_bool stillTicking;
-
     if(advanceState && dmState != 4)
     {
         advanceState = false;
-        for(i = 0; i < NUMTEAMS; ++i)
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
-            for(j = 0; j < NUMTEAMS; ++j)
+            for(int k = 0; k < NUMTEAMS; ++k)
             {
-                dmFrags[i][j] = teamInfo[i].frags[j];
+                dmFrags[i][k] = teamInfo[i].frags[k];
             }
 
             dmTotals[i] = teamInfo[i].totalFrags;
@@ -621,25 +616,27 @@ static void updateDeathmatchStats(void)
     if(dmState == 2)
     {
         if(!(backgroundAnimCounter & 3))
-            S_LocalSound(SFX_PISTOL, 0);
-
-        stillTicking = false;
-        for(i = 0; i < NUMTEAMS; ++i)
         {
-            for(j = 0; j < NUMTEAMS; ++j)
+            S_LocalSound(SFX_PISTOL, 0);
+        }
+
+        bool stillTicking = false;
+        for(int i = 0; i < NUMTEAMS; ++i)
+        {
+            for(int k = 0; k < NUMTEAMS; ++k)
             {
-                if(dmFrags[i][j] != teamInfo[i].frags[j])
+                if(dmFrags[i][k] != teamInfo[i].frags[k])
                 {
-                    if(teamInfo[i].frags[j] < 0)
-                        dmFrags[i][j]--;
+                    if(teamInfo[i].frags[k] < 0)
+                        dmFrags[i][k]--;
                     else
-                        dmFrags[i][j]++;
+                        dmFrags[i][k]++;
 
-                    if(dmFrags[i][j] > 99)
-                        dmFrags[i][j] = 99;
+                    if(dmFrags[i][k] > 99)
+                        dmFrags[i][k] = 99;
 
-                    if(dmFrags[i][j] < -99)
-                        dmFrags[i][j] = -99;
+                    if(dmFrags[i][k] < -99)
+                        dmFrags[i][k] = -99;
 
                     stillTicking = true;
                 }
@@ -666,9 +663,13 @@ static void updateDeathmatchStats(void)
         {
             S_LocalSound(SFX_SLOP, 0);
             if(gameModeBits & GM_ANY_DOOM2)
+            {
                 initNoState();
+            }
             else
+            {
                 initShowNextMap();
+            }
         }
     }
     else if(dmState & 1)
@@ -681,10 +682,8 @@ static void updateDeathmatchStats(void)
     }
 }
 
-static void drawDeathmatchStats(void)
+static void drawDeathmatchStats(int x = DM_MATRIXX + DM_SPACINGX, int y = DM_MATRIXY)
 {
-    int i, j, x, y, w;// lh = WI_SPACINGY; // Line height.
-
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
@@ -693,28 +692,26 @@ static void drawDeathmatchStats(void)
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     // Draw stat titles (top line).
-    { patchinfo_t info;
+    patchinfo_t info;
     if(R_GetPatchInfo(pTotal, &info))
-        WI_DrawPatchXY3(pTotal, patchReplacementText(pTotal), DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN); }
+    {
+        WI_DrawPatchXY3(pTotal, patchReplacementText(pTotal), DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    }
 
     WI_DrawPatchXY3(pKillers, patchReplacementText(pKillers), DM_KILLERSX, DM_KILLERSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     WI_DrawPatchXY3(pVictims, patchReplacementText(pVictims), DM_VICTIMSX, DM_VICTIMSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
-    x = DM_MATRIXX + DM_SPACINGX;
-    y = DM_MATRIXY;
-
-    for(i = 0; i < NUMTEAMS; ++i)
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
         if(teamInfo[i].playerCount > 0)
         {
-            patchid_t patchId = pTeamBackgrounds[i];
-            const char* replacement;
-            patchinfo_t info;
-
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
+            patchid_t const patchId = pTeamBackgrounds[i];
+            char const *replacement = patchReplacementText(patchId);
+
+            patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
-            replacement = patchReplacementText(patchId);
             WI_DrawPatchXY3(patchId, replacement, x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
             WI_DrawPatchXY3(patchId, replacement, DM_MATRIXX - info.geometry.size.width / 2, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
@@ -727,8 +724,7 @@ static void drawDeathmatchStats(void)
             // If more than 1 member, show the member count.
             if(1 > teamInfo[i].playerCount)
             {
-                char tmp[20];
-                sprintf(tmp, "%i", teamInfo[i].playerCount);
+                char tmp[20]; sprintf(tmp, "%i", teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
                 FR_DrawTextXY3(tmp, x - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
@@ -737,12 +733,12 @@ static void drawDeathmatchStats(void)
         }
         else
         {
-            patchid_t patchId = pTeamIcons[i];
-            const char* replacement = patchReplacementText(patchId);
-            patchinfo_t info;
-
             FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
+            patchid_t const patchId = pTeamIcons[i];
+            char const *replacement = patchReplacementText(patchId);
+
+            patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
             WI_DrawPatchXY3(patchId, replacement, x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
             WI_DrawPatchXY3(patchId, replacement, DM_MATRIXX - info.geometry.size.width / 2, y + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
@@ -756,19 +752,19 @@ static void drawDeathmatchStats(void)
     y = DM_MATRIXY + 10;
     FR_SetFont(FID(GF_SMALL));
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-    w = FR_CharWidth('0');
+    int const w = FR_CharWidth('0');
 
-    for(i = 0; i < NUMTEAMS; ++i)
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
         x = DM_MATRIXX + DM_SPACINGX;
         if(teamInfo[i].playerCount > 0)
         {
             char buf[20];
-            for(j = 0; j < NUMTEAMS; ++j)
+            for(int k = 0; k < NUMTEAMS; ++k)
             {
-                if(teamInfo[j].playerCount > 0)
+                if(teamInfo[k].playerCount > 0)
                 {
-                    dd_snprintf(buf, 20, "%i", dmFrags[i][j]);
+                    dd_snprintf(buf, 20, "%i", dmFrags[i][k]);
                     FR_DrawTextXY3(buf, x + w, y, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
                 }
                 x += DM_SPACINGX;
@@ -783,22 +779,20 @@ static void drawDeathmatchStats(void)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void initNetgameStats(void)
+static void initNetgameStats()
 {
-    int i;
-
-    inState = ILS_SHOW_STATS;
+    inState      = ILS_SHOW_STATS;
     advanceState = false;
-    ngState = 1;
-    cntPause = TICRATE;
+    ngState      = 1;
+    cntPause     = TICRATE;
 
-    memset(cntKills, 0, sizeof(cntKills));
-    memset(cntItems, 0, sizeof(cntItems));
-    memset(cntSecret, 0, sizeof(cntSecret));
-    memset(cntFrags, 0, sizeof(cntFrags));
+    std::memset(cntKills,  0, sizeof(cntKills));
+    std::memset(cntItems,  0, sizeof(cntItems));
+    std::memset(cntSecret, 0, sizeof(cntSecret));
+    std::memset(cntFrags,  0, sizeof(cntFrags));
     doFrags = 0;
 
-    for(i = 0; i < NUMTEAMS; ++i)
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
         doFrags += teamInfo[i].totalFrags;
     }
@@ -807,18 +801,15 @@ static void initNetgameStats(void)
     beginAnimations();
 }
 
-static void updateNetgameStats(void)
+static void updateNetgameStats()
 {
-    dd_bool stillTicking;
-    int i, fsum;
-
     if(advanceState && ngState != 10)
     {
         advanceState = false;
-        for(i = 0; i < NUMTEAMS; ++i)
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
-            cntKills[i] = (teamInfo[i].kills * 100) / wbs->maxKills;
-            cntItems[i] = (teamInfo[i].items * 100) / wbs->maxItems;
+            cntKills[i]  = (teamInfo[i].kills  * 100) / wbs->maxKills;
+            cntItems[i]  = (teamInfo[i].items  * 100) / wbs->maxItems;
             cntSecret[i] = (teamInfo[i].secret * 100) / wbs->maxSecret;
 
             if(doFrags)
@@ -832,10 +823,13 @@ static void updateNetgameStats(void)
     if(ngState == 2)
     {
         if(!(backgroundAnimCounter & 3))
+        {
             S_LocalSound(SFX_PISTOL, 0);
-        stillTicking = false;
+        }
 
-        for(i = 0; i < NUMTEAMS; ++i)
+        bool stillTicking = false;
+
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
             cntKills[i] += 2;
 
@@ -854,10 +848,13 @@ static void updateNetgameStats(void)
     else if(ngState == 4)
     {
         if(!(backgroundAnimCounter & 3))
+        {
             S_LocalSound(SFX_PISTOL, 0);
-        stillTicking = false;
+        }
 
-        for(i = 0; i < NUMTEAMS; ++i)
+        bool stillTicking = false;
+
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
             cntItems[i] += 2;
             if(cntItems[i] >= (teamInfo[i].items * 100) / wbs->maxItems)
@@ -875,11 +872,13 @@ static void updateNetgameStats(void)
     else if(ngState == 6)
     {
         if(!(backgroundAnimCounter & 3))
+        {
             S_LocalSound(SFX_PISTOL, 0);
+        }
 
-        stillTicking = false;
+        bool stillTicking = false;
 
-        for(i = 0; i < NUMTEAMS; ++i)
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
             cntSecret[i] += 2;
 
@@ -898,15 +897,17 @@ static void updateNetgameStats(void)
     else if(ngState == 8)
     {
         if(!(backgroundAnimCounter & 3))
+        {
             S_LocalSound(SFX_PISTOL, 0);
+        }
 
-        stillTicking = false;
+        bool stillTicking = false;
 
-        for(i = 0; i < NUMTEAMS; ++i)
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
             cntFrags[i] += 1;
 
-            fsum = teamInfo[i].totalFrags;
+            int const fsum = teamInfo[i].totalFrags;
             if(cntFrags[i] >= fsum)
                 cntFrags[i] = fsum;
             else
@@ -925,9 +926,13 @@ static void updateNetgameStats(void)
         {
             S_LocalSound(SFX_SGCOCK, 0);
             if(gameModeBits & GM_ANY_DOOM2)
+            {
                 initNoState();
+            }
             else
+            {
                 initShowNextMap();
+            }
         }
     }
     else if(ngState & 1)
@@ -940,12 +945,9 @@ static void updateNetgameStats(void)
     }
 }
 
-static void drawNetgameStats(void)
+static void drawNetgameStats()
 {
-#define ORIGINX             (NG_STATSX + starWidth/2 + NG_STATSX*!doFrags)
-
-    int i, x, y, starWidth, pwidth;
-    patchinfo_t info;
+#define ORIGINX             (NG_STATSX + starWidth/2 + NG_STATSX * !doFrags)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -954,14 +956,15 @@ static void drawNetgameStats(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    pwidth = FR_CharWidth('%');
+    int const pwidth = FR_CharWidth('%');
+    patchinfo_t info;
     R_GetPatchInfo(pFaceAlive, &info);
-    starWidth = info.geometry.size.width;
+    int const starWidth = info.geometry.size.width;
 
     // Draw stat titles (top line).
     R_GetPatchInfo(pKills, &info);
     WI_DrawPatchXY3(pKills, patchReplacementText(pKills), ORIGINX + NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
-    y = NG_STATSY + info.geometry.size.height;
+    int y = NG_STATSY + info.geometry.size.height;
 
     WI_DrawPatchXY3(pItems, patchReplacementText(pItems), ORIGINX + 2 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     WI_DrawPatchXY3(pSecret, patchReplacementText(pSecret), ORIGINX + 3 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
@@ -971,33 +974,33 @@ static void drawNetgameStats(void)
     }
 
     // Draw stats.
-    for(i = 0; i < NUMTEAMS; ++i)
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
-        patchinfo_t info;
-
-        if(0 == teamInfo[i].playerCount)
+        if(!teamInfo[i].playerCount)
             continue;
 
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(1, 1, 1, 1);
 
-        x = ORIGINX;
+        int x = ORIGINX;
+
+        patchinfo_t info;
         R_GetPatchInfo(pTeamBackgrounds[i], &info);
         WI_DrawPatchXY3(pTeamBackgrounds[i], patchReplacementText(pTeamBackgrounds[i]), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
         {
-            char tmp[40];
-
-            sprintf(tmp, "%i", teamInfo[i].playerCount);
+            char tmp[40]; sprintf(tmp, "%i", teamInfo[i].playerCount);
             FR_DrawTextXY3(tmp, x - info.geometry.size.width + 1, y + info.geometry.size.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
         }
 
         FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
         if(i == inPlayerTeam)
+        {
             WI_DrawPatchXY3(pFaceAlive, patchReplacementText(pFaceAlive), x - info.geometry.size.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        }
         x += NG_SPACINGX;
 
         FR_SetFont(FID(GF_SMALL));
@@ -1012,8 +1015,7 @@ static void drawNetgameStats(void)
 
         if(doFrags)
         {
-            char buf[20];
-            dd_snprintf(buf, 20, "%i", cntFrags[i]);
+            char buf[20]; dd_snprintf(buf, 20, "%i", cntFrags[i]);
             FR_DrawTextXY3(buf, x, y + 10, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
         }
 
@@ -1025,10 +1027,9 @@ static void drawNetgameStats(void)
 #undef ORIGINX
 }
 
-static void drawSinglePlayerStats(void)
+static void drawSinglePlayerStats()
 {
-    int lh;
-    lh = (3 * FR_CharHeight('0')) / 2; // Line height.
+    int const lh = (3 * FR_CharHeight('0')) / 2; // Line height.
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -1064,19 +1065,19 @@ static void drawSinglePlayerStats(void)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void initShowStats(void)
+static void initShowStats()
 {
-    inState = ILS_SHOW_STATS;
+    inState      = ILS_SHOW_STATS;
     advanceState = false;
-    spState = 1;
-    cntKills[0] = cntItems[0] = cntSecret[0] = -1;
-    cntTime = cntPar = -1;
-    cntPause = TICRATE;
+    spState      = 1;
+    cntKills[0]  = cntItems[0] = cntSecret[0] = -1;
+    cntTime      = cntPar = -1;
+    cntPause     = TICRATE;
 
     beginAnimations();
 }
 
-static void tickShowStats(void)
+static void tickShowStats()
 {
     if(G_Ruleset_Deathmatch())
     {
@@ -1092,8 +1093,8 @@ static void tickShowStats(void)
     if(advanceState && spState != 10)
     {
         advanceState = false;
-        cntKills[0] = (inPlayerInfo[inPlayerNum].kills * 100) / wbs->maxKills;
-        cntItems[0] = (inPlayerInfo[inPlayerNum].items * 100) / wbs->maxItems;
+        cntKills[0]  = (inPlayerInfo[inPlayerNum].kills  * 100) / wbs->maxKills;
+        cntItems[0]  = (inPlayerInfo[inPlayerNum].items  * 100) / wbs->maxItems;
         cntSecret[0] = (inPlayerInfo[inPlayerNum].secret * 100) / wbs->maxSecret;
         cntTime = inPlayerInfo[inPlayerNum].time;
         if(wbs->parTime != -1)
@@ -1194,7 +1195,7 @@ static void tickShowStats(void)
     }
 }
 
-static void drawStats(void)
+static void drawStats()
 {
     if(G_Ruleset_Deathmatch())
     {
@@ -1211,13 +1212,12 @@ static void drawStats(void)
 }
 
 /// Check for button presses to skip delays.
-static void maybeAdvanceState(void)
+static void maybeAdvanceState()
 {
-    player_t* player;
-    int i;
-
-    for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
+        player_t *player = &players[i];
+
         if(!players[i].plr->inGame) continue;
 
         if(player->brain.attack)
@@ -1254,7 +1254,7 @@ static void maybeAdvanceState(void)
     }
 }
 
-void WI_Ticker(void)
+void WI_Ticker()
 {
     ++backgroundAnimCounter;
     animateBackground();
@@ -1262,29 +1262,25 @@ void WI_Ticker(void)
     maybeAdvanceState();
     switch(inState)
     {
-    case ILS_SHOW_STATS:    tickShowStats(); break;
+    case ILS_SHOW_STATS:    tickShowStats();   break;
     case ILS_SHOW_NEXTMAP:  tickShowNextMap(); break;
-    case ILS_NONE:          tickNoState(); break;
+    case ILS_NONE:          tickNoState();     break;
+
     default:
-#if _DEBUG
-        Con_Error("WI_Ticker: Invalid state %i.", (int) inState);
-#endif
+        DENG2_ASSERT(!"WI_Ticker: Unknown intermission state");
         break;
     }
 }
 
-static void loadData(void)
+static void loadData()
 {
-    char name[9];
-    int i;
-
     if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && wbs->episode > 2))
     {
         pBackground = R_DeclarePatch("INTERPIC");
     }
     else
     {
-        sprintf(name, "WIMAP%u", wbs->episode);
+        char name[9]; sprintf(name, "WIMAP%u", wbs->episode);
         pBackground = R_DeclarePatch(name);
     }
 
@@ -1292,23 +1288,21 @@ static void loadData(void)
     {
         pYouAreHereRight = R_DeclarePatch("WIURH0");
         pYouAreHereLeft  = R_DeclarePatch("WIURH1");
-        pSplat = R_DeclarePatch("WISPLAT");
+        pSplat           = R_DeclarePatch("WISPLAT");
 
         animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * animCounts[wbs->episode], PU_GAMESTATIC);
-        if(!animStates) Con_Error("WI_Stuff::loadData: Failed on (re)allocation of %lu bytes for animStates.", (unsigned long) (sizeof(*animStates) * animCounts[wbs->episode]));
-        memset(animStates, 0, sizeof(*animStates) * animCounts[wbs->episode]);
+        std::memset(animStates, 0, sizeof(*animStates) * animCounts[wbs->episode]);
 
-        for(i = 0; i < animCounts[wbs->episode]; ++i)
+        for(int i = 0; i < animCounts[wbs->episode]; ++i)
         {
             wianimdef_t const *def = &animDefs[wbs->episode][i];
-            wianimstate_t *state = &animStates[i];
-            int j;
+            wianimstate_t *state   = &animStates[i];
 
             state->frame = -1; // Not yet begun.
 
-            for(j = 0; j < def->numFrames; ++j)
+            for(int k = 0; k < def->numFrames; ++k)
             {
-                state->patches[j] = R_DeclarePatch(def->patchNames[j]);
+                state->patches[k] = R_DeclarePatch(def->patchNames[k]);
             }
         }
     }
@@ -1329,7 +1323,8 @@ static void loadData(void)
     pFaceAlive  = R_DeclarePatch("STFST01");
     pFaceDead   = R_DeclarePatch("STFDEAD0");
 
-    for(i = 0; i < NUMTEAMS; ++i)
+    char name[9];
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
         sprintf(name, "STPB%d", i);
         pTeamBackgrounds[i] = R_DeclarePatch(name);
@@ -1339,10 +1334,8 @@ static void loadData(void)
     }
 }
 
-void WI_Drawer(void)
+void WI_Drawer()
 {
-    dgl_borderedprojectionstate_t bp;
-
     /// @todo Kludge: dj: Clearly a kludge but why?
     if(ILS_NONE == inState)
     {
@@ -1350,6 +1343,7 @@ void WI_Drawer(void)
     }
     /// kludge end.
 
+    dgl_borderedprojectionstate_t bp;
     GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK | BPF_OVERDRAW_CLIP,
         SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
@@ -1370,13 +1364,13 @@ void WI_Drawer(void)
     GL_EndBorderedProjection(&bp);
 }
 
-static void initVariables(wbstartstruct_t* wbstartstruct)
+static void initVariables(wbstartstruct_t *wbstartstruct)
 {
     wbs = wbstartstruct;
 
     advanceState = false;
     stateCounter = backgroundAnimCounter = 0;
-    inPlayerNum = wbs->pNum;
+    inPlayerNum  = wbs->pNum;
     inPlayerTeam = cfg.playerColor[wbs->pNum];
     inPlayerInfo = wbs->plyr;
 
@@ -1388,46 +1382,47 @@ static void initVariables(wbstartstruct_t* wbstartstruct)
         wbs->maxSecret = 1;
 }
 
-void WI_Init(wbstartstruct_t* wbstartstruct)
+void WI_Init(wbstartstruct_t *wbstartstruct)
 {
-    int i, j, k;
-    teaminfo_t* tin;
-
     initVariables(wbstartstruct);
     loadData();
 
     // Calculate team stats.
-    memset(teamInfo, 0, sizeof(teamInfo));
-    for(i = 0, tin = teamInfo; i < NUMTEAMS; ++i, tin++)
+    std::memset(teamInfo, 0, sizeof(teamInfo));
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
-        for(j = 0; j < MAXPLAYERS; ++j)
+        teaminfo_t *tin = &teamInfo[i];
+
+        for(int k = 0; k < MAXPLAYERS; ++k)
         {
             // Is the player in this team?
-            if(!inPlayerInfo[j].inGame || cfg.playerColor[j] != i)
+            if(!inPlayerInfo[k].inGame || cfg.playerColor[k] != i)
                 continue;
 
             ++tin->playerCount;
 
             // Check the frags.
-            for(k = 0; k < MAXPLAYERS; ++k)
-                tin->frags[cfg.playerColor[k]] += inPlayerInfo[j].frags[k];
+            for(int m = 0; m < MAXPLAYERS; ++m)
+            {
+                tin->frags[cfg.playerColor[m]] += inPlayerInfo[k].frags[m];
+            }
 
             // Counters.
-            if(inPlayerInfo[j].items > tin->items)
-                tin->items = inPlayerInfo[j].items;
-            if(inPlayerInfo[j].kills > tin->kills)
-                tin->kills = inPlayerInfo[j].kills;
-            if(inPlayerInfo[j].secret > tin->secret)
-                tin->secret = inPlayerInfo[j].secret;
+            if(inPlayerInfo[k].items > tin->items)
+                tin->items = inPlayerInfo[k].items;
+            if(inPlayerInfo[k].kills > tin->kills)
+                tin->kills = inPlayerInfo[k].kills;
+            if(inPlayerInfo[k].secret > tin->secret)
+                tin->secret = inPlayerInfo[k].secret;
         }
 
         // Calculate team's total frags.
-        for(j = 0; j < NUMTEAMS; ++j)
+        for(int k = 0; k < NUMTEAMS; ++k)
         {
-            if(j == i) // Suicides are negative frags.
-                tin->totalFrags -= tin->frags[j];
+            if(k == i) // Suicides are negative frags.
+                tin->totalFrags -= tin->frags[k];
             else
-                tin->totalFrags += tin->frags[j];
+                tin->totalFrags += tin->frags[k];
         }
     }
 
@@ -1447,26 +1442,21 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
     }
 }
 
-void WI_Shutdown(void)
+void WI_Shutdown()
 {
-    if(animStates)
-    {
-        Z_Free(animStates);
-        animStates = NULL;
-    }
+    Z_Free(animStates); animStates = 0;
 }
 
 void WI_SetState(interludestate_t st)
 {
     switch(st)
     {
-    case ILS_SHOW_STATS:    initShowStats(); break;
+    case ILS_SHOW_STATS:    initShowStats();   break;
     case ILS_SHOW_NEXTMAP:  initShowNextMap(); break;
-    case ILS_NONE:          initNoState(); break;
+    case ILS_NONE:          initNoState();     break;
+
     default:
-#if _DEBUG
-        Con_Error("WI_SetState: Invalid state %i.", (int) st);
-#endif
+        DENG2_ASSERT(!"WI_SetState: Unknown intermission state");
         break;
     }
 }
