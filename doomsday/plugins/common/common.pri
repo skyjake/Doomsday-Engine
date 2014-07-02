@@ -94,7 +94,7 @@ SOURCES += \
     $$common_src/hu_automap.cpp \
     $$common_src/hu_chat.c \
     $$common_src/hu_inventory.c \
-    $$common_src/hu_lib.c \
+    $$common_src/hu_lib.cpp \
     $$common_src/hu_log.c \
     $$common_src/hu_menu.cpp \
     $$common_src/hu_msg.c \

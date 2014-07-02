@@ -45,8 +45,16 @@
 /// each message to animate from visible to non-visible.
 #define LOG_MESSAGE_SCROLLTICS      (10)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// To be called to register the console commands and variables of this module.
 void UILog_Register(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /**
  * UILog. UI widget for player game message logging.
@@ -80,6 +88,10 @@ typedef struct {
     int _nextUsedMsg;
 } guidata_log_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Process gametic for this message log.
 void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength);
 
@@ -107,5 +119,9 @@ void UILog_Post(uiwidget_t* obj, byte flags, const char* text);
  * Rewind the message log, making the last few messages visible once again.
  */
 void UILog_Refresh(uiwidget_t* obj);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_HULOGDEV_H */
