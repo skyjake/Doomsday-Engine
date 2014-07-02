@@ -198,7 +198,7 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 static de::Uri mapUriFromLogicalNumber(int number)
 {
     if(!number) return gameMapUri; // current map.
-    return G_ComposeMapUri(gameEpisode, number - 1);
+    return G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), number - 1);
 }
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)

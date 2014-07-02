@@ -2092,11 +2092,11 @@ dd_bool XL_ValidateMap(uint *map, int /*type*/)
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_SHAREWARE))
         episode = 0;
     else
-        episode = gameEpisode;
+        episode = G_EpisodeNumberFor(gameMapUri);
 #elif __JDOOM64__
     episode = 0;
 #elif __JHERETIC__
-    episode = gameEpisode;
+    episode = G_EpisodeNumberFor(gameMapUri);
 #endif
 
     if(!(result = G_ValidateMap(&episode, map)))
@@ -2152,7 +2152,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     if(mapSpecified)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
-        map = G_LogicalMapNumber(gameEpisode, map);
+        map = G_LogicalMapNumber(G_EpisodeNumberFor(gameMapUri), map);
     }
     else
     {

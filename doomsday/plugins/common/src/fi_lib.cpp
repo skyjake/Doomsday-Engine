@@ -91,7 +91,7 @@ static void initStateConditions(fi_state_t *s)
         s->conditions.leave_hub = true;
         if(nextMap != DDMAXINT)
         {
-            de::Uri nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+            de::Uri nextMapUri = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), nextMap);
             if(curMapInfo->hub == P_MapInfo(&nextMapUri)->hub)
             {
                 s->conditions.leave_hub = false;

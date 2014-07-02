@@ -1543,7 +1543,7 @@ static void runGameAction()
             {
 #if __JDOOM__
                 // Has the secret map been completed?
-                if(gameMap == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
+                if(G_MapNumberFor(gameMapUri) == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
                 {
                     for(int i = 0; i < MAXPLAYERS; ++i)
                     {
@@ -1796,7 +1796,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newHub = true;
     if(nextMap != DDMAXINT)
     {
-        de::Uri nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+        de::Uri nextMapUri = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), nextMap);
         newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(&nextMapUri)->hub);
     }
 #endif
@@ -2024,7 +2024,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    if(gameMap == 8 || secret)
+    if(G_MapNumberFor(gameMapUri) == 8 || secret)
     {
         p->didSecret = true;
     }
@@ -2125,24 +2125,24 @@ byte G_Ruleset_RespawnMonsters()
 dd_bool G_IfVictory()
 {
 #if __JDOOM64__
-    if(gameMap == 27)
+    if(G_MapNumberFor(gameMapUri) == 27)
     {
         return true;
     }
 #elif __JDOOM__
     if(gameMode == doom_chex)
     {
-        if(gameMap == 4)
+        if(G_MapNumberFor(gameMapUri) == 4)
         {
             return true;
         }
     }
-    else if((gameModeBits & GM_ANY_DOOM) && gameMap == 7)
+    else if((gameModeBits & GM_ANY_DOOM) && G_MapNumberFor(gameMapUri) == 7)
     {
         return true;
     }
 #elif __JHERETIC__
-    if(gameMap == 7)
+    if(G_MapNumberFor(gameMapUri) == 7)
     {
         return true;
     }
@@ -2158,8 +2158,8 @@ dd_bool G_IfVictory()
 static int prepareIntermission(void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    wmInfo.currentMap = G_ComposeMapUri(gameEpisode, gameMap);
-    wmInfo.nextMap    = G_ComposeMapUri(gameEpisode, nextMap);
+    wmInfo.currentMap = gameMapUri;
+    wmInfo.nextMap    = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), nextMap);
     wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__
@@ -2413,7 +2413,7 @@ uint G_LogicalMapNumber(uint episode, uint map)
 
 uint G_CurrentLogicalMapNumber()
 {
-    return G_LogicalMapNumber(gameEpisode, gameMap);
+    return G_LogicalMapNumber(G_EpisodeNumberFor(gameMapUri), G_MapNumberFor(gameMapUri));
 }
 
 de::Uri G_ComposeMapUri(uint episode, uint map)
@@ -2632,7 +2632,7 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
 
 uint G_NextLogicalMapNumber(dd_bool secretExit)
 {
-    return G_GetNextMap(gameEpisode, gameMap, secretExit);
+    return G_GetNextMap(G_EpisodeNumberFor(gameMapUri), G_MapNumberFor(gameMapUri), secretExit);
 }
 
 String G_MapTitle(de::Uri const *mapUri)
@@ -2779,7 +2779,7 @@ char const *G_InFineDebriefing(de::Uri const *mapUri)
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
        !(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT))
     {
-        de::Uri nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+        de::Uri nextMapUri = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), nextMap);
         if(P_MapInfo(mapUri)->hub != P_MapInfo(&nextMapUri)->hub)
         {
             return 0;
