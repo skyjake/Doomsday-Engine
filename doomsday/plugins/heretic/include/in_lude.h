@@ -1,32 +1,25 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file in_lude.h  Heretic specific intermission screens.
  *
- *\author Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * in_lude.h: Intermission/stat screens
- */
-
-#ifndef __IN_LUDE_H__
-#define __IN_LUDE_H__
+#ifndef LIBHERETIC_IN_LUDE_H
+#define LIBHERETIC_IN_LUDE_H
+#ifdef __cplusplus
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -34,63 +27,58 @@
 
 #include "h_player.h"
 
-DENG_EXTERN_C dd_bool intermission;
-DENG_EXTERN_C int interState;
-DENG_EXTERN_C int interTime;
+extern dd_bool intermission;
+extern int interState;
+extern int interTime;
 
-//
-// INTERMISSION
-// Structure passed e.g. to IN_Init(wb)
-//
-/*typedef struct {
-    dd_bool         inGame; // Whether the player is in game.
+/**
+ * Structure passed to IN_Init(), etc...
+ */
+/*struct wbplayerstruct_t
+{
+    dd_bool inGame;  ///< Whether the player is in game.
 
-    // Player stats, kills, collected items etc.
-    int             kills;
-    int             items;
-    int             secret;
-    int             time;
-    int             frags[MAXPLAYERS];
-    int             score; // Current score on entry, modified on return.
-} wbplayerstruct_t;*/
+    int kills;
+    int items;
+    int secret;
+    int time;
+    int frags[MAXPLAYERS];
+    int score;       ///< Current score on entry, modified on return.
+};*/
 
-typedef struct {
-    uint            episode;
-    dd_bool         didSecret; // If true, splash the secret level.
-    uint            currentMap, nextMap; // This and next maps.
-/*    int             maxKills;
-    int             maxItems;
-    int             maxSecret;
-    int             maxFrags;
-    int             parTime;
-    int             pNum; // Index of this player in game.
-    wbplayerstruct_t plyr[MAXPLAYERS];*/
-} wbstartstruct_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct wbstartstruct_t
+{
+    uint episode;
+    dd_bool didSecret;  ///< @c true= splash the secret level.
+    uint currentMap, nextMap;
+/*
+    int maxKills;
+    int maxItems;
+    int maxSecret;
+    int maxFrags;
+    int parTime;
+    int pNum;           ///< Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];
+*/
+};
 
 /// To be called to register the console commands and variables of this module.
-void WI_Register(void);
+void WI_Register();
 
-void            IN_Init(wbstartstruct_t* wbstartstruct);
-void            IN_SkipToNext(void);
-void            IN_Stop(void);
+void IN_Init(wbstartstruct_t *wbstartstruct);
+void IN_SkipToNext();
+void IN_Stop();
 
-void            IN_Ticker(void);
-void            IN_Drawer(void);
+void IN_Ticker();
+void IN_Drawer();
 
-void            IN_WaitStop(void);
-void            IN_LoadPics(void);
-void            IN_UnloadPics(void);
-void            IN_CheckForSkip(void);
-void            IN_InitStats(void);
-void            IN_InitDeathmatchStats(void);
-void            IN_InitNetgameStats(void);
+void IN_WaitStop();
+void IN_LoadPics();
+void IN_UnloadPics();
+void IN_CheckForSkip();
+void IN_InitStats();
+void IN_InitDeathmatchStats();
+void IN_InitNetgameStats();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif
+#endif // __cplusplus
+#endif // LIBHERETIC_IN_LUDE_H
