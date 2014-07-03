@@ -130,7 +130,7 @@ static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     FR_LoadDefaultAttrib();
 
     // Draw <MapName>
-    uint const mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->currentMap), G_MapNumberFor(wbs->currentMap));
+    uint const mapNum = G_LogicalMapNumberFor(wbs->currentMap);
     patchid_t patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
@@ -172,7 +172,7 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // Draw "Entering"
     WI_DrawPatchXY2(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP);
 
-    uint const mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->nextMap), G_MapNumberFor(wbs->nextMap));
+    uint const mapNum = G_LogicalMapNumberFor(wbs->nextMap);
 
     patchinfo_t info;
     if(R_GetPatchInfo(pMapNames[mapNum], &info))

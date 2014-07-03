@@ -2377,9 +2377,7 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-
-
-uint G_LogicalMapNumber(uint episode, uint map)
+static uint logicalMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
     return P_TranslateMap(map);
@@ -2399,9 +2397,14 @@ uint G_LogicalMapNumber(uint episode, uint map)
 #endif
 }
 
+uint G_LogicalMapNumberFor(de::Uri const &mapUri)
+{
+    return logicalMapNumber(G_EpisodeNumberFor(mapUri), G_MapNumberFor(mapUri));
+}
+
 uint G_CurrentLogicalMapNumber()
 {
-    return G_LogicalMapNumber(G_EpisodeNumberFor(gameMapUri), G_MapNumberFor(gameMapUri));
+    return G_LogicalMapNumberFor(gameMapUri);
 }
 
 uint G_CurrentEpisodeNumber()
@@ -2434,16 +2437,16 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
+uint G_NextLogicalMapNumber(dd_bool secretExit)
 {
 #if __JHEXEN__
-    de::Uri mapUri = G_ComposeMapUri(episode, map);
-    return G_LogicalMapNumber(episode, P_MapInfo(&mapUri)->nextMap);
+    return logicalMapNumber(G_EpisodeNumberFor(gameMapUri), P_MapInfo(&gameMapUri)->nextMap);
 
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
-    DENG2_UNUSED(episode);
+    //uint episode = G_EpisodeNumberFor(gameMapUri);
+    uint map = G_MapNumberFor(gameMapUri);
 
     if(secretExit)
     {
@@ -2473,7 +2476,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
     default:
         return map + 1;
     }
+
 #elif __JDOOM__
+    uint episode = G_EpisodeNumberFor(gameMapUri);
+    uint map     = G_MapNumberFor(gameMapUri);
+
     if(gameModeBits & GM_ANY_DOOM2)
     {
         if(secretExit)
@@ -2522,7 +2529,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
             return map + 1; // Go to next map.
         }
     }
+
 #elif __JHERETIC__
+    uint episode = G_EpisodeNumberFor(gameMapUri);
+    uint map     = G_MapNumberFor(gameMapUri);
+
     if(secretExit && map != 8)
         return 8; // Go to secret map.
 
@@ -2540,15 +2551,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
             Con_Error("G_NextMap: Invalid episode num #%u!", episode);
         }
         return 0; // Unreachable
+
     default:
         return map + 1; // Go to next map.
     }
 #endif
-}
-
-uint G_NextLogicalMapNumber(dd_bool secretExit)
-{
-    return G_GetNextMap(G_EpisodeNumberFor(gameMapUri), G_MapNumberFor(gameMapUri), secretExit);
 }
 
 String G_MapTitle(de::Uri const *mapUri)

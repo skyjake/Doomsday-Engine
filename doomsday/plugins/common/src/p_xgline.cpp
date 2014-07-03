@@ -2141,7 +2141,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     if(mapSpecified)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
-        map = G_LogicalMapNumber(G_EpisodeNumberFor(gameMapUri), map);
+        map = G_LogicalMapNumberFor(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), map));
     }
     else
     {

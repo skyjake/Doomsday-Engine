@@ -256,7 +256,7 @@ static void drawBackground()
 
 static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
-    uint mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->currentMap), G_MapNumberFor(wbs->currentMap));
+    uint mapNum = G_LogicalMapNumberFor(wbs->currentMap);
     /*if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         mapNum = wbs->currentMap;
     else
@@ -323,7 +323,7 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // Draw "Entering"
     WI_DrawPatchXY3(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
-    uint const mapNum = G_LogicalMapNumber(G_EpisodeNumberFor(wbs->nextMap), G_MapNumberFor(wbs->nextMap));
+    uint const mapNum = G_LogicalMapNumberFor(wbs->nextMap);
 
     patchinfo_t info;
     if(R_GetPatchInfo(pMapNames[mapNum], &info))
