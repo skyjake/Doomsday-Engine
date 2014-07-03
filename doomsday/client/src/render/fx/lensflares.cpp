@@ -24,6 +24,7 @@
 #include "clientapp.h"
 
 #include <de/concurrency.h>
+#include <doomsday/console/cmd.h>
 #include <de/Drawable>
 #include <de/KdTreeAtlasAllocator>
 #include <de/Log>
@@ -71,7 +72,7 @@ struct FlareData
             DENG_ASSERT_IN_MAIN_THREAD();
             DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-            Folder const &pack = App::fileSystem().find<Folder>("lensflares.pack");
+            Folder const &pack = App::rootFolder().locate<Folder>("/packs/lensflares/.");
             images.addFromInfo(pack.locate<File>("images.dei"));
 
             atlas.setAllocator(new KdTreeAtlasAllocator);

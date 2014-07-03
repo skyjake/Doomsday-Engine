@@ -97,6 +97,10 @@ DENG2_PIMPL(RenderSystem)
     {
         LOG_AS("RenderSystem");
 
+        // Load the required packages.
+        App::packageLoader().load("renderer");
+        App::packageLoader().load("lensflares");
+
         loadAllShaders();
         loadImages();
 

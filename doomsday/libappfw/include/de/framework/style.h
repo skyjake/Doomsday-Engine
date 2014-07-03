@@ -27,6 +27,8 @@
 
 namespace de {
 
+class Package;
+
 /**
  * User interface style.
  */
@@ -39,9 +41,9 @@ public:
     /**
      * Loads a style from a resource pack.
      *
-     * @param pack  Absolute path of a resource pack containing the style.
+     * @param pack  Package containing the style.
      */
-    void load(String const &pack);
+    void load(Package const &pack);
 
     RuleBank const &rules() const;
     FontBank const &fonts() const;

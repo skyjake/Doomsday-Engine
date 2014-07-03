@@ -1,4 +1,6 @@
 # Default UI style for Doomsday.
 
-name: Doomsday Default UI Style
-labels: style
+title: Doomsday Default UI Style
+version: 1.15.0
+license: GPL 3+
+tags: ui style

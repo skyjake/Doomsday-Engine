@@ -1,5 +1,6 @@
 # General resources for the renderer
 
-name: Doomsday Renderer
-labels: core
-
+title: Doomsday Renderer
+version: 1.15.0
+license: GPL 3+
+tags: core
