@@ -394,11 +394,12 @@ private:
 template <typename PublicType>
 struct Private : public IPrivate {
     PublicType &self;
-    PublicType *thisPublic;
+#define thisPublic (&self)      // To be used inside private implementations.
+
     typedef Private<PublicType> Base;
 
-    Private(PublicType &i) : self(i), thisPublic(&i) {}
-    Private(PublicType *i) : self(*i), thisPublic(i) {}
+    Private(PublicType &i) : self(i) {}
+    Private(PublicType *i) : self(*i) {}
 };
 
 template <typename ToType, typename FromType>
