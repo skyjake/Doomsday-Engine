@@ -477,12 +477,10 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         ::gameMapUri = mapUri;
 
-        // Ensure that the episode and map numbers are good.
-        uint episode = G_EpisodeNumberFor(::gameMapUri);
-        uint map     = G_MapNumberFor(::gameMapUri);
-        if(!G_ValidateMap(&episode, &map))
+        // Check that the map truly exists.
+        if(!P_MapExists(::gameMapUri.compose().toUtf8().constData()))
         {
-            ::gameMapUri = G_ComposeMapUri(episode, map);
+            ::gameMapUri = G_ComposeMapUri(0, 0); // Should exist always?
         }
 
         // Update game status cvars:
@@ -940,10 +938,12 @@ void GameSession::leaveMap()
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
 
-    // Ensure that the episode and map indices are good.
-    uint episode = G_CurrentEpisodeNumber();
-    G_ValidateMap(&episode, &nextMap);
-    de::Uri const nextMapUri = G_ComposeMapUri(episode, nextMap);
+    // Check that the map truly exists.
+    de::Uri nextMapUri = G_ComposeMapUri(G_CurrentEpisodeNumber(), nextMap);
+    if(!P_MapExists(nextMapUri.compose().toUtf8().constData()))
+    {
+        nextMapUri = G_ComposeMapUri(0, 0); // Should exist always?
+    }
 
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process

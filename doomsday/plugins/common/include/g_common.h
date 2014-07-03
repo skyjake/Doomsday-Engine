@@ -216,17 +216,6 @@ extern "C" {
 #endif
 
 /**
- * Determine if the specified @a episode and @a map value pair are valid and if not,
- * adjust their are values within the ranges defined by the current game type and mode.
- *
- * @param episode  Logical episode number to be validated.
- * @param map      Logical map number to be validated.
- *
- * @return  @c true= The original @a episode and @a map value pair were already valid.
- */
-dd_bool G_ValidateMap(uint *episode, uint *map);
-
-/**
  * Return the next map according to the default map progression.
  *
  * @param episode     Current episode.

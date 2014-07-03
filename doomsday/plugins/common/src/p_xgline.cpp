@@ -2085,25 +2085,14 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
 
 dd_bool XL_ValidateMap(uint *map, int /*type*/)
 {
-    dd_bool result;
-    uint bMap = *map, episode;
+    // Check that the map truly exists.
+    if(P_MapExists(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), *map).compose().toUtf8().constData()))
+        return true;
 
-#if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_SHAREWARE))
-        episode = 0;
-    else
-        episode = G_EpisodeNumberFor(gameMapUri);
-#elif __JDOOM64__
-    episode = 0;
-#elif __JHERETIC__
-    episode = G_EpisodeNumberFor(gameMapUri);
-#endif
+    XG_Dev("XLTrav_LeaveMap: NOT A VALID MAP NUMBER %u, next will be map 1", *map);
+    *map = 0; // Should exist always?
 
-    if(!(result = G_ValidateMap(&episode, map)))
-        XG_Dev("XLTrav_LeaveMap: NOT A VALID MAP NUMBER %u, "
-               "next map will be %u.", bMap, *map+1);
-
-    return result;
+    return false;
 }
 
 int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,

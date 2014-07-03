@@ -456,12 +456,12 @@ bool G_SetGameActionLoadSession(de::String slotId)
     return false;
 }
 
-void G_SetGameActionMapCompleted(uint newMap, uint _entryPoint, dd_bool _secretExit)
+void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExit)
 {
 #if __JHEXEN__
-    DENG2_UNUSED(_secretExit);
+    DENG2_UNUSED(secretExit);
 #else
-    DENG2_UNUSED2(newMap, _entryPoint);
+    DENG2_UNUSED2(newMap, entryPoint);
 #endif
 
     if(IS_CLIENT) return;
@@ -477,19 +477,19 @@ void G_SetGameActionMapCompleted(uint newMap, uint _entryPoint, dd_bool _secretE
 #endif
 
 #if __JHEXEN__
-    nextMap         = newMap;
-    nextMapEntrance = _entryPoint;
+    ::nextMap         = newMap;
+    ::nextMapEntrance = entryPoint;
 #else
-    secretExit      = _secretExit;
+    ::secretExit      = secretExit;
 
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
-    if(secretExit && (gameModeBits & GM_ANY_DOOM2))
+    if(::secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
         de::Uri mapUri = G_ComposeMapUri(0, 30);
         if(!P_MapExists(mapUri.compose().toUtf8().constData()))
         {
-            secretExit = false;
+            ::secretExit = false;
         }
     }
 # endif
@@ -2432,88 +2432,6 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     DENG2_UNUSED(episode);
 #endif
     return de::Uri("Maps", mapId);
-}
-
-dd_bool G_ValidateMap(uint *episode, uint *map)
-{
-    bool ok = true;
-
-#if __JDOOM__
-    if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM_CHEX))
-    {
-        if(*episode != 0)
-        {
-            *episode = 0;
-            ok = false;
-        }
-    }
-    else
-    {
-        if(*episode > 8)
-        {
-            *episode = 8;
-            ok = false;
-        }
-    }
-
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-    {
-        if(*map > 98)
-        {
-            *map = 98;
-            ok = false;
-        }
-    }
-    else
-    {
-        if(*map > 8)
-        {
-            *map = 8;
-            ok = false;
-        }
-    }
-#elif __JHERETIC__
-    if(gameModeBits & GM_HERETIC_SHAREWARE)
-    {
-        if(*episode != 0)
-        {
-            *episode = 0;
-            ok = false;
-        }
-    }
-    else
-    {
-        if(*episode > 8)
-        {
-            *episode = 8;
-            ok = false;
-        }
-    }
-
-    if(*map > 8)
-    {
-        *map = 8;
-        ok = false;
-    }
-#else
-    if(*map > 98)
-    {
-        *map = 98;
-        ok = false;
-    }
-#endif
-
-    // Check that the map truly exists.
-    de::Uri uri = G_ComposeMapUri(*episode, *map);
-    if(!P_MapExists(uri.compose().toUtf8().constData()))
-    {
-        // (0,0) should exist always?
-        *episode = 0;
-        *map     = 0;
-        ok = false;
-    }
-
-    return ok;
 }
 
 uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
