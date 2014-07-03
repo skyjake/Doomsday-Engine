@@ -61,9 +61,13 @@ DENG2_PIMPL(Process)
 
     void clear()
     {
+        // We'll remember a global namespace specified in the constructor.
+        Record *externalGlobals = (!stack.empty() && stack.front()->hasExternalGlobalNamespace()?
+                                   &stack.front()->names() : 0);
+
         state = Stopped;
         clearStack();
-        self.pushContext(new Context(Context::BaseProcess, thisPublic));
+        self.pushContext(new Context(Context::BaseProcess, thisPublic, externalGlobals));
         workingPath = "/";
     }
 

@@ -162,6 +162,11 @@ Evaluator &Context::evaluator()
     return d->evaluator;
 }
 
+bool Context::hasExternalGlobalNamespace() const
+{
+    return !d->ownsNamespace;
+}
+
 Record &Context::names() 
 {
     return *d->names;

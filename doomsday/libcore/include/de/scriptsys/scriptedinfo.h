@@ -126,7 +126,14 @@ public:
     typedef QSet<String> Paths;
 
 public:
-    ScriptedInfo();
+    /**
+     * Creates a new ScriptedInfo parser.
+     *
+     * @param globalNamespace  Optionally an existing namespace where the parsed
+     *                         content will be stored in. If not provided, ScriptedInfo
+     *                         will create a new one (returned by names()).
+     */
+    ScriptedInfo(Record *globalNamespace = 0);
 
     void clear();
 

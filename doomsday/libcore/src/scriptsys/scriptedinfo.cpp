@@ -32,7 +32,6 @@ static String const VAR_BLOCK_TYPE  = "__type__";
 static String const VAR_SOURCE      = "__source__";
 
 DENG2_PIMPL(ScriptedInfo)
-//, public Info::IIncludeFinder
 {
     typedef Info::Element::Value InfoValue;
 
@@ -41,10 +40,10 @@ DENG2_PIMPL(ScriptedInfo)
     Process process;               ///< Execution context.
     String currentNamespace;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i, Record *globalNamespace)
+        : Base(i)
+        , process(globalNamespace)
     {
-        //info.setFinder(*this); // finding includes based on sourcePath
-
         // No limitation on duplicates for the special block types.
         info.setAllowDuplicateBlocksOfType(
                     QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
@@ -56,14 +55,6 @@ DENG2_PIMPL(ScriptedInfo)
         process.clear();
         script.reset();
     }
-
-    /*
-    String findIncludedInfoSource(String const &includeName, Info const &) const
-    {
-        return String::fromUtf8(Block(App::rootFolder().locate<File const>
-                                      (info.sourcePath().fileNamePath() / includeName)));
-    }
-    */
 
     /**
      * Iterates through the parsed Info contents and processes each element.
@@ -391,7 +382,8 @@ DENG2_PIMPL(ScriptedInfo)
     }
 };
 
-ScriptedInfo::ScriptedInfo() : d(new Instance(this))
+ScriptedInfo::ScriptedInfo(Record *globalNamespace)
+    : d(new Instance(this, globalNamespace))
 {}
 
 void ScriptedInfo::clear()
