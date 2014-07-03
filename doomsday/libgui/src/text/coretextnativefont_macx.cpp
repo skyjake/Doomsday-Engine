@@ -140,6 +140,8 @@ static CoreTextFontCache fontCache;
 
 DENG2_PIMPL(CoreTextNativeFont)
 {
+    enum Transformation { NoTransform, Uppercase, Lowercase };
+
     CTFontRef font;
     float ascent;
     float descent;
@@ -152,6 +154,8 @@ DENG2_PIMPL(CoreTextNativeFont)
     String lineText;
     CTLineRef line;
 
+    Transformation xform;
+
     Instance(Public *i)
         : Base(i)
         , font(0)
@@ -160,6 +164,7 @@ DENG2_PIMPL(CoreTextNativeFont)
         , height(0)
         , lineSpacing(0)
         , line(0)
+        , xform(NoTransform)
     {}
 
     Instance(Public *i, Instance const &other)
@@ -170,11 +175,28 @@ DENG2_PIMPL(CoreTextNativeFont)
         , height(other.height)
         , lineSpacing(other.lineSpacing)
         , line(0)
+        , xform(other.xform)
     {}
 
     ~Instance()
     {
         release();
+    }
+
+    String applyTransformation(String const &str) const
+    {
+        switch(xform)
+        {
+        case Uppercase:
+            return str.toUpper();
+
+        case Lowercase:
+            return str.toLower();
+
+        default:
+            break;
+        }
+        return str;
     }
 
     void release()
@@ -240,9 +262,13 @@ CoreTextNativeFont::CoreTextNativeFont(String const &family)
 CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
     : NativeFont(font.family()), d(new Instance(this))
 {
-    setSize(font.pointSizeF());
+    setSize  (font.pointSizeF());
     setWeight(font.weight());
-    setStyle(font.italic()? Italic : Regular);
+    setStyle (font.italic()? Italic : Regular);
+
+    d->xform = (font.capitalization() == QFont::AllUppercase? Instance::Uppercase :
+                font.capitalization() == QFont::AllLowercase? Instance::Lowercase :
+                                                              Instance::NoTransform);
 }
 
 CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
@@ -288,7 +314,7 @@ int CoreTextNativeFont::nativeFontLineSpacing() const
 
 Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 {
-    d->makeLine(text);
+    d->makeLine(d->applyTransformation(text));
 
     //CGLineGetImageBounds(d->line, d->gc); // more accurate but slow
 
@@ -301,7 +327,7 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 
 int CoreTextNativeFont::nativeFontWidth(String const &text) const
 {
-    d->makeLine(text);
+    d->makeLine(d->applyTransformation(text));
     return roundi(CTLineGetTypographicBounds(d->line, NULL, NULL, NULL));
 }
 
@@ -320,10 +346,10 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
 
     // Ensure the color is used by recreating the attributed line string.
     d->releaseLine();
-    d->makeLine(text, fgColor);
+    d->makeLine(d->applyTransformation(text), fgColor);
 
     // Set up the bitmap for drawing into.
-    Rectanglei const bounds = measure(text);
+    Rectanglei const bounds = measure(d->lineText);
     QImage backbuffer(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);//_Premultiplied);
     backbuffer.fill(QColor(background.x, background.y, background.z, background.w).rgba());
 

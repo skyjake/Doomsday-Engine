@@ -1,8 +1,10 @@
 # Fonts for the default UI style
 #
+# - family: font family name
 # - size can be "pt" or "px", defaults to "pt" 
-# - weight: normal bold light
-# - style: normal italic
+# - weight: normal, bold, light
+# - style: normal, italic
+# - transform: normal, uppercase, lowercase
 
 script { 
     import Version, gui 
@@ -115,7 +117,7 @@ group separator {
     }
     font label inherits default {
         size $: gui.scale(self.size, 0.7)
-        weight: bold
+        transform: uppercase
     }
     font annotation inherits small {}    
 }
