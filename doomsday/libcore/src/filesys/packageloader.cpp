@@ -67,6 +67,52 @@ DENG2_PIMPL(PackageLoader)
         return aVer < bVer? -1 : 1;
     }
 
+    struct PackageIdentifierDoesNotMatch
+    {
+        String matchId;
+
+        PackageIdentifierDoesNotMatch(String const &id) : matchId(id) {}
+        bool operator () (File *file) const {
+            return Package::identifierForFile(*file) != matchId;
+        }
+    };
+
+    int findAllVariants(String const &packageId, FS::FoundFiles &found) const
+    {
+        QStringList const components = packageId.split('.');
+
+        String id;
+
+        // The package may actually be inside other packages, so we need to check
+        // each component of the package identifier.
+        for(int i = components.size() - 1; i >= 0; --i)
+        {
+            if(id.isEmpty())
+            {
+                id = components.at(i);
+            }
+            else
+            {
+                id = components.at(i) + "." + id;
+            }
+
+            FS::FoundFiles files;
+            App::fileSystem().findAllOfTypes(StringList()
+                                             << DENG2_TYPE_NAME(Folder)
+                                             << DENG2_TYPE_NAME(ArchiveFolder),
+                                             id + ".pack", files);
+
+            files.remove_if(PackageIdentifierDoesNotMatch(packageId));
+
+            if(!files.empty())
+            {
+                std::copy(files.begin(), files.end(), std::back_inserter(found));
+            }
+        }
+
+        return int(found.size());
+    }
+
     /**
      * Given a package identifier, pick one of the available versions of the package
      * based on predefined criteria.
@@ -80,10 +126,7 @@ DENG2_PIMPL(PackageLoader)
         LOG_AS("selectPackage");
 
         FS::FoundFiles found;
-        if(!App::fileSystem().findAllOfTypes(StringList()
-                                             << DENG2_TYPE_NAME(Folder)
-                                             << DENG2_TYPE_NAME(ArchiveFolder),
-                                             packageId + ".pack", found))
+        if(!findAllVariants(packageId, found))
         {
             // None found.
             return 0;

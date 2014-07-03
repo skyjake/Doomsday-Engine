@@ -195,9 +195,29 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 }
 
+static String stripAfterFirstUnderscore(String str)
+{
+    int pos = str.indexOf('_');
+    if(pos > 0) return str.left(pos);
+    return str;
+}
+
+static String extractIdentifier(String str)
+{
+    return stripAfterFirstUnderscore(str.fileNameWithoutExtension());
+}
+
 String Package::identifierForFile(File const &file)
 {
-    return file.name().fileNameWithoutExtension();
+    // Form the prefix if there are enclosing packs as parents.
+    String prefix;
+    Folder const *parent = file.parent();
+    while(parent && parent->name().fileNameExtension() == ".pack")
+    {
+        prefix = extractIdentifier(parent->name()) + "." + prefix;
+        parent = parent->parent();
+    }
+    return prefix + extractIdentifier(file.name());
 }
 
 } // namespace de

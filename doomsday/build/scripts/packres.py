@@ -72,23 +72,23 @@ p.add_files(
       ('client/data', 'data') ] )
 p.create('doomsday.pk3')
 
-# defaultstyle.pack
+# net.dengine.pack
 p = Pack()
 p.add_files(
-    [ ('client/data/defaultstyle.pack', '') ] )
-p.create('defaultstyle.pack')
+    [ ('client/data/net.dengine.pack', '') ] )
+p.create('net.dengine.pack')
 
-# renderer.pack
-p = Pack()
-p.add_files(
-    [ ('client/data/renderer.pack', '') ] )
-p.create('renderer.pack')
-
-# lensflares.pack
-p = Pack()
-p.add_files(
-    [ ('client/data/lensflares.pack', '') ] )
-p.create('lensflares.pack')
+# # renderer.pack
+# p = Pack()
+# p.add_files(
+#     [ ('client/data/renderer.pack', '') ] )
+# p.create('renderer.pack')
+#
+# # lensflares.pack
+# p = Pack()
+# p.add_files(
+#     [ ('client/data/lensflares.pack', '') ] )
+# p.create('lensflares.pack')
 
 # libdoom.pk3
 p = Pack()

@@ -30,6 +30,34 @@ DENG2_PIMPL(PackageFeed)
     Instance(Public *i, PackageLoader &ldr)
         : Base(i), loader(ldr)
     {}
+
+    void linkToPackage(Package &pkg, String const &linkName, Folder &folder)
+    {
+        if(folder.has(linkName)) return; // Already there.
+
+        // Create a link to the loaded package's file.
+        LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg.file(), linkName));
+
+        // We will decide on pruning this.
+        link.setOriginFeed(thisPublic);
+
+        // Include new files in the main index.
+        folder.fileSystem().index(link);
+    }
+
+    void populate(Folder &folder)
+    {
+        DENG2_FOR_EACH_CONST(PackageLoader::LoadedPackages, i, loader.loadedPackages())
+        {
+            Package *pkg = i.value();
+            linkToPackage(*pkg, i.key(), folder);
+            // Also link it under its possible alias identifier (for variants).
+            if(pkg->info().has("alias"))
+            {
+                linkToPackage(*pkg, pkg->info().gets("alias"), folder);
+            }
+        }
+    }
 };
 } // namespace de
 
@@ -50,21 +78,7 @@ String PackageFeed::description() const
 
 void PackageFeed::populate(Folder &folder)
 {
-    DENG2_FOR_EACH_CONST(PackageLoader::LoadedPackages, i, d->loader.loadedPackages())
-    {
-        Package *pkg = i.value();
-
-        if(folder.has(i.key())) continue; // Already there.
-
-        // Create a link to the loaded package's file.
-        LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg->file(), i.key()));
-
-        // We will decide on pruning this.
-        link.setOriginFeed(this);
-
-        // Include new files in the main index.
-        folder.fileSystem().index(link);
-    }
+    d->populate(folder);
 }
 
 bool PackageFeed::prune(File &file) const
