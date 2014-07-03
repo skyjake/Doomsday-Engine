@@ -148,7 +148,7 @@ void ServerApp::initialize()
     if(!CommandLine_Exists("-stdout"))
     {
         // In server mode, stay quiet on the standard outputs.
-        LogBuffer::appBuffer().enableStandardOutput(false);
+        LogBuffer::get().enableStandardOutput(false);
     }
 
     initSubsystems();

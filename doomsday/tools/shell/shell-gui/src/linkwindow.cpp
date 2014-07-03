@@ -99,7 +99,7 @@ DENG2_PIMPL(LinkWindow)
     ~Instance()
     {
         // Make sure the local sink is removed.
-        LogBuffer::appBuffer().removeSink(console->log().logSink());
+        LogBuffer::get().removeSink(console->log().logSink());
     }
 
     void updateStyle()
@@ -330,11 +330,11 @@ void LinkWindow::changeEvent(QEvent *ev)
         if(isActiveWindow())
         {
             // Log local messages here.
-            LogBuffer::appBuffer().addSink(d->console->log().logSink());
+            LogBuffer::get().addSink(d->console->log().logSink());
         }
         else
         {
-            LogBuffer::appBuffer().removeSink(d->console->log().logSink());
+            LogBuffer::get().removeSink(d->console->log().logSink());
         }
     }
 }

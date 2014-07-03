@@ -186,12 +186,12 @@ DENG2_PIMPL(ClientApp)
     {
         clientAppSingleton = thisPublic;
 
-        LogBuffer::appBuffer().addSink(logAlarm);
+        LogBuffer::get().addSink(logAlarm);
     }
 
     ~Instance()
     {
-        LogBuffer::appBuffer().removeSink(logAlarm);
+        LogBuffer::get().removeSink(logAlarm);
 
         Sys_Shutdown();
         DD_Shutdown();

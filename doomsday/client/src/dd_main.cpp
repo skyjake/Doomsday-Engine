@@ -336,7 +336,7 @@ static void createPackagesScheme()
     filename_t fn;
     if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
     {
-        NativePath path = de::App::app().commandLine().startupPath() / fn;
+        NativePath path = de::App::commandLine().startupPath() / fn;
         scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_RES_NOTE("Using paths.iwaddir: %s") << path.pretty();
     }
@@ -373,7 +373,7 @@ static void createPackagesScheme()
     // Add the path from the DOOMWADDIR environment variable.
     if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
-        NativePath path = App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
+        NativePath path = App::commandLine().startupPath() / getenv("DOOMWADDIR");
         scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_RES_NOTE("Using DOOMWADDIR: %s") << path.pretty();
     }
@@ -390,7 +390,7 @@ static void createPackagesScheme()
         QStringList allPaths = QString(getenv("DOOMWADPATH")).split(SEP_CHAR, QString::SkipEmptyParts);
         for(int i = allPaths.count(); i--> 0; )
         {
-            NativePath path = App::app().commandLine().startupPath() / allPaths[i];
+            NativePath path = App::commandLine().startupPath() / allPaths[i];
             scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
             LOG_RES_NOTE("Using DOOMWADPATH: %s") << path.pretty();
         }
@@ -573,7 +573,7 @@ void App_AbnormalShutdown(char const *message)
         /// @todo Get the actual output filename (might be a custom one).
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
                                           "See Details for complete message log contents.",
-                                          de::LogBuffer::appBuffer().outputFile().toUtf8());
+                                          de::LogBuffer::get().outputFile().toUtf8());
     }
 
     //Sys_Shutdown();

@@ -2268,7 +2268,7 @@ DENG2_PIMPL(ResourceSystem)
         if(convertSavegameTasks.isDone())
         {
             LOG_AS("ResourceSystem");
-            Loop::appLoop().audienceForIteration() -= this;
+            Loop::get().audienceForIteration() -= this;
             try
             {
                 // The newly converted savegame(s) should now be somewhere in /home/savegames
@@ -2283,7 +2283,7 @@ DENG2_PIMPL(ResourceSystem)
     {
         LOG_AS("ResourceSystem");
         LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)") << sourcePath << gameId;
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
         convertSavegameTasks.start(new ConvertSavegameTask(sourcePath, gameId));
     }
 

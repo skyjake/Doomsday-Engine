@@ -74,7 +74,7 @@ public:
      * Returns the current global application UI style.
      * @return
      */
-    static Style &appStyle();
+    static Style &get();
 
     /**
      * Sets the current global application UI style.

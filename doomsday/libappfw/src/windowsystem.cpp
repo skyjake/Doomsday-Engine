@@ -84,13 +84,13 @@ void WindowSystem::addWindow(String const &id, BaseWindow *window)
 
 bool WindowSystem::mainExists() // static
 {
-    return appWindowSystem().d->windows.contains("main");
+    return get().d->windows.contains("main");
 }
 
 BaseWindow &WindowSystem::main() // static
 {
     DENG2_ASSERT(mainExists());
-    return **appWindowSystem().d->windows.find("main");
+    return **get().d->windows.find("main");
 }
 
 BaseWindow *WindowSystem::find(String const &id) const
@@ -170,7 +170,7 @@ void WindowSystem::setAppWindowSystem(WindowSystem &winSys)
     theAppWindowSystem = &winSys;
 }
 
-WindowSystem &WindowSystem::appWindowSystem() // static
+WindowSystem &WindowSystem::get() // static
 {
     DENG2_ASSERT(theAppWindowSystem != 0);
     return *theAppWindowSystem;

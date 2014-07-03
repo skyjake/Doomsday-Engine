@@ -118,7 +118,7 @@ Library::~Library()
 
         // The log buffer may contain log entries built by the library; those
         // entries contain pointers to functions that are about to disappear.
-        LogBuffer::appBuffer().clear();
+        LogBuffer::get().clear();
 
 #ifndef DENG2_USE_DLOPEN
         d->library->unload();

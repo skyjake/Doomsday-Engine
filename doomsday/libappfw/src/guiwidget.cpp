@@ -387,7 +387,7 @@ Widget *GuiWidget::parentWidget() const
 
 Style const &GuiWidget::style() const
 {
-    return Style::appStyle();
+    return Style::get();
 }
 
 Font const &GuiWidget::font() const

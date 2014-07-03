@@ -89,7 +89,7 @@ DENG2_PIMPL(GuiRootWidget)
     struct StyleImage : public TextureBank::ImageSource {
         StyleImage(DotPath const &id) : ImageSource(id) {}
         Image load() const {
-            return Style::appStyle().images().image(id());
+            return Style::get().images().image(id());
         }
     };
 
@@ -146,7 +146,7 @@ DENG2_PIMPL(GuiRootWidget)
         texBank.add(ID_DOT,                new TinyDotImage);
 
         // All style images.
-        Style const &st = Style::appStyle();
+        Style const &st = Style::get();
         ImageBank::Names imageNames;
         st.images().allItems(imageNames);
         foreach(String const &name, imageNames)

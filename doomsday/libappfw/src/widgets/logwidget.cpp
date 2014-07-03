@@ -360,7 +360,7 @@ public Font::RichFormat::IStyle
 
     ~Instance()
     {
-        LogBuffer::appBuffer().removeSink(sink);
+        LogBuffer::get().removeSink(sink);
     }
 
     void clear()
@@ -781,7 +781,7 @@ LogWidget::LogWidget(String const &name)
 {
     setOrigin(Bottom);
 
-    LogBuffer::appBuffer().addSink(d->sink);
+    LogBuffer::get().addSink(d->sink);
 }
 
 void LogWidget::setLogFormatter(LogSink::IFormatter &formatter)

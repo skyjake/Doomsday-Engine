@@ -575,7 +575,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
 
     // Set up the log buffer.
-    LogBuffer &logBuf = LogBuffer::appBuffer();
+    LogBuffer &logBuf = LogBuffer::get();
 
     // Update the log buffer max entry count: number of items to hold in memory.
     logBuf.setMaxEntryCount(d->config->getui("log.bufferSize", 1000));

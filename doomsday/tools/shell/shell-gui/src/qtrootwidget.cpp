@@ -216,7 +216,7 @@ void QtRootWidget::resizeEvent(QResizeEvent *ev)
 
 void QtRootWidget::paintEvent(QPaintEvent *)
 {
-    Clock::appClock().setTime(Time());
+    Clock::get().setTime(Time());
 
     d->canvas->setBlinkVisible(d->blinkVisible);
 

@@ -202,7 +202,7 @@ bool Style::isBlurringAllowed() const
 
 static Style *theAppStyle = 0;
 
-Style &Style::appStyle()
+Style &Style::get()
 {
     DENG2_ASSERT(theAppStyle != 0);
     return *theAppStyle;

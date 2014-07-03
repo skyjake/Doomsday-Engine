@@ -348,7 +348,7 @@ void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
     _appBuffer = &appBuffer;
 }
 
-LogBuffer &LogBuffer::appBuffer()
+LogBuffer &LogBuffer::get()
 {
     DENG2_ASSERT(_appBuffer != 0);
     return *_appBuffer;

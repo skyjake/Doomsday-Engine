@@ -547,7 +547,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
         destroySerialCache();
     }
 
@@ -671,13 +671,13 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         notifications.put(new Notification(notif));
         if(isThreaded())
         {
-            Loop::appLoop().audienceForIteration() += this;
+            Loop::get().audienceForIteration() += this;
         }
     }
 
     void loopIteration()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
         performNotifications();
     }
 

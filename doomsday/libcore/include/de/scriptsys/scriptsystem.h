@@ -92,9 +92,12 @@ public:
      */
     File const &findModuleSource(String const &name, String const &localPath = "");
 
+    void timeChanged(Clock const &);
+
+public:
     static Record &builtInClass(String const &name);
 
-    void timeChanged(Clock const &);
+    static ScriptSystem &get();
 
 private:
     DENG2_PRIVATE(d)

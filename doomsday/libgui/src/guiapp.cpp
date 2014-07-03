@@ -116,7 +116,7 @@ void GuiApp::loopIteration()
 {
     // Update the clock time. de::App listens to this clock and will inform
     // subsystems in the order they've been added.
-    Clock::appClock().setTime(Time::currentHighPerformanceTime());
+    Clock::get().setTime(Time::currentHighPerformanceTime());
 }
 
 NativePath GuiApp::appDataPath() const

@@ -45,12 +45,12 @@ DENG2_PIMPL(ShellUser), public LogSink
     Instance(Public &i) : Base(i)
     {
         // We will send all log entries to a shell user.
-        LogBuffer::appBuffer().addSink(*this);
+        LogBuffer::get().addSink(*this);
     }
 
     ~Instance()
     {
-        LogBuffer::appBuffer().removeSink(*this);
+        LogBuffer::get().removeSink(*this);
     }
 
     LogSink &operator << (LogEntry const &entry)
