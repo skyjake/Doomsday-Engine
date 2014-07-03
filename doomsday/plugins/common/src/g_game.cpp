@@ -113,9 +113,9 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 game_config_t cfg; // The global cfg.
 
 de::Uri gameMapUri;
-uint gameMapEntrance; ///< Entry point, for reborn.
+uint gameMapEntrance;  ///< Entry point, for reborn.
 
-uint nextMap;
+de::Uri nextMapUri;
 uint nextMapEntrance;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -456,19 +456,20 @@ bool G_SetGameActionLoadSession(de::String slotId)
     return false;
 }
 
-void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExit)
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntrance, dd_bool secretExit)
 {
 #if __JHEXEN__
     DENG2_UNUSED(secretExit);
 #else
-    DENG2_UNUSED2(newMap, entryPoint);
+    DENG2_UNUSED2(nextMapUri, nextMapEntrance);
 #endif
 
     if(IS_CLIENT) return;
     if(cyclingMaps && mapCycleNoExit) return;
 
 #if __JHEXEN__
-    if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
+    if((gameMode == hexen_betademo || gameMode == hexen_demo) &&
+       !nextMapUri.path().isEmpty() && G_MapNumberFor(nextMapUri) > 3)
     {
         // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
@@ -477,17 +478,17 @@ void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExi
 #endif
 
 #if __JHEXEN__
-    ::nextMap         = newMap;
-    ::nextMapEntrance = entryPoint;
+    ::nextMapUri      = nextMapUri;
+    ::nextMapEntrance = nextMapEntrance;
 #else
     ::secretExit      = secretExit;
 
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
+    /// @todo Don't do this here - move to G_NextMapNumber()
     if(::secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
-        de::Uri mapUri = G_ComposeMapUri(0, 30);
-        if(!P_MapExists(mapUri.compose().toUtf8().constData()))
+        if(!P_MapExists(de::Uri("Maps:MAP31", RC_NULL).compose().toUtf8().constData()))
         {
             ::secretExit = false;
         }
@@ -496,6 +497,11 @@ void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExi
 #endif
 
     G_SetGameAction(GA_MAPCOMPLETED);
+}
+
+void G_SetGameActionMapCompletedAndSetNextMap()
+{
+    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
 }
 
 static void initSaveSlots()
@@ -1540,7 +1546,7 @@ static void runGameAction()
                 }
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-                nextMap = G_NextMapNumber(secretExit);
+                nextMapUri = G_NextMap(secretExit);
 #endif
 
                 G_IntermissionBegin();
@@ -1782,9 +1788,8 @@ void G_PlayerLeaveMap(int player)
 
 #if __JHEXEN__
     dd_bool newHub = true;
-    if(nextMap != DDMAXINT)
+    if(!nextMapUri.path().isEmpty())
     {
-        de::Uri nextMapUri = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), nextMap);
         newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(&nextMapUri)->hub);
     }
 #endif
@@ -2135,7 +2140,7 @@ dd_bool G_IfVictory()
         return true;
     }
 #elif __JHEXEN__
-    if(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT)
+    if(nextMapUri.path().isEmpty())
     {
         return true;
     }
@@ -2147,7 +2152,7 @@ static int prepareIntermission(void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     wmInfo.currentMap = gameMapUri;
-    wmInfo.nextMap    = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), nextMap);
+    wmInfo.nextMap    = nextMapUri;
     wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__
@@ -2245,7 +2250,7 @@ void G_IntermissionBegin()
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     NetSv_Intermission(IMF_BEGIN, 0, 0);
 #else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntrance);
+    NetSv_Intermission(IMF_BEGIN, (int) G_MapNumberFor(nextMapUri), (int) nextMapEntrance);
 #endif
 
     S_PauseMusic(false);
@@ -2407,25 +2412,26 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-uint G_NextMapNumber(dd_bool secretExit)
+de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap);
+    return G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
-    //uint episode = G_EpisodeNumberFor(gameMapUri);
-    uint map = G_MapNumberFor(gameMapUri);
+    uint episode = G_EpisodeNumberFor(gameMapUri);
+    uint map     = G_MapNumberFor(gameMapUri);
 
     if(secretExit)
     {
         switch(map)
         {
-        case 0:  return 31;
-        case 3:  return 28;
-        case 11: return 29;
-        case 17: return 30;
-        case 31: return 0;
+        case 0:  map = 31; break;
+        case 3:  map = 28; break;
+        case 11: map = 29; break;
+        case 17: map = 30; break;
+        case 31: map =  0; break;
+
         default:
             App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map + 1);
             break;
@@ -2434,17 +2440,19 @@ uint G_NextMapNumber(dd_bool secretExit)
 
     switch(map)
     {
-    case 23: return 27;
-    case 31: return 0;
-    case 28: return 4;
-    case 29: return 12;
-    case 30: return 18;
-    case 24: return 0;
-    case 25: return 0;
-    case 26: return 0;
-    default:
-        return map + 1;
+    case 23: map = 27; break;
+    case 31: map = 0;  break;
+    case 28: map = 4;  break;
+    case 29: map = 12; break;
+    case 30: map = 18; break;
+    case 24: map = 0;  break;
+    case 25: map = 0;  break;
+    case 26: map = 0;  break;
+
+    default: map += 1; break;
     }
+
+    return G_ComposeMapUri(episode, map);
 
 #elif __JDOOM__
     uint episode = G_EpisodeNumberFor(gameMapUri);
@@ -2456,8 +2464,9 @@ uint G_NextMapNumber(dd_bool secretExit)
         {
             switch(map)
             {
-            case 14: return 30;
-            case 30: return 31;
+            case 14: map = 30; break;
+            case 30: map = 31; break;
+
             default:
                App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map+1);
                break;
@@ -2467,63 +2476,78 @@ uint G_NextMapNumber(dd_bool secretExit)
         switch(map)
         {
         case 30:
-        case 31: return 15;
-        default:
-            return map + 1;
+        case 31: map = 15; break;
+
+        default: map += 1; break;
         }
+
+        return G_ComposeMapUri(episode, map);
     }
     else if(gameMode == doom_chex)
     {
-        return map + 1; // Go to next map.
+        return G_ComposeMapUri(episode, map + 1); // Go to next map.
     }
     else
     {
+        // Going to the secret map?
         if(secretExit && map != 8)
-            return 8; // Go to secret map.
+        {
+            return G_ComposeMapUri(episode, 8);
+        }
 
         switch(map)
         {
         case 8: // Returning from secret map.
             switch(episode)
             {
-            case 0: return 3;
-            case 1: return 5;
-            case 2: return 6;
-            case 3: return 2;
+            case 0: map = 3; break;
+            case 1: map = 5; break;
+            case 2: map = 6; break;
+            case 3: map = 2; break;
+
             default:
                 Con_Error("G_NextMap: Invalid episode num #%u!", episode);
+                exit(0); // Unreachable
             }
-            return 0; // Unreachable
-        default:
-            return map + 1; // Go to next map.
+            break;
+
+        default: map += 1; break; // Go to next map.
         }
+
+        return G_ComposeMapUri(episode, map);
     }
 
 #elif __JHERETIC__
     uint episode = G_EpisodeNumberFor(gameMapUri);
     uint map     = G_MapNumberFor(gameMapUri);
 
+    // Going to the secret map?
     if(secretExit && map != 8)
-        return 8; // Go to secret map.
+    {
+        return G_ComposeMapUri(episode, 8);
+    }
 
     switch(map)
     {
     case 8: // Returning from secret map.
         switch(episode)
         {
-        case 0: return 6;
-        case 1: return 4;
-        case 2: return 4;
-        case 3: return 4;
-        case 4: return 3;
+        case 0: map = 6; break;
+        case 1: map = 4; break;
+        case 2: map = 4; break;
+        case 3: map = 4; break;
+        case 4: map = 3; break;
+
         default:
             Con_Error("G_NextMap: Invalid episode num #%u!", episode);
+            exit(0); // Unreachable
         }
-        return 0; // Unreachable
+        break;
 
-    default:
-        return map + 1; // Go to next map.
+    default: map += 1; break; // Go to next map.
     }
+
+    return G_ComposeMapUri(episode, map);
 #endif
 }
 
@@ -2668,10 +2692,8 @@ char const *G_InFineDebriefing(de::Uri const *mapUri)
     if(briefDisabled) return 0;
 
 #if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
-       !(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT))
+    if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !nextMapUri.path().isEmpty())
     {
-        de::Uri nextMapUri = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), nextMap);
         if(P_MapInfo(mapUri)->hub != P_MapInfo(&nextMapUri)->hub)
         {
             return 0;
@@ -3162,8 +3184,8 @@ static bool G_WarpMap(de::Uri const &newMapUri)
     if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
     {
 #if __JHEXEN__
-        nextMap         = G_MapNumberFor(newMapUri);
-        nextMapEntrance = 0;
+        ::nextMapUri      = newMapUri;
+        ::nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
         G_SetGameActionNewSession(newMapUri, 0/*default*/, COMMON_GAMESESSION->rules());

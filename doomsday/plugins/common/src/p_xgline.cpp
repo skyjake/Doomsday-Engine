@@ -2107,7 +2107,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_SetGameActionMapCompleted(G_NextMapNumber(true), 0, true);
+        G_SetGameActionMapCompleted(G_NextMap(true), 0, true);
         return false;
     }
 
@@ -2128,7 +2128,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
                                       "Map Number");
             if(temp > 0)
             {
-                map = temp-1;
+                map = temp - 1;
                 mapSpecified = XL_ValidateMap(&map, info->iparm[3]);
             }
         }
@@ -2138,17 +2138,18 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
                    "Next map as normal");
     }
 
+    de::Uri newMapUri;
     if(mapSpecified)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
-        map = G_MapNumberFor(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), map));
+        newMapUri = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), map);
     }
     else
     {
-        map = G_NextMapNumber(false);
+        newMapUri = G_NextMap(false);
     }
 
-    G_SetGameActionMapCompleted(map, 0, false);
+    G_SetGameActionMapCompleted(newMapUri, 0, false);
     return false; // Only do this once!
 }
 

@@ -41,7 +41,6 @@
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C uint nextMap; // If non zero this will be the next map.
 DENG_EXTERN_C uint nextMapEntrance;
 DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
@@ -52,7 +51,7 @@ DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
-
+extern de::Uri nextMapUri;
 extern wbstartstruct_t wmInfo;
 
 extern "C" {

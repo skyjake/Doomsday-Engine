@@ -476,7 +476,8 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             // Players must be alive to teleport
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
-                G_SetGameActionMapCompleted((args[0]!= 0? args[0]-1 : 0), args[1], false);
+                G_SetGameActionMapCompleted(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), args[0]!= 0? args[0]-1 : 0),
+                                            args[1], false);
                 success = true;
             }
         }
@@ -496,8 +497,8 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 }
                 else
                 {
-                    // Passing DDMAXINT, DDMAXINT to G_LeaveMap() starts the Finale
-                    G_SetGameActionMapCompleted(DDMAXINT, DDMAXINT, false);
+                    // Passing a URI with an empty path starts the Finale
+                    G_SetGameActionMapCompleted(de::Uri("Maps:", RC_NULL), 0, false);
                 }
             }
         }

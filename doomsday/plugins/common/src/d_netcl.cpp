@@ -662,8 +662,8 @@ void NetCl_Intermission(Reader *msg)
 #elif __JHERETIC__
         // @todo jHeretic does not transmit the intermission info!
 #elif __JHEXEN__
-        nextMap           = Reader_ReadByte(msg);
-        nextMapEntrance   = Reader_ReadByte(msg);
+        ::nextMapUri      = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), Reader_ReadByte(msg));
+        ::nextMapEntrance = Reader_ReadByte(msg);
 #endif
 
 #if __JDOOM__ || __JDOOM64__

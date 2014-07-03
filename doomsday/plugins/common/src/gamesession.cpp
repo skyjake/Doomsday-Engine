@@ -939,10 +939,9 @@ void GameSession::leaveMap()
     FI_StackClear();
 
     // Check that the map truly exists.
-    de::Uri nextMapUri = G_ComposeMapUri(G_CurrentEpisodeNumber(), nextMap);
-    if(!P_MapExists(nextMapUri.compose().toUtf8().constData()))
+    if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
     {
-        nextMapUri = G_ComposeMapUri(0, 0); // Should exist always?
+        ::nextMapUri = G_ComposeMapUri(0, 0); // Should exist always?
     }
 
 #if __JHEXEN__

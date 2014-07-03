@@ -29,12 +29,12 @@
 
 DENG_EXTERN_C dd_bool singledemo;
 
-#if __cplusplus
-extern de::Uri gameMapUri;
-#endif
 DENG_EXTERN_C uint gameMapEntrance;
 
 #if __cplusplus
+extern de::Uri gameMapUri;
+extern GameRuleset defaultGameRules;
+
 extern "C" {
 #endif
 
@@ -60,8 +60,6 @@ void G_SetGameAction(gameaction_t action);
 
 #if __cplusplus
 } // extern "C"
-
-extern GameRuleset defaultGameRules;
 
 /**
  * Schedule a new game session (deferred).
@@ -92,6 +90,17 @@ bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription =
  * @return  @c true iff @a slotId is in use and loading is presently possible.
  */
 bool G_SetGameActionLoadSession(de::String slotId);
+
+/**
+ * Schedule a game session map exit, possibly leading into an intermission sequence.
+ * (if __JHEXEN__ the intermission will only be displayed when exiting a
+ * hub and in DeathMatch games)
+ *
+ * @param newMapUri      Unique identifier of the map number we are entering.
+ * @param mapEntryPoint  Logical map entry point on the new map.
+ * @param secretExit     @c true if the exit taken was marked as 'secret'.
+ */
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint entryPoint, dd_bool secretExit);
 
 /**
  * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
@@ -129,17 +138,6 @@ patchid_t G_MapTitlePatch(de::Uri const *mapUri = 0);
 
 extern "C" {
 #endif
-
-/**
- * Schedule a game session map exit, possibly leading into an intermission sequence.
- * (if __JHEXEN__ the intermission will only be displayed when exiting a
- * hub and in DeathMatch games)
- *
- * @param newMap         Logical map number we are entering (i.e., not a warp/translated number).
- * @param mapEntryPoint  Logical map entry point on the new map.
- * @param secretExit     @c true if the exit taken was marked as 'secret'.
- */
-void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExit);
 
 /**
  * Returns the InFine script with the specified @a scriptId; otherwise @c 0.
@@ -212,15 +210,15 @@ uint G_MapNumberFor(de::Uri const &mapUri);
  */
 de::Uri G_ComposeMapUri(uint episode, uint map);
 
-extern "C" {
-#endif
-
 /**
  * Determines the next map according to the default map progression.
  *
  * @param secretExit  @c true= choose the map assigned to the secret exit.
  */
-uint G_NextMapNumber(dd_bool secretExit);
+de::Uri G_NextMap(dd_bool secretExit);
+
+extern "C" {
+#endif
 
 uint G_CurrentEpisodeNumber(void);
 uint G_CurrentMapNumber(void);
@@ -237,6 +235,9 @@ byte G_Ruleset_RandomClasses();
 byte G_Ruleset_RespawnMonsters();
 #endif
 
+/// @todo remove me
+void G_SetGameActionMapCompletedAndSetNextMap(void);
+
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );
@@ -245,9 +246,7 @@ D_CMD( CCmdExitLevel );
 
 #if __cplusplus
 } // extern "C"
-#endif
 
-#if __cplusplus
 #include <de/String>
 
 class SaveSlots;

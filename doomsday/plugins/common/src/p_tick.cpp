@@ -60,7 +60,7 @@ void P_DoTick()
     {
         if(!--timerGame)
         {
-            G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
+            G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
         }
     }
 

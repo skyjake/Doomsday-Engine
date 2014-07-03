@@ -1944,7 +1944,7 @@ void C_DECL A_CyberDeath(mobj_t* actor)
     }
     else if(G_CurrentMapNumber() == 34)
     {
-        G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
+        G_SetGameActionMapCompletedAndSetNextMap();
     }
 }
 
@@ -2067,7 +2067,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return;
     }
 
-    G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
+    G_SetGameActionMapCompletedAndSetNextMap();
 }
 
 void C_DECL A_Hoof(mobj_t *mo)

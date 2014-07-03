@@ -1029,7 +1029,7 @@ void P_ResetWorldState()
     static int firstFragReset = 1;
 #endif
 
-    nextMap = 0;
+    nextMapUri.clear();
 
 #if __JDOOM__ || __JDOOM64__
     wmInfo.maxFrags = 0;
