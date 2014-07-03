@@ -79,24 +79,32 @@ struct CoreTextFontCache : public Lockable
 
     CTFontRef getFont(String const &postScriptName, dfloat pointSize)
     {
-        DENG2_GUARD(this);
+        CTFontRef font;
 
-        Key const key(postScriptName, pointSize);
-        if(fonts.contains(key))
+        // Only lock the cache while accessing the fonts database. If we keep the
+        // lock while printing log output, a flush might occur, which might in turn
+        // lead to text rendering and need for font information -- causing a hang.
         {
-            // Already got it.
-            return fonts[key];
-        }
+            DENG2_GUARD(this);
 
-        // Get a reference to the font.
-        CFStringRef name = CFStringCreateWithCharacters(nil, (UniChar *) postScriptName.data(),
-                                                        postScriptName.size());
-        CTFontRef font = CTFontCreateWithName(name, pointSize, nil);
-        CFRelease(name);
+            Key const key(postScriptName, pointSize);
+            if(fonts.contains(key))
+            {
+                // Already got it.
+                return fonts[key];
+            }
+
+            // Get a reference to the font.
+            CFStringRef name = CFStringCreateWithCharacters(nil, (UniChar *) postScriptName.data(),
+                                                            postScriptName.size());
+            font = CTFontCreateWithName(name, pointSize, nil);
+            CFRelease(name);
+
+            fonts.insert(key, font);
+        }
 
         LOG_GL_VERBOSE("Cached native font '%s' size %.1f") << postScriptName << pointSize;
 
-        fonts.insert(key, font);
         return font;
     }
 
