@@ -2340,7 +2340,7 @@ uint G_EpisodeNumberFor(de::Uri const &mapUri)
         if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if(path.at(0) == 'E' && path.at(2) == 'M')
+            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
                 return path.substr(1, 1).toInt() - 1;
             }
@@ -2363,13 +2363,13 @@ uint G_MapNumberFor(de::Uri const &mapUri)
         if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if(path.at(0) == 'E' && path.at(2) == 'M')
+            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
                 return path.substr(3).toInt() - 1;
             }
         }
 #endif
-        if(path.beginsWith("MAP"))
+        if(path.beginsWith("map", Qt::CaseInsensitive))
         {
             return path.substr(3).toInt() - 1;
         }
@@ -2391,17 +2391,17 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 {
     de::String mapId;
 #if __JDOOM64__
-    mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
-        mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
+        mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
     else
-        mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
+        mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
 #elif  __JHERETIC__
-    mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
+    mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
 #else
-    mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #endif
     return de::Uri("Maps", mapId);
@@ -2421,8 +2421,8 @@ uint G_NextMapNumber(dd_bool secretExit)
     {
         switch(map)
         {
-        case 0: return 31;
-        case 3: return 28;
+        case 0:  return 31;
+        case 3:  return 28;
         case 11: return 29;
         case 17: return 30;
         case 31: return 0;
