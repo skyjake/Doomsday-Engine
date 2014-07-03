@@ -2107,7 +2107,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
+        G_SetGameActionMapCompleted(G_NextMapNumber(true), 0, true);
         return false;
     }
 
@@ -2141,11 +2141,11 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     if(mapSpecified)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
-        map = G_LogicalMapNumberFor(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), map));
+        map = G_MapNumberFor(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), map));
     }
     else
     {
-        map = G_NextLogicalMapNumber(false);
+        map = G_NextMapNumber(false);
     }
 
     G_SetGameActionMapCompleted(map, 0, false);

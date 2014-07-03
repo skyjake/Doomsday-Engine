@@ -202,9 +202,6 @@ uint G_EpisodeNumberFor(de::Uri const &mapUri);
  */
 uint G_MapNumberFor(de::Uri const &mapUri);
 
-/// @todo Refactor away.
-uint G_LogicalMapNumberFor(de::Uri const &mapUri);
-
 /**
  * Compose a Uri for the identified @a episode and @a map combination.
  *
@@ -223,10 +220,7 @@ extern "C" {
  *
  * @param secretExit  @c true= choose the map assigned to the secret exit.
  */
-uint G_NextLogicalMapNumber(dd_bool secretExit);
-
-/// @return  Logical map number.
-uint G_CurrentLogicalMapNumber(void);
+uint G_NextMapNumber(dd_bool secretExit);
 
 uint G_CurrentEpisodeNumber(void);
 uint G_CurrentMapNumber(void);

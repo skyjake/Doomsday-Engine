@@ -256,12 +256,6 @@ static void drawBackground()
 
 static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
 {
-    uint mapNum = G_LogicalMapNumberFor(wbs->currentMap);
-    /*if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        mapNum = wbs->currentMap;
-    else
-        mapNum = (wbs->episode * 9) + wbs->currentMap;*/
-
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
@@ -270,8 +264,8 @@ static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
     // Draw <MapName>
-    patchid_t const patchId   = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    de::String const mapTitle = G_MapTitle(); // current map
+    patchid_t const patchId   = G_MapTitlePatch(&wbs->currentMap);
+    de::String const mapTitle = G_MapTitle(&wbs->currentMap);
     WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
     if(R_GetPatchInfo(patchId, &info))
@@ -323,16 +317,14 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // Draw "Entering"
     WI_DrawPatchXY3(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
-    uint const mapNum = G_LogicalMapNumberFor(wbs->nextMap);
-
     patchinfo_t info;
-    if(R_GetPatchInfo(pMapNames[mapNum], &info))
+    patchid_t const mapTitlePatch = G_MapTitlePatch(&wbs->nextMap);
+    if(R_GetPatchInfo(mapTitlePatch, &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    patchid_t const patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
-    WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(mapTitlePatch, patchReplacementText(mapTitlePatch, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

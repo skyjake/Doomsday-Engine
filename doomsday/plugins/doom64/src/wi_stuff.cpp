@@ -130,11 +130,10 @@ static void drawFinishedTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     FR_LoadDefaultAttrib();
 
     // Draw <MapName>
-    uint const mapNum = G_LogicalMapNumberFor(wbs->currentMap);
-    patchid_t patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    WI_DrawPatchXY3(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    patchid_t const mapTitlePatch = G_MapTitlePatch(&wbs->currentMap);
+    WI_DrawPatchXY3(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle.toUtf8().constData()), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
-    if(R_GetPatchInfo(patchId, &info))
+    if(R_GetPatchInfo(mapTitlePatch, &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw "Finished!"
@@ -172,15 +171,13 @@ static void drawEnteringTitle(int x = SCREENWIDTH / 2, int y = WI_TITLEY)
     // Draw "Entering"
     WI_DrawPatchXY2(pEntering, patchReplacementText(pEntering), x, y, ALIGN_TOP);
 
-    uint const mapNum = G_LogicalMapNumberFor(wbs->nextMap);
-
     patchinfo_t info;
-    if(R_GetPatchInfo(pMapNames[mapNum], &info))
+    patchid_t const mapTitlePatch = G_MapTitlePatch(&wbs->nextMap);
+    if(R_GetPatchInfo(mapTitlePatch, &info))
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    patchid_t const patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    WI_DrawPatchXY2(patchId, patchReplacementText(patchId, mapName), x, y, ALIGN_TOP);
+    WI_DrawPatchXY2(mapTitlePatch, patchReplacementText(mapTitlePatch, mapName), x, y, ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

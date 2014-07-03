@@ -255,7 +255,7 @@ static void crossSpecialLine(Line *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
+        G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
         break;
 
     case 53:
@@ -338,7 +338,7 @@ static void crossSpecialLine(Line *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT.
-        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
+        G_SetGameActionMapCompleted(G_NextMapNumber(true), 0, true);
         break;
 
     case 125:
@@ -626,7 +626,7 @@ void P_PlayerInSpecialSector(player_t *player)
             P_DamageMobj(player->plr->mo, NULL, NULL, 20, false);
 
         if(player->health <= 10)
-            G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
+            G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
         break;
     }
 }
@@ -793,7 +793,7 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int side)
 
         P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
-        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
+        G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
         break;
 
     case 14:
@@ -909,7 +909,7 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int side)
 
         P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
-        G_SetGameActionMapCompleted(G_NextLogicalMapNumber(true), 0, true);
+        G_SetGameActionMapCompleted(G_NextMapNumber(true), 0, true);
         break;
 
     case 55:

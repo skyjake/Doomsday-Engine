@@ -1696,7 +1696,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
-    G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
+    G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1791,7 +1791,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
 void C_DECL A_BrainDie(mobj_t *mo)
 {
     DENG_UNUSED(mo);
-    G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
+    G_SetGameActionMapCompleted(G_NextMapNumber(false), 0, false);
 }
 
 void C_DECL A_BrainSpit(mobj_t* mo)

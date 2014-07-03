@@ -1540,7 +1540,7 @@ static void runGameAction()
                 }
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-                nextMap = G_NextLogicalMapNumber(secretExit);
+                nextMap = G_NextMapNumber(secretExit);
 #endif
 
                 G_IntermissionBegin();
@@ -2377,36 +2377,6 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-static uint logicalMapNumber(uint episode, uint map)
-{
-#if __JHEXEN__
-    return P_TranslateMap(map);
-    DENG_UNUSED(episode);
-#elif __JDOOM64__
-    return map;
-    DENG_UNUSED(episode);
-#else
-# if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        return map;
-    else
-# endif
-    {
-        return map + episode * 9; // maps per episode.
-    }
-#endif
-}
-
-uint G_LogicalMapNumberFor(de::Uri const &mapUri)
-{
-    return logicalMapNumber(G_EpisodeNumberFor(mapUri), G_MapNumberFor(mapUri));
-}
-
-uint G_CurrentLogicalMapNumber()
-{
-    return G_LogicalMapNumberFor(gameMapUri);
-}
-
 uint G_CurrentEpisodeNumber()
 {
     return G_EpisodeNumberFor(gameMapUri);
@@ -2437,11 +2407,10 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-uint G_NextLogicalMapNumber(dd_bool secretExit)
+uint G_NextMapNumber(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return logicalMapNumber(G_EpisodeNumberFor(gameMapUri), P_MapInfo(&gameMapUri)->nextMap);
-
+    return P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap);
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
