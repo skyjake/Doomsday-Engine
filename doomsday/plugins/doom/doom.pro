@@ -87,7 +87,7 @@ SOURCES += \
     src/p_mobj.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_spec.c \
+    src/p_spec.cpp \
     src/p_telept.c \
     src/st_stuff.cpp \
     src/tables.c \
