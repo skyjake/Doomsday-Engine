@@ -80,7 +80,16 @@ public:
     Node const *tryGetChild(String const &name) const;
 
 public:
-    static LinkFile *newLinkToFile(File const &file);
+    /**
+     * Creates a new link to an existing file.
+     *
+     * @param file      Target file.
+     * @param linkName  Name of the created link file. If empty, the target file's
+     *                  name is used as the link's name.
+     *
+     * @return New LinkFile instance. Caller gets ownership.
+     */
+    static LinkFile *newLinkToFile(File const &file, String linkName = "");
 
 private:
     DENG2_PRIVATE(d)

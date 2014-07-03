@@ -143,9 +143,12 @@ filesys::Node const *LinkFile::tryGetChild(String const &name) const
     return 0;
 }
 
-LinkFile *LinkFile::newLinkToFile(File const &file)
+LinkFile *LinkFile::newLinkToFile(File const &file, String linkName)
 {
-    LinkFile *link = new LinkFile(file.name());
+    // Fall back to using the target's name.
+    if(linkName.isEmpty()) linkName = file.name();
+
+    LinkFile *link = new LinkFile(linkName);
     link->setTarget(file);
     link->setStatus(file.status());
     return link;

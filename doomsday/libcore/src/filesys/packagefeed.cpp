@@ -54,10 +54,10 @@ void PackageFeed::populate(Folder &folder)
     {
         Package *pkg = i.value();
 
-        if(folder.has(pkg->file().name())) continue; // Already there.
+        if(folder.has(i.key())) continue; // Already there.
 
         // Create a link to the loaded package's file.
-        LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg->file()));
+        LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg->file(), i.key()));
 
         // We will decide on pruning this.
         link.setOriginFeed(this);
