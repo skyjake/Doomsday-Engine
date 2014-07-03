@@ -2097,9 +2097,9 @@ static int countMobjOfType(thinker_t* th, void* context)
 /**
  * Trigger special effects if all bosses are dead.
  */
-void C_DECL A_BossDeath(mobj_t* actor)
+void C_DECL A_BossDeath(mobj_t *actor)
 {
-    static mobjtype_t   bossType[6] = {
+    static mobjtype_t bossType[6] = {
         MT_HEAD,
         MT_MINOTAUR,
         MT_SORCERER2,
@@ -2108,15 +2108,15 @@ void C_DECL A_BossDeath(mobj_t* actor)
         -1
     };
 
-    Line*               dummyLine;
+    Line *dummyLine;
     countmobjoftypeparams_t params;
 
     // Not a boss level?
-    if(gameMap != 7)
+    if(G_CurrentMapNumber() != 7)
         return;
 
     // Not considered a boss in this episode?
-    if(actor->type != bossType[gameEpisode])
+    if(actor->type != bossType[G_CurrentEpisodeNumber()])
         return;
 
     // Scan the remaining thinkers to see if all bosses are dead.
@@ -2130,7 +2130,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
     }
 
     // Kill any remaining monsters.
-    if(gameEpisode != 0)
+    if(G_CurrentEpisodeNumber() != 0)
         P_Massacre();
 
     dummyLine = P_AllocDummyLine();

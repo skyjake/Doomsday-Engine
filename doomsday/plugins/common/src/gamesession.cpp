@@ -475,21 +475,19 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
     {
         DENG2_ASSERT(inProgress);
 
-        ::gameMapUri  = mapUri;
-        ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
-        ::gameMap     = G_MapNumberFor(::gameMapUri);
+        ::gameMapUri = mapUri;
 
         // Ensure that the episode and map numbers are good.
-        if(!G_ValidateMap(&::gameEpisode, &::gameMap))
+        uint episode = G_EpisodeNumberFor(::gameMapUri);
+        uint map     = G_MapNumberFor(::gameMapUri);
+        if(!G_ValidateMap(&episode, &map))
         {
-            ::gameMapUri  = G_ComposeMapUri(::gameEpisode, ::gameMap);
-            ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
-            ::gameMap     = G_MapNumberFor(::gameMapUri);
+            ::gameMapUri = G_ComposeMapUri(episode, map);
         }
 
         // Update game status cvars:
-        ::gsvMap     = (unsigned)::gameMap;
-        ::gsvEpisode = (unsigned)::gameEpisode;
+        Con_SetInteger2("map-id",      (unsigned)G_MapNumberFor(::gameMapUri),     SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-episode", (unsigned)G_EpisodeNumberFor(::gameMapUri), SVF_WRITE_OVERRIDE);
     }
 
     /**
@@ -943,8 +941,9 @@ void GameSession::leaveMap()
     FI_StackClear();
 
     // Ensure that the episode and map indices are good.
-    G_ValidateMap(&gameEpisode, &nextMap);
-    de::Uri const nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    uint episode = G_CurrentEpisodeNumber();
+    G_ValidateMap(&episode, &nextMap);
+    de::Uri const nextMapUri = G_ComposeMapUri(episode, nextMap);
 
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process
@@ -1165,11 +1164,25 @@ String GameSession::savedUserDescription(String const &saveName)
 
 namespace {
 int gsvRuleSkill;
+int gsvEpisode;
+int gsvMap;
+#if __JHEXEN__
+int gsvHub;
+#endif
 }
 
 void GameSession::consoleRegister() //static
 {
-    C_VAR_INT("game-skill", &gsvRuleSkill, CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE, 0, 0);
+#define READONLYCVAR  (CVF_READ_ONLY | CVF_NO_MAX | CVF_NO_MIN | CVF_NO_ARCHIVE)
+
+    C_VAR_INT("game-skill",  &gsvRuleSkill, READONLYCVAR, 0, 0);
+    C_VAR_INT("map-episode", &gsvEpisode,   READONLYCVAR, 0, 0);
+#if __JHEXEN__
+    C_VAR_INT("map-hub",     &gsvHub,       READONLYCVAR, 0, 0);
+#endif
+    C_VAR_INT("map-id",      &gsvMap,       READONLYCVAR, 0, 0);
+
+#undef READONLYCVAR
 }
 
 } // namespace common

@@ -29,21 +29,10 @@
 
 DENG_EXTERN_C dd_bool singledemo;
 
-DENG_EXTERN_C uint gameEpisode;
-
 #if __cplusplus
 extern de::Uri gameMapUri;
 #endif
-
 DENG_EXTERN_C uint gameMapEntrance;
-DENG_EXTERN_C uint gameMap; ///< @todo refactor away.
-
-// Game status cvars:
-DENG_EXTERN_C int gsvEpisode;
-DENG_EXTERN_C int gsvMap;
-#if __JHEXEN__
-DENG_EXTERN_C int gsvHub;
-#endif
 
 #if __cplusplus
 extern "C" {
@@ -256,6 +245,9 @@ uint G_LogicalMapNumber(uint episode, uint map);
 
 /// @return  Logical map number.
 uint G_CurrentLogicalMapNumber(void);
+
+uint G_CurrentEpisodeNumber(void);
+uint G_CurrentMapNumber(void);
 
 int G_Ruleset_Skill();
 #if !__JHEXEN__

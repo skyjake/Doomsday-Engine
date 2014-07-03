@@ -112,11 +112,8 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
-uint gameEpisode;
-
 de::Uri gameMapUri;
 uint gameMapEntrance; ///< Entry point, for reborn.
-uint gameMap;
 
 uint nextMap;
 uint nextMapEntrance;
@@ -159,11 +156,7 @@ int bodyQueueSlot;
 static SaveSlots *sslots;
 
 // vars used with game status cvars
-int gsvEpisode;
-int gsvMap;
-#if __JHEXEN__
-int gsvHub;
-#endif
+
 char *gsvMapAuthor;// = "Unknown";
 int gsvMapMusic = -1;
 char *gsvMapTitle;// = "Unknown";
@@ -207,11 +200,6 @@ cvartemplate_t gamestatusCVars[] =
 #endif
 
     {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0, 0},
-    {"map-episode", READONLYCVAR, CVT_INT, &gsvEpisode, 0, 0, 0},
-#if __JHEXEN__
-    {"map-hub", READONLYCVAR, CVT_INT, &gsvHub, 0, 0, 0},
-#endif
-    {"map-id", READONLYCVAR, CVT_INT, &gsvMap, 0, 0, 0},
     {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0, 0},
     {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapTitle, 0, 0, 0},
 
@@ -2414,6 +2402,16 @@ uint G_LogicalMapNumber(uint episode, uint map)
 uint G_CurrentLogicalMapNumber()
 {
     return G_LogicalMapNumber(G_EpisodeNumberFor(gameMapUri), G_MapNumberFor(gameMapUri));
+}
+
+uint G_CurrentEpisodeNumber()
+{
+    return G_EpisodeNumberFor(gameMapUri);
+}
+
+uint G_CurrentMapNumber()
+{
+    return G_MapNumberFor(gameMapUri);
 }
 
 de::Uri G_ComposeMapUri(uint episode, uint map)

@@ -1912,7 +1912,7 @@ void C_DECL A_CyberDeath(mobj_t* actor)
 
     S_StartSound(actor->info->deathSound | DDSF_NO_ATTENUATION, NULL);
 
-    if((gameMap != 31) && (gameMap != 32) && (gameMap != 34))
+    if((G_CurrentMapNumber() != 31) && (G_CurrentMapNumber() != 32) && (G_CurrentMapNumber() != 34))
         return;
 
     // Make sure there is a player alive for victory.
@@ -1933,7 +1933,7 @@ void C_DECL A_CyberDeath(mobj_t* actor)
         return;
     }
 
-    if(gameMap == 31 || gameMap == 32)
+    if(G_CurrentMapNumber() == 31 || G_CurrentMapNumber() == 32)
     {
         dummyLine = P_AllocDummyLine();
         P_ToXLine(dummyLine)->tag = 666;
@@ -1942,7 +1942,7 @@ void C_DECL A_CyberDeath(mobj_t* actor)
         P_FreeDummyLine(dummyLine);
         return;
     }
-    else if(gameMap == 34)
+    else if(G_CurrentMapNumber() == 34)
     {
         G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
     }
@@ -2001,7 +2001,7 @@ void C_DECL A_BarrelExplode(mobj_t* actor)
     S_StartSound(actor->info->deathSound, actor);
     P_RadiusAttack(actor, actor->target, 128, 127);
 
-    if(gameMap != 0)
+    if(G_CurrentMapNumber() != 0)
         return;
 
     if(actor->type != MT_BARREL)
@@ -2043,7 +2043,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     int                 i;
     countmobjoftypeparams_t params;
 
-    if(gameMap != 29)
+    if(G_CurrentMapNumber() != 29)
         return;
 
     if(mo->type != MT_BITCH)
@@ -2076,7 +2076,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_HOOF | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_HOOF | (G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2086,7 +2086,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_MEAL | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_MEAL | (G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
