@@ -87,14 +87,7 @@ DENG2_PIMPL(PackageLoader)
         // each component of the package identifier.
         for(int i = components.size() - 1; i >= 0; --i)
         {
-            if(id.isEmpty())
-            {
-                id = components.at(i);
-            }
-            else
-            {
-                id = components.at(i) + "." + id;
-            }
+            id = components.at(i) + (!id.isEmpty()? "." + id : "");
 
             FS::FoundFiles files;
             App::fileSystem().findAllOfTypes(StringList()
@@ -104,10 +97,7 @@ DENG2_PIMPL(PackageLoader)
 
             files.remove_if(PackageIdentifierDoesNotMatch(packageId));
 
-            if(!files.empty())
-            {
-                std::copy(files.begin(), files.end(), std::back_inserter(found));
-            }
+            std::copy(files.begin(), files.end(), std::back_inserter(found));
         }
 
         return int(found.size());
