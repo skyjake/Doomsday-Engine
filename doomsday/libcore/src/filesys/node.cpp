@@ -71,6 +71,9 @@ String const Node::path() const
 
 Node const *Node::tryFollowPath(PathRef const &path) const
 {
+    static QString const DOT_SINGLE(".");
+    static QString const DOT_DOUBLE("..");
+
     if(path.isEmpty())
     {
         // As a special case, a null path always refers to self.
@@ -81,23 +84,26 @@ Node const *Node::tryFollowPath(PathRef const &path) const
 
     // Extract the next component.
     Path::Segment const &component = path.firstSegment();
-    if(path.segmentCount() == 1)
+
+    // Check if this is the end of the path.
+    if(path.segmentCount() == 1 && component != DOT_DOUBLE)
     {
-        // This is the final component.
+        if(component == DOT_SINGLE)
+        {
+            // Special case: not a child, but a reference to this node.
+            return this;
+        }
         return tryGetChild(component);
     }
 
     PathRef const remainder = path.subPath(Rangei(1, path.segmentCount()));
 
-    static QString const singleDot(".");
-    static QString const doubleDot("..");
-
     // Check for some special cases.
-    if(component == singleDot)
+    if(component == DOT_SINGLE)
     {
         return tryFollowPath(remainder);
     }
-    if(component == doubleDot)
+    if(component == DOT_DOUBLE)
     {
         if(!parent())
         {
