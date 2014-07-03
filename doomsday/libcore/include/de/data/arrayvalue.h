@@ -24,7 +24,7 @@
 #include "../NumberValue"
 #include "../Vector"
 
-#include <vector>
+#include <QList>
 
 namespace de {
 
@@ -44,7 +44,7 @@ public:
     DENG2_ERROR(IllegalIndexError);
 
     /// Type for the elements. Public because const access to the elements is public.
-    typedef std::vector<Value *> Elements;
+    typedef QList<Value *> Elements;
 
 public:
     ArrayValue();
@@ -86,7 +86,14 @@ public:
      *
      * @return Last element of the array. Ownership transferred.
      */
-    Value *pop();
+    Value *popLast();
+
+    /**
+     * Pops the first element and gives its ownership to the caller.
+     *
+     * @return First element of the array. Ownership transferred.
+     */
+    Value *popFirst();
 
     /**
      * Inserts a new Value into the elements of the array at an
