@@ -52,11 +52,12 @@ void PackageFeed::populate(Folder &folder)
 {
     DENG2_FOR_EACH_CONST(PackageLoader::LoadedPackages, i, d->loader.loadedPackages())
     {
-        String const id = i.value()->identifier();
-        if(folder.has(id)) continue; // Already there.
+        Package *pkg = i.value();
+
+        if(folder.has(pkg->file().name())) continue; // Already there.
 
         // Create a link to the loaded package's file.
-        LinkFile &link = folder.add(LinkFile::newLinkToFile(i.value()->file()));
+        LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg->file()));
 
         // We will decide on pruning this.
         link.setOriginFeed(this);

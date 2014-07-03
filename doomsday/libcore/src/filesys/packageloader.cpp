@@ -80,7 +80,10 @@ DENG2_PIMPL(PackageLoader)
         LOG_AS("selectPackage");
 
         FS::FoundFiles found;
-        if(!App::fileSystem().findAllOfType(DENG2_TYPE_NAME(ArchiveFolder), packageId + ".pack", found))
+        if(!App::fileSystem().findAllOfTypes(StringList()
+                                             << DENG2_TYPE_NAME(Folder)
+                                             << DENG2_TYPE_NAME(ArchiveFolder),
+                                             packageId + ".pack", found))
         {
             // None found.
             return 0;
@@ -89,10 +92,14 @@ DENG2_PIMPL(PackageLoader)
         // Each must have a version specified.
         DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
         {
-            Package::validateMetadata((*i)->info());
+            File *pkg = *i;
+            Package::parseMetadata(*pkg);
+            Package::validateMetadata(pkg->info());
         }
 
         found.sort(ascendingPackagesByLatest);
+
+        LOG_RES_VERBOSE("Selected '%s': %s") << packageId << found.back()->description();
 
         return found.back();
     }
@@ -132,7 +139,7 @@ DENG2_AUDIENCE_METHOD(PackageLoader, Activity)
 PackageLoader::PackageLoader() : d(new Instance(this))
 {}
 
-void PackageLoader::load(String const &packageId)
+Package const &PackageLoader::load(String const &packageId)
 {
     LOG_AS("PackageLoader");
 
@@ -149,6 +156,8 @@ void PackageLoader::load(String const &packageId)
     {
         i->setOfLoadedPackagesChanged();
     }
+
+    return package(packageId);
 }
 
 void PackageLoader::unload(String const &packageId)
@@ -175,6 +184,15 @@ bool PackageLoader::isLoaded(File const &file) const
 PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
 {
     return d->loaded;
+}
+
+Package const &PackageLoader::package(String const &packageId) const
+{
+    if(!isLoaded(packageId))
+    {
+        throw NotFoundError("PackageLoader::package", "Package '" + packageId + "' is not loaded");
+    }
+    return *d->loaded[packageId];
 }
 
 } // namespace de

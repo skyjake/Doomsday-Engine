@@ -48,9 +48,9 @@ DENG2_PIMPL_NOREF(FileSystem), public ReadWriteLockable
 
     void findInIndex(Index const &idx, String const &path, FoundFiles &found) const
     {
-        found.clear();
         String baseName = path.fileName().lower();
-        String dir = path.fileNamePath().lower();
+        String dir      = path.fileNamePath().lower();
+
         if(!dir.empty() && !dir.beginsWith("/"))
         {
             // Always begin with a slash. We don't want to match partial folder names.
@@ -232,6 +232,7 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAll");
 
+    found.clear();
     d->findInIndex(d->index, path, found);
     return int(found.size());
 }
@@ -240,7 +241,18 @@ int FileSystem::findAllOfType(String const &typeIdentifier, String const &path, 
 {
     LOG_AS("FS::findAllOfType");
 
-    d->findInIndex(indexFor(typeIdentifier), path, found);
+    return findAllOfTypes(StringList() << typeIdentifier, path, found);
+}
+
+int FileSystem::findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const
+{
+    LOG_AS("FS::findAllOfTypes");
+
+    found.clear();
+    foreach(String const &id, typeIdentifiers)
+    {
+        d->findInIndex(indexFor(id), path, found);
+    }
     return int(found.size());
 }
 

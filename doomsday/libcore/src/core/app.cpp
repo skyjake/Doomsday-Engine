@@ -25,6 +25,7 @@
 #include "de/DictionaryValue"
 #include "de/DirectoryFeed"
 #include "de/FileLogSink"
+#include "de/PackageFeed"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
@@ -49,6 +50,7 @@ namespace de {
 static App *singletonApp;
 
 DENG2_PIMPL(App)
+, DENG2_OBSERVES(PackageLoader, Activity)
 {
     QThread *mainThread;
 
@@ -147,6 +149,8 @@ DENG2_PIMPL(App)
 
     ~Instance()
     {
+        packageLoader.audienceForActivity() -= this;
+
         if(!errorSink.isNull())
         {
             logBuffer.removeSink(*errorSink);
@@ -214,8 +218,12 @@ DENG2_PIMPL(App)
         fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
                 DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
+        fs.makeFolder("/packs").attach(new PackageFeed(packageLoader));
+
         // Populate the file system.
         fs.refresh();
+
+        packageLoader.audienceForActivity() += this;
     }
 
     void setLogLevelAccordingToOptions()
@@ -275,6 +283,12 @@ DENG2_PIMPL(App)
             errorSink->setMode(LogSink::OnlyWarningEntries);
             logBuffer.addSink(*errorSink);
         }
+    }
+
+    void setOfLoadedPackagesChanged()
+    {
+        // Make sure the package links are up to date.
+        fs.root().locate<Folder>("/packs").populate();
     }
 
     DENG2_PIMPL_AUDIENCE(StartupComplete)

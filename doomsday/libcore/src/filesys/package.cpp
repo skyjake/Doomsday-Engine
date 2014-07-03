@@ -20,6 +20,8 @@
 #include "de/PackageLoader"
 #include "de/Process"
 #include "de/Script"
+#include "de/ScriptedInfo"
+#include "de/TimeValue"
 #include "de/App"
 
 namespace de {
@@ -67,25 +69,10 @@ File const &Package::file() const
     return *d->file;
 }
 
-void Package::validateMetadata(Record const &packageInfo)
+Folder const &Package::root() const
 {
-    if(!packageInfo.has("name"))
-    {
-        throw IncompleteMetadataError("Package::validateMetadata",
-                                      "Package does not have a name");
-    }
-
-    if(!packageInfo.has("version"))
-    {
-        throw IncompleteMetadataError("Package::validateMetadata",
-                                      "Package '" + packageInfo.gets("name") +
-                                      "' does not have a version");
-    }
-}
-
-Folder const *Package::root() const
-{
-    return d->file->maybeAs<Folder>();
+    d->verifyFile();
+    return d->file->as<Folder>();
 }
 
 Record &Package::info()
@@ -121,12 +108,91 @@ bool Package::executeFunction(String const &name)
 
 void Package::didLoad()
 {
-    executeFunction(L"onLoad");
+    executeFunction("onLoad");
 }
 
 void Package::aboutToUnload()
 {
-    executeFunction(L"onUnload");
+    executeFunction("onUnload");
+}
+
+void Package::parseMetadata(File &packageFile)
+{
+    static String const TIMESTAMP("__timestamp__");
+
+    if(Folder *folder = packageFile.maybeAs<Folder>())
+    {
+        Record &metadata        = packageFile.info();
+        File *metadataInfo      = folder->tryLocateFile("Info");
+        File *initializerScript = folder->tryLocateFile("__init__.de");
+        Time parsedAt           = Time::invalidTime();
+        bool needParse          = true;
+
+        if(!metadataInfo && !initializerScript) return; // Nothing to do.
+
+        if(metadata.has(TIMESTAMP))
+        {
+            // Already parsed.
+            needParse = false;
+
+            // Only parse if the source has changed.
+            if(TimeValue const *time = metadata.get(TIMESTAMP).maybeAs<TimeValue>())
+            {
+                needParse =
+                        (metadataInfo      && metadataInfo->status().modifiedAt      > time->time()) ||
+                        (initializerScript && initializerScript->status().modifiedAt > time->time());
+            }
+        }
+
+        if(!needParse) return;
+
+        // Check for a ScriptedInfo source.
+        if(metadataInfo)
+        {
+            ScriptedInfo script(&metadata);
+            script.parse(*metadataInfo);
+
+            parsedAt = metadataInfo->status().modifiedAt;
+        }
+
+        // Check for an initialization script.
+        if(initializerScript)
+        {
+            Script script(*initializerScript);
+            Process proc(&metadata);
+            proc.run(script);
+            proc.execute();
+
+            if(parsedAt.isValid() && initializerScript->status().modifiedAt > parsedAt)
+            {
+                parsedAt = initializerScript->status().modifiedAt;
+            }
+        }
+
+        metadata.addTime(TIMESTAMP, parsedAt);
+
+        LOG_MSG("Parsed metadata of '%s':\n")
+                << identifierForFile(packageFile)
+                << metadata.asText();
+    }
+}
+
+void Package::validateMetadata(Record const &packageInfo)
+{
+    char const *required[] = {
+        "title", "version", "license", "tags", 0
+    };
+
+    for(int i = 0; required[i]; ++i)
+    {
+        if(!packageInfo.has(required[i]))
+        {
+            throw IncompleteMetadataError("Package::validateMetadata",
+                                          QString("Package \"%1\" does not have '%2' in its metadata")
+                                          .arg(packageInfo.gets("path"))
+                                          .arg(required[i]));
+        }
+    }
 }
 
 String Package::identifierForFile(File const &file)

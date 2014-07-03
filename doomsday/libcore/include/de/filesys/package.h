@@ -82,7 +82,7 @@ public:
      * Returns the package's root folder, if it has one. Returns @c NULL if the package
      * is "flat" and comes with no folder structure.
      */
-    Folder const *root() const;
+    Folder const &root() const;
 
     Record &info();
 
@@ -115,6 +115,13 @@ public:
     virtual void aboutToUnload();
 
 public:
+    /**
+     * Parse the embedded metadata found in a package file.
+     *
+     * @param packageFile  File containing a package.
+     */
+    static void parseMetadata(File &packageFile);
+
     /**
      * Checks that all the metadata seems legit. An IncompleteMetadataError or
      * another exception is thrown if the package is not deemed valid.

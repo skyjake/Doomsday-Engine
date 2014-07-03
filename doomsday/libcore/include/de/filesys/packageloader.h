@@ -58,7 +58,7 @@ public:
 public:
     PackageLoader();
 
-    void load(String const &packageId);
+    Package const &load(String const &packageId);
 
     void unload(String const &packageId);
 
@@ -70,6 +70,16 @@ public:
      * Returns the set of all loaded packages.
      */
     LoadedPackages const &loadedPackages() const;
+
+    /**
+     * Retrieves a specific loaded package. The package must already be loaded
+     * using load().
+     *
+     * @param packageId
+     *
+     * @return Package.
+     */
+    Package const &package(String const &packageId) const;
 
 private:
     DENG2_PRIVATE(d)
