@@ -35,10 +35,6 @@ namespace de {
 class ScopeStatement : public Statement
 {
 public:
-    /// Name of the special variable that specifies super records.
-    static String const SUPER_NAME;
-
-public:
     ScopeStatement();
     ScopeStatement(Expression *identifier, Expression *superRecords);
 

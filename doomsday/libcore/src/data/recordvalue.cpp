@@ -57,9 +57,9 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o) : d(new Instance)
     }
 }
 
-RecordValue::RecordValue(Record &record) : d(new Instance)
+RecordValue::RecordValue(Record const &record) : d(new Instance)
 {
-    d->record = &record;
+    d->record = const_cast<Record *>(&record);
 
     // Someone may delete the record.
     d->record->audienceForDeletion() += this;
@@ -246,15 +246,12 @@ void RecordValue::call(Process &process, Value const &arguments, Value *) const
     // initialized as a member of the class.
     QScopedPointer<RecordValue> instance(new RecordValue(new Record, RecordValue::OwnsRecord));
 
-    ArrayValue *super = new ArrayValue;
-    *super << new RecordValue(d->record);
-    instance->record()->add(new Variable(ScopeStatement::SUPER_NAME, super));
+    instance->record()->addSuperRecord(new RecordValue(d->record));
 
     // If there is an initializer method, call it now.
     if(dereference().hasMember("__init__"))
     {
-        FunctionValue const &func = dereference().getAs<FunctionValue>("__init__");
-        process.call(func.function(), arguments.as<ArrayValue>(),
+        process.call(dereference().function("__init__"), arguments.as<ArrayValue>(),
                      instance->duplicateAsReference());
 
         // Discard the return value from the init function.

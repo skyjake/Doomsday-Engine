@@ -36,6 +36,8 @@
 
 namespace de {
 
+String const Record::SUPER_NAME = "__super__";
+
 /**
  * Each record is given a unique identifier, so that serialized record
  * references can be tracked to their original target.
@@ -559,18 +561,18 @@ String Record::asText(String const &prefix, List *lines) const
     return result;
 }
 
-Function const *Record::function(String const &name) const
+Function const &Record::function(String const &name) const
 {
-    try
+    return (*this)[name].value<FunctionValue>().function();
+}
+
+void Record::addSuperRecord(Value *superValue)
+{
+    if(!has(SUPER_NAME))
     {
-        FunctionValue const *func = dynamic_cast<FunctionValue const *>(&(*this)[name].value());
-        if(func)
-        {
-            return &func->function();
-        }
+        addArray(SUPER_NAME);
     }
-    catch(NotFoundError &) {}    
-    return 0;
+    (*this)[SUPER_NAME].value<ArrayValue>().add(superValue);
 }
 
 void Record::operator >> (Writer &to) const
