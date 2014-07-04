@@ -1737,7 +1737,7 @@ int findBuildNeighbor(void* ptr, void* context)
 
 dd_bool spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
     dd_bool picstop, dd_bool ceiling, Material *myMat, int stepcount,
-    Sector *foundSec)
+    Sector **foundSec)
 {
     int i;
     dd_bool result = false;
@@ -1776,24 +1776,25 @@ dd_bool spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
         if(params.foundSec)
         {
             result = true;
-            foundSec = params.foundSec;
+            *foundSec = params.foundSec;
         }
     }
 
     return result;
 }
 
-int C_DECL XSTrav_BuildStairs(Sector* sector, dd_bool ceiling,
-                              void* context, void* context2,
-                              mobj_t* activator)
+int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
+    void *context2, mobj_t *activator)
 {
-    uint                stepCount = 0;
-    Line*               origin = (Line *) context;
-    linetype_t*         info = context2;
-    Sector*             foundSec = NULL;
-    dd_bool             picstop = info->iparm[2] != 0;
-    dd_bool             spread = info->iparm[3] != 0;
-    Material*           myMat;
+    uint stepCount   = 0;
+    Line *origin     = (Line *) context;
+    linetype_t *info = context2;
+    Sector *foundSec = 0;
+    dd_bool picstop  = info->iparm[2] != 0;
+    dd_bool spread   = info->iparm[3] != 0;
+    Material *myMat;
+
+    DENG_UNUSED(activator);
 
     XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
            ceiling ? "ceiling" : "floor");
@@ -1834,7 +1835,7 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, dd_bool ceiling,
             // Scan the sectors for the next ones to spread to.
             if(spreadBuildToNeighborLowestIDX(origin, info, picstop,
                                               ceiling, myMat, stepCount,
-                                              foundSec))
+                                              &foundSec))
             {
                 XS_DoBuild(foundSec, ceiling, origin, info, stepCount);
                 found = true;
@@ -2338,10 +2339,9 @@ float XF_GetValue(function_t * fn, int pos)
  */
 int XF_FindNextPos(function_t *fn, int pos, dd_bool poke, Sector *sec)
 {
-    int         startpos = pos;
-    int         c;
-    char       *ptr;
-    double      dvalue;
+    int startpos = pos;
+    int c;
+    char *ptr;
 
     if(fn->repeat > 0)
     {
@@ -2353,7 +2353,8 @@ int XF_FindNextPos(function_t *fn, int pos, dd_bool poke, Sector *sec)
     // Skip current.
     if(fn->func[pos] == '/' || fn->func[pos] == '%')
     {
-        dvalue = strtod(fn->func + pos + 1, &ptr); // returned value ignored
+        double dvalue = strtod(fn->func + pos + 1, &ptr);
+        DENG_UNUSED(dvalue);
         pos = ptr - fn->func; // Go to the end.
     }
     else

@@ -49,7 +49,9 @@ void NetCl_UpdateGameState(Reader *msg)
     Reader_Read(msg, gsGameIdentity, len); gsGameIdentity[len] = 0;
 
     // Current map.
-    Uri *gsMapUri  = Uri_FromReader(msg);
+    Uri *gsMapUri = Uri_FromReader(msg);
+    Uri_SetScheme(gsMapUri, "Maps");
+
     /*uint gsEpisode =*/ Reader_ReadByte(msg);
     /*uint gsMap     =*/ Reader_ReadByte(msg);
 
@@ -648,28 +650,26 @@ void NetCl_Intermission(Reader *msg)
         SN_StopAllSequences();
 #endif
 
-        // @todo jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
-        wmInfo.maxKills   = Reader_ReadUInt16(msg);
-        wmInfo.maxItems   = Reader_ReadUInt16(msg);
-        wmInfo.maxSecret  = Reader_ReadUInt16(msg);
-        wmInfo.nextMap    = Reader_ReadByte(msg);
-        wmInfo.currentMap = Reader_ReadByte(msg);
+        wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
+        wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
+        wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
+        wmInfo.nextMap    = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), Reader_ReadByte(msg));
+        wmInfo.currentMap = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), Reader_ReadByte(msg));
         wmInfo.didSecret  = Reader_ReadByte(msg);
-        wmInfo.episode    = gameEpisode;
 
         G_PrepareWIData();
 #elif __JHERETIC__
-        wmInfo.episode    = gameEpisode;
+        // @todo jHeretic does not transmit the intermission info!
 #elif __JHEXEN__
-        nextMap           = Reader_ReadByte(msg);
-        nextMapEntrance   = Reader_ReadByte(msg);
+        ::nextMapUri      = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), Reader_ReadByte(msg));
+        ::nextMapEntrance = Reader_ReadByte(msg);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-        WI_Init(&wmInfo);
+        WI_Init(wmInfo);
 #elif __JHERETIC__
-        IN_Init(&wmInfo);
+        IN_Init(wmInfo);
 #elif __JHEXEN__
         IN_Init();
 #endif

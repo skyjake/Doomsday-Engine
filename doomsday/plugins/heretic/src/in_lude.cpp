@@ -1,9 +1,7 @@
-/** @file in_lude.cpp  Heretic intermission/stat screens.
+/** @file in_lude.cpp  Heretic specific intermission screens.
  *
- * @todo optimize: Do not repeatedly compose map URIs.
- *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,6 +21,7 @@
 #include "jheretic.h"
 #include "in_lude.h"
 
+#include <cstring>
 #include "am_map.h"
 #include "d_net.h"
 #include "gamesession.h"
@@ -30,13 +29,12 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 
-#include <cstring>
-
-typedef enum gametype_e {
+enum gametype_t
+{
     SINGLE,
     COOPERATIVE,
     DEATHMATCH
-} gametype_t;
+};
 
 struct teaminfo_t
 {
@@ -61,7 +59,7 @@ int interTime = -1;
 static int bcnt;
 
 // Contains information passed into intermission.
-static wbstartstruct_t *wbs;
+static wbstartstruct_t const *wbs;
 
 static dd_bool skipIntermission;
 
@@ -95,42 +93,42 @@ static fixed_t dSlideY[NUMTEAMS];
 static char const *killersText = "KILLERS";
 
 static Point2Raw YAHspot[3][9] = {
-    {
-     Point2Raw(172, 78),
-     Point2Raw(86, 90),
-     Point2Raw(73, 66),
-     Point2Raw(159, 95),
-     Point2Raw(148, 126),
-     Point2Raw(132, 54),
-     Point2Raw(131, 74),
-     Point2Raw(208, 138),
-     Point2Raw(52, 10)
-     },
-    {
-     Point2Raw(218, 57),
-     Point2Raw(137, 81),
-     Point2Raw(155, 124),
-     Point2Raw(171, 68),
-     Point2Raw(250, 86),
-     Point2Raw(136, 98),
-     Point2Raw(203, 90),
-     Point2Raw(220, 140),
-     Point2Raw(279, 106)
-     },
-    {
-     Point2Raw(86, 99),
-     Point2Raw(124, 103),
-     Point2Raw(154, 79),
-     Point2Raw(202, 83),
-     Point2Raw(178, 59),
-     Point2Raw(142, 58),
-     Point2Raw(219, 66),
-     Point2Raw(247, 57),
-     Point2Raw(107, 80)
+    {   // Episode 0
+        Point2Raw(172, 78),
+        Point2Raw(86, 90),
+        Point2Raw(73, 66),
+        Point2Raw(159, 95),
+        Point2Raw(148, 126),
+        Point2Raw(132, 54),
+        Point2Raw(131, 74),
+        Point2Raw(208, 138),
+        Point2Raw(52, 10)
+    },
+    {   // Episode 1
+        Point2Raw(218, 57),
+        Point2Raw(137, 81),
+        Point2Raw(155, 124),
+        Point2Raw(171, 68),
+        Point2Raw(250, 86),
+        Point2Raw(136, 98),
+        Point2Raw(203, 90),
+        Point2Raw(220, 140),
+        Point2Raw(279, 106)
+    },
+    {   // Episode 2
+        Point2Raw(86, 99),
+        Point2Raw(124, 103),
+        Point2Raw(154, 79),
+        Point2Raw(202, 83),
+        Point2Raw(178, 59),
+        Point2Raw(142, 58),
+        Point2Raw(219, 66),
+        Point2Raw(247, 57),
+        Point2Raw(107, 80)
      }
 };
 
-void WI_Register(void)
+void WI_Register()
 {
     C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
     C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, PRM_FIRST, PRM_LAST);
@@ -162,9 +160,9 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, f
     }
 }
 
-void WI_initVariables(wbstartstruct_t *wbstartstruct)
+void WI_initVariables(wbstartstruct_t const &wbstartstruct)
 {
-    wbs = wbstartstruct;
+    wbs = &wbstartstruct;
 
 /*#ifdef RANGECHECK
     if(gameMode != commercial)
@@ -201,14 +199,14 @@ void WI_initVariables(wbstartstruct_t *wbstartstruct)
         if(wbs->epsd > 2)
             wbs->epsd -= 3;*/
 
-    intermission = true;
-    interState = -1;
+    intermission     = true;
+    interState       = -1;
     skipIntermission = false;
-    interTime = 0;
-    oldInterTime = 0;
+    interTime        = 0;
+    oldInterTime     = 0;
 }
 
-void IN_Init(wbstartstruct_t * wbstartstruct)
+void IN_Init(wbstartstruct_t const &wbstartstruct)
 {
     WI_initVariables(wbstartstruct);
     IN_LoadPics();
@@ -216,7 +214,7 @@ void IN_Init(wbstartstruct_t * wbstartstruct)
     IN_InitStats();
 }
 
-void IN_WaitStop(void)
+void IN_WaitStop()
 {
     if(!--cnt)
     {
@@ -225,7 +223,7 @@ void IN_WaitStop(void)
     }
 }
 
-void IN_Stop(void)
+void IN_Stop()
 {
     NetSv_Intermission(IMF_END, 0, 0);
 
@@ -236,21 +234,15 @@ void IN_Stop(void)
 /**
  * Initializes the stats for single player mode
  */
-void IN_InitStats(void)
+void IN_InitStats()
 {
-    signed int          slaughterfrags;
-
-    int                 i, j;
-    int                 posNum;
-    int                 slaughterCount;
-    int                 teamCount, team;
-
     // Init team info.
     if(IS_NETGAME)
     {
-        memset(teamInfo, 0, sizeof(teamInfo));
-        memset(playerTeam, 0, sizeof(playerTeam));
-        for(i = 0; i < MAXPLAYERS; ++i)
+        std::memset(teamInfo,   0, sizeof(teamInfo));
+        std::memset(playerTeam, 0, sizeof(playerTeam));
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
             if(!players[i].plr->inGame)
                 continue;
@@ -261,9 +253,9 @@ void IN_InitStats(void)
     }
 
     int time = mapTime / 35;
-    hours   = time / 3600; time -= hours * 3600;
-    minutes = time / 60;   time -= minutes * 60;
-    seconds = time;
+    int const hours   = time / 3600; time -= hours * 3600;
+    int const minutes = time / 60;   time -= minutes * 60;
+    //int const seconds = time;
 
     if(!IS_NETGAME)
     {
@@ -272,32 +264,34 @@ void IN_InitStats(void)
     else if( /*IS_NETGAME && */ !COMMON_GAMESESSION->rules().deathmatch)
     {
         gameType = COOPERATIVE;
-        memset(killPercent, 0, sizeof(killPercent));
-        memset(bonusPercent, 0, sizeof(bonusPercent));
-        memset(secretPercent, 0, sizeof(secretPercent));
-        for(i = 0; i < MAXPLAYERS; ++i)
+
+        std::memset(killPercent,   0, sizeof(killPercent));
+        std::memset(bonusPercent,  0, sizeof(bonusPercent));
+        std::memset(secretPercent, 0, sizeof(secretPercent));
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
             if(players[i].plr->inGame)
             {
                 if(totalKills)
                 {
-                    j = players[i].killCount * 100 / totalKills;
-                    if(j > killPercent[playerTeam[i]])
-                        killPercent[playerTeam[i]] = j;
+                    int const percent = players[i].killCount * 100 / totalKills;
+                    if(percent > killPercent[playerTeam[i]])
+                        killPercent[playerTeam[i]] = percent;
                 }
 
                 if(totalItems)
                 {
-                    j = players[i].itemCount * 100 / totalItems;
-                    if(j > bonusPercent[playerTeam[i]])
-                        bonusPercent[playerTeam[i]] = j;
+                    int const percent = players[i].itemCount * 100 / totalItems;
+                    if(percent > bonusPercent[playerTeam[i]])
+                        bonusPercent[playerTeam[i]] = percent;
                 }
 
                 if(totalSecret)
                 {
-                    j = players[i].secretCount * 100 / totalSecret;
-                    if(j > secretPercent[playerTeam[i]])
-                        secretPercent[playerTeam[i]] = j;
+                    int const percent = players[i].secretCount * 100 / totalSecret;
+                    if(percent > secretPercent[playerTeam[i]])
+                        secretPercent[playerTeam[i]] = percent;
                 }
             }
         }
@@ -306,22 +300,24 @@ void IN_InitStats(void)
     {
         gameType = DEATHMATCH;
         slaughterBoy = 0;
-        slaughterfrags = -9999;
-        posNum = 0;
-        teamCount = 0;
-        slaughterCount = 0;
-        for(i = 0; i < MAXPLAYERS; ++i)
+
+        int slaughterfrags = -9999;
+        int posNum         = 0;
+        int teamCount      = 0;
+        int slaughterCount = 0;
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            team = playerTeam[i];
+            int const team = playerTeam[i];
+
             if(players[i].plr->inGame)
             {
-                for(j = 0; j < MAXPLAYERS; ++j)
+                for(int percent = 0; percent < MAXPLAYERS; ++percent)
                 {
-                    if(players[j].plr->inGame)
+                    if(players[percent].plr->inGame)
                     {
-                        teamInfo[team].frags[playerTeam[j]] +=
-                            players[i].frags[j];
-                        teamInfo[team].totalFrags += players[i].frags[j];
+                        teamInfo[team].frags[playerTeam[percent]] += players[i].frags[percent];
+                        teamInfo[team].totalFrags                 += players[i].frags[percent];
                     }
                 }
 
@@ -331,18 +327,19 @@ void IN_InitStats(void)
             }
         }
 
-        for(i = 0; i < NUMTEAMS; ++i)
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
             //posNum++;
             /*if(teamInfo[i].totalFrags > slaughterfrags)
-               {
+            {
                slaughterBoy = 1<<i;
                slaughterfrags = teamInfo[i].totalFrags;
                slaughterCount = 1;
-               }
-               else */
-            if(!teamInfo[i].members)
+            }
+            else */ if(!teamInfo[i].members)
+            {
                 continue;
+            }
 
             dSlideX[i] = (43 * posNum * FRACUNIT) / 20;
             dSlideY[i] = (36 * posNum * FRACUNIT) / 20;
@@ -363,18 +360,20 @@ void IN_InitStats(void)
     }
 }
 
-void IN_LoadPics(void)
+void IN_LoadPics()
 {
-    char buf[9];
-    int i;
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
 
-    if(wbs->episode < 3)
-        dpInterPic = R_DeclarePatch(wbs->episode == 0? "MAPE1" : wbs->episode == 1? "MAPE2" : "MAPE3");
+    if(episode < 3)
+    {
+        dpInterPic = R_DeclarePatch(episode == 0? "MAPE1" : episode == 1? "MAPE2" : "MAPE3");
+    }
 
-    dpBeenThere = R_DeclarePatch("IN_X");
+    dpBeenThere  = R_DeclarePatch("IN_X");
     dpGoingThere = R_DeclarePatch("IN_YAH");
 
-    for(i = 0; i < NUMTEAMS; ++i)
+    char buf[9];
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
         dd_snprintf(buf, 9, "FACEA%i", i);
         dpFaceAlive[i] = R_DeclarePatch(buf);
@@ -383,9 +382,9 @@ void IN_LoadPics(void)
     }
 }
 
-void IN_UnloadPics(void)
+void IN_UnloadPics()
 {
-    /* Nothing to do...*/
+    // Nothing to do.
 }
 
 static void nextIntermissionState()
@@ -404,12 +403,9 @@ static void endIntermissionGoToNextLevel()
     interState = 3;
 }
 
-void IN_Ticker(void)
+void IN_Ticker()
 {
-    if(!intermission)
-    {
-        return;
-    }
+    if(!intermission) return;
 
     if(!IS_CLIENT)
     {
@@ -421,6 +417,8 @@ void IN_Ticker(void)
     }
     IN_CheckForSkip();
 
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
     // Counter for general background animation.
     bcnt++;
 
@@ -429,7 +427,7 @@ void IN_Ticker(void)
     {
         nextIntermissionState();
 
-        if(wbs->episode > 2 && interState >= 1)
+        if(episode > 2 && interState >= 1)
         {
             // Extended Wad levels:  skip directly to the next level
             endIntermissionGoToNextLevel();
@@ -439,7 +437,7 @@ void IN_Ticker(void)
         {
         case 0:
             oldInterTime = interTime + 300;
-            if(wbs->episode > 2)
+            if(episode > 2)
             {
                 oldInterTime = interTime + 1200;
             }
@@ -471,7 +469,7 @@ void IN_Ticker(void)
             NetSv_Intermission(IMF_TIME, 0, interTime);
             return;
         }
-        else if(interState < 2 && wbs->episode < 3)
+        if(interState < 2 && episode < 3)
         {
             interState = 2;
             skipIntermission = false;
@@ -488,7 +486,7 @@ void IN_Ticker(void)
     }
 }
 
-void IN_SkipToNext(void)
+void IN_SkipToNext()
 {
     skipIntermission = 1;
 }
@@ -496,13 +494,12 @@ void IN_SkipToNext(void)
 /**
  * Check to see if any player hit a key.
  */
-void IN_CheckForSkip(void)
+void IN_CheckForSkip()
 {
-    int                 i;
-    player_t           *player;
-
-    for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
+        player_t *player = &players[i];
+
         if(player->plr->inGame)
         {
             if(player->brain.attack)
@@ -510,9 +507,13 @@ void IN_CheckForSkip(void)
                 if(!player->attackDown)
                 {
                     if(IS_CLIENT)
+                    {
                         NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+                    }
                     else
+                    {
                         IN_SkipToNext();
+                    }
                 }
                 player->attackDown = true;
             }
@@ -526,9 +527,13 @@ void IN_CheckForSkip(void)
                 if(!player->useDown)
                 {
                     if(IS_CLIENT)
+                    {
                         NetCl_PlayerActionRequest(player, GPA_USE, 0);
+                    }
                     else
+                    {
                         IN_SkipToNext();
+                    }
                 }
                 player->useDown = true;
             }
@@ -540,10 +545,9 @@ void IN_CheckForSkip(void)
     }
 }
 
-void IN_Drawer(void)
+void IN_Drawer()
 {
     static int oldInterState;
-    dgl_borderedprojectionstate_t bp;
 
     if(!intermission || interState > 3)
     {
@@ -554,6 +558,8 @@ void IN_Drawer(void)
         return;
     }*/
 
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
     if(oldInterState != 2 && interState == 2)
     {
         S_LocalSound(SFX_PSTOP, NULL);
@@ -562,6 +568,7 @@ void IN_Drawer(void)
     if(interState != -1)
         oldInterState = interState;
 
+    dgl_borderedprojectionstate_t bp;
     GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT,
                                    Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
@@ -586,7 +593,7 @@ void IN_Drawer(void)
         break;
 
     case 1: // Leaving old level.
-        if(wbs->episode < 3)
+        if(episode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -600,7 +607,7 @@ void IN_Drawer(void)
         break;
 
     case 2: // Going to the next level.
-        if(wbs->episode < 3)
+        if(episode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -613,7 +620,7 @@ void IN_Drawer(void)
         break;
 
     case 3: // Waiting before going to the next level.
-        if(wbs->episode < 3)
+        if(episode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -625,7 +632,7 @@ void IN_Drawer(void)
         break;
 
     default:
-        Con_Error("IN_lude:  Intermission state out of range.\n");
+        DENG2_ASSERT(!"IN_Drawer: Unknown intermission state");
         break;
     }
 
@@ -645,49 +652,51 @@ void IN_DrawStatBack()
 
 void IN_DrawOldLevel()
 {
-    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
     FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
-    if(wbs->currentMap == 8)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
+    if(G_MapNumberFor(wbs->currentMap) == 8)
     {
         DGL_Color4f(1, 1, 1, 1);
-        for(uint i = 0; i < wbs->nextMap; ++i)
+        uint const nextMap = G_MapNumberFor(wbs->nextMap);
+        for(uint i = 0; i < nextMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
         }
     }
     else
     {
         DGL_Color4f(1, 1, 1, 1);
-        for(uint i = 0; i < wbs->currentMap; ++i)
+        uint const currentMap = G_MapNumberFor(wbs->currentMap);
+        for(uint i = 0; i < currentMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][wbs->currentMap]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episode][currentMap]);
         }
     }
 
@@ -696,8 +705,6 @@ void IN_DrawOldLevel()
 
 void IN_DrawYAH()
 {
-    de::Uri nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
@@ -705,23 +712,27 @@ void IN_DrawYAH()
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&nextMapUri)), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->nextMap).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
-    for(uint i = 0; i < wbs->nextMap; ++i)
+
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+    uint const nextMap = G_MapNumberFor(wbs->nextMap);
+
+    for(uint i = 0; i < nextMap; ++i)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
     }
 
     if(!(interTime & 16) || interState == 3)
     {
         // Draw the destination 'X'
-        GL_DrawPatch(dpGoingThere, &YAHspot[wbs->episode][wbs->nextMap]);
+        GL_DrawPatch(dpGoingThere, &YAHspot[episode][nextMap]);
     }
 }
 
@@ -730,9 +741,6 @@ void IN_DrawSingleStats()
 #define TRACKING                (1)
 
     static int sounds;
-
-    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
-    char buf[20];
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -743,7 +751,7 @@ void IN_DrawSingleStats()
     FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -766,6 +774,7 @@ void IN_DrawSingleStats()
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    char buf[20];
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].killCount);
     FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);
@@ -833,7 +842,9 @@ void IN_DrawSingleStats()
         sounds++;
     }
 
-    if(gameMode != heretic_extended || wbs->episode < 3)
+    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
+
+    if(gameMode != heretic_extended || episode < 3)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -847,8 +858,6 @@ void IN_DrawSingleStats()
     }
     else
     {
-        de::Uri nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTA));
@@ -857,7 +866,7 @@ void IN_DrawSingleStats()
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&nextMapUri)), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(G_MapTitle(&wbs->nextMap).toUtf8().constData(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -873,8 +882,6 @@ void IN_DrawCoopStats()
 
     static int sounds;
 
-    de::Uri oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
@@ -884,7 +891,7 @@ void IN_DrawCoopStats()
     FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(reinterpret_cast<uri_s *>(&oldMapUri)), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -898,8 +905,6 @@ void IN_DrawCoopStats()
     {
         if(teamInfo[i].members)
         {
-            char buf[20];
-
             DGL_Color4f(0, 0, 0, .4f);
             GL_DrawPatchXY(dpFaceAlive[i], 27, ypos+2);
 
@@ -918,6 +923,7 @@ void IN_DrawCoopStats()
                 sounds++;
             }
 
+            char buf[20];
             dd_snprintf(buf, 20, "%i", killPercent[i]);
             M_DrawTextFragmentShadowed(buf, 121, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             M_DrawTextFragmentShadowed("%", 121, ypos + 10, ALIGN_TOPLEFT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -938,13 +944,11 @@ void IN_DrawCoopStats()
 #undef TRACKING
 }
 
-void IN_DrawDMStats(void)
+void IN_DrawDMStats()
 {
 #define TRACKING                (1)
 
     static int sounds;
-
-    int i, j, ypos = 55, xpos = 90, kpos;
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -957,18 +961,19 @@ void IN_DrawDMStats(void)
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
     FR_DrawTextXY3("VICTIMS", 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
-    for(i = 0; i < 7; ++i)
+    for(int i = 0; i < 7; ++i)
     {
         FR_DrawCharXY3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
 
+    int ypos = 55, xpos = 90;
     if(interTime < 20)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
-        for(i = 0; i < NUMTEAMS; ++i)
+        for(int i = 0; i < NUMTEAMS; ++i)
         {
             if(teamInfo[i].members)
             {
@@ -995,7 +1000,7 @@ void IN_DrawDMStats(void)
         sounds++;
     }
 
-    for(i = 0; i < NUMTEAMS; ++i)
+    for(int i = 0; i < NUMTEAMS; ++i)
     {
         if(teamInfo[i].members)
         {
@@ -1017,12 +1022,12 @@ void IN_DrawDMStats(void)
 
             FR_SetFont(FID(GF_FONTB));
             FR_SetTracking(TRACKING);
-            kpos = 122;
-            for(j = 0; j < NUMTEAMS; ++j)
+            int kpos = 122;
+            for(int k = 0; k < NUMTEAMS; ++k)
             {
-                if(teamInfo[j].members)
+                if(teamInfo[k].members)
                 {
-                    dd_snprintf(buf, 20, "%i", teamInfo[i].frags[j]);
+                    dd_snprintf(buf, 20, "%i", teamInfo[i].frags[k]);
                     M_DrawTextFragmentShadowed(buf, kpos, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
                     kpos += 43;
                 }
@@ -1048,5 +1053,6 @@ void IN_DrawDMStats(void)
             xpos += 43;
         }
     }
+
 #undef TRACKING
 }

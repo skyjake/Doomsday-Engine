@@ -37,6 +37,7 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
+    $$common_inc/mapinfo.h \
     $$common_inc/mapstatereader.h \
     $$common_inc/mapstatewriter.h \
     $$common_inc/mobj.h \
@@ -94,13 +95,14 @@ SOURCES += \
     $$common_src/hu_automap.cpp \
     $$common_src/hu_chat.c \
     $$common_src/hu_inventory.c \
-    $$common_src/hu_lib.c \
+    $$common_src/hu_lib.cpp \
     $$common_src/hu_log.c \
     $$common_src/hu_menu.cpp \
     $$common_src/hu_msg.c \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
+    $$common_src/mapinfo.cpp \
     $$common_src/mapstatereader.cpp \
     $$common_src/mapstatewriter.cpp \
     $$common_src/mobj.cpp \
@@ -122,7 +124,7 @@ SOURCES += \
     $$common_src/p_start.cpp \
     $$common_src/p_switch.cpp \
     $$common_src/p_terraintype.c \
-    $$common_src/p_tick.c \
+    $$common_src/p_tick.cpp \
     $$common_src/p_user.c \
     $$common_src/p_view.c \
     $$common_src/p_xgfile.cpp \

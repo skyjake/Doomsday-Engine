@@ -217,6 +217,9 @@ desc = List all currently active input devices and their controls.
 [listlumps]
 desc = List all loaded virtual resource files from container archives.
 
+[listmaps]
+desc = List all loaded maps.
+
 [listmaterials]
 desc = List all known surface materials.
 

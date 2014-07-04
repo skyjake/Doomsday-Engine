@@ -36,6 +36,7 @@
 #include "p_terraintype.h"
 #include "g_common.h"
 #include "gamesession.h"
+#include "mapinfo.h"
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_switch.h"

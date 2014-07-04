@@ -1097,13 +1097,13 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  *
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                   int damageP, dd_bool stomping, dd_bool skipNetworkCheck)
 {
-    angle_t             angle;
-    int                 saved, originalHealth;
-    player_t*           player;
-    int                 temp, damage;
+    angle_t angle;
+    int saved, originalHealth;
+    player_t *player;
+    int /*temp,*/ damage;
 
     if(!target)
         return 0; // Wha?
@@ -1245,7 +1245,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
-        temp = damage < 100 ? damage : 100;
+        // temp = damage < 100 ? damage : 100; Unused?
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);

@@ -42,17 +42,19 @@
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C uint nextMap;
 DENG_EXTERN_C uint nextMapEntrance;
 DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
-DENG_EXTERN_C wbstartstruct_t wmInfo;
+
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
 DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
+extern de::Uri nextMapUri;
+extern wbstartstruct_t wmInfo;
+
 extern "C" {
 #endif
 
@@ -63,8 +65,6 @@ void G_CommonShutdown(void);
 
 void R_InitRefresh(void);
 void G_DeathMatchSpawnPlayer(int playernum);
-
-void G_PrintMapList(void);
 
 void G_DeferredPlayDemo(char *demo);
 

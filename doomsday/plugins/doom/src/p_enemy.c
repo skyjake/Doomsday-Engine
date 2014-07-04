@@ -263,7 +263,7 @@ static dd_bool tryMoveMobj(mobj_t *actor)
 
 static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
 {
-    dirtype_t xdir, ydir, tdir;
+    dirtype_t xdir, ydir;
     dirtype_t olddir = actor->moveDir;
     dirtype_t turnaround = olddir;
 
@@ -305,17 +305,21 @@ static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
     // Randomly determine direction of search.
     if(P_Random() & 1)
     {
+        int tdir;
         for(tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
-            if(tdir != turnaround &&
+            if((dirtype_t)tdir != turnaround &&
                (actor->moveDir = tdir, tryMoveMobj(actor)))
                 return;
     }
     else
     {
+        int tdir;
         for(tdir = DI_SOUTHEAST; tdir != DI_EAST - 1; tdir--)
-            if(tdir != turnaround &&
+        {
+            if((dirtype_t)tdir != turnaround &&
                (actor->moveDir = tdir, tryMoveMobj(actor)))
                 return;
+        }
     }
 
     if((actor->moveDir = turnaround) != DI_NODIR && !tryMoveMobj(actor))
@@ -1549,7 +1553,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
 
     if(gameModeBits & GM_ANY_DOOM2)
     {
-        if(gameMap != 6)
+        if(G_CurrentMapNumber() != 6)
             return;
         if(mo->type != MT_FATSO && mo->type != MT_BABY)
             return;
@@ -1559,20 +1563,20 @@ void C_DECL A_BossDeath(mobj_t *mo)
      * Many classic PWADS such as "Doomsday of UAC" (UAC_DEAD.wad) rely on the
      * old behavior. Episode 4 is exempt by PrBoom's precedent.
      */
-    else if(cfg.anyBossDeath && gameEpisode < 3)
+    else if(cfg.anyBossDeath && G_CurrentEpisodeNumber() < 3)
     {
-        if(gameMap != 7)
+        if(G_CurrentMapNumber() != 7)
             return;
 
-        if(gameEpisode != 0 && mo->type == MT_BRUISER)
+        if(G_CurrentEpisodeNumber() != 0 && mo->type == MT_BRUISER)
             return;
     }
     else
     {
-        switch(gameEpisode)
+        switch(G_CurrentEpisodeNumber())
         {
         case 0:
-            if(gameMap != 7)
+            if(G_CurrentMapNumber() != 7)
                 return;
 
             if(mo->type != MT_BRUISER)
@@ -1580,7 +1584,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             break;
 
         case 1:
-            if(gameMap != 7)
+            if(G_CurrentMapNumber() != 7)
                 return;
 
             if(mo->type != MT_CYBORG)
@@ -1588,7 +1592,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             break;
 
         case 2:
-            if(gameMap != 7)
+            if(G_CurrentMapNumber() != 7)
                 return;
 
             if(mo->type != MT_SPIDER)
@@ -1597,7 +1601,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             break;
 
         case 3:
-            switch(gameMap)
+            switch(G_CurrentMapNumber())
             {
             case 5:
                 if(mo->type != MT_CYBORG)
@@ -1615,7 +1619,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             break;
 
         default:
-            if(gameMap != 7)
+            if(G_CurrentMapNumber() != 7)
                 return;
             break;
         }
@@ -1642,7 +1646,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
     // Victory!
     if(gameModeBits & GM_ANY_DOOM2)
     {
-        if(gameMap == 6)
+        if(G_CurrentMapNumber() == 6)
         {
             if(mo->type == MT_FATSO)
             {
@@ -1665,7 +1669,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
     }
     else
     {
-        if(gameEpisode == 0)
+        if(G_CurrentEpisodeNumber() == 0)
         {
             Line *dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
@@ -1674,9 +1678,9 @@ void C_DECL A_BossDeath(mobj_t *mo)
             return;
         }
 
-        if(gameEpisode == 3)
+        if(G_CurrentEpisodeNumber() == 3)
         {
-            if(gameMap == 5)
+            if(G_CurrentMapNumber() == 5)
             {
                 Line *dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
@@ -1685,7 +1689,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
                 return;
             }
 
-            if(gameMap == 7)
+            if(G_CurrentMapNumber() == 7)
             {
                 Line *dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
@@ -1696,7 +1700,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
-    G_SetGameActionMapCompleted(G_CurrentLogicalMapNumber(), 0, false);
+    G_SetGameActionMapCompletedAndSetNextMap();
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1707,7 +1711,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      */
     S_StartSound(SFX_HOOF |
                  (!(gameModeBits & GM_ANY_DOOM2) &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+                  G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1719,7 +1723,7 @@ void C_DECL A_Metal(mobj_t *mo)
      */
     S_StartSound(SFX_METAL |
                  (!(gameModeBits & GM_ANY_DOOM2) &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+                  G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1788,12 +1792,13 @@ void C_DECL A_BrainExplode(mobj_t *mo)
     }
 }
 
-void C_DECL A_BrainDie(mobj_t* mo)
+void C_DECL A_BrainDie(mobj_t *mo)
 {
-    G_SetGameActionMapCompleted(G_CurrentLogicalMapNumber(), 0, false);
+    DENG_UNUSED(mo);
+    G_SetGameActionMapCompletedAndSetNextMap();
 }
 
-void C_DECL A_BrainSpit(mobj_t* mo)
+void C_DECL A_BrainSpit(mobj_t *mo)
 {
     mobj_t *targ = BossBrain_NextTarget(theBossBrain);
     mobj_t *newmobj;

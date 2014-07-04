@@ -1,46 +1,33 @@
-/**\file in_lude.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file in_lude.cpp  Hexen specific intermission screens.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Intermission screens - jHexen specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <assert.h>
-#include <stdio.h>
 
 #include "jhexen.h"
+#include "in_lude.h"
 
+#include <cstdio>
 #include "d_net.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "g_common.h"
 #include "am_map.h"
-
-// MACROS ------------------------------------------------------------------
 
 #define TEXTSPEED               (3)
 #define TEXTWAIT                (140)
@@ -60,38 +47,25 @@
 
 #define MAX_INTRMSN_MESSAGE_SIZE (1024)
 
-// TYPES -------------------------------------------------------------------
-
-typedef enum gametype_e {
+enum gametype_t
+{
     SINGLE,
     COOPERATIVE,
     DEATHMATCH
-} gametype_t;
+};
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void IN_WaitStop(void);
-static void loadPics(void);
-static void unloadPics(void);
-static void CheckForSkip(void);
-static void initStats(void);
-static void drawDeathTally(void);
+static void IN_WaitStop();
+static void loadPics();
+static void unloadPics();
+static void CheckForSkip();
+static void initStats();
+static void drawDeathTally();
 static void drawNumber(int val, int x, int y, int wrapThresh);
 static void drawNumberBold(int val, int x, int y, int wrapThresh);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
-
 dd_bool intermission;
-int interState = 0;
-int overrideHubMsg = 0; // Override the hub transition message when 1.
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+int interState;
+int overrideHubMsg; // Override the hub transition message when 1.
 
 // Used for timing of background animation.
 static int bcnt;
@@ -101,26 +75,20 @@ static int interTime = -1;
 static gametype_t gameType;
 static int cnt;
 static int slaughterBoy; // In DM, the player with the most kills.
-static signed int totalFrags[MAXPLAYERS];
+static int totalFrags[MAXPLAYERS];
 
 static int hubCount;
 
 static patchid_t dpTallyTop;
 static patchid_t dpTallyLeft;
 
-// CODE --------------------------------------------------------------------
-
-void WI_Register(void)
+void WI_Register()
 {
-    cvartemplate_t cvars[] = {
-        { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
-        { "inlude-patch-replacement", 0, CVT_INT, &cfg.inludePatchReplaceMode, PRM_FIRST, PRM_LAST },
-        { NULL }
-    };
-    Con_AddVariableList(cvars);
+    C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, PRM_FIRST, PRM_LAST);
 }
 
-void WI_initVariables(void /* wbstartstruct_t* wbstartstruct */)
+void WI_initVariables(/*wbstartstruct_t *wbstartstruct */)
 {
 /*    wbs = wbstartstruct;
 
@@ -159,22 +127,22 @@ void WI_initVariables(void /* wbstartstruct_t* wbstartstruct */)
         if(wbs->epsd > 2)
             wbs->epsd -= 3;*/
 
-    intermission = true;
-    interState = 0;
+    intermission     = true;
+    interState       = 0;
     skipIntermission = false;
-    interTime = 0;
+    interTime        = 0;
 }
 
-void IN_Init(void)
+void IN_Init()
 {
-    DENG_ASSERT(G_Ruleset_Deathmatch());
+    DENG2_ASSERT(G_Ruleset_Deathmatch());
 
     WI_initVariables();
     loadPics();
     initStats();
 }
 
-void IN_WaitStop(void)
+void IN_WaitStop()
 {
     if(!--cnt)
     {
@@ -183,7 +151,7 @@ void IN_WaitStop(void)
     }
 }
 
-void IN_Stop(void)
+void IN_Stop()
 {
     NetSv_Intermission(IMF_END, 0, 0);
     unloadPics();
@@ -193,27 +161,27 @@ void IN_Stop(void)
 /**
  * Initializes the stats for single player mode.
  */
-static void initStats(void)
+static void initStats()
 {
-    int i, j, slaughterFrags, posNum, slaughterCount, playerCount;
-
     gameType = DEATHMATCH;
     slaughterBoy = 0;
-    slaughterFrags = -9999;
-    posNum = 0;
-    playerCount = 0;
-    slaughterCount = 0;
-    for(i = 0; i < MAXPLAYERS; ++i)
+
+    int slaughterFrags = -9999;
+    int posNum         = 0;
+    int playerCount    = 0;
+    int slaughterCount = 0;
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         totalFrags[i] = 0;
         if(players[i].plr->inGame)
         {
             playerCount++;
-            for(j = 0; j < MAXPLAYERS; ++j)
+            for(int k = 0; k < MAXPLAYERS; ++k)
             {
                 if(players[i].plr->inGame)
                 {
-                    totalFrags[i] += players[i].frags[j];
+                    totalFrags[i] += players[i].frags[k];
                 }
             }
             posNum++;
@@ -233,37 +201,36 @@ static void initStats(void)
     }
 
     if(playerCount == slaughterCount)
-    {   // don't do the slaughter stuff if everyone is equal
+    {
+        // Don't do the slaughter stuff if everyone is equal.
         slaughterBoy = 0;
     }
 }
 
-static void loadPics(void)
+static void loadPics()
 {
     if(gameType != SINGLE)
     {
-        dpTallyTop = R_DeclarePatch("TALLYTOP");
+        dpTallyTop  = R_DeclarePatch("TALLYTOP");
         dpTallyLeft = R_DeclarePatch("TALLYLFT");
     }
 }
 
-static void unloadPics(void)
+static void unloadPics()
 {
     // Nothing to do.
 }
 
-void IN_Ticker(void)
+void IN_Ticker()
 {
-    if(!intermission)
-    {
-        return;
-    }
+    if(!intermission) return;
 
     if(interState)
     {
         IN_WaitStop();
         return;
     }
+
     skipIntermission = false;
     CheckForSkip();
 
@@ -280,7 +247,7 @@ void IN_Ticker(void)
     }
 }
 
-void IN_SkipToNext(void)
+void IN_SkipToNext()
 {
     skipIntermission = 1;
 }
@@ -288,15 +255,14 @@ void IN_SkipToNext(void)
 /**
  * Check to see if any player hit a key.
  */
-static void CheckForSkip(void)
+static void CheckForSkip()
 {
-    static dd_bool      triedToSkip;
+    static bool triedToSkip;
 
-    int                 i;
-    player_t           *player;
-
-    for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
+        player_t *player = &players[i];
+
         if(player->plr->inGame)
         {
             if(player->brain.attack)
@@ -304,9 +270,13 @@ static void CheckForSkip(void)
                 if(!player->attackDown)
                 {
                     if(IS_CLIENT)
+                    {
                         NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+                    }
                     else
+                    {
                         IN_SkipToNext();
+                    }
                 }
                 player->attackDown = true;
             }
@@ -320,9 +290,13 @@ static void CheckForSkip(void)
                 if(!player->useDown)
                 {
                     if(IS_CLIENT)
+                    {
                         NetCl_PlayerActionRequest(player, GPA_USE, 0);
+                    }
                     else
+                    {
                         IN_SkipToNext();
+                    }
                 }
                 player->useDown = true;
             }

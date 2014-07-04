@@ -29,23 +29,12 @@
 
 DENG_EXTERN_C dd_bool singledemo;
 
-DENG_EXTERN_C uint gameEpisode;
+DENG_EXTERN_C uint gameMapEntrance;
 
 #if __cplusplus
 extern de::Uri gameMapUri;
-#endif
+extern GameRuleset defaultGameRules;
 
-DENG_EXTERN_C uint gameMapEntrance;
-DENG_EXTERN_C uint gameMap; ///< @todo refactor away.
-
-// Game status cvars:
-DENG_EXTERN_C int gsvEpisode;
-DENG_EXTERN_C int gsvMap;
-#if __JHEXEN__
-DENG_EXTERN_C int gsvHub;
-#endif
-
-#if __cplusplus
 extern "C" {
 #endif
 
@@ -71,8 +60,6 @@ void G_SetGameAction(gameaction_t action);
 
 #if __cplusplus
 } // extern "C"
-
-extern GameRuleset defaultGameRules;
 
 /**
  * Schedule a new game session (deferred).
@@ -105,28 +92,52 @@ bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription =
 bool G_SetGameActionLoadSession(de::String slotId);
 
 /**
- * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
- */
-char const *G_InFineBriefing(de::Uri const *mapUri);
-
-/**
- * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
- */
-char const *G_InFineDebriefing(de::Uri const *mapUri);
-
-extern "C" {
-#endif
-
-/**
  * Schedule a game session map exit, possibly leading into an intermission sequence.
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
  * hub and in DeathMatch games)
  *
- * @param newMap         Logical map number we are entering (i.e., not a warp/translated number).
+ * @param newMapUri      Unique identifier of the map number we are entering.
  * @param mapEntryPoint  Logical map entry point on the new map.
  * @param secretExit     @c true if the exit taken was marked as 'secret'.
  */
-void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExit);
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint entryPoint, dd_bool secretExit);
+
+/**
+ * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
+ *
+ * @param mapUri  Identifier of the map to lookup the briefing for. Can be @c 0 in which
+ *                case the briefing for the @em current map will be returned.
+ */
+char const *G_InFineBriefing(de::Uri const *mapUri = 0);
+
+/**
+ * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
+ *
+ * @param mapUri  Identifier of the map to lookup the debriefing for. Can be @c 0 in which
+ *                case the debriefing for the @em current map will be returned.
+ */
+char const *G_InFineDebriefing(de::Uri const *mapUri = 0);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
+ *                case the author for the @em current map will be returned (if set).
+ */
+de::String G_MapAuthor(de::Uri const *mapUri = 0, bool supressGameAuthor = false);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+de::String G_MapTitle(de::Uri const *mapUri = 0);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+patchid_t G_MapTitlePatch(de::Uri const *mapUri = 0);
+
+extern "C" {
+#endif
 
 /**
  * Returns the InFine script with the specified @a scriptId; otherwise @c 0.
@@ -199,39 +210,18 @@ uint G_MapNumberFor(de::Uri const &mapUri);
  */
 de::Uri G_ComposeMapUri(uint episode, uint map);
 
+/**
+ * Determines the next map according to the default map progression.
+ *
+ * @param secretExit  @c true= choose the map assigned to the secret exit.
+ */
+de::Uri G_NextMap(dd_bool secretExit);
+
 extern "C" {
 #endif
 
-/**
- * Determine if the specified @a episode and @a map value pair are valid and if not,
- * adjust their are values within the ranges defined by the current game type and mode.
- *
- * @param episode  Logical episode number to be validated.
- * @param map      Logical map number to be validated.
- *
- * @return  @c true= The original @a episode and @a map value pair were already valid.
- */
-dd_bool G_ValidateMap(uint *episode, uint *map);
-
-/**
- * Return the next map according to the default map progression.
- *
- * @param episode     Current episode.
- * @param map         Current map.
- * @param secretExit
- *
- * @return  The next map.
- */
-uint G_GetNextMap(uint episode, uint map, dd_bool secretExit);
-
-/// @return  Logical map number.
-uint G_NextLogicalMapNumber(dd_bool secretExit);
-
-/// @return  Logical map number.
-uint G_LogicalMapNumber(uint episode, uint map);
-
-/// @return  Logical map number.
-uint G_CurrentLogicalMapNumber(void);
+uint G_CurrentEpisodeNumber(void);
+uint G_CurrentMapNumber(void);
 
 int G_Ruleset_Skill();
 #if !__JHEXEN__
@@ -245,6 +235,9 @@ byte G_Ruleset_RandomClasses();
 byte G_Ruleset_RespawnMonsters();
 #endif
 
+/// @todo remove me
+void G_SetGameActionMapCompletedAndSetNextMap(void);
+
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );
@@ -253,9 +246,7 @@ D_CMD( CCmdExitLevel );
 
 #if __cplusplus
 } // extern "C"
-#endif
 
-#if __cplusplus
 #include <de/String>
 
 class SaveSlots;

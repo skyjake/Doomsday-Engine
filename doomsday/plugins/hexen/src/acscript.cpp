@@ -102,6 +102,7 @@ void ACScriptInterpreter::DeferredTask::operator << (de::Reader &from)
     de::String mapUriStr;
     from >> mapUriStr;
     mapUri = de::Uri(mapUriStr, RC_NULL);
+    mapUri.setScheme("Maps");
     from >> scriptNumber;
     for(int i = 0; i < 4; ++i)
     {

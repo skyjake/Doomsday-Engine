@@ -30,6 +30,7 @@
 #include "gamesession.h"
 #include "r_common.h"
 #include "d_net.h"
+#include "mapinfo.h"
 
 #include <cstring>
 
@@ -88,9 +89,8 @@ static void initStateConditions(fi_state_t *s)
     if(mapinfo_t *curMapInfo = P_MapInfo(0/*current map*/))
     {
         s->conditions.leave_hub = true;
-        if(nextMap != DDMAXINT)
+        if(!nextMapUri.path().isEmpty())
         {
-            de::Uri nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
             if(curMapInfo->hub == P_MapInfo(&nextMapUri)->hub)
             {
                 s->conditions.leave_hub = false;

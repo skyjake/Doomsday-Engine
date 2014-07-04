@@ -151,9 +151,11 @@ void Sv_GetInfo(serverinfo_t *info)
 
     de::zapPtr(info);
 
+    Map &map = App_WorldSystem().map();
+
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
-    dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+    dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", (char *) gx.GetVariable(DD_PLUGIN_NAME), (char *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
     strncpy(info->gameIdentityKey, App_CurrentGame().identityKey().toUtf8().constData(), sizeof(info->gameIdentityKey) - 1);
     strncpy(info->gameConfig, (char const *) gx.GetVariable(DD_GAME_CONFIG), sizeof(info->gameConfig) - 1);
     strncpy(info->name, serverName, sizeof(info->name) - 1);
@@ -170,8 +172,8 @@ void Sv_GetInfo(serverinfo_t *info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    QByteArray mapPath = App_WorldSystem().map().uri().resolved().toUtf8();
-    qstrncpy(info->map, mapPath.constData(), sizeof(info->map) - 1);
+    String mapPath = (map.def()? map.def()->composeUri().path() : "(unknown map)");
+    qstrncpy(info->map, mapPath.toUtf8().constData(), sizeof(info->map) - 1);
 
     // These are largely unused at the moment... Mainly intended for
     // the game's custom values.

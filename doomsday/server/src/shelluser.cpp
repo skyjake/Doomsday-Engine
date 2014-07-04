@@ -123,7 +123,7 @@ void ShellUser::sendGameState()
     {
         Map &map = App_WorldSystem().map();
 
-        mapId = map.uri().resolvedRef();
+        mapId = (map.def()? map.def()->composeUri().path() : "(unknown map)");
 
         /// @todo A cvar is not an appropriate place to ask for this --
         /// should be moved to the Map class.

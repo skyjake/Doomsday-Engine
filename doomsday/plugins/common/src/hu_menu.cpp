@@ -30,6 +30,7 @@
 #include "x_hair.h"
 #include "player.h"
 #include "g_controls.h"
+#include "mapinfo.h"
 #include "p_savedef.h"
 #include "g_common.h"
 #include "gamesession.h"

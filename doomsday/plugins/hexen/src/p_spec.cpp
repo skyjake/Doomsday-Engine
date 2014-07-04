@@ -30,6 +30,7 @@
 
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "mapinfo.h"
 #include "p_inventory.h"
 #include "player.h"
 #include "p_map.h"
@@ -74,9 +75,9 @@ void P_InitLava(void)
     lavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-void P_InitSky(Uri const *mapUri)
+void P_InitSky(de::Uri const &mapUri)
 {
-    mapinfo_t const *mapInfo = P_MapInfo(reinterpret_cast<de::Uri const *>(mapUri));
+    mapinfo_t const *mapInfo = P_MapInfo(&mapUri);
     if(mapInfo)
     {
         sky1Material     = mapInfo->sky1Material;
@@ -197,7 +198,7 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 static de::Uri mapUriFromLogicalNumber(int number)
 {
     if(!number) return gameMapUri; // current map.
-    return G_ComposeMapUri(gameEpisode, number - 1);
+    return G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), number - 1);
 }
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
@@ -475,7 +476,8 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             // Players must be alive to teleport
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
-                G_SetGameActionMapCompleted((args[0]!= 0? args[0]-1 : 0), args[1], false);
+                G_SetGameActionMapCompleted(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), args[0]!= 0? args[0]-1 : 0),
+                                            args[1], false);
                 success = true;
             }
         }
@@ -495,8 +497,8 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 }
                 else
                 {
-                    // Passing DDMAXINT, DDMAXINT to G_LeaveMap() starts the Finale
-                    G_SetGameActionMapCompleted(DDMAXINT, DDMAXINT, false);
+                    // Passing a URI with an empty path starts the Finale
+                    G_SetGameActionMapCompleted(de::Uri("Maps:", RC_NULL), 0, false);
                 }
             }
         }

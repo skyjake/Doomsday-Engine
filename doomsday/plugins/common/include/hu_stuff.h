@@ -49,7 +49,8 @@ DENG_EXTERN_C patchid_t borderPatches[8];
 
 // The fonts.
 typedef enum {
-    GF_FIRST = 1,
+    GF_NONE,
+    GF_FIRST,
     GF_FONTA = GF_FIRST,
     GF_FONTB,
     GF_STATUS,

@@ -166,7 +166,7 @@ void printDebugInfo(player_t *plr)
 
     char textBuffer[256];
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        gameMapUri.asText().toUtf8().constData(),
+                        gameMapUri.path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 
@@ -214,6 +214,8 @@ void Cht_LaserFunc(player_t *p)
 
 D_CMD(CheatGod)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -251,6 +253,8 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
@@ -286,7 +290,7 @@ D_CMD(CheatNoClip)
     return true;
 }
 
-static int suicideResponse(msgresponse_t response, int /*userValue*/, void *userPointer)
+static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
 {
     if(response == MSG_YES)
     {
@@ -304,6 +308,8 @@ static int suicideResponse(msgresponse_t response, int /*userValue*/, void *user
 
 D_CMD(CheatSuicide)
 {
+    DENG2_UNUSED(src);
+
     if(G_GameState() == GS_MAP)
     {
         player_t *plr;
@@ -349,6 +355,8 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
+    DENG2_UNUSED2(src, argc);
+
     if(!cheatsEnabled())
         return false;
 
@@ -375,6 +383,8 @@ D_CMD(CheatReveal)
 
 D_CMD(CheatGive)
 {
+    DENG2_UNUSED(src);
+
     if(IS_CLIENT)
     {
         if(argc != 2)
@@ -581,12 +591,14 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
+    DENG2_UNUSED3(src, argc, argv);
     App_Log(DE2_LOG_MAP, "%i monsters killed", P_Massacre());
     return true;
 }
 
 D_CMD(CheatWhere)
 {
+    DENG2_UNUSED3(src, argc, argv);
     printDebugInfo(&players[CONSOLEPLAYER]);
     return true;
 }
@@ -596,6 +608,8 @@ D_CMD(CheatWhere)
  */
 D_CMD(CheatLeaveMap)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(!cheatsEnabled())
         return false;
 
@@ -606,6 +620,6 @@ D_CMD(CheatLeaveMap)
         return true;
     }
 
-    G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
+    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
     return true;
 }

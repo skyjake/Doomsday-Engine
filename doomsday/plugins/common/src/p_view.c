@@ -72,13 +72,15 @@
 /**
  * Calculate the walking / running height adjustment.
  */
-void P_CalcHeight(player_t* plr)
+void P_CalcHeight(player_t *plr)
 {
+#if __JHEXEN__
     int plrNum = plr - players;
+#endif
     dd_bool airborne;
     dd_bool morphed = false;
-    ddplayer_t* ddplr = plr->plr;
-    mobj_t* pmo = ddplr->mo;
+    ddplayer_t *ddplr = plr->plr;
+    mobj_t *pmo = ddplr->mo;
     coord_t target, step;
 
     // Regular movement bobbing (needs to be calculated for gun swing even

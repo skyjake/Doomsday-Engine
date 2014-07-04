@@ -1938,16 +1938,16 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  * @param source            Is the mobj to target after taking damage
  *                          creature or @c NULL.
  */
-int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP,
+int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP,
     dd_bool stomping, dd_bool skipNetworkCheck)
 {
     uint an;
     angle_t angle;
-    int i, temp, originalHealth;
+    int i, /*temp,*/ originalHealth;
     coord_t thrust;
     float saved, savedPercent;
-    player_t* player;
-    mobj_t* master;
+    player_t *player;
+    mobj_t *master;
     int damage;
 
     if(!target) return 0; // Wha?
@@ -2290,7 +2290,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
         if(player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
-        temp = (damage < 100 ? damage : 100);
+        // temp = (damage < 100 ? damage : 100); Unused?
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);

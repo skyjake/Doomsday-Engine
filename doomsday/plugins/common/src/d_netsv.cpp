@@ -27,6 +27,7 @@
 #include "player.h"
 #include "p_user.h"
 #include "p_map.h"
+#include "mapinfo.h"
 #include "mobj.h"
 #include "p_actor.h"
 #include "g_common.h"
@@ -209,25 +210,10 @@ void NetSv_Ticker()
     }
 }
 
-void NetSv_CycleToMapNum(uint map)
+static void NetSv_CycleToMapNum(de::Uri const &mapUri)
 {
-    char tmp[3], cmd[80];
-
-    sprintf(tmp, "%02u", map);
-#if __JDOOM64__
-    sprintf(cmd, "warp %u", map);
-#elif __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
-        sprintf(cmd, "warp %u", map);
-    else
-        sprintf(cmd, "warp %c %c", tmp[0], tmp[1]);
-#elif __JHERETIC__
-    sprintf(cmd, "warp %c %c", tmp[0], tmp[1]);
-#elif __JHEXEN__
-    sprintf(cmd, "warp %u", map);
-#endif
-
-    DD_Execute(false, cmd);
+    de::String const warpCommand = de::String("warp ") + mapUri.compose(de::Uri::DecodePath);
+    DD_Execute(false, warpCommand.toUtf8().constData());
 
     // In a couple of seconds, send everyone the rules of this map.
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -243,28 +229,20 @@ void NetSv_CycleToMapNum(uint map)
  * Reads through the MapCycle cvar and finds the map with the given index.
  * Rules that apply to the map are returned in 'rules'.
  */
-int NetSv_ScanCycle(int index, maprule_t *rules)
+static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 {
-    char *ptr = mapCycle, *end;
-    int i, pos = -1;
-    uint episode, map;
+    bool clear = false, has_random = false;
 
-#if __JHEXEN__
-    int m;
-#endif
-    char tmp[3], lump[10];
-    dd_bool clear = false, has_random = false;
     maprule_t dummy;
-
     if(!rules) rules = &dummy;
 
     // By default no rules apply.
     rules->usetime = rules->usefrags = false;
 
-    for(; *ptr; ptr++)
+    int pos = -1;
+    for(char *ptr = mapCycle; *ptr; ptr++)
     {
-        if(isspace(*ptr))
-            continue;
+        if(isspace(*ptr)) continue;
 
         if(*ptr == ',' || *ptr == '+' || *ptr == ';' || *ptr == '/' ||
            *ptr == '\\')
@@ -277,7 +255,8 @@ int NetSv_ScanCycle(int index, maprule_t *rules)
         {
             // Find the colon.
             while(*ptr && *ptr != ':') { ptr++; }
-            if(!*ptr) return -1;
+
+            if(!*ptr) break;
 
             if(clear)
             {
@@ -285,15 +264,18 @@ int NetSv_ScanCycle(int index, maprule_t *rules)
             }
             clear = true;
 
+            char *end;
             rules->usetime = true;
-            rules->time = strtol(ptr + 1, &end, 0);
+            rules->time    = strtol(ptr + 1, &end, 0);
+
             ptr = end - 1;
         }
         else if(!strnicmp("frags", ptr, 1))
         {
             // Find the colon.
             while(*ptr && *ptr != ':') { ptr++; }
-            if(!*ptr) return -1;
+
+            if(!*ptr) break;
 
             if(clear)
             {
@@ -301,8 +283,10 @@ int NetSv_ScanCycle(int index, maprule_t *rules)
             }
             clear = true;
 
+            char *end;
             rules->usefrags = true;
-            rules->frags = strtol(ptr + 1, &end, 0);
+            rules->frags    = strtol(ptr + 1, &end, 0);
+
             ptr = end - 1;
         }
         else if(*ptr == '*' || (*ptr >= '0' && *ptr <= '9'))
@@ -311,8 +295,9 @@ int NetSv_ScanCycle(int index, maprule_t *rules)
             pos++;
 
             // Read it.
+            char tmp[3];
             tmp[0] = *ptr++;
-            tmp[1] = *ptr;
+            tmp[1] = de::clamp('0', *ptr, '9');
             tmp[2] = 0;
 
             if(strlen(tmp) < 2)
@@ -324,76 +309,61 @@ int NetSv_ScanCycle(int index, maprule_t *rules)
 
             if(index == pos)
             {
+                // Are there randomized components?
+                // (If so make many passes to try to find an existing map).
                 if(tmp[0] == '*' || tmp[1] == '*')
                 {
                     has_random = true;
                 }
 
-                // This is the map we're looking for. Return it.
-                // But first randomize the asterisks.
-                for(i = 0; i < 100; i++) // Try many times to find a good map.
+                for(int pass = 0; pass < (has_random? 100 : 1); ++pass)
                 {
-                    // The differences in map numbering make this harder
-                    // than it should be.
-#if __JDOOM64__
-                    sprintf(lump, "MAP%u%u", episode =
-                            tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
-                            map = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
-#elif __JDOOM__
-                    if(gameModeBits & GM_ANY_DOOM2)
+                    uint episode = 0;
+                    uint map = 0;
+
+#if __JDOOM__
+                    if(!(gameModeBits & GM_ANY_DOOM2))
                     {
-                        sprintf(lump, "MAP%u%u", episode =
-                                tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
-                                map = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
+                        episode = tmp[0] == '*' ? RNG_RandByte() % 9 : tmp[0] - '0';
+                        map     = tmp[1] == '*' ? RNG_RandByte() % 9 : tmp[1] - '0';
                     }
                     else
                     {
-                        sprintf(lump, "E%uM%u", episode =
-                                tmp[0] == '*' ? 1 + RNG_RandByte() % 4 : tmp[0] - '0',
-                                map = tmp[1] == '*' ? 1 + RNG_RandByte() % 9 : tmp[1] - '0');
+                        int tens = tmp[0] == '*' ? RNG_RandByte() % 10 : tmp[0] - '0';
+                        int ones = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0';
+                        map = de::String("%1%2").arg(tens).arg(ones).toInt();
                     }
-#elif __JSTRIFE__
-                    sprintf(lump, "MAP%u%u", episode =
-                            tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
-                            map =
-                            tmp[1] ==
-                            '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
 #elif __JHERETIC__
-                    sprintf(lump, "E%uM%u", episode =
-                            tmp[0] == '*' ? 1 + RNG_RandByte() % 6 : tmp[0] - '0',
-                            map =
-                            tmp[1] == '*' ? 1 + RNG_RandByte() % 9 : tmp[1] - '0');
-#elif __JHEXEN__
-                    sprintf(lump, "%u%u", episode =
-                            tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
-                            map =
-                            tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
+                    episode = tmp[0] == '*' ? RNG_RandByte() % 9 : tmp[0] - '0';
+                    map     = tmp[1] == '*' ? RNG_RandByte() % 9 : tmp[1] - '0';
 
-                    m = P_TranslateMap(atoi(lump));
-                    if(m < 0) continue;
-
-                    sprintf(lump, "MAP%02u", m);
+#else // __JHEXEN__ || __JDOOM64__
+                    int tens = tmp[0] == '*' ? RNG_RandByte() % 10 : tmp[0] - '0';
+                    int ones = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0';
+                    map = de::String("%1%2").arg(tens).arg(ones).toInt();
 #endif
-                    if(CentralLumpIndex().findLast(de::String(lump) + ".lmp") >= 0)
+
+#if __JHEXEN__
+                    // In Hexen map numbers must be translated.
+                    map = P_TranslateMapIfExists(map);
+                    if(map == P_INVALID_LOGICAL_MAP) continue;
+#endif
+
+                    de::Uri mapUri = G_ComposeMapUri(episode, map);
+                    if(P_MapExists(mapUri.compose().toUtf8().constData()))
                     {
-                        tmp[0] = episode + '0';
-                        tmp[1] = map + '0';
-                        break;
-                    }
-                    else if(!has_random)
-                    {
-                        return -1;
+                        return mapUri;
                     }
                 }
 
-                // Convert to a number.
-                return atoi(tmp);
+                // This was the map we were looking for...
+                break;
             }
         }
     }
 
     // Didn't find it.
-    return -1;
+    return de::Uri();
 }
 
 void NetSv_TellCycleRulesToPlayerAfterTics(int destPlr, int tics)
@@ -476,9 +446,9 @@ void NetSv_MapCycleTicker()
             cycleCounter = 10 * TICSPERSEC;
 
             maprule_t rules;
-            if(NetSv_ScanCycle(cycleIndex, &rules) < 0)
+            if(NetSv_ScanCycle(cycleIndex, &rules).path().isEmpty())
             {
-                if(NetSv_ScanCycle(cycleIndex = 0, &rules) < 0)
+                if(NetSv_ScanCycle(cycleIndex = 0, &rules).path().isEmpty())
                 {
                     // Hmm?! Abort cycling.
                     App_Log(DE2_MAP_WARNING, "All of a sudden MapCycle is invalid; stopping cycle");
@@ -532,12 +502,12 @@ void NetSv_MapCycleTicker()
         else if(cycleCounter <= 0)
         {
             // Next map, please!
-            int map = NetSv_ScanCycle(++cycleIndex, NULL);
-            if(map < 0)
+            de::Uri mapUri = NetSv_ScanCycle(++cycleIndex);
+            if(mapUri.path().isEmpty())
             {
                 // Must be past the end?
-                map = NetSv_ScanCycle(cycleIndex = 0, NULL);
-                if(map < 0)
+                mapUri = NetSv_ScanCycle(cycleIndex = 0);
+                if(mapUri.path().isEmpty())
                 {
                     // Hmm?! Abort cycling.
                     App_Log(DE2_MAP_WARNING, "All of a sudden MapCycle is invalid; stopping cycle");
@@ -547,7 +517,7 @@ void NetSv_MapCycleTicker()
             }
 
             // Warp to the next map. Don't bother with the intermission.
-            NetSv_CycleToMapNum(map);
+            NetSv_CycleToMapNum(mapUri);
         }
         break;
     }
@@ -632,8 +602,8 @@ void NetSv_Intermission(int flags, int state, int time)
         Writer_WriteUInt16(msg, wmInfo.maxKills);
         Writer_WriteUInt16(msg, wmInfo.maxItems);
         Writer_WriteUInt16(msg, wmInfo.maxSecret);
-        Writer_WriteByte(msg, wmInfo.nextMap);
-        Writer_WriteByte(msg, wmInfo.currentMap);
+        Writer_WriteByte(msg, G_MapNumberFor(wmInfo.nextMap));
+        Writer_WriteByte(msg, G_MapNumberFor(wmInfo.currentMap));
         Writer_WriteByte(msg, wmInfo.didSecret);
     }
 #endif
@@ -706,8 +676,8 @@ void NetSv_SendGameState(int flags, int to)
         Uri_Write(reinterpret_cast<Uri *>(&gameMapUri), writer);
 
         // Also include the episode and map numbers.
-        Writer_WriteByte(writer, gameEpisode);
-        Writer_WriteByte(writer, gameMap);
+        Writer_WriteByte(writer, G_EpisodeNumberFor(gameMapUri));
+        Writer_WriteByte(writer, G_MapNumberFor(gameMapUri));
 
         Writer_WriteByte(writer, (COMMON_GAMESESSION->rules().deathmatch & 0x3)
             | (!COMMON_GAMESESSION->rules().noMonsters? 0x4 : 0)
@@ -1541,8 +1511,8 @@ D_CMD(MapCycle)
     if(!stricmp(argv[0], "startcycle")) // (Re)start rotation?
     {
         // Find the first map in the sequence.
-        int map = NetSv_ScanCycle(cycleIndex = 0, 0);
-        if(map < 0)
+        de::Uri mapUri = NetSv_ScanCycle(cycleIndex = 0);
+        if(mapUri.path().isEmpty())
         {
             App_Log(DE2_SCR_ERROR, "MapCycle \"%s\" is invalid.", mapCycle);
             return false;
@@ -1552,7 +1522,7 @@ D_CMD(MapCycle)
             cycleRulesCounter[i] = 0;
         }
         // Warp there.
-        NetSv_CycleToMapNum(map);
+        NetSv_CycleToMapNum(mapUri);
         cyclingMaps = true;
     }
     else

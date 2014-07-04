@@ -1447,12 +1447,12 @@ void C_DECL A_CFlamePuff(mobj_t* mo)
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
 }
 
-void C_DECL A_CFlameMissile(mobj_t* mo)
+void C_DECL A_CFlameMissile(mobj_t *mo)
 {
     int i;
-    uint an, an90;
+    uint an;// an90;
     coord_t dist;
-    mobj_t* pmo;
+    mobj_t *pmo;
 
     if(!mo) return;
 
@@ -1466,7 +1466,7 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
         for(i = 0; i < 4; ++i)
         {
             an = (i * ANG45) >> ANGLETOFINESHIFT;
-            an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
+            //an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
 
             if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
                                      tmBlockingMobj->origin[VX] + dist * FIX2FLT(finecosine[an]),
@@ -1598,14 +1598,12 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
     }
 }
 
-void C_DECL A_CHolyAttack(player_t* plr, pspdef_t* psp)
+void C_DECL A_CHolyAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *pmo;
-
     if(IS_CLIENT) return;
 
     P_ShotAmmo(plr);
-    pmo = P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
+    P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
     plr->damageCount = 0;
     plr->bonusCount = 0;
 

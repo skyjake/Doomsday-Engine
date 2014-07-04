@@ -31,6 +31,7 @@
 #include "g_common.h"
 #include "gamesession.h"
 #include "r_common.h"
+#include "mapinfo.h"
 #include "p_actor.h"
 #include "p_scroll.h"
 #include "p_start.h"
@@ -680,10 +681,8 @@ static void initFog(ddmapinfo_t *ddMapInfo)
 #endif
 }
 
-void P_SetupMap(uri_s const *mapUri)
+void P_SetupMap(de::Uri const &mapUri)
 {
-    DENG2_ASSERT(mapUri != 0);
-
     if(IS_DEDICATED)
     {
         // Whenever the map changes, update the game rule config.
@@ -721,21 +720,16 @@ void P_SetupMap(uri_s const *mapUri)
     // Initialize the logical sound manager.
     S_MapChange();
 
-    AutoStr *mapUriStr = Uri_Compose(mapUri);
-    if(!P_MapChange(Str_Text(mapUriStr)))
+    if(!P_MapChange(mapUri.compose().toUtf8().constData()))
     {
-        AutoStr *path = Uri_ToString(mapUri);
-        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", Str_Text(path));
+        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());
         exit(1); // Unreachable.
     }
 
     // Is MapInfo data available for this map?
-    {
-        AutoStr *mapUriStr = Uri_Compose(mapUri);
-        ddmapinfo_t mapInfo;
-        bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
-        initFog(haveMapInfo? &mapInfo : 0);
-    }
+    ddmapinfo_t mapInfo;
+    bool const haveMapInfo = Def_Get(DD_DEF_MAP_INFO, mapUri.compose().toUtf8().constData(), &mapInfo);
+    initFog(haveMapInfo? &mapInfo : 0);
 
     // Make sure the game is paused for the requested period.
     Pause_MapStarted();
@@ -744,10 +738,11 @@ void P_SetupMap(uri_s const *mapUri)
     mapSetup = false;
 }
 
-typedef struct {
+struct mobjtype_precachedata_t
+{
     mobjtype_t type;
     int gameModeBits;
-} mobjtype_precachedata_t;
+};
 
 static void precacheResources()
 {
@@ -911,10 +906,11 @@ static void precacheResources()
 #endif
 }
 
-void P_FinalizeMapChange(uri_s const *uri)
+void P_FinalizeMapChange(uri_s const *mapUri_)
 {
+    de::Uri const &mapUri = *reinterpret_cast<de::Uri const *>(mapUri_);
 #if !__JHEXEN__
-    DENG_UNUSED(uri);
+    DENG2_UNUSED(mapUri);
 #endif
 
     initXLines();
@@ -936,7 +932,7 @@ void P_FinalizeMapChange(uri_s const *uri)
     if(!IS_CLIENT)
     {
         /// @todo Should be translated by the map converter.
-        lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(String(Str_Text(Uri_Path(uri))) + ".lmp");
+        lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
         lumpnum_t acsLumpNum = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
         if(acsLumpNum < CentralLumpIndex().size())
         {
@@ -968,7 +964,7 @@ void P_FinalizeMapChange(uri_s const *uri)
 #endif
 
 #if __JHEXEN__
-    P_InitSky(uri);
+    P_InitSky(mapUri);
 #endif
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.
@@ -1033,7 +1029,7 @@ void P_ResetWorldState()
     static int firstFragReset = 1;
 #endif
 
-    nextMap = 0;
+    nextMapUri.clear();
 
 #if __JDOOM__ || __JDOOM64__
     wmInfo.maxFrags = 0;
@@ -1100,116 +1096,6 @@ void P_ResetWorldState()
     // The pointers in the body queue are now invalid.
     P_ClearBodyQueue();
 #endif
-}
-
-char const *P_MapTitle(uri_s const *mapUri_)
-{
-    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
-    if(!mapUri) mapUri = &gameMapUri;
-
-    char const *title = 0;
-
-    // Perhaps a MapInfo definition exists for the map?
-    ddmapinfo_t mapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
-    {
-        if(mapInfo.name[0])
-        {
-            // Perhaps the title string is a reference to a Text definition?
-            void *ptr;
-            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
-            {
-                title = (char const *) ptr; // Yes, use the resolved text string.
-            }
-            else
-            {
-                title = mapInfo.name;
-            }
-        }
-    }
-
-#if __JHEXEN__
-    // In Hexen we can also look in MAPINFO for the map title.
-    if(!title)
-    {
-        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
-        {
-            title = mapInfo->title;
-        }
-    }
-#endif
-
-    if(!title || !title[0])
-        return 0;
-
-    // Skip the "ExMx" part, if present.
-    if(char const *ptr = strchr(title, ':'))
-    {
-        title = ptr + 1;
-        while(*title && isspace(*title))
-        {
-            title++;
-        }
-    }
-
-    return title;
-}
-
-char const *P_MapAuthor(uri_s const *mapUri, dd_bool supressGameAuthor)
-{
-    if(!mapUri) mapUri = reinterpret_cast<uri_s const *>(&gameMapUri);
-
-    AutoStr *path = Uri_Resolved(mapUri);
-    if(!path || Str_IsEmpty(path))
-        return 0;
-
-    // Perhaps a MapInfo definition exists for the map?
-    ddmapinfo_t mapInfo;
-    char const *author = 0;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(path), &mapInfo))
-    {
-        author = mapInfo.author;
-    }
-
-    if(!author || !author[0])
-        return 0;
-
-    // Should we suppress the author?
-    /// @todo Do not do this here.
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    if(supressGameAuthor || P_MapIsCustom(Str_Text(path)))
-    {
-        if(!Str_CompareIgnoreCase(gameInfo.author, author))
-            return 0;
-    }
-
-    return author;
-}
-
-patchid_t P_MapTitlePatch(uri_s const *mapUri_)
-{
-    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
-    if(!mapUri) mapUri = &gameMapUri;
-
-#if __JDOOM__ || __JDOOM64__
-    uint map = G_MapNumberFor(*mapUri);
-#  if __JDOOM__
-    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
-    {
-        uint episode = G_EpisodeNumberFor(*mapUri);
-        map = (episode * 9) + map;
-    }
-#  endif
-    if(map < pMapNamesSize)
-    {
-        return pMapNames[map];
-    }
-#else
-    DENG2_UNUSED(mapUri);
-#endif
-
-    return 0;
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__

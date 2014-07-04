@@ -40,12 +40,10 @@
 #include "hu_msg.h"
 #include "hu_pspr.h"
 #include "hu_stuff.h"
+#include "mapinfo.h"
 #include "p_actor.h"
 #include "p_inventory.h"
 #include "p_map.h"
-#if __JHEXEN__
-#  include "p_mapinfo.h"
-#endif
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 #include "p_savedef.h"
@@ -86,6 +84,9 @@ D_CMD(HelpScreen);
 
 D_CMD(ListMaps);
 D_CMD(WarpMap);
+#if __JDOOM__ || __JHERETIC__
+D_CMD(WarpEpisodeMap);
+#endif
 
 D_CMD(LoadSession);
 D_CMD(SaveSession);
@@ -105,24 +106,16 @@ void G_StopDemo();
  */
 void G_UpdateGSVarsForPlayer(player_t *pl);
 
-/**
- * Updates game status cvars for the current map.
- */
-void G_UpdateGSVarsForMap();
-
 void R_LoadVectorGraphics();
 
 int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
-uint gameEpisode;
-
 de::Uri gameMapUri;
-uint gameMapEntrance; ///< Entry point, for reborn.
-uint gameMap;
+uint gameMapEntrance;  ///< Entry point, for reborn.
 
-uint nextMap;
+de::Uri nextMapUri;
 uint nextMapEntrance;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -163,11 +156,7 @@ int bodyQueueSlot;
 static SaveSlots *sslots;
 
 // vars used with game status cvars
-int gsvEpisode;
-int gsvMap;
-#if __JHEXEN__
-int gsvHub;
-#endif
+
 char *gsvMapAuthor;// = "Unknown";
 int gsvMapMusic = -1;
 char *gsvMapTitle;// = "Unknown";
@@ -211,11 +200,6 @@ cvartemplate_t gamestatusCVars[] =
 #endif
 
     {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0, 0},
-    {"map-episode", READONLYCVAR, CVT_INT, &gsvEpisode, 0, 0, 0},
-#if __JHEXEN__
-    {"map-hub", READONLYCVAR, CVT_INT, &gsvHub, 0, 0, 0},
-#endif
-    {"map-id", READONLYCVAR, CVT_INT, &gsvMap, 0, 0, 0},
     {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0, 0},
     {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapTitle, 0, 0, 0},
 
@@ -347,7 +331,6 @@ ccmdtemplate_t gameCmds[] = {
     { "endgame",         "s",    CCmdEndSession, 0 },
     { "endgame",         "",     CCmdEndSession, 0 },
     { "helpscreen",      "",     CCmdHelpScreen, 0 },
-    { "listmaps",        "",     CCmdListMaps, 0 },
     { "loadgame",        "ss",   CCmdLoadSession, 0 },
     { "loadgame",        "s",    CCmdLoadSession, 0 },
     { "loadgame",        "",     CCmdOpenLoadMenu, 0 },
@@ -385,15 +368,15 @@ void G_Register()
         Con_AddCommand(gameCmds + i);
     }
 
-    C_CMD("warp", "i", WarpMap);
-    C_CMD("setmap", "i", WarpMap); // alias
+    C_CMD("warp", "s", WarpMap);
+    C_CMD("setmap", "s", WarpMap); // alias
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__
     if(!(gameModeBits & GM_ANY_DOOM2))
 # endif
     {
-        C_CMD("warp", "ii", WarpMap);
-        C_CMD("setmap", "ii", WarpMap); // alias
+        C_CMD("warp", "ii", WarpEpisodeMap);
+        C_CMD("setmap", "ii", WarpEpisodeMap); // alias
     }
 #endif
 }
@@ -473,19 +456,20 @@ bool G_SetGameActionLoadSession(de::String slotId)
     return false;
 }
 
-void G_SetGameActionMapCompleted(uint newMap, uint _entryPoint, dd_bool _secretExit)
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntrance, dd_bool secretExit)
 {
 #if __JHEXEN__
-    DENG2_UNUSED(_secretExit);
+    DENG2_UNUSED(secretExit);
 #else
-    DENG2_UNUSED2(newMap, _entryPoint);
+    DENG2_UNUSED2(nextMapUri, nextMapEntrance);
 #endif
 
     if(IS_CLIENT) return;
     if(cyclingMaps && mapCycleNoExit) return;
 
 #if __JHEXEN__
-    if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
+    if((gameMode == hexen_betademo || gameMode == hexen_demo) &&
+       !nextMapUri.path().isEmpty() && G_MapNumberFor(nextMapUri) > 3)
     {
         // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
@@ -494,25 +478,30 @@ void G_SetGameActionMapCompleted(uint newMap, uint _entryPoint, dd_bool _secretE
 #endif
 
 #if __JHEXEN__
-    nextMap         = newMap;
-    nextMapEntrance = _entryPoint;
+    ::nextMapUri      = nextMapUri;
+    ::nextMapEntrance = nextMapEntrance;
 #else
-    secretExit      = _secretExit;
+    ::secretExit      = secretExit;
 
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
-    if(secretExit && (gameModeBits & GM_ANY_DOOM2))
+    /// @todo Don't do this here - move to G_NextMapNumber()
+    if(::secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
-        de::Uri mapUri = G_ComposeMapUri(0, 30);
-        if(!P_MapExists(mapUri.compose().toUtf8().constData()))
+        if(!P_MapExists(de::Uri("Maps:MAP31", RC_NULL).compose().toUtf8().constData()))
         {
-            secretExit = false;
+            ::secretExit = false;
         }
     }
 # endif
 #endif
 
     G_SetGameAction(GA_MAPCOMPLETED);
+}
+
+void G_SetGameActionMapCompletedAndSetNextMap()
+{
+    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
 }
 
 static void initSaveSlots()
@@ -1198,22 +1187,23 @@ static void printMapBanner()
 {
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 
-    if(char const *title = P_MapTitle(0/*current map*/))
+    String const title = G_MapTitle(); // current map
+    if(!title.isEmpty())
     {
-        de::String text = de::String("Map: ") + gameMapUri.asText();
+        String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
         mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
-        text += de::String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
+        text += String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
 #endif
-        text += de::String(" - " DE2_ESC(b)) + title;
+        text += String(" - " DE2_ESC(b)) + title;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
     }
 
 #if !__JHEXEN__
-    char const *author = P_MapAuthor(0/*current map*/, P_MapIsCustom(gameMapUri.compose().toUtf8().constData()));
-    if(!author) author = "Unknown";
+    String author = G_MapAuthor(0/*current map*/, P_MapIsCustom(gameMapUri.compose().toUtf8().constData()));
+    if(author.isEmpty()) author = "Unknown";
 
-    App_Log(DE2_LOG_NOTE, "Author: %s", author);
+    App_Log(DE2_LOG_NOTE, "Author: %s", author.toUtf8().constData());
 #endif
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 }
@@ -1229,7 +1219,15 @@ void G_BeginMap()
     }
 
     G_ControlReset(-1); // Clear all controls for all local players.
-    G_UpdateGSVarsForMap();
+
+    // Update the game status cvars for the current map.
+    String mapAuthor = G_MapAuthor(); // current map
+    if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
+    Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+
+    String mapTitle = G_MapTitle(); // current map
+    if(mapTitle.isEmpty()) mapTitle = "Unknown";
+    Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
 
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;
@@ -1351,18 +1349,6 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
             gsvInvItems[i] = 0;
     }
 #endif
-}
-
-void G_UpdateGSVarsForMap()
-{
-    char const *mapAuthor = P_MapAuthor(0/*current map*/, false/*don't supress*/);
-    char const *mapTitle  = P_MapTitle(0/*current map*/);
-
-    if(!mapAuthor) mapAuthor = "Unknown";
-    Con_SetString2("map-author", mapAuthor, SVF_WRITE_OVERRIDE);
-
-    if(!mapTitle) mapTitle = "Unknown";
-    Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
 }
 
 static sfxenum_t randomQuitSound()
@@ -1551,7 +1537,7 @@ static void runGameAction()
             {
 #if __JDOOM__
                 // Has the secret map been completed?
-                if(gameMap == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
+                if(G_MapNumberFor(gameMapUri) == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
                 {
                     for(int i = 0; i < MAXPLAYERS; ++i)
                     {
@@ -1560,7 +1546,7 @@ static void runGameAction()
                 }
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-                nextMap = G_NextLogicalMapNumber(secretExit);
+                nextMapUri = G_NextMap(secretExit);
 #endif
 
                 G_IntermissionBegin();
@@ -1802,9 +1788,8 @@ void G_PlayerLeaveMap(int player)
 
 #if __JHEXEN__
     dd_bool newHub = true;
-    if(nextMap != DDMAXINT)
+    if(!nextMapUri.path().isEmpty())
     {
-        de::Uri nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
         newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(&nextMapUri)->hub);
     }
 #endif
@@ -2032,7 +2017,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    if(gameMap == 8 || secret)
+    if(G_MapNumberFor(gameMapUri) == 8 || secret)
     {
         p->didSecret = true;
     }
@@ -2133,29 +2118,29 @@ byte G_Ruleset_RespawnMonsters()
 dd_bool G_IfVictory()
 {
 #if __JDOOM64__
-    if(gameMap == 27)
+    if(G_MapNumberFor(gameMapUri) == 27)
     {
         return true;
     }
 #elif __JDOOM__
     if(gameMode == doom_chex)
     {
-        if(gameMap == 4)
+        if(G_MapNumberFor(gameMapUri) == 4)
         {
             return true;
         }
     }
-    else if((gameModeBits & GM_ANY_DOOM) && gameMap == 7)
+    else if((gameModeBits & GM_ANY_DOOM) && G_MapNumberFor(gameMapUri) == 7)
     {
         return true;
     }
 #elif __JHERETIC__
-    if(gameMap == 7)
+    if(G_MapNumberFor(gameMapUri) == 7)
     {
         return true;
     }
 #elif __JHEXEN__
-    if(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT)
+    if(nextMapUri.path().isEmpty())
     {
         return true;
     }
@@ -2166,24 +2151,23 @@ dd_bool G_IfVictory()
 static int prepareIntermission(void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    wmInfo.episode    = gameEpisode;
-    wmInfo.currentMap = gameMap;
-    wmInfo.nextMap    = nextMap;
+    wmInfo.currentMap = gameMapUri;
+    wmInfo.nextMap    = nextMapUri;
     wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__
-    wmInfo.maxKills   = totalKills;
-    wmInfo.maxItems   = totalItems;
-    wmInfo.maxSecret  = totalSecret;
+    wmInfo.maxKills   = de::max(1, totalKills);
+    wmInfo.maxItems   = de::max(1, totalItems);
+    wmInfo.maxSecret  = de::max(1, totalSecret);
 
     G_PrepareWIData();
 # endif
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    WI_Init(&wmInfo);
+    WI_Init(wmInfo);
 #elif __JHERETIC__
-    IN_Init(&wmInfo);
+    IN_Init(wmInfo);
 #else /* __JHEXEN__ */
     IN_Init();
 #endif
@@ -2266,7 +2250,7 @@ void G_IntermissionBegin()
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     NetSv_Intermission(IMF_BEGIN, 0, 0);
 #else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntrance);
+    NetSv_Intermission(IMF_BEGIN, (int) G_MapNumberFor(nextMapUri), (int) nextMapEntrance);
 #endif
 
     S_PauseMusic(false);
@@ -2275,7 +2259,7 @@ void G_IntermissionBegin()
 void G_IntermissionDone()
 {
     // We have left Intermission, however if there is an InFine for debriefing we should run it now.
-    if(G_StartFinale(G_InFineDebriefing(&gameMapUri), 0, FIMODE_AFTER, 0))
+    if(G_StartFinale(G_InFineDebriefing()/*current map*/, 0, FIMODE_AFTER, 0))
     {
         // The GA_ENDDEBRIEFING action is taken after the debriefing stops.
         return;
@@ -2320,20 +2304,20 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
     de::String description;
 
     // Include the source file name, for custom maps.
-    de::String mapPath = gameMapUri.compose();
-    if(P_MapIsCustom(mapPath.toUtf8().constData()))
+    de::String mapUriAsText = gameMapUri.compose();
+    if(P_MapIsCustom(mapUriAsText.toUtf8().constData()))
     {
-        de::String const &mapSourcePath = de::String(Str_Text(P_MapSourceFile(mapPath.toUtf8().constData())));
+        de::String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText.toUtf8().constData())));
         description += mapSourcePath.fileNameWithoutExtension() + ":";
     }
 
     // Include the map title.
-    de::String mapTitle = de::String(P_MapTitle(0/*current map*/));
+    de::String mapTitle = G_MapTitle(); // current map
     // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
     /// @todo Move this logic engine-side.
     if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')
     {
-        mapTitle = mapPath;
+        mapTitle = gameMapUri.path();
     }
     description += mapTitle;
 
@@ -2354,14 +2338,14 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
 uint G_EpisodeNumberFor(de::Uri const &mapUri)
 {
 #if __JDOOM__ || __JHERETIC__
-    de::String path = mapUri.resolved();
+    String path = mapUri.path();
     if(!path.isEmpty())
     {
 # if __JDOOM__
         if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if(path.at(0) == 'E' && path.at(2) == 'M')
+            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
                 return path.substr(1, 1).toInt() - 1;
             }
@@ -2376,7 +2360,7 @@ uint G_EpisodeNumberFor(de::Uri const &mapUri)
 /// @todo Get this from MAPINFO
 uint G_MapNumberFor(de::Uri const &mapUri)
 {
-    de::String path = mapUri.resolved();
+    String path = mapUri.path();
     if(!path.isEmpty())
     {
 #if __JDOOM__ || __JHERETIC__
@@ -2384,13 +2368,13 @@ uint G_MapNumberFor(de::Uri const &mapUri)
         if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if(path.at(0) == 'E' && path.at(2) == 'M')
+            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
                 return path.substr(3).toInt() - 1;
             }
         }
 #endif
-        if(path.beginsWith("MAP"))
+        if(path.beginsWith("map", Qt::CaseInsensitive))
         {
             return path.substr(3).toInt() - 1;
         }
@@ -2398,185 +2382,56 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
+uint G_CurrentEpisodeNumber()
 {
-    if(response == MSG_YES)
-    {
-        G_SetGameAction(GA_QUIT);
-    }
-    return true;
+    return G_EpisodeNumberFor(gameMapUri);
 }
 
-void G_QuitGame()
+uint G_CurrentMapNumber()
 {
-    if(G_QuitInProgress()) return;
-
-    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
-    {
-        // User has re-tried to quit with "quit" when the question is already on
-        // the screen. Apparently we should quit...
-        DD_Execute(true, "quit!");
-        return;
-    }
-
-    char const *endString;
-#if __JDOOM__ || __JDOOM64__
-    endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
-#else
-    endString = GET_TXT(TXT_QUITMSG);
-#endif
-
-    Con_Open(false);
-    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
-}
-
-uint G_LogicalMapNumber(uint episode, uint map)
-{
-#if __JHEXEN__
-    return P_TranslateMap(map);
-    DENG_UNUSED(episode);
-#elif __JDOOM64__
-    return map;
-    DENG_UNUSED(episode);
-#else
-# if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        return map;
-    else
-# endif
-    {
-        return map + episode * 9; // maps per episode.
-    }
-#endif
-}
-
-uint G_CurrentLogicalMapNumber()
-{
-    return G_LogicalMapNumber(gameEpisode, gameMap);
+    return G_MapNumberFor(gameMapUri);
 }
 
 de::Uri G_ComposeMapUri(uint episode, uint map)
 {
     de::String mapId;
 #if __JDOOM64__
-    mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
-        mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
+        mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
     else
-        mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
+        mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
 #elif  __JHERETIC__
-    mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
+    mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
 #else
-    mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #endif
-    return de::Uri(mapId, RC_NULL);
+    return de::Uri("Maps", mapId);
 }
 
-dd_bool G_ValidateMap(uint *episode, uint *map)
-{
-    bool ok = true;
-
-#if __JDOOM__
-    if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM_CHEX))
-    {
-        if(*episode != 0)
-        {
-            *episode = 0;
-            ok = false;
-        }
-    }
-    else
-    {
-        if(*episode > 8)
-        {
-            *episode = 8;
-            ok = false;
-        }
-    }
-
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-    {
-        if(*map > 98)
-        {
-            *map = 98;
-            ok = false;
-        }
-    }
-    else
-    {
-        if(*map > 8)
-        {
-            *map = 8;
-            ok = false;
-        }
-    }
-#elif __JHERETIC__
-    if(gameModeBits & GM_HERETIC_SHAREWARE)
-    {
-        if(*episode != 0)
-        {
-            *episode = 0;
-            ok = false;
-        }
-    }
-    else
-    {
-        if(*episode > 8)
-        {
-            *episode = 8;
-            ok = false;
-        }
-    }
-
-    if(*map > 8)
-    {
-        *map = 8;
-        ok = false;
-    }
-#else
-    if(*map > 98)
-    {
-        *map = 98;
-        ok = false;
-    }
-#endif
-
-    // Check that the map truly exists.
-    de::Uri uri = G_ComposeMapUri(*episode, *map);
-    if(!P_MapExists(uri.compose().toUtf8().constData()))
-    {
-        // (0,0) should exist always?
-        *episode = 0;
-        *map     = 0;
-        ok = false;
-    }
-
-    return ok;
-}
-
-uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
+de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    de::Uri mapUri = G_ComposeMapUri(episode, map);
-    return G_LogicalMapNumber(episode, P_MapInfo(&mapUri)->nextMap);
-
+    return G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
-    DENG2_UNUSED(episode);
+    uint episode = G_EpisodeNumberFor(gameMapUri);
+    uint map     = G_MapNumberFor(gameMapUri);
 
     if(secretExit)
     {
         switch(map)
         {
-        case 0: return 31;
-        case 3: return 28;
-        case 11: return 29;
-        case 17: return 30;
-        case 31: return 0;
+        case 0:  map = 31; break;
+        case 3:  map = 28; break;
+        case 11: map = 29; break;
+        case 17: map = 30; break;
+        case 31: map =  0; break;
+
         default:
             App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map + 1);
             break;
@@ -2585,26 +2440,33 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
 
     switch(map)
     {
-    case 23: return 27;
-    case 31: return 0;
-    case 28: return 4;
-    case 29: return 12;
-    case 30: return 18;
-    case 24: return 0;
-    case 25: return 0;
-    case 26: return 0;
-    default:
-        return map + 1;
+    case 23: map = 27; break;
+    case 31: map = 0;  break;
+    case 28: map = 4;  break;
+    case 29: map = 12; break;
+    case 30: map = 18; break;
+    case 24: map = 0;  break;
+    case 25: map = 0;  break;
+    case 26: map = 0;  break;
+
+    default: map += 1; break;
     }
+
+    return G_ComposeMapUri(episode, map);
+
 #elif __JDOOM__
+    uint episode = G_EpisodeNumberFor(gameMapUri);
+    uint map     = G_MapNumberFor(gameMapUri);
+
     if(gameModeBits & GM_ANY_DOOM2)
     {
         if(secretExit)
         {
             switch(map)
             {
-            case 14: return 30;
-            case 30: return 31;
+            case 14: map = 30; break;
+            case 30: map = 31; break;
+
             default:
                App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map+1);
                break;
@@ -2614,139 +2476,183 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
         switch(map)
         {
         case 30:
-        case 31: return 15;
-        default:
-            return map + 1;
+        case 31: map = 15; break;
+
+        default: map += 1; break;
         }
+
+        return G_ComposeMapUri(episode, map);
     }
     else if(gameMode == doom_chex)
     {
-        return map + 1; // Go to next map.
+        return G_ComposeMapUri(episode, map + 1); // Go to next map.
     }
     else
     {
+        // Going to the secret map?
         if(secretExit && map != 8)
-            return 8; // Go to secret map.
+        {
+            return G_ComposeMapUri(episode, 8);
+        }
 
         switch(map)
         {
         case 8: // Returning from secret map.
             switch(episode)
             {
-            case 0: return 3;
-            case 1: return 5;
-            case 2: return 6;
-            case 3: return 2;
+            case 0: map = 3; break;
+            case 1: map = 5; break;
+            case 2: map = 6; break;
+            case 3: map = 2; break;
+
             default:
                 Con_Error("G_NextMap: Invalid episode num #%u!", episode);
+                exit(0); // Unreachable
             }
-            return 0; // Unreachable
-        default:
-            return map + 1; // Go to next map.
+            break;
+
+        default: map += 1; break; // Go to next map.
         }
+
+        return G_ComposeMapUri(episode, map);
     }
+
 #elif __JHERETIC__
+    uint episode = G_EpisodeNumberFor(gameMapUri);
+    uint map     = G_MapNumberFor(gameMapUri);
+
+    // Going to the secret map?
     if(secretExit && map != 8)
-        return 8; // Go to secret map.
+    {
+        return G_ComposeMapUri(episode, 8);
+    }
 
     switch(map)
     {
     case 8: // Returning from secret map.
         switch(episode)
         {
-        case 0: return 6;
-        case 1: return 4;
-        case 2: return 4;
-        case 3: return 4;
-        case 4: return 3;
+        case 0: map = 6; break;
+        case 1: map = 4; break;
+        case 2: map = 4; break;
+        case 3: map = 4; break;
+        case 4: map = 3; break;
+
         default:
             Con_Error("G_NextMap: Invalid episode num #%u!", episode);
+            exit(0); // Unreachable
         }
-        return 0; // Unreachable
-    default:
-        return map + 1; // Go to next map.
+        break;
+
+    default: map += 1; break; // Go to next map.
     }
+
+    return G_ComposeMapUri(episode, map);
 #endif
 }
 
-uint G_NextLogicalMapNumber(dd_bool secretExit)
+String G_MapTitle(de::Uri const *mapUri)
 {
-    return G_GetNextMap(gameEpisode, gameMap, secretExit);
-}
+    if(!mapUri) mapUri = &gameMapUri;
 
-/**
- * Print a list of maps and the WAD files where they are from.
- */
-void G_PrintFormattedMapList(uint episode, char const **files, uint count)
-{
-    char const *current = 0;
-    uint rangeStart = 0;
+    String title;
 
-    for(uint i = 0; i < count; ++i)
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
     {
-        if(!current && files[i])
+        if(mapInfo.name[0])
         {
-            current = files[i];
-            rangeStart = i;
-        }
-        else if(current && (!files[i] || stricmp(current, files[i])))
-        {
-            // Print a range.
-            uint len = i - rangeStart;
-            LogBuffer_Printf(DE2_RES_MSG, "  "); // Indentation.
-            if(len <= 2)
+            // Perhaps the title string is a reference to a Text definition?
+            void *ptr;
+            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
             {
-                for(uint k = rangeStart; k < i; ++k)
-                {
-                    char const *separator = (k != i - 1) ? "," : "";
-                    LogBuffer_Printf(DE2_RES_MSG, "%s%s", G_ComposeMapUri(episode, k).asText().toUtf8().constData(),
-                                                          separator);
-                }
+                title = (char const *) ptr; // Yes, use the resolved text string.
             }
             else
             {
-                LogBuffer_Printf(DE2_RES_MSG, "%s-", G_ComposeMapUri(episode, rangeStart).asText().toUtf8().constData());
-                LogBuffer_Printf(DE2_RES_MSG, "%s",  G_ComposeMapUri(episode, i - 1     ).asText().toUtf8().constData());
+                title = mapInfo.name;
             }
-            LogBuffer_Printf(DE2_RES_MSG, " " DE2_ESC(2) DE2_ESC(>) "%s\n", F_PrettyPath(current));
-
-            // Moving on to a different file.
-            current = files[i];
-            rangeStart = i;
         }
     }
-}
 
-void G_PrintMapList()
-{
-#if __JDOOM__
-    uint maxEpisodes       = (gameModeBits & GM_ANY_DOOM)? 9 : 1;
-    uint maxMapsPerEpisode = (gameModeBits & GM_ANY_DOOM)? 9 : 99;
-#elif __JHERETIC__
-    uint maxEpisodes       = 9;
-    uint maxMapsPerEpisode = 9;
-#else
-    uint maxEpisodes       = 1;
-    uint maxMapsPerEpisode = 99;
+#if __JHEXEN__
+    // In Hexen we can also look in MAPINFO for the map title.
+    if(title.isEmpty())
+    {
+        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
+        {
+            title = mapInfo->title;
+        }
+    }
 #endif
 
-    char const *sourceList[100];
-
-    for(uint episode = 0; episode < maxEpisodes; ++episode)
+    // Skip the "ExMx" part, if present.
+    int idSuffixAt = title.indexOf(':');
+    if(idSuffixAt >= 0)
     {
-        de::zap(sourceList);
+        int subStart = idSuffixAt + 1;
+        while(subStart < title.length() && title.at(subStart).isSpace()) { subStart++; }
 
-        // Find the name of each map (not all may exist).
-        for(uint map = 0; map < maxMapsPerEpisode; ++map)
-        {
-            AutoStr *path = P_MapSourceFile(G_ComposeMapUri(episode, map).compose().toUtf8().constData());
-            if(!Str_IsEmpty(path))
-            {
-                sourceList[map] = Str_Text(path);
-            }
-        }
-        G_PrintFormattedMapList(episode, sourceList, 99);
+        return title.substr(subStart);
     }
+
+    return title;
+}
+
+String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor)
+{
+    if(!mapUri) mapUri = &gameMapUri;
+
+    String mapUriAsText = mapUri->resolved();
+    if(mapUriAsText.isEmpty()) return ""; // Huh??
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    String author;
+    if(Def_Get(DD_DEF_MAP_INFO, mapUriAsText.toUtf8().constData(), &mapInfo))
+    {
+        author = mapInfo.author;
+    }
+
+    if(!author.isEmpty())
+    {
+        // Should we suppress the author?
+        /// @todo Do not do this here.
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        if(supressGameAuthor || P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+        {
+            if(!author.compareWithoutCase(Str_Text(gameInfo.author)))
+                return "";
+        }
+    }
+
+    return author;
+}
+
+patchid_t G_MapTitlePatch(de::Uri const *mapUri)
+{
+    if(!mapUri) mapUri = &gameMapUri;
+
+#if __JDOOM__ || __JDOOM64__
+    uint map = G_MapNumberFor(*mapUri);
+#  if __JDOOM__
+    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
+    {
+        uint episode = G_EpisodeNumberFor(*mapUri);
+        map = (episode * 9) + map;
+    }
+#  endif
+    if(map < pMapNamesSize)
+    {
+        return pMapNames[map];
+    }
+#else
+    DENG2_UNUSED(mapUri);
+#endif
+
+    return 0;
 }
 
 char const *G_InFine(char const *scriptId)
@@ -2761,11 +2667,10 @@ char const *G_InFine(char const *scriptId)
 
 char const *G_InFineBriefing(de::Uri const *mapUri)
 {
-    DENG2_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = &gameMapUri;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled)
-        return 0;
+    if(briefDisabled) return 0;
 
     if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
         return 0;
@@ -2781,17 +2686,14 @@ char const *G_InFineBriefing(de::Uri const *mapUri)
 
 char const *G_InFineDebriefing(de::Uri const *mapUri)
 {
-    DENG2_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = &gameMapUri;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled)
-        return 0;
+    if(briefDisabled) return 0;
 
 #if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
-       !(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT))
+    if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !nextMapUri.path().isEmpty())
     {
-        de::Uri nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
         if(P_MapInfo(mapUri)->hub != P_MapInfo(&nextMapUri)->hub)
         {
             return 0;
@@ -2858,6 +2760,38 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
     }
 
     return true;
+}
+
+static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
+{
+    if(response == MSG_YES)
+    {
+        G_SetGameAction(GA_QUIT);
+    }
+    return true;
+}
+
+void G_QuitGame()
+{
+    if(G_QuitInProgress()) return;
+
+    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
+    {
+        // User has re-tried to quit with "quit" when the question is already on
+        // the screen. Apparently we should quit...
+        DD_Execute(true, "quit!");
+        return;
+    }
+
+    char const *endString;
+#if __JDOOM__ || __JDOOM64__
+    endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
+#else
+    endString = GET_TXT(TXT_QUITMSG);
+#endif
+
+    Con_Open(false);
+    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
 }
 
 D_CMD(OpenLoadMenu)
@@ -3192,15 +3126,6 @@ D_CMD(CycleTextureGamma)
     return true;
 }
 
-D_CMD(ListMaps)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    App_Log(DE2_RES_MSG, "Available maps:");
-    G_PrintMapList();
-    return true;
-}
-
 /**
  * Warp behavior is as follows:
  *
@@ -3219,7 +3144,7 @@ D_CMD(ListMaps)
  *
  * @note "setmap" is an alias of "warp"
  */
-D_CMD(WarpMap)
+static bool G_WarpMap(de::Uri const &newMapUri)
 {
     bool const forceNewSession = IS_NETGAME != 0;
 
@@ -3230,54 +3155,11 @@ D_CMD(WarpMap)
         return false;
     }
 
-    uint epsd, map;
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
-# if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
-# endif
-    {
-        // "warp M":
-        epsd = 0;
-        map = de::max(0, de::String(argv[1]).toInt());
-    }
-#endif
-#if __JDOOM__
-    else
-#endif
-#if __JDOOM__ || __JHERETIC__
-        if(argc == 2)
-    {
-        // "warp EM" or "warp M":
-        int num = de::String(argv[1]).toInt();
-        epsd = de::max(0, num / 10);
-        map  = de::max(0, num % 10);
-    }
-    else // (argc == 3)
-    {
-        // "warp E M":
-        epsd = de::max(0, de::String(argv[1]).toInt());
-        map  = de::max(0, de::String(argv[2]).toInt());
-    }
-#endif
-
-    // Internally epsiode and map numbers are zero-based.
-    if(epsd != 0) epsd -= 1;
-    if(map != 0)  map  -= 1;
-
     // Catch invalid maps.
-#if __JHEXEN__
-    // Hexen map numbers require translation.
-    map = P_TranslateMapIfExists(map);
-#endif
-
-    if(!G_ValidateMap(&epsd, &map))
+    if(!P_MapExists(newMapUri.compose().toUtf8().constData()))
     {
-        char const *fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
-    de::Uri newMapUri = G_ComposeMapUri(epsd, map);
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
@@ -3302,8 +3184,8 @@ D_CMD(WarpMap)
     if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
     {
 #if __JHEXEN__
-        nextMap         = map;
-        nextMapEntrance = 0;
+        ::nextMapUri      = newMapUri;
+        ::nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
         G_SetGameActionNewSession(newMapUri, 0/*default*/, COMMON_GAMESESSION->rules());
@@ -3312,6 +3194,70 @@ D_CMD(WarpMap)
     else
     {
         G_SetGameActionNewSession(newMapUri, 0/*default*/, defaultGameRules);
+    }
+
+    return true;
+}
+
+D_CMD(WarpMap)
+{
+    DENG2_UNUSED(argc);
+
+    bool isNumber;
+    int number = de::String(argv[1]).toInt(&isNumber);
+
+    de::Uri newMapUri;
+    if(!isNumber)
+    {
+        // It must be a URI, then.
+        newMapUri = de::Uri::fromUserInput(argv + 1, 1);
+        if(newMapUri.scheme().isEmpty())
+            newMapUri.setScheme("Maps");
+    }
+    else
+    {
+        uint epsd, map;
+
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
+# if __JDOOM__
+        if(gameModeBits & GM_ANY_DOOM2)
+# endif
+        {
+            // "warp M":
+            epsd = 0;
+            map = de::max(0, number);
+        }
+#endif
+#if __JDOOM__
+        else
+#endif
+#if __JDOOM__ || __JHERETIC__
+            if(argc == 2)
+        {
+            // "warp EM" or "warp M":
+            epsd = de::max(0, number / 10);
+            map  = de::max(0, number % 10);
+        }
+#endif
+        // Internally epsiode and map numbers are zero-based.
+        if(epsd != 0) epsd -= 1;
+        if(map != 0)  map  -= 1;
+
+#if __JHEXEN__
+        // Hexen map numbers require translation.
+        map = P_TranslateMapIfExists(map);
+#endif
+
+        // Compose a map URI for the given episode and map pair using the default
+        // format specific to the game (and mode).
+        newMapUri = G_ComposeMapUri(epsd, map);
+    }
+
+    if(!G_WarpMap(newMapUri))
+    {
+        String msg = String("Unknown map \"%1\"").arg(argv[1]);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
+        return false;
     }
 
     // If the command source was "us" the game library then it was probably in
@@ -3336,3 +3282,46 @@ D_CMD(WarpMap)
 
     return true;
 }
+
+#if __JDOOM__ || __JHERETIC__
+D_CMD(WarpEpisodeMap)
+{
+    DENG2_UNUSED(argc);
+
+    uint epsd = de::max(0, de::String(argv[1]).toInt());
+    uint map  = de::max(0, de::String(argv[2]).toInt());
+
+    // Internally epsiode and map numbers are zero-based.
+    if(epsd != 0) epsd -= 1;
+    if(map != 0)  map  -= 1;
+
+    if(!G_WarpMap(G_ComposeMapUri(epsd, map)))
+    {
+        String msg = String("Unknown map \"%1 %2\"").arg(argv[1]).arg(argv[2]);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
+        return false;
+    }
+
+    // If the command source was "us" the game library then it was probably in
+    // response to the local player entering a cheat event sequence, so set the
+    // "CHANGING MAP" message.
+    // Somewhat of a kludge...
+    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    {
+#if __JHEXEN__
+        char const *msg = TXT_CHEATWARP;
+        int soundId     = SFX_PLATFORM_STOP;
+#elif __JHERETIC__
+        char const *msg = TXT_CHEATWARP;
+        int soundId     = SFX_DORCLS;
+#else //__JDOOM__ || __JDOOM64__
+        char const *msg = STSTR_CLEV;
+        int soundId     = SFX_NONE;
+#endif
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
+        S_LocalSound(soundId, NULL);
+    }
+
+    return true;
+}
+#endif // __JDOOM__ || __JHERETIC__

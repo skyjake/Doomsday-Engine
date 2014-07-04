@@ -69,7 +69,7 @@ SOURCES += \
     src/d_console.c \
     src/d_items.c \
     src/d_main.cpp \
-    src/d_refresh.c \
+    src/d_refresh.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
@@ -79,7 +79,7 @@ SOURCES += \
     src/p_mobj.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_spec.c \
+    src/p_spec.cpp \
     src/p_telept.c \
     src/st_stuff.c \
     src/tables.c \

@@ -198,7 +198,7 @@ dd_bool EV_ThingSpawn(byte *args, dd_bool fog)
     mobj_t *mobj, *newMobj, *fogMobj;
     mobjtype_t moType;
     dd_bool success;
-    coord_t z;
+    //coord_t z;
 
     success = false;
     searcher = -1;
@@ -213,7 +213,7 @@ dd_bool EV_ThingSpawn(byte *args, dd_bool fog)
     angle = (int) args[2] << 24;
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
-        z = mobj->origin[VZ];
+        //z = mobj->origin[VZ];
 
         if((newMobj = P_SpawnMobj(moType, mobj->origin, angle, 0)))
         {

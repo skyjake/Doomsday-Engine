@@ -45,7 +45,6 @@ HEADERS += \
     include/p_inter.h \
     include/p_lights.h \
     include/p_local.h \
-    include/p_mapinfo.h \
     include/p_maputl.h \
     include/p_mobj.h \
     include/p_pillar.h \
@@ -79,14 +78,13 @@ SOURCES += \
     src/acscript.cpp \
     src/h2_main.cpp \
     src/hconsole.c \
-    src/hrefresh.c \
+    src/hrefresh.cpp \
     src/in_lude.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
     src/p_lights.cpp \
-    src/p_mapinfo.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
     src/p_pillar.cpp \

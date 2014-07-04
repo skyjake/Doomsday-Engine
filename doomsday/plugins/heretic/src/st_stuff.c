@@ -288,7 +288,7 @@ void SBarChain_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
+void SBarChain_Drawer(uiwidget_t *obj, Point2Raw const *offset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (0)
@@ -303,7 +303,7 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     int chainY;
     float healthPos, gemXOffset, gemglow;
     int x, y, w, h, gemNum;
-    float cw, rgb[3];
+    float /*cw,*/ rgb[3];
     const hudstate_t* hud = &hudStates[obj->player];
     int chainYOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = headupDisplayMode(obj->player);
@@ -331,7 +331,7 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     y = ORIGINY+chainY;
     w = ST_WIDTH - 21 - 28;
     h = 8;
-    cw = (float) w / pChainInfo.geometry.size.width;
+    //cw = (float) w / pChainInfo.geometry.size.width;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1373,19 +1373,19 @@ void Flight_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
 }
 
-void Flight_UpdateGeometry(uiwidget_t* obj)
+void Flight_UpdateGeometry(uiwidget_t *ob)
 {
-    guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    //guidata_flight_t *flht = (guidata_flight_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
-    Rect_SetWidthHeight(obj->geometry, 0, 0);
+    Rect_SetWidthHeight(ob->geometry, 0, 0);
 
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(ST_AutomapIsActive(ob->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[ob->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(plr->powers[PT_FLIGHT] <= 0) return;
 
     /// @todo Calculate dimensions properly!
-    Rect_SetWidthHeight(obj->geometry, 32 * cfg.hudScale, 32 * cfg.hudScale);
+    Rect_SetWidthHeight(ob->geometry, 32 * cfg.hudScale, 32 * cfg.hudScale);
 }
 
 void Tome_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1805,10 +1805,10 @@ void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void Keys_UpdateGeometry(uiwidget_t* obj)
+void Keys_UpdateGeometry(uiwidget_t *obj)
 {
-    guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
-    int x = 0, numVisible = 0;
+    guidata_keys_t *keys = (guidata_keys_t *)obj->typedata;
+    int x = 0;// numVisible = 0;
     patchinfo_t pInfo;
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
@@ -2579,11 +2579,13 @@ static void setAutomapCheatLevel(uiwidget_t* obj, int level)
     UIAutomap_SetFlags(obj, flags);
 }
 
-static void initAutomapForCurrentMap(uiwidget_t* obj)
+static void initAutomapForCurrentMap(uiwidget_t *obj)
 {
-    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
-    automapcfg_t* mcfg;
-    mobj_t* followMobj;
+#if __JDOOM__
+    hudstate_t *hud = &hudStates[UIWidget_Player(obj)];
+    automapcfg_t *mcfg;
+#endif
+    mobj_t *followMobj;
     int i;
 
     UIAutomap_Reset(obj);
@@ -2594,7 +2596,9 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
                                   *((coord_t*) DD_GetVariable(DD_MAP_MIN_Y)),
                                   *((coord_t*) DD_GetVariable(DD_MAP_MAX_Y)));
 
+#if __JDOOM__
     mcfg = UIAutomap_Config(obj);
+#endif
 
     // Determine the obj view scale factors.
     if(UIAutomap_ZoomMax(obj))

@@ -103,6 +103,11 @@ void SavedSession::Metadata::parse(String const &source)
             }
         }
 
+        // Ensure the map URI has the "Maps" scheme set.
+        if(!gets("mapUri").beginsWith("Maps:", Qt::CaseInsensitive))
+        {
+            set("mapUri", String("Maps:") + gets("mapUri"));
+        }
         // Ensure we have a valid description.
         if(gets("userDescription").isEmpty())
         {

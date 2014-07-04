@@ -1071,6 +1071,7 @@ static void initPathLumpMappings()
     uint8_t *buf = 0;
 
     // Add the contents of all DD_DIREC lumps.
+    /// @todo fixme: Enforce scope to the containing package!
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     LumpIndex::FoundIndices foundDirecs;
     lumpIndex.findAll("DD_DIREC.lmp", foundDirecs);
@@ -1167,10 +1168,11 @@ static int DD_ActivateGameWorker(void *context)
 
     ResourceSystem &resSys = App_ResourceSystem();
 
-    // Texture resources are located now, prior to initializing the game.
+    // Some resources types are located prior to initializing the game.
     resSys.initTextures();
     resSys.textureScheme("Lightmaps").clear();
     resSys.textureScheme("Flaremaps").clear();
+    resSys.initMapDefs();
 
     if(parms.initiatedBusyMode)
     {
@@ -2072,6 +2074,7 @@ dd_bool DD_Init(void)
         App_ResourceSystem().initTextures();
         App_ResourceSystem().textureScheme("Lightmaps").clear();
         App_ResourceSystem().textureScheme("Flaremaps").clear();
+        App_ResourceSystem().initMapDefs();
 
         Def_Read();
 
@@ -2322,6 +2325,7 @@ void DD_UpdateEngineState()
     App_FileSystem().resetAllSchemes();
 
     App_ResourceSystem().initTextures();
+    App_ResourceSystem().initMapDefs();
 
     if(App_GameLoaded() && gx.UpdateState)
     {
@@ -2476,10 +2480,13 @@ int DD_GetInteger(int ddvalue)
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
-            de::Uri mapUri = App_WorldSystem().map().uri();
-            if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))
+            if(MapDef *mapDef = App_WorldSystem().map().def())
             {
-                return Def_GetMusicNum(mapInfo->music);
+                de::Uri const mapUri = mapDef->composeUri();
+                if(ded_mapinfo_t *mapInfo = defs.getMapInfo(&mapUri))
+                {
+                    return Def_GetMusicNum(mapInfo->music);
+                }
             }
         }
         return -1;

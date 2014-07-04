@@ -1636,7 +1636,7 @@ DENG2_PIMPL(DEDParser)
                 for(;;)
                 {
                     READLABEL;
-                    RV_URI("ID", &mi->uri, NULL)
+                    RV_URI("ID", &mi->uri, "Maps")
                     RV_STR("Name", mi->name)
                     RV_STR("Author", mi->author)
                     RV_FLAGS("Flags", mi->flags, "mif_")
@@ -2048,7 +2048,7 @@ DENG2_PIMPL(DEDParser)
                     RV_STR("Mobj", gen->type)
                     RV_STR("Alt mobj", gen->type2)
                     RV_STR("Damage mobj", gen->damage)
-                    RV_URI("Map", &gen->map, NULL)
+                    RV_URI("Map", &gen->map, "Maps")
                     RV_FLAGS("Flags", gen->flags, "gnf_")
                     RV_FLT("Speed", gen->speed)
                     RV_FLT("Speed Rnd", gen->speedVariance)
@@ -2128,8 +2128,8 @@ DENG2_PIMPL(DEDParser)
                 {
                     READLABEL;
                     RV_STR("ID", fin->id)
-                    RV_URI("Before", &fin->before, NULL)
-                    RV_URI("After", &fin->after, NULL)
+                    RV_URI("Before", &fin->before, "Maps")
+                    RV_URI("After", &fin->after, "Maps")
                     RV_INT("Game", dummyInt)
                     if(ISLABEL("Script"))
                     {

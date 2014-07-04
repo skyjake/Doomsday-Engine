@@ -23,6 +23,7 @@
 #include <doomsday/resource/resourceclass.h>
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
+#include "MapDef"
 #ifdef __CLIENT__
 #  include "AbstractFont"
 #  include "BitmapFont"
@@ -125,6 +126,7 @@ public:
 #endif
 
     typedef QList<Sprite *> SpriteSet;
+    typedef de::PathTreeT<MapDef> MapDefs;
 
 public:
     /**
@@ -736,6 +738,25 @@ public:
 #endif // __CLIENT__
 
     /**
+     * Convenient method of locating a MapDef for the given @a mapUri.
+     */
+    MapDef *mapDef(de::Uri const &mapUri) const;
+
+    /**
+     * Provides immutable access to a list containing all MapDefs in the system,
+     * for efficient traversal.
+     */
+    MapDefs const &allMapDefs() const;
+
+    /// @copydoc allMapDefs()
+    MapDefs &allMapDefs();
+
+    /**
+     * Returns the total number of MapDefs in the system.
+     */
+    inline int mapDefCount() const { return allMapDefs().size(); }
+
+    /**
      * Returns the total number of animation/precache groups.
      */
     int animGroupCount();
@@ -887,12 +908,14 @@ public: /// @todo Should be private:
     void initTextures();
     void initSystemTextures();
 
-    void clearAllRawTextures();
-
+    void initMapDefs();
     void initSprites();
 #ifdef __CLIENT__
     void initModels();
 #endif
+
+    void clearAllMapDefs();
+    void clearAllRawTextures();
 
     void clearAllTextureSpecs();
     void pruneUnusedTextureSpecs();
