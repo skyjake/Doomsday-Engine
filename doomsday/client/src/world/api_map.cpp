@@ -1489,7 +1489,7 @@ DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 #undef P_MapSourceFile
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
-    if(!uriCString || !uriCString[0]) return false;
+    if(!uriCString || !uriCString[0]) return 0;
     if(MapDef const *mapDef = App_ResourceSystem().mapDef(de::Uri(uriCString, RC_NULL)))
     {
         return AutoStr_FromTextStd(mapDef->sourceFile()->composePath().toUtf8().constData());

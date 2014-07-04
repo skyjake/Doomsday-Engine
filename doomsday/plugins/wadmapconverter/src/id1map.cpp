@@ -40,11 +40,16 @@ namespace internal {
 class Id1MapElement
 {
 public:
-    Id1MapElement(Id1Map &map) : map(map) {}
-    Id1MapElement(Id1MapElement const &other) : map(other.map) {}
+    Id1MapElement(Id1Map &map) : _map(&map) {}
+    Id1MapElement(Id1MapElement const &other) : _map(other._map) {}
     virtual ~Id1MapElement() {}
 
-    Id1Map &map;
+    Id1Map &map() const {
+        DENG2_ASSERT(_map != 0);
+        return *_map;
+    }
+
+    Id1Map *_map;
 };
 
 struct SideDef : public Id1MapElement
@@ -72,24 +77,24 @@ struct SideDef : public Id1MapElement
         case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
-            topMaterial    = map.toMaterialId(name.constData(), WallMaterials);
+            topMaterial    = map().toMaterialId(name.constData(), WallMaterials);
 
             from.readBytes(8, name);
-            bottomMaterial = map.toMaterialId(name.constData(), WallMaterials);
+            bottomMaterial = map().toMaterialId(name.constData(), WallMaterials);
 
             from.readBytes(8, name);
-            middleMaterial = map.toMaterialId(name.constData(), WallMaterials);
+            middleMaterial = map().toMaterialId(name.constData(), WallMaterials);
             break; }
 
         case Id1MapRecognizer::Doom64Format:
             from.readAs<duint16>(idx);
-            topMaterial    = map.toMaterialId(idx, WallMaterials);
+            topMaterial    = map().toMaterialId(idx, WallMaterials);
 
             from.readAs<duint16>(idx);
-            bottomMaterial = map.toMaterialId(idx, WallMaterials);
+            bottomMaterial = map().toMaterialId(idx, WallMaterials);
 
             from.readAs<duint16>(idx);
-            middleMaterial = map.toMaterialId(idx, WallMaterials);
+            middleMaterial = map().toMaterialId(idx, WallMaterials);
             break;
 
         default:
@@ -303,10 +308,10 @@ struct SectorDef : public Id1MapElement
         case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
-            floorMaterial= map.toMaterialId(name.constData(), PlaneMaterials);
+            floorMaterial= map().toMaterialId(name.constData(), PlaneMaterials);
 
             from.readBytes(8, name);
-            ceilMaterial = map.toMaterialId(name.constData(), PlaneMaterials);
+            ceilMaterial = map().toMaterialId(name.constData(), PlaneMaterials);
 
             from >> lightLevel;
             break; }
@@ -314,10 +319,10 @@ struct SectorDef : public Id1MapElement
         case Id1MapRecognizer::Doom64Format: {
             duint16 idx;
             from >> idx;
-            floorMaterial= map.toMaterialId(idx, PlaneMaterials);
+            floorMaterial= map().toMaterialId(idx, PlaneMaterials);
 
             from >> idx;
-            ceilMaterial = map.toMaterialId(idx, PlaneMaterials);
+            ceilMaterial = map().toMaterialId(idx, PlaneMaterials);
 
             from >> d64ceilingColor
                  >> d64floorColor
