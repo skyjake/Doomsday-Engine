@@ -34,6 +34,7 @@
 #include "saveslots.h"
 #include <cstring>
 
+using namespace de;
 using namespace common;
 
 int verbose;
@@ -322,12 +323,12 @@ void H_PreInit()
 
 void H_PostInit()
 {
-    dd_bool autoStart = false;
+    bool autoStart = false;
     de::Uri startMapUri;
 
     /// @todo Kludge: Shareware WAD has different border background.
     /// @todo Do this properly!
-    borderGraphics[0] = (gameMode == heretic_shareware)? "Flats:FLOOR04" : "Flats:FLAT513";
+    ::borderGraphics[0] = (::gameMode == heretic_shareware)? "Flats:FLOOR04" : "Flats:FLAT513";
 
     // Common post init routine.
     G_CommonPostInit();
@@ -336,39 +337,37 @@ void H_PostInit()
     P_InitWeaponInfo();
 
     // Game parameters.
-    monsterInfight = GetDefInt("AI|Infight", 0);
+    ::monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Defaults for skill, episode and map.
-    defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
 
     // Game mode specific settings.
     /* None */
 
     if(CommandLine_Check("-deathmatch"))
     {
-        cfg.netDeathmatch = true;
+        ::cfg.netDeathmatch = true;
     }
 
     // Apply these game rules.
-    defaultGameRules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
-    defaultGameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
+    ::defaultGameRules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
+    ::defaultGameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 
     // turbo option.
     int p = CommandLine_Check("-turbo");
-    turboMul = 1.0f;
+    ::turboMul = 1.0f;
     if(p)
     {
         int scale = 200;
-
         if(p < myargc - 1)
+        {
             scale = atoi(CommandLine_At(p + 1));
-        if(scale < 10)
-            scale = 10;
-        if(scale > 400)
-            scale = 400;
+        }
+        scale = de::clamp(10, scale, 400);
 
         App_Log(DE2_MAP_NOTE, "Turbo scale: %i%%", scale);
-        turboMul = scale / 100.f;
+        ::turboMul = scale / 100.f;
     }
 
     // Load a saved game?
@@ -389,7 +388,7 @@ void H_PostInit()
     if(p && p < myargc - 1)
     {
         int skillNumber = atoi(CommandLine_At(p + 1));
-        defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
@@ -403,14 +402,28 @@ void H_PostInit()
     }
 
     p = CommandLine_Check("-warp");
-    if(p && p < myargc - 2)
+    if(p && p < myargc - 1)
     {
-        int episodeNumber = atoi(CommandLine_At(p + 1));
-        int mapNumber     = atoi(CommandLine_At(p + 2));
-
-        startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber,
-                                      mapNumber > 0? mapNumber - 1 : mapNumber);
         autoStart = true;
+
+        bool isNumber;
+        String(CommandLine_At(p + 1)).toInt(&isNumber);
+        if(!isNumber)
+        {
+            // It must be a URI, then.
+            char *args[1] = { const_cast<char *>(CommandLine_At(p + 1)) };
+            startMapUri = de::Uri::fromUserInput(args, 1);
+            if(startMapUri.scheme().isEmpty())
+                startMapUri.setScheme("Maps");
+        }
+        else if(p < myargc - 2)
+        {
+            int episodeNumber = String(CommandLine_At(p + 1)).toInt();
+            int mapNumber     = String(CommandLine_At(p + 2)).toInt();
+
+            startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber,
+                                          mapNumber > 0? mapNumber - 1 : mapNumber);
+        }
     }
 
     if(startMapUri.path().isEmpty())
@@ -423,13 +436,13 @@ void H_PostInit()
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
                               startMapUri.asText().toUtf8().constData(),
-                              defaultGameRules.skill);
+                              ::defaultGameRules.skill);
     }
 
     // Validate episode and map.
     if((autoStart || IS_NETGAME) && P_MapExists(startMapUri.compose().toUtf8().constData()))
     {
-        G_SetGameActionNewSession(startMapUri, 0/*default*/, defaultGameRules);
+        G_SetGameActionNewSession(startMapUri, 0/*default*/, ::defaultGameRules);
     }
     else
     {
