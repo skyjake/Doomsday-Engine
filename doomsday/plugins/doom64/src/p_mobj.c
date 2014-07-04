@@ -112,10 +112,10 @@ static coord_t getFriction(mobj_t *mo)
     return P_MobjGetFriction(mo);
 }
 
-void P_MobjMoveXY(mobj_t* mo)
+void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[3], mom[3];
-    player_t* player;
+    //player_t *player;
     dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code
@@ -142,7 +142,7 @@ void P_MobjMoveXY(mobj_t* mo)
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
 
-    player = mo->player;
+    //player = mo->player;
 
     do
     {
@@ -902,12 +902,12 @@ dd_bool P_CheckMissileSpawn(mobj_t* mo)
     return true;
 }
 
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 {
     coord_t pos[3], spawnZOff = 0, dist = 0;
     angle_t angle = 0;
-    float slope = 0;
-    mobj_t* th = 0;
+    //float slope = 0;
+    mobj_t *th = 0;
     uint an;
 
     memcpy(pos, source->origin, sizeof(pos));
@@ -916,24 +916,23 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     {
         // See which target is to be aimed at.
         angle = source->angle;
-        slope = P_AimLineAttack(source, angle, 16 * 64);
+        /*slope =*/ P_AimLineAttack(source, angle, 16 * 64);
         if(!cfg.noAutoAim)
             if(!lineTarget)
             {
                 angle += 1 << 26;
-                slope = P_AimLineAttack(source, angle, 16 * 64);
+                /*slope =*/ P_AimLineAttack(source, angle, 16 * 64);
 
                 if(!lineTarget)
                 {
                     angle -= 2 << 26;
-                    slope = P_AimLineAttack(source, angle, 16 * 64);
+                    /*slope =*/ P_AimLineAttack(source, angle, 16 * 64);
                 }
 
                 if(!lineTarget)
                 {
                     angle = source->angle;
-                    slope =
-                        tan(LOOKDIR2RAD(source->dPlayer->lookDir)) / 1.2f;
+                    //slope = tan(LOOKDIR2RAD(source->dPlayer->lookDir)) / 1.2f;
                 }
             }
 

@@ -274,7 +274,7 @@ void ST_Register()
     C_CMD( "chatsendmacro",   NULL,   ChatSendMacro )
 }
 
-static int headupDisplayMode(int player)
+static int headupDisplayMode(int /*player*/)
 {
     return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
 }
@@ -1135,10 +1135,10 @@ void SBarHealth_UpdateGeometry(uiwidget_t *obj)
                                        MAX_OF(FR_TextHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale);
 }
 
-void Armor_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void Armor_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_armor_t *armor = (guidata_armor_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
     armor->value = plr->armorPoints;
@@ -1212,18 +1212,20 @@ void SBarArmor_UpdateGeometry(uiwidget_t *obj)
                                        MAX_OF(FR_TextHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale);
 }
 
-void SBarFrags_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void SBarFrags_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
-    int i;
+    guidata_frags_t *frags = (guidata_frags_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
+
     frags->value = 0;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
-            frags->value += plr->frags[i] * (i != obj->player ? 1 : -1);
+        {
+            frags->value += plr->frags[i] * (i != ob->player ? 1 : -1);
+        }
     }
 }
 
@@ -1350,10 +1352,10 @@ void SBarFace_UpdateGeometry(uiwidget_t *obj)
                                        info.geometry.size.height * cfg.statusbarScale);
 }
 
-void KeySlot_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void KeySlot_Ticker(uiwidget_t *obj, timespan_t /*ticLength*/)
 {
-    guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_keyslot_t *kslt = (guidata_keyslot_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
@@ -1627,19 +1629,20 @@ void ST_HUDSpriteSize(int sprite, float scale, int* width, int* height)
     if(height) *height = info.geometry.size.height * scale;
 }
 
-void Frags_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void Frags_Ticker(uiwidget_t *obj, timespan_t /*ticLength*/)
 {
-    guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
-    int i;
+    guidata_frags_t *frags = (guidata_frags_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
     frags->value = 0;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
+        {
             frags->value += plr->frags[i] * (i != obj->player ? 1 : -1);
+        }
     }
 }
 
@@ -2013,10 +2016,10 @@ void Armor_UpdateGeometry(uiwidget_t *obj)
     Rect_SetWidthHeight(obj->geometry, textSize.width, textSize.height);
 }
 
-void ArmorIcon_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void ArmorIcon_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_armoricon_t* icon = (guidata_armoricon_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_armoricon_t *icon = (guidata_armoricon_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
     icon->sprite = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
@@ -2063,14 +2066,14 @@ void ArmorIcon_UpdateGeometry(uiwidget_t *obj)
     Rect_SetWidthHeight(obj->geometry, iconSize.width, iconSize.height);
 }
 
-void Keys_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void Keys_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
-    int i;
+    guidata_keys_t *keys = (guidata_keys_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
-    for(i = 0; i < NUM_KEY_TYPES; ++i)
+
+    for(int i = 0; i < NUM_KEY_TYPES; ++i)
     {
         keys->keyBoxes[i] = plr->keys[i];
     }
@@ -2206,10 +2209,10 @@ void Keys_UpdateGeometry(uiwidget_t *obj)
 #undef EXTRA_SCALE
 }
 
-void Kills_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void Kills_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_kills_t *kills = (guidata_kills_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
     kills->value = plr->killCount;
@@ -2290,10 +2293,10 @@ void Kills_UpdateGeometry(uiwidget_t *obj)
                                        .5f + textSize.height * cfg.hudCheatCounterScale);
 }
 
-void Items_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void Items_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_items_t* items = (guidata_items_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_items_t *items = (guidata_items_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
     items->value = plr->itemCount;
@@ -2415,10 +2418,10 @@ void Secrets_Drawer(uiwidget_t *obj, Point2Raw const *offset)
     DGL_PopMatrix();
 }
 
-void Secrets_Ticker(uiwidget_t *obj, timespan_t ticLength)
+void Secrets_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_secrets_t *scrt = (guidata_secrets_t *)ob->typedata;
+    player_t const *plr = &players[ob->player];
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
     scrt->value = plr->secretCount;
@@ -2888,19 +2891,19 @@ struct uiwidgetdef_t
 
     hudstate_t *hud = hudStates + player;
     uiwidgetgroupdef_t const widgetGroupDefs[] = {
-        { UWG_STATUSBAR,    ALIGN_BOTTOM },
-        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
+        { UWG_STATUSBAR,    ALIGN_BOTTOM,      ORDER_NONE, 0, 0 },
+        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT,  ORDER_NONE, 0, 0 },
         { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
         { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT, 0, PADDING },
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, ORDER_RIGHTTOLEFT, 0, PADDING },
         { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT },
+        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT, 0, 0 },
         { UWG_TOPCENTER,    ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT, UWGF_VERTICAL, PADDING },
         { UWG_COUNTERS,     ALIGN_LEFT,        ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
-        { UWG_AUTOMAP,      ALIGN_TOPLEFT }
+        { UWG_AUTOMAP,      ALIGN_TOPLEFT,     ORDER_NONE, 0, 0 }
     };
     uiwidgetdef_t const widgetDefs[] = {
-        { GUI_BOX,      ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_NONE,    SBarBackground_UpdateGeometry, SBarBackground_Drawer },
+        { GUI_BOX,      ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_NONE,    SBarBackground_UpdateGeometry, SBarBackground_Drawer, 0, 0 },
         { GUI_READYAMMO, ALIGN_TOPLEFT,     UWG_STATUSBAR,      GF_STATUS,  SBarReadyAmmo_UpdateGeometry, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
         { GUI_HEALTH,   ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_STATUS,  SBarHealth_UpdateGeometry, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
         { GUI_WEAPONSLOT, ALIGN_TOPLEFT,    UWG_STATUSBAR,      GF_NONE,    WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[0] },
@@ -2923,7 +2926,7 @@ struct uiwidgetdef_t
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
-        { GUI_BOX,      ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    HealthIcon_UpdateGeometry, HealthIcon_Drawer },
+        { GUI_BOX,      ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    HealthIcon_UpdateGeometry, HealthIcon_Drawer, 0, 0 },
         { GUI_HEALTH,   ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
         { GUI_READYAMMOICON, ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT2, GF_NONE,    ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
         { GUI_READYAMMO, ALIGN_BOTTOMLEFT,  UWG_BOTTOMLEFT2,    GF_FONTB,   ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
@@ -2935,7 +2938,7 @@ struct uiwidgetdef_t
         { GUI_SECRETS,  ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   Secrets_UpdateGeometry, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
         { GUI_ITEMS,    ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   Items_UpdateGeometry, Items_Drawer, Items_Ticker, &hud->items },
         { GUI_KILLS,    ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   Kills_UpdateGeometry, Kills_Drawer, Kills_Ticker, &hud->kills },
-        { GUI_NONE }
+        { GUI_NONE,     0,                  NUM_UIWIDGET_GROUPS, GF_NONE,   0, 0, 0, 0 }
     };
     size_t i;
 
@@ -3125,7 +3128,7 @@ dd_bool ST_AutomapIsActive(int player)
     return UIAutomap_Active(obj);
 }
 
-dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
+dd_bool ST_AutomapObscures2(int player, RectRaw const * /*region*/)
 {
     uiwidget_t *obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -3310,6 +3313,8 @@ void unhideHUD()
 
 D_CMD(ChatOpen)
 {
+    DENG2_UNUSED(src);
+
     int player = CONSOLEPLAYER, destination = 0;
     uiwidget_t *obj;
 
@@ -3334,8 +3339,10 @@ D_CMD(ChatOpen)
 
 D_CMD(ChatAction)
 {
+    DENG2_UNUSED2(src, argc);
+
     int player = CONSOLEPLAYER;
-    const char* cmd = argv[0] + 4;
+    char const *cmd = argv[0] + 4;
     uiwidget_t *obj;
 
     if(G_QuitInProgress()) return false;
@@ -3360,6 +3367,8 @@ D_CMD(ChatAction)
 
 D_CMD(ChatSendMacro)
 {
+    DENG2_UNUSED(src);
+
     int player = CONSOLEPLAYER, macroId, destination = 0;
     uiwidget_t *obj;
 

@@ -269,7 +269,7 @@ void X_DrawViewPort(int port, RectRaw const *portGeometry,
 }
 #endif
 
-void X_DrawWindow(Size2Raw const *windowSize)
+void X_DrawWindow(Size2Raw const * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {

@@ -673,17 +673,18 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNBindings_Ticker(mn_object_t* ob)
+void MNBindings_Ticker(mn_object_t *ob)
 {
-    mndata_bindings_t* binds = (mndata_bindings_t*) ob->_typedata;
-    assert(ob && ob->_type == MN_BINDINGS);
-
+    DENG_UNUSED(ob);
+    //DENG_ASSERT(ob && ob->_type == MN_BINDINGS);
+    //mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
     // Stub.
 }
 
-int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
+int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
 {
     assert(obj && ev);
+
     // We're interested in key or button down events.
     if((obj->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {

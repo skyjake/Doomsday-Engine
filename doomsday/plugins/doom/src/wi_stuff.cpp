@@ -41,7 +41,7 @@ struct wianimdef_t
     int numFrames;     ///< Number of used frames in the animation.
 
     /// Names of the patches for each frame of the animation.
-    char *patchNames[MAX_ANIM_FRAMES];
+    char const *patchNames[MAX_ANIM_FRAMES];
 
     /// State at which this animation begins/becomes visible.
     interludestate_t beginState;

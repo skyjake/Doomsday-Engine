@@ -64,7 +64,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static float swing[2];
+//static float swing[2];
 static float bulletSlope;
 
 // CODE --------------------------------------------------------------------

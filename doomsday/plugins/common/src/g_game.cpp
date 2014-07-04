@@ -3201,6 +3201,8 @@ static bool G_WarpMap(de::Uri const &newMapUri)
 
 D_CMD(WarpMap)
 {
+    DENG2_UNUSED(argc);
+
     bool isNumber;
     int number = de::String(argv[1]).toInt(&isNumber);
 
@@ -3284,6 +3286,8 @@ D_CMD(WarpMap)
 #if __JDOOM__ || __JHERETIC__
 D_CMD(WarpEpisodeMap)
 {
+    DENG2_UNUSED(argc);
+
     uint epsd = de::max(0, de::String(argv[1]).toInt());
     uint map  = de::max(0, de::String(argv[2]).toInt());
 

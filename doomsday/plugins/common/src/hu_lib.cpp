@@ -1699,9 +1699,9 @@ void MNRect_Drawer(mn_object_t *ob, Point2Raw const *origin)
     }
 }
 
-void MNRect_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
+void MNRect_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
 {
-    mndata_rect_t* rct = (mndata_rect_t*)ob->_typedata;
+    mndata_rect_t *rct = (mndata_rect_t *)ob->_typedata;
     DENG2_ASSERT(ob->_type == MN_RECT);
 
     if(rct->dimensions.width == 0 && rct->dimensions.height == 0)
@@ -1710,7 +1710,7 @@ void MNRect_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
         patchinfo_t info;
         if(R_GetPatchInfo(rct->patch, &info))
         {
-            memcpy(&rct->dimensions, &info.geometry.size, sizeof(rct->dimensions));
+            std::memcpy(&rct->dimensions, &info.geometry.size, sizeof(rct->dimensions));
         }
     }
     Rect_SetWidthHeight(ob->_geometry, rct->dimensions.width, rct->dimensions.height);
@@ -2144,7 +2144,7 @@ int MNEdit_Responder(mn_object_t *ob, event_t* ev)
     return false;
 }
 
-void MNEdit_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
+void MNEdit_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
 {
     // @todo calculate visible dimensions properly.
     DENG2_ASSERT(ob);
@@ -2881,11 +2881,12 @@ int MNColorBox_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     }
 }
 
-void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
+void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
 {
-    mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
-    patchinfo_t info;
     DENG2_ASSERT(ob->_type == MN_COLORBOX);
+
+    mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
+    patchinfo_t info;
 
     Rect_SetWidthHeight(ob->_geometry, cbox->width, cbox->height);
 
@@ -2893,7 +2894,7 @@ void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     if(R_GetPatchInfo(borderPatches[2], &info))
     {
         info.geometry.size.width = cbox->width;
-        info.geometry.origin.y = cbox->height;
+        info.geometry.origin.y   = cbox->height;
         Rect_UniteRaw(ob->_geometry, &info.geometry);
     }
 
@@ -2901,7 +2902,7 @@ void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     if(R_GetPatchInfo(borderPatches[1], &info))
     {
         info.geometry.size.height = cbox->height;
-        info.geometry.origin.x = cbox->width;
+        info.geometry.origin.x    = cbox->width;
         Rect_UniteRaw(ob->_geometry, &info.geometry);
     }
 
@@ -2909,7 +2910,7 @@ void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     if(R_GetPatchInfo(borderPatches[0], &info))
     {
         info.geometry.size.width = cbox->width;
-        info.geometry.origin.y = -info.geometry.size.height;
+        info.geometry.origin.y   = -info.geometry.size.height;
         Rect_UniteRaw(ob->_geometry, &info.geometry);
     }
 
@@ -2917,7 +2918,7 @@ void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     if(R_GetPatchInfo(borderPatches[3], &info))
     {
         info.geometry.size.height = cbox->height;
-        info.geometry.origin.x = -info.geometry.size.width;
+        info.geometry.origin.x    = -info.geometry.size.width;
         Rect_UniteRaw(ob->_geometry, &info.geometry);
     }
 
@@ -3380,7 +3381,7 @@ static char* composeValueString(float value, float defaultValue, dd_bool floatMo
     return buf;
 }
 
-void MNSlider_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
+void MNSlider_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
 {
     int middleWidth;
     patchinfo_t info;
@@ -3602,7 +3603,7 @@ void MNMobjPreview_Drawer(mn_object_t *ob, Point2Raw const *offset)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNMobjPreview_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
+void MNMobjPreview_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
 {
     // @todo calculate visible dimensions properly!
     DENG2_ASSERT(ob && ob->_type == MN_MOBJPREVIEW);

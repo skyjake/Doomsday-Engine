@@ -79,9 +79,9 @@ static wbstartstruct_t const *wbs;
 static wbplayerstruct_t const *inPlayerInfo;
 
 static patchid_t pBackground;
-static patchid_t pYouAreHereRight;
-static patchid_t pYouAreHereLeft;
-static patchid_t pSplat;
+//static patchid_t pYouAreHereRight;
+//static patchid_t pYouAreHereLeft;
+//static patchid_t pSplat;
 static patchid_t pFinished;
 static patchid_t pEntering;
 static patchid_t pSecret;
