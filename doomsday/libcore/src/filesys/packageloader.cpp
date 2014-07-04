@@ -56,8 +56,8 @@ DENG2_PIMPL(PackageLoader)
     static int ascendingPackagesByLatest(File const *a, File const *b)
     {
         // The version must be specified using a format understood by Version.
-        Version const aVer(a->info().gets("version"));
-        Version const bVer(b->info().gets("version"));
+        Version const aVer(a->info().gets("package.version"));
+        Version const bVer(b->info().gets("package.version"));
 
         if(aVer == bVer)
         {
@@ -127,7 +127,7 @@ DENG2_PIMPL(PackageLoader)
         {
             File *pkg = *i;
             Package::parseMetadata(*pkg);
-            Package::validateMetadata(pkg->info());
+            Package::validateMetadata(pkg->info().subrecord("package"));
         }
 
         found.sort(ascendingPackagesByLatest);

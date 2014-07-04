@@ -1,4 +1,4 @@
-/** @file package.cpp
+/** @file package.cpp  Package containing metadata, data, and/or files.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -25,6 +25,8 @@
 #include "de/App"
 
 namespace de {
+
+static String const PACKAGE("package");
 
 DENG2_PIMPL(Package)
 , DENG2_OBSERVES(File, Deletion)
@@ -94,11 +96,13 @@ String Package::identifier() const
 
 bool Package::executeFunction(String const &name)
 {
-    if(info().has(name))
+    QString const funcName = PACKAGE + "." + name;
+
+    if(info().has(funcName))
     {
         Script script(name + "()");
         // The global namespace for this function is the package's info namespace.
-        Process proc(&info());
+        Process proc(&info().subrecord(PACKAGE));
         proc.run(script);
         proc.execute();
         return true;
@@ -116,13 +120,19 @@ void Package::aboutToUnload()
     executeFunction("onUnload");
 }
 
-void Package::parseMetadata(File &packageFile)
+void Package::parseMetadata(File &packageFile) // static
 {
     static String const TIMESTAMP("__timestamp__");
 
     if(Folder *folder = packageFile.maybeAs<Folder>())
     {
-        Record &metadata        = packageFile.info();
+        // The package's information is stored in a subrecord.
+        if(!packageFile.info().has(PACKAGE))
+        {
+            packageFile.info().addRecord(PACKAGE);
+        }
+
+        Record &metadata        = packageFile.info().subrecord(PACKAGE);
         File *metadataInfo      = folder->tryLocateFile("Info");
         File *initializerScript = folder->tryLocateFile("__init__.de");
         Time parsedAt           = Time::invalidTime();
@@ -145,6 +155,10 @@ void Package::parseMetadata(File &packageFile)
         }
 
         if(!needParse) return;
+
+        // The package identifier and path are automatically set.
+        metadata.set("id", identifierForFile(packageFile));
+        metadata.set("path", packageFile.path());
 
         // Check for a ScriptedInfo source.
         if(metadataInfo)
@@ -171,9 +185,9 @@ void Package::parseMetadata(File &packageFile)
 
         metadata.addTime(TIMESTAMP, parsedAt);
 
-        LOG_MSG("Parsed metadata of '%s':\n")
+        LOG_RES_MSG("Parsed metadata of '%s':\n")
                 << identifierForFile(packageFile)
-                << metadata.asText();
+                << packageFile.info().asText();
     }
 }
 

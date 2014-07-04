@@ -52,9 +52,9 @@ DENG2_PIMPL(PackageFeed)
             Package *pkg = i.value();
             linkToPackage(*pkg, i.key(), folder);
             // Also link it under its possible alias identifier (for variants).
-            if(pkg->info().has("alias"))
+            if(pkg->info().has("package.alias"))
             {
-                linkToPackage(*pkg, pkg->info().gets("alias"), folder);
+                linkToPackage(*pkg, pkg->info().gets("package.alias"), folder);
             }
         }
     }
