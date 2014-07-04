@@ -24,6 +24,7 @@
 #include "de/ArrayValue"
 #include "de/NumberValue"
 #include "de/RecordValue"
+#include "de/BlockValue"
 #include "de/DictionaryValue"
 #include "de/math.h"
 
@@ -60,6 +61,47 @@ Value *Function_Dictionary_Values(Context &ctx, Function::ArgumentValues const &
 {
     return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Values);
 }
+
+static File const &fileInstance(Context &ctx)
+{
+    Record const *obj = ctx.instanceScope().as<RecordValue>().record();
+    if(!obj)
+    {
+        throw Value::IllegalError("ScriptSystem::fileInstance", "No File instance available");
+    }
+
+    // The record is expected to have a path (e.g., File info record).
+    return App::rootFolder().locate<File>(obj->gets("path", "/"));
+}
+
+Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const &args)
+{
+    Path const relativePath = args.at(0)->asText();
+
+    if(File const *found = fileInstance(ctx).tryFollowPath(relativePath)->maybeAs<File>())
+    {
+        return new RecordValue(found->info());
+    }
+
+    // Wasn't there, result is None.
+    return 0;
+}
+
+Value *Function_File_Read(Context &ctx, Function::ArgumentValues const &)
+{
+    QScopedPointer<BlockValue> data(new BlockValue);
+    fileInstance(ctx) >> *data;
+    return data.take();
+}
+
+Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues const &)
+{
+    Block raw;
+    fileInstance(ctx) >> raw;
+    return new TextValue(String::fromUtf8(raw));
+}
+
+static ScriptSystem *_scriptSystem = 0;
 
 DENG2_PIMPL(ScriptSystem)
 , DENG2_OBSERVES(Record, Deletion)
@@ -138,6 +180,15 @@ DENG2_PIMPL(ScriptSystem)
                     << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath");
         }
 
+        // File
+        {
+            Record &dict = coreModule.addRecord("File");
+            binder.init(dict)
+                    << DENG2_FUNC      (File_Locate, "locate", "relativePath")
+                    << DENG2_FUNC_NOARG(File_Read, "read")
+                    << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8");
+        }
+
         addNativeModule("Core", coreModule);
     }
 
@@ -170,10 +221,14 @@ DENG2_PIMPL(ScriptSystem)
 };
 
 ScriptSystem::ScriptSystem() : d(new Instance(this))
-{}
+{
+    _scriptSystem = this;
+}
 
 ScriptSystem::~ScriptSystem()
-{}
+{
+    _scriptSystem = 0;
+}
 
 void ScriptSystem::addNativeModule(String const &name, Record &module)
 {
@@ -276,8 +331,14 @@ File const &ScriptSystem::findModuleSource(String const &name, String const &loc
 
 Record &ScriptSystem::builtInClass(String const &name)
 {
-    return const_cast<Record &>(App::scriptSystem().nativeModule("Core")
+    return const_cast<Record &>(ScriptSystem::get().nativeModule("Core")
                                 .getAs<RecordValue>(name).dereference());
+}
+
+ScriptSystem &ScriptSystem::get()
+{
+    DENG2_ASSERT(_scriptSystem);
+    return *_scriptSystem;
 }
 
 Record &ScriptSystem::importModule(String const &name, String const &importedFromPath)

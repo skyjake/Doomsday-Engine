@@ -24,6 +24,7 @@
 #include "de/Feed"
 #include "de/Date"
 #include "de/NumberValue"
+#include "de/RecordValue"
 #include "de/Guard"
 #include "de/DirectoryFeed"
 
@@ -57,6 +58,9 @@ DENG2_AUDIENCE_METHOD(File, Deletion)
 File::File(String const &fileName) : Node(fileName), d(new Instance)
 {
     d->source = this;
+
+    // Core.File provides the member functions for files.
+    d->info.addSuperRecord(new RecordValue(ScriptSystem::get().builtInClass("File")));
     
     // Create the default set of info variables common to all files.
     d->info.add(new Variable("name",       new Accessor(*this, Accessor::NAME),        Accessor::VARIABLE_MODE));

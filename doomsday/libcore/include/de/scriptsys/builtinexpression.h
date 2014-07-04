@@ -56,7 +56,9 @@ public:
         AS_RECORD = 13,
         FLOOR = 14,
         EVALUATE = 15,
-        DIR = 16
+        DIR = 16,
+        AS_FILE = 17,
+        GLOBAL_NAMESPACE = 18
     };
 
 public:

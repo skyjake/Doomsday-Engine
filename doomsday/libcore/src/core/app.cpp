@@ -76,9 +76,9 @@ DENG2_PIMPL(App)
     /// Subsystems (not owned).
     QList<System *> systems;
 
+    ScriptSystem scriptSys;
     FileSystem fs;
     QScopedPointer<NativeFile> basePackFile;
-    ScriptSystem scriptSys;
     Record appModule;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
