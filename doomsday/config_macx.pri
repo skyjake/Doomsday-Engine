@@ -27,7 +27,27 @@ deng_qtautoselect:!deng_nativesdk {
 
 # Apply deng_* Configuration -------------------------------------------------
 
-deng_macx8_64bit {
+deng_macx10_64bit {
+    echo(Using Mac OS 10.10 SDK.)
+    CONFIG -= x86
+    CONFIG += x86_64
+    deng_qt5 {
+        QMAKE_MAC_SDK = macosx10.10
+    }
+    else {
+        QMAKE_MAC_SDK = $$system(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk
+    }
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+    QMAKE_CFLAGS += -mmacosx-version-min=10.9
+    QMAKE_CXXFLAGS += -mmacosx-version-min=10.9
+    DEFINES += MACOS_10_7
+
+    *-clang* {
+        # Ignore warnings from Qt headers.
+        QMAKE_CXXFLAGS_WARN_ON += -Wno-c++11-long-long -Wno-unused-private-field
+    }
+}
+else:deng_macx8_64bit {
     echo(Using Mac OS 10.8 SDK.)
     CONFIG -= x86
     CONFIG += x86_64

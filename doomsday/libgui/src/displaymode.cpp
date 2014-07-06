@@ -315,6 +315,7 @@ DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, flo
 
 int DisplayMode_IsEqual(DisplayMode const *a, DisplayMode const *b)
 {
+    if(!a || !b) return true; // Cannot compare against nothing.
     return Mode(*a) == Mode(*b);
 }
 
