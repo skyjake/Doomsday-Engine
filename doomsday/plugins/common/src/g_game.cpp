@@ -1193,7 +1193,7 @@ static void printMapBanner()
         String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
         MapInfo const *mapInfo = P_MapInfo(0/*current map*/);
-        text += String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
+        text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") + 1 : 0);
 #endif
         text += String(" - " DE2_ESC(b)) + title;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
@@ -1790,7 +1790,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newHub = true;
     if(!nextMapUri.path().isEmpty())
     {
-        newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(&nextMapUri)->hub);
+        newHub = (P_MapInfo(0/*current map*/)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"));
     }
 #endif
 
@@ -2415,7 +2415,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return G_ComposeMapUri(G_CurrentEpisodeNumber(), P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap));
+    return G_ComposeMapUri(G_CurrentEpisodeNumber(), P_TranslateMap(P_MapInfo(&gameMapUri)->geti("nextMap")));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
@@ -2582,7 +2582,7 @@ String G_MapTitle(de::Uri const *mapUri)
     {
         if(MapInfo const *mapInfo = P_MapInfo(mapUri))
         {
-            title = mapInfo->title;
+            title = mapInfo->gets("title");
         }
     }
 #endif
@@ -2694,7 +2694,7 @@ char const *G_InFineDebriefing(de::Uri const *mapUri)
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !nextMapUri.path().isEmpty())
     {
-        if(P_MapInfo(mapUri)->hub != P_MapInfo(&nextMapUri)->hub)
+        if(P_MapInfo(mapUri)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"))
         {
             return 0;
         }

@@ -25,24 +25,8 @@
 
 #include "common.h"
 
-class MapInfo
+class MapInfo : public de::Record
 {
-public:
-    uint map; ///< Logical map number.
-    int hub;
-    uint warpTrans;
-    uint nextMap;
-    int cdTrack;
-    de::String title;
-    de::Uri sky1Material;
-    de::Uri sky2Material;
-    float sky1ScrollDelta;
-    float sky2ScrollDelta;
-    bool doubleSky;
-    bool lightning;
-    de::String fadeTable;
-    de::String songLump;
-
 public:
     MapInfo();
 

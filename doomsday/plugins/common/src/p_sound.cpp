@@ -38,8 +38,8 @@ void S_MapMusic(de::Uri const *mapUri)
 
 #ifdef __JHEXEN__
     MapInfo const *mapInfo = P_MapInfo(mapUri);
-    int const cdTrack = mapInfo->cdTrack;
-    String const lump = mapInfo->songLump.compareWithoutCase("DEFSONG")? mapInfo->songLump : "";
+    int const cdTrack = mapInfo->geti("cdTrack");
+    String const lump = mapInfo->gets("songLump").compareWithoutCase("DEFSONG")? mapInfo->gets("songLump") : "";
 
     App_Log(DE2_RES_VERBOSE, "S_MapMusic: %s lump: %s", mapUri->compose().toUtf8().constData(), lump);
 
@@ -131,7 +131,7 @@ void SndInfoParser(ddstring_s const *path)
                     de::Uri mapUri = G_ComposeMapUri(0, mapNumber - 1);
                     if(MapInfo *mapInfo = P_MapInfo(&mapUri))
                     {
-                        mapInfo->songLump = Str_Text(lumpName);
+                        mapInfo->set("songLump", Str_Text(lumpName));
                     }
                 }
                 continue;

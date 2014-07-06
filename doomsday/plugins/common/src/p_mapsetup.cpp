@@ -662,7 +662,7 @@ static void initFog(ddmapinfo_t *ddMapInfo)
 #if __JHEXEN__
     if(MapInfo const *mapInfo = P_MapInfo(0/*current map*/))
     {
-        int fadeTable = CentralLumpIndex().findLast(mapInfo->fadeTable + ".lmp");
+        int fadeTable = CentralLumpIndex().findLast(mapInfo->gets("fadeTable") + ".lmp");
         if(fadeTable == CentralLumpIndex().findLast("COLORMAP.lmp"))
         {
             // We don't want fog in this case.

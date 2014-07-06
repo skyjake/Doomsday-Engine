@@ -91,7 +91,7 @@ static void initStateConditions(fi_state_t *s)
         s->conditions.leave_hub = true;
         if(!nextMapUri.path().isEmpty())
         {
-            if(curMapInfo->hub == P_MapInfo(&nextMapUri)->hub)
+            if(curMapInfo->geti("hub") == P_MapInfo(&nextMapUri)->geti("hub"))
             {
                 s->conditions.leave_hub = false;
             }

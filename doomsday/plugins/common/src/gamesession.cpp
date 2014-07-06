@@ -967,7 +967,7 @@ void GameSession::leaveMap()
 
         // Are we entering a new hub?
 #if __JHEXEN__
-        if(P_MapInfo(0/*current map*/)->hub != P_MapInfo(&nextMapUri)->hub)
+        if(P_MapInfo(0/*current map*/)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"))
 #endif
         {
             // Clear all saved map states in the old hub.
