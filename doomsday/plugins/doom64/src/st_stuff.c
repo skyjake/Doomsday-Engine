@@ -349,12 +349,12 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
 void ST_doFullscreenStuff(int player)
 {
-    static int const ammo_sprite[NUM_AMMO_TYPES] = {
+    /*static int const ammo_sprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
         SPR_RCKT
-    };
+    };*/
 
     hudstate_t *hud = &hudStates[player];
     player_t *plr = &players[player];
@@ -603,9 +603,11 @@ static void setAutomapCheatLevel(uiwidget_t* obj, int level)
 
 static void initAutomapForCurrentMap(uiwidget_t* obj)
 {
-    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
-    automapcfg_t* mcfg;
-    mobj_t* followMobj;
+#ifdef __JDOOM__
+    hudstate_t *hud = &hudStates[UIWidget_Player(obj)];
+    automapcfg_t *mcfg;
+#endif
+    mobj_t *followMobj;
     int i;
 
     UIAutomap_Reset(obj);
@@ -616,7 +618,9 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
                                   *((coord_t*) DD_GetVariable(DD_MAP_MIN_Y)),
                                   *((coord_t*) DD_GetVariable(DD_MAP_MAX_Y)));
 
+#ifdef __JDOOM__
     mcfg = UIAutomap_Config(obj);
+#endif
 
     // Determine the obj view scale factors.
     if(UIAutomap_ZoomMax(obj))

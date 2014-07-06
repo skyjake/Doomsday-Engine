@@ -168,7 +168,8 @@ static int PIT_StompThing(mobj_t *mo, void *context)
         if(!Mobj_IsPlayer(parm.stompMobj)) return true;
 #elif __JDOOM__
         // Monsters only stomp on a boss map.
-        if(!Mobj_IsPlayer(parm.stompMobj) && gameMap != 29) return true;
+        if(!Mobj_IsPlayer(parm.stompMobj) && G_MapNumberFor(gameMapUri) != 29)
+            return true;
 #endif
     }
 

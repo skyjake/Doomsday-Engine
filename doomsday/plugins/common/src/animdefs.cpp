@@ -240,9 +240,8 @@ static void AnimDefsParser(ddstring_s const *path)
         // string(texture-scheme) string(texture-path)
         if(char const *scheme = textureScheme(lexer.token()))
         {
-            uri_s *uri = lexer.readUri(scheme);
-            int const texNumBase = Textures_UniqueId2(uri, !isCustom);
-            Uri_Delete(uri);
+            de::Uri uri = lexer.readUri(scheme);
+            int const texNumBase = Textures_UniqueId2(reinterpret_cast<uri_s *>(&uri), !isCustom);
 
             bool const ignore = (texNumBase == -1);
             int groupNumber = 0;

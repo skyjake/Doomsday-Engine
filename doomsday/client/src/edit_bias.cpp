@@ -303,7 +303,7 @@ static bool SBE_Save(char const *name = 0)
             << NativePath(Str_Text(&fileName)).pretty();
 
     String uid = (map.def()? map.def()->composeUniqueId(App_CurrentGame()) : "(unknown map)");
-    fprintf(file, "# %i Bias Lights for %s\n\n", map.biasSourceCount(), uid);
+    fprintf(file, "# %i Bias Lights for %s\n\n", map.biasSourceCount(), uid.toUtf8().constData());
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
@@ -312,7 +312,7 @@ static bool SBE_Save(char const *name = 0)
     foreach(BiasSource *src, map.biasSources())
     {
         fprintf(file, "\nLight {\n");
-        fprintf(file, "  Map = \"%s\"\n", uid);
+        fprintf(file, "  Map = \"%s\"\n", uid.toUtf8().constData());
         fprintf(file, "  Origin { %g %g %g }\n",
                       src->origin().x, src->origin().y, src->origin().z);
         fprintf(file, "  Color { %g %g %g }\n",

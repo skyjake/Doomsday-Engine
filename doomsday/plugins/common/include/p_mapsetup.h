@@ -1,9 +1,9 @@
-/** @file p_mapsetup.h Common map setup routines.
+/** @file p_mapsetup.h  Common map setup routines.
  *
  * Management of extended map data objects (e.g., xlines) is done here.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,6 +29,12 @@
 DENG_EXTERN_C dd_bool mapSetup;
 
 #ifdef __cplusplus
+
+/**
+ * Change the current map to that referenced by @a mapUri.
+ */
+void P_SetupMap(de::Uri const &mapUri);
+
 extern "C" {
 #endif
 
@@ -38,13 +44,6 @@ extern "C" {
  * secret areas).
  */
 void P_FinalizeMapChange(Uri const *uri);
-
-/**
- * Load the specified map.
- *
- * @param uri  URI e.g., "E1M1".
- */
-void P_SetupMap(Uri const *uri);
 
 /**
  * To be called to reset the local world state (e.g., when leaving a networked game).

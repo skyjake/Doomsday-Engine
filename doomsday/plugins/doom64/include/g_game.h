@@ -27,8 +27,8 @@
  * Top-level (common) game routines jDoom64 - specific.
  */
 
-#ifndef LIBJDOOM64_G_GAME_H
-#define LIBJDOOM64_G_GAME_H
+#ifndef LIBDOOM64_G_GAME_H
+#define LIBDOOM64_G_GAME_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -41,11 +41,9 @@
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C uint nextMap; // If non zero this will be the next map.
 DENG_EXTERN_C uint nextMapEntrance;
 DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
-DENG_EXTERN_C wbstartstruct_t wmInfo;
 DENG_EXTERN_C int bodyQueueSlot;
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
@@ -53,6 +51,9 @@ DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
+extern de::Uri nextMapUri;
+extern wbstartstruct_t wmInfo;
+
 extern "C" {
 #endif
 
@@ -90,4 +91,4 @@ void G_QueueBody(mobj_t* body);
 } // extern "C"
 #endif
 
-#endif /* LIBJDOOM64_G_GAME_H */
+#endif /* LIBDOOM64_G_GAME_H */

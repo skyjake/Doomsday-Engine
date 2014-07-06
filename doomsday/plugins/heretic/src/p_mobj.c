@@ -252,7 +252,7 @@ coord_t P_MobjGetFriction(mobj_t *mo)
 void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[2], mom[2];
-    player_t *player;
+    //player_t *player;
     dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code
@@ -279,7 +279,7 @@ void P_MobjMoveXY(mobj_t *mo)
     if(mo->flags2 & MF2_WINDTHRUST)
         P_WindThrust(mo);
 
-    player = mo->player;
+    //player = mo->player;
     do
     {
         /**

@@ -28,6 +28,7 @@
 #include "g_defs.h"
 #include "gamesession.h"
 #include "m_argv.h"
+#include "mapinfo.h"
 #include "p_inventory.h"
 #include "p_map.h"
 #include "player.h"
@@ -37,6 +38,7 @@
 #include "saveslots.h"
 #include <cstring>
 
+using namespace de;
 using namespace common;
 
 int verbose;
@@ -295,7 +297,7 @@ void X_PreInit()
 
 void X_PostInit()
 {
-    dd_bool autoStart = false;
+    bool autoStart = false;
     de::Uri startMapUri;
     playerclass_t startPlayerClass = PCLASS_NONE;
 
@@ -312,46 +314,44 @@ void X_PostInit()
     /* None */
 
     // Defaults for skill, episode and map.
-    defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
 
     // Game mode specific settings.
     /* None */
 
-    cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
+    ::cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
 
-    defaultGameRules.noMonsters    = CommandLine_Check("-nomonsters")? true : false;
-    defaultGameRules.randomClasses = CommandLine_Exists("-randclass")? true : false;
+    ::defaultGameRules.noMonsters    = CommandLine_Check("-nomonsters")? true : false;
+    ::defaultGameRules.randomClasses = CommandLine_Exists("-randclass")? true : false;
 
     // Turbo movement option.
     int p = CommandLine_Check("-turbo");
-    turboMul = 1.0f;
+    ::turboMul = 1.0f;
     if(p)
     {
         int scale = 200;
-
         if(p < CommandLine_Count() - 1)
+        {
             scale = atoi(CommandLine_At(p + 1));
-        if(scale < 10)
-            scale = 10;
-        if(scale > 400)
-            scale = 400;
+        }
+        de::clamp(10, scale, 400);
 
         App_Log(DE2_MAP_NOTE, "Turbo scale: %i%%", scale);
-        turboMul = scale / 100.f;
+        ::turboMul = scale / 100.f;
     }
 
     if((p = CommandLine_CheckWith("-scripts", 1)) != 0)
     {
-        sc_FileScripts = true;
-        sc_ScriptsDir = CommandLine_At(p + 1);
+        ::sc_FileScripts = true;
+        ::sc_ScriptsDir = CommandLine_At(p + 1);
     }
 
     // Process sound definitions.
     SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));
 
     // Process sound sequence scripts.
-    SndSeqParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sSNDSEQ.txt", sc_ScriptsDir)
-                               : AutoStr_FromText("Lumps:SNDSEQ"));
+    SndSeqParser(::sc_FileScripts? Str_Appendf(AutoStr_New(), "%sSNDSEQ.txt", ::sc_ScriptsDir)
+                                 : AutoStr_FromText("Lumps:SNDSEQ"));
 
     // Load a saved game?
     p = CommandLine_CheckWith("-loadgame", 1);
@@ -370,7 +370,7 @@ void X_PostInit()
     if((p = CommandLine_CheckWith("-skill", 1)) != 0)
     {
         int skillNumber = atoi(CommandLine_At(p + 1));
-        defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
@@ -394,7 +394,7 @@ void X_PostInit()
     if(startPlayerClass != PCLASS_NONE)
     {
         App_Log(DE2_LOG_NOTE, "Player Class: '%s'", PCLASS_INFO(startPlayerClass)->niceName);
-        cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
+        ::cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
         autoStart = true;
     }
 
@@ -402,10 +402,22 @@ void X_PostInit()
     p = CommandLine_Check("-warp");
     if(p && p < CommandLine_Count() - 1)
     {
-        int warpMap = atoi(CommandLine_At(p + 1));
-
-        startMapUri = G_ComposeMapUri(0, P_TranslateMap(warpMap - 1));
         autoStart = true;
+
+        bool isNumber;
+        int mapNumber = String(CommandLine_At(p + 1)).toInt(&isNumber);
+        if(!isNumber)
+        {
+            // It must be a URI, then.
+            char *args[1] = { const_cast<char *>(CommandLine_At(p + 1)) };
+            startMapUri = de::Uri::fromUserInput(args, 1);
+            if(startMapUri.scheme().isEmpty())
+                startMapUri.setScheme("Maps");
+        }
+        else
+        {
+            startMapUri = G_ComposeMapUri(0, P_TranslateMap(mapNumber - 1));
+        }
     }
 
     if(startMapUri.path().isEmpty())
@@ -418,13 +430,13 @@ void X_PostInit()
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
                               startMapUri.asText().toUtf8().constData(),
-                              defaultGameRules.skill);
+                              ::defaultGameRules.skill);
     }
 
     // Validate episode and map.
     if((autoStart || IS_NETGAME) && P_MapExists(startMapUri.compose().toUtf8().constData()))
     {
-        G_SetGameActionNewSession(startMapUri, 0/*default*/, defaultGameRules);
+        G_SetGameActionNewSession(startMapUri, 0/*default*/, ::defaultGameRules);
     }
     else
     {

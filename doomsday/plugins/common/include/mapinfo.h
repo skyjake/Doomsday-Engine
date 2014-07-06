@@ -1,7 +1,7 @@
-/** @file p_mapinfo.h  Hexen MAPINFO parsing.
+/** @file mapinfo.h  Hexen-format MAPINFO definition parsing.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -19,32 +19,27 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef JHEXEN_DEF_MAPINFO_H
-#define JHEXEN_DEF_MAPINFO_H
+#ifndef LIBCOMMON_MAPINFO_H
+#define LIBCOMMON_MAPINFO_H
 
-#ifndef __JHEXEN__
-#  error "Using jHexen headers without __JHEXEN__"
-#endif
-
-#include "doomsday.h"
-#include <doomsday/uri.h>
+#include "common.h"
 
 struct mapinfo_t
 {
-    uint         map; ///< Logical map number.
-    int          hub;
-    uint         warpTrans;
-    uint         nextMap;
-    int          cdTrack;
-    char         title[32];
+    uint map; ///< Logical map number.
+    int hub;
+    uint warpTrans;
+    uint nextMap;
+    int cdTrack;
+    char title[32];
     materialid_t sky1Material;
     materialid_t sky2Material;
-    float        sky1ScrollDelta;
-    float        sky2ScrollDelta;
-    dd_bool      doubleSky;
-    dd_bool      lightning;
-    int          fadeTable;
-    char         songLump[10];
+    float sky1ScrollDelta;
+    float sky2ScrollDelta;
+    dd_bool doubleSky;
+    dd_bool lightning;
+    int fadeTable;
+    char songLump[10];
 };
 
 /**
@@ -60,7 +55,7 @@ void MapInfoParser(Str const *path);
  */
 mapinfo_t *P_MapInfo(de::Uri const *mapUri = 0);
 
-#define P_INVALID_LOGICAL_MAP   0xffffffff
+#define P_INVALID_LOGICAL_MAP 0xffffffff
 
 /**
  * Translates a warp map number to logical map number, if possible.
@@ -83,4 +78,4 @@ uint P_TranslateMapIfExists(uint map);
  */
 uint P_TranslateMap(uint map);
 
-#endif // JHEXEN_DEF_MAPINFO_H
+#endif // LIBCOMMON_MAPINFO_H

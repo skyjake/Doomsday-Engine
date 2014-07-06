@@ -29,6 +29,7 @@
 #include "d_netsv.h"
 #include "g_common.h"
 #include "hu_inventory.h"
+#include "mapinfo.h"
 #include "mapstatewriter.h"
 #include "p_inventory.h"
 #include "p_map.h"
@@ -474,21 +475,17 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
     {
         DENG2_ASSERT(inProgress);
 
-        ::gameMapUri  = mapUri;
-        ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
-        ::gameMap     = G_MapNumberFor(::gameMapUri);
+        ::gameMapUri = mapUri;
 
-        // Ensure that the episode and map numbers are good.
-        if(!G_ValidateMap(&::gameEpisode, &::gameMap))
+        // Check that the map truly exists.
+        if(!P_MapExists(::gameMapUri.compose().toUtf8().constData()))
         {
-            ::gameMapUri  = G_ComposeMapUri(::gameEpisode, ::gameMap);
-            ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
-            ::gameMap     = G_MapNumberFor(::gameMapUri);
+            ::gameMapUri = G_ComposeMapUri(0, 0); // Should exist always?
         }
 
         // Update game status cvars:
-        ::gsvMap     = (unsigned)::gameMap;
-        ::gsvEpisode = (unsigned)::gameEpisode;
+        Con_SetInteger2("map-id",      (unsigned)G_MapNumberFor(::gameMapUri),     SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-episode", (unsigned)G_EpisodeNumberFor(::gameMapUri), SVF_WRITE_OVERRIDE);
     }
 
     /**
@@ -517,7 +514,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         {
             briefDisabled = true;
         }
-        char const *briefing = G_InFineBriefing(&gameMapUri);
+        char const *briefing = G_InFineBriefing(); // current map
 
         // Restart the map music?
         if(!briefing)
@@ -543,7 +540,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             S_PauseMusic(true);
         }
 
-        P_SetupMap(reinterpret_cast<uri_s *>(&gameMapUri));
+        P_SetupMap(gameMapUri);
 
         if(revisit)
         {
@@ -941,13 +938,15 @@ void GameSession::leaveMap()
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
 
-    // Ensure that the episode and map indices are good.
-    G_ValidateMap(&gameEpisode, &nextMap);
-    de::Uri const nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    // Check that the map truly exists.
+    if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
+    {
+        ::nextMapUri = G_ComposeMapUri(0, 0); // Should exist always?
+    }
 
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process
-    // of calling P_SetupMap() and we need to restore them after).
+    // of calling @ref P_SetupMap() and we need to restore them after).
     Instance::playerbackup_t playerBackup[MAXPLAYERS];
     d->backupPlayersInHub(playerBackup);
 
@@ -1164,11 +1163,25 @@ String GameSession::savedUserDescription(String const &saveName)
 
 namespace {
 int gsvRuleSkill;
+int gsvEpisode;
+int gsvMap;
+#if __JHEXEN__
+int gsvHub;
+#endif
 }
 
 void GameSession::consoleRegister() //static
 {
-    C_VAR_INT("game-skill", &gsvRuleSkill, CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE, 0, 0);
+#define READONLYCVAR  (CVF_READ_ONLY | CVF_NO_MAX | CVF_NO_MIN | CVF_NO_ARCHIVE)
+
+    C_VAR_INT("game-skill",  &gsvRuleSkill, READONLYCVAR, 0, 0);
+    C_VAR_INT("map-episode", &gsvEpisode,   READONLYCVAR, 0, 0);
+#if __JHEXEN__
+    C_VAR_INT("map-hub",     &gsvHub,       READONLYCVAR, 0, 0);
+#endif
+    C_VAR_INT("map-id",      &gsvMap,       READONLYCVAR, 0, 0);
+
+#undef READONLYCVAR
 }
 
 } // namespace common

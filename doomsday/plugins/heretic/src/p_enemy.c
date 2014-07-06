@@ -268,7 +268,7 @@ static dd_bool tryMoveMobj(mobj_t *actor)
 
 static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
 {
-    dirtype_t xdir, ydir, tdir;
+    dirtype_t xdir, ydir;
     dirtype_t olddir = actor->moveDir;
     dirtype_t turnaround = olddir;
 
@@ -310,17 +310,23 @@ static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
     // Randomly determine direction of search.
     if(P_Random() & 1)
     {
+        int tdir;
         for(tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
-            if(tdir != turnaround &&
+        {
+            if((dirtype_t)tdir != turnaround &&
                (actor->moveDir = tdir, tryMoveMobj(actor)))
                 return;
+        }
     }
     else
     {
+        int tdir;
         for(tdir = DI_SOUTHEAST; tdir != DI_EAST - 1; tdir--)
-            if(tdir != turnaround &&
+        {
+            if((dirtype_t)tdir != turnaround &&
                (actor->moveDir = tdir, tryMoveMobj(actor)))
                 return;
+        }
     }
 
     if((actor->moveDir = turnaround) != DI_NODIR && !tryMoveMobj(actor))
@@ -2097,9 +2103,9 @@ static int countMobjOfType(thinker_t* th, void* context)
 /**
  * Trigger special effects if all bosses are dead.
  */
-void C_DECL A_BossDeath(mobj_t* actor)
+void C_DECL A_BossDeath(mobj_t *actor)
 {
-    static mobjtype_t   bossType[6] = {
+    static mobjtype_t bossType[6] = {
         MT_HEAD,
         MT_MINOTAUR,
         MT_SORCERER2,
@@ -2108,15 +2114,15 @@ void C_DECL A_BossDeath(mobj_t* actor)
         -1
     };
 
-    Line*               dummyLine;
+    Line *dummyLine;
     countmobjoftypeparams_t params;
 
     // Not a boss level?
-    if(gameMap != 7)
+    if(G_CurrentMapNumber() != 7)
         return;
 
     // Not considered a boss in this episode?
-    if(actor->type != bossType[gameEpisode])
+    if(actor->type != bossType[G_CurrentEpisodeNumber()])
         return;
 
     // Scan the remaining thinkers to see if all bosses are dead.
@@ -2130,7 +2136,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
     }
 
     // Kill any remaining monsters.
-    if(gameEpisode != 0)
+    if(G_CurrentEpisodeNumber() != 0)
         P_Massacre();
 
     dummyLine = P_AllocDummyLine();

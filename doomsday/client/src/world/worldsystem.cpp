@@ -262,11 +262,6 @@ dd_bool ddMapSetup;
 
 static char const *mapCacheDir = "mapcache/";
 
-static inline lumpnum_t markerLumpNumForPath(String path)
-{
-    return App_FileSystem().lumpNumForName(path);
-}
-
 /// Determine the identity key for maps loaded from the specified @a sourcePath.
 static String cacheIdForMap(String const &sourcePath)
 {

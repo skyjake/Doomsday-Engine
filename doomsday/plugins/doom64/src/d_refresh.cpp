@@ -1,33 +1,23 @@
-/**\file d_refresh.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_refresh.cpp  DOOM 64 specific refresh functions/utilities.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Refresh - Doom64 specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 #include <assert.h>
@@ -50,56 +40,37 @@
 #include "p_actor.h"
 #include "dmu_lib.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void            R_SetAllDoomsdayFlags(void);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+void R_SetAllDoomsdayFlags(void);
 
 float quitDarkenOpacity = 0;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Draws a special filter over the screen (eg the inversing filter used
  * when in god mode).
  */
-void G_RendSpecialFilter(int player, const RectRaw* region)
+void G_RendSpecialFilter(int player, RectRaw const *region)
 {
-    player_t* plr = players + player;
-    const int filter = plr->powers[PT_INVULNERABILITY];
-    float max = 30, str, r, g, b;
-    assert(region);
+    DENG2_ASSERT(region != 0);
 
+    player_t *plr = players + player;
+    int const filter = plr->powers[PT_INVULNERABILITY];
     if(!filter) return;
 
+    float str = 1; // Full inversion.
+    float max = 30;
     if(filter < max)
         str = filter / max;
     else if(filter < 4 * 32 && !(filter & 8))
         str = .7f;
     else if(filter > INVULNTICS - max)
         str = (INVULNTICS - filter) / max;
-    else
-        str = 1; // Full inversion.
 
     // Draw an inversing filter.
     DGL_BlendMode(BM_INVERSE);
 
-    r = MINMAX_OF(0.f, str * 2, 1.f);
-    g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
-    b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
+    float r = de::clamp(0.f, str * 2,       1.f);
+    float g = de::clamp(0.f, str * 2 - .4f, 1.f);
+    float b = de::clamp(0.f, str * 2 - .8f, 1.f);
 
     DGL_DrawRectf2Color(region->origin.x, region->origin.y,
         region->size.width, region->size.height, r, g, b, 1);
@@ -110,8 +81,7 @@ void G_RendSpecialFilter(int player, const RectRaw* region)
 
 dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
-    if(!rgba)
-        return false;
+    if(!rgba) return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
@@ -154,27 +124,28 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
 
 void R_UpdateViewFilter(int player)
 {
-#define RADIATIONPAL            (13) /// Radiation suit, green shift.
+#define RADIATIONPAL (13) /// Radiation suit, green shift.
 
-    player_t* plr = players + player;
-    int palette = 0, cnt, bzc;
-
+    player_t *plr = players + player;
     if(player < 0 || player >= MAXPLAYERS)
         return;
 
     // Not currently present?
     if(!plr->plr->inGame) return;
 
-    cnt = plr->damageCount;
+    int cnt = plr->damageCount;
 
+    int bzc = 0;
     if(plr->powers[PT_STRENGTH])
-    {   // Slowly fade the berzerk out.
+    {
+        // Slowly fade the berzerk out.
         bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
 
         if(bzc > cnt)
             cnt = bzc;
     }
 
+    int palette = 0;
     if(cnt)
     {
         palette = (cnt + 7) >> 3;
@@ -213,7 +184,8 @@ void R_UpdateViewFilter(int player)
 
 void G_RendPlayerView(int player)
 {
-    player_t* plr = &players[player];
+    player_t *plr = &players[player];
+
     float pspriteOffsetY;
     int isFullBright = ((plr->powers[PT_INFRARED] > 4 * 32) ||
                         (plr->powers[PT_INFRARED] & 8) ||
@@ -244,7 +216,7 @@ void G_RendPlayerView(int player)
 }
 
 #if 0
-static void rendHUD(int player, const RectRaw* portGeometry)
+static void rendHUD(int player, RectRaw const *portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
     if(G_GameState() != GS_MAP) return;
@@ -256,8 +228,8 @@ static void rendHUD(int player, const RectRaw* portGeometry)
     Hu_MapTitleDrawer(portGeometry);
 }
 
-void D_DrawViewPort(int port, const RectRaw* portGeometry,
-    const RectRaw* windowGeometry, int player, int layer)
+void D_DrawViewPort(int port, RectRaw const *portGeometry,
+    RectRaw const *windowGeometry, int player, int layer)
 {
     if(layer != 0)
     {
@@ -268,7 +240,7 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
     switch(G_GameState())
     {
     case GS_MAP: {
-        player_t* plr = players + player;
+        player_t *plr = players + player;
 
         if(!ST_AutomapObscures2(player, windowGeometry))
         {
@@ -292,7 +264,7 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
 }
 #endif
 
-void D_DrawWindow(Size2Raw const *windowSize)
+void D_DrawWindow(Size2Raw const * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {
@@ -310,11 +282,9 @@ void D_DrawWindow(Size2Raw const *windowSize)
 
 void D_EndFrame()
 {
-    int i;
-
     if(G_GameState() != GS_MAP) return;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *plr = players + i;
 
@@ -333,6 +303,8 @@ void D_EndFrame()
  */
 void P_SetDoomsdayFlags(mobj_t *mo)
 {
+    DENG2_ASSERT(mo != 0);
+
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
         return;
@@ -401,16 +373,12 @@ void P_SetDoomsdayFlags(mobj_t *mo)
  */
 void R_SetAllDoomsdayFlags()
 {
-    int i;
-    mobj_t *iter;
-
-    if(G_GameState() != GS_MAP)
-        return;
+    if(G_GameState() != GS_MAP) return;
 
     // Only visible things are in the sector thinglists, so this is good.
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
+    for(mobj_t *iter = (mobj_t *)P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
-            P_SetDoomsdayFlags(iter);
+        P_SetDoomsdayFlags(iter);
     }
 }

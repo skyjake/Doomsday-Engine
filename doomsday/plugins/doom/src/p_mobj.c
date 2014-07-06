@@ -112,10 +112,10 @@ static coord_t getFriction(mobj_t *mo)
     return P_MobjGetFriction(mo);
 }
 
-void P_MobjMoveXY(mobj_t* mo)
+void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[3], mom[3];
-    player_t* player;
+    //player_t *player;
     dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code.
@@ -142,7 +142,7 @@ void P_MobjMoveXY(mobj_t* mo)
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
 
-    player = mo->player;
+    //player = mo->player;
 
     do
     {

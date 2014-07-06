@@ -33,10 +33,18 @@
 #include "doomsday.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Register the console variables and commands of this module.
 void UIChat_Register(void);
 
 void UIChat_LoadMacros(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /**
  * UIChat. UI widget for composing player/team chat messages.
@@ -66,6 +74,10 @@ typedef struct {
     int destination;
     guidata_chat_inputbuffer_t buffer;
 } guidata_chat_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Possibly respond to input event @a ev.
@@ -141,5 +153,9 @@ int UIChat_ParseDestination(const char* str);
 
 /// @return  Parsed chat macro identifier from @a str or @c -1 if invalid.
 int UIChat_ParseMacroId(const char* str);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_HUD_CHAT_H */

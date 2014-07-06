@@ -682,9 +682,9 @@ void P_DeathThink(player_t* player)
  *
  * @param player        Player that wishes to be reborn.
  */
-void P_PlayerReborn(player_t* player)
+void P_PlayerReborn(player_t *player)
 {
-    const uint plrNum = player - players;
+    int const plrNum = player - players;
 
     if(plrNum == CONSOLEPLAYER)
     {
@@ -1219,11 +1219,11 @@ void P_PlayerThinkItems(player_t *player)
 #endif
 }
 
-void P_PlayerThinkWeapons(player_t* player)
+void P_PlayerThinkWeapons(player_t *player)
 {
-    playerbrain_t*      brain = &player->brain;
-    weapontype_t        oldweapon = player->pendingWeapon;
-    weapontype_t        newweapon = WT_NOCHANGE;
+    playerbrain_t *brain = &player->brain;
+    //weapontype_t oldweapon = player->pendingWeapon;
+    weapontype_t newweapon = WT_NOCHANGE;
 
     if(IS_NETWORK_SERVER)
     {
@@ -1717,15 +1717,15 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
     plr->lookDir = MINMAX_OF(-LOOKDIRMAX, plr->lookDir, LOOKDIRMAX);
 }
 
-void P_PlayerThinkUpdateControls(player_t* player)
+void P_PlayerThinkUpdateControls(player_t *player)
 {
-    int                 playerNum = player - players;
-    ddplayer_t         *dp = player->plr;
-    float               vel, off, offsetSensitivity = 100;
-    int                 i;
-    dd_bool             strafe = false;
-    playerbrain_t      *brain = &player->brain;
-    dd_bool             oldAttack = brain->attack;
+    int playerNum = player - players;
+    ddplayer_t *dp = player->plr;
+    float vel, off, offsetSensitivity = 100;
+    int i;
+    //dd_bool strafe = false;
+    playerbrain_t *brain = &player->brain;
+    dd_bool oldAttack = brain->attack;
 
     if(IS_DEDICATED) return;
 
@@ -1735,7 +1735,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Check for strafe.
     P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
-    strafe = (!FEQUAL(vel, 0));
+    //strafe = (!FEQUAL(vel, 0));
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);

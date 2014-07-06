@@ -743,6 +743,6 @@ D_CMD(CheatLeaveMap)
         return true;
     }
 
-    G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
+    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
     return true;
 }

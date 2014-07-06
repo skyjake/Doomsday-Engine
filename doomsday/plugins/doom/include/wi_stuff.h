@@ -21,12 +21,14 @@
 
 #ifndef LIBDOOM_WI_STUFF_H
 #define LIBDOOM_WI_STUFF_H
+#ifdef __cplusplus
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
 #include "d_player.h"
+#include <doomsday/uri.h>
 
 // Global locations
 #define WI_TITLEY               (2)
@@ -65,66 +67,68 @@
 #define SHOWNEXTLOCDELAY        (4) // In seconds.
 
 // States for the intermission
-typedef enum {
+enum interludestate_t
+{
     ILS_NONE = -1,
     ILS_SHOW_STATS,
     ILS_SHOW_NEXTMAP
-} interludestate_t;
-
-//
-// INTERMISSION
-// Structure passed e.g. to WI_Init(wb)
-//
-typedef struct {
-    dd_bool         inGame; // Whether the player is in game.
-
-    // Player stats, kills, collected items etc.
-    int             kills;
-    int             items;
-    int             secret;
-    int             time;
-    int             frags[MAXPLAYERS];
-    int             score; // Current score on entry, modified on return.
-} wbplayerstruct_t;
-
-typedef struct {
-    uint            episode;
-    dd_bool         didSecret; // If true, splash the secret level.
-    uint            currentMap, nextMap; // This and next maps.
-    int             maxKills;
-    int             maxItems;
-    int             maxSecret;
-    int             maxFrags;
-    int             parTime;
-    int             pNum; // Index of this player in game.
-    wbplayerstruct_t plyr[MAXPLAYERS];
-} wbstartstruct_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/// To be called to register the console commands and variables of this module.
-void WI_Register(void);
+};
 
 /**
- * Perform setup for an intermission.
+ * Structure passed to WI_Init(), etc...
  */
-void WI_Init(wbstartstruct_t *wbstartstruct);
+struct wbplayerstruct_t
+{
+    dd_bool inGame;  ///< Whether the player is in game.
 
-void WI_Shutdown(void);
+    int kills;
+    int items;
+    int secret;
+    int time;
+    int frags[MAXPLAYERS];
+    int score;       ///< Current score on entry, modified on return.
+};
+
+struct wbstartstruct_t
+{
+    dd_bool didSecret;  ///< @c true= splash the secret level.
+    de::Uri currentMap;
+    de::Uri nextMap;
+    int maxKills;
+    int maxItems;
+    int maxSecret;
+    int maxFrags;
+    int parTime;
+    int pNum;           ///< Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];
+};
+
+/// To be called to register the console commands and variables of this module.
+void WI_Register();
+
+/**
+ * Begin the intermission using the given game session and player configuration.
+ *
+ * @param wbstartstruct  Configuration to use for the intermission. Ownership is
+ *                       @em not given to WI_Init() however it is assumed that
+ *                       this structure is @em not modified while the intermission
+ *                       is in progress.
+ */
+void WI_Init(wbstartstruct_t const &wbstartstruct);
+
+void WI_Shutdown();
 
 /**
  * Process game tic for the intermission.
  *
  * @note Handles user input due to timing issues in netgames.
  */
-void WI_Ticker(void);
+void WI_Ticker();
 
 /**
  * Draw the intermission.
  */
-void WI_Drawer(void);
+void WI_Drawer();
 
 /**
  * Change the current intermission state.
@@ -134,15 +138,12 @@ void WI_SetState(interludestate_t st);
 /**
  * End the current intermission.
  */
-void WI_End(void);
+void WI_End();
 
 /**
  * Skip to the next state in the intermission.
  */
-void IN_SkipToNext(void);
+void IN_SkipToNext();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
+#endif // __cplusplus
 #endif // LIBDOOM_WI_STUFF_H

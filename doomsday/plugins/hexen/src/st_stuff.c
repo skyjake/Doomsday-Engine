@@ -312,10 +312,10 @@ void Flight_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
 }
 
-void Flight_UpdateGeometry(uiwidget_t* obj)
+void Flight_UpdateGeometry(uiwidget_t *obj)
 {
-    guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    //guidata_flight_t *flht = (guidata_flight_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
@@ -363,10 +363,10 @@ void Boots_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_PopMatrix();
 }
 
-void Boots_UpdateGeometry(uiwidget_t* obj)
+void Boots_UpdateGeometry(uiwidget_t *obj)
 {
-    guidata_boots_t* boots = (guidata_boots_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    //guidata_boots_t *boots = (guidata_boots_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
@@ -377,10 +377,12 @@ void Boots_UpdateGeometry(uiwidget_t* obj)
     Rect_SetWidthHeight(obj->geometry, 24 * cfg.hudScale, 28 * cfg.hudScale);
 }
 
-void Defense_Ticker(uiwidget_t* obj, timespan_t ticLength)
+void Defense_Ticker(uiwidget_t *obj, timespan_t ticLength)
 {
-    guidata_defense_t* dfns = (guidata_defense_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_defense_t *dfns = (guidata_defense_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
+
+    DENG_UNUSED(ticLength);
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
     dfns->patchId = 0;
@@ -415,10 +417,10 @@ void Defense_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_PopMatrix();
 }
 
-void Defense_UpdateGeometry(uiwidget_t* obj)
+void Defense_UpdateGeometry(uiwidget_t *obj)
 {
-    guidata_defense_t* dfns = (guidata_defense_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    //guidata_defense_t *dfns = (guidata_defense_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
@@ -429,10 +431,12 @@ void Defense_UpdateGeometry(uiwidget_t* obj)
     Rect_SetWidthHeight(obj->geometry, 26 * cfg.hudScale, 28 * cfg.hudScale);
 }
 
-void Servant_Ticker(uiwidget_t* obj, timespan_t ticLength)
+void Servant_Ticker(uiwidget_t *obj, timespan_t ticLength)
 {
-    guidata_servant_t* svnt = (guidata_servant_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    guidata_servant_t *svnt = (guidata_servant_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
+
+    DENG_UNUSED(ticLength);
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
@@ -468,10 +472,10 @@ void Servant_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_PopMatrix();
 }
 
-void Servant_UpdateGeometry(uiwidget_t* obj)
+void Servant_UpdateGeometry(uiwidget_t *obj)
 {
-    guidata_servant_t* svnt = (guidata_servant_t*)obj->typedata;
-    const player_t* plr = &players[obj->player];
+    //guidata_servant_t *svnt = (guidata_servant_t *)obj->typedata;
+    player_t const *plr = &players[obj->player];
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
@@ -2849,11 +2853,13 @@ static void setAutomapCheatLevel(uiwidget_t* obj, int level)
     UIAutomap_SetFlags(obj, flags);
 }
 
-static void initAutomapForCurrentMap(uiwidget_t* obj)
+static void initAutomapForCurrentMap(uiwidget_t *obj)
 {
-    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
-    automapcfg_t* mcfg;
-    mobj_t* followMobj;
+#ifdef __JDOOM__
+    hudstate_t *hud = &hudStates[UIWidget_Player(obj)];
+    automapcfg_t *mcfg;
+#endif
+    mobj_t *followMobj;
     int i;
 
     UIAutomap_Reset(obj);
@@ -2864,7 +2870,9 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
                                   *((coord_t*) DD_GetVariable(DD_MAP_MIN_Y)),
                                   *((coord_t*) DD_GetVariable(DD_MAP_MAX_Y)));
 
+#if __JDOOM__
     mcfg = UIAutomap_Config(obj);
+#endif
 
     // Determine the obj view scale factors.
     if(UIAutomap_ZoomMax(obj))

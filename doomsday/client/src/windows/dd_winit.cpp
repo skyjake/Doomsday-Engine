@@ -37,6 +37,7 @@
 #include "de_system.h"
 #include "dd_winit.h"
 
+#include <QDir>
 #include <doomsday/paths.h>
 #include <de/App>
 
