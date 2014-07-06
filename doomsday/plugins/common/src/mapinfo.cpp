@@ -36,8 +36,47 @@ using namespace de;
 #define MUSIC_INTERMISSION "hub"
 #define MUSIC_TITLE        "hexen"
 
-typedef std::map<std::string, mapinfo_t> MapInfos;
+typedef std::map<std::string, MapInfo> MapInfos;
 static MapInfos mapInfos;
+
+MapInfo::MapInfo()
+    : map            (0)
+    , hub            (0)
+    , warpTrans      (0)
+    , nextMap        (0)
+    , cdTrack        (1)
+    , title          ("Untitled")
+    , sky1Material   ("Textures:SKY1", RC_NULL)
+    , sky2Material   ("Textures:SKY1", RC_NULL)
+    , sky1ScrollDelta(0)
+    , sky2ScrollDelta(0)
+    , doubleSky      (false)
+    , lightning      (false)
+    , fadeTable      ("COLORMAP")
+    , songLump       ("DEFSONG")
+{}
+
+void MapInfo::resetToDefaults()
+{
+    map             = 0; // Unknown.
+    hub             = 0;
+    warpTrans       = 0;
+    nextMap         = 0; // Always go to map 0 if not specified.
+    cdTrack         = 1;
+    title           = "Untitled";
+#ifdef __JHEXEN__
+    sky1Material    = sky2Material =
+            de::Uri((gameMode == hexen_demo || gameMode == hexen_betademo? "Textures:SKY2" : "Textures:SKY1"), RC_NULL);
+#else
+    sky1Material    = sky2Material = de::Uri("Textures:SKY1", RC_NULL);
+#endif
+    sky1ScrollDelta = 0;
+    sky2ScrollDelta = 0;
+    doubleSky       = false;
+    lightning       = false;
+    fadeTable       = "COLORMAP";
+    songLump        = "DEFSONG"; // Unknown.
+}
 
 /**
  * Update the Music definition @a musicId with the specified CD @a track number.
@@ -59,27 +98,6 @@ void MapInfoParser(ddstring_s const *path)
     if(script && !Str_IsEmpty(script))
     {
         App_Log(DE2_RES_VERBOSE, "Parsing \"%s\"...", F_PrettyPath(Str_Text(path)));
-
-        // Prepare a default-configured definition, for one-shot initialization.
-        mapinfo_t defMapInfo;
-        defMapInfo.map             = -1; // Unknown.
-        defMapInfo.hub             = 0;
-        defMapInfo.warpTrans       = 0;
-        defMapInfo.nextMap         = 0; // Always go to map 0 if not specified.
-        defMapInfo.cdTrack         = 1;
-#ifdef __JHEXEN__
-        defMapInfo.sky1Material    = Materials_ResolveUriCString(gameMode == hexen_demo || gameMode == hexen_betademo? "Textures:SKY2" : "Textures:SKY1");
-#else
-        defMapInfo.sky1Material    = Materials_ResolveUriCString("Textures:SKY1");
-#endif
-        defMapInfo.sky2Material    = defMapInfo.sky1Material;
-        defMapInfo.sky1ScrollDelta = 0;
-        defMapInfo.sky2ScrollDelta = 0;
-        defMapInfo.doubleSky       = false;
-        defMapInfo.lightning       = false;
-        defMapInfo.fadeTable       = CentralLumpIndex().findLast("COLORMAP.lmp");
-        strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
-        strcpy(defMapInfo.songLump, "DEFSONG"); // Unknown.
 
         HexLex lexer(script, path);
 
@@ -125,14 +143,14 @@ void MapInfoParser(ddstring_s const *path)
                 }
 
                 de::Uri const mapUri = G_ComposeMapUri(0, tmap - 1);
-                mapinfo_t *info = P_MapInfo(&mapUri);
+                MapInfo *info = P_MapInfo(&mapUri);
                 if(!info)
                 {
                     // A new map info.
                     info = &mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
 
                     // Initialize with the default values.
-                    std::memcpy(info, &defMapInfo, sizeof(*info));
+                    info->resetToDefaults();
 
                     // Assign a logical map index.
                     info->map = tmap - 1;
@@ -142,27 +160,21 @@ void MapInfoParser(ddstring_s const *path)
                 }
 
                 // Map title must follow the number.
-                strcpy(info->title, Str_Text(lexer.readString()));
+                info->title = Str_Text(lexer.readString());
 
                 // Process optional tokens.
                 while(lexer.readToken())
                 {
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
                     {
-                        de::Uri uri = lexer.readUri("Textures");
-
-                        info->sky1Material    = Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri));
+                        info->sky1Material    = lexer.readUri("Textures");
                         info->sky1ScrollDelta = (float) lexer.readNumber() / 256;
-
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky2"))
                     {
-                        de::Uri uri = lexer.readUri("Textures");
-
-                        info->sky2Material    = Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri));
+                        info->sky2Material    = lexer.readUri("Textures");
                         info->sky2ScrollDelta = (float) lexer.readNumber() / 256;
-
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "doublesky"))
@@ -177,7 +189,7 @@ void MapInfoParser(ddstring_s const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "fadetable"))
                     {
-                        info->fadeTable = CentralLumpIndex().findLast(de::String(Str_Text(lexer.readString())) + ".lmp");
+                        info->fadeTable = Str_Text(lexer.readString());
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
@@ -238,14 +250,15 @@ void MapInfoParser(ddstring_s const *path)
 #ifdef DENG_DEBUG
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
-        mapinfo_t const &info = i->second;
+        MapInfo const &info = i->second;
         App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" hub: %i map: %i warp: %i }",
-                                 i->first.c_str(), info.title, info.hub, info.map, info.warpTrans);
+                                 i->first.c_str(), info.title.toUtf8().constData(),
+                                 info.hub, info.map, info.warpTrans);
     }
 #endif
 }
 
-mapinfo_t *P_MapInfo(de::Uri const *mapUri)
+MapInfo *P_MapInfo(de::Uri const *mapUri)
 {
     if(!mapUri) mapUri = &gameMapUri;
 
@@ -266,7 +279,7 @@ uint P_TranslateMapIfExists(uint map)
 
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
-        mapinfo_t const &info = i->second;
+        MapInfo const &info = i->second;
 
         if(info.warpTrans == map)
         {

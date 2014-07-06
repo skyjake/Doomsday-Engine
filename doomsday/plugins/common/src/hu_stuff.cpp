@@ -148,7 +148,7 @@ const char shiftXForm[] = {
 // Misc UI patches:
 patchid_t borderPatches[8];
 #if __JDOOM__ || __JDOOM64__
-patchid_t* pMapNames; // Name graphics for each map.
+patchid_t *pMapNames; // Name graphics for each map.
 uint pMapNamesSize;
 #endif
 #if __JHERETIC__ || __JHEXEN__
@@ -284,14 +284,14 @@ static void declareGraphicPatches()
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        pMapNamesSize = 9*4;
-        pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+        pMapNamesSize = 9 * 4;
+        pMapNames = (patchid_t *) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
         for(uint i = 0; i < numEpisodes; ++i)
         {
-            for(uint j = 0; j < 9; ++j) // Number of maps per episode.
+            for(uint k = 0; k < 9; ++k) // Number of maps per episode.
             {
-                Str_Appendf(Str_Clear(&name), "WILV%2.2u", (i * 10) + j);
-                pMapNames[(i* 9) + j] = R_DeclarePatch(Str_Text(&name));
+                Str_Appendf(Str_Clear(&name), "WILV%2.2u", (i * 10) + k);
+                pMapNames[(i * 9) + k] = R_DeclarePatch(Str_Text(&name));
             }
         }
         Str_Free(&name);
@@ -337,13 +337,10 @@ void Hu_LoadData()
 #endif
 }
 
-void Hu_UnloadData(void)
+void Hu_UnloadData()
 {
 #if __JDOOM__ || __JDOOM64__
-    if(pMapNames)
-    {
-        Z_Free(pMapNames); pMapNames = 0;
-    }
+    Z_Free(pMapNames); pMapNames = 0;
 #endif
 
     releaseFogTexture();

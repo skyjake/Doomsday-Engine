@@ -60,9 +60,9 @@ float sky1ColumnOffset;
 float sky2ColumnOffset;
 float sky1ScrollDelta;
 float sky2ScrollDelta;
-dd_bool doubleSky;
+bool doubleSky;
 
-static dd_bool mapHasLightning;
+static bool mapHasLightning;
 static int nextLightningFlash;
 static int lightningFlash;
 static float *lightningLightLevels;
@@ -77,11 +77,10 @@ void P_InitLava(void)
 
 void P_InitSky(de::Uri const &mapUri)
 {
-    mapinfo_t const *mapInfo = P_MapInfo(&mapUri);
-    if(mapInfo)
+    if(MapInfo const *mapInfo = P_MapInfo(&mapUri))
     {
-        sky1Material     = mapInfo->sky1Material;
-        sky2Material     = mapInfo->sky2Material;
+        sky1Material     = Materials_ResolveUri(reinterpret_cast<uri_s const *>(&mapInfo->sky1Material));
+        sky2Material     = Materials_ResolveUri(reinterpret_cast<uri_s const *>(&mapInfo->sky2Material));
         sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
         sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
         doubleSky        = mapInfo->doubleSky;
@@ -1043,7 +1042,7 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
-    mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
+    MapInfo const *mapInfo = P_MapInfo(0/*current map*/);
 
     if(!mapInfo || !mapInfo->lightning)
     {

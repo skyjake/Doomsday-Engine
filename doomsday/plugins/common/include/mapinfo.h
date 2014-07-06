@@ -21,25 +21,32 @@
 
 #ifndef LIBCOMMON_MAPINFO_H
 #define LIBCOMMON_MAPINFO_H
+#ifdef __cplusplus
 
 #include "common.h"
 
-struct mapinfo_t
+class MapInfo
 {
+public:
     uint map; ///< Logical map number.
     int hub;
     uint warpTrans;
     uint nextMap;
     int cdTrack;
-    char title[32];
-    materialid_t sky1Material;
-    materialid_t sky2Material;
+    de::String title;
+    de::Uri sky1Material;
+    de::Uri sky2Material;
     float sky1ScrollDelta;
     float sky2ScrollDelta;
-    dd_bool doubleSky;
-    dd_bool lightning;
-    int fadeTable;
-    char songLump[10];
+    bool doubleSky;
+    bool lightning;
+    de::String fadeTable;
+    de::String songLump;
+
+public:
+    MapInfo();
+
+    void resetToDefaults();
 };
 
 /**
@@ -53,7 +60,7 @@ void MapInfoParser(Str const *path);
  *
  * @return  MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
  */
-mapinfo_t *P_MapInfo(de::Uri const *mapUri = 0);
+MapInfo *P_MapInfo(de::Uri const *mapUri = 0);
 
 #define P_INVALID_LOGICAL_MAP 0xffffffff
 
@@ -78,4 +85,5 @@ uint P_TranslateMapIfExists(uint map);
  */
 uint P_TranslateMap(uint map);
 
+#endif // __cplusplus
 #endif // LIBCOMMON_MAPINFO_H

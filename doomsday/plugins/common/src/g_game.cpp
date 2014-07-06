@@ -1192,7 +1192,7 @@ static void printMapBanner()
     {
         String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
-        mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
+        MapInfo const *mapInfo = P_MapInfo(0/*current map*/);
         text += String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
 #endif
         text += String(" - " DE2_ESC(b)) + title;
@@ -2580,7 +2580,7 @@ String G_MapTitle(de::Uri const *mapUri)
     // In Hexen we can also look in MAPINFO for the map title.
     if(title.isEmpty())
     {
-        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
+        if(MapInfo const *mapInfo = P_MapInfo(mapUri))
         {
             title = mapInfo->title;
         }

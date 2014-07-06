@@ -30,20 +30,22 @@
 #  include "g_common.h"
 #endif
 
+using namespace de;
+
 void S_MapMusic(de::Uri const *mapUri)
 {
     if(!mapUri) mapUri = &gameMapUri;
 
 #ifdef __JHEXEN__
-    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+    MapInfo const *mapInfo = P_MapInfo(mapUri);
     int const cdTrack = mapInfo->cdTrack;
-    char const *lump  = strcasecmp(mapInfo->songLump, "DEFSONG")? mapInfo->songLump : 0;
+    String const lump = mapInfo->songLump.compareWithoutCase("DEFSONG")? mapInfo->songLump : "";
 
     App_Log(DE2_RES_VERBOSE, "S_MapMusic: %s lump: %s", mapUri->compose().toUtf8().constData(), lump);
 
     // Update the 'currentmap' music definition.
     int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    Def_Set(DD_DEF_MUSIC, defIndex, DD_LUMP,     lump);
+    Def_Set(DD_DEF_MUSIC, defIndex, DD_LUMP,     lump.toUtf8().constData());
     Def_Set(DD_DEF_MUSIC, defIndex, DD_CD_TRACK, &cdTrack);
 
     if(S_StartMusic("currentmap", true))
@@ -96,7 +98,7 @@ int S_GetSoundID(char const *name)
     return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 }
 
-void SndInfoParser(Str const *path)
+void SndInfoParser(ddstring_s const *path)
 {
     AutoStr *script = M_ReadFileIntoString(path, 0);
 
@@ -121,15 +123,15 @@ void SndInfoParser(Str const *path)
             {
                 // $map int(map-number) string(lump-name)
                 // Associate a music lump to a map.
-                int mapNumber       = lexer.readNumber();
-                Str const *lumpName = lexer.readString();
+                int const mapNumber        = lexer.readNumber();
+                ddstring_t const *lumpName = lexer.readString();
 
                 if(mapNumber > 0)
                 {
                     de::Uri mapUri = G_ComposeMapUri(0, mapNumber - 1);
-                    if(mapinfo_t *mapInfo = P_MapInfo(&mapUri))
+                    if(MapInfo *mapInfo = P_MapInfo(&mapUri))
                     {
-                        strncpy(mapInfo->songLump, Str_Text(lumpName), sizeof(mapInfo->songLump));
+                        mapInfo->songLump = Str_Text(lumpName);
                     }
                 }
                 continue;
@@ -149,8 +151,8 @@ void SndInfoParser(Str const *path)
 
             // string(sound-id) string(lump-name | '?')
             // A sound definition.
-            int const soundIndex = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
-            Str const *lumpName  = lexer.readString();
+            int const soundIndex       = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
+            ddstring_t const *lumpName = lexer.readString();
 
             if(soundIndex)
             {
