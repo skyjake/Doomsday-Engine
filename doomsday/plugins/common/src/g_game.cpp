@@ -1537,7 +1537,7 @@ static void runGameAction()
             {
 #if __JDOOM__
                 // Has the secret map been completed?
-                if(G_MapNumberFor(gameMapUri) == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
+                if(G_CurrentMapNumber() == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
                 {
                     for(int i = 0; i < MAXPLAYERS; ++i)
                     {
@@ -2017,7 +2017,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    if(G_MapNumberFor(gameMapUri) == 8 || secret)
+    if(G_CurrentMapNumber() == 8 || secret)
     {
         p->didSecret = true;
     }
@@ -2118,24 +2118,24 @@ byte G_Ruleset_RespawnMonsters()
 dd_bool G_IfVictory()
 {
 #if __JDOOM64__
-    if(G_MapNumberFor(gameMapUri) == 27)
+    if(G_CurrentMapNumber() == 27)
     {
         return true;
     }
 #elif __JDOOM__
     if(gameMode == doom_chex)
     {
-        if(G_MapNumberFor(gameMapUri) == 4)
+        if(G_CurrentMapNumber() == 4)
         {
             return true;
         }
     }
-    else if((gameModeBits & GM_ANY_DOOM) && G_MapNumberFor(gameMapUri) == 7)
+    else if((gameModeBits & GM_ANY_DOOM) && G_CurrentMapNumber() == 7)
     {
         return true;
     }
 #elif __JHERETIC__
-    if(G_MapNumberFor(gameMapUri) == 7)
+    if(G_CurrentMapNumber() == 7)
     {
         return true;
     }
@@ -2415,12 +2415,12 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap));
+    return G_ComposeMapUri(G_CurrentEpisodeNumber(), P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
-    uint episode = G_EpisodeNumberFor(gameMapUri);
-    uint map     = G_MapNumberFor(gameMapUri);
+    uint episode = G_CurrentEpisodeNumber();
+    uint map     = G_CurrentMapNumber();
 
     if(secretExit)
     {
@@ -2455,8 +2455,8 @@ de::Uri G_NextMap(dd_bool secretExit)
     return G_ComposeMapUri(episode, map);
 
 #elif __JDOOM__
-    uint episode = G_EpisodeNumberFor(gameMapUri);
-    uint map     = G_MapNumberFor(gameMapUri);
+    uint episode = G_CurrentEpisodeNumber();
+    uint map     = G_CurrentMapNumber();
 
     if(gameModeBits & GM_ANY_DOOM2)
     {
@@ -2518,8 +2518,8 @@ de::Uri G_NextMap(dd_bool secretExit)
     }
 
 #elif __JHERETIC__
-    uint episode = G_EpisodeNumberFor(gameMapUri);
-    uint map     = G_MapNumberFor(gameMapUri);
+    uint episode = G_CurrentEpisodeNumber();
+    uint map     = G_CurrentMapNumber();
 
     // Going to the secret map?
     if(secretExit && map != 8)

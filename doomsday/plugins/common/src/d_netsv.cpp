@@ -676,8 +676,8 @@ void NetSv_SendGameState(int flags, int to)
         Uri_Write(reinterpret_cast<Uri *>(&gameMapUri), writer);
 
         // Also include the episode and map numbers.
-        Writer_WriteByte(writer, G_EpisodeNumberFor(gameMapUri));
-        Writer_WriteByte(writer, G_MapNumberFor(gameMapUri));
+        Writer_WriteByte(writer, G_CurrentEpisodeNumber());
+        Writer_WriteByte(writer, G_CurrentMapNumber());
 
         Writer_WriteByte(writer, (COMMON_GAMESESSION->rules().deathmatch & 0x3)
             | (!COMMON_GAMESESSION->rules().noMonsters? 0x4 : 0)

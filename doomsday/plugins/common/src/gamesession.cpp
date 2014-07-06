@@ -484,8 +484,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         }
 
         // Update game status cvars:
-        Con_SetInteger2("map-id",      (unsigned)G_MapNumberFor(::gameMapUri),     SVF_WRITE_OVERRIDE);
-        Con_SetInteger2("map-episode", (unsigned)G_EpisodeNumberFor(::gameMapUri), SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-id",      (unsigned)G_CurrentMapNumber(),     SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-episode", (unsigned)G_CurrentEpisodeNumber(), SVF_WRITE_OVERRIDE);
     }
 
     /**

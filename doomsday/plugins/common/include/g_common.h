@@ -96,11 +96,11 @@ bool G_SetGameActionLoadSession(de::String slotId);
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
  * hub and in DeathMatch games)
  *
- * @param newMapUri      Unique identifier of the map number we are entering.
- * @param mapEntryPoint  Logical map entry point on the new map.
- * @param secretExit     @c true if the exit taken was marked as 'secret'.
+ * @param nextMapUri         Unique identifier of the map number we are entering.
+ * @param nextMapEntryPoint  Logical map entry point on the new map.
+ * @param secretExit         @c true if the exit taken was marked as 'secret'.
  */
-void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint entryPoint, dd_bool secretExit);
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, dd_bool secretExit);
 
 /**
  * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
