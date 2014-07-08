@@ -130,6 +130,59 @@ void MapInfoParser(ddstring_s const *path)
             setMusicCDTrack(MUSIC_TITLE, lexer.readNumber());
             continue;
         }
+        if(!Str_CompareIgnoreCase(lexer.token(), "clearepisodes")) // ZDoom
+        {
+            LOG_WARNING("MAPINFO clearepisodes directives are not supported.");
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "episode")) // ZDoom
+        {
+            LOG_WARNING("MAPINFO episode definitions are not supported.");
+            de::Uri mapUri(Str_Text(lexer.readString()), RC_NULL);
+            if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+
+            // Process optional tokens.
+            while(lexer.readToken())
+            {
+                if(!Str_CompareIgnoreCase(lexer.token(), "name"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "lookup"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "picname"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "key"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "remove"))
+                {
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "noskillmenu"))
+                {
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "optional"))
+                {
+                    continue;
+                }
+
+                lexer.unreadToken();
+                break;
+            }
+
+            continue;
+        }
         if(!Str_CompareIgnoreCase(lexer.token(), "map"))
         {
             de::Uri mapUri;
