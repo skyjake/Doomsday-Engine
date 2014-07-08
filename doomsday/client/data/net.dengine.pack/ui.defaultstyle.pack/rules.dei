@@ -1,7 +1,8 @@
 # Length rules for the default UI style
 
 script {
-    UNIT = 4.0
+    import DisplayMode
+    UNIT = 4.0 * DisplayMode.DPI_FACTOR
 }
 
 rule unit     { constant $= UNIT }

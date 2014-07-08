@@ -12,7 +12,7 @@ deng_extassimp {
         aiIncDir = $$ASSIMP_DIR/include
         aiLibs   = -L$$ASSIMP_DIR/lib -lassimp
 
-        deng_extassimp {
+        deng_extassimp:!macx {
             *-g*|*-clang* {
                 # Inform the dynamic linker about a custom location.
                 QMAKE_LFLAGS += -Wl,-rpath,$$DENG_PLUGIN_LIB_DIR
@@ -23,7 +23,7 @@ deng_extassimp {
             assimplib.files = $$ASSIMP_DIR/lib/libassimp.so.3
             assimplib.path  = $$DENG_PLUGIN_LIB_DIR
         }
-        else {
+        else:!macx {
             *-g*|*-clang* {
                 # Inform the dynamic linker about a custom location.
                 QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib

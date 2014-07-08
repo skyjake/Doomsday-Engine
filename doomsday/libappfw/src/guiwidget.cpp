@@ -352,6 +352,15 @@ DENG2_PIMPL(GuiWidget)
                     << self.path() << er.asText();
         }
     }
+
+    static float toDevicePixels(float logicalPixels)
+    {
+#ifdef DENG2_QT_5_0_OR_NEWER
+        return logicalPixels * qApp->devicePixelRatio();
+#else
+        return logicalPixels;
+#endif
+    }
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
@@ -451,6 +460,11 @@ Rectanglef GuiWidget::normalizedRect(de::Rectanglei const &rect,
                                rectf.top()    / contSize.y),
                       Vector2f(rectf.right()  / contSize.x,
                                rectf.bottom() / contSize.y));
+}
+
+float GuiWidget::toDevicePixels(float logicalPixels)
+{
+    return Instance::toDevicePixels(logicalPixels);
 }
 
 Rectanglef GuiWidget::normalizedRect() const
@@ -844,26 +858,28 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         }
     }
 
+    float const thick = d->toDevicePixels(d->background.thickness);
+
     switch(d->background.type)
     {
     case Background::GradientFrame:
-        verts.makeFlexibleFrame(rule().recti().shrunk(1),
-                                d->background.thickness,
+        verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
+                                thick,
                                 d->background.color,
                                 root().atlas().imageRectf(root().boldRoundCorners()));
         break;
 
     case Background::Rounded:
-        verts.makeFlexibleFrame(rule().recti().shrunk(d->background.thickness - 4),
-                                d->background.thickness,
+        verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(d->background.thickness - 4)),
+                                thick,
                                 d->background.color,
                                 root().atlas().imageRectf(root().roundCorners()));
         break;
 
     case Background::BorderGlow:
     case Background::BlurredWithBorderGlow:
-        verts.makeFlexibleFrame(rule().recti().expanded(d->background.thickness),
-                                d->background.thickness,
+        verts.makeFlexibleFrame(rule().recti().expanded(thick),
+                                thick,
                                 d->background.color,
                                 root().atlas().imageRectf(root().borderGlow()));
         break;

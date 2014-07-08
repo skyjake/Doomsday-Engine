@@ -831,8 +831,8 @@ macx {
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
     !deng_nosdl {
-        doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL2.framework $$FW_DIR")
-        !deng_nosdlmixer: doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL2_mixer.framework $$FW_DIR")
+        doPostLink("cp -fRp $${SDL2_FRAMEWORK_DIR}/SDL2.framework $$FW_DIR")
+        !deng_nosdlmixer: doPostLink("cp -fRp $${SDL2_FRAMEWORK_DIR}/SDL2_mixer.framework $$FW_DIR")
     }
     deng_fmod {
         # Bundle the FMOD shared library under Frameworks.

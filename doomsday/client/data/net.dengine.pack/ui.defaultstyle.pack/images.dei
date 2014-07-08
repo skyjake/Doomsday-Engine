@@ -1,5 +1,7 @@
 # Images for the default UI style
 
+script { import DisplayMode }
+
 group window {
     image background { path = "graphics/background.jpg" }
     image borderglow { path = "graphics/borderglow.png" }
@@ -10,7 +12,13 @@ group window {
 group logo {
     image px128 { path = "graphics/deng-logo-128.png" }
     image px256 { path = "graphics/deng-logo-256.png" }
-    image px512 { path = "graphics/deng-logo-512.png" }    
+
+    # With HiDPI displays use the 2x versions of the logo.
+    group {    
+        condition: DisplayMode.DPI_FACTOR == 2
+        image px128 { path = "graphics/deng-logo-256.png" }
+        image px256 { path = "graphics/deng-logo-512.png" }
+    }
     
     group game {
         image libdoom    { path = "graphics/game-libdoom.png" }
@@ -33,6 +41,10 @@ image updater  { path = "graphics/updater.png" }
 
 group toggle {
     image onoff { path = "graphics/toggle-onoff.png" }
+    group {    
+        condition: DisplayMode.DPI_FACTOR == 2
+        image onoff { path = "graphics/toggle-onoff@2x.png"}
+    }
 }
 
 group progress {

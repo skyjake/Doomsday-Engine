@@ -42,7 +42,7 @@ group {
 
     script {
         # Define mappings for native font styles and weights.
-        import App
+        import App, DisplayMode
         App.addFontMapping("Helvetica Neue", {
             ['regular', 25]: 'HelveticaNeue-Light',
             ['regular', 50]: 'HelveticaNeue',
@@ -63,14 +63,14 @@ group {
     
     font default {
         family: Helvetica Neue
-        size: 16pt
+        size $: gui.scale('16pt', DisplayMode.DPI_FACTOR)
         weight: normal
         style: normal
     }
     
     font monospace inherits default {
         family: Menlo
-        size: 13pt
+        size $: gui.scale('13pt', DisplayMode.DPI_FACTOR)
     }
 }
 
