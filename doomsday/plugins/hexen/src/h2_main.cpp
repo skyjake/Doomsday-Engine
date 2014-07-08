@@ -416,13 +416,13 @@ void X_PostInit()
         }
         else
         {
-            startMapUri = G_ComposeMapUri(0, P_TranslateMap(mapNumber - 1));
+            startMapUri = P_TranslateMap(mapNumber - 1);
         }
     }
 
     if(startMapUri.path().isEmpty())
     {
-        startMapUri = G_ComposeMapUri(0, P_TranslateMap(0));
+        startMapUri = P_TranslateMap(0);
     }
 
     // Are we autostarting?

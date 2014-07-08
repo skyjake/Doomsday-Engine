@@ -6448,7 +6448,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     newRules.skill = mnSkillmode;
 
 #if __JHEXEN__
-    de::Uri newMapUri = G_ComposeMapUri(mnEpisode, P_TranslateMap(0));
+    de::Uri newMapUri = P_TranslateMap(0);
 #else
     de::Uri newMapUri = G_ComposeMapUri(mnEpisode, 0);
 #endif

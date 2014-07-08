@@ -344,12 +344,12 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 #endif
 
 #if __JHEXEN__
-                    // In Hexen map numbers must be translated.
-                    map = P_TranslateMapIfExists(map);
-                    if(map == P_INVALID_LOGICAL_MAP) continue;
+                    // In Hexen map numbers must be translated (urgh...).
+                    de::Uri mapUri = P_TranslateMapIfExists(map);
+#else
+                    de::Uri mapUri = G_ComposeMapUri(episode, map);
 #endif
 
-                    de::Uri mapUri = G_ComposeMapUri(episode, map);
                     if(P_MapExists(mapUri.compose().toUtf8().constData()))
                     {
                         return mapUri;

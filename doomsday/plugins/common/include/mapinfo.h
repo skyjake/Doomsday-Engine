@@ -46,28 +46,36 @@ void MapInfoParser(Str const *path);
  */
 MapInfo *P_MapInfo(de::Uri const *mapUri = 0);
 
-#define P_INVALID_LOGICAL_MAP 0xffffffff
-
 /**
- * Translates a warp map number to logical map number, if possible.
+ * Translates a warp map number to unique map identifier, if possible.
+ *
+ * @note This should only be used where necessary for compatibility reasons as
+ * the "warp translation" mechanic is redundant in the context of Doomsday's
+ * altogether better handling of map resources and their references. Instead,
+ * use the map URI mechanism.
  *
  * @param map  The warp map number to translate.
  *
- * @return The logical map number given a warp map number. If the map is not
- * found, returns P_INVALID_LOGICAL_MAP.
+ * @return The unique map identifier associated with the warp map number given;
+ * otherwise an identifier with a empty path.
  */
-uint P_TranslateMapIfExists(uint map);
+de::Uri P_TranslateMapIfExists(uint map);
 
 /**
- * Translates a warp map number to logical map number. Always returns a valid
- * logical map.
+ * Translates a warp map number to unique map identifier. Always returns a valid
+ * map identifier.
+ *
+ * @note This should only be used where necessary for compatibility reasons as
+ * the "warp translation" mechanic is redundant in the context of Doomsday's
+ * altogether better handling of map resources and their references. Instead,
+ * use the map URI mechanism.
  *
  * @param map  The warp map number to translate.
  *
- * @return The logical map number given a warp map number. If the map is not
- * found, returns 0 (first available logical map).
+ * @return The unique identifier of the map given a warp map number. If the map
+ * is not found a URI to the first available map is returned (i.e., Maps:MAP01)
  */
-uint P_TranslateMap(uint map);
+de::Uri P_TranslateMap(uint map);
 
 #endif // __cplusplus
 #endif // LIBCOMMON_MAPINFO_H

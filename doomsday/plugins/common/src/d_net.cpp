@@ -106,27 +106,22 @@ int D_NetServerStarted(int before)
     if(before) return true;
 
     // We're the server, so...
-    cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
+    ::cfg.playerColor[0] = PLR_COLOR(0, ::cfg.netColor);
 
 #if __JHEXEN__
-    cfg.playerClass[0] = playerclass_t(cfg.netClass);
+    ::cfg.playerClass[0] = playerclass_t(::cfg.netClass);
 #elif __JHERETIC__
-    cfg.playerClass[0] = PCLASS_PLAYER;
+    ::cfg.playerClass[0] = PCLASS_PLAYER;
 #endif
     P_ResetPlayerRespawnClasses();
 
-#if __JDOOM64__
-    uint netEpisode = 0;
-#else
-    uint netEpisode = cfg.netEpisode;
-#endif
 #if __JHEXEN__ // Map numbers need to be translated.
-    uint netMap = P_TranslateMap(cfg.netMap);
+    de::Uri netMapUri = P_TranslateMap(::cfg.netMap);
+#elif __JDOOM64__
+    de::Uri netMapUri = G_ComposeMapUri(0, ::cfg.netMap);
 #else
-    uint netMap = cfg.netMap;
+    de::Uri netMapUri = G_ComposeMapUri(::cfg.netEpisode, ::cfg.netMap);
 #endif
-
-    de::Uri netMapUri = G_ComposeMapUri(netEpisode, netMap);
 
     GameRuleset netRules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
     netRules.skill = skillmode_t(cfg.netSkill);

@@ -56,10 +56,10 @@ MapInfo::MapInfo() : Record()
 void MapInfo::resetToDefaults()
 {
     // Add all expected fields with their default values.
-    addNumber ("map", 0); // Unknown.
+    addText   ("map", "Maps:"); // URI. Unknown.
     addNumber ("hub", 0);
     addNumber ("warpTrans", 0);
-    addNumber ("nextMap", 0); // Always go to map 0 if not specified.
+    addNumber ("nextMap", 0);   // Warp trans number. Always go to map 0 if not specified.
     addNumber ("cdTrack", 1);
     addText   ("title", "Untitled");
     addText   ("sky1Material", defaultSkyMaterial());
@@ -88,167 +88,163 @@ void MapInfoParser(ddstring_s const *path)
     mapInfos.clear();
 
     AutoStr *script = M_ReadFileIntoString(path, 0);
-
-    if(script && !Str_IsEmpty(script))
-    {
-        App_Log(DE2_RES_VERBOSE, "Parsing \"%s\"...", F_PrettyPath(Str_Text(path)));
-
-        HexLex lexer(script, path);
-
-        while(lexer.readToken())
-        {
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_start_track"))
-            {
-                setMusicCDTrack(MUSIC_STARTUP, lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_end1_track"))
-            {
-                setMusicCDTrack(MUSIC_ENDING1, lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_end2_track"))
-            {
-                setMusicCDTrack(MUSIC_ENDING2, lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_end3_track"))
-            {
-                setMusicCDTrack(MUSIC_ENDING3, lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_intermission_track"))
-            {
-                setMusicCDTrack(MUSIC_INTERMISSION, lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_title_track"))
-            {
-                setMusicCDTrack(MUSIC_TITLE, lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "map"))
-            {
-                int tmap = lexer.readNumber();
-                if(tmap < 1)
-                {
-                    Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
-                              lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
-                }
-
-                de::Uri const mapUri = G_ComposeMapUri(0, tmap - 1);
-                MapInfo *info = P_MapInfo(&mapUri);
-                if(!info)
-                {
-                    // A new map info.
-                    info = &mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
-
-                    // Initialize with the default values.
-                    info->resetToDefaults();
-
-                    // Assign a logical map index.
-                    info->set("map", tmap - 1);
-
-                    // The warp translation defaults to the logical map index.
-                    info->set("warpTrans", tmap - 1);
-                }
-
-                // Map title must follow the number.
-                info->set("title", Str_Text(lexer.readString()));
-
-                // Process optional tokens.
-                while(lexer.readToken())
-                {
-                    if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
-                    {
-                        info->set("sky1Material", lexer.readUri("Textures").compose());
-                        info->set("sky1ScrollDelta", lexer.readNumber() / 256.f);
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "sky2"))
-                    {
-                        info->set("sky2Material", lexer.readUri("Textures").compose());
-                        info->set("sky2ScrollDelta", lexer.readNumber() / 256.f);
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "doublesky"))
-                    {
-                        info->set("doubleSky", true);
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "lightning"))
-                    {
-                        info->set("lightning", true);
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "fadetable"))
-                    {
-                        info->set("fadeTable", Str_Text(lexer.readString()));
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
-                    {
-                        int const hubNum = lexer.readNumber();
-                        if(hubNum < 1)
-                        {
-                            Con_Error("MapInfoParser: Invalid 'cluster' (i.e., hub) number '%s' in \"%s\" on line #%i",
-                                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
-                        }
-                        info->set("hub", hubNum);
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "warptrans"))
-                    {
-                        int const mapWarpNum = lexer.readNumber();
-                        if(mapWarpNum < 1)
-                        {
-                            Con_Error("MapInfoParser: Invalid map warp-number '%s' in \"%s\" on line #%i",
-                                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
-                        }
-                        info->set("warpTrans", mapWarpNum - 1);
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "next"))
-                    {
-                        int const map = lexer.readNumber();
-                        if(map < 1)
-                        {
-                            Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
-                                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
-                        }
-                        info->set("nextMap", map - 1);
-                        continue;
-                    }
-                    if(!Str_CompareIgnoreCase(lexer.token(), "cdtrack"))
-                    {
-                        info->set("cdTrack", lexer.readNumber());
-                        continue;
-                    }
-
-                    lexer.unreadToken();
-                    break;
-                }
-
-                continue;
-            }
-
-            // Found an unexpected token.
-            Con_Error("MapInfoParser: Unexpected token '%s' in \"%s\" on line #%i",
-                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
-        }
-    }
-    else
+    if(!script || Str_IsEmpty(script))
     {
         App_Log(DE2_RES_WARNING, "MapInfoParser: Failed to open definition/script file \"%s\" for reading", F_PrettyPath(Str_Text(path)));
+        return;
+    }
+
+    App_Log(DE2_RES_VERBOSE, "Parsing \"%s\"...", F_PrettyPath(Str_Text(path)));
+
+    HexLex lexer(script, path);
+    while(lexer.readToken())
+    {
+        if(!Str_CompareIgnoreCase(lexer.token(), "cd_start_track"))
+        {
+            setMusicCDTrack(MUSIC_STARTUP, lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "cd_end1_track"))
+        {
+            setMusicCDTrack(MUSIC_ENDING1, lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "cd_end2_track"))
+        {
+            setMusicCDTrack(MUSIC_ENDING2, lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "cd_end3_track"))
+        {
+            setMusicCDTrack(MUSIC_ENDING3, lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "cd_intermission_track"))
+        {
+            setMusicCDTrack(MUSIC_INTERMISSION, lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "cd_title_track"))
+        {
+            setMusicCDTrack(MUSIC_TITLE, lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "map"))
+        {
+            int tmap = lexer.readNumber();
+            if(tmap < 1)
+            {
+                Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
+                          lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+            }
+
+            de::Uri const mapUri = G_ComposeMapUri(0, tmap - 1);
+            MapInfo *info = P_MapInfo(&mapUri);
+            if(!info)
+            {
+                // A new map info.
+                info = &mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
+
+                // Initialize with the default values.
+                info->resetToDefaults();
+
+                info->set("map", mapUri.compose());
+
+                // The warp translation defaults to the logical map index.
+                info->set("warpTrans", tmap - 1);
+            }
+
+            // Map title must follow the number.
+            info->set("title", Str_Text(lexer.readString()));
+
+            // Process optional tokens.
+            while(lexer.readToken())
+            {
+                if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
+                {
+                    info->set("sky1Material", lexer.readUri("Textures").compose());
+                    info->set("sky1ScrollDelta", lexer.readNumber() / 256.f);
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "sky2"))
+                {
+                    info->set("sky2Material", lexer.readUri("Textures").compose());
+                    info->set("sky2ScrollDelta", lexer.readNumber() / 256.f);
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "doublesky"))
+                {
+                    info->set("doubleSky", true);
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "lightning"))
+                {
+                    info->set("lightning", true);
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "fadetable"))
+                {
+                    info->set("fadeTable", Str_Text(lexer.readString()));
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
+                {
+                    int const hubNum = lexer.readNumber();
+                    if(hubNum < 1)
+                    {
+                        Con_Error("MapInfoParser: Invalid 'cluster' (i.e., hub) number '%s' in \"%s\" on line #%i",
+                                  lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+                    }
+                    info->set("hub", hubNum);
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "warptrans"))
+                {
+                    int const mapWarpNum = lexer.readNumber();
+                    if(mapWarpNum < 1)
+                    {
+                        Con_Error("MapInfoParser: Invalid map warp-number '%s' in \"%s\" on line #%i",
+                                  lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+                    }
+                    info->set("warpTrans", mapWarpNum - 1);
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "next"))
+                {
+                    int const map = lexer.readNumber();
+                    if(map < 1)
+                    {
+                        Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
+                                  lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+                    }
+                    info->set("nextMap", map - 1);
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "cdtrack"))
+                {
+                    info->set("cdTrack", lexer.readNumber());
+                    continue;
+                }
+
+                lexer.unreadToken();
+                break;
+            }
+
+            continue;
+        }
+
+        // Found an unexpected token.
+        Con_Error("MapInfoParser: Unexpected token '%s' in \"%s\" on line #%i",
+                  lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
     }
 
 #ifdef DENG_DEBUG
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
         MapInfo const &info = i->second;
-        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" hub: %i map: %i warp: %i }",
+        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }",
                                  i->first.c_str(), info.gets("title").toUtf8().constData(),
-                                 info.geti("hub"), info.geti("map"), info.geti("warpTrans"));
+                                 info.geti("hub"), info.gets("map"), info.geti("warpTrans"));
     }
 #endif
 }
@@ -268,9 +264,9 @@ MapInfo *P_MapInfo(de::Uri const *mapUri)
     return 0;
 }
 
-uint P_TranslateMapIfExists(uint map)
+de::Uri P_TranslateMapIfExists(uint map)
 {
-    uint matchedWithoutHub = P_INVALID_LOGICAL_MAP;
+    de::Uri matchedWithoutHub("Maps:", RC_NULL);
 
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
@@ -280,28 +276,28 @@ uint P_TranslateMapIfExists(uint map)
         {
             if(info.geti("hub"))
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, hub %i", map, info.geti("map"), info.geti("hub"));
-                return (unsigned) info.geti("map");
+                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to map %s, hub %i", map, info.gets("map"), info.geti("hub"));
+                return de::Uri(info.gets("map"), RC_NULL);
             }
 
-            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches logical map %i, but it has no hub", map, info.geti("map"));
-            matchedWithoutHub = (unsigned) info.geti("map");
+            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches map %s, but it has no hub", map, info.gets("map"));
+            matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
         }
     }
 
-    App_Log(DE2_DEV_MAP_NOTE, "Could not find warp %i, translating to logical map %i (without hub)",
-            map, matchedWithoutHub);
+    App_Log(DE2_DEV_MAP_NOTE, "Could not find warp %i, translating to map %s (without hub)",
+            map, matchedWithoutHub.compose().toUtf8().constData());
 
     return matchedWithoutHub;
 }
 
-uint P_TranslateMap(uint map)
+de::Uri P_TranslateMap(uint map)
 {
-    uint translated = P_TranslateMapIfExists(map);
-    if(translated == P_INVALID_LOGICAL_MAP)
+    de::Uri translated = P_TranslateMapIfExists(map);
+    if(translated.path().isEmpty())
     {
-        // This function always returns a valid logical map.
-        return 0;
+        // This function always returns a valid map.
+        return G_ComposeMapUri(0, 0); // Always available?
     }
     return translated;
 }

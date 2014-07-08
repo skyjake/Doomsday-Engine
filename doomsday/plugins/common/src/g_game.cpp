@@ -2415,7 +2415,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return G_ComposeMapUri(G_CurrentEpisodeNumber(), P_TranslateMap(P_MapInfo(&gameMapUri)->geti("nextMap")));
+    return P_TranslateMap(P_MapInfo(&gameMapUri)->geti("nextMap"));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
@@ -3245,12 +3245,12 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
         // Hexen map numbers require translation.
-        map = P_TranslateMapIfExists(map);
-#endif
-
+        newMapUri = P_TranslateMapIfExists(map);
+#else
         // Compose a map URI for the given episode and map pair using the default
         // format specific to the game (and mode).
         newMapUri = G_ComposeMapUri(epsd, map);
+#endif
     }
 
     if(!G_WarpMap(newMapUri))
