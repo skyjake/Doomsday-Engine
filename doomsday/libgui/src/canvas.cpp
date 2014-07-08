@@ -56,6 +56,7 @@ DENG2_PIMPL(Canvas)
     bool readyNotified;
     Size currentSize;
     Size pendingSize;
+    float pixelRatio;
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
     QTimer resizeTimer;
 #endif
@@ -71,6 +72,7 @@ DENG2_PIMPL(Canvas)
         : Base(i)
         , parent(parentWindow)
         , readyNotified(false)
+        , pixelRatio(i->windowHandle()->devicePixelRatio())
         , mouseGrabbed(false)
     {        
         wheelDir[0] = wheelDir[1] = 0;
@@ -214,6 +216,16 @@ DENG2_PIMPL(Canvas)
 
         /// @todo Double buffering is not really needed in manual FB mode.
         framebuf.swapBuffers(self, mode);
+    }
+
+    template <typename QtEventType>
+    Vector2i translatePosition(QtEventType const *ev) const
+    {
+#ifdef DENG2_QT_5_1_OR_NEWER
+        return Vector2i(ev->pos().x(), ev->pos().y()) * self.devicePixelRatio();
+#else
+        return Vector2i(ev->pos().x(), ev->pos().y());
+#endif
     }
 
     DENG2_PIMPL_AUDIENCE(GLReady)
@@ -503,37 +515,23 @@ static MouseEvent::Button translateButton(Qt::MouseButton btn)
 
 void Canvas::mousePressEvent(QMouseEvent *ev)
 {
-    /*
-    if(!d->mouseGrabbed)
-    {
-        // The mouse will be grabbed when the button is released.
-        ev->ignore();
-        return;
-    }*/
-
     ev->accept();
 
     DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed,
-                                 Vector2i(ev->pos().x(), ev->pos().y())));
+                                 d->translatePosition(ev)));
     }
 }
 
 void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 {
-    /*if(d->mouseDisabled)
-    {
-        ev->ignore();
-        return;
-    }*/
-
     ev->accept();
 
     DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
-                                 Vector2i(ev->pos().x(), ev->pos().y())));
+                                 d->translatePosition(ev)));
     }
 }
 
@@ -547,7 +545,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *ev)
         DENG2_FOR_AUDIENCE2(MouseEvent, i)
         {
             i->mouseEvent(MouseEvent(MouseEvent::Absolute,
-                                     Vector2i(ev->pos().x(), ev->pos().y())));
+                                     d->translatePosition(ev)));
         }
     }
 }
@@ -570,7 +568,7 @@ void Canvas::wheelEvent(QWheelEvent *ev)
         i->mouseEvent(MouseEvent(MouseEvent::FineAngle,
                                  axis == 0? Vector2i(ev->delta(), 0) :
                                             Vector2i(0, ev->delta()),
-                                 Vector2i(ev->pos().x(), ev->pos().y())));
+                                 d->translatePosition(ev)));
     }
 
     if(!continuousMovement || d->wheelDir[axis] != dir)
@@ -582,7 +580,7 @@ void Canvas::wheelEvent(QWheelEvent *ev)
             i->mouseEvent(MouseEvent(MouseEvent::Step,
                                      axis == 0? Vector2i(dir, 0) :
                                      axis == 1? Vector2i(0, dir) : Vector2i(),
-                                     !d->mouseGrabbed? Vector2i(ev->pos().x(), ev->pos().y()) : Vector2i()));
+                                     !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
         }
     }
 

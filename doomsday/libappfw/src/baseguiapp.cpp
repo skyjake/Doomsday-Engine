@@ -105,6 +105,11 @@ void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
 
+#ifdef DENG2_QT_5_0_OR_NEWER
+    // The device pixel ratio.
+    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", devicePixelRatio());
+#endif
+
     d->uiState.reset(new PersistentState("UIState"));
 }
 

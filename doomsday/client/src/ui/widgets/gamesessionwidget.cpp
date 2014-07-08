@@ -41,6 +41,7 @@ DENG2_PIMPL(GameSessionWidget)
         load->setAlignment(ui::AlignLeft);
         load->setTextAlignment(ui::AlignRight);
         load->setTextLineAlignment(ui::AlignLeft);
+        load->setImageScale(self.toDevicePixels(1)); /// @todo We don't have 2x game logos.
 
         info->setWidthPolicy(ui::Expand);
         info->setAlignment(ui::AlignBottom);

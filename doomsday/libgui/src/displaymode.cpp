@@ -218,6 +218,7 @@ int DisplayMode_Init(void)
     // Script bindings.
     binder.initNew() << DENG2_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
     de::App::scriptSystem().addNativeModule("DisplayMode", binder.module());
+    binder.module().addNumber("DPI_FACTOR", 1.0);
 
     inited = true;
     return true;

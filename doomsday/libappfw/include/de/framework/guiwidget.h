@@ -374,6 +374,22 @@ public:
     static Rectanglef normalizedRect(Rectanglei const &rect,
                                      Rectanglei const &containerRect);
 
+    static float toDevicePixels(float logicalPixels);
+
+    inline static int toDevicePixels(int logicalPixels) {
+        return int(toDevicePixels(float(logicalPixels)));
+    }
+
+    inline static duint toDevicePixels(duint logicalPixels) {
+        return duint(toDevicePixels(float(logicalPixels)));
+    }
+
+    template <typename Vector2>
+    static Vector2 toDevicePixels(Vector2 const &type) {
+        return Vector2(typename Vector2::ValueType(toDevicePixels(type.x)),
+                       typename Vector2::ValueType(toDevicePixels(type.y)));
+    }
+
     /**
      * Immediately deletes all the widgets in the garbage. This is useful to
      * avoid double deletion in case a trashed widget's parent is deleted

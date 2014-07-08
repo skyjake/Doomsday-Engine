@@ -78,6 +78,9 @@ static void Mouse_Qt_Poll()
 
             // Keep the cursor centered.
             QPoint mid(win->width() / 2, win->height() / 2);
+#ifdef DENG2_QT_5_0_OR_NEWER
+            mid /= qApp->devicePixelRatio();
+#endif
             QCursor::setPos(win->mapToGlobal(mid));
             prevMousePos = mid;
         }
