@@ -244,7 +244,8 @@ void MapInfoParser(ddstring_s const *path)
         MapInfo const &info = i->second;
         App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }",
                                  i->first.c_str(), info.gets("title").toUtf8().constData(),
-                                 info.geti("hub"), info.gets("map"), info.geti("warpTrans"));
+                                 info.geti("hub"), info.gets("map").toUtf8().constData(),
+                                 info.geti("warpTrans"));
     }
 #endif
 }
@@ -276,11 +277,13 @@ de::Uri P_TranslateMapIfExists(uint map)
         {
             if(info.geti("hub"))
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to map %s, hub %i", map, info.gets("map"), info.geti("hub"));
+                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to map %s, hub %i",
+                                             map, info.gets("map").toUtf8().constData(), info.geti("hub"));
                 return de::Uri(info.gets("map"), RC_NULL);
             }
 
-            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches map %s, but it has no hub", map, info.gets("map"));
+            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches map %s, but it has no hub",
+                                         map, info.gets("map").toUtf8().constData());
             matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
         }
     }
