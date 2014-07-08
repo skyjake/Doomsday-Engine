@@ -8,6 +8,12 @@ DEFINES += MACOSX
 
 CONFIG += deng_nofixedasm deng_embedfluidsynth
 
+deng_qt5 {
+    # DisplayMode uses deprecated APIs; OS X fullscreen mode is not compatible with
+    # mode changes.
+    CONFIG += deng_nodisplaymode
+}
+
 # The native SDK option assumes the build is not for distribution.
 deng_qtautoselect:!deng_nativesdk {
     contains(QT_VERSION, ^4\\.7\\..*) {
