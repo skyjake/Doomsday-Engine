@@ -77,7 +77,7 @@ void MapInfo::resetToDefaults()
  */
 static void setMusicCDTrack(char const *musicId, int track)
 {
-    App_Log(DE2_DEV_RES_VERBOSE, "setMusicCDTrack: musicId=%s, track=%i", musicId, track);
+    LOG_RES_VERBOSE("setMusicCDTrack: musicId=%s, track=%i") << musicId << track;
 
     int cdTrack = track;
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
@@ -90,11 +90,12 @@ void MapInfoParser(ddstring_s const *path)
     AutoStr *script = M_ReadFileIntoString(path, 0);
     if(!script || Str_IsEmpty(script))
     {
-        App_Log(DE2_RES_WARNING, "MapInfoParser: Failed to open definition/script file \"%s\" for reading", F_PrettyPath(Str_Text(path)));
+        LOG_RES_WARNING("MapInfoParser: Failed to open definition/script file \"%s\" for reading")
+                << NativePath(Str_Text(path)).pretty();
         return;
     }
 
-    App_Log(DE2_RES_VERBOSE, "Parsing \"%s\"...", F_PrettyPath(Str_Text(path)));
+    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(Str_Text(path)).pretty();
 
     HexLex lexer(script, path);
     while(lexer.readToken())
@@ -131,14 +132,26 @@ void MapInfoParser(ddstring_s const *path)
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "map"))
         {
-            int tmap = lexer.readNumber();
-            if(tmap < 1)
+            de::Uri mapUri;
+            String const mapRef = String(Str_Text(lexer.readString()));
+
+            bool isNumber;
+            int mapNumber = mapRef.toInt(&isNumber); // 1-based
+            if(!isNumber)
             {
-                Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
-                          lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+                mapUri = de::Uri(mapRef, RC_NULL);
+                if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+            }
+            else
+            {
+                if(mapNumber < 1)
+                {
+                    Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
+                              mapNumber, F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+                }
+                mapUri = G_ComposeMapUri(0, mapNumber - 1);
             }
 
-            de::Uri const mapUri = G_ComposeMapUri(0, tmap - 1);
             MapInfo *info = P_MapInfo(&mapUri);
             if(!info)
             {
@@ -150,8 +163,10 @@ void MapInfoParser(ddstring_s const *path)
 
                 info->set("map", mapUri.compose());
 
-                // The warp translation defaults to the logical map index.
-                info->set("warpTrans", tmap - 1);
+                // Attempt to extract the "warp translation" number.
+                /// @todo Define a sensible default should the map identifier not
+                /// follow the default MAPXX form (what does ZDoom do here?) -ds
+                info->set("warpTrans", G_MapNumberFor(mapUri));
             }
 
             // Map title must follow the number.
@@ -242,10 +257,9 @@ void MapInfoParser(ddstring_s const *path)
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
         MapInfo const &info = i->second;
-        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }",
-                                 i->first.c_str(), info.gets("title").toUtf8().constData(),
-                                 info.geti("hub"), info.gets("map").toUtf8().constData(),
-                                 info.geti("warpTrans"));
+        LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }")
+                << i->first.c_str() << info.gets("title")
+                << info.geti("hub") << info.gets("map") << info.geti("warpTrans");
     }
 #endif
 }
@@ -277,19 +291,19 @@ de::Uri P_TranslateMapIfExists(uint map)
         {
             if(info.geti("hub"))
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to map %s, hub %i",
-                                             map, info.gets("map").toUtf8().constData(), info.geti("hub"));
+                LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
+                        << map << info.gets("map") << info.geti("hub");
                 return de::Uri(info.gets("map"), RC_NULL);
             }
 
-            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches map %s, but it has no hub",
-                                         map, info.gets("map").toUtf8().constData());
+            LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
+                    << map << info.gets("map");
             matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
         }
     }
 
-    App_Log(DE2_DEV_MAP_NOTE, "Could not find warp %i, translating to map %s (without hub)",
-            map, matchedWithoutHub.compose().toUtf8().constData());
+    LOGDEV_MAP_NOTE("Could not find warp %i, translating to map %s (without hub)")
+            << map << matchedWithoutHub;
 
     return matchedWithoutHub;
 }
