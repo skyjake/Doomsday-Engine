@@ -22,6 +22,7 @@
 #include <de/AnimationVector>
 #include <de/Clock>
 #include <QFontMetrics>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
@@ -42,6 +43,7 @@ DENG2_PIMPL(QtRootWidget)
 {
     int margin;
     Vector2i charSize;
+    float dpiFactor;
     QtTextCanvas *canvas;
     TextRootWidget root;
     QFont font;
@@ -53,15 +55,20 @@ DENG2_PIMPL(QtRootWidget)
     QPoint origin;
     QString overlay;
 
-    Instance(Public &inst) : Base(inst),
-        margin(4),
-        canvas(new QtTextCanvas(Vector2ui(1, 1))),
-        root(canvas),
-        blinkTimer(0),
-        cursorTimer(0),
-        blinkVisible(true),
-        cursorVisible(true)
+    Instance(Public &inst)
+        : Base(inst)
+        , margin(4)
+        , dpiFactor(1)
+        , canvas(new QtTextCanvas(Vector2ui(1, 1)))
+        , root(canvas)
+        , blinkTimer(0)
+        , cursorTimer(0)
+        , blinkVisible(true)
+        , cursorVisible(true)
     {
+#ifdef DENG2_QT_5_1_OR_NEWER
+        dpiFactor = qApp->devicePixelRatio();
+#endif
         canvas->setForegroundColor(Qt::black);
         canvas->setBackgroundColor(Qt::white);
     }
@@ -86,7 +93,7 @@ DENG2_PIMPL(QtRootWidget)
         Vector2ui size((widthPx - 2*margin) / charSize.x, (heightPx - 2*margin) / charSize.y);
         root.setViewSize(size);
 
-        origin = QPoint(margin, heightPx - canvas->image().height() - margin);
+        origin = QPoint(margin, heightPx - canvas->image().height()/dpiFactor - margin);
     }
 };
 
@@ -233,7 +240,7 @@ void QtRootWidget::paintEvent(QPaintEvent *)
     QImage const &buf = d->canvas->image();
     QPoint origin = d->origin;
 
-    painter.drawImage(origin, buf);
+    painter.drawImage(QRect(origin, buf.size()/d->dpiFactor), buf);
 
     // Blinking cursor.
     if(d->cursorVisible)
