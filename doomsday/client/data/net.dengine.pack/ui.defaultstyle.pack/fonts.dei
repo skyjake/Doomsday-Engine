@@ -63,14 +63,14 @@ group {
     
     font default {
         family: Helvetica Neue
-        size $: gui.scale(16pt, DisplayMode.DPI_FACTOR)
+        size $: gui.scale('16pt', DisplayMode.DPI_FACTOR)
         weight: normal
         style: normal
     }
     
     font monospace inherits default {
         family: Menlo
-        size $: gui.scale(13pt, DisplayMode.DPI_FACTOR)
+        size $: gui.scale('13pt', DisplayMode.DPI_FACTOR)
     }
 }
 
