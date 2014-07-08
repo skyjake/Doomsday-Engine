@@ -15,7 +15,11 @@ AboutDialog::AboutDialog(QWidget *parent)
     setLayout(box);
     box->setSizeConstraint(QLayout::SetFixedSize);
 
+#ifdef DENG2_QT_5_1_OR_NEWER
+    QImage logo(devicePixelRatio() > 1? ":/images/shell@2x.png" : ":/images/shell.png");
+#else
     QImage logo(":/images/shell.png");
+#endif
 
     QLabel *img = new QLabel;
     img->setPixmap(QPixmap::fromImage(logo));
