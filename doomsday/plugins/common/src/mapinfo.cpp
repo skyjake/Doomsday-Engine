@@ -303,8 +303,8 @@ private:
     }
 
     /**
-     * @note EndGame definitions appear inside a Map definition and  unlike all
-     * other definition block types are scoped with curly-braces.
+     * @note EndGame definitions appear inside a Map definition and unlike all other definition
+     * block types are scoped with curly-braces.
      *
      * @param mapInfo  MapInfo definition for which the EndGame subblock applies.
      */
@@ -312,6 +312,7 @@ private:
     {
         LOG_WARNING("MAPINFO Map.next[EndGame] definitions are not supported.");
 
+        lexer.readToken();
         if(Str_CompareIgnoreCase(lexer.token(), "{"))
             throw ParseError(String("Expected '{' but found '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
 
