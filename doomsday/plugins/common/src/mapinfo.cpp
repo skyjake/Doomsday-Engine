@@ -302,6 +302,113 @@ private:
         }
     }
 
+    /**
+     * @note EndGame definitions appear inside a Map definition and  unlike all
+     * other definition block types are scoped with curly-braces.
+     *
+     * @param mapInfo  MapInfo definition for which the EndGame subblock applies.
+     */
+    void parseEndGame(MapInfo & /*mapInfo*/) // ZDoom
+    {
+        LOG_WARNING("MAPINFO Map.next[EndGame] definitions are not supported.");
+
+        if(Str_CompareIgnoreCase(lexer.token(), "{"))
+            throw ParseError(String("Expected '{' but found '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
+
+        while(lexer.readToken())
+        {
+            if(!Str_CompareIgnoreCase(lexer.token(), "}"))
+            {
+                break;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "cast"))
+            {
+                continue;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "hscroll"))
+            {
+                lexer.readString();
+                lexer.readString();
+                continue;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "music"))
+            {
+                lexer.readString();
+                lexer.readNumber(); // Optional?
+                continue;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "pic"))
+            {
+                lexer.readString();
+                continue;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "vscroll"))
+            {
+                lexer.readString();
+                lexer.readString();
+                continue;
+            }
+
+            lexer.unreadToken();
+            break;
+        }
+    }
+
+    /**
+     * @param isSecret  @c true= this is the secret next map (from ZDoom) and should be ignored.
+     */
+    void parseMapNext(MapInfo &mapInfo, bool isSecret = false)
+    {
+        ddstring_s const *tok = lexer.readString();
+
+        // Perhaps a ZDoom EndGame directive?
+        if(!Str_CompareIgnoreCase(tok, "endpic"))
+        {
+            LOG_WARNING("MAPINFO Map.next EndGame directives are not supported.");
+            lexer.readString();
+            return;
+        }
+        if(!Str_CompareIgnoreCase(tok, "enddemon") ||
+           !Str_CompareIgnoreCase(tok, "endgame1") ||
+           !Str_CompareIgnoreCase(tok, "endgame2") ||
+           !Str_CompareIgnoreCase(tok, "endgame3") ||
+           !Str_CompareIgnoreCase(tok, "endgame4") ||
+           !Str_CompareIgnoreCase(tok, "endgamec") ||
+           !Str_CompareIgnoreCase(tok, "endgames") ||
+           !Str_CompareIgnoreCase(tok, "endgamew"))
+        {
+            LOG_WARNING("MAPINFO Map.next EndGame directives are not supported.");
+            return;
+        }
+        if(!Str_CompareIgnoreCase(tok, "endgame"))
+        {
+            parseEndGame(mapInfo);
+            return;
+        }
+
+        de::Uri mapUri;
+        bool isNumber;
+        int mapNumber = String(Str_Text(tok)).toInt(&isNumber); // 1-based
+        if(!isNumber)
+        {
+            mapUri = de::Uri(Str_Text(tok), RC_NULL);
+            if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+        }
+        else
+        {
+            if(mapNumber < 1)
+            {
+                throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
+            }
+            mapUri = G_ComposeMapUri(0, mapNumber - 1);
+        }
+
+        if(!isSecret)
+        {
+            mapInfo.set("nextMap", G_MapNumberFor(mapUri));
+        }
+    }
+
     void parseMap()
     {
         de::Uri mapUri;
@@ -573,12 +680,7 @@ private:
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "next"))
             {
-                int const map = (int)lexer.readNumber();
-                if(map < 1)
-                {
-                    throw ParseError(String("Invalid map number '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
-                }
-                info->set("nextMap", map - 1);
+                parseMapNext(*info);
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "noautosequences")) // ZDoom
@@ -651,7 +753,7 @@ private:
             if(!Str_CompareIgnoreCase(lexer.token(), "secretnext")) // ZDoom
             {
                 LOG_WARNING("MAPINFO Map.secretNext is not supported.");
-                lexer.readString();
+                parseMapNext(*info, true/*is-secret*/);
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
