@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+namespace common {
+
 class MapInfo : public de::Record
 {
 public:
@@ -76,6 +78,8 @@ de::Uri P_TranslateMapIfExists(uint map);
  * is not found a URI to the first available map is returned (i.e., Maps:MAP01)
  */
 de::Uri P_TranslateMap(uint map);
+
+} // namespace common
 
 #endif // __cplusplus
 #endif // LIBCOMMON_MAPINFO_H

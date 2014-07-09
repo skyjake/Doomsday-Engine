@@ -48,6 +48,8 @@
 #include "hu_chat.h"
 #include "r_common.h"
 
+using namespace common;
+
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 #  define TELEPORTSOUND     SFX_TELEPT
 #  define MAX_START_SPOTS   4 // Maximum number of different player starts.

@@ -44,6 +44,8 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace common;
+
 /// Original game line height for pages that employ the fixed layout (in 320x200 pixels).
 #if __JDOOM__
 #  define FIXED_LINE_HEIGHT (15+1)

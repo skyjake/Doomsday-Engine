@@ -48,6 +48,7 @@
 #endif
 
 using namespace de;
+using namespace common;
 
 // Our private map data structures
 xsector_t *xsectors;

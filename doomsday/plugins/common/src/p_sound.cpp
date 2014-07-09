@@ -31,6 +31,7 @@
 #endif
 
 using namespace de;
+using namespace common;
 
 void S_MapMusic(de::Uri const *mapUri)
 {

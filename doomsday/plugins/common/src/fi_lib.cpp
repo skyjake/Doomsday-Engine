@@ -34,6 +34,8 @@
 
 #include <cstring>
 
+using namespace common;
+
 struct fi_state_conditions_t
 {
     byte secret:1;

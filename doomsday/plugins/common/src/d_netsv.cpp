@@ -44,6 +44,8 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace common;
+
 #if __JHEXEN__ || __JSTRIFE__
 #  define SOUND_COUNTDOWN       SFX_PICKUP_KEY
 #elif __JDOOM__ || __JDOOM64__
@@ -318,8 +320,10 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
                 for(int pass = 0; pass < (has_random? 100 : 1); ++pass)
                 {
-                    uint episode = 0;
                     uint map = 0;
+#if !__JHEXEN__
+                    uint episode = 0;
+#endif
 
 #if __JDOOM__
                     if(!(gameModeBits & GM_ANY_DOOM2))

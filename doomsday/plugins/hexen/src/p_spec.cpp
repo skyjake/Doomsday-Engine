@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 
 #include "jhexen.h"
 
@@ -44,6 +44,8 @@
 #include "p_switch.h"
 #include "p_user.h"
 #include "polyobjs.h"
+
+using namespace common;
 
 #define LIGHTNING_SPECIAL       198
 #define LIGHTNING_SPECIAL2      199
