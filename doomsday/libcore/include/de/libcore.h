@@ -363,6 +363,9 @@ public:
     InstType *get() const {
         return ptr;
     }
+    InstType const *getConst() const {
+        return ptr;
+    }
     operator InstType *() const {
         return ptr;
     }

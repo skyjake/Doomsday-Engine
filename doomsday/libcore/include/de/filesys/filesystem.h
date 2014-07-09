@@ -22,10 +22,10 @@
 
 #include "../libcore.h"
 #include "../Folder"
+#include "../FileIndex"
 #include "../System"
 
 #include <QFlags>
-#include <map>
 
 /**
  * @defgroup fs File System
@@ -105,11 +105,8 @@ public:
     /// between them. @ingroup errors
     DENG2_ERROR(AmbiguousError);
 
-    typedef std::multimap<String, File *> Index;
-    typedef std::pair<Index::iterator, Index::iterator> IndexRange;
-    typedef std::pair<Index::const_iterator, Index::const_iterator> ConstIndexRange;
-    typedef std::pair<String, File *> IndexEntry;
-    typedef std::list<File *> FoundFiles;
+    typedef FileIndex Index;
+    typedef FileIndex::FoundFiles FoundFiles;
 
 public:
     /**
@@ -251,7 +248,7 @@ public:
      *
      * @note The file names are indexed in lower case.
      */
-    Index const &nameIndex() const;
+    FileIndex const &nameIndex() const;
 
     /**
      * Retrieves the index of files of a particular type.
@@ -266,7 +263,7 @@ public:
      * FS::Index const &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
      * @endcode
      */
-    Index const &indexFor(String const &typeIdentifier) const;
+    FileIndex const &indexFor(String const &typeIdentifier) const;
 
     /**
      * Adds a file to the main index.
