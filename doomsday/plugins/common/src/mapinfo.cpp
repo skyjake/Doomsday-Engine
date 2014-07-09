@@ -135,6 +135,74 @@ void MapInfoParser(ddstring_s const *path)
             LOG_WARNING("MAPINFO clearepisodes directives are not supported.");
             continue;
         }
+        if(!Str_CompareIgnoreCase(lexer.token(), "clusterdef")) // ZDoom
+        {
+            LOG_WARNING("MAPINFO cluster definitions are not supported.");
+
+            /*int const clusterId =*/ lexer.readNumber();
+
+            // Process optional tokens.
+            while(lexer.readToken())
+            {
+                if(!Str_CompareIgnoreCase(lexer.token(), "entertext"))
+                {
+                    String enterText = Str_Text(lexer.readString());
+
+                    // Lookup the enter text from a Text definition?
+                    if(!enterText.compareWithoutCase("lookup"))
+                    {
+                        enterText = Str_Text(lexer.readString());
+                        /*char *found = 0;
+                        if(Def_Get(DD_DEF_TEXT, enterText.toUtf8().constData(), &found) >= 0)
+                        {
+                            enterText = String(found);
+                        }*/
+                    }
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "exittext"))
+                {
+                    String exitText = Str_Text(lexer.readString());
+
+                    // Lookup the exit text from a Text definition?
+                    if(!exitText.compareWithoutCase("lookup"))
+                    {
+                        exitText = Str_Text(lexer.readString());
+                        /*char *found = 0;
+                        if(Def_Get(DD_DEF_TEXT, exitText.toUtf8().constData(), &found) >= 0)
+                        {
+                            exitText = String(found);
+                        }*/
+                    }
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "music"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "flat"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "pic"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "hub"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+
+                lexer.unreadToken();
+                break;
+            }
+
+            continue;
+        }
         if(!Str_CompareIgnoreCase(lexer.token(), "episode")) // ZDoom
         {
             LOG_WARNING("MAPINFO episode definitions are not supported.");
