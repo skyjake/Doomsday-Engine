@@ -223,7 +223,19 @@ void MapInfoParser(ddstring_s const *path)
             }
 
             // Map title must follow the number.
-            info->set("title", Str_Text(lexer.readString()));
+            String title = Str_Text(lexer.readString());
+
+            // Lookup the title from a Text definition? (ZDoom)
+            if(!title.compareWithoutCase("lookup"))
+            {
+                title = Str_Text(lexer.readString());
+                char *found = 0;
+                if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &found) >= 0)
+                {
+                    title = String(found);
+                }
+            }
+            info->set("title", title);
 
             // Process optional tokens.
             while(lexer.readToken())
