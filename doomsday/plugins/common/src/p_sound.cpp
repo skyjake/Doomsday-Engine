@@ -123,7 +123,7 @@ void SndInfoParser(ddstring_s const *path)
             {
                 // $map int(map-number) string(lump-name)
                 // Associate a music lump to a map.
-                int const mapNumber        = lexer.readNumber();
+                int const mapNumber        = (int)lexer.readNumber();
                 ddstring_t const *lumpName = lexer.readString();
 
                 if(mapNumber > 0)

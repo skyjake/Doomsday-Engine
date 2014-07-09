@@ -197,15 +197,15 @@ ddstring_s const *HexLex::token()
     return &_token;
 }
 
-int HexLex::readNumber()
+ddouble HexLex::readNumber()
 {
     if(!readToken())
     {
-        syntaxError("Missing integer");
+        syntaxError("Missing number value");
     }
 
     char *stopper;
-    int number = strtol(Str_Text(&_token), &stopper, 0);
+    ddouble number = strtod(Str_Text(&_token), &stopper);
     if(*stopper != 0)
     {
         Con_Error("HexLex: Non-numeric constant '%s' in \"%s\" on line #%i",

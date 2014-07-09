@@ -102,32 +102,32 @@ void MapInfoParser(ddstring_s const *path)
     {
         if(!Str_CompareIgnoreCase(lexer.token(), "cd_start_track"))
         {
-            setMusicCDTrack(MUSIC_STARTUP, lexer.readNumber());
+            setMusicCDTrack(MUSIC_STARTUP, (int)lexer.readNumber());
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "cd_end1_track"))
         {
-            setMusicCDTrack(MUSIC_ENDING1, lexer.readNumber());
+            setMusicCDTrack(MUSIC_ENDING1, (int)lexer.readNumber());
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "cd_end2_track"))
         {
-            setMusicCDTrack(MUSIC_ENDING2, lexer.readNumber());
+            setMusicCDTrack(MUSIC_ENDING2, (int)lexer.readNumber());
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "cd_end3_track"))
         {
-            setMusicCDTrack(MUSIC_ENDING3, lexer.readNumber());
+            setMusicCDTrack(MUSIC_ENDING3, (int)lexer.readNumber());
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "cd_intermission_track"))
         {
-            setMusicCDTrack(MUSIC_INTERMISSION, lexer.readNumber());
+            setMusicCDTrack(MUSIC_INTERMISSION, (int)lexer.readNumber());
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "cd_title_track"))
         {
-            setMusicCDTrack(MUSIC_TITLE, lexer.readNumber());
+            setMusicCDTrack(MUSIC_TITLE, (int)lexer.readNumber());
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "clearepisodes")) // ZDoom
@@ -135,11 +135,16 @@ void MapInfoParser(ddstring_s const *path)
             LOG_WARNING("MAPINFO clearepisodes directives are not supported.");
             continue;
         }
+        if(!Str_CompareIgnoreCase(lexer.token(), "clearskills")) // ZDoom
+        {
+            LOG_WARNING("MAPINFO clearskills directives are not supported.");
+            continue;
+        }
         if(!Str_CompareIgnoreCase(lexer.token(), "clusterdef")) // ZDoom
         {
             LOG_WARNING("MAPINFO cluster definitions are not supported.");
 
-            /*int const clusterId =*/ lexer.readNumber();
+            /*int const clusterId = (int)*/lexer.readNumber();
 
             // Process optional tokens.
             while(lexer.readToken())
@@ -337,7 +342,7 @@ void MapInfoParser(ddstring_s const *path)
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
                 {
-                    int const hubNum = lexer.readNumber();
+                    int const hubNum = (int)lexer.readNumber();
                     if(hubNum < 1)
                     {
                         Con_Error("MapInfoParser: Invalid 'cluster' (i.e., hub) number '%s' in \"%s\" on line #%i",
@@ -348,7 +353,7 @@ void MapInfoParser(ddstring_s const *path)
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "warptrans"))
                 {
-                    int const mapWarpNum = lexer.readNumber();
+                    int const mapWarpNum = (int)lexer.readNumber();
                     if(mapWarpNum < 1)
                     {
                         Con_Error("MapInfoParser: Invalid map warp-number '%s' in \"%s\" on line #%i",
@@ -359,7 +364,7 @@ void MapInfoParser(ddstring_s const *path)
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "next"))
                 {
-                    int const map = lexer.readNumber();
+                    int const map = (int)lexer.readNumber();
                     if(map < 1)
                     {
                         Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
@@ -370,7 +375,115 @@ void MapInfoParser(ddstring_s const *path)
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "cdtrack"))
                 {
-                    info->set("cdTrack", lexer.readNumber());
+                    info->set("cdTrack", (int)lexer.readNumber());
+                    continue;
+                }
+
+                lexer.unreadToken();
+                break;
+            }
+
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(lexer.token(), "skill")) // ZDoom
+        {
+            LOG_WARNING("MAPINFO skill definitions are not supported.");
+
+            /*ddstring_s const *id =*/ lexer.readString();
+
+            // Process optional tokens.
+            while(lexer.readToken())
+            {
+                if(!Str_CompareIgnoreCase(lexer.token(), "acsreturn"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "aggressiveness"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "ammofactor"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "autousehealth"))
+                {
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "damagefactor"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "disablecheats"))
+                {
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "doubleammofactor"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "dropammofactor"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "easybossbrain"))
+                {
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "fastmonsters"))
+                {
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "key"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "mustconfirm"))
+                {
+                    lexer.readString(); // Optional?
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "name"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "picname"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "playerclassname"))
+                {
+                    lexer.readString();
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "respawnlimit"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "respawntime"))
+                {
+                    lexer.readNumber();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "spawnfilter"))
+                {
+                    lexer.readString();
+                    continue;
+                }
+                if(!Str_CompareIgnoreCase(lexer.token(), "textcolor"))
+                {
+                    lexer.readString();
                     continue;
                 }
 
