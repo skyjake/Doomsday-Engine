@@ -27,6 +27,10 @@
 #include "doomsday.h"
 #include "gl_drawpatch.h"
 
+#ifdef __cplusplus
+#  include <de/Vector>
+#endif
+
 DENG_EXTERN_C patchid_t *pMapNames; // Name graphics of each map.
 DENG_EXTERN_C uint pMapNamesSize;
 
@@ -165,6 +169,15 @@ const char* Hu_ChoosePatchReplacement2(patchreplacemode_t replaceMode, patchid_t
 const char* Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId);
 
 /**
+ * Misc specialised elements:
+ */
+
+void M_DrawGlowBar(const float a[2], const float b[2], float thickness, dd_bool left, dd_bool right, dd_bool caps, float red, float green, float blue, float alpha);
+
+#ifdef __cplusplus
+} // extern "C"
+
+/**
  * Implements patch replacement.
  *
  * @param patchId   Unique identifier of the patch to be drawn if no replacement.
@@ -175,25 +188,8 @@ const char* Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t 
  * @param patchFlags    @ref drawPatchFlags
  * @param textFlags     @ref drawTextFlags
  */
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags, int patchFlags, short textFlags);
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags);
-void WI_DrawPatch(patchid_t patchId, const char* replacement, const Point2Raw* origin);
+void WI_DrawPatch(patchid_t patchId, char const *replacement, de::Vector2i const &origin = de::Vector2i(0, 0),
+                  int alignFlags = ALIGN_TOPLEFT, int patchFlags = 0, short textFlags = 0);
 
-/**
- * Same as @a WI_DrawPatch except origin is specified with separate xy coordinates.
- */
-void WI_DrawPatchXY3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
-void WI_DrawPatchXY2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags);
-void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y);
-
-/**
- * Misc specialised elements:
- */
-
-void M_DrawGlowBar(const float a[2], const float b[2], float thickness, dd_bool left, dd_bool right, dd_bool caps, float red, float green, float blue, float alpha);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBCOMMON_HU_STUFF_H */
+#endif // __cplusplus
+#endif // LIBCOMMON_HU_STUFF_H

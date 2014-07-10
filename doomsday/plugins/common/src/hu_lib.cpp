@@ -1784,7 +1784,8 @@ void MNText_Drawer(mn_object_t *ob, Point2Raw const *origin)
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch3(*txt->patch, replacement, origin, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+        WI_DrawPatch(*txt->patch, replacement, de::Vector2i(origin->x, origin->y),
+                     ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
 
         return;
@@ -2579,7 +2580,8 @@ void MNButton_Drawer(mn_object_t *ob, Point2Raw const *origin)
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch3(*btn->patch, replacement, origin, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+        WI_DrawPatch(*btn->patch, replacement, de::Vector2i(origin->x, origin->y),
+                     ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
 
         return;

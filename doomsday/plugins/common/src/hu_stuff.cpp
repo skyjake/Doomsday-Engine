@@ -1186,46 +1186,18 @@ const char* Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId
     return Hu_ChoosePatchReplacement2(mode, patchId, NULL);
 }
 
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, const Point2Raw* origin,
+void WI_DrawPatch(patchid_t patchId, char const *replacement, de::Vector2i const &origin,
     int alignFlags, int patchFlags, short textFlags)
 {
+    Point2Raw const originAsPoint2Raw(origin.x, origin.y);
     if(replacement && replacement[0])
     {
         // Use the replacement string.
-        FR_DrawText3(replacement, origin, alignFlags, textFlags);
+        FR_DrawText3(replacement, &originAsPoint2Raw, alignFlags, textFlags);
         return;
     }
     // Use the original patch.
-    GL_DrawPatch3(patchId, origin, alignFlags, patchFlags);
-}
-
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags)
-{
-    WI_DrawPatch3(patchId, replacement, origin, alignFlags, 0, 0);
-}
-
-void WI_DrawPatch(patchid_t patchId, const char* replacement, const Point2Raw* origin)
-{
-    WI_DrawPatch2(patchId, replacement, origin, ALIGN_TOPLEFT);
-}
-
-void WI_DrawPatchXY3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, short textFlags)
-{
-    Point2Raw origin;
-    origin.x = x;
-    origin.y = y;
-    WI_DrawPatch3(patchId, replacement, &origin, alignFlags, patchFlags, textFlags);
-}
-
-void WI_DrawPatchXY2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags)
-{
-    WI_DrawPatchXY3(patchId, replacement, x, y, alignFlags, 0, 0);
-}
-
-void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y)
-{
-    WI_DrawPatchXY2(patchId, replacement, x, y, ALIGN_TOPLEFT);
+    GL_DrawPatch3(patchId, &originAsPoint2Raw, alignFlags, patchFlags);
 }
 
 void Draw_BeginZoom(float s, float originX, float originY)
@@ -1419,7 +1391,8 @@ void Hu_Drawer(void)
         FR_LoadDefaultAttrib();
         FR_SetLeading(0);
 
-        WI_DrawPatchXY3(m_pause, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
+        WI_DrawPatch(m_pause, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, m_pause),
+                     de::Vector2i(), ALIGN_TOP, DPF_NO_OFFSET, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1514,8 +1487,8 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
 #if __JDOOM__ || __JDOOM64__
     patchid_t patchId = G_MapTitlePatch(); // current map
-    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
-                    0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    WI_DrawPatch(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
+                 de::Vector2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.
     y += Hu_MapTitleFirstLineHeight();

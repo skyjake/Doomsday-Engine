@@ -46,6 +46,8 @@
 #include "r_common.h"
 #include "am_map.h"
 
+using namespace de;
+
 // N/256*100% probability
 //  that the normal face state will change
 #define ST_FACEPROBABILITY  (96)
@@ -1493,16 +1495,16 @@ void WeaponSlot_Drawer(uiwidget_t *ob, Point2Raw const *offset)
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
 
-    static Point2Raw const elements[] = {
-        Point2Raw( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY ),
-        Point2Raw( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY ),
-        Point2Raw( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY ),
-        Point2Raw( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
-        Point2Raw( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
-        Point2Raw( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
+    static Vector2i const elements[] = {
+        Vector2i( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY ),
+        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY ),
+        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY ),
+        Vector2i( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
+        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
+        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
     };
     guidata_weaponslot_t *wpns = (guidata_weaponslot_t *)ob->typedata;
-    Point2Raw const *element = &elements[wpns->slot-1];
+    Vector2i const &element = elements[wpns->slot-1];
     hudstate_t const *hud = &hudStates[ob->player];
     int yOffset = ST_HEIGHT * (1 - hud->showBar);
     int fullscreen = headupDisplayMode(ob->player);
@@ -1531,8 +1533,8 @@ void WeaponSlot_Drawer(uiwidget_t *ob, Point2Raw const *offset)
     {
         FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     }
-    WI_DrawPatch3(wpns->patchId, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.hudPatchReplaceMode), wpns->patchId),
-                  element, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
+    WI_DrawPatch(wpns->patchId, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.hudPatchReplaceMode), wpns->patchId),
+                 element, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
