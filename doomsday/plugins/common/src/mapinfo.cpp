@@ -296,7 +296,6 @@ private:
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "hub"))
             {
-                lexer.readNumber();
                 continue;
             }
 
