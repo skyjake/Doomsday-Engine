@@ -207,7 +207,7 @@ public:
                 parseMap(defaultMap);
                 continue;
             }
-            if(!Str_CompareIgnoreCase(lexer.token(), "addefaultmap")) // ZDoom
+            if(!Str_CompareIgnoreCase(lexer.token(), "adddefaultmap")) // ZDoom
             {
                 // As per 'defaultmap' but additive.
                 if(!defaultMap)
