@@ -37,7 +37,7 @@ using namespace de;
 
 struct wianimdef_t
 {
-    int mapNum;       ///< If not @c 0= the logical map-number+1 for which this animation should only be displayed.
+    de::Uri mapUri;   ///< If path is not zero-length the animation should only be displayed on this map.
     int tics;         ///< Number of tics each frame of the animation lasts for.
     Vector2i origin;  ///< Location origin of the animation on the map.
     int numFrames;    ///< Number of used frames in the animation.
@@ -105,37 +105,37 @@ static Vector2i const locations[][NUMMAPS] = {
 };
 
 static wianimdef_t const episode0AnimDefs[] = {
-    { 0, 11, Vector2i( 224, 104 ), 3, { "wia00000", "wia00001", "wia00002" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i( 184, 160 ), 3, { "wia00100", "wia00101", "wia00102" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i( 112, 136 ), 3, { "wia00200", "wia00201", "wia00202" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i(  72, 112 ), 3, { "wia00300", "wia00301", "wia00302" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i(  88,  96 ), 3, { "wia00400", "wia00401", "wia00402" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i(  64,  48 ), 3, { "wia00500", "wia00501", "wia00502" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i( 192,  40 ), 3, { "wia00600", "wia00601", "wia00602" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i( 136,  16 ), 3, { "wia00700", "wia00701", "wia00702" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i(  80,  16 ), 3, { "wia00800", "wia00801", "wia00802" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i(  64,  24 ), 3, { "wia00900", "wia00901", "wia00902" }, ILS_SHOW_STATS }
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 224, 104 ), 3, { "wia00000", "wia00001", "wia00002" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 184, 160 ), 3, { "wia00100", "wia00101", "wia00102" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 112, 136 ), 3, { "wia00200", "wia00201", "wia00202" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  72, 112 ), 3, { "wia00300", "wia00301", "wia00302" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  88,  96 ), 3, { "wia00400", "wia00401", "wia00402" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  64,  48 ), 3, { "wia00500", "wia00501", "wia00502" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 192,  40 ), 3, { "wia00600", "wia00601", "wia00602" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 136,  16 ), 3, { "wia00700", "wia00701", "wia00702" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  80,  16 ), 3, { "wia00800", "wia00801", "wia00802" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  64,  24 ), 3, { "wia00900", "wia00901", "wia00902" }, ILS_SHOW_STATS }
 };
 
 static wianimdef_t const episode1AnimDefs[] = {
-    { 1,  0, Vector2i( 128, 136 ), 1, { "wia10000" }, ILS_SHOW_STATS },
-    { 2,  0, Vector2i( 128, 136 ), 1, { "wia10100" }, ILS_SHOW_STATS },
-    { 3,  0, Vector2i( 128, 136 ), 1, { "wia10200" }, ILS_SHOW_STATS },
-    { 4,  0, Vector2i( 128, 136 ), 1, { "wia10300" }, ILS_SHOW_STATS },
-    { 5,  0, Vector2i( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS },
-    { 6,  0, Vector2i( 128, 136 ), 1, { "wia10500" }, ILS_SHOW_STATS },
-    { 7,  0, Vector2i( 128, 136 ), 1, { "wia10600" }, ILS_SHOW_STATS },
-    { 8, 11, Vector2i( 192, 144 ), 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
-    { 8,  0, Vector2i( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS }
+    { de::Uri("Maps:E2M1", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10000" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:E2M2", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10100" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:E2M3", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10200" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:E2M4", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10300" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:E2M5", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:E2M6", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10500" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:E2M7", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10600" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:E2M8", RC_NULL), 11, Vector2i( 192, 144 ), 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
+    { de::Uri("Maps:E2M8", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS }
 };
 
 static wianimdef_t const episode2AnimDefs[] = {
-    { 0, 11, Vector2i( 104, 168 ), 3, { "wia20000", "wia20001", "wia20002" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i(  40, 136 ), 3, { "wia20100", "wia20101", "wia20102" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i( 160,  96 ), 3, { "wia20200", "wia20201", "wia20202" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i( 104,  80 ), 3, { "wia20300", "wia20301", "wia20302" }, ILS_SHOW_STATS },
-    { 0, 11, Vector2i( 120,  32 ), 3, { "wia20400", "wia20401", "wia20402" }, ILS_SHOW_STATS },
-    { 0,  8, Vector2i(  40,   0 ), 3, { "wia20500", "wia20501", "wia20502" }, ILS_SHOW_STATS }
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 104, 168 ), 3, { "wia20000", "wia20001", "wia20002" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  40, 136 ), 3, { "wia20100", "wia20101", "wia20102" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 160,  96 ), 3, { "wia20200", "wia20201", "wia20202" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 104,  80 ), 3, { "wia20300", "wia20301", "wia20302" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 120,  32 ), 3, { "wia20400", "wia20401", "wia20402" }, ILS_SHOW_STATS },
+    { de::Uri("Maps:", RC_NULL),  8, Vector2i(  40,   0 ), 3, { "wia20500", "wia20501", "wia20502" }, ILS_SHOW_STATS }
 };
 
 static int const animCounts[] = {
@@ -377,7 +377,7 @@ static void beginAnimations()
         wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && G_MapNumberFor(wbs->nextMap) != (unsigned)def->mapNum)
+        if(!def->mapUri.path().isEmpty() && wbs->nextMap != def->mapUri)
             continue;
 
         // Already begun?
@@ -389,7 +389,7 @@ static void beginAnimations()
         state->frame = 0;
 
         // Determine when to animate the first frame.
-        if(def->mapNum)
+        if(!def->mapUri.path().isEmpty())
         {
             state->nextTic = backgroundAnimCounter + 1 + def->tics;
         }
@@ -412,7 +412,7 @@ static void animateBackground()
         wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
-        if(def->mapNum && G_MapNumberFor(wbs->nextMap) != (unsigned)def->mapNum)
+        if(!def->mapUri.path().isEmpty() && wbs->nextMap != def->mapUri)
             continue;
 
         // Has the animation begun yet
@@ -424,7 +424,7 @@ static void animateBackground()
         ++state->frame;
         if(state->frame >= def->numFrames)
         {
-            if(def->mapNum)
+            if(!def->mapUri.path().isEmpty())
             {
                 // Loop.
                 state->frame = def->numFrames - 1;
