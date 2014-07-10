@@ -466,64 +466,64 @@ private:
      */
     void parseMap(MapInfo *info = 0)
     {
-        de::Uri mapUri;
-        String const mapRef = String(Str_Text(lexer.readString()));
-
-        bool isNumber;
-        int mapNumber = mapRef.toInt(&isNumber); // 1-based
-        if(!isNumber)
-        {
-            mapUri = de::Uri(mapRef, RC_NULL);
-            if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
-        }
-        else
-        {
-            if(mapNumber < 1)
-            {
-                throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
-            }
-            mapUri = G_ComposeMapUri(0, mapNumber - 1);
-        }
-
         if(!info)
         {
+            de::Uri mapUri;
+            String const mapRef = String(Str_Text(lexer.readString()));
+
+            bool isNumber;
+            int mapNumber = mapRef.toInt(&isNumber); // 1-based
+            if(!isNumber)
+            {
+                mapUri = de::Uri(mapRef, RC_NULL);
+                if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+            }
+            else
+            {
+                if(mapNumber < 1)
+                {
+                    throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
+                }
+                mapUri = G_ComposeMapUri(0, mapNumber - 1);
+            }
+
             // Lookup an existing map info from the database.
             info = P_MapInfo(&mapUri);
-        }
 
-        if(!info)
-        {
-            // A new map info.
-            info = &::mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
-
-            // Initialize with custom default values?
-            if(defaultMap)
+            if(!info)
             {
-                *info = *defaultMap;
+                // A new map info.
+                info = &::mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
+
+                // Initialize with custom default values?
+                if(defaultMap)
+                {
+                    *info = *defaultMap;
+                }
+
+                info->set("map", mapUri.compose());
+
+                // Attempt to extract the "warp translation" number.
+                /// @todo Define a sensible default should the map identifier not
+                /// follow the default MAPXX form (what does ZDoom do here?) -ds
+                info->set("warpTrans", G_MapNumberFor(mapUri));
             }
 
-            info->set("map", mapUri.compose());
+            // Map title must follow the number.
+            String title = Str_Text(lexer.readString());
 
-            // Attempt to extract the "warp translation" number.
-            /// @todo Define a sensible default should the map identifier not
-            /// follow the default MAPXX form (what does ZDoom do here?) -ds
-            info->set("warpTrans", G_MapNumberFor(mapUri));
-        }
-
-        // Map title must follow the number.
-        String title = Str_Text(lexer.readString());
-
-        // Lookup the title from a Text definition? (ZDoom)
-        if(!title.compareWithoutCase("lookup"))
-        {
-            title = Str_Text(lexer.readString());
-            char *found = 0;
-            if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &found) >= 0)
+            // Lookup the title from a Text definition? (ZDoom)
+            if(!title.compareWithoutCase("lookup"))
             {
-                title = String(found);
+                title = Str_Text(lexer.readString());
+                char *found = 0;
+                if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &found) >= 0)
+                {
+                    title = String(found);
+                }
             }
+            info->set("title", title);
         }
-        info->set("title", title);
 
         // Process optional tokens.
         while(lexer.readToken())
