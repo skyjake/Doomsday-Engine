@@ -927,6 +927,7 @@ static void applyPageLayout(mn_page_t *page)
 static void composeSubpageString(mn_page_t *page, char *buf, size_t bufSize)
 {
     DENG2_ASSERT(page != 0);
+    DENG2_UNUSED(page);
     if(!buf || 0 == bufSize) return;
     dd_snprintf(buf, bufSize, "Page %i/%i", 0, 0);
 }
