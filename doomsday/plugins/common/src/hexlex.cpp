@@ -158,7 +158,16 @@ bool HexLex::readToken()
         _readPos++;
         while(Str_At(_script, _readPos) != T_QUOTE)
         {
-            Str_AppendChar(&_token, Str_At(_script, _readPos++));
+            char const ch = Str_At(_script, _readPos++);
+            if(ch != '\r')
+            {
+                Str_AppendChar(&_token, ch);
+            }
+            if(ch == '\n')
+            {
+                _lineNumber++;
+            }
+
             if(atEnd())
             {
                 break;
