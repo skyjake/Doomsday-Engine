@@ -31,6 +31,7 @@ class MapInfo : public de::Record
 {
 public:
     MapInfo();
+    MapInfo &operator = (MapInfo const &other);
 
     void resetToDefaults();
 };

@@ -55,6 +55,12 @@ MapInfo::MapInfo() : Record()
     resetToDefaults();
 }
 
+MapInfo &MapInfo::operator = (MapInfo const &other)
+{
+    static_cast<Record &>(*this) = other;
+    return *this;
+}
+
 void MapInfo::resetToDefaults()
 {
     // Add all expected fields with their default values.
@@ -103,12 +109,20 @@ class MapInfoParser
 {
     AutoStr *source;
     HexLex lexer;
+    MapInfo *defaultMap;
 
 public:
     /// Base class for all parse-related errors. @ingroup errors
     DENG2_ERROR(ParseError);
 
-    MapInfoParser(AutoStr *source = 0) : source(source) {}
+    MapInfoParser(AutoStr *source = 0)
+        : source(source), defaultMap(0)
+    {}
+
+    ~MapInfoParser()
+    {
+        delete defaultMap;
+    }
 
     void parse()
     {
@@ -117,6 +131,8 @@ public:
         // Nothing to parse?
         if(!source || Str_IsEmpty(source))
             return;
+
+        delete defaultMap; defaultMap = 0;
 
         lexer.parse(source);
         while(lexer.readToken())
@@ -174,6 +190,40 @@ public:
             if(!Str_CompareIgnoreCase(lexer.token(), "map"))
             {
                 parseMap();
+                continue;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "defaultmap")) // ZDoom
+            {
+                // Custom default MapInfo definition to be used as the basis for subsequent defs.
+                if(!defaultMap)
+                {
+                    defaultMap = new MapInfo;
+                }
+                else
+                {
+                    defaultMap->resetToDefaults();
+                }
+
+                parseMap(defaultMap);
+                continue;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "addefaultmap")) // ZDoom
+            {
+                // As per 'defaultmap' but additive.
+                if(!defaultMap)
+                {
+                    defaultMap = new MapInfo;
+                }
+                parseMap(defaultMap);
+                continue;
+            }
+            if(!Str_CompareIgnoreCase(lexer.token(), "gamedefaults")) // ZDoom
+            {
+                // Custom default MapInfo definition which is seemingly only used by ZDoom itself
+                // as a way to get around their changes to/repurposing of the MAPINFO mechanism.
+                // We probably don't need to support this. -ds
+                MapInfo tempMap;
+                parseMap(&tempMap);
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "skill")) // ZDoom
@@ -410,7 +460,11 @@ private:
         }
     }
 
-    void parseMap()
+    /**
+     * @param info  If non-zero parse the definition to this record. Otherwise the relevant
+     *              MapInfo record will be located/created in the main database.
+     */
+    void parseMap(MapInfo *info = 0)
     {
         de::Uri mapUri;
         String const mapRef = String(Str_Text(lexer.readString()));
@@ -431,14 +485,22 @@ private:
             mapUri = G_ComposeMapUri(0, mapNumber - 1);
         }
 
-        MapInfo *info = P_MapInfo(&mapUri);
+        if(!info)
+        {
+            // Lookup an existing map info from the database.
+            info = P_MapInfo(&mapUri);
+        }
+
         if(!info)
         {
             // A new map info.
             info = &::mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
 
-            // Initialize with the default values.
-            info->resetToDefaults();
+            // Initialize with custom default values?
+            if(defaultMap)
+            {
+                *info = *defaultMap;
+            }
 
             info->set("map", mapUri.compose());
 
