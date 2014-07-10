@@ -362,11 +362,9 @@ void IN_InitStats()
 
 void IN_LoadPics()
 {
-    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
-
-    if(episode < 3)
+    if(::gameEpisode < 3)
     {
-        dpInterPic = R_DeclarePatch(episode == 0? "MAPE1" : episode == 1? "MAPE2" : "MAPE3");
+        dpInterPic = R_DeclarePatch(::gameEpisode == 0? "MAPE1" : ::gameEpisode == 1? "MAPE2" : "MAPE3");
     }
 
     dpBeenThere  = R_DeclarePatch("IN_X");
@@ -417,8 +415,6 @@ void IN_Ticker()
     }
     IN_CheckForSkip();
 
-    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
-
     // Counter for general background animation.
     bcnt++;
 
@@ -427,7 +423,7 @@ void IN_Ticker()
     {
         nextIntermissionState();
 
-        if(episode > 2 && interState >= 1)
+        if(::gameEpisode > 2 && interState >= 1)
         {
             // Extended Wad levels:  skip directly to the next level
             endIntermissionGoToNextLevel();
@@ -437,7 +433,7 @@ void IN_Ticker()
         {
         case 0:
             oldInterTime = interTime + 300;
-            if(episode > 2)
+            if(::gameEpisode > 2)
             {
                 oldInterTime = interTime + 1200;
             }
@@ -469,7 +465,7 @@ void IN_Ticker()
             NetSv_Intermission(IMF_TIME, 0, interTime);
             return;
         }
-        if(interState < 2 && episode < 3)
+        if(interState < 2 && ::gameEpisode < 3)
         {
             interState = 2;
             skipIntermission = false;
@@ -558,8 +554,6 @@ void IN_Drawer()
         return;
     }*/
 
-    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
-
     if(oldInterState != 2 && interState == 2)
     {
         S_LocalSound(SFX_PSTOP, NULL);
@@ -593,7 +587,7 @@ void IN_Drawer()
         break;
 
     case 1: // Leaving old level.
-        if(episode < 3)
+        if(::gameEpisode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -607,7 +601,7 @@ void IN_Drawer()
         break;
 
     case 2: // Going to the next level.
-        if(episode < 3)
+        if(::gameEpisode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -620,7 +614,7 @@ void IN_Drawer()
         break;
 
     case 3: // Waiting before going to the next level.
-        if(episode < 3)
+        if(::gameEpisode < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -664,20 +658,18 @@ void IN_DrawOldLevel()
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
     FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
-    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
-
     if(G_MapNumberFor(wbs->currentMap) == 8)
     {
         DGL_Color4f(1, 1, 1, 1);
         uint const nextMap = G_MapNumberFor(wbs->nextMap);
         for(uint i = 0; i < nextMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][i]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][8]);
         }
     }
     else
@@ -686,17 +678,17 @@ void IN_DrawOldLevel()
         uint const currentMap = G_MapNumberFor(wbs->currentMap);
         for(uint i = 0; i < currentMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][i]);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][8]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episode][currentMap]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][currentMap]);
         }
     }
 
@@ -716,23 +708,22 @@ void IN_DrawYAH()
 
     DGL_Color4f(1, 1, 1, 1);
 
-    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
     uint const nextMap = G_MapNumberFor(wbs->nextMap);
 
     for(uint i = 0; i < nextMap; ++i)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[episode][i]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][i]);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[episode][8]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][8]);
     }
 
     if(!(interTime & 16) || interState == 3)
     {
         // Draw the destination 'X'
-        GL_DrawPatch(dpGoingThere, &YAHspot[episode][nextMap]);
+        GL_DrawPatch(dpGoingThere, &YAHspot[::gameEpisode][nextMap]);
     }
 }
 
@@ -842,9 +833,7 @@ void IN_DrawSingleStats()
         sounds++;
     }
 
-    uint const episode = G_EpisodeNumberFor(wbs->currentMap);
-
-    if(gameMode != heretic_extended || episode < 3)
+    if(gameMode != heretic_extended || ::gameEpisode < 3)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 

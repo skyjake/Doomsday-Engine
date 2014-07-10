@@ -1563,17 +1563,17 @@ void C_DECL A_BossDeath(mobj_t *mo)
      * Many classic PWADS such as "Doomsday of UAC" (UAC_DEAD.wad) rely on the
      * old behavior. Episode 4 is exempt by PrBoom's precedent.
      */
-    else if(cfg.anyBossDeath && G_CurrentEpisodeNumber() < 3)
+    else if(cfg.anyBossDeath && gameEpisode < 3)
     {
         if(G_CurrentMapNumber() != 7)
             return;
 
-        if(G_CurrentEpisodeNumber() != 0 && mo->type == MT_BRUISER)
+        if(gameEpisode != 0 && mo->type == MT_BRUISER)
             return;
     }
     else
     {
-        switch(G_CurrentEpisodeNumber())
+        switch(gameEpisode)
         {
         case 0:
             if(G_CurrentMapNumber() != 7)
@@ -1669,7 +1669,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
     }
     else
     {
-        if(G_CurrentEpisodeNumber() == 0)
+        if(gameEpisode == 0)
         {
             Line *dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
@@ -1678,7 +1678,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
             return;
         }
 
-        if(G_CurrentEpisodeNumber() == 3)
+        if(gameEpisode == 3)
         {
             if(G_CurrentMapNumber() == 5)
             {

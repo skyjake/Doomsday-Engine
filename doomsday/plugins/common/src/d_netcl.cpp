@@ -650,19 +650,20 @@ void NetCl_Intermission(Reader *msg)
         SN_StopAllSequences();
 #endif
 
+        /// @todo Map references should be transmitted as URI.
 #if __JDOOM__ || __JDOOM64__
         wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
-        wmInfo.nextMap    = G_ComposeMapUri(G_CurrentEpisodeNumber(), Reader_ReadByte(msg));
-        wmInfo.currentMap = G_ComposeMapUri(G_CurrentEpisodeNumber(), Reader_ReadByte(msg));
+        wmInfo.nextMap    = G_ComposeMapUri(::gameEpisode, Reader_ReadByte(msg));
+        wmInfo.currentMap = G_ComposeMapUri(::gameEpisode, Reader_ReadByte(msg));
         wmInfo.didSecret  = Reader_ReadByte(msg);
 
         G_PrepareWIData();
 #elif __JHERETIC__
-        // @todo jHeretic does not transmit the intermission info!
+        /// @todo jHeretic does not transmit the intermission info!
 #elif __JHEXEN__
-        ::nextMapUri      = G_ComposeMapUri(G_CurrentEpisodeNumber(), Reader_ReadByte(msg));
+        ::nextMapUri      = G_ComposeMapUri(::gameEpisode, Reader_ReadByte(msg));
         ::nextMapEntrance = Reader_ReadByte(msg);
 #endif
 

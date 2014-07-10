@@ -112,6 +112,7 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
+uint gameEpisode;
 de::Uri gameMapUri;
 uint gameMapEntrance;  ///< Entry point, for reborn.
 
@@ -2382,11 +2383,6 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-uint G_CurrentEpisodeNumber()
-{
-    return G_EpisodeNumberFor(gameMapUri);
-}
-
 uint G_CurrentMapNumber()
 {
     return G_MapNumberFor(gameMapUri);
@@ -2419,7 +2415,7 @@ de::Uri G_NextMap(dd_bool secretExit)
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
-    uint episode = G_CurrentEpisodeNumber();
+    uint episode = ::gameEpisode;
     uint map     = G_CurrentMapNumber();
 
     if(secretExit)
@@ -2455,7 +2451,7 @@ de::Uri G_NextMap(dd_bool secretExit)
     return G_ComposeMapUri(episode, map);
 
 #elif __JDOOM__
-    uint episode = G_CurrentEpisodeNumber();
+    uint episode = ::gameEpisode;
     uint map     = G_CurrentMapNumber();
 
     if(gameModeBits & GM_ANY_DOOM2)
@@ -2518,7 +2514,7 @@ de::Uri G_NextMap(dd_bool secretExit)
     }
 
 #elif __JHERETIC__
-    uint episode = G_CurrentEpisodeNumber();
+    uint episode = ::gameEpisode;
     uint map     = G_CurrentMapNumber();
 
     // Going to the secret map?

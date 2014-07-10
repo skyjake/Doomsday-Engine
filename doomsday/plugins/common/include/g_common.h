@@ -29,6 +29,7 @@
 
 DENG_EXTERN_C dd_bool singledemo;
 
+DENG_EXTERN_C uint gameEpisode;
 DENG_EXTERN_C uint gameMapEntrance;
 
 #if __cplusplus
@@ -187,28 +188,11 @@ void G_IntermissionDone(void);
 } // extern "C"
 
 /**
- * Returns the logical episode number for the identified map.
+ * Returns the logical episode number assigned to the identified map (in MapInfo).
  *
  * @param mapUri  Unique identifier of the map to lookup.
  */
 uint G_EpisodeNumberFor(de::Uri const &mapUri);
-
-/**
- * Returns the logical map number for the identified map.
- *
- * @param mapUri  Unique identifier of the map to lookup.
- */
-uint G_MapNumberFor(de::Uri const &mapUri);
-
-/**
- * Compose a Uri for the identified @a episode and @a map combination.
- *
- * @param episode  Logical episode number.
- * @param map      Logical map number.
- *
- * @return  Resultant Uri.
- */
-de::Uri G_ComposeMapUri(uint episode, uint map);
 
 /**
  * Determines the next map according to the default map progression.
@@ -217,10 +201,33 @@ de::Uri G_ComposeMapUri(uint episode, uint map);
  */
 de::Uri G_NextMap(dd_bool secretExit);
 
+/**
+ * Returns the logical map number for the identified map.
+ *
+ * @param mapUri  Unique identifier of the map to lookup.
+ *
+ * @deprecated  Should use map URIs instead.
+ */
+uint G_MapNumberFor(de::Uri const &mapUri);
+
+/**
+ * Compose a Uri for the identified @a episode and @a map combination using the default
+ * form for the current game mode (i.e., MAPXX or EXMY).
+ *
+ * @param episode  Logical episode number.
+ * @param map      Logical map number.
+ *
+ * @return  Resultant Uri.
+ *
+ * @deprecated  Should use map URIs instead. Map references composed of a logical episode
+ * and map number pair are a historical legacy that should only be used when necessary,
+ * for compatibility reasons.
+ */
+de::Uri G_ComposeMapUri(uint episode, uint map);
+
 extern "C" {
 #endif
 
-uint G_CurrentEpisodeNumber(void);
 uint G_CurrentMapNumber(void);
 
 int G_Ruleset_Skill();

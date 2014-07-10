@@ -476,16 +476,18 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         DENG2_ASSERT(inProgress);
 
         ::gameMapUri = mapUri;
-
         // Check that the map truly exists.
         if(!P_MapExists(::gameMapUri.compose().toUtf8().constData()))
         {
             ::gameMapUri = G_ComposeMapUri(0, 0); // Should exist always?
         }
 
+        // Determine the episode for the map (should come from MapInfo).
+        ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
+
         // Update game status cvars:
-        Con_SetInteger2("map-id",      (unsigned)G_CurrentMapNumber(),     SVF_WRITE_OVERRIDE);
-        Con_SetInteger2("map-episode", (unsigned)G_CurrentEpisodeNumber(), SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-episode", (unsigned)::gameEpisode,        SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-id",      (unsigned)G_CurrentMapNumber(), SVF_WRITE_OVERRIDE);
     }
 
     /**
