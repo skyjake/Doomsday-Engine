@@ -74,7 +74,7 @@ public:
      */
     Str const *token();
 
-    int readNumber();
+    de::ddouble readNumber();
     Str const *readString();
     de::Uri readUri(de::String const &defaultScheme = "");
 

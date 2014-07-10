@@ -34,6 +34,8 @@
 
 #include <cstring>
 
+using namespace common;
+
 struct fi_state_conditions_t
 {
     byte secret:1;
@@ -86,12 +88,12 @@ static void initStateConditions(fi_state_t *s)
 
 #if __JHEXEN__
     // Leaving the current hub?
-    if(mapinfo_t *curMapInfo = P_MapInfo(0/*current map*/))
+    if(MapInfo *curMapInfo = P_MapInfo(0/*current map*/))
     {
         s->conditions.leave_hub = true;
         if(!nextMapUri.path().isEmpty())
         {
-            if(curMapInfo->hub == P_MapInfo(&nextMapUri)->hub)
+            if(curMapInfo->geti("hub") == P_MapInfo(&nextMapUri)->geti("hub"))
             {
                 s->conditions.leave_hub = false;
             }

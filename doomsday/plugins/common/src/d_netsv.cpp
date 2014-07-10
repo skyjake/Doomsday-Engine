@@ -44,6 +44,8 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace common;
+
 #if __JHEXEN__ || __JSTRIFE__
 #  define SOUND_COUNTDOWN       SFX_PICKUP_KEY
 #elif __JDOOM__ || __JDOOM64__
@@ -318,8 +320,10 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
                 for(int pass = 0; pass < (has_random? 100 : 1); ++pass)
                 {
-                    uint episode = 0;
                     uint map = 0;
+#if !__JHEXEN__
+                    uint episode = 0;
+#endif
 
 #if __JDOOM__
                     if(!(gameModeBits & GM_ANY_DOOM2))
@@ -344,12 +348,12 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 #endif
 
 #if __JHEXEN__
-                    // In Hexen map numbers must be translated.
-                    map = P_TranslateMapIfExists(map);
-                    if(map == P_INVALID_LOGICAL_MAP) continue;
+                    // In Hexen map numbers must be translated (urgh...).
+                    de::Uri mapUri = P_TranslateMapIfExists(map);
+#else
+                    de::Uri mapUri = G_ComposeMapUri(episode, map);
 #endif
 
-                    de::Uri mapUri = G_ComposeMapUri(episode, map);
                     if(P_MapExists(mapUri.compose().toUtf8().constData()))
                     {
                         return mapUri;
@@ -676,8 +680,8 @@ void NetSv_SendGameState(int flags, int to)
         Uri_Write(reinterpret_cast<Uri *>(&gameMapUri), writer);
 
         // Also include the episode and map numbers.
-        Writer_WriteByte(writer, G_EpisodeNumberFor(gameMapUri));
-        Writer_WriteByte(writer, G_MapNumberFor(gameMapUri));
+        Writer_WriteByte(writer, G_CurrentEpisodeNumber());
+        Writer_WriteByte(writer, G_CurrentMapNumber());
 
         Writer_WriteByte(writer, (COMMON_GAMESESSION->rules().deathmatch & 0x3)
             | (!COMMON_GAMESESSION->rules().noMonsters? 0x4 : 0)

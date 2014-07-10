@@ -1192,8 +1192,8 @@ static void printMapBanner()
     {
         String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
-        mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
-        text += String(" (%1)").arg(mapInfo? mapInfo->warpTrans + 1 : 0);
+        MapInfo const *mapInfo = P_MapInfo(0/*current map*/);
+        text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") + 1 : 0);
 #endif
         text += String(" - " DE2_ESC(b)) + title;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
@@ -1537,7 +1537,7 @@ static void runGameAction()
             {
 #if __JDOOM__
                 // Has the secret map been completed?
-                if(G_MapNumberFor(gameMapUri) == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
+                if(G_CurrentMapNumber() == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
                 {
                     for(int i = 0; i < MAXPLAYERS; ++i)
                     {
@@ -1790,7 +1790,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newHub = true;
     if(!nextMapUri.path().isEmpty())
     {
-        newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(&nextMapUri)->hub);
+        newHub = (P_MapInfo(0/*current map*/)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"));
     }
 #endif
 
@@ -2017,7 +2017,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    if(G_MapNumberFor(gameMapUri) == 8 || secret)
+    if(G_CurrentMapNumber() == 8 || secret)
     {
         p->didSecret = true;
     }
@@ -2118,24 +2118,24 @@ byte G_Ruleset_RespawnMonsters()
 dd_bool G_IfVictory()
 {
 #if __JDOOM64__
-    if(G_MapNumberFor(gameMapUri) == 27)
+    if(G_CurrentMapNumber() == 27)
     {
         return true;
     }
 #elif __JDOOM__
     if(gameMode == doom_chex)
     {
-        if(G_MapNumberFor(gameMapUri) == 4)
+        if(G_CurrentMapNumber() == 4)
         {
             return true;
         }
     }
-    else if((gameModeBits & GM_ANY_DOOM) && G_MapNumberFor(gameMapUri) == 7)
+    else if((gameModeBits & GM_ANY_DOOM) && G_CurrentMapNumber() == 7)
     {
         return true;
     }
 #elif __JHERETIC__
-    if(G_MapNumberFor(gameMapUri) == 7)
+    if(G_CurrentMapNumber() == 7)
     {
         return true;
     }
@@ -2415,12 +2415,12 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), P_TranslateMap(P_MapInfo(&gameMapUri)->nextMap));
+    return P_TranslateMap(P_MapInfo(&gameMapUri)->geti("nextMap"));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
-    uint episode = G_EpisodeNumberFor(gameMapUri);
-    uint map     = G_MapNumberFor(gameMapUri);
+    uint episode = G_CurrentEpisodeNumber();
+    uint map     = G_CurrentMapNumber();
 
     if(secretExit)
     {
@@ -2455,8 +2455,8 @@ de::Uri G_NextMap(dd_bool secretExit)
     return G_ComposeMapUri(episode, map);
 
 #elif __JDOOM__
-    uint episode = G_EpisodeNumberFor(gameMapUri);
-    uint map     = G_MapNumberFor(gameMapUri);
+    uint episode = G_CurrentEpisodeNumber();
+    uint map     = G_CurrentMapNumber();
 
     if(gameModeBits & GM_ANY_DOOM2)
     {
@@ -2518,8 +2518,8 @@ de::Uri G_NextMap(dd_bool secretExit)
     }
 
 #elif __JHERETIC__
-    uint episode = G_EpisodeNumberFor(gameMapUri);
-    uint map     = G_MapNumberFor(gameMapUri);
+    uint episode = G_CurrentEpisodeNumber();
+    uint map     = G_CurrentMapNumber();
 
     // Going to the secret map?
     if(secretExit && map != 8)
@@ -2580,9 +2580,9 @@ String G_MapTitle(de::Uri const *mapUri)
     // In Hexen we can also look in MAPINFO for the map title.
     if(title.isEmpty())
     {
-        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
+        if(MapInfo const *mapInfo = P_MapInfo(mapUri))
         {
-            title = mapInfo->title;
+            title = mapInfo->gets("title");
         }
     }
 #endif
@@ -2694,7 +2694,7 @@ char const *G_InFineDebriefing(de::Uri const *mapUri)
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !nextMapUri.path().isEmpty())
     {
-        if(P_MapInfo(mapUri)->hub != P_MapInfo(&nextMapUri)->hub)
+        if(P_MapInfo(mapUri)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"))
         {
             return 0;
         }
@@ -3245,12 +3245,12 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
         // Hexen map numbers require translation.
-        map = P_TranslateMapIfExists(map);
-#endif
-
+        newMapUri = P_TranslateMapIfExists(map);
+#else
         // Compose a map URI for the given episode and map pair using the default
         // format specific to the game (and mode).
         newMapUri = G_ComposeMapUri(epsd, map);
+#endif
     }
 
     if(!G_WarpMap(newMapUri))

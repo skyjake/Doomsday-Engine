@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 
 #include "jhexen.h"
 
@@ -45,6 +45,8 @@
 #include "p_user.h"
 #include "polyobjs.h"
 
+using namespace common;
+
 #define LIGHTNING_SPECIAL       198
 #define LIGHTNING_SPECIAL2      199
 #define SKYCHANGE_SPECIAL       200
@@ -60,9 +62,9 @@ float sky1ColumnOffset;
 float sky2ColumnOffset;
 float sky1ScrollDelta;
 float sky2ScrollDelta;
-dd_bool doubleSky;
+bool doubleSky;
 
-static dd_bool mapHasLightning;
+static bool mapHasLightning;
 static int nextLightningFlash;
 static int lightningFlash;
 static float *lightningLightLevels;
@@ -77,14 +79,13 @@ void P_InitLava(void)
 
 void P_InitSky(de::Uri const &mapUri)
 {
-    mapinfo_t const *mapInfo = P_MapInfo(&mapUri);
-    if(mapInfo)
+    if(MapInfo const *mapInfo = P_MapInfo(&mapUri))
     {
-        sky1Material     = mapInfo->sky1Material;
-        sky2Material     = mapInfo->sky2Material;
-        sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
-        sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
-        doubleSky        = mapInfo->doubleSky;
+        sky1Material     = Materials_ResolveUriCString(mapInfo->gets("sky1Material").toUtf8().constData());
+        sky2Material     = Materials_ResolveUriCString(mapInfo->gets("sky2Material").toUtf8().constData());
+        sky1ScrollDelta  = mapInfo->getd("sky1ScrollDelta");
+        sky2ScrollDelta  = mapInfo->getd("sky2ScrollDelta");
+        doubleSky        = mapInfo->getb("doubleSky");
     }
 
     sky1ColumnOffset = sky2ColumnOffset = 0;
@@ -198,7 +199,7 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 static de::Uri mapUriFromLogicalNumber(int number)
 {
     if(!number) return gameMapUri; // current map.
-    return G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), number - 1);
+    return G_ComposeMapUri(G_CurrentEpisodeNumber(), number - 1);
 }
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
@@ -476,7 +477,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             // Players must be alive to teleport
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
-                G_SetGameActionMapCompleted(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), args[0]!= 0? args[0]-1 : 0),
+                G_SetGameActionMapCompleted(G_ComposeMapUri(G_CurrentEpisodeNumber(), args[0]!= 0? args[0]-1 : 0),
                                             args[1], false);
                 success = true;
             }
@@ -1043,9 +1044,9 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
-    mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
+    MapInfo const *mapInfo = P_MapInfo(0/*current map*/);
 
-    if(!mapInfo || !mapInfo->lightning)
+    if(!mapInfo || !mapInfo->getb("lightning"))
     {
         mapHasLightning = false;
         lightningFlash = 0;

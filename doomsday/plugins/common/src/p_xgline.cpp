@@ -2086,7 +2086,7 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
 dd_bool XL_ValidateMap(uint *map, int /*type*/)
 {
     // Check that the map truly exists.
-    if(P_MapExists(G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), *map).compose().toUtf8().constData()))
+    if(P_MapExists(G_ComposeMapUri(G_CurrentEpisodeNumber(), *map).compose().toUtf8().constData()))
         return true;
 
     XG_Dev("XLTrav_LeaveMap: NOT A VALID MAP NUMBER %u, next will be map 1", *map);
@@ -2142,7 +2142,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     if(mapSpecified)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
-        newMapUri = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), map);
+        newMapUri = G_ComposeMapUri(G_CurrentEpisodeNumber(), map);
     }
     else
     {

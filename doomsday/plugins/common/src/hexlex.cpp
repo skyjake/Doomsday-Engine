@@ -158,7 +158,16 @@ bool HexLex::readToken()
         _readPos++;
         while(Str_At(_script, _readPos) != T_QUOTE)
         {
-            Str_AppendChar(&_token, Str_At(_script, _readPos++));
+            char const ch = Str_At(_script, _readPos++);
+            if(ch != '\r')
+            {
+                Str_AppendChar(&_token, ch);
+            }
+            if(ch == '\n')
+            {
+                _lineNumber++;
+            }
+
             if(atEnd())
             {
                 break;
@@ -197,15 +206,15 @@ ddstring_s const *HexLex::token()
     return &_token;
 }
 
-int HexLex::readNumber()
+ddouble HexLex::readNumber()
 {
     if(!readToken())
     {
-        syntaxError("Missing integer");
+        syntaxError("Missing number value");
     }
 
     char *stopper;
-    int number = strtol(Str_Text(&_token), &stopper, 0);
+    ddouble number = strtod(Str_Text(&_token), &stopper);
     if(*stopper != 0)
     {
         Con_Error("HexLex: Non-numeric constant '%s' in \"%s\" on line #%i",

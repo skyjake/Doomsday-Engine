@@ -654,15 +654,15 @@ void NetCl_Intermission(Reader *msg)
         wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
-        wmInfo.nextMap    = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), Reader_ReadByte(msg));
-        wmInfo.currentMap = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), Reader_ReadByte(msg));
+        wmInfo.nextMap    = G_ComposeMapUri(G_CurrentEpisodeNumber(), Reader_ReadByte(msg));
+        wmInfo.currentMap = G_ComposeMapUri(G_CurrentEpisodeNumber(), Reader_ReadByte(msg));
         wmInfo.didSecret  = Reader_ReadByte(msg);
 
         G_PrepareWIData();
 #elif __JHERETIC__
         // @todo jHeretic does not transmit the intermission info!
 #elif __JHEXEN__
-        ::nextMapUri      = G_ComposeMapUri(G_EpisodeNumberFor(gameMapUri), Reader_ReadByte(msg));
+        ::nextMapUri      = G_ComposeMapUri(G_CurrentEpisodeNumber(), Reader_ReadByte(msg));
         ::nextMapEntrance = Reader_ReadByte(msg);
 #endif
 
