@@ -289,7 +289,7 @@ void SBarBackground_Drawer(uiwidget_t *ob, Point2Raw const *offset)
 #define ORIGINY     ((int)(-HEIGHT * hud->showBar))
 
     hudstate_t const *hud = &hudStates[ob->player];
-    float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT, armsBGX;
+    float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT, armsBGX = 0;
     int fullscreen = headupDisplayMode(ob->player);
     //float const textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     float const iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);

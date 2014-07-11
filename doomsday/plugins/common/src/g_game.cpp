@@ -3212,7 +3212,7 @@ D_CMD(WarpMap)
     }
     else
     {
-        uint epsd, map;
+        uint epsd = 0, map = 0;
 
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
 # if __JDOOM__

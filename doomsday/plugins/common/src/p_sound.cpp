@@ -30,6 +30,8 @@
 #  include "g_common.h"
 #endif
 
+#include <de/Log>
+
 using namespace de;
 using namespace common;
 
@@ -42,7 +44,7 @@ void S_MapMusic(de::Uri const *mapUri)
     int const cdTrack = mapInfo->geti("cdTrack");
     String const lump = mapInfo->gets("songLump").compareWithoutCase("DEFSONG")? mapInfo->gets("songLump") : "";
 
-    App_Log(DE2_RES_VERBOSE, "S_MapMusic: %s lump: %s", mapUri->compose().toUtf8().constData(), lump);
+    LOG_RES_VERBOSE("S_MapMusic: %s lump: %s") << mapUri->compose() << lump;
 
     // Update the 'currentmap' music definition.
     int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
