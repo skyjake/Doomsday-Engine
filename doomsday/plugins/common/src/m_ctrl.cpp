@@ -1,44 +1,32 @@
-/**\file m_ctrl.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file m_ctrl.cpp  Controls menu page and associated widgets.
  *
- *\author Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdio.h>
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
-#include "hu_menu.h"
+#include "common.h"
 #include "m_ctrl.h"
+
+#include <cstring>
+#include <cctype>
+#include <cstdio>
+#include "hu_menu.h"
+
+using namespace de;
 
 // Control config flags.
 #define CCF_NON_INVERSE         0x1
@@ -53,16 +41,18 @@
 // Binding iteration flags
 #define MIBF_IGNORE_REPEATS     0x1
 
-typedef enum {
+enum bindingitertype_t
+{
     MIBT_KEY,
     MIBT_MOUSE,
     MIBT_JOY
-} bindingitertype_t;
+};
 
-typedef struct bindingdrawerdata_s {
+struct bindingdrawerdata_t
+{
     Point2Raw origin;
     float alpha;
-} bindingdrawerdata_t;
+};
 
 static mndata_bindings_t controlConfig[] =
 {
@@ -132,31 +122,31 @@ static mndata_bindings_t controlConfig[] =
 #endif
 
 #ifdef __JHERETIC__
-    { (const char*) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
-    { (const char*) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility" },
-    { (const char*) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
-    { (const char*) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth" },
-    { (const char*) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome" },
-    { (const char*) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
-    { (const char*) TXT_TXT_INV_FIREBOMB, 0, 0, "impulse firebomb" },
-    { (const char*) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
-    { (const char*) TXT_TXT_INV_FLY, 0, 0, "impulse fly" },
-    { (const char*) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
+    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
+    { (char const *) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility" },
+    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
+    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth" },
+    { (char const *) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome" },
+    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
+    { (char const *) TXT_TXT_INV_FIREBOMB, 0, 0, "impulse firebomb" },
+    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
+    { (char const *) TXT_TXT_INV_FLY, 0, 0, "impulse fly" },
+    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
 #endif
 
 #ifdef __JHEXEN__
-    { (const char*) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
-    { (const char*) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
-    { (const char*) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse mysticurn" },
-    { (const char*) TXT_TXT_INV_BOOSTMANA, 0, 0, "impulse krater" },
-    { (const char*) TXT_TXT_INV_SPEED, 0, 0, "impulse speedboots" },
-    { (const char*) TXT_TXT_INV_BLASTRADIUS, 0, 0, "impulse blast" },
-    { (const char*) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
-    { (const char*) TXT_TXT_INV_TELEPORTOTHER, 0, 0, "impulse teleportother" },
-    { (const char*) TXT_TXT_INV_POISONBAG, 0, 0, "impulse poisonbag" },
-    { (const char*) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
-    { (const char*) TXT_TXT_INV_SUMMON, 0, 0, "impulse darkservant" },
-    { (const char*) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
+    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
+    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
+    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse mysticurn" },
+    { (char const *) TXT_TXT_INV_BOOSTMANA, 0, 0, "impulse krater" },
+    { (char const *) TXT_TXT_INV_SPEED, 0, 0, "impulse speedboots" },
+    { (char const *) TXT_TXT_INV_BLASTRADIUS, 0, 0, "impulse blast" },
+    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
+    { (char const *) TXT_TXT_INV_TELEPORTOTHER, 0, 0, "impulse teleportother" },
+    { (char const *) TXT_TXT_INV_POISONBAG, 0, 0, "impulse poisonbag" },
+    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
+    { (char const *) TXT_TXT_INV_SUMMON, 0, 0, "impulse darkservant" },
+    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
 #endif
 
     { "Chat" },
@@ -243,41 +233,36 @@ static mndata_bindings_t controlConfig[] =
     { "Cancel", "message", 0, "messagecancel" },
 };
 
-static void deleteBinding(bindingitertype_t type, int bid, const char* name, dd_bool isInverse, void* data)
+static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*name*/, dd_bool /*isInverse*/, void * /*data*/)
 {
     DD_Executef(true, "delbind %i", bid);
 }
 
-int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuActivateBindingsGrab(mn_object_t * /*ob*/, mn_actionid_t /*action*/, void * /*parameters*/)
 {
      // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
     return 0;
 }
 
-void Hu_MenuInitControlsPage(void)
+void Hu_MenuInitControlsPage()
 {
 #if __JDOOM__ || __JDOOM64__
-    const Point2Raw pageOrigin = { 32, 40 };
+    Point2Raw const pageOrigin(32, 40);
 #elif __JHERETIC__
-    const Point2Raw pageOrigin = { 32, 40 };
+    Point2Raw const pageOrigin(32, 40);
 #elif __JHEXEN__
-    const Point2Raw pageOrigin = { 32, 40 };
+    Point2Raw const pageOrigin(32, 40);
 #endif
-    int i, textCount, bindingsCount, totalItems, group;
     int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
-    size_t objectIdx, textIdx;
-    mn_object_t* objects;
-    mndata_text_t* texts;
-    mn_page_t* page;
 
-    App_Log(DE2_DEV_VERBOSE, "Hu_MenuInitControlsPage: Creating controls items");
+    LOGDEV_VERBOSE("Hu_MenuInitControlsPage: Creating controls items");
 
-    textCount = 0;
-    bindingsCount = 0;
-    for(i = 0; i < configCount; ++i)
+    int textCount = 0;
+    int bindingsCount = 0;
+    for(int i = 0; i < configCount; ++i)
     {
-        mndata_bindings_t* binds = &controlConfig[i];
+        mndata_bindings_t *binds = &controlConfig[i];
         if(!binds->command && !binds->controlName)
         {
             ++textCount;
@@ -290,80 +275,74 @@ void Hu_MenuInitControlsPage(void)
     }
 
     // Allocate the menu items array.
-    totalItems = textCount + bindingsCount + 1/*terminator*/;
-    objects = (mn_object_t*)Z_Calloc(sizeof(*objects) * totalItems, PU_GAMESTATIC, 0);
-    if(!objects)
-        Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for items array.",
-            (unsigned long) (sizeof(*objects) * totalItems));
+    int totalItems = textCount + bindingsCount + 1/*terminator*/;
+    mn_object_t *objects =   (mn_object_t *)Z_Calloc(sizeof(*objects) * totalItems, PU_GAMESTATIC, 0);
+    mndata_text_t *texts = (mndata_text_t *)Z_Calloc(sizeof(*texts)   * textCount,  PU_GAMESTATIC, 0);
+    size_t objectIdx = 0;
+    size_t textIdx   = 0;
 
-    texts = (mndata_text_t*)Z_Calloc(sizeof(*texts) * textCount, PU_GAMESTATIC, 0);
-    if(!texts)
-        Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for texts array.",
-            (unsigned long) (sizeof(*texts) * textCount));
-
-    objectIdx = 0;
-    textIdx = 0;
-    group = 0;
-    for(i = 0; i < configCount; ++i)
+    int group = 0;
+    for(int i = 0; i < configCount; ++i)
     {
-        mndata_bindings_t* binds = &controlConfig[i];
+        mndata_bindings_t *binds = &controlConfig[i];
 
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            mn_object_t* ob    = &objects[objectIdx++];
-            mndata_text_t* txt = &texts[textIdx++];
+            mn_object_t *ob    = &objects[objectIdx++];
+            mndata_text_t *txt = &texts[textIdx++];
 
-            ob->_type = MN_TEXT;
-            txt->text = binds->text;
-            ob->_typedata = txt;
-            ob->_pageFontIdx = MENU_FONT1;
-            ob->_pageColorIdx = MENU_COLOR2;
-            ob->ticker = MNText_Ticker;
-            ob->drawer = MNText_Drawer;
-            ob->updateGeometry = MNText_UpdateGeometry;
+            ob->_type           = MN_TEXT;
+            txt->text           = binds->text;
+            ob->_typedata       = txt;
+            ob->_pageFontIdx    = MENU_FONT1;
+            ob->_pageColorIdx   = MENU_COLOR2;
+            ob->ticker          = MNText_Ticker;
+            ob->drawer          = MNText_Drawer;
+            ob->updateGeometry  = MNText_UpdateGeometry;
 
             // A new group begins;
             ob->_group = ++group;
         }
         else
         {
-            mn_object_t* labelOb    = &objects[objectIdx++];
-            mn_object_t* bindingsOb = &objects[objectIdx++];
-            mndata_text_t* txt = &texts[textIdx++];
+            mn_object_t *labelOb    = &objects[objectIdx++];
+            mn_object_t *bindingsOb = &objects[objectIdx++];
+            mndata_text_t *txt = &texts[textIdx++];
 
-            labelOb->_type = MN_TEXT;
             txt->text = binds->text;
-            labelOb->_typedata = txt;
-            labelOb->ticker = MNText_Ticker;
-            labelOb->drawer = MNText_Drawer;
-            labelOb->updateGeometry = MNText_UpdateGeometry;
-            labelOb->_pageFontIdx = MENU_FONT1;
-            labelOb->_pageColorIdx = MENU_COLOR1;
-            labelOb->_group = group;
 
-            bindingsOb->_type = MN_BINDINGS;
-            bindingsOb->ticker = MNBindings_Ticker;
-            bindingsOb->drawer = MNBindings_Drawer;
-            bindingsOb->cmdResponder = MNBindings_CommandResponder;
+            labelOb->_type          = MN_TEXT;
+            labelOb->_typedata      = txt;
+            labelOb->ticker         = MNText_Ticker;
+            labelOb->drawer         = MNText_Drawer;
+            labelOb->updateGeometry = MNText_UpdateGeometry;
+            labelOb->_pageFontIdx   = MENU_FONT1;
+            labelOb->_pageColorIdx  = MENU_COLOR1;
+            labelOb->_group         = group;
+
+            bindingsOb->_type               = MN_BINDINGS;
+            bindingsOb->ticker              = MNBindings_Ticker;
+            bindingsOb->drawer              = MNBindings_Drawer;
+            bindingsOb->cmdResponder        = MNBindings_CommandResponder;
             bindingsOb->privilegedResponder = MNBindings_PrivilegedResponder;
-            bindingsOb->updateGeometry = MNBindings_UpdateGeometry;
+            bindingsOb->updateGeometry      = MNBindings_UpdateGeometry;
             bindingsOb->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            bindingsOb->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
-            bindingsOb->_typedata = binds;
-            bindingsOb->_group = group;
+            bindingsOb->actions[MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
+            bindingsOb->_typedata           = binds;
+            bindingsOb->_group              = group;
         }
     }
     objects[objectIdx]._type = MN_NONE; // Terminate.
 
-    page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
+    mn_page_t *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
     page->objects = objects;
     MNPage_SetTitle(page, "Controls");
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
 }
 
-static void drawSmallText(const char* string, int x, int y, float alpha)
+static void drawSmallText(char const *string, int x, int y, float alpha)
 {
     int height = FR_TextHeight(string);
 
@@ -381,28 +360,27 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
     DGL_PopMatrix();
 }
 
-static void drawBinding(bindingitertype_t type, int bid, const char* name,
-    dd_bool isInverse, void *data)
+static void drawBinding(bindingitertype_t type, int /*bid*/, const char *name,
+    dd_bool isInverse, void *context)
 {
 #define BIND_GAP                (2)
 
 #if __JHERETIC__
-    static const float bgRGB[] = { 0, .5f, 0 };
+    static float const bgRGB[] = { 0, .5f, 0 };
 #elif __JHEXEN__
-    static const float bgRGB[] = { .5f, 0, 0 };
+    static float const bgRGB[] = { .5f, 0, 0 };
 #else
-    static const float bgRGB[] = { 0, 0, 0 };
+    static float const bgRGB[] = { 0, 0, 0 };
 #endif
 
-    bindingdrawerdata_t* d = data;
-    int width, height;
+    bindingdrawerdata_t *d = (bindingdrawerdata_t *)context;
 
     FR_SetFont(FID(GF_FONTA));
 
     if(type == MIBT_KEY)
     {
-        width = FR_TextWidth(name);
-        height = FR_TextHeight(name);
+        int const width  = FR_TextWidth(name);
+        int const height = FR_TextHeight(name);
 
         DGL_SetNoMaterial();
         DGL_DrawRectf2Color(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
@@ -415,15 +393,14 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
     }
     else
     {
-        char temp[256];
+        char buf[256];
+        sprintf(buf, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
 
-        sprintf(temp, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
-
-        width = FR_TextWidth(temp);
-        height = FR_TextHeight(temp);
+        int const width  = FR_TextWidth(buf);
+        ///int const height = FR_TextHeight(temp);
 
         DGL_Enable(DGL_TEXTURE_2D);
-        drawSmallText(temp, d->origin.x, d->origin.y, d->alpha);
+        drawSmallText(buf, d->origin.x, d->origin.y, d->alpha);
         DGL_Disable(DGL_TEXTURE_2D);
 
         d->origin.x += width * SMALL_SCALE + BIND_GAP;
@@ -432,15 +409,13 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
 #undef BIND_GAP
 }
 
-static const char* findInString(const char* str, const char* token, int n)
+static char const *findInString(char const *str, char const *token, int n)
 {
     int tokenLen = strlen(token);
-    const char* at = strstr(str, token);
+    char const *at = strstr(str, token);
 
-    if(!at)
-    {   // Not there at all.
-        return NULL;
-    }
+    // Not there at all?
+    if(!at) return 0;
 
     if(at - str <= n - tokenLen)
     {
@@ -448,20 +423,21 @@ static const char* findInString(const char* str, const char* token, int n)
     }
 
     // Past the end.
-    return NULL;
+    return 0;
 }
 
-static void iterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* data,
-    void (*callback)(bindingitertype_t type, int bid, const char* ev, dd_bool isInverse, void *data))
+static void iterateBindings(mndata_bindings_t const *binds, char const *bindings, int flags, void *data,
+    void (*callback)(bindingitertype_t type, int bid, char const *ev, dd_bool isInverse, void *data))
 {
-    const char* ptr = strchr(bindings, ':');
-    const char* begin, *end, *end2, *k, *bindingStart, *bindingEnd;
+    DENG2_ASSERT(binds != 0);
+
+    char const *ptr = strchr(bindings, ':');
+    char const *begin, *end, *end2, *k, *bindingStart, *bindingEnd;
     char buf[80], *b;
     dd_bool isInverse;
     int bid;
-    assert(binds);
 
-    memset(buf, 0, sizeof(buf));
+    std::memset(buf, 0, sizeof(buf));
 
     while(ptr)
     {
@@ -543,41 +519,38 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
         }
 
         ptr = end;
-        while(*ptr == ' ')
-            ptr++;
+        while(*ptr == ' ') { ptr++; }
 
         ptr = strchr(ptr, ':');
     }
 }
 
-mn_object_t* MNBindings_New(void)
+mn_object_t *MNBindings_New()
 {
-    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
-    if(!ob) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for new MNBindings.", (unsigned long) sizeof(*ob));
-    ob->_typedata = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
-    if(!ob->_typedata) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for mndata_bindings_t.", (unsigned long) sizeof(mndata_bindings_t));
+    mn_object_t *ob = (mn_object_t *)Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
 
-    ob->_type = MN_BINDINGS;
-    ob->_pageFontIdx = MENU_FONT1;
-    ob->_pageColorIdx = MENU_COLOR1;
-    ob->updateGeometry = MNBindings_UpdateGeometry;
-    ob->drawer = MNBindings_Drawer;
-    ob->cmdResponder = MNBindings_CommandResponder;
+    ob->_typedata           = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
+    ob->_type               = MN_BINDINGS;
+    ob->_pageFontIdx        = MENU_FONT1;
+    ob->_pageColorIdx       = MENU_COLOR1;
+    ob->updateGeometry      = MNBindings_UpdateGeometry;
+    ob->drawer              = MNBindings_Drawer;
+    ob->cmdResponder        = MNBindings_CommandResponder;
     ob->privilegedResponder = MNBindings_PrivilegedResponder;
 
     return ob;
 }
 
-void MNBindings_Delete(mn_object_t* ob)
+void MNBindings_Delete(mn_object_t *ob)
 {
-    assert(ob && ob->_type == MN_BINDINGS);
+    DENG2_ASSERT(ob && ob->_type == MN_BINDINGS);
     Z_Free(ob->_typedata);
     Z_Free(ob);
 }
 
-void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)
+void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin)
 {
-    mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
+    mndata_bindings_t *binds = (mndata_bindings_t *)ob->_typedata;
     bindingdrawerdata_t draw;
     char buf[1024];
 
@@ -595,9 +568,9 @@ void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)
     iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
 }
 
-int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
+int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
+    mndata_bindings_t *binds = (mndata_bindings_t *)ob->_typedata;
     switch(cmd)
     {
     case MCMD_DELETE: {
@@ -621,34 +594,35 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         {
             DD_Execute(true, "bindevent menu:key-return menuselect");
         }
-        return true;
-      }
+        return true; }
+
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
-        obj->_flags |= MNF_ACTIVE;
-        if(MNObject_HasAction(obj, MNA_ACTIVE))
+        ob->_flags |= MNF_ACTIVE;
+        if(MNObject_HasAction(ob, MNA_ACTIVE))
         {
-            MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
+            MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
             return true;
         }
         break;
-    default:
-        break;
+
+    default: break;
     }
+
     return false; // Not eaten.
 }
 
-void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
+void MNBindings_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
 {
     // @todo calculate visible dimensions properly!
-    assert(obj);
-    Rect_SetWidthHeight(obj->_geometry, 60, 10 * SMALL_SCALE);
+    DENG2_ASSERT(ob);
+    Rect_SetWidthHeight(ob->_geometry, 60, 10 * SMALL_SCALE);
 }
 
 /**
  * Hu_MenuDrawControlsPage
  */
-void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* offset)
+void Hu_MenuDrawControlsPage(mn_page_t * /*page*/, Point2Raw const * /*offset*/)
 {
     Point2Raw origin;
     origin.x = SCREENWIDTH/2;
@@ -656,7 +630,7 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* offset)
     Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin.x, origin.y);
 }
 
-void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
+void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -673,34 +647,33 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNBindings_Ticker(mn_object_t *ob)
+void MNBindings_Ticker(mn_object_t * /*ob*/)
 {
-    DENG_UNUSED(ob);
-    //DENG_ASSERT(ob && ob->_type == MN_BINDINGS);
+    //DENG2_ASSERT(ob != 0 && ob->_type == MN_BINDINGS);
     //mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
     // Stub.
 }
 
-int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
+int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
 {
-    assert(obj && ev);
+    DENG2_ASSERT(ob != 0 && ev != 0);
 
     // We're interested in key or button down events.
-    if((obj->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
+    if((ob->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
-        mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
-        const char* bindContext = "game";
-        const char* symbol = 0;
+        mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
+        char const *bindContext = "game";
+        char const *symbol = 0;
         char cmd[512];
 
 #ifndef __64BIT__
-        symbol = (const char*) ev->data1;
+        symbol = (char const *) ev->data1;
 #else
         {
             uint64_t address = (uint32_t) ev->data2;
             address <<= 32;
             address |= (uint32_t) ev->data1;
-            symbol = (const char*) address;
+            symbol = (char const *) address;
         }
 #endif
 
@@ -727,13 +700,13 @@ int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
 
         if(binds->command)
         {
-            const char* extraCondition = (binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "");
+            char const *extraCondition = (binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "");
             sprintf(cmd, "bindevent {%s:%s%s} {%s}", bindContext, &symbol[5], extraCondition, binds->command);
 
             // Check for repeats.
             if(binds->flags & CCF_REPEAT)
             {
-                const char* downPtr = 0;
+                char const *downPtr = 0;
                 char temp[256];
 
                 downPtr = strstr(symbol + 5, "-down");
@@ -741,7 +714,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
                 {
                     char temp2[256];
 
-                    memset(temp2, 0, sizeof(temp2));
+                    std::memset(temp2, 0, sizeof(temp2));
                     strncpy(temp2, symbol + 5, downPtr - symbol - 5);
                     sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindContext, temp2, binds->command);
                     strcat(cmd, temp);
@@ -751,9 +724,9 @@ int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
         else if(binds->controlName)
         {
             // Have to exclude the state part.
-            dd_bool inv = (binds->flags & CCF_INVERSE) != 0;
+            dd_bool inv      = (binds->flags & CCF_INVERSE) != 0;
             dd_bool isStaged = (binds->flags & CCF_STAGED) != 0;
-            const char* end = strchr(symbol + 5, '-');
+            char const *end = strchr(symbol + 5, '-');
             char temp3[256];
             char extra[256];
 
@@ -764,7 +737,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
                 Con_Error("what! %s\n", symbol);
             }
 
-            memset(temp3, 0, sizeof(temp3));
+            std::memset(temp3, 0, sizeof(temp3));
             strncpy(temp3, symbol + 5, end - symbol - 5);
 
             // Check for inverse.
@@ -796,11 +769,11 @@ int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
             sprintf(cmd, "bindcontrol {%s} {%s%s}", binds->controlName, temp3, extra);
         }
 
-        App_Log(DE2_DEV_INPUT_MSG, "MNBindings_PrivilegedResponder: %s", cmd);
+        LOGDEV_INPUT_MSG("MNBindings_PrivilegedResponder: %s") << cmd;
         DD_Execute(true, cmd);
 
         // We've finished the grab.
-        obj->_flags &= ~MNF_ACTIVE;
+        ob->_flags &= ~MNF_ACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;
@@ -809,11 +782,11 @@ int MNBindings_PrivilegedResponder(mn_object_t *obj, event_t *ev)
     return false;
 }
 
-const char* MNBindings_ControlName(mn_object_t* obj)
+char const *MNBindings_ControlName(mn_object_t *ob)
 {
-    mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
-    assert(obj);
-    assert(binds);
+    DENG2_ASSERT(ob != 0);
+    mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
+    DENG2_ASSERT(binds != 0);
 
     // Map to a text definition?
     if(PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT)
