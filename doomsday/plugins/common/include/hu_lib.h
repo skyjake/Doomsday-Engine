@@ -124,12 +124,12 @@ typedef struct {
     /// Callback to be made when this action is executed. Can be @c NULL in
     /// which case attempts to action this will be NOPs.
     ///
-    /// @param obj  Object being referenced for this callback.
+    /// @param ob  Object being referenced for this callback.
     /// @param action  Identifier of the Menu Action to be processed.
-    /// @param paramaters  Passed to the callback from event which actioned this.
+    /// @param parameters  Passed to the callback from event which actioned this.
     /// @return  Callback return value. Callback should return zero if the action
     ///     was recognised and processed, regardless of outcome.
-    int (*callback) (struct mn_object_s* obj, mn_actionid_t action, void* paramaters);
+    int (*callback) (struct mn_object_s *ob, mn_actionid_t action, void *parameters);
 } mn_actioninfo_t;
 
 /**
@@ -160,43 +160,43 @@ typedef struct mn_object_s {
     int _pageColorIdx;
 
     /// Process time (the "tick") for this object.
-    void (*ticker) (struct mn_object_s* ob);
+    void (*ticker) (struct mn_object_s *ob);
 
     /// Calculate geometry for this when visible on the specified page.
-    void (*updateGeometry) (struct mn_object_s* ob, struct mn_page_s* page);
+    void (*updateGeometry) (struct mn_object_s *ob, struct mn_page_s *page);
 
     /// Draw this at the specified offset within the owning view-space.
     /// Can be @c NULL in which case this will never be drawn.
-    void (*drawer) (struct mn_object_s* ob, const Point2Raw* origin);
+    void (*drawer) (struct mn_object_s *ob, Point2Raw const *origin);
 
     /// Info about "actionable event" callbacks.
     mn_actioninfo_t actions[MNACTION_COUNT];
 
     /// Respond to the given (menu) @a command. Can be @c NULL.
     /// @return  @c true if the command is eaten.
-    int (*cmdResponder) (struct mn_object_s* ob, menucommand_e command);
+    int (*cmdResponder) (struct mn_object_s *ob, menucommand_e command);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*responder) (struct mn_object_s* ob, event_t* ev);
+    int (*responder) (struct mn_object_s *ob, event_t *ev);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*privilegedResponder) (struct mn_object_s* ob, event_t* ev);
+    int (*privilegedResponder) (struct mn_object_s *ob, event_t *ev);
 
-    void* _typedata; // Type-specific extra data.
+    void *_typedata; // Type-specific extra data.
 
     // Extra property values.
-    void* data1;
+    void *data1;
     int data2;
 
     // Auto initialized:
 
     /// Current geometry.
-    Rect* _geometry;
+    Rect *_geometry;
 
     /// MenuPage which owns this object (if any).
-    struct mn_page_s* _page;
+    struct mn_page_s *_page;
 
     int timer;
 } mn_object_t;
@@ -205,11 +205,11 @@ typedef struct mn_object_s {
 extern "C" {
 #endif
 
-mn_obtype_e MNObject_Type(const mn_object_t* obj);
+mn_obtype_e MNObject_Type(mn_object_t const *ob);
 
-struct mn_page_s* MNObject_Page(const mn_object_t* obj);
+struct mn_page_s* MNObject_Page(mn_object_t const *ob);
 
-int MNObject_Flags(const mn_object_t* obj);
+int MNObject_Flags(mn_object_t const *ob);
 
 /**
  * Retrieve the current geometry of object within the two-dimensioned
@@ -217,21 +217,21 @@ int MNObject_Flags(const mn_object_t* obj);
  *
  * @return  Rectangluar region of the parent space.
  */
-const Rect* MNObject_Geometry(const mn_object_t* obj);
+Rect const *MNObject_Geometry(mn_object_t const *ob);
 
 /**
  * Retrieve the origin of the object within the two-dimensioned coordinate
  * space of the owning object.
  * @return  Origin point within the parent space.
  */
-const Point2* MNObject_Origin(const mn_object_t* obj);
+Point2 const *MNObject_Origin(mn_object_t const *ob);
 
 /**
  * Retrieve the boundary dimensions of the object expressed as units of
  * the coordinate space of the owning object.
  * @return  Size of this object in units of the parent's coordinate space.
  */
-const Size2* MNObject_Size(const mn_object_t* obj);
+Size2 const *MNObject_Size(mn_object_t const *ob);
 
 /**
  * Retreive the current fixed origin coordinates.
@@ -239,9 +239,9 @@ const Size2* MNObject_Size(const mn_object_t* obj);
  * @param ob  MNObject-derived instance.
  * @return  Fixed origin.
  */
-const Point2Raw* MNObject_FixedOrigin(const mn_object_t* ob);
-int MNObject_FixedX(const mn_object_t* ob);
-int MNObject_FixedY(const mn_object_t* ob);
+Point2Raw const *MNObject_FixedOrigin(mn_object_t const *ob);
+int MNObject_FixedX(mn_object_t const *ob);
+int MNObject_FixedY(mn_object_t const *ob);
 
 /**
  * Change the current fixed origin coordinates.
@@ -250,44 +250,44 @@ int MNObject_FixedY(const mn_object_t* ob);
  * @param origin  New origin coordinates.
  * @return  Same as @a ob for caller convenience.
  */
-mn_object_t* MNObject_SetFixedOrigin(mn_object_t* ob, const Point2Raw* origin);
-mn_object_t* MNObject_SetFixedX(mn_object_t* ob, int x);
-mn_object_t* MNObject_SetFixedY(mn_object_t* ob, int y);
+mn_object_t *MNObject_SetFixedOrigin(mn_object_t *ob, Point2Raw const *origin);
+mn_object_t *MNObject_SetFixedX(mn_object_t *ob, int x);
+mn_object_t *MNObject_SetFixedY(mn_object_t *ob, int y);
 
 /// @return  Flags value post operation for caller convenience.
-int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags);
+int MNObject_SetFlags(mn_object_t *ob, flagop_t op, int flags);
 
-int MNObject_Shortcut(mn_object_t* obj);
+int MNObject_Shortcut(mn_object_t *ob);
 
-void MNObject_SetShortcut(mn_object_t* obj, int ddkey);
+void MNObject_SetShortcut(mn_object_t *ob, int ddkey);
 
 /// @return  Index of the font used from the owning/active page.
-int MNObject_Font(mn_object_t* obj);
+int MNObject_Font(mn_object_t *ob);
 
 /// @return  Index of the color used from the owning/active page.
-int MNObject_Color(mn_object_t* obj);
+int MNObject_Color(mn_object_t *ob);
 
-dd_bool MNObject_IsGroupMember(const mn_object_t* obj, int group);
+dd_bool MNObject_IsGroupMember(mn_object_t const *ob, int group);
 
-int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e command);
+int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e command);
 
 /**
  * Lookup the unique ActionInfo associated with the identifier @a id.
  * @return  Associated info if found else @c NULL.
  */
-const mn_actioninfo_t* MNObject_Action(mn_object_t*obj, mn_actionid_t action);
+mn_actioninfo_t const *MNObject_Action(mn_object_t *ob, mn_actionid_t action);
 
 /// @return  @c true if this object has a registered executeable action
 /// associated with the unique identifier @a action.
-dd_bool MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
+dd_bool MNObject_HasAction(mn_object_t *ob, mn_actionid_t action);
 
 /**
  * Execute the action associated with @a id
  * @param action  Identifier of the action to be executed (if found).
- * @param paramaters  Passed to the action callback.
+ * @param parameters  Passed to the action callback.
  * @return  Return value of the executed action else @c -1 if NOP.
  */
-int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int MNObject_ExecAction(mn_object_t *ob, mn_actionid_t action, void *parameters);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -335,15 +335,15 @@ typedef enum {
 
 typedef struct mn_page_s {
     /// Collection of objects on this page.
-    mn_object_t* objects;
+    mn_object_t *objects;
     int objectsCount;
 
     /// "Physical" geometry in fixed 320x200 screen coordinate space.
     Point2Raw origin;
-    Rect* geometry;
+    Rect *geometry;
 
     /// Previous page else @c NULL
-    struct mn_page_s* previous;
+    struct mn_page_s *previous;
 
     /// Title of this page.
     ddstring_t title;
@@ -361,16 +361,16 @@ typedef struct mn_page_s {
     uint colors[MENU_COLOR_COUNT];
 
     /// Process time (the "tick") for this object.
-    void (*ticker) (struct mn_page_s* page);
+    void (*ticker) (struct mn_page_s *page);
 
     /// Page drawing routine.
-    void (*drawer) (struct mn_page_s* page, const Point2Raw* offset);
+    void (*drawer) (struct mn_page_s *page, Point2Raw const *offset);
 
     /// Menu-command responder routine.
-    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
+    int (*cmdResponder) (struct mn_page_s *page, menucommand_e cmd);
 
     /// User data.
-    void* userData;
+    void *userData;
 
     int timer;
 } mn_page_t;
@@ -379,19 +379,19 @@ typedef struct mn_page_s {
 extern "C" {
 #endif
 
-void MNPage_Initialize(mn_page_t* page);
+void MNPage_Initialize(mn_page_t *page);
 
 /// Call the ticker routine for each object.
-void MNPage_Ticker(mn_page_t* page);
+void MNPage_Ticker(mn_page_t *page);
 
-void MNPage_SetTitle(mn_page_t* page, const char* title);
+void MNPage_SetTitle(mn_page_t *page, char const *title);
 
-void MNPage_SetX(mn_page_t* page, int x);
-void MNPage_SetY(mn_page_t* page, int y);
+void MNPage_SetX(mn_page_t *page, int x);
+void MNPage_SetY(mn_page_t *page, int y);
 
-void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage);
+void MNPage_SetPreviousPage(mn_page_t *page, mn_page_t *prevPage);
 
-void MNPage_Refocus(mn_page_t* page);
+void MNPage_Refocus(mn_page_t *page);
 
 /// @return  Currently focused object; otherwise @c 0.
 mn_object_t *MNPage_FocusObject(mn_page_t *page);
@@ -399,15 +399,15 @@ mn_object_t *MNPage_FocusObject(mn_page_t *page);
 void MNPage_ClearFocusObject(mn_page_t *page);
 
 /**
- * Attempt to give focus to the MNObject @a obj which is thought to be on the
- * page. If @a obj is found to present and is not currently in-focus, an out-focus
+ * Attempt to give focus to the MNObject @a ob which is thought to be on the
+ * page. If @a ob is found to present and is not currently in-focus, an out-focus
  * action is first sent to the presently focused object, then this page's focused
  * object is set before finally executing an in-focus action on the new object.
  * If the object is not found on this page then nothing will happen.
  *
- * @param obj  MNObject to be given focus.
+ * @param ob  MNObject to be given focus.
  */
-void MNPage_SetFocus(mn_page_t *page, mn_object_t *obj);
+void MNPage_SetFocus(mn_page_t *page, mn_object_t *ob);
 
 /**
  * Determines the size of the menu cursor for the currently focused widget. If
@@ -458,7 +458,7 @@ int MNPage_LineHeight2(mn_page_t *page, int *lineOffset);
 int MNPage_LineHeight(mn_page_t *page/*, lineOffset = 0*/);
 
 /// @return  Current time in tics since page activation.
-int MNPage_Timer(mn_page_t* page);
+int MNPage_Timer(mn_page_t *page);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -479,12 +479,12 @@ typedef struct mndata_rect_s {
 extern "C" {
 #endif
 
-mn_object_t* MNRect_New(void);
-void MNRect_Delete(mn_object_t* ob);
+mn_object_t *MNRect_New(void);
+void MNRect_Delete(mn_object_t *ob);
 
-void MNRect_Ticker(mn_object_t* ob);
-void MNRect_Drawer(mn_object_t* ob, const Point2Raw* origin);
-void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNRect_Ticker(mn_object_t *ob);
+void MNRect_Drawer(mn_object_t *ob, Point2Raw const *origin);
+void MNRect_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 /**
  * Apply the Patch graphic referenced by @a patch as the background for this rect.
@@ -493,7 +493,7 @@ void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
  * @param patch  Unique identifier of the patch. If @c <= 0 the current background
  *               will be cleared and the Rect will be drawn as a solid color.
  */
-void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch);
+void MNRect_SetBackgroundPatch(mn_object_t *ob, patchid_t patch);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -523,14 +523,14 @@ typedef struct mndata_text_s {
 extern "C" {
 #endif
 
-mn_object_t* MNText_New(void);
-void MNText_Delete(mn_object_t* ob);
+mn_object_t *MNText_New(void);
+void MNText_Delete(mn_object_t *ob);
 
-void MNText_Ticker(mn_object_t* ob);
-void MNText_Drawer(mn_object_t* ob, const Point2Raw* origin);
-void MNText_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNText_Ticker(mn_object_t *ob);
+void MNText_Drawer(mn_object_t *ob, Point2Raw const *origin);
+void MNText_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
-int MNText_SetFlags(mn_object_t* ob, flagop_t op, int flags);
+int MNText_SetFlags(mn_object_t *ob, flagop_t op, int flags);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -567,15 +567,15 @@ typedef struct mndata_button_s {
 extern "C" {
 #endif
 
-mn_object_t* MNButton_New(void);
-void MNButton_Delete(mn_object_t* ob);
+mn_object_t *MNButton_New(void);
+void MNButton_Delete(mn_object_t *ob);
 
-void MNButton_Ticker(mn_object_t* ob);
-void MNButton_Drawer(mn_object_t* ob, const Point2Raw* origin);
-int MNButton_CommandResponder(mn_object_t* ob, menucommand_e command);
-void MNButton_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNButton_Ticker(mn_object_t *ob);
+void MNButton_Drawer(mn_object_t *ob, Point2Raw const *origin);
+int MNButton_CommandResponder(mn_object_t *ob, menucommand_e command);
+void MNButton_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
-int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
+int MNButton_SetFlags(mn_object_t *ob, flagop_t op, int flags);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -617,17 +617,17 @@ typedef struct mndata_edit_s {
 extern "C" {
 #endif
 
-mn_object_t* MNEdit_New(void);
-void MNEdit_Delete(mn_object_t* ob);
+mn_object_t *MNEdit_New(void);
+void MNEdit_Delete(mn_object_t *ob);
 
-void MNEdit_Ticker(mn_object_t* ob);
-void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* origin);
-int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e command);
-int MNEdit_Responder(mn_object_t* ob, event_t* ev);
-void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNEdit_Ticker(mn_object_t *ob);
+void MNEdit_Drawer(mn_object_t *ob, Point2Raw const *origin);
+int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e command);
+int MNEdit_Responder(mn_object_t *ob, event_t* ev);
+void MNEdit_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
-uint MNEdit_MaxLength(mn_object_t* ob);
-void MNEdit_SetMaxLength(mn_object_t* ob, uint newMaxLength);
+uint MNEdit_MaxLength(mn_object_t *ob);
+void MNEdit_SetMaxLength(mn_object_t *ob, uint newMaxLength);
 
 /**
  * @defgroup mneditSetTextFlags  MNEdit Set Text Flags
@@ -638,14 +638,14 @@ void MNEdit_SetMaxLength(mn_object_t* ob, uint newMaxLength);
 /**@}*/
 
 /// @return  A pointer to an immutable copy of the current contents of the edit field.
-const ddstring_t* MNEdit_Text(mn_object_t* ob);
+ddstring_t const *MNEdit_Text(mn_object_t *ob);
 
 /**
  * Change the current contents of the edit field.
  * @param flags  @ref mneditSetTextFlags
  * @param string  New text string which will replace the existing string.
  */
-void MNEdit_SetText(mn_object_t* ob, int flags, const char* string);
+void MNEdit_SetText(mn_object_t *ob, int flags, char const *string);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -660,7 +660,7 @@ void MNEdit_SetText(mn_object_t* ob, int flags, const char* string);
 #define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
 
 typedef struct {
-    const char* text;
+    char const *text;
     int data;
 } mndata_listitem_t;
 
@@ -679,34 +679,34 @@ typedef struct mndata_list_s {
 extern "C" {
 #endif
 
-mn_object_t* MNList_New(void);
-void MNList_Delete(mn_object_t* ob);
+mn_object_t *MNList_New(void);
+void MNList_Delete(mn_object_t *ob);
 
-void MNList_Ticker(mn_object_t* ob);
-void MNList_Drawer(mn_object_t* ob, const Point2Raw* origin);
-int MNList_CommandResponder(mn_object_t* ob, menucommand_e command);
+void MNList_Ticker(mn_object_t *ob);
+void MNList_Drawer(mn_object_t *ob, Point2Raw const *origin);
+int MNList_CommandResponder(mn_object_t *ob, menucommand_e command);
 
-void MNList_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNList_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 /// @return  Index of the currently selected item else -1.
-int MNList_Selection(mn_object_t* ob);
+int MNList_Selection(mn_object_t *ob);
 
 /// @return  Data of item at position @a index. 0 if index is out of bounds.
-int MNList_ItemData(const mn_object_t* obj, int index);
+int MNList_ItemData(mn_object_t const *ob, int index);
 
 /// @return  @c true if the currently selected item is presently visible.
-dd_bool MNList_SelectionIsVisible(mn_object_t* ob);
+dd_bool MNList_SelectionIsVisible(mn_object_t *ob);
 
 /// @return  Index of the found item associated with @a dataValue else -1.
-int MNList_FindItem(const mn_object_t* ob, int dataValue);
+int MNList_FindItem(mn_object_t const *ob, int dataValue);
 
-mn_object_t* MNListInline_New(void);
-void MNListInline_Delete(mn_object_t* ob);
+mn_object_t *MNListInline_New(void);
+void MNListInline_Delete(mn_object_t *ob);
 
-void MNListInline_Ticker(mn_object_t* ob);
-void MNListInline_Drawer(mn_object_t* ob, const Point2Raw* origin);
-int MNListInline_CommandResponder(mn_object_t* ob, menucommand_e command);
-void MNListInline_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNListInline_Ticker(mn_object_t *ob);
+void MNListInline_Drawer(mn_object_t *ob, Point2Raw const *origin);
+int MNListInline_CommandResponder(mn_object_t *ob, menucommand_e command);
+void MNListInline_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 /**
  * @defgroup mnlistSelectItemFlags  MNList Select Item Flags
@@ -721,7 +721,7 @@ void MNListInline_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
  * @param itemIndex  Index of the new selection.
  * @return  @c true if the selected item changed.
  */
-dd_bool MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
+dd_bool MNList_SelectItem(mn_object_t *ob, int flags, int itemIndex);
 
 /**
  * Change the currently selected item by looking up its data value.
@@ -729,7 +729,7 @@ dd_bool MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
  * @param dataValue  Value associated to the candidate item being selected.
  * @return  @c true if the selected item changed.
  */
-dd_bool MNList_SelectItemByValue(mn_object_t* ob, int flags, int itemIndex);
+dd_bool MNList_SelectItemByValue(mn_object_t *ob, int flags, int itemIndex);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -757,29 +757,29 @@ typedef struct mndata_colorbox_s {
 extern "C" {
 #endif
 
-mn_object_t* MNColorBox_New(void);
-void MNColorBox_Delete(mn_object_t* ob);
+mn_object_t *MNColorBox_New(void);
+void MNColorBox_Delete(mn_object_t *ob);
 
-void MNColorBox_Ticker(mn_object_t* ob);
-void MNColorBox_Drawer(mn_object_t* ob, const Point2Raw* origin);
-int MNColorBox_CommandResponder(mn_object_t* ob, menucommand_e command);
-void MNColorBox_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNColorBox_Ticker(mn_object_t *ob);
+void MNColorBox_Drawer(mn_object_t *ob, Point2Raw const *origin);
+int MNColorBox_CommandResponder(mn_object_t *ob, menucommand_e command);
+void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t* page);
 
 /// @return  @c true if this colorbox is operating in RGBA mode.
-dd_bool MNColorBox_RGBAMode(mn_object_t* ob);
+dd_bool MNColorBox_RGBAMode(mn_object_t *ob);
 
 /// @return  Current red color component.
-float MNColorBox_Redf(const mn_object_t* ob);
+float MNColorBox_Redf(mn_object_t const *ob);
 
 /// @return  Current green color component.
-float MNColorBox_Greenf(const mn_object_t* ob);
+float MNColorBox_Greenf(mn_object_t const *ob);
 
 /// @return  Current blue color component.
-float MNColorBox_Bluef(const mn_object_t* ob);
+float MNColorBox_Bluef(mn_object_t const *ob);
 
 /// @return  Current alpha value or @c 1 if this colorbox is not
 ///          operating in "rgba mode".
-float MNColorBox_Alphaf(const mn_object_t* ob);
+float MNColorBox_Alphaf(mn_object_t const *ob);
 
 /**
  * @defgroup mncolorboxSetColorFlags  MNColorBox Set Color Flags.
@@ -795,33 +795,33 @@ float MNColorBox_Alphaf(const mn_object_t* ob);
  *              is not operating in "rgba mode".
  * @return  @c true if the current color changed.
  */
-dd_bool MNColorBox_SetColor4fv(mn_object_t* ob, int flags, float rgba[4]);
-dd_bool MNColorBox_SetColor4f(mn_object_t* ob, int flags, float red, float green,
+dd_bool MNColorBox_SetColor4fv(mn_object_t *ob, int flags, float rgba[4]);
+dd_bool MNColorBox_SetColor4f(mn_object_t *ob, int flags, float red, float green,
     float blue, float alpha);
 
 /// Change the current red color component.
 /// @return  @c true if the value changed.
-dd_bool MNColorBox_SetRedf(mn_object_t* ob, int flags, float red);
+dd_bool MNColorBox_SetRedf(mn_object_t *ob, int flags, float red);
 
 /// Change the current green color component.
 /// @return  @c true if the value changed.
-dd_bool MNColorBox_SetGreenf(mn_object_t* ob, int flags, float green);
+dd_bool MNColorBox_SetGreenf(mn_object_t *ob, int flags, float green);
 
 /// Change the current blue color component.
 /// @return  @c true if the value changed.
-dd_bool MNColorBox_SetBluef(mn_object_t* ob, int flags, float blue);
+dd_bool MNColorBox_SetBluef(mn_object_t *ob, int flags, float blue);
 
 /// Change the current alpha value. Note: will be NOP if this colorbox
 /// is not operating in "rgba mode".
 /// @return  @c true if the value changed.
-dd_bool MNColorBox_SetAlphaf(mn_object_t* ob, int flags, float alpha);
+dd_bool MNColorBox_SetAlphaf(mn_object_t *ob, int flags, float alpha);
 
 /**
  * Copy the current color from @a other.
  * @param flags  @ref mncolorboxSetColorFlags
  * @return  @c true if the current color changed.
  */
-dd_bool MNColorBox_CopyColor(mn_object_t* ob, int flags, const mn_object_t* otherObj);
+dd_bool MNColorBox_CopyColor(mn_object_t *ob, int flags, mn_object_t const *otherObj);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -865,19 +865,19 @@ typedef struct mndata_slider_s {
 extern "C" {
 #endif
 
-mn_object_t* MNSlider_New(void);
-void MNSlider_Delete(mn_object_t* ob);
+mn_object_t *MNSlider_New(void);
+void MNSlider_Delete(mn_object_t *ob);
 
-void MNSlider_Ticker(mn_object_t* ob);
-void MNSlider_Drawer(mn_object_t* ob, const Point2Raw* origin);
-void MNSlider_TextualValueDrawer(mn_object_t* ob, const Point2Raw* origin);
-int MNSlider_CommandResponder(mn_object_t* ob, menucommand_e command);
-void MNSlider_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
-void MNSlider_TextualValueUpdateGeometry(mn_object_t* ob, mn_page_t* page);
-int MNSlider_ThumbPos(const mn_object_t* ob);
+void MNSlider_Ticker(mn_object_t *ob);
+void MNSlider_Drawer(mn_object_t *ob, Point2Raw const *origin);
+void MNSlider_TextualValueDrawer(mn_object_t *ob, Point2Raw const *origin);
+int MNSlider_CommandResponder(mn_object_t *ob, menucommand_e command);
+void MNSlider_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
+void MNSlider_TextualValueUpdateGeometry(mn_object_t *ob, mn_page_t *page);
+int MNSlider_ThumbPos(mn_object_t const *ob);
 
 /// @return  Current value represented by the slider.
-float MNSlider_Value(const mn_object_t* ob);
+float MNSlider_Value(mn_object_t const *ob);
 
 /**
  * @defgroup mnsliderSetValueFlags  MNSlider Set Value Flags
@@ -891,7 +891,7 @@ float MNSlider_Value(const mn_object_t* ob);
  * @param flags  @ref mnsliderSetValueFlags
  * @param value  New value.
  */
-void MNSlider_SetValue(mn_object_t* ob, int flags, float value);
+void MNSlider_SetValue(mn_object_t *ob, int flags, float value);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -914,17 +914,17 @@ typedef struct mndata_mobjpreview_s {
 extern "C" {
 #endif
 
-mn_object_t* MNMobjPreview_New(void);
-void MNMobjPreview_Delete(mn_object_t* ob);
+mn_object_t *MNMobjPreview_New(void);
+void MNMobjPreview_Delete(mn_object_t *ob);
 
-void MNMobjPreview_Ticker(mn_object_t* ob);
-void MNMobjPreview_SetMobjType(mn_object_t* ob, int mobjType);
-void MNMobjPreview_SetPlayerClass(mn_object_t* ob, int plrClass);
-void MNMobjPreview_SetTranslationClass(mn_object_t* ob, int tClass);
-void MNMobjPreview_SetTranslationMap(mn_object_t* ob, int tMap);
+void MNMobjPreview_Ticker(mn_object_t *ob);
+void MNMobjPreview_SetMobjType(mn_object_t *ob, int mobjType);
+void MNMobjPreview_SetPlayerClass(mn_object_t *ob, int plrClass);
+void MNMobjPreview_SetTranslationClass(mn_object_t *ob, int tClass);
+void MNMobjPreview_SetTranslationMap(mn_object_t *ob, int tMap);
 
-void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* origin);
-void MNMobjPreview_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNMobjPreview_Drawer(mn_object_t *ob, Point2Raw const *origin);
+void MNMobjPreview_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -958,9 +958,9 @@ extern "C" {
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
-mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
+mn_object_t *MN_MustFindObjectOnPage(mn_page_t *page, int group, int flags);
 
-void MN_DrawPage(mn_page_t* page, float alpha, dd_bool showFocusCursor);
+void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor);
 
 /**
  * Execute a menu navigation/action command.
@@ -1050,9 +1050,9 @@ typedef struct uiwidget_s {
     /// Current opacity value for this widget.
     float opacity;
 
-    void (*updateGeometry) (struct uiwidget_s* obj);
-    void (*drawer) (struct uiwidget_s* obj, const Point2Raw* offset);
-    void (*ticker) (struct uiwidget_s* obj, timespan_t ticLength);
+    void (*updateGeometry) (struct uiwidget_s* ob);
+    void (*drawer) (struct uiwidget_s* ob, Point2Raw const *offset);
+    void (*ticker) (struct uiwidget_s* ob, timespan_t ticLength);
 
     void* typedata;
 } uiwidget_t;
@@ -1061,41 +1061,41 @@ typedef struct uiwidget_s {
 extern "C" {
 #endif
 
-void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin);
-void GUI_DrawWidgetXY(uiwidget_t* obj, int x, int y);
+void GUI_DrawWidget(uiwidget_t* ob, Point2Raw const *origin);
+void GUI_DrawWidgetXY(uiwidget_t* ob, int x, int y);
 
 /// @return  @ref alignmentFlags
-int UIWidget_Alignment(uiwidget_t* obj);
+int UIWidget_Alignment(uiwidget_t* ob);
 
-float UIWidget_Opacity(uiwidget_t* obj);
+float UIWidget_Opacity(uiwidget_t* ob);
 
-const Rect* UIWidget_Geometry(uiwidget_t* obj);
+const Rect* UIWidget_Geometry(uiwidget_t* ob);
 
-int UIWidget_MaximumHeight(uiwidget_t* obj);
+int UIWidget_MaximumHeight(uiwidget_t* ob);
 
-const Size2Raw* UIWidget_MaximumSize(uiwidget_t* obj);
+const Size2Raw* UIWidget_MaximumSize(uiwidget_t* ob);
 
-int UIWidget_MaximumWidth(uiwidget_t* obj);
+int UIWidget_MaximumWidth(uiwidget_t* ob);
 
-const Point2* UIWidget_Origin(uiwidget_t* obj);
+const Point2* UIWidget_Origin(uiwidget_t* ob);
 
 /// @return  Local player number of the owner of this widget.
-int UIWidget_Player(uiwidget_t* obj);
+int UIWidget_Player(uiwidget_t* ob);
 
-void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
+void UIWidget_RunTic(uiwidget_t* ob, timespan_t ticLength);
 
-void UIWidget_SetOpacity(uiwidget_t* obj, float alpha);
+void UIWidget_SetOpacity(uiwidget_t* ob, float alpha);
 
 /**
  * @param alignFlags  @ref alignmentFlags
  */
-void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags);
+void UIWidget_SetAlignment(uiwidget_t* ob, int alignFlags);
 
-void UIWidget_SetMaximumHeight(uiwidget_t* obj, int height);
+void UIWidget_SetMaximumHeight(uiwidget_t* ob, int height);
 
-void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2Raw* size);
+void UIWidget_SetMaximumSize(uiwidget_t* ob, const Size2Raw* size);
 
-void UIWidget_SetMaximumWidth(uiwidget_t* obj, int width);
+void UIWidget_SetMaximumWidth(uiwidget_t* ob, int width);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -1126,11 +1126,11 @@ typedef struct {
 extern "C" {
 #endif
 
-void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other);
-int UIGroup_Flags(uiwidget_t* obj);
-void UIGroup_SetFlags(uiwidget_t* obj, int flags);
+void UIGroup_AddWidget(uiwidget_t* ob, uiwidget_t* other);
+int UIGroup_Flags(uiwidget_t* ob);
+void UIGroup_SetFlags(uiwidget_t* ob, int flags);
 
-void UIGroup_UpdateGeometry(uiwidget_t* obj);
+void UIGroup_UpdateGeometry(uiwidget_t* ob);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -1315,8 +1315,8 @@ uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
     fontid_t fontId, float opacity,
-    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* offset),
-    void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
+    void (*updateGeometry) (uiwidget_t* ob), void (*drawer) (uiwidget_t* ob, Point2Raw const *offset),
+    void (*ticker) (uiwidget_t* ob, timespan_t ticLength), void* typedata);
 
 uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, order_t order, int padding);
 

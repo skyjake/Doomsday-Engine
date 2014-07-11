@@ -1,30 +1,21 @@
-/**\file hu_menu.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file hu_menu.h  Menu widget stuff, episode selection and such.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Menu widget stuff, episode selection and such.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBCOMMON_HU_MENU_H
@@ -119,7 +110,7 @@ void Hu_MenuTicker(timespan_t ticLength);
 /// @return  @c true if the menu is presently visible.
 dd_bool Hu_MenuIsVisible(void);
 
-mn_page_t* Hu_MenuFindPageByName(const char* name);
+mn_page_t *Hu_MenuFindPageByName(char const *name);
 
 /**
  * @param name  Symbolic name.
@@ -130,11 +121,11 @@ mn_page_t* Hu_MenuFindPageByName(const char* name);
  * @param cmdResponder  Menu-command responder routine.
  * @param userData  User data pointer to be associated with the page.
  */
-mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin, int flags,
-    void (*ticker) (mn_page_t* page),
-    void (*drawer) (mn_page_t* page, const Point2Raw* origin),
-    int (*cmdResponder) (mn_page_t* page, menucommand_e cmd),
-    void* userData);
+mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
+    void (*ticker) (mn_page_t *page),
+    void (*drawer) (mn_page_t *page, Point2Raw const *origin),
+    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd),
+    void *userData);
 
 /**
  * This is the main menu drawing routine (called every tic by the drawing
@@ -143,24 +134,24 @@ mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin, int flags,
  */
 void Hu_MenuDrawer(void);
 
-void Hu_MenuPageTicker(struct mn_page_s* page);
+void Hu_MenuPageTicker(struct mn_page_s *page);
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
-void Hu_MenuDrawPageTitle(const char* title, int x, int y);
-void Hu_MenuDrawPageHelp(const char* help, int x, int y);
+void Hu_MenuDrawPageTitle(char const *title, int x, int y);
+void Hu_MenuDrawPageHelp(char const *help, int x, int y);
 
 /// @return  @c true if the input event @a ev was eaten.
-int Hu_MenuPrivilegedResponder(event_t* ev);
+int Hu_MenuPrivilegedResponder(event_t *ev);
 
 /// @return  @c true if the input event @a ev was eaten.
-int Hu_MenuResponder(event_t* ev);
+int Hu_MenuResponder(event_t *ev);
 
 /**
  * Handles "hotkey" navigation in the menu.
  * @return  @c true if the input event @a ev was eaten.
  */
-int Hu_MenuFallbackResponder(event_t* ev);
+int Hu_MenuFallbackResponder(event_t *ev);
 
 /**
  * @return  @c true iff the menu is currently active (open).
@@ -182,13 +173,13 @@ void Hu_MenuSetAlpha(float alpha);
 /**
  * Retrieve the currently active page.
  */
-mn_page_t* Hu_MenuActivePage(void);
+mn_page_t *Hu_MenuActivePage(void);
 
 /**
  * Change the current active page.
  */
-void Hu_MenuSetActivePage2(mn_page_t* page, dd_bool canReactivate);
-void Hu_MenuSetActivePage(mn_page_t* page);
+void Hu_MenuSetActivePage2(mn_page_t *page, dd_bool canReactivate);
+void Hu_MenuSetActivePage(mn_page_t *page);
 
 /**
  * Initialize a new singleplayer game according to the options set via the menu.
@@ -196,19 +187,19 @@ void Hu_MenuSetActivePage(mn_page_t* page);
  */
 void Hu_MenuInitNewGame(dd_bool confirmed);
 
-int Hu_MenuDefaultFocusAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuDefaultFocusAction(mn_object_t *obj, mn_actionid_t action, void *parameters);
 
-int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuCvarSlider(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuCvarEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuCvarColorBox(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuCvarButton(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuCvarList(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuCvarSlider(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuCvarColorBox(mn_object_t *ob, mn_actionid_t action, void *parameters);
 
-int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuBindings(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSaveSlotEdit(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuBindings(mn_object_t *ob, mn_actionid_t action, void *parameters);
 
-int Hu_MenuActivateColorWidget(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuActivateColorWidget(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuUpdateColorWidgetColor(mn_object_t *ob, mn_actionid_t action, void *parameters);
 
 D_CMD(MenuOpen);
 D_CMD(MenuCommand);
@@ -217,4 +208,4 @@ D_CMD(MenuCommand);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_HU_MENU_H */
+#endif // LIBCOMMON_HU_MENU_H

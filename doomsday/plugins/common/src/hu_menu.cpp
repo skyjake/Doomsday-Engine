@@ -1,7 +1,7 @@
 /** @file hu_menu.cpp  Menu widget stuff, episode selection and such.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,29 +21,31 @@
 #include "common.h"
 #include "hu_menu.h"
 
-#include "m_argv.h"
-#include "hu_chat.h"
-#include "hu_log.h"
-#include "hu_msg.h"
-#include "hu_stuff.h"
-#include "am_map.h"
-#include "x_hair.h"
-#include "player.h"
-#include "g_controls.h"
-#include "mapinfo.h"
-#include "p_savedef.h"
-#include "g_common.h"
-#include "gamesession.h"
-#include "r_common.h"
-#include "m_ctrl.h"
-#include "saveslots.h"
-#include <de/memory.h>
 #include <cstdlib>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <de/memory.h>
 
+#include "am_map.h"
+#include "g_common.h"
+#include "g_controls.h"
+#include "gamesession.h"
+#include "hu_chat.h"
+#include "hu_log.h"
+#include "hu_msg.h"
+#include "hu_stuff.h"
+#include "m_argv.h"
+#include "m_ctrl.h"
+#include "mapinfo.h"
+#include "p_savedef.h"
+#include "player.h"
+#include "r_common.h"
+#include "saveslots.h"
+#include "x_hair.h"
+
+using namespace de;
 using namespace common;
 
 /// Original game line height for pages that employ the fixed layout (in 320x200 pixels).
@@ -656,73 +658,6 @@ struct pagerecord_t
 static int pageCount;
 static pagerecord_t *pages;
 
-// Cvars for the menu:
-cvartemplate_t menuCVars[] = {
-    { "menu-scale",     0,  CVT_FLOAT,  &cfg.menuScale, .1f, 1, 0 },
-    { "menu-stretch",   0,  CVT_BYTE,   &cfg.menuScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST, 0 },
-    { "menu-flash-r",   0,  CVT_FLOAT,  &cfg.menuTextFlashColor[CR], 0, 1, 0 },
-    { "menu-flash-g",   0,  CVT_FLOAT,  &cfg.menuTextFlashColor[CG], 0, 1, 0 },
-    { "menu-flash-b",   0,  CVT_FLOAT,  &cfg.menuTextFlashColor[CB], 0, 1, 0 },
-    { "menu-flash-speed", 0, CVT_INT,   &cfg.menuTextFlashSpeed, 0, 50, 0 },
-    { "menu-cursor-rotate", 0, CVT_BYTE, &cfg.menuCursorRotate, 0, 1, 0 },
-    { "menu-effect",    0,  CVT_INT,    &cfg.menuEffectFlags, 0, MEF_EVERYTHING, 0 },
-    { "menu-color-r",   0,  CVT_FLOAT,  &cfg.menuTextColors[0][CR], 0, 1, 0 },
-    { "menu-color-g",   0,  CVT_FLOAT,  &cfg.menuTextColors[0][CG], 0, 1, 0 },
-    { "menu-color-b",   0,  CVT_FLOAT,  &cfg.menuTextColors[0][CB], 0, 1, 0 },
-    { "menu-colorb-r",  0,  CVT_FLOAT,  &cfg.menuTextColors[1][CR], 0, 1, 0 },
-    { "menu-colorb-g",  0,  CVT_FLOAT,  &cfg.menuTextColors[1][CG], 0, 1, 0 },
-    { "menu-colorb-b",  0,  CVT_FLOAT,  &cfg.menuTextColors[1][CB], 0, 1, 0 },
-    { "menu-colorc-r",  0,  CVT_FLOAT,  &cfg.menuTextColors[2][CR], 0, 1, 0 },
-    { "menu-colorc-g",  0,  CVT_FLOAT,  &cfg.menuTextColors[2][CG], 0, 1, 0 },
-    { "menu-colorc-b",  0,  CVT_FLOAT,  &cfg.menuTextColors[2][CB], 0, 1, 0 },
-    { "menu-colord-r",  0,  CVT_FLOAT,  &cfg.menuTextColors[3][CR], 0, 1, 0 },
-    { "menu-colord-g",  0,  CVT_FLOAT,  &cfg.menuTextColors[3][CG], 0, 1, 0 },
-    { "menu-colord-b",  0,  CVT_FLOAT,  &cfg.menuTextColors[3][CB], 0, 1, 0 },
-    { "menu-glitter",   0,  CVT_FLOAT,  &cfg.menuTextGlitter, 0, 1, 0 },
-    { "menu-fog",       0,  CVT_INT,    &cfg.hudFog, 0, 5, 0 },
-    { "menu-shadow",    0,  CVT_FLOAT,  &cfg.menuShadow, 0, 1, 0 },
-    { "menu-patch-replacement", 0, CVT_INT, &cfg.menuPatchReplaceMode, PRM_FIRST, PRM_LAST, 0 },
-    { "menu-slam",      0,  CVT_BYTE,   &cfg.menuSlam, 0, 1, 0 },
-    { "menu-hotkeys",   0,  CVT_BYTE,   &cfg.menuShortcutsEnabled, 0, 1, 0 },
-#if __JDOOM__ || __JDOOM64__
-    { "menu-quitsound", 0,  CVT_INT,    &cfg.menuQuitSound, 0, 1, 0 },
-#endif
-    { "menu-save-suggestname", 0, CVT_BYTE, &cfg.menuGameSaveSuggestDescription, 0, 1, 0 },
-
-    // Aliases for obsolete cvars:
-    { "menu-turningskull", 0, CVT_BYTE, &cfg.menuCursorRotate, 0, 1, 0 },
-    { "",               0,  CVT_NULL,   0, 0, 0, 0 }
-};
-
-// Console commands for the menu:
-ccmdtemplate_t menuCCmds[] = {
-    { "menu",           "s",    CCmdMenuOpen, 0 },
-    { "menu",           "",     CCmdMenuOpen, 0 },
-    { "menuup",         "",     CCmdMenuCommand, 0 },
-    { "menudown",       "",     CCmdMenuCommand, 0 },
-    { "menupageup",     "",     CCmdMenuCommand, 0 },
-    { "menupagedown",   "",     CCmdMenuCommand, 0 },
-    { "menuleft",       "",     CCmdMenuCommand, 0 },
-    { "menuright",      "",     CCmdMenuCommand, 0 },
-    { "menuselect",     "",     CCmdMenuCommand, 0 },
-    { "menudelete",     "",     CCmdMenuCommand, 0 },
-    { "menuback",       "",     CCmdMenuCommand, 0 },
-    { "",               "",     0, 0 }
-};
-
-void Hu_MenuRegister()
-{
-    for(int i = 0; menuCVars[i].path[0]; ++i)
-    {
-        Con_AddVariable(menuCVars + i);
-    }
-
-    for(int i = 0; menuCCmds[i].name[0]; ++i)
-    {
-        Con_AddCommand(menuCCmds + i);
-    }
-}
-
 static menucommand_e chooseCloseMethod()
 {
     // If we aren't using a transition then we can close normally and allow our
@@ -730,30 +665,29 @@ static menucommand_e chooseCloseMethod()
     return Con_GetInteger("con-transition-tics") == 0? MCMD_CLOSE : MCMD_CLOSEFAST;
 }
 
-mn_page_t* Hu_MenuFindPageByName(const char* name)
+mn_page_t *Hu_MenuFindPageByName(char const *name)
 {
     if(name && name[0])
     {
-        int i;
-        for(i = 0; i < pageCount; ++i)
+        for(int i = 0; i < pageCount; ++i)
         {
-            pagerecord_t* rec = pages + i;
+            pagerecord_t *rec = pages + i;
             if(!stricmp(name, Str_Text(&rec->name)))
             {
                 return rec->page;
             }
         }
     }
-    return NULL;
+    return 0; // Not found.
 }
 
 /// @todo Make this state an object property flag.
 /// @return  @c true if the rotation of a cursor on this object should be animated.
-static dd_bool Hu_MenuHasCursorRotation(mn_object_t *obj)
+static dd_bool Hu_MenuHasCursorRotation(mn_object_t *ob)
 {
-    assert(obj);
-    return (!(MNObject_Flags(obj) & MNF_DISABLED) &&
-              (MNObject_Type(obj) == MN_LISTINLINE || MNObject_Type(obj) == MN_SLIDER));
+    DENG2_ASSERT(ob != 0);
+    return (!(MNObject_Flags(ob) & MNF_DISABLED) &&
+              (MNObject_Type(ob) == MN_LISTINLINE || MNObject_Type(ob) == MN_SLIDER));
 }
 
 /// To be called to re-evaluate the state of the cursor (e.g., when focus changes).
@@ -761,18 +695,10 @@ static void Hu_MenuUpdateCursorState()
 {
     if(menuActive)
     {
-        mn_page_t *page;
-        mn_object_t *obj;
-
-        if(colorWidgetActive)
-            page = Hu_MenuFindPageByName("ColorWidget");
-        else
-            page = Hu_MenuActivePage();
-
-        obj = MNPage_FocusObject(page);
-        if(obj)
+        mn_page_t *page = colorWidgetActive? Hu_MenuFindPageByName("ColorWidget") : Hu_MenuActivePage();
+        if(mn_object_t *ob = MNPage_FocusObject(page))
         {
-            cursorHasRotation = Hu_MenuHasCursorRotation(obj);
+            cursorHasRotation = Hu_MenuHasCursorRotation(ob);
             return;
         }
     }
@@ -781,8 +707,7 @@ static void Hu_MenuUpdateCursorState()
 
 void Hu_MenuLoadResources()
 {
-    char buffer[9];
-    int i;
+    char buf[9];
 
 #if __JDOOM__ || __JDOOM64__
     pMainTitle = R_DeclarePatch("M_DOOM");
@@ -827,18 +752,18 @@ void Hu_MenuLoadResources()
 #endif
 
 #if __JHERETIC__
-    for(i = 0; i < 18; ++i)
+    for(int i = 0; i < 18; ++i)
     {
-        dd_snprintf(buffer, 9, "M_SKL%02d", i);
-        pRotatingSkull[i] = R_DeclarePatch(buffer);
+        dd_snprintf(buf, 9, "M_SKL%02d", i);
+        pRotatingSkull[i] = R_DeclarePatch(buf);
     }
 #endif
 
 #if __JHEXEN__
-    for(i = 0; i < 7; ++i)
+    for(int i = 0; i < 7; ++i)
     {
-        dd_snprintf(buffer, 9, "FBUL%c0", 'A'+i);
-        pBullWithFire[i] = R_DeclarePatch(buffer);
+        dd_snprintf(buf, 9, "FBUL%c0", 'A'+i);
+        pBullWithFire[i] = R_DeclarePatch(buf);
     }
 
     pPlayerClassBG[0] = R_DeclarePatch("M_FBOX");
@@ -846,14 +771,14 @@ void Hu_MenuLoadResources()
     pPlayerClassBG[2] = R_DeclarePatch("M_MBOX");
 #endif
 
-    for(i = 0; i < MENU_CURSOR_FRAMECOUNT; ++i)
+    for(int i = 0; i < MENU_CURSOR_FRAMECOUNT; ++i)
     {
 #if __JDOOM__ || __JDOOM64__
-        dd_snprintf(buffer, 9, "M_SKULL%d", i+1);
+        dd_snprintf(buf, 9, "M_SKULL%d", i+1);
 #else
-        dd_snprintf(buffer, 9, "M_SLCTR%d", i+1);
+        dd_snprintf(buf, 9, "M_SLCTR%d", i+1);
 #endif
-        pCursors[i] = R_DeclarePatch(buffer);
+        pCursors[i] = R_DeclarePatch(buf);
     }
 }
 
@@ -5835,9 +5760,8 @@ int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 
     case CVT_URIPTR: {
         /// @todo Sanitize and validate against known schemas.
-        Uri *uri = Uri_NewWithPath2(Str_Text(MNEdit_Text(ob)), RC_NULL);
-        Con_SetUri2((char const *)edit->data1, uri, SVF_WRITE_OVERRIDE);
-        Uri_Delete(uri);
+        de::Uri uri(Str_Text(MNEdit_Text(ob)), RC_NULL);
+        Con_SetUri2((char const *)edit->data1, reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
         break; }
 
     default: break;
@@ -6575,4 +6499,54 @@ D_CMD(MenuCommand)
         }
     }
     return false;
+}
+
+void Hu_MenuRegister()
+{
+    C_VAR_FLOAT("menu-scale",               &cfg.menuScale,              0, .1f, 1);
+    C_VAR_BYTE ("menu-stretch",             &cfg.menuScaleMode,          0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_FLOAT("menu-flash-r",             &cfg.menuTextFlashColor[CR], 0, 0, 1);
+    C_VAR_FLOAT("menu-flash-g",             &cfg.menuTextFlashColor[CG], 0, 0, 1);
+    C_VAR_FLOAT("menu-flash-b",             &cfg.menuTextFlashColor[CB], 0, 0, 1);
+    C_VAR_INT  ("menu-flash-speed",         &cfg.menuTextFlashSpeed,     0, 0, 50);
+    C_VAR_BYTE ("menu-cursor-rotate",       &cfg.menuCursorRotate,       0, 0, 1);
+    C_VAR_INT  ("menu-effect",              &cfg.menuEffectFlags,        0, 0, MEF_EVERYTHING);
+    C_VAR_FLOAT("menu-color-r",             &cfg.menuTextColors[0][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-color-g",             &cfg.menuTextColors[0][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-color-b",             &cfg.menuTextColors[0][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorb-r",            &cfg.menuTextColors[1][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorb-g",            &cfg.menuTextColors[1][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorb-b",            &cfg.menuTextColors[1][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorc-r",            &cfg.menuTextColors[2][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorc-g",            &cfg.menuTextColors[2][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorc-b",            &cfg.menuTextColors[2][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-colord-r",            &cfg.menuTextColors[3][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-colord-g",            &cfg.menuTextColors[3][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-colord-b",            &cfg.menuTextColors[3][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-glitter",             &cfg.menuTextGlitter,        0, 0, 1);
+    C_VAR_INT  ("menu-fog",                 &cfg.hudFog,                 0, 0, 5);
+    C_VAR_FLOAT("menu-shadow",              &cfg.menuShadow,             0, 0, 1);
+    C_VAR_INT  ("menu-patch-replacement",   &cfg.menuPatchReplaceMode,   0, PRM_FIRST, PRM_LAST);
+    C_VAR_BYTE ("menu-slam",                &cfg.menuSlam,               0, 0, 1);
+    C_VAR_BYTE ("menu-hotkeys",             &cfg.menuShortcutsEnabled,   0, 0, 1);
+#if __JDOOM__ || __JDOOM64__
+    C_VAR_INT  ("menu-quitsound",           &cfg.menuQuitSound,          0, 0, 1);
+#endif
+    C_VAR_BYTE ("menu-save-suggestname",    &cfg.menuGameSaveSuggestDescription, 0, 0, 1);
+
+    // Aliases for obsolete cvars:
+    C_VAR_BYTE ("menu-turningskull",        &cfg.menuCursorRotate,       0, 0, 1);
+
+
+    C_CMD("menu",           "s",    MenuOpen);
+    C_CMD("menu",           "",     MenuOpen);
+    C_CMD("menuup",         "",     MenuCommand);
+    C_CMD("menudown",       "",     MenuCommand);
+    C_CMD("menupageup",     "",     MenuCommand);
+    C_CMD("menupagedown",   "",     MenuCommand);
+    C_CMD("menuleft",       "",     MenuCommand);
+    C_CMD("menuright",      "",     MenuCommand);
+    C_CMD("menuselect",     "",     MenuCommand);
+    C_CMD("menudelete",     "",     MenuCommand);
+    C_CMD("menuback",       "",     MenuCommand);
 }
