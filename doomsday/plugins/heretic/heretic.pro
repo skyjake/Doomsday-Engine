@@ -73,7 +73,7 @@ HEADERS += \
 SOURCES += \
     src/acfnlink.c \
     src/h_api.c \
-    src/h_console.c \
+    src/h_console.cpp \
     src/h_main.cpp \
     src/h_refresh.cpp \
     src/hereticv13mapstatereader.cpp \

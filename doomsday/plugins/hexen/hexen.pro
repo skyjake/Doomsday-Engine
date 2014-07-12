@@ -77,7 +77,7 @@ SOURCES += \
     src/acfnlink.c \
     src/acscript.cpp \
     src/h2_main.cpp \
-    src/hconsole.c \
+    src/hconsole.cpp \
     src/hrefresh.cpp \
     src/in_lude.cpp \
     src/m_cheat.cpp \

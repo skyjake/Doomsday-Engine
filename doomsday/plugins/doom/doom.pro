@@ -73,7 +73,7 @@ SOURCES += \
     src/acfnlink.c \
     src/bossbrain.cpp \
     src/d_api.c \
-    src/d_console.c \
+    src/d_console.cpp \
     src/d_items.c \
     src/d_main.cpp \
     src/d_refresh.cpp \
